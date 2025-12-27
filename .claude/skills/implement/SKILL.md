@@ -35,13 +35,28 @@ You are a senior engineer executing a single, well-scoped task in this repositor
 
 ### 2. Create Git Branch
 
-Branch naming convention:
+**IMPORTANT: Always sync with default branch first:**
+
+```bash
+# Get the default branch name (usually 'main' or 'master')
+DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+
+# Switch to default branch, fetch latest, and pull
+git checkout $DEFAULT_BRANCH
+git fetch origin
+git pull origin $DEFAULT_BRANCH
+
+# Create new feature branch from updated default branch
+git checkout -b <branch-name>
+```
+
+**Branch naming convention:**
 
 - `feat/<short-slug>` - for new features
 - `fix/<short-slug>` - for bug fixes
 - `chore/<short-slug>` - for maintenance tasks
 
-Example: `feat/user-avatar-upload`
+**Example:** `feat/user-avatar-upload`
 
 ### 3. Implement Changes
 
@@ -121,7 +136,24 @@ chore: update dependencies to latest versions
    gh auth status || gh auth login
    ```
 
-2. **Push branch and create PR:**
+2. **Update branch with latest changes from default branch:**
+
+   ```bash
+   # Get default branch name
+   DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+
+   # Fetch latest changes
+   git fetch origin
+
+   # Rebase your branch on top of the latest default branch
+   git rebase origin/$DEFAULT_BRANCH
+
+   # If conflicts occur, resolve them and continue:
+   # git add <resolved-files>
+   # git rebase --continue
+   ```
+
+3. **Push branch and create PR:**
 
    **Option A: Use the helper script** (recommended):
 
@@ -136,8 +168,8 @@ chore: update dependencies to latest versions
    **Option B: Manual gh command:**
 
    ```bash
-   # Push branch
-   git push -u origin <branch-name>
+   # Push branch (use --force-with-lease if rebased)
+   git push -u origin <branch-name> --force-with-lease
 
    # Create PR
    gh pr create --title "<conventional-commit-title>" --body "$(cat <<'EOF'
