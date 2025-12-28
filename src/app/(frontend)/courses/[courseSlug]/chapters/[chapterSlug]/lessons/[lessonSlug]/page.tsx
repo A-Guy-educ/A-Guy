@@ -1,20 +1,21 @@
 import { notFound } from 'next/navigation'
 import { queryCourseBySlug } from '@/lib/queries/courses'
 import { queryLessonBySlug } from '@/lib/queries/lessons'
-import { Breadcrumb } from '@/components/courses/Breadcrumb'
-import { LessonHeader } from '@/components/courses/LessonHeader'
-import { PDFViewer } from '@/components/courses/PDFViewer'
-import { EmptyState } from '@/components/courses/EmptyState'
+import { Breadcrumb } from '../../../../../_components/Breadcrumb'
+import { LessonHeader } from '../../../../../_components/LessonHeader'
+import { PDFViewer } from '@/components/utilities/PDFViewer'
+import { EmptyState } from '../../../../../_components/EmptyState'
 
 interface LessonPageProps {
   params: Promise<{
     courseSlug: string
+    chapterSlug: string
     lessonSlug: string
   }>
 }
 
 export default async function LessonPage({ params }: LessonPageProps) {
-  const { courseSlug, lessonSlug } = await params
+  const { courseSlug, chapterSlug, lessonSlug } = await params
 
   const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug }),
@@ -25,14 +26,23 @@ export default async function LessonPage({ params }: LessonPageProps) {
     notFound()
   }
 
-  const lessonCourseId = typeof lesson.course === 'string' ? lesson.course : lesson.course.id
-  if (lessonCourseId !== course.id) {
+  const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
+  const lessonCourse =
+    lessonChapter && typeof lessonChapter.course !== 'string' ? lessonChapter.course : null
+
+  if (!lessonCourse || lessonCourse.id !== course.id) {
+    notFound()
+  }
+
+  // Verify lesson belongs to the specified chapter
+  if (!lessonChapter || lessonChapter.slug !== chapterSlug) {
     notFound()
   }
 
   const breadcrumbItems = [
     { label: 'Courses', href: '/courses' },
     { label: course.title, href: `/courses/${courseSlug}` },
+    { label: lessonChapter.title, href: `/courses/${courseSlug}/chapters/${chapterSlug}` },
     { label: lesson.title },
   ]
 
@@ -59,7 +69,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
 }
 
 export async function generateMetadata({ params }: LessonPageProps) {
-  const { courseSlug, lessonSlug } = await params
+  const { courseSlug, chapterSlug, lessonSlug } = await params
 
   const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug }),
@@ -72,15 +82,24 @@ export async function generateMetadata({ params }: LessonPageProps) {
     }
   }
 
-  const lessonCourseId = typeof lesson.course === 'string' ? lesson.course : lesson.course.id
-  if (lessonCourseId !== course.id) {
+  const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
+  const lessonCourse =
+    lessonChapter && typeof lessonChapter.course !== 'string' ? lessonChapter.course : null
+
+  if (!lessonCourse || lessonCourse.id !== course.id) {
+    return {
+      title: 'Lesson Not Found',
+    }
+  }
+
+  if (!lessonChapter || lessonChapter.slug !== chapterSlug) {
     return {
       title: 'Lesson Not Found',
     }
   }
 
   return {
-    title: `${lesson.title} - ${course.title}`,
+    title: `${lesson.title} - ${lessonChapter.title} - ${course.title}`,
     description: lesson.description || `Lesson ${lesson.order}: ${lesson.title}`,
   }
 }

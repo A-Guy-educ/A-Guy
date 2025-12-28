@@ -17,7 +17,7 @@ export function PDFEmbed({ pdfUrl, title }: PDFEmbedProps) {
         src={pdfUrl}
         title={`PDF: ${title}`}
         className="w-full"
-        style={{ height: '800px' }}
+        style={{ height: '841px', marginTop: '-41px' }}
         loading="lazy"
         onError={handleError}
       />

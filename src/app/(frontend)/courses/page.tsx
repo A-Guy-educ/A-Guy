@@ -1,7 +1,7 @@
 import { queryPublishedCourses } from '@/lib/queries/courses'
-import { CourseCard } from '@/components/courses/CourseCard'
-import { EmptyState } from '@/components/courses/EmptyState'
-import { CoursesPageTitle } from '@/components/courses/CoursesPageTitle'
+import { CourseCard } from './_components/CourseCard'
+import { EmptyState } from './_components/EmptyState'
+import { CoursesPageTitle } from './_components/CoursesPageTitle'
 
 export default async function CoursesPage() {
   const courses = await queryPublishedCourses()

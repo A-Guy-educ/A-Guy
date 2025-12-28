@@ -5,6 +5,7 @@ import { buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Categories } from './collections/Categories'
+import { Chapters } from './collections/Chapters'
 import { Courses } from './collections/Courses'
 import { Lessons } from './collections/Lessons'
 import { Pages } from './collections/Pages'
@@ -60,7 +61,7 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),
-  collections: [Pages, Categories, Courses, Lessons, Users],
+  collections: [Pages, Categories, Courses, Chapters, Lessons, Users],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins,

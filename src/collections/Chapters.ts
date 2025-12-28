@@ -9,8 +9,8 @@ const formatSlug = (val: string): string =>
     .replace(/[^\w-]+/g, '')
     .toLowerCase()
 
-export const Lessons: CollectionConfig = {
-  slug: 'lessons',
+export const Chapters: CollectionConfig = {
+  slug: 'chapters',
   access: {
     create: authenticated,
     delete: authenticated,
@@ -29,17 +29,25 @@ export const Lessons: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['chapter', 'title', 'slug', 'order', 'status', 'isActive', 'updatedAt'],
+    defaultColumns: ['course', 'chapterLabel', 'title', 'order', 'status', 'isActive', 'updatedAt'],
   },
   fields: [
     {
-      name: 'chapter',
+      name: 'course',
       type: 'relationship',
-      relationTo: 'chapters',
+      relationTo: 'courses',
       required: true,
       index: true,
       admin: {
-        description: 'The chapter this lesson belongs to',
+        description: 'The course this chapter belongs to',
+      },
+    },
+    {
+      name: 'chapterLabel',
+      type: 'text',
+      index: true,
+      admin: {
+        description: 'Chapter identifier (e.g., "1", "A", "א")',
       },
     },
     {
@@ -48,14 +56,14 @@ export const Lessons: CollectionConfig = {
       required: true,
       index: true,
       admin: {
-        description: 'Lesson title',
+        description: 'Chapter title',
       },
     },
     {
       name: 'description',
       type: 'textarea',
       admin: {
-        description: 'Detailed description of the lesson',
+        description: 'Detailed description of the chapter',
       },
     },
     {
@@ -88,7 +96,7 @@ export const Lessons: CollectionConfig = {
         },
       ],
       admin: {
-        description: 'Publication status of the lesson',
+        description: 'Publication status of the chapter',
       },
     },
     {
@@ -97,52 +105,7 @@ export const Lessons: CollectionConfig = {
       required: true,
       defaultValue: true,
       admin: {
-        description: 'Whether this lesson is currently active',
-      },
-    },
-    {
-      name: 'contentType',
-      type: 'select',
-      required: true,
-      defaultValue: 'none',
-      options: [
-        {
-          label: 'None',
-          value: 'none',
-        },
-        {
-          label: 'PDF',
-          value: 'pdf',
-        },
-      ],
-      admin: {
-        description: 'Defines how this lesson is delivered.',
-      },
-    },
-    {
-      name: 'pdfUrl',
-      type: 'text',
-      required: false,
-      index: true,
-      admin: {
-        description: 'External PDF URL for this lesson (temporary hosting).',
-        condition: (data) => data.contentType === 'pdf',
-      },
-      validate: (value: unknown, { data }: { data: Record<string, unknown> }) => {
-        // Only validate if contentType is 'pdf' and a value is provided
-        if (data?.contentType === 'pdf' && value && typeof value === 'string') {
-          try {
-            const url = new URL(value)
-            // Check if URL looks like a PDF (ends with .pdf, ignoring query/hash)
-            const pathname = url.pathname.toLowerCase()
-            if (!pathname.endsWith('.pdf')) {
-              return 'URL must point to a PDF file (should end with .pdf)'
-            }
-          } catch {
-            return 'Must be a valid URL'
-          }
-        }
-        return true
+        description: 'Whether this chapter is currently active',
       },
     },
     {
