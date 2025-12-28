@@ -55,15 +55,15 @@
   }
 
   [data-theme='dark'] {
-    /* Rich navy blue background matching LearnFlow */
-    --background: 217 33% 17%;
+    /* Deep navy blue background matching #06112a from LearnFlow */
+    --background: 222 75% 9%;
     --foreground: 210 40% 98%;
 
-    /* Card surfaces - richer blue tone */
-    --card: 217 33% 21%;
+    /* Card surfaces - slightly elevated from background */
+    --card: 222 75% 13%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 217 33% 21%;
+    --popover: 222 75% 13%;
     --popover-foreground: 210 40% 98%;
 
     /* Primary: bright vibrant blue from LearnFlow */
@@ -71,10 +71,10 @@
     --primary-foreground: 0 0% 100%;
 
     /* Secondary: elevated blue surface */
-    --secondary: 217 33% 25%;
+    --secondary: 222 75% 17%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 25%;
+    --muted: 222 75% 17%;
     --muted-foreground: 215 20.2% 65.1%;
 
     /* Accent: vibrant blue */
@@ -84,9 +84,9 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    /* More visible borders */
-    --border: 217 33% 30% / 0.7;
-    --input: 217 33% 25%;
+    /* Borders - slightly lighter for visibility */
+    --border: 222 75% 20% / 0.7;
+    --input: 222 75% 17%;
 
     /* Focus ring follows accent */
     --ring: 217 91% 60%;
