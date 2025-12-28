@@ -60,7 +60,7 @@ export const queryChapterBySlug = cache(async ({ slug }: { slug: string }) => {
     },
     limit: 1,
     pagination: false,
-    depth: 1,
+    depth: 2,
   })
 
   return result.docs?.[0] || null

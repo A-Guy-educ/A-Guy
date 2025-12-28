@@ -627,6 +627,10 @@ export interface Chapter {
    * Whether this chapter is currently active
    */
   isActive: boolean;
+  /**
+   * URL-friendly identifier (auto-generated from title if empty)
+   */
+  slug?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1143,6 +1147,7 @@ export interface ChaptersSelect<T extends boolean = true> {
   order?: T;
   status?: T;
   isActive?: T;
+  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }
