@@ -5,5 +5,19 @@
       "english": "אנגלית",
       "hebrew": "עברית"
     }
+  },
+  "courses": {
+    "title": "קורסים",
+    "description": "עיין בכל הקורסים הזמינים",
+    "backToCourses": "חזרה לקורסים",
+    "openCourse": "פתח קורס",
+    "viewLesson": "צפה בשיעור",
+    "lessonsSection": "שיעורים",
+    "lesson": "שיעור",
+    "noCourses": "אין קורסים זמינים כרגע.",
+    "noLessons": "אין שיעורים זמינים לקורס זה.",
+    "noPDF": "תוכן PDF אינו זמין לשיעור זה.",
+    "pdfBadge": "PDF",
+    "notFound": "לא נמצא"
   }
 }

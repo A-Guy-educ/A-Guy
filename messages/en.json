@@ -5,5 +5,19 @@
       "english": "English",
       "hebrew": "Hebrew"
     }
+  },
+  "courses": {
+    "title": "Courses",
+    "description": "Browse all available courses",
+    "backToCourses": "Back to Courses",
+    "openCourse": "Open Course",
+    "viewLesson": "View Lesson",
+    "lessonsSection": "Lessons",
+    "lesson": "Lesson",
+    "noCourses": "No courses available at this time.",
+    "noLessons": "No lessons available for this course.",
+    "noPDF": "PDF content is not available for this lesson.",
+    "pdfBadge": "PDF",
+    "notFound": "Not Found"
   }
 }
