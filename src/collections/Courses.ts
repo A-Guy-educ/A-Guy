@@ -95,6 +95,7 @@ export const Courses: CollectionConfig = {
     },
     slugField({
       required: false,
+      useAsSlug: 'title',
     }),
     {
       name: 'meta',

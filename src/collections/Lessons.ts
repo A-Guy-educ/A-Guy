@@ -132,6 +132,7 @@ export const Lessons: CollectionConfig = {
     },
     slugField({
       required: false,
+      useAsSlug: 'title',
     }),
   ],
 }
