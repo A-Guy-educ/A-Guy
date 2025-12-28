@@ -29,17 +29,17 @@ export const Lessons: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['course', 'title', 'slug', 'order', 'status', 'isActive', 'updatedAt'],
+    defaultColumns: ['chapter', 'title', 'slug', 'order', 'status', 'isActive', 'updatedAt'],
   },
   fields: [
     {
-      name: 'course',
+      name: 'chapter',
       type: 'relationship',
-      relationTo: 'courses',
+      relationTo: 'chapters',
       required: true,
       index: true,
       admin: {
-        description: 'The course this lesson belongs to',
+        description: 'The chapter this lesson belongs to',
       },
     },
     {

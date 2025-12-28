@@ -25,8 +25,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
     notFound()
   }
 
-  const lessonCourseId = typeof lesson.course === 'string' ? lesson.course : lesson.course.id
-  if (lessonCourseId !== course.id) {
+  const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
+  const lessonCourse =
+    lessonChapter && typeof lessonChapter.course !== 'string' ? lessonChapter.course : null
+
+  if (!lessonCourse || lessonCourse.id !== course.id) {
     notFound()
   }
 
@@ -72,8 +75,11 @@ export async function generateMetadata({ params }: LessonPageProps) {
     }
   }
 
-  const lessonCourseId = typeof lesson.course === 'string' ? lesson.course : lesson.course.id
-  if (lessonCourseId !== course.id) {
+  const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
+  const lessonCourse =
+    lessonChapter && typeof lessonChapter.course !== 'string' ? lessonChapter.course : null
+
+  if (!lessonCourse || lessonCourse.id !== course.id) {
     return {
       title: 'Lesson Not Found',
     }

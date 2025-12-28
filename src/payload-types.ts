@@ -70,6 +70,7 @@ export interface Config {
     pages: Page;
     categories: Category;
     courses: Course;
+    chapters: Chapter;
     lessons: Lesson;
     users: User;
     redirects: Redirect;
@@ -87,6 +88,7 @@ export interface Config {
     pages: PagesSelect<false> | PagesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     courses: CoursesSelect<false> | CoursesSelect<true>;
+    chapters: ChaptersSelect<false> | ChaptersSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -593,14 +595,51 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "chapters".
+ */
+export interface Chapter {
+  id: string;
+  /**
+   * The course this chapter belongs to
+   */
+  course: string | Course;
+  /**
+   * Chapter identifier (e.g., "1", "A", "א")
+   */
+  chapterLabel?: string | null;
+  /**
+   * Chapter title
+   */
+  title: string;
+  /**
+   * Detailed description of the chapter
+   */
+  description?: string | null;
+  /**
+   * Sort order within the course
+   */
+  order: number;
+  /**
+   * Publication status of the chapter
+   */
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Whether this chapter is currently active
+   */
+  isActive: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "lessons".
  */
 export interface Lesson {
   id: string;
   /**
-   * The course this lesson belongs to
+   * The chapter this lesson belongs to
    */
-  course: string | Course;
+  chapter: string | Chapter;
   /**
    * Lesson title
    */
@@ -858,6 +897,10 @@ export interface PayloadLockedDocument {
         value: string | Course;
       } | null)
     | ({
+        relationTo: 'chapters';
+        value: string | Chapter;
+      } | null)
+    | ({
         relationTo: 'lessons';
         value: string | Lesson;
       } | null)
@@ -1090,10 +1133,25 @@ export interface CoursesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "chapters_select".
+ */
+export interface ChaptersSelect<T extends boolean = true> {
+  course?: T;
+  chapterLabel?: T;
+  title?: T;
+  description?: T;
+  order?: T;
+  status?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "lessons_select".
  */
 export interface LessonsSelect<T extends boolean = true> {
-  course?: T;
+  chapter?: T;
   title?: T;
   description?: T;
   order?: T;
