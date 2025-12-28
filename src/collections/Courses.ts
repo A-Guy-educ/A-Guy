@@ -3,8 +3,8 @@ import type { CollectionConfig } from 'payload'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 
-export const Lessons: CollectionConfig = {
-  slug: 'lessons',
+export const Courses: CollectionConfig = {
+  slug: 'courses',
   access: {
     create: authenticated,
     delete: authenticated,
@@ -13,16 +13,16 @@ export const Lessons: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['lessonLabel', 'title', 'order', 'status', 'isActive', 'updatedAt'],
+    defaultColumns: ['courseLabel', 'title', 'order', 'status', 'isActive', 'updatedAt'],
   },
   fields: [
     {
-      name: 'lessonLabel',
+      name: 'courseLabel',
       type: 'text',
       required: true,
       index: true,
       admin: {
-        description: 'Lesson identifier (e.g., "ח" or "8")',
+        description: 'Course identifier (e.g., "ח" or "8")',
       },
     },
     {
@@ -31,14 +31,14 @@ export const Lessons: CollectionConfig = {
       required: true,
       index: true,
       admin: {
-        description: 'Display title (e.g., "Lesson 8 Math Course")',
+        description: 'Display title (e.g., "Course 8 Math")',
       },
     },
     {
       name: 'description',
       type: 'textarea',
       admin: {
-        description: 'Detailed description of the lesson course',
+        description: 'Detailed description of the course',
       },
     },
     {
@@ -71,7 +71,7 @@ export const Lessons: CollectionConfig = {
         },
       ],
       admin: {
-        description: 'Publication status of the lesson',
+        description: 'Publication status of the course',
       },
     },
     {
@@ -80,7 +80,7 @@ export const Lessons: CollectionConfig = {
       required: true,
       defaultValue: true,
       admin: {
-        description: 'Whether this lesson is currently active',
+        description: 'Whether this course is currently active',
       },
     },
   ],
