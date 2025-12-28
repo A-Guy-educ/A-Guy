@@ -55,45 +55,45 @@
   }
 
   [data-theme='dark'] {
-    /* Deep navy background inspired by LearnFlow */
-    --background: 217 33% 9%;
+    /* Deep navy background inspired by LearnFlow - richer, less pure black */
+    --background: 222 47% 11%;
     --foreground: 210 40% 98%;
 
-    /* Card with subtle elevation */
-    --card: 217 33% 12%;
+    /* Card with subtle elevation - slightly lighter than background */
+    --card: 222 47% 15%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 217 33% 12%;
+    --popover: 222 47% 15%;
     --popover-foreground: 210 40% 98%;
 
-    /* Primary: blue accent */
+    /* Primary: bright blue accent from LearnFlow */
     --primary: 217 91% 60%;
-    --primary-foreground: 210 40% 98%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary: deep surface */
-    --secondary: 217 33% 16%;
+    /* Secondary: elevated surface */
+    --secondary: 222 47% 19%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 16%;
+    --muted: 222 47% 19%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    /* Accent: vibrant blue-purple */
+    /* Accent: vibrant blue */
     --accent: 217 91% 60%;
-    --accent-foreground: 210 40% 98%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    /* Subtle border with transparency */
-    --border: 217 33% 20% / 0.5;
-    --input: 217 33% 16%;
+    /* Subtle border with more visibility */
+    --border: 222 47% 25% / 0.6;
+    --input: 222 47% 19%;
 
     /* Focus ring follows accent */
     --ring: 217 91% 60%;
 
-    --success: 196 100% 14%;
-    --warning: 34 51% 25%;
-    --error: 10 39% 43%;
+    --success: 142 71% 45%;
+    --warning: 38 92% 50%;
+    --error: 0 72% 51%;
   }
 }
 
