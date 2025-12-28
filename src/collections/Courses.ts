@@ -2,7 +2,12 @@ import type { CollectionConfig } from 'payload'
 
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
-import { slugField } from 'payload'
+
+const formatSlug = (val: string): string =>
+  val
+    .replace(/ /g, '-')
+    .replace(/[^\w-]+/g, '')
+    .toLowerCase()
 
 export const Courses: CollectionConfig = {
   slug: 'courses',
@@ -11,6 +16,16 @@ export const Courses: CollectionConfig = {
     delete: authenticated,
     read: anyone,
     update: authenticated,
+  },
+  hooks: {
+    beforeChange: [
+      ({ data }) => {
+        if (data?.title && !data?.slug) {
+          data.slug = formatSlug(data.title)
+        }
+        return data
+      },
+    ],
   },
   admin: {
     useAsTitle: 'title',
@@ -93,7 +108,17 @@ export const Courses: CollectionConfig = {
         position: 'sidebar',
       },
     },
-    slugField(),
+    {
+      name: 'slug',
+      type: 'text',
+      required: false,
+      index: true,
+      unique: true,
+      admin: {
+        position: 'sidebar',
+        description: 'URL-friendly identifier (auto-generated from title if empty)',
+      },
+    },
     {
       name: 'meta',
       type: 'group',

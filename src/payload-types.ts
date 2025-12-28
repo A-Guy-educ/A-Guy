@@ -381,10 +381,9 @@ export interface Course {
   isActive: boolean;
   categories?: (string | Category)[] | null;
   /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   * URL-friendly identifier (auto-generated from title if empty)
    */
-  generateSlug?: boolean | null;
-  slug: string;
+  slug?: string | null;
   meta?: {
     title?: string | null;
     description?: string | null;
@@ -622,6 +621,18 @@ export interface Lesson {
    * Whether this lesson is currently active
    */
   isActive: boolean;
+  /**
+   * Defines how this lesson is delivered.
+   */
+  contentType: 'none' | 'pdf';
+  /**
+   * External PDF URL for this lesson (temporary hosting).
+   */
+  pdfUrl?: string | null;
+  /**
+   * URL-friendly identifier (auto-generated from title if empty)
+   */
+  slug?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1067,7 +1078,6 @@ export interface CoursesSelect<T extends boolean = true> {
   status?: T;
   isActive?: T;
   categories?: T;
-  generateSlug?: T;
   slug?: T;
   meta?:
     | T
@@ -1089,6 +1099,9 @@ export interface LessonsSelect<T extends boolean = true> {
   order?: T;
   status?: T;
   isActive?: T;
+  contentType?: T;
+  pdfUrl?: T;
+  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }
