@@ -9,6 +9,9 @@
   "courses": {
     "title": "Courses",
     "description": "Browse all available courses",
+    "heroTitle": "The Future of Online Learning",
+    "heroDescription": "Master new skills with our project-based courses, interactive quizzes, and a supportive community of learners.",
+    "liveContent": "New content added regularly",
     "backToCourses": "Back to Courses",
     "openCourse": "Open Course",
     "viewChapter": "View Chapter",

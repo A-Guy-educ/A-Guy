@@ -55,15 +55,15 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
       <header
         className={`sticky top-0 z-40 w-full transition-all duration-300 ${
           isScrolled
-            ? 'bg-background/95 backdrop-blur-lg border-b border-border shadow-sm'
-            : 'bg-background/60 backdrop-blur-md'
+            ? 'bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-lg shadow-black/5'
+            : 'bg-background/40 backdrop-blur-md border-b border-border/30'
         }`}
         {...(theme ? { 'data-theme': theme } : {})}
       >
         <div className="container">
-          <div className="py-4 md:py-6 flex items-center justify-between text-foreground">
+          <div className="py-3 md:py-4 flex items-center justify-between text-foreground">
             {/* Logo */}
-            <Link href="/" className="flex-shrink-0">
+            <Link href="/" className="flex-shrink-0 hover:opacity-80 transition-opacity">
               <Logo loading="eager" priority="high" className="invert dark:invert-0" />
             </Link>
 

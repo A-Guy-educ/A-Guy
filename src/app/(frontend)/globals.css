@@ -47,7 +47,7 @@
     /* Focus ring follows accent */
     --ring: 271 91% 65%;
 
-    --radius: 0.2rem;
+    --radius: 0.75rem;
 
     --success: 196 52% 74%;
     --warning: 34 89% 85%;
@@ -55,39 +55,41 @@
   }
 
   [data-theme='dark'] {
-    --background: 220 40% 8%;
+    /* Deep navy background inspired by LearnFlow */
+    --background: 217 33% 9%;
     --foreground: 210 40% 98%;
 
-    --card: 220 40% 12%;
+    /* Card with subtle elevation */
+    --card: 217 33% 12%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 217 33% 12%;
     --popover-foreground: 210 40% 98%;
 
-    /* Primary: dark blue in dark mode */
-    --primary: 220 40% 12%;
+    /* Primary: blue accent */
+    --primary: 217 91% 60%;
     --primary-foreground: 210 40% 98%;
 
-    /* Secondary: deep violet surface */
-    --secondary: 261 73% 23%;
+    /* Secondary: deep surface */
+    --secondary: 217 33% 16%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 217 33% 16%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    /* Accent: vivid purple */
-    --accent: 271 91% 65%;
+    /* Accent: vibrant blue-purple */
+    --accent: 217 91% 60%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    /* FIX: valid HSL with alpha (no commas) */
-    --border: 0 0% 15% / 0.8;
-    --input: 217.2 32.6% 17.5%;
+    /* Subtle border with transparency */
+    --border: 217 33% 20% / 0.5;
+    --input: 217 33% 16%;
 
     /* Focus ring follows accent */
-    --ring: 271 91% 65%;
+    --ring: 217 91% 60%;
 
     --success: 196 100% 14%;
     --warning: 34 51% 25%;
@@ -136,6 +138,34 @@
   /* Prevent transition on page load */
   .no-transition {
     transition: none !important;
+  }
+
+  /* Gradient utilities inspired by LearnFlow */
+  .gradient-border {
+    position: relative;
+    border-radius: var(--radius);
+    background: linear-gradient(to bottom right, hsl(var(--card)), hsl(var(--secondary)));
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.4), hsl(var(--accent) / 0.2));
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .glass-card {
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border));
   }
 }
 
