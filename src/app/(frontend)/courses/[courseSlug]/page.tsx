@@ -1,11 +1,10 @@
 import { notFound } from 'next/navigation'
 import { queryCourseBySlug } from '@/lib/queries/courses'
-import { queryLessonsByCourse } from '@/lib/queries/lessons'
-import { CourseHeader } from '@/components/courses/CourseHeader'
-import { LessonCard } from '@/components/courses/LessonCard'
-import { EmptyState } from '@/components/courses/EmptyState'
-import { BackToCourses } from '@/components/courses/BackToCourses'
-import { LessonsSectionTitle } from '@/components/courses/LessonsSectionTitle'
+import { queryChaptersByCourse } from '@/lib/queries/chapters'
+import { CourseHeader } from '../_components/CourseHeader'
+import { ChapterCard } from '../_components/ChapterCard'
+import { EmptyState } from '../_components/EmptyState'
+import { BackToCourses } from '../_components/BackToCourses'
 
 interface CoursePageProps {
   params: Promise<{
@@ -21,7 +20,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
     notFound()
   }
 
-  const lessons = await queryLessonsByCourse({ courseId: course.id })
+  const chapters = await queryChaptersByCourse({ courseId: course.id })
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -34,14 +33,14 @@ export default async function CoursePage({ params }: CoursePageProps) {
       />
 
       <section>
-        <LessonsSectionTitle />
+        <h2 className="text-2xl font-bold mb-4">Chapters</h2>
 
-        {lessons.length === 0 ? (
-          <EmptyState type="noLessons" />
+        {chapters.length === 0 ? (
+          <EmptyState type="noChapters" />
         ) : (
           <div className="space-y-3">
-            {lessons.map((lesson) => (
-              <LessonCard key={lesson.id} lesson={lesson} courseSlug={courseSlug} />
+            {chapters.map((chapter) => (
+              <ChapterCard key={chapter.id} chapter={chapter} courseSlug={courseSlug} />
             ))}
           </div>
         )}

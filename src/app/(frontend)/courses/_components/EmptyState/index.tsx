@@ -2,7 +2,7 @@
 
 import { useTranslations } from '@/providers/I18n'
 
-type EmptyStateType = 'noCourses' | 'noLessons' | 'noPDF'
+type EmptyStateType = 'noCourses' | 'noChapters' | 'noLessons' | 'noPDF'
 
 interface EmptyStateProps {
   type: EmptyStateType

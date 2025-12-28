@@ -7,12 +7,21 @@ import { useTranslations } from '@/providers/I18n'
 interface LessonCardProps {
   lesson: Lesson
   courseSlug: string
+  chapterSlug?: string
 }
 
-export function LessonCard({ lesson, courseSlug }: LessonCardProps) {
+export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps) {
   const t = useTranslations('courses')
 
   if (!lesson.slug) {
+    return null
+  }
+
+  // Get chapter slug from lesson if not provided
+  const chapter = typeof lesson.chapter !== 'string' ? lesson.chapter : null
+  const effectiveChapterSlug = chapterSlug || chapter?.slug
+
+  if (!effectiveChapterSlug) {
     return null
   }
 
@@ -35,7 +44,7 @@ export function LessonCard({ lesson, courseSlug }: LessonCardProps) {
         </div>
       </div>
       <Link
-        href={`/courses/${courseSlug}/lessons/${lesson.slug}`}
+        href={`/courses/${courseSlug}/chapters/${effectiveChapterSlug}/lessons/${lesson.slug}`}
         className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
       >
         {t('viewLesson')}
