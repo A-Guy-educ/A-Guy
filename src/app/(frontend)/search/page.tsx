@@ -6,7 +6,6 @@ import { getPayload } from 'payload'
 import React from 'react'
 import { Search } from '@/search/Component'
 import PageClient from './page.client'
-import { CardPostData } from '@/components/Card'
 
 type Args = {
   searchParams: Promise<{
@@ -18,7 +17,7 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
   const payload = await getPayload({ config: configPromise })
 
   const posts = await payload.find({
-    collection: 'search',
+    collection: 'posts',
     depth: 1,
     limit: 12,
     select: {
@@ -27,8 +26,6 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
       categories: true,
       meta: true,
     },
-    // pagination: false reduces overhead if you don't need totalDocs
-    pagination: false,
     ...(query
       ? {
           where: {
@@ -72,8 +69,8 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
         </div>
       </div>
 
-      {posts.totalDocs > 0 ? (
-        <CollectionArchive posts={posts.docs as CardPostData[]} />
+      {posts.docs && posts.docs.length > 0 ? (
+        <CollectionArchive posts={posts.docs} />
       ) : (
         <div className="container">No results found.</div>
       )}
