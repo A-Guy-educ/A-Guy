@@ -67,10 +67,10 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, userName }) => {
       {/* Search */}
       <Link
         href="/search"
-        className="p-2 rounded-lg hover:bg-muted transition-colors"
+        className="p-2 rounded-lg hover:bg-hover transition-colors"
         aria-label="Search"
       >
-        <SearchIcon className="w-5 text-foreground" />
+        <SearchIcon className="w-5" />
       </Link>
 
       {/* Separator before language switcher */}
