@@ -29,7 +29,16 @@ export const Courses: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['courseLabel', 'title', 'slug', 'order', 'status', 'isActive', 'updatedAt'],
+    defaultColumns: [
+      'courseLabel',
+      'title',
+      'categories',
+      'slug',
+      'order',
+      'status',
+      'isActive',
+      'updatedAt',
+    ],
   },
   fields: [
     {
@@ -103,6 +112,7 @@ export const Courses: CollectionConfig = {
       name: 'categories',
       type: 'relationship',
       relationTo: 'categories',
+      required: true,
       hasMany: true,
       admin: {
         position: 'sidebar',
