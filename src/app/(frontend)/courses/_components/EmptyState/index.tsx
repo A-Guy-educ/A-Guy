@@ -15,9 +15,9 @@ export function EmptyState({ type }: EmptyStateProps) {
 
   if (type === 'noPDF') {
     return (
-      <Card className="border-amber-200 bg-amber-50">
+      <Card className="bg-warning/10 border-warning/30">
         <CardContent className="p-6 text-center">
-          <p className="text-foreground">{message}</p>
+          <p className="text-warning">{message}</p>
         </CardContent>
       </Card>
     )

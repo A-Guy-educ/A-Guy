@@ -106,6 +106,20 @@ const config = {
           foreground: 'hsl(var(--header-fg))',
         },
         footer: 'hsl(var(--footer-bg))',
+        hover: 'hsl(var(--hover-bg))',
+        selected: {
+          DEFAULT: 'hsl(var(--selected-bg))',
+          foreground: 'hsl(var(--selected-fg))',
+        },
+        form: {
+          DEFAULT: 'hsl(var(--form-bg))',
+          border: 'hsla(var(--form-border))',
+          placeholder: 'hsl(var(--form-placeholder))',
+        },
+        elevated: {
+          DEFAULT: 'hsl(var(--surface-elevated))',
+          foreground: 'hsl(var(--surface-elevated-fg))',
+        },
       },
       fontFamily: {
         mono: ['var(--font-geist-mono)'],

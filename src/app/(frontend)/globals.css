@@ -61,6 +61,20 @@
     --header-bg: var(--secondary);
     --header-fg: var(--secondary-foreground);
     --footer-bg: var(--card);
+
+    /* Interactive element states */
+    --hover-bg: var(--muted);
+    --selected-bg: var(--muted);
+    --selected-fg: var(--foreground);
+
+    /* Form elements */
+    --form-bg: var(--background);
+    --form-border: var(--border);
+    --form-placeholder: var(--muted-foreground);
+
+    /* Command palette / Modals */
+    --surface-elevated: var(--background);
+    --surface-elevated-fg: var(--foreground);
   }
 
   [data-theme='dark'] {
@@ -108,6 +122,20 @@
     --header-bg: var(--card);
     --header-fg: var(--card-foreground);
     --footer-bg: var(--card);
+
+    /* Interactive element states */
+    --hover-bg: var(--muted);
+    --selected-bg: var(--muted);
+    --selected-fg: var(--foreground);
+
+    /* Form elements */
+    --form-bg: var(--background);
+    --form-border: var(--border);
+    --form-placeholder: var(--muted-foreground);
+
+    /* Command palette / Modals */
+    --surface-elevated: var(--card);
+    --surface-elevated-fg: var(--card-foreground);
   }
 }
 
