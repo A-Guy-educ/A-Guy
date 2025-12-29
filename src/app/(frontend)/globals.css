@@ -14,44 +14,47 @@
   }
 
   :root {
-    --background: 220 40% 97%;
+    /* Light background with subtle warmth */
+    --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
-    --card: 240 5% 96%;
+    /* Card: light with subtle contrast */
+    --card: 0 0% 98%;
     --card-foreground: 222.2 84% 4.9%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    /* Primary: light blue in light mode */
-    --primary: 220 40% 97%;
-    --primary-foreground: 222.2 84% 4.9%;
+    /* Primary: vibrant blue for emphasis */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary: soft purple tint */
-    --secondary: 251 91% 95%;
-    --secondary-foreground: 219 83% 14%;
+    /* Secondary: light surface with good contrast */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 8.9% 46.1%;
 
     /* Accent: vivid purple */
     --accent: 271 91% 65%;
-    --accent-foreground: 210 40% 98%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 240 6% 80%;
-    --input: 214.3 31.8% 91.4%;
+    /* Border: visible gray */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
 
     /* Focus ring follows accent */
     --ring: 271 91% 65%;
 
     --radius: 0.75rem;
 
-    --success: 196 52% 74%;
-    --warning: 34 89% 85%;
-    --error: 10 100% 86%;
+    --success: 142 71% 45%;
+    --warning: 38 92% 50%;
+    --error: 0 72% 51%;
   }
 
   [data-theme='dark'] {
