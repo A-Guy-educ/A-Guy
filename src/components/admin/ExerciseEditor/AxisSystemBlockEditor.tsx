@@ -10,6 +10,7 @@ import type { AxisSystemBlock, AxisSpecV1 } from '@/contracts'
 import type { BlockEditorProps } from '../shared/types'
 import { ErrorDisplay } from '../shared/ErrorDisplay'
 import { AdvancedJsonPanel } from '../shared/AdvancedJsonPanel'
+import { AxisPreview } from './previews/AxisPreview'
 
 export function AxisSystemBlockEditor({
   block,
@@ -392,7 +393,7 @@ export function AxisSystemBlockEditor({
           </div>
         </div>
 
-        {/* Preview Placeholder */}
+        {/* Preview */}
         <div
           style={{
             borderTop: '1px solid var(--theme-elevation-150)',
@@ -403,17 +404,12 @@ export function AxisSystemBlockEditor({
           <h4 style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Preview</h4>
           <div
             style={{
-              height: '16rem',
-              border: '1px solid var(--theme-elevation-150)',
-              borderRadius: '4px',
               display: 'flex',
-              alignItems: 'center',
               justifyContent: 'center',
+              alignItems: 'center',
             }}
           >
-            <p style={{ fontSize: '0.875rem', opacity: 0.7 }}>
-              Preview will render when frontend renderer is implemented
-            </p>
+            <AxisPreview spec={spec} width={600} height={400} />
           </div>
         </div>
 

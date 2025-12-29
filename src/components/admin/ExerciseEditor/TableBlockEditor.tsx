@@ -8,6 +8,7 @@ import React from 'react'
 import type { TableBlock } from '@/contracts'
 import type { BlockEditorProps } from '../shared/types'
 import { ErrorDisplay } from '../shared/ErrorDisplay'
+import { TablePreview } from './previews/TablePreview'
 
 export function TableBlockEditor({
   block,
@@ -254,6 +255,18 @@ export function TableBlockEditor({
         >
           + Add Row
         </button>
+
+        {/* Preview */}
+        <div
+          style={{
+            borderTop: '1px solid var(--theme-elevation-150)',
+            paddingTop: '0.75rem',
+            marginTop: '0.75rem',
+          }}
+        >
+          <h4 style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Rendered Preview</h4>
+          <TablePreview block={block} />
+        </div>
       </div>
     </div>
   )

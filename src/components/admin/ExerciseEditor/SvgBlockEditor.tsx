@@ -4,10 +4,11 @@
  * SVG Block Editor
  */
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import type { SvgBlock } from '@/contracts'
 import type { BlockEditorProps } from '../shared/types'
 import { ErrorDisplay } from '../shared/ErrorDisplay'
+import { sanitizeSvg } from '../shared/utils'
 
 export function SvgBlockEditor({
   block,
@@ -20,20 +21,32 @@ export function SvgBlockEditor({
   errors,
 }: BlockEditorProps<SvgBlock>) {
   const [svg, setSvg] = useState(block.svg)
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Debounced onChange
-  const debouncedOnChange = useMemo(() => {
-    let timeout: NodeJS.Timeout
-    return (newSvg: string) => {
-      setSvg(newSvg)
-      clearTimeout(timeout)
-      timeout = setTimeout(() => {
-        onChange({ ...block, svg: newSvg })
-      }, 300)
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
     }
-  }, [block, onChange])
+  }, [])
 
-  // Basic SVG sanitization (just check if it looks like SVG)
+  const debouncedOnChange = (newSvg: string) => {
+    setSvg(newSvg)
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+    // Debounced onChange
+    debounceTimerRef.current = setTimeout(() => {
+      onChange({ ...block, svg: newSvg })
+    }, 300)
+  }
+
+  // Sanitize SVG for preview
+  const sanitizedResult = useMemo(() => sanitizeSvg(svg), [svg])
+  const { safe: isSvgSafe, sanitized: sanitizedSvg } = sanitizedResult
   const isSvgValid = svg.trim().toLowerCase().includes('<svg')
 
   return (
@@ -126,14 +139,41 @@ export function SvgBlockEditor({
               justifyContent: 'center',
             }}
           >
-            {isSvgValid ? (
-              <div dangerouslySetInnerHTML={{ __html: svg }} />
-            ) : (
+            {!isSvgValid ? (
               <p style={{ fontSize: '0.875rem', opacity: 0.7, fontStyle: 'italic' }}>
                 {svg ? 'Invalid SVG (must start with <svg>)' : 'No SVG code'}
               </p>
+            ) : !isSvgSafe ? (
+              <div style={{ textAlign: 'center', padding: '1rem' }}>
+                <p
+                  style={{
+                    fontSize: '0.875rem',
+                    color: 'var(--theme-error-500)',
+                    fontWeight: '500',
+                    marginBottom: '0.5rem',
+                  }}
+                >
+                  SVG preview disabled (unsafe)
+                </p>
+                <p style={{ fontSize: '0.75rem', opacity: 0.7 }}>
+                  Contains script, event handlers, or external references
+                </p>
+              </div>
+            ) : (
+              <div dangerouslySetInnerHTML={{ __html: sanitizedSvg }} />
             )}
           </div>
+          {isSvgValid && !isSvgSafe && (
+            <p
+              style={{
+                marginTop: '0.25rem',
+                fontSize: '0.75rem',
+                color: 'var(--theme-error-500)',
+              }}
+            >
+              ⚠️ Warning: Dangerous content removed from preview
+            </p>
+          )}
         </div>
       </div>
     </div>

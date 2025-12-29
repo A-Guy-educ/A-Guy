@@ -4,14 +4,13 @@
  * Rich Text Block Editor - Math-aware Markdown
  */
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import type { RichTextBlock } from '@/contracts'
 import type { BlockEditorProps } from '../shared/types'
 import { ErrorDisplay } from '../shared/ErrorDisplay'
-import 'katex/dist/katex.min.css'
 
 export function RichTextBlockEditor({
   block,
@@ -24,18 +23,28 @@ export function RichTextBlockEditor({
   errors,
 }: BlockEditorProps<RichTextBlock>) {
   const [value, setValue] = useState(block.value)
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Debounced onChange
-  const debouncedOnChange = useMemo(() => {
-    let timeout: NodeJS.Timeout
-    return (newValue: string) => {
-      setValue(newValue)
-      clearTimeout(timeout)
-      timeout = setTimeout(() => {
-        onChange({ ...block, value: newValue })
-      }, 300)
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
     }
-  }, [block, onChange])
+  }, [])
+
+  const debouncedOnChange = (newValue: string) => {
+    setValue(newValue)
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+    // Debounced onChange
+    debounceTimerRef.current = setTimeout(() => {
+      onChange({ ...block, value: newValue })
+    }, 300)
+  }
 
   return (
     <div

@@ -4,7 +4,7 @@
  * ContentJson Editor - Main orchestrator for exercise content blocks
  */
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import type { ExerciseContent, ExerciseBlock } from '@/contracts'
 import { ExerciseContentSchema } from '@/contracts'
 import { generateBlockId, zodErrorsToEditorErrors, getErrorsForPath } from '../shared/utils'
@@ -25,6 +25,7 @@ interface ContentJsonEditorProps {
 
 export function ContentJsonEditor({ value, onChange }: ContentJsonEditorProps) {
   const [validationErrors, setValidationErrors] = useState<EditorError[]>([])
+  const validationTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Validate on change (debounced)
   const validateContent = useCallback((content: ExerciseContent) => {
@@ -36,12 +37,24 @@ export function ContentJsonEditor({ value, onChange }: ContentJsonEditorProps) {
     }
   }, [])
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (validationTimerRef.current) {
+        clearTimeout(validationTimerRef.current)
+      }
+    }
+  }, [])
+
   const handleChange = useCallback(
     (newContent: ExerciseContent) => {
       onChange(newContent)
+      // Clear existing timer
+      if (validationTimerRef.current) {
+        clearTimeout(validationTimerRef.current)
+      }
       // Debounced validation
-      const timeout = setTimeout(() => validateContent(newContent), 500)
-      return () => clearTimeout(timeout)
+      validationTimerRef.current = setTimeout(() => validateContent(newContent), 500)
     },
     [onChange, validateContent],
   )

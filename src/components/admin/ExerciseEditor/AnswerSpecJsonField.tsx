@@ -18,12 +18,38 @@ export const AnswerSpecJsonField: TextFieldClientComponent = (props) => {
   const questionTypeField = useFormFields(([fields]) => fields.questionType)
   const questionType = (questionTypeField?.value as 'mcq' | 'true_false' | 'free_response') || 'mcq'
 
-  // Default value if undefined
-  const defaultValue: AnswerSpec = {
-    questionType: 'mcq',
-    multiSelect: false,
-    options: [],
-    correctOptionIds: [],
+  // Generate valid default based on current questionType
+  const getDefaultValue = (): AnswerSpec => {
+    switch (questionType) {
+      case 'mcq':
+        return {
+          questionType: 'mcq',
+          multiSelect: false,
+          options: [
+            {
+              id: 'opt1',
+              content: [{ id: 't1', type: 'rich_text', format: 'md-math-v1', value: 'Option A' }],
+            },
+            {
+              id: 'opt2',
+              content: [{ id: 't2', type: 'rich_text', format: 'md-math-v1', value: 'Option B' }],
+            },
+          ],
+          correctOptionIds: ['opt1'],
+        }
+      case 'true_false':
+        return {
+          questionType: 'true_false',
+          correct: true,
+        }
+      case 'free_response':
+        return {
+          questionType: 'free_response',
+          responseKind: 'numeric',
+          acceptedAnswers: ['0'],
+          tolerance: 0,
+        }
+    }
   }
 
   return (
@@ -35,7 +61,7 @@ export const AnswerSpecJsonField: TextFieldClientComponent = (props) => {
         )}
         <div style={{ marginTop: '0.75rem' }}>
           <AnswerSpecJsonEditor
-            value={value || defaultValue}
+            value={value || getDefaultValue()}
             onChange={readOnly ? () => {} : setValue}
             questionType={questionType}
             path={path}

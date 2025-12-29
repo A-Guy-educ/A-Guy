@@ -4,7 +4,7 @@
  * AnswerSpecJson Editor - Main orchestrator for answer specifications
  */
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import type { AnswerSpec } from '@/contracts'
 import { AnswerSpecSchema } from '@/contracts'
 import { zodErrorsToEditorErrors } from '../shared/utils'
@@ -24,6 +24,7 @@ interface AnswerSpecJsonEditorProps {
 
 export function AnswerSpecJsonEditor({ value, onChange, questionType }: AnswerSpecJsonEditorProps) {
   const [validationErrors, setValidationErrors] = useState<EditorError[]>([])
+  const validationTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Validate on change (debounced)
   const validateAnswerSpec = useCallback((spec: AnswerSpec) => {
@@ -35,12 +36,24 @@ export function AnswerSpecJsonEditor({ value, onChange, questionType }: AnswerSp
     }
   }, [])
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (validationTimerRef.current) {
+        clearTimeout(validationTimerRef.current)
+      }
+    }
+  }, [])
+
   const handleChange = useCallback(
     (newSpec: AnswerSpec) => {
       onChange(newSpec)
+      // Clear existing timer
+      if (validationTimerRef.current) {
+        clearTimeout(validationTimerRef.current)
+      }
       // Debounced validation
-      const timeout = setTimeout(() => validateAnswerSpec(newSpec), 500)
-      return () => clearTimeout(timeout)
+      validationTimerRef.current = setTimeout(() => validateAnswerSpec(newSpec), 500)
     },
     [onChange, validateAnswerSpec],
   )
@@ -48,57 +61,43 @@ export function AnswerSpecJsonEditor({ value, onChange, questionType }: AnswerSp
   // Check for questionType mismatch
   const hasQuestionTypeMismatch = value.questionType !== questionType
 
-  // Auto-convert when questionType changes
-  React.useEffect(() => {
-    if (hasQuestionTypeMismatch) {
-      // Prompt user to convert
-      const shouldConvert = window.confirm(
-        `The Question Type field has been changed to "${questionType}" but the answer spec is still set to "${value.questionType}". Would you like to auto-convert the answer spec to match? (This will reset the answer configuration)`,
-      )
-
-      if (shouldConvert) {
-        let newSpec: AnswerSpec
-        switch (questionType) {
-          case 'mcq':
-            newSpec = {
-              questionType: 'mcq',
-              multiSelect: false,
-              options: [
-                {
-                  id: 'opt1',
-                  content: [
-                    { id: 't1', type: 'rich_text', format: 'md-math-v1', value: 'Option A' },
-                  ],
-                },
-                {
-                  id: 'opt2',
-                  content: [
-                    { id: 't2', type: 'rich_text', format: 'md-math-v1', value: 'Option B' },
-                  ],
-                },
-              ],
-              correctOptionIds: ['opt1'],
-            }
-            break
-          case 'true_false':
-            newSpec = {
-              questionType: 'true_false',
-              correct: true,
-            }
-            break
-          case 'free_response':
-            newSpec = {
-              questionType: 'free_response',
-              responseKind: 'numeric',
-              acceptedAnswers: [''],
-              tolerance: 0,
-            }
-            break
+  const handleResetToMatchQuestionType = () => {
+    let newSpec: AnswerSpec
+    switch (questionType) {
+      case 'mcq':
+        newSpec = {
+          questionType: 'mcq',
+          multiSelect: false,
+          options: [
+            {
+              id: 'opt1',
+              content: [{ id: 't1', type: 'rich_text', format: 'md-math-v1', value: 'Option A' }],
+            },
+            {
+              id: 'opt2',
+              content: [{ id: 't2', type: 'rich_text', format: 'md-math-v1', value: 'Option B' }],
+            },
+          ],
+          correctOptionIds: ['opt1'],
         }
-        handleChange(newSpec)
-      }
+        break
+      case 'true_false':
+        newSpec = {
+          questionType: 'true_false',
+          correct: true,
+        }
+        break
+      case 'free_response':
+        newSpec = {
+          questionType: 'free_response',
+          responseKind: 'numeric',
+          acceptedAnswers: ['0'],
+          tolerance: 0,
+        }
+        break
     }
-  }, [questionType, value.questionType, hasQuestionTypeMismatch, handleChange])
+    handleChange(newSpec)
+  }
 
   // Render appropriate editor
   const renderEditor = () => {
@@ -109,16 +108,26 @@ export function AnswerSpecJsonEditor({ value, onChange, questionType }: AnswerSp
       errors: validationErrors,
     }
 
-    // If there's a mismatch, show error
+    // If there's a mismatch, show inline reset prompt
     if (hasQuestionTypeMismatch) {
       return (
         <div className="field-error" style={{ padding: '1.5rem' }}>
-          <h3 style={{ fontWeight: '500', marginBottom: '0.5rem' }}>Question Type Mismatch</h3>
-          <p>
+          <h3 style={{ fontWeight: '500', marginBottom: '0.75rem' }}>Question Type Mismatch</h3>
+          <p style={{ marginBottom: '1rem' }}>
             The Question Type field is set to <strong>{questionType}</strong> but the answer spec
-            has questionType <strong>{value.questionType}</strong>. Please reload the page or
-            manually fix this mismatch.
+            has questionType <strong>{value.questionType}</strong>.
           </p>
+          <button
+            type="button"
+            onClick={handleResetToMatchQuestionType}
+            className="btn btn--style-primary btn--size-small"
+            style={{ marginRight: '0.5rem' }}
+          >
+            Reset to {questionType}
+          </button>
+          <span style={{ fontSize: '0.875rem', opacity: 0.7 }}>
+            This will clear the current answer configuration
+          </span>
         </div>
       )
     }

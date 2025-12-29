@@ -10,6 +10,7 @@ import type { GeometryBlock, GeometrySpecV1 } from '@/contracts'
 import type { BlockEditorProps } from '../shared/types'
 import { ErrorDisplay } from '../shared/ErrorDisplay'
 import { AdvancedJsonPanel } from '../shared/AdvancedJsonPanel'
+import { GeometryPreview } from './previews/GeometryPreview'
 
 export function GeometryBlockEditor({
   block,
@@ -380,7 +381,7 @@ export function GeometryBlockEditor({
           </div>
         </div>
 
-        {/* Preview Placeholder */}
+        {/* Preview */}
         <div
           style={{
             borderTop: '1px solid var(--theme-elevation-150)',
@@ -391,18 +392,12 @@ export function GeometryBlockEditor({
           <h4 style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Preview</h4>
           <div
             style={{
-              border: '1px solid var(--theme-elevation-150)',
-              borderRadius: '4px',
               display: 'flex',
-              alignItems: 'center',
               justifyContent: 'center',
-              height: `${spec.canvas.height}px`,
-              maxHeight: '400px',
+              alignItems: 'center',
             }}
           >
-            <p style={{ fontSize: '0.875rem', opacity: 0.7 }}>
-              Preview will render when frontend renderer is implemented
-            </p>
+            <GeometryPreview spec={spec} />
           </div>
         </div>
 
