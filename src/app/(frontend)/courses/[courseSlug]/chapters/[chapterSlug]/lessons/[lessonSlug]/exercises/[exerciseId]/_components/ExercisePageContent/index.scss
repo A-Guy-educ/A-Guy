@@ -1,0 +1,16 @@
+.exercise-page-content {
+  margin-top: 2rem;
+  padding: 2rem;
+  background-color: var(--theme-elevation-50);
+  border-radius: var(--border-radius-m);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1rem;
+  }
+}

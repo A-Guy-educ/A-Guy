@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation'
 import { queryCourseBySlug } from '@/lib/queries/courses'
 import { queryLessonBySlug } from '@/lib/queries/lessons'
+import { queryExercisesByLesson } from '@/lib/queries/exercises'
 import { Breadcrumb } from '../../../../../_components/Breadcrumb'
 import { LessonHeader } from '../../../../../_components/LessonHeader'
-import { PDFViewer } from '@/components/utilities/PDFViewer'
-import { EmptyState } from '../../../../../_components/EmptyState'
+import { LessonContent } from './_components/LessonContent'
 
 interface LessonPageProps {
   params: Promise<{
@@ -39,6 +39,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
     notFound()
   }
 
+  // Fetch exercises for this lesson
+  const exercises = await queryExercisesByLesson({ lessonId: lesson.id })
+
   const breadcrumbItems = [
     { label: 'Courses', href: '/courses' },
     { label: course.title, href: `/courses/${courseSlug}` },
@@ -57,13 +60,14 @@ export default async function LessonPage({ params }: LessonPageProps) {
         contentType={lesson.contentType}
       />
 
-      <section className="mb-8">
-        {lesson.contentType === 'pdf' && lesson.pdfUrl ? (
-          <PDFViewer pdfUrl={lesson.pdfUrl} lessonTitle={lesson.title} />
-        ) : (
-          <EmptyState type="noPDF" />
-        )}
-      </section>
+      <LessonContent
+        pdfUrl={lesson.pdfUrl}
+        lessonTitle={lesson.title}
+        exercises={exercises}
+        courseSlug={courseSlug}
+        chapterSlug={chapterSlug}
+        lessonSlug={lessonSlug}
+      />
     </div>
   )
 }

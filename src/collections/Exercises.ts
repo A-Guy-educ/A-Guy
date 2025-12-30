@@ -60,7 +60,7 @@ export const Exercises: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'lesson', 'questionType', 'updatedAt'],
+    defaultColumns: ['order', 'title', 'lesson', 'questionType', 'updatedAt'],
   },
   fields: [
     // Helper UI field for expand/collapse all controls
@@ -87,6 +87,15 @@ export const Exercises: CollectionConfig = {
           required: true,
           admin: {
             description: 'Exercise title (for admin reference)',
+          },
+        },
+        {
+          name: 'order',
+          type: 'number',
+          required: true,
+          defaultValue: 0,
+          admin: {
+            description: 'Order of exercise within the lesson (lower numbers appear first)',
           },
         },
         {

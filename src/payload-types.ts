@@ -704,6 +704,10 @@ export interface Exercise {
    */
   title: string;
   /**
+   * Order of exercise within the lesson (lower numbers appear first)
+   */
+  order: number;
+  /**
    * The lesson this exercise belongs to
    */
   lesson: string | Lesson;
@@ -1468,6 +1472,7 @@ export interface LessonsSelect<T extends boolean = true> {
  */
 export interface ExercisesSelect<T extends boolean = true> {
   title?: T;
+  order?: T;
   lesson?: T;
   questionType?: T;
   contentJson?: T;
