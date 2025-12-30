@@ -1,0 +1,134 @@
+@import '~@payloadcms/ui/scss';
+
+.exercise-renderer {
+  &__debug-info {
+    padding: base(0.75);
+    background: var(--theme-elevation-100);
+    border: 1px solid var(--theme-elevation-300);
+    border-radius: 4px;
+    margin-bottom: base(1);
+    font-size: 0.75rem;
+    font-family: monospace;
+  }
+
+  &__debug-title {
+    font-weight: bold;
+    margin-bottom: base(0.25);
+  }
+
+  &__content {
+    margin-bottom: base(1.5);
+  }
+
+  &__empty {
+    padding: base(1);
+    opacity: 0.6;
+    font-style: italic;
+  }
+
+  &__sections-note {
+    margin-top: base(1);
+    padding: base(0.75);
+    background: var(--theme-elevation-100);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    opacity: 0.7;
+  }
+
+  &__answer-section {
+    padding: base(1.5);
+    background: var(--theme-elevation-50);
+    border: 2px solid var(--theme-elevation-200);
+    border-radius: 8px;
+    margin-bottom: base(1);
+  }
+
+  &__answer-title {
+    margin: 0 0 base(1) 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  &__check-button-wrapper {
+    margin-top: base(1.5);
+  }
+
+  &__check-button {
+    padding: base(0.75) base(1.5);
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: var(--theme-info-500);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    &--correct {
+      background: var(--theme-success-500);
+    }
+  }
+
+  &__result {
+    margin-top: base(1);
+    padding: base(1);
+    border-radius: 8px;
+    border: 2px solid;
+
+    &--correct {
+      background: var(--theme-success-50);
+      border-color: var(--theme-success-500);
+    }
+
+    &--incorrect {
+      background: var(--theme-error-50);
+      border-color: var(--theme-error-500);
+    }
+  }
+
+  &__result-header {
+    display: flex;
+    align-items: center;
+    gap: base(0.5);
+    font-size: 1rem;
+    font-weight: 600;
+
+    .exercise-renderer__result--correct & {
+      color: var(--theme-success-700);
+    }
+
+    .exercise-renderer__result--incorrect & {
+      color: var(--theme-error-700);
+    }
+  }
+
+  &__result-icon {
+    font-size: 1.5rem;
+  }
+
+  &__result-text {
+    // Text styling
+  }
+
+  &__result-message {
+    margin-top: base(0.5);
+    font-size: 0.875rem;
+
+    .exercise-renderer__result--correct & {
+      color: var(--theme-success-600);
+    }
+
+    .exercise-renderer__result--incorrect & {
+      color: var(--theme-error-600);
+    }
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "$schema": "Example ExerciseContent with mixed blocks",
+  "stem": [
+    {
+      "id": "b1",
+      "type": "rich_text",
+      "format": "md-math-v1",
+      "value": "Solve the quadratic equation: $2x^2+3=11$"
+    },
+    {
+      "id": "b2",
+      "type": "axis_system",
+      "specVersion": 1,
+      "spec": {
+        "kind": "cartesian",
+        "units": 1,
+        "grid": {
+          "enabled": true,
+          "color": "#e0e0e0"
+        },
+        "axes": {
+          "axisColor": "#000000",
+          "showNumbers": true,
+          "showLabels": true,
+          "ticks": 1,
+          "labels": {
+            "x": "x",
+            "y": "y"
+          },
+          "origin": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "viewport": {
+          "xMin": -5,
+          "xMax": 5,
+          "yMin": -5,
+          "yMax": 15
+        },
+        "elements": {
+          "points": [
+            {
+              "x": 2,
+              "y": 11,
+              "type": "point",
+              "label": "Solution",
+              "labelPosition": "tr",
+              "color": "red"
+            }
+          ],
+          "graphs": [
+            {
+              "id": "g1",
+              "fn": "2*x^2+3",
+              "style": "solid",
+              "thickness": 2,
+              "color": "blue"
+            }
+          ]
+        },
+        "interactionSpec": {
+          "enabled": false,
+          "toolsAllowed": [],
+          "evaluation": {
+            "mode": "none"
+          }
+        }
+      }
+    },
+    {
+      "id": "b3",
+      "type": "table",
+      "headers": ["x", "y = 2x² + 3"],
+      "rows": [
+        ["-2", "11"],
+        ["-1", "5"],
+        ["0", "3"],
+        ["1", "5"],
+        ["2", "11"]
+      ],
+      "showBorders": true,
+      "showHeader": true,
+      "columnAlignment": ["center", "center"]
+    }
+  ],
+  "sections": [
+    {
+      "id": "s1",
+      "label": "A",
+      "prompt": [
+        {
+          "id": "b4",
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "What are the solutions to the equation?"
+        }
+      ],
+      "subSections": []
+    },
+    {
+      "id": "s2",
+      "label": "B",
+      "prompt": [
+        {
+          "id": "b5",
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Graph the function on the coordinate plane."
+        }
+      ]
+    }
+  ]
+}

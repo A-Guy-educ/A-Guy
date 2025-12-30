@@ -1,0 +1,26 @@
+@import '~@payloadcms/ui/scss';
+
+.exercise-error-boundary {
+  padding: base(1);
+  background: var(--theme-error-50);
+  border: 1px solid var(--theme-error-300);
+  border-radius: 4px;
+  margin: base(0.5) 0;
+
+  &__icon {
+    font-size: 1.5rem;
+    margin-bottom: base(0.5);
+  }
+
+  &__title {
+    font-weight: 600;
+    color: var(--theme-error-700);
+    margin-bottom: base(0.25);
+  }
+
+  &__message {
+    font-size: 0.875rem;
+    color: var(--theme-error-600);
+    font-family: monospace;
+  }
+}

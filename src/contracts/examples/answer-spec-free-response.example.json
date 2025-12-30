@@ -1,0 +1,7 @@
+{
+  "$schema": "Example Free Response AnswerSpec (numeric with tolerance)",
+  "questionType": "free_response",
+  "responseKind": "numeric",
+  "acceptedAnswers": ["2", "-2"],
+  "tolerance": 0.01
+}

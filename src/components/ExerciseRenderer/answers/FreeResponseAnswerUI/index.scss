@@ -1,0 +1,44 @@
+@import '~@payloadcms/ui/scss';
+
+.free-response-answer-ui {
+  &__hint {
+    margin-bottom: base(0.5);
+    font-size: 0.875rem;
+    opacity: 0.8;
+  }
+
+  &__input,
+  &__textarea {
+    width: 100%;
+    padding: base(0.75);
+    font-size: 1rem;
+    font-family: inherit;
+    border: 2px solid var(--theme-elevation-300);
+    border-radius: 8px;
+    background: white;
+    transition: all 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: var(--theme-info-500);
+      background: var(--theme-info-50);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: var(--theme-elevation-100);
+    }
+
+    &::placeholder {
+      color: var(--theme-elevation-500);
+      opacity: 0.6;
+    }
+  }
+
+  &__textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+  }
+}

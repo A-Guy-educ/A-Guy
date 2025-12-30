@@ -1,0 +1,18 @@
+@import '~@payloadcms/ui/scss';
+
+.answer-renderer {
+  &--unknown {
+    padding: base(1);
+    background: var(--theme-warning-50);
+    border: 1px solid var(--theme-warning-300);
+    border-radius: 4px;
+    color: var(--theme-warning-700);
+    display: flex;
+    align-items: center;
+    gap: base(0.5);
+  }
+
+  &__icon {
+    font-size: 1.25rem;
+  }
+}

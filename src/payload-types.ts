@@ -72,6 +72,7 @@ export interface Config {
     courses: Course;
     chapters: Chapter;
     lessons: Lesson;
+    exercises: Exercise;
     users: User;
     media: Media;
     posts: Post;
@@ -98,6 +99,7 @@ export interface Config {
     courses: CoursesSelect<false> | CoursesSelect<true>;
     chapters: ChaptersSelect<false> | ChaptersSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
+    exercises: ExercisesSelect<false> | ExercisesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
@@ -693,6 +695,55 @@ export interface Lesson {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exercises".
+ */
+export interface Exercise {
+  id: string;
+  /**
+   * Exercise title (for admin reference)
+   */
+  title: string;
+  /**
+   * Order of exercise within the lesson (lower numbers appear first)
+   */
+  order: number;
+  /**
+   * The lesson this exercise belongs to
+   */
+  lesson: string | Lesson;
+  /**
+   * Question type - must match answerSpecJson.questionType
+   */
+  questionType: 'mcq' | 'true_false' | 'free_response';
+  /**
+   * Exercise content blocks (stem + optional sections)
+   */
+  contentJson:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Answer specification - must match the selected Question Type above
+   */
+  answerSpecJson:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -1136,6 +1187,10 @@ export interface PayloadLockedDocument {
         value: string | Lesson;
       } | null)
     | ({
+        relationTo: 'exercises';
+        value: string | Exercise;
+      } | null)
+    | ({
         relationTo: 'users';
         value: string | User;
       } | null)
@@ -1408,6 +1463,20 @@ export interface LessonsSelect<T extends boolean = true> {
   contentType?: T;
   pdfUrl?: T;
   slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exercises_select".
+ */
+export interface ExercisesSelect<T extends boolean = true> {
+  title?: T;
+  order?: T;
+  lesson?: T;
+  questionType?: T;
+  contentJson?: T;
+  answerSpecJson?: T;
   updatedAt?: T;
   createdAt?: T;
 }

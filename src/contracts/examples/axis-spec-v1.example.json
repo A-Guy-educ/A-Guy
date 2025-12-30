@@ -1,0 +1,138 @@
+{
+  "$schema": "Example AxisSpecV1 with interactionSpec placeholder for Drawing Response",
+  "kind": "cartesian",
+  "units": 1,
+  "grid": {
+    "enabled": true,
+    "color": "#e0e0e0"
+  },
+  "axes": {
+    "axisColor": "#000000",
+    "numberColor": "#333333",
+    "labelColor": "#000000",
+    "showNumbers": true,
+    "showLabels": true,
+    "ticks": 1,
+    "labels": {
+      "x": "x",
+      "y": "y"
+    },
+    "origin": {
+      "x": 0,
+      "y": 0
+    }
+  },
+  "viewport": {
+    "xMin": -10,
+    "xMax": 10,
+    "yMin": -10,
+    "yMax": 10
+  },
+  "elements": {
+    "points": [
+      {
+        "x": 0,
+        "y": 0,
+        "type": "point",
+        "label": "Origin",
+        "labelPosition": "br",
+        "color": "#000000"
+      },
+      {
+        "x": 2,
+        "y": 4,
+        "type": "point",
+        "label": "A",
+        "labelPosition": "tr",
+        "color": "red"
+      },
+      {
+        "x": -3,
+        "y": 0,
+        "type": "hole",
+        "color": "blue"
+      }
+    ],
+    "graphs": [
+      {
+        "id": "parabola",
+        "fn": "x^2",
+        "style": "solid",
+        "thickness": 2,
+        "color": "blue",
+        "range": {
+          "fromX": -5,
+          "toX": 5
+        },
+        "paint": {
+          "underGraph": [
+            {
+              "fromX": 0,
+              "toX": 2,
+              "fillColor": "rgba(0, 0, 255, 0.2)"
+            }
+          ]
+        }
+      },
+      {
+        "id": "line",
+        "fn": "2*x + 1",
+        "style": "dashed",
+        "thickness": 1.5,
+        "color": "green"
+      }
+    ],
+    "asymptotesVertical": [3],
+    "asymptotesHorizontal": [5],
+    "paintBetweenGraphs": [
+      {
+        "firstGraphId": "parabola",
+        "secondGraphId": "line",
+        "fromX": -1,
+        "toX": 3,
+        "fillColor": "rgba(255, 255, 0, 0.3)"
+      }
+    ],
+    "lineBetweenPoints": [
+      {
+        "style": "solid",
+        "thickness": 1,
+        "a": {
+          "x": 0,
+          "y": 0
+        },
+        "b": {
+          "x": 2,
+          "y": 4
+        },
+        "color": "red"
+      }
+    ],
+    "geometricLoci": [
+      {
+        "equation": "x^2 + y^2 = 25",
+        "style": "dotted",
+        "thickness": 1,
+        "color": "purple"
+      }
+    ]
+  },
+  "interactionSpec": {
+    "enabled": true,
+    "toolsAllowed": ["point", "line", "shade"],
+    "constraints": {
+      "snapToGrid": true,
+      "bounds": {
+        "xMin": -10,
+        "xMax": 10,
+        "yMin": -10,
+        "yMax": 10
+      },
+      "maxPoints": 5
+    },
+    "evaluation": {
+      "mode": "none",
+      "rules": []
+    }
+  }
+}

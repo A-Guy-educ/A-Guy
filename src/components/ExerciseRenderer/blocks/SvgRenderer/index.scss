@@ -1,0 +1,32 @@
+@import '~@payloadcms/ui/scss';
+
+.svg-renderer {
+  margin-bottom: base(1);
+  display: flex;
+  justify-content: center;
+
+  &__content {
+    max-width: 100%;
+    
+    svg {
+      max-width: 100%;
+      height: auto;
+    }
+  }
+
+  &--error {
+    padding: base(1);
+    background: var(--theme-error-50);
+    border: 1px solid var(--theme-error-300);
+    border-radius: 4px;
+    color: var(--theme-error-700);
+    display: flex;
+    align-items: center;
+    gap: base(0.5);
+    justify-content: flex-start;
+  }
+
+  &__error-icon {
+    font-size: 1.25rem;
+  }
+}
