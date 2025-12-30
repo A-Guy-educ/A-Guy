@@ -9,6 +9,57 @@
       "title": "404",
       "message": "דף זה לא נמצא.",
       "goHome": "חזרה לדף הבית"
+    },
+    "header": {
+      "welcome": "שלום,",
+      "logout": "התנתק",
+      "loggingOut": "מתנתק..."
+    }
+  },
+  "auth": {
+    "signup": {
+      "title": "צור חשבון",
+      "subtitle": "הירשם כדי להתחיל ללמוד",
+      "name": "שם",
+      "namePlaceholder": "ישראל ישראלי",
+      "email": "אימייל",
+      "emailPlaceholder": "you@example.com",
+      "password": "סיסמה",
+      "passwordPlaceholder": "••••••••",
+      "confirmPassword": "אשר סיסמה",
+      "createAccount": "צור חשבון",
+      "creatingAccount": "יוצר חשבון...",
+      "alreadyHaveAccount": "כבר יש לך חשבון?",
+      "login": "התחבר",
+      "errors": {
+        "nameRequired": "שם הוא שדה חובה",
+        "invalidEmail": "נדרש אימייל תקין",
+        "passwordTooShort": "הסיסמה חייבת להיות לפחות 8 תווים",
+        "passwordMismatch": "הסיסמאות אינן תואמות",
+        "emailExists": "כבר קיים חשבון עם כתובת אימייל זו",
+        "duplicateEmailMessage": "כבר קיים חשבון עם כתובת אימייל זו. האם תרצה להתחבר במקום?"
+      }
+    },
+    "login": {
+      "title": "ברוך שובך",
+      "subtitle": "התחבר כדי להמשיך ללמוד",
+      "description": "הזן את פרטי ההתחברות שלך כדי לגשת לחשבון",
+      "email": "אימייל",
+      "emailPlaceholder": "you@example.com",
+      "password": "סיסמה",
+      "passwordPlaceholder": "••••••••",
+      "loginButton": "התחבר",
+      "loggingIn": "מתחבר...",
+      "noAccount": "אין לך חשבון?",
+      "signUp": "הירשם",
+      "forgotPassword": "שכחת סיסמה?",
+      "errors": {
+        "invalidEmail": "נדרש אימייל תקין",
+        "passwordRequired": "סיסמה היא שדה חובה",
+        "invalidCredentials": "אימייל או סיסמה לא תקינים",
+        "captchaRequired": "נא להשלים את אימות ה-CAPTCHA",
+        "captchaFailed": "אימות CAPTCHA נכשל. נסה שוב."
+      }
     }
   },
   "courses": {

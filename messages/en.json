@@ -9,6 +9,57 @@
       "title": "404",
       "message": "This page could not be found.",
       "goHome": "Go home"
+    },
+    "header": {
+      "welcome": "Welcome,",
+      "logout": "Logout",
+      "loggingOut": "Logging out..."
+    }
+  },
+  "auth": {
+    "signup": {
+      "title": "Create Account",
+      "subtitle": "Sign up to start learning",
+      "name": "Name",
+      "namePlaceholder": "John Doe",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "••••••••",
+      "confirmPassword": "Confirm Password",
+      "createAccount": "Create Account",
+      "creatingAccount": "Creating account...",
+      "alreadyHaveAccount": "Already have an account?",
+      "login": "Log in",
+      "errors": {
+        "nameRequired": "Name is required",
+        "invalidEmail": "Valid email is required",
+        "passwordTooShort": "Password must be at least 8 characters",
+        "passwordMismatch": "Passwords do not match",
+        "emailExists": "This email is already registered",
+        "duplicateEmailMessage": "An account with this email already exists. Would you like to log in instead?"
+      }
+    },
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Log in to continue learning",
+      "description": "Enter your credentials to access your account",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "••••••••",
+      "loginButton": "Log in",
+      "loggingIn": "Logging in...",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up",
+      "forgotPassword": "Forgot password?",
+      "errors": {
+        "invalidEmail": "Valid email is required",
+        "passwordRequired": "Password is required",
+        "invalidCredentials": "Invalid email or password",
+        "captchaRequired": "Please complete the CAPTCHA verification",
+        "captchaFailed": "CAPTCHA verification failed. Please try again."
+      }
     }
   },
   "courses": {

@@ -1,15 +1,15 @@
 import React from 'react'
 import type { Metadata } from 'next'
-import { SignupPageContent } from './SignupPageContent'
+import { LoginPageContent } from './LoginPageContent'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
-  title: 'Sign Up',
-  description: 'Create a new account',
+  title: 'Log In',
+  description: 'Log in to your account',
 }
 
-export default async function SignupPage() {
+export default async function LoginPage() {
   // Quick check: if user has a token, redirect to home
   // We don't validate the token here for performance - let the client handle it
   const cookieStore = await cookies()
@@ -19,5 +19,5 @@ export default async function SignupPage() {
     redirect('/')
   }
 
-  return <SignupPageContent />
+  return <LoginPageContent />
 }

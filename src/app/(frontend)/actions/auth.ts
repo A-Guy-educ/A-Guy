@@ -21,5 +21,5 @@ export async function logoutAction() {
 
 export async function logoutAndRedirect() {
   await logoutAction()
-  redirect('/admin')
+  redirect('/login')
 }

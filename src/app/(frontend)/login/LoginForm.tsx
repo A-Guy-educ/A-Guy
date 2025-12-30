@@ -7,13 +7,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import { signupAction } from './actions'
+import { loginAction } from './actions'
 import { toast } from 'sonner'
 import { useTranslations } from '@/providers/I18n'
 import { Turnstile } from '@marsidev/react-turnstile'
 
-export function SignupForm() {
-  const t = useTranslations('auth.signup')
+export function LoginForm() {
+  const t = useTranslations('auth.login')
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -29,29 +29,19 @@ export function SignupForm() {
     // Client-side validation
     const email = formData.get('email') as string
     const password = formData.get('password') as string
-    const confirmPassword = formData.get('confirmPassword') as string
-    const name = formData.get('name') as string
 
     const clientErrors: Record<string, string> = {}
-
-    if (!name || name.trim().length === 0) {
-      clientErrors.name = t('errors.nameRequired')
-    }
 
     if (!email || !email.includes('@')) {
       clientErrors.email = t('errors.invalidEmail')
     }
 
-    if (!password || password.length < 8) {
-      clientErrors.password = t('errors.passwordTooShort')
-    }
-
-    if (password !== confirmPassword) {
-      clientErrors.confirmPassword = t('errors.passwordMismatch')
+    if (!password || password.length === 0) {
+      clientErrors.password = t('errors.passwordRequired')
     }
 
     if (!turnstileToken) {
-      clientErrors.general = 'Please complete the CAPTCHA verification'
+      clientErrors.general = t('errors.captchaRequired')
     }
 
     if (Object.keys(clientErrors).length > 0) {
@@ -64,20 +54,25 @@ export function SignupForm() {
     formData.set('cf-turnstile-response', turnstileToken)
 
     try {
-      const result = await signupAction(formData)
+      const result = await loginAction(formData)
 
       if (!result.success) {
         if (result.errors) {
           setErrors(result.errors)
         }
-        toast.error(result.message || 'Signup failed')
+        if (result.message) {
+          toast.error(result.message)
+        }
       } else {
-        toast.success('Account created successfully!')
-        // Auto-login successful - redirect to home
-        router.push('/')
+        toast.success('Welcome back!')
+        // Redirect based on user role (handled in server action)
         router.refresh()
       }
-    } catch (_error) {
+    } catch (error) {
+      // Re-throw Next.js redirect errors (they're not actually errors)
+      if (error && typeof error === 'object' && 'digest' in error) {
+        throw error
+      }
       toast.error('An unexpected error occurred')
     } finally {
       setIsLoading(false)
@@ -87,41 +82,10 @@ export function SignupForm() {
   return (
     <Card>
       <CardHeader>
-        <p className="text-sm text-muted-foreground text-center">
-          Fill in the form below to create your account
-        </p>
+        <p className="text-sm text-muted-foreground text-center">{t('description')}</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
-          {/* Honeypot field - invisible to users, catches bots */}
-          <input
-            type="text"
-            name="website"
-            tabIndex={-1}
-            autoComplete="off"
-            style={{
-              position: 'absolute',
-              left: '-9999px',
-              width: '1px',
-              height: '1px',
-            }}
-            aria-hidden="true"
-          />
-
-          <div className="space-y-2">
-            <Label htmlFor="name">{t('name')}</Label>
-            <Input
-              id="name"
-              name="name"
-              type="text"
-              placeholder={t('namePlaceholder')}
-              required
-              disabled={isLoading}
-              className={errors.name ? 'border-red-500' : ''}
-            />
-            {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="email">{t('email')}</Label>
             <Input
@@ -150,39 +114,16 @@ export function SignupForm() {
             {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
-            <Input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              placeholder={t('passwordPlaceholder')}
-              required
-              disabled={isLoading}
-              className={errors.confirmPassword ? 'border-red-500' : ''}
-            />
-            {errors.confirmPassword && (
-              <p className="text-sm text-red-500">{errors.confirmPassword}</p>
-            )}
-          </div>
-
           {/* Cloudflare Turnstile */}
           <div className="flex justify-center">
             <Turnstile
               siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
-              onSuccess={(token) => {
-                console.log('Turnstile success:', token ? 'Token received' : 'No token')
-                setTurnstileToken(token)
-              }}
-              onError={(error) => {
-                console.error('Turnstile error:', error)
+              onSuccess={(token) => setTurnstileToken(token)}
+              onError={() => {
                 setTurnstileToken('')
-                setErrors({ ...errors, general: 'CAPTCHA verification failed. Please try again.' })
+                setErrors({ ...errors, general: t('errors.captchaFailed') })
               }}
-              onExpire={() => {
-                console.log('Turnstile expired')
-                setTurnstileToken('')
-              }}
+              onExpire={() => setTurnstileToken('')}
             />
           </div>
 
@@ -194,15 +135,26 @@ export function SignupForm() {
           )}
 
           <Button type="submit" className="w-full" disabled={isLoading || !turnstileToken}>
-            {isLoading ? t('creatingAccount') : t('createAccount')}
+            {isLoading ? t('loggingIn') : t('loginButton')}
           </Button>
+
+          {/* Forgot Password - Placeholder */}
+          <div className="text-center">
+            <button
+              type="button"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              disabled
+            >
+              {t('forgotPassword')}
+            </button>
+          </div>
         </form>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
-          {t('alreadyHaveAccount')}{' '}
-          <Link href="/login" className="text-primary hover:underline">
-            {t('login')}
+          {t('noAccount')}{' '}
+          <Link href="/signup" className="text-primary hover:underline">
+            {t('signUp')}
           </Link>
         </p>
       </CardFooter>

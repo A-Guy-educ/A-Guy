@@ -28,7 +28,8 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   isAuthenticated,
 }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const t = useTranslations('courses')
+  const tCourses = useTranslations('courses')
+  const tCommon = useTranslations('common.header')
   const navItems = data?.navItems || []
 
   // Prevent body scroll when menu is open
@@ -80,7 +81,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           {/* User Greeting */}
           {userName && (
             <div className="px-6 py-4 border-b border-border bg-muted/30">
-              <p className="text-sm text-muted-foreground">Welcome back,</p>
+              <p className="text-sm text-muted-foreground">{tCommon('welcome')}</p>
               <p className="text-base font-semibold mt-1">{userName}</p>
             </div>
           )}
@@ -132,7 +133,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               onClick={onClose}
               className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted transition-colors text-base font-medium"
             >
-              {t('title')}
+              {tCourses('title')}
             </Link>
           </div>
 
@@ -166,7 +167,11 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                   setIsLoggingOut(true)
                   try {
                     await logoutAndRedirect()
-                  } catch (_error) {
+                  } catch (error) {
+                    // Re-throw Next.js redirect errors (they're not actually errors)
+                    if (error && typeof error === 'object' && 'digest' in error) {
+                      throw error
+                    }
                     toast.error('Logout failed. Please try again.')
                     setIsLoggingOut(false)
                   }
@@ -174,7 +179,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                 disabled={isLoggingOut}
               >
                 <LogOut className="w-4 h-4" />
-                {isLoggingOut ? 'Logging out...' : 'Logout'}
+                {isLoggingOut ? tCommon('loggingOut') : tCommon('logout')}
               </Button>
             </div>
           )}

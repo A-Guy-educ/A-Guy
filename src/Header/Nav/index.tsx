@@ -21,7 +21,8 @@ interface HeaderNavProps {
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({ data, userName, isAuthenticated }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const t = useTranslations('courses')
+  const tCourses = useTranslations('courses')
+  const tCommon = useTranslations('common.header')
   const navItems = data?.navItems || []
 
   // Group navigation items by type
@@ -33,7 +34,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, userName, isAuthenti
       {/* User Greeting */}
       {userName && (
         <div className="hidden xl:flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30">
-          <span className="text-sm text-muted-foreground">Welcome,</span>
+          <span className="text-sm text-muted-foreground">{tCommon('welcome')}</span>
           <span className="text-sm font-semibold">{userName}</span>
         </div>
       )}
@@ -66,7 +67,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, userName, isAuthenti
 
       {/* Courses Link */}
       <Link href="/courses" className="text-sm font-medium hover:text-primary transition-colors">
-        {t('title')}
+        {tCourses('title')}
       </Link>
 
       {/* Search */}
@@ -95,7 +96,11 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, userName, isAuthenti
               setIsLoggingOut(true)
               try {
                 await logoutAndRedirect()
-              } catch (_error) {
+              } catch (error) {
+                // Re-throw Next.js redirect errors (they're not actually errors)
+                if (error && typeof error === 'object' && 'digest' in error) {
+                  throw error
+                }
                 toast.error('Logout failed. Please try again.')
                 setIsLoggingOut(false)
               }
@@ -104,7 +109,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, userName, isAuthenti
             className="flex items-center gap-2"
           >
             <LogOut className="w-4 h-4" />
-            {isLoggingOut ? 'Logging out...' : 'Logout'}
+            {isLoggingOut ? tCommon('loggingOut') : tCommon('logout')}
           </Button>
         </>
       )}

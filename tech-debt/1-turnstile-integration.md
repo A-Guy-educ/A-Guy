@@ -1,17 +1,31 @@
 # Tech Debt: Cloudflare Turnstile Integration
 
 **Priority**: Medium
-**Status**: Pending
+**Status**: ⚠️ PARTIALLY COMPLETED - Using Test Keys
 **Created**: 2025-12-30
-**Related to**: Public signup anti-spam protection
+**Completed**: 2025-12-30 (localhost only)
+**Related to**: Public signup and login anti-spam protection
+
+## ⚠️ IMPORTANT: Currently Using Test Keys
+
+The implementation is complete but uses **Cloudflare test keys** that work for localhost only:
+
+- Site Key: `1x00000000000000000000AA` (always passes)
+- Secret Key: `1x0000000000000000000000000000000AA` (always passes)
+
+**Before deploying to production:**
+
+1. Get real keys from [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. Add your domain to Turnstile
+3. Replace test keys in `.env` with production keys
 
 ## Context
 
-The public signup page (`/signup`) currently implements two layers of bot protection:
+The public signup page (`/signup`) and login page (`/login`) now implement three layers of bot protection:
 
-1. ✅ Honeypot field (invisible field that bots fill)
-2. ✅ Rate limiting (5 attempts per 15 minutes per email)
-3. ⏳ **MISSING**: CAPTCHA verification (Cloudflare Turnstile)
+1. ✅ Honeypot field (invisible field that bots fill) - signup only
+2. ✅ Rate limiting (5 attempts per 15 minutes per email) - signup only
+3. ✅ **COMPLETED**: CAPTCHA verification (Cloudflare Turnstile) - both signup and login
 
 ## What Needs to Be Done
 
@@ -102,13 +116,16 @@ if (!turnstileResult.success) {
 
 ## Verification Checklist
 
-When implementing:
+✅ Implementation Complete:
 
-- [ ] Turnstile widget appears on signup form
-- [ ] Form submission fails without completing CAPTCHA
-- [ ] Server validates token before creating user
-- [ ] Invalid/expired tokens are rejected
-- [ ] Error messages are user-friendly
+- [x] Turnstile widget appears on signup form
+- [x] Turnstile widget appears on login form
+- [x] Form submission fails without completing CAPTCHA
+- [x] Server validates token before creating user / logging in
+- [x] Invalid/expired tokens are rejected
+- [x] Error messages are user-friendly
+- [x] Test keys configured for localhost development
+- [x] i18n support for all error messages
 
 ## Estimated Effort
 
