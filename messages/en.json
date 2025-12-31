@@ -39,27 +39,6 @@
         "emailExists": "This email is already registered",
         "duplicateEmailMessage": "An account with this email already exists. Would you like to log in instead?"
       }
-    },
-    "login": {
-      "title": "Welcome Back",
-      "subtitle": "Log in to continue learning",
-      "description": "Enter your credentials to access your account",
-      "email": "Email",
-      "emailPlaceholder": "you@example.com",
-      "password": "Password",
-      "passwordPlaceholder": "••••••••",
-      "loginButton": "Log in",
-      "loggingIn": "Logging in...",
-      "noAccount": "Don't have an account?",
-      "signUp": "Sign up",
-      "forgotPassword": "Forgot password?",
-      "errors": {
-        "invalidEmail": "Valid email is required",
-        "passwordRequired": "Password is required",
-        "invalidCredentials": "Invalid email or password",
-        "captchaRequired": "Please complete the CAPTCHA verification",
-        "captchaFailed": "CAPTCHA verification failed. Please try again."
-      }
     }
   },
   "courses": {
