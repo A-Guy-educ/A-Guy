@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
-import type { Header } from '@/payload-types'
+import type { Header, User } from '@/payload-types'
 
 import { Logo } from '@/components/Logo/Logo'
 import { HeaderNav } from './Nav'
@@ -12,9 +12,10 @@ import { MobileMenu, MobileMenuButton } from './MobileMenu'
 
 interface HeaderClientProps {
   data: Header
+  user: User | null
 }
 
-export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
+export const HeaderClient: React.FC<HeaderClientProps> = ({ data, user }) => {
   /* Storing the value in a useState to avoid hydration errors */
   const [theme, setTheme] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -47,8 +48,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Example user name - in a real app, you'd get this from auth context
-  const userName = undefined // Replace with actual user data: useAuth()?.user?.name
+  const userName = user?.name || undefined
 
   return (
     <>
@@ -69,7 +69,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center">
-              <HeaderNav data={data} userName={userName} />
+              <HeaderNav data={data} userName={userName} isAuthenticated={!!user} />
             </div>
 
             {/* Mobile Menu Button */}
@@ -84,6 +84,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         onClose={() => setIsMobileMenuOpen(false)}
         data={data}
         userName={userName}
+        isAuthenticated={!!user}
       />
     </>
   )

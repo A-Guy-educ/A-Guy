@@ -1,23 +1,35 @@
 'use client'
 
-import React, { useEffect } from 'react'
-import { X, Menu } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { X, Menu, LogOut } from 'lucide-react'
 import { CMSLink } from '@/components/Link'
 import Link from 'next/link'
 import { SearchIcon } from 'lucide-react'
 import type { Header as HeaderType } from '@/payload-types'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useTranslations } from '@/providers/I18n'
+import { Button } from '@/components/ui/button'
+import { logoutAndRedirect } from '@/app/(frontend)/actions/auth-action'
+import { toast } from 'sonner'
 
 interface MobileMenuProps {
   isOpen: boolean
   onClose: () => void
   data: HeaderType
   userName?: string
+  isAuthenticated: boolean
 }
 
-export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, data, userName }) => {
-  const t = useTranslations('courses')
+export const MobileMenu: React.FC<MobileMenuProps> = ({
+  isOpen,
+  onClose,
+  data,
+  userName,
+  isAuthenticated,
+}) => {
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const tCourses = useTranslations('courses')
+  const tCommon = useTranslations('common.header')
   const navItems = data?.navItems || []
 
   // Prevent body scroll when menu is open
@@ -69,7 +81,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, data, u
           {/* User Greeting */}
           {userName && (
             <div className="px-6 py-4 border-b border-border bg-muted/30">
-              <p className="text-sm text-muted-foreground">Welcome back,</p>
+              <p className="text-sm text-muted-foreground">{tCommon('welcome')}</p>
               <p className="text-base font-semibold mt-1">{userName}</p>
             </div>
           )}
@@ -121,7 +133,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, data, u
               onClick={onClose}
               className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted transition-colors text-base font-medium"
             >
-              {t('title')}
+              {tCourses('title')}
             </Link>
           </div>
 
@@ -144,6 +156,25 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, data, u
             </h3>
             <LanguageSwitcher />
           </div>
+
+          {/* Logout - Only show when authenticated */}
+          {isAuthenticated && (
+            <div className="px-6 py-4 border-t border-border mt-auto">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-2"
+                onClick={async () => {
+                  setIsLoggingOut(true)
+                  await logoutAndRedirect()
+                  // No need to reset state - redirect will unmount component
+                }}
+                disabled={isLoggingOut}
+              >
+                <LogOut className="w-4 h-4" />
+                {isLoggingOut ? tCommon('loggingOut') : tCommon('logout')}
+              </Button>
+            </div>
+          )}
         </nav>
       </div>
     </>
