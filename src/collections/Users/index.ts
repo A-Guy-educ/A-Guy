@@ -3,6 +3,7 @@ import type { CollectionConfig } from 'payload'
 import { authenticated } from '../../access/authenticated'
 import { adminOnly } from '../../access/adminOnly'
 import { adminOrSelf } from '../../access/adminOrSelf'
+import { anyone } from '../../access/anyone'
 import { ensureRoleOnSignup } from './hooks/ensureRoleOnSignup'
 import { preventLastAdminDemotion } from './hooks/preventLastAdminDemotion'
 import { auditRoleChange } from './hooks/auditRoleChange'
@@ -11,7 +12,7 @@ export const Users: CollectionConfig = {
   slug: 'users',
   access: {
     admin: adminOnly, // Only admins can access the admin panel
-    create: authenticated,
+    create: anyone, // Allow public signup - users can create their own accounts
     delete: adminOnly, // Only admins can delete users
     read: adminOrSelf, // Admins can read all, users can read their own
     update: adminOrSelf, // Admins can update all, users can update their own
