@@ -82,13 +82,6 @@ export function ExerciseRenderer({
           ) : (
             <div className={`${baseClass}__empty`}>No content blocks</div>
           )}
-
-          {/* Render sections if present (not fully implemented in v0) */}
-          {content.sections && content.sections.length > 0 && (
-            <div className={`${baseClass}__sections-note`}>
-              Note: Multi-section exercises are not fully supported in this preview
-            </div>
-          )}
         </ErrorBoundary>
       </div>
 

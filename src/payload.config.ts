@@ -8,6 +8,7 @@ import { Categories } from './collections/Categories'
 import { Chapters } from './collections/Chapters'
 import { Courses } from './collections/Courses'
 import { Exercises } from './collections/Exercises'
+import { ExerciseAssets } from './collections/ExerciseAssets'
 import { Lessons } from './collections/Lessons'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
@@ -72,6 +73,7 @@ export default buildConfig({
     Chapters,
     Lessons,
     Exercises,
+    ExerciseAssets,
     Users,
     Media,
     Posts,

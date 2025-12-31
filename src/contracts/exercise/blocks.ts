@@ -4,11 +4,18 @@ import { AxisSpecV1Schema } from '../graphics/axis.v1'
 import { GeometrySpecV1Schema } from '../graphics/geometry.v1'
 
 /**
- * Exercise content blocks - Discriminated union by 'type'
- * Each block has an 'id' for stable React keys and editor operations
+ * Exercise Block Schemas (v1)
+ *
+ * Implements a strict, depth-limited block structure.
+ * - Max nesting depth: 3
+ * - Explicit unwrapping for recursion control
+ * - "Leaf" blocks (RichText, Figure, etc.)
+ * - "Container" blocks (Section)
  */
 
-/** Rich text block (Math-aware Markdown) */
+// --- Leaf Blocks ---
+
+/** Rich text (Markdown + Math) */
 const RichTextBlockSchema = z
   .object({
     id: BlockIdSchema,
@@ -18,7 +25,18 @@ const RichTextBlockSchema = z
   })
   .strict()
 
-/** Table block */
+/** Figure (Image/Asset) */
+const FigureBlockSchema = z
+  .object({
+    id: BlockIdSchema,
+    type: z.literal('figure'),
+    assetId: z.string().min(1),
+    caption: z.string().optional(),
+    alt: z.string().optional(),
+  })
+  .strict()
+
+/** Table */
 const TableBlockSchema = z
   .object({
     id: BlockIdSchema,
@@ -31,8 +49,6 @@ const TableBlockSchema = z
   })
   .strict()
   .superRefine((data, ctx) => {
-    // Optionally validate each row has same length as headers
-    // Keeping permissive for v1, but document the check
     for (let i = 0; i < data.rows.length; i++) {
       if (data.rows[i].length !== data.headers.length) {
         ctx.addIssue({
@@ -44,16 +60,7 @@ const TableBlockSchema = z
     }
   })
 
-/** SVG block (static SVG content) */
-const SvgBlockSchema = z
-  .object({
-    id: BlockIdSchema,
-    type: z.literal('svg'),
-    svg: z.string().min(1),
-  })
-  .strict()
-
-/** Axis system block (spec JSON) */
+/** Axis System */
 const AxisSystemBlockSchema = z
   .object({
     id: BlockIdSchema,
@@ -63,7 +70,7 @@ const AxisSystemBlockSchema = z
   })
   .strict()
 
-/** Geometry block (spec JSON) */
+/** Geometry */
 const GeometryBlockSchema = z
   .object({
     id: BlockIdSchema,
@@ -73,19 +80,63 @@ const GeometryBlockSchema = z
   })
   .strict()
 
-/** Discriminated union of all exercise blocks */
-export const ExerciseBlockSchema = z.discriminatedUnion('type', [
+// Union of all Leaf Blocks
+const LeafBlockSchema = z.discriminatedUnion('type', [
   RichTextBlockSchema,
+  FigureBlockSchema,
   TableBlockSchema,
-  SvgBlockSchema,
   AxisSystemBlockSchema,
   GeometryBlockSchema,
 ])
 
-/** Inferred TypeScript types */
+export type LeafBlock = z.infer<typeof LeafBlockSchema>
+
+// --- Container Blocks (Recursive with Depth Limit) ---
+
+// Level 3 (Deepest): Can only contain Leaves. No Sections.
+const BlockV1Level3Schema = LeafBlockSchema
+
+// Level 2: Can contain Sections (which contain Level 3) OR Leaves
+const SectionBlockLevel3Schema = z
+  .object({
+    id: BlockIdSchema,
+    type: z.literal('section'),
+    label: z.string().optional(),
+    title: z.string().optional(),
+    blocks: z.array(BlockV1Level3Schema),
+  })
+  .strict()
+
+const BlockV1Level2Schema = z.union([LeafBlockSchema, SectionBlockLevel3Schema])
+
+// Level 1 (Top): Can contain Sections (which contain Level 2) OR Leaves
+const SectionBlockLevel2Schema = z
+  .object({
+    id: BlockIdSchema,
+    type: z.literal('section'),
+    label: z.string().optional(),
+    title: z.string().optional(),
+    blocks: z.array(BlockV1Level2Schema),
+  })
+  .strict()
+
+// Root Block Type
+export const BlockV1Schema = z.union([LeafBlockSchema, SectionBlockLevel2Schema])
+
+export type BlockV1 = z.infer<typeof BlockV1Schema>
+// Export specific levels if needed for recursive rendering components
+export type BlockV1Level2 = z.infer<typeof BlockV1Level2Schema>
+export type BlockV1Level3 = z.infer<typeof BlockV1Level3Schema>
+
+// Export specific block types for convenience
 export type RichTextBlock = z.infer<typeof RichTextBlockSchema>
+export type FigureBlock = z.infer<typeof FigureBlockSchema>
 export type TableBlock = z.infer<typeof TableBlockSchema>
-export type SvgBlock = z.infer<typeof SvgBlockSchema>
 export type AxisSystemBlock = z.infer<typeof AxisSystemBlockSchema>
 export type GeometryBlock = z.infer<typeof GeometryBlockSchema>
-export type ExerciseBlock = z.infer<typeof ExerciseBlockSchema>
+export type SectionBlock = z.infer<typeof SectionBlockLevel2Schema>
+
+// For compatibility with parts of the app expecting "ExerciseBlock" (alias to V1)
+// We export this precisely ONCE here.
+export const ExerciseBlockSchema = BlockV1Schema
+export type ExerciseBlock = BlockV1

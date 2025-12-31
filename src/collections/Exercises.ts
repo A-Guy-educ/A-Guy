@@ -6,13 +6,14 @@ import { ExerciseContentSchema, AnswerSpecSchema } from '../contracts'
 import { throwPayloadValidationError } from '../utilities/zodToPayloadError'
 
 /**
- * Exercises Collection - Stage 1
+ * Exercises Collection - Block V1
  *
  * Field-level validation + default templates for better Admin UX
  */
 
 // Default templates
 const DEFAULT_CONTENT_JSON = {
+  contentSchemaVersion: 1,
   stem: [
     {
       id: 'b1',
@@ -153,7 +154,7 @@ export const Exercises: CollectionConfig = {
             return true
           },
           admin: {
-            description: 'Exercise content blocks (stem + optional sections)',
+            description: 'Exercise content blocks (stem)',
             components: {
               Field: '@/components/admin/ExerciseEditor#ContentJsonField',
             },

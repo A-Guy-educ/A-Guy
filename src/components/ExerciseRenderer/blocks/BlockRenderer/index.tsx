@@ -1,16 +1,12 @@
-/**
- * Block Renderer Dispatcher
- * Routes different block types to their specific renderers
- */
-
 import React from 'react'
 import type { ExerciseBlock } from '@/contracts'
 import type { PreviewMode } from '../../types'
 import { RichTextRenderer } from '../RichTextRenderer'
 import { TableRenderer } from '../TableRenderer'
-import { SvgRenderer } from '../SvgRenderer'
 import { AxisRenderer } from '../AxisRenderer'
 import { GeometryRenderer } from '../GeometryRenderer'
+import { FigureRenderer } from '../FigureRenderer'
+import { SectionRenderer } from '../SectionRenderer'
 import './index.scss'
 
 const baseClass = 'block-renderer'
@@ -28,8 +24,11 @@ export function BlockRenderer({ block, mode = 'student' }: BlockRendererProps) {
     case 'table':
       return <TableRenderer block={block} />
 
-    case 'svg':
-      return <SvgRenderer block={block} />
+    case 'figure':
+      return <FigureRenderer block={block} />
+
+    case 'section':
+      return <SectionRenderer block={block} mode={mode} />
 
     case 'axis_system':
       return <AxisRenderer block={block} />
@@ -41,7 +40,7 @@ export function BlockRenderer({ block, mode = 'student' }: BlockRendererProps) {
       return (
         <div className={`${baseClass} ${baseClass}--unknown`}>
           <span className={`${baseClass}__icon`}>⚠️</span>
-          <span>Unknown block type</span>
+          <span>Unknown block type: {(block as any).type}</span>
           {mode === 'debug' && (
             <code className={`${baseClass}__debug`}>{JSON.stringify(block, null, 2)}</code>
           )}
