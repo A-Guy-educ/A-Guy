@@ -3,14 +3,14 @@
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { cookies } from 'next/headers'
-import { checkRateLimit } from './rateLimit'
-import { verifyTurnstileToken } from './turnstile'
+import { checkRateLimit } from './signup_rateLimit'
+import { verifyTurnstileToken } from './signup_turnstile'
 import {
   handleDuplicateEmailError,
-  handlePayloadValidationError,
+  handlePayloadError,
   isDuplicateEmailError,
-} from './errorHandling'
-import { SignupSchema, type SignupResult } from './schemas'
+} from './signup_handlers'
+import { SignupSchema, type SignupResult } from './signup_schemas'
 
 export async function signupAction(formData: FormData): Promise<SignupResult> {
   try {
@@ -112,13 +112,13 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
       if (error && typeof error === 'object' && 'message' in error) {
         const errorMessage = error.message as string
 
-        // Check for duplicate email
+        // Check for duplicate email (extends generic Payload error handling)
         if (isDuplicateEmailError(errorMessage)) {
           return handleDuplicateEmailError()
         }
 
-        // Check for Payload validation errors
-        const validationError = handlePayloadValidationError(error)
+        // Check for generic Payload validation errors
+        const validationError = handlePayloadError(error, 'Please fix the errors below.')
         if (validationError) return validationError
 
         // Return actual error message
