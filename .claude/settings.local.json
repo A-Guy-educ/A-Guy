@@ -1,5 +1,20 @@
 {
   "permissions": {
-    "allow": ["Bash(git clone:*)"]
+    "allow": [
+      "Bash(git clone:*)",
+      "Bash(npm run dev:*)",
+      "Bash(pkill:*)",
+      "Bash(pnpm dev)",
+      "Bash(find:*)",
+      "Bash(pnpm payload generate:importmap:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(rm:*)",
+      "Bash(kill:*)",
+      "Bash(curl:*)",
+      "Bash(npx tsc:*)",
+      "Bash(wc:*)",
+      "Bash(cat:*)"
+    ]
   }
 }
