@@ -32,10 +32,10 @@ export function BlockRenderer({ block, mode = 'student', availableAssets }: Bloc
       return <SectionRenderer block={block} mode={mode} availableAssets={availableAssets} />
 
     case 'axis_system':
-      return <AxisRenderer block={block} />
+      return <AxisRenderer blockId={block.id} spec={block.spec} />
 
     case 'geometry':
-      return <GeometryRenderer block={block} />
+      return <GeometryRenderer blockId={block.id} spec={block.spec} />
 
     default:
       return (

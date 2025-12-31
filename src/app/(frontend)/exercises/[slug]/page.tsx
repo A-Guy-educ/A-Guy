@@ -61,7 +61,7 @@ export default async function ExercisePage({ params: paramsPromise }: Args) {
 
   if (assetIds.length > 0) {
     const assetsBlob = await payload.find({
-      collection: 'exercise-assets',
+      collection: 'exercise-assets' as any,
       where: {
         id: {
           in: assetIds,
@@ -70,7 +70,7 @@ export default async function ExercisePage({ params: paramsPromise }: Args) {
       limit: 100, // Reasonable limit
     })
 
-    assetsBlob.docs.forEach((asset) => {
+    assetsBlob.docs.forEach((asset: any) => {
       if (asset.url) {
         assetMap[asset.id] = asset.url
       }

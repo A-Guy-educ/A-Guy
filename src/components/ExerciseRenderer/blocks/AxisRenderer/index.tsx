@@ -3,21 +3,19 @@
  * Renders coordinate systems with axes, grids, points, and function graphs
  */
 
-import React from 'react'
-import type { AxisSystemBlock } from '@/contracts'
-import { AxisPreview } from '@/components/admin/ExerciseEditor/previews/AxisPreview'
-import './index.scss'
+// For now, always render the client component or nothing if SSR issues arise.
+// But we want the interactive component.
+import dynamic from 'next/dynamic'
+import { AxisSpecV1 } from '@/contracts'
 
-const baseClass = 'axis-renderer'
-
-interface AxisRendererProps {
-  block: AxisSystemBlock
-}
-
-export function AxisRenderer({ block }: AxisRendererProps) {
+// Placeholder for AxisSystem since we are not supporting graphs workflows in this task.
+export const AxisRenderer: React.FC<{
+  blockId: string
+  spec: AxisSpecV1
+}> = ({ blockId, spec }) => {
   return (
-    <div className={baseClass}>
-      <AxisPreview spec={block.spec} width={600} height={400} />
+    <div className="my-8 border rounded-lg overflow-hidden border-border bg-card p-4 text-center text-muted-foreground">
+      Axis System (Not Supported)
     </div>
   )
 }

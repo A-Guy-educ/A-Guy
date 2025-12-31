@@ -64,16 +64,6 @@ export const Exercises: CollectionConfig = {
     defaultColumns: ['order', 'title', 'lesson', 'questionType', 'updatedAt'],
   },
   fields: [
-    // Helper UI field for expand/collapse all controls
-    {
-      name: 'sectionControls',
-      type: 'ui',
-      admin: {
-        components: {
-          Field: '@/components/admin/ExerciseEditor#ExerciseSectionedLayout',
-        },
-      },
-    },
     // Section 1: Exercise Meta (Basics)
     {
       type: 'collapsible',
@@ -155,9 +145,6 @@ export const Exercises: CollectionConfig = {
           },
           admin: {
             description: 'Exercise content blocks (stem)',
-            components: {
-              Field: '@/components/admin/ExerciseEditor#ContentJsonField',
-            },
           },
         },
       ],
@@ -199,40 +186,6 @@ export const Exercises: CollectionConfig = {
           },
           admin: {
             description: 'Answer specification - must match the selected Question Type above',
-            components: {
-              Field: '@/components/admin/ExerciseEditor#AnswerSpecJsonField',
-            },
-          },
-        },
-      ],
-    },
-    // Section 4: Exercise Preview
-    {
-      name: 'exercisePreview',
-      type: 'ui',
-      admin: {
-        components: {
-          Field: '@/components/admin/ExerciseEditor#ExercisePreview',
-        },
-      },
-    },
-    // Section 5: Advanced (JSON + Debug)
-    {
-      type: 'collapsible',
-      label: 'Advanced (JSON + Debug)',
-      admin: {
-        initCollapsed: true,
-        description:
-          'Advanced JSON editors are available within the Content and Answer sections. Future: schema versions, debug info.',
-      },
-      fields: [
-        {
-          name: 'advancedPlaceholder',
-          type: 'ui',
-          admin: {
-            components: {
-              Field: '@/components/admin/ExerciseEditor#AdvancedPlaceholder',
-            },
           },
         },
       ],
