@@ -1,83 +1,16 @@
 'use server'
 
-import { z } from 'zod'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { cookies } from 'next/headers'
-
-// Rate limiting store (in-memory - use Redis in production)
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
-
-// Validation schema
-const SignupSchema = z.object({
-  name: z.string().min(1, 'Name is required').trim(),
-  email: z.string().email('Invalid email format').toLowerCase().trim(),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string(),
-  // Honeypot field
-  website: z.string().optional(),
-  // Turnstile token
-  'cf-turnstile-response': z.string().optional(),
-})
-
-interface SignupResult {
-  success: boolean
-  message?: string
-  errors?: Record<string, string>
-}
-
-// Rate limiting helper
-function checkRateLimit(identifier: string): boolean {
-  const now = Date.now()
-  const limit = rateLimitStore.get(identifier)
-
-  if (!limit || now > limit.resetAt) {
-    // Reset or create new limit
-    rateLimitStore.set(identifier, {
-      count: 1,
-      resetAt: now + 15 * 60 * 1000, // 15 minutes
-    })
-    return true
-  }
-
-  if (limit.count >= 5) {
-    // Exceeded limit: 5 attempts per 15 minutes
-    return false
-  }
-
-  limit.count++
-  return true
-}
-
-// Helper function to verify Turnstile token
-async function verifyTurnstileToken(token: string | undefined): Promise<boolean> {
-  if (!token) return false
-
-  const secretKey = process.env.TURNSTILE_SECRET_KEY
-
-  // If no secret key, skip verification (development mode)
-  if (!secretKey) {
-    console.warn('Turnstile secret key not configured - skipping verification')
-    return true
-  }
-
-  try {
-    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        secret: secretKey,
-        response: token,
-      }),
-    })
-
-    const data = await response.json()
-    return data.success === true
-  } catch (error) {
-    console.error('Turnstile verification error:', error)
-    return false
-  }
-}
+import { checkRateLimit } from './rateLimit'
+import { verifyTurnstileToken } from './turnstile'
+import {
+  handleDuplicateEmailError,
+  handlePayloadValidationError,
+  isDuplicateEmailError,
+} from './errorHandling'
+import { SignupSchema, type SignupResult } from './schemas'
 
 export async function signupAction(formData: FormData): Promise<SignupResult> {
   try {
@@ -93,7 +26,6 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
 
     // 2. Honeypot check (anti-spam layer 1)
     if (rawData.website && rawData.website.toString().trim() !== '') {
-      // Bot detected - reject silently with generic message
       return {
         success: false,
         message: 'Unable to create account. Please try again.',
@@ -110,11 +42,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
           errors[err.path[0].toString()] = err.message
         }
       })
-      return {
-        success: false,
-        message: 'Validation failed',
-        errors,
-      }
+      return { success: false, message: 'Validation failed', errors }
     }
 
     const { name, email, password, confirmPassword } = parsed.data
@@ -128,7 +56,6 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
     }
 
     // 5. Rate limiting (anti-spam layer 2)
-    // Use email hash as identifier
     const emailHash = Buffer.from(email).toString('base64')
     if (!checkRateLimit(emailHash)) {
       return {
@@ -145,9 +72,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
       return {
         success: false,
         message: 'CAPTCHA verification failed. Please try again.',
-        errors: {
-          general: 'CAPTCHA verification failed',
-        },
+        errors: { general: 'CAPTCHA verification failed' },
       }
     }
 
@@ -161,8 +86,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
           name,
           email,
           password,
-          // Force role to 'student' - never trust client input for roles
-          roles: ['student'],
+          roles: ['student'], // Force role - never trust client input
         },
       })
 
@@ -170,14 +94,10 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
       const cookieStore = await cookies()
       const token = await payload.login({
         collection: 'users',
-        data: {
-          email,
-          password,
-        },
+        data: { email, password },
       })
 
       if (token && 'token' in token && token.token) {
-        // Set the Payload auth cookie
         cookieStore.set('payload-token', token.token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
@@ -187,70 +107,31 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
         })
       }
 
-      return {
-        success: true,
-        message: 'Account created successfully',
-      }
+      return { success: true, message: 'Account created successfully' }
     } catch (error) {
-      // Check if it's a duplicate email error (security-sensitive)
       if (error && typeof error === 'object' && 'message' in error) {
         const errorMessage = error.message as string
 
-        if (
-          errorMessage.includes('duplicate') ||
-          errorMessage.includes('unique') ||
-          errorMessage.includes('E11000')
-        ) {
-          // Provide helpful message for duplicate email
-          return {
-            success: false,
-            message: 'An account with this email already exists. Would you like to log in instead?',
-            errors: {
-              email: 'This email is already registered',
-            },
-          }
+        // Check for duplicate email
+        if (isDuplicateEmailError(errorMessage)) {
+          return handleDuplicateEmailError()
         }
 
         // Check for Payload validation errors
-        if ('data' in error && error.data && typeof error.data === 'object') {
-          const payloadError = error.data as any
-          const errors: Record<string, string> = {}
+        const validationError = handlePayloadValidationError(error)
+        if (validationError) return validationError
 
-          // Parse Payload field errors
-          if (payloadError.errors && Array.isArray(payloadError.errors)) {
-            payloadError.errors.forEach((err: any) => {
-              if (err.path && err.message) {
-                errors[err.path] = err.message
-              }
-            })
-          }
-
-          if (Object.keys(errors).length > 0) {
-            return {
-              success: false,
-              message: 'Please fix the errors below.',
-              errors,
-            }
-          }
-        }
-
-        // Return the actual error message for other validation errors
-        return {
-          success: false,
-          message: errorMessage,
-        }
+        // Return actual error message
+        return { success: false, message: errorMessage }
       }
 
-      // Generic error for unknown failures
       return {
         success: false,
         message: 'An error occurred during signup. Please try again.',
       }
     }
   } catch (error) {
-    // Log the error for debugging (in production, use proper logging)
     console.error('Signup error:', error)
-
     return {
       success: false,
       message: 'An unexpected error occurred. Please try again.',
