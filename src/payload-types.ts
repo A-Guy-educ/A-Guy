@@ -749,6 +749,7 @@ export interface Exercise {
 export interface User {
   id: string;
   name?: string | null;
+  roles: ('admin' | 'student')[];
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -1486,6 +1487,7 @@ export interface ExercisesSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  roles?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

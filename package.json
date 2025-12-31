@@ -24,6 +24,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "^1.4.1",
     "@payloadcms/admin-bar": "3.69.0",
     "@payloadcms/db-mongodb": "3.69.0",
     "@payloadcms/live-preview-react": "3.69.0",
