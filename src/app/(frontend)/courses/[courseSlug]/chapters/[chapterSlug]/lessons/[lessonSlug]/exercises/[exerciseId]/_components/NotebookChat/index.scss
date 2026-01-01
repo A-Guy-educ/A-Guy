@@ -7,14 +7,26 @@
   background: hsl(var(--card));
   color: hsl(var(--foreground));
   min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
 
   &__messages {
     padding: 1.75rem;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
     flex: 1;
     min-height: 0;
+    overflow-y: auto;
+    gap: 1rem;
+    scroll-behavior: smooth;
+    
+    // Ensure messages start from top but scroll shows bottom
+    &::after {
+      content: '';
+      flex: 0 0 auto;
+      height: 0;
+    }
   }
 
   &__bubble {
@@ -30,6 +42,8 @@
     justify-content: space-around;
     padding: 1.25rem 1.5rem;
     border-top: 1px solid hsl(var(--border));
+    flex-shrink: 0;
+    background: hsl(var(--card));
   }
 
   &__action {
@@ -60,7 +74,8 @@
     gap: 0.75rem;
     padding: 1.25rem 1.5rem;
     border-top: 1px solid hsl(var(--border));
-    margin-top: auto;
+    flex-shrink: 0;
+    background: hsl(var(--card));
   }
 
   &__input {

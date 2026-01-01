@@ -1,17 +1,37 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useRef, useLayoutEffect } from 'react'
 import { Lightbulb, CheckCircle, BookOpen } from 'lucide-react'
 import { useTranslations } from '@/providers/I18n'
 import './index.scss'
 
 export function NotebookChat() {
   const t = useTranslations('courses')
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
+  }
+
+  useLayoutEffect(() => {
+    // Scroll to bottom immediately after layout
+    scrollToBottom()
+  }, [])
+
+  useEffect(() => {
+    // Also scroll after a brief delay to handle any async rendering
+    const timer = setTimeout(() => {
+      scrollToBottom()
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <div className="notebook-chat">
-      <div className="notebook-chat__messages">
+      <div ref={messagesContainerRef} className="notebook-chat__messages">
         <div className="notebook-chat__bubble">{t('chatWelcome')}</div>
+        <div ref={messagesEndRef} />
       </div>
 
       <div className="notebook-chat__actions">

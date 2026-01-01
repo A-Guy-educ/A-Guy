@@ -51,7 +51,7 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-background">
+    <div className="flex flex-col h-screen overflow-hidden bg-background relative z-50">
       <NotebookWorkspace
         content={
           <ExerciseRenderer
@@ -65,6 +65,9 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
         chat={<NotebookChat />}
         formulas={<NotebookFormulas />}
         notes={<NotebookNotes />}
+        courseSlug={courseSlug}
+        chapterSlug={chapterSlug}
+        lessonSlug={lessonSlug}
       />
     </div>
   )

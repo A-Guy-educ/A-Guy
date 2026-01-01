@@ -50,6 +50,13 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, user }) => {
 
   const userName = user?.name || undefined
 
+  // Hide header on notebook/exercise pages
+  const isNotebookPage = pathname?.includes('/exercises/') ?? false
+
+  if (isNotebookPage) {
+    return null
+  }
+
   return (
     <>
       <header
