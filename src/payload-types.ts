@@ -791,7 +791,7 @@ export interface ExerciseAsset {
 export interface User {
   id: string;
   name?: string | null;
-  roles: ('admin' | 'student')[];
+  role: 'admin' | 'student';
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -1552,7 +1552,7 @@ export interface ExerciseAssetsSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
-  roles?: T;
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
