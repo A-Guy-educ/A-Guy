@@ -24,6 +24,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@marsidev/react-turnstile": "^1.4.1",
     "@payloadcms/admin-bar": "3.69.0",
     "@payloadcms/db-mongodb": "3.69.0",
