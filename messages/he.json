@@ -41,6 +41,10 @@
       }
     }
   },
+  "roles": {
+    "admin": "מנהל",
+    "student": "תלמיד"
+  },
   "courses": {
     "title": "קורסים",
     "description": "עיין בכל הקורסים הזמינים",

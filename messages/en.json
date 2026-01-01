@@ -41,6 +41,10 @@
       }
     }
   },
+  "roles": {
+    "admin": "Admin",
+    "student": "Student"
+  },
   "courses": {
     "title": "Courses",
     "description": "Browse all available courses",

@@ -1,4 +1,5 @@
 // Role enum for type-safe role management
+import enMessages from '../../../messages/en.json'
 
 export enum Role {
   Admin = 'admin',
@@ -18,10 +19,10 @@ export function parseRole(value: unknown): Role {
   return value
 }
 
-// Role labels for UI display
+// Role labels for UI display (sourced from language files)
 export const ROLE_LABEL: Record<Role, string> = {
-  [Role.Admin]: 'Admin',
-  [Role.Student]: 'Student',
+  [Role.Admin]: enMessages.roles.admin,
+  [Role.Student]: enMessages.roles.student,
 }
 
 // All roles as an array (useful for iteration)
