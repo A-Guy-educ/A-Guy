@@ -11,18 +11,7 @@ export const logger = pino({
       return { level: label }
     },
   },
-  ...(process.env.NODE_ENV === 'development'
-    ? {
-        transport: {
-          target: 'pino-pretty',
-          options: {
-            colorize: true,
-            translateTime: 'HH:MM:ss Z',
-            ignore: 'pid,hostname',
-          },
-        },
-      }
-    : {}),
+  // Keep transport disabled to avoid worker.js / thread-stream issues in dev
 })
 
 /**

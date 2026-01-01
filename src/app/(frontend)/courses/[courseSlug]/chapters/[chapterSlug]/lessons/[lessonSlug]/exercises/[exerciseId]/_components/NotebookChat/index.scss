@@ -1,0 +1,106 @@
+@import '~@payloadcms/ui/scss';
+
+.notebook-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+
+  &__messages {
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    gap: 1rem;
+    scroll-behavior: smooth;
+    
+    // Ensure messages start from top but scroll shows bottom
+    &::after {
+      content: '';
+      flex: 0 0 auto;
+      height: 0;
+    }
+  }
+
+  &__bubble {
+    background: hsl(var(--muted));
+    padding: 1.2rem 1.4rem;
+    border-radius: 14px;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: space-around;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid hsl(var(--border));
+    flex-shrink: 0;
+    background: hsl(var(--card));
+  }
+
+  &__action {
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    span {
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    &:hover {
+      opacity: 0.85;
+      transform: translateY(-1px);
+    }
+  }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid hsl(var(--border));
+    flex-shrink: 0;
+    background: hsl(var(--card));
+  }
+
+  &__input {
+    flex: 1;
+    background: hsl(var(--muted));
+    border: 1px solid hsl(var(--border));
+    border-radius: 28px;
+    padding: 0.7rem 1rem;
+    font-size: 0.95rem;
+    color: hsl(var(--foreground));
+
+    &:focus {
+      outline: none;
+      border-color: hsl(var(--primary));
+    }
+  }
+
+  &__send {
+    background: transparent;
+    border: none;
+    font-weight: 800;
+    color: hsl(var(--primary));
+    text-transform: lowercase;
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+

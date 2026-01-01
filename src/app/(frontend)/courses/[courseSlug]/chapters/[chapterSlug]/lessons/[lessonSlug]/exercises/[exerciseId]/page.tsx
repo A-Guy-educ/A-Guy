@@ -2,9 +2,12 @@ import { notFound } from 'next/navigation'
 import { queryCourseBySlug } from '@/lib/queries/courses'
 import { queryLessonBySlug } from '@/lib/queries/lessons'
 import { queryExerciseById } from '@/lib/queries/exercises'
-import { Breadcrumb } from '../../../../../../../_components/Breadcrumb'
-import { ExercisePageHeader } from './_components/ExercisePageHeader'
-import { ExercisePageContent } from './_components/ExercisePageContent'
+import { NotebookWorkspace } from './_components/NotebookWorkspace'
+import { NotebookChat } from './_components/NotebookChat'
+import { NotebookFormulas } from './_components/NotebookFormulas'
+import { NotebookNotes } from './_components/NotebookNotes'
+import { ExerciseRenderer } from '@/components/ExerciseRenderer'
+import type { ExerciseContent, AnswerSpec } from '@/contracts'
 
 interface ExercisePageProps {
   params: Promise<{
@@ -47,33 +50,24 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
     notFound()
   }
 
-  const breadcrumbItems = [
-    { label: 'Courses', href: '/courses' },
-    { label: course.title, href: `/courses/${courseSlug}` },
-    { label: lessonChapter.title, href: `/courses/${courseSlug}/chapters/${chapterSlug}` },
-    {
-      label: lesson.title,
-      href: `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}`,
-    },
-    { label: exercise.title },
-  ]
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Breadcrumb items={breadcrumbItems} />
-
-      <ExercisePageHeader
-        title={exercise.title}
-        questionType={exercise.questionType}
+    <div className="flex flex-col h-screen overflow-hidden bg-background relative z-50">
+      <NotebookWorkspace
+        content={
+          <ExerciseRenderer
+            content={exercise.contentJson as ExerciseContent}
+            answerSpec={exercise.answerSpecJson as AnswerSpec}
+            questionType={exercise.questionType}
+            mode="student"
+            showCheckAnswer
+          />
+        }
+        chat={<NotebookChat />}
+        formulas={<NotebookFormulas />}
+        notes={<NotebookNotes />}
         courseSlug={courseSlug}
         chapterSlug={chapterSlug}
         lessonSlug={lessonSlug}
-      />
-
-      <ExercisePageContent
-        contentJson={exercise.contentJson}
-        answerSpecJson={exercise.answerSpecJson}
-        questionType={exercise.questionType}
       />
     </div>
   )
