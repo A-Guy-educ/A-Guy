@@ -23,13 +23,14 @@ export const IMAGE_TO_EXERCISE_PROMPT = `You are an expert at converting exercis
 
 **Guidelines**:
 1. Extract the exact text from the image (preserve Hebrew/RTL text if present)
-2. Convert all mathematical notation to LaTeX format:
+2. If the exercise has multiple parts (א, ב, ג or a, b, c), include ALL parts in the question text
+3. Convert all mathematical notation to LaTeX format:
    - Inline math: $x^2$, $\\frac{a}{b}$, $\\sqrt{x}$
    - Display math: $$\\int_0^1 x dx$$
-3. Identify all answer options (usually labeled A, B, C, D or 1, 2, 3, 4)
-4. Determine the correct answer (index starting from 0)
-5. If an explanation is visible in the image, include it
-6. If the image contains multiple exercises, extract only the FIRST one
+4. Identify all answer options (usually labeled A, B, C, D or 1, 2, 3, 4)
+5. Determine the correct answer (index starting from 0)
+6. If an explanation is visible in the image, include it
+7. If the image contains multiple SEPARATE exercises (different question numbers), extract only the FIRST one
 
 **Error Handling**:
 - If the image is unclear or unreadable: return {"error": "Image quality too low to extract exercise"}

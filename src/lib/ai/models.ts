@@ -7,8 +7,8 @@
 
 export const AI_MODELS = {
   IMAGE_TO_EXERCISE: {
-    name: 'gemini-2.0-flash-exp',
-    temperature: 0.3, // Lower for more deterministic JSON output
+    name: 'gemini-2.0-flash-001', // Latest stable Gemini 2.0 with best multimodal capabilities
+    temperature: 0.2, // Lower for more deterministic JSON output
     maxOutputTokens: 8192,
   },
   // Future models can be added here:

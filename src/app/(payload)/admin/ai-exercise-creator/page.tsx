@@ -72,6 +72,59 @@ export default function AIExerciseCreatorPage() {
 
   const createExercise = async (exerciseData: any) => {
     try {
+      // Fetch available lessons to connect the exercise
+      const lessonsResponse = await fetch('/api/lessons?limit=1', {
+        credentials: 'include',
+      })
+
+      let lessonId = undefined
+      if (lessonsResponse.ok) {
+        const lessonsData = await lessonsResponse.json()
+        if (lessonsData.docs && lessonsData.docs.length > 0) {
+          lessonId = lessonsData.docs[0].id
+        }
+      }
+
+      if (!lessonId) {
+        setError('No lessons found in database. Please create a lesson first.')
+        return
+      }
+
+      // Determine question type based on whether we have options
+      const hasOptions = exerciseData.options && exerciseData.options.length > 0
+      const questionType = hasOptions ? 'mcq' : 'free_response'
+
+      // Build answer spec based on question type
+      let answerSpecJson
+      if (hasOptions) {
+        answerSpecJson = {
+          questionType: 'mcq',
+          multiSelect: false,
+          options: exerciseData.options.map((opt: string, i: number) => ({
+            id: `opt-${i + 1}`,
+            content: [
+              {
+                id: `opt-${i + 1}-text`,
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: opt,
+              },
+            ],
+          })),
+          correctOptionIds:
+            exerciseData.correctAnswer !== null && exerciseData.correctAnswer !== undefined
+              ? [`opt-${exerciseData.correctAnswer + 1}`]
+              : ['opt-1'],
+        }
+      } else {
+        // Free response requires responseKind and acceptedAnswers
+        answerSpecJson = {
+          questionType: 'free_response',
+          responseKind: 'text',
+          acceptedAnswers: [exerciseData.explanation || 'See solution'],
+        }
+      }
+
       // Create exercise via Payload API
       const response = await fetch('/api/exercises', {
         method: 'POST',
@@ -81,9 +134,10 @@ export default function AIExerciseCreatorPage() {
         credentials: 'include',
         body: JSON.stringify({
           title: 'AI Generated Exercise',
-          questionType: 'mcq',
-          difficulty: 'medium',
-          // Dump the entire AI response as JSON text in contentJson
+          questionType,
+          order: 0,
+          lesson: lessonId, // Field name is 'lesson' not 'lessonId'
+          // Put the question text with full AI JSON in contentJson
           contentJson: {
             contentSchemaVersion: 1,
             stem: [
@@ -91,37 +145,29 @@ export default function AIExerciseCreatorPage() {
                 id: 'ai-generated-1',
                 type: 'rich_text',
                 format: 'md-math-v1',
-                value: JSON.stringify(exerciseData, null, 2),
+                value: `${exerciseData.question}\n\n---\n**Full AI Response:**\n\`\`\`json\n${JSON.stringify(exerciseData, null, 2)}\n\`\`\``,
               },
             ],
           },
-          answerSpecJson: {
-            questionType: 'mcq',
-            multiSelect: false,
-            options: [
-              {
-                id: 'opt-1',
-                content: [
-                  {
-                    id: 'opt-1-text',
-                    type: 'rich_text',
-                    format: 'md-math-v1',
-                    value: 'Option A',
-                  },
-                ],
-              },
-            ],
-            correctOptionIds: ['opt-1'],
-          },
+          answerSpecJson,
         }),
       })
 
       if (response.ok) {
         const created = await response.json()
         console.log('Exercise created:', created)
+        setError(null)
+        alert(
+          `Exercise created successfully! ID: ${created.doc?.id || 'unknown'} (connected to lesson ${lessonId})`,
+        )
+      } else {
+        const errorData = await response.json()
+        console.error('Failed to create exercise:', errorData)
+        setError(`Failed to create exercise: ${JSON.stringify(errorData, null, 2)}`)
       }
     } catch (err) {
       console.error('Failed to create exercise:', err)
+      setError(`Failed to create exercise: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
@@ -171,11 +217,35 @@ export default function AIExerciseCreatorPage() {
         )}
 
         <div style={{ marginBottom: '20px' }}>
-          <label
-            style={{ display: 'block', fontWeight: '600', marginBottom: '8px', fontSize: '14px' }}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '8px',
+            }}
           >
-            Prompt for AI
-          </label>
+            <label style={{ fontWeight: '600', fontSize: '14px' }}>Prompt for AI</label>
+            <button
+              type="button"
+              onClick={() =>
+                setPrompt(
+                  'Extract this exercise completely with all parts (א, ב, ג, etc.). Convert all math symbols to LaTeX format ($x^2$, $\\frac{a}{b}$). Return as JSON with question, options (if any), correct answer index, and explanation.',
+                )
+              }
+              style={{
+                background: '#f3f4f6',
+                border: '1px solid #d1d5db',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '13px',
+                cursor: 'pointer',
+                color: '#374151',
+              }}
+            >
+              Use Sample Prompt
+            </button>
+          </div>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
