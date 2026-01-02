@@ -241,6 +241,9 @@ export const Exercises: CollectionConfig = {
           },
           admin: {
             description: 'Answer specification - must match the selected Question Type above',
+            components: {
+              Field: '@/components/admin/AnswerSpecJsonField#AnswerSpecJsonField',
+            },
           },
         },
       ],

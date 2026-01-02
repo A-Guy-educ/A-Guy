@@ -1,8 +1,9 @@
 'use client'
 
 import React from 'react'
-import { Folder, ChevronDown, ChevronRight, Trash2, ArrowUp, ArrowDown, Type } from 'lucide-react'
+import { Folder, ChevronDown, ChevronRight } from 'lucide-react'
 import type { ContainerBlock as ContainerBlockType } from '@/contracts/exercise/content'
+import { ContextualToolbar } from './ContextualToolbar'
 
 interface ContainerBlockProps {
   block: ContainerBlockType
@@ -12,8 +13,11 @@ interface ContainerBlockProps {
   isCollapsed: boolean
   onSelect: (blockId: string) => void
   onToggleCollapse: (blockId: string) => void
-  onAddChild: (parentId: string, blockType: 'container' | 'rich_text') => void
-  onAddSibling: (siblingId: string, blockType: 'container' | 'rich_text') => void
+  onAddBlock: (
+    parentId: string | null,
+    blockType: 'container' | 'rich_text',
+    position: 'inside' | 'below',
+  ) => void
   onDelete: (blockId: string) => void
   onUpdate: (blockId: string, updates: Partial<ContainerBlockType>) => void
   onMove: (blockId: string, direction: 'up' | 'down') => void
@@ -30,8 +34,7 @@ export const ContainerBlock: React.FC<ContainerBlockProps> = ({
   isCollapsed,
   onSelect,
   onToggleCollapse,
-  onAddChild,
-  onAddSibling,
+  onAddBlock,
   onDelete,
   onUpdate,
   onMove,
@@ -107,107 +110,30 @@ export const ContainerBlock: React.FC<ContainerBlockProps> = ({
           )}
         </div>
 
-        <div className="container-block__actions">
-          <div className="container-block__action-group">
-            <span className="container-block__action-label">Add inside:</span>
-            <button
-              className="icon-button icon-button--text"
-              onClick={(e) => {
-                e.stopPropagation()
-                onAddChild(block.id, 'rich_text')
-              }}
-              title="Add Rich Text Inside"
-            >
-              <Type size={14} />
-              <span>Text</span>
-            </button>
-            {!maxDepthReached && (
-              <button
-                className="icon-button icon-button--container"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onAddChild(block.id, 'container')
-                }}
-                title="Add Container Inside"
-              >
-                <Folder size={14} />
-                <span>Container</span>
-              </button>
-            )}
-          </div>
-          <div className="container-block__action-group">
-            <button
-              className="icon-button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onMove(block.id, 'up')
-              }}
-              disabled={!canMoveUp}
-              title="Move Up"
-            >
-              <ArrowUp size={14} />
-            </button>
-            <button
-              className="icon-button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onMove(block.id, 'down')
-              }}
-              disabled={!canMoveDown}
-              title="Move Down"
-            >
-              <ArrowDown size={14} />
-            </button>
-          </div>
-          <button
-            className="icon-button delete"
-            onClick={(e) => {
-              e.stopPropagation()
-              if (confirm('Delete this container and all its children?')) {
-                onDelete(block.id)
+        {isSelected && (
+          <ContextualToolbar
+            block={block}
+            canMoveUp={canMoveUp}
+            canMoveDown={canMoveDown}
+            maxDepthReached={maxDepthReached}
+            onMove={(direction) => onMove(block.id, direction)}
+            onDelete={() => onDelete(block.id)}
+            onAdd={(blockType, position) => {
+              if (position === 'inside') {
+                onAddBlock(block.id, blockType, 'inside')
+              } else {
+                onAddBlock(block.id, blockType, 'below')
               }
             }}
-            title="Delete Container"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
+          />
+        )}
       </div>
 
       {!isCollapsed && (
         <div className="container-block__body">
-          <div className="container-block__rail" />
           <div className="container-block__children">{children}</div>
         </div>
       )}
-
-      <div className="container-block__add-below">
-        <span className="container-block__action-label">Add below:</span>
-        <button
-          className="icon-button icon-button--text"
-          onClick={(e) => {
-            e.stopPropagation()
-            onAddSibling(block.id, 'rich_text')
-          }}
-          title="Add Rich Text Below"
-        >
-          <Type size={14} />
-          <span>Text</span>
-        </button>
-        {!maxDepthReached && (
-          <button
-            className="icon-button icon-button--container"
-            onClick={(e) => {
-              e.stopPropagation()
-              onAddSibling(block.id, 'container')
-            }}
-            title="Add Container Below"
-          >
-            <Folder size={14} />
-            <span>Container</span>
-          </button>
-        )}
-      </div>
     </div>
   )
 }
