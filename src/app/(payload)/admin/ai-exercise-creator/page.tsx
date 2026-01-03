@@ -8,6 +8,8 @@ export default function AIExerciseCreatorPage() {
   const searchParams = useSearchParams()
   const urlLessonId = searchParams.get('lessonId')
   const urlLessonSlug = searchParams.get('lessonSlug')
+  const urlCourseSlug = searchParams.get('courseSlug')
+  const urlChapterSlug = searchParams.get('chapterSlug')
 
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -179,11 +181,49 @@ export default function AIExerciseCreatorPage() {
     }
   }
 
+  const lessonUrl =
+    urlCourseSlug && urlChapterSlug && urlLessonSlug
+      ? `/courses/${urlCourseSlug}/chapters/${urlChapterSlug}/lessons/${urlLessonSlug}`
+      : null
+
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
-      <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '10px' }}>
-        AI Exercise Creator
-      </h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '10px' }}>
+        <h1 style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>AI Exercise Creator</h1>
+        {lessonUrl && (
+          <a
+            href={lessonUrl}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '8px 16px',
+              background: '#f3f4f6',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              color: '#374151',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'all 0.2s',
+            }}
+          >
+            <svg
+              style={{ width: '16px', height: '16px', marginRight: '6px' }}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Back to Lesson
+          </a>
+        )}
+      </div>
       <p style={{ color: '#666', marginBottom: '10px' }}>
         Upload an exercise image and provide a prompt for Gemini AI to convert it to structured data
       </p>
