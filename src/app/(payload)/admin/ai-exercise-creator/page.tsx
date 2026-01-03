@@ -1,9 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import type { ImageToExerciseAPIResponse } from '@/types/ai'
 
 export default function AIExerciseCreatorPage() {
+  const searchParams = useSearchParams()
+  const urlLessonId = searchParams.get('lessonId')
+  const urlLessonSlug = searchParams.get('lessonSlug')
+
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [prompt, setPrompt] = useState('')
@@ -72,16 +77,19 @@ export default function AIExerciseCreatorPage() {
 
   const createExercise = async (exerciseData: any) => {
     try {
-      // Fetch available lessons to connect the exercise
-      const lessonsResponse = await fetch('/api/lessons?limit=1', {
-        credentials: 'include',
-      })
+      // Use lesson from URL if available, otherwise fetch first available lesson
+      let lessonId = urlLessonId
 
-      let lessonId = undefined
-      if (lessonsResponse.ok) {
-        const lessonsData = await lessonsResponse.json()
-        if (lessonsData.docs && lessonsData.docs.length > 0) {
-          lessonId = lessonsData.docs[0].id
+      if (!lessonId) {
+        const lessonsResponse = await fetch('/api/lessons?limit=1', {
+          credentials: 'include',
+        })
+
+        if (lessonsResponse.ok) {
+          const lessonsData = await lessonsResponse.json()
+          if (lessonsData.docs && lessonsData.docs.length > 0) {
+            lessonId = lessonsData.docs[0].id
+          }
         }
       }
 
@@ -176,9 +184,23 @@ export default function AIExerciseCreatorPage() {
       <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '10px' }}>
         AI Exercise Creator
       </h1>
-      <p style={{ color: '#666', marginBottom: '30px' }}>
+      <p style={{ color: '#666', marginBottom: '10px' }}>
         Upload an exercise image and provide a prompt for Gemini AI to convert it to structured data
       </p>
+      {urlLessonSlug && (
+        <div
+          style={{
+            background: '#e3f2fd',
+            border: '1px solid #2196f3',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '20px',
+            color: '#1565c0',
+          }}
+        >
+          <strong>Creating exercise for lesson:</strong> {urlLessonSlug}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '20px' }}>
