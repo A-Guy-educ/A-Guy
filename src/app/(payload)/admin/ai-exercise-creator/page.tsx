@@ -137,15 +137,15 @@ export default function AIExerciseCreatorPage() {
           questionType,
           order: 0,
           lesson: lessonId, // Field name is 'lesson' not 'lessonId'
-          // Put the question text with full AI JSON in contentJson
-          contentJson: {
-            contentSchemaVersion: 1,
-            stem: [
+          // New content structure: { blocks: [...] }
+          content: {
+            blocks: [
               {
                 id: 'ai-generated-1',
                 type: 'rich_text',
                 format: 'md-math-v1',
                 value: `${exerciseData.question}\n\n---\n**Full AI Response:**\n\`\`\`json\n${JSON.stringify(exerciseData, null, 2)}\n\`\`\``,
+                mediaIds: [],
               },
             ],
           },

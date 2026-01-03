@@ -14,7 +14,8 @@
       "Bash(curl:*)",
       "Bash(npx tsc:*)",
       "Bash(wc:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git fetch:*)"
     ]
   }
 }
