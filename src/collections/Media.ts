@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url'
 
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
+import { createdByField } from '../fields/createdBy'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -38,6 +39,9 @@ export const Media: CollectionConfig = {
         },
       }),
     },
+
+    // Created By
+    createdByField,
   ],
   upload: {
     // Upload to the public/media directory in Next.js making them publicly accessible even outside of Payload

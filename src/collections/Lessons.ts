@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
+import { createdByField } from '../fields/createdBy'
 
 const formatSlug = (val: string): string =>
   val
@@ -156,5 +157,8 @@ export const Lessons: CollectionConfig = {
         description: 'URL-friendly identifier (auto-generated from title if empty)',
       },
     },
+
+    // Created By
+    createdByField,
   ],
 }

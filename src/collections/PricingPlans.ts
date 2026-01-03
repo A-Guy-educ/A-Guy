@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
+import { createdByField } from '../fields/createdBy'
 
 export const PricingPlans: CollectionConfig = {
   slug: 'pricing-plans',
@@ -152,5 +153,8 @@ export const PricingPlans: CollectionConfig = {
         description: 'Whether this pricing plan is currently active',
       },
     },
+
+    // Created By
+    createdByField,
   ],
 }

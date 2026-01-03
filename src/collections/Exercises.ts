@@ -2,27 +2,65 @@ import type { CollectionConfig } from 'payload'
 import { ValidationError } from 'payload'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
-import { AnswerSpecSchema, ExerciseContentSchema } from '../contracts'
+import { AnswerSpecSchema } from '../contracts'
 import { throwPayloadValidationError } from '../utilities/zodToPayloadError'
-import crypto from 'crypto'
+import { z } from 'zod'
+import { randomUUID } from 'node:crypto'
+import { createdByField } from '../fields/createdBy'
+
+import type { Access } from 'payload'
+
+const isAdminOrOwner: Access = ({ req }) => {
+  const user = req.user
+  if (!user) return false
+
+  // אדמין
+  if (user.role === 'admin') return true
+
+  // בעלים
+  return {
+    owner: {
+      equals: user.id,
+    },
+  }
+}
 
 /**
- * Exercises Collection — Strict content.blocks Structure
+ * Exercises Collection — Content (strict, no backward compatibility)
  *
- * ONLY valid structure:
+ * Target structure:
  *   exercise.content = { blocks: RichTextBlock[] }
  *
- * NO backward compatibility. NO migration. Any legacy shape is INVALID.
+ * Each RichTextBlock can reference media via:
+ *   mediaIds: string[]
  */
 
-// Default content (function -> unique IDs per doc)
+// ---- Strict content schema (flat only) ----
+const RichTextBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('rich_text'),
+    format: z.literal('md-math-v1'),
+    value: z.string(),
+    mediaIds: z.array(z.string().min(1)).default([]), // ✅ per-block media references
+  })
+  .strict()
+
+const ContentSchema = z
+  .object({
+    blocks: z.array(RichTextBlockSchema),
+  })
+  .strict()
+
+// Default content (function => unique IDs per new doc)
 const DEFAULT_CONTENT = () => ({
   blocks: [
     {
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       type: 'rich_text',
       format: 'md-math-v1',
       value: '# Write your question here\n\nExample: Solve for $x$: $2x+3=11$',
+      mediaIds: [],
     },
   ],
 })
@@ -43,12 +81,12 @@ const DEFAULT_ANSWER_MCQ = {
   correctOptionIds: ['o1'],
 }
 
-const _DEFAULT_ANSWER_TRUE_FALSE = {
+const DEFAULT_ANSWER_TRUE_FALSE = {
   questionType: 'true_false',
   correct: true,
 }
 
-const _DEFAULT_ANSWER_FREE_RESPONSE = {
+const DEFAULT_ANSWER_FREE_RESPONSE = {
   questionType: 'free_response',
   responseKind: 'numeric',
   acceptedAnswers: ['4'],
@@ -59,9 +97,9 @@ export const Exercises: CollectionConfig = {
   slug: 'exercises',
   access: {
     create: authenticated,
-    delete: authenticated,
+    delete: isAdminOrOwner,
     read: anyone,
-    update: authenticated,
+    update: isAdminOrOwner,
   },
   admin: {
     useAsTitle: 'title',
@@ -123,16 +161,13 @@ export const Exercises: CollectionConfig = {
           required: true,
           defaultValue: DEFAULT_CONTENT,
           validate: (value: unknown) => {
-            const result = ExerciseContentSchema.safeParse(value)
-
-            if (!result.success) {
-              throwPayloadValidationError(result.error, 'content')
-            }
-
-            return true
+            const result = ContentSchema.safeParse(value)
+            if (result.success) return true
+            return 'Invalid content. Expected: { blocks: RichTextBlock[] } with optional mediaIds: string[].'
           },
           admin: {
-            description: 'Exercise content. MUST be: { blocks: RichTextBlock[] }',
+            description:
+              'Exercise content. Format: { blocks: [...] } (each block supports mediaIds: string[])',
             components: {
               Field: '@/components/admin/ExerciseContentEditor#ExerciseContentEditor',
             },
@@ -158,7 +193,6 @@ export const Exercises: CollectionConfig = {
               throwPayloadValidationError(result.error, 'answerSpecJson')
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const questionType = (data as any)?.questionType
             if (questionType && result.data.questionType !== questionType) {
               throw new ValidationError({
@@ -182,5 +216,8 @@ export const Exercises: CollectionConfig = {
         },
       ],
     },
+
+    // Created By
+    createdByField,
   ],
 }
