@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
+import { createdByField } from '../fields/createdBy'
 
 export const ExerciseAssets: CollectionConfig = {
   slug: 'exercise-assets',
@@ -52,5 +53,8 @@ export const ExerciseAssets: CollectionConfig = {
         description: 'Optional caption for the figure',
       },
     },
+
+    // Created By
+    createdByField,
   ],
 }

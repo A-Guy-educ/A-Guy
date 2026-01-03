@@ -26,6 +26,7 @@ import {
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
 import { slugField } from 'payload'
+import { createdByField } from '../../fields/createdBy'
 
 export const Posts: CollectionConfig<'posts'> = {
   slug: 'posts',
@@ -215,6 +216,9 @@ export const Posts: CollectionConfig<'posts'> = {
       ],
     },
     slugField(),
+
+    // Created By
+    createdByField,
   ],
   hooks: {
     afterChange: [revalidatePost],

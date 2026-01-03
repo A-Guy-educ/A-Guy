@@ -2,27 +2,68 @@ import type { CollectionConfig } from 'payload'
 import { ValidationError } from 'payload'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
-import { ExerciseContentSchema, AnswerSpecSchema } from '../contracts'
+import { AnswerSpecSchema } from '../contracts'
 import { throwPayloadValidationError } from '../utilities/zodToPayloadError'
+import { z } from 'zod'
+import { randomUUID } from 'node:crypto'
+import { createdByField } from '../fields/createdBy'
+
+import type { Access } from 'payload'
+
+const isAdminOrOwner: Access = ({ req }) => {
+  const user = req.user
+  if (!user) return false
+
+  // אדמין
+  if (user.role === 'admin') return true
+
+  // בעלים
+  return {
+    owner: {
+      equals: user.id,
+    },
+  }
+}
 
 /**
- * Exercises Collection - Block V1
+ * Exercises Collection — Content (strict, no backward compatibility)
  *
- * Field-level validation + default templates for better Admin UX
+ * Target structure:
+ *   exercise.content = { blocks: RichTextBlock[] }
+ *
+ * Each RichTextBlock can reference media via:
+ *   mediaIds: string[]
  */
 
-// Default template - simplified single-level structure
-const DEFAULT_CONTENT_JSON = {
-  contentSchemaVersion: 1,
-  stem: [
+// ---- Strict content schema (flat only) ----
+const RichTextBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('rich_text'),
+    format: z.literal('md-math-v1'),
+    value: z.string(),
+    mediaIds: z.array(z.string().min(1)).default([]), // ✅ per-block media references
+  })
+  .strict()
+
+const ContentSchema = z
+  .object({
+    blocks: z.array(RichTextBlockSchema),
+  })
+  .strict()
+
+// Default content (function => unique IDs per new doc)
+const DEFAULT_CONTENT = () => ({
+  blocks: [
     {
-      id: 'default-block-1',
+      id: randomUUID(),
       type: 'rich_text',
       format: 'md-math-v1',
       value: '# Write your question here\n\nExample: Solve for $x$: $2x+3=11$',
+      mediaIds: [],
     },
   ],
-}
+})
 
 const DEFAULT_ANSWER_MCQ = {
   questionType: 'mcq',
@@ -51,13 +92,14 @@ const DEFAULT_ANSWER_FREE_RESPONSE = {
   acceptedAnswers: ['4'],
   tolerance: 0,
 }
+
 export const Exercises: CollectionConfig = {
   slug: 'exercises',
   access: {
     create: authenticated,
-    delete: authenticated,
+    delete: isAdminOrOwner,
     read: anyone,
-    update: authenticated,
+    update: isAdminOrOwner,
   },
   admin: {
     useAsTitle: 'title',
@@ -68,17 +110,13 @@ export const Exercises: CollectionConfig = {
     {
       type: 'collapsible',
       label: 'Exercise Meta (Basics)',
-      admin: {
-        initCollapsed: false,
-      },
+      admin: { initCollapsed: false },
       fields: [
         {
           name: 'title',
           type: 'text',
           required: true,
-          admin: {
-            description: 'Exercise title (for admin reference)',
-          },
+          admin: { description: 'Exercise title (for admin reference)' },
         },
         {
           name: 'order',
@@ -95,70 +133,54 @@ export const Exercises: CollectionConfig = {
           relationTo: 'lessons',
           required: true,
           index: true,
-          admin: {
-            description: 'The lesson this exercise belongs to',
-          },
+          admin: { description: 'The lesson this exercise belongs to' },
         },
         {
           name: 'questionType',
           type: 'select',
           required: true,
           options: [
-            {
-              label: 'Multiple Choice (MCQ)',
-              value: 'mcq',
-            },
-            {
-              label: 'True/False',
-              value: 'true_false',
-            },
-            {
-              label: 'Free Response',
-              value: 'free_response',
-            },
+            { label: 'Multiple Choice (MCQ)', value: 'mcq' },
+            { label: 'True/False', value: 'true_false' },
+            { label: 'Free Response', value: 'free_response' },
           ],
-          admin: {
-            description: 'Question type - must match answerSpecJson.questionType',
-          },
+          admin: { description: 'Question type - must match answerSpecJson.questionType' },
         },
       ],
     },
+
     // Section 2: Content
     {
       type: 'collapsible',
       label: 'Content',
-      admin: {
-        initCollapsed: false,
-      },
+      admin: { initCollapsed: false },
       fields: [
         {
-          name: 'contentJson',
+          name: 'content',
           type: 'json',
           required: true,
-          defaultValue: DEFAULT_CONTENT_JSON,
-          validate: (value) => {
-            const result = ExerciseContentSchema.safeParse(value)
-            if (!result.success) {
-              throwPayloadValidationError(result.error, 'contentJson')
-            }
-            return true
+          defaultValue: DEFAULT_CONTENT,
+          validate: (value: unknown) => {
+            const result = ContentSchema.safeParse(value)
+            if (result.success) return true
+            return 'Invalid content. Expected: { blocks: RichTextBlock[] } with optional mediaIds: string[].'
           },
           admin: {
-            description: 'Exercise content blocks (stem)',
+            description:
+              'Exercise content. Format: { blocks: [...] } (each block supports mediaIds: string[])',
             components: {
-              Field: '@/components/admin/ExerciseContentEditor#ExerciseContentEditor', // Custom V1 Editor
+              Field: '@/components/admin/ExerciseContentEditor#ExerciseContentEditor',
             },
           },
         },
       ],
     },
+
     // Section 3: Answer
     {
       type: 'collapsible',
       label: 'Answer',
-      admin: {
-        initCollapsed: false,
-      },
+      admin: { initCollapsed: false },
       fields: [
         {
           name: 'answerSpecJson',
@@ -166,13 +188,11 @@ export const Exercises: CollectionConfig = {
           required: true,
           defaultValue: DEFAULT_ANSWER_MCQ,
           validate: (value, { data }) => {
-            // Validate structure with Zod
             const result = AnswerSpecSchema.safeParse(value)
             if (!result.success) {
               throwPayloadValidationError(result.error, 'answerSpecJson')
             }
 
-            // Check questionType consistency
             const questionType = (data as any)?.questionType
             if (questionType && result.data.questionType !== questionType) {
               throw new ValidationError({
@@ -189,9 +209,15 @@ export const Exercises: CollectionConfig = {
           },
           admin: {
             description: 'Answer specification - must match the selected Question Type above',
+            components: {
+              Field: '@/components/admin/AnswerSpecJsonField#AnswerSpecJsonField',
+            },
           },
         },
       ],
     },
+
+    // Created By
+    createdByField,
   ],
 }

@@ -1,5 +1,4 @@
 {
-  "$schema": "Example MCQ AnswerSpec (single select)",
   "questionType": "mcq",
   "multiSelect": false,
   "options": [

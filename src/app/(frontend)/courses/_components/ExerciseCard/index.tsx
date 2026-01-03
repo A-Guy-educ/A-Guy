@@ -50,13 +50,19 @@ export function ExerciseCard({
           <Badge variant={badge.variant}>{badge.label}</Badge>
         </div>
         <CardTitle className="text-xl">{exercise.title}</CardTitle>
-        {exercise.contentJson &&
-          typeof exercise.contentJson === 'object' &&
-          'stem' in exercise.contentJson &&
-          Array.isArray(exercise.contentJson.stem) &&
-          exercise.contentJson.stem.length > 0 && (
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        {(exercise as any).content &&
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          typeof (exercise as any).content === 'object' &&
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          'blocks' in (exercise as any).content &&
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          Array.isArray((exercise as any).content.blocks) &&
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          (exercise as any).content.blocks.length > 0 && (
             <CardDescription className="line-clamp-2">
-              {exercise.contentJson.stem[0]?.value || t('exercisesTitle')}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {(exercise as any).content.blocks[0]?.value || t('exercisesTitle')}
             </CardDescription>
           )}
       </CardHeader>

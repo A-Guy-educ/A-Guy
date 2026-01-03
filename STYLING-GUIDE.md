@@ -164,9 +164,20 @@ Use Tailwind opacity modifiers with base colors:
 
 ### Forms
 
+**Input Field Styling Rules:**
+
+- Input fields must have **rounded borders** (use `rounded-md` or `rounded` class)
+- Input field backgrounds must be **slightly altered** from the page background (use `bg-form` token)
+- This provides visual distinction and better UX
+
 ```tsx
 <input
-  className="bg-form border-form-border text-foreground placeholder:text-form-placeholder"
+  className="bg-form border-form-border text-foreground placeholder:text-form-placeholder rounded-md"
+  placeholder="Enter text..."
+/>
+
+<textarea
+  className="bg-form border-form-border text-foreground placeholder:text-form-placeholder rounded-md"
   placeholder="Enter text..."
 />
 ```

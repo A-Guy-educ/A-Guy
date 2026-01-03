@@ -67,8 +67,8 @@
     --selected-bg: var(--muted);
     --selected-fg: var(--foreground);
 
-    /* Form elements */
-    --form-bg: var(--background);
+    /* Form elements - slightly altered background for visual distinction */
+    --form-bg: var(--card);
     --form-border: var(--border);
     --form-placeholder: var(--muted-foreground);
 
@@ -128,8 +128,8 @@
     --selected-bg: var(--muted);
     --selected-fg: var(--foreground);
 
-    /* Form elements */
-    --form-bg: var(--background);
+    /* Form elements - slightly altered background for visual distinction */
+    --form-bg: var(--card);
     --form-border: var(--border);
     --form-placeholder: var(--muted-foreground);
 
@@ -202,6 +202,11 @@
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
+  }
+
+  /* Improved gradient for dark mode */
+  [data-theme='dark'] .gradient-border::before {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.6), hsl(var(--accent) / 0.4));
   }
 
   .glass-card {

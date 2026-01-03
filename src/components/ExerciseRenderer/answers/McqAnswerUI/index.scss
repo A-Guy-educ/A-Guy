@@ -21,7 +21,8 @@
     border: 1px solid var(--theme-elevation-300);
     border-radius: 8px;
     cursor: pointer;
-    background: white;
+    background: var(--theme-elevation-0);
+    color: var(--theme-text);
     transition: all 0.2s;
 
     &:hover:not(&--disabled) {

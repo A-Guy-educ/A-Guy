@@ -76,6 +76,19 @@
     "mcqBadge": "בחירה מרובה",
     "trueFalseBadge": "נכון/לא נכון",
     "freeResponseBadge": "תשובה חופשית",
-    "notFound": "לא נמצא"
+    "notFound": "לא נמצא",
+    "notebookTitle": "מחברת תרגול",
+    "chatTab": "צ'אט",
+    "formulasTab": "נוסחאות",
+    "notesTab": "הערות",
+    "chatWelcome": "היי! אני כאן לעזור עם שאלה 5. איזה סעיף תרצה שנבדוק?",
+    "chatHint": "רמז",
+    "chatSolution": "פתרון",
+    "chatFullSolution": "מלא",
+    "chatInputPlaceholder": "שלח הודעה...",
+    "chatSend": "send",
+    "formulaSubtitle": "נוסחאות עזר",
+    "notesSubtitle": "הערות אישיות",
+    "notesPlaceholder": "הוסף הערות כאן..."
   }
 }

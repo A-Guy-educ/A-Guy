@@ -13,25 +13,26 @@
     padding: base(0.75);
     font-size: 1rem;
     font-family: inherit;
-    border: 2px solid var(--theme-elevation-300);
+    border: 1px solid hsl(var(--form-border));
     border-radius: 8px;
-    background: white;
+    background: hsl(var(--form-bg));
+    color: hsl(var(--foreground));
     transition: all 0.2s;
 
     &:focus {
       outline: none;
-      border-color: var(--theme-info-500);
-      background: var(--theme-info-50);
+      border-color: hsl(var(--ring));
+      box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
     }
 
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
-      background: var(--theme-elevation-100);
+      background: hsl(var(--muted));
     }
 
     &::placeholder {
-      color: var(--theme-elevation-500);
+      color: hsl(var(--form-placeholder));
       opacity: 0.6;
     }
   }

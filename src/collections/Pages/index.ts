@@ -18,6 +18,7 @@ import {
   OverviewField,
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
+import { createdByField } from '../../fields/createdBy'
 
 export const Pages: CollectionConfig<'pages'> = {
   slug: 'pages',
@@ -112,6 +113,9 @@ export const Pages: CollectionConfig<'pages'> = {
       },
     },
     slugField(),
+
+    // Created By
+    createdByField,
   ],
   hooks: {
     afterChange: [revalidatePage],

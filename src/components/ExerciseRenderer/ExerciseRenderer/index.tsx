@@ -1,6 +1,8 @@
 /**
  * Exercise Renderer
  * Main component that renders complete exercises with content blocks and answer UI
+ *
+ * Strict: Only supports content.blocks format
  */
 
 'use client'
@@ -60,6 +62,21 @@ export function ExerciseRenderer({
     setHasChecked(true)
   }
 
+  // Validate content structure
+  if (!content?.blocks || !Array.isArray(content.blocks)) {
+    return (
+      <div className={cn(baseClass, className)}>
+        <div className={`${baseClass}__error`}>
+          <h3>Invalid Content Format</h3>
+          <p>Expected: {`{ blocks: [] }`}</p>
+          <p>Received: {JSON.stringify(content)}</p>
+        </div>
+      </div>
+    )
+  }
+
+  const blocks = content.blocks
+
   return (
     <div className={cn(baseClass, className)}>
       {/* Debug Mode Info */}
@@ -71,18 +88,20 @@ export function ExerciseRenderer({
           {answerSpec.questionType === 'free_response' && (
             <div>Response Kind: {answerSpec.responseKind}</div>
           )}
+          <div>Content Structure: Flat blocks (strict)</div>
+          <div>Blocks Found: {blocks.length}</div>
         </div>
       )}
 
       {/* Content Section */}
       <div className={`${baseClass}__content`}>
         <ErrorBoundary fallbackTitle="Error rendering exercise content">
-          {/* Render stem blocks */}
-          {content.stem && content.stem.length > 0 ? (
-            content.stem.map((block) => (
+          {blocks.length > 0 ? (
+            blocks.map((block) => (
               <BlockRenderer
                 key={block.id}
-                block={block}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                block={block as any}
                 mode={mode}
                 availableAssets={availableAssets}
               />

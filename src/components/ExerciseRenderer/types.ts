@@ -1,5 +1,7 @@
 /**
  * Type definitions for Exercise Renderer
+ *
+ * Strict: Only supports content.blocks format
  */
 
 export type PreviewMode = 'student' | 'debug'
@@ -14,8 +16,21 @@ export interface CheckResult {
   message?: string
 }
 
+/**
+ * Content structure - STRICT
+ * ONLY valid: { blocks: RichTextBlock[] }
+ */
+export interface ExerciseContentData {
+  blocks: Array<{
+    id: string
+    type: 'rich_text'
+    format: 'md-math-v1'
+    value: string
+  }>
+}
+
 export interface ExerciseRendererProps {
-  content: import('@/contracts').ExerciseContent
+  content: ExerciseContentData
   answerSpec: import('@/contracts').AnswerSpec
   questionType: 'mcq' | 'true_false' | 'free_response'
   mode?: PreviewMode

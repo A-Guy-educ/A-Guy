@@ -57,7 +57,7 @@
     padding: base(0.75) base(1.5);
     font-size: 1rem;
     font-weight: 600;
-    color: white;
+    color: var(--theme-elevation-0);
     background: var(--theme-info-500);
     border: none;
     border-radius: 8px;
@@ -65,7 +65,7 @@
     transition: all 0.2s;
 
     &:hover:not(:disabled) {
-      opacity: 0.9;
+      background: var(--theme-info-600);
     }
 
     &:disabled {
@@ -75,6 +75,11 @@
 
     &--correct {
       background: var(--theme-success-500);
+      color: var(--theme-elevation-0);
+
+      &:hover:not(:disabled) {
+        background: var(--theme-success-600);
+      }
     }
   }
 

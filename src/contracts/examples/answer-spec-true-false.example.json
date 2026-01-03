@@ -1,5 +1,4 @@
 {
-  "$schema": "Example True/False AnswerSpec",
   "questionType": "true_false",
   "correct": true
 }

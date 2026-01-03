@@ -217,6 +217,10 @@ export interface Page {
    */
   generateSlug?: boolean | null;
   slug: string;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -355,6 +359,10 @@ export interface Category {
    */
   generateSlug?: boolean | null;
   slug: string;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   parent?: (string | null) | Category;
   breadcrumbs?:
     | {
@@ -366,6 +374,32 @@ export interface Category {
     | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: string;
+  name?: string | null;
+  role: 'admin' | 'student';
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -406,6 +440,10 @@ export interface Course {
     title?: string | null;
     description?: string | null;
   };
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -647,6 +685,10 @@ export interface Chapter {
    * URL-friendly identifier (auto-generated from title if empty)
    */
   slug?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -692,6 +734,10 @@ export interface Lesson {
    * URL-friendly identifier (auto-generated from title if empty)
    */
   slug?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -718,9 +764,9 @@ export interface Exercise {
    */
   questionType: 'mcq' | 'true_false' | 'free_response';
   /**
-   * Exercise content blocks (stem)
+   * Exercise content. Format: { blocks: [...] } (each block supports mediaIds: string[])
    */
-  contentJson:
+  content:
     | {
         [k: string]: unknown;
       }
@@ -741,6 +787,10 @@ export interface Exercise {
     | number
     | boolean
     | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -772,6 +822,10 @@ export interface ExerciseAsset {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -783,32 +837,6 @@ export interface ExerciseAsset {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: string;
-  name?: string | null;
-  role: 'admin' | 'student';
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -832,6 +860,10 @@ export interface Media {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   folder?: (string | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
@@ -975,6 +1007,10 @@ export interface Post {
    */
   generateSlug?: boolean | null;
   slug: string;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -1017,6 +1053,10 @@ export interface PricingPlan {
    * Whether this pricing plan is currently active
    */
   isActive?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -1359,6 +1399,7 @@ export interface PagesSelect<T extends boolean = true> {
   publishedAt?: T;
   generateSlug?: T;
   slug?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1446,6 +1487,7 @@ export interface CategoriesSelect<T extends boolean = true> {
   title?: T;
   generateSlug?: T;
   slug?: T;
+  createdBy?: T;
   parent?: T;
   breadcrumbs?:
     | T
@@ -1477,6 +1519,7 @@ export interface CoursesSelect<T extends boolean = true> {
         title?: T;
         description?: T;
       };
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1493,6 +1536,7 @@ export interface ChaptersSelect<T extends boolean = true> {
   status?: T;
   isActive?: T;
   slug?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1510,6 +1554,7 @@ export interface LessonsSelect<T extends boolean = true> {
   contentType?: T;
   pdfUrl?: T;
   slug?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1522,8 +1567,9 @@ export interface ExercisesSelect<T extends boolean = true> {
   order?: T;
   lesson?: T;
   questionType?: T;
-  contentJson?: T;
+  content?: T;
   answerSpecJson?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1534,6 +1580,7 @@ export interface ExercisesSelect<T extends boolean = true> {
 export interface ExerciseAssetsSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -1577,6 +1624,7 @@ export interface UsersSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  createdBy?: T;
   folder?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1691,6 +1739,7 @@ export interface PostsSelect<T extends boolean = true> {
       };
   generateSlug?: T;
   slug?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1708,6 +1757,7 @@ export interface PricingPlansSelect<T extends boolean = true> {
   price?: T;
   currency?: T;
   isActive?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }

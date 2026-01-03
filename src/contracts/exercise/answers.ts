@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ExerciseBlockSchema } from './blocks'
+import { RichTextBlockSchema } from './content'
 
 /**
  * Answer specifications - Discriminated union by 'questionType'
@@ -16,7 +16,7 @@ const McqAnswerSpecSchema = z
         z
           .object({
             id: z.string(),
-            content: z.array(ExerciseBlockSchema),
+            content: z.array(RichTextBlockSchema),
           })
           .strict(),
       )

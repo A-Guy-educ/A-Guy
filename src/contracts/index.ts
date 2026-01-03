@@ -35,23 +35,13 @@ export { AxisSpecV1Schema, type AxisSpecV1 } from './graphics/axis.v1'
 // Graphics - Geometry
 export { GeometrySpecV1Schema, type GeometrySpecV1 } from './graphics/geometry.v1'
 
-// Exercise - Content (Block Types)
+// Exercise - Content (Strict: content.blocks only)
 export {
-  ExerciseBlockSchema,
-  type ExerciseBlock,
-  type ExerciseBlockLevel2,
-  type ExerciseBlockLevel3,
-  type LeafBlock,
+  RichTextBlockSchema,
+  ExerciseContentSchema,
   type RichTextBlock,
-  type FigureBlock,
-  type TableBlock,
-  type AxisSystemBlock,
-  type GeometryBlock,
-  type SectionBlock,
-} from './exercise/blocks'
-
-// Exercise - Content Schema (Simplified)
-export { ExerciseContentSchema, type ExerciseContent } from './exercise/content'
+  type ExerciseContent,
+} from './exercise/content'
 
 // Exercise - Answers
 export {

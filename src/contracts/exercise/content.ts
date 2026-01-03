@@ -2,17 +2,16 @@ import { z } from 'zod'
 import { BlockIdSchema } from '../primitives'
 
 /**
- * Exercise Content Schema - Simplified Single Level
+ * Exercise Content Schema - Strict Flat Blocks (No Backward Compatibility)
  *
- * Represents the complete content of an exercise.
- * - contentSchemaVersion: 1 (always)
- * - stem: Array of RichTextBlock only (no sections, no nesting)
+ * ONLY valid structure:
+ *   content: { blocks: RichTextBlock[] }
  *
- * Single-level structure for simplicity and better UX.
+ * Any other structure is INVALID and will be rejected.
  */
 
-/** Rich text block - the only block type supported */
-const RichTextBlockSchema = z
+/** Rich text block - the only supported block type */
+export const RichTextBlockSchema = z
   .object({
     id: BlockIdSchema,
     type: z.literal('rich_text'),
@@ -21,12 +20,16 @@ const RichTextBlockSchema = z
   })
   .strict()
 
+export type RichTextBlock = z.infer<typeof RichTextBlockSchema>
+
+/**
+ * Exercise Content - Strict Schema
+ * REQUIRES: { blocks: RichTextBlock[] }
+ */
 export const ExerciseContentSchema = z
   .object({
-    contentSchemaVersion: z.literal(1).default(1),
-    stem: z.array(RichTextBlockSchema),
+    blocks: z.array(RichTextBlockSchema),
   })
   .strict()
 
 export type ExerciseContent = z.infer<typeof ExerciseContentSchema>
-export type RichTextBlock = z.infer<typeof RichTextBlockSchema>
