@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { ImageToExerciseAPIResponse } from '@/types/ai'
-import { createExerciseFromAI } from './utils'
+import { createExerciseFromAI } from './createExerciseFromAI'
+import { BackArrowIcon } from './BackArrowIcon'
+import styles from './AIExerciseCreator.module.css'
 
 export default function AIExerciseCreatorPage() {
   const searchParams = useSearchParams()
@@ -92,124 +94,55 @@ export default function AIExerciseCreatorPage() {
       ? `/courses/${urlCourseSlug}/chapters/${urlChapterSlug}/lessons/${urlLessonSlug}`
       : null
 
+  const samplePrompt =
+    'Extract this exercise completely with all parts (א, ב, ג, etc.). Convert all math symbols to LaTeX format ($x^2$, $\\frac{a}{b}$). Return as JSON with question, options (if any), correct answer index, and explanation.'
+
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '10px' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>AI Exercise Creator</h1>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>AI Exercise Creator</h1>
         {lessonUrl && (
-          <a
-            href={lessonUrl}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '8px 16px',
-              background: '#f3f4f6',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              textDecoration: 'none',
-              color: '#374151',
-              fontSize: '14px',
-              fontWeight: '500',
-              transition: 'all 0.2s',
-            }}
-          >
-            <svg
-              style={{ width: '16px', height: '16px', marginRight: '6px' }}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
+          <a href={lessonUrl} className={styles.backButton}>
+            <BackArrowIcon className={styles.backIcon} />
             Back to Lesson
           </a>
         )}
       </div>
-      <p style={{ color: '#666', marginBottom: '10px' }}>
+
+      <p className={styles.description}>
         Upload an exercise image and provide a prompt for Gemini AI to convert it to structured data
       </p>
+
       {urlLessonSlug && (
-        <div
-          style={{
-            background: '#e3f2fd',
-            border: '1px solid #2196f3',
-            borderRadius: '8px',
-            padding: '12px 16px',
-            marginBottom: '20px',
-            color: '#1565c0',
-          }}
-        >
+        <div className={styles.lessonInfo}>
           <strong>Creating exercise for lesson:</strong> {urlLessonSlug}
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '20px' }}>
-          <label
-            style={{ display: 'block', fontWeight: '600', marginBottom: '8px', fontSize: '14px' }}
-          >
-            Exercise Image
-          </label>
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Exercise Image</label>
           <input
             type="file"
             accept="image/png,image/jpeg,image/jpg,image/webp"
             onChange={handleImageSelect}
-            style={{
-              padding: '10px',
-              border: '2px dashed #ddd',
-              borderRadius: '8px',
-              width: '100%',
-              cursor: 'pointer',
-            }}
+            className={styles.fileInput}
           />
         </div>
 
         {imagePreview && (
-          <div style={{ marginBottom: '20px' }}>
-            <img
-              src={imagePreview}
-              alt="Preview"
-              style={{
-                maxWidth: '100%',
-                maxHeight: '400px',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-              }}
-            />
+          <div className={styles.previewContainer}>
+            <img src={imagePreview} alt="Preview" className={styles.preview} />
           </div>
         )}
 
-        <div style={{ marginBottom: '20px' }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '8px',
-            }}
-          >
-            <label style={{ fontWeight: '600', fontSize: '14px' }}>Prompt for AI</label>
+        <div className={styles.formGroup}>
+          <div className={styles.labelRow}>
+            <label className={styles.label}>Prompt for AI</label>
             <button
               type="button"
-              onClick={() =>
-                setPrompt(
-                  'Extract this exercise completely with all parts (א, ב, ג, etc.). Convert all math symbols to LaTeX format ($x^2$, $\\frac{a}{b}$). Return as JSON with question, options (if any), correct answer index, and explanation.',
-                )
-              }
-              style={{
-                background: '#f3f4f6',
-                border: '1px solid #d1d5db',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                fontSize: '13px',
-                cursor: 'pointer',
-                color: '#374151',
-              }}
+              onClick={() => setPrompt(samplePrompt)}
+              className={styles.sampleButton}
             >
               Use Sample Prompt
             </button>
@@ -219,75 +152,41 @@ export default function AIExerciseCreatorPage() {
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Example: Extract this math exercise and return it as JSON with question, options, and correct answer..."
             rows={4}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontFamily: 'inherit',
-              resize: 'vertical',
-            }}
+            className={styles.textarea}
           />
         </div>
 
         <button
           type="submit"
           disabled={isProcessing || !imageFile || !prompt.trim()}
-          style={{
-            background: isProcessing ? '#ccc' : '#0070f3',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: isProcessing ? 'not-allowed' : 'pointer',
-          }}
+          className={styles.submitButton}
         >
           {isProcessing ? 'Processing...' : 'Generate Exercise'}
         </button>
       </form>
 
       {error && (
-        <div
-          style={{
-            marginTop: '20px',
-            padding: '16px',
-            background: '#fee',
-            border: '1px solid #fcc',
-            borderRadius: '8px',
-            color: '#c00',
-          }}
-        >
+        <div className={styles.errorBanner}>
           <strong>Error:</strong> {error}
         </div>
       )}
 
       {result && result.success && result.data && (
-        <div
-          style={{
-            marginTop: '20px',
-            padding: '20px',
-            background: '#f0f9ff',
-            border: '1px solid #bae6fd',
-            borderRadius: '8px',
-          }}
-        >
-          <h2
-            style={{ fontSize: '20px', fontWeight: '600', marginBottom: '15px', color: '#0c4a6e' }}
-          >
-            Exercise Created Successfully!
-          </h2>
+        <div className={styles.resultsSection}>
+          <h2 className={styles.resultsTitle}>Exercise Created Successfully!</h2>
 
-          <div style={{ marginBottom: '15px' }}>
-            <strong>Question:</strong>
-            <p style={{ marginTop: '5px' }}>{result.data.question}</p>
+          <div className={styles.resultCard}>
+            <div className={styles.resultHeader}>
+              <span className={styles.resultLabel}>Question</span>
+            </div>
+            <p className={styles.resultValue}>{result.data.question}</p>
           </div>
 
-          <div style={{ marginBottom: '15px' }}>
-            <strong>Options:</strong>
-            <ul style={{ marginTop: '5px', paddingLeft: '20px' }}>
+          <div className={styles.resultCard}>
+            <div className={styles.resultHeader}>
+              <span className={styles.resultLabel}>Options</span>
+            </div>
+            <ul className={styles.resultValue}>
               {result.data.options.map((opt, i) => (
                 <li
                   key={i}
@@ -300,34 +199,27 @@ export default function AIExerciseCreatorPage() {
           </div>
 
           {result.data.explanation && (
-            <div style={{ marginBottom: '15px' }}>
-              <strong>Explanation:</strong>
-              <p style={{ marginTop: '5px' }}>{result.data.explanation}</p>
+            <div className={styles.resultCard}>
+              <div className={styles.resultHeader}>
+                <span className={styles.resultLabel}>Explanation</span>
+              </div>
+              <p className={styles.resultValue}>{result.data.explanation}</p>
             </div>
           )}
 
-          <details style={{ marginTop: '20px' }}>
-            <summary style={{ cursor: 'pointer', fontWeight: '600' }}>
-              View Full JSON Response
-            </summary>
-            <pre
-              style={{
-                marginTop: '10px',
-                padding: '15px',
-                background: '#1e293b',
-                color: '#e2e8f0',
-                borderRadius: '8px',
-                overflow: 'auto',
-                fontSize: '12px',
-              }}
-            >
-              {JSON.stringify(result, null, 2)}
-            </pre>
-          </details>
-
-          <div style={{ marginTop: '15px', fontSize: '13px', color: '#666' }}>
-            Processing time: {result.metadata?.processingTimeMs}ms | Model: {result.metadata?.model}
+          <div className={styles.resultCard}>
+            <div className={styles.resultHeader}>
+              <span className={styles.resultLabel}>Full JSON Response</span>
+              <button type="button" className={styles.jsonToggle}>
+                View JSON
+              </button>
+            </div>
+            <pre className={styles.jsonBlock}>{JSON.stringify(result, null, 2)}</pre>
           </div>
+
+          <p className={styles.resultValue}>
+            Processing time: {result.metadata?.processingTimeMs}ms | Model: {result.metadata?.model}
+          </p>
         </div>
       )}
     </div>

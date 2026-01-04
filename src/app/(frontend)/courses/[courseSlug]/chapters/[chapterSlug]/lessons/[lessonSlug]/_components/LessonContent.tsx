@@ -8,6 +8,7 @@ import { EmptyState } from '@/app/(frontend)/courses/_components/EmptyState'
 import { useTranslations } from '@/providers/I18n'
 import Link from 'next/link'
 import type { Exercise } from '@/payload-types'
+import { PlusIcon } from './PlusIcon'
 import styles from './LessonContent.module.css'
 
 type ViewMode = 'non-interactive' | 'interactive'
@@ -73,19 +74,7 @@ export function LessonContent({
                       href={`/admin/ai-exercise-creator?lessonId=${lessonId}&lessonSlug=${lessonSlug}&courseSlug=${courseSlug}&chapterSlug=${chapterSlug}`}
                       className={styles.createButton}
                     >
-                      <svg
-                        className={styles.buttonIcon}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
+                      <PlusIcon className={styles.buttonIcon} />
                       AI Exercise Creator
                     </Link>
                   )}
