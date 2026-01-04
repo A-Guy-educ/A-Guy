@@ -8,6 +8,7 @@ import { EmptyState } from '@/app/(frontend)/courses/_components/EmptyState'
 import { useTranslations } from '@/providers/I18n'
 import Link from 'next/link'
 import type { Exercise } from '@/payload-types'
+import styles from './LessonContent.module.css'
 
 type ViewMode = 'non-interactive' | 'interactive'
 
@@ -52,7 +53,7 @@ export function LessonContent({
         onViewChange={setViewMode}
       />
 
-      <section className="mb-8">
+      <section className={styles.section}>
         {viewMode === 'non-interactive' ? (
           <>
             {hasPdf ? (
@@ -63,17 +64,17 @@ export function LessonContent({
           </>
         ) : (
           <>
-            <div className="space-y-4">
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-2xl font-bold">{t('exercisesTitle')}</h2>
+            <div className={styles.exercisesContainer}>
+              <div className={styles.header}>
+                <div className={styles.headerTop}>
+                  <h2 className={styles.title}>{t('exercisesTitle')}</h2>
                   {isAdmin && (
                     <Link
                       href={`/admin/ai-exercise-creator?lessonId=${lessonId}&lessonSlug=${lessonSlug}&courseSlug=${courseSlug}&chapterSlug=${chapterSlug}`}
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                      className={styles.createButton}
                     >
                       <svg
-                        className="w-4 h-4 mr-2"
+                        className={styles.buttonIcon}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -89,10 +90,10 @@ export function LessonContent({
                     </Link>
                   )}
                 </div>
-                <p className="text-muted-foreground">{t('exercisesDescription')}</p>
+                <p className={styles.description}>{t('exercisesDescription')}</p>
               </div>
               {hasExercises ? (
-                <div className="space-y-3">
+                <div className={styles.exercisesList}>
                   {exercises.map((exercise, index) => (
                     <ExerciseCard
                       key={exercise.id}
@@ -105,10 +106,10 @@ export function LessonContent({
                   ))}
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                  <p className="text-gray-500 mb-4">No exercises yet for this lesson</p>
+                <div className={styles.emptyState}>
+                  <p className={styles.emptyStateText}>No exercises yet for this lesson</p>
                   {isAdmin && (
-                    <p className="text-sm text-gray-400">
+                    <p className={styles.emptyStateHint}>
                       Click &ldquo;AI Exercise Creator&rdquo; above to generate exercises from
                       images
                     </p>
