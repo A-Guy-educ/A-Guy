@@ -4,10 +4,10 @@
  *
  * Future: Can be extended for exercise chat, editing assistance, etc.
  */
-import { getGeminiClient } from '../client'
+import { getGeminiClient } from '../gemini-ai-provider.server'
 import { AI_MODELS } from '../models'
-import { optimizeImageForAI } from './image-processor'
-import { IMAGE_TO_EXERCISE_PROMPT } from '../prompts/image-to-exercise'
+import { optimizeImageForAI } from './image-optimizer-service'
+import { IMAGE_TO_EXERCISE_PROMPT } from '../prompts/simple-text-question'
 
 export interface ImageToExerciseInput {
   imageBuffer: Buffer

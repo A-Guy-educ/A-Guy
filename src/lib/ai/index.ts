@@ -9,13 +9,13 @@
  * - Auto-grading assistance
  */
 
-export { getGeminiClient } from './client'
+export { getGeminiClient } from './gemini-ai-provider.server'
 export { AI_MODELS, type AIModelKey, type AIModelConfig } from './models'
-export { optimizeImageForAI, type OptimizedImage } from './services/image-processor'
+export { optimizeImageForAI, type OptimizedImage } from './services/image-optimizer-service'
 export {
   generateExerciseFromImage,
   type ImageToExerciseInput,
   type ImageToExerciseResult,
   type ImageToExerciseResponse,
 } from './services/exercise-generator'
-export { IMAGE_TO_EXERCISE_PROMPT } from './prompts/image-to-exercise'
+export { IMAGE_TO_EXERCISE_PROMPT } from './prompts/simple-text-question'
