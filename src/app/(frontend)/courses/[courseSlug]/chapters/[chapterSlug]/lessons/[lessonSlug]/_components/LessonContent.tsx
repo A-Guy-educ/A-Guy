@@ -10,6 +10,7 @@ import Link from 'next/link'
 import type { Exercise, Media } from '@/payload-types'
 import { PlusIcon } from './PlusIcon'
 import styles from './LessonContent.module.css'
+import { ConvertButton } from './ConvertButton'
 
 type ViewMode = 'non-interactive' | 'interactive'
 
@@ -58,7 +59,14 @@ export function LessonContent({
         {viewMode === 'non-interactive' ? (
           <>
             {hasContent && contentFile?.url ? (
-              <PDFViewer pdfUrl={contentFile.url} lessonTitle={lessonTitle} />
+              <>
+                <PDFViewer pdfUrl={contentFile.url} lessonTitle={lessonTitle} />
+                {isAdmin && (
+                  <div className={styles.convertButtonContainer}>
+                    <ConvertButton lessonId={lessonId} />
+                  </div>
+                )}
+              </>
             ) : (
               <EmptyState type="noPDF" />
             )}
