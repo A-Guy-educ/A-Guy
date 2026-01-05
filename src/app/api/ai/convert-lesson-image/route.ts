@@ -15,10 +15,6 @@ import type { Media } from '@/payload-types'
 import fs from 'fs'
 import path from 'path'
 
-// Default prompt for Hebrew math exercises
-const DEFAULT_PROMPT =
-  'Extract this exercise completely with all parts (א, ב, ג, etc.). Convert all math symbols to LaTeX format ($x^2$, $\\frac{a}{b}$). Return as JSON with question, options (if any), correct answer index, and explanation.'
-
 export async function POST(request: NextRequest) {
   const requestId = randomUUID()
   const reqLogger = createRequestLogger(requestId)
@@ -112,11 +108,10 @@ export async function POST(request: NextRequest) {
       'Calling AI service with lesson image',
     )
 
-    // Call AI service
+    // Call AI service (image only)
     const result = await generateExerciseFromImage({
       imageBuffer,
       mimeType,
-      accompanyingText: DEFAULT_PROMPT,
     })
 
     if (!result.success) {
