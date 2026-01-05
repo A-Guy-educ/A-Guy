@@ -1,9 +1,8 @@
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import sharp from 'sharp'
 import path from 'path'
-import { addDataAndFileToRequest, buildConfig, PayloadRequest } from 'payload'
+import { buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
-import { extractFromImage } from '@/lib/ai/services/data-extractor-service'
 
 import { Categories } from './collections/Categories'
 import { Chapters } from './collections/Chapters'
@@ -21,20 +20,11 @@ import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
+import { importExerciseFromImage } from './endpoints/exercises/import-from-image'
+import { importExerciseFromLesson } from './endpoints/exercises/import-from-lesson'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
-
-// AI Image Upload Validation
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp']
-
-type UploadedFileLike = {
-  mimetype?: string
-  size?: number
-  data?: Buffer
-  buffer?: Buffer
-}
 
 export default buildConfig({
   admin: {
@@ -103,66 +93,13 @@ export default buildConfig({
     {
       path: '/exercises/import',
       method: 'post',
-      handler: async (req: PayloadRequest) => {
-        // 1) Auth - endpoints not authenticated by default
-        if (!req.user) {
-          return Response.json(
-            { success: false, error: 'Authentication required' },
-            { status: 401 },
-          )
+      handler: (req: PayloadRequest) => {
+        // Route based on whether lessonId query param exists
+        const url = new URL(req.url || 'http://localhost')
+        if (url.searchParams.has('lessonId')) {
+          return importExerciseFromLesson(req)
         }
-
-        // 2) Parse multipart (Payload doesn't auto-attach data/file)
-        await addDataAndFileToRequest(req)
-
-        const file = (req as any).file as UploadedFileLike | undefined
-        const data = (req as any).data as Record<string, unknown> | undefined
-
-        if (!file) {
-          return Response.json({ success: false, error: 'Image file is required' }, { status: 400 })
-        }
-
-        const mimeType = file.mimetype
-        const fileSize = file.size ?? 0
-        const imageBuffer = file.data ?? file.buffer
-
-        if (!imageBuffer || !mimeType) {
-          return Response.json({ success: false, error: 'Invalid uploaded file' }, { status: 400 })
-        }
-
-        // 3) Validate
-        if (fileSize > MAX_FILE_SIZE) {
-          return Response.json(
-            { success: false, error: 'File size must be under 10MB' },
-            { status: 400 },
-          )
-        }
-
-        if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
-          return Response.json(
-            { success: false, error: 'Invalid file type. Allowed: PNG, JPG, WEBP' },
-            { status: 400 },
-          )
-        }
-
-        // 4) Call AI service (image only, no additional text)
-        const result = await extractFromImage({
-          imageBuffer,
-          mimeType,
-        })
-
-        if (!result.success) {
-          return Response.json(
-            { success: false, error: result.error || 'Failed to process image' },
-            { status: 500 },
-          )
-        }
-
-        return Response.json({
-          success: true,
-          data: result.data,
-          metadata: result.metadata,
-        })
+        return importExerciseFromImage(req)
       },
     },
   ],
