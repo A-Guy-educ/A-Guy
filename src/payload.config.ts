@@ -145,22 +145,10 @@ export default buildConfig({
           )
         }
 
-        const accompanyingTextRaw = data?.accompanyingText
-        const accompanyingText =
-          typeof accompanyingTextRaw === 'string' ? accompanyingTextRaw.trim() : undefined
-
-        if (accompanyingText && accompanyingText.length > 1000) {
-          return Response.json(
-            { success: false, error: 'Accompanying text must be under 1000 characters' },
-            { status: 400 },
-          )
-        }
-
-        // 4) Call AI service
+        // 4) Call AI service (image only, no additional text)
         const result = await generateExerciseFromImage({
           imageBuffer,
           mimeType,
-          accompanyingText,
         })
 
         if (!result.success) {

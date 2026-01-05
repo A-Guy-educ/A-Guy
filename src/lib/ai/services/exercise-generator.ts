@@ -12,7 +12,6 @@ import { IMAGE_TO_EXERCISE_PROMPT } from '../prompts/simple-text-question'
 export interface ImageToExerciseInput {
   imageBuffer: Buffer
   mimeType: string
-  accompanyingText?: string
 }
 
 export interface ImageToExerciseResult {
@@ -30,7 +29,6 @@ export interface ImageToExerciseResponse {
     model: string
     processingTimeMs: number
     imageSizeBytes: number
-    hasAccompanyingText: boolean
   }
 }
 
@@ -55,7 +53,7 @@ export async function generateExerciseFromImage(
       systemInstruction: IMAGE_TO_EXERCISE_PROMPT,
     })
 
-    // Prepare parts for the API
+    // Prepare parts for the API (image only, no additional text)
     const parts: any[] = [
       {
         inlineData: {
@@ -64,11 +62,6 @@ export async function generateExerciseFromImage(
         },
       },
     ]
-
-    // Add accompanying text if provided
-    if (input.accompanyingText) {
-      parts.push({ text: `Additional context: ${input.accompanyingText}` })
-    }
 
     // Generate content
     const result = await model.generateContent({
@@ -100,7 +93,6 @@ export async function generateExerciseFromImage(
           model: modelConfig.name,
           processingTimeMs: Date.now() - startTime,
           imageSizeBytes: optimizedImage.sizeBytes,
-          hasAccompanyingText: !!input.accompanyingText,
         },
       }
     }
@@ -118,7 +110,6 @@ export async function generateExerciseFromImage(
         model: modelConfig.name,
         processingTimeMs: Date.now() - startTime,
         imageSizeBytes: optimizedImage.sizeBytes,
-        hasAccompanyingText: !!input.accompanyingText,
       },
     }
   } catch (error) {
@@ -130,7 +121,6 @@ export async function generateExerciseFromImage(
         model: AI_MODELS.IMAGE_TO_EXERCISE.name,
         processingTimeMs: Date.now() - startTime,
         imageSizeBytes: 0,
-        hasAccompanyingText: !!input.accompanyingText,
       },
     }
   }

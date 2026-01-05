@@ -1,6 +1,8 @@
 /**
- * System prompt for image-to-exercise conversion
- * Guides Gemini to extract exercises from images and return structured JSON
+ * System prompt for simple text-based question extraction
+ * Protocol: Extracts questions with multiple-choice or free-response answers
+ * Use case: Converting static exercise images to structured JSON
+ * Note: This prompt expects ONLY the image - no additional context text
  */
 
 export const IMAGE_TO_EXERCISE_PROMPT = `You are an expert at converting exercise images into structured JSON format for an educational platform.
