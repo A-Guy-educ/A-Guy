@@ -7,13 +7,7 @@
 import { PayloadRequest } from 'payload'
 import { extractFromImage } from '@/lib/ai/services/data-extractor-service'
 import type { Media } from '@/payload-types'
-import { randomUUID } from 'crypto'
-import type {
-  QuestionMcqBlock,
-  QuestionFreeResponseBlock,
-  InlineRichText,
-  McqOption,
-} from '@/collections/Exercises'
+import { ExerciseBlockDefaults } from '@/collections/Exercises'
 
 export async function importExerciseFromLesson(req: PayloadRequest) {
   // 1) Auth - endpoints not authenticated by default
@@ -81,17 +75,21 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
     return Response.json({ error: result.error || 'Failed to process image' }, { status: 500 })
   }
 
-  // 7) Create exercise from extracted data using Zod types
+  // 7) Create exercise using factory from Exercises.ts
   if (result.data) {
     try {
       const hasOptions = result.data.options && result.data.options.length > 0
 
-      // Build question block using Zod-validated types
-      let questionBlock: QuestionMcqBlock | QuestionFreeResponseBlock
+      // Use factory, then populate with AI data
+      let questionBlock
 
       if (hasOptions) {
-        // Build MCQ options using McqOption type
-        const options: McqOption[] = result.data.options.map((opt: string, i: number) => ({
+        // Get MCQ template from factory
+        questionBlock = ExerciseBlockDefaults.question_mcq() as any
+
+        // Populate with AI-extracted data
+        questionBlock.prompt.value = result.data.question
+        questionBlock.answer.options = result.data.options.map((opt: string, i: number) => ({
           id: `opt-${i + 1}`,
           content: {
             type: 'rich_text' as const,
@@ -100,64 +98,35 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
             mediaIds: [],
           },
         }))
-
-        const correctIds =
+        questionBlock.answer.correctOptionIds =
           result.data.correctAnswer !== null && result.data.correctAnswer !== undefined
             ? [`opt-${result.data.correctAnswer + 1}`]
             : ['opt-1']
 
-        // Build MCQ block using QuestionMcqBlock type
-        questionBlock = {
-          id: randomUUID(),
-          type: 'question_mcq' as const,
-          prompt: {
-            type: 'rich_text' as const,
-            format: 'md-math-v1' as const,
-            value: result.data.question,
-            mediaIds: [],
-          },
-          answer: {
-            multiSelect: false,
-            options,
-            correctOptionIds: correctIds,
-          },
-        }
-
         if (result.data.explanation) {
-          const solution: InlineRichText = {
+          questionBlock.solution = {
             type: 'rich_text' as const,
             format: 'md-math-v1' as const,
             value: result.data.explanation,
             mediaIds: [],
           }
-          questionBlock.solution = solution
         }
       } else {
-        // Build free response block using QuestionFreeResponseBlock type
-        questionBlock = {
-          id: randomUUID(),
-          type: 'question_free_response' as const,
-          prompt: {
-            type: 'rich_text' as const,
-            format: 'md-math-v1' as const,
-            value: result.data.question,
-            mediaIds: [],
-          },
-          answer: {
-            responseKind: 'text' as const,
-            acceptedAnswers: [result.data.explanation || 'See solution'],
-            tolerance: 0,
-          },
-        }
+        // Get free response template from factory
+        questionBlock = ExerciseBlockDefaults.question_free_response() as any
+
+        // Populate with AI-extracted data
+        questionBlock.prompt.value = result.data.question
+        questionBlock.answer.responseKind = 'text'
+        questionBlock.answer.acceptedAnswers = [result.data.explanation || 'See solution']
 
         if (result.data.explanation) {
-          const solution: InlineRichText = {
+          questionBlock.solution = {
             type: 'rich_text' as const,
             format: 'md-math-v1' as const,
             value: result.data.explanation,
             mediaIds: [],
           }
-          questionBlock.solution = solution
         }
       }
 
