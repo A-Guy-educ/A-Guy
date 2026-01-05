@@ -40,7 +40,7 @@ const isAdminOrOwner: Access = ({ req }) => {
 // ---------------------------------
 // Zod: Inline Rich Text (NO id)
 // ---------------------------------
-const InlineRichTextSchema = z
+export const InlineRichTextSchema = z
   .object({
     type: z.literal('rich_text'),
     format: z.literal('md-math-v1'),
@@ -49,10 +49,12 @@ const InlineRichTextSchema = z
   })
   .strict()
 
+export type InlineRichText = z.infer<typeof InlineRichTextSchema>
+
 // ---------------------------------
 // Zod: Stream Rich Text Block (has id)
 // ---------------------------------
-const RichTextBlockSchema = z
+export const RichTextBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('rich_text'),
@@ -71,7 +73,7 @@ const TrueFalseAnswerSchema = z
   })
   .strict()
 
-const McqOptionSchema = z
+export const McqOptionSchema = z
   .object({
     id: z.string().min(1),
     // single rich_text per option
@@ -79,7 +81,9 @@ const McqOptionSchema = z
   })
   .strict()
 
-const McqAnswerSchema = z
+export type McqOption = z.infer<typeof McqOptionSchema>
+
+export const McqAnswerSchema = z
   .object({
     multiSelect: z.boolean().default(false),
     options: z.array(McqOptionSchema).min(2),
@@ -105,7 +109,9 @@ const McqAnswerSchema = z
     }
   })
 
-const FreeResponseAnswerSchema = z
+export type McqAnswer = z.infer<typeof McqAnswerSchema>
+
+export const FreeResponseAnswerSchema = z
   .object({
     responseKind: z.enum(['numeric', 'text']),
     acceptedAnswers: z.array(z.string().min(1)).min(1),
@@ -121,6 +127,8 @@ const FreeResponseAnswerSchema = z
       })
     }
   })
+
+export type FreeResponseAnswer = z.infer<typeof FreeResponseAnswerSchema>
 
 // ---------------------------------
 // Zod: Question blocks
@@ -138,7 +146,7 @@ const QuestionTrueFalseBlockSchema = z
   })
   .strict()
 
-const QuestionMcqBlockSchema = z
+export const QuestionMcqBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('question_mcq'),
@@ -151,7 +159,9 @@ const QuestionMcqBlockSchema = z
   })
   .strict()
 
-const QuestionFreeResponseBlockSchema = z
+export type QuestionMcqBlock = z.infer<typeof QuestionMcqBlockSchema>
+
+export const QuestionFreeResponseBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('question_free_response'),
@@ -163,6 +173,8 @@ const QuestionFreeResponseBlockSchema = z
     fullSolution: InlineRichTextSchema.optional(),
   })
   .strict()
+
+export type QuestionFreeResponseBlock = z.infer<typeof QuestionFreeResponseBlockSchema>
 
 // ---------------------------------
 // Zod: Content union
