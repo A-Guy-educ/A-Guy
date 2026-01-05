@@ -31,7 +31,7 @@ export function ExerciseCard({
 
     const questionBlocks = content.blocks.filter(
       (block: any) =>
-        block.type === 'question_true_false' ||
+        block.type === 'question_select' ||
         block.type === 'question_mcq' ||
         block.type === 'question_free_response',
     )
@@ -43,7 +43,7 @@ export function ExerciseCard({
   const getQuestionTypeBadge = (questionType: string) => {
     const badges = {
       question_mcq: { label: t('mcqBadge'), variant: 'default' as const },
-      question_true_false: { label: t('trueFalseBadge'), variant: 'secondary' as const },
+      question_select: { label: t('selectBadge'), variant: 'secondary' as const },
       question_free_response: { label: t('freeResponseBadge'), variant: 'outline' as const },
     }
     return (

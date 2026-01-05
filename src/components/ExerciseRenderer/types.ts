@@ -40,8 +40,14 @@ export interface RichTextBlock {
 /**
  * Answer types for different question blocks
  */
+export interface TrueFalseOption {
+  id: 'true' | 'false'
+  value: boolean
+  label: InlineRichText
+}
+
 export interface TrueFalseAnswer {
-  correct: boolean
+  correctOptionId?: string
 }
 
 export interface McqOption {
@@ -64,10 +70,16 @@ export interface FreeResponseAnswer {
 /**
  * Question block types
  */
-export interface QuestionTrueFalseBlock {
+export interface QuestionSelectBlock {
   id: string
-  type: 'question_true_false'
+  type: 'question_select'
+  variant: 'true_false'
+  selectionMode: 'single'
   prompt: InlineRichText
+  options?: [
+    { id: 'true'; value: true; label: InlineRichText },
+    { id: 'false'; value: false; label: InlineRichText },
+  ]
   answer: TrueFalseAnswer
   hint?: InlineRichText
   solution?: InlineRichText
@@ -94,7 +106,7 @@ export interface QuestionFreeResponseBlock {
   fullSolution?: InlineRichText
 }
 
-export type QuestionBlock = QuestionTrueFalseBlock | QuestionMcqBlock | QuestionFreeResponseBlock
+export type QuestionBlock = QuestionSelectBlock | QuestionMcqBlock | QuestionFreeResponseBlock
 
 export type ContentBlock = RichTextBlock | QuestionBlock
 
