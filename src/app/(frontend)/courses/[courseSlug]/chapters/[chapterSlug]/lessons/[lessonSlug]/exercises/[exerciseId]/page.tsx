@@ -7,7 +7,7 @@ import { NotebookChat } from './_components/NotebookChat'
 import { NotebookFormulas } from './_components/NotebookFormulas'
 import { NotebookNotes } from './_components/NotebookNotes'
 import { ExerciseRenderer } from '@/components/ExerciseRenderer'
-import type { ExerciseContent, AnswerSpec } from '@/contracts'
+import type { ExerciseContentData } from '@/components/ExerciseRenderer/types'
 
 interface ExercisePageProps {
   params: Promise<{
@@ -55,12 +55,7 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
       <NotebookWorkspace
         content={
           <ExerciseRenderer
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            content={(exercise as any).content as ExerciseContent}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            answerSpec={(exercise as any).answerSpecJson as AnswerSpec}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            questionType={(exercise as any).questionType}
+            content={(exercise as any).content as ExerciseContentData}
             mode="student"
             showCheckAnswer
           />

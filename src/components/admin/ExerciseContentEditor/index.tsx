@@ -2,10 +2,12 @@
 
 import React from 'react'
 import { useField, useForm } from '@payloadcms/ui'
-import { Code, Plus, Trash2, MoveUp, MoveDown } from 'lucide-react'
+import { Code, Plus, Trash2, MoveUp, MoveDown, Image } from 'lucide-react'
 import { RichTextEditor } from './RichTextEditor'
 import { JSONInspector } from './JSONInspector'
+import { MediaPicker } from './MediaPicker'
 import type { RichTextBlock } from '@/contracts'
+import type { Media } from '@/payload-types'
 import { generateId } from './utils'
 import './index.css'
 
@@ -22,6 +24,7 @@ const DEFAULT_BLOCKS: RichTextBlock[] = [
     type: 'rich_text',
     format: 'md-math-v1',
     value: '# Write your question here\n\nExample: Solve for $x$: $2x+3=11$',
+    mediaIds: [],
   },
 ]
 
@@ -40,6 +43,8 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
 
   const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null)
   const [isJsonPanelOpen, setIsJsonPanelOpen] = React.useState(false)
+  const [mediaPickerOpen, setMediaPickerOpen] = React.useState(false)
+  const [currentBlockForMedia, setCurrentBlockForMedia] = React.useState<string | null>(null)
   const [jsonPanelWidth, setJsonPanelWidth] = React.useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('exercise-editor-json-panel-width')
@@ -116,6 +121,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
       type: 'rich_text',
       format: 'md-math-v1',
       value: '',
+      mediaIds: [],
     }
 
     const newBlocks = [...blocks]
@@ -140,6 +146,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
         type: 'rich_text',
         format: 'md-math-v1',
         value: '',
+        mediaIds: [],
       })
     }
 
@@ -175,6 +182,27 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   const handleJsonApply = (updatedBlock: RichTextBlock) => {
     if (!selectedBlockId) return
     handleUpdateBlock(selectedBlockId, updatedBlock)
+  }
+
+  // Open media picker for a block
+  const handleOpenMediaPicker = (blockId: string) => {
+    setCurrentBlockForMedia(blockId)
+    setMediaPickerOpen(true)
+  }
+
+  // Save media selection
+  const handleMediaSave = (mediaIds: string[]) => {
+    if (currentBlockForMedia) {
+      handleUpdateBlock(currentBlockForMedia, { mediaIds })
+    }
+  }
+
+  // Remove single media from block
+  const handleRemoveMedia = (blockId: string, mediaId: string) => {
+    const block = blocks.find((b) => b.id === blockId)
+    if (!block) return
+    const newMediaIds = (block.mediaIds || []).filter((id) => id !== mediaId)
+    handleUpdateBlock(blockId, { mediaIds: newMediaIds })
   }
 
   // Save changes
@@ -312,6 +340,8 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
                 onDeleteBlock={handleDeleteBlock}
                 onUpdateBlock={handleUpdateBlock}
                 onMoveBlock={handleMoveBlock}
+                onOpenMediaPicker={handleOpenMediaPicker}
+                onRemoveMedia={handleRemoveMedia}
               />
             </div>
           ) : (
@@ -336,6 +366,8 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
               onDeleteBlock={handleDeleteBlock}
               onUpdateBlock={handleUpdateBlock}
               onMoveBlock={handleMoveBlock}
+              onOpenMediaPicker={handleOpenMediaPicker}
+              onRemoveMedia={handleRemoveMedia}
             />
           </div>
 
@@ -355,6 +387,17 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
           )}
         </div>
       )}
+
+      <MediaPicker
+        isOpen={mediaPickerOpen}
+        onClose={() => setMediaPickerOpen(false)}
+        selectedMediaIds={
+          currentBlockForMedia
+            ? blocks.find((b) => b.id === currentBlockForMedia)?.mediaIds || []
+            : []
+        }
+        onSave={handleMediaSave}
+      />
     </div>
   )
 }
@@ -367,6 +410,8 @@ interface BlockListProps {
   onDeleteBlock: (id: string) => void
   onUpdateBlock: (id: string, updates: Partial<RichTextBlock>) => void
   onMoveBlock: (id: string, direction: 'up' | 'down') => void
+  onOpenMediaPicker: (blockId: string) => void
+  onRemoveMedia: (blockId: string, mediaId: string) => void
 }
 
 function BlockList({
@@ -377,6 +422,8 @@ function BlockList({
   onDeleteBlock,
   onUpdateBlock,
   onMoveBlock,
+  onOpenMediaPicker,
+  onRemoveMedia,
 }: BlockListProps) {
   return (
     <div className="block-list">
@@ -437,6 +484,30 @@ function BlockList({
               onChange={(value) => onUpdateBlock(block.id, { value })}
             />
           </div>
+
+          <div className="block-media-section">
+            <button
+              type="button"
+              className="block-media-button"
+              onClick={() => onOpenMediaPicker(block.id)}
+              title="Attach media"
+            >
+              <Image size={14} />
+              <span>
+                {block.mediaIds && block.mediaIds.length > 0
+                  ? `${block.mediaIds.length} media attached`
+                  : 'Attach media'}
+              </span>
+            </button>
+
+            {block.mediaIds && block.mediaIds.length > 0 && (
+              <BlockMediaDisplay
+                blockId={block.id}
+                mediaIds={block.mediaIds}
+                onRemoveMedia={onRemoveMedia}
+              />
+            )}
+          </div>
         </div>
       ))}
 
@@ -448,6 +519,73 @@ function BlockList({
           </button>
         </div>
       )}
+    </div>
+  )
+}
+
+interface BlockMediaDisplayProps {
+  blockId: string
+  mediaIds: string[]
+  onRemoveMedia: (blockId: string, mediaId: string) => void
+}
+
+function BlockMediaDisplay({ blockId, mediaIds, onRemoveMedia }: BlockMediaDisplayProps) {
+  const [mediaItems, setMediaItems] = React.useState<Media[]>([])
+  const [loading, setLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    const fetchMedia = async () => {
+      setLoading(true)
+      try {
+        const fetchPromises = mediaIds.map((id) =>
+          fetch(`/api/media/${id}`).then((res) => (res.ok ? res.json() : null)),
+        )
+        const results = await Promise.all(fetchPromises)
+        setMediaItems(results.filter((item): item is Media => item !== null))
+      } catch (err) {
+        console.error('Failed to fetch media:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (mediaIds.length > 0) {
+      fetchMedia()
+    }
+  }, [mediaIds])
+
+  if (loading) {
+    return <div className="block-media-loading">Loading media...</div>
+  }
+
+  if (mediaItems.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="block-media-preview">
+      {mediaItems.map((media) => {
+        const thumbnailUrl = media.sizes?.thumbnail?.url || media.url
+        return (
+          <div key={media.id} className="media-thumbnail-preview">
+            {thumbnailUrl && (
+              <img src={thumbnailUrl} alt={media.alt || media.filename || 'Media'} />
+            )}
+            <button
+              type="button"
+              className="media-thumbnail-remove"
+              onClick={(e) => {
+                e.stopPropagation()
+                onRemoveMedia(blockId, media.id)
+              }}
+              title="Remove media"
+            >
+              ×
+            </button>
+            <div className="media-thumbnail-name">{media.filename}</div>
+          </div>
+        )
+      })}
     </div>
   )
 }

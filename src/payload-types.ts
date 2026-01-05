@@ -723,13 +723,9 @@ export interface Lesson {
    */
   isActive: boolean;
   /**
-   * Defines how this lesson is delivered.
+   * Upload lesson content file (PDF, video, etc.)
    */
-  contentType: 'none' | 'pdf';
-  /**
-   * External PDF URL for this lesson (temporary hosting).
-   */
-  pdfUrl?: string | null;
+  contentFile?: (string | null) | Media;
   /**
    * URL-friendly identifier (auto-generated from title if empty)
    */
@@ -740,103 +736,6 @@ export interface Lesson {
   createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "exercises".
- */
-export interface Exercise {
-  id: string;
-  /**
-   * Exercise title (for admin reference)
-   */
-  title: string;
-  /**
-   * Order of exercise within the lesson (lower numbers appear first)
-   */
-  order: number;
-  /**
-   * The lesson this exercise belongs to
-   */
-  lesson: string | Lesson;
-  /**
-   * Question type - must match answerSpecJson.questionType
-   */
-  questionType: 'mcq' | 'true_false' | 'free_response';
-  /**
-   * Exercise content. Format: { blocks: [...] } (each block supports mediaIds: string[])
-   */
-  content:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * Answer specification - must match the selected Question Type above
-   */
-  answerSpecJson:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "exercise-assets".
- */
-export interface ExerciseAsset {
-  id: string;
-  /**
-   * Alt text for accessibility
-   */
-  alt: string;
-  /**
-   * Optional caption for the figure
-   */
-  caption?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -960,6 +859,87 @@ export interface FolderInterface {
   folderType?: 'media'[] | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exercises".
+ */
+export interface Exercise {
+  id: string;
+  /**
+   * Exercise title (for admin reference)
+   */
+  title: string;
+  /**
+   * Order of exercise within the lesson (lower numbers appear first)
+   */
+  order: number;
+  /**
+   * The lesson this exercise belongs to
+   */
+  lesson: string | Lesson;
+  /**
+   * Ordered blocks stream. Use question_* blocks to add questions, and rich_text blocks for instructions/notes between questions.
+   */
+  content:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exercise-assets".
+ */
+export interface ExerciseAsset {
+  id: string;
+  /**
+   * Alt text for accessibility
+   */
+  alt: string;
+  /**
+   * Optional caption for the figure
+   */
+  caption?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1551,8 +1531,7 @@ export interface LessonsSelect<T extends boolean = true> {
   order?: T;
   status?: T;
   isActive?: T;
-  contentType?: T;
-  pdfUrl?: T;
+  contentFile?: T;
   slug?: T;
   createdBy?: T;
   updatedAt?: T;
@@ -1566,9 +1545,7 @@ export interface ExercisesSelect<T extends boolean = true> {
   title?: T;
   order?: T;
   lesson?: T;
-  questionType?: T;
   content?: T;
-  answerSpecJson?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

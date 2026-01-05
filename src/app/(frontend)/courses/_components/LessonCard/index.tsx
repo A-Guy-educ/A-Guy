@@ -35,7 +35,6 @@ export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps)
           <span className="text-sm font-semibold text-muted-foreground">
             {t('lesson')} {lesson.order}
           </span>
-          {lesson.contentType === 'pdf' && <Badge variant="secondary">{t('pdfBadge')}</Badge>}
         </div>
         <CardTitle className="text-xl">{lesson.title}</CardTitle>
         {lesson.description && <CardDescription>{lesson.description}</CardDescription>}

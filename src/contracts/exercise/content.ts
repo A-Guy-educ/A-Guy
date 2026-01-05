@@ -17,6 +17,7 @@ export const RichTextBlockSchema = z
     type: z.literal('rich_text'),
     format: z.literal('md-math-v1'),
     value: z.string().min(1),
+    mediaIds: z.array(z.string()).default([]),
   })
   .strict()
 

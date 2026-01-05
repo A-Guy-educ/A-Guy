@@ -15,7 +15,12 @@
       "Bash(npx tsc:*)",
       "Bash(wc:*)",
       "Bash(cat:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm generate:types:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }

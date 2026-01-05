@@ -1,16 +1,23 @@
 /**
  * Answer Checking Logic
  * Validates user answers against answer specifications
+ * NOTE: This utility is deprecated and not used in the new block-based exercise structure
  */
 
 import type { AnswerSpec } from '@/contracts'
-import type { UserAnswer, CheckResult } from '../types'
+import type { CheckResult } from '../types'
+
+// Legacy UserAnswer types for the old exercise format
+type LegacyUserAnswer =
+  | { type: 'mcq'; selectedIds: string[] }
+  | { type: 'true_false'; sections: Record<string, boolean | null> }
+  | { type: 'free_response'; value: string }
 
 /**
  * Check if a user's answer is correct
  * v0: Basic comparison logic, no CAS for algebraic equivalence
  */
-export function checkAnswer(spec: AnswerSpec, answer: UserAnswer): CheckResult {
+export function checkAnswer(spec: AnswerSpec, answer: LegacyUserAnswer): CheckResult {
   // Type mismatch check
   if (spec.questionType !== answer.type) {
     return {
@@ -21,11 +28,14 @@ export function checkAnswer(spec: AnswerSpec, answer: UserAnswer): CheckResult {
 
   switch (spec.questionType) {
     case 'mcq':
-      return checkMcqAnswer(spec, answer as Extract<UserAnswer, { type: 'mcq' }>)
+      return checkMcqAnswer(spec, answer as Extract<LegacyUserAnswer, { type: 'mcq' }>)
     case 'true_false':
-      return checkTrueFalseAnswer(spec, answer as Extract<UserAnswer, { type: 'true_false' }>)
+      return checkTrueFalseAnswer(spec, answer as Extract<LegacyUserAnswer, { type: 'true_false' }>)
     case 'free_response':
-      return checkFreeResponseAnswer(spec, answer as Extract<UserAnswer, { type: 'free_response' }>)
+      return checkFreeResponseAnswer(
+        spec,
+        answer as Extract<LegacyUserAnswer, { type: 'free_response' }>,
+      )
     default:
       return {
         isCorrect: false,
@@ -36,7 +46,7 @@ export function checkAnswer(spec: AnswerSpec, answer: UserAnswer): CheckResult {
 
 function checkMcqAnswer(
   spec: Extract<AnswerSpec, { questionType: 'mcq' }>,
-  answer: Extract<UserAnswer, { type: 'mcq' }>,
+  answer: Extract<LegacyUserAnswer, { type: 'mcq' }>,
 ): CheckResult {
   if (answer.selectedIds.length === 0) {
     return {
@@ -59,23 +69,33 @@ function checkMcqAnswer(
 
 function checkTrueFalseAnswer(
   spec: Extract<AnswerSpec, { questionType: 'true_false' }>,
-  answer: Extract<UserAnswer, { type: 'true_false' }>,
+  answer: Extract<LegacyUserAnswer, { type: 'true_false' }>,
 ): CheckResult {
-  if (answer.value === null) {
+  const sections = answer.sections
+
+  // Check if all sections have been answered
+  const unansweredSections = spec.items.filter(
+    (item) => sections[item.id] === null || sections[item.id] === undefined,
+  )
+
+  if (unansweredSections.length > 0) {
     return {
       isCorrect: false,
-      message: 'Please select True or False',
+      message: `Please answer all sections (missing: ${unansweredSections.map((s) => s.label).join(', ')})`,
     }
   }
 
+  // Check if all sections are correct
+  const allCorrect = spec.items.every((item) => sections[item.id] === item.correct)
+
   return {
-    isCorrect: answer.value === spec.correct,
+    isCorrect: allCorrect,
   }
 }
 
 function checkFreeResponseAnswer(
   spec: Extract<AnswerSpec, { questionType: 'free_response' }>,
-  answer: Extract<UserAnswer, { type: 'free_response' }>,
+  answer: Extract<LegacyUserAnswer, { type: 'free_response' }>,
 ): CheckResult {
   const userValue = answer.value.trim()
 

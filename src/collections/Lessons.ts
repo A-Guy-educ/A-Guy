@@ -102,48 +102,11 @@ export const Lessons: CollectionConfig = {
       },
     },
     {
-      name: 'contentType',
-      type: 'select',
-      required: true,
-      defaultValue: 'none',
-      options: [
-        {
-          label: 'None',
-          value: 'none',
-        },
-        {
-          label: 'PDF',
-          value: 'pdf',
-        },
-      ],
+      name: 'contentFile',
+      type: 'upload',
+      relationTo: 'media',
       admin: {
-        description: 'Defines how this lesson is delivered.',
-      },
-    },
-    {
-      name: 'pdfUrl',
-      type: 'text',
-      required: false,
-      index: true,
-      admin: {
-        description: 'External PDF URL for this lesson (temporary hosting).',
-        condition: (data) => data.contentType === 'pdf',
-      },
-      validate: (value: unknown, { data }: { data: Record<string, unknown> }) => {
-        // Only validate if contentType is 'pdf' and a value is provided
-        if (data?.contentType === 'pdf' && value && typeof value === 'string') {
-          try {
-            const url = new URL(value)
-            // Check if URL looks like a PDF (ends with .pdf, ignoring query/hash)
-            const pathname = url.pathname.toLowerCase()
-            if (!pathname.endsWith('.pdf')) {
-              return 'URL must point to a PDF file (should end with .pdf)'
-            }
-          } catch {
-            return 'Must be a valid URL'
-          }
-        }
-        return true
+        description: 'Upload lesson content file (PDF, video, etc.)',
       },
     },
     {
