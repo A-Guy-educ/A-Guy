@@ -6,9 +6,7 @@ import { PDFViewer } from '@/components/utilities/PDFViewer'
 import { ExerciseCard } from '@/app/(frontend)/courses/_components/ExerciseCard'
 import { EmptyState } from '@/app/(frontend)/courses/_components/EmptyState'
 import { useTranslations } from '@/providers/I18n'
-import Link from 'next/link'
 import type { Exercise, Media } from '@/payload-types'
-import { PlusIcon } from './PlusIcon'
 import styles from './LessonContent.module.css'
 import { ConvertButton } from './ConvertButton'
 
@@ -75,18 +73,7 @@ export function LessonContent({
           <>
             <div className={styles.exercisesContainer}>
               <div className={styles.header}>
-                <div className={styles.headerTop}>
-                  <h2 className={styles.title}>{t('exercisesTitle')}</h2>
-                  {isAdmin && (
-                    <Link
-                      href={`/admin/ai-exercise-creator?lessonId=${lessonId}&lessonSlug=${lessonSlug}&courseSlug=${courseSlug}&chapterSlug=${chapterSlug}`}
-                      className={styles.createButton}
-                    >
-                      <PlusIcon className={styles.buttonIcon} />
-                      AI Exercise Creator
-                    </Link>
-                  )}
-                </div>
+                <h2 className={styles.title}>{t('exercisesTitle')}</h2>
                 <p className={styles.description}>{t('exercisesDescription')}</p>
               </div>
               {hasExercises ? (
@@ -105,12 +92,6 @@ export function LessonContent({
               ) : (
                 <div className={styles.emptyState}>
                   <p className={styles.emptyStateText}>No exercises yet for this lesson</p>
-                  {isAdmin && (
-                    <p className={styles.emptyStateHint}>
-                      Click &ldquo;AI Exercise Creator&rdquo; above to generate exercises from
-                      images
-                    </p>
-                  )}
                 </div>
               )}
             </div>
