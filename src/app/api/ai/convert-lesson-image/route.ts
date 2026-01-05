@@ -12,6 +12,8 @@ import * as Sentry from '@sentry/nextjs'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import type { Media } from '@/payload-types'
+import fs from 'fs'
+import path from 'path'
 
 // Default prompt for Hebrew math exercises
 const DEFAULT_PROMPT =
@@ -70,29 +72,36 @@ export async function POST(request: NextRequest) {
 
     reqLogger.info({ lessonId, contentFileUrl: contentFile.url }, 'Fetching content file')
 
-    // Fetch the image from the URL
-    // Handle both absolute and relative URLs
-    const imageUrl = contentFile.url.startsWith('http')
-      ? contentFile.url
-      : `${process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'}${contentFile.url}`
+    // Read the image from filesystem (media files are stored in public/media)
+    let imageBuffer: Buffer
+    let mimeType: string
 
-    const imageResponse = await fetch(imageUrl)
+    try {
+      // Extract filename from URL (e.g., /api/media/file/exercise.png -> exercise.png)
+      const filename = contentFile.filename || path.basename(contentFile.url)
+      const filePath = path.join(process.cwd(), 'public', 'media', filename)
 
-    if (!imageResponse.ok) {
-      reqLogger.warn({ lessonId, imageUrl, status: imageResponse.status }, 'Failed to fetch image')
+      reqLogger.info({ lessonId, filePath }, 'Reading image from filesystem')
+
+      // Read file from filesystem
+      imageBuffer = fs.readFileSync(filePath)
+
+      // Determine MIME type from file extension
+      const ext = path.extname(filename).toLowerCase()
+      const mimeTypes: Record<string, string> = {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.webp': 'image/webp',
+      }
+      mimeType = mimeTypes[ext] || 'image/jpeg'
+    } catch (readError) {
+      reqLogger.error({ err: readError, lessonId }, 'Failed to read image file')
       return NextResponse.json(
-        { success: false, error: 'Failed to fetch lesson content file' },
+        { success: false, error: 'Failed to read lesson content file from disk' },
         { status: 500 },
       )
     }
-
-    // Get image buffer
-    const arrayBuffer = await imageResponse.arrayBuffer()
-    const imageBuffer = Buffer.from(arrayBuffer)
-
-    // Determine MIME type from content type or file extension
-    const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
-    const mimeType = contentType.split(';')[0] // Remove charset if present
 
     reqLogger.info(
       {
@@ -164,17 +173,11 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Create exercise via REST API
-        const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
-        const exerciseResponse = await fetch(`${baseUrl}/api/exercises`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Cookie: request.headers.get('cookie') || '',
-          },
-          body: JSON.stringify({
+        // Create exercise via Payload SDK directly (avoids fetch issues)
+        const exerciseDoc = await payload.create({
+          collection: 'exercises',
+          data: {
             title: 'AI Generated Exercise',
-            questionType,
             order: 0,
             lesson: lessonId,
             content: {
@@ -188,19 +191,13 @@ export async function POST(request: NextRequest) {
                 },
               ],
             },
+            // @ts-expect-error - answerSpecJson is dynamic and doesn't match Exercise type exactly
             answerSpecJson,
-          }),
+          },
         })
 
-        if (!exerciseResponse.ok) {
-          const errorData = await exerciseResponse.json()
-          throw new Error(`Exercise creation failed: ${JSON.stringify(errorData)}`)
-        }
-
-        const exerciseDoc = await exerciseResponse.json()
-
         reqLogger.info(
-          { exerciseId: exerciseDoc.doc?.id, lessonId },
+          { exerciseId: exerciseDoc.id, lessonId },
           'Exercise created successfully from lesson image',
         )
 
@@ -208,7 +205,7 @@ export async function POST(request: NextRequest) {
           success: true,
           data: result.data,
           metadata: result.metadata,
-          exerciseId: exerciseDoc.doc?.id,
+          exerciseId: exerciseDoc.id,
           requestId,
         })
       } catch (createError) {

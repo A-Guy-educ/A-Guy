@@ -74,6 +74,10 @@
   color: #9ca3af;
 }
 
+.convertButtonWrapper {
+  margin-top: 1.5rem;
+}
+
 .convertButtonContainer {
   margin-top: 1.5rem;
   display: flex;

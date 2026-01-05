@@ -57,14 +57,7 @@ export function LessonContent({
         {viewMode === 'non-interactive' ? (
           <>
             {hasContent && contentFile?.url ? (
-              <>
-                <PDFViewer pdfUrl={contentFile.url} lessonTitle={lessonTitle} />
-                {isAdmin && (
-                  <div className={styles.convertButtonContainer}>
-                    <ConvertButton lessonId={lessonId} />
-                  </div>
-                )}
-              </>
+              <PDFViewer pdfUrl={contentFile.url} lessonTitle={lessonTitle} />
             ) : (
               <EmptyState type="noPDF" />
             )}
@@ -92,6 +85,11 @@ export function LessonContent({
               ) : (
                 <div className={styles.emptyState}>
                   <p className={styles.emptyStateText}>No exercises yet for this lesson</p>
+                  {isAdmin && hasContent && (
+                    <div className={styles.convertButtonWrapper}>
+                      <ConvertButton lessonId={lessonId} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
