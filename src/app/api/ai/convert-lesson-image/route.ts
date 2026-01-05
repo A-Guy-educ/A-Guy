@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { logger, createRequestLogger } from '@/utilities/logger'
-import { generateExerciseFromImage } from '@/lib/ai/services/exercise-generator'
+import { extractFromImage } from '@/lib/ai/services/data-extractor-service'
 import * as Sentry from '@sentry/nextjs'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     )
 
     // Call AI service (image only)
-    const result = await generateExerciseFromImage({
+    const result = await extractFromImage({
       imageBuffer,
       mimeType,
     })
