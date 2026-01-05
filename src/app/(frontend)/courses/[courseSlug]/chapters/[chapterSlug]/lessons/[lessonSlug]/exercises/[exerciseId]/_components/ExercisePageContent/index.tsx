@@ -1,26 +1,18 @@
 'use client'
 
 import { ExerciseRenderer } from '@/components/ExerciseRenderer'
-import type { ExerciseContent, AnswerSpec } from '@/contracts'
+import type { ExerciseContentData } from '@/components/ExerciseRenderer/types'
 import './index.scss'
 
 interface ExercisePageContentProps {
   contentJson: unknown
-  answerSpecJson: unknown
-  questionType: 'mcq' | 'true_false' | 'free_response'
 }
 
-export function ExercisePageContent({
-  contentJson,
-  answerSpecJson,
-  questionType,
-}: ExercisePageContentProps) {
+export function ExercisePageContent({ contentJson }: ExercisePageContentProps) {
   return (
     <div className="exercise-page-content">
       <ExerciseRenderer
-        content={contentJson as ExerciseContent}
-        answerSpec={answerSpecJson as AnswerSpec}
-        questionType={questionType}
+        content={contentJson as ExerciseContentData}
         mode="student"
         showCheckAnswer={true}
       />

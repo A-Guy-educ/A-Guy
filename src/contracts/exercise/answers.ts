@@ -49,11 +49,24 @@ const McqAnswerSpecSchema = z
     }
   })
 
-/** True/False Answer Spec */
+/** True/False Answer Spec - Sections Variant */
+const TrueFalseSectionItemSchema = z
+  .object({
+    id: z.string().min(1),
+    label: z.string().min(1),
+    correct: z.boolean(),
+    prompt: RichTextBlockSchema,
+    hint: RichTextBlockSchema.optional(),
+    solution: RichTextBlockSchema.optional(),
+    fullSolution: RichTextBlockSchema.optional(),
+  })
+  .strict()
+
 const TrueFalseAnswerSpecSchema = z
   .object({
     questionType: z.literal('true_false'),
-    correct: z.boolean(),
+    variant: z.literal('sections'),
+    items: z.array(TrueFalseSectionItemSchema).min(1),
   })
   .strict()
 

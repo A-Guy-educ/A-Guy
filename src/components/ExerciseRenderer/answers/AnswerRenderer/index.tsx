@@ -1,11 +1,12 @@
 /**
  * Answer Renderer Dispatcher
  * Routes different answer types to their specific UI components
+ * NOTE: This component is deprecated and not used in the new block-based exercise structure
  */
 
 import React from 'react'
 import type { AnswerSpec } from '@/contracts'
-import type { UserAnswer, PreviewMode } from '../../types'
+import type { PreviewMode } from '../../types'
 import { McqAnswerUI } from '../McqAnswerUI'
 import { TrueFalseAnswerUI } from '../TrueFalseAnswerUI'
 import { FreeResponseAnswerUI } from '../FreeResponseAnswerUI'
@@ -13,10 +14,16 @@ import './index.scss'
 
 const baseClass = 'answer-renderer'
 
+// Legacy UserAnswer types for backward compatibility
+type LegacyUserAnswer =
+  | { type: 'mcq'; selectedIds: string[] }
+  | { type: 'true_false'; sections: Record<string, boolean | null> }
+  | { type: 'free_response'; value: string }
+
 interface AnswerRendererProps {
   answerSpec: AnswerSpec
-  value: UserAnswer
-  onChange: (value: UserAnswer) => void
+  value: LegacyUserAnswer
+  onChange: (value: LegacyUserAnswer) => void
   disabled?: boolean
   mode?: PreviewMode
 }
@@ -35,7 +42,7 @@ export function AnswerRenderer({
       return (
         <McqAnswerUI
           spec={answerSpec}
-          value={value}
+          value={value as Extract<LegacyUserAnswer, { type: 'mcq' }>}
           onChange={onChange}
           disabled={disabled}
           showCorrect={showCorrect}
@@ -46,8 +53,8 @@ export function AnswerRenderer({
       return (
         <TrueFalseAnswerUI
           spec={answerSpec}
-          value={value}
-          onChange={onChange}
+          value={value as Extract<LegacyUserAnswer, { type: 'true_false' }>}
+          onChange={onChange as (value: Extract<LegacyUserAnswer, { type: 'true_false' }>) => void}
           disabled={disabled}
           showCorrect={showCorrect}
         />
@@ -57,7 +64,7 @@ export function AnswerRenderer({
       return (
         <FreeResponseAnswerUI
           spec={answerSpec}
-          value={value}
+          value={value as Extract<LegacyUserAnswer, { type: 'free_response' }>}
           onChange={onChange}
           disabled={disabled}
         />

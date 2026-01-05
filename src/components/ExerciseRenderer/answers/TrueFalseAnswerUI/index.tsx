@@ -1,20 +1,27 @@
 /**
  * True/False Answer UI
- * Simple true/false selection interface
+ * Sections variant - multiple true/false items with individual prompts
+ * NOTE: This component is deprecated and not used in the new block-based exercise structure
  */
 
 import React from 'react'
 import { cn } from '@/utilities/ui'
 import type { TrueFalseAnswerSpec } from '@/contracts'
-import type { UserAnswer } from '../../types'
+import { RichTextRenderer } from '../../blocks/RichTextRenderer'
 import './index.scss'
 
 const baseClass = 'true-false-answer-ui'
 
+// Legacy UserAnswer type for the old sections-based true/false format
+type LegacyTrueFalseAnswer = {
+  type: 'true_false'
+  sections: Record<string, boolean | null>
+}
+
 interface TrueFalseAnswerUIProps {
   spec: TrueFalseAnswerSpec
-  value: UserAnswer
-  onChange: (value: UserAnswer) => void
+  value: LegacyTrueFalseAnswer
+  onChange: (value: LegacyTrueFalseAnswer) => void
   disabled?: boolean
   showCorrect?: boolean
 }
@@ -26,22 +33,30 @@ export function TrueFalseAnswerUI({
   disabled = false,
   showCorrect = false,
 }: TrueFalseAnswerUIProps) {
-  const selectedValue = value.type === 'true_false' ? value.value : null
+  const sections = value.type === 'true_false' ? value.sections : {}
 
-  const handleSelect = (boolValue: boolean) => {
+  const handleSectionChange = (sectionId: string, boolValue: boolean) => {
     if (disabled) return
-    onChange({ type: 'true_false', value: boolValue })
+    onChange({
+      type: 'true_false',
+      sections: {
+        ...sections,
+        [sectionId]: boolValue,
+      },
+    })
   }
 
-  const renderOption = (boolValue: boolean, label: string) => {
+  const renderSectionOption = (sectionId: string, boolValue: boolean, label: string) => {
+    const selectedValue = sections[sectionId]
     const isSelected = selectedValue === boolValue
-    const isCorrect = spec.correct === boolValue
+    const item = spec.items.find((i) => i.id === sectionId)
+    const isCorrect = item?.correct === boolValue
     const showAsCorrect = showCorrect && isCorrect
 
     return (
       <button
         type="button"
-        onClick={() => handleSelect(boolValue)}
+        onClick={() => handleSectionChange(sectionId, boolValue)}
         disabled={disabled}
         className={cn(
           `${baseClass}__option`,
@@ -58,10 +73,20 @@ export function TrueFalseAnswerUI({
 
   return (
     <div className={baseClass}>
-      <div className={`${baseClass}__options`}>
-        {renderOption(true, 'True')}
-        {renderOption(false, 'False')}
-      </div>
+      {spec.items.map((item) => (
+        <div key={item.id} className={`${baseClass}__section`}>
+          <div className={`${baseClass}__section-header`}>
+            <span className={`${baseClass}__section-label`}>{item.label}.</span>
+          </div>
+          <div className={`${baseClass}__section-prompt`}>
+            <RichTextRenderer block={item.prompt} />
+          </div>
+          <div className={`${baseClass}__options`}>
+            {renderSectionOption(item.id, true, 'True')}
+            {renderSectionOption(item.id, false, 'False')}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

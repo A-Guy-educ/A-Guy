@@ -1,21 +1,24 @@
 /**
  * MCQ Answer UI
  * Interactive multiple choice interface for students
+ * NOTE: This component is deprecated and not used in the new block-based exercise structure
  */
 
 import React from 'react'
 import { cn } from '@/utilities/ui'
 import type { McqAnswerSpec } from '@/contracts'
-import type { UserAnswer } from '../../types'
 import { BlockRenderer } from '../../blocks/BlockRenderer'
 import './index.scss'
 
 const baseClass = 'mcq-answer-ui'
 
+// Legacy UserAnswer type
+type LegacyMcqAnswer = { type: 'mcq'; selectedIds: string[] }
+
 interface McqAnswerUIProps {
   spec: McqAnswerSpec
-  value: UserAnswer
-  onChange: (value: UserAnswer) => void
+  value: LegacyMcqAnswer
+  onChange: (value: LegacyMcqAnswer) => void
   disabled?: boolean
   showCorrect?: boolean // For debug mode
 }

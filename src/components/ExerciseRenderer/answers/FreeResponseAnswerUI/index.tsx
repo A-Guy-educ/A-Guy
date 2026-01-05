@@ -1,19 +1,22 @@
 /**
  * Free Response Answer UI
  * Text input for numeric, algebraic, or text answers
+ * NOTE: This component is deprecated and not used in the new block-based exercise structure
  */
 
 import React from 'react'
 import type { FreeResponseAnswerSpec } from '@/contracts'
-import type { UserAnswer } from '../../types'
 import './index.scss'
 
 const baseClass = 'free-response-answer-ui'
 
+// Legacy UserAnswer type
+type LegacyFreeResponseAnswer = { type: 'free_response'; value: string }
+
 interface FreeResponseAnswerUIProps {
   spec: FreeResponseAnswerSpec
-  value: UserAnswer
-  onChange: (value: UserAnswer) => void
+  value: LegacyFreeResponseAnswer
+  onChange: (value: LegacyFreeResponseAnswer) => void
   disabled?: boolean
 }
 

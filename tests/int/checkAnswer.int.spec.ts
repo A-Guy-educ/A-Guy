@@ -1,11 +1,17 @@
 /**
  * Unit tests for checkAnswer function
+ * NOTE: These tests are for the legacy checkAnswer utility
  */
 
 import { describe, test, expect } from 'vitest'
 import { checkAnswer } from '@/components/ExerciseRenderer/utils/checkAnswer'
 import type { AnswerSpec } from '@/contracts'
-import type { UserAnswer } from '@/components/ExerciseRenderer/types'
+
+// Legacy UserAnswer types for the old exercise format
+type LegacyUserAnswer =
+  | { type: 'mcq'; selectedIds: string[] }
+  | { type: 'true_false'; sections: Record<string, boolean | null> }
+  | { type: 'free_response'; value: string }
 
 describe('checkAnswer', () => {
   describe('MCQ - Single Select', () => {
@@ -21,19 +27,19 @@ describe('checkAnswer', () => {
     }
 
     test('returns correct for correct answer', () => {
-      const answer: UserAnswer = { type: 'mcq', selectedIds: ['opt2'] }
+      const answer: LegacyUserAnswer = { type: 'mcq', selectedIds: ['opt2'] }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
     test('returns incorrect for wrong answer', () => {
-      const answer: UserAnswer = { type: 'mcq', selectedIds: ['opt1'] }
+      const answer: LegacyUserAnswer = { type: 'mcq', selectedIds: ['opt1'] }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
     })
 
     test('returns error for empty selection', () => {
-      const answer: UserAnswer = { type: 'mcq', selectedIds: [] }
+      const answer: LegacyUserAnswer = { type: 'mcq', selectedIds: [] }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
       expect(result.message).toBe('Please select an answer')
@@ -53,64 +59,97 @@ describe('checkAnswer', () => {
     }
 
     test('returns correct for all correct answers', () => {
-      const answer: UserAnswer = { type: 'mcq', selectedIds: ['opt1', 'opt3'] }
+      const answer: LegacyUserAnswer = { type: 'mcq', selectedIds: ['opt1', 'opt3'] }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
     test('returns correct for answers in different order', () => {
-      const answer: UserAnswer = { type: 'mcq', selectedIds: ['opt3', 'opt1'] }
+      const answer: LegacyUserAnswer = { type: 'mcq', selectedIds: ['opt3', 'opt1'] }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
     test('returns incorrect for partial selection', () => {
-      const answer: UserAnswer = { type: 'mcq', selectedIds: ['opt1'] }
+      const answer: LegacyUserAnswer = { type: 'mcq', selectedIds: ['opt1'] }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
     })
 
     test('returns incorrect for extra selections', () => {
-      const answer: UserAnswer = { type: 'mcq', selectedIds: ['opt1', 'opt2', 'opt3'] }
+      const answer: LegacyUserAnswer = { type: 'mcq', selectedIds: ['opt1', 'opt2', 'opt3'] }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
     })
   })
 
   describe('True/False', () => {
-    const specTrue: AnswerSpec = {
+    const spec: AnswerSpec = {
       questionType: 'true_false',
-      correct: true,
+      variant: 'sections',
+      items: [
+        {
+          id: 'a',
+          label: 'A',
+          correct: true,
+          prompt: {
+            id: 'a_p1',
+            type: 'rich_text',
+            format: 'md-math-v1',
+            value: 'Statement A',
+            mediaIds: [],
+          },
+        },
+        {
+          id: 'b',
+          label: 'B',
+          correct: false,
+          prompt: {
+            id: 'b_p1',
+            type: 'rich_text',
+            format: 'md-math-v1',
+            value: 'Statement B',
+            mediaIds: [],
+          },
+        },
+      ],
     }
 
-    const specFalse: AnswerSpec = {
-      questionType: 'true_false',
-      correct: false,
-    }
-
-    test('returns correct for true answer when correct is true', () => {
-      const answer: UserAnswer = { type: 'true_false', value: true }
-      const result = checkAnswer(specTrue, answer)
+    test('returns correct when all sections are correct', () => {
+      const answer: LegacyUserAnswer = {
+        type: 'true_false',
+        sections: {
+          a: true,
+          b: false,
+        },
+      }
+      const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
-    test('returns incorrect for false answer when correct is true', () => {
-      const answer: UserAnswer = { type: 'true_false', value: false }
-      const result = checkAnswer(specTrue, answer)
+    test('returns incorrect when any section is wrong', () => {
+      const answer: LegacyUserAnswer = {
+        type: 'true_false',
+        sections: {
+          a: true,
+          b: true, // Wrong
+        },
+      }
+      const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
     })
 
-    test('returns correct for false answer when correct is false', () => {
-      const answer: UserAnswer = { type: 'true_false', value: false }
-      const result = checkAnswer(specFalse, answer)
-      expect(result.isCorrect).toBe(true)
-    })
-
-    test('returns error for null value', () => {
-      const answer: UserAnswer = { type: 'true_false', value: null }
-      const result = checkAnswer(specTrue, answer)
+    test('returns incorrect when sections are missing', () => {
+      const answer: LegacyUserAnswer = {
+        type: 'true_false',
+        sections: {
+          a: true,
+          // missing 'b'
+        },
+      }
+      const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
-      expect(result.message).toBe('Please select True or False')
+      expect(result.message).toContain('Please answer all sections')
     })
   })
 
@@ -123,32 +162,32 @@ describe('checkAnswer', () => {
     }
 
     test('returns correct for exact numeric match', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '42' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '42' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
     test('returns correct for decimal match', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '42.0' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '42.0' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
     test('returns incorrect for wrong number', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '43' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '43' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
     })
 
     test('returns error for non-numeric input', () => {
-      const answer: UserAnswer = { type: 'free_response', value: 'abc' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: 'abc' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
       expect(result.message).toBe('Please enter a valid number')
     })
 
     test('returns error for empty input', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
       expect(result.message).toBe('Please enter an answer')
@@ -164,25 +203,25 @@ describe('checkAnswer', () => {
     }
 
     test('returns correct for value within tolerance (upper)', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '105' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '105' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
     test('returns correct for value within tolerance (lower)', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '95' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '95' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
     test('returns correct for exact boundary', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '105.0' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '105.0' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
     test('returns incorrect for value outside tolerance', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '106' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '106' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
     })
@@ -197,19 +236,19 @@ describe('checkAnswer', () => {
     }
 
     test('returns correct for first accepted answer', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '10' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '10' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
     test('returns correct for second accepted answer within tolerance', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '21' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '21' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
     test('returns incorrect for value between accepted answers but outside tolerance', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '15' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '15' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
     })
@@ -223,25 +262,25 @@ describe('checkAnswer', () => {
     }
 
     test('returns correct for exact match', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '2x+3' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '2x+3' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
     test('returns correct for match with whitespace normalized', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '2x + 3' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '2x + 3' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
     test('returns correct for second accepted answer', () => {
-      const answer: UserAnswer = { type: 'free_response', value: 'x^2-1' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: 'x^2-1' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(true)
     })
 
     test('returns incorrect for algebraically equivalent but different form (v0)', () => {
-      const answer: UserAnswer = { type: 'free_response', value: '3+2x' }
+      const answer: LegacyUserAnswer = { type: 'free_response', value: '3+2x' }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
     })
@@ -258,25 +297,25 @@ describe('checkAnswer', () => {
       }
 
       test('returns correct for exact match', () => {
-        const answer: UserAnswer = { type: 'free_response', value: 'photosynthesis' }
+        const answer: LegacyUserAnswer = { type: 'free_response', value: 'photosynthesis' }
         const result = checkAnswer(spec, answer)
         expect(result.isCorrect).toBe(true)
       })
 
       test('returns correct for uppercase match', () => {
-        const answer: UserAnswer = { type: 'free_response', value: 'PHOTOSYNTHESIS' }
+        const answer: LegacyUserAnswer = { type: 'free_response', value: 'PHOTOSYNTHESIS' }
         const result = checkAnswer(spec, answer)
         expect(result.isCorrect).toBe(true)
       })
 
       test('returns correct for mixed case match', () => {
-        const answer: UserAnswer = { type: 'free_response', value: 'PhotoSynthesis' }
+        const answer: LegacyUserAnswer = { type: 'free_response', value: 'PhotoSynthesis' }
         const result = checkAnswer(spec, answer)
         expect(result.isCorrect).toBe(true)
       })
 
       test('returns incorrect for wrong answer', () => {
-        const answer: UserAnswer = { type: 'free_response', value: 'chloroplast' }
+        const answer: LegacyUserAnswer = { type: 'free_response', value: 'chloroplast' }
         const result = checkAnswer(spec, answer)
         expect(result.isCorrect).toBe(false)
       })
@@ -292,13 +331,13 @@ describe('checkAnswer', () => {
       }
 
       test('returns correct for exact case match', () => {
-        const answer: UserAnswer = { type: 'free_response', value: 'JavaScript' }
+        const answer: LegacyUserAnswer = { type: 'free_response', value: 'JavaScript' }
         const result = checkAnswer(spec, answer)
         expect(result.isCorrect).toBe(true)
       })
 
       test('returns incorrect for different case', () => {
-        const answer: UserAnswer = { type: 'free_response', value: 'javascript' }
+        const answer: LegacyUserAnswer = { type: 'free_response', value: 'javascript' }
         const result = checkAnswer(spec, answer)
         expect(result.isCorrect).toBe(false)
       })
@@ -314,13 +353,13 @@ describe('checkAnswer', () => {
       }
 
       test('returns correct with extra spaces', () => {
-        const answer: UserAnswer = { type: 'free_response', value: 'New  York' }
+        const answer: LegacyUserAnswer = { type: 'free_response', value: 'New  York' }
         const result = checkAnswer(spec, answer)
         expect(result.isCorrect).toBe(true)
       })
 
       test('returns correct with leading/trailing spaces', () => {
-        const answer: UserAnswer = { type: 'free_response', value: '  New York  ' }
+        const answer: LegacyUserAnswer = { type: 'free_response', value: '  New York  ' }
         const result = checkAnswer(spec, answer)
         expect(result.isCorrect).toBe(true)
       })
@@ -335,7 +374,7 @@ describe('checkAnswer', () => {
         options: [{ id: 'opt1', content: [] }],
         correctOptionIds: ['opt1'],
       }
-      const answer: UserAnswer = { type: 'true_false', value: true }
+      const answer: LegacyUserAnswer = { type: 'true_false', sections: {} }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
       expect(result.message).toBe('Invalid answer type')
@@ -344,9 +383,23 @@ describe('checkAnswer', () => {
     test('returns error for True/False spec with wrong answer type', () => {
       const spec: AnswerSpec = {
         questionType: 'true_false',
-        correct: true,
+        variant: 'sections',
+        items: [
+          {
+            id: 'a',
+            label: 'A',
+            correct: true,
+            prompt: {
+              id: 'a_p1',
+              type: 'rich_text',
+              format: 'md-math-v1',
+              value: 'Statement A',
+              mediaIds: [],
+            },
+          },
+        ],
       }
-      const answer: UserAnswer = { type: 'mcq', selectedIds: [] }
+      const answer: LegacyUserAnswer = { type: 'mcq', selectedIds: [] }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
       expect(result.message).toBe('Invalid answer type')
@@ -358,7 +411,7 @@ describe('checkAnswer', () => {
         responseKind: 'numeric',
         acceptedAnswers: ['42'],
       }
-      const answer: UserAnswer = { type: 'mcq', selectedIds: [] }
+      const answer: LegacyUserAnswer = { type: 'mcq', selectedIds: [] }
       const result = checkAnswer(spec, answer)
       expect(result.isCorrect).toBe(false)
       expect(result.message).toBe('Invalid answer type')

@@ -879,25 +879,9 @@ export interface Exercise {
    */
   lesson: string | Lesson;
   /**
-   * Question type - must match answerSpecJson.questionType
-   */
-  questionType: 'mcq' | 'true_false' | 'free_response';
-  /**
-   * Exercise content. Format: { blocks: [...] } (each block supports mediaIds: string[])
+   * Ordered blocks stream. Use question_* blocks to add questions, and rich_text blocks for instructions/notes between questions.
    */
   content:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * Answer specification - must match the selected Question Type above
-   */
-  answerSpecJson:
     | {
         [k: string]: unknown;
       }
@@ -1561,9 +1545,7 @@ export interface ExercisesSelect<T extends boolean = true> {
   title?: T;
   order?: T;
   lesson?: T;
-  questionType?: T;
   content?: T;
-  answerSpecJson?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

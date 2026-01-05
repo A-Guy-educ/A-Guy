@@ -18,7 +18,8 @@
       "Bash(pnpm add:*)",
       "Bash(pnpm generate:types:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: add Vercel Blob storage, exercise media picker, and migrate lessons to media uploads\n\n- Add Vercel Blob storage adapter for Media and ExerciseAssets collections\n- Add media picker modal to exercise rich text editor with multi-select capability\n- Update exercise content schema to support mediaIds per block\n- Replace Lessons pdfUrl with contentFile upload field\n- Remove contentType field from Lessons collection\n- Update frontend components to use new contentFile structure\n- Add comprehensive styles for media picker and thumbnails\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: add Vercel Blob storage, exercise media picker, and migrate lessons to media uploads\n\n- Add Vercel Blob storage adapter for Media and ExerciseAssets collections\n- Add media picker modal to exercise rich text editor with multi-select capability\n- Update exercise content schema to support mediaIds per block\n- Replace Lessons pdfUrl with contentFile upload field\n- Remove contentType field from Lessons collection\n- Update frontend components to use new contentFile structure\n- Add comprehensive styles for media picker and thumbnails\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)"
     ]
   }
 }

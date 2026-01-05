@@ -1,98 +1,229 @@
-import type { CollectionConfig } from 'payload'
-import { ValidationError } from 'payload'
-import { anyone } from '../access/anyone'
-import { authenticated } from '../access/authenticated'
-import { AnswerSpecSchema } from '../contracts'
-import { throwPayloadValidationError } from '../utilities/zodToPayloadError'
+import type { CollectionConfig, Access } from 'payload'
 import { z } from 'zod'
 import { randomUUID } from 'node:crypto'
-import { createdByField } from '../fields/createdBy'
 
-import type { Access } from 'payload'
+import { anyone } from '../access/anyone'
+import { authenticated } from '../access/authenticated'
+import { createdByField } from '../fields/createdBy'
 
 const isAdminOrOwner: Access = ({ req }) => {
   const user = req.user
   if (!user) return false
 
-  // אדמין
-  if (user.role === 'admin') return true
+  // Admin
+  if ((user as any).role === 'admin') return true
 
-  // בעלים
+  // Owner
   return {
     owner: {
-      equals: user.id,
+      equals: (user as any).id,
     },
   }
 }
 
 /**
- * Exercises Collection — Content (strict, no backward compatibility)
+ * Exercises Collection — Block-based content (correct model)
  *
- * Target structure:
- *   exercise.content = { blocks: RichTextBlock[] }
+ * Rule:
+ * - content.blocks is a single ordered stream.
+ * - Any question is a block type inside the stream.
  *
- * Each RichTextBlock can reference media via:
- *   mediaIds: string[]
+ * Therefore:
+ * - NO exercise-level questionType
+ * - NO exercise-level answerSpecJson
+ * - Each question block owns:
+ *   - prompt (required)
+ *   - answer (required)        <-- ONLY grading data
+ *   - hint/solution/fullSolution (optional)  <-- teacher/explanation data
  */
 
-// ---- Strict content schema (flat only) ----
+// ---------------------------------
+// Zod: Inline Rich Text (NO id)
+// ---------------------------------
+const InlineRichTextSchema = z
+  .object({
+    type: z.literal('rich_text'),
+    format: z.literal('md-math-v1'),
+    value: z.string(),
+    mediaIds: z.array(z.string().min(1)).default([]),
+  })
+  .strict()
+
+// ---------------------------------
+// Zod: Stream Rich Text Block (has id)
+// ---------------------------------
 const RichTextBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('rich_text'),
     format: z.literal('md-math-v1'),
     value: z.string(),
-    mediaIds: z.array(z.string().min(1)).default([]), // ✅ per-block media references
+    mediaIds: z.array(z.string().min(1)).default([]),
   })
   .strict()
+
+// ---------------------------------
+// Zod: Answer schemas by question type
+// ---------------------------------
+const TrueFalseAnswerSchema = z
+  .object({
+    correct: z.boolean(),
+  })
+  .strict()
+
+const McqOptionSchema = z
+  .object({
+    id: z.string().min(1),
+    // single rich_text per option
+    content: InlineRichTextSchema,
+  })
+  .strict()
+
+const McqAnswerSchema = z
+  .object({
+    multiSelect: z.boolean().default(false),
+    options: z.array(McqOptionSchema).min(2),
+    correctOptionIds: z.array(z.string().min(1)).min(1),
+  })
+  .strict()
+  .superRefine((ans, ctx) => {
+    const optionIds = new Set(ans.options.map((o) => o.id))
+    const missing = ans.correctOptionIds.filter((id) => !optionIds.has(id))
+    if (missing.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `correctOptionIds contains unknown option ids: ${missing.join(', ')}`,
+        path: ['correctOptionIds'],
+      })
+    }
+    if (!ans.multiSelect && ans.correctOptionIds.length !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'When multiSelect=false, correctOptionIds must contain exactly 1 id.',
+        path: ['correctOptionIds'],
+      })
+    }
+  })
+
+const FreeResponseAnswerSchema = z
+  .object({
+    responseKind: z.enum(['numeric', 'text']),
+    acceptedAnswers: z.array(z.string().min(1)).min(1),
+    tolerance: z.number().min(0).default(0),
+  })
+  .strict()
+  .superRefine((ans, ctx) => {
+    if (ans.responseKind !== 'numeric' && ans.tolerance !== 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'tolerance is only allowed for numeric responses (set it to 0 for text).',
+        path: ['tolerance'],
+      })
+    }
+  })
+
+// ---------------------------------
+// Zod: Question blocks
+// ---------------------------------
+const QuestionTrueFalseBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('question_true_false'),
+    prompt: InlineRichTextSchema,
+    answer: TrueFalseAnswerSchema,
+
+    hint: InlineRichTextSchema.optional(),
+    solution: InlineRichTextSchema.optional(),
+    fullSolution: InlineRichTextSchema.optional(),
+  })
+  .strict()
+
+const QuestionMcqBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('question_mcq'),
+    prompt: InlineRichTextSchema,
+    answer: McqAnswerSchema,
+
+    hint: InlineRichTextSchema.optional(),
+    solution: InlineRichTextSchema.optional(),
+    fullSolution: InlineRichTextSchema.optional(),
+  })
+  .strict()
+
+const QuestionFreeResponseBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('question_free_response'),
+    prompt: InlineRichTextSchema,
+    answer: FreeResponseAnswerSchema,
+
+    hint: InlineRichTextSchema.optional(),
+    solution: InlineRichTextSchema.optional(),
+    fullSolution: InlineRichTextSchema.optional(),
+  })
+  .strict()
+
+// ---------------------------------
+// Zod: Content union
+// ---------------------------------
+const ContentBlockSchema = z.discriminatedUnion('type', [
+  RichTextBlockSchema,
+  QuestionTrueFalseBlockSchema,
+  QuestionMcqBlockSchema,
+  QuestionFreeResponseBlockSchema,
+])
 
 const ContentSchema = z
   .object({
-    blocks: z.array(RichTextBlockSchema),
+    blocks: z.array(ContentBlockSchema).min(1),
   })
   .strict()
 
-// Default content (function => unique IDs per new doc)
+// ---------------------------------
+// Defaults
+// ---------------------------------
 const DEFAULT_CONTENT = () => ({
   blocks: [
     {
       id: randomUUID(),
-      type: 'rich_text',
-      format: 'md-math-v1',
-      value: '# Write your question here\n\nExample: Solve for $x$: $2x+3=11$',
-      mediaIds: [],
+      type: 'rich_text' as const,
+      format: 'md-math-v1' as const,
+      value: 'Write the exercise instructions here.',
+      mediaIds: [] as string[],
     },
   ],
 })
 
-const DEFAULT_ANSWER_MCQ = {
-  questionType: 'mcq',
+// ✅ FIX: TF "answer" is ONLY grading data (single question per block)
+const DEFAULT_TF_ANSWER = {
+  correct: true,
+} as const
+
+const DEFAULT_MCQ_ANSWER = {
   multiSelect: false,
   options: [
     {
       id: 'o1',
-      content: [{ id: 't1', type: 'rich_text', format: 'md-math-v1', value: 'Option A' }],
+      content: { type: 'rich_text', format: 'md-math-v1', value: 'Option A', mediaIds: [] },
     },
     {
       id: 'o2',
-      content: [{ id: 't2', type: 'rich_text', format: 'md-math-v1', value: 'Option B' }],
+      content: { type: 'rich_text', format: 'md-math-v1', value: 'Option B', mediaIds: [] },
     },
   ],
   correctOptionIds: ['o1'],
-}
+} as const
 
-const DEFAULT_ANSWER_TRUE_FALSE = {
-  questionType: 'true_false',
-  correct: true,
-}
-
-const DEFAULT_ANSWER_FREE_RESPONSE = {
-  questionType: 'free_response',
+const DEFAULT_FREE_RESPONSE_ANSWER = {
   responseKind: 'numeric',
   acceptedAnswers: ['4'],
   tolerance: 0,
-}
+} as const
 
+// ---------------------------------
+// Collection
+// ---------------------------------
 export const Exercises: CollectionConfig = {
   slug: 'exercises',
   access: {
@@ -101,10 +232,12 @@ export const Exercises: CollectionConfig = {
     read: anyone,
     update: isAdminOrOwner,
   },
+
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['order', 'title', 'lesson', 'questionType', 'updatedAt'],
+    defaultColumns: ['order', 'title', 'lesson', 'updatedAt'],
   },
+
   fields: [
     // Section 1: Exercise Meta (Basics)
     {
@@ -135,17 +268,6 @@ export const Exercises: CollectionConfig = {
           index: true,
           admin: { description: 'The lesson this exercise belongs to' },
         },
-        {
-          name: 'questionType',
-          type: 'select',
-          required: true,
-          options: [
-            { label: 'Multiple Choice (MCQ)', value: 'mcq' },
-            { label: 'True/False', value: 'true_false' },
-            { label: 'Free Response', value: 'free_response' },
-          ],
-          admin: { description: 'Question type - must match answerSpecJson.questionType' },
-        },
       ],
     },
 
@@ -163,54 +285,13 @@ export const Exercises: CollectionConfig = {
           validate: (value: unknown) => {
             const result = ContentSchema.safeParse(value)
             if (result.success) return true
-            return 'Invalid content. Expected: { blocks: RichTextBlock[] } with optional mediaIds: string[].'
+            return 'Invalid content. Expected: { blocks: (rich_text | question_true_false | question_mcq | question_free_response)[] }.'
           },
           admin: {
             description:
-              'Exercise content. Format: { blocks: [...] } (each block supports mediaIds: string[])',
+              'Ordered blocks stream. Use question_* blocks to add questions, and rich_text blocks for instructions/notes between questions.',
             components: {
               Field: '@/components/admin/ExerciseContentEditor#ExerciseContentEditor',
-            },
-          },
-        },
-      ],
-    },
-
-    // Section 3: Answer
-    {
-      type: 'collapsible',
-      label: 'Answer',
-      admin: { initCollapsed: false },
-      fields: [
-        {
-          name: 'answerSpecJson',
-          type: 'json',
-          required: true,
-          defaultValue: DEFAULT_ANSWER_MCQ,
-          validate: (value, { data }) => {
-            const result = AnswerSpecSchema.safeParse(value)
-            if (!result.success) {
-              throwPayloadValidationError(result.error, 'answerSpecJson')
-            }
-
-            const questionType = (data as any)?.questionType
-            if (questionType && result.data.questionType !== questionType) {
-              throw new ValidationError({
-                errors: [
-                  {
-                    path: 'answerSpecJson.questionType',
-                    message: `Question type mismatch: this field has questionType="${result.data.questionType}" but the Question Type field is set to "${questionType}". These must match.`,
-                  },
-                ],
-              })
-            }
-
-            return true
-          },
-          admin: {
-            description: 'Answer specification - must match the selected Question Type above',
-            components: {
-              Field: '@/components/admin/AnswerSpecJsonField#AnswerSpecJsonField',
             },
           },
         },
@@ -220,4 +301,62 @@ export const Exercises: CollectionConfig = {
     // Created By
     createdByField,
   ],
+}
+
+// ---------------------------------
+// Block factories for editor UI (Add Block menu)
+// ---------------------------------
+export const ExerciseBlockDefaults = {
+  rich_text: () => ({
+    id: randomUUID(),
+    type: 'rich_text' as const,
+    format: 'md-math-v1' as const,
+    value: 'Write text here.',
+    mediaIds: [] as string[],
+  }),
+
+  question_true_false: () => ({
+    id: randomUUID(),
+    type: 'question_true_false' as const,
+    prompt: {
+      type: 'rich_text' as const,
+      format: 'md-math-v1' as const,
+      value: 'Statement: ...',
+      mediaIds: [] as string[],
+    },
+    // ✅ FIX: answer matches schema (no questionType/variant/items)
+    answer: { ...DEFAULT_TF_ANSWER },
+    // hint/solution/fullSolution are optional; UI can add them when needed
+  }),
+
+  question_mcq: () => ({
+    id: randomUUID(),
+    type: 'question_mcq' as const,
+    prompt: {
+      type: 'rich_text' as const,
+      format: 'md-math-v1' as const,
+      value: 'Choose the correct option:',
+      mediaIds: [] as string[],
+    },
+    answer: {
+      multiSelect: DEFAULT_MCQ_ANSWER.multiSelect,
+      options: DEFAULT_MCQ_ANSWER.options.map((o) => ({
+        id: o.id,
+        content: { ...o.content },
+      })),
+      correctOptionIds: [...DEFAULT_MCQ_ANSWER.correctOptionIds],
+    },
+  }),
+
+  question_free_response: () => ({
+    id: randomUUID(),
+    type: 'question_free_response' as const,
+    prompt: {
+      type: 'rich_text' as const,
+      format: 'md-math-v1' as const,
+      value: 'Enter your answer:',
+      mediaIds: [] as string[],
+    },
+    answer: { ...DEFAULT_FREE_RESPONSE_ANSWER },
+  }),
 }

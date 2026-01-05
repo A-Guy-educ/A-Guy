@@ -3,7 +3,7 @@ import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { notFound } from 'next/navigation'
 import { ExerciseRenderer } from '@/components/ExerciseRenderer/ExerciseRenderer'
-import type { ExerciseContent } from '@/contracts'
+import type { ExerciseContentData } from '@/components/ExerciseRenderer/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
@@ -34,7 +34,7 @@ export default async function ExercisePage({ params: paramsPromise }: Args) {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const content = (exercise as any).content as ExerciseContent
+    const content = (exercise as any).content as ExerciseContentData
 
     return (
       <div className="container py-10 max-w-4xl mx-auto">
@@ -46,14 +46,7 @@ export default async function ExercisePage({ params: paramsPromise }: Args) {
 
         <Card className="shadow-sm border-slate-200">
           <CardContent className="p-8">
-            <ExerciseRenderer
-              content={content}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              answerSpec={(exercise as any).answerSpecJson}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              questionType={(exercise as any).questionType}
-              mode="student"
-            />
+            <ExerciseRenderer content={content} mode="student" showCheckAnswer />
           </CardContent>
         </Card>
 

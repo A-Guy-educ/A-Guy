@@ -24,21 +24,38 @@ export function ExerciseCard({
 }: ExerciseCardProps) {
   const t = useTranslations('courses')
 
+  // Extract question types from content blocks
+  const getQuestionTypes = () => {
+    const content = (exercise as any).content
+    if (!content?.blocks || !Array.isArray(content.blocks)) return []
+
+    const questionBlocks = content.blocks.filter(
+      (block: any) =>
+        block.type === 'question_true_false' ||
+        block.type === 'question_mcq' ||
+        block.type === 'question_free_response',
+    )
+
+    const types = new Set(questionBlocks.map((block: any) => block.type))
+    return Array.from(types)
+  }
+
   const getQuestionTypeBadge = (questionType: string) => {
     const badges = {
-      mcq: { label: t('mcqBadge'), variant: 'default' as const },
-      true_false: { label: t('trueFalseBadge'), variant: 'secondary' as const },
-      free_response: { label: t('freeResponseBadge'), variant: 'outline' as const },
+      question_mcq: { label: t('mcqBadge'), variant: 'default' as const },
+      question_true_false: { label: t('trueFalseBadge'), variant: 'secondary' as const },
+      question_free_response: { label: t('freeResponseBadge'), variant: 'outline' as const },
     }
     return (
       badges[questionType as keyof typeof badges] || {
-        label: questionType,
+        label: 'Question',
         variant: 'default' as const,
       }
     )
   }
 
-  const badge = getQuestionTypeBadge(exercise.questionType)
+  const questionTypes = getQuestionTypes()
+  const badge = questionTypes.length > 0 ? getQuestionTypeBadge(questionTypes[0] as string) : null
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -47,7 +64,7 @@ export function ExerciseCard({
           <span className="text-sm font-semibold text-muted-foreground">
             {t('exercise')} {index + 1}
           </span>
-          <Badge variant={badge.variant}>{badge.label}</Badge>
+          {badge && <Badge variant={badge.variant}>{badge.label}</Badge>}
         </div>
         <CardTitle className="text-xl">{exercise.title}</CardTitle>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}

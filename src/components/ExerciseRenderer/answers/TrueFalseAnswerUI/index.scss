@@ -1,10 +1,38 @@
 @import '~@payloadcms/ui/scss';
 
 .true-false-answer-ui {
+  display: flex;
+  flex-direction: column;
+  gap: base(2);
+
+  &__section {
+    padding: base(1.5);
+    border: 1px solid var(--theme-elevation-300);
+    border-radius: 8px;
+    background: var(--theme-elevation-0);
+  }
+
+  &__section-header {
+    margin-bottom: base(0.5);
+  }
+
+  &__section-label {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--theme-text);
+  }
+
+  &__section-prompt {
+    margin-bottom: base(1.5);
+    padding: base(1);
+    background: var(--theme-elevation-50);
+    border-radius: 4px;
+  }
+
   &__options {
     display: flex;
     gap: base(1);
-    
+
     @include small-break {
       flex-direction: column;
     }

@@ -1,4 +1,35 @@
 {
   "questionType": "true_false",
-  "correct": true
+  "variant": "sections",
+  "id": "a",
+  "label": "A",
+  "correct": true,
+  "prompt": {
+    "id": "a_p1",
+    "type": "rich_text",
+    "format": "md-math-v1",
+    "value": "Given $9 + 6 \\div 2$.\n\nStatement: The next step is $9 + 3 = 12$.",
+    "mediaIds": []
+  },
+  "hint": {
+    "id": "a_h1",
+    "type": "rich_text",
+    "format": "md-math-v1",
+    "value": "Division comes before addition.",
+    "mediaIds": []
+  },
+  "solution": {
+    "id": "a_s1",
+    "type": "rich_text",
+    "format": "md-math-v1",
+    "value": "Compute $6 \\div 2 = 3$, then $9 + 3 = 12$.",
+    "mediaIds": []
+  },
+  "fullSolution": {
+    "id": "a_fs1",
+    "type": "rich_text",
+    "format": "md-math-v1",
+    "value": "$9 + 6 \\div 2 = 9 + 3 = 12$.",
+    "mediaIds": []
+  }
 }
