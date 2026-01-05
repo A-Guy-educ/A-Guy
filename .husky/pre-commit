@@ -1,1 +1,5 @@
+#!/bin/sh
+# Check for secrets before running lint-staged
+.husky/check-secrets
+
 pnpm exec lint-staged
