@@ -73,6 +73,8 @@ export async function extractFromImage(
     })
 
     const responseText = result.response.text().trim()
+    console.log('[AI Service] Raw AI response:', responseText)
+    console.log('[AI Service] Response length:', responseText.length)
 
     // Clean JSON response (remove markdown code blocks if present)
     const cleanedText = responseText
@@ -80,6 +82,11 @@ export async function extractFromImage(
       .replace(/^```\s*/, '')
       .replace(/```\s*$/, '')
       .trim()
+
+    console.log('[AI Service] Cleaned text:', cleanedText)
+    console.log('[AI Service] Cleaned text length:', cleanedText.length)
+    console.log('[AI Service] Character at position 47:', cleanedText.charAt(47))
+    console.log('[AI Service] Characters 40-55:', cleanedText.substring(40, 55))
 
     // Parse JSON
     const parsed = JSON.parse(cleanedText)
