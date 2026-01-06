@@ -50,12 +50,20 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
 
   try {
     // Handle both relative and absolute URLs
-    const imageUrl = contentFile.url.startsWith('http')
-      ? contentFile.url
-      : `${req.payload.config.serverURL || 'http://localhost:3000'}${contentFile.url}`
+    let imageUrl: string
+    if (contentFile.url.startsWith('http')) {
+      // Already absolute URL (Vercel Blob, S3, etc.)
+      imageUrl = contentFile.url
+    } else {
+      // Relative URL - build absolute URL from request
+      const requestUrl = new URL(req.url || 'http://localhost:3000')
+      const origin = `${requestUrl.protocol}//${requestUrl.host}`
+      imageUrl = `${origin}${contentFile.url}`
+    }
 
     console.log('[Import] Fetching image from URL:', imageUrl)
     console.log('[Import] Original URL:', contentFile.url)
+    console.log('[Import] Request origin:', new URL(req.url || 'http://localhost:3000').origin)
     console.log('[Import] MIME type:', contentFile.mimeType)
 
     // Fetch from the URL (works with Vercel Blob, S3, filesystem, etc.)
