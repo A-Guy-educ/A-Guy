@@ -1,0 +1,34 @@
+/**
+ * Question Card Styles
+ */
+
+.question-card {
+  padding: 1.5rem;
+  border: 2px solid hsl(var(--border));
+  transition: all 0.2s ease;
+
+  &--correct {
+    border-color: hsl(var(--success) / 0.3);
+    background-color: hsl(var(--success) / 0.05);
+  }
+
+  &__actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  &__button {
+    font-weight: 600;
+
+    &--success {
+      background-color: hsl(var(--success));
+      
+      &:hover {
+        background-color: hsl(var(--success) / 0.9);
+      }
+      
+      color: white;
+    }
+  }
+}

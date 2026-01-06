@@ -1,0 +1,66 @@
+/**
+ * Feedback Display Styles
+ */
+
+.feedback-display {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 2px solid;
+
+  &--correct {
+    border-color: hsl(var(--success));
+    background-color: hsl(var(--success) / 0.1);
+  }
+
+  &--incorrect {
+    border-color: hsl(var(--error));
+    background-color: hsl(var(--error) / 0.1);
+  }
+
+  &__content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+
+    .feedback-display--correct & {
+      color: hsl(var(--success));
+    }
+
+    .feedback-display--incorrect & {
+      color: hsl(var(--error));
+    }
+  }
+
+  &__text {
+    font-weight: 600;
+    font-size: 1.125rem;
+
+    .feedback-display--correct & {
+      color: hsl(var(--success));
+    }
+
+    .feedback-display--incorrect & {
+      color: hsl(var(--error));
+    }
+  }
+
+  &__message {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+
+    .feedback-display--correct & {
+      color: hsl(var(--success) / 0.8);
+    }
+
+    .feedback-display--incorrect & {
+      color: hsl(var(--error) / 0.8);
+    }
+  }
+}

@@ -1,2 +1,54 @@
-// Minimal SCSS file - most styles moved to Tailwind CSS classes
-// Keeping this file for potential future use or legacy compatibility
+/**
+ * Exercise Renderer Styles
+ */
+
+.exercise-renderer {
+  width: 100%;
+  max-width: 48rem; // 768px
+  margin: 0 auto;
+
+  &__blocks {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  &__rich-text {
+    // Prose styles for rich text content
+    @apply prose prose-slate dark:prose-invert max-w-none;
+    color: hsl(var(--foreground));
+    line-height: 1.625;
+  }
+
+  &__error {
+    padding: 1.5rem;
+    border-color: hsl(var(--error));
+    background-color: hsl(var(--error) / 0.05);
+  }
+
+  &__error-content {
+    display: flex;
+    align-items: start;
+    gap: 0.75rem;
+  }
+
+  &__error-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: hsl(var(--error));
+    margin-top: 0.125rem;
+    flex-shrink: 0;
+  }
+
+  &__error-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: hsl(var(--error));
+    margin-bottom: 0.25rem;
+  }
+
+  &__error-description {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+  }
+}
