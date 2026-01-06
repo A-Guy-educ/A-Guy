@@ -9,6 +9,11 @@
 import React, { useState } from 'react'
 import { cn } from '@/utilities/ui'
 import { useTranslations } from '@/providers/I18n'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 import type {
   ExerciseRendererProps,
   QuestionBlock,
@@ -20,9 +25,6 @@ import type {
   RichTextBlock,
 } from '../types'
 import { RichTextRenderer } from '../blocks/RichTextRenderer'
-import './index.scss'
-
-const baseClass = 'exercise-renderer'
 
 // Individual question answer checker
 function checkQuestionAnswer(question: QuestionBlock, answer: UserAnswer): CheckResult {
@@ -146,14 +148,13 @@ function TrueFalseQuestionUI({
   }
 
   return (
-    <div className={`${baseClass}__question-ui`}>
-      <div className={`${baseClass}__question-prompt`}>
+    <div className="space-y-4">
+      <div className="text-base font-medium text-foreground leading-relaxed">
         <RichTextRenderer block={promptBlock} />
       </div>
-      <div className={`${baseClass}__tf-options`}>
+      <div className="flex gap-3">
         {options.map((option) => {
           const isSelected = value === option.value
-          const isCorrectAnswer = question.answer.correctOptionId === option.id
           const showFeedback = checkResult !== null
 
           const labelBlock: RichTextBlock = {
@@ -168,25 +169,40 @@ function TrueFalseQuestionUI({
               onClick={() => onChange({ type: 'true_false', value: option.value })}
               disabled={disabled}
               className={cn(
-                `${baseClass}__tf-option`,
-                isSelected && `${baseClass}__tf-option--selected`,
+                'flex-1 group relative overflow-hidden',
+                'px-6 py-4 rounded-lg',
+                'border-2 transition-all duration-200',
+                'font-medium text-base',
+                'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                !isSelected &&
+                  !showFeedback &&
+                  'border-border bg-card hover:border-primary hover:bg-primary/5',
+                isSelected &&
+                  !showFeedback &&
+                  'border-primary bg-primary/10 text-primary shadow-sm',
                 showFeedback &&
                   isSelected &&
                   checkResult.isCorrect &&
-                  `${baseClass}__tf-option--correct`,
+                  'border-[hsl(var(--success))] bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] shadow-sm',
                 showFeedback &&
                   isSelected &&
                   !checkResult.isCorrect &&
-                  `${baseClass}__tf-option--incorrect`,
-                disabled && `${baseClass}__tf-option--disabled`,
+                  'border-[hsl(var(--error))] bg-[hsl(var(--error))]/10 text-[hsl(var(--error))] shadow-sm',
+                disabled && 'opacity-60 cursor-not-allowed',
               )}
             >
-              <RichTextRenderer block={labelBlock} />
-              {showFeedback && isSelected && (
-                <span className={`${baseClass}__tf-option-icon`}>
-                  {checkResult.isCorrect ? '✓' : '✗'}
-                </span>
-              )}
+              <div className="flex items-center justify-center gap-2">
+                <RichTextRenderer block={labelBlock} />
+                {showFeedback && isSelected && (
+                  <span className="text-xl font-bold">
+                    {checkResult.isCorrect ? (
+                      <CheckCircle2 className="w-5 h-5" />
+                    ) : (
+                      <XCircle className="w-5 h-5" />
+                    )}
+                  </span>
+                )}
+              </div>
             </button>
           )
         })}
@@ -236,14 +252,15 @@ function McqQuestionUI({
   }
 
   return (
-    <div className={`${baseClass}__question-ui`}>
-      <div className={`${baseClass}__question-prompt`}>
+    <div className="space-y-4">
+      <div className="text-base font-medium text-foreground leading-relaxed">
         <RichTextRenderer block={promptBlock} />
       </div>
-      <div className={`${baseClass}__mcq-instruction`}>
+      <div className="text-sm text-muted-foreground flex items-center gap-1.5">
+        <AlertCircle className="w-4 h-4" />
         {question.answer.multiSelect ? t('selectMultiple') : t('selectOne')}
       </div>
-      <div className={`${baseClass}__mcq-options`}>
+      <div className="space-y-3">
         {question.answer.options.map((option) => {
           const isSelected = selectedIds.includes(option.id)
           const optionBlock: RichTextBlock = {
@@ -255,19 +272,32 @@ function McqQuestionUI({
             <label
               key={option.id}
               className={cn(
-                `${baseClass}__mcq-option`,
-                isSelected && `${baseClass}__mcq-option--selected`,
-                disabled && `${baseClass}__mcq-option--disabled`,
+                'flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer',
+                'transition-all duration-200',
+                'hover:border-primary hover:bg-primary/5',
+                'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
+                isSelected ? 'border-primary bg-primary/10 shadow-sm' : 'border-border bg-card',
+                disabled && 'opacity-60 cursor-not-allowed',
               )}
             >
-              <input
-                type={question.answer.multiSelect ? 'checkbox' : 'radio'}
-                checked={isSelected}
-                onChange={() => handleOptionClick(option.id)}
-                disabled={disabled}
-                className={`${baseClass}__mcq-input`}
-              />
-              <div className={`${baseClass}__mcq-content`}>
+              {question.answer.multiSelect ? (
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() => handleOptionClick(option.id)}
+                  disabled={disabled}
+                  className="mt-0.5"
+                />
+              ) : (
+                <div
+                  className={cn(
+                    'w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center transition-all',
+                    isSelected ? 'border-primary bg-primary' : 'border-border bg-background',
+                  )}
+                >
+                  {isSelected && <div className="w-2 h-2 rounded-full bg-primary-foreground" />}
+                </div>
+              )}
+              <div className="flex-1 text-foreground">
                 <RichTextRenderer block={optionBlock} />
               </div>
             </label>
@@ -304,17 +334,17 @@ function FreeResponseQuestionUI({
   }
 
   return (
-    <div className={`${baseClass}__question-ui`}>
-      <div className={`${baseClass}__question-prompt`}>
+    <div className="space-y-4">
+      <div className="text-base font-medium text-foreground leading-relaxed">
         <RichTextRenderer block={promptBlock} />
       </div>
-      <input
+      <Input
         type="text"
         value={value}
         onChange={(e) => onChange({ type: 'free_response', value: e.target.value })}
         disabled={disabled}
         placeholder={t('enterAnswer')}
-        className={`${baseClass}__free-response-input`}
+        className="text-base py-6"
       />
     </div>
   )
@@ -381,24 +411,34 @@ export function ExerciseRenderer({
   // Validate content structure
   if (!content?.blocks || !Array.isArray(content.blocks)) {
     return (
-      <div className={cn(baseClass, className)}>
-        <div className={`${baseClass}__error`}>
-          <h3>Invalid Content Format</h3>
-          <p>Expected: {`{ blocks: [] }`}</p>
-        </div>
+      <div className={cn('w-full max-w-3xl mx-auto', className)}>
+        <Card className="p-6 border-[hsl(var(--error))] bg-[hsl(var(--error))]/5">
+          <div className="flex items-start gap-3">
+            <XCircle className="w-5 h-5 text-[hsl(var(--error))] mt-0.5 flex-shrink-0" />
+            <div>
+              <h3 className="text-lg font-semibold text-[hsl(var(--error))] mb-1">
+                Invalid Content Format
+              </h3>
+              <p className="text-sm text-muted-foreground">Expected: {`{ blocks: [] }`}</p>
+            </div>
+          </div>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className={cn(baseClass, className)}>
+    <div className={cn('w-full max-w-3xl mx-auto', className)}>
       {/* Render all blocks sequentially */}
-      <div className={`${baseClass}__content`}>
+      <div className="space-y-6">
         {content.blocks.map((block) => {
           // Rich text block - just render content
           if (block.type === 'rich_text') {
             return (
-              <div key={block.id} className={`${baseClass}__text-block`}>
+              <div
+                key={block.id}
+                className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed"
+              >
                 <RichTextRenderer block={block} />
               </div>
             )
@@ -411,21 +451,17 @@ export function ExerciseRenderer({
           const checked = hasChecked[question.id] || false
           const disabled = checked && checkResult?.isCorrect
 
-          // Debug logging
-          if (question.type === 'question_select') {
-            console.log('Question Select Block:', {
-              id: question.id,
-              type: question.type,
-              hasVariant: 'variant' in question,
-              variant: (question as any).variant,
-              hasOptions: 'options' in question,
-              options: (question as any).options,
-              question: question,
-            })
-          }
-
           return (
-            <div key={question.id} className={`${baseClass}__question-block`}>
+            <Card
+              key={question.id}
+              className={cn(
+                'p-6 border-2 transition-all duration-200',
+                checked &&
+                  checkResult?.isCorrect &&
+                  'border-[hsl(var(--success))]/30 bg-[hsl(var(--success))]/5',
+                checked && !checkResult?.isCorrect && 'border-border',
+              )}
+            >
               {/* Question UI based on type and variant */}
               {question.type === 'question_select' && question.variant === 'true_false' && (
                 <TrueFalseQuestionUI
@@ -460,17 +496,26 @@ export function ExerciseRenderer({
               {/* Check Answer Button - hidden for true/false variant (immediate feedback) */}
               {showCheckAnswer &&
                 !(question.type === 'question_select' && question.variant === 'true_false') && (
-                  <div className={`${baseClass}__check-button-wrapper`}>
-                    <button
+                  <div className="mt-6 flex justify-end">
+                    <Button
                       onClick={() => handleCheckAnswer(question.id)}
                       disabled={disabled}
+                      size="lg"
                       className={cn(
-                        `${baseClass}__check-button`,
-                        disabled && `${baseClass}__check-button--correct`,
+                        'font-semibold',
+                        disabled &&
+                          'bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 text-white',
                       )}
                     >
-                      {disabled ? `✓ ${t('correct')}` : t('checkAnswer')}
-                    </button>
+                      {disabled ? (
+                        <>
+                          <CheckCircle2 className="w-5 h-5 mr-2" />
+                          {t('correct')}
+                        </>
+                      ) : (
+                        t('checkAnswer')
+                      )}
+                    </Button>
                   </div>
                 )}
 
@@ -478,26 +523,44 @@ export function ExerciseRenderer({
               {checked && checkResult && (
                 <div
                   className={cn(
-                    `${baseClass}__result`,
+                    'mt-6 p-4 rounded-lg border-2',
                     checkResult.isCorrect
-                      ? `${baseClass}__result--correct`
-                      : `${baseClass}__result--incorrect`,
+                      ? 'border-[hsl(var(--success))] bg-[hsl(var(--success))]/10'
+                      : 'border-[hsl(var(--error))] bg-[hsl(var(--error))]/10',
                   )}
                 >
-                  <div className={`${baseClass}__result-header`}>
-                    <span className={`${baseClass}__result-icon`}>
-                      {checkResult.isCorrect ? '✓' : '✗'}
-                    </span>
-                    <span className={`${baseClass}__result-text`}>
+                  <div className="flex items-center gap-2">
+                    {checkResult.isCorrect ? (
+                      <CheckCircle2 className="w-6 h-6 text-[hsl(var(--success))] flex-shrink-0" />
+                    ) : (
+                      <XCircle className="w-6 h-6 text-[hsl(var(--error))] flex-shrink-0" />
+                    )}
+                    <span
+                      className={cn(
+                        'font-semibold text-lg',
+                        checkResult.isCorrect
+                          ? 'text-[hsl(var(--success))]'
+                          : 'text-[hsl(var(--error))]',
+                      )}
+                    >
                       {checkResult.isCorrect ? t('correct') : t('incorrect')}
                     </span>
                   </div>
                   {checkResult.message && (
-                    <div className={`${baseClass}__result-message`}>{checkResult.message}</div>
+                    <p
+                      className={cn(
+                        'mt-2 text-sm',
+                        checkResult.isCorrect
+                          ? 'text-[hsl(var(--success))]/80'
+                          : 'text-[hsl(var(--error))]/80',
+                      )}
+                    >
+                      {checkResult.message}
+                    </p>
                   )}
                 </div>
               )}
-            </div>
+            </Card>
           )
         })}
       </div>

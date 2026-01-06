@@ -10,8 +10,6 @@ import remarkMath from 'remark-math'
 import 'katex/dist/katex.min.css'
 import './index.scss'
 
-const baseClass = 'rich-text-renderer'
-
 interface RichTextRendererProps {
   block: {
     type: 'rich_text'
@@ -23,12 +21,10 @@ interface RichTextRendererProps {
 
 export function RichTextRenderer({ block }: RichTextRendererProps) {
   return (
-    <div className={baseClass}>
-      <div className={`${baseClass}__content`}>
-        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-          {block.value}
-        </ReactMarkdown>
-      </div>
+    <div className="rich-text-content">
+      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+        {block.value}
+      </ReactMarkdown>
     </div>
   )
 }
