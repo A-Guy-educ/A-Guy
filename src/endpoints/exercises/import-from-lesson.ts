@@ -142,10 +142,33 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
   }
 
   // 6) Extract data from image
-  const result = await extractFromImage({
-    imageBuffer,
-    mimeType,
-  })
+  console.log('[Import] Calling AI extraction service...')
+  console.log('[Import] Image buffer size:', imageBuffer.length)
+  console.log('[Import] MIME type for AI:', mimeType)
+
+  let result
+  try {
+    result = await extractFromImage({
+      imageBuffer,
+      mimeType,
+    })
+    console.log('[Import] AI extraction completed')
+    console.log('[Import] AI result success:', result.success)
+    if (result.success) {
+      console.log('[Import] AI extracted data:', JSON.stringify(result.data, null, 2))
+    } else {
+      console.error('[Import] AI extraction failed:', result.error)
+    }
+  } catch (aiError) {
+    console.error('[Import] AI extraction threw error:', aiError)
+    return Response.json(
+      {
+        error: 'AI extraction failed',
+        details: aiError instanceof Error ? aiError.message : 'Unknown AI error',
+      },
+      { status: 500 },
+    )
+  }
 
   if (!result.success) {
     return Response.json({ error: result.error || 'Failed to process image' }, { status: 500 })
