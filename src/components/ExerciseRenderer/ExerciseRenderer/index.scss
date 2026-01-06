@@ -177,6 +177,10 @@
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: base(0.5);
 
     &:hover:not(&--disabled) {
       border-color: var(--theme-info-500);
@@ -189,10 +193,35 @@
       color: var(--theme-info-700);
     }
 
+    &--correct {
+      border-color: var(--theme-success-500);
+      background: var(--theme-success-100);
+      color: var(--theme-success-700);
+
+      &:hover {
+        background: var(--theme-success-100);
+      }
+    }
+
+    &--incorrect {
+      border-color: var(--theme-error-500);
+      background: var(--theme-error-100);
+      color: var(--theme-error-700);
+
+      &:hover {
+        background: var(--theme-error-100);
+      }
+    }
+
     &--disabled {
       cursor: not-allowed;
       opacity: 0.6;
     }
+  }
+
+  &__tf-option-icon {
+    font-size: 1.25rem;
+    font-weight: bold;
   }
 
   // MCQ UI

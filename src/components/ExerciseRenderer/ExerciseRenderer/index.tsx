@@ -11,6 +11,9 @@ import { cn } from '@/utilities/ui'
 import type {
   ExerciseRendererProps,
   QuestionBlock,
+  QuestionSelectBlock,
+  QuestionMcqBlock,
+  QuestionFreeResponseBlock,
   UserAnswer,
   CheckResult,
   RichTextBlock,
@@ -23,15 +26,20 @@ const baseClass = 'exercise-renderer'
 // Individual question answer checker
 function checkQuestionAnswer(question: QuestionBlock, answer: UserAnswer): CheckResult {
   switch (question.type) {
-    case 'question_true_false': {
+    case 'question_select': {
       if (answer.type !== 'true_false') {
         return { isCorrect: false, message: 'Invalid answer type' }
       }
       if (answer.value === null || answer.value === undefined) {
         return { isCorrect: false, message: 'Please select True or False' }
       }
+      if (!question.answer.correctOptionId) {
+        return { isCorrect: false, message: 'No correct answer defined' }
+      }
+      // Convert user's boolean answer to option id and compare
+      const userOptionId = answer.value ? 'true' : 'false'
       return {
-        isCorrect: answer.value === question.answer.correct,
+        isCorrect: userOptionId === question.answer.correctOptionId,
       }
     }
 
@@ -89,7 +97,7 @@ function checkQuestionAnswer(question: QuestionBlock, answer: UserAnswer): Check
 // Get initial answer for a question
 function getInitialAnswer(question: QuestionBlock): UserAnswer {
   switch (question.type) {
-    case 'question_true_false':
+    case 'question_select':
       return { type: 'true_false', value: null }
     case 'question_mcq':
       return { type: 'mcq', selectedIds: [] }
@@ -106,13 +114,37 @@ function TrueFalseQuestionUI({
   disabled,
   checkResult,
 }: {
-  question: QuestionBlock & { type: 'question_true_false' }
+  question: QuestionSelectBlock
   answer: UserAnswer
   onChange: (answer: UserAnswer) => void
   disabled: boolean
   checkResult: CheckResult | null
 }) {
   const value = answer.type === 'true_false' ? answer.value : null
+
+  // Fallback for backward compatibility - generate default options if missing
+  const options = question.options || [
+    {
+      id: 'true' as const,
+      value: true as const,
+      label: {
+        type: 'rich_text' as const,
+        format: 'md-math-v1' as const,
+        value: 'True',
+        mediaIds: [] as string[],
+      },
+    },
+    {
+      id: 'false' as const,
+      value: false as const,
+      label: {
+        type: 'rich_text' as const,
+        format: 'md-math-v1' as const,
+        value: 'False',
+        mediaIds: [] as string[],
+      },
+    },
+  ]
 
   // Convert InlineRichText to RichTextBlock for renderer
   const promptBlock: RichTextBlock = {
@@ -127,21 +159,42 @@ function TrueFalseQuestionUI({
         <RichTextRenderer block={promptBlock} />
       </div>
       <div className={`${baseClass}__tf-options`}>
-        {[true, false].map((boolValue) => {
-          const isSelected = value === boolValue
+        {options.map((option) => {
+          const isSelected = value === option.value
+          const isCorrectAnswer = question.answer.correctOptionId === option.id
+          const showFeedback = checkResult !== null
+
+          const labelBlock: RichTextBlock = {
+            ...option.label,
+            id: `${question.id}-option-${option.id}`,
+            mediaIds: option.label.mediaIds || [],
+          }
           return (
             <button
-              key={String(boolValue)}
+              key={option.id}
               type="button"
-              onClick={() => onChange({ type: 'true_false', value: boolValue })}
+              onClick={() => onChange({ type: 'true_false', value: option.value })}
               disabled={disabled}
               className={cn(
                 `${baseClass}__tf-option`,
                 isSelected && `${baseClass}__tf-option--selected`,
+                showFeedback &&
+                  isSelected &&
+                  checkResult.isCorrect &&
+                  `${baseClass}__tf-option--correct`,
+                showFeedback &&
+                  isSelected &&
+                  !checkResult.isCorrect &&
+                  `${baseClass}__tf-option--incorrect`,
                 disabled && `${baseClass}__tf-option--disabled`,
               )}
             >
-              {boolValue ? 'True' : 'False'}
+              <RichTextRenderer block={labelBlock} />
+              {showFeedback && isSelected && (
+                <span className={`${baseClass}__tf-option-icon`}>
+                  {checkResult.isCorrect ? '✓' : '✗'}
+                </span>
+              )}
             </button>
           )
         })}
@@ -158,7 +211,7 @@ function McqQuestionUI({
   disabled,
   checkResult,
 }: {
-  question: QuestionBlock & { type: 'question_mcq' }
+  question: QuestionMcqBlock
   answer: UserAnswer
   onChange: (answer: UserAnswer) => void
   disabled: boolean
@@ -239,7 +292,7 @@ function FreeResponseQuestionUI({
   disabled,
   checkResult,
 }: {
-  question: QuestionBlock & { type: 'question_free_response' }
+  question: QuestionFreeResponseBlock
   answer: UserAnswer
   onChange: (answer: UserAnswer) => void
   disabled: boolean
@@ -284,7 +337,7 @@ export function ExerciseRenderer({
   // Track answers and check results for each question block
   const questionBlocks = content.blocks.filter(
     (block) =>
-      block.type === 'question_true_false' ||
+      block.type === 'question_select' ||
       block.type === 'question_mcq' ||
       block.type === 'question_free_response',
   ) as QuestionBlock[]
@@ -302,12 +355,26 @@ export function ExerciseRenderer({
 
   const handleAnswerChange = (questionId: string, answer: UserAnswer) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }))
-    setCheckResults((prev) => {
-      const next = { ...prev }
-      delete next[questionId]
-      return next
-    })
-    setHasChecked((prev) => ({ ...prev, [questionId]: false }))
+
+    // For true/false questions, check immediately on selection
+    const question = questionBlocks.find((q) => q.id === questionId)
+    if (
+      question?.type === 'question_select' &&
+      answer.type === 'true_false' &&
+      answer.value !== null
+    ) {
+      const result = checkQuestionAnswer(question, answer)
+      setCheckResults((prev) => ({ ...prev, [questionId]: result }))
+      setHasChecked((prev) => ({ ...prev, [questionId]: true }))
+    } else {
+      // For other question types, clear the check result
+      setCheckResults((prev) => {
+        const next = { ...prev }
+        delete next[questionId]
+        return next
+      })
+      setHasChecked((prev) => ({ ...prev, [questionId]: false }))
+    }
   }
 
   const handleCheckAnswer = (questionId: string) => {
@@ -352,12 +419,25 @@ export function ExerciseRenderer({
           const checked = hasChecked[question.id] || false
           const disabled = checked && checkResult?.isCorrect
 
+          // Debug logging
+          if (question.type === 'question_select') {
+            console.log('Question Select Block:', {
+              id: question.id,
+              type: question.type,
+              hasVariant: 'variant' in question,
+              variant: (question as any).variant,
+              hasOptions: 'options' in question,
+              options: (question as any).options,
+              question: question,
+            })
+          }
+
           return (
             <div key={question.id} className={`${baseClass}__question-block`}>
               {/* Question UI based on type */}
-              {question.type === 'question_true_false' && (
+              {question.type === 'question_select' && (
                 <TrueFalseQuestionUI
-                  question={question}
+                  question={question as QuestionSelectBlock}
                   answer={answer}
                   onChange={(ans) => handleAnswerChange(question.id, ans)}
                   disabled={!!disabled}
@@ -366,7 +446,7 @@ export function ExerciseRenderer({
               )}
               {question.type === 'question_mcq' && (
                 <McqQuestionUI
-                  question={question}
+                  question={question as QuestionMcqBlock}
                   answer={answer}
                   onChange={(ans) => handleAnswerChange(question.id, ans)}
                   disabled={!!disabled}
@@ -375,7 +455,7 @@ export function ExerciseRenderer({
               )}
               {question.type === 'question_free_response' && (
                 <FreeResponseQuestionUI
-                  question={question}
+                  question={question as QuestionFreeResponseBlock}
                   answer={answer}
                   onChange={(ans) => handleAnswerChange(question.id, ans)}
                   disabled={!!disabled}
@@ -383,8 +463,8 @@ export function ExerciseRenderer({
                 />
               )}
 
-              {/* Check Answer Button */}
-              {showCheckAnswer && (
+              {/* Check Answer Button - hidden for true/false (immediate feedback) */}
+              {showCheckAnswer && question.type !== 'question_select' && (
                 <div className={`${baseClass}__check-button-wrapper`}>
                   <button
                     onClick={() => handleCheckAnswer(question.id)}

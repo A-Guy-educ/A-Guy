@@ -2,13 +2,14 @@
 
 import React from 'react'
 import { Copy, Edit, X, Check, RotateCcw, AlignLeft } from 'lucide-react'
-import type { RichTextBlock } from '@/contracts'
-import { RichTextBlockSchema } from '@/contracts'
+import { Highlight, themes } from 'prism-react-renderer'
+import type { ContentBlock } from '@/collections/Exercises'
+import { ContentBlockSchema } from '@/collections/Exercises'
 
 interface JSONInspectorProps {
-  block: RichTextBlock | null // Selected block
+  block: ContentBlock | null // Selected block
   mode: 'read' | 'edit'
-  onApply?: (block: RichTextBlock) => void // Called when Apply is clicked
+  onApply?: (block: ContentBlock) => void // Called when Apply is clicked
   onClose?: () => void // For mobile toggle
 }
 
@@ -17,8 +18,18 @@ export const JSONInspector: React.FC<JSONInspectorProps> = ({ block, mode, onApp
   const [isEditing, setIsEditing] = React.useState(false)
   const [editValue, setEditValue] = React.useState('')
   const [editError, setEditError] = React.useState<string | null>(null)
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+  const preRef = React.useRef<HTMLPreElement>(null)
 
   const jsonString = block ? JSON.stringify(block, null, 2) : null
+
+  // Sync scroll position between textarea and overlay
+  const handleScroll = React.useCallback(() => {
+    if (textareaRef.current && preRef.current) {
+      preRef.current.scrollTop = textareaRef.current.scrollTop
+      preRef.current.scrollLeft = textareaRef.current.scrollLeft
+    }
+  }, [])
 
   // Initialize edit value when entering edit mode
   React.useEffect(() => {
@@ -41,7 +52,7 @@ export const JSONInspector: React.FC<JSONInspectorProps> = ({ block, mode, onApp
 
   const validateJSON = (
     jsonStr: string,
-  ): { valid: boolean; error?: string; data?: RichTextBlock } => {
+  ): { valid: boolean; error?: string; data?: ContentBlock } => {
     // Try JSON.parse first
     let parsed: unknown
     try {
@@ -53,8 +64,8 @@ export const JSONInspector: React.FC<JSONInspectorProps> = ({ block, mode, onApp
       }
     }
 
-    // Try Zod schema validation
-    const result = RichTextBlockSchema.safeParse(parsed)
+    // Try Zod schema validation (validates all block types)
+    const result = ContentBlockSchema.safeParse(parsed)
     if (!result.success) {
       const firstError = result.error.issues[0]
       const path = firstError.path.join('.')
@@ -184,18 +195,51 @@ export const JSONInspector: React.FC<JSONInspectorProps> = ({ block, mode, onApp
       )}
       <div className="json-inspector__content">
         {isEditing ? (
-          <textarea
-            className="json-inspector__textarea"
-            value={editValue}
-            onChange={(e) => {
-              setEditValue(e.target.value)
-              setEditError(null)
-            }}
-            spellCheck={false}
-          />
-        ) : (
-          <pre className="json-inspector__pre">{jsonString}</pre>
-        )}
+          <div className="json-inspector__editor">
+            <Highlight theme={themes.vsDark} code={editValue} language="json">
+              {({ style, tokens, getLineProps, getTokenProps }) => (
+                <pre
+                  ref={preRef}
+                  className="json-inspector__pre json-inspector__pre--overlay"
+                  style={{ ...style, background: '#1e1e1e' }}
+                >
+                  {tokens.map((line, i) => (
+                    <div key={i} {...getLineProps({ line })}>
+                      {line.map((token, key) => (
+                        <span key={key} {...getTokenProps({ token })} />
+                      ))}
+                    </div>
+                  ))}
+                </pre>
+              )}
+            </Highlight>
+            <textarea
+              ref={textareaRef}
+              className="json-inspector__textarea json-inspector__textarea--editable"
+              value={editValue}
+              onChange={(e) => {
+                setEditValue(e.target.value)
+                setEditError(null)
+              }}
+              onScroll={handleScroll}
+              spellCheck={false}
+            />
+          </div>
+        ) : jsonString ? (
+          <Highlight theme={themes.vsDark} code={jsonString} language="json">
+            {({ style, tokens, getLineProps, getTokenProps }) => (
+              <pre className="json-inspector__pre" style={{ ...style, background: '#1e1e1e' }}>
+                {tokens.map((line, i) => (
+                  <div key={i} {...getLineProps({ line })}>
+                    {line.map((token, key) => (
+                      <span key={key} {...getTokenProps({ token })} />
+                    ))}
+                  </div>
+                ))}
+              </pre>
+            )}
+          </Highlight>
+        ) : null}
       </div>
     </div>
   )

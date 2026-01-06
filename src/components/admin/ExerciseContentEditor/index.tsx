@@ -6,7 +6,9 @@ import { Code, Plus, Trash2, MoveUp, MoveDown, Image } from 'lucide-react'
 import { RichTextEditor } from './RichTextEditor'
 import { JSONInspector } from './JSONInspector'
 import { MediaPicker } from './MediaPicker'
-import type { RichTextBlock } from '@/contracts'
+import { BlockTypeSelector } from './BlockTypeSelector'
+import type { ContentBlock } from '@/collections/Exercises'
+import { ExerciseBlockDefaults } from '@/collections/Exercises'
 import type { Media } from '@/payload-types'
 import { generateId } from './utils'
 import './index.css'
@@ -14,11 +16,14 @@ import './index.css'
 /**
  * Exercise Content Editor - Strict Flat Blocks
  *
- * Reads/writes ONLY: { blocks: RichTextBlock[] }
- * NO containers, NO hierarchy, NO legacy support.
+ * Supports all block types:
+ * - rich_text (content blocks)
+ * - question_select
+ * - question_mcq
+ * - question_free_response
  */
 
-const DEFAULT_BLOCKS: RichTextBlock[] = [
+const DEFAULT_BLOCKS: ContentBlock[] = [
   {
     id: generateId(),
     type: 'rich_text',
@@ -45,6 +50,8 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   const [isJsonPanelOpen, setIsJsonPanelOpen] = React.useState(false)
   const [mediaPickerOpen, setMediaPickerOpen] = React.useState(false)
   const [currentBlockForMedia, setCurrentBlockForMedia] = React.useState<string | null>(null)
+  const [blockTypeSelectorOpen, setBlockTypeSelectorOpen] = React.useState(false)
+  const [insertAtIndex, setInsertAtIndex] = React.useState<number | undefined>(undefined)
   const [jsonPanelWidth, setJsonPanelWidth] = React.useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('exercise-editor-json-panel-width')
@@ -112,27 +119,33 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   }, [])
 
   // Get blocks array safely
-  const blocks: RichTextBlock[] = localValue?.blocks || []
+  const blocks: ContentBlock[] = localValue?.blocks || []
 
-  // Add new block
+  // Open block type selector
   const handleAddBlock = (index?: number) => {
-    const newBlock: RichTextBlock = {
-      id: generateId(),
-      type: 'rich_text',
-      format: 'md-math-v1',
-      value: '',
-      mediaIds: [],
-    }
+    setInsertAtIndex(index)
+    setBlockTypeSelectorOpen(true)
+  }
+
+  // Handle block type selection
+  const handleBlockTypeSelected = (blockType: ContentBlock['type']) => {
+    // Create block using factory defaults
+    const newBlock = ExerciseBlockDefaults[blockType]() as ContentBlock
 
     const newBlocks = [...blocks]
-    if (index !== undefined) {
-      newBlocks.splice(index + 1, 0, newBlock)
+    if (insertAtIndex !== undefined) {
+      newBlocks.splice(insertAtIndex + 1, 0, newBlock)
     } else {
       newBlocks.push(newBlock)
     }
 
     updateLocalValue({ blocks: newBlocks })
     setSelectedBlockId(newBlock.id)
+
+    // Open JSON panel for question blocks
+    if (blockType !== 'rich_text') {
+      setIsJsonPanelOpen(true)
+    }
   }
 
   // Delete block
@@ -158,7 +171,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   }
 
   // Update block
-  const handleUpdateBlock = (blockId: string, updates: Partial<RichTextBlock>) => {
+  const handleUpdateBlock = (blockId: string, updates: Partial<ContentBlock>) => {
     const newBlocks = blocks.map((b) => (b.id === blockId ? { ...b, ...updates } : b))
     updateLocalValue({ blocks: newBlocks })
   }
@@ -179,7 +192,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   }
 
   // Apply JSON changes
-  const handleJsonApply = (updatedBlock: RichTextBlock) => {
+  const handleJsonApply = (updatedBlock: ContentBlock) => {
     if (!selectedBlockId) return
     handleUpdateBlock(selectedBlockId, updatedBlock)
   }
@@ -200,8 +213,8 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   // Remove single media from block
   const handleRemoveMedia = (blockId: string, mediaId: string) => {
     const block = blocks.find((b) => b.id === blockId)
-    if (!block) return
-    const newMediaIds = (block.mediaIds || []).filter((id) => id !== mediaId)
+    if (!block || block.type !== 'rich_text') return
+    const newMediaIds = (block.mediaIds || []).filter((id: string) => id !== mediaId)
     handleUpdateBlock(blockId, { mediaIds: newMediaIds })
   }
 
@@ -393,22 +406,31 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
         onClose={() => setMediaPickerOpen(false)}
         selectedMediaIds={
           currentBlockForMedia
-            ? blocks.find((b) => b.id === currentBlockForMedia)?.mediaIds || []
+            ? (() => {
+                const block = blocks.find((b) => b.id === currentBlockForMedia)
+                return block?.type === 'rich_text' ? block.mediaIds || [] : []
+              })()
             : []
         }
         onSave={handleMediaSave}
+      />
+
+      <BlockTypeSelector
+        isOpen={blockTypeSelectorOpen}
+        onClose={() => setBlockTypeSelectorOpen(false)}
+        onSelect={handleBlockTypeSelected}
       />
     </div>
   )
 }
 
 interface BlockListProps {
-  blocks: RichTextBlock[]
+  blocks: ContentBlock[]
   selectedBlockId: string | null
   onSelect: (id: string) => void
   onAddBlock: (index?: number) => void
   onDeleteBlock: (id: string) => void
-  onUpdateBlock: (id: string, updates: Partial<RichTextBlock>) => void
+  onUpdateBlock: (id: string, updates: Partial<ContentBlock>) => void
   onMoveBlock: (id: string, direction: 'up' | 'down') => void
   onOpenMediaPicker: (blockId: string) => void
   onRemoveMedia: (blockId: string, mediaId: string) => void
@@ -474,40 +496,55 @@ function BlockList({
               </button>
             </div>
           </div>
-          <div
-            className="block-content"
-            onClick={() => onSelect(block.id)}
-            onFocus={() => onSelect(block.id)}
-          >
-            <RichTextEditor
-              value={block.value}
-              onChange={(value) => onUpdateBlock(block.id, { value })}
-            />
-          </div>
-
-          <div className="block-media-section">
-            <button
-              type="button"
-              className="block-media-button"
-              onClick={() => onOpenMediaPicker(block.id)}
-              title="Attach media"
-            >
-              <Image size={14} />
-              <span>
-                {block.mediaIds && block.mediaIds.length > 0
-                  ? `${block.mediaIds.length} media attached`
-                  : 'Attach media'}
-              </span>
-            </button>
-
-            {block.mediaIds && block.mediaIds.length > 0 && (
-              <BlockMediaDisplay
-                blockId={block.id}
-                mediaIds={block.mediaIds}
-                onRemoveMedia={onRemoveMedia}
-              />
+          <div className="block-content">
+            {block.type === 'rich_text' ? (
+              <div onClick={() => onSelect(block.id)} onFocus={() => onSelect(block.id)}>
+                <RichTextEditor
+                  value={block.value}
+                  onChange={(value) => onUpdateBlock(block.id, { value })}
+                />
+              </div>
+            ) : (
+              <div className="question-block-json-editor">
+                <div className="question-block-type-badge">
+                  {block.type === 'question_select' && 'Select Question'}
+                  {block.type === 'question_mcq' && 'Multiple Choice Question'}
+                  {block.type === 'question_free_response' && 'Free Response Question'}
+                </div>
+                <JSONInspector
+                  block={block}
+                  mode="edit"
+                  onApply={(updatedBlock) => onUpdateBlock(block.id, updatedBlock)}
+                />
+              </div>
             )}
           </div>
+
+          {block.type === 'rich_text' && (
+            <div className="block-media-section">
+              <button
+                type="button"
+                className="block-media-button"
+                onClick={() => onOpenMediaPicker(block.id)}
+                title="Attach media"
+              >
+                <Image size={14} />
+                <span>
+                  {block.mediaIds && block.mediaIds.length > 0
+                    ? `${block.mediaIds.length} media attached`
+                    : 'Attach media'}
+                </span>
+              </button>
+
+              {block.mediaIds && block.mediaIds.length > 0 && (
+                <BlockMediaDisplay
+                  blockId={block.id}
+                  mediaIds={block.mediaIds}
+                  onRemoveMedia={onRemoveMedia}
+                />
+              )}
+            </div>
+          )}
         </div>
       ))}
 
