@@ -14,7 +14,6 @@ import type {
   QuestionBlock,
   QuestionSelectTrueFalseBlock,
   QuestionSelectMcqBlock,
-  QuestionMcqBlock,
   QuestionFreeResponseBlock,
   UserAnswer,
   CheckResult,
@@ -61,21 +60,6 @@ function checkQuestionAnswer(question: QuestionBlock, answer: UserAnswer): Check
       return { isCorrect: false, message: 'Unknown question variant' }
     }
 
-    case 'question_mcq': {
-      // Deprecated: backward compatibility for old question_mcq blocks
-      if (answer.type !== 'mcq') {
-        return { isCorrect: false, message: 'Invalid answer type' }
-      }
-      if (answer.selectedIds.length === 0) {
-        return { isCorrect: false, message: 'Please select an answer' }
-      }
-      const userIds = [...answer.selectedIds].sort()
-      const correctIds = [...question.answer.correctOptionIds].sort()
-      const isCorrect =
-        userIds.length === correctIds.length && userIds.every((id, idx) => id === correctIds[idx])
-      return { isCorrect }
-    }
-
     case 'question_free_response': {
       if (answer.type !== 'free_response') {
         return { isCorrect: false, message: 'Invalid answer type' }
@@ -109,8 +93,6 @@ function getInitialAnswer(question: QuestionBlock): UserAnswer {
         return { type: 'mcq', selectedIds: [] }
       }
       return { type: 'true_false', value: null } // fallback
-    case 'question_mcq':
-      return { type: 'mcq', selectedIds: [] }
     case 'question_free_response':
       return { type: 'free_response', value: '' }
   }
@@ -222,7 +204,7 @@ function McqQuestionUI({
   checkResult,
   t,
 }: {
-  question: QuestionMcqBlock | QuestionSelectMcqBlock
+  question: QuestionSelectMcqBlock
   answer: UserAnswer
   onChange: (answer: UserAnswer) => void
   disabled: boolean
@@ -349,10 +331,7 @@ export function ExerciseRenderer({
 
   // Track answers and check results for each question block
   const questionBlocks = content.blocks.filter(
-    (block) =>
-      block.type === 'question_select' ||
-      block.type === 'question_mcq' ||
-      block.type === 'question_free_response',
+    (block) => block.type === 'question_select' || block.type === 'question_free_response',
   ) as QuestionBlock[]
 
   const [answers, setAnswers] = useState<Record<string, UserAnswer>>(() => {
@@ -460,17 +439,6 @@ export function ExerciseRenderer({
               {question.type === 'question_select' && question.variant === 'mcq' && (
                 <McqQuestionUI
                   question={question as QuestionSelectMcqBlock}
-                  answer={answer}
-                  onChange={(ans) => handleAnswerChange(question.id, ans)}
-                  disabled={!!disabled}
-                  checkResult={checkResult}
-                  t={t}
-                />
-              )}
-              {/* Deprecated: backward compatibility for old question_mcq blocks */}
-              {question.type === 'question_mcq' && (
-                <McqQuestionUI
-                  question={question as QuestionMcqBlock}
                   answer={answer}
                   onChange={(ans) => handleAnswerChange(question.id, ans)}
                   disabled={!!disabled}

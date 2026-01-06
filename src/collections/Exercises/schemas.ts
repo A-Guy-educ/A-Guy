@@ -138,20 +138,6 @@ export const QuestionSelectBlockSchema = z.discriminatedUnion('variant', [
   QuestionSelectMcqSchema,
 ])
 
-// Keep QuestionMcqBlockSchema for backward compatibility (deprecated)
-export const QuestionMcqBlockSchema = z
-  .object({
-    id: z.string().min(1),
-    type: z.literal('question_mcq'),
-    prompt: InlineRichTextSchema,
-    answer: McqAnswerSchema,
-
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
-  })
-  .strict()
-
 export const QuestionFreeResponseBlockSchema = z
   .object({
     id: z.string().min(1),
@@ -171,7 +157,6 @@ export const QuestionFreeResponseBlockSchema = z
 export const ContentBlockSchema = z.discriminatedUnion('type', [
   RichTextBlockSchema,
   QuestionSelectBlockSchema,
-  QuestionMcqBlockSchema, // Deprecated: kept for backward compatibility with old data
   QuestionFreeResponseBlockSchema,
 ])
 

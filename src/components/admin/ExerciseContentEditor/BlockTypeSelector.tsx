@@ -7,7 +7,7 @@ import type { ContentBlock } from '@/collections/Exercises'
 interface BlockTypeSelectorProps {
   isOpen: boolean
   onClose: () => void
-  onSelect: (blockType: ContentBlock['type']) => void
+  onSelect: (blockType: string) => void
 }
 
 export const BlockTypeSelector: React.FC<BlockTypeSelectorProps> = ({
@@ -18,7 +18,7 @@ export const BlockTypeSelector: React.FC<BlockTypeSelectorProps> = ({
   if (!isOpen) return null
 
   const blockTypes: Array<{
-    type: ContentBlock['type']
+    type: string
     label: string
     description: string
     icon: React.ReactNode

@@ -124,7 +124,6 @@ export {
   ContentBlockSchema,
   ContentSchema,
   type ContentBlock,
-  QuestionMcqBlockSchema,
   QuestionFreeResponseBlockSchema,
 } from './schemas'
 export { ExerciseBlockDefaults } from './defaults'

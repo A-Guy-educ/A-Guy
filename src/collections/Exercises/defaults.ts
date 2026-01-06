@@ -68,8 +68,9 @@ const DEFAULT_FREE_RESPONSE_ANSWER = {
 
 // ---------------------------------
 // Block factories for editor UI (Add Block menu)
+// Keys are used in the admin UI, values create the actual block structure
 // ---------------------------------
-export const ExerciseBlockDefaults: Record<ContentBlock['type'], () => ContentBlock> = {
+export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
   rich_text: () => ({
     id: generateId(),
     type: 'rich_text' as const,

@@ -7,11 +7,11 @@
 import { PayloadRequest } from 'payload'
 import { extractFromImage } from '@/lib/ai/services/data-extractor-service'
 import type { Media } from '@/payload-types'
+import { ExerciseBlockDefaults } from '@/collections/Exercises'
 import {
-  ExerciseBlockDefaults,
-  QuestionMcqBlockSchema,
   QuestionFreeResponseBlockSchema,
-} from '@/collections/Exercises'
+  QuestionSelectBlockSchema,
+} from '@/collections/Exercises/schemas'
 
 export async function importExerciseFromLesson(req: PayloadRequest) {
   // 1) Auth - endpoints not authenticated by default
@@ -122,16 +122,14 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
         }
 
         // Validate with Zod schema (runtime validation)
-        questionBlock = QuestionMcqBlockSchema.parse(draft)
+        questionBlock = QuestionSelectBlockSchema.parse(draft)
       } else {
         // Get free response template from factory
         const draft = ExerciseBlockDefaults.question_free_response() as any
 
         // Populate with AI-extracted data
         draft.prompt.value = result.data.question
-        draft.answer.responseKind = 'text'
         draft.answer.acceptedAnswers = [result.data.explanation || 'See solution']
-        draft.answer.tolerance = 0
 
         if (result.data.explanation) {
           draft.solution = {

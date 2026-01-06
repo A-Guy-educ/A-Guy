@@ -18,8 +18,7 @@ import './index.css'
  *
  * Supports all block types:
  * - rich_text (content blocks)
- * - question_select
- * - question_mcq
+ * - question_select (true_false and mcq variants)
  * - question_free_response
  */
 
@@ -128,7 +127,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   }
 
   // Handle block type selection
-  const handleBlockTypeSelected = (blockType: ContentBlock['type']) => {
+  const handleBlockTypeSelected = (blockType: string) => {
     // Create block using factory defaults
     const newBlock = ExerciseBlockDefaults[blockType]() as ContentBlock
 
@@ -507,8 +506,8 @@ function BlockList({
             ) : (
               <div className="question-block-json-editor">
                 <div className="question-block-type-badge">
-                  {block.type === 'question_select' && 'Select Question'}
-                  {block.type === 'question_mcq' && 'Multiple Choice Question'}
+                  {block.type === 'question_select' &&
+                    (block.variant === 'mcq' ? 'Multiple Choice Question' : 'Select Question')}
                   {block.type === 'question_free_response' && 'Free Response Question'}
                 </div>
                 <JSONInspector

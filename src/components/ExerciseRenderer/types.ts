@@ -100,17 +100,6 @@ export interface QuestionSelectMcqBlock {
 
 export type QuestionSelectBlock = QuestionSelectTrueFalseBlock | QuestionSelectMcqBlock
 
-// Deprecated: Keep for backward compatibility
-export interface QuestionMcqBlock {
-  id: string
-  type: 'question_mcq'
-  prompt: InlineRichText
-  answer: McqAnswer
-  hint?: InlineRichText
-  solution?: InlineRichText
-  fullSolution?: InlineRichText
-}
-
 export interface QuestionFreeResponseBlock {
   id: string
   type: 'question_free_response'
@@ -121,7 +110,7 @@ export interface QuestionFreeResponseBlock {
   fullSolution?: InlineRichText
 }
 
-export type QuestionBlock = QuestionSelectBlock | QuestionMcqBlock | QuestionFreeResponseBlock
+export type QuestionBlock = QuestionSelectBlock | QuestionFreeResponseBlock
 
 export type ContentBlock = RichTextBlock | QuestionBlock
 
