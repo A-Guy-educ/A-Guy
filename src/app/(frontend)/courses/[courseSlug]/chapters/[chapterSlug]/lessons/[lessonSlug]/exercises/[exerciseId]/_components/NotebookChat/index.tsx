@@ -50,7 +50,7 @@ export function NotebookChat() {
           onClick={() => handleQuickAction('hint')}
           disabled={isLoading}
         >
-          <Lightbulb className="w-6 h-6 text-yellow-400" />
+          <Lightbulb className="text-yellow-400" />
           <span>{t('chatHint')}</span>
         </button>
         <button
@@ -58,7 +58,7 @@ export function NotebookChat() {
           onClick={() => handleQuickAction('solution')}
           disabled={isLoading}
         >
-          <CheckCircle className="w-6 h-6 text-green-500" />
+          <CheckCircle className="text-green-500" />
           <span>{t('chatSolution')}</span>
         </button>
         <button
@@ -66,7 +66,7 @@ export function NotebookChat() {
           onClick={() => handleQuickAction('full')}
           disabled={isLoading}
         >
-          <BookOpen className="w-6 h-6 text-blue-500" />
+          <BookOpen className="text-blue-500" />
           <span>{t('chatFullSolution')}</span>
         </button>
       </div>
