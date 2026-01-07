@@ -94,7 +94,7 @@
     "chatTab": "Chat",
     "formulasTab": "Formulas",
     "notesTab": "Notes",
-    "chatWelcome": "Hi! I’m here to help with question 5. Which part should we check?",
+    "chatWelcome": "Hi! I'm your AI tutor. Ask me for hints, explanations, or help solving this exercise!",
     "chatHint": "Hint",
     "chatSolution": "Solution",
     "chatFullSolution": "Full",
