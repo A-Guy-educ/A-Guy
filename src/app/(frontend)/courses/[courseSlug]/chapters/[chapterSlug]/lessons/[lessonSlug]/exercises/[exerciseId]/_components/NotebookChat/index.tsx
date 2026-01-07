@@ -4,6 +4,7 @@ import React from 'react'
 import { Lightbulb, CheckCircle, BookOpen, Loader2, Send } from 'lucide-react'
 import { useTranslations } from '@/providers/I18n'
 import { useNotebookChat } from './useNotebookChat'
+import { ChatMessageRole } from '@/lib/ai/chat-message-role'
 import './index.scss'
 
 export function NotebookChat() {
@@ -35,7 +36,7 @@ export function NotebookChat() {
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`notebook-chat__bubble ${msg.role === 'user' ? 'notebook-chat__bubble--user' : ''}`}
+            className={`notebook-chat__bubble ${msg.role === ChatMessageRole.User ? 'notebook-chat__bubble--user' : ''}`}
           >
             {msg.content}
           </div>
