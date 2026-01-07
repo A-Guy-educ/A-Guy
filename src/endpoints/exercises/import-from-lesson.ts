@@ -40,6 +40,7 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
 
   // 4) Check if contentFile exists
   const contentFile = lesson.contentFile as Media | null | undefined
+
   if (!contentFile || !contentFile.url) {
     return Response.json({ error: 'Lesson has no content file to convert' }, { status: 400 })
   }
@@ -49,12 +50,42 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
   let mimeType: string
 
   try {
-    // Fetch from the URL (works with Vercel Blob, S3, filesystem, etc.)
-    const imageResponse = await fetch(contentFile.url)
+    // Handle both relative and absolute URLs
+    let imageUrl: string
+    const isAbsolute = contentFile.url.startsWith('http')
+
+    if (isAbsolute) {
+      // Already absolute URL (Vercel Blob, S3, etc.)
+      imageUrl = contentFile.url
+    } else {
+      // Relative URL - build absolute URL from request origin
+      const requestUrl = new URL(req.url || 'http://localhost:3000')
+      const origin = `${requestUrl.protocol}//${requestUrl.host}`
+      imageUrl = `${origin}${contentFile.url}`
+    }
+
+    // Fetch from the URL with authentication forwarding for relative URLs
+    // For absolute URLs (Vercel Blob, S3), no auth needed
+    const fetchOptions: RequestInit = {}
+    if (!isAbsolute) {
+      // Forward cookies for server-to-server requests to our own API
+      const cookieHeader = req.headers.get('cookie')
+      if (cookieHeader) {
+        fetchOptions.headers = {
+          cookie: cookieHeader,
+        }
+      }
+    }
+
+    const imageResponse = await fetch(imageUrl, fetchOptions)
 
     if (!imageResponse.ok) {
       return Response.json(
-        { error: 'Failed to fetch lesson content file from storage' },
+        {
+          error: 'Failed to fetch lesson content file from storage',
+          details: `HTTP ${imageResponse.status}: ${imageResponse.statusText}`,
+          url: contentFile.url,
+        },
         { status: 500 },
       )
     }
@@ -64,16 +95,31 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
     mimeType = contentFile.mimeType || 'image/jpeg'
   } catch (fetchError) {
     return Response.json(
-      { error: 'Failed to fetch lesson content file from storage' },
+      {
+        error: 'Failed to fetch lesson content file from storage',
+        details: fetchError instanceof Error ? fetchError.message : 'Unknown error',
+        url: contentFile.url,
+      },
       { status: 500 },
     )
   }
 
   // 6) Extract data from image
-  const result = await extractFromImage({
-    imageBuffer,
-    mimeType,
-  })
+  let result
+  try {
+    result = await extractFromImage({
+      imageBuffer,
+      mimeType,
+    })
+  } catch (aiError) {
+    return Response.json(
+      {
+        error: 'AI extraction failed',
+        details: aiError instanceof Error ? aiError.message : 'Unknown AI error',
+      },
+      { status: 500 },
+    )
+  }
 
   if (!result.success) {
     return Response.json({ error: result.error || 'Failed to process image' }, { status: 500 })
@@ -163,11 +209,14 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
         exerciseId: exerciseDoc.id,
       })
     } catch (createError) {
-      // Exercise creation failed, but AI extraction succeeded
       return Response.json(
         {
           error: 'AI conversion succeeded but exercise creation failed',
           details: createError instanceof Error ? createError.message : 'Unknown error',
+          // Include Zod issues in response for debugging
+          ...(createError && typeof createError === 'object' && 'issues' in createError
+            ? { zodIssues: (createError as any).issues }
+            : {}),
         },
         { status: 500 },
       )

@@ -5,6 +5,9 @@ import { queryExercisesByLesson } from '@/lib/queries/exercises'
 import { Breadcrumb } from '../../../../../_components/Breadcrumb'
 import { LessonHeader } from '../../../../../_components/LessonHeader'
 import { LessonContent } from './_components/LessonContent'
+import { getPayload } from 'payload'
+import configPromise from '@payload-config'
+import { headers as getHeaders } from 'next/headers'
 
 interface LessonPageProps {
   params: Promise<{
@@ -17,10 +20,16 @@ interface LessonPageProps {
 export default async function LessonPage({ params }: LessonPageProps) {
   const { courseSlug, chapterSlug, lessonSlug } = await params
 
-  const [course, lesson] = await Promise.all([
+  const [course, lesson, payload] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug }),
     queryLessonBySlug({ slug: lessonSlug }),
+    getPayload({ config: configPromise }),
   ])
+
+  // Get current user
+  const headers = await getHeaders()
+  const { user } = await payload.auth({ headers })
+  const isAdmin = user?.role === 'admin'
 
   if (!course || !lesson) {
     notFound()
@@ -62,6 +71,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
         courseSlug={courseSlug}
         chapterSlug={chapterSlug}
         lessonSlug={lessonSlug}
+        lessonId={lesson.id}
+        isAdmin={isAdmin}
       />
     </div>
   )
