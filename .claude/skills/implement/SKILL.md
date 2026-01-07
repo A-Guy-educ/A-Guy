@@ -84,6 +84,14 @@ git checkout -b <branch-name>
 - Add Pino logging for new/changed server-side behavior (include requestId correlation)
 - Ensure Sentry captures relevant errors (no silent failures)
 
+**Helper Skills Available**:
+
+- Use `/new-collection` skill when creating Payload collections
+- Use `/new-block` skill when creating layout builder blocks
+- Use `/add-ui-component` skill when adding shadcn/ui components
+- Use `/quality-check` skill before committing to verify all gates pass
+- Use `/security-review` skill before creating PR for security audit
+
 ### 4. Tests & Quality Gates (Mandatory)
 
 Run ALL of these commands and ensure they pass:

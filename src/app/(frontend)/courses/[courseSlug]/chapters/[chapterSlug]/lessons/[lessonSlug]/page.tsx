@@ -8,6 +8,7 @@ import { LessonContent } from './_components/LessonContent'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { headers as getHeaders } from 'next/headers'
+import type { Media } from '@/payload-types'
 
 interface LessonPageProps {
   params: Promise<{
@@ -65,7 +66,13 @@ export default async function LessonPage({ params }: LessonPageProps) {
       <LessonHeader order={lesson.order} title={lesson.title} description={lesson.description} />
 
       <LessonContent
-        contentFile={typeof lesson.contentFile === 'string' ? null : lesson.contentFile}
+        contentFiles={
+          lesson.contentFiles
+            ? lesson.contentFiles
+                .map((file) => (typeof file === 'string' ? null : file))
+                .filter((file): file is Media => file !== null)
+            : null
+        }
         lessonTitle={lesson.title}
         exercises={exercises}
         courseSlug={courseSlug}

@@ -29,6 +29,7 @@ export const queryChaptersByCourse = cache(async ({ courseId }: { courseId: stri
     sort: 'order',
     limit: 1000,
     pagination: false,
+    depth: 2,
   })
 
   return result.docs

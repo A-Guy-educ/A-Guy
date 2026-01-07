@@ -68,6 +68,15 @@ export const Courses: CollectionConfig = {
       },
     },
     {
+      name: 'mediaFiles',
+      type: 'upload',
+      relationTo: 'media',
+      hasMany: true,
+      admin: {
+        description: 'Upload course-related media files (images, videos, documents, etc.)',
+      },
+    },
+    {
       name: 'order',
       type: 'number',
       required: true,

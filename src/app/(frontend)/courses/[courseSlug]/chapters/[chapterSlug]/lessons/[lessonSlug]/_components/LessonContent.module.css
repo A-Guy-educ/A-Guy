@@ -2,6 +2,31 @@
   margin-bottom: 2rem;
 }
 
+.mediaFilesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.mediaFileWrapper {
+  width: 100%;
+  min-height: 841px;
+  flex-shrink: 0;
+}
+
+.fileSeparator {
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    hsl(var(--border)) 20%,
+    hsl(var(--border)) 80%,
+    transparent
+  );
+  margin: 2rem 0;
+  flex-shrink: 0;
+}
+
 .exercisesContainer {
   display: flex;
   flex-direction: column;
