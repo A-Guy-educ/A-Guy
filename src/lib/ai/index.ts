@@ -3,7 +3,6 @@
  * Centralized exports for all AI functionality
  *
  * Future-ready: Easy to extend with new features like:
- * - Exercise chat assistant
  * - Exercise editing suggestions
  * - Content generation
  * - Auto-grading assistance
@@ -18,4 +17,10 @@ export {
   type ImageToExerciseResult,
   type ImageToExerciseResponse,
 } from './services/data-extractor-service'
+export {
+  chatWithExerciseHelper,
+  type ChatMessage,
+  type ExerciseChatInput,
+  type ExerciseChatResult,
+} from './services/exercise-chat-service'
 export { SIMPLE_TEXT_QUESTION_PROMPT } from './prompts/simple-text-question'

@@ -1,65 +1,102 @@
 'use client'
 
-import React, { useEffect, useRef, useLayoutEffect } from 'react'
-import { Lightbulb, CheckCircle, BookOpen } from 'lucide-react'
+import React from 'react'
+import { Lightbulb, CheckCircle, BookOpen, Loader2, Send } from 'lucide-react'
 import { useTranslations } from '@/providers/I18n'
+import { useNotebookChat } from './useNotebookChat'
+import { ChatMessageRole } from '@/lib/ai/chat-message-role'
 import './index.scss'
 
 export function NotebookChat() {
   const t = useTranslations('courses')
-  const messagesContainerRef = useRef<HTMLDivElement>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
-  }
-
-  useLayoutEffect(() => {
-    // Scroll to bottom immediately after layout
-    scrollToBottom()
-  }, [])
-
-  useEffect(() => {
-    // Also scroll after a brief delay to handle any async rendering
-    const timer = setTimeout(() => {
-      scrollToBottom()
-    }, 50)
-    return () => clearTimeout(timer)
-  }, [])
+  const {
+    messages,
+    inputValue,
+    isLoading,
+    messagesContainerRef,
+    messagesEndRef,
+    inputRef,
+    setInputValue,
+    handleSubmit,
+    handleKeyDown,
+    handleQuickAction,
+  } = useNotebookChat({
+    initialMessage: t('chatWelcome'),
+    authRequiredMessage: t('chatAuthRequired'),
+    errorMessage: t('chatError'),
+    hintPrompt: t('chatHintPrompt'),
+    solutionPrompt: t('chatSolutionPrompt'),
+    fullSolutionPrompt: t('chatFullSolutionPrompt'),
+    acknowledgment: t('chatAIAcknowledgment'),
+  })
 
   return (
     <div className="notebook-chat">
       <div ref={messagesContainerRef} className="notebook-chat__messages">
-        <div className="notebook-chat__bubble">{t('chatWelcome')}</div>
+        {messages.map((msg, idx) => (
+          <div
+            key={idx}
+            className={`notebook-chat__bubble ${msg.role === ChatMessageRole.User ? 'notebook-chat__bubble--user' : ''}`}
+          >
+            {msg.content}
+          </div>
+        ))}
+        {isLoading && (
+          <div className="notebook-chat__bubble notebook-chat__bubble--loading">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Thinking...</span>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
       <div className="notebook-chat__actions">
-        <button className="notebook-chat__action">
-          <Lightbulb className="w-6 h-6 text-yellow-400" />
+        <button
+          className="notebook-chat__action"
+          onClick={() => handleQuickAction('hint')}
+          disabled={isLoading}
+        >
+          <Lightbulb className="text-yellow-400" />
           <span>{t('chatHint')}</span>
         </button>
-        <button className="notebook-chat__action">
-          <CheckCircle className="w-6 h-6 text-green-500" />
+        <button
+          className="notebook-chat__action"
+          onClick={() => handleQuickAction('solution')}
+          disabled={isLoading}
+        >
+          <CheckCircle className="text-green-500" />
           <span>{t('chatSolution')}</span>
         </button>
-        <button className="notebook-chat__action">
-          <BookOpen className="w-6 h-6 text-blue-500" />
+        <button
+          className="notebook-chat__action"
+          onClick={() => handleQuickAction('full')}
+          disabled={isLoading}
+        >
+          <BookOpen className="text-blue-500" />
           <span>{t('chatFullSolution')}</span>
         </button>
       </div>
 
-      <div className="notebook-chat__footer">
+      <form onSubmit={handleSubmit} className="notebook-chat__footer">
         <input
+          ref={inputRef}
           type="text"
           className="notebook-chat__input"
           placeholder={t('chatInputPlaceholder')}
-          disabled
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={isLoading}
         />
-        <button className="notebook-chat__send" disabled>
-          {t('chatSend')}
+        <button
+          type="submit"
+          className="notebook-chat__send"
+          disabled={isLoading || !inputValue.trim()}
+          aria-label="Send message"
+        >
+          <Send className="w-5 h-5" />
         </button>
-      </div>
+      </form>
     </div>
   )
 }

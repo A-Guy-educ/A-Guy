@@ -131,13 +131,23 @@ export function NotebookWorkspace({
             </nav>
           </header>
 
-          {activeTab === 'chat' && <div className="notebook-workspace__chat">{chat}</div>}
-          {activeTab !== 'chat' && (
-            <div className="notebook-workspace__tools">
-              {activeTab === 'formulas' && formulas}
-              {activeTab === 'notes' && notes}
-            </div>
-          )}
+          <div
+            className={cn(
+              'notebook-workspace__chat',
+              activeTab !== 'chat' && 'notebook-workspace__chat--hidden',
+            )}
+          >
+            {chat}
+          </div>
+          <div
+            className={cn(
+              'notebook-workspace__tools',
+              activeTab === 'chat' && 'notebook-workspace__tools--hidden',
+            )}
+          >
+            {activeTab === 'formulas' && formulas}
+            {activeTab === 'notes' && notes}
+          </div>
         </aside>
 
         <main className="notebook-workspace__content">

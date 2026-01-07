@@ -11,8 +11,12 @@ export const AI_MODELS = {
     temperature: 0.2, // Lower for more deterministic JSON output
     maxOutputTokens: 8192,
   },
+  EXERCISE_CHAT: {
+    name: 'gemini-2.0-flash-001', // Fast and conversational
+    temperature: 0.7, // More natural responses
+    maxOutputTokens: 2048,
+  },
   // Future models can be added here:
-  // EXERCISE_CHAT: { ... }
   // EXERCISE_EDITOR: { ... }
   // TEXT_TO_EXERCISE: { ... }
 } as const

@@ -37,6 +37,12 @@ const nextConfig = {
       '.mjs': ['.mts', '.mjs'],
     }
 
+    // Add loader for markdown files
+    webpackConfig.module.rules.push({
+      test: /\.md$/,
+      type: 'asset/source',
+    })
+
     return webpackConfig
   },
   reactStrictMode: true,
