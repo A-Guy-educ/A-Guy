@@ -53,7 +53,6 @@ export function NotebookChat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message,
-          conversationHistory: updatedHistory,
         }),
       })
 
