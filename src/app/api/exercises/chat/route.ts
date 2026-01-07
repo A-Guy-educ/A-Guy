@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { exerciseChat } from '@/endpoints/exercises/chat'
+import { logger } from '@/utilities/logger/logger'
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     return await exerciseChat(payloadRequest)
   } catch (error) {
-    console.error('Exercise chat route error:', error)
+    logger.error({ err: error }, 'Exercise chat route error')
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

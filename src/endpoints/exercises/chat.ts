@@ -7,6 +7,7 @@
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
 import { chatWithExerciseHelper, type ChatMessage } from '@/lib/ai'
+import { logger } from '@/utilities/logger/logger'
 
 const chatMessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
@@ -21,6 +22,7 @@ const requestSchema = z.object({
 
 export async function exerciseChat(req: PayloadRequest & { json?: () => Promise<unknown> }) {
   const requestId = crypto.randomUUID()
+  const reqLogger = logger.child({ requestId })
 
   // 1) Auth - endpoints not authenticated by default
   if (!req.user) {
@@ -36,6 +38,8 @@ export async function exerciseChat(req: PayloadRequest & { json?: () => Promise<
     const body = await req.json()
     const validated = requestSchema.parse(body)
 
+    reqLogger.info({ userId: req.user.id }, 'Processing chat request')
+
     // 3) Call AI service
     const result = await chatWithExerciseHelper({
       message: validated.message,
@@ -44,19 +48,20 @@ export async function exerciseChat(req: PayloadRequest & { json?: () => Promise<
     })
 
     if (!result.success) {
-      console.error({ requestId, error: result.error }, 'Chat request failed')
+      reqLogger.error({ error: result.error }, 'Chat request failed')
       return Response.json(
         { error: result.error || 'Failed to process chat message' },
         { status: 500 },
       )
     }
 
+    reqLogger.info('Chat request successful')
     return Response.json({
       success: true,
       message: result.message,
     })
   } catch (error) {
-    console.error({ requestId, error }, 'Chat endpoint error')
+    reqLogger.error({ err: error }, 'Chat endpoint error')
 
     if (error instanceof z.ZodError) {
       return Response.json({ error: 'Invalid request', details: error.issues }, { status: 400 })
