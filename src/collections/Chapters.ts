@@ -68,6 +68,15 @@ export const Chapters: CollectionConfig = {
       },
     },
     {
+      name: 'mediaFiles',
+      type: 'upload',
+      relationTo: 'media',
+      hasMany: true,
+      admin: {
+        description: 'Upload chapter-related media files (images, videos, documents, etc.)',
+      },
+    },
+    {
       name: 'order',
       type: 'number',
       required: true,

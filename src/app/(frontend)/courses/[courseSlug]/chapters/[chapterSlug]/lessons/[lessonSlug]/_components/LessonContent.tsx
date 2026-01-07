@@ -13,7 +13,7 @@ import { ConvertButton } from './ConvertButton'
 type ViewMode = 'non-interactive' | 'interactive'
 
 interface LessonContentProps {
-  contentFile?: Media | null
+  contentFiles?: Media[] | null
   lessonTitle: string
   exercises: Exercise[]
   courseSlug: string
@@ -24,7 +24,7 @@ interface LessonContentProps {
 }
 
 export function LessonContent({
-  contentFile,
+  contentFiles,
   lessonTitle,
   exercises,
   courseSlug,
@@ -34,7 +34,8 @@ export function LessonContent({
   isAdmin,
 }: LessonContentProps) {
   const t = useTranslations('courses')
-  const hasContent = Boolean(contentFile?.url)
+  const validFiles = contentFiles?.filter((file) => file?.url) || []
+  const hasContent = validFiles.length > 0
   const hasExercises = exercises.length > 0
 
   // For admins: always show exercises option, default to interactive if no content
@@ -56,8 +57,18 @@ export function LessonContent({
       <section className={styles.section}>
         {viewMode === 'non-interactive' ? (
           <>
-            {hasContent && contentFile?.url ? (
-              <PDFViewer pdfUrl={contentFile.url} lessonTitle={lessonTitle} />
+            {hasContent ? (
+              <div className={styles.mediaFilesContainer}>
+                {validFiles.map((file, index) => (
+                  <div key={file.id} className={styles.mediaFileWrapper}>
+                    {index > 0 && <div className={styles.fileSeparator} />}
+                    <PDFViewer
+                      pdfUrl={file.url!}
+                      lessonTitle={`${lessonTitle}${validFiles.length > 1 ? ` - Part ${index + 1}` : ''}`}
+                    />
+                  </div>
+                ))}
+              </div>
             ) : (
               <EmptyState type="noPDF" />
             )}

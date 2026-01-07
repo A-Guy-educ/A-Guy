@@ -25,7 +25,8 @@
       "Bash(tree:*)",
       "Bash(git grep:*)",
       "Bash(xargs:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(grep:*)"
     ]
   }
 }

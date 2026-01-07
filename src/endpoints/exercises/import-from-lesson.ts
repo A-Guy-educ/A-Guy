@@ -27,7 +27,7 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
     return Response.json({ error: 'lessonId query parameter is required' }, { status: 400 })
   }
 
-  // 3) Fetch lesson with contentFile
+  // 3) Fetch lesson with contentFiles
   const lesson = await req.payload.findByID({
     collection: 'lessons',
     id: lessonId,
@@ -38,8 +38,10 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
     return Response.json({ error: 'Lesson not found' }, { status: 404 })
   }
 
-  // 4) Check if contentFile exists
-  const contentFile = lesson.contentFile as Media | null | undefined
+  // 4) Check if contentFiles exists and get the first file
+  const contentFiles = lesson.contentFiles as (Media | string)[] | null | undefined
+  const firstFile = contentFiles && contentFiles.length > 0 ? contentFiles[0] : null
+  const contentFile = (typeof firstFile === 'string' ? null : firstFile) as Media | null
 
   if (!contentFile || !contentFile.url) {
     return Response.json({ error: 'Lesson has no content file to convert' }, { status: 400 })

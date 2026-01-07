@@ -102,11 +102,12 @@ export const Lessons: CollectionConfig = {
       },
     },
     {
-      name: 'contentFile',
+      name: 'contentFiles',
       type: 'upload',
       relationTo: 'media',
+      hasMany: true,
       admin: {
-        description: 'Upload lesson content file (PDF, video, etc.)',
+        description: 'Upload lesson content files (PDFs, videos, images, etc.)',
       },
     },
     {
