@@ -32,7 +32,7 @@ export function useNotebookChat({
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: ChatMessageRole.Assistant, content: initialMessage },
+    { role: ChatMessageRole.Model, content: initialMessage },
   ])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -73,11 +73,11 @@ export function useNotebookChat({
       }
 
       if (result.message) {
-        const assistantMessage: ChatMessage = {
-          role: ChatMessageRole.Assistant,
+        const modelMessage: ChatMessage = {
+          role: ChatMessageRole.Model,
           content: result.message,
         }
-        setMessages((prev) => [...prev, assistantMessage])
+        setMessages((prev) => [...prev, modelMessage])
       }
     } catch (error) {
       toast.error(errorMessage)

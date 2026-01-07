@@ -24,7 +24,8 @@
       "Bash(ls:*)",
       "Bash(tree:*)",
       "Bash(git grep:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(git restore:*)"
     ]
   }
 }
