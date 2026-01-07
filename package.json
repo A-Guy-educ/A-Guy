@@ -42,6 +42,8 @@
     "clean": "rm -rf .next node_modules/.cache tsconfig.tsbuildinfo",
     "clean:all": "rm -rf .next node_modules/.cache tsconfig.tsbuildinfo node_modules pnpm-lock.yaml",
     "ci:local": "pnpm typecheck && pnpm lint && pnpm test",
+    "release": "semantic-release",
+    "release:dry-run": "semantic-release --dry-run",
     "prepare": "husky"
   },
   "dependencies": {
@@ -96,6 +98,9 @@
     "@commitlint/config-conventional": "^20.2.0",
     "@eslint/eslintrc": "^3.2.0",
     "@playwright/test": "1.56.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.2",
     "@tailwindcss/typography": "^0.5.13",
     "@testcontainers/mongodb": "^11.10.0",
     "@testing-library/react": "16.3.0",
@@ -115,6 +120,7 @@
     "playwright-core": "1.56.1",
     "postcss": "^8.4.38",
     "prettier": "^3.4.2",
+    "semantic-release": "^25.0.2",
     "tailwindcss": "^3.4.3",
     "testcontainers": "^11.10.0",
     "tsx": "^4.21.0",
@@ -123,7 +129,7 @@
     "vitest": "3.2.3"
   },
   "engines": {
-    "node": "^18.20.2 || >=20.9.0",
+    "node": "^18.20.2 || >=20.9.0 || ^22.14.0 || >=24.10.0",
     "pnpm": "^9 || ^10"
   },
   "pnpm": {

@@ -22,6 +22,7 @@ Core features:
 - [Redirects](#redirects)
 - [Jobs and Scheduled Publishing](#jobs-and-scheduled-publish)
 - [Website](#website)
+- [Automated Releases](./docs/releases.md) - Version management with semantic-release
 
 ## Quick Start
 
