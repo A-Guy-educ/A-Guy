@@ -1,5 +1,10 @@
 {
   "*.{js,jsx,ts,tsx,mjs,cjs}": ["eslint --fix", "prettier --write"],
   "*.{json,md,yml,yaml,css}": ["prettier --write"],
-  "*.{ts,tsx}": ["bash -c 'tsc --noEmit'"]
+  "*.{ts,tsx}": ["bash -c 'tsc --noEmit'"],
+  "AGENTS.md": ["pnpm run ai:generate-docs"],
+  "DESIGN_SYSTEM.md": ["pnpm run ai:generate-docs"],
+  "docs/ai/quick-reference/CHEAT-SHEET.md": ["pnpm run ai:generate-docs"],
+  "src/collections/**/*.ts": ["pnpm run ai:generate-patterns"],
+  "src/components/**/*.{ts,tsx}": ["pnpm run ai:generate-patterns"]
 }
