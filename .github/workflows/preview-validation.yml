@@ -109,7 +109,7 @@ jobs:
 
       - name: Get PR number
         id: get-pr
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const deployment = await github.rest.repos.getDeployment({
@@ -140,7 +140,7 @@ jobs:
 
       - name: Comment validation results
         if: steps.get-pr.outputs.result != 'null'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = ${{ steps.get-pr.outputs.result }};
