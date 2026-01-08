@@ -1026,7 +1026,7 @@ export const myPlugin =
 
 1. Always pass `req` to nested operations in hooks
 2. Use context flags to prevent infinite hook loops
-3. Enable transactions for MongoDB (requires replica set) and Postgres
+3. Enable transactions for MongoDB (requires replica set)
 4. Use `beforeValidate` for data formatting
 5. Use `beforeChange` for business logic
 
@@ -1056,8 +1056,6 @@ export const myPlugin =
 6. **Draft Status**: `_status` field auto-injected when drafts enabled
 7. **Type Generation**: Types not updated until `generate:types` runs
 8. **MongoDB Transactions**: Require replica set configuration
-9. **SQLite Transactions**: Disabled by default, enable with `transactionOptions: {}`
-10. **Point Fields**: Not supported in SQLite
 
 ## Additional Context Files
 
@@ -1126,7 +1124,7 @@ For deeper exploration of specific topics, refer to the context files located in
     - Route parameters
 
 11. **`adapters.md`** - Database and storage adapters
-    - MongoDB, PostgreSQL, SQLite patterns
+    - MongoDB patterns
     - Storage adapter usage (S3, Azure, GCS, etc.)
     - Custom adapter development
 

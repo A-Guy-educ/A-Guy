@@ -76,8 +76,6 @@ hooks: {
 **Why This Matters:**
 
 - **MongoDB (with replica sets)**: Creates atomic session across operations
-- **PostgreSQL**: All operations use same Drizzle transaction
-- **SQLite (with transactions enabled)**: Ensures rollback on errors
 - **Without req**: Each operation runs independently, breaking atomicity
 
 **Rule**: ALWAYS pass `req` to nested operations in hooks
