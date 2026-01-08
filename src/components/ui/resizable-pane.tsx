@@ -10,6 +10,7 @@ interface ResizablePaneProps {
   maxSize?: number
   children: [React.ReactNode, React.ReactNode]
   className?: string
+  storageKey?: string // Optional key to persist size in localStorage
 }
 
 export function ResizablePane({
@@ -19,10 +20,24 @@ export function ResizablePane({
   maxSize = 80,
   children,
   className,
+  storageKey,
 }: ResizablePaneProps) {
   const [isDragging, setIsDragging] = useState(false)
-  const [firstPaneSize, setFirstPaneSize] = useState(defaultSize)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Initialize size from localStorage if available, otherwise use defaultSize
+  const [firstPaneSize, setFirstPaneSize] = useState(() => {
+    if (storageKey && typeof window !== 'undefined') {
+      const saved = localStorage.getItem(storageKey)
+      if (saved) {
+        const parsed = parseFloat(saved)
+        if (!isNaN(parsed) && parsed >= minSize && parsed <= maxSize) {
+          return parsed
+        }
+      }
+    }
+    return defaultSize
+  })
 
   const handleMouseDown = () => {
     setIsDragging(true)
@@ -56,6 +71,13 @@ export function ResizablePane({
       setFirstPaneSize(percentage)
     }
   }
+
+  // Save to localStorage when size changes
+  useEffect(() => {
+    if (storageKey && typeof window !== 'undefined') {
+      localStorage.setItem(storageKey, firstPaneSize.toString())
+    }
+  }, [firstPaneSize, storageKey])
 
   useEffect(() => {
     if (isDragging) {

@@ -26,9 +26,10 @@ export function ExerciseWorkspace({
 
       <ResizablePane
         orientation={isDesktop ? 'horizontal' : 'vertical'}
-        defaultSize={isDesktop ? 65 : 45}
-        minSize={15}
-        maxSize={isDesktop ? 85 : 80}
+        defaultSize={isDesktop ? 70 : 50}
+        minSize={20}
+        maxSize={80}
+        storageKey="exercise-split-size"
         className="flex-1"
       >
         {/* PDF Viewer Section */}

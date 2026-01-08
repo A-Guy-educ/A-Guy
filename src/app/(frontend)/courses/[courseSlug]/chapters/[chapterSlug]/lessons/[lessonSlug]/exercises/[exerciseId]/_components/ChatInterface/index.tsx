@@ -149,11 +149,12 @@ export function ChatInterface({ exerciseId }: ChatInterfaceProps) {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => {
+                // Let the form onSubmit handle Enter key submission
+                // Don't call handleKeyDown to avoid double submission
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
                   handleFormSubmit(e as unknown as React.FormEvent)
                 }
-                handleKeyDown(e as React.KeyboardEvent<HTMLInputElement>)
               }}
               disabled={isLoading}
             />
