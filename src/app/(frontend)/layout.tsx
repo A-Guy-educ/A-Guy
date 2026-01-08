@@ -81,6 +81,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <InitTheme />
         <link href="/favicon.ico" rel="icon" sizes="32x32" />
         <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
       </head>
       <body>
         <I18nProvider locale={locale} messages={messages}>

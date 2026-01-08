@@ -15,57 +15,85 @@
 
   :root,
   [data-theme='light'] {
-    /* Light background - pure white */
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Light background - light gray-blue for exercise view */
+    --background: 210 33% 97%; /* #f4f7fa */
+    --foreground: 220 9% 11%; /* #1a1c1e */
 
-    /* Card: visible gray for footer/cards - 6% darker than white */
-    --card: 220 14% 94%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Card: pure white for elevated surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 220 9% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 9% 11%;
 
-    /* Primary: vibrant blue for emphasis */
-    --primary: 217 91% 60%;
+    /* Primary: warm burgundy red (brand color) */
+    --primary: 353 73% 29%; /* #91262C */
+    --primary-soft: 0 45% 98%; /* #fdf2f2 - light wash for hover states */
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: lighter gray for header - distinct from cards */
-    --secondary: 220 14% 97%;
-    --secondary-foreground: 222.2 84% 4.9%;
+    /* Secondary: muted sage green (accent) */
+    --secondary: 113 12% 41%; /* #5D725B */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 14% 95%;
-    --muted-foreground: 220 8.9% 46.1%;
+    /* Muted: light backgrounds and secondary text */
+    --muted: 210 14% 95%; /* #f8f9fa */
+    --muted-foreground: 220 8% 45%; /* #6c7278 */
 
-    /* Accent: vivid purple */
+    /* Accent: vivid purple (keeping for backward compatibility) */
     --accent: 271 91% 65%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Border: dark gray for clear visibility */
-    --border: 220 13% 75%;
-    --input: 220 13% 91%;
+    /* Border: extremely subtle borders */
+    --border: 0 0% 0% / 0.05; /* rgba(0,0,0,0.05) */
+    --input: 210 14% 97%; /* #f8f9fa */
 
-    /* Focus ring follows accent */
-    --ring: 271 91% 65%;
+    /* Focus ring follows primary */
+    --ring: 353 73% 29%;
 
-    --radius: 0.75rem;
+    /* Radius system */
+    --radius: 0.75rem; /* 12px - default */
+    --radius-bubble: 20px; /* Chat message bubbles */
+    --radius-bubble-corner: 4px; /* Reduced corner on bubble tails */
+    --radius-input: 30px; /* Fully rounded input container */
+    --radius-button: 50%; /* Circular action buttons */
+    --radius-card: 12px; /* Panels and popups */
+    --radius-math-key: 100px; /* Fully rounded math keys */
 
-    /* Shadow system */
-    --shadow-card: 0 2px 8px 0 rgb(0 0 0 / 0.08);
+    /* Shadow system - soft and minimal */
+    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03);
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.03);
     --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.12);
-    --shadow-modal: 0 10px 25px -5px rgb(0 0 0 / 0.15);
+    --shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.1);
     --shadow-dropdown: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+    --shadow-input: 0 3px 8px rgba(145, 38, 44, 0.2); /* red tint for primary buttons */
+    --shadow-panel: 0 -8px 24px rgba(0, 0, 0, 0.1); /* upward shadow for popups */
+
+    /* Transition system */
+    --transition-fast: 0.2s ease;
+    --transition-base: 0.3s ease;
+    --transition-slow: 0.4s ease;
+
+    /* Typography scale */
+    --font-size-xs: 13px;
+    --font-size-sm: 14px;
+    --font-size-base: 16px;
+    --font-size-lg: 17px;
+    --font-size-xl: 18px;
+    --font-size-2xl: 20px;
+
+    /* PDF Viewer Background */
+    --pdf-viewer-bg: 217 6% 35%; /* #525659 - dark gray for contrast */
 
     --success: 142 71% 45%;
     --warning: 38 92% 50%;
     --error: 0 72% 51%;
 
     /* Semantic colors - components use these */
-    --header-bg: var(--secondary);
-    --header-fg: var(--secondary-foreground);
+    --header-bg: var(--card);
+    --header-fg: var(--card-foreground);
     --footer-bg: var(--card);
 
     /* Interactive element states */
@@ -74,7 +102,7 @@
     --selected-fg: var(--foreground);
 
     /* Form elements - slightly altered background for visual distinction */
-    --form-bg: var(--card);
+    --form-bg: var(--input);
     --form-border: var(--border);
     --form-placeholder: var(--muted-foreground);
 
@@ -84,7 +112,7 @@
   }
 
   [data-theme='dark'] {
-    /* Deep navy blue background matching #06112a from LearnFlow */
+    /* Deep navy blue background */
     --background: 222 75% 9%;
     --foreground: 210 40% 98%;
 
@@ -95,36 +123,66 @@
     --popover: 222 75% 13%;
     --popover-foreground: 210 40% 98%;
 
-    /* Primary: bright vibrant blue from LearnFlow */
-    --primary: 217 91% 60%;
+    /* Primary: burgundy red slightly brighter for dark mode */
+    --primary: 353 73% 35%; /* Lighter than light mode */
+    --primary-soft: 353 73% 15%; /* Darker tint for dark mode */
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: elevated blue surface */
-    --secondary: 222 75% 17%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary: muted green */
+    --secondary: 113 12% 45%;
+    --secondary-foreground: 0 0% 100%;
 
+    /* Muted: dark gray-blue */
     --muted: 222 75% 17%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    /* Accent: vibrant blue */
+    /* Accent: vibrant purple (keeping for backward compatibility) */
     --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    /* Borders - slightly lighter for visibility */
+    /* Borders - subtle borders with alpha */
     --border: 222 75% 20% / 0.7;
     --input: 222 75% 17%;
 
-    /* Focus ring follows accent */
-    --ring: 217 91% 60%;
+    /* Focus ring follows primary */
+    --ring: 353 73% 35%;
 
-    /* Shadow system - darker shadows for dark mode */
-    --shadow-card: 0 4px 16px 0 rgb(0 0 0 / 0.3);
+    /* Radius system */
+    --radius: 0.75rem;
+    --radius-bubble: 20px;
+    --radius-bubble-corner: 4px;
+    --radius-input: 30px;
+    --radius-button: 50%;
+    --radius-card: 12px;
+    --radius-math-key: 100px;
+
+    /* Shadow system - darker for depth */
+    --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.3);
     --shadow-card-hover: 0 8px 24px 0 rgb(0 0 0 / 0.4);
-    --shadow-modal: 0 20px 40px -10px rgb(0 0 0 / 0.5);
+    --shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.5);
     --shadow-dropdown: 0 8px 12px -2px rgb(0 0 0 / 0.3), 0 4px 8px -2px rgb(0 0 0 / 0.2);
+    --shadow-input: 0 4px 12px rgba(145, 38, 44, 0.4);
+    --shadow-panel: 0 -12px 30px rgba(0, 0, 0, 0.4);
+
+    /* Transition system */
+    --transition-fast: 0.2s ease;
+    --transition-base: 0.3s ease;
+    --transition-slow: 0.4s ease;
+
+    /* Typography scale */
+    --font-size-xs: 13px;
+    --font-size-sm: 14px;
+    --font-size-base: 16px;
+    --font-size-lg: 17px;
+    --font-size-xl: 18px;
+    --font-size-2xl: 20px;
+
+    /* PDF Viewer: slightly lighter for dark mode */
+    --pdf-viewer-bg: 217 6% 40%;
 
     --success: 142 71% 45%;
     --warning: 38 92% 50%;
@@ -157,6 +215,7 @@
   }
   body {
     @apply bg-background text-foreground min-h-[100vh] flex flex-col;
+    font-family: 'Assistant', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 }
 
@@ -349,4 +408,43 @@ html[data-theme='light'] {
   .katex-inline {
     @apply inline-block;
   }
+}
+
+/* Exercise View Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Scrollbar hide utility */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }

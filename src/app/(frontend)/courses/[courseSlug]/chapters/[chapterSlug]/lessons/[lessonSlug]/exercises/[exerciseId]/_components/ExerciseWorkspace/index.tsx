@@ -1,0 +1,44 @@
+'use client'
+
+import React from 'react'
+import { ExerciseHeader } from '../ExerciseHeader'
+import { ResizablePane } from '@/components/ui/resizable-pane'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+
+interface ExerciseWorkspaceProps {
+  exerciseTitle: string
+  backUrl: string
+  pdfContent: React.ReactNode
+  chatContent: React.ReactNode
+}
+
+export function ExerciseWorkspace({
+  exerciseTitle,
+  backUrl,
+  pdfContent,
+  chatContent,
+}: ExerciseWorkspaceProps) {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+
+  return (
+    <div className="fixed inset-0 bg-background z-50 flex flex-col overflow-hidden">
+      <ExerciseHeader exerciseTitle={exerciseTitle} backUrl={backUrl} />
+
+      <ResizablePane
+        orientation={isDesktop ? 'horizontal' : 'vertical'}
+        defaultSize={isDesktop ? 65 : 45}
+        minSize={15}
+        maxSize={isDesktop ? 85 : 80}
+        className="flex-1"
+      >
+        {/* PDF Viewer Section */}
+        <div className="bg-[#525659] overflow-hidden flex items-center justify-center">
+          {pdfContent}
+        </div>
+
+        {/* Chat Section */}
+        <div className="bg-background flex flex-col overflow-hidden">{chatContent}</div>
+      </ResizablePane>
+    </div>
+  )
+}
