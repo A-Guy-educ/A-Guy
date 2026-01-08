@@ -10,6 +10,7 @@ export interface ChatApiResponse {
   message?: string
   error?: string
   authRequired?: boolean
+  conversationId?: string
 }
 
 export const apiService = {
@@ -18,14 +19,19 @@ export const apiService = {
    *
    * @param message - The user's message
    * @param acknowledgment - The AI's acknowledgment message (from locale)
+   * @param exerciseId - The ID of the exercise being discussed
    * @returns Response with success status and either message or error
    */
-  async chat(message: string, acknowledgment: string): Promise<ChatApiResponse> {
+  async chat(
+    message: string,
+    acknowledgment: string,
+    exerciseId: string,
+  ): Promise<ChatApiResponse> {
     try {
       const response = await fetch('/api/agent/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, acknowledgment }),
+        body: JSON.stringify({ message, acknowledgment, exerciseId }),
       })
 
       const data = await response.json()
@@ -39,11 +45,15 @@ export const apiService = {
       }
 
       if (data.success && data.message) {
-        return { success: true, message: data.message }
+        return {
+          success: true,
+          message: data.message,
+          conversationId: data.conversationId,
+        }
       }
 
       return { success: false, error: 'Invalid response format' }
-    } catch (error) {
+    } catch (_error) {
       // Network errors or other exceptions
       return { success: false, error: 'Network error' }
     }

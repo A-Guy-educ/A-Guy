@@ -16,6 +16,7 @@ interface UseNotebookChatProps {
   solutionPrompt: string
   fullSolutionPrompt: string
   acknowledgment: string
+  exerciseId: string
 }
 
 export function useNotebookChat({
@@ -26,6 +27,7 @@ export function useNotebookChat({
   solutionPrompt,
   fullSolutionPrompt,
   acknowledgment,
+  exerciseId,
 }: UseNotebookChatProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -61,7 +63,7 @@ export function useNotebookChat({
     setIsLoading(true)
 
     try {
-      const result = await apiService.chat(message, acknowledgment)
+      const result = await apiService.chat(message, acknowledgment, exerciseId)
 
       if (!result.success) {
         if (result.authRequired) {
@@ -79,7 +81,7 @@ export function useNotebookChat({
         }
         setMessages((prev) => [...prev, modelMessage])
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error(errorMessage)
     } finally {
       setIsLoading(false)

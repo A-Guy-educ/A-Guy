@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 
 import { Categories } from './collections/Categories'
 import { Chapters } from './collections/Chapters'
+import { Conversations } from './collections/Conversations'
 import { Courses } from './collections/Courses'
 import { Exercises } from './collections/Exercises'
 import { ExerciseAssets } from './collections/ExerciseAssets'
@@ -71,6 +72,7 @@ export default buildConfig({
   collections: [
     Pages,
     Categories,
+    Conversations,
     Courses,
     Chapters,
     Lessons,
