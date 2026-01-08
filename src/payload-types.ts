@@ -795,15 +795,17 @@ export interface Conversation {
   /**
    * Conversation message history
    */
-  messages: {
-    role: 'user' | 'model';
-    /**
-     * Message content
-     */
-    content: string;
-    timestamp: string;
-    id?: string | null;
-  }[];
+  messages?:
+    | {
+        role: 'user' | 'model';
+        /**
+         * Message content
+         */
+        content: string;
+        timestamp: string;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Timestamp of last message (auto-updated)
    */

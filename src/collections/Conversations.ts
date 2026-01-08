@@ -64,7 +64,6 @@ export const Conversations: CollectionConfig = {
     {
       name: 'messages',
       type: 'array',
-      required: true,
       defaultValue: [],
       maxRows: 100, // Prevent unbounded growth
       admin: {
