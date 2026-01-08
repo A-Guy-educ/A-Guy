@@ -16,6 +16,7 @@ export interface ChatMessage {
 export interface ExerciseChatInput {
   message: string
   acknowledgment: string
+  conversationHistory?: ChatMessage[]
 }
 
 export interface ExerciseChatResult {
@@ -47,18 +48,31 @@ export async function chatWithExerciseHelper(
       },
     })
 
-    // Start chat with system prompt
+    // Build conversation history for Gemini
+    // Start with system prompt exchange
+    const history: any[] = [
+      {
+        role: ChatMessageRole.User,
+        parts: [{ text: systemPrompt }],
+      },
+      {
+        role: ChatMessageRole.Model,
+        parts: [{ text: input.acknowledgment }],
+      },
+    ]
+
+    // Add conversation history if provided
+    if (input.conversationHistory && input.conversationHistory.length > 0) {
+      const historyMessages = input.conversationHistory.map((msg) => ({
+        role: msg.role,
+        parts: [{ text: msg.content }],
+      }))
+      history.push(...historyMessages)
+    }
+
+    // Start chat with full history
     const chat = model.startChat({
-      history: [
-        {
-          role: ChatMessageRole.User,
-          parts: [{ text: systemPrompt }],
-        },
-        {
-          role: ChatMessageRole.Model,
-          parts: [{ text: input.acknowledgment }],
-        },
-      ],
+      history,
     })
 
     const result = await chat.sendMessage(input.message)

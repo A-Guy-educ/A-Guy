@@ -60,7 +60,7 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
             showCheckAnswer
           />
         }
-        chat={<NotebookChat />}
+        chat={<NotebookChat exerciseId={exerciseId} />}
         formulas={<NotebookFormulas />}
         notes={<NotebookNotes />}
         courseSlug={courseSlug}

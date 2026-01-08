@@ -7,7 +7,11 @@ import { useNotebookChat } from './useNotebookChat'
 import { ChatMessageRole } from '@/lib/ai/chat-message-role'
 import { cn } from '@/utilities/ui'
 
-export function NotebookChat() {
+interface NotebookChatProps {
+  exerciseId: string
+}
+
+export function NotebookChat({ exerciseId }: NotebookChatProps) {
   const t = useTranslations('courses')
   const {
     messages,
@@ -28,6 +32,7 @@ export function NotebookChat() {
     solutionPrompt: t('chatSolutionPrompt'),
     fullSolutionPrompt: t('chatFullSolutionPrompt'),
     acknowledgment: t('chatAIAcknowledgment'),
+    exerciseId,
   })
 
   return (
