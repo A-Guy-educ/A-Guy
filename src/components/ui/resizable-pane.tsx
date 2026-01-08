@@ -108,8 +108,8 @@ export function ResizablePane({
   const resizerClasses = cn(
     'bg-[#eef2f6] flex items-center justify-center shrink-0 z-20 transition-colors',
     isVertical
-      ? 'w-3 cursor-col-resize border-x border-[#dee2e6]'
-      : 'h-3 cursor-ns-resize border-y border-[#dee2e6]',
+      ? 'w-3 cursor-col-resize border-x border-[#dee2e6] lg:w-3'
+      : 'h-4 cursor-ns-resize border-y border-[#dee2e6] lg:h-3',
     isDragging && 'bg-primary/10',
   )
 
