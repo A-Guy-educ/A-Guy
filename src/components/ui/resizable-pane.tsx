@@ -56,11 +56,19 @@ export function ResizablePane({
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
 
+    // Check if we're in RTL mode
+    const isRTL = document.dir === 'rtl' || document.documentElement.dir === 'rtl'
+
     let percentage: number
 
     if (orientation === 'horizontal') {
       // Vertical resizer (left/right split)
-      percentage = ((clientX - rect.left) / rect.width) * 100
+      if (isRTL) {
+        // In RTL, calculate from right edge
+        percentage = ((rect.right - clientX) / rect.width) * 100
+      } else {
+        percentage = ((clientX - rect.left) / rect.width) * 100
+      }
     } else {
       // Horizontal resizer (top/bottom split)
       percentage = ((clientY - rect.top) / rect.height) * 100

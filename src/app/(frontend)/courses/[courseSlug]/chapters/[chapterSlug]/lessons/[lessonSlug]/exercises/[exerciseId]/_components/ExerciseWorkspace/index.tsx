@@ -38,7 +38,7 @@ export function ExerciseWorkspace({
         </div>
 
         {/* Chat Section */}
-        <div className="bg-background flex flex-col overflow-hidden">{chatContent}</div>
+        <div className="bg-background flex flex-col overflow-hidden h-full">{chatContent}</div>
       </ResizablePane>
     </div>
   )

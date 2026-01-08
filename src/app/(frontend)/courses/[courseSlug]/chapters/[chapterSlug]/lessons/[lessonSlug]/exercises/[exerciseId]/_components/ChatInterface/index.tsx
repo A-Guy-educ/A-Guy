@@ -76,9 +76,9 @@ export function ChatInterface({ exerciseId }: ChatInterfaceProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex flex-col h-full">
       {/* Messages Area */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-5 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-5 space-y-4 min-h-0">
         {messages.map((msg, idx) => (
           <div
             key={idx}
