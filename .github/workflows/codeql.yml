@@ -3,8 +3,26 @@ name: CodeQL Security Scan
 on:
   push:
     branches: [main, dev]
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/codeql.yml'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   pull_request:
     branches: [main, dev]
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/codeql.yml'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   schedule:
     # Run weekly on Sunday at midnight UTC
     - cron: '0 0 * * 0'

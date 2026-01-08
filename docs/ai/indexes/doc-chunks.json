@@ -979,7 +979,7 @@
     {
       "id": "AGENTS-data-integrity",
       "title": "Data Integrity",
-      "content": "1. Always pass `req` to nested operations in hooks\n2. Use context flags to prevent infinite hook loops\n3. Enable transactions for MongoDB (requires replica set) and Postgres\n4. Use `beforeValidate` for data formatting\n5. Use `beforeChange` for business logic",
+      "content": "1. Always pass `req` to nested operations in hooks\n2. Use context flags to prevent infinite hook loops\n3. Enable transactions for MongoDB (requires replica set)\n4. Use `beforeValidate` for data formatting\n5. Use `beforeChange` for business logic",
       "keywords": [
         "data",
         "integrity",
@@ -1045,7 +1045,7 @@
     {
       "id": "AGENTS-common-gotchas",
       "title": "Common Gotchas",
-      "content": "1. **Local API Default**: Access control bypassed unless `overrideAccess: false`\n2. **Transaction Safety**: Missing `req` in nested operations breaks atomicity\n3. **Hook Loops**: Operations in hooks can trigger the same hooks\n4. **Field Access**: Cannot use query constraints, only boolean\n5. **Relationship Depth**: Default depth is 2, set to 0 for IDs only\n6. **Draft Status**: `_status` field auto-injected when drafts enabled\n7. **Type Generation**: Types not updated until `generate:types` runs\n8. **MongoDB Transactions**: Require replica set configuration\n9. **SQLite Transactions**: Disabled by default, enable with `transactionOptions: {}`\n10. **Point Fields**: Not supported in SQLite",
+      "content": "1. **Local API Default**: Access control bypassed unless `overrideAccess: false`\n2. **Transaction Safety**: Missing `req` in nested operations breaks atomicity\n3. **Hook Loops**: Operations in hooks can trigger the same hooks\n4. **Field Access**: Cannot use query constraints, only boolean\n5. **Relationship Depth**: Default depth is 2, set to 0 for IDs only\n6. **Draft Status**: `_status` field auto-injected when drafts enabled\n7. **Type Generation**: Types not updated until `generate:types` runs\n8. **MongoDB Transactions**: Require replica set configuration",
       "keywords": [
         "default",
         "access",
@@ -1055,13 +1055,13 @@
         "only",
         "depth",
         "types",
-        "transactions",
-        "sqlite"
+        "common",
+        "gotchas"
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 1049,
-      "endLine": 1062,
+      "endLine": 1060,
       "priority": 8
     },
     {
@@ -1082,14 +1082,14 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1062,
-      "endLine": 1066,
+      "startLine": 1060,
+      "endLine": 1064,
       "priority": 8
     },
     {
       "id": "AGENTS-available-context-files",
       "title": "Available Context Files",
-      "content": "1. **`payload-overview.md`** - High-level architecture and core concepts\n   - Payload structure and initialization\n   - Configuration fundamentals\n   - Database adapters overview\n\n2. **`security-critical.md`** - Critical security patterns (⚠️ IMPORTANT)\n   - Local API access control\n   - Transaction safety in hooks\n   - Preventing infinite hook loops\n\n3. **`collections.md`** - Collection configurations\n   - Basic collection patterns\n   - Auth collections with RBAC\n   - Upload collections\n   - Drafts and versioning\n   - Globals\n\n4. **`fields.md`** - Field types and patterns\n   - All field types with examples\n   - Conditional fields\n   - Virtual fields\n   - Field validation\n   - Common field patterns\n\n5. **`field-type-guards.md`** - TypeScript field type utilities\n   - Field type checking utilities\n   - Safe type narrowing\n   - Runtime field validation\n\n6. **`access-control.md`** - Permission patterns\n   - Collection-level access\n   - Field-level access\n   - Row-level security\n   - RBAC patterns\n   - Multi-tenant access control\n\n7. **`access-control-advanced.md`** - Complex access patterns\n   - Nested document access\n   - Cross-collection permissions\n   - Dynamic role hierarchies\n   - Performance optimization\n\n8. **`hooks.md`** - Lifecycle hooks\n   - Collection hooks\n   - Field hooks\n   - Hook context patterns\n   - Common hook recipes\n\n9. **`queries.md`** - Database operations\n   - Local API usage\n   - Query operators\n   - Complex queries with AND/OR\n   - Performance optimization\n\n10. **`endpoints.md`** - Custom API endpoints\n    - REST endpoint patterns\n    - Authentication in endpoints\n    - Error handling\n    - Route parameters\n\n11. **`adapters.md`** - Database and storage adapters\n    - MongoDB, PostgreSQL, SQLite patterns\n    - Storage adapter usage (S3, Azure, GCS, etc.)\n    - Custom adapter development\n\n12. **`plugin-development.md`** - Creating plugins\n    - Plugin architecture\n    - Modifying configuration\n    - Plugin hooks\n    - Best practices\n\n13. **`components.md`** - Custom Components\n    - Component types (Root, Collection, Global, Field)\n    - Server vs Client Components\n    - Component paths and definition\n    - Default and custom props\n    - Using hooks\n    - Performance best practices\n    - Styling components",
+      "content": "1. **`payload-overview.md`** - High-level architecture and core concepts\n   - Payload structure and initialization\n   - Configuration fundamentals\n   - Database adapters overview\n\n2. **`security-critical.md`** - Critical security patterns (⚠️ IMPORTANT)\n   - Local API access control\n   - Transaction safety in hooks\n   - Preventing infinite hook loops\n\n3. **`collections.md`** - Collection configurations\n   - Basic collection patterns\n   - Auth collections with RBAC\n   - Upload collections\n   - Drafts and versioning\n   - Globals\n\n4. **`fields.md`** - Field types and patterns\n   - All field types with examples\n   - Conditional fields\n   - Virtual fields\n   - Field validation\n   - Common field patterns\n\n5. **`field-type-guards.md`** - TypeScript field type utilities\n   - Field type checking utilities\n   - Safe type narrowing\n   - Runtime field validation\n\n6. **`access-control.md`** - Permission patterns\n   - Collection-level access\n   - Field-level access\n   - Row-level security\n   - RBAC patterns\n   - Multi-tenant access control\n\n7. **`access-control-advanced.md`** - Complex access patterns\n   - Nested document access\n   - Cross-collection permissions\n   - Dynamic role hierarchies\n   - Performance optimization\n\n8. **`hooks.md`** - Lifecycle hooks\n   - Collection hooks\n   - Field hooks\n   - Hook context patterns\n   - Common hook recipes\n\n9. **`queries.md`** - Database operations\n   - Local API usage\n   - Query operators\n   - Complex queries with AND/OR\n   - Performance optimization\n\n10. **`endpoints.md`** - Custom API endpoints\n    - REST endpoint patterns\n    - Authentication in endpoints\n    - Error handling\n    - Route parameters\n\n11. **`adapters.md`** - Database and storage adapters\n    - MongoDB patterns\n    - Storage adapter usage (S3, Azure, GCS, etc.)\n    - Custom adapter development\n\n12. **`plugin-development.md`** - Creating plugins\n    - Plugin architecture\n    - Modifying configuration\n    - Plugin hooks\n    - Best practices\n\n13. **`components.md`** - Custom Components\n    - Component types (Root, Collection, Global, Field)\n    - Server vs Client Components\n    - Component paths and definition\n    - Default and custom props\n    - Using hooks\n    - Performance best practices\n    - Styling components",
       "keywords": [
         "patterns",
         "field",
@@ -1104,8 +1104,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1066,
-      "endLine": 1148,
+      "startLine": 1064,
+      "endLine": 1146,
       "priority": 7
     },
     {
@@ -1126,8 +1126,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1148,
-      "endLine": 1155,
+      "startLine": 1146,
+      "endLine": 1153,
       "priority": 8
     },
     {
@@ -3065,47 +3065,69 @@
       "priority": 8
     },
     {
+      "id": "CLAUDE-setup-diagnostics",
+      "title": "Setup & Diagnostics",
+      "content": "- **Setup environment**: `pnpm setup` - Automated first-time setup (creates .env, starts DB, generates types)\n- **Health check**: `pnpm doctor` - Diagnose environment issues and verify configuration\n- **Validate env**: `pnpm validate:env` - Check required environment variables",
+      "keywords": [
+        "setup",
+        "environment",
+        "pnpm",
+        "check",
+        "validate",
+        "diagnostics",
+        "automated",
+        "first-time",
+        "creates",
+        "starts"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CLAUDE.md",
+      "startLine": 32,
+      "endLine": 38,
+      "priority": 7
+    },
+    {
       "id": "CLAUDE-development-server",
       "title": "Development Server",
-      "content": "- **Start dev**: `pnpm dev` - Access at http://localhost:3000 (frontend) and /admin (admin panel)\n- **Clean restart**: `rm -rf .next && pnpm dev` - Clear Next.js cache and restart",
+      "content": "- **Start dev**: `pnpm dev` - Access at http://localhost:3000 (frontend) and /admin (admin panel)\n- **Clean restart**: `pnpm dev:clean` - Clear Next.js cache and restart (shortcut for `rm -rf .next && pnpm dev`)",
       "keywords": [
         "pnpm",
         "admin",
+        "clean",
         "restart",
         "next",
         "development",
         "server",
         "start",
         "access",
-        "http",
-        "localhost"
+        "http"
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 32,
-      "endLine": 37,
+      "startLine": 38,
+      "endLine": 43,
       "priority": 7
     },
     {
       "id": "CLAUDE-database",
       "title": "Database",
-      "content": "- **Start DB**: `docker-compose up -d` - Start MongoDB via Docker\n- **Stop DB**: `docker-compose down` - Stop MongoDB\n- **Check status**: `docker-compose ps`\n- **View logs**: `docker-compose logs -f`",
+      "content": "- **Start DB**: `pnpm db:start` - Start MongoDB via Docker (shortcut for `docker-compose up -d`)\n- **Stop DB**: `pnpm db:stop` - Stop MongoDB (shortcut for `docker-compose down`)\n- **Restart DB**: `pnpm db:restart` - Restart MongoDB container\n- **Reset DB**: `pnpm db:reset` - Delete all data and restart MongoDB\n- **View logs**: `pnpm db:logs` - Stream MongoDB logs (shortcut for `docker-compose logs -f mongo`)",
       "keywords": [
-        "docker-compose",
-        "start",
+        "pnpm",
         "mongodb",
-        "stop",
+        "restart",
         "logs",
-        "database",
-        "docker",
-        "down",
-        "check",
-        "status"
+        "start",
+        "shortcut",
+        "docker-compose",
+        "stop",
+        "reset",
+        "database"
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 37,
-      "endLine": 44,
+      "startLine": 43,
+      "endLine": 51,
       "priority": 7
     },
     {
@@ -3126,52 +3148,74 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 44,
-      "endLine": 49,
+      "startLine": 51,
+      "endLine": 56,
       "priority": 7
     },
     {
       "id": "CLAUDE-quality-gates",
       "title": "Quality Gates",
-      "content": "- **Typecheck**: `pnpm -s tsc --noEmit`\n- **Lint**: `pnpm -s lint`\n- **Lint fix**: `pnpm lint:fix`\n- **Format check**: `pnpm -s format` or `pnpm -s prettier:check`\n- **Format fix**: `pnpm format:fix` or `pnpm prettier:write`",
+      "content": "- **Typecheck**: `pnpm typecheck`\n- **Lint**: `pnpm lint`\n- **Lint fix**: `pnpm lint:fix`\n- **Format check**: `pnpm format:check`\n- **Format fix**: `pnpm format`\n- **Run all checks locally**: `pnpm ci:local` - Run typecheck, lint, and all tests",
       "keywords": [
         "pnpm",
         "lint",
         "format",
+        "typecheck",
         "check",
-        "prettier",
         "quality",
         "gates",
-        "typecheck",
-        "--noemit",
-        "write"
+        "checks",
+        "locally",
+        "local"
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 49,
-      "endLine": 57,
+      "startLine": 56,
+      "endLine": 65,
       "priority": 7
     },
     {
       "id": "CLAUDE-testing",
       "title": "Testing",
-      "content": "- **Integration tests**: `pnpm test:int`\n- **E2E tests**: `pnpm test:e2e`\n- **E2E headed**: `pnpm exec playwright test --headed`\n- **E2E UI mode**: `pnpm exec playwright test --ui`\n- **Specific test**: `pnpm exec vitest run tests/int/<file>.int.spec.ts --config ./vitest.config.mts`",
+      "content": "- **All tests**: `pnpm test` - Run both integration and E2E tests\n- **Integration tests**: `pnpm test:int`\n- **E2E tests**: `pnpm test:e2e`\n- **E2E headed**: `pnpm exec playwright test --headed`\n- **E2E UI mode**: `pnpm exec playwright test --ui`\n- **Specific test**: `pnpm exec vitest run tests/int/<file>.int.spec.ts --config ./vitest.config.mts`",
       "keywords": [
         "pnpm",
         "test",
         "tests",
         "exec",
+        "integration",
         "playwright",
         "vitest",
         "testing",
-        "integration",
-        "headed",
-        "--headed"
+        "both",
+        "headed"
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 57,
-      "endLine": 65,
+      "startLine": 65,
+      "endLine": 74,
+      "priority": 7
+    },
+    {
+      "id": "CLAUDE-maintenance",
+      "title": "Maintenance",
+      "content": "- **Clean cache**: `pnpm clean` - Remove .next cache and build artifacts\n- **Clean all**: `pnpm clean:all` - Remove node_modules, cache, and lock file (requires reinstall)",
+      "keywords": [
+        "clean",
+        "cache",
+        "pnpm",
+        "remove",
+        "maintenance",
+        "next",
+        "build",
+        "artifacts",
+        "node_modules",
+        "lock"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CLAUDE.md",
+      "startLine": 74,
+      "endLine": 79,
       "priority": 7
     },
     {
@@ -3190,8 +3234,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 65,
-      "endLine": 74,
+      "startLine": 79,
+      "endLine": 88,
       "priority": 7
     },
     {
@@ -3212,8 +3256,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 74,
-      "endLine": 87,
+      "startLine": 88,
+      "endLine": 101,
       "priority": 8
     },
     {
@@ -4711,8 +4755,8 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-01-07T20:57:38.405Z",
-    "totalChunks": 230,
+    "generatedAt": "2026-01-08T07:49:03.689Z",
+    "totalChunks": 232,
     "sourceFiles": [
       "AGENTS.md",
       "DESIGN_SYSTEM.md",
