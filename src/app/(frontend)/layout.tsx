@@ -12,29 +12,17 @@ import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import { draftMode, headers } from 'next/headers'
+import { draftMode } from 'next/headers'
 
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
 import { I18nProvider } from '@/providers/I18n'
-import { defaultLocale, locales, type Locale } from '@/i18n/config'
+import { defaultLocale } from '@/i18n/config'
 
-async function getLocale(): Promise<string> {
-  try {
-    // Use the x-locale header set by middleware
-    // This avoids DYNAMIC_SERVER_USAGE errors during static generation
-    const headersList = await headers()
-    const localeHeader = headersList.get('x-locale')
-
-    if (localeHeader && locales.includes(localeHeader as Locale)) {
-      return localeHeader
-    }
-  } catch (_error) {
-    // During static generation, headers() is not available
-    // Fall back to default locale
-    // The middleware will handle locale detection at request time for dynamic pages
-  }
-
+// Use default locale for static generation
+// Locale detection happens in middleware and client-side components
+// This avoids static-to-dynamic conversion errors
+function getLocale(): string {
   return defaultLocale
 }
 
@@ -55,7 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // During static generation, draftMode() is not available
   }
 
-  const locale = await getLocale()
+  const locale = getLocale()
   const messages = await getMessages(locale)
 
   // Determine text direction based on locale
