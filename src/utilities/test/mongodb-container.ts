@@ -8,13 +8,19 @@ let mongoContainer: StartedMongoDBContainer | null = null
 
 /**
  * Start MongoDB test container
- * Returns connection URI
+ * Returns connection URI using localhost (for proper host resolution)
  */
 export async function startMongoContainer(): Promise<string> {
   if (!mongoContainer) {
     mongoContainer = await new MongoDBContainer('mongo:7').start()
   }
-  return mongoContainer.getConnectionString()
+
+  // Get the mapped port and use localhost for proper resolution
+  const host = mongoContainer.getHost()
+  const port = mongoContainer.getMappedPort(27017)
+
+  // Use localhost instead of container hostname for proper DNS resolution
+  return `mongodb://localhost:${port}/test`
 }
 
 /**

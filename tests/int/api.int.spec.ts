@@ -13,14 +13,7 @@ describe('API', () => {
         // Start MongoDB test container and override DATABASE_URL
         const mongoUri = await startMongoContainer()
         originalDatabaseUrl = process.env.DATABASE_URL
-
-        // Replace container hostname with localhost for proper resolution
-        // Testcontainers returns a URI with container hostname, but we need localhost
-        const mongoUriWithLocalhost = mongoUri.replace(
-          /mongodb:\/\/([^:]+):/,
-          'mongodb://localhost:',
-        )
-        process.env.DATABASE_URL = mongoUriWithLocalhost
+        process.env.DATABASE_URL = mongoUri
 
         // Import config AFTER setting DATABASE_URL so it uses the test database
         const config = await import('@payload-config')
