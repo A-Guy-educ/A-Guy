@@ -25,7 +25,7 @@ describe('API', () => {
         throw error
       }
     },
-    60000, // 60 second timeout for Payload initialization (CI can be slow)
+    120000, // 120 second timeout (MongoDB container startup + Payload init can be slow)
   )
 
   afterAll(async () => {
