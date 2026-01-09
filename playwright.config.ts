@@ -50,7 +50,7 @@ export default defineConfig({
     stdout: 'pipe',
     stderr: 'pipe',
     env: {
-      PAYLOAD_SECRET: process.env.PAYLOAD_SECRET || '',
+      PAYLOAD_SECRET: process.env.PAYLOAD_SECRET || 'test-secret-key-for-integration-tests-only',
       DATABASE_URL: process.env.DATABASE_URL || '',
       NEXT_PUBLIC_SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000',
       NODE_OPTIONS: process.env.NODE_OPTIONS || '',

@@ -15,9 +15,6 @@ jobs:
       deployments: read
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Wait for deployment to be fully ready
         run: sleep 15
 
