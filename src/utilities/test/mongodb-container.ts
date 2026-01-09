@@ -12,8 +12,9 @@ let mongoContainer: StartedMongoDBContainer | null = null
  */
 export async function startMongoContainer(): Promise<string> {
   if (!mongoContainer) {
-    // Configure container to wait for MongoDB to be ready
-    mongoContainer = await new MongoDBContainer('mongo:7').withReuse().start()
+    // Use MongoDB 6 which doesn't require replica sets by default
+    // MongoDB 7+ requires replica sets which causes hostname resolution issues
+    mongoContainer = await new MongoDBContainer('mongo:6').withReuse().start()
   }
 
   // Get the mapped port and use localhost for proper resolution
