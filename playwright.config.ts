@@ -43,7 +43,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm build && pnpm start',
+    command: 'rm -rf .next && pnpm build && test -d .next && pnpm start',
     reuseExistingServer: !process.env.CI,
     url: 'http://localhost:3000',
     timeout: 180000, // 3 minutes for build + server start (MongoDB connection can be slow)
