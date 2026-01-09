@@ -1,15 +1,25 @@
+import { startMongoContainer, stopMongoContainer } from '@/utilities/test/mongodb-container'
 import { getPayload, Payload } from 'payload'
-import config from '@payload-config'
 
-import { describe, it, beforeAll, expect } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 let payload: Payload
+let originalDatabaseUrl: string | undefined
 
 describe('API', () => {
   beforeAll(
     async () => {
       try {
-        payload = await getPayload({ config })
+        // Start MongoDB test container and override DATABASE_URL
+        const mongoUri = await startMongoContainer()
+        originalDatabaseUrl = process.env.DATABASE_URL
+        process.env.DATABASE_URL = mongoUri
+
+        // Import config AFTER setting DATABASE_URL so it uses the test database
+        const config = await import('@payload-config')
+
+        // Initialize Payload with the test MongoDB
+        payload = await getPayload({ config: config.default })
       } catch (error) {
         console.error('Failed to initialize Payload:', error)
         throw error
@@ -17,6 +27,20 @@ describe('API', () => {
     },
     60000, // 60 second timeout for Payload initialization (CI can be slow)
   )
+
+  afterAll(async () => {
+    // Restore original DATABASE_URL if it was set
+    if (originalDatabaseUrl !== undefined) {
+      process.env.DATABASE_URL = originalDatabaseUrl
+    } else {
+      // Remove the property if it wasn't originally set
+      // @ts-expect-error - TypeScript doesn't allow delete on process.env, but it's safe here
+      delete process.env.DATABASE_URL
+    }
+
+    // Stop MongoDB container
+    await stopMongoContainer()
+  })
 
   it('fetches users', async () => {
     const users = await payload.find({
