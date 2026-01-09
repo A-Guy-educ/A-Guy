@@ -12,7 +12,7 @@ export default defineConfig({
       'tests/int/**/*.int.spec.tsx',
       'tests/unit/**/*.test.ts',
     ],
-    hookTimeout: 60000, // 60 seconds for hooks (Payload initialization can be slow in CI)
+    hookTimeout: 120000, // 120 seconds for hooks (MongoDB container + Payload init can be slow)
     testTimeout: 10000, // 10 seconds for individual tests
   },
 })
