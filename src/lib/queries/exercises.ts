@@ -32,7 +32,7 @@ export const queryExerciseById = cache(async ({ id }: { id: string }) => {
     })
 
     return exercise
-  } catch (error) {
+  } catch (_error) {
     return null
   }
 })

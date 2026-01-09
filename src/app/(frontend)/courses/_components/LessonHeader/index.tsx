@@ -1,7 +1,6 @@
 'use client'
 
 import { useTranslations } from '@/providers/I18n'
-import { Badge } from '@/components/ui/badge'
 
 interface LessonHeaderProps {
   order: number

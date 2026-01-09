@@ -111,14 +111,17 @@ export const apiService = {
 
       // Payload returns { docs: [...], totalDocs, ... }
       if (data.docs && data.docs.length > 0) {
-        const conversation = data.docs[0]
+        const conversation = data.docs[0] as {
+          id: string
+          messages?: Array<{ role: string; content: string }>
+        }
         const messages = conversation.messages || []
 
         return {
           success: true,
           exists: true,
           conversationId: conversation.id,
-          messages: messages.map((msg: any) => ({
+          messages: messages.map((msg) => ({
             role: msg.role,
             content: msg.content,
           })),

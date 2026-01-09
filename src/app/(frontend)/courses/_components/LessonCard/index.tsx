@@ -5,7 +5,6 @@ import type { Lesson } from '@/payload-types'
 import { useTranslations } from '@/providers/I18n'
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 
 interface LessonCardProps {
   lesson: Lesson
