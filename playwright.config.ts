@@ -11,8 +11,9 @@ import { fileURLToPath } from 'url'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-// Load test.env for E2E tests (contains test-specific environment variables)
-config({ path: path.resolve(dirname, 'test.env') })
+// Load .env file (same as development environment)
+// Environment variables can be overridden via CI secrets or process.env
+config({ path: path.resolve(dirname, '.env') })
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -42,10 +43,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm dev',
+    command: 'pnpm build && pnpm start',
     reuseExistingServer: !process.env.CI,
     url: 'http://localhost:3000',
-    timeout: 120000, // 2 minutes for server to start (MongoDB connection can be slow)
+    timeout: 180000, // 3 minutes for build + server start (MongoDB connection can be slow)
     stdout: 'pipe',
     stderr: 'pipe',
     env: {
