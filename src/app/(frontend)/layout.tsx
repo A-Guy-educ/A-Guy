@@ -12,7 +12,6 @@ import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import { draftMode } from 'next/headers'
 
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
@@ -35,13 +34,9 @@ async function getMessages(locale: string) {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  let isEnabled = false
-  try {
-    const draft = await draftMode()
-    isEnabled = draft.isEnabled
-  } catch {
-    // During static generation, draftMode() is not available
-  }
+  // Draft mode is handled in individual pages/components, not in the layout
+  // This avoids static-to-dynamic conversion errors
+  const isEnabled = false
 
   const locale = getLocale()
   const messages = await getMessages(locale)

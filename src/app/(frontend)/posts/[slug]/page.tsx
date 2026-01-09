@@ -49,7 +49,14 @@ type Args = {
 }
 
 export default async function Post({ params: paramsPromise }: Args) {
-  const { isEnabled: draft } = await draftMode()
+  let draft = false
+  try {
+    const draftModeResult = await draftMode()
+    draft = draftModeResult.isEnabled
+  } catch {
+    // During static generation, draftMode() is not available
+    // Default to false (not in draft mode)
+  }
   const { slug = '' } = await paramsPromise
   // Decode to support slugs with special characters
   const decodedSlug = decodeURIComponent(slug)
@@ -94,7 +101,14 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
 }
 
 const queryPostBySlug = cache(async ({ slug }: { slug: string }) => {
-  const { isEnabled: draft } = await draftMode()
+  let draft = false
+  try {
+    const draftModeResult = await draftMode()
+    draft = draftModeResult.isEnabled
+  } catch {
+    // During static generation, draftMode() is not available
+    // Default to false (not in draft mode)
+  }
 
   const payload = await getPayload({ config: configPromise })
 
