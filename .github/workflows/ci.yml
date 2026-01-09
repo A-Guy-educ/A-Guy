@@ -114,7 +114,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run unit/integration tests
+      - name: Run unit tests
+        run: pnpm test:unit
+
+      - name: Run integration tests
         run: pnpm test:int
 
       - name: Install Playwright browsers

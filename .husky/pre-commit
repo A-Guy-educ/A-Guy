@@ -54,3 +54,19 @@ fi
 
 # Run lint-staged
 pnpm exec lint-staged
+
+# Run unit tests - all must pass for commit
+echo ""
+echo "🧪 Running unit tests..."
+pnpm test:unit
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Unit tests failed. Commit cancelled."
+  echo ""
+  echo "To skip: git commit --no-verify"
+  echo "Or use: SKIP_HOOKS=1 git commit"
+  exit 1
+fi
+
+echo "✅ Unit tests passed"
