@@ -9,31 +9,11 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import type { DocChunk, DocChunks } from '../src/lib/ai/doc-chunk-types.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT_DIR = path.join(__dirname, '..')
-
-interface DocChunk {
-  id: string
-  title: string
-  content: string
-  keywords: string[]
-  category: string
-  sourceFile: string
-  startLine?: number
-  endLine?: number
-  priority: number // Higher = more important
-}
-
-interface DocChunks {
-  chunks: DocChunk[]
-  metadata: {
-    generatedAt: string
-    totalChunks: number
-    sourceFiles: string[]
-  }
-}
 
 /**
  * Extract sections from markdown content
@@ -68,7 +48,7 @@ function extractMarkdownSections(content: string, filePath: string): DocChunk[] 
         title: headingMatch[2],
         content: [],
         startLine: lineNumber,
-        level: headingMatch[1].length
+        level: headingMatch[1].length,
       }
     } else if (currentSection) {
       // Add line to current section
@@ -90,7 +70,7 @@ function extractMarkdownSections(content: string, filePath: string): DocChunk[] 
 function createChunk(
   section: { title: string; content: string[]; startLine: number; level: number },
   filePath: string,
-  endLine: number
+  endLine: number,
 ): DocChunk {
   const content = section.content.join('\n').trim()
   const fileName = path.basename(filePath, '.md')
@@ -116,7 +96,7 @@ function createChunk(
     sourceFile: path.basename(filePath),
     startLine: section.startLine,
     endLine,
-    priority
+    priority,
   }
 }
 
@@ -125,25 +105,55 @@ function createChunk(
  */
 function extractKeywords(text: string): string[] {
   const commonWords = new Set([
-    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-    'of', 'with', 'by', 'from', 'as', 'is', 'was', 'be', 'been', 'are',
-    'this', 'that', 'these', 'those', 'it', 'its', 'you', 'your', 'we',
-    'how', 'what', 'when', 'where', 'why', 'which', 'who'
+    'the',
+    'a',
+    'an',
+    'and',
+    'or',
+    'but',
+    'in',
+    'on',
+    'at',
+    'to',
+    'for',
+    'of',
+    'with',
+    'by',
+    'from',
+    'as',
+    'is',
+    'was',
+    'be',
+    'been',
+    'are',
+    'this',
+    'that',
+    'these',
+    'those',
+    'it',
+    'its',
+    'you',
+    'your',
+    'we',
+    'how',
+    'what',
+    'when',
+    'where',
+    'why',
+    'which',
+    'who',
   ])
 
   // Extract words and filter
-  const words = text.toLowerCase()
+  const words = text
+    .toLowerCase()
     .replace(/[^\w\s-]/g, ' ')
     .split(/\s+/)
-    .filter(word =>
-      word.length > 3 &&
-      !commonWords.has(word) &&
-      !word.match(/^\d+$/)
-    )
+    .filter((word) => word.length > 3 && !commonWords.has(word) && !word.match(/^\d+$/))
 
   // Count frequency and take top keywords
   const frequency = new Map<string, number>()
-  words.forEach(word => {
+  words.forEach((word) => {
     frequency.set(word, (frequency.get(word) || 0) + 1)
   })
 
@@ -190,8 +200,8 @@ async function main() {
     metadata: {
       generatedAt: new Date().toISOString(),
       totalChunks: 0,
-      sourceFiles: []
-    }
+      sourceFiles: [],
+    },
   }
 
   // Documentation files to process
@@ -200,7 +210,7 @@ async function main() {
     'DESIGN_SYSTEM.md',
     'CLAUDE.md',
     'STYLING-GUIDE.md',
-    'docs/ai/quick-reference/CHEAT-SHEET.md'
+    'docs/ai/quick-reference/CHEAT-SHEET.md',
   ]
 
   // Process each file
@@ -234,18 +244,14 @@ async function main() {
 
   // Write output
   const outputPath = path.join(outputDir, 'doc-chunks.json')
-  fs.writeFileSync(
-    outputPath,
-    JSON.stringify(docChunks, null, 2),
-    'utf-8'
-  )
+  fs.writeFileSync(outputPath, JSON.stringify(docChunks, null, 2), 'utf-8')
 
   console.log(`\n✅ Generated ${docChunks.metadata.totalChunks} documentation chunks`)
   console.log(`📁 Output: ${path.relative(ROOT_DIR, outputPath)}`)
 
   // Print statistics
   const categories = new Map<string, number>()
-  docChunks.chunks.forEach(chunk => {
+  docChunks.chunks.forEach((chunk) => {
     categories.set(chunk.category, (categories.get(chunk.category) || 0) + 1)
   })
 
@@ -263,4 +269,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export { extractMarkdownSections, extractKeywords, determineCategory }
-export type { DocChunk, DocChunks }
+// Types are now imported from src/lib/ai/doc-chunk-types.ts

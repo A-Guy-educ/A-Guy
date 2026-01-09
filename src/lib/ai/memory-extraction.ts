@@ -226,8 +226,8 @@ export async function persistMemoryItems(
           { text: candidate.text.slice(0, 50) },
           '[MemoryExtraction] Created new memory item',
         )
+        persisted++ // Only count new creations, not updates
       }
-      persisted++
     }
 
     logMaintenance({
