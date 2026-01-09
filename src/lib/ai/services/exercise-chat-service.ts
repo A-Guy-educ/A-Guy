@@ -65,7 +65,11 @@ export async function chatWithExerciseHelper(
 
       // Use composed prompt if provided (Context Policy V1)
       if (input.composedPrompt) {
-        const history: any[] = []
+        type GeminiHistoryItem = {
+          role: 'user' | 'model'
+          parts: Array<{ text: string }>
+        }
+        const history: GeminiHistoryItem[] = []
         let lastUserMessageContent: string | null = null
 
         // Convert composed prompt to Gemini format
@@ -134,7 +138,11 @@ export async function chatWithExerciseHelper(
 
       // Fallback: Legacy mode (for backward compatibility)
       const systemPrompt = getSystemPrompt()
-      const history: any[] = [
+      type GeminiHistoryItem = {
+        role: 'user' | 'model'
+        parts: Array<{ text: string }>
+      }
+      const history: GeminiHistoryItem[] = [
         {
           role: 'user' as const,
           parts: [{ text: systemPrompt }],

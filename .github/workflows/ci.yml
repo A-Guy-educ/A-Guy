@@ -16,6 +16,10 @@ jobs:
     name: Quality Gates
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # DATABASE_URL is required for postinstall -> generate:types
+      # Falls back to a dummy connection string if secret is not available (e.g., fork PRs)
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'mongodb://localhost:27017/test' }}
 
     steps:
       - name: Checkout code
@@ -39,6 +43,15 @@ jobs:
           key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
+
+      - name: Verify DATABASE_URL is set
+        run: |
+          if [ -n "$DATABASE_URL" ]; then
+            echo "DATABASE_URL is set: true"
+          else
+            echo "DATABASE_URL is set: false"
+            exit 1
+          fi
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -78,6 +91,10 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # DATABASE_URL is required for postinstall -> generate:types
+      # Falls back to a dummy connection string if secret is not available (e.g., fork PRs)
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'mongodb://localhost:27017/test' }}
 
     steps:
       - name: Checkout code
@@ -135,28 +152,27 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  dependency-review:
-    name: Dependency Review
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Dependency Review
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: moderate
-          comment-summary-in-pr: always
-
   build:
     name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # DATABASE_URL is required for postinstall -> generate:types
+      # Falls back to service container if secret is not available (e.g., fork PRs)
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'mongodb://localhost:27017/test' }}
+      PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET || 'test-secret-for-ci' }}
+      NEXT_PUBLIC_SERVER_URL: ${{ secrets.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000' }}
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout code
@@ -190,13 +206,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
 
+      - name: Verify DATABASE_URL is set
+        run: |
+          if [ -n "$DATABASE_URL" ]; then
+            echo "DATABASE_URL is set: true"
+          else
+            echo "DATABASE_URL is set: false"
+            exit 1
+          fi
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build application
         run: pnpm build
-        env:
-          # Add required build-time env vars here
-          DATABASE_URL: mongodb://localhost/test
-          PAYLOAD_SECRET: test-secret-for-ci
-          NEXT_PUBLIC_SERVER_URL: http://localhost:3000

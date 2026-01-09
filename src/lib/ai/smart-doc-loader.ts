@@ -196,7 +196,7 @@ export class SmartDocLoader {
   /**
    * Get relevant chunks based on tier and context
    */
-  private getRelevantChunks(query: string, tier: DocTier, context: AIContext): SearchResult[] {
+  private getRelevantChunks(query: string, tier: DocTier, _context: AIContext): SearchResult[] {
     // Determine category filter
     let category: string | undefined
 

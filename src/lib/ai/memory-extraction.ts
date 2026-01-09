@@ -152,7 +152,9 @@ export async function persistMemoryItems(
     return 0
   }
 
-  const db = (payload.db as any).connection.db // Access MongoDB directly for vector search
+  // Access MongoDB directly for vector search (not part of Payload's public API)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = (payload.db as any).connection.db
 
   try {
     // Batch generate all embeddings at once
@@ -195,6 +197,7 @@ export async function persistMemoryItems(
             importance: Math.max(similar.importance, candidate.importance), // Take higher importance
             embedding,
             updatedAt: new Date().toISOString(),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any,
           overrideAccess: true, // Server-side write, bypass user access control
         })
@@ -219,6 +222,7 @@ export async function persistMemoryItems(
               sourceMessageTimestamp: sourceTimestamp.toISOString(),
               sourceMessageRole: sourceRole, // ChatRole enum values match Payload schema ('user' | 'assistant')
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any,
           overrideAccess: true, // Server-side write, bypass user access control
         })

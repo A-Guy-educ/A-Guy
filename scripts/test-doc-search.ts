@@ -14,7 +14,7 @@ const QUERIES = [
   'API endpoint authentication',
   'Test patterns for collections',
   'Hooks lifecycle',
-  'RBAC patterns'
+  'RBAC patterns',
 ]
 
 async function main() {
@@ -28,7 +28,7 @@ async function main() {
   console.log(`   Total chunks: ${stats.totalChunks}`)
   console.log(`   Total keywords: ${stats.totalKeywords}`)
   console.log(`   Categories:`)
-  stats.categories.forEach(cat => {
+  stats.categories.forEach((cat) => {
     console.log(`      - ${cat.name}: ${cat.count} chunks`)
   })
   console.log()
