@@ -16,23 +16,30 @@ import PageClient from './page.client'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 
 export async function generateStaticParams() {
-  const payload = await getPayload({ config: configPromise })
-  const posts = await payload.find({
-    collection: 'posts',
-    draft: false,
-    limit: 1000,
-    overrideAccess: false,
-    pagination: false,
-    select: {
-      slug: true,
-    },
-  })
+  try {
+    const payload = await getPayload({ config: configPromise })
+    const posts = await payload.find({
+      collection: 'posts',
+      draft: false,
+      limit: 1000,
+      overrideAccess: false,
+      pagination: false,
+      select: {
+        slug: true,
+      },
+    })
 
-  const params = posts.docs.map(({ slug }) => {
-    return { slug }
-  })
+    const params = posts.docs.map(({ slug }) => {
+      return { slug }
+    })
 
-  return params
+    return params
+  } catch (error) {
+    // Gracefully handle MongoDB connection failures during build
+    // Return empty array to allow build to continue
+    console.warn('Failed to generate static params for posts:', error)
+    return []
+  }
 }
 
 type Args = {

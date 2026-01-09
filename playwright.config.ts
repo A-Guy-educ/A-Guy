@@ -46,7 +46,7 @@ export default defineConfig({
     command: 'rm -rf .next && pnpm build && test -d .next && pnpm start',
     reuseExistingServer: !process.env.CI,
     url: 'http://localhost:3000',
-    timeout: 180000, // 3 minutes for build + server start (MongoDB connection can be slow)
+    timeout: 300000, // 5 minutes for build + server start (MongoDB connection can be slow, static generation may take time)
     stdout: 'pipe',
     stderr: 'pipe',
     env: {
