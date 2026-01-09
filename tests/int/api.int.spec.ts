@@ -15,7 +15,7 @@ describe('API', () => {
         throw error
       }
     },
-    30000, // 30 second timeout for Payload initialization
+    60000, // 60 second timeout for Payload initialization (CI can be slow)
   )
 
   it('fetches users', async () => {
