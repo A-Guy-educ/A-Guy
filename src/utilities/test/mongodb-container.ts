@@ -16,11 +16,11 @@ export async function startMongoContainer(): Promise<string> {
   }
 
   // Get the mapped port and use localhost for proper resolution
-  const host = mongoContainer.getHost()
   const port = mongoContainer.getMappedPort(27017)
 
-  // Use localhost instead of container hostname for proper DNS resolution
-  return `mongodb://localhost:${port}/test`
+  // Use localhost with directConnection=true to bypass replica set discovery
+  // This avoids issues with container hostnames in replica set configuration
+  return `mongodb://localhost:${port}/test?directConnection=true`
 }
 
 /**
