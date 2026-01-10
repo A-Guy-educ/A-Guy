@@ -11,10 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      contents: read
       pull-requests: write
       deployments: read
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
       - name: Wait for deployment to be fully ready
         run: sleep 15
 
