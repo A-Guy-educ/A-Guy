@@ -375,8 +375,7 @@
       "dependencies": [
         "react",
         "lucide-react",
-        "next/link",
-        "sonner"
+        "next/link"
       ]
     },
     "src/Header/Nav/index.tsx": {
@@ -391,8 +390,7 @@
       "dependencies": [
         "react",
         "next/link",
-        "lucide-react",
-        "sonner"
+        "lucide-react"
       ]
     },
     "src/Header/RowLabel.tsx": {
@@ -2104,7 +2102,7 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-01-09T12:25:33.897Z",
+    "generatedAt": "2026-01-09T18:13:23.420Z",
     "totalFiles": 135,
     "totalPatterns": 16
   }

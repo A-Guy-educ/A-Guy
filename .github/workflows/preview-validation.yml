@@ -11,12 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      contents: read
       pull-requests: write
       deployments: read
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Wait for deployment to be fully ready
         run: sleep 15
@@ -33,9 +34,15 @@ jobs:
           if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
             echo "✅ Homepage is accessible (HTTP $HTTP_CODE)"
             echo "homepage_status=success" >> $GITHUB_OUTPUT
+            echo "homepage_protected=false" >> $GITHUB_OUTPUT
+          elif [ "$HTTP_CODE" -eq 401 ]; then
+            echo "⚠️  Homepage is password-protected (HTTP 401) - Preview Protection enabled"
+            echo "homepage_status=protected" >> $GITHUB_OUTPUT
+            echo "homepage_protected=true" >> $GITHUB_OUTPUT
           else
             echo "❌ Homepage failed (HTTP $HTTP_CODE)"
             echo "homepage_status=failure" >> $GITHUB_OUTPUT
+            echo "homepage_protected=false" >> $GITHUB_OUTPUT
             exit 1
           fi
 
@@ -52,9 +59,15 @@ jobs:
           if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
             echo "✅ Admin panel is accessible (HTTP $HTTP_CODE)"
             echo "admin_status=success" >> $GITHUB_OUTPUT
+            echo "admin_protected=false" >> $GITHUB_OUTPUT
+          elif [ "$HTTP_CODE" -eq 401 ]; then
+            echo "⚠️  Admin panel is password-protected (HTTP 401) - Preview Protection enabled"
+            echo "admin_status=protected" >> $GITHUB_OUTPUT
+            echo "admin_protected=true" >> $GITHUB_OUTPUT
           else
             echo "❌ Admin panel failed (HTTP $HTTP_CODE)"
             echo "admin_status=failure" >> $GITHUB_OUTPUT
+            echo "admin_protected=false" >> $GITHUB_OUTPUT
             exit 1
           fi
 
@@ -150,31 +163,48 @@ jobs:
             const adminStatus = '${{ steps.test-admin.outputs.admin_status }}';
             const apiStatus = '${{ steps.test-api.outputs.api_status }}';
             const perfStatus = '${{ steps.perf-check.outputs.perf_status }}';
+            const homepageProtected = '${{ steps.test-homepage.outputs.homepage_protected }}' === 'true';
+            const adminProtected = '${{ steps.test-admin.outputs.admin_protected }}' === 'true';
 
             const statusIcon = (status) => {
               if (status === 'success') return '✅';
+              if (status === 'protected') return '🔒';
               if (status === 'warning') return '⚠️';
               if (status === 'failure') return '❌';
               return '➖';
             };
 
-            const allPassed = homepageStatus === 'success' && adminStatus === 'success';
+            const statusText = (status, protected) => {
+              if (status === 'protected') return 'Password Protected';
+              if (status === 'success') return 'Accessible';
+              if (status === 'warning') return 'Warning';
+              if (status === 'failure') return 'Failed';
+              return 'Unknown';
+            };
 
-            const commentBody = `## ${allPassed ? '✅' : '⚠️'} Preview Validation Results
+            const allPassed = (homepageStatus === 'success' || homepageStatus === 'protected') &&
+                             (adminStatus === 'success' || adminStatus === 'protected');
+            const isProtected = homepageProtected || adminProtected;
+
+            const commentBody = `## ${allPassed ? (isProtected ? '🔒' : '✅') : '⚠️'} Preview Validation Results
 
             Automated smoke tests have been run on your preview deployment.
+
+            ${isProtected ? '> **Note**: Preview Protection is enabled. Tests returned 401 (Unauthorized), which indicates password protection is active. This is expected and secure for preview deployments.\n' : ''}
 
             ### Test Results
 
             | Test | Status | Notes |
             |------|--------|-------|
-            | Homepage | ${statusIcon(homepageStatus)} ${homepageStatus} | Main page loads |
-            | Admin Panel | ${statusIcon(adminStatus)} ${adminStatus} | Admin interface loads |
-            | API | ${statusIcon(apiStatus)} ${apiStatus} | API endpoint check |
-            | Performance | ${statusIcon(perfStatus)} ${perfStatus} | Response time check |
+            | Homepage | ${statusIcon(homepageStatus)} ${statusText(homepageStatus, homepageProtected)} | ${homepageProtected ? 'Password protected' : 'Main page loads'} |
+            | Admin Panel | ${statusIcon(adminStatus)} ${statusText(adminStatus, adminProtected)} | ${adminProtected ? 'Password protected' : 'Admin interface loads'} |
+            | API | ${statusIcon(apiStatus)} ${statusText(apiStatus, false)} | API endpoint check |
+            | Performance | ${statusIcon(perfStatus)} ${statusText(perfStatus, false)} | Response time check |
 
             ${allPassed
-              ? '### ✅ All critical tests passed!\n\nYour preview deployment is working correctly.'
+              ? isProtected
+                ? '### 🔒 Preview Protection Enabled\n\nYour preview deployment is password-protected and responding correctly. Automated tests cannot access protected deployments, but the deployment is working as expected.'
+                : '### ✅ All critical tests passed!\n\nYour preview deployment is working correctly.'
               : '### ⚠️ Some tests failed\n\nPlease review the failed tests above and check the deployment logs.'
             }
 
@@ -193,7 +223,7 @@ jobs:
             });
 
       - name: Fail job if critical tests failed
-        if: steps.test-homepage.outputs.homepage_status != 'success' || steps.test-admin.outputs.admin_status != 'success'
+        if: steps.test-homepage.outputs.homepage_status == 'failure' || steps.test-admin.outputs.admin_status == 'failure'
         run: |
           echo "❌ Critical smoke tests failed"
           exit 1

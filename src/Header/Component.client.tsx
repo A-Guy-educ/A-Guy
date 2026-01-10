@@ -12,16 +12,37 @@ import { MobileMenu, MobileMenuButton } from './MobileMenu'
 
 interface HeaderClientProps {
   data: Header
-  user: User | null
 }
 
-export const HeaderClient: React.FC<HeaderClientProps> = ({ data, user }) => {
+export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
+  const [user, setUser] = useState<User | null>(null)
   /* Storing the value in a useState to avoid hydration errors */
   const [theme, setTheme] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const { headerTheme, setHeaderTheme } = useHeaderTheme()
   const pathname = usePathname()
+
+  // Fetch user on client side to avoid static-to-dynamic conversion
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch('/api/users/me', {
+          credentials: 'include', // Include cookies
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setUser(data.user || null)
+        }
+      } catch (_error) {
+        // Silently fail - user is not authenticated
+        setUser(null)
+      }
+    }
+
+    fetchUser()
+  }, [])
 
   useEffect(() => {
     setHeaderTheme(null)

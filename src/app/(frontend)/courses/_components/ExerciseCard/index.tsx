@@ -6,6 +6,7 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/comp
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useTranslations } from '@/providers/I18n'
+import type { ExerciseContentData, ContentBlock } from '@/components/ExerciseRenderer/types'
 
 interface ExerciseCardProps {
   exercise: Exercise
@@ -24,19 +25,29 @@ export function ExerciseCard({
 }: ExerciseCardProps) {
   const t = useTranslations('courses')
 
+  // Type guard: Check if content matches ExerciseContentData structure
+  const isExerciseContent = (
+    content: unknown,
+  ): content is ExerciseContentData & { blocks: ContentBlock[] } => {
+    return (
+      typeof content === 'object' &&
+      content !== null &&
+      'blocks' in content &&
+      Array.isArray((content as { blocks: unknown }).blocks)
+    )
+  }
+
   // Extract question types from content blocks
   const getQuestionTypes = () => {
-    const content = (exercise as any).content
-    if (!content?.blocks || !Array.isArray(content.blocks)) return []
+    const content = exercise.content as unknown
+    if (!isExerciseContent(content)) return []
 
     const questionBlocks = content.blocks.filter(
-      (block: any) =>
-        block.type === 'question_select' ||
-        block.type === 'question_mcq' ||
-        block.type === 'question_free_response',
+      (block): block is ContentBlock =>
+        block.type === 'question_select' || block.type === 'question_free_response',
     )
 
-    const types = new Set(questionBlocks.map((block: any) => block.type))
+    const types = new Set(questionBlocks.map((block) => block.type))
     return Array.from(types)
   }
 
@@ -67,21 +78,15 @@ export function ExerciseCard({
           {badge && <Badge variant={badge.variant}>{badge.label}</Badge>}
         </div>
         <CardTitle className="text-xl">{exercise.title}</CardTitle>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {(exercise as any).content &&
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          typeof (exercise as any).content === 'object' &&
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          'blocks' in (exercise as any).content &&
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          Array.isArray((exercise as any).content.blocks) &&
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          (exercise as any).content.blocks.length > 0 && (
-            <CardDescription className="line-clamp-2">
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {(exercise as any).content.blocks[0]?.value || t('exercisesTitle')}
-            </CardDescription>
-          )}
+        {isExerciseContent(exercise.content) && exercise.content.blocks.length > 0 && (
+          <CardDescription className="line-clamp-2">
+            {exercise.content.blocks[0] &&
+            'value' in exercise.content.blocks[0] &&
+            typeof exercise.content.blocks[0].value === 'string'
+              ? exercise.content.blocks[0].value
+              : t('exercisesTitle')}
+          </CardDescription>
+        )}
       </CardHeader>
       <CardFooter>
         <Button asChild>

@@ -4,6 +4,19 @@
 import 'dotenv/config'
 import { vi } from 'vitest'
 
+// Set required environment variables for tests if not already set
+if (!process.env.PAYLOAD_SECRET) {
+  process.env.PAYLOAD_SECRET = 'test-secret-key-for-integration-tests-only'
+}
+
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = 'mongodb://127.0.0.1:27017/test'
+}
+
+if (!process.env.NEXT_PUBLIC_SERVER_URL) {
+  process.env.NEXT_PUBLIC_SERVER_URL = 'http://localhost:3000'
+}
+
 /**
  * Mock OpenAI for integration tests
  *

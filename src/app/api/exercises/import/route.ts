@@ -8,6 +8,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
+import type { PayloadRequest } from 'payload'
 import config from '@payload-config'
 import { importExerciseFromLesson } from '@/endpoints/exercises/import-from-lesson'
 import { importExerciseFromImage } from '@/endpoints/exercises/import-from-image'
@@ -24,13 +25,16 @@ export async function POST(request: NextRequest) {
     const url = new URL(request.url)
     const lessonId = url.searchParams.get('lessonId')
 
-    // Create a PayloadRequest-like object
-    const payloadRequest = {
+    // Create a PayloadRequest-like object (minimal required fields)
+    // PayloadRequest has many optional fields, so we create a partial one
+    const payloadRequest: PayloadRequest = {
       payload,
-      user,
+      user: user || undefined,
       url: request.url,
       headers: request.headers,
-    } as any
+      routeParams: {},
+      context: {},
+    } as PayloadRequest
 
     // Route to appropriate handler
     if (lessonId) {

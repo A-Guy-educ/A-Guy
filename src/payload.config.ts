@@ -28,6 +28,16 @@ import { getServerSideURL } from './utilities/getURL'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+// Validate DATABASE_URL is set and not empty
+// This prevents accidental fallback to localhost when Atlas connection string is expected
+const databaseUrl = process.env.DATABASE_URL
+if (!databaseUrl || databaseUrl.trim() === '') {
+  throw new Error(
+    'DATABASE_URL environment variable is required but not set. ' +
+      'Please set DATABASE_URL to your MongoDB connection string (e.g., mongodb+srv://... for Atlas).',
+  )
+}
+
 export default buildConfig({
   admin: {
     components: {
@@ -68,7 +78,7 @@ export default buildConfig({
   // This config helps us configure global or default features that the other editors can inherit
   editor: defaultLexical,
   db: mongooseAdapter({
-    url: process.env.DATABASE_URL || '',
+    url: databaseUrl,
   }),
   collections: [
     Pages,
