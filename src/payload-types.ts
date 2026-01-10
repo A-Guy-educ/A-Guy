@@ -69,6 +69,8 @@ export interface Config {
   collections: {
     pages: Page;
     categories: Category;
+    conversations: Conversation;
+    memory_items: MemoryItem;
     courses: Course;
     chapters: Chapter;
     lessons: Lesson;
@@ -97,6 +99,8 @@ export interface Config {
   collectionsSelect: {
     pages: PagesSelect<false> | PagesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    conversations: ConversationsSelect<false> | ConversationsSelect<true>;
+    memory_items: MemoryItemsSelect<false> | MemoryItemsSelect<true>;
     courses: CoursesSelect<false> | CoursesSelect<true>;
     chapters: ChaptersSelect<false> | ChaptersSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
@@ -775,47 +779,88 @@ export interface Form {
   createdAt: string;
 }
 /**
+ * Chat conversations between users and AI tutor
+ *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "chapters".
+ * via the `definition` "conversations".
  */
-export interface Chapter {
+export interface Conversation {
   id: string;
   /**
-   * The course this chapter belongs to
+   * Student who owns this conversation
    */
-  course: string | Course;
+  user: string | User;
   /**
-   * Chapter identifier (e.g., "1", "A", "א")
+   * Exercise this conversation is about
    */
-  chapterLabel?: string | null;
+  exercise: string | Exercise;
   /**
-   * Chapter title
+   * Conversation message history
+   */
+  messages?:
+    | {
+        role: 'user' | 'assistant';
+        /**
+         * Message content
+         */
+        content: string;
+        timestamp: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Compressed history of older messages
+   */
+  summary?: string | null;
+  /**
+   * When summary was last updated
+   */
+  summaryUpdatedAt?: string | null;
+  /**
+   * Summary includes messages up to this timestamp
+   */
+  summaryUntilTimestamp?: string | null;
+  /**
+   * Version of prompt composition policy
+   */
+  contextPolicyVersion: string;
+  /**
+   * Timestamp of last message (auto-updated)
+   */
+  lastMessageAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exercises".
+ */
+export interface Exercise {
+  id: string;
+  /**
+   * Exercise title (for admin reference)
    */
   title: string;
   /**
-   * Detailed description of the chapter
-   */
-  description?: string | null;
-  /**
-   * Upload chapter-related media files (images, videos, documents, etc.)
-   */
-  mediaFiles?: (string | Media)[] | null;
-  /**
-   * Sort order within the course
+   * Order of exercise within the lesson (lower numbers appear first)
    */
   order: number;
   /**
-   * Publication status of the chapter
+   * The lesson this exercise belongs to
    */
-  status: 'draft' | 'published' | 'archived';
+  lesson: string | Lesson;
   /**
-   * Whether this chapter is currently active
+   * Ordered blocks stream. Use question_* blocks to add questions, and rich_text blocks for instructions/notes between questions.
    */
-  isActive: boolean;
-  /**
-   * URL-friendly identifier (auto-generated from title if empty)
-   */
-  slug?: string | null;
+  content:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   /**
    * User who created this document
    */
@@ -870,26 +915,81 @@ export interface Lesson {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "exercises".
+ * via the `definition` "chapters".
  */
-export interface Exercise {
+export interface Chapter {
   id: string;
   /**
-   * Exercise title (for admin reference)
+   * The course this chapter belongs to
+   */
+  course: string | Course;
+  /**
+   * Chapter identifier (e.g., "1", "A", "א")
+   */
+  chapterLabel?: string | null;
+  /**
+   * Chapter title
    */
   title: string;
   /**
-   * Order of exercise within the lesson (lower numbers appear first)
+   * Detailed description of the chapter
+   */
+  description?: string | null;
+  /**
+   * Upload chapter-related media files (images, videos, documents, etc.)
+   */
+  mediaFiles?: (string | Media)[] | null;
+  /**
+   * Sort order within the course
    */
   order: number;
   /**
-   * The lesson this exercise belongs to
+   * Publication status of the chapter
    */
-  lesson: string | Lesson;
+  status: 'draft' | 'published' | 'archived';
   /**
-   * Ordered blocks stream. Use question_* blocks to add questions, and rich_text blocks for instructions/notes between questions.
+   * Whether this chapter is currently active
    */
-  content:
+  isActive: boolean;
+  /**
+   * URL-friendly identifier (auto-generated from title if empty)
+   */
+  slug?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Long-term memory items for AI chat context
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "memory_items".
+ */
+export interface MemoryItem {
+  id: string;
+  /**
+   * User ID for filtering (scalar field, NOT a relationship)
+   */
+  userId: string;
+  /**
+   * Optional conversation scope (scalar field, NOT a relationship)
+   */
+  conversationId?: string | null;
+  /**
+   * Category of memory item
+   */
+  type: 'preference' | 'decision' | 'fact' | 'open_loop' | 'profile' | 'constraint' | 'other';
+  /**
+   * The memory content (max 2000 chars)
+   */
+  text: string;
+  /**
+   * Vector embedding (1536 dimensions) - auto-generated
+   */
+  embedding:
     | {
         [k: string]: unknown;
       }
@@ -899,9 +999,38 @@ export interface Exercise {
     | boolean
     | null;
   /**
-   * User who created this document
+   * Importance scale 1-5 (higher = more important)
    */
-  createdBy?: (string | null) | User;
+  importance: number;
+  /**
+   * Status (use deprecated instead of deleting)
+   */
+  status: 'active' | 'deprecated';
+  /**
+   * Metadata about where this memory came from
+   */
+  source: {
+    /**
+     * Conversation where this memory was extracted
+     */
+    sourceConversationId?: string | null;
+    /**
+     * Timestamp of source message
+     */
+    sourceMessageTimestamp: string;
+    /**
+     * Who said the message this memory came from
+     */
+    sourceMessageRole: 'user' | 'assistant';
+  };
+  /**
+   * Convenience field for admin UI - DO NOT use for filtering
+   */
+  user?: (string | null) | User;
+  /**
+   * Convenience field for admin UI - DO NOT use for filtering
+   */
+  conversation?: (string | null) | Conversation;
   updatedAt: string;
   createdAt: string;
 }
@@ -1246,6 +1375,14 @@ export interface PayloadLockedDocument {
         value: string | Category;
       } | null)
     | ({
+        relationTo: 'conversations';
+        value: string | Conversation;
+      } | null)
+    | ({
+        relationTo: 'memory_items';
+        value: string | MemoryItem;
+      } | null)
+    | ({
         relationTo: 'courses';
         value: string | Course;
       } | null)
@@ -1485,6 +1622,53 @@ export interface CategoriesSelect<T extends boolean = true> {
         label?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversations_select".
+ */
+export interface ConversationsSelect<T extends boolean = true> {
+  user?: T;
+  exercise?: T;
+  messages?:
+    | T
+    | {
+        role?: T;
+        content?: T;
+        timestamp?: T;
+        id?: T;
+      };
+  summary?: T;
+  summaryUpdatedAt?: T;
+  summaryUntilTimestamp?: T;
+  contextPolicyVersion?: T;
+  lastMessageAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "memory_items_select".
+ */
+export interface MemoryItemsSelect<T extends boolean = true> {
+  userId?: T;
+  conversationId?: T;
+  type?: T;
+  text?: T;
+  embedding?: T;
+  importance?: T;
+  status?: T;
+  source?:
+    | T
+    | {
+        sourceConversationId?: T;
+        sourceMessageTimestamp?: T;
+        sourceMessageRole?: T;
+      };
+  user?: T;
+  conversation?: T;
   updatedAt?: T;
   createdAt?: T;
 }

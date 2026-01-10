@@ -8,7 +8,8 @@ import { getPayload } from 'payload'
 import React from 'react'
 import PageClient from './page.client'
 
-export const dynamic = 'force-static'
+// Note: Cannot use 'force-static' because the layout uses dynamic APIs (headers, cookies)
+// The page will still be statically generated at build time, but can be revalidated
 export const revalidate = 600
 
 export default async function Page() {

@@ -26,7 +26,7 @@ export function McqQuestion({
   answer,
   onChange,
   disabled,
-  checkResult,
+  checkResult: _checkResult,
   t,
 }: McqQuestionProps) {
   const selectedIds = answer.type === 'mcq' ? answer.selectedIds : []

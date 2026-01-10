@@ -12,7 +12,7 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import type { DocChunk, DocChunks } from '../../../scripts/generate-doc-chunks'
+import type { DocChunk, DocChunks } from './doc-chunk-types'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -46,8 +46,10 @@ export class DocSearch {
         const fileContent = fs.readFileSync(docChunksPath, 'utf-8')
         const data = JSON.parse(fileContent) as DocChunks
         this.chunks = data.chunks
-      } catch (error) {
-        console.error('Failed to load doc-chunks.json. Run: pnpm tsx scripts/generate-doc-chunks.ts')
+      } catch (_error) {
+        console.error(
+          'Failed to load doc-chunks.json. Run: pnpm tsx scripts/generate-doc-chunks.ts',
+        )
         this.chunks = []
       }
     }
@@ -62,9 +64,9 @@ export class DocSearch {
    * Build search indexes for fast lookup
    */
   private buildIndexes(): void {
-    this.chunks.forEach(chunk => {
+    this.chunks.forEach((chunk) => {
       // Index by keywords
-      chunk.keywords.forEach(keyword => {
+      chunk.keywords.forEach((keyword) => {
         if (!this.keywordIndex.has(keyword)) {
           this.keywordIndex.set(keyword, new Set())
         }
@@ -83,12 +85,7 @@ export class DocSearch {
    * Search documentation
    */
   query(query: string, options: SearchOptions = {}): SearchResult[] {
-    const {
-      limit = 5,
-      category,
-      minScore = 0,
-      includeContent = true
-    } = options
+    const { limit = 5, category, minScore = 0, includeContent = true } = options
 
     // Normalize query
     const queryLower = query.toLowerCase()
@@ -96,7 +93,7 @@ export class DocSearch {
 
     // Score all chunks
     const scored: SearchResult[] = this.chunks
-      .map(chunk => {
+      .map((chunk) => {
         // Skip if category filter doesn't match
         if (category && chunk.category !== category) {
           return null
@@ -112,7 +109,7 @@ export class DocSearch {
           chunk: includeContent ? chunk : { ...chunk, content: '' },
           score,
           matchedKeywords,
-          relevance: this.determineRelevance(score)
+          relevance: this.determineRelevance(score),
         }
       })
       .filter((result): result is SearchResult => result !== null)
@@ -128,7 +125,7 @@ export class DocSearch {
   private scoreChunk(
     chunk: DocChunk,
     queryLower: string,
-    queryWords: string[]
+    queryWords: string[],
   ): { score: number; matchedKeywords: string[] } {
     let score = 0
     const matchedKeywords: string[] = []
@@ -144,15 +141,15 @@ export class DocSearch {
     }
 
     // 3. Title word matches: 15 points each
-    queryWords.forEach(word => {
+    queryWords.forEach((word) => {
       if (chunk.title.toLowerCase().includes(word)) {
         score += 15
       }
     })
 
     // 4. Keyword matches: 10 points each
-    queryWords.forEach(word => {
-      chunk.keywords.forEach(keyword => {
+    queryWords.forEach((word) => {
+      chunk.keywords.forEach((keyword) => {
         if (keyword.includes(word) || word.includes(keyword)) {
           score += 10
           if (!matchedKeywords.includes(keyword)) {
@@ -169,7 +166,7 @@ export class DocSearch {
 
     // 6. Content word matches: 5 points each (capped at 30)
     let contentMatches = 0
-    queryWords.forEach(word => {
+    queryWords.forEach((word) => {
       if (chunk.content.toLowerCase().includes(word)) {
         contentMatches++
       }
@@ -195,7 +192,7 @@ export class DocSearch {
       .toLowerCase()
       .replace(/[^\w\s-]/g, ' ')
       .split(/\s+/)
-      .filter(word => word.length > 2)
+      .filter((word) => word.length > 2)
   }
 
   /**
@@ -209,12 +206,12 @@ export class DocSearch {
       security: ['access', 'control', 'auth', 'permission', 'role', 'security'],
       testing: ['test', 'spec', 'vitest', 'playwright', 'assert'],
       hooks: ['hook', 'before', 'after', 'lifecycle'],
-      styling: ['style', 'css', 'tailwind', 'class', 'design']
+      styling: ['style', 'css', 'tailwind', 'class', 'design'],
     }
 
     const categoryKeywords = relevanceMap[category] || []
-    return queryWords.some(word =>
-      categoryKeywords.some(keyword => word.includes(keyword) || keyword.includes(word))
+    return queryWords.some((word) =>
+      categoryKeywords.some((keyword) => word.includes(keyword) || keyword.includes(word)),
     )
   }
 
@@ -240,11 +237,11 @@ export class DocSearch {
   getStats() {
     return {
       totalChunks: this.chunks.length,
-      categories: this.getCategories().map(category => ({
+      categories: this.getCategories().map((category) => ({
         name: category,
-        count: this.categoryIndex.get(category)?.size || 0
+        count: this.categoryIndex.get(category)?.size || 0,
       })),
-      totalKeywords: this.keywordIndex.size
+      totalKeywords: this.keywordIndex.size,
     }
   }
 
@@ -252,15 +249,15 @@ export class DocSearch {
    * Find similar chunks to a given chunk
    */
   findSimilar(chunkId: string, limit: number = 3): DocChunk[] {
-    const chunk = this.chunks.find(c => c.id === chunkId)
+    const chunk = this.chunks.find((c) => c.id === chunkId)
     if (!chunk) return []
 
     // Find chunks with overlapping keywords
     const keywordOverlap = new Map<string, number>()
 
-    chunk.keywords.forEach(keyword => {
+    chunk.keywords.forEach((keyword) => {
       const matchingChunkIds = this.keywordIndex.get(keyword) || new Set()
-      matchingChunkIds.forEach(id => {
+      matchingChunkIds.forEach((id) => {
         if (id !== chunkId) {
           keywordOverlap.set(id, (keywordOverlap.get(id) || 0) + 1)
         }
@@ -271,7 +268,7 @@ export class DocSearch {
     return Array.from(keywordOverlap.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, limit)
-      .map(([id]) => this.chunks.find(c => c.id === id))
+      .map(([id]) => this.chunks.find((c) => c.id === id))
       .filter((c): c is DocChunk => c !== undefined)
   }
 }

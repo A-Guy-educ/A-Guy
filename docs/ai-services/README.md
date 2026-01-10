@@ -366,7 +366,7 @@ const chat = model.startChat({
       parts: [{ text: systemPrompt }], // From prompt file
     },
     {
-      role: 'model',
+      role: 'assistant',
       parts: [{ text: input.acknowledgment }],
     },
   ],
@@ -523,7 +523,7 @@ async function chat(messages: Array<{ role: string; content: string }>) {
   
   // Convert messages to Gemini format
   const history = messages.map((msg) => ({
-    role: msg.role === 'user' ? 'user' : 'model',
+    role: msg.role === 'user' ? 'user' : 'assistant',
     parts: [{ text: msg.content }],
   }))
   

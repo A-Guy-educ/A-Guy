@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# Helpful reminders after commits
+
+# Check if package.json version changed
+if git diff HEAD~1 --name-only 2>/dev/null | grep -q "^package.json$"; then
+  version=$(node -p "require('./package.json').version" 2>/dev/null)
+  if [ -n "$version" ]; then
+    echo ""
+    echo "📦 Package version: $version"
+    echo "ℹ️  Remember to update CHANGELOG.md if this is a release"
+    echo ""
+  fi
+fi
+
+# Check if this is a merge commit
+if git log -1 --pretty=%P | grep -q " "; then
+  echo ""
+  echo "🔀 Merge commit detected"
+  echo "ℹ️  Make sure all tests pass: pnpm test"
+  echo ""
+fi
+
+exit 0

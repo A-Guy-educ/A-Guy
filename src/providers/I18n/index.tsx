@@ -2,7 +2,9 @@
 
 import React, { createContext, useContext } from 'react'
 
-type Messages = Record<string, any>
+interface Messages {
+  [key: string]: string | Messages
+}
 
 interface I18nContextType {
   locale: string
@@ -23,10 +25,15 @@ export function I18nProvider({
 }) {
   const t = (key: string): string => {
     const keys = key.split('.')
-    let value: any = messages
+    let value: string | Messages | undefined = messages
 
     for (const k of keys) {
-      value = value?.[k]
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k]
+      } else {
+        value = undefined
+        break
+      }
     }
 
     return typeof value === 'string' ? value : key

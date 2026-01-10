@@ -10,7 +10,7 @@ import {
   isDuplicateEmailError,
 } from '../signup_handlers'
 import { SignupSchema, type SignupResult } from '../signup_schemas'
-import { Role } from '@/collections/Users/roles'
+import { AccountRole } from '@/collections/Users/roles'
 
 export async function signupAction(formData: FormData): Promise<SignupResult> {
   try {
@@ -73,7 +73,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
           name,
           email,
           password,
-          role: Role.Student, // Force role - never trust client input
+          role: AccountRole.Student, // Force role - never trust client input
         },
       })
 

@@ -12,45 +12,16 @@ import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import { draftMode, headers, cookies } from 'next/headers'
 
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
 import { I18nProvider } from '@/providers/I18n'
-import { defaultLocale, locales, cookieName, type Locale } from '@/i18n/config'
+import { defaultLocale } from '@/i18n/config'
 
-async function getLocale(): Promise<string> {
-  const headersList = await headers()
-  const cookieStore = await cookies()
-
-  const host = headersList.get('host') || ''
-
-  // Check for subdomain-based locale forcing
-  if (host.startsWith('he.')) {
-    return 'he'
-  } else if (host.startsWith('en.')) {
-    return 'en'
-  }
-
-  // On primary domain, check cookie first
-  const cookieLocale = cookieStore.get(cookieName)?.value as Locale | undefined
-
-  if (cookieLocale && locales.includes(cookieLocale)) {
-    return cookieLocale
-  }
-
-  // Fallback to Accept-Language header
-  const acceptLanguage = headersList.get('accept-language')
-  if (acceptLanguage) {
-    const preferredLocale = acceptLanguage.split(',')[0]?.split('-')[0]?.toLowerCase() as
-      | Locale
-      | undefined
-
-    if (preferredLocale && locales.includes(preferredLocale)) {
-      return preferredLocale
-    }
-  }
-
+// Use default locale for static generation
+// Locale detection happens in middleware and client-side components
+// This avoids static-to-dynamic conversion errors
+function getLocale(): string {
   return defaultLocale
 }
 
@@ -63,8 +34,11 @@ async function getMessages(locale: string) {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { isEnabled } = await draftMode()
-  const locale = await getLocale()
+  // Draft mode is handled in individual pages/components, not in the layout
+  // This avoids static-to-dynamic conversion errors
+  const isEnabled = false
+
+  const locale = getLocale()
   const messages = await getMessages(locale)
 
   // Determine text direction based on locale

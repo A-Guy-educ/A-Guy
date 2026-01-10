@@ -54,7 +54,8 @@ export async function extractFromImage(
     })
 
     // Prepare parts for the API (image only, no additional text)
-    const parts: any[] = [
+    // Using inline data format for Gemini API
+    const parts: Array<{ inlineData: { data: string; mimeType: string } }> = [
       {
         inlineData: {
           data: optimizedImage.buffer.toString('base64'),

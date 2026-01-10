@@ -25,11 +25,11 @@ export type RichTextBlock = z.infer<typeof RichTextBlockSchema>
 
 /**
  * Exercise Content - Strict Schema
- * REQUIRES: { blocks: RichTextBlock[] }
+ * REQUIRES: { blocks: RichTextBlock[] } with at least one block
  */
 export const ExerciseContentSchema = z
   .object({
-    blocks: z.array(RichTextBlockSchema),
+    blocks: z.array(RichTextBlockSchema).min(1, 'At least one block is required'),
   })
   .strict()
 

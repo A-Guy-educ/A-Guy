@@ -16,9 +16,14 @@ export default {
         'ci', // Changes to CI configuration files and scripts
         'chore', // Other changes that don't modify src or test files
         'revert', // Reverts a previous commit
+        'security', // Security-related changes
       ],
     ],
     'body-min-length': [2, 'always', 20], // Require at least 20 characters in commit body
     'body-empty': [2, 'never'], // Body must not be empty
+    'subject-case': [2, 'always', 'sentence-case'], // Use sentence case for subject
+    'header-max-length': [2, 'always', 100], // Max 100 characters for header
+    'subject-empty': [2, 'never'], // Subject cannot be empty
+    'subject-full-stop': [2, 'never', '.'], // No period at end of subject
   },
 }
