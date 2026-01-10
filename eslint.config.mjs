@@ -13,8 +13,14 @@ const compat = new FlatCompat({
 // The plugin is currently CommonJS and needs to be converted to work with Next.js ESLint
 // See eslint-plugin-aguy/README.md for the rules it provides
 
+// Note: eslint-config-next 16.1.1 works correctly, but ESLint 9.39.2 has a bug in error handling
+// that crashes when displaying validation errors for configs with circular references.
+// This is a known ESLint bug: https://github.com/eslint/eslint/issues/20237
+// Using only next/core-web-vitals (which includes TypeScript support) as a workaround.
+// Related: https://github.com/vercel/next.js/issues/85244
+// TODO: Remove this workaround once ESLint fixes issue #20237
 const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  ...compat.extends('next/core-web-vitals'),
   {
     rules: {
       // TypeScript rules
