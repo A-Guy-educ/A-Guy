@@ -22,3 +22,8 @@ test-results
 *.min.css
 .husky/_
 
+# Auto-generated files
+src/app/(payload)/admin/importMap.js
+docs/ai/indexes/*.json
+public/sitemap*.xml
+

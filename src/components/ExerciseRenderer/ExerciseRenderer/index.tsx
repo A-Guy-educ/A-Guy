@@ -32,7 +32,7 @@ import { checkQuestionAnswer, getInitialAnswer } from '../utils/answerChecking'
  */
 export function ExerciseRenderer({
   content,
-  mode = 'student',
+  mode: _mode = 'student',
   showCheckAnswer = true,
   className = '',
 }: ExerciseRendererProps) {

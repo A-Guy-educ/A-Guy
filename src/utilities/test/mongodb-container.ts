@@ -8,13 +8,22 @@ let mongoContainer: StartedMongoDBContainer | null = null
 
 /**
  * Start MongoDB test container
- * Returns connection URI
+ * Returns connection URI using localhost (for proper host resolution)
  */
 export async function startMongoContainer(): Promise<string> {
   if (!mongoContainer) {
-    mongoContainer = await new MongoDBContainer('mongo:7').start()
+    // Use MongoDB 6 which doesn't require replica sets by default
+    // MongoDB 7+ requires replica sets which causes hostname resolution issues
+    mongoContainer = await new MongoDBContainer('mongo:6').withReuse().start()
   }
-  return mongoContainer.getConnectionString()
+
+  // Get the mapped port and use localhost for proper resolution
+  const port = mongoContainer.getMappedPort(27017)
+
+  // Use localhost with directConnection=true to bypass replica set discovery
+  // This avoids issues with container hostnames in replica set configuration
+  // directConnection=true forces direct connection to this host, ignoring replica set
+  return `mongodb://localhost:${port}/test?directConnection=true`
 }
 
 /**
