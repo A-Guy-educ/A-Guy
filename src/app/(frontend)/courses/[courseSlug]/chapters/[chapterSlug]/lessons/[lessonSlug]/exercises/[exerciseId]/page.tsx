@@ -50,16 +50,13 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
     notFound()
   }
 
+  // Type assertion: Exercise.content is JSON field, but we validate it matches ExerciseContentData
+  const exerciseContent = exercise.content as unknown as ExerciseContentData
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background relative z-50">
       <NotebookWorkspace
-        content={
-          <ExerciseRenderer
-            content={(exercise as any).content as ExerciseContentData}
-            mode="student"
-            showCheckAnswer
-          />
-        }
+        content={<ExerciseRenderer content={exerciseContent} mode="student" showCheckAnswer />}
         chat={<NotebookChat exerciseId={exerciseId} />}
         formulas={<NotebookFormulas />}
         notes={<NotebookNotes />}

@@ -46,7 +46,7 @@ export class DocSearch {
         const fileContent = fs.readFileSync(docChunksPath, 'utf-8')
         const data = JSON.parse(fileContent) as DocChunks
         this.chunks = data.chunks
-      } catch (error) {
+      } catch (_error) {
         console.error(
           'Failed to load doc-chunks.json. Run: pnpm tsx scripts/generate-doc-chunks.ts',
         )

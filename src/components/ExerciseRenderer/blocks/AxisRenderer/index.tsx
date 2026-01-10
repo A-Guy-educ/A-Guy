@@ -3,16 +3,13 @@
  * Renders coordinate systems with axes, grids, points, and function graphs
  */
 
-// For now, always render the client component or nothing if SSR issues arise.
-// But we want the interactive component.
-import dynamic from 'next/dynamic'
 import { AxisSpecV1 } from '@/contracts'
 
 // Placeholder for AxisSystem since we are not supporting graphs workflows in this task.
 export const AxisRenderer: React.FC<{
   blockId: string
   spec: AxisSpecV1
-}> = ({ blockId, spec }) => {
+}> = ({ blockId: _blockId, spec: _spec }) => {
   return (
     <div className="mb-4 flex justify-center">
       <div className="my-8 border rounded-lg overflow-hidden border-border bg-card p-4 text-center text-muted-foreground">

@@ -53,7 +53,7 @@ function extractFileMetadata(filePath: string, content: string): FileMetadata | 
     domain: 'general',
     patterns: [],
     aiSummary: '',
-    dependencies: []
+    dependencies: [],
   }
 
   // Match JSDoc-style file header
@@ -65,7 +65,7 @@ function extractFileMetadata(filePath: string, content: string): FileMetadata | 
   // Extract @fileType
   const fileTypeMatch = header.match(/@fileType\s+([^\n]+)/)
   if (fileTypeMatch) {
-    metadata.type = fileTypeMatch[1].trim() as any
+    metadata.type = fileTypeMatch[1].trim() as FileMetadata['type']
   }
 
   // Extract @domain
@@ -77,7 +77,7 @@ function extractFileMetadata(filePath: string, content: string): FileMetadata | 
   // Extract @pattern
   const patternMatch = header.match(/@pattern\s+([^\n]+)/)
   if (patternMatch) {
-    metadata.patterns = patternMatch[1].split(',').map(p => p.trim())
+    metadata.patterns = patternMatch[1].split(',').map((p) => p.trim())
   }
 
   // Extract @ai-summary
@@ -153,7 +153,7 @@ function detectPatterns(filePath: string, content: string): string[] {
 function extractDependencies(content: string): string[] {
   const deps: string[] = []
   const importRegex = /import\s+.*?\s+from\s+['"]([^'"]+)['"]/g
-  
+
   let match
   while ((match = importRegex.exec(content)) !== null) {
     const dep = match[1]
@@ -200,8 +200,8 @@ async function main() {
     metadata: {
       generatedAt: new Date().toISOString(),
       totalFiles: 0,
-      totalPatterns: 0
-    }
+      totalPatterns: 0,
+    },
   }
 
   // Scan src directory
@@ -215,10 +215,10 @@ async function main() {
 
     // Extract metadata from header
     const headerMetadata = extractFileMetadata(relativePath, content)
-    
+
     // Detect patterns automatically
     const detectedPatterns = detectPatterns(relativePath, content)
-    
+
     // Extract dependencies
     const dependencies = extractDependencies(content)
 
@@ -229,7 +229,7 @@ async function main() {
       domain: 'general',
       patterns: detectedPatterns,
       aiSummary: '',
-      dependencies
+      dependencies,
     }
 
     // Add detected patterns to header patterns
@@ -241,12 +241,12 @@ async function main() {
       patternIndex.fileMetadata[relativePath] = metadata
 
       // Add to pattern index
-      metadata.patterns.forEach(pattern => {
+      metadata.patterns.forEach((pattern) => {
         if (!patternIndex.patterns[pattern]) {
           patternIndex.patterns[pattern] = {
             pattern,
             description: getPatternDescription(pattern),
-            files: []
+            files: [],
           }
         }
         patternIndex.patterns[pattern].files.push(relativePath)
@@ -259,7 +259,7 @@ async function main() {
   patternIndex.metadata.totalPatterns = Object.keys(patternIndex.patterns).length
 
   // Sort files in each pattern
-  Object.values(patternIndex.patterns).forEach(pattern => {
+  Object.values(patternIndex.patterns).forEach((pattern) => {
     pattern.files.sort()
   })
 
@@ -271,11 +271,7 @@ async function main() {
 
   // Write output
   const outputPath = path.join(outputDir, 'pattern-index.json')
-  fs.writeFileSync(
-    outputPath,
-    JSON.stringify(patternIndex, null, 2),
-    'utf-8'
-  )
+  fs.writeFileSync(outputPath, JSON.stringify(patternIndex, null, 2), 'utf-8')
 
   console.log(`✅ Scanned ${fileCount} TypeScript files`)
   console.log(`✅ Indexed ${patternIndex.metadata.totalFiles} files with patterns`)
@@ -284,8 +280,9 @@ async function main() {
 
   // Print pattern statistics
   console.log('📊 Patterns found:')
-  const sortedPatterns = Object.entries(patternIndex.patterns)
-    .sort((a, b) => b[1].files.length - a[1].files.length)
+  const sortedPatterns = Object.entries(patternIndex.patterns).sort(
+    (a, b) => b[1].files.length - a[1].files.length,
+  )
 
   sortedPatterns.forEach(([pattern, data]) => {
     console.log(`   ${pattern}: ${data.files.length} files`)
@@ -297,7 +294,7 @@ async function main() {
     console.log(`\n   ${pattern} (${data.files.length} files)`)
     console.log(`   Description: ${data.description}`)
     console.log(`   Examples:`)
-    data.files.slice(0, 3).forEach(file => {
+    data.files.slice(0, 3).forEach((file) => {
       console.log(`      - ${file}`)
     })
   })
@@ -310,7 +307,7 @@ function getPatternDescription(pattern: string): string {
   const descriptions: Record<string, string> = {
     'published-content': 'Collection with publishedAt field and isPublished access control',
     'user-owned': 'Collection with owner field and isOwner access control',
-    'rbac': 'Role-based access control with admin/user roles',
+    rbac: 'Role-based access control with admin/user roles',
     'hierarchical-data': 'Parent-child relationships with order field',
     'access-control': 'Explicit access control defined for CRUD operations',
     'tailwind-component': 'Component using Tailwind CSS utilities',
@@ -320,7 +317,7 @@ function getPatternDescription(pattern: string): string {
     'api-endpoint': 'Next.js API route handler',
     'authenticated-endpoint': 'API endpoint requiring authentication',
     'validated-endpoint': 'API endpoint with Zod validation',
-    'payload-hooks': 'Payload lifecycle hooks (beforeChange, afterChange, etc.)'
+    'payload-hooks': 'Payload lifecycle hooks (beforeChange, afterChange, etc.)',
   }
 
   return descriptions[pattern] || 'No description available'

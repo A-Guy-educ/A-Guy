@@ -27,19 +27,26 @@ export function parseMathExpression(expr: string): ParseResult {
     // Create a function that evaluates the expression
     // Note: This uses eval which is normally unsafe, but we're in a controlled environment
     // and the expression comes from trusted admin input, not user input
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const evaluate = (x: number): number => {
       try {
-        // Define math functions
+        // Define math functions and constants (used by eval, not directly by TypeScript)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const sin = Math.sin
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const cos = Math.cos
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const tan = Math.tan
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const sqrt = Math.sqrt
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const abs = Math.abs
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const PI = Math.PI
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const E = Math.E
 
-        // Evaluate the expression
-
+        // Evaluate the expression (x and math functions are available to eval)
         const result = eval(normalized)
         return typeof result === 'number' ? result : NaN
       } catch {
