@@ -135,7 +135,7 @@
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "4.5.2",
-    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/coverage-v8": "^4.0.16",
     "autoprefixer": "^10.4.19",
     "copyfiles": "^2.4.1",
     "eslint": "^9.16.0",
@@ -153,7 +153,7 @@
     "tsx": "^4.21.0",
     "typescript": "5.7.3",
     "vite-tsconfig-paths": "6.0.3",
-    "vitest": "3.2.3"
+    "vitest": "4.0.16"
   },
   "engines": {
     "node": "^18.20.2 || >=20.9.0 || ^22.14.0 || >=24.10.0",
