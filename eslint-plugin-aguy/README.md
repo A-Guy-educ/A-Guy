@@ -18,7 +18,7 @@ This is a **critical security requirement**. All collections must explicitly def
 // ❌ BAD - No access control
 export const MyCollection: CollectionConfig = {
   slug: 'my-collection',
-  fields: []
+  fields: [],
 }
 
 // ✅ GOOD - Access control defined
@@ -28,9 +28,9 @@ export const MyCollection: CollectionConfig = {
     read: anyone,
     create: isAdmin,
     update: isAdmin,
-    delete: isAdmin
+    delete: isAdmin,
   },
-  fields: []
+  fields: [],
 }
 ```
 
@@ -115,15 +115,15 @@ import aguyPlugin from './eslint-plugin-aguy/index.js'
 export default [
   {
     plugins: {
-      aguy: aguyPlugin
+      aguy: aguyPlugin,
     },
     rules: {
       'aguy/require-collection-access': 'error',
       'aguy/no-nested-metadata': 'error',
       'aguy/tailwind-only-components': 'warn',
-      'aguy/require-auth-endpoints': 'error'
-    }
-  }
+      'aguy/require-auth-endpoints': 'error',
+    },
+  },
 ]
 ```
 

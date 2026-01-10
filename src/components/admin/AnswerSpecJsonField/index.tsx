@@ -21,7 +21,7 @@ export const AnswerSpecJsonField: JSONFieldClientComponent = ({ path, field }) =
   const { value, setValue } = useField<unknown>({ path })
   const questionTypeField = useFormFields(([fields]) => fields.questionType)
   const questionType = questionTypeField?.value as QuestionType | undefined
-  const { t, i18n } = useTranslation()
+  const { i18n } = useTranslation()
 
   // Handle i18n labels and descriptions
   const getLabel = () => {

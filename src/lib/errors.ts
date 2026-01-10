@@ -19,12 +19,16 @@ export function handlePayloadError(error: unknown, fallbackMessage: string): Err
     return null
   }
 
-  const payloadError = error.data as any
+  interface PayloadErrorData {
+    errors?: Array<{ path?: string; message?: string }>
+  }
+
+  const payloadError = error.data as PayloadErrorData
   const errors: Record<string, string> = {}
 
   // Parse Payload field errors
   if (payloadError.errors && Array.isArray(payloadError.errors)) {
-    payloadError.errors.forEach((err: any) => {
+    payloadError.errors.forEach((err) => {
       if (err.path && err.message) {
         errors[err.path] = err.message
       }

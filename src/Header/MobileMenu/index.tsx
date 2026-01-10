@@ -10,7 +10,6 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useTranslations } from '@/providers/I18n'
 import { Button } from '@/components/ui/button'
 import { logoutAndRedirect } from '@/app/(frontend)/actions/auth-action'
-import { toast } from 'sonner'
 
 interface MobileMenuProps {
   isOpen: boolean

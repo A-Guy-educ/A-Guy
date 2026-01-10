@@ -32,7 +32,11 @@ export async function checkVectorIndexReady(db: Db): Promise<IndexCheckResult> {
     const indexes = await collection.listSearchIndexes().toArray()
 
     // Find our specific vector index
-    const vectorIndex: any = indexes.find((idx: any) => idx.name === INDEX_NAME)
+    // Type is from MongoDB Atlas API which doesn't have TypeScript definitions
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const vectorIndex = indexes.find((idx: any) => idx.name === INDEX_NAME) as
+      | { name: string; status?: string; queryable?: boolean }
+      | undefined
 
     if (!vectorIndex) {
       return {
