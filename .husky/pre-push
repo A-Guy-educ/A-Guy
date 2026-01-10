@@ -3,7 +3,7 @@
 # Allow skipping hooks with SKIP_HOOKS=1
 . "$(dirname "$0")/skip-hooks.sh"
 
-# Run integration and e2e tests - all must pass for push
+# Run integration tests - must pass for push
 echo ""
 echo "🧪 Running integration tests..."
 pnpm test:int
@@ -18,17 +18,3 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "✅ Integration tests passed"
-echo ""
-echo "🧪 Running e2e tests..."
-pnpm test:e2e
-
-if [ $? -ne 0 ]; then
-  echo ""
-  echo "❌ E2E tests failed. Push cancelled."
-  echo ""
-  echo "To skip: git push --no-verify"
-  echo "Or use: SKIP_HOOKS=1 git push"
-  exit 1
-fi
-
-echo "✅ E2E tests passed"

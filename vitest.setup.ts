@@ -57,9 +57,19 @@ const shouldMock = process.env.USE_REAL_OPENAI_API !== 'true'
 
 if (shouldMock) {
   vi.mock('openai', () => {
-    return {
-      OpenAI: vi.fn().mockImplementation(() => ({
-        embeddings: {
+    // Create a proper constructor class for Vitest 4.0
+    class MockOpenAI {
+      embeddings: {
+        create: ReturnType<typeof vi.fn>
+      }
+      chat: {
+        completions: {
+          create: ReturnType<typeof vi.fn>
+        }
+      }
+
+      constructor() {
+        this.embeddings = {
           create: vi.fn().mockImplementation(async ({ input, model }) => {
             // Simulate API behavior: reject empty strings
             if (!input || (Array.isArray(input) && input.some((i) => !i || i.trim() === ''))) {
@@ -92,8 +102,8 @@ if (shouldMock) {
               object: 'list',
             }
           }),
-        },
-        chat: {
+        }
+        this.chat = {
           completions: {
             create: vi.fn().mockImplementation(async ({ messages, response_format }) => {
               const systemMessage = messages.find((m: any) => m.role === 'system')?.content || ''
@@ -196,8 +206,12 @@ if (shouldMock) {
               }
             }),
           },
-        },
-      })),
+        }
+      }
+    }
+
+    return {
+      OpenAI: MockOpenAI,
     }
   })
 }

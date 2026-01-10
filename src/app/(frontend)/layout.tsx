@@ -16,12 +16,28 @@ import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
 import { I18nProvider } from '@/providers/I18n'
-import { defaultLocale } from '@/i18n/config'
+import { defaultLocale, cookieName, type Locale, locales } from '@/i18n/config'
+import { headers, cookies } from 'next/headers'
 
-// Use default locale for static generation
-// Locale detection happens in middleware and client-side components
-// This avoids static-to-dynamic conversion errors
-function getLocale(): string {
+// Read locale from middleware header or cookie
+// Middleware sets x-locale header after detecting locale from cookie/subdomain
+async function getLocale(): Promise<Locale> {
+  const headersList = await headers()
+  const cookieStore = await cookies()
+
+  // First, try to read from middleware header
+  const headerLocale = headersList.get('x-locale') as Locale | null
+  if (headerLocale && locales.includes(headerLocale)) {
+    return headerLocale
+  }
+
+  // Fallback to cookie (in case header is not set)
+  const cookieLocale = cookieStore.get(cookieName)?.value as Locale | undefined
+  if (cookieLocale && locales.includes(cookieLocale)) {
+    return cookieLocale
+  }
+
+  // Default fallback
   return defaultLocale
 }
 
@@ -38,7 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // This avoids static-to-dynamic conversion errors
   const isEnabled = false
 
-  const locale = getLocale()
+  const locale = await getLocale()
   const messages = await getMessages(locale)
 
   // Determine text direction based on locale
