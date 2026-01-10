@@ -979,7 +979,7 @@
     {
       "id": "AGENTS-data-integrity",
       "title": "Data Integrity",
-      "content": "1. Always pass `req` to nested operations in hooks\n2. Use context flags to prevent infinite hook loops\n3. Enable transactions for MongoDB (requires replica set) and Postgres\n4. Use `beforeValidate` for data formatting\n5. Use `beforeChange` for business logic",
+      "content": "1. Always pass `req` to nested operations in hooks\n2. Use context flags to prevent infinite hook loops\n3. Enable transactions for MongoDB (requires replica set)\n4. Use `beforeValidate` for data formatting\n5. Use `beforeChange` for business logic",
       "keywords": [
         "data",
         "integrity",
@@ -1045,7 +1045,7 @@
     {
       "id": "AGENTS-common-gotchas",
       "title": "Common Gotchas",
-      "content": "1. **Local API Default**: Access control bypassed unless `overrideAccess: false`\n2. **Transaction Safety**: Missing `req` in nested operations breaks atomicity\n3. **Hook Loops**: Operations in hooks can trigger the same hooks\n4. **Field Access**: Cannot use query constraints, only boolean\n5. **Relationship Depth**: Default depth is 2, set to 0 for IDs only\n6. **Draft Status**: `_status` field auto-injected when drafts enabled\n7. **Type Generation**: Types not updated until `generate:types` runs\n8. **MongoDB Transactions**: Require replica set configuration\n9. **SQLite Transactions**: Disabled by default, enable with `transactionOptions: {}`\n10. **Point Fields**: Not supported in SQLite",
+      "content": "1. **Local API Default**: Access control bypassed unless `overrideAccess: false`\n2. **Transaction Safety**: Missing `req` in nested operations breaks atomicity\n3. **Hook Loops**: Operations in hooks can trigger the same hooks\n4. **Field Access**: Cannot use query constraints, only boolean\n5. **Relationship Depth**: Default depth is 2, set to 0 for IDs only\n6. **Draft Status**: `_status` field auto-injected when drafts enabled\n7. **Type Generation**: Types not updated until `generate:types` runs\n8. **MongoDB Transactions**: Require replica set configuration",
       "keywords": [
         "default",
         "access",
@@ -1055,13 +1055,13 @@
         "only",
         "depth",
         "types",
-        "transactions",
-        "sqlite"
+        "common",
+        "gotchas"
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 1049,
-      "endLine": 1062,
+      "endLine": 1060,
       "priority": 8
     },
     {
@@ -1082,14 +1082,14 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1062,
-      "endLine": 1066,
+      "startLine": 1060,
+      "endLine": 1064,
       "priority": 8
     },
     {
       "id": "AGENTS-available-context-files",
       "title": "Available Context Files",
-      "content": "1. **`payload-overview.md`** - High-level architecture and core concepts\n   - Payload structure and initialization\n   - Configuration fundamentals\n   - Database adapters overview\n\n2. **`security-critical.md`** - Critical security patterns (⚠️ IMPORTANT)\n   - Local API access control\n   - Transaction safety in hooks\n   - Preventing infinite hook loops\n\n3. **`collections.md`** - Collection configurations\n   - Basic collection patterns\n   - Auth collections with RBAC\n   - Upload collections\n   - Drafts and versioning\n   - Globals\n\n4. **`fields.md`** - Field types and patterns\n   - All field types with examples\n   - Conditional fields\n   - Virtual fields\n   - Field validation\n   - Common field patterns\n\n5. **`field-type-guards.md`** - TypeScript field type utilities\n   - Field type checking utilities\n   - Safe type narrowing\n   - Runtime field validation\n\n6. **`access-control.md`** - Permission patterns\n   - Collection-level access\n   - Field-level access\n   - Row-level security\n   - RBAC patterns\n   - Multi-tenant access control\n\n7. **`access-control-advanced.md`** - Complex access patterns\n   - Nested document access\n   - Cross-collection permissions\n   - Dynamic role hierarchies\n   - Performance optimization\n\n8. **`hooks.md`** - Lifecycle hooks\n   - Collection hooks\n   - Field hooks\n   - Hook context patterns\n   - Common hook recipes\n\n9. **`queries.md`** - Database operations\n   - Local API usage\n   - Query operators\n   - Complex queries with AND/OR\n   - Performance optimization\n\n10. **`endpoints.md`** - Custom API endpoints\n    - REST endpoint patterns\n    - Authentication in endpoints\n    - Error handling\n    - Route parameters\n\n11. **`adapters.md`** - Database and storage adapters\n    - MongoDB, PostgreSQL, SQLite patterns\n    - Storage adapter usage (S3, Azure, GCS, etc.)\n    - Custom adapter development\n\n12. **`plugin-development.md`** - Creating plugins\n    - Plugin architecture\n    - Modifying configuration\n    - Plugin hooks\n    - Best practices\n\n13. **`components.md`** - Custom Components\n    - Component types (Root, Collection, Global, Field)\n    - Server vs Client Components\n    - Component paths and definition\n    - Default and custom props\n    - Using hooks\n    - Performance best practices\n    - Styling components",
+      "content": "1. **`payload-overview.md`** - High-level architecture and core concepts\n   - Payload structure and initialization\n   - Configuration fundamentals\n   - Database adapters overview\n\n2. **`security-critical.md`** - Critical security patterns (⚠️ IMPORTANT)\n   - Local API access control\n   - Transaction safety in hooks\n   - Preventing infinite hook loops\n\n3. **`collections.md`** - Collection configurations\n   - Basic collection patterns\n   - Auth collections with RBAC\n   - Upload collections\n   - Drafts and versioning\n   - Globals\n\n4. **`fields.md`** - Field types and patterns\n   - All field types with examples\n   - Conditional fields\n   - Virtual fields\n   - Field validation\n   - Common field patterns\n\n5. **`field-type-guards.md`** - TypeScript field type utilities\n   - Field type checking utilities\n   - Safe type narrowing\n   - Runtime field validation\n\n6. **`access-control.md`** - Permission patterns\n   - Collection-level access\n   - Field-level access\n   - Row-level security\n   - RBAC patterns\n   - Multi-tenant access control\n\n7. **`access-control-advanced.md`** - Complex access patterns\n   - Nested document access\n   - Cross-collection permissions\n   - Dynamic role hierarchies\n   - Performance optimization\n\n8. **`hooks.md`** - Lifecycle hooks\n   - Collection hooks\n   - Field hooks\n   - Hook context patterns\n   - Common hook recipes\n\n9. **`queries.md`** - Database operations\n   - Local API usage\n   - Query operators\n   - Complex queries with AND/OR\n   - Performance optimization\n\n10. **`endpoints.md`** - Custom API endpoints\n    - REST endpoint patterns\n    - Authentication in endpoints\n    - Error handling\n    - Route parameters\n\n11. **`adapters.md`** - Database and storage adapters\n    - MongoDB patterns\n    - Storage adapter usage (S3, Azure, GCS, etc.)\n    - Custom adapter development\n\n12. **`plugin-development.md`** - Creating plugins\n    - Plugin architecture\n    - Modifying configuration\n    - Plugin hooks\n    - Best practices\n\n13. **`components.md`** - Custom Components\n    - Component types (Root, Collection, Global, Field)\n    - Server vs Client Components\n    - Component paths and definition\n    - Default and custom props\n    - Using hooks\n    - Performance best practices\n    - Styling components",
       "keywords": [
         "patterns",
         "field",
@@ -1104,8 +1104,52 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1066,
-      "endLine": 1148,
+      "startLine": 1064,
+      "endLine": 1146,
+      "priority": 7
+    },
+    {
+      "id": "AGENTS-ai-agent-optimization",
+      "title": "AI Agent Optimization",
+      "content": "This codebase includes tools to help AI agents work efficiently:\n\n- **SmartDocLoader**: Context-aware documentation loading that minimizes token usage\n- **DocSearch**: Fast keyword-based documentation search\n- **Pattern Index**: Pattern → files mapping for quick example discovery\n- **JSON Schemas**: Machine-readable validation contracts for code generation\n- **Centralized Types**: Common types exported from `src/types/index.ts` for easy discovery",
+      "keywords": [
+        "types",
+        "documentation",
+        "pattern",
+        "index",
+        "discovery",
+        "agent",
+        "optimization",
+        "codebase",
+        "includes",
+        "tools"
+      ],
+      "category": "patterns",
+      "sourceFile": "AGENTS.md",
+      "startLine": 1146,
+      "endLine": 1156,
+      "priority": 8
+    },
+    {
+      "id": "AGENTS-quick-start",
+      "title": "Quick Start",
+      "content": "```typescript\n// Load context-aware documentation\nimport { SmartDocLoader } from '@/lib/ai/smart-doc-loader'\n\nconst docs = SmartDocLoader.forCollection('create')\n// Returns: ~380 tokens, quick reference tier\n\n// Search documentation\nimport { getDocSearch } from '@/lib/ai/doc-search'\nconst search = getDocSearch()\nconst results = search.query('How do I create a published collection?')\n\n// Use centralized types\nimport type { User, Course, CollectionConfig } from '@/types'\n```\n\nSee [docs/ai/README.md](docs/ai/README.md) for full guide and [docs/ai/QUICK-START.md](docs/ai/QUICK-START.md) for quick reference.",
+      "keywords": [
+        "docs",
+        "quick",
+        "import",
+        "const",
+        "search",
+        "documentation",
+        "smartdocloader",
+        "create",
+        "reference",
+        "getdocsearch"
+      ],
+      "category": "patterns",
+      "sourceFile": "AGENTS.md",
+      "startLine": 1156,
+      "endLine": 1176,
       "priority": 7
     },
     {
@@ -1126,8 +1170,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1148,
-      "endLine": 1155,
+      "startLine": 1176,
+      "endLine": 1183,
       "priority": 8
     },
     {
@@ -3065,47 +3109,69 @@
       "priority": 8
     },
     {
+      "id": "CLAUDE-setup-diagnostics",
+      "title": "Setup & Diagnostics",
+      "content": "- **Setup environment**: `pnpm setup` - Automated first-time setup (creates .env, starts DB, generates types)\n- **Health check**: `pnpm doctor` - Diagnose environment issues and verify configuration\n- **Validate env**: `pnpm validate:env` - Check required environment variables",
+      "keywords": [
+        "setup",
+        "environment",
+        "pnpm",
+        "check",
+        "validate",
+        "diagnostics",
+        "automated",
+        "first-time",
+        "creates",
+        "starts"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CLAUDE.md",
+      "startLine": 32,
+      "endLine": 38,
+      "priority": 7
+    },
+    {
       "id": "CLAUDE-development-server",
       "title": "Development Server",
-      "content": "- **Start dev**: `pnpm dev` - Access at http://localhost:3000 (frontend) and /admin (admin panel)\n- **Clean restart**: `rm -rf .next && pnpm dev` - Clear Next.js cache and restart",
+      "content": "- **Start dev**: `pnpm dev` - Access at http://localhost:3000 (frontend) and /admin (admin panel)\n- **Clean restart**: `pnpm dev:clean` - Clear Next.js cache and restart (shortcut for `rm -rf .next && pnpm dev`)",
       "keywords": [
         "pnpm",
         "admin",
+        "clean",
         "restart",
         "next",
         "development",
         "server",
         "start",
         "access",
-        "http",
-        "localhost"
+        "http"
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 32,
-      "endLine": 37,
+      "startLine": 38,
+      "endLine": 43,
       "priority": 7
     },
     {
       "id": "CLAUDE-database",
       "title": "Database",
-      "content": "- **Start DB**: `docker-compose up -d` - Start MongoDB via Docker\n- **Stop DB**: `docker-compose down` - Stop MongoDB\n- **Check status**: `docker-compose ps`\n- **View logs**: `docker-compose logs -f`",
+      "content": "- **Start DB**: `pnpm db:start` - Start MongoDB via Docker (shortcut for `docker-compose up -d`)\n- **Stop DB**: `pnpm db:stop` - Stop MongoDB (shortcut for `docker-compose down`)\n- **Restart DB**: `pnpm db:restart` - Restart MongoDB container\n- **Reset DB**: `pnpm db:reset` - Delete all data and restart MongoDB\n- **View logs**: `pnpm db:logs` - Stream MongoDB logs (shortcut for `docker-compose logs -f mongo`)",
       "keywords": [
-        "docker-compose",
-        "start",
+        "pnpm",
         "mongodb",
-        "stop",
+        "restart",
         "logs",
-        "database",
-        "docker",
-        "down",
-        "check",
-        "status"
+        "start",
+        "shortcut",
+        "docker-compose",
+        "stop",
+        "reset",
+        "database"
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 37,
-      "endLine": 44,
+      "startLine": 43,
+      "endLine": 51,
       "priority": 7
     },
     {
@@ -3126,52 +3192,74 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 44,
-      "endLine": 49,
+      "startLine": 51,
+      "endLine": 56,
       "priority": 7
     },
     {
       "id": "CLAUDE-quality-gates",
       "title": "Quality Gates",
-      "content": "- **Typecheck**: `pnpm -s tsc --noEmit`\n- **Lint**: `pnpm -s lint`\n- **Lint fix**: `pnpm lint:fix`\n- **Format check**: `pnpm -s format` or `pnpm -s prettier:check`\n- **Format fix**: `pnpm format:fix` or `pnpm prettier:write`",
+      "content": "- **Typecheck**: `pnpm typecheck`\n- **Lint**: `pnpm lint`\n- **Lint fix**: `pnpm lint:fix`\n- **Format check**: `pnpm format:check`\n- **Format fix**: `pnpm format`\n- **Run all checks locally**: `pnpm ci:local` - Run typecheck, lint, and all tests",
       "keywords": [
         "pnpm",
         "lint",
         "format",
+        "typecheck",
         "check",
-        "prettier",
         "quality",
         "gates",
-        "typecheck",
-        "--noemit",
-        "write"
+        "checks",
+        "locally",
+        "local"
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 49,
-      "endLine": 57,
+      "startLine": 56,
+      "endLine": 65,
       "priority": 7
     },
     {
       "id": "CLAUDE-testing",
       "title": "Testing",
-      "content": "- **Integration tests**: `pnpm test:int`\n- **E2E tests**: `pnpm test:e2e`\n- **E2E headed**: `pnpm exec playwright test --headed`\n- **E2E UI mode**: `pnpm exec playwright test --ui`\n- **Specific test**: `pnpm exec vitest run tests/int/<file>.int.spec.ts --config ./vitest.config.mts`",
+      "content": "- **All tests**: `pnpm test` - Run both integration and E2E tests\n- **Integration tests**: `pnpm test:int`\n- **E2E tests**: `pnpm test:e2e`\n- **E2E headed**: `pnpm exec playwright test --headed`\n- **E2E UI mode**: `pnpm exec playwright test --ui`\n- **Specific test**: `pnpm exec vitest run tests/int/<file>.int.spec.ts --config ./vitest.config.mts`",
       "keywords": [
         "pnpm",
         "test",
         "tests",
         "exec",
+        "integration",
         "playwright",
         "vitest",
         "testing",
-        "integration",
-        "headed",
-        "--headed"
+        "both",
+        "headed"
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 57,
-      "endLine": 65,
+      "startLine": 65,
+      "endLine": 74,
+      "priority": 7
+    },
+    {
+      "id": "CLAUDE-maintenance",
+      "title": "Maintenance",
+      "content": "- **Clean cache**: `pnpm clean` - Remove .next cache and build artifacts\n- **Clean all**: `pnpm clean:all` - Remove node_modules, cache, and lock file (requires reinstall)",
+      "keywords": [
+        "clean",
+        "cache",
+        "pnpm",
+        "remove",
+        "maintenance",
+        "next",
+        "build",
+        "artifacts",
+        "node_modules",
+        "lock"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CLAUDE.md",
+      "startLine": 74,
+      "endLine": 79,
       "priority": 7
     },
     {
@@ -3190,14 +3278,36 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 65,
-      "endLine": 74,
+      "startLine": 79,
+      "endLine": 88,
       "priority": 7
+    },
+    {
+      "id": "CLAUDE-vector-search-setup",
+      "title": "Vector Search Setup",
+      "content": "The project includes MongoDB Atlas Vector Search for AI-powered long-term memory:\n\n- **Setup Guide**: [docs/VECTOR-SEARCH-SETUP.md](docs/VECTOR-SEARCH-SETUP.md) - Complete setup instructions\n- **Quick Reference**: [docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md](docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md)\n- **Index Definition**: `infra/atlas/vector-index.memory_items.v1.json`\n- **Verify Setup**: `pnpm verify:vector-index`\n\n**Requirements**: MongoDB Atlas M10+ cluster, OpenAI API key\n\n---",
+      "keywords": [
+        "setup",
+        "docs",
+        "atlas",
+        "vector",
+        "search",
+        "mongodb",
+        "vector-search-setup",
+        "features",
+        "chat-context",
+        "vector-index-setup-quick"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CLAUDE.md",
+      "startLine": 88,
+      "endLine": 101,
+      "priority": 8
     },
     {
       "id": "CLAUDE-available-skills",
       "title": "Available Skills",
-      "content": "Use these skills for complex workflows:\n\n- `/implement` - Full implementation workflow (branch, tests, commit, PR, CI)\n- `/new-collection` - Generate new Payload collection with best practices\n- `/new-block` - Create new layout builder block\n- `/add-ui-component` - Add shadcn/ui component\n- `/security-review` - Security audit of code changes\n- `/quality-check` - Run all quality gates\n- `/ux-engineer-expert` - UI/UX component architecture guidance\n\nInvoke skills using the Skill tool when needed.",
+      "content": "Use these skills for complex workflows:\n\n- `/implement` - Full implementation workflow (branch, tests, commit, PR, CI)\n- `/new-collection` - Generate new Payload collection with best practices\n- `/new-block` - Create new layout builder block\n- `/add-ui-component` - Add shadcn/ui component\n- `/security-review` - Security audit of code changes\n- `/quality-check` - Run all quality gates\n- `/ux-engineer-expert` - UI/UX component architecture guidance\n\nInvoke skills using the Skill tool when needed.\n\n---",
       "keywords": [
         "skills",
         "component",
@@ -3212,8 +3322,116 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 74,
-      "endLine": 87,
+      "startLine": 101,
+      "endLine": 117,
+      "priority": 8
+    },
+    {
+      "id": "CLAUDE-ai-agent-tools",
+      "title": "AI Agent Tools",
+      "content": "This codebase includes tools to help AI agents work efficiently:",
+      "keywords": [
+        "tools",
+        "agent",
+        "codebase",
+        "includes",
+        "help",
+        "agents",
+        "work",
+        "efficiently"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CLAUDE.md",
+      "startLine": 117,
+      "endLine": 121,
+      "priority": 8
+    },
+    {
+      "id": "CLAUDE-smart-documentation-loading",
+      "title": "Smart Documentation Loading",
+      "content": "Use SmartDocLoader for context-aware documentation loading:\n\n```typescript\nimport { SmartDocLoader } from '@/lib/ai/smart-doc-loader'\n\n// Creating a collection\nconst docs = SmartDocLoader.forCollection('create')\nconsole.log(docs.estimatedTokens) // ~380 tokens\n\n// Creating a component\nconst docs = SmartDocLoader.forComponent('create')\n// Returns: ~335 tokens, quick reference tier\n\n// Creating an endpoint\nconst docs = SmartDocLoader.forEndpoint('create')\n// Returns: ~228 tokens, quick reference tier\n\n// Debugging\nconst docs = SmartDocLoader.forDebugging('collection')\n// Returns: ~1158 tokens, deep reference tier\n```",
+      "keywords": [
+        "smartdocloader",
+        "docs",
+        "const",
+        "tokens",
+        "creating",
+        "create",
+        "returns",
+        "reference",
+        "tier",
+        "documentation"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CLAUDE.md",
+      "startLine": 121,
+      "endLine": 145,
+      "priority": 7
+    },
+    {
+      "id": "CLAUDE-documentation-search",
+      "title": "Documentation Search",
+      "content": "Search for specific information:\n\n```typescript\nimport { getDocSearch } from '@/lib/ai/doc-search'\n\nconst search = getDocSearch()\nconst results = search.query('How do I create a published collection?', {\n  limit: 5,\n  category: 'quick-reference',\n})\n```",
+      "keywords": [
+        "search",
+        "getdocsearch",
+        "const",
+        "documentation",
+        "specific",
+        "information",
+        "typescript",
+        "import",
+        "doc-search",
+        "results"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CLAUDE.md",
+      "startLine": 145,
+      "endLine": 159,
+      "priority": 7
+    },
+    {
+      "id": "CLAUDE-pattern-discovery",
+      "title": "Pattern Discovery",
+      "content": "Find examples of specific patterns:\n\n```typescript\n// Load pattern index\nconst index = require('./docs/ai/indexes/pattern-index.json')\n\n// Find all files using RBAC pattern\nconst rbacFiles = index.patterns['rbac'].files\n```\n\nSee [docs/ai/QUICK-START.md](docs/ai/QUICK-START.md) for full guide.\n\n---",
+      "keywords": [
+        "pattern",
+        "index",
+        "docs",
+        "find",
+        "patterns",
+        "const",
+        "files",
+        "rbac",
+        "quick-start",
+        "discovery"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CLAUDE.md",
+      "startLine": 159,
+      "endLine": 175,
+      "priority": 7
+    },
+    {
+      "id": "CLAUDE-import-style",
+      "title": "Import Style",
+      "content": "**Always use `@/` aliases** for src imports:\n\n```typescript\n// ✅ Correct\nimport { getPayload } from 'payload'\nimport { User } from '@/payload-types'\nimport { SmartDocLoader } from '@/lib/ai/smart-doc-loader'\n\n// ❌ Wrong\nimport { SmartDocLoader } from '../../../lib/ai/smart-doc-loader'\n```\n\n**Exception**: Use relative imports within the same directory:\n\n```typescript\n// ✅ Correct (same directory)\nimport { helper } from './helper'\n```",
+      "keywords": [
+        "import",
+        "imports",
+        "typescript",
+        "correct",
+        "smartdocloader",
+        "smart-doc-loader",
+        "same",
+        "directory",
+        "helper",
+        "style"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CLAUDE.md",
+      "startLine": 175,
+      "endLine": 195,
       "priority": 8
     },
     {
@@ -4322,25 +4540,69 @@
       "priority": 13
     },
     {
-      "id": "CHEAT-SHEET-integration-test",
-      "title": "Integration Test",
-      "content": "```typescript\nimport { describe, it, expect, beforeAll, afterAll } from 'vitest'\nimport { getPayloadClient } from './helpers'\n\ndescribe('My Collection', () => {\n  let payload\n\n  beforeAll(async () => {\n    payload = await getPayloadClient()\n  })\n\n  afterAll(async () => {\n    await payload.db.destroy()\n  })\n\n  it('creates a document', async () => {\n    const doc = await payload.create({\n      collection: 'my-collection',\n      data: { title: 'Test' },\n    })\n\n    expect(doc.title).toBe('Test')\n  })\n})\n```\n\n---",
+      "id": "CHEAT-SHEET-integration-test-template",
+      "title": "Integration Test Template",
+      "content": "```typescript\nimport { describe, it, expect, beforeAll, afterAll } from 'vitest'\nimport { getPayload } from 'payload'\nimport config from '@payload-config'\n\ndescribe('MyCollection', () => {\n  let payload: Payload\n\n  beforeAll(async () => {\n    payload = await getPayload({ config })\n  })\n\n  afterAll(async () => {\n    await payload.db.destroy()\n  })\n\n  it('should create with access control', async () => {\n    const doc = await payload.create({\n      collection: 'my-collection',\n      data: { title: 'Test' },\n    })\n\n    expect(doc.title).toBe('Test')\n  })\n\n  it('should enforce access control', async () => {\n    // Test that access control works\n    await expect(\n      payload.find({\n        collection: 'my-collection',\n        where: { user: { equals: 'unauthorized-user-id' } },\n        overrideAccess: false,\n      })\n    ).rejects.toThrow()\n  })\n})\n```",
       "keywords": [
         "payload",
         "test",
         "async",
         "await",
         "import",
-        "describe",
         "expect",
-        "beforeall",
-        "afterall",
-        "getpayloadclient"
+        "access",
+        "control",
+        "describe",
+        "beforeall"
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
       "startLine": 363,
-      "endLine": 392,
+      "endLine": 402,
+      "priority": 12
+    },
+    {
+      "id": "CHEAT-SHEET-mocking-strategy",
+      "title": "Mocking Strategy",
+      "content": "- **Mock external APIs (OpenAI) by default** - Fast, reliable, deterministic\n- **Use `USE_REAL_OPENAI_API=true`** for occasional validation\n- **Focus on testing our code**, not external service behavior\n- See [tests/TESTING_STRATEGY.md](../../tests/TESTING_STRATEGY.md) for details",
+      "keywords": [
+        "external",
+        "tests",
+        "testing_strategy",
+        "mocking",
+        "strategy",
+        "mock",
+        "apis",
+        "openai",
+        "default",
+        "fast"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CHEAT-SHEET.md",
+      "startLine": 402,
+      "endLine": 408,
+      "priority": 12
+    },
+    {
+      "id": "CHEAT-SHEET-test-file-structure",
+      "title": "Test File Structure",
+      "content": "```typescript\n// tests/int/my-collection.int.spec.ts\nimport { describe, it, expect, beforeAll, afterAll } from 'vitest'\nimport { getPayload } from 'payload'\nimport config from '@payload-config'\n\ndescribe('MyCollection Integration', () => {\n  let payload: Payload\n\n  beforeAll(async () => {\n    payload = await getPayload({ config })\n  })\n\n  afterAll(async () => {\n    await payload.db.destroy()\n  })\n\n  describe('create', () => {\n    it('should create document with required fields', async () => {\n      // Test implementation\n    })\n  })\n\n  describe('access control', () => {\n    it('should enforce read access', async () => {\n      // Test implementation\n    })\n  })\n})\n```\n\n---",
+      "keywords": [
+        "payload",
+        "describe",
+        "async",
+        "test",
+        "import",
+        "beforeall",
+        "afterall",
+        "getpayload",
+        "config",
+        "await"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CHEAT-SHEET.md",
+      "startLine": 408,
+      "endLine": 442,
       "priority": 12
     },
     {
@@ -4355,8 +4617,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 392,
-      "endLine": 394,
+      "startLine": 442,
+      "endLine": 444,
       "priority": 13
     },
     {
@@ -4377,8 +4639,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 394,
-      "endLine": 410,
+      "startLine": 444,
+      "endLine": 460,
       "priority": 12
     },
     {
@@ -4399,8 +4661,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 410,
-      "endLine": 426,
+      "startLine": 460,
+      "endLine": 476,
       "priority": 12
     },
     {
@@ -4421,8 +4683,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 426,
-      "endLine": 442,
+      "startLine": 476,
+      "endLine": 492,
       "priority": 12
     },
     {
@@ -4435,8 +4697,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 442,
-      "endLine": 444,
+      "startLine": 492,
+      "endLine": 494,
       "priority": 13
     },
     {
@@ -4457,8 +4719,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 444,
-      "endLine": 454,
+      "startLine": 494,
+      "endLine": 504,
       "priority": 12
     },
     {
@@ -4479,8 +4741,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 454,
-      "endLine": 472,
+      "startLine": 504,
+      "endLine": 522,
       "priority": 12
     },
     {
@@ -4501,8 +4763,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 472,
-      "endLine": 481,
+      "startLine": 522,
+      "endLine": 531,
       "priority": 12
     },
     {
@@ -4523,8 +4785,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 481,
-      "endLine": 492,
+      "startLine": 531,
+      "endLine": 542,
       "priority": 12
     },
     {
@@ -4545,8 +4807,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 492,
-      "endLine": 518,
+      "startLine": 542,
+      "endLine": 568,
       "priority": 13
     },
     {
@@ -4560,8 +4822,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 518,
-      "endLine": 521,
+      "startLine": 568,
+      "endLine": 571,
       "priority": 13
     },
     {
@@ -4582,8 +4844,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 521,
-      "endLine": 526,
+      "startLine": 571,
+      "endLine": 576,
       "priority": 14
     },
     {
@@ -4600,8 +4862,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 526,
-      "endLine": 530,
+      "startLine": 576,
+      "endLine": 580,
       "priority": 14
     },
     {
@@ -4622,8 +4884,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 530,
-      "endLine": 537,
+      "startLine": 580,
+      "endLine": 587,
       "priority": 14
     },
     {
@@ -4639,8 +4901,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 537,
-      "endLine": 544,
+      "startLine": 587,
+      "endLine": 594,
       "priority": 14
     },
     {
@@ -4661,8 +4923,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 544,
-      "endLine": 569,
+      "startLine": 594,
+      "endLine": 619,
       "priority": 13
     },
     {
@@ -4683,8 +4945,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 569,
-      "endLine": 579,
+      "startLine": 619,
+      "endLine": 629,
       "priority": 13
     },
     {
@@ -4705,14 +4967,14 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
-      "startLine": 579,
-      "endLine": 606,
+      "startLine": 629,
+      "endLine": 656,
       "priority": 13
     }
   ],
   "metadata": {
-    "generatedAt": "2026-01-07T20:57:38.405Z",
-    "totalChunks": 230,
+    "generatedAt": "2026-01-09T12:25:33.897Z",
+    "totalChunks": 242,
     "sourceFiles": [
       "AGENTS.md",
       "DESIGN_SYSTEM.md",

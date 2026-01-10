@@ -11,3 +11,14 @@
 
  # ux expert, i want you to create a very clean and useful design system for this project,
 # accept best practices, and provide a plan to migrate this project into an improved design system
+
+
+
+
+# analyze and provide recommendations on improving this project automation process, better using scripts, improving lints, pre commit and husky
+
+
+
+
+future improvements:
+ Add JSDoc comments and standardize error handling to reach 9.5+/10.

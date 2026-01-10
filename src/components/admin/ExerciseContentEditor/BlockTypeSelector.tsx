@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { FileText, CheckSquare, List, Edit3, X } from 'lucide-react'
-import type { ContentBlock } from '@/collections/Exercises'
 
 interface BlockTypeSelectorProps {
   isOpen: boolean

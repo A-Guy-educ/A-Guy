@@ -1,7 +1,7 @@
 ---
 title: Database Adapters & Transactions
 description: Database adapters, storage, email, and transaction patterns
-tags: [payload, database, mongodb, postgres, sqlite, transactions]
+tags: [payload, database, mongodb, transactions]
 ---
 
 # Payload CMS Adapters
@@ -16,37 +16,6 @@ import { mongooseAdapter } from '@payloadcms/db-mongodb'
 export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URL,
-  }),
-})
-```
-
-### Postgres
-
-```typescript
-import { postgresAdapter } from '@payloadcms/db-postgres'
-
-export default buildConfig({
-  db: postgresAdapter({
-    pool: {
-      connectionString: process.env.DATABASE_URL,
-    },
-    push: false, // Don't auto-push schema changes
-    migrationDir: './migrations',
-  }),
-})
-```
-
-### SQLite
-
-```typescript
-import { sqliteAdapter } from '@payloadcms/db-sqlite'
-
-export default buildConfig({
-  db: sqliteAdapter({
-    client: {
-      url: 'file:./payload.db',
-    },
-    transactionOptions: {}, // Enable transactions (disabled by default)
   }),
 })
 ```
@@ -102,8 +71,6 @@ const brokenHook: CollectionAfterChangeHook = async ({ collection, doc, req }) =
 **Why This Matters:**
 
 - **MongoDB (with replica sets)**: Creates atomic session across operations
-- **PostgreSQL**: All operations use same Drizzle transaction
-- **SQLite (with transactions enabled)**: Ensures rollback on errors
 - **Without req**: Each operation runs independently, breaking atomicity
 
 ### Manual Transaction Control
@@ -204,6 +171,4 @@ export default buildConfig({
 ## Important Notes
 
 1. **MongoDB Transactions**: Require replica set configuration
-2. **SQLite Transactions**: Disabled by default, enable with `transactionOptions: {}`
-3. **Pass req**: Always pass `req` to nested operations in hooks for transaction safety
-4. **Point Fields**: Not supported in SQLite
+2. **Pass req**: Always pass `req` to nested operations in hooks for transaction safety

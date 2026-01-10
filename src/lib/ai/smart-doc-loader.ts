@@ -11,7 +11,7 @@
  */
 
 import { DocSearch, type SearchResult } from './doc-search'
-import type { DocChunk } from '../../../scripts/generate-doc-chunks'
+import type { DocChunk } from './doc-chunk-types'
 
 /**
  * AI Agent Context
@@ -19,16 +19,16 @@ import type { DocChunk } from '../../../scripts/generate-doc-chunks'
 export interface AIContext {
   /** Type of task being performed */
   task: 'create' | 'update' | 'debug' | 'explain' | 'refactor'
-  
+
   /** Domain being worked on */
   domain: 'collection' | 'component' | 'endpoint' | 'test' | 'utility' | 'general'
-  
+
   /** Files being worked on */
   files?: string[]
-  
+
   /** Patterns being used */
   patterns?: string[]
-  
+
   /** Keywords from the user's request */
   keywords?: string[]
 }
@@ -44,16 +44,16 @@ export type DocTier = 'quick-reference' | 'patterns' | 'deep-reference'
 export interface LoadedDocs {
   /** Documentation chunks */
   chunks: DocChunk[]
-  
+
   /** Tier used */
   tier: DocTier
-  
+
   /** Estimated token count */
   estimatedTokens: number
-  
+
   /** Categories included */
   categories: string[]
-  
+
   /** Recommendation for next action */
   recommendation?: string
 }
@@ -64,20 +64,20 @@ export interface LoadedDocs {
 export interface UsageStats {
   /** Total queries made */
   totalQueries: number
-  
+
   /** Average tokens per query */
   avgTokens: number
-  
+
   /** Most used categories */
   topCategories: Record<string, number>
-  
+
   /** Most common tasks */
   taskDistribution: Record<AIContext['task'], number>
 }
 
 /**
  * Smart Documentation Loader
- * 
+ *
  * Intelligently loads documentation based on AI agent context
  */
 export class SmartDocLoader {
@@ -100,32 +100,32 @@ export class SmartDocLoader {
   loadDocs(context: AIContext): LoadedDocs {
     // Determine which tier to use
     const tier = this.determineTier(context)
-    
+
     // Build search query from context
     const query = this.buildQuery(context)
-    
+
     // Get relevant chunks
     const results = this.getRelevantChunks(query, tier, context)
-    
+
     // Calculate estimated tokens
-    const chunks = results.map(r => r.chunk)
+    const chunks = results.map((r) => r.chunk)
     const estimatedTokens = this.estimateTokens(chunks)
-    
+
     // Track usage
     this.trackUsage(context, tier, estimatedTokens)
-    
+
     // Get unique categories
-    const categories = [...new Set(chunks.map(c => c.category))]
-    
+    const categories = [...new Set(chunks.map((c) => c.category))]
+
     // Generate recommendation
     const recommendation = this.generateRecommendation(chunks, tier, estimatedTokens)
-    
+
     return {
       chunks,
       tier,
       estimatedTokens,
       categories,
-      recommendation
+      recommendation,
     }
   }
 
@@ -196,14 +196,10 @@ export class SmartDocLoader {
   /**
    * Get relevant chunks based on tier and context
    */
-  private getRelevantChunks(
-    query: string,
-    tier: DocTier,
-    context: AIContext
-  ): SearchResult[] {
+  private getRelevantChunks(query: string, tier: DocTier, _context: AIContext): SearchResult[] {
     // Determine category filter
     let category: string | undefined
-    
+
     if (tier === 'quick-reference') {
       category = 'quick-reference'
     }
@@ -215,7 +211,7 @@ export class SmartDocLoader {
     const results = this.docSearch.query(query, {
       limit,
       category,
-      minScore: tier === 'quick-reference' ? 40 : 20
+      minScore: tier === 'quick-reference' ? 40 : 20,
     })
 
     // If we got no results from quick-reference, escalate
@@ -246,7 +242,7 @@ export class SmartDocLoader {
       context,
       tier,
       tokens,
-      timestamp: new Date()
+      timestamp: new Date(),
     })
 
     // Keep only last 100 entries
@@ -261,7 +257,7 @@ export class SmartDocLoader {
   private generateRecommendation(
     chunks: DocChunk[],
     tier: DocTier,
-    tokens: number
+    tokens: number,
   ): string | undefined {
     if (chunks.length === 0) {
       return 'No documentation found. Try broader search terms or check AGENTS.md manually.'
@@ -296,21 +292,24 @@ export class SmartDocLoader {
           update: 0,
           debug: 0,
           explain: 0,
-          refactor: 0
-        }
+          refactor: 0,
+        },
       }
     }
 
     const totalQueries = this.usageHistory.length
     const avgTokens = Math.round(
-      this.usageHistory.reduce((sum, entry) => sum + entry.tokens, 0) / totalQueries
+      this.usageHistory.reduce((sum, entry) => sum + entry.tokens, 0) / totalQueries,
     )
 
     // Count tasks
-    const taskDistribution = this.usageHistory.reduce((acc, entry) => {
-      acc[entry.context.task] = (acc[entry.context.task] || 0) + 1
-      return acc
-    }, {} as Record<AIContext['task'], number>)
+    const taskDistribution = this.usageHistory.reduce(
+      (acc, entry) => {
+        acc[entry.context.task] = (acc[entry.context.task] || 0) + 1
+        return acc
+      },
+      {} as Record<AIContext['task'], number>,
+    )
 
     // Track categories (would need to extract from chunks)
     const topCategories: Record<string, number> = {}
@@ -319,7 +318,7 @@ export class SmartDocLoader {
       totalQueries,
       avgTokens,
       topCategories,
-      taskDistribution
+      taskDistribution,
     }
   }
 
@@ -365,7 +364,7 @@ export class SmartDocLoader {
     return loader.loadDocs({
       task,
       domain: 'collection',
-      keywords: ['access control', 'fields', 'security']
+      keywords: ['access control', 'fields', 'security'],
     })
   }
 
@@ -377,7 +376,7 @@ export class SmartDocLoader {
     return loader.loadDocs({
       task,
       domain: 'component',
-      keywords: ['tailwind', 'styling', 'props']
+      keywords: ['tailwind', 'styling', 'props'],
     })
   }
 
@@ -389,7 +388,7 @@ export class SmartDocLoader {
     return loader.loadDocs({
       task,
       domain: 'endpoint',
-      keywords: ['authentication', 'validation', 'zod']
+      keywords: ['authentication', 'validation', 'zod'],
     })
   }
 
@@ -401,7 +400,7 @@ export class SmartDocLoader {
     return loader.loadDocs({
       task: 'debug',
       domain,
-      keywords: ['troubleshooting', 'common issues', 'anti-patterns']
+      keywords: ['troubleshooting', 'common issues', 'anti-patterns'],
     })
   }
 }

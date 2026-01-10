@@ -11,4 +11,19 @@
 **/temp
 **/docs/**
 tsconfig.json
+pnpm-lock.yaml
+CHANGELOG.md
+.next
+.cache
+coverage
+playwright-report
+test-results
+*.min.js
+*.min.css
+.husky/_
+
+# Auto-generated files
+src/app/(payload)/admin/importMap.js
+docs/ai/indexes/*.json
+public/sitemap*.xml
 

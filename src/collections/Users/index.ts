@@ -1,13 +1,21 @@
+/**
+ * Users Collection
+ *
+ * @fileType collection-config
+ * @domain auth
+ * @pattern rbac, user-owned
+ * @ai-summary Users collection with authentication, RBAC roles, and audit hooks
+ */
+
 import type { CollectionConfig } from 'payload'
 
-import { authenticated } from '../../access/authenticated'
 import { adminOnly } from '../../access/adminOnly'
 import { adminOrSelf } from '../../access/adminOrSelf'
 import { anyone } from '../../access/anyone'
 import { ensureRoleOnSignup } from './hooks/ensureRoleOnSignup-hook'
 import { preventLastAdminDemotion } from './hooks/preventLastAdminDemotion-hook'
 import { auditRoleChange } from './hooks/auditRoleChange-hook'
-import { Role, ROLE_LABEL } from './roles'
+import { AccountRole, ACCOUNT_ROLE_LABEL } from './roles'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -36,16 +44,16 @@ export const Users: CollectionConfig = {
     {
       name: 'role',
       type: 'select',
-      options: Object.entries(ROLE_LABEL).map(([value, label]) => ({
+      options: Object.entries(ACCOUNT_ROLE_LABEL).map(([value, label]) => ({
         label,
         value,
       })),
-      defaultValue: Role.Student,
+      defaultValue: AccountRole.Student,
       required: true,
       saveToJWT: true, // Include in JWT for fast access checks
       access: {
         // Only admins can update the role field
-        update: ({ req: { user } }) => user?.role === Role.Admin,
+        update: ({ req: { user } }) => user?.role === AccountRole.Admin,
       },
       hooks: {
         // Enforce role='student' on signup (ignore client input)

@@ -1,11 +1,11 @@
 /**
  * ESLint Plugin for A-Guy Platform Patterns
- * 
+ *
  * Enforces code patterns and best practices specific to the A-Guy platform.
- * 
+ *
  * Usage in eslint.config.mjs:
  * import aguyPlugin from './eslint-plugin-aguy/index.js'
- * 
+ *
  * export default [
  *   {
  *     plugins: { aguy: aguyPlugin },
@@ -18,20 +18,23 @@
  * ]
  */
 
+/* eslint-disable @typescript-eslint/no-require-imports */
+// This is a CommonJS file that must use require() for compatibility
 const requireCollectionAccess = require('./rules/require-collection-access.js')
 const noNestedMetadata = require('./rules/no-nested-metadata.js')
 const tailwindOnlyComponents = require('./rules/tailwind-only-components.js')
 const requireAuthEndpoints = require('./rules/require-auth-endpoints.js')
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 module.exports = {
   meta: {
     name: 'eslint-plugin-aguy',
-    version: '1.0.0'
+    version: '1.0.0',
   },
   rules: {
     'require-collection-access': requireCollectionAccess,
     'no-nested-metadata': noNestedMetadata,
     'tailwind-only-components': tailwindOnlyComponents,
-    'require-auth-endpoints': requireAuthEndpoints
-  }
+    'require-auth-endpoints': requireAuthEndpoints,
+  },
 }

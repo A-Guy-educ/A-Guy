@@ -3,6 +3,8 @@ dist / media
 node_modules
 .DS_Store
 .env
+.env.*
+!.env.example
 .next
 .vercel
 
@@ -31,3 +33,7 @@ tasks/
 
 # Generated AI documentation indices
 .ai-docs/
+
+# Test coverage reports
+coverage/
+*.lcov

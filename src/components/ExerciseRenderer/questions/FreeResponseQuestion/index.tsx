@@ -24,7 +24,7 @@ export function FreeResponseQuestion({
   answer,
   onChange,
   disabled,
-  checkResult,
+  checkResult: _checkResult,
   t,
 }: FreeResponseQuestionProps) {
   const value = answer.type === 'free_response' ? answer.value : ''

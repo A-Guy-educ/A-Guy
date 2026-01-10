@@ -1,8 +1,114 @@
 #!/bin/sh
-# Check for secrets before running lint-staged
-.husky/check-secrets
 
-# Block CSS/SCSS files
-.husky/check-no-css
+# Allow skipping hooks with SKIP_HOOKS=1
+. "$(dirname "$0")/skip-hooks.sh"
 
+# Get current branch name
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+# Prevent direct commits to protected branches (main, dev)
+if [ "$branch" = "main" ] || [ "$branch" = "dev" ]; then
+  echo ""
+  echo "❌ ERROR: Direct commits to '$branch' branch are not allowed"
+  echo ""
+  echo "All changes must go through pull requests. Please create a feature branch:"
+  echo ""
+  echo "  git checkout -b feat/<description>"
+  echo "  git checkout -b fix/<description>"
+  echo "  git checkout -b chore/<description>"
+  echo ""
+  echo "Examples:"
+  echo "  git checkout -b feat/user-authentication"
+  echo "  git checkout -b fix/login-bug"
+  echo "  git checkout -b chore/update-dependencies"
+  echo ""
+  echo "Then commit your changes and create a pull request."
+  echo ""
+  echo "To skip this check (not recommended):"
+  echo "  git commit --no-verify"
+  echo "  Or use: SKIP_HOOKS=1 git commit"
+  echo ""
+  exit 1
+fi
+
+# Validate branch naming convention
+
+# Allowed patterns: feat/, fix/, chore/, docs/, refactor/, test/, security/
+if ! echo "$branch" | grep -qE '^(feat|fix|chore|docs|refactor|test|security)/[a-z0-9-]+$'; then
+  echo ""
+  echo "❌ ERROR: Invalid branch name: '$branch'"
+  echo ""
+  echo "Branch names must follow one of these patterns:"
+  echo "  ✅ feat/<description>     - New features"
+  echo "  ✅ fix/<description>      - Bug fixes"
+  echo "  ✅ chore/<description>    - Maintenance tasks"
+  echo "  ✅ docs/<description>     - Documentation changes"
+  echo "  ✅ refactor/<description> - Code refactoring"
+  echo "  ✅ test/<description>     - Test additions/changes"
+  echo "  ✅ security/<description> - Security fixes"
+  echo ""
+  echo "Examples:"
+  echo "  git checkout -b feat/user-authentication"
+  echo "  git checkout -b fix/login-bug"
+  echo "  git checkout -b chore/update-dependencies"
+  echo ""
+  echo "To rename your branch:"
+  echo "  git branch -m <new-branch-name>"
+  echo ""
+  echo "To skip this check once:"
+  echo "  git commit --no-verify"
+  echo ""
+  exit 1
+fi
+
+# Run checks in parallel for faster execution
+{
+  .husky/check-secrets &
+  PID1=$!
+
+  .husky/check-no-css &
+  PID2=$!
+
+  # Wait for both to complete
+  wait $PID1 $PID2
+}
+
+# If any check failed, exit
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
+# Run lint-staged
 pnpm exec lint-staged
+
+# Run build check - verify project builds successfully
+echo ""
+echo "🔨 Running build check..."
+pnpm build
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Build failed. Commit cancelled."
+  echo ""
+  echo "To skip: git commit --no-verify"
+  echo "Or use: SKIP_HOOKS=1 git commit"
+  exit 1
+fi
+
+echo "✅ Build check passed"
+
+# Run unit tests - all must pass for commit
+echo ""
+echo "🧪 Running unit tests..."
+pnpm test:unit
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Unit tests failed. Commit cancelled."
+  echo ""
+  echo "To skip: git commit --no-verify"
+  echo "Or use: SKIP_HOOKS=1 git commit"
+  exit 1
+fi
+
+echo "✅ Unit tests passed"
