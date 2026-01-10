@@ -1,6 +1,6 @@
 import type { FieldHook } from 'payload'
 
-import { Role } from '../roles'
+import { AccountRole } from '../roles'
 
 /**
  * beforeChange hook that ensures role is always 'student' on user creation
@@ -9,7 +9,7 @@ import { Role } from '../roles'
 export const ensureRoleOnSignup: FieldHook = ({ operation, value }) => {
   // On create operations, always enforce role='student' (ignore client input)
   if (operation === 'create') {
-    return Role.Student
+    return AccountRole.Student
   }
 
   // On update operations, return the value (will be validated by field-level access control)

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ColorStringSchema, LineStyleSchema, PositionEnumSchema } from '../primitives'
+import { ColorStringSchema, PositionEnumSchema } from '../primitives'
 import { InteractionToolSchema, EvaluationModeSchema } from './interaction.base'
 
 /**

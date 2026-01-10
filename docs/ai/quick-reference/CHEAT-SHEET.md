@@ -360,29 +360,79 @@ export async function POST(req: NextRequest) {
 
 ## 🧪 Testing Patterns
 
-### Integration Test
+### Integration Test Template
 ```typescript
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { getPayloadClient } from './helpers'
+import { getPayload } from 'payload'
+import config from '@payload-config'
 
-describe('My Collection', () => {
-  let payload
+describe('MyCollection', () => {
+  let payload: Payload
 
   beforeAll(async () => {
-    payload = await getPayloadClient()
+    payload = await getPayload({ config })
   })
 
   afterAll(async () => {
     await payload.db.destroy()
   })
 
-  it('creates a document', async () => {
+  it('should create with access control', async () => {
     const doc = await payload.create({
       collection: 'my-collection',
       data: { title: 'Test' },
     })
 
     expect(doc.title).toBe('Test')
+  })
+
+  it('should enforce access control', async () => {
+    // Test that access control works
+    await expect(
+      payload.find({
+        collection: 'my-collection',
+        where: { user: { equals: 'unauthorized-user-id' } },
+        overrideAccess: false,
+      })
+    ).rejects.toThrow()
+  })
+})
+```
+
+### Mocking Strategy
+- **Mock external APIs (OpenAI) by default** - Fast, reliable, deterministic
+- **Use `USE_REAL_OPENAI_API=true`** for occasional validation
+- **Focus on testing our code**, not external service behavior
+- See [tests/TESTING_STRATEGY.md](../../tests/TESTING_STRATEGY.md) for details
+
+### Test File Structure
+```typescript
+// tests/int/my-collection.int.spec.ts
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { getPayload } from 'payload'
+import config from '@payload-config'
+
+describe('MyCollection Integration', () => {
+  let payload: Payload
+
+  beforeAll(async () => {
+    payload = await getPayload({ config })
+  })
+
+  afterAll(async () => {
+    await payload.db.destroy()
+  })
+
+  describe('create', () => {
+    it('should create document with required fields', async () => {
+      // Test implementation
+    })
+  })
+
+  describe('access control', () => {
+    it('should enforce read access', async () => {
+      // Test implementation
+    })
   })
 })
 ```

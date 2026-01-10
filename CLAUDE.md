@@ -85,6 +85,19 @@ When adding translations, update both:
 
 ---
 
+## Vector Search Setup
+
+The project includes MongoDB Atlas Vector Search for AI-powered long-term memory:
+
+- **Setup Guide**: [docs/VECTOR-SEARCH-SETUP.md](docs/VECTOR-SEARCH-SETUP.md) - Complete setup instructions
+- **Quick Reference**: [docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md](docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md)
+- **Index Definition**: `infra/atlas/vector-index.memory_items.v1.json`
+- **Verify Setup**: `pnpm verify:vector-index`
+
+**Requirements**: MongoDB Atlas M10+ cluster, OpenAI API key
+
+---
+
 ## Available Skills
 
 Use these skills for complex workflows:
@@ -98,3 +111,84 @@ Use these skills for complex workflows:
 - `/ux-engineer-expert` - UI/UX component architecture guidance
 
 Invoke skills using the Skill tool when needed.
+
+---
+
+## AI Agent Tools
+
+This codebase includes tools to help AI agents work efficiently:
+
+### Smart Documentation Loading
+
+Use SmartDocLoader for context-aware documentation loading:
+
+```typescript
+import { SmartDocLoader } from '@/lib/ai/smart-doc-loader'
+
+// Creating a collection
+const docs = SmartDocLoader.forCollection('create')
+console.log(docs.estimatedTokens) // ~380 tokens
+
+// Creating a component
+const docs = SmartDocLoader.forComponent('create')
+// Returns: ~335 tokens, quick reference tier
+
+// Creating an endpoint
+const docs = SmartDocLoader.forEndpoint('create')
+// Returns: ~228 tokens, quick reference tier
+
+// Debugging
+const docs = SmartDocLoader.forDebugging('collection')
+// Returns: ~1158 tokens, deep reference tier
+```
+
+### Documentation Search
+
+Search for specific information:
+
+```typescript
+import { getDocSearch } from '@/lib/ai/doc-search'
+
+const search = getDocSearch()
+const results = search.query('How do I create a published collection?', {
+  limit: 5,
+  category: 'quick-reference',
+})
+```
+
+### Pattern Discovery
+
+Find examples of specific patterns:
+
+```typescript
+// Load pattern index
+const index = require('./docs/ai/indexes/pattern-index.json')
+
+// Find all files using RBAC pattern
+const rbacFiles = index.patterns['rbac'].files
+```
+
+See [docs/ai/QUICK-START.md](docs/ai/QUICK-START.md) for full guide.
+
+---
+
+## Import Style
+
+**Always use `@/` aliases** for src imports:
+
+```typescript
+// ✅ Correct
+import { getPayload } from 'payload'
+import { User } from '@/payload-types'
+import { SmartDocLoader } from '@/lib/ai/smart-doc-loader'
+
+// ❌ Wrong
+import { SmartDocLoader } from '../../../lib/ai/smart-doc-loader'
+```
+
+**Exception**: Use relative imports within the same directory:
+
+```typescript
+// ✅ Correct (same directory)
+import { helper } from './helper'
+```

@@ -23,6 +23,7 @@ Core features:
 - [Jobs and Scheduled Publishing](#jobs-and-scheduled-publish)
 - [Website](#website)
 - [Automated Releases](./docs/releases.md) - Version management with semantic-release
+- [AI-Powered Memory System](#ai-memory-system) - Vector search and long-term memory
 
 ## Quick Start
 
@@ -46,6 +47,8 @@ pnpx create-payload-app my-project -t website
 1. open `http://localhost:3000` to open the app in your browser
 
 That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+
+**Optional**: For AI-powered features, see [AI Memory System Setup](#ai-memory-system).
 
 ## How it works
 
@@ -177,41 +180,45 @@ Core features:
 
 Although Next.js includes a robust set of caching strategies out of the box, Payload Cloud proxies and caches all files through Cloudflare using the [Official Cloud Plugin](https://www.npmjs.com/package/@payloadcms/payload-cloud). This means that Next.js caching is not needed and is disabled by default. If you are hosting your app outside of Payload Cloud, you can easily reenable the Next.js caching mechanisms by removing the `no-store` directive from all fetch requests in `./src/app/_api` and then removing all instances of `export const dynamic = 'force-dynamic'` from pages files, such as `./src/app/(pages)/[slug]/page.tsx`. For more details, see the official [Next.js Caching Docs](https://nextjs.org/docs/app/building-your-application/caching).
 
+## AI Memory System
+
+This project includes an AI-powered long-term memory system using MongoDB Atlas Vector Search.
+
+### Features
+
+- **Semantic Memory Retrieval**: Relevant facts, preferences, and context from past conversations
+- **Conversation Summarization**: Automatic compression of long conversation histories
+- **Memory Extraction**: AI-powered extraction of important information
+- **Tenant Isolation**: Users only see their own memories
+- Vector embeddings using OpenAI's `text-embedding-3-small` (1536 dimensions)
+
+### Setup
+
+**Prerequisites**: MongoDB Atlas M10+ cluster (free tier doesn't support vector search), OpenAI API key
+
+1. Create vector search index in MongoDB Atlas
+2. Add to `.env`: `OPENAI_API_KEY=sk-proj-...` and `MEMORY_RETRIEVAL_ENABLED=true`
+3. Verify: `pnpm verify:vector-index`
+
+**Documentation**:
+
+- [System Overview](docs/features/chat-context/README.md) - Architecture and features
+- [Technical Spec](docs/features/chat-context/spec.md) - Implementation details
+- [Atlas Config](infra/atlas/README.md) - Vector index configuration
+
+**Collections**: `memory_items` (long-term memory with vectors), `conversations` (chat history with summaries)
+
+**Feature Flags**:
+
+```env
+SUMMARY_MAINTENANCE_ENABLED=true   # Conversation summarization
+MEMORY_EXTRACTION_ENABLED=true     # Memory extraction
+MEMORY_RETRIEVAL_ENABLED=true      # Memory retrieval
+```
+
 ## Development
 
 To spin up this example locally, follow the [Quick Start](#quick-start). Then [Seed](#seed) the database with a few pages, posts, and projects.
-
-### Working with Postgres
-
-Postgres and other SQL-based databases follow a strict schema for managing your data. In comparison to our MongoDB adapter, this means that there's a few extra steps to working with Postgres.
-
-Note that often times when making big schema changes you can run the risk of losing data if you're not manually migrating it.
-
-#### Local development
-
-Ideally we recommend running a local copy of your database so that schema updates are as fast as possible. By default the Postgres adapter has `push: true` for development environments. This will let you add, modify and remove fields and collections without needing to run any data migrations.
-
-If your database is pointed to production you will want to set `push: false` otherwise you will risk losing data or having your migrations out of sync.
-
-#### Migrations
-
-[Migrations](https://payloadcms.com/docs/database/migrations) are essentially SQL code versions that keeps track of your schema. When deploy with Postgres you will need to make sure you create and then run your migrations.
-
-Locally create a migration
-
-```bash
-pnpm payload migrate:create
-```
-
-This creates the migration files you will need to push alongside with your new configuration.
-
-On the server after building and before running `pnpm start` you will want to run your migrations
-
-```bash
-pnpm payload migrate
-```
-
-This command will check for any migrations that have not yet been run and try to run them and it will keep a record of migrations that have been run in the database.
 
 ### Docker
 
@@ -245,27 +252,7 @@ To run Payload in production, you need to build and start the Admin panel. To do
 
 ### Deploying to Vercel
 
-This template can also be deployed to Vercel for free. You can get started by choosing the Vercel DB adapter during the setup of the template or by manually installing and configuring it:
-
-```bash
-pnpm add @payloadcms/db-vercel-postgres
-```
-
-```ts
-// payload.config.ts
-import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
-
-export default buildConfig({
-  // ...
-  db: vercelPostgresAdapter({
-    pool: {
-      connectionString: process.env.POSTGRES_URL || '',
-    },
-  }),
-  // ...
-```
-
-We also support Vercel's blob storage:
+This template can also be deployed to Vercel for free. We support Vercel's blob storage:
 
 ```bash
 pnpm add @payloadcms/storage-vercel-blob
@@ -287,8 +274,6 @@ export default buildConfig({
   ],
   // ...
 ```
-
-There is also a simplified [one click deploy](https://github.com/payloadcms/payload/tree/templates/with-vercel-postgres) to Vercel should you need it.
 
 ### Self-hosting
 

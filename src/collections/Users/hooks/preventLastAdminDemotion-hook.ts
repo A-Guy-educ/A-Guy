@@ -1,7 +1,7 @@
 import type { CollectionBeforeChangeHook } from 'payload'
 import { ValidationError } from 'payload'
 
-import { Role } from '../roles'
+import { AccountRole } from '../roles'
 
 /**
  * beforeChange hook that prevents demoting the last admin to student
@@ -15,14 +15,14 @@ export const preventLastAdminDemotion: CollectionBeforeChangeHook = async ({
 }) => {
   // Only check on update operations where role is being changed to student
   if (operation !== 'update') return data
-  if (data.role !== Role.Student) return data
-  if (originalDoc?.role !== Role.Admin) return data
+  if (data.role !== AccountRole.Student) return data
+  if (originalDoc?.role !== AccountRole.Admin) return data
 
   // This admin is being demoted - check if they're the last one
   const { totalDocs: adminCount } = await req.payload.count({
     collection: 'users',
     where: {
-      role: { equals: Role.Admin },
+      role: { equals: AccountRole.Admin },
     },
     overrideAccess: false,
     req,

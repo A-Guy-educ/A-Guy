@@ -1026,7 +1026,7 @@ export const myPlugin =
 
 1. Always pass `req` to nested operations in hooks
 2. Use context flags to prevent infinite hook loops
-3. Enable transactions for MongoDB (requires replica set) and Postgres
+3. Enable transactions for MongoDB (requires replica set)
 4. Use `beforeValidate` for data formatting
 5. Use `beforeChange` for business logic
 
@@ -1056,8 +1056,6 @@ export const myPlugin =
 6. **Draft Status**: `_status` field auto-injected when drafts enabled
 7. **Type Generation**: Types not updated until `generate:types` runs
 8. **MongoDB Transactions**: Require replica set configuration
-9. **SQLite Transactions**: Disabled by default, enable with `transactionOptions: {}`
-10. **Point Fields**: Not supported in SQLite
 
 ## Additional Context Files
 
@@ -1126,7 +1124,7 @@ For deeper exploration of specific topics, refer to the context files located in
     - Route parameters
 
 11. **`adapters.md`** - Database and storage adapters
-    - MongoDB, PostgreSQL, SQLite patterns
+    - MongoDB patterns
     - Storage adapter usage (S3, Azure, GCS, etc.)
     - Custom adapter development
 
@@ -1144,6 +1142,36 @@ For deeper exploration of specific topics, refer to the context files located in
     - Using hooks
     - Performance best practices
     - Styling components
+
+## AI Agent Optimization
+
+This codebase includes tools to help AI agents work efficiently:
+
+- **SmartDocLoader**: Context-aware documentation loading that minimizes token usage
+- **DocSearch**: Fast keyword-based documentation search
+- **Pattern Index**: Pattern → files mapping for quick example discovery
+- **JSON Schemas**: Machine-readable validation contracts for code generation
+- **Centralized Types**: Common types exported from `src/types/index.ts` for easy discovery
+
+### Quick Start
+
+```typescript
+// Load context-aware documentation
+import { SmartDocLoader } from '@/lib/ai/smart-doc-loader'
+
+const docs = SmartDocLoader.forCollection('create')
+// Returns: ~380 tokens, quick reference tier
+
+// Search documentation
+import { getDocSearch } from '@/lib/ai/doc-search'
+const search = getDocSearch()
+const results = search.query('How do I create a published collection?')
+
+// Use centralized types
+import type { User, Course, CollectionConfig } from '@/types'
+```
+
+See [docs/ai/README.md](docs/ai/README.md) for full guide and [docs/ai/QUICK-START.md](docs/ai/QUICK-START.md) for quick reference.
 
 ## Resources
 

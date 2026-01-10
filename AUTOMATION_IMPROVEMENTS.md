@@ -125,7 +125,6 @@ git commit --no-verify -m "Emergency fix"
 - OpenAI API keys (`sk-...`)
 - GitHub tokens (`ghp_...`, `gho_...`)
 - MongoDB connection strings
-- PostgreSQL connection strings
 - AWS Access Keys (`AKIA...`)
 - Stripe keys (`sk_live_...`, `pk_live_...`)
 - Slack tokens
