@@ -37,9 +37,8 @@ export function LessonContent({
   const hasContent = validFiles.length > 0
   const hasExercises = exercises.length > 0
 
-  // For admins: always show exercises option, default to interactive if no content
-  // For others: only show if has exercises
-  const showExercisesToggle = isAdmin || hasExercises
+  // Only show exercises toggle to admins
+  const showExercisesToggle = isAdmin
   const initialViewMode: ViewMode =
     !hasContent && showExercisesToggle ? 'interactive' : 'non-interactive'
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode)

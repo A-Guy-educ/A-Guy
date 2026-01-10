@@ -1,6 +1,6 @@
 import type { Access } from 'payload'
 
-import { Role } from '@/collections/Users/roles'
+import { AccountRole } from '@/collections/Users/roles'
 
 /**
  * Access control that allows admins to access all records,
@@ -10,7 +10,7 @@ export const adminOrSelf: Access = ({ req: { user } }) => {
   if (!user) return false
 
   // Admins can access all records
-  if (user.role === Role.Admin) return true
+  if (user.role === AccountRole.Admin) return true
 
   // Users can only access their own record
   return {

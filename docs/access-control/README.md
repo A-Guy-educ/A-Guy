@@ -133,7 +133,7 @@ const isAdminOrOwner: Access = ({ req: { user } }) => {
   if (!user) return false
 
   // Admin can access all
-  if (user.role === Role.Admin) return true
+  if (user.role === AccountRole.Admin) return true
 
   // User can only access their own records
   return {
@@ -331,19 +331,19 @@ export async function canAccessExercise(
 
 ```typescript
 // src/collections/Users/roles.ts
-export enum Role {
+export enum AccountRole {
   Admin = 'admin',
   Teacher = 'teacher',
   Student = 'student',
 }
 
-export const ROLE_HIERARCHY: Record<Role, number> = {
-  [Role.Admin]: 3,
-  [Role.Teacher]: 2,
-  [Role.Student]: 1,
+export const ROLE_HIERARCHY: Record<AccountRole, number> = {
+  [AccountRole.Admin]: 3,
+  [AccountRole.Teacher]: 2,
+  [AccountRole.Student]: 1,
 }
 
-export function hasRoleLevel(userRole: Role, requiredLevel: number): boolean {
+export function hasRoleLevel(userRole: AccountRole, requiredLevel: number): boolean {
   return ROLE_HIERARCHY[userRole] >= requiredLevel
 }
 ```
@@ -351,12 +351,12 @@ export function hasRoleLevel(userRole: Role, requiredLevel: number): boolean {
 ### Multi-Role Access Control
 
 ```typescript
-import { Role, ROLE_HIERARCHY, hasRoleLevel } from '@/collections/Users/roles'
+import { AccountRole, ROLE_HIERARCHY, hasRoleLevel } from '@/collections/Users/roles'
 import type { Access } from 'payload'
 
 const teacherOrAdmin: Access = ({ req: { user } }) => {
   if (!user) return false
-  return user.role === Role.Admin || user.role === Role.Teacher
+  return user.role === AccountRole.Admin || user.role === AccountRole.Teacher
 }
 
 const canManageContent: Access = ({ req: { user } }) => {
