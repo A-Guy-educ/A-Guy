@@ -6,7 +6,7 @@ import { MediaType, MIME_ALLOWLISTS } from './types'
  */
 export function inferMediaType(
   mimeType: string | null | undefined,
-  filename?: string | null,
+  _filename?: string | null,
 ): MediaType {
   if (!mimeType) return MediaType.Other
 
@@ -35,4 +35,3 @@ export function validateMimeType(mimeType: string, mediaType: MediaType): boolea
   const allowlist = MIME_ALLOWLISTS[mediaType]
   return allowlist.includes(mimeType.toLowerCase().trim())
 }
-
