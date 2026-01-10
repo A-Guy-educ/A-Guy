@@ -1,6 +1,7 @@
 import tseslint from 'typescript-eslint'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
+import nextPlugin from '@next/eslint-plugin-next'
 
 // TODO: Enable custom eslint-plugin-aguy once converted to ESM
 // The plugin is currently CommonJS and needs to be converted to work with Next.js ESLint
@@ -15,7 +16,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 // TODO: Remove this workaround once ESLint fixes issue #20237
 
 // Manual configuration based on next/core-web-vitals to avoid circular reference bug
-// Use typescript-eslint's recommended config as base, then add React plugins
+// Use typescript-eslint's recommended config as base, then add React and Next.js plugins
 const nextConfig = [
   ...tseslint.configs.recommended,
   {
@@ -23,6 +24,7 @@ const nextConfig = [
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
+      '@next/next': nextPlugin,
     },
     rules: {
       // React hooks rules
@@ -33,6 +35,14 @@ const nextConfig = [
         'warn',
         { allowConstantExport: true },
       ],
+      // Next.js core web vitals rules
+      '@next/next/no-html-link-for-pages': 'error',
+      '@next/next/no-img-element': 'error',
+      '@next/next/no-unwanted-polyfillio': 'error',
+      '@next/next/no-page-custom-font': 'error',
+      '@next/next/no-css-tags': 'error',
+      '@next/next/no-head-element': 'error',
+      '@next/next/no-sync-scripts': 'error',
     },
   },
 ]

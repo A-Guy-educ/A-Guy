@@ -159,6 +159,9 @@ importers:
       '@eslint/eslintrc':
         specifier: ^3.3.3
         version: 3.3.3
+      '@next/eslint-plugin-next':
+        specifier: ^16.1.1
+        version: 16.1.1
       '@playwright/test':
         specifier: 1.57.0
         version: 1.57.0
