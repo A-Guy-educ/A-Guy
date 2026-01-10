@@ -17,7 +17,7 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({
   selectedMediaIds,
   onSave,
 }) => {
-  const { t } = useTranslation()
+  const { t: _t } = useTranslation()
   const [media, setMedia] = React.useState<Media[]>([])
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)

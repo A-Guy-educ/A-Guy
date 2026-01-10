@@ -4,7 +4,29 @@ import { defineConfig, devices } from '@playwright/test'
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-import 'dotenv/config'
+import { config } from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const filename = fileURLToPath(import.meta.url)
+const dirname = path.dirname(filename)
+
+// Load .env file (same as development environment)
+// Environment variables can be overridden via CI secrets or process.env
+config({ path: path.resolve(dirname, '.env') })
+
+// Validate DATABASE_URL in CI environment
+// In CI, we should use MongoDB Atlas (via secrets), not localhost
+if (process.env.CI && !process.env.DATABASE_URL) {
+  throw new Error(
+    'DATABASE_URL must be set in CI environment. ' +
+      'Set it in GitHub Secrets (Settings → Secrets and variables → Actions) or workflow env. ' +
+      'For MongoDB Atlas, use: mongodb+srv://username:password@cluster.mongodb.net/database',
+  )
+}
+
+// Determine DATABASE_URL: use provided value or fallback to localhost for local E2E tests only
+const databaseUrl = process.env.DATABASE_URL || 'mongodb://127.0.0.1:27017/test'
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -34,8 +56,21 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm dev',
-    reuseExistingServer: true,
-    url: 'http://localhost:3000',
+    command: 'rm -rf .next && pnpm build && test -d .next && pnpm start',
+    reuseExistingServer: !process.env.CI,
+    url: 'http://localhost:3000/api/health', // Use dedicated health endpoint (fast, no blocking operations)
+    timeout: 300000, // 5 minutes for build + server start (MongoDB connection can be slow, static generation may take time)
+    stdout: 'pipe',
+    stderr: 'pipe',
+    env: {
+      PAYLOAD_SECRET: process.env.PAYLOAD_SECRET || 'test-secret-key-for-integration-tests-only',
+      DATABASE_URL: databaseUrl,
+      NEXT_PUBLIC_SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000',
+      NODE_OPTIONS: process.env.NODE_OPTIONS || '',
+      SUMMARY_MAINTENANCE_ENABLED: process.env.SUMMARY_MAINTENANCE_ENABLED || 'true',
+      MEMORY_EXTRACTION_ENABLED: process.env.MEMORY_EXTRACTION_ENABLED || 'true',
+      MEMORY_RETRIEVAL_ENABLED: process.env.MEMORY_RETRIEVAL_ENABLED || 'true',
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+    },
   },
 })

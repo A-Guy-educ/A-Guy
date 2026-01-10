@@ -29,15 +29,6 @@ export const RichTextBlockSchema = z
 // Zod: Answer schemas by question type
 // ---------------------------------
 
-// True/False option schema (fixed structure)
-const TrueFalseOptionSchema = z
-  .object({
-    id: z.enum(['true', 'false']),
-    value: z.boolean(),
-    label: InlineRichTextSchema,
-  })
-  .strict()
-
 export const TrueFalseAnswerSchema = z
   .object({
     correctOptionId: z.string().optional(),

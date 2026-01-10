@@ -1,8 +1,6 @@
 import { Banner } from '@payloadcms/ui/elements/Banner'
 import React from 'react'
 
-import { SeedButton } from './SeedButton'
-
 const BeforeDashboard: React.FC = () => {
   return (
     <div className="mb-6">
