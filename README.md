@@ -23,6 +23,7 @@ Core features:
 - [Jobs and Scheduled Publishing](#jobs-and-scheduled-publish)
 - [Website](#website)
 - [Automated Releases](./docs/releases.md) - Version management with semantic-release
+- [AI-Powered Memory System](#ai-memory-system) - Vector search and long-term memory
 
 ## Quick Start
 
@@ -46,6 +47,8 @@ pnpx create-payload-app my-project -t website
 1. open `http://localhost:3000` to open the app in your browser
 
 That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+
+**Optional**: For AI-powered features, see [AI Memory System Setup](#ai-memory-system).
 
 ## How it works
 
@@ -176,6 +179,42 @@ Core features:
 ### Cache
 
 Although Next.js includes a robust set of caching strategies out of the box, Payload Cloud proxies and caches all files through Cloudflare using the [Official Cloud Plugin](https://www.npmjs.com/package/@payloadcms/payload-cloud). This means that Next.js caching is not needed and is disabled by default. If you are hosting your app outside of Payload Cloud, you can easily reenable the Next.js caching mechanisms by removing the `no-store` directive from all fetch requests in `./src/app/_api` and then removing all instances of `export const dynamic = 'force-dynamic'` from pages files, such as `./src/app/(pages)/[slug]/page.tsx`. For more details, see the official [Next.js Caching Docs](https://nextjs.org/docs/app/building-your-application/caching).
+
+## AI Memory System
+
+This project includes an AI-powered long-term memory system using MongoDB Atlas Vector Search.
+
+### Features
+
+- **Semantic Memory Retrieval**: Relevant facts, preferences, and context from past conversations
+- **Conversation Summarization**: Automatic compression of long conversation histories
+- **Memory Extraction**: AI-powered extraction of important information
+- **Tenant Isolation**: Users only see their own memories
+- Vector embeddings using OpenAI's `text-embedding-3-small` (1536 dimensions)
+
+### Setup
+
+**Prerequisites**: MongoDB Atlas M10+ cluster (free tier doesn't support vector search), OpenAI API key
+
+1. Create vector search index in MongoDB Atlas
+2. Add to `.env`: `OPENAI_API_KEY=sk-proj-...` and `MEMORY_RETRIEVAL_ENABLED=true`
+3. Verify: `pnpm verify:vector-index`
+
+**Documentation**:
+
+- [System Overview](docs/features/chat-context/README.md) - Architecture and features
+- [Technical Spec](docs/features/chat-context/spec.md) - Implementation details
+- [Atlas Config](infra/atlas/README.md) - Vector index configuration
+
+**Collections**: `memory_items` (long-term memory with vectors), `conversations` (chat history with summaries)
+
+**Feature Flags**:
+
+```env
+SUMMARY_MAINTENANCE_ENABLED=true   # Conversation summarization
+MEMORY_EXTRACTION_ENABLED=true     # Memory extraction
+MEMORY_RETRIEVAL_ENABLED=true      # Memory retrieval
+```
 
 ## Development
 

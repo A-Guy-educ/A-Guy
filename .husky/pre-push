@@ -3,23 +3,18 @@
 # Allow skipping hooks with SKIP_HOOKS=1
 . "$(dirname "$0")/skip-hooks.sh"
 
-# Only run tests before push if STRICT_PUSH=1 or in CI
-if [ -n "$CI" ] || [ -n "$STRICT_PUSH" ]; then
-  echo "🧪 Running tests before push..."
-  pnpm test:int
+# Run integration tests - must pass for push
+echo ""
+echo "🧪 Running integration tests..."
+pnpm test:int
 
-  if [ $? -ne 0 ]; then
-    echo ""
-    echo "❌ Tests failed. Push cancelled."
-    echo ""
-    echo "To skip: git push --no-verify"
-    echo "Or use: SKIP_HOOKS=1 git push"
-    exit 1
-  fi
-
-  echo "✅ Tests passed"
-else
-  echo "ℹ️  Skipping tests (use STRICT_PUSH=1 to run tests before push)"
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Integration tests failed. Push cancelled."
+  echo ""
+  echo "To skip: git push --no-verify"
+  echo "Or use: SKIP_HOOKS=1 git push"
+  exit 1
 fi
 
-exit 0
+echo "✅ Integration tests passed"

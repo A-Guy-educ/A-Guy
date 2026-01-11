@@ -4,7 +4,7 @@ import React from 'react'
 import { Lightbulb, CheckCircle, BookOpen, Loader2, Send } from 'lucide-react'
 import { useTranslations } from '@/providers/I18n'
 import { useNotebookChat } from './useNotebookChat'
-import { ChatMessageRole } from '@/lib/ai/chat-message-role'
+import { ChatRole } from '@/lib/ai/chat-message-role'
 import { cn } from '@/utilities/ui'
 
 interface NotebookChatProps {
@@ -17,6 +17,7 @@ export function NotebookChat({ exerciseId }: NotebookChatProps) {
     messages,
     inputValue,
     isLoading,
+    isLoadingHistory,
     messagesContainerRef,
     messagesEndRef,
     inputRef,
@@ -38,19 +39,26 @@ export function NotebookChat({ exerciseId }: NotebookChatProps) {
   return (
     <div className="h-full flex flex-col bg-card">
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={cn(
-              'p-3 rounded-lg max-w-[85%]',
-              msg.role === ChatMessageRole.User
-                ? 'ml-auto bg-primary text-primary-foreground'
-                : 'mr-auto bg-muted text-foreground',
-            )}
-          >
-            {msg.content}
+        {isLoadingHistory && (
+          <div className="flex items-center justify-center p-4 text-muted-foreground text-sm">
+            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            Loading conversation...
           </div>
-        ))}
+        )}
+        {!isLoadingHistory &&
+          messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={cn(
+                'p-3 rounded-lg max-w-[85%]',
+                msg.role === ChatRole.User
+                  ? 'ml-auto bg-primary text-primary-foreground'
+                  : 'mr-auto bg-muted text-foreground',
+              )}
+            >
+              {msg.content}
+            </div>
+          ))}
         {isLoading && (
           <div className="mr-auto bg-muted text-foreground p-3 rounded-lg max-w-[85%] flex items-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" />

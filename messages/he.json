@@ -105,6 +105,13 @@
     "chatFullSolutionPrompt": "האם תוכל לספק את הפתרון המלא עם כל השלבים?",
     "chatAIAcknowledgment": "הבנתי. אני אעזור להדריך תלמידים דרך התרגילים שלהם.",
     "chatError": "שליחת ההודעה נכשלה. אנא נסה שוב.",
+    "chatThinking": "חושב...",
+    "mathKeyboard": "מקלדת מתמטית",
+    "formulaSheet": "דף נוסחאות",
+    "uploadFile": "העלאת קובץ",
+    "sendMessage": "שליחה",
+    "algebraFormulas": "אלגברה",
+    "trigonometryFormulas": "טריגונומטריה",
     "formulaSubtitle": "נוסחאות עזר",
     "notesSubtitle": "הערות אישיות",
     "notesPlaceholder": "הוסף הערות כאן..."

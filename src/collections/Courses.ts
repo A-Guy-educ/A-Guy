@@ -1,3 +1,12 @@
+/**
+ * Courses Collection
+ *
+ * @fileType collection-config
+ * @domain courses
+ * @pattern published-content, hierarchical-data
+ * @ai-summary Courses collection with chapters relationship and published state
+ */
+
 import type { CollectionConfig } from 'payload'
 
 import { anyone } from '../access/anyone'

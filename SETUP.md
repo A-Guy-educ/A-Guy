@@ -14,12 +14,17 @@ pnpm install
 cp .env.example .env
 ```
 
-Edit `.env` and update:
+Edit `.env` and update the required variables:
 
 ```env
+# Required
 DATABASE_URI=mongodb://localhost:27017/payload-starter
 PAYLOAD_SECRET=your-super-secret-key-change-this
 NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+
+# Optional: AI features (see docs/VECTOR-SEARCH-SETUP.md)
+# OPENAI_API_KEY=sk-...
+# MEMORY_RETRIEVAL_ENABLED=false
 ```
 
 Generate a secure secret:
@@ -141,13 +146,28 @@ rm -rf .husky
 pnpm exec husky init
 ```
 
+## Optional: Vector Search Setup
+
+For AI-powered long-term memory features:
+
+1. See [docs/VECTOR-SEARCH-SETUP.md](docs/VECTOR-SEARCH-SETUP.md) for detailed setup
+2. Requires MongoDB Atlas M10+ cluster
+3. Requires OpenAI API key
+
+Quick verification:
+
+```bash
+pnpm verify:vector-index
+```
+
 ## Next Steps
 
 1. ✅ Read [README.md](README.md) for full documentation
 2. ✅ Review [project-tooling.md](project-tooling.md) for development rules
-3. ✅ Create your first Payload collection
-4. ✅ Build your frontend components
-5. ✅ Set up your CI/CD pipeline
+3. ✅ (Optional) Set up vector search for AI features
+4. ✅ Create your first Payload collection
+5. ✅ Build your frontend components
+6. ✅ Set up your CI/CD pipeline
 
 ## Useful Commands
 

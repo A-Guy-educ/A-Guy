@@ -1143,6 +1143,36 @@ For deeper exploration of specific topics, refer to the context files located in
     - Performance best practices
     - Styling components
 
+## AI Agent Optimization
+
+This codebase includes tools to help AI agents work efficiently:
+
+- **SmartDocLoader**: Context-aware documentation loading that minimizes token usage
+- **DocSearch**: Fast keyword-based documentation search
+- **Pattern Index**: Pattern → files mapping for quick example discovery
+- **JSON Schemas**: Machine-readable validation contracts for code generation
+- **Centralized Types**: Common types exported from `src/types/index.ts` for easy discovery
+
+### Quick Start
+
+```typescript
+// Load context-aware documentation
+import { SmartDocLoader } from '@/lib/ai/smart-doc-loader'
+
+const docs = SmartDocLoader.forCollection('create')
+// Returns: ~380 tokens, quick reference tier
+
+// Search documentation
+import { getDocSearch } from '@/lib/ai/doc-search'
+const search = getDocSearch()
+const results = search.query('How do I create a published collection?')
+
+// Use centralized types
+import type { User, Course, CollectionConfig } from '@/types'
+```
+
+See [docs/ai/README.md](docs/ai/README.md) for full guide and [docs/ai/QUICK-START.md](docs/ai/QUICK-START.md) for quick reference.
+
 ## Resources
 
 - Docs: https://payloadcms.com/docs

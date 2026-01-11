@@ -17,16 +17,20 @@ jobs:
     runs-on: ubuntu-latest
     # Only run if the commit is not from semantic-release itself
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    env:
+      # DATABASE_URL is required for postinstall -> generate:types
+      # Falls back to a dummy connection string if secret is not available
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'mongodb://localhost:27017/test' }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Fetch all history for semantic-release
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
 
@@ -42,12 +46,21 @@ jobs:
           echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
 
       - name: Setup pnpm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
+
+      - name: Verify DATABASE_URL is set
+        run: |
+          if [ -n "$DATABASE_URL" ]; then
+            echo "DATABASE_URL is set: true"
+          else
+            echo "DATABASE_URL is set: false"
+            exit 1
+          fi
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

@@ -79,7 +79,7 @@ async function main() {
     task: 'create',
     domain: 'collection',
     patterns: ['rbac', 'published-content'],
-    keywords: ['access control', 'roles']
+    keywords: ['access control', 'roles'],
   })
   console.log(`   Tier: ${customDocs.tier}`)
   console.log(`   Chunks: ${customDocs.chunks.length}`)
@@ -112,7 +112,7 @@ async function main() {
   console.log(`\n   ... (${lines.length} total lines)`)
 
   console.log('\n\n✅ All tests complete!')
-  
+
   // Summary
   console.log('\n📈 Summary:')
   console.log(`   ✓ Smart loader successfully determines tiers based on context`)

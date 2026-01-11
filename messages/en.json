@@ -105,6 +105,13 @@
     "chatFullSolutionPrompt": "Can you provide the complete solution with all steps?",
     "chatAIAcknowledgment": "I understand. I will help guide students through their exercises.",
     "chatError": "Failed to send message. Please try again.",
+    "chatThinking": "Thinking...",
+    "mathKeyboard": "Math Keyboard",
+    "formulaSheet": "Formula Sheet",
+    "uploadFile": "Upload File",
+    "sendMessage": "Send",
+    "algebraFormulas": "Algebra",
+    "trigonometryFormulas": "Trigonometry",
     "formulaSubtitle": "Helper Formulas",
     "notesSubtitle": "Personal Notes",
     "notesPlaceholder": "Add your notes here..."

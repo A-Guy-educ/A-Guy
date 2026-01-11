@@ -70,6 +70,7 @@ export interface Config {
     pages: Page;
     categories: Category;
     conversations: Conversation;
+    memory_items: MemoryItem;
     courses: Course;
     chapters: Chapter;
     lessons: Lesson;
@@ -99,6 +100,7 @@ export interface Config {
     pages: PagesSelect<false> | PagesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
+    memory_items: MemoryItemsSelect<false> | MemoryItemsSelect<true>;
     courses: CoursesSelect<false> | CoursesSelect<true>;
     chapters: ChaptersSelect<false> | ChaptersSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
@@ -459,6 +461,17 @@ export interface Course {
  */
 export interface Media {
   id: string;
+  /**
+   * Auto-detected from file type (admin can override)
+   */
+  type: 'image' | 'video' | 'audio' | 'pdf' | 'svg' | 'document' | 'external' | 'other';
+  /**
+   * URL for external embed or link
+   */
+  externalUrl?: string | null;
+  /**
+   * Alternative text for images and SVGs (required for accessibility)
+   */
   alt?: string | null;
   caption?: {
     root: {
@@ -797,7 +810,7 @@ export interface Conversation {
    */
   messages?:
     | {
-        role: 'user' | 'model';
+        role: 'user' | 'assistant';
         /**
          * Message content
          */
@@ -806,6 +819,22 @@ export interface Conversation {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Compressed history of older messages
+   */
+  summary?: string | null;
+  /**
+   * When summary was last updated
+   */
+  summaryUpdatedAt?: string | null;
+  /**
+   * Summary includes messages up to this timestamp
+   */
+  summaryUntilTimestamp?: string | null;
+  /**
+   * Version of prompt composition policy
+   */
+  contextPolicyVersion: string;
   /**
    * Timestamp of last message (auto-updated)
    */
@@ -941,6 +970,78 @@ export interface Chapter {
    * User who created this document
    */
   createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Long-term memory items for AI chat context
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "memory_items".
+ */
+export interface MemoryItem {
+  id: string;
+  /**
+   * User ID for filtering (scalar field, NOT a relationship)
+   */
+  userId: string;
+  /**
+   * Optional conversation scope (scalar field, NOT a relationship)
+   */
+  conversationId?: string | null;
+  /**
+   * Category of memory item
+   */
+  type: 'preference' | 'decision' | 'fact' | 'open_loop' | 'profile' | 'constraint' | 'other';
+  /**
+   * The memory content (max 2000 chars)
+   */
+  text: string;
+  /**
+   * Vector embedding (1536 dimensions) - auto-generated
+   */
+  embedding:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Importance scale 1-5 (higher = more important)
+   */
+  importance: number;
+  /**
+   * Status (use deprecated instead of deleting)
+   */
+  status: 'active' | 'deprecated';
+  /**
+   * Metadata about where this memory came from
+   */
+  source: {
+    /**
+     * Conversation where this memory was extracted
+     */
+    sourceConversationId?: string | null;
+    /**
+     * Timestamp of source message
+     */
+    sourceMessageTimestamp: string;
+    /**
+     * Who said the message this memory came from
+     */
+    sourceMessageRole: 'user' | 'assistant';
+  };
+  /**
+   * Convenience field for admin UI - DO NOT use for filtering
+   */
+  user?: (string | null) | User;
+  /**
+   * Convenience field for admin UI - DO NOT use for filtering
+   */
+  conversation?: (string | null) | Conversation;
   updatedAt: string;
   createdAt: string;
 }
@@ -1289,6 +1390,10 @@ export interface PayloadLockedDocument {
         value: string | Conversation;
       } | null)
     | ({
+        relationTo: 'memory_items';
+        value: string | MemoryItem;
+      } | null)
+    | ({
         relationTo: 'courses';
         value: string | Course;
       } | null)
@@ -1546,7 +1651,35 @@ export interface ConversationsSelect<T extends boolean = true> {
         timestamp?: T;
         id?: T;
       };
+  summary?: T;
+  summaryUpdatedAt?: T;
+  summaryUntilTimestamp?: T;
+  contextPolicyVersion?: T;
   lastMessageAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "memory_items_select".
+ */
+export interface MemoryItemsSelect<T extends boolean = true> {
+  userId?: T;
+  conversationId?: T;
+  type?: T;
+  text?: T;
+  embedding?: T;
+  importance?: T;
+  status?: T;
+  source?:
+    | T
+    | {
+        sourceConversationId?: T;
+        sourceMessageTimestamp?: T;
+        sourceMessageRole?: T;
+      };
+  user?: T;
+  conversation?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1671,6 +1804,8 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  type?: T;
+  externalUrl?: T;
   alt?: T;
   caption?: T;
   createdBy?: T;

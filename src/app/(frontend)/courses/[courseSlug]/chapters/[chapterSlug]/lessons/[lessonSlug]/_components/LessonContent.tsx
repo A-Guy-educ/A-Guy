@@ -1,18 +1,18 @@
 'use client'
 
-import { useState } from 'react'
-import { ViewToggle } from './ViewToggle'
-import { PDFViewer } from '@/components/utilities/PDFViewer'
-import { ExerciseCard } from '@/app/(frontend)/courses/_components/ExerciseCard'
 import { EmptyState } from '@/app/(frontend)/courses/_components/EmptyState'
+import { ExerciseCard } from '@/app/(frontend)/courses/_components/ExerciseCard'
+import { Media as MediaComponent } from '@/components/Media'
+import type { Exercise, Media as MediaType } from '@/payload-types'
 import { useTranslations } from '@/providers/I18n'
-import type { Exercise, Media } from '@/payload-types'
+import { useState } from 'react'
 import { ConvertButton } from './ConvertButton'
+import { ViewToggle } from './ViewToggle'
 
 type ViewMode = 'non-interactive' | 'interactive'
 
 interface LessonContentProps {
-  contentFiles?: Media[] | null
+  contentFiles?: MediaType[] | null
   lessonTitle: string
   exercises: Exercise[]
   courseSlug: string
@@ -24,7 +24,7 @@ interface LessonContentProps {
 
 export function LessonContent({
   contentFiles,
-  lessonTitle,
+  lessonTitle: _lessonTitle,
   exercises,
   courseSlug,
   chapterSlug,
@@ -68,10 +68,9 @@ export function LessonContent({
                         }}
                       />
                     )}
-                    <PDFViewer
-                      pdfUrl={file.url!}
-                      lessonTitle={`${lessonTitle}${validFiles.length > 1 ? ` - Part ${index + 1}` : ''}`}
-                    />
+                    <div className="border rounded-lg overflow-hidden bg-gray-50">
+                      <MediaComponent resource={file} className="w-full" htmlElement={null} />
+                    </div>
                   </div>
                 ))}
               </div>

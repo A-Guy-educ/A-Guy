@@ -12,18 +12,14 @@ import {
 
 import { CodeBlock, CodeBlockProps } from '@/blocks/Code/Component'
 
-import type {
-  CallToActionBlock as CTABlockProps,
-} from '@/payload-types'
+import type { CallToActionBlock as CTABlockProps } from '@/payload-types'
 import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { cn } from '@/utilities/ui'
 
-type NodeTypes =
-  | DefaultNodeTypes
-  | SerializedBlockNode<CTABlockProps | CodeBlockProps>
+type NodeTypes = DefaultNodeTypes | SerializedBlockNode<CTABlockProps | CodeBlockProps>
 
 const internalDocToHref = ({ linkNode }: { linkNode: SerializedLinkNode }) => {
-  const { value, relationTo } = linkNode.fields.doc!
+  const { value } = linkNode.fields.doc!
   if (typeof value !== 'object') {
     throw new Error('Expected value to be an object')
   }

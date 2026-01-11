@@ -2,10 +2,8 @@ import { notFound } from 'next/navigation'
 import { queryCourseBySlug } from '@/lib/queries/courses'
 import { queryLessonBySlug } from '@/lib/queries/lessons'
 import { queryExerciseById } from '@/lib/queries/exercises'
-import { NotebookWorkspace } from './_components/NotebookWorkspace'
-import { NotebookChat } from './_components/NotebookChat'
-import { NotebookFormulas } from './_components/NotebookFormulas'
-import { NotebookNotes } from './_components/NotebookNotes'
+import { ExerciseWorkspace } from './_components/ExerciseWorkspace'
+import { ChatInterface } from './_components/ChatInterface'
 import { ExerciseRenderer } from '@/components/ExerciseRenderer'
 import type { ExerciseContentData } from '@/components/ExerciseRenderer/types'
 
@@ -50,24 +48,26 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
     notFound()
   }
 
+  const lessonUrl = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}`
+
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-background relative z-50">
-      <NotebookWorkspace
-        content={
+    <ExerciseWorkspace
+      exerciseTitle={exercise.title}
+      backUrl={lessonUrl}
+      pdfContent={
+        <div
+          className="w-full max-w-[920px] max-h-full bg-card border border-border rounded-[10px] p-12 text-foreground shadow-[0_10px_30px_hsl(var(--border))] overflow-auto"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
           <ExerciseRenderer
-            content={(exercise as any).content as ExerciseContentData}
+            content={exercise.content as unknown as ExerciseContentData}
             mode="student"
             showCheckAnswer
           />
-        }
-        chat={<NotebookChat exerciseId={exerciseId} />}
-        formulas={<NotebookFormulas />}
-        notes={<NotebookNotes />}
-        courseSlug={courseSlug}
-        chapterSlug={chapterSlug}
-        lessonSlug={lessonSlug}
-      />
-    </div>
+        </div>
+      }
+      chatContent={<ChatInterface exerciseId={exerciseId} />}
+    />
   )
 }
 

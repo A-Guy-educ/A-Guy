@@ -469,6 +469,40 @@ pnpm exec playwright test --debug                      # Debug mode
 pnpm exec vitest watch            # Auto-run integration tests on file change
 ```
 
+## OpenAI API Mocking
+
+Tests that use OpenAI APIs (embeddings, chat completions) are **automatically mocked** by default in `vitest.setup.ts`.
+
+### Benefits
+
+- ✅ No API costs or rate limits
+- ✅ Fast, deterministic tests
+- ✅ Works offline
+- ✅ Tests our code logic, not OpenAI's API
+
+### Mock Implementation
+
+- **Embeddings**: Deterministic 1536-dimensional vectors generated via text hashing
+- **Chat Completions**: Context-aware responses based on prompts and keywords
+- **Response Structure**: Matches actual OpenAI API responses
+
+### Testing with Real API (Optional)
+
+To occasionally validate against the real OpenAI API:
+
+```bash
+USE_REAL_OPENAI_API=true pnpm test:int
+```
+
+⚠️ Requires valid `OPENAI_API_KEY` and will incur costs.
+
+**See `TESTING_STRATEGY.md` for detailed information on:**
+
+- How mocking maintains test quality
+- Mock implementation details
+- When to use real API
+- Best practices for AI-related tests
+
 ## Test Configuration
 
 ### Vitest Config
@@ -480,6 +514,7 @@ Key settings:
 - Test file pattern: `**/*.int.spec.ts`
 - Timeout: 10 seconds
 - Environment: Node.js
+- Setup file: `vitest.setup.ts` (contains OpenAI mocks)
 
 ### Playwright Config
 

@@ -92,6 +92,7 @@
         "src/Footer/config.ts",
         "src/Header/config.ts",
         "src/collections/Chapters.ts",
+        "src/collections/Conversations.ts",
         "src/collections/Courses.ts",
         "src/collections/Lessons.ts",
         "src/collections/Pages/index.ts",
@@ -113,7 +114,8 @@
         "src/app/(frontend)/next/preview/route.ts",
         "src/app/(frontend)/next/seed/route.ts",
         "src/app/api/agent/chat/route.ts",
-        "src/app/api/exercises/import/route.ts"
+        "src/app/api/exercises/import/route.ts",
+        "src/endpoints/agent/chat.ts"
       ]
     },
     "i18n-component": {
@@ -213,11 +215,13 @@
       "files": [
         "src/collections/Categories.ts",
         "src/collections/Chapters.ts",
+        "src/collections/Conversations.ts",
         "src/collections/Courses.ts",
         "src/collections/ExerciseAssets.ts",
         "src/collections/Exercises/index.ts",
         "src/collections/Lessons.ts",
         "src/collections/Media.ts",
+        "src/collections/MemoryItems.ts",
         "src/collections/Pages/index.ts",
         "src/collections/Posts/index.ts",
         "src/collections/PricingPlans.ts",
@@ -234,11 +238,36 @@
         "src/collections/Lessons.ts"
       ]
     },
+    "user-owned": {
+      "pattern": "user-owned",
+      "description": "Collection with owner field and isOwner access control",
+      "files": [
+        "src/collections/Conversations.ts",
+        "src/collections/MemoryItems.ts",
+        "src/collections/Users/index.ts"
+      ]
+    },
+    "published-content": {
+      "pattern": "published-content",
+      "description": "Collection with publishedAt field and isPublished access control",
+      "files": [
+        "src/collections/Courses.ts"
+      ]
+    },
     "rbac": {
       "pattern": "rbac",
       "description": "Role-based access control with admin/user roles",
       "files": [
-        "src/collections/Exercises/index.ts"
+        "src/collections/Exercises/index.ts",
+        "src/collections/MemoryItems.ts",
+        "src/collections/Users/index.ts"
+      ]
+    },
+    "vector-search": {
+      "pattern": "vector-search",
+      "description": "No description available",
+      "files": [
+        "src/collections/MemoryItems.ts"
       ]
     },
     "variant-component": {
@@ -270,6 +299,13 @@
       "description": "No description available",
       "files": [
         "src/lib/ai/smart-doc-loader.ts"
+      ]
+    },
+    "type-exports": {
+      "pattern": "type-exports",
+      "description": "No description available",
+      "files": [
+        "src/types/index.ts"
       ]
     }
   },
@@ -339,8 +375,7 @@
       "dependencies": [
         "react",
         "lucide-react",
-        "next/link",
-        "sonner"
+        "next/link"
       ]
     },
     "src/Header/Nav/index.tsx": {
@@ -355,8 +390,7 @@
       "dependencies": [
         "react",
         "next/link",
-        "lucide-react",
-        "sonner"
+        "lucide-react"
       ]
     },
     "src/Header/RowLabel.tsx": {
@@ -1001,16 +1035,31 @@
         "payload"
       ]
     },
+    "src/collections/Conversations.ts": {
+      "path": "src/collections/Conversations.ts",
+      "type": "collection-config",
+      "domain": "chat",
+      "patterns": [
+        "user-owned",
+        "access-control",
+        "payload-hooks"
+      ],
+      "aiSummary": "Conversations collection with user ownership, message history, and context management",
+      "dependencies": [
+        "payload"
+      ]
+    },
     "src/collections/Courses.ts": {
       "path": "src/collections/Courses.ts",
-      "type": "unknown",
-      "domain": "general",
+      "type": "collection-config",
+      "domain": "courses",
       "patterns": [
+        "published-content",
         "hierarchical-data",
         "access-control",
         "payload-hooks"
       ],
-      "aiSummary": "",
+      "aiSummary": "Courses collection with chapters relationship and published state",
       "dependencies": [
         "payload"
       ]
@@ -1067,6 +1116,21 @@
         "payload",
         "path",
         "url"
+      ]
+    },
+    "src/collections/MemoryItems.ts": {
+      "path": "src/collections/MemoryItems.ts",
+      "type": "collection-config",
+      "domain": "chat",
+      "patterns": [
+        "user-owned",
+        "vector-search",
+        "rbac",
+        "access-control"
+      ],
+      "aiSummary": "Memory items collection with vector embeddings for semantic retrieval and user isolation",
+      "dependencies": [
+        "payload"
       ]
     },
     "src/collections/Pages/index.ts": {
@@ -1145,13 +1209,15 @@
     },
     "src/collections/Users/index.ts": {
       "path": "src/collections/Users/index.ts",
-      "type": "unknown",
-      "domain": "general",
+      "type": "collection-config",
+      "domain": "auth",
       "patterns": [
+        "rbac",
+        "user-owned",
         "access-control",
         "payload-hooks"
       ],
-      "aiSummary": "",
+      "aiSummary": "Users collection with authentication, RBAC roles, and audit hooks",
       "dependencies": [
         "payload"
       ]
@@ -1871,12 +1937,13 @@
     },
     "src/endpoints/agent/chat.ts": {
       "path": "src/endpoints/agent/chat.ts",
-      "type": "unknown",
-      "domain": "general",
+      "type": "endpoint",
+      "domain": "chat",
       "patterns": [
+        "authenticated-endpoint",
         "validated-endpoint"
       ],
-      "aiSummary": "",
+      "aiSummary": "Chat endpoint with context awareness, memory retrieval, and automatic maintenance",
       "dependencies": [
         "payload",
         "zod"
@@ -2010,6 +2077,16 @@
         "next/navigation"
       ]
     },
+    "src/types/index.ts": {
+      "path": "src/types/index.ts",
+      "type": "utility",
+      "domain": "general",
+      "patterns": [
+        "type-exports"
+      ],
+      "aiSummary": "Centralized type exports for easy discovery by AI agents",
+      "dependencies": []
+    },
     "src/utilities/useClickableCard.ts": {
       "path": "src/utilities/useClickableCard.ts",
       "type": "unknown",
@@ -2025,8 +2102,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-01-07T19:47:02.038Z",
-    "totalFiles": 132,
-    "totalPatterns": 12
+    "generatedAt": "2026-01-09T18:13:23.420Z",
+    "totalFiles": 135,
+    "totalPatterns": 16
   }
 }

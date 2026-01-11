@@ -6,7 +6,7 @@ import { createdByField } from '../../fields/createdBy'
 import { ContentSchema } from './schemas'
 import { DEFAULT_CONTENT } from './defaults'
 import type { User } from '@/payload-types'
-import { Role } from '../Users/roles'
+import { AccountRole } from '../Users/roles'
 
 /**
  * Access control - Exercise-specific
@@ -17,7 +17,7 @@ const isAdminOrOwner: Access = ({ req }) => {
   if (!user) return false
 
   // Admin
-  if (user.role === Role.Admin) return true
+  if (user.role === AccountRole.Admin) return true
 
   // Owner
   return {
