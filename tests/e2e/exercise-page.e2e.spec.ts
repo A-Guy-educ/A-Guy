@@ -1,11 +1,9 @@
-import { test, expect, Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 
 test.describe('Exercise Page', () => {
-  let page: Page
-
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext()
-    page = await context.newPage()
+    await context.newPage()
   })
 
   test.describe('Exercise Page Navigation', () => {
