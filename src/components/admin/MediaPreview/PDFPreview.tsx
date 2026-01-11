@@ -19,14 +19,6 @@ export const PDFPreview: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null)
 
-  if (!url) {
-    return (
-      <div className="p-4">
-        <p>No PDF uploaded yet</p>
-      </div>
-    )
-  }
-
   useEffect(() => {
     const loadPDF = async () => {
       if (!url) {
@@ -97,9 +89,17 @@ export const PDFPreview: React.FC = () => {
     setCurrentPage((prev) => Math.min(totalPages, prev + 1))
   }
 
+  if (!url) {
+    return (
+      <div className="p-4">
+        <p>No PDF uploaded yet</p>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
-      <div className={`flex items-center justify-center p-8 ${className}`}>
+      <div className="flex items-center justify-center p-8">
         <div className="text-muted-foreground">Loading PDF...</div>
       </div>
     )
@@ -107,14 +107,14 @@ export const PDFPreview: React.FC = () => {
 
   if (error) {
     return (
-      <div className={`flex items-center justify-center p-8 ${className}`}>
+      <div className="flex items-center justify-center p-8">
         <div className="text-destructive">Error: {error}</div>
       </div>
     )
   }
 
   return (
-    <div className={`flex flex-col gap-4 ${className}`}>
+    <div className="flex flex-col gap-4 p-4">
       <div className="overflow-auto border border-border rounded-lg bg-muted/30 p-4">
         <canvas ref={canvasRef} className="mx-auto" />
       </div>
