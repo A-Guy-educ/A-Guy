@@ -27,7 +27,9 @@
       "Bash(xargs:*)",
       "Bash(git restore:*)",
       "Bash(mkdir:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(pnpm list:*)",
+      "Bash(pnpm why:*)"
     ]
   }
 }

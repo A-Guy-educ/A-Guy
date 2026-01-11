@@ -19,4 +19,5 @@ export interface Props {
   size?: string // for NextImage only
   src?: StaticImageData // for static media
   videoClassName?: string
+  page?: number // for PDF only - page number to display
 }

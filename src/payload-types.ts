@@ -461,6 +461,17 @@ export interface Course {
  */
 export interface Media {
   id: string;
+  /**
+   * Auto-detected from file type (admin can override)
+   */
+  type: 'image' | 'video' | 'audio' | 'pdf' | 'svg' | 'document' | 'external' | 'other';
+  /**
+   * URL for external embed or link
+   */
+  externalUrl?: string | null;
+  /**
+   * Alternative text for images and SVGs (required for accessibility)
+   */
   alt?: string | null;
   caption?: {
     root: {
@@ -1793,6 +1804,8 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  type?: T;
+  externalUrl?: T;
   alt?: T;
   caption?: T;
   createdBy?: T;
