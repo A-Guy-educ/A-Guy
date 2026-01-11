@@ -123,14 +123,13 @@
     --popover: 222 75% 13%;
     --popover-foreground: 210 40% 98%;
 
-    /* Primary: burgundy red slightly brighter for dark mode */
-    --primary: 353 73% 35%; /* Lighter than light mode */
-    --primary-soft: 353 73% 15%; /* Darker tint for dark mode */
+    /* Primary: bright vibrant blue */
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: muted green */
-    --secondary: 113 12% 45%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary: elevated blue surface */
+    --secondary: 222 75% 17%;
+    --secondary-foreground: 210 40% 98%;
 
     /* Muted: dark gray-blue */
     --muted: 222 75% 17%;
@@ -147,42 +146,14 @@
     --border: 222 75% 20% / 0.7;
     --input: 222 75% 17%;
 
-    /* Focus ring follows primary */
-    --ring: 353 73% 35%;
+    /* Focus ring follows accent */
+    --ring: 217 91% 60%;
 
-    /* Radius system */
-    --radius: 0.75rem;
-    --radius-bubble: 20px;
-    --radius-bubble-corner: 4px;
-    --radius-input: 30px;
-    --radius-button: 50%;
-    --radius-card: 12px;
-    --radius-math-key: 100px;
-
-    /* Shadow system - darker for depth */
-    --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.3);
-    --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.3);
+    /* Shadow system - darker shadows for dark mode */
+    --shadow-card: 0 4px 16px 0 rgb(0 0 0 / 0.3);
     --shadow-card-hover: 0 8px 24px 0 rgb(0 0 0 / 0.4);
-    --shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.5);
+    --shadow-modal: 0 20px 40px -10px rgb(0 0 0 / 0.5);
     --shadow-dropdown: 0 8px 12px -2px rgb(0 0 0 / 0.3), 0 4px 8px -2px rgb(0 0 0 / 0.2);
-    --shadow-input: 0 4px 12px rgba(145, 38, 44, 0.4);
-    --shadow-panel: 0 -12px 30px rgba(0, 0, 0, 0.4);
-
-    /* Transition system */
-    --transition-fast: 0.2s ease;
-    --transition-base: 0.3s ease;
-    --transition-slow: 0.4s ease;
-
-    /* Typography scale */
-    --font-size-xs: 13px;
-    --font-size-sm: 14px;
-    --font-size-base: 16px;
-    --font-size-lg: 17px;
-    --font-size-xl: 18px;
-    --font-size-2xl: 20px;
-
-    /* PDF Viewer: slightly lighter for dark mode */
-    --pdf-viewer-bg: 217 6% 40%;
 
     --success: 142 71% 45%;
     --warning: 38 92% 50%;

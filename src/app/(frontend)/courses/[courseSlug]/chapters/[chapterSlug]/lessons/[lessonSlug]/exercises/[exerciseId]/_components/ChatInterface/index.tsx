@@ -24,7 +24,6 @@ export function ChatInterface({ exerciseId }: ChatInterfaceProps) {
     inputRef,
     setInputValue,
     handleSubmit,
-    handleKeyDown,
   } = useNotebookChat({
     initialMessage: t('chatWelcome'),
     authRequiredMessage: t('chatAuthRequired'),
