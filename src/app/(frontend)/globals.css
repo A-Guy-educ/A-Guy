@@ -54,37 +54,6 @@
 
     /* Radius system */
     --radius: 0.75rem; /* 12px - default */
-    --radius-bubble: 20px; /* Chat message bubbles */
-    --radius-bubble-corner: 4px; /* Reduced corner on bubble tails */
-    --radius-input: 30px; /* Fully rounded input container */
-    --radius-button: 50%; /* Circular action buttons */
-    --radius-card: 12px; /* Panels and popups */
-    --radius-math-key: 100px; /* Fully rounded math keys */
-
-    /* Shadow system - soft and minimal */
-    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03);
-    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.03);
-    --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.12);
-    --shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.1);
-    --shadow-dropdown: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
-    --shadow-input: 0 3px 8px rgba(145, 38, 44, 0.2); /* red tint for primary buttons */
-    --shadow-panel: 0 -8px 24px rgba(0, 0, 0, 0.1); /* upward shadow for popups */
-
-    /* Transition system */
-    --transition-fast: 0.2s ease;
-    --transition-base: 0.3s ease;
-    --transition-slow: 0.4s ease;
-
-    /* Typography scale */
-    --font-size-xs: 13px;
-    --font-size-sm: 14px;
-    --font-size-base: 16px;
-    --font-size-lg: 17px;
-    --font-size-xl: 18px;
-    --font-size-2xl: 20px;
-
-    /* PDF Viewer Background */
-    --pdf-viewer-bg: 217 6% 35%; /* #525659 - dark gray for contrast */
 
     --success: 142 71% 45%;
     --warning: 38 92% 50%;
