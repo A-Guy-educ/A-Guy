@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { useFormFields } from '@payloadcms/ui'
 import * as pdfjsLib from 'pdfjs-dist'
 
 // Configure PDF.js worker
@@ -8,18 +9,23 @@ if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
 }
 
-interface PDFPreviewProps {
-  url: string
-  className?: string
-}
-
-export function PDFPreview({ url, className = '' }: PDFPreviewProps) {
+export const PDFPreview: React.FC = () => {
+  const urlField = useFormFields(([fields]) => fields.url)
+  const url = urlField?.value as string | undefined
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null)
+
+  if (!url) {
+    return (
+      <div className="p-4">
+        <p>No PDF uploaded yet</p>
+      </div>
+    )
+  }
 
   useEffect(() => {
     const loadPDF = async () => {
