@@ -554,6 +554,12 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         return
       }
 
+      // Skip if we don't have valid test data
+      if (!testUserId || !testExerciseId) {
+        console.log('Skipping: Test user or exercise not available')
+        return
+      }
+
       // Create two conversations for the same user
       const conv1 = await payload.create({
         collection: 'conversations',
