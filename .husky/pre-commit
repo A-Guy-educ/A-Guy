@@ -28,6 +28,8 @@ if [ "$branch" = "main" ] || [ "$branch" = "dev" ]; then
   echo "  git commit --no-verify"
   echo "  Or use: SKIP_HOOKS=1 git commit"
   echo ""
+  echo "For detailed help, see: docs/specs/COMMIT_GUIDE.md"
+  echo ""
   exit 1
 fi
 
@@ -57,6 +59,8 @@ if ! echo "$branch" | grep -qE '^(feat|fix|chore|docs|refactor|test|security)/[a
   echo ""
   echo "To skip this check once:"
   echo "  git commit --no-verify"
+  echo ""
+  echo "For detailed help, see: docs/specs/COMMIT_GUIDE.md"
   echo ""
   exit 1
 fi

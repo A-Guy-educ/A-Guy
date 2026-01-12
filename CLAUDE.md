@@ -83,6 +83,12 @@ When adding translations, update both:
 - `messages/en.json` - English
 - `messages/he.json` - Hebrew
 
+### Git & Commits
+
+- **Commit guide**: See [docs/specs/COMMIT_GUIDE.md](docs/specs/COMMIT_GUIDE.md) - Complete guide to passing pre-commit hooks
+- **Quick tip**: Use `git commit` (opens editor) for proper commit messages with body
+- **Emergency skip**: `SKIP_HOOKS=1 git commit` (use sparingly)
+
 ---
 
 ## Vector Search Setup

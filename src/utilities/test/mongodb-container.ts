@@ -14,7 +14,9 @@ export async function startMongoContainer(): Promise<string> {
   if (!mongoContainer) {
     // Use MongoDB 6 which doesn't require replica sets by default
     // MongoDB 7+ requires replica sets which causes hostname resolution issues
-    mongoContainer = await new MongoDBContainer('mongo:6').withReuse().start()
+    // Note: Removed .withReuse() to avoid stale container references
+    // Containers are cleaned up properly in stopMongoContainer()
+    mongoContainer = await new MongoDBContainer('mongo:6').start()
   }
 
   // Get the mapped port and use localhost for proper resolution
