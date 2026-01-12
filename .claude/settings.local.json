@@ -29,7 +29,8 @@
       "Bash(mkdir:*)",
       "Bash(grep:*)",
       "Bash(pnpm list:*)",
-      "Bash(pnpm why:*)"
+      "Bash(pnpm why:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }
