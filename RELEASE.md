@@ -13,57 +13,43 @@
 
 <!-- Summarize the most important changes in this release -->
 
-- 
-
----
+-
 
 ## ✨ Features
 
 <!-- New features added in this release -->
 
-- 
-
----
+-
 
 ## 🐛 Bug Fixes
 
 <!-- Bugs that were fixed -->
 
-- 
-
----
+-
 
 ## ⚡ Performance Improvements
 
 <!-- Performance optimizations -->
 
-- 
-
----
+- [Add item]
 
 ## 🔧 Code Refactoring
 
 <!-- Code improvements and refactoring -->
 
-- 
-
----
+- [Add item]
 
 ## 📚 Documentation
 
 <!-- Documentation updates -->
 
-- 
-
----
+- [Add item]
 
 ## 🔨 Build System
 
 <!-- Build system changes -->
 
-- 
-
----
+- [Add item]
 
 ## ⚠️ Breaking Changes
 
@@ -74,11 +60,13 @@
 <!-- If breaking changes exist, provide migration steps -->
 
 **Before:**
+
 ```typescript
 // Old code example
 ```
 
 **After:**
+
 ```typescript
 // New code example
 ```
@@ -90,31 +78,28 @@
 <!-- Dependency updates -->
 
 ### Added
-- 
+
+-
 
 ### Updated
-- 
+
+-
 
 ### Removed
-- 
 
----
+- [Add item]
 
 ## 🧪 Testing
 
 <!-- Testing improvements or changes -->
 
-- 
-
----
+- [Add item]
 
 ## 🔐 Security
 
 <!-- Security fixes or improvements -->
 
-- 
-
----
+- [Add item]
 
 ## 📝 Full Changelog
 
@@ -126,17 +111,17 @@ For a complete list of changes, see [CHANGELOG.md](./CHANGELOG.md).
 
 <!-- Steps to upgrade from previous version -->
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ---
 
 ## 📊 Statistics
 
-- **Commits:** 
-- **Files Changed:** 
-- **Contributors:** 
+- **Commits:**
+- **Files Changed:**
+- **Contributors:**
 
 ---
 
@@ -144,9 +129,7 @@ For a complete list of changes, see [CHANGELOG.md](./CHANGELOG.md).
 
 <!-- List of contributors for this release -->
 
-- 
-
----
+- [Add item]
 
 ## 🔗 Related Links
 
@@ -176,9 +159,7 @@ Before publishing this release, ensure:
 
 <!-- Preview of what's coming in the next release -->
 
-- 
+- [Add item]
 
----
-
-**Generated:** YYYY-MM-DD  
-**Release Manager:** 
+  **Generated:** YYYY-MM-DD  
+  **Release Manager:**
