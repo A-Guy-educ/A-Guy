@@ -1,11 +1,9 @@
 #!/bin/sh
 # Block CSS/SCSS files from being committed
 # This project uses Tailwind CSS only - no CSS/SCSS files allowed
-# Exceptions:
-#   - src/app/(frontend)/globals.css (design system file)
-#   - public/web/*.css (third-party PDF.js viewer files)
+# Exception: src/app/(frontend)/globals.css is allowed (design system file)
 
-staged_css=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(css|scss|sass)$' | grep -v 'src/app/(frontend)/globals.css' | grep -v 'public/web/' || true)
+staged_css=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(css|scss|sass)$' | grep -v 'src/app/(frontend)/globals.css' || true)
 
 if [ -n "$staged_css" ]; then
   echo "❌ ERROR: CSS/SCSS files are not allowed in this project"
@@ -17,8 +15,6 @@ if [ -n "$staged_css" ]; then
   echo "Please remove these files and use Tailwind utility classes instead."
   echo "See AGENTS.md for styling guidelines."
   echo ""
-  echo "Exceptions:"
-  echo "  - src/app/(frontend)/globals.css is allowed for design system variables."
-  echo "  - public/web/*.css is allowed for third-party PDF.js viewer files."
+  echo "Exception: src/app/(frontend)/globals.css is allowed for design system variables."
   exit 1
 fi
