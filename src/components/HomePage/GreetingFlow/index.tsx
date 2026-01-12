@@ -1,36 +1,56 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { TypingAnimation } from '@/components/shared/TypingAnimation'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CourseCard } from '@/app/(frontend)/courses/_components/CourseCard'
 import { setUserProfile } from '@/lib/localStorage/userProfile'
 import { useTranslations } from '@/providers/I18n'
+import type { Course } from '@/payload-types'
 
 type FlowStep = 'greeting' | 'mood' | 'grade' | 'complete'
 
 const MOODS = ['happy', 'neutral', 'sad', 'excited'] as const
-const GRADES = ['7', '8', '9', '10', '11', '12'] as const
 
 export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
   const t = useTranslations('homepage.greeting')
+  const tStudy = useTranslations('study')
   const [step, setStep] = useState<FlowStep>('greeting')
   const [selectedMood, setSelectedMood] = useState<string>('')
+  const [courses, setCourses] = useState<Course[]>([])
+  const [isLoadingCourses, setIsLoadingCourses] = useState(false)
+
+  useEffect(() => {
+    if (step === 'grade') {
+      setIsLoadingCourses(true)
+      async function loadCourses() {
+        try {
+          const coursesResponse = await fetch('/api/courses')
+          if (coursesResponse.ok) {
+            const coursesData = await coursesResponse.json()
+            setCourses(coursesData.docs || [])
+          }
+        } catch (error) {
+          console.error('Failed to load courses:', error)
+        } finally {
+          setIsLoadingCourses(false)
+        }
+      }
+      loadCourses()
+    }
+  }, [step])
 
   const handleMoodSelect = (mood: string) => {
     setSelectedMood(mood)
     setStep('grade')
   }
 
-  const handleGradeSelect = (grade: string) => {
+  const handleCourseSelect = (course: Course) => {
+    // Extract grade from courseLabel (e.g., "8" or "ח"), or use a default
+    const gradeLevel = course.courseLabel || '7'
+    
     setUserProfile({
-      gradeLevel: grade,
+      gradeLevel,
       mood: selectedMood,
       lastVisit: new Date().toISOString(),
     })
@@ -71,20 +91,25 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
       )}
 
       {step === 'grade' && (
-        <div className="max-w-md w-full space-y-6">
+        <div className="w-full max-w-7xl space-y-6">
           <h2 className="text-xl text-center">{t('gradeQuestion')}</h2>
-          <Select onValueChange={handleGradeSelect}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={t('selectGrade')} />
-            </SelectTrigger>
-            <SelectContent>
-              {GRADES.map((grade) => (
-                <SelectItem key={grade} value={grade}>
-                  {t('gradeLabel').replace('{{grade}}', grade)}
-                </SelectItem>
+          {isLoadingCourses ? (
+            <div className="text-center text-muted-foreground py-12">{tStudy('loading')}</div>
+          ) : courses.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {courses.map((course) => (
+                <div
+                  key={course.id}
+                  onClick={() => handleCourseSelect(course)}
+                  className="cursor-pointer"
+                >
+                  <CourseCard course={course} />
+                </div>
               ))}
-            </SelectContent>
-          </Select>
+            </div>
+          ) : (
+            <div className="text-center text-muted-foreground py-12">{tStudy('noCoursesAvailable')}</div>
+          )}
         </div>
       )}
 
