@@ -1,46 +1,11 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
+import * as pdfjsLib from 'pdfjs-dist'
 import { cn } from '@/utilities/ui'
 import type { Props as MediaProps } from '../types'
 import { getMediaUrl } from '@/utilities/getMediaUrl'
 import { useI18n } from '@/providers/I18n'
-
-// PDF.js types
-interface PDFDocumentProxy {
-  numPages: number
-  getPage: (pageNumber: number) => Promise<PDFPageProxy>
-  destroy: () => void
-}
-
-interface PDFPageProxy {
-  getViewport: (params: { scale: number }) => PDFPageViewport
-  render: (params: RenderParameters) => { promise: Promise<void> }
-}
-
-interface PDFPageViewport {
-  width: number
-  height: number
-}
-
-interface RenderParameters {
-  canvasContext: CanvasRenderingContext2D
-  viewport: PDFPageViewport
-  transform?: number[] | null
-}
-
-interface PDFJSLib {
-  GlobalWorkerOptions: {
-    workerSrc: string
-  }
-  getDocument: (url: string) => { promise: Promise<PDFDocumentProxy> }
-}
-
-declare global {
-  interface Window {
-    pdfjsLib?: PDFJSLib
-  }
-}
 
 export const PDFRenderer: React.FC<MediaProps> = (props) => {
   const { resource, className, page: initialPage = 1 } = props
@@ -51,8 +16,7 @@ export const PDFRenderer: React.FC<MediaProps> = (props) => {
   const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const pdfDocRef = useRef<PDFDocumentProxy | null>(null)
-  const [pdfjsLoaded, setPdfjsLoaded] = useState(false)
+  const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null)
 
   // Get PDF URL
   const pdfUrl = React.useMemo(() => {
@@ -63,46 +27,14 @@ export const PDFRenderer: React.FC<MediaProps> = (props) => {
     return null
   }, [resource])
 
-  // Load PDF.js from CDN
+  // Set worker source
   useEffect(() => {
-    const loadPDFJS = () => {
-      // Check if already loaded
-      if (window.pdfjsLib) {
-        setPdfjsLoaded(true)
-        return
-      }
-
-      // Load PDF.js from CDN
-      const script = document.createElement('script')
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
-      script.async = true
-      script.onload = () => {
-        // Set worker
-        if (window.pdfjsLib) {
-          window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
-          setPdfjsLoaded(true)
-        }
-      }
-      script.onerror = () => {
-        setError('Failed to load PDF.js library')
-        setLoading(false)
-      }
-      document.head.appendChild(script)
-
-      return () => {
-        if (document.head.contains(script)) {
-          document.head.removeChild(script)
-        }
-      }
-    }
-
-    loadPDFJS()
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
   }, [])
 
   // Load PDF document
   useEffect(() => {
-    if (!pdfjsLoaded || !pdfUrl || !window.pdfjsLib) {
+    if (!pdfUrl) {
       setLoading(false)
       return
     }
@@ -112,7 +44,7 @@ export const PDFRenderer: React.FC<MediaProps> = (props) => {
         setLoading(true)
         setError(null)
 
-        const loadingTask = window.pdfjsLib!.getDocument(pdfUrl)
+        const loadingTask = pdfjsLib.getDocument(pdfUrl)
         const pdf = await loadingTask.promise
 
         pdfDocRef.current = pdf
@@ -132,7 +64,7 @@ export const PDFRenderer: React.FC<MediaProps> = (props) => {
         pdfDocRef.current.destroy()
       }
     }
-  }, [pdfUrl, pdfjsLoaded])
+  }, [pdfUrl])
 
   // Render current page
   useEffect(() => {
@@ -170,7 +102,7 @@ export const PDFRenderer: React.FC<MediaProps> = (props) => {
         await page.render({
           canvasContext: context,
           viewport,
-          transform,
+          transform: transform ?? undefined,
         }).promise
       } catch (err) {
         console.error('[PDFMedia] Error rendering page:', err)
