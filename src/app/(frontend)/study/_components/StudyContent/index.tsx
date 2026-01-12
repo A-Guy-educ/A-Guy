@@ -30,10 +30,7 @@ export function StudyContent() {
         const coursesResponse = await fetch('/api/courses')
         if (coursesResponse.ok) {
           const coursesData = await coursesResponse.json()
-          console.log('Loaded courses:', coursesData.docs?.length || 0, coursesData.docs)
           setCourses(coursesData.docs || [])
-        } else {
-          console.error('Failed to load courses:', coursesResponse.status, coursesResponse.statusText)
         }
 
         // Load chapters by grade
@@ -88,8 +85,6 @@ export function StudyContent() {
       </div>
     )
   }
-
-  console.log('StudyContent render - courses:', courses.length, 'courseSlug:', courseSlug)
 
   return (
     <div className="container mx-auto px-4 py-8">
