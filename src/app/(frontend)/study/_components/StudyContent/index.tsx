@@ -30,7 +30,10 @@ export function StudyContent() {
         const coursesResponse = await fetch('/api/courses')
         if (coursesResponse.ok) {
           const coursesData = await coursesResponse.json()
+          console.log('Loaded courses:', coursesData.docs?.length || 0, coursesData.docs)
           setCourses(coursesData.docs || [])
+        } else {
+          console.error('Failed to load courses:', coursesResponse.status, coursesResponse.statusText)
         }
 
         // Load chapters by grade
@@ -86,11 +89,14 @@ export function StudyContent() {
     )
   }
 
+  console.log('StudyContent render - courses:', courses.length, 'courseSlug:', courseSlug)
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">{t('chooseCourse')}</h1>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-12">
-        {courses.map((course) => (
+      {courses.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-12">
+          {courses.map((course) => (
           <Card
             key={course.id}
             onClick={() => handleCourseClick(course)}
@@ -113,8 +119,9 @@ export function StudyContent() {
               </CardContent>
             )}
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
       {courses.length === 0 && (
         <div className="text-center text-muted-foreground py-12">{t('noCoursesAvailable')}</div>
       )}
