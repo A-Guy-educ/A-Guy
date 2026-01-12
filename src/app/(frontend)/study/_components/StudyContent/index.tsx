@@ -56,14 +56,19 @@ export function StudyContent() {
   const handleCourseClick = async (e: React.MouseEvent, course: Course) => {
     e.preventDefault()
     e.stopPropagation()
-    if (course.slug) {
+    if (course.slug && course.id) {
       setCourseSlug(course.slug)
       setIsLoading(true)
       try {
-        // Load chapters for the selected course
-        const response = await fetch(`/api/chapters/by-course?courseSlug=${course.slug}`)
-        const data = await response.json()
-        setChapters(data.chapters || [])
+        // Load chapters for the selected course using Payload's standard API
+        const courseId = typeof course.id === 'string' ? course.id : course.id.toString()
+        const response = await fetch(
+          `/api/chapters?where[course][equals]=${courseId}&sort=order&depth=1`,
+        )
+        if (response.ok) {
+          const data = await response.json()
+          setChapters(data.docs || [])
+        }
       } catch (error) {
         console.error('Failed to load chapters for course:', error)
       } finally {
