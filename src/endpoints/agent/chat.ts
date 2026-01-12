@@ -4,16 +4,19 @@
  *
  * @fileType endpoint
  * @domain chat
- * @pattern authenticated-endpoint, validated-endpoint
- * @ai-summary Chat endpoint with context awareness, memory retrieval, and automatic maintenance
+ * @pattern authenticated-endpoint, validated-endpoint, context-scoped
+ * @ai-summary Chat endpoint with context scoping, memory retrieval, and automatic maintenance
  *
  * Access: Authenticated users only
  *
  * Features:
+ * - Context-scoped conversations (Course/Chapter/Lesson/Exercise)
  * - Running summary of conversation history
- * - Long-term memory with vector search
+ * - Long-term memory with hierarchical vector search
  * - Automatic maintenance and memory extraction
  */
+import { AccountRole } from '@/collections/Users/roles'
+import { ChatRole } from '@/lib/ai/chat-message-role'
 import {
   buildRetrievalQuery,
   composePrompt,
@@ -21,14 +24,13 @@ import {
   type Message,
 } from '@/lib/ai/context-policy'
 import { runSummaryMaintenance } from '@/lib/ai/maintenance'
-import { ChatRole } from '@/lib/ai/chat-message-role'
 import { extractMemoryCandidates, persistMemoryItems } from '@/lib/ai/memory-extraction'
 import { createContextLog, logContextUsage, logPromptSnapshot } from '@/lib/ai/observability'
 import { chatWithExerciseHelper, getSystemPrompt } from '@/lib/ai/services/exercise-chat-service'
 import { isVectorIndexAvailable } from '@/lib/ai/vector-index-check'
 import { retrieveMemoryItems, type MemoryItem } from '@/lib/ai/vector-search'
 import { featureFlags } from '@/lib/feature-flags'
-import type { Conversation } from '@/payload-types'
+import { ConversationService, deriveContextLevel } from '@/lib/services/conversation-service'
 import { logger } from '@/utilities/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
@@ -36,7 +38,11 @@ import { z } from 'zod'
 const requestSchema = z.object({
   message: z.string().min(1).max(1000),
   acknowledgment: z.string().min(1),
-  exerciseId: z.string().min(1),
+  // Context parameters (prefer IDs over slugs)
+  exerciseId: z.string().optional(),
+  lessonId: z.string().optional(),
+  chapterId: z.string().optional(),
+  courseId: z.string().optional(),
 })
 
 export async function agentChat(req: PayloadRequest & { json?: () => Promise<unknown> }) {
@@ -58,50 +64,53 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     const validated = requestSchema.parse(body)
 
     reqLogger.info(
-      { userId: req.user.id, exerciseId: validated.exerciseId },
+      {
+        userId: req.user.id,
+        exerciseId: validated.exerciseId,
+        lessonId: validated.lessonId,
+        chapterId: validated.chapterId,
+        courseId: validated.courseId,
+      },
       'Processing chat request',
     )
 
-    // 3) Find or create conversation
-    const existingConv = await req.payload.find({
-      collection: 'conversations',
-      where: {
-        and: [{ user: { equals: req.user.id } }, { exercise: { equals: validated.exerciseId } }],
-      },
-      limit: 1,
-      user: req.user, // Explicitly pass user for access control
-      overrideAccess: false, // Enforce user's access control
+    // 3) Initialize ConversationService and resolve context
+    const conversationService = new ConversationService(req.payload)
+
+    const context = await conversationService.resolveContext({
+      exerciseId: validated.exerciseId,
+      lessonId: validated.lessonId,
+      chapterId: validated.chapterId,
+      courseId: validated.courseId,
     })
 
-    let conversationId: string
-    let conversation: Conversation
+    reqLogger.info(
+      { userId: req.user.id, contextKey: context.contextKey, contextRelation: context.relationTo },
+      'Resolved context',
+    )
 
-    if (existingConv.docs.length > 0) {
-      // Use existing conversation
-      conversation = existingConv.docs[0]
-      conversationId = conversation.id
-      reqLogger.info({ conversationId }, 'Using existing conversation')
-    } else {
-      // Create new conversation
-      const newConv = await req.payload.create({
-        collection: 'conversations',
-        data: {
-          user: req.user.id,
-          exercise: validated.exerciseId,
-          messages: [],
-          lastMessageAt: new Date().toISOString(),
-          contextPolicyVersion: 'v1',
-        },
-        draft: false,
-        user: req.user, // Explicitly pass user for access control
-        overrideAccess: false, // Enforce user's access control
-      })
-      conversationId = newConv.id
-      conversation = newConv
-      reqLogger.info({ conversationId }, 'Created new conversation')
+    // 4) Validate context access
+    const hasAccess = await conversationService.validateContextAccess(
+      req.user.id,
+      req.user.role as AccountRole,
+      { relationTo: context.relationTo, value: context.value },
+    )
+
+    if (!hasAccess) {
+      return Response.json({ error: 'Unauthorized to access this context' }, { status: 403 })
     }
 
-    // 4) Persist user message FIRST
+    // 5) Get or create conversation
+    const conversation = await conversationService.getOrCreateActiveConversation(req.user.id, {
+      relationTo: context.relationTo,
+      value: context.value,
+    })
+
+    const conversationId = conversation.id
+
+    reqLogger.info({ conversationId, contextKey: context.contextKey }, 'Using conversation')
+
+    // 6) Persist user message FIRST
     const userMessage = {
       role: 'user' as const,
       content: validated.message,
@@ -118,8 +127,8 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
         messages: allMessages,
         lastMessageAt: new Date().toISOString(),
       },
-      user: req.user, // Explicitly pass user for access control
-      overrideAccess: false, // Enforce user's access control
+      user: req.user,
+      overrideAccess: false,
     })
 
     // DEBUG: Log message count
@@ -135,16 +144,18 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       '[DEBUG] Conversation messages loaded',
     )
 
-    // 6) Get recent window from persisted messages
+    // 7) Get recent window from persisted messages
     const recentMessages = getRecentWindow(allMessages as Message[])
 
     reqLogger.info({ recentCount: recentMessages.length }, '[DEBUG] Recent window extracted')
 
-    // 7) Retrieve memory items (if enabled)
+    // 8) Retrieve memory items (if enabled)
     let memoryItems: MemoryItem[] = []
     let retrievalLatencyMs = 0
     let localCount = 0
+    let contextCount = 0
     let globalCount = 0
+    let hierarchyKeys: string[] = []
 
     if (featureFlags.MEMORY_RETRIEVAL_ENABLED) {
       try {
@@ -159,22 +170,34 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
           // Skip retrieval if query is empty or too short
           if (queryText && queryText.trim().length >= 3) {
             reqLogger.debug({ queryText }, 'Retrieving memory items')
-            const retrieval = await retrieveMemoryItems(db, req.user.id, queryText, conversationId)
+
+            const retrieval = await retrieveMemoryItems(
+              db,
+              req.user.id,
+              queryText,
+              conversationId,
+              context.contextKey,
+              req.payload,
+            )
 
             memoryItems = retrieval.items
             retrievalLatencyMs = retrieval.latencyMs
             localCount = retrieval.localCount
+            contextCount = retrieval.contextCount
             globalCount = retrieval.globalCount
+            hierarchyKeys = retrieval.hierarchyKeys
 
             reqLogger.info(
               {
                 memoryCount: memoryItems.length,
                 localCount,
+                contextCount,
                 globalCount,
                 latencyMs: retrievalLatencyMs,
                 queryText,
+                hierarchyKeys,
               },
-              'Retrieved memory items',
+              'Retrieved memory items with hierarchy',
             )
           } else {
             reqLogger.debug(
@@ -191,7 +214,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       }
     }
 
-    // 8) Compose prompt using Context Policy V1
+    // 9) Compose prompt using Context Policy V1
     const systemInstructions = getSystemPrompt()
     const composedPrompt = composePrompt(systemInstructions, {
       systemMessage: systemInstructions,
@@ -203,7 +226,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     // Log prompt snapshot in development
     logPromptSnapshot(conversationId, composedPrompt)
 
-    // 9) Call AI service with composed prompt
+    // 10) Call AI service with composed prompt
     const modelCallStart = Date.now()
     const result = await chatWithExerciseHelper({
       message: validated.message,
@@ -220,7 +243,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       )
     }
 
-    // 10) Persist assistant response
+    // 11) Persist assistant response
     const assistantMessage = {
       role: 'assistant' as const,
       content: result.message || '',
@@ -236,11 +259,11 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
         messages: updatedMessages,
         lastMessageAt: new Date().toISOString(),
       },
-      user: req.user, // Explicitly pass user for access control
-      overrideAccess: false, // Enforce user's access control
+      user: req.user,
+      overrideAccess: false,
     })
 
-    // 11) Log context usage for observability
+    // 12) Log context usage for observability
     logContextUsage(
       createContextLog({
         conversationId,
@@ -249,22 +272,24 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
         summaryPresent: !!conversation?.summary,
         summaryLength: composedPrompt.metadata.summaryLength,
         memoryLocalCount: localCount,
+        memoryContextCount: contextCount,
         memoryGlobalCount: globalCount,
         memoryRetrievalLatencyMs: retrievalLatencyMs,
         messageWindowSize: composedPrompt.metadata.messageCount,
         messageTotalCount: updatedMessages.length,
         modelLatencyMs,
+        hierarchyKeys,
       }),
     )
 
-    // 12) Background: Run summary maintenance (non-blocking)
+    // 13) Background: Run summary maintenance (non-blocking)
     if (featureFlags.SUMMARY_MAINTENANCE_ENABLED) {
       runSummaryMaintenance(req.payload, conversationId).catch((err) => {
         reqLogger.error({ err, conversationId }, 'Summary maintenance failed')
       })
     }
 
-    // 13) Background: Extract and persist memories (non-blocking)
+    // 14) Background: Extract and persist memories (non-blocking)
     if (featureFlags.MEMORY_EXTRACTION_ENABLED && req.user) {
       const currentUserId = req.user.id
       reqLogger.debug({ conversationId }, 'Starting memory extraction')
@@ -274,8 +299,8 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
         .findByID({
           collection: 'conversations',
           id: conversationId,
-          user: req.user, // Explicitly pass user for access control
-          overrideAccess: false, // Enforce user's access control
+          user: req.user,
+          overrideAccess: false,
         })
         .then((updatedConv) => {
           const messages = updatedConv.messages || []
@@ -288,14 +313,14 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
           }))
 
           // Determine source role and timestamp
-          // Since extraction happens after assistant response, use the assistant's message timestamp
-          // But note: memories about user preferences/facts actually came from user messages
-          // We use assistant role here because extraction is triggered after assistant response
           const lastMessage = messages[messages.length - 1]
-          const sourceRole = ChatRole.Assistant // Extraction triggered after assistant response
+          const sourceRole = ChatRole.Assistant
           const sourceTimestamp = lastMessage?.timestamp
             ? new Date(lastMessage.timestamp)
             : new Date()
+
+          // Derive context info for memory extraction
+          const contextLevel = deriveContextLevel(context.relationTo)
 
           return extractMemoryCandidates(messageList, updatedConv.summary || undefined).then(
             (candidates) => {
@@ -304,11 +329,12 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
                 candidates,
                 sourceRole,
                 sourceTimestamp,
+                contextLevel,
               }
             },
           )
         })
-        .then(({ candidates, sourceRole, sourceTimestamp }) => {
+        .then(({ candidates, sourceRole, sourceTimestamp, contextLevel }) => {
           if (candidates.length > 0) {
             reqLogger.debug({ candidateCount: candidates.length }, 'Persisting memory items')
             return persistMemoryItems(
@@ -318,6 +344,8 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
               candidates,
               sourceTimestamp,
               sourceRole,
+              context.contextKey,
+              contextLevel,
             ).then((persisted) => {
               reqLogger.info({ persisted, conversationId }, 'Memory extraction completed')
               return persisted
@@ -345,6 +373,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       success: true,
       message: result.message,
       conversationId,
+      contextKey: context.contextKey,
     })
   } catch (error) {
     reqLogger.error({ err: error }, 'Chat endpoint error')

@@ -29,7 +29,14 @@
       "Bash(mkdir:*)",
       "Bash(grep:*)",
       "Bash(pnpm list:*)",
-      "Bash(pnpm why:*)"
+      "Bash(pnpm why:*)",
+      "Bash(git show:*)",
+      "Bash(pnpm exec next:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(node -e \"\nconst fetch = require\\(''node-fetch''\\);\n\\(async \\(\\) => {\n  try {\n    const response = await fetch\\(''http://localhost:3000/api/conversations'', {\n      headers: { ''Content-Type'': ''application/json'' }\n    }\\);\n    console.log\\(''Status:'', response.status\\);\n    const data = await response.json\\(\\);\n    console.log\\(''Response:'', JSON.stringify\\(data, null, 2\\)\\);\n  } catch \\(e\\) {\n    console.error\\(''Error:'', e.message\\);\n  }\n}\\)\\(\\);\n\")",
+      "Bash(docker exec:*)",
+      "Bash(docker ps:*)"
     ]
   }
 }

@@ -3,26 +3,33 @@
  * Retrieves memory items using MongoDB Atlas Vector Search
  *
  * Key Features:
- * - Prefer-local policy (conversation-scoped first, then user-global)
+ * - Context-hierarchy policy (conversation → contextKey → parent keys → user-global)
  * - Tenant isolation (CRITICAL: always filter by userId)
  * - Graceful fallback on errors
- * - Deduplication of results
+ * - Deduplication of results with hierarchy priority
+ *
+ * @fileType service
+ * @domain ai
+ * @pattern vector-search, context-scoped
  */
 
 import { logger } from '@/utilities/logger'
 import type { Db } from 'mongodb'
+import { Payload } from 'payload'
+import { buildContextHierarchy } from '../services/conversation-service'
 import { ChatRole } from './chat-message-role'
 import { generateEmbedding } from './embeddings'
 
 const VECTOR_INDEX_NAME = 'memory_items_embedding_v1'
 const NUM_CANDIDATES = 200
-const TOP_K_LOCAL = 4
-const TOP_K_GLOBAL = 4
+const TOP_K_TOTAL = 8
 
 export interface MemoryItem {
   _id: string
   userId: string
   conversationId?: string
+  contextKey?: string
+  contextLevel?: string
   type: string
   text: string
   importance: number
@@ -39,13 +46,20 @@ export interface MemoryItem {
 export interface RetrievalResult {
   items: MemoryItem[]
   localCount: number
+  contextCount: number
+  parentCount: number
   globalCount: number
+  hierarchyKeys: string[]
   latencyMs: number
 }
 
 /**
  * Retrieve relevant memory items for a user query
- * Implements prefer-local policy: 4 conversation-scoped + 4 global
+ * Implements context-hierarchy policy:
+ * 1. Conversation-scoped (conversationId match)
+ * 2. Context-scoped (contextKey match)
+ * 3. Parent contexts (lesson > chapter > course)
+ * 4. User-global (userId match only)
  *
  * SECURITY: ALWAYS filters by userId for tenant isolation
  */
@@ -54,6 +68,8 @@ export async function retrieveMemoryItems(
   userId: string,
   queryText: string,
   conversationId?: string,
+  contextKey?: string,
+  payload?: Payload,
 ): Promise<RetrievalResult> {
   const startTime = Date.now()
 
@@ -64,11 +80,109 @@ export async function retrieveMemoryItems(
     const collection = db.collection<MemoryItem>('memory_items')
     const results: MemoryItem[] = []
     let localCount = 0
+    let contextCount = 0
+    const _parentCount = 0 // Unused, calculated as contextCount - localCount if needed
     let globalCount = 0
 
-    // Prepare both queries
-    const localQuery = conversationId
-      ? collection
+    // Build hierarchy keys if contextKey is provided and payload is available
+    let hierarchyKeys: string[] = []
+    if (contextKey && payload) {
+      hierarchyKeys = await buildContextHierarchy(contextKey, payload)
+    } else if (contextKey) {
+      // Fallback: just use the contextKey and 'global'
+      hierarchyKeys = [contextKey, 'global']
+    } else {
+      hierarchyKeys = ['global']
+    }
+
+    logger.debug(
+      { userId, conversationId, contextKey, hierarchyKeys },
+      '[VectorSearch] Building retrieval queries',
+    )
+
+    // Prepare queries
+    const queries: Promise<{ items: MemoryItem[]; count: number; scope: string }>[] = []
+
+    // 1. Conversation-scoped query
+    if (conversationId) {
+      queries.push(
+        (async () => {
+          const convResults = await collection
+            .aggregate([
+              {
+                $vectorSearch: {
+                  index: VECTOR_INDEX_NAME,
+                  path: 'embedding',
+                  queryVector,
+                  numCandidates: NUM_CANDIDATES,
+                  limit: 4,
+                  filter: {
+                    userId: { $eq: userId },
+                    conversationId: { $eq: conversationId },
+                    status: { $eq: 'active' },
+                  },
+                },
+              },
+              {
+                $project: {
+                  embedding: 0,
+                  score: { $meta: 'vectorSearchScore' },
+                },
+              },
+            ])
+            .toArray()
+          return {
+            items: convResults as MemoryItem[],
+            count: convResults.length,
+            scope: 'conversation',
+          }
+        })(),
+      )
+    }
+
+    // 2. Context-hierarchy query (contextKey + parent keys)
+    if (hierarchyKeys.length > 0) {
+      queries.push(
+        (async () => {
+          const ctxResults = await collection
+            .aggregate([
+              {
+                $vectorSearch: {
+                  index: VECTOR_INDEX_NAME,
+                  path: 'embedding',
+                  queryVector,
+                  numCandidates: NUM_CANDIDATES,
+                  limit: TOP_K_TOTAL * 2,
+                  filter: {
+                    userId: { $eq: userId },
+                    contextKey: { $in: hierarchyKeys },
+                    status: { $eq: 'active' },
+                  },
+                },
+              },
+              {
+                $project: {
+                  embedding: 0,
+                  score: { $meta: 'vectorSearchScore' },
+                  hierarchyKeyIndex: {
+                    $indexOfArray: [hierarchyKeys, '$contextKey'],
+                  },
+                },
+              },
+              {
+                $sort: { hierarchyKeyIndex: 1 }, // Prefer narrower context (lower index = more specific)
+              },
+            ])
+            .toArray()
+          return { items: ctxResults as MemoryItem[], count: ctxResults.length, scope: 'context' }
+        })(),
+      )
+    }
+
+    // 3. User-global query (no contextKey or contextKey = 'global')
+    queries.push(
+      (async () => {
+        const globalResults = await collection
           .aggregate([
             {
               $vectorSearch: {
@@ -76,66 +190,62 @@ export async function retrieveMemoryItems(
                 path: 'embedding',
                 queryVector,
                 numCandidates: NUM_CANDIDATES,
-                limit: TOP_K_LOCAL,
+                limit: 4,
                 filter: {
                   userId: { $eq: userId },
-                  conversationId: { $eq: conversationId },
+                  contextKey: { $eq: 'global' },
                   status: { $eq: 'active' },
                 },
               },
             },
             {
               $project: {
-                embedding: 0, // Don't return embeddings (large)
+                embedding: 0,
                 score: { $meta: 'vectorSearchScore' },
               },
             },
           ])
           .toArray()
-      : Promise.resolve([])
+        return {
+          items: globalResults as MemoryItem[],
+          count: globalResults.length,
+          scope: 'global',
+        }
+      })(),
+    )
 
-    const globalQuery = collection
-      .aggregate([
-        {
-          $vectorSearch: {
-            index: VECTOR_INDEX_NAME,
-            path: 'embedding',
-            queryVector,
-            numCandidates: NUM_CANDIDATES,
-            limit: TOP_K_GLOBAL,
-            filter: {
-              userId: { $eq: userId },
-              status: { $eq: 'active' },
-            },
-          },
-        },
-        {
-          $project: {
-            embedding: 0,
-            score: { $meta: 'vectorSearchScore' },
-          },
-        },
-      ])
-      .toArray()
+    // Execute all queries in parallel
+    const queryResults = await Promise.all(queries)
 
-    // Execute both queries in parallel
-    const [localResults, globalResults] = await Promise.all([localQuery, globalQuery])
+    // Process results with priority: conversation > context > global
+    const seenIds = new Set<string>()
 
-    // Process results
-    results.push(...(localResults as MemoryItem[]))
-    localCount = localResults.length
+    for (const queryResult of queryResults) {
+      for (const item of queryResult.items) {
+        const itemId = item._id.toString()
+        if (!seenIds.has(itemId)) {
+          seenIds.add(itemId)
+          results.push(item)
 
-    // Deduplicate: prefer local results over global
-    const seenIds = new Set(results.map((r) => r._id.toString()))
-    for (const item of globalResults as MemoryItem[]) {
-      if (!seenIds.has(item._id.toString())) {
-        results.push(item)
-        globalCount++
+          // Update scope-specific counts
+          switch (queryResult.scope) {
+            case 'conversation':
+              localCount++
+              break
+            case 'context':
+              contextCount++
+              break
+            case 'global':
+              globalCount++
+              break
+          }
+        }
       }
     }
 
-    // Enforce total limit
-    const finalResults = results.slice(0, TOP_K_LOCAL + TOP_K_GLOBAL)
+    // Deduplicate across hierarchy levels (prefer narrower scope)
+    // Already handled above by the priority order
+    const finalResults = results.slice(0, TOP_K_TOTAL)
 
     const latencyMs = Date.now() - startTime
 
@@ -143,18 +253,24 @@ export async function retrieveMemoryItems(
       {
         userId,
         conversationId,
+        contextKey,
+        hierarchyKeys,
         localCount,
+        contextCount,
         globalCount,
         totalCount: finalResults.length,
         latencyMs,
       },
-      '[VectorSearch] Retrieved memories',
+      '[VectorSearch] Retrieved memories with hierarchy',
     )
 
     return {
       items: finalResults,
       localCount,
+      contextCount,
+      parentCount: contextCount - localCount, // Approximate parent context count
       globalCount,
+      hierarchyKeys,
       latencyMs,
     }
   } catch (error) {
@@ -165,10 +281,28 @@ export async function retrieveMemoryItems(
     return {
       items: [],
       localCount: 0,
+      contextCount: 0,
+      parentCount: 0,
       globalCount: 0,
+      hierarchyKeys: [],
       latencyMs,
     }
   }
+}
+
+/**
+ * Retrieve memories with context hierarchy using Payload
+ * Convenience function that combines payload and db access
+ */
+export async function retrieveMemoriesWithContext(
+  payload: Payload,
+  userId: string,
+  queryText: string,
+  conversationId: string,
+  contextKey: string,
+): Promise<RetrievalResult> {
+  const db = (payload.db as any).connection.db
+  return retrieveMemoryItems(db, userId, queryText, conversationId, contextKey, payload)
 }
 
 /**

@@ -23,9 +23,12 @@ export interface ContextLog {
   }
   memory: {
     localCount: number
+    contextCount: number
+    parentCount: number
     globalCount: number
     totalCount: number
     retrievalLatencyMs: number
+    hierarchyKeys: string[]
   }
   messages: {
     windowSize: number
@@ -77,11 +80,13 @@ export function createContextLog(params: {
   summaryPresent: boolean
   summaryLength: number
   memoryLocalCount: number
+  memoryContextCount: number
   memoryGlobalCount: number
   memoryRetrievalLatencyMs: number
   messageWindowSize: number
   messageTotalCount: number
   modelLatencyMs?: number
+  hierarchyKeys?: string[]
 }): ContextLog {
   return {
     timestamp: new Date().toISOString(),
@@ -94,9 +99,12 @@ export function createContextLog(params: {
     },
     memory: {
       localCount: params.memoryLocalCount,
+      contextCount: params.memoryContextCount,
+      parentCount: params.memoryContextCount - params.memoryLocalCount,
       globalCount: params.memoryGlobalCount,
-      totalCount: params.memoryLocalCount + params.memoryGlobalCount,
+      totalCount: params.memoryLocalCount + params.memoryContextCount + params.memoryGlobalCount,
       retrievalLatencyMs: params.memoryRetrievalLatencyMs,
+      hierarchyKeys: params.hierarchyKeys || [],
     },
     messages: {
       windowSize: params.messageWindowSize,

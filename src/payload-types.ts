@@ -790,7 +790,7 @@ export interface Form {
   createdAt: string;
 }
 /**
- * Chat conversations between users and AI tutor
+ * Context-scoped chat conversations with AI tutor
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "conversations".
@@ -802,9 +802,33 @@ export interface Conversation {
    */
   user: string | User;
   /**
-   * Exercise this conversation is about
+   * Polymorphic context reference (Course/Chapter/Lesson/Exercise)
    */
-  exercise: string | Exercise;
+  contextRef:
+    | {
+        relationTo: 'courses';
+        value: string | Course;
+      }
+    | {
+        relationTo: 'chapters';
+        value: string | Chapter;
+      }
+    | {
+        relationTo: 'lessons';
+        value: string | Lesson;
+      }
+    | {
+        relationTo: 'exercises';
+        value: string | Exercise;
+      };
+  /**
+   * Derived key for indexing (e.g., "exercises:abc123")
+   */
+  contextKey?: string | null;
+  /**
+   * Legacy field - use contextRef instead. Will be removed in future version.
+   */
+  exercise?: (string | null) | Exercise;
   /**
    * Conversation message history
    */
@@ -839,39 +863,55 @@ export interface Conversation {
    * Timestamp of last message (auto-updated)
    */
   lastMessageAt: string;
+  /**
+   * Archival timestamp. Active conversation: null. Archived: non-null.
+   */
+  archivedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "exercises".
+ * via the `definition` "chapters".
  */
-export interface Exercise {
+export interface Chapter {
   id: string;
   /**
-   * Exercise title (for admin reference)
+   * The course this chapter belongs to
+   */
+  course: string | Course;
+  /**
+   * Chapter identifier (e.g., "1", "A", "א")
+   */
+  chapterLabel?: string | null;
+  /**
+   * Chapter title
    */
   title: string;
   /**
-   * Order of exercise within the lesson (lower numbers appear first)
+   * Detailed description of the chapter
+   */
+  description?: string | null;
+  /**
+   * Upload chapter-related media files (images, videos, documents, etc.)
+   */
+  mediaFiles?: (string | Media)[] | null;
+  /**
+   * Sort order within the course
    */
   order: number;
   /**
-   * The lesson this exercise belongs to
+   * Publication status of the chapter
    */
-  lesson: string | Lesson;
+  status: 'draft' | 'published' | 'archived';
   /**
-   * Ordered blocks stream. Use question_* blocks to add questions, and rich_text blocks for instructions/notes between questions.
+   * Whether this chapter is currently active
    */
-  content:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
+  isActive: boolean;
+  /**
+   * URL-friendly identifier (auto-generated from title if empty)
+   */
+  slug?: string | null;
   /**
    * User who created this document
    */
@@ -926,46 +966,34 @@ export interface Lesson {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "chapters".
+ * via the `definition` "exercises".
  */
-export interface Chapter {
+export interface Exercise {
   id: string;
   /**
-   * The course this chapter belongs to
-   */
-  course: string | Course;
-  /**
-   * Chapter identifier (e.g., "1", "A", "א")
-   */
-  chapterLabel?: string | null;
-  /**
-   * Chapter title
+   * Exercise title (for admin reference)
    */
   title: string;
   /**
-   * Detailed description of the chapter
-   */
-  description?: string | null;
-  /**
-   * Upload chapter-related media files (images, videos, documents, etc.)
-   */
-  mediaFiles?: (string | Media)[] | null;
-  /**
-   * Sort order within the course
+   * Order of exercise within the lesson (lower numbers appear first)
    */
   order: number;
   /**
-   * Publication status of the chapter
+   * The lesson this exercise belongs to
    */
-  status: 'draft' | 'published' | 'archived';
+  lesson: string | Lesson;
   /**
-   * Whether this chapter is currently active
+   * Ordered blocks stream. Use question_* blocks to add questions, and rich_text blocks for instructions/notes between questions.
    */
-  isActive: boolean;
-  /**
-   * URL-friendly identifier (auto-generated from title if empty)
-   */
-  slug?: string | null;
+  content:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   /**
    * User who created this document
    */
@@ -989,6 +1017,14 @@ export interface MemoryItem {
    * Optional conversation scope (scalar field, NOT a relationship)
    */
   conversationId?: string | null;
+  /**
+   * Context key (e.g., lessons:abc123) for scoped retrieval
+   */
+  contextKey?: string | null;
+  /**
+   * Context level where memory was extracted (analytics/debug only)
+   */
+  contextLevel?: ('exercise' | 'lesson' | 'chapter' | 'course' | 'global') | null;
   /**
    * Category of memory item
    */
@@ -1642,6 +1678,8 @@ export interface CategoriesSelect<T extends boolean = true> {
  */
 export interface ConversationsSelect<T extends boolean = true> {
   user?: T;
+  contextRef?: T;
+  contextKey?: T;
   exercise?: T;
   messages?:
     | T
@@ -1656,6 +1694,7 @@ export interface ConversationsSelect<T extends boolean = true> {
   summaryUntilTimestamp?: T;
   contextPolicyVersion?: T;
   lastMessageAt?: T;
+  archivedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1666,6 +1705,8 @@ export interface ConversationsSelect<T extends boolean = true> {
 export interface MemoryItemsSelect<T extends boolean = true> {
   userId?: T;
   conversationId?: T;
+  contextKey?: T;
+  contextLevel?: T;
   type?: T;
   text?: T;
   embedding?: T;

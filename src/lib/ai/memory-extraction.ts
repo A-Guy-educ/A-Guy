@@ -7,6 +7,7 @@
  * - Server-side filtering for quality control
  * - Deduplication via vector similarity
  * - Selective storage (quality over quantity)
+ * - Context-scoped memory items
  */
 
 import { logger } from '@/utilities/logger'
@@ -143,6 +144,8 @@ export async function persistMemoryItems(
   candidates: MemoryCandidate[],
   sourceTimestamp: Date,
   sourceRole: ChatRole,
+  contextKey?: string,
+  contextLevel?: string,
 ): Promise<number> {
   if (!featureFlags.MEMORY_EXTRACTION_ENABLED) {
     return 0
@@ -217,10 +220,12 @@ export async function persistMemoryItems(
             embedding,
             importance: candidate.importance,
             status: 'active',
+            contextKey: contextKey ?? 'global',
+            contextLevel: contextLevel,
             source: {
               sourceConversationId: conversationId,
               sourceMessageTimestamp: sourceTimestamp.toISOString(),
-              sourceMessageRole: sourceRole, // ChatRole enum values match Payload schema ('user' | 'assistant')
+              sourceMessageRole: sourceRole,
             },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any,

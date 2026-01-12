@@ -1,19 +1,27 @@
 /**
  * Conversations Collection
- * Stores chat conversations between users and AI tutor for exercises
+ * Stores chat conversations between users and AI tutor with context scoping
  *
  * @fileType collection-config
  * @domain chat
- * @pattern user-owned
- * @ai-summary Conversations collection with user ownership, message history, and context management
+ * @pattern user-owned, context-scoped
+ * @ai-summary Context-scoped conversations with polymorphic context references
  *
  * Security:
  * - Users can only access their own conversations
  * - Admin can manage all conversations
+ * - Context access validation via validateContextAccess service
  *
  * Relationships:
  * - user: The student who owns this conversation
- * - exercise: The exercise this conversation is about
+ * - contextRef: Polymorphic reference to Course/Chapter/Lesson/Exercise
+ * - contextKey: Derived operational key for indexing (e.g., "exercises:abc123")
+ *
+ * Archival:
+ * - Use ONLY archivedAt field for archival (no status field)
+ * - Active conversation: archivedAt === null
+ * - Archived conversation: archivedAt !== null
+ * - MongoDB partial unique index enforces one active conversation per user+context
  */
 import type { User } from '@/payload-types'
 import type { Access, CollectionConfig } from 'payload'
@@ -36,8 +44,8 @@ export const Conversations: CollectionConfig = {
   slug: 'conversations',
   admin: {
     useAsTitle: 'id',
-    defaultColumns: ['user', 'exercise', 'lastMessageAt', 'createdAt'],
-    description: 'Chat conversations between users and AI tutor',
+    defaultColumns: ['user', 'contextKey', 'lastMessageAt', 'createdAt'],
+    description: 'Context-scoped chat conversations with AI tutor',
   },
   access: {
     create: authenticated,
@@ -45,7 +53,11 @@ export const Conversations: CollectionConfig = {
     update: isOwner,
     delete: isOwner,
   },
+  dbName: 'conversations',
   fields: [
+    // ========================================
+    // User Ownership
+    // ========================================
     {
       name: 'user',
       type: 'relationship',
@@ -56,21 +68,59 @@ export const Conversations: CollectionConfig = {
         description: 'Student who owns this conversation',
       },
     },
+
+    // ========================================
+    // Context Reference (Polymorphic)
+    // ========================================
+    {
+      name: 'contextRef',
+      type: 'relationship',
+      relationTo: ['courses', 'chapters', 'lessons', 'exercises'],
+      required: true,
+      index: true,
+      admin: {
+        description: 'Polymorphic context reference (Course/Chapter/Lesson/Exercise)',
+      },
+    },
+
+    // ========================================
+    // Context Key (Derived Operational Key)
+    // Populated by beforeChange hook from contextRef
+    // ========================================
+    {
+      name: 'contextKey',
+      type: 'text',
+      required: false, // Populated by hook, not required in input
+      index: true,
+      admin: {
+        hidden: true,
+        description: 'Derived key for indexing (e.g., "exercises:abc123")',
+      },
+    },
+
+    // ========================================
+    // Legacy Exercise Field (Deprecated)
+    // Kept for migration compatibility only
+    // ========================================
     {
       name: 'exercise',
       type: 'relationship',
       relationTo: 'exercises',
-      required: true,
+      required: false,
       index: true,
       admin: {
-        description: 'Exercise this conversation is about',
+        description: 'Legacy field - use contextRef instead. Will be removed in future version.',
       },
     },
+
+    // ========================================
+    // Messages
+    // ========================================
     {
       name: 'messages',
       type: 'array',
       defaultValue: [],
-      maxRows: 100, // Prevent unbounded growth
+      maxRows: 100,
       admin: {
         description: 'Conversation message history',
       },
@@ -88,7 +138,7 @@ export const Conversations: CollectionConfig = {
           name: 'content',
           type: 'textarea',
           required: true,
-          maxLength: 5000, // Prevent excessive message length
+          maxLength: 5000,
           admin: {
             description: 'Message content',
           },
@@ -106,6 +156,10 @@ export const Conversations: CollectionConfig = {
         },
       ],
     },
+
+    // ========================================
+    // Summary (Compressed History)
+    // ========================================
     {
       name: 'summary',
       type: 'textarea',
@@ -134,6 +188,10 @@ export const Conversations: CollectionConfig = {
         },
       },
     },
+
+    // ========================================
+    // Context Policy Version
+    // ========================================
     {
       name: 'contextPolicyVersion',
       type: 'text',
@@ -143,6 +201,10 @@ export const Conversations: CollectionConfig = {
         description: 'Version of prompt composition policy',
       },
     },
+
+    // ========================================
+    // Last Message Timestamp
+    // ========================================
     {
       name: 'lastMessageAt',
       type: 'date',
@@ -155,14 +217,39 @@ export const Conversations: CollectionConfig = {
         },
       },
     },
+
+    // ========================================
+    // Archival (Single Source of Truth)
+    // ========================================
+    {
+      name: 'archivedAt',
+      type: 'date',
+      index: true,
+      admin: {
+        description: 'Archival timestamp. Active conversation: null. Archived: non-null.',
+        date: {
+          pickerAppearance: 'dayAndTime',
+        },
+      },
+    },
   ],
   hooks: {
     beforeChange: [
-      async ({ data }) => {
-        // Auto-update lastMessageAt when messages are added
-        if (data.messages && data.messages.length > 0) {
-          const lastMessage = data.messages[data.messages.length - 1]
-          data.lastMessageAt = lastMessage.timestamp || new Date().toISOString()
+      async ({ data, req: _req, operation }) => {
+        // Derive contextKey from raw contextRef shape
+        // contextRef.value is ALWAYS a string ID on writes (never populated object)
+        if (operation === 'create' || operation === 'update') {
+          if (data.contextRef?.value && data.contextRef?.relationTo) {
+            const collectionSlug = data.contextRef.relationTo
+            const contextId = data.contextRef.value
+            data.contextKey = `${collectionSlug}:${contextId}`
+          }
+
+          // Auto-update lastMessageAt when messages are added
+          if (data.messages && data.messages.length > 0) {
+            const lastMessage = data.messages[data.messages.length - 1]
+            data.lastMessageAt = lastMessage.timestamp || new Date().toISOString()
+          }
         }
         return data
       },

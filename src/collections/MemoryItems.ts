@@ -5,8 +5,8 @@
  *
  * @fileType collection-config
  * @domain chat
- * @pattern user-owned, vector-search
- * @ai-summary Memory items collection with vector embeddings for semantic retrieval and user isolation
+ * @pattern user-owned, vector-search, context-scoped
+ * @ai-summary Memory items with context hierarchy for semantic retrieval
  *
  * Security (CRITICAL):
  * - Users can only read their own memory items
@@ -18,6 +18,11 @@
  * - Index name: memory_items_embedding_v1
  * - Dimensions: 1536 (text-embedding-3-small)
  * - Similarity: cosine
+ *
+ * Context Hierarchy:
+ * - contextKey: Primary retrieval key (e.g., "exercises:abc123")
+ * - contextLevel: Analytics/debug only (NOT used for retrieval)
+ * - Retrieval builds hierarchy by traversing parent relationships
  */
 import type { User } from '@/payload-types'
 import type { Access, CollectionConfig } from 'payload'
@@ -43,15 +48,15 @@ export const MemoryItems: CollectionConfig = {
   slug: 'memory_items',
   admin: {
     useAsTitle: 'text',
-    defaultColumns: ['text', 'type', 'importance', 'status', 'createdAt'],
+    defaultColumns: ['text', 'type', 'contextKey', 'importance', 'createdAt'],
     group: 'Chat System',
     description: 'Long-term memory items for AI chat context',
   },
   access: {
     read: readOwnMemories,
-    create: isAdmin, // Server-side only
-    update: isAdmin, // Server-side only
-    delete: isAdmin, // Server-side only
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   fields: [
     // ========================================
@@ -73,6 +78,36 @@ export const MemoryItems: CollectionConfig = {
       index: true,
       admin: {
         description: 'Optional conversation scope (scalar field, NOT a relationship)',
+        readOnly: true,
+      },
+    },
+
+    // ========================================
+    // Context Fields
+    // ========================================
+    {
+      name: 'contextKey',
+      type: 'text',
+      index: true,
+      admin: {
+        description: 'Context key (e.g., lessons:abc123) for scoped retrieval',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'contextLevel',
+      type: 'select',
+      required: false,
+      options: [
+        { label: 'Exercise', value: 'exercise' },
+        { label: 'Lesson', value: 'lesson' },
+        { label: 'Chapter', value: 'chapter' },
+        { label: 'Course', value: 'course' },
+        { label: 'Global', value: 'global' },
+      ],
+      index: true,
+      admin: {
+        description: 'Context level where memory was extracted (analytics/debug only)',
         readOnly: true,
       },
     },

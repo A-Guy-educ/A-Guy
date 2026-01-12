@@ -1,17 +1,19 @@
 'use client'
 
-import React from 'react'
-import { Lightbulb, CheckCircle, BookOpen, Loader2, Send } from 'lucide-react'
-import { useTranslations } from '@/providers/I18n'
-import { useNotebookChat } from './useNotebookChat'
 import { ChatRole } from '@/lib/ai/chat-message-role'
+import { useTranslations } from '@/providers/I18n'
 import { cn } from '@/utilities/ui'
+import { BookOpen, CheckCircle, Lightbulb, Loader2, RefreshCw, Send } from 'lucide-react'
+import { useNotebookChat } from './useNotebookChat'
 
 interface NotebookChatProps {
   exerciseId: string
+  lessonId?: string
+  chapterId?: string
+  courseId?: string
 }
 
-export function NotebookChat({ exerciseId }: NotebookChatProps) {
+export function NotebookChat({ exerciseId, lessonId, chapterId, courseId }: NotebookChatProps) {
   const t = useTranslations('courses')
   const {
     messages,
@@ -21,10 +23,12 @@ export function NotebookChat({ exerciseId }: NotebookChatProps) {
     messagesContainerRef,
     messagesEndRef,
     inputRef,
+    contextKey,
     setInputValue,
     handleSubmit,
     handleKeyDown,
     handleQuickAction,
+    handleReset,
   } = useNotebookChat({
     initialMessage: t('chatWelcome'),
     authRequiredMessage: t('chatAuthRequired'),
@@ -34,10 +38,29 @@ export function NotebookChat({ exerciseId }: NotebookChatProps) {
     fullSolutionPrompt: t('chatFullSolutionPrompt'),
     acknowledgment: t('chatAIAcknowledgment'),
     exerciseId,
+    lessonId,
+    chapterId,
+    courseId,
   })
 
   return (
     <div className="h-full flex flex-col bg-card">
+      {/* Header with reset button */}
+      <div className="flex items-center justify-between p-3 border-b border-border">
+        <h3 className="font-medium text-sm text-foreground">{t('chatTitle')}</h3>
+        {contextKey && (
+          <button
+            onClick={handleReset}
+            disabled={isLoading}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            title={t('chatReset')}
+          >
+            <RefreshCw className="w-3 h-3" />
+            <span>{t('chatReset')}</span>
+          </button>
+        )}
+      </div>
+
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {isLoadingHistory && (
           <div className="flex items-center justify-center p-4 text-muted-foreground text-sm">

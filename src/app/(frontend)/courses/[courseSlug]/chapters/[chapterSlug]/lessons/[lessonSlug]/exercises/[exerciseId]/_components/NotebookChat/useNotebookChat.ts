@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, useLayoutEffect } from 'react'
-import { toast } from 'sonner'
-import { apiService } from '@/services/api/api-service'
 import { ChatRole } from '@/lib/ai/chat-message-role'
+import { apiService } from '@/services/api/api-service'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 export interface ChatMessage {
   role: ChatRole
@@ -17,6 +17,9 @@ interface UseNotebookChatProps {
   fullSolutionPrompt: string
   acknowledgment: string
   exerciseId: string
+  lessonId?: string
+  chapterId?: string
+  courseId?: string
 }
 
 export function useNotebookChat({
@@ -28,6 +31,9 @@ export function useNotebookChat({
   fullSolutionPrompt,
   acknowledgment,
   exerciseId,
+  lessonId,
+  chapterId,
+  courseId,
 }: UseNotebookChatProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -39,6 +45,15 @@ export function useNotebookChat({
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+
+  // Compute contextKey based on available context (priority: Exercise > Lesson > Chapter > Course)
+  const contextKey = useMemo(() => {
+    if (exerciseId) return `exercises:${exerciseId}`
+    if (lessonId) return `lessons:${lessonId}`
+    if (chapterId) return `chapters:${chapterId}`
+    if (courseId) return `courses:${courseId}`
+    return null
+  }, [exerciseId, lessonId, chapterId, courseId])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -58,8 +73,18 @@ export function useNotebookChat({
   // Load existing conversation history on mount
   useEffect(() => {
     async function loadConversationHistory() {
+      if (!contextKey) {
+        setIsLoadingHistory(false)
+        return
+      }
+
       try {
-        const result = await apiService.getConversation(exerciseId)
+        const result = await apiService.getConversation(contextKey)
+
+        if (result.authRequired) {
+          // Keep initial message, user needs to log in
+          return
+        }
 
         if (result.success && result.exists && result.messages.length > 0) {
           // Map API messages to chat messages
@@ -79,7 +104,7 @@ export function useNotebookChat({
     }
 
     loadConversationHistory()
-  }, [exerciseId, initialMessage])
+  }, [contextKey, initialMessage])
 
   const sendMessage = async (message: string) => {
     if (!message.trim() || isLoading) return
@@ -90,7 +115,12 @@ export function useNotebookChat({
     setIsLoading(true)
 
     try {
-      const result = await apiService.chat(message, acknowledgment, exerciseId)
+      const result = await apiService.chat(message, acknowledgment, {
+        exerciseId,
+        lessonId,
+        chapterId,
+        courseId,
+      })
 
       if (!result.success) {
         if (result.authRequired) {
@@ -115,6 +145,29 @@ export function useNotebookChat({
       inputRef.current?.focus()
     }
   }
+
+  const handleReset = useCallback(async () => {
+    if (!contextKey || isLoading) return
+
+    const confirmed = confirm(
+      'Are you sure you want to reset the conversation? This will start a new chat.',
+    )
+    if (!confirmed) return
+
+    try {
+      const result = await apiService.resetChat(contextKey)
+
+      if (result.success) {
+        // Clear messages and show welcome
+        setMessages([{ role: ChatRole.Assistant, content: initialMessage }])
+        toast.success('Conversation reset')
+      } else {
+        toast.error(result.error || 'Failed to reset conversation')
+      }
+    } catch (_error) {
+      toast.error('Failed to reset conversation')
+    }
+  }, [contextKey, isLoading, initialMessage])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -145,9 +198,11 @@ export function useNotebookChat({
     messagesContainerRef,
     messagesEndRef,
     inputRef,
+    contextKey,
     setInputValue,
     handleSubmit,
     handleKeyDown,
     handleQuickAction,
+    handleReset,
   }
 }
