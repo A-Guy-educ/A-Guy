@@ -193,6 +193,53 @@ export const MemoryItems: CollectionConfig = {
             description: 'Who said the message this memory came from',
           },
         },
+        // Document-specific source fields (for type='document')
+        {
+          name: 'lessonId',
+          type: 'text',
+          admin: {
+            description: 'Lesson ID for document memories',
+            condition: (data) => data?.type === 'document',
+          },
+        },
+        {
+          name: 'fileName',
+          type: 'text',
+          admin: {
+            description: 'Source PDF filename for document memories',
+            condition: (data) => data?.type === 'document',
+          },
+        },
+        {
+          name: 'chunkIndex',
+          type: 'number',
+          admin: {
+            description: 'Chunk index within document (for type=document)',
+            condition: (data) => data?.type === 'document',
+          },
+        },
+        {
+          name: 'sectionTitle',
+          type: 'text',
+          admin: {
+            description: 'Section title for document chunk',
+            condition: (data) => data?.type === 'document',
+          },
+        },
+        {
+          name: 'topics',
+          type: 'array',
+          admin: {
+            description: 'Topics covered in this document chunk',
+            condition: (data) => data?.type === 'document',
+          },
+          fields: [
+            {
+              name: 'topic',
+              type: 'text',
+            },
+          ],
+        },
       ],
     },
 

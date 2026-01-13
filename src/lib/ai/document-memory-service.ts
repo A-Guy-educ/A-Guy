@@ -202,6 +202,11 @@ export async function createDocumentMemories(
               sourceConversationId: conversationId,
               sourceMessageTimestamp: sourceTimestamp.toISOString(),
               sourceMessageRole: ChatRole.Assistant, // Document extraction triggered by system
+              lessonId: lessonId,
+              fileName: fileName,
+              chunkIndex: chunk.chunkIndex,
+              sectionTitle: chunk.sectionTitle,
+              topics: chunk.topics?.map((topic) => ({ topic })) || [],
             },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any,
