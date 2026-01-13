@@ -112,6 +112,7 @@ let payload: Payload
 let testUserId: string
 let testLessonId: string | undefined
 let testChapterId: string | undefined
+let testCourseId: string | undefined
 
 beforeAll(
   async () => {
@@ -128,13 +129,60 @@ beforeAll(
     })
     testUserId = user.id
 
+    // Find or create a test course
+    const existingCourses = await payload.find({
+      collection: 'courses',
+      limit: 1,
+    })
+
+    if (existingCourses.docs.length > 0) {
+      testCourseId = existingCourses.docs[0].id
+    } else {
+      // Find or create a category for the course
+      const existingCategories = await payload.find({
+        collection: 'categories',
+        limit: 1,
+      })
+
+      let categoryId: string | undefined
+      if (existingCategories.docs.length > 0) {
+        categoryId = existingCategories.docs[0].id
+      } else {
+        const category = await payload.create({
+          collection: 'categories',
+          data: {
+            title: 'Test Category',
+            slug: `test-category-${Date.now()}`,
+          } as any,
+        })
+        categoryId = category.id
+      }
+
+      const course = await payload.create({
+        collection: 'courses',
+        data: {
+          courseLabel: 'TEST',
+          title: 'Test Course',
+          slug: `test-course-${Date.now()}`,
+          status: 'published',
+          isActive: true,
+          categories: categoryId ? [categoryId] : [],
+          order: 0,
+        } as any,
+      })
+      testCourseId = course.id
+    }
+
     // Create test chapter
     const chapter = await payload.create({
       collection: 'chapters',
       data: {
+        course: testCourseId,
         title: 'Test Chapter',
         slug: `test-chapter-${Date.now()}`,
         order: 0,
+        status: 'published',
+        isActive: true,
       } as any,
     })
     testChapterId = chapter.id
@@ -165,6 +213,8 @@ afterAll(async () => {
   if (testChapterId) {
     await payload.delete({ collection: 'chapters', id: testChapterId })
   }
+  // Only delete course if we created it (not if we reused an existing one)
+  // For now, we'll leave courses as they might be shared
   if (testUserId) {
     await payload.delete({ collection: 'users', id: testUserId })
   }

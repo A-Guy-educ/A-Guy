@@ -17,7 +17,6 @@ import { logger } from '@/utilities/logger'
 import { getCachedExtraction, getFileHash, setCachedExtraction } from '../extraction-cache'
 
 const EXTRACTION_TIMEOUT_MS = 30 * 1000 // 30 seconds
-const MAX_RETRIES = 2
 
 // Lazy initialization to avoid errors at module load time
 let anthropicClient: Anthropic | null = null
