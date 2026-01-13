@@ -804,9 +804,13 @@ export interface Conversation {
    */
   user: string | User;
   /**
-   * Exercise this conversation is about
+   * Exercise this conversation is about (for exercise-specific chats)
    */
-  exercise: string | Exercise;
+  exercise?: (string | null) | Exercise;
+  /**
+   * Lesson this conversation is about (for lesson-specific chats)
+   */
+  lesson?: (string | null) | Lesson;
   /**
    * Conversation message history
    */
@@ -1689,6 +1693,7 @@ export interface CategoriesSelect<T extends boolean = true> {
 export interface ConversationsSelect<T extends boolean = true> {
   user?: T;
   exercise?: T;
+  lesson?: T;
   messages?:
     | T
     | {
