@@ -1,581 +1,873 @@
-# Implementation Plan: Lesson Document Chat Integration
+# Implementation Plan: AI-Powered Lesson Document Chat Integration
 
-## 1. Overview
+## Overview
 
-**Objective**: Automatically extract content from lesson PDF documents on first message and store as memory items for semantic retrieval, enabling AI to answer questions with high precision based on document content.
+Integrate AI-powered document extraction into the chat endpoint to automatically process PDF lesson materials and enable semantic search over document content. When a student sends their first message in a lesson conversation, the system will:
 
-**Impact**: High - Significantly improves chat accuracy for lesson-based questions by providing actual document content as context.
+1. Extract structured content from lesson PDFs using Claude API (with vision)
+2. Chunk the content semantically based on AI-extracted structure
+3. Store chunks as memory items with embeddings for vector search
+4. Retrieve relevant document chunks during chat to provide context-aware answers
 
-**Rollout**: Safe default with feature flag (`ENABLE_DOCUMENT_MEMORY`) for controlled rollout and easy rollback.
-
----
-
-## 2. Requirements → Plan Map (Trace Table)
-
-| Spec Requirement                           | Stage(s)   | Deliverables                                        | Tests           |
-| ------------------------------------------ | ---------- | --------------------------------------------------- | --------------- |
-| Extract document content on first message  | Stage 1, 3 | pdf-extractor-service.ts, chat.ts modifications     | Behaviors 1, 11 |
-| Retrieve document memories in answers      | Stage 3    | context-policy.ts modifications                     | Behavior 2      |
-| Chunk documents respecting 2000 char limit | Stage 1    | Chunking algorithm in pdf-extractor-service.ts      | Behavior 3      |
-| Skip extraction when no PDFs               | Stage 3    | Logic in chat.ts                                    | Behavior 4      |
-| Skip extraction when memories exist        | Stage 2    | hasDocumentMemories() in document-memory-service.ts | Behavior 5      |
-| Handle empty/unreadable PDFs gracefully    | Stage 1    | Error handling in pdf-extractor-service.ts          | Behavior 6      |
-| Continue chat when extraction fails        | Stage 3    | Try-catch with graceful fallback in chat.ts         | Behavior 7      |
-| Continue chat when embedding fails         | Stage 2    | Error handling in document-memory-service.ts        | Behavior 8      |
-| Enforce conversation-level access control  | Stage 4    | Filter updates in vector-search.ts                  | Behavior 9      |
-| Respect lesson access control              | Stage 3    | Access check in chat.ts                             | Behavior 10     |
-| Process extraction asynchronously          | Stage 3    | Promise.allSettled() in chat.ts                     | Behavior 11     |
-| Cache PDF extraction results               | Stage 1    | Buffer caching in extraction loop                   | Behavior 12     |
-
-**Validation**: All 12 spec behaviors mapped to implementation stages ✓
+**Key Design Decision**: Use Claude's PDF + vision capabilities instead of traditional pdf-parse for better understanding of educational content, diagrams, and document structure.
 
 ---
 
-## 3. Stages (Risk-Ordered)
-
-### Stage 1: PDF Extraction Service (Core Infrastructure)
-
-**Risk Level**: Medium - New dependency, external library integration
-
-**Scope**:
-
-- Create PDF text extraction service with chunking algorithm
-- Add `pdf-parse` dependency
-- Implement sentence-boundary chunking (max 2000 chars)
-- Error handling for corrupted/empty PDFs
-- Buffer caching to avoid re-downloading
-
-**Deliverables**:
-
-- `src/lib/ai/services/pdf-extractor-service.ts` (new)
-- `tests/int/pdf-extractor.int.spec.ts` (new)
-- `tests/fixtures/pdfs/` directory with 4 test PDFs
-- Updated `package.json` with `pdf-parse` dependency
-
-**Verification**:
-
-- Unit tests pass for text extraction
-- Chunking algorithm respects 2000 char limit
-- Empty PDF returns empty string without error
-- Corrupted PDF throws handled error
-
-**Exit Criteria**:
-
-- ✓ All 4 PDF fixtures tested
-- ✓ Chunking produces no mid-sentence splits
-- ✓ Error cases logged, not thrown
-- ✓ `pnpm test:int && pnpm typecheck` passes
-
-**Constraints Check**: Compliant
-
-- Separation of concerns: pure service function
-- No UI logic mixed with extraction
-- Observable behavior tested
-
-**Risk Note**: `pdf-parse` library may have compatibility issues with certain PDF versions; mitigate with comprehensive error handling and logging.
-
----
-
-### Stage 2: Document Memory Service (Storage Layer)
-
-**Risk Level**: Medium - Integrates with existing memory system
-
-**Scope**:
-
-- Create document memory service for creating and checking memory items
-- Batch embedding generation (reuse existing pattern)
-- Deduplication check (prevent duplicate memories)
-- Type-safe memory item creation with document metadata
-
-**Deliverables**:
-
-- `src/lib/ai/document-memory-service.ts` (new)
-- `tests/int/document-memory.int.spec.ts` (new)
-- Extended MemoryItems schema with `type: 'document'` support
-
-**Verification**:
-
-- Memory items created with correct structure
-- `hasDocumentMemories()` correctly identifies existing memories
-- Embedding generation errors handled gracefully
-- Source metadata includes conversationId, lessonId, fileName
-
-**Exit Criteria**:
-
-- ✓ 3 integration tests pass (create, skip, fail gracefully)
-- ✓ Memory items queryable by conversationId + type='document'
-- ✓ Deduplication prevents duplicate memories
-- ✓ `pnpm test:int && pnpm typecheck` passes
-
-**Constraints Check**: Compliant
-
-- Payload-first: Uses Payload API for memory creation
-- No direct DB bypass
-- Server-side only (access control preserved)
-
-**Risk Note**: OpenAI embedding API failures; mitigate with retry logic and background task queuing.
-
----
-
-### Stage 3: Chat Integration (Orchestration)
-
-**Risk Level**: High - Modifies critical chat endpoint
-
-**Scope**:
-
-- Integrate document extraction into chat flow on first message
-- Check if first message in conversation
-- Fetch lesson contentFiles (PDFs only)
-- Download PDF from Vercel Blob
-- Extract, chunk, and create memories in background
-- Graceful degradation if extraction fails
-
-**Deliverables**:
-
-- Modified `src/endpoints/agent/chat.ts`
-- `tests/int/lesson-document-chat.int.spec.ts` (new)
-- Feature flag: `ENABLE_DOCUMENT_MEMORY` in env
-
-**Verification**:
-
-- Document extraction triggers on first message only
-- Extraction runs asynchronously (doesn't block response)
-- Chat responds normally if extraction fails
-- Lesson access control enforced before extraction
-
-**Exit Criteria**:
-
-- ✓ 3 integration tests pass (first message, skip subsequent, fail gracefully)
-- ✓ Chat response time < 3s (extraction in background)
-- ✓ 403 when user lacks lesson access
-- ✓ All existing chat tests still pass
-- ✓ `pnpm test:int && pnpm typecheck && pnpm lint` passes
-
-**Constraints Check**: Compliant
-
-- Payload-first: Uses Payload's lesson query API
-- No hardcoded strings (logs only)
-- Minimal change to chat.ts (single async function call)
-
-**Risk Note**: Highest risk stage - modifies production-critical chat endpoint. Mitigate with feature flag, extensive testing, and async processing to prevent blocking.
-
----
-
-### Stage 4: Access Control & Security (Critical Path)
-
-**Risk Level**: Critical - Security implications
-
-**Scope**:
-
-- Update vector search filter to enforce conversation-scoped isolation
-- Ensure userId + conversationId always included in filters
-- Security audit of memory retrieval paths
-- Verify no cross-user memory leakage
-
-**Deliverables**:
-
-- Modified `src/lib/ai/vector-search.ts` (filter enhancement)
-- Security tests in `tests/int/lesson-document-chat.int.spec.ts`
-
-**Verification**:
-
-- Vector search filters by both userId AND conversationId
-- User A cannot retrieve User B's document memories
-- All memory retrieval paths audited
-- Test: Create memories for User A, query as User B, expect 0 results
-
-**Exit Criteria**:
-
-- ✓ 2 security tests pass (conversation isolation, lesson access)
-- ✓ All vector search queries include userId filter
-- ✓ No cross-tenant data leakage in any scenario
-- ✓ `pnpm test:int && pnpm typecheck` passes
-
-**Constraints Check**: Compliant
-
-- Payload-first: Uses Payload's user context
-- Security-first: Tenant isolation enforced at query level
-
-**Risk Note**: Data leakage between users is unacceptable. This stage gates all others - must pass security review before proceeding.
-
----
-
-### Stage 5: Documentation & Polish (Quality Gate)
-
-**Risk Level**: Low - Non-functional improvements
-
-**Scope**:
-
-- Update AGENTS.md with PDF extraction patterns
-- Add inline code comments for chunking algorithm
-- Document error handling patterns
-- Add feature flag configuration guide
-
-**Deliverables**:
-
-- Updated `docs/AGENTS.md`
-- Code comments in new services
-- Feature flag in `src/lib/feature-flags.ts`
-
-**Verification**:
-
-- Documentation complete and accurate
-- Code comments explain non-obvious logic
-- Feature flag documented in AGENTS.md
-
-**Exit Criteria**:
-
-- ✓ AGENTS.md includes PDF extraction section
-- ✓ All new functions have JSDoc comments
-- ✓ Feature flag behavior documented
-- ✓ `pnpm lint` passes (comment style checked)
-
-**Constraints Check**: Compliant
-
-- Documentation requirement met
-- No scope creep
-
-**Risk Note**: Low risk; documentation-only changes.
-
----
-
-## 4. Test Plan (Staged)
-
-### Stage 1 Tests (PDF Extraction)
-
-**Behaviors Covered**: 3, 6, 12
-
-- ✅ Extract text from valid PDF (sample-lesson.pdf)
-- ✅ Chunk long text with sentence boundaries (long-lesson.pdf)
-- ✅ Handle empty PDF gracefully (empty.pdf)
-- ✅ Handle corrupted PDF with error (corrupted.pdf)
-- ✅ Cache buffer across chunks (verify single fetch call)
-
-**Red-First Test**: Corrupted PDF extraction (expect graceful error, not crash)
-
-### Stage 2 Tests (Memory Service)
-
-**Behaviors Covered**: 5, 8
-
-- ✅ Create document memories from chunks
-- ✅ Skip if memories already exist (hasDocumentMemories returns true)
-- ✅ Handle embedding API failure gracefully
-
-**Red-First Test**: Embedding generation fails (OpenAI API mocked to throw error)
-
-### Stage 3 Tests (Chat Integration)
-
-**Behaviors Covered**: 1, 4, 7, 10, 11
-
-- ✅ Extract documents on first message (verify memory items created)
-- ✅ Skip extraction when lesson has no PDFs
-- ✅ Skip extraction on subsequent messages
-- ✅ Continue chat if extraction fails (PDF download timeout)
-- ✅ Respect lesson access control (403 for unauthorized)
-- ✅ Process extraction asynchronously (response time < 3s)
-
-**Red-First Test**: Chat on first message with PDF (expect memory items in DB after response)
-
-### Stage 4 Tests (Security)
-
-**Behaviors Covered**: 9, 10
-
-- ✅ Enforce conversation-level isolation (User A can't see User B's memories)
-- ✅ Respect lesson access control (no extraction for unauthorized users)
-
-**Red-First Test**: Cross-tenant memory leakage (User B queries, expect 0 results from User A)
-
-### Stage 5 Tests (Documentation)
-
-**Behaviors Covered**: None (quality gate)
-
-- ✅ Verify all existing tests still pass
-- ✅ Verify build succeeds
-
----
-
-## 5. Data & Migration
-
-**Changes**: Schema extension (non-breaking)
-
-**Migration**: None required
-
-- `type: 'document'` is a new enum value (existing types unchanged)
-- `source` fields are optional (existing memories unaffected)
-- No data backfill needed
-
-**Rollback Implication**: Safe
-
-- New memory items remain in database (harmless)
-- Feature flag disables creation of new document memories
-- Existing memories unaffected
-- No destructive operations
-
----
-
-## 6. Rollout & Monitoring
-
-**Environments**: dev → staging → prod
-
-**Feature Flag Strategy**:
-
-```typescript
-// In .env
-ENABLE_DOCUMENT_MEMORY=false  // Start disabled
-
-// Rollout phases:
-1. Dev: true (internal testing)
-2. Staging: true (QA verification)
-3. Prod: false → true (gradual rollout, monitor 24h)
+## Architecture Integration Points
+
+### Current Chat Flow (13 Steps)
+
+```
+1. Auth Check
+2. Request Validation
+3. Find/Create Conversation
+4. Persist User Message
+5. (Not executed)
+6. Get Recent Window
+7. Retrieve Memory Items          ← ADD: Document memory retrieval
+8. Compose Prompt
+9. Call AI Model
+10. Persist Assistant Response
+11. Log Context Usage
+12. Background: Summary Maintenance
+13. Background: Memory Extraction  ← ADD: Document extraction job
 ```
 
-**Monitoring**:
+### New Integration Points
 
-- **Errors**: PDF extraction failures (log rate)
-- **Performance**: Chat response time (p95 < 3s)
-- **Usage**: Document memories created per day
-- **Quality**: Memory retrieval success rate in chat
+**Step 3.5 (NEW)** - Check for Document Extraction Need:
 
-**Key User Flows**:
+- After conversation is found/created
+- Check if first message in lesson conversation
+- Check if lesson has PDF contentFiles
+- Check if document memories already exist
+- Trigger extraction if needed (non-blocking)
 
-1. Student sends first message in lesson → memories created → chat responds
-2. Student asks document question → memories retrieved → accurate answer
-3. Extraction fails → chat still responds (graceful degradation)
+**Step 7 (MODIFY)** - Enhanced Memory Retrieval:
 
-**Success Signals**:
+- Current: Retrieves conversation + global memories (8 total)
+- Add: Document-specific memory retrieval with type filter
+- Maintain prefer-local policy for document chunks
+- Keep graceful degradation on failures
 
-- ✅ Chat response time remains < 3s (p95)
-- ✅ Zero security incidents (cross-user leakage)
-- ✅ Document extraction success rate > 90%
-- ✅ Memory retrieval includes document memories in top 4 results
+**Step 13 (ADD)** - Document Extraction Job:
 
-**Failure Signals**:
-
-- ❌ Chat response time > 5s (p95) → disable feature flag
-- ❌ PDF extraction failure rate > 20% → investigate library compatibility
-- ❌ Security alert (cross-tenant data) → immediate rollback
-
----
-
-## 7. Stop Conditions
-
-**DONE only if**:
-
-- ✓ All 5 stages complete with exit criteria met
-- ✓ All 12 spec behaviors have tests and pass in CI
-- ✓ `pnpm test:int && pnpm typecheck && pnpm lint && pnpm build` passes
-- ✓ Security review approved (Stage 4)
-- ✓ Feature flag configured and tested
-- ✓ Documentation complete (AGENTS.md updated)
-- ✓ All engineering constraints respected:
-  - Payload-first: ✓ (uses Payload APIs)
-  - i18n only: ✓ (logs only, no UI strings)
-  - Microcomponents: N/A (backend only)
-  - Separation of concerns: ✓ (service layer pattern)
-  - Testing alignment: ✓ (12 integration tests)
-  - Change discipline: ✓ (minimal changes, no scope creep)
-
-**Explicit Defers**:
-
-- Admin UI for document memories → future enhancement
-- Video transcript extraction → out of scope
-- OCR for scanned PDFs → future enhancement
+- Parallel to existing memory extraction
+- Downloads PDF from Vercel Blob
+- Sends to Claude API for structured extraction
+- Chunks by semantic boundaries (sections/concepts)
+- Generates embeddings and stores as memory items
+- Caches extraction results by file hash
 
 ---
 
-## 8. Implementation Sequence
+## Implementation Steps
 
-### Day 1-2: Stage 1 (PDF Extraction)
+### Phase 1: Core Infrastructure
 
-- Add `pdf-parse` dependency
-- Create `pdf-extractor-service.ts`
-- Implement chunking algorithm
-- Write 5 unit tests
-- Create test fixtures
+#### 1.1 Add Anthropic SDK Dependency
 
-**Checkpoint**: `pnpm test:int tests/int/pdf-extractor.int.spec.ts` passes
+**File**: `package.json`
 
----
+```bash
+pnpm add @anthropic-ai/sdk
+```
 
-### Day 3-4: Stage 2 (Memory Service)
-
-- Create `document-memory-service.ts`
-- Implement `createDocumentMemories()` and `hasDocumentMemories()`
-- Batch embedding generation
-- Write 3 integration tests
-
-**Checkpoint**: `pnpm test:int tests/int/document-memory.int.spec.ts` passes
+**Verification**: Package should be added to dependencies
 
 ---
 
-### Day 5-7: Stage 3 (Chat Integration)
+#### 1.2 Create AI Document Extractor Service
 
-- Modify `src/endpoints/agent/chat.ts`
-- Add document extraction logic (async)
-- Fetch lesson contentFiles
-- Download PDF from Vercel Blob
-- Write 6 integration tests
-- Test with real lesson data
+**File**: `src/lib/ai/services/ai-document-extractor.ts` (NEW)
 
-**Checkpoint**: All existing chat tests + new tests pass
+**Purpose**: Extract structured content from PDFs using Claude API
+
+**Key Functions**:
+
+```typescript
+/**
+ * Extract structured content from PDF using Claude API
+ * @param pdfBuffer - Raw PDF buffer
+ * @param fileName - Original file name for context
+ * @returns Structured extraction result with sections, topics, etc.
+ */
+export async function extractDocumentContent(
+  pdfBuffer: Buffer,
+  fileName: string,
+): Promise<DocumentExtractionResult>
+
+/**
+ * Result type from AI extraction
+ */
+export interface DocumentExtractionResult {
+  title: string
+  sections: Array<{
+    heading: string
+    content: string
+    keyPoints: string[]
+  }>
+  topics: string[]
+  difficulty?: 'beginner' | 'intermediate' | 'advanced'
+  estimatedReadingTime?: number
+}
+```
+
+**Implementation Details**:
+
+- Use Anthropic SDK with `claude-3-5-sonnet-20241022` model
+- Send PDF as base64-encoded document in message
+- Use structured prompt requesting JSON output
+- Timeout: 30 seconds per document
+- Error handling: Return empty result on failure (graceful degradation)
+
+**Prompt Structure**:
+
+```
+You are extracting educational content from a PDF document.
+
+Extract the following as JSON:
+{
+  "title": "Document title",
+  "sections": [
+    {
+      "heading": "Section heading",
+      "content": "Full section text (preserve key info)",
+      "keyPoints": ["Key concept 1", "Key concept 2"]
+    }
+  ],
+  "topics": ["Topic 1", "Topic 2"],
+  "difficulty": "beginner|intermediate|advanced",
+  "estimatedReadingTime": minutes
+}
+
+Focus on:
+- Preserving technical content and examples
+- Identifying clear section boundaries
+- Extracting key concepts and definitions
+- Maintaining context for Q&A
+```
+
+**Dependencies**:
+
+- `@anthropic-ai/sdk`
+- Environment variable: `ANTHROPIC_API_KEY`
 
 ---
 
-### Day 8: Stage 4 (Security)
+#### 1.3 Create Extraction Cache Service
 
-- Update `vector-search.ts` filters
-- Add conversation-scoped isolation
-- Write 2 security tests
-- Security audit of all retrieval paths
+**File**: `src/lib/ai/extraction-cache.ts` (NEW)
 
-**Checkpoint**: Security tests pass, manual review complete
+**Purpose**: Cache AI extraction results to avoid duplicate API calls
 
----
+**Implementation Strategy**: In-memory cache (simple Map)
 
-### Day 9: Stage 5 (Documentation)
+- Key: SHA-256 hash of PDF buffer
+- Value: Extraction result + timestamp
+- TTL: 1 hour
+- Eviction: Lazy (check on get)
 
-- Update AGENTS.md
-- Add code comments
-- Configure feature flag
-- Final CI/CD check
+**Key Functions**:
 
-**Checkpoint**: All quality gates pass, documentation complete
+```typescript
+/**
+ * Get cached extraction result by file hash
+ */
+export function getCachedExtraction(fileHash: string): DocumentExtractionResult | null
 
----
+/**
+ * Store extraction result in cache
+ */
+export function setCachedExtraction(fileHash: string, result: DocumentExtractionResult): void
 
-## 9. Constraints Compliance Summary
+/**
+ * Generate file hash from buffer
+ */
+export function generateFileHash(buffer: Buffer): string
+```
 
-| Constraint             | Compliance  | Evidence                                                               |
-| ---------------------- | ----------- | ---------------------------------------------------------------------- |
-| Payload-First          | ✓ Compliant | Uses Payload APIs for lesson queries, memory creation                  |
-| i18n Only              | ✓ Compliant | No UI strings (backend only, logs exempted)                            |
-| Microcomponents        | N/A         | Backend services only                                                  |
-| Separation of Concerns | ✓ Compliant | Service layer (pdf-extractor, document-memory), endpoint orchestration |
-| Testing Alignment      | ✓ Compliant | 12 integration tests, observable behavior validated                    |
-| Change Discipline      | ✓ Compliant | Minimal changes to chat.ts, no unrelated refactors                     |
-
-**Violations**: None
-
-**Deviations**: None
+**Future Enhancement**: Could be replaced with Redis for production at scale
 
 ---
 
-## 10. Dependencies
+#### 1.4 Create Document Memory Service
 
-### New NPM Dependencies
+**File**: `src/lib/ai/document-memory-service.ts` (NEW)
+
+**Purpose**: Orchestrate document extraction → chunking → memory storage
+
+**Key Functions**:
+
+```typescript
+/**
+ * Process lesson documents and create memory items
+ * - Downloads PDFs from Vercel Blob
+ * - Extracts content via Claude API
+ * - Chunks content by sections (respecting 2000 char limit)
+ * - Generates embeddings
+ * - Stores as memory items with type='document'
+ */
+export async function processLessonDocuments(
+  payload: Payload,
+  userId: string,
+  conversationId: string,
+  lessonId: string,
+): Promise<DocumentProcessingResult>
+
+/**
+ * Check if lesson has PDF files to process
+ */
+export async function hasProcessableDocuments(payload: Payload, lessonId: string): Promise<boolean>
+
+/**
+ * Check if document memories already exist for conversation
+ */
+export async function hasExistingDocumentMemories(db: Db, conversationId: string): Promise<boolean>
+
+/**
+ * Chunk extracted content by sections, respecting 2000 char limit
+ */
+function chunkDocumentContent(extractedContent: DocumentExtractionResult): DocumentChunk[]
+
+export interface DocumentChunk {
+  text: string // Max 2000 chars
+  sectionTitle: string
+  chunkIndex: number
+  topics: string[]
+}
+```
+
+**Chunking Strategy**:
+
+1. Process sections sequentially
+2. If section content <= 2000 chars: Single chunk
+3. If section content > 2000 chars: Split at paragraph boundaries
+4. Each chunk gets metadata: `sectionTitle`, `chunkIndex`, `topics`
+
+**Memory Item Structure**:
+
+```typescript
+{
+  userId: string
+  conversationId: string
+  type: 'document'                    // New memory type
+  text: string                        // Chunk content (max 2000)
+  embedding: number[]                 // 1536-dim vector
+  importance: 5                       // Highest priority for source material
+  status: 'active'
+  source: {
+    sourceConversationId: string
+    sourceMessageTimestamp: Date
+    sourceMessageRole: 'assistant'    // Background job
+    // Document-specific fields:
+    lessonId: string
+    fileName: string
+    chunkIndex: number
+    sectionTitle: string
+    topics: string[]
+  }
+}
+```
+
+**Error Handling**:
+
+- PDF download fails: Log error, continue chat
+- Claude API fails: Log error, continue chat
+- Embedding fails: Log error, queue retry (optional)
+- Network timeout: 30s max, then fail gracefully
+
+---
+
+### Phase 2: Chat Endpoint Integration
+
+#### 2.1 Modify Chat Endpoint - Add Document Extraction Check
+
+**File**: `src/endpoints/agent/chat.ts`
+
+**Location**: After Step 3 (conversation creation), before Step 4 (persist message)
+
+**Changes**:
+
+```typescript
+// NEW: Step 3.5 - Check for document extraction need
+if (contextType === 'lesson' && !existingConv.docs.length) {
+  // First message in new lesson conversation
+  const lessonId = validated.lessonId!
+
+  // Check if lesson has PDFs to process
+  const hasDocuments = await hasProcessableDocuments(req.payload, lessonId)
+
+  if (hasDocuments) {
+    const db = (req.payload.db as any).connection.db
+
+    // Check if already processed
+    const hasMemories = await hasExistingDocumentMemories(db, conversationId)
+
+    if (!hasMemories && featureFlags.DOCUMENT_EXTRACTION_ENABLED) {
+      reqLogger.info({ lessonId, conversationId }, 'Triggering document extraction')
+
+      // Trigger extraction (non-blocking)
+      processLessonDocuments(req.payload, req.user.id, conversationId, lessonId).catch((err) => {
+        reqLogger.error({ err, lessonId, conversationId }, 'Document extraction failed')
+      })
+    } else {
+      reqLogger.debug('Document memories already exist or extraction disabled')
+    }
+  } else {
+    reqLogger.debug({ lessonId }, 'No PDF documents found for lesson')
+  }
+}
+```
+
+**Key Points**:
+
+- Only runs on first message in NEW lesson conversations
+- Non-blocking (Promise not awaited)
+- Graceful: Chat continues even if extraction fails
+- Feature flag controlled
+
+---
+
+#### 2.2 Modify Memory Retrieval - Include Document Memories
+
+**File**: `src/lib/ai/vector-search.ts`
+
+**Changes**: No changes needed! Document memories use same vector search.
+
+**Why**: Memory items with `type='document'` are automatically included in vector search. The existing prefer-local policy works perfectly:
+
+- Document chunks are conversation-scoped (have conversationId)
+- They compete with other memories in the 4 local + 4 global slots
+- Higher importance (5) means they rank higher
+
+**Optional Enhancement** (future): Could add type-specific retrieval to guarantee document context:
+
+```typescript
+// Retrieve 4 document-specific + 4 general memories
+const documentQuery = { ...baseFilter, type: { $eq: 'document' } }
+```
+
+---
+
+### Phase 3: Feature Flags & Environment
+
+#### 3.1 Add Feature Flags
+
+**File**: `src/lib/feature-flags.ts`
+
+**Changes**:
+
+```typescript
+export const featureFlags = {
+  // ... existing flags
+  DOCUMENT_EXTRACTION_ENABLED: process.env.DOCUMENT_EXTRACTION_ENABLED === 'true',
+} as const
+```
+
+**Environment Variable**:
+
+```bash
+# .env
+DOCUMENT_EXTRACTION_ENABLED=true
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+---
+
+### Phase 4: Testing Infrastructure
+
+#### 4.1 Create Test Fixtures
+
+**PDF Fixtures**: `tests/fixtures/pdfs/`
+
+- `sample-lesson.pdf` - 3 pages, ~2000 chars (single chunk test)
+- `long-lesson.pdf` - 10 pages, ~10,000 chars (multi-chunk test)
+- `empty.pdf` - 0 text content (edge case)
+- `corrupted.pdf` - Invalid PDF structure (error handling)
+
+**Mock Claude Responses**: `tests/fixtures/ai-extractions/`
+
+- `sample-lesson-extraction.json`:
 
 ```json
 {
-  "pdf-parse": "^1.1.1"
+  "title": "Introduction to Variables",
+  "sections": [
+    {
+      "heading": "What are Variables?",
+      "content": "Variables are named containers...",
+      "keyPoints": ["Storage", "Declaration", "Assignment"]
+    }
+  ],
+  "topics": ["programming basics", "variables", "data types"],
+  "difficulty": "beginner"
 }
 ```
 
-### Development Dependencies
+- `long-lesson-extraction.json` - Multi-section response
+- `empty-extraction.json` - Minimal/empty response
 
+---
+
+#### 4.2 Integration Test Suite
+
+**File**: `tests/int/lesson-document-chat.int.spec.ts` (NEW)
+
+**Test Structure**:
+
+```typescript
+describe('Lesson Document Chat Integration', () => {
+  // Setup: Create test lesson with PDF contentFiles
+  // Setup: Mock Claude API responses
+  // Setup: Mock Vercel Blob fetch
+
+  describe('Happy Path', () => {
+    test('should extract and store document content on first message', async () => {
+      // Given: Lesson with PDF
+      // When: Send first message
+      // Then: Memory items created with type='document'
+      // Then: Items have correct structure and metadata
+    })
+
+    test('should retrieve document memories in chat context', async () => {
+      // Given: Document memories exist
+      // When: Ask question about document content
+      // Then: Vector search returns relevant chunks
+      // Then: Chat response uses document context
+    })
+
+    test('should chunk large documents respecting 2000 char limit', async () => {
+      // Given: PDF with 10,000+ chars
+      // When: Extraction and chunking
+      // Then: Multiple memory items created
+      // Then: Each chunk <= 2000 chars
+      // Then: Chunks have sequential indexes
+    })
+  })
+
+  describe('Edge Cases', () => {
+    test('should skip extraction when lesson has no PDFs', async () => {
+      // Given: Lesson with only images
+      // When: First message
+      // Then: No document extraction triggered
+      // Then: Chat works normally
+    })
+
+    test('should skip extraction when memories already exist', async () => {
+      // Given: Document memories already present
+      // When: First message in existing conversation
+      // Then: No new extraction
+      // Then: Uses existing memories
+    })
+
+    test('should handle empty PDFs gracefully', async () => {
+      // Given: PDF with no extractable content
+      // When: Extraction attempted
+      // Then: Warning logged
+      // Then: Chat continues without document context
+    })
+  })
+
+  describe('Failures', () => {
+    test('should continue chat when Claude API fails', async () => {
+      // Given: Claude API returns error
+      // When: First message processing
+      // Then: Error logged
+      // Then: Chat response successful
+      // Then: No document memories created
+    })
+
+    test('should continue chat when embedding generation fails', async () => {
+      // Given: Extraction successful, OpenAI fails
+      // When: Creating memory items
+      // Then: Chat continues
+      // Then: Error logged with retry suggestion
+    })
+  })
+
+  describe('Security', () => {
+    test('should enforce conversation-level isolation', async () => {
+      // Given: User A has conversation with doc memories
+      // When: User B queries their conversation
+      // Then: User B cannot access User A's memories
+      // Then: Verified via vector search filters
+    })
+
+    test('should respect lesson access control', async () => {
+      // Given: User without lesson access
+      // When: Attempt to start conversation
+      // Then: 403 error
+      // Then: No extraction or storage occurs
+    })
+  })
+
+  describe('Performance', () => {
+    test('should process extraction asynchronously', async () => {
+      // Given: First message sent
+      // When: Chat endpoint called
+      // Then: Response received < 3s
+      // Then: Extraction runs in background
+    })
+
+    test('should cache extraction results', async () => {
+      // Given: PDF already extracted (cache hit)
+      // When: Second user starts conversation
+      // Then: No Claude API call
+      // Then: Uses cached result
+      // Then: Cache hit logged
+    })
+  })
+})
+```
+
+**Mocking Strategy**:
+
+- Mock `@anthropic-ai/sdk`: Return fixture JSON responses
+- Mock `openai.embeddings.create`: Return deterministic vectors
+- Mock Vercel Blob fetch: Return fixture PDF buffers
+- Real MongoDB: Vector search must work end-to-end
+
+---
+
+### Phase 5: Documentation Updates
+
+#### 5.1 Update AGENTS.md
+
+**File**: `docs/AGENTS.md`
+
+**Section to Add**: "AI Document Extraction Pattern"
+
+**Content**:
+
+````markdown
+## AI Document Extraction for Lesson Context
+
+When students interact with lesson content, the system automatically extracts and indexes PDF documents using Claude's vision capabilities.
+
+### Architecture
+
+1. **Trigger**: First message in lesson conversation
+2. **Extraction**: Claude API processes PDF → structured JSON
+3. **Chunking**: Content split by sections (semantic boundaries)
+4. **Storage**: Chunks stored as memory items with type='document'
+5. **Retrieval**: Vector search includes document chunks in context
+
+### Service Layer
+
+**AI Document Extractor** (`src/lib/ai/services/ai-document-extractor.ts`):
+
+- Sends PDF to Claude API for structured extraction
+- Returns sections, topics, key points
+- 30s timeout, graceful failure
+
+**Document Memory Service** (`src/lib/ai/document-memory-service.ts`):
+
+- Orchestrates extraction → chunking → storage
+- Semantic chunking by sections (max 2000 chars)
+- Caches results by file hash (1 hour TTL)
+
+### Memory Item Structure
+
+```typescript
+{
+  type: 'document',
+  importance: 5,        // Highest priority
+  source: {
+    lessonId: string,
+    fileName: string,
+    chunkIndex: number,
+    sectionTitle: string,
+    topics: string[]
+  }
+}
+```
+````
+
+### Error Handling
+
+All failures are graceful - chat continues without document context:
+
+- PDF download fails → Log error, skip
+- Claude API error → Log error, skip
+- Embedding fails → Log error, skip (optional retry)
+
+### Caching Strategy
+
+Extraction results cached in-memory by file hash:
+
+- TTL: 1 hour
+- Eviction: Lazy on get
+- Key: SHA-256 of PDF buffer
+- Prevents duplicate API calls across users
+
+````
+
+---
+
+## Critical Files Summary
+
+### New Files (6)
+1. `src/lib/ai/services/ai-document-extractor.ts` - Claude API integration
+2. `src/lib/ai/document-memory-service.ts` - Orchestration layer
+3. `src/lib/ai/extraction-cache.ts` - Caching layer
+4. `tests/int/lesson-document-chat.int.spec.ts` - Integration tests
+5. `tests/fixtures/pdfs/` - Test PDF files (4 files)
+6. `tests/fixtures/ai-extractions/` - Mock responses (3 files)
+
+### Modified Files (3)
+1. `src/endpoints/agent/chat.ts` - Add Step 3.5 + background job
+2. `src/lib/feature-flags.ts` - Add DOCUMENT_EXTRACTION_ENABLED
+3. `docs/AGENTS.md` - Add documentation section
+
+### No Changes Needed
+- `src/lib/ai/vector-search.ts` - Works as-is with document type
+- `src/lib/ai/context-policy.ts` - Works as-is with memory items
+- `src/collections/MemoryItems.ts` - Schema supports document type
+
+---
+
+## Dependencies
+
+### New Package
 ```json
 {
-  "@types/pdf-parse": "^1.1.4"
+  "@anthropic-ai/sdk": "^0.32.0"
 }
-```
+````
 
-### Existing Dependencies (Already Available)
+### Environment Variables
 
-- `openai` - Embedding generation
-- `mongodb` - Vector search
-- `zod` - Validation
-- `pino` - Logging
-
----
-
-## 11. Risk Mitigation Matrix
-
-| Risk                             | Likelihood | Impact   | Mitigation                                           |
-| -------------------------------- | ---------- | -------- | ---------------------------------------------------- |
-| PDF library compatibility issues | Medium     | Medium   | Comprehensive error handling, test with diverse PDFs |
-| Chat response time degradation   | Low        | High     | Async processing (Promise.allSettled), timeout (10s) |
-| OpenAI API failure               | Medium     | Low      | Graceful degradation, retry in background            |
-| Cross-user memory leakage        | Low        | Critical | Mandatory userId filter, security tests, audit       |
-| Large document token overflow    | Medium     | Medium   | Chunking limit (max 50 chunks), preview extraction   |
-| Feature breaks existing chat     | Low        | High     | Feature flag, extensive integration tests            |
-
----
-
-## 12. Code Patterns Reference
-
-### Pattern 1: Payload-First Query
-
-```typescript
-// ✅ Correct: Use Payload API
-const lesson = await payload.findByID({
-  collection: 'lessons',
-  id: lessonId,
-  user: req.user,
-})
-
-// ❌ Wrong: Direct DB query
-const lesson = await db.collection('lessons').findOne({ _id: lessonId })
-```
-
-### Pattern 2: Async Background Processing
-
-```typescript
-// ✅ Correct: Non-blocking
-const extractionPromise = extractAndStoreDocuments(lesson, conversation)
-Promise.allSettled([extractionPromise]).catch((err) => {
-  req.payload.logger.error('Background extraction failed', { error: err })
-})
-
-// Respond immediately (don't await)
-return res.json({ message: 'Chat response' })
-```
-
-### Pattern 3: Tenant-Safe Vector Search
-
-```typescript
-// ✅ Correct: Always filter by userId
-const memories = await retrieveMemoryItems(db, userId, query, conversationId)
-
-// ❌ Wrong: Missing userId filter
-const memories = await collection.find({ conversationId })
-```
-
-### Pattern 4: Graceful Error Handling
-
-```typescript
-// ✅ Correct: Fail gracefully
-try {
-  const text = await extractTextFromPDF({ pdfBuffer })
-  await createDocumentMemories(text, metadata)
-} catch (error) {
-  req.payload.logger.error('PDF extraction failed', { error })
-  // Chat continues without document context
-}
+```bash
+ANTHROPIC_API_KEY=sk-ant-...
+DOCUMENT_EXTRACTION_ENABLED=true
 ```
 
 ---
 
-## 13. Final Checklist
+## Implementation Order
 
-Before considering implementation complete:
+### Day 1: Core Services
 
-- [ ] All 12 spec behaviors tested
-- [ ] All 5 stages completed with exit criteria met
-- [ ] Security review passed (Stage 4)
-- [ ] Feature flag configured and tested
-- [ ] Documentation updated (AGENTS.md)
-- [ ] All constraints respected
-- [ ] CI/CD passing (`pnpm test:int && pnpm typecheck && pnpm lint && pnpm build`)
-- [ ] No cross-user data leakage (verified in tests)
-- [ ] Chat response time < 3s (verified in integration test)
-- [ ] Rollback plan documented and tested
-- [ ] Monitoring/logging in place
+1. Add Anthropic SDK dependency
+2. Implement AI document extractor service
+3. Implement extraction cache service
+4. Implement document memory service (without chat integration)
+
+### Day 2: Integration
+
+5. Modify chat endpoint (Step 3.5 + background job)
+6. Add feature flag
+7. Manual testing with Postman/curl
+
+### Day 3: Testing
+
+8. Create test fixtures (PDFs + mock responses)
+9. Write integration test suite (12 tests)
+10. Run full test suite, fix any issues
+
+### Day 4: Documentation & Polish
+
+11. Update AGENTS.md
+12. Add inline code comments
+13. Final code review and cleanup
+14. Run all quality gates (typecheck, lint, test)
 
 ---
 
-**Plan Status**: Ready for implementation ✓
+## Verification & Testing
 
-**Constraints**: All compliant ✓
+### Manual Testing Steps
 
-**Traceability**: All requirements mapped ✓
+1. **Setup**:
 
-**Risk Assessment**: Mitigated with feature flag, async processing, and security tests ✓
+   ```bash
+   # Set environment variables
+   export ANTHROPIC_API_KEY=sk-ant-...
+   export DOCUMENT_EXTRACTION_ENABLED=true
+
+   # Start dev server
+   pnpm dev
+   ```
+
+2. **Create Test Lesson**:
+   - Go to `/admin/collections/lessons`
+   - Create lesson with PDF in `contentFiles`
+   - Note lesson ID
+
+3. **Test First Message**:
+
+   ```bash
+   curl -X POST http://localhost:3000/api/agent/chat \
+     -H "Authorization: Bearer <token>" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "message": "What is this lesson about?",
+       "acknowledgment": "test",
+       "lessonId": "<lesson-id>"
+     }'
+   ```
+
+4. **Verify Extraction**:
+   - Check logs for "Triggering document extraction"
+   - Check logs for "Memory extraction completed"
+   - Query MongoDB:
+     ```javascript
+     db.memory_items.find({
+       conversationId: '<conv-id>',
+       type: 'document',
+     })
+     ```
+
+5. **Test Retrieval**:
+   - Send second message asking about document content
+   - Check logs for memory retrieval including document items
+   - Verify chat response references document content
+
+### Integration Test Execution
+
+```bash
+# Run all integration tests
+pnpm test:int
+
+# Run specific test file
+pnpm exec vitest run tests/int/lesson-document-chat.int.spec.ts --config ./vitest.config.mts
+
+# Watch mode for TDD
+pnpm test:watch lesson-document-chat
+```
+
+### Quality Gates
+
+All must pass:
+
+```bash
+pnpm typecheck          # No TypeScript errors
+pnpm lint               # No ESLint errors
+pnpm format:check       # Code formatted
+pnpm test:int           # All integration tests pass
+pnpm build              # Production build succeeds
+```
+
+---
+
+## Rollback Plan
+
+### Immediate Rollback
+
+1. Set `DOCUMENT_EXTRACTION_ENABLED=false`
+2. Chat continues without document context
+3. No data deletion needed (memories remain)
+
+### Full Rollback
+
+1. Revert PR (single commit)
+2. Remove Anthropic SDK: `pnpm remove @anthropic-ai/sdk`
+3. Existing conversations unaffected
+
+### Data Cleanup (Optional)
+
+```javascript
+// Remove all document-type memories
+db.memory_items.deleteMany({ type: 'document' })
+```
+
+---
+
+## Risk Mitigation
+
+### Performance Risks
+
+- **Risk**: Claude API slow (10-30s per PDF)
+- **Mitigation**: Non-blocking execution, chat proceeds immediately
+- **Monitoring**: Log extraction latency, set 30s timeout
+
+### Cost Risks
+
+- **Risk**: Claude API costs (~$0.03-0.10 per PDF)
+- **Mitigation**: Cache extraction results by file hash (1 hour TTL)
+- **Mitigation**: Skip if document memories already exist
+- **Monitoring**: Log Claude API call count and cache hit rate
+
+### Quality Risks
+
+- **Risk**: Poor extraction breaks Q&A
+- **Mitigation**: Structured prompt with JSON schema
+- **Mitigation**: Server-side validation of extraction results
+- **Testing**: Integration tests verify retrieval precision
+
+### Storage Risks
+
+- **Risk**: Large lessons create many memory items
+- **Mitigation**: Chunk limit (max 50 chunks per document)
+- **Mitigation**: 2000 char limit per chunk (enforced)
+- **Monitoring**: Track memory item count per conversation
+
+---
+
+## Success Criteria
+
+### Functional
+
+- ✅ First message in lesson conversation triggers extraction
+- ✅ PDFs extracted and chunked correctly (<= 2000 chars)
+- ✅ Document memories stored with correct metadata
+- ✅ Vector search retrieves relevant document chunks
+- ✅ Chat responses reference document content
+- ✅ All 12 integration tests pass
+
+### Non-Functional
+
+- ✅ Chat response time < 3s (extraction non-blocking)
+- ✅ Extraction cached to prevent duplicate API calls
+- ✅ Graceful failure handling (chat continues on errors)
+- ✅ Access control enforced (conversation-scoped isolation)
+- ✅ All quality gates pass (typecheck, lint, format, build)
+
+### Documentation
+
+- ✅ AGENTS.md updated with extraction patterns
+- ✅ Inline comments explain chunking and caching
+- ✅ Error handling documented in service layer
+
+---
+
+## Notes
+
+### Why Claude Over pdf-parse?
+
+Traditional PDF parsing (pdf-parse, pdfjs-dist):
+
+- Extracts raw text mechanically
+- Struggles with complex layouts, tables, diagrams
+- No understanding of content hierarchy
+- Manual work to structure for Q&A
+
+AI extraction (Claude with vision):
+
+- Understands document structure semantically
+- Handles complex layouts intelligently
+- Extracts structured content (sections, concepts, key points)
+- Better semantic chunking for Q&A
+- Works with images, diagrams, charts
+
+**Cost**: ~$0.03-0.10 per document (one-time)
+**Quality**: Significantly better for educational Q&A
+
+### Memory Item Reuse
+
+Document memories use the existing `MemoryItems` collection:
+
+- No schema changes needed
+- Same vector search infrastructure
+- Type-based discrimination (`type: 'document'`)
+- Consistent with existing patterns
+
+### Future Enhancements
+
+1. **Redis Cache**: Replace in-memory cache for production scale
+2. **Retry Queue**: Background retry for failed embeddings
+3. **Document Updates**: Track PDF versions, re-extract on changes
+4. **OCR Support**: Add scanned PDF support via Gemini vision
+5. **Analytics**: Track document access patterns, popular chunks
+6. **Admin UI**: View/edit document memories in admin panel
