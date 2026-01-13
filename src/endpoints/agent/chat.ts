@@ -33,11 +33,16 @@ import { logger } from '@/utilities/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
 
-const requestSchema = z.object({
-  message: z.string().min(1).max(1000),
-  acknowledgment: z.string().min(1),
-  exerciseId: z.string().min(1),
-})
+const requestSchema = z
+  .object({
+    message: z.string().min(1).max(1000),
+    acknowledgment: z.string().min(1),
+    exerciseId: z.string().min(1).optional(),
+    lessonId: z.string().min(1).optional(),
+  })
+  .refine((data) => data.exerciseId || data.lessonId, {
+    message: 'Either exerciseId or lessonId must be provided',
+  })
 
 export async function agentChat(req: PayloadRequest & { json?: () => Promise<unknown> }) {
   const requestId = crypto.randomUUID()
@@ -57,16 +62,20 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     const body = await req.json()
     const validated = requestSchema.parse(body)
 
-    reqLogger.info(
-      { userId: req.user.id, exerciseId: validated.exerciseId },
-      'Processing chat request',
-    )
+    const contextId = validated.exerciseId || validated.lessonId
+    const contextType = validated.exerciseId ? 'exercise' : 'lesson'
+    const contextField = validated.exerciseId ? 'exercise' : 'lesson'
+
+    reqLogger.info({ userId: req.user.id, contextType, contextId }, 'Processing chat request')
 
     // 3) Find or create conversation
+    const whereClause: any = { user: { equals: req.user.id } }
+    whereClause[contextField] = { equals: contextId }
+
     const existingConv = await req.payload.find({
       collection: 'conversations',
       where: {
-        and: [{ user: { equals: req.user.id } }, { exercise: { equals: validated.exerciseId } }],
+        and: [whereClause],
       },
       limit: 1,
       user: req.user, // Explicitly pass user for access control
@@ -83,22 +92,28 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       reqLogger.info({ conversationId }, 'Using existing conversation')
     } else {
       // Create new conversation
+      const conversationData: any = {
+        user: req.user.id,
+        messages: [],
+        lastMessageAt: new Date().toISOString(),
+        contextPolicyVersion: 'v1',
+      }
+      if (validated.exerciseId) {
+        conversationData.exercise = validated.exerciseId
+      } else if (validated.lessonId) {
+        conversationData.lesson = validated.lessonId
+      }
+
       const newConv = await req.payload.create({
         collection: 'conversations',
-        data: {
-          user: req.user.id,
-          exercise: validated.exerciseId,
-          messages: [],
-          lastMessageAt: new Date().toISOString(),
-          contextPolicyVersion: 'v1',
-        },
+        data: conversationData,
         draft: false,
         user: req.user, // Explicitly pass user for access control
         overrideAccess: false, // Enforce user's access control
       })
       conversationId = newConv.id
       conversation = newConv
-      reqLogger.info({ conversationId }, 'Created new conversation')
+      reqLogger.info({ conversationId, contextType }, 'Created new conversation')
     }
 
     // 4) Persist user message FIRST

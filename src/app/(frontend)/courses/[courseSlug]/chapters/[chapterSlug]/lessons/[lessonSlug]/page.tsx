@@ -2,13 +2,11 @@ import { notFound } from 'next/navigation'
 import { queryCourseBySlug } from '@/lib/queries/courses'
 import { queryLessonBySlug } from '@/lib/queries/lessons'
 import { queryExercisesByLesson } from '@/lib/queries/exercises'
-import { Breadcrumb } from '../../../../../_components/Breadcrumb'
-import { LessonHeader } from '../../../../../_components/LessonHeader'
-import { LessonContent } from './_components/LessonContent'
-import { getPayload } from 'payload'
-import configPromise from '@payload-config'
-import { headers as getHeaders } from 'next/headers'
-import type { Media } from '@/payload-types'
+import type { Exercise, Media } from '@/payload-types'
+import { Media as MediaComponent } from '@/components/Media'
+import { EmptyState } from '../../../../../_components/EmptyState'
+import { ExerciseWorkspace } from './exercises/[exerciseId]/_components/ExerciseWorkspace'
+import { ChatInterface } from './exercises/[exerciseId]/_components/ChatInterface'
 
 interface LessonPageProps {
   params: Promise<{
@@ -21,16 +19,10 @@ interface LessonPageProps {
 export default async function LessonPage({ params }: LessonPageProps) {
   const { courseSlug, chapterSlug, lessonSlug } = await params
 
-  const [course, lesson, payload] = await Promise.all([
+  const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug }),
     queryLessonBySlug({ slug: lessonSlug }),
-    getPayload({ config: configPromise }),
   ])
-
-  // Get current user
-  const headers = await getHeaders()
-  const { user } = await payload.auth({ headers })
-  const isAdmin = user?.role === 'admin'
 
   if (!course || !lesson) {
     notFound()
@@ -49,39 +41,50 @@ export default async function LessonPage({ params }: LessonPageProps) {
     notFound()
   }
 
-  // Fetch exercises for this lesson
+  // Fetch exercises for this lesson (used for chat context)
   const exercises = await queryExercisesByLesson({ lessonId: lesson.id })
 
-  const breadcrumbItems = [
-    { label: 'Courses', href: '/courses' },
-    { label: course.title, href: `/courses/${courseSlug}` },
-    { label: lessonChapter.title, href: `/courses/${courseSlug}/chapters/${chapterSlug}` },
-    { label: lesson.title },
-  ]
+  // Use the first exercise as the primary chat context when available,
+  // otherwise use the lesson ID for lesson-scoped conversation.
+  const primaryExercise = exercises[0] as Exercise | undefined
+  const chatExerciseId = primaryExercise?.id
+  const chatLessonId = primaryExercise ? undefined : lesson.id
+
+  const validFiles =
+    lesson.contentFiles
+      ?.map((file) => (typeof file === 'string' ? null : file))
+      .filter((file): file is Media => file !== null && Boolean(file.url)) || []
+
+  const hasContent = validFiles.length > 0
+
+  const pdfContent = hasContent ? (
+    <div className="w-full max-w-[920px] max-h-full bg-card border border-border rounded-[10px] p-12 text-foreground shadow-[0_10px_30px_hsl(var(--border))] overflow-auto">
+      <div className="flex flex-col gap-0">
+        {validFiles.map((file, index) => (
+          <div key={file.id} className="w-full min-h-[841px] flex-shrink-0">
+            {index > 0 && (
+              <div className="h-0.5 my-8 flex-shrink-0 bg-gradient-to-r from-transparent via-border to-transparent" />
+            )}
+            <div className="border rounded-lg overflow-hidden bg-gray-50">
+              <MediaComponent resource={file} className="w-full" htmlElement={null} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : (
+    <div className="w-full max-w-[920px] max-h-full flex items-center justify-center">
+      <EmptyState type="noPDF" />
+    </div>
+  )
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Breadcrumb items={breadcrumbItems} />
-
-      <LessonHeader order={lesson.order} title={lesson.title} description={lesson.description} />
-
-      <LessonContent
-        contentFiles={
-          lesson.contentFiles
-            ? lesson.contentFiles
-                .map((file) => (typeof file === 'string' ? null : file))
-                .filter((file): file is Media => file !== null)
-            : null
-        }
-        lessonTitle={lesson.title}
-        exercises={exercises}
-        courseSlug={courseSlug}
-        chapterSlug={chapterSlug}
-        lessonSlug={lessonSlug}
-        lessonId={lesson.id}
-        isAdmin={isAdmin}
-      />
-    </div>
+    <ExerciseWorkspace
+      exerciseTitle={lesson.title}
+      backUrl={`/courses/${courseSlug}/chapters/${chapterSlug}`}
+      pdfContent={pdfContent}
+      chatContent={<ChatInterface exerciseId={chatExerciseId} lessonId={chatLessonId} />}
+    />
   )
 }
 

@@ -16,7 +16,8 @@ interface UseNotebookChatProps {
   solutionPrompt: string
   fullSolutionPrompt: string
   acknowledgment: string
-  exerciseId: string
+  exerciseId?: string
+  lessonId?: string
 }
 
 export function useNotebookChat({
@@ -28,6 +29,7 @@ export function useNotebookChat({
   fullSolutionPrompt,
   acknowledgment,
   exerciseId,
+  lessonId,
 }: UseNotebookChatProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -59,7 +61,7 @@ export function useNotebookChat({
   useEffect(() => {
     async function loadConversationHistory() {
       try {
-        const result = await apiService.getConversation(exerciseId)
+        const result = await apiService.getConversation(exerciseId, lessonId)
 
         if (result.success && result.exists && result.messages.length > 0) {
           // Map API messages to chat messages
@@ -79,7 +81,7 @@ export function useNotebookChat({
     }
 
     loadConversationHistory()
-  }, [exerciseId, initialMessage])
+  }, [exerciseId, lessonId, initialMessage])
 
   const sendMessage = async (message: string) => {
     if (!message.trim() || isLoading) return
@@ -90,7 +92,7 @@ export function useNotebookChat({
     setIsLoading(true)
 
     try {
-      const result = await apiService.chat(message, acknowledgment, exerciseId)
+      const result = await apiService.chat(message, acknowledgment, exerciseId, lessonId)
 
       if (!result.success) {
         if (result.authRequired) {

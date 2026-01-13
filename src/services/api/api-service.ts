@@ -33,19 +33,28 @@ export const apiService = {
    *
    * @param message - The user's message
    * @param acknowledgment - The AI's acknowledgment message (from locale)
-   * @param exerciseId - The ID of the exercise being discussed
+   * @param exerciseId - The ID of the exercise being discussed (optional)
+   * @param lessonId - The ID of the lesson being discussed (optional)
    * @returns Response with success status and either message or error
    */
   async chat(
     message: string,
     acknowledgment: string,
-    exerciseId: string,
+    exerciseId?: string,
+    lessonId?: string,
   ): Promise<ChatApiResponse> {
     try {
+      const body: any = { message, acknowledgment }
+      if (exerciseId) {
+        body.exerciseId = exerciseId
+      } else if (lessonId) {
+        body.lessonId = lessonId
+      }
+
       const response = await fetch('/api/agent/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, acknowledgment, exerciseId }),
+        body: JSON.stringify(body),
       })
 
       const data = await response.json()
@@ -74,18 +83,23 @@ export const apiService = {
   },
 
   /**
-   * Fetch existing conversation history for an exercise using Payload's REST API
+   * Fetch existing conversation history for an exercise or lesson using Payload's REST API
    *
-   * @param exerciseId - The ID of the exercise
+   * @param exerciseId - The ID of the exercise (optional)
+   * @param lessonId - The ID of the lesson (optional)
    * @returns Conversation history with messages
    */
-  async getConversation(exerciseId: string): Promise<ConversationApiResponse> {
+  async getConversation(exerciseId?: string, lessonId?: string): Promise<ConversationApiResponse> {
     try {
       // Use Payload's auto-generated REST API with query filters
       // Access control is automatically enforced by Payload
-      const whereQuery = JSON.stringify({
-        exercise: { equals: exerciseId },
-      })
+      const whereClause: any = {}
+      if (exerciseId) {
+        whereClause.exercise = { equals: exerciseId }
+      } else if (lessonId) {
+        whereClause.lesson = { equals: lessonId }
+      }
+      const whereQuery = JSON.stringify(whereClause)
 
       const response = await fetch(
         `/api/conversations?where=${encodeURIComponent(whereQuery)}&limit=1`,

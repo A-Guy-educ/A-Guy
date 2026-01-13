@@ -1,6 +1,6 @@
 /**
  * Conversations Collection
- * Stores chat conversations between users and AI tutor for exercises
+ * Stores chat conversations between users and AI tutor for exercises and lessons
  *
  * @fileType collection-config
  * @domain chat
@@ -13,7 +13,8 @@
  *
  * Relationships:
  * - user: The student who owns this conversation
- * - exercise: The exercise this conversation is about
+ * - exercise: The exercise this conversation is about (optional, for exercise-specific chats)
+ * - lesson: The lesson this conversation is about (optional, for lesson-specific chats)
  */
 import type { User } from '@/payload-types'
 import type { Access, CollectionConfig } from 'payload'
@@ -36,7 +37,7 @@ export const Conversations: CollectionConfig = {
   slug: 'conversations',
   admin: {
     useAsTitle: 'id',
-    defaultColumns: ['user', 'exercise', 'lastMessageAt', 'createdAt'],
+    defaultColumns: ['user', 'exercise', 'lesson', 'lastMessageAt', 'createdAt'],
     description: 'Chat conversations between users and AI tutor',
   },
   access: {
@@ -60,10 +61,22 @@ export const Conversations: CollectionConfig = {
       name: 'exercise',
       type: 'relationship',
       relationTo: 'exercises',
-      required: true,
+      required: false,
       index: true,
       admin: {
-        description: 'Exercise this conversation is about',
+        description: 'Exercise this conversation is about (for exercise-specific chats)',
+        condition: (data) => !data.lesson, // Only show if lesson is not set
+      },
+    },
+    {
+      name: 'lesson',
+      type: 'relationship',
+      relationTo: 'lessons',
+      required: false,
+      index: true,
+      admin: {
+        description: 'Lesson this conversation is about (for lesson-specific chats)',
+        condition: (data) => !data.exercise, // Only show if exercise is not set
       },
     },
     {
@@ -157,6 +170,19 @@ export const Conversations: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeValidate: [
+      async ({ data }) => {
+        // Ensure either exercise or lesson is provided, but not both
+        if (!data) return data
+        if (!data.exercise && !data.lesson) {
+          throw new Error('Either exercise or lesson must be provided')
+        }
+        if (data.exercise && data.lesson) {
+          throw new Error('Cannot have both exercise and lesson')
+        }
+        return data
+      },
+    ],
     beforeChange: [
       async ({ data }) => {
         // Auto-update lastMessageAt when messages are added
