@@ -192,6 +192,28 @@ export const MemoryItems: CollectionConfig = {
             description: 'Who said the message this memory came from',
           },
         },
+        // Document-specific metadata (optional, for document-type memories)
+        {
+          name: 'lessonId',
+          type: 'text',
+          admin: {
+            description: 'Lesson ID for document memories',
+          },
+        },
+        {
+          name: 'fileName',
+          type: 'text',
+          admin: {
+            description: 'Original file name for document memories',
+          },
+        },
+        {
+          name: 'chunkIndex',
+          type: 'number',
+          admin: {
+            description: 'Chunk index for document memories',
+          },
+        },
       ],
     },
 
