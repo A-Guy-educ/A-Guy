@@ -35,6 +35,7 @@ export interface ContextLog {
     summaryMaintenance: boolean
     memoryExtraction: boolean
     memoryRetrieval: boolean
+    documentMemory: boolean
   }
   modelLatencyMs?: number
 }
