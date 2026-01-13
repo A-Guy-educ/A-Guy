@@ -20,6 +20,7 @@ playwright-report
 test-results
 *.min.js
 *.min.css
+*.min.mjs
 .husky/_
 
 # Auto-generated files

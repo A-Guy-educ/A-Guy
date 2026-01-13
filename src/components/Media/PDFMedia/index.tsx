@@ -1,20 +1,38 @@
 'use client'
 
 import React from 'react'
-import dynamic from 'next/dynamic'
-
+import { cn } from '@/utilities/ui'
 import type { Props as MediaProps } from '../types'
 
-// Import with ssr: false to prevent server-side rendering
-const PDFRenderer = dynamic(() => import('./PDFRenderer').then((mod) => mod.PDFRenderer), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-[841px] border rounded-lg bg-muted/30">
-      <div className="text-muted-foreground">Loading PDF viewer...</div>
-    </div>
-  ),
-})
-
 export const PDFMedia: React.FC<MediaProps> = (props) => {
-  return <PDFRenderer {...props} />
+  const { resource, className } = props
+
+  const pdfUrl = React.useMemo(() => {
+    if (resource && typeof resource === 'object') {
+      const { filename, url } = resource
+      // Use relative URLs to avoid hydration mismatch with port numbers
+      if (url) {
+        // If URL is already absolute, return as-is, otherwise make it relative
+        return url.startsWith('http://') || url.startsWith('https://') ? url : url
+      }
+      return filename ? `/media/${filename}` : null
+    }
+    return null
+  }, [resource])
+
+  if (!pdfUrl) {
+    return null
+  }
+
+  const viewerUrl = `/pdfjs/viewer.html?file=${encodeURIComponent(pdfUrl)}`
+
+  return (
+    <div className={cn('w-full', className)}>
+      <iframe
+        src={viewerUrl}
+        className="w-full h-[800px] border rounded-lg bg-muted/30"
+        title="PDF Viewer"
+      />
+    </div>
+  )
 }
