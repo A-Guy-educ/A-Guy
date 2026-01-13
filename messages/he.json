@@ -135,7 +135,9 @@
       "gradeQuestion": "באיזו כיתה אתה לומד?",
       "selectGrade": "בחר כיתה",
       "gradeLabel": "כיתה {{grade}}",
-      "letsStart": "בואו נתחיל!"
+      "letsStart": "בואו נתחיל!",
+      "loading": "טוען...",
+      "noCoursesAvailable": "אין קורסים זמינים"
     }
   },
   "study": {
