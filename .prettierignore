@@ -26,4 +26,3 @@ test-results
 src/app/(payload)/admin/importMap.js
 docs/ai/indexes/*.json
 public/sitemap*.xml
-

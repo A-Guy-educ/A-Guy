@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryChaptersByGrade } from '@/lib/queries/chapters'
+import { getPayload } from 'payload'
+import configPromise from '@payload-config'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -15,8 +17,61 @@ export async function GET(request: NextRequest) {
     const courseSlug =
       typeof course === 'object' && course !== null && 'slug' in course ? course.slug : ''
 
+    // Fetch all lessons for all chapters (batch query for efficiency)
+    const chapterIds = chapters.map((chapter) => chapter.id)
+    let lessons: any[] = []
+
+    if (chapterIds.length > 0) {
+      const payload = await getPayload({ config: configPromise })
+      const lessonsResult = await payload.find({
+        collection: 'lessons',
+        where: {
+          and: [
+            {
+              chapter: {
+                in: chapterIds,
+              },
+            },
+            {
+              status: {
+                equals: 'published',
+              },
+            },
+            {
+              isActive: {
+                equals: true,
+              },
+            },
+          ],
+        },
+        sort: 'order',
+        limit: 1000,
+        pagination: false,
+        depth: 2,
+      })
+      lessons = lessonsResult.docs
+    }
+
+    // Group lessons by chapter
+    const lessonsByChapter: Record<string, any[]> = {}
+    lessons.forEach((lesson) => {
+      const chapterId = typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter?.id
+      if (chapterId) {
+        if (!lessonsByChapter[chapterId]) {
+          lessonsByChapter[chapterId] = []
+        }
+        lessonsByChapter[chapterId].push(lesson)
+      }
+    })
+
+    // Attach lessons to chapters
+    const chaptersWithLessons = chapters.map((chapter) => ({
+      ...chapter,
+      lessons: lessonsByChapter[chapter.id] || [],
+    }))
+
     return NextResponse.json({
-      chapters,
+      chapters: chaptersWithLessons,
       courseSlug,
     })
   } catch (error) {

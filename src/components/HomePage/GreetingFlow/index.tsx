@@ -3,52 +3,52 @@
 import { useState, useEffect } from 'react'
 import { TypingAnimation } from '@/components/shared/TypingAnimation'
 import { Button } from '@/components/ui/button'
-import { CourseCard } from '@/app/(frontend)/courses/_components/CourseCard'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { setUserProfile } from '@/lib/localStorage/userProfile'
 import { useTranslations } from '@/providers/I18n'
 import type { Course } from '@/payload-types'
 
-type FlowStep = 'greeting' | 'mood' | 'grade' | 'complete'
+type FlowStep = 'greeting' | 'mood' | 'courses' | 'complete'
 
 const MOODS = ['happy', 'neutral', 'sad', 'excited'] as const
 
 export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
   const t = useTranslations('homepage.greeting')
-  const tStudy = useTranslations('study')
   const [step, setStep] = useState<FlowStep>('greeting')
   const [selectedMood, setSelectedMood] = useState<string>('')
   const [courses, setCourses] = useState<Course[]>([])
   const [isLoadingCourses, setIsLoadingCourses] = useState(false)
 
+  const handleMoodSelect = (mood: string) => {
+    setSelectedMood(mood)
+    setStep('courses')
+  }
+
   useEffect(() => {
-    if (step === 'grade') {
+    if (step === 'courses') {
       setIsLoadingCourses(true)
-      async function loadCourses() {
-        try {
-          const coursesResponse = await fetch('/api/courses')
-          if (coursesResponse.ok) {
-            const coursesData = await coursesResponse.json()
-            setCourses(coursesData.docs || [])
-          }
-        } catch (error) {
+      fetch(
+        '/api/courses?where[status][equals]=published&where[isActive][equals]=true&sort=order&depth=2',
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          setCourses(data.docs || [])
+        })
+        .catch((error) => {
           console.error('Failed to load courses:', error)
-        } finally {
+        })
+        .finally(() => {
           setIsLoadingCourses(false)
-        }
-      }
-      loadCourses()
+        })
     }
   }, [step])
 
-  const handleMoodSelect = (mood: string) => {
-    setSelectedMood(mood)
-    setStep('grade')
-  }
-
   const handleCourseSelect = (course: Course) => {
-    // Extract grade from courseLabel (e.g., "8" or "ח"), or use a default
-    const gradeLevel = course.courseLabel || '7'
-    
+    // Extract grade level from courseLabel (e.g., "ח" -> "8", "י" -> "10")
+    // If courseLabel is already a number, use it directly
+    const gradeLevel = course.courseLabel || '8'
+
     setUserProfile({
       gradeLevel,
       mood: selectedMood,
@@ -90,25 +90,39 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
         </div>
       )}
 
-      {step === 'grade' && (
-        <div className="w-full max-w-7xl space-y-6">
-          <h2 className="text-xl text-center">{t('gradeQuestion')}</h2>
+      {step === 'courses' && (
+        <div className="container mx-auto px-4 py-8 max-w-6xl w-full">
+          <h2 className="text-xl text-center mb-8">{t('gradeQuestion')}</h2>
           {isLoadingCourses ? (
-            <div className="text-center text-muted-foreground py-12">{tStudy('loading')}</div>
+            <div className="text-center text-muted-foreground">{t('loading')}</div>
           ) : courses.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {courses.map((course) => (
-                <div
+                <Card
                   key={course.id}
                   onClick={() => handleCourseSelect(course)}
-                  className="cursor-pointer"
+                  className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col"
                 >
-                  <CourseCard course={course} />
-                </div>
+                  <CardHeader>
+                    {course.courseLabel && (
+                      <Badge variant="secondary" className="w-fit mb-2 text-xs font-semibold">
+                        {course.courseLabel}
+                      </Badge>
+                    )}
+                    <CardTitle className="text-lg font-bold">{course.title}</CardTitle>
+                  </CardHeader>
+                  {course.description && (
+                    <CardContent className="flex-1">
+                      <CardDescription className="line-clamp-2">
+                        {course.description}
+                      </CardDescription>
+                    </CardContent>
+                  )}
+                </Card>
               ))}
             </div>
           ) : (
-            <div className="text-center text-muted-foreground py-12">{tStudy('noCoursesAvailable')}</div>
+            <div className="text-center text-muted-foreground">{t('noCoursesAvailable')}</div>
           )}
         </div>
       )}
