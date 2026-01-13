@@ -142,9 +142,16 @@ async function createMediaFileWithFile(
   // Write the file to disk first (Payload will read from here during processing)
   fs.writeFileSync(filePath, content)
   
-  // Verify file was written
+  // Verify file was written and is readable
   if (!fs.existsSync(filePath)) {
     throw new Error(`Failed to create file at ${filePath}`)
+  }
+  
+  // Ensure file is readable (check permissions)
+  try {
+    fs.accessSync(filePath, fs.constants.R_OK)
+  } catch (error) {
+    throw new Error(`File at ${filePath} is not readable: ${error}`)
   }
   
   // Create media record with file buffer
