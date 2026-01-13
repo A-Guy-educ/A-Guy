@@ -21,7 +21,7 @@ const HeaderThemeContext = createContext(initialContext)
 export const HeaderThemeProvider = ({ children }: { children: React.ReactNode }) => {
   // Get the main theme from ThemeProvider
   const { theme: mainTheme } = useTheme()
-  
+
   // Local state for per-page overrides (null means use main theme)
   const [overrideTheme, setOverrideTheme] = useState<Theme | null | undefined>(undefined)
 
