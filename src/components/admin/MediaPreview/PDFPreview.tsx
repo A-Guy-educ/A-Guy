@@ -6,10 +6,8 @@ import { PDFViewer } from '@/components/Media/PDFMedia/PDFViewer'
 
 export const PDFPreview: React.FC = () => {
   const urlField = useFormFields(([fields]) => fields.url)
-  const filenameField = useFormFields(([fields]) => fields.filename)
 
   const url = urlField?.value as string | undefined
-  const filename = filenameField?.value as string | undefined
 
   if (!url) {
     return (

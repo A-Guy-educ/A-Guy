@@ -35,7 +35,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const [scale, setScale] = useState<Scale>(1.0)
   const [rotation, setRotation] = useState<number>(0)
   const [searchText, setSearchText] = useState<string>('')
-  const [isSearching, setIsSearching] = useState<boolean>(false)
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
@@ -334,8 +333,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               placeholder="Search..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              onFocus={() => setIsSearching(true)}
-              onBlur={() => setIsSearching(false)}
               className="pl-8 pr-2 py-1 text-sm border rounded bg-background w-32"
             />
           </div>
