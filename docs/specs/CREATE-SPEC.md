@@ -136,6 +136,18 @@ Before submitting, verify:
 
 ---
 
+## Spec File Location
+
+`.tasks/[task-name]/spec.md` (e.g., `.tasks/email-verification-endpoint/spec.md`)
+
+**Output Optimization**: Generated specs MUST follow `docs/specs/PROMPT-OPTIMIZER.md`:
+- Dense, scannable format (bullets, tables, symbols)
+- Minimal prose (≤2 sentences per concept)
+- Templates in code blocks
+- No redundant explanations
+
+---
+
 ## Example Spec
 
 ```markdown

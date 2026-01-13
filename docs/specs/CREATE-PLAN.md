@@ -1,8 +1,22 @@
 # PLAN OF PLANS
 
+> **For AI Agents**: Convert approved spec into verifiable execution plan.
+
 ## Goal
 
 Convert any **Feature Spec** into a **small, verifiable execution plan** that an agent can follow without improvising scope.
+
+---
+
+## Plan File Location
+
+`.tasks/[task-name]/plan.md` (e.g., `.tasks/email-verification-endpoint/plan.md`)
+
+**Output Optimization**: Generated plans MUST follow `docs/specs/PROMPT-OPTIMIZER.md`:
+- Dense, scannable format (bullets, tables, symbols)
+- Minimal prose (≤2 sentences per concept)
+- Templates in code blocks
+- No redundant explanations
 
 ---
 
@@ -10,7 +24,7 @@ Convert any **Feature Spec** into a **small, verifiable execution plan** that an
 
 The plan MUST reference:
 
-* Feature Spec (the “what”)
+* Feature Spec (the "what") - located at `.tasks/[task-name]/spec.md`
 * Spec of Specs (test contract)
 * **ENGINEERING-CONSTRAINTS.md** (mandatory)
 

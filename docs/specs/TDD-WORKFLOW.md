@@ -1,6 +1,6 @@
 # TDD Workflow: Spec → Plan → Implement → Commit
 
-**Execute 4-stage TDD workflow. Always comply with `docs/specs/CONSTRAINTS.md`.**
+> **For AI Agents**: 4-stage TDD workflow. Always comply with `docs/specs/CONSTRAINTS.md`.
 
 ```
 Task → [1] Spec → [2] Plan → [3] Implement → [4] Commit → DONE
@@ -10,97 +10,54 @@ Task → [1] Spec → [2] Plan → [3] Implement → [4] Commit → DONE
 
 ---
 
-## Stage 1: Create Specification
+## Workflow Phases
 
-**Read:** `docs/specs/CREATE-SPEC.md` + `docs/specs/CONSTRAINTS.md`
+This workflow is split into two phases:
 
-**If unclear:** Use `AskUserQuestion` (behaviors, edge cases, security, schema, i18n) → BLOCK until clear
+### Create Phase (Stages 1-2)
+**File:** `docs/specs/TDD-WORKFLOW-CREATE.md`
 
-**Create:** `docs/specs/tasks/TASK-{name}.md` with 8 sections:
-1. Scope (feature, type, impact)
-2. Behaviors to Cover (6-15 testable items)
-3. Expected Outcomes (observable per behavior)
-4. Out of Scope (explicit exclusions)
-5. Test Boundaries (unit/integration, mocking)
-6. Stop Conditions (DONE criteria)
-7. Deliverables (tests, CI, docs, migrations)
-8. Risk & Rollback (blast radius, strategy)
+**Stages:**
+1. **Create Specification** → `.tasks/[task-name]/spec.md`
+2. **Create Implementation Plan** → `.tasks/[task-name]/plan.md`
 
-**Validate:** All 8 sections, every behavior → outcome, constraints compliant
-
-**Exit:** ✓ Complete ✓ User approved ✓ No violations
+**Exit:** Approved spec + plan, ready for implementation
 
 ---
 
-## Stage 2: Create Implementation Plan
+### Execute Phase (Stages 3-4)
+**File:** `docs/specs/TDD-WORKFLOW-EXECUTE.md`
 
-**Read:** `docs/specs/CREATE-PLAN.md` + `CONSTRAINTS.md` + approved spec
+**Stages:**
+3. **Implement the Plan** → TDD implementation with tests
+4. **Commit and Push** → Conventional commits, hooks, push
 
-**Explore:** Use Task(Explore) for patterns, files, tests, collections/components
-
-**If multiple approaches:** Use `AskUserQuestion` (patterns, flags, rollout, migrations) → BLOCK until decided
-
-**Append to spec:** Plan with 7 sections:
-1. Overview (objective, impact, rollout)
-2. Requirements → Plan Map (trace all)
-3. Stages (3-7, risk-ordered, each with: scope, deliverables, verification, exit criteria, constraints check, risk)
-4. Test Plan (staged, not deferred)
-5. Data & Migration (if needed)
-6. Rollout & Monitoring
-7. Stop Conditions
-
-**Validate:** All requirements mapped, stages verified, constraints per stage
-
-**Exit:** ✓ Complete ✓ Mapped ✓ Compliant ✓ User approved
+**Exit:** All tests pass, code committed and pushed
 
 ---
 
-## Stage 3: Implement the Plan
+## Quick Overview
 
-**Branch:** `git checkout -b <type>/<kebab-name>` (feat|fix|chore|docs|refactor|test|security)
+### Stage 1: Create Specification
+- Read: `CREATE-SPEC.md` + `CONSTRAINTS.md` + `PROMPT-OPTIMIZER.md`
+- Create: `.tasks/[task-name]/spec.md` (8 sections, optimized)
+- Exit: ✓ Complete ✓ Optimized ✓ User approved
 
-**Track:** Use `TodoWrite` for each stage (content, activeForm, status)
+### Stage 2: Create Implementation Plan
+- Read: `CREATE-PLAN.md` + `CONSTRAINTS.md` + `PROMPT-OPTIMIZER.md` + approved spec
+- Create: `.tasks/[task-name]/plan.md` (7 sections, optimized)
+- Exit: ✓ Complete ✓ Mapped ✓ Compliant ✓ Optimized ✓ User approved
 
-**Per stage:**
-1. Mark todo "in_progress"
-2. **Write tests FIRST** → Run `pnpm test:unit` → VERIFY fail (red)
-3. **Implement** (Payload-first, i18n, microcomponents, @/ imports, no scope creep)
-4. **Make tests pass** → Run `pnpm test:unit` → VERIFY green
-5. **Quality gate:** `pnpm typecheck && pnpm lint && pnpm build && pnpm test:unit` → Must ALL pass
-6. **Commit** (Stage 4 protocol)
-7. Mark todo "completed"
+### Stage 3: Implement the Plan
+- Branch: `git checkout -b <type>/<kebab-name>`
+- Per stage: Tests FIRST (red) → Implement → Green → Quality gates → Commit
+- Exit: ✓ All stages done ✓ Tests pass ✓ Quality passes
 
-**If issues:** Tests fail → fix code (never skip). Constraints → refactor. Blocked → `AskUserQuestion`
-
-**Exit:** ✓ All stages done ✓ All behaviors tested ✓ Quality passes ✓ No violations
-
----
-
-## Stage 4: Commit and Push
-
-**Pre-check:** On feature branch, quality gates pass (`typecheck && lint && build && test:unit`)
-
-**Stage:** `git add <files>` → No secrets, no CSS (except globals.css) → Review `git diff --cached`
-
-**Commit:** See style with `git log --oneline -5`, then:
-```bash
-git commit -m "$(cat <<'EOF'
-<type>: <Subject in sentence case, no period>
-
-<Body: min 20 chars, WHY not WHAT>
-
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
-EOF
-)"
-```
-Types: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|security`
-
-**Hooks (8 auto-checks):** Branch protection, naming, secrets, CSS, lint-staged, types, build, tests
-→ If fail: read error, consult `COMMIT_GUIDE.md`, fix, `git add`, retry
-
-**Push:** `git push -u origin <branch>` (first) or `git push`
-
-**Exit:** ✓ Committed ✓ Hooks passed ✓ Pushed
+### Stage 4: Commit and Push
+- Pre-check: Quality gates pass
+- Commit: Conventional format + co-author line
+- Hooks: 8 auto-checks must pass
+- Exit: ✓ Committed ✓ Hooks passed ✓ Pushed
 
 ---
 
@@ -136,4 +93,11 @@ Types: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|security`
 
 ## References
 
-`CREATE-SPEC.md` (Stage 1) • `CREATE-PLAN.md` (Stage 2) • `COMMIT_GUIDE.md` (Stage 4) • `CONSTRAINTS.md` (all) • `CLAUDE.md` • `AGENTS.md`
+**Detailed Workflows:**
+- `TDD-WORKFLOW-CREATE.md` (Stages 1-2: Spec + Plan)
+- `TDD-WORKFLOW-EXECUTE.md` (Stages 3-4: Implement + Commit)
+
+**Supporting Docs:**
+- `CREATE-SPEC.md` (Stage 1) • `CREATE-PLAN.md` (Stage 2) • `COMMIT_GUIDE.md` (Stage 4)
+- `PROMPT-OPTIMIZER.md` (output format) • `CONSTRAINTS.md` (compliance)
+- `CLAUDE.md` • `AGENTS.md`
