@@ -41,28 +41,78 @@ export interface SummaryResult {
   tokensUsed: number
 }
 
+/**
+ * Try to read a file from multiple possible paths.
+ * This handles different environments (dev, production, serverless).
+ */
+function tryReadFile(possiblePaths: string[]): { content: string; path: string } | null {
+  for (const filePath of possiblePaths) {
+    try {
+      const content = readFileSync(filePath, 'utf-8')
+      return { content, path: filePath }
+    } catch {
+      // Try next path
+      continue
+    }
+  }
+  return null
+}
+
 // Load prompt from external file with a safe fallback so that missing files
 // do not crash the agent chat endpoint at module load time (e.g. in serverless environments).
 // First tries to load the main prompt file, then falls back to the default file, then to inline default.
 let SUMMARY_SYSTEM_PROMPT: string = ''
 
+// Try multiple path resolution strategies for different environments
+// In Vercel, files might be in different locations depending on the build output
+const cwd = process.cwd()
+const possibleMainPaths = [
+  // Standard path (works in dev and most production builds)
+  join(__dirname, 'prompts/summary-system-prompt.md'),
+  // Path relative to project root (works in some serverless environments)
+  join(cwd, 'src/lib/ai/prompts/summary-system-prompt.md'),
+  // Vercel serverless function path
+  join(cwd, 'src', 'lib', 'ai', 'prompts', 'summary-system-prompt.md'),
+  // Path from dist/build output (if files are copied there)
+  join(cwd, '.next', 'server', 'app', 'lib', 'ai', 'prompts', 'summary-system-prompt.md'),
+  // Alternative serverless path
+  join(cwd, '.next', 'server', 'chunks', 'src', 'lib', 'ai', 'prompts', 'summary-system-prompt.md'),
+]
+
+const possibleDefaultPaths = [
+  join(__dirname, 'prompts/summary-system-prompt.default.md'),
+  join(cwd, 'src/lib/ai/prompts/summary-system-prompt.default.md'),
+  join(cwd, 'src', 'lib', 'ai', 'prompts', 'summary-system-prompt.default.md'),
+  join(cwd, '.next', 'server', 'app', 'lib', 'ai', 'prompts', 'summary-system-prompt.default.md'),
+  join(cwd, '.next', 'server', 'chunks', 'src', 'lib', 'ai', 'prompts', 'summary-system-prompt.default.md'),
+]
+
 try {
-  const promptPath = join(__dirname, 'prompts/summary-system-prompt.md')
-  SUMMARY_SYSTEM_PROMPT = readFileSync(promptPath, 'utf-8')
+  const result = tryReadFile(possibleMainPaths)
+  if (result) {
+    SUMMARY_SYSTEM_PROMPT = result.content
+    logger.debug({ path: result.path }, '[Summary] Loaded summary system prompt from file')
+  } else {
+    throw new Error('Could not find summary-system-prompt.md in any expected location')
+  }
 } catch (error: unknown) {
   logger.warn(
-    { err: error, path: join(__dirname, 'prompts/summary-system-prompt.md') },
+    { err: error, paths: possibleMainPaths, cwd, __dirname },
     '[Summary] Failed to load summary system prompt from markdown file, trying default fallback',
   )
 
   // Try to load the default fallback file
   try {
-    const defaultPath = join(__dirname, 'prompts/summary-system-prompt.default.md')
-    SUMMARY_SYSTEM_PROMPT = readFileSync(defaultPath, 'utf-8')
-    logger.info('[Summary] Loaded default summary prompt from fallback file')
+    const result = tryReadFile(possibleDefaultPaths)
+    if (result) {
+      SUMMARY_SYSTEM_PROMPT = result.content
+      logger.info({ path: result.path }, '[Summary] Loaded default summary prompt from fallback file')
+    } else {
+      throw new Error('Could not find default fallback file')
+    }
   } catch (fallbackError: unknown) {
     logger.warn(
-      { err: fallbackError },
+      { err: fallbackError, paths: possibleDefaultPaths },
       '[Summary] Failed to load default fallback file, using inline default',
     )
     // Final fallback: inline default (matches summary-system-prompt.default.md)
@@ -81,6 +131,7 @@ try {
       'Omit greetings, small talk, and ephemeral content.',
       'Focus on information that will help continue the conversation later.',
     ].join('\n')
+    logger.info('[Summary] Using inline default prompt')
   }
 }
 
