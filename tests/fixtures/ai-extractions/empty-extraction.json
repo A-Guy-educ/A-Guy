@@ -1,0 +1,10 @@
+{
+  "success": false,
+  "error": "Extracted content too short or empty",
+  "metadata": {
+    "model": "claude-3-5-sonnet-20241022",
+    "processingTimeMs": 500,
+    "fileSizeBytes": 100,
+    "cached": false
+  }
+}

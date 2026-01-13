@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "structuredContent": "# Introduction to Algebra\n\n## Basic Concepts\n\nAlgebra is a branch of mathematics that uses symbols and letters to represent numbers and quantities in formulas and equations.\n\n### Variables\n\nVariables are symbols (usually letters) that represent unknown values. Common examples include x, y, and z.\n\n### Equations\n\nAn equation is a mathematical statement that shows two expressions are equal. For example: 2x + 3 = 7\n\n## Solving Linear Equations\n\nTo solve a linear equation, we isolate the variable on one side of the equation.\n\n### Steps:\n\n1. Simplify both sides of the equation\n2. Use inverse operations to isolate the variable\n3. Check your solution by substituting back into the original equation\n\n## Practice Problems\n\nExample 1: Solve 3x - 5 = 10\n\nSolution: Add 5 to both sides, then divide by 3. x = 5\n\nExample 2: Solve 2(x + 3) = 14\n\nSolution: Distribute, subtract 6, then divide by 2. x = 4",
+  "metadata": {
+    "model": "claude-3-5-sonnet-20241022",
+    "processingTimeMs": 1500,
+    "fileSizeBytes": 2500,
+    "cached": false
+  }
+}

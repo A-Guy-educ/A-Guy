@@ -1173,6 +1173,100 @@ import type { User, Course, CollectionConfig } from '@/types'
 
 See [docs/ai/README.md](docs/ai/README.md) for full guide and [docs/ai/QUICK-START.md](docs/ai/QUICK-START.md) for quick reference.
 
+## AI Document Extraction Service
+
+The project includes an AI-powered document extraction service for automatically processing lesson PDFs and creating memory items for chat context.
+
+### Architecture
+
+**Service Layer:**
+- `src/lib/ai/services/ai-document-extractor.ts` - Extracts structured content from PDFs using Claude
+- `src/lib/ai/document-memory-service.ts` - Creates memory items from extracted content
+- `src/lib/ai/extraction-cache.ts` - Caches extraction results to avoid duplicate API calls
+- `src/lib/ai/services/document-extraction-handler.ts` - Handles extraction workflow
+
+### Usage Pattern
+
+```typescript
+import { extractDocumentContent } from '@/lib/ai/services/ai-document-extractor'
+import { chunkDocumentContent, createDocumentMemories } from '@/lib/ai/document-memory-service'
+
+// Extract structured content from PDF
+const result = await extractDocumentContent(pdfBuffer, 'lesson.pdf')
+
+if (result.success && result.structuredContent) {
+  // Chunk content into memory-sized pieces
+  const chunks = chunkDocumentContent(result.structuredContent)
+  
+  // Create memory items
+  await createDocumentMemories(
+    payload,
+    userId,
+    conversationId,
+    lessonId,
+    'lesson.pdf',
+    chunks,
+    new Date()
+  )
+}
+```
+
+### Key Features
+
+1. **Automatic Extraction**: Triggered on first message in lesson conversations
+2. **Semantic Chunking**: Respects 2000 char limit, preserves section boundaries
+3. **Caching**: Results cached by file hash (1 hour TTL) to avoid duplicate API calls
+4. **Error Handling**: Graceful degradation - chat continues even if extraction fails
+5. **Background Processing**: Non-blocking - doesn't delay chat responses
+
+### Integration Points
+
+**Chat Endpoint** (`src/endpoints/agent/chat.ts`):
+- Checks if first message in lesson conversation
+- Triggers async document extraction
+- Extraction runs in background, doesn't block response
+
+**Memory Retrieval** (`src/lib/ai/vector-search.ts`):
+- Document memories automatically retrieved via vector search
+- Included in context policy composition
+- Filtered by conversationId for isolation
+
+### Configuration
+
+**Feature Flags** (`src/lib/feature-flags.ts`):
+- `MEMORY_EXTRACTION_ENABLED`: Must be `true` for extraction to run
+- `MEMORY_RETRIEVAL_ENABLED`: Must be `true` for document memories to be retrieved
+
+**Environment Variables**:
+- `ANTHROPIC_API_KEY`: Required for Claude API calls
+- `OPENAI_API_KEY`: Required for embedding generation
+
+### Memory Item Structure
+
+Document memories are stored with:
+- `type: 'document'` - Identifies as document content
+- `importance: 5` - Highest importance for source material
+- `text: string` - Chunked content (max 2000 chars)
+- `embedding: number[]` - 1536-dim vector for semantic search
+- `source.conversationId` - Links to conversation
+- `source.lessonId` - Links to source lesson (via metadata)
+
+### Best Practices
+
+1. **Idempotency**: Always check for existing document memories before extraction
+2. **Chunking**: Respect 2000 char limit, use semantic boundaries (sections)
+3. **Error Handling**: Never throw - log errors and continue chat flow
+4. **Caching**: Use file hash as cache key to avoid duplicate extractions
+5. **Background Processing**: Use `Promise.allSettled()` for non-blocking execution
+
+### Testing
+
+Integration tests in `tests/int/lesson-document-chat.int.spec.ts`:
+- Mock PDF parsing (`pdf-parse`)
+- Mock Claude API (`@anthropic-ai/sdk`)
+- Mock embeddings (`@/lib/ai/embeddings`)
+- Verify memory creation and chunking
+
 ## Resources
 
 - Docs: https://payloadcms.com/docs

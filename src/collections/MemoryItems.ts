@@ -91,6 +91,7 @@ export const MemoryItems: CollectionConfig = {
         { label: 'Open Loop', value: 'open_loop' },
         { label: 'Profile', value: 'profile' },
         { label: 'Constraint', value: 'constraint' },
+        { label: 'Document', value: 'document' },
         { label: 'Other', value: 'other' },
       ],
       admin: {

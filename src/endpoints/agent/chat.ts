@@ -25,6 +25,7 @@ import { ChatRole } from '@/lib/ai/chat-message-role'
 import { extractMemoryCandidates, persistMemoryItems } from '@/lib/ai/memory-extraction'
 import { createContextLog, logContextUsage, logPromptSnapshot } from '@/lib/ai/observability'
 import { chatWithExerciseHelper, getSystemPrompt } from '@/lib/ai/services/exercise-chat-service'
+import { handleDocumentExtraction } from '@/lib/ai/services/document-extraction-handler'
 import { isVectorIndexAvailable } from '@/lib/ai/vector-index-check'
 import { retrieveMemoryItems, type MemoryItem } from '@/lib/ai/vector-search'
 import { featureFlags } from '@/lib/feature-flags'
@@ -154,6 +155,25 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     const recentMessages = getRecentWindow(allMessages as Message[])
 
     reqLogger.info({ recentCount: recentMessages.length }, '[DEBUG] Recent window extracted')
+
+    // 6.5) Background: Extract document content for lesson conversations (first message only)
+    if (
+      contextType === 'lesson' &&
+      validated.lessonId &&
+      allMessages.length === 1 && // First message only
+      featureFlags.MEMORY_EXTRACTION_ENABLED
+    ) {
+      // Run asynchronously (non-blocking)
+      handleDocumentExtraction(
+        req.payload,
+        req.user.id,
+        conversationId,
+        validated.lessonId,
+        req,
+      ).catch((err) => {
+        reqLogger.error({ err, conversationId, lessonId: validated.lessonId }, 'Document extraction failed')
+      })
+    }
 
     // 7) Retrieve memory items (if enabled)
     let memoryItems: MemoryItem[] = []
