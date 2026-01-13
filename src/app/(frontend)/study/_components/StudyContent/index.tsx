@@ -28,9 +28,7 @@ export function StudyContent() {
 
       try {
         // Load chapters with lessons for the selected course (by grade level)
-        const chaptersResponse = await fetch(
-          `/api/chapters/by-grade?grade=${profile.gradeLevel}`,
-        )
+        const chaptersResponse = await fetch(`/api/chapters/by-grade?grade=${profile.gradeLevel}`)
         if (chaptersResponse.ok) {
           const data = await chaptersResponse.json()
           setChapters(data.chapters || [])
