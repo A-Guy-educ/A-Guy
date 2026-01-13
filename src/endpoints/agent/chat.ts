@@ -33,14 +33,16 @@ import { logger } from '@/utilities/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
 
-const requestSchema = z.object({
-  message: z.string().min(1).max(1000),
-  acknowledgment: z.string().min(1),
-  exerciseId: z.string().min(1).optional(),
-  lessonId: z.string().min(1).optional(),
-}).refine((data) => data.exerciseId || data.lessonId, {
-  message: 'Either exerciseId or lessonId must be provided',
-})
+const requestSchema = z
+  .object({
+    message: z.string().min(1).max(1000),
+    acknowledgment: z.string().min(1),
+    exerciseId: z.string().min(1).optional(),
+    lessonId: z.string().min(1).optional(),
+  })
+  .refine((data) => data.exerciseId || data.lessonId, {
+    message: 'Either exerciseId or lessonId must be provided',
+  })
 
 export async function agentChat(req: PayloadRequest & { json?: () => Promise<unknown> }) {
   const requestId = crypto.randomUUID()
@@ -64,10 +66,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     const contextType = validated.exerciseId ? 'exercise' : 'lesson'
     const contextField = validated.exerciseId ? 'exercise' : 'lesson'
 
-    reqLogger.info(
-      { userId: req.user.id, contextType, contextId },
-      'Processing chat request',
-    )
+    reqLogger.info({ userId: req.user.id, contextType, contextId }, 'Processing chat request')
 
     // 3) Find or create conversation
     const whereClause: any = { user: { equals: req.user.id } }

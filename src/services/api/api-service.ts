@@ -89,10 +89,7 @@ export const apiService = {
    * @param lessonId - The ID of the lesson (optional)
    * @returns Conversation history with messages
    */
-  async getConversation(
-    exerciseId?: string,
-    lessonId?: string,
-  ): Promise<ConversationApiResponse> {
+  async getConversation(exerciseId?: string, lessonId?: string): Promise<ConversationApiResponse> {
     try {
       // Use Payload's auto-generated REST API with query filters
       // Access control is automatically enforced by Payload

@@ -83,12 +83,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
       exerciseTitle={lesson.title}
       backUrl={`/courses/${courseSlug}/chapters/${chapterSlug}`}
       pdfContent={pdfContent}
-      chatContent={
-        <ChatInterface
-          exerciseId={chatExerciseId}
-          lessonId={chatLessonId}
-        />
-      }
+      chatContent={<ChatInterface exerciseId={chatExerciseId} lessonId={chatLessonId} />}
     />
   )
 }
