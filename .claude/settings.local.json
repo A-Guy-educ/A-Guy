@@ -30,7 +30,8 @@
       "Bash(grep:*)",
       "Bash(pnpm list:*)",
       "Bash(pnpm why:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(gh pr create:*)"
     ]
   }
 }
