@@ -34,10 +34,10 @@ export async function extractTextFromPDF(options: ExtractTextOptions): Promise<s
     const parser = new PDFParse({ data })
     const textResult = await parser.getText()
     const text = textResult.text || ''
-    
+
     // Clean up parser resources
     await parser.destroy()
-    
+
     if (text.trim().length === 0) {
       logger.warn('PDF contains no extractable text')
       return ''
@@ -46,7 +46,9 @@ export async function extractTextFromPDF(options: ExtractTextOptions): Promise<s
     return text
   } catch (error) {
     logger.error({ err: error }, 'PDF extraction failed')
-    throw new Error(`Failed to extract text from PDF: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    throw new Error(
+      `Failed to extract text from PDF: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    )
   }
 }
 
@@ -61,15 +63,15 @@ export function chunkText(text: string, maxChunkSize: number = 2000): string[] {
 
   const chunks: string[] = []
   let currentChunk = ''
-  
+
   // Split by sentence boundaries (period, exclamation, question mark)
   const sentences = text.split(/([.!?]\s+)/)
-  
+
   for (let i = 0; i < sentences.length; i++) {
     const sentence = sentences[i]
     const nextSeparator = i + 1 < sentences.length ? sentences[i + 1] : ''
     const fullSentence = sentence + nextSeparator
-    
+
     // If adding this sentence would exceed limit, finalize current chunk
     if (currentChunk.length + fullSentence.length > maxChunkSize && currentChunk.length > 0) {
       chunks.push(currentChunk.trim())
@@ -77,18 +79,18 @@ export function chunkText(text: string, maxChunkSize: number = 2000): string[] {
     } else {
       currentChunk += fullSentence
     }
-    
+
     // Skip the separator in next iteration
     if (nextSeparator) {
       i++
     }
   }
-  
+
   // Add remaining chunk
   if (currentChunk.trim().length > 0) {
     chunks.push(currentChunk.trim())
   }
-  
+
   // Safety: if any chunk is still too large, force split at word boundaries
   const finalChunks: string[] = []
   for (const chunk of chunks) {
@@ -113,6 +115,6 @@ export function chunkText(text: string, maxChunkSize: number = 2000): string[] {
       }
     }
   }
-  
+
   return finalChunks
 }

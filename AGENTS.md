@@ -1180,6 +1180,7 @@ The project includes a PDF extraction service for automatically extracting text 
 ### Overview
 
 When a student sends their first message in a lesson conversation, the system automatically:
+
 1. Downloads PDF files from the lesson's `contentFiles`
 2. Extracts text using `pdf-parse` library
 3. Chunks text into segments (max 2000 chars) respecting sentence boundaries
@@ -1189,14 +1190,17 @@ When a student sends their first message in a lesson conversation, the system au
 ### Key Components
 
 **PDF Extraction Service** (`src/lib/ai/services/pdf-extractor-service.ts`):
+
 - `extractTextFromPDF()` - Extracts text from PDF buffers
 - `chunkText()` - Chunks text with sentence-boundary awareness (max 2000 chars)
 
 **Document Memory Service** (`src/lib/ai/document-memory-service.ts`):
+
 - `hasDocumentMemories()` - Checks if document memories already exist
 - `createDocumentMemories()` - Batch creates memory items with embeddings
 
 **Lesson Document Extraction** (`src/lib/ai/services/lesson-document-extraction.ts`):
+
 - `extractAndStoreLessonDocuments()` - Orchestrates PDF download, extraction, and storage
 
 ### Usage Pattern
@@ -1206,8 +1210,9 @@ import { extractAndStoreLessonDocuments } from '@/lib/ai/services/lesson-documen
 
 // In chat endpoint (non-blocking)
 if (featureFlags.ENABLE_DOCUMENT_MEMORY && isFirstMessage && lessonId) {
-  extractAndStoreLessonDocuments(payload, userId, conversationId, lessonId)
-    .catch((err) => logger.error({ err }, 'Document extraction failed'))
+  extractAndStoreLessonDocuments(payload, userId, conversationId, lessonId).catch((err) =>
+    logger.error({ err }, 'Document extraction failed'),
+  )
   // Don't await - runs in background
 }
 ```
@@ -1224,6 +1229,7 @@ The chunking algorithm respects sentence boundaries to avoid mid-sentence splits
 ### Error Handling
 
 All extraction operations use graceful degradation:
+
 - PDF download failures → Log error, continue chat
 - Extraction failures → Log error, continue chat
 - Embedding failures → Log error, retry in background
@@ -1239,6 +1245,7 @@ ENABLE_DOCUMENT_MEMORY=true
 ```
 
 **Rollout Strategy**:
+
 1. Dev: `true` (internal testing)
 2. Staging: `true` (QA verification)
 3. Prod: `false` → `true` (gradual rollout, monitor 24h)

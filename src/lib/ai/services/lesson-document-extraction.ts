@@ -34,11 +34,11 @@ export async function extractAndStoreLessonDocuments(
     }
 
     // Fetch lesson with contentFiles
-    const lesson = await payload.findByID({
+    const lesson = (await payload.findByID({
       collection: 'lessons',
       id: lessonId,
       depth: 2, // Populate contentFiles
-    }) as Lesson
+    })) as Lesson
 
     if (!lesson.contentFiles || lesson.contentFiles.length === 0) {
       logger.info({ lessonId }, 'No PDF documents found for lesson')

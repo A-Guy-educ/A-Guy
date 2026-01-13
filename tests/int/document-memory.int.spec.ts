@@ -171,7 +171,7 @@ describe.skipIf(!hasOpenAIKey)('Document Memory Service', () => {
       })
 
       expect(memories.docs.length).toBe(created)
-      
+
       // Verify memory structure
       const memory = memories.docs[0]
       expect(memory.type).toBe('document')

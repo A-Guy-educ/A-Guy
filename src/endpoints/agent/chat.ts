@@ -117,7 +117,6 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       conversationId = newConv.id
       conversation = newConv
       reqLogger.info({ conversationId, contextType }, 'Created new conversation')
-
     }
 
     // 4) Persist user message FIRST
@@ -133,7 +132,10 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     // 3.5) Background: Extract lesson documents on first message (non-blocking)
     if (featureFlags.ENABLE_DOCUMENT_MEMORY && validated.lessonId && isFirstUserMessage) {
-      reqLogger.debug({ conversationId, lessonId: validated.lessonId }, 'Starting document extraction')
+      reqLogger.debug(
+        { conversationId, lessonId: validated.lessonId },
+        'Starting document extraction',
+      )
       extractAndStoreLessonDocuments(req.payload, req.user.id, conversationId, validated.lessonId)
         .then(() => {
           reqLogger.info({ conversationId }, 'Document extraction completed')

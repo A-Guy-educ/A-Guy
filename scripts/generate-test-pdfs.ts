@@ -76,8 +76,10 @@ startxref
 
 // Long lesson PDF (~10000 chars, multiple chunks)
 // Create a longer text string with actual sentences
-const longText = Array.from({ length: 300 }, (_, i) => 
-  `This is sentence ${i + 1} of a long lesson PDF. It contains educational content for testing PDF extraction with multiple chunks. The text should be extracted and chunked correctly by the PDF parser. `.repeat(2)
+const longText = Array.from({ length: 300 }, (_, i) =>
+  `This is sentence ${i + 1} of a long lesson PDF. It contains educational content for testing PDF extraction with multiple chunks. The text should be extracted and chunked correctly by the PDF parser. `.repeat(
+    2,
+  ),
 ).join('')
 
 // Calculate approximate length for PDF structure
