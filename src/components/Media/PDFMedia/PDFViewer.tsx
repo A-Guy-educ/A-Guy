@@ -7,10 +7,9 @@ import { cn } from '@/utilities/ui'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 
-// Configure pdf.js worker
+// Configure pdf.js worker - use local worker file for reliability
 if (typeof window !== 'undefined') {
-  // Use CDN for worker - stable version
-  pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+  pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
 }
 
 export interface PDFViewerProps {
