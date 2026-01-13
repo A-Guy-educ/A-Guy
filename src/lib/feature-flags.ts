@@ -34,6 +34,14 @@ export const featureFlags = {
    * - Injects into prompt before model call
    */
   MEMORY_RETRIEVAL_ENABLED: process.env.MEMORY_RETRIEVAL_ENABLED === 'true',
+
+  /**
+   * Enable automatic document extraction from lesson PDFs
+   * - Extracts text from PDFs on first message
+   * - Creates document-type memory items
+   * - Runs asynchronously in background
+   */
+  ENABLE_DOCUMENT_MEMORY: process.env.ENABLE_DOCUMENT_MEMORY === 'true',
 } as const
 
 export type FeatureFlags = typeof featureFlags
@@ -47,6 +55,7 @@ export function logFeatureFlags(): void {
     summaryMaintenance: featureFlags.SUMMARY_MAINTENANCE_ENABLED,
     memoryExtraction: featureFlags.MEMORY_EXTRACTION_ENABLED,
     memoryRetrieval: featureFlags.MEMORY_RETRIEVAL_ENABLED,
+    documentMemory: featureFlags.ENABLE_DOCUMENT_MEMORY,
   })
 }
 
@@ -58,10 +67,12 @@ export function getFeatureFlagStatus(): {
   summaryMaintenance: boolean
   memoryExtraction: boolean
   memoryRetrieval: boolean
+  documentMemory: boolean
 } {
   return {
     summaryMaintenance: featureFlags.SUMMARY_MAINTENANCE_ENABLED,
     memoryExtraction: featureFlags.MEMORY_EXTRACTION_ENABLED,
     memoryRetrieval: featureFlags.MEMORY_RETRIEVAL_ENABLED,
+    documentMemory: featureFlags.ENABLE_DOCUMENT_MEMORY,
   }
 }

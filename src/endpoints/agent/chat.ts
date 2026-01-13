@@ -25,6 +25,7 @@ import { ChatRole } from '@/lib/ai/chat-message-role'
 import { extractMemoryCandidates, persistMemoryItems } from '@/lib/ai/memory-extraction'
 import { createContextLog, logContextUsage, logPromptSnapshot } from '@/lib/ai/observability'
 import { chatWithExerciseHelper, getSystemPrompt } from '@/lib/ai/services/exercise-chat-service'
+import { extractAndStoreLessonDocuments } from '@/lib/ai/services/lesson-document-extraction'
 import { isVectorIndexAvailable } from '@/lib/ai/vector-index-check'
 import { retrieveMemoryItems, type MemoryItem } from '@/lib/ai/vector-search'
 import { featureFlags } from '@/lib/feature-flags'
@@ -85,7 +86,9 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     let conversationId: string
     let conversation: Conversation
 
-    if (existingConv.docs.length > 0) {
+    const isFirstMessage = existingConv.docs.length === 0
+
+    if (!isFirstMessage) {
       // Use existing conversation
       conversation = existingConv.docs[0]
       conversationId = conversation.id
@@ -114,6 +117,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       conversationId = newConv.id
       conversation = newConv
       reqLogger.info({ conversationId, contextType }, 'Created new conversation')
+
     }
 
     // 4) Persist user message FIRST
@@ -125,6 +129,20 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     const conversationHistory = conversation.messages || []
     const allMessages = [...conversationHistory, userMessage]
+    const isFirstUserMessage = conversationHistory.length === 0
+
+    // 3.5) Background: Extract lesson documents on first message (non-blocking)
+    if (featureFlags.ENABLE_DOCUMENT_MEMORY && validated.lessonId && isFirstUserMessage) {
+      reqLogger.debug({ conversationId, lessonId: validated.lessonId }, 'Starting document extraction')
+      extractAndStoreLessonDocuments(req.payload, req.user.id, conversationId, validated.lessonId)
+        .then(() => {
+          reqLogger.info({ conversationId }, 'Document extraction completed')
+        })
+        .catch((err) => {
+          reqLogger.error({ err, conversationId }, 'Document extraction failed in background')
+        })
+      // Don't await - run in background
+    }
 
     await req.payload.update({
       collection: 'conversations',
