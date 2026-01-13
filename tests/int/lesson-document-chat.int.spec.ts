@@ -123,13 +123,14 @@ async function createMediaFileWithFile(
   filename: string,
   content: Buffer = Buffer.from('%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n>>\nendobj\nxref\n0 0\ntrailer\n<<\n/Size 1\n/Root 1 0 R\n>>\nstartxref\n9\n%%EOF'),
 ): Promise<{ id: string; filePath: string }> {
-  // Get the media directory path (same as Media collection staticDir)
-  // Media collection: path.resolve(dirname, '../../public/media') where dirname is src/collections/Media
-  // This resolves to src/public/media
-  const testFile = fileURLToPath(import.meta.url)
-  const testDir = path.dirname(testFile) // tests/int
-  const projectRoot = path.resolve(testDir, '../..') // project root
-  const mediaDir = path.join(projectRoot, 'src', 'public', 'media')
+  // Get the media directory path using the same resolution as Media collection
+  // Media collection uses: path.resolve(dirname, '../../public/media')
+  // where dirname is the directory of src/collections/Media/index.ts
+  const mediaCollectionPath = fileURLToPath(
+    new URL('../../src/collections/Media/index.ts', import.meta.url),
+  )
+  const mediaCollectionDir = path.dirname(mediaCollectionPath)
+  const mediaDir = path.resolve(mediaCollectionDir, '../../public/media')
   
   // Ensure directory exists
   if (!fs.existsSync(mediaDir)) {
@@ -140,6 +141,11 @@ async function createMediaFileWithFile(
   
   // Write the file to disk first (Payload will read from here during processing)
   fs.writeFileSync(filePath, content)
+  
+  // Verify file was written
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Failed to create file at ${filePath}`)
+  }
   
   // Create media record with file buffer
   // Payload will process the file and may read it from disk for metadata extraction
