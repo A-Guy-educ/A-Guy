@@ -41,11 +41,37 @@ export interface SummaryResult {
   tokensUsed: number
 }
 
-// Load prompt from external file
-const SUMMARY_SYSTEM_PROMPT = readFileSync(
-  join(__dirname, 'prompts/summary-system-prompt.md'),
-  'utf-8',
-)
+// Default summary system prompt used if the markdown file cannot be read at runtime.
+// This matches the content of `src/lib/ai/prompts/summary-system-prompt.md`.
+const DEFAULT_SUMMARY_SYSTEM_PROMPT = [
+  'You are a conversation summarizer for an educational chat system.',
+  '',
+  'Your task is to create a concise, factual summary that preserves:',
+  '',
+  '- Key decisions made',
+  '- User preferences and constraints',
+  '- Important facts and context',
+  '- Open loops (unresolved questions)',
+  '- Learning progress and goals',
+  '',
+  'Keep the summary under 500 words. Use clear, structured format.',
+  'Omit greetings, small talk, and ephemeral content.',
+  'Focus on information that will help continue the conversation later.',
+].join('\n')
+
+// Load prompt from external file with a safe fallback so that missing files
+// do not crash the agent chat endpoint at module load time (e.g. in serverless environments).
+let SUMMARY_SYSTEM_PROMPT: string = DEFAULT_SUMMARY_SYSTEM_PROMPT
+
+try {
+  const promptPath = join(__dirname, 'prompts/summary-system-prompt.md')
+  SUMMARY_SYSTEM_PROMPT = readFileSync(promptPath, 'utf-8')
+} catch (error: unknown) {
+  logger.warn(
+    { err: error },
+    '[Summary] Failed to load summary system prompt from markdown file, falling back to default inline prompt',
+  )
+}
 
 /**
  * Generate or update conversation summary
