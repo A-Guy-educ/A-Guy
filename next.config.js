@@ -46,6 +46,12 @@ const nextConfig = {
       type: 'asset/source',
     })
 
+    // Handle pdfjs-dist worker files
+    webpackConfig.resolve.alias = {
+      ...webpackConfig.resolve.alias,
+      canvas: false,
+    }
+
     return webpackConfig
   },
   reactStrictMode: true,

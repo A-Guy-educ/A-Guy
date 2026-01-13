@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { useFormFields } from '@payloadcms/ui'
+import { PDFViewer } from '@/components/Media/PDFMedia/PDFViewer'
 
 export const PDFPreview: React.FC = () => {
   const urlField = useFormFields(([fields]) => fields.url)
@@ -20,21 +21,9 @@ export const PDFPreview: React.FC = () => {
 
   return (
     <div className="p-4">
-      <div className="mb-2">
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block px-4 py-2 bg-[var(--theme-elevation-300)] rounded no-underline"
-        >
-          📄 Open PDF
-        </a>
+      <div className="h-[600px] border border-[var(--theme-elevation-300)] rounded overflow-hidden">
+        <PDFViewer file={url} />
       </div>
-      <iframe
-        src={url}
-        className="w-full h-[600px] border border-[var(--theme-elevation-300)] rounded"
-        title={filename || 'PDF Preview'}
-      />
     </div>
   )
 }
