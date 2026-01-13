@@ -35,9 +35,7 @@ export const HeaderThemeProvider = ({ children }: { children: React.ReactNode })
   // - Otherwise (undefined), use the main theme
   const headerTheme = overrideTheme !== undefined ? overrideTheme : mainTheme
 
-  return (
-    <HeaderThemeContext value={{ headerTheme, setHeaderTheme }}>{children}</HeaderThemeContext>
-  )
+  return <HeaderThemeContext value={{ headerTheme, setHeaderTheme }}>{children}</HeaderThemeContext>
 }
 
 export const useHeaderTheme = (): ContextType => use(HeaderThemeContext)
