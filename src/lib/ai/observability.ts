@@ -9,7 +9,6 @@
  */
 
 import { logger } from '@/utilities/logger'
-import { getFeatureFlagStatus } from '../feature-flags'
 import type { ComposedPrompt } from './context-policy'
 
 export interface ContextLog {
@@ -31,7 +30,8 @@ export interface ContextLog {
     windowSize: number
     totalCount: number
   }
-  featureFlags: {
+  // Feature flags removed - all features always enabled
+  featuresEnabled: {
     summaryMaintenance: boolean
     memoryExtraction: boolean
     memoryRetrieval: boolean
@@ -102,7 +102,12 @@ export function createContextLog(params: {
       windowSize: params.messageWindowSize,
       totalCount: params.messageTotalCount,
     },
-    featureFlags: getFeatureFlagStatus(),
+    featuresEnabled: {
+      summaryMaintenance: true,
+      memoryExtraction: true,
+      memoryRetrieval: true,
+      documentMemory: true,
+    },
     modelLatencyMs: params.modelLatencyMs,
   }
 }
