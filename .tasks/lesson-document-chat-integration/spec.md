@@ -15,6 +15,7 @@ Impact: high
 ## 2. Behaviors to Cover
 
 ### Happy Path
+
 1. **Should extract and store document content when user sends first message in lesson conversation**
    - Given: Lesson has contentFiles with PDFs
    - When: User sends first message in conversation
@@ -31,6 +32,7 @@ Impact: high
    - Then: Creates 5+ memory items with semantic chunking
 
 ### Edge Cases
+
 4. **Should skip document extraction when lesson has no PDF files**
    - Given: Lesson contentFiles contains only images/videos
    - When: First message sent
@@ -47,6 +49,7 @@ Impact: high
    - Then: Logs warning, continues chat without document context
 
 ### Failures
+
 7. **Should continue chat when PDF extraction fails**
    - Given: PDF extraction throws error (corrupted file, network timeout)
    - When: First message processing
@@ -58,6 +61,7 @@ Impact: high
    - Then: Chat responds normally, logs error, retries embedding in background
 
 ### Security
+
 9. **Should enforce conversation-level access control for document memories**
    - Given: User A has conversation with lesson document
    - When: User B queries their own lesson conversation
@@ -69,6 +73,7 @@ Impact: high
     - Then: Returns 403, does not extract or store document content
 
 ### Performance
+
 11. **Should process document extraction asynchronously without blocking chat response**
     - Given: User sends first message
     - When: Chat response generation starts
@@ -84,6 +89,7 @@ Impact: high
 ## 3. Expected Outcomes
 
 **Behavior 1 → Outcome**:
+
 - Database: MemoryItems collection contains records with:
   - `userId`: Current user ID
   - `conversationId`: Current conversation ID
@@ -96,55 +102,66 @@ Impact: high
 - Count: 1+ memory items (depends on document length)
 
 **Behavior 2 → Outcome**:
+
 - API: Chat response includes content that references document text
 - Logs: Context usage includes document memory items with source citations
 
 **Behavior 3 → Outcome**:
+
 - Database: Multiple MemoryItems with same conversationId, sequential chunkIndex
 - Each item: `text.length <= 2000`
 - Chunking: Respects sentence/paragraph boundaries (no mid-sentence cuts)
 
 **Behavior 4 → Outcome**:
+
 - Database: No document-type memory items created
 - API: 200 response with chat answer
 - Logs: Info log "No PDF documents found for lesson {lessonId}"
 
 **Behavior 5 → Outcome**:
+
 - Database: No new memory items created (count unchanged)
 - Query: `db.memory_items.countDocuments({ conversationId: X, type: 'document' })` > 0
 - Logs: Debug log "Document memories already exist, skipping extraction"
 
 **Behavior 6 → Outcome**:
+
 - API: 200 response with chat answer
 - Logs: Warn log "PDF {fileName} contains no extractable text"
 - Database: No memory items created for empty PDF
 
 **Behavior 7 → Outcome**:
+
 - API: 200 response with chat answer (no failure exposed to user)
 - Logs: Error log with PDF extraction error details + stack trace
 - Database: No document memory items created
 
 **Behavior 8 → Outcome**:
+
 - API: 200 response with chat answer
 - Logs: Error log "Embedding generation failed, will retry in background"
 - Background: Task queued to retry embedding generation
 
 **Behavior 9 → Outcome**:
+
 - Vector Search: Filter includes `{ conversationId: <user's conversation>, userId: <current user> }`
 - Results: Only memories from user's own conversation returned
 - Test: User B queries → 0 document memories from User A's conversation
 
 **Behavior 10 → Outcome**:
+
 - API: 403 response with message "Access denied to lesson"
 - Database: No conversation created, no memory items created
 - Logs: Security log "Unauthorized lesson access attempt by user {userId}"
 
 **Behavior 11 → Outcome**:
+
 - API: Chat response time < 3s (measured in integration test)
 - Background: Document extraction task spawned with `Promise.allSettled()` (non-blocking)
 - Logs: Two separate log entries with timestamps showing async execution
 
 **Behavior 12 → Outcome**:
+
 - Network: Single `fetch()` call to Vercel Blob URL per PDF
 - Memory: Buffer stored in scope/closure during chunking loop
 - Logs: Debug log showing "Processing chunk 2/5 from cached buffer"
@@ -156,6 +173,7 @@ Impact: high
 **Explicitly excluded from this task:**
 
 ### Feature Exclusions
+
 - Image OCR extraction (only PDF text extraction)
 - Video transcript extraction (future enhancement)
 - Document summarization (will be handled by existing memory extraction)
@@ -165,11 +183,13 @@ Impact: high
 - Document search/filtering UI
 
 ### Test Type Exclusions
+
 - E2E tests (chat interaction tested at integration level)
 - Performance benchmarks (extraction time variance too high for CI)
 - Load testing (background processing behavior)
 
 ### Technical Exclusions
+
 - PDF table/form extraction (only plain text)
 - PDF image extraction (only text content)
 - Scanned PDF OCR (requires Gemini vision API - future)
@@ -177,6 +197,7 @@ Impact: high
 - Real-time document updates (batch processing only)
 
 ### Domain Exclusions
+
 - Exercise-level document context (only lesson-level)
 - Document access analytics (usage tracking)
 - Document quality scoring (readability metrics)
@@ -194,6 +215,7 @@ Database: real (test MongoDB with vector search)
 ```
 
 **Rationale**:
+
 - Integration tests verify full flow: API request → PDF extraction → memory creation → vector retrieval
 - Mock OpenAI to avoid cost and rate limits (use deterministic fake embeddings)
 - Mock Vercel Blob fetch to avoid network dependency (use fixture PDF buffers)
@@ -201,6 +223,7 @@ Database: real (test MongoDB with vector search)
 - No E2E needed - chat behavior already covered by existing chat integration tests
 
 **Test Data**:
+
 - Fixture PDFs: `tests/fixtures/pdfs/` directory
   - `sample-lesson.pdf` (3 pages, ~2000 chars, single chunk)
   - `long-lesson.pdf` (10 pages, ~10,000 chars, multi-chunk)
@@ -212,18 +235,21 @@ Database: real (test MongoDB with vector search)
 ## 6. Stop Conditions
 
 **All tests must pass:**
+
 - ✓ 12 behaviors → 12 integration tests passing
 - ✓ `pnpm test:int` (all existing + new tests pass)
 - ✓ `pnpm typecheck && pnpm lint && pnpm build` (no errors)
 - ✓ `pnpm generate:types` (Payload types regenerated if collections modified)
 
 **Code quality gates:**
+
 - ✓ No unrelated test modifications
 - ✓ No snapshot-only tests (all assertions explicit)
 - ✓ All new code covered by tests (100% for new service layer)
 - ✓ Error handling paths tested (failures don't crash)
 
 **Functional completeness:**
+
 - ✓ Document extraction service implemented and tested
 - ✓ Memory chunking respects 2000 char limit
 - ✓ Vector search retrieves document memories correctly
@@ -231,6 +257,7 @@ Database: real (test MongoDB with vector search)
 - ✓ Access control enforced (conversation-scoped isolation)
 
 **Documentation:**
+
 - ✓ AGENTS.md updated with PDF extraction patterns
 - ✓ Inline code comments for chunking algorithm
 - ✓ Error handling documented in service layer
@@ -249,18 +276,21 @@ Types: yes (pnpm generate:types if Conversation schema changes)
 ```
 
 **New Files**:
+
 1. `src/lib/ai/services/pdf-extractor-service.ts` - PDF text extraction + chunking
 2. `src/lib/ai/document-memory-service.ts` - Document memory creation + retrieval
 3. `tests/int/lesson-document-chat.int.spec.ts` - Integration test suite
 4. `tests/fixtures/pdfs/` - Test PDF files (4 fixtures)
 
 **Modified Files**:
+
 1. `src/endpoints/agent/chat.ts` - Add document extraction logic to Step 3-4
 2. `src/lib/ai/context-policy.ts` - Document memory retrieval in compose step
 3. `docs/AGENTS.md` - Add PDF extraction service documentation
 4. `package.json` - Add `pdf-parse` dependency
 
 **Dependencies to Add**:
+
 - `pdf-parse` (^1.1.1) - Server-side PDF text extraction
 - `@types/pdf-parse` (dev dependency)
 
@@ -269,6 +299,7 @@ Types: yes (pnpm generate:types if Conversation schema changes)
 ## 8. Risk & Rollback
 
 ### Breaking Changes
+
 ```yaml
 Breaking: Chat responses may be delayed if PDF extraction blocks
 Blast radius: module (lesson conversations only)
@@ -277,6 +308,7 @@ Data safety: medium (large memory items created, quota impact)
 ```
 
 **Risk Mitigation**:
+
 1. **Performance risk**: Background processing prevents blocking
    - Mitigation: `Promise.allSettled()` + timeout (10s max per PDF)
    - Fallback: Skip extraction, log error, chat continues
@@ -294,18 +326,21 @@ Data safety: medium (large memory items created, quota impact)
    - Testing: Verify retrieval precision in integration tests
 
 ### Rollback Strategy
+
 1. **Immediate rollback**: Revert PR (single commit)
 2. **Feature flag**: `ENABLE_DOCUMENT_MEMORY=false` (env var)
 3. **Data cleanup**: Document memories remain (no breaking change)
 4. **Monitoring**: Track chat response latency in logs
 
 ### Data Safety
+
 - **No destructive operations**: Only creates memory items
 - **Idempotent**: Checks for existing memories before creating
 - **User isolation**: Conversation-scoped, no cross-user contamination
 - **Quota impact**: ~10-50 memory items per lesson conversation (within limits)
 
 ### Blast Radius
+
 - **Affected**: Lesson conversations with PDF documents
 - **Unaffected**: Exercise-only conversations, image-only lessons
 - **Scope**: New conversations only (existing conversations unaffected)
