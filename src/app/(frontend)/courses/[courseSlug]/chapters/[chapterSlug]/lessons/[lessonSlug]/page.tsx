@@ -1,8 +1,4 @@
 import { notFound } from 'next/navigation'
-import { headers as getHeaders } from 'next/headers'
-import { getPayload } from 'payload'
-import configPromise from '@payload-config'
-
 import { queryCourseBySlug } from '@/lib/queries/courses'
 import { queryLessonBySlug } from '@/lib/queries/lessons'
 import { queryExercisesByLesson } from '@/lib/queries/exercises'
@@ -23,16 +19,10 @@ interface LessonPageProps {
 export default async function LessonPage({ params }: LessonPageProps) {
   const { courseSlug, chapterSlug, lessonSlug } = await params
 
-  const [course, lesson, payload] = await Promise.all([
+  const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug }),
     queryLessonBySlug({ slug: lessonSlug }),
-    getPayload({ config: configPromise }),
   ])
-
-  // Get current user
-  const headers = await getHeaders()
-  const { user } = await payload.auth({ headers })
-  const isAdmin = user?.role === 'admin'
 
   if (!course || !lesson) {
     notFound()
