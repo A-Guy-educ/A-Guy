@@ -39,7 +39,11 @@ describe('summary service', () => {
     let callCount = 0
     readFileSyncMock.mockImplementation((path: string) => {
       callCount++
-      if (callCount === 1 && path.includes('summary-system-prompt.md') && !path.includes('.default')) {
+      if (
+        callCount === 1 &&
+        path.includes('summary-system-prompt.md') &&
+        !path.includes('.default')
+      ) {
         const error: NodeJS.ErrnoException = new Error('ENOENT: file not found')
         error.code = 'ENOENT'
         throw error
@@ -58,9 +62,7 @@ describe('summary service', () => {
     })
 
     const now = new Date().toISOString()
-    const result = await generateSummary('', [
-      { role: 'user', content: 'Hello', timestamp: now },
-    ])
+    const result = await generateSummary('', [{ role: 'user', content: 'Hello', timestamp: now }])
 
     expect(result.summary).toBe('mock summary')
     expect(result.tokensUsed).toBe(42)
@@ -86,12 +88,9 @@ describe('summary service', () => {
     })
 
     const now = new Date().toISOString()
-    const result = await generateSummary('', [
-      { role: 'user', content: 'Hello', timestamp: now },
-    ])
+    const result = await generateSummary('', [{ role: 'user', content: 'Hello', timestamp: now }])
 
     expect(result.summary).toBe('mock summary')
     expect(result.tokensUsed).toBe(42)
   })
 })
-

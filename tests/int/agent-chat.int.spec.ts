@@ -13,6 +13,9 @@ import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
 import { agentChat } from '@/endpoints/agent/chat'
 
+// Skip tests if DATABASE_URL is not set (e.g., in CI without MongoDB service)
+const hasDatabaseUrl = !!process.env.DATABASE_URL
+
 // Mock AI and vector-related services to keep tests deterministic and offline.
 vi.mock('@/lib/ai/services/exercise-chat-service', () => ({
   chatWithExerciseHelper: vi.fn(async () => ({
@@ -59,39 +62,42 @@ let payload: Payload
 let testUserId: string
 let testExerciseId: string | undefined
 
-beforeAll(async () => {
-  payload = await getPayload({ config })
+beforeAll(
+  async () => {
+    payload = await getPayload({ config })
 
-  const user = await payload.create({
-    collection: 'users',
-    data: {
-      email: `agent-chat-int-${Date.now()}@example.com`,
-      password: 'test123456',
-      role: 'student',
-    },
-  })
-  testUserId = user.id
-
-  // Reuse an existing exercise if available; otherwise create a minimal one.
-  const existingExercises = await payload.find({
-    collection: 'exercises',
-    limit: 1,
-  })
-
-  if (existingExercises.docs.length > 0) {
-    testExerciseId = existingExercises.docs[0].id
-  } else {
-    const exercise = await payload.create({
-      collection: 'exercises',
+    const user = await payload.create({
+      collection: 'users',
       data: {
-        title: 'Agent Chat Integration Test Exercise',
-        slug: `agent-chat-int-${Date.now()}`,
-        _status: 'published',
-      } as any,
+        email: `agent-chat-int-${Date.now()}@example.com`,
+        password: 'test123456',
+        role: 'student',
+      },
     })
-    testExerciseId = exercise.id
-  }
-}, 30000)
+    testUserId = user.id
+
+    // Reuse an existing exercise if available; otherwise create a minimal one.
+    const existingExercises = await payload.find({
+      collection: 'exercises',
+      limit: 1,
+    })
+
+    if (existingExercises.docs.length > 0) {
+      testExerciseId = existingExercises.docs[0].id
+    } else {
+      const exercise = await payload.create({
+        collection: 'exercises',
+        data: {
+          title: 'Agent Chat Integration Test Exercise',
+          slug: `agent-chat-int-${Date.now()}`,
+          _status: 'published',
+        } as any,
+      })
+      testExerciseId = exercise.id
+    }
+  },
+  60000, // Increased timeout for Payload initialization
+)
 
 afterAll(async () => {
   if (!payload) return
@@ -104,7 +110,7 @@ afterAll(async () => {
   }
 }, 30000)
 
-describe('agentChat endpoint', () => {
+describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
   it('returns 401 when user is not authenticated', async () => {
     const req = {
       payload,
@@ -155,4 +161,3 @@ describe('agentChat endpoint', () => {
     expect(conversation.messages!.length).toBeGreaterThanOrEqual(2)
   }, 60000)
 })
-

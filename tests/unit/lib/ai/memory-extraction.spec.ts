@@ -39,7 +39,11 @@ describe('memory extraction service', () => {
     let callCount = 0
     readFileSyncMock.mockImplementation((path: string) => {
       callCount++
-      if (callCount === 1 && path.includes('memory-extraction-system-prompt.md') && !path.includes('.default')) {
+      if (
+        callCount === 1 &&
+        path.includes('memory-extraction-system-prompt.md') &&
+        !path.includes('.default')
+      ) {
         const error: NodeJS.ErrnoException = new Error('ENOENT: file not found')
         error.code = 'ENOENT'
         throw error

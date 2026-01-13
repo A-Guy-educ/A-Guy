@@ -75,7 +75,7 @@ try {
       '',
       '- User preferences (learning style, pace, topics of interest)',
       '- Decisions made (chose X over Y, wants to focus on Z)',
-      '- Important facts (user\'s background, goals, constraints)',
+      "- Important facts (user's background, goals, constraints)",
       '- Open loops (questions to follow up on later)',
       '- Profile information (skill level, prior knowledge)',
       '',
