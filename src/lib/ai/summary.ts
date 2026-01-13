@@ -10,14 +10,11 @@
  */
 
 import { OpenAI } from 'openai'
-import { readFileSync } from 'fs'
-import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
 import { logger } from '@/utilities/logger'
 import type { Message } from './context-policy'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+// Import prompts directly - webpack will bundle them as strings
+import summaryPrompt from './prompts/summary-system-prompt.md'
+import summaryPromptDefault from './prompts/summary-system-prompt.default.md'
 
 // Lazy initialization to avoid errors at module load time
 let openai: OpenAI | null = null
@@ -41,48 +38,24 @@ export interface SummaryResult {
   tokensUsed: number
 }
 
-// Load prompt from external file with a safe fallback so that missing files
-// do not crash the agent chat endpoint at module load time (e.g. in serverless environments).
-// First tries to load the main prompt file, then falls back to the default file, then to inline default.
-let SUMMARY_SYSTEM_PROMPT: string = ''
-
-try {
-  const promptPath = join(__dirname, 'prompts/summary-system-prompt.md')
-  SUMMARY_SYSTEM_PROMPT = readFileSync(promptPath, 'utf-8')
-} catch (error: unknown) {
-  logger.warn(
-    { err: error, path: join(__dirname, 'prompts/summary-system-prompt.md') },
-    '[Summary] Failed to load summary system prompt from markdown file, trying default fallback',
-  )
-
-  // Try to load the default fallback file
-  try {
-    const defaultPath = join(__dirname, 'prompts/summary-system-prompt.default.md')
-    SUMMARY_SYSTEM_PROMPT = readFileSync(defaultPath, 'utf-8')
-    logger.info('[Summary] Loaded default summary prompt from fallback file')
-  } catch (fallbackError: unknown) {
-    logger.warn(
-      { err: fallbackError },
-      '[Summary] Failed to load default fallback file, using inline default',
-    )
-    // Final fallback: inline default (matches summary-system-prompt.default.md)
-    SUMMARY_SYSTEM_PROMPT = [
-      'You are a conversation summarizer for an educational chat system.',
-      '',
-      'Your task is to create a concise, factual summary that preserves:',
-      '',
-      '- Key decisions made',
-      '- User preferences and constraints',
-      '- Important facts and context',
-      '- Open loops (unresolved questions)',
-      '- Learning progress and goals',
-      '',
-      'Keep the summary under 500 words. Use clear, structured format.',
-      'Omit greetings, small talk, and ephemeral content.',
-      'Focus on information that will help continue the conversation later.',
-    ].join('\n')
-  }
-}
+// Load prompt from imported markdown file with fallback
+// Webpack bundles .md files as strings via next.config.js webpack loader
+const SUMMARY_SYSTEM_PROMPT: string =
+  summaryPrompt || summaryPromptDefault || [
+    'You are a conversation summarizer for an educational chat system.',
+    '',
+    'Your task is to create a concise, factual summary that preserves:',
+    '',
+    '- Key decisions made',
+    '- User preferences and constraints',
+    '- Important facts and context',
+    '- Open loops (unresolved questions)',
+    '- Learning progress and goals',
+    '',
+    'Keep the summary under 500 words. Use clear, structured format.',
+    'Omit greetings, small talk, and ephemeral content.',
+    'Focus on information that will help continue the conversation later.',
+  ].join('\n')
 
 /**
  * Generate or update conversation summary
