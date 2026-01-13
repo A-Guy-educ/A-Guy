@@ -1173,6 +1173,115 @@ import type { User, Course, CollectionConfig } from '@/types'
 
 See [docs/ai/README.md](docs/ai/README.md) for full guide and [docs/ai/QUICK-START.md](docs/ai/QUICK-START.md) for quick reference.
 
+## PDF Document Extraction Service
+
+The project includes a PDF extraction service for automatically extracting text from lesson PDFs and storing them as document-type memory items for AI chat context.
+
+### Overview
+
+When a student sends their first message in a lesson conversation, the system automatically:
+1. Downloads PDF files from the lesson's `contentFiles`
+2. Extracts text using `pdf-parse` library
+3. Chunks text into segments (max 2000 chars) respecting sentence boundaries
+4. Creates document-type memory items with embeddings
+5. Makes content available for semantic retrieval in chat
+
+### Key Components
+
+**PDF Extraction Service** (`src/lib/ai/services/pdf-extractor-service.ts`):
+- `extractTextFromPDF()` - Extracts text from PDF buffers
+- `chunkText()` - Chunks text with sentence-boundary awareness (max 2000 chars)
+
+**Document Memory Service** (`src/lib/ai/document-memory-service.ts`):
+- `hasDocumentMemories()` - Checks if document memories already exist
+- `createDocumentMemories()` - Batch creates memory items with embeddings
+
+**Lesson Document Extraction** (`src/lib/ai/services/lesson-document-extraction.ts`):
+- `extractAndStoreLessonDocuments()` - Orchestrates PDF download, extraction, and storage
+
+### Usage Pattern
+
+```typescript
+import { extractAndStoreLessonDocuments } from '@/lib/ai/services/lesson-document-extraction'
+
+// In chat endpoint (non-blocking)
+if (featureFlags.ENABLE_DOCUMENT_MEMORY && isFirstMessage && lessonId) {
+  extractAndStoreLessonDocuments(payload, userId, conversationId, lessonId)
+    .catch((err) => logger.error({ err }, 'Document extraction failed'))
+  // Don't await - runs in background
+}
+```
+
+### Chunking Algorithm
+
+The chunking algorithm respects sentence boundaries to avoid mid-sentence splits:
+
+1. Split text by sentence boundaries (`.`, `!`, `?`)
+2. Build chunks up to 2000 characters, adding complete sentences
+3. If a chunk exceeds 2000 chars, force split at word boundaries
+4. Each chunk becomes a separate memory item with `type: 'document'`
+
+### Error Handling
+
+All extraction operations use graceful degradation:
+- PDF download failures → Log error, continue chat
+- Extraction failures → Log error, continue chat
+- Embedding failures → Log error, retry in background
+- Empty PDFs → Log warning, skip file
+
+### Feature Flag
+
+Control document extraction via environment variable:
+
+```bash
+# Enable document memory extraction
+ENABLE_DOCUMENT_MEMORY=true
+```
+
+**Rollout Strategy**:
+1. Dev: `true` (internal testing)
+2. Staging: `true` (QA verification)
+3. Prod: `false` → `true` (gradual rollout, monitor 24h)
+
+### Security
+
+- Document memories are conversation-scoped (filtered by `conversationId`)
+- All vector searches filter by `userId` for tenant isolation
+- Access control enforced at Payload collection level
+- No cross-user memory leakage (verified in security tests)
+
+### Memory Item Structure
+
+Document memories use the following structure:
+
+```typescript
+{
+  userId: string
+  conversationId: string
+  type: 'document'
+  text: string // Chunk of PDF text (≤2000 chars)
+  embedding: number[] // 1536-dim vector
+  importance: 5 // Highest for source material
+  status: 'active'
+  source: {
+    sourceConversationId: string
+    sourceMessageTimestamp: Date
+    sourceMessageRole: 'assistant'
+    lessonId: string
+    fileName: string
+    chunkIndex: number
+  }
+}
+```
+
+### Performance Considerations
+
+- Extraction runs asynchronously (non-blocking)
+- Chat response time remains < 3s even with extraction
+- PDF buffer cached during chunking to avoid re-downloading
+- Batch embedding generation for efficiency
+- Deduplication prevents duplicate memories
+
 ## Resources
 
 - Docs: https://payloadcms.com/docs
