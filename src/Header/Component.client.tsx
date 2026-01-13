@@ -1,14 +1,17 @@
 'use client'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 
 import type { Header, User } from '@/payload-types'
 
 import { TelescopeLogo } from '@/components/TelescopeLogo'
 import { HeaderNav } from './Nav'
 import { MobileMenu, MobileMenuButton } from './MobileMenu'
+import { useLocale, useTranslations } from '@/providers/I18n'
+import { cn } from '@/utilities/ui'
 
 interface HeaderClientProps {
   data: Header
@@ -22,6 +25,13 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   const [isScrolled, setIsScrolled] = useState(false)
   const { headerTheme, setHeaderTheme } = useHeaderTheme()
   const pathname = usePathname()
+  const router = useRouter()
+  const locale = useLocale()
+  const tCommon = useTranslations('common.header')
+  const isRTL = locale === 'he'
+  
+  // Show back button if not on home page
+  const showBackButton = pathname !== '/'
 
   // Fetch user on client side to avoid static-to-dynamic conversion
   useEffect(() => {
@@ -83,22 +93,41 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
       >
         <div className="container">
           <div className="py-3 md:py-4 flex items-center justify-between text-header-foreground">
+            {/* Back Button */}
+            {showBackButton && (
+              <button
+                onClick={() => router.back()}
+                className={cn(
+                  'flex items-center justify-center p-2 text-header-foreground hover:text-primary transition-colors flex-shrink-0',
+                  isRTL ? 'order-4' : 'order-1',
+                )}
+                aria-label={tCommon('back')}
+              >
+                {isRTL ? <ArrowRight className="w-6 h-6" /> : <ArrowLeft className="w-6 h-6" />}
+              </button>
+            )}
+
             {/* Logo */}
             <Link
               href="/"
-              className="flex items-center gap-3 flex-shrink-0 hover:opacity-80 transition-opacity"
+              className={cn(
+                'flex items-center gap-3 flex-shrink-0 hover:opacity-80 transition-opacity',
+                showBackButton ? (isRTL ? 'order-3' : 'order-2') : (isRTL ? 'order-4' : 'order-1'),
+              )}
             >
               <TelescopeLogo className="h-8 w-auto" />
               <span className="text-xl font-semibold">AGuy</span>
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center">
+            <div className={cn('hidden lg:flex items-center', isRTL ? 'order-2' : 'order-3')}>
               <HeaderNav data={data} userName={userName} isAuthenticated={!!user} />
             </div>
 
             {/* Mobile Menu Button */}
-            <MobileMenuButton onClick={() => setIsMobileMenuOpen(true)} />
+            <div className={cn(isRTL ? 'order-1' : 'order-4')}>
+              <MobileMenuButton onClick={() => setIsMobileMenuOpen(true)} />
+            </div>
           </div>
         </div>
       </header>

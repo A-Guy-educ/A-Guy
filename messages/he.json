@@ -13,7 +13,8 @@
     "header": {
       "welcome": "שלום,",
       "logout": "התנתק",
-      "loggingOut": "מתנתק..."
+      "loggingOut": "מתנתק...",
+      "back": "חזרה"
     }
   },
   "auth": {

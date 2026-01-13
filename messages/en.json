@@ -13,7 +13,8 @@
     "header": {
       "welcome": "Welcome,",
       "logout": "Logout",
-      "loggingOut": "Logging out..."
+      "loggingOut": "Logging out...",
+      "back": "Back"
     }
   },
   "auth": {
