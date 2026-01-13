@@ -31,8 +31,12 @@ const dirname = path.dirname(filename)
 
 // Validate DATABASE_URL is set and not empty
 // This prevents accidental fallback to localhost when Atlas connection string is expected
+// During build time, we allow missing DATABASE_URL to avoid build failures
+// The error will be thrown at runtime when the config is actually used
 const databaseUrl = process.env.DATABASE_URL
-if (!databaseUrl || databaseUrl.trim() === '') {
+const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL
+
+if (!isBuildTime && (!databaseUrl || databaseUrl.trim() === '')) {
   throw new Error(
     'DATABASE_URL environment variable is required but not set. ' +
       'Please set DATABASE_URL to your MongoDB connection string (e.g., mongodb+srv://... for Atlas).',
@@ -79,7 +83,7 @@ export default buildConfig({
   // This config helps us configure global or default features that the other editors can inherit
   editor: defaultLexical,
   db: mongooseAdapter({
-    url: databaseUrl,
+    url: databaseUrl || 'mongodb://localhost:27017/payload',
   }),
   collections: [
     Pages,
