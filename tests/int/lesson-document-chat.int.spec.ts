@@ -18,6 +18,9 @@ import { agentChat } from '@/endpoints/agent/chat'
 import sampleLessonExtraction from '../fixtures/ai-extractions/sample-lesson-extraction.json'
 import longLessonExtraction from '../fixtures/ai-extractions/long-lesson-extraction.json'
 import emptyExtraction from '../fixtures/ai-extractions/empty-extraction.json'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 // Skip tests if DATABASE_URL is not set
 const hasDatabaseUrl = !!process.env.DATABASE_URL
@@ -113,6 +116,48 @@ let testUserId: string
 let testLessonId: string | undefined
 let testChapterId: string | undefined
 let testCourseId: string | undefined
+
+// Helper function to create a media file with actual file on disk
+async function createMediaFileWithFile(
+  payload: Payload,
+  filename: string,
+  content: Buffer = Buffer.from('%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n>>\nendobj\nxref\n0 0\ntrailer\n<<\n/Size 1\n/Root 1 0 R\n>>\nstartxref\n9\n%%EOF'),
+): Promise<{ id: string; filePath: string }> {
+  // Get the media directory path (same as Media collection staticDir)
+  // Media collection: path.resolve(dirname, '../../public/media') where dirname is src/collections/Media
+  // This resolves to src/public/media
+  const testFile = fileURLToPath(import.meta.url)
+  const testDir = path.dirname(testFile) // tests/int
+  const projectRoot = path.resolve(testDir, '../..') // project root
+  const mediaDir = path.join(projectRoot, 'src', 'public', 'media')
+  
+  // Ensure directory exists
+  if (!fs.existsSync(mediaDir)) {
+    fs.mkdirSync(mediaDir, { recursive: true })
+  }
+  
+  const filePath = path.join(mediaDir, filename)
+  
+  // Write the file to disk first (Payload will read from here during processing)
+  fs.writeFileSync(filePath, content)
+  
+  // Create media record with file buffer
+  // Payload will process the file and may read it from disk for metadata extraction
+  const mediaFile = await payload.create({
+    collection: 'media',
+    data: {
+      filename,
+    } as any,
+    file: {
+      data: content,
+      mimetype: 'application/pdf',
+      name: filename,
+      size: content.length,
+    },
+  })
+  
+  return { id: mediaFile.id, filePath }
+}
 
 beforeAll(
   async () => {
@@ -227,14 +272,11 @@ describe.skipIf(!hasDatabaseUrl)('Lesson Document Chat Integration', () => {
     }
 
     // Create a media file (PDF) for the lesson
-    const mediaFile = await payload.create({
-      collection: 'media',
-      data: {
-        filename: 'sample-lesson.pdf',
-        mimeType: 'application/pdf',
-        url: '/media/sample-lesson.pdf',
-      } as any,
-    })
+    const { id: mediaFileId, filePath: mediaFilePath } = await createMediaFileWithFile(
+      payload,
+      'sample-lesson.pdf',
+    )
+    const mediaFile = { id: mediaFileId }
 
     // Update lesson with contentFiles
     await payload.update({
@@ -310,6 +352,9 @@ describe.skipIf(!hasDatabaseUrl)('Lesson Document Chat Integration', () => {
 
     // Cleanup
     await payload.delete({ collection: 'media', id: mediaFile.id })
+    if (fs.existsSync(mediaFilePath)) {
+      fs.unlinkSync(mediaFilePath)
+    }
   }, 60000)
 
   it('should skip document extraction when lesson has no PDF files', async () => {
@@ -440,14 +485,12 @@ describe.skipIf(!hasDatabaseUrl)('Lesson Document Chat Integration', () => {
     }
 
     // Create a media file for empty PDF
-    const mediaFile = await payload.create({
-      collection: 'media',
-      data: {
-        filename: 'empty.pdf',
-        mimeType: 'application/pdf',
-        url: '/media/empty.pdf',
-      } as any,
-    })
+    const { id: mediaFileId, filePath: mediaFilePath } = await createMediaFileWithFile(
+      payload,
+      'empty.pdf',
+      Buffer.from('%PDF-1.4\n'),
+    )
+    const mediaFile = { id: mediaFileId }
 
     await payload.update({
       collection: 'lessons',
@@ -505,6 +548,9 @@ describe.skipIf(!hasDatabaseUrl)('Lesson Document Chat Integration', () => {
 
     // Cleanup
     await payload.delete({ collection: 'media', id: mediaFile.id })
+    if (fs.existsSync(mediaFilePath)) {
+      fs.unlinkSync(mediaFilePath)
+    }
   }, 60000)
 
   it('should chunk large documents into multiple memory items', async () => {
@@ -513,14 +559,11 @@ describe.skipIf(!hasDatabaseUrl)('Lesson Document Chat Integration', () => {
     }
 
     // Create a media file for long PDF
-    const mediaFile = await payload.create({
-      collection: 'media',
-      data: {
-        filename: 'long-lesson.pdf',
-        mimeType: 'application/pdf',
-        url: '/media/long-lesson.pdf',
-      } as any,
-    })
+    const { id: mediaFileId, filePath: mediaFilePath } = await createMediaFileWithFile(
+      payload,
+      'long-lesson.pdf',
+    )
+    const mediaFile = { id: mediaFileId }
 
     await payload.update({
       collection: 'lessons',
@@ -594,5 +637,8 @@ describe.skipIf(!hasDatabaseUrl)('Lesson Document Chat Integration', () => {
 
     // Cleanup
     await payload.delete({ collection: 'media', id: mediaFile.id })
+    if (fs.existsSync(mediaFilePath)) {
+      fs.unlinkSync(mediaFilePath)
+    }
   }, 60000)
 })
