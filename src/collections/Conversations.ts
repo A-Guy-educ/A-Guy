@@ -173,6 +173,7 @@ export const Conversations: CollectionConfig = {
     beforeValidate: [
       async ({ data }) => {
         // Ensure either exercise or lesson is provided, but not both
+        if (!data) return data
         if (!data.exercise && !data.lesson) {
           throw new Error('Either exercise or lesson must be provided')
         }
