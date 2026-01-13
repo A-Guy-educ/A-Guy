@@ -28,7 +28,6 @@ import { chatWithExerciseHelper, getSystemPrompt } from '@/lib/ai/services/exerc
 import { extractAndStoreLessonDocuments } from '@/lib/ai/services/lesson-document-extraction'
 import { isVectorIndexAvailable } from '@/lib/ai/vector-index-check'
 import { retrieveMemoryItems, type MemoryItem } from '@/lib/ai/vector-search'
-import { featureFlags } from '@/lib/feature-flags'
 import type { Conversation } from '@/payload-types'
 import { logger } from '@/utilities/logger'
 import { PayloadRequest } from 'payload'
@@ -131,7 +130,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     const isFirstUserMessage = conversationHistory.length === 0
 
     // 3.5) Background: Extract lesson documents on first message (non-blocking)
-    if (featureFlags.ENABLE_DOCUMENT_MEMORY && validated.lessonId && isFirstUserMessage) {
+    if (validated.lessonId && isFirstUserMessage) {
       reqLogger.debug(
         { conversationId, lessonId: validated.lessonId },
         'Starting document extraction',
@@ -175,55 +174,53 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     reqLogger.info({ recentCount: recentMessages.length }, '[DEBUG] Recent window extracted')
 
-    // 7) Retrieve memory items (if enabled)
+    // 7) Retrieve memory items
     let memoryItems: MemoryItem[] = []
     let retrievalLatencyMs = 0
     let localCount = 0
     let globalCount = 0
 
-    if (featureFlags.MEMORY_RETRIEVAL_ENABLED) {
-      try {
-        const db = (req.payload.db as any).connection.db
+    try {
+      const db = (req.payload.db as any).connection.db
 
-        // Graceful check: skip retrieval if index not available
-        const indexAvailable = await isVectorIndexAvailable(db)
+      // Graceful check: skip retrieval if index not available
+      const indexAvailable = await isVectorIndexAvailable(db)
 
-        if (indexAvailable) {
-          const queryText = buildRetrievalQuery(recentMessages)
+      if (indexAvailable) {
+        const queryText = buildRetrievalQuery(recentMessages)
 
-          // Skip retrieval if query is empty or too short
-          if (queryText && queryText.trim().length >= 3) {
-            reqLogger.debug({ queryText }, 'Retrieving memory items')
-            const retrieval = await retrieveMemoryItems(db, req.user.id, queryText, conversationId)
+        // Skip retrieval if query is empty or too short
+        if (queryText && queryText.trim().length >= 3) {
+          reqLogger.debug({ queryText }, 'Retrieving memory items')
+          const retrieval = await retrieveMemoryItems(db, req.user.id, queryText, conversationId)
 
-            memoryItems = retrieval.items
-            retrievalLatencyMs = retrieval.latencyMs
-            localCount = retrieval.localCount
-            globalCount = retrieval.globalCount
+          memoryItems = retrieval.items
+          retrievalLatencyMs = retrieval.latencyMs
+          localCount = retrieval.localCount
+          globalCount = retrieval.globalCount
 
-            reqLogger.info(
-              {
-                memoryCount: memoryItems.length,
-                localCount,
-                globalCount,
-                latencyMs: retrievalLatencyMs,
-                queryText,
-              },
-              'Retrieved memory items',
-            )
-          } else {
-            reqLogger.debug(
-              { queryText, queryLength: queryText?.trim().length },
-              'Skipping memory retrieval: query text too short or empty',
-            )
-          }
+          reqLogger.info(
+            {
+              memoryCount: memoryItems.length,
+              localCount,
+              globalCount,
+              latencyMs: retrievalLatencyMs,
+              queryText,
+            },
+            'Retrieved memory items',
+          )
         } else {
-          reqLogger.warn('Vector search index not available, skipping memory retrieval')
+          reqLogger.debug(
+            { queryText, queryLength: queryText?.trim().length },
+            'Skipping memory retrieval: query text too short or empty',
+          )
         }
-      } catch (error) {
-        // Graceful degradation: continue without memories
-        reqLogger.warn({ err: error }, 'Memory retrieval failed, continuing without memories')
+      } else {
+        reqLogger.warn('Vector search index not available, skipping memory retrieval')
       }
+    } catch (error) {
+      // Graceful degradation: continue without memories
+      reqLogger.warn({ err: error }, 'Memory retrieval failed, continuing without memories')
     }
 
     // 8) Compose prompt using Context Policy V1
@@ -293,14 +290,12 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     )
 
     // 12) Background: Run summary maintenance (non-blocking)
-    if (featureFlags.SUMMARY_MAINTENANCE_ENABLED) {
-      runSummaryMaintenance(req.payload, conversationId).catch((err) => {
-        reqLogger.error({ err, conversationId }, 'Summary maintenance failed')
-      })
-    }
+    runSummaryMaintenance(req.payload, conversationId).catch((err) => {
+      reqLogger.error({ err, conversationId }, 'Summary maintenance failed')
+    })
 
     // 13) Background: Extract and persist memories (non-blocking)
-    if (featureFlags.MEMORY_EXTRACTION_ENABLED && req.user) {
+    if (req.user) {
       const currentUserId = req.user.id
       reqLogger.debug({ conversationId }, 'Starting memory extraction')
 
@@ -366,13 +361,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
           reqLogger.error({ err, conversationId }, 'Memory extraction failed')
         })
     } else {
-      reqLogger.debug(
-        {
-          extractionEnabled: featureFlags.MEMORY_EXTRACTION_ENABLED,
-          hasUser: !!req.user,
-        },
-        'Memory extraction skipped',
-      )
+      reqLogger.debug({ hasUser: !!req.user }, 'Memory extraction skipped (no user)')
     }
 
     reqLogger.info('Chat request successful')

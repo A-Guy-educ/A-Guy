@@ -1235,20 +1235,6 @@ All extraction operations use graceful degradation:
 - Embedding failures → Log error, retry in background
 - Empty PDFs → Log warning, skip file
 
-### Feature Flag
-
-Control document extraction via environment variable:
-
-```bash
-# Enable document memory extraction
-ENABLE_DOCUMENT_MEMORY=true
-```
-
-**Rollout Strategy**:
-
-1. Dev: `true` (internal testing)
-2. Staging: `true` (QA verification)
-3. Prod: `false` → `true` (gradual rollout, monitor 24h)
 
 ### Security
 

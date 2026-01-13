@@ -11,7 +11,6 @@
 
 import { logger } from '@/utilities/logger'
 import type { Payload } from 'payload'
-import { featureFlags } from '../feature-flags'
 import type { Message } from './context-policy'
 import { getMessagesToSummarize, getRecentWindow, needsSummaryMaintenance } from './context-policy'
 import { generateSummary } from './summary'
@@ -38,15 +37,6 @@ export async function runSummaryMaintenance(
   payload: Payload,
   conversationId: string,
 ): Promise<MaintenanceResult> {
-  // Check feature flag
-  if (!featureFlags.SUMMARY_MAINTENANCE_ENABLED) {
-    return {
-      summaryUpdated: false,
-      messagesTrimmed: 0,
-      tokensUsed: 0,
-    }
-  }
-
   try {
     // Load conversation
     const conversation = await payload.findByID({
