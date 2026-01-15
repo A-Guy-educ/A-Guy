@@ -32,6 +32,7 @@ import type { Conversation } from '@/payload-types'
 import { logger } from '@/utilities/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
+import type { Where } from 'payload'
 
 const requestSchema = z
   .object({
@@ -69,14 +70,13 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     reqLogger.info({ userId: req.user.id, contextType, contextId }, 'Processing chat request')
 
     // 3) Find or create conversation
-    const whereClause: any = { user: { equals: req.user.id } }
-    whereClause[contextField] = { equals: contextId }
+    const whereClause: Where = {
+      and: [{ user: { equals: req.user.id } }, { [contextField]: { equals: contextId } }],
+    }
 
     const existingConv = await req.payload.find({
       collection: 'conversations',
-      where: {
-        and: [whereClause],
-      },
+      where: whereClause,
       limit: 1,
       user: req.user, // Explicitly pass user for access control
       overrideAccess: false, // Enforce user's access control
@@ -92,7 +92,14 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       reqLogger.info({ conversationId }, 'Using existing conversation')
     } else {
       // Create new conversation
-      const conversationData: any = {
+      const conversationData: {
+        user: string
+        messages: []
+        lastMessageAt: string
+        contextPolicyVersion: string
+        exercise?: string
+        lesson?: string
+      } = {
         user: req.user.id,
         messages: [],
         lastMessageAt: new Date().toISOString(),
@@ -142,9 +149,9 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       {
         conversationId,
         totalMessages: allMessages.length,
-        messagePreview: allMessages.slice(-3).map((m: any) => ({
+        messagePreview: allMessages.slice(-3).map((m) => ({
           role: m.role,
-          content: m.content?.substring(0, 50),
+          content: typeof m.content === 'string' ? m.content.substring(0, 50) : '',
         })),
       },
       '[DEBUG] Conversation messages loaded',
@@ -163,6 +170,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     if (featureFlags.MEMORY_RETRIEVAL_ENABLED) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = (req.payload.db as any).connection.db
 
         // Graceful check: skip retrieval if index not available
