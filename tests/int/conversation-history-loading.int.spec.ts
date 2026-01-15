@@ -168,10 +168,11 @@ afterAll(async () => {
 })
 
 /**
- * Simulate fetching conversation via dedicated endpoint (as frontend does)
- * Uses Payload's Local API with explicit user filtering to ensure proper access control
+ * Simulate fetching conversation via Payload REST API (as frontend does)
+ * Uses Payload's Local API to simulate REST API behavior with access control
+ * The isOwner access control automatically filters by authenticated user
  */
-async function fetchConversationViaEndpoint(
+async function fetchConversationViaREST(
   payload: Payload,
   userId: string,
   contextKey: string,
@@ -181,26 +182,26 @@ async function fetchConversationViaEndpoint(
   messages: Array<{ role: string; content: string }>
   conversationId?: string
 }> {
-  // Simulate what the frontend API service does
-  // Use Payload's Local API with explicit user filtering
+  // Simulate what the frontend API service does via Payload REST API
+  // The isOwner access control should automatically add { user: { equals: userId } } to the query
   const user = await payload.findByID({
     collection: 'users',
     id: userId,
   })
 
-  // CRITICAL: Explicitly filter by user ID to ensure proper access control
+  // Simulate REST API query - Payload's access control merges with where query
+  // The isOwner access control returns { user: { equals: user.id } } which gets merged
   const result = await payload.find({
     collection: 'conversations',
     where: {
       and: [
-        { user: { equals: userId } }, // Explicitly filter by authenticated user
         { contextKey: { equals: contextKey } },
         { archivedAt: { exists: false } },
       ],
     },
     limit: 1,
     user: user as any,
-    overrideAccess: false, // CRITICAL: Enforce access control
+    overrideAccess: false, // CRITICAL: Enforce access control (isOwner will filter by user)
   })
 
   if (result.docs.length === 0) {
@@ -303,7 +304,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversation History Loading', () => {
     expect(res2.status).toBe(200)
 
     // Simulate frontend fetching conversation history (after "refresh")
-    const fetched = await fetchConversationViaEndpoint(payload, testUserId, contextKey)
+    const fetched = await fetchConversationViaREST(payload, testUserId, contextKey)
 
     expect(fetched.success).toBe(true)
     expect(fetched.exists).toBe(true)
@@ -345,7 +346,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversation History Loading', () => {
     }
 
     // Simulate "refresh" - fetch conversation history again
-    const fetched1 = await fetchConversationViaEndpoint(payload, testUserId, contextKey)
+    const fetched1 = await fetchConversationViaREST(payload, testUserId, contextKey)
 
     expect(fetched1.success).toBe(true)
     expect(fetched1.exists).toBe(true)
@@ -362,7 +363,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversation History Loading', () => {
     expect(userMessages.map((m) => m.content)).toContain('Message 3')
 
     // Simulate another "refresh" - should still work
-    const fetched2 = await fetchConversationViaEndpoint(payload, testUserId, contextKey)
+    const fetched2 = await fetchConversationViaREST(payload, testUserId, contextKey)
 
     expect(fetched2.success).toBe(true)
     expect(fetched2.exists).toBe(true)
@@ -406,7 +407,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversation History Loading', () => {
     const conversationId2 = body2.conversationId
 
     // User 1 should only see their own conversation
-    const fetched1 = await fetchConversationViaEndpoint(payload, testUserId, contextKey)
+    const fetched1 = await fetchConversationViaREST(payload, testUserId, contextKey)
     expect(fetched1.success).toBe(true)
     expect(fetched1.exists).toBe(true)
     expect(fetched1.conversationId).toBe(conversationId1)
@@ -414,7 +415,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversation History Loading', () => {
     expect(fetched1.messages.some((m) => m.content.includes('user 2'))).toBe(false)
 
     // User 2 should only see their own conversation
-    const fetched2 = await fetchConversationViaEndpoint(payload, testUserId2, contextKey)
+    const fetched2 = await fetchConversationViaREST(payload, testUserId2, contextKey)
     expect(fetched2.success).toBe(true)
     expect(fetched2.exists).toBe(true)
     expect(fetched2.conversationId).toBe(conversationId2)
@@ -426,7 +427,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversation History Loading', () => {
     // Use a unique context key that doesn't have a conversation
     const uniqueContextKey = `exercises:${testExerciseId}-nonexistent-${Date.now()}`
 
-    const fetched = await fetchConversationViaEndpoint(payload, testUserId, uniqueContextKey)
+    const fetched = await fetchConversationViaREST(payload, testUserId, uniqueContextKey)
 
     expect(fetched.success).toBe(true)
     expect(fetched.exists).toBe(false)

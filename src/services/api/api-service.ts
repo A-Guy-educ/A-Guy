@@ -90,18 +90,27 @@ export const apiService = {
   },
 
   /**
-   * Fetch existing conversation history for a context using dedicated endpoint
-   * Uses Payload's Local API with explicit user filtering to ensure proper access control
+   * Fetch existing conversation history for a context using Payload's REST API
+   * Access control (isOwner) automatically filters by authenticated user
+   * Payload merges the access control constraint with the where query
    *
    * @param contextKey - The context key (e.g., "exercises:abc123")
    * @returns Conversation history with messages
    */
   async getConversation(contextKey: string): Promise<ConversationApiResponse> {
     try {
-      // Use dedicated endpoint that uses Payload's Local API with explicit user filtering
-      // This ensures conversations are properly filtered by the authenticated user
+      // Use Payload's auto-generated REST API endpoint
+      // The isOwner access control automatically adds { user: { equals: user.id } } to the query
+      // Payload merges this with our where query, ensuring only the authenticated user's conversations are returned
+      const whereQuery = JSON.stringify({
+        and: [
+          { contextKey: { equals: contextKey } },
+          { archivedAt: { exists: false } },
+        ],
+      })
+
       const response = await fetch(
-        `/api/agent/get-conversation?contextKey=${encodeURIComponent(contextKey)}`,
+        `/api/conversations?where=${encodeURIComponent(whereQuery)}&limit=1`,
         {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
@@ -126,27 +135,36 @@ export const apiService = {
           success: false,
           exists: false,
           messages: [],
-          error: data.error || 'Request failed',
+          error: data.errors?.[0]?.message || data.error || 'Request failed',
         }
       }
 
-      // Endpoint returns standardized response format
-      if (data.success) {
+      // Payload REST API returns { docs: [...], totalDocs, ... }
+      if (data.docs && data.docs.length > 0) {
+        const conversation = data.docs[0] as {
+          id: string
+          messages?: Array<{ role: string; content: string; timestamp?: string }>
+        }
+        const messages = (conversation.messages || []).map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        }))
+
         return {
           success: true,
-          exists: data.exists || false,
-          conversationId: data.conversationId,
-          contextKey: data.contextKey || contextKey,
-          messages: data.messages || [],
+          exists: true,
+          conversationId: conversation.id,
+          contextKey,
+          messages,
         }
       }
 
-      // Fallback for unexpected response format
+      // No conversation exists yet
       return {
-        success: false,
+        success: true,
         exists: false,
         messages: [],
-        error: 'Invalid response format',
+        contextKey,
       }
     } catch (_error) {
       return { success: false, exists: false, messages: [], error: 'Network error' }
