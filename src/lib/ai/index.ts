@@ -8,7 +8,7 @@
  * - Auto-grading assistance
  */
 
-export { getGeminiClient } from './gemini-ai-provider.server'
+export { getGeminiClient, isGeminiApiKeyConfigured } from './gemini-ai-provider.server'
 export { AI_MODELS, type AIModelKey, type AIModelConfig } from './models'
 export { optimizeImageForAI, type OptimizedImage } from './services/image-optimizer-service'
 export {
