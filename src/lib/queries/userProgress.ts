@@ -26,6 +26,7 @@ export const queryUserProgressByGrade = cache(
     const payload = await getPayload({ config: configPromise })
 
     const result = await payload.find({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       collection: 'user-progress' as any,
       where: {
         and: [{ user: { equals: userId } }, { gradeLevel: { equals: gradeLevel } }],

@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { useFormFields } from '@payloadcms/ui'
+import Image from 'next/image'
 
 export const ImagePreview: React.FC = () => {
   const urlField = useFormFields(([fields]) => fields.url)
@@ -20,7 +21,14 @@ export const ImagePreview: React.FC = () => {
 
   return (
     <div className="p-4">
-      <img src={url} alt={alt || 'Preview'} className="max-w-full h-auto rounded" />
+      <Image
+        src={url}
+        alt={alt || 'Preview'}
+        width={800}
+        height={600}
+        className="max-w-full h-auto rounded"
+        style={{ objectFit: 'contain' }}
+      />
     </div>
   )
 }

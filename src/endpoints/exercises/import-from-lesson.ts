@@ -136,6 +136,7 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
 
       if (hasOptions) {
         // Get MCQ template from factory
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const draft = ExerciseBlockDefaults.question_mcq() as any
 
         // Populate with AI-extracted data
@@ -173,6 +174,7 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
         questionBlock = QuestionSelectBlockSchema.parse(draft)
       } else {
         // Get free response template from factory
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const draft = ExerciseBlockDefaults.question_free_response() as any
 
         // Populate with AI-extracted data
@@ -217,7 +219,7 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
           details: createError instanceof Error ? createError.message : 'Unknown error',
           // Include Zod issues in response for debugging
           ...(createError && typeof createError === 'object' && 'issues' in createError
-            ? { zodIssues: (createError as any).issues }
+            ? { zodIssues: (createError as { issues: unknown }).issues }
             : {}),
         },
         { status: 500 },

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { queryChaptersByGrade } from '@/lib/queries/chapters'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
+import type { Lesson } from '@/payload-types'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch all lessons for all chapters (batch query for efficiency)
     const chapterIds = chapters.map((chapter) => chapter.id)
-    let lessons: any[] = []
+    let lessons: Lesson[] = []
 
     if (chapterIds.length > 0) {
       const payload = await getPayload({ config: configPromise })
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Group lessons by chapter
-    const lessonsByChapter: Record<string, any[]> = {}
+    const lessonsByChapter: Record<string, Lesson[]> = {}
     lessons.forEach((lesson) => {
       const chapterId = typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter?.id
       if (chapterId) {
