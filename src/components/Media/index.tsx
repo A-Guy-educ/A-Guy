@@ -12,11 +12,7 @@ import { ExternalMedia } from './ExternalMedia'
 import { OtherMedia } from './OtherMedia'
 import { MediaType } from '@/lib/media/types'
 import { inferMediaType } from '@/lib/media/inferMediaType'
-import type { Media } from '@/payload-types'
-
-interface MediaWithType extends Media {
-  type?: MediaType
-}
+import type { Media as PayloadMedia } from '@/payload-types'
 
 export const Media: React.FC<Props> = (props) => {
   const { className, htmlElement = 'div', resource } = props
@@ -27,12 +23,14 @@ export const Media: React.FC<Props> = (props) => {
   let mediaType: MediaType = MediaType.Other
 
   if (typeof resource === 'object' && resource) {
-    // Prefer explicit type field
-    mediaType = (resource as MediaWithType).type
-
-    // Fallback to mimeType inference (for legacy data without type field)
-    if (!mediaType && resource.mimeType) {
-      mediaType = inferMediaType(resource.mimeType, resource.filename)
+    const mediaResource = resource as PayloadMedia
+    // Prefer explicit type field (Media type from payload-types has type as string literal)
+    if (mediaResource.type) {
+      // Map string literal to MediaType enum
+      mediaType = mediaResource.type as MediaType
+    } else if (mediaResource.mimeType) {
+      // Fallback to mimeType inference (for legacy data without type field)
+      mediaType = inferMediaType(mediaResource.mimeType, mediaResource.filename)
     }
   }
 
