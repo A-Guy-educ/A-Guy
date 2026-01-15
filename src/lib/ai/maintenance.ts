@@ -88,7 +88,7 @@ export async function runSummaryMaintenance(
     )
 
     // Update conversation
-    await payload.update({
+    const updated = await payload.update({
       collection: 'conversations',
       id: conversationId,
       data: {
@@ -97,7 +97,13 @@ export async function runSummaryMaintenance(
         summaryUntilTimestamp: summaryUntilTimestamp.toISOString(),
         messages: recentWindow as any, // Keep only recent window
       },
+      depth: 0, // Don't populate relationships
     })
+
+    // Verify update succeeded
+    if (!updated.summaryUpdatedAt) {
+      logger.warn({ conversationId }, '[Maintenance] summaryUpdatedAt not set after update')
+    }
 
     const messagesTrimmed = messages.length - recentWindow.length
 

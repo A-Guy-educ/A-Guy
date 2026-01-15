@@ -209,7 +209,12 @@ export async function persistMemoryItems(
 
   // Access MongoDB directly for vector search (not part of Payload's public API)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = (payload.db as any).connection.db
+  const db = (payload.db as any).connection?.db
+
+  if (!db) {
+    logger.warn('[MemoryExtraction] MongoDB connection not available, skipping persistence')
+    return 0
+  }
 
   try {
     // Batch generate all embeddings at once
@@ -217,12 +222,26 @@ export async function persistMemoryItems(
     const embeddingResults = await generateEmbeddings(texts) // Single API call
 
     // Prepare similarity checks in parallel (with concurrency limit)
+    // If vector search fails, we'll still create the memory items (graceful degradation)
     const similarityChecks = embeddingResults.map((result, idx) =>
-      findSimilarMemoryItem(db, userId, result.embedding, 0.9).then((similar) => ({
-        candidate: candidates[idx],
-        embedding: result.embedding,
-        similar,
-      })),
+      findSimilarMemoryItem(db, userId, result.embedding, 0.9)
+        .then((similar) => ({
+          candidate: candidates[idx],
+          embedding: result.embedding,
+          similar,
+        }))
+        .catch((error) => {
+          // If vector search fails, log but continue (will create new item)
+          logger.debug(
+            { err: error, text: candidates[idx].text.slice(0, 50) },
+            '[MemoryExtraction] Similarity check failed, will create new item',
+          )
+          return {
+            candidate: candidates[idx],
+            embedding: result.embedding,
+            similar: null, // Treat as no similar item found
+          }
+        }),
     )
 
     // Execute similarity checks with concurrency limit (avoid overwhelming DB)
@@ -242,50 +261,58 @@ export async function persistMemoryItems(
     // Process results (create/update)
     let persisted = 0
     for (const { candidate, embedding, similar } of results) {
-      if (similar) {
-        // Update existing (server-side override)
-        await payload.update({
-          collection: 'memory_items',
-          id: similar._id.toString(),
-          data: {
-            text: candidate.text, // Update with new phrasing
-            importance: Math.max(similar.importance, candidate.importance), // Take higher importance
-            embedding,
-            updatedAt: new Date().toISOString(),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any,
-          overrideAccess: true, // Server-side write, bypass user access control
-        })
-        logger.debug(
-          { memoryId: similar._id.toString(), text: candidate.text.slice(0, 50) },
-          '[MemoryExtraction] Updated existing memory item',
+      try {
+        if (similar) {
+          // Update existing (server-side override)
+          await payload.update({
+            collection: 'memory_items',
+            id: similar._id.toString(),
+            data: {
+              text: candidate.text, // Update with new phrasing
+              importance: Math.max(similar.importance, candidate.importance), // Take higher importance
+              embedding,
+              updatedAt: new Date().toISOString(),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+            overrideAccess: true, // Server-side write, bypass user access control
+          })
+          logger.debug(
+            { memoryId: similar._id.toString(), text: candidate.text.slice(0, 50) },
+            '[MemoryExtraction] Updated existing memory item',
+          )
+        } else {
+          // Create new (server-side override)
+          await payload.create({
+            collection: 'memory_items',
+            data: {
+              userId,
+              conversationId: candidate.scope === 'conversation' ? conversationId : undefined,
+              type: candidate.type,
+              text: candidate.text,
+              embedding,
+              importance: candidate.importance,
+              status: 'active',
+              source: {
+                sourceConversationId: conversationId,
+                sourceMessageTimestamp: sourceTimestamp.toISOString(),
+                sourceMessageRole: sourceRole, // ChatRole enum values match Payload schema ('user' | 'assistant')
+              },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+            overrideAccess: true, // Server-side write, bypass user access control
+          })
+          logger.debug(
+            { text: candidate.text.slice(0, 50) },
+            '[MemoryExtraction] Created new memory item',
+          )
+          persisted++ // Only count new creations, not updates
+        }
+      } catch (error) {
+        logger.error(
+          { err: error, candidate: candidate.text.slice(0, 50), similar: !!similar },
+          '[MemoryExtraction] Failed to persist memory item',
         )
-      } else {
-        // Create new (server-side override)
-        await payload.create({
-          collection: 'memory_items',
-          data: {
-            userId,
-            conversationId: candidate.scope === 'conversation' ? conversationId : undefined,
-            type: candidate.type,
-            text: candidate.text,
-            embedding,
-            importance: candidate.importance,
-            status: 'active',
-            source: {
-              sourceConversationId: conversationId,
-              sourceMessageTimestamp: sourceTimestamp.toISOString(),
-              sourceMessageRole: sourceRole, // ChatRole enum values match Payload schema ('user' | 'assistant')
-            },
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any,
-          overrideAccess: true, // Server-side write, bypass user access control
-        })
-        logger.debug(
-          { text: candidate.text.slice(0, 50) },
-          '[MemoryExtraction] Created new memory item',
-        )
-        persisted++ // Only count new creations, not updates
+        // Continue with next item instead of failing completely
       }
     }
 
