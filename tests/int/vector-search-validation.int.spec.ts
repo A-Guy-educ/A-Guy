@@ -93,7 +93,10 @@ describe.skipIf(!hasOpenAIKey)('Vector Search Validation Integration Tests', () 
         collection: 'conversations',
         data: {
           user: testUserId,
-          exercise: exercises.docs[0].id,
+          contextRef: {
+            relationTo: 'exercises',
+            value: exercises.docs[0].id,
+          },
           messages: [],
           lastMessageAt: new Date().toISOString(),
           contextPolicyVersion: 'v1',
