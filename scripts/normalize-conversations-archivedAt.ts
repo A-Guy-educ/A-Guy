@@ -34,7 +34,7 @@ interface Conversation {
   exercise?: any // ObjectId or string (Payload relationships)
   lesson?: any // ObjectId or string (Payload relationships)
   archivedAt?: Date | null
-  lastMessageAt: Date
+  lastMessageAt: Date | string // Legacy data may be string
   updatedAt?: Date
   messages: Array<{ role: string; content: string }>
 }

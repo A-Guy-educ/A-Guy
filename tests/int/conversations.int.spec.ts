@@ -384,13 +384,20 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
         } as any,
       })
 
+      // Fetch raw Mongo document to get exact stored IDs (ObjectId or string)
+      const raw1 = await collection.findOne({ _id: conv1.id })
+      if (!raw1) {
+        throw new Error('Failed to fetch created conversation')
+      }
+
       // Try to create second active conversation directly via MongoDB (bypassing Payload)
+      // Use exact stored values from raw1 to avoid string/ObjectId mismatch
       // This should fail with duplicate key error
       let duplicateError: Error | null = null
       try {
         await collection.insertOne({
-          user: testUserId,
-          exercise: testExerciseId,
+          user: raw1.user, // Use exact stored value (ObjectId or string)
+          exercise: raw1.exercise, // Use exact stored value (ObjectId or string)
           contextRef: {
             relationTo: 'exercises',
             value: testExerciseId,
@@ -460,13 +467,20 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
         } as any,
       })
 
+      // Fetch raw Mongo document to get exact stored IDs (ObjectId or string)
+      const raw1 = await collection.findOne({ _id: conv1.id })
+      if (!raw1) {
+        throw new Error('Failed to fetch created conversation')
+      }
+
       // Try to create second active conversation directly via MongoDB (bypassing Payload)
+      // Use exact stored values from raw1 to avoid string/ObjectId mismatch
       // This should fail with duplicate key error
       let duplicateError: Error | null = null
       try {
         await collection.insertOne({
-          user: testUserId,
-          lesson: testLessonId,
+          user: raw1.user, // Use exact stored value (ObjectId or string)
+          lesson: raw1.lesson, // Use exact stored value (ObjectId or string)
           contextRef: {
             relationTo: 'lessons',
             value: testLessonId,

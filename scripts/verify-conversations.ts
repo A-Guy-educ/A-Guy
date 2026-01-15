@@ -20,12 +20,12 @@ if (!DATABASE_URL) {
 }
 
 interface Conversation {
-  _id: string
-  user: string
-  exercise?: string
-  lesson?: string
+  _id: any // ObjectId or string
+  user: any // ObjectId or string (Payload relationships)
+  exercise?: any // ObjectId or string (Payload relationships)
+  lesson?: any // ObjectId or string (Payload relationships)
   archivedAt?: Date
-  lastMessageAt: Date
+  lastMessageAt: Date | string // Legacy data may be string
   messages: Array<{ role: string; content: string }>
   updatedAt?: Date
 }
@@ -54,11 +54,16 @@ async function verifyConversations() {
 
     for (const conv of activeConversations) {
       // Group by exercise if it exists, otherwise by lesson
+      // Handle ObjectId or string for user/exercise/lesson
+      const userId = typeof conv.user === 'string' ? conv.user : conv.user?.toString() || String(conv.user)
+      const exerciseId = conv.exercise ? (typeof conv.exercise === 'string' ? conv.exercise : conv.exercise?.toString() || String(conv.exercise)) : null
+      const lessonId = conv.lesson ? (typeof conv.lesson === 'string' ? conv.lesson : conv.lesson?.toString() || String(conv.lesson)) : null
+
       let key: string
-      if (conv.exercise) {
-        key = `${conv.user}:exercise:${conv.exercise}`
-      } else if (conv.lesson) {
-        key = `${conv.user}:lesson:${conv.lesson}`
+      if (exerciseId) {
+        key = `${userId}:exercise:${exerciseId}`
+      } else if (lessonId) {
+        key = `${userId}:lesson:${lessonId}`
       } else {
         // Skip conversations without exercise or lesson (shouldn't happen in practice)
         console.warn(`⚠️  Conversation ${conv._id} has neither exercise nor lesson, skipping`)
@@ -127,6 +132,7 @@ async function verifyConversations() {
       const contextId = parts[2]
 
       // Sort by lastMessageAt descending (most recent first), fallback to updatedAt
+      // Handle lastMessageAt as Date or string (legacy data)
       const sorted = conversations.sort((a, b) => {
         const aTime = new Date(a.lastMessageAt || a.updatedAt || 0).getTime()
         const bTime = new Date(b.lastMessageAt || b.updatedAt || 0).getTime()
