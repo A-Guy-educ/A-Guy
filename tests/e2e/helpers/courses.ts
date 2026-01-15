@@ -49,6 +49,7 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
         collection: 'categories',
         data: {
           title: 'Test Category',
+          slug: 'test-category',
         },
         draft: false,
       })
