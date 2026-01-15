@@ -179,7 +179,9 @@ export async function retrieveMemoryItems(
       )
     }
 
-    // 3. User-global query (no contextKey or contextKey = 'global')
+    // 3. User-global query (contextKey = 'global' or missing)
+    // Note: MongoDB Atlas Vector Search filters support $in but not $or or $exists
+    // For missing contextKey, we rely on the context-hierarchy query or ensure contextKey is set
     queries.push(
       (async () => {
         const globalResults = await collection

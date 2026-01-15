@@ -219,12 +219,15 @@ describe.skipIf(!hasOpenAIKey)('Vector Search Validation Integration Tests', () 
       }
 
       // Create test memories with different content
+      // Note: contextKey is set to 'global' so they can be found by global query
+      // In real usage, contextKey would be set based on the conversation context
       const embedding1 = await generateEmbedding('User prefers TypeScript for type safety')
       const memory1 = await payload.create({
         collection: 'memory_items',
         data: {
           userId: testUserId,
           conversationId: testConversationId,
+          contextKey: 'global',
           text: 'User prefers TypeScript for type safety',
           type: 'preference',
           importance: 4,
@@ -244,6 +247,7 @@ describe.skipIf(!hasOpenAIKey)('Vector Search Validation Integration Tests', () 
         data: {
           userId: testUserId,
           conversationId: testConversationId,
+          contextKey: 'global',
           text: 'User enjoys functional programming patterns',
           type: 'preference',
           importance: 3,
@@ -263,6 +267,7 @@ describe.skipIf(!hasOpenAIKey)('Vector Search Validation Integration Tests', () 
         data: {
           userId: testUserId,
           conversationId: testConversationId,
+          contextKey: 'global',
           text: 'User is learning about databases',
           type: 'fact',
           importance: 3,
@@ -436,6 +441,7 @@ describe.skipIf(!hasOpenAIKey)('Vector Search Validation Integration Tests', () 
         data: {
           userId: otherUserId,
           conversationId: 'other-conversation',
+          contextKey: 'global',
           text: 'Other user confidential information',
           type: 'fact',
           importance: 5,
@@ -546,6 +552,7 @@ describe.skipIf(!hasOpenAIKey)('Vector Search Validation Integration Tests', () 
         data: {
           userId: testUserId,
           conversationId: testConversationId,
+          contextKey: 'global',
           text: 'This is deprecated information',
           type: 'fact',
           importance: 3,
