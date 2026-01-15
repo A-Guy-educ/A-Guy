@@ -95,7 +95,9 @@ export async function runSummaryMaintenance(
         summary,
         summaryUpdatedAt: new Date().toISOString(),
         summaryUntilTimestamp: summaryUntilTimestamp.toISOString(),
-        messages: recentWindow as any, // Keep only recent window
+        // Keep only recent window - cast needed because Message type may not exactly match Conversation messages
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        messages: recentWindow as any,
       },
       depth: 0, // Don't populate relationships
     })

@@ -39,7 +39,7 @@ This directory contains all Payload CMS collection configurations for the A-Guy 
 
 ### Supporting Collections
 
-- **[Media.ts](Media.ts)** - General media assets
+- **[Media](Media/)** - General media assets
   - Purpose: Images, documents for general content
   - Access: Public read, authenticated write
   - Upload directory: `media/`

@@ -86,6 +86,30 @@ test.describe('Memory System E2E Tests', () => {
     return userMessages + assistantMessages
   }
 
+  /**
+   * Helper to wait for chat input to be enabled
+   */
+  async function waitForChatInputEnabled(chatInput: ReturnType<Page['locator']>, timeout = 30000) {
+    await chatInput.waitFor({ state: 'visible', timeout })
+    // Wait for input to be enabled by checking if it's not disabled
+    // Poll until enabled or timeout
+    const startTime = Date.now()
+    while (Date.now() - startTime < timeout) {
+      const isDisabled = await chatInput.isDisabled().catch(() => true)
+      if (!isDisabled) {
+        // Small delay to ensure state is stable
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        return
+      }
+      await new Promise((resolve) => setTimeout(resolve, 200))
+    }
+    // Final check - if still disabled, throw error
+    const stillDisabled = await chatInput.isDisabled().catch(() => true)
+    if (stillDisabled) {
+      throw new Error('Chat input remained disabled after timeout')
+    }
+  }
+
   test.describe('Chat with Memory Extraction', () => {
     test('should extract and persist user preferences from conversation', async ({ page }) => {
       // Authenticate user with unique email
@@ -236,17 +260,20 @@ test.describe('Memory System E2E Tests', () => {
 
       // Send multiple messages to trigger summarization (reduced from 25 to 5 for CI speed)
       for (let i = 0; i < 5; i++) {
+        // Wait for input to be enabled before filling
+        await waitForChatInputEnabled(chatInput, 30000)
         await chatInput.fill(`Message ${i}: Can you explain concept ${i}?`)
         await chatInput.press('Enter')
 
         // Wait for response
         await waitForChatMessage(page, 30000)
 
-        // Small delay between messages
-        await page.waitForTimeout(1000)
+        // Wait for input to be enabled again after response
+        await waitForChatInputEnabled(chatInput, 30000)
       }
 
       // Verify conversation is still working
+      await waitForChatInputEnabled(chatInput, 30000)
       await chatInput.fill('Are you still there?')
       await chatInput.press('Enter')
       await waitForChatMessage(page, 30000)

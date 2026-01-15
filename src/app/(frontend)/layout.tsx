@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { cn } from '@/utilities/ui'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
+import { Assistant } from 'next/font/google'
 import React from 'react'
 
 import { AdminBar } from '@/components/AdminBar'
@@ -18,6 +19,13 @@ import { getServerSideURL } from '@/utilities/getURL'
 import { I18nProvider } from '@/providers/I18n'
 import { defaultLocale, cookieName, type Locale, locales } from '@/i18n/config'
 import { headers, cookies } from 'next/headers'
+
+const assistant = Assistant({
+  subsets: ['latin', 'hebrew'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-assistant',
+})
 
 // Read locale from middleware header or cookie
 // Middleware sets x-locale header after detecting locale from cookie/subdomain
@@ -63,7 +71,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html
-      className={cn(GeistSans.variable, GeistMono.variable)}
+      className={cn(GeistSans.variable, GeistMono.variable, assistant.variable)}
       dir={dir}
       lang={locale}
       suppressHydrationWarning
@@ -72,10 +80,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <InitTheme />
         <link href="/favicon.ico" rel="icon" sizes="32x32" />
         <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
       </head>
       <body>
         <I18nProvider locale={locale} messages={messages}>

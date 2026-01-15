@@ -82,21 +82,34 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Run lint-staged
-pnpm exec lint-staged
-
-# Run typecheck on the project
+# Run lint-staged (auto-fixes formatting + linting)
 echo ""
-echo "🔍 Running typecheck..."
-pnpm typecheck
+echo "🎨 Running lint-staged (auto-formatting & linting)..."
+pnpm exec lint-staged
 
 if [ $? -ne 0 ]; then
   echo ""
-  echo "❌ Typecheck failed. Commit cancelled."
-  echo ""
-  echo "To skip: git commit --no-verify"
-  echo "Or use: SKIP_HOOKS=1 git commit"
+  echo "❌ Linting failed. Please fix the errors and try again."
   exit 1
 fi
 
-echo "✅ Typecheck passed"
+echo "✅ Lint-staged passed"
+
+# Fast type checking on staged TypeScript files only
+echo ""
+echo "🔍 Type checking staged files..."
+pnpm exec tsc --noEmit --incremental false
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Type checking failed. Please fix type errors and try again."
+  echo ""
+  echo "To see all errors: pnpm typecheck"
+  echo "To skip: git commit --no-verify"
+  exit 1
+fi
+
+echo "✅ Type checking passed"
+echo ""
+echo "✅ Pre-commit checks passed!"
+echo "⚠️  Full build & tests will run in CI"

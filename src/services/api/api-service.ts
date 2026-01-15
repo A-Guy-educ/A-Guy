@@ -44,7 +44,12 @@ export const apiService = {
     lessonId?: string,
   ): Promise<ChatApiResponse> {
     try {
-      const body: any = { message, acknowledgment }
+      const body: {
+        message: string
+        acknowledgment: string
+        exerciseId?: string
+        lessonId?: string
+      } = { message, acknowledgment }
       if (exerciseId) {
         body.exerciseId = exerciseId
       } else if (lessonId) {
@@ -93,7 +98,10 @@ export const apiService = {
     try {
       // Use Payload's auto-generated REST API with query filters
       // Access control is automatically enforced by Payload
-      const whereClause: any = {}
+      const whereClause: {
+        exercise?: { equals: string }
+        lesson?: { equals: string }
+      } = {}
       if (exerciseId) {
         whereClause.exercise = { equals: exerciseId }
       } else if (lessonId) {
