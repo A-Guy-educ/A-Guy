@@ -370,6 +370,13 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       conversationId,
     })
   } catch (error) {
+    // Handle connection reset errors gracefully (client disconnected)
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'ECONNRESET') {
+      reqLogger.debug({ err: error }, 'Client disconnected during chat request')
+      // Return 499 (Client Closed Request) or 200 to avoid error logs
+      return Response.json({ error: 'Request cancelled' }, { status: 499 })
+    }
+
     reqLogger.error({ err: error }, 'Chat endpoint error')
 
     if (error instanceof z.ZodError) {
