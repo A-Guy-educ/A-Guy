@@ -77,6 +77,7 @@ export interface Config {
     exercises: Exercise;
     'exercise-assets': ExerciseAsset;
     users: User;
+    'user-progress': UserProgress;
     media: Media;
     posts: Post;
     'pricing-plans': PricingPlan;
@@ -107,6 +108,7 @@ export interface Config {
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
     'exercise-assets': ExerciseAssetsSelect<false> | ExerciseAssetsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
@@ -1127,6 +1129,46 @@ export interface ExerciseAsset {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-progress".
+ */
+export interface UserProgress {
+  id: string;
+  /**
+   * The user this progress belongs to
+   */
+  user: string | User;
+  /**
+   * Grade level (e.g., "8", "ח")
+   */
+  gradeLevel?: string | null;
+  progressRecords?:
+    | {
+        recordType: 'chapter' | 'lesson' | 'exercise';
+        /**
+         * ID of the chapter, lesson, or exercise
+         */
+        recordId: string;
+        /**
+         * Completion percentage (0-100)
+         */
+        completionPercentage?: number | null;
+        status?: ('not_started' | 'in_progress' | 'completed') | null;
+        /**
+         * Score for exercises (0-100)
+         */
+        score?: number | null;
+        /**
+         * Last time this record was accessed
+         */
+        lastAccessedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts".
  */
 export interface Post {
@@ -1454,6 +1496,10 @@ export interface PayloadLockedDocument {
         value: string | User;
       } | null)
     | ({
+        relationTo: 'user-progress';
+        value: string | UserProgress;
+      } | null)
+    | ({
         relationTo: 'media';
         value: string | Media;
       } | null)
@@ -1681,6 +1727,7 @@ export interface ConversationsSelect<T extends boolean = true> {
   contextRef?: T;
   contextKey?: T;
   exercise?: T;
+  lesson?: T;
   messages?:
     | T
     | {
@@ -1839,6 +1886,27 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-progress_select".
+ */
+export interface UserProgressSelect<T extends boolean = true> {
+  user?: T;
+  gradeLevel?: T;
+  progressRecords?:
+    | T
+    | {
+        recordType?: T;
+        recordId?: T;
+        completionPercentage?: T;
+        status?: T;
+        score?: T;
+        lastAccessedAt?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

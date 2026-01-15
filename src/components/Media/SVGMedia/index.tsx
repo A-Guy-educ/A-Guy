@@ -2,6 +2,7 @@
 
 import { cn } from '@/utilities/ui'
 import React from 'react'
+import Image from 'next/image'
 
 import type { Props as MediaProps } from '../types'
 
@@ -11,7 +12,7 @@ export const SVGMedia: React.FC<MediaProps> = (props) => {
   const { resource, className, imgClassName, alt } = props
 
   if (resource && typeof resource === 'object') {
-    const { filename, url, alt: altFromResource } = resource
+    const { filename, url, alt: altFromResource, width, height } = resource
 
     const svgUrl = url ? getMediaUrl(url) : filename ? getMediaUrl(`/media/${filename}`) : null
 
@@ -23,7 +24,14 @@ export const SVGMedia: React.FC<MediaProps> = (props) => {
 
     return (
       <div className={cn('svg-media', className)}>
-        <img src={svgUrl} alt={altText} className={cn('max-w-full h-auto', imgClassName)} />
+        <Image
+          src={svgUrl}
+          alt={altText}
+          width={width || 800}
+          height={height || 600}
+          className={cn('max-w-full h-auto', imgClassName)}
+          unoptimized
+        />
       </div>
     )
   }

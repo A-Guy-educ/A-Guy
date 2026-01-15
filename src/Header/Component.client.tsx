@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react'
 
 import type { Header, User } from '@/payload-types'
 
-import { Logo } from '@/components/Logo/Logo'
+import { TelescopeLogo } from '@/components/TelescopeLogo'
 import { HeaderNav } from './Nav'
 import { MobileMenu, MobileMenuButton } from './MobileMenu'
 
@@ -84,8 +84,11 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         <div className="container">
           <div className="py-3 md:py-4 flex items-center justify-between text-header-foreground">
             {/* Logo */}
-            <Link href="/" className="flex-shrink-0 hover:opacity-80 transition-opacity">
-              <Logo loading="eager" priority="high" className="invert dark:invert-0" />
+            <Link
+              href="/"
+              className="flex items-center gap-3 flex-shrink-0 hover:opacity-80 transition-opacity"
+            >
+              <TelescopeLogo className="h-8 w-auto" />
             </Link>
 
             {/* Desktop Navigation */}

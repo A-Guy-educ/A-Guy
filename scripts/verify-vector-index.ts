@@ -9,7 +9,13 @@
  *   pnpm tsx scripts/verify-vector-index.ts
  */
 
-import config from '@payload-config'
+// CRITICAL: Load env vars FIRST before any imports that rely on them
+import { config as loadEnv } from 'dotenv'
+import { resolve } from 'path'
+
+loadEnv({ path: resolve(process.cwd(), '.env.local') })
+loadEnv({ path: resolve(process.cwd(), '.env') })
+
 import type { Db } from 'mongodb'
 import { getPayload } from 'payload'
 
@@ -35,6 +41,9 @@ async function verifyVectorIndex() {
   console.log('🔍 Verifying MongoDB Atlas Vector Search Index...\n')
 
   try {
+    // Load Payload config AFTER env vars are available
+    const { default: config } = await import('@payload-config')
+
     // Initialize Payload
     console.log('1️⃣  Connecting to database...')
     const payload = await getPayload({ config })

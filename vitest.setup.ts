@@ -9,13 +9,14 @@ if (!process.env.PAYLOAD_SECRET) {
   process.env.PAYLOAD_SECRET = 'test-secret-key-for-integration-tests-only'
 }
 
-if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'mongodb://127.0.0.1:27017/test'
-}
-
 if (!process.env.NEXT_PUBLIC_SERVER_URL) {
   process.env.NEXT_PUBLIC_SERVER_URL = 'http://localhost:3000'
 }
+
+// Note: Testcontainers constraint is enforced in individual test files
+// that use testcontainers (via startMongoContainer() in beforeAll hooks)
+// Vector search tests are allowed to use MongoDB Atlas (they require it)
+// This setup file doesn't enforce constraints because test files aren't loaded yet
 
 /**
  * Mock OpenAI for integration tests

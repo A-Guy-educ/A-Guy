@@ -18,6 +18,7 @@ import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { PricingPlans } from './collections/PricingPlans'
 import { Users } from './collections/Users'
+import { UserProgress } from './collections/UserProgress'
 import { importExerciseFromImage } from './endpoints/exercises/import-from-image'
 import { importExerciseFromLesson } from './endpoints/exercises/import-from-lesson'
 import { Footer } from './Footer/config'
@@ -91,6 +92,7 @@ export default buildConfig({
     Exercises,
     ExerciseAssets,
     Users,
+    UserProgress,
     Media,
     Posts,
     PricingPlans,

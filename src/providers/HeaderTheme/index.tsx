@@ -4,7 +4,7 @@ import type { Theme } from '@/providers/Theme/types'
 
 import React, { createContext, useCallback, use, useState } from 'react'
 
-import canUseDOM from '@/utilities/canUseDOM'
+import { useTheme } from '@/providers/Theme'
 
 export interface ContextType {
   headerTheme?: Theme | null
@@ -19,13 +19,21 @@ const initialContext: ContextType = {
 const HeaderThemeContext = createContext(initialContext)
 
 export const HeaderThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [headerTheme, setThemeState] = useState<Theme | undefined | null>(
-    canUseDOM ? (document.documentElement.getAttribute('data-theme') as Theme) : undefined,
-  )
+  // Get the main theme from ThemeProvider
+  const { theme: mainTheme } = useTheme()
+
+  // Local state for per-page overrides (null means use main theme)
+  const [overrideTheme, setOverrideTheme] = useState<Theme | null | undefined>(undefined)
 
   const setHeaderTheme = useCallback((themeToSet: Theme | null) => {
-    setThemeState(themeToSet)
+    // null means reset to main theme, so set to undefined
+    setOverrideTheme(themeToSet === null ? undefined : themeToSet)
   }, [])
+
+  // Determine the effective header theme:
+  // - If overrideTheme is set (not undefined), use it
+  // - Otherwise (undefined), use the main theme
+  const headerTheme = overrideTheme !== undefined ? overrideTheme : mainTheme
 
   return <HeaderThemeContext value={{ headerTheme, setHeaderTheme }}>{children}</HeaderThemeContext>
 }

@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { useTranslation } from '@payloadcms/ui'
+import Image from 'next/image'
 import type { Media } from '@/payload-types'
 
 interface MediaPickerProps {
@@ -132,10 +133,13 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({
                       />
                     </div>
                     {thumbnailUrl && (
-                      <img
+                      <Image
                         src={thumbnailUrl}
                         alt={item.alt || item.filename || 'Media'}
+                        width={200}
+                        height={200}
                         className="media-grid-image"
+                        style={{ objectFit: 'cover' }}
                       />
                     )}
                     <div className="media-grid-info">

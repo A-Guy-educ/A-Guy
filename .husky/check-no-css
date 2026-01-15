@@ -16,5 +16,7 @@ if [ -n "$staged_css" ]; then
   echo "See AGENTS.md for styling guidelines."
   echo ""
   echo "Exception: src/app/(frontend)/globals.css is allowed for design system variables."
+  echo ""
+  echo "For detailed help, see: docs/specs/COMMIT_GUIDE.md"
   exit 1
 fi

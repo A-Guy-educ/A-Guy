@@ -16,7 +16,7 @@ interface UseNotebookChatProps {
   solutionPrompt: string
   fullSolutionPrompt: string
   acknowledgment: string
-  exerciseId: string
+  exerciseId?: string
   lessonId?: string
   chapterId?: string
   courseId?: string

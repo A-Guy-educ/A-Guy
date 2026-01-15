@@ -8,7 +8,7 @@
  * - admin: Platform administrator with full access
  * - student: Learner with standard access (default role)
  */
-import enMessages from '../../../messages/en.json'
+import enMessages from '../../../messages/en.json' with { type: 'json' }
 
 export enum AccountRole {
   Admin = 'admin',

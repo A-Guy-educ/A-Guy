@@ -2,7 +2,8 @@
 
 import React from 'react'
 import { useField, useForm } from '@payloadcms/ui'
-import { Code, Plus, Trash2, MoveUp, MoveDown, Image } from 'lucide-react'
+import { Code, Plus, Trash2, MoveUp, MoveDown, Image as ImageIcon } from 'lucide-react'
+import Image from 'next/image'
 import { RichTextEditor } from './RichTextEditor'
 import { JSONInspector } from './JSONInspector'
 import { MediaPicker } from './MediaPicker'
@@ -115,7 +116,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
     if (!localValue || !localValue.blocks || !Array.isArray(localValue.blocks)) {
       updateLocalValue({ blocks: DEFAULT_BLOCKS })
     }
-  }, [])
+  }, [localValue, updateLocalValue])
 
   // Get blocks array safely
   const blocks: ContentBlock[] = localValue?.blocks || []
@@ -527,7 +528,7 @@ function BlockList({
                 onClick={() => onOpenMediaPicker(block.id)}
                 title="Attach media"
               >
-                <Image size={14} />
+                <ImageIcon size={14} />
                 <span>
                   {block.mediaIds && block.mediaIds.length > 0
                     ? `${block.mediaIds.length} media attached`
@@ -605,7 +606,13 @@ function BlockMediaDisplay({ blockId, mediaIds, onRemoveMedia }: BlockMediaDispl
         return (
           <div key={media.id} className="media-thumbnail-preview">
             {thumbnailUrl && (
-              <img src={thumbnailUrl} alt={media.alt || media.filename || 'Media'} />
+              <Image
+                src={thumbnailUrl}
+                alt={media.alt || media.filename || 'Media'}
+                width={150}
+                height={150}
+                style={{ objectFit: 'cover' }}
+              />
             )}
             <button
               type="button"

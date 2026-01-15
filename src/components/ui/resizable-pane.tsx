@@ -127,9 +127,11 @@ export function ResizablePane({
         style={{
           flex: `0 0 ${firstPaneSize}%`,
         }}
-        className="overflow-hidden"
+        className="overflow-hidden relative"
       >
         {children[0]}
+        {/* Overlay to prevent iframe from capturing mouse events during drag */}
+        {isDragging && <div className="absolute inset-0 z-10" />}
       </div>
 
       {/* Resizer Handle */}
@@ -170,7 +172,11 @@ export function ResizablePane({
       </div>
 
       {/* Second Pane */}
-      <div className="flex-1 overflow-hidden">{children[1]}</div>
+      <div className="flex-1 overflow-hidden relative">
+        {children[1]}
+        {/* Overlay to prevent iframe from capturing mouse events during drag */}
+        {isDragging && <div className="absolute inset-0 z-10" />}
+      </div>
     </div>
   )
 }
