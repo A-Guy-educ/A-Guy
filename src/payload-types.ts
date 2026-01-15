@@ -866,7 +866,7 @@ export interface Conversation {
    */
   lastMessageAt: string;
   /**
-   * Archival timestamp. Active conversation: null. Archived: non-null.
+   * When this conversation was archived. Missing = active.
    */
   archivedAt?: string | null;
   updatedAt: string;
@@ -1727,7 +1727,6 @@ export interface ConversationsSelect<T extends boolean = true> {
   contextRef?: T;
   contextKey?: T;
   exercise?: T;
-  lesson?: T;
   messages?:
     | T
     | {

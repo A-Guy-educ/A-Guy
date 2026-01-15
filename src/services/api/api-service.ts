@@ -90,17 +90,21 @@ export const apiService = {
   },
 
   /**
-   * Fetch existing conversation history for a context using Payload's REST API
+   * Fetch existing conversation history for a context using Payload's built-in REST API
+   * Access control is automatically enforced by Payload based on collection access rules
    *
    * @param contextKey - The context key (e.g., "exercises:abc123")
    * @returns Conversation history with messages
    */
   async getConversation(contextKey: string): Promise<ConversationApiResponse> {
     try {
-      // Use Payload's auto-generated REST API with query filters
-      // Access control is automatically enforced by Payload
+      // Use Payload's auto-generated REST API endpoint
+      // Access control (isOwner) automatically filters by authenticated user
       const whereQuery = JSON.stringify({
-        and: [{ contextKey: { equals: contextKey } }, { archivedAt: { exists: false } }],
+        and: [
+          { contextKey: { equals: contextKey } },
+          { archivedAt: { exists: false } },
+        ],
       })
 
       const response = await fetch(
@@ -108,7 +112,7 @@ export const apiService = {
         {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          credentials: 'include', // Include cookies for authentication
         },
       )
 
@@ -129,27 +133,27 @@ export const apiService = {
           success: false,
           exists: false,
           messages: [],
-          error: data.errors?.[0]?.message || 'Request failed',
+          error: data.errors?.[0]?.message || data.error || 'Request failed',
         }
       }
 
-      // Payload returns { docs: [...], totalDocs, ... }
+      // Payload REST API returns { docs: [...], totalDocs, ... }
       if (data.docs && data.docs.length > 0) {
         const conversation = data.docs[0] as {
           id: string
-          messages?: Array<{ role: string; content: string }>
+          messages?: Array<{ role: string; content: string; timestamp?: string }>
         }
-        const messages = conversation.messages || []
+        const messages = (conversation.messages || []).map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        }))
 
         return {
           success: true,
           exists: true,
           conversationId: conversation.id,
           contextKey,
-          messages: messages.map((msg) => ({
-            role: msg.role,
-            content: msg.content,
-          })),
+          messages,
         }
       }
 
