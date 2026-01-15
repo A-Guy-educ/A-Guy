@@ -11,11 +11,16 @@ import { expect, test, type Page } from '@playwright/test'
 import { setupAuthenticatedUser, generateTestUserEmail, cleanupTestUsers } from './helpers/auth'
 import { getTestCourseData, buildLessonUrl, seedTestCourseData } from './helpers/courses'
 
-// Skip all tests if OPENAI_API_KEY is not set
+// Skip all tests if required API keys are not set
 const hasOpenAIKey = !!process.env.OPENAI_API_KEY
+const hasGeminiKey = !!process.env.GEMINI_API_KEY
+const hasRequiredKeys = hasOpenAIKey && hasGeminiKey
 
 test.describe('Memory System E2E Tests', () => {
-  test.skip(!hasOpenAIKey, 'Skipping Memory System E2E Tests: OPENAI_API_KEY is not set')
+  test.skip(
+    !hasRequiredKeys,
+    `Skipping Memory System E2E Tests: Missing required API keys. OPENAI_API_KEY: ${hasOpenAIKey ? 'set' : 'missing'}, GEMINI_API_KEY: ${hasGeminiKey ? 'set' : 'missing'}`,
+  )
 
   let testCourseData: Awaited<ReturnType<typeof getTestCourseData>>
 
