@@ -14,6 +14,110 @@ export interface TestCourseData {
 }
 
 /**
+ * Seed test course data if it doesn't exist
+ * Creates a test course with a chapter and lesson, all published and active
+ */
+export async function seedTestCourseData(): Promise<TestCourseData | null> {
+  try {
+    const payload = await getPayload({ config })
+
+    // Check if test course already exists
+    const existing = await getTestCourseData()
+    if (existing) {
+      console.log('Test course data already exists, skipping seed')
+      return existing
+    }
+
+    console.log('Seeding test course data...')
+
+    // Get or create a test category
+    let category
+    const categories = await payload.find({
+      collection: 'categories',
+      where: {
+        title: {
+          equals: 'Test Category',
+        },
+      },
+      limit: 1,
+    })
+
+    if (categories.docs.length > 0) {
+      category = categories.docs[0]
+    } else {
+      category = await payload.create({
+        collection: 'categories',
+        data: {
+          title: 'Test Category',
+          slug: 'test-category',
+        },
+        draft: false,
+      })
+    }
+
+    // Create test course
+    const course = await payload.create({
+      collection: 'courses',
+      data: {
+        courseLabel: 'TEST',
+        title: 'Test Course for E2E',
+        description: 'A test course created for E2E testing',
+        status: 'published',
+        isActive: true,
+        order: 0,
+        categories: [category.id],
+      },
+    })
+
+    // Create test chapter
+    const chapter = await payload.create({
+      collection: 'chapters',
+      data: {
+        course: course.id,
+        chapterLabel: '1',
+        title: 'Test Chapter',
+        description: 'A test chapter created for E2E testing',
+        status: 'published',
+        isActive: true,
+        order: 0,
+      },
+    })
+
+    // Create test lesson
+    const lesson = await payload.create({
+      collection: 'lessons',
+      data: {
+        chapter: chapter.id,
+        title: 'Test Lesson',
+        description: 'A test lesson created for E2E testing',
+        status: 'published',
+        isActive: true,
+        order: 0,
+      },
+    })
+
+    // Validate slugs exist
+    if (!course.slug || !chapter.slug || !lesson.slug) {
+      throw new Error('Course, chapter, or lesson missing slug field after creation')
+    }
+
+    console.log('Test course data seeded successfully')
+
+    return {
+      courseSlug: course.slug,
+      chapterSlug: chapter.slug,
+      lessonSlug: lesson.slug,
+      courseId: course.id,
+      chapterId: chapter.id,
+      lessonId: lesson.id,
+    }
+  } catch (error) {
+    console.error('Error seeding test course data:', error)
+    return null
+  }
+}
+
+/**
  * Get the first available published course with chapters and lessons
  * Returns null if no suitable course data is available
  */

@@ -9,7 +9,7 @@
  */
 import { expect, test, type Page } from '@playwright/test'
 import { setupAuthenticatedUser, generateTestUserEmail, cleanupTestUsers } from './helpers/auth'
-import { getTestCourseData, buildLessonUrl } from './helpers/courses'
+import { getTestCourseData, buildLessonUrl, seedTestCourseData } from './helpers/courses'
 
 // Skip all tests if OPENAI_API_KEY is not set
 const hasOpenAIKey = !!process.env.OPENAI_API_KEY
@@ -20,11 +20,18 @@ test.describe('Memory System E2E Tests', () => {
   let testCourseData: Awaited<ReturnType<typeof getTestCourseData>>
 
   test.beforeAll(async () => {
-    // Get test course data once for all tests
-    testCourseData = await getTestCourseData()
+    // Seed test course data if it doesn't exist
+    const seeded = await seedTestCourseData()
+    if (seeded) {
+      testCourseData = seeded
+    } else {
+      // If seeding failed, try to get existing data
+      testCourseData = await getTestCourseData()
+    }
+
     if (!testCourseData) {
       throw new Error(
-        'No test course data available. Please ensure at least one published course with chapters and lessons exists.',
+        'No test course data available. Failed to seed or find published course with chapters and lessons.',
       )
     }
   })
