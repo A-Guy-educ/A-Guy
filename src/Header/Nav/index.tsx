@@ -20,7 +20,6 @@ interface HeaderNavProps {
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({ data, userName, isAuthenticated }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const tCourses = useTranslations('courses')
   const tCommon = useTranslations('common.header')
   const navItems = data?.navItems || []
 
@@ -60,14 +59,6 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, userName, isAuthenti
           ))}
         </div>
       )}
-
-      {/* Separator before courses */}
-      {navItems.length > 0 && <div className="h-6 w-px bg-border" />}
-
-      {/* Courses Link */}
-      <Link href="/courses" className="text-sm font-medium hover:text-primary transition-colors">
-        {tCourses('title')}
-      </Link>
 
       {/* Search */}
       <Link

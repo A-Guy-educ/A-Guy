@@ -66,3 +66,30 @@ export const queryChapterBySlug = cache(async ({ slug }: { slug: string }) => {
 
   return result.docs?.[0] || null
 })
+
+/**
+ * Fetch chapters by grade level (filters by courseLabel)
+ */
+export const queryChaptersByGrade = cache(async ({ gradeLevel }: { gradeLevel: string }) => {
+  const payload = await getPayload({ config: configPromise })
+
+  // Find course for this grade
+  const courseResult = await payload.find({
+    collection: 'courses',
+    where: {
+      and: [
+        { courseLabel: { equals: gradeLevel } },
+        { status: { equals: 'published' } },
+        { isActive: { equals: true } },
+      ],
+    },
+    limit: 1,
+    pagination: false,
+  })
+
+  const course = courseResult.docs?.[0]
+  if (!course) return []
+
+  // Reuse existing function
+  return queryChaptersByCourse({ courseId: course.id })
+})

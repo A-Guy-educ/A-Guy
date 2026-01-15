@@ -1,5 +1,12 @@
-import PageTemplate, { generateMetadata } from './[slug]/page'
+import { HomePage } from './_components/HomePage'
 
-export default PageTemplate
+export default function HomepagePage() {
+  return <HomePage />
+}
 
-export { generateMetadata }
+export async function generateMetadata() {
+  return {
+    title: 'דף הבית - A-Guy',
+    description: 'המורה הדיגיטלי שלך - לימוד, תרגול, שאלות ומבחנים',
+  }
+}

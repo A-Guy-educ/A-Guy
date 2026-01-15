@@ -88,16 +88,24 @@ export async function runSummaryMaintenance(
     )
 
     // Update conversation
-    await payload.update({
+    const updated = await payload.update({
       collection: 'conversations',
       id: conversationId,
       data: {
         summary,
         summaryUpdatedAt: new Date().toISOString(),
         summaryUntilTimestamp: summaryUntilTimestamp.toISOString(),
-        messages: recentWindow as any, // Keep only recent window
+        // Keep only recent window - cast needed because Message type may not exactly match Conversation messages
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        messages: recentWindow as any,
       },
+      depth: 0, // Don't populate relationships
     })
+
+    // Verify update succeeded
+    if (!updated.summaryUpdatedAt) {
+      logger.warn({ conversationId }, '[Maintenance] summaryUpdatedAt not set after update')
+    }
 
     const messagesTrimmed = messages.length - recentWindow.length
 

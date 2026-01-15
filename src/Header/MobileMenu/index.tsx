@@ -27,7 +27,6 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   isAuthenticated,
 }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const tCourses = useTranslations('courses')
   const tCommon = useTranslations('common.header')
   const navItems = data?.navItems || []
 
@@ -124,17 +123,6 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               </div>
             </div>
           )}
-
-          {/* Courses */}
-          <div className="px-6 py-4 border-b border-border">
-            <Link
-              href="/courses"
-              onClick={onClose}
-              className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted transition-colors text-base font-medium"
-            >
-              {tCourses('title')}
-            </Link>
-          </div>
 
           {/* Search */}
           <div className="px-6 py-4 border-b border-border">

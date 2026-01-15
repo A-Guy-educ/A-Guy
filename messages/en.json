@@ -115,5 +115,36 @@
     "formulaSubtitle": "Helper Formulas",
     "notesSubtitle": "Personal Notes",
     "notesPlaceholder": "Add your notes here..."
+  },
+  "homepage": {
+    "nav": {
+      "study": "Study",
+      "practice": "Practice",
+      "ask": "Ask",
+      "test": "Test"
+    },
+    "greeting": {
+      "welcome": "Hello! I'm your digital teacher 🤖",
+      "moodQuestion": "How are you feeling today?",
+      "moods": {
+        "happy": "😊 Happy",
+        "neutral": "😐 Calm",
+        "sad": "😔 Sad",
+        "excited": "🤩 Excited"
+      },
+      "gradeQuestion": "What grade are you in?",
+      "selectGrade": "Select grade",
+      "gradeLabel": "Grade {{grade}}",
+      "letsStart": "Let's start!",
+      "loading": "Loading...",
+      "noCoursesAvailable": "No courses available"
+    }
+  },
+  "study": {
+    "loading": "Loading...",
+    "chooseCourse": "Choose Course",
+    "noCoursesAvailable": "No courses available",
+    "studyTopics": "Study Topics",
+    "noTopicsAvailable": "No topics available in this course"
   }
 }

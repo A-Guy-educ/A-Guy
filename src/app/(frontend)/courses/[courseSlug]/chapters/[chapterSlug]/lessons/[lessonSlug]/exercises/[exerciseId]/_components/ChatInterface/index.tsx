@@ -10,10 +10,11 @@ import { useNotebookChat } from '../NotebookChat/useNotebookChat'
 import { ChatMessageRole } from '@/lib/ai/chat-message-role'
 
 interface ChatInterfaceProps {
-  exerciseId: string
+  exerciseId?: string
+  lessonId?: string
 }
 
-export function ChatInterface({ exerciseId }: ChatInterfaceProps) {
+export function ChatInterface({ exerciseId, lessonId }: ChatInterfaceProps) {
   const t = useTranslations('courses')
   const {
     messages,
@@ -33,6 +34,7 @@ export function ChatInterface({ exerciseId }: ChatInterfaceProps) {
     fullSolutionPrompt: t('chatFullSolutionPrompt'),
     acknowledgment: t('chatAIAcknowledgment'),
     exerciseId,
+    lessonId,
   })
 
   const [isMathPaletteOpen, setIsMathPaletteOpen] = useState(false)

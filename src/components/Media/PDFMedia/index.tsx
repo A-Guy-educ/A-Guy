@@ -1,59 +1,36 @@
 'use client'
 
+import React from 'react'
 import { cn } from '@/utilities/ui'
-import React, { useMemo } from 'react'
-
 import type { Props as MediaProps } from '../types'
 
-import { getMediaUrl } from '@/utilities/getMediaUrl'
-
 export const PDFMedia: React.FC<MediaProps> = (props) => {
-  const { resource, className, page = 1 } = props
+  const { resource, className } = props
 
-  // Get base PDF URL
-  const basePdfUrl = useMemo(() => {
+  const pdfUrl = React.useMemo(() => {
     if (resource && typeof resource === 'object') {
       const { filename, url } = resource
-      return url ? getMediaUrl(url) : filename ? getMediaUrl(`/media/${filename}`) : null
+      // Use relative URLs to avoid hydration mismatch with port numbers
+      if (url) {
+        // If URL is already absolute, return as-is, otherwise make it relative
+        return url.startsWith('http://') || url.startsWith('https://') ? url : url
+      }
+      return filename ? `/media/${filename}` : null
     }
     return null
   }, [resource])
 
-  // Configure PDF.js viewer to hide toolbar and control view
-  // Same configuration as old PDFViewer: page=${page}&pagemode=none&scrollbar=0&toolbar=0&navpanes=0&view=FitH
-  const configuredPdfUrl = useMemo(() => {
-    if (!basePdfUrl) return null
-
-    // Check if pdfUrl already has hash parameters
-    if (basePdfUrl.includes('#')) {
-      return basePdfUrl
-    }
-
-    // Add hash parameters for single page mode with hidden toolbar
-    const params = `page=${page}&pagemode=none&scrollbar=0&toolbar=0&navpanes=0&view=FitH`
-    return `${basePdfUrl}#${params}`
-  }, [basePdfUrl, page])
-
-  const handleError = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
-    const target = e.currentTarget
-    target.classList.add('hidden')
-  }
-
-  if (!configuredPdfUrl || !resource || typeof resource !== 'object') {
+  if (!pdfUrl) {
     return null
   }
 
+  // Load PDF.js viewer via proxy (Blob CDN sets Content-Disposition: attachment)
+  // Add version parameter to bust cache when viewer files are updated
+  const viewerUrl = `/api/pdfjs-viewer?file=${encodeURIComponent(pdfUrl)}&v=4.4.168`
+
   return (
-    <iframe
-      src={configuredPdfUrl}
-      title={
-        typeof resource === 'object' && 'filename' in resource && resource.filename
-          ? resource.filename
-          : 'PDF'
-      }
-      className={cn('w-full h-[841px]', className)}
-      loading="lazy"
-      onError={handleError}
-    />
+    <div className={cn('w-full h-full', className)}>
+      <iframe src={viewerUrl} className="w-full h-full border-0" title="PDF Viewer" />
+    </div>
   )
 }

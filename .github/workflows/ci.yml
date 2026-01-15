@@ -56,9 +56,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run diff-scoped auto-fix
-        run: pnpm fix:changed
-
       - name: Cache TypeScript
         uses: actions/cache@v5
         with:
@@ -98,6 +95,12 @@ jobs:
       # DATABASE_URL is required for postinstall -> generate:types
       # Falls back to a dummy connection string if secret is not available (e.g., fork PRs)
       DATABASE_URL: ${{ secrets.DATABASE_URL || 'mongodb://localhost:27017/test' }}
+      # PAYLOAD_SECRET is required for Payload CMS initialization in E2E tests
+      PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET || 'test-secret-for-ci' }}
+      # OPENAI_API_KEY is required for memory system E2E tests
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || '' }}
+      # GEMINI_API_KEY is required for memory system E2E tests
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || '' }}
 
     steps:
       - name: Checkout code

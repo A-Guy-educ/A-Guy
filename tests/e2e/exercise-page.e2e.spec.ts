@@ -1,16 +1,11 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Exercise Page', () => {
-  test.beforeAll(async ({ browser }) => {
-    const context = await browser.newContext()
-    await context.newPage()
-  })
-
   test.describe('Exercise Page Navigation', () => {
     test('navigates from lesson page to exercise page', async ({ page }) => {
       // This test assumes the courses route exists with at least one exercise
       // You may need to seed data or adjust the URL based on your test data
-      await page.goto('http://localhost:3000/courses')
+      await page.goto('/courses')
 
       // Wait for page to load
       await expect(page).toHaveURL(/\/courses/)
@@ -22,7 +17,7 @@ test.describe('Exercise Page', () => {
       // Navigate to a specific exercise page
       // Note: Update this URL with actual test data IDs
       const testUrl =
-        'http://localhost:3000/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/test-exercise-id'
+        '/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/test-exercise-id'
 
       await page.goto(testUrl)
 
@@ -54,7 +49,7 @@ test.describe('Exercise Page', () => {
       // SKIPPED: Requires test data seeding
       // TODO: Implement test data seeding in beforeAll hook
       const testUrl =
-        'http://localhost:3000/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/test-exercise-id'
+        '/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/test-exercise-id'
 
       await page.goto(testUrl)
 
@@ -83,7 +78,7 @@ test.describe('Exercise Page', () => {
       // SKIPPED: Requires test data seeding
       // TODO: Implement test data seeding in beforeAll hook
       const testUrl =
-        'http://localhost:3000/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/test-exercise-id'
+        '/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/test-exercise-id'
 
       await page.goto(testUrl)
 
@@ -99,7 +94,9 @@ test.describe('Exercise Page', () => {
       await backButton.click()
 
       // Verify navigation to lesson page
-      await expect(page).toHaveURL(/\/lessons\/test-lesson/)
+      await expect(page).toHaveURL(
+        /\/courses\/test-course\/chapters\/test-chapter\/lessons\/test-lesson/,
+      )
     })
   })
 
@@ -109,7 +106,7 @@ test.describe('Exercise Page', () => {
       // TODO: Implement test data seeding in beforeAll hook
       // Navigate to MCQ exercise
       const testUrl =
-        'http://localhost:3000/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/mcq-exercise-id'
+        '/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/mcq-exercise-id'
 
       await page.goto(testUrl)
 
@@ -140,7 +137,7 @@ test.describe('Exercise Page', () => {
       // TODO: Implement test data seeding in beforeAll hook
       // Navigate to True/False exercise
       const testUrl =
-        'http://localhost:3000/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/tf-exercise-id'
+        '/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/tf-exercise-id'
 
       await page.goto(testUrl)
 
@@ -171,7 +168,7 @@ test.describe('Exercise Page', () => {
       // TODO: Implement test data seeding in beforeAll hook
       // Navigate to Free Response exercise
       const testUrl =
-        'http://localhost:3000/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/fr-exercise-id'
+        '/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/fr-exercise-id'
 
       await page.goto(testUrl)
 
@@ -203,7 +200,7 @@ test.describe('Exercise Page', () => {
       // SKIPPED: Requires test data seeding
       // TODO: Implement test data seeding in beforeAll hook
       const testUrl =
-        'http://localhost:3000/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/test-exercise-id'
+        '/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/test-exercise-id'
 
       await page.goto(testUrl)
 
@@ -221,24 +218,27 @@ test.describe('Exercise Page', () => {
 
   test.describe('Exercise Page Error Handling', () => {
     test('displays 404 for non-existent exercise', async ({ page }) => {
+      // Use a clearly invalid exercise ID
       const invalidUrl =
-        'http://localhost:3000/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/non-existent-id'
+        '/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/non-existent-exercise-id-12345'
 
-      await page.goto(invalidUrl)
+      await page.goto(invalidUrl, { waitUntil: 'networkidle' })
 
       // Check for 404 or not found message
-      await expect(page.locator('body')).toContainText(/not found|404/i)
+      const bodyText = await page.locator('body').textContent()
+      expect(bodyText).toMatch(/not found|404/i)
     })
 
     test('displays 404 when exercise does not belong to lesson', async ({ page }) => {
       // This test assumes you have exercises that belong to different lessons
       const mismatchedUrl =
-        'http://localhost:3000/courses/test-course/chapters/test-chapter/lessons/wrong-lesson/exercises/test-exercise-id'
+        '/courses/test-course/chapters/test-chapter/lessons/wrong-lesson-slug/exercises/test-exercise-id'
 
-      await page.goto(mismatchedUrl)
+      await page.goto(mismatchedUrl, { waitUntil: 'networkidle' })
 
       // Check for 404 or not found message
-      await expect(page.locator('body')).toContainText(/not found|404/i)
+      const bodyText = await page.locator('body').textContent()
+      expect(bodyText).toMatch(/not found|404/i)
     })
   })
 })

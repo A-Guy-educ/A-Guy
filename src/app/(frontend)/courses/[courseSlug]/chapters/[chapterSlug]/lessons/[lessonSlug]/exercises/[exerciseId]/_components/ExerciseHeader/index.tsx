@@ -35,18 +35,18 @@ export function ExerciseHeader({ exerciseTitle, backUrl }: ExerciseHeaderProps) 
         {exerciseTitle}
       </h1>
 
-      {/* Right side in LTR (logo) / Left side in RTL (logo) - Fixed positioning to viewport edge */}
+      {/* Right side in LTR (logo + text) / Left side in RTL (logo + text) - Fixed positioning to viewport edge */}
       <div
         className={cn(
-          'flex items-center gap-2 flex-shrink-0 fixed top-[10px] z-[101]',
-          isRTL ? 'flex-row' : 'flex-row-reverse',
+          'flex items-center gap-1 flex-shrink-0 fixed top-[10px] z-[101]',
+          isRTL ? 'flex-row-reverse' : 'flex-row',
         )}
         style={{
           [isRTL ? 'left' : 'right']: '20px',
         }}
       >
-        <span className="text-primary text-xl font-extrabold tracking-tight">Aguy</span>
         <TelescopeLogo className="h-8 w-auto" />
+        <span className="text-primary text-xl font-extrabold tracking-tight">Aguy</span>
       </div>
     </header>
   )

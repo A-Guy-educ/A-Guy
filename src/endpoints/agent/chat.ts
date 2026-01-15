@@ -34,6 +34,7 @@ import { ConversationService, deriveContextLevel } from '@/lib/services/conversa
 import { logger } from '@/utilities/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
+import type { Where } from 'payload'
 
 const requestSchema = z.object({
   message: z.string().min(1).max(1000),
@@ -136,9 +137,9 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       {
         conversationId,
         totalMessages: allMessages.length,
-        messagePreview: allMessages.slice(-3).map((m: any) => ({
+        messagePreview: allMessages.slice(-3).map((m) => ({
           role: m.role,
-          content: m.content?.substring(0, 50),
+          content: typeof m.content === 'string' ? m.content.substring(0, 50) : '',
         })),
       },
       '[DEBUG] Conversation messages loaded',
@@ -159,6 +160,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     if (featureFlags.MEMORY_RETRIEVAL_ENABLED) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = (req.payload.db as any).connection.db
 
         // Graceful check: skip retrieval if index not available
@@ -376,6 +378,13 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       contextKey: context.contextKey,
     })
   } catch (error) {
+    // Handle connection reset errors gracefully (client disconnected)
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'ECONNRESET') {
+      reqLogger.debug({ err: error }, 'Client disconnected during chat request')
+      // Return 499 (Client Closed Request) or 200 to avoid error logs
+      return Response.json({ error: 'Request cancelled' }, { status: 499 })
+    }
+
     reqLogger.error({ err: error }, 'Chat endpoint error')
 
     if (error instanceof z.ZodError) {
