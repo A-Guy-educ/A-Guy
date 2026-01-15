@@ -109,14 +109,19 @@ export const apiService = {
         ],
       })
 
-      const response = await fetch(
-        `/api/conversations?where=${encodeURIComponent(whereQuery)}&limit=1`,
-        {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include', // Include cookies for authentication
-        },
-      )
+      const url = `/api/conversations?where=${encodeURIComponent(whereQuery)}&limit=1&depth=0`
+      
+      // Log for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[getConversation] Fetching conversation:', { contextKey, url })
+      }
+
+      // Include depth=0 to ensure messages array is populated (messages is not a relationship)
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies for authentication
+      })
 
       const data = await response.json()
 
@@ -145,10 +150,26 @@ export const apiService = {
           id: string
           messages?: Array<{ role: string; content: string; timestamp?: string }>
         }
-        const messages = (conversation.messages || []).map((msg) => ({
-          role: msg.role,
-          content: msg.content,
-        }))
+
+        // Ensure messages array exists and is properly formatted
+        const rawMessages = conversation.messages || []
+        const messages = rawMessages
+          .filter((msg) => msg && msg.role && msg.content) // Filter out invalid messages
+          .map((msg) => ({
+            role: msg.role,
+            content: msg.content,
+          }))
+
+        // Log for debugging (can be removed in production)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[getConversation] Loaded conversation:', {
+            conversationId: conversation.id,
+            contextKey,
+            rawMessageCount: rawMessages.length,
+            validMessageCount: messages.length,
+            hasMessages: rawMessages.length > 0,
+          })
+        }
 
         return {
           success: true,
@@ -160,6 +181,10 @@ export const apiService = {
       }
 
       // No conversation exists yet
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[getConversation] No conversation found for contextKey:', contextKey)
+      }
+
       return {
         success: true,
         exists: false,
