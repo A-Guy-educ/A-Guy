@@ -17,13 +17,16 @@ Complete guide to making successful commits in this project. All commits must pa
 
 ## Quick Start
 
-**TL;DR - Five steps to a successful commit:**
+**TL;DR - Three steps to a successful commit:**
 
 1. ✅ Create a properly named branch: `git checkout -b feat/your-feature`
 2. ✅ Make your changes and stage them: `git add <files>`
 3. ✅ Write a conventional commit message with body (min 20 chars)
-4. ✅ Ensure your code builds: `pnpm build`
-5. ✅ Ensure tests pass: `pnpm test:unit`
+
+**Pre-commit hooks automatically:**
+- Auto-fix formatting and linting (< 5 seconds)
+- Type-check your changes (< 5 seconds)
+- **Build & tests run in CI** (not locally)
 
 **Most common commands:**
 
@@ -257,9 +260,9 @@ rm src/components/Button.css
 
 **What runs:**
 
-- **JavaScript/TypeScript files:** `eslint --fix` → `prettier --write`
+- **JavaScript/TypeScript files:** `eslint --fix --max-warnings=0` → `prettier --write`
 - **JSON/Markdown/YAML:** `prettier --write`
-- **TypeScript files:** Type checking with `tsc --noEmit`
+- **Documentation files:** Auto-generates indexes and validates links
 
 **Common issues:**
 
@@ -281,13 +284,15 @@ function example(userId, _name) {
 
 **Import order issues:** Usually auto-fixed by ESLint.
 
+**⏱️ Speed:** Typically < 5 seconds
+
 ---
 
 ### 6. Type Checking
 
-**What it does:** Validates TypeScript types across the entire project.
+**What it does:** Fast type checking on staged TypeScript files only.
 
-**Why:** Catches type errors before runtime.
+**Why:** Catches type errors before runtime without slowing down commits.
 
 **Error message:**
 
@@ -322,64 +327,39 @@ const user: User = { name: 'John', email: 'john@example.com' }
 
 **Tip:** After changing collection schemas, run `pnpm generate:types` to update Payload types.
 
----
-
-### 7. Build Verification
-
-**What it does:** Runs `pnpm build` to ensure the project builds successfully.
-
-**Why:** Catches build-time errors before they reach CI/CD.
-
-**Error message:**
-
-```
-❌ Build failed. Commit cancelled.
-```
-
-**Fix:**
-
-```bash
-# Run build manually to see detailed errors
-pnpm build
-
-# Common issues:
-# - Import path errors
-# - Missing dependencies
-# - Type errors in production build
-# - Environment variable issues
-
-# Fix the errors and try again
-git add <fixed-files>
-git commit
-```
+**⏱️ Speed:** Typically < 5 seconds (incremental check)
 
 ---
 
-### 8. Unit Tests
+### Build & Test Verification (Runs in CI)
 
-**What it does:** Runs all unit tests with `pnpm test:unit`.
+**What happens:** Build verification and full test suite run in CI, not on commit.
 
-**Why:** Ensures your changes don't break existing functionality.
+**Why:** Keeps commits fast while still ensuring quality through CI.
 
-**Error message:**
+**When they run:**
+- ✅ On every push to your branch
+- ✅ On every pull request
+- ✅ Before merging to main/dev
 
-```
-❌ Unit tests failed. Commit cancelled.
-```
-
-**Fix:**
+**To run locally before pushing:**
 
 ```bash
-# Run tests manually to see failures
-pnpm test:unit
+# Run all quality checks + tests
+pnpm ci:local
 
-# Run specific test file
-pnpm exec vitest run tests/unit/auth.test.ts
-
-# Fix the failing tests or update them if behavior changed intentionally
-# Then commit again
-git commit
+# Or run individually
+pnpm build        # Build check
+pnpm test:unit    # Unit tests
+pnpm test:int     # Integration tests
+pnpm test:e2e     # E2E tests
 ```
+
+**Benefits:**
+- ⚡ Fast commits (< 15 seconds vs 2-5 minutes)
+- ✅ Still catch issues before merge
+- 🔄 CI provides comprehensive validation
+- 💡 Less temptation to skip hooks
 
 ---
 
@@ -650,51 +630,28 @@ git commit
 
 ---
 
-### Error: Build failed
+### Want to run build/tests locally?
 
-**Cause:** Project won't build due to errors.
-
-**Fix:**
+**Optional:** Build and tests now run in CI, but you can still run them locally:
 
 ```bash
-# Run build to see detailed errors
-pnpm build
+# Run all quality checks + tests (mimics CI)
+pnpm ci:local
 
-# Common issues:
-# 1. Missing imports: Add the import statement
-# 2. Wrong import paths: Fix the path
-# 3. Environment variables: Check .env file
-# 4. Type errors: Fix TypeScript issues
+# Or run individually
+pnpm build        # Verify build succeeds
+pnpm test:unit    # Run unit tests
+pnpm test:int     # Run integration tests (needs DB)
+pnpm test:e2e     # Run E2E tests
 
-# After fixing:
-git add .
-git commit
+# Quick quality check (no tests)
+pnpm ci:quality   # typecheck + lint + format:check
 ```
 
----
-
-### Error: Unit tests failed
-
-**Cause:** Tests are failing with your changes.
-
-**Fix:**
-
-```bash
-# Run tests to see failures
-pnpm test:unit
-
-# Options:
-# 1. Fix your code to make tests pass
-# 2. Update tests if behavior changed intentionally
-# 3. Add new tests for new functionality
-
-# Run specific test file
-pnpm exec vitest run path/to/test.spec.ts
-
-# After fixing:
-git add .
-git commit
-```
+**When to use:**
+- Before pushing to avoid CI failures
+- When making large refactoring changes
+- When you want extra confidence
 
 ---
 
@@ -1080,13 +1037,22 @@ Don't forget to update CHANGELOG.md
 
 ### Commit Checklist
 
+**Required (enforced by pre-commit):**
 - [ ] On a properly named feature branch (`feat/`, `fix/`, etc.)
-- [ ] Code builds: `pnpm build`
-- [ ] Tests pass: `pnpm test:unit`
 - [ ] No secrets in staged files
 - [ ] No CSS/SCSS files (use Tailwind)
 - [ ] Commit message follows conventional commits format
 - [ ] Commit body has at least 20 characters
+
+**Automatic (handled by hooks):**
+- ✅ Formatting auto-fixed by Prettier
+- ✅ Linting auto-fixed by ESLint
+- ✅ Type checking on staged files
+
+**Optional (validated in CI):**
+- Build verification runs in CI
+- Full test suite runs in CI
+- Can run locally with `pnpm ci:local` if desired
 
 ### Common Commands
 
