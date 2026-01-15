@@ -104,7 +104,7 @@ export function useNotebookChat({
     }
 
     loadConversationHistory()
-  }, [contextKey, initialMessage])
+  }, [contextKey])
 
   const sendMessage = async (message: string) => {
     if (!message.trim() || isLoading) return
