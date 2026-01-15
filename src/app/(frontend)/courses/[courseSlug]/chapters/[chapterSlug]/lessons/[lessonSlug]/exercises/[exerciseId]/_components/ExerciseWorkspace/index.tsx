@@ -33,7 +33,7 @@ export function ExerciseWorkspace({
         className="flex-1"
       >
         {/* PDF Viewer Section */}
-        <div className="bg-muted flex items-center justify-center p-4 h-full overflow-hidden">
+        <div className="bg-muted flex items-center justify-center h-full overflow-hidden">
           {pdfContent}
         </div>
 

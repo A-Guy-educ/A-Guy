@@ -58,22 +58,20 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const hasContent = validFiles.length > 0
 
   const pdfContent = hasContent ? (
-    <div className="w-full max-w-[920px] max-h-full bg-card border border-border rounded-[10px] p-12 text-foreground shadow-[0_10px_30px_hsl(var(--border))] overflow-auto">
-      <div className="flex flex-col gap-0">
-        {validFiles.map((file, index) => (
-          <div key={file.id} className="w-full min-h-[841px] flex-shrink-0">
-            {index > 0 && (
-              <div className="h-0.5 my-8 flex-shrink-0 bg-gradient-to-r from-transparent via-border to-transparent" />
-            )}
-            <div className="border rounded-lg overflow-hidden bg-gray-50">
-              <MediaComponent resource={file} className="w-full" htmlElement={null} />
-            </div>
+    <div className="w-full h-full flex flex-col">
+      {validFiles.map((file, index) => (
+        <div key={file.id} className="w-full h-full flex-shrink-0">
+          {index > 0 && (
+            <div className="h-0.5 my-8 flex-shrink-0 bg-gradient-to-r from-transparent via-border to-transparent" />
+          )}
+          <div className="border rounded-lg overflow-hidden bg-card shadow-lg h-full">
+            <MediaComponent resource={file} className="w-full h-full" htmlElement={null} />
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   ) : (
-    <div className="w-full max-w-[920px] max-h-full flex items-center justify-center">
+    <div className="w-full h-full flex items-center justify-center">
       <EmptyState type="noPDF" />
     </div>
   )
