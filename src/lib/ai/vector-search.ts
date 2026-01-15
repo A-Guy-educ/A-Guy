@@ -216,13 +216,23 @@ export async function retrieveMemoryItems(
       })(),
     )
 
-    // Execute all queries in parallel
-    const queryResults = await Promise.all(queries)
+    // Execute all queries in parallel (use allSettled so one failure doesn't break all)
+    const querySettledResults = await Promise.allSettled(queries)
 
     // Process results with priority: conversation > context > global
     const seenIds = new Set<string>()
 
-    for (const queryResult of queryResults) {
+    for (const settledResult of querySettledResults) {
+      if (settledResult.status === 'rejected') {
+        // Log individual query failures but continue processing other queries
+        logger.warn(
+          { err: settledResult.reason },
+          '[VectorSearch] One query failed, continuing with others',
+        )
+        continue
+      }
+
+      const queryResult = settledResult.value
       for (const item of queryResult.items) {
         const itemId = item._id.toString()
         if (!seenIds.has(itemId)) {
