@@ -21,9 +21,9 @@ type NotebookChatHookState = {
   inputValue: string
   isLoading: boolean
   isLoadingHistory: boolean
-  messagesContainerRef: React.RefObject<HTMLDivElement>
-  messagesEndRef: React.RefObject<HTMLDivElement>
-  inputRef: React.RefObject<HTMLInputElement>
+  messagesContainerRef: React.RefObject<HTMLDivElement | null>
+  messagesEndRef: React.RefObject<HTMLDivElement | null>
+  inputRef: React.RefObject<HTMLInputElement | null>
   contextKey: string | null
   setInputValue: (value: string) => void
   handleSubmit: (e: React.FormEvent) => void
@@ -77,21 +77,21 @@ describe('NotebookChat component', () => {
 
   it('disables send button when input is empty', () => {
     renderWithI18n({ ...baseHookState, inputValue: '' })
-    const sendButton = screen.getByLabelText(enMessages.courses.sendMessage)
+    const sendButton = screen.getByRole('button', { name: enMessages.courses.sendMessage })
     expect((sendButton as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('invokes quick action handlers', () => {
     renderWithI18n(baseHookState)
 
-    fireEvent.click(screen.getByText(enMessages.courses.chatHint))
+    fireEvent.click(screen.getByRole('button', { name: enMessages.courses.chatHint }))
     expect(baseHookState.handleQuickAction).toHaveBeenCalledWith('hint')
   })
 
   it('invokes reset handler when reset is clicked', () => {
     renderWithI18n(baseHookState)
 
-    fireEvent.click(screen.getByText(enMessages.courses.chatReset))
+    fireEvent.click(screen.getByRole('button', { name: enMessages.courses.chatReset }))
     expect(baseHookState.handleReset).toHaveBeenCalled()
   })
 })
