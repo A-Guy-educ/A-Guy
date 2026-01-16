@@ -292,6 +292,26 @@ afterAll(async () => {
     })
   }
 
+  // Drop test-created indexes to prevent interference with other test files
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = (payload.db as any).connection?.db
+  if (db) {
+    const collection = db.collection('conversations')
+    const indexesToDrop = [
+      'unique_active_user_exercise',
+      'unique_active_user_contextKey',
+      'unique_active_user_lesson',
+    ]
+
+    for (const indexName of indexesToDrop) {
+      try {
+        await collection.dropIndex(indexName)
+      } catch (e) {
+        // Index may not exist, ignore
+      }
+    }
+  }
+
   if (payload.db?.destroy) {
     await payload.db.destroy()
   }
