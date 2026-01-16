@@ -18,6 +18,7 @@ import { getServerSideURL } from '@/utilities/getURL'
 import { I18nProvider } from '@/providers/I18n'
 import { defaultLocale, cookieName, type Locale, locales } from '@/i18n/config'
 import { headers, cookies } from 'next/headers'
+import { LayoutClient } from './LayoutClient'
 
 // Read locale from middleware header or cookie
 // Middleware sets x-locale header after detecting locale from cookie/subdomain
@@ -79,6 +80,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <I18nProvider locale={locale} messages={messages}>
           <Providers>
+            <LayoutClient />
             <AdminBar
               adminBarProps={{
                 preview: isEnabled,

@@ -1,0 +1,53 @@
+/**
+ * Canonical Product Events (v1)
+ *
+ * These are the ONLY allowed events in this phase.
+ * Adding a new event requires:
+ * 1. Update this file
+ * 2. Add schema in schemas.ts
+ * 3. Add destination in destinations.ts
+ * 4. Update documentation
+ *
+ * Naming Convention: lowercase_with_underscores
+ * - Past tense for completed actions: lesson_completed
+ * - Present tense for ongoing: page_view
+ */
+
+export const PRODUCT_EVENTS = {
+  // Page & Session Events (GA4 + Mixpanel)
+  PAGE_VIEW: 'page_view',
+  SESSION_STARTED: 'session_started',
+
+  // User Identity (Mixpanel only)
+  USER_IDENTIFIED: 'user_identified',
+
+  // Course & Lesson Events (Mixpanel only)
+  COURSE_ENTERED: 'course_entered',
+  LESSON_STARTED: 'lesson_started',
+  LESSON_COMPLETED: 'lesson_completed',
+
+  // Content Events (Mixpanel only)
+  PDF_VIEWED: 'pdf_viewed',
+  CHAT_MESSAGE_SENT: 'chat_message_sent',
+
+  // Registration Events
+  REGISTRATION_PROMPT_SHOWN: 'registration_prompt_shown',
+  REGISTRATION_COMPLETED: 'registration_completed', // GA4 + Mixpanel
+} as const
+
+/**
+ * Type-safe event names
+ */
+export type ProductEvent = (typeof PRODUCT_EVENTS)[keyof typeof PRODUCT_EVENTS]
+
+/**
+ * Reverse lookup for validation
+ */
+export const VALID_EVENTS = new Set(Object.values(PRODUCT_EVENTS))
+
+/**
+ * Check if an event name is valid
+ */
+export function isValidEvent(event: string): event is ProductEvent {
+  return VALID_EVENTS.has(event as ProductEvent)
+}
