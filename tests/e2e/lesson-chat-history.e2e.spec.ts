@@ -69,7 +69,8 @@ test.describe('Lesson Chat History Loading', () => {
    */
   async function waitForChatMessage(page: Page, timeout = 30000) {
     // Wait for any message div (user or assistant)
-    await page.waitForSelector('.bg-primary, .bg-muted', { timeout })
+    // ChatInterface uses bg-card for assistant messages, NotebookChat uses bg-muted
+    await page.waitForSelector('.bg-primary, .bg-muted, .bg-card', { timeout })
   }
 
   /**
@@ -80,7 +81,8 @@ test.describe('Lesson Chat History Loading', () => {
     assistantMessages: Locator[]
   }> {
     const userMessages = await page.locator('.bg-primary').all()
-    const assistantMessages = await page.locator('.bg-muted').all()
+    // ChatInterface uses bg-card for assistant messages, NotebookChat uses bg-muted
+    const assistantMessages = await page.locator('.bg-muted, .bg-card').all()
     return { userMessages, assistantMessages }
   }
 

@@ -94,6 +94,7 @@ export function useNotebookChat({
         while (attempt <= maxRetries) {
           if (result.authRequired) {
             // Keep initial message, user needs to log in
+            setIsLoadingHistory(false)
             return
           }
 
@@ -111,6 +112,7 @@ export function useNotebookChat({
               // Only update messages if we have valid messages to avoid clearing the chat
               if (loadedMessages.length > 0) {
                 setMessages(loadedMessages)
+                setIsLoadingHistory(false)
                 return
               }
             }
@@ -126,6 +128,7 @@ export function useNotebookChat({
                 },
                 '[useNotebookChat] Conversation exists but messages are empty after retries',
               )
+              setIsLoadingHistory(false)
               return
             }
 
@@ -137,6 +140,7 @@ export function useNotebookChat({
           if (result.success && !result.exists) {
             // No conversation exists yet - keep initial welcome message
             logger.debug({ contextKey }, '[useNotebookChat] No conversation found for contextKey')
+            setIsLoadingHistory(false)
             return
           }
 
@@ -150,6 +154,7 @@ export function useNotebookChat({
             },
             '[useNotebookChat] Failed to load conversation',
           )
+          setIsLoadingHistory(false)
           return
         }
       } catch (error) {

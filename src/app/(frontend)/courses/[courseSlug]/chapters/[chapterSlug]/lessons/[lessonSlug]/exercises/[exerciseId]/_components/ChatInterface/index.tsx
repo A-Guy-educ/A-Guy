@@ -20,6 +20,7 @@ export function ChatInterface({ exerciseId, lessonId }: ChatInterfaceProps) {
     messages,
     inputValue,
     isLoading,
+    isLoadingHistory,
     messagesContainerRef,
     messagesEndRef,
     inputRef,
@@ -83,19 +84,26 @@ export function ChatInterface({ exerciseId, lessonId }: ChatInterfaceProps) {
     <div className="flex flex-col h-full">
       {/* Messages Area */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-5 space-y-4 min-h-0">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={cn(
-              'max-w-[85%] px-[18px] py-3.5 text-base leading-relaxed shadow-sm',
-              msg.role === ChatMessageRole.User
-                ? 'ml-auto bg-primary text-primary-foreground rounded-[20px] rounded-bl-[4px]'
-                : 'mr-auto bg-card text-foreground border border-border rounded-[20px] rounded-br-[4px]',
-            )}
-          >
-            {msg.content}
+        {isLoadingHistory && (
+          <div className="flex items-center justify-center p-4 text-muted-foreground text-sm">
+            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            {t('chatLoadingHistory')}
           </div>
-        ))}
+        )}
+        {!isLoadingHistory &&
+          messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={cn(
+                'max-w-[85%] px-[18px] py-3.5 text-base leading-relaxed shadow-sm',
+                msg.role === ChatMessageRole.User
+                  ? 'ml-auto bg-primary text-primary-foreground rounded-[20px] rounded-bl-[4px]'
+                  : 'mr-auto bg-card text-foreground border border-border rounded-[20px] rounded-br-[4px]',
+              )}
+            >
+              {msg.content}
+            </div>
+          ))}
         {isLoading && (
           <div className="mr-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-[20px] rounded-br-[4px] max-w-[85%] flex items-center gap-2 shadow-sm">
             <Loader2 className="w-4 h-4 animate-spin" />
