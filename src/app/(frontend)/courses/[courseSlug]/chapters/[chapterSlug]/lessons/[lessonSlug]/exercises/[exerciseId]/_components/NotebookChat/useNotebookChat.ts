@@ -129,11 +129,13 @@ export function useNotebookChat({
                   },
                   '[useNotebookChat] Loaded conversation history',
                 )
-                // Set messages and loading state together - React will batch these updates
-                // and they'll be applied in the same render, ensuring messages are available
-                // when isLoadingHistory becomes false
+                // Set messages first, then hide loading indicator in next tick
+                // This ensures messages are rendered before hiding the loading indicator
                 setMessages(loadedMessages)
-                setIsLoadingHistory(false)
+                // Use requestAnimationFrame to ensure DOM has updated before hiding loading
+                requestAnimationFrame(() => {
+                  setIsLoadingHistory(false)
+                })
                 return
               }
             }
