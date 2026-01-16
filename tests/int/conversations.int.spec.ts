@@ -49,11 +49,6 @@ beforeAll(async () => {
   if (!hasDatabaseUrl) {
     return
   }
-  async () => {
-    if (!hasDatabaseUrl) {
-      return
-    }
->>>>>>> dev
 
   payload = await getPayload({ config })
 
