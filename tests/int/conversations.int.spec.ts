@@ -687,7 +687,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
       })
     })
 
-    it('should reject duplicate active conversations at DB level (user+lesson)', async () => {
+    it('should reject duplicate active conversations at DB level (user+contextKey)', async () => {
       // Ensure indexes exist
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const db = (payload.db as any).connection.db
@@ -697,26 +697,18 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
       // Note: MongoDB doesn't support $exists: false in partial index filter expressions
       // We omit archivedAt check and rely on application logic to ensure uniqueness for active conversations
       const indexes = await collection.indexes()
-      let index2Exists = indexes.some((idx: any) => idx.name === 'unique_active_user_lesson')
+      const indexName = 'unique_active_user_contextKey'
+      let indexExists = indexes.some((idx: any) => idx.name === indexName)
       
-      // Drop and recreate if it exists with wrong definition (has exercise: { $exists: false })
-      if (index2Exists) {
-        const existingIndex = indexes.find((idx: any) => idx.name === 'unique_active_user_lesson')
-        if (existingIndex?.partialFilterExpression?.exercise) {
-          await collection.dropIndex('unique_active_user_lesson')
-          index2Exists = false
-        }
-      }
-      
-      if (!index2Exists) {
+      if (!indexExists) {
         await collection.createIndex(
-          { user: 1, lesson: 1 },
+          { user: 1, contextKey: 1 },
           {
             unique: true,
             partialFilterExpression: {
-              lesson: { $exists: true },
+              archivedAt: { $exists: false },
             },
-            name: 'unique_active_user_lesson',
+            name: indexName,
           },
         )
       }
@@ -726,7 +718,6 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
         collection: 'conversations',
         data: {
           user: testUserId,
-          lesson: testLessonId,
           contextRef: {
             relationTo: 'lessons',
             value: testLessonId,
@@ -761,12 +752,11 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
       try {
         await collection.insertOne({
           user: raw1.user, // Use exact stored value (ObjectId or string)
-          lesson: raw1.lesson, // Use exact stored value (ObjectId or string)
           contextRef: {
             relationTo: 'lessons',
             value: testLessonId,
           },
-          contextKey: `lessons:${testLessonId}`,
+          contextKey: raw1.contextKey, // Use exact stored value
           messages: [],
           lastMessageAt: new Date(),
           contextPolicyVersion: 'v1',
