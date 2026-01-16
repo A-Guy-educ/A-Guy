@@ -22,6 +22,8 @@ let payload: Payload
 let testUserId: string
 let testExerciseId: string
 let testLessonId: string
+let testChapterId: string
+let testCourseId: string
 
 beforeAll(
   async () => {
@@ -51,8 +53,58 @@ beforeAll(
     if (existingExercises.docs.length > 0) {
       testExerciseId = existingExercises.docs[0].id
     } else {
-      // Need a lesson first (exercises require lesson field)
+      // Need full hierarchy: course -> chapter -> lesson -> exercise
+      let exerciseCourseId: string
+      let exerciseChapterId: string
       let exerciseLessonId: string
+
+      // Get or create course
+      const existingCourses = await payload.find({
+        collection: 'courses',
+        limit: 1,
+      })
+
+      if (existingCourses.docs.length > 0) {
+        exerciseCourseId = existingCourses.docs[0].id
+      } else {
+        const course = await payload.create({
+          collection: 'courses',
+          data: {
+            courseLabel: 'Test',
+            title: 'Conversations Integration Test Course',
+            slug: `conversations-int-${Date.now()}`,
+            order: 0,
+            status: 'published',
+            isActive: true,
+          } as any,
+        })
+        exerciseCourseId = course.id
+      }
+
+      // Get or create chapter
+      const existingChapters = await payload.find({
+        collection: 'chapters',
+        limit: 1,
+      })
+
+      if (existingChapters.docs.length > 0) {
+        exerciseChapterId = existingChapters.docs[0].id
+      } else {
+        const chapter = await payload.create({
+          collection: 'chapters',
+          data: {
+            course: exerciseCourseId,
+            title: 'Conversations Integration Test Chapter',
+            slug: `conversations-int-${Date.now()}`,
+            order: 0,
+            status: 'published',
+            isActive: true,
+          } as any,
+        })
+        exerciseChapterId = chapter.id
+      }
+
+      // Get or create lesson
       const existingLessons = await payload.find({
         collection: 'lessons',
         limit: 1,
@@ -64,9 +116,12 @@ beforeAll(
         const lesson = await payload.create({
           collection: 'lessons',
           data: {
+            chapter: exerciseChapterId,
             title: 'Conversations Integration Test Lesson',
             slug: `conversations-int-${Date.now()}`,
-            _status: 'published',
+            order: 0,
+            status: 'published',
+            isActive: true,
           } as any,
         })
         exerciseLessonId = lesson.id
@@ -85,6 +140,52 @@ beforeAll(
       testExerciseId = exercise.id
     }
 
+    // Get or create test course (required for chapters)
+    const existingCourses = await payload.find({
+      collection: 'courses',
+      limit: 1,
+    })
+
+    if (existingCourses.docs.length > 0) {
+      testCourseId = existingCourses.docs[0].id
+    } else {
+      const course = await payload.create({
+        collection: 'courses',
+        data: {
+          courseLabel: 'Test',
+          title: 'Conversations Integration Test Course',
+          slug: `conversations-int-${Date.now()}`,
+          order: 0,
+          status: 'published',
+          isActive: true,
+        } as any,
+      })
+      testCourseId = course.id
+    }
+
+    // Get or create test chapter (required for lessons)
+    const existingChapters = await payload.find({
+      collection: 'chapters',
+      limit: 1,
+    })
+
+    if (existingChapters.docs.length > 0) {
+      testChapterId = existingChapters.docs[0].id
+    } else {
+      const chapter = await payload.create({
+        collection: 'chapters',
+        data: {
+          course: testCourseId,
+          title: 'Conversations Integration Test Chapter',
+          slug: `conversations-int-${Date.now()}`,
+          order: 0,
+          status: 'published',
+          isActive: true,
+        } as any,
+      })
+      testChapterId = chapter.id
+    }
+
     // Get or create test lesson
     const existingLessons = await payload.find({
       collection: 'lessons',
@@ -97,9 +198,12 @@ beforeAll(
       const lesson = await payload.create({
         collection: 'lessons',
         data: {
+          chapter: testChapterId,
           title: 'Conversations Integration Test Lesson',
           slug: `conversations-int-${Date.now()}`,
-          _status: 'published',
+          order: 0,
+          status: 'published',
+          isActive: true,
         } as any,
       })
       testLessonId = lesson.id
@@ -426,7 +530,17 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
       // Note: MongoDB doesn't support $exists: false in partial index filter expressions
       // We omit archivedAt check and rely on application logic to ensure uniqueness for active conversations
       const indexes = await collection.indexes()
-      const index1Exists = indexes.some((idx: any) => idx.name === 'unique_active_user_exercise')
+      let index1Exists = indexes.some((idx: any) => idx.name === 'unique_active_user_exercise')
+      
+      // Drop and recreate if it exists with wrong definition (has lesson: { $exists: false })
+      if (index1Exists) {
+        const existingIndex = indexes.find((idx: any) => idx.name === 'unique_active_user_exercise')
+        if (existingIndex?.partialFilterExpression?.lesson) {
+          await collection.dropIndex('unique_active_user_exercise')
+          index1Exists = false
+        }
+      }
+      
       if (!index1Exists) {
         await collection.createIndex(
           { user: 1, exercise: 1 },
@@ -434,7 +548,6 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
             unique: true,
             partialFilterExpression: {
               exercise: { $exists: true },
-              lesson: { $exists: false },
             },
             name: 'unique_active_user_exercise',
           },
@@ -510,7 +623,17 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
       // Note: MongoDB doesn't support $exists: false in partial index filter expressions
       // We omit archivedAt check and rely on application logic to ensure uniqueness for active conversations
       const indexes = await collection.indexes()
-      const index2Exists = indexes.some((idx: any) => idx.name === 'unique_active_user_lesson')
+      let index2Exists = indexes.some((idx: any) => idx.name === 'unique_active_user_lesson')
+      
+      // Drop and recreate if it exists with wrong definition (has exercise: { $exists: false })
+      if (index2Exists) {
+        const existingIndex = indexes.find((idx: any) => idx.name === 'unique_active_user_lesson')
+        if (existingIndex?.partialFilterExpression?.exercise) {
+          await collection.dropIndex('unique_active_user_lesson')
+          index2Exists = false
+        }
+      }
+      
       if (!index2Exists) {
         await collection.createIndex(
           { user: 1, lesson: 1 },
@@ -518,7 +641,6 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
             unique: true,
             partialFilterExpression: {
               lesson: { $exists: true },
-              exercise: { $exists: false },
             },
             name: 'unique_active_user_lesson',
           },
@@ -790,14 +912,34 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
           value: testExerciseId,
         })
 
+        // Verify conversations were created
+        expect(conv1.id).toBeDefined()
+        expect(conv2.id).toBeDefined()
+        expect(conv1.id).not.toBe(conv2.id)
+
+        // Verify conversations exist in database
+        const verifyConv1 = await payload.findByID({
+          collection: 'conversations',
+          id: conv1.id,
+          overrideAccess: true,
+        })
+        const verifyConv2 = await payload.findByID({
+          collection: 'conversations',
+          id: conv2.id,
+          overrideAccess: true,
+        })
+        expect(verifyConv1).toBeDefined()
+        expect(verifyConv2).toBeDefined()
+
         // Admin should be able to see all conversations
+        // Note: Admin access control should allow seeing all conversations
         const adminConversations = await payload.find({
           collection: 'conversations',
           where: {
             archivedAt: { exists: false },
           },
           user: admin as any,
-          overrideAccess: false, // Access control should allow admin
+          overrideAccess: false, // Access control should allow admin to see all
         })
 
         // Admin should see both conversations

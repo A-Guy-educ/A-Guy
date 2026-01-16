@@ -70,6 +70,8 @@ let testUserId: string
 let testUserId2: string // Second user for access control test
 let testExerciseId: string
 let testLessonId: string
+let testChapterId: string
+let testCourseId: string
 let originalDatabaseUrl: string | undefined
 
 beforeAll(
@@ -114,7 +116,58 @@ beforeAll(
     })
     testUserId2 = user2.id
 
+    // Get or create test course (required for chapters)
+    const existingCourses = await payload.find({
+      collection: 'courses',
+      limit: 1,
+    })
+
+    if (existingCourses.docs.length > 0) {
+      testCourseId = existingCourses.docs[0].id
+    } else {
+      const course = await payload.create({
+        collection: 'courses',
+        data: {
+          courseLabel: 'Test',
+          title: 'Conversation History Test Course',
+          slug: `conv-history-${Date.now()}`,
+          order: 0,
+          status: 'published',
+          isActive: true,
+        } as any,
+      })
+      testCourseId = course.id
+    }
+
+    // Get or create test chapter (required for lessons)
+    const existingChapters = await payload.find({
+      collection: 'chapters',
+      limit: 1,
+    })
+
+    if (existingChapters.docs.length > 0) {
+      testChapterId = existingChapters.docs[0].id
+    } else {
+      const chapter = await payload.create({
+        collection: 'chapters',
+        data: {
+          course: testCourseId,
+          title: 'Conversation History Test Chapter',
+          slug: `conv-history-${Date.now()}`,
+          order: 0,
+          status: 'published',
+          isActive: true,
+        } as any,
+      })
+      testChapterId = chapter.id
+    }
+
     // Get or create test lesson (required for exercises)
+    // Ensure testChapterId is set before creating lesson
+    if (!testChapterId) {
+      throw new Error('testChapterId must be set before creating lesson')
+    }
+
     const existingLessons = await payload.find({
       collection: 'lessons',
       limit: 1,
@@ -126,9 +179,12 @@ beforeAll(
       const lesson = await payload.create({
         collection: 'lessons',
         data: {
+          chapter: testChapterId,
           title: 'Conversation History Test Lesson',
           slug: `conv-history-${Date.now()}`,
-          _status: 'published',
+          order: 0,
+          status: 'published',
+          isActive: true,
         } as any,
       })
       testLessonId = lesson.id
