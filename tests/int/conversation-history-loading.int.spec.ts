@@ -10,14 +10,11 @@
  * - Access control ensures users only see their own conversations
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
 import { agentChat } from '@/endpoints/agent/chat'
-
-// Skip tests if DATABASE_URL is not set
-const hasDatabaseUrl = !!process.env.DATABASE_URL
+import { startMongoContainer, stopMongoContainer } from '@/utilities/test/mongodb-container'
 
 // Mock AI and vector-related services
 
@@ -72,14 +69,27 @@ let payload: Payload
 let testUserId: string
 let testUserId2: string // Second user for access control test
 let testExerciseId: string
+let originalDatabaseUrl: string | undefined
 
 beforeAll(
   async () => {
-    if (!hasDatabaseUrl) {
-      return
-    }
+    // Save original DATABASE_URL and unset it before starting testcontainers
+    // (testcontainers will fail if DATABASE_URL is set to Atlas)
+    originalDatabaseUrl = process.env.DATABASE_URL
+    // @ts-expect-error - TypeScript doesn't allow delete on process.env, but it's safe here
+    delete process.env.DATABASE_URL
 
-    payload = await getPayload({ config })
+    // Start MongoDB test container and set DATABASE_URL to testcontainers URL
+    const mongoUri = await startMongoContainer()
+    process.env.DATABASE_URL = mongoUri
+
+    // Import config AFTER setting DATABASE_URL so it uses the test database
+    // The config reads process.env.DATABASE_URL at evaluation time
+    const config = await import('@payload-config')
+
+    // Initialize Payload with the test MongoDB
+    // testcontainers waits for MongoDB to be ready before start() resolves
+    payload = await getPayload({ config: config.default })
 
     // Create first test user
     const user1 = await payload.create({
@@ -127,7 +137,7 @@ beforeAll(
 )
 
 afterAll(async () => {
-  if (!hasDatabaseUrl || !payload) {
+  if (!payload) {
     return
   }
 
@@ -165,7 +175,19 @@ afterAll(async () => {
   if (payload.db?.destroy) {
     await payload.db.destroy()
   }
-})
+
+  // Restore original DATABASE_URL if it was set
+  if (originalDatabaseUrl !== undefined) {
+    process.env.DATABASE_URL = originalDatabaseUrl
+  } else {
+    // Remove the property if it wasn't originally set
+    // @ts-expect-error - TypeScript doesn't allow delete on process.env, but it's safe here
+    delete process.env.DATABASE_URL
+  }
+
+  // Stop MongoDB container
+  await stopMongoContainer()
+}, 60000)
 
 /**
  * Simulate fetching conversation via Payload REST API (as frontend does)
@@ -191,6 +213,7 @@ async function fetchConversationViaREST(
 
   // Simulate REST API query - Payload's access control merges with where query
   // The isOwner access control returns { user: { equals: user.id } } which gets merged
+  // Sort by lastMessageAt descending to get the most recent conversation (matches actual implementation)
   const result = await payload.find({
     collection: 'conversations',
     where: {
@@ -200,6 +223,7 @@ async function fetchConversationViaREST(
       ],
     },
     limit: 1,
+    sort: '-lastMessageAt', // Match actual implementation - sort by most recent
     user: user as any,
     overrideAccess: false, // CRITICAL: Enforce access control (isOwner will filter by user)
   })
@@ -230,7 +254,7 @@ async function fetchConversationViaREST(
   }
 }
 
-describe.skipIf(!hasDatabaseUrl)('Conversation History Loading', () => {
+describe('Conversation History Loading', () => {
   it('should store messages when user sends chat messages', async () => {
     const req = {
       payload,
@@ -432,5 +456,428 @@ describe.skipIf(!hasDatabaseUrl)('Conversation History Loading', () => {
     expect(fetched.success).toBe(true)
     expect(fetched.exists).toBe(false)
     expect(fetched.messages).toEqual([])
+  })
+
+  it('should filter by user ID and return most recent conversation when multiple users have conversations', async () => {
+    const contextKey = `exercises:${testExerciseId}`
+
+    // User 1 sends a message and gets a conversation
+    const req1 = {
+      payload,
+      user: { id: testUserId } as any,
+      json: async () => ({
+        message: 'User 1 first message',
+        acknowledgment: 'ack',
+        exerciseId: testExerciseId,
+      }),
+    } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+    const res1 = await agentChat(req1)
+    expect(res1.status).toBe(200)
+    const body1 = await res1.json()
+    const conversationId1 = body1.conversationId
+
+    // Wait a bit to ensure different timestamps
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // User 2 sends a message and gets a different conversation
+    const req2 = {
+      payload,
+      user: { id: testUserId2 } as any,
+      json: async () => ({
+        message: 'User 2 first message',
+        acknowledgment: 'ack',
+        exerciseId: testExerciseId,
+      }),
+    } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+    const res2 = await agentChat(req2)
+    expect(res2.status).toBe(200)
+    const body2 = await res2.json()
+    const conversationId2 = body2.conversationId
+
+    // Wait a bit more
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // User 1 sends another message (updates their conversation's lastMessageAt)
+    const req3 = {
+      payload,
+      user: { id: testUserId } as any,
+      json: async () => ({
+        message: 'User 1 second message',
+        acknowledgment: 'ack',
+        exerciseId: testExerciseId,
+      }),
+    } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+    const res3 = await agentChat(req3)
+    expect(res3.status).toBe(200)
+    const body3 = await res3.json()
+    // Should be the same conversation ID (same user, same context)
+    expect(body3.conversationId).toBe(conversationId1)
+
+    // User 1 should get their own conversation (most recent one)
+    const fetched1 = await fetchConversationViaREST(payload, testUserId, contextKey)
+    expect(fetched1.success).toBe(true)
+    expect(fetched1.exists).toBe(true)
+    expect(fetched1.conversationId).toBe(conversationId1)
+    expect(fetched1.messages.some((m) => m.content.includes('User 1'))).toBe(true)
+    expect(fetched1.messages.some((m) => m.content.includes('User 2'))).toBe(false)
+
+    // User 2 should get their own conversation
+    const fetched2 = await fetchConversationViaREST(payload, testUserId2, contextKey)
+    expect(fetched2.success).toBe(true)
+    expect(fetched2.exists).toBe(true)
+    expect(fetched2.conversationId).toBe(conversationId2)
+    expect(fetched2.messages.some((m) => m.content.includes('User 2'))).toBe(true)
+    expect(fetched2.messages.some((m) => m.content.includes('User 1'))).toBe(false)
+
+    // Verify conversations are different
+    expect(conversationId1).not.toBe(conversationId2)
+  })
+
+  it('should return most recent conversation when user has multiple conversations (edge case)', async () => {
+    // This test verifies the sort order works correctly
+    // In practice, the unique index prevents multiple active conversations per user+context
+    // But we test the sort to ensure it works if somehow multiple exist
+
+    const contextKey = `exercises:${testExerciseId}-sort-test-${Date.now()}`
+
+    // Create first conversation manually (bypassing unique index by using different contextKey)
+    const conv1 = await payload.create({
+      collection: 'conversations',
+      data: {
+        user: testUserId,
+        contextRef: { relationTo: 'exercises', value: testExerciseId },
+        contextKey,
+        messages: [
+          { role: 'user', content: 'First message', timestamp: new Date(Date.now() - 2000).toISOString() },
+          { role: 'assistant', content: 'Response 1', timestamp: new Date(Date.now() - 1000).toISOString() },
+        ],
+        lastMessageAt: new Date(Date.now() - 1000).toISOString(),
+      } as any,
+    })
+
+    // Wait to ensure different timestamp
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // Create second conversation with more recent lastMessageAt
+    const conv2 = await payload.create({
+      collection: 'conversations',
+      data: {
+        user: testUserId,
+        contextRef: { relationTo: 'exercises', value: testExerciseId },
+        contextKey,
+        messages: [
+          { role: 'user', content: 'Second message', timestamp: new Date().toISOString() },
+          { role: 'assistant', content: 'Response 2', timestamp: new Date().toISOString() },
+        ],
+        lastMessageAt: new Date().toISOString(),
+      } as any,
+    })
+
+    // Fetch conversation - should return the most recent one (conv2)
+    const fetched = await fetchConversationViaREST(payload, testUserId, contextKey)
+    expect(fetched.success).toBe(true)
+    expect(fetched.exists).toBe(true)
+    expect(fetched.conversationId).toBe(conv2.id) // Should be the more recent one
+    expect(fetched.messages.some((m) => m.content.includes('Second message'))).toBe(true)
+
+    // Clean up
+    await payload.delete({ collection: 'conversations', id: conv1.id })
+    await payload.delete({ collection: 'conversations', id: conv2.id })
+  })
+
+  it('should validate REST API access control filters by user ID correctly', async () => {
+    // This test explicitly validates that Payload's REST API access control works
+    // by verifying that when User 1 queries, they only get User 1's conversations
+    // and when User 2 queries, they only get User 2's conversations
+
+    const contextKey = `exercises:${testExerciseId}-rest-api-test-${Date.now()}`
+
+    // Create conversation for User 1
+    const conv1 = await payload.create({
+      collection: 'conversations',
+      data: {
+        user: testUserId,
+        contextRef: { relationTo: 'exercises', value: testExerciseId },
+        contextKey,
+        messages: [
+          { role: 'user', content: 'User 1 private message', timestamp: new Date().toISOString() },
+          { role: 'assistant', content: 'Response to user 1', timestamp: new Date().toISOString() },
+        ],
+        lastMessageAt: new Date().toISOString(),
+      } as any,
+    })
+
+    // Wait to ensure different timestamp
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // Create conversation for User 2 with same contextKey
+    const conv2 = await payload.create({
+      collection: 'conversations',
+      data: {
+        user: testUserId2,
+        contextRef: { relationTo: 'exercises', value: testExerciseId },
+        contextKey,
+        messages: [
+          { role: 'user', content: 'User 2 private message', timestamp: new Date().toISOString() },
+          { role: 'assistant', content: 'Response to user 2', timestamp: new Date().toISOString() },
+        ],
+        lastMessageAt: new Date().toISOString(),
+      } as any,
+    })
+
+    // Verify conversations were created
+    expect(conv1.id).toBeDefined()
+    expect(conv2.id).toBeDefined()
+    expect(conv1.id).not.toBe(conv2.id)
+
+    // Test: User 1 should only see their own conversation
+    const user1Result = await payload.find({
+      collection: 'conversations',
+      where: {
+        and: [
+          { contextKey: { equals: contextKey } },
+          { archivedAt: { exists: false } },
+        ],
+      },
+      limit: 1,
+      sort: '-lastMessageAt',
+      user: (await payload.findByID({ collection: 'users', id: testUserId })) as any,
+      overrideAccess: false, // CRITICAL: Enforce access control
+    })
+
+    expect(user1Result.docs.length).toBe(1)
+    expect(user1Result.docs[0].id).toBe(conv1.id)
+    const user1UserId = typeof user1Result.docs[0].user === 'object' 
+      ? user1Result.docs[0].user.id 
+      : user1Result.docs[0].user
+    expect(user1UserId).toBe(testUserId)
+    expect(user1Result.docs[0].messages?.some((m: any) => m.content.includes('User 1'))).toBe(true)
+    expect(user1Result.docs[0].messages?.some((m: any) => m.content.includes('User 2'))).toBe(false)
+
+    // Test: User 2 should only see their own conversation
+    const user2Result = await payload.find({
+      collection: 'conversations',
+      where: {
+        and: [
+          { contextKey: { equals: contextKey } },
+          { archivedAt: { exists: false } },
+        ],
+      },
+      limit: 1,
+      sort: '-lastMessageAt',
+      user: (await payload.findByID({ collection: 'users', id: testUserId2 })) as any,
+      overrideAccess: false, // CRITICAL: Enforce access control
+    })
+
+    expect(user2Result.docs.length).toBe(1)
+    expect(user2Result.docs[0].id).toBe(conv2.id)
+    const user2UserId = typeof user2Result.docs[0].user === 'object' 
+      ? user2Result.docs[0].user.id 
+      : user2Result.docs[0].user
+    expect(user2UserId).toBe(testUserId2)
+    expect(user2Result.docs[0].messages?.some((m: any) => m.content.includes('User 2'))).toBe(true)
+    expect(user2Result.docs[0].messages?.some((m: any) => m.content.includes('User 1'))).toBe(false)
+
+    // Test: Verify that without user context, access control blocks access
+    const noUserResult = await payload.find({
+      collection: 'conversations',
+      where: {
+        and: [
+          { contextKey: { equals: contextKey } },
+          { archivedAt: { exists: false } },
+        ],
+      },
+      limit: 1,
+      sort: '-lastMessageAt',
+      // No user provided - access control should block
+      overrideAccess: false,
+    })
+
+    // Access control should return empty result when no user is authenticated
+    expect(noUserResult.docs.length).toBe(0)
+
+    // Clean up
+    await payload.delete({ collection: 'conversations', id: conv1.id })
+    await payload.delete({ collection: 'conversations', id: conv2.id })
+  })
+
+  it('should validate REST API query matches frontend implementation exactly', async () => {
+    // This test ensures the query structure matches what the frontend sends
+    // and validates that access control is properly applied
+
+    const contextKey = `exercises:${testExerciseId}-query-test-${Date.now()}`
+
+    // Create conversation for test user
+    const conv = await payload.create({
+      collection: 'conversations',
+      data: {
+        user: testUserId,
+        contextRef: { relationTo: 'exercises', value: testExerciseId },
+        contextKey,
+        messages: [
+          { role: 'user', content: 'Test message', timestamp: new Date().toISOString() },
+          { role: 'assistant', content: 'Test response', timestamp: new Date().toISOString() },
+        ],
+        lastMessageAt: new Date().toISOString(),
+      } as any,
+    })
+
+    // Simulate the exact query structure that the frontend sends
+    // This matches the query in api-service.ts:getConversation()
+    const whereQuery = {
+      and: [
+        { contextKey: { equals: contextKey } },
+        { archivedAt: { exists: false } },
+      ],
+    }
+
+    const user = await payload.findByID({ collection: 'users', id: testUserId })
+
+    // Execute query with access control (simulating REST API behavior)
+    // Payload's Local API with overrideAccess: false simulates REST API access control
+    const result = await payload.find({
+      collection: 'conversations',
+      where: whereQuery,
+      limit: 1,
+      sort: '-lastMessageAt',
+      depth: 0,
+      user: user as any,
+      overrideAccess: false, // CRITICAL: Enforce access control (simulates REST API behavior)
+    })
+
+    // Verify result
+    expect(result.docs.length).toBe(1)
+    expect(result.docs[0].id).toBe(conv.id)
+    expect(result.docs[0].contextKey).toBe(contextKey)
+    
+    // Verify user ownership
+    const conversationUserId = typeof result.docs[0].user === 'object' 
+      ? result.docs[0].user.id 
+      : result.docs[0].user
+    expect(conversationUserId).toBe(testUserId)
+
+    // Verify messages are included
+    expect(Array.isArray(result.docs[0].messages)).toBe(true)
+    expect(result.docs[0].messages.length).toBeGreaterThan(0)
+
+    // Clean up
+    await payload.delete({ collection: 'conversations', id: conv.id })
+  })
+
+  it('should validate Payload REST API endpoint structure and access control', async () => {
+    // This test validates that Payload's REST API endpoint (/api/conversations) structure
+    // matches what the frontend expects and that access control works correctly
+    //
+    // Note: We use Payload's Local API with overrideAccess: false to simulate REST API behavior
+    // This is the recommended way to test Payload access control in integration tests
+
+    const contextKey = `exercises:${testExerciseId}-rest-endpoint-test-${Date.now()}`
+
+    // Create conversations for both users
+    const conv1 = await payload.create({
+      collection: 'conversations',
+      data: {
+        user: testUserId,
+        contextRef: { relationTo: 'exercises', value: testExerciseId },
+        contextKey,
+        messages: [
+          { role: 'user', content: 'User 1 message', timestamp: new Date().toISOString() },
+        ],
+        lastMessageAt: new Date().toISOString(),
+      } as any,
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    const conv2 = await payload.create({
+      collection: 'conversations',
+      data: {
+        user: testUserId2,
+        contextRef: { relationTo: 'exercises', value: testExerciseId },
+        contextKey,
+        messages: [
+          { role: 'user', content: 'User 2 message', timestamp: new Date().toISOString() },
+        ],
+        lastMessageAt: new Date().toISOString(),
+      } as any,
+    })
+
+    // Validate REST API endpoint structure:
+    // GET /api/conversations?where={...}&limit=1&sort=-lastMessageAt&depth=0
+    // 
+    // The where query should be:
+    // {
+    //   and: [
+    //     { contextKey: { equals: contextKey } },
+    //     { archivedAt: { exists: false } }
+    //   ]
+    // }
+    //
+    // Access control (isOwner) automatically adds: { user: { equals: user.id } }
+
+    const whereQuery = {
+      and: [
+        { contextKey: { equals: contextKey } },
+        { archivedAt: { exists: false } },
+      ],
+    }
+
+    // Test User 1 - should only see their own conversation
+    const user1 = await payload.findByID({ collection: 'users', id: testUserId })
+    const user1Result = await payload.find({
+      collection: 'conversations',
+      where: whereQuery,
+      limit: 1,
+      sort: '-lastMessageAt',
+      depth: 0,
+      user: user1 as any,
+      overrideAccess: false, // Simulates REST API access control
+    })
+
+    // Verify REST API response structure matches Payload's format
+    expect(user1Result).toHaveProperty('docs')
+    expect(user1Result).toHaveProperty('totalDocs')
+    expect(Array.isArray(user1Result.docs)).toBe(true)
+    
+    // Verify access control filtered to User 1 only
+    expect(user1Result.docs.length).toBe(1)
+    expect(user1Result.docs[0].id).toBe(conv1.id)
+    const user1UserId = typeof user1Result.docs[0].user === 'object' 
+      ? user1Result.docs[0].user.id 
+      : user1Result.docs[0].user
+    expect(user1UserId).toBe(testUserId)
+
+    // Test User 2 - should only see their own conversation
+    const user2 = await payload.findByID({ collection: 'users', id: testUserId2 })
+    const user2Result = await payload.find({
+      collection: 'conversations',
+      where: whereQuery,
+      limit: 1,
+      sort: '-lastMessageAt',
+      depth: 0,
+      user: user2 as any,
+      overrideAccess: false, // Simulates REST API access control
+    })
+
+    // Verify access control filtered to User 2 only
+    expect(user2Result.docs.length).toBe(1)
+    expect(user2Result.docs[0].id).toBe(conv2.id)
+    const user2UserId = typeof user2Result.docs[0].user === 'object' 
+      ? user2Result.docs[0].user.id 
+      : user2Result.docs[0].user
+    expect(user2UserId).toBe(testUserId2)
+
+    // Verify REST API response format
+    expect(user2Result.docs[0]).toHaveProperty('id')
+    expect(user2Result.docs[0]).toHaveProperty('contextKey')
+    expect(user2Result.docs[0]).toHaveProperty('messages')
+    expect(user2Result.docs[0]).toHaveProperty('user')
+
+    // Clean up
+    await payload.delete({ collection: 'conversations', id: conv1.id })
+    await payload.delete({ collection: 'conversations', id: conv2.id })
   })
 })
