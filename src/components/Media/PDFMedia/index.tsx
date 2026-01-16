@@ -1,11 +1,14 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { cn } from '@/utilities/ui'
 import type { Props as MediaProps } from '../types'
+import { useAnalytics } from '@/lib/analytics/providers/AnalyticsProvider'
+import { PRODUCT_EVENTS } from '@/lib/analytics/contracts/events'
 
 export const PDFMedia: React.FC<MediaProps> = (props) => {
   const { resource, className } = props
+  const analytics = useAnalytics()
 
   const pdfUrl = React.useMemo(() => {
     if (resource && typeof resource === 'object') {
@@ -19,6 +22,23 @@ export const PDFMedia: React.FC<MediaProps> = (props) => {
     }
     return null
   }, [resource])
+
+  // Track PDF viewed
+  useEffect(() => {
+    if (resource && typeof resource === 'object' && resource.id) {
+      analytics.track(PRODUCT_EVENTS.PDF_VIEWED, {
+        pdf_id: resource.id,
+        page_count:
+          typeof resource === 'object' && 'pageCount' in resource
+            ? Number(resource.pageCount)
+            : undefined,
+        file_name:
+          typeof resource === 'object' && 'filename' in resource
+            ? String(resource.filename)
+            : undefined,
+      })
+    }
+  }, [resource, analytics])
 
   if (!pdfUrl) {
     return null

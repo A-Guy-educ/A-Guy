@@ -67,7 +67,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
     const payload = await getPayload({ config })
 
     try {
-      await payload.create({
+      const user = await payload.create({
         collection: 'users',
         data: {
           name,
@@ -94,7 +94,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
         })
       }
 
-      return { success: true, message: 'Account created successfully' }
+      return { success: true, message: 'Account created successfully', userId: user.id }
     } catch (error) {
       if (error && typeof error === 'object' && 'message' in error) {
         const errorMessage = error.message as string

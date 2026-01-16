@@ -13,6 +13,7 @@ import { GA4Scripts } from '../adapters/ga4/scripts'
 import { MixpanelScripts } from '../adapters/mixpanel/scripts'
 import { analyticsConfig } from '../config'
 import type { Analytics } from '../types'
+import { UserIdentificationTracker } from '../components/UserIdentificationTracker'
 
 /**
  * Analytics context
@@ -56,6 +57,9 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
       {/* Load analytics scripts */}
       <GA4Scripts />
       <MixpanelScripts />
+
+      {/* Track user identification */}
+      <UserIdentificationTracker />
 
       {/* Render children */}
       {children}

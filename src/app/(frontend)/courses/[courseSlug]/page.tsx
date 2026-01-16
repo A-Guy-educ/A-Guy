@@ -6,6 +6,7 @@ import { ChapterCard } from '../_components/ChapterCard'
 import { EmptyState } from '../_components/EmptyState'
 import { BackToCourses } from '../_components/BackToCourses'
 import { ChaptersSectionTitle } from '../_components/ChaptersSectionTitle'
+import { CourseAnalytics } from './_components/CourseAnalytics'
 
 interface CoursePageProps {
   params: Promise<{
@@ -25,6 +26,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <CourseAnalytics courseId={course.id} courseTitle={course.title} />
       <BackToCourses />
 
       <CourseHeader

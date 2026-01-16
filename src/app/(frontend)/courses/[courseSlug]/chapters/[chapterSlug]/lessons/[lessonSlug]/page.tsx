@@ -7,6 +7,7 @@ import { Media as MediaComponent } from '@/components/Media'
 import { EmptyState } from '../../../../../_components/EmptyState'
 import { ExerciseWorkspace } from './exercises/[exerciseId]/_components/ExerciseWorkspace'
 import { ChatInterface } from './exercises/[exerciseId]/_components/ChatInterface'
+import { LessonAnalytics } from './_components/LessonAnalytics'
 
 interface LessonPageProps {
   params: Promise<{
@@ -77,12 +78,15 @@ export default async function LessonPage({ params }: LessonPageProps) {
   )
 
   return (
-    <ExerciseWorkspace
-      exerciseTitle={lesson.title}
-      backUrl={`/courses/${courseSlug}/chapters/${chapterSlug}`}
-      pdfContent={pdfContent}
-      chatContent={<ChatInterface exerciseId={chatExerciseId} lessonId={chatLessonId} />}
-    />
+    <>
+      <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
+      <ExerciseWorkspace
+        exerciseTitle={lesson.title}
+        backUrl={`/courses/${courseSlug}/chapters/${chapterSlug}`}
+        pdfContent={pdfContent}
+        chatContent={<ChatInterface exerciseId={chatExerciseId} lessonId={chatLessonId} />}
+      />
+    </>
   )
 }
 
