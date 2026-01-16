@@ -16,6 +16,9 @@ interface UseNotebookChatProps {
   hintPrompt: string
   solutionPrompt: string
   fullSolutionPrompt: string
+  resetConfirmMessage: string
+  resetSuccessMessage: string
+  resetErrorMessage: string
   acknowledgment: string
   exerciseId?: string
   lessonId?: string
@@ -30,6 +33,9 @@ export function useNotebookChat({
   hintPrompt,
   solutionPrompt,
   fullSolutionPrompt,
+  resetConfirmMessage,
+  resetSuccessMessage,
+  resetErrorMessage,
   acknowledgment,
   exerciseId,
   lessonId,
@@ -203,9 +209,7 @@ export function useNotebookChat({
   const handleReset = useCallback(async () => {
     if (!contextKey || isLoading) return
 
-    const confirmed = confirm(
-      'Are you sure you want to reset the conversation? This will start a new chat.',
-    )
+    const confirmed = confirm(resetConfirmMessage)
     if (!confirmed) return
 
     try {
@@ -214,14 +218,14 @@ export function useNotebookChat({
       if (result.success) {
         // Clear messages and show welcome
         setMessages([{ role: ChatRole.Assistant, content: initialMessage }])
-        toast.success('Conversation reset')
+        toast.success(resetSuccessMessage)
       } else {
-        toast.error(result.error || 'Failed to reset conversation')
+        toast.error(result.error || resetErrorMessage)
       }
     } catch (_error) {
-      toast.error('Failed to reset conversation')
+      toast.error(resetErrorMessage)
     }
-  }, [contextKey, isLoading, initialMessage])
+  }, [contextKey, isLoading, initialMessage, resetConfirmMessage, resetErrorMessage, resetSuccessMessage])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

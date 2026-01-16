@@ -63,6 +63,48 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     const body = await req.json()
     const validated = requestSchema.parse(body)
 
+    const contextCandidate = validated.exerciseId
+      ? { relationTo: 'exercises' as const, value: validated.exerciseId }
+      : validated.lessonId
+        ? { relationTo: 'lessons' as const, value: validated.lessonId }
+        : validated.chapterId
+          ? { relationTo: 'chapters' as const, value: validated.chapterId }
+          : validated.courseId
+            ? { relationTo: 'courses' as const, value: validated.courseId }
+            : null
+
+    if (!contextCandidate) {
+      return Response.json(
+        { error: 'Missing context ID (requires exerciseId, lessonId, chapterId, or courseId)' },
+        { status: 400 },
+      )
+    }
+
+    try {
+      const contextResult = await req.payload.find({
+        collection: contextCandidate.relationTo,
+        where: { id: { equals: contextCandidate.value } },
+        limit: 1,
+        depth: 0,
+        user: req.user,
+        overrideAccess: false,
+      })
+
+      if (contextResult.docs.length === 0) {
+        reqLogger.warn(
+          { userId: req.user.id, context: contextCandidate },
+          'Context not found for chat request',
+        )
+        return Response.json({ error: 'Context not found' }, { status: 404 })
+      }
+    } catch (error) {
+      reqLogger.warn(
+        { err: error, userId: req.user.id, context: contextCandidate },
+        'Invalid context ID in chat request',
+      )
+      return Response.json({ error: 'Invalid context ID' }, { status: 400 })
+    }
+
     reqLogger.info(
       {
         userId: req.user.id,

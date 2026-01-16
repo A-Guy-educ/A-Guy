@@ -5,7 +5,12 @@ export default defineConfig({
   plugins: [tsconfigPaths()],
   test: {
     environment: 'node',
-    include: ['tests/unit/**/*.spec.ts', 'tests/unit/**/*.test.ts'],
+    include: [
+      'tests/unit/**/*.spec.ts',
+      'tests/unit/**/*.test.ts',
+      'tests/unit/**/*.spec.tsx',
+      'tests/unit/**/*.test.tsx',
+    ],
     exclude: ['**/node_modules/**', '**/dist/**', '**/*.int.spec.ts', '**/*.e2e.spec.ts'],
     coverage: {
       provider: 'v8',

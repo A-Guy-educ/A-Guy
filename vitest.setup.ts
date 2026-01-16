@@ -3,6 +3,7 @@
 // Load .env files
 import 'dotenv/config'
 import { vi } from 'vitest'
+import { getTestDatabaseUrl } from './tests/setup/db-config'
 
 // Set required environment variables for tests if not already set
 if (!process.env.PAYLOAD_SECRET) {
@@ -11,6 +12,13 @@ if (!process.env.PAYLOAD_SECRET) {
 
 if (!process.env.NEXT_PUBLIC_SERVER_URL) {
   process.env.NEXT_PUBLIC_SERVER_URL = 'http://localhost:3000'
+}
+
+if (process.env.USE_ATLAS === 'true') {
+  const databaseUrl = getTestDatabaseUrl()
+  if (databaseUrl) {
+    process.env.DATABASE_URL = databaseUrl
+  }
 }
 
 // Note: Testcontainers constraint is enforced in individual test files

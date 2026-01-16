@@ -22,7 +22,11 @@ import { PayloadRequest } from 'payload'
 import { z } from 'zod'
 
 const requestSchema = z.object({
-  contextKey: z.string().min(1),
+  contextKey: z
+    .string()
+    .trim()
+    .min(1)
+    .regex(/^(courses|chapters|lessons|exercises):[^:]+$/),
 })
 
 export async function agentResetChat(req: PayloadRequest & { json?: () => Promise<unknown> }) {

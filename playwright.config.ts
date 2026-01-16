@@ -14,6 +14,7 @@ const dirname = path.dirname(filename)
 // Load .env file (same as development environment)
 // Environment variables can be overridden via CI secrets or process.env
 config({ path: path.resolve(dirname, '.env') })
+config({ path: path.resolve(dirname, '.env.test'), override: true })
 
 // Determine DATABASE_URL for webServer
 // E2E_DATABASE_URL will be set by globalSetup (testcontainers)
