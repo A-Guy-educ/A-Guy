@@ -699,26 +699,25 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
     })
 
     it('should reject duplicate active conversations at DB level (user+contextKey)', async () => {
-      // Ensure indexes exist
+      // Note: MongoDB partial indexes don't support $exists: false
+      // Uniqueness is enforced at application level by ConversationService.getOrCreateActiveConversation()
+      // This test verifies that duplicate active conversations are prevented
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const db = (payload.db as any).connection.db
       const collection = db.collection('conversations')
 
-      // Create indexes if they don't exist
-      // Note: MongoDB doesn't support $exists: false in partial index filter expressions
-      // We omit archivedAt check and rely on application logic to ensure uniqueness for active conversations
+      // Use sparse unique index - only indexes docs where both fields exist
+      // Combined with application logic that doesn't set archivedAt for active conversations
       const indexes = await collection.indexes()
       const indexName = 'unique_active_user_contextKey'
-      let indexExists = indexes.some((idx: any) => idx.name === indexName)
+      const indexExists = indexes.some((idx: any) => idx.name === indexName)
       
       if (!indexExists) {
         await collection.createIndex(
           { user: 1, contextKey: 1 },
           {
             unique: true,
-            partialFilterExpression: {
-              archivedAt: { $exists: false },
-            },
+            sparse: true, // Only index docs where both fields exist
             name: indexName,
           },
         )
