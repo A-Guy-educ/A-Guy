@@ -24,7 +24,6 @@ NEXT_PUBLIC_SERVER_URL=http://localhost:3000
 
 # Optional: AI features (see docs/VECTOR-SEARCH-SETUP.md)
 # OPENAI_API_KEY=sk-...
-# MEMORY_RETRIEVAL_ENABLED=false
 ```
 
 Generate a secure secret:

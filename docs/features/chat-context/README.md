@@ -111,26 +111,7 @@ Chat history with running summaries.
 - `summaryUntilTimestamp` - Summary coverage
 - `contextPolicyVersion` - For future migrations
 
-## Feature Flags
-
-Control rollout with environment variables:
-
-```env
-# Phase 1: Summary only
-SUMMARY_MAINTENANCE_ENABLED=true
-MEMORY_EXTRACTION_ENABLED=false
-MEMORY_RETRIEVAL_ENABLED=false
-
-# Phase 2: Add extraction
-SUMMARY_MAINTENANCE_ENABLED=true
-MEMORY_EXTRACTION_ENABLED=true
-MEMORY_RETRIEVAL_ENABLED=false
-
-# Phase 3: Full system
-SUMMARY_MAINTENANCE_ENABLED=true
-MEMORY_EXTRACTION_ENABLED=true
-MEMORY_RETRIEVAL_ENABLED=true
-```
+All memory features (summarization, extraction, retrieval) are enabled by default.
 
 ## Implementation
 

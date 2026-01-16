@@ -10,6 +10,7 @@ import { ChatRole } from '@/lib/ai/chat-message-role'
 import { retrieveMemoryItems } from '@/lib/ai/vector-search'
 import config from '@payload-config'
 import type { Payload } from 'payload'
+import type { Db } from 'mongodb'
 import { getPayload } from 'payload'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -37,6 +38,23 @@ function generateDeterministicEmbedding(text: string): number[] {
   return Array.from({ length: 1536 }, (_, i) => random(i))
 }
 
+function getDb(payload: Payload): Db {
+  const db = (payload.db as { connection?: { db?: Db } }).connection?.db
+  if (!db) {
+    throw new Error('Database connection not available')
+  }
+  return db
+}
+
+function isVectorSearchUnavailable(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  return (
+    error.message.includes('index') ||
+    error.message.includes('$vectorSearch') ||
+    error.message.includes('SearchNotEnabled')
+  )
+}
+
 // Mock OpenAI embeddings to use deterministic generator
 vi.mock('@/lib/ai/embeddings', () => ({
   generateEmbedding: vi.fn(async (text: string) => ({
@@ -58,25 +76,6 @@ vi.mock('@/lib/ai/maintenance', () => ({
     messagesTrimmed: 0,
   })),
 }))
-
-vi.mock('@/lib/feature-flags', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/feature-flags')>()
-  const featureFlags = {
-    SUMMARY_MAINTENANCE_ENABLED: true,
-    MEMORY_EXTRACTION_ENABLED: true,
-    MEMORY_RETRIEVAL_ENABLED: true,
-  }
-  return {
-    ...actual,
-    featureFlags,
-    getFeatureFlagStatus: () => ({
-      summaryMaintenance: featureFlags.SUMMARY_MAINTENANCE_ENABLED,
-      memoryExtraction: featureFlags.MEMORY_EXTRACTION_ENABLED,
-      memoryRetrieval: featureFlags.MEMORY_RETRIEVAL_ENABLED,
-    }),
-    logFeatureFlags: () => undefined,
-  }
-})
 
 let payload: Payload
 const testUsers = new Map<string, string>() // email -> userId
@@ -236,8 +235,7 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
       importance: 4,
     })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = (payload.db as any).connection.db
+    const db = getDb(payload)
 
     // Try to retrieve for U2
     try {
@@ -259,12 +257,8 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
         // Vector search might not be available (local MongoDB)
         console.log('Skipping assertions: Vector search returned no results (likely not Atlas)')
       }
-    } catch (error: any) {
-      if (
-        error.message?.includes('index') ||
-        error.message?.includes('$vectorSearch') ||
-        error.message?.includes('SearchNotEnabled')
-      ) {
+    } catch (error: unknown) {
+      if (isVectorSearchUnavailable(error)) {
         console.log('Skipping: Vector search not available (requires MongoDB Atlas)')
       } else {
         throw error
@@ -293,8 +287,7 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
       importance: 4,
     })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = (payload.db as any).connection.db
+    const db = getDb(payload)
 
     try {
       const result = await retrieveMemoryItems(db, userId, 'memory', undefined, undefined, payload)
@@ -305,12 +298,8 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
       } else {
         console.log('Skipping assertions: Vector search returned no results (likely not Atlas)')
       }
-    } catch (error: any) {
-      if (
-        error.message?.includes('index') ||
-        error.message?.includes('$vectorSearch') ||
-        error.message?.includes('SearchNotEnabled')
-      ) {
+    } catch (error: unknown) {
+      if (isVectorSearchUnavailable(error)) {
         console.log('Skipping: Vector search not available (requires MongoDB Atlas)')
       } else {
         throw error
@@ -344,8 +333,7 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
       status: 'active',
     })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = (payload.db as any).connection.db
+    const db = getDb(payload)
 
     // Retrieve for convB (different conversation)
     try {
@@ -359,12 +347,8 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
       } else {
         console.log('Skipping assertions: Vector search returned no results (likely not Atlas)')
       }
-    } catch (error: any) {
-      if (
-        error.message?.includes('index') ||
-        error.message?.includes('$vectorSearch') ||
-        error.message?.includes('SearchNotEnabled')
-      ) {
+    } catch (error: unknown) {
+      if (isVectorSearchUnavailable(error)) {
         console.log('Skipping: Vector search not available (requires MongoDB Atlas)')
       } else {
         throw error
@@ -395,8 +379,7 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
       status: 'active',
     })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = (payload.db as any).connection.db
+    const db = getDb(payload)
 
     try {
       const result = await retrieveMemoryItems(
@@ -415,12 +398,8 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
       } else {
         console.log('Skipping assertions: Vector search returned no results (likely not Atlas)')
       }
-    } catch (error: any) {
-      if (
-        error.message?.includes('index') ||
-        error.message?.includes('$vectorSearch') ||
-        error.message?.includes('SearchNotEnabled')
-      ) {
+    } catch (error: unknown) {
+      if (isVectorSearchUnavailable(error)) {
         console.log('Skipping: Vector search not available (requires MongoDB Atlas)')
       } else {
         throw error
@@ -443,20 +422,15 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
       })
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = (payload.db as any).connection.db
+    const db = getDb(payload)
 
     try {
       const result = await retrieveMemoryItems(db, userId, 'memory', undefined, undefined, payload)
 
       // Should respect limit (max 8)
       expect(result.items.length).toBeLessThanOrEqual(8)
-    } catch (error: any) {
-      if (
-        error.message?.includes('index') ||
-        error.message?.includes('$vectorSearch') ||
-        error.message?.includes('SearchNotEnabled')
-      ) {
+    } catch (error: unknown) {
+      if (isVectorSearchUnavailable(error)) {
         console.log('Skipping: Vector search not available (requires MongoDB Atlas)')
       } else {
         throw error
@@ -498,8 +472,7 @@ describe.skipIf(!ATLAS_TESTS_ENABLED || !hasDatabaseUrl)(
         status: 'active',
       })
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const db = (payload.db as any).connection.db
+      const db = getDb(payload)
 
       const result = await retrieveMemoryItems(
         db,

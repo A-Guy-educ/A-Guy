@@ -42,22 +42,6 @@ vi.mock('@/lib/ai/maintenance', () => ({
   })),
 }))
 
-const featureFlagsMock = {
-  SUMMARY_MAINTENANCE_ENABLED: false,
-  MEMORY_EXTRACTION_ENABLED: false,
-  MEMORY_RETRIEVAL_ENABLED: false,
-}
-
-vi.mock('@/lib/feature-flags', () => ({
-  featureFlags: featureFlagsMock,
-  getFeatureFlagStatus: () => ({
-    summaryMaintenance: featureFlagsMock.SUMMARY_MAINTENANCE_ENABLED,
-    memoryExtraction: featureFlagsMock.MEMORY_EXTRACTION_ENABLED,
-    memoryRetrieval: featureFlagsMock.MEMORY_RETRIEVAL_ENABLED,
-  }),
-  logFeatureFlags: () => undefined,
-}))
-
 let payload: Payload
 let originalDatabaseUrl: string | undefined
 let context: Awaited<ReturnType<typeof createContextHierarchy>>
@@ -103,7 +87,7 @@ describe('agentChat validation', () => {
   it('returns 400 for missing message', async () => {
     const req = {
       payload,
-      user: { id: testUserId, role: 'student' } as any,
+      user: { id: testUserId, role: 'student' } as PayloadRequest['user'],
       json: async () => ({
         message: '',
         acknowledgment: 'ack',
@@ -118,7 +102,7 @@ describe('agentChat validation', () => {
   it('returns 400 for message length over 1000 chars', async () => {
     const req = {
       payload,
-      user: { id: testUserId, role: 'student' } as any,
+      user: { id: testUserId, role: 'student' } as PayloadRequest['user'],
       json: async () => ({
         message: 'a'.repeat(1001),
         acknowledgment: 'ack',
@@ -133,7 +117,7 @@ describe('agentChat validation', () => {
   it('returns 400 when acknowledgment is missing', async () => {
     const req = {
       payload,
-      user: { id: testUserId, role: 'student' } as any,
+      user: { id: testUserId, role: 'student' } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello',
         exerciseId: context.exerciseId,
@@ -147,7 +131,7 @@ describe('agentChat validation', () => {
   it('returns 400 when no context IDs are provided', async () => {
     const req = {
       payload,
-      user: { id: testUserId, role: 'student' } as any,
+      user: { id: testUserId, role: 'student' } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello',
         acknowledgment: 'ack',
@@ -164,7 +148,7 @@ describe('agentChat validation', () => {
   it('returns 404 for non-existent context IDs', async () => {
     const req = {
       payload,
-      user: { id: testUserId, role: 'student' } as any,
+      user: { id: testUserId, role: 'student' } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello',
         acknowledgment: 'ack',

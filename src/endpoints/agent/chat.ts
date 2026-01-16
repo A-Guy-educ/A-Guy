@@ -29,7 +29,6 @@ import { createContextLog, logContextUsage, logPromptSnapshot } from '@/lib/ai/o
 import { chatWithExerciseHelper, getSystemPrompt } from '@/lib/ai/services/exercise-chat-service'
 import { isVectorIndexAvailable } from '@/lib/ai/vector-index-check'
 import { retrieveMemoryItems, type MemoryItem } from '@/lib/ai/vector-search'
-import { featureFlags } from '@/lib/feature-flags'
 import { ConversationService, deriveContextLevel } from '@/lib/services/conversation-service'
 import { logger } from '@/utilities/logger'
 import { PayloadRequest } from 'payload'
@@ -199,62 +198,60 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     let globalCount = 0
     let hierarchyKeys: string[] = []
 
-    if (featureFlags.MEMORY_RETRIEVAL_ENABLED) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const db = (req.payload.db as any).connection.db
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const db = (req.payload.db as any).connection.db
 
-        // Graceful check: skip retrieval if index not available
-        const indexAvailable = await isVectorIndexAvailable(db)
+      // Graceful check: skip retrieval if index not available
+      const indexAvailable = await isVectorIndexAvailable(db)
 
-        if (indexAvailable) {
-          const queryText = buildRetrievalQuery(recentMessages)
+      if (indexAvailable) {
+        const queryText = buildRetrievalQuery(recentMessages)
 
-          // Skip retrieval if query is empty or too short
-          if (queryText && queryText.trim().length >= 3) {
-            reqLogger.debug({ queryText }, 'Retrieving memory items')
+        // Skip retrieval if query is empty or too short
+        if (queryText && queryText.trim().length >= 3) {
+          reqLogger.debug({ queryText }, 'Retrieving memory items')
 
-            const retrieval = await retrieveMemoryItems(
-              db,
-              req.user.id,
+          const retrieval = await retrieveMemoryItems(
+            db,
+            req.user.id,
+            queryText,
+            conversationId,
+            context.contextKey,
+            req.payload,
+          )
+
+          memoryItems = retrieval.items
+          retrievalLatencyMs = retrieval.latencyMs
+          localCount = retrieval.localCount
+          contextCount = retrieval.contextCount
+          globalCount = retrieval.globalCount
+          hierarchyKeys = retrieval.hierarchyKeys
+
+          reqLogger.info(
+            {
+              memoryCount: memoryItems.length,
+              localCount,
+              contextCount,
+              globalCount,
+              latencyMs: retrievalLatencyMs,
               queryText,
-              conversationId,
-              context.contextKey,
-              req.payload,
-            )
-
-            memoryItems = retrieval.items
-            retrievalLatencyMs = retrieval.latencyMs
-            localCount = retrieval.localCount
-            contextCount = retrieval.contextCount
-            globalCount = retrieval.globalCount
-            hierarchyKeys = retrieval.hierarchyKeys
-
-            reqLogger.info(
-              {
-                memoryCount: memoryItems.length,
-                localCount,
-                contextCount,
-                globalCount,
-                latencyMs: retrievalLatencyMs,
-                queryText,
-                hierarchyKeys,
-              },
-              'Retrieved memory items with hierarchy',
-            )
-          } else {
-            reqLogger.debug(
-              { queryText, queryLength: queryText?.trim().length },
-              'Skipping memory retrieval: query text too short or empty',
-            )
-          }
+              hierarchyKeys,
+            },
+            'Retrieved memory items with hierarchy',
+          )
         } else {
-          reqLogger.warn('Vector search index not available, skipping memory retrieval')
+          reqLogger.debug(
+            { queryText, queryLength: queryText?.trim().length },
+            'Skipping memory retrieval: query text too short or empty',
+          )
         }
-      } catch (error) {
-        // Graceful degradation: continue without memories
-        reqLogger.warn({ err: error }, 'Memory retrieval failed, continuing without memories')
+      } else {
+        reqLogger.warn('Vector search index not available, skipping memory retrieval')
       }
+    } catch (error) {
+      // Graceful degradation: continue without memories
+      reqLogger.warn({ err: error }, 'Memory retrieval failed, continuing without memories')
     }
 
     // 9) Compose prompt using Context Policy V1
@@ -326,90 +323,78 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     )
 
     // 13) Background: Run summary maintenance (non-blocking)
-    if (featureFlags.SUMMARY_MAINTENANCE_ENABLED) {
-      runSummaryMaintenance(req.payload, conversationId).catch((err) => {
-        reqLogger.error({ err, conversationId }, 'Summary maintenance failed')
-      })
-    }
+    runSummaryMaintenance(req.payload, conversationId).catch((err) => {
+      reqLogger.error({ err, conversationId }, 'Summary maintenance failed')
+    })
 
     // 14) Background: Extract and persist memories (non-blocking)
-    if (featureFlags.MEMORY_EXTRACTION_ENABLED && req.user) {
-      const currentUserId = req.user.id
-      reqLogger.debug({ conversationId }, 'Starting memory extraction')
+    const currentUserId = req.user.id
+    reqLogger.debug({ conversationId }, 'Starting memory extraction')
 
-      // Refresh conversation to get potential summary updates
-      req.payload
-        .findByID({
-          collection: 'conversations',
-          id: conversationId,
-          user: req.user,
-          overrideAccess: false,
-        })
-        .then((updatedConv) => {
-          const messages = updatedConv.messages || []
-          reqLogger.debug({ messageCount: messages.length }, 'Loaded conversation for extraction')
+    // Refresh conversation to get potential summary updates
+    req.payload
+      .findByID({
+        collection: 'conversations',
+        id: conversationId,
+        user: req.user,
+        overrideAccess: false,
+      })
+      .then((updatedConv) => {
+        const messages = updatedConv.messages || []
+        reqLogger.debug({ messageCount: messages.length }, 'Loaded conversation for extraction')
 
-          const messageList = messages.map((m) => ({
-            role: m.role!,
-            content: m.content!,
-            timestamp: m.timestamp!,
-          }))
+        const messageList = messages.map((m) => ({
+          role: m.role!,
+          content: m.content!,
+          timestamp: m.timestamp!,
+        }))
 
-          // Determine source role and timestamp
-          const lastMessage = messages[messages.length - 1]
-          const sourceRole = ChatRole.Assistant
-          const sourceTimestamp = lastMessage?.timestamp
-            ? new Date(lastMessage.timestamp)
-            : new Date()
+        // Determine source role and timestamp
+        const lastMessage = messages[messages.length - 1]
+        const sourceRole = ChatRole.Assistant
+        const sourceTimestamp = lastMessage?.timestamp
+          ? new Date(lastMessage.timestamp)
+          : new Date()
 
-          // Derive context info for memory extraction
-          const contextLevel = deriveContextLevel(context.relationTo)
+        // Derive context info for memory extraction
+        const contextLevel = deriveContextLevel(context.relationTo)
 
-          return extractMemoryCandidates(messageList, updatedConv.summary || undefined).then(
-            (candidates) => {
-              reqLogger.debug({ candidateCount: candidates.length }, 'Extracted memory candidates')
-              return {
-                candidates,
-                sourceRole,
-                sourceTimestamp,
-                contextLevel,
-              }
-            },
-          )
-        })
-        .then(({ candidates, sourceRole, sourceTimestamp, contextLevel }) => {
-          if (candidates.length > 0) {
-            reqLogger.debug({ candidateCount: candidates.length }, 'Persisting memory items')
-            return persistMemoryItems(
-              req.payload,
-              currentUserId,
-              conversationId,
+        return extractMemoryCandidates(messageList, updatedConv.summary || undefined).then(
+          (candidates) => {
+            reqLogger.debug({ candidateCount: candidates.length }, 'Extracted memory candidates')
+            return {
               candidates,
-              sourceTimestamp,
               sourceRole,
-              context.contextKey,
+              sourceTimestamp,
               contextLevel,
-            ).then((persisted) => {
-              reqLogger.info({ persisted, conversationId }, 'Memory extraction completed')
-              return persisted
-            })
-          } else {
-            reqLogger.debug('No memory candidates to persist')
-            return 0
-          }
-        })
-        .catch((err) => {
-          reqLogger.error({ err, conversationId }, 'Memory extraction failed')
-        })
-    } else {
-      reqLogger.debug(
-        {
-          extractionEnabled: featureFlags.MEMORY_EXTRACTION_ENABLED,
-          hasUser: !!req.user,
-        },
-        'Memory extraction skipped',
-      )
-    }
+            }
+          },
+        )
+      })
+      .then(({ candidates, sourceRole, sourceTimestamp, contextLevel }) => {
+        if (candidates.length > 0) {
+          reqLogger.debug({ candidateCount: candidates.length }, 'Persisting memory items')
+          return persistMemoryItems(
+            req.payload,
+            currentUserId,
+            conversationId,
+            candidates,
+            sourceTimestamp,
+            sourceRole,
+            context.contextKey,
+            contextLevel,
+          ).then((persisted) => {
+            reqLogger.info({ persisted, conversationId }, 'Memory extraction completed')
+            return persisted
+          })
+        }
+
+        reqLogger.debug('No memory candidates to persist')
+        return 0
+      })
+      .catch((err) => {
+        reqLogger.error({ err, conversationId }, 'Memory extraction failed')
+      })
 
     reqLogger.info('Chat request successful')
     return Response.json({

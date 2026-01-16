@@ -20,7 +20,6 @@ Four tests were hitting the OpenAI API directly and encountering rate limit erro
 ### 2. Memory Persistence Test Failure
 
 One test was failing because:
-- Feature flags (`MEMORY_EXTRACTION_ENABLED`) were not enabled in test environment
 - MongoDB connection check was needed before attempting vector search operations
 
 ## Solution
@@ -55,16 +54,13 @@ function generateMockEmbedding(text: string): number[]
 - Tests work offline
 - Easy to test error cases
 
-### 2. Enabled Feature Flags in Tests
+### 2. Added Test Environment OpenAI Key
 
 **File:** `test.env`
 
-Added feature flags to enable memory system functionality:
+Added a mock OpenAI key to ensure the memory system can initialize in tests:
 
 ```bash
-SUMMARY_MAINTENANCE_ENABLED=true
-MEMORY_EXTRACTION_ENABLED=true
-MEMORY_RETRIEVAL_ENABLED=true
 OPENAI_API_KEY=sk-mock-key-for-testing
 ```
 
@@ -89,7 +85,6 @@ While we're mocking external APIs, we maintain high test quality by:
 ✅ Data transformations (embeddings, summaries)
 ✅ Business logic (deduplication, context assembly)
 ✅ Database operations (create, update, delete)
-✅ Feature flag behavior
 
 ### What We Don't Test (External Services)
 

@@ -11,6 +11,7 @@ import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
+import type { Exercise } from '@/payload-types'
 import { agentChat } from '@/endpoints/agent/chat'
 
 // Skip tests if DATABASE_URL is not set (e.g., in CI without MongoDB service)
@@ -50,25 +51,6 @@ vi.mock('@/lib/ai/maintenance', () => ({
   })),
 }))
 
-vi.mock('@/lib/feature-flags', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/feature-flags')>()
-  const featureFlags = {
-    SUMMARY_MAINTENANCE_ENABLED: true,
-    MEMORY_EXTRACTION_ENABLED: true,
-    MEMORY_RETRIEVAL_ENABLED: true,
-  }
-  return {
-    ...actual,
-    featureFlags,
-    getFeatureFlagStatus: () => ({
-      summaryMaintenance: featureFlags.SUMMARY_MAINTENANCE_ENABLED,
-      memoryExtraction: featureFlags.MEMORY_EXTRACTION_ENABLED,
-      memoryRetrieval: featureFlags.MEMORY_RETRIEVAL_ENABLED,
-    }),
-    logFeatureFlags: () => undefined,
-  }
-})
-
 let payload: Payload
 let testUserId: string
 let testExerciseId: string | undefined
@@ -100,9 +82,8 @@ beforeAll(
         collection: 'exercises',
         data: {
           title: 'Agent Chat Integration Test Exercise',
-          slug: `agent-chat-int-${Date.now()}`,
-          _status: 'published',
-        } as any,
+        } satisfies Partial<Exercise>,
+        draft: true,
       })
       testExerciseId = exercise.id
     }
@@ -143,7 +124,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
     const req = {
       payload,
-      user: { id: testUserId } as any,
+      user: { id: testUserId } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello, can you help me with this exercise?',
         acknowledgment: 'ack-1',

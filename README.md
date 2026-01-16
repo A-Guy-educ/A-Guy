@@ -197,7 +197,7 @@ This project includes an AI-powered long-term memory system using MongoDB Atlas 
 **Prerequisites**: MongoDB Atlas M10+ cluster (free tier doesn't support vector search), OpenAI API key
 
 1. Create vector search index in MongoDB Atlas
-2. Add to `.env`: `OPENAI_API_KEY=sk-proj-...` and `MEMORY_RETRIEVAL_ENABLED=true`
+2. Add to `.env`: `OPENAI_API_KEY=sk-proj-...`
 3. Verify: `pnpm verify:vector-index`
 
 **Documentation**:
@@ -208,13 +208,7 @@ This project includes an AI-powered long-term memory system using MongoDB Atlas 
 
 **Collections**: `memory_items` (long-term memory with vectors), `conversations` (chat history with summaries)
 
-**Feature Flags**:
-
-```env
-SUMMARY_MAINTENANCE_ENABLED=true   # Conversation summarization
-MEMORY_EXTRACTION_ENABLED=true     # Memory extraction
-MEMORY_RETRIEVAL_ENABLED=true      # Memory retrieval
-```
+Memory extraction, retrieval, and summarization are enabled by default.
 
 ## Development
 

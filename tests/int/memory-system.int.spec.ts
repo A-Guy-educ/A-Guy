@@ -15,30 +15,29 @@ import { runSummaryMaintenance } from '@/lib/ai/maintenance'
 import { extractMemoryCandidates, persistMemoryItems } from '@/lib/ai/memory-extraction'
 import { generateSummary } from '@/lib/ai/summary'
 import { retrieveMemoryItems } from '@/lib/ai/vector-search'
+import type { MemoryItem } from '@/lib/ai/vector-search'
 import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import type { Db } from 'mongodb'
 
-// Enable feature flags for tests
-vi.mock('@/lib/feature-flags', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/feature-flags')>()
-  const featureFlags = {
-    SUMMARY_MAINTENANCE_ENABLED: true,
-    MEMORY_EXTRACTION_ENABLED: true,
-    MEMORY_RETRIEVAL_ENABLED: true,
+function getDb(payload: Payload): Db {
+  const db = (payload.db as { connection?: { db?: Db } }).connection?.db
+  if (!db) {
+    throw new Error('Database connection not available')
   }
-  return {
-    ...actual,
-    featureFlags,
-    getFeatureFlagStatus: () => ({
-      summaryMaintenance: featureFlags.SUMMARY_MAINTENANCE_ENABLED,
-      memoryExtraction: featureFlags.MEMORY_EXTRACTION_ENABLED,
-      memoryRetrieval: featureFlags.MEMORY_RETRIEVAL_ENABLED,
-    }),
-    logFeatureFlags: () => undefined,
-  }
-})
+  return db
+}
+
+function isVectorSearchUnavailable(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  return (
+    error.message.includes('index') ||
+    error.message.includes('$vectorSearch') ||
+    error.message.includes('SearchNotEnabled')
+  )
+}
 
 let payload: Payload
 let testUserId: string
@@ -222,16 +221,25 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
     })
 
     it('should compose prompt with all context elements', () => {
+      const memoryItem: MemoryItem = {
+        _id: 'mem-1',
+        userId: 'user-1',
+        type: 'preference',
+        text: 'User prefers TypeScript over JavaScript',
+        importance: 4,
+        status: 'active',
+        source: {
+          sourceMessageTimestamp: new Date(),
+          sourceMessageRole: ChatRole.User,
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
       const prompt = composePrompt('You are a helpful assistant.', {
         systemMessage: 'You are a helpful assistant.',
         summary: 'Previously discussed TypeScript basics.',
-        memoryItems: [
-          {
-            text: 'User prefers TypeScript over JavaScript',
-            type: 'preference',
-            importance: 4,
-          } as any,
-        ],
+        memoryItems: [memoryItem],
         recentMessages: [
           { role: 'user', content: 'Tell me about React', timestamp: new Date().toISOString() },
         ],
@@ -581,7 +589,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
 
     it('should persist non-duplicate memories', async () => {
       // Skip if MongoDB connection not available (needed for vector search)
-      const db = (payload.db as any).connection?.db
+      const db = getDb(payload)
       if (!db) {
         console.log('Skipping memory persistence test: MongoDB connection not available')
         return
@@ -626,7 +634,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
     })
 
     it('should deduplicate similar memories', async () => {
-      const db = (payload.db as any).connection?.db
+      const db = getDb(payload)
       if (!db) {
         console.log('Skipping: MongoDB connection not available')
         return
@@ -692,7 +700,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
 
     it('should retrieve conversation-scoped memories', async () => {
       // Skip if not Atlas
-      const db = (payload.db as any).connection?.db
+      const db = getDb(payload)
       if (!db) {
         console.log('Skipping vector search test: MongoDB Atlas not available')
         return
@@ -737,12 +745,8 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         // Local or global count should be > 0 (may vary based on indexing timing)
         expect(result.localCount + result.globalCount).toBeGreaterThan(0)
         expect(result.latencyMs).toBeGreaterThan(0)
-      } catch (error: any) {
-        if (
-          error.message?.includes('index') ||
-          error.message?.includes('$vectorSearch') ||
-          error.message?.includes('SearchNotEnabled')
-        ) {
+      } catch (error: unknown) {
+        if (isVectorSearchUnavailable(error)) {
           console.log('Skipping: Vector search not available (requires MongoDB Atlas)')
         } else {
           throw error
@@ -751,7 +755,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
     }, 30000)
 
     it('should enforce tenant isolation in vector search', async () => {
-      const db = (payload.db as any).connection?.db
+      const db = getDb(payload)
       if (!db) {
         console.log('Skipping vector search test: MongoDB Atlas not available')
         return
@@ -797,8 +801,8 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         // Should NOT retrieve other user's memory
         const hasOtherUserMemory = result.items.some((item) => item.userId === otherUser.id)
         expect(hasOtherUserMemory).toBe(false)
-      } catch (error: any) {
-        if (error.message?.includes('index')) {
+      } catch (error: unknown) {
+        if (isVectorSearchUnavailable(error)) {
           console.log('Skipping: Vector search index not provisioned')
         } else {
           throw error
@@ -849,17 +853,6 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
       })
 
       expect(prompt.messages.length).toBeGreaterThan(0)
-    })
-  })
-
-  describe('Feature Flags', () => {
-    it('should respect feature flags', async () => {
-      const { featureFlags } = await import('@/lib/feature-flags')
-
-      // Flags should exist
-      expect(typeof featureFlags.SUMMARY_MAINTENANCE_ENABLED).toBe('boolean')
-      expect(typeof featureFlags.MEMORY_EXTRACTION_ENABLED).toBe('boolean')
-      expect(typeof featureFlags.MEMORY_RETRIEVAL_ENABLED).toBe('boolean')
     })
   })
 })

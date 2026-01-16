@@ -2,6 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import { ChatRole } from '@/lib/ai/chat-message-role'
+import type { Message } from '@/lib/ai/context-policy'
 import { runSummaryMaintenance } from '@/lib/ai/maintenance'
 import { startMongoContainer, stopMongoContainer } from '@/utilities/test/mongodb-container'
 import { createContextHierarchy } from '../factories/context.factory'
@@ -9,28 +10,12 @@ import { createConversation } from '../factories/conversation.factory'
 import { createTestUser } from '../factories/user.factory'
 
 const generateSummary = vi.hoisted(() =>
-  vi.fn(async (_existingSummary: string, messagesToSummarize: any[]) => ({
+  vi.fn(async (_existingSummary: string, messagesToSummarize: Message[]) => ({
     summary: `Summary for ${messagesToSummarize.length} messages`,
     summaryUntilTimestamp: new Date(messagesToSummarize[messagesToSummarize.length - 1].timestamp),
     tokensUsed: 20,
   })),
 )
-
-const featureFlagsMock = {
-  SUMMARY_MAINTENANCE_ENABLED: true,
-  MEMORY_EXTRACTION_ENABLED: false,
-  MEMORY_RETRIEVAL_ENABLED: false,
-}
-
-vi.mock('@/lib/feature-flags', () => ({
-  featureFlags: featureFlagsMock,
-  getFeatureFlagStatus: () => ({
-    summaryMaintenance: featureFlagsMock.SUMMARY_MAINTENANCE_ENABLED,
-    memoryExtraction: featureFlagsMock.MEMORY_EXTRACTION_ENABLED,
-    memoryRetrieval: featureFlagsMock.MEMORY_RETRIEVAL_ENABLED,
-  }),
-  logFeatureFlags: () => undefined,
-}))
 
 vi.mock('@/lib/ai/summary', () => ({
   generateSummary,
@@ -152,9 +137,6 @@ describe('summary maintenance thresholds', () => {
 
     const result = await runSummaryMaintenance(payload, conversation.id)
     expect(result.summaryUpdated).toBe(true)
-    expect(generateSummary).toHaveBeenCalledWith(
-      'Existing summary',
-      expect.any(Array),
-    )
+    expect(generateSummary).toHaveBeenCalledWith('Existing summary', expect.any(Array))
   })
 })

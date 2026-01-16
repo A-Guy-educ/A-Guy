@@ -86,27 +86,7 @@ const composedPrompt = composePrompt(systemInstructions, {
 
 ---
 
-## Feature Flags
-
-Three independent flags control the system (all default to OFF):
-
-### 1. SUMMARY_MAINTENANCE_ENABLED
-- Automatic conversation compression
-- Triggers when messages.length > 40
-- Compresses old messages into summary field
-- Trims messages array to last 20
-
-### 2. MEMORY_EXTRACTION_ENABLED
-- Extract important information from conversations
-- Creates memory_items with embeddings
-- Runs after each model reply (non-blocking)
-- Deduplicates similar memories
-
-### 3. MEMORY_RETRIEVAL_ENABLED
-- Retrieve relevant memories for context
-- Queries MongoDB Atlas vector search
-- Injects Top-K memories into prompt
-- Graceful degradation if index unavailable
+All memory features (summary maintenance, extraction, retrieval) run by default.
 
 ---
 
@@ -161,13 +141,13 @@ Three independent flags control the system (all default to OFF):
 3. **Persist user message** to DB
 4. **Reload** conversation (get updated messages)
 5. **Get recent window** from persisted messages
-6. **Retrieve memories** (if MEMORY_RETRIEVAL_ENABLED and index available)
+6. **Retrieve memories** (if index available)
 7. **Compose prompt** using `composePrompt()` with all context
 8. **Call model** with composed prompt
 9. **Persist assistant response**
 10. **Log context usage** for observability
-11. **Run background maintenance** (summary if enabled)
-12. **Extract memories** in background (if enabled)
+11. **Run background maintenance** (summary)
+12. **Extract memories** in background
 
 ### Maintenance Flow (Background)
 
@@ -301,24 +281,13 @@ See [tests/int/memory-system.int.spec.ts](../../tests/int/memory-system.int.spec
 
 ## Rollout Plan
 
-### Phase 1: Summary Maintenance (Week 1)
-- Enable SUMMARY_MAINTENANCE_ENABLED
-- Monitor: summary generation, message trimming
-- Verify: no data loss, summaries are coherent
-
-### Phase 2: Memory Extraction (Week 2)
-- Enable MEMORY_EXTRACTION_ENABLED
-- Monitor: memory creation, deduplication
-- Verify: memory quality, no spam
-
-### Phase 3: Memory Retrieval (Week 3)
+### Phase 1: Index Readiness (Week 1)
 - Ensure vector index is ready
-- Enable MEMORY_RETRIEVAL_ENABLED
 - Monitor: retrieval latency, relevance
 - Verify: memories enhance context
 
-### Phase 4: Full System (Week 4+)
-- All flags enabled
+### Phase 2: Production Monitoring (Week 2+)
+- Memory features run by default
 - Monitor end-to-end metrics
 - Iterate on thresholds and configurations
 

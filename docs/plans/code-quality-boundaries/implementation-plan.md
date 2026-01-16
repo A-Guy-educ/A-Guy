@@ -53,7 +53,6 @@ This plan implements **hard enforcement** of architectural zone boundaries in th
 
 **UI-safe LIB allowlist:**
 - `lib/errors.ts`
-- `lib/feature-flags.ts`
 - `lib/logger/client-logger.ts` (if exists)
 - Additional files can be explicitly whitelisted
 
@@ -204,7 +203,6 @@ const ZONES = {
 
 const UI_SAFE_LIB = [
   'lib/errors.ts',
-  'lib/feature-flags.ts',
   // explicit allowlist
 ]
 ```
@@ -393,7 +391,6 @@ export default [
         },
         uiSafeLib: [
           'lib/errors.ts',
-          'lib/feature-flags.ts',
         ],
       },
     },

@@ -167,8 +167,8 @@ On deploy (CI step) run:
 
 ### 6.7 Failure Behavior
 - If provisioning fails → deployment fails
-- App must be able to run with memory retrieval disabled (feature flag OFF)
-- Production rollout requires index READY before enabling retrieval
+- App must handle missing vector index gracefully (skip retrieval)
+- Production rollout requires index READY before use
 
 ### 6.8 Index Versioning
 - Any change to embeddings model or `numDimensions` requires a new index version (`..._v2`)
@@ -180,15 +180,8 @@ On deploy (CI step) run:
 
 ## 7) Runtime Contracts
 
-### 7.1 Feature Flags (Explicit)
-- `SUMMARY_MAINTENANCE_ENABLED`
-- `MEMORY_EXTRACTION_ENABLED`
-- `MEMORY_RETRIEVAL_ENABLED`
-
-Rollout order:
-1) Summary maintenance ON
-2) Memory extraction ON (writes)
-3) Memory retrieval ON (reads)
+### 7.1 Feature Flags Removed
+Summary maintenance, extraction, and retrieval run by default.
 
 ### 7.2 Prompt Composition Contract (Deterministic)
 For every model call, prompt MUST be composed in this exact order:
@@ -225,7 +218,7 @@ When user sends a message:
 3) Call `buildContextAndRunModel()` using the conversation’s messages (which already include the new user message)
 4) Append model reply into `conversation.messages`
 5) Update `lastMessageAt`
-6) Run maintenance (summary/memory) according to flags and thresholds
+6) Run maintenance (summary/memory) according to thresholds
 
 ### 8.2 buildContextAndRunModel()
 Inputs:
@@ -236,14 +229,14 @@ Steps:
 1) Load conversation (`summary`, `messages`)
 2) Build retrieval query text:
    - Use the newest user message + optionally last 1–2 user turns
-3) If `MEMORY_RETRIEVAL_ENABLED`:
+3) If vector index is available:
    - Retrieve memory items via `$vectorSearch` (see Section 9)
 4) Compose prompt strictly per Section 7.2
 5) Call model
 6) Return model reply
 
 ### 8.3 Running Summary Maintenance
-Triggers (when `SUMMARY_MAINTENANCE_ENABLED`):
+Triggers:
 - If `messages.length > 40` (normal threshold)
 - OR if `messages.length > 80` (safety threshold before maxRows=100)
 
@@ -264,7 +257,7 @@ Outcome:
 - Conversation never “forgets”; old context is compressed into `summary`.
 
 ### 8.4 Memory Extraction (Create/Update MemoryItems)
-Triggers (when `MEMORY_EXTRACTION_ENABLED`):
+Triggers:
 - After model reply (recommended)
 - Or when stable signals detected (preferences, decisions, constraints)
 
@@ -371,16 +364,13 @@ Optional:
 - No duplicate user message insertion in prompt.
 - Embedding length validation enforced (1536).
 
-## 14) Rollout Plan (Flagged)
+## 14) Rollout Plan
 1) Add conversation summary fields
 2) Add `memory_items` collection
 3) Add provisioning script + index definition (IaC)
-4) Deploy with all flags OFF
-5) Enable `SUMMARY_MAINTENANCE_ENABLED`
-6) Enable `MEMORY_EXTRACTION_ENABLED` (writes only)
-7) Verify memory_items growth + dedup
-8) Enable `MEMORY_RETRIEVAL_ENABLED` (reads)
-9) Monitor: latency, relevance, leakage checks
+4) Verify vector index readiness
+5) Deploy with memory features enabled by default
+6) Monitor: latency, relevance, leakage checks
 
 ## 15) Open Configuration Values (Final)
 - Embeddings model (must output 1536 dims)

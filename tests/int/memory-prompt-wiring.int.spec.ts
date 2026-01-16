@@ -15,6 +15,7 @@ import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
+import type { Exercise } from '@/payload-types'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Skip tests if DATABASE_URL is not set
@@ -57,29 +58,6 @@ vi.mock('@/lib/ai/maintenance', () => ({
     messagesTrimmed: 0,
   })),
 }))
-
-// Feature flags mock - use mutable object that can be updated between tests
-const mockFeatureFlags = {
-  SUMMARY_MAINTENANCE_ENABLED: true,
-  MEMORY_EXTRACTION_ENABLED: true,
-  MEMORY_RETRIEVAL_ENABLED: true,
-}
-
-vi.mock('@/lib/feature-flags', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/feature-flags')>()
-  return {
-    ...actual,
-    get featureFlags() {
-      return mockFeatureFlags
-    },
-    getFeatureFlagStatus: () => ({
-      summaryMaintenance: mockFeatureFlags.SUMMARY_MAINTENANCE_ENABLED,
-      memoryExtraction: mockFeatureFlags.MEMORY_EXTRACTION_ENABLED,
-      memoryRetrieval: mockFeatureFlags.MEMORY_RETRIEVAL_ENABLED,
-    }),
-    logFeatureFlags: () => undefined,
-  }
-})
 
 let payload: Payload
 const testUsers = new Map<string, string>() // email -> userId
@@ -139,7 +117,7 @@ async function chatAsUser(userId: string, message: string): Promise<Response> {
 
   const req = {
     payload,
-    user: { id: userId } as any,
+    user: { id: userId } as PayloadRequest['user'],
     json: async () => ({
       message,
       acknowledgment: 'ack-1',
@@ -166,9 +144,8 @@ beforeAll(async () => {
       collection: 'exercises',
       data: {
         title: 'Memory Wiring Test Exercise',
-        slug: `memory-wiring-${Date.now()}`,
-        _status: 'published',
-      } as any,
+      } satisfies Partial<Exercise>,
+      draft: true,
     })
     testExerciseId = exercise.id
   }
@@ -178,7 +155,6 @@ beforeEach(() => {
   capturedPrompts = []
   mockRetrieveMemoryItems.mockClear()
   mockChatWithExerciseHelper.mockClear()
-  mockFeatureFlags.MEMORY_RETRIEVAL_ENABLED = true
 })
 
 afterAll(async () => {
@@ -267,77 +243,6 @@ describe.skipIf(!hasDatabaseUrl)('Memory Prompt Wiring Tests', () => {
     expect(body.message).toContain('mathematics LMS')
   }, 60000)
 
-  describe('feature flag toggle', () => {
-    it('does NOT inject memory when MEMORY_RETRIEVAL_ENABLED=false', async () => {
-      mockFeatureFlags.MEMORY_RETRIEVAL_ENABLED = false
-      const userId = await createTestUser('toggle-off')
-
-      mockChatWithExerciseHelper.mockImplementation(async (input) => {
-        const systemMsg = input.composedPrompt?.messages.find(
-          (m: { role: string }) => m.role === 'system',
-        )
-        const hasMemoryBlock = systemMsg?.content.includes(MEMORY_BLOCK_START)
-        if (hasMemoryBlock) {
-          return { success: true, message: 'Memory was injected (unexpected)' }
-        }
-        return { success: true, message: "I don't have specific context about your project." }
-      })
-
-      const response = await chatAsUser(userId, 'What system am I building?')
-      const body = await response.json()
-
-      // Retriever should NOT be called
-      expect(mockRetrieveMemoryItems).not.toHaveBeenCalled()
-
-      // Prompt should NOT have memory delimiters
-      expect(capturedPrompts.length).toBeGreaterThan(0)
-      const systemContent = getSystemMessage(capturedPrompts[0])
-      expect(systemContent).not.toContain(MEMORY_BLOCK_START)
-
-      // Response is generic
-      expect(body.message).toContain("don't have")
-    }, 60000)
-
-    it('injects memory when MEMORY_RETRIEVAL_ENABLED=true', async () => {
-      mockFeatureFlags.MEMORY_RETRIEVAL_ENABLED = true
-      const userId = await createTestUser('toggle-on')
-
-      mockRetrieveMemoryItems.mockResolvedValueOnce({
-        items: [createMemoryItem(userId, 'The user is building a mathematics LMS', 4)],
-        localCount: 0,
-        contextCount: 0,
-        globalCount: 1,
-        parentCount: 0,
-        hierarchyKeys: ['global'],
-        latencyMs: 5,
-      })
-
-      mockChatWithExerciseHelper.mockImplementation(async (input) => {
-        const systemMsg = input.composedPrompt?.messages.find(
-          (m: { role: string }) => m.role === 'system',
-        )
-        const hasMemoryBlock = systemMsg?.content.includes(MEMORY_BLOCK_START)
-        const hasLmsMemory = systemMsg?.content.includes('mathematics LMS')
-
-        if (hasMemoryBlock && hasLmsMemory) {
-          return { success: true, message: "You're building a mathematics LMS." }
-        }
-        return { success: true, message: "I don't have specific context." }
-      })
-
-      const response = await chatAsUser(userId, 'What system am I building?')
-      const body = await response.json()
-
-      expect(mockRetrieveMemoryItems).toHaveBeenCalled()
-
-      expect(capturedPrompts.length).toBeGreaterThan(0)
-      const systemContent = getSystemMessage(capturedPrompts[0])
-      expect(systemContent).toContain(MEMORY_BLOCK_START)
-
-      expect(body.message).toContain('mathematics LMS')
-    }, 60000)
-  })
-
   it('injects only the memories returned by retriever (selected memory injection)', async () => {
     const userId = await createTestUser('selection-user')
 
@@ -366,7 +271,7 @@ describe.skipIf(!hasDatabaseUrl)('Memory Prompt Wiring Tests', () => {
   }, 60000)
 
   it('passes correct userId to retriever', async () => {
-    const userU1 = await createTestUser('U1-wiring')
+    const _userU1 = await createTestUser('U1-wiring')
     const userU2 = await createTestUser('U2-wiring')
 
     mockRetrieveMemoryItems.mockResolvedValueOnce({

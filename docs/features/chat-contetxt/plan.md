@@ -268,54 +268,9 @@ export const MemoryItems: CollectionConfig = {
 
 ---
 
-### 1.3 Add Feature Flags
+### 1.3 Feature Flags Removed
 
-**File**: `src/lib/env.ts` or create `src/lib/feature-flags.ts`
-
-**What to do**:
-1. Define environment variables for feature flags
-2. Create a typed config object
-3. Add default values (all OFF initially)
-
-**Implementation**:
-
-```typescript
-// src/lib/feature-flags.ts
-export const featureFlags = {
-  // Chat context features (all OFF by default)
-  SUMMARY_MAINTENANCE_ENABLED: process.env.SUMMARY_MAINTENANCE_ENABLED === 'true',
-  MEMORY_EXTRACTION_ENABLED: process.env.MEMORY_EXTRACTION_ENABLED === 'true',
-  MEMORY_RETRIEVAL_ENABLED: process.env.MEMORY_RETRIEVAL_ENABLED === 'true',
-} as const
-
-export type FeatureFlags = typeof featureFlags
-
-// Helper for logging flag status
-export function logFeatureFlags() {
-  console.log('[Feature Flags]', {
-    summaryMaintenance: featureFlags.SUMMARY_MAINTENANCE_ENABLED,
-    memoryExtraction: featureFlags.MEMORY_EXTRACTION_ENABLED,
-    memoryRetrieval: featureFlags.MEMORY_RETRIEVAL_ENABLED,
-  })
-}
-```
-
-**Update `.env.example`**:
-```bash
-# Chat Context Feature Flags (default: false)
-SUMMARY_MAINTENANCE_ENABLED=false
-MEMORY_EXTRACTION_ENABLED=false
-MEMORY_RETRIEVAL_ENABLED=false
-```
-
-**Testing**:
-- Import and log flags in your app to verify they're read correctly
-- Try toggling them in `.env.local` and restarting the server
-
-**Junior Tips**:
-- Feature flags let us deploy code without activating it
-- We'll enable these in order: summary → extraction → retrieval
-- Never use feature flags directly in code - always import from this file
+Memory summarization, extraction, and retrieval are enabled by default. No rollout flags are required.
 
 ---
 
@@ -1099,7 +1054,6 @@ export async function generateSummary(
 // src/lib/ai/maintenance.ts
 import type { Payload } from 'payload'
 import type { Conversation } from '@/payload-types'
-import { featureFlags } from '../feature-flags'
 import { CONTEXT_POLICY_V1 } from './context-policy'
 import { generateSummary } from './summary'
 import { getMessagesToSummarize, getRecentWindow } from './context-policy'
@@ -1121,15 +1075,6 @@ export async function runSummaryMaintenance(
   payload: Payload,
   conversationId: string
 ): Promise<MaintenanceResult> {
-  // Check feature flag
-  if (!featureFlags.SUMMARY_MAINTENANCE_ENABLED) {
-    return {
-      summaryUpdated: false,
-      messagesTrimmed: 0,
-      tokensUsed: 0,
-    }
-  }
-
   // Load conversation
   const conversation = await payload.findByID({
     collection: 'conversations',
@@ -1190,7 +1135,6 @@ export async function runSummaryMaintenance(
 
 **Testing**:
 - Create a conversation with 50+ messages
-- Enable `SUMMARY_MAINTENANCE_ENABLED=true`
 - Call maintenance function
 - Verify summary is created and messages are trimmed
 
@@ -1221,7 +1165,6 @@ import type { Payload } from 'payload'
 import { openai } from './openai-client'
 import { generateEmbedding } from './embeddings'
 import { findSimilarMemoryItem } from './vector-search'
-import { featureFlags } from '../feature-flags'
 
 const MEMORY_EXTRACTION_PROMPT = `You are a memory extraction assistant for an educational platform.
 
@@ -1325,10 +1268,6 @@ export async function persistMemoryItems(
   sourceTimestamp: Date,
   sourceRole: 'user' | 'model'
 ): Promise<number> {
-  if (!featureFlags.MEMORY_EXTRACTION_ENABLED) {
-    return 0
-  }
-
   let persisted = 0
   const db = payload.db.connection.db // Access MongoDB directly for vector search
 
@@ -1415,7 +1354,6 @@ import { retrieveMemoryItems } from '@/lib/ai/vector-search'
 import { composePrompt, buildRetrievalQuery, getRecentWindow } from '@/lib/ai/context-policy'
 import { runSummaryMaintenance } from '@/lib/ai/maintenance'
 import { extractMemoryCandidates, persistMemoryItems } from '@/lib/ai/memory-extraction'
-import { featureFlags } from '@/lib/feature-flags'
 
 export async function POST(req: Request) {
   const { message, conversationId } = await req.json()
@@ -1453,18 +1391,15 @@ export async function POST(req: Request) {
   const recentMessages = getRecentWindow(updatedConversation.messages)
   const summary = updatedConversation.summary
 
-  // 4. Retrieve memory (if enabled)
-  let memoryItems = []
-  if (featureFlags.MEMORY_RETRIEVAL_ENABLED) {
-    const queryText = buildRetrievalQuery(recentMessages)
-    const retrieval = await retrieveMemoryItems(
-      payload.db.connection.db,
-      userId,
-      queryText,
-      conversationId
-    )
-    memoryItems = retrieval.items
-  }
+  // 4. Retrieve memory
+  const queryText = buildRetrievalQuery(recentMessages)
+  const retrieval = await retrieveMemoryItems(
+    payload.db.connection.db,
+    userId,
+    queryText,
+    conversationId
+  )
+  const memoryItems = retrieval.items
 
   // 5. Compose prompt
   const prompt = composePrompt(SYSTEM_INSTRUCTIONS, {
@@ -1497,9 +1432,7 @@ export async function POST(req: Request) {
   runSummaryMaintenance(payload, conversationId).catch(console.error)
 
   // 9. Background: Extract and persist memories
-  if (featureFlags.MEMORY_EXTRACTION_ENABLED) {
-    extractAndPersist(payload, userId, conversationId, updatedConversation).catch(console.error)
-  }
+  extractAndPersist(payload, userId, conversationId, updatedConversation).catch(console.error)
 
   return Response.json({ reply: modelResponse.content })
 }
@@ -1526,7 +1459,7 @@ async function extractAndPersist(payload, userId, conversationId, conversation) 
 **Junior Tips**:
 - We reload the conversation after updating to ensure we have latest data
 - Maintenance and extraction run in background (don't block response)
-- Feature flags control what runs
+- Memory features are always on by default
 - Always log context metadata for debugging
 
 ---
@@ -1564,11 +1497,6 @@ export interface ContextLog {
   messages: {
     windowSize: number
     totalCount: number
-  }
-  featureFlags: {
-    summaryEnabled: boolean
-    extractionEnabled: boolean
-    retrievalEnabled: boolean
   }
   modelLatencyMs?: number
 }
@@ -1729,10 +1657,6 @@ Create `docs/features/chat-context/testing-checklist.md`:
    ATLAS_PUBLIC_KEY=...
    ATLAS_PRIVATE_KEY=...
 
-   # Feature flags (start with all OFF)
-   SUMMARY_MAINTENANCE_ENABLED=false
-   MEMORY_EXTRACTION_ENABLED=false
-   MEMORY_RETRIEVAL_ENABLED=false
    ```
 
 2. **Provision vector index**:
@@ -1754,36 +1678,9 @@ Create `docs/features/chat-context/testing-checklist.md`:
 
 ---
 
-### 8.2 Phased Rollout
+### 8.2 Rollout
 
-**Week 1: Deploy with flags OFF**
-- Deploy all code
-- Verify no regressions
-- Monitor error logs
-
-**Week 2: Enable Summary Maintenance**
-```bash
-SUMMARY_MAINTENANCE_ENABLED=true
-```
-- Monitor conversations with 40+ messages
-- Check summary quality
-- Verify trimming works
-
-**Week 3: Enable Memory Extraction**
-```bash
-MEMORY_EXTRACTION_ENABLED=true
-```
-- Monitor memory_items growth
-- Check deduplication is working
-- Verify no duplicates or noise
-
-**Week 4: Enable Memory Retrieval**
-```bash
-MEMORY_RETRIEVAL_ENABLED=true
-```
-- Monitor vector search latency
-- Test memory recall quality
-- Check for any leakage (users seeing others' data)
+Memory summarization, extraction, and retrieval run by default. Verify vector index readiness and monitor logs for regressions after deployment.
 
 ---
 

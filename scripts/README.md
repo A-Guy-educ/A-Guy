@@ -251,4 +251,4 @@ Vercel Blob CDN
 
 ## Questions?
 
-See [CLAUDE_INTERNAL.md](../CLAUDE_INTERNAL.md) "External Libraries & CDN Strategy" section for design decisions and lessons learned.
+See [CLAUDE.md](../CLAUDE.md) "External Libraries & CDN Strategy" section for design decisions and lessons learned.
