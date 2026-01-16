@@ -6,6 +6,7 @@
  *
  * Network: Fully offline using deterministic embeddings (except gated Atlas tests).
  */
+import { ChatRole } from '@/lib/ai/chat-message-role'
 import { retrieveMemoryItems } from '@/lib/ai/vector-search'
 import config from '@payload-config'
 import type { Payload } from 'payload'
@@ -107,14 +108,14 @@ async function insertMemoryItem(data: {
       userId: data.userId,
       text: data.text,
       embedding: data.embedding,
-      status: data.status,
+      status: data.status as 'active' | 'deprecated',
       contextKey: data.contextKey || 'global',
       conversationId: data.conversationId,
       importance: data.importance || 3,
-      type: data.type || 'fact',
+      type: (data.type || 'fact') as 'preference' | 'decision' | 'fact' | 'open_loop' | 'profile' | 'constraint' | 'other',
       source: {
         sourceMessageTimestamp: new Date().toISOString(),
-        sourceMessageRole: 'user',
+        sourceMessageRole: ChatRole.User,
       },
     },
   })
