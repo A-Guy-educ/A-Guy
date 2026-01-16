@@ -80,53 +80,60 @@ export function useNotebookChat({
       }
 
       try {
-        const result = await apiService.getConversation(contextKey)
+        const retryDelayMs = 300
+        const maxRetries = 6
+        let attempt = 0
+        let result = await apiService.getConversation(contextKey)
 
-        if (result.authRequired) {
-          // Keep initial message, user needs to log in
-          setIsLoadingHistory(false)
-          return
-        }
+        while (attempt <= maxRetries) {
+          if (result.authRequired) {
+            // Keep initial message, user needs to log in
+            return
+          }
 
-        if (result.success && result.exists) {
-          if (result.messages && result.messages.length > 0) {
-            // Map API messages to chat messages
-            const loadedMessages: ChatMessage[] = result.messages.map((msg) => ({
-              role:
-                msg.role === ChatRole.User || msg.role === 'user'
-                  ? ChatRole.User
-                  : ChatRole.Assistant,
-              content: msg.content,
-            }))
+          if (result.success && result.exists) {
+            if (result.messages && result.messages.length > 0) {
+              // Map API messages to chat messages
+              const loadedMessages: ChatMessage[] = result.messages.map((msg) => ({
+                role:
+                  msg.role === ChatRole.User || msg.role === 'user'
+                    ? ChatRole.User
+                    : ChatRole.Assistant,
+                content: msg.content,
+              }))
 
-            // Only update messages if we have valid messages to avoid clearing the chat
-            if (loadedMessages.length > 0) {
-              setMessages(loadedMessages)
-            } else {
+              // Only update messages if we have valid messages to avoid clearing the chat
+              if (loadedMessages.length > 0) {
+                setMessages(loadedMessages)
+                return
+              }
+            }
+
+            // Conversation exists but messages may still be persisting
+            attempt += 1
+            if (attempt > maxRetries) {
               logger.warn(
                 {
                   conversationId: result.conversationId,
                   contextKey,
                   rawMessages: result.messages,
                 },
-                '[useNotebookChat] Conversation exists but loaded messages are empty',
+                '[useNotebookChat] Conversation exists but messages are empty after retries',
               )
+              return
             }
-          } else {
-            // Conversation exists but has no messages yet - keep initial welcome message
-            logger.warn(
-              {
-                conversationId: result.conversationId,
-                contextKey,
-              },
-              '[useNotebookChat] Conversation exists but has no messages',
-            )
+
+            await new Promise((resolve) => setTimeout(resolve, retryDelayMs))
+            result = await apiService.getConversation(contextKey)
+            continue
           }
-        } else if (result.success && !result.exists) {
-          // No conversation exists yet - keep initial welcome message
-          // This is expected for new conversations
-          logger.debug({ contextKey }, '[useNotebookChat] No conversation found for contextKey')
-        } else {
+
+          if (result.success && !result.exists) {
+            // No conversation exists yet - keep initial welcome message
+            logger.debug({ contextKey }, '[useNotebookChat] No conversation found for contextKey')
+            return
+          }
+
           // API call failed
           logger.error(
             {
@@ -137,10 +144,14 @@ export function useNotebookChat({
             },
             '[useNotebookChat] Failed to load conversation',
           )
+          return
         }
       } catch (error) {
         // Fail silently - keep initial message
-        logger.error({ err: error, contextKey }, '[useNotebookChat] Failed to load conversation history')
+        logger.error(
+          { err: error, contextKey },
+          '[useNotebookChat] Failed to load conversation history',
+        )
       } finally {
         setIsLoadingHistory(false)
       }

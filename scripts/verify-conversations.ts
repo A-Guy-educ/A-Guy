@@ -55,9 +55,18 @@ async function verifyConversations() {
     for (const conv of activeConversations) {
       // Group by exercise if it exists, otherwise by lesson
       // Handle ObjectId or string for user/exercise/lesson
-      const userId = typeof conv.user === 'string' ? conv.user : conv.user?.toString() || String(conv.user)
-      const exerciseId = conv.exercise ? (typeof conv.exercise === 'string' ? conv.exercise : conv.exercise?.toString() || String(conv.exercise)) : null
-      const lessonId = conv.lesson ? (typeof conv.lesson === 'string' ? conv.lesson : conv.lesson?.toString() || String(conv.lesson)) : null
+      const userId =
+        typeof conv.user === 'string' ? conv.user : conv.user?.toString() || String(conv.user)
+      const exerciseId = conv.exercise
+        ? typeof conv.exercise === 'string'
+          ? conv.exercise
+          : conv.exercise?.toString() || String(conv.exercise)
+        : null
+      const lessonId = conv.lesson
+        ? typeof conv.lesson === 'string'
+          ? conv.lesson
+          : conv.lesson?.toString() || String(conv.lesson)
+        : null
 
       let key: string
       if (exerciseId) {
@@ -147,10 +156,7 @@ async function verifyConversations() {
 
       for (const conv of toArchive) {
         // INVARIANT: Archive by setting archivedAt. Use $set to add the field.
-        await collection.updateOne(
-          { _id: conv._id },
-          { $set: { archivedAt: new Date() } },
-        )
+        await collection.updateOne({ _id: conv._id }, { $set: { archivedAt: new Date() } })
         console.log(`   Archived: ${conv._id}`)
         archivedCount++
       }

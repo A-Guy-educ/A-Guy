@@ -137,7 +137,7 @@ export class ConversationService {
 
     if (existingConv.docs.length > 0) {
       const currentConv = existingConv.docs[0]
-      // INVARIANT: Archive by setting archivedAt. Requires overrideAccess: true.
+      // INVARIANT: Archive by setting archivedAt. Requires overrideAccess: true and allowArchive context flag.
       await this.payload.update({
         collection: 'conversations',
         id: currentConv.id,
@@ -145,6 +145,7 @@ export class ConversationService {
           archivedAt: new Date(),
         } as any,
         overrideAccess: true, // REQUIRED - field access blocks normal mutations
+        context: { allowArchive: true }, // REQUIRED - hook protection requires this flag
       })
       logger.info(
         { userId, contextKey, conversationId: currentConv.id },

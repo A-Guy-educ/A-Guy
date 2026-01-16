@@ -1,0 +1,430 @@
+/**
+ * Suite A: Memory Prompt Wiring Integration Tests
+ *
+ * Purpose: Prove that retrieved memory items are injected into the prompt
+ * and affect the LLM response.
+ *
+ * Network: Fully offline (all external calls mocked).
+ */
+import { MEMORY_BLOCK_END, MEMORY_BLOCK_START } from '@/lib/ai/context-policy'
+import type { ComposedPrompt } from '@/lib/ai/context-policy'
+import { ChatRole } from '@/lib/ai/chat-message-role'
+import type { MemoryItem } from '@/lib/ai/vector-search'
+import { agentChat } from '@/endpoints/agent/chat'
+import config from '@payload-config'
+import type { Payload } from 'payload'
+import { getPayload } from 'payload'
+import type { PayloadRequest } from 'payload'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Skip tests if DATABASE_URL is not set
+const hasDatabaseUrl = !!process.env.DATABASE_URL
+
+// Capture prompts passed to chatWithExerciseHelper
+let capturedPrompts: ComposedPrompt[] = []
+
+// Mock retrieveMemoryItems - returns controlled items
+const mockRetrieveMemoryItems = vi.fn()
+vi.mock('@/lib/ai/vector-search', () => ({
+  retrieveMemoryItems: (...args: unknown[]) => mockRetrieveMemoryItems(...args),
+}))
+
+// Mock LLM - returns different response based on prompt content
+const mockChatWithExerciseHelper = vi.fn()
+vi.mock('@/lib/ai/services/exercise-chat-service', () => ({
+  chatWithExerciseHelper: async (input: { composedPrompt?: ComposedPrompt; message: string }) => {
+    if (input.composedPrompt) {
+      capturedPrompts.push(input.composedPrompt)
+    }
+    return mockChatWithExerciseHelper(input)
+  },
+  getSystemPrompt: vi.fn(() => 'You are a helpful assistant.'),
+}))
+
+// Mock other services
+vi.mock('@/lib/ai/vector-index-check', () => ({
+  isVectorIndexAvailable: vi.fn(async () => true),
+}))
+
+vi.mock('@/lib/ai/memory-extraction', () => ({
+  extractMemoryCandidates: vi.fn(async () => []),
+  persistMemoryItems: vi.fn(async () => 0),
+}))
+
+vi.mock('@/lib/ai/maintenance', () => ({
+  runSummaryMaintenance: vi.fn(async () => ({
+    summaryUpdated: false,
+    messagesTrimmed: 0,
+  })),
+}))
+
+// Feature flags mock - use mutable object that can be updated between tests
+const mockFeatureFlags = {
+  SUMMARY_MAINTENANCE_ENABLED: true,
+  MEMORY_EXTRACTION_ENABLED: true,
+  MEMORY_RETRIEVAL_ENABLED: true,
+}
+
+vi.mock('@/lib/feature-flags', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/feature-flags')>()
+  return {
+    ...actual,
+    get featureFlags() {
+      return mockFeatureFlags
+    },
+  }
+})
+
+let payload: Payload
+const testUsers = new Map<string, string>() // email -> userId
+let testExerciseId: string | undefined
+
+// Helper: Find system message
+function getSystemMessage(prompt: ComposedPrompt): string | undefined {
+  return prompt.messages.find((m) => m.role === 'system')?.content
+}
+
+// Helper: Create test user
+async function createTestUser(prefix: string): Promise<string> {
+  const email = `test-${prefix}-${Date.now()}@example.com`
+  const user = await payload.create({
+    collection: 'users',
+    data: {
+      email,
+      password: 'test123456',
+      role: 'student',
+    },
+  })
+  testUsers.set(email, user.id)
+  return user.id
+}
+
+// Helper: Create memory item
+function createMemoryItem(
+  userId: string,
+  text: string,
+  importance: number,
+  conversationId?: string,
+): MemoryItem {
+  return {
+    _id: `mem-${Date.now()}-${Math.random()}`,
+    userId,
+    conversationId,
+    contextKey: 'global',
+    contextLevel: 'global',
+    type: 'fact',
+    text,
+    importance,
+    status: 'active',
+    source: {
+      sourceMessageTimestamp: new Date(),
+      sourceMessageRole: ChatRole.User,
+    },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
+}
+
+// Helper: Make chat request as user
+async function chatAsUser(userId: string, message: string): Promise<Response> {
+  if (!testExerciseId) {
+    throw new Error('testExerciseId not initialized')
+  }
+
+  const req = {
+    payload,
+    user: { id: userId } as any,
+    json: async () => ({
+      message,
+      acknowledgment: 'ack-1',
+      exerciseId: testExerciseId,
+    }),
+  } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+  return agentChat(req)
+}
+
+beforeAll(async () => {
+  payload = await getPayload({ config })
+
+  // Find or create an exercise
+  const existingExercises = await payload.find({
+    collection: 'exercises',
+    limit: 1,
+  })
+
+  if (existingExercises.docs.length > 0) {
+    testExerciseId = existingExercises.docs[0].id
+  } else {
+    const exercise = await payload.create({
+      collection: 'exercises',
+      data: {
+        title: 'Memory Wiring Test Exercise',
+        slug: `memory-wiring-${Date.now()}`,
+        _status: 'published',
+      } as any,
+    })
+    testExerciseId = exercise.id
+  }
+}, 60000)
+
+beforeEach(() => {
+  capturedPrompts = []
+  mockRetrieveMemoryItems.mockClear()
+  mockChatWithExerciseHelper.mockClear()
+  mockFeatureFlags.MEMORY_RETRIEVAL_ENABLED = true
+})
+
+afterAll(async () => {
+  if (!payload) return
+
+  // Cleanup: Paginate through all test conversations
+  let hasMore = true
+  while (hasMore) {
+    const conversations = await payload.find({
+      collection: 'conversations',
+      where: { user: { in: Array.from(testUsers.values()) } },
+      limit: 100,
+    })
+
+    if (conversations.docs.length === 0) {
+      hasMore = false
+      break
+    }
+
+    await Promise.all(
+      conversations.docs.map((conv) =>
+        payload.delete({ collection: 'conversations', id: conv.id }).catch(() => {}),
+      ),
+    )
+  }
+
+  // Delete test users
+  for (const userId of testUsers.values()) {
+    await payload.delete({ collection: 'users', id: userId }).catch(() => {})
+  }
+}, 60000)
+
+describe.skipIf(!hasDatabaseUrl)('Memory Prompt Wiring Tests', () => {
+  it('injects retrieved memory into prompt and affects response', async () => {
+    const userId = await createTestUser('U1')
+
+    // Mock retriever returns LMS memory
+    mockRetrieveMemoryItems.mockResolvedValueOnce({
+      items: [createMemoryItem(userId, 'The user is building a mathematics LMS', 4)],
+      localCount: 0,
+      contextCount: 0,
+      globalCount: 1,
+      parentCount: 0,
+      hierarchyKeys: ['global'],
+      latencyMs: 5,
+    })
+
+    // Mock LLM to check prompt content
+    mockChatWithExerciseHelper.mockImplementation(async (input) => {
+      const systemMsg = input.composedPrompt?.messages.find(
+        (m: { role: string }) => m.role === 'system',
+      )
+      const hasMemoryBlock = systemMsg?.content.includes(MEMORY_BLOCK_START)
+      const hasLmsMemory = systemMsg?.content.includes('mathematics LMS')
+
+      if (hasMemoryBlock && hasLmsMemory) {
+        return {
+          success: true,
+          message: "You're building a mathematics LMS for educational purposes.",
+        }
+      }
+      return { success: true, message: "I don't have specific context about your project." }
+    })
+
+    const response = await chatAsUser(userId, 'What kind of system am I building?')
+    const body = await response.json()
+
+    // 1. Verify retriever was called with correct userId
+    expect(mockRetrieveMemoryItems).toHaveBeenCalledWith(
+      expect.anything(),
+      userId,
+      expect.any(String),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    )
+
+    // 2. Verify prompt contains memory delimiters and text
+    expect(capturedPrompts.length).toBeGreaterThan(0)
+    const systemContent = getSystemMessage(capturedPrompts[0])
+    expect(systemContent).toContain(MEMORY_BLOCK_START)
+    expect(systemContent).toContain('mathematics LMS')
+    expect(systemContent).toContain(MEMORY_BLOCK_END)
+
+    // 3. Verify behavioral change
+    expect(body.message).toContain('mathematics LMS')
+  }, 60000)
+
+  describe('feature flag toggle', () => {
+    it('does NOT inject memory when MEMORY_RETRIEVAL_ENABLED=false', async () => {
+      mockFeatureFlags.MEMORY_RETRIEVAL_ENABLED = false
+      const userId = await createTestUser('toggle-off')
+
+      mockChatWithExerciseHelper.mockImplementation(async (input) => {
+        const systemMsg = input.composedPrompt?.messages.find(
+          (m: { role: string }) => m.role === 'system',
+        )
+        const hasMemoryBlock = systemMsg?.content.includes(MEMORY_BLOCK_START)
+        if (hasMemoryBlock) {
+          return { success: true, message: 'Memory was injected (unexpected)' }
+        }
+        return { success: true, message: "I don't have specific context about your project." }
+      })
+
+      const response = await chatAsUser(userId, 'What system am I building?')
+      const body = await response.json()
+
+      // Retriever should NOT be called
+      expect(mockRetrieveMemoryItems).not.toHaveBeenCalled()
+
+      // Prompt should NOT have memory delimiters
+      expect(capturedPrompts.length).toBeGreaterThan(0)
+      const systemContent = getSystemMessage(capturedPrompts[0])
+      expect(systemContent).not.toContain(MEMORY_BLOCK_START)
+
+      // Response is generic
+      expect(body.message).toContain("don't have")
+    }, 60000)
+
+    it('injects memory when MEMORY_RETRIEVAL_ENABLED=true', async () => {
+      mockFeatureFlags.MEMORY_RETRIEVAL_ENABLED = true
+      const userId = await createTestUser('toggle-on')
+
+      mockRetrieveMemoryItems.mockResolvedValueOnce({
+        items: [createMemoryItem(userId, 'The user is building a mathematics LMS', 4)],
+        localCount: 0,
+        contextCount: 0,
+        globalCount: 1,
+        parentCount: 0,
+        hierarchyKeys: ['global'],
+        latencyMs: 5,
+      })
+
+      mockChatWithExerciseHelper.mockImplementation(async (input) => {
+        const systemMsg = input.composedPrompt?.messages.find(
+          (m: { role: string }) => m.role === 'system',
+        )
+        const hasMemoryBlock = systemMsg?.content.includes(MEMORY_BLOCK_START)
+        const hasLmsMemory = systemMsg?.content.includes('mathematics LMS')
+
+        if (hasMemoryBlock && hasLmsMemory) {
+          return { success: true, message: "You're building a mathematics LMS." }
+        }
+        return { success: true, message: "I don't have specific context." }
+      })
+
+      const response = await chatAsUser(userId, 'What system am I building?')
+      const body = await response.json()
+
+      expect(mockRetrieveMemoryItems).toHaveBeenCalled()
+
+      expect(capturedPrompts.length).toBeGreaterThan(0)
+      const systemContent = getSystemMessage(capturedPrompts[0])
+      expect(systemContent).toContain(MEMORY_BLOCK_START)
+
+      expect(body.message).toContain('mathematics LMS')
+    }, 60000)
+  })
+
+  it('injects only the memories returned by retriever (selected memory injection)', async () => {
+    const userId = await createTestUser('selection-user')
+
+    // Mock retriever returns ONLY LMS (retriever already filtered)
+    mockRetrieveMemoryItems.mockResolvedValueOnce({
+      items: [createMemoryItem(userId, 'The user is building a mathematics LMS', 4)],
+      localCount: 0,
+      contextCount: 0,
+      globalCount: 1,
+      parentCount: 0,
+      hierarchyKeys: ['global'],
+      latencyMs: 5,
+    })
+
+    mockChatWithExerciseHelper.mockResolvedValueOnce({
+      success: true,
+      message: 'Response',
+    })
+
+    await chatAsUser(userId, 'What product am I working on?')
+
+    expect(capturedPrompts.length).toBeGreaterThan(0)
+    const systemContent = getSystemMessage(capturedPrompts[0])
+    expect(systemContent).toContain('mathematics LMS')
+    expect(systemContent).not.toContain('Italian food')
+  }, 60000)
+
+  it('passes correct userId to retriever', async () => {
+    const userU1 = await createTestUser('U1-wiring')
+    const userU2 = await createTestUser('U2-wiring')
+
+    mockRetrieveMemoryItems.mockResolvedValueOnce({
+      items: [createMemoryItem(userU2, 'The user is building a CRM system', 4)],
+      localCount: 0,
+      contextCount: 0,
+      globalCount: 1,
+      parentCount: 0,
+      hierarchyKeys: ['global'],
+      latencyMs: 5,
+    })
+
+    mockChatWithExerciseHelper.mockResolvedValueOnce({
+      success: true,
+      message: 'Response',
+    })
+
+    await chatAsUser(userU2, 'What system am I building?')
+
+    expect(mockRetrieveMemoryItems).toHaveBeenCalledWith(
+      expect.anything(),
+      userU2, // CRITICAL: must be U2
+      expect.any(String),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    )
+  }, 60000)
+
+  it('places memory text inside stable delimiters', async () => {
+    const userId = await createTestUser('prompt-inspect')
+    const memoryText = 'User prefers dark mode IDE and uses VS Code'
+
+    mockRetrieveMemoryItems.mockResolvedValueOnce({
+      items: [createMemoryItem(userId, memoryText, 4)],
+      localCount: 0,
+      contextCount: 0,
+      globalCount: 1,
+      parentCount: 0,
+      hierarchyKeys: ['global'],
+      latencyMs: 5,
+    })
+
+    mockChatWithExerciseHelper.mockResolvedValueOnce({
+      success: true,
+      message: 'Response',
+    })
+
+    await chatAsUser(userId, 'Tell me about my preferences')
+
+    expect(capturedPrompts.length).toBeGreaterThan(0)
+    const systemContent = getSystemMessage(capturedPrompts[0])
+
+    // Delimiters present
+    expect(systemContent).toContain(MEMORY_BLOCK_START)
+    expect(systemContent).toContain(MEMORY_BLOCK_END)
+
+    // Memory is BETWEEN delimiters
+    const startIdx = systemContent!.indexOf(MEMORY_BLOCK_START)
+    const endIdx = systemContent!.indexOf(MEMORY_BLOCK_END)
+    const memoryBlock = systemContent!.substring(startIdx, endIdx)
+    expect(memoryBlock).toContain('dark mode IDE')
+    expect(memoryBlock).toContain('VS Code')
+
+    expect(capturedPrompts[0].metadata.memoryCount).toBe(1)
+  }, 60000)
+})

@@ -40,7 +40,9 @@
       "Bash(git checkout:*)",
       "Bash(gh pr create:*)",
       "Bash(pnpm exec vitest:*)",
-      "Bash(node --version:*)"
+      "Bash(node --version:*)",
+      "Bash(pnpm test:int:*)",
+      "Bash(git ls-tree:*)"
     ]
   }
 }
