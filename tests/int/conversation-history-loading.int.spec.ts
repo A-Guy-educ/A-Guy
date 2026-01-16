@@ -832,7 +832,7 @@ describe('Conversation History Loading', () => {
         { contextKey: { equals: contextKey } },
         { archivedAt: { exists: false } },
       ],
-    }
+    } as const
 
     const user = await payload.findByID({ collection: 'users', id: testUserId })
 
@@ -860,8 +860,9 @@ describe('Conversation History Loading', () => {
     expect(conversationUserId).toBe(testUserId)
 
     // Verify messages are included
-    expect(Array.isArray(result.docs[0].messages)).toBe(true)
-    expect(result.docs[0].messages.length).toBeGreaterThan(0)
+    expect(result.docs.length).toBeGreaterThan(0)
+    expect(Array.isArray(result.docs[0]?.messages)).toBe(true)
+    expect(result.docs[0]?.messages?.length).toBeGreaterThan(0)
 
     // Clean up
     await payload.delete({ collection: 'conversations', id: conv.id })
@@ -923,7 +924,7 @@ describe('Conversation History Loading', () => {
         { contextKey: { equals: contextKey } },
         { archivedAt: { exists: false } },
       ],
-    }
+    } as const
 
     // Test User 1 - should only see their own conversation
     const user1 = await payload.findByID({ collection: 'users', id: testUserId })
