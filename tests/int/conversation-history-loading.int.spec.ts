@@ -237,23 +237,25 @@ beforeAll(
 )
 
 beforeEach(async () => {
-  if (!payload) return
+  if (!payload) return // Skip if payload not initialized yet
 
-  // Archive all conversations for test users before each test to ensure isolation
-  const existingConversations = await payload.find({
+  // Delete all conversations for test users before each test to ensure isolation
+  const conversations = await payload.find({
     collection: 'conversations',
     where: {
-      or: [{ user: { equals: testUserId } }, { user: { equals: testUserId2 } }],
+      or: [
+        { user: { equals: testUserId } },
+        { user: { equals: testUserId2 } },
+      ],
     },
     limit: 1000,
     overrideAccess: true,
   })
 
-  for (const conv of existingConversations.docs) {
-    await payload.update({
+  for (const conv of conversations.docs) {
+    await payload.delete({
       collection: 'conversations',
       id: conv.id,
-      data: { archivedAt: new Date() },
       overrideAccess: true,
     })
   }

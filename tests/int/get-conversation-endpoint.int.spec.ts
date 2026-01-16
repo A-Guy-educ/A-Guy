@@ -7,7 +7,7 @@
  * - Unauthenticated request returns 401
  * - Explicit user filtering guarantees isolation
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
@@ -68,6 +68,31 @@ let testUserId: string
 let testUserId2: string
 let testExerciseId: string
 let originalDatabaseUrl: string | undefined
+
+// Clean up conversations before each test to ensure isolation
+beforeEach(async () => {
+  if (!payload) return
+
+  const conversations = await payload.find({
+    collection: 'conversations',
+    where: {
+      or: [
+        { user: { equals: testUserId } },
+        { user: { equals: testUserId2 } },
+      ],
+    },
+    limit: 1000,
+    overrideAccess: true,
+  })
+
+  for (const conv of conversations.docs) {
+    await payload.delete({
+      collection: 'conversations',
+      id: conv.id,
+      overrideAccess: true,
+    })
+  }
+})
 
 beforeAll(
   async () => {

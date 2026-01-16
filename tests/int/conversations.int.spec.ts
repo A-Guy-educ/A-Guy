@@ -9,7 +9,7 @@
  *
  * INVARIANT: Active = archivedAt field is MISSING. Archived = archivedAt field EXISTS.
  */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
@@ -24,6 +24,26 @@ let testExerciseId: string
 let testLessonId: string
 let testChapterId: string
 let testCourseId: string
+
+// Clean up conversations before each test
+beforeEach(async () => {
+  if (!payload) return
+
+  const conversations = await payload.find({
+    collection: 'conversations',
+    where: { user: { equals: testUserId } },
+    limit: 1000,
+    overrideAccess: true,
+  })
+
+  for (const conv of conversations.docs) {
+    await payload.delete({
+      collection: 'conversations',
+      id: conv.id,
+      overrideAccess: true,
+    })
+  }
+})
 
 beforeAll(
   async () => {
