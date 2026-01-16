@@ -10,14 +10,11 @@
  * - Access control ensures users only see their own conversations
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
 import { agentChat } from '@/endpoints/agent/chat'
-
-// Skip tests if DATABASE_URL is not set
-const hasDatabaseUrl = !!process.env.DATABASE_URL
+import { startMongoContainer, stopMongoContainer } from '@/utilities/test/mongodb-container'
 
 // Mock AI and vector-related services
 
@@ -72,14 +69,27 @@ let payload: Payload
 let testUserId: string
 let testUserId2: string // Second user for access control test
 let testExerciseId: string
+let originalDatabaseUrl: string | undefined
 
 beforeAll(
   async () => {
-    if (!hasDatabaseUrl) {
-      return
-    }
+    // Save original DATABASE_URL and unset it before starting testcontainers
+    // (testcontainers will fail if DATABASE_URL is set to Atlas)
+    originalDatabaseUrl = process.env.DATABASE_URL
+    // @ts-expect-error - TypeScript doesn't allow delete on process.env, but it's safe here
+    delete process.env.DATABASE_URL
 
-    payload = await getPayload({ config })
+    // Start MongoDB test container and set DATABASE_URL to testcontainers URL
+    const mongoUri = await startMongoContainer()
+    process.env.DATABASE_URL = mongoUri
+
+    // Import config AFTER setting DATABASE_URL so it uses the test database
+    // The config reads process.env.DATABASE_URL at evaluation time
+    const config = await import('@payload-config')
+
+    // Initialize Payload with the test MongoDB
+    // testcontainers waits for MongoDB to be ready before start() resolves
+    payload = await getPayload({ config: config.default })
 
     // Create first test user
     const user1 = await payload.create({
@@ -127,7 +137,7 @@ beforeAll(
 )
 
 afterAll(async () => {
-  if (!hasDatabaseUrl || !payload) {
+  if (!payload) {
     return
   }
 
@@ -165,7 +175,19 @@ afterAll(async () => {
   if (payload.db?.destroy) {
     await payload.db.destroy()
   }
-})
+
+  // Restore original DATABASE_URL if it was set
+  if (originalDatabaseUrl !== undefined) {
+    process.env.DATABASE_URL = originalDatabaseUrl
+  } else {
+    // Remove the property if it wasn't originally set
+    // @ts-expect-error - TypeScript doesn't allow delete on process.env, but it's safe here
+    delete process.env.DATABASE_URL
+  }
+
+  // Stop MongoDB container
+  await stopMongoContainer()
+}, 60000)
 
 /**
  * Simulate fetching conversation via Payload REST API (as frontend does)
@@ -232,7 +254,7 @@ async function fetchConversationViaREST(
   }
 }
 
-describe.skipIf(!hasDatabaseUrl)('Conversation History Loading', () => {
+describe('Conversation History Loading', () => {
   it('should store messages when user sends chat messages', async () => {
     const req = {
       payload,
