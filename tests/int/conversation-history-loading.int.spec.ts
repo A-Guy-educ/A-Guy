@@ -565,4 +565,182 @@ describe.skipIf(!hasDatabaseUrl)('Conversation History Loading', () => {
     await payload.delete({ collection: 'conversations', id: conv1.id })
     await payload.delete({ collection: 'conversations', id: conv2.id })
   })
+
+  it('should validate REST API access control filters by user ID correctly', async () => {
+    // This test explicitly validates that Payload's REST API access control works
+    // by verifying that when User 1 queries, they only get User 1's conversations
+    // and when User 2 queries, they only get User 2's conversations
+
+    const contextKey = `exercises:${testExerciseId}-rest-api-test-${Date.now()}`
+
+    // Create conversation for User 1
+    const conv1 = await payload.create({
+      collection: 'conversations',
+      data: {
+        user: testUserId,
+        contextRef: { relationTo: 'exercises', value: testExerciseId },
+        contextKey,
+        messages: [
+          { role: 'user', content: 'User 1 private message', timestamp: new Date().toISOString() },
+          { role: 'assistant', content: 'Response to user 1', timestamp: new Date().toISOString() },
+        ],
+        lastMessageAt: new Date().toISOString(),
+      } as any,
+    })
+
+    // Wait to ensure different timestamp
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // Create conversation for User 2 with same contextKey
+    const conv2 = await payload.create({
+      collection: 'conversations',
+      data: {
+        user: testUserId2,
+        contextRef: { relationTo: 'exercises', value: testExerciseId },
+        contextKey,
+        messages: [
+          { role: 'user', content: 'User 2 private message', timestamp: new Date().toISOString() },
+          { role: 'assistant', content: 'Response to user 2', timestamp: new Date().toISOString() },
+        ],
+        lastMessageAt: new Date().toISOString(),
+      } as any,
+    })
+
+    // Verify conversations were created
+    expect(conv1.id).toBeDefined()
+    expect(conv2.id).toBeDefined()
+    expect(conv1.id).not.toBe(conv2.id)
+
+    // Test: User 1 should only see their own conversation
+    const user1Result = await payload.find({
+      collection: 'conversations',
+      where: {
+        and: [
+          { contextKey: { equals: contextKey } },
+          { archivedAt: { exists: false } },
+        ],
+      },
+      limit: 1,
+      sort: '-lastMessageAt',
+      user: (await payload.findByID({ collection: 'users', id: testUserId })) as any,
+      overrideAccess: false, // CRITICAL: Enforce access control
+    })
+
+    expect(user1Result.docs.length).toBe(1)
+    expect(user1Result.docs[0].id).toBe(conv1.id)
+    const user1UserId = typeof user1Result.docs[0].user === 'object' 
+      ? user1Result.docs[0].user.id 
+      : user1Result.docs[0].user
+    expect(user1UserId).toBe(testUserId)
+    expect(user1Result.docs[0].messages?.some((m: any) => m.content.includes('User 1'))).toBe(true)
+    expect(user1Result.docs[0].messages?.some((m: any) => m.content.includes('User 2'))).toBe(false)
+
+    // Test: User 2 should only see their own conversation
+    const user2Result = await payload.find({
+      collection: 'conversations',
+      where: {
+        and: [
+          { contextKey: { equals: contextKey } },
+          { archivedAt: { exists: false } },
+        ],
+      },
+      limit: 1,
+      sort: '-lastMessageAt',
+      user: (await payload.findByID({ collection: 'users', id: testUserId2 })) as any,
+      overrideAccess: false, // CRITICAL: Enforce access control
+    })
+
+    expect(user2Result.docs.length).toBe(1)
+    expect(user2Result.docs[0].id).toBe(conv2.id)
+    const user2UserId = typeof user2Result.docs[0].user === 'object' 
+      ? user2Result.docs[0].user.id 
+      : user2Result.docs[0].user
+    expect(user2UserId).toBe(testUserId2)
+    expect(user2Result.docs[0].messages?.some((m: any) => m.content.includes('User 2'))).toBe(true)
+    expect(user2Result.docs[0].messages?.some((m: any) => m.content.includes('User 1'))).toBe(false)
+
+    // Test: Verify that without user context, access control blocks access
+    const noUserResult = await payload.find({
+      collection: 'conversations',
+      where: {
+        and: [
+          { contextKey: { equals: contextKey } },
+          { archivedAt: { exists: false } },
+        ],
+      },
+      limit: 1,
+      sort: '-lastMessageAt',
+      // No user provided - access control should block
+      overrideAccess: false,
+    })
+
+    // Access control should return empty result when no user is authenticated
+    expect(noUserResult.docs.length).toBe(0)
+
+    // Clean up
+    await payload.delete({ collection: 'conversations', id: conv1.id })
+    await payload.delete({ collection: 'conversations', id: conv2.id })
+  })
+
+  it('should validate REST API query matches frontend implementation exactly', async () => {
+    // This test ensures the query structure matches what the frontend sends
+    // and validates that access control is properly applied
+
+    const contextKey = `exercises:${testExerciseId}-query-test-${Date.now()}`
+
+    // Create conversation for test user
+    const conv = await payload.create({
+      collection: 'conversations',
+      data: {
+        user: testUserId,
+        contextRef: { relationTo: 'exercises', value: testExerciseId },
+        contextKey,
+        messages: [
+          { role: 'user', content: 'Test message', timestamp: new Date().toISOString() },
+          { role: 'assistant', content: 'Test response', timestamp: new Date().toISOString() },
+        ],
+        lastMessageAt: new Date().toISOString(),
+      } as any,
+    })
+
+    // Simulate the exact query structure that the frontend sends
+    // This matches the query in api-service.ts:getConversation()
+    const whereQuery = {
+      and: [
+        { contextKey: { equals: contextKey } },
+        { archivedAt: { exists: false } },
+      ],
+    }
+
+    const user = await payload.findByID({ collection: 'users', id: testUserId })
+
+    // Execute query with access control (simulating REST API behavior)
+    const result = await payload.find({
+      collection: 'conversations',
+      where: whereQuery,
+      limit: 1,
+      sort: '-lastMessageAt',
+      depth: 0,
+      user: user as any,
+      overrideAccess: false, // CRITICAL: Enforce access control
+    })
+
+    // Verify result
+    expect(result.docs.length).toBe(1)
+    expect(result.docs[0].id).toBe(conv.id)
+    expect(result.docs[0].contextKey).toBe(contextKey)
+    
+    // Verify user ownership
+    const conversationUserId = typeof result.docs[0].user === 'object' 
+      ? result.docs[0].user.id 
+      : result.docs[0].user
+    expect(conversationUserId).toBe(testUserId)
+
+    // Verify messages are included
+    expect(Array.isArray(result.docs[0].messages)).toBe(true)
+    expect(result.docs[0].messages.length).toBeGreaterThan(0)
+
+    // Clean up
+    await payload.delete({ collection: 'conversations', id: conv.id })
+  })
 })
