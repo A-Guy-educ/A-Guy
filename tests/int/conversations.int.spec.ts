@@ -343,7 +343,8 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
         data: {
           archivedAt: new Date(),
         } as any,
-        overrideAccess: true, // Required for archivedAt field
+        overrideAccess: true,
+        context: { allowArchive: true }, // Required for archivedAt field
       })
 
       // Query for active conversations
@@ -466,7 +467,8 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
         data: {
           archivedAt: new Date(),
         } as any,
-        overrideAccess: true, // Required for archivedAt field
+        overrideAccess: true,
+        context: { allowArchive: true }, // Required for archivedAt field
       })
 
       // Verify it's archived (archivedAt field exists)
@@ -505,6 +507,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
           archivedAt: new Date(),
         } as any,
         overrideAccess: true,
+        context: { allowArchive: true },
       })
 
       // Create new active conversation for same context

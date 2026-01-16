@@ -259,9 +259,10 @@ export const Conversations: CollectionConfig = {
             data.lastMessageAt = lastMessage.timestamp || new Date().toISOString()
           }
 
-          // Protect archivedAt field - only allow setting if overrideAccess is true
+          // Protect archivedAt field - only allow setting if allowArchive context flag is set
           // This enforces the field-level access control at the hook level
-          if ('archivedAt' in data && !req.context?.overrideAccess) {
+          // Note: overrideAccess: true doesn't set req.context.overrideAccess, so we use a custom flag
+          if ('archivedAt' in data && !req.context?.allowArchive) {
             delete data.archivedAt
           }
         }
