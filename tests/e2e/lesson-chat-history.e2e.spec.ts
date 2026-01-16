@@ -103,21 +103,39 @@ test.describe('Lesson Chat History Loading', () => {
 
   /**
    * Helper to wait for chat history loading to finish
-   * Waits for either: loading indicator to disappear OR user messages to appear
+   * Waits for loading indicator to disappear AND ensures messages are loaded
    */
   async function waitForHistoryLoaded(page: Page, timeout = 30000) {
     const loadingIndicator = page.locator('text=Loading conversation...')
     const userMessages = page.locator(USER_MESSAGE_SELECTOR)
 
-    // Wait for loading to finish (either loading indicator disappears or messages appear)
-    await Promise.race([
-      // Option 1: Loading indicator was visible and becomes hidden
-      loadingIndicator.waitFor({ state: 'hidden', timeout }).catch(() => {}),
-      // Option 2: User messages appear (indicating history loaded)
-      userMessages.first().waitFor({ state: 'visible', timeout }).catch(() => {}),
-    ])
+    // First, wait for loading indicator to disappear (if it was visible)
+    // This ensures the API call has completed
+    try {
+      const isVisible = await loadingIndicator.isVisible().catch(() => false)
+      if (isVisible) {
+        await loadingIndicator.waitFor({ state: 'hidden', timeout })
+      }
+    } catch {
+      // Loading indicator might not have been visible, that's okay
+    }
 
-    // Small additional wait for React state to settle
+    // Then wait for messages to appear (with polling to handle async rendering)
+    // Use expect.poll to wait for messages to actually be present
+    await expect
+      .poll(
+        async () => {
+          const count = await userMessages.count()
+          return count
+        },
+        {
+          timeout,
+          intervals: [200, 500, 1000], // Check more frequently at first
+        },
+      )
+      .toBeGreaterThan(0)
+
+    // Small additional wait for React state to fully settle
     await page.waitForTimeout(500)
   }
 

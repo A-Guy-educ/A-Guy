@@ -106,10 +106,18 @@ export async function getConversation(req: PayloadRequest & { json?: () => Promi
     // Format messages for client
     const rawMessages = conversation.messages || []
     const messages = rawMessages
-      .filter((msg) => msg && msg.role && msg.content) // Filter out invalid messages
+      .filter((msg) => {
+        // Filter out invalid messages - ensure role and content are present and valid
+        if (!msg || !msg.role || !msg.content) return false
+        // Ensure content is a non-empty string
+        if (typeof msg.content !== 'string' || msg.content.trim().length === 0) return false
+        // Ensure role is valid
+        if (msg.role !== 'user' && msg.role !== 'assistant') return false
+        return true
+      })
       .map((msg) => ({
         role: msg.role === 'user' ? ChatRole.User : ChatRole.Assistant,
-        content: msg.content,
+        content: String(msg.content).trim(),
       }))
 
     reqLogger.info(

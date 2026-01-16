@@ -86,8 +86,8 @@ export function useNotebookChat({
       }
 
       try {
-        const retryDelayMs = 300
-        const maxRetries = 6
+        const retryDelayMs = 500
+        const maxRetries = 10
         let attempt = 0
         let result = await apiService.getConversation(contextKey)
 
@@ -99,18 +99,31 @@ export function useNotebookChat({
           }
 
           if (result.success && result.exists) {
-            if (result.messages && result.messages.length > 0) {
+            // Filter out invalid messages and map to chat messages
+            const validMessages = (result.messages || []).filter(
+              (msg) => msg && msg.role && msg.content && typeof msg.content === 'string',
+            )
+
+            if (validMessages.length > 0) {
               // Map API messages to chat messages
-              const loadedMessages: ChatMessage[] = result.messages.map((msg) => ({
+              const loadedMessages: ChatMessage[] = validMessages.map((msg) => ({
                 role:
                   msg.role === ChatRole.User || msg.role === 'user'
                     ? ChatRole.User
                     : ChatRole.Assistant,
-                content: msg.content,
+                content: String(msg.content),
               }))
 
               // Only update messages if we have valid messages to avoid clearing the chat
               if (loadedMessages.length > 0) {
+                logger.debug(
+                  {
+                    contextKey,
+                    conversationId: result.conversationId,
+                    messageCount: loadedMessages.length,
+                  },
+                  '[useNotebookChat] Loaded conversation history',
+                )
                 setMessages(loadedMessages)
                 setIsLoadingHistory(false)
                 return
@@ -125,6 +138,7 @@ export function useNotebookChat({
                   conversationId: result.conversationId,
                   contextKey,
                   rawMessages: result.messages,
+                  messageCount: result.messages?.length || 0,
                 },
                 '[useNotebookChat] Conversation exists but messages are empty after retries',
               )
@@ -132,7 +146,9 @@ export function useNotebookChat({
               return
             }
 
-            await new Promise((resolve) => setTimeout(resolve, retryDelayMs))
+            // Exponential backoff for retries
+            const delay = retryDelayMs * Math.min(attempt, 3)
+            await new Promise((resolve) => setTimeout(resolve, delay))
             result = await apiService.getConversation(contextKey)
             continue
           }
@@ -163,7 +179,6 @@ export function useNotebookChat({
           { err: error, contextKey },
           '[useNotebookChat] Failed to load conversation history',
         )
-      } finally {
         setIsLoadingHistory(false)
       }
     }
