@@ -4,20 +4,20 @@ Canonical event tracking system for A-Guy platform.
 
 ## Implementation Status
 
-**✅ Fully Integrated (8 events):**
+**✅ Fully Integrated (9 events):**
 
 - `page_view` - Auto-tracked via LayoutClient
 - `session_started` - Auto-tracked via AnalyticsProvider
 - `user_identified` - Auto-tracked via UserIdentificationTracker + SignupForm
 - `course_entered` - Integrated in course page
 - `lesson_started` - Integrated in lesson page
+- `lesson_completed` - Auto-tracked on lesson unmount (navigation away)
 - `pdf_viewed` - Integrated in PDFMedia component
 - `chat_message_sent` - Integrated in useNotebookChat hook
 - `registration_completed` - Integrated in SignupForm
 
-**⚠️ Pending UX Triggers (2 events):**
+**⚠️ Pending UX Implementation (1 event):**
 
-- `lesson_completed` - Requires UI button/completion flow
 - `registration_prompt_shown` - Requires registration modal implementation
 
 ## Architecture
