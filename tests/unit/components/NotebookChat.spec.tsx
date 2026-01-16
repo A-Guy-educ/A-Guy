@@ -76,22 +76,24 @@ describe('NotebookChat component', () => {
   })
 
   it('disables send button when input is empty', () => {
-    renderWithI18n({ ...baseHookState, inputValue: '' })
-    const sendButton = screen.getByRole('button', { name: enMessages.courses.sendMessage })
-    expect((sendButton as HTMLButtonElement).disabled).toBe(true)
+    const { container } = renderWithI18n({ ...baseHookState, inputValue: '' })
+    const sendButton = container.querySelector('form button[type="submit"]') as HTMLButtonElement
+    expect(sendButton.disabled).toBe(true)
   })
 
   it('invokes quick action handlers', () => {
     renderWithI18n(baseHookState)
 
-    fireEvent.click(screen.getByRole('button', { name: enMessages.courses.chatHint }))
+    const hintButton = screen.getAllByRole('button', { name: enMessages.courses.chatHint })[0]
+    fireEvent.click(hintButton)
     expect(baseHookState.handleQuickAction).toHaveBeenCalledWith('hint')
   })
 
   it('invokes reset handler when reset is clicked', () => {
     renderWithI18n(baseHookState)
 
-    fireEvent.click(screen.getByRole('button', { name: enMessages.courses.chatReset }))
+    const resetButton = screen.getAllByRole('button', { name: enMessages.courses.chatReset })[0]
+    fireEvent.click(resetButton)
     expect(baseHookState.handleReset).toHaveBeenCalled()
   })
 })
