@@ -715,6 +715,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversation History Loading', () => {
     const user = await payload.findByID({ collection: 'users', id: testUserId })
 
     // Execute query with access control (simulating REST API behavior)
+    // Payload's Local API with overrideAccess: false simulates REST API access control
     const result = await payload.find({
       collection: 'conversations',
       where: whereQuery,
@@ -722,7 +723,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversation History Loading', () => {
       sort: '-lastMessageAt',
       depth: 0,
       user: user as any,
-      overrideAccess: false, // CRITICAL: Enforce access control
+      overrideAccess: false, // CRITICAL: Enforce access control (simulates REST API behavior)
     })
 
     // Verify result
@@ -742,5 +743,119 @@ describe.skipIf(!hasDatabaseUrl)('Conversation History Loading', () => {
 
     // Clean up
     await payload.delete({ collection: 'conversations', id: conv.id })
+  })
+
+  it('should validate Payload REST API endpoint structure and access control', async () => {
+    // This test validates that Payload's REST API endpoint (/api/conversations) structure
+    // matches what the frontend expects and that access control works correctly
+    //
+    // Note: We use Payload's Local API with overrideAccess: false to simulate REST API behavior
+    // This is the recommended way to test Payload access control in integration tests
+
+    const contextKey = `exercises:${testExerciseId}-rest-endpoint-test-${Date.now()}`
+
+    // Create conversations for both users
+    const conv1 = await payload.create({
+      collection: 'conversations',
+      data: {
+        user: testUserId,
+        contextRef: { relationTo: 'exercises', value: testExerciseId },
+        contextKey,
+        messages: [
+          { role: 'user', content: 'User 1 message', timestamp: new Date().toISOString() },
+        ],
+        lastMessageAt: new Date().toISOString(),
+      } as any,
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    const conv2 = await payload.create({
+      collection: 'conversations',
+      data: {
+        user: testUserId2,
+        contextRef: { relationTo: 'exercises', value: testExerciseId },
+        contextKey,
+        messages: [
+          { role: 'user', content: 'User 2 message', timestamp: new Date().toISOString() },
+        ],
+        lastMessageAt: new Date().toISOString(),
+      } as any,
+    })
+
+    // Validate REST API endpoint structure:
+    // GET /api/conversations?where={...}&limit=1&sort=-lastMessageAt&depth=0
+    // 
+    // The where query should be:
+    // {
+    //   and: [
+    //     { contextKey: { equals: contextKey } },
+    //     { archivedAt: { exists: false } }
+    //   ]
+    // }
+    //
+    // Access control (isOwner) automatically adds: { user: { equals: user.id } }
+
+    const whereQuery = {
+      and: [
+        { contextKey: { equals: contextKey } },
+        { archivedAt: { exists: false } },
+      ],
+    }
+
+    // Test User 1 - should only see their own conversation
+    const user1 = await payload.findByID({ collection: 'users', id: testUserId })
+    const user1Result = await payload.find({
+      collection: 'conversations',
+      where: whereQuery,
+      limit: 1,
+      sort: '-lastMessageAt',
+      depth: 0,
+      user: user1 as any,
+      overrideAccess: false, // Simulates REST API access control
+    })
+
+    // Verify REST API response structure matches Payload's format
+    expect(user1Result).toHaveProperty('docs')
+    expect(user1Result).toHaveProperty('totalDocs')
+    expect(Array.isArray(user1Result.docs)).toBe(true)
+    
+    // Verify access control filtered to User 1 only
+    expect(user1Result.docs.length).toBe(1)
+    expect(user1Result.docs[0].id).toBe(conv1.id)
+    const user1UserId = typeof user1Result.docs[0].user === 'object' 
+      ? user1Result.docs[0].user.id 
+      : user1Result.docs[0].user
+    expect(user1UserId).toBe(testUserId)
+
+    // Test User 2 - should only see their own conversation
+    const user2 = await payload.findByID({ collection: 'users', id: testUserId2 })
+    const user2Result = await payload.find({
+      collection: 'conversations',
+      where: whereQuery,
+      limit: 1,
+      sort: '-lastMessageAt',
+      depth: 0,
+      user: user2 as any,
+      overrideAccess: false, // Simulates REST API access control
+    })
+
+    // Verify access control filtered to User 2 only
+    expect(user2Result.docs.length).toBe(1)
+    expect(user2Result.docs[0].id).toBe(conv2.id)
+    const user2UserId = typeof user2Result.docs[0].user === 'object' 
+      ? user2Result.docs[0].user.id 
+      : user2Result.docs[0].user
+    expect(user2UserId).toBe(testUserId2)
+
+    // Verify REST API response format
+    expect(user2Result.docs[0]).toHaveProperty('id')
+    expect(user2Result.docs[0]).toHaveProperty('contextKey')
+    expect(user2Result.docs[0]).toHaveProperty('messages')
+    expect(user2Result.docs[0]).toHaveProperty('user')
+
+    // Clean up
+    await payload.delete({ collection: 'conversations', id: conv1.id })
+    await payload.delete({ collection: 'conversations', id: conv2.id })
   })
 })
