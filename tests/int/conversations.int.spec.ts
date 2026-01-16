@@ -293,14 +293,19 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
       expect(conversation).toBeDefined()
       expect(conversation.id).toBeDefined()
 
-      // Fetch from DB to verify field is missing
-      const dbConv = await payload.findByID({
-        collection: 'conversations',
-        id: conversation.id,
-      })
-
-      // archivedAt should be undefined (field missing), not null
-      expect((dbConv as any).archivedAt).toBeUndefined()
+      // Fetch from DB directly to verify field is actually missing
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const db = (payload.db as any).connection.db
+      const collection = db.collection('conversations')
+      const { ObjectId } = await import('mongodb')
+      const convId = typeof conversation.id === 'string' && ObjectId.isValid(conversation.id) 
+        ? new ObjectId(conversation.id) 
+        : conversation.id
+      const rawConv = await collection.findOne({ _id: convId })
+      
+      // archivedAt should NOT exist in the database document
+      expect(rawConv).toBeDefined()
+      expect(rawConv.archivedAt).toBeUndefined()
     })
 
     it('should return only active conversations in queries', async () => {
@@ -430,12 +435,17 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
         value: testExerciseId,
       })
 
-      // Verify it's active (archivedAt field missing)
-      const beforeArchive = await payload.findByID({
-        collection: 'conversations',
-        id: activeConv.id,
-      })
-      expect((beforeArchive as any).archivedAt).toBeUndefined()
+      // Verify it's active (archivedAt field missing) - check database directly
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const db = (payload.db as any).connection.db
+      const collection = db.collection('conversations')
+      const { ObjectId } = await import('mongodb')
+      const convId = typeof activeConv.id === 'string' && ObjectId.isValid(activeConv.id) 
+        ? new ObjectId(activeConv.id) 
+        : activeConv.id
+      const beforeArchiveRaw = await collection.findOne({ _id: convId })
+      expect(beforeArchiveRaw).toBeDefined()
+      expect(beforeArchiveRaw.archivedAt).toBeUndefined()
 
       // Archive it
       await payload.update({
@@ -498,14 +508,19 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
       expect(conv2.id).not.toBe(conv1.id)
 
       // Verify new conversation is active
-      const dbConv = await payload.findByID({
-        collection: 'conversations',
-        id: conv2.id,
-      })
-      // archivedAt should be undefined (field missing), not null or a date
-      // Payload might return undefined or the field might be missing from the object
-      const archivedAt = (dbConv as any).archivedAt
-      expect(archivedAt === undefined || archivedAt === null).toBe(true)
+      // Query database directly to verify archivedAt field is actually missing
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const db = (payload.db as any).connection.db
+      const collection = db.collection('conversations')
+      const { ObjectId } = await import('mongodb')
+      const convId = typeof conv2.id === 'string' && ObjectId.isValid(conv2.id) 
+        ? new ObjectId(conv2.id) 
+        : conv2.id
+      const rawConv = await collection.findOne({ _id: convId })
+      
+      // archivedAt should NOT exist in the database document
+      expect(rawConv).toBeDefined()
+      expect(rawConv.archivedAt).toBeUndefined()
 
       // Verify old conversation is still archived
       const oldConv = await payload.findByID({
@@ -524,12 +539,17 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
         value: testExerciseId,
       })
 
-      // Verify it's active (archivedAt field missing)
-      const beforeAttempt = await payload.findByID({
-        collection: 'conversations',
-        id: activeConv.id,
-      })
-      expect((beforeAttempt as any).archivedAt).toBeUndefined()
+      // Verify it's active (archivedAt field missing) - check database directly
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const db = (payload.db as any).connection.db
+      const collection = db.collection('conversations')
+      const { ObjectId } = await import('mongodb')
+      const convId = typeof activeConv.id === 'string' && ObjectId.isValid(activeConv.id) 
+        ? new ObjectId(activeConv.id) 
+        : activeConv.id
+      const beforeAttemptRaw = await collection.findOne({ _id: convId })
+      expect(beforeAttemptRaw).toBeDefined()
+      expect(beforeAttemptRaw.archivedAt).toBeUndefined()
 
       // Attempt to archive WITHOUT overrideAccess: true
       // Payload may silently ignore fields without access (field-level access control)
@@ -543,12 +563,10 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
         // Intentionally NOT setting overrideAccess: true
       })
 
-      // Verify conversation is still active (archivedAt field still missing)
-      const afterAttempt = await payload.findByID({
-        collection: 'conversations',
-        id: activeConv.id,
-      })
-      expect((afterAttempt as any).archivedAt).toBeUndefined()
+      // Verify conversation is still active (archivedAt field still missing) - check database directly
+      const afterAttemptRaw = await collection.findOne({ _id: convId })
+      expect(afterAttemptRaw).toBeDefined()
+      expect(afterAttemptRaw.archivedAt).toBeUndefined()
 
       // Verify it's still included in active queries
       const activeConversations = await payload.find({
