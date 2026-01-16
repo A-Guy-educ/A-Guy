@@ -19,7 +19,6 @@ describe('OpenAI error handling', () => {
   })
 
   it('throws when OPENAI_API_KEY is missing', async () => {
-    // @ts-expect-error - TypeScript doesn't allow delete on process.env, but it's safe here
     delete process.env.OPENAI_API_KEY
 
     const { generateEmbedding } = await import('@/lib/ai/embeddings')

@@ -14,10 +14,26 @@ vi.mock(
   }),
 )
 
-const mockUseNotebookChat = useNotebookChat as unknown as ReturnType<typeof vi.fn>
+const mockUseNotebookChat = vi.mocked(useNotebookChat)
 
-const renderWithI18n = (hookState: ReturnType<typeof mockUseNotebookChat>) => {
-  mockUseNotebookChat.mockReturnValue(hookState)
+type NotebookChatHookState = {
+  messages: Array<{ role: string; content: string }>
+  inputValue: string
+  isLoading: boolean
+  isLoadingHistory: boolean
+  messagesContainerRef: React.RefObject<HTMLDivElement>
+  messagesEndRef: React.RefObject<HTMLDivElement>
+  inputRef: React.RefObject<HTMLInputElement>
+  contextKey: string | null
+  setInputValue: (value: string) => void
+  handleSubmit: (e: React.FormEvent) => void
+  handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void
+  handleQuickAction: (action: 'hint' | 'solution' | 'full') => void
+  handleReset: () => void
+}
+
+const renderWithI18n = (hookState: NotebookChatHookState) => {
+  mockUseNotebookChat.mockReturnValue(hookState as ReturnType<typeof useNotebookChat>)
 
   return render(
     <I18nProvider locale="en" messages={enMessages}>
