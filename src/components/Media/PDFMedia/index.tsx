@@ -27,7 +27,7 @@ export const PDFMedia: React.FC<MediaProps> = (props) => {
   useEffect(() => {
     if (resource && typeof resource === 'object' && resource.id) {
       analytics.track(PRODUCT_EVENTS.PDF_VIEWED, {
-        pdf_id: resource.id,
+        document_id: resource.id,
         page_count:
           typeof resource === 'object' && 'pageCount' in resource
             ? Number(resource.pageCount)

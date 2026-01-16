@@ -51,7 +51,7 @@ export function SignupForm() {
         if (result.userId) {
           analytics.track(PRODUCT_EVENTS.REGISTRATION_COMPLETED, {
             user_id: result.userId,
-            registration_method: 'email',
+            auth_method: 'email',
           })
           analytics.track(PRODUCT_EVENTS.USER_IDENTIFIED, {
             user_id: result.userId,

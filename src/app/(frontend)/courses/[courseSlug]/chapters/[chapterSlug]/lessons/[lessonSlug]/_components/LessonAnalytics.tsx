@@ -25,11 +25,11 @@ export function LessonAnalytics({ lessonId, courseId, lessonTitle }: LessonAnaly
 
     // Track lesson completed on unmount (when user navigates away)
     return () => {
-      const completionTimeSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000)
+      const durationSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000)
       analytics.track(PRODUCT_EVENTS.LESSON_COMPLETED, {
         lesson_id: lessonId,
         course_id: courseId,
-        completion_time_seconds: completionTimeSeconds,
+        duration_seconds: durationSeconds,
       })
     }
   }, [lessonId, courseId, lessonTitle, analytics])

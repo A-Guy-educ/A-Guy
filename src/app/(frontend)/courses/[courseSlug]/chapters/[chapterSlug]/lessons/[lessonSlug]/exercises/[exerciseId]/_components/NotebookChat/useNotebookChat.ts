@@ -165,6 +165,7 @@ export function useNotebookChat({
 
     // Track chat message sent (message length only, NOT content)
     analytics.track(PRODUCT_EVENTS.CHAT_MESSAGE_SENT, {
+      conversation_id: contextKey || 'unknown',
       message_length: message.length,
       lesson_id: lessonId,
     })
