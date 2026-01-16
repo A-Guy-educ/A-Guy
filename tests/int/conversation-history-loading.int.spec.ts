@@ -827,12 +827,12 @@ describe('Conversation History Loading', () => {
 
     // Simulate the exact query structure that the frontend sends
     // This matches the query in api-service.ts:getConversation()
-    const whereQuery = {
+    const whereQuery: any = {
       and: [
         { contextKey: { equals: contextKey } },
         { archivedAt: { exists: false } },
       ],
-    } as const
+    }
 
     const user = await payload.findByID({ collection: 'users', id: testUserId })
 
@@ -919,12 +919,12 @@ describe('Conversation History Loading', () => {
     //
     // Access control (isOwner) automatically adds: { user: { equals: user.id } }
 
-    const whereQuery = {
+    const whereQuery: any = {
       and: [
         { contextKey: { equals: contextKey } },
         { archivedAt: { exists: false } },
       ],
-    } as const
+    }
 
     // Test User 1 - should only see their own conversation
     const user1 = await payload.findByID({ collection: 'users', id: testUserId })
