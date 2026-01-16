@@ -92,118 +92,43 @@ export const apiService = {
   },
 
   /**
-   * Fetch existing conversation history for a context using Payload's REST API
-   * Access control (isOwner) automatically filters by authenticated user
-   * Payload merges the access control constraint with the where query
+   * Fetch existing conversation history for a context using dedicated endpoint
+   * The endpoint explicitly filters by authenticated user ID to guarantee isolation
    *
    * @param contextKey - The context key (e.g., "exercises:abc123")
    * @returns Conversation history with messages
    */
   async getConversation(contextKey: string): Promise<ConversationApiResponse> {
     try {
-      // Use Payload's auto-generated REST API endpoint
-      // The isOwner access control automatically adds { user: { equals: user.id } } to the query
-      // Payload merges this with our where query, ensuring only the authenticated user's conversations are returned
-      // 
-      // IMPORTANT: The where query should NOT include user filter - access control handles it automatically
-      // Including it explicitly would cause issues if access control isn't working
-      const whereQuery = JSON.stringify({
-        and: [
-          { contextKey: { equals: contextKey } },
-          { archivedAt: { exists: false } },
-        ],
-      })
+      logger.debug({ contextKey }, '[getConversation] Fetching via dedicated endpoint')
 
-      // Sort by lastMessageAt descending to get the most recent conversation for this user+contextKey
-      const url = `/api/conversations?where=${encodeURIComponent(whereQuery)}&limit=1&sort=-lastMessageAt&depth=0`
-      
-      logger.debug({ contextKey, url }, '[getConversation] Fetching conversation via Payload REST API')
-
-      const response = await fetch(url, {
-        method: 'GET',
+      const response = await fetch('/api/agent/conversation', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // CRITICAL: Include cookies for authentication (required for access control)
+        credentials: 'include',
+        body: JSON.stringify({ contextKey }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        // Log the full error for debugging
-        logger.error(
-          {
-            status: response.status,
-            statusText: response.statusText,
-            data,
-            contextKey,
-          },
-          '[getConversation] API error',
-        )
-
-        if (response.status === 401 || response.status === 403) {
+        if (response.status === 401) {
           return { success: false, exists: false, messages: [], authRequired: true }
         }
-        return {
-          success: false,
-          exists: false,
-          messages: [],
-          error: data.error || 'Request failed',
-        }
+        return { success: false, exists: false, messages: [], error: data.error || 'Request failed' }
       }
 
-      // Payload REST API returns { docs: [...], totalDocs, ... }
-      if (data.docs && data.docs.length > 0) {
-        const conversation = data.docs[0] as {
-          id: string
-          user?: string | { id: string }
-          contextKey?: string
-          messages?: Array<{ role: string; content: string; timestamp?: string }>
-        }
-
-        // Verify the conversation matches the expected contextKey
-        if (conversation.contextKey && conversation.contextKey !== contextKey) {
-          logger.warn(
-            {
-              conversationId: conversation.id,
-              expectedContextKey: contextKey,
-              actualContextKey: conversation.contextKey,
-            },
-            '[getConversation] Conversation contextKey mismatch',
-          )
-        }
-
-        // Log conversation user ID for debugging (access control should have already filtered by user)
-        // Note: We can't verify user ownership on client side without making another API call
-        // Payload's REST API with isOwner access control should ensure only current user's conversations are returned
-        const conversationUserId =
-          typeof conversation.user === 'object' ? conversation.user.id : conversation.user
-        logger.debug(
-          {
-            conversationId: conversation.id,
-            conversationUserId,
-            contextKey,
-            note: 'Access control (isOwner) should have filtered to current user only',
-          },
-          '[getConversation] Conversation loaded (user filtered by access control)',
-        )
-
-        // Ensure messages array exists and is properly formatted
-        const rawMessages = conversation.messages || []
-        const messages = rawMessages
-          .filter((msg) => msg && msg.role && msg.content) // Filter out invalid messages
-          .map((msg) => ({
-            role: msg.role === ChatRole.User || msg.role === 'user' ? ChatRole.User : ChatRole.Assistant,
-            content: msg.content,
-          }))
+      if (data.success && data.exists) {
+        const messages = (data.messages || []).map((msg: { role: string; content: string }) => ({
+          role: msg.role === ChatRole.User || msg.role === 'user' ? ChatRole.User : ChatRole.Assistant,
+          content: msg.content,
+        }))
 
         logger.debug(
           {
-            conversationId: conversation.id,
-            contextKey,
-            conversationContextKey: conversation.contextKey,
-            userId: conversationUserId,
-            rawMessageCount: rawMessages.length,
-            validMessageCount: messages.length,
-            hasMessages: rawMessages.length > 0,
+            conversationId: data.conversationId,
+            contextKey: data.contextKey,
+            messageCount: messages.length,
           },
           '[getConversation] Loaded conversation',
         )
@@ -211,21 +136,14 @@ export const apiService = {
         return {
           success: true,
           exists: true,
-          conversationId: conversation.id,
-          contextKey,
+          conversationId: data.conversationId,
           messages,
+          contextKey: data.contextKey,
         }
       }
 
-      // No conversation exists yet
-      logger.debug({ contextKey }, '[getConversation] No conversation found for contextKey')
-
-      return {
-        success: true,
-        exists: false,
-        messages: [],
-        contextKey,
-      }
+      logger.debug({ contextKey }, '[getConversation] No conversation found')
+      return { success: true, exists: false, messages: [], contextKey }
     } catch (_error) {
       return { success: false, exists: false, messages: [], error: 'Network error' }
     }
