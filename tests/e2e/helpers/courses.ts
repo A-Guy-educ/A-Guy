@@ -1,8 +1,8 @@
 /**
  * Test helpers for course and lesson data
  */
-import { getPayload } from 'payload'
 import config from '@payload-config'
+import { getPayload } from 'payload'
 
 export interface TestCourseData {
   courseSlug: string
@@ -69,12 +69,14 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
       },
     })
 
-    // Create test chapter
+    // Create test chapter with unique slug to avoid conflicts
+    const timestamp = Date.now()
     const chapter = await payload.create({
       collection: 'chapters',
       data: {
         course: course.id,
         chapterLabel: '1',
+        slug: `test-chapter-${timestamp}`,
         title: 'Test Chapter',
         description: 'A test chapter created for E2E testing',
         status: 'published',
