@@ -42,7 +42,8 @@
       "Bash(pnpm exec vitest:*)",
       "Bash(node --version:*)",
       "Bash(pnpm test:int:*)",
-      "Bash(git ls-tree:*)"
+      "Bash(git ls-tree:*)",
+      "Bash(SKIP_HOOKS=1 git push:*)"
     ]
   }
 }

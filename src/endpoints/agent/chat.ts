@@ -23,14 +23,16 @@ import {
   getRecentWindow,
   type Message,
 } from '@/lib/ai/context-policy'
+import { buildLessonContextPrompt } from '@/lib/ai/lesson-context'
 import { runSummaryMaintenance } from '@/lib/ai/maintenance'
 import { extractMemoryCandidates, persistMemoryItems } from '@/lib/ai/memory-extraction'
 import { createContextLog, logContextUsage, logPromptSnapshot } from '@/lib/ai/observability'
-import { buildLessonContextPrompt } from '@/lib/ai/lesson-context'
-import { chatWithExerciseHelper, getSystemPrompt } from '@/lib/ai/services/exercise-chat-service'
+import { resolveAgentSystemPrompt } from '@/lib/ai/prompt-resolver.server'
+import { chatWithExerciseHelper } from '@/lib/ai/services/exercise-chat-service'
 import { isVectorIndexAvailable } from '@/lib/ai/vector-index-check'
 import { retrieveMemoryItems, type MemoryItem } from '@/lib/ai/vector-search'
 import { ConversationService, deriveContextLevel } from '@/lib/services/conversation-service'
+import type { Prompt } from '@/payload-types'
 import { logger } from '@/utilities/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
@@ -255,35 +257,105 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       reqLogger.warn({ err: error }, 'Memory retrieval failed, continuing without memories')
     }
 
-    // 9) Fetch lesson context if applicable
+    // 9) Fetch lesson context and prompt using secure fetch pattern
+    //
+    // We use a two-fetch pattern for security:
+    // - Lesson fetched with normal access checks (overrideAccess: false)
+    // - Prompt fetched separately with overrideAccess: true (admin-only collection)
+    // This preserves Lesson access control while allowing server access to Prompts.
+
     let lessonContextText: string | undefined
+    let lessonPrompt: Prompt | null = null
+
     if (context.relationTo === 'lessons') {
+      // Direct lesson context - fetch with access checks
       const lesson = await req.payload.findByID({
         collection: 'lessons',
         id: context.value,
         depth: 0,
+        user: req.user, // Pass user for access control
+        // DO NOT use overrideAccess here - preserve lesson access control
       })
       lessonContextText = (lesson as { lessonContextText?: string }).lessonContextText ?? undefined
+
+      // Fetch prompt separately if lesson has one (admin-only, requires override)
+      if ((lesson as { prompt?: unknown }).prompt) {
+        const promptId = typeof (lesson as { prompt: unknown }).prompt === 'string'
+          ? (lesson as { prompt: string }).prompt
+          : (lesson as { prompt: { id: string } }).prompt.id
+
+        try {
+          lessonPrompt = await req.payload.findByID({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            collection: 'prompts' as any,
+            id: promptId,
+            overrideAccess: true, // Prompts are admin-only
+          }) as Prompt | null
+        } catch (error) {
+          reqLogger.warn({ err: error, promptId, lessonId: context.value }, 'Failed to fetch lesson prompt')
+          // Continue with null - will fall back to default
+        }
+      }
+
     } else if (context.relationTo === 'exercises') {
-      // Exercises inherit lesson context
+      // Exercise context - inherit parent lesson's prompt
       const exercise = await req.payload.findByID({
         collection: 'exercises',
         id: context.value,
         depth: 0,
+        user: req.user, // Pass user for access control
       })
-      if (exercise.lesson) {
-        const lessonId = typeof exercise.lesson === 'string' ? exercise.lesson : exercise.lesson.id
+
+      if ((exercise as { lesson?: unknown }).lesson) {
+        const lessonId = typeof (exercise as { lesson: unknown }).lesson === 'string'
+          ? (exercise as { lesson: string }).lesson
+          : (exercise as { lesson: { id: string } }).lesson.id
+
+        // Fetch lesson with access checks
         const lesson = await req.payload.findByID({
           collection: 'lessons',
           id: lessonId,
           depth: 0,
+          user: req.user, // Pass user for access control
+          // DO NOT use overrideAccess here
         })
         lessonContextText = (lesson as { lessonContextText?: string }).lessonContextText ?? undefined
+
+        // Fetch prompt separately if lesson has one
+        if ((lesson as { prompt?: unknown }).prompt) {
+          const promptId = typeof (lesson as { prompt: unknown }).prompt === 'string'
+            ? (lesson as { prompt: string }).prompt
+            : (lesson as { prompt: { id: string } }).prompt.id
+
+          try {
+            lessonPrompt = await req.payload.findByID({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              collection: 'prompts' as any,
+              id: promptId,
+              overrideAccess: true,
+            }) as Prompt | null
+          } catch (error) {
+            reqLogger.warn({ err: error, promptId, lessonId }, 'Failed to fetch lesson prompt')
+          }
+        }
       }
     }
 
-    // 10) Inject lesson context (single responsibility)
-    let systemInstructions = getSystemPrompt()
+    // 10) Resolve system prompt using pre-loaded prompt object
+    const promptResolution = await resolveAgentSystemPrompt(req.payload, lessonPrompt)
+
+    reqLogger.info(
+      {
+        promptId: promptResolution.promptId,
+        promptTitle: promptResolution.promptTitle,
+        resolvedFrom: promptResolution.resolvedFrom,
+        ...(promptResolution.fallbackReason && { fallbackReason: promptResolution.fallbackReason }),
+      },
+      'Resolved system prompt',
+    )
+
+    // Inject lesson context into resolved prompt
+    let systemInstructions = promptResolution.template
     try {
       systemInstructions = buildLessonContextPrompt(systemInstructions, lessonContextText)
     } catch (error) {
@@ -443,7 +515,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     })
   } catch (error) {
     // Handle connection reset errors gracefully (client disconnected)
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'ECONNRESET') {
+    if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'ECONNRESET') {
       reqLogger.debug({ err: error }, 'Client disconnected during chat request')
       // Return 499 (Client Closed Request) or 200 to avoid error logs
       return Response.json({ error: 'Request cancelled' }, { status: 499 })

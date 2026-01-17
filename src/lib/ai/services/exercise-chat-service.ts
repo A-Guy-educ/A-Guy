@@ -7,7 +7,6 @@ import { ChatRole, toGeminiRole } from '../chat-message-role'
 import type { ComposedPrompt } from '../context-policy'
 import { getGeminiClient } from '../gemini-ai-provider.server'
 import { AI_MODELS } from '../models'
-import promptContent from '../prompts/exercise-chat-agent-prompt.md'
 
 export interface ChatMessage {
   role: ChatRole
@@ -27,12 +26,18 @@ export interface ExerciseChatResult {
   error?: string
 }
 
+// Local fallback constant - no imports to avoid circular deps
+const LEGACY_FALLBACK = 'You are a helpful assistant.'
+
+/**
+ * @deprecated Use resolveAgentSystemPrompt from prompt-resolver.server instead.
+ * This remains only for legacy code paths without access to Payload.
+ * The main chat endpoint always provides composedPrompt, so this is only
+ * reached by direct calls to chatWithExerciseHelper without composedPrompt.
+ */
 export function getSystemPrompt(): string {
-  // Extract content, remove markdown headers
-  return promptContent
-    .replace(/^#.*$/gm, '')
-    .replace(/^##.*$/gm, '')
-    .trim()
+  logger.warn('[DEPRECATED] getSystemPrompt() called - migrate to prompt resolver')
+  return LEGACY_FALLBACK
 }
 
 const MODEL_TIMEOUT_MS = 30_000 // 30 seconds

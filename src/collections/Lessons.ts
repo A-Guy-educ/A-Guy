@@ -120,6 +120,16 @@ export const Lessons: CollectionConfig = {
       // NOT indexed, NOT required
     },
     {
+      name: 'prompt',
+      type: 'relationship',
+      relationTo: 'prompts',
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description: 'AI system prompt for this lesson (uses default if not set)',
+      },
+    },
+    {
       name: 'slug',
       type: 'text',
       required: false,

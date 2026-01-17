@@ -6,13 +6,12 @@
  * - Happy-path chat flow with a real Payload instance
  *   (AI calls and vector search are mocked to avoid external dependencies).
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import config from '@payload-config'
-import type { Payload } from 'payload'
-import { getPayload } from 'payload'
-import type { PayloadRequest } from 'payload'
-import type { Exercise } from '@/payload-types'
 import { agentChat } from '@/endpoints/agent/chat'
+import type { Exercise } from '@/payload-types'
+import config from '@payload-config'
+import type { Payload, PayloadRequest } from 'payload'
+import { getPayload } from 'payload'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 // Skip tests if DATABASE_URL is not set (e.g., in CI without MongoDB service)
 const hasDatabaseUrl = !!process.env.DATABASE_URL
@@ -23,7 +22,6 @@ vi.mock('@/lib/ai/services/exercise-chat-service', () => ({
     success: true,
     message: 'Mock assistant response',
   })),
-  getSystemPrompt: vi.fn(() => 'You are a helpful assistant.'),
 }))
 
 vi.mock('@/lib/ai/vector-index-check', () => ({
@@ -54,6 +52,8 @@ vi.mock('@/lib/ai/maintenance', () => ({
 let payload: Payload
 let testUserId: string
 let testExerciseId: string | undefined
+let testChapterId: string
+let testPromptId: string
 
 beforeAll(
   async () => {
@@ -68,6 +68,58 @@ beforeAll(
       },
     })
     testUserId = user.id
+
+    // Create a category first (required by courses)
+    const category = await payload.create({
+      collection: 'categories',
+      data: { title: 'Test Category', slug: `test-category-${Date.now()}` },
+      user: { id: testUserId },
+    } as any)
+
+    // Create test course with all required fields
+    const course = await payload.create({
+      collection: 'courses',
+      data: {
+        courseLabel: 'TST',
+        title: 'Test Course',
+        slug: `test-course-${Date.now()}`,
+        categories: [category.id],
+        order: 1,
+        status: 'published',
+        isActive: true,
+      },
+      draft: true,
+    } as any)
+
+    // Create test chapter with all required fields
+    const chapter = await payload.create({
+      collection: 'chapters',
+      data: {
+        chapterLabel: '1',
+        title: 'Test Chapter',
+        slug: `test-chapter-${Date.now()}`,
+        course: course.id,
+        order: 1,
+        status: 'published',
+        isActive: true,
+      },
+      draft: true,
+    } as any)
+    testChapterId = chapter.id
+
+    // Create a default prompt for tests (requires overrideAccess since it's admin-only)
+    const prompt = await payload.create({
+      collection: 'prompts',
+      data: {
+        title: 'Integration Test Default Prompt',
+        key: `int-test-default-${Date.now()}`,
+        template: 'You are a test assistant for integration tests.',
+        status: 'published',
+        isDefaultForAgentChat: true,
+      },
+      overrideAccess: true,
+    } as any)
+    testPromptId = prompt.id
 
     // Reuse an existing exercise if available; otherwise create a minimal one.
     const existingExercises = await payload.find({
@@ -93,6 +145,15 @@ beforeAll(
 
 afterAll(async () => {
   if (!payload) return
+
+  // Cleanup prompt first (it may be referenced by lessons)
+  if (testPromptId) {
+    try {
+      await payload.delete({ collection: 'prompts', id: testPromptId, overrideAccess: true } as any)
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
 
   if (testUserId) {
     await payload.delete({
@@ -152,4 +213,117 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
     expect(Array.isArray(conversation.messages)).toBe(true)
     expect(conversation.messages!.length).toBeGreaterThanOrEqual(2)
   }, 60000)
+
+  describe('prompt resolution', () => {
+    it('uses default prompt when lesson has no prompt', async () => {
+      // Create a lesson WITHOUT a prompt
+      const lesson = await payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Test Lesson Without Prompt',
+          chapter: testChapterId,
+          order: 1,
+          status: 'published',
+          // No prompt field - will use default
+        },
+        draft: true,
+      } as any)
+
+      const req = {
+        payload,
+        user: { id: testUserId } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello',
+          acknowledgment: 'ack-1',
+          lessonId: lesson.id,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      const res = await agentChat(req)
+      expect(res.status).toBe(200)
+
+      // Cleanup
+      await payload.delete({ collection: 'lessons', id: lesson.id } as any)
+    })
+
+    it('falls back to default when lesson prompt is draft', async () => {
+      // Create draft prompt (requires overrideAccess since it's admin-only)
+      const draftPrompt = await payload.create({
+        collection: 'prompts',
+        data: {
+          title: 'Draft Prompt',
+          key: `draft-prompt-${Date.now()}`,
+          template: 'Draft content.',
+          status: 'draft', // Not published
+        },
+        overrideAccess: true,
+      } as any)
+
+      const lesson = await payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Test Lesson With Draft Prompt',
+          chapter: testChapterId,
+          order: 1,
+          status: 'published',
+          prompt: draftPrompt.id,
+        },
+        draft: true,
+      } as any)
+
+      const req = {
+        payload,
+        user: { id: testUserId } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello',
+          acknowledgment: 'ack-1',
+          lessonId: lesson.id,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      const res = await agentChat(req)
+      expect(res.status).toBe(200)
+      // The default prompt (testPromptId) should be used
+
+      // Cleanup
+      await payload.delete({ collection: 'lessons', id: lesson.id } as any)
+      await payload.delete({ collection: 'prompts', id: draftPrompt.id } as any)
+    })
+
+    it('endpoint always passes composedPrompt to chatWithExerciseHelper', async () => {
+      const { chatWithExerciseHelper } = await import('@/lib/ai/services/exercise-chat-service')
+
+      const lesson = await payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Test Lesson',
+          chapter: testChapterId,
+          order: 1,
+          status: 'published',
+        },
+        draft: true,
+      } as any)
+
+      const req = {
+        payload,
+        user: { id: testUserId } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello',
+          acknowledgment: 'ack-1',
+          lessonId: lesson.id,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      await agentChat(req)
+
+      // Verify composedPrompt was passed
+      expect(chatWithExerciseHelper).toHaveBeenCalledWith(
+        expect.objectContaining({
+          composedPrompt: expect.any(Object),
+        }),
+      )
+
+      await payload.delete({ collection: 'lessons', id: lesson.id } as any)
+    })
+  })
 })
