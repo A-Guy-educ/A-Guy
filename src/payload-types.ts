@@ -956,6 +956,10 @@ export interface Lesson {
    */
   contentFiles?: (string | Media)[] | null;
   /**
+   * AI context text for this lesson. Injected into chat prompts at runtime. NOT indexed or searchable.
+   */
+  lessonContextText?: string | null;
+  /**
    * URL-friendly identifier (auto-generated from title if empty)
    */
   slug?: string | null;
@@ -1824,6 +1828,7 @@ export interface LessonsSelect<T extends boolean = true> {
   status?: T;
   isActive?: T;
   contentFiles?: T;
+  lessonContextText?: T;
   slug?: T;
   createdBy?: T;
   updatedAt?: T;

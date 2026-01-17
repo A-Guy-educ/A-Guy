@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Send, Plus, BookOpen, Loader2 } from 'lucide-react'
-import { cn } from '@/utilities/ui'
-import { MathPalette } from '../MathPalette'
-import { FormulaPanel } from '../FormulaPanel'
-import { useTranslations } from '@/providers/I18n'
-import { useNotebookChat } from '../NotebookChat/useNotebookChat'
 import { ChatMessageRole } from '@/lib/ai/chat-message-role'
+import { useTranslations } from '@/providers/I18n'
+import { cn } from '@/utilities/ui'
+import { BookOpen, Loader2, Plus, Send } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { FormulaPanel } from '../FormulaPanel'
+import { MathPalette } from '../MathPalette'
+import { useNotebookChat } from '../NotebookChat/useNotebookChat'
 
 interface ChatInterfaceProps {
   exerciseId?: string

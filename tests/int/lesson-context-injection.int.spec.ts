@@ -281,43 +281,24 @@ describe.skipIf(!hasDatabaseUrl)('Lesson Context Injection', () => {
   }, 60000)
 
   it('should reject oversized context without calling model', async () => {
-    // Create a lesson with oversized context
+    // Create a lesson with oversized context - should be rejected by Payload validation
     const oversizedContext = 'a'.repeat(LESSON_CONTEXT_MAX_CHARS + 1)
-    const oversizedLesson = await payload.create({
-      collection: 'lessons',
-      data: {
-        chapter: testChapterId,
-        title: 'Oversized Lesson',
-        lessonContextText: oversizedContext,
-        status: 'published',
-        isActive: true,
-        order: 2,
-      } as any,
-      draft: false,
-    })
 
-    const req = {
-      payload,
-      user: { id: testUserId } as PayloadRequest['user'],
-      json: async () => ({
-        message: 'Hello',
-        acknowledgment: 'ack-5',
-        lessonId: oversizedLesson.id,
+    // Payload field validation should reject oversized context (maxLength: 100_000)
+    await expect(
+      payload.create({
+        collection: 'lessons',
+        data: {
+          chapter: testChapterId,
+          title: 'Oversized Lesson',
+          lessonContextText: oversizedContext,
+          status: 'published',
+          isActive: true,
+          order: 2,
+        } as any,
+        draft: false,
       }),
-    } as unknown as PayloadRequest & { json: () => Promise<unknown> }
-
-    const res = await agentChat(req)
-
-    // Should return 400 error
-    expect(res.status).toBe(400)
-    const body = await res.json()
-    expect(body.error).toContain('exceeds maximum')
-
-    // Cleanup
-    await payload.delete({
-      collection: 'lessons',
-      id: oversizedLesson.id,
-    })
+    ).rejects.toThrow(/invalid/)
   }, 60000)
 
   it('should verify stored messages never contain lesson markers', async () => {
