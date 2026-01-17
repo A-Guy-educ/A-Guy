@@ -13,34 +13,41 @@ import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
 import type { Lesson } from '@/payload-types'
-import { agentChat } from '@/endpoints/agent/chat'
 import { LESSON_CONTEXT_BLOCK_START, LESSON_CONTEXT_MAX_CHARS } from '@/lib/ai/lesson-context'
-import * as contextPolicy from '@/lib/ai/context-policy'
 
 // Skip tests if DATABASE_URL is not set
 const hasDatabaseUrl = !!process.env.DATABASE_URL
 
-// Mock AI and vector-related services
-vi.mock('@/lib/ai/services/exercise-chat-service', async () => {
-  const actual = await vi.importActual('@/lib/ai/services/exercise-chat-service')
-  return {
-    ...actual,
-    chatWithExerciseHelper: vi.fn(async () => ({
-      success: true,
-      message: 'Mock assistant response',
-    })),
-    getSystemPrompt: vi.fn(() => 'You are a helpful assistant.'),
-  }
-})
+// Mock AI and vector-related services (must be before any imports that use them)
+vi.mock('@/lib/ai/services/exercise-chat-service', () => ({
+  chatWithExerciseHelper: vi.fn(async () => ({
+    success: true,
+    message: 'Mock assistant response',
+  })),
+  getSystemPrompt: vi.fn(() => 'You are a helpful assistant.'),
+}))
 
-// Mock context-policy
-vi.mock('@/lib/ai/context-policy', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/ai/context-policy')>('@/lib/ai/context-policy')
-  return {
-    ...actual,
-    composePrompt: vi.fn(actual.composePrompt),
-  }
-})
+// Mock context-policy - provide implementations that return expected values
+// Note: Must define spy inside return to avoid hoisting issues
+vi.mock('@/lib/ai/context-policy', () => ({
+  buildRetrievalQuery: vi.fn((messages: unknown[]) => {
+    return messages.map((m: any) => m.content || '').join(' ')
+  }),
+  composePrompt: vi.fn((systemMessage: string) => ({
+    messages: [],
+    metadata: {
+      policyVersion: 'v1',
+      summaryLength: 0,
+      messageCount: 0,
+    },
+    systemMessage,
+  })),
+  getRecentWindow: vi.fn((messages: unknown[]) => messages),
+}))
+
+// Import after mocks are set up
+import { agentChat } from '@/endpoints/agent/chat'
+import * as contextPolicy from '@/lib/ai/context-policy'
 
 vi.mock('@/lib/ai/vector-index-check', () => ({
   isVectorIndexAvailable: vi.fn(async () => false),
