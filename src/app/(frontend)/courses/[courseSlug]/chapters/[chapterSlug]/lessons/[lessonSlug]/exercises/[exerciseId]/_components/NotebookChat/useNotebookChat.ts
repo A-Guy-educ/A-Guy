@@ -133,11 +133,15 @@ export function useNotebookChat({
                 // React will batch these updates, but we need to ensure messages
                 // are actually in the DOM before hiding the loading indicator
                 setMessages(loadedMessages)
-                // Use a longer delay to ensure React has rendered the messages
-                // This is critical for E2E tests that check for message presence
-                setTimeout(() => {
-                  setIsLoadingHistory(false)
-                }, 150)
+                // Wait for React to render using double rAF pattern
+                // First rAF: schedules callback before next paint
+                // Second rAF: ensures the paint cycle completed
+                // This ensures loading indicator hides only after messages are in DOM
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() => {
+                    setIsLoadingHistory(false)
+                  })
+                })
                 return
               }
             }

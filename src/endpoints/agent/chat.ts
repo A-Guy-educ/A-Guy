@@ -26,6 +26,7 @@ import {
 import { runSummaryMaintenance } from '@/lib/ai/maintenance'
 import { extractMemoryCandidates, persistMemoryItems } from '@/lib/ai/memory-extraction'
 import { createContextLog, logContextUsage, logPromptSnapshot } from '@/lib/ai/observability'
+import { buildLessonContextPrompt } from '@/lib/ai/lesson-context'
 import { chatWithExerciseHelper, getSystemPrompt } from '@/lib/ai/services/exercise-chat-service'
 import { isVectorIndexAvailable } from '@/lib/ai/vector-index-check'
 import { retrieveMemoryItems, type MemoryItem } from '@/lib/ai/vector-search'
@@ -254,8 +255,45 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       reqLogger.warn({ err: error }, 'Memory retrieval failed, continuing without memories')
     }
 
-    // 9) Compose prompt using Context Policy V1
-    const systemInstructions = getSystemPrompt()
+    // 9) Fetch lesson context if applicable
+    let lessonContextText: string | undefined
+    if (context.relationTo === 'lessons') {
+      const lesson = await req.payload.findByID({
+        collection: 'lessons',
+        id: context.value,
+        depth: 0,
+      })
+      lessonContextText = (lesson as { lessonContextText?: string }).lessonContextText ?? undefined
+    } else if (context.relationTo === 'exercises') {
+      // Exercises inherit lesson context
+      const exercise = await req.payload.findByID({
+        collection: 'exercises',
+        id: context.value,
+        depth: 0,
+      })
+      if (exercise.lesson) {
+        const lessonId = typeof exercise.lesson === 'string' ? exercise.lesson : exercise.lesson.id
+        const lesson = await req.payload.findByID({
+          collection: 'lessons',
+          id: lessonId,
+          depth: 0,
+        })
+        lessonContextText = (lesson as { lessonContextText?: string }).lessonContextText ?? undefined
+      }
+    }
+
+    // 10) Inject lesson context (single responsibility)
+    let systemInstructions = getSystemPrompt()
+    try {
+      systemInstructions = buildLessonContextPrompt(systemInstructions, lessonContextText)
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('exceeds maximum')) {
+        return Response.json({ error: 'Lesson context exceeds maximum allowed size' }, { status: 400 })
+      }
+      throw error
+    }
+
+    // 11) Compose prompt using Context Policy V1
     const composedPrompt = composePrompt(systemInstructions, {
       systemMessage: systemInstructions,
       summary: conversation?.summary || undefined,
@@ -266,7 +304,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     // Log prompt snapshot in development
     logPromptSnapshot(conversationId, composedPrompt)
 
-    // 10) Call AI service with composed prompt
+    // 12) Call AI service with composed prompt
     const modelCallStart = Date.now()
     const result = await chatWithExerciseHelper({
       message: validated.message,
@@ -283,7 +321,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       )
     }
 
-    // 11) Persist assistant response
+    // 13) Persist assistant response
     const assistantMessage = {
       role: 'assistant' as const,
       content: result.message || '',
@@ -303,7 +341,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       overrideAccess: false,
     })
 
-    // 12) Log context usage for observability
+    // 14) Log context usage for observability
     logContextUsage(
       createContextLog({
         conversationId,
@@ -322,12 +360,12 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       }),
     )
 
-    // 13) Background: Run summary maintenance (non-blocking)
+    // 15) Background: Run summary maintenance (non-blocking)
     runSummaryMaintenance(req.payload, conversationId).catch((err) => {
       reqLogger.error({ err, conversationId }, 'Summary maintenance failed')
     })
 
-    // 14) Background: Extract and persist memories (non-blocking)
+    // 16) Background: Extract and persist memories (non-blocking)
     const currentUserId = req.user.id
     reqLogger.debug({ conversationId }, 'Starting memory extraction')
 

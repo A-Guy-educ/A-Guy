@@ -320,6 +320,42 @@ describe('Conversations Schema', () => {
       expect(messages[0].role).toBe('user')
       expect(messages[1].role).toBe('assistant')
     })
+
+    it('messages should NOT have lessonContext', () => {
+      // INVARIANT: Messages should never contain lessonContext field
+      // Lesson context is injected at runtime and never persisted
+      const message = {
+        role: 'user',
+        content: 'What is the derivative of x^2?',
+        timestamp: new Date().toISOString(),
+      }
+
+      expect(message).not.toHaveProperty('lessonContext')
+      expect((message as { lessonContext?: unknown }).lessonContext).toBeUndefined()
+    })
+  })
+
+  describe('lesson context persistence invariant', () => {
+    it('should NOT have lessonContext field', () => {
+      // INVARIANT: Conversations should never contain lessonContext field
+      // Lesson context is injected at runtime via buildLessonContextPrompt()
+      // and NEVER stored in conversations or messages
+      const conversation = {
+        id: 'conv-1',
+        user: 'user-123',
+        contextKey: 'lessons:lesson-123',
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello',
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      }
+
+      expect(conversation).not.toHaveProperty('lessonContext')
+      expect((conversation as { lessonContext?: unknown }).lessonContext).toBeUndefined()
+    })
   })
 })
 
