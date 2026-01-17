@@ -30,6 +30,7 @@ describe('resolveAgentSystemPrompt', () => {
         title: 'Math Tutor',
         template: 'You are a math tutor.',
         status: 'published' as const,
+        type: 'context' as const,
         isDefaultForAgentChat: false,
         createdAt: '',
         updatedAt: '',
@@ -51,6 +52,7 @@ describe('resolveAgentSystemPrompt', () => {
         title: 'Draft',
         template: 'Draft.',
         status: 'draft' as const,
+        type: 'context' as const,
         isDefaultForAgentChat: false,
         createdAt: '',
         updatedAt: '',
@@ -61,6 +63,7 @@ describe('resolveAgentSystemPrompt', () => {
           title: 'Default',
           template: 'Default template.',
           status: 'published',
+          type: 'context',
         }],
         totalDocs: 1,
       })
@@ -80,12 +83,13 @@ describe('resolveAgentSystemPrompt', () => {
         title: 'Archived',
         template: 'Archived.',
         status: 'archived' as const,
+        type: 'context' as const,
         isDefaultForAgentChat: false,
         createdAt: '',
         updatedAt: '',
       }
       mockPayload.find.mockResolvedValue({
-        docs: [{ id: 'default-1', template: 'Default.', status: 'published' }],
+        docs: [{ id: 'default-1', template: 'Default.', status: 'published', type: 'context' }],
         totalDocs: 1,
       })
 
@@ -98,7 +102,7 @@ describe('resolveAgentSystemPrompt', () => {
   describe('when lessonPrompt is null', () => {
     it('uses default prompt', async () => {
       mockPayload.find.mockResolvedValue({
-        docs: [{ id: 'default-1', title: 'Default', template: 'Default.', status: 'published' }],
+        docs: [{ id: 'default-1', title: 'Default', template: 'Default.', status: 'published', type: 'context' }],
         totalDocs: 1,
       })
 
@@ -112,7 +116,7 @@ describe('resolveAgentSystemPrompt', () => {
   describe('when lessonPrompt is undefined', () => {
     it('uses default prompt', async () => {
       mockPayload.find.mockResolvedValue({
-        docs: [{ id: 'default-1', template: 'Default.', status: 'published' }],
+        docs: [{ id: 'default-1', template: 'Default.', status: 'published', type: 'context' }],
         totalDocs: 1,
       })
 
@@ -125,7 +129,7 @@ describe('resolveAgentSystemPrompt', () => {
   describe('multiple defaults warning', () => {
     it('logs warning when multiple defaults exist and uses first', async () => {
       mockPayload.find.mockResolvedValue({
-        docs: [{ id: 'default-1', title: 'First', template: 'First.', status: 'published' }],
+        docs: [{ id: 'default-1', title: 'First', template: 'First.', status: 'published', type: 'context' }],
         totalDocs: 3,
       })
 

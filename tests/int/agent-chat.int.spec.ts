@@ -54,6 +54,7 @@ let testUserId: string
 let testExerciseId: string | undefined
 let testChapterId: string
 let testPromptId: string
+let testSystemPromptId: string | undefined
 
 beforeAll(
   async () => {
@@ -114,12 +115,27 @@ beforeAll(
         title: 'Integration Test Default Prompt',
         key: `int-test-default-${Date.now()}`,
         template: 'You are a test assistant for integration tests.',
+        type: 'context',
         status: 'published',
         isDefaultForAgentChat: true,
       },
       overrideAccess: true,
     } as any)
     testPromptId = prompt.id
+
+    // Create a published system prompt for tests
+    const systemPrompt = await payload.create({
+      collection: 'prompts',
+      data: {
+        title: 'Integration Test System Prompt',
+        key: `int-test-system-${Date.now()}`,
+        template: 'SYSTEM_PROMPT_MARKER: You must always follow these rules.',
+        type: 'system',
+        status: 'published',
+      },
+      overrideAccess: true,
+    } as any)
+    testSystemPromptId = systemPrompt.id
 
     // Reuse an existing exercise if available; otherwise create a minimal one.
     const existingExercises = await payload.find({
@@ -150,6 +166,15 @@ afterAll(async () => {
   if (testPromptId) {
     try {
       await payload.delete({ collection: 'prompts', id: testPromptId, overrideAccess: true } as any)
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+
+  // Cleanup system prompt
+  if (testSystemPromptId) {
+    try {
+      await payload.delete({ collection: 'prompts', id: testSystemPromptId, overrideAccess: true } as any)
     } catch {
       // Ignore cleanup errors
     }
@@ -325,6 +350,107 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
       )
 
       await payload.delete({ collection: 'lessons', id: lesson.id } as any)
+    })
+  })
+
+  describe('system prompts', () => {
+    it('includes published system prompts in composed prompt', async () => {
+      const { chatWithExerciseHelper } = await import(
+        '@/lib/ai/services/exercise-chat-service'
+      )
+
+      const lesson = await payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Test Lesson For System Prompts',
+          slug: `test-lesson-sys-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          chapter: testChapterId,
+          order: 1,
+          status: 'published',
+        },
+        draft: true,
+      } as any)
+
+      const req = {
+        payload,
+        user: { id: testUserId } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello',
+          acknowledgment: 'ack-1',
+          lessonId: lesson.id,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      await agentChat(req)
+
+      // Verify composedPrompt includes system prompt marker
+      expect(chatWithExerciseHelper).toHaveBeenCalledWith(
+        expect.objectContaining({
+          composedPrompt: expect.objectContaining({
+            messages: expect.arrayContaining([
+              expect.objectContaining({
+                role: 'system',
+                content: expect.stringContaining('SYSTEM_PROMPT_MARKER'),
+              }),
+            ]),
+          }),
+        }),
+      )
+
+      await payload.delete({ collection: 'lessons', id: lesson.id } as any)
+    })
+
+    it('proceeds successfully when no system prompts exist', async () => {
+      // Temporarily remove system prompt
+      if (testSystemPromptId) {
+        await payload.delete({
+          collection: 'prompts',
+          id: testSystemPromptId,
+          overrideAccess: true,
+        } as any)
+      }
+
+      const lesson = await payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Test Lesson No System Prompts',
+          slug: `test-lesson-nosys-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          chapter: testChapterId,
+          order: 1,
+          status: 'published',
+        },
+        draft: true,
+      } as any)
+
+      const req = {
+        payload,
+        user: { id: testUserId } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello',
+          acknowledgment: 'ack-1',
+          lessonId: lesson.id,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      const res = await agentChat(req)
+      expect(res.status).toBe(200)
+
+      // Cleanup lesson
+      await payload.delete({ collection: 'lessons', id: lesson.id } as any)
+
+      // Recreate system prompt for other tests
+      const newSystemPrompt = await payload.create({
+        collection: 'prompts',
+        data: {
+          title: 'Integration Test System Prompt',
+          key: `int-test-system-recreated-${Date.now()}`,
+          template: 'SYSTEM_PROMPT_MARKER: You must always follow these rules.',
+          type: 'system',
+          status: 'published',
+        },
+        overrideAccess: true,
+      } as any)
+      testSystemPromptId = newSystemPrompt.id
     })
   })
 })

@@ -12,7 +12,7 @@ export const Prompts: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'key', 'status', 'isDefaultForAgentChat', 'updatedAt'],
+    defaultColumns: ['title', 'key', 'type', 'status', 'isDefaultForAgentChat', 'updatedAt'],
     group: 'AI',
   },
   fields: [
@@ -30,6 +30,21 @@ export const Prompts: CollectionConfig = {
       index: true,
       admin: {
         description: 'Machine-readable key (e.g., "default-tutor-v1")',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'type',
+      type: 'select',
+      required: true,
+      defaultValue: 'context',
+      options: [
+        { label: 'System', value: 'system' },
+        { label: 'Context', value: 'context' },
+      ],
+      index: true,
+      admin: {
+        description: 'System prompts are always included. Context prompts are lesson-specific.',
         position: 'sidebar',
       },
     },

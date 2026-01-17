@@ -23,12 +23,13 @@ import {
   getRecentWindow,
   type Message,
 } from '@/lib/ai/context-policy'
-import { buildLessonContextPrompt } from '@/lib/ai/lesson-context'
 import { runSummaryMaintenance } from '@/lib/ai/maintenance'
 import { extractMemoryCandidates, persistMemoryItems } from '@/lib/ai/memory-extraction'
 import { createContextLog, logContextUsage, logPromptSnapshot } from '@/lib/ai/observability'
+import { composeSystemInstructions } from '@/lib/ai/prompt-composer.server'
 import { resolveAgentSystemPrompt } from '@/lib/ai/prompt-resolver.server'
 import { chatWithExerciseHelper } from '@/lib/ai/services/exercise-chat-service'
+import { fetchPublishedSystemPrompts } from '@/lib/ai/system-prompts.server'
 import { isVectorIndexAvailable } from '@/lib/ai/vector-index-check'
 import { retrieveMemoryItems, type MemoryItem } from '@/lib/ai/vector-search'
 import { ConversationService, deriveContextLevel } from '@/lib/services/conversation-service'
@@ -341,6 +342,20 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       }
     }
 
+    // 9.5) Fetch published system prompts (always included)
+    const systemPromptsResult = await fetchPublishedSystemPrompts(req.payload)
+
+    if (systemPromptsResult.count > 0) {
+      reqLogger.info(
+        {
+          systemPromptCount: systemPromptsResult.count,
+          systemPromptIds: systemPromptsResult.promptIds,
+          systemPromptTitles: systemPromptsResult.promptTitles,
+        },
+        'Including system prompts',
+      )
+    }
+
     // 10) Resolve system prompt using pre-loaded prompt object
     const promptResolution = await resolveAgentSystemPrompt(req.payload, lessonPrompt)
 
@@ -354,10 +369,14 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       'Resolved system prompt',
     )
 
-    // Inject lesson context into resolved prompt
-    let systemInstructions = promptResolution.template
+    // Compose final system instructions: system prompts + lesson prompt + lesson context
+    let systemInstructions: string
     try {
-      systemInstructions = buildLessonContextPrompt(systemInstructions, lessonContextText)
+      systemInstructions = composeSystemInstructions(
+        systemPromptsResult.templates,
+        promptResolution.template,
+        lessonContextText,
+      )
     } catch (error) {
       if (error instanceof Error && error.message.includes('exceeds maximum')) {
         return Response.json({ error: 'Lesson context exceeds maximum allowed size' }, { status: 400 })
