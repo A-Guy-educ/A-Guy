@@ -49,12 +49,24 @@ export async function loginAction(formData: FormData, cookieStore?: CookieStore)
 
     if (result.token) {
       const resolvedCookieStore = cookieStore ?? (await cookies())
+      const authCookies = usersCollection?.config?.auth?.cookies
+      const sameSite =
+        authCookies?.sameSite === 'None'
+          ? 'none'
+          : authCookies?.sameSite === 'Strict'
+            ? 'strict'
+            : authCookies?.sameSite === 'Lax'
+              ? 'lax'
+              : 'lax'
+      const secure = authCookies?.secure ?? process.env.NODE_ENV === 'production'
+
       resolvedCookieStore.set('payload-token', result.token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure,
+        sameSite,
         path: '/',
         maxAge: 60 * 60 * 24 * 7,
+        ...(authCookies?.domain ? { domain: authCookies.domain } : {}),
       })
 
       return { success: true }
