@@ -30,6 +30,7 @@ export function LoginForm() {
     const result = await loginAction(formData)
 
     if (result.success) {
+      window.dispatchEvent(new Event('auth:changed'))
       router.push('/')
       router.refresh()
       return

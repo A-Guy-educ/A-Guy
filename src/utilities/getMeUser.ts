@@ -1,30 +1,48 @@
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import type { User } from '../payload-types'
-import { getClientSideURL } from './getURL'
+import { getServerSideURL } from './getURL'
 
 export const getMeUser = async (args?: {
   nullUserRedirect?: string
   validUserRedirect?: string
 }): Promise<{
-  token: string
-  user: User
+  token: string | null
+  user: User | null
 }> => {
   const { nullUserRedirect, validUserRedirect } = args || {}
   const cookieStore = await cookies()
   const token = cookieStore.get('payload-token')?.value
 
-  const meUserReq = await fetch(`${getClientSideURL()}/api/users/me`, {
+  if (!token) {
+    if (nullUserRedirect) {
+      redirect(nullUserRedirect)
+    }
+
+    return {
+      token: null,
+      user: null,
+    }
+  }
+
+  const headerList = await headers()
+  const forwardedProto = headerList.get('x-forwarded-proto')
+  const forwardedHost = headerList.get('x-forwarded-host')
+  const host = forwardedHost || headerList.get('host')
+  const origin = host ? `${forwardedProto || 'http'}://${host}` : getServerSideURL()
+
+  const meUserReq = await fetch(`${origin}/api/users/me`, {
     headers: {
       Authorization: `JWT ${token}`,
     },
+    cache: 'no-store',
   })
 
   const {
     user,
   }: {
-    user: User
+    user: User | null
   } = await meUserReq.json()
 
   if (validUserRedirect && meUserReq.ok && user) {
@@ -35,9 +53,8 @@ export const getMeUser = async (args?: {
     redirect(nullUserRedirect)
   }
 
-  // Token will exist here because if it doesn't the user will be redirected
   return {
-    token: token!,
+    token,
     user,
   }
 }

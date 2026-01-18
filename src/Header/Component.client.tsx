@@ -2,7 +2,7 @@
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import type { Header, User } from '@/payload-types'
 
@@ -25,29 +25,40 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   const pathname = usePathname()
 
   // Fetch user on client side to avoid static-to-dynamic conversion
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch('/api/users/me', {
-          credentials: 'include', // Include cookies
-        })
+  const fetchUser = useCallback(async () => {
+    setIsAuthLoading(true)
+    try {
+      const response = await fetch('/api/users/me', {
+        credentials: 'include', // Include cookies
+        cache: 'no-store',
+      })
 
-        if (response.ok) {
-          const data = await response.json()
-          setUser(data.user || null)
-        } else {
-          setUser(null)
-        }
-      } catch (_error) {
-        // Silently fail - user is not authenticated
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data.user || null)
+      } else {
         setUser(null)
-      } finally {
-        setIsAuthLoading(false)
       }
+    } catch (_error) {
+      // Silently fail - user is not authenticated
+      setUser(null)
+    } finally {
+      setIsAuthLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchUser()
+  }, [fetchUser, pathname])
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      fetchUser()
     }
 
-    fetchUser()
-  }, [])
+    window.addEventListener('auth:changed', handleAuthChange)
+    return () => window.removeEventListener('auth:changed', handleAuthChange)
+  }, [fetchUser])
 
   useEffect(() => {
     setHeaderTheme(null)
