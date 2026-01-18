@@ -1,7 +1,6 @@
-import { beforeAll, beforeEach, afterAll, afterEach, describe, expect, it, vi } from 'vitest'
+import { beforeAll, beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { getPayload, type Payload } from 'payload'
-
-import { startMongoContainer, stopMongoContainer } from '@/utilities/test/mongodb-container'
+import config from '@payload-config'
 import { loginAction } from '@/app/(frontend)/login/login_authenticate-action'
 import { createTestUser } from '../factories/user.factory'
 
@@ -18,29 +17,8 @@ vi.mock('next/headers', () => ({
 describe('Login Action', () => {
   let payload: Payload
   let testUser: { id: string; email: string }
-  let originalDatabaseUrl: string | undefined
-
   beforeAll(async () => {
-    originalDatabaseUrl = process.env.DATABASE_URL
-    // @ts-expect-error - TypeScript doesn't allow delete on process.env, but it's safe here
-    delete process.env.DATABASE_URL
-
-    const mongoUri = await startMongoContainer()
-    process.env.DATABASE_URL = mongoUri
-
-    const config = await import('@payload-config')
-    payload = await getPayload({ config: config.default })
-  }, 120000)
-
-  afterAll(async () => {
-    if (originalDatabaseUrl !== undefined) {
-      process.env.DATABASE_URL = originalDatabaseUrl
-    } else {
-      // @ts-expect-error - TypeScript doesn't allow delete on process.env, but it's safe here
-      delete process.env.DATABASE_URL
-    }
-
-    await stopMongoContainer()
+    payload = await getPayload({ config })
   })
 
   beforeEach(async () => {
