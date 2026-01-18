@@ -39,17 +39,33 @@ export const getMeUser = async (args?: {
     cache: 'no-store',
   })
 
-  const {
-    user,
-  }: {
-    user: User | null
-  } = await meUserReq.json()
+  if (!meUserReq.ok) {
+    if (nullUserRedirect) {
+      redirect(nullUserRedirect)
+    }
+
+    return {
+      token,
+      user: null,
+    }
+  }
+
+  let user: User | null = null
+  try {
+    const contentType = meUserReq.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      const data = (await meUserReq.json()) as { user?: User | null }
+      user = data.user ?? null
+    }
+  } catch {
+    user = null
+  }
 
   if (validUserRedirect && meUserReq.ok && user) {
     redirect(validUserRedirect)
   }
 
-  if (nullUserRedirect && (!meUserReq.ok || !user)) {
+  if (nullUserRedirect && !user) {
     redirect(nullUserRedirect)
   }
 
