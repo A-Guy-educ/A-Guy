@@ -8,13 +8,32 @@ import { isProductionDatabase } from './test-db-constraint'
 let mongoContainer: StartedMongoDBContainer | null = null
 
 /**
- * Start MongoDB test container
+ * Check if we're running in CI with a MongoDB service container
+ * In this case, we skip testcontainers and use the service directly
+ */
+function isUsingMongoService(): boolean {
+  return process.env.USE_MONGO_SERVICE === 'true'
+}
+
+/**
+ * Start MongoDB test container or use CI service container
  * Returns connection URI using localhost (for proper host resolution)
  *
- * Throws error if DATABASE_URL is set to MongoDB Atlas (tests using testcontainers
- * should not have Atlas configured - vector search tests use Atlas directly without testcontainers)
+ * In CI with USE_MONGO_SERVICE=true:
+ * - Returns the service container URL directly (mongodb://localhost:27017/test)
+ * - Skips testcontainers entirely for faster CI
+ *
+ * Locally or without service:
+ * - Starts a testcontainer
+ * - Throws error if DATABASE_URL is set to MongoDB Atlas
  */
 export async function startMongoContainer(): Promise<string> {
+  // In CI with service container, use it directly
+  if (isUsingMongoService()) {
+    console.log('Using MongoDB service container (USE_MONGO_SERVICE=true)')
+    return 'mongodb://localhost:27017/test?directConnection=true'
+  }
+
   // Check if DATABASE_URL is set to Atlas - tests using testcontainers shouldn't have Atlas configured
   const currentDbUrl = process.env.DATABASE_URL
   if (currentDbUrl && isProductionDatabase(currentDbUrl)) {
@@ -46,8 +65,14 @@ export async function startMongoContainer(): Promise<string> {
 
 /**
  * Stop MongoDB test container
+ * No-op when using CI service container (USE_MONGO_SERVICE=true)
  */
 export async function stopMongoContainer(): Promise<void> {
+  // Service container is managed by CI, not us
+  if (process.env.USE_MONGO_SERVICE === 'true') {
+    return
+  }
+
   if (mongoContainer) {
     await mongoContainer.stop()
     mongoContainer = null

@@ -991,6 +991,10 @@ export interface Prompt {
    */
   key?: string | null;
   /**
+   * System prompts are always included. Context prompts are lesson-specific.
+   */
+  type: 'system' | 'context';
+  /**
    * System prompt template for AI tutor
    */
   template: string;
@@ -1894,6 +1898,7 @@ export interface ExercisesSelect<T extends boolean = true> {
 export interface PromptsSelect<T extends boolean = true> {
   title?: T;
   key?: T;
+  type?: T;
   template?: T;
   status?: T;
   isDefaultForAgentChat?: T;
