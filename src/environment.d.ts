@@ -5,6 +5,10 @@ declare global {
       DATABASE_URL: string
       NEXT_PUBLIC_SERVER_URL: string
       VERCEL_PROJECT_PRODUCTION_URL: string
+
+      // Analytics (only keys/tokens - presence enables the platform)
+      NEXT_PUBLIC_GA4_MEASUREMENT_ID?: string
+      NEXT_PUBLIC_MIXPANEL_TOKEN?: string
     }
   }
 }

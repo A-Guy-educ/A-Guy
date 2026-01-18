@@ -1,14 +1,8 @@
 /**
  * Unit tests for prompt composer
  */
-import {
-  LESSON_CONTEXT_BLOCK_END,
-  LESSON_CONTEXT_BLOCK_START,
-} from '@/lib/ai/lesson-context'
-import {
-  composeSystemInstructions,
-  SYSTEM_PROMPT_SEPARATOR,
-} from '@/lib/ai/prompt-composer.server'
+import { LESSON_CONTEXT_BLOCK_END, LESSON_CONTEXT_BLOCK_START } from '@/lib/ai/lesson-context'
+import { composeSystemInstructions, SYSTEM_PROMPT_SEPARATOR } from '@/lib/ai/prompt-composer.server'
 import { describe, expect, it } from 'vitest'
 
 describe('composeSystemInstructions', () => {
@@ -72,20 +66,13 @@ describe('composeSystemInstructions', () => {
   })
 
   it('handles single system prompt correctly', () => {
-    const result = composeSystemInstructions(
-      ['Only system prompt'],
-      'Lesson prompt',
-    )
+    const result = composeSystemInstructions(['Only system prompt'], 'Lesson prompt')
 
     expect(result).toBe(`Only system prompt${SYSTEM_PROMPT_SEPARATOR}Lesson prompt`)
   })
 
   it('handles multiple system prompts with lesson context', () => {
-    const result = composeSystemInstructions(
-      ['Sys1', 'Sys2', 'Sys3'],
-      'Lesson',
-      'Context',
-    )
+    const result = composeSystemInstructions(['Sys1', 'Sys2', 'Sys3'], 'Lesson', 'Context')
 
     // Verify structure
     expect(result).toMatch(/Sys1.*Sys2.*Sys3.*Lesson.*Context/s)

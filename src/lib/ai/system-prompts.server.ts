@@ -26,18 +26,13 @@ export type SystemPromptResult = {
  *
  * If none exist, returns empty array (graceful degradation).
  */
-export async function fetchPublishedSystemPrompts(
-  payload: Payload,
-): Promise<SystemPromptResult> {
+export async function fetchPublishedSystemPrompts(payload: Payload): Promise<SystemPromptResult> {
   try {
     const result = await payload.find({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       collection: 'prompts' as any,
       where: {
-        and: [
-          { type: { equals: 'system' } },
-          { status: { equals: 'published' } },
-        ],
+        and: [{ type: { equals: 'system' } }, { status: { equals: 'published' } }],
       },
       sort: '-createdAt,-id', // DESC order (newest first), we reverse to get ASC
       limit: 100, // Safety limit

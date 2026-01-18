@@ -114,12 +114,16 @@ describe('useNotebookChat', () => {
       result.current.handleQuickAction('hint')
     })
 
-    expect(apiService.chat).toHaveBeenCalledWith(defaultProps.hintPrompt, defaultProps.acknowledgment, {
-      exerciseId: defaultProps.exerciseId,
-      lessonId: undefined,
-      chapterId: undefined,
-      courseId: undefined,
-    })
+    expect(apiService.chat).toHaveBeenCalledWith(
+      defaultProps.hintPrompt,
+      defaultProps.acknowledgment,
+      {
+        exerciseId: defaultProps.exerciseId,
+        lessonId: undefined,
+        chapterId: undefined,
+        courseId: undefined,
+      },
+    )
   })
 
   it('resets conversation after confirmation', async () => {

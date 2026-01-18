@@ -281,23 +281,26 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
       // Fetch prompt separately if lesson has one (admin-only, requires override)
       if ((lesson as { prompt?: unknown }).prompt) {
-        const promptId = typeof (lesson as { prompt: unknown }).prompt === 'string'
-          ? (lesson as { prompt: string }).prompt
-          : (lesson as { prompt: { id: string } }).prompt.id
+        const promptId =
+          typeof (lesson as { prompt: unknown }).prompt === 'string'
+            ? (lesson as { prompt: string }).prompt
+            : (lesson as { prompt: { id: string } }).prompt.id
 
         try {
-          lessonPrompt = await req.payload.findByID({
+          lessonPrompt = (await req.payload.findByID({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             collection: 'prompts' as any,
             id: promptId,
             overrideAccess: true, // Prompts are admin-only
-          }) as Prompt | null
+          })) as Prompt | null
         } catch (error) {
-          reqLogger.warn({ err: error, promptId, lessonId: context.value }, 'Failed to fetch lesson prompt')
+          reqLogger.warn(
+            { err: error, promptId, lessonId: context.value },
+            'Failed to fetch lesson prompt',
+          )
           // Continue with null - will fall back to default
         }
       }
-
     } else if (context.relationTo === 'exercises') {
       // Exercise context - inherit parent lesson's prompt
       const exercise = await req.payload.findByID({
@@ -308,9 +311,10 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       })
 
       if ((exercise as { lesson?: unknown }).lesson) {
-        const lessonId = typeof (exercise as { lesson: unknown }).lesson === 'string'
-          ? (exercise as { lesson: string }).lesson
-          : (exercise as { lesson: { id: string } }).lesson.id
+        const lessonId =
+          typeof (exercise as { lesson: unknown }).lesson === 'string'
+            ? (exercise as { lesson: string }).lesson
+            : (exercise as { lesson: { id: string } }).lesson.id
 
         // Fetch lesson with access checks
         const lesson = await req.payload.findByID({
@@ -320,21 +324,23 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
           user: req.user, // Pass user for access control
           // DO NOT use overrideAccess here
         })
-        lessonContextText = (lesson as { lessonContextText?: string }).lessonContextText ?? undefined
+        lessonContextText =
+          (lesson as { lessonContextText?: string }).lessonContextText ?? undefined
 
         // Fetch prompt separately if lesson has one
         if ((lesson as { prompt?: unknown }).prompt) {
-          const promptId = typeof (lesson as { prompt: unknown }).prompt === 'string'
-            ? (lesson as { prompt: string }).prompt
-            : (lesson as { prompt: { id: string } }).prompt.id
+          const promptId =
+            typeof (lesson as { prompt: unknown }).prompt === 'string'
+              ? (lesson as { prompt: string }).prompt
+              : (lesson as { prompt: { id: string } }).prompt.id
 
           try {
-            lessonPrompt = await req.payload.findByID({
+            lessonPrompt = (await req.payload.findByID({
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               collection: 'prompts' as any,
               id: promptId,
               overrideAccess: true,
-            }) as Prompt | null
+            })) as Prompt | null
           } catch (error) {
             reqLogger.warn({ err: error, promptId, lessonId }, 'Failed to fetch lesson prompt')
           }
@@ -379,7 +385,10 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       )
     } catch (error) {
       if (error instanceof Error && error.message.includes('exceeds maximum')) {
-        return Response.json({ error: 'Lesson context exceeds maximum allowed size' }, { status: 400 })
+        return Response.json(
+          { error: 'Lesson context exceeds maximum allowed size' },
+          { status: 400 },
+        )
       }
       throw error
     }
@@ -534,7 +543,12 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     })
   } catch (error) {
     // Handle connection reset errors gracefully (client disconnected)
-    if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'ECONNRESET') {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error as { code: string }).code === 'ECONNRESET'
+    ) {
       reqLogger.debug({ err: error }, 'Client disconnected during chat request')
       // Return 499 (Client Closed Request) or 200 to avoid error logs
       return Response.json({ error: 'Request cancelled' }, { status: 499 })

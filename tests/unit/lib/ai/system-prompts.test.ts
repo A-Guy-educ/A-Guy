@@ -42,10 +42,7 @@ describe('fetchPublishedSystemPrompts', () => {
       expect.objectContaining({
         sort: '-createdAt,-id',
         where: {
-          and: [
-            { type: { equals: 'system' } },
-            { status: { equals: 'published' } },
-          ],
+          and: [{ type: { equals: 'system' } }, { status: { equals: 'published' } }],
         },
       }),
     )
@@ -122,10 +119,7 @@ describe('fetchPublishedSystemPrompts', () => {
     expect(mockPayload.find).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          and: [
-            { type: { equals: 'system' } },
-            { status: { equals: 'published' } },
-          ],
+          and: [{ type: { equals: 'system' } }, { status: { equals: 'published' } }],
         },
       }),
     )
@@ -136,9 +130,24 @@ describe('fetchPublishedSystemPrompts', () => {
     // After reverse, should be ASC order (oldest first)
     mockPayload.find.mockResolvedValue({
       docs: [
-        { id: 'id3', title: 'Third (Newest)', template: 'Third content', createdAt: '2024-01-03T00:00:00Z' },
-        { id: 'id2', title: 'Second (Middle)', template: 'Second content', createdAt: '2024-01-02T00:00:00Z' },
-        { id: 'id1', title: 'First (Oldest)', template: 'First content', createdAt: '2024-01-01T00:00:00Z' },
+        {
+          id: 'id3',
+          title: 'Third (Newest)',
+          template: 'Third content',
+          createdAt: '2024-01-03T00:00:00Z',
+        },
+        {
+          id: 'id2',
+          title: 'Second (Middle)',
+          template: 'Second content',
+          createdAt: '2024-01-02T00:00:00Z',
+        },
+        {
+          id: 'id1',
+          title: 'First (Oldest)',
+          template: 'First content',
+          createdAt: '2024-01-01T00:00:00Z',
+        },
       ],
     })
 
