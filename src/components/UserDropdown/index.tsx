@@ -25,6 +25,7 @@ export function UserDropdown({ user }: { user: User }) {
   async function handleLogout() {
     setIsLoggingOut(true)
     await logoutAction()
+    window.dispatchEvent(new Event('auth:changed'))
     router.push('/login')
     router.refresh()
   }
