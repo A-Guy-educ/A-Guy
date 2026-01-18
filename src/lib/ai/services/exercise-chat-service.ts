@@ -7,7 +7,7 @@ import type { ComposedPrompt } from '../context-policy'
 import { AI_MODELS } from '../models'
 import {
   generateChatCompletion,
-  type ChatMessage as ProviderChatMessage
+  type ChatMessage as ProviderChatMessage,
 } from '../providers/gemini'
 
 export interface ChatMessage {
@@ -62,10 +62,11 @@ export async function chatWithExerciseHelper(
     } else {
       // Legacy path
       systemPrompt = getSystemPrompt()
-      messages = input.conversationHistory?.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })) ?? []
+      messages =
+        input.conversationHistory?.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })) ?? []
       // Add current message
       messages.push({ role: 'user', content: input.message })
     }

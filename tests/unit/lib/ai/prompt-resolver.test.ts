@@ -58,13 +58,15 @@ describe('resolveAgentSystemPrompt', () => {
         updatedAt: '',
       }
       mockPayload.find.mockResolvedValue({
-        docs: [{
-          id: 'default-1',
-          title: 'Default',
-          template: 'Default template.',
-          status: 'published',
-          type: 'context',
-        }],
+        docs: [
+          {
+            id: 'default-1',
+            title: 'Default',
+            template: 'Default template.',
+            status: 'published',
+            type: 'context',
+          },
+        ],
         totalDocs: 1,
       })
 
@@ -102,7 +104,15 @@ describe('resolveAgentSystemPrompt', () => {
   describe('when lessonPrompt is null', () => {
     it('uses default prompt', async () => {
       mockPayload.find.mockResolvedValue({
-        docs: [{ id: 'default-1', title: 'Default', template: 'Default.', status: 'published', type: 'context' }],
+        docs: [
+          {
+            id: 'default-1',
+            title: 'Default',
+            template: 'Default.',
+            status: 'published',
+            type: 'context',
+          },
+        ],
         totalDocs: 1,
       })
 
@@ -129,7 +139,15 @@ describe('resolveAgentSystemPrompt', () => {
   describe('multiple defaults warning', () => {
     it('logs warning when multiple defaults exist and uses first', async () => {
       mockPayload.find.mockResolvedValue({
-        docs: [{ id: 'default-1', title: 'First', template: 'First.', status: 'published', type: 'context' }],
+        docs: [
+          {
+            id: 'default-1',
+            title: 'First',
+            template: 'First.',
+            status: 'published',
+            type: 'context',
+          },
+        ],
         totalDocs: 3,
       })
 

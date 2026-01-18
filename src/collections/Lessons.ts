@@ -24,9 +24,10 @@ export const Lessons: CollectionConfig = {
         if (data?.title && !data?.slug) {
           // Generate unique slug from title
           // Include timestamp for uniqueness, falling back to random if timestamp not available
-          const timestamp = typeof data.createdAt === 'string'
-            ? data.createdAt.replace(/[^0-9]/g, '').slice(-6)
-            : Date.now().toString().slice(-6)
+          const timestamp =
+            typeof data.createdAt === 'string'
+              ? data.createdAt.replace(/[^0-9]/g, '').slice(-6)
+              : Date.now().toString().slice(-6)
           data.slug = `${formatSlug(data.title)}-${timestamp}`
         }
         return data
@@ -120,7 +121,8 @@ export const Lessons: CollectionConfig = {
       type: 'textarea',
       maxLength: 100_000, // Match LESSON_CONTEXT_MAX_CHARS in src/lib/ai/lesson-context.ts
       admin: {
-        description: 'AI context text for this lesson. Injected into chat prompts at runtime. NOT indexed or searchable.',
+        description:
+          'AI context text for this lesson. Injected into chat prompts at runtime. NOT indexed or searchable.',
       },
       // NOT indexed, NOT required
     },

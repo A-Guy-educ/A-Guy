@@ -148,7 +148,9 @@ export function useNotebookChat({
                   contextKey,
                   conversationId: result.conversationId,
                   messageCount: loadedMessages.length,
-                  messagesPreview: loadedMessages.slice(0, 2).map(m => ({ role: m.role, content: m.content.substring(0, 30) })),
+                  messagesPreview: loadedMessages
+                    .slice(0, 2)
+                    .map((m) => ({ role: m.role, content: m.content.substring(0, 30) })),
                 },
                 '[useNotebookChat] Loaded conversation history',
               )

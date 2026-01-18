@@ -76,10 +76,7 @@ export async function generateChatCompletion(
 
       // Don't retry non-retryable errors
       if (!isRetryableError(lastError)) {
-        logger.error(
-          { err: lastError, attempt },
-          '[GeminiProvider] Non-retryable error',
-        )
+        logger.error({ err: lastError, attempt }, '[GeminiProvider] Non-retryable error')
         throw geminiError
       }
 
@@ -119,16 +116,12 @@ async function executeWithTimeout(
   })
 
   // Build messages array with system message first
-  const allMessages: ChatMessage[] = [
-    { role: 'system', content: input.system },
-    ...input.messages,
-  ]
+  const allMessages: ChatMessage[] = [{ role: 'system', content: input.system }, ...input.messages]
 
   // Get the current user message (last user message in the array)
   const userMessages = input.messages.filter((m) => m.role === 'user')
-  const currentMessage = userMessages.length > 0
-    ? userMessages[userMessages.length - 1].content
-    : ''
+  const currentMessage =
+    userMessages.length > 0 ? userMessages[userMessages.length - 1].content : ''
 
   // Map to Gemini format
   const { history, currentMessage: finalMessage } = mapMessagesToGeminiHistory(
@@ -155,10 +148,7 @@ async function executeWithTimeout(
 
   // Execute chat with timeout
   const chat = model.startChat({ history })
-  const result = await Promise.race([
-    chat.sendMessage(finalMessage),
-    timeoutPromise,
-  ])
+  const result = await Promise.race([chat.sendMessage(finalMessage), timeoutPromise])
 
   const text = extractResponseText(result.response)
 
@@ -178,4 +168,3 @@ function sleep(ms: number): Promise<void> {
 
 export { isGeminiApiKeyConfigured } from './gemini.client'
 export { GeminiError, GeminiErrorCode } from './gemini.errors'
-

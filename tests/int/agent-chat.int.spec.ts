@@ -187,7 +187,11 @@ afterAll(async () => {
   // Cleanup system prompt
   if (testSystemPromptId) {
     try {
-      await payload.delete({ collection: 'prompts', id: testSystemPromptId, overrideAccess: true } as any)
+      await payload.delete({
+        collection: 'prompts',
+        id: testSystemPromptId,
+        overrideAccess: true,
+      } as any)
     } catch {
       // Ignore cleanup errors
     }
@@ -368,9 +372,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
   describe('system prompts', () => {
     it('includes published system prompts in composed prompt', async () => {
-      const { chatWithExerciseHelper } = await import(
-        '@/lib/ai/services/exercise-chat-service'
-      )
+      const { chatWithExerciseHelper } = await import('@/lib/ai/services/exercise-chat-service')
 
       const lesson = await payload.create({
         collection: 'lessons',
@@ -415,9 +417,8 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
     it('prepends system prompts in createdAt ASC order', async () => {
       // Import after mocks are set up to get the mocked version
-      const chatWithExerciseHelper = (await import(
-        '@/lib/ai/services/exercise-chat-service'
-      )).chatWithExerciseHelper as ReturnType<typeof vi.fn>
+      const chatWithExerciseHelper = (await import('@/lib/ai/services/exercise-chat-service'))
+        .chatWithExerciseHelper as ReturnType<typeof vi.fn>
 
       // Delete existing system prompt from beforeAll to ensure clean test
       if (testSystemPromptId) {
@@ -489,9 +490,12 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
       // Get the call arguments - use last call to ensure we get this test's call
       // Previous tests in this describe block may have called the mock
-      const mockCalls = (chatWithExerciseHelper as unknown as { mock: { calls: Array<[unknown]> } }).mock.calls
+      const mockCalls = (chatWithExerciseHelper as unknown as { mock: { calls: Array<[unknown]> } })
+        .mock.calls
       const lastCallIndex = mockCalls.length - 1
-      const callArgs = mockCalls[lastCallIndex]?.[0] as { composedPrompt: { messages: Array<{ role: string; content: string }> } }
+      const callArgs = mockCalls[lastCallIndex]?.[0] as {
+        composedPrompt: { messages: Array<{ role: string; content: string }> }
+      }
       const systemMessage = callArgs?.composedPrompt?.messages?.find(
         (m: { role: string }) => m.role === 'system',
       )?.content
@@ -515,9 +519,9 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
       if (indexA > indexB) {
         throw new Error(
           `System prompts not ordered correctly by createdAt ASC. ` +
-          `Expected SYS_MARKER_A (created first) at position ${indexB}, ` +
-          `but found at position ${indexA}. ` +
-          `Actual order: B before A (newer before older)`,
+            `Expected SYS_MARKER_A (created first) at position ${indexB}, ` +
+            `but found at position ${indexA}. ` +
+            `Actual order: B before A (newer before older)`,
         )
       }
 

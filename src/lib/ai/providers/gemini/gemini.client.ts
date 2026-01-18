@@ -22,9 +22,7 @@ export function isGeminiApiKeyConfigured(): boolean {
 export function getGeminiClient(): GoogleGenerativeAI {
   if (!geminiClient) {
     if (!process.env.GEMINI_API_KEY) {
-      throw new Error(
-        'GEMINI_API_KEY environment variable is not configured.',
-      )
+      throw new Error('GEMINI_API_KEY environment variable is not configured.')
     }
     geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   }

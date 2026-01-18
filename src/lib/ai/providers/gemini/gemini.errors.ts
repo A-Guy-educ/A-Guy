@@ -81,18 +81,8 @@ export function wrapGeminiError(error: Error): GeminiError {
   }
 
   if (message.includes('invalid') || message.includes('validation')) {
-    return new GeminiError(
-      error.message,
-      GeminiErrorCode.VALIDATION_ERROR,
-      false,
-      error,
-    )
+    return new GeminiError(error.message, GeminiErrorCode.VALIDATION_ERROR, false, error)
   }
 
-  return new GeminiError(
-    error.message,
-    GeminiErrorCode.API_ERROR,
-    true,
-    error,
-  )
+  return new GeminiError(error.message, GeminiErrorCode.API_ERROR, true, error)
 }

@@ -82,72 +82,71 @@ let testLessonId: string
 let testLessonIdB: string
 let testChapterId: string
 
-beforeAll(
-  async () => {
-    payload = await getPayload({ config })
+beforeAll(async () => {
+  payload = await getPayload({ config })
 
-    // Create test user
-    const user = await payload.create({
-      collection: 'users',
-      data: {
-        email: `lesson-context-int-${Date.now()}@example.com`,
-        password: 'test123456',
-        role: 'student',
-      },
-    })
-    testUserId = user.id
+  // Create test user
+  const user = await payload.create({
+    collection: 'users',
+    data: {
+      email: `lesson-context-int-${Date.now()}@example.com`,
+      password: 'test123456',
+      role: 'student',
+    },
+  })
+  testUserId = user.id
 
-    // Create a chapter (required for lessons)
-    const chapters = await payload.find({
+  // Create a chapter (required for lessons)
+  const chapters = await payload.find({
+    collection: 'chapters',
+    limit: 1,
+  })
+
+  if (chapters.docs.length > 0) {
+    testChapterId = chapters.docs[0].id
+  } else {
+    const chapter = await payload.create({
       collection: 'chapters',
-      limit: 1,
-    })
-
-    if (chapters.docs.length > 0) {
-      testChapterId = chapters.docs[0].id
-    } else {
-      const chapter = await payload.create({
-        collection: 'chapters',
-        data: {
-          title: 'Test Chapter for Lesson Context',
-        },
-        draft: true,
-      })
-      testChapterId = chapter.id
-    }
-
-    // Create lesson A with context text
-    const lessonA = await payload.create({
-      collection: 'lessons',
       data: {
-        chapter: testChapterId,
-        title: 'Lesson A with Context',
-        lessonContextText: 'This is the context for Lesson A. It contains important information about algebra.',
-        status: 'published',
-        isActive: true,
-        order: 0,
-      } as any,
-      draft: false,
+        title: 'Test Chapter for Lesson Context',
+      },
+      draft: true,
     })
-    testLessonId = lessonA.id
+    testChapterId = chapter.id
+  }
 
-    // Create lesson B with different context text
-    const lessonB = await payload.create({
-      collection: 'lessons',
-      data: {
-        chapter: testChapterId,
-        title: 'Lesson B with Context',
-        lessonContextText: 'This is the context for Lesson B. It contains information about geometry.',
-        status: 'published',
-        isActive: true,
-        order: 1,
-      } as any,
-      draft: false,
-    })
-    testLessonIdB = lessonB.id
-  },
-  60000,
-)
+  // Create lesson A with context text
+  const lessonA = await payload.create({
+    collection: 'lessons',
+    data: {
+      chapter: testChapterId,
+      title: 'Lesson A with Context',
+      lessonContextText:
+        'This is the context for Lesson A. It contains important information about algebra.',
+      status: 'published',
+      isActive: true,
+      order: 0,
+    } as any,
+    draft: false,
+  })
+  testLessonId = lessonA.id
+
+  // Create lesson B with different context text
+  const lessonB = await payload.create({
+    collection: 'lessons',
+    data: {
+      chapter: testChapterId,
+      title: 'Lesson B with Context',
+      lessonContextText:
+        'This is the context for Lesson B. It contains information about geometry.',
+      status: 'published',
+      isActive: true,
+      order: 1,
+    } as any,
+    draft: false,
+  })
+  testLessonIdB = lessonB.id
+}, 60000)
 
 afterAll(async () => {
   if (!payload) return
@@ -331,9 +330,7 @@ describe.skipIf(!hasDatabaseUrl)('Lesson Context Injection', () => {
         id: conversationId,
       })
 
-      const allMessageContent = (conversation.messages || [])
-        .map((m) => m.content || '')
-        .join(' ')
+      const allMessageContent = (conversation.messages || []).map((m) => m.content || '').join(' ')
 
       expect(allMessageContent).not.toContain(LESSON_CONTEXT_BLOCK_START)
     }

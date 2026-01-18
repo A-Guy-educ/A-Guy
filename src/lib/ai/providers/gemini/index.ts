@@ -8,7 +8,11 @@
  */
 export {
   GeminiError,
-  GeminiErrorCode, generateChatCompletion, isGeminiApiKeyConfigured, type AIModel, type ChatMessage, type GenerateChatInput,
-  type GenerateChatOutput
-} from './gemini.provider';
-
+  GeminiErrorCode,
+  generateChatCompletion,
+  isGeminiApiKeyConfigured,
+  type AIModel,
+  type ChatMessage,
+  type GenerateChatInput,
+  type GenerateChatOutput,
+} from './gemini.provider'

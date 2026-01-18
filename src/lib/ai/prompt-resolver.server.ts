@@ -49,7 +49,11 @@ export async function resolveAgentSystemPrompt(
     }
     // Prompt exists but not published or has no template
     logger.debug(
-      { promptId: lessonPrompt.id, status: lessonPrompt.status, hasTemplate: !!lessonPrompt.template?.trim() },
+      {
+        promptId: lessonPrompt.id,
+        status: lessonPrompt.status,
+        hasTemplate: !!lessonPrompt.template?.trim(),
+      },
       'Lesson prompt not usable, falling back',
     )
   }
@@ -60,10 +64,7 @@ export async function resolveAgentSystemPrompt(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       collection: 'prompts' as any,
       where: {
-        and: [
-          { isDefaultForAgentChat: { equals: true } },
-          { status: { equals: 'published' } },
-        ],
+        and: [{ isDefaultForAgentChat: { equals: true } }, { status: { equals: 'published' } }],
       },
       limit: 1,
       overrideAccess: true,
