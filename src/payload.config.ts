@@ -17,8 +17,9 @@ import { MemoryItems } from './collections/MemoryItems'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { PricingPlans } from './collections/PricingPlans'
-import { Users } from './collections/Users'
+import { Prompts } from './collections/Prompts'
 import { UserProgress } from './collections/UserProgress'
+import { Users } from './collections/Users'
 import { importExerciseFromImage } from './endpoints/exercises/import-from-image'
 import { importExerciseFromLesson } from './endpoints/exercises/import-from-lesson'
 import { Footer } from './Footer/config'
@@ -90,6 +91,7 @@ export default buildConfig({
     Chapters,
     Lessons,
     Exercises,
+    Prompts,
     ExerciseAssets,
     Users,
     UserProgress,

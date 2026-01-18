@@ -10,7 +10,6 @@ import type { ProductEvent } from './contracts/events'
 export interface AnalyticsConfig {
   enabled: boolean
   debugMode: boolean
-  dryRun: boolean
   ga4: {
     measurementId: string | undefined
     enabled: boolean

@@ -2,7 +2,7 @@
  * Analytics Configuration
  *
  * Environment-based configuration for analytics system
- * All settings controlled via environment variables
+ * Simplified: presence of token/key enables the platform
  */
 
 import type { AnalyticsConfig } from './types'
@@ -10,12 +10,11 @@ import type { AnalyticsConfig } from './types'
 /**
  * Get analytics configuration from environment variables
  *
- * Feature flags:
- * - NEXT_PUBLIC_ANALYTICS_ENABLED: Master switch
- * - NEXT_PUBLIC_ANALYTICS_DEBUG: Log events to console
- * - NEXT_PUBLIC_ANALYTICS_DRY_RUN: Log without sending to platforms
- * - NEXT_PUBLIC_GA4_ENABLED: Enable GA4
- * - NEXT_PUBLIC_MIXPANEL_ENABLED: Enable Mixpanel
+ * Simple rule: If a token/key is set, that platform is enabled
+ * - NEXT_PUBLIC_GA4_MEASUREMENT_ID: Enables GA4
+ * - NEXT_PUBLIC_MIXPANEL_TOKEN: Enables Mixpanel
+ *
+ * Debug mode is enabled in development only
  */
 export function getAnalyticsConfig(): AnalyticsConfig {
   const isClient = typeof window !== 'undefined'
@@ -25,33 +24,32 @@ export function getAnalyticsConfig(): AnalyticsConfig {
     return {
       enabled: false,
       debugMode: false,
-      dryRun: false,
       ga4: { measurementId: undefined, enabled: false },
       mixpanel: { token: undefined, enabled: false },
     }
   }
 
-  const enabled = process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === 'true'
-  const debugMode = process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === 'true'
-  const dryRun = process.env.NEXT_PUBLIC_ANALYTICS_DRY_RUN === 'true'
-
   const ga4MeasurementId = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID
-  const ga4Enabled = process.env.NEXT_PUBLIC_GA4_ENABLED === 'true' && !!ga4MeasurementId
-
   const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN
-  const mixpanelEnabled = process.env.NEXT_PUBLIC_MIXPANEL_ENABLED === 'true' && !!mixpanelToken
+
+  // Analytics is enabled if at least one platform has credentials
+  const ga4Enabled = !!ga4MeasurementId
+  const mixpanelEnabled = !!mixpanelToken
+  const enabled = ga4Enabled || mixpanelEnabled
+
+  // Debug mode only in development
+  const debugMode = process.env.NODE_ENV === 'development'
 
   return {
     enabled,
     debugMode,
-    dryRun,
     ga4: {
       measurementId: ga4MeasurementId,
-      enabled: enabled && ga4Enabled,
+      enabled: ga4Enabled,
     },
     mixpanel: {
       token: mixpanelToken,
-      enabled: enabled && mixpanelEnabled,
+      enabled: mixpanelEnabled,
     },
   }
 }
@@ -67,23 +65,14 @@ export const analyticsConfig = getAnalyticsConfig()
 export function validateConfig(): void {
   if (!analyticsConfig.enabled) {
     if (analyticsConfig.debugMode) {
-      console.log('[Analytics] Disabled via NEXT_PUBLIC_ANALYTICS_ENABLED')
+      console.log('[Analytics] Disabled - no platform credentials configured')
     }
     return
-  }
-
-  if (analyticsConfig.dryRun) {
-    console.log('[Analytics] Dry-run mode enabled - events will be logged but not sent')
-  }
-
-  if (!analyticsConfig.ga4.enabled && !analyticsConfig.mixpanel.enabled) {
-    console.warn('[Analytics] Enabled but no platforms configured (GA4 and Mixpanel both disabled)')
   }
 
   if (analyticsConfig.debugMode) {
     console.log('[Analytics] Configuration:', {
       enabled: analyticsConfig.enabled,
-      dryRun: analyticsConfig.dryRun,
       ga4Enabled: analyticsConfig.ga4.enabled,
       mixpanelEnabled: analyticsConfig.mixpanel.enabled,
     })

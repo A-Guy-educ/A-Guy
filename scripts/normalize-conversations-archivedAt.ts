@@ -51,9 +51,7 @@ async function normalizeConversations() {
 
     // Step 1: Remove archivedAt: null (should be missing field instead)
     console.log('🔍 Step 1: Finding conversations with archivedAt: null...')
-    const nullArchivedDocs = await collection
-      .find({ archivedAt: null })
-      .toArray()
+    const nullArchivedDocs = await collection.find({ archivedAt: null }).toArray()
 
     if (nullArchivedDocs.length > 0) {
       console.log(`   Found ${nullArchivedDocs.length} conversations with archivedAt: null`)
@@ -70,9 +68,7 @@ async function normalizeConversations() {
 
     // Step 2: Find active conversations (archivedAt field missing)
     console.log('🔍 Step 2: Finding active conversations (archivedAt field missing)...')
-    const activeConversations = await collection
-      .find({ archivedAt: { $exists: false } })
-      .toArray()
+    const activeConversations = await collection.find({ archivedAt: { $exists: false } }).toArray()
 
     console.log(`   Found ${activeConversations.length} active conversations\n`)
 
@@ -83,9 +79,18 @@ async function normalizeConversations() {
     for (const conv of activeConversations) {
       let key: string
       // Handle ObjectId or string for user/exercise/lesson
-      const userId = typeof conv.user === 'string' ? conv.user : conv.user?.toString() || String(conv.user)
-      const exerciseId = conv.exercise ? (typeof conv.exercise === 'string' ? conv.exercise : conv.exercise?.toString() || String(conv.exercise)) : null
-      const lessonId = conv.lesson ? (typeof conv.lesson === 'string' ? conv.lesson : conv.lesson?.toString() || String(conv.lesson)) : null
+      const userId =
+        typeof conv.user === 'string' ? conv.user : conv.user?.toString() || String(conv.user)
+      const exerciseId = conv.exercise
+        ? typeof conv.exercise === 'string'
+          ? conv.exercise
+          : conv.exercise?.toString() || String(conv.exercise)
+        : null
+      const lessonId = conv.lesson
+        ? typeof conv.lesson === 'string'
+          ? conv.lesson
+          : conv.lesson?.toString() || String(conv.lesson)
+        : null
 
       if (exerciseId) {
         key = `${userId}:exercise:${exerciseId}`
@@ -136,15 +141,16 @@ async function normalizeConversations() {
       const toArchive = sorted.slice(1)
 
       console.log(`   Context: ${contextType}:${contextId}`)
-      console.log(`   Keeping: ${toKeep._id} (${toKeep.messages?.length || 0} messages, last: ${new Date(toKeep.lastMessageAt || toKeep.updatedAt || 0).toISOString()})`)
+      console.log(
+        `   Keeping: ${toKeep._id} (${toKeep.messages?.length || 0} messages, last: ${new Date(toKeep.lastMessageAt || toKeep.updatedAt || 0).toISOString()})`,
+      )
 
       for (const conv of toArchive) {
         // INVARIANT: Archive by setting archivedAt. Use $set to add the field.
-        await collection.updateOne(
-          { _id: conv._id },
-          { $set: { archivedAt: new Date() } },
+        await collection.updateOne({ _id: conv._id }, { $set: { archivedAt: new Date() } })
+        console.log(
+          `   Archived: ${conv._id} (${conv.messages?.length || 0} messages, last: ${new Date(conv.lastMessageAt || conv.updatedAt || 0).toISOString()})`,
         )
-        console.log(`   Archived: ${conv._id} (${conv.messages?.length || 0} messages, last: ${new Date(conv.lastMessageAt || conv.updatedAt || 0).toISOString()})`)
         archivedCount++
       }
       console.log()
@@ -157,17 +163,24 @@ async function normalizeConversations() {
 
     // Verification: Check for remaining duplicates
     console.log('🔍 Verification: Checking for remaining duplicates...')
-    const remainingActive = await collection
-      .find({ archivedAt: { $exists: false } })
-      .toArray()
+    const remainingActive = await collection.find({ archivedAt: { $exists: false } }).toArray()
 
     const remainingGrouped = new Map<string, Conversation[]>()
     for (const conv of remainingActive) {
       let key: string
       // Handle ObjectId or string for user/exercise/lesson
-      const userId = typeof conv.user === 'string' ? conv.user : conv.user?.toString() || String(conv.user)
-      const exerciseId = conv.exercise ? (typeof conv.exercise === 'string' ? conv.exercise : conv.exercise?.toString() || String(conv.exercise)) : null
-      const lessonId = conv.lesson ? (typeof conv.lesson === 'string' ? conv.lesson : conv.lesson?.toString() || String(conv.lesson)) : null
+      const userId =
+        typeof conv.user === 'string' ? conv.user : conv.user?.toString() || String(conv.user)
+      const exerciseId = conv.exercise
+        ? typeof conv.exercise === 'string'
+          ? conv.exercise
+          : conv.exercise?.toString() || String(conv.exercise)
+        : null
+      const lessonId = conv.lesson
+        ? typeof conv.lesson === 'string'
+          ? conv.lesson
+          : conv.lesson?.toString() || String(conv.lesson)
+        : null
 
       if (exerciseId) {
         key = `${userId}:exercise:${exerciseId}`

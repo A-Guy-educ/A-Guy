@@ -54,10 +54,7 @@ DATABASE_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database
 # OpenAI API key
 OPENAI_API_KEY=sk-proj-...
 
-# Enable features
-SUMMARY_MAINTENANCE_ENABLED=true
-MEMORY_EXTRACTION_ENABLED=true
-MEMORY_RETRIEVAL_ENABLED=true
+# Memory features are enabled by default
 ```
 
 ## Step 3: Verify Setup

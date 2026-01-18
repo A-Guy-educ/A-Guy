@@ -1,8 +1,7 @@
 import { notFound } from 'next/navigation'
 import { queryCourseBySlug } from '@/lib/queries/courses'
 import { queryLessonBySlug } from '@/lib/queries/lessons'
-import { queryExercisesByLesson } from '@/lib/queries/exercises'
-import type { Exercise, Media } from '@/payload-types'
+import type { Media } from '@/payload-types'
 import { Media as MediaComponent } from '@/components/Media'
 import { EmptyState } from '../../../../../_components/EmptyState'
 import { ExerciseWorkspace } from './exercises/[exerciseId]/_components/ExerciseWorkspace'
@@ -42,14 +41,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
     notFound()
   }
 
-  // Fetch exercises for this lesson (used for chat context)
-  const exercises = await queryExercisesByLesson({ lessonId: lesson.id })
-
-  // Use the first exercise as the primary chat context when available,
-  // otherwise use the lesson ID for lesson-scoped conversation.
-  const primaryExercise = exercises[0] as Exercise | undefined
-  const chatExerciseId = primaryExercise?.id
-  const chatLessonId = primaryExercise ? undefined : lesson.id
+  // Use lesson-scoped chat context to keep history stable across refreshes
+  const chatLessonId = lesson.id
 
   const validFiles =
     lesson.contentFiles
@@ -84,7 +77,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         exerciseTitle={lesson.title}
         backUrl={`/courses/${courseSlug}/chapters/${chapterSlug}`}
         pdfContent={pdfContent}
-        chatContent={<ChatInterface exerciseId={chatExerciseId} lessonId={chatLessonId} />}
+        chatContent={<ChatInterface lessonId={chatLessonId} />}
       />
     </>
   )

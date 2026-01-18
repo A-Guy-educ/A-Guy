@@ -15,7 +15,7 @@ import type { ValidationResult } from '../types'
  *
  * Behavior:
  * - Development/Staging: Block unknown/invalid events (throw error)
- * - Production: Log warning and return best-effort validation
+ * - Production: Log warning and continue best-effort (return success with raw data)
  *
  * @param event - Event name to validate
  * @param properties - Event properties to validate
@@ -25,29 +25,23 @@ export function validateEvent(
   event: string,
   properties?: Record<string, unknown>,
 ): ValidationResult {
+  const rawData = properties || {}
+
   // Check if event name is valid
   if (!isValidEvent(event)) {
-    const error = {
-      message: `Unknown event: ${event}. Only canonical events are allowed.`,
-      issues: [
-        {
-          path: ['event'],
-          message: `Event "${event}" is not in the canonical event list`,
-        },
-      ],
-    }
+    const errorMsg = `Unknown event: ${event}. Only canonical events are allowed.`
 
-    // In production: log warning and continue best-effort
+    // In production: log warning and continue best-effort with raw data
     if (process.env.NODE_ENV === 'production') {
-      console.warn('[Analytics] Invalid event (production mode - continuing):', error.message)
+      console.warn('[Analytics] Invalid event (production mode - continuing):', errorMsg)
       return {
-        success: false,
-        error,
+        success: true,
+        data: rawData,
       }
     }
 
     // In dev/staging: throw error to catch issues early
-    throw new Error(error.message)
+    throw new Error(errorMsg)
   }
 
   // Get schema for this event
@@ -60,7 +54,7 @@ export function validateEvent(
 
   try {
     // Validate properties against schema
-    const validatedData = schema.parse(properties || {})
+    const validatedData = schema.parse(rawData)
 
     return {
       success: true,
@@ -69,29 +63,25 @@ export function validateEvent(
   } catch (err) {
     if (err instanceof ZodError) {
       const zodIssues: ZodIssue[] = err.issues || []
-      const error = {
-        message: `Invalid properties for event "${event}"`,
-        issues: zodIssues.map((issue) => ({
-          path: issue.path.map(String),
-          message: issue.message,
-        })),
-      }
+      const errorDetails = zodIssues.map((issue) => ({
+        path: issue.path.map(String),
+        message: issue.message,
+      }))
 
-      // In production: log warning and continue best-effort
+      // In production: log warning and continue best-effort with raw data
       if (process.env.NODE_ENV === 'production') {
         console.warn('[Analytics] Validation failed (production mode - continuing):', {
           event,
-          error: error.message,
-          issues: error.issues,
+          issues: errorDetails,
         })
         return {
-          success: false,
-          error,
+          success: true,
+          data: rawData,
         }
       }
 
       // In dev/staging: throw error with detailed info
-      const errorMessage = `${error.message}\n${error.issues.map((i) => `  - ${i.path.join('.')}: ${i.message}`).join('\n')}`
+      const errorMessage = `Invalid properties for event "${event}"\n${errorDetails.map((i) => `  - ${i.path.join('.')}: ${i.message}`).join('\n')}`
       throw new Error(errorMessage)
     }
 

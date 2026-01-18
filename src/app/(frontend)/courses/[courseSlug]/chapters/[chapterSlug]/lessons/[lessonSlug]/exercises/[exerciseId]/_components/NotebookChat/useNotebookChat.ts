@@ -18,6 +18,9 @@ interface UseNotebookChatProps {
   hintPrompt: string
   solutionPrompt: string
   fullSolutionPrompt: string
+  resetConfirmMessage: string
+  resetSuccessMessage: string
+  resetErrorMessage: string
   acknowledgment: string
   exerciseId?: string
   lessonId?: string
@@ -32,6 +35,9 @@ export function useNotebookChat({
   hintPrompt,
   solutionPrompt,
   fullSolutionPrompt,
+  resetConfirmMessage,
+  resetSuccessMessage,
+  resetErrorMessage,
   acknowledgment,
   exerciseId,
   lessonId,
@@ -82,54 +88,123 @@ export function useNotebookChat({
         return
       }
 
+      // Ensure loading indicator shows for minimum duration to avoid race conditions
+      const minLoadingTime = Promise.all([new Promise((resolve) => setTimeout(resolve, 100))])
+
       try {
-        const result = await apiService.getConversation(contextKey)
+        const retryDelayMs = 500
+        const maxRetries = 10
+        let attempt = 0
+        let result = (
+          await Promise.all([apiService.getConversation(contextKey), minLoadingTime])
+        )[0]
 
-        if (result.authRequired) {
-          // Keep initial message, user needs to log in
-          setIsLoadingHistory(false)
-          return
-        }
+        while (attempt <= maxRetries) {
+          if (result.authRequired) {
+            // Keep initial message, user needs to log in
+            setIsLoadingHistory(false)
+            return
+          }
 
-        if (result.success && result.exists) {
-          if (result.messages && result.messages.length > 0) {
-            // Map API messages to chat messages
-            const loadedMessages: ChatMessage[] = result.messages.map((msg) => ({
-              role:
-                msg.role === ChatRole.User || msg.role === 'user'
-                  ? ChatRole.User
-                  : ChatRole.Assistant,
-              content: msg.content,
-            }))
+          if (result.success && result.exists) {
+            // DEBUG: Log the raw result
+            logger.debug(
+              {
+                contextKey,
+                conversationId: result.conversationId,
+                rawMessages: result.messages,
+                rawMessagesLength: result.messages?.length,
+                rawMessagesType: typeof result.messages,
+                isArray: Array.isArray(result.messages),
+              },
+              '[useNotebookChat] API response received',
+            )
 
-            // Only update messages if we have valid messages to avoid clearing the chat
-            if (loadedMessages.length > 0) {
-              setMessages(loadedMessages)
-            } else {
+            // Filter out invalid messages and map to chat messages
+            const rawMessages = result.messages || []
+            logger.debug(
+              { contextKey, rawMessagesLength: rawMessages.length },
+              '[useNotebookChat] Processing raw messages',
+            )
+
+            const validMessages = rawMessages.filter(
+              (msg) => msg && msg.role && msg.content && typeof msg.content === 'string',
+            )
+
+            logger.debug(
+              { contextKey, validMessagesLength: validMessages.length },
+              '[useNotebookChat] Valid messages count',
+            )
+
+            if (validMessages.length > 0) {
+              // Map API messages to chat messages
+              const loadedMessages: ChatMessage[] = validMessages.map((msg) => ({
+                role:
+                  msg.role === ChatRole.User || msg.role === 'user'
+                    ? ChatRole.User
+                    : ChatRole.Assistant,
+                content: String(msg.content),
+              }))
+
+              logger.debug(
+                {
+                  contextKey,
+                  conversationId: result.conversationId,
+                  messageCount: loadedMessages.length,
+                  messagesPreview: loadedMessages.slice(0, 2).map(m => ({ role: m.role, content: m.content.substring(0, 30) })),
+                },
+                '[useNotebookChat] Loaded conversation history',
+              )
+
+              // Only update messages if we have valid messages to avoid clearing the chat
+              if (loadedMessages.length > 0) {
+                // Set messages and loading state together
+                // React will batch these updates, but we need to ensure messages
+                // are actually in the DOM before hiding the loading indicator
+                setMessages(loadedMessages)
+                // Wait for React to render using double rAF pattern
+                // First rAF: schedules callback before next paint
+                // Second rAF: ensures the paint cycle completed
+                // This ensures loading indicator hides only after messages are in DOM
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() => {
+                    setIsLoadingHistory(false)
+                  })
+                })
+                return
+              }
+            }
+
+            // Conversation exists but messages may still be persisting
+            attempt += 1
+            if (attempt > maxRetries) {
               logger.warn(
                 {
                   conversationId: result.conversationId,
                   contextKey,
                   rawMessages: result.messages,
+                  messageCount: result.messages?.length || 0,
                 },
-                '[useNotebookChat] Conversation exists but loaded messages are empty',
+                '[useNotebookChat] Conversation exists but messages are empty after retries',
               )
+              setIsLoadingHistory(false)
+              return
             }
-          } else {
-            // Conversation exists but has no messages yet - keep initial welcome message
-            logger.warn(
-              {
-                conversationId: result.conversationId,
-                contextKey,
-              },
-              '[useNotebookChat] Conversation exists but has no messages',
-            )
+
+            // Exponential backoff for retries
+            const delay = retryDelayMs * Math.min(attempt, 3)
+            await new Promise((resolve) => setTimeout(resolve, delay))
+            result = await apiService.getConversation(contextKey)
+            continue
           }
-        } else if (result.success && !result.exists) {
-          // No conversation exists yet - keep initial welcome message
-          // This is expected for new conversations
-          logger.debug({ contextKey }, '[useNotebookChat] No conversation found for contextKey')
-        } else {
+
+          if (result.success && !result.exists) {
+            // No conversation exists yet - keep initial welcome message
+            logger.debug({ contextKey }, '[useNotebookChat] No conversation found for contextKey')
+            setIsLoadingHistory(false)
+            return
+          }
+
           // API call failed
           logger.error(
             {
@@ -140,6 +215,8 @@ export function useNotebookChat({
             },
             '[useNotebookChat] Failed to load conversation',
           )
+          setIsLoadingHistory(false)
+          return
         }
       } catch (error) {
         // Fail silently - keep initial message
@@ -147,7 +224,6 @@ export function useNotebookChat({
           { err: error, contextKey },
           '[useNotebookChat] Failed to load conversation history',
         )
-      } finally {
         setIsLoadingHistory(false)
       }
     }
@@ -205,9 +281,7 @@ export function useNotebookChat({
   const handleReset = useCallback(async () => {
     if (!contextKey || isLoading) return
 
-    const confirmed = confirm(
-      'Are you sure you want to reset the conversation? This will start a new chat.',
-    )
+    const confirmed = confirm(resetConfirmMessage)
     if (!confirmed) return
 
     try {
@@ -216,14 +290,21 @@ export function useNotebookChat({
       if (result.success) {
         // Clear messages and show welcome
         setMessages([{ role: ChatRole.Assistant, content: initialMessage }])
-        toast.success('Conversation reset')
+        toast.success(resetSuccessMessage)
       } else {
-        toast.error(result.error || 'Failed to reset conversation')
+        toast.error(result.error || resetErrorMessage)
       }
     } catch (_error) {
-      toast.error('Failed to reset conversation')
+      toast.error(resetErrorMessage)
     }
-  }, [contextKey, isLoading, initialMessage])
+  }, [
+    contextKey,
+    isLoading,
+    initialMessage,
+    resetConfirmMessage,
+    resetErrorMessage,
+    resetSuccessMessage,
+  ])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

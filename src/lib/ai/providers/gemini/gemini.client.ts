@@ -1,6 +1,8 @@
 /**
- * Centralized Gemini AI client initialization
- * Single source of truth for API key and client config
+ * Gemini Client Module
+ * Handles SDK initialization, singleton caching, and environment config
+ *
+ * @internal This module is used by gemini.provider.ts only
  */
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
@@ -14,17 +16,25 @@ export function isGeminiApiKeyConfigured(): boolean {
 }
 
 /**
- * Get Gemini client instance
- * @throws Error if GEMINI_API_KEY is not configured
+ * Get or create Gemini client singleton
+ * @throws GeminiConfigError if API key not configured
  */
 export function getGeminiClient(): GoogleGenerativeAI {
   if (!geminiClient) {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error(
-        'GEMINI_API_KEY environment variable is not configured. Please set it in your .env file. See .env.example for details.',
+        'GEMINI_API_KEY environment variable is not configured.',
       )
     }
     geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   }
   return geminiClient
+}
+
+/**
+ * Reset client singleton (for testing)
+ * @internal
+ */
+export function resetGeminiClient(): void {
+  geminiClient = null
 }

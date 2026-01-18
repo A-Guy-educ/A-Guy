@@ -15,6 +15,10 @@ import type { MemoryItem } from './vector-search'
 
 export const CONTEXT_POLICY_VERSION = 'v1'
 
+// Memory block delimiters for testability
+export const MEMORY_BLOCK_START = 'MEMORY_CONTEXT_START'
+export const MEMORY_BLOCK_END = 'MEMORY_CONTEXT_END'
+
 export const CONTEXT_POLICY_V1 = {
   recentWindowSize: 20,
   memoryTopK: 8,
@@ -74,7 +78,8 @@ export function composePrompt(
 
   // 3. Append memory items to system message (if any)
   if (components.memoryItems.length > 0) {
-    systemContent += '\n\n## Relevant Context from Past Conversations\n'
+    systemContent += '\n\n' + MEMORY_BLOCK_START + '\n'
+    systemContent += '## Relevant Context from Past Conversations\n'
 
     // Sort by importance (descending) and limit text length
     const sortedMemories = [...components.memoryItems]
@@ -118,6 +123,7 @@ export function composePrompt(
         })
         .join('\n')
     }
+    systemContent += '\n' + MEMORY_BLOCK_END
   }
 
   messages.push({

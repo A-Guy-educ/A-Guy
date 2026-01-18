@@ -75,6 +75,7 @@ export interface Config {
     chapters: Chapter;
     lessons: Lesson;
     exercises: Exercise;
+    prompts: Prompt;
     'exercise-assets': ExerciseAsset;
     users: User;
     'user-progress': UserProgress;
@@ -106,6 +107,7 @@ export interface Config {
     chapters: ChaptersSelect<false> | ChaptersSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
+    prompts: PromptsSelect<false> | PromptsSelect<true>;
     'exercise-assets': ExerciseAssetsSelect<false> | ExerciseAssetsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
@@ -956,6 +958,14 @@ export interface Lesson {
    */
   contentFiles?: (string | Media)[] | null;
   /**
+   * AI context text for this lesson. Injected into chat prompts at runtime. NOT indexed or searchable.
+   */
+  lessonContextText?: string | null;
+  /**
+   * AI system prompt for this lesson (uses default if not set)
+   */
+  prompt?: (string | null) | Prompt;
+  /**
    * URL-friendly identifier (auto-generated from title if empty)
    */
   slug?: string | null;
@@ -963,6 +973,39 @@ export interface Lesson {
    * User who created this document
    */
   createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prompts".
+ */
+export interface Prompt {
+  id: string;
+  /**
+   * Human-readable prompt name
+   */
+  title: string;
+  /**
+   * Machine-readable key (e.g., "default-tutor-v1")
+   */
+  key?: string | null;
+  /**
+   * System prompts are always included. Context prompts are lesson-specific.
+   */
+  type: 'system' | 'context';
+  /**
+   * System prompt template for AI tutor
+   */
+  template: string;
+  /**
+   * Only "published" prompts are used at runtime
+   */
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Use as fallback when lesson has no prompt
+   */
+  isDefaultForAgentChat?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1488,6 +1531,10 @@ export interface PayloadLockedDocument {
         value: string | Exercise;
       } | null)
     | ({
+        relationTo: 'prompts';
+        value: string | Prompt;
+      } | null)
+    | ({
         relationTo: 'exercise-assets';
         value: string | ExerciseAsset;
       } | null)
@@ -1824,6 +1871,8 @@ export interface LessonsSelect<T extends boolean = true> {
   status?: T;
   isActive?: T;
   contentFiles?: T;
+  lessonContextText?: T;
+  prompt?: T;
   slug?: T;
   createdBy?: T;
   updatedAt?: T;
@@ -1839,6 +1888,20 @@ export interface ExercisesSelect<T extends boolean = true> {
   lesson?: T;
   content?: T;
   createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prompts_select".
+ */
+export interface PromptsSelect<T extends boolean = true> {
+  title?: T;
+  key?: T;
+  type?: T;
+  template?: T;
+  status?: T;
+  isDefaultForAgentChat?: T;
   updatedAt?: T;
   createdAt?: T;
 }

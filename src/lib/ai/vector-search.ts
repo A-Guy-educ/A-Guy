@@ -14,6 +14,7 @@
  */
 
 import { logger } from '@/utilities/logger'
+import { MongooseAdapter } from '@payloadcms/db-mongodb'
 import type { Db } from 'mongodb'
 import { Payload } from 'payload'
 import { buildContextHierarchy } from '../services/conversation-service'
@@ -162,19 +163,34 @@ export async function retrieveMemoryItems(
               },
               {
                 $project: {
-                  embedding: 0,
+                  _id: 1,
+                  userId: 1,
+                  conversationId: 1,
+                  contextKey: 1,
+                  contextLevel: 1,
+                  type: 1,
+                  text: 1,
+                  importance: 1,
+                  status: 1,
+                  source: 1,
+                  createdAt: 1,
+                  updatedAt: 1,
                   score: { $meta: 'vectorSearchScore' },
-                  hierarchyKeyIndex: {
-                    $indexOfArray: [hierarchyKeys, '$contextKey'],
-                  },
                 },
-              },
-              {
-                $sort: { hierarchyKeyIndex: 1 }, // Prefer narrower context (lower index = more specific)
               },
             ])
             .toArray()
-          return { items: ctxResults as MemoryItem[], count: ctxResults.length, scope: 'context' }
+
+          // Sort by hierarchy priority in JavaScript (narrower context first)
+          const sortedResults = (ctxResults as MemoryItem[]).sort((a, b) => {
+            const aIndex = a.contextKey ? hierarchyKeys.indexOf(a.contextKey) : Infinity
+            const bIndex = b.contextKey ? hierarchyKeys.indexOf(b.contextKey) : Infinity
+            // Prefer lower index (more specific context), then higher score
+            if (aIndex !== bIndex) return aIndex - bIndex
+            return 0 // Keep original order for same context level
+          })
+
+          return { items: sortedResults, count: sortedResults.length, scope: 'context' }
         })(),
       )
     }
@@ -313,7 +329,11 @@ export async function retrieveMemoriesWithContext(
   conversationId: string,
   contextKey: string,
 ): Promise<RetrievalResult> {
-  const db = (payload.db as any).connection.db
+  const adapter = payload.db as MongooseAdapter
+  const db = adapter.connection.db
+  if (!db) {
+    throw new Error('Database connection not available')
+  }
   return retrieveMemoryItems(db, userId, queryText, conversationId, contextKey, payload)
 }
 

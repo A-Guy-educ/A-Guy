@@ -7,6 +7,7 @@
  * - Unauthenticated request returns 401
  * - Explicit user filtering guarantees isolation
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
@@ -51,18 +52,6 @@ vi.mock('@/lib/ai/maintenance', () => ({
   })),
 }))
 
-vi.mock('@/lib/feature-flags', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/feature-flags')>()
-  return {
-    ...actual,
-    featureFlags: {
-      SUMMARY_MAINTENANCE_ENABLED: true,
-      MEMORY_EXTRACTION_ENABLED: true,
-      MEMORY_RETRIEVAL_ENABLED: true,
-    },
-  }
-})
-
 let payload: Payload
 let testUserId: string
 let testUserId2: string
@@ -76,10 +65,7 @@ beforeEach(async () => {
   const conversations = await payload.find({
     collection: 'conversations',
     where: {
-      or: [
-        { user: { equals: testUserId } },
-        { user: { equals: testUserId2 } },
-      ],
+      or: [{ user: { equals: testUserId } }, { user: { equals: testUserId2 } }],
     },
     limit: 1000,
     overrideAccess: true,
@@ -94,159 +80,176 @@ beforeEach(async () => {
   }
 })
 
-beforeAll(
-  async () => {
-    // Save original DATABASE_URL and unset it before starting testcontainers
-    originalDatabaseUrl = process.env.DATABASE_URL
-    // @ts-expect-error - TypeScript doesn't allow delete on process.env, but it's safe here
-    delete process.env.DATABASE_URL
+beforeAll(async () => {
+  // Save original DATABASE_URL and unset it before starting testcontainers
+  originalDatabaseUrl = process.env.DATABASE_URL
+  // @ts-expect-error - TypeScript doesn't allow delete on process.env, but it's safe here
+  delete process.env.DATABASE_URL
 
-    // Start MongoDB test container
-    const mongoUri = await startMongoContainer()
-    process.env.DATABASE_URL = mongoUri
+  // Start MongoDB test container
+  const mongoUri = await startMongoContainer()
+  process.env.DATABASE_URL = mongoUri
 
-    // Import config AFTER setting DATABASE_URL
-    const config = await import('@payload-config')
-    payload = await getPayload({ config: config.default })
+  // Import config AFTER setting DATABASE_URL
+  const config = await import('@payload-config')
+  payload = await getPayload({ config: config.default })
 
-    // Create first test user
-    const user1 = await payload.create({
-      collection: 'users',
-      data: {
-        email: `get-conv-${Date.now()}@example.com`,
-        password: 'test123456',
-        role: 'student',
-      },
-    })
-    testUserId = user1.id
+  // Create first test user
+  const user1 = await payload.create({
+    collection: 'users',
+    data: {
+      email: `get-conv-${Date.now()}@example.com`,
+      password: 'test123456',
+      role: 'student',
+    },
+  })
+  testUserId = user1.id
 
-    // Create second test user
-    const user2 = await payload.create({
-      collection: 'users',
-      data: {
-        email: `get-conv-2-${Date.now()}@example.com`,
-        password: 'test123456',
-        role: 'student',
-      },
-    })
-    testUserId2 = user2.id
+  // Create second test user
+  const user2 = await payload.create({
+    collection: 'users',
+    data: {
+      email: `get-conv-2-${Date.now()}@example.com`,
+      password: 'test123456',
+      role: 'student',
+    },
+  })
+  testUserId2 = user2.id
 
-    // Get or create test exercise
-    const existingExercises = await payload.find({
-      collection: 'exercises',
+  // Get or create test exercise
+  const existingExercises = await payload.find({
+    collection: 'exercises',
+    limit: 1,
+  })
+
+  if (existingExercises.docs.length > 0) {
+    testExerciseId = existingExercises.docs[0].id
+  } else {
+    // Need to create lesson first
+    const existingLessons = await payload.find({
+      collection: 'lessons',
       limit: 1,
     })
 
-    if (existingExercises.docs.length > 0) {
-      testExerciseId = existingExercises.docs[0].id
+    let testLessonId: string
+    if (existingLessons.docs.length > 0) {
+      testLessonId = existingLessons.docs[0].id
     } else {
-      // Need to create lesson first
-      const existingLessons = await payload.find({
-        collection: 'lessons',
+      // Need to create chapter first
+      const existingChapters = await payload.find({
+        collection: 'chapters',
         limit: 1,
       })
 
-      let testLessonId: string
-      if (existingLessons.docs.length > 0) {
-        testLessonId = existingLessons.docs[0].id
+      let testChapterId: string
+      if (existingChapters.docs.length > 0) {
+        testChapterId = existingChapters.docs[0].id
       } else {
-        // Need to create chapter first
-        const existingChapters = await payload.find({
-          collection: 'chapters',
+        // Need to create course first
+        const existingCourses = await payload.find({
+          collection: 'courses',
           limit: 1,
         })
 
-        let testChapterId: string
-        if (existingChapters.docs.length > 0) {
-          testChapterId = existingChapters.docs[0].id
+        let testCourseId: string
+        if (existingCourses.docs.length > 0) {
+          testCourseId = existingCourses.docs[0].id
         } else {
-          // Need to create course first
-          const existingCourses = await payload.find({
-            collection: 'courses',
+          const existingCategories = await payload.find({
+            collection: 'categories',
             limit: 1,
           })
 
-          let testCourseId: string
-          if (existingCourses.docs.length > 0) {
-            testCourseId = existingCourses.docs[0].id
+          let testCategoryId: string
+          if (existingCategories.docs.length > 0) {
+            testCategoryId = existingCategories.docs[0].id
           } else {
-            const existingCategories = await payload.find({
+            const category = await payload.create({
               collection: 'categories',
-              limit: 1,
-            })
-
-            let testCategoryId: string
-            if (existingCategories.docs.length > 0) {
-              testCategoryId = existingCategories.docs[0].id
-            } else {
-              const category = await payload.create({
-                collection: 'categories',
-                data: {
-                  title: 'Test Category',
-                  slug: `test-category-${Date.now()}`,
-                } as any,
-              })
-              testCategoryId = category.id
-            }
-
-            const course = await payload.create({
-              collection: 'courses',
               data: {
-                courseLabel: 'Test',
-                title: 'Test Course',
-                slug: `test-course-${Date.now()}`,
-                order: 0,
-                status: 'published',
-                isActive: true,
-                categories: [testCategoryId],
+                title: 'Test Category',
+                slug: `test-category-${Date.now()}`,
               } as any,
             })
-            testCourseId = course.id
+            testCategoryId = category.id
           }
 
-          const chapter = await payload.create({
-            collection: 'chapters',
+          const course = await payload.create({
+            collection: 'courses',
             data: {
-              course: testCourseId,
-              title: 'Test Chapter',
-              slug: `test-chapter-${Date.now()}`,
+              courseLabel: 'Test',
+              title: 'Test Course',
+              slug: `test-course-${Date.now()}`,
               order: 0,
               status: 'published',
               isActive: true,
+              categories: [testCategoryId],
             } as any,
           })
-          testChapterId = chapter.id
+          testCourseId = course.id
         }
 
-        const lesson = await payload.create({
-          collection: 'lessons',
+        const chapter = await payload.create({
+          collection: 'chapters',
           data: {
-            chapter: testChapterId,
-            title: 'Test Lesson',
-            slug: `test-lesson-${Date.now()}`,
+            course: testCourseId,
+            title: 'Test Chapter',
+            slug: `test-chapter-${Date.now()}`,
             order: 0,
             status: 'published',
             isActive: true,
           } as any,
         })
-        testLessonId = lesson.id
+        testChapterId = chapter.id
       }
 
-      const exercise = await payload.create({
-        collection: 'exercises',
+      const lesson = await payload.create({
+        collection: 'lessons',
         data: {
-          title: 'Test Exercise',
-          slug: `test-exercise-${Date.now()}`,
-          lesson: testLessonId,
+          chapter: testChapterId,
+          title: 'Test Lesson',
+          slug: `test-lesson-${Date.now()}`,
           order: 0,
-          _status: 'published',
+          status: 'published',
+          isActive: true,
         } as any,
       })
-      testExerciseId = exercise.id
+      testLessonId = lesson.id
     }
-  },
-  60000,
-)
+
+    const exercise = await payload.create({
+      collection: 'exercises',
+      data: {
+        title: 'Test Exercise',
+        slug: `test-exercise-${Date.now()}`,
+        lesson: testLessonId,
+        order: 0,
+        _status: 'published',
+      } as any,
+    })
+    testExerciseId = exercise.id
+  }
+
+  // Drop test-created indexes from other test files to prevent conflicts
+
+  const db = (payload.db as any).connection?.db
+  if (db) {
+    const collection = db.collection('conversations')
+    const indexesToDrop = [
+      'unique_active_user_exercise',
+      'unique_active_user_contextKey',
+      'unique_active_user_lesson',
+    ]
+
+    for (const indexName of indexesToDrop) {
+      try {
+        await collection.dropIndex(indexName)
+      } catch (_error) {
+        // Index may not exist, ignore
+      }
+    }
+  }
+}, 60000)
 
 afterAll(async () => {
   if (!payload) {
@@ -431,7 +434,9 @@ describe('Get Conversation Endpoint', () => {
     expect(body1.exists).toBe(true)
     expect(body1.conversationId).toBe(conversationId1)
     expect(body1.messages.some((m: { content: string }) => m.content.includes('User 1'))).toBe(true)
-    expect(body1.messages.some((m: { content: string }) => m.content.includes('User 2'))).toBe(false)
+    expect(body1.messages.some((m: { content: string }) => m.content.includes('User 2'))).toBe(
+      false,
+    )
 
     // User 2 should only see their own conversation
     const req2 = {
@@ -449,11 +454,13 @@ describe('Get Conversation Endpoint', () => {
     expect(body2.exists).toBe(true)
     expect(body2.conversationId).toBe(conversationId2)
     expect(body2.messages.some((m: { content: string }) => m.content.includes('User 2'))).toBe(true)
-    expect(body2.messages.some((m: { content: string }) => m.content.includes('User 1'))).toBe(false)
+    expect(body2.messages.some((m: { content: string }) => m.content.includes('User 1'))).toBe(
+      false,
+    )
   })
 
   it('should explicitly filter by user ID in query', async () => {
-    const contextKey = `exercises:${testExerciseId}-explicit-filter-${Date.now()}`
+    const contextKey = `exercises:${testExerciseId}`
 
     // Create conversations for both users manually
     const conv1 = await payload.create({
@@ -461,7 +468,6 @@ describe('Get Conversation Endpoint', () => {
       data: {
         user: testUserId,
         contextRef: { relationTo: 'exercises', value: testExerciseId },
-        contextKey,
         messages: [
           { role: 'user', content: 'User 1 message', timestamp: new Date().toISOString() },
         ],
@@ -476,7 +482,6 @@ describe('Get Conversation Endpoint', () => {
       data: {
         user: testUserId2,
         contextRef: { relationTo: 'exercises', value: testExerciseId },
-        contextKey,
         messages: [
           { role: 'user', content: 'User 2 message', timestamp: new Date().toISOString() },
         ],

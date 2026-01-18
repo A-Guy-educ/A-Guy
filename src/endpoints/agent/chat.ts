@@ -26,11 +26,14 @@ import {
 import { runSummaryMaintenance } from '@/lib/ai/maintenance'
 import { extractMemoryCandidates, persistMemoryItems } from '@/lib/ai/memory-extraction'
 import { createContextLog, logContextUsage, logPromptSnapshot } from '@/lib/ai/observability'
-import { chatWithExerciseHelper, getSystemPrompt } from '@/lib/ai/services/exercise-chat-service'
+import { composeSystemInstructions } from '@/lib/ai/prompt-composer.server'
+import { resolveAgentSystemPrompt } from '@/lib/ai/prompt-resolver.server'
+import { chatWithExerciseHelper } from '@/lib/ai/services/exercise-chat-service'
+import { fetchPublishedSystemPrompts } from '@/lib/ai/system-prompts.server'
 import { isVectorIndexAvailable } from '@/lib/ai/vector-index-check'
 import { retrieveMemoryItems, type MemoryItem } from '@/lib/ai/vector-search'
-import { featureFlags } from '@/lib/feature-flags'
 import { ConversationService, deriveContextLevel } from '@/lib/services/conversation-service'
+import type { Prompt } from '@/payload-types'
 import { logger } from '@/utilities/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
@@ -62,6 +65,48 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     const body = await req.json()
     const validated = requestSchema.parse(body)
+
+    const contextCandidate = validated.exerciseId
+      ? { relationTo: 'exercises' as const, value: validated.exerciseId }
+      : validated.lessonId
+        ? { relationTo: 'lessons' as const, value: validated.lessonId }
+        : validated.chapterId
+          ? { relationTo: 'chapters' as const, value: validated.chapterId }
+          : validated.courseId
+            ? { relationTo: 'courses' as const, value: validated.courseId }
+            : null
+
+    if (!contextCandidate) {
+      return Response.json(
+        { error: 'Missing context ID (requires exerciseId, lessonId, chapterId, or courseId)' },
+        { status: 400 },
+      )
+    }
+
+    try {
+      const contextResult = await req.payload.find({
+        collection: contextCandidate.relationTo,
+        where: { id: { equals: contextCandidate.value } },
+        limit: 1,
+        depth: 0,
+        user: req.user,
+        overrideAccess: false,
+      })
+
+      if (contextResult.docs.length === 0) {
+        reqLogger.warn(
+          { userId: req.user.id, context: contextCandidate },
+          'Context not found for chat request',
+        )
+        return Response.json({ error: 'Context not found' }, { status: 404 })
+      }
+    } catch (error) {
+      reqLogger.warn(
+        { err: error, userId: req.user.id, context: contextCandidate },
+        'Invalid context ID in chat request',
+      )
+      return Response.json({ error: 'Invalid context ID' }, { status: 400 })
+    }
 
     reqLogger.info(
       {
@@ -157,66 +202,189 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     let globalCount = 0
     let hierarchyKeys: string[] = []
 
-    if (featureFlags.MEMORY_RETRIEVAL_ENABLED) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const db = (req.payload.db as any).connection.db
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const db = (req.payload.db as any).connection.db
 
-        // Graceful check: skip retrieval if index not available
-        const indexAvailable = await isVectorIndexAvailable(db)
+      // Graceful check: skip retrieval if index not available
+      const indexAvailable = await isVectorIndexAvailable(db)
 
-        if (indexAvailable) {
-          const queryText = buildRetrievalQuery(recentMessages)
+      if (indexAvailable) {
+        const queryText = buildRetrievalQuery(recentMessages)
 
-          // Skip retrieval if query is empty or too short
-          if (queryText && queryText.trim().length >= 3) {
-            reqLogger.debug({ queryText }, 'Retrieving memory items')
+        // Skip retrieval if query is empty or too short
+        if (queryText && queryText.trim().length >= 3) {
+          reqLogger.debug({ queryText }, 'Retrieving memory items')
 
-            const retrieval = await retrieveMemoryItems(
-              db,
-              req.user.id,
+          const retrieval = await retrieveMemoryItems(
+            db,
+            req.user.id,
+            queryText,
+            conversationId,
+            context.contextKey,
+            req.payload,
+          )
+
+          memoryItems = retrieval.items
+          retrievalLatencyMs = retrieval.latencyMs
+          localCount = retrieval.localCount
+          contextCount = retrieval.contextCount
+          globalCount = retrieval.globalCount
+          hierarchyKeys = retrieval.hierarchyKeys
+
+          reqLogger.info(
+            {
+              memoryCount: memoryItems.length,
+              localCount,
+              contextCount,
+              globalCount,
+              latencyMs: retrievalLatencyMs,
               queryText,
-              conversationId,
-              context.contextKey,
-              req.payload,
-            )
-
-            memoryItems = retrieval.items
-            retrievalLatencyMs = retrieval.latencyMs
-            localCount = retrieval.localCount
-            contextCount = retrieval.contextCount
-            globalCount = retrieval.globalCount
-            hierarchyKeys = retrieval.hierarchyKeys
-
-            reqLogger.info(
-              {
-                memoryCount: memoryItems.length,
-                localCount,
-                contextCount,
-                globalCount,
-                latencyMs: retrievalLatencyMs,
-                queryText,
-                hierarchyKeys,
-              },
-              'Retrieved memory items with hierarchy',
-            )
-          } else {
-            reqLogger.debug(
-              { queryText, queryLength: queryText?.trim().length },
-              'Skipping memory retrieval: query text too short or empty',
-            )
-          }
+              hierarchyKeys,
+            },
+            'Retrieved memory items with hierarchy',
+          )
         } else {
-          reqLogger.warn('Vector search index not available, skipping memory retrieval')
+          reqLogger.debug(
+            { queryText, queryLength: queryText?.trim().length },
+            'Skipping memory retrieval: query text too short or empty',
+          )
         }
-      } catch (error) {
-        // Graceful degradation: continue without memories
-        reqLogger.warn({ err: error }, 'Memory retrieval failed, continuing without memories')
+      } else {
+        reqLogger.warn('Vector search index not available, skipping memory retrieval')
+      }
+    } catch (error) {
+      // Graceful degradation: continue without memories
+      reqLogger.warn({ err: error }, 'Memory retrieval failed, continuing without memories')
+    }
+
+    // 9) Fetch lesson context and prompt using secure fetch pattern
+    //
+    // We use a two-fetch pattern for security:
+    // - Lesson fetched with normal access checks (overrideAccess: false)
+    // - Prompt fetched separately with overrideAccess: true (admin-only collection)
+    // This preserves Lesson access control while allowing server access to Prompts.
+
+    let lessonContextText: string | undefined
+    let lessonPrompt: Prompt | null = null
+
+    if (context.relationTo === 'lessons') {
+      // Direct lesson context - fetch with access checks
+      const lesson = await req.payload.findByID({
+        collection: 'lessons',
+        id: context.value,
+        depth: 0,
+        user: req.user, // Pass user for access control
+        // DO NOT use overrideAccess here - preserve lesson access control
+      })
+      lessonContextText = (lesson as { lessonContextText?: string }).lessonContextText ?? undefined
+
+      // Fetch prompt separately if lesson has one (admin-only, requires override)
+      if ((lesson as { prompt?: unknown }).prompt) {
+        const promptId = typeof (lesson as { prompt: unknown }).prompt === 'string'
+          ? (lesson as { prompt: string }).prompt
+          : (lesson as { prompt: { id: string } }).prompt.id
+
+        try {
+          lessonPrompt = await req.payload.findByID({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            collection: 'prompts' as any,
+            id: promptId,
+            overrideAccess: true, // Prompts are admin-only
+          }) as Prompt | null
+        } catch (error) {
+          reqLogger.warn({ err: error, promptId, lessonId: context.value }, 'Failed to fetch lesson prompt')
+          // Continue with null - will fall back to default
+        }
+      }
+
+    } else if (context.relationTo === 'exercises') {
+      // Exercise context - inherit parent lesson's prompt
+      const exercise = await req.payload.findByID({
+        collection: 'exercises',
+        id: context.value,
+        depth: 0,
+        user: req.user, // Pass user for access control
+      })
+
+      if ((exercise as { lesson?: unknown }).lesson) {
+        const lessonId = typeof (exercise as { lesson: unknown }).lesson === 'string'
+          ? (exercise as { lesson: string }).lesson
+          : (exercise as { lesson: { id: string } }).lesson.id
+
+        // Fetch lesson with access checks
+        const lesson = await req.payload.findByID({
+          collection: 'lessons',
+          id: lessonId,
+          depth: 0,
+          user: req.user, // Pass user for access control
+          // DO NOT use overrideAccess here
+        })
+        lessonContextText = (lesson as { lessonContextText?: string }).lessonContextText ?? undefined
+
+        // Fetch prompt separately if lesson has one
+        if ((lesson as { prompt?: unknown }).prompt) {
+          const promptId = typeof (lesson as { prompt: unknown }).prompt === 'string'
+            ? (lesson as { prompt: string }).prompt
+            : (lesson as { prompt: { id: string } }).prompt.id
+
+          try {
+            lessonPrompt = await req.payload.findByID({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              collection: 'prompts' as any,
+              id: promptId,
+              overrideAccess: true,
+            }) as Prompt | null
+          } catch (error) {
+            reqLogger.warn({ err: error, promptId, lessonId }, 'Failed to fetch lesson prompt')
+          }
+        }
       }
     }
 
-    // 9) Compose prompt using Context Policy V1
-    const systemInstructions = getSystemPrompt()
+    // 9.5) Fetch published system prompts (always included)
+    const systemPromptsResult = await fetchPublishedSystemPrompts(req.payload)
+
+    if (systemPromptsResult.count > 0) {
+      reqLogger.info(
+        {
+          systemPromptCount: systemPromptsResult.count,
+          systemPromptIds: systemPromptsResult.promptIds,
+          systemPromptTitles: systemPromptsResult.promptTitles,
+        },
+        'Including system prompts',
+      )
+    }
+
+    // 10) Resolve system prompt using pre-loaded prompt object
+    const promptResolution = await resolveAgentSystemPrompt(req.payload, lessonPrompt)
+
+    reqLogger.info(
+      {
+        promptId: promptResolution.promptId,
+        promptTitle: promptResolution.promptTitle,
+        resolvedFrom: promptResolution.resolvedFrom,
+        ...(promptResolution.fallbackReason && { fallbackReason: promptResolution.fallbackReason }),
+      },
+      'Resolved system prompt',
+    )
+
+    // Compose final system instructions: system prompts + lesson prompt + lesson context
+    let systemInstructions: string
+    try {
+      systemInstructions = composeSystemInstructions(
+        systemPromptsResult.templates,
+        promptResolution.template,
+        lessonContextText,
+      )
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('exceeds maximum')) {
+        return Response.json({ error: 'Lesson context exceeds maximum allowed size' }, { status: 400 })
+      }
+      throw error
+    }
+
+    // 11) Compose prompt using Context Policy V1
     const composedPrompt = composePrompt(systemInstructions, {
       systemMessage: systemInstructions,
       summary: conversation?.summary || undefined,
@@ -227,7 +395,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     // Log prompt snapshot in development
     logPromptSnapshot(conversationId, composedPrompt)
 
-    // 10) Call AI service with composed prompt
+    // 12) Call AI service with composed prompt
     const modelCallStart = Date.now()
     const result = await chatWithExerciseHelper({
       message: validated.message,
@@ -244,7 +412,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       )
     }
 
-    // 11) Persist assistant response
+    // 13) Persist assistant response
     const assistantMessage = {
       role: 'assistant' as const,
       content: result.message || '',
@@ -264,7 +432,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       overrideAccess: false,
     })
 
-    // 12) Log context usage for observability
+    // 14) Log context usage for observability
     logContextUsage(
       createContextLog({
         conversationId,
@@ -283,91 +451,79 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       }),
     )
 
-    // 13) Background: Run summary maintenance (non-blocking)
-    if (featureFlags.SUMMARY_MAINTENANCE_ENABLED) {
-      runSummaryMaintenance(req.payload, conversationId).catch((err) => {
-        reqLogger.error({ err, conversationId }, 'Summary maintenance failed')
+    // 15) Background: Run summary maintenance (non-blocking)
+    runSummaryMaintenance(req.payload, conversationId).catch((err) => {
+      reqLogger.error({ err, conversationId }, 'Summary maintenance failed')
+    })
+
+    // 16) Background: Extract and persist memories (non-blocking)
+    const currentUserId = req.user.id
+    reqLogger.debug({ conversationId }, 'Starting memory extraction')
+
+    // Refresh conversation to get potential summary updates
+    req.payload
+      .findByID({
+        collection: 'conversations',
+        id: conversationId,
+        user: req.user,
+        overrideAccess: false,
       })
-    }
+      .then((updatedConv) => {
+        const messages = updatedConv.messages || []
+        reqLogger.debug({ messageCount: messages.length }, 'Loaded conversation for extraction')
 
-    // 14) Background: Extract and persist memories (non-blocking)
-    if (featureFlags.MEMORY_EXTRACTION_ENABLED && req.user) {
-      const currentUserId = req.user.id
-      reqLogger.debug({ conversationId }, 'Starting memory extraction')
+        const messageList = messages.map((m) => ({
+          role: m.role!,
+          content: m.content!,
+          timestamp: m.timestamp!,
+        }))
 
-      // Refresh conversation to get potential summary updates
-      req.payload
-        .findByID({
-          collection: 'conversations',
-          id: conversationId,
-          user: req.user,
-          overrideAccess: false,
-        })
-        .then((updatedConv) => {
-          const messages = updatedConv.messages || []
-          reqLogger.debug({ messageCount: messages.length }, 'Loaded conversation for extraction')
+        // Determine source role and timestamp
+        const lastMessage = messages[messages.length - 1]
+        const sourceRole = ChatRole.Assistant
+        const sourceTimestamp = lastMessage?.timestamp
+          ? new Date(lastMessage.timestamp)
+          : new Date()
 
-          const messageList = messages.map((m) => ({
-            role: m.role!,
-            content: m.content!,
-            timestamp: m.timestamp!,
-          }))
+        // Derive context info for memory extraction
+        const contextLevel = deriveContextLevel(context.relationTo)
 
-          // Determine source role and timestamp
-          const lastMessage = messages[messages.length - 1]
-          const sourceRole = ChatRole.Assistant
-          const sourceTimestamp = lastMessage?.timestamp
-            ? new Date(lastMessage.timestamp)
-            : new Date()
-
-          // Derive context info for memory extraction
-          const contextLevel = deriveContextLevel(context.relationTo)
-
-          return extractMemoryCandidates(messageList, updatedConv.summary || undefined).then(
-            (candidates) => {
-              reqLogger.debug({ candidateCount: candidates.length }, 'Extracted memory candidates')
-              return {
-                candidates,
-                sourceRole,
-                sourceTimestamp,
-                contextLevel,
-              }
-            },
-          )
-        })
-        .then(({ candidates, sourceRole, sourceTimestamp, contextLevel }) => {
-          if (candidates.length > 0) {
-            reqLogger.debug({ candidateCount: candidates.length }, 'Persisting memory items')
-            return persistMemoryItems(
-              req.payload,
-              currentUserId,
-              conversationId,
+        return extractMemoryCandidates(messageList, updatedConv.summary || undefined).then(
+          (candidates) => {
+            reqLogger.debug({ candidateCount: candidates.length }, 'Extracted memory candidates')
+            return {
               candidates,
-              sourceTimestamp,
               sourceRole,
-              context.contextKey,
+              sourceTimestamp,
               contextLevel,
-            ).then((persisted) => {
-              reqLogger.info({ persisted, conversationId }, 'Memory extraction completed')
-              return persisted
-            })
-          } else {
-            reqLogger.debug('No memory candidates to persist')
-            return 0
-          }
-        })
-        .catch((err) => {
-          reqLogger.error({ err, conversationId }, 'Memory extraction failed')
-        })
-    } else {
-      reqLogger.debug(
-        {
-          extractionEnabled: featureFlags.MEMORY_EXTRACTION_ENABLED,
-          hasUser: !!req.user,
-        },
-        'Memory extraction skipped',
-      )
-    }
+            }
+          },
+        )
+      })
+      .then(({ candidates, sourceRole, sourceTimestamp, contextLevel }) => {
+        if (candidates.length > 0) {
+          reqLogger.debug({ candidateCount: candidates.length }, 'Persisting memory items')
+          return persistMemoryItems(
+            req.payload,
+            currentUserId,
+            conversationId,
+            candidates,
+            sourceTimestamp,
+            sourceRole,
+            context.contextKey,
+            contextLevel,
+          ).then((persisted) => {
+            reqLogger.info({ persisted, conversationId }, 'Memory extraction completed')
+            return persisted
+          })
+        }
+
+        reqLogger.debug('No memory candidates to persist')
+        return 0
+      })
+      .catch((err) => {
+        reqLogger.error({ err, conversationId }, 'Memory extraction failed')
+      })
 
     reqLogger.info('Chat request successful')
     return Response.json({
@@ -378,7 +534,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     })
   } catch (error) {
     // Handle connection reset errors gracefully (client disconnected)
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'ECONNRESET') {
+    if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'ECONNRESET') {
       reqLogger.debug({ err: error }, 'Client disconnected during chat request')
       // Return 499 (Client Closed Request) or 200 to avoid error logs
       return Response.json({ error: 'Request cancelled' }, { status: 499 })

@@ -20,19 +20,12 @@ This plan addresses critical correctness issues in the chat context system that 
 - **Impact**: Runtime undefined access, memories not shown to model
 - **Fix**: Change `m.content` → `m.text`
 
-### 3. **Feature Flag Mismatch** (Type Safety Violation)
-- **Problem**: [observability.ts:105-109](src/lib/ai/observability.ts#L105-L109) uses type cast to hide key mismatch
-  - `getFeatureFlagStatus()` returns: `summaryMaintenance`, `memoryExtraction`, `memoryRetrieval`
-  - `ContextLog.featureFlags` expects: `summaryEnabled`, `extractionEnabled`, `retrievalEnabled`
-- **Impact**: Runtime undefined access when reading feature flags from logs
-- **Fix**: Align keys (recommend updating ContextLog interface to match actual data)
-
-### 4. **composePrompt() Not Used** (Architectural Gap)
+### 3. **composePrompt() Not Used** (Architectural Gap)
 - **Problem**: [chat.ts:140-177](src/endpoints/agent/chat.ts#L140-L177) manually builds context instead of using designed function
 - **Impact**: No deterministic ordering, missing metadata, policy violations
 - **Fix**: Replace manual construction with `composePrompt()` call
 
-### 5. **Message Duplication Risk** (Correctness Issue)
+### 4. **Message Duplication Risk** (Correctness Issue)
 - **Problem**: User message handling is split:
   - Passed as `message` parameter [chat.ts:197](src/endpoints/agent/chat.ts#L197)
   - Added to conversationHistory [chat.ts:186-193](src/endpoints/agent/chat.ts#L186-L193)
@@ -50,15 +43,6 @@ This plan addresses critical correctness issues in the chat context system that 
 **File**: [src/endpoints/agent/chat.ts](../../src/endpoints/agent/chat.ts)
 
 Change line 159: `m.content` → `m.text`
-
-#### 1.2 Align Feature Flag Keys
-**Files**:
-- [src/lib/ai/observability.ts](../../src/lib/ai/observability.ts)
-- [src/lib/feature-flags.ts](../../src/lib/feature-flags.ts)
-
-Update ContextLog interface and getFeatureFlagStatus() return type to match actual data structure. Remove unsafe type cast.
-
----
 
 ### Phase 2: Integrate composePrompt()
 
@@ -130,8 +114,7 @@ Create minimal documentation in this directory:
 | File | Changes |
 |------|---------|
 | [src/endpoints/agent/chat.ts](../../src/endpoints/agent/chat.ts) | Use composePrompt(), fix field access, fix message flow |
-| [src/lib/ai/observability.ts](../../src/lib/ai/observability.ts) | Fix feature flag keys, remove type cast |
-| [src/lib/feature-flags.ts](../../src/lib/feature-flags.ts) | Update return type signature |
+| [src/lib/ai/observability.ts](../../src/lib/ai/observability.ts) | Align context logging keys and metadata |
 | [src/lib/ai/services/exercise-chat-service.ts](../../src/lib/ai/services/exercise-chat-service.ts) | Export getSystemPrompt, accept ComposedPrompt, fix logger import |
 | [tests/int/memory-system.int.spec.ts](../../tests/int/memory-system.int.spec.ts) | Verify memory items use 'text' field |
 
@@ -157,11 +140,10 @@ pnpm typecheck
 
 ### Integration Testing Scenarios
 
-1. **All Flags OFF**: Baseline functionality
-2. **Summary Only**: Summary maintenance triggers at threshold
-3. **Retrieval Only**: Memory retrieval with vector search
-4. **Extraction Only**: Memory extraction runs in background
-5. **All Flags ON**: Full system integration
+1. **Baseline**: Summary maintenance triggers at threshold
+2. **Retrieval**: Memory retrieval with vector search
+3. **Extraction**: Memory extraction runs in background
+4. **Full system**: End-to-end chat with context and summaries
 
 See detailed test scenarios in full plan above.
 
@@ -186,16 +168,12 @@ See detailed test scenarios in full plan above.
 ### Observability
 - ✅ Context logs show accurate metadata
 - ✅ Prompt snapshots available in dev mode
-- ✅ Feature flag status visible in all logs
 
 ---
 
 ## Rollout Strategy
 
-1. Deploy with all flags OFF (default state)
-2. Enable SUMMARY_MAINTENANCE_ENABLED → monitor for 1 week
-3. Enable MEMORY_EXTRACTION_ENABLED → monitor for 1 week
-4. Enable MEMORY_RETRIEVAL_ENABLED → full system active
+Ensure the vector index is ready before deploying; memory features run by default.
 
 ---
 

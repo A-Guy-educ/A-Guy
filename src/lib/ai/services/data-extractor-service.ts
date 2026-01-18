@@ -4,7 +4,7 @@
  *
  * Future: Can be extended for exercise chat, editing assistance, etc.
  */
-import { getGeminiClient } from '../gemini-ai-provider.server'
+import { getGeminiClient } from '../providers/gemini/gemini.client'
 import { AI_MODELS } from '../models'
 import { optimizeImageForAI } from './image-optimizer-service'
 import { SIMPLE_TEXT_QUESTION_PROMPT } from '../prompts/simple-text-question'

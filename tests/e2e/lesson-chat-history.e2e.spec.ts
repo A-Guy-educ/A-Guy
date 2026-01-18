@@ -9,6 +9,7 @@
  * - Test logout clears conversation context properly
  */
 import { expect, test } from '@playwright/test'
+import type { Locator, Page, Response } from '@playwright/test'
 import { setupAuthenticatedUser, generateTestUserEmail, cleanupTestUsers } from './helpers/auth'
 import { getTestCourseData, buildLessonUrl, seedTestCourseData } from './helpers/courses'
 
@@ -38,9 +39,15 @@ test.describe('Lesson Chat History Loading', () => {
   })
 
   /**
+   * Selector for user chat messages (excludes buttons and other bg-primary elements)
+   * User messages have: ml-auto bg-primary and contain text content
+   */
+  const USER_MESSAGE_SELECTOR = '.bg-primary.ml-auto'
+
+  /**
    * Helper to find chat input - works with both ChatInterface and NotebookChat
    */
-  async function findChatInput(page: any) {
+  async function findChatInput(page: Page): Promise<Locator> {
     // Try different selectors for chat input
     const selectors = [
       'input[type="text"]:not([name="name"]):not([name="email"]):not([name="password"])',
@@ -66,24 +73,76 @@ test.describe('Lesson Chat History Loading', () => {
   /**
    * Helper to wait for chat message to appear
    */
-  async function waitForChatMessage(page: any, timeout = 30000) {
+  async function waitForChatMessage(page: Page, timeout = 30000) {
     // Wait for any message div (user or assistant)
-    await page.waitForSelector('.bg-primary, .bg-muted', { timeout })
+    // User messages have ml-auto class to distinguish from send button
+    // ChatInterface uses bg-card for assistant messages, NotebookChat uses bg-muted
+    await page.waitForSelector(`${USER_MESSAGE_SELECTOR}, .bg-muted, .bg-card`, { timeout })
   }
 
   /**
    * Helper to get chat messages
    */
-  async function getChatMessages(page: any) {
-    const userMessages = await page.locator('.bg-primary').all()
-    const assistantMessages = await page.locator('.bg-muted').all()
+  async function getChatMessages(page: Page): Promise<{
+    userMessages: Locator[]
+    assistantMessages: Locator[]
+  }> {
+    // Use more specific selector for user messages (ml-auto distinguishes from send button)
+    const userMessages = await page.locator(USER_MESSAGE_SELECTOR).all()
+    // ChatInterface uses bg-card for assistant messages, NotebookChat uses bg-muted
+    const assistantMessages = await page.locator('.bg-muted, .bg-card').all()
     return { userMessages, assistantMessages }
+  }
+
+  /**
+   * Helper to get chat message text content
+   */
+  async function getChatMessageTexts(page: Page, selector: string) {
+    return page.locator(selector).allTextContents()
+  }
+
+  /**
+   * Helper to wait for chat history loading to finish
+   * Waits for loading indicator to disappear AND ensures messages are loaded
+   */
+  async function waitForHistoryLoaded(page: Page, timeout = 30000) {
+    const loadingIndicator = page.locator('text=Loading conversation...')
+    const userMessages = page.locator(USER_MESSAGE_SELECTOR)
+
+    // First, wait for loading indicator to disappear (if it was visible)
+    // This ensures the API call has completed
+    try {
+      const isVisible = await loadingIndicator.isVisible().catch(() => false)
+      if (isVisible) {
+        await loadingIndicator.waitFor({ state: 'hidden', timeout })
+      }
+    } catch {
+      // Loading indicator might not have been visible, that's okay
+    }
+
+    // Then wait for messages to appear (with polling to handle async rendering)
+    // Use expect.poll to wait for messages to actually be present
+    await expect
+      .poll(
+        async () => {
+          const count = await userMessages.count()
+          return count
+        },
+        {
+          timeout,
+          intervals: [200, 500, 1000], // Check more frequently at first
+        },
+      )
+      .toBeGreaterThan(0)
+
+    // Small additional wait for React state to fully settle
+    await page.waitForTimeout(500)
   }
 
   /**
    * Helper to wait for chat input to be enabled
    */
-  async function waitForChatInputEnabled(chatInput: any, timeout = 30000) {
+  async function waitForChatInputEnabled(chatInput: Locator, timeout = 30000) {
     await chatInput.waitFor({ state: 'visible', timeout })
     const startTime = Date.now()
     while (Date.now() - startTime < timeout) {
@@ -102,7 +161,7 @@ test.describe('Lesson Chat History Loading', () => {
 
   test('should load chat history after refresh for User A', async ({ page }) => {
     // Authenticate User A
-    const userA = await setupAuthenticatedUser(page, {
+    await setupAuthenticatedUser(page, {
       email: generateTestUserEmail('chat-history-user-a'),
       password: 'password123',
     })
@@ -134,6 +193,7 @@ test.describe('Lesson Chat History Loading', () => {
     await page.reload()
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)
+    await waitForHistoryLoaded(page, 30000)
 
     // Verify chat history loads after refresh
     const messagesAfterRefresh = await getChatMessages(page)
@@ -141,13 +201,20 @@ test.describe('Lesson Chat History Loading', () => {
     expect(messagesAfterRefresh.assistantMessages.length).toBeGreaterThan(0)
 
     // Verify the original message is still present
-    const pageContent = await page.textContent('body')
-    expect(pageContent).toContain(testMessage)
+    await expect
+      .poll(
+        async () => {
+          const userMessageTexts = await getChatMessageTexts(page, USER_MESSAGE_SELECTOR)
+          return userMessageTexts.join(' ')
+        },
+        { timeout: 30000 },
+      )
+      .toContain(testMessage)
   })
 
   test('should isolate chat history between different users', async ({ page }) => {
     // Authenticate User A
-    const userA = await setupAuthenticatedUser(page, {
+    await setupAuthenticatedUser(page, {
       email: generateTestUserEmail('chat-history-isolation-a'),
       password: 'password123',
     })
@@ -179,7 +246,7 @@ test.describe('Lesson Chat History Loading', () => {
     await page.waitForLoadState('networkidle')
 
     // Authenticate User B
-    const userB = await setupAuthenticatedUser(page, {
+    await setupAuthenticatedUser(page, {
       email: generateTestUserEmail('chat-history-isolation-b'),
       password: 'password123',
     })
@@ -195,13 +262,13 @@ test.describe('Lesson Chat History Loading', () => {
 
     // Verify User B does NOT see User A's messages
     const messagesB = await getChatMessages(page)
-    const pageContent = await page.textContent('body')
 
     // User B should have empty chat (no previous conversation)
     // OR if there are messages, they should NOT contain User A's message
     if (messagesB.userMessages.length > 0) {
       // If messages exist, verify they don't contain User A's message
-      expect(pageContent).not.toContain(userAMessage)
+      const userMessageTexts = await getChatMessageTexts(page, USER_MESSAGE_SELECTOR)
+      expect(userMessageTexts.join(' ')).not.toContain(userAMessage)
     } else {
       // Empty chat is also valid - User B has no conversation yet
       expect(messagesB.userMessages.length).toBe(0)
@@ -227,7 +294,7 @@ test.describe('Lesson Chat History Loading', () => {
 
   test('should verify API endpoint returns correct user conversation', async ({ page }) => {
     // Authenticate User A
-    const userA = await setupAuthenticatedUser(page, {
+    await setupAuthenticatedUser(page, {
       email: generateTestUserEmail('chat-history-api-a'),
       password: 'password123',
     })
@@ -251,8 +318,8 @@ test.describe('Lesson Chat History Loading', () => {
     await waitForChatMessage(page, 30000)
 
     // Intercept API call to verify it uses the new endpoint
-    const apiCalls: any[] = []
-    page.on('response', (response: any) => {
+    const apiCalls: Array<{ url: string; status: number }> = []
+    page.on('response', (response: Response) => {
       if (response.url().includes('/api/agent/conversation')) {
         apiCalls.push({
           url: response.url(),

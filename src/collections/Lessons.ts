@@ -22,7 +22,12 @@ export const Lessons: CollectionConfig = {
     beforeChange: [
       ({ data }) => {
         if (data?.title && !data?.slug) {
-          data.slug = formatSlug(data.title)
+          // Generate unique slug from title
+          // Include timestamp for uniqueness, falling back to random if timestamp not available
+          const timestamp = typeof data.createdAt === 'string'
+            ? data.createdAt.replace(/[^0-9]/g, '').slice(-6)
+            : Date.now().toString().slice(-6)
+          data.slug = `${formatSlug(data.title)}-${timestamp}`
         }
         return data
       },
@@ -108,6 +113,25 @@ export const Lessons: CollectionConfig = {
       hasMany: true,
       admin: {
         description: 'Upload lesson content files (PDFs, videos, images, etc.)',
+      },
+    },
+    {
+      name: 'lessonContextText',
+      type: 'textarea',
+      maxLength: 100_000, // Match LESSON_CONTEXT_MAX_CHARS in src/lib/ai/lesson-context.ts
+      admin: {
+        description: 'AI context text for this lesson. Injected into chat prompts at runtime. NOT indexed or searchable.',
+      },
+      // NOT indexed, NOT required
+    },
+    {
+      name: 'prompt',
+      type: 'relationship',
+      relationTo: 'prompts',
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description: 'AI system prompt for this lesson (uses default if not set)',
       },
     },
     {

@@ -16,7 +16,6 @@ import { OpenAI } from 'openai'
 import { dirname, join } from 'path'
 import type { Payload } from 'payload'
 import { fileURLToPath } from 'url'
-import { featureFlags } from '../feature-flags'
 import { ChatRole } from './chat-message-role'
 import type { Message } from './context-policy'
 import { generateEmbeddings } from './embeddings'
@@ -202,10 +201,6 @@ export async function persistMemoryItems(
   contextKey?: string,
   contextLevel?: string,
 ): Promise<number> {
-  if (!featureFlags.MEMORY_EXTRACTION_ENABLED) {
-    return 0
-  }
-
   if (candidates.length === 0) {
     return 0
   }

@@ -6,12 +6,12 @@
  * - Happy-path chat flow with a real Payload instance
  *   (AI calls and vector search are mocked to avoid external dependencies).
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import config from '@payload-config'
-import type { Payload } from 'payload'
-import { getPayload } from 'payload'
-import type { PayloadRequest } from 'payload'
 import { agentChat } from '@/endpoints/agent/chat'
+import type { Exercise } from '@/payload-types'
+import config from '@payload-config'
+import type { Payload, PayloadRequest } from 'payload'
+import { getPayload } from 'payload'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 // Skip tests if DATABASE_URL is not set (e.g., in CI without MongoDB service)
 const hasDatabaseUrl = !!process.env.DATABASE_URL
@@ -22,7 +22,6 @@ vi.mock('@/lib/ai/services/exercise-chat-service', () => ({
     success: true,
     message: 'Mock assistant response',
   })),
-  getSystemPrompt: vi.fn(() => 'You are a helpful assistant.'),
 }))
 
 vi.mock('@/lib/ai/vector-index-check', () => ({
@@ -50,21 +49,12 @@ vi.mock('@/lib/ai/maintenance', () => ({
   })),
 }))
 
-vi.mock('@/lib/feature-flags', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/feature-flags')>()
-  return {
-    ...actual,
-    featureFlags: {
-      SUMMARY_MAINTENANCE_ENABLED: true,
-      MEMORY_EXTRACTION_ENABLED: true,
-      MEMORY_RETRIEVAL_ENABLED: true,
-    },
-  }
-})
-
 let payload: Payload
 let testUserId: string
 let testExerciseId: string | undefined
+let testChapterId: string
+let testPromptId: string
+let testSystemPromptId: string | undefined
 
 beforeAll(
   async () => {
@@ -80,6 +70,73 @@ beforeAll(
     })
     testUserId = user.id
 
+    // Create a category first (required by courses)
+    const category = await payload.create({
+      collection: 'categories',
+      data: { title: 'Test Category', slug: `test-category-${Date.now()}` },
+      user: { id: testUserId },
+    } as any)
+
+    // Create test course with all required fields
+    const course = await payload.create({
+      collection: 'courses',
+      data: {
+        courseLabel: 'TST',
+        title: 'Test Course',
+        slug: `test-course-${Date.now()}`,
+        categories: [category.id],
+        order: 1,
+        status: 'published',
+        isActive: true,
+      },
+      draft: true,
+    } as any)
+
+    // Create test chapter with all required fields
+    const chapter = await payload.create({
+      collection: 'chapters',
+      data: {
+        chapterLabel: '1',
+        title: 'Test Chapter',
+        slug: `test-chapter-${Date.now()}`,
+        course: course.id,
+        order: 1,
+        status: 'published',
+        isActive: true,
+      },
+      draft: true,
+    } as any)
+    testChapterId = chapter.id
+
+    // Create a default prompt for tests (requires overrideAccess since it's admin-only)
+    const prompt = await payload.create({
+      collection: 'prompts',
+      data: {
+        title: 'Integration Test Default Prompt',
+        key: `int-test-default-${Date.now()}`,
+        template: 'You are a test assistant for integration tests.',
+        type: 'context',
+        status: 'published',
+        isDefaultForAgentChat: true,
+      },
+      overrideAccess: true,
+    } as any)
+    testPromptId = prompt.id
+
+    // Create a published system prompt for tests
+    const systemPrompt = await payload.create({
+      collection: 'prompts',
+      data: {
+        title: 'Integration Test System Prompt',
+        key: `int-test-system-${Date.now()}`,
+        template: 'SYSTEM_PROMPT_MARKER: You must always follow these rules.',
+        type: 'system',
+        status: 'published',
+      },
+      overrideAccess: true,
+    } as any)
+    testSystemPromptId = systemPrompt.id
+
     // Reuse an existing exercise if available; otherwise create a minimal one.
     const existingExercises = await payload.find({
       collection: 'exercises',
@@ -89,13 +146,25 @@ beforeAll(
     if (existingExercises.docs.length > 0) {
       testExerciseId = existingExercises.docs[0].id
     } else {
+      // Create a lesson first (required for exercise)
+      const lesson = await payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Test Lesson for Exercise',
+          chapter: testChapterId,
+          order: 1,
+          status: 'published',
+        },
+        draft: true,
+      } as any)
+
       const exercise = await payload.create({
         collection: 'exercises',
         data: {
           title: 'Agent Chat Integration Test Exercise',
-          slug: `agent-chat-int-${Date.now()}`,
-          _status: 'published',
-        } as any,
+          lesson: lesson.id,
+        } satisfies Partial<Exercise>,
+        draft: true,
       })
       testExerciseId = exercise.id
     }
@@ -105,6 +174,24 @@ beforeAll(
 
 afterAll(async () => {
   if (!payload) return
+
+  // Cleanup prompt first (it may be referenced by lessons)
+  if (testPromptId) {
+    try {
+      await payload.delete({ collection: 'prompts', id: testPromptId, overrideAccess: true } as any)
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+
+  // Cleanup system prompt
+  if (testSystemPromptId) {
+    try {
+      await payload.delete({ collection: 'prompts', id: testSystemPromptId, overrideAccess: true } as any)
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
 
   if (testUserId) {
     await payload.delete({
@@ -136,7 +223,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
     const req = {
       payload,
-      user: { id: testUserId } as any,
+      user: { id: testUserId } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello, can you help me with this exercise?',
         acknowledgment: 'ack-1',
@@ -164,4 +251,333 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
     expect(Array.isArray(conversation.messages)).toBe(true)
     expect(conversation.messages!.length).toBeGreaterThanOrEqual(2)
   }, 60000)
+
+  describe('prompt resolution', () => {
+    it('uses default prompt when lesson has no prompt', async () => {
+      // Create a lesson WITHOUT a prompt
+      const lesson = await payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Test Lesson Without Prompt',
+          chapter: testChapterId,
+          order: 1,
+          status: 'published',
+          // No prompt field - will use default
+        },
+        draft: true,
+      } as any)
+
+      const req = {
+        payload,
+        user: { id: testUserId } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello',
+          acknowledgment: 'ack-1',
+          lessonId: lesson.id,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      const res = await agentChat(req)
+      expect(res.status).toBe(200)
+
+      // Cleanup
+      await payload.delete({ collection: 'lessons', id: lesson.id } as any)
+    })
+
+    it('falls back to default when lesson prompt is draft', async () => {
+      // Create draft prompt (requires overrideAccess since it's admin-only)
+      const draftPrompt = await payload.create({
+        collection: 'prompts',
+        data: {
+          title: 'Draft Prompt',
+          key: `draft-prompt-${Date.now()}`,
+          template: 'Draft content.',
+          status: 'draft', // Not published
+        },
+        overrideAccess: true,
+      } as any)
+
+      const lesson = await payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Test Lesson With Draft Prompt',
+          chapter: testChapterId,
+          order: 1,
+          status: 'published',
+          prompt: draftPrompt.id,
+        },
+        draft: true,
+      } as any)
+
+      const req = {
+        payload,
+        user: { id: testUserId } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello',
+          acknowledgment: 'ack-1',
+          lessonId: lesson.id,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      const res = await agentChat(req)
+      expect(res.status).toBe(200)
+      // The default prompt (testPromptId) should be used
+
+      // Cleanup
+      await payload.delete({ collection: 'lessons', id: lesson.id } as any)
+      await payload.delete({ collection: 'prompts', id: draftPrompt.id } as any)
+    })
+
+    it('endpoint always passes composedPrompt to chatWithExerciseHelper', async () => {
+      const { chatWithExerciseHelper } = await import('@/lib/ai/services/exercise-chat-service')
+
+      const lesson = await payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Test Lesson',
+          slug: `test-lesson-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          chapter: testChapterId,
+          order: 1,
+          status: 'published',
+        },
+        draft: true,
+      } as any)
+
+      const req = {
+        payload,
+        user: { id: testUserId } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello',
+          acknowledgment: 'ack-1',
+          lessonId: lesson.id,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      await agentChat(req)
+
+      // Verify composedPrompt was passed
+      expect(chatWithExerciseHelper).toHaveBeenCalledWith(
+        expect.objectContaining({
+          composedPrompt: expect.any(Object),
+        }),
+      )
+
+      await payload.delete({ collection: 'lessons', id: lesson.id } as any)
+    })
+  })
+
+  describe('system prompts', () => {
+    it('includes published system prompts in composed prompt', async () => {
+      const { chatWithExerciseHelper } = await import(
+        '@/lib/ai/services/exercise-chat-service'
+      )
+
+      const lesson = await payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Test Lesson For System Prompts',
+          slug: `test-lesson-sys-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          chapter: testChapterId,
+          order: 1,
+          status: 'published',
+        },
+        draft: true,
+      } as any)
+
+      const req = {
+        payload,
+        user: { id: testUserId } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello',
+          acknowledgment: 'ack-1',
+          lessonId: lesson.id,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      await agentChat(req)
+
+      // Verify composedPrompt includes system prompt marker
+      expect(chatWithExerciseHelper).toHaveBeenCalledWith(
+        expect.objectContaining({
+          composedPrompt: expect.objectContaining({
+            messages: expect.arrayContaining([
+              expect.objectContaining({
+                role: 'system',
+                content: expect.stringContaining('SYSTEM_PROMPT_MARKER'),
+              }),
+            ]),
+          }),
+        }),
+      )
+
+      await payload.delete({ collection: 'lessons', id: lesson.id } as any)
+    })
+
+    it('prepends system prompts in createdAt ASC order', async () => {
+      // Import after mocks are set up to get the mocked version
+      const chatWithExerciseHelper = (await import(
+        '@/lib/ai/services/exercise-chat-service'
+      )).chatWithExerciseHelper as ReturnType<typeof vi.fn>
+
+      // Delete existing system prompt from beforeAll to ensure clean test
+      if (testSystemPromptId) {
+        try {
+          await payload.delete({
+            collection: 'prompts',
+            id: testSystemPromptId,
+            overrideAccess: true,
+          } as any)
+          testSystemPromptId = undefined
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+
+      // Create two system prompts with specific markers
+      // First prompt (older)
+      const sysPromptA = await payload.create({
+        collection: 'prompts',
+        data: {
+          title: 'System Prompt A (Older)',
+          key: `sys-prompt-a-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          template: 'SYS_MARKER_A: First system prompt.',
+          type: 'system',
+          status: 'published',
+        },
+        overrideAccess: true,
+      } as any)
+
+      // Small delay to ensure different timestamps
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
+      // Second prompt (newer)
+      const sysPromptB = await payload.create({
+        collection: 'prompts',
+        data: {
+          title: 'System Prompt B (Newer)',
+          key: `sys-prompt-b-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          template: 'SYS_MARKER_B: Second system prompt.',
+          type: 'system',
+          status: 'published',
+        },
+        overrideAccess: true,
+      } as any)
+
+      const lesson = await payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Test Lesson For Ordering',
+          slug: `test-lesson-order-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          chapter: testChapterId,
+          order: 1,
+          status: 'published',
+        },
+        draft: true,
+      } as any)
+
+      const req = {
+        payload,
+        user: { id: testUserId } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello',
+          acknowledgment: 'ack-1',
+          lessonId: lesson.id,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      await agentChat(req)
+
+      // Get the call arguments - use last call to ensure we get this test's call
+      // Previous tests in this describe block may have called the mock
+      const mockCalls = (chatWithExerciseHelper as unknown as { mock: { calls: Array<[unknown]> } }).mock.calls
+      const lastCallIndex = mockCalls.length - 1
+      const callArgs = mockCalls[lastCallIndex]?.[0] as { composedPrompt: { messages: Array<{ role: string; content: string }> } }
+      const systemMessage = callArgs?.composedPrompt?.messages?.find(
+        (m: { role: string }) => m.role === 'system',
+      )?.content
+
+      // Verify system prompts are prepended in correct order (A before B)
+      expect(systemMessage).toBeDefined()
+      if (!systemMessage) {
+        throw new Error('System message not found')
+      }
+
+      // Our test markers should be present
+      expect(systemMessage).toContain('SYS_MARKER_A')
+      expect(systemMessage).toContain('SYS_MARKER_B')
+
+      // Verify ordering: older prompt (A) should come before newer prompt (B)
+      // This is the key assertion - createdAt ASC means older first
+      const indexA = systemMessage.indexOf('SYS_MARKER_A')
+      const indexB = systemMessage.indexOf('SYS_MARKER_B')
+
+      // If ordering is working correctly, A should come before B
+      if (indexA > indexB) {
+        throw new Error(
+          `System prompts not ordered correctly by createdAt ASC. ` +
+          `Expected SYS_MARKER_A (created first) at position ${indexB}, ` +
+          `but found at position ${indexA}. ` +
+          `Actual order: B before A (newer before older)`,
+        )
+      }
+
+      // Cleanup
+      await payload.delete({ collection: 'lessons', id: lesson.id } as any)
+      await payload.delete({ collection: 'prompts', id: sysPromptA.id } as any)
+      await payload.delete({ collection: 'prompts', id: sysPromptB.id } as any)
+    })
+
+    it('proceeds successfully when no system prompts exist', async () => {
+      // Temporarily remove system prompt
+      if (testSystemPromptId) {
+        await payload.delete({
+          collection: 'prompts',
+          id: testSystemPromptId,
+          overrideAccess: true,
+        } as any)
+      }
+
+      const lesson = await payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Test Lesson No System Prompts',
+          slug: `test-lesson-nosys-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          chapter: testChapterId,
+          order: 1,
+          status: 'published',
+        },
+        draft: true,
+      } as any)
+
+      const req = {
+        payload,
+        user: { id: testUserId } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello',
+          acknowledgment: 'ack-1',
+          lessonId: lesson.id,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      const res = await agentChat(req)
+      expect(res.status).toBe(200)
+
+      // Cleanup lesson
+      await payload.delete({ collection: 'lessons', id: lesson.id } as any)
+
+      // Recreate system prompt for other tests
+      const newSystemPrompt = await payload.create({
+        collection: 'prompts',
+        data: {
+          title: 'Integration Test System Prompt',
+          key: `int-test-system-recreated-${Date.now()}`,
+          template: 'SYSTEM_PROMPT_MARKER: You must always follow these rules.',
+          type: 'system',
+          status: 'published',
+        },
+        overrideAccess: true,
+      } as any)
+      testSystemPromptId = newSystemPrompt.id
+    })
+  })
 })

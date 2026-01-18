@@ -36,6 +36,9 @@ export function NotebookChat({ exerciseId, lessonId, chapterId, courseId }: Note
     hintPrompt: t('chatHintPrompt'),
     solutionPrompt: t('chatSolutionPrompt'),
     fullSolutionPrompt: t('chatFullSolutionPrompt'),
+    resetConfirmMessage: t('chatResetConfirm'),
+    resetSuccessMessage: t('chatResetSuccess'),
+    resetErrorMessage: t('chatResetError'),
     acknowledgment: t('chatAIAcknowledgment'),
     exerciseId,
     lessonId,
@@ -65,7 +68,7 @@ export function NotebookChat({ exerciseId, lessonId, chapterId, courseId }: Note
         {isLoadingHistory && (
           <div className="flex items-center justify-center p-4 text-muted-foreground text-sm">
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            Loading conversation...
+            {t('chatLoadingHistory')}
           </div>
         )}
         {!isLoadingHistory &&
@@ -85,7 +88,7 @@ export function NotebookChat({ exerciseId, lessonId, chapterId, courseId }: Note
         {isLoading && (
           <div className="mr-auto bg-muted text-foreground p-3 rounded-lg max-w-[85%] flex items-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Thinking...</span>
+            <span>{t('chatThinking')}</span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -133,7 +136,7 @@ export function NotebookChat({ exerciseId, lessonId, chapterId, courseId }: Note
           type="submit"
           className="p-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isLoading || !inputValue.trim()}
-          aria-label="Send message"
+          aria-label={t('sendMessage')}
         >
           <Send className="w-5 h-5" />
         </button>

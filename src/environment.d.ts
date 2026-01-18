@@ -6,13 +6,8 @@ declare global {
       NEXT_PUBLIC_SERVER_URL: string
       VERCEL_PROJECT_PRODUCTION_URL: string
 
-      // Analytics
-      NEXT_PUBLIC_ANALYTICS_ENABLED?: string
-      NEXT_PUBLIC_ANALYTICS_DEBUG?: string
-      NEXT_PUBLIC_ANALYTICS_DRY_RUN?: string
-      NEXT_PUBLIC_GA4_ENABLED?: string
+      // Analytics (only keys/tokens - presence enables the platform)
       NEXT_PUBLIC_GA4_MEASUREMENT_ID?: string
-      NEXT_PUBLIC_MIXPANEL_ENABLED?: string
       NEXT_PUBLIC_MIXPANEL_TOKEN?: string
     }
   }

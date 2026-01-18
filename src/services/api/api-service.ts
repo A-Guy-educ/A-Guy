@@ -115,12 +115,18 @@ export const apiService = {
         if (response.status === 401) {
           return { success: false, exists: false, messages: [], authRequired: true }
         }
-        return { success: false, exists: false, messages: [], error: data.error || 'Request failed' }
+        return {
+          success: false,
+          exists: false,
+          messages: [],
+          error: data.error || 'Request failed',
+        }
       }
 
       if (data.success && data.exists) {
         const messages = (data.messages || []).map((msg: { role: string; content: string }) => ({
-          role: msg.role === ChatRole.User || msg.role === 'user' ? ChatRole.User : ChatRole.Assistant,
+          role:
+            msg.role === ChatRole.User || msg.role === 'user' ? ChatRole.User : ChatRole.Assistant,
           content: msg.content,
         }))
 

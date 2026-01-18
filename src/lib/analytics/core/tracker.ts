@@ -39,7 +39,7 @@ async function initializeAdapters() {
  * Get or create session ID
  * Uses sessionStorage for per-tab sessions
  */
-function getSessionId(): string {
+export function getSessionId(): string {
   if (typeof window === 'undefined') return ''
 
   const SESSION_KEY = 'analytics_session_id'
@@ -95,12 +95,6 @@ export function track(event: ProductEvent, properties?: Record<string, unknown>)
       console.log('[Analytics] Track:', payload)
     }
 
-    // Dry-run mode - log but don't send
-    if (analyticsConfig.dryRun) {
-      console.log('[Analytics] Dry-run (not sent):', payload)
-      return
-    }
-
     // Get destinations for this event
     const destinations = getEventDestinations(event)
 
@@ -141,11 +135,6 @@ export function identify(userId: string, properties?: Record<string, unknown>): 
       console.log('[Analytics] Identify:', { userId, properties })
     }
 
-    if (analyticsConfig.dryRun) {
-      console.log('[Analytics] Dry-run identify (not sent):', { userId, properties })
-      return
-    }
-
     void initializeAdapters().then(() => {
       // Only Mixpanel handles user identification
       if (analyticsConfig.mixpanel.enabled && mixpanelAdapter) {
@@ -167,11 +156,6 @@ export function reset(): void {
   try {
     if (analyticsConfig.debugMode) {
       console.log('[Analytics] Reset')
-    }
-
-    if (analyticsConfig.dryRun) {
-      console.log('[Analytics] Dry-run reset (not sent)')
-      return
     }
 
     void initializeAdapters().then(() => {

@@ -8,7 +8,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, type ReactNode } from 'react'
-import { analytics, initializeAnalytics, PRODUCT_EVENTS } from '../index'
+import { analytics, initializeAnalytics, getSessionId, PRODUCT_EVENTS } from '../index'
 import { GA4Scripts } from '../adapters/ga4/scripts'
 import { MixpanelScripts } from '../adapters/mixpanel/scripts'
 import { analyticsConfig } from '../config'
@@ -43,8 +43,10 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
     const sessionStarted = sessionStorage.getItem(sessionStartedKey)
 
     if (!sessionStarted && analyticsConfig.enabled) {
+      // getSessionId() creates the session ID if it doesn't exist
+      const sessionId = getSessionId()
       analytics.track(PRODUCT_EVENTS.SESSION_STARTED, {
-        session_id: sessionStorage.getItem('analytics_session_id') || '',
+        session_id: sessionId,
         is_anonymous: true, // Will be updated on user_identified
       })
 

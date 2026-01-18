@@ -79,30 +79,19 @@ export async function checkVectorIndexReady(db: Db): Promise<IndexCheckResult> {
 }
 
 /**
- * Enforce vector index requirement when retrieval is enabled
+ * Enforce vector index requirement for memory retrieval
  *
- * Fails fast if:
- * - MEMORY_RETRIEVAL_ENABLED=true
- * - But index is missing or not ready
- *
- * This prevents silent degradation and makes the problem obvious
+ * Fails fast if the index is missing or not ready.
+ * This prevents silent degradation and makes the problem obvious.
  */
-export async function enforceVectorIndexRequirement(
-  db: Db,
-  retrievalEnabled: boolean,
-): Promise<void> {
-  if (!retrievalEnabled) {
-    // Feature is disabled, no check needed
-    return
-  }
-
+export async function enforceVectorIndexRequirement(db: Db): Promise<void> {
   const result = await checkVectorIndexReady(db)
 
   if (!result.ready) {
     const errorMsg = [
       '❌ MEMORY RETRIEVAL STARTUP CHECK FAILED',
       '',
-      'MEMORY_RETRIEVAL_ENABLED=true but vector search index is not ready',
+      'Memory retrieval is enabled but vector search index is not ready',
       '',
       `Error: ${result.error}`,
       '',
@@ -119,7 +108,7 @@ export async function enforceVectorIndexRequirement(
       '  1. Create the index manually in MongoDB Atlas UI',
       '  2. Use the definition in: infra/atlas/vector-index.memory_items.v1.json',
       '  3. Wait for index to reach READY status (5-10 minutes)',
-      '  4. OR set MEMORY_RETRIEVAL_ENABLED=false to disable feature',
+      '  4. Wait for index to reach READY status (5-10 minutes)',
       '',
       'MongoDB Atlas M10+ cluster is required for vector search.',
     ].join('\n')
@@ -127,9 +116,7 @@ export async function enforceVectorIndexRequirement(
     logger.error(errorMsg)
 
     // Fail fast: refuse to start
-    throw new Error(
-      'Vector search index not ready. See logs for details. Set MEMORY_RETRIEVAL_ENABLED=false or create the index in Atlas UI.',
-    )
+    throw new Error('Vector search index not ready. See logs for details.')
   }
 
   logger.info(

@@ -47,7 +47,7 @@ async function verifyVectorIndex() {
     // Initialize Payload
     console.log('1️⃣  Connecting to database...')
     const payload = await getPayload({ config })
-    const db = (payload.db as any).connection?.db as Db | undefined
+    const db = (payload.db as { connection?: { db?: Db } }).connection?.db
 
     if (!db) {
       console.error('❌ Failed to get database connection')
@@ -76,8 +76,11 @@ async function verifyVectorIndex() {
     let indexes: IndexInfo[] = []
     try {
       indexes = (await collection.listSearchIndexes().toArray()) as IndexInfo[]
-    } catch (error: any) {
-      if (error.message?.includes('not supported') || error.message?.includes('SearchNotEnabled')) {
+    } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        (error.message.includes('not supported') || error.message.includes('SearchNotEnabled'))
+      ) {
         console.error('❌ Vector search is not supported on this cluster')
         console.error('   You need MongoDB Atlas with M10+ cluster tier')
         console.error(
@@ -85,7 +88,6 @@ async function verifyVectorIndex() {
         )
         console.error('Solutions:')
         console.error('   1. Upgrade to M10+ cluster in MongoDB Atlas')
-        console.error('   2. Or set MEMORY_RETRIEVAL_ENABLED=false in .env')
         process.exit(1)
       }
       throw error
@@ -128,7 +130,7 @@ async function verifyVectorIndex() {
     } else if (status === 'BUILDING' || status === 'PENDING') {
       console.warn('⚠️  Index status: BUILDING')
       console.warn('   The index is being built, this can take 5-10 minutes')
-      console.warn('   Wait for status to change to READY before enabling memory retrieval')
+      console.warn('   Wait for status to change to READY before using memory retrieval')
       console.warn('   Check status in MongoDB Atlas → Atlas Search\n')
       process.exit(1)
     } else {
@@ -195,27 +197,8 @@ async function verifyVectorIndex() {
 
     console.log('✅ OpenAI API key is set\n')
 
-    // Check feature flags
-    console.log('7️⃣  Checking feature flags...')
-    const flags = {
-      SUMMARY_MAINTENANCE_ENABLED: process.env.SUMMARY_MAINTENANCE_ENABLED === 'true',
-      MEMORY_EXTRACTION_ENABLED: process.env.MEMORY_EXTRACTION_ENABLED === 'true',
-      MEMORY_RETRIEVAL_ENABLED: process.env.MEMORY_RETRIEVAL_ENABLED === 'true',
-    }
-
-    console.log('   Feature flags:')
-    console.log(
-      `   • SUMMARY_MAINTENANCE_ENABLED: ${flags.SUMMARY_MAINTENANCE_ENABLED ? '✅' : '❌'}`,
-    )
-    console.log(`   • MEMORY_EXTRACTION_ENABLED: ${flags.MEMORY_EXTRACTION_ENABLED ? '✅' : '❌'}`)
-    console.log(`   • MEMORY_RETRIEVAL_ENABLED: ${flags.MEMORY_RETRIEVAL_ENABLED ? '✅' : '❌'}`)
-
-    if (!flags.MEMORY_RETRIEVAL_ENABLED) {
-      console.log('\n   ℹ️  Memory retrieval is disabled')
-      console.log('      Set MEMORY_RETRIEVAL_ENABLED=true in .env to enable')
-    }
-
-    console.log('\n' + '='.repeat(60))
+    console.log('7️⃣  Finalizing...\n')
+    console.log('='.repeat(60))
     console.log('✅ Vector Search Setup Complete!')
     console.log('='.repeat(60))
     console.log('\nIndex Details:')
@@ -226,13 +209,7 @@ async function verifyVectorIndex() {
     console.log(`  Similarity: ${vectorField.similarity}`)
     console.log(`  Filter fields: ${filterFields.join(', ')}\n`)
 
-    if (flags.MEMORY_RETRIEVAL_ENABLED) {
-      console.log('🎉 Memory retrieval is enabled and ready to use!')
-    } else {
-      console.log('💡 To enable memory retrieval:')
-      console.log('   1. Add to .env: MEMORY_RETRIEVAL_ENABLED=true')
-      console.log('   2. Restart the application')
-    }
+    console.log('🎉 Memory retrieval is ready to use!')
 
     console.log('\nNext steps:')
     console.log('  • Test the system: pnpm test:int tests/int/memory-system.int.spec.ts')

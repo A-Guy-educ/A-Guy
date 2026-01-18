@@ -14,6 +14,7 @@ const dirname = path.dirname(filename)
 // Load .env file (same as development environment)
 // Environment variables can be overridden via CI secrets or process.env
 config({ path: path.resolve(dirname, '.env') })
+config({ path: path.resolve(dirname, '.env.test'), override: true })
 
 // Determine DATABASE_URL for webServer
 // E2E_DATABASE_URL will be set by globalSetup (testcontainers)
@@ -62,9 +63,6 @@ export default defineConfig({
       DATABASE_URL: databaseUrl,
       NEXT_PUBLIC_SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000',
       NODE_OPTIONS: process.env.NODE_OPTIONS || '',
-      SUMMARY_MAINTENANCE_ENABLED: process.env.SUMMARY_MAINTENANCE_ENABLED || 'true',
-      MEMORY_EXTRACTION_ENABLED: process.env.MEMORY_EXTRACTION_ENABLED || 'true',
-      MEMORY_RETRIEVAL_ENABLED: process.env.MEMORY_RETRIEVAL_ENABLED || 'true',
       OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
     },
   },

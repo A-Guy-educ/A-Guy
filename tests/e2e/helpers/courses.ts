@@ -1,8 +1,9 @@
 /**
  * Test helpers for course and lesson data
  */
-import { getPayload } from 'payload'
 import config from '@payload-config'
+import type { Payload } from 'payload'
+import { getPayload } from 'payload'
 
 export interface TestCourseData {
   courseSlug: string
@@ -14,6 +15,93 @@ export interface TestCourseData {
 }
 
 /**
+ * Generate a unique slug with random suffix to avoid conflicts
+ */
+function generateUniqueSlug(prefix: string): string {
+  const timestamp = Date.now()
+  const random = Math.random().toString(36).substring(2, 8)
+  return `${prefix}-${timestamp}-${random}`
+}
+
+/**
+ * Delete existing test data to avoid unique constraint violations
+ * Uses depth: 0 to avoid populating relationships that may cause null reference errors
+ */
+async function cleanupTestData(payload: Payload): Promise<void> {
+  // Delete in reverse order to avoid relationship issues: lessons → chapters → courses
+  // Use depth: 0 to avoid populating relationships during cleanup
+
+  // Find and delete test lessons
+  const lessons = await payload.find({
+    collection: 'lessons',
+    where: {
+      slug: {
+        like: 'test-lesson-',
+      },
+    },
+    limit: 100,
+    depth: 0,
+  })
+
+  for (const lesson of lessons.docs) {
+    try {
+      await payload.delete({
+        collection: 'lessons',
+        id: lesson.id,
+      })
+    } catch {
+      // Ignore errors - document may already be deleted
+    }
+  }
+
+  // Find and delete test chapters
+  const chapters = await payload.find({
+    collection: 'chapters',
+    where: {
+      slug: {
+        like: 'test-chapter-',
+      },
+    },
+    limit: 100,
+    depth: 0,
+  })
+
+  for (const chapter of chapters.docs) {
+    try {
+      await payload.delete({
+        collection: 'chapters',
+        id: chapter.id,
+      })
+    } catch {
+      // Ignore errors - document may already be deleted
+    }
+  }
+
+  // Delete test courses (by prefix)
+  const courses = await payload.find({
+    collection: 'courses',
+    where: {
+      slug: {
+        like: 'test-course-',
+      },
+    },
+    limit: 100,
+    depth: 0,
+  })
+
+  for (const course of courses.docs) {
+    try {
+      await payload.delete({
+        collection: 'courses',
+        id: course.id,
+      })
+    } catch {
+      // Ignore errors - document may already be deleted
+    }
+  }
+}
+
+/**
  * Seed test course data if it doesn't exist
  * Creates a test course with a chapter and lesson, all published and active
  */
@@ -21,12 +109,8 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
   try {
     const payload = await getPayload({ config })
 
-    // Check if test course already exists
-    const existing = await getTestCourseData()
-    if (existing) {
-      console.log('Test course data already exists, skipping seed')
-      return existing
-    }
+    // Clean up any existing test data first
+    await cleanupTestData(payload)
 
     console.log('Seeding test course data...')
 
@@ -55,12 +139,14 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
       })
     }
 
-    // Create test course
+    // Create test course with unique slug
+    const courseSlug = generateUniqueSlug('test-course')
     const course = await payload.create({
       collection: 'courses',
       data: {
         courseLabel: 'TEST',
         title: 'Test Course for E2E',
+        slug: courseSlug,
         description: 'A test course created for E2E testing',
         status: 'published',
         isActive: true,
@@ -69,12 +155,14 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
       },
     })
 
-    // Create test chapter
+    // Create test chapter with unique slug
+    const chapterSlug = generateUniqueSlug('test-chapter')
     const chapter = await payload.create({
       collection: 'chapters',
       data: {
         course: course.id,
         chapterLabel: '1',
+        slug: chapterSlug,
         title: 'Test Chapter',
         description: 'A test chapter created for E2E testing',
         status: 'published',
@@ -83,11 +171,13 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
       },
     })
 
-    // Create test lesson
+    // Create test lesson with unique slug
+    const lessonSlug = generateUniqueSlug('test-lesson')
     const lesson = await payload.create({
       collection: 'lessons',
       data: {
         chapter: chapter.id,
+        slug: lessonSlug,
         title: 'Test Lesson',
         description: 'A test lesson created for E2E testing',
         status: 'published',
@@ -96,17 +186,12 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
       },
     })
 
-    // Validate slugs exist
-    if (!course.slug || !chapter.slug || !lesson.slug) {
-      throw new Error('Course, chapter, or lesson missing slug field after creation')
-    }
-
     console.log('Test course data seeded successfully')
 
     return {
-      courseSlug: course.slug,
-      chapterSlug: chapter.slug,
-      lessonSlug: lesson.slug,
+      courseSlug: course.slug!,
+      chapterSlug: chapter.slug!,
+      lessonSlug: lesson.slug!,
       courseId: course.id,
       chapterId: chapter.id,
       lessonId: lesson.id,
@@ -219,15 +304,10 @@ export async function getTestCourseData(): Promise<TestCourseData | null> {
 
     const lesson = lessons.docs[0]
 
-    // Validate slugs exist (required fields but TypeScript doesn't know)
-    if (!course.slug || !chapter.slug || !lesson.slug) {
-      throw new Error('Course, chapter, or lesson missing slug field')
-    }
-
     return {
-      courseSlug: course.slug,
-      chapterSlug: chapter.slug,
-      lessonSlug: lesson.slug,
+      courseSlug: course.slug!,
+      chapterSlug: chapter.slug!,
+      lessonSlug: lesson.slug!,
       courseId: course.id,
       chapterId: chapter.id,
       lessonId: lesson.id,

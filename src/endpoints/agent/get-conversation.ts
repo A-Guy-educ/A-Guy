@@ -51,29 +51,57 @@ export async function getConversation(req: PayloadRequest & { json?: () => Promi
     // 3) Query with EXPLICIT user filter - guarantees user isolation
     // This ensures that even if multiple users have conversations with the same contextKey,
     // only the authenticated user's conversation is returned
-    const result = await req.payload.find({
-      collection: 'conversations',
-      where: {
-        and: [
-          { user: { equals: req.user.id } }, // Explicit user filter - CRITICAL for security
-          { contextKey: { equals: validated.contextKey } },
-          { archivedAt: { exists: false } }, // Only active conversations
-        ],
-      },
-      limit: 1,
-      sort: '-lastMessageAt', // Most recent first
-      depth: 0, // No relationship population needed
-      user: req.user,
-      overrideAccess: false, // Enforce access control
-    })
+    // Retry logic to handle potential read-after-write consistency issues
+    let conversation = null
+    let attempts = 0
+    const maxAttempts = 3
+    const retryDelayMs = 100
 
-    if (result.docs.length === 0) {
+    while (attempts < maxAttempts) {
+      const result = await req.payload.find({
+        collection: 'conversations',
+        where: {
+          and: [
+            { user: { equals: req.user.id } }, // Explicit user filter - CRITICAL for security
+            { contextKey: { equals: validated.contextKey } },
+            { archivedAt: { exists: false } }, // Only active conversations
+          ],
+        },
+        limit: 1,
+        sort: '-lastMessageAt', // Most recent first
+        depth: 0, // No relationship population needed
+        user: req.user,
+        overrideAccess: false, // Enforce access control
+      })
+
+      if (result.docs.length > 0) {
+        conversation = result.docs[0]
+        reqLogger.debug(
+          {
+            userId: req.user.id,
+            contextKey: validated.contextKey,
+            conversationId: conversation.id,
+            attempt: attempts + 1,
+          },
+          'Found conversation',
+        )
+        break
+      }
+
+      if (attempts < maxAttempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs))
+      }
+      attempts++
+    }
+
+    if (!conversation) {
       reqLogger.debug(
         {
           userId: req.user.id,
           contextKey: validated.contextKey,
+          attempts,
         },
-        'No conversation found',
+        'No conversation found after retries',
       )
 
       return Response.json({
@@ -83,8 +111,6 @@ export async function getConversation(req: PayloadRequest & { json?: () => Promi
         contextKey: validated.contextKey,
       })
     }
-
-    const conversation = result.docs[0]
 
     // Verify conversation ownership (defense in depth)
     const conversationUserId =
@@ -105,11 +131,36 @@ export async function getConversation(req: PayloadRequest & { json?: () => Promi
 
     // Format messages for client
     const rawMessages = conversation.messages || []
+    reqLogger.info(
+      {
+        userId: req.user.id,
+        conversationId: conversation.id,
+        contextKey: validated.contextKey,
+        rawMessagesCount: rawMessages.length,
+        rawMessagesPreview: rawMessages.slice(0, 2).map((m) => ({
+          role: m.role,
+          content:
+            typeof m.content === 'string'
+              ? m.content.substring(0, 30)
+              : String(m.content).substring(0, 30),
+        })),
+      },
+      '[DEBUG] Raw messages from database',
+    )
+
     const messages = rawMessages
-      .filter((msg) => msg && msg.role && msg.content) // Filter out invalid messages
+      .filter((msg) => {
+        // Filter out invalid messages - ensure role and content are present and valid
+        if (!msg || !msg.role || !msg.content) return false
+        // Ensure content is a non-empty string
+        if (typeof msg.content !== 'string' || msg.content.trim().length === 0) return false
+        // Ensure role is valid
+        if (msg.role !== 'user' && msg.role !== 'assistant') return false
+        return true
+      })
       .map((msg) => ({
         role: msg.role === 'user' ? ChatRole.User : ChatRole.Assistant,
-        content: msg.content,
+        content: String(msg.content).trim(),
       }))
 
     reqLogger.info(
@@ -118,6 +169,9 @@ export async function getConversation(req: PayloadRequest & { json?: () => Promi
         conversationId: conversation.id,
         contextKey: validated.contextKey,
         messageCount: messages.length,
+        messagesPreview: messages
+          .slice(0, 2)
+          .map((m) => ({ role: m.role, content: m.content.substring(0, 30) })),
       },
       'Conversation loaded successfully',
     )

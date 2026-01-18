@@ -6,7 +6,7 @@
  */
 
 // Core API
-export { analytics, initializeAnalytics } from './core/tracker'
+export { analytics, initializeAnalytics, getSessionId } from './core/tracker'
 
 // Event constants
 export { PRODUCT_EVENTS } from './contracts/events'
