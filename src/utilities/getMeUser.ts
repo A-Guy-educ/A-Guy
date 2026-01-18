@@ -13,7 +13,10 @@ export const getMeUser = async (args?: {
 }> => {
   const { nullUserRedirect, validUserRedirect } = args || {}
   const cookieStore = await cookies()
-  const token = cookieStore.get('payload-token')?.value
+  const config = (await import('@payload-config')).default as { cookiePrefix?: string }
+  const cookiePrefix = config.cookiePrefix || 'payload'
+  const cookieName = `${cookiePrefix}-token`
+  const token = cookieStore.get(cookieName)?.value || cookieStore.get('payload-token')?.value
 
   if (!token) {
     if (nullUserRedirect) {
@@ -32,10 +35,16 @@ export const getMeUser = async (args?: {
   const host = forwardedHost || headerList.get('host')
   const origin = host ? `${forwardedProto || 'http'}://${host}` : getServerSideURL()
 
+  const cookieHeader = cookieStore.toString()
+  const headersToSend = new Headers({
+    Authorization: `JWT ${token}`,
+  })
+  if (cookieHeader) {
+    headersToSend.set('Cookie', cookieHeader)
+  }
+
   const meUserReq = await fetch(`${origin}/api/users/me`, {
-    headers: {
-      Authorization: `JWT ${token}`,
-    },
+    headers: headersToSend,
     cache: 'no-store',
   })
 
