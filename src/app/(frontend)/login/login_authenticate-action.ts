@@ -2,7 +2,6 @@
 
 import { cookies } from 'next/headers'
 import { getPayload } from 'payload'
-import config from '@payload-config'
 
 export async function loginAction(formData: FormData) {
   const email = formData.get('email') as string
@@ -13,6 +12,7 @@ export async function loginAction(formData: FormData) {
   }
 
   try {
+    const config = (await import('@payload-config')).default
     const payload = await getPayload({ config })
     const result = await payload.login({
       collection: 'users',
