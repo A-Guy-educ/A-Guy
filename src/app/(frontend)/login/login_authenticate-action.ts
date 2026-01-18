@@ -30,6 +30,8 @@ export async function loginAction(formData: FormData, cookieStore?: CookieStore)
     const payload = await getPayload({ config })
     const usersCollection = payload.collections?.users
     const shouldRestoreToken = usersCollection?.config?.auth?.removeTokenFromResponses === true
+    const cookiePrefix = payload.config.cookiePrefix || 'payload'
+    const cookieName = `${cookiePrefix}-token`
 
     if (shouldRestoreToken && usersCollection?.config?.auth) {
       const authConfig = usersCollection.config.auth as {
@@ -60,7 +62,7 @@ export async function loginAction(formData: FormData, cookieStore?: CookieStore)
               : 'lax'
       const secure = authCookies?.secure ?? process.env.NODE_ENV === 'production'
 
-      resolvedCookieStore.set('payload-token', result.token, {
+      resolvedCookieStore.set(cookieName, result.token, {
         httpOnly: true,
         secure,
         sameSite,
