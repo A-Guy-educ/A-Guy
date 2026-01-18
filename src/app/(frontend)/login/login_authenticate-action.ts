@@ -3,7 +3,21 @@
 import { cookies } from 'next/headers'
 import { getPayload } from 'payload'
 
-export async function loginAction(formData: FormData) {
+type CookieStore = {
+  set: (
+    name: string,
+    value: string,
+    options: {
+      httpOnly: boolean
+      secure: boolean
+      sameSite: 'lax' | 'strict' | 'none'
+      path: string
+      maxAge: number
+    },
+  ) => void
+}
+
+export async function loginAction(formData: FormData, cookieStore?: CookieStore) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
@@ -34,8 +48,8 @@ export async function loginAction(formData: FormData) {
     }
 
     if (result.token) {
-      const cookieStore = await cookies()
-      cookieStore.set('payload-token', result.token, {
+      const resolvedCookieStore = cookieStore ?? (await cookies())
+      resolvedCookieStore.set('payload-token', result.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',

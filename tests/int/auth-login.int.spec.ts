@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { beforeAll, beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
@@ -47,7 +48,7 @@ describe('Login Action', () => {
     formData.set('email', testUser.email)
     formData.set('password', 'testpassword123')
 
-    const result = await loginAction(formData)
+    const result = await loginAction(formData, mockCookieStore)
 
     expect(result.success).toBe(true)
     expect(mockCookieStore.set).toHaveBeenCalledWith(
