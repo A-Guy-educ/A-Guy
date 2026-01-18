@@ -1,8 +1,8 @@
 import React from 'react'
 import type { Metadata } from 'next'
-import { SignupPageContent } from './SignupPageContent'
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { getMeUser } from '@/utilities/getMeUser'
+import { SignupPageContent } from './SignupPageContent'
 
 export const metadata: Metadata = {
   title: 'Sign Up',
@@ -10,12 +10,9 @@ export const metadata: Metadata = {
 }
 
 export default async function SignupPage() {
-  // Quick check: if user has a token, redirect to home
-  // We don't validate the token here for performance
-  const cookieStore = await cookies()
-  const token = cookieStore.get('payload-token')
+  const { user } = await getMeUser()
 
-  if (token) {
+  if (user) {
     redirect('/')
   }
 

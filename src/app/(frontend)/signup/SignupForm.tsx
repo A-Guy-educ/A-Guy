@@ -73,7 +73,7 @@ export function SignupForm() {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           {t('alreadyHaveAccount')}{' '}
-          <Link href="/admin/login" className="text-primary hover:underline">
+          <Link href="/login" className="text-primary hover:underline">
             {t('login')}
           </Link>
         </p>

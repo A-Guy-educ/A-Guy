@@ -13,7 +13,17 @@
     "header": {
       "welcome": "שלום,",
       "logout": "התנתק",
-      "loggingOut": "מתנתק..."
+      "loggingOut": "מתנתק...",
+      "login": "התחבר",
+      "signup": "הירשם",
+      "myAccount": "החשבון שלי"
+    },
+    "mobileMenu": {
+      "title": "תפריט",
+      "navigation": "ניווט",
+      "resources": "משאבים",
+      "search": "חיפוש",
+      "language": "שפה"
     }
   },
   "auth": {
@@ -39,6 +49,27 @@
         "emailExists": "כבר קיים חשבון עם כתובת אימייל זו",
         "duplicateEmailMessage": "כבר קיים חשבון עם כתובת אימייל זו. האם תרצה להתחבר במקום?"
       }
+    },
+    "login": {
+      "title": "ברוך שובך",
+      "subtitle": "התחבר לחשבון שלך",
+      "email": "אימייל",
+      "emailPlaceholder": "you@example.com",
+      "password": "סיסמה",
+      "passwordPlaceholder": "הזן את הסיסמה שלך",
+      "loginButton": "התחבר",
+      "loggingIn": "מתחבר...",
+      "noAccount": "אין לך חשבון?",
+      "signupLink": "הירשם",
+      "errors": {
+        "invalidCredentials": "אימייל או סיסמה שגויים"
+      }
+    },
+    "account": {
+      "title": "חשבון",
+      "name": "שם",
+      "email": "אימייל",
+      "missing": "לא סופק"
     }
   },
   "roles": {

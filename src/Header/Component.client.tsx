@@ -16,6 +16,7 @@ interface HeaderClientProps {
 
 export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   const [user, setUser] = useState<User | null>(null)
+  const [isAuthLoading, setIsAuthLoading] = useState(true)
   /* Storing the value in a useState to avoid hydration errors */
   const [theme, setTheme] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -34,10 +35,14 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         if (response.ok) {
           const data = await response.json()
           setUser(data.user || null)
+        } else {
+          setUser(null)
         }
       } catch (_error) {
         // Silently fail - user is not authenticated
         setUser(null)
+      } finally {
+        setIsAuthLoading(false)
       }
     }
 
@@ -69,8 +74,6 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const userName = user?.name || undefined
-
   return (
     <>
       <header
@@ -93,7 +96,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center">
-              <HeaderNav data={data} userName={userName} isAuthenticated={!!user} />
+              <HeaderNav data={data} user={user} isAuthLoading={isAuthLoading} />
             </div>
 
             {/* Mobile Menu Button */}
@@ -107,8 +110,8 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
         data={data}
-        userName={userName}
-        isAuthenticated={!!user}
+        user={user}
+        isAuthLoading={isAuthLoading}
       />
     </>
   )
