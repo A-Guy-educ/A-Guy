@@ -14,10 +14,24 @@ export async function loginAction(formData: FormData) {
   try {
     const config = (await import('@payload-config')).default
     const payload = await getPayload({ config })
+    const usersCollection = payload.collections?.users
+    const shouldRestoreToken = usersCollection?.config?.auth?.removeTokenFromResponses === true
+
+    if (shouldRestoreToken && usersCollection?.config?.auth) {
+      const authConfig = usersCollection.config.auth as {
+        removeTokenFromResponses?: true
+      }
+      delete authConfig.removeTokenFromResponses
+    }
+
     const result = await payload.login({
       collection: 'users',
       data: { email, password },
     })
+
+    if (shouldRestoreToken && usersCollection?.config?.auth) {
+      usersCollection.config.auth.removeTokenFromResponses = true
+    }
 
     if (result.token) {
       const cookieStore = await cookies()
