@@ -9,7 +9,6 @@
 
 import Script from 'next/script'
 import { analyticsConfig } from '../../config'
-import { initializeGA4 } from './adapter'
 
 /**
  * GA4 Script Component
@@ -34,24 +33,22 @@ export function GA4Scripts() {
 
   return (
     <>
-      {/* Load gtag.js */}
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
-        strategy="afterInteractive"
-        onLoad={() => {
-          // Initialize GA4 after script loads
-          initializeGA4()
-        }}
-      />
-
-      {/* Initialize gtag function */}
-      <Script id="ga4-init" strategy="afterInteractive">
+      {/* Initialize gtag function FIRST (must run before gtag.js loads) */}
+      <Script id="ga4-init" strategy="beforeInteractive">
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           window.gtag = gtag;
+          gtag('js', new Date());
+          gtag('config', '${measurementId}');
         `}
       </Script>
+
+      {/* Load gtag.js AFTER gtag is defined */}
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
+        strategy="afterInteractive"
+      />
     </>
   )
 }

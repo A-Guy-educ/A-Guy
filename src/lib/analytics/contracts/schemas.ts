@@ -28,7 +28,7 @@ export const PageViewSchema = z.object({
  */
 export const SessionStartedSchema = z.object({
   session_id: z.string().describe('Client-side session identifier'),
-  is_anonymous: z.boolean().describe('Whether user is authenticated'),
+  is_anonymous: z.boolean().describe('True if user is not logged in'),
   locale: z.string().optional().describe('User locale'),
 })
 

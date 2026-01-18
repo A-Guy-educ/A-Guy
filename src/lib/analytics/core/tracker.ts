@@ -39,7 +39,7 @@ async function initializeAdapters() {
  * Get or create session ID
  * Uses sessionStorage for per-tab sessions
  */
-function getSessionId(): string {
+export function getSessionId(): string {
   if (typeof window === 'undefined') return ''
 
   const SESSION_KEY = 'analytics_session_id'
