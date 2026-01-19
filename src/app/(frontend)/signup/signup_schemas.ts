@@ -15,4 +15,5 @@ export interface SignupResult {
   success: boolean
   message?: string
   errors?: Record<string, string>
+  userId?: string
 }

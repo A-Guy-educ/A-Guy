@@ -10,10 +10,13 @@ import { toast } from 'sonner'
 import { useTranslations } from '@/providers/I18n'
 import { SignupFormFields } from './SignupFormFields'
 import { validateSignupForm } from './actions/signup_validation-action'
+import { useAnalytics } from '@/lib/analytics/providers/AnalyticsProvider'
+import { PRODUCT_EVENTS } from '@/lib/analytics/contracts/events'
 
 export function SignupForm() {
   const t = useTranslations('auth.signup')
   const router = useRouter()
+  const analytics = useAnalytics()
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -43,6 +46,19 @@ export function SignupForm() {
         toast.error(result.message || 'Signup failed')
       } else {
         toast.success('Account created successfully!')
+
+        // Track registration completed and user identified
+        if (result.userId) {
+          analytics.track(PRODUCT_EVENTS.REGISTRATION_COMPLETED, {
+            user_id: result.userId,
+            auth_method: 'email',
+          })
+          analytics.track(PRODUCT_EVENTS.USER_IDENTIFIED, {
+            user_id: result.userId,
+            is_new_user: true,
+          })
+        }
+
         // Auto-login successful - redirect to home
         router.push('/')
         router.refresh()

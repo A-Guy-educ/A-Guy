@@ -3,6 +3,8 @@ import { apiService } from '@/services/api/api-service'
 import { logger } from '@/utilities/logger'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useAnalytics } from '@/lib/analytics/providers/AnalyticsProvider'
+import { PRODUCT_EVENTS } from '@/lib/analytics/contracts/events'
 
 export interface ChatMessage {
   role: ChatRole
@@ -42,6 +44,7 @@ export function useNotebookChat({
   chapterId,
   courseId,
 }: UseNotebookChatProps) {
+  const analytics = useAnalytics()
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -237,6 +240,13 @@ export function useNotebookChat({
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
     setIsLoading(true)
+
+    // Track chat message sent (message length only, NOT content)
+    analytics.track(PRODUCT_EVENTS.CHAT_MESSAGE_SENT, {
+      conversation_id: contextKey || 'unknown',
+      message_length: message.length,
+      lesson_id: lessonId,
+    })
 
     try {
       const result = await apiService.chat(message, acknowledgment, {
