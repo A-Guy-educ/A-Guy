@@ -27,4 +27,3 @@ jobs:
     secrets:
       LLM_API_KEY: ${{secrets.AI_KEY }}
       LLM_BASE_URL: ${{secrets.AI_BASE_URL }}
-      GITHUB_TOKEN: ${{secrets.RELEASE_TOKEN}}
