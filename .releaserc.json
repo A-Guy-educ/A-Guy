@@ -62,7 +62,7 @@
       {
         "notifyOnSuccess": true,
         "notifyOnFail": true,
-        "slackUrl": "${SLACK_WEBHOOK_URL}"
+        "slackWebhook": "${SLACK_WEBHOOK_URL}"
       }
     ]
   ]
