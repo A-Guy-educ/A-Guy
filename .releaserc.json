@@ -65,8 +65,7 @@
       {
         "packageName": "a-guy",
         "notifyOnSuccess": true,
-        "notifyOnFail": true,
-        "slackWebhook": "${SLACK_WEBHOOK_URL}"
+        "notifyOnFail": true
       }
     ]
   ]
