@@ -1,0 +1,31 @@
+name: OpenHands Agent
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: openhands-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  openhands:
+    if: contains(github.event.comment.body, '@openhands-agent')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Run OpenHands
+        uses: All-Hands-AI/openhands-github-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AI_BASE_URL: ${{ secrets.AI_BASE_URL }}
+          AI_MODEL: ${{ secrets.AI_MODEL }}
+          AI_KEY: ${{ secrets.AI_KEY }}
