@@ -934,6 +934,10 @@ export interface Lesson {
    */
   chapter: string | Chapter;
   /**
+   * The type of lesson: Learning content, Practice exercises, or Exam
+   */
+  type: 'learning' | 'practice' | 'exam';
+  /**
    * Lesson title
    */
   title: string;
@@ -1865,6 +1869,7 @@ export interface ChaptersSelect<T extends boolean = true> {
  */
 export interface LessonsSelect<T extends boolean = true> {
   chapter?: T;
+  type?: T;
   title?: T;
   description?: T;
   order?: T;
