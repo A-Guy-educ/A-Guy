@@ -22,6 +22,6 @@ jobs:
       max_iterations: 25
       target_branch: 'main'
     secrets:
-      # Map your existing secrets to what the resolver expects
       LLM_API_KEY: ${{ secrets.AI_KEY }}
       LLM_BASE_URL: ${{ secrets.AI_BASE_URL }}
+      LLM_MODEL: ${{ secrets.AI_MODEL }}
