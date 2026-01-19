@@ -16,16 +16,12 @@ concurrency:
 jobs:
   openhands:
     if: contains(github.event.comment.body, '@openhands-agent')
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Run OpenHands
-        uses: All-Hands-AI/openhands-github-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AI_BASE_URL: ${{ secrets.AI_BASE_URL }}
-          AI_MODEL: ${{ secrets.AI_MODEL }}
-          AI_KEY: ${{ secrets.AI_KEY }}
+    uses: OpenHands/OpenHands/.github/workflows/openhands-resolver.yml@main
+    with:
+      macro: '@openhands-agent'
+      max_iterations: 25
+      target_branch: 'main'
+    secrets:
+      # Map your existing secrets to what the resolver expects
+      LLM_API_KEY: ${{ secrets.AI_KEY }}
+      LLM_BASE_URL: ${{ secrets.AI_BASE_URL }}
