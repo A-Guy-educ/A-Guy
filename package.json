@@ -30,6 +30,7 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,yml,yaml}\"",
     "format:all": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md,yml,yaml}\"",
+    "format:changed": "git diff --name-only | grep -E '\\.(js|jsx|ts|tsx|json|md|yml|yaml)$' | grep -v 'tests/' | xargs prettier --write",
     "fix": "pnpm lint:fix && pnpm format",
     "fix:all": "pnpm typecheck && pnpm lint:fix && pnpm format && pnpm test",
     "fix:changed": "node scripts/fix-changed.mjs",

@@ -30,3 +30,46 @@ public/sitemap*.xml
 # Test files
 *.test.*
 *.spec.*
+*.mock.*
+
+# Test directories
+tests/factories/
+tests/mocks/
+tests/setup/
+tests/e2e/
+vitest.setup.ts
+tests/README.md
+
+# Test utilities
+src/utilities/test/
+
+# Generated and third-party files
+src/types/markdown.d.ts
+STYLING-GUIDE.md
+
+# Markdown files
+*.md
+
+# YAML files
+*.yaml
+*.yml
+
+# Config and scripts
+commitlint.config.js
+eslint-plugin-aguy/
+instrumentation.ts
+middleware.ts
+next.config.js
+playwright.config.ts
+postcss.config.js
+redirects.js
+scripts/
+sentry.client.config.ts
+sentry.edge.config.ts
+sentry.server.config.ts
+
+# Access control files
+src/access/
+
+# Blocks
+src/blocks/
