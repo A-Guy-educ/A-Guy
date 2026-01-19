@@ -5,6 +5,8 @@ import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 
+import { logger } from '@/utilities/logger'
+
 export interface TestCourseData {
   courseSlug: string
   chapterSlug: string
@@ -112,7 +114,7 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
     // Clean up any existing test data first
     await cleanupTestData(payload)
 
-    console.log('Seeding test course data...')
+    logger.info('Seeding test course data...')
 
     // Get or create a test category
     let category
@@ -180,13 +182,14 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
         slug: lessonSlug,
         title: 'Test Lesson',
         description: 'A test lesson created for E2E testing',
+        type: 'learning',
         status: 'published',
         isActive: true,
         order: 0,
       },
     })
 
-    console.log('Test course data seeded successfully')
+    logger.info('Test course data seeded successfully')
 
     return {
       courseSlug: course.slug!,
@@ -197,7 +200,8 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
       lessonId: lesson.id,
     }
   } catch (error) {
-    console.error('Error seeding test course data:', error)
+    const err = error instanceof Error ? error : new Error('Unknown error')
+    logger.error({ err }, 'Error seeding test course data')
     return null
   }
 }
@@ -232,7 +236,7 @@ export async function getTestCourseData(): Promise<TestCourseData | null> {
     })
 
     if (courses.docs.length === 0) {
-      console.warn('No published courses found in database')
+      logger.warn('No published courses found in database')
       return null
     }
 
@@ -265,7 +269,7 @@ export async function getTestCourseData(): Promise<TestCourseData | null> {
     })
 
     if (chapters.docs.length === 0) {
-      console.warn(`No published chapters found for course: ${course.slug}`)
+      logger.warn({ courseSlug: course.slug }, 'No published chapters found for course')
       return null
     }
 
@@ -298,7 +302,7 @@ export async function getTestCourseData(): Promise<TestCourseData | null> {
     })
 
     if (lessons.docs.length === 0) {
-      console.warn(`No published lessons found for chapter: ${chapter.slug}`)
+      logger.warn({ chapterSlug: chapter.slug }, 'No published lessons found for chapter')
       return null
     }
 
@@ -313,7 +317,8 @@ export async function getTestCourseData(): Promise<TestCourseData | null> {
       lessonId: lesson.id,
     }
   } catch (error) {
-    console.error('Error fetching test course data:', error)
+    const err = error instanceof Error ? error : new Error('Unknown error')
+    logger.error({ err }, 'Error fetching test course data')
     return null
   }
 }

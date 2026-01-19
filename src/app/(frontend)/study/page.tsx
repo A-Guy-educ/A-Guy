@@ -5,7 +5,7 @@ export default function StudyPage() {
   return (
     <div>
       <NavigationBar />
-      <StudyContent />
+      <StudyContent lessonType="learning" />
     </div>
   )
 }
