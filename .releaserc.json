@@ -1,5 +1,8 @@
 {
   "branches": ["main"],
+  "package": {
+    "name": "a-guy"
+  },
   "plugins": [
     [
       "@semantic-release/commit-analyzer",
@@ -60,9 +63,9 @@
     [
       "semantic-release-slack-bot",
       {
+        "packageName": "a-guy",
         "notifyOnSuccess": true,
-        "notifyOnFail": true,
-        "slackWebhook": "${SLACK_WEBHOOK_URL}"
+        "notifyOnFail": true
       }
     ]
   ]

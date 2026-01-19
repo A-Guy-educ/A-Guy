@@ -3,11 +3,27 @@
 # Allow skipping hooks with SKIP_HOOKS=1
 . "$(dirname "$0")/skip-hooks.sh"
 
+# Allow commits with [skip ci] flag (used by CI/CD systems like semantic-release)
+# This is needed for automated releases to commit changelog updates
+if [ "$SKIP_HOOKS" = "1" ]; then
+  exit 0
+fi
+
 # Get current branch name
 branch=$(git rev-parse --abbrev-ref HEAD)
 
-# Prevent direct commits to protected branches (main, dev)
+# Prevent direct commits to protected branches (main, dev) unless CI-initiated
 if [ "$branch" = "main" ] || [ "$branch" = "dev" ]; then
+  # Check if this is a CI-initiated commit:
+  # 1. Running in GitHub Actions (GITHUB_ACTIONS is set)
+  # 2. Has SKIP_HOOKS=1 set
+  if [ -n "$GITHUB_ACTIONS" ] || [ "$SKIP_HOOKS" = "1" ]; then
+    echo ""
+    echo "ℹ️  CI-initiated commit to '$branch' detected. Skipping branch protection check."
+    echo ""
+    exit 0
+  fi
+
   echo ""
   echo "❌ ERROR: Direct commits to '$branch' branch are not allowed"
   echo ""
