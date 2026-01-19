@@ -79,6 +79,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SKIP_HOOKS: 1
         run: pnpm exec semantic-release
 
       - name: Create release summary
