@@ -8,7 +8,13 @@
  */
 import type { Prompt } from '@/payload-types'
 import { logger } from '@/utilities/logger'
-import type { Payload } from 'payload'
+import type { Payload, Where } from 'payload'
+import type { Logger } from 'pino'
+import {
+  getFilterShapeKeys,
+  type RequestTiming,
+  timeDbOperation,
+} from '@/utilities/perf/request-timing'
 
 // Local constant - no cross-module imports to avoid circular deps
 export const BUILTIN_FALLBACK_PROMPT = `You are a helpful math and science tutor for students working on exercises.
@@ -36,7 +42,18 @@ export type PromptResolutionResult = {
 export async function resolveAgentSystemPrompt(
   payload: Payload,
   lessonPrompt?: Prompt | null,
+  options?: {
+    timing?: RequestTiming
+    logger?: Logger
+    requestId?: string
+    endpoint?: string
+  },
 ): Promise<PromptResolutionResult> {
+  const requestLogger = options?.logger ?? logger
+  const timing = options?.timing
+  const requestId = options?.requestId ?? 'unknown'
+  const endpoint = options?.endpoint ?? 'prompt-resolver'
+
   // 1) Check if lesson has a populated prompt object
   if (lessonPrompt && typeof lessonPrompt === 'object') {
     if (lessonPrompt.status === 'published' && lessonPrompt.template?.trim()) {
@@ -48,7 +65,7 @@ export async function resolveAgentSystemPrompt(
       }
     }
     // Prompt exists but not published or has no template
-    logger.debug(
+    requestLogger.debug(
       {
         promptId: lessonPrompt.id,
         status: lessonPrompt.status,
@@ -60,19 +77,38 @@ export async function resolveAgentSystemPrompt(
 
   // 2) Query for default prompt (with overrideAccess since prompts are admin-only)
   try {
-    const defaultPrompts = await payload.find({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      collection: 'prompts' as any,
-      where: {
-        and: [{ isDefaultForAgentChat: { equals: true } }, { status: { equals: 'published' } }],
-      },
-      limit: 1,
-      overrideAccess: true,
-    })
+    const where: Where = {
+      and: [{ isDefaultForAgentChat: { equals: true } }, { status: { equals: 'published' } }],
+    }
+    const findOp = () =>
+      payload.find({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        collection: 'prompts' as any,
+        where,
+        limit: 1,
+        overrideAccess: true,
+      })
+
+    const defaultPrompts = timing
+      ? await timeDbOperation(
+          timing,
+          {
+            stage: 'db_query:default_prompt',
+            collection: 'prompts',
+            filterKeys: getFilterShapeKeys(where),
+            limit: 1,
+            sort: undefined,
+            logger: requestLogger,
+            requestId,
+            endpoint,
+          },
+          findOp,
+        )
+      : await findOp()
 
     // Warn if multiple defaults exist (query totalDocs)
     if (defaultPrompts.totalDocs > 1) {
-      logger.warn(
+      requestLogger.warn(
         { count: defaultPrompts.totalDocs },
         'Multiple published default prompts found, using first one',
       )
@@ -95,17 +131,17 @@ export async function resolveAgentSystemPrompt(
       }
 
       // Default prompt exists but has no template - fall through to built-in fallback
-      logger.debug(
+      requestLogger.debug(
         { promptId: defaultPrompt.id },
         'Default prompt has no template, using built-in fallback',
       )
     }
   } catch (error) {
-    logger.error({ err: error }, 'Failed to query default prompt')
+    requestLogger.error({ err: error }, 'Failed to query default prompt')
   }
 
   // 3) Built-in fallback
-  logger.warn('No published prompts with templates available, using built-in fallback')
+  requestLogger.warn('No published prompts with templates available, using built-in fallback')
   return {
     template: BUILTIN_FALLBACK_PROMPT,
     resolvedFrom: 'fallback',

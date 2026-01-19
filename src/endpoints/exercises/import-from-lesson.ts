@@ -12,11 +12,31 @@ import {
   QuestionFreeResponseBlockSchema,
   QuestionSelectBlockSchema,
 } from '@/collections/Exercises/schemas'
+import { RequestTiming, timeDbOperation } from '@/utilities/perf/request-timing'
+import { logger } from '@/utilities/logger'
 
-export async function importExerciseFromLesson(req: PayloadRequest) {
+export async function importExerciseFromLesson(
+  req: PayloadRequest & { requestId?: string; timing?: RequestTiming },
+) {
+  const requestId = req.requestId ?? crypto.randomUUID()
+  const reqLogger = logger.child({ requestId })
+  const timing =
+    req.timing ??
+    new RequestTiming({ requestId, endpoint: '/api/exercises/import', logger: reqLogger })
+  const ownsTiming = !req.timing
+  if (ownsTiming) {
+    timing.markPoint('handler_entry')
+  }
   // 1) Auth - endpoints not authenticated by default
   if (!req.user) {
-    return Response.json({ error: 'Authentication required' }, { status: 401 })
+    const { result: response } = timing.timeSync('serialization', () =>
+      Response.json({ error: 'Authentication required' }, { status: 401 }),
+    )
+    if (ownsTiming) {
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+    }
+    return response
   }
 
   // 2) Get lessonId from query params
@@ -24,18 +44,46 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
   const lessonId = url.searchParams.get('lessonId')
 
   if (!lessonId) {
-    return Response.json({ error: 'lessonId query parameter is required' }, { status: 400 })
+    const { result: response } = timing.timeSync('serialization', () =>
+      Response.json({ error: 'lessonId query parameter is required' }, { status: 400 }),
+    )
+    if (ownsTiming) {
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+    }
+    return response
   }
 
   // 3) Fetch lesson with contentFiles
-  const lesson = await req.payload.findByID({
-    collection: 'lessons',
-    id: lessonId,
-    depth: 1,
-  })
+  const lesson = await timeDbOperation(
+    timing,
+    {
+      stage: 'db_query:lesson_by_id',
+      collection: 'lessons',
+      filterKeys: ['id'],
+      limit: undefined,
+      sort: undefined,
+      logger: reqLogger,
+      requestId,
+      endpoint: '/api/exercises/import',
+    },
+    () =>
+      req.payload.findByID({
+        collection: 'lessons',
+        id: lessonId,
+        depth: 1,
+      }),
+  )
 
   if (!lesson) {
-    return Response.json({ error: 'Lesson not found' }, { status: 404 })
+    const { result: response } = timing.timeSync('serialization', () =>
+      Response.json({ error: 'Lesson not found' }, { status: 404 }),
+    )
+    if (ownsTiming) {
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+    }
+    return response
   }
 
   // 4) Check if contentFiles exists and get the first file
@@ -44,7 +92,14 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
   const contentFile = (typeof firstFile === 'string' ? null : firstFile) as Media | null
 
   if (!contentFile || !contentFile.url) {
-    return Response.json({ error: 'Lesson has no content file to convert' }, { status: 400 })
+    const { result: response } = timing.timeSync('serialization', () =>
+      Response.json({ error: 'Lesson has no content file to convert' }, { status: 400 }),
+    )
+    if (ownsTiming) {
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+    }
+    return response
   }
 
   // 5) Fetch image from storage URL as buffer
@@ -79,52 +134,85 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
       }
     }
 
-    const imageResponse = await fetch(imageUrl, fetchOptions)
+    const { result: imageResponse } = await timing.time('external_call:fetch_lesson_image', () =>
+      fetch(imageUrl, fetchOptions),
+    )
 
     if (!imageResponse.ok) {
-      return Response.json(
-        {
-          error: 'Failed to fetch lesson content file from storage',
-          details: `HTTP ${imageResponse.status}: ${imageResponse.statusText}`,
-          url: contentFile.url,
-        },
-        { status: 500 },
+      const { result: response } = timing.timeSync('serialization', () =>
+        Response.json(
+          {
+            error: 'Failed to fetch lesson content file from storage',
+            details: `HTTP ${imageResponse.status}: ${imageResponse.statusText}`,
+            url: contentFile.url,
+          },
+          { status: 500 },
+        ),
       )
+      if (ownsTiming) {
+        timing.markPoint('handler_exit')
+        timing.logIfSlow()
+      }
+      return response
     }
 
     const arrayBuffer = await imageResponse.arrayBuffer()
     imageBuffer = Buffer.from(arrayBuffer)
     mimeType = contentFile.mimeType || 'image/jpeg'
   } catch (fetchError) {
-    return Response.json(
-      {
-        error: 'Failed to fetch lesson content file from storage',
-        details: fetchError instanceof Error ? fetchError.message : 'Unknown error',
-        url: contentFile.url,
-      },
-      { status: 500 },
+    const { result: response } = timing.timeSync('serialization', () =>
+      Response.json(
+        {
+          error: 'Failed to fetch lesson content file from storage',
+          details: fetchError instanceof Error ? fetchError.message : 'Unknown error',
+          url: contentFile.url,
+        },
+        { status: 500 },
+      ),
     )
+    if (ownsTiming) {
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+    }
+    return response
   }
 
   // 6) Extract data from image
   let result
   try {
-    result = await extractFromImage({
-      imageBuffer,
-      mimeType,
-    })
-  } catch (aiError) {
-    return Response.json(
-      {
-        error: 'AI extraction failed',
-        details: aiError instanceof Error ? aiError.message : 'Unknown AI error',
-      },
-      { status: 500 },
+    const { result: extracted } = await timing.time('external_call:extract_from_image', () =>
+      extractFromImage({
+        imageBuffer,
+        mimeType,
+      }),
     )
+    result = extracted
+  } catch (aiError) {
+    const { result: response } = timing.timeSync('serialization', () =>
+      Response.json(
+        {
+          error: 'AI extraction failed',
+          details: aiError instanceof Error ? aiError.message : 'Unknown AI error',
+        },
+        { status: 500 },
+      ),
+    )
+    if (ownsTiming) {
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+    }
+    return response
   }
 
   if (!result.success) {
-    return Response.json({ error: result.error || 'Failed to process image' }, { status: 500 })
+    const { result: response } = timing.timeSync('serialization', () =>
+      Response.json({ error: result.error || 'Failed to process image' }, { status: 500 }),
+    )
+    if (ownsTiming) {
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+    }
+    return response
   }
 
   // 7) Create exercise using factory from Exercises.ts, then validate with Zod
@@ -153,10 +241,14 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
 
         // Validate correctAnswer exists
         if (typeof result.data.correctAnswer !== 'number') {
-          return Response.json(
-            { error: 'AI did not provide correctAnswer for MCQ' },
-            { status: 422 },
+          const { result: response } = timing.timeSync('serialization', () =>
+            Response.json({ error: 'AI did not provide correctAnswer for MCQ' }, { status: 422 }),
           )
+          if (ownsTiming) {
+            timing.markPoint('handler_exit')
+            timing.logIfSlow()
+          }
+          return response
         }
 
         draft.answer.correctOptionIds = [`opt-${result.data.correctAnswer + 1}`]
@@ -194,42 +286,77 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
         questionBlock = QuestionFreeResponseBlockSchema.parse(draft)
       }
 
-      const exerciseDoc = await req.payload.create({
-        collection: 'exercises',
-        data: {
-          title: 'AI Generated Exercise',
-          order: 0,
-          lesson: lessonId,
-          content: {
-            blocks: [questionBlock],
-          },
-        },
-      })
-
-      return Response.json({
-        success: true,
-        data: result.data,
-        metadata: result.metadata,
-        exerciseId: exerciseDoc.id,
-      })
-    } catch (createError) {
-      return Response.json(
+      const exerciseDoc = await timeDbOperation(
+        timing,
         {
-          error: 'AI conversion succeeded but exercise creation failed',
-          details: createError instanceof Error ? createError.message : 'Unknown error',
-          // Include Zod issues in response for debugging
-          ...(createError && typeof createError === 'object' && 'issues' in createError
-            ? { zodIssues: (createError as { issues: unknown }).issues }
-            : {}),
+          stage: 'db_query:exercise_create',
+          collection: 'exercises',
+          filterKeys: [],
+          limit: undefined,
+          sort: undefined,
+          logger: reqLogger,
+          requestId,
+          endpoint: '/api/exercises/import',
         },
-        { status: 500 },
+        () =>
+          req.payload.create({
+            collection: 'exercises',
+            data: {
+              title: 'AI Generated Exercise',
+              order: 0,
+              lesson: lessonId,
+              content: {
+                blocks: [questionBlock],
+              },
+            },
+          }),
       )
+
+      const { result: response } = timing.timeSync('serialization', () =>
+        Response.json({
+          success: true,
+          data: result.data,
+          metadata: result.metadata,
+          exerciseId: exerciseDoc.id,
+        }),
+      )
+      if (ownsTiming) {
+        timing.markPoint('handler_exit')
+        timing.logIfSlow()
+      }
+      return response
+    } catch (createError) {
+      const { result: response } = timing.timeSync('serialization', () =>
+        Response.json(
+          {
+            error: 'AI conversion succeeded but exercise creation failed',
+            details: createError instanceof Error ? createError.message : 'Unknown error',
+            // Include Zod issues in response for debugging
+            ...(createError && typeof createError === 'object' && 'issues' in createError
+              ? { zodIssues: (createError as { issues: unknown }).issues }
+              : {}),
+          },
+          { status: 500 },
+        ),
+      )
+      if (ownsTiming) {
+        timing.markPoint('handler_exit')
+        timing.logIfSlow()
+      }
+      return response
     }
   }
 
-  return Response.json({
-    success: true,
-    data: result.data,
-    metadata: result.metadata,
-  })
+  const { result: response } = timing.timeSync('serialization', () =>
+    Response.json({
+      success: true,
+      data: result.data,
+      metadata: result.metadata,
+    }),
+  )
+  if (ownsTiming) {
+    timing.markPoint('handler_exit')
+    timing.logIfSlow()
+  }
+  return response
 }

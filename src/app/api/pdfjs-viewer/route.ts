@@ -4,6 +4,7 @@ import { RESPONSE_HEADERS } from '@/lib/pdfjs/config'
 import { validateFileUrl, redactUrl } from '@/lib/pdfjs/validator'
 import { loadViewerTemplate, loadViewerCss } from '@/lib/pdfjs/template-loader'
 import { rewriteCss, renderViewerHtml, validateRewrittenHtml } from '@/lib/pdfjs/renderer'
+import { RequestTiming } from '@/utilities/perf/request-timing'
 
 /**
  * PDF.js Viewer Proxy
@@ -26,6 +27,8 @@ import { rewriteCss, renderViewerHtml, validateRewrittenHtml } from '@/lib/pdfjs
 export async function GET(request: NextRequest) {
   const requestId = crypto.randomUUID()
   const reqLogger = logger.child({ requestId, component: 'pdfjs-viewer' })
+  const timing = new RequestTiming({ requestId, endpoint: '/api/pdfjs-viewer', logger: reqLogger })
+  timing.markPoint('handler_entry')
 
   // Parse and validate file parameter
   const fileParam = request.nextUrl.searchParams.get('file')
@@ -48,10 +51,15 @@ export async function GET(request: NextRequest) {
       'Invalid file parameter',
     )
 
-    return NextResponse.json(
-      { error: 'Invalid file URL', details: validation.error.message },
-      { status: 400 },
+    const { result: response } = timing.timeSync('serialization', () =>
+      NextResponse.json(
+        { error: 'Invalid file URL', details: validation.error.message },
+        { status: 400 },
+      ),
     )
+    timing.markPoint('handler_exit')
+    timing.logIfSlow()
+    return response
   }
 
   const validatedFileUrl = validation.url
@@ -59,23 +67,37 @@ export async function GET(request: NextRequest) {
 
   try {
     // Load viewer template
-    const templateResult = await loadViewerTemplate()
+    const { result: templateResult } = await timing.time('external_call:viewer_template', () =>
+      loadViewerTemplate(),
+    )
     if (!templateResult.ok) {
       reqLogger.error(
         { status: templateResult.status, statusText: templateResult.statusText },
         'Failed to fetch viewer HTML from CDN',
       )
-      return NextResponse.json({ error: 'PDF viewer upstream unavailable' }, { status: 502 })
+      const { result: response } = timing.timeSync('serialization', () =>
+        NextResponse.json({ error: 'PDF viewer upstream unavailable' }, { status: 502 }),
+      )
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+      return response
     }
 
     // Load viewer CSS
-    const cssResult = await loadViewerCss()
+    const { result: cssResult } = await timing.time('external_call:viewer_css', () =>
+      loadViewerCss(),
+    )
     if (!cssResult.ok) {
       reqLogger.error(
         { status: cssResult.status, statusText: cssResult.statusText },
         'Failed to fetch viewer CSS from CDN',
       )
-      return NextResponse.json({ error: 'PDF viewer upstream unavailable' }, { status: 502 })
+      const { result: response } = timing.timeSync('serialization', () =>
+        NextResponse.json({ error: 'PDF viewer upstream unavailable' }, { status: 502 }),
+      )
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+      return response
     }
 
     // Rewrite CSS to fix image paths
@@ -88,7 +110,12 @@ export async function GET(request: NextRequest) {
     const validation = validateRewrittenHtml(html)
     if (!validation.valid) {
       reqLogger.error({ issues: validation.issues }, 'HTML rewrite validation failed')
-      return NextResponse.json({ error: 'PDF viewer rendering error' }, { status: 500 })
+      const { result: response } = timing.timeSync('serialization', () =>
+        NextResponse.json({ error: 'PDF viewer rendering error' }, { status: 500 }),
+      )
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+      return response
     }
 
     // Inject file URL via query parameter (PDF.js native mechanism)
@@ -125,12 +152,22 @@ export async function GET(request: NextRequest) {
     )
 
     // Return HTML with proper headers
-    return new NextResponse(html, {
-      status: 200,
-      headers: RESPONSE_HEADERS,
-    })
+    const { result: response } = timing.timeSync('serialization', () =>
+      new NextResponse(html, {
+        status: 200,
+        headers: RESPONSE_HEADERS,
+      }),
+    )
+    timing.markPoint('handler_exit')
+    timing.logIfSlow()
+    return response
   } catch (error) {
     reqLogger.error({ error }, 'Unexpected error proxying PDF viewer')
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    const { result: response } = timing.timeSync('serialization', () =>
+      NextResponse.json({ error: 'Internal server error' }, { status: 500 }),
+    )
+    timing.markPoint('handler_exit')
+    timing.logIfSlow()
+    return response
   }
 }

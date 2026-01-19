@@ -4,6 +4,7 @@ import { logger, createRequestLogger } from '@/utilities/logger'
 import { createValidationErrorResponse } from '@/utilities/validation'
 import * as Sentry from '@sentry/nextjs'
 import { randomUUID } from 'crypto'
+import { RequestTiming } from '@/utilities/perf/request-timing'
 
 /**
  * Example API route demonstrating:
@@ -24,6 +25,8 @@ export async function POST(request: NextRequest) {
   // Generate request ID for correlation
   const requestId = randomUUID()
   const reqLogger = createRequestLogger(requestId)
+  const timing = new RequestTiming({ requestId, endpoint: '/api/example', logger: reqLogger })
+  timing.markPoint('handler_entry')
 
   try {
     // Parse request body
@@ -40,9 +43,14 @@ export async function POST(request: NextRequest) {
         'Validation failed for example request',
       )
 
-      return NextResponse.json(createValidationErrorResponse(validationResult.error), {
-        status: 400,
-      })
+      const { result: response } = timing.timeSync('serialization', () =>
+        NextResponse.json(createValidationErrorResponse(validationResult.error), {
+          status: 400,
+        }),
+      )
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+      return response
     }
 
     const data = validationResult.data
@@ -59,11 +67,16 @@ export async function POST(request: NextRequest) {
 
     reqLogger.info('Example request processed successfully')
 
-    return NextResponse.json({
-      success: true,
-      message: 'Request processed successfully',
-      requestId,
-    })
+    const { result: response } = timing.timeSync('serialization', () =>
+      NextResponse.json({
+        success: true,
+        message: 'Request processed successfully',
+        requestId,
+      }),
+    )
+    timing.markPoint('handler_exit')
+    timing.logIfSlow()
+    return response
   } catch (error) {
     // Log error with context
     reqLogger.error({ err: error }, 'Error processing example request')
@@ -76,32 +89,47 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Internal server error',
-        requestId,
-      },
-      { status: 500 },
+    const { result: response } = timing.timeSync('serialization', () =>
+      NextResponse.json(
+        {
+          success: false,
+          error: 'Internal server error',
+          requestId,
+        },
+        { status: 500 },
+      ),
     )
+    timing.markPoint('handler_exit')
+    timing.logIfSlow()
+    return response
   }
 }
 
 export async function GET() {
+  const requestId = randomUUID()
+  const reqLogger = createRequestLogger(requestId)
+  const timing = new RequestTiming({ requestId, endpoint: '/api/example', logger: reqLogger })
+  timing.markPoint('handler_entry')
+
   logger.info('Example GET request')
 
-  return NextResponse.json({
-    message: 'This is an example API endpoint',
-    methods: ['GET', 'POST'],
-    documentation: {
-      post: {
-        description: 'Submit data with validation',
-        body: {
-          name: 'string (min 2 chars)',
-          email: 'string (valid email)',
-          message: 'string (min 10 chars)',
+  const { result: response } = timing.timeSync('serialization', () =>
+    NextResponse.json({
+      message: 'This is an example API endpoint',
+      methods: ['GET', 'POST'],
+      documentation: {
+        post: {
+          description: 'Submit data with validation',
+          body: {
+            name: 'string (min 2 chars)',
+            email: 'string (valid email)',
+            message: 'string (min 10 chars)',
+          },
         },
       },
-    },
-  })
+    }),
+  )
+  timing.markPoint('handler_exit')
+  timing.logIfSlow()
+  return response
 }

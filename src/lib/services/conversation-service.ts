@@ -15,7 +15,13 @@
  */
 import { AccountRole } from '@/collections/Users/roles'
 import { logger } from '@/utilities/logger'
-import type { Payload } from 'payload'
+import type { Payload, Where } from 'payload'
+import type { Logger } from 'pino'
+import {
+  getFilterShapeKeys,
+  type RequestTiming,
+  timeDbOperation,
+} from '@/utilities/perf/request-timing'
 
 /**
  * Context reference shape for polymorphic relationships
@@ -58,9 +64,25 @@ export interface ConversationWithHistory {
 
 export class ConversationService {
   private payload: Payload
+  private timing?: RequestTiming
+  private requestLogger: Logger
+  private requestId?: string
+  private endpoint?: string
 
-  constructor(payload: Payload) {
+  constructor(
+    payload: Payload,
+    options?: {
+      timing?: RequestTiming
+      logger?: Logger
+      requestId?: string
+      endpoint?: string
+    },
+  ) {
     this.payload = payload
+    this.timing = options?.timing
+    this.requestLogger = options?.logger ?? logger
+    this.requestId = options?.requestId
+    this.endpoint = options?.endpoint
   }
 
   /**
@@ -74,17 +96,38 @@ export class ConversationService {
     const contextKey = `${contextRef.relationTo}:${contextRef.value}`
 
     // Try to find existing active conversation
-    const existingConv = await this.payload.find({
-      collection: 'conversations',
-      where: {
-        and: [
-          { user: { equals: userId } },
-          { contextKey: { equals: contextKey } },
-          { archivedAt: { exists: false } },
-        ],
-      },
-      limit: 1,
-    })
+    const existingWhere: Where = {
+      and: [
+        { user: { equals: userId } },
+        { contextKey: { equals: contextKey } },
+        { archivedAt: { exists: false } },
+      ],
+    }
+    const existingConv = this.timing
+      ? await timeDbOperation(
+          this.timing,
+          {
+            stage: 'db_query:conversation_find_active',
+            collection: 'conversations',
+            filterKeys: getFilterShapeKeys(existingWhere),
+            limit: 1,
+            sort: undefined,
+            logger: this.requestLogger,
+            requestId: this.requestId ?? 'unknown',
+            endpoint: this.endpoint ?? 'conversation-service',
+          },
+          () =>
+            this.payload.find({
+              collection: 'conversations',
+              where: existingWhere,
+              limit: 1,
+            }),
+        )
+      : await this.payload.find({
+          collection: 'conversations',
+          where: existingWhere,
+          limit: 1,
+        })
 
     if (existingConv.docs.length > 0) {
       logger.info(
@@ -96,22 +139,40 @@ export class ConversationService {
 
     // Create new conversation
     // INVARIANT: Active = archivedAt field is MISSING. Do NOT set archivedAt.
-    const newConv = await this.payload.create({
-      collection: 'conversations',
-      data: {
-        user: userId,
-        contextRef: {
-          relationTo: contextRef.relationTo,
-          value: contextRef.value,
-        },
-        contextKey,
-        messages: [],
-        lastMessageAt: new Date(),
-        contextPolicyVersion: 'v1',
-        // Do NOT set archivedAt - active conversations must NOT have this field
-      } as any,
-      draft: false,
-    })
+    const createOp = () =>
+      this.payload.create({
+        collection: 'conversations',
+        data: {
+          user: userId,
+          contextRef: {
+            relationTo: contextRef.relationTo,
+            value: contextRef.value,
+          },
+          contextKey,
+          messages: [],
+          lastMessageAt: new Date(),
+          contextPolicyVersion: 'v1',
+          // Do NOT set archivedAt - active conversations must NOT have this field
+        } as any,
+        draft: false,
+      })
+
+    const newConv = this.timing
+      ? await timeDbOperation(
+          this.timing,
+          {
+            stage: 'db_query:conversation_create',
+            collection: 'conversations',
+            filterKeys: [],
+            limit: undefined,
+            sort: undefined,
+            logger: this.requestLogger,
+            requestId: this.requestId ?? 'unknown',
+            endpoint: this.endpoint ?? 'conversation-service',
+          },
+          createOp,
+        )
+      : await createOp()
 
     logger.info({ userId, contextKey, conversationId: newConv.id }, 'Created new conversation')
     return newConv as unknown as ConversationWithHistory
@@ -123,30 +184,71 @@ export class ConversationService {
    */
   async resetConversation(userId: string, contextKey: string): Promise<ConversationWithHistory> {
     // Find and archive the current active conversation
-    const existingConv = await this.payload.find({
-      collection: 'conversations',
-      where: {
-        and: [
-          { user: { equals: userId } },
-          { contextKey: { equals: contextKey } },
-          { archivedAt: { exists: false } },
-        ],
-      },
-      limit: 1,
-    })
+    const existingWhere: Where = {
+      and: [
+        { user: { equals: userId } },
+        { contextKey: { equals: contextKey } },
+        { archivedAt: { exists: false } },
+      ],
+    }
+    const existingConv = this.timing
+      ? await timeDbOperation(
+          this.timing,
+          {
+            stage: 'db_query:conversation_find_active_for_reset',
+            collection: 'conversations',
+            filterKeys: getFilterShapeKeys(existingWhere),
+            limit: 1,
+            sort: undefined,
+            logger: this.requestLogger,
+            requestId: this.requestId ?? 'unknown',
+            endpoint: this.endpoint ?? 'conversation-service',
+          },
+          () =>
+            this.payload.find({
+              collection: 'conversations',
+              where: existingWhere,
+              limit: 1,
+            }),
+        )
+      : await this.payload.find({
+          collection: 'conversations',
+          where: existingWhere,
+          limit: 1,
+        })
 
     if (existingConv.docs.length > 0) {
       const currentConv = existingConv.docs[0]
       // INVARIANT: Archive by setting archivedAt. Requires overrideAccess: true and allowArchive context flag.
-      await this.payload.update({
-        collection: 'conversations',
-        id: currentConv.id,
-        data: {
-          archivedAt: new Date(),
-        } as any,
-        overrideAccess: true, // REQUIRED - field access blocks normal mutations
-        context: { allowArchive: true }, // REQUIRED - hook protection requires this flag
-      })
+      const updateOp = () =>
+        this.payload.update({
+          collection: 'conversations',
+          id: currentConv.id,
+          data: {
+            archivedAt: new Date(),
+          } as any,
+          overrideAccess: true, // REQUIRED - field access blocks normal mutations
+          context: { allowArchive: true }, // REQUIRED - hook protection requires this flag
+        })
+
+      if (this.timing) {
+        await timeDbOperation(
+          this.timing,
+          {
+            stage: 'db_query:conversation_archive',
+            collection: 'conversations',
+            filterKeys: ['id'],
+            limit: undefined,
+            sort: undefined,
+            logger: this.requestLogger,
+            requestId: this.requestId ?? 'unknown',
+            endpoint: this.endpoint ?? 'conversation-service',
+          },
+          updateOp,
+        )
+      } else {
+        await updateOp()
+      }
       logger.info(
         { userId, contextKey, conversationId: currentConv.id },
         'Archived current conversation',
@@ -158,22 +260,40 @@ export class ConversationService {
 
     // Create new conversation with same context
     // INVARIANT: Active = archivedAt field is MISSING. Do NOT set archivedAt.
-    const newConv = await this.payload.create({
-      collection: 'conversations',
-      data: {
-        user: userId,
-        contextRef: {
-          relationTo,
-          value,
-        },
-        contextKey,
-        messages: [],
-        lastMessageAt: new Date(),
-        contextPolicyVersion: 'v1',
-        // Do NOT set archivedAt - active conversations must NOT have this field
-      } as any,
-      draft: false,
-    })
+    const createOp = () =>
+      this.payload.create({
+        collection: 'conversations',
+        data: {
+          user: userId,
+          contextRef: {
+            relationTo,
+            value,
+          },
+          contextKey,
+          messages: [],
+          lastMessageAt: new Date(),
+          contextPolicyVersion: 'v1',
+          // Do NOT set archivedAt - active conversations must NOT have this field
+        } as any,
+        draft: false,
+      })
+
+    const newConv = this.timing
+      ? await timeDbOperation(
+          this.timing,
+          {
+            stage: 'db_query:conversation_create_after_reset',
+            collection: 'conversations',
+            filterKeys: [],
+            limit: undefined,
+            sort: undefined,
+            logger: this.requestLogger,
+            requestId: this.requestId ?? 'unknown',
+            endpoint: this.endpoint ?? 'conversation-service',
+          },
+          createOp,
+        )
+      : await createOp()
 
     logger.info(
       { userId, contextKey, conversationId: newConv.id },
@@ -292,10 +412,28 @@ export class ConversationService {
   async getConversationHistory(
     conversationId: string,
   ): Promise<{ messages: ChatMessage[]; summary?: string }> {
-    const conversation = await this.payload.findByID({
-      collection: 'conversations',
-      id: conversationId,
-    })
+    const findOp = () =>
+      this.payload.findByID({
+        collection: 'conversations',
+        id: conversationId,
+      })
+
+    const conversation = this.timing
+      ? await timeDbOperation(
+          this.timing,
+          {
+            stage: 'db_query:conversation_find_by_id',
+            collection: 'conversations',
+            filterKeys: ['id'],
+            limit: undefined,
+            sort: undefined,
+            logger: this.requestLogger,
+            requestId: this.requestId ?? 'unknown',
+            endpoint: this.endpoint ?? 'conversation-service',
+          },
+          findOp,
+        )
+      : await findOp()
 
     return {
       messages: (conversation.messages as ChatMessage[]) || [],
@@ -310,17 +448,38 @@ export class ConversationService {
     userId: string,
     contextKey: string,
   ): Promise<ConversationWithHistory | null> {
-    const result = await this.payload.find({
-      collection: 'conversations',
-      where: {
-        and: [
-          { user: { equals: userId } },
-          { contextKey: { equals: contextKey } },
-          { archivedAt: { exists: false } },
-        ],
-      },
-      limit: 1,
-    })
+    const where: Where = {
+      and: [
+        { user: { equals: userId } },
+        { contextKey: { equals: contextKey } },
+        { archivedAt: { exists: false } },
+      ],
+    }
+    const result = this.timing
+      ? await timeDbOperation(
+          this.timing,
+          {
+            stage: 'db_query:conversation_find_active_by_context',
+            collection: 'conversations',
+            filterKeys: getFilterShapeKeys(where),
+            limit: 1,
+            sort: undefined,
+            logger: this.requestLogger,
+            requestId: this.requestId ?? 'unknown',
+            endpoint: this.endpoint ?? 'conversation-service',
+          },
+          () =>
+            this.payload.find({
+              collection: 'conversations',
+              where,
+              limit: 1,
+            }),
+        )
+      : await this.payload.find({
+          collection: 'conversations',
+          where,
+          limit: 1,
+        })
 
     if (result.docs.length === 0) {
       return null

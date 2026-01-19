@@ -7,7 +7,13 @@
  */
 import type { Prompt } from '@/payload-types'
 import { logger } from '@/utilities/logger'
-import type { Payload } from 'payload'
+import type { Payload, Where } from 'payload'
+import type { Logger } from 'pino'
+import {
+  getFilterShapeKeys,
+  type RequestTiming,
+  timeDbOperation,
+} from '@/utilities/perf/request-timing'
 
 export type SystemPromptResult = {
   templates: string[]
@@ -26,23 +32,55 @@ export type SystemPromptResult = {
  *
  * If none exist, returns empty array (graceful degradation).
  */
-export async function fetchPublishedSystemPrompts(payload: Payload): Promise<SystemPromptResult> {
+export async function fetchPublishedSystemPrompts(
+  payload: Payload,
+  options?: {
+    timing?: RequestTiming
+    logger?: Logger
+    requestId?: string
+    endpoint?: string
+  },
+): Promise<SystemPromptResult> {
+  const requestLogger = options?.logger ?? logger
+  const timing = options?.timing
+  const requestId = options?.requestId ?? 'unknown'
+  const endpoint = options?.endpoint ?? 'system-prompts'
+
   try {
-    const result = await payload.find({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      collection: 'prompts' as any,
-      where: {
-        and: [{ type: { equals: 'system' } }, { status: { equals: 'published' } }],
-      },
-      sort: '-createdAt,-id', // DESC order (newest first), we reverse to get ASC
-      limit: 100, // Safety limit
-      overrideAccess: true, // Prompts are admin-only
-    })
+    const where: Where = {
+      and: [{ type: { equals: 'system' } }, { status: { equals: 'published' } }],
+    }
+    const findOp = () =>
+      payload.find({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        collection: 'prompts' as any,
+        where,
+        sort: '-createdAt,-id', // DESC order (newest first), we reverse to get ASC
+        limit: 100, // Safety limit
+        overrideAccess: true, // Prompts are admin-only
+      })
+
+    const result = timing
+      ? await timeDbOperation(
+          timing,
+          {
+            stage: 'db_query:system_prompts',
+            collection: 'prompts',
+            filterKeys: getFilterShapeKeys(where),
+            limit: 100,
+            sort: '-createdAt,-id',
+            logger: requestLogger,
+            requestId,
+            endpoint,
+          },
+          findOp,
+        )
+      : await findOp()
 
     const prompts = (result.docs as unknown as Prompt[]).slice().reverse()
 
     if (prompts.length === 0) {
-      logger.debug('No published system prompts found, proceeding without them')
+      requestLogger.debug('No published system prompts found, proceeding without them')
       return { templates: [], count: 0, promptIds: [], promptTitles: [] }
     }
 
@@ -53,7 +91,7 @@ export async function fetchPublishedSystemPrompts(payload: Payload): Promise<Sys
       promptTitles: prompts.map((p) => p.title ?? 'Untitled'),
     }
   } catch (error) {
-    logger.error({ err: error }, 'Failed to fetch system prompts')
+    requestLogger.error({ err: error }, 'Failed to fetch system prompts')
     // Graceful degradation - continue without system prompts
     return { templates: [], count: 0, promptIds: [], promptTitles: [] }
   }

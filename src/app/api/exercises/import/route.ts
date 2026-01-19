@@ -12,14 +12,23 @@ import type { PayloadRequest } from 'payload'
 import config from '@payload-config'
 import { importExerciseFromLesson } from '@/endpoints/exercises/import-from-lesson'
 import { importExerciseFromImage } from '@/endpoints/exercises/import-from-image'
+import { RequestTiming } from '@/utilities/perf/request-timing'
+import { logger } from '@/utilities/logger'
 
 export async function POST(request: NextRequest) {
+  const requestId = crypto.randomUUID()
+  const timing = new RequestTiming({ requestId, endpoint: '/api/exercises/import', logger })
+  timing.markPoint('handler_entry')
+
   try {
     // Get Payload instance
-    const payload = await getPayload({ config })
+    const { result: payload } = await timing.time('db_connect', () => getPayload({ config }))
 
     // Get authenticated user
-    const { user } = await payload.auth({ headers: request.headers })
+    const { result: authResult } = await timing.time('auth', () =>
+      payload.auth({ headers: request.headers }),
+    )
+    const { user } = authResult
 
     // Determine which handler to use based on query param
     const url = new URL(request.url)
@@ -27,32 +36,45 @@ export async function POST(request: NextRequest) {
 
     // Create a PayloadRequest-like object (minimal required fields)
     // PayloadRequest has many optional fields, so we create a partial one
-    const payloadRequest: PayloadRequest = {
+    const payloadRequest = {
       payload,
       user: user || undefined,
       url: request.url,
       headers: request.headers,
       routeParams: {},
       context: {},
-    } as PayloadRequest
+      requestId,
+      timing,
+    } as unknown as PayloadRequest
 
     // Route to appropriate handler
     if (lessonId) {
       console.log('[API Route] Calling importExerciseFromLesson for lessonId:', lessonId)
-      return await importExerciseFromLesson(payloadRequest)
+      const response = await importExerciseFromLesson(payloadRequest)
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+      return response
     } else {
       console.log('[API Route] Calling importExerciseFromImage')
-      return await importExerciseFromImage(payloadRequest)
+      const response = await importExerciseFromImage(payloadRequest)
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+      return response
     }
   } catch (error) {
     console.error('[API Route] Error in /api/exercises/import:', error)
 
-    return NextResponse.json(
-      {
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 },
+    const { result: response } = timing.timeSync('serialization', () =>
+      NextResponse.json(
+        {
+          error: 'Internal server error',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        },
+        { status: 500 },
+      ),
     )
+    timing.markPoint('handler_exit')
+    timing.logIfSlow()
+    return response
   }
 }

@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { logger } from '@/utilities/logger'
+import { RequestTiming } from '@/utilities/perf/request-timing'
 
 /**
  * Health check endpoint for Playwright and monitoring tools
@@ -18,13 +20,22 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic' // Explicitly mark as dynamic to avoid static generation issues
 
 export async function GET() {
+  const requestId = crypto.randomUUID()
+  const timing = new RequestTiming({ requestId, endpoint: '/api/health', logger })
+  timing.markPoint('handler_entry')
+
   // Simple, fast response - no database, no Payload, no dynamic APIs
-  return NextResponse.json(
-    {
-      status: 'ok',
-      timestamp: Date.now(),
-      uptime: process.uptime(),
-    },
-    { status: 200 },
+  const { result: response } = timing.timeSync('serialization', () =>
+    NextResponse.json(
+      {
+        status: 'ok',
+        timestamp: Date.now(),
+        uptime: process.uptime(),
+      },
+      { status: 200 },
+    ),
   )
+  timing.markPoint('handler_exit')
+  timing.logIfSlow()
+  return response
 }

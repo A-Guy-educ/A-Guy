@@ -18,6 +18,7 @@
  */
 import { ConversationService } from '@/lib/services/conversation-service'
 import { logger } from '@/utilities/logger'
+import { RequestTiming } from '@/utilities/perf/request-timing'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
 
@@ -29,19 +30,42 @@ const requestSchema = z.object({
     .regex(/^(courses|chapters|lessons|exercises):[^:]+$/),
 })
 
-export async function agentResetChat(req: PayloadRequest & { json?: () => Promise<unknown> }) {
-  const requestId = crypto.randomUUID()
+export async function agentResetChat(
+  req: PayloadRequest & { json?: () => Promise<unknown>; requestId?: string; timing?: RequestTiming },
+) {
+  const requestId = req.requestId ?? crypto.randomUUID()
   const reqLogger = logger.child({ requestId })
+  const timing =
+    req.timing ??
+    new RequestTiming({ requestId, endpoint: '/api/agent/reset-chat', logger: reqLogger })
+  const ownsTiming = !req.timing
+  if (ownsTiming) {
+    timing.markPoint('handler_entry')
+  }
 
   // 1) Auth check
   if (!req.user) {
-    return Response.json({ error: 'Authentication required' }, { status: 401 })
+    const { result: response } = timing.timeSync('serialization', () =>
+      Response.json({ error: 'Authentication required' }, { status: 401 }),
+    )
+    if (ownsTiming) {
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+    }
+    return response
   }
 
   try {
     // 2) Parse and validate request body
     if (!req.json) {
-      return Response.json({ error: 'Invalid request' }, { status: 400 })
+      const { result: response } = timing.timeSync('serialization', () =>
+        Response.json({ error: 'Invalid request' }, { status: 400 }),
+      )
+      if (ownsTiming) {
+        timing.markPoint('handler_exit')
+        timing.logIfSlow()
+      }
+      return response
     }
 
     const body = await req.json()
@@ -53,7 +77,12 @@ export async function agentResetChat(req: PayloadRequest & { json?: () => Promis
     )
 
     // 3) Initialize ConversationService
-    const conversationService = new ConversationService(req.payload)
+    const conversationService = new ConversationService(req.payload, {
+      timing,
+      logger: reqLogger,
+      requestId,
+      endpoint: '/api/agent/reset-chat',
+    })
 
     // 4) Reset conversation (archive current, create new)
     const newConversation = await conversationService.resetConversation(
@@ -70,18 +99,39 @@ export async function agentResetChat(req: PayloadRequest & { json?: () => Promis
       'Chat reset successful',
     )
 
-    return Response.json({
-      success: true,
-      conversationId: newConversation.id,
-      contextKey: validated.contextKey,
-    })
+    const { result: response } = timing.timeSync('serialization', () =>
+      Response.json({
+        success: true,
+        conversationId: newConversation.id,
+        contextKey: validated.contextKey,
+      }),
+    )
+    if (ownsTiming) {
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+    }
+    return response
   } catch (error) {
     reqLogger.error({ err: error }, 'Reset chat endpoint error')
 
     if (error instanceof z.ZodError) {
-      return Response.json({ error: 'Invalid request', details: error.issues }, { status: 400 })
+      const { result: response } = timing.timeSync('serialization', () =>
+        Response.json({ error: 'Invalid request', details: error.issues }, { status: 400 }),
+      )
+      if (ownsTiming) {
+        timing.markPoint('handler_exit')
+        timing.logIfSlow()
+      }
+      return response
     }
 
-    return Response.json({ error: 'Internal server error' }, { status: 500 })
+    const { result: response } = timing.timeSync('serialization', () =>
+      Response.json({ error: 'Internal server error' }, { status: 500 }),
+    )
+    if (ownsTiming) {
+      timing.markPoint('handler_exit')
+      timing.logIfSlow()
+    }
+    return response
   }
 }
