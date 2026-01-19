@@ -4,9 +4,9 @@
 
 Isolate **all Gemini-specific complexity** into a single, well-defined provider layer, so that:
 
-- Product logic stays clean and readable
-- AI provider logic is swappable
-- `agent/chat.ts` and `exercise-chat-service.ts` become thin orchestrators
+* Product logic stays clean and readable
+* AI provider logic is swappable
+* `agent/chat.ts` and `exercise-chat-service.ts` become thin orchestrators
 
 This is a **refactor-only task**. No behavior change is allowed.
 
@@ -14,24 +14,25 @@ This is a **refactor-only task**. No behavior change is allowed.
 
 ## Problem Statement (Current State)
 
-- Gemini logic is **split across multiple layers**:
-  - `gemini-ai-provider.server.ts` (client factory only)
-  - `exercise-chat-service.ts` (model choice, retries, timeouts, mapping)
-  - `agent/chat.ts` (still aware of AI invocation semantics)
+* Gemini logic is **split across multiple layers**:
+
+  * `gemini-ai-provider.server.ts` (client factory only)
+  * `exercise-chat-service.ts` (model choice, retries, timeouts, mapping)
+  * `agent/chat.ts` (still aware of AI invocation semantics)
 
 Result:
 
-- Files grow instead of shrink
-- Hard to swap provider (Gemini → OpenAI / Claude)
-- Hard to test AI boundary in isolation
+* Files grow instead of shrink
+* Hard to swap provider (Gemini → OpenAI / Claude)
+* Hard to test AI boundary in isolation
 
 ---
 
 ## Target State (After Refactor)
 
-- **One provider = one folder**
-- One public entry point per provider
-- Zero Gemini-specific logic outside the provider
+* **One provider = one folder**
+* One public entry point per provider
+* Zero Gemini-specific logic outside the provider
 
 ```
 src/lib/ai/providers/
@@ -62,14 +63,16 @@ export interface GenerateChatOutput {
   raw?: unknown
 }
 
-export async function generateChatCompletion(input: GenerateChatInput): Promise<GenerateChatOutput>
+export async function generateChatCompletion(
+  input: GenerateChatInput
+): Promise<GenerateChatOutput>
 ```
 
 Rules:
 
-- No Payload types
-- No product concepts (lesson, exercise, memory)
-- Pure AI boundary
+* No Payload types
+* No product concepts (lesson, exercise, memory)
+* Pure AI boundary
 
 ---
 
@@ -77,24 +80,24 @@ Rules:
 
 ### gemini.provider.ts
 
-- Orchestrates the Gemini call
-- Applies timeout / retry
-- Returns normalized output
+* Orchestrates the Gemini call
+* Applies timeout / retry
+* Returns normalized output
 
 ### gemini.client.ts
 
-- Owns `GoogleGenerativeAI` init
-- Caches client instance
-- Reads env vars
+* Owns `GoogleGenerativeAI` init
+* Caches client instance
+* Reads env vars
 
 ### gemini.mapper.ts
 
-- Converts internal `ChatMessage[]` → Gemini format
-- Converts Gemini response → plain text
+* Converts internal `ChatMessage[]` → Gemini format
+* Converts Gemini response → plain text
 
 ### gemini.errors.ts
 
-- Maps Gemini SDK errors → domain-safe errors
+* Maps Gemini SDK errors → domain-safe errors
 
 ---
 
@@ -102,11 +105,12 @@ Rules:
 
 ### agent/chat.ts
 
-- **No Gemini imports**
-- Only responsibility:
-  - resolve prompt
-  - build context
-  - call `chatWithExerciseHelper`
+* **No Gemini imports**
+* Only responsibility:
+
+  * resolve prompt
+  * build context
+  * call `chatWithExerciseHelper`
 
 ---
 
@@ -114,20 +118,20 @@ Rules:
 
 Before:
 
-- Knows Gemini SDK
-- Knows model mapping
-- Knows retry/timeout
+* Knows Gemini SDK
+* Knows model mapping
+* Knows retry/timeout
 
 After:
 
-- Calls **only**:
+* Calls **only**:
 
 ```ts
 import { generateChatCompletion } from '@/lib/ai/providers/gemini'
 ```
 
-- Passes `system + composedPrompt`
-- Receives plain text
+* Passes `system + composedPrompt`
+* Receives plain text
 
 ---
 
@@ -135,7 +139,7 @@ import { generateChatCompletion } from '@/lib/ai/providers/gemini'
 
 Status:
 
-- ❌ Deleted or merged into `gemini.client.ts`
+* ❌ Deleted or merged into `gemini.client.ts`
 
 No standalone “provider factory” files allowed.
 
@@ -143,10 +147,10 @@ No standalone “provider factory” files allowed.
 
 ## Non-Goals
 
-- No multi-provider abstraction yet
-- No OpenAI / Claude adapter
-- No config-driven provider selection
-- No behavior change
+* No multi-provider abstraction yet
+* No OpenAI / Claude adapter
+* No config-driven provider selection
+* No behavior change
 
 ---
 
@@ -154,18 +158,20 @@ No standalone “provider factory” files allowed.
 
 ### Unit Tests (Required)
 
-- `gemini.mapper.spec.ts`
-  - message mapping correctness
+* `gemini.mapper.spec.ts`
 
-- `gemini.provider.spec.ts`
-  - timeout handling
-  - retry behavior
-  - error normalization
+  * message mapping correctness
+
+* `gemini.provider.spec.ts`
+
+  * timeout handling
+  * retry behavior
+  * error normalization
 
 ### Integration Tests (Unchanged)
 
-- `agent-chat.int.spec.ts`
-- `exercise-chat-service` tests
+* `agent-chat.int.spec.ts`
+* `exercise-chat-service` tests
 
 No snapshot changes allowed.
 
@@ -173,10 +179,10 @@ No snapshot changes allowed.
 
 ## Success Criteria
 
-- `agent/chat.ts` contains **zero Gemini references**
-- `exercise-chat-service.ts` shrinks significantly
-- All Gemini SDK imports exist **only** under `providers/gemini/`
-- CI passes with no behavior diff
+* `agent/chat.ts` contains **zero Gemini references**
+* `exercise-chat-service.ts` shrinks significantly
+* All Gemini SDK imports exist **only** under `providers/gemini/`
+* CI passes with no behavior diff
 
 ---
 
@@ -184,13 +190,13 @@ No snapshot changes allowed.
 
 If tomorrow you:
 
-- replace Gemini with another provider
+* replace Gemini with another provider
 
 You should:
 
-- delete `providers/gemini`
-- implement `providers/openai`
-- touch **no product code**
+* delete `providers/gemini`
+* implement `providers/openai`
+* touch **no product code**
 
 If that's not true — the refactor failed.
 
@@ -207,7 +213,6 @@ mkdir -p src/lib/ai/providers/gemini
 ```
 
 Create the following empty files:
-
 - `src/lib/ai/providers/gemini/index.ts`
 - `src/lib/ai/providers/gemini/gemini.provider.ts`
 - `src/lib/ai/providers/gemini/gemini.client.ts`
@@ -277,13 +282,13 @@ export interface GenerateChatInput {
   system: string
   messages: ChatMessage[]
   model: AIModel
-  acknowledgment: string // Required for Gemini's system prompt simulation
+  acknowledgment: string  // Required for Gemini's system prompt simulation
   timeoutMs?: number
 }
 
 export interface GenerateChatOutput {
   text: string
-  raw?: unknown // For debugging - Gemini response object
+  raw?: unknown  // For debugging - Gemini response object
 }
 ```
 
@@ -322,7 +327,9 @@ export function isGeminiApiKeyConfigured(): boolean {
 export function getGeminiClient(): GoogleGenerativeAI {
   if (!geminiClient) {
     if (!process.env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY environment variable is not configured.')
+      throw new Error(
+        'GEMINI_API_KEY environment variable is not configured.',
+      )
     }
     geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   }
@@ -339,7 +346,6 @@ export function resetGeminiClient(): void {
 ```
 
 **Changes from original:**
-
 - Add `resetGeminiClient()` for testing
 - Simplify error message (detailed message moves to `gemini.errors.ts`)
 
@@ -435,10 +441,20 @@ export function wrapGeminiError(error: Error): GeminiError {
   }
 
   if (message.includes('invalid') || message.includes('validation')) {
-    return new GeminiError(error.message, GeminiErrorCode.VALIDATION_ERROR, false, error)
+    return new GeminiError(
+      error.message,
+      GeminiErrorCode.VALIDATION_ERROR,
+      false,
+      error,
+    )
   }
 
-  return new GeminiError(error.message, GeminiErrorCode.API_ERROR, true, error)
+  return new GeminiError(
+    error.message,
+    GeminiErrorCode.API_ERROR,
+    true,
+    error,
+  )
 }
 ```
 
@@ -741,7 +757,10 @@ export async function generateChatCompletion(
 
       // Don't retry non-retryable errors
       if (!isRetryableError(lastError)) {
-        logger.error({ err: lastError, attempt }, '[GeminiProvider] Non-retryable error')
+        logger.error(
+          { err: lastError, attempt },
+          '[GeminiProvider] Non-retryable error',
+        )
         throw geminiError
       }
 
@@ -781,12 +800,16 @@ async function executeWithTimeout(
   })
 
   // Build messages array with system message first
-  const allMessages: ChatMessage[] = [{ role: 'system', content: input.system }, ...input.messages]
+  const allMessages: ChatMessage[] = [
+    { role: 'system', content: input.system },
+    ...input.messages,
+  ]
 
   // Get the current user message (last user message in the array)
   const userMessages = input.messages.filter((m) => m.role === 'user')
-  const currentMessage =
-    userMessages.length > 0 ? userMessages[userMessages.length - 1].content : ''
+  const currentMessage = userMessages.length > 0
+    ? userMessages[userMessages.length - 1].content
+    : ''
 
   // Map to Gemini format
   const { history, currentMessage: finalMessage } = mapMessagesToGeminiHistory(
@@ -813,7 +836,10 @@ async function executeWithTimeout(
 
   // Execute chat with timeout
   const chat = model.startChat({ history })
-  const result = await Promise.race([chat.sendMessage(finalMessage), timeoutPromise])
+  const result = await Promise.race([
+    chat.sendMessage(finalMessage),
+    timeoutPromise,
+  ])
 
   const text = extractResponseText(result.response)
 
@@ -886,7 +912,7 @@ describe('gemini.provider', () => {
 
       const mock = createGeminiMock('Test response')
       mock.sendMessage.mockImplementation(
-        () => new Promise((resolve) => setTimeout(resolve, 60_000)),
+        () => new Promise((resolve) => setTimeout(resolve, 60_000))
       )
       vi.mocked(getGeminiClient).mockReturnValue(mock.client as any)
 
@@ -936,7 +962,7 @@ describe('gemini.provider', () => {
 
 **File:** `src/lib/ai/providers/gemini/index.ts`
 
-````typescript
+```typescript
 /**
  * Gemini Provider - Public Exports
  *
@@ -955,7 +981,7 @@ export {
   GeminiErrorCode,
   isGeminiApiKeyConfigured,
 } from './gemini.provider'
-````
+```
 
 ---
 
@@ -966,7 +992,6 @@ export {
 **File:** `src/lib/ai/services/exercise-chat-service.ts`
 
 **Before (214 lines):**
-
 - Direct Gemini SDK usage
 - Inline retry logic
 - Inline timeout handling
@@ -1040,11 +1065,10 @@ export async function chatWithExerciseHelper(
     } else {
       // Legacy path
       systemPrompt = getSystemPrompt()
-      messages =
-        input.conversationHistory?.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })) ?? []
+      messages = input.conversationHistory?.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })) ?? []
       // Add current message
       messages.push({ role: 'user', content: input.message })
     }
@@ -1242,13 +1266,13 @@ src/lib/ai/
 
 ### 8.4 Line Count Comparison
 
-| File                           | Before | After       | Change |
-| ------------------------------ | ------ | ----------- | ------ |
-| `exercise-chat-service.ts`     | 214    | ~60         | -154   |
-| `gemini-ai-provider.server.ts` | 31     | 0 (deleted) | -31    |
-| `chat-message-role.ts`         | 53     | ~25         | -28    |
-| **New: `providers/gemini/*`**  | 0      | ~290        | +290   |
-| **Net change**                 | 298    | ~375        | +77    |
+| File | Before | After | Change |
+|------|--------|-------|--------|
+| `exercise-chat-service.ts` | 214 | ~60 | -154 |
+| `gemini-ai-provider.server.ts` | 31 | 0 (deleted) | -31 |
+| `chat-message-role.ts` | 53 | ~25 | -28 |
+| **New: `providers/gemini/*`** | 0 | ~290 | +290 |
+| **Net change** | 298 | ~375 | +77 |
 
 Note: Total lines increase slightly, but complexity is **isolated**. The service layer is now thin and the provider is self-contained.
 
@@ -1271,18 +1295,15 @@ Note: Total lines increase slightly, but complexity is **isolated**. The service
 ## Risk Mitigation
 
 ### Breaking Changes
-
 - **None expected** - all public APIs remain the same
 - `chatWithExerciseHelper` signature unchanged
 - `ExerciseChatInput` / `ExerciseChatResult` types unchanged
 
 ### Testing Strategy
-
 1. Run existing integration tests after each phase
 2. Add unit tests for new modules in Phase 4-5
 3. Final verification: `pnpm ci:local`
 
 ### Rollback Plan
-
 - Keep `gemini-ai-provider.server.ts` until final verification
 - Each phase should be a separate commit for easy rollback
