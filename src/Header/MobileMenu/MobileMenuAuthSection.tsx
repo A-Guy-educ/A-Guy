@@ -44,9 +44,15 @@ export function MobileMenuAuthSection({
           className="justify-start gap-2 text-destructive hover:text-destructive"
           onClick={async () => {
             setIsLoggingOut(true)
-            await logoutAction()
-            router.push('/login')
-            router.refresh()
+            try {
+              await logoutAction()
+              window.dispatchEvent(new Event('auth:changed'))
+              onClose()
+              router.push('/login')
+              router.refresh()
+            } finally {
+              setIsLoggingOut(false)
+            }
           }}
           disabled={isLoggingOut}
         >
