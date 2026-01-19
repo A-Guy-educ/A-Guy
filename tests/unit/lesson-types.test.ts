@@ -33,3 +33,65 @@ describe('getEffectiveLessonType', () => {
     expect(getEffectiveLessonType('invalid')).toBe('learning')
   })
 })
+
+describe('chapter filtering by lesson type', () => {
+  const mockChapters = [
+    {
+      id: '1',
+      title: 'Chapter with learning',
+      lessons: [
+        { id: 'l1', type: 'learning' },
+        { id: 'l2', type: 'practice' },
+      ],
+    },
+    {
+      id: '2',
+      title: 'Chapter with only practice',
+      lessons: [{ id: 'l3', type: 'practice' }],
+    },
+    {
+      id: '3',
+      title: 'Chapter with null type',
+      lessons: [{ id: 'l4', type: null }],
+    },
+  ]
+
+  it('hides chapters with zero matching lessons', () => {
+    const filtered = mockChapters
+      .map((chapter) => ({
+        ...chapter,
+        lessons: chapter.lessons.filter((lesson) => getEffectiveLessonType(lesson.type) === 'exam'),
+      }))
+      .filter((chapter) => chapter.lessons.length > 0)
+
+    expect(filtered).toHaveLength(0)
+  })
+
+  it('keeps chapters with matching lessons', () => {
+    const filtered = mockChapters
+      .map((chapter) => ({
+        ...chapter,
+        lessons: chapter.lessons.filter(
+          (lesson) => getEffectiveLessonType(lesson.type) === 'learning',
+        ),
+      }))
+      .filter((chapter) => chapter.lessons.length > 0)
+
+    expect(filtered).toHaveLength(2)
+  })
+
+  it('includes null types in the learning filter', () => {
+    const filtered = mockChapters
+      .map((chapter) => ({
+        ...chapter,
+        lessons: chapter.lessons.filter(
+          (lesson) => getEffectiveLessonType(lesson.type) === 'learning',
+        ),
+      }))
+      .filter((chapter) => chapter.lessons.length > 0)
+
+    const chapterWithNull = filtered.find((chapter) => chapter.id === '3')
+    expect(chapterWithNull).toBeDefined()
+    expect(chapterWithNull?.lessons).toHaveLength(1)
+  })
+})
