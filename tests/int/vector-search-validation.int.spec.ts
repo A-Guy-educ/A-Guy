@@ -15,6 +15,7 @@ import type { Db } from 'mongodb'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { isAtlasEnvironment } from '../setup/db-config'
 
 const INDEX_NAME = 'memory_items_embedding_v1'
 const COLLECTION_NAME = 'memory_items'
@@ -29,6 +30,11 @@ let hasVectorSearch: boolean = false
 async function checkVectorSearchAvailable(): Promise<boolean> {
   if (!db) return false
 
+  // Vector search is only available on MongoDB Atlas
+  if (!isAtlasEnvironment()) {
+    return false
+  }
+
   try {
     const collection = db.collection(COLLECTION_NAME)
     const indexes = await collection.listSearchIndexes().toArray()
@@ -42,17 +48,21 @@ async function checkVectorSearchAvailable(): Promise<boolean> {
 
     return !!vectorIndex && (vectorIndex.status === 'READY' || vectorIndex.queryable === true)
   } catch (error: any) {
-    if (error.message?.includes('not supported') || error.message?.includes('SearchNotEnabled')) {
+    if (
+      error.message?.includes('not supported') ||
+      error.message?.includes('SearchNotEnabled') ||
+      error.message?.includes('$listSearchIndexes')
+    ) {
       return false
     }
     throw error
   }
 }
 
-// Skip all tests if OPENAI_API_KEY is not set
+// Skip all tests if OPENAI_API_KEY is not set or not connected to Atlas
 const hasOpenAIKey = !!process.env.OPENAI_API_KEY
 
-describe.skipIf(!hasOpenAIKey)('Vector Search Validation Integration Tests', () => {
+describe.skipIf(!hasOpenAIKey || !isAtlasEnvironment())('Vector Search Validation Integration Tests', () => {
   beforeAll(async () => {
     payload = await getPayload({ config })
     db = (payload.db as any).connection?.db
