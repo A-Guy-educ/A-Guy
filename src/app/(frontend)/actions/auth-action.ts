@@ -1,25 +1,15 @@
 'use server'
 
 import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
+import { getPayload } from 'payload'
 
 export async function logoutAction() {
-  try {
-    const cookieStore = await cookies()
+  const config = (await import('@payload-config')).default
+  const payload = await getPayload({ config })
+  const cookiePrefix = payload.config.cookiePrefix || 'payload'
+  const cookieName = `${cookiePrefix}-token`
 
-    // Clear the auth cookie
-    cookieStore.delete('payload-token')
-
-    return { success: true }
-  } catch (_error) {
-    return {
-      success: false,
-      message: 'Logout failed. Please try again.',
-    }
-  }
-}
-
-export async function logoutAndRedirect() {
-  await logoutAction()
-  redirect('/admin/login')
+  const cookieStore = await cookies()
+  cookieStore.delete(cookieName)
+  return { success: true }
 }

@@ -2,7 +2,7 @@
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import type { Header, User } from '@/payload-types'
 
@@ -16,6 +16,7 @@ interface HeaderClientProps {
 
 export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   const [user, setUser] = useState<User | null>(null)
+  const [isAuthLoading, setIsAuthLoading] = useState(true)
   /* Storing the value in a useState to avoid hydration errors */
   const [theme, setTheme] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -24,25 +25,40 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   const pathname = usePathname()
 
   // Fetch user on client side to avoid static-to-dynamic conversion
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch('/api/users/me', {
-          credentials: 'include', // Include cookies
-        })
+  const fetchUser = useCallback(async () => {
+    setIsAuthLoading(true)
+    try {
+      const response = await fetch('/api/users/me', {
+        credentials: 'include', // Include cookies
+        cache: 'no-store',
+      })
 
-        if (response.ok) {
-          const data = await response.json()
-          setUser(data.user || null)
-        }
-      } catch (_error) {
-        // Silently fail - user is not authenticated
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data.user || null)
+      } else {
         setUser(null)
       }
+    } catch (_error) {
+      // Silently fail - user is not authenticated
+      setUser(null)
+    } finally {
+      setIsAuthLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchUser()
+  }, [fetchUser, pathname])
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      fetchUser()
     }
 
-    fetchUser()
-  }, [])
+    window.addEventListener('auth:changed', handleAuthChange)
+    return () => window.removeEventListener('auth:changed', handleAuthChange)
+  }, [fetchUser])
 
   useEffect(() => {
     setHeaderTheme(null)
@@ -69,8 +85,6 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const userName = user?.name || undefined
-
   return (
     <>
       <header
@@ -93,7 +107,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center">
-              <HeaderNav data={data} userName={userName} isAuthenticated={!!user} />
+              <HeaderNav data={data} user={user} isAuthLoading={isAuthLoading} />
             </div>
 
             {/* Mobile Menu Button */}
@@ -107,8 +121,8 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
         data={data}
-        userName={userName}
-        isAuthenticated={!!user}
+        user={user}
+        isAuthLoading={isAuthLoading}
       />
     </>
   )

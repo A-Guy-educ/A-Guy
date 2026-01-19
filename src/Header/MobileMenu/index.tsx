@@ -1,36 +1,34 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { X, Menu, LogOut } from 'lucide-react'
+import React, { useEffect } from 'react'
+import { X, Menu } from 'lucide-react'
 import { CMSLink } from '@/components/Link'
 import Link from 'next/link'
 import { SearchIcon } from 'lucide-react'
-import type { Header as HeaderType } from '@/payload-types'
+import type { Header as HeaderType, User } from '@/payload-types'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useTranslations } from '@/providers/I18n'
-import { Button } from '@/components/ui/button'
-import { logoutAndRedirect } from '@/app/(frontend)/actions/auth-action'
+import { MobileMenuAuthSection } from './MobileMenuAuthSection'
 
 interface MobileMenuProps {
   isOpen: boolean
   onClose: () => void
   data: HeaderType
-  userName?: string
-  isAuthenticated: boolean
+  user: User | null
+  isAuthLoading: boolean
 }
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({
   isOpen,
   onClose,
   data,
-  userName,
-  isAuthenticated,
+  user,
+  isAuthLoading,
 }) => {
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const tCommon = useTranslations('common.header')
+  const tMenu = useTranslations('common.mobileMenu')
   const navItems = data?.navItems || []
 
-  // Prevent body scroll when menu is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -42,13 +40,11 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
     }
   }, [isOpen])
 
-  // Group navigation items by type (you can customize this logic)
   const primaryLinks = navItems.slice(0, Math.ceil(navItems.length / 2))
   const secondaryLinks = navItems.slice(Math.ceil(navItems.length / 2))
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -56,15 +52,13 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
         onClick={onClose}
       />
 
-      {/* Side Panel */}
       <div
         className={`fixed top-0 right-0 h-full w-[280px] sm:w-[320px] bg-background border-l border-border z-50 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="text-lg font-semibold">Menu</h2>
+          <h2 className="text-lg font-semibold">{tMenu('title')}</h2>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-muted transition-colors"
@@ -74,21 +68,18 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           </button>
         </div>
 
-        {/* Content */}
         <nav className="flex flex-col h-[calc(100%-73px)] overflow-y-auto">
-          {/* User Greeting */}
-          {userName && (
+          {user?.name && (
             <div className="px-6 py-4 border-b border-border bg-muted/30">
               <p className="text-sm text-muted-foreground">{tCommon('welcome')}</p>
-              <p className="text-base font-semibold mt-1">{userName}</p>
+              <p className="text-base font-semibold mt-1">{user.name}</p>
             </div>
           )}
 
-          {/* Primary Navigation */}
           {primaryLinks.length > 0 && (
             <div className="px-6 py-4 border-b border-border">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Navigation
+                {tMenu('navigation')}
               </h3>
               <div className="flex flex-col gap-2">
                 {primaryLinks.map(({ link }, i) => (
@@ -104,11 +95,10 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             </div>
           )}
 
-          {/* Secondary Navigation */}
           {secondaryLinks.length > 0 && (
             <div className="px-6 py-4 border-b border-border">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Resources
+                {tMenu('resources')}
               </h3>
               <div className="flex flex-col gap-2">
                 {secondaryLinks.map(({ link }, i) => (
@@ -124,7 +114,6 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             </div>
           )}
 
-          {/* Search */}
           <div className="px-6 py-4 border-b border-border">
             <Link
               href="/search"
@@ -132,36 +121,20 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted transition-colors"
             >
               <SearchIcon className="w-5 h-5 text-primary" />
-              <span className="text-base">Search</span>
+              <span className="text-base">{tMenu('search')}</span>
             </Link>
           </div>
 
-          {/* Language Switcher */}
           <div className="px-6 py-4">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Language
+              {tMenu('language')}
             </h3>
             <LanguageSwitcher />
           </div>
 
-          {/* Logout - Only show when authenticated */}
-          {isAuthenticated && (
-            <div className="px-6 py-4 border-t border-border mt-auto">
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-2"
-                onClick={async () => {
-                  setIsLoggingOut(true)
-                  await logoutAndRedirect()
-                  // No need to reset state - redirect will unmount component
-                }}
-                disabled={isLoggingOut}
-              >
-                <LogOut className="w-4 h-4" />
-                {isLoggingOut ? tCommon('loggingOut') : tCommon('logout')}
-              </Button>
-            </div>
-          )}
+          <div className="px-6 py-4 border-t border-border mt-auto">
+            <MobileMenuAuthSection user={user} isAuthLoading={isAuthLoading} onClose={onClose} />
+          </div>
         </nav>
       </div>
     </>

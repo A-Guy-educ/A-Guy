@@ -1,6 +1,6 @@
 # Implementation Plan: Lesson Type Tabs
 
-> **Junior-Friendly Guide** - This plan is written for developers who may be new to the codebase. Each step includes explanations of *why* we're doing things, not just *what* to do.
+> **Junior-Friendly Guide** - This plan is written for developers who may be new to the codebase. Each step includes explanations of _why_ we're doing things, not just _what_ to do.
 
 ---
 
@@ -38,6 +38,7 @@ NavigationBar (src/components/HomePage/NavigationBar)
 ```
 
 **Key Insight**: The tabs already exist! Each tab is a separate route (`/study`, `/practice`, `/test`) using the `NavigationBar` component. We just need to:
+
 1. Add the `type` field to Lessons
 2. Update `StudyContent` to filter lessons based on which page it's on
 
@@ -91,6 +92,7 @@ Before starting, ensure you can:
 ## Phase 1: Data Model Changes
 
 ### Goal
+
 Add a `type` field to the Lessons collection so each lesson can be categorized.
 
 ### Step 1.1: Update Lessons Collection
@@ -146,6 +148,7 @@ admin: {
 **Why**: After changing a collection, Payload needs to regenerate TypeScript types so your code knows the new field exists.
 
 **What to do**:
+
 ```bash
 pnpm generate:types
 ```
@@ -155,6 +158,7 @@ pnpm generate:types
 **Why**: Always verify schema changes work before building on top of them.
 
 **What to do**:
+
 1. Start the dev server: `pnpm dev`
 2. Go to http://localhost:3000/admin/collections/lessons
 3. Create or edit a lesson
@@ -168,6 +172,7 @@ pnpm generate:types
 ## Phase 2: Shared Constants
 
 ### Goal
+
 Create a minimal mapping constant for route → lesson type. Keep it minimal - only add helpers if used in 2+ places.
 
 ### Step 2.1: Create Route-to-Type Mapping
@@ -209,22 +214,29 @@ export function getEffectiveLessonType(type: string | null | undefined): LessonT
 ## Phase 3: Update StudyContent Component
 
 ### Goal
+
 Update the existing `StudyContent` component to filter lessons by type based on the current route. Make minimal changes.
 
 ### Step 3.1: Modify StudyContent to Accept Type Prop
 
-**File**: [src/app/(frontend)/study/_components/StudyContent/index.tsx](src/app/(frontend)/study/_components/StudyContent/index.tsx)
+**File**: [src/app/(frontend)/study/\_components/StudyContent/index.tsx](<src/app/(frontend)/study/_components/StudyContent/index.tsx>)
 
 **Why**: The component needs to know which lesson type to filter for. We pass it as a prop from the page.
 
 **What to do** (minimal changes - only add what's needed):
 
 1. Add the import at the top:
+
 ```typescript
-import { getEffectiveLessonType, type LessonType, DEFAULT_LESSON_TYPE } from '@/lib/constants/lesson-types'
+import {
+  getEffectiveLessonType,
+  type LessonType,
+  DEFAULT_LESSON_TYPE,
+} from '@/lib/constants/lesson-types'
 ```
 
 2. Add a prop to the component:
+
 ```typescript
 interface StudyContentProps {
   /** The lesson type to filter for. Defaults to 'learning' */
@@ -235,20 +247,22 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
 ```
 
 3. Add filtering logic before rendering (after `setIsLoading(false)`):
+
 ```typescript
-  // Filter chapters to only show those with lessons of the specified type
-  const filteredChapters = chapters
-    .map((chapter) => {
-      // Filter lessons by type, using fallback for null/undefined
-      const filteredLessons = chapter.lessons.filter(
-        (lesson) => getEffectiveLessonType(lesson.type) === lessonType
-      )
-      return { ...chapter, lessons: filteredLessons }
-    })
-    .filter((chapter) => chapter.lessons.length > 0) // Hide chapters with no matching lessons
+// Filter chapters to only show those with lessons of the specified type
+const filteredChapters = chapters
+  .map((chapter) => {
+    // Filter lessons by type, using fallback for null/undefined
+    const filteredLessons = chapter.lessons.filter(
+      (lesson) => getEffectiveLessonType(lesson.type) === lessonType,
+    )
+    return { ...chapter, lessons: filteredLessons }
+  })
+  .filter((chapter) => chapter.lessons.length > 0) // Hide chapters with no matching lessons
 ```
 
 4. Update the render to use `filteredChapters` instead of `chapters`:
+
 ```typescript
   {filteredChapters.length > 0 ? (
     <div className="space-y-12">
@@ -263,7 +277,7 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
 
 ### Step 3.2: Update Study Page (minimal change)
 
-**File**: [src/app/(frontend)/study/page.tsx](src/app/(frontend)/study/page.tsx)
+**File**: [src/app/(frontend)/study/page.tsx](<src/app/(frontend)/study/page.tsx>)
 
 **Why**: Pass the correct lesson type to StudyContent.
 
@@ -276,7 +290,7 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
 
 ### Step 3.3: Update Practice Page (minimal change)
 
-**File**: [src/app/(frontend)/practice/page.tsx](src/app/(frontend)/practice/page.tsx)
+**File**: [src/app/(frontend)/practice/page.tsx](<src/app/(frontend)/practice/page.tsx>)
 
 **Why**: Pass the correct lesson type to StudyContent.
 
@@ -289,7 +303,7 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
 
 ### Step 3.4: Update Test Page
 
-**File**: [src/app/(frontend)/test/page.tsx](src/app/(frontend)/test/page.tsx)
+**File**: [src/app/(frontend)/test/page.tsx](<src/app/(frontend)/test/page.tsx>)
 
 **Why**: Replace "coming soon" with actual content filtered by exam type.
 
@@ -321,6 +335,7 @@ export async function generateMetadata() {
 ## Phase 4: Migration Script
 
 ### Goal
+
 Ensure existing lessons have a type value.
 
 ### Step 4.1: Create Migration Script
@@ -350,10 +365,7 @@ async function migrateLessonTypes() {
   const lessonsWithoutType = await payload.find({
     collection: 'lessons',
     where: {
-      or: [
-        { type: { exists: false } },
-        { type: { equals: null } },
-      ],
+      or: [{ type: { exists: false } }, { type: { equals: null } }],
     },
     limit: 0, // Get count only first
   })
@@ -374,10 +386,7 @@ async function migrateLessonTypes() {
     const batch = await payload.find({
       collection: 'lessons',
       where: {
-        or: [
-          { type: { exists: false } },
-          { type: { equals: null } },
-        ],
+        or: [{ type: { exists: false } }, { type: { equals: null } }],
       },
       limit: batchSize,
       page,
@@ -411,6 +420,7 @@ migrateLessonTypes().catch((error) => {
 ### Step 4.2: Run Migration
 
 **What to do**:
+
 ```bash
 # Make sure database is running
 pnpm db:start
@@ -424,16 +434,19 @@ pnpm tsx scripts/migrate-lesson-types.ts
 ## Phase 5: Testing
 
 ### Goal
+
 Verify everything works correctly.
 
 ### Step 5.1: Manual Testing Checklist
 
 **Admin UI Testing**:
+
 - [ ] Create a new lesson - type field appears with default "Learning"
 - [ ] Edit existing lesson - can change type to Practice or Exam
 - [ ] Type appears in lesson list columns
 
 **Frontend Testing**:
+
 - [ ] `/study` page shows only lessons with type "learning" (or null/undefined via fallback)
 - [ ] `/practice` page shows only lessons with type "practice"
 - [ ] `/test` page shows only lessons with type "exam"
@@ -559,7 +572,7 @@ describe('Lesson Types', () => {
           type: 'invalid' as any,
           order: 4,
         },
-      })
+      }),
     ).rejects.toThrow()
   })
 })
@@ -638,9 +651,7 @@ describe('Chapter visibility after filtering', () => {
     const filtered = mockChapters
       .map((chapter) => ({
         ...chapter,
-        lessons: chapter.lessons.filter(
-          (lesson) => getEffectiveLessonType(lesson.type) === 'exam'
-        ),
+        lessons: chapter.lessons.filter((lesson) => getEffectiveLessonType(lesson.type) === 'exam'),
       }))
       .filter((chapter) => chapter.lessons.length > 0)
 
@@ -653,7 +664,7 @@ describe('Chapter visibility after filtering', () => {
       .map((chapter) => ({
         ...chapter,
         lessons: chapter.lessons.filter(
-          (lesson) => getEffectiveLessonType(lesson.type) === 'learning'
+          (lesson) => getEffectiveLessonType(lesson.type) === 'learning',
         ),
       }))
       .filter((chapter) => chapter.lessons.length > 0)
@@ -667,7 +678,7 @@ describe('Chapter visibility after filtering', () => {
       .map((chapter) => ({
         ...chapter,
         lessons: chapter.lessons.filter(
-          (lesson) => getEffectiveLessonType(lesson.type) === 'learning'
+          (lesson) => getEffectiveLessonType(lesson.type) === 'learning',
         ),
       }))
       .filter((chapter) => chapter.lessons.length > 0)
@@ -741,58 +752,65 @@ Checklist from the spec acceptance criteria:
 ## Files Changed Summary
 
 ### New Files
-| File | Purpose |
-|------|---------|
-| `src/lib/constants/lesson-types.ts` | Minimal route-to-type mapping + fallback helper |
-| `scripts/migrate-lesson-types.ts` | Migration script |
-| `tests/int/lesson-types.int.spec.ts` | Integration tests (Payload) |
-| `tests/unit/lesson-types.test.ts` | Unit tests (UI filtering logic) |
+
+| File                                 | Purpose                                         |
+| ------------------------------------ | ----------------------------------------------- |
+| `src/lib/constants/lesson-types.ts`  | Minimal route-to-type mapping + fallback helper |
+| `scripts/migrate-lesson-types.ts`    | Migration script                                |
+| `tests/int/lesson-types.int.spec.ts` | Integration tests (Payload)                     |
+| `tests/unit/lesson-types.test.ts`    | Unit tests (UI filtering logic)                 |
 
 ### Modified Files
-| File | Changes |
-|------|---------|
-| `src/collections/Lessons.ts` | Add `type` field |
-| `src/app/(frontend)/study/_components/StudyContent/index.tsx` | Add `lessonType` prop, filter lessons, hide empty chapters |
-| `src/app/(frontend)/study/page.tsx` | Pass `lessonType="learning"` (one line) |
-| `src/app/(frontend)/practice/page.tsx` | Pass `lessonType="practice"` (one line) |
-| `src/app/(frontend)/test/page.tsx` | Replace "coming soon" with `<StudyContent lessonType="exam" />` |
+
+| File                                                          | Changes                                                         |
+| ------------------------------------------------------------- | --------------------------------------------------------------- |
+| `src/collections/Lessons.ts`                                  | Add `type` field                                                |
+| `src/app/(frontend)/study/_components/StudyContent/index.tsx` | Add `lessonType` prop, filter lessons, hide empty chapters      |
+| `src/app/(frontend)/study/page.tsx`                           | Pass `lessonType="learning"` (one line)                         |
+| `src/app/(frontend)/practice/page.tsx`                        | Pass `lessonType="practice"` (one line)                         |
+| `src/app/(frontend)/test/page.tsx`                            | Replace "coming soon" with `<StudyContent lessonType="exam" />` |
 
 ### Files NOT Modified (per spec)
-| File | Reason |
-|------|--------|
-| `src/lib/queries/*.ts` | Spec requires generic queries remain unchanged |
-| `messages/en.json` | i18n keys already exist in `homepage.nav` |
-| `messages/he.json` | i18n keys already exist in `homepage.nav` |
-| `src/components/ui/tabs.tsx` | Not needed - tabs UI already exists as NavigationBar |
-| `src/components/HomePage/NavigationBar` | No changes needed - already works |
-| `src/app/(frontend)/courses/_components/EmptyState` | Reuse existing `noLessons` type |
+
+| File                                                | Reason                                               |
+| --------------------------------------------------- | ---------------------------------------------------- |
+| `src/lib/queries/*.ts`                              | Spec requires generic queries remain unchanged       |
+| `messages/en.json`                                  | i18n keys already exist in `homepage.nav`            |
+| `messages/he.json`                                  | i18n keys already exist in `homepage.nav`            |
+| `src/components/ui/tabs.tsx`                        | Not needed - tabs UI already exists as NavigationBar |
+| `src/components/HomePage/NavigationBar`             | No changes needed - already works                    |
+| `src/app/(frontend)/courses/_components/EmptyState` | Reuse existing `noLessons` type                      |
 
 ---
 
 ## Glossary
 
-| Term | Definition |
-|------|------------|
-| **Collection** | A Payload CMS concept - like a database table that defines what fields an entity has |
-| **Client-side filtering** | Filtering data in the browser (React component) rather than in the database query |
-| **Fallback** | A default value used when the actual value is missing (null/undefined) |
-| **effectiveType** | The lesson type to use after applying the fallback rule: `lesson.type ?? 'learning'` |
-| **NavigationBar** | The existing tab-like navigation component that routes between /study, /practice, /test |
+| Term                      | Definition                                                                              |
+| ------------------------- | --------------------------------------------------------------------------------------- |
+| **Collection**            | A Payload CMS concept - like a database table that defines what fields an entity has    |
+| **Client-side filtering** | Filtering data in the browser (React component) rather than in the database query       |
+| **Fallback**              | A default value used when the actual value is missing (null/undefined)                  |
+| **effectiveType**         | The lesson type to use after applying the fallback rule: `lesson.type ?? 'learning'`    |
+| **NavigationBar**         | The existing tab-like navigation component that routes between /study, /practice, /test |
 
 ---
 
 ## Troubleshooting
 
 ### "Property 'type' does not exist on type 'Lesson'"
+
 Run `pnpm generate:types` after modifying the collection.
 
 ### All lessons appear on Study tab
+
 This is expected for existing lessons - they have null/undefined type which falls back to 'learning'. Run the migration script or manually set types.
 
 ### Empty state always shows on Practice/Test
+
 Verify lessons exist with `type: 'practice'` or `type: 'exam'` in the database. Use the admin UI to create test data.
 
 ### Chapters still show with no lessons
+
 Check that the filtering logic uses `getEffectiveLessonType()` and filters chapters with `lessons.length > 0`.
 
 ---
@@ -800,6 +818,7 @@ Check that the filtering logic uses `getEffectiveLessonType()` and filters chapt
 ## Questions?
 
 If you're stuck:
+
 1. Check the existing code patterns in similar files
 2. Run `pnpm doctor` to check your environment
 3. Ask for help with specific error messages

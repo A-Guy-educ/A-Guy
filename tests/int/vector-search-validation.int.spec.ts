@@ -8,6 +8,7 @@
  * - Search quality and relevance
  * - Performance and latency
  */
+/* eslint-disable @typescript-eslint/no-explicit-any -- MongoDB cursor results use any type */
 import { generateEmbedding } from '@/lib/ai/embeddings'
 import { retrieveMemoryItems } from '@/lib/ai/vector-search'
 import config from '@payload-config'
@@ -15,6 +16,11 @@ import type { Db } from 'mongodb'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+
+// When USE_ATLAS=true, use DATABASE_URL_ATLAS for vector search tests
+// This allows tests to connect to the Atlas cluster with vector search enabled
+const useAtlas = process.env.USE_ATLAS === 'true'
+const atlasDatabaseUrl = process.env.DATABASE_URL_ATLAS
 
 const INDEX_NAME = 'memory_items_embedding_v1'
 const COLLECTION_NAME = 'memory_items'
@@ -26,12 +32,14 @@ let testConversationId: string
 let hasVectorSearch: boolean = false
 
 // Helper to check if vector search is available
+
 async function checkVectorSearchAvailable(): Promise<boolean> {
   if (!db) return false
 
   try {
     const collection = db.collection(COLLECTION_NAME)
     const indexes = await collection.listSearchIndexes().toArray()
+
     const vectorIndex = indexes.find((idx: any) => (idx as any).name === INDEX_NAME) as
       | {
           name: string
@@ -42,19 +50,35 @@ async function checkVectorSearchAvailable(): Promise<boolean> {
 
     return !!vectorIndex && (vectorIndex.status === 'READY' || vectorIndex.queryable === true)
   } catch (error: any) {
-    if (error.message?.includes('not supported') || error.message?.includes('SearchNotEnabled')) {
+    // $listSearchIndexes is only available on MongoDB Atlas
+    if (
+      error.message?.includes('not supported') ||
+      error.message?.includes('SearchNotEnabled') ||
+      error.message?.includes('$listSearchIndexes stage is only allowed on MongoDB Atlas')
+    ) {
       return false
     }
     throw error
   }
 }
 
-// Skip all tests if OPENAI_API_KEY is not set
+// Skip all tests if OPENAI_API_KEY is not set or DATABASE_URL_ATLAS is not configured
+// Vector search requires MongoDB Atlas with search enabled
 const hasOpenAIKey = !!process.env.OPENAI_API_KEY
+const hasAtlasUrl = !!process.env.DATABASE_URL_ATLAS
 
-describe.skipIf(!hasOpenAIKey)('Vector Search Validation Integration Tests', () => {
+describe.skipIf(!hasOpenAIKey || !hasAtlasUrl)('Vector Search Validation Integration Tests', () => {
   beforeAll(async () => {
-    payload = await getPayload({ config })
+    // When USE_ATLAS is true, we need to temporarily override DATABASE_URL
+    // to use the Atlas URL for vector search tests
+    if (useAtlas && atlasDatabaseUrl) {
+      const originalDbUrl = process.env.DATABASE_URL
+      process.env.DATABASE_URL = atlasDatabaseUrl
+      payload = await getPayload({ config })
+      process.env.DATABASE_URL = originalDbUrl
+    } else {
+      payload = await getPayload({ config })
+    }
     db = (payload.db as any).connection?.db
 
     if (!db) {
