@@ -36,7 +36,7 @@ export const Lessons: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['chapter', 'title', 'slug', 'order', 'status', 'isActive', 'updatedAt'],
+    defaultColumns: ['chapter', 'title', 'type', 'slug', 'order', 'status', 'isActive', 'updatedAt'],
   },
   fields: [
     {
@@ -47,6 +47,31 @@ export const Lessons: CollectionConfig = {
       index: true,
       admin: {
         description: 'The chapter this lesson belongs to',
+      },
+    },
+    {
+      name: 'type',
+      type: 'select',
+      required: true,
+      defaultValue: 'learning',
+      index: true,
+      options: [
+        {
+          label: 'Learning',
+          value: 'learning',
+        },
+        {
+          label: 'Practice',
+          value: 'practice',
+        },
+        {
+          label: 'Exam',
+          value: 'exam',
+        },
+      ],
+      admin: {
+        description: 'The type of lesson: Learning content, Practice exercises, or Exam',
+        position: 'sidebar',
       },
     },
     {

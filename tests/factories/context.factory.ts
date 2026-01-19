@@ -55,6 +55,7 @@ export async function createContextHierarchy(payload: Payload): Promise<ContextH
       chapter: chapter.id,
       title: `Test Lesson ${timestamp}`,
       slug: `test-lesson-${timestamp}`,
+      type: 'learning',
       order: 0,
       status: 'published',
       isActive: true,

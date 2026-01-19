@@ -2,17 +2,27 @@
 
 import { useEffect, useState } from 'react'
 import { getUserProfile } from '@/lib/localStorage/userProfile'
+import {
+  DEFAULT_LESSON_TYPE,
+  getEffectiveLessonType,
+  type LessonType,
+} from '@/lib/constants/lesson-types'
 import { useTranslations } from '@/providers/I18n'
 import type { Chapter, Lesson } from '@/payload-types'
 import { ChapterHeader } from '@/app/(frontend)/courses/_components/ChapterHeader'
 import { LessonCard } from '@/app/(frontend)/courses/_components/LessonCard'
 import { EmptyState } from '@/app/(frontend)/courses/_components/EmptyState'
+import { logger } from '@/utilities/logger'
 
 interface ChapterWithLessons extends Chapter {
   lessons: Lesson[]
 }
 
-export function StudyContent() {
+interface StudyContentProps {
+  lessonType?: LessonType
+}
+
+export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentProps) {
   const t = useTranslations('study')
   const [chapters, setChapters] = useState<ChapterWithLessons[]>([])
   const [courseSlug, setCourseSlug] = useState<string>('')
@@ -35,7 +45,8 @@ export function StudyContent() {
           setCourseSlug(data.courseSlug || '')
         }
       } catch (error) {
-        console.error('Failed to load chapters:', error)
+        const err = error instanceof Error ? error : new Error('Unknown error')
+        logger.error({ err }, 'Failed to load chapters')
       } finally {
         setIsLoading(false)
       }
@@ -52,12 +63,21 @@ export function StudyContent() {
     )
   }
 
+  const filteredChapters = chapters
+    .map((chapter) => {
+      const filteredLessons = (chapter.lessons ?? []).filter(
+        (lesson) => getEffectiveLessonType(lesson.type) === lessonType,
+      )
+      return { ...chapter, lessons: filteredLessons }
+    })
+    .filter((chapter) => chapter.lessons.length > 0)
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">{t('studyTopics')}</h1>
-      {chapters.length > 0 ? (
+      {filteredChapters.length > 0 ? (
         <div className="space-y-12">
-          {chapters.map((chapter) => {
+          {filteredChapters.map((chapter) => {
             const chapterSlug = chapter.slug
             if (!chapterSlug) return null
 
@@ -68,26 +88,22 @@ export function StudyContent() {
                   title={chapter.title}
                   description={chapter.description}
                 />
-                {chapter.lessons && chapter.lessons.length > 0 ? (
-                  <div className="space-y-3">
-                    {chapter.lessons.map((lesson) => (
-                      <LessonCard
-                        key={lesson.id}
-                        lesson={lesson}
-                        courseSlug={courseSlug}
-                        chapterSlug={chapterSlug}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState type="noLessons" />
-                )}
+                <div className="space-y-3">
+                  {chapter.lessons.map((lesson) => (
+                    <LessonCard
+                      key={lesson.id}
+                      lesson={lesson}
+                      courseSlug={courseSlug}
+                      chapterSlug={chapterSlug}
+                    />
+                  ))}
+                </div>
               </section>
             )
           })}
         </div>
       ) : (
-        <div className="text-center text-muted-foreground py-12">{t('noTopicsAvailable')}</div>
+        <EmptyState type="noLessons" />
       )}
     </div>
   )
