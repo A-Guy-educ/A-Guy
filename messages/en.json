@@ -5,6 +5,13 @@
       "english": "English",
       "hebrew": "Hebrew"
     },
+    "mobileMenu": {
+      "title": "Menu",
+      "navigation": "Navigation",
+      "resources": "Resources",
+      "search": "Search",
+      "language": "Language"
+    },
     "notFound": {
       "title": "404",
       "message": "This page could not be found.",
@@ -12,11 +19,35 @@
     },
     "header": {
       "welcome": "Welcome,",
+      "login": "Log in",
+      "signup": "Sign up",
+      "myAccount": "My Account",
       "logout": "Logout",
       "loggingOut": "Logging out..."
     }
   },
   "auth": {
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Log in to your account",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "loginButton": "Log in",
+      "loggingIn": "Logging in...",
+      "noAccount": "Don't have an account?",
+      "signupLink": "Sign up",
+      "errors": {
+        "invalidCredentials": "Invalid email or password"
+      }
+    },
+    "account": {
+      "title": "Account",
+      "name": "Name",
+      "email": "Email",
+      "missing": "Not provided"
+    },
     "signup": {
       "title": "Create Account",
       "subtitle": "Sign up to start learning",

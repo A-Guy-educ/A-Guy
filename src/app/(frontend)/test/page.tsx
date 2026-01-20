@@ -1,13 +1,11 @@
 import { NavigationBar } from '@/components/HomePage/NavigationBar'
+import { StudyContent } from '../study/_components/StudyContent'
 
 export default function TestPage() {
   return (
     <div>
       <NavigationBar />
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">מבחנים</h1>
-        <div className="text-center text-muted-foreground py-12">תכונה זו תגיע בקרוב</div>
-      </div>
+      <StudyContent lessonType="exam" />
     </div>
   )
 }

@@ -1,0 +1,143 @@
+// @vitest-environment node
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { getPayload, type Payload } from 'payload'
+import config from '@payload-config'
+
+describe('Lesson types', () => {
+  let payload: Payload
+  let categoryId: string
+  let courseId: string
+  let chapterId: string
+  const lessonIds: string[] = []
+
+  beforeAll(async () => {
+    payload = await getPayload({ config })
+    const timestamp = Date.now()
+    const category = await payload.create({
+      collection: 'categories',
+      data: {
+        title: `Lesson Types Category ${timestamp}`,
+        slug: `lesson-types-category-${timestamp}`,
+      },
+    })
+    categoryId = category.id
+    const course = await payload.create({
+      collection: 'courses',
+      data: {
+        courseLabel: `LT-${timestamp}`,
+        title: `Lesson Types Course ${timestamp}`,
+        categories: [categoryId],
+        order: 0,
+        status: 'published',
+        isActive: true,
+      },
+    })
+    courseId = course.id
+    const chapter = await payload.create({
+      collection: 'chapters',
+      data: {
+        title: `Lesson Types Chapter ${timestamp}`,
+        chapterLabel: `L-${timestamp}`,
+        course: courseId,
+        order: 0,
+        status: 'published',
+        isActive: true,
+      },
+    })
+    chapterId = chapter.id
+  })
+
+  afterAll(async () => {
+    for (const lessonId of lessonIds) {
+      try {
+        await payload.delete({ collection: 'lessons', id: lessonId })
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+    try {
+      await payload.delete({ collection: 'chapters', id: chapterId })
+    } catch {
+      // Ignore cleanup errors
+    }
+    try {
+      await payload.delete({ collection: 'courses', id: courseId })
+    } catch {
+      // Ignore cleanup errors
+    }
+    try {
+      await payload.delete({ collection: 'categories', id: categoryId })
+    } catch {
+      // Ignore cleanup errors
+    }
+    await payload.db?.destroy?.()
+  })
+
+  it('creates a lesson with an explicit type', async () => {
+    const lesson = await payload.create({
+      collection: 'lessons',
+      data: {
+        title: 'Practice Lesson',
+        chapter: chapterId,
+        type: 'practice',
+        order: 1,
+        status: 'published',
+        isActive: true,
+      },
+    })
+    lessonIds.push(lesson.id)
+    expect(lesson.type).toBe('practice')
+  })
+
+  it('defaults to learning when type is omitted', async () => {
+    const lesson = await payload.create({
+      collection: 'lessons',
+      data: {
+        title: 'Default Type Lesson',
+        chapter: chapterId,
+        order: 2,
+        status: 'published',
+        isActive: true,
+      } as any,
+    })
+    lessonIds.push(lesson.id)
+    expect(lesson.type).toBe('learning')
+  })
+
+  it('allows updating the lesson type', async () => {
+    const lesson = await payload.create({
+      collection: 'lessons',
+      data: {
+        title: 'Changeable Lesson',
+        chapter: chapterId,
+        type: 'learning',
+        order: 3,
+        status: 'published',
+        isActive: true,
+      },
+    })
+    lessonIds.push(lesson.id)
+    const updated = await payload.update({
+      collection: 'lessons',
+      id: lesson.id,
+      data: { type: 'exam' },
+    })
+    expect(updated.type).toBe('exam')
+  })
+
+  it('rejects invalid lesson types', async () => {
+    await expect(
+      payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Invalid Type Lesson',
+          chapter: chapterId,
+          type: 'invalid' as 'learning',
+          order: 4,
+          status: 'published',
+          isActive: true,
+        },
+      }),
+    ).rejects.toThrow()
+  })
+})

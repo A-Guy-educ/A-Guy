@@ -5,7 +5,7 @@ export default function PracticePage() {
   return (
     <div>
       <NavigationBar />
-      <StudyContent />
+      <StudyContent lessonType="practice" />
     </div>
   )
 }

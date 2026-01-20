@@ -1,0 +1,27 @@
+name: PR Merged to Dev
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    name: Notify Slack
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: Send Slack notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          channel: '#dev-updates'
+          text: '🚀 PR merged to dev: ${{ github.event.pull_request.title }}'
+          fields: repo,author,action,pr
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
+        continue-on-error: true

@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Fetch all history for semantic-release
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -53,6 +53,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Verify SLACK_WEBHOOK_URL is set (optional)
+        if: always()
+        run: |
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            echo "✅ SLACK_WEBHOOK_URL is configured - Slack notifications will be sent"
+          else
+            echo "⚠️  SLACK_WEBHOOK_URL not set - Slack notifications disabled"
+            echo "To enable: Add SLACK_WEBHOOK_URL secret in GitHub repository settings"
+          fi
+
       - name: Verify DATABASE_URL is set
         run: |
           if [ -n "$DATABASE_URL" ]; then
@@ -67,7 +77,9 @@ jobs:
 
       - name: Run semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SKIP_HOOKS: 1
         run: pnpm exec semantic-release
 
       - name: Create release summary
@@ -77,6 +89,13 @@ jobs:
             echo "✅ Release workflow completed successfully" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Check the [Releases page](https://github.com/${{ github.repository }}/releases) for the new release." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            if [ -n "$SLACK_WEBHOOK_URL" ]; then
+              echo "📢 Slack notification sent successfully" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "📢 Slack notifications disabled (no SLACK_WEBHOOK_URL secret)" >> $GITHUB_STEP_SUMMARY
+              echo "To enable: Add SLACK_WEBHOOK_URL in [GitHub Secrets](https://github.com/${{ github.repository }}/settings/secrets/actions)" >> $GITHUB_STEP_SUMMARY
+            fi
           else
             echo "ℹ️ No release created" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
