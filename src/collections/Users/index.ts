@@ -16,6 +16,7 @@ import { ensureRoleOnSignup } from './hooks/ensureRoleOnSignup-hook'
 import { preventLastAdminDemotion } from './hooks/preventLastAdminDemotion-hook'
 import { auditRoleChange } from './hooks/auditRoleChange-hook'
 import { AccountRole, ACCOUNT_ROLE_LABEL } from './roles'
+import { isUsersCollectionUser } from '@/access/isUsersCollectionUser'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -53,7 +54,8 @@ export const Users: CollectionConfig = {
       saveToJWT: true, // Include in JWT for fast access checks
       access: {
         // Only admins can update the role field
-        update: ({ req: { user } }) => user?.role === AccountRole.Admin,
+        update: ({ req: { user } }) =>
+          isUsersCollectionUser(user) && user.role === AccountRole.Admin,
       },
       hooks: {
         // Enforce role='student' on signup (ignore client input)
