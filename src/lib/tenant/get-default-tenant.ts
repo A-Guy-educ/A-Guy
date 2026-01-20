@@ -21,7 +21,17 @@ export async function getDefaultTenantId(payload: Payload): Promise<string> {
 
   const tenant = result.docs[0]
   if (!tenant) {
-    throw new Error(`Default tenant with slug "${slug}" not found`)
+    const created = await payload.create({
+      collection: 'tenants',
+      data: {
+        name: slug,
+        slug,
+        status: 'active',
+      },
+      overrideAccess: true,
+    })
+
+    return created.id
   }
 
   return tenant.id
