@@ -75,18 +75,24 @@ async function backfillCollection(
       overrideAccess: true,
     })
 
-    for (const doc of batch.docs) {
-      await payload.update({
-        collection,
-        id: doc.id,
-        data: {
-          tenant: tenantId,
-        },
-        overrideAccess: true,
-      })
-      processed += 1
+    if (batch.docs.length === 0) {
+      break
     }
 
+    const batchIds = batch.docs.map((doc) => doc.id)
+
+    await payload.db.updateMany({
+      collection,
+      data: {
+        tenant: tenantId,
+      },
+      where: {
+        id: { in: batchIds },
+      },
+      returning: false,
+    })
+
+    processed += batch.docs.length
     logger.info({ collection, processed, totalDocs }, 'Tenant backfill batch completed')
     page += 1
   }
