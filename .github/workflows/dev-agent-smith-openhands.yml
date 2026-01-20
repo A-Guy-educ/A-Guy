@@ -9,10 +9,6 @@ permissions:
   pull-requests: write
   issues: write
 
-concurrency:
-  group: openhands-${{ github.event.issue.number }}
-  cancel-in-progress: true
-
 jobs:
   openhands:
     if: contains(github.event.comment.body, '@openhands-agent')
@@ -27,3 +23,5 @@ jobs:
     secrets:
       LLM_API_KEY: ${{secrets.AI_KEY }}
       LLM_BASE_URL: ${{secrets.AI_BASE_URL }}
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      PAT_USERNAME: ${{ secrets.PAT_USERNAME }}
