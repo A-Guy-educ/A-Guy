@@ -12,6 +12,7 @@ import { SignupFormFields } from './SignupFormFields'
 import { validateSignupForm } from './actions/signup_validation-action'
 import { useAnalytics } from '@/lib/analytics/providers/AnalyticsProvider'
 import { PRODUCT_EVENTS } from '@/lib/analytics/contracts/events'
+import { updateCachedUserProperties } from '@/lib/analytics/utils/user-properties-cache'
 
 export function SignupForm() {
   const t = useTranslations('auth.signup')
@@ -53,10 +54,30 @@ export function SignupForm() {
             user_id: result.userId,
             auth_method: 'email',
           })
-          analytics.track(PRODUCT_EVENTS.USER_IDENTIFIED, {
+
+          // Track user_identified with enriched user properties
+          const userProperties: Record<string, unknown> = {
             user_id: result.userId,
             is_new_user: true,
-          })
+            auth_method: 'email',
+            signup_date: new Date().toISOString(),
+            role: 'student', // Default role for new signups
+          }
+
+          // Add locale from browser
+          if (typeof window !== 'undefined') {
+            const locale = window.navigator.language.startsWith('he') ? 'he' : 'en'
+            userProperties.locale = locale
+          }
+
+          // Cache user properties for future sessions
+          updateCachedUserProperties(userProperties)
+
+          // Track event with enriched properties
+          analytics.track(PRODUCT_EVENTS.USER_IDENTIFIED, userProperties)
+
+          // Also call identify() to ensure Mixpanel People properties are set
+          analytics.identify(result.userId, userProperties)
         }
 
         // Auto-login successful - redirect to home
