@@ -66,13 +66,7 @@ export function sendToMixpanel(payload: EventPayload): void {
 
         // Extract user profile properties (exclude event metadata)
         const userProperties: Record<string, unknown> = {}
-        const eventMetadataKeys = [
-          'user_id',
-          'event_timestamp',
-          'session_id',
-          '$current_url',
-          '$referrer',
-        ]
+        const eventMetadataKeys = ['event_timestamp', 'session_id', '$current_url', '$referrer']
 
         Object.keys(mixpanelEvent.properties).forEach((key) => {
           if (!eventMetadataKeys.includes(key)) {
@@ -81,6 +75,7 @@ export function sendToMixpanel(payload: EventPayload): void {
         })
 
         // Set user properties in Mixpanel People
+        // This creates the user profile in Mixpanel
         if (Object.keys(userProperties).length > 0) {
           mixpanel.people.set(userProperties)
 
