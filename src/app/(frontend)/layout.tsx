@@ -14,11 +14,11 @@ import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 
-import './globals.css'
-import { getServerSideURL } from '@/utilities/getURL'
+import { cookieName, defaultLocale, getDirection, type Locale, locales } from '@/i18n/config'
 import { I18nProvider } from '@/providers/I18n'
-import { defaultLocale, cookieName, type Locale, locales } from '@/i18n/config'
-import { headers, cookies } from 'next/headers'
+import { getServerSideURL } from '@/utilities/getURL'
+import { cookies, headers } from 'next/headers'
+import './globals.css'
 import { LayoutClient } from './LayoutClient'
 
 const assistant = Assistant({
@@ -68,7 +68,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const messages = await getMessages(locale)
 
   // Determine text direction based on locale
-  const dir = locale === 'he' ? 'rtl' : 'ltr'
+  const dir = getDirection(locale)
 
   return (
     <html

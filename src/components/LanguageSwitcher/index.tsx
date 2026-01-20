@@ -1,9 +1,5 @@
 'use client'
 
-import { useLocale, useTranslations } from '@/providers/I18n'
-import { cookieName, type Locale, locales } from '@/i18n/config'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
 import {
   Select,
   SelectContent,
@@ -12,6 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cookieName, getDirection, isForcedLocaleDomain, type Locale, locales } from '@/i18n/config'
+import { useLocale, useTranslations } from '@/providers/I18n'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export function LanguageSwitcher() {
   const t = useTranslations('common.languageSwitcher')
@@ -37,7 +37,7 @@ export function LanguageSwitcher() {
     // 2. Update HTML attributes immediately (instant RTL/LTR visual feedback)
     // This matches the Theme provider pattern for instant client-side updates
     document.documentElement.setAttribute('lang', newLocale)
-    document.documentElement.setAttribute('dir', newLocale === 'he' ? 'rtl' : 'ltr')
+    document.documentElement.setAttribute('dir', getDirection(newLocale as Locale))
 
     // 3. Set the locale cookie (source of truth for middleware)
     document.cookie = `${cookieName}=${newLocale}; path=/; max-age=31536000; samesite=lax`
@@ -61,8 +61,7 @@ export function LanguageSwitcher() {
 
   // Check if we're on a forced locale subdomain
   const isOnForcedDomain =
-    typeof window !== 'undefined' &&
-    (window.location.host.startsWith('he.') || window.location.host.startsWith('en.'))
+    typeof window !== 'undefined' && isForcedLocaleDomain(window.location.host)
 
   const localeLabels: Record<Locale, string> = {
     en: t('english'),
