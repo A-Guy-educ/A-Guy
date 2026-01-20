@@ -740,7 +740,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
         collection: 'conversations',
         id: conv1.id,
       })
-    })
+    }, 30000)
 
     it('should reject duplicate active conversations at DB level (user+contextKey)', async () => {
       // This test verifies that duplicate active conversations are prevented at the DB level

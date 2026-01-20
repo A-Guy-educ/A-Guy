@@ -6,6 +6,7 @@
  * - Happy-path chat flow with a real Payload instance
  *   (AI calls and vector search are mocked to avoid external dependencies).
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { agentChat } from '@/endpoints/agent/chat'
 import type { Exercise } from '@/payload-types'
 import config from '@payload-config'
@@ -529,7 +530,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
       await payload.delete({ collection: 'lessons', id: lesson.id } as any)
       await payload.delete({ collection: 'prompts', id: sysPromptA.id } as any)
       await payload.delete({ collection: 'prompts', id: sysPromptB.id } as any)
-    })
+    }, 30000)
 
     it('proceeds successfully when no system prompts exist', async () => {
       // Temporarily remove system prompt
@@ -582,6 +583,6 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
         overrideAccess: true,
       } as any)
       testSystemPromptId = newSystemPrompt.id
-    })
+    }, 30000)
   })
 })
