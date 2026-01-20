@@ -15,8 +15,6 @@ import { AccountRole } from '@/collections/Users/roles'
 import { inferMediaTypeHook } from './hooks/inferMediaType'
 import { validateMediaUploadHook } from './hooks/validateMediaUpload'
 import { MediaType } from '@/lib/media/types'
-import { tenantField } from '@/fields/tenant'
-import { isUsersCollectionUser } from '@/access/isUsersCollectionUser'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -31,8 +29,6 @@ export const Media: CollectionConfig = {
     update: authenticated,
   },
   fields: [
-    // Tenant
-    tenantField,
     {
       name: 'type',
       type: 'select',
@@ -53,7 +49,7 @@ export const Media: CollectionConfig = {
       access: {
         update: ({ req: { user } }) => {
           // Only admins can update (others are read-only)
-          return isUsersCollectionUser(user) && user.role === AccountRole.Admin
+          return user?.role === AccountRole.Admin
         },
       },
       hooks: {
