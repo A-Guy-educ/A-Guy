@@ -14,6 +14,10 @@ if (!process.env.NEXT_PUBLIC_SERVER_URL) {
   process.env.NEXT_PUBLIC_SERVER_URL = 'http://localhost:3000'
 }
 
+if (!process.env.DEFAULT_TENANT_SLUG) {
+  process.env.DEFAULT_TENANT_SLUG = 'default'
+}
+
 if (process.env.USE_ATLAS === 'true') {
   const databaseUrl = getTestDatabaseUrl()
   if (databaseUrl) {

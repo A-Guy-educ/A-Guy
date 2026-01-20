@@ -3,6 +3,7 @@ import type { CollectionConfig } from 'payload'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
+import { tenantField } from '@/fields/tenant'
 
 const formatSlug = (val: string): string =>
   val
@@ -36,9 +37,20 @@ export const Lessons: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['chapter', 'title', 'type', 'slug', 'order', 'status', 'isActive', 'updatedAt'],
+    defaultColumns: [
+      'chapter',
+      'title',
+      'type',
+      'slug',
+      'order',
+      'status',
+      'isActive',
+      'updatedAt',
+    ],
   },
   fields: [
+    // Tenant
+    tenantField,
     {
       name: 'chapter',
       type: 'relationship',

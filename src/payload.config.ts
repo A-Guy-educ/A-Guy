@@ -13,11 +13,13 @@ import { ExerciseAssets } from './collections/ExerciseAssets'
 import { Exercises } from './collections/Exercises'
 import { Lessons } from './collections/Lessons'
 import { Media } from './collections/Media'
+import { MCPAuditLogs } from './collections/MCPAuditLogs'
 import { MemoryItems } from './collections/MemoryItems'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { PricingPlans } from './collections/PricingPlans'
 import { Prompts } from './collections/Prompts'
+import { Tenants } from './collections/Tenants'
 import { UserProgress } from './collections/UserProgress'
 import { Users } from './collections/Users'
 import { importExerciseFromImage } from './endpoints/exercises/import-from-image'
@@ -38,6 +40,14 @@ if (!databaseUrl || databaseUrl.trim() === '') {
     'DATABASE_URL environment variable is required but not set. ' +
       'Please set DATABASE_URL to your MongoDB connection string (e.g., mongodb+srv://... for Atlas).',
   )
+}
+
+const mcpEnabled = process.env.MCP_ENABLED === 'true'
+if (
+  mcpEnabled &&
+  (!process.env.DEFAULT_TENANT_SLUG || process.env.DEFAULT_TENANT_SLUG.trim() === '')
+) {
+  throw new Error('DEFAULT_TENANT_SLUG environment variable is required when MCP_ENABLED=true.')
 }
 
 export default buildConfig({
@@ -87,6 +97,7 @@ export default buildConfig({
     Categories,
     Conversations,
     MemoryItems,
+    Tenants,
     Courses,
     Chapters,
     Lessons,
@@ -98,6 +109,7 @@ export default buildConfig({
     Media,
     Posts,
     PricingPlans,
+    MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

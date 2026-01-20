@@ -6,6 +6,7 @@ import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 
 import { logger } from '@/utilities/logger'
+import { getDefaultTenantSlug } from '@/lib/tenant/get-default-tenant'
 
 export interface TestCourseData {
   courseSlug: string
@@ -23,6 +24,28 @@ function generateUniqueSlug(prefix: string): string {
   const timestamp = Date.now()
   const random = Math.random().toString(36).substring(2, 8)
   return `${prefix}-${timestamp}-${random}`
+}
+
+async function ensureDefaultTenant(payload: Payload): Promise<string> {
+  const slug = getDefaultTenantSlug()
+  const existing = await payload.find({
+    collection: 'tenants',
+    where: { slug: { equals: slug } },
+    limit: 1,
+    overrideAccess: true,
+  })
+
+  if (existing.docs[0]) {
+    return existing.docs[0].id
+  }
+
+  const created = await payload.create({
+    collection: 'tenants',
+    data: { name: slug, slug, status: 'active' },
+    overrideAccess: true,
+  })
+
+  return created.id
 }
 
 /**
@@ -143,6 +166,7 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
 
     // Create test course with unique slug
     const courseSlug = generateUniqueSlug('test-course')
+    const tenantId = await ensureDefaultTenant(payload)
     const course = await payload.create({
       collection: 'courses',
       data: {
@@ -154,6 +178,7 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
         isActive: true,
         order: 0,
         categories: [category.id],
+        tenant: tenantId,
       },
     })
 
@@ -170,6 +195,7 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
         status: 'published',
         isActive: true,
         order: 0,
+        tenant: tenantId,
       },
     })
 
@@ -186,6 +212,7 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
         status: 'published',
         isActive: true,
         order: 0,
+        tenant: tenantId,
       },
     })
 

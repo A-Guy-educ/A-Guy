@@ -12,6 +12,7 @@ import type { CollectionConfig } from 'payload'
 import { adminOnly } from '@/access/adminOnly'
 import { authenticated } from '@/access/authenticated'
 import { authenticatedOrOwner } from '@/access/authenticatedOrOwner'
+import { tenantField } from '@/fields/tenant'
 
 export const UserProgress: CollectionConfig = {
   slug: 'user-progress',
@@ -26,6 +27,8 @@ export const UserProgress: CollectionConfig = {
     defaultColumns: ['user', 'gradeLevel', 'updatedAt'],
   },
   fields: [
+    // Tenant
+    tenantField,
     {
       name: 'user',
       type: 'relationship',
