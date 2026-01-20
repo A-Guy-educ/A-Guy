@@ -43,10 +43,11 @@ if (!databaseUrl || databaseUrl.trim() === '') {
 }
 
 const mcpEnabled = process.env.MCP_ENABLED === 'true'
-if (mcpEnabled && (!process.env.DEFAULT_TENANT_SLUG || process.env.DEFAULT_TENANT_SLUG.trim() === '')) {
-  throw new Error(
-    'DEFAULT_TENANT_SLUG environment variable is required when MCP_ENABLED=true.',
-  )
+if (
+  mcpEnabled &&
+  (!process.env.DEFAULT_TENANT_SLUG || process.env.DEFAULT_TENANT_SLUG.trim() === '')
+) {
+  throw new Error('DEFAULT_TENANT_SLUG environment variable is required when MCP_ENABLED=true.')
 }
 
 export default buildConfig({

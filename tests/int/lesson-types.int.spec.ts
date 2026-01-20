@@ -157,18 +157,18 @@ describe('Lesson types', () => {
 
   it('rejects invalid lesson types', async () => {
     await expect(
-        payload.create({
-          collection: 'lessons',
-          data: {
-            title: 'Invalid Type Lesson',
-            chapter: chapterId,
-            type: 'invalid' as 'learning',
-            order: 4,
-            status: 'published',
-            isActive: true,
-            tenant: tenantId,
-          },
-        }),
+      payload.create({
+        collection: 'lessons',
+        data: {
+          title: 'Invalid Type Lesson',
+          chapter: chapterId,
+          type: 'invalid' as 'learning',
+          order: 4,
+          status: 'published',
+          isActive: true,
+          tenant: tenantId,
+        },
+      }),
     ).rejects.toThrow()
   })
 })
