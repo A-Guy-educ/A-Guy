@@ -21,7 +21,7 @@ import type { Payload } from 'payload'
  * Context reference shape for polymorphic relationships
  */
 export interface ContextRef {
-  relationTo: 'courses' | 'chapters' | 'lessons' | 'exercises'
+  relationTo: 'courses' | 'chapters' | 'lessons' | 'exercises' | 'tenants'
   value: string
 }
 
@@ -192,6 +192,7 @@ export class ConversationService {
     lessonId?: string
     chapterId?: string
     courseId?: string
+    tenantId?: string
   }): Promise<ResolvedContext> {
     // Priority order: Exercise > Lesson > Chapter > Course
     if (params.exerciseId) {
@@ -223,6 +224,14 @@ export class ConversationService {
         relationTo: 'courses',
         value: params.courseId,
         contextKey: `courses:${params.courseId}`,
+      }
+    }
+
+    if (params.tenantId) {
+      return {
+        relationTo: 'tenants',
+        value: params.tenantId,
+        contextKey: `tenants:${params.tenantId}`,
       }
     }
 
@@ -388,7 +397,7 @@ export async function buildContextHierarchy(
     })
     keys.push(`courses:${chapter.course}`)
   }
-  // 'courses' collection has no parent
+  // 'courses' and 'tenants' collections have no parent
 
   keys.push('global') // Always include user-global context
   return keys
@@ -399,12 +408,18 @@ export async function buildContextHierarchy(
  */
 export function deriveContextLevel(
   relationTo: ContextRef['relationTo'],
-): 'exercise' | 'lesson' | 'chapter' | 'course' | 'global' {
-  const mapping: Record<ContextRef['relationTo'], 'exercise' | 'lesson' | 'chapter' | 'course'> = {
+): 'exercise' | 'lesson' | 'chapter' | 'course' | 'tenant' | 'global' {
+  const mapping: Partial<
+    Record<ContextRef['relationTo'], 'exercise' | 'lesson' | 'chapter' | 'course'>
+  > = {
     exercises: 'exercise',
     lessons: 'lesson',
     chapters: 'chapter',
     courses: 'course',
   }
+  if (relationTo === 'tenants') {
+    return 'tenant'
+  }
+
   return mapping[relationTo] || 'global'
 }

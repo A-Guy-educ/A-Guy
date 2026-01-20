@@ -9,6 +9,7 @@ import {
   generateChatCompletion,
   type ChatMessage as ProviderChatMessage,
 } from '../providers/gemini'
+import type { FunctionCall, Tool, ToolConfig } from '@google/generative-ai'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -20,11 +21,15 @@ export interface ExerciseChatInput {
   acknowledgment: string
   conversationHistory?: ChatMessage[]
   composedPrompt?: ComposedPrompt
+  tools?: Tool[]
+  toolConfig?: ToolConfig
+  extraMessages?: ProviderChatMessage[]
 }
 
 export interface ExerciseChatResult {
   success: boolean
   message?: string
+  toolCalls?: FunctionCall[]
   error?: string
 }
 
@@ -71,16 +76,23 @@ export async function chatWithExerciseHelper(
       messages.push({ role: 'user', content: input.message })
     }
 
+    if (input.extraMessages && input.extraMessages.length > 0) {
+      messages.push(...input.extraMessages)
+    }
+
     const result = await generateChatCompletion({
       system: systemPrompt,
       messages,
       model: AI_MODELS.EXERCISE_CHAT,
       acknowledgment: input.acknowledgment,
+      tools: input.tools,
+      toolConfig: input.toolConfig,
     })
 
     return {
       success: true,
       message: result.text,
+      toolCalls: result.toolCalls,
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)

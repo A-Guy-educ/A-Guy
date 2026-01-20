@@ -7,6 +7,7 @@ import { ContentSchema } from './schemas'
 import { DEFAULT_CONTENT } from './defaults'
 import type { User } from '@/payload-types'
 import { AccountRole } from '../Users/roles'
+import { tenantField } from '@/fields/tenant'
 
 /**
  * Access control - Exercise-specific
@@ -57,6 +58,8 @@ export const Exercises: CollectionConfig = {
   },
 
   fields: [
+    // Tenant
+    tenantField,
     // Section 1: Exercise Meta (Basics)
     {
       type: 'collapsible',

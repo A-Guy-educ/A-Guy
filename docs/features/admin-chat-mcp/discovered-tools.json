@@ -1,0 +1,258 @@
+{
+  "capturedAt": "2026-01-20T09:55:53.442Z",
+  "endpoint": "http://localhost:3000/api/mcp",
+  "tools": {
+    "tools": [
+      {
+        "name": "findCourses",
+        "description": "Course content for admin read-only inspection",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Optional: specific document ID to retrieve. If not provided, returns all documents"
+            },
+            "fallbackLocale": {
+              "type": "string",
+              "description": "Optional: fallback locale code to use when requested locale is not available"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "description": "Maximum number of documents to return (default: 10, max: 100)"
+            },
+            "locale": {
+              "type": "string",
+              "description": "Optional: locale code to retrieve data in (e.g., \"en\", \"es\"). Use \"all\" to retrieve all locales for localized fields"
+            },
+            "page": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "description": "Page number for pagination (default: 1)"
+            },
+            "sort": {
+              "type": "string",
+              "description": "Field to sort by (e.g., \"createdAt\", \"-updatedAt\" for descending)"
+            },
+            "where": {
+              "type": "string",
+              "description": "Optional JSON string for where clause filtering (e.g., '{\"title\": {\"contains\": \"test\"}}')"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "findChapters",
+        "description": "Chapter content for admin read-only inspection",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Optional: specific document ID to retrieve. If not provided, returns all documents"
+            },
+            "fallbackLocale": {
+              "type": "string",
+              "description": "Optional: fallback locale code to use when requested locale is not available"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "description": "Maximum number of documents to return (default: 10, max: 100)"
+            },
+            "locale": {
+              "type": "string",
+              "description": "Optional: locale code to retrieve data in (e.g., \"en\", \"es\"). Use \"all\" to retrieve all locales for localized fields"
+            },
+            "page": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "description": "Page number for pagination (default: 1)"
+            },
+            "sort": {
+              "type": "string",
+              "description": "Field to sort by (e.g., \"createdAt\", \"-updatedAt\" for descending)"
+            },
+            "where": {
+              "type": "string",
+              "description": "Optional JSON string for where clause filtering (e.g., '{\"title\": {\"contains\": \"test\"}}')"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "findLessons",
+        "description": "Lesson content for admin read-only inspection",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Optional: specific document ID to retrieve. If not provided, returns all documents"
+            },
+            "fallbackLocale": {
+              "type": "string",
+              "description": "Optional: fallback locale code to use when requested locale is not available"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "description": "Maximum number of documents to return (default: 10, max: 100)"
+            },
+            "locale": {
+              "type": "string",
+              "description": "Optional: locale code to retrieve data in (e.g., \"en\", \"es\"). Use \"all\" to retrieve all locales for localized fields"
+            },
+            "page": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "description": "Page number for pagination (default: 1)"
+            },
+            "sort": {
+              "type": "string",
+              "description": "Field to sort by (e.g., \"createdAt\", \"-updatedAt\" for descending)"
+            },
+            "where": {
+              "type": "string",
+              "description": "Optional JSON string for where clause filtering (e.g., '{\"title\": {\"contains\": \"test\"}}')"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "findExercises",
+        "description": "Exercise content for admin read-only inspection",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Optional: specific document ID to retrieve. If not provided, returns all documents"
+            },
+            "fallbackLocale": {
+              "type": "string",
+              "description": "Optional: fallback locale code to use when requested locale is not available"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "description": "Maximum number of documents to return (default: 10, max: 100)"
+            },
+            "locale": {
+              "type": "string",
+              "description": "Optional: locale code to retrieve data in (e.g., \"en\", \"es\"). Use \"all\" to retrieve all locales for localized fields"
+            },
+            "page": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "description": "Page number for pagination (default: 1)"
+            },
+            "sort": {
+              "type": "string",
+              "description": "Field to sort by (e.g., \"createdAt\", \"-updatedAt\" for descending)"
+            },
+            "where": {
+              "type": "string",
+              "description": "Optional JSON string for where clause filtering (e.g., '{\"title\": {\"contains\": \"test\"}}')"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "findMedia",
+        "description": "Media library items for admin read-only inspection",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "description": "Optional: specific document ID to retrieve. If not provided, returns all documents"
+            },
+            "fallbackLocale": {
+              "type": "string",
+              "description": "Optional: fallback locale code to use when requested locale is not available"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "description": "Maximum number of documents to return (default: 10, max: 100)"
+            },
+            "locale": {
+              "type": "string",
+              "description": "Optional: locale code to retrieve data in (e.g., \"en\", \"es\"). Use \"all\" to retrieve all locales for localized fields"
+            },
+            "page": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "description": "Page number for pagination (default: 1)"
+            },
+            "sort": {
+              "type": "string",
+              "description": "Field to sort by (e.g., \"createdAt\", \"-updatedAt\" for descending)"
+            },
+            "where": {
+              "type": "string",
+              "description": "Optional JSON string for where clause filtering (e.g., '{\"title\": {\"contains\": \"test\"}}')"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      }
+    ]
+  }
+}

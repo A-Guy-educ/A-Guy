@@ -8,6 +8,7 @@ import { logger } from '@/utilities/logger'
 import { getGeminiClient } from './gemini.client'
 import { isRetryableError, wrapGeminiError } from './gemini.errors'
 import { extractResponseText, mapMessagesToGeminiHistory } from './gemini.mapper'
+import type { FunctionCall, Tool, ToolConfig } from '@google/generative-ai'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public Types
@@ -29,11 +30,14 @@ export interface GenerateChatInput {
   messages: ChatMessage[]
   model: AIModel
   acknowledgment: string
+  tools?: Tool[]
+  toolConfig?: ToolConfig
   timeoutMs?: number
 }
 
 export interface GenerateChatOutput {
   text: string
+  toolCalls?: FunctionCall[]
   raw?: unknown
 }
 
@@ -147,13 +151,20 @@ async function executeWithTimeout(
   })
 
   // Execute chat with timeout
-  const chat = model.startChat({ history })
+  const chat = model.startChat({
+    history,
+    tools: input.tools,
+    toolConfig: input.toolConfig,
+  })
   const result = await Promise.race([chat.sendMessage(finalMessage), timeoutPromise])
 
   const text = extractResponseText(result.response)
+  const toolCalls =
+    typeof result.response.functionCalls === 'function' ? result.response.functionCalls() : undefined
 
   return {
     text,
+    toolCalls,
     raw: result,
   }
 }

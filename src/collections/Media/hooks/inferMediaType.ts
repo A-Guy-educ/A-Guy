@@ -3,11 +3,12 @@ import type { FieldHook } from 'payload'
 import { inferMediaType, validateMimeType } from '@/lib/media/inferMediaType'
 import { MediaType } from '@/lib/media/types'
 import { AccountRole } from '@/collections/Users/roles'
+import { isUsersCollectionUser } from '@/access/isUsersCollectionUser'
 
 export const inferMediaTypeHook: FieldHook = ({ data, operation, value, req }) => {
   const mimeType = data?.mimeType
   const filename = data?.filename
-  const isAdmin = req?.user?.role === AccountRole.Admin
+  const isAdmin = isUsersCollectionUser(req.user) && req.user.role === AccountRole.Admin
 
   // If admin explicitly set a value, respect it
   if (isAdmin && value && operation === 'update') {

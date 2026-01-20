@@ -2,16 +2,41 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
+import { getDefaultTenantSlug } from '@/lib/tenant/get-default-tenant'
+
+async function ensureDefaultTenant(payload: Payload): Promise<string> {
+  const slug = getDefaultTenantSlug()
+  const existing = await payload.find({
+    collection: 'tenants',
+    where: { slug: { equals: slug } },
+    limit: 1,
+    overrideAccess: true,
+  })
+
+  if (existing.docs[0]) {
+    return existing.docs[0].id
+  }
+
+  const created = await payload.create({
+    collection: 'tenants',
+    data: { name: slug, slug, status: 'active' },
+    overrideAccess: true,
+  })
+
+  return created.id
+}
 
 describe('Lesson types', () => {
   let payload: Payload
   let categoryId: string
   let courseId: string
   let chapterId: string
+  let tenantId: string
   const lessonIds: string[] = []
 
   beforeAll(async () => {
     payload = await getPayload({ config })
+    tenantId = await ensureDefaultTenant(payload)
     const timestamp = Date.now()
     const category = await payload.create({
       collection: 'categories',
@@ -30,6 +55,7 @@ describe('Lesson types', () => {
         order: 0,
         status: 'published',
         isActive: true,
+        tenant: tenantId,
       },
     })
     courseId = course.id
@@ -42,6 +68,7 @@ describe('Lesson types', () => {
         order: 0,
         status: 'published',
         isActive: true,
+        tenant: tenantId,
       },
     })
     chapterId = chapter.id
@@ -83,6 +110,7 @@ describe('Lesson types', () => {
         order: 1,
         status: 'published',
         isActive: true,
+        tenant: tenantId,
       },
     })
     lessonIds.push(lesson.id)
@@ -98,6 +126,7 @@ describe('Lesson types', () => {
         order: 2,
         status: 'published',
         isActive: true,
+        tenant: tenantId,
       } as any,
     })
     lessonIds.push(lesson.id)
@@ -114,6 +143,7 @@ describe('Lesson types', () => {
         order: 3,
         status: 'published',
         isActive: true,
+        tenant: tenantId,
       },
     })
     lessonIds.push(lesson.id)
@@ -127,17 +157,18 @@ describe('Lesson types', () => {
 
   it('rejects invalid lesson types', async () => {
     await expect(
-      payload.create({
-        collection: 'lessons',
-        data: {
-          title: 'Invalid Type Lesson',
-          chapter: chapterId,
-          type: 'invalid' as 'learning',
-          order: 4,
-          status: 'published',
-          isActive: true,
-        },
-      }),
+        payload.create({
+          collection: 'lessons',
+          data: {
+            title: 'Invalid Type Lesson',
+            chapter: chapterId,
+            type: 'invalid' as 'learning',
+            order: 4,
+            status: 'published',
+            isActive: true,
+            tenant: tenantId,
+          },
+        }),
     ).rejects.toThrow()
   })
 })

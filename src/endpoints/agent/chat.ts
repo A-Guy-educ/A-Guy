@@ -32,11 +32,20 @@ import { chatWithExerciseHelper } from '@/lib/ai/services/exercise-chat-service'
 import { fetchPublishedSystemPrompts } from '@/lib/ai/system-prompts.server'
 import { isVectorIndexAvailable } from '@/lib/ai/vector-index-check'
 import { retrieveMemoryItems, type MemoryItem } from '@/lib/ai/vector-search'
+import { mcpToolsToGeminiFunctionDeclarations } from '@/lib/ai/providers/gemini/gemini-tools'
+import { getMCPClient } from '@/lib/mcp/client/mcp-client'
+import { executeToolCall } from '@/lib/mcp/chat-integration'
+import { discoverAllowedTools } from '@/lib/mcp/tool-allowlist'
 import { ConversationService, deriveContextLevel } from '@/lib/services/conversation-service'
+import { getDefaultTenantId } from '@/lib/tenant/get-default-tenant'
 import type { Prompt } from '@/payload-types'
 import { logger } from '@/utilities/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
+import type { ChatMessage as ProviderChatMessage } from '@/lib/ai/providers/gemini'
+import type { Tool, ToolConfig } from '@google/generative-ai'
+import { FunctionCallingMode } from '@google/generative-ai'
+import { isUsersCollectionUser } from '@/access/isUsersCollectionUser'
 
 const requestSchema = z.object({
   message: z.string().min(1).max(1000),
@@ -46,6 +55,7 @@ const requestSchema = z.object({
   lessonId: z.string().optional(),
   chapterId: z.string().optional(),
   courseId: z.string().optional(),
+  contextKey: z.string().optional(),
 })
 
 export async function agentChat(req: PayloadRequest & { json?: () => Promise<unknown> }) {
@@ -54,6 +64,10 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
   // 1) Auth - endpoints not authenticated by default
   if (!req.user) {
+    return Response.json({ error: 'Authentication required' }, { status: 401 })
+  }
+
+  if (!isUsersCollectionUser(req.user)) {
     return Response.json({ error: 'Authentication required' }, { status: 401 })
   }
 
@@ -66,7 +80,15 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     const body = await req.json()
     const validated = requestSchema.parse(body)
 
-    const contextCandidate = validated.exerciseId
+    const isAdminUser = req.user.role === AccountRole.Admin
+    let tenantId: string | undefined
+
+    type ContextCandidate = {
+      relationTo: 'exercises' | 'lessons' | 'chapters' | 'courses' | 'tenants'
+      value: string
+    }
+
+    let contextCandidate: ContextCandidate | null = validated.exerciseId
       ? { relationTo: 'exercises' as const, value: validated.exerciseId }
       : validated.lessonId
         ? { relationTo: 'lessons' as const, value: validated.lessonId }
@@ -76,11 +98,31 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
             ? { relationTo: 'courses' as const, value: validated.courseId }
             : null
 
+    if (!contextCandidate && validated.contextKey) {
+      const [relationTo, value] = validated.contextKey.split(':')
+      if (relationTo === 'tenants' && value) {
+        contextCandidate = { relationTo: 'tenants' as const, value }
+        tenantId = value
+      }
+    }
+
+    if (!contextCandidate && isAdminUser) {
+      tenantId = await getDefaultTenantId(req.payload)
+      contextCandidate = { relationTo: 'tenants' as const, value: tenantId }
+    }
+
     if (!contextCandidate) {
       return Response.json(
-        { error: 'Missing context ID (requires exerciseId, lessonId, chapterId, or courseId)' },
+        {
+          error:
+            'Missing context ID (requires exerciseId, lessonId, chapterId, or courseId)',
+        },
         { status: 400 },
       )
+    }
+
+    if (contextCandidate.relationTo === 'tenants' && !isAdminUser) {
+      return Response.json({ error: 'Unauthorized to access tenant context' }, { status: 403 })
     }
 
     try {
@@ -122,11 +164,16 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     // 3) Initialize ConversationService and resolve context
     const conversationService = new ConversationService(req.payload)
 
+    if (contextCandidate.relationTo === 'tenants') {
+      tenantId = tenantId || contextCandidate.value
+    }
+
     const context = await conversationService.resolveContext({
       exerciseId: validated.exerciseId,
       lessonId: validated.lessonId,
       chapterId: validated.chapterId,
       courseId: validated.courseId,
+      tenantId,
     })
 
     reqLogger.info(
@@ -135,11 +182,14 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     )
 
     // 4) Validate context access
-    const hasAccess = await conversationService.validateContextAccess(
-      req.user.id,
-      req.user.role as AccountRole,
-      { relationTo: context.relationTo, value: context.value },
-    )
+    const hasAccess =
+      context.relationTo === 'tenants'
+        ? isAdminUser
+        : await conversationService.validateContextAccess(
+            req.user.id,
+            req.user.role as AccountRole,
+            { relationTo: context.relationTo, value: context.value },
+          )
 
     if (!hasAccess) {
       return Response.json({ error: 'Unauthorized to access this context' }, { status: 403 })
@@ -404,14 +454,94 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     // Log prompt snapshot in development
     logPromptSnapshot(conversationId, composedPrompt)
 
+    const mcpEnabled = process.env.MCP_ENABLED === 'true'
+    const isAdminContext = context.relationTo === 'tenants' && isAdminUser && mcpEnabled
+
+    let tools: Tool[] | undefined
+    let toolConfig: ToolConfig | undefined
+    let allowedToolNames = new Set<string>()
+
+    if (isAdminContext) {
+      const mcpHeaders = buildMcpHeaders(req)
+      const mcpClient = getMCPClient()
+      const allTools = await mcpClient.listTools(mcpHeaders)
+      allowedToolNames = discoverAllowedTools(allTools)
+
+      const functionDeclarations = mcpToolsToGeminiFunctionDeclarations(
+        allTools,
+        allowedToolNames,
+      )
+
+      if (functionDeclarations.length > 0) {
+        tools = [{ functionDeclarations }]
+        toolConfig = {
+          functionCallingConfig: {
+            mode: FunctionCallingMode.AUTO,
+            allowedFunctionNames: Array.from(allowedToolNames),
+          },
+        }
+      }
+    }
+
     // 12) Call AI service with composed prompt
     const modelCallStart = Date.now()
-    const result = await chatWithExerciseHelper({
+    let result = await chatWithExerciseHelper({
       message: validated.message,
       acknowledgment: validated.acknowledgment,
       composedPrompt: composedPrompt,
+      tools,
+      toolConfig,
     })
     const modelLatencyMs = Date.now() - modelCallStart
+
+    const toolResponseMessages: ProviderChatMessage[] = []
+    const toolResultsForResponse: Array<{ name: string; result: string }> = []
+    const maxToolIterations = 3
+    let toolIteration = 0
+
+    if (isAdminContext && !tenantId) {
+      throw new Error('Tenant ID missing for admin context')
+    }
+
+    while (
+      isAdminContext &&
+      result.toolCalls &&
+      result.toolCalls.length > 0 &&
+      toolIteration < maxToolIterations
+    ) {
+      toolIteration += 1
+
+      for (const toolCall of result.toolCalls) {
+        const toolResult = await executeToolCall({
+          toolCall: {
+            name: toolCall.name,
+            args: toolCall.args as Record<string, unknown>,
+          },
+          tenantId: tenantId as string,
+          req,
+          requestId,
+        })
+
+        toolResultsForResponse.push({ name: toolCall.name, result: toolResult.text })
+        toolResponseMessages.push({
+          role: 'assistant',
+          content: `Tool ${toolCall.name} result:\n${toolResult.text}`,
+        })
+      }
+
+      result = await chatWithExerciseHelper({
+        message: validated.message,
+        acknowledgment: validated.acknowledgment,
+        composedPrompt,
+        tools,
+        toolConfig,
+        extraMessages: toolResponseMessages,
+      })
+    }
+
+    if (toolIteration >= maxToolIterations && result.toolCalls?.length) {
+      reqLogger.warn({ toolCalls: result.toolCalls.length }, 'Tool call loop capped')
+    }
 
     if (!result.success) {
       reqLogger.error({ error: result.error, modelLatencyMs }, 'Chat request failed')
@@ -428,7 +558,13 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       timestamp: new Date().toISOString(),
     }
 
-    const updatedMessages = [...allMessages, assistantMessage]
+    const toolMessages = toolResponseMessages.map((message) => ({
+      role: 'assistant' as const,
+      content: message.content,
+      timestamp: new Date().toISOString(),
+    }))
+
+    const updatedMessages = [...allMessages, ...toolMessages, assistantMessage]
 
     await req.payload.update({
       collection: 'conversations',
@@ -540,6 +676,9 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       message: result.message,
       conversationId,
       contextKey: context.contextKey,
+      ...(isAdminContext && toolResultsForResponse.length > 0
+        ? { toolResults: toolResultsForResponse }
+        : {}),
     })
   } catch (error) {
     // Handle connection reset errors gracefully (client disconnected)
@@ -562,4 +701,14 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
+
+function buildMcpHeaders(req: PayloadRequest): HeadersInit {
+  const headers: Record<string, string> = {}
+  const cookie = req.headers.get('cookie')
+  if (cookie) {
+    headers.cookie = cookie
+  }
+
+  return headers
 }
