@@ -1,5 +1,6 @@
 import type { CollectionAfterChangeHook } from 'payload'
 import { logger } from '@/utilities/logger'
+import { isUsersCollectionUser } from '@/access/isUsersCollectionUser'
 
 /**
  * HOOK: Payload CMS lifecycle hook that runs automatically after a user record changes
@@ -27,8 +28,8 @@ export const auditRoleChange: CollectionAfterChangeHook = async ({
 
   if (oldRole !== newRole) {
     const requestId = crypto.randomUUID()
-    const changedBy = req.user?.id || 'system'
-    const changedByEmail = req.user?.email || 'system'
+    const changedBy = isUsersCollectionUser(req.user) ? req.user.id : 'system'
+    const changedByEmail = isUsersCollectionUser(req.user) ? req.user.email : 'system'
 
     logger.info(
       {
