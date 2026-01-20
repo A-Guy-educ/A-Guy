@@ -12,6 +12,7 @@ import type { CollectionConfig } from 'payload'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
+import { tenantField } from '@/fields/tenant'
 
 const formatSlug = (val: string): string =>
   val
@@ -51,6 +52,8 @@ export const Courses: CollectionConfig = {
     ],
   },
   fields: [
+    // Tenant
+    tenantField,
     {
       name: 'courseLabel',
       type: 'text',

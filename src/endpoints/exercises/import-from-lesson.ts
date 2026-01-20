@@ -12,6 +12,7 @@ import {
   QuestionFreeResponseBlockSchema,
   QuestionSelectBlockSchema,
 } from '@/collections/Exercises/schemas'
+import { getDefaultTenantId } from '@/lib/tenant/get-default-tenant'
 
 export async function importExerciseFromLesson(req: PayloadRequest) {
   // 1) Auth - endpoints not authenticated by default
@@ -194,12 +195,14 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
         questionBlock = QuestionFreeResponseBlockSchema.parse(draft)
       }
 
+      const tenantId = await getDefaultTenantId(req.payload)
       const exerciseDoc = await req.payload.create({
         collection: 'exercises',
         data: {
           title: 'AI Generated Exercise',
           order: 0,
           lesson: lessonId,
+          tenant: tenantId,
           content: {
             blocks: [questionBlock],
           },
