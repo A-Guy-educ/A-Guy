@@ -16,6 +16,7 @@
  * - Automatic maintenance and memory extraction
  */
 import { AccountRole } from '@/collections/Users/roles'
+import { isUsersCollectionUser } from '@/access/isUsersCollectionUser'
 import { ChatRole } from '@/lib/ai/chat-message-role'
 import {
   buildRetrievalQuery,
@@ -54,6 +55,9 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
   // 1) Auth - endpoints not authenticated by default
   if (!req.user) {
+    return Response.json({ error: 'Authentication required' }, { status: 401 })
+  }
+  if (!isUsersCollectionUser(req.user)) {
     return Response.json({ error: 'Authentication required' }, { status: 401 })
   }
 
