@@ -26,8 +26,13 @@ function rehypeMathWrapper() {
         ? node.properties.className.join(' ')
         : String(node.properties?.className || '')
 
-      // Skip if already wrapped
-      if (className.includes('math-inline') || className.includes('math-block')) return
+      // Skip if already wrapped (check for Tailwind classes we use)
+      if (
+        className.includes('isolate') &&
+        (className.includes('inline-block') || className.includes('block'))
+      ) {
+        return
+      }
 
       // Check if parent is already a math wrapper or a katex element (to avoid nested wrapping)
       if (parent.type === 'element') {
@@ -35,8 +40,11 @@ function rehypeMathWrapper() {
           ? parent.properties.className.join(' ')
           : String(parent.properties?.className || '')
         
-        // Skip if parent is already wrapped
-        if (parentClassName.includes('math-inline') || parentClassName.includes('math-block')) {
+        // Skip if parent is already wrapped (check for Tailwind classes we use)
+        if (
+          parentClassName.includes('isolate') &&
+          (parentClassName.includes('inline-block') || parentClassName.includes('block'))
+        ) {
           return
         }
         
@@ -53,8 +61,7 @@ function rehypeMathWrapper() {
           tagName: 'div',
           properties: {
             dir: 'ltr',
-            className: ['math-block'],
-            style: 'unicode-bidi: isolate; direction: ltr; display: block; text-align: center;',
+            className: ['isolate', 'block', 'text-center', 'mt-3', 'mb-3'],
           },
           children: [node],
         }
@@ -71,8 +78,7 @@ function rehypeMathWrapper() {
           tagName: 'span',
           properties: {
             dir: 'ltr',
-            className: ['math-inline'],
-            style: 'unicode-bidi: isolate; direction: ltr; display: inline-block;',
+            className: ['isolate', 'inline-block', 'align-middle'],
           },
           children: [node],
         }

@@ -9,23 +9,23 @@ describe('ChatMessageContent', () => {
     it('renders plain text without math wrappers', () => {
       const { container } = render(<ChatMessageContent content="Hello world" />)
 
-      expect(container.querySelector('.math-inline')).toBeNull()
-      expect(container.querySelector('.math-block')).toBeNull()
+      expect(container.querySelector('.isolate.inline-block')).toBeNull()
+      expect(container.querySelector('.isolate.block')).toBeNull()
       expect(container.textContent).toContain('Hello world')
     })
 
     it('renders Hebrew text without math wrappers', () => {
       const { container } = render(<ChatMessageContent content="שלום עולם" />)
 
-      expect(container.querySelector('.math-inline')).toBeNull()
-      expect(container.querySelector('.math-block')).toBeNull()
+      expect(container.querySelector('.isolate.inline-block')).toBeNull()
+      expect(container.querySelector('.isolate.block')).toBeNull()
     })
 
     it('does NOT wrap undelimited math-like text', () => {
       const { container } = render(<ChatMessageContent content="x + y = z without delimiters" />)
 
-      expect(container.querySelector('.math-inline')).toBeNull()
-      expect(container.querySelector('.math-block')).toBeNull()
+      expect(container.querySelector('.isolate.inline-block')).toBeNull()
+      expect(container.querySelector('.isolate.block')).toBeNull()
     })
   })
 
@@ -35,7 +35,7 @@ describe('ChatMessageContent', () => {
         <ChatMessageContent content="הנוסחה היא $E = mc^2$ והיא חשובה" />,
       )
 
-      const inlineMath = container.querySelector('.math-inline')
+      const inlineMath = container.querySelector('.isolate.inline-block[dir="ltr"]')
       expect(inlineMath).not.toBeNull()
       expect(inlineMath?.getAttribute('dir')).toBe('ltr')
       expect(inlineMath?.querySelector('.katex')).not.toBeNull()
@@ -44,7 +44,7 @@ describe('ChatMessageContent', () => {
     it('wraps multiple inline math expressions', () => {
       const { container } = render(<ChatMessageContent content="נתון $x = 5$ ו-$y = 10$" />)
 
-      const inlineMaths = container.querySelectorAll('.math-inline[dir="ltr"]')
+      const inlineMaths = container.querySelectorAll('.isolate.inline-block[dir="ltr"]')
       expect(inlineMaths.length).toBe(2)
     })
   })
@@ -55,7 +55,7 @@ describe('ChatMessageContent', () => {
         <ChatMessageContent content={'הפתרון:\n\n$$x = \\frac{-b}{2a}$$'} />,
       )
 
-      const blockMath = container.querySelector('.math-block')
+      const blockMath = container.querySelector('.isolate.block[dir="ltr"]')
       expect(blockMath).not.toBeNull()
       expect(blockMath?.getAttribute('dir')).toBe('ltr')
       expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
@@ -66,7 +66,7 @@ describe('ChatMessageContent', () => {
         <ChatMessageContent content={'$$\\begin{align}\na &= b \\\\\nc &= d\n\\end{align}$$'} />,
       )
 
-      const blockMath = container.querySelector('.math-block[dir="ltr"]')
+      const blockMath = container.querySelector('.isolate.block[dir="ltr"]')
       expect(blockMath).not.toBeNull()
     })
   })
@@ -77,8 +77,8 @@ describe('ChatMessageContent', () => {
         <ChatMessageContent content={'בעיה: מצא $x$\n\n$$x^2 = 4$$\n\nתשובה: $x = 2$'} />,
       )
 
-      const inlineMaths = container.querySelectorAll('.math-inline[dir="ltr"]')
-      const blockMaths = container.querySelectorAll('.math-block[dir="ltr"]')
+      const inlineMaths = container.querySelectorAll('.isolate.inline-block[dir="ltr"]')
+      const blockMaths = container.querySelectorAll('.isolate.block[dir="ltr"]')
 
       expect(inlineMaths.length).toBe(2)
       expect(blockMaths.length).toBe(1)
@@ -94,7 +94,7 @@ describe('ChatMessageContent', () => {
     it('handles math-only content', () => {
       const { container } = render(<ChatMessageContent content="$\\pi$" />)
 
-      const inlineMath = container.querySelector('.math-inline[dir="ltr"]')
+      const inlineMath = container.querySelector('.isolate.inline-block[dir="ltr"]')
       expect(inlineMath).not.toBeNull()
     })
   })

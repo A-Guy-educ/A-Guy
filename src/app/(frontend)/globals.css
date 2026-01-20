@@ -388,20 +388,3 @@ html[data-theme='light'] {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
-
-/* RTL/LTR Isolation for Math - must be flat selectors */
-.math-inline {
-  direction: ltr;
-  unicode-bidi: isolate;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.math-block {
-  direction: ltr;
-  unicode-bidi: isolate;
-  display: block;
-  text-align: center;
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-}
