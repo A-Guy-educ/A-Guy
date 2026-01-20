@@ -10,7 +10,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: openhands-${{ github.repository }}-${{ github.event.issue.number }}
+  group: openhands-${{ github.repository }}-issue-${{ github.event.issue.number }}
   cancel-in-progress: false
 
 jobs:
@@ -18,11 +18,13 @@ jobs:
     if: |
       startsWith(github.event.comment.body, '@openhands-agent') &&
       github.event.comment.user.type != 'Bot'
+    environment: openhands-lock
+    timeout-minutes: 90
     uses: OpenHands/OpenHands/.github/workflows/openhands-resolver.yml@main
     with:
       macro: '@openhands-agent'
       max_iterations: 25
-      target_branch: 'dev'
+      target_branch: dev
       llm_model: minimax/MiniMax-M2.1
       pr_type: ready
     secrets:
