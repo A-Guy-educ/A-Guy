@@ -1,12 +1,13 @@
 'use client'
 
+import { detectBrowserLocale } from '@/i18n/config'
 import { useEffect } from 'react'
-import { useAnalytics } from '../providers/AnalyticsProvider'
 import { PRODUCT_EVENTS } from '../contracts/events'
+import { useAnalytics } from '../providers/AnalyticsProvider'
 import {
   getCachedUserProperties,
-  updateCachedUserProperties,
   shouldRefreshUserProperties,
+  updateCachedUserProperties,
 } from '../utils/user-properties-cache'
 
 /**
@@ -73,8 +74,7 @@ export function UserIdentificationTracker() {
 
               // Add locale if available from browser or user settings
               if (typeof window !== 'undefined') {
-                const locale = window.navigator.language.startsWith('he') ? 'he' : 'en'
-                userProperties.locale = locale
+                userProperties.locale = detectBrowserLocale()
               }
 
               // Cache user properties for future sessions
