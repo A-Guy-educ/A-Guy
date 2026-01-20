@@ -36,7 +36,16 @@ export const Lessons: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['chapter', 'title', 'type', 'slug', 'order', 'status', 'isActive', 'updatedAt'],
+    defaultColumns: [
+      'chapter',
+      'title',
+      'type',
+      'slug',
+      'order',
+      'status',
+      'isActive',
+      'updatedAt',
+    ],
   },
   fields: [
     {
