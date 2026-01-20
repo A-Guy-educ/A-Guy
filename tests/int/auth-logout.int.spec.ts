@@ -14,9 +14,13 @@ vi.mock('next/headers', () => ({
   cookies: () => mockCookieStore,
 }))
 
-vi.mock('payload', () => ({
-  getPayload: mockGetPayload,
-}))
+vi.mock('payload', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('payload')>()
+  return {
+    ...actual,
+    getPayload: mockGetPayload,
+  }
+})
 
 describe('Logout Action', () => {
   beforeEach(() => {
