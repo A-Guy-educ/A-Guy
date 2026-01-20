@@ -2,7 +2,8 @@ name: OpenHands Agent
 
 on:
   issue_comment:
-    types: [created]
+    types:
+      - created
 
 permissions:
   contents: write
@@ -15,15 +16,12 @@ concurrency:
 
 jobs:
   openhands:
-    if: |
-      startsWith(github.event.comment.body, '@openhands-agent') &&
-      github.event.comment.user.type != 'Bot'
-    timeout-minutes: 60
+    if: startsWith(github.event.comment.body, '@openhands-agent') && github.event.comment.user.type != 'Bot'
     uses: OpenHands/OpenHands/.github/workflows/openhands-resolver.yml@main
     with:
       macro: '@openhands-agent'
       max_iterations: 25
-      target_branch: 'dev'
+      target_branch: dev
       llm_model: minimax/MiniMax-M2.1
       pr_type: ready
     secrets:
