@@ -18,6 +18,7 @@ jobs:
     if: |
       startsWith(github.event.comment.body, '@openhands-agent') &&
       github.event.comment.user.type != 'Bot'
+    timeout-minutes: 60
     uses: OpenHands/OpenHands/.github/workflows/openhands-resolver.yml@main
     with:
       macro: '@openhands-agent'
