@@ -64,6 +64,7 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations;
+    'payload-mcp-api-keys': PayloadMcpApiKeyAuthOperations;
   };
   blocks: {};
   collections: {
@@ -71,6 +72,7 @@ export interface Config {
     categories: Category;
     conversations: Conversation;
     memory_items: MemoryItem;
+    tenants: Tenant;
     courses: Course;
     chapters: Chapter;
     lessons: Lesson;
@@ -82,10 +84,12 @@ export interface Config {
     media: Media;
     posts: Post;
     'pricing-plans': PricingPlan;
+    'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
     search: Search;
+    'payload-mcp-api-keys': PayloadMcpApiKey;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-folders': FolderInterface;
@@ -103,6 +107,7 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
     memory_items: MemoryItemsSelect<false> | MemoryItemsSelect<true>;
+    tenants: TenantsSelect<false> | TenantsSelect<true>;
     courses: CoursesSelect<false> | CoursesSelect<true>;
     chapters: ChaptersSelect<false> | ChaptersSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
@@ -114,10 +119,12 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
+    'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     search: SearchSelect<false> | SearchSelect<true>;
+    'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
@@ -138,9 +145,13 @@ export interface Config {
     footer: FooterSelect<false> | FooterSelect<true>;
   };
   locale: null;
-  user: User & {
-    collection: 'users';
-  };
+  user:
+    | (User & {
+        collection: 'users';
+      })
+    | (PayloadMcpApiKey & {
+        collection: 'payload-mcp-api-keys';
+      });
   jobs: {
     tasks: {
       schedulePublish: TaskSchedulePublish;
@@ -153,6 +164,24 @@ export interface Config {
   };
 }
 export interface UserAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
+  };
+}
+export interface PayloadMcpApiKeyAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -416,6 +445,10 @@ export interface User {
 export interface Course {
   id: string;
   /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
    * Course identifier (e.g., "ח" or "8")
    */
   courseLabel: string;
@@ -461,10 +494,35 @@ export interface Course {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants".
+ */
+export interface Tenant {
+  id: string;
+  /**
+   * Tenant display name
+   */
+  name: string;
+  /**
+   * Tenant slug (used to resolve default tenant from env)
+   */
+  slug: string;
+  /**
+   * Tenant status flag
+   */
+  status?: ('active' | 'archived') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
   id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
   /**
    * Auto-detected from file type (admin can override)
    */
@@ -806,7 +864,7 @@ export interface Conversation {
    */
   user: string | User;
   /**
-   * Polymorphic context reference (Course/Chapter/Lesson/Exercise)
+   * Polymorphic context reference (Course/Chapter/Lesson/Exercise/Tenant)
    */
   contextRef:
     | {
@@ -824,6 +882,10 @@ export interface Conversation {
     | {
         relationTo: 'exercises';
         value: string | Exercise;
+      }
+    | {
+        relationTo: 'tenants';
+        value: string | Tenant;
       };
   /**
    * Derived key for indexing (e.g., "exercises:abc123")
@@ -881,6 +943,10 @@ export interface Conversation {
 export interface Chapter {
   id: string;
   /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
    * The course this chapter belongs to
    */
   course: string | Course;
@@ -929,6 +995,10 @@ export interface Chapter {
  */
 export interface Lesson {
   id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
   /**
    * The chapter this lesson belongs to
    */
@@ -1019,6 +1089,10 @@ export interface Prompt {
  */
 export interface Exercise {
   id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
   /**
    * Exercise title (for admin reference)
    */
@@ -1181,6 +1255,10 @@ export interface ExerciseAsset {
 export interface UserProgress {
   id: string;
   /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
    * The user this progress belongs to
    */
   user: string | User;
@@ -1315,6 +1393,57 @@ export interface PricingPlan {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-audit-logs".
+ */
+export interface McpAuditLog {
+  id: string;
+  /**
+   * Admin user who initiated the tool call
+   */
+  adminUserId: string | User;
+  /**
+   * Tenant scope for the tool call
+   */
+  tenantId: string | Tenant;
+  /**
+   * MCP tool name that was executed
+   */
+  toolName: string;
+  /**
+   * Sanitized arguments passed to the tool
+   */
+  args?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Number of records returned by the tool
+   */
+  resultCount?: number | null;
+  /**
+   * Whether the tool call succeeded
+   */
+  success: boolean;
+  /**
+   * When the tool call occurred
+   */
+  timestamp: string;
+  /**
+   * Request correlation ID
+   */
+  requestId: string;
+  /**
+   * Tool execution duration in milliseconds
+   */
+  durationMs?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1385,6 +1514,62 @@ export interface Search {
     | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * API keys control which collections, resources, tools, and prompts MCP clients can access
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-mcp-api-keys".
+ */
+export interface PayloadMcpApiKey {
+  id: string;
+  /**
+   * The user that the API key is associated with.
+   */
+  user: string | User;
+  /**
+   * A useful label for the API key.
+   */
+  label?: string | null;
+  /**
+   * The purpose of the API key.
+   */
+  description?: string | null;
+  courses?: {
+    /**
+     * Allow clients to find courses.
+     */
+    find?: boolean | null;
+  };
+  chapters?: {
+    /**
+     * Allow clients to find chapters.
+     */
+    find?: boolean | null;
+  };
+  lessons?: {
+    /**
+     * Allow clients to find lessons.
+     */
+    find?: boolean | null;
+  };
+  exercises?: {
+    /**
+     * Allow clients to find exercises.
+     */
+    find?: boolean | null;
+  };
+  media?: {
+    /**
+     * Allow clients to find media.
+     */
+    find?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  enableAPIKey?: boolean | null;
+  apiKey?: string | null;
+  apiKeyIndex?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1519,6 +1704,10 @@ export interface PayloadLockedDocument {
         value: string | MemoryItem;
       } | null)
     | ({
+        relationTo: 'tenants';
+        value: string | Tenant;
+      } | null)
+    | ({
         relationTo: 'courses';
         value: string | Course;
       } | null)
@@ -1563,6 +1752,10 @@ export interface PayloadLockedDocument {
         value: string | PricingPlan;
       } | null)
     | ({
+        relationTo: 'mcp-audit-logs';
+        value: string | McpAuditLog;
+      } | null)
+    | ({
         relationTo: 'redirects';
         value: string | Redirect;
       } | null)
@@ -1579,14 +1772,23 @@ export interface PayloadLockedDocument {
         value: string | Search;
       } | null)
     | ({
+        relationTo: 'payload-mcp-api-keys';
+        value: string | PayloadMcpApiKey;
+      } | null)
+    | ({
         relationTo: 'payload-folders';
         value: string | FolderInterface;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: string | User;
+      }
+    | {
+        relationTo: 'payload-mcp-api-keys';
+        value: string | PayloadMcpApiKey;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -1596,10 +1798,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: string;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: string | User;
+      }
+    | {
+        relationTo: 'payload-mcp-api-keys';
+        value: string | PayloadMcpApiKey;
+      };
   key?: string | null;
   value?:
     | {
@@ -1823,9 +2030,21 @@ export interface MemoryItemsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants_select".
+ */
+export interface TenantsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "courses_select".
  */
 export interface CoursesSelect<T extends boolean = true> {
+  tenant?: T;
   courseLabel?: T;
   title?: T;
   description?: T;
@@ -1850,6 +2069,7 @@ export interface CoursesSelect<T extends boolean = true> {
  * via the `definition` "chapters_select".
  */
 export interface ChaptersSelect<T extends boolean = true> {
+  tenant?: T;
   course?: T;
   chapterLabel?: T;
   title?: T;
@@ -1868,6 +2088,7 @@ export interface ChaptersSelect<T extends boolean = true> {
  * via the `definition` "lessons_select".
  */
 export interface LessonsSelect<T extends boolean = true> {
+  tenant?: T;
   chapter?: T;
   type?: T;
   title?: T;
@@ -1888,6 +2109,7 @@ export interface LessonsSelect<T extends boolean = true> {
  * via the `definition` "exercises_select".
  */
 export interface ExercisesSelect<T extends boolean = true> {
+  tenant?: T;
   title?: T;
   order?: T;
   lesson?: T;
@@ -1959,6 +2181,7 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "user-progress_select".
  */
 export interface UserProgressSelect<T extends boolean = true> {
+  tenant?: T;
   user?: T;
   gradeLevel?: T;
   progressRecords?:
@@ -1980,6 +2203,7 @@ export interface UserProgressSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  tenant?: T;
   type?: T;
   externalUrl?: T;
   alt?: T;
@@ -2120,6 +2344,21 @@ export interface PricingPlansSelect<T extends boolean = true> {
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-audit-logs_select".
+ */
+export interface McpAuditLogsSelect<T extends boolean = true> {
+  adminUserId?: T;
+  tenantId?: T;
+  toolName?: T;
+  args?: T;
+  resultCount?: T;
+  success?: T;
+  timestamp?: T;
+  requestId?: T;
+  durationMs?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2311,6 +2550,45 @@ export interface SearchSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-mcp-api-keys_select".
+ */
+export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
+  user?: T;
+  label?: T;
+  description?: T;
+  courses?:
+    | T
+    | {
+        find?: T;
+      };
+  chapters?:
+    | T
+    | {
+        find?: T;
+      };
+  lessons?:
+    | T
+    | {
+        find?: T;
+      };
+  exercises?:
+    | T
+    | {
+        find?: T;
+      };
+  media?:
+    | T
+    | {
+        find?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  enableAPIKey?: T;
+  apiKey?: T;
+  apiKeyIndex?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
