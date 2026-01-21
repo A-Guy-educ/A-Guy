@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
-import React from 'react'
+import { ChatMessageContent } from '@/components/chat'
 import { render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { ChatMessageContent } from '@/components/chat'
 
 describe('ChatMessageContent', () => {
   describe('Plain text (no math)', () => {
@@ -47,12 +46,20 @@ describe('ChatMessageContent', () => {
       const inlineMaths = container.querySelectorAll('.math-inline[dir="ltr"]')
       expect(inlineMaths.length).toBe(2)
     })
+
+    it('handles math-only inline content', () => {
+      const { container } = render(<ChatMessageContent content="$\\pi$" />)
+
+      const inlineMath = container.querySelector('.math-inline[dir="ltr"]')
+      expect(inlineMath).not.toBeNull()
+    })
   })
 
   describe('Block math RTL isolation', () => {
     it('wraps block math with LTR isolation', () => {
       const { container } = render(
-        <ChatMessageContent content={'הפתרון:\n\n$$x = \\frac{-b}{2a}$$'} />,
+        // Use $$ on separate lines with blank lines for proper block math detection
+        <ChatMessageContent content={'הפתרון:\n\n$$\nx = \\frac{-b}{2a}\n$$\n'} />,
       )
 
       const blockMath = container.querySelector('.math-block')
@@ -63,7 +70,10 @@ describe('ChatMessageContent', () => {
 
     it('renders multi-line block equations', () => {
       const { container } = render(
-        <ChatMessageContent content={'$$\\begin{align}\na &= b \\\\\nc &= d\n\\end{align}$$'} />,
+        // Use $$ on separate lines with blank lines for proper block math detection
+        <ChatMessageContent
+          content={'$$\n\\begin{align}\na &= b \\\\\nc &= d\n\\end{align}\n$$'}
+        />,
       )
 
       const blockMath = container.querySelector('.math-block[dir="ltr"]')
@@ -72,9 +82,22 @@ describe('ChatMessageContent', () => {
   })
 
   describe('Mixed content', () => {
-    it('handles Hebrew with both inline and block math', () => {
+    it('handles Hebrew with inline math only', () => {
       const { container } = render(
-        <ChatMessageContent content={'בעיה: מצא $x$\n\n$$x^2 = 4$$\n\nתשובה: $x = 2$'} />,
+        <ChatMessageContent content={'בעיה: מצא $x$\n\nתשובה: $x = 2$'} />,
+      )
+
+      const inlineMaths = container.querySelectorAll('.math-inline[dir="ltr"]')
+      const blockMaths = container.querySelectorAll('.math-block[dir="ltr"]')
+
+      expect(inlineMaths.length).toBe(2)
+      expect(blockMaths.length).toBe(0)
+    })
+
+    it('handles Hebrew with inline and block math', () => {
+      const { container } = render(
+        // Use $$ on separate lines with blank lines for proper block math detection
+        <ChatMessageContent content={'בעיה: מצא $x$\n\n$$\nx^2 = 4\n$$\n\nתשובה: $x = 2$'} />,
       )
 
       const inlineMaths = container.querySelectorAll('.math-inline[dir="ltr"]')
@@ -89,13 +112,6 @@ describe('ChatMessageContent', () => {
     it('handles empty content', () => {
       const { container } = render(<ChatMessageContent content="" />)
       expect(container.querySelector('.chat-message-content')).not.toBeNull()
-    })
-
-    it('handles math-only content', () => {
-      const { container } = render(<ChatMessageContent content="$\\pi$" />)
-
-      const inlineMath = container.querySelector('.math-inline[dir="ltr"]')
-      expect(inlineMath).not.toBeNull()
     })
   })
 })

@@ -1,12 +1,11 @@
 'use client'
 
-import React from 'react'
+import { cn } from '@/utilities/ui'
+import type { Element, Root } from 'hast'
 import ReactMarkdown from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
 import remarkMath from 'remark-math'
 import { visit } from 'unist-util-visit'
-import type { Root, Element } from 'hast'
-import { cn } from '@/utilities/ui'
 
 interface ChatMessageContentProps {
   content: string
@@ -34,12 +33,12 @@ function rehypeMathWrapper() {
         const parentClassName = Array.isArray(parent.properties?.className)
           ? parent.properties.className.join(' ')
           : String(parent.properties?.className || '')
-        
+
         // Skip if parent is already wrapped
         if (parentClassName.includes('math-inline') || parentClassName.includes('math-block')) {
           return
         }
-        
+
         // Skip if parent is a katex element (we only wrap top-level katex)
         if (parentClassName.includes('katex')) {
           return
@@ -65,7 +64,11 @@ function rehypeMathWrapper() {
       }
 
       // Inline math: wrap katex (only top-level, not nested)
-      if (className.includes('katex') && !className.includes('katex-display') && node.tagName === 'span') {
+      if (
+        className.includes('katex') &&
+        !className.includes('katex-display') &&
+        node.tagName === 'span'
+      ) {
         const wrapper: Element = {
           type: 'element',
           tagName: 'span',
