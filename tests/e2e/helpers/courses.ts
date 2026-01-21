@@ -5,8 +5,8 @@ import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 
-import { logger } from '@/utilities/logger'
 import { getDefaultTenantSlug } from '@/lib/tenant/get-default-tenant'
+import { logger } from '@/utilities/logger'
 
 export interface TestCourseData {
   courseSlug: string
@@ -228,7 +228,7 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
     }
   } catch (error) {
     const err = error instanceof Error ? error : new Error('Unknown error')
-    logger.error({ err }, 'Error seeding test course data')
+    logger.error({ err, message: err.message, stack: err.stack }, 'Error seeding test course data')
     return null
   }
 }
