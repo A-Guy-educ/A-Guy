@@ -1,17 +1,19 @@
 'use client'
 
-import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import { signupAction } from './actions/signup_createUser-action'
-import { toast } from 'sonner'
-import { useTranslations } from '@/providers/I18n'
-import { SignupFormFields } from './SignupFormFields'
-import { validateSignupForm } from './actions/signup_validation-action'
-import { useAnalytics } from '@/lib/analytics/providers/AnalyticsProvider'
+import { detectBrowserLocale } from '@/i18n/config'
 import { PRODUCT_EVENTS } from '@/lib/analytics/contracts/events'
+import { useAnalytics } from '@/lib/analytics/providers/AnalyticsProvider'
+import { updateCachedUserProperties } from '@/lib/analytics/utils/user-properties-cache'
+import { useTranslations } from '@/providers/I18n'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import React, { useState } from 'react'
+import { toast } from 'sonner'
+import { SignupFormFields } from './SignupFormFields'
+import { signupAction } from './actions/signup_createUser-action'
+import { validateSignupForm } from './actions/signup_validation-action'
 
 export function SignupForm() {
   const t = useTranslations('auth.signup')
@@ -53,10 +55,39 @@ export function SignupForm() {
             user_id: result.userId,
             auth_method: 'email',
           })
-          analytics.track(PRODUCT_EVENTS.USER_IDENTIFIED, {
+
+          // Track user_identified with enriched user properties
+          const userProperties: Record<string, unknown> = {
             user_id: result.userId,
             is_new_user: true,
-          })
+            auth_method: 'email',
+            signup_date: new Date().toISOString(),
+            role: 'student', // Default role for new signups
+          }
+
+          // Add email and name from form (using Mixpanel reserved properties)
+          const email = formData.get('email') as string
+          const name = formData.get('name') as string
+          if (email) {
+            userProperties.$email = email
+          }
+          if (name) {
+            userProperties.$name = name
+          }
+
+          // Add locale from browser
+          if (typeof window !== 'undefined') {
+            userProperties.locale = detectBrowserLocale()
+          }
+
+          // Cache user properties for future sessions
+          updateCachedUserProperties(userProperties)
+
+          // Track event with enriched properties
+          analytics.track(PRODUCT_EVENTS.USER_IDENTIFIED, userProperties)
+
+          // Also call identify() to ensure Mixpanel People properties are set
+          analytics.identify(result.userId, userProperties)
         }
 
         // Auto-login successful - redirect to home

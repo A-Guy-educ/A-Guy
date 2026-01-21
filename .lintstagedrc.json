@@ -1,6 +1,6 @@
 {
   "*.{js,jsx,ts,tsx,mjs,cjs}": ["eslint --fix --max-warnings=0", "prettier --write"],
-  "*.{json,md,yml,yaml}": ["prettier --write"],
+  "*.{json,yml,yaml}": ["prettier --write"],
   "AGENTS.md": ["pnpm run ai:generate-docs"],
   "DESIGN_SYSTEM.md": ["pnpm run ai:generate-docs"],
   "docs/ai/quick-reference/CHEAT-SHEET.md": ["pnpm run ai:generate-docs"],

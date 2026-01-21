@@ -15,6 +15,7 @@ import { getEventDestinations } from '../contracts/destinations'
 import { analyticsConfig, validateConfig } from '../config'
 import { validateEvent } from './validator'
 import type { Analytics, EventPayload } from '../types'
+import { clearCachedUserProperties } from '../utils/user-properties-cache'
 
 // Adapters will be imported dynamically to avoid SSR issues
 let ga4Adapter: typeof import('../adapters/ga4/adapter') | null = null
@@ -157,6 +158,12 @@ export function reset(): void {
     if (analyticsConfig.debugMode) {
       console.log('[Analytics] Reset')
     }
+
+    // Clear cached user properties
+    clearCachedUserProperties()
+
+    // Clear session tracking
+    sessionStorage.removeItem('analytics_tracked_user_id')
 
     void initializeAdapters().then(() => {
       // Only Mixpanel handles user reset

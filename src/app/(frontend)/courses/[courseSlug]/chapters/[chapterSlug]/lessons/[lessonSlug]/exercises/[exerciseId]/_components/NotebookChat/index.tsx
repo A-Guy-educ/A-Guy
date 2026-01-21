@@ -4,6 +4,7 @@ import { ChatRole } from '@/lib/ai/chat-message-role'
 import { useTranslations } from '@/providers/I18n'
 import { cn } from '@/utilities/ui'
 import { BookOpen, CheckCircle, Lightbulb, Loader2, RefreshCw, Send } from 'lucide-react'
+import { ChatMessageContent } from '@/components/chat'
 import { useNotebookChat } from './useNotebookChat'
 
 interface NotebookChatProps {
@@ -82,7 +83,7 @@ export function NotebookChat({ exerciseId, lessonId, chapterId, courseId }: Note
                   : 'mr-auto bg-muted text-foreground',
               )}
             >
-              {msg.content}
+              <ChatMessageContent content={msg.content} />
             </div>
           ))}
         {isLoading && (

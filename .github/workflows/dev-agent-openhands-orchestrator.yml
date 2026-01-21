@@ -1,0 +1,139 @@
+name: Agent Orchestrator
+
+on:
+  issue_comment:
+    types:
+      - created
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: agent-orchestrator-${{ github.repository }}-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  orchestrator:
+    if: ${{ github.event.issue.state == 'open' && github.event.sender.type != 'Bot' && contains(toLowerCase(github.event.comment.body), '@agent-orchestrator') }}
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    outputs:
+      mode: ${{ steps.decide.outputs.mode }}
+      issue_number: ${{ steps.context.outputs.issue_number }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set issue context
+        id: context
+        run: |
+          echo "issue_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+
+      - name: Guard - prevent duplicate runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo
+            const issue_number = context.payload.issue.number
+
+            const res = await github.rest.issues.listLabelsOnIssue({
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            })
+
+            const hasRunning = res.data.some(l => l.name === 'agent:running')
+            if (hasRunning) {
+              throw new Error('Duplicate run: agent:running already set')
+            }
+
+      - name: Mark issue as running
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              labels: ['agent:running'],
+            })
+
+      - name: Decide execution mode
+        id: decide
+        run: |
+          if echo "${{ github.event.comment.body }}" | grep -iq "@agent-orchestrator simple"; then
+            echo "mode=simple" >> $GITHUB_OUTPUT
+          else
+            echo "mode=openhands" >> $GITHUB_OUTPUT
+          fi
+
+  simple:
+    needs: orchestrator
+    if: ${{ needs.orchestrator.outputs.mode == 'simple' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run simple patch engine
+        run: |
+          echo "Running simple diff/patch engine"
+
+      - name: Mark issue as done
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner
+            const repo = context.repo.repo
+            const issue_number = Number('${{ needs.orchestrator.outputs.issue_number }}')
+
+            // Remove running label if exists (ignore error if missing)
+            await github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'agent:running' }).catch(() => {})
+
+            // Add done label
+            await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['agent:done'] })
+
+  openhands:
+    needs: orchestrator
+    if: ${{ needs.orchestrator.outputs.mode == 'openhands' }}
+    uses: OpenHands/OpenHands/.github/workflows/openhands-resolver.yml@0.62.0
+    with:
+      macro: '@agent-orchestrator'
+      max_iterations: 25
+      target_branch: dev
+      pr_type: ready
+    secrets:
+      LLM_API_KEY: ${{ secrets.AI_KEY }}
+      LLM_BASE_URL: ${{ secrets.AI_BASE_URL }}
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      PAT_USERNAME: ${{ secrets.PAT_USERNAME }}
+
+  done:
+    needs: [orchestrator, simple, openhands]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark issue as done
+        if: ${{ needs.orchestrator.result == 'success' && (needs.simple.result == 'success' || needs.simple.result == 'skipped') && (needs.openhands.result == 'success' || needs.openhands.result == 'skipped') }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner
+            const repo = context.repo.repo
+            const issue_number = Number('${{ needs.orchestrator.outputs.issue_number }}')
+            await github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'agent:running' }).catch(() => {})
+            await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['agent:done'] })
+
+      - name: Mark issue as error
+        if: ${{ needs.orchestrator.result == 'failure' || needs.simple.result == 'failure' || needs.openhands.result == 'failure' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner
+            const repo = context.repo.repo
+            const issue_number = Number('${{ needs.orchestrator.outputs.issue_number }}')
+            await github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'agent:running' }).catch(() => {})
+            await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['agent:error'] })

@@ -55,6 +55,37 @@ export function sendToMixpanel(payload: EventPayload): void {
     // Send to Mixpanel
     mixpanel.track(mixpanelEvent.name, mixpanelEvent.properties)
 
+    // Special handling for user_identified event
+    // Also set user properties in Mixpanel People
+    if (mixpanelEvent.name === 'user_identified' && mixpanel.people) {
+      const userId = mixpanelEvent.properties.user_id as string
+
+      if (userId) {
+        // Identify user first
+        mixpanel.identify(userId)
+
+        // Extract user profile properties (exclude event metadata)
+        const userProperties: Record<string, unknown> = {}
+        const eventMetadataKeys = ['event_timestamp', 'session_id', '$current_url', '$referrer']
+
+        Object.keys(mixpanelEvent.properties).forEach((key) => {
+          if (!eventMetadataKeys.includes(key)) {
+            userProperties[key] = mixpanelEvent.properties[key]
+          }
+        })
+
+        // Set user properties in Mixpanel People
+        // This creates the user profile in Mixpanel
+        if (Object.keys(userProperties).length > 0) {
+          mixpanel.people.set(userProperties)
+
+          if (analyticsConfig.debugMode) {
+            console.log('[Analytics/Mixpanel] People.set:', { userId, userProperties })
+          }
+        }
+      }
+    }
+
     if (analyticsConfig.debugMode) {
       console.log('[Analytics/Mixpanel] Sent:', mixpanelEvent)
     }

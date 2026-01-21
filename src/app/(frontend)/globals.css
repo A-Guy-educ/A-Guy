@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @config "../../../tailwind.config.mjs";
+@import 'katex/dist/katex.min.css';
 
 @layer base {
   h1,
@@ -386,4 +387,32 @@ html[data-theme='light'] {
 
 .scrollbar-none::-webkit-scrollbar {
   display: none;
+}
+
+/* RTL/LTR Isolation for Math - must be flat selectors */
+.math-inline {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.math-block {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: block;
+  text-align: center;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* KaTeX math expression styling in chat */
+.chat-message-content .katex {
+  @apply bg-secondary text-secondary-foreground p-5 rounded-xl inline-block;
+  margin: calc(var(--spacing) * 1);
+}
+
+/* KaTeX in user messages: inherit background from parent (primary) */
+.bg-primary .chat-message-content .katex {
+  @apply bg-inherit text-inherit;
 }
