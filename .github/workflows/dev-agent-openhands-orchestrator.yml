@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   orchestrator:
-    if: ${{ github.event.issue.state == 'open' && github.event.sender.type != 'Bot' && startsWith(github.event.comment.body, '@agent-orchestrator') }}
+    if: ${{ github.event.issue.state == 'open' && github.event.sender.type != 'Bot' && contains(toLowerCase(github.event.comment.body), '@agent-orchestrator') }}
 
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -42,15 +42,20 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Mark issue as running
-        run: |
-          gh issue edit "${{ github.event.issue.number }}" --add-label "agent:running"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              labels: ['agent:running'],
+            })
 
       - name: Decide execution mode
         id: decide
         run: |
-          if echo "${{ github.event.comment.body }}" | grep -q "@agent-orchestrator simple"; then
+          if echo "${{ github.event.comment.body }}" | grep -iq "@agent-orchestrator simple"; then
             echo "mode=simple" >> $GITHUB_OUTPUT
           else
             echo "mode=openhands" >> $GITHUB_OUTPUT
@@ -66,10 +71,18 @@ jobs:
           echo "Running simple diff/patch engine"
 
       - name: Mark issue as done
-        run: |
-          gh issue edit "${{ needs.orchestrator.outputs.issue_number }}" --remove-label "agent:running" --add-label "agent:done"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner
+            const repo = context.repo.repo
+            const issue_number = Number('${{ needs.orchestrator.outputs.issue_number }}')
+
+            // Remove running label if exists (ignore error if missing)
+            await github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'agent:running' }).catch(() => {})
+
+            // Add done label
+            await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['agent:done'] })
 
   openhands:
     needs: orchestrator
@@ -93,14 +106,22 @@ jobs:
     steps:
       - name: Mark issue as done
         if: ${{ needs.orchestrator.result == 'success' && (needs.simple.result == 'success' || needs.simple.result == 'skipped') && (needs.openhands.result == 'success' || needs.openhands.result == 'skipped') }}
-        run: |
-          gh issue edit "${{ needs.orchestrator.outputs.issue_number }}" --remove-label "agent:running" --add-label "agent:done"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner
+            const repo = context.repo.repo
+            const issue_number = Number('${{ needs.orchestrator.outputs.issue_number }}')
+            await github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'agent:running' }).catch(() => {})
+            await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['agent:done'] })
 
       - name: Mark issue as error
         if: ${{ needs.orchestrator.result == 'failure' || needs.simple.result == 'failure' || needs.openhands.result == 'failure' }}
-        run: |
-          gh issue edit "${{ needs.orchestrator.outputs.issue_number }}" --remove-label "agent:running" --add-label "agent:error"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner
+            const repo = context.repo.repo
+            const issue_number = Number('${{ needs.orchestrator.outputs.issue_number }}')
+            await github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'agent:running' }).catch(() => {})
+            await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['agent:error'] })
