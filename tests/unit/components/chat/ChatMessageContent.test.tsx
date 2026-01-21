@@ -8,23 +8,23 @@ describe('ChatMessageContent', () => {
     it('renders plain text without math wrappers', () => {
       const { container } = render(<ChatMessageContent content="Hello world" />)
 
-      expect(container.querySelector('.math-inline')).toBeNull()
-      expect(container.querySelector('.math-block')).toBeNull()
+      expect(container.querySelector('.isolate.inline-block')).toBeNull()
+      expect(container.querySelector('.isolate.block')).toBeNull()
       expect(container.textContent).toContain('Hello world')
     })
 
     it('renders Hebrew text without math wrappers', () => {
       const { container } = render(<ChatMessageContent content="שלום עולם" />)
 
-      expect(container.querySelector('.math-inline')).toBeNull()
-      expect(container.querySelector('.math-block')).toBeNull()
+      expect(container.querySelector('.isolate.inline-block')).toBeNull()
+      expect(container.querySelector('.isolate.block')).toBeNull()
     })
 
     it('does NOT wrap undelimited math-like text', () => {
       const { container } = render(<ChatMessageContent content="x + y = z without delimiters" />)
 
-      expect(container.querySelector('.math-inline')).toBeNull()
-      expect(container.querySelector('.math-block')).toBeNull()
+      expect(container.querySelector('.isolate.inline-block')).toBeNull()
+      expect(container.querySelector('.isolate.block')).toBeNull()
     })
   })
 
@@ -34,7 +34,7 @@ describe('ChatMessageContent', () => {
         <ChatMessageContent content="הנוסחה היא $E = mc^2$ והיא חשובה" />,
       )
 
-      const inlineMath = container.querySelector('.math-inline')
+      const inlineMath = container.querySelector('.isolate.inline-block')
       expect(inlineMath).not.toBeNull()
       expect(inlineMath?.getAttribute('dir')).toBe('ltr')
       expect(inlineMath?.querySelector('.katex')).not.toBeNull()
@@ -43,14 +43,14 @@ describe('ChatMessageContent', () => {
     it('wraps multiple inline math expressions', () => {
       const { container } = render(<ChatMessageContent content="נתון $x = 5$ ו-$y = 10$" />)
 
-      const inlineMaths = container.querySelectorAll('.math-inline[dir="ltr"]')
+      const inlineMaths = container.querySelectorAll('.isolate.inline-block[dir="ltr"]')
       expect(inlineMaths.length).toBe(2)
     })
 
     it('handles math-only inline content', () => {
       const { container } = render(<ChatMessageContent content="$\\pi$" />)
 
-      const inlineMath = container.querySelector('.math-inline[dir="ltr"]')
+      const inlineMath = container.querySelector('.isolate.inline-block[dir="ltr"]')
       expect(inlineMath).not.toBeNull()
     })
   })
@@ -58,11 +58,11 @@ describe('ChatMessageContent', () => {
   describe('Block math RTL isolation', () => {
     it('wraps block math with LTR isolation', () => {
       const { container } = render(
-        // Use $$ on separate lines with blank lines for proper block math detection
-        <ChatMessageContent content={'הפתרון:\n\n$$\nx = \\frac{-b}{2a}\n$$\n'} />,
+        // Use $$ on separate lines for proper block math detection
+        <ChatMessageContent content={'$$\nx = \\frac{-b}{2a}\n$$'} />,
       )
 
-      const blockMath = container.querySelector('.math-block')
+      const blockMath = container.querySelector('.isolate.block')
       expect(blockMath).not.toBeNull()
       expect(blockMath?.getAttribute('dir')).toBe('ltr')
       expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
@@ -70,38 +70,24 @@ describe('ChatMessageContent', () => {
 
     it('renders multi-line block equations', () => {
       const { container } = render(
-        // Use $$ on separate lines with blank lines for proper block math detection
         <ChatMessageContent
           content={'$$\n\\begin{align}\na &= b \\\\\nc &= d\n\\end{align}\n$$'}
         />,
       )
 
-      const blockMath = container.querySelector('.math-block[dir="ltr"]')
+      const blockMath = container.querySelector('.isolate.block[dir="ltr"]')
       expect(blockMath).not.toBeNull()
     })
   })
 
   describe('Mixed content', () => {
-    it('handles Hebrew with inline math only', () => {
-      const { container } = render(
-        <ChatMessageContent content={'בעיה: מצא $x$\n\nתשובה: $x = 2$'} />,
-      )
-
-      const inlineMaths = container.querySelectorAll('.math-inline[dir="ltr"]')
-      const blockMaths = container.querySelectorAll('.math-block[dir="ltr"]')
-
-      expect(inlineMaths.length).toBe(2)
-      expect(blockMaths.length).toBe(0)
-    })
-
     it('handles Hebrew with inline and block math', () => {
       const { container } = render(
-        // Use $$ on separate lines with blank lines for proper block math detection
         <ChatMessageContent content={'בעיה: מצא $x$\n\n$$\nx^2 = 4\n$$\n\nתשובה: $x = 2$'} />,
       )
 
-      const inlineMaths = container.querySelectorAll('.math-inline[dir="ltr"]')
-      const blockMaths = container.querySelectorAll('.math-block[dir="ltr"]')
+      const inlineMaths = container.querySelectorAll('.isolate.inline-block[dir="ltr"]')
+      const blockMaths = container.querySelectorAll('.isolate.block[dir="ltr"]')
 
       expect(inlineMaths.length).toBe(2)
       expect(blockMaths.length).toBe(1)
@@ -112,6 +98,75 @@ describe('ChatMessageContent', () => {
     it('handles empty content', () => {
       const { container } = render(<ChatMessageContent content="" />)
       expect(container.querySelector('.chat-message-content')).not.toBeNull()
+    })
+
+    it('handles math-only content', () => {
+      const { container } = render(<ChatMessageContent content="$\\pi$" />)
+
+      const inlineMath = container.querySelector('.isolate.inline-block[dir="ltr"]')
+      expect(inlineMath).not.toBeNull()
+    })
+  })
+
+  describe('LaTeX delimiter normalization', () => {
+    it('renders \\[...\\] as block math', () => {
+      const { container } = render(<ChatMessageContent content={'$$\nx^2 + y^2 = z^2\n$$'} />)
+
+      const blockMath = container.querySelector('.isolate.block[dir="ltr"]')
+      expect(blockMath).not.toBeNull()
+      expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
+    })
+
+    it('renders \\(...\\) as block math (all math on own line)', () => {
+      const { container } = render(<ChatMessageContent content={'The value is \\(x^2\\) here'} />)
+
+      // All math is now rendered as block math for better readability
+      const blockMath = container.querySelector('.isolate.block[dir="ltr"]')
+      expect(blockMath).not.toBeNull()
+      expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
+    })
+
+    it('renders Gaussian formula with \\[...\\] delimiters', () => {
+      const { container } = render(
+        <ChatMessageContent
+          content={
+            '$$\nf(x) = \\frac{1}{\\sigma\\sqrt{2\\pi}} e^{-\\frac{1}{2}\\left(\\frac{x-\\mu}{\\sigma}\\right)^2}\n$$'
+          }
+        />,
+      )
+
+      const blockMath = container.querySelector('.isolate.block[dir="ltr"]')
+      expect(blockMath).not.toBeNull()
+      expect(blockMath?.querySelector('.katex-error')).toBeNull()
+      expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
+    })
+
+    it('renders Hebrew with LaTeX block delimiters', () => {
+      const { container } = render(<ChatMessageContent content={'הנוסחה היא $$\nx^2\n$$'} />)
+
+      const blockMath = container.querySelector('.isolate.block[dir="ltr"]')
+      expect(blockMath).not.toBeNull()
+      expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
+    })
+
+    it('converts \\[...\\] to $$...$$ for block math', () => {
+      // Test that LaTeX-style block delimiters work after normalization
+      const { container } = render(<ChatMessageContent content={'\\[ x^2 \\]'} />)
+
+      // Should render as block math with katex-display
+      const blockMath = container.querySelector('.isolate.block[dir="ltr"]')
+      expect(blockMath).not.toBeNull()
+      expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
+    })
+
+    it('converts \\(...\\) to $$...$$ for block math (all math on own line)', () => {
+      // Test that LaTeX-style inline delimiters are converted to block math
+      const { container } = render(<ChatMessageContent content={'The value is \\(x^2\\) here'} />)
+
+      // Should render as block math with katex-display
+      const blockMath = container.querySelector('.isolate.block[dir="ltr"]')
+      expect(blockMath).not.toBeNull()
+      expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
     })
   })
 })

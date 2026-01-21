@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
 import remarkMath from 'remark-math'
 import { visit } from 'unist-util-visit'
+import { normalizeLatexDelimiters } from './normalize-latex'
 
 interface ChatMessageContentProps {
   content: string
@@ -94,10 +95,12 @@ function rehypeMathWrapper() {
 }
 
 export function ChatMessageContent({ content, className }: ChatMessageContentProps) {
+  const normalizedContent = normalizeLatexDelimiters(content)
+
   return (
     <div className={cn('chat-message-content', className)}>
       <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeMathWrapper]}>
-        {content}
+        {normalizedContent}
       </ReactMarkdown>
     </div>
   )

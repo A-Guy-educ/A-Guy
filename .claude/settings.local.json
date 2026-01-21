@@ -43,7 +43,8 @@
       "Bash(node --version:*)",
       "Bash(pnpm test:int:*)",
       "Bash(git ls-tree:*)",
-      "Bash(SKIP_HOOKS=1 git push:*)"
+      "Bash(SKIP_HOOKS=1 git push:*)",
+      "Bash(git diff:*)"
     ]
   }
 }
