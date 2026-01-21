@@ -42,11 +42,15 @@ export const SessionStartedSchema = z.object({
  */
 export const UserIdentifiedSchema = z.object({
   user_id: z.string().describe('MongoDB user ID'),
-  // NO email, NO name, NO PII - only ID
+
+  // User identity (using Mixpanel reserved properties for better integration)
+  $email: z.string().email().optional().describe('User email address'),
+  $name: z.string().optional().describe('User display name'),
+
   is_new_user: z.boolean().optional().describe('First time signup'),
   auth_method: z.enum(['google', 'email']).optional().describe('Auth provider'),
 
-  // User profile properties (non-PII)
+  // User profile properties
   signup_date: z.string().optional().describe('ISO signup date'),
   role: z.string().optional().describe('User role (student, teacher, admin)'),
   locale: z.string().optional().describe('User locale preference (en/he)'),

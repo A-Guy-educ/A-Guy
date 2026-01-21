@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookieName, defaultLocale, type Locale, locales } from './src/i18n/config'
+import {
+  cookieName,
+  defaultLocale,
+  type Locale,
+  locales,
+  getLocaleFromSubdomain,
+} from './src/i18n/config'
 
 function resolveCookieDomain(host: string): string | undefined {
   // If you're on *.vercel.app, sharing cookies across subdomains via Domain=.vercel.app
@@ -37,11 +43,9 @@ export function middleware(request: NextRequest) {
   let shouldSetCookie = false
 
   // Subdomain-based locale forcing
-  if (host.startsWith('he.')) {
-    locale = 'he'
-    shouldSetCookie = true
-  } else if (host.startsWith('en.')) {
-    locale = 'en'
+  const subdomainLocale = getLocaleFromSubdomain(host)
+  if (subdomainLocale) {
+    locale = subdomainLocale
     shouldSetCookie = true
   } else {
     // On primary domain, check cookie first

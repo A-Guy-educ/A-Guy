@@ -1,13 +1,13 @@
 'use client'
 
-import React from 'react'
-import { ExerciseHeader } from '../ExerciseHeader'
 import { ResizablePane } from '@/components/ui/resizable-pane'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import React from 'react'
+import { ExerciseHeader } from '../ExerciseHeader'
 
 interface ExerciseWorkspaceProps {
   exerciseTitle: string
-  backUrl: string
+  backUrl?: string
   pdfContent: React.ReactNode
   chatContent: React.ReactNode
 }

@@ -1,12 +1,13 @@
 'use client'
 
+import { detectBrowserLocale } from '@/i18n/config'
 import { useEffect } from 'react'
-import { useAnalytics } from '../providers/AnalyticsProvider'
 import { PRODUCT_EVENTS } from '../contracts/events'
+import { useAnalytics } from '../providers/AnalyticsProvider'
 import {
   getCachedUserProperties,
-  updateCachedUserProperties,
   shouldRefreshUserProperties,
+  updateCachedUserProperties,
 } from '../utils/user-properties-cache'
 
 /**
@@ -53,13 +54,23 @@ export function UserIdentificationTracker() {
             const trackedUserId = sessionStorage.getItem('analytics_tracked_user_id')
 
             if (trackedUserId !== user.id || needsRefresh) {
-              // Extract non-PII user properties
+              // Extract user properties
               const userProperties: Record<string, unknown> = {
                 user_id: user.id,
                 is_new_user: false, // Existing user logging in
               }
 
-              // Add enriched user profile properties (non-PII)
+              // Add user email (using Mixpanel reserved property)
+              if (user.email) {
+                userProperties.$email = user.email
+              }
+
+              // Add user name (using Mixpanel reserved property)
+              if (user.name) {
+                userProperties.$name = user.name
+              }
+
+              // Add enriched user profile properties
               if (user.role) {
                 userProperties.role = user.role
               }
@@ -73,8 +84,7 @@ export function UserIdentificationTracker() {
 
               // Add locale if available from browser or user settings
               if (typeof window !== 'undefined') {
-                const locale = window.navigator.language.startsWith('he') ? 'he' : 'en'
-                userProperties.locale = locale
+                userProperties.locale = detectBrowserLocale()
               }
 
               // Cache user properties for future sessions

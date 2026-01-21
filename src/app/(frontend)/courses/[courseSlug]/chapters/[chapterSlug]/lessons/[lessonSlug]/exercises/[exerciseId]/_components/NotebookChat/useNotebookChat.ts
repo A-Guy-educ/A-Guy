@@ -1,10 +1,10 @@
 import { ChatRole } from '@/lib/ai/chat-message-role'
+import { PRODUCT_EVENTS } from '@/lib/analytics/contracts/events'
+import { useAnalytics } from '@/lib/analytics/providers/AnalyticsProvider'
 import { apiService } from '@/services/api/api-service'
 import { logger } from '@/utilities/logger'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { useAnalytics } from '@/lib/analytics/providers/AnalyticsProvider'
-import { PRODUCT_EVENTS } from '@/lib/analytics/contracts/events'
 
 export interface ChatMessage {
   role: ChatRole
@@ -65,20 +65,22 @@ export function useNotebookChat({
     return null
   }, [exerciseId, lessonId, chapterId, courseId])
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
-  useLayoutEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      scrollToBottom()
-    }, 50)
-    return () => clearTimeout(timer)
+  // Simple scroll to bottom using scrollTop instead of scrollIntoView
+  // scrollIntoView can cause layout issues in nested flex containers
+  const scrollToBottom = useCallback(() => {
+    const container = messagesContainerRef.current
+    if (container) {
+      container.scrollTop = container.scrollHeight
+    }
   }, [])
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    // Use requestAnimationFrame to ensure DOM has updated
+    requestAnimationFrame(() => {
+      scrollToBottom()
+    })
+  }, [messages, scrollToBottom])
 
   // Load existing conversation history on mount
   useEffect(() => {

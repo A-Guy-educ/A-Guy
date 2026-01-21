@@ -107,6 +107,7 @@ jobs:
       DATABASE_URL: mongodb://localhost:27017/test
       PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET || 'test-secret-for-ci' }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || '' }}
+      DEFAULT_TENANT_SLUG: default
 
     services:
       mongodb:
@@ -229,6 +230,7 @@ jobs:
       DATABASE_URL: mongodb://localhost:27017/test
       PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET || 'test-secret-for-ci' }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || '' }}
+      DEFAULT_TENANT_SLUG: default
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || '' }}
       NEXT_PUBLIC_SERVER_URL: http://localhost:3000
 

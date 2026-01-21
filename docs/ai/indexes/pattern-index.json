@@ -102,6 +102,7 @@
         "src/components/admin/shared/AdvancedJsonPanel.tsx",
         "src/components/admin/shared/CollapsibleSection.tsx",
         "src/components/admin/shared/ErrorDisplay.tsx",
+        "src/components/chat/ChatMessageContent/index.tsx",
         "src/components/shared/ProgressCircle/index.tsx",
         "src/components/shared/TypingAnimation/index.tsx",
         "src/components/ui/avatar.tsx",
@@ -205,6 +206,7 @@
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/MathPalette/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookWorkspace/index.tsx",
+        "src/app/(frontend)/courses/_components/LessonHeader/index.tsx",
         "src/app/(frontend)/layout.tsx",
         "src/blocks/Banner/Component.tsx",
         "src/blocks/Content/Component.tsx",
@@ -231,6 +233,7 @@
         "src/components/Media/VideoMedia/index.tsx",
         "src/components/Pagination/index.tsx",
         "src/components/RichText/index.tsx",
+        "src/components/chat/ChatMessageContent/index.tsx",
         "src/components/shared/EmptyState/EmptyState.tsx",
         "src/components/shared/EmptyState/ErrorState.tsx",
         "src/components/shared/Icon/Icon.tsx",
@@ -296,12 +299,14 @@
         "src/collections/ExerciseAssets.ts",
         "src/collections/Exercises/index.ts",
         "src/collections/Lessons.ts",
+        "src/collections/MCPAuditLogs.ts",
         "src/collections/Media/index.ts",
         "src/collections/MemoryItems.ts",
         "src/collections/Pages/index.ts",
         "src/collections/Posts/index.ts",
         "src/collections/PricingPlans.ts",
         "src/collections/Prompts.ts",
+        "src/collections/Tenants.ts",
         "src/collections/UserProgress.ts",
         "src/collections/Users/index.ts"
       ]
@@ -685,7 +690,7 @@
       "aiSummary": "",
       "dependencies": [
         "lucide-react",
-        "next/link"
+        "next/navigation"
       ]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExercisePageContent/index.tsx": {
@@ -945,11 +950,15 @@
       "type": "unknown",
       "domain": "general",
       "patterns": [
+        "tailwind-component",
         "i18n-component",
         "client-component"
       ],
       "aiSummary": "",
-      "dependencies": []
+      "dependencies": [
+        "lucide-react",
+        "next/navigation"
+      ]
     },
     "src/app/(frontend)/courses/_components/LessonsSectionTitle/index.tsx": {
       "path": "src/app/(frontend)/courses/_components/LessonsSectionTitle/index.tsx",
@@ -1107,9 +1116,9 @@
       ],
       "aiSummary": "",
       "dependencies": [
-        "react",
-        "next/navigation",
         "next/link",
+        "next/navigation",
+        "react",
         "sonner"
       ]
     },
@@ -1443,6 +1452,18 @@
         "payload"
       ]
     },
+    "src/collections/MCPAuditLogs.ts": {
+      "path": "src/collections/MCPAuditLogs.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": [
+        "access-control"
+      ],
+      "aiSummary": "",
+      "dependencies": [
+        "payload"
+      ]
+    },
     "src/collections/Media/index.ts": {
       "path": "src/collections/Media/index.ts",
       "type": "unknown",
@@ -1514,6 +1535,18 @@
     },
     "src/collections/Prompts.ts": {
       "path": "src/collections/Prompts.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": [
+        "access-control"
+      ],
+      "aiSummary": "",
+      "dependencies": [
+        "payload"
+      ]
+    },
+    "src/collections/Tenants.ts": {
+      "path": "src/collections/Tenants.ts",
       "type": "unknown",
       "domain": "general",
       "patterns": [
@@ -2245,6 +2278,23 @@
         "react"
       ]
     },
+    "src/components/chat/ChatMessageContent/index.tsx": {
+      "path": "src/components/chat/ChatMessageContent/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": [
+        "tailwind-component",
+        "client-component"
+      ],
+      "aiSummary": "",
+      "dependencies": [
+        "hast",
+        "react-markdown",
+        "rehype-katex",
+        "remark-math",
+        "unist-util-visit"
+      ]
+    },
     "src/components/shared/EmptyState/EmptyState.tsx": {
       "path": "src/components/shared/EmptyState/EmptyState.tsx",
       "type": "unknown",
@@ -2963,8 +3013,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-01-19T14:34:31.196Z",
-    "totalFiles": 191,
+    "generatedAt": "2026-01-21T10:24:19.588Z",
+    "totalFiles": 194,
     "totalPatterns": 22
   }
 }
