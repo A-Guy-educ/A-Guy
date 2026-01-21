@@ -375,6 +375,110 @@
       "priority": 7
     },
     {
+      "id": "AGENTS-advanced-access-control-patterns",
+      "title": "Advanced Access Control Patterns",
+      "content": "",
+      "keywords": [
+        "advanced",
+        "access",
+        "control",
+        "patterns"
+      ],
+      "category": "patterns",
+      "sourceFile": "AGENTS.md",
+      "startLine": 331,
+      "endLine": 333,
+      "priority": 8
+    },
+    {
+      "id": "AGENTS-context-aware-access",
+      "title": "Context-Aware Access",
+      "content": "```typescript\n// Locale-specific access\nexport const localeSpecificAccess: Access = ({ req: { user, locale } }) => {\n  if (user) return true\n  return locale === 'en' // Public users can only access English content\n}\n\n// IP-based access (factory function)\nexport function restrictedIpAccess(allowedIps: string[]): Access {\n  return ({ req: { headers } }) => {\n    const ip = headers?.get('x-forwarded-for') || headers?.get('x-real-ip')\n    return allowedIps.includes(ip || '')\n  }\n}\n```",
+      "keywords": [
+        "access",
+        "return",
+        "headers",
+        "export",
+        "const",
+        "user",
+        "locale",
+        "function",
+        "allowedips",
+        "context-aware"
+      ],
+      "category": "patterns",
+      "sourceFile": "AGENTS.md",
+      "startLine": 333,
+      "endLine": 351,
+      "priority": 7
+    },
+    {
+      "id": "AGENTS-time-based-access",
+      "title": "Time-Based Access",
+      "content": "```typescript\n// Recent records only (last N days)\nexport function recentRecordsAccess(days: number): Access {\n  return ({ req: { user } }) => {\n    if (!user) return false\n    if (user.roles?.includes('admin')) return true\n\n    const cutoff = new Date()\n    cutoff.setDate(cutoff.getDate() - days)\n\n    return {\n      createdAt: { greater_than_equal: cutoff.toISOString() },\n    }\n  }\n}\n\n// Scheduled content (publish window)\nexport const scheduledContentAccess: Access = ({ req: { user } }) => {\n  if (user?.roles?.includes('admin') || user?.roles?.includes('editor')) {\n    return true\n  }\n\n  const now = new Date().toISOString()\n  return {\n    and: [\n      { publishDate: { less_than_equal: now } },\n      {\n        or: [{ unpublishDate: { exists: false } }, { unpublishDate: { greater_than: now } }],\n      },\n    ],\n  }\n}\n```",
+      "keywords": [
+        "return",
+        "user",
+        "cutoff",
+        "access",
+        "days",
+        "roles",
+        "includes",
+        "const",
+        "export",
+        "false"
+      ],
+      "category": "patterns",
+      "sourceFile": "AGENTS.md",
+      "startLine": 351,
+      "endLine": 387,
+      "priority": 7
+    },
+    {
+      "id": "AGENTS-access-control-factory-functions",
+      "title": "Access Control Factory Functions",
+      "content": "```typescript\n// Role-based factory\nexport function createRoleBasedAccess(roles: string[]): Access {\n  return ({ req: { user } }) => {\n    if (!user) return false\n    return roles.some((role) => user.roles?.includes(role))\n  }\n}\n\n// Organization-scoped factory\nexport function createOrgScopedAccess(allowAdmin = true): Access {\n  return ({ req: { user } }) => {\n    if (!user) return false\n    if (allowAdmin && user.roles?.includes('admin')) return true\n    return { organizationId: { in: user.organizationIds || [] } }\n  }\n}\n\n// Time-limited factory\nexport function createTimeLimitedAccess(daysAccess: number): Access {\n  return ({ req: { user } }) => {\n    if (!user) return false\n    if (user.roles?.includes('admin')) return true\n\n    const cutoff = new Date()\n    cutoff.setDate(cutoff.getDate() - daysAccess)\n    return { createdAt: { greater_than_equal: cutoff.toISOString() } }\n  }\n}\n```",
+      "keywords": [
+        "return",
+        "user",
+        "roles",
+        "access",
+        "factory",
+        "cutoff",
+        "export",
+        "function",
+        "false",
+        "includes"
+      ],
+      "category": "patterns",
+      "sourceFile": "AGENTS.md",
+      "startLine": 387,
+      "endLine": 420,
+      "priority": 7
+    },
+    {
+      "id": "AGENTS-access-control-performance",
+      "title": "Access Control Performance",
+      "content": "```typescript\n// ❌ Slow: Multiple async calls in access check\nexport const slowAccess: Access = async ({ req: { user } }) => {\n  const org = await req.payload.findByID({ collection: 'orgs', id: user.orgId })\n  const team = await req.payload.findByID({ collection: 'teams', id: user.teamId })\n  return org.active && team.active\n}\n\n// ✅ Fast: Use query constraints or cache in context\nexport const fastAccess: Access = ({ req: { user, context } }) => {\n  if (!context.orgStatus) {\n    context.orgStatus = checkOrgStatus(user.orgId) // Cache expensive lookups\n  }\n  return context.orgStatus\n}\n\n// ✅ Better: Use query constraint to filter at DB level\nexport const efficientAccess: Access = () => {\n  return { isPublic: { equals: true } } // Let database filter\n}\n```",
+      "keywords": [
+        "access",
+        "const",
+        "user",
+        "context",
+        "export",
+        "return",
+        "orgstatus",
+        "async",
+        "await",
+        "payload"
+      ],
+      "category": "patterns",
+      "sourceFile": "AGENTS.md",
+      "startLine": 420,
+      "endLine": 444,
+      "priority": 7
+    },
+    {
       "id": "AGENTS-hooks",
       "title": "Hooks",
       "content": "",
@@ -383,8 +487,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 331,
-      "endLine": 333,
+      "startLine": 444,
+      "endLine": 446,
       "priority": 8
     },
     {
@@ -405,8 +509,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 333,
-      "endLine": 396,
+      "startLine": 446,
+      "endLine": 509,
       "priority": 7
     },
     {
@@ -418,8 +522,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 396,
-      "endLine": 398,
+      "startLine": 509,
+      "endLine": 511,
       "priority": 8
     },
     {
@@ -440,8 +544,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 398,
-      "endLine": 446,
+      "startLine": 511,
+      "endLine": 559,
       "priority": 7
     },
     {
@@ -462,8 +566,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 446,
-      "endLine": 475,
+      "startLine": 559,
+      "endLine": 588,
       "priority": 7
     },
     {
@@ -483,8 +587,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 475,
-      "endLine": 493,
+      "startLine": 588,
+      "endLine": 606,
       "priority": 7
     },
     {
@@ -505,8 +609,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 493,
-      "endLine": 522,
+      "startLine": 606,
+      "endLine": 635,
       "priority": 8
     },
     {
@@ -527,8 +631,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 522,
-      "endLine": 528,
+      "startLine": 635,
+      "endLine": 641,
       "priority": 8
     },
     {
@@ -549,8 +653,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 528,
-      "endLine": 587,
+      "startLine": 641,
+      "endLine": 700,
       "priority": 7
     },
     {
@@ -571,8 +675,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 587,
-      "endLine": 594,
+      "startLine": 700,
+      "endLine": 707,
       "priority": 7
     },
     {
@@ -593,8 +697,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 594,
-      "endLine": 601,
+      "startLine": 707,
+      "endLine": 714,
       "priority": 7
     },
     {
@@ -615,8 +719,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 601,
-      "endLine": 636,
+      "startLine": 714,
+      "endLine": 749,
       "priority": 7
     },
     {
@@ -637,8 +741,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 636,
-      "endLine": 663,
+      "startLine": 749,
+      "endLine": 776,
       "priority": 7
     },
     {
@@ -659,8 +763,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 663,
-      "endLine": 689,
+      "startLine": 776,
+      "endLine": 802,
       "priority": 7
     },
     {
@@ -681,8 +785,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 689,
-      "endLine": 727,
+      "startLine": 802,
+      "endLine": 840,
       "priority": 7
     },
     {
@@ -703,8 +807,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 727,
-      "endLine": 751,
+      "startLine": 840,
+      "endLine": 864,
       "priority": 7
     },
     {
@@ -725,8 +829,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 751,
-      "endLine": 787,
+      "startLine": 864,
+      "endLine": 900,
       "priority": 7
     },
     {
@@ -747,8 +851,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 787,
-      "endLine": 803,
+      "startLine": 900,
+      "endLine": 916,
       "priority": 7
     },
     {
@@ -769,8 +873,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 803,
-      "endLine": 826,
+      "startLine": 916,
+      "endLine": 939,
       "priority": 7
     },
     {
@@ -791,8 +895,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 826,
-      "endLine": 845,
+      "startLine": 939,
+      "endLine": 958,
       "priority": 7
     },
     {
@@ -813,8 +917,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 845,
-      "endLine": 888,
+      "startLine": 958,
+      "endLine": 1001,
       "priority": 8
     },
     {
@@ -835,8 +939,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 888,
-      "endLine": 926,
+      "startLine": 1001,
+      "endLine": 1039,
       "priority": 8
     },
     {
@@ -857,8 +961,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 926,
-      "endLine": 961,
+      "startLine": 1039,
+      "endLine": 1074,
       "priority": 8
     },
     {
@@ -870,8 +974,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 961,
-      "endLine": 963,
+      "startLine": 1074,
+      "endLine": 1076,
       "priority": 8
     },
     {
@@ -892,8 +996,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 963,
-      "endLine": 981,
+      "startLine": 1076,
+      "endLine": 1094,
       "priority": 7
     },
     {
@@ -914,8 +1018,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 981,
-      "endLine": 1007,
+      "startLine": 1094,
+      "endLine": 1120,
       "priority": 7
     },
     {
@@ -928,8 +1032,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1007,
-      "endLine": 1009,
+      "startLine": 1120,
+      "endLine": 1122,
       "priority": 8
     },
     {
@@ -950,8 +1054,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1009,
-      "endLine": 1017,
+      "startLine": 1122,
+      "endLine": 1130,
       "priority": 7
     },
     {
@@ -972,8 +1076,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1017,
-      "endLine": 1025,
+      "startLine": 1130,
+      "endLine": 1138,
       "priority": 7
     },
     {
@@ -994,8 +1098,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1025,
-      "endLine": 1033,
+      "startLine": 1138,
+      "endLine": 1146,
       "priority": 7
     },
     {
@@ -1016,8 +1120,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1033,
-      "endLine": 1041,
+      "startLine": 1146,
+      "endLine": 1154,
       "priority": 7
     },
     {
@@ -1038,8 +1142,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1041,
-      "endLine": 1049,
+      "startLine": 1154,
+      "endLine": 1162,
       "priority": 7
     },
     {
@@ -1060,52 +1164,52 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1049,
-      "endLine": 1060,
+      "startLine": 1162,
+      "endLine": 1173,
       "priority": 8
     },
     {
-      "id": "AGENTS-additional-context-files",
-      "title": "Additional Context Files",
-      "content": "For deeper exploration of specific topics, refer to the context files located in `.cursor/rules/`:",
+      "id": "AGENTS-additional-documentation",
+      "title": "Additional Documentation",
+      "content": "For deeper exploration of specific topics, refer to the README files throughout the project:\n\n| Topic | Location |\n|-------|----------|\n| Access Control | `docs/access-control/README.md` |\n| Admin Components | `docs/admin-components/README.md` |\n| AI Services | `docs/ai-services/README.md` |\n| Block Rendering | `docs/block-rendering/README.md` |\n| Collections | `src/collections/README.md` |\n| Components | `src/components/README.md` |\n| Course Hierarchy | `docs/course-hierarchy/README.md` |\n| Exercises | `docs/exercises/README.md` |\n| Exercise Import | `docs/exercise-import/README.md` |\n| Testing | `tests/README.md` |",
       "keywords": [
-        "context",
-        "files",
+        "readme",
+        "docs",
+        "components",
+        "collections",
+        "exercises",
         "additional",
+        "documentation",
         "deeper",
         "exploration",
-        "specific",
-        "topics",
-        "refer",
-        "located",
-        "cursor"
+        "specific"
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1060,
-      "endLine": 1064,
+      "startLine": 1173,
+      "endLine": 1190,
       "priority": 8
     },
     {
-      "id": "AGENTS-available-context-files",
-      "title": "Available Context Files",
-      "content": "1. **`payload-overview.md`** - High-level architecture and core concepts\n   - Payload structure and initialization\n   - Configuration fundamentals\n   - Database adapters overview\n\n2. **`security-critical.md`** - Critical security patterns (⚠️ IMPORTANT)\n   - Local API access control\n   - Transaction safety in hooks\n   - Preventing infinite hook loops\n\n3. **`collections.md`** - Collection configurations\n   - Basic collection patterns\n   - Auth collections with RBAC\n   - Upload collections\n   - Drafts and versioning\n   - Globals\n\n4. **`fields.md`** - Field types and patterns\n   - All field types with examples\n   - Conditional fields\n   - Virtual fields\n   - Field validation\n   - Common field patterns\n\n5. **`field-type-guards.md`** - TypeScript field type utilities\n   - Field type checking utilities\n   - Safe type narrowing\n   - Runtime field validation\n\n6. **`access-control.md`** - Permission patterns\n   - Collection-level access\n   - Field-level access\n   - Row-level security\n   - RBAC patterns\n   - Multi-tenant access control\n\n7. **`access-control-advanced.md`** - Complex access patterns\n   - Nested document access\n   - Cross-collection permissions\n   - Dynamic role hierarchies\n   - Performance optimization\n\n8. **`hooks.md`** - Lifecycle hooks\n   - Collection hooks\n   - Field hooks\n   - Hook context patterns\n   - Common hook recipes\n\n9. **`queries.md`** - Database operations\n   - Local API usage\n   - Query operators\n   - Complex queries with AND/OR\n   - Performance optimization\n\n10. **`endpoints.md`** - Custom API endpoints\n    - REST endpoint patterns\n    - Authentication in endpoints\n    - Error handling\n    - Route parameters\n\n11. **`adapters.md`** - Database and storage adapters\n    - MongoDB patterns\n    - Storage adapter usage (S3, Azure, GCS, etc.)\n    - Custom adapter development\n\n12. **`plugin-development.md`** - Creating plugins\n    - Plugin architecture\n    - Modifying configuration\n    - Plugin hooks\n    - Best practices\n\n13. **`components.md`** - Custom Components\n    - Component types (Root, Collection, Global, Field)\n    - Server vs Client Components\n    - Component paths and definition\n    - Default and custom props\n    - Using hooks\n    - Performance best practices\n    - Styling components",
+      "id": "AGENTS-pattern-discovery",
+      "title": "Pattern Discovery",
+      "content": "Find code examples using the AI-optimized indexes:\n\n- **Pattern Index**: `docs/ai/indexes/pattern-index.json` - 132 files × 12 patterns\n- **README Index**: `.ai-docs/readme-index.json` - 19 READMEs indexed\n- **Doc Chunks**: `docs/ai/indexes/doc-chunks.json` - 217 searchable chunks",
       "keywords": [
-        "patterns",
-        "field",
-        "hooks",
-        "access",
-        "collection",
-        "custom",
-        "components",
-        "database",
-        "adapters",
-        "hook"
+        "indexes",
+        "json",
+        "pattern",
+        "index",
+        "docs",
+        "chunks",
+        "discovery",
+        "find",
+        "code",
+        "examples"
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1064,
-      "endLine": 1146,
+      "startLine": 1190,
+      "endLine": 1198,
       "priority": 7
     },
     {
@@ -1126,8 +1230,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1146,
-      "endLine": 1156,
+      "startLine": 1198,
+      "endLine": 1208,
       "priority": 8
     },
     {
@@ -1148,8 +1252,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1156,
-      "endLine": 1176,
+      "startLine": 1208,
+      "endLine": 1228,
       "priority": 7
     },
     {
@@ -1170,8 +1274,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1176,
-      "endLine": 1183,
+      "startLine": 1228,
+      "endLine": 1235,
       "priority": 8
     },
     {
@@ -3265,7 +3369,7 @@
     {
       "id": "CLAUDE-translations",
       "title": "Translations",
-      "content": "When adding translations, update both:\n\n- `messages/en.json` - English\n- `messages/he.json` - Hebrew\n\n---",
+      "content": "When adding translations, update both:\n\n- `messages/en.json` - English\n- `messages/he.json` - Hebrew",
       "keywords": [
         "translations",
         "messages",
@@ -3279,7 +3383,29 @@
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
       "startLine": 79,
-      "endLine": 88,
+      "endLine": 86,
+      "priority": 7
+    },
+    {
+      "id": "CLAUDE-git-commits",
+      "title": "Git & Commits",
+      "content": "- **Commit guide**: See [docs/specs/COMMIT_GUIDE.md](docs/specs/COMMIT_GUIDE.md) - Complete guide to passing pre-commit hooks\n- **Quick tip**: Use `git commit` (opens editor) for proper commit messages with body\n- **Emergency skip**: `SKIP_HOOKS=1 git commit` (use sparingly)\n\n---",
+      "keywords": [
+        "commit",
+        "guide",
+        "docs",
+        "specs",
+        "commit_guide",
+        "commits",
+        "complete",
+        "passing",
+        "pre-commit",
+        "hooks"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CLAUDE.md",
+      "startLine": 86,
+      "endLine": 94,
       "priority": 7
     },
     {
@@ -3300,8 +3426,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 88,
-      "endLine": 101,
+      "startLine": 94,
+      "endLine": 107,
       "priority": 8
     },
     {
@@ -3322,8 +3448,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 101,
-      "endLine": 117,
+      "startLine": 107,
+      "endLine": 123,
       "priority": 8
     },
     {
@@ -3342,8 +3468,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 117,
-      "endLine": 121,
+      "startLine": 123,
+      "endLine": 127,
       "priority": 8
     },
     {
@@ -3364,8 +3490,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 121,
-      "endLine": 145,
+      "startLine": 127,
+      "endLine": 151,
       "priority": 7
     },
     {
@@ -3386,8 +3512,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 145,
-      "endLine": 159,
+      "startLine": 151,
+      "endLine": 165,
       "priority": 7
     },
     {
@@ -3408,8 +3534,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 159,
-      "endLine": 175,
+      "startLine": 165,
+      "endLine": 181,
       "priority": 7
     },
     {
@@ -3430,8 +3556,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 175,
-      "endLine": 195,
+      "startLine": 181,
+      "endLine": 201,
       "priority": 8
     },
     {
@@ -4973,8 +5099,8 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-01-09T12:25:33.897Z",
-    "totalChunks": 242,
+    "generatedAt": "2026-01-21T20:08:32.277Z",
+    "totalChunks": 248,
     "sourceFiles": [
       "AGENTS.md",
       "DESIGN_SYSTEM.md",
