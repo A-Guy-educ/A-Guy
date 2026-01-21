@@ -79,7 +79,7 @@ jobs:
     if: needs.orchestrator.outputs.mode == 'openhands'
     uses: OpenHands/OpenHands/.github/workflows/openhands-resolver.yml@0.62.0
     with:
-      macro: '@agent-orchestrator'
+      macro: '@agent'
       max_iterations: 25
       target_branch: dev
       pr_type: ready
