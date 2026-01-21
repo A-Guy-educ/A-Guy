@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
 import { cn } from '@/utilities/ui'
+import React, { useEffect, useRef, useState } from 'react'
 
 interface ResizablePaneProps {
   orientation: 'horizontal' | 'vertical'
@@ -25,19 +25,22 @@ export function ResizablePane({
   const [isDragging, setIsDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Initialize size from localStorage if available, otherwise use defaultSize
-  const [firstPaneSize, setFirstPaneSize] = useState(() => {
+  // Initialize with defaultSize to prevent hydration mismatch
+  // Server can't access localStorage, so we always start with default
+  const [firstPaneSize, setFirstPaneSize] = useState(defaultSize)
+
+  // Sync from localStorage after mount (client-only)
+  useEffect(() => {
     if (storageKey && typeof window !== 'undefined') {
       const saved = localStorage.getItem(storageKey)
       if (saved) {
         const parsed = parseFloat(saved)
         if (!isNaN(parsed) && parsed >= minSize && parsed <= maxSize) {
-          return parsed
+          setFirstPaneSize(parsed)
         }
       }
     }
-    return defaultSize
-  })
+  }, [storageKey, minSize, maxSize])
 
   const handleMouseDown = () => {
     setIsDragging(true)
@@ -127,7 +130,7 @@ export function ResizablePane({
         style={{
           flex: `0 0 ${firstPaneSize}%`,
         }}
-        className="overflow-hidden relative"
+        className="overflow-hidden relative min-h-0"
       >
         {children[0]}
         {/* Overlay to prevent iframe from capturing mouse events during drag */}
@@ -172,7 +175,7 @@ export function ResizablePane({
       </div>
 
       {/* Second Pane */}
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-hidden relative min-h-0">
         {children[1]}
         {/* Overlay to prevent iframe from capturing mouse events during drag */}
         {isDragging && <div className="absolute inset-0 z-10" />}

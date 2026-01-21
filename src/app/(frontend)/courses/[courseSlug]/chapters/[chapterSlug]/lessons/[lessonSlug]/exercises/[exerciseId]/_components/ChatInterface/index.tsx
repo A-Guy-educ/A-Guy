@@ -82,9 +82,9 @@ export function ChatInterface({ exerciseId, lessonId }: ChatInterfaceProps) {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
       {/* Messages Area */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-5 space-y-4 min-h-0">
+      <div ref={messagesContainerRef} className="flex-grow overflow-y-auto p-5 space-y-4 min-h-0">
         {isLoadingHistory && (
           <div className="flex items-center justify-center p-4 text-muted-foreground text-sm">
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -115,7 +115,7 @@ export function ChatInterface({ exerciseId, lessonId }: ChatInterfaceProps) {
       </div>
 
       {/* Input Container */}
-      <div className="flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative">
+      <div className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative">
         {/* Math Preview Popup */}
         {mathPreview && (
           <div className="absolute bottom-full left-5 right-5 mb-2.5 bg-card border border-primary-soft rounded-xl p-2.5 text-center shadow-panel z-20">

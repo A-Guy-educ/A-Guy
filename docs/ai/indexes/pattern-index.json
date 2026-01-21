@@ -102,6 +102,7 @@
         "src/components/admin/shared/AdvancedJsonPanel.tsx",
         "src/components/admin/shared/CollapsibleSection.tsx",
         "src/components/admin/shared/ErrorDisplay.tsx",
+        "src/components/chat/ChatMessageContent/index.tsx",
         "src/components/shared/ProgressCircle/index.tsx",
         "src/components/shared/TypingAnimation/index.tsx",
         "src/components/ui/avatar.tsx",
@@ -232,6 +233,7 @@
         "src/components/Media/VideoMedia/index.tsx",
         "src/components/Pagination/index.tsx",
         "src/components/RichText/index.tsx",
+        "src/components/chat/ChatMessageContent/index.tsx",
         "src/components/shared/EmptyState/EmptyState.tsx",
         "src/components/shared/EmptyState/ErrorState.tsx",
         "src/components/shared/Icon/Icon.tsx",
@@ -2276,6 +2278,23 @@
         "react"
       ]
     },
+    "src/components/chat/ChatMessageContent/index.tsx": {
+      "path": "src/components/chat/ChatMessageContent/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": [
+        "tailwind-component",
+        "client-component"
+      ],
+      "aiSummary": "",
+      "dependencies": [
+        "hast",
+        "react-markdown",
+        "rehype-katex",
+        "remark-math",
+        "unist-util-visit"
+      ]
+    },
     "src/components/shared/EmptyState/EmptyState.tsx": {
       "path": "src/components/shared/EmptyState/EmptyState.tsx",
       "type": "unknown",
@@ -2994,8 +3013,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-01-21T06:37:03.402Z",
-    "totalFiles": 193,
+    "generatedAt": "2026-01-21T10:24:19.588Z",
+    "totalFiles": 194,
     "totalPatterns": 22
   }
 }

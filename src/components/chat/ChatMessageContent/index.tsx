@@ -2,14 +2,70 @@
 
 import { cn } from '@/utilities/ui'
 import type { Element, Root } from 'hast'
+import type { Components } from 'react-markdown'
 import ReactMarkdown from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
 import remarkMath from 'remark-math'
 import { visit } from 'unist-util-visit'
+import { normalizeLatexDelimiters } from './normalize-latex'
 
 interface ChatMessageContentProps {
   content: string
   className?: string
+}
+
+/**
+ * Custom components for ReactMarkdown with Tailwind styling.
+ * Implements the chat answer formatting spec:
+ * - Paragraphs: 16-24px spacing, line-height 1.5-1.6
+ * - Headings: semibold, 8-12px spacing below
+ * - Emphasis: bold only (em rendered as font-medium, not italic)
+ * - Lists: proper indentation and spacing
+ */
+const markdownComponents: Components = {
+  p: ({ children }) => <p className="mb-4 leading-relaxed first:mt-0 last:mb-0">{children}</p>,
+  h1: ({ children }) => (
+    <h1 className="text-xl font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-lg font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-base font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h3>
+  ),
+  h4: ({ children }) => (
+    <h4 className="text-base font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h4>
+  ),
+  h5: ({ children }) => (
+    <h5 className="text-base font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h5>
+  ),
+  h6: ({ children }) => (
+    <h6 className="text-base font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h6>
+  ),
+  ul: ({ children }) => <ul className="mb-4 pl-5 list-disc">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-4 pl-5 list-decimal">{children}</ol>,
+  li: ({ children }) => <li className="mb-1 leading-relaxed">{children}</li>,
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  em: ({ children }) => <em className="not-italic font-medium">{children}</em>,
+  a: ({ href, children }) => (
+    <a href={href} className="text-primary underline underline-offset-2 hover:text-primary/80">
+      {children}
+    </a>
+  ),
+  code: ({ children }) => (
+    <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>
+  ),
+  pre: ({ children }) => (
+    <pre className="bg-muted p-4 rounded-lg overflow-x-auto mb-4 border border-border">
+      {children}
+    </pre>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-4 border-primary mb-4 pl-4 text-muted-foreground">
+      {children}
+    </blockquote>
+  ),
+  hr: () => <hr className="border-0 border-t border-border my-5" />,
 }
 
 /**
@@ -25,8 +81,13 @@ function rehypeMathWrapper() {
         ? node.properties.className.join(' ')
         : String(node.properties?.className || '')
 
-      // Skip if already wrapped
-      if (className.includes('math-inline') || className.includes('math-block')) return
+      // Skip if already wrapped (check for Tailwind classes we use)
+      if (
+        className.includes('isolate') &&
+        (className.includes('inline-block') || className.includes('block'))
+      ) {
+        return
+      }
 
       // Check if parent is already a math wrapper or a katex element (to avoid nested wrapping)
       if (parent.type === 'element') {
@@ -34,8 +95,11 @@ function rehypeMathWrapper() {
           ? parent.properties.className.join(' ')
           : String(parent.properties?.className || '')
 
-        // Skip if parent is already wrapped
-        if (parentClassName.includes('math-inline') || parentClassName.includes('math-block')) {
+        // Skip if parent is already wrapped (check for Tailwind classes we use)
+        if (
+          parentClassName.includes('isolate') &&
+          (parentClassName.includes('inline-block') || parentClassName.includes('block'))
+        ) {
           return
         }
 
@@ -52,8 +116,7 @@ function rehypeMathWrapper() {
           tagName: 'div',
           properties: {
             dir: 'ltr',
-            className: ['math-block'],
-            style: 'unicode-bidi: isolate; direction: ltr; display: block; text-align: center;',
+            className: ['isolate', 'block', 'text-center', 'mt-3', 'mb-3'],
           },
           children: [node],
         }
@@ -74,8 +137,7 @@ function rehypeMathWrapper() {
           tagName: 'span',
           properties: {
             dir: 'ltr',
-            className: ['math-inline'],
-            style: 'unicode-bidi: isolate; direction: ltr; display: inline-block;',
+            className: ['isolate', 'inline-block', 'align-middle'],
           },
           children: [node],
         }
@@ -88,10 +150,16 @@ function rehypeMathWrapper() {
 }
 
 export function ChatMessageContent({ content, className }: ChatMessageContentProps) {
+  const normalizedContent = normalizeLatexDelimiters(content)
+
   return (
-    <div className={cn('chat-message-content', className)}>
-      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeMathWrapper]}>
-        {content}
+    <div className={cn('chat-message-content leading-relaxed', className)}>
+      <ReactMarkdown
+        remarkPlugins={[remarkMath]}
+        rehypePlugins={[rehypeKatex, rehypeMathWrapper]}
+        components={markdownComponents}
+      >
+        {normalizedContent}
       </ReactMarkdown>
     </div>
   )
