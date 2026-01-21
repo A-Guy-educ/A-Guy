@@ -328,6 +328,119 @@ export const authenticatedOrPublished: Access = ({ req: { user } }) => {
 }
 ```
 
+## Advanced Access Control Patterns
+
+### Context-Aware Access
+
+```typescript
+// Locale-specific access
+export const localeSpecificAccess: Access = ({ req: { user, locale } }) => {
+  if (user) return true
+  return locale === 'en' // Public users can only access English content
+}
+
+// IP-based access (factory function)
+export function restrictedIpAccess(allowedIps: string[]): Access {
+  return ({ req: { headers } }) => {
+    const ip = headers?.get('x-forwarded-for') || headers?.get('x-real-ip')
+    return allowedIps.includes(ip || '')
+  }
+}
+```
+
+### Time-Based Access
+
+```typescript
+// Recent records only (last N days)
+export function recentRecordsAccess(days: number): Access {
+  return ({ req: { user } }) => {
+    if (!user) return false
+    if (user.roles?.includes('admin')) return true
+
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - days)
+
+    return {
+      createdAt: { greater_than_equal: cutoff.toISOString() },
+    }
+  }
+}
+
+// Scheduled content (publish window)
+export const scheduledContentAccess: Access = ({ req: { user } }) => {
+  if (user?.roles?.includes('admin') || user?.roles?.includes('editor')) {
+    return true
+  }
+
+  const now = new Date().toISOString()
+  return {
+    and: [
+      { publishDate: { less_than_equal: now } },
+      {
+        or: [{ unpublishDate: { exists: false } }, { unpublishDate: { greater_than: now } }],
+      },
+    ],
+  }
+}
+```
+
+### Access Control Factory Functions
+
+```typescript
+// Role-based factory
+export function createRoleBasedAccess(roles: string[]): Access {
+  return ({ req: { user } }) => {
+    if (!user) return false
+    return roles.some((role) => user.roles?.includes(role))
+  }
+}
+
+// Organization-scoped factory
+export function createOrgScopedAccess(allowAdmin = true): Access {
+  return ({ req: { user } }) => {
+    if (!user) return false
+    if (allowAdmin && user.roles?.includes('admin')) return true
+    return { organizationId: { in: user.organizationIds || [] } }
+  }
+}
+
+// Time-limited factory
+export function createTimeLimitedAccess(daysAccess: number): Access {
+  return ({ req: { user } }) => {
+    if (!user) return false
+    if (user.roles?.includes('admin')) return true
+
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - daysAccess)
+    return { createdAt: { greater_than_equal: cutoff.toISOString() } }
+  }
+}
+```
+
+### Access Control Performance
+
+```typescript
+// ❌ Slow: Multiple async calls in access check
+export const slowAccess: Access = async ({ req: { user } }) => {
+  const org = await req.payload.findByID({ collection: 'orgs', id: user.orgId })
+  const team = await req.payload.findByID({ collection: 'teams', id: user.teamId })
+  return org.active && team.active
+}
+
+// ✅ Fast: Use query constraints or cache in context
+export const fastAccess: Access = ({ req: { user, context } }) => {
+  if (!context.orgStatus) {
+    context.orgStatus = checkOrgStatus(user.orgId) // Cache expensive lookups
+  }
+  return context.orgStatus
+}
+
+// ✅ Better: Use query constraint to filter at DB level
+export const efficientAccess: Access = () => {
+  return { isPublic: { equals: true } } // Let database filter
+}
+```
+
 ## Hooks
 
 ### Common Hook Patterns
@@ -1057,91 +1170,30 @@ export const myPlugin =
 7. **Type Generation**: Types not updated until `generate:types` runs
 8. **MongoDB Transactions**: Require replica set configuration
 
-## Additional Context Files
+## Additional Documentation
 
-For deeper exploration of specific topics, refer to the context files located in `.cursor/rules/`:
+For deeper exploration of specific topics, refer to the README files throughout the project:
 
-### Available Context Files
+| Topic | Location |
+|-------|----------|
+| Access Control | `docs/access-control/README.md` |
+| Admin Components | `docs/admin-components/README.md` |
+| AI Services | `docs/ai-services/README.md` |
+| Block Rendering | `docs/block-rendering/README.md` |
+| Collections | `src/collections/README.md` |
+| Components | `src/components/README.md` |
+| Course Hierarchy | `docs/course-hierarchy/README.md` |
+| Exercises | `docs/exercises/README.md` |
+| Exercise Import | `docs/exercise-import/README.md` |
+| Testing | `tests/README.md` |
 
-1. **`payload-overview.md`** - High-level architecture and core concepts
-   - Payload structure and initialization
-   - Configuration fundamentals
-   - Database adapters overview
+### Pattern Discovery
 
-2. **`security-critical.md`** - Critical security patterns (⚠️ IMPORTANT)
-   - Local API access control
-   - Transaction safety in hooks
-   - Preventing infinite hook loops
+Find code examples using the AI-optimized indexes:
 
-3. **`collections.md`** - Collection configurations
-   - Basic collection patterns
-   - Auth collections with RBAC
-   - Upload collections
-   - Drafts and versioning
-   - Globals
-
-4. **`fields.md`** - Field types and patterns
-   - All field types with examples
-   - Conditional fields
-   - Virtual fields
-   - Field validation
-   - Common field patterns
-
-5. **`field-type-guards.md`** - TypeScript field type utilities
-   - Field type checking utilities
-   - Safe type narrowing
-   - Runtime field validation
-
-6. **`access-control.md`** - Permission patterns
-   - Collection-level access
-   - Field-level access
-   - Row-level security
-   - RBAC patterns
-   - Multi-tenant access control
-
-7. **`access-control-advanced.md`** - Complex access patterns
-   - Nested document access
-   - Cross-collection permissions
-   - Dynamic role hierarchies
-   - Performance optimization
-
-8. **`hooks.md`** - Lifecycle hooks
-   - Collection hooks
-   - Field hooks
-   - Hook context patterns
-   - Common hook recipes
-
-9. **`queries.md`** - Database operations
-   - Local API usage
-   - Query operators
-   - Complex queries with AND/OR
-   - Performance optimization
-
-10. **`endpoints.md`** - Custom API endpoints
-    - REST endpoint patterns
-    - Authentication in endpoints
-    - Error handling
-    - Route parameters
-
-11. **`adapters.md`** - Database and storage adapters
-    - MongoDB patterns
-    - Storage adapter usage (S3, Azure, GCS, etc.)
-    - Custom adapter development
-
-12. **`plugin-development.md`** - Creating plugins
-    - Plugin architecture
-    - Modifying configuration
-    - Plugin hooks
-    - Best practices
-
-13. **`components.md`** - Custom Components
-    - Component types (Root, Collection, Global, Field)
-    - Server vs Client Components
-    - Component paths and definition
-    - Default and custom props
-    - Using hooks
-    - Performance best practices
-    - Styling components
+- **Pattern Index**: `docs/ai/indexes/pattern-index.json` - 132 files × 12 patterns
+- **README Index**: `.ai-docs/readme-index.json` - 19 READMEs indexed
+- **Doc Chunks**: `docs/ai/indexes/doc-chunks.json` - 217 searchable chunks
 
 ## AI Agent Optimization
 
