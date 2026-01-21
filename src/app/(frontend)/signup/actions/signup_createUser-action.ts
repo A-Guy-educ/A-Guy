@@ -2,7 +2,6 @@
 
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { cookies } from 'next/headers'
 import { checkRateLimit } from './signup_rateLimit-action'
 import {
   handleDuplicateEmailError,
@@ -11,6 +10,7 @@ import {
 } from '../signup_handlers'
 import { SignupSchema, type SignupResult } from '../signup_schemas'
 import { AccountRole } from '@/collections/Users/roles'
+import { setSignupAuthCookie } from './signup_setAuthCookie'
 
 export async function signupAction(formData: FormData): Promise<SignupResult> {
   try {
@@ -69,30 +69,20 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
     try {
       const user = await payload.create({
         collection: 'users',
+        overrideAccess: false,
         data: {
           name,
           email,
           password,
           role: AccountRole.Student, // Force role - never trust client input
+          registrationMethod: 'email',
+          registeredAt: new Date().toISOString(),
+          localAuthEnabled: true,
         },
       })
 
       // 7. Auto-login: Set auth cookies
-      const cookieStore = await cookies()
-      const token = await payload.login({
-        collection: 'users',
-        data: { email, password },
-      })
-
-      if (token && 'token' in token && token.token) {
-        cookieStore.set('payload-token', token.token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 7 * 24 * 60 * 60, // 7 days
-          path: '/',
-        })
-      }
+      await setSignupAuthCookie(payload, email, password)
 
       return { success: true, message: 'Account created successfully', userId: user.id }
     } catch (error) {

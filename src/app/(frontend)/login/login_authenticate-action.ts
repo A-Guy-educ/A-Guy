@@ -20,6 +20,14 @@ type CookieStore = {
 export async function loginAction(formData: FormData, cookieStore?: CookieStore) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const returnTo = formData.get('returnTo') as string | null
+
+  const sanitizeReturnTo = (value?: string | null) => {
+    if (!value) return undefined
+    if (!value.startsWith('/')) return undefined
+    if (value.startsWith('//')) return undefined
+    return value
+  }
 
   if (!email || !password) {
     return { success: false, error: 'invalidCredentials' }
@@ -71,7 +79,7 @@ export async function loginAction(formData: FormData, cookieStore?: CookieStore)
         ...(authCookies?.domain ? { domain: authCookies.domain } : {}),
       })
 
-      return { success: true }
+      return { success: true, redirectTo: sanitizeReturnTo(returnTo) }
     }
 
     return { success: false, error: 'invalidCredentials' }

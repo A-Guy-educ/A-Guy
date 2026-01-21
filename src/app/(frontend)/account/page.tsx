@@ -1,15 +1,10 @@
-import { redirect } from 'next/navigation'
-import { getMeUser } from '@/utilities/getMeUser'
+import { requireRegistration } from '@/lib/auth/registration-gate'
 import { AccountPageContent } from './AccountPageContent'
 
 export const metadata = { title: 'Account' }
 
 export default async function AccountPage() {
-  const { user } = await getMeUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  const user = await requireRegistration('/account')
 
   return <AccountPageContent user={user} />
 }

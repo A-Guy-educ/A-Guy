@@ -38,8 +38,15 @@
       "loggingIn": "Logging in...",
       "noAccount": "Don't have an account?",
       "signupLink": "Sign up",
+      "linkGoogle": "Link Google account",
       "errors": {
-        "invalidCredentials": "Invalid email or password"
+        "invalidCredentials": "Invalid email or password",
+        "account_exists": "Account exists for this email. Log in to link Google.",
+        "oauth_already_linked": "This Google account is already linked to another user.",
+        "oauth_failed": "Authentication failed. Please try again.",
+        "email_not_verified": "Please verify your email with Google first.",
+        "invalid_state": "Invalid request. Please try again.",
+        "invalid_request": "Invalid request. Please try again."
       }
     },
     "account": {
@@ -60,6 +67,13 @@
       "confirmPassword": "Confirm Password",
       "createAccount": "Create Account",
       "creatingAccount": "Creating account...",
+      "continueWithGoogle": "Continue with Google",
+      "orContinueWith": "or continue with email",
+      "oneMethodOnly": "You only need one method to register",
+      "signupDescription": "Fill in the form below to create your account",
+      "signupSuccess": "Account created successfully!",
+      "signupFailed": "Signup failed",
+      "unexpectedError": "An unexpected error occurred",
       "alreadyHaveAccount": "Already have an account?",
       "login": "Log in",
       "errors": {

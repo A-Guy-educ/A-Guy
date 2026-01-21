@@ -39,6 +39,13 @@
       "confirmPassword": "אשר סיסמה",
       "createAccount": "צור חשבון",
       "creatingAccount": "יוצר חשבון...",
+      "continueWithGoogle": "המשך עם Google",
+      "orContinueWith": "או המשך עם אימייל",
+      "oneMethodOnly": "צריך רק שיטת הרשמה אחת",
+      "signupDescription": "מלא את הטופס כדי ליצור חשבון",
+      "signupSuccess": "החשבון נוצר בהצלחה!",
+      "signupFailed": "ההרשמה נכשלה",
+      "unexpectedError": "אירעה שגיאה לא צפויה",
       "alreadyHaveAccount": "כבר יש לך חשבון?",
       "login": "התחבר",
       "errors": {
@@ -61,8 +68,15 @@
       "loggingIn": "מתחבר...",
       "noAccount": "אין לך חשבון?",
       "signupLink": "הירשם",
+      "linkGoogle": "קישור חשבון Google",
       "errors": {
-        "invalidCredentials": "אימייל או סיסמה שגויים"
+        "invalidCredentials": "אימייל או סיסמה שגויים",
+        "account_exists": "חשבון קיים עבור האימייל הזה. התחבר כדי לקשר.",
+        "oauth_already_linked": "חשבון Google זה כבר מקושר למשתמש אחר.",
+        "oauth_failed": "האימות נכשל. נסה שוב.",
+        "email_not_verified": "נא לאמת את האימייל שלך ב-Google תחילה.",
+        "invalid_state": "בקשה לא תקינה. נסה שוב.",
+        "invalid_request": "בקשה לא תקינה. נסה שוב."
       }
     },
     "account": {

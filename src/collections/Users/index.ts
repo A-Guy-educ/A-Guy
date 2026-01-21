@@ -63,6 +63,99 @@ export const Users: CollectionConfig = {
         position: 'sidebar',
       },
     },
+    {
+      name: 'registrationMethod',
+      type: 'select',
+      options: [
+        { label: 'Email', value: 'email' },
+        { label: 'Google', value: 'google' },
+      ],
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'localAuthEnabled',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'registeredAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'googleSub',
+      type: 'text',
+      unique: true,
+      index: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'googleEmail',
+      type: 'email',
+      index: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'oauthPasswordVersion',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        readOnly: true,
+        hidden: true,
+      },
+    },
+    {
+      name: 'oauthIdentities',
+      type: 'array',
+      admin: {
+        readOnly: true,
+      },
+      fields: [
+        {
+          name: 'provider',
+          type: 'select',
+          options: [{ label: 'Google', value: 'google' }],
+          required: true,
+        },
+        {
+          name: 'providerUserId',
+          type: 'text',
+          required: true,
+        },
+        {
+          name: 'email',
+          type: 'email',
+        },
+        {
+          name: 'linkedAt',
+          type: 'date',
+          required: true,
+        },
+        {
+          name: 'profile',
+          type: 'json',
+          admin: {
+            hidden: true,
+          },
+        },
+      ],
+    },
   ],
   hooks: {
     // Prevent demoting the last admin

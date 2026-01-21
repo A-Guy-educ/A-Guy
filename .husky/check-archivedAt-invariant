@@ -8,8 +8,8 @@ if [ "$SKIP_HOOKS" = "1" ]; then
 fi
 
 # Check staged files for archivedAt: null
-# Allowlist: normalize-conversations-archivedAt.ts (which finds and removes null values)
-violations=$(git diff --cached --name-only | xargs grep -l "archivedAt.*null\|archivedAt:\s*null" 2>/dev/null | grep -v "normalize-conversations-archivedAt.ts" || true)
+# Allowlist: normalize-conversations-archivedAt.ts and generated payload types
+violations=$(git diff --cached --name-only | xargs grep -l "archivedAt.*null\|archivedAt:\s*null" 2>/dev/null | grep -v -e "normalize-conversations-archivedAt.ts" -e "src/payload-types.ts" -e ".husky/check-archivedAt-invariant" || true)
 
 if [ -n "$violations" ]; then
   echo ""

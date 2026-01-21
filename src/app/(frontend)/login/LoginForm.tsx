@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
@@ -14,10 +14,27 @@ import { loginAction } from './login_authenticate-action'
 export function LoginForm() {
   const t = useTranslations('auth.login')
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const queryError = searchParams.get('error')
+  const queryReturnTo = searchParams.get('returnTo')
+  const queryLinkGoogle = searchParams.get('linkGoogle') === '1'
+
+  const sanitizeReturnTo = (value?: string | null) => {
+    if (!value) return undefined
+    if (!value.startsWith('/')) return undefined
+    if (value.startsWith('//')) return undefined
+    return value
+  }
+
+  const returnTo = sanitizeReturnTo(queryReturnTo)
+  const resolvedError = error || queryError
+  const showLinkGoogleButton = queryError === 'account_exists' || queryLinkGoogle
+  const signupHref = returnTo ? `/signup?returnTo=${encodeURIComponent(returnTo)}` : '/signup'
 
   const isFormValid = email.trim() !== '' && password.trim() !== ''
 
@@ -31,7 +48,18 @@ export function LoginForm() {
 
     if (result.success) {
       window.dispatchEvent(new Event('auth:changed'))
-      router.push('/')
+      if (queryError === 'account_exists') {
+        const linkParams = new URLSearchParams()
+        linkParams.set('linkGoogle', '1')
+        if (returnTo) {
+          linkParams.set('returnTo', returnTo)
+        }
+        router.push(`/login?${linkParams.toString()}`)
+        router.refresh()
+        return
+      }
+
+      router.push(result.redirectTo || returnTo || '/')
       router.refresh()
       return
     }
@@ -75,7 +103,22 @@ export function LoginForm() {
             />
           </div>
 
-          {error && <p className="text-sm text-destructive">{t(`errors.${error}`)}</p>}
+          <input type="hidden" name="returnTo" value={returnTo ?? ''} />
+
+          {resolvedError && (
+            <p className="text-sm text-destructive">{t(`errors.${resolvedError}`)}</p>
+          )}
+
+          {showLinkGoogleButton && (
+            <Link
+              href={`/api/auth/google?mode=link${
+                returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''
+              }`}
+              className="block text-center text-sm text-primary hover:underline"
+            >
+              {t('linkGoogle')}
+            </Link>
+          )}
 
           <Button type="submit" className="w-full" disabled={!isFormValid || isLoading}>
             {isLoading ? t('loggingIn') : t('loginButton')}
@@ -85,7 +128,7 @@ export function LoginForm() {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           {t('noAccount')}{' '}
-          <Link href="/signup" className="text-primary hover:underline">
+          <Link href={signupHref} className="text-primary hover:underline">
             {t('signupLink')}
           </Link>
         </p>

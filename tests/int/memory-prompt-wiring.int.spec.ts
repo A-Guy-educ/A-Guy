@@ -83,6 +83,57 @@ async function createTestUser(prefix: string): Promise<string> {
   return user.id
 }
 
+async function createTestLesson(): Promise<string> {
+  const timestamp = Date.now()
+  const category = await payload.create({
+    collection: 'categories',
+    data: {
+      title: `Test Category ${timestamp}`,
+    },
+    draft: true,
+  })
+
+  const course = await payload.create({
+    collection: 'courses',
+    data: {
+      courseLabel: `T-${timestamp}`,
+      title: `Test Course ${timestamp}`,
+      categories: [category.id],
+      order: 0,
+      status: 'draft',
+      isActive: true,
+    },
+    draft: true,
+  })
+
+  const chapter = await payload.create({
+    collection: 'chapters',
+    data: {
+      course: course.id,
+      title: `Test Chapter ${timestamp}`,
+      order: 0,
+      status: 'draft',
+      isActive: true,
+    },
+    draft: true,
+  })
+
+  const lesson = await payload.create({
+    collection: 'lessons',
+    data: {
+      chapter: chapter.id,
+      title: `Test Lesson ${timestamp}`,
+      order: 0,
+      status: 'draft',
+      isActive: true,
+      type: 'learning',
+    },
+    draft: true,
+  })
+
+  return lesson.id
+}
+
 // Helper: Create memory item
 function createMemoryItem(
   userId: string,
@@ -140,10 +191,13 @@ beforeAll(async () => {
   if (existingExercises.docs.length > 0) {
     testExerciseId = existingExercises.docs[0].id
   } else {
+    const lessonId = await createTestLesson()
     const exercise = await payload.create({
       collection: 'exercises',
       data: {
         title: 'Memory Wiring Test Exercise',
+        order: 0,
+        lesson: lessonId,
       } satisfies Partial<Exercise>,
       draft: true,
     })

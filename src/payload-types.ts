@@ -395,6 +395,30 @@ export interface User {
   id: string;
   name?: string | null;
   role: 'admin' | 'student';
+  registrationMethod?: ('email' | 'google') | null;
+  localAuthEnabled?: boolean | null;
+  registeredAt?: string | null;
+  googleSub?: string | null;
+  googleEmail?: string | null;
+  oauthPasswordVersion?: number | null;
+  oauthIdentities?:
+    | {
+        provider: 'google';
+        providerUserId: string;
+        email?: string | null;
+        linkedAt: string;
+        profile?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -2060,6 +2084,22 @@ export interface ExerciseAssetsSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
+  registrationMethod?: T;
+  localAuthEnabled?: T;
+  registeredAt?: T;
+  googleSub?: T;
+  googleEmail?: T;
+  oauthPasswordVersion?: T;
+  oauthIdentities?:
+    | T
+    | {
+        provider?: T;
+        providerUserId?: T;
+        email?: T;
+        linkedAt?: T;
+        profile?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
