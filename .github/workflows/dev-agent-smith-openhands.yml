@@ -14,6 +14,7 @@ concurrency:
   group: agent-orchestrator-${{ github.repository }}-${{ github.event.issue.number }}
   cancel-in-progress: true
 
+
 jobs:
   orchestrator:
     if: >
@@ -78,6 +79,7 @@ jobs:
     needs: orchestrator
     if: needs.orchestrator.outputs.mode == 'openhands'
     uses: OpenHands/OpenHands/.github/workflows/openhands-resolver.yml@0.62.0
+
     with:
       macro: '@agent-orchestrator'
       max_iterations: 25
