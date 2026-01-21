@@ -65,6 +65,16 @@ export function SignupForm() {
             role: 'student', // Default role for new signups
           }
 
+          // Add email and name from form (using Mixpanel reserved properties)
+          const email = formData.get('email') as string
+          const name = formData.get('name') as string
+          if (email) {
+            userProperties.$email = email
+          }
+          if (name) {
+            userProperties.$name = name
+          }
+
           // Add locale from browser
           if (typeof window !== 'undefined') {
             userProperties.locale = detectBrowserLocale()

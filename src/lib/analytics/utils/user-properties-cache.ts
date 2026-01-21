@@ -2,15 +2,15 @@
  * User Properties Cache
  *
  * Manages persistent storage of user properties for analytics
- * Stores non-PII user properties in localStorage for cross-session persistence
- *
- * CRITICAL: Only store non-PII properties (no emails, names, etc.)
+ * Stores user properties in localStorage for cross-session persistence
  */
 
 const CACHE_KEY = 'analytics_user_properties'
 
 export interface CachedUserProperties {
   user_id: string
+  $email?: string
+  $name?: string
   role?: string
   signup_date?: string
   locale?: string
