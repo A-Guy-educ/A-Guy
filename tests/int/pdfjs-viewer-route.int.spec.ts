@@ -381,11 +381,9 @@ describe('PDF.js Viewer Route Integration', () => {
       })
     })
 
-    it('should accept annotationEditorMode=15 for highlight mode', async () => {
+    it('should accept annotationEditorMode=9 for highlight mode via hash', async () => {
       const request = new NextRequest(
-        new URL(
-          `${testOrigin}/api/pdfjs-viewer?file=/media/sample.pdf&annotationEditorMode=15`,
-        ),
+        new URL(`${testOrigin}/api/pdfjs-viewer?file=/media/sample.pdf&annotationEditorMode=9`),
       )
 
       const response = await GET(request)
@@ -393,9 +391,9 @@ describe('PDF.js Viewer Route Integration', () => {
       expect(response.status).toBe(200)
       const html = await response.text()
 
-      // Check that annotation mode script was injected
-      expect(html).toContain('switchannotationeditormode')
-      expect(html).toContain('mode: 15')
+      // Check that annotation mode is passed via hash parameter
+      expect(html).toContain('annotationEditorMode=9')
+      expect(html).toContain('window.location')
     })
 
     it('should accept annotationEditorMode=0 for disabled mode', async () => {
@@ -408,12 +406,12 @@ describe('PDF.js Viewer Route Integration', () => {
       expect(response.status).toBe(200)
       const html = await response.text()
 
-      // Mode 0 should not inject script (default disabled)
-      expect(html).not.toContain('switchannotationeditormode')
+      // Mode 0 should not add hash parameter
+      expect(html).not.toContain('annotationEditorMode=')
     })
 
-    it('should accept other valid annotation modes (1=freetext, 2=ink, 3=stamp)', async () => {
-      for (const mode of [1, 2, 3]) {
+    it('should accept other valid annotation modes (3=freetext, 15=ink, 13=stamp)', async () => {
+      for (const mode of [3, 13, 15]) {
         const request = new NextRequest(
           new URL(
             `${testOrigin}/api/pdfjs-viewer?file=/media/sample.pdf&annotationEditorMode=${mode}`,
@@ -425,26 +423,27 @@ describe('PDF.js Viewer Route Integration', () => {
         expect(response.status).toBe(200)
         const html = await response.text()
 
-        // Check that annotation mode script was injected
-        expect(html).toContain('switchannotationeditormode')
-        expect(html).toContain(`mode: ${mode}`)
+        // Check that annotation mode is passed via hash parameter
+        expect(html).toContain(`annotationEditorMode=${mode}`)
       }
     })
 
-    it('should reject invalid annotation mode values', async () => {
+    it('should ignore invalid annotation mode values and log warning', async () => {
       const request = new NextRequest(
         new URL(`${testOrigin}/api/pdfjs-viewer?file=/media/sample.pdf&annotationEditorMode=999`),
       )
 
       const response = await GET(request)
 
-      expect(response.status).toBe(400)
-      const json = await response.json()
-      expect(json.error).toBe('Invalid annotation mode')
-      expect(json.details).toContain('not in allowed list')
+      // Should succeed with default mode (backward compatible)
+      expect(response.status).toBe(200)
+      const html = await response.text()
+
+      // Invalid mode should not be in hash
+      expect(html).not.toContain('annotationEditorMode=999')
     })
 
-    it('should reject non-numeric annotation mode values', async () => {
+    it('should ignore non-numeric annotation mode values and log warning', async () => {
       const request = new NextRequest(
         new URL(
           `${testOrigin}/api/pdfjs-viewer?file=/media/sample.pdf&annotationEditorMode=invalid`,
@@ -453,10 +452,12 @@ describe('PDF.js Viewer Route Integration', () => {
 
       const response = await GET(request)
 
-      expect(response.status).toBe(400)
-      const json = await response.json()
-      expect(json.error).toBe('Invalid annotation mode')
-      expect(json.details).toContain('must be a number')
+      // Should succeed with default mode (backward compatible)
+      expect(response.status).toBe(200)
+      const html = await response.text()
+
+      // Invalid mode should not be in hash
+      expect(html).not.toContain('annotationEditorMode=invalid')
     })
 
     it('should work without annotationEditorMode parameter (default)', async () => {
@@ -469,8 +470,8 @@ describe('PDF.js Viewer Route Integration', () => {
       expect(response.status).toBe(200)
       const html = await response.text()
 
-      // Without mode parameter, no annotation script should be injected
-      expect(html).not.toContain('switchannotationeditormode')
+      // Without mode parameter, no hash should be present
+      expect(html).not.toContain('annotationEditorMode=')
     })
   })
 })

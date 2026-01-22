@@ -1,10 +1,9 @@
-'use client'
-
 import React, { useEffect } from 'react'
 import { cn } from '@/utilities/ui'
 import type { Props as MediaProps } from '../types'
 import { useAnalytics } from '@/lib/analytics/providers/AnalyticsProvider'
 import { PRODUCT_EVENTS } from '@/lib/analytics/contracts/events'
+import { ANNOTATION_EDITOR_MODES } from '@/lib/pdfjs/config'
 
 export const PDFMedia: React.FC<MediaProps> = (props) => {
   const { resource, className } = props
@@ -46,8 +45,8 @@ export const PDFMedia: React.FC<MediaProps> = (props) => {
 
   // Load PDF.js viewer via proxy (Blob CDN sets Content-Disposition: attachment)
   // Add version parameter to bust cache when viewer files are updated
-  // Add annotationEditorMode=15 to enable highlight tool
-  const viewerUrl = `/api/pdfjs-viewer?file=${encodeURIComponent(pdfUrl)}&v=4.4.168&annotationEditorMode=15`
+  // Add annotationEditorMode to enable highlight tool
+  const viewerUrl = `/api/pdfjs-viewer?file=${encodeURIComponent(pdfUrl)}&v=4.4.168&annotationEditorMode=${ANNOTATION_EDITOR_MODES.HIGHLIGHT}`
 
   return (
     <div className={cn('w-full h-full', className)}>

@@ -60,23 +60,21 @@ export async function GET(request: NextRequest) {
   // Validate annotation mode if provided
   const annotationModeValidation = validateAnnotationMode(annotationModeParam)
 
+  let annotationEditorMode = 0 // Default to NONE
   if (!annotationModeValidation.valid) {
+    // Log invalid annotation mode but don't fail the request (backward compatibility)
     reqLogger.warn(
       {
         error: annotationModeValidation.error,
         annotationModeParam,
       },
-      'Invalid annotation mode parameter',
+      'Invalid annotation mode parameter - ignoring and using default (NONE)',
     )
-
-    return NextResponse.json(
-      { error: 'Invalid annotation mode', details: annotationModeValidation.error },
-      { status: 400 },
-    )
+  } else {
+    annotationEditorMode = annotationModeValidation.mode
   }
 
   const validatedFileUrl = validation.url
-  const annotationEditorMode = annotationModeValidation.mode
 
   reqLogger.debug(
     { fileUrl: redactUrl(validatedFileUrl), annotationEditorMode },
@@ -107,10 +105,8 @@ export async function GET(request: NextRequest) {
     // Rewrite CSS to fix image paths
     const rewrittenCss = rewriteCss(cssResult.css)
 
-    // Render final HTML with annotation mode if specified
-    let html = renderViewerHtml(templateResult.html, rewrittenCss, {
-      annotationEditorMode: annotationEditorMode > 0 ? annotationEditorMode : undefined,
-    })
+    // Render final HTML (no script injection for annotation mode)
+    let html = renderViewerHtml(templateResult.html, rewrittenCss)
 
     // Validate rewrite was successful
     const validation = validateRewrittenHtml(html)
@@ -119,26 +115,33 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'PDF viewer rendering error' }, { status: 500 })
     }
 
-    // Inject file URL via query parameter (PDF.js native mechanism)
-    // The viewer will read the file parameter from its own URL
+    // Inject file URL and annotation mode via query parameter and hash (PDF.js native mechanism)
+    // The viewer will read the file parameter from window.location.search
+    // and annotationEditorMode from window.location.hash
     if (validatedFileUrl) {
-      // PDF.js viewer.html reads the file parameter from window.location.search
-      // We pass it through by adding it to the base href or letting the iframe handle it
-      // Since we're serving the HTML directly, we need to inject it via the viewer's
-      // own query handling mechanism
+      // Build hash parameters for PDF.js
+      const hashParams: string[] = []
+      if (annotationEditorMode > 0) {
+        hashParams.push(`annotationEditorMode=${annotationEditorMode}`)
+      }
+      const hashString = hashParams.length > 0 ? `#${hashParams.join('&')}` : ''
 
-      // Add file parameter to viewer's window.location simulation
-      // The viewer expects to read 'file' from URLSearchParams
+      // Add file parameter and hash to viewer's window.location simulation
+      // PDF.js viewer reads 'file' from URLSearchParams and hash params from location.hash
       html = html.replace(
         '</head>',
         `<script>
-          // Inject file URL into viewer's URL handling
-          // PDF.js viewer reads 'file' from window.location.search
+          // Inject file URL and annotation mode into viewer's URL handling
+          // PDF.js viewer reads 'file' from window.location.search and hash params from location.hash
           if (typeof window !== 'undefined') {
-            const originalSearch = window.location.search;
             Object.defineProperty(window.location, 'search', {
               get: function() {
                 return '?file=${encodeURIComponent(validatedFileUrl).replace(/'/g, "\\'")}';
+              }
+            });
+            Object.defineProperty(window.location, 'hash', {
+              get: function() {
+                return '${hashString}';
               }
             });
           }

@@ -56,14 +56,15 @@ export const VALIDATION_CONFIG = {
 
 /**
  * PDF.js annotation editor modes
- * See: https://github.com/mozilla/pdf.js/blob/master/web/app_options.js
+ * See: https://github.com/mozilla/pdf.js/blob/master/web/annotation_editor_params.js
+ * AnnotationEditorType values from PDF.js 4.x
  */
 export const ANNOTATION_EDITOR_MODES = {
   NONE: 0,
-  FREETEXT: 1,
-  INK: 2,
-  STAMP: 3,
-  HIGHLIGHT: 15,
+  FREETEXT: 3,
+  HIGHLIGHT: 9,
+  STAMP: 13,
+  INK: 15,
 } as const
 
 /**

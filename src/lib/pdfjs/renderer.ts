@@ -28,14 +28,8 @@ export function rewriteCss(css: string): string {
  *
  * @param html - Original viewer HTML
  * @param css - CSS content (should already have image paths rewritten via rewriteCss)
- * @param options - Optional configuration
- * @param options.annotationEditorMode - PDF.js annotation editor mode (0=none, 15=highlight, etc)
  */
-export function renderViewerHtml(
-  html: string,
-  css: string,
-  options?: { annotationEditorMode?: number },
-): string {
+export function renderViewerHtml(html: string, css: string): string {
   logger.debug('Starting HTML rewrite pipeline')
 
   let result = html
@@ -124,22 +118,6 @@ export function renderViewerHtml(
           e.preventDefault();
           return false;
         }, false);
-        ${
-          options?.annotationEditorMode !== undefined
-            ? `
-        // Enable annotation editor mode
-        document.addEventListener('DOMContentLoaded', function() {
-          if (window.PDFViewerApplication) {
-            window.PDFViewerApplication.initializedPromise.then(function() {
-              window.PDFViewerApplication.eventBus.dispatch('switchannotationeditormode', {
-                mode: ${options.annotationEditorMode}
-              });
-            });
-          }
-        });
-        `
-            : ''
-        }
       })();
     </script>
     </head>`,
