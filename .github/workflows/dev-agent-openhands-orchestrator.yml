@@ -1,4 +1,4 @@
-name: Agent Orchestrator
+name: Mrs. Smith
 
 on:
   issue_comment:
@@ -13,12 +13,12 @@ permissions:
 # IMPORTANT:
 # One run per comment. Prevents "canceling since a higher priority request exists"
 concurrency:
-  group: agent-orchestrator-${{ github.repository }}-${{ github.event.issue.number }}-${{ github.event.comment.id }}
+  group: mrs-smith-${{ github.repository }}-${{ github.event.issue.number }}-${{ github.event.comment.id }}
   cancel-in-progress: false
 
 jobs:
   orchestrator:
-    if: ${{ github.event.issue.state == 'open' && github.event.sender.type != 'Bot' && contains(github.event.comment.body, '@agent-orchestrator') }}
+    if: ${{ github.event.issue.state == 'open' && github.event.sender.type != 'Bot' && contains(github.event.comment.body, '@mrs-smith') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -57,7 +57,7 @@ jobs:
         with:
           script: |
             const body = context.payload.comment?.body || "";
-            const isSimple = /@agent-orchestrator\b.*\s--simple\b/i.test(body);
+            const isSimple = /@mrs-smith\b.*\s--simple\b/i.test(body);
             const mode = isSimple ? "simple" : "openhands";
 
             core.info(`DECIDE: mode=${mode}`);
@@ -123,7 +123,7 @@ jobs:
           timeout -k 30s 12m python -m openhands.resolver.resolve_issue \
             --repo "$REPO" \
             --issue-number "$ISSUE_NUMBER" \
-            --macro "@agent-orchestrator" \
+            --macro "@mrs-smith" \
             --max-iterations 25 \
             --target-branch "dev" \
             --llm-model "minimax/MiniMax-M2.1" \
