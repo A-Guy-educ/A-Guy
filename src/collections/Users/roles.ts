@@ -8,7 +8,6 @@
  * - admin: Platform administrator with full access
  * - student: Learner with standard access (default role)
  */
-import enMessages from '../../../messages/en.json' with { type: 'json' }
 
 export enum AccountRole {
   Admin = 'admin',
@@ -28,14 +27,17 @@ export function parseAccountRole(value: unknown): AccountRole {
   return value
 }
 
-// Role labels for UI display (sourced from language files)
-export const ACCOUNT_ROLE_LABEL: Record<AccountRole, string> = {
-  [AccountRole.Admin]: enMessages.roles.admin,
-  [AccountRole.Student]: enMessages.roles.student,
-}
-
 // All roles as an array (useful for iteration)
 export const ALL_ACCOUNT_ROLES: AccountRole[] = Object.values(AccountRole)
+
+/**
+ * Role labels for UI display
+ * Note: Uses static strings to avoid loading translation files at build time
+ */
+export const ACCOUNT_ROLE_LABEL: Record<AccountRole, string> = {
+  [AccountRole.Admin]: 'Admin',
+  [AccountRole.Student]: 'Student',
+}
 
 // Type-safe role checking functions
 export function isAdmin(role: AccountRole): boolean {
