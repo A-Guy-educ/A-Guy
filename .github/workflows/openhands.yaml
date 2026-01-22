@@ -1,0 +1,27 @@
+name: OpenHands Agent smith
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  openhands:
+    if: contains(github.event.comment.body, '@smith')
+    uses: OpenHands/OpenHands/.github/workflows/openhands-resolver.yml@main
+    with:
+      macro: '@smith'
+      max_iterations: 25
+      target_branch: 'dev'
+      llm_model: minimax/MiniMax-M2.1
+      pr_type: ready
+
+    secrets:
+      LLM_API_KEY: ${{secrets.AI_KEY }}
+      LLM_BASE_URL: ${{secrets.AI_BASE_URL }}
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      PAT_USERNAME: ${{ secrets.PAT_USERNAME }}
