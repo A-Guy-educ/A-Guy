@@ -58,7 +58,6 @@ export function ExerciseHeader({ exerciseTitle, backUrl }: ExerciseHeaderProps) 
         }}
       >
         <TelescopeLogo className="h-8 w-auto" />
-        <span className="text-primary text-xl font-extrabold tracking-tight">Aguy</span>
       </div>
     </header>
   )
