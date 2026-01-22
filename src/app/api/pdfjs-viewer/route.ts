@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/utilities/logger'
-import { RESPONSE_HEADERS } from '@/lib/pdfjs/config'
+import { RESPONSE_HEADERS, VALID_ANNOTATION_MODES } from '@/lib/pdfjs/config'
 import { validateFileUrl, redactUrl } from '@/lib/pdfjs/validator'
 import { loadViewerTemplate, loadViewerCss } from '@/lib/pdfjs/template-loader'
 import { rewriteCss, renderViewerHtml, validateRewrittenHtml } from '@/lib/pdfjs/renderer'
@@ -32,11 +32,10 @@ export async function GET(request: NextRequest) {
   const requestOrigin = request.nextUrl.origin
 
   // Parse and validate annotation editor mode parameter (for enabling highlight/drawing features)
-  // Valid values: 0 (none), 1 (freetext), 2 (ink), 3 (stamp), 13 (highlight)
+  // Valid values defined in VALID_ANNOTATION_MODES constant
   const annotationEditorModeParam = request.nextUrl.searchParams.get('annotationEditorMode')
-  const validAnnotationModes = ['0', '1', '2', '3', '13']
   const validatedAnnotationMode =
-    annotationEditorModeParam && validAnnotationModes.includes(annotationEditorModeParam)
+    annotationEditorModeParam && VALID_ANNOTATION_MODES.includes(annotationEditorModeParam)
       ? annotationEditorModeParam
       : null
 
@@ -119,6 +118,21 @@ export async function GET(request: NextRequest) {
 
       const queryString = queryParams.toString()
 
+      // Escape query string for safe injection into JavaScript string literal
+      // URLSearchParams already encodes special characters, but we need to escape for JS context
+      const escapeForJs = (str: string): string => {
+        return str
+          .replace(/\\/g, '\\\\') // Backslash
+          .replace(/'/g, "\\'") // Single quote
+          .replace(/"/g, '\\"') // Double quote
+          .replace(/\n/g, '\\n') // Newline
+          .replace(/\r/g, '\\r') // Carriage return
+          .replace(/\u2028/g, '\\u2028') // Line separator
+          .replace(/\u2029/g, '\\u2029') // Paragraph separator
+      }
+
+      const safeQueryString = escapeForJs(queryString)
+
       html = html.replace(
         '</head>',
         `<script>
@@ -127,7 +141,7 @@ export async function GET(request: NextRequest) {
           if (typeof window !== 'undefined') {
             Object.defineProperty(window.location, 'search', {
               get: function() {
-                return '?${queryString.replace(/'/g, "\\'")}';
+                return '?${safeQueryString}';
               }
             });
           }

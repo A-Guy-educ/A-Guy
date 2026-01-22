@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { GET } from '@/app/api/pdfjs-viewer/route'
 import { clearTemplateCache } from '@/lib/pdfjs/template-loader'
+import { VALID_ANNOTATION_MODES } from '@/lib/pdfjs/config'
 
 describe('PDF.js Viewer Route Integration', () => {
   const mockViewerHtml = `
@@ -196,9 +197,9 @@ describe('PDF.js Viewer Route Integration', () => {
 
     it('should accept valid annotationEditorMode values', async () => {
       const testFileUrl = '/media/test.pdf'
-      const validModes = ['0', '1', '2', '3', '13']
 
-      for (const mode of validModes) {
+      // Use shared constant to ensure consistency
+      for (const mode of VALID_ANNOTATION_MODES) {
         const request = new NextRequest(
           new URL(
             `${testOrigin}/api/pdfjs-viewer?file=${encodeURIComponent(testFileUrl)}&annotationEditorMode=${mode}`,

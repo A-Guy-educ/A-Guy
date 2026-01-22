@@ -55,6 +55,28 @@ export const VALIDATION_CONFIG = {
 } as const
 
 /**
+ * Annotation editor mode configuration
+ * Valid modes per PDF.js specification:
+ * - 0: None (editor disabled)
+ * - 1: FreeText
+ * - 2: Ink (drawing/pen)
+ * - 3: Stamp
+ * - 13: Highlight
+ */
+export const ANNOTATION_EDITOR_MODES = {
+  NONE: '0',
+  FREETEXT: '1',
+  INK: '2',
+  STAMP: '3',
+  HIGHLIGHT: '13',
+} as const
+
+/**
+ * Valid annotation editor mode values
+ */
+export const VALID_ANNOTATION_MODES = Object.values(ANNOTATION_EDITOR_MODES)
+
+/**
  * Get full PDF.js configuration object
  */
 export function getPdfjsConfig() {
