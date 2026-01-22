@@ -177,6 +177,41 @@ describe('PDF.js Viewer Route Integration', () => {
       // Should not contain annotationEditorMode if not provided
       expect(html).not.toContain('annotationEditorMode')
     })
+
+    it('should reject invalid annotationEditorMode values', async () => {
+      const testFileUrl = '/media/test.pdf'
+      const request = new NextRequest(
+        new URL(
+          `${testOrigin}/api/pdfjs-viewer?file=${encodeURIComponent(testFileUrl)}&annotationEditorMode=999`,
+        ),
+      )
+
+      const response = await GET(request)
+
+      expect(response.status).toBe(200)
+      const html = await response.text()
+      // Invalid mode should be ignored (not injected)
+      expect(html).not.toContain('annotationEditorMode')
+    })
+
+    it('should accept valid annotationEditorMode values', async () => {
+      const testFileUrl = '/media/test.pdf'
+      const validModes = ['0', '1', '2', '3', '13']
+
+      for (const mode of validModes) {
+        const request = new NextRequest(
+          new URL(
+            `${testOrigin}/api/pdfjs-viewer?file=${encodeURIComponent(testFileUrl)}&annotationEditorMode=${mode}`,
+          ),
+        )
+
+        const response = await GET(request)
+        const html = await response.text()
+
+        expect(response.status).toBe(200)
+        expect(html).toContain(`annotationEditorMode=${mode}`)
+      }
+    })
   })
 
   describe('Invalid input handling', () => {

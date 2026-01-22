@@ -31,13 +31,19 @@ export async function GET(request: NextRequest) {
   const fileParam = request.nextUrl.searchParams.get('file')
   const requestOrigin = request.nextUrl.origin
 
-  // Parse annotation editor mode parameter (for enabling highlight/drawing features)
+  // Parse and validate annotation editor mode parameter (for enabling highlight/drawing features)
+  // Valid values: 0 (none), 1 (freetext), 2 (ink), 3 (stamp), 13 (highlight)
   const annotationEditorModeParam = request.nextUrl.searchParams.get('annotationEditorMode')
+  const validAnnotationModes = ['0', '1', '2', '3', '13']
+  const validatedAnnotationMode =
+    annotationEditorModeParam && validAnnotationModes.includes(annotationEditorModeParam)
+      ? annotationEditorModeParam
+      : null
 
   reqLogger.debug(
     {
       fileParam: fileParam ? redactUrl(fileParam) : null,
-      annotationEditorMode: annotationEditorModeParam,
+      annotationEditorMode: validatedAnnotationMode,
     },
     'Processing viewer request',
   )
@@ -105,10 +111,10 @@ export async function GET(request: NextRequest) {
       const queryParams = new URLSearchParams()
       queryParams.set('file', validatedFileUrl)
 
-      // Add annotation editor mode if specified
+      // Add annotation editor mode if validated
       // This enables highlight/drawing features in PDF.js viewer
-      if (annotationEditorModeParam) {
-        queryParams.set('annotationEditorMode', annotationEditorModeParam)
+      if (validatedAnnotationMode) {
+        queryParams.set('annotationEditorMode', validatedAnnotationMode)
       }
 
       const queryString = queryParams.toString()
