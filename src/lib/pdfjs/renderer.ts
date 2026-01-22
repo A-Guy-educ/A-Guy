@@ -70,7 +70,50 @@ export function renderViewerHtml(html: string, css: string): string {
       #mainContainer {
         padding: 0 !important;
       }
-    </style>\n</head>`,
+      /* Disable download and print controls */
+      #download,
+      #downloadButton,
+      #openFile,
+      #print,
+      #printButton,
+      #secondaryDownload,
+      #secondaryOpenFile,
+      #secondaryPrint {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+    </style>
+    <script>
+      // Disable print keyboard shortcuts
+      (function() {
+        'use strict';
+        
+        // Prevent printing via keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+          // Check for Ctrl+P (Windows/Linux) or Cmd+P (Mac)
+          if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+          }
+        }, true);
+        
+        // Override window.print to prevent programmatic printing
+        window.print = function() {
+          console.warn('Printing is disabled for this document');
+          return false;
+        };
+        
+        // Disable context menu to prevent right-click print
+        document.addEventListener('contextmenu', function(e) {
+          e.preventDefault();
+          return false;
+        }, false);
+      })();
+    </script>
+    </head>`,
   )
 
   logger.debug(
