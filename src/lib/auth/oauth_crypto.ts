@@ -11,9 +11,9 @@ import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'crypt
 
 // Derive a proper 32-byte key using SHA-256
 function getKey(): Buffer {
-  const ENC_KEY = process.env.OAUTH_SECRET_ENC_KEY
+  const ENC_KEY = process.env.PAYLOAD_SECRET
   if (!ENC_KEY || ENC_KEY.length < 32) {
-    throw new Error('OAUTH_SECRET_ENC_KEY must be 32+ characters')
+    throw new Error('PAYLOAD_SECRET must be 32+ characters')
   }
   return createHash('sha256').update(ENC_KEY).digest()
 }
@@ -29,6 +29,7 @@ const TAG_LENGTH = 16
 export function encrypt(plain: string): string {
   const key = getKey()
   const iv = randomBytes(IV_LENGTH)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cipher = createCipheriv(ALGORITHM, key as any, iv as any)
 
   let encrypted = cipher.update(plain, 'utf8', 'base64')
@@ -37,9 +38,13 @@ export function encrypt(plain: string): string {
   const authTag = cipher.getAuthTag()
 
   // Combine: iv + authTag + ciphertext
+
   const combined = Buffer.concat([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     iv as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     authTag as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Buffer.from(encrypted, 'base64') as any,
   ])
 
@@ -59,10 +64,14 @@ export function decrypt(encrypted: string): string {
   const authTag = combined.subarray(IV_LENGTH, IV_LENGTH + TAG_LENGTH)
   const ciphertext = combined.subarray(IV_LENGTH + TAG_LENGTH)
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const decipher = createDecipheriv(ALGORITHM, key as any, iv as any)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   decipher.setAuthTag(authTag as any)
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let decrypted = decipher.update(ciphertext as any)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   decrypted = Buffer.concat([decrypted as any, decipher.final() as any])
 
   return decrypted.toString('utf8')
