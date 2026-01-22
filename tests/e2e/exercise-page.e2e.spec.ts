@@ -241,4 +241,91 @@ test.describe('Exercise Page', () => {
       expect(bodyText).toMatch(/not found|404/i)
     })
   })
+
+  test.describe('Exercise Header Mobile Navigation', () => {
+    test.skip('shows hamburger menu on mobile viewport', async ({ page }) => {
+      // SKIPPED: Requires test data seeding
+      // TODO: Implement test data seeding in beforeAll hook
+      const testUrl =
+        '/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/test-exercise-id'
+
+      // Set mobile viewport
+      await page.setViewportSize({ width: 375, height: 667 })
+      await page.goto(testUrl)
+
+      // Check that page loaded (not 404)
+      const notFound = await page.locator('body').textContent()
+      if (notFound?.includes('not found') || notFound?.includes('404')) {
+        test.skip()
+        return
+      }
+
+      // Check hamburger menu is visible
+      const hamburger = page.getByRole('button', { name: /open menu/i })
+      await expect(hamburger).toBeVisible()
+
+      // Check logo is NOT visible on mobile
+      const logo = page.locator('header').getByRole('img').first()
+      await expect(logo).not.toBeVisible()
+    })
+
+    test.skip('hamburger menu opens mobile sidebar', async ({ page }) => {
+      // SKIPPED: Requires test data seeding
+      // TODO: Implement test data seeding in beforeAll hook
+      const testUrl =
+        '/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/test-exercise-id'
+
+      // Set mobile viewport
+      await page.setViewportSize({ width: 375, height: 667 })
+      await page.goto(testUrl)
+
+      // Check that page loaded (not 404)
+      const notFound = await page.locator('body').textContent()
+      if (notFound?.includes('not found') || notFound?.includes('404')) {
+        test.skip()
+        return
+      }
+
+      // Click hamburger menu
+      const hamburger = page.getByRole('button', { name: /open menu/i })
+      await hamburger.click()
+
+      // Wait for mobile menu to appear
+      await page.waitForTimeout(500) // Wait for animation
+
+      // Check mobile menu is visible
+      const mobileMenu = page.locator('[class*="translate-x-0"]').filter({ hasText: /menu/i })
+      await expect(mobileMenu).toBeVisible()
+
+      // Check close button in mobile menu
+      const closeButton = page.getByRole('button', { name: /close menu/i })
+      await expect(closeButton).toBeVisible()
+    })
+
+    test.skip('shows logo on desktop viewport', async ({ page }) => {
+      // SKIPPED: Requires test data seeding
+      // TODO: Implement test data seeding in beforeAll hook
+      const testUrl =
+        '/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/test-exercise-id'
+
+      // Set desktop viewport
+      await page.setViewportSize({ width: 1920, height: 1080 })
+      await page.goto(testUrl)
+
+      // Check that page loaded (not 404)
+      const notFound = await page.locator('body').textContent()
+      if (notFound?.includes('not found') || notFound?.includes('404')) {
+        test.skip()
+        return
+      }
+
+      // Check logo is visible on desktop
+      const logo = page.locator('header').getByRole('img').first()
+      await expect(logo).toBeVisible()
+
+      // Check hamburger menu is NOT visible on desktop
+      const hamburger = page.getByRole('button', { name: /open menu/i })
+      await expect(hamburger).not.toBeVisible()
+    })
+  })
 })
