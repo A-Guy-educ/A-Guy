@@ -7,7 +7,7 @@ import { getTestDatabaseUrl } from './tests/setup/db-config'
 
 // Set required environment variables for tests if not already set
 if (!process.env.PAYLOAD_SECRET) {
-  process.env.PAYLOAD_SECRET = 'test-secret-key-for-integration-tests-only'
+  process.env.PAYLOAD_SECRET = 'test-secret-key-for-integration-tests-only-minimum-32-chars'
 }
 
 if (!process.env.NEXT_PUBLIC_SERVER_URL) {
@@ -119,7 +119,9 @@ if (shouldMock) {
         this.chat = {
           completions: {
             create: vi.fn().mockImplementation(async ({ messages, response_format }) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const systemMessage = messages.find((m: any) => m.role === 'system')?.content || ''
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const userMessage = messages.find((m: any) => m.role === 'user')?.content || ''
 
               // For memory extraction (JSON response)
@@ -129,6 +131,7 @@ if (shouldMock) {
                 response_format?.type === 'json_object'
               ) {
                 // Parse user message to create relevant memories
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const memories: any[] = []
 
                 if (userMessage.includes('dark mode') || userMessage.includes('prefer')) {
