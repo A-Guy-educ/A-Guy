@@ -119,7 +119,6 @@ export async function GET(request: NextRequest) {
           // Inject parameters into viewer's URL handling
           // PDF.js viewer reads parameters from window.location.search
           if (typeof window !== 'undefined') {
-            const originalSearch = window.location.search;
             Object.defineProperty(window.location, 'search', {
               get: function() {
                 return '?${queryString.replace(/'/g, "\\'")}';
