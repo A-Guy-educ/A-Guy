@@ -63,6 +63,68 @@ export const Users: CollectionConfig = {
         position: 'sidebar',
       },
     },
+    // OAuth fields
+    {
+      name: 'googleSub',
+      type: 'text',
+      unique: true,
+      index: true,
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'verifiedEmail',
+      type: 'text',
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'registrationMethod',
+      type: 'select',
+      options: [
+        { label: 'Google', value: 'google' },
+        { label: 'Email', value: 'email' },
+      ],
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'registeredAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'googleProfile',
+      type: 'group',
+      fields: [
+        { name: 'name', type: 'text' },
+        { name: 'picture', type: 'text' },
+      ],
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'oauthLoginSecretEnc',
+      type: 'text',
+      // Encrypted secret for payload.login() - required for OAuth users
+      // Server-side reads allowed via overrideAccess in callback
+      access: {
+        read: () => false, // Never exposed to client
+        create: () => true, // Set during OAuth user creation
+        update: () => false, // Never updatable after creation
+      },
+      admin: {
+        hidden: true,
+      },
+    },
   ],
   hooks: {
     // Prevent demoting the last admin

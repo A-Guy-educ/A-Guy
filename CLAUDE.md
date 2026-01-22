@@ -19,7 +19,7 @@ This file serves as the entry point for Claude Code (AI assistant) when working 
 - Authentication patterns
 - Examples and code snippets
 
-**Read [claude-internal.md](claude-internal.md) - Internal team guidelines:**
+**Read [CLAUDE_INTERNAL.md](CLAUDE_INTERNAL.md) - Internal team guidelines:**
 
 - Internal conventions and patterns specific to this project
 
