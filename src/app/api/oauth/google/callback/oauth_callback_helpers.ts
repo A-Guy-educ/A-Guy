@@ -152,12 +152,20 @@ async function handleRaceCondition(
       const user = retryUser.docs[0]
 
       if (!user.oauthLoginSecretEnc) {
-        logOAuthError('race_recovery_missing_secret', 'Race recovery failed: secret not set', correlationId)
+        logOAuthError(
+          'race_recovery_missing_secret',
+          'Race recovery failed: secret not set',
+          correlationId,
+        )
         res.headers.set('Location', new URL('/login?error=auth_error', req.url).toString())
         return res
       }
 
-      await logOAuthEvent('user_created_race_recovery', { correlationId, userId: user.id, googleSub: sub })
+      await logOAuthEvent('user_created_race_recovery', {
+        correlationId,
+        userId: user.id,
+        googleSub: sub,
+      })
       return res
     }
   }

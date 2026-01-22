@@ -5,7 +5,7 @@ Ensure every user-facing time-consuming action provides accurate, consistent loa
 
 Hard Boundary
 
-IN SCOPE: /app/(frontend)/**, user-facing API routes, user query utilities, user UI components.
+IN SCOPE: /app/(frontend)/\*\*, user-facing API routes, user query utilities, user UI components.
 
 OUT OF SCOPE: Payload Admin UI, admin hooks, seeds, internal ops tooling, migrations unrelated to user UI.
 
@@ -28,7 +28,8 @@ Client fetch calls → routed through a single client wrapper (small scope)
 You will NOT add “loading state” inside every screen manually.
 
 System Building Blocks
-1) Global Loading Manager (Source of Truth)
+
+1. Global Loading Manager (Source of Truth)
 
 A single store that tracks active operations by key and type:
 
@@ -50,7 +51,7 @@ No component manages its own loading flags for long operations.
 
 Everything long is registered here.
 
-2) RouteLoadingIndicator (Minimal, Non-Blocking)
+2. RouteLoadingIndicator (Minimal, Non-Blocking)
 
 A global indicator that:
 
@@ -64,7 +65,7 @@ Rule
 
 Route indicator is “life sign”, not a modal.
 
-3) AsyncAction Wrapper (For Server Actions + Mutations)
+3. AsyncAction Wrapper (For Server Actions + Mutations)
 
 A shared primitive used by any user-triggered async:
 
@@ -86,7 +87,7 @@ blocks duplicate runs for same key
 
 returns normalized result contract (success/error)
 
-4) LoadingBoundary (For Content Areas)
+4. LoadingBoundary (For Content Areas)
 
 A shared component to wrap heavy content regions:
 

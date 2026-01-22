@@ -13,11 +13,7 @@ import config from '@payload-config'
 import { validateOAuthState } from '@/lib/auth/oauth_state'
 import { logOAuthError } from '@/lib/auth/oauth_logger'
 import { getPublicBaseUrl } from '@/lib/auth/oauth_url'
-import {
-  handleExistingUser,
-  handleCollision,
-  createNewOAuthUser,
-} from './oauth_callback_helpers'
+import { handleExistingUser, handleCollision, createNewOAuthUser } from './oauth_callback_helpers'
 
 interface GoogleUserInfo {
   sub: string
@@ -156,4 +152,3 @@ async function handleUserLookupAndSession(
   // D.3: Create new user
   return await createNewOAuthUser(payload, req, res, userinfo, returnTo, correlationId)
 }
-
