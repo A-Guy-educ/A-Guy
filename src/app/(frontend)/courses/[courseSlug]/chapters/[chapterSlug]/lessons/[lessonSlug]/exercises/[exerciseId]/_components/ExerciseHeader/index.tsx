@@ -59,7 +59,7 @@ export function ExerciseHeader({ exerciseTitle, backUrl, onMenuClick }: Exercise
         }}
       >
         {/* Logo - Hidden on mobile, shown on desktop */}
-        <TelescopeLogo className="h-8 w-auto hidden lg:block" />
+        <TelescopeLogo className="h-8 w-auto hidden lg:flex" />
 
         {/* Hamburger menu - Shown on mobile, hidden on desktop */}
         {onMenuClick && (
