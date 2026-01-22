@@ -88,12 +88,10 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install OpenHands
+      - name: Install OpenHands (from GitHub tag)
         run: |
           python -m pip install --upgrade pip
-          # Match your previous workflow tag. If this exact version doesn't exist in PyPI,
-          # remove the pin and just use: pip install openhands
-          pip install "openhands==0.62.0"
+          pip install "git+https://github.com/OpenHands/OpenHands.git@0.62.0"
 
       - name: Run resolver with external timeout
         env:
