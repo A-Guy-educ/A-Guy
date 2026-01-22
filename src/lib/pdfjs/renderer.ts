@@ -18,6 +18,13 @@ export function rewriteCss(css: string): string {
  * 3. Replace pdf.mjs references
  * 4. Remove broken locale references
  * 5. Inline rewritten CSS
+ * 6. Inject security features to disable download and print
+ *
+ * Security features:
+ * - Hides download and print buttons via CSS
+ * - Disables Ctrl+P/Cmd+P keyboard shortcuts
+ * - Overrides window.print() to prevent programmatic printing
+ * - Disables context menu to prevent right-click print
  *
  * @param html - Original viewer HTML
  * @param css - CSS content (should already have image paths rewritten via rewriteCss)
