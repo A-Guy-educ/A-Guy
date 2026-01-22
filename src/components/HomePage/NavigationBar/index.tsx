@@ -17,7 +17,7 @@ export function NavigationBar() {
   const pathname = usePathname()
 
   return (
-    <nav className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
+    <nav className="sticky top-0 bg-card/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-around h-14">
           {NAV_ITEMS.map((item) => {
