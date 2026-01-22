@@ -10,10 +10,16 @@ import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 import { searchFields } from '@/search/fieldOverrides'
 import { beforeSyncWithSearch } from '@/search/beforeSync'
-import { mcp } from '@/plugins/mcp'
 
 import { Page } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
+
+// Conditionally import MCP plugin only when enabled to avoid loading heavy dependencies at build time
+// Using dynamic require here is intentional to prevent webpack from bundling MCP dependencies
+// when MCP_ENABLED is not set, which saves significant build memory
+const mcpEnabled = process.env.MCP_ENABLED === 'true'
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const mcp = mcpEnabled ? require('@/plugins/mcp').mcp : null
 
 const generateTitle: GenerateTitle<Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
@@ -98,5 +104,6 @@ export const plugins: Plugin[] = [
     },
     token: process.env.BLOB_READ_WRITE_TOKEN || '',
   }),
-  mcp,
+  // Only include MCP plugin when explicitly enabled
+  ...(mcp ? [mcp] : []),
 ]
