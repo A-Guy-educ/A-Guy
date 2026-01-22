@@ -73,6 +73,7 @@ jobs:
           echo "Running simple diff/patch engine"
           echo "TODO: implement your simple engine here"
 
+  # Option A: run the resolver locally and wrap it with an external timeout.
   openhands:
     needs: orchestrator
     if: ${{ needs.orchestrator.outputs.mode == 'openhands' }}
@@ -95,11 +96,11 @@ jobs:
 
       - name: Run resolver with external timeout
         env:
-          # GitHub auth (same secrets you already have)
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-          PAT_USERNAME: ${{ secrets.PAT_USERNAME }}
+          # GitHub auth
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_USERNAME: ${{ secrets.PAT_USERNAME }}
 
-          # LLM config (same secrets you already have)
+          # LLM config
           LLM_API_KEY: ${{ secrets.AI_KEY }}
           LLM_BASE_URL: ${{ secrets.AI_BASE_URL }}
           LLM_MODEL: minimax/MiniMax-M2.1
@@ -113,19 +114,17 @@ jobs:
           echo "Repo: $REPO"
           echo "Issue: #$ISSUE_NUMBER"
 
-          # Some implementations expect these env vars:
-          export GITHUB_TOKEN="$PAT_TOKEN"
-          export GITHUB_USERNAME="$PAT_USERNAME"
-
           # Hard stop: SIGTERM at 12m, SIGKILL 30s later if still alive
           timeout -k 30s 12m python -m openhands.resolver.resolve_issue \
-            --repo "$REPO" \
+            --selected-repo "$REPO" \
             --issue-number "$ISSUE_NUMBER" \
-            --macro "@mrs-smith" \
+            --token "$GITHUB_TOKEN" \
+            --username "$GITHUB_USERNAME" \
             --max-iterations 25 \
-            --target-branch "dev" \
-            --llm-model "minimax/MiniMax-M2.1" \
-            --pr-type "ready"
+            --llm-model "$LLM_MODEL" \
+            --llm-api-key "$LLM_API_KEY" \
+            --llm-base-url "$LLM_BASE_URL" \
+            --issue-type issue
 
   done:
     needs: [orchestrator, simple, openhands]
