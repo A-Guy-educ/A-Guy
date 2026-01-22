@@ -8,6 +8,10 @@ describe('Google OAuth Integration', () => {
   let payload: Payload
 
   beforeAll(async () => {
+    // Ensure PAYLOAD_SECRET is set for crypto operations
+    if (!process.env.PAYLOAD_SECRET || process.env.PAYLOAD_SECRET.length < 32) {
+      process.env.PAYLOAD_SECRET = 'test-secret-key-for-integration-tests-only-minimum-32-chars'
+    }
     payload = await getPayload({ config })
   })
 
