@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useTranslations } from '@/providers/I18n'
 import { loginAction } from './login_authenticate-action'
+import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton'
 
 export function LoginForm() {
   const t = useTranslations('auth.login')
@@ -46,6 +47,19 @@ export function LoginForm() {
         <p className="text-sm text-muted-foreground text-center">{t('subtitle')}</p>
       </CardHeader>
       <CardContent>
+        <div className="space-y-4">
+          <GoogleLoginButton returnTo="/" className="w-full" />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                {useTranslations('auth.oauth')('orDivider')}
+              </span>
+            </div>
+          </div>
+        </div>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">{t('email')}</Label>

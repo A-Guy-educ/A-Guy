@@ -27,6 +27,20 @@
     }
   },
   "auth": {
+    "oauth": {
+      "continueWithGoogle": "Continue with Google",
+      "signInWithGoogle": "Sign in with Google",
+      "orDivider": "or",
+      "errors": {
+        "invalid_state": "Security validation failed. Please try again.",
+        "missing_code": "Authentication code missing. Please try again.",
+        "token_exchange_failed": "Failed to authenticate with Google. Please try again.",
+        "userinfo_failed": "Failed to retrieve Google account information.",
+        "invalid_userinfo": "Invalid account information from Google.",
+        "email_not_verified": "Please verify your email with Google first.",
+        "collision": "An account with this email already exists. Please log in with your password or contact support."
+      }
+    },
     "login": {
       "title": "Welcome Back",
       "subtitle": "Log in to your account",

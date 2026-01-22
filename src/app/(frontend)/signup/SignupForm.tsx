@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import { SignupFormFields } from './SignupFormFields'
 import { signupAction } from './actions/signup_createUser-action'
 import { validateSignupForm } from './actions/signup_validation-action'
+import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton'
 
 export function SignupForm() {
   const t = useTranslations('auth.signup')
@@ -109,6 +110,19 @@ export function SignupForm() {
         </p>
       </CardHeader>
       <CardContent>
+        <div className="space-y-4">
+          <GoogleLoginButton returnTo="/" className="w-full" />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                {useTranslations('auth.oauth')('orDivider')}
+              </span>
+            </div>
+          </div>
+        </div>
         <form onSubmit={onSubmit} className="space-y-4">
           <SignupFormFields t={t} isLoading={isLoading} errors={errors} />
 

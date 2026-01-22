@@ -27,6 +27,20 @@
     }
   },
   "auth": {
+    "oauth": {
+      "continueWithGoogle": "המשך עם Google",
+      "signInWithGoogle": "התחבר עם Google",
+      "orDivider": "או",
+      "errors": {
+        "invalid_state": "אימות אבטחה נכשל. אנא נסה שוב.",
+        "missing_code": "קוד אימות חסר. אנא נסה שוב.",
+        "token_exchange_failed": "אימות עם Google נכשל. אנא נסה שוב.",
+        "userinfo_failed": "שליפת מידע החשבון מ-Google נכשלה.",
+        "invalid_userinfo": "מידע חשבון לא תקין מ-Google.",
+        "email_not_verified": "אנא אמת את האימייל שלך ב-Google תחילה.",
+        "collision": "כבר קיים חשבון עם כתובת אימייל זו. אנא התחבר עם הסיסמה שלך או פנה לתמיכה."
+      }
+    },
     "signup": {
       "title": "צור חשבון",
       "subtitle": "הירשם כדי להתחיל ללמוד",
