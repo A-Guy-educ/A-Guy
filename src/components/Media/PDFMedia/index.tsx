@@ -46,7 +46,8 @@ export const PDFMedia: React.FC<MediaProps> = (props) => {
 
   // Load PDF.js viewer via proxy (Blob CDN sets Content-Disposition: attachment)
   // Add version parameter to bust cache when viewer files are updated
-  const viewerUrl = `/api/pdfjs-viewer?file=${encodeURIComponent(pdfUrl)}&v=4.4.168`
+  // Enable annotation editor mode for highlighting (mode 13 = highlight)
+  const viewerUrl = `/api/pdfjs-viewer?file=${encodeURIComponent(pdfUrl)}&annotationEditorMode=13&v=4.4.168`
 
   return (
     <div className={cn('w-full h-full', className)}>

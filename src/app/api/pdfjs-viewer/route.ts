@@ -31,8 +31,14 @@ export async function GET(request: NextRequest) {
   const fileParam = request.nextUrl.searchParams.get('file')
   const requestOrigin = request.nextUrl.origin
 
+  // Parse annotation editor mode parameter (for enabling highlight/drawing features)
+  const annotationEditorModeParam = request.nextUrl.searchParams.get('annotationEditorMode')
+
   reqLogger.debug(
-    { fileParam: fileParam ? redactUrl(fileParam) : null },
+    {
+      fileParam: fileParam ? redactUrl(fileParam) : null,
+      annotationEditorMode: annotationEditorModeParam,
+    },
     'Processing viewer request',
   )
 
@@ -91,26 +97,32 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'PDF viewer rendering error' }, { status: 500 })
     }
 
-    // Inject file URL via query parameter (PDF.js native mechanism)
-    // The viewer will read the file parameter from its own URL
+    // Inject file URL and annotation editor mode via query parameter (PDF.js native mechanism)
+    // The viewer will read parameters from its own URL
     if (validatedFileUrl) {
-      // PDF.js viewer.html reads the file parameter from window.location.search
-      // We pass it through by adding it to the base href or letting the iframe handle it
-      // Since we're serving the HTML directly, we need to inject it via the viewer's
-      // own query handling mechanism
+      // PDF.js viewer.html reads parameters from window.location.search
+      // Build query string with file and optional annotationEditorMode
+      const queryParams = new URLSearchParams()
+      queryParams.set('file', validatedFileUrl)
 
-      // Add file parameter to viewer's window.location simulation
-      // The viewer expects to read 'file' from URLSearchParams
+      // Add annotation editor mode if specified
+      // This enables highlight/drawing features in PDF.js viewer
+      if (annotationEditorModeParam) {
+        queryParams.set('annotationEditorMode', annotationEditorModeParam)
+      }
+
+      const queryString = queryParams.toString()
+
       html = html.replace(
         '</head>',
         `<script>
-          // Inject file URL into viewer's URL handling
-          // PDF.js viewer reads 'file' from window.location.search
+          // Inject parameters into viewer's URL handling
+          // PDF.js viewer reads parameters from window.location.search
           if (typeof window !== 'undefined') {
             const originalSearch = window.location.search;
             Object.defineProperty(window.location, 'search', {
               get: function() {
-                return '?file=${encodeURIComponent(validatedFileUrl).replace(/'/g, "\\'")}';
+                return '?${queryString.replace(/'/g, "\\'")}';
               }
             });
           }
