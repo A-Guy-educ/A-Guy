@@ -75,6 +75,16 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
     setIsMobileMenuOpen(false)
   }, [pathname])
 
+  // Listen for custom event to open mobile menu (from exercise pages)
+  useEffect(() => {
+    const handleOpenMenu = () => {
+      setIsMobileMenuOpen(true)
+    }
+
+    window.addEventListener('open-mobile-menu', handleOpenMenu)
+    return () => window.removeEventListener('open-mobile-menu', handleOpenMenu)
+  }, [])
+
   // Handle scroll for sticky header
   useEffect(() => {
     const handleScroll = () => {
