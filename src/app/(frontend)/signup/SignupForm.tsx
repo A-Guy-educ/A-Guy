@@ -18,6 +18,7 @@ import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton'
 
 export function SignupForm() {
   const t = useTranslations('auth.signup')
+  const tOauth = useTranslations('auth.oauth')
   const router = useRouter()
   const analytics = useAnalytics()
   const [isLoading, setIsLoading] = useState(false)
@@ -118,7 +119,7 @@ export function SignupForm() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                {useTranslations('auth.oauth')('orDivider')}
+                {tOauth('orDivider')}
               </span>
             </div>
           </div>

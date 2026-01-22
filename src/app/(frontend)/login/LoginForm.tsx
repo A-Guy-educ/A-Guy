@@ -14,6 +14,7 @@ import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton'
 
 export function LoginForm() {
   const t = useTranslations('auth.login')
+  const tOauth = useTranslations('auth.oauth')
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -55,7 +56,7 @@ export function LoginForm() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                {useTranslations('auth.oauth')('orDivider')}
+                {tOauth('orDivider')}
               </span>
             </div>
           </div>
