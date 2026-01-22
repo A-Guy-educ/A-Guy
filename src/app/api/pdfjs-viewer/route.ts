@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/utilities/logger'
 import { RESPONSE_HEADERS } from '@/lib/pdfjs/config'
-import { validateFileUrl, redactUrl } from '@/lib/pdfjs/validator'
+import { validateFileUrl, redactUrl, validateAnnotationMode } from '@/lib/pdfjs/validator'
 import { loadViewerTemplate, loadViewerCss } from '@/lib/pdfjs/template-loader'
 import { rewriteCss, renderViewerHtml, validateRewrittenHtml } from '@/lib/pdfjs/renderer'
 
@@ -31,8 +31,11 @@ export async function GET(request: NextRequest) {
   const fileParam = request.nextUrl.searchParams.get('file')
   const requestOrigin = request.nextUrl.origin
 
+  // Parse and validate annotation editor mode parameter (optional)
+  const annotationModeParam = request.nextUrl.searchParams.get('annotationEditorMode')
+
   reqLogger.debug(
-    { fileParam: fileParam ? redactUrl(fileParam) : null },
+    { fileParam: fileParam ? redactUrl(fileParam) : null, annotationModeParam },
     'Processing viewer request',
   )
 
@@ -54,8 +57,31 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  // Validate annotation mode if provided
+  const annotationModeValidation = validateAnnotationMode(annotationModeParam)
+
+  if (!annotationModeValidation.valid) {
+    reqLogger.warn(
+      {
+        error: annotationModeValidation.error,
+        annotationModeParam,
+      },
+      'Invalid annotation mode parameter',
+    )
+
+    return NextResponse.json(
+      { error: 'Invalid annotation mode', details: annotationModeValidation.error },
+      { status: 400 },
+    )
+  }
+
   const validatedFileUrl = validation.url
-  reqLogger.debug({ fileUrl: redactUrl(validatedFileUrl) }, 'File URL validated')
+  const annotationEditorMode = annotationModeValidation.mode
+
+  reqLogger.debug(
+    { fileUrl: redactUrl(validatedFileUrl), annotationEditorMode },
+    'Parameters validated',
+  )
 
   try {
     // Load viewer template
@@ -81,8 +107,10 @@ export async function GET(request: NextRequest) {
     // Rewrite CSS to fix image paths
     const rewrittenCss = rewriteCss(cssResult.css)
 
-    // Render final HTML
-    let html = renderViewerHtml(templateResult.html, rewrittenCss)
+    // Render final HTML with annotation mode if specified
+    let html = renderViewerHtml(templateResult.html, rewrittenCss, {
+      annotationEditorMode: annotationEditorMode > 0 ? annotationEditorMode : undefined,
+    })
 
     // Validate rewrite was successful
     const validation = validateRewrittenHtml(html)
@@ -120,7 +148,11 @@ export async function GET(request: NextRequest) {
     }
 
     reqLogger.info(
-      { fileUrl: redactUrl(validatedFileUrl), htmlSize: html.length },
+      {
+        fileUrl: redactUrl(validatedFileUrl),
+        htmlSize: html.length,
+        annotationEditorMode,
+      },
       'Successfully rendered PDF viewer',
     )
 

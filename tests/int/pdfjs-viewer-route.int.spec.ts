@@ -360,4 +360,117 @@ describe('PDF.js Viewer Route Integration', () => {
       expect(secondCallCount).toBe(firstCallCount)
     })
   })
+
+  describe('Annotation editor mode', () => {
+    beforeEach(() => {
+      // Mock successful CDN fetches
+      ;(global.fetch as any).mockImplementation((url: string) => {
+        if (url.includes('viewer') && url.endsWith('.html')) {
+          return Promise.resolve({
+            ok: true,
+            text: () => Promise.resolve(mockViewerHtml),
+          })
+        }
+        if (url.includes('viewer') && url.endsWith('.css')) {
+          return Promise.resolve({
+            ok: true,
+            text: () => Promise.resolve(mockViewerCss),
+          })
+        }
+        return Promise.resolve({ ok: false, status: 404 })
+      })
+    })
+
+    it('should accept annotationEditorMode=15 for highlight mode', async () => {
+      const request = new NextRequest(
+        new URL(
+          `${testOrigin}/api/pdfjs-viewer?file=/media/sample.pdf&annotationEditorMode=15`,
+        ),
+      )
+
+      const response = await GET(request)
+
+      expect(response.status).toBe(200)
+      const html = await response.text()
+
+      // Check that annotation mode script was injected
+      expect(html).toContain('switchannotationeditormode')
+      expect(html).toContain('mode: 15')
+    })
+
+    it('should accept annotationEditorMode=0 for disabled mode', async () => {
+      const request = new NextRequest(
+        new URL(`${testOrigin}/api/pdfjs-viewer?file=/media/sample.pdf&annotationEditorMode=0`),
+      )
+
+      const response = await GET(request)
+
+      expect(response.status).toBe(200)
+      const html = await response.text()
+
+      // Mode 0 should not inject script (default disabled)
+      expect(html).not.toContain('switchannotationeditormode')
+    })
+
+    it('should accept other valid annotation modes (1=freetext, 2=ink, 3=stamp)', async () => {
+      for (const mode of [1, 2, 3]) {
+        const request = new NextRequest(
+          new URL(
+            `${testOrigin}/api/pdfjs-viewer?file=/media/sample.pdf&annotationEditorMode=${mode}`,
+          ),
+        )
+
+        const response = await GET(request)
+
+        expect(response.status).toBe(200)
+        const html = await response.text()
+
+        // Check that annotation mode script was injected
+        expect(html).toContain('switchannotationeditormode')
+        expect(html).toContain(`mode: ${mode}`)
+      }
+    })
+
+    it('should reject invalid annotation mode values', async () => {
+      const request = new NextRequest(
+        new URL(`${testOrigin}/api/pdfjs-viewer?file=/media/sample.pdf&annotationEditorMode=999`),
+      )
+
+      const response = await GET(request)
+
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toBe('Invalid annotation mode')
+      expect(json.details).toContain('not in allowed list')
+    })
+
+    it('should reject non-numeric annotation mode values', async () => {
+      const request = new NextRequest(
+        new URL(
+          `${testOrigin}/api/pdfjs-viewer?file=/media/sample.pdf&annotationEditorMode=invalid`,
+        ),
+      )
+
+      const response = await GET(request)
+
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toBe('Invalid annotation mode')
+      expect(json.details).toContain('must be a number')
+    })
+
+    it('should work without annotationEditorMode parameter (default)', async () => {
+      const request = new NextRequest(
+        new URL(`${testOrigin}/api/pdfjs-viewer?file=/media/sample.pdf`),
+      )
+
+      const response = await GET(request)
+
+      expect(response.status).toBe(200)
+      const html = await response.text()
+
+      // Without mode parameter, no annotation script should be injected
+      expect(html).not.toContain('switchannotationeditormode')
+    })
+  })
 })

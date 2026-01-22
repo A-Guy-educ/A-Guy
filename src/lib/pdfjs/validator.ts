@@ -1,4 +1,4 @@
-import { VALIDATION_CONFIG } from './config'
+import { VALIDATION_CONFIG, ALLOWED_EDITOR_MODES } from './config'
 
 /**
  * Validation error types
@@ -168,5 +168,50 @@ export function validateFileUrl(fileParam: string | null, requestOrigin: string)
   return {
     valid: true,
     url: absoluteUrl,
+  }
+}
+
+/**
+ * Validate annotation editor mode parameter
+ *
+ * Accepts:
+ * - Integer values from the ALLOWED_EDITOR_MODES list
+ * - String representations of those integers
+ *
+ * Rejects:
+ * - Non-numeric values
+ * - Numbers outside the allowed list
+ * - null/undefined/empty values
+ */
+export function validateAnnotationMode(
+  modeParam: string | null,
+): { valid: true; mode: number } | { valid: false; error: string } {
+  // If no mode specified, that's valid (use default)
+  if (!modeParam) {
+    return { valid: true, mode: 0 } // Default to NONE
+  }
+
+  // Parse as integer
+  const mode = parseInt(modeParam, 10)
+
+  // Check if it's a valid number
+  if (isNaN(mode)) {
+    return {
+      valid: false,
+      error: `Invalid annotation mode: must be a number`,
+    }
+  }
+
+  // Check if it's in the allowlist
+  if (!ALLOWED_EDITOR_MODES.includes(mode)) {
+    return {
+      valid: false,
+      error: `Invalid annotation mode: ${mode} not in allowed list`,
+    }
+  }
+
+  return {
+    valid: true,
+    mode,
   }
 }

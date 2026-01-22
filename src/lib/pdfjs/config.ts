@@ -55,6 +55,29 @@ export const VALIDATION_CONFIG = {
 } as const
 
 /**
+ * PDF.js annotation editor modes
+ * See: https://github.com/mozilla/pdf.js/blob/master/web/app_options.js
+ */
+export const ANNOTATION_EDITOR_MODES = {
+  NONE: 0,
+  FREETEXT: 1,
+  INK: 2,
+  STAMP: 3,
+  HIGHLIGHT: 15,
+} as const
+
+/**
+ * Allowed annotation editor mode values (allowlist for security)
+ */
+export const ALLOWED_EDITOR_MODES = [
+  ANNOTATION_EDITOR_MODES.NONE,
+  ANNOTATION_EDITOR_MODES.FREETEXT,
+  ANNOTATION_EDITOR_MODES.INK,
+  ANNOTATION_EDITOR_MODES.STAMP,
+  ANNOTATION_EDITOR_MODES.HIGHLIGHT,
+] as const
+
+/**
  * Get full PDF.js configuration object
  */
 export function getPdfjsConfig() {
@@ -65,5 +88,7 @@ export function getPdfjsConfig() {
     cacheConfig: CACHE_CONFIG,
     responseHeaders: RESPONSE_HEADERS,
     validationConfig: VALIDATION_CONFIG,
+    annotationEditorModes: ANNOTATION_EDITOR_MODES,
+    allowedEditorModes: ALLOWED_EDITOR_MODES,
   } as const
 }
