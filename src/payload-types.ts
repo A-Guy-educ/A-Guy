@@ -395,6 +395,15 @@ export interface User {
   id: string;
   name?: string | null;
   role: 'admin' | 'student';
+  googleSub?: string | null;
+  verifiedEmail?: string | null;
+  registrationMethod?: ('google' | 'email') | null;
+  registeredAt?: string | null;
+  googleProfile?: {
+    name?: string | null;
+    picture?: string | null;
+  };
+  oauthLoginSecretEnc?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -2060,6 +2069,17 @@ export interface ExerciseAssetsSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
+  googleSub?: T;
+  verifiedEmail?: T;
+  registrationMethod?: T;
+  registeredAt?: T;
+  googleProfile?:
+    | T
+    | {
+        name?: T;
+        picture?: T;
+      };
+  oauthLoginSecretEnc?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
