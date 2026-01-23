@@ -2,7 +2,7 @@
  * Unit tests for system prompts fetcher
  */
 import { fetchPublishedSystemPrompts } from '@/infra/llm/system-prompts.server'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/utilities/logger', () => ({

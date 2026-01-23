@@ -4,9 +4,8 @@
  * NOTE: This component is deprecated and not used in the new block-based exercise structure
  */
 
-import React from 'react'
-import { cn } from '@/utilities/ui'
-import type { McqAnswerSpec } from '@/contracts'
+import type { McqAnswerSpec } from '@/infra/contracts'
+import { cn } from '@/infra/utils/ui'
 import { BlockRenderer } from '../../blocks/BlockRenderer'
 
 // Legacy UserAnswer type

@@ -17,7 +17,7 @@
  * - conversationId: ID of the new conversation
  */
 import { ConversationService } from '@/server/services/conversation-service'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
 

@@ -4,12 +4,11 @@
  * NOTE: This component is deprecated and not used in the new block-based exercise structure
  */
 
-import React from 'react'
-import type { AnswerSpec } from '@/contracts'
+import type { AnswerSpec } from '@/infra/contracts'
 import type { PreviewMode } from '../../types'
+import { FreeResponseAnswerUI } from '../FreeResponseAnswerUI'
 import { McqAnswerUI } from '../McqAnswerUI'
 import { TrueFalseAnswerUI } from '../TrueFalseAnswerUI'
-import { FreeResponseAnswerUI } from '../FreeResponseAnswerUI'
 
 // Legacy UserAnswer types for backward compatibility
 type LegacyUserAnswer =

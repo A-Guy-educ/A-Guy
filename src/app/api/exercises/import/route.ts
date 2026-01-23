@@ -10,8 +10,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
 import config from '@payload-config'
-import { importExerciseFromLesson } from '@/endpoints/exercises/import-from-lesson'
-import { importExerciseFromImage } from '@/endpoints/exercises/import-from-image'
+import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
+import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
 
 export async function POST(request: NextRequest) {
   try {

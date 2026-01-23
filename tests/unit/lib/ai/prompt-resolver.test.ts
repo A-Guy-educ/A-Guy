@@ -2,7 +2,7 @@
  * Unit tests for the prompt resolver
  */
 import { BUILTIN_FALLBACK_PROMPT, resolveAgentSystemPrompt } from '@/infra/llm/prompt-resolver.server'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock logger

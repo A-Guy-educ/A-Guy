@@ -1,5 +1,5 @@
+import { AnswerSpecSchema } from '@/infra/contracts'
 import { describe, expect, it } from 'vitest'
-import { AnswerSpecSchema } from '@/contracts'
 
 describe('AnswerSpecSchema - Free Response', () => {
   it('validates free_response answer spec (numeric)', () => {

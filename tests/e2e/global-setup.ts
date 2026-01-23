@@ -2,7 +2,7 @@
  * Global setup for E2E tests
  * Starts MongoDB test container before tests run, or uses CI service container
  */
-import { startMongoContainer } from '@/utilities/test/mongodb-container'
+import { startMongoContainer } from '@/infra/utils/test/mongodb-container'
 
 async function globalSetup() {
   // In CI with USE_MONGO_SERVICE, use the service container directly

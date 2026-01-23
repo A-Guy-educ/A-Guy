@@ -10,7 +10,7 @@ import { cache } from 'react'
 
 import { LivePreviewListener } from '@/ui/web/LivePreviewListener'
 import { PostHero } from '@/ui/web/heros/PostHero'
-import { generateMeta } from '@/utilities/generateMeta'
+import { generateMeta } from '@/infra/utils/generateMeta'
 import PageClient from './page.client'
 
 export async function generateStaticParams() {

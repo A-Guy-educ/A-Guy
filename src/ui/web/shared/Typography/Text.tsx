@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 
 /**
  * Text component for body copy with size and color variants.

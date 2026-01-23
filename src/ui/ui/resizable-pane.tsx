@@ -1,6 +1,6 @@
 'use client'
 
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import React, { useEffect, useRef, useState } from 'react'
 
 interface ResizablePaneProps {

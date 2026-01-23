@@ -83,7 +83,7 @@ export async function stopMongoContainer(): Promise<void> {
  * Example usage in Vitest:
  *
  * import { beforeAll, afterAll, describe, it, expect } from 'vitest'
- * import { startMongoContainer, stopMongoContainer } from '@/utilities/test/mongodb-container'
+ * import { startMongoContainer, stopMongoContainer } from '@/infra/utils/test/mongodb-container'
  *
  * describe('MongoDB Integration Tests', () => {
  *   let mongoUri: string

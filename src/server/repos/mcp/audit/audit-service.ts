@@ -1,6 +1,6 @@
 import type { PayloadRequest } from 'payload'
 
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 
 interface MCPAuditLogParams {
   req: PayloadRequest

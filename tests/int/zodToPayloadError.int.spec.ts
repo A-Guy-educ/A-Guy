@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { z, ZodError } from 'zod'
-import { zodPathToDotPath, zodErrorToPayloadErrors } from '../../src/utilities/zodToPayloadError'
+import { zodPathToDotPath, zodErrorToPayloadErrors } from '@/infra/utils/zodToPayloadError'
 
 describe('zodPathToDotPath', () => {
   it('converts simple path to dot notation', () => {

@@ -35,7 +35,7 @@ import type { Prompt } from '@/payload-types'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { ConversationService, deriveContextLevel } from '@/server/services/conversation-service'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
 

@@ -14,7 +14,7 @@ import { CodeBlock, CodeBlockProps } from '@/server/payload/blocks/Code/Componen
 
 import type { CallToActionBlock as CTABlockProps } from '@/payload-types'
 import { CallToActionBlock } from '@/server/payload/blocks/CallToAction/Component'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 
 type NodeTypes = DefaultNodeTypes | SerializedBlockNode<CTABlockProps | CodeBlockProps>
 

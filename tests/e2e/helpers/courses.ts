@@ -6,7 +6,7 @@ import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 
 export interface TestCourseData {
   courseSlug: string

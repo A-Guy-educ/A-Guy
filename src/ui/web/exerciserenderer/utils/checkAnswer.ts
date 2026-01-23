@@ -4,7 +4,7 @@
  * NOTE: This utility is deprecated and not used in the new block-based exercise structure
  */
 
-import type { AnswerSpec } from '@/contracts'
+import type { AnswerSpec } from '@/infra/contracts'
 import type { CheckResult } from '../types'
 
 // Legacy UserAnswer types for the old exercise format

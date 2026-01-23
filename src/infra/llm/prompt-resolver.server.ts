@@ -7,7 +7,7 @@
  * 3. Built-in fallback (logs warning)
  */
 import type { Prompt } from '@/payload-types'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import type { Payload } from 'payload'
 
 // Local constant - no cross-module imports to avoid circular deps

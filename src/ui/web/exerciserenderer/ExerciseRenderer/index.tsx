@@ -7,7 +7,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/providers/I18n'
 import { Card } from '@/ui/ui/card'
 import { XCircle } from 'lucide-react'

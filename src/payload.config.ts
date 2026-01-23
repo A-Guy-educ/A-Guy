@@ -4,8 +4,8 @@ import { buildConfig, PayloadRequest } from 'payload'
 import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
-import { importExerciseFromImage } from '@/endpoints/exercises/import-from-image'
-import { importExerciseFromLesson } from '@/endpoints/exercises/import-from-lesson'
+import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
+import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { Footer } from '@/ui/web/footer/config'
 import { Header } from '@/ui/web/header/config'
 import { Categories } from '@/server/payload/collections/Categories'
@@ -27,7 +27,7 @@ import { UserProgress } from '@/server/payload/collections/UserProgress'
 import { Users } from '@/server/payload/collections/Users'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { plugins } from '@/server/payload/plugins'
-import { getServerSideURL } from '@/utilities/getURL'
+import { getServerSideURL } from '@/infra/utils/getURL'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)

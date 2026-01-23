@@ -1,7 +1,7 @@
 import { getPayload } from 'payload'
 
+import { logger } from '../src/infra/utils/logger'
 import config from '../src/payload.config'
-import { logger } from '../src/utilities/logger/logger'
 
 const DEFAULT_TYPE = 'learning'
 const BATCH_SIZE = 100

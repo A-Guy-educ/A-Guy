@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import mathKeys from './math-keys.json'
 
 interface MathPaletteProps {

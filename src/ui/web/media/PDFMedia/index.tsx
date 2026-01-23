@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect } from 'react'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import type { Props as MediaProps } from '../types'
 import { useAnalytics } from '@/infra/analytics/providers/AnalyticsProvider'
 import { PRODUCT_EVENTS } from '@/infra/analytics/contracts/events'

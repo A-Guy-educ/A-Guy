@@ -1,7 +1,7 @@
 import { getPayload, type CollectionSlug } from 'payload'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
-import { logger } from '@/utilities/logger/logger'
+import { logger } from '@/infra/utils/logger/logger'
 import config from '@payload-config'
 
 const BATCH_SIZE = 100

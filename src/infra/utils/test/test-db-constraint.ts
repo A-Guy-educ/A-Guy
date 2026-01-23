@@ -96,7 +96,7 @@ export function enforceTestContainersOnly(): void {
   if (!dbUrl) {
     throw new Error(
       'DATABASE_URL not set in test environment. ' +
-        'Tests must use testcontainers. Use startMongoContainer() from @/utilities/test/mongodb-container',
+        'Tests must use testcontainers. Use startMongoContainer() from @/infra/utils/test/mongodb-container',
     )
   }
 

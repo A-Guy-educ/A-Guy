@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { AlertCircle } from 'lucide-react'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import { Stack } from '../Layout/Stack'
 import { Heading } from '../Typography/Heading'
 import { Text } from '../Typography/Text'

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { getConversation } from '@/endpoints/agent/get-conversation'
-import { logger } from '@/utilities/logger/logger'
+import { getConversation } from '@/server/payload/endpoints/agent/get-conversation'
+import { logger } from '@/infra/utils/logger/logger'
 
 export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID()

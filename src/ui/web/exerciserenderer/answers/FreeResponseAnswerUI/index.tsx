@@ -4,8 +4,8 @@
  * NOTE: This component is deprecated and not used in the new block-based exercise structure
  */
 
+import type { FreeResponseAnswerSpec } from '@/infra/contracts'
 import React from 'react'
-import type { FreeResponseAnswerSpec } from '@/contracts'
 
 // Legacy UserAnswer type
 type LegacyFreeResponseAnswer = { type: 'free_response'; value: string }

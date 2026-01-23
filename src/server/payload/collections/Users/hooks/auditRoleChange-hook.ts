@@ -1,5 +1,5 @@
 import type { CollectionAfterChangeHook } from 'payload'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 
 /**

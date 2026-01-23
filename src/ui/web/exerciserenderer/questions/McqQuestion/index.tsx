@@ -6,7 +6,7 @@
 'use client'
 
 import React from 'react'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import { Checkbox } from '@/ui/ui/checkbox'
 import { AlertCircle } from 'lucide-react'
 import type { QuestionSelectMcqBlock, UserAnswer, CheckResult, RichTextBlock } from '../../types'

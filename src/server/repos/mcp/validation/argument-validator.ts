@@ -1,4 +1,4 @@
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 
 const MAX_LIMIT = 10
 

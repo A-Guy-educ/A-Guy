@@ -9,7 +9,7 @@ import { Button } from '@/ui/ui/button'
 import type { DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
 
 import { fields } from './fields'
-import { getClientSideURL } from '@/utilities/getURL'
+import { getClientSideURL } from '@/infra/utils/getURL'
 
 export type FormBlockType = {
   blockName?: string

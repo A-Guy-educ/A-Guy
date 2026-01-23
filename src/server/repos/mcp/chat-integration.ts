@@ -1,6 +1,6 @@
 import type { PayloadRequest } from 'payload'
 
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import { getMCPClient } from './client/mcp-client'
 import type { MCPToolCall } from './client/types'
 import { logMcpCall } from './audit/audit-service'

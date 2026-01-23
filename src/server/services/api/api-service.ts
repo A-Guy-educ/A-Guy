@@ -5,7 +5,7 @@
  * Provides simple interface for components to interact with backend endpoints.
  */
 import { ChatRole } from '@/infra/llm/chat-message-role'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 
 export interface ChatApiResponse {
   success: boolean

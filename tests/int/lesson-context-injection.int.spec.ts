@@ -46,7 +46,7 @@ vi.mock('@/infra/llm/context-policy', () => ({
 }))
 
 // Import after mocks are set up
-import { agentChat } from '@/endpoints/agent/chat'
+import { agentChat } from '@/server/payload/endpoints/agent/chat'
 import * as contextPolicy from '@/infra/llm/context-policy'
 
 vi.mock('@/infra/llm/vector-index-check', () => ({

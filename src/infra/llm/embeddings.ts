@@ -9,7 +9,7 @@
  * - Error handling and logging
  */
 
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import { OpenAI } from 'openai'
 
 // Lazy initialization to avoid errors at module load time

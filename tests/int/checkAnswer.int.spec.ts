@@ -3,9 +3,9 @@
  * NOTE: These tests are for the legacy checkAnswer utility
  */
 
-import { describe, test, expect } from 'vitest'
+import type { AnswerSpec } from '@/infra/contracts'
 import { checkAnswer } from '@/ui/web/exerciserenderer/utils/checkAnswer'
-import type { AnswerSpec } from '@/contracts'
+import { describe, expect, test } from 'vitest'
 
 // Legacy UserAnswer types for the old exercise format
 type LegacyUserAnswer =

@@ -1,7 +1,7 @@
 import React from 'react'
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { getMeUser } from '@/utilities/getMeUser'
+import { getMeUser } from '@/infra/utils/getMeUser'
 import { SignupPageContent } from './SignupPageContent'
 
 export const metadata: Metadata = {

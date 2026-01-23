@@ -8,7 +8,7 @@
  * - Debug snapshots (dev only)
  */
 
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import type { ComposedPrompt } from './context-policy'
 
 export interface ContextLog {

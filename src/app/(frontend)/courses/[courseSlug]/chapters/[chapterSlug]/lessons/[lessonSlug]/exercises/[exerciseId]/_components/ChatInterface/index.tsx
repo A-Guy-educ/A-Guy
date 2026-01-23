@@ -2,7 +2,7 @@
 
 import { ChatMessageRole } from '@/infra/llm/chat-message-role'
 import { useTranslations } from '@/ui/providers/I18n'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import { BookOpen, Loader2, Plus, Send } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { ChatMessageContent } from '@/ui/web/chat'

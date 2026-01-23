@@ -14,8 +14,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
-import { agentChat } from '@/endpoints/agent/chat'
-import { startMongoContainer, stopMongoContainer } from '@/utilities/test/mongodb-container'
+import { agentChat } from '@/server/payload/endpoints/agent/chat'
+import { startMongoContainer, stopMongoContainer } from '@/infra/utils/test/mongodb-container'
 
 // Mock AI and vector-related services
 

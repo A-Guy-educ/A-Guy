@@ -14,7 +14,7 @@
  * - Validate enrollment/ownership for access control
  */
 import { AccountRole } from '@/server/payload/collections/Users/roles'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import type { Payload } from 'payload'
 
 /**

@@ -1,5 +1,4 @@
-import React from 'react'
-import type { RichTextBlock } from '@/contracts'
+import type { RichTextBlock } from '@/infra/contracts'
 import type { PreviewMode } from '../../types'
 import { RichTextRenderer } from '../RichTextRenderer'
 
