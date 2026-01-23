@@ -1,9 +1,7 @@
 import type { Metadata } from 'next/types'
 
+import { searchPosts } from '@/server/repos/queries/posts'
 import { CollectionArchive } from '@/ui/web/CollectionArchive'
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
-import React from 'react'
 import { Search } from '@/ui/web/search/Component'
 import PageClient from './page.client'
 
@@ -12,49 +10,12 @@ type Args = {
     q: string
   }>
 }
+
 export default async function Page({ searchParams: searchParamsPromise }: Args) {
   const { q: query } = await searchParamsPromise
-  const payload = await getPayload({ config: configPromise })
 
-  const posts = await payload.find({
-    collection: 'posts',
-    depth: 1,
-    limit: 12,
-    select: {
-      title: true,
-      slug: true,
-      categories: true,
-      meta: true,
-    },
-    ...(query
-      ? {
-          where: {
-            or: [
-              {
-                title: {
-                  like: query,
-                },
-              },
-              {
-                'meta.description': {
-                  like: query,
-                },
-              },
-              {
-                'meta.title': {
-                  like: query,
-                },
-              },
-              {
-                slug: {
-                  like: query,
-                },
-              },
-            ],
-          },
-        }
-      : {}),
-  })
+  const result = query ? await searchPosts({ query }) : null
+  const posts = result?.docs || []
 
   return (
     <div className="pt-24 pb-24">
@@ -69,8 +30,8 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
         </div>
       </div>
 
-      {posts.docs && posts.docs.length > 0 ? (
-        <CollectionArchive posts={posts.docs} />
+      {posts.length > 0 ? (
+        <CollectionArchive posts={posts} />
       ) : (
         <div className="container">No results found.</div>
       )}

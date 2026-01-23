@@ -1,11 +1,9 @@
 import type { Metadata } from 'next/types'
 
+import { queryPublishedPosts } from '@/server/repos/queries/posts'
 import { CollectionArchive } from '@/ui/web/CollectionArchive'
 import { PageRange } from '@/ui/web/PageRange'
 import { Pagination } from '@/ui/web/Pagination'
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
-import React from 'react'
 import PageClient from './page.client'
 
 // Note: Cannot use 'force-static' because the layout uses dynamic APIs (headers, cookies)
@@ -13,20 +11,7 @@ import PageClient from './page.client'
 export const revalidate = 600
 
 export default async function Page() {
-  const payload = await getPayload({ config: configPromise })
-
-  const posts = await payload.find({
-    collection: 'posts',
-    depth: 1,
-    limit: 12,
-    overrideAccess: false,
-    select: {
-      title: true,
-      slug: true,
-      categories: true,
-      meta: true,
-    },
-  })
+  const result = await queryPublishedPosts({ limit: 12 })
 
   return (
     <div className="pt-24 pb-24">
@@ -40,17 +25,17 @@ export default async function Page() {
       <div className="container mb-8">
         <PageRange
           collection="posts"
-          currentPage={posts.page}
+          currentPage={result.page}
           limit={12}
-          totalDocs={posts.totalDocs}
+          totalDocs={result.totalDocs}
         />
       </div>
 
-      <CollectionArchive posts={posts.docs} />
+      <CollectionArchive posts={result.docs} />
 
       <div className="container">
-        {posts.totalPages > 1 && posts.page && (
-          <Pagination page={posts.page} totalPages={posts.totalPages} />
+        {result.totalPages > 1 && result.page && (
+          <Pagination page={result.page} totalPages={result.totalPages} />
         )}
       </div>
     </div>
