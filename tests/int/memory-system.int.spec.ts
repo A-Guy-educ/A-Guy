@@ -14,13 +14,13 @@ import { generateEmbedding } from '@/infra/llm/embeddings'
 import { runSummaryMaintenance } from '@/infra/llm/maintenance'
 import { extractMemoryCandidates, persistMemoryItems } from '@/infra/llm/memory-extraction'
 import { generateSummary } from '@/infra/llm/summary'
-import { retrieveMemoryItems } from '@/infra/llm/vector-search'
 import type { MemoryItem } from '@/infra/llm/vector-search'
+import { retrieveMemoryItems } from '@/infra/llm/vector-search'
 import config from '@payload-config'
+import type { Db } from 'mongodb'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import type { Db } from 'mongodb'
 
 function getDb(payload: Payload): Db {
   const db = (payload.db as { connection?: { db?: Db } }).connection?.db
@@ -326,6 +326,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         collection: 'conversations',
         id: testConversationId,
         data: { messages: [] },
+        overrideAccess: true,
       })
 
       // Create conversation with 45 messages (above normal threshold)
@@ -339,6 +340,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         collection: 'conversations',
         id: testConversationId,
         data: { messages },
+        overrideAccess: true,
       })
 
       // Run maintenance
@@ -366,6 +368,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         collection: 'conversations',
         id: testConversationId,
         data: { messages: [] },
+        overrideAccess: true,
       })
 
       // Create conversation with 85 messages (above safety threshold)
@@ -379,6 +382,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         collection: 'conversations',
         id: testConversationId,
         data: { messages },
+        overrideAccess: true,
       })
 
       // Run maintenance
@@ -404,6 +408,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         collection: 'conversations',
         id: testConversationId,
         data: { messages: [] },
+        overrideAccess: true,
       })
 
       // Simulate 3 cycles of conversation growth
@@ -432,6 +437,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
             collection: 'conversations',
             id: testConversationId,
             data: { messages: [...trimmedMessages, ...newMessages] },
+            overrideAccess: true,
           })
         } else {
           const newMessages = Array.from({ length: 45 }, (_, i) => ({
@@ -444,6 +450,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
             collection: 'conversations',
             id: testConversationId,
             data: { messages: [...currentMessages, ...newMessages] },
+            overrideAccess: true,
           })
         }
 
@@ -468,6 +475,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         collection: 'conversations',
         id: testConversationId,
         data: { messages: [] },
+        overrideAccess: true,
       })
 
       // Create a conversation where key information is repeatedly reinforced
@@ -510,6 +518,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         collection: 'conversations',
         id: testConversationId,
         data: { messages },
+        overrideAccess: true,
       })
 
       await runSummaryMaintenance(payload, testConversationId)
@@ -834,6 +843,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         collection: 'conversations',
         id: testConversationId,
         data: { messages },
+        overrideAccess: true,
       })
 
       // Get recent window

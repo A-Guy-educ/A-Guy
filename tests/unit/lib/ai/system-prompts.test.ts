@@ -5,7 +5,7 @@ import { fetchPublishedSystemPrompts } from '@/infra/llm/system-prompts.server'
 import { logger } from '@/infra/utils/logger'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/utilities/logger', () => ({
+vi.mock('@/infra/utils/logger', () => ({
   logger: {
     debug: vi.fn(),
     error: vi.fn(),
@@ -30,7 +30,9 @@ describe('fetchPublishedSystemPrompts', () => {
       ],
     })
 
-    const result = await fetchPublishedSystemPrompts(mockPayload as any)
+    const result = await fetchPublishedSystemPrompts(
+      mockPayload as unknown as import('payload').Payload,
+    )
 
     expect(result.count).toBe(2)
     // After reverse(), should be in ASC order (oldest first)
@@ -51,7 +53,9 @@ describe('fetchPublishedSystemPrompts', () => {
   it('returns empty array when no system prompts exist', async () => {
     mockPayload.find.mockResolvedValue({ docs: [] })
 
-    const result = await fetchPublishedSystemPrompts(mockPayload as any)
+    const result = await fetchPublishedSystemPrompts(
+      mockPayload as unknown as import('payload').Payload,
+    )
 
     expect(result).toEqual({
       templates: [],
@@ -67,7 +71,9 @@ describe('fetchPublishedSystemPrompts', () => {
   it('handles database errors gracefully', async () => {
     mockPayload.find.mockRejectedValue(new Error('DB connection failed'))
 
-    const result = await fetchPublishedSystemPrompts(mockPayload as any)
+    const result = await fetchPublishedSystemPrompts(
+      mockPayload as unknown as import('payload').Payload,
+    )
 
     expect(result).toEqual({
       templates: [],
@@ -89,7 +95,9 @@ describe('fetchPublishedSystemPrompts', () => {
       ],
     })
 
-    const result = await fetchPublishedSystemPrompts(mockPayload as any)
+    const result = await fetchPublishedSystemPrompts(
+      mockPayload as unknown as import('payload').Payload,
+    )
 
     // After reverse and filter, should maintain order
     expect(result.templates).toEqual(['Valid content', 'More content'])
@@ -104,7 +112,9 @@ describe('fetchPublishedSystemPrompts', () => {
       ],
     })
 
-    const result = await fetchPublishedSystemPrompts(mockPayload as any)
+    const result = await fetchPublishedSystemPrompts(
+      mockPayload as unknown as import('payload').Payload,
+    )
 
     expect(result.promptTitles).toEqual(['Untitled', 'Untitled'])
   })
@@ -113,7 +123,7 @@ describe('fetchPublishedSystemPrompts', () => {
     // This test verifies the filter shape - actual filtering is done by DB query
     mockPayload.find.mockResolvedValue({ docs: [] })
 
-    await fetchPublishedSystemPrompts(mockPayload as any)
+    await fetchPublishedSystemPrompts(mockPayload as unknown as import('payload').Payload)
 
     // Verify the where clause contains the correct filters
     expect(mockPayload.find).toHaveBeenCalledWith(
@@ -151,7 +161,9 @@ describe('fetchPublishedSystemPrompts', () => {
       ],
     })
 
-    const result = await fetchPublishedSystemPrompts(mockPayload as any)
+    const result = await fetchPublishedSystemPrompts(
+      mockPayload as unknown as import('payload').Payload,
+    )
 
     // After reverse, should be in ASC order (oldest first)
     expect(result.templates).toEqual(['First content', 'Second content', 'Third content'])

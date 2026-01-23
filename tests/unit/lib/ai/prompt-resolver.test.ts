@@ -1,12 +1,15 @@
 /**
  * Unit tests for the prompt resolver
  */
-import { BUILTIN_FALLBACK_PROMPT, resolveAgentSystemPrompt } from '@/infra/llm/prompt-resolver.server'
+import {
+  BUILTIN_FALLBACK_PROMPT,
+  resolveAgentSystemPrompt,
+} from '@/infra/llm/prompt-resolver.server'
 import { logger } from '@/infra/utils/logger'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock logger
-vi.mock('@/utilities/logger', () => ({
+vi.mock('@/infra/utils/logger', () => ({
   logger: {
     debug: vi.fn(),
     warn: vi.fn(),
@@ -36,7 +39,10 @@ describe('resolveAgentSystemPrompt', () => {
         updatedAt: '',
       }
 
-      const result = await resolveAgentSystemPrompt(mockPayload as any, lessonPrompt)
+      const result = await resolveAgentSystemPrompt(
+        mockPayload as unknown as import('payload').Payload,
+        lessonPrompt,
+      )
 
       expect(result.template).toBe('You are a math tutor.')
       expect(result.resolvedFrom).toBe('lesson-prompt')
@@ -70,7 +76,10 @@ describe('resolveAgentSystemPrompt', () => {
         totalDocs: 1,
       })
 
-      const result = await resolveAgentSystemPrompt(mockPayload as any, draftPrompt)
+      const result = await resolveAgentSystemPrompt(
+        mockPayload as unknown as import('payload').Payload,
+        draftPrompt,
+      )
 
       expect(result.resolvedFrom).toBe('default-prompt')
       expect(result.fallbackReason).toBe('Lesson prompt not published or has no template')
@@ -95,7 +104,10 @@ describe('resolveAgentSystemPrompt', () => {
         totalDocs: 1,
       })
 
-      const result = await resolveAgentSystemPrompt(mockPayload as any, archivedPrompt)
+      const result = await resolveAgentSystemPrompt(
+        mockPayload as unknown as import('payload').Payload,
+        archivedPrompt,
+      )
 
       expect(result.resolvedFrom).toBe('default-prompt')
     })
@@ -116,7 +128,10 @@ describe('resolveAgentSystemPrompt', () => {
         totalDocs: 1,
       })
 
-      const result = await resolveAgentSystemPrompt(mockPayload as any, null)
+      const result = await resolveAgentSystemPrompt(
+        mockPayload as unknown as import('payload').Payload,
+        null,
+      )
 
       expect(result.resolvedFrom).toBe('default-prompt')
       expect(result.fallbackReason).toBe('Lesson has no prompt')
@@ -130,7 +145,10 @@ describe('resolveAgentSystemPrompt', () => {
         totalDocs: 1,
       })
 
-      const result = await resolveAgentSystemPrompt(mockPayload as any, undefined)
+      const result = await resolveAgentSystemPrompt(
+        mockPayload as unknown as import('payload').Payload,
+        undefined,
+      )
 
       expect(result.resolvedFrom).toBe('default-prompt')
     })
@@ -151,7 +169,10 @@ describe('resolveAgentSystemPrompt', () => {
         totalDocs: 3,
       })
 
-      const result = await resolveAgentSystemPrompt(mockPayload as any, null)
+      const result = await resolveAgentSystemPrompt(
+        mockPayload as unknown as import('payload').Payload,
+        null,
+      )
 
       expect(result.resolvedFrom).toBe('default-prompt')
       expect(result.promptId).toBe('default-1')
@@ -166,7 +187,10 @@ describe('resolveAgentSystemPrompt', () => {
     it('returns built-in fallback when no prompts exist', async () => {
       mockPayload.find.mockResolvedValue({ docs: [], totalDocs: 0 })
 
-      const result = await resolveAgentSystemPrompt(mockPayload as any, null)
+      const result = await resolveAgentSystemPrompt(
+        mockPayload as unknown as import('payload').Payload,
+        null,
+      )
 
       expect(result.template).toBe(BUILTIN_FALLBACK_PROMPT)
       expect(result.resolvedFrom).toBe('fallback')
@@ -179,7 +203,10 @@ describe('resolveAgentSystemPrompt', () => {
     it('returns built-in fallback on database error', async () => {
       mockPayload.find.mockRejectedValue(new Error('DB connection failed'))
 
-      const result = await resolveAgentSystemPrompt(mockPayload as any, null)
+      const result = await resolveAgentSystemPrompt(
+        mockPayload as unknown as import('payload').Payload,
+        null,
+      )
 
       expect(result.resolvedFrom).toBe('fallback')
       expect(logger.error).toHaveBeenCalled()
