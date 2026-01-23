@@ -94,6 +94,29 @@ const eslintConfig = [
     },
   },
 
+  // Server layer - block client and UI imports
+  {
+    name: 'server-boundaries',
+    files: ['src/server/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/client/**', 'src/client/**'],
+              message: 'Server layer cannot import from Client layer',
+            },
+            {
+              group: ['@/ui/**', 'src/ui/**'],
+              message: 'Server layer cannot import from UI layer',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // Infra layer - leaf node, cannot import from other layers
   {
     name: 'infra-boundaries',
