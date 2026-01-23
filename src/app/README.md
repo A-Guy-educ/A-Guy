@@ -1,74 +1,65 @@
-# Thin App Layer
+# Application Routes
 
-`src/app/**` is a thin composition layer only: routing + params parsing + calls to services + UI composition.
+**@domain** app
+**@fileType** routes
+**@ai-summary** Next.js App Router: frontend pages, Payload admin, API routes
 
-## Allowed Imports by File Type
+---
 
-### SSR Pages/Layout: `src/app/**/{page,layout}.tsx`
+## Structure
 
-**Allowed:**
+```
+app/
+├── (frontend)/              # Frontend routes (public + authenticated)
+│   ├── [slug]/             # Dynamic page routes
+│   ├── account/            # User account
+│   ├── courses/            # Course pages
+│   ├── exercises/          # Exercise pages
+│   ├── login/              # Login page
+│   ├── posts/              # Blog posts
+│   ├── practice/           # Practice page
+│   ├── search/             # Search page
+│   ├── signup/             # Signup page
+│   ├── study/              # Study page
+│   ├── test/               # Test page
+│   └── page.tsx            # Homepage
+├── (payload)/              # Payload CMS routes
+│   ├── admin/              # Admin panel
+│   └── api/                # API routes (GraphQL, REST)
+└── api/                    # Custom API routes
+    ├── agent/              # AI agent endpoints
+    ├── exercises/          # Exercise endpoints
+    ├── oauth/google/       # OAuth endpoints
+    └── pdfjs-viewer/       # PDF viewer
+```
 
-- `@/server/services/**` - Preferred for business logic
-- `@/server/repos/queries/**` - ONLY read-only single-call queries
-- `@/ui/**` - UI components
-- `next/*` - Navigation, headers
+## Patterns
 
-**Forbidden:**
+| Pattern       | Location                          | Description           |
+| ------------- | --------------------------------- | --------------------- |
+| page-server   | `(frontend)/path/`                | Server component page |
+| page-client   | `(frontend)/path/page.client.tsx` | Client component page |
+| route-dynamic | `(frontend)/[slug]/`              | Dynamic route segment |
+| payload-api   | `(payload)/api/`                  | Payload API routes    |
 
-- Direct Payload (`payload`, `@/server/payload/**`)
-- Repos outside `/queries/**`
-- `@/infra/llm/**`, `@/infra/pdfjs/**`, `@/infra/analytics/**`
+## Key Files
 
-**Policy:** Max 1 query call per SSR page unless via service.
+- [`(frontend)/page.tsx`](<(frontend)/page.tsx>) - Homepage
+- [`(frontend)/courses/page.tsx`](<(frontend)/courses/page.tsx>) - Courses listing
+- [`(payload)/admin/`](<(payload)/admin/>) - Payload admin panel
+- [`api/agent/conversation/route.ts`](api/agent/conversation/route.ts) - AI chat endpoint
 
-### Route Handlers: `src/app/**/route.ts`
+## Common Tasks
 
-**Allowed:**
+| Task              | File                         | Pattern                        |
+| ----------------- | ---------------------------- | ------------------------------ |
+| Create page       | `(frontend)/name/page.tsx`   | Server component               |
+| Create API        | `api/name/route.ts`          | Next.js Route Handler          |
+| Add dynamic route | `(frontend)/[slug]/page.tsx` | Dynamic segment                |
+| Access Payload    | `page.tsx`                   | `await getPayload({ config })` |
 
-- `@/server/services/**` - ONLY allowed
-- `next/server`, `next/headers`
+## Related
 
-**Forbidden:**
-
-- `@/server/repos/**`
-- Direct Payload
-- `@/infra/llm/**`, `@/infra/pdfjs/**`, `@/infra/analytics/**`
-
-### Server Actions: `src/app/**/actions/**`
-
-**Convention:** `'use server'` allowed ONLY in `src/app/**/actions/**`
-
-**Allowed:**
-
-- `@/server/services/**` - ONLY allowed
-
-**Forbidden:**
-
-- `@/server/repos/**`
-- Direct Payload
-- `@/infra/llm/**`, `@/infra/pdfjs/**`, `@/infra/analytics/**`
-
-## File Structure Allowlist
-
-**Allowed files:**
-
-- `{page,layout,loading,error,not-found}.tsx`
-- `route.ts`
-- `actions/**`
-- `_components/**` (colocated UI only)
-
-**Forbidden:**
-
-- `src/app/**/{lib,utils,helpers}/`
-- Any `.ts/.tsx` outside allowed list
-
-## Heavy Transforms Forbidden
-
-The following on query results are forbidden in `src/app/**`:
-
-- `.map`, `.filter`, `.reduce`, `.sort`
-- Building view models / DTOs beyond trivial pick
-- Merging results from multiple queries
-- Decision trees / permission rules
-
-**If it makes a decision → it does NOT belong in `app`.**
+- [`src/ui/web/`](../../ui/web/README.md) - Web components
+- [`src/server/`](../../server/README.md) - Server configuration
+- [`AGENTS.md`](../../AGENTS.md) - Next.js + Payload patterns
