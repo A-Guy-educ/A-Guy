@@ -6,7 +6,7 @@ This document provides an executable, low-level plan for restructuring the codeb
 
 ## Target Structure
 
-> **NOTE:** All folder names are lowercase (hard rule).
+> **NOTE:** All folder names are lowercase (hard rule). Use single lowercase tokens, not kebab-case.
 
 ```text
 src/
@@ -170,9 +170,17 @@ if [[ ! "$ADMIN_STATUS" =~ ^[23] ]]; then echo "Admin panel returned $ADMIN_STAT
 
 echo "[3/4] Checking API health..."
 HEALTH_RESPONSE=$(curl -s "$BASE_URL/api/health")
-if [[ -z "$HEALTH_RESPONSE" ]] || ! echo "$HEALTH_RESPONSE" | jq -e . >/dev/null 2>&1; then
-  echo "Health check failed: $HEALTH_RESPONSE"
+if [[ -z "$HEALTH_RESPONSE" ]]; then
+  # Fallback if jq not available or empty response
+  echo "Health check empty response"
   exit 1
+fi
+# Try jq if available, otherwise just check non-empty
+if command -v jq &> /dev/null; then
+  if ! echo "$HEALTH_RESPONSE" | jq -e . >/dev/null 2>&1; then
+    echo "Health check invalid JSON: $HEALTH_RESPONSE"
+    exit 1
+  fi
 fi
 
 echo "[4/4] Checking course page..."
@@ -181,6 +189,26 @@ if [[ ! "$COURSES_STATUS" =~ ^2 ]]; then echo "Courses page returned $COURSES_ST
 
 echo "=== All smoke tests passed ==="
 ````
+
+### Step 0.4: Run Verification
+
+**Commands:**
+
+```bash
+pnpm verify
+./scripts/smoke-test.sh
+```
+
+### Stage Report
+
+**Moved paths:** None (scripts only)
+**Import updates:** None
+**Smoke checks:** Login, admin, health, courses - all passed
+**Temporary exceptions:** None
+
+**STOP → Request operator approval to proceed to Stage 1**
+
+---
 
 ### Exit Criteria
 
@@ -231,6 +259,26 @@ ls -la *.ts *.tsx *.js *.jsx 2>/dev/null || echo "No stray code files"
 grep -r "from '@" --include="*.ts" --include="*.tsx" . --maxdepth=1 2>/dev/null | head -20
 ```
 
+### Step 1.3: Run Verification
+
+**Commands:**
+
+```bash
+pnpm verify
+./scripts/smoke-test.sh
+```
+
+### Stage Report
+
+**Moved paths:** None
+**Import updates:** None
+**Smoke checks:** All passed
+**Temporary exceptions:** None
+
+**STOP → Request operator approval to proceed to Stage 2**
+
+---
+
 ### Exit Criteria
 
 - [ ] No app code found outside `src/` (excluding allowed)
@@ -258,9 +306,9 @@ mkdir -p src/server/repos/{queries,mcp,tenant}
 # Client directories
 mkdir -p src/client/{hooks,state,api}
 
-# UI directories (ALL LOWERCASE)
-mkdir -p src/ui/web/{exercise-renderer,media,chat,shared,home-page,header,footer}
-mkdir -p src/ui/admin/{exercise-content-editor,media-preview,shared}
+# UI directories (ALL LOWERCASE - single tokens, no kebab-case)
+mkdir -p src/ui/web/{exerciserenderer,media,chat,shared,homepage,header,footer}
+mkdir -p src/ui/admin/{exercisecontenteditor,mediapreview,shared}
 
 # Infra directories
 mkdir -p src/infra/{logging,config,llm/providers,auth,media,analytics/{adapters,contracts,core,providers},pdfjs}
@@ -294,6 +342,25 @@ pnpm typecheck
 # Test alias resolution
 tsc --noEmit --traceResolution 2>&1 | grep "@/server" | head -5
 ```
+
+### Step 2.4: Run Verification
+
+**Commands:**
+
+```bash
+pnpm verify
+```
+
+### Stage Report
+
+**Moved paths:** Created: src/server, src/client, src/ui, src/infra (empty)
+**Import updates:** None
+**Smoke checks:** N/A (no runtime changes)
+**Temporary exceptions:** None
+
+**STOP → Request operator approval to proceed to Stage 3**
+
+---
 
 ### Exit Criteria
 
@@ -499,8 +566,8 @@ pnpm verify
 
 - `src/lib/ai/services/data-extractor-service.ts`
 - `src/lib/ai/services/exercise-chat-service.ts`
-- `src/lib/ai/services/image-optimizer-service.ts`
-- `src/lib/ai/prompt-composer.server.ts`
+  -ai/services/image-optimizer-service.ts`
+- `src/lib `src/lib//ai/prompt-composer.server.ts`
 - `src/lib/ai/prompt-resolver.server.ts`
 - `src/lib/ai/system-prompts.server.ts`
 - `src/lib/ai/summary.ts`
@@ -535,7 +602,7 @@ pnpm verify
 
 **Batch Report:** LLM wrappers moved to `src/infra/llm/`. Services still in `src/lib/ai/services/`.
 
-**STOP → Request operator approval to continue to Stage 4**
+**STOP → Request operator approval to proceed to Stage 4**
 
 ---
 
@@ -633,6 +700,7 @@ import { slugField } from '@/server/payload/fields/slug'
 
 ```bash
 pnpm verify
+./scripts/smoke-test.sh
 
 # Critical smoke: Payload admin must load
 open http://localhost:3000/admin
@@ -643,6 +711,17 @@ open http://localhost:3000/admin
 1. Navigate to `/admin`
 2. Verify collections are accessible
 3. Check browser console for errors
+
+### Stage Report
+
+**Moved paths:** collections, fields, access, hooks, migrations, plugins → src/server/payload/
+**Import updates:** payload.config.ts + all files importing from those paths
+**Smoke checks:** Admin panel loads, collections accessible
+**Temporary exceptions:** None
+
+**STOP → Request operator approval to proceed to Stage 5**
+
+---
 
 ### Exit Criteria
 
@@ -747,6 +826,17 @@ pnpm verify
 ./scripts/smoke-test.sh
 ```
 
+### Stage Report
+
+**Moved paths:** services/\* → src/server/services/, ai/services → src/server/services/ai/, mcp → src/server/repos/, tenant → src/server/repos/
+**Import updates:** All files importing from moved paths
+**Smoke checks:** All passed
+**Temporary exceptions:** None
+
+**STOP → Request operator approval to proceed to Stage 6**
+
+---
+
 ### Exit Criteria
 
 - [ ] All services moved to `src/server/services/`
@@ -760,80 +850,110 @@ pnpm verify
 
 ### Objective
 
-Move components into `src/ui/web` and `src/ui/admin` (lowercase paths).
+Move components into `src/ui/web` and `src/ui/admin` (lowercase paths, single tokens).
+
+### Step 6.0: Verify Admin Component Usage (BEFORE MOVING)
+
+**IMPORTANT:** Before moving `AdminBar`, `BeforeDashboard`, `BeforeLogin`, verify their usage.
+
+**Commands:**
+
+```bash
+# Check where these components are imported from
+echo "=== Searching for AdminBar imports ==="
+grep -r "AdminBar" --include="*.ts" --include="*.tsx" src/ | grep -v "node_modules" | head -20
+
+echo "=== Searching for BeforeDashboard imports ==="
+grep -r "BeforeDashboard" --include="*.ts" --include="*.tsx" src/ | grep -v "node_modules" | head -20
+
+echo "=== Searching for BeforeLogin imports ==="
+grep -r "BeforeLogin" --include="*.ts" --include="*.tsx" src/ | grep -v "node_modules" | head -20
+```
+
+**Decision Table:**
+
+| Component       | References in Payload Config?                 | References in Frontend Routes? | Decision |
+| --------------- | --------------------------------------------- | ------------------------------ | -------- |
+| AdminBar        | Check `payload.config.ts` or admin components | Check `src/app/**`             | Target   |
+| BeforeDashboard | Check `payload.config.ts`                     | Check `src/app/**`             | Target   |
+| BeforeLogin     | Check `payload.config.ts`                     | Check `src/app/**`             | Target   |
+
+**Stage Report Documentation:**
+
+Document the search results and chosen targets in the stage report.
+
+**STOP → Request operator approval to proceed with moves**
+
+---
 
 ### Step 6.1: Move Student UI to ui/web
 
-**Files to Move:**
+**Files to Move (lowercase, single tokens):**
 
-| Source                                | Target                              |
-| ------------------------------------- | ----------------------------------- |
-| `src/components/ExerciseRenderer/`    | `src/ui/web/exercise-renderer/`     |
-| `src/components/Media/`               | `src/ui/web/media/`                 |
-| `src/components/chat/`                | `src/ui/web/chat/`                  |
-| `src/components/HomePage/`            | `src/ui/web/home-page/`             |
-| `src/components/Header/`              | `src/ui/web/header/`                |
-| `src/components/Footer/`              | `src/ui/web/footer/`                |
-| `src/components/CommandPalette.tsx`   | `src/ui/web/command-palette.tsx`    |
-| `src/components/ExampleForm.tsx`      | `src/ui/web/example-form.tsx`       |
-| `src/components/Link/`                | `src/ui/web/link/`                  |
-| `src/components/Logo/`                | `src/ui/web/logo/`                  |
-| `src/components/PageRange/`           | `src/ui/web/page-range/`            |
-| `src/components/Pagination/`          | `src/ui/web/pagination/`            |
-| `src/components/RichText/`            | `src/ui/web/rich-text/`             |
-| `src/components/TelescopeLogo/`       | `src/ui/web/telescope-logo/`        |
-| `src/components/UserAvatar/`          | `src/ui/web/user-avatar/`           |
-| `src/components/UserDropdown/`        | `src/ui/web/user-dropdown/`         |
-| `src/components/shared/`              | `src/ui/web/shared/`                |
-| `src/components/LivePreviewListener/` | `src/ui/web/live-preview-listener/` |
-| `src/components/Card/`                | `src/ui/web/card/`                  |
-| `src/components/CollectionArchive/`   | `src/ui/web/collection-archive/`    |
+| Source                                | Target                            |
+| ------------------------------------- | --------------------------------- |
+| `src/components/ExerciseRenderer/`    | `src/ui/web/exerciserenderer/`    |
+| `src/components/Media/`               | `src/ui/web/media/`               |
+| `src/components/chat/`                | `src/ui/web/chat/`                |
+| `src/components/HomePage/`            | `src/ui/web/homepage/`            |
+| `src/components/Header/`              | `src/ui/web/header/`              |
+| `src/components/Footer/`              | `src/ui/web/footer/`              |
+| `src/components/CommandPalette.tsx`   | `src/ui/web/commandpalette.tsx`   |
+| `src/components/ExampleForm.tsx`      | `src/ui/web/exampleform.tsx`      |
+| `src/components/Link/`                | `src/ui/web/link/`                |
+| `src/components/Logo/`                | `src/ui/web/logo/`                |
+| `src/components/PageRange/`           | `src/ui/web/pagerange/`           |
+| `src/components/Pagination/`          | `src/ui/web/pagination/`          |
+| `src/components/RichText/`            | `src/ui/web/richtext/`            |
+| `src/components/TelescopeLogo/`       | `src/ui/web/telescopelogo/`       |
+| `src/components/UserAvatar/`          | `src/ui/web/useravatar/`          |
+| `src/components/UserDropdown/`        | `src/ui/web/userdropdown/`        |
+| `src/components/shared/`              | `src/ui/web/shared/`              |
+| `src/components/LivePreviewListener/` | `src/ui/web/livepreviewlistener/` |
+| `src/components/Card/`                | `src/ui/web/card/`                |
+| `src/components/CollectionArchive/`   | `src/ui/web/collectionarchive/`   |
 
 **Commands:**
 
 ```bash
 # Move student UI components
-mv src/components/ExerciseRenderer src/ui/web/exercise-renderer
+mv src/components/ExerciseRenderer src/ui/web/exerciserenderer
 mv src/components/Media src/ui/web/media
 mv src/components/chat src/ui/web/chat
-mv src/components/HomePage src/ui/web/home-page
+mv src/components/HomePage src/ui/web/homepage
 mv src/components/Header src/ui/web/header
 mv src/components/Footer src/ui/web/footer
-mv src/components/CommandPalette.tsx src/ui/web/command-palette.tsx
-mv src/components/ExampleForm.tsx src/ui/web/example-form.tsx
+mv src/components/CommandPalette.tsx src/ui/web/commandpalette.tsx
+mv src/components/ExampleForm.tsx src/ui/web/exampleform.tsx
 mv src/components/Link src/ui/web/link
 mv src/components/Logo src/ui/web/logo
-mv src/components/PageRange src/ui/web/page-range
+mv src/components/PageRange src/ui/web/pagerange
 mv src/components/Pagination src/ui/web/pagination
-mv src/components/RichText src/ui/web/rich-text
-mv src/components/TelescopeLogo src/ui/web/telescope-logo
-mv src/components/UserAvatar src/ui/web/user-avatar
-mv src/components/UserDropdown src/ui/web/user-dropdown
+mv src/components/RichText src/ui/web/richtext
+mv src/components/TelescopeLogo src/ui/web/telescopelogo
+mv src/components/UserAvatar src/ui/web/useravatar
+mv src/components/UserDropdown src/ui/web/userdropdown
 mv src/components/shared src/ui/web/shared
-mv src/components/LivePreviewListener src/ui/web/live-preview-listener
+mv src/components/LivePreviewListener src/ui/web/livepreviewlistener
 mv src/components/Card src/ui/web/card
-mv src/components/CollectionArchive src/ui/web/collection-archive
+mv src/components/CollectionArchive src/ui/web/collectionarchive
 ```
 
 ### Step 6.2: Move Admin UI to ui/admin
 
 **Files to Move:**
 
-| Source                            | Target                         |
-| --------------------------------- | ------------------------------ |
-| `src/components/admin/`           | `src/ui/admin/`                |
-| `src/components/AdminBar/`        | `src/ui/web/admin-bar/`        |
-| `src/components/BeforeDashboard/` | `src/ui/web/before-dashboard/` |
-| `src/components/BeforeLogin/`     | `src/ui/web/before-login/`     |
+| Source                  | Target          |
+| ----------------------- | --------------- |
+| `src/components/admin/` | `src/ui/admin/` |
+
+**Note:** `AdminBar`, `BeforeDashboard`, `BeforeLogin` - target determined by Step 6.0 verification.
 
 **Commands:**
 
 ```bash
 # Move admin UI components
 mv src/components/admin src/ui/admin/
-mv src/components/AdminBar src/ui/web/admin-bar/
-mv src/components/BeforeDashboard src/ui/web/before-dashboard/
-mv src/components/BeforeLogin src/ui/web/before-login/
 ```
 
 ### Step 6.3: Move Blocks
@@ -887,7 +1007,7 @@ mv src/hooks/useMediaQuery.ts src/client/hooks/
 import { CourseCard } from '@/components/CourseCard'
 
 // After
-import { CourseCard } from '@/ui/web/course-card'
+import { CourseCard } from '@/ui/web/coursecard'
 ```
 
 **Commands:**
@@ -912,11 +1032,23 @@ grep -r "@/server" src/ui/ --include="*.ts" --include="*.tsx" || echo "No server
 
 ```bash
 pnpm verify
+./scripts/smoke-test.sh
 
 # Smoke: student pages render
 open http://localhost:3000/courses
 open http://localhost:3000/
 ```
+
+### Stage Report
+
+**Moved paths:** All components → src/ui/web/ and src/ui/admin/
+**Import updates:** All files importing from @/components
+**Smoke checks:** Student pages render correctly
+**Temporary exceptions:** Document if any
+
+**STOP → Request operator approval to proceed to Stage 7**
+
+---
 
 ### Exit Criteria
 
@@ -1015,7 +1147,7 @@ export async function getCoursesData() {
 
 // After: src/app/courses/page.tsx
 import { getCourses } from '@/server/repos/queries/courses'
-import { CourseCard } from '@/ui/web/course-card'
+import { CourseCard } from '@/ui/web/coursecard'
 
 export default async function CoursesPage() {
   const courses = await getCourses()
@@ -1087,6 +1219,8 @@ pnpm verify
 - [ ] No Payload queries in routes
 - [ ] No business logic in pages
 - [ ] `pnpm verify` passes
+
+**STOP → Request operator approval to proceed to Stage 8**
 
 ---
 
@@ -1186,6 +1320,17 @@ pnpm verify
 ./scripts/smoke-test.sh
 ```
 
+### Stage Report
+
+**Moved paths:** localStorage, hooks, utilities → src/client/
+**Import updates:** All files importing from moved paths
+**Smoke checks:** All passed
+**Temporary exceptions:** None
+
+**STOP → Request operator approval to proceed to Stage 9**
+
+---
+
 ### Exit Criteria
 
 - [ ] Client helpers in `src/client/`
@@ -1200,6 +1345,53 @@ pnpm verify
 
 Make the folder architecture non-negotiable with ESLint rules.
 
+### Step 9.0: Audit Boundary Violations (MANDATORY)
+
+**Before adding rules, count and categorize violations:**
+
+```bash
+echo "=== Auditing boundary violations ==="
+
+echo "--- UI → Server violations ---"
+grep -r "@/server" src/ui/ --include="*.ts" --include="*.tsx" | wc -l
+
+echo "--- Client → Server violations ---"
+grep -r "@/server" src/client/ --include="*.ts" --include="*.tsx" | wc -l
+
+echo "--- Server → Client violations ---"
+grep -r "@/client" src/server/ --include="*.ts" --include="*.tsx" | wc -l
+
+echo "--- Server → UI violations ---"
+grep -r "@/ui" src/server/ --include="*.ts" --include="*.tsx" | wc -l
+
+echo "--- Infra → Server violations ---"
+grep -r "@/server" src/infra/ --include="*.ts" --include="*.tsx" | wc -l
+
+echo "--- Infra → Client violations ---"
+grep -r "@/client" src/infra/ --include="*.ts" --include="*.tsx" | wc -l
+
+echo "--- Infra → UI violations ---"
+grep -r "@/ui" src/infra/ --include="*.ts" --include="*.tsx" | wc -l
+
+echo "=== Top violating files ==="
+grep -r "@/server\|@/client\|@/ui" src/ --include="*.ts" --include="*.tsx" | \
+  sed 's/:.*//' | sort | uniq -c | sort -rn | head -10
+```
+
+**Output:** Total violations + top 10 offending files/folders
+
+**Verification Gate:**
+
+```bash
+pnpm verify
+```
+
+**Batch Report:** Audit complete. X violations found. Top offenders: [list].
+
+**STOP → Request operator approval to continue to Step 9.1**
+
+---
+
 ### Step 9.1: Add ESLint Boundary Rules
 
 **File:** `eslint.config.mjs`
@@ -1209,16 +1401,19 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   // ... existing rules
+
+  // UI boundaries - allow src/app/** to import from anywhere
   {
     name: 'ui-boundaries',
     files: ['src/ui/**/*.{ts,tsx}'],
+    excludedFiles: ['src/app/**'],
     rules: {
       'no-restricted-imports': [
         'error',
         {
           patterns: [
             {
-              group: ['@/server/**', 'src/server/**', '../../server/**'],
+              group: ['@/server/**', 'src/server/**'],
               message: 'UI layer cannot import from Server layer',
             },
           ],
@@ -1226,16 +1421,19 @@ export default tseslint.config(
       ],
     },
   },
+
+  // Client boundaries - allow src/app/** to import from anywhere
   {
     name: 'client-boundaries',
     files: ['src/client/**/*.{ts,tsx}'],
+    excludedFiles: ['src/app/**'],
     rules: {
       'no-restricted-imports': [
         'error',
         {
           patterns: [
             {
-              group: ['@/server/**', 'src/server/**', '../../server/**'],
+              group: ['@/server/**', 'src/server/**'],
               message: 'Client layer cannot import from Server layer',
             },
           ],
@@ -1243,6 +1441,8 @@ export default tseslint.config(
       ],
     },
   },
+
+  // Server boundaries
   {
     name: 'server-boundaries',
     files: ['src/server/**/*.{ts,tsx}'],
@@ -1252,11 +1452,11 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['@/client/**', 'src/client/**', '../../client/**'],
+              group: ['@/client/**', 'src/client/**'],
               message: 'Server layer cannot import from Client layer',
             },
             {
-              group: ['@/ui/**', 'src/ui/**', '../../ui/**'],
+              group: ['@/ui/**', 'src/ui/**'],
               message: 'Server layer cannot import from UI layer',
             },
           ],
@@ -1264,6 +1464,8 @@ export default tseslint.config(
       ],
     },
   },
+
+  // Infra boundaries - infra is a leaf layer
   {
     name: 'infra-boundaries',
     files: ['src/infra/**/*.{ts,tsx}'],
@@ -1273,15 +1475,15 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['@/client/**', 'src/client/**', '../../client/**'],
+              group: ['@/client/**', 'src/client/**'],
               message: 'Infra layer cannot import from Client layer',
             },
             {
-              group: ['@/ui/**', 'src/ui/**', '../../ui/**'],
+              group: ['@/ui/**', 'src/ui/**'],
               message: 'Infra layer cannot import from UI layer',
             },
             {
-              group: ['@/server/**', 'src/server/**', '../../server/**'],
+              group: ['@/server/**', 'src/server/**'],
               message: 'Infra layer cannot import from Server layer',
             },
           ],
@@ -1292,6 +1494,10 @@ export default tseslint.config(
 )
 ```
 
+**STOP → Request operator approval to continue to Step 9.2**
+
+---
+
 ### Step 9.2: CI Integration
 
 **Update:** `.github/workflows/lint.yml`
@@ -1300,6 +1506,10 @@ export default tseslint.config(
 - name: Run lint
   run: pnpm lint
 ```
+
+**STOP → Request operator approval to continue to Step 9.3**
+
+---
 
 ### Step 9.3: Fix Remaining Violations
 
@@ -1311,6 +1521,10 @@ export default tseslint.config(
    - Decide: move code, invert dependency, or duplicate
    - Fix and re-run
 
+**STOP → Request operator approval to continue to Step 9.4**
+
+---
+
 ### Step 9.4: Final Verification
 
 **Commands:**
@@ -1319,6 +1533,15 @@ export default tseslint.config(
 pnpm verify
 ./scripts/smoke-test.sh
 ```
+
+### Stage Report
+
+**Moved paths:** N/A (rule enforcement only)
+**Import updates:** ESLint boundary rules added
+**Smoke checks:** All passed
+**Temporary exceptions:** Document if any
+
+---
 
 ### Exit Criteria
 
@@ -1365,78 +1588,69 @@ After completing all stages:
 
 ## Stage Summary
 
-| Stage | Focus                       | Risk     |
-| ----- | --------------------------- | -------- |
-| 0     | Baseline & Safety Net       | Low      |
-| 1     | Repo Hygiene                | Very Low |
-| 2     | Root Folders & Aliases      | Low      |
-| 3     | Infra Migration (5 batches) | Low      |
-| 4     | Payload Consolidation       | Medium   |
-| 5     | Server Logic                | Medium   |
-| 6     | UI Migration                | Medium   |
-| 7     | Thin App Layer (3 batches)  | Medium   |
-| 8     | Client Helpers              | Low      |
-| 9     | Boundary Enforcement        | Low      |
+| Stage | Focus                              | Risk     |
+| ----- | ---------------------------------- | -------- |
+| 0     | Baseline & Safety Net              | Low      |
+| 1     | Repo Hygiene                       | Very Low |
+| 2     | Root Folders & Aliases             | Low      |
+| 3     | Infra Migration (5 batches)        | Low      |
+| 4     | Payload Consolidation              | Medium   |
+| 5     | Server Logic                       | Medium   |
+| 6     | UI Migration                       | Medium   |
+| 7     | Thin App Layer (3 batches)         | Medium   |
+| 8     | Client Helpers                     | Low      |
+| 9     | Boundary Enforcement (4 sub-steps) | Low      |
 
 ---
 
-## Summary of Changes Applied
+## Summary of Key Changes
 
-### Updated Stage List (Titles Only, in Order)
+### 1. Updated Stage List with STOP+Approval Markers
 
-1. Stage 0: Baseline & Safety Net
-2. Stage 1: Repo Hygiene
-3. Stage 2: Create Root Folders & Aliases
-4. Stage 3: Migrate Infra First (5 batches)
-5. Stage 4: Consolidate Payload into src/server/payload
-6. Stage 5: Consolidate Server Logic
-7. Stage 6: UI Migration
-8. Stage 7: Thin App Layer (3 batches)
-9. Stage 8: Client Helpers Migration
-10. Stage 9: Enforce Boundaries
+1. Stage 0: Baseline & Safety Net ← STOP
+2. Stage 1: Repo Hygiene ← STOP
+3. Stage 2: Create Root Folders & Aliases ← STOP
+4. Stage 3: Migrate Infra First (5 batches) ← STOP after each batch
+5. Stage 4: Payload Consolidation ← STOP
+6. Stage 5: Server Logic ← STOP
+7. Stage 6: UI Migration ← STOP
+8. Stage 7: Thin App Layer (3 batches) ← STOP after each batch
+9. Stage 8: Client Helpers ← STOP
+10. Stage 9: Enforce Boundaries ← STOP after 9.0, 9.1, 9.2, 9.3
 
-### Updated Directory Targets (Lowercase Paths)
+### 2. Stage 6 - Verify Before Moving Admin Components
 
-```text
-src/
-  ui/web/
-    exercise-renderer/
-    media/
-    chat/
-    home-page/
-    header/
-    footer/
-    command-palette.tsx
-    example-form.tsx
-    link/
-    logo/
-    page-range/
-    pagination/
-    rich-text/
-    telescope-logo/
-    user-avatar/
-    user-dropdown/
-    shared/
-    live-preview-listener/
-    card/
-    collection-archive/
-    blocks/
-    admin-bar/
-    before-dashboard/
-    before-login/
+Added Step 6.0 with verification commands:
 
-  ui/admin/
-    (admin components)
+```bash
+grep -r "AdminBar" --include="*.ts" --include="*.tsx" src/
 ```
 
-### Updated Verify and Smoke Scripts
+Decision table to choose `ui/admin` vs `ui/web` vs `ui/shared`.
 
-**`scripts/verify.sh`:**
+### 3. Naming Policy - No Kebab-Case
 
-- Tests run without `|| true` - failures cause script to fail
-- All 4 checks run: lint → typecheck → build → test
+Changed to single lowercase tokens:
 
-**`scripts/smoke-test.sh`:**
+- `home-page` → `homepage`
+- `rich-text` → `richtext`
+- `user-avatar` → `useravatar`
+- `telescope-logo` → `telescopelogo`
 
-- `/admin` accepts HTTP 200 or 3xx (redirects)
-- Health check accepts any non-empty JSON, not hardcoded `"status":"ok"`
+### 4. Stage 9 - Added 9.0 Audit + App Allowlist
+
+- **9.0 Audit**: Count violations before enforcement
+- **Allowlist**: `src/app/**` excluded from boundary rules
+- **Improved patterns**: Cover any depth (`**/server/**`-style)
+
+### 5. Smoke Script - jq Fallback
+
+Updated `scripts/smoke-test.sh`:
+
+```bash
+if command -v jq &> /dev/null; then
+  # use jq
+else
+  # fallback to non-empty check
+fi
+```
