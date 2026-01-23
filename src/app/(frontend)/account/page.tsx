@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getMeUser } from '@/utilities/getMeUser'
+import { getMeUser } from '@/infra/utils/getMeUser'
 import { AccountPageContent } from './AccountPageContent'
 
 export const metadata = { title: 'Account' }

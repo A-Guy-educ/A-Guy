@@ -1,5 +1,5 @@
+import { ExerciseContentSchema } from '@/infra/contracts'
 import { describe, expect, it } from 'vitest'
-import { ExerciseContentSchema } from '@/contracts'
 
 describe('ExerciseContentSchema', () => {
   it('validates exercise content with multiple rich text blocks', () => {

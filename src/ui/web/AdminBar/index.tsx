@@ -2,13 +2,13 @@
 
 import type { PayloadAdminBarProps, PayloadMeUser } from '@payloadcms/admin-bar'
 
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import { useSelectedLayoutSegments } from 'next/navigation'
 import { PayloadAdminBar } from '@payloadcms/admin-bar'
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { getClientSideURL } from '@/utilities/getURL'
+import { getClientSideURL } from '@/infra/utils/getURL'
 
 const collectionLabels = {
   pages: {

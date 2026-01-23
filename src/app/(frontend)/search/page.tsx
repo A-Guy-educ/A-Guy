@@ -4,7 +4,7 @@ import { CollectionArchive } from '@/ui/web/CollectionArchive'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
-import { Search } from '@/search/Component'
+import { Search } from '@/ui/web/search/Component'
 import PageClient from './page.client'
 
 type Args = {

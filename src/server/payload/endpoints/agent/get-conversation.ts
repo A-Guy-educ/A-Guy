@@ -14,7 +14,7 @@
  * Access: Authenticated users only
  */
 import { ChatRole } from '@/infra/llm/chat-message-role'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
 

@@ -1,5 +1,5 @@
-import { logger } from '@/utilities/logger'
-import { getServerSideURL } from '@/utilities/getURL'
+import { logger } from '@/infra/utils/logger'
+import { getServerSideURL } from '@/infra/utils/getURL'
 import type { MCPJsonRpcResponse, MCPListToolsResult, MCPTool, MCPToolResult } from './types'
 
 const DEFAULT_MCP_PATH = '/api/mcp'

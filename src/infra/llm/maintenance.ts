@@ -9,7 +9,7 @@
  * - Tracks summarization metadata
  */
 
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import type { Payload } from 'payload'
 import type { Message } from './context-policy'
 import { getMessagesToSummarize, getRecentWindow, needsSummaryMaintenance } from './context-policy'

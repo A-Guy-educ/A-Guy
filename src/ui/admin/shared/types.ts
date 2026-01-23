@@ -2,7 +2,7 @@
  * Shared types for Exercise admin editors
  */
 
-import type { RichTextBlock, AnswerSpec } from '@/contracts'
+import type { AnswerSpec, RichTextBlock } from '@/infra/contracts'
 
 export interface EditorError {
   path: string

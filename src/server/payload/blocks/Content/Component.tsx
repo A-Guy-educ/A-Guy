@@ -1,5 +1,5 @@
 import RichText from '@/ui/web/RichText'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import React from 'react'
 
 import type { ContentBlock as ContentBlockProps } from '@/payload-types'

@@ -1,5 +1,3 @@
-import canUseDOM from '@/client/utils/canUseDOM'
-
 export const getServerSideURL = () => {
   return (
     process.env.NEXT_PUBLIC_SERVER_URL ||
@@ -10,7 +8,7 @@ export const getServerSideURL = () => {
 }
 
 export const getClientSideURL = () => {
-  if (canUseDOM) {
+  if (typeof window !== 'undefined') {
     const protocol = window.location.protocol
     const domain = window.location.hostname
     const port = window.location.port

@@ -1,4 +1,4 @@
-import { startMongoContainer, stopMongoContainer } from '@/utilities/test/mongodb-container'
+import { startMongoContainer, stopMongoContainer } from '@/infra/utils/test/mongodb-container'
 import { getPayload, Payload } from 'payload'
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'

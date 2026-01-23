@@ -7,7 +7,7 @@
  * @ai-summary PII-safe logging for OAuth events with email hashing
  */
 
-import { logger } from '@/utilities/logger/logger'
+import { logger } from '@/infra/utils/logger/logger'
 import { createHash } from 'crypto'
 
 async function hashEmail(email: string): Promise<string> {

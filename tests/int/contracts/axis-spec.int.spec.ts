@@ -1,5 +1,5 @@
+import { AxisSpecV1Schema } from '@/infra/contracts'
 import { describe, expect, it } from 'vitest'
-import { AxisSpecV1Schema } from '@/contracts'
 
 describe('AxisSpecV1Schema', () => {
   it('validates complete axis spec with all features', () => {

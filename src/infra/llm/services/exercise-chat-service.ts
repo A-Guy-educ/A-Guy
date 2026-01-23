@@ -2,7 +2,7 @@
  * AI Chat Service for Exercise Help
  * Orchestrates chat with Gemini provider
  */
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import type { ComposedPrompt } from '../context-policy'
 import { AI_MODELS } from '../models'
 import {

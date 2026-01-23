@@ -1,5 +1,5 @@
+import { GeometrySpecV1Schema } from '@/infra/contracts'
 import { describe, expect, it } from 'vitest'
-import { GeometrySpecV1Schema } from '@/contracts'
 
 describe('GeometrySpecV1Schema', () => {
   it('validates complete geometry spec', () => {

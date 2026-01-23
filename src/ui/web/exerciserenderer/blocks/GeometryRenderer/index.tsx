@@ -3,7 +3,7 @@
  * Renders geometric shapes and diagrams
  */
 
-import { GeometrySpecV1 } from '@/contracts'
+import { GeometrySpecV1 } from '@/infra/contracts'
 
 // Placeholder for GeometrySystem since we are not supporting graphs workflows in this task.
 export const GeometryRenderer: React.FC<{

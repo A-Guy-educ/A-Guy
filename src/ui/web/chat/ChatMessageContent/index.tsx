@@ -1,6 +1,6 @@
 'use client'
 
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import type { Element, Root } from 'hast'
 import type { Components } from 'react-markdown'
 import ReactMarkdown from 'react-markdown'

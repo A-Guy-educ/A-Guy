@@ -6,7 +6,7 @@
 'use client'
 
 import React from 'react'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import { Button } from '@/ui/ui/button'
 import { Card } from '@/ui/ui/card'
 import { CheckCircle2 } from 'lucide-react'

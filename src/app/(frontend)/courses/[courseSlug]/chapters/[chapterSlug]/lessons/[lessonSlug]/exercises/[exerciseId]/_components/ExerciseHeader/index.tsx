@@ -3,7 +3,7 @@
 import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
 import { isRTL } from '@/i18n/config'
 import { useLocale, useTranslations } from '@/ui/providers/I18n'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import { ArrowLeft, ArrowRight, Menu } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 

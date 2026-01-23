@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 
 /**
  * Section component for page sections with consistent vertical padding.

@@ -2,7 +2,7 @@ import { ChatRole } from '@/infra/llm/chat-message-role'
 import { PRODUCT_EVENTS } from '@/infra/analytics/contracts/events'
 import { useAnalytics } from '@/infra/analytics/providers/AnalyticsProvider'
 import { apiService } from '@/server/services/api/api-service'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 

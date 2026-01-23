@@ -12,9 +12,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
-import { getConversation } from '@/endpoints/agent/get-conversation'
-import { agentChat } from '@/endpoints/agent/chat'
-import { startMongoContainer, stopMongoContainer } from '@/utilities/test/mongodb-container'
+import { getConversation } from '@/server/payload/endpoints/agent/get-conversation'
+import { agentChat } from '@/server/payload/endpoints/agent/chat'
+import { startMongoContainer, stopMongoContainer } from '@/infra/utils/test/mongodb-container'
 
 // Mock AI and vector-related services
 vi.mock('@/infra/llm/services/exercise-chat-service', () => ({

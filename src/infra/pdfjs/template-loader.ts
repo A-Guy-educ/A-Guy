@@ -1,5 +1,5 @@
 import { CACHE_CONFIG, VIEWER_URLS } from './config'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 
 /**
  * Fetch helper with consistent error handling

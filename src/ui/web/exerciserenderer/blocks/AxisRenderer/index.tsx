@@ -3,7 +3,7 @@
  * Renders coordinate systems with axes, grids, points, and function graphs
  */
 
-import { AxisSpecV1 } from '@/contracts'
+import { AxisSpecV1 } from '@/infra/contracts'
 
 // Placeholder for AxisSystem since we are not supporting graphs workflows in this task.
 export const AxisRenderer: React.FC<{

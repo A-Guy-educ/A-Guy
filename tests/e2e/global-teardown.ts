@@ -3,7 +3,7 @@
  * Stops MongoDB test container after tests complete
  * No-op when using CI service container (USE_MONGO_SERVICE=true)
  */
-import { stopMongoContainer } from '@/utilities/test/mongodb-container'
+import { stopMongoContainer } from '@/infra/utils/test/mongodb-container'
 
 async function globalTeardown() {
   // Service container is managed by CI, not us

@@ -4,7 +4,7 @@
  *
  * @public This is the ONLY file consumers should import from
  */
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import { getGeminiClient } from './gemini.client'
 import { isRetryableError, wrapGeminiError } from './gemini.errors'
 import { extractResponseText, mapMessagesToGeminiHistory } from './gemini.mapper'

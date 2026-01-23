@@ -1,4 +1,4 @@
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import type { MCPTool } from './client/types'
 
 const ALLOWED_TOOL_NAMES = new Set([

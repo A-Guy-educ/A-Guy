@@ -6,7 +6,7 @@
  * @pattern server-only
  */
 import type { Prompt } from '@/payload-types'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import type { Payload } from 'payload'
 
 export type SystemPromptResult = {

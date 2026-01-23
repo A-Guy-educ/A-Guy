@@ -7,7 +7,7 @@
  * Strategy: Fail fast in production if index is missing
  */
 
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import type { Db } from 'mongodb'
 
 const INDEX_NAME = 'memory_items_embedding_v1'

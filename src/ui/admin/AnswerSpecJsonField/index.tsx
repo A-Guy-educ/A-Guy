@@ -4,9 +4,9 @@ import React from 'react'
 import { useField, useFormFields, useTranslation } from '@payloadcms/ui'
 import { Highlight, themes } from 'prism-react-renderer'
 // Import example JSON files
-import mcqExample from '@/contracts/examples/answer-spec-mcq.example.json'
-import trueFalseExample from '@/contracts/examples/answer-spec-true-false.example.json'
-import freeResponseExample from '@/contracts/examples/answer-spec-free-response.example.json'
+import mcqExample from '@/infra/contracts/examples/answer-spec-mcq.example.json'
+import trueFalseExample from '@/infra/contracts/examples/answer-spec-true-false.example.json'
+import freeResponseExample from '@/infra/contracts/examples/answer-spec-free-response.example.json'
 import type { JSONFieldClientComponent } from 'payload'
 
 type QuestionType = 'mcq' | 'true_false' | 'free_response'

@@ -1,4 +1,4 @@
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import React from 'react'
 
 import { Card, CardPostData } from '@/ui/web/Card'

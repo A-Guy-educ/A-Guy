@@ -15,41 +15,41 @@
 // ============================================================================
 
 export type {
-  User,
-  Course,
+  Category,
   Chapter,
-  Lesson,
+  Config,
+  Conversation,
+  Course,
   Exercise,
   ExerciseAsset,
-  Conversation,
+  Form,
+  FormSubmission,
+  Lesson,
+  Media,
   MemoryItem,
   Page,
   Post,
-  Category,
-  Media,
   PricingPlan,
-  Form,
-  FormSubmission,
   Redirect,
   Search,
-  Config,
+  User,
 } from '@/payload-types'
 
 // ============================================================================
 // Payload Config Types
 // ============================================================================
 
-export type { CollectionConfig, GlobalConfig, Field, Access } from 'payload'
+export type { Access, CollectionConfig, Field, GlobalConfig } from 'payload'
 
 // ============================================================================
 // AI Types
 // ============================================================================
 
-export type { AIContext, LoadedDocs, DocTier } from '@/infra/llm/smart-doc-loader'
+export type { AIContext, DocTier, LoadedDocs } from '@/infra/llm/smart-doc-loader'
 
 export type { MemoryItem as MemoryItemSearch, RetrievalResult } from '@/infra/llm/vector-search'
 
-export type { Message, ContextComponents, ComposedPrompt } from '@/infra/llm/context-policy'
+export type { ComposedPrompt, ContextComponents, Message } from '@/infra/llm/context-policy'
 
 export type {
   ChatMessage,
@@ -63,19 +63,13 @@ export type { SummaryResult } from '@/infra/llm/summary'
 
 export type { ContextLog } from '@/infra/llm/observability'
 
-export type { AIModelKey, AIModelConfig } from '@/infra/llm/models'
-
-// ============================================================================
-// Component Types
-// ============================================================================
-
-export type { Theme, ThemeContextType } from '@/ui/providers/Theme/types'
+export type { AIModelConfig, AIModelKey } from '@/infra/llm/models'
 
 // ============================================================================
 // Contract Types
 // ============================================================================
 
-export type { BlockId, ColorString, PositionEnum, LineStyle } from '@/contracts/primitives'
+export type { BlockId, ColorString, LineStyle, PositionEnum } from '@/infra/contracts/primitives'
 
 export type { ContentBlock, ExerciseContent } from '@/server/payload/collections/Exercises/schemas'
 
@@ -85,16 +79,6 @@ export type {
   ContentSchema,
   QuestionFreeResponseBlockSchema,
 } from '@/server/payload/collections/Exercises/index'
-
-// ============================================================================
-// API Service Types
-// ============================================================================
-
-export type {
-  ChatApiResponse,
-  ConversationApiResponse,
-  ConversationMessage,
-} from '@/server/services/api/api-service'
 
 // ============================================================================
 // Access Control Types

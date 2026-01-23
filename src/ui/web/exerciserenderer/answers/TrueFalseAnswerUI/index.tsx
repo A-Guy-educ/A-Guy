@@ -4,9 +4,8 @@
  * NOTE: This component is deprecated and not used in the new block-based exercise structure
  */
 
-import React from 'react'
-import { cn } from '@/utilities/ui'
-import type { TrueFalseAnswerSpec } from '@/contracts'
+import type { TrueFalseAnswerSpec } from '@/infra/contracts'
+import { cn } from '@/infra/utils/ui'
 import { RichTextRenderer } from '../../blocks/RichTextRenderer'
 
 // Legacy UserAnswer type for the old sections-based true/false format

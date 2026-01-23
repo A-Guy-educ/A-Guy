@@ -34,7 +34,7 @@ export function createRequestLogger(requestId: string) {
 /**
  * Example usage:
  *
- * import { logger, createRequestLogger } from '@/utilities/logger'
+ * import { logger, createRequestLogger } from '@/infra/utils/logger'
  *
  * // Basic logging
  * logger.info('Server started')

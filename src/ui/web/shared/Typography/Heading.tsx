@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 
 /**
  * Heading component with semantic HTML levels and visual size variants.

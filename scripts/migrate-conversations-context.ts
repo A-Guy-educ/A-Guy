@@ -17,7 +17,7 @@
  * IMPORTANT: Run with --dry-run first to preview changes
  */
 
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import config from '@payload-config'
 import { getPayload } from 'payload'
 

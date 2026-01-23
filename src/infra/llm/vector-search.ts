@@ -13,7 +13,7 @@
  * @pattern vector-search, context-scoped
  */
 
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import { MongooseAdapter } from '@payloadcms/db-mongodb'
 import type { Db } from 'mongodb'
 import { Payload } from 'payload'

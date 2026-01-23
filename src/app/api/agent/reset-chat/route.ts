@@ -1,5 +1,5 @@
-import { agentResetChat } from '@/endpoints/agent/reset-chat'
-import { logger } from '@/utilities/logger/logger'
+import { agentResetChat } from '@/server/payload/endpoints/agent/reset-chat'
+import { logger } from '@/infra/utils/logger/logger'
 import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'

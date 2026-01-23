@@ -10,7 +10,7 @@
  * - Context-scoped memory items
  */
 
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import { readFileSync } from 'fs'
 import { OpenAI } from 'openai'
 import { dirname, join } from 'path'

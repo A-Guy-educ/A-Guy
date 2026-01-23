@@ -8,11 +8,11 @@ import { Plugin } from 'payload'
 import { revalidateRedirects } from '@/server/payload/hooks/revalidateRedirects'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
-import { searchFields } from '@/search/fieldOverrides'
-import { beforeSyncWithSearch } from '@/search/beforeSync'
+import { searchFields } from '@/ui/web/search/fieldOverrides'
+import { beforeSyncWithSearch } from '@/ui/web/search/beforeSync'
 
 import { Page } from '@/payload-types'
-import { getServerSideURL } from '@/utilities/getURL'
+import { getServerSideURL } from '@/infra/utils/getURL'
 
 // Temporarily disabled - @payloadcms/plugin-mcp not available in dependencies
 // TODO: Re-enable when MCP plugin is properly configured

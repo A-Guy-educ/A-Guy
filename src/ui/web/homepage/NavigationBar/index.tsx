@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from '@/ui/providers/I18n'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 
 const NAV_ITEMS = [
   { key: 'study', href: '/study' },

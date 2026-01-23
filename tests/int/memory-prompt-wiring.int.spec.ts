@@ -10,7 +10,7 @@ import { MEMORY_BLOCK_END, MEMORY_BLOCK_START } from '@/infra/llm/context-policy
 import type { ComposedPrompt } from '@/infra/llm/context-policy'
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import type { MemoryItem } from '@/infra/llm/vector-search'
-import { agentChat } from '@/endpoints/agent/chat'
+import { agentChat } from '@/server/payload/endpoints/agent/chat'
 import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'

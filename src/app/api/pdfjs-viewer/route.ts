@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import { RESPONSE_HEADERS } from '@/infra/pdfjs/config'
 import { validateFileUrl, redactUrl } from '@/infra/pdfjs/validator'
 import { loadViewerTemplate, loadViewerCss } from '@/infra/pdfjs/template-loader'

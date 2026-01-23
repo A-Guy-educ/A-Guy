@@ -13,7 +13,7 @@ import { OpenAI } from 'openai'
 import { readFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 import type { Message } from './context-policy'
 
 const __filename = fileURLToPath(import.meta.url)

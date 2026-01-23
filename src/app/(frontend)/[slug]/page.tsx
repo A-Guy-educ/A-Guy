@@ -9,7 +9,7 @@ import { cache } from 'react'
 import { RenderBlocks } from '@/server/payload/blocks/RenderBlocks'
 import { LivePreviewListener } from '@/ui/web/LivePreviewListener'
 import { RenderHero } from '@/ui/web/heros/RenderHero'
-import { generateMeta } from '@/utilities/generateMeta'
+import { generateMeta } from '@/infra/utils/generateMeta'
 import PageClient from './page.client'
 
 export async function generateStaticParams() {

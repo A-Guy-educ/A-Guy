@@ -1,5 +1,5 @@
 import { CDN_BASE, VIEWER_URLS } from './config'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 
 /**
  * Rewrite CSS to fix relative image paths

@@ -12,7 +12,7 @@ import type { Chapter, Lesson } from '@/payload-types'
 import { ChapterHeader } from '@/app/(frontend)/courses/_components/ChapterHeader'
 import { LessonCard } from '@/app/(frontend)/courses/_components/LessonCard'
 import { EmptyState } from '@/app/(frontend)/courses/_components/EmptyState'
-import { logger } from '@/utilities/logger'
+import { logger } from '@/infra/utils/logger'
 
 interface ChapterWithLessons extends Chapter {
   lessons: Lesson[]

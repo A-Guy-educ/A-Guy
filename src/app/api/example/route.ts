@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { logger, createRequestLogger } from '@/utilities/logger'
-import { createValidationErrorResponse } from '@/utilities/validation'
+import { logger, createRequestLogger } from '@/infra/utils/logger'
+import { createValidationErrorResponse } from '@/infra/utils/validation'
 import * as Sentry from '@sentry/nextjs'
 import { randomUUID } from 'crypto'
 
