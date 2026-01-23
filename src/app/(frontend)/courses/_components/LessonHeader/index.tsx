@@ -1,7 +1,7 @@
 'use client'
 
 import { isRTL } from '@/i18n/config'
-import { useLocale, useTranslations } from '@/ui/providers/I18n'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'

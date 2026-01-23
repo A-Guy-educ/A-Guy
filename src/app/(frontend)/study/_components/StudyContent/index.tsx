@@ -7,7 +7,7 @@ import {
   getEffectiveLessonType,
   type LessonType,
 } from '@/server/constants/lesson-types'
-import { useTranslations } from '@/ui/providers/I18n'
+import { useTranslations } from '@/ui/web/providers/I18n'
 import type { Chapter, Lesson } from '@/payload-types'
 import { ChapterHeader } from '@/app/(frontend)/courses/_components/ChapterHeader'
 import { LessonCard } from '@/app/(frontend)/courses/_components/LessonCard'

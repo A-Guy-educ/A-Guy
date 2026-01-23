@@ -95,9 +95,11 @@ const eslintConfig = [
   },
 
   // Server layer - block client and UI imports
+  // Note: Payload admin blocks and plugins are exempt - they need UI imports
   {
     name: 'server-boundaries',
     files: ['src/server/**/*.{ts,tsx}'],
+    ignores: ['src/server/payload/blocks/**', 'src/server/payload/plugins/**'],
     rules: {
       'no-restricted-imports': [
         'error',

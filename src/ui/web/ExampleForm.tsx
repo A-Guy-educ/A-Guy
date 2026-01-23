@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Button } from '@/ui/components/button'
-import { Input } from '@/ui/components/input'
-import { Label } from '@/ui/components/label'
-import { Textarea } from '@/ui/components/textarea'
+import { Button } from '@/ui/web/components/button'
+import { Input } from '@/ui/web/components/input'
+import { Label } from '@/ui/web/components/label'
+import { Textarea } from '@/ui/web/components/textarea'
 
 /**
  * Example form component demonstrating:

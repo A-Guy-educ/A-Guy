@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { Button } from '@/ui/components/button'
-import { Badge } from '@/ui/components/badge'
-import { useTranslations } from '@/ui/providers/I18n'
+import { Button } from '@/ui/web/components/button'
+import { Badge } from '@/ui/web/components/badge'
+import { useTranslations } from '@/ui/web/providers/I18n'
 
 interface ExercisePageHeaderProps {
   title: string

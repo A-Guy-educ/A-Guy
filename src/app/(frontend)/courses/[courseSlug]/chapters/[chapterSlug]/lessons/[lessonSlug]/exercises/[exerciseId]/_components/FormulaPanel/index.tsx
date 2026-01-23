@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { useTranslations } from '@/ui/providers/I18n'
+import { useTranslations } from '@/ui/web/providers/I18n'
 import formulas from './formulas.json'
 
 interface FormulaPanelProps {

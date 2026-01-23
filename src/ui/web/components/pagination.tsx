@@ -1,6 +1,6 @@
-import type { ButtonProps } from '@/ui/components/button'
+import type { ButtonProps } from '@/ui/web/components/button'
 
-import { buttonVariants } from '@/ui/components/button'
+import { buttonVariants } from '@/ui/web/components/button'
 import { cn } from '@/infra/utils/ui'
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
 import * as React from 'react'

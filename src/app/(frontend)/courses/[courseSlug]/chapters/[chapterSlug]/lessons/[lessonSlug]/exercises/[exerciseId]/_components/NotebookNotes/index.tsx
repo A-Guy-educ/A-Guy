@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useTranslations } from '@/ui/providers/I18n'
+import { useTranslations } from '@/ui/web/providers/I18n'
 
 export function NotebookNotes() {
   const t = useTranslations('courses')

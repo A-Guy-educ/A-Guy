@@ -7,9 +7,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/ui/components/select'
+} from '@/ui/web/components/select'
 import { cookieName, getDirection, isForcedLocaleDomain, type Locale, locales } from '@/i18n/config'
-import { useLocale, useTranslations } from '@/ui/providers/I18n'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 

@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { TypingAnimation } from '@/ui/web/shared/TypingAnimation'
-import { Button } from '@/ui/components/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/components/card'
-import { Badge } from '@/ui/components/badge'
+import { Button } from '@/ui/web/components/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/web/components/card'
+import { Badge } from '@/ui/web/components/badge'
 import { setUserProfile } from '@/client/state/localStorage/userProfile'
-import { useTranslations } from '@/ui/providers/I18n'
+import { useTranslations } from '@/ui/web/providers/I18n'
 import type { Course } from '@/payload-types'
 
 type FlowStep = 'greeting' | 'mood' | 'courses' | 'complete'

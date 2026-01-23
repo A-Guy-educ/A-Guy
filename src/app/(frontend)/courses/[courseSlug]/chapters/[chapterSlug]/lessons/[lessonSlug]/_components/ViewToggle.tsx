@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/ui/components/button'
-import { useTranslations } from '@/ui/providers/I18n'
+import { Button } from '@/ui/web/components/button'
+import { useTranslations } from '@/ui/web/providers/I18n'
 
 type ViewMode = 'non-interactive' | 'interactive'
 

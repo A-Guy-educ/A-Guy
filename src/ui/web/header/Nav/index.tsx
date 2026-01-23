@@ -8,8 +8,8 @@ import { CMSLink } from '@/ui/web/Link'
 import Link from 'next/link'
 import { SearchIcon } from 'lucide-react'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
-import { useTranslations } from '@/ui/providers/I18n'
-import { Button } from '@/ui/components/button'
+import { useTranslations } from '@/ui/web/providers/I18n'
+import { Button } from '@/ui/web/components/button'
 import { UserDropdown } from '@/ui/web/UserDropdown'
 
 interface HeaderNavProps {

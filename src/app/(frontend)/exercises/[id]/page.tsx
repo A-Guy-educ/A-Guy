@@ -4,8 +4,8 @@ import configPromise from '@payload-config'
 import { notFound } from 'next/navigation'
 import { ExerciseRenderer } from '@/ui/web/exerciserenderer/ExerciseRenderer'
 import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
-import { Card, CardContent, CardHeader, CardTitle } from '@/ui/components/card'
-import { Badge } from '@/ui/components/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/ui/web/components/card'
+import { Badge } from '@/ui/web/components/badge'
 
 type Args = {
   params: Promise<{

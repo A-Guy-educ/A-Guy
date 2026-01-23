@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from '@/ui/components/avatar'
+import { Avatar, AvatarFallback } from '@/ui/web/components/avatar'
 
 interface UserAvatarProps {
   name: string

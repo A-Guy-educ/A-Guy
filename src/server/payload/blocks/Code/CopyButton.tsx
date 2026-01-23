@@ -1,5 +1,5 @@
 'use client'
-import { Button } from '@/ui/components/button'
+import { Button } from '@/ui/web/components/button'
 import { CopyIcon } from '@payloadcms/ui/icons/Copy'
 import { useState } from 'react'
 

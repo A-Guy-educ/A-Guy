@@ -1,6 +1,6 @@
 import React from 'react'
-import { Input } from '@/ui/components/input'
-import { Label } from '@/ui/components/label'
+import { Input } from '@/ui/web/components/input'
+import { Label } from '@/ui/web/components/label'
 import './SignupFormFields.css'
 
 interface SignupFormFieldsProps {

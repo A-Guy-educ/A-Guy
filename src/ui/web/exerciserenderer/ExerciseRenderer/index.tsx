@@ -8,8 +8,8 @@
 
 import React, { useState } from 'react'
 import { cn } from '@/infra/utils/ui'
-import { useTranslations } from '@/ui/providers/I18n'
-import { Card } from '@/ui/components/card'
+import { useTranslations } from '@/ui/web/providers/I18n'
+import { Card } from '@/ui/web/components/card'
 import { XCircle } from 'lucide-react'
 import type {
   ExerciseRendererProps,

@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useTranslations } from '@/ui/providers/I18n'
-import { Button } from '@/ui/components/button'
+import { useTranslations } from '@/ui/web/providers/I18n'
+import { Button } from '@/ui/web/components/button'
 
 export function BackToCourses() {
   const t = useTranslations('courses')

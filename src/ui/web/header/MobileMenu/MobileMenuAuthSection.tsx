@@ -7,9 +7,9 @@ import { LogOut, User as UserIcon } from 'lucide-react'
 
 import type { User } from '@/payload-types'
 
-import { Button } from '@/ui/components/button'
+import { Button } from '@/ui/web/components/button'
 import { logoutAction } from '@/app/(frontend)/actions/auth-action'
-import { useTranslations } from '@/ui/providers/I18n'
+import { useTranslations } from '@/ui/web/providers/I18n'
 
 interface MobileMenuAuthSectionProps {
   user: User | null

@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/ui/components/select'
+} from '@/ui/web/components/select'
 import React, { useState } from 'react'
 
 import type { Theme } from './types'
