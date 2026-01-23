@@ -1,6 +1,6 @@
 'use client'
 
-import { ResizablePane } from '@/ui/ui/resizable-pane'
+import { ResizablePane } from '@/ui/components/resizable-pane'
 import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
 import React from 'react'
 import { ExerciseHeader } from '../ExerciseHeader'

@@ -8,7 +8,7 @@ import {
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-import { MediaType } from '@/server/media/types'
+import { MediaType } from '@/infra/media/types'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { tenantField } from '@/server/payload/fields/tenant'

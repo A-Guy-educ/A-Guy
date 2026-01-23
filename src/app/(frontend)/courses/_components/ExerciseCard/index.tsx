@@ -2,9 +2,9 @@
 
 import Link from 'next/link'
 import type { Exercise } from '@/payload-types'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/ui/card'
-import { Button } from '@/ui/ui/button'
-import { Badge } from '@/ui/ui/badge'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/components/card'
+import { Button } from '@/ui/components/button'
+import { Badge } from '@/ui/components/badge'
 import { useTranslations } from '@/ui/providers/I18n'
 import type { ExerciseContentData, ContentBlock } from '@/ui/web/exerciserenderer/types'
 

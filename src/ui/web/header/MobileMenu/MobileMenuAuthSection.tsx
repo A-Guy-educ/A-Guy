@@ -7,7 +7,7 @@ import { LogOut, User as UserIcon } from 'lucide-react'
 
 import type { User } from '@/payload-types'
 
-import { Button } from '@/ui/ui/button'
+import { Button } from '@/ui/components/button'
 import { logoutAction } from '@/app/(frontend)/actions/auth-action'
 import { useTranslations } from '@/ui/providers/I18n'
 

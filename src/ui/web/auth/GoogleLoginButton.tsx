@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from '@/ui/ui/button'
+import { Button } from '@/ui/components/button'
 import { useTranslations } from '@/ui/providers/I18n'
 
 interface GoogleLoginButtonProps {

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import React from 'react'
 
-import { Button } from '@/ui/ui/button'
+import { Button } from '@/ui/components/button'
 import { useTranslations } from '@/ui/providers/I18n'
 
 export default function NotFound() {

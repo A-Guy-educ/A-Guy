@@ -7,8 +7,8 @@
 
 import React from 'react'
 import { cn } from '@/infra/utils/ui'
-import { Button } from '@/ui/ui/button'
-import { Card } from '@/ui/ui/card'
+import { Button } from '@/ui/components/button'
+import { Card } from '@/ui/components/card'
 import { CheckCircle2 } from 'lucide-react'
 import type { CheckResult } from '../../types'
 import { FeedbackDisplay } from '../FeedbackDisplay'

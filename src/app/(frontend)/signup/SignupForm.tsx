@@ -1,7 +1,7 @@
 'use client'
 
-import { Button } from '@/ui/ui/button'
-import { Card, CardContent, CardFooter, CardHeader } from '@/ui/ui/card'
+import { Button } from '@/ui/components/button'
+import { Card, CardContent, CardFooter, CardHeader } from '@/ui/components/card'
 import { detectBrowserLocale } from '@/i18n/config'
 import { PRODUCT_EVENTS } from '@/infra/analytics/contracts/events'
 import { useAnalytics } from '@/infra/analytics/providers/AnalyticsProvider'

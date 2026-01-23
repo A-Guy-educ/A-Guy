@@ -1,18 +1,17 @@
 'use client'
 
-import React from 'react'
 import { useFormFields } from '@payloadcms/ui'
 import type { UIFieldClientComponent } from 'payload'
 
-import { ImagePreview } from './ImagePreview'
-import { VideoPreview } from './VideoPreview'
+import { MediaType } from '@/infra/media/types'
 import { AudioPreview } from './AudioPreview'
-import { PDFPreview } from './PDFPreview'
-import { SVGPreview } from './SVGPreview'
 import { DocumentPreview } from './DocumentPreview'
 import { ExternalPreview } from './ExternalPreview'
+import { ImagePreview } from './ImagePreview'
 import { OtherPreview } from './OtherPreview'
-import { MediaType } from '@/server/media/types'
+import { PDFPreview } from './PDFPreview'
+import { SVGPreview } from './SVGPreview'
+import { VideoPreview } from './VideoPreview'
 
 export const MediaPreview: UIFieldClientComponent = () => {
   const typeField = useFormFields(([fields]) => fields.type)

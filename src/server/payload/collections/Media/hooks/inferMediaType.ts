@@ -1,9 +1,9 @@
 import type { FieldHook } from 'payload'
 
-import { inferMediaType, validateMimeType } from '@/server/media/inferMediaType'
-import { MediaType } from '@/server/media/types'
-import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { inferMediaType, validateMimeType } from '@/infra/media/inferMediaType'
+import { MediaType } from '@/infra/media/types'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
+import { AccountRole } from '@/server/payload/collections/Users/roles'
 
 export const inferMediaTypeHook: FieldHook = ({ data, operation, value, req }) => {
   const mimeType = data?.mimeType

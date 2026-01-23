@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useTranslations } from '@/ui/providers/I18n'
-import { Button } from '@/ui/ui/button'
+import { Button } from '@/ui/components/button'
 
 export function BackToCourses() {
   const t = useTranslations('courses')

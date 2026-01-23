@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import type { Lesson } from '@/payload-types'
 import { useTranslations } from '@/ui/providers/I18n'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/ui/card'
-import { Button } from '@/ui/ui/button'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/components/card'
+import { Button } from '@/ui/components/button'
 
 interface LessonCardProps {
   lesson: Lesson

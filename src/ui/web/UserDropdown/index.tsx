@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/ui/ui/dropdown-menu'
+} from '@/ui/components/dropdown-menu'
 import { UserAvatar } from '@/ui/web/UserAvatar'
 import { useTranslations } from '@/ui/providers/I18n'
 import { logoutAction } from '@/app/(frontend)/actions/auth-action'

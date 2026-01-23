@@ -11,7 +11,7 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from '@/ui/ui/command'
+} from '@/ui/components/command'
 
 /**
  * Example command palette component demonstrating:

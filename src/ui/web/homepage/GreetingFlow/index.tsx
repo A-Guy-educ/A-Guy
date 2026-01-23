@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { TypingAnimation } from '@/ui/web/shared/TypingAnimation'
-import { Button } from '@/ui/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/ui/card'
-import { Badge } from '@/ui/ui/badge'
+import { Button } from '@/ui/components/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/components/card'
+import { Badge } from '@/ui/components/badge'
 import { setUserProfile } from '@/client/state/localStorage/userProfile'
 import { useTranslations } from '@/ui/providers/I18n'
 import type { Course } from '@/payload-types'

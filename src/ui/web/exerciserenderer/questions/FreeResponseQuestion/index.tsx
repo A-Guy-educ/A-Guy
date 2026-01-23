@@ -6,7 +6,7 @@
 'use client'
 
 import React from 'react'
-import { Input } from '@/ui/ui/input'
+import { Input } from '@/ui/components/input'
 import type { QuestionFreeResponseBlock, UserAnswer, CheckResult, RichTextBlock } from '../../types'
 import { RichTextRenderer } from '../../blocks/RichTextRenderer'
 

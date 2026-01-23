@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/ui/ui/button'
+import { Button } from '@/ui/components/button'
 import { useTranslations } from '@/ui/providers/I18n'
 
 type ViewMode = 'non-interactive' | 'interactive'

@@ -2,17 +2,17 @@ import React, { Fragment } from 'react'
 
 import type { Props } from './types'
 
-import { ImageMedia } from './ImageMedia'
-import { VideoMedia } from './VideoMedia'
+import { inferMediaType } from '@/infra/media/inferMediaType'
+import { MediaType } from '@/infra/media/types'
+import type { Media as PayloadMedia } from '@/payload-types'
 import { AudioMedia } from './AudioMedia'
-import { PDFMedia } from './PDFMedia'
-import { SVGMedia } from './SVGMedia'
 import { DocumentMedia } from './DocumentMedia'
 import { ExternalMedia } from './ExternalMedia'
+import { ImageMedia } from './ImageMedia'
 import { OtherMedia } from './OtherMedia'
-import { MediaType } from '@/server/media/types'
-import { inferMediaType } from '@/server/media/inferMediaType'
-import type { Media as PayloadMedia } from '@/payload-types'
+import { PDFMedia } from './PDFMedia'
+import { SVGMedia } from './SVGMedia'
+import { VideoMedia } from './VideoMedia'
 
 export const Media: React.FC<Props> = (props) => {
   const { className, htmlElement = 'div', resource } = props

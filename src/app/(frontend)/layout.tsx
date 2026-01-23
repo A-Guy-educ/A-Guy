@@ -10,7 +10,7 @@ import { Footer } from '@/ui/web/footer/Component'
 import { Header } from '@/ui/web/header/Component'
 import { Providers } from '@/ui/providers'
 import { InitTheme } from '@/ui/providers/Theme/InitTheme'
-import { Toaster } from '@/ui/ui/toaster'
+import { Toaster } from '@/ui/components/toaster'
 import { AdminBar } from '@/ui/web/AdminBar'
 import { mergeOpenGraph } from '@/infra/utils/mergeOpenGraph'
 

@@ -7,7 +7,7 @@
 
 import React from 'react'
 import { cn } from '@/infra/utils/ui'
-import { Checkbox } from '@/ui/ui/checkbox'
+import { Checkbox } from '@/ui/components/checkbox'
 import { AlertCircle } from 'lucide-react'
 import type { QuestionSelectMcqBlock, UserAnswer, CheckResult, RichTextBlock } from '../../types'
 import { RichTextRenderer } from '../../blocks/RichTextRenderer'

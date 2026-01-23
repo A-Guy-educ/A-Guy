@@ -1,7 +1,7 @@
 'use client'
 
 import type { User } from '@/payload-types'
-import { Card, CardContent, CardHeader, CardTitle } from '@/ui/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/ui/components/card'
 import { useTranslations } from '@/ui/providers/I18n'
 
 export function AccountPageContent({ user }: { user: User }) {
