@@ -149,6 +149,80 @@ const eslintConfig = [
       ],
     },
   },
+
+  // =============================================================================
+  // Thin App Layer Rules (src/app/**)
+  // =============================================================================
+  // Block direct Payload usage in src/app/**
+  {
+    name: 'thin-app-payload-block',
+    files: ['src/app/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          name: 'payload-import',
+          importNames: ['default', 'getPayload'],
+          message:
+            'Direct Payload access is forbidden in src/app/**. Use @/server/repos/queries/** or @/server/services/**',
+        },
+        {
+          name: 'server-payload-import',
+          message: 'Direct Payload access is forbidden in src/app/**',
+        },
+        {
+          name: 'collections-import',
+          message: 'Direct collection access is forbidden in src/app/**',
+        },
+        {
+          name: 'fields-import',
+          message: 'Direct field access is forbidden in src/app/**',
+        },
+        {
+          name: 'access-import',
+          message: 'Direct access control imports are forbidden in src/app/**',
+        },
+      ],
+    },
+  },
+
+  // Block repos in route handlers and server actions
+  {
+    name: 'thin-app-routes-services-only',
+    files: ['src/app/**/route.ts', 'src/app/**/actions/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          name: 'repos-in-routes',
+          message:
+            'Route handlers and server actions must call services only. Use @/server/services/**',
+        },
+      ],
+    },
+  },
+
+  // Block heavy transforms (map/filter/reduce/sort) in src/app/**
+  // Only blocks transforms within component scope (JSX, function bodies)
+  // Allowlist: loading.tsx, error.tsx, not-found.tsx, module-level helper functions
+  {
+    name: 'thin-app-no-heavy-transforms',
+    files: ['src/app/**/*.{ts,tsx}'],
+    ignores: ['src/app/**/loading.tsx', 'src/app/**/error.tsx', 'src/app/**/not-found.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          // Only catch transforms inside JSX (return statements) or variable declarations in function scope
+          // Excludes: top-level helper functions, import statements
+          selector:
+            'CallExpression[callee.type="MemberExpression"][callee.property.name=/^(map|filter|reduce|sort)$/]:not(:scope) :matches(JSXExpressionContainer, VariableDeclarator > CallExpression, Property > CallExpression, ArrayExpression > CallExpression)',
+          message:
+            'Heavy transforms (map/filter/reduce/sort) are forbidden in src/app/**. Move to src/server/services/**.',
+        },
+      ],
+    },
+  },
 ]
 
 export default eslintConfig

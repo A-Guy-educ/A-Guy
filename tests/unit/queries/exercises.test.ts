@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { queryExerciseById, queryExercisesByLesson } from '@/server/repos/queries/exercises'
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 
 // Mock Payload
 vi.mock('payload', () => ({
@@ -9,6 +9,11 @@ vi.mock('payload', () => ({
 vi.mock('@payload-config', () => ({
   default: {},
 }))
+
+type MockPayload = {
+  findByID?: Mock
+  find?: Mock
+}
 
 describe('Exercise Queries', () => {
   describe('queryExerciseById', () => {
@@ -30,10 +35,10 @@ describe('Exercise Queries', () => {
       }
 
       const { getPayload } = await import('payload')
-      const mockPayload = {
+      const mockPayload: MockPayload = {
         findByID: vi.fn().mockResolvedValue(mockExercise),
       }
-      ;(getPayload as any).mockResolvedValue(mockPayload)
+      ;(getPayload as Mock).mockResolvedValue(mockPayload)
 
       const result = await queryExerciseById({ id: 'exercise-1' })
 
@@ -47,10 +52,10 @@ describe('Exercise Queries', () => {
 
     it('returns null when exercise not found', async () => {
       const { getPayload } = await import('payload')
-      const mockPayload = {
+      const mockPayload: MockPayload = {
         findByID: vi.fn().mockRejectedValue(new Error('Not found')),
       }
-      ;(getPayload as any).mockResolvedValue(mockPayload)
+      ;(getPayload as Mock).mockResolvedValue(mockPayload)
 
       const result = await queryExerciseById({ id: 'non-existent' })
 
@@ -72,10 +77,10 @@ describe('Exercise Queries', () => {
       }
 
       const { getPayload } = await import('payload')
-      const mockPayload = {
+      const mockPayload: MockPayload = {
         findByID: vi.fn().mockResolvedValue(mockExercise),
       }
-      ;(getPayload as any).mockResolvedValue(mockPayload)
+      ;(getPayload as Mock).mockResolvedValue(mockPayload)
 
       await queryExerciseById({ id: 'exercise-1' })
 
@@ -107,10 +112,10 @@ describe('Exercise Queries', () => {
       ]
 
       const { getPayload } = await import('payload')
-      const mockPayload = {
+      const mockPayload: MockPayload = {
         find: vi.fn().mockResolvedValue({ docs: mockExercises }),
       }
-      ;(getPayload as any).mockResolvedValue(mockPayload)
+      ;(getPayload as Mock).mockResolvedValue(mockPayload)
 
       const result = await queryExercisesByLesson({ lessonId: 'lesson-1' })
 
@@ -131,10 +136,10 @@ describe('Exercise Queries', () => {
 
     it('returns empty array when no exercises found', async () => {
       const { getPayload } = await import('payload')
-      const mockPayload = {
+      const mockPayload: MockPayload = {
         find: vi.fn().mockResolvedValue({ docs: [] }),
       }
-      ;(getPayload as any).mockResolvedValue(mockPayload)
+      ;(getPayload as Mock).mockResolvedValue(mockPayload)
 
       const result = await queryExercisesByLesson({ lessonId: 'lesson-without-exercises' })
 
@@ -143,10 +148,10 @@ describe('Exercise Queries', () => {
 
     it('uses correct query parameters', async () => {
       const { getPayload } = await import('payload')
-      const mockPayload = {
+      const mockPayload: MockPayload = {
         find: vi.fn().mockResolvedValue({ docs: [] }),
       }
-      ;(getPayload as any).mockResolvedValue(mockPayload)
+      ;(getPayload as Mock).mockResolvedValue(mockPayload)
 
       await queryExercisesByLesson({ lessonId: 'lesson-1' })
 

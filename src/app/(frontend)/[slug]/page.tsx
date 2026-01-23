@@ -1,40 +1,19 @@
 import type { Metadata } from 'next'
 
 import { PayloadRedirects } from '@/ui/web/PayloadRedirects'
-import configPromise from '@payload-config'
 import { draftMode } from 'next/headers'
-import { getPayload } from 'payload'
-import { cache } from 'react'
 
+import { generateMeta } from '@/infra/utils/generateMeta'
 import { RenderBlocks } from '@/server/payload/blocks/RenderBlocks'
+import { queryAllPageSlugs, queryPageBySlug } from '@/server/repos/queries/pages'
 import { LivePreviewListener } from '@/ui/web/LivePreviewListener'
 import { RenderHero } from '@/ui/web/heros/RenderHero'
-import { generateMeta } from '@/infra/utils/generateMeta'
 import PageClient from './page.client'
 
 export async function generateStaticParams() {
   try {
-    const payload = await getPayload({ config: configPromise })
-    const pages = await payload.find({
-      collection: 'pages',
-      draft: false,
-      limit: 1000,
-      overrideAccess: false,
-      pagination: false,
-      select: {
-        slug: true,
-      },
-    })
-
-    const params = pages.docs
-      ?.filter((doc) => {
-        return doc.slug !== 'home'
-      })
-      .map(({ slug }) => {
-        return { slug }
-      })
-
-    return params || []
+    const pages = await queryAllPageSlugs()
+    return pages
   } catch (error) {
     // Gracefully handle MongoDB connection failures during build
     // Return empty array to allow build to continue
@@ -97,31 +76,3 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
 
   return generateMeta({ doc: page })
 }
-
-const queryPageBySlug = cache(async ({ slug }: { slug: string }) => {
-  let draft = false
-  try {
-    const draftModeResult = await draftMode()
-    draft = draftModeResult.isEnabled
-  } catch {
-    // During static generation, draftMode() is not available
-    // Default to false (not in draft mode)
-  }
-
-  const payload = await getPayload({ config: configPromise })
-
-  const result = await payload.find({
-    collection: 'pages',
-    draft,
-    limit: 1,
-    pagination: false,
-    overrideAccess: draft,
-    where: {
-      slug: {
-        equals: slug,
-      },
-    },
-  })
-
-  return result.docs?.[0] || null
-})
