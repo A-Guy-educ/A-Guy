@@ -14,12 +14,12 @@ import { beforeSyncWithSearch } from '@/search/beforeSync'
 import { Page } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 
-// Conditionally import MCP plugin only when enabled to avoid loading heavy dependencies at build time
-// Using dynamic require here is intentional to prevent webpack from bundling MCP dependencies
-// when MCP_ENABLED is not set, which saves significant build memory
-const mcpEnabled = process.env.MCP_ENABLED === 'true'
+// Temporarily disabled - @payloadcms/plugin-mcp not available in dependencies
+// TODO: Re-enable when MCP plugin is properly configured
+// const mcpEnabled = process.env.MCP_ENABLED === 'true'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const mcp = mcpEnabled ? require('@/plugins/mcp').mcp : null
+// const mcp = mcpEnabled ? require('@/plugins/mcp').mcp : null
+const mcp = null
 
 const generateTitle: GenerateTitle<Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'

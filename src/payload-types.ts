@@ -504,6 +504,10 @@ export interface Tenant {
 export interface Media {
   id: string;
   /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
    * Auto-detected from file type (admin can override)
    */
   type: 'image' | 'video' | 'audio' | 'pdf' | 'svg' | 'document' | 'external' | 'other';
@@ -2124,6 +2128,7 @@ export interface UserProgressSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  tenant?: T;
   type?: T;
   externalUrl?: T;
   alt?: T;
