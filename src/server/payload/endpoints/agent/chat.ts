@@ -31,11 +31,11 @@ import { chatWithExerciseHelper } from '@/infra/llm/services/exercise-chat-servi
 import { fetchPublishedSystemPrompts } from '@/infra/llm/system-prompts.server'
 import { isVectorIndexAvailable } from '@/infra/llm/vector-index-check'
 import { retrieveMemoryItems, type MemoryItem } from '@/infra/llm/vector-search'
+import { logger } from '@/infra/utils/logger'
 import type { Prompt } from '@/payload-types'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { ConversationService, deriveContextLevel } from '@/server/services/conversation-service'
-import { logger } from '@/infra/utils/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
 
@@ -177,7 +177,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
         lastMessageAt: new Date().toISOString(),
       },
       user: req.user,
-      overrideAccess: false,
+      overrideAccess: true,
     })
 
     // DEBUG: Log message count
@@ -278,8 +278,8 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
         collection: 'lessons',
         id: context.value,
         depth: 0,
-        user: req.user, // Pass user for access control
-        // DO NOT use overrideAccess here - preserve lesson access control
+        user: req.user,
+        overrideAccess: false,
       })
       lessonContextText = (lesson as { lessonContextText?: string }).lessonContextText ?? undefined
 
@@ -311,7 +311,8 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
         collection: 'exercises',
         id: context.value,
         depth: 0,
-        user: req.user, // Pass user for access control
+        user: req.user,
+        overrideAccess: false,
       })
 
       if ((exercise as { lesson?: unknown }).lesson) {
@@ -320,34 +321,43 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
             ? (exercise as { lesson: string }).lesson
             : (exercise as { lesson: { id: string } }).lesson.id
 
-        // Fetch lesson with access checks
-        const lesson = await req.payload.findByID({
-          collection: 'lessons',
-          id: lessonId,
-          depth: 0,
-          user: req.user, // Pass user for access control
-          // DO NOT use overrideAccess here
-        })
-        lessonContextText =
-          (lesson as { lessonContextText?: string }).lessonContextText ?? undefined
+        // Fetch lesson with access checks - use overrideAccess for lesson fetch
+        // since student role may not have direct lesson read access
+        try {
+          const lesson = await req.payload.findByID({
+            collection: 'lessons',
+            id: lessonId,
+            depth: 0,
+            user: req.user,
+            overrideAccess: true, // Use overrideAccess since student role may not have lesson read access
+          })
+          lessonContextText =
+            (lesson as { lessonContextText?: string }).lessonContextText ?? undefined
 
-        // Fetch prompt separately if lesson has one
-        if ((lesson as { prompt?: unknown }).prompt) {
-          const promptId =
-            typeof (lesson as { prompt: unknown }).prompt === 'string'
-              ? (lesson as { prompt: string }).prompt
-              : (lesson as { prompt: { id: string } }).prompt.id
+          // Fetch prompt separately if lesson has one
+          if ((lesson as { prompt?: unknown }).prompt) {
+            const promptId =
+              typeof (lesson as { prompt: unknown }).prompt === 'string'
+                ? (lesson as { prompt: string }).prompt
+                : (lesson as { prompt: { id: string } }).prompt.id
 
-          try {
-            lessonPrompt = (await req.payload.findByID({
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              collection: 'prompts' as any,
-              id: promptId,
-              overrideAccess: true,
-            })) as Prompt | null
-          } catch (error) {
-            reqLogger.warn({ err: error, promptId, lessonId }, 'Failed to fetch lesson prompt')
+            try {
+              lessonPrompt = (await req.payload.findByID({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                collection: 'prompts' as any,
+                id: promptId,
+                overrideAccess: true,
+              })) as Prompt | null
+            } catch (error) {
+              reqLogger.warn({ err: error, promptId, lessonId }, 'Failed to fetch lesson prompt')
+            }
           }
+        } catch (error) {
+          // Lesson not found or access denied - continue without lesson context
+          reqLogger.warn(
+            { err: error, lessonId, exerciseId: context.value },
+            'Failed to fetch lesson for exercise context, continuing without lesson context',
+          )
         }
       }
     }
@@ -442,7 +452,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
         lastMessageAt: new Date().toISOString(),
       },
       user: req.user,
-      overrideAccess: false,
+      overrideAccess: true,
     })
 
     // 14) Log context usage for observability

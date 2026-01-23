@@ -6,16 +6,14 @@
  *
  * Network: Fully offline (all external calls mocked).
  */
-import { MEMORY_BLOCK_END, MEMORY_BLOCK_START } from '@/infra/llm/context-policy'
-import type { ComposedPrompt } from '@/infra/llm/context-policy'
 import { ChatRole } from '@/infra/llm/chat-message-role'
+import type { ComposedPrompt } from '@/infra/llm/context-policy'
+import { MEMORY_BLOCK_END, MEMORY_BLOCK_START } from '@/infra/llm/context-policy'
 import type { MemoryItem } from '@/infra/llm/vector-search'
-import { agentChat } from '@/server/payload/endpoints/agent/chat'
-import config from '@payload-config'
-import type { Payload } from 'payload'
-import { getPayload } from 'payload'
-import type { PayloadRequest } from 'payload'
 import type { Exercise } from '@/payload-types'
+import config from '@payload-config'
+import type { Payload, PayloadRequest } from 'payload'
+import { getPayload } from 'payload'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Skip tests if DATABASE_URL is not set
@@ -26,21 +24,13 @@ let capturedPrompts: ComposedPrompt[] = []
 
 // Mock retrieveMemoryItems - returns controlled items
 const mockRetrieveMemoryItems = vi.fn()
-vi.mock('@/infra/llm/vector-search', () => ({
-  retrieveMemoryItems: (...args: unknown[]) => mockRetrieveMemoryItems(...args),
-}))
-
-// Mock LLM - returns different response based on prompt content
-const mockChatWithExerciseHelper = vi.fn()
-vi.mock('@/infra/llm/services/exercise-chat-service', () => ({
-  chatWithExerciseHelper: async (input: { composedPrompt?: ComposedPrompt; message: string }) => {
-    if (input.composedPrompt) {
-      capturedPrompts.push(input.composedPrompt)
-    }
-    return mockChatWithExerciseHelper(input)
-  },
-  getSystemPrompt: vi.fn(() => 'You are a helpful assistant.'),
-}))
+vi.mock('@/infra/llm/vector-search', async () => {
+  const actual = await vi.importActual('@/infra/llm/vector-search')
+  return {
+    ...actual,
+    retrieveMemoryItems: (...args: unknown[]) => mockRetrieveMemoryItems(...args),
+  }
+})
 
 // Mock other services
 vi.mock('@/infra/llm/vector-index-check', () => ({
@@ -83,6 +73,30 @@ async function createTestUser(prefix: string): Promise<string> {
   return user.id
 }
 
+// Mock LLM - capture prompts passed to chatWithExerciseHelper
+// We use doMock inside beforeAll to ensure it's applied after module loading
+let mockChatWithExerciseHelper: (input: {
+  composedPrompt?: ComposedPrompt
+  message: string
+}) => Promise<{ success: boolean; message: string }>
+
+beforeAll(async () => {
+  // Setup mocks after vi.mock declarations but before tests
+  mockChatWithExerciseHelper = async (input: {
+    composedPrompt?: ComposedPrompt
+    message: string
+  }) => {
+    if (input.composedPrompt) {
+      capturedPrompts.push(input.composedPrompt)
+    }
+    return { success: true, message: 'Mock response' }
+  }
+
+  vi.doMock('@/infra/llm/services/exercise-chat-service', () => ({
+    chatWithExerciseHelper: mockChatWithExerciseHelper,
+  }))
+}, 60000)
+
 // Helper: Create memory item
 function createMemoryItem(
   userId: string,
@@ -111,6 +125,9 @@ function createMemoryItem(
 
 // Helper: Make chat request as user
 async function chatAsUser(userId: string, message: string): Promise<Response> {
+  // Import agentChat dynamically to get the mocked version
+  const { agentChat } = await import('@/server/payload/endpoints/agent/chat')
+
   if (!testExerciseId) {
     throw new Error('testExerciseId not initialized')
   }
@@ -154,7 +171,8 @@ beforeAll(async () => {
 beforeEach(() => {
   capturedPrompts = []
   mockRetrieveMemoryItems.mockClear()
-  mockChatWithExerciseHelper.mockClear()
+  // Note: mockChatWithExerciseHelper is a plain function, not a mock
+  // The capturedPrompts array is reset above
 })
 
 afterAll(async () => {
@@ -202,8 +220,15 @@ describe.skipIf(!hasDatabaseUrl)('Memory Prompt Wiring Tests', () => {
       latencyMs: 5,
     })
 
-    // Mock LLM to check prompt content
-    mockChatWithExerciseHelper.mockImplementation(async (input) => {
+    // Mock LLM to check prompt content - override the default behavior
+    const original = mockChatWithExerciseHelper
+    mockChatWithExerciseHelper = async (input: {
+      composedPrompt?: ComposedPrompt
+      message: string
+    }) => {
+      if (input.composedPrompt) {
+        capturedPrompts.push(input.composedPrompt)
+      }
       const systemMsg = input.composedPrompt?.messages.find(
         (m: { role: string }) => m.role === 'system',
       )
@@ -217,7 +242,11 @@ describe.skipIf(!hasDatabaseUrl)('Memory Prompt Wiring Tests', () => {
         }
       }
       return { success: true, message: "I don't have specific context about your project." }
-    })
+    }
+    // Restore after test
+    const restore = () => {
+      mockChatWithExerciseHelper = original
+    }
 
     const response = await chatAsUser(userId, 'What kind of system am I building?')
     const body = await response.json()
@@ -241,6 +270,9 @@ describe.skipIf(!hasDatabaseUrl)('Memory Prompt Wiring Tests', () => {
 
     // 3. Verify behavioral change
     expect(body.message).toContain('mathematics LMS')
+
+    // Restore mock
+    restore()
   }, 60000)
 
   it('injects only the memories returned by retriever (selected memory injection)', async () => {
@@ -257,10 +289,20 @@ describe.skipIf(!hasDatabaseUrl)('Memory Prompt Wiring Tests', () => {
       latencyMs: 5,
     })
 
-    mockChatWithExerciseHelper.mockResolvedValueOnce({
-      success: true,
-      message: 'Response',
-    })
+    // Mock LLM
+    const original = mockChatWithExerciseHelper
+    mockChatWithExerciseHelper = async (input: {
+      composedPrompt?: ComposedPrompt
+      message: string
+    }) => {
+      if (input.composedPrompt) {
+        capturedPrompts.push(input.composedPrompt)
+      }
+      return { success: true, message: 'Response' }
+    }
+    const restore2 = () => {
+      mockChatWithExerciseHelper = original
+    }
 
     await chatAsUser(userId, 'What product am I working on?')
 
@@ -268,6 +310,8 @@ describe.skipIf(!hasDatabaseUrl)('Memory Prompt Wiring Tests', () => {
     const systemContent = getSystemMessage(capturedPrompts[0])
     expect(systemContent).toContain('mathematics LMS')
     expect(systemContent).not.toContain('Italian food')
+
+    restore2()
   }, 60000)
 
   it('passes correct userId to retriever', async () => {
@@ -284,10 +328,20 @@ describe.skipIf(!hasDatabaseUrl)('Memory Prompt Wiring Tests', () => {
       latencyMs: 5,
     })
 
-    mockChatWithExerciseHelper.mockResolvedValueOnce({
-      success: true,
-      message: 'Response',
-    })
+    // Mock LLM
+    const original = mockChatWithExerciseHelper
+    mockChatWithExerciseHelper = async (input: {
+      composedPrompt?: ComposedPrompt
+      message: string
+    }) => {
+      if (input.composedPrompt) {
+        capturedPrompts.push(input.composedPrompt)
+      }
+      return { success: true, message: 'Response' }
+    }
+    const restore3 = () => {
+      mockChatWithExerciseHelper = original
+    }
 
     await chatAsUser(userU2, 'What system am I building?')
 
@@ -299,6 +353,8 @@ describe.skipIf(!hasDatabaseUrl)('Memory Prompt Wiring Tests', () => {
       expect.anything(),
       expect.anything(),
     )
+
+    restore3()
   }, 60000)
 
   it('places memory text inside stable delimiters', async () => {
@@ -315,10 +371,20 @@ describe.skipIf(!hasDatabaseUrl)('Memory Prompt Wiring Tests', () => {
       latencyMs: 5,
     })
 
-    mockChatWithExerciseHelper.mockResolvedValueOnce({
-      success: true,
-      message: 'Response',
-    })
+    // Mock LLM
+    const original = mockChatWithExerciseHelper
+    mockChatWithExerciseHelper = async (input: {
+      composedPrompt?: ComposedPrompt
+      message: string
+    }) => {
+      if (input.composedPrompt) {
+        capturedPrompts.push(input.composedPrompt)
+      }
+      return { success: true, message: 'Response' }
+    }
+    const restore4 = () => {
+      mockChatWithExerciseHelper = original
+    }
 
     await chatAsUser(userId, 'Tell me about my preferences')
 
@@ -337,5 +403,7 @@ describe.skipIf(!hasDatabaseUrl)('Memory Prompt Wiring Tests', () => {
     expect(memoryBlock).toContain('VS Code')
 
     expect(capturedPrompts[0].metadata.memoryCount).toBe(1)
+
+    restore4()
   }, 60000)
 })

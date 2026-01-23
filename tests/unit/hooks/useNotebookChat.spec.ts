@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
-import { act, renderHook, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ChatRole } from '@/infra/llm/chat-message-role'
 import { useNotebookChat } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat/useNotebookChat'
+import { ChatRole } from '@/infra/llm/chat-message-role'
 import { apiService } from '@/server/services/api/api-service'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { toast } from 'sonner'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/services/api/api-service', () => ({
+vi.mock('@/server/services/api/api-service', () => ({
   apiService: {
     chat: vi.fn(),
     getConversation: vi.fn(),

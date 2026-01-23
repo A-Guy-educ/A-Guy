@@ -54,7 +54,9 @@ async function checkVectorSearchAvailable(): Promise<boolean> {
     if (
       error.message?.includes('not supported') ||
       error.message?.includes('SearchNotEnabled') ||
-      error.message?.includes('$listSearchIndexes stage is only allowed on MongoDB Atlas')
+      error.message?.includes('$listSearchIndexes stage is only allowed on MongoDB Atlas') ||
+      error.message?.includes('Atlas Search Database Commands') ||
+      error.message?.includes('additional configuration')
     ) {
       return false
     }
