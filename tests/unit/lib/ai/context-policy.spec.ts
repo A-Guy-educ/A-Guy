@@ -8,7 +8,7 @@
  * - Prompt composition with memory items
  */
 import { describe, expect, it } from 'vitest'
-import type { ContextComponents, Message } from '@/lib/ai/context-policy'
+import type { ContextComponents, Message } from '@/infra/llm/context-policy'
 import {
   CONTEXT_POLICY_V1,
   CONTEXT_POLICY_VERSION,
@@ -17,9 +17,9 @@ import {
   getMessagesToSummarize,
   getRecentWindow,
   needsSummaryMaintenance,
-} from '@/lib/ai/context-policy'
-import type { MemoryItem } from '@/lib/ai/vector-search'
-import { ChatRole } from '@/lib/ai/chat-message-role'
+} from '@/infra/llm/context-policy'
+import type { MemoryItem } from '@/infra/llm/vector-search'
+import { ChatRole } from '@/infra/llm/chat-message-role'
 
 describe('Context Policy V1', () => {
   describe('constants', () => {

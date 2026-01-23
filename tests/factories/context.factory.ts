@@ -1,5 +1,5 @@
 import type { Payload } from 'payload'
-import { DEFAULT_CONTENT } from '@/collections/Exercises/defaults'
+import { DEFAULT_CONTENT } from '@/server/payload/collections/Exercises/defaults'
 
 export interface ContextHierarchy {
   categoryId: string

@@ -8,14 +8,14 @@
  * - Context composition
  * - End-to-end chat with context
  */
-import { ChatRole } from '@/lib/ai/chat-message-role'
-import { buildRetrievalQuery, composePrompt, getRecentWindow } from '@/lib/ai/context-policy'
-import { generateEmbedding } from '@/lib/ai/embeddings'
-import { runSummaryMaintenance } from '@/lib/ai/maintenance'
-import { extractMemoryCandidates, persistMemoryItems } from '@/lib/ai/memory-extraction'
-import { generateSummary } from '@/lib/ai/summary'
-import { retrieveMemoryItems } from '@/lib/ai/vector-search'
-import type { MemoryItem } from '@/lib/ai/vector-search'
+import { ChatRole } from '@/infra/llm/chat-message-role'
+import { buildRetrievalQuery, composePrompt, getRecentWindow } from '@/infra/llm/context-policy'
+import { generateEmbedding } from '@/infra/llm/embeddings'
+import { runSummaryMaintenance } from '@/infra/llm/maintenance'
+import { extractMemoryCandidates, persistMemoryItems } from '@/infra/llm/memory-extraction'
+import { generateSummary } from '@/infra/llm/summary'
+import { retrieveMemoryItems } from '@/infra/llm/vector-search'
+import type { MemoryItem } from '@/infra/llm/vector-search'
 import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'

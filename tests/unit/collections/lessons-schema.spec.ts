@@ -7,7 +7,7 @@
  * - Field is NOT indexed
  */
 import { describe, expect, it } from 'vitest'
-import { Lessons } from '@/collections/Lessons'
+import { Lessons } from '@/server/payload/collections/Lessons'
 
 describe('Lessons Schema', () => {
   describe('lessonContextText field', () => {

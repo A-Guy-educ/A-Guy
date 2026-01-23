@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
-import { ChatRole } from '@/lib/ai/chat-message-role'
-import type { Message } from '@/lib/ai/context-policy'
-import { runSummaryMaintenance } from '@/lib/ai/maintenance'
+import { ChatRole } from '@/infra/llm/chat-message-role'
+import type { Message } from '@/infra/llm/context-policy'
+import { runSummaryMaintenance } from '@/infra/llm/maintenance'
 import { startMongoContainer, stopMongoContainer } from '@/utilities/test/mongodb-container'
 import { createContextHierarchy } from '../factories/context.factory'
 import { createConversation } from '../factories/conversation.factory'
@@ -17,7 +17,7 @@ const generateSummary = vi.hoisted(() =>
   })),
 )
 
-vi.mock('@/lib/ai/summary', () => ({
+vi.mock('@/infra/llm/summary', () => ({
   generateSummary,
 }))
 

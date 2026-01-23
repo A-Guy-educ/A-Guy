@@ -5,7 +5,7 @@
  * Access: Authenticated users only
  */
 import { PayloadRequest, addDataAndFileToRequest } from 'payload'
-import { extractFromImage } from '@/lib/ai/services/data-extractor-service'
+import { extractFromImage } from '@/infra/llm/services/data-extractor-service'
 
 interface UploadedFileLike {
   data?: Buffer

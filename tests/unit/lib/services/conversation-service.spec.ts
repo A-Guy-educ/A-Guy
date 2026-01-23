@@ -10,13 +10,13 @@
  * - deriveContextLevel
  * - buildContextHierarchy
  */
-import { AccountRole } from '@/collections/Users/roles'
+import type { User } from '@/payload-types'
+import { AccountRole } from '@/server/payload/collections/Users/roles'
 import {
   buildContextHierarchy,
   ConversationService,
   deriveContextLevel,
-} from '@/lib/services/conversation-service'
-import type { User } from '@/payload-types'
+} from '@/server/services/conversation-service'
 import type { Payload } from 'payload'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 

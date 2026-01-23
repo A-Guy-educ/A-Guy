@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import type { RetrievalResult } from '@/lib/ai/vector-search'
+import type { RetrievalResult } from '@/infra/llm/vector-search'
 
 export function createVectorSearchMock(overrides?: Partial<RetrievalResult>) {
   const retrieveMemoryItems = vi.fn(async () => ({

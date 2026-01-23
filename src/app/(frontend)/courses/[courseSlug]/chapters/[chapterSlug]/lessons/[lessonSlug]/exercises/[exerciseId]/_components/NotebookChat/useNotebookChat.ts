@@ -1,4 +1,4 @@
-import { ChatRole } from '@/lib/ai/chat-message-role'
+import { ChatRole } from '@/infra/llm/chat-message-role'
 import { PRODUCT_EVENTS } from '@/lib/analytics/contracts/events'
 import { useAnalytics } from '@/lib/analytics/providers/AnalyticsProvider'
 import { apiService } from '@/services/api/api-service'

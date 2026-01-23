@@ -13,7 +13,7 @@ describe('OpenAI error handling', () => {
 
     vi.doMock('openai', () => ({ OpenAI: MockOpenAI }))
 
-    const { generateEmbedding } = await import('@/lib/ai/embeddings')
+    const { generateEmbedding } = await import('@/infra/llm/embeddings')
 
     await expect(generateEmbedding('hello world')).rejects.toThrow('Rate limit exceeded')
   })
@@ -21,7 +21,7 @@ describe('OpenAI error handling', () => {
   it('throws when OPENAI_API_KEY is missing', async () => {
     delete process.env.OPENAI_API_KEY
 
-    const { generateEmbedding } = await import('@/lib/ai/embeddings')
+    const { generateEmbedding } = await import('@/infra/llm/embeddings')
     await expect(generateEmbedding('hello world')).rejects.toThrow('OPENAI_API_KEY')
   })
 
@@ -32,7 +32,7 @@ describe('OpenAI error handling', () => {
 
     vi.doMock('openai', () => ({ OpenAI: MockOpenAI }))
 
-    const { extractMemoryCandidates } = await import('@/lib/ai/memory-extraction')
+    const { extractMemoryCandidates } = await import('@/infra/llm/memory-extraction')
 
     const candidates = await extractMemoryCandidates([
       {

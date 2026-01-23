@@ -12,7 +12,7 @@ import {
   isChatRole,
   parseChatRole,
   toGeminiRole,
-} from '@/lib/ai/chat-message-role'
+} from '@/infra/llm/chat-message-role'
 
 describe('ChatRole', () => {
   describe('enum values', () => {

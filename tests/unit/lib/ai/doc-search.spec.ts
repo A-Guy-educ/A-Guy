@@ -5,8 +5,8 @@
  * including scoring, filtering, and similarity finding.
  */
 import { describe, expect, it, beforeEach } from 'vitest'
-import { DocSearch, getDocSearch } from '@/lib/ai/doc-search'
-import type { DocChunks, DocChunk } from '@/lib/ai/doc-chunk-types'
+import { DocSearch, getDocSearch } from '@/infra/llm/doc-search'
+import type { DocChunks, DocChunk } from '@/infra/llm/doc-chunk-types'
 
 describe('DocSearch', () => {
   // Mock data for testing

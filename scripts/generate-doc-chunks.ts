@@ -9,7 +9,7 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import type { DocChunk, DocChunks } from '../src/lib/ai/doc-chunk-types.js'
+import type { DocChunk, DocChunks } from '../src/infra/llm/doc-chunk-types.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)

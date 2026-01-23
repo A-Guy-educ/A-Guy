@@ -53,7 +53,7 @@ describe('summary service', () => {
     })
 
     // Import after mocks so that module initialization uses the mocked fs
-    const { generateSummary } = await import('@/lib/ai/summary')
+    const { generateSummary } = await import('@/infra/llm/summary')
 
     // Mock OpenAI response
     createMock.mockResolvedValue({
@@ -79,7 +79,7 @@ describe('summary service', () => {
     })
 
     // Import after mocks so that module initialization uses the mocked fs
-    const { generateSummary } = await import('@/lib/ai/summary')
+    const { generateSummary } = await import('@/infra/llm/summary')
 
     // Mock OpenAI response
     createMock.mockResolvedValue({

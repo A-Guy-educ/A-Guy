@@ -1,5 +1,5 @@
 import type { Payload } from 'payload'
-import { ChatRole } from '@/lib/ai/chat-message-role'
+import { ChatRole } from '@/infra/llm/chat-message-role'
 
 export interface ConversationMessageInput {
   role?: ChatRole

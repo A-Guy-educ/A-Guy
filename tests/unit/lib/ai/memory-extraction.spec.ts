@@ -53,7 +53,7 @@ describe('memory extraction service', () => {
     })
 
     // Import after mocks so that module initialization uses the mocked fs
-    const { extractMemoryCandidates } = await import('@/lib/ai/memory-extraction')
+    const { extractMemoryCandidates } = await import('@/infra/llm/memory-extraction')
 
     // Mock OpenAI response
     createMock.mockResolvedValue({
@@ -97,7 +97,7 @@ describe('memory extraction service', () => {
     })
 
     // Import after mocks so that module initialization uses the mocked fs
-    const { extractMemoryCandidates } = await import('@/lib/ai/memory-extraction')
+    const { extractMemoryCandidates } = await import('@/infra/llm/memory-extraction')
 
     // Mock OpenAI response
     createMock.mockResolvedValue({

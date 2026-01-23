@@ -6,8 +6,8 @@
  *
  * Network: Fully offline using deterministic embeddings (except gated Atlas tests).
  */
-import { ChatRole } from '@/lib/ai/chat-message-role'
-import { retrieveMemoryItems } from '@/lib/ai/vector-search'
+import { ChatRole } from '@/infra/llm/chat-message-role'
+import { retrieveMemoryItems } from '@/infra/llm/vector-search'
 import config from '@payload-config'
 import type { Payload } from 'payload'
 import type { Db } from 'mongodb'
@@ -56,7 +56,7 @@ function isVectorSearchUnavailable(error: unknown): boolean {
 }
 
 // Mock OpenAI embeddings to use deterministic generator
-vi.mock('@/lib/ai/embeddings', () => ({
+vi.mock('@/infra/llm/embeddings', () => ({
   generateEmbedding: vi.fn(async (text: string) => ({
     embedding: generateDeterministicEmbedding(text),
     model: 'mock-embedding',
@@ -65,12 +65,12 @@ vi.mock('@/lib/ai/embeddings', () => ({
 }))
 
 // Mock other services
-vi.mock('@/lib/ai/memory-extraction', () => ({
+vi.mock('@/infra/llm/memory-extraction', () => ({
   extractMemoryCandidates: vi.fn(async () => []),
   persistMemoryItems: vi.fn(async () => 0),
 }))
 
-vi.mock('@/lib/ai/maintenance', () => ({
+vi.mock('@/infra/llm/maintenance', () => ({
   runSummaryMaintenance: vi.fn(async () => ({
     summaryUpdated: false,
     messagesTrimmed: 0,
@@ -445,14 +445,14 @@ describe.skipIf(!ATLAS_TESTS_ENABLED || !hasDatabaseUrl)(
   () => {
     // Remove embedding mock for this section - use real OpenAI
     beforeAll(() => {
-      vi.unmock('@/lib/ai/embeddings')
+      vi.unmock('@/infra/llm/embeddings')
     })
 
     it('ranks semantically similar memories higher', async () => {
       const userId = testUserU1
 
       // Use real embeddings
-      const { generateEmbedding } = await import('@/lib/ai/embeddings')
+      const { generateEmbedding } = await import('@/infra/llm/embeddings')
 
       await insertMemoryItem({
         userId,

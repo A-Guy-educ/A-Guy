@@ -15,26 +15,26 @@
  * - Long-term memory with hierarchical vector search
  * - Automatic maintenance and memory extraction
  */
-import { AccountRole } from '@/collections/Users/roles'
-import { isUsersCollectionUser } from '@/access/isUsersCollectionUser'
-import { ChatRole } from '@/lib/ai/chat-message-role'
+import { ChatRole } from '@/infra/llm/chat-message-role'
 import {
   buildRetrievalQuery,
   composePrompt,
   getRecentWindow,
   type Message,
-} from '@/lib/ai/context-policy'
-import { runSummaryMaintenance } from '@/lib/ai/maintenance'
-import { extractMemoryCandidates, persistMemoryItems } from '@/lib/ai/memory-extraction'
-import { createContextLog, logContextUsage, logPromptSnapshot } from '@/lib/ai/observability'
-import { composeSystemInstructions } from '@/lib/ai/prompt-composer.server'
-import { resolveAgentSystemPrompt } from '@/lib/ai/prompt-resolver.server'
-import { chatWithExerciseHelper } from '@/lib/ai/services/exercise-chat-service'
-import { fetchPublishedSystemPrompts } from '@/lib/ai/system-prompts.server'
-import { isVectorIndexAvailable } from '@/lib/ai/vector-index-check'
-import { retrieveMemoryItems, type MemoryItem } from '@/lib/ai/vector-search'
-import { ConversationService, deriveContextLevel } from '@/lib/services/conversation-service'
+} from '@/infra/llm/context-policy'
+import { runSummaryMaintenance } from '@/infra/llm/maintenance'
+import { extractMemoryCandidates, persistMemoryItems } from '@/infra/llm/memory-extraction'
+import { createContextLog, logContextUsage, logPromptSnapshot } from '@/infra/llm/observability'
+import { composeSystemInstructions } from '@/infra/llm/prompt-composer.server'
+import { resolveAgentSystemPrompt } from '@/infra/llm/prompt-resolver.server'
+import { chatWithExerciseHelper } from '@/infra/llm/services/exercise-chat-service'
+import { fetchPublishedSystemPrompts } from '@/infra/llm/system-prompts.server'
+import { isVectorIndexAvailable } from '@/infra/llm/vector-index-check'
+import { retrieveMemoryItems, type MemoryItem } from '@/infra/llm/vector-search'
 import type { Prompt } from '@/payload-types'
+import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
+import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { ConversationService, deriveContextLevel } from '@/server/services/conversation-service'
 import { logger } from '@/utilities/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'

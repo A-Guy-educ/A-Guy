@@ -1,7 +1,7 @@
 /**
  * Unit tests for system prompts fetcher
  */
-import { fetchPublishedSystemPrompts } from '@/lib/ai/system-prompts.server'
+import { fetchPublishedSystemPrompts } from '@/infra/llm/system-prompts.server'
 import { logger } from '@/utilities/logger'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 

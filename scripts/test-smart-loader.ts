@@ -5,7 +5,7 @@
  * Run: pnpm tsx scripts/test-smart-loader.ts
  */
 
-import { SmartDocLoader } from '../src/lib/ai/smart-doc-loader'
+import { SmartDocLoader } from '../src/infra/llm/smart-doc-loader'
 
 async function main() {
   console.log('🧠 Testing Smart Documentation Loader\n')

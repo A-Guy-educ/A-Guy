@@ -45,25 +45,25 @@ export type { CollectionConfig, GlobalConfig, Field, Access } from 'payload'
 // AI Types
 // ============================================================================
 
-export type { AIContext, LoadedDocs, DocTier } from '@/lib/ai/smart-doc-loader'
+export type { AIContext, LoadedDocs, DocTier } from '@/infra/llm/smart-doc-loader'
 
-export type { MemoryItem as MemoryItemSearch, RetrievalResult } from '@/lib/ai/vector-search'
+export type { MemoryItem as MemoryItemSearch, RetrievalResult } from '@/infra/llm/vector-search'
 
-export type { Message, ContextComponents, ComposedPrompt } from '@/lib/ai/context-policy'
+export type { Message, ContextComponents, ComposedPrompt } from '@/infra/llm/context-policy'
 
 export type {
   ChatMessage,
   ExerciseChatInput,
   ExerciseChatResult,
-} from '@/lib/ai/services/exercise-chat-service'
+} from '@/infra/llm/services/exercise-chat-service'
 
-export type { EmbeddingResult } from '@/lib/ai/embeddings'
+export type { EmbeddingResult } from '@/infra/llm/embeddings'
 
-export type { SummaryResult } from '@/lib/ai/summary'
+export type { SummaryResult } from '@/infra/llm/summary'
 
-export type { ContextLog } from '@/lib/ai/observability'
+export type { ContextLog } from '@/infra/llm/observability'
 
-export type { AIModelKey, AIModelConfig } from '@/lib/ai/models'
+export type { AIModelKey, AIModelConfig } from '@/infra/llm/models'
 
 // ============================================================================
 // Component Types
@@ -77,14 +77,14 @@ export type { Theme, ThemeContextType } from '@/providers/Theme/types'
 
 export type { BlockId, ColorString, PositionEnum, LineStyle } from '@/contracts/primitives'
 
-export type { ContentBlock, ExerciseContent } from '@/collections/Exercises/schemas'
+export type { ContentBlock, ExerciseContent } from '@/server/payload/collections/Exercises/schemas'
 
 // Re-export from Exercises collection index for convenience
 export type {
   ContentBlockSchema,
   ContentSchema,
   QuestionFreeResponseBlockSchema,
-} from '@/collections/Exercises/index'
+} from '@/server/payload/collections/Exercises/index'
 
 // ============================================================================
 // API Service Types

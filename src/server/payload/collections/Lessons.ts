@@ -1,0 +1,191 @@
+import type { CollectionConfig } from 'payload'
+
+import { anyone } from '../access/anyone'
+import { authenticated } from '../access/authenticated'
+import { createdByField } from '../fields/createdBy'
+import { tenantField } from '@/server/payload/fields/tenant'
+
+const formatSlug = (val: string): string =>
+  val
+    .replace(/ /g, '-')
+    .replace(/[^\w-]+/g, '')
+    .toLowerCase()
+
+export const Lessons: CollectionConfig = {
+  slug: 'lessons',
+  access: {
+    create: authenticated,
+    delete: authenticated,
+    read: anyone,
+    update: authenticated,
+  },
+  hooks: {
+    beforeChange: [
+      ({ data }) => {
+        if (data?.title && !data?.slug) {
+          // Generate unique slug from title
+          // Include timestamp for uniqueness, falling back to random if timestamp not available
+          const timestamp =
+            typeof data.createdAt === 'string'
+              ? data.createdAt.replace(/[^0-9]/g, '').slice(-6)
+              : Date.now().toString().slice(-6)
+          data.slug = `${formatSlug(data.title)}-${timestamp}`
+        }
+        return data
+      },
+    ],
+  },
+  admin: {
+    useAsTitle: 'title',
+    defaultColumns: [
+      'chapter',
+      'title',
+      'type',
+      'slug',
+      'order',
+      'status',
+      'isActive',
+      'updatedAt',
+    ],
+  },
+  fields: [
+    // Tenant
+    tenantField,
+    {
+      name: 'chapter',
+      type: 'relationship',
+      relationTo: 'chapters',
+      required: true,
+      index: true,
+      admin: {
+        description: 'The chapter this lesson belongs to',
+      },
+    },
+    {
+      name: 'type',
+      type: 'select',
+      required: true,
+      defaultValue: 'learning',
+      index: true,
+      options: [
+        {
+          label: 'Learning',
+          value: 'learning',
+        },
+        {
+          label: 'Practice',
+          value: 'practice',
+        },
+        {
+          label: 'Exam',
+          value: 'exam',
+        },
+      ],
+      admin: {
+        description: 'The type of lesson: Learning content, Practice exercises, or Exam',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'title',
+      type: 'text',
+      required: true,
+      index: true,
+      admin: {
+        description: 'Lesson title',
+      },
+    },
+    {
+      name: 'description',
+      type: 'textarea',
+      admin: {
+        description: 'Detailed description of the lesson',
+      },
+    },
+    {
+      name: 'order',
+      type: 'number',
+      required: true,
+      defaultValue: 0,
+      min: 0,
+      admin: {
+        description: 'Sort order within the course',
+      },
+    },
+    {
+      name: 'status',
+      type: 'select',
+      required: true,
+      defaultValue: 'draft',
+      options: [
+        {
+          label: 'Draft',
+          value: 'draft',
+        },
+        {
+          label: 'Published',
+          value: 'published',
+        },
+        {
+          label: 'Archived',
+          value: 'archived',
+        },
+      ],
+      admin: {
+        description: 'Publication status of the lesson',
+      },
+    },
+    {
+      name: 'isActive',
+      type: 'checkbox',
+      required: true,
+      defaultValue: true,
+      admin: {
+        description: 'Whether this lesson is currently active',
+      },
+    },
+    {
+      name: 'contentFiles',
+      type: 'upload',
+      relationTo: 'media',
+      hasMany: true,
+      admin: {
+        description: 'Upload lesson content files (PDFs, videos, images, etc.)',
+      },
+    },
+    {
+      name: 'lessonContextText',
+      type: 'textarea',
+      maxLength: 100_000, // Match LESSON_CONTEXT_MAX_CHARS in src/lib/ai/lesson-context.ts
+      admin: {
+        description:
+          'AI context text for this lesson. Injected into chat prompts at runtime. NOT indexed or searchable.',
+      },
+      // NOT indexed, NOT required
+    },
+    {
+      name: 'prompt',
+      type: 'relationship',
+      relationTo: 'prompts',
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description: 'AI system prompt for this lesson (uses default if not set)',
+      },
+    },
+    {
+      name: 'slug',
+      type: 'text',
+      required: false,
+      index: true,
+      unique: true,
+      admin: {
+        position: 'sidebar',
+        description: 'URL-friendly identifier (auto-generated from title if empty)',
+      },
+    },
+
+    // Created By
+    createdByField,
+  ],
+}

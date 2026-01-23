@@ -13,13 +13,13 @@ import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
 import type { Lesson } from '@/payload-types'
-import { LESSON_CONTEXT_BLOCK_START, LESSON_CONTEXT_MAX_CHARS } from '@/lib/ai/lesson-context'
+import { LESSON_CONTEXT_BLOCK_START, LESSON_CONTEXT_MAX_CHARS } from '@/infra/llm/lesson-context'
 
 // Skip tests if DATABASE_URL is not set
 const hasDatabaseUrl = !!process.env.DATABASE_URL
 
 // Mock AI and vector-related services (must be before any imports that use them)
-vi.mock('@/lib/ai/services/exercise-chat-service', () => ({
+vi.mock('@/infra/llm/services/exercise-chat-service', () => ({
   chatWithExerciseHelper: vi.fn(async () => ({
     success: true,
     message: 'Mock assistant response',
@@ -29,7 +29,7 @@ vi.mock('@/lib/ai/services/exercise-chat-service', () => ({
 
 // Mock context-policy - provide implementations that return expected values
 // Note: Must define spy inside return to avoid hoisting issues
-vi.mock('@/lib/ai/context-policy', () => ({
+vi.mock('@/infra/llm/context-policy', () => ({
   buildRetrievalQuery: vi.fn((messages: unknown[]) => {
     return messages.map((m: any) => m.content || '').join(' ')
   }),
@@ -47,13 +47,13 @@ vi.mock('@/lib/ai/context-policy', () => ({
 
 // Import after mocks are set up
 import { agentChat } from '@/endpoints/agent/chat'
-import * as contextPolicy from '@/lib/ai/context-policy'
+import * as contextPolicy from '@/infra/llm/context-policy'
 
-vi.mock('@/lib/ai/vector-index-check', () => ({
+vi.mock('@/infra/llm/vector-index-check', () => ({
   isVectorIndexAvailable: vi.fn(async () => false),
 }))
 
-vi.mock('@/lib/ai/vector-search', () => ({
+vi.mock('@/infra/llm/vector-search', () => ({
   retrieveMemoryItems: vi.fn(async () => ({
     items: [],
     latencyMs: 0,
@@ -64,12 +64,12 @@ vi.mock('@/lib/ai/vector-search', () => ({
   })),
 }))
 
-vi.mock('@/lib/ai/memory-extraction', () => ({
+vi.mock('@/infra/llm/memory-extraction', () => ({
   extractMemoryCandidates: vi.fn(async () => []),
   persistMemoryItems: vi.fn(async () => 0),
 }))
 
-vi.mock('@/lib/ai/maintenance', () => ({
+vi.mock('@/infra/llm/maintenance', () => ({
   runSummaryMaintenance: vi.fn(async () => ({
     summaryUpdated: false,
     messagesTrimmed: 0,

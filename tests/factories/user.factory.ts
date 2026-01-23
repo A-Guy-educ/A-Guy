@@ -1,6 +1,6 @@
 import type { Payload } from 'payload'
 import type { User } from '@/payload-types'
-import { AccountRole } from '@/collections/Users/roles'
+import { AccountRole } from '@/server/payload/collections/Users/roles'
 
 export interface UserFactoryInput {
   email?: string

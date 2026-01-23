@@ -1,8 +1,8 @@
 /**
  * Unit tests for prompt composer
  */
-import { LESSON_CONTEXT_BLOCK_END, LESSON_CONTEXT_BLOCK_START } from '@/lib/ai/lesson-context'
-import { composeSystemInstructions, SYSTEM_PROMPT_SEPARATOR } from '@/lib/ai/prompt-composer.server'
+import { LESSON_CONTEXT_BLOCK_END, LESSON_CONTEXT_BLOCK_START } from '@/infra/llm/lesson-context'
+import { composeSystemInstructions, SYSTEM_PROMPT_SEPARATOR } from '@/infra/llm/prompt-composer.server'
 import { describe, expect, it } from 'vitest'
 
 describe('composeSystemInstructions', () => {

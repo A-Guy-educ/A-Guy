@@ -9,8 +9,8 @@
  * - Performance and latency
  */
 /* eslint-disable @typescript-eslint/no-explicit-any -- MongoDB cursor results use any type */
-import { generateEmbedding } from '@/lib/ai/embeddings'
-import { retrieveMemoryItems } from '@/lib/ai/vector-search'
+import { generateEmbedding } from '@/infra/llm/embeddings'
+import { retrieveMemoryItems } from '@/infra/llm/vector-search'
 import config from '@payload-config'
 import type { Db } from 'mongodb'
 import type { Payload } from 'payload'

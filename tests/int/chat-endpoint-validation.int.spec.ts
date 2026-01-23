@@ -7,7 +7,7 @@ import { startMongoContainer, stopMongoContainer } from '@/utilities/test/mongod
 import { createContextHierarchy } from '../factories/context.factory'
 import { createTestUser } from '../factories/user.factory'
 
-vi.mock('@/lib/ai/services/exercise-chat-service', () => ({
+vi.mock('@/infra/llm/services/exercise-chat-service', () => ({
   chatWithExerciseHelper: vi.fn(async () => ({
     success: true,
     message: 'Mock assistant response',
@@ -15,11 +15,11 @@ vi.mock('@/lib/ai/services/exercise-chat-service', () => ({
   getSystemPrompt: vi.fn(() => 'You are a helpful assistant.'),
 }))
 
-vi.mock('@/lib/ai/vector-index-check', () => ({
+vi.mock('@/infra/llm/vector-index-check', () => ({
   isVectorIndexAvailable: vi.fn(async () => false),
 }))
 
-vi.mock('@/lib/ai/vector-search', () => ({
+vi.mock('@/infra/llm/vector-search', () => ({
   retrieveMemoryItems: vi.fn(async () => ({
     items: [],
     latencyMs: 0,
@@ -30,12 +30,12 @@ vi.mock('@/lib/ai/vector-search', () => ({
   })),
 }))
 
-vi.mock('@/lib/ai/memory-extraction', () => ({
+vi.mock('@/infra/llm/memory-extraction', () => ({
   extractMemoryCandidates: vi.fn(async () => []),
   persistMemoryItems: vi.fn(async () => 0),
 }))
 
-vi.mock('@/lib/ai/maintenance', () => ({
+vi.mock('@/infra/llm/maintenance', () => ({
   runSummaryMaintenance: vi.fn(async () => ({
     summaryUpdated: false,
     messagesTrimmed: 0,

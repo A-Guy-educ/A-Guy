@@ -1,6 +1,6 @@
 'use client'
 
-import { ChatMessageRole } from '@/lib/ai/chat-message-role'
+import { ChatMessageRole } from '@/infra/llm/chat-message-role'
 import { useTranslations } from '@/providers/I18n'
 import { cn } from '@/utilities/ui'
 import { BookOpen, Loader2, Plus, Send } from 'lucide-react'

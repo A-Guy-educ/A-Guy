@@ -4,7 +4,7 @@
  * Encapsulates all API calls with error handling.
  * Provides simple interface for components to interact with backend endpoints.
  */
-import { ChatRole } from '@/lib/ai/chat-message-role'
+import { ChatRole } from '@/infra/llm/chat-message-role'
 import { logger } from '@/utilities/logger'
 
 export interface ChatApiResponse {

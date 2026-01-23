@@ -5,7 +5,7 @@
  * Run: pnpm tsx scripts/test-doc-search.ts
  */
 
-import { DocSearch } from '../src/lib/ai/doc-search'
+import { DocSearch } from '../src/infra/llm/doc-search'
 
 const QUERIES = [
   'How do I create a published collection?',

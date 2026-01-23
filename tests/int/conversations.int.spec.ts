@@ -10,12 +10,12 @@
  * INVARIANT: Active = archivedAt field is MISSING. Archived = archivedAt field EXISTS.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { ConversationService } from '@/server/services/conversation-service'
 import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
-import { AccountRole } from '@/collections/Users/roles'
-import { ConversationService } from '@/lib/services/conversation-service'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 // Skip tests if DATABASE_URL is not set (e.g., in CI without MongoDB service)
 const hasDatabaseUrl = !!process.env.DATABASE_URL

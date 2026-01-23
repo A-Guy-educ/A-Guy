@@ -16,7 +16,7 @@
  * - success: boolean
  * - conversationId: ID of the new conversation
  */
-import { ConversationService } from '@/lib/services/conversation-service'
+import { ConversationService } from '@/server/services/conversation-service'
 import { logger } from '@/utilities/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'

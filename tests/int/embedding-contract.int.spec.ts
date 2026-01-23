@@ -11,7 +11,7 @@ describe('embedding contract', () => {
     const { MockOpenAI } = createOpenAIMock({ embeddingDimension: 1536 })
     vi.doMock('openai', () => ({ OpenAI: MockOpenAI }))
 
-    const { generateEmbedding } = await import('@/lib/ai/embeddings')
+    const { generateEmbedding } = await import('@/infra/llm/embeddings')
     const result = await generateEmbedding('Test input')
 
     expect(result.embedding).toHaveLength(1536)
@@ -22,7 +22,7 @@ describe('embedding contract', () => {
     const { MockOpenAI } = createOpenAIMock({ embeddingDimension: 1024 })
     vi.doMock('openai', () => ({ OpenAI: MockOpenAI }))
 
-    const { generateEmbedding } = await import('@/lib/ai/embeddings')
+    const { generateEmbedding } = await import('@/infra/llm/embeddings')
     await expect(generateEmbedding('Test input')).rejects.toThrow('Embedding dimension mismatch')
   })
 
@@ -30,7 +30,7 @@ describe('embedding contract', () => {
     const { MockOpenAI } = createOpenAIMock({ embeddingDimension: 1536 })
     vi.doMock('openai', () => ({ OpenAI: MockOpenAI }))
 
-    const { generateEmbeddings } = await import('@/lib/ai/embeddings')
+    const { generateEmbeddings } = await import('@/infra/llm/embeddings')
     const results = await generateEmbeddings(['One', 'Two'])
 
     expect(results).toHaveLength(2)

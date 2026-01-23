@@ -18,18 +18,18 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 const hasDatabaseUrl = !!process.env.DATABASE_URL
 
 // Mock AI and vector-related services to keep tests deterministic and offline.
-vi.mock('@/lib/ai/services/exercise-chat-service', () => ({
+vi.mock('@/infra/llm/services/exercise-chat-service', () => ({
   chatWithExerciseHelper: vi.fn(async () => ({
     success: true,
     message: 'Mock assistant response',
   })),
 }))
 
-vi.mock('@/lib/ai/vector-index-check', () => ({
+vi.mock('@/infra/llm/vector-index-check', () => ({
   isVectorIndexAvailable: vi.fn(async () => false),
 }))
 
-vi.mock('@/lib/ai/vector-search', () => ({
+vi.mock('@/infra/llm/vector-search', () => ({
   retrieveMemoryItems: vi.fn(async () => ({
     items: [],
     latencyMs: 0,
@@ -38,12 +38,12 @@ vi.mock('@/lib/ai/vector-search', () => ({
   })),
 }))
 
-vi.mock('@/lib/ai/memory-extraction', () => ({
+vi.mock('@/infra/llm/memory-extraction', () => ({
   extractMemoryCandidates: vi.fn(async () => []),
   persistMemoryItems: vi.fn(async () => 0),
 }))
 
-vi.mock('@/lib/ai/maintenance', () => ({
+vi.mock('@/infra/llm/maintenance', () => ({
   runSummaryMaintenance: vi.fn(async () => ({
     summaryUpdated: false,
     messagesTrimmed: 0,
@@ -334,7 +334,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
     })
 
     it('endpoint always passes composedPrompt to chatWithExerciseHelper', async () => {
-      const { chatWithExerciseHelper } = await import('@/lib/ai/services/exercise-chat-service')
+      const { chatWithExerciseHelper } = await import('@/infra/llm/services/exercise-chat-service')
 
       const lesson = await payload.create({
         collection: 'lessons',
@@ -373,7 +373,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
   describe('system prompts', () => {
     it('includes published system prompts in composed prompt', async () => {
-      const { chatWithExerciseHelper } = await import('@/lib/ai/services/exercise-chat-service')
+      const { chatWithExerciseHelper } = await import('@/infra/llm/services/exercise-chat-service')
 
       const lesson = await payload.create({
         collection: 'lessons',
@@ -418,7 +418,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
     it('prepends system prompts in createdAt ASC order', async () => {
       // Import after mocks are set up to get the mocked version
-      const chatWithExerciseHelper = (await import('@/lib/ai/services/exercise-chat-service'))
+      const chatWithExerciseHelper = (await import('@/infra/llm/services/exercise-chat-service'))
         .chatWithExerciseHelper as ReturnType<typeof vi.fn>
 
       // Delete existing system prompt from beforeAll to ensure clean test

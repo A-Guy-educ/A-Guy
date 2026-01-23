@@ -3,8 +3,8 @@
 import React from 'react'
 import { Copy, Edit, X, Check, RotateCcw, AlignLeft } from 'lucide-react'
 import { Highlight, themes } from 'prism-react-renderer'
-import type { ContentBlock } from '@/collections/Exercises'
-import { ContentBlockSchema } from '@/collections/Exercises'
+import type { ContentBlock } from '@/server/payload/collections/Exercises'
+import { ContentBlockSchema } from '@/server/payload/collections/Exercises'
 
 interface JSONInspectorProps {
   block: ContentBlock | null // Selected block

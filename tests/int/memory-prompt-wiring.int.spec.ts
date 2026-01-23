@@ -6,10 +6,10 @@
  *
  * Network: Fully offline (all external calls mocked).
  */
-import { MEMORY_BLOCK_END, MEMORY_BLOCK_START } from '@/lib/ai/context-policy'
-import type { ComposedPrompt } from '@/lib/ai/context-policy'
-import { ChatRole } from '@/lib/ai/chat-message-role'
-import type { MemoryItem } from '@/lib/ai/vector-search'
+import { MEMORY_BLOCK_END, MEMORY_BLOCK_START } from '@/infra/llm/context-policy'
+import type { ComposedPrompt } from '@/infra/llm/context-policy'
+import { ChatRole } from '@/infra/llm/chat-message-role'
+import type { MemoryItem } from '@/infra/llm/vector-search'
 import { agentChat } from '@/endpoints/agent/chat'
 import config from '@payload-config'
 import type { Payload } from 'payload'
@@ -26,13 +26,13 @@ let capturedPrompts: ComposedPrompt[] = []
 
 // Mock retrieveMemoryItems - returns controlled items
 const mockRetrieveMemoryItems = vi.fn()
-vi.mock('@/lib/ai/vector-search', () => ({
+vi.mock('@/infra/llm/vector-search', () => ({
   retrieveMemoryItems: (...args: unknown[]) => mockRetrieveMemoryItems(...args),
 }))
 
 // Mock LLM - returns different response based on prompt content
 const mockChatWithExerciseHelper = vi.fn()
-vi.mock('@/lib/ai/services/exercise-chat-service', () => ({
+vi.mock('@/infra/llm/services/exercise-chat-service', () => ({
   chatWithExerciseHelper: async (input: { composedPrompt?: ComposedPrompt; message: string }) => {
     if (input.composedPrompt) {
       capturedPrompts.push(input.composedPrompt)
@@ -43,16 +43,16 @@ vi.mock('@/lib/ai/services/exercise-chat-service', () => ({
 }))
 
 // Mock other services
-vi.mock('@/lib/ai/vector-index-check', () => ({
+vi.mock('@/infra/llm/vector-index-check', () => ({
   isVectorIndexAvailable: vi.fn(async () => true),
 }))
 
-vi.mock('@/lib/ai/memory-extraction', () => ({
+vi.mock('@/infra/llm/memory-extraction', () => ({
   extractMemoryCandidates: vi.fn(async () => []),
   persistMemoryItems: vi.fn(async () => 0),
 }))
 
-vi.mock('@/lib/ai/maintenance', () => ({
+vi.mock('@/infra/llm/maintenance', () => ({
   runSummaryMaintenance: vi.fn(async () => ({
     summaryUpdated: false,
     messagesTrimmed: 0,

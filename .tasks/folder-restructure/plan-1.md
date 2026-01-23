@@ -543,65 +543,35 @@ pnpm verify
 
 ---
 
-### Batch 3.5: Move LLM Wrappers (Infra Only)
+### Batch 3.5: Move LLM Wrappers → COMPLETED
 
-**Files to Move (Infrastructure Only):**
+**Status:** ✅ COMPLETED (see `.tasks/folder-restructure/plan-1-llm-migration.md` for details)
 
-| Source                            | Target                               |
-| --------------------------------- | ------------------------------------ |
-| `src/lib/ai/index.ts`             | `src/infra/llm/index.ts`             |
-| `src/lib/ai/embeddings.ts`        | `src/infra/llm/embeddings.ts`        |
-| `src/lib/ai/vector-search.ts`     | `src/infra/llm/vector-search.ts`     |
-| `src/lib/ai/doc-search.ts`        | `src/infra/llm/doc-search.ts`        |
-| `src/lib/ai/smart-doc-loader.ts`  | `src/infra/llm/smart-doc-loader.ts`  |
-| `src/lib/ai/observability.ts`     | `src/infra/llm/observability.ts`     |
-| `src/lib/ai/models.ts`            | `src/infra/llm/models.ts`            |
-| `src/lib/ai/doc-chunk-types.ts`   | `src/infra/llm/doc-chunk-types.ts`   |
-| `src/lib/ai/context-policy.ts`    | `src/infra/llm/context-policy.ts`    |
-| `src/lib/ai/lesson-context.ts`    | `src/infra/llm/lesson-context.ts`    |
-| `src/lib/ai/chat-message-role.ts` | `src/infra/llm/chat-message-role.ts` |
-| `src/lib/ai/providers/gemini/`    | `src/infra/llm/providers/gemini/`    |
+**Migration Summary:**
+- **Source:** `src/lib/ai/`
+- **Target:** `src/infra/llm/`
+- **Execution:** All files moved in single batch with sed-based import updates
+- **Verification:** All 457 tests pass
+- **Date:** 2026-01-23
 
-**Files to KEEP in `src/lib/ai/` (for Stage 5):**
+**Files Moved:**
+- All core LLM modules (embeddings, vector-search, doc-search, smart-doc-loader, etc.)
+- Providers (gemini/)
+- Services (data-extractor, exercise-chat, image-optimizer)
+- Prompts
 
-- `src/lib/ai/services/data-extractor-service.ts`
-- `src/lib/ai/services/exercise-chat-service.ts`
-  -ai/services/image-optimizer-service.ts`
-- `src/lib `src/lib//ai/prompt-composer.server.ts`
-- `src/lib/ai/prompt-resolver.server.ts`
-- `src/lib/ai/system-prompts.server.ts`
-- `src/lib/ai/summary.ts`
-- `src/lib/ai/memory-extraction.ts`
-- `src/lib/ai/maintenance.ts`
-- `src/lib/ai/vector-index-check.ts`
+**Import Pattern:**
+```typescript
+// Before
+import { chatWithExerciseHelper } from '@/lib/ai/services/exercise-chat-service'
 
-**Commands:**
-
-```bash
-mkdir -p src/infra/llm/providers
-mv src/lib/ai/index.ts src/infra/llm/
-mv src/lib/ai/embeddings.ts src/infra/llm/
-mv src/lib/ai/vector-search.ts src/infra/llm/
-mv src/lib/ai/doc-search.ts src/infra/llm/
-mv src/lib/ai/smart-doc-loader.ts src/infra/llm/
-mv src/lib/ai/observability.ts src/infra/llm/
-mv src/lib/ai/models.ts src/infra/llm/
-mv src/lib/ai/doc-chunk-types.ts src/infra/llm/
-mv src/lib/ai/context-policy.ts src/infra/llm/
-mv src/lib/ai/lesson-context.ts src/infra/llm/
-mv src/lib/ai/chat-message-role.ts src/infra/llm/
-mv src/lib/ai/providers/gemini src/infra/llm/providers/
+// After
+import { chatWithExerciseHelper } from '@/infra/llm/services/exercise-chat-service'
 ```
 
-**Verification Gate:**
+**Batch Report:** LLM infrastructure fully migrated to `src/infra/llm/`. Old `src/lib/ai/` directory removed.
 
-```bash
-pnpm verify
-./scripts/smoke-test.sh
-```
-
-**Batch Report:** LLM wrappers moved to `src/infra/llm/`. Services still in `src/lib/ai/services/`.
-
+**STOP → Request operator approval to proceed to Stage 4**
 **STOP → Request operator approval to proceed to Stage 4**
 
 ---

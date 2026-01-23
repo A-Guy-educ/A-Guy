@@ -5,15 +5,15 @@ import {
   type DefaultTypedEditorState,
 } from '@payloadcms/richtext-lexical'
 import {
+  RichText as ConvertRichText,
   JSXConvertersFunction,
   LinkJSXConverter,
-  RichText as ConvertRichText,
 } from '@payloadcms/richtext-lexical/react'
 
-import { CodeBlock, CodeBlockProps } from '@/blocks/Code/Component'
+import { CodeBlock, CodeBlockProps } from '@/server/payload/blocks/Code/Component'
 
 import type { CallToActionBlock as CTABlockProps } from '@/payload-types'
-import { CallToActionBlock } from '@/blocks/CallToAction/Component'
+import { CallToActionBlock } from '@/server/payload/blocks/CallToAction/Component'
 import { cn } from '@/utilities/ui'
 
 type NodeTypes = DefaultNodeTypes | SerializedBlockNode<CTABlockProps | CodeBlockProps>

@@ -5,13 +5,13 @@
  * Access: Authenticated users only
  */
 import { PayloadRequest } from 'payload'
-import { extractFromImage } from '@/lib/ai/services/data-extractor-service'
+import { extractFromImage } from '@/infra/llm/services/data-extractor-service'
 import type { Media } from '@/payload-types'
-import { ExerciseBlockDefaults } from '@/collections/Exercises'
+import { ExerciseBlockDefaults } from '@/server/payload/collections/Exercises'
 import {
   QuestionFreeResponseBlockSchema,
   QuestionSelectBlockSchema,
-} from '@/collections/Exercises/schemas'
+} from '@/server/payload/collections/Exercises/schemas'
 import { getDefaultTenantId } from '@/lib/tenant/get-default-tenant'
 
 export async function importExerciseFromLesson(req: PayloadRequest) {

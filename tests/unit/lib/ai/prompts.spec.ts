@@ -12,8 +12,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // Path to prompts directory relative to test file location
-// From tests/unit/lib/ai/ we need to go up 4 levels to workspace root, then to src/lib/ai/prompts
-const promptsDir = join(__dirname, '../../../../src/lib/ai/prompts')
+// From tests/unit/lib/ai/ we need to go up 4 levels to workspace root, then to src/infra/llm/prompts
+const promptsDir = join(__dirname, '../../../../src/infra/llm/prompts')
 
 describe('System prompt files validation', () => {
   describe('Summary system prompts', () => {

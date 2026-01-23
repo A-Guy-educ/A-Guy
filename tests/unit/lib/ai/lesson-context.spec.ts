@@ -14,7 +14,7 @@ import {
   LESSON_CONTEXT_BLOCK_END,
   LESSON_CONTEXT_BLOCK_START,
   LESSON_CONTEXT_MAX_CHARS,
-} from '@/lib/ai/lesson-context'
+} from '@/infra/llm/lesson-context'
 
 describe('buildLessonContextPrompt', () => {
   const baseSystemPrompt = 'You are a helpful assistant.'
