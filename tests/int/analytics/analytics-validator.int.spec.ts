@@ -5,8 +5,8 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { validateEvent } from '@/lib/analytics/core/validator'
-import { PRODUCT_EVENTS } from '@/lib/analytics/contracts/events'
+import { validateEvent } from '@/infra/analytics/core/validator'
+import { PRODUCT_EVENTS } from '@/infra/analytics/contracts/events'
 
 describe('Analytics Validator', () => {
   describe('Event Validation', () => {

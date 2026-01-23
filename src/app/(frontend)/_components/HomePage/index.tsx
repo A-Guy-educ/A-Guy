@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getUserProfile } from '@/lib/localStorage/userProfile'
-import { GreetingFlow } from '@/components/HomePage/GreetingFlow'
+import { getUserProfile } from '@/client/state/localStorage/userProfile'
+import { GreetingFlow } from '@/ui/web/homepage/GreetingFlow'
 import { useRouter } from 'next/navigation'
 
 export function HomePage() {

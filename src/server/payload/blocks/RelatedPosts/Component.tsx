@@ -1,10 +1,10 @@
-import RichText from '@/components/RichText'
+import RichText from '@/ui/web/RichText'
 import clsx from 'clsx'
 import React from 'react'
 
 import type { Post } from '@/payload-types'
 
-import { Card } from '@/components/Card'
+import { Card } from '@/ui/web/Card'
 import { DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
 
 export type RelatedPostsProps = {

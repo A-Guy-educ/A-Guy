@@ -1,11 +1,11 @@
 'use client'
 
 import { ChatMessageRole } from '@/infra/llm/chat-message-role'
-import { useTranslations } from '@/providers/I18n'
+import { useTranslations } from '@/ui/providers/I18n'
 import { cn } from '@/utilities/ui'
 import { BookOpen, Loader2, Plus, Send } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
-import { ChatMessageContent } from '@/components/chat'
+import { ChatMessageContent } from '@/ui/web/chat'
 import { FormulaPanel } from '../FormulaPanel'
 import { MathPalette } from '../MathPalette'
 import { useNotebookChat } from '../NotebookChat/useNotebookChat'

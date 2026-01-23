@@ -2,10 +2,10 @@ import React from 'react'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { notFound } from 'next/navigation'
-import { ExerciseRenderer } from '@/components/ExerciseRenderer/ExerciseRenderer'
-import type { ExerciseContentData } from '@/components/ExerciseRenderer/types'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { ExerciseRenderer } from '@/ui/web/exerciserenderer/ExerciseRenderer'
+import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
+import { Card, CardContent, CardHeader, CardTitle } from '@/ui/ui/card'
+import { Badge } from '@/ui/ui/badge'
 
 type Args = {
   params: Promise<{

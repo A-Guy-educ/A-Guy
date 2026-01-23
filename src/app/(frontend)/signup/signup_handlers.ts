@@ -1,6 +1,6 @@
 // Signup-specific error handlers (extends generic Payload error handling)
 
-import { handlePayloadError } from '@/lib/errors'
+import { handlePayloadError } from '@/server/errors'
 
 interface ErrorResult {
   success: false

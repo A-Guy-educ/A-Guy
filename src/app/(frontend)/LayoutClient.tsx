@@ -7,7 +7,7 @@
 
 'use client'
 
-import { usePageView } from '@/lib/analytics/hooks/usePageView'
+import { usePageView } from '@/infra/analytics/hooks/usePageView'
 
 export function LayoutClient() {
   // Track page views automatically on route changes

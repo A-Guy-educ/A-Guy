@@ -1,12 +1,12 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { Button } from '@/ui/ui/button'
+import { Card, CardContent, CardFooter, CardHeader } from '@/ui/ui/card'
 import { detectBrowserLocale } from '@/i18n/config'
-import { PRODUCT_EVENTS } from '@/lib/analytics/contracts/events'
-import { useAnalytics } from '@/lib/analytics/providers/AnalyticsProvider'
-import { updateCachedUserProperties } from '@/lib/analytics/utils/user-properties-cache'
-import { useTranslations } from '@/providers/I18n'
+import { PRODUCT_EVENTS } from '@/infra/analytics/contracts/events'
+import { useAnalytics } from '@/infra/analytics/providers/AnalyticsProvider'
+import { updateCachedUserProperties } from '@/infra/analytics/utils/user-properties-cache'
+import { useTranslations } from '@/ui/providers/I18n'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import { SignupFormFields } from './SignupFormFields'
 import { signupAction } from './actions/signup_createUser-action'
 import { validateSignupForm } from './actions/signup_validation-action'
-import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton'
+import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
 
 export function SignupForm() {
   const t = useTranslations('auth.signup')

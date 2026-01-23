@@ -1,7 +1,7 @@
 'use client'
 
-import { useTranslations } from '@/providers/I18n'
-import { Card, CardContent } from '@/components/ui/card'
+import { useTranslations } from '@/ui/providers/I18n'
+import { Card, CardContent } from '@/ui/ui/card'
 
 type EmptyStateType = 'noCourses' | 'noChapters' | 'noLessons' | 'noPDF'
 

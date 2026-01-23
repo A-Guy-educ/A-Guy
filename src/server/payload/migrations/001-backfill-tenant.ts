@@ -1,6 +1,6 @@
 import { getPayload, type CollectionSlug } from 'payload'
 
-import { getDefaultTenantSlug } from '@/lib/tenant/get-default-tenant'
+import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { logger } from '@/utilities/logger/logger'
 import config from '@payload-config'
 

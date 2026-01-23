@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { queryExerciseById, queryExercisesByLesson } from '@/lib/queries/exercises'
+import { queryExerciseById, queryExercisesByLesson } from '@/server/repos/queries/exercises'
 
 // Mock Payload
 vi.mock('payload', () => ({

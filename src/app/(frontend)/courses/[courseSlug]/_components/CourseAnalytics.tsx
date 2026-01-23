@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { PRODUCT_EVENTS } from '@/lib/analytics/contracts/events'
-import { useAnalytics } from '@/lib/analytics/providers/AnalyticsProvider'
+import { PRODUCT_EVENTS } from '@/infra/analytics/contracts/events'
+import { useAnalytics } from '@/infra/analytics/providers/AnalyticsProvider'
 
 interface CourseAnalyticsProps {
   courseId: string

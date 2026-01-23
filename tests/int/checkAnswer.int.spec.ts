@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect } from 'vitest'
-import { checkAnswer } from '@/components/ExerciseRenderer/utils/checkAnswer'
+import { checkAnswer } from '@/ui/web/exerciserenderer/utils/checkAnswer'
 import type { AnswerSpec } from '@/contracts'
 
 // Legacy UserAnswer types for the old exercise format

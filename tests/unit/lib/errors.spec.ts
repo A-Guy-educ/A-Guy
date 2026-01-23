@@ -4,7 +4,7 @@
  * Tests the handlePayloadError function for parsing Payload CMS errors.
  */
 import { describe, expect, it } from 'vitest'
-import { handlePayloadError } from '@/lib/errors'
+import { handlePayloadError } from '@/server/errors'
 
 describe('handlePayloadError', () => {
   describe('with valid Payload errors', () => {

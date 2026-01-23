@@ -5,7 +5,7 @@ import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 
-import { getDefaultTenantSlug } from '@/lib/tenant/get-default-tenant'
+import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { logger } from '@/utilities/logger'
 
 export interface TestCourseData {

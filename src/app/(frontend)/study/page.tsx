@@ -1,4 +1,4 @@
-import { NavigationBar } from '@/components/HomePage/NavigationBar'
+import { NavigationBar } from '@/ui/web/homepage/NavigationBar'
 import { StudyContent } from './_components/StudyContent'
 
 export default function StudyPage() {

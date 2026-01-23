@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { GET } from '@/app/api/pdfjs-viewer/route'
-import { clearTemplateCache } from '@/lib/pdfjs/template-loader'
+import { clearTemplateCache } from '@/infra/pdfjs/template-loader'
 
 describe('PDF.js Viewer Route Integration', () => {
   const mockViewerHtml = `

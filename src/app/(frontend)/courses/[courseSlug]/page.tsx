@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import { queryCourseBySlug } from '@/lib/queries/courses'
-import { queryChaptersByCourse } from '@/lib/queries/chapters'
+import { queryCourseBySlug } from '@/server/repos/queries/courses'
+import { queryChaptersByCourse } from '@/server/repos/queries/chapters'
 import { CourseHeader } from '../_components/CourseHeader'
 import { ChapterCard } from '../_components/ChapterCard'
 import { EmptyState } from '../_components/EmptyState'

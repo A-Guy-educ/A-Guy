@@ -1,15 +1,15 @@
 import type { Metadata } from 'next'
 
-import { PayloadRedirects } from '@/components/PayloadRedirects'
-import RichText from '@/components/RichText'
 import { RelatedPosts } from '@/server/payload/blocks/RelatedPosts/Component'
+import { PayloadRedirects } from '@/ui/web/PayloadRedirects'
+import RichText from '@/ui/web/RichText'
 import configPromise from '@payload-config'
 import { draftMode } from 'next/headers'
 import { getPayload } from 'payload'
 import { cache } from 'react'
 
-import { LivePreviewListener } from '@/components/LivePreviewListener'
-import { PostHero } from '@/heros/PostHero'
+import { LivePreviewListener } from '@/ui/web/LivePreviewListener'
+import { PostHero } from '@/ui/web/heros/PostHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
 

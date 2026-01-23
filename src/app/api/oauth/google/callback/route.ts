@@ -10,9 +10,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
-import { validateOAuthState } from '@/lib/auth/oauth_state'
-import { logOAuthError } from '@/lib/auth/oauth_logger'
-import { getPublicBaseUrl } from '@/lib/auth/oauth_url'
+import { validateOAuthState } from '@/infra/auth/oauth_state'
+import { logOAuthError } from '@/infra/auth/oauth_logger'
+import { getPublicBaseUrl } from '@/infra/auth/oauth_url'
 import { handleExistingUser, handleCollision, createNewOAuthUser } from './oauth_callback_helpers'
 
 interface GoogleUserInfo {

@@ -2,11 +2,11 @@
 
 import Link from 'next/link'
 import type { Exercise } from '@/payload-types'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { useTranslations } from '@/providers/I18n'
-import type { ExerciseContentData, ContentBlock } from '@/components/ExerciseRenderer/types'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/ui/card'
+import { Button } from '@/ui/ui/button'
+import { Badge } from '@/ui/ui/badge'
+import { useTranslations } from '@/ui/providers/I18n'
+import type { ExerciseContentData, ContentBlock } from '@/ui/web/exerciserenderer/types'
 
 interface ExerciseCardProps {
   exercise: Exercise

@@ -1,8 +1,8 @@
 'use client'
 
 import type { User } from '@/payload-types'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useTranslations } from '@/providers/I18n'
+import { Card, CardContent, CardHeader, CardTitle } from '@/ui/ui/card'
+import { useTranslations } from '@/ui/providers/I18n'
 
 export function AccountPageContent({ user }: { user: User }) {
   const t = useTranslations('auth.account')

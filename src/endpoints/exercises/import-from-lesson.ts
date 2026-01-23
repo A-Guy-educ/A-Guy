@@ -12,7 +12,7 @@ import {
   QuestionFreeResponseBlockSchema,
   QuestionSelectBlockSchema,
 } from '@/server/payload/collections/Exercises/schemas'
-import { getDefaultTenantId } from '@/lib/tenant/get-default-tenant'
+import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 
 export async function importExerciseFromLesson(req: PayloadRequest) {
   // 1) Auth - endpoints not authenticated by default

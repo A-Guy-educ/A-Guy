@@ -4,7 +4,7 @@ import {
   DEFAULT_LESSON_TYPE,
   getEffectiveLessonType,
   LESSON_TYPES,
-} from '@/lib/constants/lesson-types'
+} from '@/server/constants/lesson-types'
 
 describe('lesson type constants', () => {
   it('exposes the supported lesson types', () => {

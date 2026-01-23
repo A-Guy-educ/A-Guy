@@ -1,4 +1,4 @@
-import { normalizeLatexDelimiters } from '@/components/chat/ChatMessageContent/normalize-latex'
+import { normalizeLatexDelimiters } from '@/ui/web/chat/ChatMessageContent/normalize-latex'
 import { describe, expect, it } from 'vitest'
 
 describe('normalizeLatexDelimiters', () => {

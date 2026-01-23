@@ -1,7 +1,7 @@
 import type { CollectionBeforeValidateHook } from 'payload'
 
-import { inferMediaType, validateMimeType } from '@/lib/media/inferMediaType'
-import { MediaType, SIZE_LIMITS } from '@/lib/media/types'
+import { inferMediaType, validateMimeType } from '@/server/media/inferMediaType'
+import { MediaType, SIZE_LIMITS } from '@/server/media/types'
 
 export const validateMediaUploadHook: CollectionBeforeValidateHook = async ({
   data,

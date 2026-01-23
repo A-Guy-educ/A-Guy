@@ -8,9 +8,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { storeOAuthState } from '@/lib/auth/oauth_state'
-import { sanitizeReturnTo } from '@/lib/auth/oauth_sanitize'
-import { getPublicBaseUrl } from '@/lib/auth/oauth_url'
+import { storeOAuthState } from '@/infra/auth/oauth_state'
+import { sanitizeReturnTo } from '@/infra/auth/oauth_sanitize'
+import { getPublicBaseUrl } from '@/infra/auth/oauth_url'
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 

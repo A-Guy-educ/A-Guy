@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { rewriteCss, renderViewerHtml, validateRewrittenHtml } from '@/lib/pdfjs/renderer'
-import { CDN_BASE, VIEWER_URLS } from '@/lib/pdfjs/config'
+import { rewriteCss, renderViewerHtml, validateRewrittenHtml } from '@/infra/pdfjs/renderer'
+import { CDN_BASE, VIEWER_URLS } from '@/infra/pdfjs/config'
 
 describe('rewriteCss', () => {
   it('should rewrite relative image paths to absolute CDN URLs', () => {

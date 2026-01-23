@@ -69,7 +69,7 @@ export type { AIModelKey, AIModelConfig } from '@/infra/llm/models'
 // Component Types
 // ============================================================================
 
-export type { Theme, ThemeContextType } from '@/providers/Theme/types'
+export type { Theme, ThemeContextType } from '@/ui/providers/Theme/types'
 
 // ============================================================================
 // Contract Types
@@ -94,7 +94,7 @@ export type {
   ChatApiResponse,
   ConversationApiResponse,
   ConversationMessage,
-} from '@/services/api/api-service'
+} from '@/server/services/api/api-service'
 
 // ============================================================================
 // Access Control Types

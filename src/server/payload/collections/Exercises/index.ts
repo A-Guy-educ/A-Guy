@@ -1,13 +1,13 @@
-import type { CollectionConfig, Access } from 'payload'
+import type { Access, CollectionConfig } from 'payload'
 
+import type { User } from '@/payload-types'
+import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../../access/anyone'
 import { authenticated } from '../../access/authenticated'
 import { createdByField } from '../../fields/createdBy'
-import { ContentSchema } from './schemas'
-import { DEFAULT_CONTENT } from './defaults'
-import type { User } from '@/payload-types'
 import { AccountRole } from '../Users/roles'
-import { tenantField } from '@/server/payload/fields/tenant'
+import { DEFAULT_CONTENT } from './defaults'
+import { ContentSchema } from './schemas'
 
 /**
  * Access control - Exercise-specific
@@ -112,7 +112,7 @@ export const Exercises: CollectionConfig = {
             description:
               'Ordered blocks stream. Use question_* blocks to add questions, and rich_text blocks for instructions/notes between questions.',
             components: {
-              Field: '@/components/admin/ExerciseContentEditor#ExerciseContentEditor',
+              Field: '@/ui/admin/ExerciseContentEditor#ExerciseContentEditor',
             },
           },
         },
@@ -125,10 +125,10 @@ export const Exercises: CollectionConfig = {
 }
 
 // Re-export types and utilities for backward compatibility
+export { ExerciseBlockDefaults } from './defaults'
 export {
   ContentBlockSchema,
   ContentSchema,
-  type ContentBlock,
   QuestionFreeResponseBlockSchema,
+  type ContentBlock,
 } from './schemas'
-export { ExerciseBlockDefaults } from './defaults'

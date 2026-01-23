@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { validateFileUrl, redactUrl } from '@/lib/pdfjs/validator'
+import { validateFileUrl, redactUrl } from '@/infra/pdfjs/validator'
 
 describe('validateFileUrl', () => {
   const testOrigin = 'https://example.com'

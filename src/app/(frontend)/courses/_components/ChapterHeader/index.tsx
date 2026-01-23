@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from '@/providers/I18n'
+import { useTranslations } from '@/ui/providers/I18n'
 
 interface ChapterHeaderProps {
   chapterLabel?: string | null

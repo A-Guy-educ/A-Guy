@@ -4,13 +4,13 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { useTranslations } from '@/providers/I18n'
+import { Button } from '@/ui/ui/button'
+import { Card, CardContent, CardFooter, CardHeader } from '@/ui/ui/card'
+import { Input } from '@/ui/ui/input'
+import { Label } from '@/ui/ui/label'
+import { useTranslations } from '@/ui/providers/I18n'
 import { loginAction } from './login_authenticate-action'
-import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton'
+import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
 
 export function LoginForm() {
   const t = useTranslations('auth.login')

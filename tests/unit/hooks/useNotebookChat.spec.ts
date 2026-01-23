@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import { useNotebookChat } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat/useNotebookChat'
-import { apiService } from '@/services/api/api-service'
+import { apiService } from '@/server/services/api/api-service'
 import { toast } from 'sonner'
 
 vi.mock('@/services/api/api-service', () => ({

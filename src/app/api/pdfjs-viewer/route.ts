@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/utilities/logger'
-import { RESPONSE_HEADERS } from '@/lib/pdfjs/config'
-import { validateFileUrl, redactUrl } from '@/lib/pdfjs/validator'
-import { loadViewerTemplate, loadViewerCss } from '@/lib/pdfjs/template-loader'
-import { rewriteCss, renderViewerHtml, validateRewrittenHtml } from '@/lib/pdfjs/renderer'
+import { RESPONSE_HEADERS } from '@/infra/pdfjs/config'
+import { validateFileUrl, redactUrl } from '@/infra/pdfjs/validator'
+import { loadViewerTemplate, loadViewerCss } from '@/infra/pdfjs/template-loader'
+import { rewriteCss, renderViewerHtml, validateRewrittenHtml } from '@/infra/pdfjs/renderer'
 
 /**
  * PDF.js Viewer Proxy

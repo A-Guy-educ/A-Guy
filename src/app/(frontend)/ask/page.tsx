@@ -1,4 +1,4 @@
-import { NavigationBar } from '@/components/HomePage/NavigationBar'
+import { NavigationBar } from '@/ui/web/homepage/NavigationBar'
 
 export default function AskPage() {
   return (

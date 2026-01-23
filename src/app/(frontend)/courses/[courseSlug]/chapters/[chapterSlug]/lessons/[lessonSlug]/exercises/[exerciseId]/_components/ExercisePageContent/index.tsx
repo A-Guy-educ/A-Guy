@@ -1,7 +1,7 @@
 'use client'
 
-import { ExerciseRenderer } from '@/components/ExerciseRenderer'
-import type { ExerciseContentData } from '@/components/ExerciseRenderer/types'
+import { ExerciseRenderer } from '@/ui/web/exerciserenderer'
+import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
 
 interface ExercisePageContentProps {
   contentJson: unknown

@@ -8,15 +8,15 @@ import {
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+import { MediaType } from '@/server/media/types'
+import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
+import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../../access/anyone'
 import { authenticated } from '../../access/authenticated'
 import { createdByField } from '../../fields/createdBy'
-import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { inferMediaTypeHook } from './hooks/inferMediaType'
 import { validateMediaUploadHook } from './hooks/validateMediaUpload'
-import { MediaType } from '@/lib/media/types'
-import { tenantField } from '@/server/payload/fields/tenant'
-import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -94,7 +94,7 @@ export const Media: CollectionConfig = {
       admin: {
         position: 'sidebar',
         components: {
-          Field: '@/components/admin/MediaPreview#MediaPreview',
+          Field: '@/ui/admin/MediaPreview#MediaPreview',
         },
       },
     },

@@ -1,7 +1,7 @@
 import type { FieldHook } from 'payload'
 
-import { inferMediaType, validateMimeType } from '@/lib/media/inferMediaType'
-import { MediaType } from '@/lib/media/types'
+import { inferMediaType, validateMimeType } from '@/server/media/inferMediaType'
+import { MediaType } from '@/server/media/types'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 

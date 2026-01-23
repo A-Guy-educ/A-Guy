@@ -6,8 +6,8 @@ import { fileURLToPath } from 'url'
 
 import { importExerciseFromImage } from '@/endpoints/exercises/import-from-image'
 import { importExerciseFromLesson } from '@/endpoints/exercises/import-from-lesson'
-import { Footer } from '@/Footer/config'
-import { Header } from '@/Header/config'
+import { Footer } from '@/ui/web/footer/config'
+import { Header } from '@/ui/web/header/config'
 import { Categories } from '@/server/payload/collections/Categories'
 import { Chapters } from '@/server/payload/collections/Chapters'
 import { Conversations } from '@/server/payload/collections/Conversations'
@@ -55,10 +55,10 @@ export default buildConfig({
     components: {
       // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
-      beforeLogin: ['@/components/BeforeLogin'],
+      beforeLogin: ['@/ui/admin/BeforeLogin'],
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
-      beforeDashboard: ['@/components/BeforeDashboard'],
+      beforeDashboard: ['@/ui/admin/BeforeDashboard'],
     },
     importMap: {
       baseDir: path.resolve(dirname),

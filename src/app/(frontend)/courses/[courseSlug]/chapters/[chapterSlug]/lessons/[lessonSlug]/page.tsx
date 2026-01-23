@@ -1,12 +1,12 @@
-import { notFound } from 'next/navigation'
-import { queryCourseBySlug } from '@/lib/queries/courses'
-import { queryLessonBySlug } from '@/lib/queries/lessons'
+import { queryCourseBySlug } from '@/server/repos/queries/courses'
+import { queryLessonBySlug } from '@/server/repos/queries/lessons'
 import type { Media } from '@/payload-types'
-import { Media as MediaComponent } from '@/components/Media'
+import { Media as MediaComponent } from '@/ui/web/media'
+import { notFound } from 'next/navigation'
 import { EmptyState } from '../../../../../_components/EmptyState'
-import { ExerciseWorkspace } from './exercises/[exerciseId]/_components/ExerciseWorkspace'
-import { ChatInterface } from './exercises/[exerciseId]/_components/ChatInterface'
 import { LessonAnalytics } from './_components/LessonAnalytics'
+import { ChatInterface } from './exercises/[exerciseId]/_components/ChatInterface'
+import { ExerciseWorkspace } from './exercises/[exerciseId]/_components/ExerciseWorkspace'
 
 interface LessonPageProps {
   params: Promise<{

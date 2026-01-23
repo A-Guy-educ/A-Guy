@@ -10,10 +10,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { Payload } from 'payload'
 import type { User } from '@/payload-types'
-import { issueSession, issueSessionWithPlainSecret } from '@/lib/auth/oauth_session'
-import { setAuthCookie } from '@/lib/auth/oauth_cookies'
-import { logOAuthEvent, logOAuthError } from '@/lib/auth/oauth_logger'
-import { generateSecret, encrypt } from '@/lib/auth/oauth_crypto'
+import { issueSession, issueSessionWithPlainSecret } from '@/infra/auth/oauth_session'
+import { setAuthCookie } from '@/infra/auth/oauth_cookies'
+import { logOAuthEvent, logOAuthError } from '@/infra/auth/oauth_logger'
+import { generateSecret, encrypt } from '@/infra/auth/oauth_crypto'
 
 export async function handleExistingUser(
   payload: Payload,

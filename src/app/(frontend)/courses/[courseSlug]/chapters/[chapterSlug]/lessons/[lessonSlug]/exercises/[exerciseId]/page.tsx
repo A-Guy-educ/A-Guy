@@ -1,11 +1,11 @@
 import { notFound } from 'next/navigation'
-import { queryCourseBySlug } from '@/lib/queries/courses'
-import { queryLessonBySlug } from '@/lib/queries/lessons'
-import { queryExerciseById } from '@/lib/queries/exercises'
+import { queryCourseBySlug } from '@/server/repos/queries/courses'
+import { queryLessonBySlug } from '@/server/repos/queries/lessons'
+import { queryExerciseById } from '@/server/repos/queries/exercises'
 import { ExerciseWorkspace } from './_components/ExerciseWorkspace'
 import { ChatInterface } from './_components/ChatInterface'
-import { ExerciseRenderer } from '@/components/ExerciseRenderer'
-import type { ExerciseContentData } from '@/components/ExerciseRenderer/types'
+import { ExerciseRenderer } from '@/ui/web/exerciserenderer'
+import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
 
 interface ExercisePageProps {
   params: Promise<{

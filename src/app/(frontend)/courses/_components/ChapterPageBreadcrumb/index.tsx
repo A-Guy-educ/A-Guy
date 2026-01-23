@@ -1,7 +1,7 @@
 'use client'
 
 import { Breadcrumb } from '../Breadcrumb'
-import { useTranslations } from '@/providers/I18n'
+import { useTranslations } from '@/ui/providers/I18n'
 
 interface ChapterPageBreadcrumbProps {
   courseTitle: string

@@ -1,6 +1,6 @@
 import type { Field } from 'payload'
 
-import { getDefaultTenantId } from '@/lib/tenant/get-default-tenant'
+import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 
 export const tenantField: Field = {
   name: 'tenant',

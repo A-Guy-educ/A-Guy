@@ -2,7 +2,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
-import { getDefaultTenantSlug } from '@/lib/tenant/get-default-tenant'
+import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()

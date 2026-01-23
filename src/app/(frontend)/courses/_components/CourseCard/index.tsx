@@ -2,10 +2,10 @@
 
 import Link from 'next/link'
 import type { Course } from '@/payload-types'
-import { useTranslations } from '@/providers/I18n'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useTranslations } from '@/ui/providers/I18n'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/ui/card'
+import { Button } from '@/ui/ui/button'
+import { Badge } from '@/ui/ui/badge'
 import { ArrowRight } from 'lucide-react'
 
 interface CourseCardProps {

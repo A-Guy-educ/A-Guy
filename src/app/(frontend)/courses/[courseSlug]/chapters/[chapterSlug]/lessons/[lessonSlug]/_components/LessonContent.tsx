@@ -2,9 +2,9 @@
 
 import { EmptyState } from '@/app/(frontend)/courses/_components/EmptyState'
 import { ExerciseCard } from '@/app/(frontend)/courses/_components/ExerciseCard'
-import { Media as MediaComponent } from '@/components/Media'
 import type { Exercise, Media as MediaType } from '@/payload-types'
-import { useTranslations } from '@/providers/I18n'
+import { useTranslations } from '@/ui/providers/I18n'
+import { Media as MediaComponent } from '@/ui/web/media'
 import { useState } from 'react'
 import { ConvertButton } from './ConvertButton'
 import { ViewToggle } from './ViewToggle'

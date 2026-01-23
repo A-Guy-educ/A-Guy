@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { renderViewerHtml, rewriteCss } from '@/lib/pdfjs/renderer'
+import { renderViewerHtml, rewriteCss } from '@/infra/pdfjs/renderer'
 
 describe('PDF.js Security Features', () => {
   const mockHtml = `

@@ -2,9 +2,9 @@
 
 import Link from 'next/link'
 import type { Lesson } from '@/payload-types'
-import { useTranslations } from '@/providers/I18n'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { useTranslations } from '@/ui/providers/I18n'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/ui/card'
+import { Button } from '@/ui/ui/button'
 
 interface LessonCardProps {
   lesson: Lesson

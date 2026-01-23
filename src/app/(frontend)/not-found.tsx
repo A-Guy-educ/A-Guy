@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import React from 'react'
 
-import { Button } from '@/components/ui/button'
-import { useTranslations } from '@/providers/I18n'
+import { Button } from '@/ui/ui/button'
+import { useTranslations } from '@/ui/providers/I18n'
 
 export default function NotFound() {
   const t = useTranslations('common.notFound')

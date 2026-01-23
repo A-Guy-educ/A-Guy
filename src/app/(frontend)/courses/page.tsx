@@ -1,4 +1,4 @@
-import { queryPublishedCourses } from '@/lib/queries/courses'
+import { queryPublishedCourses } from '@/server/repos/queries/courses'
 import { CourseCard } from './_components/CourseCard'
 import { EmptyState } from './_components/EmptyState'
 import { CoursesHero } from './_components/CoursesHero'

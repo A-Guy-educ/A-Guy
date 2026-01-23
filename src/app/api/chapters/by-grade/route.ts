@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { queryChaptersByGrade } from '@/lib/queries/chapters'
+import { queryChaptersByGrade } from '@/server/repos/queries/chapters'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import type { Lesson } from '@/payload-types'

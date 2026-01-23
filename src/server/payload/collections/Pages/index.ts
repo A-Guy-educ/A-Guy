@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { hero } from '@/heros/config'
+import { hero } from '@/ui/web/heros/config'
 import { generatePreviewPath } from '@/utilities/generatePreviewPath'
 import { slugField } from 'payload'
 import { authenticated } from '../../access/authenticated'
