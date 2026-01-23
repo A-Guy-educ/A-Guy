@@ -1,6 +1,6 @@
+import { FlatCompat } from '@eslint/eslintrc'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { FlatCompat } from '@eslint/eslintrc'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -47,6 +47,82 @@ const eslintConfig = [
   },
   {
     ignores: ['.next/', 'node_modules/', '.cache/', 'dist/', 'build/', 'coverage/'],
+  },
+
+  // =============================================================================
+  // Layer Boundary Rules
+  // =============================================================================
+  // UI layer - block server/services and server/repos imports (payload/ allowed)
+  {
+    name: 'ui-boundaries',
+    files: ['src/ui/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/server/services/**', 'src/server/services/**'],
+              message: 'UI layer cannot import from Server Services (business logic)',
+            },
+            {
+              group: ['@/server/repos/**', 'src/server/repos/**'],
+              message: 'UI layer cannot import from Server Repos (data access)',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // Client layer - block server imports
+  {
+    name: 'client-boundaries',
+    files: ['src/client/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/server/**', 'src/server/**'],
+              message: 'Client layer cannot import from Server layer',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // Infra layer - leaf node, cannot import from other layers
+  {
+    name: 'infra-boundaries',
+    files: ['src/infra/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/client/**', 'src/client/**'],
+              message: 'Infra layer cannot import from Client layer',
+            },
+            {
+              group: ['@/ui/**', 'src/ui/**'],
+              message: 'Infra layer cannot import from UI layer',
+            },
+            {
+              group: ['@/server/services/**', 'src/server/services/**'],
+              message: 'Infra layer cannot import from Server Services',
+            },
+            {
+              group: ['@/server/repos/**', 'src/server/repos/**'],
+              message: 'Infra layer cannot import from Server Repos',
+            },
+          ],
+        },
+      ],
+    },
   },
 ]
 
