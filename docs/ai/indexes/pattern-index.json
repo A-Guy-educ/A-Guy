@@ -102,6 +102,7 @@
         "src/components/admin/shared/AdvancedJsonPanel.tsx",
         "src/components/admin/shared/CollapsibleSection.tsx",
         "src/components/admin/shared/ErrorDisplay.tsx",
+        "src/components/auth/GoogleLoginButton.tsx",
         "src/components/chat/ChatMessageContent/index.tsx",
         "src/components/shared/ProgressCircle/index.tsx",
         "src/components/shared/TypingAnimation/index.tsx",
@@ -194,6 +195,7 @@
         "src/components/HomePage/NavigationBar/index.tsx",
         "src/components/LanguageSwitcher/index.tsx",
         "src/components/UserDropdown/index.tsx",
+        "src/components/auth/GoogleLoginButton.tsx",
         "src/providers/I18n/index.tsx"
       ]
     },
@@ -285,7 +287,29 @@
         "src/app/api/chapters/by-grade/route.ts",
         "src/app/api/example/route.ts",
         "src/app/api/exercises/import/route.ts",
-        "src/app/api/pdfjs-viewer/route.ts"
+        "src/app/api/oauth/google/callback/oauth_callback_helpers.ts",
+        "src/app/api/oauth/google/callback/route.ts",
+        "src/app/api/oauth/google/route.ts",
+        "src/app/api/pdfjs-viewer/route.ts",
+        "src/lib/auth/oauth_cookies.ts",
+        "src/lib/auth/oauth_state.ts"
+      ]
+    },
+    "oauth": {
+      "pattern": "oauth",
+      "description": "No description available",
+      "files": [
+        "src/app/api/oauth/google/callback/oauth_callback_helpers.ts",
+        "src/app/api/oauth/google/callback/route.ts",
+        "src/app/api/oauth/google/route.ts",
+        "src/lib/auth/oauth_constants.ts",
+        "src/lib/auth/oauth_cookies.ts",
+        "src/lib/auth/oauth_logger.ts",
+        "src/lib/auth/oauth_nonce.ts",
+        "src/lib/auth/oauth_sanitize.ts",
+        "src/lib/auth/oauth_session.ts",
+        "src/lib/auth/oauth_state.ts",
+        "src/lib/auth/oauth_url.ts"
       ]
     },
     "access-control": {
@@ -428,6 +452,13 @@
       "description": "No description available",
       "files": [
         "src/lib/ai/smart-doc-loader.ts"
+      ]
+    },
+    "encryption": {
+      "pattern": "encryption",
+      "description": "No description available",
+      "files": [
+        "src/lib/auth/oauth_crypto.ts"
       ]
     },
     "service-layer": {
@@ -1235,6 +1266,48 @@
         "next/server",
         "payload",
         "@payload-config"
+      ]
+    },
+    "src/app/api/oauth/google/callback/oauth_callback_helpers.ts": {
+      "path": "src/app/api/oauth/google/callback/oauth_callback_helpers.ts",
+      "type": "utility",
+      "domain": "auth",
+      "patterns": [
+        "oauth",
+        "api-endpoint"
+      ],
+      "aiSummary": "Helper functions for OAuth callback to handle user lookup and creation",
+      "dependencies": [
+        "next/server",
+        "payload"
+      ]
+    },
+    "src/app/api/oauth/google/callback/route.ts": {
+      "path": "src/app/api/oauth/google/callback/route.ts",
+      "type": "api-route",
+      "domain": "auth",
+      "patterns": [
+        "oauth",
+        "api-endpoint"
+      ],
+      "aiSummary": "Handles Google OAuth callback, creates/updates users, issues sessions",
+      "dependencies": [
+        "next/server",
+        "payload",
+        "@payload-config"
+      ]
+    },
+    "src/app/api/oauth/google/route.ts": {
+      "path": "src/app/api/oauth/google/route.ts",
+      "type": "api-route",
+      "domain": "auth",
+      "patterns": [
+        "oauth",
+        "api-endpoint"
+      ],
+      "aiSummary": "Initiates Google OAuth flow by redirecting to Google consent screen",
+      "dependencies": [
+        "next/server"
       ]
     },
     "src/app/api/pdfjs-viewer/route.ts": {
@@ -2278,6 +2351,17 @@
         "react"
       ]
     },
+    "src/components/auth/GoogleLoginButton.tsx": {
+      "path": "src/components/auth/GoogleLoginButton.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": [
+        "i18n-component",
+        "client-component"
+      ],
+      "aiSummary": "",
+      "dependencies": []
+    },
     "src/components/chat/ChatMessageContent/index.tsx": {
       "path": "src/components/chat/ChatMessageContent/index.tsx",
       "type": "unknown",
@@ -2893,6 +2977,114 @@
         "react"
       ]
     },
+    "src/lib/auth/oauth_constants.ts": {
+      "path": "src/lib/auth/oauth_constants.ts",
+      "type": "constants",
+      "domain": "auth",
+      "patterns": [
+        "oauth"
+      ],
+      "aiSummary": "Cookie configuration and constants for OAuth authentication",
+      "dependencies": [
+        "payload"
+      ]
+    },
+    "src/lib/auth/oauth_cookies.ts": {
+      "path": "src/lib/auth/oauth_cookies.ts",
+      "type": "utility",
+      "domain": "auth",
+      "patterns": [
+        "oauth",
+        "api-endpoint"
+      ],
+      "aiSummary": "Cookie read/write/delete utilities for OAuth flow",
+      "dependencies": [
+        "next/server",
+        "payload"
+      ]
+    },
+    "src/lib/auth/oauth_crypto.ts": {
+      "path": "src/lib/auth/oauth_crypto.ts",
+      "type": "utility",
+      "domain": "auth",
+      "patterns": [
+        "encryption"
+      ],
+      "aiSummary": "AES-256-GCM encryption for OAuth login secrets",
+      "dependencies": [
+        "crypto"
+      ]
+    },
+    "src/lib/auth/oauth_logger.ts": {
+      "path": "src/lib/auth/oauth_logger.ts",
+      "type": "utility",
+      "domain": "auth",
+      "patterns": [
+        "oauth"
+      ],
+      "aiSummary": "PII-safe logging for OAuth events with email hashing",
+      "dependencies": [
+        "crypto"
+      ]
+    },
+    "src/lib/auth/oauth_nonce.ts": {
+      "path": "src/lib/auth/oauth_nonce.ts",
+      "type": "utility",
+      "domain": "auth",
+      "patterns": [
+        "oauth"
+      ],
+      "aiSummary": "Generate cryptographically secure random nonces for CSRF protection",
+      "dependencies": []
+    },
+    "src/lib/auth/oauth_sanitize.ts": {
+      "path": "src/lib/auth/oauth_sanitize.ts",
+      "type": "utility",
+      "domain": "auth",
+      "patterns": [
+        "oauth"
+      ],
+      "aiSummary": "Sanitize returnTo URLs to prevent open redirect vulnerabilities",
+      "dependencies": []
+    },
+    "src/lib/auth/oauth_session.ts": {
+      "path": "src/lib/auth/oauth_session.ts",
+      "type": "utility",
+      "domain": "auth",
+      "patterns": [
+        "oauth"
+      ],
+      "aiSummary": "Issue Payload auth sessions using payload.login() for OAuth users",
+      "dependencies": [
+        "payload",
+        "@payload-config"
+      ]
+    },
+    "src/lib/auth/oauth_state.ts": {
+      "path": "src/lib/auth/oauth_state.ts",
+      "type": "utility",
+      "domain": "auth",
+      "patterns": [
+        "oauth",
+        "api-endpoint"
+      ],
+      "aiSummary": "Manage OAuth state nonces and returnTo URLs for CSRF protection",
+      "dependencies": [
+        "next/server"
+      ]
+    },
+    "src/lib/auth/oauth_url.ts": {
+      "path": "src/lib/auth/oauth_url.ts",
+      "type": "utility",
+      "domain": "auth",
+      "patterns": [
+        "oauth"
+      ],
+      "aiSummary": "Build canonical public base URLs for OAuth callbacks",
+      "dependencies": [
+        "next/server"
+      ]
+    },
     "src/lib/services/conversation-service.ts": {
       "path": "src/lib/services/conversation-service.ts",
       "type": "service",
@@ -3013,8 +3205,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-01-21T10:24:19.588Z",
-    "totalFiles": 194,
-    "totalPatterns": 22
+    "generatedAt": "2026-01-23T13:06:03.363Z",
+    "totalFiles": 207,
+    "totalPatterns": 24
   }
 }
