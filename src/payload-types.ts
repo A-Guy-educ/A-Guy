@@ -69,6 +69,8 @@ export interface Config {
   collections: {
     pages: Page;
     categories: Category;
+    config_entries: ConfigEntry;
+    config_audit_logs: ConfigAuditLog;
     conversations: Conversation;
     memory_items: MemoryItem;
     tenants: Tenant;
@@ -103,6 +105,8 @@ export interface Config {
   collectionsSelect: {
     pages: PagesSelect<false> | PagesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    config_entries: ConfigEntriesSelect<false> | ConfigEntriesSelect<true>;
+    config_audit_logs: ConfigAuditLogsSelect<false> | ConfigAuditLogsSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
     memory_items: MemoryItemsSelect<false> | MemoryItemsSelect<true>;
     tenants: TenantsSelect<false> | TenantsSelect<true>;
@@ -832,6 +836,64 @@ export interface Form {
         id?: string | null;
       }[]
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Global configuration key/value store. Variables are plaintext, secrets are encrypted.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config_entries".
+ */
+export interface ConfigEntry {
+  id: string;
+  /**
+   * Configuration key (snake_case, immutable after creation)
+   */
+  key: string;
+  /**
+   * Variable: stored as plaintext. Secret: encrypted at rest.
+   */
+  kind: 'variable' | 'secret';
+  /**
+   * Configuration value. Secrets are write-only after save.
+   */
+  value: string;
+  /**
+   * Enable or disable this configuration entry
+   */
+  enabled: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Append-only audit log for config mutations. Secrets never stored in plaintext.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config_audit_logs".
+ */
+export interface ConfigAuditLog {
+  id: string;
+  /**
+   * Configuration key that was modified
+   */
+  key: string;
+  /**
+   * Type of config entry
+   */
+  kind: 'variable' | 'secret';
+  /**
+   * Action performed
+   */
+  action: 'created' | 'updated' | 'enabled' | 'disabled';
+  /**
+   * Admin user who performed the action
+   */
+  actor: string | User;
+  /**
+   * Optional reason for the change
+   */
+  reason?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1624,6 +1686,14 @@ export interface PayloadLockedDocument {
         value: string | Category;
       } | null)
     | ({
+        relationTo: 'config_entries';
+        value: string | ConfigEntry;
+      } | null)
+    | ({
+        relationTo: 'config_audit_logs';
+        value: string | ConfigAuditLog;
+      } | null)
+    | ({
         relationTo: 'conversations';
         value: string | Conversation;
       } | null)
@@ -1887,6 +1957,31 @@ export interface CategoriesSelect<T extends boolean = true> {
         label?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config_entries_select".
+ */
+export interface ConfigEntriesSelect<T extends boolean = true> {
+  key?: T;
+  kind?: T;
+  value?: T;
+  enabled?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config_audit_logs_select".
+ */
+export interface ConfigAuditLogsSelect<T extends boolean = true> {
+  key?: T;
+  kind?: T;
+  action?: T;
+  actor?: T;
+  reason?: T;
   updatedAt?: T;
   createdAt?: T;
 }
