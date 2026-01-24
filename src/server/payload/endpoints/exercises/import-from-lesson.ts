@@ -4,7 +4,6 @@
  *
  * Access: Authenticated users only
  */
-import { PayloadRequest } from 'payload'
 import { extractFromImage } from '@/infra/llm/services/data-extractor-service'
 import type { Media } from '@/payload-types'
 import { ExerciseBlockDefaults } from '@/server/payload/collections/Exercises'
@@ -13,6 +12,7 @@ import {
   QuestionSelectBlockSchema,
 } from '@/server/payload/collections/Exercises/schemas'
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
+import { PayloadRequest } from 'payload'
 
 export async function importExerciseFromLesson(req: PayloadRequest) {
   // 1) Auth - endpoints not authenticated by default
@@ -110,10 +110,13 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
   // 6) Extract data from image
   let result
   try {
-    result = await extractFromImage({
-      imageBuffer,
-      mimeType,
-    })
+    result = await extractFromImage(
+      {
+        imageBuffer,
+        mimeType,
+      },
+      req.payload,
+    )
   } catch (aiError) {
     return Response.json(
       {

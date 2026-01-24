@@ -5,8 +5,8 @@
  * @public This is the ONLY file consumers should import from
  */
 import { logger } from '@/infra/utils/logger'
+import { getGeminiClient } from '@/server/llm/gemini.client'
 import type { Payload } from 'payload'
-import { getGeminiClient } from './gemini.client'
 import { isRetryableError, wrapGeminiError } from './gemini.errors'
 import { extractResponseText, mapMessagesToGeminiHistory } from './gemini.mapper'
 
@@ -65,7 +65,7 @@ const RETRY_DELAY_MS = 1_000
  */
 export async function generateChatCompletion(
   input: GenerateChatInput,
-  payload?: Payload,
+  payload: Payload,
 ): Promise<GenerateChatOutput> {
   const timeoutMs = input.timeoutMs ?? DEFAULT_TIMEOUT_MS
   let lastError: Error | null = null
@@ -107,7 +107,7 @@ export async function generateChatCompletion(
 async function executeWithTimeout(
   input: GenerateChatInput,
   timeoutMs: number,
-  payload?: Payload,
+  payload: Payload,
 ): Promise<GenerateChatOutput> {
   const client = await getGeminiClient(payload)
 
@@ -170,5 +170,5 @@ function sleep(ms: number): Promise<void> {
 // Re-exports for convenience
 // ─────────────────────────────────────────────────────────────────────────────
 
-export { isGeminiApiKeyConfigured } from './gemini.client'
+export { isGeminiApiKeyConfigured } from '@/server/llm/gemini.client'
 export { GeminiError, GeminiErrorCode } from './gemini.errors'

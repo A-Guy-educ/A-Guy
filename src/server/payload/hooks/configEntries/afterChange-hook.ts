@@ -21,7 +21,7 @@ export const afterChangeAuditLog: CollectionAfterChangeHook = async ({
   doc,
   operation,
   req,
-  previousDoc,
+  // previousDoc intentionally unused - kept for hook signature compatibility
 }) => {
   // Skip if we triggered this ourselves (prevent infinite loop)
   if (req.context._skipAuditLog) {
@@ -41,6 +41,12 @@ export const afterChangeAuditLog: CollectionAfterChangeHook = async ({
       ? (req.user as { id: string }).id
       : ''
 
+  // Get tenant ID from doc
+  const tenantId =
+    doc.tenant && typeof doc.tenant === 'object' && 'id' in doc.tenant
+      ? (doc.tenant as { id: string }).id
+      : (doc.tenant as string)
+
   // =========================================================================
   // Create Audit Log Entry (CRITICAL: pass req for transaction safety)
   // Use overrideAccess: true to bypass collection's create: () => false
@@ -53,6 +59,7 @@ export const afterChangeAuditLog: CollectionAfterChangeHook = async ({
       kind: doc.kind,
       action: action,
       actor: actorId,
+      tenant: tenantId,
       // No reason field in this implementation (can be added later)
     },
     req, // CRITICAL: Pass req for transaction safety

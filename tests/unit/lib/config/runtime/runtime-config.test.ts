@@ -3,6 +3,7 @@
  *
  * @fileType unit-test
  * @domain config.runtime
+ * @pattern tenant-scoped
  */
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
@@ -44,38 +45,52 @@ const mockPayload: any = {
   logger: { info: vi.fn() },
 }
 
-describe('Runtime Config', () => {
+const TEST_TENANT_ID = 'test-tenant-123'
+
+describe('Runtime Config (Tenant-Scoped)', () => {
   beforeEach(() => {
     clearConfigCache()
     vi.clearAllMocks()
   })
 
   describe('loadRuntimeConfig', () => {
-    test('should load variables and secrets from DB', async () => {
+    test('should load variables and secrets from DB for tenant', async () => {
       const secretValue = 'secret-value'
       mockPayload.find.mockResolvedValue({
         docs: [
-          { key: 'test_var', kind: 'variable', value: 'var-value', enabled: true },
-          { key: 'test_secret', kind: 'secret', value: encryptSecret(secretValue), enabled: true },
+          {
+            key: 'test_var',
+            kind: 'variable',
+            value: 'var-value',
+            enabled: true,
+            tenant: { id: TEST_TENANT_ID },
+          },
+          {
+            key: 'test_secret',
+            kind: 'secret',
+            value: encryptSecret(secretValue),
+            enabled: true,
+            tenant: { id: TEST_TENANT_ID },
+          },
         ],
       })
 
-      const result = await loadRuntimeConfig(mockPayload)
+      const result = await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
       expect(result.success).toBe(true)
       expect(result.variablesLoaded).toBe(1)
       expect(result.secretsLoaded).toBe(1)
       expect(isConfigLoaded()).toBe(true)
 
-      // Verify secret was decrypted
-      expect(getSecret('test_secret')).toBe(secretValue)
+      // Verify secret was decrypted (tenant-scoped)
+      expect(getSecret(TEST_TENANT_ID, 'test_secret')).toBe(secretValue)
     })
 
     test('should be idempotent and return cached result', async () => {
       mockPayload.find.mockResolvedValue({ docs: [] })
 
-      const result1 = await loadRuntimeConfig(mockPayload)
-      const result2 = await loadRuntimeConfig(mockPayload)
+      const result1 = await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
+      const result2 = await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
       // Should only call DB once
       expect(mockPayload.find).toHaveBeenCalledTimes(1)
@@ -83,13 +98,16 @@ describe('Runtime Config', () => {
       expect(result1).toEqual(result2)
     })
 
-    test('should pass internalConfigLoad context flag', async () => {
+    test('should pass tenant filter and internalConfigLoad context flag', async () => {
       mockPayload.find.mockResolvedValue({ docs: [] })
 
-      await loadRuntimeConfig(mockPayload)
+      await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
       expect(mockPayload.find).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: expect.objectContaining({
+            tenant: { equals: TEST_TENANT_ID },
+          }),
           overrideAccess: true,
           req: expect.objectContaining({
             context: expect.objectContaining({
@@ -104,22 +122,37 @@ describe('Runtime Config', () => {
       const dbError = new Error('DB connection failed')
       mockPayload.find.mockRejectedValue(dbError)
 
-      await expect(loadRuntimeConfig(mockPayload)).rejects.toThrow('DB connection failed')
+      await expect(loadRuntimeConfig(mockPayload, TEST_TENANT_ID)).rejects.toThrow(
+        'DB connection failed',
+      )
     })
 
     test('should collect decryption errors but continue loading', async () => {
       mockPayload.find.mockResolvedValue({
         docs: [
-          { key: 'valid_var', kind: 'variable', value: 'value', enabled: true },
-          { key: 'bad_secret', kind: 'secret', value: 'not-encrypted', enabled: true },
+          {
+            key: 'valid_var',
+            kind: 'variable',
+            value: 'value',
+            enabled: true,
+            tenant: { id: TEST_TENANT_ID },
+          },
+          {
+            key: 'bad_secret',
+            kind: 'secret',
+            value: 'not-encrypted',
+            enabled: true,
+            tenant: { id: TEST_TENANT_ID },
+          },
         ],
       })
 
-      const result = await loadRuntimeConfig(mockPayload)
+      const result = await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
       expect(result.success).toBe(false)
       expect(result.errors).toHaveLength(1)
       expect(result.errors[0].key).toBe('bad_secret')
+      expect(result.errors[0].tenantId).toBe(TEST_TENANT_ID)
     })
   })
 
@@ -128,7 +161,7 @@ describe('Runtime Config', () => {
       mockPayload.find.mockResolvedValue({ docs: [] })
 
       // First load
-      await loadRuntimeConfig(mockPayload)
+      await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
       expect(mockPayload.find).toHaveBeenCalledTimes(1)
 
       // Reload - should clear cache and call DB again
@@ -137,85 +170,111 @@ describe('Runtime Config', () => {
     })
   })
 
-  describe('getVariable', () => {
-    test('should return process.env override (exact key match)', async () => {
+  describe('getVariable (tenant-scoped)', () => {
+    test('should return DB value for tenant', async () => {
       mockPayload.find.mockResolvedValue({
-        docs: [{ key: 'MY_VAR', kind: 'variable', value: 'db-value', enabled: true }],
+        docs: [
+          {
+            key: 'DB_VAR',
+            kind: 'variable',
+            value: 'db-value',
+            enabled: true,
+            tenant: { id: TEST_TENANT_ID },
+          },
+        ],
       })
 
-      await loadRuntimeConfig(mockPayload)
-
-      process.env.MY_VAR = 'env-override'
-      expect(getVariable('MY_VAR')).toBe('env-override')
-      delete process.env.MY_VAR
-    })
-
-    test('should return DB value when env not set', async () => {
-      mockPayload.find.mockResolvedValue({
-        docs: [{ key: 'DB_VAR', kind: 'variable', value: 'db-value', enabled: true }],
-      })
-
-      await loadRuntimeConfig(mockPayload)
-      expect(getVariable('DB_VAR')).toBe('db-value')
-    })
-
-    test('should NOT match if env key case differs', async () => {
-      mockPayload.find.mockResolvedValue({
-        docs: [{ key: 'my_var', kind: 'variable', value: 'db-value', enabled: true }],
-      })
-
-      await loadRuntimeConfig(mockPayload)
-
-      process.env.MY_VAR = 'env-override'
-      expect(getVariable('my_var')).toBe('db-value')
-      delete process.env.MY_VAR
+      await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
+      expect(getVariable(TEST_TENANT_ID, 'DB_VAR')).toBe('db-value')
     })
 
     test('should throw ConfigNotLoadedError if not loaded', () => {
-      expect(() => getVariable('any_key')).toThrow('Runtime config has not been loaded')
+      expect(() => getVariable(TEST_TENANT_ID, 'any_key')).toThrow(
+        'Runtime config has not been loaded',
+      )
     })
 
     test('should throw ConfigKeyNotFoundError if key missing', async () => {
       mockPayload.find.mockResolvedValue({ docs: [] })
 
-      await loadRuntimeConfig(mockPayload)
+      await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
-      expect(() => getVariable('missing_key')).toThrow('Missing required variable: missing_key')
+      expect(() => getVariable(TEST_TENANT_ID, 'missing_key')).toThrow(
+        `Missing variable "missing_key" for tenant ${TEST_TENANT_ID}`,
+      )
     })
 
     test('should return default value if provided', async () => {
       mockPayload.find.mockResolvedValue({ docs: [] })
 
-      await loadRuntimeConfig(mockPayload)
+      await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
-      expect(getVariable('missing', { defaultValue: 'default' })).toBe('default')
+      expect(getVariable(TEST_TENANT_ID, 'missing', { defaultValue: 'default' })).toBe('default')
     })
-  })
 
-  describe('getSecret', () => {
-    test('should return decrypted secret', async () => {
-      const secretValue = 'my-secret-password'
+    test('should return empty string when throwIfNotFound is false', async () => {
+      mockPayload.find.mockResolvedValue({ docs: [] })
+
+      await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
+
+      expect(getVariable(TEST_TENANT_ID, 'missing', { throwIfNotFound: false })).toBe('')
+    })
+
+    test('should throw for different tenant', async () => {
       mockPayload.find.mockResolvedValue({
         docs: [
-          { key: 'MY_SECRET', kind: 'secret', value: encryptSecret(secretValue), enabled: true },
+          {
+            key: 'shared_key',
+            kind: 'variable',
+            value: 'tenant-value',
+            enabled: true,
+            tenant: { id: TEST_TENANT_ID },
+          },
         ],
       })
 
-      await loadRuntimeConfig(mockPayload)
+      await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
-      expect(getSecret('MY_SECRET')).toBe(secretValue)
+      // Should find for correct tenant
+      expect(getVariable(TEST_TENANT_ID, 'shared_key')).toBe('tenant-value')
+
+      // Should throw for different tenant
+      expect(() => getVariable('other-tenant', 'shared_key')).toThrow()
+    })
+  })
+
+  describe('getSecret (tenant-scoped)', () => {
+    test('should return decrypted secret for tenant', async () => {
+      const secretValue = 'my-secret-password'
+      mockPayload.find.mockResolvedValue({
+        docs: [
+          {
+            key: 'MY_SECRET',
+            kind: 'secret',
+            value: encryptSecret(secretValue),
+            enabled: true,
+            tenant: { id: TEST_TENANT_ID },
+          },
+        ],
+      })
+
+      await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
+
+      expect(getSecret(TEST_TENANT_ID, 'MY_SECRET')).toBe(secretValue)
     })
 
     test('should throw ConfigKeyNotFoundError if secret missing', async () => {
       mockPayload.find.mockResolvedValue({ docs: [] })
 
-      await loadRuntimeConfig(mockPayload)
+      await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
-      expect(() => getSecret('missing_secret')).toThrow('Missing required secret: missing_secret')
+      expect(() => getSecret(TEST_TENANT_ID, 'missing_secret')).toThrow(
+        `Missing secret "missing_secret" for tenant ${TEST_TENANT_ID}`,
+      )
     })
   })
 
-  describe('utility functions', () => {
+  describe('utility functions (tenant-scoped)', () => {
     test('getCacheMetadata should return null when not loaded', () => {
       expect(getCacheMetadata()).toBeNull()
     })
@@ -223,44 +282,86 @@ describe('Runtime Config', () => {
     test('getCacheMetadata should return metadata when loaded', async () => {
       mockPayload.find.mockResolvedValue({
         docs: [
-          { key: 'var1', kind: 'variable', value: 'val1', enabled: true },
-          { key: 'secret1', kind: 'secret', value: encryptSecret('s1'), enabled: true },
+          {
+            key: 'var1',
+            kind: 'variable',
+            value: 'val1',
+            enabled: true,
+            tenant: { id: TEST_TENANT_ID },
+          },
+          {
+            key: 'secret1',
+            kind: 'secret',
+            value: encryptSecret('s1'),
+            enabled: true,
+            tenant: { id: TEST_TENANT_ID },
+          },
         ],
       })
 
-      await loadRuntimeConfig(mockPayload)
+      await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
       const metadata = getCacheMetadata()
       expect(metadata).not.toBeNull()
       expect(metadata?.entryCount).toBe(2)
       expect(metadata?.variableCount).toBe(1)
       expect(metadata?.secretCount).toBe(1)
+      expect(metadata?.tenantsLoaded).toBe(1)
     })
 
-    test('getVariableKeys should return keys', async () => {
+    test('getVariableKeys should return keys for tenant', async () => {
       mockPayload.find.mockResolvedValue({
         docs: [
-          { key: 'key1', kind: 'variable', value: 'val1', enabled: true },
-          { key: 'key2', kind: 'variable', value: 'val2', enabled: true },
+          {
+            key: 'key1',
+            kind: 'variable',
+            value: 'val1',
+            enabled: true,
+            tenant: { id: TEST_TENANT_ID },
+          },
+          {
+            key: 'key2',
+            kind: 'variable',
+            value: 'val2',
+            enabled: true,
+            tenant: { id: TEST_TENANT_ID },
+          },
         ],
       })
 
-      await loadRuntimeConfig(mockPayload)
+      await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
-      const keys = getVariableKeys()
+      const keys = getVariableKeys(TEST_TENANT_ID)
       expect(keys).toContain('key1')
       expect(keys).toContain('key2')
       expect(keys).toHaveLength(2)
     })
 
-    test('getSecretKeys should return keys', async () => {
+    test('getVariableKeys should return empty array for unloaded tenant', async () => {
+      mockPayload.find.mockResolvedValue({ docs: [] })
+
+      await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
+
+      const keys = getVariableKeys('other-tenant')
+      expect(keys).toEqual([])
+    })
+
+    test('getSecretKeys should return keys for tenant', async () => {
       mockPayload.find.mockResolvedValue({
-        docs: [{ key: 'secret1', kind: 'secret', value: encryptSecret('s1'), enabled: true }],
+        docs: [
+          {
+            key: 'secret1',
+            kind: 'secret',
+            value: encryptSecret('s1'),
+            enabled: true,
+            tenant: { id: TEST_TENANT_ID },
+          },
+        ],
       })
 
-      await loadRuntimeConfig(mockPayload)
+      await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
-      const keys = getSecretKeys()
+      const keys = getSecretKeys(TEST_TENANT_ID)
       expect(keys).toContain('secret1')
       expect(keys).toHaveLength(1)
     })

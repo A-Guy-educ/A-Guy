@@ -14,8 +14,11 @@ export class ConfigNotLoadedError extends Error {
 }
 
 export class ConfigKeyNotFoundError extends Error {
-  constructor(key: string, kind: 'variable' | 'secret') {
-    super(`Missing required ${kind}: ${key}`)
+  constructor(key: string, kind: 'variable' | 'secret', tenantId?: string) {
+    const message = tenantId
+      ? `Missing ${kind} "${key}" for tenant ${tenantId}`
+      : `Missing required ${kind}: ${key}`
+    super(message)
     this.name = 'ConfigKeyNotFoundError'
   }
 }
