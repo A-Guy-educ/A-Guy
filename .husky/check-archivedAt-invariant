@@ -7,9 +7,14 @@ if [ "$SKIP_HOOKS" = "1" ]; then
   exit 0
 fi
 
-# Check staged files for archivedAt: null
-# Allowlist: normalize-conversations-archivedAt.ts (which finds and removes null values)
-violations=$(git diff --cached --name-only | xargs grep -l "archivedAt.*null\|archivedAt:\s*null" 2>/dev/null | grep -v "normalize-conversations-archivedAt.ts" || true)
+# Check staged files for archivedAt: null in object literals (not TypeScript types)
+# Allowlist:
+# - normalize-conversations-archivedAt.ts (finds and removes null values)
+# - payload-types.ts (auto-generated, TypeScript types may include null)
+# - check-archivedAt-invariant (this file, contains comments with null)
+# - Documentation files
+# - Files with only TypeScript type annotations (not object literal assignments)
+violations=$(git diff --cached --name-only | xargs grep -lE "^\s*archivedAt\s*:\s*[^|]*null" 2>/dev/null | grep -v "normalize-conversations-archivedAt.ts" | grep -v "payload-types.ts" | grep -v "check-archivedAt-invariant" | grep -v "\.md$" || true)
 
 if [ -n "$violations" ]; then
   echo ""

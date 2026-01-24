@@ -4,8 +4,8 @@
  *
  * Access: Authenticated users only
  */
-import { PayloadRequest, addDataAndFileToRequest } from 'payload'
 import { extractFromImage } from '@/infra/llm/services/data-extractor-service'
+import { PayloadRequest, addDataAndFileToRequest } from 'payload'
 
 interface UploadedFileLike {
   data?: Buffer
@@ -51,10 +51,13 @@ export async function importExerciseFromImage(req: PayloadRequest) {
   }
 
   // 4) Call AI service (image only, no additional text)
-  const result = await extractFromImage({
-    imageBuffer,
-    mimeType,
-  })
+  const result = await extractFromImage(
+    {
+      imageBuffer,
+      mimeType,
+    },
+    req.payload,
+  )
 
   if (!result.success) {
     return Response.json({ error: result.error || 'Failed to process image' }, { status: 500 })

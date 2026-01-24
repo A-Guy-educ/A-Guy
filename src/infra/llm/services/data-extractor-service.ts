@@ -4,9 +4,10 @@
  *
  * Future: Can be extended for exercise chat, editing assistance, etc.
  */
+import { getGeminiClient } from '@/server/llm/gemini.client'
+import type { Payload } from 'payload'
 import { AI_MODELS } from '../models'
 import { SIMPLE_TEXT_QUESTION_PROMPT } from '../prompts/simple-text-question'
-import { getGeminiClient } from '../providers/gemini/gemini.client'
 import { optimizeImageForAI } from './image-optimizer-service'
 
 export interface ImageToExerciseInput {
@@ -38,6 +39,7 @@ export interface ImageToExerciseResponse {
  */
 export async function extractFromImage(
   input: ImageToExerciseInput,
+  payload: Payload,
 ): Promise<ImageToExerciseResponse> {
   const startTime = Date.now()
 
@@ -45,8 +47,8 @@ export async function extractFromImage(
     // Optimize image
     const optimizedImage = await optimizeImageForAI(input.imageBuffer)
 
-    // Get AI client and model
-    const client = await getGeminiClient()
+    // Get AI client and model (requires Payload for config access)
+    const client = await getGeminiClient(payload)
     const modelConfig = AI_MODELS.IMAGE_TO_EXERCISE
     const model = client.getGenerativeModel({
       model: modelConfig.name,

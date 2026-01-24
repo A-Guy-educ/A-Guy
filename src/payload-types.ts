@@ -840,7 +840,7 @@ export interface Form {
   createdAt: string;
 }
 /**
- * Global configuration key/value store. Variables are plaintext, secrets are encrypted.
+ * Tenant-scoped configuration key/value store. Variables are plaintext, secrets are encrypted.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "config_entries".
@@ -851,6 +851,10 @@ export interface ConfigEntry {
    * Configuration key (snake_case, immutable after creation)
    */
   key: string;
+  /**
+   * Tenant this config entry belongs to
+   */
+  tenant: string | Tenant;
   /**
    * Variable: stored as plaintext. Secret: encrypted at rest.
    */
@@ -878,6 +882,10 @@ export interface ConfigAuditLog {
    * Configuration key that was modified
    */
   key: string;
+  /**
+   * Tenant of the mutated config entry
+   */
+  tenant: string | Tenant;
   /**
    * Type of config entry
    */
@@ -1966,6 +1974,7 @@ export interface CategoriesSelect<T extends boolean = true> {
  */
 export interface ConfigEntriesSelect<T extends boolean = true> {
   key?: T;
+  tenant?: T;
   kind?: T;
   value?: T;
   enabled?: T;
@@ -1978,6 +1987,7 @@ export interface ConfigEntriesSelect<T extends boolean = true> {
  */
 export interface ConfigAuditLogsSelect<T extends boolean = true> {
   key?: T;
+  tenant?: T;
   kind?: T;
   action?: T;
   actor?: T;
