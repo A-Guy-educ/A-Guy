@@ -170,7 +170,7 @@ const model = client.getGenerativeModel({
 // In src/lib/ai/models.ts
 export const AI_MODELS = {
   // Existing models...
-  
+
   // Add new model
   TEXT_TO_EXERCISE: {
     name: 'gemini-2.0-flash-001',
@@ -233,7 +233,7 @@ const result = await extractFromImage({
 // ✅ Success case
 if (result.success) {
   const { question, options, correctAnswer, explanation } = result.data
-  
+
   // Create exercise in database
   await payload.create({
     collection: 'exercises',
@@ -462,7 +462,7 @@ import { optimizeImageForAI } from '@/lib/ai/services/image-optimizer-service'
 async function extractData(imageBuffer: Buffer, mimeType: string) {
   // 1. Optimize image
   const optimized = await optimizeImageForAI(imageBuffer)
-  
+
   // 2. Get AI client and model
   const client = getGeminiClient()
   const config = AI_MODELS.IMAGE_TO_EXERCISE
@@ -470,7 +470,7 @@ async function extractData(imageBuffer: Buffer, mimeType: string) {
     model: config.name,
     systemInstruction: YOUR_SYSTEM_PROMPT,
   })
-  
+
   // 3. Prepare request
   const parts = [
     {
@@ -480,7 +480,7 @@ async function extractData(imageBuffer: Buffer, mimeType: string) {
       },
     },
   ]
-  
+
   // 4. Generate content
   const result = await model.generateContent({
     contents: [{ role: 'user', parts }],
@@ -489,7 +489,7 @@ async function extractData(imageBuffer: Buffer, mimeType: string) {
       maxOutputTokens: config.maxOutputTokens,
     },
   })
-  
+
   // 5. Parse JSON response
   const responseText = result.response.text()
   const cleaned = responseText
@@ -497,7 +497,7 @@ async function extractData(imageBuffer: Buffer, mimeType: string) {
     .replace(/^```\s*/, '')
     .replace(/```\s*$/, '')
     .trim()
-  
+
   return JSON.parse(cleaned)
 }
 ```
@@ -520,16 +520,16 @@ async function chat(messages: Array<{ role: string; content: string }>) {
       maxOutputTokens: config.maxOutputTokens,
     },
   })
-  
+
   // Convert messages to Gemini format
   const history = messages.map((msg) => ({
     role: msg.role === 'user' ? 'user' : 'assistant',
     parts: [{ text: msg.content }],
   }))
-  
+
   // Start chat with history
   const chat = model.startChat({ history })
-  
+
   // Send new message
   const result = await chat.sendMessage(userMessage)
   return result.response.text()
@@ -569,7 +569,7 @@ export async function myNewService(
         maxOutputTokens: config.maxOutputTokens,
       },
     })
-    
+
     // Your AI logic here
     const result = await model.generateContent({
       contents: [
@@ -579,7 +579,7 @@ export async function myNewService(
         },
       ],
     })
-    
+
     return {
       success: true,
       data: result.response.text(),
@@ -614,7 +614,7 @@ export async function myNewService(
 // ✅ CORRECT: Handle all error cases
 try {
   const result = await extractFromImage({ imageBuffer, mimeType })
-  
+
   if (result.success) {
     // Handle success
     return Response.json({ data: result.data })
@@ -683,26 +683,26 @@ import fs from 'fs'
 describe('Data Extractor Service', () => {
   it('should extract question from image', async () => {
     const imageBuffer = fs.readFileSync('tests/fixtures/math-question.png')
-    
+
     const result = await extractFromImage({
       imageBuffer,
       mimeType: 'image/png',
     })
-    
+
     expect(result.success).toBe(true)
     expect(result.data.question).toBeDefined()
     expect(result.data.options.length).toBeGreaterThan(0)
     expect(result.metadata.model).toBe('gemini-2.0-flash-001')
   })
-  
+
   it('should handle invalid images', async () => {
     const invalidBuffer = Buffer.from('not an image')
-    
+
     const result = await extractFromImage({
       imageBuffer: invalidBuffer,
       mimeType: 'image/png',
     })
-    
+
     expect(result.success).toBe(false)
     expect(result.error).toBeDefined()
   })
@@ -714,7 +714,7 @@ describe('Data Extractor Service', () => {
 ## 🔗 Related Documentation
 
 - **[Exercise Import Pipeline](../exercise-import/README.md)** - How image import works end-to-end
-- **[AGENTS.md](../../AGENTS.md)** - Payload CMS patterns for AI agents
+- **[AGENTS.md]('../../AGENTS.md')** - Payload CMS patterns for AI agents
 - **[Contracts Documentation](../contracts/README.md)** - Data validation contracts
 
 ---

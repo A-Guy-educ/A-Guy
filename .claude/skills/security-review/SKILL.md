@@ -577,6 +577,6 @@ export async function POST(req: NextRequest) {
 
 ## Related Documentation
 
-- Project security: [AGENTS.md](../../AGENTS.md) - Security Patterns section
+- Project security: [AGENTS.md](../../../AGENTS.md) - Security Patterns section
 - Payload access control: https://payloadcms.com/docs/access-control
 - OWASP Top 10: https://owasp.org/www-project-top-ten/

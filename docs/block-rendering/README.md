@@ -51,10 +51,10 @@ This document describes the block-based exercise rendering architecture and prov
 
 | Block Type | Purpose | Renderer | Interactive |
 |------------|---------|----------|-------------|
-| **`rich_text`** | Content, instructions, explanations | [`RichTextRenderer`](../../src/components/ExerciseRenderer/blocks/RichTextRenderer/index.tsx) | ❌ No |
-| **`question_select`** (variant: `true_false`) | True/False questions | [`TrueFalseQuestion`](../../src/components/ExerciseRenderer/questions/TrueFalseQuestion/index.tsx) | ✅ Yes |
-| **`question_select`** (variant: `mcq`) | Multiple choice questions | [`McqQuestion`](../../src/components/ExerciseRenderer/questions/McqQuestion/index.tsx) | ✅ Yes |
-| **`question_free_response`** | Open-ended text answers | [`FreeResponseQuestion`](../../src/components/ExerciseRenderer/questions/FreeResponseQuestion/index.tsx) | ✅ Yes |
+| **`rich_text`** | Content, instructions, explanations | [`RichTextRenderer`](../../../src/components/exercise/RichTextRenderer/index.tsx) | ❌ No |
+| **`question_select`** (variant: `true_false`) | True/False questions | [`TrueFalseQuestion`](../../../src/components/exercise/questions/TrueFalseQuestion/index.tsx) | ✅ Yes |
+| **`question_select`** (variant: `mcq`) | Multiple choice questions | [`McqQuestion`](../../../src/components/exercise/questions/McqQuestion/index.tsx) | ✅ Yes |
+| **`question_free_response`** | Open-ended text answers | [`FreeResponseQuestion`](../../../src/components/exercise/questions/FreeResponseQuestion/index.tsx) | ✅ Yes |
 
 ---
 
@@ -90,7 +90,7 @@ This document describes the block-based exercise rendering architecture and prov
   if (block.type === 'rich_text') {
     return <RichTextRenderer block={block} />
   }
-  
+
   // Question blocks - render with answer UI
   const question = block as QuestionBlock
   return (
@@ -150,7 +150,7 @@ Let's add support for syntax-highlighted code blocks.
 
 ### Step 1: Define Zod Contract
 
-**File**: [`src/collections/Exercises/schemas.ts`](../../src/collections/Exercises/schemas.ts)
+**File**: [`src/collections/Exercises/schemas.ts`](../../../src/collections/Exercises/schemas.ts)
 
 ```typescript
 // Add new block schema
@@ -171,7 +171,7 @@ export type CodeBlock = z.infer<typeof CodeBlockSchema>
 
 ### Step 2: Update ContentBlockSchema Union
 
-**File**: [`src/collections/Exercises/schemas.ts`](../../src/collections/Exercises/schemas.ts)
+**File**: [`src/collections/Exercises/schemas.ts`](../../../src/collections/Exercises/schemas.ts)
 
 ```typescript
 // Update the discriminated union to include new block type
@@ -237,7 +237,7 @@ export function CodeRenderer({ block }: CodeRendererProps) {
 
 ### Step 4: Update ExerciseRenderer Switch
 
-**File**: [`src/components/ExerciseRenderer/ExerciseRenderer/index.tsx`](../../src/components/ExerciseRenderer/ExerciseRenderer/index.tsx)
+**File**: [`src/components/ExerciseRenderer/ExerciseRenderer/index.tsx`](../../../src/components/exercise/ExerciseRenderer/index.tsx)
 
 ```typescript
 import { CodeRenderer } from '../blocks/CodeRenderer'
@@ -248,12 +248,12 @@ import { CodeRenderer } from '../blocks/CodeRenderer'
   if (block.type === 'rich_text') {
     return <RichTextRenderer key={block.id} block={block} />
   }
-  
+
   // ✅ Add new code block handler
   if (block.type === 'code') {
     return <CodeRenderer key={block.id} block={block} />
   }
-  
+
   // Existing question handlers...
   const question = block as QuestionBlock
   // ...
@@ -273,9 +273,9 @@ import { CodeRenderer } from '../blocks/CodeRenderer'
 export type { CodeBlock } from '@/collections/Exercises/schemas'
 
 // Update ContentBlock union type if needed
-export type ContentBlock = 
-  | RichTextBlock 
-  | QuestionBlock 
+export type ContentBlock =
+  | RichTextBlock
+  | QuestionBlock
   | CodeBlock // ✅ Add here
 ```
 
@@ -355,7 +355,7 @@ The quadratic formula is:
 $$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
 ```
 
-**Renders**: 
+**Renders**:
 $$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
 
 ### KaTeX Configuration
@@ -560,7 +560,7 @@ const promptBlock: RichTextBlock = {
   if (block.type === 'teacher_notes' && mode !== 'teacher') {
     return null // Skip this block for students
   }
-  
+
   return <BlockRenderer key={block.id} block={block} mode={mode} />
 })}
 ```
@@ -576,7 +576,7 @@ interface InteractiveBlock {
 
 function DiagramRenderer({ block }: { block: InteractiveBlock }) {
   const [state, setState] = useState(block.initialState)
-  
+
   return (
     <div>
       <DiagramCanvas state={state} onChange={setState} />

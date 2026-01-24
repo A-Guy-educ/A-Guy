@@ -153,15 +153,15 @@ export const Exercises: CollectionConfig = {
       ({ data, req }) => {
         // Validate contentJson
         const contentResult = ExerciseContentSchema.safeParse(data.contentJson)
-        
+
         // Validate answerSpecJson
         const answerResult = AnswerSpecSchema.safeParse(data.answerSpecJson)
-        
+
         // Ensure questionType matches
         if (data.questionType !== answerResult.data.questionType) {
           throw new Error('Question type mismatch...')
         }
-        
+
         return data
       },
     ],
@@ -500,7 +500,7 @@ When extending the Exercises collection:
 
 1. **Update Contracts First**: Modify Zod schemas in `src/contracts/`
 2. **Update Tests**: Add test cases in `tests/int/contracts/`
-3. **Update Collection**: Modify `src/collections/Exercises.ts`
+3. **Update Collection**: Modify `src/server/payload/collections/Exercises/index.ts`
 4. **Update Docs**: Update this README and verification guide
 5. **Run Validation**: `npx tsc --noEmit && pnpm test`
 

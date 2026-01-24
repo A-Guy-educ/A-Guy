@@ -47,8 +47,8 @@ This guide explains how to create and register custom components for the Payload
 
 | Component | Type | Purpose | Location |
 |-----------|------|---------|----------|
-| **ExerciseContentEditor** | Field | Block-based exercise content editor | [`src/components/admin/ExerciseContentEditor/`](../../src/components/admin/ExerciseContentEditor/index.tsx) |
-| **AnswerSpecJsonField** | Field | JSON editor with syntax highlighting | [`src/components/admin/AnswerSpecJsonField/`](../../src/components/admin/AnswerSpecJsonField/index.tsx) |
+| **ExerciseContentEditor** | Field | Block-based exercise content editor | [`src/components/admin/ExerciseContentEditor/index.tsx`](../../src/components/admin/ExerciseContentEditor/index.tsx) |
+| **AnswerSpecJsonField** | Field | JSON editor with syntax highlighting | [`src/components/admin/AnswerSpecJsonField/index.tsx`](../../src/components/admin/AnswerSpecJsonField/index.tsx) |
 | **ChapterBreadcrumbField** | Field | Breadcrumb navigation for chapters | `src/components/admin/ChapterBreadcrumbField/` |
 | **LessonBreadcrumbField** | Field | Breadcrumb navigation for lessons | `src/components/admin/LessonBreadcrumbField/` |
 
@@ -175,7 +175,7 @@ const MySchema = z.object({
 
 export const ValidatedJsonField: JSONFieldClientComponent = ({ path, field }) => {
   const { value, setValue } = useField<unknown>({ path })
-  const [jsonString, setJsonString] = React.useState(() => 
+  const [jsonString, setJsonString] = React.useState(() =>
     JSON.stringify(value || {}, null, 2)
   )
   const [error, setError] = React.useState<string | null>(null)
@@ -217,7 +217,7 @@ import { useField, useFormFields } from '@payloadcms/ui'
 
 export const ConditionalField: React.FC<{ path: string }> = ({ path }) => {
   const { value, setValue } = useField<string>({ path })
-  
+
   // Watch another field's value
   const questionType = useFormFields(([fields]) => fields.questionType)
 
@@ -342,7 +342,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   const updateLocalValue = (newValue: any) => {
     setLocalValue(newValue)
     setHasUnsavedChanges(true)
-    
+
     // Prevent autosave
     if (form.setModified) {
       setTimeout(() => form.setModified(false), 50)
@@ -352,19 +352,19 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   // Save changes manually
   const handleSave = async () => {
     setValue(localValue)
-    
+
     // Mark form as modified to enable save button
     if (form.setModified) {
       form.setModified(true)
     }
-    
+
     // Click the form's save button
     await new Promise(resolve => setTimeout(resolve, 150))
     const saveButton = document.querySelector('button[type="submit"]')
     if (saveButton) {
       saveButton.click()
     }
-    
+
     setHasUnsavedChanges(false)
   }
 
@@ -512,7 +512,7 @@ export const ManualSaveField: React.FC<{ path: string }> = ({ path }) => {
 
   const handleChange = (newValue: string) => {
     setLocalValue(newValue)
-    
+
     // Prevent autosave
     if (form.setModified) {
       setTimeout(() => form.setModified(false), 50)

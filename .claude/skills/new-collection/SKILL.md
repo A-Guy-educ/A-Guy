@@ -519,6 +519,6 @@ Common issues and solutions:
 
 ## Related Documentation
 
-- Project docs: [AGENTS.md](../../AGENTS.md) - Payload patterns section
+- Project docs: [AGENTS.md](../../../AGENTS.md) - Payload patterns section
 - Payload docs: https://payloadcms.com/docs/configuration/collections
 - Access control: https://payloadcms.com/docs/access-control/overview

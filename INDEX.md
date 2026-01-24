@@ -8,28 +8,29 @@
 
 ## 1. Repository Navigation Map
 
-| Area                 | Location              | Purpose                                                   |
-| -------------------- | --------------------- | --------------------------------------------------------- |
-| **Frontend Routes**  | `src/app/(frontend)/` | Next.js App Router pages and components                   |
-| **Payload Admin**    | `src/app/(payload)/`  | Payload CMS admin panel routes                            |
-| **Collections**      | `src/collections/`    | Payload CMS collection configurations                     |
-| **Components**       | `src/components/`     | React components (UI, Admin, Custom)                      |
-| **Business Logic**   | `src/lib/`            | Mixed domain: verify file responsibility before modifying |
-| **Access Control**   | `src/access/`         | Reusable access control functions                         |
-| **Hooks**            | `src/hooks/`          | Payload lifecycle hooks                                   |
-| **AI Documentation** | `.ai-docs/`           | AI-optimized indexes, schemas, quick reference            |
+| Area                 | Location                          | Purpose                                        |
+| -------------------- | --------------------------------- | ---------------------------------------------- |
+| **Frontend Routes**  | `src/app/(frontend)/`             | Next.js App Router pages and components        |
+| **Payload Admin**    | `src/app/(payload)/`              | Payload CMS admin panel routes                 |
+| **Collections**      | `src/server/payload/collections/` | Payload CMS collection configurations          |
+| **Components**       | `src/components/`                 | React components (UI, Admin, Custom)           |
+| **Business Logic**   | `src/server/`                     | Server-side logic and services                 |
+| **Access Control**   | `src/server/payload/access/`      | Reusable access control functions              |
+| **Hooks**            | `src/server/payload/hooks/`       | Payload lifecycle hooks                        |
+| **AI Documentation** | `.ai-docs/`                       | AI-optimized indexes, schemas, quick reference |
+| **AI Services**      | `src/infra/llm/`                  | AI/LLM services and providers                  |
 
 ---
 
 ## 2. Canonical AI Documentation
 
-| File                                                                                 | Purpose                                       | When to Read                |
-| ------------------------------------------------------------------------------------ | --------------------------------------------- | --------------------------- |
-| [`AGENTS.md`](../../AGENTS.md)                                                       | Primary Payload CMS development rules         | Deep implementation tasks   |
+| File                                                                                   | Purpose                                       | When to Read                |
+| -------------------------------------------------------------------------------------- | --------------------------------------------- | --------------------------- |
+| [`AGENTS.md`](./AGENTS.md)                                                             | Primary Payload CMS development rules         | Deep implementation tasks   |
 | [`.ai-docs/BOOTSTRAP.md`](.ai-docs/BOOTSTRAP.md)                                     | Mandatory agent bootstrap                     | Start here for any task     |
 | [`.ai-docs/quick-reference/CHEAT-SHEET.md`](.ai-docs/quick-reference/CHEAT-SHEET.md) | Token-efficient quick reference (~500 tokens) | First stop for 90% of tasks |
-| [`docs/access-control/README.md`](../../docs/access-control/README.md)               | Access control patterns and examples          | RBAC implementation         |
-| [`docs/admin-components/README.md`](../../docs/admin-components/README.md)           | Admin panel customization                     | Admin UI work               |
+| [`docs/access-control/README.md`](./docs/access-control/README.md)                     | Access control patterns and examples          | RBAC implementation         |
+| [`docs/admin-components/README.md`](./docs/admin-components/README.md)                 | Admin panel customization                     | Admin UI work               |
 
 **Recommended Reading Order for Code Agents**
 

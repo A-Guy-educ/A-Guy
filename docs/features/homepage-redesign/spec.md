@@ -553,10 +553,9 @@ None - all required systems exist in current codebase
 
 ## References
 
-- [Design Source](file:///Users/aguy/Downloads/home.html)
 - [Implementation Plan](./implementation-plan.md)
-- [Project Documentation](../../CLAUDE.md)
-- [Payload CMS Collections](../../src/collections/)
+- [Project Documentation](../../AGENTS.md)
+- [Payload CMS Collections](../../src/server/payload/collections/)
 
 ---
 

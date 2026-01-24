@@ -44,9 +44,9 @@ app/
 
 ## Key Files
 
-- [`(frontend)/page.tsx`](<(frontend)/page.tsx>) - Homepage
-- [`(frontend)/courses/page.tsx`](<(frontend)/courses/page.tsx>) - Courses listing
-- [`(payload)/admin/`](<(payload)/admin/>) - Payload admin panel
+- [`(frontend)/page.tsx`(../app/(frontend)/page.tsx>) - Homepage
+- [`(frontend)/courses/page.tsx`(../app/(frontend)/courses/page.tsx>) - Courses listing
+- [`(payload)/admin/`(../app/(payload)/admin/>) - Payload admin panel
 - [`api/agent/conversation/route.ts`](./api/agent/conversation/route.ts) - AI chat endpoint
 
 ## Common Tasks
@@ -60,6 +60,6 @@ app/
 
 ## Related
 
-- [`src/ui/web/`](../../ui/web/README.md) - Web components
-- [`src/server/`](../../server/README.md) - Server configuration
+- [`src/ui/web/`](../ui/web/README.md) - Web components
+- [`src/server/`](../server/README.md) - Server configuration
 - [`AGENTS.md`](../../AGENTS.md) - Next.js + Payload patterns

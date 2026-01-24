@@ -204,7 +204,7 @@ This project includes an AI-powered long-term memory system using MongoDB Atlas 
 
 - [System Overview](./docs/features/chat-context/README.md) - Architecture and features
 - [Technical Spec](./docs/features/chat-context/spec.md) - Implementation details
-- [Atlas Config](docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md) - Vector index configuration
+- [Atlas Config](./docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md) - Vector index configuration
 
 **Collections**: `memory_items` (long-term memory with vectors), `conversations` (chat history with summaries)
 

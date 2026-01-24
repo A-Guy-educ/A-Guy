@@ -679,7 +679,7 @@ export const InteractiveBlock: React.FC<InteractiveBlockType> = ({ items }) => {
 
 ## Related Documentation
 
-- Project docs: [AGENTS.md](../../AGENTS.md) - Component development section
+- Project docs: [AGENTS.md](../../../AGENTS.md) - Component development section
 - Payload blocks: https://payloadcms.com/docs/fields/blocks
 - Next.js Image: https://nextjs.org/docs/app/api-reference/components/image
 - Tailwind CSS: https://tailwindcss.com/docs

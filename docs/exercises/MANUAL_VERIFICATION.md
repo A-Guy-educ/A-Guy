@@ -444,4 +444,4 @@ Once manual verification passes:
 
 - [Contracts README](../contracts/README.md)
 - [Contracts Implementation](../contracts/IMPLEMENTATION.md)
-- [Exercise Contract Examples](../../src/contracts/examples/)
+- [Exercise Contract Examples](../contracts/examples/)

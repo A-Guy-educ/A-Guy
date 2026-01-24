@@ -10,7 +10,7 @@
 
 ### Core Implementation
 
-1. **Exercises Collection** ([`src/collections/Exercises.ts`](../../src/collections/Exercises.ts))
+1. **Exercises Collection** ([`src/server/payload/collections/Exercises/index.ts`](../../src/server/payload/collections/Exercises/index.ts))
    - Minimal data model with 5 required fields
    - Zod validation via `beforeValidate` hook
    - Question type mismatch detection
@@ -390,9 +390,9 @@ import {
 
 - [📚 Exercises README](./README.md) - Complete documentation
 - [📋 Manual Verification Guide](./MANUAL_VERIFICATION.md) - Testing steps
-- [🔧 Contracts README](../../src/contracts/README.md) - Contract usage
-- [📝 Contracts Implementation](../../src/contracts/IMPLEMENTATION.md) - Implementation details
-- [📁 Contract Examples](../../src/contracts/examples/) - JSON samples
+- [🔧 Contracts README](../contracts/README.md) - Contract usage
+- [📝 Contracts Implementation](../contracts/IMPLEMENTATION.md) - Implementation details
+- [📁 Contract Examples](../contracts/examples/) - JSON samples
 
 ---
 
