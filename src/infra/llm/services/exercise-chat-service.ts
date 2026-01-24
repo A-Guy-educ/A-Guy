@@ -3,6 +3,7 @@
  * Orchestrates chat with Gemini provider
  */
 import { logger } from '@/infra/utils/logger'
+import type { Payload } from 'payload'
 import type { ComposedPrompt } from '../context-policy'
 import { AI_MODELS } from '../models'
 import {
@@ -41,6 +42,7 @@ export function getSystemPrompt(): string {
 
 export async function chatWithExerciseHelper(
   input: ExerciseChatInput,
+  payload?: Payload,
 ): Promise<ExerciseChatResult> {
   try {
     // Build messages from composedPrompt or legacy format
@@ -71,12 +73,15 @@ export async function chatWithExerciseHelper(
       messages.push({ role: 'user', content: input.message })
     }
 
-    const result = await generateChatCompletion({
-      system: systemPrompt,
-      messages,
-      model: AI_MODELS.EXERCISE_CHAT,
-      acknowledgment: input.acknowledgment,
-    })
+    const result = await generateChatCompletion(
+      {
+        system: systemPrompt,
+        messages,
+        model: AI_MODELS.EXERCISE_CHAT,
+        acknowledgment: input.acknowledgment,
+      },
+      payload,
+    )
 
     return {
       success: true,

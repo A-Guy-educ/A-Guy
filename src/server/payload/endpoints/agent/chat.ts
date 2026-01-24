@@ -420,11 +420,14 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     // 12) Call AI service with composed prompt
     const modelCallStart = Date.now()
-    const result = await chatWithExerciseHelper({
-      message: validated.message,
-      acknowledgment: validated.acknowledgment,
-      composedPrompt: composedPrompt,
-    })
+    const result = await chatWithExerciseHelper(
+      {
+        message: validated.message,
+        acknowledgment: validated.acknowledgment,
+        composedPrompt: composedPrompt,
+      },
+      req.payload,
+    )
     const modelLatencyMs = Date.now() - modelCallStart
 
     if (!result.success) {
