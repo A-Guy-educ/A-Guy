@@ -3,18 +3,5 @@
 # Allow skipping hooks with SKIP_HOOKS=1
 . "$(dirname "$0")/skip-hooks.sh"
 
-# Run integration tests - must pass for push
-echo ""
-echo "🧪 Running integration tests..."
-pnpm test:int
-
-if [ $? -ne 0 ]; then
-  echo ""
-  echo "❌ Integration tests failed. Push cancelled."
-  echo ""
-  echo "To skip: git push --no-verify"
-  echo "Or use: SKIP_HOOKS=1 git push"
-  exit 1
-fi
-
-echo "✅ Integration tests passed"
+# Pre-push hook - no tests run (integration tests moved to CI)
+echo "✅ Pre-push checks passed"
