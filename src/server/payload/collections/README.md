@@ -189,7 +189,7 @@ Some collections use custom admin UI components:
 }
 ```
 
-See [AGENTS.md](../../AGENTS.md#layout-builder-blocks) for block development patterns.
+See [AGENTS.md)](../../../../AGENTS.md#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks#layout-builder-blocks) for block development patterns.
 
 ## When to Create a New Collection
 
@@ -268,11 +268,11 @@ Types are generated to: `src/payload-types.ts`
 
 ## Related Documentation
 
-- [AGENTS.md](../../AGENTS.md) - Comprehensive development guide
+- [AGENTS.md)](../../../../AGENTS.md) - Comprehensive development guide
 - [Payload Collections Docs](https://payloadcms.com/docs/configuration/collections) - Official documentation
-- [Access Control](../../AGENTS.md#access-control) - Security patterns
-- [Hooks](../../AGENTS.md#hooks) - Lifecycle hooks
-- [Fields](../../AGENTS.md#fields) - Field types and validation
+- [Access Control)](../../../../AGENTS.md#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control#access-control) - Security patterns
+- [Hooks)](../../../../AGENTS.md#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks#hooks) - Lifecycle hooks
+- [Fields)](../../../../AGENTS.md#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields#fields) - Field types and validation
 
 ## Quick Reference Commands
 

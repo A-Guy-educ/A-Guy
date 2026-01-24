@@ -489,6 +489,6 @@ Typical execution times:
 
 ## Related Documentation
 
-- Project setup: [AGENTS.md](../../AGENTS.md)
+- Project setup: [AGENTS.md](../../../AGENTS.md)
 - CI/CD: `.github/workflows/`
 - Test patterns: `tests/`

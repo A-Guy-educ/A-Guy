@@ -266,8 +266,7 @@ web/
 
 ## Related Documentation
 
-- [`.ai-docs/`](../../../.ai-docs/README.md) - AI component patterns
+- [`.ai-docs/`](../../../.ai-docs/BOOTSTRAP.md) - AI component patterns
 - [`AGENTS.md`](../../../AGENTS.md) - Complete patterns
-- [`src/app/`](../../app/README.md) - App routes
-- [`src/client/`](../../client/README.md) - Client utilities
+- [`INDEX.md`](../../../INDEX.md) - Project overview
 - [`src/server/`](../../server/README.md) - Server configuration

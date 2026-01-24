@@ -259,7 +259,7 @@ const chapter = await payload.find({
       { slug: { equals: chapterSlug } },
       { status: { equals: 'published' } },
       { isActive: { equals: true } },
-      
+
       // Also filter by parent course status
       {
         'course.status': { equals: 'published' },
@@ -293,9 +293,9 @@ async function getStudentCourseView(courseSlug: string) {
     },
     depth: 0,
   })
-  
+
   if (!course.docs[0]) return null
-  
+
   // 2. Get published chapters
   const chapters = await payload.find({
     collection: 'chapters',
@@ -308,7 +308,7 @@ async function getStudentCourseView(courseSlug: string) {
     },
     sort: 'order',
   })
-  
+
   // 3. Get published lessons
   const chapterIds = chapters.docs.map(c => c.id)
   const lessons = await payload.find({
@@ -322,7 +322,7 @@ async function getStudentCourseView(courseSlug: string) {
     },
     sort: 'order',
   })
-  
+
   // 4. Get all exercises (no status filter)
   const lessonIds = lessons.docs.map(l => l.id)
   const exercises = await payload.find({
@@ -332,7 +332,7 @@ async function getStudentCourseView(courseSlug: string) {
     },
     sort: 'order',
   })
-  
+
   return { course: course.docs[0], chapters: chapters.docs, lessons: lessons.docs, exercises: exercises.docs }
 }
 ```
@@ -443,10 +443,10 @@ async function getCourseNavigation(courseSlug: string) {
   // 1. Get course
   const course = await queryCourseBySlug({ slug: courseSlug })
   if (!course) return null
-  
+
   // 2. Get chapters (published + active)
   const chapters = await queryChaptersByCourse({ courseId: course.id })
-  
+
   // 3. Get all lessons for all chapters (batch query)
   const chapterIds = chapters.map(c => c.id)
   const lessons = await payload.find({
@@ -460,7 +460,7 @@ async function getCourseNavigation(courseSlug: string) {
     },
     sort: 'order',
   })
-  
+
   // 4. Group lessons by chapter
   const lessonsByChapter = lessons.docs.reduce((acc, lesson) => {
     const chapterId = typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter.id
@@ -468,7 +468,7 @@ async function getCourseNavigation(courseSlug: string) {
     acc[chapterId].push(lesson)
     return acc
   }, {})
-  
+
   // 5. Build navigation structure
   return {
     course,
@@ -489,14 +489,14 @@ async function getLessonPage(lessonSlug: string) {
   // ✅ depth=2 populates lesson → chapter → course
   const lesson = await queryLessonBySlug({ slug: lessonSlug })
   if (!lesson) return null
-  
+
   // Access breadcrumb data:
   const breadcrumbs = [
     { title: lesson.chapter.course.title, href: `/courses/${lesson.chapter.course.slug}` },
     { title: lesson.chapter.title, href: `/courses/${lesson.chapter.course.slug}/chapters/${lesson.chapter.slug}` },
     { title: lesson.title, href: `/courses/${lesson.chapter.course.slug}/chapters/${lesson.chapter.slug}/lessons/${lesson.slug}` },
   ]
-  
+
   return { lesson, breadcrumbs }
 }
 ```
@@ -509,7 +509,7 @@ import { queryExercisesByLesson } from '@/lib/queries/exercises'
 async function getLessonExercises(lessonId: string) {
   // ✅ Simple query, exercises inherit lesson visibility
   const exercises = await queryExercisesByLesson({ lessonId })
-  
+
   return exercises
 }
 ```
@@ -519,12 +519,12 @@ async function getLessonExercises(lessonId: string) {
 ```typescript
 async function searchExercises(searchTerm: string, courseId?: string) {
   const payload = await getPayload({ config: configPromise })
-  
+
   // Build query
   const where: any = {
     title: { contains: searchTerm },
   }
-  
+
   // Optionally filter by course
   if (courseId) {
     // Get all lessons in course
@@ -533,24 +533,24 @@ async function searchExercises(searchTerm: string, courseId?: string) {
       where: { course: { equals: courseId } },
       select: { id: true },
     })
-    
+
     const chapterIds = chapters.docs.map(c => c.id)
     const lessons = await payload.find({
       collection: 'lessons',
       where: { chapter: { in: chapterIds } },
       select: { id: true },
     })
-    
+
     const lessonIds = lessons.docs.map(l => l.id)
     where.lesson = { in: lessonIds }
   }
-  
+
   const exercises = await payload.find({
     collection: 'exercises',
     where,
     depth: 3, // Populate full hierarchy for results
   })
-  
+
   return exercises.docs
 }
 ```
@@ -636,8 +636,8 @@ if (isCoursePopulated(chapter.course)) {
 
 ## 🔗 Related Documentation
 
-- **[Collections](../../src/collections/)** - Collection configurations
-- **[Query Utilities](../../src/lib/queries/)** - Reusable query functions
+- **[Collections](../../src/server/payload/collections/README.md)** - Collection configurations
+- **[Query Utilities](../src/lib/queries/)** - Reusable query functions
 - **[Access Control](../access-control/README.md)** - Permission patterns
 - **[AGENTS.md](../../AGENTS.md)** - Payload CMS query patterns
 

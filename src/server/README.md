@@ -139,10 +139,10 @@ export const myEndpoint: Endpoint = {
 
 ## Related Documentation
 
-- [`AGENTS.md`](../../../AGENTS.md) - Complete Payload patterns
+- [`AGENTS.md`](../../AGENTS.md) - Complete Payload patterns
 - [`src/server/payload/collections/README.md`](./payload/collections/README.md) - Collection details
-- [`src/infra/`](../../infra/README.md) - Shared infrastructure
-- [`src/ui/admin/`](../../ui/admin/README.md) - Admin components
+- [`src/infra/`](../infra/README.md) - Shared infrastructure
+- [`src/ui/admin/exercise/README.md`](../ui/admin/exercise/README.md) - Admin components
 
 ## File Reference
 

@@ -35,7 +35,7 @@ import { SmartDocLoader } from '@/lib/ai/smart-doc-loader'
 const docs = SmartDocLoader.forCollection('create')
 // Returns: ~380 tokens, quick reference tier
 
-// Creating a component  
+// Creating a component
 const docs = SmartDocLoader.forComponent('create')
 // Returns: ~335 tokens, quick reference tier
 
@@ -326,7 +326,7 @@ pnpm run ai:generate-docs
 
 **Problem**: Pattern not in index
 
-**Solution**: 
+**Solution**:
 1. Add pattern to code
 2. Regenerate pattern index
 ```bash
@@ -349,7 +349,7 @@ pnpm run ai:generate-patterns
 - [Full Documentation](../../AGENTS.md) - Complete Payload patterns
 - [Design System](../../DESIGN_SYSTEM.md) - Tailwind styling guide
 - [Implementation Status](./IMPLEMENTATION-STATUS.md) - Current progress
-- [AI Optimization Plan](../../AI-OPTIMIZATION-PLAN.md) - Full strategy
+- [AI Optimization Plan](./README.md) - Full strategy
 
 ---
 

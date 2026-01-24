@@ -19,7 +19,7 @@ This file serves as the entry point for Claude Code (AI assistant) when working 
 - Authentication patterns
 - Examples and code snippets
 
-**Read [CLAUDE_INTERNAL.md](CLAUDE_INTERNAL.md) - Internal team guidelines:**
+**Read [CLAUDE_INTERNAL.md](./CLAUDE.md) - Internal team guidelines (if it exists):**
 
 - Internal conventions and patterns specific to this project
 
@@ -95,7 +95,7 @@ When adding translations, update both:
 
 The project includes MongoDB Atlas Vector Search for AI-powered long-term memory:
 
-- **Setup Guide**: [docs/VECTOR-SEARCH-SETUP.md](docs/VECTOR-SEARCH-SETUP.md) - Complete setup instructions
+- **Setup Guide**: [docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md](./docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md) - Quick setup reference
 - **Quick Reference**: [docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md](./docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md)
 - **Index Definition**: `infra/atlas/vector-index.memory_items.v1.json`
 - **Verify Setup**: `pnpm verify:vector-index`
@@ -129,7 +129,7 @@ This codebase includes tools to help AI agents work efficiently:
 Use SmartDocLoader for context-aware documentation loading:
 
 ```typescript
-import { SmartDocLoader } from '@/lib/ai/smart-doc-loader'
+import { SmartDocLoader } from '@/lib/ai/smart-doc-loader' // src/infra/llm/smart-doc-loader.ts - OLD PATH
 
 // Creating a collection
 const docs = SmartDocLoader.forCollection('create')
@@ -153,7 +153,7 @@ const docs = SmartDocLoader.forDebugging('collection')
 Search for specific information:
 
 ```typescript
-import { getDocSearch } from '@/lib/ai/doc-search'
+import { getDocSearch } from '@/lib/ai/doc-search' // src/infra/llm/doc-search.ts - OLD PATH
 
 const search = getDocSearch()
 const results = search.query('How do I create a published collection?', {
@@ -186,9 +186,9 @@ See [BOOTSTRAP.md](.ai-docs/BOOTSTRAP.md) for full guide.
 // ✅ Correct
 import { getPayload } from 'payload'
 import { User } from '@/payload-types'
-import { SmartDocLoader } from '@/lib/ai/smart-doc-loader'
+import { SmartDocLoader } from '@/lib/ai/smart-doc-loader' // src/infra/llm/smart-doc-loader.ts
 
-// ❌ Wrong
+// ❌ Wrong (old path structure)
 import { SmartDocLoader } from '../../../lib/ai/smart-doc-loader'
 ```
 

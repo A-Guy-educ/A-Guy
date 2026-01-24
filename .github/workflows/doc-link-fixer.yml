@@ -2,13 +2,13 @@ name: Doc Link Fixer (Daily)
 
 on:
   schedule:
-    # Daily at 02:05 UTC
     - cron: "5 2 * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 concurrency:
   group: doc-link-fixer
@@ -42,7 +42,22 @@ jobs:
       - name: Fix internal markdown links + write report
         run: pnpm run docs:links:fix
 
-      # Always try to open/update PR if there are changes (even if the fixer exits non-zero later)
+      - name: Upsert issue on failure (broken links remain)
+        if: always()
+        run: |
+          if [ -f ".ai-docs/reports/doc-link-report.md" ]; then
+            pnpm tsx scripts/github-issue-upsert.ts \
+              --title "Doc link fixer failures (automated)" \
+              --body-file ".ai-docs/reports/doc-link-report.md" \
+              --labels "automation,docs,doc-links" \
+              --dedupe-label "doc-links" \
+              --mode upsert
+          else
+            echo "No failure report found. Skipping issue upsert."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create or update PR
         if: always()
         uses: peter-evans/create-pull-request@v6
@@ -54,8 +69,8 @@ jobs:
           body: |
             Automated daily internal markdown link fixer.
 
-            - Fixes safe patterns (e.g. docs/ai -> .ai-docs, missing .md where unambiguous)
-            - Generates report: .ai-docs/reports/doc-link-report.md
+            - Fixes safe patterns (e.g. docs/ai -> .ai-docs, repo-root paths, missing .md where unambiguous)
+            - Failure report (only if broken remain): .ai-docs/reports/doc-link-report.md
 
             Run locally:
             - pnpm run docs:links:fix

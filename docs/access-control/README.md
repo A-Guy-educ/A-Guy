@@ -87,15 +87,15 @@ Controls which users can see/edit specific fields.
 
 ## 🎯 Built-in Access Functions
 
-Located in [`src/access/`](../../src/access/):
+Located in [`src/server/payload/access/`](../../src/server/payload/access/):
 
 | Function | Purpose | Returns | Use Case |
 |----------|---------|---------|----------|
-| [`anyone`](../../src/access/anyone.ts) | Allow all users (including unauthenticated) | `true` | Public content |
-| [`authenticated`](../../src/access/authenticated.ts) | Allow only logged-in users | `boolean` | User-only features |
-| [`adminOnly`](../../src/access/adminOnly.ts) | Allow only admins | `boolean` | Admin operations |
-| [`adminOrSelf`](../../src/access/adminOrSelf.ts) | Admin or own records | `boolean \| query` | User profiles |
-| [`authenticatedOrPublished`](../../src/access/authenticatedOrPublished.ts) | Authenticated sees all, public sees published | `boolean \| query` | Draft/published content |
+| [`anyone`](../../src/server/payload/access/anyone.ts) | Allow all users (including unauthenticated) | `true` | Public content |
+| [`authenticated`](../../src/server/payload/access/authenticated.ts) | Allow only logged-in users | `boolean` | User-only features |
+| [`adminOnly`](../../src/server/payload/access/adminOnly.ts) | Allow only admins | `boolean` | Admin operations |
+| [`adminOrSelf`](../../src/server/payload/access/adminOrSelf.ts) | Admin or own records | `boolean \| query` | User profiles |
+| [`authenticatedOrPublished`](../../src/server/payload/access/authenticatedOrPublished.ts) | Authenticated sees all, public sees published | `boolean \| query` | Draft/published content |
 
 ---
 
@@ -592,7 +592,7 @@ User attempts operation on collection
 - **[Payload Access Control](https://payloadcms.com/docs/access-control/overview)** - Official docs
 - **[Course Hierarchy](../course-hierarchy/README.md)** - Hierarchy query patterns
 - **[AGENTS.md](../../AGENTS.md)** - General Payload patterns
-- **[Collections](../../src/collections/)** - Example implementations
+- **[Collections](../../src/server/payload/collections/README.md)** - Example implementations
 
 ---
 

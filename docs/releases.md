@@ -151,7 +151,7 @@ The new system uses OAuth 2.0 instead of session-based auth."
 
 ### semantic-release Configuration
 
-Configuration is in [`.releaserc.json`](./.releaserc.json):
+Configuration is in [`.releaserc.json`](../.releaserc.json):
 
 - **Branches:** Only `main` triggers releases
 - **Plugins:**
@@ -164,7 +164,7 @@ Configuration is in [`.releaserc.json`](./.releaserc.json):
 
 ### GitHub Actions Workflow
 
-The release workflow ([`.github/workflows/release.yml`](./.github/workflows/release.yml)):
+The release workflow ([`.github/workflows/release.yml`](../.github/workflows/release.yml)):
 
 - **Triggers:** Push to `main` or manual dispatch
 - **Skips:** Commits with `[skip ci]` (prevents infinite loops)
@@ -209,4 +209,4 @@ Dependabot automatically creates PRs with conventional commits:
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Semantic Versioning](https://semver.org/)
 - [semantic-release Documentation](https://semantic-release.gitbook.io/)
-- [Project Commitlint Config](../.commitlintrc.json)
+- [Project Commitlint Config](../commitlint.config.js):

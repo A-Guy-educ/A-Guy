@@ -56,7 +56,7 @@ Load these based on your task:
 Always reference these authoritative docs:
 
 1. **[AGENTS.md](../../AGENTS.md)** - Core Payload CMS patterns
-2. **[CHEAT-SHEET.md](./quick-reference/CHEAT-SHEET.md)** - Quick reference (~500 tokens)
+2. **[CHEAT-SHEET.md](../../.ai-docs/quick-reference/CHEAT-SHEET.md)** - Quick reference (~500 tokens)
 3. **[DESIGN_SYSTEM.md](../../DESIGN_SYSTEM.md)** - Styling system
 
 ---

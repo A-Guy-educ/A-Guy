@@ -403,7 +403,7 @@ describe('MyCollection', () => {
 - **Mock external APIs (OpenAI) by default** - Fast, reliable, deterministic
 - **Use `USE_REAL_OPENAI_API=true`** for occasional validation
 - **Focus on testing our code**, not external service behavior
-- See [tests/TESTING_STRATEGY.md](../../tests/TESTING_STRATEGY.md) for details
+- See [tests/README.md](../../tests/README.md) for details
 
 ### Test File Structure
 ```typescript
@@ -652,4 +652,4 @@ For detailed information, see:
 - **[Block Rendering](../../block-rendering/README.md)** - Extension guide
 - **[Contracts](../../contracts/README.md)** - Zod schemas
 - **[AGENTS.md](../../../AGENTS.md)** - Complete Payload patterns
-- **[AI-OPTIMIZATION-PLAN.md](../../../AI-OPTIMIZATION-PLAN.md)** - Full optimization strategy
+- **[AI Optimization](../README.md)** - Full optimization strategy

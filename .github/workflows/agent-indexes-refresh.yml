@@ -1,0 +1,72 @@
+name: Agent Indexes Refresh (Daily)
+
+on:
+  schedule:
+    # Daily at 02:20 UTC
+    - cron: "20 2 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: agent-indexes-refresh
+  cancel-in-progress: true
+
+jobs:
+  refresh-indexes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate indexes
+        run: pnpm run ai:generate-all-indexes
+
+      - name: Validate indexes
+        run: pnpm run ai:validate-indexes
+
+      - name: Create or update PR
+        if: always()
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/agent-indexes
+          base: dev
+          title: "chore(ai): refresh agent indexes"
+          commit-message: "chore(ai): refresh agent indexes"
+          body: |
+            Automated daily refresh of AI agent indexes.
+
+            Generated + validated:
+            - .ai-docs/indexes/readme-index.json
+            - .ai-docs/indexes/route-index.json
+            - .ai-docs/indexes/collection-slug-map.json
+
+            Run locally:
+            - pnpm run ai:generate-all-indexes
+            - pnpm run ai:validate-indexes
+          labels: |
+            automation
+            ai-docs
+          delete-branch: false
+          add-paths: |
+            .ai-docs/indexes/*.json

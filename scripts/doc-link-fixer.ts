@@ -1,269 +1,271 @@
 // scripts/doc-link-fixer.ts
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs'
+import path from 'node:path'
 
-type Broken = { file: string; link: string; resolved: string };
+type Broken = { file: string; link: string; resolved: string }
 
-const REPO_ROOT = process.cwd();
-const REPORT_PATH = path.join(REPO_ROOT, ".ai-docs/reports/doc-link-report.md");
+const REPO_ROOT = process.cwd()
+const REPORT_PATH = path.join(REPO_ROOT, '.ai-docs/reports/doc-link-report.md')
+const TRUNCATION_LIMIT = 200
 
-const args = process.argv.slice(2);
-const STRICT = args.includes("--strict");
+const args = process.argv.slice(2)
+const STRICT = args.includes('--strict')
 
-// Conservative, safe rewrites (extend as needed)
-const SAFE_REWRITES: Array<[RegExp, string]> = [
-  [/^docs\/ai\/schemas\//, ".ai-docs/schemas/"],
-  [/^docs\/ai\/indexes\//, ".ai-docs/indexes/"],
-  [/^docs\/ai\/quick-reference\//, ".ai-docs/quick-reference/"],
-];
-
-const MD_LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
+const MD_LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g
 
 function isExternal(href: string) {
   return (
-    href.startsWith("http://") ||
-    href.startsWith("https://") ||
-    href.startsWith("mailto:") ||
-    href.startsWith("tel:")
-  );
+    href.startsWith('http://') ||
+    href.startsWith('https://') ||
+    href.startsWith('mailto:') ||
+    href.startsWith('tel:')
+  )
 }
 
 function normalizeHref(raw: string) {
-  let href = raw.trim();
-  if (href.startsWith("<") && href.endsWith(">")) href = href.slice(1, -1).trim();
-  href = href.replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1");
-  return href;
+  let href = raw.trim()
+  if (href.startsWith('<') && href.endsWith('>')) href = href.slice(1, -1).trim()
+  href = href.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1')
+  return href
 }
 
 function splitAnchor(href: string) {
-  const idx = href.indexOf("#");
-  if (idx === -1) return { p: href, anchor: "" };
-  return { p: href.slice(0, idx), anchor: href.slice(idx + 1) };
-}
-
-function applySafeRewrites(href: string) {
-  if (href.startsWith("#")) return href;
-
-  const { p, anchor } = splitAnchor(href);
-  let newPath = p.replace(/^\.\//, "");
-
-  for (const [re, repl] of SAFE_REWRITES) {
-    newPath = newPath.replace(re, repl);
-  }
-
-  return anchor ? `${newPath}#${anchor}` : newPath;
+  const idx = href.indexOf('#')
+  if (idx === -1) return { p: href, anchor: '' }
+  return { p: href.slice(0, idx), anchor: href.slice(idx + 1) }
 }
 
 function resolveTarget(fromFile: string, href: string) {
-  const { p } = splitAnchor(href);
-  if (!p || p.startsWith("#")) return null;
+  const { p, anchor } = splitAnchor(href)
+  if (!p || p.startsWith('#')) return null
 
-  if (p.startsWith("/")) {
+  let basePath: string
+  if (p.startsWith('/')) {
     // repo-root relative
-    return path.join(REPO_ROOT, p.slice(1));
+    basePath = path.join(REPO_ROOT, p.slice(1))
+  } else {
+    // file-relative
+    basePath = path.resolve(path.dirname(fromFile), p)
   }
 
-  // file-relative
-  return path.resolve(path.dirname(fromFile), p);
+  // Return with anchor for accurate reporting
+  return anchor ? `${basePath}#${anchor}` : basePath
 }
 
 function fileExists(p: string) {
   try {
-    return fs.existsSync(p);
+    return fs.existsSync(p)
   } catch {
-    return false;
+    return false
   }
 }
 
 function statIsFile(p: string) {
   try {
-    return fs.statSync(p).isFile();
+    return fs.statSync(p).isFile()
   } catch {
-    return false;
+    return false
   }
 }
 
 function statIsDir(p: string) {
   try {
-    return fs.statSync(p).isDirectory();
+    return fs.statSync(p).isDirectory()
   } catch {
-    return false;
+    return false
   }
 }
 
-function existsAsMarkdownOrDir(resolved: string) {
+function existsAsMarkdownOrDir(resolved: string): string | null {
+  // Always strip anchor before checking file existence
+  const { p, anchor } = splitAnchor(resolved)
+  const checkPath = p // Always use the path without anchor for existence checks
+
   // exact file
-  if (fileExists(resolved) && statIsFile(resolved)) return resolved;
+  if (fileExists(checkPath) && statIsFile(checkPath)) {
+    return anchor ? `${checkPath}#${anchor}` : checkPath
+  }
 
   // add .md if missing
-  if (!path.extname(resolved) && fileExists(resolved + ".md") && statIsFile(resolved + ".md")) {
-    return resolved + ".md";
+  if (!path.extname(checkPath) && fileExists(checkPath + '.md') && statIsFile(checkPath + '.md')) {
+    return anchor ? `${checkPath}.md#${anchor}` : checkPath + '.md'
   }
 
   // directory -> README.md / index.md
-  if (fileExists(resolved) && statIsDir(resolved)) {
-    const readme = path.join(resolved, "README.md");
-    const index = path.join(resolved, "index.md");
-    if (fileExists(readme) && statIsFile(readme)) return readme;
-    if (fileExists(index) && statIsFile(index)) return index;
-  }
-
-  return null;
-}
-
-function toRelativeHref(fromFile: string, targetAbs: string, originalHref: string) {
-  const { anchor } = splitAnchor(originalHref);
-  let rel = path
-    .relative(path.dirname(fromFile), targetAbs)
-    .replaceAll(path.sep, "/");
-  if (!rel.startsWith(".")) rel = "./" + rel;
-  return anchor ? `${rel}#${anchor}` : rel;
-}
-
-function getAllMarkdownFiles(dir: string) {
-  const out: string[] = [];
-  const stack = [dir];
-
-  while (stack.length) {
-    const cur = stack.pop()!;
-    const entries = fs.readdirSync(cur, { withFileTypes: true });
-
-    for (const e of entries) {
-      if (e.isDirectory()) {
-        if (["node_modules", ".git", ".next", "dist", "build", "coverage"].includes(e.name)) continue;
-        stack.push(path.join(cur, e.name));
-        continue;
-      }
-      if (e.isFile() && e.name.endsWith(".md")) out.push(path.join(cur, e.name));
+  if (fileExists(checkPath) && statIsDir(checkPath)) {
+    const readme = path.join(checkPath, 'README.md')
+    const index = path.join(checkPath, 'index.md')
+    if (fileExists(readme) && statIsFile(readme)) {
+      return anchor ? `${readme}#${anchor}` : readme
+    }
+    if (fileExists(index) && statIsFile(index)) {
+      return anchor ? `${index}#${anchor}` : index
     }
   }
 
-  return out;
+  return null
+}
+
+function toRelativeHref(fromFile: string, targetAbs: string, originalHref: string) {
+  // Split anchor from targetAbs to avoid passing '#' to path.relative()
+  const { p: targetPathAbs, anchor: targetAnchor } = splitAnchor(targetAbs)
+  const { anchor } = splitAnchor(originalHref)
+
+  // Compute relative path from the path portion only (no anchor)
+  let rel = path.relative(path.dirname(fromFile), targetPathAbs).replaceAll(path.sep, '/')
+  if (!rel.startsWith('.')) rel = './' + rel
+
+  // Use anchor from targetAbs if present, otherwise from originalHref
+  const finalAnchor = targetAnchor || anchor
+  return finalAnchor ? `${rel}#${finalAnchor}` : rel
+}
+
+function getAllMarkdownFiles(dir: string) {
+  const out: string[] = []
+  const stack = [dir]
+
+  while (stack.length) {
+    const cur = stack.pop()!
+    const entries = fs.readdirSync(cur, { withFileTypes: true })
+
+    for (const e of entries) {
+      if (e.isDirectory()) {
+        if (['node_modules', '.git', '.next', 'dist', 'build', 'coverage'].includes(e.name))
+          continue
+        stack.push(path.join(cur, e.name))
+        continue
+      }
+      if (e.isFile() && e.name.endsWith('.md')) out.push(path.join(cur, e.name))
+    }
+  }
+
+  return out
 }
 
 function ensureReportDir() {
-  fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
+  fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true })
 }
 
 function deleteReportIfExists() {
   try {
-    if (fs.existsSync(REPORT_PATH)) fs.unlinkSync(REPORT_PATH);
+    if (fs.existsSync(REPORT_PATH)) fs.unlinkSync(REPORT_PATH)
   } catch {
     // ignore
   }
 }
 
 function writeFailureReport(broken: Broken[]) {
-  ensureReportDir();
+  ensureReportDir()
 
-  // Minimal "failure-only" report
-  const lines: string[] = [];
-  lines.push(`# Doc Link Fixer - Failure Report`);
-  lines.push(``);
-  lines.push(`Broken internal links remaining: **${broken.length}**`);
-  lines.push(``);
+  const lines: string[] = []
+  lines.push(`# Doc Link Fixer - Failure Report`)
+  lines.push(``)
+  lines.push(`Generated: ${new Date().toISOString()}`)
 
-  // Top offenders by source file (first 20)
-  const byFile = new Map<string, number>();
-  for (const b of broken) byFile.set(b.file, (byFile.get(b.file) ?? 0) + 1);
-  const topFiles = [...byFile.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20);
+  const isTruncated = broken.length > TRUNCATION_LIMIT
+  const displayBroken = isTruncated ? broken.slice(0, TRUNCATION_LIMIT) : broken
 
-  lines.push(`## Top source files`);
-  lines.push(``);
-  for (const [f, n] of topFiles) lines.push(`- ${f}: ${n}`);
-  lines.push(``);
-
-  lines.push(`## Broken links (first 200)`);
-  lines.push(``);
-  for (const b of broken.slice(0, 200)) {
-    lines.push(`- **${b.file}**`);
-    lines.push(`  - link: \`${b.link}\``);
-    lines.push(`  - resolved: \`${b.resolved}\``);
+  lines.push(`Broken internal links remaining: **${broken.length}**`)
+  if (isTruncated) {
+    lines.push(`(truncated: showing first ${TRUNCATION_LIMIT} of ${broken.length} total)`)
   }
-  if (broken.length > 200) {
-    lines.push(``);
-    lines.push(`(truncated: showing first 200)`);
+  lines.push(``)
+
+  // Group by source file for easier navigation
+  const byFile = new Map<string, Broken[]>()
+  for (const b of displayBroken) {
+    if (!byFile.has(b.file)) byFile.set(b.file, [])
+    byFile.get(b.file)!.push(b)
   }
 
-  fs.writeFileSync(REPORT_PATH, lines.join("\n"), "utf8");
+  lines.push(`## By Source File`)
+  lines.push(``)
+  for (const [file, links] of byFile) {
+    lines.push(`### ${file} (${links.length} broken links)`)
+    lines.push(``)
+    for (const b of links) {
+      lines.push(`- \`${b.link}\` → \`${b.resolved}\``)
+    }
+    lines.push(``)
+  }
+
+  fs.writeFileSync(REPORT_PATH, lines.join('\n'), 'utf8')
 }
 
 function scanAndMaybeFix({ applyFixes }: { applyFixes: boolean }) {
-  const mdFiles = getAllMarkdownFiles(REPO_ROOT);
+  const mdFiles = getAllMarkdownFiles(REPO_ROOT)
 
-  let changedFiles = 0;
-  const broken: Broken[] = [];
+  let changedFiles = 0
+  const broken: Broken[] = []
 
   for (const file of mdFiles) {
-    const original = fs.readFileSync(file, "utf8");
-    let updated = original;
-    let touched = false;
+    const original = fs.readFileSync(file, 'utf8')
+    let updated = original
+    let touched = false
 
     updated = updated.replace(MD_LINK_RE, (full, text, hrefRaw) => {
-      const href0 = normalizeHref(hrefRaw);
-      if (isExternal(href0)) return full;
+      const href0 = normalizeHref(hrefRaw)
+      if (isExternal(href0)) return full
 
       // Keep anchors-only untouched
-      if (href0.startsWith("#")) return `[${text}](${href0})`;
+      if (href0.startsWith('#')) return `[${text}](${href0})`
 
-      // Safe path rewrites
-      const href1 = applySafeRewrites(href0);
+      // Resolve target directly (no rewrites)
+      const target = resolveTarget(file, href0)
+      if (!target) return `[${text}](${href0})`
 
-      const target = resolveTarget(file, href1);
-      if (!target) return `[${text}](${href1})`;
-
-      const existing = existsAsMarkdownOrDir(target);
+      const existing = existsAsMarkdownOrDir(target)
       if (existing) {
         // Canonicalize to relative href (adds .md, README, etc.)
-        const newHref = toRelativeHref(file, existing, href1);
-        if (applyFixes && newHref !== href1) {
-          touched = true;
-          return `[${text}](${newHref})`;
+        const newHref = toRelativeHref(file, existing, href0)
+        if (applyFixes && newHref !== href0) {
+          touched = true
+          return `[${text}](${newHref})`
         }
-        return `[${text}](${href1})`;
+        return `[${text}](${href0})`
       }
 
-      // Still broken
+      // Still broken - report it
       broken.push({
         file: path.relative(REPO_ROOT, file),
-        link: href1,
+        link: href0,
         resolved: path.relative(REPO_ROOT, target),
-      });
+      })
 
-      return `[${text}](${href1})`;
-    });
+      return `[${text}](${href0})`
+    })
 
     if (applyFixes && touched && updated !== original) {
-      fs.writeFileSync(file, updated, "utf8");
-      changedFiles++;
+      fs.writeFileSync(file, updated, 'utf8')
+      changedFiles++
     }
   }
 
-  return { changedFiles, broken };
+  return { changedFiles, broken }
 }
 
 function main() {
   // PASS 1: try to fix what is safe
-  const pass1 = scanAndMaybeFix({ applyFixes: true });
+  const pass1 = scanAndMaybeFix({ applyFixes: true })
 
   // PASS 2: rescan after fixes, report only if still broken
-  const pass2 = scanAndMaybeFix({ applyFixes: false });
+  const pass2 = scanAndMaybeFix({ applyFixes: false })
 
   if (pass2.broken.length === 0) {
-    deleteReportIfExists();
-    console.log(`Doc link fixer: OK (changed files: ${pass1.changedFiles})`);
-    process.exit(0);
+    deleteReportIfExists()
+    console.log(`Doc link fixer: OK (changed files: ${pass1.changedFiles})`)
+    process.exit(0)
   }
 
   // Failure: write report (failure-only)
-  writeFailureReport(pass2.broken);
+  writeFailureReport(pass2.broken)
   console.error(
-    `Broken links remaining: ${pass2.broken.length}. Report: ${path.relative(REPO_ROOT, REPORT_PATH)}.`
-  );
+    `Broken links remaining: ${pass2.broken.length}. Report: ${path.relative(REPO_ROOT, REPORT_PATH)}.`,
+  )
 
   // Strict mode: fail; otherwise succeed (useful for scheduled runs)
-  if (STRICT) process.exit(1);
-  process.exit(0);
+  if (STRICT) process.exit(1)
+  process.exit(0)
 }
 
-main();
+main()

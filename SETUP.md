@@ -149,7 +149,7 @@ pnpm exec husky init
 
 For AI-powered long-term memory features:
 
-1. See [docs/VECTOR-SEARCH-SETUP.md](docs/VECTOR-SEARCH-SETUP.md) for detailed setup
+1. See [docs/ai/README.md](./docs/ai/README.md) for AI features setup
 2. Requires MongoDB Atlas M10+ cluster
 3. Requires OpenAI API key
 

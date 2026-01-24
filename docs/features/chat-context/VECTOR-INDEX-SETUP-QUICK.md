@@ -1,6 +1,6 @@
 # Quick Reference: MongoDB Atlas Vector Search Index
 
-This is a quick reference for setting up the vector search index. For full details, see [VECTOR-SEARCH-SETUP.md](../../VECTOR-SEARCH-SETUP.md).
+This is a quick reference for setting up the vector search index. For full details, see [spec.md](./spec.md).
 
 ## Prerequisites
 
@@ -81,7 +81,6 @@ You should see:
 
 ## Resources
 
-- Full setup guide: [docs/VECTOR-SEARCH-SETUP.md](../../VECTOR-SEARCH-SETUP.md)
 - Index definition file: `infra/atlas/vector-index.memory_items.v1.json`
 - Memory system spec: [spec.md](./spec.md)
 

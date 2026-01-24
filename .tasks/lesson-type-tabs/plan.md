@@ -97,7 +97,7 @@ Add a `type` field to the Lessons collection so each lesson can be categorized.
 
 ### Step 1.1: Update Lessons Collection
 
-**File**: [src/collections/Lessons.ts](src/collections/Lessons.ts)
+**File**: [src/collections/Lessons.ts](../../src/server/payload/collections/Lessons.ts)
 
 **Why**: The Lessons collection defines what fields a lesson has. We need to add a `type` field that stores whether it's a learning, practice, or exam lesson.
 
@@ -219,7 +219,7 @@ Update the existing `StudyContent` component to filter lessons by type based on 
 
 ### Step 3.1: Modify StudyContent to Accept Type Prop
 
-**File**: [src/app/(frontend)/study/\_components/StudyContent/index.tsx](<src/app/(frontend)/study/_components/StudyContent/index.tsx>)
+**File**: [src/app/(frontend)/study/\_components/StudyContent/index.tsx](<../../src/app/(frontend)/study/_components/StudyContent/index.tsx>)
 
 **Why**: The component needs to know which lesson type to filter for. We pass it as a prop from the page.
 
@@ -277,7 +277,7 @@ const filteredChapters = chapters
 
 ### Step 3.2: Update Study Page (minimal change)
 
-**File**: [src/app/(frontend)/study/page.tsx](<src/app/(frontend)/study/page.tsx>)
+**File**: [src/app/(frontend)/study/page.tsx](<../../src/app/(frontend)/study/page.tsx>)
 
 **Why**: Pass the correct lesson type to StudyContent.
 
@@ -290,7 +290,7 @@ const filteredChapters = chapters
 
 ### Step 3.3: Update Practice Page (minimal change)
 
-**File**: [src/app/(frontend)/practice/page.tsx](<src/app/(frontend)/practice/page.tsx>)
+**File**: [src/app/(frontend)/practice/page.tsx](<../../src/app/(frontend)/practice/page.tsx>)
 
 **Why**: Pass the correct lesson type to StudyContent.
 
@@ -303,7 +303,7 @@ const filteredChapters = chapters
 
 ### Step 3.4: Update Test Page
 
-**File**: [src/app/(frontend)/test/page.tsx](<src/app/(frontend)/test/page.tsx>)
+**File**: [src/app/(frontend)/test/page.tsx](<../../src/app/(frontend)/test/page.tsx>)
 
 **Why**: Replace "coming soon" with actual content filtered by exam type.
 
