@@ -40,19 +40,29 @@ export const queryPublishedPages = cache(async () => {
 })
 
 export const queryAllPageSlugs = cache(async () => {
-  const payload = await getPayload({ config: configPromise })
+  try {
+    const payload = await getPayload({ config: configPromise })
 
-  const result = await payload.find({
-    collection: 'pages',
-    draft: false,
-    limit: 1000,
-    pagination: false,
-    select: {
-      slug: true,
-    },
-  })
+    const result = await payload.find({
+      collection: 'pages',
+      draft: false,
+      limit: 1000,
+      pagination: false,
+      select: {
+        slug: true,
+      },
+    })
 
-  return result.docs?.filter((doc) => doc.slug !== 'home').map(({ slug }) => ({ slug })) || []
+    // Defensive: ensure docs is an array before filtering
+    const docs = result.docs || []
+    return docs
+      .filter((doc) => doc.slug !== undefined && doc.slug !== 'home')
+      .map(({ slug }) => ({ slug }))
+  } catch (error) {
+    // During build, MongoDB may not be connected - return empty array
+    console.warn('Failed to fetch page slugs, returning empty array:', error)
+    return []
+  }
 })
 
 export const queryAllPagesForSitemap = cache(async () => {
