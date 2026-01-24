@@ -4,12 +4,11 @@ import { buildConfig, PayloadRequest } from 'payload'
 import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
-import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
-import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
-import { Footer } from '@/ui/web/footer/config'
-import { Header } from '@/ui/web/header/config'
+import { getServerSideURL } from '@/infra/utils/getURL'
 import { Categories } from '@/server/payload/collections/Categories'
 import { Chapters } from '@/server/payload/collections/Chapters'
+import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
+import { ConfigEntries } from '@/server/payload/collections/ConfigEntries'
 import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
@@ -25,9 +24,12 @@ import { Prompts } from '@/server/payload/collections/Prompts'
 import { Tenants } from '@/server/payload/collections/Tenants'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
 import { Users } from '@/server/payload/collections/Users'
+import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
+import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { plugins } from '@/server/payload/plugins'
-import { getServerSideURL } from '@/infra/utils/getURL'
+import { Footer } from '@/ui/web/footer/config'
+import { Header } from '@/ui/web/header/config'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -95,6 +97,8 @@ export default buildConfig({
   collections: [
     Pages,
     Categories,
+    ConfigEntries,
+    ConfigAuditLogs,
     Conversations,
     MemoryItems,
     Tenants,
