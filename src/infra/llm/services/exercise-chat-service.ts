@@ -42,7 +42,7 @@ export function getSystemPrompt(): string {
 
 export async function chatWithExerciseHelper(
   input: ExerciseChatInput,
-  payload?: Payload,
+  payload: Payload,
 ): Promise<ExerciseChatResult> {
   try {
     // Build messages from composedPrompt or legacy format

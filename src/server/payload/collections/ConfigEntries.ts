@@ -25,10 +25,10 @@ export const ConfigEntries: CollectionConfig = {
   slug: 'config_entries',
   admin: {
     useAsTitle: 'key',
-    defaultColumns: ['key', 'kind', 'enabled', 'updatedAt'],
+    defaultColumns: ['key', 'tenant', 'kind', 'enabled', 'updatedAt'],
     group: 'System',
     description:
-      'Global configuration key/value store. Variables are plaintext, secrets are encrypted.',
+      'Tenant-scoped configuration key/value store. Variables are plaintext, secrets are encrypted.',
   },
   access: {
     create: configAdminOnly,
@@ -41,7 +41,7 @@ export const ConfigEntries: CollectionConfig = {
       name: 'key',
       type: 'text',
       required: true,
-      unique: true,
+      // unique: true removed - uniqueness is now (tenant, key) enforced in hook
       index: true,
       admin: {
         description: 'Configuration key (snake_case, immutable after creation)',
@@ -54,6 +54,17 @@ export const ConfigEntries: CollectionConfig = {
           return 'Key must be snake_case or SCREAMING_SNAKE_CASE (e.g., my_config_key or MY_CONFIG_KEY)'
         }
         return true
+      },
+    },
+    {
+      name: 'tenant',
+      type: 'relationship',
+      relationTo: 'tenants',
+      required: true,
+      index: true,
+      admin: {
+        description: 'Tenant this config entry belongs to',
+        position: 'sidebar',
       },
     },
     {

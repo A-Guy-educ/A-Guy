@@ -4,22 +4,22 @@
  * @fileType implementation
  * @domain config.runtime
  * @pattern singleton, in-memory-cache, config-loader
- * @ai-summary Server-side runtime config loader with DB→memory caching
+ * @ai-summary Server-side runtime config loader with DB→memory caching (tenant-scoped)
  *
  * Security:
  * - Server-side only (throws on client)
  * - Secrets never logged
  * - Explicit error messages
- * - process.env exact key match (hard override)
+ * - process.env override DISABLED for tenant-scoped config (per spec-3)
  *
  * Design Constraints:
- * - Global-only: single in-memory cache, no scopes/contextual variants
+ * - Tenant-scoped: each entry belongs to exactly one tenant
  * - Explicit: must call loadRuntimeConfig() before using getters
  * - Minimal: no startup hooks, no health endpoints, no lazy loading
  */
 
 import type { ConfigEntry } from '@/payload-types'
-import type { Payload } from 'payload'
+import type { Payload, Where } from 'payload'
 import { ConfigKind } from '../config-constants'
 import { decryptSecret } from '../config-crypto'
 import { ConfigKeyNotFoundError, ConfigNotLoadedError } from './errors'
@@ -60,7 +60,7 @@ function assertLoaded(): void {
 // ============================================
 
 /**
- * Load all enabled config entries from DB into memory
+ * Load all enabled tenant-scoped config entries from DB into memory
  *
  * Design:
  * - Dependency injection: caller provides Payload instance
@@ -68,8 +68,10 @@ function assertLoaded(): void {
  * - Only loads enabled=true entries
  * - Decrypts secrets using config-crypto
  * - Passes context flag to bypass write-only UX hook
+ * - Tenant-scoped cache structure: Map<tenantId, Map<key, value>>
  *
  * @param payload - Payload instance (must be initialized)
+ * @param tenantId - Optional: load specific tenant only
  * @returns LoadConfigResult with stats and any errors
  *
  * @throws Error if DB is unreachable (re-thrown, not wrapped)
@@ -84,7 +86,10 @@ function assertLoaded(): void {
  * await loadRuntimeConfig(payload)
  * ```
  */
-export async function loadRuntimeConfig(payload: Payload): Promise<LoadConfigResult> {
+export async function loadRuntimeConfig(
+  payload: Payload,
+  tenantId?: string,
+): Promise<LoadConfigResult> {
   assertServerSide()
 
   // Idempotent: return cached result if already loaded
@@ -94,16 +99,20 @@ export async function loadRuntimeConfig(payload: Payload): Promise<LoadConfigRes
 
   const startTime = Date.now()
   const errors: LoadConfigResult['errors'] = []
-  const variables: Record<string, string> = {}
-  const secrets: Record<string, string> = {}
+  const variables = new Map<string, Map<string, string>>()
+  const secrets = new Map<string, Map<string, string>>()
 
   try {
-    // Query all enabled config entries with internal context flag
-    // This bypasses the write-only UX hook so we get real ciphertext
+    // Build query - optional tenant filter
+    const where: Where = { enabled: { equals: true } }
+    if (tenantId) {
+      where.tenant = { equals: tenantId }
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await (payload.find as any)({
       collection: 'config_entries',
-      where: { enabled: { equals: true } },
+      where,
       limit: 1000, // Reasonable limit for config entries
       overrideAccess: true,
       req: {
@@ -113,30 +122,38 @@ export async function loadRuntimeConfig(payload: Payload): Promise<LoadConfigRes
       },
     })
 
-    // Process each entry
+    // Process each entry with tenant scoping
     for (const doc of result.docs) {
-      const { key, kind, value } = doc as ConfigEntry
+      const { key, kind, value, tenant } = doc as ConfigEntry & { tenant: { id: string } | string }
+      const tId = typeof tenant === 'object' ? tenant.id : tenant
+
+      if (!tId) {
+        continue // Skip entries without tenant
+      }
+
+      // Initialize tenant maps if needed
+      if (!variables.has(tId)) {
+        variables.set(tId, new Map())
+        secrets.set(tId, new Map())
+      }
 
       try {
         if (kind === ConfigKind.Variable) {
-          // Variables: store as-is
-          variables[key] = value
-        } else if (kind === ConfigKind.Secret) {
-          // Secrets: decrypt before storing
-          if (value && value.length > 0) {
-            secrets[key] = decryptSecret(value)
-          }
+          variables.get(tId)!.set(key, value)
+        } else if (kind === ConfigKind.Secret && value && value.length > 0) {
+          secrets.get(tId)!.set(key, decryptSecret(value))
         }
       } catch (error) {
         // Log error but continue loading other entries
         errors.push({
           key,
+          tenantId: tId,
           error: error instanceof Error ? error.message : 'Unknown error',
         })
       }
     }
 
-    // Initialize cache
+    // Initialize tenant-scoped cache
     const loadedAt = new Date()
     cache = {
       variables,
@@ -144,6 +161,7 @@ export async function loadRuntimeConfig(payload: Payload): Promise<LoadConfigRes
       metadata: {
         loadedAt,
         entryCount: result.docs.length,
+        tenantsLoaded: variables.size,
       },
     }
 
@@ -152,8 +170,8 @@ export async function loadRuntimeConfig(payload: Payload): Promise<LoadConfigRes
     // Store result for idempotent returns
     lastLoadResult = {
       success: errors.length === 0,
-      variablesLoaded: Object.keys(variables).length,
-      secretsLoaded: Object.keys(secrets).length,
+      variablesLoaded: Array.from(variables.values()).reduce((sum, m) => sum + m.size, 0),
+      secretsLoaded: Array.from(secrets.values()).reduce((sum, m) => sum + m.size, 0),
       errors,
       loadedAt,
     }
@@ -163,6 +181,7 @@ export async function loadRuntimeConfig(payload: Payload): Promise<LoadConfigRes
       msg: 'Runtime config loaded',
       variablesLoaded: lastLoadResult.variablesLoaded,
       secretsLoaded: lastLoadResult.secretsLoaded,
+      tenantsLoaded: variables.size,
       errorsCount: errors.length,
       durationMs: duration,
     })
@@ -189,18 +208,15 @@ export async function reloadRuntimeConfig(payload: Payload): Promise<LoadConfigR
 }
 
 // ============================================
-// Public API: Getters (Synchronous)
+// Public API: Tenant-Scoped Getters (Synchronous)
 // ============================================
 
 /**
- * Get a configuration variable
+ * Get a configuration variable for a specific tenant
  *
- * Precedence (exact key match):
- * 1. process.env[KEY] (hard override)
- * 2. In-memory cache (DB config)
- * 3. Default value (if provided)
- * 4. Throw error
+ * Note: process.env override is DISABLED for tenant-scoped config (per spec-3)
  *
+ * @param tenantId - Tenant ID to scope the lookup
  * @param key - Configuration key (exact match required)
  * @param options - Options for default value and error handling
  * @returns The configuration value
@@ -209,6 +225,7 @@ export async function reloadRuntimeConfig(payload: Payload): Promise<LoadConfigR
  * @throws ConfigKeyNotFoundError if key not found and no default
  */
 export function getVariable(
+  tenantId: string,
   key: string,
   options?: { defaultValue?: string; throwIfNotFound?: boolean },
 ): string {
@@ -217,17 +234,13 @@ export function getVariable(
 
   const { defaultValue, throwIfNotFound = true } = options ?? {}
 
-  // 1. Check process.env first (exact key match)
-  if (process.env[key] !== undefined) {
-    return process.env[key]!
+  // Check tenant-specific cache
+  const tenantVariables = cache!.variables.get(tenantId)
+  if (tenantVariables?.has(key)) {
+    return tenantVariables.get(key)!
   }
 
-  // 2. Check in-memory cache
-  if (cache!.variables[key] !== undefined) {
-    return cache!.variables[key]
-  }
-
-  // 3. Return default or throw
+  // Return default or throw
   if (defaultValue !== undefined) {
     return defaultValue
   }
@@ -236,19 +249,17 @@ export function getVariable(
     return ''
   }
 
-  throw new ConfigKeyNotFoundError(key, 'variable')
+  throw new ConfigKeyNotFoundError(key, 'variable', tenantId)
 }
 
 /**
- * Get a configuration secret
- *
- * Same precedence as getVariable, but for secrets.
- * Secrets are decrypted and stored in memory after load.
+ * Get a secret for a specific tenant
  *
  * SECURITY:
  * - Never logs the secret value
  * - Throws explicit error if not found
  *
+ * @param tenantId - Tenant ID to scope the lookup
  * @param key - Secret key (exact match required)
  * @param options - Options for default value and error handling
  * @returns The decrypted secret value
@@ -257,6 +268,7 @@ export function getVariable(
  * @throws ConfigKeyNotFoundError if key not found and no default
  */
 export function getSecret(
+  tenantId: string,
   key: string,
   options?: { defaultValue?: string; throwIfNotFound?: boolean },
 ): string {
@@ -265,17 +277,13 @@ export function getSecret(
 
   const { defaultValue, throwIfNotFound = true } = options ?? {}
 
-  // 1. Check process.env first (exact key match)
-  if (process.env[key] !== undefined) {
-    return process.env[key]!
+  // Check tenant-specific cache (secrets)
+  const tenantSecrets = cache!.secrets.get(tenantId)
+  if (tenantSecrets?.has(key)) {
+    return tenantSecrets.get(key)!
   }
 
-  // 2. Check in-memory cache (secrets)
-  if (cache!.secrets[key] !== undefined) {
-    return cache!.secrets[key]
-  }
-
-  // 3. Return default or throw
+  // Return default or throw
   if (defaultValue !== undefined) {
     return defaultValue
   }
@@ -284,7 +292,7 @@ export function getSecret(
     return ''
   }
 
-  throw new ConfigKeyNotFoundError(key, 'secret')
+  throw new ConfigKeyNotFoundError(key, 'secret', tenantId)
 }
 
 // ============================================
@@ -307,6 +315,7 @@ export function getCacheMetadata(): {
   entryCount: number
   variableCount: number
   secretCount: number
+  tenantsLoaded: number
 } | null {
   if (!cache) {
     return null
@@ -315,27 +324,35 @@ export function getCacheMetadata(): {
   return {
     loadedAt: cache.metadata.loadedAt,
     entryCount: cache.metadata.entryCount,
-    variableCount: Object.keys(cache.variables).length,
-    secretCount: Object.keys(cache.secrets).length,
+    variableCount: Array.from(cache.variables.values()).reduce((sum, m) => sum + m.size, 0),
+    secretCount: Array.from(cache.secrets.values()).reduce((sum, m) => sum + m.size, 0),
+    tenantsLoaded: cache.metadata.tenantsLoaded,
   }
 }
 
 /**
- * Get all variable keys (for introspection)
+ * Get all keys for a tenant (for introspection)
  */
-export function getVariableKeys(): string[] {
+export function getVariableKeys(tenantId: string): string[] {
   assertServerSide()
   assertLoaded()
-  return Object.keys(cache!.variables)
+  return cache!.variables.get(tenantId) ? Array.from(cache!.variables.get(tenantId)!.keys()) : []
 }
 
 /**
- * Get all secret keys (for introspection, not values)
+ * Get all secret keys for a tenant (for introspection, not values)
  */
-export function getSecretKeys(): string[] {
+export function getSecretKeys(tenantId: string): string[] {
   assertServerSide()
   assertLoaded()
-  return Object.keys(cache!.secrets)
+  return cache!.secrets.get(tenantId) ? Array.from(cache!.secrets.get(tenantId)!.keys()) : []
+}
+
+/**
+ * Get all loaded tenant IDs
+ */
+export function getLoadedTenantIds(): string[] {
+  return cache ? Array.from(cache.variables.keys()) : []
 }
 
 /**
@@ -345,4 +362,38 @@ export function getSecretKeys(): string[] {
 export function clearConfigCache(): void {
   cache = null
   lastLoadResult = null
+}
+
+// ============================================
+// Deprecated: Legacy API (for backward compatibility during migration)
+// ============================================
+
+/**
+ * @deprecated Use getVariable(tenantId, key) instead
+ * This function is kept for backward compatibility but will throw
+ * with a migration message.
+ */
+export function getVariableLegacy(
+  _key: string,
+  _options?: { defaultValue?: string; throwIfNotFound?: boolean },
+): string {
+  throw new Error(
+    'Legacy getVariable() is deprecated. Use getVariable(tenantId, key) instead. ' +
+      'Config entries are now tenant-scoped.',
+  )
+}
+
+/**
+ * @deprecated Use getSecret(tenantId, key) instead
+ * This function is kept for backward compatibility but will throw
+ * with a migration message.
+ */
+export function getSecretLegacy(
+  _key: string,
+  _options?: { defaultValue?: string; throwIfNotFound?: boolean },
+): string {
+  throw new Error(
+    'Legacy getSecret() is deprecated. Use getSecret(tenantId, key) instead. ' +
+      'Config entries are now tenant-scoped.',
+  )
 }

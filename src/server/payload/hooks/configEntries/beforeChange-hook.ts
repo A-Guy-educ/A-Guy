@@ -13,10 +13,75 @@
  * - Store computed action in req.context for audit hook
  */
 
-import type { CollectionBeforeChangeHook } from 'payload'
+import type { CollectionBeforeChangeHook, Payload, Where } from 'payload'
 
 import { ConfigKind, isSnakeCase, looksLikeSecret } from '@/lib/config/config-constants'
 import { encryptSecret } from '@/lib/config/config-crypto'
+
+// Type for ConfigEntries data (partial for validation)
+type ConfigEntriesFields = {
+  key: string
+  kind: string
+  tenant: string | { id: string }
+}
+
+/**
+ * ==========================================================================
+ * Tenant+Key Uniqueness Check
+ * CRITICAL: Must be deterministic and fail loudly
+ * ==========================================================================
+ */
+async function checkTenantKeyUniqueness({
+  data,
+  operation,
+  req,
+  originalDoc,
+}: {
+  data: Partial<ConfigEntriesFields>
+  operation: 'create' | 'update'
+  req: { payload: Payload }
+  originalDoc?: { id: string; tenant: string | object }
+}): Promise<void> {
+  const key = data.key
+  const tenant = data.tenant
+
+  if (!key) {
+    throw new Error('Config key is required')
+  }
+
+  const tenantId = typeof tenant === 'object' ? tenant.id : tenant
+
+  if (!tenantId) {
+    throw new Error('Tenant is required for config entries')
+  }
+
+  // Build query to find conflicting entry
+  const whereQuery: Where = {
+    and: [
+      { tenant: { equals: tenantId } },
+      { key: { equals: key } },
+      // On update, exclude current document
+      ...(operation === 'update' && originalDoc?.id
+        ? [{ id: { not_equals: originalDoc.id } }]
+        : []),
+    ],
+  }
+
+  const existing = await req.payload.find({
+    collection: 'config_entries',
+    where: whereQuery,
+    limit: 1,
+    req, // Pass req for potential transaction safety
+    overrideAccess: true, // Bypass access control for validation
+  })
+
+  if (existing.docs.length > 0) {
+    throw new Error(
+      `Config key "${key}" already exists for this tenant. ` +
+        `Each tenant can have only one entry per key.`,
+    )
+  }
+}
 
 /**
  * Determine the action type based on operation and data
@@ -49,6 +114,13 @@ export const beforeChangeEncryptAndValidate: CollectionBeforeChangeHook = async 
   originalDoc,
 }) => {
   const { payload } = req
+
+  // =========================================================================
+  // Tenant+Key Uniqueness Check
+  // =========================================================================
+  if (operation === 'create' || operation === 'update') {
+    await checkTenantKeyUniqueness({ data, operation, req, originalDoc })
+  }
 
   // =========================================================================
   // Key Immutability Check

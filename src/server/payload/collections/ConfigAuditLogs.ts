@@ -26,7 +26,7 @@ export const ConfigAuditLogs: CollectionConfig = {
   slug: 'config_audit_logs',
   admin: {
     useAsTitle: 'key',
-    defaultColumns: ['key', 'kind', 'action', 'actor', 'createdAt'],
+    defaultColumns: ['key', 'tenant', 'kind', 'action', 'actor', 'createdAt'],
     group: 'System',
     description: 'Append-only audit log for config mutations. Secrets never stored in plaintext.',
   },
@@ -44,6 +44,15 @@ export const ConfigAuditLogs: CollectionConfig = {
       index: true,
       admin: {
         description: 'Configuration key that was modified',
+      },
+    },
+    {
+      name: 'tenant',
+      type: 'relationship',
+      relationTo: 'tenants',
+      required: true,
+      admin: {
+        description: 'Tenant of the mutated config entry',
       },
     },
     {
