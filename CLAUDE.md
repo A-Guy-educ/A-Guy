@@ -6,7 +6,7 @@ This file serves as the entry point for Claude Code (AI assistant) when working 
 
 ## Documentation
 
-**Read [AGENTS.md](AGENTS.md) - it contains everything you need:**
+**Read [AGENTS.md](./AGENTS.md) - it contains everything you need:**
 
 - Core principles and best practices
 - Project structure and architecture
@@ -85,7 +85,7 @@ When adding translations, update both:
 
 ### Git & Commits
 
-- **Commit guide**: See [docs/specs/COMMIT_GUIDE.md](docs/specs/COMMIT_GUIDE.md) - Complete guide to passing pre-commit hooks
+- **Commit guide**: See [docs/specs/COMMIT_GUIDE.md](./docs/specs/COMMIT_GUIDE.md) - Complete guide to passing pre-commit hooks
 - **Quick tip**: Use `git commit` (opens editor) for proper commit messages with body
 - **Emergency skip**: `SKIP_HOOKS=1 git commit` (use sparingly)
 
@@ -96,7 +96,7 @@ When adding translations, update both:
 The project includes MongoDB Atlas Vector Search for AI-powered long-term memory:
 
 - **Setup Guide**: [docs/VECTOR-SEARCH-SETUP.md](docs/VECTOR-SEARCH-SETUP.md) - Complete setup instructions
-- **Quick Reference**: [docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md](docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md)
+- **Quick Reference**: [docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md](./docs/features/chat-context/VECTOR-INDEX-SETUP-QUICK.md)
 - **Index Definition**: `infra/atlas/vector-index.memory_items.v1.json`
 - **Verify Setup**: `pnpm verify:vector-index`
 
@@ -168,13 +168,13 @@ Find examples of specific patterns:
 
 ```typescript
 // Load pattern index
-const index = require('./docs/ai/indexes/pattern-index.json')
+const index = require('./.ai-docs/indexes/pattern-index.json')
 
 // Find all files using RBAC pattern
 const rbacFiles = index.patterns['rbac'].files
 ```
 
-See [docs/ai/QUICK-START.md](docs/ai/QUICK-START.md) for full guide.
+See [BOOTSTRAP.md](.ai-docs/BOOTSTRAP.md) for full guide.
 
 ---
 

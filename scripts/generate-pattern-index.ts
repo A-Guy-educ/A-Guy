@@ -264,7 +264,7 @@ async function main() {
   })
 
   // Ensure output directory exists
-  const outputDir = path.join(ROOT_DIR, 'docs/ai/indexes')
+  const outputDir = path.join(ROOT_DIR, '.ai-docs/indexes')
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true })
   }
@@ -328,5 +328,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(console.error)
 }
 
-export { extractFileMetadata, detectPatterns, extractDependencies }
+export { detectPatterns, extractDependencies, extractFileMetadata }
 export type { FileMetadata, PatternExample, PatternIndex }

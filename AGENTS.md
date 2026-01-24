@@ -1191,9 +1191,9 @@ For deeper exploration of specific topics, refer to the README files throughout 
 
 Find code examples using the AI-optimized indexes:
 
-- **Pattern Index**: `docs/ai/indexes/pattern-index.json` - 132 files × 12 patterns
+- **Pattern Index**: `.ai-docs/indexes/pattern-index.json` - 208 files × 24 patterns
 - **README Index**: `.ai-docs/readme-index.json` - 19 READMEs indexed
-- **Doc Chunks**: `docs/ai/indexes/doc-chunks.json` - 217 searchable chunks
+- **Doc Chunks**: `.ai-docs/indexes/doc-chunks.json` - 248 searchable chunks
 
 ## AI Agent Optimization
 
@@ -1223,7 +1223,7 @@ const results = search.query('How do I create a published collection?')
 import type { User, Course, CollectionConfig } from '@/types'
 ```
 
-See [docs/ai/README.md](docs/ai/README.md) for full guide and [docs/ai/QUICK-START.md](docs/ai/QUICK-START.md) for quick reference.
+See [docs/ai/README.md](./docs/ai/README.md) for full guide and [BOOTSTRAP.md](.ai-docs/BOOTSTRAP.md) for quick reference.
 
 ## Resources
 

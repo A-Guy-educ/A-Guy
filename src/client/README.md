@@ -27,9 +27,9 @@ client/
 
 ## Key Files
 
-- [`hooks/useDebounce.ts`](hooks/useDebounce.ts) - Debounce value changes
-- [`state/localStorage/userProfile.ts`](state/localStorage/userProfile.ts) - User preferences
-- [`utils/canUseDOM.ts`](utils/canUseDOM.ts) - Check if running in browser
+- [`hooks/useDebounce.ts`](./hooks/useDebounce.ts) - Debounce value changes
+- [`state/localStorage/userProfile.ts`](./state/localStorage/userProfile.ts) - User preferences
+- [`utils/canUseDOM.ts`](./utils/canUseDOM.ts) - Check if running in browser
 
 ## Common Tasks
 

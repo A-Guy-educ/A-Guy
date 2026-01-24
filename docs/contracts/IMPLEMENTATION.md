@@ -6,16 +6,16 @@
 
 All schemas implemented with strict validation:
 
-- **[`primitives.ts`](./primitives.ts)** - Shared primitive types (BlockId, ColorString, PositionEnum, LineStyle)
-- **[`graphics/axis.v1.ts`](./graphics/axis.v1.ts)** - AxisSpecV1Schema with full cartesian coordinate system support
-- **[`graphics/geometry.v1.ts`](./graphics/geometry.v1.ts)** - GeometrySpecV1Schema with Euclidean geometry elements
-- **[`exercise/blocks.ts`](./exercise/blocks.ts)** - ExerciseBlockSchema (discriminated union by `type`)
-- **[`exercise/content.ts`](./exercise/content.ts)** - ExerciseContentSchema with stem and sections
-- **[`exercise/answers.ts`](./exercise/answers.ts)** - AnswerSpecSchema (discriminated union by `questionType`)
+- **[`primitives.ts`](primitives.ts)** - Shared primitive types (BlockId, ColorString, PositionEnum, LineStyle)
+- **[`graphics/axis.v1.ts`](graphics/axis.v1.ts)** - AxisSpecV1Schema with full cartesian coordinate system support
+- **[`graphics/geometry.v1.ts`](graphics/geometry.v1.ts)** - GeometrySpecV1Schema with Euclidean geometry elements
+- **[`exercise/blocks.ts`](exercise/blocks.ts)** - ExerciseBlockSchema (discriminated union by `type`)
+- **[`exercise/content.ts`](exercise/content.ts)** - ExerciseContentSchema with stem and sections
+- **[`exercise/answers.ts`](exercise/answers.ts)** - AnswerSpecSchema (discriminated union by `questionType`)
 
 ### 2. TypeScript Types
 
-All inferred types exported from [`index.ts`](./index.ts):
+All inferred types exported from [`index.ts`](index.ts):
 
 ```typescript
 // Primitives
@@ -48,14 +48,14 @@ Coverage:
 
 ### 4. Example JSON Files
 
-Complete examples in [`examples/`](./examples/):
+Complete examples in [`examples/`](examples/):
 
-1. **[`exercise-content.example.json`](./examples/exercise-content.example.json)** - Mixed blocks with stem and sections
-2. **[`answer-spec-mcq.example.json`](./examples/answer-spec-mcq.example.json)** - MCQ answer spec
-3. **[`answer-spec-true-false.example.json`](./examples/answer-spec-true-false.example.json)** - True/False answer spec
-4. **[`answer-spec-free-response.example.json`](./examples/answer-spec-free-response.example.json)** - Free response answer spec
-5. **[`axis-spec-v1.example.json`](./examples/axis-spec-v1.example.json)** - Complete axis spec with interactionSpec
-6. **[`geometry-spec-v1.example.json`](./examples/geometry-spec-v1.example.json)** - Complete geometry spec
+1. **[`exercise-content.example.json`](examples/exercise-content.example.json)** - Mixed blocks with stem and sections
+2. **[`answer-spec-mcq.example.json`](examples/answer-spec-mcq.example.json)** - MCQ answer spec
+3. **[`answer-spec-true-false.example.json`](examples/answer-spec-true-false.example.json)** - True/False answer spec
+4. **[`answer-spec-free-response.example.json`](examples/answer-spec-free-response.example.json)** - Free response answer spec
+5. **[`axis-spec-v1.example.json`](examples/axis-spec-v1.example.json)** - Complete axis spec with interactionSpec
+6. **[`geometry-spec-v1.example.json`](examples/geometry-spec-v1.example.json)** - Complete geometry spec
 
 ### 5. Documentation
 

@@ -19,8 +19,8 @@ The memory system enables conversations to maintain context across sessions usin
 
 ### Technical Documentation
 
-- **[Specification](spec.md)** - System architecture and design
-- **[Implementation Plan](plan.md)** - Step-by-step implementation guide
+- **[Specification](./spec.md)** - System architecture and design
+- **[Implementation Plan](./plan.md)** - Step-by-step implementation guide
 
 ## Architecture
 
