@@ -161,8 +161,8 @@ pnpm verify:vector-index
 
 ## Next Steps
 
-1. ✅ Read [README.md](README.md) for full documentation
-2. ✅ Review [project-tooling.md](project-tooling.md) for development rules
+1. ✅ Read [README.md](./README.md) for full documentation
+2. ✅ Review [project-tooling.md](./project-tooling.md) for development rules
 3. ✅ (Optional) Set up vector search for AI features
 4. ✅ Create your first Payload collection
 5. ✅ Build your frontend components

@@ -225,7 +225,7 @@ const result = validate({
 
 ## Related Documentation
 
-- [`docs/ai/`](../../docs/ai/README.md) - AI optimization system
+- [`.ai-docs/`](../../../.ai-docs/README.md) - AI optimization system
 - [`AGENTS.md`](../../../AGENTS.md) - Complete patterns
 - [`src/server/`](../../server/README.md) - Server configuration
 - [`src/ui/admin/`](../../ui/admin/README.md) - Admin components

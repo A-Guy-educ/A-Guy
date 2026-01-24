@@ -266,7 +266,7 @@ web/
 
 ## Related Documentation
 
-- [`docs/ai/`](../../docs/ai/README.md) - AI component patterns
+- [`.ai-docs/`](../../../.ai-docs/README.md) - AI component patterns
 - [`AGENTS.md`](../../../AGENTS.md) - Complete patterns
 - [`src/app/`](../../app/README.md) - App routes
 - [`src/client/`](../../client/README.md) - Client utilities

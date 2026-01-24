@@ -282,7 +282,7 @@ chore: update dependencies
 
 ```
 
-For the complete PR template reference, see [PR_TEMPLATE.md](PR_TEMPLATE.md).
+For the complete PR template reference, see [PR_TEMPLATE.md](./PR_TEMPLATE.md).
 
 ### 7. CI/CD Verification
 

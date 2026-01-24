@@ -1,0 +1,68 @@
+name: Doc Link Fixer (Daily)
+
+on:
+  schedule:
+    # Daily at 02:05 UTC
+    - cron: "5 2 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: doc-link-fixer
+  cancel-in-progress: true
+
+jobs:
+  fix-links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Fix internal markdown links + write report
+        run: pnpm run docs:links:fix
+
+      # Always try to open/update PR if there are changes (even if the fixer exits non-zero later)
+      - name: Create or update PR
+        if: always()
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/doc-link-fixer
+          base: dev
+          title: "chore(docs): fix broken internal links"
+          commit-message: "chore(docs): fix broken internal links"
+          body: |
+            Automated daily internal markdown link fixer.
+
+            - Fixes safe patterns (e.g. docs/ai -> .ai-docs, missing .md where unambiguous)
+            - Generates report: .ai-docs/reports/doc-link-report.md
+
+            Run locally:
+            - pnpm run docs:links:fix
+          labels: |
+            automation
+            docs
+          delete-branch: false
+          add-paths: |
+            **/*.md
+            .ai-docs/reports/doc-link-report.md

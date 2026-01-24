@@ -6,32 +6,32 @@ This directory contains all Payload CMS collection configurations for the A-Guy 
 
 ### Core Content Collections
 
-- **[Courses.ts](Courses.ts)** - Top-level course containers
+- **[Courses.ts](./Courses.ts)** - Top-level course containers
   - Purpose: Organize content into distinct courses
   - Access: Public read, authenticated write
   - Key fields: `courseLabel`, `title`, `slug`, `categories`, `order`, `isActive`
   - Auto-generates slug from title
 
-- **[Chapters.ts](Chapters.ts)** - Course chapters/modules
+- **[Chapters.ts](./Chapters.ts)** - Course chapters/modules
   - Purpose: Group related lessons within a course
   - Access: Public read, authenticated write
   - Key fields: `chapterLabel`, `title`, `course` (relationship), `order`
   - Hierarchical: belongs to a Course
 
-- **[Lessons.ts](Lessons.ts)** - Individual lessons
+- **[Lessons.ts](./Lessons.ts)** - Individual lessons
   - Purpose: Core learning content units
   - Access: Public read, authenticated write
   - Key fields: `lessonLabel`, `title`, `chapter` (relationship), `content` (layout builder)
   - Contains exercise blocks via layout builder
 
-- **[Categories.ts](Categories.ts)** - Content categorization
+- **[Categories.ts](./Categories.ts)** - Content categorization
   - Purpose: Tag courses with topics/themes
   - Access: Public read, authenticated write
   - Key fields: `categoryLabel`, `title`
 
 ### Exercise System Collections
 
-- **[ExerciseAssets.ts](ExerciseAssets.ts)** - Exercise-specific media
+- **[ExerciseAssets.ts](./ExerciseAssets.ts)** - Exercise-specific media
   - Purpose: Store images, audio, video for exercises
   - Access: Public read, authenticated write
   - Special: Dedicated upload directory (`exerciseAssets/`)
@@ -39,12 +39,12 @@ This directory contains all Payload CMS collection configurations for the A-Guy 
 
 ### Supporting Collections
 
-- **[Media](Media/index.ts)** - General media assets
+- **[Media](./Media/index.ts)** - General media assets
   - Purpose: Images, documents for general content
   - Access: Public read, authenticated write
   - Upload directory: `media/`
 
-- **[PricingPlans.ts](PricingPlans.ts)** - Subscription tiers
+- **[PricingPlans.ts](./PricingPlans.ts)** - Subscription tiers
   - Purpose: Define pricing and feature sets
   - Access: Public read, authenticated write
   - Key fields: `name`, `price`, `features`, `isActive`

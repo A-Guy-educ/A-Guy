@@ -47,7 +47,7 @@ app/
 - [`(frontend)/page.tsx`](<(frontend)/page.tsx>) - Homepage
 - [`(frontend)/courses/page.tsx`](<(frontend)/courses/page.tsx>) - Courses listing
 - [`(payload)/admin/`](<(payload)/admin/>) - Payload admin panel
-- [`api/agent/conversation/route.ts`](api/agent/conversation/route.ts) - AI chat endpoint
+- [`api/agent/conversation/route.ts`](./api/agent/conversation/route.ts) - AI chat endpoint
 
 ## Common Tasks
 

@@ -13,7 +13,7 @@ This document summarizes all improvements made to project automation, scripts, l
 
 ### ✅ Custom ESLint Plugin Enabled
 
-**File:** [eslint.config.mjs](eslint.config.mjs)
+**File:** [eslint.config.mjs](./eslint.config.mjs)
 
 **Changes:**
 
@@ -188,7 +188,7 @@ SKIP_HOOKS=1 git push
 
 ## 4. Commitlint Enhancements
 
-**File:** [commitlint.config.js](commitlint.config.js)
+**File:** [commitlint.config.js](./commitlint.config.js)
 
 **New rules:**
 
@@ -227,7 +227,7 @@ feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, security
 
 ## 6. Package.json Scripts
 
-**File:** [package.json](package.json)
+**File:** [package.json](./package.json)
 
 ### New Development Scripts
 
@@ -315,7 +315,7 @@ pnpm postinstall            # Auto-generate types
 
 ### ✅ Branch Validation Script
 
-**File:** [scripts/check-branch.ts](scripts/check-branch.ts)
+**File:** [scripts/check-branch.ts](./scripts/check-branch.ts)
 
 **Usage:**
 
@@ -327,7 +327,7 @@ pnpm check:branch
 
 ### ✅ Pre-release Check Script
 
-**File:** [scripts/pre-release-check.ts](scripts/pre-release-check.ts)
+**File:** [scripts/pre-release-check.ts](./scripts/pre-release-check.ts)
 
 **Usage:**
 
@@ -366,7 +366,7 @@ pnpm check:release
 
 ## 10. Documentation Updates
 
-**File:** [scripts/README.md](scripts/README.md)
+**File:** [scripts/README.md](./scripts/README.md)
 
 **Added sections:**
 
@@ -582,10 +582,10 @@ pnpm test:watch
 
 For questions or issues with these improvements:
 
-1. Check [scripts/README.md](scripts/README.md) for detailed documentation
+1. Check [scripts/README.md](./scripts/README.md) for detailed documentation
 2. Run `pnpm doctor` to diagnose environment issues
 3. Check `.husky/` directory for hook implementations
-4. Review [AGENTS.md](AGENTS.md) for development guidelines
+4. Review [AGENTS.md](./AGENTS.md) for development guidelines
 
 ---
 

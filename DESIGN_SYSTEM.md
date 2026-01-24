@@ -1069,4 +1069,4 @@ If you need to:
 - **Extend Tailwind**: Update `tailwind.config.mjs`
 - **Report design inconsistencies**: Create an issue with screenshots
 
-For questions about design decisions or component usage, refer to [PROJECT-TOOLING.md](PROJECT-TOOLING.md) or consult with the team.
+For questions about design decisions or component usage, refer to [PROJECT-TOOLING.md](./PROJECT-TOOLING.md) or consult with the team.
