@@ -5,6 +5,7 @@
  * @public This is the ONLY file consumers should import from
  */
 import { logger } from '@/infra/utils/logger'
+import type { Payload } from 'payload'
 import { getGeminiClient } from './gemini.client'
 import { isRetryableError, wrapGeminiError } from './gemini.errors'
 import { extractResponseText, mapMessagesToGeminiHistory } from './gemini.mapper'
@@ -58,18 +59,20 @@ const RETRY_DELAY_MS = 1_000
  * - Error normalization
  *
  * @param input - Chat input with system prompt, messages, and model config
+ * @param payload - Optional Payload instance for runtime config access
  * @returns Chat output with response text
  * @throws GeminiError on failure after retries
  */
 export async function generateChatCompletion(
   input: GenerateChatInput,
+  payload?: Payload,
 ): Promise<GenerateChatOutput> {
   const timeoutMs = input.timeoutMs ?? DEFAULT_TIMEOUT_MS
   let lastError: Error | null = null
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      return await executeWithTimeout(input, timeoutMs)
+      return await executeWithTimeout(input, timeoutMs, payload)
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
       const geminiError = wrapGeminiError(lastError)
@@ -104,8 +107,9 @@ export async function generateChatCompletion(
 async function executeWithTimeout(
   input: GenerateChatInput,
   timeoutMs: number,
+  payload?: Payload,
 ): Promise<GenerateChatOutput> {
-  const client = getGeminiClient()
+  const client = await getGeminiClient(payload)
 
   const model = client.getGenerativeModel({
     model: input.model.name,

@@ -4,10 +4,10 @@
  *
  * Future: Can be extended for exercise chat, editing assistance, etc.
  */
-import { getGeminiClient } from '../providers/gemini/gemini.client'
 import { AI_MODELS } from '../models'
-import { optimizeImageForAI } from './image-optimizer-service'
 import { SIMPLE_TEXT_QUESTION_PROMPT } from '../prompts/simple-text-question'
+import { getGeminiClient } from '../providers/gemini/gemini.client'
+import { optimizeImageForAI } from './image-optimizer-service'
 
 export interface ImageToExerciseInput {
   imageBuffer: Buffer
@@ -46,7 +46,7 @@ export async function extractFromImage(
     const optimizedImage = await optimizeImageForAI(input.imageBuffer)
 
     // Get AI client and model
-    const client = getGeminiClient()
+    const client = await getGeminiClient()
     const modelConfig = AI_MODELS.IMAGE_TO_EXERCISE
     const model = client.getGenerativeModel({
       model: modelConfig.name,

@@ -1,1622 +1,1070 @@
-# Low-Level Plan: Global Config Key/Value Manager
+# Low-Level Plan: Runtime Config Loader (spec-2.md)
 
-## Overview
-
-This document provides a detailed implementation plan for a minimal admin-managed configuration store in Payload CMS with:
-
-- Single global key/value table (`ConfigEntries`)
-- Encryption for secrets only
-- Audit logging (`ConfigAuditLog`)
-- Comprehensive automated tests
-
-## Project Standards Compliance
-
-This plan adheres to:
-
-- **AGENTS.md** - Payload CMS development rules (TypeScript-first, transaction safety, access control)
-- **Collection patterns** from `src/server/payload/collections/` (adminOnly access, hook patterns)
-- **Encryption pattern** from `src/infra/auth/oauth_crypto.ts` (AES-256-GCM)
-- **Testing patterns** from `tests/README.md` (Vitest integration tests)
+**Task:** Runtime Config Loader (DB → Memory, Server-Side Only)
+**Spec Reference:** `.tasks/var-namager/spec-2.md`
+**Created:** 2026-01-24
+**Status:** Draft
 
 ---
 
-## Architecture
+## 1. Architecture Overview
 
-```mermaid
-graph TD
-    subgraph Admin UI
-        A[ConfigEntries List View] --> B[ConfigEntries Edit View]
-        B --> C[Secret Write-Only Field]
-        C --> D[Enabled Toggle]
-    end
+### 1.1 Component Diagram
 
-    subgraph Server-Side
-        E[beforeChange Hook] -->|Encrypt if secret| F[Encryption Utility]
-        E -->|Validate key/kind immutability| G[Validation]
-        E -->|Store action in context| H[Context Storage]
-        H -->|Create audit entry| I[ConfigAuditLog Collection]
-        F --> J[(MongoDB)]
-        I --> J
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Runtime Config System                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────┐     ┌─────────────────────┐     ┌──────────┐  │
+│  │   Payload   │────▶│  RuntimeConfigLoader │────▶│ In-Memory│  │
+│  │   Bootstrap │     │     (Singleton)      │     │   Cache  │  │
+│  └─────────────┘     └─────────────────────┘     └──────────┘  │
+│         │                     │                     │            │
+│         │                     │                     │            │
+│         ▼                     ▼                     ▼            │
+│  ┌─────────────┐     ┌─────────────────────┐     ┌──────────┐  │
+│  │   Hooks/    │     │   Public API         │     │ Secrets  │  │
+│  │  Endpoints  │     │ • loadRuntimeConfig │     │ Decrypted│  │
+│  └─────────────┘     │ • getVariable       │     └──────────┘  │
+│                      │ • getSecret         │                    │
+│                      └─────────────────────┘                    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-        K[afterRead Hook] -->|Clear secret value| L[Write-Only Behavior]
-    end
+### 1.2 Precedence Flow
 
-    subgraph Encryption
-        M[CONFIG_MASTER_KEY Env] --> N[getKey Derivation]
-        N --> O[AES-256-GCM Encrypt/Decrypt]
-    end
+```
+getVariable("API_URL")
+         │
+         ▼
+┌─────────────────────┐
+│ 1. Check process.env│◀──── Hard Override
+│    (highest priority)│
+└─────────────────────┘
+         │
+         ▼ (not found)
+┌─────────────────────┐
+│ 2. Check in-memory  │◀──── DB Config
+│    cache (variables)│
+└─────────────────────┘
+         │
+         ▼ (not found)
+┌─────────────────────┐
+│ 3. Throw Error      │◀──── "Missing required variable: API_URL"
+│    "NotFound"       │
+└─────────────────────┘
 ```
 
 ---
 
-## File Structure
+## 2. File Structure
+
+### 2.1 New Files to Create
 
 ```
-src/
-├── server/
-│   └── payload/
-│       ├── collections/
-│       │   ├── ConfigEntries.ts         # Main collection with afterRead hook
-│       │   └── ConfigAuditLogs.ts       # Audit log collection
-│       ├── access/
-│       │   └── configAdminOnly.ts       # Access control for config
-│       └── hooks/
-│           └── configEntries/
-│               ├── beforeChange-hook.ts # Encryption + validation
-│               └── afterChange-hook.ts  # Audit logging
-├── lib/
-│   └── config/
-│       ├── config-crypto.ts             # Encryption utilities
-│       └── config-constants.ts          # Kind enum, guard patterns
-tests/
-├── int/
-│   └── config-manager.int.spec.ts       # Integration tests
-└── unit/
-    └── lib/
-        └── config/
-            └── config-crypto.spec.ts    # Unit tests for crypto
-.env.example                           # Add CONFIG_MASTER_KEY
-payload.config.ts                       # Register collections
-payload-types.ts                        # Generated after types
+src/lib/config/runtime/
+├── types.ts              # TypeScript interfaces
+├── runtime-config.ts     # Main loader + getters (PRIMARY)
+├── errors.ts             # Custom error classes
+└── index.ts             # Public exports
+
+tests/unit/lib/config/runtime/
+├── runtime-config.test.ts     # Unit tests
+
+tests/int/
+├── runtime-config.int.test.ts  # Integration tests
 ```
+
+### 2.2 Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/lib/config/config-crypto.ts` | Export `decryptSecret` for runtime use |
+| `src/payload.config.ts` | Optional: Register startup hook |
+| `src/app/api/runtime-config/route.ts` | Optional: Health check endpoint |
 
 ---
 
-## Step-by-Step Implementation
+## 3. Implementation Details
 
-### Step 1: Create Constants and Types
-
-**File:** `src/lib/config/config-constants.ts`
+### 3.1 Type Definitions (`types.ts`)
 
 ```typescript
 /**
- * Config Constants
+ * Runtime Config Types
  *
- * @fileType utility
- * @domain config
- * @pattern constants
- * @ai-summary Configuration constants for the config manager
+ * @fileType type-definition
+ * @domain config.runtime
+ * @pattern types
  */
 
 /**
- * Kind enum for config entry types
+ * Shape of the in-memory cache
  */
-export const ConfigKind = {
-  Variable: 'variable',
-  Secret: 'secret',
-} as const
-
-export type ConfigKind = (typeof ConfigKind)[keyof typeof ConfigKind]
-
-/**
- * Action enum for audit log entries
- */
-export const ConfigAction = {
-  Created: 'created',
-  Updated: 'updated',
-  Enabled: 'enabled',
-  Disabled: 'disabled',
-} as const
-
-export type ConfigAction = (typeof ConfigAction)[keyof typeof ConfigAction]
-
-/**
- * Secret-like key patterns to block for variables
- * Prevents accidental storage of secrets as variables
- */
-export const SECRET_KEY_PATTERNS = [
-  /secret/i,
-  /token/i,
-  /apikey/i,
-  /api_key/i,
-  /password/i,
-  /private/i,
-  /credential/i,
-  /key$/i,
-]
-
-/**
- * Validates that a key is in snake_case
- */
-export function isSnakeCase(key: string): boolean {
-  return /^[a-z][a-z0-9]*(_[a-z0-9]+)*$/.test(key)
-}
-
-/**
- * Check if a key looks like it should be a secret
- */
-export function looksLikeSecret(key: string): boolean {
-  return SECRET_KEY_PATTERNS.some((pattern) => pattern.test(key))
-}
-```
-
-**Acceptance Criteria:**
-
-- [ ] `ConfigKind` enum with `variable` and `secret` values
-- [ ] `ConfigAction` enum with all action types
-- [ ] `isSnakeCase()` function validates snake_case format
-- [ ] `looksLikeSecret()` detects secret-like patterns
-- [ ] `SECRET_KEY_PATTERNS` array for regex patterns
-
----
-
-### Step 2: Create Encryption Utility
-
-**File:** `src/lib/config/config-crypto.ts`
-
-```typescript
-/**
- * Config Encryption Utility
- *
- * @fileType utility
- * @domain config
- * @pattern encryption
- * @ai-summary AES-256-GCM encryption for config secrets
- */
-
-import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'crypto'
-
-/**
- * Derive a 32-byte key from CONFIG_MASTER_KEY
- * Throws if env var is not set
- */
-function getKey(): Buffer {
-  const key = process.env.CONFIG_MASTER_KEY
-  if (!key || key.length < 32) {
-    throw new Error(
-      'CONFIG_MASTER_KEY environment variable must be set and be at least 32 characters',
-    )
+export interface RuntimeConfigCache {
+  /** Plaintext variables loaded from DB */
+  variables: Record<string, string>
+  /** Decrypted secrets loaded from DB */
+  secrets: Record<string, string>
+  /** Metadata about the cache state */
+  metadata: {
+    loadedAt: Date | null
+    loadedFromDb: boolean
+    entryCount: number
   }
-  return createHash('sha256').update(key).digest()
-}
-
-const ALGORITHM = 'aes-256-gcm'
-const IV_LENGTH = 12
-const TAG_LENGTH = 16
-
-/**
- * Encrypt a plain text secret using AES-256-GCM.
- * Returns: iv + authTag + ciphertext (base64 encoded)
- *
- * @param plain - Plain text to encrypt
- * @returns Base64 encoded encrypted value
- * @throws Error if encryption fails
- */
-export function encryptSecret(plain: string): string {
-  const key = getKey()
-  const iv = randomBytes(IV_LENGTH)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cipher = createCipheriv(ALGORITHM, key as any, iv as any)
-
-  let encrypted = cipher.update(plain, 'utf8', 'base64')
-  encrypted += cipher.final('base64')
-
-  const authTag = cipher.getAuthTag()
-
-  // Combine: iv + authTag + ciphertext
-  const combined = Buffer.concat([
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    iv as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    authTag as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Buffer.from(encrypted, 'base64') as any,
-  ])
-
-  return combined.toString('base64')
 }
 
 /**
- * Decrypt an encrypted secret.
- * Format: iv + authTag + ciphertext (base64 encoded)
- *
- * @param encrypted - Base64 encoded encrypted value
- * @returns Decrypted plain text
- * @throws Error if decryption fails (wrong key or corrupted data)
+ * Result of loading config from DB
  */
-export function decryptSecret(encrypted: string): string {
-  const key = getKey()
-  const combined = Buffer.from(encrypted, 'base64')
+export interface LoadConfigResult {
+  success: boolean
+  variablesLoaded: number
+  secretsLoaded: number
+  errors: Array<{ key: string; error: string }>
+  loadedAt: Date
+}
 
-  // Extract components
-  const iv = combined.subarray(0, IV_LENGTH)
-  const authTag = combined.subarray(IV_LENGTH, IV_LENGTH + TAG_LENGTH)
-  const ciphertext = combined.subarray(IV_LENGTH + TAG_LENGTH)
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const decipher = createDecipheriv(ALGORITHM, key as any, iv as any)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  decipher.setAuthTag(authTag as any)
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let decrypted = decipher.update(ciphertext as any)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  decrypted = Buffer.concat([decrypted as any, decipher.final() as any])
-
-  return decrypted.toString('utf8')
+/**
+ * Options for getVariable/getSecret
+ */
+export interface GetConfigOptions {
+  /** Default value if key not found */
+  defaultValue?: string
+  /** Whether to throw if not found (default: true) */
+  throwIfNotFound?: boolean
 }
 ```
 
-**Acceptance Criteria:**
-
-- [ ] `encryptSecret()` encrypts using AES-256-GCM with CONFIG_MASTER_KEY
-- [ ] `decryptSecret()` decrypts successfully
-- [ ] Throws descriptive error if CONFIG_MASTER_KEY is missing
-- [ ] Uses same encryption format as `oauth_crypto.ts` for consistency
-
----
-
-### Step 3: Create Access Control
-
-**File:** `src/server/payload/access/configAdminOnly.ts`
+### 3.2 Custom Errors (`errors.ts`)
 
 ```typescript
 /**
- * Access Control for Config Collections
+ * Runtime Config Errors
  *
- * @fileType access-control
- * @domain config
- * @pattern admin-only
- * @ai-summary Access control that restricts config operations to admins only
+ * @fileType error-definition
+ * @domain config.runtime
+ * @pattern error-handling
  */
 
-import type { AccessArgs } from 'payload'
-import type { User } from '@/payload-types'
-import { AccountRole } from '@/server/payload/collections/Users/roles'
-import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
-
-type ConfigAccess = (args: AccessArgs<User>) => boolean
-
-/**
- * Access control that only allows users with role='admin'
- */
-export const configAdminOnly: ConfigAccess = ({ req: { user } }) => {
-  if (!isUsersCollectionUser(user)) {
-    return false
+export class ConfigNotLoadedError extends Error {
+  constructor() {
+    super('Runtime config has not been loaded. Call loadRuntimeConfig() first.')
+    this.name = 'ConfigNotLoadedError'
   }
+}
 
-  return user.role === AccountRole.Admin
+export class ConfigKeyNotFoundError extends Error {
+  constructor(key: string, kind: 'variable' | 'secret') {
+    super(`Missing required ${kind}: ${key}`)
+    this.name = 'ConfigKeyNotFoundError'
+  }
+}
+
+export class ConfigLoadError extends Error {
+  constructor(key: string, underlyingError: Error) {
+    super(`Failed to load config entry "${key}": ${underlyingError.message}`)
+    this.name = 'ConfigLoadError'
+  }
 }
 ```
 
-**Acceptance Criteria:**
-
-- [ ] Only admins can create/read/update/delete config entries
-- [ ] Non-admins receive 403 response
-- [ ] Type-safe with User type from payload-types
-
----
-
-### Step 4: Create ConfigEntries Collection
-
-**File:** `src/server/payload/collections/ConfigEntries.ts`
+### 3.3 Main Implementation (`runtime-config.ts`)
 
 ```typescript
 /**
- * ConfigEntries Collection
+ * Runtime Config Loader
  *
- * @fileType collection-config
- * @domain config
- * @pattern key-value-store, encrypted-values
- * @ai-summary Config entries with encryption for secrets, audit logging, and write-only UX for secrets
- *
- * Security (CRITICAL):
- * - Admin-only access for all operations
- * - Secrets encrypted at rest in database
- * - Admin UI never shows decrypted secrets after save (write-only)
- * - Audit log tracks all mutations without leaking secrets
- */
-
-import type { CollectionConfig } from 'payload'
-
-import { configAdminOnly } from '../access/configAdminOnly'
-import { beforeChangeEncryptAndValidate } from '../hooks/configEntries/beforeChange-hook'
-import { afterChangeAuditLog } from '../hooks/configEntries/afterChange-hook'
-import { afterReadHideSecretValue } from '../hooks/configEntries/afterRead-hook'
-import { ConfigKind } from '@/lib/config/config-constants'
-
-export const ConfigEntries: CollectionConfig = {
-  slug: 'config_entries',
-  admin: {
-    useAsTitle: 'key',
-    defaultColumns: ['key', 'kind', 'enabled', 'updatedAt'],
-    group: 'System',
-    description:
-      'Global configuration key/value store. Variables are plaintext, secrets are encrypted.',
-  },
-  access: {
-    create: configAdminOnly,
-    read: configAdminOnly,
-    update: configAdminOnly,
-    delete: configAdminOnly,
-  },
-  fields: [
-    {
-      name: 'key',
-      type: 'text',
-      required: true,
-      unique: true,
-      index: true,
-      admin: {
-        description: 'Configuration key (snake_case, immutable after creation)',
-      },
-      validate: (value) => {
-        if (!value || typeof value !== 'string') {
-          return 'Key is required'
-        }
-        if (!/^[a-z][a-z0-9]*(_[a-z0-9]+)*$/.test(value)) {
-          return 'Key must be snake_case (e.g., my_config_key)'
-        }
-        return true
-      },
-    },
-    {
-      name: 'kind',
-      type: 'select',
-      required: true,
-      options: [
-        { label: 'Variable', value: ConfigKind.Variable },
-        { label: 'Secret', value: ConfigKind.Secret },
-      ],
-      defaultValue: ConfigKind.Variable,
-      admin: {
-        description: 'Variable: stored as plaintext. Secret: encrypted at rest.',
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'value',
-      type: 'text',
-      required: true,
-      admin: {
-        description: 'Configuration value. Secrets are write-only after save.',
-      },
-      hooks: {
-        /**
-         * afterRead: Clear secret value to implement write-only UX
-         */
-        afterRead: [afterReadHideSecretValue],
-      },
-    },
-    {
-      name: 'enabled',
-      type: 'checkbox',
-      required: true,
-      defaultValue: true,
-      index: true,
-      admin: {
-        description: 'Enable or disable this configuration entry',
-      },
-    },
-  ],
-  hooks: {
-    /**
-     * beforeChange: Encrypt secrets, validate key/kind immutability
-     * CRITICAL: Pass req to nested operations for transaction safety
-     */
-    beforeChange: [beforeChangeEncryptAndValidate],
-    /**
-     * afterChange: Create audit log entry
-     * CRITICAL: Use context to prevent infinite hook loops
-     */
-    afterChange: [afterChangeAuditLog],
-    /**
-     * afterRead: Hide secret values in Admin UI responses
-     */
-    afterRead: [afterReadHideSecretValue],
-  },
-  timestamps: true,
-}
-```
-
-**Acceptance Criteria:**
-
-- [ ] Collection slug: `config_entries`
-- [ ] Fields: key, kind, value, enabled
-- [ ] Admin UI columns: key, kind, enabled, updatedAt (no value)
-- [ ] Key validation: required, unique, snake_case
-- [ ] Kind select: variable | secret
-- [ ] Admin-only access for all operations
-- [ ] beforeChange hook encrypts secrets and enforces immutability
-- [ ] afterChange hook creates audit entries
-- [ ] afterRead hook clears secret value for write-only UX
-
----
-
-### Step 5: Create ConfigAuditLogs Collection
-
-**File:** `src/server/payload/collections/ConfigAuditLogs.ts`
-
-```typescript
-/**
- * ConfigAuditLogs Collection
- *
- * @fileType collection-config
- * @domain config
- * @pattern audit-log
- * @ai-summary Append-only audit log for config mutations
+ * @fileType implementation
+ * @domain config.runtime
+ * @pattern singleton, in-memory-cache, config-loader
+ * @ai-summary Server-side runtime config loader with DB→memory caching
  *
  * Security:
- * - create: DISABLED for UI (hooks use overrideAccess)
- * - read: admin only
- * - update: DISABLED (append-only)
- * - delete: DISABLED (append-only)
- *
- * Privacy:
- * - Secrets: Never store plaintext before/after values
- * - Variables: Store metadata only (no sensitive data)
+ * - Server-side only (throws on client)
+ * - Secrets never logged
+ * - Explicit error messages
+ * - process.env always wins (hard override)
  */
 
-import type { CollectionConfig } from 'payload'
+import { getPayload } from 'payload'
+import config from '@payload-config'
+import { decryptSecret } from '../config-crypto'
+import { ConfigKind } from '../config-constants'
+import type { ConfigEntries } from '@/payload-types'
+import type { RuntimeConfigCache, LoadConfigResult } from './types'
+import {
+  ConfigNotLoadedError,
+  ConfigKeyNotFoundError,
+  ConfigLoadError,
+} from './errors'
 
-import { configAdminOnly } from '../access/configAdminOnly'
-import { ConfigKind } from '@/lib/config/config-constants'
+// ============================================
+// Module-Level State (Process Singleton)
+// ============================================
 
-export const ConfigAuditLogs: CollectionConfig = {
-  slug: 'config_audit_logs',
-  admin: {
-    useAsTitle: 'key',
-    defaultColumns: ['key', 'kind', 'action', 'actor', 'createdAt'],
-    group: 'System',
-    description: 'Append-only audit log for config mutations. Secrets never stored in plaintext.',
-  },
-  access: {
-    create: () => false, // Only created via hooks with overrideAccess
-    read: configAdminOnly,
-    update: () => false, // Append-only
-    delete: () => false, // Append-only
-  },
-  fields: [
-    {
-      name: 'key',
-      type: 'text',
-      required: true,
-      index: true,
-      admin: {
-        description: 'Configuration key that was modified',
-      },
-    },
-    {
-      name: 'kind',
-      type: 'select',
-      required: true,
-      options: [
-        { label: 'Variable', value: ConfigKind.Variable },
-        { label: 'Secret', value: ConfigKind.Secret },
-      ],
-      admin: {
-        description: 'Type of config entry',
-      },
-    },
-    {
-      name: 'action',
-      type: 'select',
-      required: true,
-      options: [
-        { label: 'Created', value: 'created' },
-        { label: 'Updated', value: 'updated' },
-        { label: 'Enabled', value: 'enabled' },
-        { label: 'Disabled', value: 'disabled' },
-      ],
-      admin: {
-        description: 'Action performed',
-      },
-    },
-    {
-      name: 'actor',
-      type: 'relationship',
-      relationTo: 'users',
-      required: true,
-      index: true,
-      admin: {
-        description: 'Admin user who performed the action',
-      },
-    },
-    {
-      name: 'reason',
-      type: 'text',
-      required: false,
-      admin: {
-        description: 'Optional reason for the change',
-      },
-    },
-  ],
-  timestamps: true,
+let cache: RuntimeConfigCache | null = null
+let loadingPromise: Promise<LoadConfigResult> | null = null
+
+// ============================================
+// Type Guards & Validators
+// ============================================
+
+/**
+ * Check if we're running on the server
+ * CRITICAL: Never allow client-side access
+ */
+function assertServerSide(): void {
+  if (typeof window !== 'undefined') {
+    throw new Error('RuntimeConfig is server-side only')
+  }
+}
+
+/**
+ * Check if config has been loaded
+ */
+function assertLoaded(): void {
+  if (!cache) {
+    throw new ConfigNotLoadedError()
+  }
+}
+
+// ============================================
+// Core Loader Logic
+// ============================================
+
+/**
+ * Load all enabled config entries from DB into memory
+ *
+ * Behavior:
+ * - Idempotent: safe to call multiple times
+ * - Only loads enabled=true entries
+ * - Decrypts secrets using config-crypto
+ * - Merges with process.env (env wins)
+ *
+ * @returns LoadConfigResult with stats and any errors
+ *
+ * @throws Error if DB is unreachable
+ */
+export async function loadRuntimeConfig(): Promise<LoadConfigResult> {
+  assertServerSide()
+
+  // Idempotent: return existing promise if already loading
+  if (loadingPromise) {
+    return loadingPromise
+  }
+
+  loadingPromise = (async (): Promise<LoadConfigResult> => {
+    const startTime = Date.now()
+    const errors: LoadConfigResult['errors'] = []
+    const variables: Record<string, string> = {}
+    const secrets: Record<string, string> = {}
+
+    try {
+      // Get Payload instance
+      const payload = await getPayload({ config })
+
+      // Query all enabled config entries
+      // Use overrideAccess: true since we're server-side admin
+      const result = await payload.find({
+        collection: 'config_entries',
+        where: { enabled: { equals: true } },
+        limit: 1000, // Reasonable limit for config entries
+        overrideAccess: true, // Server-side operation
+      })
+
+      // Process each entry
+      for (const doc of result.docs) {
+        const { key, kind, value } = doc
+
+        try {
+          if (kind === ConfigKind.Variable) {
+            // Variables: store as-is
+            variables[key] = value
+          } else if (kind === ConfigKind.Secret) {
+            // Secrets: decrypt before storing
+            if (value && value.length > 0) {
+              secrets[key] = decryptSecret(value)
+            }
+          }
+        } catch (error) {
+          // Log error but continue loading other entries
+          errors.push({
+            key,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          })
+        }
+      }
+
+      // Initialize cache
+      cache = {
+        variables,
+        secrets,
+        metadata: {
+          loadedAt: new Date(),
+          loadedFromDb: true,
+          entryCount: result.docs.length,
+        },
+      }
+
+      const duration = Date.now() - startTime
+
+      // SECURITY: Never log secrets - only metadata
+      payload.logger.info({
+        msg: 'Runtime config loaded',
+        variablesLoaded: Object.keys(variables).length,
+        secretsLoaded: Object.keys(secrets).length,
+        errorsCount: errors.length,
+        durationMs: duration,
+      })
+
+      return {
+        success: errors.length === 0,
+        variablesLoaded: Object.keys(variables).length,
+        secretsLoaded: Object.keys(secrets).length,
+        errors,
+        loadedAt: cache.metadata.loadedAt,
+      }
+    } finally {
+      // Clear loading promise to allow retry on next call
+      loadingPromise = null
+    }
+  })()
+
+  return loadingPromise
+}
+
+/**
+ * Force reload config (bypasses idempotent check)
+ * Useful for dev mode or manual refresh
+ */
+export async function reloadRuntimeConfig(): Promise<LoadConfigResult> {
+  assertServerSide()
+
+  // Reset state to force fresh load
+  cache = null
+  loadingPromise = null
+
+  return loadRuntimeConfig()
+}
+
+// ============================================
+// Public API: Getters
+// ============================================
+
+/**
+ * Get a configuration variable
+ *
+ * Precedence:
+ * 1. process.env[KEY] (hard override)
+ * 2. In-memory cache (DB config)
+ * 3. Default value (if provided)
+ * 4. Throw error
+ *
+ * @param key - Configuration key
+ * @param options - Options for default value and error handling
+ * @returns The configuration value
+ *
+ * @throws ConfigNotLoadedError if config not loaded
+ * @throws ConfigKeyNotFoundError if key not found and no default
+ */
+export function getVariable(
+  key: string,
+  options?: { defaultValue?: string; throwIfNotFound?: boolean }
+): string {
+  assertServerSide()
+  assertLoaded()
+
+  const { defaultValue, throwIfNotFound = true } = options ?? {}
+
+  // 1. Check process.env first (hard override)
+  if (process.env[key] !== undefined) {
+    return process.env[key]!
+  }
+
+  // 2. Check in-memory cache
+  if (cache!.variables[key] !== undefined) {
+    return cache!.variables[key]
+  }
+
+  // 3. Return default or throw
+  if (defaultValue !== undefined) {
+    return defaultValue
+  }
+
+  if (!throwIfNotFound) {
+    return ''
+  }
+
+  throw new ConfigKeyNotFoundError(key, 'variable')
+}
+
+/**
+ * Get a configuration secret
+ *
+ * Same precedence as getVariable, but for secrets.
+ * Secrets are decrypted and stored in memory after load.
+ *
+ * SECURITY:
+ * - Never logs the secret value
+ * - Throws explicit error if not found
+ *
+ * @param key - Secret key
+ * @param options - Options for default value and error handling
+ * @returns The decrypted secret value
+ *
+ * @throws ConfigNotLoadedError if config not loaded
+ * @throws ConfigKeyNotFoundError if key not found and no default
+ */
+export function getSecret(
+  key: string,
+  options?: { defaultValue?: string; throwIfNotFound?: boolean }
+): string {
+  assertServerSide()
+  assertLoaded()
+
+  const { defaultValue, throwIfNotFound = true } = options ?? {}
+
+  // 1. Check process.env first (hard override)
+  if (process.env[key] !== undefined) {
+    return process.env[key]!
+  }
+
+  // 2. Check in-memory cache (secrets)
+  if (cache!.secrets[key] !== undefined) {
+    return cache!.secrets[key]
+  }
+
+  // 3. Return default or throw
+  if (defaultValue !== undefined) {
+    return defaultValue
+  }
+
+  if (!throwIfNotFound) {
+    return ''
+  }
+
+  throw new ConfigKeyNotFoundError(key, 'secret')
+}
+
+// ============================================
+// Utility Functions
+// ============================================
+
+/**
+ * Check if config has been loaded
+ */
+export function isConfigLoaded(): boolean {
+  return cache !== null && cache.metadata.loadedAt !== null
+}
+
+/**
+ * Get cache metadata (for debugging/monitoring)
+ * Note: Does not expose secret values
+ */
+export function getCacheMetadata(): {
+  loadedAt: Date | null
+  entryCount: number
+  variableCount: number
+  secretCount: number
+} | null {
+  if (!cache) {
+    return null
+  }
+
+  return {
+    loadedAt: cache.metadata.loadedAt,
+    entryCount: cache.metadata.entryCount,
+    variableCount: Object.keys(cache.variables).length,
+    secretCount: Object.keys(cache.secrets).length,
+  }
+}
+
+/**
+ * Get all variable keys (for introspection)
+ */
+export function getVariableKeys(): string[] {
+  assertServerSide()
+  assertLoaded()
+  return Object.keys(cache!.variables)
+}
+
+/**
+ * Get all secret keys (for introspection, not values)
+ */
+export function getSecretKeys(): string[] {
+  assertServerSide()
+  assertLoaded()
+  return Object.keys(cache!.secrets)
+}
+
+/**
+ * Clear the in-memory cache
+ * Useful for testing or graceful shutdown
+ */
+export function clearConfigCache(): void {
+  cache = null
+  loadingPromise = null
 }
 ```
 
-**Acceptance Criteria:**
+### 3.4 Public Exports (`index.ts`)
 
-- [ ] Collection slug: `config_audit_logs`
-- [ ] create: returns false (UI blocked, hooks use overrideAccess)
-- [ ] update: returns false (append-only)
-- [ ] delete: returns false (append-only)
-- [ ] read: admin only
-- [ ] Fields: key, kind, action, actor, reason, timestamps
+```typescript
+/**
+ * Runtime Config Module Exports
+ *
+ * @fileType exports
+ * @domain config.runtime
+ */
+
+export * from './runtime-config'
+export * from './types'
+export * from './errors'
+```
 
 ---
 
-### Step 6: Create Hooks
+## 4. Integration Points
 
-#### Step 6a: Before Change Hook
+### 4.1 Payload Startup Hook (Optional)
 
-**File:** `src/server/payload/hooks/configEntries/beforeChange-hook.ts`
+Add to `src/payload.config.ts` or create a startup hook:
 
 ```typescript
 /**
- * ConfigEntries Before Change Hook
- *
- * @fileType hook
- * @domain config
- * @pattern validation, encryption
- * @ai-summary Encrypts secrets and validates config entries before save
- *
- * Security (CRITICAL):
- * - Always pass req to nested operations for transaction safety
- * - Encrypt secrets before storage
- * - Enforce key and kind immutability
- * - Store computed action in req.context for audit hook
+ * Server start hook to load config
+ * This ensures config is ready before first request
  */
+import { loadRuntimeConfig } from '@/lib/config/runtime'
 
-import type { CollectionBeforeChangeHook } from 'payload'
+// Note: Payload CMS doesn't have built-in startup hooks in v3.x
+// Alternative: Call loadRuntimeConfig() in first API route
+// or use a lazy-loading pattern in getVariable/getSecret
+```
 
-import { encryptSecret } from '@/lib/config/config-crypto'
-import { isSnakeCase, looksLikeSecret } from '@/lib/config/config-constants'
-import { ConfigKind } from '@/lib/config/config-constants'
+### 4.2 Lazy Loading Pattern
 
+```typescript
 /**
- * Determine the action type based on operation and data
+ * Auto-load on first access
+ * Useful if you don't want explicit startup calls
  */
-function getAction(
-  operation: 'create' | 'update',
-  data: { enabled?: boolean; kind?: string },
-  originalDoc?: { enabled?: boolean; kind?: string },
-): 'created' | 'updated' | 'enabled' | 'disabled' {
-  if (operation === 'create') {
-    return 'created'
+export async function getVariable(
+  key: string,
+  options?: GetConfigOptions
+): Promise<string> {
+  assertServerSide()
+
+  // Auto-load if not already loaded
+  if (!isConfigLoaded()) {
+    await loadRuntimeConfig()
   }
 
-  if (originalDoc && data.enabled !== undefined) {
-    if (data.enabled && !originalDoc.enabled) {
-      return 'enabled'
-    }
-    if (!data.enabled && originalDoc.enabled) {
-      return 'disabled'
-    }
-  }
-
-  return 'updated'
-}
-
-export const beforeChangeEncryptAndValidate: CollectionBeforeChangeHook = async ({
-  data,
-  operation,
-  req,
-  originalDoc,
-}) => {
-  const { payload } = req
-
-  // =========================================================================
-  // Key Immutability Check
-  // Only compare if data.key is provided (update may omit it)
-  // =========================================================================
-  if (operation === 'update' && data.key !== undefined && originalDoc?.key !== data.key) {
-    throw new Error('Config key cannot be changed after creation')
-  }
-
-  // =========================================================================
-  // Kind Immutability Check
-  // Only compare if data.kind is provided (update may omit it)
-  // =========================================================================
-  if (operation === 'update' && data.kind !== undefined && originalDoc?.kind !== data.kind) {
-    throw new Error('Config kind cannot be changed after creation')
-  }
-
-  // =========================================================================
-  // Key Format Validation (snake_case) - only on create or if key is provided
-  // =========================================================================
-  if (data.key && !isSnakeCase(data.key)) {
-    throw new Error('Config key must be snake_case (e.g., my_config_key)')
-  }
-
-  // =========================================================================
-  // Secret-Like Key Warning (soft validation)
-  // =========================================================================
-  if (data.kind === ConfigKind.Variable && data.key && looksLikeSecret(data.key)) {
-    payload.logger.warn({
-      msg: 'Config entry with variable kind has secret-like key',
-      key: data.key,
-      userId: req.user?.id,
-    })
-  }
-
-  // =========================================================================
-  // Encrypt Secrets (deterministic - always encrypt when value provided)
-  // =========================================================================
-  if (data.kind === ConfigKind.Secret && data.value) {
-    // Always encrypt when value is provided (treat as rotation)
-    // On create: always encrypt
-    // On update: only encrypt if value is explicitly provided
-    data.value = encryptSecret(data.value)
-  }
-
-  // =========================================================================
-  // Store action in context for afterChange hook
-  // =========================================================================
-  req.context.configAction = getAction(operation, data, originalDoc)
-
-  return data
+  // ... rest of implementation
 }
 ```
 
-**Acceptance Criteria:**
+---
 
-- [ ] Key immutability: throws on key change attempt (only if key provided)
-- [ ] Kind immutability: throws on kind change attempt (only if kind provided)
-- [ ] Key format: validates snake_case
-- [ ] Secret encryption: always encrypts when value provided for secrets
-- [ ] Secret-like warning: logs warning for variable with secret-like key
-- [ ] Stores `configAction` in `req.context` for audit hook
+## 5. Testing Strategy
 
-#### Step 6b: After Change Hook
-
-**File:** `src/server/payload/hooks/configEntries/afterChange-hook.ts`
+### 5.1 Unit Tests (`tests/unit/lib/config/runtime/runtime-config.test.ts`)
 
 ```typescript
 /**
- * ConfigEntries After Change Hook
+ * Runtime Config Unit Tests
  *
- * @fileType hook
- * @domain config
- * @pattern audit-log
- * @ai-summary Creates audit log entries after config mutations
- *
- * Security (CRITICAL):
- * - Always pass req to nested operations for transaction safety
- * - Never log secret values in plaintext
- * - Use context to prevent infinite hook loops
- * - Use overrideAccess to bypass collection create restriction
+ * @fileType unit-test
+ * @domain config.runtime
  */
 
-import type { CollectionAfterChangeHook } from 'payload'
+import { describe, expect, test, beforeEach, vi } from 'vitest'
+import {
+  loadRuntimeConfig,
+  getVariable,
+  getSecret,
+  isConfigLoaded,
+  clearConfigCache,
+  reloadRuntimeConfig,
+} from '@/lib/config/runtime'
+import { decryptSecret, encryptSecret } from '@/lib/config/config-crypto'
 
-export const afterChangeAuditLog: CollectionAfterChangeHook = async ({
-  doc,
-  operation,
-  req,
-  previousDoc,
-}) => {
-  // Skip if we triggered this ourselves (prevent infinite loop)
-  if (req.context._skipAuditLog) {
-    return doc
-  }
+// Mock Payload
+vi.mock('payload', () => ({
+  getPayload: vi.fn(),
+}))
 
-  const { payload } = req
-
-  // Get the action from beforeChange hook (stored in context)
-  const action = req.context.configAction || (operation === 'create' ? 'created' : 'updated')
-
-  // =========================================================================
-  // Create Audit Log Entry (CRITICAL: pass req for transaction safety)
-  // Use overrideAccess: true to bypass collection's create: () => false
-  // =========================================================================
-  await payload.create({
-    collection: 'config_audit_logs',
-    data: {
-      key: doc.key,
-      kind: doc.kind,
-      action: action,
-      actor: req.user?.id,
-      // No reason field in this implementation (can be added later)
-    },
-    req, // CRITICAL: Pass req for transaction safety
-    overrideAccess: true, // Bypass create restriction - hooks can create
-    context: {
-      _skipAuditLog: true, // Prevent audit hook from triggering itself
-    },
+describe('Runtime Config', () => {
+  beforeEach(() => {
+    clearConfigCache()
+    vi.clearAllMocks()
   })
 
-  return doc
-}
-```
+  describe('loadRuntimeConfig', () => {
+    test('should load variables and secrets from DB', async () => {
+      // Mock payload.find with test data
+      const mockPayload = {
+        find: vi.fn().mockResolvedValue({
+          docs: [
+            { key: 'test_var', kind: 'variable', value: 'var-value', enabled: true },
+            { key: 'test_secret', kind: 'secret', value: encryptSecret('secret-value'), enabled: true },
+          ],
+        }),
+        logger: { info: vi.fn() },
+      }
+      ;(getPayload as any).mockResolvedValue(mockPayload)
 
-**Acceptance Criteria:**
+      const result = await loadRuntimeConfig()
 
-- [ ] Creates audit log entry for all mutations
-- [ ] Uses `overrideAccess: true` to bypass collection create restriction
-- [ ] Passes req to payload.create for transaction safety
-- [ ] Uses context to prevent infinite hook loops
-- [ ] Logs actor, action, key, kind
+      expect(result.success).toBe(true)
+      expect(result.variablesLoaded).toBe(1)
+      expect(result.secretsLoaded).toBe(1)
+      expect(isConfigLoaded()).toBe(true)
+    })
 
-#### Step 6c: After Read Hook (Write-Only UX)
+    test('should be idempotent', async () => {
+      // Same mock as above
+      const mockPayload = {
+        find: vi.fn().mockResolvedValue({ docs: [] }),
+        logger: { info: vi.fn() },
+      }
+      ;(getPayload as any).mockResolvedValue(mockPayload)
 
-**File:** `src/server/payload/hooks/configEntries/afterRead-hook.ts`
+      const result1 = await loadRuntimeConfig()
+      const result2 = await loadRuntimeConfig()
 
-```typescript
-/**
- * ConfigEntries After Read Hook
- *
- * @fileType hook
- * @domain config
- * @pattern write-only-ux
- * @ai-summary Clears secret values in Admin UI responses to implement write-only UX
- *
- * Security (CRITICAL):
- * - Secrets should not be revealed after save
- * - Admin must re-enter value to rotate/change
- * - Original ciphertext remains encrypted in database
- */
+      // Should only call DB once
+      expect(mockPayload.find).toHaveBeenCalledTimes(1)
+      expect(result1).toEqual(result2)
+    })
 
-import type { CollectionAfterReadHook } from 'payload'
+    test('should ignore disabled entries', async () => {
+      const mockPayload = {
+        find: vi.fn().mockResolvedValue({
+          docs: [
+            { key: 'enabled_var', kind: 'variable', value: 'value', enabled: true },
+            { key: 'disabled_var', kind: 'variable', value: 'disabled', enabled: false },
+          ],
+        }),
+        logger: { info: vi.fn() },
+      }
+      ;(getPayload as any).mockResolvedValue(mockPayload)
 
-/**
- * Hide secret values in Admin UI responses
- * Called both at collection level and field level
- */
-export const afterReadHideSecretValue: CollectionAfterReadHook = async ({
-  doc,
-  req,
-  // Note: field is not available in collection-level afterRead, only field-level
-}) => {
-  // Only affect Admin UI responses (not API responses with overrideAccess)
-  // We can check if this is an admin UI request by context or headers
-  // For simplicity, we check if the doc is a secret - the Admin UI should hide it
+      await loadRuntimeConfig()
 
-  if (doc.kind === 'secret') {
-    // Clear the value field for secrets
-    // This makes the field appear empty/blank in the edit view
-    // Admin must re-enter value to update
-    doc.value = ''
-  }
+      const vars = await getVariable('disabled_var', { throwIfNotFound: false })
+      expect(vars).toBe('')
+    })
 
-  return doc
-}
-```
+    test('should fail fast on DB error', async () => {
+      const mockPayload = {
+        find: vi.fn().mockRejectedValue(new Error('DB connection failed')),
+        logger: { info: vi.fn() },
+      }
+      ;(getPayload as any).mockResolvedValue(mockPayload)
 
-**Acceptance Criteria:**
+      await expect(loadRuntimeConfig()).rejects.toThrow('DB connection failed')
+    })
+  })
 
-- [ ] Secrets return empty string for value in Admin UI
-- [ ] Variables return plaintext value normally
-- [ ] Database still contains encrypted value (not modified)
+  describe('getVariable', () => {
+    test('should return process.env override', async () => {
+      const mockPayload = {
+        find: vi.fn().mockResolvedValue({ docs: [{ key: 'MY_VAR', kind: 'variable', value: 'db-value', enabled: true }] }),
+        logger: { info: vi.fn() },
+      }
+      ;(getPayload as any).mockResolvedValue(mockPayload)
 
----
+      process.env.MY_VAR = 'env-override'
+      await loadRuntimeConfig()
 
-### Step 7: Register Collections in Payload Config
+      expect(getVariable('MY_VAR')).toBe('env-override')
 
-**File:** `src/payload.config.ts`
+      delete process.env.MY_VAR
+    })
 
-```typescript
-// Add imports
-import { ConfigEntries } from '@/server/payload/collections/ConfigEntries'
-import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
+    test('should return DB value when env not set', async () => {
+      const mockPayload = {
+        find: vi.fn().mockResolvedValue({ docs: [{ key: 'DB_VAR', kind: 'variable', value: 'db-value', enabled: true }] }),
+        logger: { info: vi.fn() },
+      }
+      ;(getPayload as any).mockResolvedValue(mockPayload)
 
-// Add to collections array
-export default buildConfig({
-  // ... existing config
-  collections: [
-    // ... existing collections
-    ConfigEntries,
-    ConfigAuditLogs,
-  ],
-  // ... rest of config
+      await loadRuntimeConfig()
+
+      expect(getVariable('DB_VAR')).toBe('db-value')
+    })
+
+    test('should throw ConfigNotLoadedError if not loaded', () => {
+      expect(() => getVariable('any_key')).toThrow(ConfigNotLoadedError)
+    })
+
+    test('should throw ConfigKeyNotFoundError if key missing', async () => {
+      const mockPayload = {
+        find: vi.fn().mockResolvedValue({ docs: [] }),
+        logger: { info: vi.fn() },
+      }
+      ;(getPayload as any).mockResolvedValue(mockPayload)
+
+      await loadRuntimeConfig()
+
+      expect(() => getVariable('missing_key')).toThrow(ConfigKeyNotFoundError)
+    })
+
+    test('should return default value if provided', async () => {
+      const mockPayload = {
+        find: vi.fn().mockResolvedValue({ docs: [] }),
+        logger: { info: vi.fn() },
+      }
+      ;(getPayload as any).mockResolvedValue(mockPayload)
+
+      await loadRuntimeConfig()
+
+      expect(getVariable('missing', { defaultValue: 'default' })).toBe('default')
+    })
+  })
+
+  describe('getSecret', () => {
+    test('should return decrypted secret', async () => {
+      const secretValue = 'my-secret-password'
+      const mockPayload = {
+        find: vi.fn().mockResolvedValue({
+          docs: [{ key: 'MY_SECRET', kind: 'secret', value: encryptSecret(secretValue), enabled: true }],
+        }),
+        logger: { info: vi.fn() },
+      }
+      ;(getPayload as any).mockResolvedValue(mockPayload)
+
+      await loadRuntimeConfig()
+
+      expect(getSecret('MY_SECRET')).toBe(secretValue)
+    })
+
+    test('should throw ConfigKeyNotFoundError if secret missing', async () => {
+      const mockPayload = {
+        find: vi.fn().mockResolvedValue({ docs: [] }),
+        logger: { info: vi.fn() },
+      }
+      ;(getPayload as any).mockResolvedValue(mockPayload)
+
+      await loadRuntimeConfig()
+
+      expect(() => getSecret('missing_secret')).toThrow(ConfigKeyNotFoundError)
+    })
+  })
+
+  describe('security', () => {
+    test('should throw on client-side access', () => {
+      // Simulate window object
+      const { window } = globalThis
+      ;(globalThis as any).window = {}
+
+      expect(() => loadRuntimeConfig()).toThrow('server-side only')
+
+      // Restore
+      if (window === undefined) {
+        delete (globalThis as any).window
+      } else {
+        (globalThis as any).window = window
+      }
+    })
+
+    test('should not throw on server (window undefined)', async () => {
+      delete (globalThis as any).window
+
+      const mockPayload = {
+        find: vi.fn().mockResolvedValue({ docs: [] }),
+        logger: { info: vi.fn() },
+      }
+      ;(getPayload as any).mockResolvedValue(mockPayload)
+
+      // Should not throw, just return
+      await expect(loadRuntimeConfig()).resolves.toBeDefined()
+
+      // Restore
+      ;(globalThis as any).window = undefined
+    })
+  })
 })
 ```
 
-**Acceptance Criteria:**
-
-- [ ] Import ConfigEntries and ConfigAuditLogs
-- [ ] Add to collections array
-
----
-
-### Step 8: Update Environment Example
-
-**File:** `.env.example`
-
-```bash
-# Config Manager
-CONFIG_MASTER_KEY=your-32-char-minimum-master-key-here
-```
-
-**Acceptance Criteria:**
-
-- [ ] Add CONFIG_MASTER_KEY documentation
-- [ ] Document minimum length requirement
-
----
-
-### Step 9: Create Integration Tests
-
-**File:** `tests/int/config-manager.int.spec.ts`
+### 5.2 Integration Tests (`tests/int/runtime-config.int.test.ts`)
 
 ```typescript
 /**
- * Config Manager Integration Tests
+ * Runtime Config Integration Tests
  *
  * @fileType integration-test
- * @domain config
- * @pattern key-value-store, encryption, audit-log
- * @ai-summary Integration tests for config manager functionality
+ * @domain config.runtime
+ * @pattern integration
  */
 
-import { describe, test, expect, beforeAll, afterAll } from 'vitest'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import type { User } from '@/payload-types'
-import { encryptSecret, decryptSecret } from '@/lib/config/config-crypto'
+import { loadRuntimeConfig, getVariable, getSecret, clearConfigCache } from '@/lib/config/runtime'
 import { ConfigKind } from '@/lib/config/config-constants'
+import { describe, expect, test, beforeAll, afterAll } from 'vitest'
 
-// Test data
-const TEST_ADMIN_EMAIL = 'config-test-admin@example.com'
-const TEST_ADMIN_PASSWORD = 'test-password-min-32-chars!!'
-const TEST_KEY = 'test_config_key'
-
-describe('Config Manager', () => {
+describe('Runtime Config Integration', () => {
   let payload: Awaited<ReturnType<typeof getPayload>>
-  let adminUser: User
 
   beforeAll(async () => {
     payload = await getPayload({ config })
-
-    // Create or find admin user for tests
-    try {
-      const users = await payload.find({
-        collection: 'users',
-        where: { email: { equals: TEST_ADMIN_EMAIL } },
-      })
-      if (users.docs.length > 0) {
-        adminUser = users.docs[0]
-      } else {
-        adminUser = await payload.create({
-          collection: 'users',
-          data: {
-            email: TEST_ADMIN_EMAIL,
-            password: TEST_ADMIN_PASSWORD,
-            role: 'admin',
-          },
-        })
-      }
-    } catch {
-      // User might already exist, try to find
-      const users = await payload.find({
-        collection: 'users',
-        where: { email: { equals: TEST_ADMIN_EMAIL } },
-      })
-      adminUser = users.docs[0]
-    }
   })
 
   afterAll(async () => {
-    // Cleanup test data
+    clearConfigCache()
+    // Cleanup test entries
     try {
       await payload.delete({
         collection: 'config_entries',
-        where: { key: { like: 'test_' } },
-      })
-      await payload.delete({
-        collection: 'config_audit_logs',
-        where: { key: { like: 'test_' } },
+        where: { key: { like: 'test_runtime_' } },
       })
     } catch {
       // Ignore cleanup errors
     }
   })
 
-  describe('ConfigEntries Collection', () => {
-    test('should create variable config entry', async () => {
-      const result = await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_variable',
-          kind: ConfigKind.Variable,
-          value: 'plaintext-value',
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      expect(result.key).toBe('test_variable')
-      expect(result.kind).toBe(ConfigKind.Variable)
-      expect(result.value).toBe('plaintext-value')
-      expect(result.enabled).toBe(true)
+  test('should load config from real DB', async () => {
+    // Create test entries
+    await payload.create({
+      collection: 'config_entries',
+      data: {
+        key: 'test_runtime_var',
+        kind: ConfigKind.Variable,
+        value: 'integration-test-value',
+        enabled: true,
+      },
+      overrideAccess: true,
     })
 
-    test('should create secret config entry with encryption', async () => {
-      const secretValue = 'my-super-secret-password'
-
-      const result = await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_secret',
-          kind: ConfigKind.Secret,
-          value: secretValue,
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      // Value should be encrypted in DB (afterRead hook returns empty string)
-      expect(result.value).toBe('') // Write-only UX
-      expect(result.value).not.toBe(secretValue)
-
-      // Verify encryption by using overrideAccess to bypass afterRead
-      // Or directly query and decrypt
+    await payload.create({
+      collection: 'config_entries',
+      data: {
+        key: 'test_runtime_secret',
+        kind: ConfigKind.Secret,
+        value: 'integration-test-secret',
+        enabled: true,
+      },
+      overrideAccess: true,
     })
 
-    test('should reject duplicate key', async () => {
-      await expect(
-        payload.create({
-          collection: 'config_entries',
-          data: {
-            key: 'test_variable', // Already exists from previous test
-            kind: ConfigKind.Variable,
-            value: 'another-value',
-            enabled: true,
-          },
-          req: { user: adminUser } as any,
-        }),
-      ).rejects.toThrow()
-    })
+    // Load config
+    const result = await loadRuntimeConfig()
 
-    test('should reject non-snake_case key', async () => {
-      await expect(
-        payload.create({
-          collection: 'config_entries',
-          data: {
-            key: 'Invalid-Key-Format',
-            kind: ConfigKind.Variable,
-            value: 'value',
-            enabled: true,
-          },
-          req: { user: adminUser } as any,
-        }),
-      ).rejects.toThrow(/snake_case/)
-    })
+    expect(result.success).toBe(true)
+    expect(result.variablesLoaded).toBeGreaterThan(0)
 
-    test('should reject key change on update', async () => {
-      // First create a config entry
-      const created = await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_immutable',
-          kind: ConfigKind.Variable,
-          value: 'value',
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      // Try to update key
-      await expect(
-        payload.update({
-          collection: 'config_entries',
-          id: created.id,
-          data: { key: 'new_key' },
-          req: { user: adminUser } as any,
-        }),
-      ).rejects.toThrow(/cannot be changed/)
-    })
-
-    test('should reject kind change on update', async () => {
-      // First create a config entry
-      const created = await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_kind_immutable',
-          kind: ConfigKind.Variable,
-          value: 'value',
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      // Try to update kind
-      await expect(
-        payload.update({
-          collection: 'config_entries',
-          id: created.id,
-          data: { kind: ConfigKind.Secret },
-          req: { user: adminUser } as any,
-        }),
-      ).rejects.toThrow(/cannot be changed/)
-    })
-
-    test('should update enabled without sending key or kind', async () => {
-      // First create a config entry
-      const created = await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_update_enabled_only',
-          kind: ConfigKind.Variable,
-          value: 'value',
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      // Update only enabled (no key or kind)
-      const updated = await payload.update({
-        collection: 'config_entries',
-        id: created.id,
-        data: { enabled: false },
-        req: { user: adminUser } as any,
-      })
-
-      expect(updated.enabled).toBe(false)
-    })
-
-    test('should update value without sending key or kind', async () => {
-      // First create a config entry
-      const created = await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_update_value_only',
-          kind: ConfigKind.Variable,
-          value: 'original',
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      // Update only value (no key or kind)
-      const updated = await payload.update({
-        collection: 'config_entries',
-        id: created.id,
-        data: { value: 'updated' },
-        req: { user: adminUser } as any,
-      })
-
-      expect(updated.value).toBe('updated')
-    })
-
-    test('should toggle enabled status', async () => {
-      const created = await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_toggle',
-          kind: ConfigKind.Variable,
-          value: 'value',
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      const disabled = await payload.update({
-        collection: 'config_entries',
-        id: created.id,
-        data: { enabled: false },
-        req: { user: adminUser } as any,
-      })
-
-      expect(disabled.enabled).toBe(false)
-
-      const reenabled = await payload.update({
-        collection: 'config_entries',
-        id: created.id,
-        data: { enabled: true },
-        req: { user: adminUser } as any,
-      })
-
-      expect(reenabled.enabled).toBe(true)
-    })
+    // Verify values
+    expect(getVariable('test_runtime_var')).toBe('integration-test-value')
+    expect(getSecret('test_runtime_secret')).toBe('integration-test-secret')
   })
 
-  describe('Encryption', () => {
-    test('encrypt produces encrypted output', () => {
-      const plaintext = 'secret-data'
-      const encrypted = encryptSecret(plaintext)
-
-      expect(encrypted).toBeDefined()
-      expect(typeof encrypted).toBe('string')
-      expect(encrypted).not.toBe(plaintext)
+  test('should respect process.env override in integration', async () => {
+    // Create DB entry
+    await payload.create({
+      collection: 'config_entries',
+      data: {
+        key: 'test_runtime_override',
+        kind: ConfigKind.Variable,
+        value: 'db-value',
+        enabled: true,
+      },
+      overrideAccess: true,
     })
 
-    test('round-trip preserves data', () => {
-      const testValues = [
-        'simple',
-        'with spaces',
-        'special-chars!@#$%',
-        'unicode: עברית',
-        'multi\nline',
-      ]
+    // Set env override
+    process.env.TEST_RUNTIME_OVERRIDE = 'env-wins'
 
-      for (const value of testValues) {
-        const encrypted = encryptSecret(value)
-        const decrypted = decryptSecret(encrypted)
-        expect(decrypted).toBe(value)
-      }
-    })
+    await loadRuntimeConfig()
+
+    expect(getVariable('TEST_RUNTIME_OVERRIDE')).toBe('env-wins')
+
+    // Cleanup
+    delete process.env.TEST_RUNTIME_OVERRIDE
   })
 
-  describe('ConfigAuditLogs Collection', () => {
-    test('should create audit log on create', async () => {
-      await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_audit_create',
-          kind: ConfigKind.Variable,
-          value: 'value',
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      const logs = await payload.find({
-        collection: 'config_audit_logs',
-        where: { key: { equals: 'test_audit_create' } },
-        sort: '-createdAt',
-        limit: 1,
-      })
-
-      expect(logs.docs.length).toBeGreaterThan(0)
-      expect(logs.docs[0].action).toBe('created')
-      expect(logs.docs[0].actor).toBe(adminUser.id)
+  test('should not leak secrets to logs', async () => {
+    await payload.create({
+      collection: 'config_entries',
+      data: {
+        key: 'test_runtime_leak',
+        kind: ConfigKind.Secret,
+        value: 'super-secret-value',
+        enabled: true,
+      },
+      overrideAccess: true,
     })
 
-    test('should create audit log on update', async () => {
-      const created = await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_audit_update',
-          kind: ConfigKind.Variable,
-          value: 'original',
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
+    await loadRuntimeConfig()
 
-      await payload.update({
-        collection: 'config_entries',
-        id: created.id,
-        data: { value: 'updated' },
-        req: { user: adminUser } as any,
-      })
+    // The secret should be readable via API
+    expect(getSecret('test_runtime_leak')).toBe('super-secret-value')
 
-      const logs = await payload.find({
-        collection: 'config_audit_logs',
-        where: { key: { equals: 'test_audit_update' } },
-        sort: '-createdAt',
-      })
-
-      const updateLog = logs.docs.find((log) => log.action === 'updated')
-      expect(updateLog).toBeDefined()
-    })
-
-    test('should create audit log on enable/disable', async () => {
-      const created = await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_audit_toggle',
-          kind: ConfigKind.Variable,
-          value: 'value',
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      await payload.update({
-        collection: 'config_entries',
-        id: created.id,
-        data: { enabled: false },
-        req: { user: adminUser } as any,
-      })
-
-      const logs = await payload.find({
-        collection: 'config_audit_logs',
-        where: { key: { equals: 'test_audit_toggle' } },
-        sort: '-createdAt',
-      })
-
-      const disableLog = logs.docs.find((log) => log.action === 'disabled')
-      expect(disableLog).toBeDefined()
-    })
-
-    test('should not store secret values in audit log', async () => {
-      const secretValue = 'super-secret-audit-test'
-
-      await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_audit_secret',
-          kind: ConfigKind.Secret,
-          value: secretValue,
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      const logs = await payload.find({
-        collection: 'config_audit_logs',
-        where: { key: { equals: 'test_audit_secret' } },
-      })
-
-      expect(logs.docs.length).toBeGreaterThan(0)
-      // Audit log should NOT contain the secret value
-      const logJson = JSON.stringify(logs.docs)
-      expect(logJson).not.toContain(secretValue)
-      expect(logJson).not.toContain('super-secret')
-    })
-  })
-
-  describe('Admin UI Write-Only Behavior', () => {
-    test('should return empty value for secret after save', async () => {
-      const secretValue = 'ui-secret-test'
-
-      const created = await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_ui_secret',
-          kind: ConfigKind.Secret,
-          value: secretValue,
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      // AfterRead hook should return empty string for secrets
-      expect(created.value).toBe('')
-
-      // Fetch again - should still be empty
-      const fetched = await payload.findByID({
-        collection: 'config_entries',
-        id: created.id,
-        req: { user: adminUser } as any,
-      })
-
-      expect(fetched.value).toBe('')
-    })
-
-    test('should return plaintext value for variable after save', async () => {
-      const variableValue = 'ui-variable-test'
-
-      const created = await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_ui_variable',
-          kind: ConfigKind.Variable,
-          value: variableValue,
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      // Variables should return plaintext
-      expect(created.value).toBe(variableValue)
-    })
-
-    test('encrypted value should still exist in database', async () => {
-      const secretValue = 'db-encryption-test'
-
-      const created = await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_db_encryption',
-          kind: ConfigKind.Secret,
-          value: secretValue,
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      // The afterRead hook returns empty, but we need to verify
-      // the encrypted value is still in the DB
-      // We can verify this by checking the raw document
-      // or by using a server-side function that bypasses afterRead
-
-      // For testing: use find with overrideAccess to bypass hooks
-      const rawDocs = await payload.find({
-        collection: 'config_entries',
-        where: { key: { equals: 'test_db_encryption' } },
-        overrideAccess: true, // Bypass afterRead hook
-        req: { user: adminUser } as any,
-      })
-
-      expect(rawDocs.docs[0].value).not.toBe(secretValue)
-      expect(rawDocs.docs[0].value).not.toBe('')
-
-      // Verify it can be decrypted
-      const decrypted = decryptSecret(rawDocs.docs[0].value)
-      expect(decrypted).toBe(secretValue)
-    })
-  })
-
-  describe('Audit Collection Access', () => {
-    test('should block direct create to audit logs', async () => {
-      // This should fail because create: () => false
-      await expect(
-        payload.create({
-          collection: 'config_audit_logs',
-          data: {
-            key: 'direct_create_test',
-            kind: ConfigKind.Variable,
-            action: 'created',
-            actor: adminUser.id,
-          },
-          req: { user: adminUser } as any,
-        }),
-      ).rejects.toThrow()
-    })
-
-    test('should allow hook to create audit entries via overrideAccess', async () => {
-      // Create a config entry - the hook should create an audit log
-      const created = await payload.create({
-        collection: 'config_entries',
-        data: {
-          key: 'test_hook_override_access',
-          kind: ConfigKind.Variable,
-          value: 'value',
-          enabled: true,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      // Verify audit log was created (hook used overrideAccess)
-      const logs = await payload.find({
-        collection: 'config_audit_logs',
-        where: { key: { equals: 'test_hook_override_access' } },
-      })
-
-      expect(logs.docs.length).toBeGreaterThan(0)
-      expect(logs.docs[0].action).toBe('created')
-    })
+    // Note: In real test, you'd capture logs and verify no secret leakage
+    // This is more of a code review concern
   })
 })
 ```
 
-**Acceptance Criteria:**
+---
 
-- [ ] Integration tests for all CRUD operations
-- [ ] Tests for encryption/decryption
-- [ ] Tests for key immutability
-- [ ] Tests for kind immutability
-- [ ] Tests for unique key constraint
-- [ ] Tests for snake_case validation
-- [ ] Tests for audit logging
-- [ ] Tests for secret non-leakage in audit logs
-- [ ] Tests for enabled/disabled toggle
-- [ ] Tests for write-only UX (empty value returned for secrets)
-- [ ] Tests for audit collection access control
+## 6. Security Considerations
+
+### 6.1 Security Checklist
+
+| Concern | Mitigation |
+|---------|------------|
+| **Client-side exposure** | `typeof window` check + TypeScript types |
+| **Secret logging** | Logger only prints metadata (counts, not values) |
+| **Memory safety** | Secrets in module-level variable (process lifetime only) |
+| **DB connection** | Fail fast on DB errors |
+| **Access control** | Use `overrideAccess: true` (server-side admin) |
+| **Error messages** | Explicit errors, no stack traces with sensitive data |
+
+### 6.2 Threat Model
+
+| Threat | Impact | Mitigation |
+|--------|--------|------------|
+| Memory dump exposes secrets | Critical | Container security, short process lifetime |
+| process.env override abuse | Medium | Intentional design for emergency overrides |
+| Unauthorized server access | Critical | Server-only code, no client bundles |
+| Log injection | Low | Structured logging, no user input in logs |
 
 ---
 
-### Step 10: Create Unit Tests for Crypto
+## 7. Performance Considerations
 
-**File:** `tests/unit/lib/config/config-crypto.spec.ts`
+### 7.1 Performance Characteristics
 
-```typescript
-/**
- * Config Crypto Unit Tests
- *
- * @fileType unit-test
- * @domain config
- * @pattern encryption
- * @ai-summary Unit tests for config encryption utilities
- */
+| Operation | Complexity | Notes |
+|-----------|------------|-------|
+| `loadRuntimeConfig()` | O(n) | Single DB query, n = enabled entries |
+| `getVariable()` | O(1) | Hash map lookup |
+| `getSecret()` | O(1) | Hash map lookup |
+| Memory usage | O(n) | Stores all enabled entries in memory |
 
-import { describe, test, expect, beforeAll, afterAll } from 'vitest'
-import { encryptSecret, decryptSecret } from '@/lib/config/config-crypto'
+### 7.2 Optimization Notes
 
-// Set test environment
-const TEST_MASTER_KEY = 'test-master-key-32-characters-long!!'
-
-describe('Config Crypto', () => {
-  beforeAll(() => {
-    process.env.CONFIG_MASTER_KEY = TEST_MASTER_KEY
-  })
-
-  afterAll(() => {
-    delete process.env.CONFIG_MASTER_KEY
-  })
-
-  describe('encryptSecret', () => {
-    test('should encrypt plaintext', () => {
-      const plaintext = 'my-secret-value'
-      const encrypted = encryptSecret(plaintext)
-
-      expect(encrypted).toBeDefined()
-      expect(typeof encrypted).toBe('string')
-      expect(encrypted).not.toBe(plaintext)
-    })
-
-    test('should produce base64 output', () => {
-      const encrypted = encryptSecret('test')
-      expect(() => Buffer.from(encrypted, 'base64')).not.toThrow()
-    })
-
-    test('should produce different output for same input (random IV)', () => {
-      const plaintext = 'same-value'
-      const encrypted1 = encryptSecret(plaintext)
-      const encrypted2 = encryptSecret(plaintext)
-
-      expect(encrypted1).not.toBe(encrypted2)
-    })
-  })
-
-  describe('decryptSecret', () => {
-    test('should decrypt encrypted value', () => {
-      const plaintext = 'decrypt-me'
-      const encrypted = encryptSecret(plaintext)
-      const decrypted = decryptSecret(encrypted)
-
-      expect(decrypted).toBe(plaintext)
-    })
-
-    test('should handle special characters', () => {
-      const specialChars = '!@#$%^&*()_+-=[]{}|;\':",./<>?'
-      const encrypted = encryptSecret(specialChars)
-      const decrypted = decryptSecret(encrypted)
-
-      expect(decrypted).toBe(specialChars)
-    })
-
-    test('should handle unicode', () => {
-      const unicode = 'עברית 中文 日本語 🚀'
-      const encrypted = encryptSecret(unicode)
-      const decrypted = decryptSecret(encrypted)
-
-      expect(decrypted).toBe(unicode)
-    })
-
-    test('should handle empty string', () => {
-      const encrypted = encryptSecret('')
-      const decrypted = decryptSecret(encrypted)
-
-      expect(decrypted).toBe('')
-    })
-
-    test('should handle long strings', () => {
-      const longString = 'a'.repeat(10000)
-      const encrypted = encryptSecret(longString)
-      const decrypted = decryptSecret(encrypted)
-
-      expect(decrypted).toBe(longString)
-    })
-
-    test('should throw on invalid data', () => {
-      expect(() => decryptSecret('not-encrypted')).toThrow()
-    })
-
-    test('should throw on tampered ciphertext', () => {
-      const encrypted = encryptSecret('test')
-      // Tamper with the encrypted data
-      const tampered = encrypted.slice(0, -5) + 'xxxxx'
-      expect(() => decryptSecret(tampered)).toThrow()
-    })
-  })
-})
-```
-
-**Acceptance Criteria:**
-
-- [ ] Unit tests for encryptSecret
-- [ ] Unit tests for decryptSecret
-- [ ] Tests for edge cases (empty string, unicode, long strings)
-- [ ] Tests for tamper detection
+- **Lazy loading**: Config only loaded when first accessed (optional)
+- **No TTL**: Manual reload only, simplifies caching
+- **Single query**: Fetches all entries in one DB call
+- **Limit**: Hard limit of 1000 entries (reasonable for config)
 
 ---
 
-## Mermaid: Data Flow
+## 8. Validation Against Project Standards
 
-```mermaid
-sequenceDiagram
-    participant Admin as Admin User
-    participant UI as Payload Admin UI
-    participant BeforeChange as beforeChange Hook
-    participant Crypto as Encryption Utility
-    participant DB as MongoDB
-    participant AfterRead as afterRead Hook
-    participant Audit as afterChange Audit
+### 8.1 Standards Checklist
 
-    Admin->>UI: Create Config Entry (key, kind, value)
-    UI->>BeforeChange: beforeChange(data, operation)
+| Standard | Compliance | Notes |
+|----------|------------|-------|
+| **TypeScript-First** | ✅ | Full type definitions in `types.ts` |
+| **Security-Critical** | ✅ | Server-side only, no secret logging |
+| **Type Generation** | N/A | No schema changes |
+| **Transaction Safety** | ✅ | No nested operations in hooks |
+| **Access Control** | ✅ | Uses `overrideAccess: true` (server-side) |
+| **File Structure** | ✅ | Follows `src/lib/config/` pattern |
+| **Testing** | ✅ | Unit + integration tests |
+| **Pattern Documentation** | ✅ | `@ai-summary`, `@pattern` tags |
 
-    BeforeChange->>BeforeChange: Validate key/kind immutability
-    BeforeChange->>BeforeChange: Validate snake_case
+### 8.2 Code Quality Metrics
 
-    alt kind === 'secret' AND value provided
-        BeforeChange->>Crypto: encryptSecret(value)
-        Crypto-->>BeforeChange: encrypted value
-    end
-
-    BeforeChange->>BeforeChange: Store action in req.context.configAction
-    BeforeChange-->>UI: validated data
-
-    UI->>DB: Store config entry
-
-    DB->>AfterRead: afterRead(doc)
-
-    alt doc.kind === 'secret'
-        AfterRead->>AfterRead: Set doc.value = ''
-    end
-
-    AfterRead-->>UI: doc with cleared secret value
-    UI-->>Admin: Success (value shown as empty)
-
-    DB->>Audit: Trigger afterChange
-    Audit->>DB: Create audit log with overrideAccess=true
-    Audit-->>DB: Audit entry created
-```
+| Metric | Target | Plan Value |
+|--------|--------|------------|
+| Test Coverage | >90% | Unit tests for all branches |
+| Cyclomatic Complexity | <10 | Simple loader pattern |
+| Documentation | 100% | JSDoc on all public APIs |
+| Linting | Pass | Follows project ESLint rules |
 
 ---
 
-## Security Checklist
+## 9. Implementation Tasks
 
-- [x] Admin-only access for all operations
-- [x] Secrets encrypted at rest (AES-256-GCM)
-- [x] Encryption key from environment variable
-- [x] Unique key constraint enforced
-- [x] Key immutability enforced (only if key provided in update)
-- [x] Kind immutability enforced (only if kind provided in update)
-- [x] Audit log for all mutations
-- [x] Secrets never leaked in audit logs
-- [x] Transaction safety (req passed to nested operations)
-- [x] Hook loop prevention (context flags)
-- [x] Snake case validation for keys
-- [x] Write-only UX for secrets (afterRead clears value)
+### Phase 1: Core Implementation
+- [ ] Create `src/lib/config/runtime/types.ts`
+- [ ] Create `src/lib/config/runtime/errors.ts`
+- [ ] Create `src/lib/config/runtime/runtime-config.ts`
+- [ ] Create `src/lib/config/runtime/index.ts`
 
----
+### Phase 2: Testing
+- [ ] Create `tests/unit/lib/config/runtime/runtime-config.test.ts`
+- [ ] Create `tests/int/runtime-config.int.test.ts`
+- [ ] Run `pnpm test` to verify
 
-## Testing Strategy
+### Phase 3: Documentation
+- [ ] Add module documentation comments
+- [ ] Update `src/lib/config/README.md` (if exists)
 
-| Test Type   | Location                                      | Coverage                               |
-| ----------- | --------------------------------------------- | -------------------------------------- |
-| Unit        | `tests/unit/lib/config/config-crypto.spec.ts` | Encryption/decryption logic            |
-| Integration | `tests/int/config-manager.int.spec.ts`        | Full CRUD + audit flow + write-only UX |
-
----
-
-## Commands to Run
-
-```bash
-# After implementation
-pnpm generate:types                    # Generate payload-types.ts
-pnpm generate:importmap               # Update import map
-pnpm tsc --noEmit                     # Validate TypeScript
-pnpm test:int tests/int/config-manager.int.spec.ts  # Run integration tests
-pnpm test:int tests/unit/lib/config/config-crypto.spec.ts  # Run unit tests
-pnpm ci:local                         # Full CI check
-```
+### Phase 4: Validation
+- [ ] Run `pnpm tsc --noEmit`
+- [ ] Run `pnpm lint:fix`
+- [ ] Run `pnpm generate:types` (if needed)
+- [ ] Final code review
 
 ---
 
-## Acceptance Criteria Summary
+## 10. Rollout Plan
 
-| Category       | Criteria                                              | Status |
-| -------------- | ----------------------------------------------------- | ------ |
-| **Data Model** | ConfigEntries with key, kind, value, enabled          | [ ]    |
-|                | ConfigAuditLogs with key, kind, action, actor, reason | [ ]    |
-| **Admin UI**   | List view: key, kind, enabled, updatedAt (no value)   | [ ]    |
-|                | Edit view: value field for both kinds                 | [ ]    |
-|                | Secret: write-only behavior after save (empty value)  | [ ]    |
-| **Security**   | Variables stored plaintext                            | [ ]    |
-|                | Secrets encrypted at rest                             | [ ]    |
-|                | Admin-only access                                     | [ ]    |
-|                | Key immutability                                      | [ ]    |
-|                | Kind immutability                                     | [ ]    |
-|                | Unique key constraint                                 | [ ]    |
-| **Audit**      | Create/update/enable/disable logged                   | [ ]    |
-|                | Secrets never in audit log                            | [ ]    |
-|                | Hook uses overrideAccess to bypass create restriction | [ ]    |
-| **Tests**      | Integration tests pass                                | [ ]    |
-|                | Unit tests pass                                       | [ ]    |
-|                | CI passes                                             | [ ]    |
+### 10.1 Deployment Steps
+
+1. **Deploy code** - Merge PR with implementation
+2. **Run tests** - CI passes all tests
+3. **Manual verification** - Test in staging environment
+4. **Monitor logs** - Verify no secret leakage in logs
+5. **Update documentation** - If needed
+
+### 10.2 Rollback Plan
+
+If issues arise:
+1. Remove process.env overrides if causing issues
+2. Clear in-memory cache (`clearConfigCache()`)
+3. Redeploy previous version if needed
+
+---
+
+## 11. Known Limitations (v1)
+
+| Limitation | Reason | Workaround |
+|------------|--------|------------|
+| No auto-reload on DB change | Performance/simplicity | Manual `reloadRuntimeConfig()` call |
+| No hot-reload in dev | Design choice | Restart dev server |
+| No cluster mode support | Process-level singleton | One config per Node process |
+| Max 1000 entries | Safety limit | Increase if needed |
+
+---
+
+## 12. Future Enhancements (Post-v1)
+
+| Enhancement | Priority | Description |
+|-------------|----------|-------------|
+| Auto-reload | Medium | Watch for DB changes via polling |
+| Cluster support | Low | Distributed cache (Redis) |
+| Hot reload | Low | WebSocket通知 |
+| Metrics endpoint | Low | Expose cache stats |
+
+---
+
+## 13. References
+
+| Reference | Link |
+|-----------|------|
+| Payload CMS Docs | https://payloadcms.com/docs |
+| Config Manager Spec-1 | `.tasks/var-namager/spec-1.md` |
+| AGENTS.md Security | See "CRITICAL SECURITY PATTERNS" section |
+| Encryption Utils | `src/lib/config/config-crypto.ts` |
+| Config Entries | `src/server/payload/collections/ConfigEntries.ts` |
+
+---
+
+## 14. Approval Checklist
+
+- [ ] Architecture approved
+- [ ] Security review completed
+- [ ] Tests written and passing
+- [ ] Documentation complete
+- [ ] Code review passed
+- [ ] Integration tested

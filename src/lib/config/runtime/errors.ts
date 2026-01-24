@@ -1,0 +1,21 @@
+/**
+ * Runtime Config Errors
+ *
+ * @fileType error-definition
+ * @domain config.runtime
+ * @pattern error-handling
+ */
+
+export class ConfigNotLoadedError extends Error {
+  constructor() {
+    super('Runtime config has not been loaded. Call loadRuntimeConfig() first.')
+    this.name = 'ConfigNotLoadedError'
+  }
+}
+
+export class ConfigKeyNotFoundError extends Error {
+  constructor(key: string, kind: 'variable' | 'secret') {
+    super(`Missing required ${kind}: ${key}`)
+    this.name = 'ConfigKeyNotFoundError'
+  }
+}
