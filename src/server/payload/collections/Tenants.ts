@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
 import { adminOnly } from '@/server/payload/access/adminOnly'
 
 export const Tenants: CollectionConfig = {
@@ -49,10 +50,7 @@ export const Tenants: CollectionConfig = {
   hooks: {
     beforeDelete: [
       async ({ req, id }) => {
-        const defaultTenantSlug = process.env.DEFAULT_TENANT_SLUG
-        if (!defaultTenantSlug) {
-          throw new Error('DEFAULT_TENANT_SLUG is required to delete tenants')
-        }
+        const defaultTenantSlug = getConfigValue('DEFAULT_TENANT_SLUG')
 
         const tenant = await req.payload.findByID({
           collection: 'tenants',

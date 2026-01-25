@@ -1,15 +1,11 @@
 import type { Payload } from 'payload'
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
 
 /**
  * @deprecated Use '@/lib/tenant/get-default-tenant' instead
  */
 export function getDefaultTenantSlug(): string {
-  const slug = process.env.DEFAULT_TENANT_SLUG
-  if (!slug) {
-    throw new Error('DEFAULT_TENANT_SLUG environment variable is required')
-  }
-
-  return slug
+  return getConfigValue('DEFAULT_TENANT_SLUG')
 }
 
 /**
