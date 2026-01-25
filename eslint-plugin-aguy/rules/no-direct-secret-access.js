@@ -22,6 +22,7 @@
 
 // List of keys that are allowed to be accessed directly (bootstrap config)
 const UNRESTRICTED_SECRET_KEYS = [
+  'BLOB_READ_WRITE_TOKEN',
   'CONFIG_MASTER_KEY',
   'DATABASE_URL',
   'DATABASE_URL_ATLAS',
