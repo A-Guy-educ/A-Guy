@@ -4,6 +4,11 @@
  * Prevents direct access to secrets via process.env.
  * Enforces use of tenant-scoped getSecret() from '@/lib/config/runtime'
  *
+ * Only the following keys are allowed to be accessed directly:
+ * - DATABASE_URL, DEFAULT_TENANT_SLUG, MCP_ENABLED (bootstrap config)
+ *
+ * All other process.env access should use getSecret(tenantId, key)
+ *
  * @example
  * // ❌ BAD - Direct secret access
  * const apiKey = process.env.OPENAI_API_KEY
@@ -15,13 +20,11 @@
  * const apiKey = getSecret(tenantId, 'OPENAI_API_KEY', { throwIfNotFound: false })
  */
 
-// List of secret keys that must be accessed via getSecret()
-const RESTRICTED_SECRET_KEYS = [
-  'GEMINI_API_KEY',
-  'OPENAI_API_KEY',
-  'GOOGLE_CLIENT_ID',
-  'GOOGLE_CLIENT_SECRET',
-  'PREVIEW_SECRET',
+// List of keys that are allowed to be accessed directly (bootstrap config)
+const UNRESTRICTED_SECRET_KEYS = [
+  'DATABASE_URL',
+  'DEFAULT_TENANT_SLUG',
+  'MCP_ENABLED',
 ]
 
 // Pattern to match process.env.X access
@@ -48,14 +51,14 @@ export default {
       type: 'array',
       items: { type: 'string' },
       uniqueItems: true,
-      description: 'Additional secret keys to restrict (merged with default list)',
+      description: 'Additional keys that are allowed to be accessed directly (merged with default list)',
     },
   },
 
   create(context) {
-    // Get additional restricted keys from options
+    // Get additional unrestricted keys from options
     const options = context.options[0] || []
-    const restrictedKeys = [...RESTRICTED_SECRET_KEYS, ...options]
+    const unrestrictedKeys = [...UNRESTRICTED_SECRET_KEYS, ...options]
 
     return {
       // Check MemberExpression for process.env.X access
@@ -68,10 +71,10 @@ export default {
           node.object.property.type === 'Identifier' &&
           node.object.property.name === 'env'
         ) {
-          // Check if the property is a restricted secret key
+          // Check if the property is NOT in the unrestricted list
           const accessedKey = node.property.name
 
-          if (restrictedKeys.includes(accessedKey)) {
+          if (!unrestrictedKeys.includes(accessedKey)) {
             context.report({
               node: node,
               messageId: 'directSecretAccess',
