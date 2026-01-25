@@ -5,6 +5,7 @@ import { draftMode } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { NextRequest } from 'next/server'
 
+import { getPreviewSecret } from '@/infra/auth/oauth-secrets'
 import configPromise from '@payload-config'
 
 export async function GET(req: NextRequest): Promise<Response> {
@@ -17,7 +18,10 @@ export async function GET(req: NextRequest): Promise<Response> {
   const slug = searchParams.get('slug')
   const previewSecret = searchParams.get('previewSecret')
 
-  if (previewSecret !== process.env.PREVIEW_SECRET) {
+  // Get preview secret from tenant-scoped config
+  const expectedSecret = await getPreviewSecret(payload)
+
+  if (previewSecret !== expectedSecret) {
     return new Response('You are not allowed to preview this page', { status: 403 })
   }
 

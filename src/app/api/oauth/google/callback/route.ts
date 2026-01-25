@@ -7,13 +7,14 @@
  * @ai-summary Handles Google OAuth callback, creates/updates users, issues sessions
  */
 
+import { getGoogleOAuthSecrets } from '@/infra/auth/oauth-secrets'
+import { logOAuthError } from '@/infra/auth/oauth_logger'
+import { validateOAuthState } from '@/infra/auth/oauth_state'
+import { getPublicBaseUrl } from '@/infra/auth/oauth_url'
+import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload, type Payload } from 'payload'
-import config from '@payload-config'
-import { validateOAuthState } from '@/infra/auth/oauth_state'
-import { logOAuthError } from '@/infra/auth/oauth_logger'
-import { getPublicBaseUrl } from '@/infra/auth/oauth_url'
-import { handleExistingUser, handleCollision, createNewOAuthUser } from './oauth_callback_helpers'
+import { createNewOAuthUser, handleCollision, handleExistingUser } from './oauth_callback_helpers'
 
 interface GoogleUserInfo {
   sub: string
@@ -46,13 +47,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   // STEP 2: Exchange code for tokens
+  const { clientId, clientSecret } = await getGoogleOAuthSecrets(payload)
   const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       code,
-      client_id: process.env.GOOGLE_CLIENT_ID!,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+      client_id: clientId,
+      client_secret: clientSecret,
       redirect_uri: `${getPublicBaseUrl(req)}/api/oauth/google/callback`,
       grant_type: 'authorization_code',
     }),

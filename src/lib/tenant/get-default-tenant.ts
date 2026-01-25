@@ -1,7 +1,14 @@
+/**
+ * Default Tenant Utilities
+ * Provides tenant-scoped operations for the lib layer
+ *
+ * @internal This module is used by infra layer services
+ */
 import type { Payload } from 'payload'
 
 /**
- * @deprecated Use '@/lib/tenant/get-default-tenant' instead
+ * Get the default tenant slug from environment
+ * This is a bootstrap config value (not a secret)
  */
 export function getDefaultTenantSlug(): string {
   const slug = process.env.DEFAULT_TENANT_SLUG
@@ -13,7 +20,11 @@ export function getDefaultTenantSlug(): string {
 }
 
 /**
- * @deprecated Use '@/lib/tenant/get-default-tenant' instead
+ * Get the default tenant ID by looking up the tenant by slug
+ * Creates the tenant if it doesn't exist
+ *
+ * @param payload - Payload instance for database access
+ * @returns The default tenant ID
  */
 export async function getDefaultTenantId(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()

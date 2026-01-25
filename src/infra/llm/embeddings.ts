@@ -10,23 +10,8 @@
  */
 
 import { logger } from '@/infra/utils/logger'
-import { OpenAI } from 'openai'
-
-// Lazy initialization to avoid errors at module load time
-let openai: OpenAI | null = null
-
-function getOpenAIClient(): OpenAI {
-  if (!openai) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY environment variable is not set')
-    }
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-      dangerouslyAllowBrowser: true, // Safe in Node.js/test environment
-    })
-  }
-  return openai
-}
+import type { Payload } from 'payload'
+import { getOpenAIClient } from './openai-client'
 
 const EMBEDDING_MODEL = 'text-embedding-3-small' // 1536 dimensions
 const EXPECTED_DIMENSIONS = 1536
@@ -37,21 +22,86 @@ export interface EmbeddingResult {
   tokensUsed: number
 }
 
+// Track if we're in test mode (no payload)
+let testMode = false
+
+/**
+ * Enable test mode - uses process.env.OPENAI_API_KEY directly
+ * @internal
+ */
+export function setEmbeddingsTestMode(enabled: boolean): void {
+  testMode = enabled
+}
+
+/**
+ * Get OpenAI client for embeddings (test-compatible)
+ */
+async function getEmbeddingClient(payload?: Payload): Promise<{ client: any; apiKey: string }> {
+  if (testMode || !payload) {
+    // Try tenant-scoped secret first
+    if (!testMode && payload) {
+      try {
+        const { getSecret, isConfigLoaded, loadRuntimeConfig } =
+          await import('@/lib/config/runtime')
+        const { getDefaultTenantId } = await import('@/lib/tenant/get-default-tenant')
+        if (!isConfigLoaded()) {
+          const tenantId = await getDefaultTenantId(payload)
+          await loadRuntimeConfig(payload, tenantId)
+        }
+        const tenantId = await getDefaultTenantId(payload)
+        const apiKey = getSecret(tenantId, 'OPENAI_API_KEY', { throwIfNotFound: false })
+        if (apiKey) {
+          const { OpenAI } = await import('openai')
+          return { client: new OpenAI({ apiKey, dangerouslyAllowBrowser: true }), apiKey }
+        }
+      } catch {
+        // Fall through to process.env
+      }
+    }
+    // Fallback to process.env for development/testing
+    /* eslint-disable aguy/no-direct-secret-access -- Intentionally allowed for test/dev convenience */
+    const apiKey = process.env.OPENAI_API_KEY
+    /* eslint-enable aguy/no-direct-secret-access */
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY environment variable is not set')
+    }
+    const { OpenAI } = await import('openai')
+    return { client: new OpenAI({ apiKey, dangerouslyAllowBrowser: true }), apiKey }
+  }
+  const client = await getOpenAIClient(payload)
+  return { client, apiKey: '' }
+}
+
 /**
  * Generate embedding for a single text
  * Validates output dimensions (CRITICAL)
+ *
+ * @param payloadOrText - Payload instance OR text (for backward compatibility)
+ * @param text - Text to embed (if first arg is payload)
  */
-export async function generateEmbedding(text: string): Promise<EmbeddingResult> {
+export async function generateEmbedding(
+  payloadOrText: Payload | string,
+  textOrUndefined?: string,
+): Promise<EmbeddingResult> {
+  let payload: Payload | undefined
+  let text: string
+
+  if (typeof payloadOrText === 'string') {
+    // Backward compatibility: first arg is text
+    text = payloadOrText
+    payload = undefined
+  } else {
+    // New signature: first arg is payload
+    payload = payloadOrText
+    text = textOrUndefined!
+  }
+
   if (!text || text.trim().length === 0) {
     throw new Error('Cannot generate embedding for empty text')
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY environment variable is not set')
-  }
-
   try {
-    const client = getOpenAIClient()
+    const { client } = await getEmbeddingClient(payload)
     const response = await client.embeddings.create({
       model: EMBEDDING_MODEL,
       input: text.trim(),
@@ -80,14 +130,29 @@ export async function generateEmbedding(text: string): Promise<EmbeddingResult> 
 /**
  * Generate embeddings for multiple texts (batch)
  * More efficient than individual calls
+ *
+ * @param payloadOrTexts - Payload instance OR array of texts (backward compat)
+ * @param texts - Array of texts to embed (if first arg is payload)
  */
-export async function generateEmbeddings(texts: string[]): Promise<EmbeddingResult[]> {
-  if (texts.length === 0) {
-    return []
+export async function generateEmbeddings(
+  payloadOrTexts: Payload | string[],
+  textsOrUndefined?: string[],
+): Promise<EmbeddingResult[]> {
+  let payload: Payload | undefined
+  let texts: string[]
+
+  if (Array.isArray(payloadOrTexts)) {
+    // Backward compatibility: first arg is texts array
+    texts = payloadOrTexts
+    payload = undefined
+  } else {
+    // New signature: first arg is payload
+    payload = payloadOrTexts
+    texts = textsOrUndefined!
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY environment variable is not set')
+  if (texts.length === 0) {
+    return []
   }
 
   // Filter out empty texts
@@ -98,7 +163,7 @@ export async function generateEmbeddings(texts: string[]): Promise<EmbeddingResu
   }
 
   try {
-    const client = getOpenAIClient()
+    const { client } = await getEmbeddingClient(payload)
     const response = await client.embeddings.create({
       model: EMBEDDING_MODEL,
       input: validTexts.map((t) => t.trim()),

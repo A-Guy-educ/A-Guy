@@ -9,13 +9,12 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 })
 
-// TODO: Enable custom eslint-plugin-aguy once converted to ESM
-// The plugin is currently CommonJS and needs to be converted to work with Next.js ESLint
-// See eslint-plugin-aguy/README.md for the rules it provides
+import aguyPlugin from './eslint-plugin-aguy/index.js'
 
 const eslintConfig = [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
+    plugins: { aguy: aguyPlugin },
     rules: {
       // TypeScript rules
       '@typescript-eslint/ban-ts-comment': 'warn',
@@ -38,11 +37,11 @@ const eslintConfig = [
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
 
-      // TODO: Custom A-Guy platform rules (pending plugin ESM conversion)
-      // 'aguy/require-collection-access': 'error',
-      // 'aguy/no-nested-metadata': 'error',
-      // 'aguy/tailwind-only-components': 'warn',
-      // 'aguy/require-auth-endpoints': 'error',
+      'aguy/require-collection-access': 'error',
+      'aguy/no-nested-metadata': 'error',
+      'aguy/tailwind-only-components': 'warn',
+      'aguy/require-auth-endpoints': 'warn',
+      'aguy/no-direct-secret-access': 'error',
     },
   },
   {

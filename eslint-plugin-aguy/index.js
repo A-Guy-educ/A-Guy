@@ -13,20 +13,19 @@
  *       'aguy/require-collection-access': 'error',
  *       'aguy/no-nested-metadata': 'error',
  *       'aguy/tailwind-only-components': 'warn',
+ *       'aguy/no-direct-secret-access': 'error',
  *     }
  *   }
  * ]
  */
 
-/* eslint-disable @typescript-eslint/no-require-imports */
-// This is a CommonJS file that must use require() for compatibility
-const requireCollectionAccess = require('./rules/require-collection-access.js')
-const noNestedMetadata = require('./rules/no-nested-metadata.js')
-const tailwindOnlyComponents = require('./rules/tailwind-only-components.js')
-const requireAuthEndpoints = require('./rules/require-auth-endpoints.js')
-/* eslint-enable @typescript-eslint/no-require-imports */
+import noDirectSecretAccess from './rules/no-direct-secret-access.js'
+import noNestedMetadata from './rules/no-nested-metadata.js'
+import requireAuthEndpoints from './rules/require-auth-endpoints.js'
+import requireCollectionAccess from './rules/require-collection-access.js'
+import tailwindOnlyComponents from './rules/tailwind-only-components.js'
 
-module.exports = {
+export default {
   meta: {
     name: 'eslint-plugin-aguy',
     version: '1.0.0',
@@ -36,5 +35,6 @@ module.exports = {
     'no-nested-metadata': noNestedMetadata,
     'tailwind-only-components': tailwindOnlyComponents,
     'require-auth-endpoints': requireAuthEndpoints,
+    'no-direct-secret-access': noDirectSecretAccess,
   },
 }

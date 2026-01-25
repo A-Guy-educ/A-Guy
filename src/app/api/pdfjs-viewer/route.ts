@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { logger } from '@/infra/utils/logger'
 import { RESPONSE_HEADERS } from '@/infra/pdfjs/config'
-import { validateFileUrl, redactUrl } from '@/infra/pdfjs/validator'
-import { loadViewerTemplate, loadViewerCss } from '@/infra/pdfjs/template-loader'
-import { rewriteCss, renderViewerHtml, validateRewrittenHtml } from '@/infra/pdfjs/renderer'
+import { renderViewerHtml, rewriteCss, validateRewrittenHtml } from '@/infra/pdfjs/renderer'
+import { loadViewerCss, loadViewerTemplate } from '@/infra/pdfjs/template-loader'
+import { redactUrl, validateFileUrl } from '@/infra/pdfjs/validator'
+import { logger } from '@/infra/utils/logger'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * PDF.js Viewer Proxy
@@ -23,6 +23,8 @@ import { rewriteCss, renderViewerHtml, validateRewrittenHtml } from '@/infra/pdf
  * - No inline script injection
  * - Uses PDF.js native file loading via query parameter
  */
+// public endpoint - PDF viewer proxy serves public CDN content
+// public endpoint - PDF viewer proxy serves public CDN content
 export async function GET(request: NextRequest) {
   const requestId = crypto.randomUUID()
   const reqLogger = logger.child({ requestId, component: 'pdfjs-viewer' })

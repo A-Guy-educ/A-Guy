@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // We need to mock fs BEFORE importing the module under test because the prompt
 // is loaded at module initialization time.
@@ -26,12 +26,28 @@ vi.mock('openai', () => ({
   OpenAI: FakeOpenAI,
 }))
 
+// Mock the openai-client module to return our fake OpenAI
+vi.mock('@/infra/llm/openai-client', () => ({
+  getOpenAIClient: vi.fn(async () => {
+    const { OpenAI } = await import('openai')
+    return new OpenAI({ apiKey: 'test-key' })
+  }),
+}))
+
+// Mock the runtime config
+vi.mock('@/lib/config/runtime', () => ({
+  isConfigLoaded: vi.fn(() => true),
+  loadRuntimeConfig: vi.fn(),
+  getSecret: vi.fn((_tenantId, key) => {
+    if (key === 'OPENAI_API_KEY') return 'test-key'
+    return null
+  }),
+}))
+
 describe('summary service', () => {
   beforeEach(() => {
     readFileSyncMock.mockReset()
     createMock.mockReset()
-    // Ensure OPENAI_API_KEY check passes
-    process.env.OPENAI_API_KEY = 'test-key'
   })
 
   it('falls back to default prompt file when main markdown file cannot be read', async () => {
@@ -62,7 +78,11 @@ describe('summary service', () => {
     })
 
     const now = new Date().toISOString()
-    const result = await generateSummary('', [{ role: 'user', content: 'Hello', timestamp: now }])
+    // Create a minimal mock payload
+    const mockPayload = {} as any
+    const result = await generateSummary(mockPayload, '', [
+      { role: 'user', content: 'Hello', timestamp: now },
+    ])
 
     expect(result.summary).toBe('mock summary')
     expect(result.tokensUsed).toBe(42)
@@ -88,7 +108,10 @@ describe('summary service', () => {
     })
 
     const now = new Date().toISOString()
-    const result = await generateSummary('', [{ role: 'user', content: 'Hello', timestamp: now }])
+    const mockPayload = {} as any
+    const result = await generateSummary(mockPayload, '', [
+      { role: 'user', content: 'Hello', timestamp: now },
+    ])
 
     expect(result.summary).toBe('mock summary')
     expect(result.tokensUsed).toBe(42)

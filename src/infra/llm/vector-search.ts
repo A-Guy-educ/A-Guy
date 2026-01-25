@@ -76,7 +76,7 @@ export async function retrieveMemoryItems(
 
   try {
     // Generate query embedding (must happen first)
-    const { embedding: queryVector } = await generateEmbedding(queryText)
+    const { embedding: queryVector } = await generateEmbedding(payload!, queryText)
 
     const collection = db.collection<MemoryItem>('memory_items')
     const results: MemoryItem[] = []

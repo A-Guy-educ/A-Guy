@@ -17,7 +17,7 @@ import { getServerSideURL } from '@/infra/utils/getURL'
 // Temporarily disabled - @payloadcms/plugin-mcp not available in dependencies
 // TODO: Re-enable when MCP plugin is properly configured
 // const mcpEnabled = process.env.MCP_ENABLED === 'true'
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 // const mcp = mcpEnabled ? require('@/plugins/mcp').mcp : null
 const mcp = null
 

@@ -9,30 +9,64 @@
  * - Low temperature for deterministic output
  */
 
-import { OpenAI } from 'openai'
-import { readFileSync } from 'fs'
-import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
 import { logger } from '@/infra/utils/logger'
+import { readFileSync } from 'fs'
+import { dirname, join } from 'path'
+import type { Payload } from 'payload'
+import { fileURLToPath } from 'url'
 import type { Message } from './context-policy'
+import { getOpenAIClient } from './openai-client'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// Lazy initialization to avoid errors at module load time
-let openai: OpenAI | null = null
+// Track if we're in test mode (no payload)
+let testMode = false
 
-function getOpenAIClient(): OpenAI {
-  if (!openai) {
-    if (!process.env.OPENAI_API_KEY) {
+/**
+ * Enable test mode - uses process.env.OPENAI_API_KEY directly
+ * @internal
+ */
+export function setSummaryTestMode(enabled: boolean): void {
+  testMode = enabled
+}
+
+/**
+ * Get OpenAI client for summary generation (test-compatible)
+ */
+async function getSummaryClient(payload?: Payload): Promise<any> {
+  if (testMode || !payload) {
+    // Try tenant-scoped secret first
+    if (!testMode && payload) {
+      try {
+        const { getSecret, isConfigLoaded, loadRuntimeConfig } =
+          await import('@/lib/config/runtime')
+        const { getDefaultTenantId } = await import('@/lib/tenant/get-default-tenant')
+        if (!isConfigLoaded()) {
+          const tenantId = await getDefaultTenantId(payload)
+          await loadRuntimeConfig(payload, tenantId)
+        }
+        const tenantId = await getDefaultTenantId(payload)
+        const apiKey = getSecret(tenantId, 'OPENAI_API_KEY', { throwIfNotFound: false })
+        if (apiKey) {
+          const { OpenAI } = await import('openai')
+          return new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
+        }
+      } catch {
+        // Fall through to process.env
+      }
+    }
+    // Fallback to process.env for development/testing
+    /* eslint-disable aguy/no-direct-secret-access -- Intentionally allowed for test/dev convenience */
+    const apiKey = process.env.OPENAI_API_KEY
+    /* eslint-enable aguy/no-direct-secret-access */
+    if (!apiKey) {
       throw new Error('OPENAI_API_KEY environment variable is not set')
     }
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-      dangerouslyAllowBrowser: true, // Safe in Node.js/test environment
-    })
+    const { OpenAI } = await import('openai')
+    return new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
   }
-  return openai
+  return getOpenAIClient(payload)
 }
 
 export interface SummaryResult {
@@ -87,21 +121,38 @@ try {
 /**
  * Generate or update conversation summary
  * Returns updated summary text and metadata
+ *
+ * @param payloadOrSummary - Payload instance OR existing summary string (backward compat)
+ * @param existingSummaryOrMessages - Existing summary OR messages array (backward compat)
+ * @param messagesToSummarize - Messages array (new signature only)
  */
 export async function generateSummary(
-  existingSummary: string,
-  messagesToSummarize: Message[],
+  payloadOrSummary: Payload | string,
+  existingSummaryOrMessages: string | Message[],
+  messagesToSummarize?: Message[],
 ): Promise<SummaryResult> {
-  if (messagesToSummarize.length === 0) {
+  let payload: Payload | undefined
+  let existingSummary: string
+  let messages: Message[]
+
+  if (typeof payloadOrSummary === 'string') {
+    // Backward compatibility: first arg is existingSummary string
+    existingSummary = payloadOrSummary
+    messages = existingSummaryOrMessages as Message[]
+    payload = undefined
+  } else {
+    // New signature: first arg is payload
+    payload = payloadOrSummary
+    existingSummary = typeof existingSummaryOrMessages === 'string' ? existingSummaryOrMessages : ''
+    messages = messagesToSummarize || []
+  }
+
+  if (messages.length === 0) {
     throw new Error('Cannot summarize empty message list')
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY environment variable is not set')
-  }
-
   // Build prompt
-  const messagesText = messagesToSummarize
+  const messagesText = messages
     .map((msg) => {
       const timestamp = new Date(msg.timestamp).toISOString()
       return `[${timestamp}] ${msg.role}: ${msg.content}`
@@ -117,7 +168,7 @@ export async function generateSummary(
 
   try {
     // Call model
-    const client = getOpenAIClient()
+    const client = await getSummaryClient(payload)
     const response = await client.chat.completions.create({
       model: 'gpt-4o-mini', // Cheaper model is fine for summaries
       messages: [
@@ -129,7 +180,7 @@ export async function generateSummary(
     })
 
     const summary = response.choices[0].message.content || ''
-    const lastMessage = messagesToSummarize[messagesToSummarize.length - 1]
+    const lastMessage = messages[messages.length - 1]
 
     return {
       summary,

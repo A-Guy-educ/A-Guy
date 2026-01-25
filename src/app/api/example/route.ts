@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import { logger, createRequestLogger } from '@/infra/utils/logger'
+import { createRequestLogger, logger } from '@/infra/utils/logger'
 import { createValidationErrorResponse } from '@/infra/utils/validation'
 import * as Sentry from '@sentry/nextjs'
 import { randomUUID } from 'crypto'
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
 /**
  * Example API route demonstrating:
@@ -20,6 +20,8 @@ const requestSchema = z.object({
   message: z.string().min(10, 'Message must be at least 10 characters'),
 })
 
+// public endpoint - example/demo API that doesn't require authentication
+// public endpoint - demo/example API that doesn't require authentication
 export async function POST(request: NextRequest) {
   // Generate request ID for correlation
   const requestId = randomUUID()
@@ -87,6 +89,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// public endpoint - example/demo API that doesn't require authentication
+// public endpoint - demo/example API that doesn't require authentication
 export async function GET() {
   logger.info('Example GET request')
 

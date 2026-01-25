@@ -11,7 +11,7 @@
  * className="bg-primary text-white"
  */
 
-module.exports = {
+export default {
   meta: {
     type: 'problem',
     docs: {
