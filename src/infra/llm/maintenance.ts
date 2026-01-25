@@ -73,6 +73,7 @@ export async function runSummaryMaintenance(
 
     // Generate summary
     const { summary, summaryUntilTimestamp, tokensUsed } = await generateSummary(
+      payload,
       conversation.summary || '',
       messagesToSummarize,
     )

@@ -12,7 +12,6 @@
 
 import { logger } from '@/infra/utils/logger'
 import { readFileSync } from 'fs'
-import { OpenAI } from 'openai'
 import { dirname, join } from 'path'
 import type { Payload } from 'payload'
 import { fileURLToPath } from 'url'
@@ -20,25 +19,59 @@ import { ChatRole } from './chat-message-role'
 import type { Message } from './context-policy'
 import { generateEmbeddings } from './embeddings'
 import { logMaintenance } from './observability'
+import { getOpenAIClient } from './openai-client'
 import { findSimilarMemoryItem, type MemoryItem } from './vector-search'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// Lazy initialization to avoid errors at module load time
-let openai: OpenAI | null = null
+// Track if we're in test mode (no payload)
+let testMode = false
 
-function getOpenAIClient(): OpenAI {
-  if (!openai) {
-    if (!process.env.OPENAI_API_KEY) {
+/**
+ * Enable test mode - uses process.env.OPENAI_API_KEY directly
+ * @internal
+ */
+export function setMemoryExtractionTestMode(enabled: boolean): void {
+  testMode = enabled
+}
+
+/**
+ * Get OpenAI client for memory extraction (test-compatible)
+ */
+async function getMemoryExtractionClient(payload?: Payload): Promise<any> {
+  if (testMode || !payload) {
+    // Try tenant-scoped secret first
+    if (!testMode && payload) {
+      try {
+        const { getSecret, isConfigLoaded, loadRuntimeConfig } =
+          await import('@/lib/config/runtime')
+        const { getDefaultTenantId } = await import('@/lib/tenant/get-default-tenant')
+        if (!isConfigLoaded()) {
+          const tenantId = await getDefaultTenantId(payload)
+          await loadRuntimeConfig(payload, tenantId)
+        }
+        const tenantId = await getDefaultTenantId(payload)
+        const apiKey = getSecret(tenantId, 'OPENAI_API_KEY', { throwIfNotFound: false })
+        if (apiKey) {
+          const { OpenAI } = await import('openai')
+          return new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
+        }
+      } catch {
+        // Fall through to process.env
+      }
+    }
+    // Fallback to process.env for development/testing
+    /* eslint-disable aguy/no-direct-secret-access -- Intentionally allowed for test/dev convenience */
+    const apiKey = process.env.OPENAI_API_KEY
+    /* eslint-enable aguy/no-direct-secret-access */
+    if (!apiKey) {
       throw new Error('OPENAI_API_KEY environment variable is not set')
     }
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-      dangerouslyAllowBrowser: true, // Safe in Node.js/test environment
-    })
+    const { OpenAI } = await import('openai')
+    return new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
   }
-  return openai
+  return getOpenAIClient(payload)
 }
 
 // Load prompt from external file with a safe fallback so that missing files
@@ -117,14 +150,31 @@ interface ExtractionResult {
 /**
  * Extract memory candidates from recent messages
  * Uses AI to identify important information
+ *
+ * @param payloadOrMessages - Payload instance OR array of messages (backward compat)
+ * @param recentMessagesOrSummary - Messages array OR existing summary (backward compat)
+ * @param existingSummary - Optional existing summary (new signature only)
  */
 export async function extractMemoryCandidates(
-  recentMessages: Message[],
+  payloadOrMessages: Payload | Message[],
+  recentMessagesOrSummary?: Message[] | string,
   existingSummary?: string,
 ): Promise<MemoryCandidate[]> {
-  if (!process.env.OPENAI_API_KEY) {
-    logger.warn('[MemoryExtraction] OPENAI_API_KEY not set, skipping extraction')
-    return []
+  let payload: Payload | undefined
+  let recentMessages: Message[]
+
+  if (Array.isArray(payloadOrMessages)) {
+    // Backward compatibility: first arg is messages array
+    recentMessages = payloadOrMessages
+    // Second arg can be summary string (2-arg call) or undefined
+    if (typeof recentMessagesOrSummary === 'string') {
+      existingSummary = recentMessagesOrSummary
+    }
+    payload = undefined
+  } else {
+    // New signature: first arg is payload
+    payload = payloadOrMessages
+    recentMessages = (recentMessagesOrSummary as Message[]) || []
   }
 
   // Build context
@@ -140,7 +190,7 @@ export async function extractMemoryCandidates(
 
   try {
     // Call model
-    const client = getOpenAIClient()
+    const client = await getMemoryExtractionClient(payload)
     const response = await client.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -217,7 +267,7 @@ export async function persistMemoryItems(
   try {
     // Batch generate all embeddings at once
     const texts = candidates.map((c) => c.text)
-    const embeddingResults = await generateEmbeddings(texts) // Single API call
+    const embeddingResults = await generateEmbeddings(payload, texts) // Single API call
 
     // Prepare similarity checks in parallel (with concurrency limit)
     // If vector search fails, we'll still create the memory items (graceful degradation)

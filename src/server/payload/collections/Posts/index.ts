@@ -9,12 +9,12 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
-import { authenticated } from '../../access/authenticated'
-import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
+import { generatePreviewPath } from '@/infra/utils/generatePreviewPath'
 import { Banner } from '@/server/payload/blocks/Banner/config'
 import { Code } from '@/server/payload/blocks/Code/config'
 import { MediaBlock } from '@/server/payload/blocks/MediaBlock/config'
-import { generatePreviewPath } from '@/infra/utils/generatePreviewPath'
+import { authenticated } from '../../access/authenticated'
+import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
 import { populateAuthors } from './hooks/populateAuthors'
 import { revalidateDelete, revalidatePost } from './hooks/revalidatePost'
 
@@ -58,7 +58,7 @@ export const Posts: CollectionConfig<'posts'> = {
           req,
         }),
     },
-    preview: (data, { req }) =>
+    preview: async (data, { req }) =>
       generatePreviewPath({
         slug: data?.slug as string,
         collection: 'posts',

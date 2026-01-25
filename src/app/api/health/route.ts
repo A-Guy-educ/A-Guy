@@ -17,6 +17,8 @@ import { NextResponse } from 'next/server'
  */
 export const dynamic = 'force-dynamic' // Explicitly mark as dynamic to avoid static generation issues
 
+// public endpoint - health check for monitoring/Playwright
+// public endpoint - health check for monitoring/Playwright
 export async function GET() {
   // Simple, fast response - no database, no Payload, no dynamic APIs
   return NextResponse.json(

@@ -5,7 +5,7 @@
  * @internal This module is used by gemini.provider.ts only
  */
 import { getSecret, isConfigLoaded, loadRuntimeConfig } from '@/lib/config/runtime'
-import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
+import { getDefaultTenantId } from '@/lib/tenant/get-default-tenant'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { Payload } from 'payload'
 
@@ -30,12 +30,7 @@ export async function isGeminiApiKeyConfigured(payload: Payload): Promise<boolea
     // Ensure config is loaded
     await ensureConfigLoaded(payload)
 
-    // First check process.env for direct override
-    if (process.env.GEMINI_API_KEY) {
-      return true
-    }
-
-    // Then check runtime config using default tenant
+    // Check runtime config using default tenant
     const defaultTenantId = await getDefaultTenantId(payload)
     const apiKey = getSecret(defaultTenantId, 'GEMINI_API_KEY', { throwIfNotFound: false })
     return !!apiKey
@@ -54,17 +49,12 @@ export async function getGeminiClient(payload: Payload): Promise<GoogleGenerativ
     // Ensure config is loaded
     await ensureConfigLoaded(payload)
 
-    // First check process.env for direct override
-    let apiKey = process.env.GEMINI_API_KEY
-
-    // Then check runtime config using default tenant
-    if (!apiKey) {
-      const defaultTenantId = await getDefaultTenantId(payload)
-      apiKey = getSecret(defaultTenantId, 'GEMINI_API_KEY', { throwIfNotFound: false })
-    }
+    // Get API key from tenant-scoped secret storage
+    const defaultTenantId = await getDefaultTenantId(payload)
+    const apiKey = getSecret(defaultTenantId, 'GEMINI_API_KEY', { throwIfNotFound: false })
 
     if (!apiKey) {
-      throw new Error('GEMINI_API_KEY environment variable is not configured.')
+      throw new Error('GEMINI_API_KEY is not configured in tenant config.')
     }
     geminiClient = new GoogleGenerativeAI(apiKey)
   }

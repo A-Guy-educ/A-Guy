@@ -514,17 +514,19 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
         // Derive context info for memory extraction
         const contextLevel = deriveContextLevel(context.relationTo)
 
-        return extractMemoryCandidates(messageList, updatedConv.summary || undefined).then(
-          (candidates) => {
-            reqLogger.debug({ candidateCount: candidates.length }, 'Extracted memory candidates')
-            return {
-              candidates,
-              sourceRole,
-              sourceTimestamp,
-              contextLevel,
-            }
-          },
-        )
+        return extractMemoryCandidates(
+          req.payload,
+          messageList,
+          updatedConv.summary || undefined,
+        ).then((candidates) => {
+          reqLogger.debug({ candidateCount: candidates.length }, 'Extracted memory candidates')
+          return {
+            candidates,
+            sourceRole,
+            sourceTimestamp,
+            contextLevel,
+          }
+        })
       })
       .then(({ candidates, sourceRole, sourceTimestamp, contextLevel }) => {
         if (candidates.length > 0) {

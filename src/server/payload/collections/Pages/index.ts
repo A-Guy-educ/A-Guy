@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
-import { hero } from '@/ui/web/heros/config'
 import { generatePreviewPath } from '@/infra/utils/generatePreviewPath'
+import { hero } from '@/ui/web/heros/config'
 import { slugField } from 'payload'
 import { authenticated } from '../../access/authenticated'
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
@@ -45,7 +45,7 @@ export const Pages: CollectionConfig<'pages'> = {
           req,
         }),
     },
-    preview: (data, { req }) =>
+    preview: async (data, { req }) =>
       generatePreviewPath({
         slug: data?.slug as string,
         collection: 'pages',

@@ -17,7 +17,7 @@
  * }
  */
 
-module.exports = {
+export default {
   meta: {
     type: 'problem',
     docs: {
@@ -56,7 +56,11 @@ module.exports = {
             const functionBody = node.declaration.body
 
             if (functionBody && functionBody.type === 'BlockStatement') {
-              const hasAuthCheck = this.checkForAuthInBody(functionBody)
+              const sourceCode = functionBody.range
+                ? context.getSourceCode().getText(functionBody)
+                : ''
+
+              const hasAuthCheck = checkForAuthInBody(sourceCode)
 
               if (!hasAuthCheck) {
                 context.report({
@@ -73,17 +77,14 @@ module.exports = {
       },
     }
   },
+}
 
-  checkForAuthInBody(body) {
-    // Simple heuristic: look for payload.auth or req.user checks
-    const sourceCode = body.range ? body.parent.getSourceCode().getText(body) : ''
-
-    return (
-      sourceCode.includes('payload.auth') ||
-      sourceCode.includes('req.user') ||
-      sourceCode.includes('getPayload') ||
-      sourceCode.includes('// public endpoint') ||
-      sourceCode.includes('// no auth required')
-    )
-  },
+function checkForAuthInBody(sourceCode) {
+  return (
+    sourceCode.includes('payload.auth') ||
+    sourceCode.includes('req.user') ||
+    sourceCode.includes('getPayload') ||
+    sourceCode.includes('// public endpoint') ||
+    sourceCode.includes('// no auth required')
+  )
 }
