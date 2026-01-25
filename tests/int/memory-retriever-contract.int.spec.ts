@@ -9,8 +9,8 @@
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import { retrieveMemoryItems } from '@/infra/llm/vector-search'
 import config from '@payload-config'
-import type { Payload } from 'payload'
 import type { Db } from 'mongodb'
+import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -255,12 +255,10 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
         expect(result.items.some((item) => item.text.includes('mathematics LMS'))).toBe(false)
       } else {
         // Vector search might not be available (local MongoDB)
-        console.log('Skipping assertions: Vector search returned no results (likely not Atlas)')
+        return
       }
     } catch (error: unknown) {
-      if (isVectorSearchUnavailable(error)) {
-        console.log('Skipping: Vector search not available (requires MongoDB Atlas)')
-      } else {
+      if (!isVectorSearchUnavailable(error)) {
         throw error
       }
     }
@@ -296,12 +294,10 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
         expect(result.items.every((item) => item.status === 'active')).toBe(true)
         expect(result.items.some((item) => item.text.includes('Deprecated'))).toBe(false)
       } else {
-        console.log('Skipping assertions: Vector search returned no results (likely not Atlas)')
+        return
       }
     } catch (error: unknown) {
-      if (isVectorSearchUnavailable(error)) {
-        console.log('Skipping: Vector search not available (requires MongoDB Atlas)')
-      } else {
+      if (!isVectorSearchUnavailable(error)) {
         throw error
       }
     }
@@ -345,12 +341,10 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
         // Global memory SHOULD appear (if vector search is working)
         // Note: This might not work with deterministic embeddings, but structure is correct
       } else {
-        console.log('Skipping assertions: Vector search returned no results (likely not Atlas)')
+        return
       }
     } catch (error: unknown) {
-      if (isVectorSearchUnavailable(error)) {
-        console.log('Skipping: Vector search not available (requires MongoDB Atlas)')
-      } else {
+      if (!isVectorSearchUnavailable(error)) {
         throw error
       }
     }
@@ -396,12 +390,10 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
         // Note: With deterministic embeddings, exact ranking may vary, but structure is tested
         expect(result.items.length).toBeGreaterThanOrEqual(1)
       } else {
-        console.log('Skipping assertions: Vector search returned no results (likely not Atlas)')
+        return
       }
     } catch (error: unknown) {
-      if (isVectorSearchUnavailable(error)) {
-        console.log('Skipping: Vector search not available (requires MongoDB Atlas)')
-      } else {
+      if (!isVectorSearchUnavailable(error)) {
         throw error
       }
     }
@@ -430,9 +422,7 @@ describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () 
       // Should respect limit (max 8)
       expect(result.items.length).toBeLessThanOrEqual(8)
     } catch (error: unknown) {
-      if (isVectorSearchUnavailable(error)) {
-        console.log('Skipping: Vector search not available (requires MongoDB Atlas)')
-      } else {
+      if (!isVectorSearchUnavailable(error)) {
         throw error
       }
     }

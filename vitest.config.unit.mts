@@ -1,6 +1,10 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vitest/config'
+import { config as loadEnv } from 'dotenv'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import { defineConfig } from 'vitest/config'
+
+loadEnv({ path: '.env' })
+loadEnv({ path: '.env.test', override: true })
 
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
@@ -13,6 +17,12 @@ export default defineConfig({
       'tests/unit/**/*.test.tsx',
     ],
     exclude: ['**/node_modules/**', '**/dist/**', '**/*.int.spec.ts', '**/*.e2e.spec.ts'],
+    // Suppress console output during tests for cleaner output
+    onConsoleLog(_log, type) {
+      if (type === 'stdout') {
+        return false
+      }
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

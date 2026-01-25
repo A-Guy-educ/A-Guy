@@ -547,10 +547,6 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         summaryLower.includes('hooks') ||
         summaryLower.includes('component')
 
-      // Log what was captured for debugging
-      console.log('Summary:', summary)
-      console.log('Preserved:', { hasAlice, hasReact, hasRelevantTerms })
-
       // The summary should at least capture the general topic even if specific names are lost
       // This is more realistic given AI summarization behavior
       expect(hasRelevantTerms || hasAlice || hasReact).toBe(true)
@@ -600,7 +596,6 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
       // Skip if MongoDB connection not available (needed for vector search)
       const db = getDb(payload)
       if (!db) {
-        console.log('Skipping memory persistence test: MongoDB connection not available')
         return
       }
 
@@ -638,14 +633,11 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
   describe('Memory Isolation and Deduplication', () => {
     it.skip('should isolate memories across different conversations', async () => {
       // SKIPPED: This test requires the new conversation schema with contextRef
-      // The test environment may not have the updated schema yet
-      console.log('Skipping: Requires updated conversation schema with contextRef')
     })
 
     it('should deduplicate similar memories', async () => {
       const db = getDb(payload)
       if (!db) {
-        console.log('Skipping: MongoDB connection not available')
         return
       }
 
@@ -694,11 +686,6 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
       // If vector search is available (Atlas), should deduplicate (0)
       // If not available (local), will create new (1)
       // Both behaviors are acceptable depending on environment
-      if (persisted2 === 0) {
-        console.log('✓ Deduplication working (vector search available)')
-      } else if (persisted2 === 1) {
-        console.log('⚠ Deduplication skipped (vector search not available)')
-      }
       expect([0, 1]).toContain(persisted2)
     }, 60000)
   })
@@ -711,7 +698,6 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
       // Skip if not Atlas
       const db = getDb(payload)
       if (!db) {
-        console.log('Skipping vector search test: MongoDB Atlas not available')
         return
       }
 
@@ -746,7 +732,6 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         // Only assert if vector search is actually working
         // (fails on local MongoDB without Atlas vector search)
         if (result.items.length === 0) {
-          console.log('Skipping assertions: Vector search returned no results (likely not Atlas)')
           return
         }
 
@@ -755,9 +740,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         expect(result.localCount + result.globalCount).toBeGreaterThan(0)
         expect(result.latencyMs).toBeGreaterThan(0)
       } catch (error: unknown) {
-        if (isVectorSearchUnavailable(error)) {
-          console.log('Skipping: Vector search not available (requires MongoDB Atlas)')
-        } else {
+        if (!isVectorSearchUnavailable(error)) {
           throw error
         }
       }
@@ -766,7 +749,6 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
     it('should enforce tenant isolation in vector search', async () => {
       const db = getDb(payload)
       if (!db) {
-        console.log('Skipping vector search test: MongoDB Atlas not available')
         return
       }
 
@@ -811,9 +793,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         const hasOtherUserMemory = result.items.some((item) => item.userId === otherUser.id)
         expect(hasOtherUserMemory).toBe(false)
       } catch (error: unknown) {
-        if (isVectorSearchUnavailable(error)) {
-          console.log('Skipping: Vector search index not provisioned')
-        } else {
+        if (!isVectorSearchUnavailable(error)) {
           throw error
         }
       }

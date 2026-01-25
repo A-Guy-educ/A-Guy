@@ -7,8 +7,8 @@
  *   (AI calls and vector search are mocked to avoid external dependencies).
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { agentChat } from '@/server/payload/endpoints/agent/chat'
 import type { Exercise } from '@/payload-types'
+import { agentChat } from '@/server/payload/endpoints/agent/chat'
 import config from '@payload-config'
 import type { Payload, PayloadRequest } from 'payload'
 import { getPayload } from 'payload'
@@ -360,12 +360,18 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
       await agentChat(req)
 
+      // Verify mock was called at least once
+      expect(chatWithExerciseHelper).toHaveBeenCalled()
+
+      // Get the last call arguments safely to avoid verbose error expansion
+      const mockCalls = (chatWithExerciseHelper as unknown as { mock: { calls: Array<[unknown]> } })
+        .mock.calls
+      const lastCallArgs = mockCalls[mockCalls.length - 1]?.[0] as {
+        composedPrompt?: unknown
+      }
+
       // Verify composedPrompt was passed
-      expect(chatWithExerciseHelper).toHaveBeenCalledWith(
-        expect.objectContaining({
-          composedPrompt: expect.any(Object),
-        }),
-      )
+      expect(lastCallArgs?.composedPrompt).toBeDefined()
 
       await payload.delete({ collection: 'lessons', id: lesson.id } as any)
     })
@@ -399,19 +405,26 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
       await agentChat(req)
 
-      // Verify composedPrompt includes system prompt marker
-      expect(chatWithExerciseHelper).toHaveBeenCalledWith(
-        expect.objectContaining({
-          composedPrompt: expect.objectContaining({
-            messages: expect.arrayContaining([
-              expect.objectContaining({
-                role: 'system',
-                content: expect.stringContaining('SYSTEM_PROMPT_MARKER'),
-              }),
-            ]),
-          }),
-        }),
-      )
+      // Verify mock was called at least once
+      expect(chatWithExerciseHelper).toHaveBeenCalled()
+
+      // Get the last call arguments safely
+      const mockCalls = (chatWithExerciseHelper as unknown as { mock: { calls: Array<[unknown]> } })
+        .mock.calls
+      const lastCallArgs = mockCalls[mockCalls.length - 1]?.[0] as {
+        composedPrompt?: { messages?: Array<{ role: string; content: string }> }
+      }
+
+      // Verify composedPrompt structure exists
+      expect(lastCallArgs?.composedPrompt).toBeDefined()
+      expect(lastCallArgs?.composedPrompt?.messages).toBeDefined()
+      expect(Array.isArray(lastCallArgs?.composedPrompt?.messages)).toBe(true)
+
+      // Check if any message contains our system prompt marker
+      const messages = lastCallArgs?.composedPrompt?.messages || []
+      const systemMessage = messages.find((m) => m.role === 'system')
+      expect(systemMessage).toBeDefined()
+      expect(systemMessage?.content).toContain('SYSTEM_PROMPT_MARKER')
 
       await payload.delete({ collection: 'lessons', id: lesson.id } as any)
     })
