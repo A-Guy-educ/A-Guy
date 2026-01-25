@@ -5,7 +5,7 @@
  * Enforces use of tenant-scoped getSecret() from '@/lib/config/runtime'
  *
  * Only the following keys are allowed to be accessed directly:
- * - CONFIG_MASTER_KEY, DATABASE_URL, DATABASE_URL_ATLAS, MCP_ENABLED (bootstrap config)
+ * - CONFIG_MASTER_KEY, DATABASE_URL, DATABASE_URL_ATLAS, MCP_ENABLED, PAYLOAD_SECRET, NEXT_PUBLIC_SERVER_URL (bootstrap config)
  *
  * All other process.env access should use getSecret(tenantId, key)
  *
@@ -27,7 +27,7 @@ const UNRESTRICTED_SECRET_KEYS = [
   'DATABASE_URL_ATLAS',
   'MCP_ENABLED',
   'PAYLOAD_SECRET',
-  'NEXT_PUBLIC_SERVER_URL'
+  'NEXT_PUBLIC_SERVER_URL',
 ]
 
 // Pattern to match process.env.X access
