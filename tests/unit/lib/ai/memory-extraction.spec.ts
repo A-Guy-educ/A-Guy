@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // We need to mock fs BEFORE importing the module under test because the prompt
 // is loaded at module initialization time.
@@ -26,12 +26,23 @@ vi.mock('openai', () => ({
   OpenAI: FakeOpenAI,
 }))
 
+// Mock the openai-client module to return our fake OpenAI
+vi.mock('@/infra/llm/openai-client', () => ({
+  getOpenAIClient: vi.fn(async () => {
+    const { OpenAI } = await import('openai')
+    return new OpenAI({ apiKey: 'test-key' })
+  }),
+}))
+
+// Mock the embeddings module
+vi.mock('@/infra/llm/embeddings', () => ({
+  generateEmbeddings: vi.fn(),
+}))
+
 describe('memory extraction service', () => {
   beforeEach(() => {
     readFileSyncMock.mockReset()
     createMock.mockReset()
-    // Ensure OPENAI_API_KEY check passes
-    process.env.OPENAI_API_KEY = 'test-key'
   })
 
   it('falls back to default prompt file when main markdown file cannot be read', async () => {
@@ -77,10 +88,10 @@ describe('memory extraction service', () => {
     })
 
     const now = new Date().toISOString()
-    const result = await extractMemoryCandidates(
-      [{ role: 'user', content: 'I prefer TypeScript', timestamp: now }],
-      undefined,
-    )
+    const mockPayload = {} as any
+    const result = await extractMemoryCandidates(mockPayload, [
+      { role: 'user', content: 'I prefer TypeScript', timestamp: now },
+    ])
 
     expect(result).toBeDefined()
     expect(Array.isArray(result)).toBe(true)
@@ -121,10 +132,10 @@ describe('memory extraction service', () => {
     })
 
     const now = new Date().toISOString()
-    const result = await extractMemoryCandidates(
-      [{ role: 'user', content: 'I prefer TypeScript', timestamp: now }],
-      undefined,
-    )
+    const mockPayload = {} as any
+    const result = await extractMemoryCandidates(mockPayload, [
+      { role: 'user', content: 'I prefer TypeScript', timestamp: now },
+    ])
 
     expect(result).toBeDefined()
     expect(Array.isArray(result)).toBe(true)

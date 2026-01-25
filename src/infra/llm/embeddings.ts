@@ -10,6 +10,7 @@
  */
 
 import { logger } from '@/infra/utils/logger'
+import OpenAI from 'openai'
 import type { Payload } from 'payload'
 import { getOpenAIClient } from './openai-client'
 
@@ -22,66 +23,27 @@ export interface EmbeddingResult {
   tokensUsed: number
 }
 
-// Track if we're in test mode (no payload)
-let testMode = false
-
 /**
- * Enable test mode - uses process.env.OPENAI_API_KEY directly
- * @internal
+ * Get OpenAI client for embeddings (always uses getSecret via getOpenAIClient)
  */
-export function setEmbeddingsTestMode(enabled: boolean): void {
-  testMode = enabled
-}
-
-/**
- * Get OpenAI client for embeddings (test-compatible)
- */
-async function getEmbeddingClient(payload?: Payload): Promise<{ client: any; apiKey: string }> {
-  // Test mode: use process.env directly
-  if (testMode || !payload) {
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is not set')
-    }
-    const { OpenAI } = await import('openai')
-    return { client: new OpenAI({ apiKey, dangerouslyAllowBrowser: true }), apiKey }
+async function getEmbeddingClient(payload: Payload): Promise<OpenAI> {
+  if (!payload) {
+    throw new Error('Payload instance required for embeddings')
   }
-
-  // Use tenant-scoped config
-  const client = await getOpenAIClient(payload)
-  return { client, apiKey: '' }
+  return getOpenAIClient(payload)
 }
 
 /**
  * Generate embedding for a single text
  * Validates output dimensions (CRITICAL)
- *
- * @param payloadOrText - Payload instance OR text (for backward compatibility)
- * @param text - Text to embed (if first arg is payload)
  */
-export async function generateEmbedding(
-  payloadOrText: Payload | string,
-  textOrUndefined?: string,
-): Promise<EmbeddingResult> {
-  let payload: Payload | undefined
-  let text: string
-
-  if (typeof payloadOrText === 'string') {
-    // Backward compatibility: first arg is text
-    text = payloadOrText
-    payload = undefined
-  } else {
-    // New signature: first arg is payload
-    payload = payloadOrText
-    text = textOrUndefined!
-  }
-
+export async function generateEmbedding(payload: Payload, text: string): Promise<EmbeddingResult> {
   if (!text || text.trim().length === 0) {
     throw new Error('Cannot generate embedding for empty text')
   }
 
   try {
-    const { client } = await getEmbeddingClient(payload)
+    const client = await getEmbeddingClient(payload)
     const response = await client.embeddings.create({
       model: EMBEDDING_MODEL,
       input: text.trim(),
@@ -110,27 +72,11 @@ export async function generateEmbedding(
 /**
  * Generate embeddings for multiple texts (batch)
  * More efficient than individual calls
- *
- * @param payloadOrTexts - Payload instance OR array of texts (backward compat)
- * @param texts - Array of texts to embed (if first arg is payload)
  */
 export async function generateEmbeddings(
-  payloadOrTexts: Payload | string[],
-  textsOrUndefined?: string[],
+  payload: Payload,
+  texts: string[],
 ): Promise<EmbeddingResult[]> {
-  let payload: Payload | undefined
-  let texts: string[]
-
-  if (Array.isArray(payloadOrTexts)) {
-    // Backward compatibility: first arg is texts array
-    texts = payloadOrTexts
-    payload = undefined
-  } else {
-    // New signature: first arg is payload
-    payload = payloadOrTexts
-    texts = textsOrUndefined!
-  }
-
   if (texts.length === 0) {
     return []
   }
@@ -143,7 +89,7 @@ export async function generateEmbeddings(
   }
 
   try {
-    const { client } = await getEmbeddingClient(payload)
+    const client = await getEmbeddingClient(payload)
     const response = await client.embeddings.create({
       model: EMBEDDING_MODEL,
       input: validTexts.map((t) => t.trim()),
@@ -160,7 +106,7 @@ export async function generateEmbeddings(
       return {
         embedding: item.embedding,
         model: response.model,
-        tokensUsed: Math.round(response.usage.total_tokens / validTexts.length), // Approximate per-text
+        tokensUsed: Math.round(response.usage.total_tokens / validTexts.length),
       }
     })
 

@@ -12,7 +12,8 @@ describe('embedding contract', () => {
     vi.doMock('openai', () => ({ OpenAI: MockOpenAI }))
 
     const { generateEmbedding } = await import('@/infra/llm/embeddings')
-    const result = await generateEmbedding('Test input')
+    const mockPayload = { id: 'test-user' } as unknown as import('payload').Payload
+    const result = await generateEmbedding(mockPayload, 'Test input')
 
     expect(result.embedding).toHaveLength(1536)
     expect(result.tokensUsed).toBeGreaterThan(0)
@@ -23,7 +24,10 @@ describe('embedding contract', () => {
     vi.doMock('openai', () => ({ OpenAI: MockOpenAI }))
 
     const { generateEmbedding } = await import('@/infra/llm/embeddings')
-    await expect(generateEmbedding('Test input')).rejects.toThrow('Embedding dimension mismatch')
+    const mockPayload = { id: 'test-user' } as unknown as import('payload').Payload
+    await expect(generateEmbedding(mockPayload, 'Test input')).rejects.toThrow(
+      'Embedding dimension mismatch',
+    )
   })
 
   it('handles batch embeddings and empty input', async () => {
@@ -31,11 +35,12 @@ describe('embedding contract', () => {
     vi.doMock('openai', () => ({ OpenAI: MockOpenAI }))
 
     const { generateEmbeddings } = await import('@/infra/llm/embeddings')
-    const results = await generateEmbeddings(['One', 'Two'])
+    const mockPayload = { id: 'test-user' } as unknown as import('payload').Payload
+    const results = await generateEmbeddings(mockPayload, ['One', 'Two'])
 
     expect(results).toHaveLength(2)
     expect(results[0].embedding).toHaveLength(1536)
-    expect(await generateEmbeddings([])).toEqual([])
-    expect(await generateEmbeddings(['', '   '])).toEqual([])
+    expect(await generateEmbeddings(mockPayload, [])).toEqual([])
+    expect(await generateEmbeddings(mockPayload, ['', '   '])).toEqual([])
   })
 })

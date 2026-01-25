@@ -1,16 +1,17 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Payload } from 'payload'
-import { getPayload } from 'payload'
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import type { Message } from '@/infra/llm/context-policy'
 import { runSummaryMaintenance } from '@/infra/llm/maintenance'
 import { startMongoContainer, stopMongoContainer } from '@/infra/utils/test/mongodb-container'
+import type { Payload } from 'payload'
+import { getPayload } from 'payload'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createContextHierarchy } from '../factories/context.factory'
 import { createConversation } from '../factories/conversation.factory'
 import { createTestUser } from '../factories/user.factory'
 
+// Updated mock to match new signature: (payload, messages, existingSummary?)
 const generateSummary = vi.hoisted(() =>
-  vi.fn(async (_existingSummary: string, messagesToSummarize: Message[]) => ({
+  vi.fn(async (_payload: Payload, messagesToSummarize: Message[], _existingSummary?: string) => ({
     summary: `Summary for ${messagesToSummarize.length} messages`,
     summaryUntilTimestamp: new Date(messagesToSummarize[messagesToSummarize.length - 1].timestamp),
     tokensUsed: 20,
@@ -137,6 +138,7 @@ describe('summary maintenance thresholds', () => {
 
     const result = await runSummaryMaintenance(payload, conversation.id)
     expect(result.summaryUpdated).toBe(true)
-    expect(generateSummary).toHaveBeenCalledWith('Existing summary', expect.any(Array))
+    // New signature: (payload, messages, existingSummary?)
+    expect(generateSummary).toHaveBeenCalledWith(payload, expect.any(Array), 'Existing summary')
   })
 })

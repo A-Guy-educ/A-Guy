@@ -14,15 +14,19 @@ describe('OpenAI error handling', () => {
     vi.doMock('openai', () => ({ OpenAI: MockOpenAI }))
 
     const { generateEmbedding } = await import('@/infra/llm/embeddings')
+    const mockPayload = { id: 'test-user' } as unknown as import('payload').Payload
 
-    await expect(generateEmbedding('hello world')).rejects.toThrow('Rate limit exceeded')
+    await expect(generateEmbedding(mockPayload, 'hello world')).rejects.toThrow(
+      'Rate limit exceeded',
+    )
   })
 
   it('throws when OPENAI_API_KEY is missing', async () => {
     delete process.env.OPENAI_API_KEY
 
     const { generateEmbedding } = await import('@/infra/llm/embeddings')
-    await expect(generateEmbedding('hello world')).rejects.toThrow('OPENAI_API_KEY')
+    const mockPayload = { id: 'test-user' } as unknown as import('payload').Payload
+    await expect(generateEmbedding(mockPayload, 'hello world')).rejects.toThrow('OPENAI_API_KEY')
   })
 
   it('returns empty candidates when extraction fails', async () => {
@@ -33,8 +37,9 @@ describe('OpenAI error handling', () => {
     vi.doMock('openai', () => ({ OpenAI: MockOpenAI }))
 
     const { extractMemoryCandidates } = await import('@/infra/llm/memory-extraction')
+    const mockPayload = { id: 'test-user' } as unknown as import('payload').Payload
 
-    const candidates = await extractMemoryCandidates([
+    const candidates = await extractMemoryCandidates(mockPayload, [
       {
         role: 'user',
         content: 'Remember that I like TypeScript.',

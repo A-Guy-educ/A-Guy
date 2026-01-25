@@ -1,12 +1,5 @@
 /**
  * Integration Tests for Chat Context + Long-Term Memory System
- *
- * Tests the complete flow of:
- * - Summary generation and maintenance
- * - Memory extraction and deduplication
- * - Vector search and retrieval
- * - Context composition
- * - End-to-end chat with context
  */
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import { buildRetrievalQuery, composePrompt, getRecentWindow } from '@/infra/llm/context-policy'
@@ -62,7 +55,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
     })
     testUserId = user.id
 
-    // Try to find an existing exercise, or create minimal test data
+    // Try to find an existing exercise
     const existingExercises = await payload.find({
       collection: 'exercises',
       limit: 1,
@@ -71,18 +64,14 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
     if (existingExercises.docs.length > 0) {
       testExerciseId = existingExercises.docs[0].id
     } else {
-      // If no exercise exists, we'll skip conversation creation
-      // Tests will still work for embeddings, summary, and memory extraction
       console.warn('⚠️  No existing exercise found - skipping conversation creation')
     }
 
-    // Create test conversation only if we have an exercise
     if (testExerciseId) {
       const conversation = await payload.create({
         collection: 'conversations',
         data: {
           user: testUserId,
-          // NEW: Use contextRef instead of exercise
           contextRef: {
             relationTo: 'exercises',
             value: testExerciseId,
@@ -95,13 +84,11 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
       })
       testConversationId = conversation.id
     }
-  }, 30000) // 30s timeout for Payload initialization
+  }, 30000)
 
   afterAll(async () => {
-    // Skip cleanup if payload not initialized
     if (!payload) return
 
-    // Cleanup: Delete test data
     if (testConversationId) {
       await payload.delete({
         collection: 'conversations',
@@ -109,7 +96,6 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
       })
     }
 
-    // Delete test memory items
     const memories = await payload.find({
       collection: 'memory_items',
       where: { userId: { equals: testUserId } },
@@ -121,19 +107,18 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
       })
     }
 
-    // Delete test user (we didn't create exercise/lesson, so don't delete them)
     if (testUserId) {
       await payload.delete({
         collection: 'users',
         id: testUserId,
       })
     }
-  }, 30000) // 30s timeout for cleanup
+  }, 30000)
 
   describe('Embeddings Service', () => {
     it('should generate valid 1536-dimensional embeddings', async () => {
       const text = 'This is a test sentence for embedding generation.'
-      const result = await generateEmbedding(text)
+      const result = await generateEmbedding(payload, text)
 
       expect(result).toBeDefined()
       expect(result.embedding).toBeDefined()
@@ -142,21 +127,20 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
       expect(result.embedding.every((v) => typeof v === 'number')).toBe(true)
       expect(result.model).toBeDefined()
       expect(result.tokensUsed).toBeGreaterThan(0)
-    }, 30000) // 30s timeout for API call
+    }, 30000)
 
     it('should handle empty text gracefully', async () => {
-      await expect(generateEmbedding('')).rejects.toThrow(
+      await expect(generateEmbedding(payload, '')).rejects.toThrow(
         'Cannot generate embedding for empty text',
       )
     }, 30000)
 
     it('should generate different embeddings for different texts', async () => {
-      const result1 = await generateEmbedding('I love programming in TypeScript.')
-      const result2 = await generateEmbedding('The weather is sunny today.')
+      const result1 = await generateEmbedding(payload, 'I love programming in TypeScript.')
+      const result2 = await generateEmbedding(payload, 'The weather is sunny today.')
 
       expect(result1.embedding).not.toEqual(result2.embedding)
 
-      // Check they're actually different (cosine similarity should be low)
       const dotProduct = result1.embedding.reduce(
         (sum, val, i) => sum + val * result2.embedding[i],
         0,
@@ -165,7 +149,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
       const mag2 = Math.sqrt(result2.embedding.reduce((sum, val) => sum + val * val, 0))
       const similarity = dotProduct / (mag1 * mag2)
 
-      expect(similarity).toBeLessThan(0.9) // Should be dissimilar
+      expect(similarity).toBeLessThan(0.9)
     }, 30000)
   })
 
@@ -180,7 +164,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
       const recent = getRecentWindow(messages)
 
       expect(recent.length).toBe(20)
-      expect(recent[0].content).toBe('Message 30') // Last 20 messages
+      expect(recent[0].content).toBe('Message 30')
       expect(recent[19].content).toBe('Message 49')
     })
 
@@ -204,7 +188,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         },
         {
           role: 'assistant' as const,
-          content: 'TypeScript is a typed superset of JavaScript.',
+          content: 'TypeScript is a typed superset.',
           timestamp: new Date().toISOString(),
         },
         {
@@ -228,10 +212,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         text: 'User prefers TypeScript over JavaScript',
         importance: 4,
         status: 'active',
-        source: {
-          sourceMessageTimestamp: new Date(),
-          sourceMessageRole: ChatRole.User,
-        },
+        source: { sourceMessageTimestamp: new Date(), sourceMessageRole: ChatRole.User },
         createdAt: new Date(),
         updatedAt: new Date(),
       }
@@ -246,7 +227,6 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
       })
 
       expect(prompt.messages.length).toBeGreaterThan(0)
-      // Check deterministic ordering
       const contents = prompt.messages.map((m) => m.content).join(' ')
       expect(contents).toContain('helpful assistant')
       expect(contents).toContain('TypeScript basics')
@@ -265,7 +245,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         },
         {
           role: 'assistant' as const,
-          content: 'Payload is a headless CMS built with TypeScript.',
+          content: 'Payload is a headless CMS.',
           timestamp: new Date().toISOString(),
         },
         {
@@ -275,22 +255,19 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         },
         {
           role: 'assistant' as const,
-          content: 'You define collections in your config file.',
+          content: 'You define collections in config.',
           timestamp: new Date().toISOString(),
         },
       ]
 
-      const result = await generateSummary('', messages)
+      const result = await generateSummary(payload, messages)
 
       expect(result).toBeDefined()
       expect(result.summary).toBeDefined()
       expect(typeof result.summary).toBe('string')
       expect(result.summary.length).toBeGreaterThan(0)
-
-      // FIX: Validate word count, not character count (prompt says "under 500 words")
       const wordCount = result.summary.split(/\s+/).length
       expect(wordCount).toBeLessThan(500)
-
       expect(result.summaryUntilTimestamp).toBeDefined()
       expect(result.tokensUsed).toBeGreaterThan(0)
     }, 30000)
@@ -304,13 +281,13 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         },
         {
           role: 'assistant' as const,
-          content: 'Hooks let you add logic to collection operations.',
+          content: 'Hooks let you add logic.',
           timestamp: new Date().toISOString(),
         },
       ]
       const previousSummary = 'User learned about Payload CMS basics.'
 
-      const result = await generateSummary(previousSummary, messages)
+      const result = await generateSummary(payload, messages, previousSummary)
 
       expect(result).toBeDefined()
       expect(result.summary).toBeDefined()
@@ -321,7 +298,6 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
 
   describe('Summary Maintenance', () => {
     it('should trigger maintenance when threshold reached (40+ messages)', async () => {
-      // Clear existing messages first to avoid maxRows issues
       await payload.update({
         collection: 'conversations',
         id: testConversationId,
@@ -329,7 +305,6 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         overrideAccess: true,
       })
 
-      // Create conversation with 45 messages (above normal threshold)
       const messages = Array.from({ length: 45 }, (_, i) => ({
         role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
         content: `Message ${i}`,
@@ -343,27 +318,21 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         overrideAccess: true,
       })
 
-      // Run maintenance
       await runSummaryMaintenance(payload, testConversationId)
 
-      // Check conversation was updated
       const updated = await payload.findByID({
         collection: 'conversations',
         id: testConversationId,
         depth: 0,
       })
 
-      // Summary should be generated
       expect(updated.summary).toBeDefined()
       expect(updated.summaryUpdatedAt).toBeDefined()
       expect(updated.summaryUntilTimestamp).toBeDefined()
-
-      // Messages should be trimmed to 20
       expect(updated.messages?.length).toBe(20)
-    }, 60000) // 60s timeout
+    }, 60000)
 
     it('should trigger at safety threshold (80+ messages)', async () => {
-      // Clear existing messages first to avoid maxRows issues
       await payload.update({
         collection: 'conversations',
         id: testConversationId,
@@ -371,7 +340,6 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         overrideAccess: true,
       })
 
-      // Create conversation with 85 messages (above safety threshold)
       const messages = Array.from({ length: 85 }, (_, i) => ({
         role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
         content: `Safety threshold message ${i}`,
@@ -385,25 +353,21 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         overrideAccess: true,
       })
 
-      // Run maintenance
       const result = await runSummaryMaintenance(payload, testConversationId)
 
       expect(result.summaryUpdated).toBe(true)
       expect(result.messagesTrimmed).toBeGreaterThan(0)
 
-      // Check conversation was updated
       const updated = await payload.findByID({
         collection: 'conversations',
         id: testConversationId,
       })
 
-      // Should definitely have summary at safety threshold
       expect(updated.summary).toBeDefined()
       expect(updated.messages?.length).toBe(20)
     }, 60000)
 
     it('should handle long conversations with multiple summary cycles', async () => {
-      // Clear existing messages first
       await payload.update({
         collection: 'conversations',
         id: testConversationId,
@@ -411,28 +375,20 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         overrideAccess: true,
       })
 
-      // Simulate 3 cycles of conversation growth
       for (let cycle = 0; cycle < 3; cycle++) {
-        // Add 45 messages
         const currentMessages =
-          (
-            await payload.findByID({
-              collection: 'conversations',
-              id: testConversationId,
-            })
-          ).messages || []
+          (await payload.findByID({ collection: 'conversations', id: testConversationId }))
+            .messages || []
 
-        // Check if adding would exceed maxRows (100)
         const totalMessages = currentMessages.length + 45
+        let newMessages
         if (totalMessages > 100) {
-          // Trim to make room
-          const trimmedMessages = currentMessages.slice(-55) // Keep last 55, add 45 = 100
-          const newMessages = Array.from({ length: 45 }, (_, i) => ({
+          const trimmedMessages = currentMessages.slice(-55)
+          newMessages = Array.from({ length: 45 }, (_, i) => ({
             role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
             content: `Cycle ${cycle} Message ${i}`,
             timestamp: new Date(Date.now() - (45 - i) * 60000 + cycle * 100000).toISOString(),
           }))
-
           await payload.update({
             collection: 'conversations',
             id: testConversationId,
@@ -440,12 +396,11 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
             overrideAccess: true,
           })
         } else {
-          const newMessages = Array.from({ length: 45 }, (_, i) => ({
+          newMessages = Array.from({ length: 45 }, (_, i) => ({
             role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
             content: `Cycle ${cycle} Message ${i}`,
             timestamp: new Date(Date.now() - (45 - i) * 60000 + cycle * 100000).toISOString(),
           }))
-
           await payload.update({
             collection: 'conversations',
             id: testConversationId,
@@ -454,23 +409,17 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
           })
         }
 
-        // Run maintenance
         await runSummaryMaintenance(payload, testConversationId)
       }
 
-      const final = await payload.findByID({
-        collection: 'conversations',
-        id: testConversationId,
-      })
+      const final = await payload.findByID({ collection: 'conversations', id: testConversationId })
 
-      // Should have summary from multiple cycles
       expect(final.summary).toBeDefined()
-      expect(final.summary!.length).toBeGreaterThan(50) // Should have accumulated info
-      expect(final.messages?.length).toBe(20) // Always trimmed to 20
-    }, 180000) // 3 minutes for multiple cycles
+      expect(final.summary!.length).toBeGreaterThan(50)
+      expect(final.messages?.length).toBe(20)
+    }, 180000)
 
     it('should preserve information quality across summary cycles', async () => {
-      // Clear existing messages first
       await payload.update({
         collection: 'conversations',
         id: testConversationId,
@@ -478,28 +427,21 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         overrideAccess: true,
       })
 
-      // Create a conversation where key information is repeatedly reinforced
       const messages = [
         {
           role: 'user' as const,
-          content: 'My name is Alice and I love React for building web applications',
+          content: 'My name is Alice and I love React',
           timestamp: new Date().toISOString(),
         },
         {
           role: 'assistant' as const,
-          content: 'Nice to meet you Alice! React is excellent for UI development.',
+          content: 'Nice to meet you Alice!',
           timestamp: new Date().toISOString(),
         },
         ...Array.from({ length: 20 }, (_, i) => ({
           role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
           content:
-            i % 4 === 0
-              ? `Alice, what do you think about React hooks?`
-              : i % 4 === 1
-                ? `I find React hooks very useful for state management`
-                : i % 4 === 2
-                  ? `That's great! React's component model is powerful`
-                  : `General discussion point ${i}`,
+            i % 4 === 0 ? `Alice, what do you think about React hooks?` : `Discussion point ${i}`,
           timestamp: new Date(Date.now() + i * 60000).toISOString(),
         })),
         {
@@ -529,30 +471,17 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         depth: 0,
       })
 
-      // Summary should be generated and contain meaningful information
       expect(updated.summary).toBeDefined()
       const summary = updated.summary || ''
-
-      // The summary should be a meaningful text (not empty)
       expect(summary.length).toBeGreaterThan(10)
 
-      // Check if key information was preserved (best effort, AI may generalize)
       const summaryLower = summary.toLowerCase()
       const hasAlice = summaryLower.includes('alice')
       const hasReact = summaryLower.includes('react')
       const hasRelevantTerms =
         summaryLower.includes('web') ||
         summaryLower.includes('development') ||
-        summaryLower.includes('ui') ||
-        summaryLower.includes('hooks') ||
-        summaryLower.includes('component')
-
-      // Log what was captured for debugging
-      console.log('Summary:', summary)
-      console.log('Preserved:', { hasAlice, hasReact, hasRelevantTerms })
-
-      // The summary should at least capture the general topic even if specific names are lost
-      // This is more realistic given AI summarization behavior
+        summaryLower.includes('ui')
       expect(hasRelevantTerms || hasAlice || hasReact).toBe(true)
     }, 60000)
   })
@@ -567,7 +496,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         },
         {
           role: 'assistant' as const,
-          content: "That's a great choice for reducing eye strain.",
+          content: "That's a great choice.",
           timestamp: new Date().toISOString(),
         },
         {
@@ -577,16 +506,15 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         },
         {
           role: 'assistant' as const,
-          content: 'TypeScript is excellent for type safety.',
+          content: 'TypeScript is excellent.',
           timestamp: new Date().toISOString(),
         },
       ]
 
-      const candidates = await extractMemoryCandidates(messages, '')
+      const candidates = await extractMemoryCandidates(payload, messages)
 
       expect(candidates).toBeDefined()
       expect(Array.isArray(candidates)).toBe(true)
-      // Should extract preferences
       if (candidates.length > 0) {
         expect(candidates[0]).toHaveProperty('text')
         expect(candidates[0]).toHaveProperty('type')
@@ -597,10 +525,9 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
     }, 60000)
 
     it('should persist non-duplicate memories', async () => {
-      // Skip if MongoDB connection not available (needed for vector search)
       const db = getDb(payload)
       if (!db) {
-        console.log('Skipping memory persistence test: MongoDB connection not available')
+        console.log('Skipping: MongoDB connection not available')
         return
       }
 
@@ -610,7 +537,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
           type: 'fact' as const,
           importance: 3,
           scope: 'user' as const,
-          reason: 'Test memory item',
+          reason: 'Test',
         },
       ]
 
@@ -625,21 +552,17 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
 
       expect(persisted).toBeGreaterThan(0)
 
-      // Verify memory was created
       const memories = await payload.find({
         collection: 'memory_items',
         where: { userId: { equals: testUserId } },
       })
-
       expect(memories.docs.length).toBeGreaterThan(0)
     }, 30000)
   })
 
   describe('Memory Isolation and Deduplication', () => {
     it.skip('should isolate memories across different conversations', async () => {
-      // SKIPPED: This test requires the new conversation schema with contextRef
-      // The test environment may not have the updated schema yet
-      console.log('Skipping: Requires updated conversation schema with contextRef')
+      console.log('Skipping: Requires updated conversation schema')
     })
 
     it('should deduplicate similar memories', async () => {
@@ -649,14 +572,13 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         return
       }
 
-      // Create first memory
       const candidates1 = [
         {
-          text: 'User prefers React for frontend development',
+          text: 'User prefers React for frontend',
           type: 'preference' as const,
           importance: 4,
           scope: 'user' as const,
-          reason: 'Explicit preference stated',
+          reason: 'Preference',
         },
       ]
 
@@ -668,17 +590,15 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         new Date(),
         ChatRole.User,
       )
-
       expect(persisted1).toBe(1)
 
-      // Try to create very similar memory (should be deduplicated)
       const candidates2 = [
         {
           text: 'User likes React for building frontends',
           type: 'preference' as const,
           importance: 4,
           scope: 'user' as const,
-          reason: 'Similar to existing preference',
+          reason: 'Similar',
         },
       ]
 
@@ -690,33 +610,19 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         new Date(),
         ChatRole.User,
       )
-
-      // If vector search is available (Atlas), should deduplicate (0)
-      // If not available (local), will create new (1)
-      // Both behaviors are acceptable depending on environment
-      if (persisted2 === 0) {
-        console.log('✓ Deduplication working (vector search available)')
-      } else if (persisted2 === 1) {
-        console.log('⚠ Deduplication skipped (vector search not available)')
-      }
       expect([0, 1]).toContain(persisted2)
     }, 60000)
   })
 
-  describe('Vector Search (requires MongoDB Atlas)', () => {
-    // Note: These tests require MongoDB Atlas with vector search index
-    // They will be skipped if not available
-
+  describe('Vector Search', () => {
     it('should retrieve conversation-scoped memories', async () => {
-      // Skip if not Atlas
       const db = getDb(payload)
       if (!db) {
-        console.log('Skipping vector search test: MongoDB Atlas not available')
+        console.log('Skipping: MongoDB Atlas not available')
         return
       }
 
-      // Create a memory for this conversation
-      const embeddingResult = await generateEmbedding('User is learning TypeScript basics')
+      const embeddingResult = await generateEmbedding(payload, 'User is learning TypeScript basics')
       await payload.create({
         collection: 'memory_items',
         data: {
@@ -726,15 +632,11 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
           type: 'fact',
           importance: 4,
           embedding: embeddingResult.embedding,
-          source: {
-            sourceMessageTimestamp: new Date().toISOString(),
-            sourceMessageRole: 'user',
-          },
+          source: { sourceMessageTimestamp: new Date().toISOString(), sourceMessageRole: 'user' },
           status: 'active',
         },
       })
 
-      // Search for it
       try {
         const result = await retrieveMemoryItems(
           db,
@@ -742,21 +644,16 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
           'TypeScript programming',
           testConversationId,
         )
-
-        // Only assert if vector search is actually working
-        // (fails on local MongoDB without Atlas vector search)
         if (result.items.length === 0) {
-          console.log('Skipping assertions: Vector search returned no results (likely not Atlas)')
+          console.log('Vector search returned no results')
           return
         }
-
         expect(result.items.length).toBeGreaterThan(0)
-        // Local or global count should be > 0 (may vary based on indexing timing)
         expect(result.localCount + result.globalCount).toBeGreaterThan(0)
         expect(result.latencyMs).toBeGreaterThan(0)
       } catch (error: unknown) {
         if (isVectorSearchUnavailable(error)) {
-          console.log('Skipping: Vector search not available (requires MongoDB Atlas)')
+          console.log('Skipping: Vector search not available')
         } else {
           throw error
         }
@@ -766,11 +663,10 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
     it('should enforce tenant isolation in vector search', async () => {
       const db = getDb(payload)
       if (!db) {
-        console.log('Skipping vector search test: MongoDB Atlas not available')
+        console.log('Skipping: MongoDB Atlas not available')
         return
       }
 
-      // Create another user's memory
       const otherUser = await payload.create({
         collection: 'users',
         data: {
@@ -780,7 +676,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         },
       })
 
-      const embeddingResult = await generateEmbedding('Other user secret information')
+      const embeddingResult = await generateEmbedding(payload, 'Other user secret information')
       await payload.create({
         collection: 'memory_items',
         data: {
@@ -790,15 +686,11 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
           type: 'fact',
           importance: 5,
           embedding: embeddingResult.embedding,
-          source: {
-            sourceMessageTimestamp: new Date().toISOString(),
-            sourceMessageRole: 'user',
-          },
+          source: { sourceMessageTimestamp: new Date().toISOString(), sourceMessageRole: 'user' },
           status: 'active',
         },
       })
 
-      // Try to search as test user
       try {
         const result = await retrieveMemoryItems(
           db,
@@ -806,8 +698,6 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
           'secret information',
           testConversationId,
         )
-
-        // Should NOT retrieve other user's memory
         const hasOtherUserMemory = result.items.some((item) => item.userId === otherUser.id)
         expect(hasOtherUserMemory).toBe(false)
       } catch (error: unknown) {
@@ -818,14 +708,12 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         }
       }
 
-      // Cleanup
       await payload.delete({ collection: 'users', id: otherUser.id })
     }, 30000)
   })
 
   describe('End-to-End Chat with Context', () => {
     it('should build context and generate response', async () => {
-      // Setup: Create a conversation with history
       const messages = [
         {
           role: 'user' as const,
@@ -846,15 +734,12 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         overrideAccess: true,
       })
 
-      // Get recent window
       const recentMessages = getRecentWindow(messages)
       expect(recentMessages.length).toBe(2)
 
-      // Build retrieval query
       const query = buildRetrievalQuery(recentMessages)
       expect(query).toContain('Payload')
 
-      // Compose prompt with context
       const prompt = composePrompt('You are a helpful assistant.', {
         systemMessage: 'You are a helpful assistant.',
         summary: '',
