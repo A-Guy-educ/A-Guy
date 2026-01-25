@@ -42,33 +42,21 @@ export async function handleExistingUser(
   // or a pure OAuth account (has both)
   const isLinkedAccount = !user.oauthLoginSecretEnc
 
-  console.log('[handleExistingUser] User:', {
-    email: user.email,
-    id: user.id,
-    hasOauthSecret: !!user.oauthLoginSecretEnc,
-    isLinkedAccount,
-  })
-
   try {
     let token: string
 
     if (isLinkedAccount) {
       // Linked account: user kept their email/password, generate token directly
-      console.log('[handleExistingUser] Taking linked account path')
       const result = await issueSessionForLinkedAccount(user.id)
       token = result.token
-      console.log('[handleExistingUser] Token generated:', token.substring(0, 30) + '...')
     } else {
       // Pure OAuth account: use stored encrypted secret
       // CRITICAL: Use user.email (from DB), NOT userinfo.email (Google may change)
-      console.log('[handleExistingUser] Taking pure OAuth account path')
       const result = await issueSession(user.email, user.oauthLoginSecretEnc!)
       token = result.token
-      console.log('[handleExistingUser] Token generated:', token.substring(0, 30) + '...')
     }
 
     const redirectUrl = new URL(returnTo, req.url).toString()
-    console.log('[handleExistingUser] Setting cookie and redirecting to:', redirectUrl)
     res.headers.set('Location', redirectUrl)
     setAuthCookie(res, payload, token)
     return res
@@ -130,15 +118,20 @@ export async function handleCollision(
     // This allows the user to keep both login methods:
     // - Email/password login continues to work with their existing password
     // - Google login works by verifying googleSub and generating token directly
-    await payload.update({
-      collection: 'users',
-      id: existingUser.id,
-      data: {
-        googleSub: sub,
-        googleProfile: { name: profile.name, picture: profile.picture },
-        verifiedEmail: email, // Update verifiedEmail since Google verified it
+
+    // CRITICAL: Use MongoDB direct update to avoid Payload hooks that might clear password
+    const db = payload.db
+    const { ObjectId } = await import('mongodb')
+    await db.collections.users.updateOne(
+      { _id: new ObjectId(existingUser.id) },
+      {
+        $set: {
+          googleSub: sub,
+          googleProfile: { name: profile.name, picture: profile.picture },
+          verifiedEmail: email,
+        },
       },
-    })
+    )
 
     await logOAuthEvent('account_linked', {
       correlationId,

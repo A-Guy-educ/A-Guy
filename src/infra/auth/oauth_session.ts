@@ -9,7 +9,7 @@
 
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { decrypt } from './oauth_crypto'
+import { decrypt, generateSecret } from './oauth_crypto'
 
 export interface SessionResult {
   token: string
@@ -84,52 +84,82 @@ export async function issueSessionWithPlainSecret(
  * @returns Session token
  */
 export async function issueSessionForLinkedAccount(userId: string): Promise<SessionResult> {
-  console.log('[issueSessionForLinkedAccount] Starting for userId:', userId)
   const payload = await getPayload({ config })
 
-  // Fetch the user to generate a proper JWT
-  const user = await payload.findByID({
-    collection: 'users',
-    id: userId,
-    overrideAccess: true,
-  })
+  // CRITICAL: Payload's auth system strips hash/salt from findByID for security
+  // We must read directly from MongoDB to access these fields
+  const db = payload.db
+  const { ObjectId } = await import('mongodb')
 
-  if (!user) {
-    console.error('[issueSessionForLinkedAccount] User not found:', userId)
+  const userDoc = await db.collections.users.findOne({ _id: new ObjectId(userId) })
+
+  if (!userDoc) {
     throw new Error('User not found for session generation')
   }
 
-  console.log('[issueSessionForLinkedAccount] User found:', user.email)
+  // Save original state from MongoDB (has hash/salt)
+  const originalHash = userDoc.hash
+  const originalSalt = userDoc.salt
 
-  // Generate JWT token using the same method as Payload's login
-  // Import jose's SignJWT to replicate Payload's token generation
-  const { SignJWT } = await import('jose')
-
-  const secret = process.env.PAYLOAD_SECRET!
-  if (!secret) {
-    console.error('[issueSessionForLinkedAccount] PAYLOAD_SECRET not configured')
-    throw new Error('PAYLOAD_SECRET is not configured')
+  if (!originalHash || !originalSalt) {
+    throw new Error('User missing password hash/salt - cannot issue session for linked account')
   }
 
-  console.log('[issueSessionForLinkedAccount] Generating JWT...')
-  const secretKey = new TextEncoder().encode(secret)
-  const issuedAt = Math.floor(Date.now() / 1000)
-  const tokenExpiration = 7200 // 2 hours (default Payload expiration)
-  const exp = issuedAt + tokenExpiration
+  // Generate a temporary secret and use payload.login()
+  // This ensures the JWT is 100% compatible with Payload's expectations
+  const tempSecret = generateSecret()
 
-  // Fields to include in JWT (same as Payload's login)
-  const fieldsToSign = {
-    id: user.id,
-    email: user.email,
-    collection: 'users',
+  try {
+    // Temporarily set OAuth secret as password
+    await payload.update({
+      collection: 'users',
+      id: userId,
+      data: {
+        password: tempSecret,
+      },
+      overrideAccess: true,
+    })
+
+    // Login to get real Payload JWT
+    const loginResult = await payload.login({
+      collection: 'users',
+      data: {
+        email: userDoc.email as string,
+        password: tempSecret,
+      },
+    })
+
+    if (!loginResult || !('token' in loginResult) || !loginResult.token) {
+      throw new Error('Session issuance failed: no token returned')
+    }
+
+    // Restore original password hash using MongoDB direct update
+    await db.collections.users.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          hash: originalHash,
+          salt: originalSalt,
+        },
+      },
+    )
+
+    return { token: loginResult.token }
+  } catch (error) {
+    // Try to restore password if login/token generation failed
+    try {
+      await db.collections.users.updateOne(
+        { _id: new ObjectId(userId) },
+        {
+          $set: {
+            hash: originalHash,
+            salt: originalSalt,
+          },
+        },
+      )
+    } catch (_restoreError) {
+      // Silent failure - already in error state
+    }
+    throw error
   }
-
-  const token = await new SignJWT(fieldsToSign)
-    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
-    .setIssuedAt(issuedAt)
-    .setExpirationTime(exp)
-    .sign(secretKey)
-
-  console.log('[issueSessionForLinkedAccount] JWT generated successfully')
-  return { token }
 }
