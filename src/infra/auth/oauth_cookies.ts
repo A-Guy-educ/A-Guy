@@ -21,7 +21,15 @@ export function deleteCookie(res: NextResponse, name: string): void {
 
 export function setAuthCookie(res: NextResponse, payload: Payload, value: string): void {
   const cookieName = getCookieName(payload)
-  res.cookies.set(cookieName, value, AUTH_COOKIE_OPTIONS)
+  const usersCollection = payload.collections?.users
+  const authCookies = usersCollection?.config?.auth?.cookies as
+    | { domain?: string; secure?: boolean; sameSite?: string }
+    | undefined
+
+  res.cookies.set(cookieName, value, {
+    ...AUTH_COOKIE_OPTIONS,
+    ...(authCookies?.domain ? { domain: authCookies.domain } : {}),
+  })
 }
 
 export function setShortLivedCookie(res: NextResponse, name: string, value: string): void {

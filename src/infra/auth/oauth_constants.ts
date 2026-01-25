@@ -18,6 +18,7 @@ export const AUTH_COOKIE_OPTIONS = {
   secure: true, // Always secure for OAuth (production requirement)
   sameSite: 'none' as const, // Match Payload's auth cookie config
   path: '/',
+  maxAge: 60 * 60 * 24 * 7, // 7 days - match Payload's default token expiration
 }
 
 export const STATE_COOKIE_OPTIONS = {
