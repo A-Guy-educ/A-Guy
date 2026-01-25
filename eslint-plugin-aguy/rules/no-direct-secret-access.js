@@ -26,6 +26,8 @@ const UNRESTRICTED_SECRET_KEYS = [
   'DATABASE_URL',
   'DATABASE_URL_ATLAS',
   'MCP_ENABLED',
+  'PAYLOAD_SECRET',
+  'NEXT_PUBLIC_SERVER_URL'
 ]
 
 // Pattern to match process.env.X access
