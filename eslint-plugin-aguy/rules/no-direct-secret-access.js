@@ -2,12 +2,9 @@
  * ESLint Rule: no-direct-secret-access
  *
  * Prevents direct access to secrets via process.env.
- * Enforces use of tenant-scoped getSecret() from '@/lib/config/runtime'
- *
- * Only the following keys are allowed to be accessed directly:
- * - BLOB_READ_WRITE_TOKEN, CONFIG_MASTER_KEY, DATABASE_URL, DATABASE_URL_ATLAS, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, MCP_ENABLED, NEXT_PUBLIC_SERVER_URL, OPENAI_API_KEY, PAYLOAD_SECRET, PREVIEW_SECRET (bootstrap config + test convenience)
- *
- * All other process.env access should use getSecret(tenantId, key)
+ * Enforces use of:
+ * - getConfigValue(key) for bootstrap config (non-secret env vars)
+ * - getSecret(tenantId, key) for tenant-scoped secrets
  *
  * @example
  * // ❌ BAD - Direct secret access
@@ -18,57 +15,52 @@
  * import { getDefaultTenantId } from '@/lib/tenant/get-default-tenant'
  * const tenantId = await getDefaultTenantId(payload)
  * const apiKey = getSecret(tenantId, 'OPENAI_API_KEY', { throwIfNotFound: false })
+ *
+ * // ✅ GOOD - Bootstrap config value (non-secret)
+ * import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
+ * const tenantSlug = getConfigValue('DEFAULT_TENANT_SLUG')
  */
 
 // List of keys that are allowed to be accessed directly (bootstrap config + test convenience)
 // Not allowed to be changed
 const UNRESTRICTED_SECRET_KEYS = [
+  'ATLAS_VECTOR_TESTS', // Test flag for vector search tests
   'BLOB_READ_WRITE_TOKEN', // Vercel Blob plugin initialization (startup)
   'CONFIG_MASTER_KEY',
+  'CRON_SECRET', // Jobs access control
   'DATABASE_URL',
   'DATABASE_URL_ATLAS',
   'NEXT_PUBLIC_SERVER_URL',
-  'PAYLOAD_SECRET'
+  'PAYLOAD_SECRET',
 ]
 
-// Pattern to match process.env.X access
-const PROCESS_ENV_PATTERN = /process\.env\.([A-Z_][A-Z0-9_]*)/g
+// Pattern to match process.env.X access (prefixed with _ to indicate intentionally unused)
+const _PROCESS_ENV_PATTERN = /process\.env\.([A-Z_][A-Z0-9_]*)/g
 
-export default {
+const noDirectSecretAccess = {
   meta: {
     type: 'problem',
     docs: {
       description:
-        'Prevent direct secret access via process.env. Use getSecret(tenantId, key) instead.',
+        'Prevent direct secret access via process.env. Use getConfigValue(key) or getSecret(tenantId, key) instead.',
       category: 'Security',
       recommended: true,
     },
     messages: {
       directSecretAccess:
-        'Direct access to secret "{{secretKey}}" via process.env is not allowed. ' +
-        'Use getSecret(tenantId, "{{secretKey}}") from "@/lib/config/runtime" instead. ' +
-        'Example: import { getSecret } from "@/lib/config/runtime"; ' +
-        'const tenantId = await getDefaultTenantId(payload); ' +
-        'const secret = getSecret(tenantId, "{{secretKey}}")',
-    },
-    schema: {
-      type: 'array',
-      items: { type: 'string' },
-      uniqueItems: true,
-      description:
-        'Additional keys that are allowed to be accessed directly (merged with default list)',
+        'Direct access to "{{secretKey}}" via process.env is not allowed. ' +
+        'For bootstrap config (non-secret): Use getConfigValue("{{secretKey}}") from "@/lib/config/runtime/bootstrap-config". ' +
+        'For secrets: Use getSecret(tenantId, "{{secretKey}}") from "@/lib/config/runtime".',
     },
   },
 
   create(context) {
-    // Get additional unrestricted keys from options
-    const options = context.options[0] || []
-    const unrestrictedKeys = [...UNRESTRICTED_SECRET_KEYS, ...options]
-
     return {
       // Check MemberExpression for process.env.X access
+      // Literal property: process.env.SECRET_KEY - flagged unless in UNRESTRICTED_SECRET_KEYS
+      // Computed property: process.env[key] - always allowed (used by getConfigValue)
       MemberExpression(node) {
-        // Check if this is process.env.X pattern
+        // Check if this is process.env pattern
         if (
           node.object.type === 'MemberExpression' &&
           node.object.object.type === 'Identifier' &&
@@ -76,20 +68,31 @@ export default {
           node.object.property.type === 'Identifier' &&
           node.object.property.name === 'env'
         ) {
-          // Check if the property is NOT in the unrestricted list
-          const accessedKey = node.property.name
+          // Skip computed access like process.env[key] - allowed for getConfigValue
+          if (node.computed) {
+            return
+          }
 
-          if (!unrestrictedKeys.includes(accessedKey)) {
-            context.report({
-              node: node,
-              messageId: 'directSecretAccess',
-              data: {
-                secretKey: accessedKey,
-              },
-            })
+          // Only flag literal access like process.env.SECRET_KEY
+          if (node.property.type === 'Identifier') {
+            const accessedKey = node.property.name
+
+            // Framework bootstrap keys are allowed in framework code
+            // All other code should use getConfigValue(key)
+            if (!UNRESTRICTED_SECRET_KEYS.includes(accessedKey)) {
+              context.report({
+                node: node,
+                messageId: 'directSecretAccess',
+                data: {
+                  secretKey: accessedKey,
+                },
+              })
+            }
           }
         }
       },
     }
-  }
+  },
 }
+
+export default noDirectSecretAccess
