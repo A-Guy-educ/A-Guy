@@ -1,17 +1,11 @@
 /**
  * Memory Extraction Service
  * Extracts important information from conversations to store as long-term memory
- *
- * Key Features:
- * - AI-powered extraction of preferences, decisions, facts
- * - Server-side filtering for quality control
- * - Deduplication via vector similarity
- * - Selective storage (quality over quantity)
- * - Context-scoped memory items
  */
 
 import { logger } from '@/infra/utils/logger'
 import { readFileSync } from 'fs'
+import OpenAI from 'openai'
 import { dirname, join } from 'path'
 import type { Payload } from 'payload'
 import { fileURLToPath } from 'url'
@@ -25,38 +19,7 @@ import { findSimilarMemoryItem, type MemoryItem } from './vector-search'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// Track if we're in test mode (no payload)
-let testMode = false
-
-/**
- * Enable test mode - uses process.env.OPENAI_API_KEY directly
- * @internal
- */
-export function setMemoryExtractionTestMode(enabled: boolean): void {
-  testMode = enabled
-}
-
-/**
- * Get OpenAI client for memory extraction (test-compatible)
- */
-async function getMemoryExtractionClient(payload?: Payload): Promise<any> {
-  // Test mode: use process.env directly
-  if (testMode || !payload) {
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is not set')
-    }
-    const { OpenAI } = await import('openai')
-    return new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
-  }
-
-  // Use tenant-scoped config
-  return getOpenAIClient(payload)
-}
-
-// Load prompt from external file with a safe fallback so that missing files
-// do not crash the agent chat endpoint at module load time (e.g. in serverless environments).
-// First tries to load the main prompt file, then falls back to the default file, then to inline default.
+// Load prompt from external file with safe fallback
 let MEMORY_EXTRACTION_PROMPT: string = ''
 
 try {
@@ -65,52 +28,16 @@ try {
 } catch (error: unknown) {
   logger.warn(
     { err: error, path: join(__dirname, 'prompts/memory-extraction-system-prompt.md') },
-    '[MemoryExtraction] Failed to load memory extraction prompt from markdown file, trying default fallback',
+    '[MemoryExtraction] Failed to load prompt, using default',
   )
 
-  // Try to load the default fallback file
   try {
     const defaultPath = join(__dirname, 'prompts/memory-extraction-system-prompt.default.md')
     MEMORY_EXTRACTION_PROMPT = readFileSync(defaultPath, 'utf-8')
-    logger.info('[MemoryExtraction] Loaded default memory extraction prompt from fallback file')
-  } catch (fallbackError: unknown) {
-    logger.warn(
-      { err: fallbackError },
-      '[MemoryExtraction] Failed to load default fallback file, using inline default',
-    )
-    // Final fallback: inline default (matches memory-extraction-system-prompt.default.md)
+  } catch {
     MEMORY_EXTRACTION_PROMPT = [
       'You are a memory extraction assistant for an educational platform.',
-      '',
-      'Analyze the conversation and extract important information worth remembering long-term.',
-      '',
-      'Focus on:',
-      '',
-      '- User preferences (learning style, pace, topics of interest)',
-      '- Decisions made (chose X over Y, wants to focus on Z)',
-      "- Important facts (user's background, goals, constraints)",
-      '- Open loops (questions to follow up on later)',
-      '- Profile information (skill level, prior knowledge)',
-      '',
-      'Output format (JSON):',
-      '{',
-      '"memories": [',
-      '{',
-      '"type": "preference|decision|fact|open_loop|profile|constraint|other",',
-      '"text": "Concise statement (max 200 chars)",',
-      '"importance": 1-5,',
-      '"scope": "user|conversation",',
-      '"reason": "Why this is worth remembering"',
-      '}',
-      ']',
-      '}',
-      '',
-      'Filtering rules:',
-      '',
-      '- Omit greetings, acknowledgments, small talk',
-      '- Omit temporary/ephemeral content',
-      '- Be selective: quality over quantity (max 3-5 items per extraction)',
-      '- Each item must be actionable or informative',
+      'Extract important information worth remembering.',
     ].join('\n')
   }
 }
@@ -128,38 +55,25 @@ interface ExtractionResult {
 }
 
 /**
+ * Get OpenAI client for memory extraction (always uses getSecret via getOpenAIClient)
+ */
+async function getMemoryExtractionClient(payload: Payload): Promise<OpenAI> {
+  if (!payload) {
+    throw new Error('Payload instance required for memory extraction')
+  }
+  return getOpenAIClient(payload)
+}
+
+/**
  * Extract memory candidates from recent messages
- * Uses AI to identify important information
- *
- * @param payloadOrMessages - Payload instance OR array of messages (backward compat)
- * @param recentMessagesOrSummary - Messages array OR existing summary (backward compat)
- * @param existingSummary - Optional existing summary (new signature only)
  */
 export async function extractMemoryCandidates(
-  payloadOrMessages: Payload | Message[],
-  recentMessagesOrSummary?: Message[] | string,
+  payload: Payload,
+  recentMessages: Message[],
   existingSummary?: string,
 ): Promise<MemoryCandidate[]> {
-  let payload: Payload | undefined
-  let recentMessages: Message[]
-
-  if (Array.isArray(payloadOrMessages)) {
-    // Backward compatibility: first arg is messages array
-    recentMessages = payloadOrMessages
-    // Second arg can be summary string (2-arg call) or undefined
-    if (typeof recentMessagesOrSummary === 'string') {
-      existingSummary = recentMessagesOrSummary
-    }
-    payload = undefined
-  } else {
-    // New signature: first arg is payload
-    payload = payloadOrMessages
-    recentMessages = (recentMessagesOrSummary as Message[]) || []
-  }
-
-  // Build context
   const messagesText = recentMessages
-    .slice(-10) // Last 10 messages
+    .slice(-10)
     .map((msg) => `${msg.role}: ${msg.content}`)
     .join('\n\n')
 
@@ -169,7 +83,6 @@ export async function extractMemoryCandidates(
   }
 
   try {
-    // Call model
     const client = await getMemoryExtractionClient(payload)
     const response = await client.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -183,15 +96,10 @@ export async function extractMemoryCandidates(
 
     const result: ExtractionResult = JSON.parse(response.choices[0].message.content || '{}')
 
-    // Apply server-side filtering
+    // Server-side filtering
     const filtered = (result.memories || []).filter((mem) => {
-      // Reject too short
-      if (mem.text.length < 10) return false
-      // Reject too long
-      if (mem.text.length > 2000) return false
-      // Validate importance range
+      if (mem.text.length < 10 || mem.text.length > 2000) return false
       if (mem.importance < 1 || mem.importance > 5) return false
-      // Validate type
       const validTypes = [
         'preference',
         'decision',
@@ -201,9 +109,7 @@ export async function extractMemoryCandidates(
         'constraint',
         'other',
       ]
-      if (!validTypes.includes(mem.type)) return false
-
-      return true
+      return validTypes.includes(mem.type)
     })
 
     logger.info(
@@ -219,7 +125,6 @@ export async function extractMemoryCandidates(
 
 /**
  * Persist memory items with deduplication
- * Checks for similar existing memories before creating new ones
  */
 export async function persistMemoryItems(
   payload: Payload,
@@ -231,11 +136,9 @@ export async function persistMemoryItems(
   contextKey?: string,
   contextLevel?: string,
 ): Promise<number> {
-  if (candidates.length === 0) {
-    return 0
-  }
+  if (candidates.length === 0) return 0
 
-  // Access MongoDB directly for vector search (not part of Payload's public API)
+  // Access MongoDB directly for vector search
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = (payload.db as any).connection?.db
 
@@ -245,34 +148,15 @@ export async function persistMemoryItems(
   }
 
   try {
-    // Batch generate all embeddings at once
     const texts = candidates.map((c) => c.text)
-    const embeddingResults = await generateEmbeddings(payload, texts) // Single API call
+    const embeddingResults = await generateEmbeddings(payload, texts)
 
-    // Prepare similarity checks in parallel (with concurrency limit)
-    // If vector search fails, we'll still create the memory items (graceful degradation)
     const similarityChecks = embeddingResults.map((result, idx) =>
       findSimilarMemoryItem(db, userId, result.embedding, 0.9)
-        .then((similar) => ({
-          candidate: candidates[idx],
-          embedding: result.embedding,
-          similar,
-        }))
-        .catch((error) => {
-          // If vector search fails, log but continue (will create new item)
-          logger.debug(
-            { err: error, text: candidates[idx].text.slice(0, 50) },
-            '[MemoryExtraction] Similarity check failed, will create new item',
-          )
-          return {
-            candidate: candidates[idx],
-            embedding: result.embedding,
-            similar: null, // Treat as no similar item found
-          }
-        }),
+        .then((similar) => ({ candidate: candidates[idx], embedding: result.embedding, similar }))
+        .catch(() => ({ candidate: candidates[idx], embedding: result.embedding, similar: null })),
     )
 
-    // Execute similarity checks with concurrency limit (avoid overwhelming DB)
     const CONCURRENCY_LIMIT = 5
     const results: Array<{
       candidate: MemoryCandidate
@@ -286,30 +170,23 @@ export async function persistMemoryItems(
       results.push(...batchResults)
     }
 
-    // Process results (create/update)
     let persisted = 0
     for (const { candidate, embedding, similar } of results) {
       try {
         if (similar) {
-          // Update existing (server-side override)
           await payload.update({
             collection: 'memory_items',
             id: similar._id.toString(),
             data: {
-              text: candidate.text, // Update with new phrasing
-              importance: Math.max(similar.importance, candidate.importance), // Take higher importance
+              text: candidate.text,
+              importance: Math.max(similar.importance, candidate.importance),
               embedding,
               updatedAt: new Date().toISOString(),
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any,
-            overrideAccess: true, // Server-side write, bypass user access control
+            overrideAccess: true,
           })
-          logger.debug(
-            { memoryId: similar._id.toString(), text: candidate.text.slice(0, 50) },
-            '[MemoryExtraction] Updated existing memory item',
-          )
         } else {
-          // Create new (server-side override)
           await payload.create({
             collection: 'memory_items',
             data: {
@@ -321,7 +198,7 @@ export async function persistMemoryItems(
               importance: candidate.importance,
               status: 'active',
               contextKey: contextKey ?? 'global',
-              contextLevel: contextLevel,
+              contextLevel,
               source: {
                 sourceConversationId: conversationId,
                 sourceMessageTimestamp: sourceTimestamp.toISOString(),
@@ -329,20 +206,15 @@ export async function persistMemoryItems(
               },
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any,
-            overrideAccess: true, // Server-side write, bypass user access control
+            overrideAccess: true,
           })
-          logger.debug(
-            { text: candidate.text.slice(0, 50) },
-            '[MemoryExtraction] Created new memory item',
-          )
-          persisted++ // Only count new creations, not updates
+          persisted++
         }
       } catch (error) {
         logger.error(
-          { err: error, candidate: candidate.text.slice(0, 50), similar: !!similar },
-          '[MemoryExtraction] Failed to persist memory item',
+          { err: error, candidate: candidate.text.slice(0, 50) },
+          '[MemoryExtraction] Failed to persist',
         )
-        // Continue with next item instead of failing completely
       }
     }
 
@@ -352,7 +224,6 @@ export async function persistMemoryItems(
       success: true,
       memoryItemsCreated: persisted,
     })
-
     return persisted
   } catch (error) {
     logger.error({ err: error, conversationId }, '[MemoryExtraction] Persistence failed')
@@ -360,7 +231,7 @@ export async function persistMemoryItems(
       conversationId,
       operation: 'extraction',
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: String(error),
     })
     return 0
   }

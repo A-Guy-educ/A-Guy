@@ -447,7 +447,8 @@ describe.skipIf(!ATLAS_TESTS_ENABLED || !hasDatabaseUrl)(
       await insertMemoryItem({
         userId,
         text: 'The user is building a mathematics LMS for students',
-        embedding: (await generateEmbedding('mathematics LMS educational platform')).embedding,
+        embedding: (await generateEmbedding(payload, 'mathematics LMS educational platform'))
+          .embedding,
         contextKey: 'global',
         importance: 3,
         status: 'active',
@@ -456,7 +457,7 @@ describe.skipIf(!ATLAS_TESTS_ENABLED || !hasDatabaseUrl)(
       await insertMemoryItem({
         userId,
         text: 'The user likes Italian food, especially pasta',
-        embedding: (await generateEmbedding('Italian food pasta cuisine')).embedding,
+        embedding: (await generateEmbedding(payload, 'Italian food pasta cuisine')).embedding,
         contextKey: 'global',
         importance: 3,
         status: 'active',

@@ -21,18 +21,14 @@
  */
 
 // List of keys that are allowed to be accessed directly (bootstrap config + test convenience)
+// Not allowed to be changed
 const UNRESTRICTED_SECRET_KEYS = [
   'BLOB_READ_WRITE_TOKEN', // Vercel Blob plugin initialization (startup)
   'CONFIG_MASTER_KEY',
   'DATABASE_URL',
   'DATABASE_URL_ATLAS',
-  'GOOGLE_CLIENT_ID', // Test mode convenience
-  'GOOGLE_CLIENT_SECRET', // Test mode convenience
-  'MCP_ENABLED',
   'NEXT_PUBLIC_SERVER_URL',
-  'OPENAI_API_KEY', // Test mode convenience
-  'PAYLOAD_SECRET',
-  'PREVIEW_SECRET', // Test mode convenience
+  'PAYLOAD_SECRET'
 ]
 
 // Pattern to match process.env.X access
@@ -95,5 +91,5 @@ export default {
         }
       },
     }
-  },
+  }
 }

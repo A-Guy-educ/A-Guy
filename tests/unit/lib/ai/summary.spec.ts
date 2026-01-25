@@ -34,16 +34,6 @@ vi.mock('@/infra/llm/openai-client', () => ({
   }),
 }))
 
-// Mock the runtime config
-vi.mock('@/lib/config/runtime', () => ({
-  isConfigLoaded: vi.fn(() => true),
-  loadRuntimeConfig: vi.fn(),
-  getSecret: vi.fn((_tenantId, key) => {
-    if (key === 'OPENAI_API_KEY') return 'test-key'
-    return null
-  }),
-}))
-
 describe('summary service', () => {
   beforeEach(() => {
     readFileSyncMock.mockReset()
@@ -78,9 +68,8 @@ describe('summary service', () => {
     })
 
     const now = new Date().toISOString()
-    // Create a minimal mock payload
     const mockPayload = {} as any
-    const result = await generateSummary(mockPayload, '', [
+    const result = await generateSummary(mockPayload, [
       { role: 'user', content: 'Hello', timestamp: now },
     ])
 
@@ -109,7 +98,7 @@ describe('summary service', () => {
 
     const now = new Date().toISOString()
     const mockPayload = {} as any
-    const result = await generateSummary(mockPayload, '', [
+    const result = await generateSummary(mockPayload, [
       { role: 'user', content: 'Hello', timestamp: now },
     ])
 

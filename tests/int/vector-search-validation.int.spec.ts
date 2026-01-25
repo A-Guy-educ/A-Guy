@@ -240,7 +240,7 @@ describe.skipIf(!hasOpenAIKey || !hasAtlasUrl)('Vector Search Validation Integra
       // Create test memories with different content
       // Note: contextKey is set to 'global' so they can be found by global query
       // In real usage, contextKey would be set based on the conversation context
-      const embedding1 = await generateEmbedding('User prefers TypeScript for type safety')
+      const embedding1 = await generateEmbedding(payload, 'User prefers TypeScript for type safety')
       const memory1 = await payload.create({
         collection: 'memory_items',
         data: {
@@ -260,7 +260,10 @@ describe.skipIf(!hasOpenAIKey || !hasAtlasUrl)('Vector Search Validation Integra
       })
       memoryId1 = memory1.id
 
-      const embedding2 = await generateEmbedding('User enjoys functional programming patterns')
+      const embedding2 = await generateEmbedding(
+        payload,
+        'User enjoys functional programming patterns',
+      )
       const memory2 = await payload.create({
         collection: 'memory_items',
         data: {
@@ -280,7 +283,7 @@ describe.skipIf(!hasOpenAIKey || !hasAtlasUrl)('Vector Search Validation Integra
       })
       memoryId2 = memory2.id
 
-      const embedding3 = await generateEmbedding('User is learning about databases')
+      const embedding3 = await generateEmbedding(payload, 'User is learning about databases')
       const memory3 = await payload.create({
         collection: 'memory_items',
         data: {
@@ -477,7 +480,7 @@ describe.skipIf(!hasOpenAIKey || !hasAtlasUrl)('Vector Search Validation Integra
       })
       otherUserId = otherUser.id
 
-      const embedding = await generateEmbedding('Other user confidential information')
+      const embedding = await generateEmbedding(payload, 'Other user confidential information')
       const memory = await payload.create({
         collection: 'memory_items',
         data: {
@@ -584,7 +587,7 @@ describe.skipIf(!hasOpenAIKey || !hasAtlasUrl)('Vector Search Validation Integra
       if (!payload || !hasVectorSearch || !testUserId || !testConversationId) return
 
       // Create a deprecated memory
-      const embedding = await generateEmbedding('This is deprecated information')
+      const embedding = await generateEmbedding(payload, 'This is deprecated information')
       const memory = await payload.create({
         collection: 'memory_items',
         data: {

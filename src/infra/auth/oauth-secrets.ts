@@ -3,22 +3,10 @@
  * Provides access to OAuth-related secrets from tenant-scoped config
  *
  * All secrets are accessed via getSecret() from the runtime config.
- * Tests should use setTestMode() to enable process.env fallback.
  */
 import { getSecret, isConfigLoaded, loadRuntimeConfig } from '@/lib/config/runtime'
 import { getDefaultTenantId } from '@/lib/tenant/get-default-tenant'
 import type { Payload } from 'payload'
-
-// Test mode flag - when enabled, uses process.env directly
-let testMode = false
-
-/**
- * Enable test mode - uses process.env directly
- * @internal
- */
-export function setOAuthTestMode(enabled: boolean): void {
-  testMode = enabled
-}
 
 /**
  * Get Google OAuth credentials from tenant-scoped config
@@ -27,17 +15,12 @@ export function setOAuthTestMode(enabled: boolean): void {
  * @returns Object with clientId and clientSecret
  */
 export async function getGoogleOAuthSecrets(
-  payload?: Payload,
+  payload: Payload,
 ): Promise<{ clientId: string; clientSecret: string }> {
-  // Test mode: use process.env directly
-  if (testMode || !payload) {
-    return {
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    }
+  if (!payload) {
+    throw new Error('Payload instance required for OAuth secrets')
   }
 
-  // Use tenant-scoped config
   if (!isConfigLoaded()) {
     const defaultTenantId = await getDefaultTenantId(payload)
     await loadRuntimeConfig(payload, defaultTenantId)
@@ -58,13 +41,11 @@ export async function getGoogleOAuthSecrets(
  * @param payload - Payload instance for runtime config access
  * @returns Preview secret string
  */
-export async function getPreviewSecret(payload?: Payload): Promise<string> {
-  // Test mode: use process.env directly
-  if (testMode || !payload) {
-    return process.env.PREVIEW_SECRET || ''
+export async function getPreviewSecret(payload: Payload): Promise<string> {
+  if (!payload) {
+    throw new Error('Payload instance required for preview secret')
   }
 
-  // Use tenant-scoped config
   if (!isConfigLoaded()) {
     const defaultTenantId = await getDefaultTenantId(payload)
     await loadRuntimeConfig(payload, defaultTenantId)

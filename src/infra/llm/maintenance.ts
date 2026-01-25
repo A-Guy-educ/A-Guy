@@ -71,11 +71,11 @@ export async function runSummaryMaintenance(
       }
     }
 
-    // Generate summary
+    // Generate summary (new signature: payload, messages, existingSummary?)
     const { summary, summaryUntilTimestamp, tokensUsed } = await generateSummary(
       payload,
-      conversation.summary || '',
       messagesToSummarize,
+      conversation.summary || '',
     )
 
     // Update conversation
