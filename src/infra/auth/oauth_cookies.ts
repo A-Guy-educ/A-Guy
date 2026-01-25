@@ -26,10 +26,18 @@ export function setAuthCookie(res: NextResponse, payload: Payload, value: string
     | { domain?: string; secure?: boolean; sameSite?: string }
     | undefined
 
-  res.cookies.set(cookieName, value, {
+  const cookieOptions = {
     ...AUTH_COOKIE_OPTIONS,
     ...(authCookies?.domain ? { domain: authCookies.domain } : {}),
+  }
+
+  console.log('[setAuthCookie] Setting cookie:', {
+    name: cookieName,
+    options: cookieOptions,
+    tokenLength: value.length,
   })
+
+  res.cookies.set(cookieName, value, cookieOptions)
 }
 
 export function setShortLivedCookie(res: NextResponse, name: string, value: string): void {

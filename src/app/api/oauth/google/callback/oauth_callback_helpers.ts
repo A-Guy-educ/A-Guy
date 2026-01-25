@@ -42,24 +42,38 @@ export async function handleExistingUser(
   // or a pure OAuth account (has both)
   const isLinkedAccount = !user.oauthLoginSecretEnc
 
+  console.log('[handleExistingUser] User:', {
+    email: user.email,
+    id: user.id,
+    hasOauthSecret: !!user.oauthLoginSecretEnc,
+    isLinkedAccount,
+  })
+
   try {
     let token: string
 
     if (isLinkedAccount) {
       // Linked account: user kept their email/password, generate token directly
+      console.log('[handleExistingUser] Taking linked account path')
       const result = await issueSessionForLinkedAccount(user.id)
       token = result.token
+      console.log('[handleExistingUser] Token generated:', token.substring(0, 30) + '...')
     } else {
       // Pure OAuth account: use stored encrypted secret
       // CRITICAL: Use user.email (from DB), NOT userinfo.email (Google may change)
+      console.log('[handleExistingUser] Taking pure OAuth account path')
       const result = await issueSession(user.email, user.oauthLoginSecretEnc!)
       token = result.token
+      console.log('[handleExistingUser] Token generated:', token.substring(0, 30) + '...')
     }
 
-    res.headers.set('Location', new URL(returnTo, req.url).toString())
+    const redirectUrl = new URL(returnTo, req.url).toString()
+    console.log('[handleExistingUser] Setting cookie and redirecting to:', redirectUrl)
+    res.headers.set('Location', redirectUrl)
     setAuthCookie(res, payload, token)
     return res
   } catch (error) {
+    console.error('[handleExistingUser] Error:', error)
     logOAuthError('session_issuance_failed', error, correlationId)
     res.headers.set('Location', new URL('/login?error=session_issue_failed', req.url).toString())
     return res

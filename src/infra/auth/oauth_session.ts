@@ -84,6 +84,7 @@ export async function issueSessionWithPlainSecret(
  * @returns Session token
  */
 export async function issueSessionForLinkedAccount(userId: string): Promise<SessionResult> {
+  console.log('[issueSessionForLinkedAccount] Starting for userId:', userId)
   const payload = await getPayload({ config })
 
   // Fetch the user to generate a proper JWT
@@ -94,8 +95,11 @@ export async function issueSessionForLinkedAccount(userId: string): Promise<Sess
   })
 
   if (!user) {
+    console.error('[issueSessionForLinkedAccount] User not found:', userId)
     throw new Error('User not found for session generation')
   }
+
+  console.log('[issueSessionForLinkedAccount] User found:', user.email)
 
   // Generate JWT token using the same method as Payload's login
   // Import jose's SignJWT to replicate Payload's token generation
@@ -103,9 +107,11 @@ export async function issueSessionForLinkedAccount(userId: string): Promise<Sess
 
   const secret = process.env.PAYLOAD_SECRET!
   if (!secret) {
+    console.error('[issueSessionForLinkedAccount] PAYLOAD_SECRET not configured')
     throw new Error('PAYLOAD_SECRET is not configured')
   }
 
+  console.log('[issueSessionForLinkedAccount] Generating JWT...')
   const secretKey = new TextEncoder().encode(secret)
   const issuedAt = Math.floor(Date.now() / 1000)
   const tokenExpiration = 7200 // 2 hours (default Payload expiration)
@@ -124,5 +130,6 @@ export async function issueSessionForLinkedAccount(userId: string): Promise<Sess
     .setExpirationTime(exp)
     .sign(secretKey)
 
+  console.log('[issueSessionForLinkedAccount] JWT generated successfully')
   return { token }
 }
