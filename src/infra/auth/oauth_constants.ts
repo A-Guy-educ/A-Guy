@@ -15,8 +15,8 @@ export function getCookieName(payload: Payload): string {
 
 export const AUTH_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  secure: true, // Always secure for OAuth (production requirement)
+  sameSite: 'none' as const, // Match Payload's auth cookie config
   path: '/',
 }
 
