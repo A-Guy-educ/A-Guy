@@ -22,7 +22,9 @@
 
 // List of keys that are allowed to be accessed directly (bootstrap config)
 const UNRESTRICTED_SECRET_KEYS = [
+  'CONFIG_MASTER_KEY',
   'DATABASE_URL',
+  'DATABASE_URL_ATLAS',
   'DEFAULT_TENANT_SLUG',
   'MCP_ENABLED',
 ]
@@ -51,7 +53,8 @@ export default {
       type: 'array',
       items: { type: 'string' },
       uniqueItems: true,
-      description: 'Additional keys that are allowed to be accessed directly (merged with default list)',
+      description:
+        'Additional keys that are allowed to be accessed directly (merged with default list)',
     },
   },
 
