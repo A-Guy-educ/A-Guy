@@ -5,7 +5,7 @@
  * Enforces use of tenant-scoped getSecret() from '@/lib/config/runtime'
  *
  * Only the following keys are allowed to be accessed directly:
- * - CONFIG_MASTER_KEY, DATABASE_URL, DATABASE_URL_ATLAS, MCP_ENABLED, PAYLOAD_SECRET, NEXT_PUBLIC_SERVER_URL (bootstrap config)
+ * - BLOB_READ_WRITE_TOKEN, CONFIG_MASTER_KEY, DATABASE_URL, DATABASE_URL_ATLAS, MCP_ENABLED, PAYLOAD_SECRET, NEXT_PUBLIC_SERVER_URL (bootstrap config)
  *
  * All other process.env access should use getSecret(tenantId, key)
  *
@@ -21,7 +21,9 @@
  */
 
 // List of keys that are allowed to be accessed directly (bootstrap config)
+// These are "bootstrap secrets" needed at startup before Payload request context is available
 const UNRESTRICTED_SECRET_KEYS = [
+  'BLOB_READ_WRITE_TOKEN', // Vercel Blob plugin initialization (startup)
   'CONFIG_MASTER_KEY',
   'DATABASE_URL',
   'DATABASE_URL_ATLAS',

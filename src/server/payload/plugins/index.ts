@@ -97,14 +97,18 @@ export const plugins: Plugin[] = [
       },
     },
   }),
-  vercelBlobStorage({
-    collections: {
-      media: true,
-      'exercise-assets': true,
-    },
-    // eslint-disable-next-line aguy/no-direct-secret-access
-    token: process.env.BLOB_READ_WRITE_TOKEN || '',
-  }),
+  // Only include Vercel Blob storage when BLOB_READ_WRITE_TOKEN is available
+  ...(process.env.BLOB_READ_WRITE_TOKEN
+    ? [
+        vercelBlobStorage({
+          collections: {
+            media: true,
+            'exercise-assets': true,
+          },
+          token: process.env.BLOB_READ_WRITE_TOKEN,
+        }),
+      ]
+    : []),
   // Only include MCP plugin when explicitly enabled
   ...(mcp ? [mcp] : []),
 ]

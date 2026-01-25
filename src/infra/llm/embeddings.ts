@@ -37,37 +37,17 @@ export function setEmbeddingsTestMode(enabled: boolean): void {
  * Get OpenAI client for embeddings (test-compatible)
  */
 async function getEmbeddingClient(payload?: Payload): Promise<{ client: any; apiKey: string }> {
+  // Test mode: use process.env directly
   if (testMode || !payload) {
-    // Try tenant-scoped secret first
-    if (!testMode && payload) {
-      try {
-        const { getSecret, isConfigLoaded, loadRuntimeConfig } =
-          await import('@/lib/config/runtime')
-        const { getDefaultTenantId } = await import('@/lib/tenant/get-default-tenant')
-        if (!isConfigLoaded()) {
-          const tenantId = await getDefaultTenantId(payload)
-          await loadRuntimeConfig(payload, tenantId)
-        }
-        const tenantId = await getDefaultTenantId(payload)
-        const apiKey = getSecret(tenantId, 'OPENAI_API_KEY', { throwIfNotFound: false })
-        if (apiKey) {
-          const { OpenAI } = await import('openai')
-          return { client: new OpenAI({ apiKey, dangerouslyAllowBrowser: true }), apiKey }
-        }
-      } catch {
-        // Fall through to process.env
-      }
-    }
-    // Fallback to process.env for development/testing
-    /* eslint-disable aguy/no-direct-secret-access -- Intentionally allowed for test/dev convenience */
     const apiKey = process.env.OPENAI_API_KEY
-    /* eslint-enable aguy/no-direct-secret-access */
     if (!apiKey) {
       throw new Error('OPENAI_API_KEY environment variable is not set')
     }
     const { OpenAI } = await import('openai')
     return { client: new OpenAI({ apiKey, dangerouslyAllowBrowser: true }), apiKey }
   }
+
+  // Use tenant-scoped config
   const client = await getOpenAIClient(payload)
   return { client, apiKey: '' }
 }

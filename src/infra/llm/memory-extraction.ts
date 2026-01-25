@@ -40,37 +40,17 @@ export function setMemoryExtractionTestMode(enabled: boolean): void {
  * Get OpenAI client for memory extraction (test-compatible)
  */
 async function getMemoryExtractionClient(payload?: Payload): Promise<any> {
+  // Test mode: use process.env directly
   if (testMode || !payload) {
-    // Try tenant-scoped secret first
-    if (!testMode && payload) {
-      try {
-        const { getSecret, isConfigLoaded, loadRuntimeConfig } =
-          await import('@/lib/config/runtime')
-        const { getDefaultTenantId } = await import('@/lib/tenant/get-default-tenant')
-        if (!isConfigLoaded()) {
-          const tenantId = await getDefaultTenantId(payload)
-          await loadRuntimeConfig(payload, tenantId)
-        }
-        const tenantId = await getDefaultTenantId(payload)
-        const apiKey = getSecret(tenantId, 'OPENAI_API_KEY', { throwIfNotFound: false })
-        if (apiKey) {
-          const { OpenAI } = await import('openai')
-          return new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
-        }
-      } catch {
-        // Fall through to process.env
-      }
-    }
-    // Fallback to process.env for development/testing
-    /* eslint-disable aguy/no-direct-secret-access -- Intentionally allowed for test/dev convenience */
     const apiKey = process.env.OPENAI_API_KEY
-    /* eslint-enable aguy/no-direct-secret-access */
     if (!apiKey) {
       throw new Error('OPENAI_API_KEY environment variable is not set')
     }
     const { OpenAI } = await import('openai')
     return new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
   }
+
+  // Use tenant-scoped config
   return getOpenAIClient(payload)
 }
 
