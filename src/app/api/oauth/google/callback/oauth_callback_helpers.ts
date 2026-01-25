@@ -10,7 +10,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { Payload } from 'payload'
 import type { User } from '@/payload-types'
-import { issueSession, issueSessionWithPlainSecret } from '@/infra/auth/oauth_session'
+import {
+  issueSession,
+  issueSessionWithPlainSecret,
+  issueSessionForLinkedAccount,
+} from '@/infra/auth/oauth_session'
 import { setAuthCookie } from '@/infra/auth/oauth_cookies'
 import { logOAuthEvent, logOAuthError } from '@/infra/auth/oauth_logger'
 import { generateSecret, encrypt } from '@/infra/auth/oauth_crypto'
@@ -25,13 +29,6 @@ export async function handleExistingUser(
   correlationId: string,
   sub: string,
 ): Promise<NextResponse> {
-  // Verify oauthLoginSecretEnc exists and is readable
-  if (!user.oauthLoginSecretEnc) {
-    logOAuthError('user_missing_oauth_secret', 'OAuth user missing stored secret', correlationId)
-    res.headers.set('Location', new URL('/login?error=auth_error', req.url).toString())
-    return res
-  }
-
   // Update profile only (name/picture from Google)
   await payload.update({
     collection: 'users',
@@ -41,10 +38,24 @@ export async function handleExistingUser(
 
   await logOAuthEvent('user_updated', { correlationId, userId: user.id, googleSub: sub })
 
-  // Issue session using stored encrypted secret
-  // CRITICAL: Use user.email (from DB), NOT userinfo.email (Google may change)
+  // Check if this is a linked account (has googleSub but no oauthLoginSecretEnc)
+  // or a pure OAuth account (has both)
+  const isLinkedAccount = !user.oauthLoginSecretEnc
+
   try {
-    const { token } = await issueSession(user.email, user.oauthLoginSecretEnc)
+    let token: string
+
+    if (isLinkedAccount) {
+      // Linked account: user kept their email/password, generate token directly
+      const result = await issueSessionForLinkedAccount(user.id)
+      token = result.token
+    } else {
+      // Pure OAuth account: use stored encrypted secret
+      // CRITICAL: Use user.email (from DB), NOT userinfo.email (Google may change)
+      const result = await issueSession(user.email, user.oauthLoginSecretEnc!)
+      token = result.token
+    }
+
     res.headers.set('Location', new URL(returnTo, req.url).toString())
     setAuthCookie(res, payload, token)
     return res
@@ -55,27 +66,83 @@ export async function handleExistingUser(
   }
 }
 
-export function handleCollision(
+export async function handleCollision(
+  payload: Payload,
   req: NextRequest,
   res: NextResponse,
   existingUser: User,
   sub: string,
   correlationId: string,
   email: string,
-): NextResponse {
-  // COLLISION - BLOCK (no linking, no mutation)
+  profile: { name?: string; picture?: string },
+  returnTo: string,
+): Promise<NextResponse> {
+  // Check if googleSub is missing or empty (account needs linking)
   const googleSubMissing =
     existingUser.googleSub === null ||
     existingUser.googleSub === undefined ||
     existingUser.googleSub === ''
 
-  if (googleSubMissing || existingUser.googleSub !== sub) {
-    logOAuthEvent('collision', { correlationId, email, googleSub: sub })
-    res.headers.set('Location', new URL('/login?error=account_exists', req.url).toString())
+  // If googleSub already exists and matches, this shouldn't happen (should be caught by first lookup)
+  if (!googleSubMissing && existingUser.googleSub === sub) {
+    logOAuthError(
+      'unexpected_collision_path',
+      'User with googleSub reached collision handler',
+      correlationId,
+    )
+    res.headers.set('Location', new URL('/login?error=auth_error', req.url).toString())
     return res
   }
 
-  return res
+  // If googleSub exists but doesn't match, this is a real collision - different Google account
+  if (!googleSubMissing && existingUser.googleSub !== sub) {
+    await logOAuthEvent('collision_different_google', {
+      correlationId,
+      email,
+      googleSub: sub,
+      existingGoogleSub: existingUser.googleSub,
+    })
+    res.headers.set(
+      'Location',
+      new URL('/login?error=account_exists_different_google', req.url).toString(),
+    )
+    return res
+  }
+
+  // Link the Google account to the existing email/password user
+  try {
+    // Update user with Google OAuth fields
+    // NOTE: We do NOT update password or oauthLoginSecretEnc
+    // This allows the user to keep both login methods:
+    // - Email/password login continues to work with their existing password
+    // - Google login works by verifying googleSub and generating token directly
+    await payload.update({
+      collection: 'users',
+      id: existingUser.id,
+      data: {
+        googleSub: sub,
+        googleProfile: { name: profile.name, picture: profile.picture },
+        verifiedEmail: email, // Update verifiedEmail since Google verified it
+      },
+    })
+
+    await logOAuthEvent('account_linked', {
+      correlationId,
+      userId: existingUser.id,
+      googleSub: sub,
+      previousRegistrationMethod: existingUser.registrationMethod,
+    })
+
+    // Issue session directly (without password check) for linked accounts
+    const { token } = await issueSessionForLinkedAccount(existingUser.id)
+    res.headers.set('Location', new URL(returnTo, req.url).toString())
+    setAuthCookie(res, payload, token)
+    return res
+  } catch (error) {
+    logOAuthError('account_linking_failed', error, correlationId)
+    res.headers.set('Location', new URL('/login?error=linking_failed', req.url).toString())
+    return res
+  }
 }
 
 export async function createNewOAuthUser(

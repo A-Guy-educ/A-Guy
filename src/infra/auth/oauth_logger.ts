@@ -17,6 +17,8 @@ async function hashEmail(email: string): Promise<string> {
 export async function logOAuthEvent(
   event:
     | 'collision'
+    | 'collision_different_google'
+    | 'account_linked'
     | 'user_created'
     | 'user_updated'
     | 'session_issued'

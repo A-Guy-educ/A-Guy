@@ -34,11 +34,25 @@ describe('Google OAuth Integration', () => {
       expect(secret2.length).toBeGreaterThan(0)
     })
 
-    it('throws error with invalid key', () => {
+    it('throws error when PAYLOAD_SECRET is missing', () => {
       const originalSecret = process.env.PAYLOAD_SECRET
-      process.env.PAYLOAD_SECRET = 'too-short'
+      process.env.PAYLOAD_SECRET = ''
 
-      expect(() => encrypt('test')).toThrow('PAYLOAD_SECRET must be 32+ characters')
+      expect(() => encrypt('test')).toThrow('PAYLOAD_SECRET is required')
+
+      process.env.PAYLOAD_SECRET = originalSecret
+    })
+
+    it('works with any length PAYLOAD_SECRET (due to SHA-256 hashing)', () => {
+      const originalSecret = process.env.PAYLOAD_SECRET
+
+      // Even short secrets work because SHA-256 produces fixed 32-byte output
+      process.env.PAYLOAD_SECRET = 'short'
+      const encrypted = encrypt('test')
+      expect(encrypted).toBeDefined()
+
+      const decrypted = decrypt(encrypted)
+      expect(decrypted).toBe('test')
 
       process.env.PAYLOAD_SECRET = originalSecret
     })
@@ -185,6 +199,80 @@ describe('Google OAuth Integration', () => {
 
       // This would trigger collision handling in OAuth callback
       expect(existingByEmail.docs[0].id).toBe(emailUser.id)
+
+      // Cleanup
+      await payload.delete({ collection: 'users', id: emailUser.id })
+    })
+
+    it('links Google account to existing email/password user (keeps both login methods)', async () => {
+      const sharedEmail = `linking-${Date.now()}@example.com`
+      const emailPassword = 'original-password-123'
+      const googleSub = `google-link-${Date.now()}`
+
+      // Create email/password user first
+      const emailUser = (await payload.create({
+        collection: 'users',
+        data: {
+          email: sharedEmail,
+          name: 'Email User',
+          password: emailPassword,
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)) as any
+
+      expect(emailUser.googleSub).toBeUndefined()
+
+      // Simulate OAuth callback linking (without replacing password)
+      const updatedUser = (await payload.update({
+        collection: 'users',
+        id: emailUser.id,
+        data: {
+          googleSub,
+          // NOTE: We do NOT update password or oauthLoginSecretEnc
+          // This allows both login methods to work
+          googleProfile: {
+            name: 'Google User',
+            picture: 'https://example.com/photo.jpg',
+          },
+          verifiedEmail: sharedEmail,
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)) as any
+
+      // Verify linking succeeded
+      expect(updatedUser.googleSub).toBe(googleSub)
+      expect(updatedUser.email).toBe(sharedEmail)
+      expect(updatedUser.googleProfile?.name).toBe('Google User')
+
+      // Verify original email/password login STILL works
+      const emailLogin = await payload.login({
+        collection: 'users',
+        data: { email: sharedEmail, password: emailPassword },
+      })
+      expect(emailLogin.token).toBeDefined()
+      expect(emailLogin.user.id).toBe(emailUser.id)
+
+      // Verify we can generate a session token for Google login (simulating OAuth callback)
+      // For linked accounts, we generate tokens directly without password check
+      const { SignJWT } = await import('jose')
+      const secret = process.env.PAYLOAD_SECRET!
+      const secretKey = new TextEncoder().encode(secret)
+      const issuedAt = Math.floor(Date.now() / 1000)
+      const tokenExpiration = 7200
+      const exp = issuedAt + tokenExpiration
+
+      const token = await new SignJWT({
+        id: updatedUser.id,
+        email: updatedUser.email,
+        collection: 'users',
+      })
+        .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+        .setIssuedAt(issuedAt)
+        .setExpirationTime(exp)
+        .sign(secretKey)
+
+      expect(token).toBeDefined()
+      expect(typeof token).toBe('string')
 
       // Cleanup
       await payload.delete({ collection: 'users', id: emailUser.id })

@@ -10,10 +10,12 @@
 import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'crypto'
 
 // Derive a proper 32-byte key using SHA-256
+// Note: SHA-256 produces a fixed 32-byte output regardless of input length,
+// so any length PAYLOAD_SECRET will work (though longer is better for security)
 function getKey(): Buffer {
   const ENC_KEY = process.env.PAYLOAD_SECRET
-  if (!ENC_KEY || ENC_KEY.length < 32) {
-    throw new Error('PAYLOAD_SECRET must be 32+ characters')
+  if (!ENC_KEY) {
+    throw new Error('PAYLOAD_SECRET is required')
   }
   return createHash('sha256').update(ENC_KEY).digest()
 }

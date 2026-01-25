@@ -71,3 +71,58 @@ export async function issueSessionWithPlainSecret(
 
   return { token: loginResult.token }
 }
+
+/**
+ * Issue session for linked account (email/password user who added Google).
+ *
+ * For linked accounts:
+ * - User keeps their original password for email/password login
+ * - We can't use payload.login() because OAuth secret ≠ password
+ * - Instead, generate token directly after verifying googleSub
+ *
+ * @param userId - User ID (already verified via googleSub lookup)
+ * @returns Session token
+ */
+export async function issueSessionForLinkedAccount(userId: string): Promise<SessionResult> {
+  const payload = await getPayload({ config })
+
+  // Fetch the user to generate a proper JWT
+  const user = await payload.findByID({
+    collection: 'users',
+    id: userId,
+    overrideAccess: true,
+  })
+
+  if (!user) {
+    throw new Error('User not found for session generation')
+  }
+
+  // Generate JWT token using the same method as Payload's login
+  // Import jose's SignJWT to replicate Payload's token generation
+  const { SignJWT } = await import('jose')
+
+  const secret = process.env.PAYLOAD_SECRET!
+  if (!secret) {
+    throw new Error('PAYLOAD_SECRET is not configured')
+  }
+
+  const secretKey = new TextEncoder().encode(secret)
+  const issuedAt = Math.floor(Date.now() / 1000)
+  const tokenExpiration = 7200 // 2 hours (default Payload expiration)
+  const exp = issuedAt + tokenExpiration
+
+  // Fields to include in JWT (same as Payload's login)
+  const fieldsToSign = {
+    id: user.id,
+    email: user.email,
+    collection: 'users',
+  }
+
+  const token = await new SignJWT(fieldsToSign)
+    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+    .setIssuedAt(issuedAt)
+    .setExpirationTime(exp)
+    .sign(secretKey)
+
+  return { token }
+}

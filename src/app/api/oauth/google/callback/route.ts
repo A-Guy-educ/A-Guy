@@ -146,7 +146,17 @@ async function handleUserLookupAndSession(
   })
 
   if (existingByEmail.docs.length > 0) {
-    return handleCollision(req, res, existingByEmail.docs[0], sub, correlationId, email)
+    return await handleCollision(
+      payload,
+      req,
+      res,
+      existingByEmail.docs[0],
+      sub,
+      correlationId,
+      email,
+      { name, picture },
+      returnTo,
+    )
   }
 
   // D.3: Create new user
