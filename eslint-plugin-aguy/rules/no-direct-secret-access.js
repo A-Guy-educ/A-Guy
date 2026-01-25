@@ -5,7 +5,7 @@
  * Enforces use of tenant-scoped getSecret() from '@/lib/config/runtime'
  *
  * Only the following keys are allowed to be accessed directly:
- * - BLOB_READ_WRITE_TOKEN, CONFIG_MASTER_KEY, DATABASE_URL, DATABASE_URL_ATLAS, MCP_ENABLED, PAYLOAD_SECRET, NEXT_PUBLIC_SERVER_URL (bootstrap config)
+ * - BLOB_READ_WRITE_TOKEN, CONFIG_MASTER_KEY, DATABASE_URL, DATABASE_URL_ATLAS, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, MCP_ENABLED, NEXT_PUBLIC_SERVER_URL, OPENAI_API_KEY, PAYLOAD_SECRET, PREVIEW_SECRET (bootstrap config + test convenience)
  *
  * All other process.env access should use getSecret(tenantId, key)
  *
@@ -20,16 +20,19 @@
  * const apiKey = getSecret(tenantId, 'OPENAI_API_KEY', { throwIfNotFound: false })
  */
 
-// List of keys that are allowed to be accessed directly (bootstrap config)
-// These are "bootstrap secrets" needed at startup before Payload request context is available
+// List of keys that are allowed to be accessed directly (bootstrap config + test convenience)
 const UNRESTRICTED_SECRET_KEYS = [
   'BLOB_READ_WRITE_TOKEN', // Vercel Blob plugin initialization (startup)
   'CONFIG_MASTER_KEY',
   'DATABASE_URL',
   'DATABASE_URL_ATLAS',
+  'GOOGLE_CLIENT_ID', // Test mode convenience
+  'GOOGLE_CLIENT_SECRET', // Test mode convenience
   'MCP_ENABLED',
-  'PAYLOAD_SECRET',
   'NEXT_PUBLIC_SERVER_URL',
+  'OPENAI_API_KEY', // Test mode convenience
+  'PAYLOAD_SECRET',
+  'PREVIEW_SECRET', // Test mode convenience
 ]
 
 // Pattern to match process.env.X access
