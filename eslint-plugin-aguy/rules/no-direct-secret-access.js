@@ -5,7 +5,7 @@
  * Enforces use of tenant-scoped getSecret() from '@/lib/config/runtime'
  *
  * Only the following keys are allowed to be accessed directly:
- * - DATABASE_URL, DEFAULT_TENANT_SLUG, MCP_ENABLED (bootstrap config)
+ * - CONFIG_MASTER_KEY, DATABASE_URL, DATABASE_URL_ATLAS, MCP_ENABLED (bootstrap config)
  *
  * All other process.env access should use getSecret(tenantId, key)
  *
@@ -22,11 +22,9 @@
 
 // List of keys that are allowed to be accessed directly (bootstrap config)
 const UNRESTRICTED_SECRET_KEYS = [
-  'BLOB_READ_WRITE_TOKEN',
   'CONFIG_MASTER_KEY',
   'DATABASE_URL',
   'DATABASE_URL_ATLAS',
-  'DEFAULT_TENANT_SLUG',
   'MCP_ENABLED',
 ]
 
