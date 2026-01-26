@@ -1,13 +1,12 @@
 'use client'
 
-import React, { useEffect } from 'react'
-import { X, Menu } from 'lucide-react'
-import { CMSLink } from '@/ui/web/Link'
-import Link from 'next/link'
-import { SearchIcon } from 'lucide-react'
 import type { Header as HeaderType, User } from '@/payload-types'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
+import { CMSLink } from '@/ui/web/Link'
 import { useTranslations } from '@/ui/web/providers/I18n'
+import { Menu, SearchIcon, X } from 'lucide-react'
+import Link from 'next/link'
+import React, { useEffect } from 'react'
 import { MobileMenuAuthSection } from './MobileMenuAuthSection'
 
 interface MobileMenuProps {
@@ -16,6 +15,7 @@ interface MobileMenuProps {
   data: HeaderType
   user: User | null
   isAuthLoading: boolean
+  currentUrl?: string
 }
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({
@@ -24,6 +24,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   data,
   user,
   isAuthLoading,
+  currentUrl,
 }) => {
   const tCommon = useTranslations('common.header')
   const tMenu = useTranslations('common.mobileMenu')
@@ -133,7 +134,12 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           </div>
 
           <div className="px-6 py-4 border-t border-border mt-auto">
-            <MobileMenuAuthSection user={user} isAuthLoading={isAuthLoading} onClose={onClose} />
+            <MobileMenuAuthSection
+              user={user}
+              isAuthLoading={isAuthLoading}
+              onClose={onClose}
+              currentUrl={currentUrl}
+            />
           </div>
         </nav>
       </div>

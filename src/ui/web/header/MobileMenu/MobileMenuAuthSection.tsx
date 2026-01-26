@@ -1,26 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { LogOut, User as UserIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { LogOut, User as UserIcon } from 'lucide-react'
+import { useState } from 'react'
 
 import type { User } from '@/payload-types'
 
-import { Button } from '@/ui/web/components/button'
 import { logoutAction } from '@/app/(frontend)/actions/auth-action'
+import { Button } from '@/ui/web/components/button'
 import { useTranslations } from '@/ui/web/providers/I18n'
 
 interface MobileMenuAuthSectionProps {
   user: User | null
   isAuthLoading: boolean
   onClose: () => void
+  currentUrl?: string
 }
 
 export function MobileMenuAuthSection({
   user,
   isAuthLoading,
   onClose,
+  currentUrl,
 }: MobileMenuAuthSectionProps) {
   const router = useRouter()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -66,12 +68,18 @@ export function MobileMenuAuthSection({
   return (
     <div className="flex flex-col gap-2">
       <Button variant="ghost" asChild className="justify-start">
-        <Link href="/login" onClick={onClose}>
+        <Link
+          href={currentUrl ? `/login?returnTo=${encodeURIComponent(currentUrl)}` : '/login'}
+          onClick={onClose}
+        >
           {tCommon('login')}
         </Link>
       </Button>
       <Button asChild className="justify-start">
-        <Link href="/signup" onClick={onClose}>
+        <Link
+          href={currentUrl ? `/signup?returnTo=${encodeURIComponent(currentUrl)}` : '/signup'}
+          onClick={onClose}
+        >
           {tCommon('signup')}
         </Link>
       </Button>

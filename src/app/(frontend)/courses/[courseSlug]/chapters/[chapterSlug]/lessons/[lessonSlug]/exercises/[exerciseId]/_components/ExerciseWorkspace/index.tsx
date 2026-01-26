@@ -1,9 +1,11 @@
 'use client'
 
-import { ResizablePane } from '@/ui/web/components/resizable-pane'
-import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
-import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { cn } from '@/infra/utils/ui'
+import type { User } from '@/payload-types'
+import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
+import { ResizablePane } from '@/ui/web/components/resizable-pane'
+import { usePathname } from 'next/navigation'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { ExerciseHeader } from '../ExerciseHeader'
 import type { ViewMode } from './exercise-workspace-types'
 import { getInitialViewMode } from './exercise-workspace-utils'
@@ -22,6 +24,9 @@ export function ExerciseWorkspace({
   chatContent,
 }: ExerciseWorkspaceProps) {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const pathname = usePathname()
+  const [user, setUser] = useState<User | null>(null)
+  const [isAuthLoading, setIsAuthLoading] = useState(true)
 
   // Mobile mode state
   const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode())
@@ -116,7 +121,43 @@ export function ExerciseWorkspace({
     window.dispatchEvent(new CustomEvent('open-mobile-menu'))
   }
 
-  // Desktop: use existing ResizablePane layout (unchanged)
+  // Fetch user on client side to avoid static-to-dynamic conversion
+  const fetchUser = useCallback(async () => {
+    setIsAuthLoading(true)
+    try {
+      const response = await fetch('/api/users/me', {
+        credentials: 'include', // Include cookies
+        cache: 'no-store',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data.user || null)
+      } else {
+        setUser(null)
+      }
+    } catch (_error) {
+      // Silently fail - user is not authenticated
+      setUser(null)
+    } finally {
+      setIsAuthLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchUser()
+  }, [fetchUser])
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      fetchUser()
+    }
+
+    window.addEventListener('auth:changed', handleAuthChange)
+    return () => window.removeEventListener('auth:changed', handleAuthChange)
+  }, [fetchUser])
+
+  // Desktop: use existing ResizablePane layout
   if (isDesktop) {
     return (
       <div className="fixed inset-0 bg-background z-50 flex flex-col overflow-hidden">
@@ -124,6 +165,9 @@ export function ExerciseWorkspace({
           exerciseTitle={exerciseTitle}
           backUrl={backUrl}
           onMenuClick={handleMenuClick}
+          user={user}
+          isAuthLoading={isAuthLoading}
+          currentUrl={pathname}
         />
 
         <ResizablePane
@@ -153,6 +197,9 @@ export function ExerciseWorkspace({
         exerciseTitle={exerciseTitle}
         backUrl={backUrl}
         onMenuClick={handleMenuClick}
+        user={user}
+        isAuthLoading={isAuthLoading}
+        currentUrl={pathname}
       />
 
       {/* Mobile: Consistent flex container for all 3 states */}

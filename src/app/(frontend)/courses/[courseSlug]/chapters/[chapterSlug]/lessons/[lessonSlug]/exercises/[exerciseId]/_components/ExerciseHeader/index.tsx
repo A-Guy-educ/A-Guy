@@ -1,20 +1,35 @@
 'use client'
 
-import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
 import { isRTL } from '@/i18n/config'
-import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
+import type { User } from '@/payload-types'
+import { Button } from '@/ui/web/components/button'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
+import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
+import { UserDropdown } from '@/ui/web/UserDropdown'
 import { ArrowLeft, ArrowRight, Menu } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 interface ExerciseHeaderProps {
   exerciseTitle: string
   backUrl?: string
   onMenuClick?: () => void
+  user?: User | null
+  isAuthLoading?: boolean
+  currentUrl?: string
 }
 
-export function ExerciseHeader({ exerciseTitle, backUrl, onMenuClick }: ExerciseHeaderProps) {
+export function ExerciseHeader({
+  exerciseTitle,
+  backUrl,
+  onMenuClick,
+  user,
+  isAuthLoading,
+  currentUrl,
+}: ExerciseHeaderProps) {
   const t = useTranslations('courses')
+  const tCommon = useTranslations('common.header')
   const locale = useLocale()
   const rtl = isRTL(locale as 'en' | 'he')
   const router = useRouter()
@@ -60,6 +75,28 @@ export function ExerciseHeader({ exerciseTitle, backUrl, onMenuClick }: Exercise
       >
         {/* Logo - Hidden on mobile, shown on desktop */}
         <TelescopeLogo className="h-8 w-auto hidden lg:flex" />
+
+        {/* Desktop Auth Section */}
+        <div className="hidden lg:flex items-center gap-2" data-testid="exercise-header-auth">
+          {isAuthLoading ? (
+            <div className="w-20 h-8 animate-pulse bg-muted rounded" aria-hidden="true" />
+          ) : user ? (
+            <UserDropdown user={user} />
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/login?returnTo=${encodeURIComponent(currentUrl || '/')}`}>
+                  {tCommon('login')}
+                </Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href={`/signup?returnTo=${encodeURIComponent(currentUrl || '/')}`}>
+                  {tCommon('signup')}
+                </Link>
+              </Button>
+            </>
+          )}
+        </div>
 
         {/* Hamburger menu - Shown on mobile, hidden on desktop */}
         {onMenuClick && (
