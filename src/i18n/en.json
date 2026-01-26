@@ -1,4 +1,8 @@
 {
+  "home": {
+    "title": "Home - A-Guy",
+    "description": "Your digital teacher - learning, practice, questions and exams"
+  },
   "common": {
     "languageSwitcher": {
       "label": "Language",

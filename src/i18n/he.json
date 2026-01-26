@@ -1,4 +1,8 @@
 {
+  "home": {
+    "title": "דף הבית - A-Guy",
+    "description": "המורה הדיגיטלי שלך - לימוד, תרגול, שאלות ומבחנים"
+  },
   "common": {
     "languageSwitcher": {
       "label": "שפה",
