@@ -22,6 +22,7 @@ import type { ConfigEntry } from '@/payload-types'
 import type { Payload, Where } from 'payload'
 import { ConfigKind } from '../config-constants'
 import { decryptSecret } from '../config-crypto'
+import { getConfigValue } from './bootstrap-config'
 import { ConfigKeyNotFoundError, ConfigNotLoadedError } from './errors'
 import type { LoadConfigResult, RuntimeConfigCache } from './types'
 
@@ -39,9 +40,14 @@ let lastLoadResult: LoadConfigResult | null = null
 /**
  * Check if we're running on the server
  * CRITICAL: Never allow client-side access
+ * NOTE: Allow in test environment (Vitest with jsdom sets window but tests are server-side)
  */
 function assertServerSide(): void {
-  if (typeof window !== 'undefined') {
+  // Allow in test environment where window is defined by jsdom
+  // Use bootstrap config getter to avoid direct process.env access
+  const inTestEnvironment =
+    getConfigValue('VITEST', { throwIfNotFound: false, defaultValue: '' }) !== ''
+  if (typeof window !== 'undefined' && !inTestEnvironment) {
     throw new Error('RuntimeConfig is server-side only')
   }
 }

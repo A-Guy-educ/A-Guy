@@ -8,6 +8,40 @@
  * - Context composition
  * - End-to-end chat with context
  */
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+
+// Mocks for config/runtime - inline factory for vi.mock hoisting
+vi.mock('@/lib/config/runtime', () => ({
+  loadRuntimeConfig: vi.fn().mockResolvedValue({
+    success: true,
+    variablesLoaded: 0,
+    secretsLoaded: 1,
+    errors: [],
+    loadedAt: new Date(),
+  }),
+  isConfigLoaded: vi.fn().mockReturnValue(true),
+  clearConfigCache: vi.fn(),
+  getVariable: vi.fn().mockReturnValue('test-value'),
+  getSecret: vi.fn().mockImplementation((_tenantId, key) => {
+    if (key === 'OPENAI_API_KEY') return 'test-api-key'
+    return ''
+  }),
+  getVariableKeys: vi.fn().mockReturnValue([]),
+  getSecretKeys: vi.fn().mockReturnValue(['OPENAI_API_KEY']),
+  getLoadedTenantIds: vi.fn().mockReturnValue(['default-tenant']),
+  getCacheMetadata: vi.fn().mockReturnValue({
+    loadedAt: new Date(),
+    entryCount: 0,
+    variableCount: 0,
+    secretCount: 1,
+    tenantsLoaded: 1,
+  }),
+}))
+
+vi.mock('@/lib/tenant/get-default-tenant', () => ({
+  getDefaultTenantId: vi.fn().mockResolvedValue('default-tenant'),
+}))
+
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import { buildRetrievalQuery, composePrompt, getRecentWindow } from '@/infra/llm/context-policy'
 import { generateEmbedding } from '@/infra/llm/embeddings'
@@ -20,7 +54,6 @@ import config from '@payload-config'
 import type { Db } from 'mongodb'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 function getDb(payload: Payload): Db {
   const db = (payload.db as { connection?: { db?: Db } }).connection?.db

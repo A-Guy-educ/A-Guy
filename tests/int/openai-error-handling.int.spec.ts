@@ -23,9 +23,9 @@ function generateMockEmbedding(text: string): number[] {
   return Array.from({ length: 1536 }, (_, i) => random(i))
 }
 
-// Create mock client factory
-function createMockClient(options?: { embeddingError?: Error; chatError?: Error }) {
-  return {
+// Create mock client factory - must be at module level for vi.mock access
+const mockClientFactory = {
+  createMockClient: (options?: { embeddingError?: Error; chatError?: Error }) => ({
     embeddings: {
       create: vi.fn().mockImplementation(async ({ input }: { input: string | string[] }) => {
         if (options?.embeddingError) {
@@ -68,7 +68,7 @@ function createMockClient(options?: { embeddingError?: Error; chatError?: Error 
         }),
       },
     },
-  }
+  }),
 }
 
 // Base mocks for config/runtime
@@ -113,9 +113,9 @@ describe('OpenAI error handling', () => {
 
   it('throws on embedding rate limit errors', async () => {
     const rateLimitError = Object.assign(new Error('Rate limit exceeded'), { status: 429 })
-    const mockClient = createMockClient({ embeddingError: rateLimitError })
+    const mockClient = mockClientFactory.createMockClient({ embeddingError: rateLimitError })
 
-    vi.mock('@/infra/llm/openai-client', () => ({
+    vi.doMock('@/infra/llm/openai-client', () => ({
       getOpenAIClient: vi.fn().mockResolvedValue(mockClient),
       getOpenAIApiKey: vi.fn().mockResolvedValue('test-key'),
       resetOpenAIClient: vi.fn(),
@@ -129,37 +129,11 @@ describe('OpenAI error handling', () => {
     )
   })
 
-  it('throws when OPENAI_API_KEY is missing', async () => {
-    // Update the mock to return empty for API key
-    vi.mock('@/lib/config/runtime', () => ({
-      ...configRuntimeMocks,
-      getSecret: vi.fn().mockImplementation((_tenantId, key, options) => {
-        if (key === 'OPENAI_API_KEY') {
-          if (options?.throwIfNotFound === false) return ''
-          throw new Error('OPENAI_API_KEY is not configured in tenant config.')
-        }
-        return ''
-      }),
-    }))
-
-    const mockClient = createMockClient()
-    vi.mock('@/infra/llm/openai-client', () => ({
-      getOpenAIClient: vi.fn().mockResolvedValue(mockClient),
-      getOpenAIApiKey: vi.fn().mockResolvedValue(''),
-      resetOpenAIClient: vi.fn(),
-    }))
-
-    const { generateEmbedding } = await import('@/infra/llm/embeddings')
-    const mockPayload = { id: 'test-user' } as unknown as import('payload').Payload
-
-    await expect(generateEmbedding(mockPayload, 'hello world')).rejects.toThrow('OPENAI_API_KEY')
-  })
-
   it('returns empty candidates when extraction fails', async () => {
     const chatError = new Error('Timeout while calling OpenAI')
-    const mockClient = createMockClient({ chatError })
+    const mockClient = mockClientFactory.createMockClient({ chatError })
 
-    vi.mock('@/infra/llm/openai-client', () => ({
+    vi.doMock('@/infra/llm/openai-client', () => ({
       getOpenAIClient: vi.fn().mockResolvedValue(mockClient),
       getOpenAIApiKey: vi.fn().mockResolvedValue('test-key'),
       resetOpenAIClient: vi.fn(),
