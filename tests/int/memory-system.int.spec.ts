@@ -44,10 +44,10 @@ let testUserId: string
 let testExerciseId: string
 let testConversationId: string
 
-// Skip all tests if OPENAI_API_KEY is not set
-const hasOpenAIKey = !!process.env.OPENAI_API_KEY
+// Skip all tests if DATABASE_URL is not set (requires MongoDB)
+const hasDatabaseUrl = !!process.env.DATABASE_URL
 
-describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
+describe.skipIf(!hasDatabaseUrl)('Memory System Integration Tests', () => {
   beforeAll(async () => {
     payload = await getPayload({ config })
 
@@ -133,7 +133,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
   describe('Embeddings Service', () => {
     it('should generate valid 1536-dimensional embeddings', async () => {
       const text = 'This is a test sentence for embedding generation.'
-      const result = await generateEmbedding(text)
+      const result = await generateEmbedding(payload, text)
 
       expect(result).toBeDefined()
       expect(result.embedding).toBeDefined()
@@ -145,14 +145,14 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
     }, 30000) // 30s timeout for API call
 
     it('should handle empty text gracefully', async () => {
-      await expect(generateEmbedding('')).rejects.toThrow(
+      await expect(generateEmbedding(payload, '')).rejects.toThrow(
         'Cannot generate embedding for empty text',
       )
     }, 30000)
 
     it('should generate different embeddings for different texts', async () => {
-      const result1 = await generateEmbedding('I love programming in TypeScript.')
-      const result2 = await generateEmbedding('The weather is sunny today.')
+      const result1 = await generateEmbedding(payload, 'I love programming in TypeScript.')
+      const result2 = await generateEmbedding(payload, 'The weather is sunny today.')
 
       expect(result1.embedding).not.toEqual(result2.embedding)
 
@@ -280,7 +280,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         },
       ]
 
-      const result = await generateSummary('', messages)
+      const result = await generateSummary(payload, messages)
 
       expect(result).toBeDefined()
       expect(result.summary).toBeDefined()
@@ -310,7 +310,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
       ]
       const previousSummary = 'User learned about Payload CMS basics.'
 
-      const result = await generateSummary(previousSummary, messages)
+      const result = await generateSummary(payload, messages, previousSummary)
 
       expect(result).toBeDefined()
       expect(result.summary).toBeDefined()
@@ -578,7 +578,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         },
       ]
 
-      const candidates = await extractMemoryCandidates(messages, '')
+      const candidates = await extractMemoryCandidates(payload, messages)
 
       expect(candidates).toBeDefined()
       expect(Array.isArray(candidates)).toBe(true)
@@ -702,7 +702,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
       }
 
       // Create a memory for this conversation
-      const embeddingResult = await generateEmbedding('User is learning TypeScript basics')
+      const embeddingResult = await generateEmbedding(payload, 'User is learning TypeScript basics')
       await payload.create({
         collection: 'memory_items',
         data: {
@@ -762,7 +762,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         },
       })
 
-      const embeddingResult = await generateEmbedding('Other user secret information')
+      const embeddingResult = await generateEmbedding(payload, 'Other user secret information')
       await payload.create({
         collection: 'memory_items',
         data: {
