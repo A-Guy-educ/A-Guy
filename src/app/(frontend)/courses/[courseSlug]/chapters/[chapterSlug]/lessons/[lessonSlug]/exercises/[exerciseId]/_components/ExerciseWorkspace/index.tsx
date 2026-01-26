@@ -124,9 +124,6 @@ export function ExerciseWorkspace({
           exerciseTitle={exerciseTitle}
           backUrl={backUrl}
           onMenuClick={handleMenuClick}
-          isMobile={false}
-          viewMode={viewMode}
-          onModeToggle={handleModeToggle}
         />
 
         <ResizablePane
@@ -156,9 +153,6 @@ export function ExerciseWorkspace({
         exerciseTitle={exerciseTitle}
         backUrl={backUrl}
         onMenuClick={handleMenuClick}
-        isMobile={true}
-        viewMode={viewMode}
-        onModeToggle={handleModeToggle}
       />
 
       {/* Mobile: Consistent flex container for all 3 states */}
@@ -225,6 +219,9 @@ export function ExerciseWorkspace({
             chatContent as React.ReactElement<{
               onChatInteraction?: () => void
               displayMode?: 'full' | 'input-only'
+              isMobile?: boolean
+              viewMode?: ViewMode
+              onModeToggle?: () => void
             }>,
             {
               onChatInteraction: handleChatExpand,
@@ -232,6 +229,9 @@ export function ExerciseWorkspace({
                 viewMode === 'CHAT' || (viewMode === 'PDF' && chatExpandedInPdf)
                   ? 'full'
                   : ('input-only' as const),
+              isMobile: true,
+              viewMode,
+              onModeToggle: handleModeToggle,
             },
           )}
           {/* Overlay to prevent iframe from capturing mouse during drag */}

@@ -4,27 +4,16 @@ import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
 import { isRTL } from '@/i18n/config'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
-import { ArrowLeft, ArrowRight, Menu, MessageSquare, FileText } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Menu } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import type { ViewMode } from '../ExerciseWorkspace/exercise-workspace-types'
 
 interface ExerciseHeaderProps {
   exerciseTitle: string
   backUrl?: string
   onMenuClick?: () => void
-  isMobile?: boolean
-  viewMode?: ViewMode
-  onModeToggle?: () => void
 }
 
-export function ExerciseHeader({
-  exerciseTitle,
-  backUrl,
-  onMenuClick,
-  isMobile = false,
-  viewMode,
-  onModeToggle,
-}: ExerciseHeaderProps) {
+export function ExerciseHeader({ exerciseTitle, backUrl, onMenuClick }: ExerciseHeaderProps) {
   const t = useTranslations('courses')
   const locale = useLocale()
   const rtl = isRTL(locale as 'en' | 'he')
@@ -69,42 +58,6 @@ export function ExerciseHeader({
           [rtl ? 'left' : 'right']: '20px',
         }}
       >
-        {/* Mobile segmented control - Only shown on mobile when mode is defined */}
-        {isMobile && viewMode && onModeToggle && (
-          <div className="flex items-center bg-muted rounded-lg p-1 gap-1">
-            <button
-              onClick={() => viewMode !== 'CHAT' && onModeToggle()}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
-                viewMode === 'CHAT'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-              aria-label={t('switchToChat')}
-              aria-pressed={viewMode === 'CHAT'}
-              disabled={viewMode === 'CHAT'}
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('chat')}</span>
-            </button>
-            <button
-              onClick={() => viewMode !== 'PDF' && onModeToggle()}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
-                viewMode === 'PDF'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-              aria-label={t('switchToPdf')}
-              aria-pressed={viewMode === 'PDF'}
-              disabled={viewMode === 'PDF'}
-            >
-              <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('content')}</span>
-            </button>
-          </div>
-        )}
-
         {/* Logo - Hidden on mobile, shown on desktop */}
         <TelescopeLogo className="h-8 w-auto hidden lg:flex" />
 

@@ -3,12 +3,13 @@
 import { ChatMessageRole } from '@/infra/llm/chat-message-role'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
-import { BookOpen, Loader2, Plus, Send } from 'lucide-react'
+import { BookOpen, Loader2, Plus, Send, MessageSquare, FileText } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { ChatMessageContent } from '@/ui/web/chat'
 import { FormulaPanel } from '../FormulaPanel'
 import { MathPalette } from '../MathPalette'
 import { useNotebookChat } from '../NotebookChat/useNotebookChat'
+import type { ViewMode } from '../ExerciseWorkspace/exercise-workspace-types'
 
 interface ChatInterfaceProps {
   exerciseId?: string
@@ -16,6 +17,10 @@ interface ChatInterfaceProps {
   // NEW: Mobile mode support
   displayMode?: 'full' | 'input-only'
   onChatInteraction?: () => void
+  // Mobile toggle
+  isMobile?: boolean
+  viewMode?: ViewMode
+  onModeToggle?: () => void
 }
 
 export function ChatInterface({
@@ -23,6 +28,9 @@ export function ChatInterface({
   lessonId,
   displayMode = 'full',
   onChatInteraction,
+  isMobile,
+  viewMode,
+  onModeToggle,
 }: ChatInterfaceProps) {
   const t = useTranslations('courses')
   const {
@@ -159,7 +167,7 @@ export function ChatInterface({
         <MathPalette isOpen={isMathPaletteOpen} onInject={injectFormula} />
 
         {/* Toolbar Above Input */}
-        <div className="flex gap-4 mb-2.5 px-1.5">
+        <div className="flex gap-4 mb-2.5 px-1.5 justify-between items-center">
           <button
             type="button"
             className={cn(
@@ -174,6 +182,28 @@ export function ChatInterface({
           >
             <BookOpen className="w-5 h-5" />
           </button>
+
+          {/* Mobile Toggle - Shows opposite mode */}
+          {isMobile && viewMode && onModeToggle && (
+            <button
+              type="button"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors bg-muted hover:bg-muted/80"
+              onClick={onModeToggle}
+              aria-label={viewMode === 'PDF' ? t('switchToChat') : t('switchToPdf')}
+            >
+              {viewMode === 'PDF' ? (
+                <>
+                  <MessageSquare className="w-4 h-4" />
+                  <span className="hidden sm:inline">{t('chat')}</span>
+                </>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4" />
+                  <span className="hidden sm:inline">{t('content')}</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Input Wrapper */}
