@@ -1,0 +1,87 @@
+/* src/ui/web/chat/ChatMessageContent/ChatTable.css */
+
+/* Main container, matches .geometry-table */
+.chat-table-container {
+  margin: 16px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  background: white;
+  width: 100%;
+  overflow-x: auto; /* For mobile responsiveness */
+}
+
+.chat-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Header styles, matches .table-header and .header-cell */
+.chat-table thead {
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb; /* --math-color from your variables */
+  font-weight: 700;
+  font-size: 14px;
+  border-bottom: 1.5px solid rgba(37, 99, 235, 0.2);
+}
+
+.chat-table th {
+  padding: 12px 16px;
+  text-align: center;
+  border-left: 1px solid rgba(37, 99, 235, 0.15);
+}
+
+.chat-table th:first-child {
+  border-left: none;
+}
+
+/* Row styles, matches .table-row */
+.chat-table tbody tr {
+  border-bottom: 1px solid rgba(37, 99, 235, 0.1);
+}
+
+.chat-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* Cell styles, matches .table-cell */
+.chat-table td {
+  padding: 12px 16px;
+  text-align: center;
+  border-left: 1px solid rgba(37, 99, 235, 0.1);
+  font-size: 14.5px;
+  line-height: 1.5;
+  /* Vertically and horizontally center content like the flexbox example */
+  vertical-align: middle;
+}
+
+.chat-table td:first-child {
+  border-left: none;
+}
+
+/* Alternating row colors for tbody */
+.chat-table tbody tr:nth-child(odd) td {
+    background: rgba(37, 99, 235, 0.02);
+}
+
+.chat-table tbody tr:nth-child(odd) td:first-child {
+    background: rgba(37, 99, 235, 0.04);
+}
+
+.chat-table tbody tr:nth-child(even) td {
+    background: white;
+}
+
+.chat-table tbody tr:nth-child(even) td:first-child {
+    background: rgba(37, 99, 235, 0.03);
+}
+
+/* Direction handling for LTR math content */
+.chat-table [dir="ltr"] {
+  text-align: center; /* Override default right-align */
+  /* Critical: Isolates LTR content from parent RTL context to prevent symbol flipping. */
+  unicode-bidi: isolate;
+  color: #2563eb; /* --math-color */
+  font-family: 'Cambria Math', 'Latin Modern Math', 'STIX Two Math', 'Noto Sans Math', math, serif;
+  font-size: 1.05em;
+}
