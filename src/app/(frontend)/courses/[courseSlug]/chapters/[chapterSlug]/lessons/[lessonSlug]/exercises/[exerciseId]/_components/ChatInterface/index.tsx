@@ -83,7 +83,7 @@ export function ChatInterface({ exerciseId, lessonId }: ChatInterfaceProps) {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Messages Area */}
+      {/* Messages Area - LLP: Container with p-5 and space-y-4 for message spacing */}
       <div ref={messagesContainerRef} className="flex-grow overflow-y-auto p-5 space-y-4 min-h-0">
         {isLoadingHistory && (
           <div className="flex items-center justify-center p-4 text-muted-foreground text-sm">
@@ -96,10 +96,13 @@ export function ChatInterface({ exerciseId, lessonId }: ChatInterfaceProps) {
             <div
               key={idx}
               className={cn(
+                // LLP: Base bubble styling - max-w-[85%] for bubble width constraint
                 'max-w-[85%] px-[18px] py-3.5 text-base leading-relaxed shadow-sm',
+                // LLP: User messages - right-aligned (ml-auto) with primary colors
                 msg.role === ChatMessageRole.User
                   ? 'ml-auto bg-primary text-primary-foreground rounded-[20px] rounded-bl-[4px]'
-                  : 'mr-auto bg-card text-foreground border border-border rounded-[20px] rounded-br-[4px]',
+                  : // LLP: Bot messages - left-aligned (mr-auto) with card colors and border
+                    'mr-auto bg-card text-foreground border border-border rounded-[20px] rounded-br-[4px]',
               )}
             >
               <ChatMessageContent content={msg.content} />
@@ -151,9 +154,10 @@ export function ChatInterface({ exerciseId, lessonId }: ChatInterfaceProps) {
           </button>
         </div>
 
-        {/* Input Wrapper */}
+        {/* Input Wrapper - LLP: Composer with max-w-[850px], rounded-[30px], bg-muted */}
         <form onSubmit={handleFormSubmit}>
           <div className="max-w-[850px] mx-auto bg-muted rounded-[30px] flex items-center px-4 py-1.5 border border-input gap-3">
+            {/* LLP: Input field - flex-1, bg-transparent, text-[17px] */}
             <input
               ref={inputRef}
               type="text"
@@ -194,7 +198,7 @@ export function ChatInterface({ exerciseId, lessonId }: ChatInterfaceProps) {
               <input type="file" className="hidden" />
             </label>
 
-            {/* Send Button */}
+            {/* Send Button - LLP: w-10 h-10 rounded-full, shadow-input, hover:scale-105 */}
             <button
               type="submit"
               className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-input hover:bg-primary/90 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
