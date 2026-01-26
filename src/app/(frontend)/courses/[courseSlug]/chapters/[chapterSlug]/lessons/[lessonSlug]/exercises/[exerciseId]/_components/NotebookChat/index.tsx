@@ -1,10 +1,10 @@
 'use client'
 
 import { ChatRole } from '@/infra/llm/chat-message-role'
-import { useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
-import { BookOpen, CheckCircle, Lightbulb, Loader2, RefreshCw, Send } from 'lucide-react'
 import { ChatMessageContent } from '@/ui/web/chat'
+import { useTranslations } from '@/ui/web/providers/I18n'
+import { BookOpen, CheckCircle, Lightbulb, Loader2, RefreshCw, Send } from 'lucide-react'
 import { useNotebookChat } from './useNotebookChat'
 
 interface NotebookChatProps {
@@ -48,7 +48,7 @@ export function NotebookChat({ exerciseId, lessonId, chapterId, courseId }: Note
   })
 
   return (
-    <div className="h-full flex flex-col bg-card">
+    <div className="h-full flex flex-col bg-card rounded-xl border border-border/50 shadow-sm">
       {/* Header with reset button */}
       <div className="flex items-center justify-between p-3 border-b border-border">
         <h3 className="font-medium text-sm text-foreground">{t('chatTitle')}</h3>
@@ -77,17 +77,17 @@ export function NotebookChat({ exerciseId, lessonId, chapterId, courseId }: Note
             <div
               key={idx}
               className={cn(
-                'p-3 rounded-lg max-w-[85%]',
+                'max-w-[85%] px-[18px] py-3.5 text-base leading-relaxed shadow-sm',
                 msg.role === ChatRole.User
-                  ? 'ml-auto bg-primary text-primary-foreground'
-                  : 'mr-auto bg-muted text-foreground',
+                  ? 'ml-auto bg-primary text-primary-foreground rounded-[20px] rounded-bl-[4px]'
+                  : 'mr-auto bg-card text-foreground border border-border rounded-[20px] rounded-br-[4px]',
               )}
             >
               <ChatMessageContent content={msg.content} />
             </div>
           ))}
         {isLoading && (
-          <div className="mr-auto bg-muted text-foreground p-3 rounded-lg max-w-[85%] flex items-center gap-2">
+          <div className="mr-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-[20px] rounded-br-[4px] max-w-[85%] flex items-center gap-2 shadow-sm">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span>{t('chatThinking')}</span>
           </div>
@@ -122,11 +122,14 @@ export function NotebookChat({ exerciseId, lessonId, chapterId, courseId }: Note
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex gap-2 p-3 border-t border-border">
+      <form
+        onSubmit={handleSubmit}
+        className="max-w-[850px] mx-auto bg-muted rounded-[30px] flex items-center px-4 py-1.5 border border-input gap-3"
+      >
         <input
           ref={inputRef}
           type="text"
-          className="flex-1 px-4 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+          className="flex-1 bg-transparent border-none outline-none py-2.5 text-[17px] text-foreground placeholder:text-muted-foreground"
           placeholder={t('chatInputPlaceholder')}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
@@ -135,7 +138,7 @@ export function NotebookChat({ exerciseId, lessonId, chapterId, courseId }: Note
         />
         <button
           type="submit"
-          className="p-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-input hover:bg-primary/90 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isLoading || !inputValue.trim()}
           aria-label={t('sendMessage')}
         >
