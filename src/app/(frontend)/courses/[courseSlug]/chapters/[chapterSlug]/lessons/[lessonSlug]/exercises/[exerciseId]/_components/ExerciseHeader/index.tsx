@@ -7,7 +7,7 @@ import { Button } from '@/ui/web/components/button'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
 import { UserDropdown } from '@/ui/web/UserDropdown'
-import { ArrowLeft, ArrowRight, Menu } from 'lucide-react'
+import { ArrowRight, Menu } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -46,16 +46,27 @@ export function ExerciseHeader({
 
   return (
     <header className="h-[60px] bg-card border-b border-border flex items-center flex-shrink-0 z-[100] relative">
-      {/* Left side in LTR (back arrow) / Right side in RTL (back arrow) */}
+      {/* Back button - position flips on desktop for better UX */}
       <button
         onClick={handleBack}
         className={cn(
           'flex items-center justify-center p-2 text-foreground hover:text-primary transition-colors flex-shrink-0 absolute cursor-pointer',
-          rtl ? 'right-5' : 'left-5',
+          // Mobile: back button on outer edge (left in LTR, right in RTL)
+          // Desktop: back button on opposite side (right in LTR, left in RTL)
+          rtl ? 'lg:left-5 lg:right-auto right-5' : 'lg:right-5 lg:left-auto left-5',
         )}
         aria-label={t('backToLesson')}
       >
-        {rtl ? <ArrowRight className="w-6 h-6" /> : <ArrowLeft className="w-6 h-6" />}
+        {/* Arrow points in navigation direction - always ArrowRight, rotated to point correct way */}
+        <ArrowRight
+          className={cn(
+            'w-6 h-6 transition-transform',
+            // Mobile: arrow points outward
+            rtl ? (rtl ? 'rotate-0' : 'rotate-180') : 'rotate-180',
+            // Desktop: arrow points inward (opposite of mobile)
+            rtl ? 'lg:rotate-180' : 'lg:rotate-0',
+          )}
+        />
       </button>
 
       {/* Center: Exercise Title */}
@@ -63,15 +74,14 @@ export function ExerciseHeader({
         {exerciseTitle}
       </h1>
 
-      {/* Right side in LTR / Left side in RTL - Fixed positioning to viewport edge */}
+      {/* Logo and Auth section - position flips on desktop */}
       <div
         className={cn(
-          'flex items-center gap-2 flex-shrink-0 fixed top-[10px] z-[101]',
-          rtl ? 'flex-row-reverse' : 'flex-row',
+          'flex items-center gap-1 flex-shrink-0 absolute top-[10px] z-[101]',
+          // Mobile: fixed to outer edge (right in LTR, left in RTL)
+          // Desktop: fixed to opposite edge (left in LTR, right in RTL)
+          rtl ? 'lg:left-5 lg:right-auto right-5' : 'lg:right-5 lg:left-auto left-5',
         )}
-        style={{
-          [rtl ? 'left' : 'right']: '20px',
-        }}
       >
         {/* Logo - Hidden on mobile, shown on desktop */}
         <TelescopeLogo className="h-8 w-auto hidden lg:flex" />
