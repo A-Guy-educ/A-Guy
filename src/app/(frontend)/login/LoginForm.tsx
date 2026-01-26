@@ -1,18 +1,22 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
+import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
 import { Button } from '@/ui/web/components/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/ui/web/components/card'
 import { Input } from '@/ui/web/components/input'
 import { Label } from '@/ui/web/components/label'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { loginAction } from './login_authenticate-action'
-import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
 
-export function LoginForm() {
+interface LoginFormProps {
+  returnTo?: string
+}
+
+export function LoginForm({ returnTo }: LoginFormProps) {
   const t = useTranslations('auth.login')
   const tOauth = useTranslations('auth.oauth')
   const router = useRouter()
@@ -33,7 +37,7 @@ export function LoginForm() {
 
     if (result.success) {
       window.dispatchEvent(new Event('auth:changed'))
-      router.push('/')
+      router.push(returnTo || '/')
       router.refresh()
       return
     }
@@ -49,7 +53,7 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <GoogleLoginButton returnTo="/" className="w-full" />
+          <GoogleLoginButton returnTo={returnTo || '/'} className="w-full" />
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
@@ -100,7 +104,10 @@ export function LoginForm() {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           {t('noAccount')}{' '}
-          <Link href="/signup" className="text-primary hover:underline">
+          <Link
+            href={returnTo ? `/signup?returnTo=${encodeURIComponent(returnTo)}` : '/signup'}
+            className="text-primary hover:underline"
+          >
             {t('signupLink')}
           </Link>
         </p>

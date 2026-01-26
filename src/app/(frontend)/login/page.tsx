@@ -1,15 +1,20 @@
-import { redirect } from 'next/navigation'
 import { getMeUser } from '@/infra/utils/getMeUser'
+import { redirect } from 'next/navigation'
 import { LoginPageContent } from './LoginPageContent'
 
 export const metadata = { title: 'Log In' }
 
-export default async function LoginPage() {
+interface LoginPageProps {
+  searchParams: Promise<{ returnTo?: string }>
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { user } = await getMeUser()
+  const { returnTo } = await searchParams
 
   if (user) {
-    redirect('/')
+    redirect(returnTo || '/')
   }
 
-  return <LoginPageContent />
+  return <LoginPageContent returnTo={returnTo} />
 }

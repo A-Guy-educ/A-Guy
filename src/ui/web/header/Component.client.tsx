@@ -7,8 +7,8 @@ import React, { useCallback, useEffect, useState } from 'react'
 import type { Header, User } from '@/payload-types'
 
 import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
-import { HeaderNav } from './Nav'
 import { MobileMenu, MobileMenuButton } from './MobileMenu'
+import { HeaderNav } from './Nav'
 
 interface HeaderClientProps {
   data: Header
@@ -133,6 +133,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         data={data}
         user={user}
         isAuthLoading={isAuthLoading}
+        currentUrl={pathname}
       />
     </>
   )

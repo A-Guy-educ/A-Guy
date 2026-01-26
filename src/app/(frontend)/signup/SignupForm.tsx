@@ -1,11 +1,12 @@
 'use client'
 
-import { Button } from '@/ui/web/components/button'
-import { Card, CardContent, CardFooter, CardHeader } from '@/ui/web/components/card'
 import { detectBrowserLocale } from '@/i18n/config'
 import { PRODUCT_EVENTS } from '@/infra/analytics/contracts/events'
 import { useAnalytics } from '@/infra/analytics/providers/AnalyticsProvider'
 import { updateCachedUserProperties } from '@/infra/analytics/utils/user-properties-cache'
+import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
+import { Button } from '@/ui/web/components/button'
+import { Card, CardContent, CardFooter, CardHeader } from '@/ui/web/components/card'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -14,9 +15,12 @@ import { toast } from 'sonner'
 import { SignupFormFields } from './SignupFormFields'
 import { signupAction } from './actions/signup_createUser-action'
 import { validateSignupForm } from './actions/signup_validation-action'
-import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
 
-export function SignupForm() {
+interface SignupFormProps {
+  returnTo?: string
+}
+
+export function SignupForm({ returnTo }: SignupFormProps) {
   const t = useTranslations('auth.signup')
   const tOauth = useTranslations('auth.oauth')
   const router = useRouter()
@@ -92,8 +96,8 @@ export function SignupForm() {
           analytics.identify(result.userId, userProperties)
         }
 
-        // Auto-login successful - redirect to home
-        router.push('/')
+        // Auto-login successful - redirect to returnTo or home
+        router.push(returnTo || '/')
         router.refresh()
       }
     } catch (_error) {
@@ -112,7 +116,7 @@ export function SignupForm() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <GoogleLoginButton returnTo="/" className="w-full" />
+          <GoogleLoginButton returnTo={returnTo || '/'} className="w-full" />
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
@@ -135,7 +139,10 @@ export function SignupForm() {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           {t('alreadyHaveAccount')}{' '}
-          <Link href="/login" className="text-primary hover:underline">
+          <Link
+            href={returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login'}
+            className="text-primary hover:underline"
+          >
             {t('login')}
           </Link>
         </p>

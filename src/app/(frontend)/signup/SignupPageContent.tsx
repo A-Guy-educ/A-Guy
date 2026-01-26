@@ -1,10 +1,13 @@
 'use client'
 
-import React from 'react'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { SignupForm } from './SignupForm'
 
-export function SignupPageContent() {
+interface SignupPageContentProps {
+  returnTo?: string
+}
+
+export function SignupPageContent({ returnTo }: SignupPageContentProps) {
   const t = useTranslations('auth.signup')
 
   return (
@@ -14,7 +17,7 @@ export function SignupPageContent() {
           <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
           <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
-        <SignupForm />
+        <SignupForm returnTo={returnTo} />
       </div>
     </div>
   )

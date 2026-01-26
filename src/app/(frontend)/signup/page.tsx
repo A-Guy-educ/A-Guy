@@ -1,7 +1,6 @@
-import React from 'react'
+import { getMeUser } from '@/infra/utils/getMeUser'
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { getMeUser } from '@/infra/utils/getMeUser'
 import { SignupPageContent } from './SignupPageContent'
 
 export const metadata: Metadata = {
@@ -9,12 +8,17 @@ export const metadata: Metadata = {
   description: 'Create a new account',
 }
 
-export default async function SignupPage() {
+interface SignupPageProps {
+  searchParams: Promise<{ returnTo?: string }>
+}
+
+export default async function SignupPage({ searchParams }: SignupPageProps) {
   const { user } = await getMeUser()
+  const { returnTo } = await searchParams
 
   if (user) {
-    redirect('/')
+    redirect(returnTo || '/')
   }
 
-  return <SignupPageContent />
+  return <SignupPageContent returnTo={returnTo} />
 }
