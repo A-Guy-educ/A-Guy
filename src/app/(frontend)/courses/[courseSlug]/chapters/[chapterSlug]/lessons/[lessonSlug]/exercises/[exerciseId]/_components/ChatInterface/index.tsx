@@ -13,9 +13,17 @@ import { useNotebookChat } from '../NotebookChat/useNotebookChat'
 interface ChatInterfaceProps {
   exerciseId?: string
   lessonId?: string
+  // NEW: Mobile mode support
+  displayMode?: 'full' | 'input-only'
+  onChatInteraction?: () => void
 }
 
-export function ChatInterface({ exerciseId, lessonId }: ChatInterfaceProps) {
+export function ChatInterface({
+  exerciseId,
+  lessonId,
+  displayMode = 'full',
+  onChatInteraction,
+}: ChatInterfaceProps) {
   const t = useTranslations('courses')
   const {
     messages,
@@ -74,17 +82,34 @@ export function ChatInterface({ exerciseId, lessonId }: ChatInterfaceProps) {
     })
   }
 
+  // Handle input change (no expansion while typing)
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value)
+  }
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setIsMathPaletteOpen(false)
     setIsFormulaPanelOpen(false)
+
+    // Trigger interaction callback on submit
+    if (onChatInteraction) {
+      onChatInteraction()
+    }
+
     handleSubmit(e)
   }
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Messages Area */}
-      <div ref={messagesContainerRef} className="flex-grow overflow-y-auto p-5 space-y-4 min-h-0">
+      {/* Messages Area - Hidden when displayMode is 'input-only' */}
+      <div
+        ref={messagesContainerRef}
+        className={cn(
+          'flex-grow overflow-y-auto p-5 space-y-4 min-h-0',
+          displayMode === 'input-only' && 'hidden',
+        )}
+      >
         {isLoadingHistory && (
           <div className="flex items-center justify-center p-4 text-muted-foreground text-sm">
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -114,7 +139,7 @@ export function ChatInterface({ exerciseId, lessonId }: ChatInterfaceProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Container */}
+      {/* Input Container - Always rendered */}
       <div className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative">
         {/* Math Preview Popup */}
         {mathPreview && (
@@ -160,7 +185,7 @@ export function ChatInterface({ exerciseId, lessonId }: ChatInterfaceProps) {
               className="flex-1 bg-transparent border-none outline-none py-2.5 text-[17px] text-foreground placeholder:text-muted-foreground"
               placeholder={t('chatInputPlaceholder')}
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={(e) => {
                 // Let the form onSubmit handle Enter key submission
                 // Don't call handleKeyDown to avoid double submission
