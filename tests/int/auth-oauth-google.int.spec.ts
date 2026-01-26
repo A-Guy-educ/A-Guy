@@ -75,7 +75,7 @@ describe('Google OAuth Integration', () => {
           registrationMethod: 'google',
           googleProfile: {
             name: 'Test OAuth User',
-            picture: 'https://example.com/photo.jpg',
+            picture: 'https://lh3.googleusercontent.com/a/test-photo',
           },
           name: 'Test OAuth User',
           password: plainSecret,
@@ -232,7 +232,7 @@ describe('Google OAuth Integration', () => {
           // This allows both login methods to work
           googleProfile: {
             name: 'Google User',
-            picture: 'https://example.com/photo.jpg',
+            picture: 'https://lh3.googleusercontent.com/a/test-photo',
           },
           verifiedEmail: sharedEmail,
         },

@@ -61,7 +61,6 @@ export async function handleExistingUser(
     setAuthCookie(res, payload, token)
     return res
   } catch (error) {
-    console.error('[handleExistingUser] Error:', error)
     logOAuthError('session_issuance_failed', error, correlationId)
     res.headers.set('Location', new URL('/login?error=session_issue_failed', req.url).toString())
     return res
