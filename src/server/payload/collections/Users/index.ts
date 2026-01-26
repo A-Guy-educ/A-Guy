@@ -105,10 +105,7 @@ export const Users: CollectionConfig = {
     {
       name: 'googleProfile',
       type: 'group',
-      fields: [
-        { name: 'name', type: 'text' },
-        { name: 'picture', type: 'text' },
-      ],
+      fields: [{ name: 'name', type: 'text' }],
       admin: {
         readOnly: true,
       },

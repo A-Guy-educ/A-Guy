@@ -29,11 +29,11 @@ export async function handleExistingUser(
   correlationId: string,
   sub: string,
 ): Promise<NextResponse> {
-  // Update profile only (name/picture from Google)
+  // Update profile only (name from Google)
   await payload.update({
     collection: 'users',
     id: user.id,
-    data: { googleProfile: { name: profile.name, picture: profile.picture } },
+    data: { googleProfile: { name: profile.name } },
   })
 
   await logOAuthEvent('user_updated', { correlationId, userId: user.id, googleSub: sub })
@@ -126,7 +126,7 @@ export async function handleCollision(
       {
         $set: {
           googleSub: sub,
-          googleProfile: { name: profile.name, picture: profile.picture },
+          googleProfile: { name: profile.name },
           verifiedEmail: email,
         },
       },
@@ -159,7 +159,7 @@ export async function createNewOAuthUser(
   returnTo: string,
   correlationId: string,
 ): Promise<NextResponse> {
-  const { sub, email, name, picture } = userinfo
+  const { sub, email, name } = userinfo
   let userId: string
   const plainSecret = generateSecret()
   const encryptedSecret = encrypt(plainSecret)
@@ -174,7 +174,7 @@ export async function createNewOAuthUser(
         verifiedEmail: email,
         registeredAt: new Date().toISOString(),
         registrationMethod: 'google',
-        googleProfile: { name, picture },
+        googleProfile: { name },
         name: name || email.split('@')[0],
         password: plainSecret,
         oauthLoginSecretEnc: encryptedSecret,
