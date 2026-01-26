@@ -1,3 +1,4 @@
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
 import { MongoDBContainer, StartedMongoDBContainer } from '@testcontainers/mongodb'
 import { isProductionDatabase } from './test-db-constraint'
 
@@ -12,7 +13,7 @@ let mongoContainer: StartedMongoDBContainer | null = null
  * In this case, we skip testcontainers and use the service directly
  */
 function isUsingMongoService(): boolean {
-  return process.env.USE_MONGO_SERVICE === 'true'
+  return getConfigValue('USE_MONGO_SERVICE', { throwIfNotFound: false }) === 'true'
 }
 
 /**
@@ -69,7 +70,7 @@ export async function startMongoContainer(): Promise<string> {
  */
 export async function stopMongoContainer(): Promise<void> {
   // Service container is managed by CI, not us
-  if (process.env.USE_MONGO_SERVICE === 'true') {
+  if (getConfigValue('USE_MONGO_SERVICE', { throwIfNotFound: false }) === 'true') {
     return
   }
 

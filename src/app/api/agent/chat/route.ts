@@ -1,3 +1,4 @@
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
       {
         error: error instanceof Error ? error.message : 'Internal server error',
         requestId,
-        ...(process.env.NODE_ENV === 'development' && error instanceof Error
+        ...(getConfigValue('NODE_ENV') === 'development' && error instanceof Error
           ? { stack: error.stack }
           : {}),
       },

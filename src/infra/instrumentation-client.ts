@@ -1,9 +1,10 @@
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
 import * as Sentry from '@sentry/nextjs'
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart
 
 Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  dsn: getConfigValue('NEXT_PUBLIC_SENTRY_DSN', { throwIfNotFound: false }),
 
   // Replay sample rate for production
   replaysSessionSampleRate: 0.1,
@@ -13,10 +14,10 @@ Sentry.init({
   tracesSampleRate: 0.1,
 
   // Environment
-  environment: process.env.NODE_ENV,
+  environment: getConfigValue('NODE_ENV'),
 
   // Disable in development
-  enabled: process.env.NODE_ENV === 'production',
+  enabled: getConfigValue('NODE_ENV') === 'production',
 
   integrations: [
     Sentry.replayIntegration({

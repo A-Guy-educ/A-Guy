@@ -5,6 +5,7 @@
  * Enforces strict contracts and prevents invalid data
  */
 
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
 import { ZodError, type ZodIssue } from 'zod'
 import { isValidEvent, type ProductEvent } from '../contracts/events'
 import { eventSchemas } from '../contracts/schemas'
@@ -32,7 +33,7 @@ export function validateEvent(
     const errorMsg = `Unknown event: ${event}. Only canonical events are allowed.`
 
     // In production: log warning and continue best-effort with raw data
-    if (process.env.NODE_ENV === 'production') {
+    if (getConfigValue('NODE_ENV') === 'production') {
       console.warn('[Analytics] Invalid event (production mode - continuing):', errorMsg)
       return {
         success: true,
@@ -69,7 +70,7 @@ export function validateEvent(
       }))
 
       // In production: log warning and continue best-effort with raw data
-      if (process.env.NODE_ENV === 'production') {
+      if (getConfigValue('NODE_ENV') === 'production') {
         console.warn('[Analytics] Validation failed (production mode - continuing):', {
           event,
           issues: errorDetails,

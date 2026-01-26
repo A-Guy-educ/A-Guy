@@ -1,5 +1,6 @@
 'use server'
 
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { cookies } from 'next/headers'
@@ -87,7 +88,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
       if (token && 'token' in token && token.token) {
         cookieStore.set('payload-token', token.token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
+          secure: getConfigValue('NODE_ENV') === 'production',
           sameSite: 'lax',
           maxAge: 7 * 24 * 60 * 60, // 7 days
           path: '/',

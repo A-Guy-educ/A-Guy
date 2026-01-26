@@ -3,15 +3,17 @@
  * Prevents accidental use of production/shared databases in tests
  */
 
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
+
 /**
  * Check if we're running in a test environment
  */
 export function isTestEnvironment(): boolean {
   return (
-    process.env.NODE_ENV === 'test' ||
-    process.env.VITEST === 'true' ||
-    process.env.PLAYWRIGHT_TEST === 'true' ||
-    typeof process.env.VITEST_WORKER_ID !== 'undefined' ||
+    getConfigValue('NODE_ENV') === 'test' ||
+    getConfigValue('VITEST', { throwIfNotFound: false }) === 'true' ||
+    getConfigValue('PLAYWRIGHT_TEST', { throwIfNotFound: false }) === 'true' ||
+    typeof getConfigValue('VITEST_WORKER_ID', { throwIfNotFound: false }) !== 'undefined' ||
     process.argv.some((arg) => arg.includes('vitest') || arg.includes('playwright'))
   )
 }
@@ -21,7 +23,7 @@ export function isTestEnvironment(): boolean {
  */
 function isVectorSearchTest(): boolean {
   // Check if explicitly allowed via env var
-  if (process.env.ALLOW_ATLAS_FOR_VECTOR_SEARCH === 'true') {
+  if (getConfigValue('ALLOW_ATLAS_FOR_VECTOR_SEARCH', { throwIfNotFound: false }) === 'true') {
     return true
   }
 

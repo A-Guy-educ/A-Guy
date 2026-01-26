@@ -1,5 +1,6 @@
 'use server'
 
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
 import { cookies } from 'next/headers'
 import { getPayload } from 'payload'
 
@@ -60,7 +61,7 @@ export async function loginAction(formData: FormData, cookieStore?: CookieStore)
             : authCookies?.sameSite === 'Lax'
               ? 'lax'
               : 'lax'
-      const secure = authCookies?.secure ?? process.env.NODE_ENV === 'production'
+      const secure = authCookies?.secure ?? getConfigValue('NODE_ENV') === 'production'
 
       resolvedCookieStore.set(cookieName, result.token, {
         httpOnly: true,

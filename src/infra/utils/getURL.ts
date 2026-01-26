@@ -1,8 +1,10 @@
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
+
 export const getServerSideURL = () => {
   return (
-    process.env.NEXT_PUBLIC_SERVER_URL ||
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    getConfigValue('NEXT_PUBLIC_SERVER_URL', { throwIfNotFound: false }) ||
+    (getConfigValue('VERCEL_PROJECT_PRODUCTION_URL', { throwIfNotFound: false })
+      ? `https://${getConfigValue('VERCEL_PROJECT_PRODUCTION_URL', { throwIfNotFound: false })}`
       : 'http://localhost:3000')
   )
 }
@@ -16,9 +18,9 @@ export const getClientSideURL = () => {
     return `${protocol}//${domain}${port ? `:${port}` : ''}`
   }
 
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  if (getConfigValue('VERCEL_PROJECT_PRODUCTION_URL', { throwIfNotFound: false })) {
+    return `https://${getConfigValue('VERCEL_PROJECT_PRODUCTION_URL', { throwIfNotFound: false })}`
   }
 
-  return process.env.NEXT_PUBLIC_SERVER_URL || ''
+  return getConfigValue('NEXT_PUBLIC_SERVER_URL', { throwIfNotFound: false }) || ''
 }

@@ -1,3 +1,4 @@
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
 import { agentResetChat } from '@/server/payload/endpoints/agent/reset-chat'
 import { logger } from '@/infra/utils/logger/logger'
 import config from '@payload-config'
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
       {
         error: error instanceof Error ? error.message : 'Internal server error',
         requestId,
-        ...(process.env.NODE_ENV === 'development' && error instanceof Error
+        ...(getConfigValue('NODE_ENV') === 'development' && error instanceof Error
           ? { stack: error.stack }
           : {}),
       },

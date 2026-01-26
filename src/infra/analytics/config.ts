@@ -5,6 +5,7 @@
  * Simplified: presence of token/key enables the platform
  */
 
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
 import type { AnalyticsConfig } from './types'
 
 /**
@@ -29,8 +30,10 @@ export function getAnalyticsConfig(): AnalyticsConfig {
     }
   }
 
-  const ga4MeasurementId = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID
-  const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN
+  const ga4MeasurementId = getConfigValue('NEXT_PUBLIC_GA4_MEASUREMENT_ID', {
+    throwIfNotFound: false,
+  })
+  const mixpanelToken = getConfigValue('NEXT_PUBLIC_MIXPANEL_TOKEN', { throwIfNotFound: false })
 
   // Analytics is enabled if at least one platform has credentials
   const ga4Enabled = !!ga4MeasurementId
@@ -38,7 +41,7 @@ export function getAnalyticsConfig(): AnalyticsConfig {
   const enabled = ga4Enabled || mixpanelEnabled
 
   // Debug mode only in development
-  const debugMode = process.env.NODE_ENV === 'development'
+  const debugMode = getConfigValue('NODE_ENV') === 'development'
 
   return {
     enabled,

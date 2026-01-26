@@ -2,6 +2,7 @@ import { getServerSideSitemap } from 'next-sitemap'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { unstable_cache } from 'next/cache'
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
 
 // Force dynamic rendering to avoid build-time tracing issues
 export const dynamic = 'force-dynamic'
@@ -10,8 +11,8 @@ const getPagesSitemap = unstable_cache(
   async () => {
     const payload = await getPayload({ config })
     const SITE_URL =
-      process.env.NEXT_PUBLIC_SERVER_URL ||
-      process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+      getConfigValue('NEXT_PUBLIC_SERVER_URL', { throwIfNotFound: false }) ||
+      getConfigValue('VERCEL_PROJECT_PRODUCTION_URL', { throwIfNotFound: false }) ||
       'https://example.com'
 
     const results = await payload.find({

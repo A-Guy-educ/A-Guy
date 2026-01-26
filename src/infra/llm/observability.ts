@@ -8,6 +8,7 @@
  * - Debug snapshots (dev only)
  */
 
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
 import { logger } from '@/infra/utils/logger'
 import type { ComposedPrompt } from './context-policy'
 
@@ -50,7 +51,7 @@ export function logContextUsage(log: ContextLog): void {
  */
 export function logPromptSnapshot(conversationId: string, prompt: ComposedPrompt): void {
   // Only in development
-  if (process.env.NODE_ENV !== 'development') return
+  if (getConfigValue('NODE_ENV') !== 'development') return
 
   logger.debug(
     {

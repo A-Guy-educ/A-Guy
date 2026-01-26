@@ -1,3 +1,4 @@
+import { getConfigValue } from '@/lib/config/runtime/bootstrap-config'
 import pino from 'pino'
 
 /**
@@ -5,7 +6,7 @@ import pino from 'pino'
  * Supports JSON output in production and pretty-print in development
  */
 export const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
+  level: getConfigValue('LOG_LEVEL', { defaultValue: 'info' }),
   formatters: {
     level: (label) => {
       return { level: label }
