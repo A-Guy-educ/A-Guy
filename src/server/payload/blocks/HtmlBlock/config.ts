@@ -14,7 +14,7 @@ export const HtmlBlock: Block = {
       required: true,
       admin: {
         description:
-          'Enter HTML content. Links must be relative (/path or #anchor). Allowed attributes: class, data-* on all tags; href (required), title, class, data-* on <a> tags. No style=, target=, or on*= attributes allowed. The <style> tag is allowed.',
+          'Enter HTML content. Links must be relative (/path or #anchor). Allowed attributes: class, id, data-* on all tags; href (required), title, class, id, data-* on <a> tags. No style=, target=, or on*= attributes allowed. The <style> tag is allowed.',
         language: 'html',
       },
       validate: (value: string | null | undefined): string | true => {
@@ -37,11 +37,15 @@ export const HtmlBlock: Block = {
           '<meta',
           '<base',
           '<link',
+          '<title',
         ]
 
         for (const tag of dangerousTags) {
           const lowerTag = tag.toLowerCase()
           if (trimmed.toLowerCase().includes(lowerTag)) {
+            if (tag === '<title') {
+              return '<title> is not allowed in HtmlBlock. Put title in the page head.'
+            }
             return `HTML contains blocked content: ${tag}`
           }
         }
@@ -151,6 +155,9 @@ export const HtmlBlock: Block = {
             // data-* attributes are allowed
             if (attrName.startsWith('data-')) continue
 
+            // id is allowed
+            if (attrName === 'id') continue
+
             // Any other attribute is forbidden
             return `<a> tag does not allow attribute "${attrName}"`
           }
@@ -176,6 +183,9 @@ export const HtmlBlock: Block = {
 
             // data-* attributes are allowed
             if (attrName.startsWith('data-')) continue
+
+            // id is allowed
+            if (attrName === 'id') continue
 
             // Any other attribute is forbidden
             return `Attribute "${attrName}" is not allowed on <${tagName}> tags`
@@ -211,6 +221,14 @@ export const HtmlBlock: Block = {
           'span',
           'div',
           'style',
+          'nav',
+          'button',
+          'header',
+          'main',
+          'footer',
+          'section',
+          'article',
+          'aside',
         ]
 
         const tagCheckPattern = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi

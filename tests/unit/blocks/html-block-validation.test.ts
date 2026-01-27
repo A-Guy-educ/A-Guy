@@ -3,10 +3,10 @@
  *
  * Tests the HtmlBlock field validation rules:
  * - Href validation: must start with / or # only
- * - Attribute restrictions: class, data-* allowed on all tags; href, title, class, data-* allowed on <a> tags
+ * - Attribute restrictions: class, id, data-* allowed on all tags; href, title, class, id, data-* allowed on <a> tags
  * - Blocked URI schemes: mailto:, tel:, ftp:, javascript:, data:
  * - Blocked attributes: style=, target=, on*= handlers
- * - Allowed HTML tags (including <style>)
+ * - Allowed HTML tags (including <style> and semantic HTML5 tags)
  */
 import { describe, expect, it } from 'vitest'
 import { HtmlBlock } from '../../../src/server/payload/blocks/HtmlBlock/config'
@@ -173,13 +173,26 @@ describe('HtmlBlock Validation', () => {
         expect(result).toContain('Inline event handlers')
       }
     })
+  })
 
-    it('should reject class attribute on <p> tags', () => {
-      const result = validate?.('<p class="x">hi</p>')
-      expect(result).toBe(true) // class is now allowed
+  describe('Attribute Restrictions - ALLOWED', () => {
+    it('should allow class attribute on tags', () => {
+      expect(validate?.('<p class="x">hi</p>')).toBe(true)
+      expect(validate?.('<div class="container">Content</div>')).toBe(true)
     })
 
-    it('should allow data-* attributes on <span> tags', () => {
+    it('should allow id attribute on <div> tags', () => {
+      expect(validate?.('<div id="x">hi</div>')).toBe(true)
+    })
+
+    it('should allow id attribute on all tags', () => {
+      expect(validate?.('<p id="para1">Paragraph</p>')).toBe(true)
+      expect(validate?.('<span id="span1">Text</span>')).toBe(true)
+      expect(validate?.('<a href="/page" id="link1">Link</a>')).toBe(true)
+      expect(validate?.('<h1 id="heading1">Title</h1>')).toBe(true)
+    })
+
+    it('should allow data-* attributes on tags', () => {
       expect(validate?.('<span data-x="1">hi</span>')).toBe(true)
       expect(validate?.('<span data-test-id="123">hi</span>')).toBe(true)
       expect(validate?.('<div data-analytics="track">Content</div>')).toBe(true)
@@ -190,13 +203,6 @@ describe('HtmlBlock Validation', () => {
       expect(validate?.('<div class="wrap" data-test="x">Content</div>')).toBe(true)
     })
 
-    it('should reject id attribute on <div> tags', () => {
-      const result = validate?.('<div id="x">hi</div>')
-      expect(result).toContain('Attribute "id" is not allowed')
-    })
-  })
-
-  describe('Attribute Restrictions - ALLOWED', () => {
     it('should allow simple anchor with href only', () => {
       expect(validate?.('<a href="/page">Link</a>')).toBe(true)
     })
@@ -219,6 +225,13 @@ describe('HtmlBlock Validation', () => {
       expect(validate?.('<p>Simple paragraph</p>')).toBe(true)
       expect(validate?.('<div><h1>Title</h1><p>Content</p></div>')).toBe(true)
       expect(validate?.('<ul><li>Item 1</li><li>Item 2</li></ul>')).toBe(true)
+    })
+
+    it('should allow id attribute on other tags', () => {
+      expect(validate?.('<p id="para1">Paragraph</p>')).toBe(true)
+      expect(validate?.('<div id="container">Content</div>')).toBe(true)
+      expect(validate?.('<span id="text1">Text</span>')).toBe(true)
+      expect(validate?.('<section id="section1">Section</section>')).toBe(true)
     })
 
     it('should allow class attribute on other tags', () => {
@@ -295,6 +308,42 @@ describe('HtmlBlock Validation', () => {
       expect(validate?.('<style>.x { color: red; }</style>')).toBe(true)
       expect(validate?.('<style>p { margin: 0; }</style>')).toBe(true)
     })
+
+    it('should allow semantic HTML5 tags (nav, button, header, main, footer)', () => {
+      expect(validate?.('<nav>Navigation</nav>')).toBe(true)
+      expect(validate?.('<button>Click Me</button>')).toBe(true)
+      expect(validate?.('<header>Header</header>')).toBe(true)
+      expect(validate?.('<main>Main Content</main>')).toBe(true)
+      expect(validate?.('<footer>Footer</footer>')).toBe(true)
+    })
+
+    it('should allow id attribute on semantic HTML5 tags', () => {
+      expect(validate?.('<nav id="nav-main">Navigation</nav>')).toBe(true)
+      expect(validate?.('<button id="btn-submit">Click Me</button>')).toBe(true)
+      expect(validate?.('<header id="page-header">Header</header>')).toBe(true)
+      expect(validate?.('<main id="main-content">Main Content</main>')).toBe(true)
+      expect(validate?.('<footer id="page-footer">Footer</footer>')).toBe(true)
+    })
+
+    it('should allow class and data-* on semantic HTML5 tags', () => {
+      expect(validate?.('<nav class="menu" data-nav="true">Navigation</nav>')).toBe(true)
+      expect(validate?.('<button class="btn" data-action="submit">Click Me</button>')).toBe(true)
+      expect(validate?.('<header class="site-header" data-sticky="yes">Header</header>')).toBe(true)
+      expect(validate?.('<main class="content" data-page="home">Main Content</main>')).toBe(true)
+      expect(validate?.('<footer class="site-footer" data-year="2024">Footer</footer>')).toBe(true)
+    })
+  })
+
+  describe('Blocked Tags - Special Cases', () => {
+    it('should reject <title> tags with specific message', () => {
+      const result = validate?.('<title>Page Title</title>')
+      expect(result).toBe('<title> is not allowed in HtmlBlock. Put title in the page head.')
+    })
+
+    it('should reject <title> tag in middle of content', () => {
+      const result = validate?.('<div><title>Bad</title></div>')
+      expect(result).toContain('is not allowed in HtmlBlock')
+    })
   })
 
   describe('Acceptance Examples - SHOULD PASS', () => {
@@ -357,6 +406,22 @@ describe('HtmlBlock Validation', () => {
 
     it('should reject <audio> tags', () => {
       const result = validate?.('<audio src="audio.mp3"></audio>')
+      expect(result).toMatch(/disallowed tag|Attribute/)
+    })
+
+    it('should reject <head> tags', () => {
+      const result = validate?.('<head><title>Test</title></head>')
+      // The <title> inside triggers the specific message
+      expect(result).toMatch(/is not allowed in HtmlBlock/)
+    })
+
+    it('should reject <html> tags', () => {
+      const result = validate?.('<html><body>Content</body></html>')
+      expect(result).toMatch(/disallowed tag|Attribute/)
+    })
+
+    it('should reject <body> tags', () => {
+      const result = validate?.('<body>Content</body>')
       expect(result).toMatch(/disallowed tag|Attribute/)
     })
   })
