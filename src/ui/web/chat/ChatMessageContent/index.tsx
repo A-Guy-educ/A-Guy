@@ -8,20 +8,14 @@ import rehypeKatex from 'rehype-katex'
 import remarkMath from 'remark-math'
 import { visit } from 'unist-util-visit'
 import { normalizeLatexDelimiters } from './normalize-latex'
+import { parseTable } from '@/infra/llm/table-parser';
+import { ChatTable } from '@/ui/web/chat/ChatTable';
 
 interface ChatMessageContentProps {
   content: string
   className?: string
 }
 
-/**
- * Custom components for ReactMarkdown with Tailwind styling.
- * Implements the chat answer formatting spec:
- * - Paragraphs: 16-24px spacing, line-height 1.5-1.6
- * - Headings: semibold, 8-12px spacing below
- * - Emphasis: bold only (em rendered as font-medium, not italic)
- * - Lists: proper indentation and spacing
- */
 const markdownComponents: Components = {
   p: ({ children }) => <p className="mb-4 leading-relaxed first:mt-0 last:mb-0">{children}</p>,
   h1: ({ children }) => (
@@ -68,10 +62,6 @@ const markdownComponents: Components = {
   hr: () => <hr className="border-0 border-t border-border my-5" />,
 }
 
-/**
- * Rehype plugin to wrap KaTeX output with RTL isolation.
- * Adds wrapper elements at the AST level before React rendering.
- */
 function rehypeMathWrapper() {
   return (tree: Root) => {
     visit(tree, 'element', (node: Element, index, parent) => {
@@ -81,7 +71,6 @@ function rehypeMathWrapper() {
         ? node.properties.className.join(' ')
         : String(node.properties?.className || '')
 
-      // Skip if already wrapped (check for Tailwind classes we use)
       if (
         className.includes('isolate') &&
         (className.includes('inline-block') || className.includes('block'))
@@ -89,13 +78,11 @@ function rehypeMathWrapper() {
         return
       }
 
-      // Check if parent is already a math wrapper or a katex element (to avoid nested wrapping)
       if (parent.type === 'element') {
         const parentClassName = Array.isArray(parent.properties?.className)
           ? parent.properties.className.join(' ')
           : String(parent.properties?.className || '')
 
-        // Skip if parent is already wrapped (check for Tailwind classes we use)
         if (
           parentClassName.includes('isolate') &&
           (parentClassName.includes('inline-block') || parentClassName.includes('block'))
@@ -103,13 +90,11 @@ function rehypeMathWrapper() {
           return
         }
 
-        // Skip if parent is a katex element (we only wrap top-level katex)
         if (parentClassName.includes('katex')) {
           return
         }
       }
 
-      // Block math: wrap katex-display
       if (className.includes('katex-display')) {
         const wrapper: Element = {
           type: 'element',
@@ -126,7 +111,6 @@ function rehypeMathWrapper() {
         return
       }
 
-      // Inline math: wrap katex (only top-level, not nested)
       if (
         className.includes('katex') &&
         !className.includes('katex-display') &&
@@ -151,6 +135,11 @@ function rehypeMathWrapper() {
 
 export function ChatMessageContent({ content, className }: ChatMessageContentProps) {
   const normalizedContent = normalizeLatexDelimiters(content)
+  const tableData = parseTable(normalizedContent);
+
+  if (tableData) {
+    return <ChatTable data={tableData} />;
+  }
 
   return (
     <div className={cn('chat-message-content leading-relaxed', className)}>
