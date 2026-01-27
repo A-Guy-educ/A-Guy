@@ -133,9 +133,6 @@ export const HtmlBlock: Block = {
             }
           }
 
-          // Only allow href and optionally title
-          const allowedAttrPattern = /\b(href|title)\s*=/gi
-
           // Check for any disallowed attributes
           const allAttrPattern = /\b([a-z-]+)\s*=/gi
           let attrMatch
