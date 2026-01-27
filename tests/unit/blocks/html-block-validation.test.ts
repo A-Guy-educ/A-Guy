@@ -3,10 +3,10 @@
  *
  * Tests the HtmlBlock field validation rules:
  * - Href validation: must start with / or # only
- * - Attribute restrictions: only href allowed on <a> tags
+ * - Attribute restrictions: class, data-* allowed on all tags; href, title, class, data-* allowed on <a> tags
  * - Blocked URI schemes: mailto:, tel:, ftp:, javascript:, data:
  * - Blocked attributes: style=, target=, on*= handlers
- * - Allowed HTML tags
+ * - Allowed HTML tags (including <style>)
  */
 import { describe, expect, it } from 'vitest'
 import { HtmlBlock } from '../../../src/server/payload/blocks/HtmlBlock/config'
@@ -143,19 +143,22 @@ describe('HtmlBlock Validation', () => {
   describe('Attribute Restrictions - DENIED', () => {
     it('should reject target attribute on anchor tags', () => {
       const result = validate?.('<a target="_blank" href="/x">X</a>')
-      expect(result).toContain('found: target=')
+      expect(result).toContain('does not allow attribute "target"')
     })
 
-    it('should reject style attribute', () => {
+    it('should reject style attribute on <p> tags', () => {
       const result = validate?.('<p style="color:red">x</p>')
-      expect(result).toContain('Attributes are not allowed on <p> tags')
-      expect(result).toContain('style=')
+      expect(result).toContain('Attribute "style" is not allowed')
     })
 
     it('should reject onclick handlers', () => {
       const result = validate?.('<button onclick="alert(1)">Click</button>')
-      expect(result).toContain('Inline event handlers')
-      expect(result).toContain('not allowed')
+      expect(result).toContain('Inline event handlers are not allowed')
+    })
+
+    it('should reject onclick handler with specific error message', () => {
+      const result = validate?.('<span onclick="x()">X</span>')
+      expect(result).toContain('Inline event handlers are not allowed')
     })
 
     it('should reject onload handlers', () => {
@@ -173,26 +176,23 @@ describe('HtmlBlock Validation', () => {
 
     it('should reject class attribute on <p> tags', () => {
       const result = validate?.('<p class="x">hi</p>')
-      expect(result).toContain('Attributes are not allowed')
-      expect(result).toContain('class=')
+      expect(result).toBe(true) // class is now allowed
+    })
+
+    it('should allow data-* attributes on <span> tags', () => {
+      expect(validate?.('<span data-x="1">hi</span>')).toBe(true)
+      expect(validate?.('<span data-test-id="123">hi</span>')).toBe(true)
+      expect(validate?.('<div data-analytics="track">Content</div>')).toBe(true)
+    })
+
+    it('should allow class and data-* on same tag', () => {
+      expect(validate?.('<p class="hero" data-id="123">Hello</p>')).toBe(true)
+      expect(validate?.('<div class="wrap" data-test="x">Content</div>')).toBe(true)
     })
 
     it('should reject id attribute on <div> tags', () => {
       const result = validate?.('<div id="x">hi</div>')
-      expect(result).toContain('Attributes are not allowed')
-      expect(result).toContain('id=')
-    })
-
-    it('should reject data-* attributes on <span> tags', () => {
-      const result = validate?.('<span data-x="1">hi</span>')
-      expect(result).toContain('Attributes are not allowed')
-      expect(result).toContain('data-x=')
-    })
-
-    it('should reject class attribute on <span> tags', () => {
-      const result = validate?.('<span class="highlight">hi</span>')
-      expect(result).toContain('Attributes are not allowed')
-      expect(result).toContain('class=')
+      expect(result).toContain('Attribute "id" is not allowed')
     })
   })
 
@@ -205,10 +205,31 @@ describe('HtmlBlock Validation', () => {
       expect(validate?.('<a href="/page" title="Page Title">Link</a>')).toBe(true)
     })
 
+    it('should allow anchor with class attribute', () => {
+      expect(validate?.('<a href="/page" class="btn">Link</a>')).toBe(true)
+      expect(validate?.('<a href="/about" class="link" data-cta="main">About</a>')).toBe(true)
+    })
+
+    it('should allow anchor with data-* attributes', () => {
+      expect(validate?.('<a href="/page" data-id="123">Link</a>')).toBe(true)
+      expect(validate?.('<a href="/about" data-cta="main">About</a>')).toBe(true)
+    })
+
     it('should allow HTML without attributes on other tags', () => {
       expect(validate?.('<p>Simple paragraph</p>')).toBe(true)
       expect(validate?.('<div><h1>Title</h1><p>Content</p></div>')).toBe(true)
       expect(validate?.('<ul><li>Item 1</li><li>Item 2</li></ul>')).toBe(true)
+    })
+
+    it('should allow class attribute on other tags', () => {
+      expect(validate?.('<p class="highlight">Paragraph</p>')).toBe(true)
+      expect(validate?.('<div class="container">Content</div>')).toBe(true)
+      expect(validate?.('<span class="text">Text</span>')).toBe(true)
+    })
+
+    it('should allow data-* attributes on other tags', () => {
+      expect(validate?.('<p data-test="123">Paragraph</p>')).toBe(true)
+      expect(validate?.('<div data-id="456">Content</div>')).toBe(true)
     })
   })
 
@@ -226,11 +247,6 @@ describe('HtmlBlock Validation', () => {
     it('should reject <object> tags', () => {
       const result = validate?.('<object data="evil.swf"></object>')
       expect(result).toContain('<object')
-    })
-
-    it('should reject <style> tags', () => {
-      const result = validate?.('<style>p { color: red; }</style>')
-      expect(result).toContain('<style')
     })
 
     it('should reject <meta> tags', () => {
@@ -274,32 +290,74 @@ describe('HtmlBlock Validation', () => {
       expect(validate?.('<span>Text</span>')).toBe(true)
       expect(validate?.('<div>Container</div>')).toBe(true)
     })
+
+    it('should allow <style> tags', () => {
+      expect(validate?.('<style>.x { color: red; }</style>')).toBe(true)
+      expect(validate?.('<style>p { margin: 0; }</style>')).toBe(true)
+    })
+  })
+
+  describe('Acceptance Examples - SHOULD PASS', () => {
+    it('should pass for allowed class and data-* on tags', () => {
+      expect(validate?.('<p class="hero" data-id="123">Hello</p>')).toBe(true)
+      expect(validate?.('<div class="wrap" data-test="x">Content</div>')).toBe(true)
+    })
+
+    it('should pass for allowed attributes on <a> tags', () => {
+      expect(validate?.('<a href="/about" class="link" data-cta="main">About</a>')).toBe(true)
+    })
+
+    it('should pass for <style> tags', () => {
+      expect(validate?.('<style>.x { color: red; }</style>')).toBe(true)
+    })
+  })
+
+  describe('Acceptance Examples - SHOULD FAIL', () => {
+    it('should reject target attribute on <a>', () => {
+      const result = validate?.('<a href="/x" target="_blank">X</a>')
+      expect(result).toContain('does not allow attribute "target"')
+    })
+
+    it('should reject style attribute on <a>', () => {
+      const result = validate?.('<a href="/x" style="color:red">X</a>')
+      expect(result).toContain('does not allow attribute "style"')
+    })
+
+    it('should reject style attribute on <div>', () => {
+      const result = validate?.('<div style="color:red">X</div>')
+      expect(result).toContain('Attribute "style" is not allowed')
+    })
+
+    it('should reject onclick handler', () => {
+      const result = validate?.('<span onclick="alert(1)">X</span>')
+      expect(result).toContain('Inline event handlers are not allowed')
+    })
   })
 
   describe('Disallowed Tags', () => {
     it('should reject <form> tags', () => {
       const result = validate?.('<form><input/></form>')
-      expect(result).toMatch(/disallowed tag|Attributes are not allowed/)
+      expect(result).toMatch(/disallowed tag|Attribute/)
     })
 
     it('should reject <input> tags', () => {
       const result = validate?.('<input type="text"/>')
-      expect(result).toMatch(/disallowed tag|Attributes are not allowed/)
+      expect(result).toMatch(/disallowed tag|Attribute/)
     })
 
     it('should reject <img> tags', () => {
       const result = validate?.('<img src="picture.jpg"/>')
-      expect(result).toMatch(/disallowed tag|Attributes are not allowed/)
+      expect(result).toMatch(/disallowed tag|Attribute/)
     })
 
     it('should reject <video> tags', () => {
       const result = validate?.('<video src="video.mp4"></video>')
-      expect(result).toMatch(/disallowed tag|Attributes are not allowed/)
+      expect(result).toMatch(/disallowed tag|Attribute/)
     })
 
     it('should reject <audio> tags', () => {
       const result = validate?.('<audio src="audio.mp3"></audio>')
-      expect(result).toMatch(/disallowed tag|Attributes are not allowed/)
+      expect(result).toMatch(/disallowed tag|Attribute/)
     })
   })
 })

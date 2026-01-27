@@ -14,7 +14,7 @@ export const HtmlBlock: Block = {
       required: true,
       admin: {
         description:
-          'Enter HTML content. Links must be relative (/path or #anchor). Only href (and optional title) are allowed on <a> tags. No attributes are allowed on other tags.',
+          'Enter HTML content. Links must be relative (/path or #anchor). Allowed attributes: class, data-* on all tags; href (required), title, class, data-* on <a> tags. No style=, target=, or on*= attributes allowed. The <style> tag is allowed.',
         language: 'html',
       },
       validate: (value: string | null | undefined): string | true => {
@@ -27,7 +27,7 @@ export const HtmlBlock: Block = {
           return 'HTML content is required'
         }
 
-        // Block dangerous tags
+        // Block dangerous tags (style tag is now allowed)
         const dangerousTags = [
           '<script',
           '<iframe',
@@ -37,7 +37,6 @@ export const HtmlBlock: Block = {
           '<meta',
           '<base',
           '<link',
-          '<style',
         ]
 
         for (const tag of dangerousTags) {
@@ -133,19 +132,32 @@ export const HtmlBlock: Block = {
             }
           }
 
-          // Check for any disallowed attributes
+          // Check for any disallowed attributes on <a> tags
+          // Allowed: href (required), title (optional), class (optional), data-* (optional)
           const allAttrPattern = /\b([a-z-]+)\s*=/gi
           let attrMatch
           while ((attrMatch = allAttrPattern.exec(attrs)) !== null) {
             const attrName = attrMatch[1].toLowerCase()
-            if (attrName !== 'href' && attrName !== 'title') {
-              return `<a> tag only allows href (and optional title), found: ${attrName}=`
-            }
+
+            // href is required, so only check non-href attributes
+            if (attrName === 'href') continue
+
+            // title is allowed
+            if (attrName === 'title') continue
+
+            // class is allowed
+            if (attrName === 'class') continue
+
+            // data-* attributes are allowed
+            if (attrName.startsWith('data-')) continue
+
+            // Any other attribute is forbidden
+            return `<a> tag does not allow attribute "${attrName}"`
           }
         }
 
-        // CRITICAL: Block ALL attributes on non-<a> tags
-        // This catches class=, id=, data-*=, and any other attributes on tags like <p>, <div>, <span>
+        // Allow class and data-* attributes on non-<a> tags
+        // Block all other attributes
         const nonAnchorTagPattern = /<(?!a\b)([a-z][a-z0-9]*)\b([^>]*)>/gi
         let tagMatch
         while ((tagMatch = nonAnchorTagPattern.exec(trimmed)) !== null) {
@@ -155,14 +167,22 @@ export const HtmlBlock: Block = {
           // Check if this tag has any attribute assignment
           // Attribute pattern: word followed by = (with optional whitespace)
           const hasAttributePattern = /\b([a-z-]+)\s*=/gi
-          const attrCheck = hasAttributePattern.exec(tagAttrs)
-          if (attrCheck) {
+          let attrCheck
+          while ((attrCheck = hasAttributePattern.exec(tagAttrs)) !== null) {
             const attrName = attrCheck[1].toLowerCase()
-            return `Attributes are not allowed on <${tagName}> tags, found: ${attrName}=`
+
+            // class is allowed
+            if (attrName === 'class') continue
+
+            // data-* attributes are allowed
+            if (attrName.startsWith('data-')) continue
+
+            // Any other attribute is forbidden
+            return `Attribute "${attrName}" is not allowed on <${tagName}> tags`
           }
         }
 
-        // Allowlist: Only permit safe tags
+        // Allowlist: Only permit safe tags (style tag is allowed)
         const allowedTags = [
           'p',
           'br',
@@ -190,6 +210,7 @@ export const HtmlBlock: Block = {
           'pre',
           'span',
           'div',
+          'style',
         ]
 
         const tagCheckPattern = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi
