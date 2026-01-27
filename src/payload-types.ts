@@ -405,7 +405,6 @@ export interface User {
   registeredAt?: string | null;
   googleProfile?: {
     name?: string | null;
-    picture?: string | null;
   };
   oauthLoginSecretEnc?: string | null;
   updatedAt: string;
@@ -2186,7 +2185,6 @@ export interface UsersSelect<T extends boolean = true> {
     | T
     | {
         name?: T;
-        picture?: T;
       };
   oauthLoginSecretEnc?: T;
   updatedAt?: T;
