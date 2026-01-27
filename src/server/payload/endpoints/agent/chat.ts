@@ -257,16 +257,25 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     const updatedMessages = [...allMessages, assistantMessage]
 
-    await req.payload.update({
-      collection: 'conversations',
-      id: conversationId,
-      data: {
-        messages: updatedMessages,
-        lastMessageAt: new Date().toISOString(),
-      },
-      user: req.user,
-      overrideAccess: true,
-    })
+    try {
+      await req.payload.update({
+        collection: 'conversations',
+        id: conversationId,
+        data: {
+          messages: updatedMessages,
+          lastMessageAt: new Date().toISOString(),
+        },
+        user: req.user,
+        overrideAccess: true,
+      })
+    } catch (updateError) {
+      // Handle race condition where conversation was modified/deleted during long AI call
+      reqLogger.warn(
+        { err: updateError, conversationId },
+        'Failed to persist assistant response - conversation may have been modified',
+      )
+      // Still return the AI response to the user even if persistence failed
+    }
 
     // 14) Log context usage
     logContextUsage(

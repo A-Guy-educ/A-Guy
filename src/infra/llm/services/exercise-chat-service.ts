@@ -142,11 +142,29 @@ async function sendMultimodalToGemini(
   // Convert media to Gemini parts
   const { currentMessage: multimodalParts } = await mapMultimodalToGemini(mediaPartsWithPath)
 
+  logger.info(
+    {
+      mediaInputCount: mediaPartsWithPath.length,
+      multimodalPartsCount: multimodalParts.length,
+      hasInlineData: multimodalParts.some((p) => 'inlineData' in p),
+    },
+    '[ExerciseChat] Multimodal parts prepared for Gemini',
+  )
+
   // Build content: system prompt + user message text + media parts
   const fullContents: Part[] = [
     { text: `System: ${systemPrompt}\n\nUser: ${userMessage}` },
     ...multimodalParts,
   ]
+
+  logger.info(
+    {
+      totalParts: fullContents.length,
+      textParts: fullContents.filter((p) => 'text' in p).length,
+      inlineDataParts: fullContents.filter((p) => 'inlineData' in p).length,
+    },
+    '[ExerciseChat] Sending to Gemini',
+  )
 
   try {
     const result = await geminiModel.generateContent({

@@ -38,8 +38,13 @@ export async function processMediaAttachments(
 
   // Get default tenant for validation
   const tenantId = await getDefaultTenantId(payload)
+  reqLogger.info({ tenantId }, 'Using tenant for media validation')
 
   const validationResult = await validateChatMedia(payload, mediaIds, userId, tenantId)
+  reqLogger.info(
+    { valid: validationResult.valid, mediaItems: validationResult.mediaItems },
+    'Media validation result',
+  )
 
   // Full validation success required
   if (!validationResult.valid) {

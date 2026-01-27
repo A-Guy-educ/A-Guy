@@ -17,12 +17,31 @@ export async function mapMultimodalToGemini(
 ): Promise<{ currentMessage: Part[] }> {
   const currentParts: Part[] = []
 
+  logger.info(
+    { mediaCount: mediaPartsWithPath.length, mediaParts: mediaPartsWithPath },
+    '[MultimodalMapper] Processing media parts',
+  )
+
   for (const mediaPart of mediaPartsWithPath) {
     const geminiPart = await convertMediaToGeminiPart(mediaPart)
     if (geminiPart) {
       currentParts.push(geminiPart)
+      logger.info(
+        { mediaId: mediaPart.mediaId },
+        '[MultimodalMapper] Successfully converted media to Gemini part',
+      )
+    } else {
+      logger.warn(
+        { mediaId: mediaPart.mediaId },
+        '[MultimodalMapper] Failed to convert media - returned null',
+      )
     }
   }
+
+  logger.info(
+    { inputCount: mediaPartsWithPath.length, outputCount: currentParts.length },
+    '[MultimodalMapper] Finished processing',
+  )
 
   return { currentMessage: currentParts }
 }
@@ -33,9 +52,16 @@ export async function mapMultimodalToGemini(
 async function convertMediaToGeminiPart(mediaPart: MediaPartWithPath): Promise<Part | null> {
   const { absoluteFilePath, mimeType, mediaId } = mediaPart
 
+  logger.info({ mediaId, absoluteFilePath, mimeType }, '[MultimodalMapper] Reading file for Gemini')
+
   try {
     const fileBuffer = await fs.readFile(absoluteFilePath)
     const base64 = fileBuffer.toString('base64')
+
+    logger.info(
+      { mediaId, fileSize: fileBuffer.length, base64Length: base64.length },
+      '[MultimodalMapper] File read successfully',
+    )
 
     return {
       inlineData: {
@@ -44,7 +70,10 @@ async function convertMediaToGeminiPart(mediaPart: MediaPartWithPath): Promise<P
       },
     }
   } catch (error) {
-    logger.error({ err: error, mediaId, absoluteFilePath }, 'Failed to read media file for Gemini')
+    logger.error(
+      { err: error, mediaId, absoluteFilePath },
+      '[MultimodalMapper] Failed to read media file for Gemini',
+    )
     return null
   }
 }

@@ -11,7 +11,8 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 // Use same resolution pattern as Payload's upload.staticDir
-// From src/lib/config -> ../../public/media
+// Media collection: src/server/payload/collections/Media -> ../../../../public/media = src/public/media
+// From src/lib/config -> ../../public/media = src/public/media (matches)
 const MEDIA_SUBDIR = path.resolve(dirname, '../../public/media')
 
 /**
@@ -38,15 +39,15 @@ export function resolveMediaFilePath(filename: string): string {
 
 /**
  * Resolve public URL for a media file
- * @throws Error if NEXT_PUBLIC_BASE_URL is not configured
+ * @throws Error if NEXT_PUBLIC_SERVER_URL is not configured
  */
 export function resolveMediaPublicUrl(filename: string, baseUrl?: string): string {
   if (!filename) {
     throw new Error('Filename is required to resolve media URL')
   }
-  const base = baseUrl || process.env.NEXT_PUBLIC_BASE_URL
+  const base = baseUrl || process.env.NEXT_PUBLIC_SERVER_URL
   if (!base) {
-    throw new Error('NEXT_PUBLIC_BASE_URL environment variable is required')
+    throw new Error('NEXT_PUBLIC_SERVER_URL environment variable is required')
   }
   return `${base}${MEDIA_PUBLIC_URL}/${filename}`
 }
