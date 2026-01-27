@@ -143,13 +143,13 @@ describe('HtmlBlock Validation', () => {
   describe('Attribute Restrictions - DENIED', () => {
     it('should reject target attribute on anchor tags', () => {
       const result = validate?.('<a target="_blank" href="/x">X</a>')
-      expect(result).toContain('target attribute is not allowed')
+      expect(result).toContain('found: target=')
     })
 
     it('should reject style attribute', () => {
       const result = validate?.('<p style="color:red">x</p>')
-      expect(result).toContain('Inline styles')
-      expect(result).toContain('not allowed')
+      expect(result).toContain('Attributes are not allowed on <p> tags')
+      expect(result).toContain('style=')
     })
 
     it('should reject onclick handlers', () => {
