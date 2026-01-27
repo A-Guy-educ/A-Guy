@@ -844,7 +844,7 @@ export interface Form {
  */
 export interface HtmlBlock {
   /**
-   * Enter HTML content. Links must be relative (/path or #anchor).
+   * Enter HTML content. Links must be relative (/path or #anchor). Only href attribute is allowed on <a> tags.
    */
   html: string;
   id?: string | null;

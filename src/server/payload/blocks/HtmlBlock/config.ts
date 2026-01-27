@@ -10,11 +10,12 @@ export const HtmlBlock: Block = {
   fields: [
     {
       name: 'html',
-      type: 'textarea',
+      type: 'code',
       required: true,
       admin: {
-        description: 'Enter HTML content. Links must be relative (/path or #anchor).',
-        rows: 10,
+        description:
+          'Enter HTML content. Links must be relative (/path or #anchor). Only href (and optional title) are allowed on <a> tags. No attributes are allowed on other tags.',
+        language: 'html',
       },
       validate: (value: string | null | undefined): string | true => {
         if (!value || typeof value !== 'string') {
@@ -46,34 +47,122 @@ export const HtmlBlock: Block = {
           }
         }
 
-        // Block inline event handlers
+        // Block inline event handlers (onclick, onload, etc.)
         const eventHandlerPattern = /\bon\w+\s*=/gi
-        if (eventHandlerPattern.test(trimmed)) {
-          return 'Inline event handlers (onclick, onload, etc.) are not allowed'
+        const eventMatch = eventHandlerPattern.exec(trimmed)
+        if (eventMatch) {
+          return `Inline event handlers are not allowed: ${eventMatch[0]}`
         }
 
         // Block javascript: URLs
         const jsUrlPattern = /href\s*=\s*["']?\s*javascript:/gi
-        if (jsUrlPattern.test(trimmed)) {
-          return 'javascript: URLs are not allowed'
+        const jsMatch = jsUrlPattern.exec(trimmed)
+        if (jsMatch) {
+          return `javascript: URLs are not allowed: ${jsMatch[0]}`
         }
 
-        // Block external URLs in href/src
-        const externalUrlPattern = /href\s*=\s*["']\s*(https?:)?\/\//gi
-        const srcUrlPattern = /src\s*=\s*["']\s*(https?:)?\/\//gi
-
-        if (externalUrlPattern.test(trimmed)) {
-          return 'External URLs (http://, https://, //) are not allowed in href. Use relative paths (/path) or anchors (#anchor).'
+        // Block data: URLs in href
+        const dataHrefPattern = /href\s*=\s*["']?\s*data:/gi
+        const dataHrefMatch = dataHrefPattern.exec(trimmed)
+        if (dataHrefMatch) {
+          return `data: URLs are not allowed in href: ${dataHrefMatch[0]}`
         }
 
-        if (srcUrlPattern.test(trimmed)) {
-          return 'External URLs (http://, https://, //) are not allowed in src attributes.'
-        }
-
-        // Block data: URLs
+        // Block data: URLs in src
         const dataUrlPattern = /src\s*=\s*["']?\s*data:/gi
-        if (dataUrlPattern.test(trimmed)) {
-          return 'data: URLs are not allowed'
+        const dataSrcMatch = dataUrlPattern.exec(trimmed)
+        if (dataSrcMatch) {
+          return `data: URLs are not allowed: ${dataSrcMatch[0]}`
+        }
+
+        // Block protocol-relative URLs (//)
+        const protocolRelativeHrefPattern = /href\s*=\s*["']?\s*\/\//gi
+        const protocolRelativeMatch = protocolRelativeHrefPattern.exec(trimmed)
+        if (protocolRelativeMatch) {
+          return `Protocol-relative URLs (//) are not allowed: ${protocolRelativeMatch[0]}`
+        }
+
+        // Block external URLs (http://, https://) in href - CHECK BEFORE GENERAL / or # CHECK
+        const externalHrefPattern = /href\s*=\s*["']?\s*https?:\/\//gi
+        const externalMatch = externalHrefPattern.exec(trimmed)
+        if (externalMatch) {
+          return `External URLs are not allowed, use relative paths (/path) or anchors (#anchor): ${externalMatch[0]}`
+        }
+
+        // Block mailto: URLs - CHECK BEFORE GENERAL / or # CHECK
+        const mailtoPattern = /href\s*=\s*["']?\s*mailto:/gi
+        const mailtoMatch = mailtoPattern.exec(trimmed)
+        if (mailtoMatch) {
+          return `mailto: links are not allowed: ${mailtoMatch[0]}`
+        }
+
+        // Block tel: URLs - CHECK BEFORE GENERAL / or # CHECK
+        const telPattern = /href\s*=\s*["']?\s*tel:/gi
+        const telMatch = telPattern.exec(trimmed)
+        if (telMatch) {
+          return `tel: links are not allowed: ${telMatch[0]}`
+        }
+
+        // Block ftp: URLs - CHECK BEFORE GENERAL / or # CHECK
+        const ftpPattern = /href\s*=\s*["']?\s*ftp:/gi
+        const ftpMatch = ftpPattern.exec(trimmed)
+        if (ftpMatch) {
+          return `ftp: links are not allowed: ${ftpMatch[0]}`
+        }
+
+        // For anchor tags, validate href value and allowed attributes
+        const anchorTagPattern = /<a\b([^>]*)>/gi
+        let anchorMatch
+        while ((anchorMatch = anchorTagPattern.exec(trimmed)) !== null) {
+          const attrs = anchorMatch[1]
+
+          // Extract href value from anchor attributes
+          const hrefAttrPattern = /href\s*=\s*["']?([^"'\s>]+)["']?/gi
+          const hrefAttrMatch = hrefAttrPattern.exec(attrs)
+          if (hrefAttrMatch) {
+            const hrefValue = hrefAttrMatch[1]
+
+            // Must start with / or #, and not be empty
+            if (!hrefValue || hrefValue.length === 0) {
+              return 'href attribute cannot be empty'
+            }
+
+            const firstChar = hrefValue.charAt(0)
+            if (firstChar !== '/' && firstChar !== '#') {
+              return `href must start with / or #, found: href="${hrefValue}"`
+            }
+          }
+
+          // Only allow href and optionally title
+          const allowedAttrPattern = /\b(href|title)\s*=/gi
+
+          // Check for any disallowed attributes
+          const allAttrPattern = /\b([a-z-]+)\s*=/gi
+          let attrMatch
+          while ((attrMatch = allAttrPattern.exec(attrs)) !== null) {
+            const attrName = attrMatch[1].toLowerCase()
+            if (attrName !== 'href' && attrName !== 'title') {
+              return `<a> tag only allows href (and optional title), found: ${attrName}=`
+            }
+          }
+        }
+
+        // CRITICAL: Block ALL attributes on non-<a> tags
+        // This catches class=, id=, data-*=, and any other attributes on tags like <p>, <div>, <span>
+        const nonAnchorTagPattern = /<(?!a\b)([a-z][a-z0-9]*)\b([^>]*)>/gi
+        let tagMatch
+        while ((tagMatch = nonAnchorTagPattern.exec(trimmed)) !== null) {
+          const tagName = tagMatch[1].toLowerCase()
+          const tagAttrs = tagMatch[2]
+
+          // Check if this tag has any attribute assignment
+          // Attribute pattern: word followed by = (with optional whitespace)
+          const hasAttributePattern = /\b([a-z-]+)\s*=/gi
+          const attrCheck = hasAttributePattern.exec(tagAttrs)
+          if (attrCheck) {
+            const attrName = attrCheck[1].toLowerCase()
+            return `Attributes are not allowed on <${tagName}> tags, found: ${attrName}=`
+          }
         }
 
         // Allowlist: Only permit safe tags
@@ -106,10 +195,10 @@ export const HtmlBlock: Block = {
           'div',
         ]
 
-        const tagPattern = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi
-        let match
-        while ((match = tagPattern.exec(trimmed)) !== null) {
-          const tagName = match[1].toLowerCase()
+        const tagCheckPattern = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi
+        let tagCheckMatch
+        while ((tagCheckMatch = tagCheckPattern.exec(trimmed)) !== null) {
+          const tagName = tagCheckMatch[1].toLowerCase()
           if (!allowedTags.includes(tagName)) {
             return `HTML contains disallowed tag: <${tagName}>`
           }
