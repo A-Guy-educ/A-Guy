@@ -46,14 +46,14 @@ export function ExerciseHeader({
 
   return (
     <header className="h-[60px] bg-card border-b border-border flex items-center flex-shrink-0 z-[100] relative">
-      {/* Back button - on inner edge for better UX (opposite to auth/logo section) */}
+      {/* Back button - position flips on desktop for better UX */}
       <button
         onClick={handleBack}
         className={cn(
           'flex items-center justify-center p-2 text-foreground hover:text-primary transition-colors flex-shrink-0 absolute cursor-pointer',
           // Mobile: back button on outer edge (left in LTR, right in RTL)
-          // Desktop: back button on inner edge (left in LTR, right in RTL)
-          rtl ? 'lg:right-5 lg:left-auto right-5' : 'lg:left-5 lg:right-auto left-5',
+          // Desktop: back button on opposite side (right in LTR, left in RTL)
+          rtl ? 'lg:left-5 lg:right-auto right-5' : 'lg:right-5 lg:left-auto left-5',
         )}
         aria-label={t('backToLesson')}
       >
@@ -62,7 +62,7 @@ export function ExerciseHeader({
           className={cn(
             'w-6 h-6 transition-transform',
             // Mobile: arrow points outward
-            rtl ? 'rotate-0' : 'rotate-180',
+            rtl ? (rtl ? 'rotate-0' : 'rotate-180') : 'rotate-180',
             // Desktop: arrow points inward (opposite of mobile)
             rtl ? 'lg:rotate-180' : 'lg:rotate-0',
           )}
@@ -74,12 +74,12 @@ export function ExerciseHeader({
         {exerciseTitle}
       </h1>
 
-      {/* Logo and Auth section - on outer edge (opposite to back button) */}
+      {/* Logo and Auth section - position flips on desktop */}
       <div
         className={cn(
-          'flex items-center gap-1 flex-shrink-0 absolute z-[101]',
+          'flex items-center gap-1 flex-shrink-0 absolute top-[10px] z-[101]',
           // Mobile: fixed to outer edge (right in LTR, left in RTL)
-          // Desktop: fixed to outer edge (right in LTR, left in RTL)
+          // Desktop: fixed to opposite edge (left in LTR, right in RTL)
           rtl ? 'lg:left-5 lg:right-auto right-5' : 'lg:right-5 lg:left-auto left-5',
         )}
       >
