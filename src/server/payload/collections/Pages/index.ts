@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
-import { hero } from '@/ui/web/heros/config'
 import { generatePreviewPath } from '@/infra/utils/generatePreviewPath'
+import { hero } from '@/ui/web/heros/config'
 import { slugField } from 'payload'
 import { authenticated } from '../../access/authenticated'
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
@@ -9,6 +9,7 @@ import { Archive } from '../../blocks/ArchiveBlock/config'
 import { CallToAction } from '../../blocks/CallToAction/config'
 import { Content } from '../../blocks/Content/config'
 import { FormBlock } from '../../blocks/Form/config'
+import { HtmlBlock } from '../../blocks/HtmlBlock/config'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
 import { revalidateDelete, revalidatePage } from './hooks/revalidatePage'
 
@@ -71,7 +72,7 @@ export const Pages: CollectionConfig<'pages'> = {
             {
               name: 'layout',
               type: 'blocks',
-              blocks: [CallToAction, Content, Archive, FormBlock],
+              blocks: [CallToAction, Content, Archive, FormBlock, HtmlBlock],
               required: true,
               admin: {
                 initCollapsed: true,

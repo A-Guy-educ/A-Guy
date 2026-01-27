@@ -6,12 +6,14 @@ import { ArchiveBlock } from '@/server/payload/blocks/ArchiveBlock/Component'
 import { CallToActionBlock } from '@/server/payload/blocks/CallToAction/Component'
 import { ContentBlock } from '@/server/payload/blocks/Content/Component'
 import { FormBlock } from '@/server/payload/blocks/Form/Component'
+import { HtmlBlock } from '@/server/payload/blocks/HtmlBlock/Component'
 
 const blockComponents = {
   archive: ArchiveBlock,
   content: ContentBlock,
   cta: CallToActionBlock,
   formBlock: FormBlock,
+  html: HtmlBlock,
 }
 
 export const RenderBlocks: React.FC<{

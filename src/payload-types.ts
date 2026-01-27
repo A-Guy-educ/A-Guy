@@ -222,7 +222,7 @@ export interface Page {
         }[]
       | null;
   };
-  layout: (CallToActionBlock | ContentBlock | ArchiveBlock | FormBlock)[];
+  layout: (CallToActionBlock | ContentBlock | ArchiveBlock | FormBlock | HtmlBlock)[];
   meta?: {
     title?: string | null;
     description?: string | null;
@@ -405,7 +405,6 @@ export interface User {
   registeredAt?: string | null;
   googleProfile?: {
     name?: string | null;
-    picture?: string | null;
   };
   oauthLoginSecretEnc?: string | null;
   updatedAt: string;
@@ -838,6 +837,19 @@ export interface Form {
     | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HtmlBlock".
+ */
+export interface HtmlBlock {
+  /**
+   * Enter HTML content. Links must be relative (/path or #anchor).
+   */
+  html: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'html';
 }
 /**
  * Tenant-scoped configuration key/value store. Variables are plaintext, secrets are encrypted.
@@ -1857,6 +1869,7 @@ export interface PagesSelect<T extends boolean = true> {
         content?: T | ContentBlockSelect<T>;
         archive?: T | ArchiveBlockSelect<T>;
         formBlock?: T | FormBlockSelect<T>;
+        html?: T | HtmlBlockSelect<T>;
       };
   meta?:
     | T
@@ -1944,6 +1957,15 @@ export interface FormBlockSelect<T extends boolean = true> {
   form?: T;
   enableIntro?: T;
   introContent?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HtmlBlock_select".
+ */
+export interface HtmlBlockSelect<T extends boolean = true> {
+  html?: T;
   id?: T;
   blockName?: T;
 }
@@ -2186,7 +2208,6 @@ export interface UsersSelect<T extends boolean = true> {
     | T
     | {
         name?: T;
-        picture?: T;
       };
   oauthLoginSecretEnc?: T;
   updatedAt?: T;
