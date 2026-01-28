@@ -257,8 +257,14 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
           mediaResult.mediaPartsWithPath.length > 0 ? mediaResult.mediaPartsWithPath : undefined,
         req: {
           headers: {
-            authorization: req.headers.get('authorization') || undefined,
-            cookie: req.headers.get('cookie') || undefined,
+            authorization:
+              (req.headers && typeof req.headers.get === 'function'
+                ? req.headers.get('authorization')
+                : undefined) || undefined,
+            cookie:
+              (req.headers && typeof req.headers.get === 'function'
+                ? req.headers.get('cookie')
+                : undefined) || undefined,
           },
         },
       },
