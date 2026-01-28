@@ -1,6 +1,7 @@
 # Course Selection Management - Implementation Plan
 
 ## Overview
+
 Add course selection display to user account page with ability to remove selection, and enforce course selection on protected routes (/study, /practice, /ask, /test).
 
 ---
@@ -10,6 +11,7 @@ Add course selection display to user account page with ability to remove selecti
 **File:** `src/client/state/localStorage/userProfile.ts`
 
 Remove unused progress-related code:
+
 - `LocalProgressRecord` interface
 - `getLocalProgress()` function
 - `updateLocalProgress()` function
@@ -44,29 +46,44 @@ export const clearUserProfile = (): void => {
 **File:** `src/app/(frontend)/account/_components/SelectedCourseCard.tsx` (new)
 
 A client component that:
+
 1. Reads `gradeLevel` from localStorage on mount
 2. Fetches course via **Payload REST API** (no custom endpoint):
-   ```
-   GET /api/courses?where[courseLabel][equals]={gradeLevel}&where[status][equals]=published&where[isActive][equals]=true&limit=1&depth=1
-   ```
-3. Handles 3 states:
-   - No gradeLevel in localStorage → show "No course selected" with link to home
-   - gradeLevel exists but no matching course → show "Course not found"
-   - Valid course found → display course card
+   - Build URL using `NEXT_PUBLIC_SERVER_URL` as base
+   - Use `URLSearchParams` to safely encode query:
+     - `where[courseLabel][equals]={gradeLevel}`
+     - `where[status][equals]=published`
+     - `where[isActive][equals]=true`
+     - `limit=1`
+     - `depth=1`
+3. Handles 4 states:
+   - **Loading**: Show spinner/skeleton UI
+   - **Error**: Show fetch error message with retry option
+   - **No course selected**: No gradeLevel in localStorage → show "No course selected" with link to home
+   - **Course not found**: gradeLevel exists but no matching course → show "Course not found"
+   - **Valid course found**: display course card
 4. Shows "Remove Selection" button that:
    - Calls `clearUserProfile()`
    - Uses `router.replace('/')` for navigation
+   - Optionally call `router.refresh()` after redirect
 
 **UI Structure:**
+
 ```
 ┌─────────────────────────────────────────┐
 │ Selected Course                         │
 ├─────────────────────────────────────────┤
+│ [Spinner/Loading State]                 │
+│                                         │
+│ OR (valid course):                      │
 │ [Badge: courseLabel]                    │
 │ Course Title                            │
 │ Course description (if available)       │
 │                                         │
 │ [Remove Selection Button]               │
+│                                         │
+│ OR (error/not found):                   │
+│ Error/Not Found message + retry button  │
 └─────────────────────────────────────────┘
 ```
 
@@ -80,9 +97,7 @@ Add the `SelectedCourseCard` component below the existing account info card:
 
 ```tsx
 <div className="mx-auto max-w-md space-y-6">
-  <Card>
-    {/* Existing account info */}
-  </Card>
+  <Card>{/* Existing account info */}</Card>
   <SelectedCourseCard />
 </div>
 ```
@@ -94,9 +109,12 @@ Add the `SelectedCourseCard` component below the existing account info card:
 **File:** `src/ui/web/guards/RequireCourseSelection.tsx` (new)
 
 A client component that wraps protected content:
+
 1. Checks localStorage for `gradeLevel` on mount
 2. If missing, uses `router.replace('/')` to redirect
 3. If present, renders children
+
+**Note:** Current enforcement is **client-side UX gating**, not server-side security.
 
 ```typescript
 'use client'
@@ -119,7 +137,7 @@ export function RequireCourseSelection({ children }: { children: React.ReactNode
   }, [router])
 
   if (hasSelection === null) {
-    return null // or loading spinner
+    return <Spinner /> // or loading skeleton
   }
 
   return <>{children}</>
@@ -133,18 +151,25 @@ export function RequireCourseSelection({ children }: { children: React.ReactNode
 Apply the guard to each protected route:
 
 ### `/study` - Already has redirect logic in `StudyContent`
+
 **File:** `src/app/(frontend)/study/page.tsx`
+
 - No change needed - `StudyContent` already redirects if no gradeLevel
 
 ### `/practice` - Already has redirect logic in `StudyContent`
+
 **File:** `src/app/(frontend)/practice/page.tsx`
+
 - No change needed - `StudyContent` already redirects if no gradeLevel
 
 ### `/test` - Already has redirect logic in `StudyContent`
+
 **File:** `src/app/(frontend)/test/page.tsx`
+
 - No change needed - `StudyContent` already redirects if no gradeLevel
 
 ### `/ask` - Needs guard (currently a placeholder)
+
 **File:** `src/app/(frontend)/ask/page.tsx`
 
 Wrap content with `RequireCourseSelection`:
@@ -189,6 +214,7 @@ Add new keys under `auth.account`:
 ```
 
 Hebrew translations:
+
 ```json
 "auth": {
   "account": {
@@ -209,20 +235,20 @@ Hebrew translations:
 
 ## Files to Create
 
-| File | Purpose |
-|------|---------|
+| File                                                            | Purpose                        |
+| --------------------------------------------------------------- | ------------------------------ |
 | `src/app/(frontend)/account/_components/SelectedCourseCard.tsx` | Course card with remove button |
-| `src/ui/web/guards/RequireCourseSelection.tsx` | Client-side route guard |
+| `src/ui/web/guards/RequireCourseSelection.tsx`                  | Client-side route guard        |
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/client/state/localStorage/userProfile.ts` | Remove unused progress functions, add `clearUserProfile()` |
-| `src/app/(frontend)/account/AccountPageContent.tsx` | Add SelectedCourseCard |
-| `src/app/(frontend)/ask/page.tsx` | Wrap with RequireCourseSelection |
-| `src/i18n/en.json` | Add translation strings |
-| `src/i18n/he.json` | Add translation strings |
+| File                                                | Change                                                     |
+| --------------------------------------------------- | ---------------------------------------------------------- |
+| `src/client/state/localStorage/userProfile.ts`      | Remove unused progress functions, add `clearUserProfile()` |
+| `src/app/(frontend)/account/AccountPageContent.tsx` | Add SelectedCourseCard                                     |
+| `src/app/(frontend)/ask/page.tsx`                   | Wrap with RequireCourseSelection                           |
+| `src/i18n/en.json`                                  | Add translation strings                                    |
+| `src/i18n/he.json`                                  | Add translation strings                                    |
 
 ---
 
