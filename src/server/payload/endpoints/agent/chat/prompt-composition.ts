@@ -59,7 +59,7 @@ async function fetchLessonContext(
     }
   }
 
-  return { lessonContextText, lessonPrompt }
+  return { lessonContextText, lessonPrompt, courseContextText: undefined, coursePrompt: null }
 }
 
 /**
@@ -80,7 +80,7 @@ async function fetchExerciseLessonContext(
   })
 
   if (!(exercise as { lesson?: unknown }).lesson) {
-    return { lessonContextText: undefined, lessonPrompt: null }
+    return { lessonContextText: undefined, lessonPrompt: null, courseContextText: undefined, coursePrompt: null }
   }
 
   const lessonId =
@@ -120,13 +120,13 @@ async function fetchExerciseLessonContext(
       }
     }
 
-    return { lessonContextText, lessonPrompt }
+    return { lessonContextText, lessonPrompt, courseContextText: undefined, coursePrompt: null }
   } catch (error) {
     reqLogger.warn(
       { err: error, lessonId, exerciseId },
       'Failed to fetch lesson for exercise context, continuing without lesson context',
     )
-    return { lessonContextText: undefined, lessonPrompt: null }
+    return { lessonContextText: undefined, lessonPrompt: null, courseContextText: undefined, coursePrompt: null }
   }
 }
 
@@ -201,7 +201,7 @@ export async function fetchLessonContextForContext(
   } else if (context.relationTo === 'exercises') {
     lessonContext = await fetchExerciseLessonContext(payload, context.value, user, reqLogger)
   } else {
-    lessonContext = { lessonContextText: undefined, lessonPrompt: null }
+    lessonContext = { lessonContextText: undefined, lessonPrompt: null, courseContextText: undefined, coursePrompt: null }
   }
 
   // Fetch course prompt if no lesson prompt and courseId is provided

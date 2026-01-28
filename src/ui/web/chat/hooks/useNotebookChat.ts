@@ -10,7 +10,19 @@ import { toast } from 'sonner'
 export interface ChatMessage {
   role: ChatRole
   content: string
+  media?: Array<{ mediaId: string; filename?: string }>
 }
+
+export interface UploadedMedia {
+  id: string
+  filename: string
+  mimeType: string
+}
+
+// Media upload constraints
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const MAX_FILES = 5
 
 interface UseNotebookChatProps {
   initialMessage: string
@@ -27,6 +39,11 @@ interface UseNotebookChatProps {
   lessonId?: string
   chapterId?: string
   courseId?: string
+  // Media upload messages
+  unsupportedFileTypeMessage?: string
+  fileTooLargeMessage?: string
+  maxFilesMessage?: string
+  uploadFailedMessage?: string
 }
 
 export function useNotebookChat({
@@ -44,11 +61,16 @@ export function useNotebookChat({
   lessonId,
   chapterId,
   courseId,
+  unsupportedFileTypeMessage = 'Unsupported file type',
+  fileTooLargeMessage = 'File too large (max 10MB)',
+  maxFilesMessage = 'Maximum 5 files allowed',
+  uploadFailedMessage = 'Failed to upload file',
 }: UseNotebookChatProps) {
   const analytics = useAnalytics()
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: ChatRole.Assistant, content: initialMessage },
@@ -56,6 +78,10 @@ export function useNotebookChat({
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+
+  // Media upload state
+  const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([])
+  const [isUploading, setIsUploading] = useState(false)
 
   // Compute contextKey based on available context (priority: Exercise > Lesson > Chapter > Course)
   const contextKey = useMemo(() => {
@@ -147,6 +173,7 @@ export function useNotebookChat({
                     ? ChatRole.User
                     : ChatRole.Assistant,
                 content: String(msg.content),
+                media: (msg as { media?: Array<{ mediaId: string; filename?: string }> }).media,
               }))
 
               logger.debug(
@@ -236,28 +263,128 @@ export function useNotebookChat({
     loadConversationHistory()
   }, [contextKey])
 
-  const sendMessage = async (message: string) => {
-    if (!message.trim() || isLoading) return
+  // Handle file selection for media upload
+  const handleFileSelect = useCallback(
+    async (files: FileList | null) => {
+      if (!files || files.length === 0) return
 
-    const userMessage: ChatMessage = { role: ChatRole.User, content: message }
+      // Check max files limit
+      if (uploadedMedia.length + files.length > MAX_FILES) {
+        toast.error(maxFilesMessage)
+        return
+      }
+
+      setIsUploading(true)
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+
+        // Validate file type
+        if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+          toast.error(`${file.name}: ${unsupportedFileTypeMessage}`)
+          continue
+        }
+
+        // Validate file size
+        if (file.size > MAX_FILE_SIZE) {
+          toast.error(`${file.name}: ${fileTooLargeMessage}`)
+          continue
+        }
+
+        try {
+          const formData = new FormData()
+          formData.append('file', file)
+
+          const response = await fetch('/api/media', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData,
+          })
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.message || errorData.error || 'Upload failed')
+          }
+
+          const doc = await response.json()
+          setUploadedMedia((prev) => [
+            ...prev,
+            {
+              id: doc.doc?.id || doc.id,
+              filename: doc.doc?.filename || doc.filename || file.name,
+              mimeType: file.type,
+            },
+          ])
+        } catch (error) {
+          logger.error({ err: error, filename: file.name }, 'Media upload failed')
+          toast.error(`${file.name}: ${uploadFailedMessage}`)
+        }
+      }
+
+      setIsUploading(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    },
+    [
+      uploadedMedia.length,
+      maxFilesMessage,
+      unsupportedFileTypeMessage,
+      fileTooLargeMessage,
+      uploadFailedMessage,
+    ],
+  )
+
+  // Remove uploaded media
+  const removeMedia = useCallback((mediaId: string) => {
+    setUploadedMedia((prev) => prev.filter((m) => m.id !== mediaId))
+  }, [])
+
+  // Trigger file picker
+  const openFilePicker = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const sendMessage = async (message: string) => {
+    if ((!message.trim() && uploadedMedia.length === 0) || isLoading) return
+
+    // Capture mediaIds and metadata before clearing
+    const mediaIds = uploadedMedia.map((m) => m.id)
+    const mediaMetadata = uploadedMedia.map((m) => ({ mediaId: m.id, filename: m.filename }))
+
+    const userMessage: ChatMessage = {
+      role: ChatRole.User,
+      content: message,
+      media: mediaMetadata.length > 0 ? mediaMetadata : undefined,
+    }
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
     setIsLoading(true)
+
+    setUploadedMedia([])
 
     // Track chat message sent (message length only, NOT content)
     analytics.track(PRODUCT_EVENTS.CHAT_MESSAGE_SENT, {
       conversation_id: contextKey || 'unknown',
       message_length: message.length,
       lesson_id: lessonId,
+      has_media: mediaIds.length > 0,
+      media_count: mediaIds.length,
     })
 
     try {
-      const result = await apiService.chat(message, acknowledgment, {
-        exerciseId,
-        lessonId,
-        chapterId,
-        courseId,
-      })
+      const result = await apiService.chat(
+        message,
+        acknowledgment,
+        {
+          exerciseId,
+          lessonId,
+          chapterId,
+          courseId,
+        },
+        mediaIds.length > 0 ? mediaIds : undefined,
+      )
 
       if (!result.success) {
         if (result.authRequired) {
@@ -340,11 +467,18 @@ export function useNotebookChat({
     messagesContainerRef,
     messagesEndRef,
     inputRef,
+    fileInputRef,
     contextKey,
     setInputValue,
     handleSubmit,
     handleKeyDown,
     handleQuickAction,
     handleReset,
+    // Media upload
+    uploadedMedia,
+    isUploading,
+    handleFileSelect,
+    removeMedia,
+    openFilePicker,
   }
 }
