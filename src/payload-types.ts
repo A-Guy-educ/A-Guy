@@ -844,7 +844,7 @@ export interface Form {
  */
 export interface HtmlBlock {
   /**
-   * Enter HTML content. Links must be relative (/path or #anchor). Only href attribute is allowed on <a> tags.
+   * Enter HTML content. Links must be relative (/path or #anchor). Allowed attributes: class, id, data-* on all tags; href (required), title, class, id, data-* on <a> tags; plus safe SVG attributes (e.g., viewBox, fill, stroke, d). No style=, target=, or on*= attributes allowed. The <style> tag is allowed.
    */
   html: string;
   id?: string | null;
