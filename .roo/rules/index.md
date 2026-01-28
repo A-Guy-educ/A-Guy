@@ -27,6 +27,7 @@ pnpm lint:fix         # Fix lint issues
 - Use `pnpm`, never npm/yarn
 - Run `pnpm generate:types` after collection changes
 - Run `pnpm generate:importmap` after adding admin components
+- **Payload-First**: Use existing URL utilities and Payload's auto-generated API endpoints (`/api/<collection-slug>`) instead of creating custom URL logic or custom CRUD routes
 
 ## Documentation by Topic
 

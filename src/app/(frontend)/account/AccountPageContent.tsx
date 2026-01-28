@@ -3,13 +3,14 @@
 import type { User } from '@/payload-types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/web/components/card'
 import { useTranslations } from '@/ui/web/providers/I18n'
+import { SelectedCourseCard } from './_components/SelectedCourseCard'
 
 export function AccountPageContent({ user }: { user: User }) {
   const t = useTranslations('auth.account')
 
   return (
     <div className="container py-16">
-      <div className="mx-auto max-w-md">
+      <div className="mx-auto max-w-md space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>{t('title')}</CardTitle>
@@ -25,6 +26,7 @@ export function AccountPageContent({ user }: { user: User }) {
             </div>
           </CardContent>
         </Card>
+        <SelectedCourseCard />
       </div>
     </div>
   )

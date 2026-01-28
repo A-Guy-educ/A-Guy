@@ -87,7 +87,12 @@
       "title": "חשבון",
       "name": "שם",
       "email": "אימייל",
-      "missing": "לא סופק"
+      "missing": "לא סופק",
+      "selectedCourse": "קורס נבחר",
+      "noCourseSelected": "לא נבחר קורס",
+      "selectCourse": "בחר קורס",
+      "removeCourseSelection": "הסר בחירה",
+      "loadingCourse": "טוען..."
     }
   },
   "roles": {
