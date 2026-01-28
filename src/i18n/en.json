@@ -202,6 +202,13 @@
       "letsStart": "Let's start!",
       "loading": "Loading...",
       "noCoursesAvailable": "No courses available"
+    },
+    "ask": {
+      "chatWelcome": "Hi! Ask me anything about the course!",
+      "chatInputPlaceholder": "Ask a question...",
+      "chatAuthRequired": "Please sign in to ask questions",
+      "loading": "Loading...",
+      "noCourse": "No course selected. Please select a course from the home page."
     }
   },
   "study": {

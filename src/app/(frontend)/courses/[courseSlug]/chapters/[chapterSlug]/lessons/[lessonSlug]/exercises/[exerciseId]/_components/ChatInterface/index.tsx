@@ -5,10 +5,9 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
 import { BookOpen, Loader2, Plus, Send, MessageSquare, FileText } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
-import { ChatMessageContent } from '@/ui/web/chat'
+import { ChatMessageContent, useNotebookChat } from '@/ui/web/chat'
 import { FormulaPanel } from '../FormulaPanel'
 import { MathPalette } from '../MathPalette'
-import { useNotebookChat } from '../NotebookChat/useNotebookChat'
 import type { ViewMode } from '../ExerciseWorkspace/exercise-workspace-types'
 
 interface ChatInterfaceProps {

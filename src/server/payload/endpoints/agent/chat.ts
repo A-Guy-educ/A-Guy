@@ -271,6 +271,8 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     let lessonContextText: string | undefined
     let lessonPrompt: Prompt | null = null
+    let courseContextText: string | undefined
+    let coursePrompt: Prompt | null = null
 
     if (context.relationTo === 'lessons') {
       // Direct lesson context - fetch with access checks
@@ -362,6 +364,55 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       }
     }
 
+    // 9.25) Fetch course prompt (for course-level context, e.g., Ask tab)
+    // This provides a fallback prompt when no lesson is specified
+    if (validated.courseId && !lessonPrompt) {
+      try {
+        const course = await req.payload.findByID({
+          collection: 'courses',
+          id: validated.courseId,
+          depth: 0,
+          user: req.user,
+          overrideAccess: false,
+        })
+
+        courseContextText = (course as { courseContextText?: string }).courseContextText ?? undefined
+
+        // Fetch course prompt separately if course has one (admin-only, requires override)
+        if ((course as { prompt?: unknown }).prompt) {
+          const promptId =
+            typeof (course as { prompt: unknown }).prompt === 'string'
+              ? (course as { prompt: string }).prompt
+              : (course as { prompt: { id: string } }).prompt.id
+
+          try {
+            coursePrompt = (await req.payload.findByID({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              collection: 'prompts' as any,
+              id: promptId,
+              overrideAccess: true, // Prompts are admin-only
+            })) as Prompt | null
+
+            reqLogger.info(
+              { promptId, courseId: validated.courseId },
+              'Loaded course-specific prompt',
+            )
+          } catch (error) {
+            reqLogger.warn(
+              { err: error, promptId, courseId: validated.courseId },
+              'Failed to fetch course prompt',
+            )
+            // Continue with null - will fall back to default
+          }
+        }
+      } catch (error) {
+        reqLogger.warn(
+          { err: error, courseId: validated.courseId },
+          'Failed to fetch course for prompt resolution, continuing with defaults',
+        )
+      }
+    }
+
     // 9.5) Fetch published system prompts (always included)
     const systemPromptsResult = await fetchPublishedSystemPrompts(req.payload)
 
@@ -377,7 +428,11 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     }
 
     // 10) Resolve system prompt using pre-loaded prompt object
-    const promptResolution = await resolveAgentSystemPrompt(req.payload, lessonPrompt)
+    // Priority: lesson prompt > course prompt > default prompt
+    const promptResolution = await resolveAgentSystemPrompt(
+      req.payload,
+      lessonPrompt || coursePrompt,
+    )
 
     reqLogger.info(
       {
@@ -385,17 +440,19 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
         promptTitle: promptResolution.promptTitle,
         resolvedFrom: promptResolution.resolvedFrom,
         ...(promptResolution.fallbackReason && { fallbackReason: promptResolution.fallbackReason }),
+        usedCoursePrompt: !lessonPrompt && !!coursePrompt,
       },
       'Resolved system prompt',
     )
 
-    // Compose final system instructions: system prompts + lesson prompt + lesson context
+    // Compose final system instructions: system prompts + lesson/course prompt + lesson/course context
+    // Priority: lesson context > course context
     let systemInstructions: string
     try {
       systemInstructions = composeSystemInstructions(
         systemPromptsResult.templates,
         promptResolution.template,
-        lessonContextText,
+        lessonContextText || courseContextText,
       )
     } catch (error) {
       if (error instanceof Error && error.message.includes('exceeds maximum')) {
