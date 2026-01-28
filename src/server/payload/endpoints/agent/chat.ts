@@ -376,7 +376,8 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
           overrideAccess: false,
         })
 
-        courseContextText = (course as { courseContextText?: string }).courseContextText ?? undefined
+        courseContextText =
+          (course as { courseContextText?: string }).courseContextText ?? undefined
 
         // Fetch course prompt separately if course has one (admin-only, requires override)
         if ((course as { prompt?: unknown }).prompt) {

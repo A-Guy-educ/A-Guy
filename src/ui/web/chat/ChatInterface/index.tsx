@@ -62,10 +62,7 @@ export function ChatInterface({
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Messages Area */}
-      <div
-        ref={messagesContainerRef}
-        className="flex-grow overflow-y-auto p-5 space-y-4 min-h-0"
-      >
+      <div ref={messagesContainerRef} className="flex-grow overflow-y-auto p-5 space-y-4 min-h-0">
         {isLoadingHistory && (
           <div className="flex items-center justify-center p-4 text-muted-foreground text-sm">
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
