@@ -202,6 +202,13 @@
       "letsStart": "בואו נתחיל!",
       "loading": "טוען...",
       "noCoursesAvailable": "אין קורסים זמינים"
+    },
+    "ask": {
+      "chatWelcome": "היי! שאל אותי כל שאלה על הקורס!",
+      "chatInputPlaceholder": "שאל שאלה...",
+      "chatAuthRequired": "אנא התחבר כדי לשאול שאלות",
+      "loading": "טוען...",
+      "noCourse": "לא נבחר קורס. אנא בחר קורס מדף הבית."
     }
   },
   "study": {

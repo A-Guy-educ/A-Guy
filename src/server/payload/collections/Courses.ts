@@ -141,6 +141,25 @@ export const Courses: CollectionConfig = {
       },
     },
     {
+      name: 'prompt',
+      type: 'relationship',
+      relationTo: 'prompts',
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description: 'AI system prompt for Ask tab chat in this course (uses default if not set)',
+      },
+    },
+    {
+      name: 'courseContextText',
+      type: 'textarea',
+      maxLength: 100_000,
+      admin: {
+        description:
+          'AI context text for this course. Injected into Ask tab chat prompts at runtime.',
+      },
+    },
+    {
       name: 'slug',
       type: 'text',
       required: false,
