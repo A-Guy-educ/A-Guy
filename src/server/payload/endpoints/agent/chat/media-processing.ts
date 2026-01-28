@@ -10,7 +10,6 @@ import {
   validateChatMedia,
   type MediaPartWithPath,
 } from '@/infra/llm/multimodal'
-import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 
 export interface MediaProcessingResult {
   success: boolean
@@ -34,13 +33,9 @@ export async function processMediaAttachments(
     return { success: true, mediaPartsWithPath: [] }
   }
 
-  reqLogger.info({ mediaIds }, 'Processing media attachments')
+  reqLogger.info({ mediaIds, userId }, 'Processing media attachments')
 
-  // Get default tenant for validation
-  const tenantId = await getDefaultTenantId(payload)
-  reqLogger.info({ tenantId }, 'Using tenant for media validation')
-
-  const validationResult = await validateChatMedia(payload, mediaIds, userId, tenantId)
+  const validationResult = await validateChatMedia(payload, mediaIds, userId)
   reqLogger.info(
     { valid: validationResult.valid, mediaItems: validationResult.mediaItems },
     'Media validation result',

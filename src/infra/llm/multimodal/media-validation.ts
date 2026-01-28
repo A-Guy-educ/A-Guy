@@ -52,18 +52,18 @@ function validateAttachmentCount(mediaIds: string[]): MediaItemResult | null {
 }
 
 /**
- * Fetches media documents from database with tenant filter
- * DB-level tenant filter ensures no cross-tenant leaks
+ * Fetches media documents from database
+ * Relies on Payload's access control to ensure proper isolation
  */
 async function fetchMediaDocuments(
   payload: Payload,
   mediaIds: string[],
-  tenantId: string,
+  userId: string,
 ): Promise<MediaDocument[]> {
   const result = await payload.find({
     collection: 'media',
     where: {
-      and: [{ id: { in: mediaIds } }, { tenant: { equals: tenantId } }],
+      and: [{ id: { in: mediaIds } }, { createdBy: { equals: userId } }],
     },
     limit: mediaIds.length,
     depth: 0,
@@ -188,15 +188,14 @@ function validateMediaDocument(doc: MediaDocument): {
 
 /**
  * Main validation function for chat media
- * Validates media exists, belongs to tenant, not expired, valid type/size
+ * Validates media exists, belongs to user, not expired, valid type/size
  */
 export async function validateChatMedia(
   payload: Payload,
   mediaIds: string[],
   userId: string,
-  tenantId: string,
 ): Promise<MediaValidationResult & { mediaPartsWithPath: MediaPartWithPath[] }> {
-  const reqLogger = logger.child({ mediaIds, userId, tenantId })
+  const reqLogger = logger.child({ mediaIds, userId })
   const result: MediaValidationResult = {
     valid: true,
     mediaItems: [],
@@ -217,15 +216,15 @@ export async function validateChatMedia(
     return { ...result, mediaPartsWithPath }
   }
 
-  // Fetch documents with tenant filter
-  const mediaDocs = await fetchMediaDocuments(payload, mediaIds, tenantId)
+  // Fetch documents - filter by user ownership for security
+  const mediaDocs = await fetchMediaDocuments(payload, mediaIds, userId)
 
   // Check for missing media
   const missingIds = findMissingMediaIds(mediaIds, mediaDocs)
   for (const mediaId of missingIds) {
     result.valid = false
     result.mediaItems.push(createErrorResult(mediaId, '', 'Media not found or access denied'))
-    reqLogger.warn({ mediaId }, 'Media not found or wrong tenant')
+    reqLogger.warn({ mediaId }, 'Media not found or not owned by user')
   }
 
   // Process each found document
