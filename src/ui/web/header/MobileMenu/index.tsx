@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { X, Menu } from 'lucide-react'
 import { CMSLink } from '@/ui/web/Link'
 import Link from 'next/link'
@@ -28,6 +28,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   const tCommon = useTranslations('common.header')
   const tMenu = useTranslations('common.mobileMenu')
   const navItems = data?.navItems || []
+  const portalContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -53,6 +54,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       />
 
       <div
+        ref={portalContainerRef}
         className={`fixed top-0 right-0 h-full w-[280px] sm:w-[320px] bg-background border-l border-border z-[70] transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
@@ -129,7 +131,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               {tMenu('language')}
             </h3>
-            <LanguageSwitcher />
+            <LanguageSwitcher portalContainer={portalContainerRef.current} />
           </div>
 
           <div className="px-6 py-4 border-t border-border mt-auto">
