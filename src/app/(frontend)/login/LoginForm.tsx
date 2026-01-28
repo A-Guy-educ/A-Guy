@@ -1,21 +1,24 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useState } from 'react'
 
+import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
 import { Button } from '@/ui/web/components/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/ui/web/components/card'
 import { Input } from '@/ui/web/components/input'
 import { Label } from '@/ui/web/components/label'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { loginAction } from './login_authenticate-action'
-import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
 
-export function LoginForm() {
+function LoginFormContent() {
   const t = useTranslations('auth.login')
   const tOauth = useTranslations('auth.oauth')
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnTo = searchParams?.get('returnTo') || '/'
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -33,7 +36,7 @@ export function LoginForm() {
 
     if (result.success) {
       window.dispatchEvent(new Event('auth:changed'))
-      router.push('/')
+      router.push(returnTo)
       router.refresh()
       return
     }
@@ -49,7 +52,7 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <GoogleLoginButton returnTo="/" className="w-full" />
+          <GoogleLoginButton returnTo={returnTo} className="w-full" />
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
@@ -105,6 +108,46 @@ export function LoginForm() {
           </Link>
         </p>
       </CardFooter>
+    </Card>
+  )
+}
+
+export function LoginForm() {
+  return (
+    <Suspense fallback={<LoginFormSkeleton />}>
+      <LoginFormContent />
+    </Suspense>
+  )
+}
+
+function LoginFormSkeleton() {
+  const t = useTranslations('auth.login')
+  return (
+    <Card>
+      <CardHeader>
+        <p className="text-sm text-muted-foreground text-center">{t('subtitle')}</p>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="w-full h-10 bg-muted animate-pulse rounded" />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+          </div>
+        </div>
+        <div className="space-y-4 mt-4">
+          <div className="space-y-2">
+            <div className="h-4 w-20 bg-muted animate-pulse rounded" />
+            <div className="h-10 bg-muted animate-pulse rounded" />
+          </div>
+          <div className="space-y-2">
+            <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+            <div className="h-10 bg-muted animate-pulse rounded" />
+          </div>
+          <div className="h-10 bg-muted animate-pulse rounded" />
+        </div>
+      </CardContent>
     </Card>
   )
 }

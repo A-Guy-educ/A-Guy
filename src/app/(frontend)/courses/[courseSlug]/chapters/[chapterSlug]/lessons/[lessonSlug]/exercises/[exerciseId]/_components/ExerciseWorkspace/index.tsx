@@ -1,9 +1,11 @@
 'use client'
 
-import { ResizablePane } from '@/ui/web/components/resizable-pane'
-import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
-import React, { useState, useCallback, useEffect, useRef } from 'react'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { cn } from '@/infra/utils/ui'
+import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
+import { ResizablePane } from '@/ui/web/components/resizable-pane'
+import { usePathname } from 'next/navigation'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { ExerciseHeader } from '../ExerciseHeader'
 import type { ViewMode } from './exercise-workspace-types'
 import { getInitialViewMode } from './exercise-workspace-utils'
@@ -21,6 +23,8 @@ export function ExerciseWorkspace({
   pdfContent,
   chatContent,
 }: ExerciseWorkspaceProps) {
+  const { user, isLoading: isAuthLoading } = useCurrentUser()
+  const pathname = usePathname()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   // Mobile mode state
@@ -124,6 +128,9 @@ export function ExerciseWorkspace({
           exerciseTitle={exerciseTitle}
           backUrl={backUrl}
           onMenuClick={handleMenuClick}
+          user={user}
+          isAuthLoading={isAuthLoading}
+          currentUrl={pathname}
         />
 
         <ResizablePane
@@ -153,6 +160,9 @@ export function ExerciseWorkspace({
         exerciseTitle={exerciseTitle}
         backUrl={backUrl}
         onMenuClick={handleMenuClick}
+        user={user}
+        isAuthLoading={isAuthLoading}
+        currentUrl={pathname}
       />
 
       {/* Mobile: Consistent flex container for all 3 states */}

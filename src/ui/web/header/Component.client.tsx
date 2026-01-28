@@ -2,63 +2,27 @@
 import { useHeaderTheme } from '@/ui/web/providers/HeaderTheme'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
-import type { Header, User } from '@/payload-types'
+import type { Header } from '@/payload-types'
 
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
-import { HeaderNav } from './Nav'
 import { MobileMenu, MobileMenuButton } from './MobileMenu'
+import { HeaderNav } from './Nav'
 
 interface HeaderClientProps {
   data: Header
 }
 
 export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
-  const [user, setUser] = useState<User | null>(null)
-  const [isAuthLoading, setIsAuthLoading] = useState(true)
+  const { user, isLoading: isAuthLoading } = useCurrentUser()
   /* Storing the value in a useState to avoid hydration errors */
   const [theme, setTheme] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const { headerTheme, setHeaderTheme } = useHeaderTheme()
   const pathname = usePathname()
-
-  // Fetch user on client side to avoid static-to-dynamic conversion
-  const fetchUser = useCallback(async () => {
-    setIsAuthLoading(true)
-    try {
-      const response = await fetch('/api/users/me', {
-        credentials: 'include', // Include cookies
-        cache: 'no-store',
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setUser(data.user || null)
-      } else {
-        setUser(null)
-      }
-    } catch (_error) {
-      // Silently fail - user is not authenticated
-      setUser(null)
-    } finally {
-      setIsAuthLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchUser()
-  }, [fetchUser, pathname])
-
-  useEffect(() => {
-    const handleAuthChange = () => {
-      fetchUser()
-    }
-
-    window.addEventListener('auth:changed', handleAuthChange)
-    return () => window.removeEventListener('auth:changed', handleAuthChange)
-  }, [fetchUser])
 
   useEffect(() => {
     setHeaderTheme(null)

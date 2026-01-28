@@ -1,25 +1,27 @@
 'use client'
 
-import { Button } from '@/ui/web/components/button'
-import { Card, CardContent, CardFooter, CardHeader } from '@/ui/web/components/card'
 import { detectBrowserLocale } from '@/i18n/config'
 import { PRODUCT_EVENTS } from '@/infra/analytics/contracts/events'
 import { useAnalytics } from '@/infra/analytics/providers/AnalyticsProvider'
 import { updateCachedUserProperties } from '@/infra/analytics/utils/user-properties-cache'
+import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
+import { Button } from '@/ui/web/components/button'
+import { Card, CardContent, CardFooter, CardHeader } from '@/ui/web/components/card'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import React, { Suspense, useState } from 'react'
 import { toast } from 'sonner'
 import { SignupFormFields } from './SignupFormFields'
 import { signupAction } from './actions/signup_createUser-action'
 import { validateSignupForm } from './actions/signup_validation-action'
-import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
 
-export function SignupForm() {
+function SignupFormContent() {
   const t = useTranslations('auth.signup')
   const tOauth = useTranslations('auth.oauth')
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnTo = searchParams?.get('returnTo') || '/'
   const analytics = useAnalytics()
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -92,8 +94,8 @@ export function SignupForm() {
           analytics.identify(result.userId, userProperties)
         }
 
-        // Auto-login successful - redirect to home
-        router.push('/')
+        // Auto-login successful - redirect to returnTo
+        router.push(returnTo)
         router.refresh()
       }
     } catch (_error) {
@@ -112,7 +114,7 @@ export function SignupForm() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <GoogleLoginButton returnTo="/" className="w-full" />
+          <GoogleLoginButton returnTo={returnTo} className="w-full" />
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
@@ -140,6 +142,52 @@ export function SignupForm() {
           </Link>
         </p>
       </CardFooter>
+    </Card>
+  )
+}
+
+export function SignupForm() {
+  return (
+    <Suspense fallback={<SignupFormSkeleton />}>
+      <SignupFormContent />
+    </Suspense>
+  )
+}
+
+function SignupFormSkeleton() {
+  const _t = useTranslations('auth.signup')
+  return (
+    <Card>
+      <CardHeader>
+        <p className="text-sm text-muted-foreground text-center">
+          Fill in the form below to create your account
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="w-full h-10 bg-muted animate-pulse rounded" />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+          </div>
+        </div>
+        <div className="space-y-4 mt-4">
+          <div className="space-y-2">
+            <div className="h-4 w-16 bg-muted animate-pulse rounded" />
+            <div className="h-10 bg-muted animate-pulse rounded" />
+          </div>
+          <div className="space-y-2">
+            <div className="h-4 w-20 bg-muted animate-pulse rounded" />
+            <div className="h-10 bg-muted animate-pulse rounded" />
+          </div>
+          <div className="space-y-2">
+            <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+            <div className="h-10 bg-muted animate-pulse rounded" />
+          </div>
+          <div className="h-10 bg-muted animate-pulse rounded" />
+        </div>
+      </CardContent>
     </Card>
   )
 }

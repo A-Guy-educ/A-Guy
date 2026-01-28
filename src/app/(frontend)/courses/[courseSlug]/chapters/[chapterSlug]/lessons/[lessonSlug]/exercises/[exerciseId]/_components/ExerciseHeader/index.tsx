@@ -1,23 +1,40 @@
 'use client'
 
-import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
 import { isRTL } from '@/i18n/config'
-import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
+import type { User } from '@/payload-types'
+import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
+import { UserDropdown } from '@/ui/web/UserDropdown'
+import { Button } from '@/ui/web/components/button'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ArrowLeft, ArrowRight, Menu } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 interface ExerciseHeaderProps {
   exerciseTitle: string
   backUrl?: string
   onMenuClick?: () => void
+  user?: User | null
+  isAuthLoading?: boolean
+  currentUrl?: string
 }
 
-export function ExerciseHeader({ exerciseTitle, backUrl, onMenuClick }: ExerciseHeaderProps) {
+export function ExerciseHeader({
+  exerciseTitle,
+  backUrl,
+  onMenuClick,
+  user,
+  isAuthLoading,
+  currentUrl,
+}: ExerciseHeaderProps) {
   const t = useTranslations('courses')
+  const tCommon = useTranslations('common.header')
   const locale = useLocale()
   const rtl = isRTL(locale as 'en' | 'he')
   const router = useRouter()
+
+  const returnToParam = currentUrl ? `?returnTo=${encodeURIComponent(currentUrl)}` : ''
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -71,6 +88,24 @@ export function ExerciseHeader({ exerciseTitle, backUrl, onMenuClick }: Exercise
             <Menu className="w-6 h-6 text-foreground" />
           </button>
         )}
+
+        {/* Desktop Auth Section */}
+        <div className="hidden lg:flex items-center gap-2" data-testid="exercise-header-auth">
+          {isAuthLoading ? (
+            <div className="w-20 h-8 animate-pulse bg-muted rounded" aria-hidden="true" />
+          ) : user ? (
+            <UserDropdown user={user} />
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/login${returnToParam}`}>{tCommon('login')}</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href={`/signup${returnToParam}`}>{tCommon('signup')}</Link>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     </header>
   )
