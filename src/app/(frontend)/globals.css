@@ -408,7 +408,7 @@ html[data-theme='light'] {
 
 /* KaTeX math expression styling in chat */
 .chat-message-content .katex {
-  @apply bg-secondary text-secondary-foreground p-5 rounded-xl inline-block;
+  @apply bg-muted text-foreground p-5 rounded-xl inline-block;
   margin: calc(var(--spacing) * 1);
 }
 
