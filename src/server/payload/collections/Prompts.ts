@@ -1,18 +1,19 @@
 import type { CollectionConfig } from 'payload'
 
 import { adminOnly } from '../access/adminOnly'
+import { tenantField } from '../fields/tenant'
 
 export const Prompts: CollectionConfig = {
   slug: 'prompts',
   access: {
     create: adminOnly,
-    read: adminOnly, // Endpoint uses overrideAccess: true for prompt fetches
+    read: adminOnly, // OverrideAccess: true used server-side in queue endpoint
     update: adminOnly,
     delete: adminOnly,
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'key', 'type', 'status', 'isDefaultForAgentChat', 'updatedAt'],
+    defaultColumns: ['title', 'key', 'type', 'status', 'usage', 'tenant', 'updatedAt'],
     group: 'AI',
   },
   fields: [
@@ -80,6 +81,28 @@ export const Prompts: CollectionConfig = {
         position: 'sidebar',
       },
     },
+    // ADD: tenant scoping
+    tenantField,
+    // ADD: usage for conversion (extractor/verifier) - NOT a replacement for type field
+    {
+      name: 'usage',
+      type: 'select',
+      options: [
+        { label: 'Chat', value: 'chat' },
+        { label: 'PDF Extractor', value: 'extractor' },
+        { label: 'PDF Verifier', value: 'verifier' },
+      ],
+      defaultValue: 'chat',
+      admin: {
+        description:
+          'Purpose of this prompt: chat conversation, PDF extraction, or PDF verification',
+        position: 'sidebar',
+      },
+    },
+  ],
+  indexes: [
+    // Keep existing indexes
+    { fields: { tenant: 1, status: 1, usage: 1 }, name: 'idx_prompt_tenant_status_usage' },
   ],
   timestamps: true,
 }

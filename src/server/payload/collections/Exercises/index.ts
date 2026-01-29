@@ -121,6 +121,58 @@ export const Exercises: CollectionConfig = {
 
     // Created By
     createdByField,
+
+    // ADD: Conversion Metadata Section
+    {
+      type: 'collapsible',
+      label: 'Conversion Metadata',
+      admin: { initCollapsed: true },
+      fields: [
+        {
+          name: 'origin',
+          type: 'select',
+          options: [
+            { label: 'Manual', value: 'manual' },
+            { label: 'Conversion', value: 'conversion' },
+            { label: 'Import', value: 'import' },
+          ],
+          defaultValue: 'manual',
+          required: true,
+          index: true,
+        },
+        {
+          name: 'sourceDoc',
+          type: 'relationship',
+          relationTo: 'media',
+          admin: { description: 'Original PDF media for conversion exercises' },
+        },
+        {
+          name: 'conversionJobId',
+          type: 'text',
+          admin: { description: 'Payload job ID that created this exercise' },
+        },
+        {
+          name: 'sourcePageStart',
+          type: 'number',
+          admin: { description: 'Starting page in source PDF' },
+        },
+        {
+          name: 'sourcePageEnd',
+          type: 'number',
+          admin: { description: 'Ending page in source PDF' },
+        },
+        {
+          name: 'sourceOrderInSegment',
+          type: 'number',
+          admin: { description: 'Order within the segment (1-indexed)' },
+        },
+        {
+          name: 'contentHash',
+          type: 'text',
+          admin: { description: 'SHA256 hash for deduplication' },
+        },
+      ],
+    },
   ],
 }
 
@@ -130,5 +182,7 @@ export {
   ContentBlockSchema,
   ContentSchema,
   QuestionFreeResponseBlockSchema,
+  LatexBlockSchema,
   type ContentBlock,
+  type LatexBlock,
 } from './schemas'

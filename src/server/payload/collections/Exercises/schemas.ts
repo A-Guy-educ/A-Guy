@@ -143,12 +143,27 @@ export const QuestionFreeResponseBlockSchema = z
   .strict()
 
 // ---------------------------------
+// Zod: Latex Block
+// ---------------------------------
+export const LatexBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('latex'),
+    latex: z.string().min(1),
+    renderMode: z.enum(['block', 'inline']).default('block'),
+  })
+  .strict()
+
+export type LatexBlock = z.infer<typeof LatexBlockSchema>
+
+// ---------------------------------
 // Zod: Content union (exported for admin components)
 // ---------------------------------
 export const ContentBlockSchema = z.discriminatedUnion('type', [
   RichTextBlockSchema,
   QuestionSelectBlockSchema,
   QuestionFreeResponseBlockSchema,
+  LatexBlockSchema,
 ])
 
 export type ContentBlock = z.infer<typeof ContentBlockSchema>
