@@ -139,6 +139,17 @@ export const Exercises: CollectionConfig = {
           defaultValue: 'manual',
           required: true,
           index: true,
+          hooks: {
+            beforeValidate: [
+              async ({ value, operation }) => {
+                // Backfill: set default for existing exercises without origin
+                if (operation === 'update' && !value) {
+                  return 'manual'
+                }
+                return value || 'manual'
+              },
+            ],
+          },
         },
         {
           name: 'sourceDoc',

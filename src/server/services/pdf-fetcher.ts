@@ -1,7 +1,4 @@
 import { PDF_MAX_BYTES } from '@/server/config/constants'
-import * as fs from 'fs'
-import * as path from 'path'
-import { getUploadDir } from '@/server/config/constants'
 
 export interface PDFExtractError {
   stage: 'PASS0_EXTRACT'
@@ -24,10 +21,14 @@ const PROXY_TO_STAGE: Record<string, string> = {
 }
 
 /**
- * Get PDF file path via direct filesystem access (same as Chat Media Upload)
- * NO proxy endpoint - direct absoluteFilePath resolution
+ * Get PDF buffer from Vercel Blob storage
+ * Uses media document's URL to fetch the file
  */
-export async function getPdfAbsolutePath(mediaId: string, payload: any): Promise<string> {
+export async function getPdfBufferFromBlob(
+  mediaId: string,
+  payload: any,
+  req?: { headers?: { authorization?: string; cookie?: string } },
+): Promise<Buffer> {
   // Fetch media document
   const media = await payload.findByID({ collection: 'media', id: mediaId, depth: 0 })
 
@@ -40,31 +41,60 @@ export async function getPdfAbsolutePath(mediaId: string, payload: any): Promise
     throw stageError('NOT_PDF', `Expected application/pdf, got ${media.mimeType}`)
   }
 
-  // Resolve absolute file path
-  const uploadDir = getUploadDir()
-  const filePath = path.join(uploadDir, media.filename)
+  // Get file size from media document
+  let filesize = media.filesize as number | undefined
 
-  // Check file exists
-  if (!fs.existsSync(filePath)) {
-    throw stageError('FETCH_FAILED', 'File not found in storage')
+  // Fetch the file from Blob storage using the URL
+  if (!media.url) {
+    throw stageError('FETCH_FAILED', 'Media document has no URL')
   }
 
-  // Validate PDF magic bytes
-  const fd = fs.openSync(filePath, 'r')
-  const magicBuffer = Buffer.alloc(4)
-  fs.readSync(fd, magicBuffer, 0, 4, 0)
-  fs.closeSync(fd)
-
-  if (magicBuffer.toString('ascii') !== '%PDF') {
-    throw stageError('INVALID_PDF', 'Invalid PDF magic bytes')
+  // Prepare headers for authenticated requests (if needed)
+  const headers: Record<string, string> = {}
+  if (req?.headers?.authorization) {
+    headers['Authorization'] = req.headers.authorization
+  }
+  if (req?.headers?.cookie) {
+    headers['Cookie'] = req.headers.cookie
   }
 
-  return filePath
+  try {
+    const response = await fetch(media.url, { headers })
+
+    if (!response.ok) {
+      throw stageError('FETCH_FAILED', `Failed to fetch PDF: ${response.status} ${response.statusText}`)
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    const pdfBuffer = Buffer.from(arrayBuffer)
+
+    // Validate size
+    if (pdfBuffer.length > PDF_MAX_BYTES) {
+      throw stageError('PDF_TOO_LARGE', `Size ${pdfBuffer.length} exceeds limit ${PDF_MAX_BYTES}`)
+    }
+
+    // Validate PDF magic bytes
+    if (pdfBuffer.length < 4) {
+      throw stageError('INVALID_PDF', 'PDF file too small')
+    }
+
+    const magicBytes = pdfBuffer.slice(0, 4).toString('ascii')
+    if (magicBytes !== '%PDF') {
+      throw stageError('INVALID_PDF', 'Invalid PDF magic bytes')
+    }
+
+    return pdfBuffer
+  } catch (error: any) {
+    if (error.stage === 'PASS0_EXTRACT') {
+      throw error
+    }
+    throw stageError('FETCH_FAILED', `Failed to fetch PDF: ${error.message || 'Unknown error'}`)
+  }
 }
 
 /**
  * Get PDF file size (for validation)
- * v2.1 Fix 4: Enforce size limit in BOTH code paths (db field and fs fallback)
+ * Uses media document's filesize field or fetches to calculate
  */
 export async function getPdfFileSize(mediaId: string, payload: any): Promise<number> {
   const media = await payload.findByID({ collection: 'media', id: mediaId, depth: 0 })
@@ -73,22 +103,35 @@ export async function getPdfFileSize(mediaId: string, payload: any): Promise<num
     throw stageError('MEDIA_NOT_FOUND', `Media not found: ${mediaId}`)
   }
 
-  let filesize = media.filesize as number
+  let filesize = media.filesize as number | undefined
 
-  // Fallback: if filesize is missing, resolve filePath and calculate from file system
+  // If filesize is missing, fetch the file to calculate size
   if (filesize === undefined || filesize === null) {
-    const uploadDir = getUploadDir()
-    const filePath = path.join(uploadDir, media.filename)
-    const stats = fs.statSync(filePath)
-    filesize = stats.size
+    if (!media.url) {
+      throw stageError('FETCH_FAILED', 'Media document has no URL')
+    }
+
+    try {
+      const response = await fetch(media.url, { method: 'HEAD' })
+      if (response.ok) {
+        const contentLength = response.headers.get('content-length')
+        if (contentLength) {
+          filesize = parseInt(contentLength, 10)
+        }
+      }
+    } catch (error) {
+      // Fallback: fetch full file if HEAD fails
+      const buffer = await getPdfBufferFromBlob(mediaId, payload)
+      filesize = buffer.length
+    }
   }
 
-  // v2.1 Fix 4: Enforce size limit in BOTH code paths
-  if (filesize > PDF_MAX_BYTES) {
+  // Enforce size limit
+  if (filesize && filesize > PDF_MAX_BYTES) {
     throw stageError('PDF_TOO_LARGE', `Size ${filesize} exceeds limit ${PDF_MAX_BYTES}`)
   }
 
-  return filesize
+  return filesize || 0
 }
 
 /**

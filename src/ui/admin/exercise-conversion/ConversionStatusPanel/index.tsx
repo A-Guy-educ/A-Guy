@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { buildJobsWhereQuery } from '@/shared/exercise-conversion/helpers'
+import { buildJobsWhereQuery } from '@/lib/exercise-conversion/helpers'
 
 interface ConversionStatusPanelProps {
   lessonId: string

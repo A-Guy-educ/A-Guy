@@ -3,7 +3,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { ENV, TASK_SLUG, MAX_PROMPT_SIZE_BYTES } from '@/server/config/constants'
 import { hashTextSha256 } from '@/server/utils/hash'
-import { validatePromptForUsageAndTenant } from '@/shared/exercise-conversion/helpers'
+import { validatePromptForUsageAndTenant } from '@/lib/exercise-conversion/helpers'
 
 type ErrorCode =
   | 'UNAUTHORIZED'
@@ -112,37 +112,50 @@ export async function POST(request: NextRequest) {
     validatePromptForUsageAndTenant(verifierPrompt, 'verifier', lessonTenantId)
 
     // ========== Prompt Size Validation (after validation passes) ==========
-    if (extractorPrompt.template.length > MAX_PROMPT_SIZE_BYTES) {
+    // Use byteLength for accurate size check (UTF-8 encoding)
+    const extractorSize = Buffer.byteLength(extractorPrompt.template, 'utf8')
+    if (extractorSize > MAX_PROMPT_SIZE_BYTES) {
       return errorResponse(
         'VALIDATION_ERROR',
         'Extractor prompt template exceeds maximum size',
         400,
       )
     }
-    if (verifierPrompt.template.length > MAX_PROMPT_SIZE_BYTES) {
+    const verifierSize = Buffer.byteLength(verifierPrompt.template, 'utf8')
+    if (verifierSize > MAX_PROMPT_SIZE_BYTES) {
       return errorResponse('VALIDATION_ERROR', 'Verifier prompt template exceeds maximum size', 400)
     }
 
-    // ========== Queue Policy Check ==========
+    // ========== Queue Policy Check (Idempotency) ==========
+    // Block duplicates for same (lessonId, mediaId) when status is queued OR running
     const now = new Date()
-    const runningJobs = await payload.find({
+    const existingJobs = await payload.find({
       collection: 'jobs',
       where: {
         and: [
           { taskSlug: { equals: TASK_SLUG } },
           { 'input.ctx.lessonId': { equals: lessonId } },
           { 'input.ctx.sourceDocId': { equals: mediaId } },
-          { status: { equals: 'running' } },
-          { lockExpiresAt: { greater_than: now } },
+          {
+            or: [
+              { status: { equals: 'queued' } },
+              {
+                and: [
+                  { status: { equals: 'running' } },
+                  { lockExpiresAt: { greater_than: now } },
+                ],
+              },
+            ],
+          },
         ],
       },
       limit: 1,
       pagination: false,
     })
 
-    if (runningJobs.docs.length > 0) {
-      return errorResponse('CONVERSION_ALREADY_RUNNING', 'A conversion is already running', 409, {
-        runningJobId: runningJobs.docs[0].id,
+    if (existingJobs.docs.length > 0) {
+      return errorResponse('CONVERSION_ALREADY_RUNNING', 'A conversion is already queued or running', 409, {
+        runningJobId: existingJobs.docs[0].id,
       })
     }
 

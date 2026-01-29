@@ -120,6 +120,7 @@
     "katex": "^0.16.27",
     "lucide-react": "^0.562.0",
     "mongodb": "^6.12.0",
+    "nanoid": "^5.0.0",
     "next": "15.5.9",
     "next-sitemap": "^4.2.3",
     "openai": "^4.77.3",

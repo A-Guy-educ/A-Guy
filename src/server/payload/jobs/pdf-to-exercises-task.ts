@@ -1,21 +1,20 @@
 import type { JobTask } from 'payload'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import * as fs from 'fs'
 import { nanoid } from 'nanoid'
 import {
   PDF_MAX_BYTES,
   MAX_SEGMENT_PAGES,
   MAX_EXERCISES_PER_SEGMENT,
 } from '@/server/config/constants'
-import { getPdfAbsolutePath } from '@/server/services/pdf-fetcher'
+import { getPdfBufferFromBlob } from '@/server/services/pdf-fetcher'
 import { computeContentHash } from '@/server/utils/hash'
 
 // v2.1: Use EXISTING LLM infrastructure
 import { mapMultimodalToGemini } from '@/infra/llm/providers/gemini/multimodal-mapper'
 import { getGeminiClient } from '@/server/llm/gemini.client'
 import type { MediaPartWithPath } from '@/infra/llm/multimodal/types'
-import { toExerciseInput, toPayloadContent, enrichBlockIds, parseExtractorResponseText, parseVerifierResponseText } from '@/shared/exercise-conversion/helpers'
+import { toExerciseInput, toPayloadContent, enrichBlockIds, parseExtractorResponseText, parseVerifierResponseText } from '@/lib/exercise-conversion/helpers'
 import { z } from 'zod'
 
 export const pdfToExercisesTask: JobTask = {
@@ -42,25 +41,37 @@ export const pdfToExercisesTask: JobTask = {
     }
 
     try {
-      // PASS 0: Load and Validate PDF (Direct file path)
-      const pdfPath = await getPdfAbsolutePath(sourceDocId, payload)
-      const pdfBuffer = fs.readFileSync(pdfPath)
+      // PASS 0: Load and Validate PDF from Vercel Blob
+      const pdfBuffer = await getPdfBufferFromBlob(sourceDocId, payload, req)
 
       if (pdfBuffer.length > PDF_MAX_BYTES) {
         throw { stage: 'PASS0_EXTRACT', code: 'PDF_TOO_LARGE', message: 'PDF too large' }
       }
 
-      // PASS 1: Segment Indexing
-      const segments = await segmentPdf(pdfPath, MAX_SEGMENT_PAGES)
+      // Fetch media document to get URL for multimodal mapper
+      const media = await payload.findByID({
+        collection: 'media',
+        id: sourceDocId,
+        depth: 0,
+        overrideAccess: true,
+      })
+
+      if (!media || !media.url) {
+        throw { stage: 'PASS0_EXTRACT', code: 'MEDIA_NOT_FOUND', message: 'Media document has no URL' }
+      }
+
+      // PASS 1: Segment Indexing (using buffer)
+      const segments = await segmentPdf(pdfBuffer, MAX_SEGMENT_PAGES)
       output.segmentsTotal = segments.length
 
       // ========== Prepare Multimodal PDF Parts (v2.1: Use EXISTING infrastructure) ==========
       // Create MediaPartWithPath for the PDF (same format as Chat Media Upload)
+      // Use publicUrl from media document (Vercel Blob URL)
       const mediaPartWithPath: MediaPartWithPath = {
         mediaId: sourceDocId,
         type: 'pdf',
-        absoluteFilePath: pdfPath,
-        publicUrl: '', // Not needed for server-side processing
+        absoluteFilePath: '', // Not used for Blob storage
+        publicUrl: media.url, // Vercel Blob URL
         mimeType: 'application/pdf',
       }
 
@@ -75,7 +86,6 @@ export const pdfToExercisesTask: JobTask = {
         try {
           const exercises = await processSegmentWithMultimodal(payload, req, {
             geminiParts, // v2.1: Use existing infrastructure output
-            pdfPath,
             segment,
             extractorPrompt: input.promptSnapshot.extractor,
             verifierPrompt: input.promptSnapshot.verifier,
@@ -169,9 +179,10 @@ export const pdfToExercisesTask: JobTask = {
   },
 }
 
-async function segmentPdf(pdfPath: string, maxPagesPerSegment: number) {
+async function segmentPdf(pdfBuffer: Buffer, maxPagesPerSegment: number) {
   const pdfjs = await import('pdfjs-dist')
-  const pdf = await pdfjs.getDocument(pdfPath).promise
+  // Use buffer data instead of file path
+  const pdf = await pdfjs.getDocument({ data: pdfBuffer }).promise
   const pageCount = pdf.numPages
 
   const segments = []
@@ -192,14 +203,13 @@ async function processSegmentWithMultimodal(
   req: any,
   context: {
     geminiParts: { currentMessage: any[] } // v2.1: Output from mapMultimodalToGemini
-    pdfPath: string
     segment: { pageStart: number; pageEnd: number }
     extractorPrompt: string
     verifierPrompt: string
     output: any // v2.1: For tracking exercisesSkipped
   },
 ) {
-  const { geminiParts, pdfPath, segment, extractorPrompt, verifierPrompt, output } = context
+  const { geminiParts, segment, extractorPrompt, verifierPrompt, output } = context
 
   // ========== Call Extractor with MULTIMODAL PDF Attachment ==========
   const extractorPromptWithContext = `${extractorPrompt}

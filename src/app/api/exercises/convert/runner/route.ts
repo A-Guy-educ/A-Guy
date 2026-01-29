@@ -4,7 +4,7 @@ import config from '@payload-config'
 import { ObjectId } from 'mongodb'
 import { LOCK_TIMEOUT_MS, HEARTBEAT_INTERVAL_MS, ENV } from '@/server/config/constants'
 // v2.1 Fix 7: Import shared pure helpers for testability
-import { atomicClaimJobQuery, atomicClaimJobUpdate } from '@/shared/exercise-conversion/helpers'
+import { atomicClaimJobQuery, atomicClaimJobUpdate } from '@/lib/exercise-conversion/helpers'
 
 function getJobCollection(payload: any) {
   const db = payload.db as any
