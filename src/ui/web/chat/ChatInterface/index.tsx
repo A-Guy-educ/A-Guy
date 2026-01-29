@@ -92,6 +92,24 @@ export function ChatInterface({
                   : 'mr-auto bg-card text-foreground border border-border rounded-[20px] rounded-br-[4px]',
               )}
             >
+              {msg.media && msg.media.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {msg.media.map((mediaItem, mediaIdx) => (
+                    <div
+                      key={mediaIdx}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
+                        msg.role === ChatMessageRole.User ? 'bg-primary-foreground/20' : 'bg-muted',
+                      )}
+                    >
+                      <ImageIcon className="w-3 h-3" />
+                      <span className="max-w-[120px] truncate">
+                        {mediaItem.filename || `media-${mediaIdx + 1}`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <ChatMessageContent content={msg.content} />
             </div>
           ))}
