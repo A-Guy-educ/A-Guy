@@ -3,7 +3,7 @@
 import { ChatMessageRole } from '@/infra/llm/chat-message-role'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
-import { Loader2, Send } from 'lucide-react'
+import { Loader2, Send, Plus, X, Image as ImageIcon, FileUp } from 'lucide-react'
 import React from 'react'
 import { ChatMessageContent } from '../ChatMessageContent'
 import { useNotebookChat } from '../hooks/useNotebookChat'
@@ -32,8 +32,15 @@ export function ChatInterface({
     messagesContainerRef,
     messagesEndRef,
     inputRef,
+    fileInputRef,
     setInputValue,
     handleSubmit,
+    // Media upload
+    uploadedMedia,
+    isUploading,
+    handleFileSelect,
+    removeMedia,
+    openFilePicker,
   } = useNotebookChat({
     initialMessage: t('chatWelcome'),
     authRequiredMessage: t('chatAuthRequired'),
@@ -48,6 +55,11 @@ export function ChatInterface({
     courseId,
     lessonId,
     exerciseId,
+    // Media upload messages
+    unsupportedFileTypeMessage: tCourses('chatUnsupportedFileType'),
+    fileTooLargeMessage: tCourses('chatFileTooLarge'),
+    maxFilesMessage: tCourses('chatMaxFiles'),
+    uploadFailedMessage: tCourses('chatUploadFailed'),
   })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +106,33 @@ export function ChatInterface({
 
       {/* Input Container */}
       <div className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8">
+        {/* Media Preview Chips */}
+        {uploadedMedia.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2.5 max-w-[850px] mx-auto">
+            {uploadedMedia.map((media) => (
+              <div
+                key={media.id}
+                className="flex items-center gap-1.5 bg-muted rounded-full px-3 py-1.5 text-sm border border-input"
+              >
+                {media.mimeType.startsWith('image/') ? (
+                  <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <FileUp className="w-4 h-4 text-muted-foreground" />
+                )}
+                <span className="max-w-[120px] truncate text-foreground">{media.filename}</span>
+                <button
+                  type="button"
+                  onClick={() => removeMedia(media.id)}
+                  className="p-0.5 hover:bg-destructive/20 rounded-full transition-colors"
+                  aria-label={tCourses('chatRemoveFile')}
+                >
+                  <X className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <form onSubmit={handleFormSubmit}>
           <div className="max-w-[850px] mx-auto bg-muted rounded-[30px] flex items-center px-4 py-1.5 border border-input gap-3">
             <input
@@ -110,6 +149,32 @@ export function ChatInterface({
                 }
               }}
               disabled={isLoading}
+            />
+
+            {/* File Upload */}
+            <button
+              type="button"
+              className={cn(
+                'p-1.5 text-muted-foreground hover:text-primary transition-colors',
+                isUploading && 'opacity-50 cursor-not-allowed',
+              )}
+              onClick={openFilePicker}
+              disabled={isUploading || uploadedMedia.length >= 5}
+              aria-label={tCourses('chatAttachFile')}
+            >
+              {isUploading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Plus className="w-5 h-5" />
+              )}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+              multiple
+              onChange={(e) => handleFileSelect(e.target.files)}
             />
 
             {/* Send Button */}
