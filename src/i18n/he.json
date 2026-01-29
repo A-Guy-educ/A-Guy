@@ -223,5 +223,33 @@
     "noCoursesAvailable": "אין קורסים זמינים",
     "studyTopics": "נושאי לימוד",
     "noTopicsAvailable": "אין נושאים זמינים בקורס זה"
+  },
+  "exerciseConversion": {
+    "convertButton": "המר → תרגילים",
+    "modalTitle": "המרת PDF לתרגילים",
+    "modalFilename": "קובץ: {{filename}}",
+    "loadingPrompts": "טוען הנחיות...",
+    "extractorPrompt": "הנחיית חילוץ",
+    "verifierPrompt": "הנחיית אימות",
+    "selectExtractor": "בחר הנחיית חילוץ...",
+    "selectVerifier": "בחר הנחיית אימות...",
+    "cancel": "ביטול",
+    "queueConversion": "תור המרה",
+    "queuing": "ממתין בתור...",
+    "conversionQueued": "המרה בתור! מזהה עבודה: {{jobId}}",
+    "failedToLoadPrompts": "טעינת הנחיות נכשלה",
+    "queueFailed": "תור נכשל",
+    "statusTitle": "סטטוס המרה",
+    "statusLoading": "טוען סטטוס...",
+    "segments": "קטעים",
+    "exercises": "תרגילים",
+    "created": "נוצרו",
+    "deduped": "כפולים",
+    "skipped": "דולגו",
+    "viewCreatedExercises": "צפה בתרגילים שנוצרו",
+    "draftExercisesTitle": "תרגילים טיוטה ({{count}})",
+    "draftExercisesLoading": "טוען תרגילים...",
+    "noDraftExercises": "לא נמצאו תרגילי טיוטה להמרה זו.",
+    "pages": "עמודים {{start}}-{{end}}"
   }
 }

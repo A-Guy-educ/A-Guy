@@ -223,5 +223,33 @@
     "noCoursesAvailable": "No courses available",
     "studyTopics": "Study Topics",
     "noTopicsAvailable": "No topics available in this course"
+  },
+  "exerciseConversion": {
+    "convertButton": "Convert → Exercises",
+    "modalTitle": "Convert PDF to Exercises",
+    "modalFilename": "File: {{filename}}",
+    "loadingPrompts": "Loading prompts...",
+    "extractorPrompt": "Extractor Prompt",
+    "verifierPrompt": "Verifier Prompt",
+    "selectExtractor": "Select extractor prompt...",
+    "selectVerifier": "Select verifier prompt...",
+    "cancel": "Cancel",
+    "queueConversion": "Queue Conversion",
+    "queuing": "Queuing...",
+    "conversionQueued": "Conversion queued! Job ID: {{jobId}}",
+    "failedToLoadPrompts": "Failed to load prompts",
+    "queueFailed": "Queue failed",
+    "statusTitle": "Conversion Status",
+    "statusLoading": "Loading status...",
+    "segments": "Segments",
+    "exercises": "Exercises",
+    "created": "created",
+    "deduped": "deduped",
+    "skipped": "skipped",
+    "viewCreatedExercises": "View Created Exercises",
+    "draftExercisesTitle": "Draft Exercises ({{count}})",
+    "draftExercisesLoading": "Loading exercises...",
+    "noDraftExercises": "No draft exercises found for this conversion.",
+    "pages": "Pages {{start}}-{{end}}"
   }
 }
