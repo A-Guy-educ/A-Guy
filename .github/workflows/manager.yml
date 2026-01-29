@@ -1,0 +1,81 @@
+name: Manager Agent
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+
+jobs:
+  manager:
+    if: >
+      github.event.issue.state == 'open' &&
+      github.event.sender.type != 'Bot' &&
+      contains(github.event.comment.body, '@manager')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Manager started
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: 'Manager started'
+            })
+
+      - name: Extract task from @manager comment (safe)
+        id: task
+        shell: bash
+        run: |
+          BODY="$(jq -r .comment.body "$GITHUB_EVENT_PATH")"
+          TASK="${BODY#*@manager}"
+          TASK="${TASK#"${TASK%%[![:space:]]*}"}"
+          if [ -z "$TASK" ]; then
+            TASK="Read the issue and propose the smallest concrete code change to address it. Then implement it."
+          fi
+          {
+            echo "task<<EOF"
+            echo "$TASK"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Manager is working
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: 'Manager is working'
+            })
+
+      - name: Trigger openhands with a specific task
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            const task = `${{ steps.task.outputs.task }}`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `@openhands ${task}`
+            })
+
+      - name: Manager finished
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: 'Manager finished (triggered @openhands)'
+            })

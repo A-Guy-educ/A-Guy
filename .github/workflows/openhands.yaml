@@ -1,4 +1,4 @@
-name: OpenHands Agent smith
+name: OpenHands Agent
 
 on:
   issue_comment:
@@ -11,10 +11,10 @@ permissions:
 
 jobs:
   openhands:
-    if: contains(github.event.comment.body, '@smith')
+    if: contains(github.event.comment.body, '@openhands')
     uses: OpenHands/OpenHands/.github/workflows/openhands-resolver.yml@main
     with:
-      macro: '@smith'
+      macro: '@openhands'
       max_iterations: 25
       target_branch: 'dev'
       llm_model: minimax/MiniMax-M2.1
