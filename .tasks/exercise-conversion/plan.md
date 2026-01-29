@@ -1,9 +1,54 @@
 # LLP: PDF → Exercises Conversion v2.0 (Admin UI + Tenant Prompts + Multimodal + Draft Review)
 
-**Version:** v2.0 - Complete Implementation Guide
+**Version:** v2.1 - Complete Implementation Guide (with LLM Infrastructure Alignment)
 **Date:** 2026-01-29
 **Reference:** [hls.md](./hls.md)
-**Status:** Ready for Implementation (Agent Fixes Applied)
+**Status:** Ready for Implementation (Agent Fixes + LLM Alignment Applied)
+
+---
+
+## Critical Updates (v2.1)
+
+> **LLM Infrastructure:** Use existing `mapMultimodalToGemini()` and `getGeminiClient()` instead of creating new functions.
+>
+> **Verification Behavior:** Changed from fail-fast to **retry-once-then-skip** - invalid exercises are logged and skipped.
+>
+> **Block IDs:** Generate with `nanoid()` after extraction if LLM doesn't provide them.
+>
+> **New Output Field:** `exercisesSkipped` tracks verification failures.
+
+### API Fixes (v2.1 - `/api/prompts/for-conversion`)
+
+| Fix | Description |
+|-----|-------------|
+| **Fix 1** | Include `status` field in API response (required by tests) |
+| **Fix 2** | Add GET handler returning 405 Method Not Allowed with `Allow: POST` header |
+| **Fix 3** | Keep server-side filtering by `status=published` (already present) |
+| **Fix 4** | Tests use `TEST_ADMIN_SECRET` header auth (not session cookies) |
+| **Fix 5** | Standardize on `PAYLOAD_PUBLIC_SERVER_URL` env var across repo |
+
+### Consistency Fixes (v2.1 - Code ↔ Tests ↔ Schemas)
+
+| Fix | Description |
+|-----|-------------|
+| **Fix 1** | Extractor Zod schema: block `id` is now `optional()` - IDs generated post-validation via `nanoid()` |
+| **Fix 2** | Contract tests: aligned with `mapMultimodalToGemini` + `getGeminiClient` (no removed functions) |
+| **Fix 3** | Task behavior tests: mock correct modules (`getGeminiClient`, `mapMultimodalToGemini`) |
+| **Fix 4** | PDF fetcher: enforce `PDF_MAX_BYTES` in BOTH code paths (db field and fs fallback) |
+| **Fix 5** | Removed duplicate `helpers.ts` entry from new files list |
+| **Fix 6** | ConversionStatusPanel: types include `exercisesSkipped`, UI renders skipped count |
+| **Fix 7** | Runner endpoint: uses shared pure helpers (`atomicClaimJobQuery`, `atomicClaimJobUpdate`) |
+| **Fix 8** | Queue endpoint: returns `PROMPT_NOT_FOUND` if prompt doesn't exist before validation |
+
+### Testability Fixes (v2.1 - Must-Pass CI)
+
+| Fix | Description |
+|-----|-------------|
+| **Fix 1** | Task handler uses `req.payload ?? getPayload()` for testability |
+| **Fix 2** | Contract tests use exact `mapMultimodalToGemini(parts, payload, req)` signature |
+| **Fix 3** | Task tests mock `fs` + `pdf-fetcher` for PASS0 without real files |
+| **Fix 4** | Type distinction: `RawExtractedExercise` (id optional) vs `ExerciseExtractedEnriched` (id required) |
+| **Fix 5** | Explicit invariant: `enrichBlockIds()` must be called after validation, before hashing/persistence |
 
 ---
 
@@ -71,7 +116,6 @@ flowchart TB
 | [`src/shared/exercise-conversion/helpers.ts`](src/shared/exercise-conversion/helpers.ts:1)                           | Pure helpers for testing (buildJobsWhereQuery, etc.)           |
 | [`src/app/api/exercises/convert/runner/route.ts`](src/app/api/exercises/convert/runner/route.ts:1)                   | Runner endpoint with hardened reclaim                          |
 | [`src/server/services/pdf-fetcher.ts`](src/server/services/pdf-fetcher.ts:1)                                         | PDF fetching with error mapping (NO proxy - direct paths)      |
-| [`src/shared/exercise-conversion/helpers.ts`](src/shared/exercise-conversion/helpers.ts:1)                           | Pure helpers for testing (buildJobsWhereQuery, etc.)           |
 | [`src/server/payload/jobs/pdf-to-exercises-task.ts`](src/server/payload/jobs/pdf-to-exercises-task.ts:1)             | Job task with multimodal pipeline                              |
 | [`src/server/migrations/001-create-conversion-indexes.ts`](src/server/migrations/001-create-conversion-indexes.ts:1) | Migration with all indexes                                     |
 | [`tests/unit/env-parsing.test.ts`](tests/unit/env-parsing.test.ts:1)                                                 | Unit tests for env parsing                                     |
@@ -371,15 +415,39 @@ export const ENV = {
 
 ## 5.1 ExerciseExtracted Canonical Shape
 
-**CRITICAL:** This is the single source of truth for exercise blocks returned by the extractor.
-All code (prompts, hashing, persistence) must use this shape.
+**CRITICAL:** Two distinct types exist for exercises at different pipeline stages.
+
+### v2.1 Fix 4: Raw vs Enriched Type Distinction
 
 ```typescript
 /**
- * Canonical shape for exercises extracted from PDF
- * Used by: extractor prompt schema, computeContentHash adapter, payload.create mapping
+ * RAW shape: Directly from LLM extractor output
+ * Block `id` is OPTIONAL - LLM may or may not provide it
+ * Used by: Zod schema validation (extractor output)
  */
-export interface ExerciseExtracted {
+export interface RawExtractedExercise {
+  title: string
+  blocks: Array<
+    | { type: 'rich_text'; id?: string; format: 'md-math-v1'; value: string }
+    | { type: 'latex'; id?: string; latex: string; renderMode?: 'block' | 'inline' }
+    | {
+        type: 'question_select'
+        id?: string
+        question: string
+        options: string[]
+        correctAnswer: number
+      }
+    | { type: 'question_free_response'; id?: string; question: string; sampleAnswer: string }
+  >
+  orderInSegment: number
+}
+
+/**
+ * ENRICHED shape: After block ID generation
+ * Block `id` is REQUIRED - generated via nanoid() if LLM didn't provide
+ * Used by: computeContentHash adapter, payload.create mapping, toPayloadContent
+ */
+export interface ExerciseExtractedEnriched {
   title: string
   blocks: Array<
     | { type: 'rich_text'; id: string; format: 'md-math-v1'; value: string }
@@ -394,6 +462,31 @@ export interface ExerciseExtracted {
     | { type: 'question_free_response'; id: string; question: string; sampleAnswer: string }
   >
   orderInSegment: number
+}
+
+// Alias for backwards compatibility (enriched is the "canonical" shape for persistence)
+export type ExerciseExtracted = ExerciseExtractedEnriched
+
+/**
+ * v2.1 Fix 5: INVARIANT - Block ID Enrichment
+ *
+ * After Zod schema validation of extractor output:
+ * 1. Raw exercises have optional block IDs (RawExtractedExercise)
+ * 2. ALWAYS call enrichBlockIds() to generate missing IDs via nanoid()
+ * 3. Result is ExerciseExtractedEnriched with guaranteed block IDs
+ * 4. Only enriched exercises are passed to hashing/persistence
+ *
+ * This invariant MUST be enforced in processSegmentWithMultimodal().
+ */
+export function enrichBlockIds(raw: RawExtractedExercise): ExerciseExtractedEnriched {
+  return {
+    ...raw,
+    blocks: raw.blocks.map(block => ({
+      ...block,
+      id: block.id || nanoid(),
+      renderMode: block.type === 'latex' ? (block.renderMode || 'block') : undefined,
+    })) as ExerciseExtractedEnriched['blocks'],
+  }
 }
 
 /**
@@ -482,11 +575,14 @@ interface PdfToExercisesOutput {
   currentSegmentIndex: number
   exercisesCreated: number
   exercisesDeduped: number
+  exercisesSkipped: number // NEW (v2.1): Count of exercises that failed verification after retry
   errors: Array<{
     stage: 'PASS0_EXTRACT' | 'PASS1_SEGMENT' | 'PASS2_EXTRACT' | 'PASS2_VERIFY'
     pageRange: { start: number; end: number }
     code: string
     message: string
+    exerciseTitle?: string // NEW (v2.1): Title of skipped exercise for debugging
+    skipped?: boolean // NEW (v2.1): True if exercise was skipped (not job-fatal)
   }>
   segments?: Array<{
     index: number
@@ -494,6 +590,7 @@ interface PdfToExercisesOutput {
     pageEnd: number
     status: 'done' | 'failed' | 'skipped'
     exercisesCreated: number
+    exercisesSkipped?: number // NEW (v2.1): Skipped exercises in this segment
   }>
 }
 ```
@@ -750,6 +847,7 @@ interface ConversionStatusPanelProps {
   onViewExercises?: () => void
 }
 
+// v2.1 Fix 6: Include exercisesSkipped and richer error fields
 interface JobStatus {
   id: string
   status: 'queued' | 'running' | 'completed' | 'failed'
@@ -759,7 +857,14 @@ interface JobStatus {
     segmentsFailed: number
     exercisesCreated: number
     exercisesDeduped: number
-    errors: Array<{ code: string; message: string }>
+    exercisesSkipped?: number // v2.1: Exercises that failed verification after retry
+    errors: Array<{
+      stage: string
+      code: string
+      message: string
+      exerciseTitle?: string // v2.1: Title of skipped exercise
+      skipped?: boolean // v2.1: True if exercise was skipped
+    }>
   }
   updatedAt: string
 }
@@ -841,6 +946,10 @@ export function ConversionStatusPanel({ lessonId, mediaId, onViewExercises }: Co
               <span className="value">
                 {status.output.exercisesCreated} created
                 {status.output.exercisesDeduped > 0 && ` (${status.output.exercisesDeduped} deduped)`}
+                {/* v2.1 Fix 6: Show skipped count */}
+                {status.output.exercisesSkipped && status.output.exercisesSkipped > 0 && (
+                  <span className="skipped"> ({status.output.exercisesSkipped} skipped)</span>
+                )}
               </span>
             </div>
           </>
@@ -863,16 +972,25 @@ export function ConversionStatusPanel({ lessonId, mediaId, onViewExercises }: Co
 
 **File:** [`src/app/api/prompts/for-conversion/route.ts`](src/app/api/prompts/for-conversion/route.ts:1)
 
+**v2.1 Fixes Applied:**
+- Fix 1: Include `status` field in response
+- Fix 2: Add GET handler returning 405
+
 ```typescript
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { ENV } from '@/server/config/constants'
 
-type ErrorCode = 'UNAUTHORIZED' | 'VALIDATION_ERROR' | 'LESSON_NOT_FOUND' | 'INTERNAL_ERROR'
+type ErrorCode = 'UNAUTHORIZED' | 'VALIDATION_ERROR' | 'LESSON_NOT_FOUND' | 'INTERNAL_ERROR' | 'METHOD_NOT_ALLOWED'
 
-function errorResponse(code: ErrorCode, message: string, status: number): NextResponse {
-  return NextResponse.json({ error: { code, message } }, { status })
+function errorResponse(code: ErrorCode, message: string, status: number, headers?: Record<string, string>): NextResponse {
+  return NextResponse.json({ error: { code, message } }, { status, headers })
+}
+
+// v2.1 Fix 2: GET returns 405 Method Not Allowed
+export async function GET() {
+  return errorResponse('METHOD_NOT_ALLOWED', 'Use POST', 405, { 'Allow': 'POST' })
 }
 
 export async function POST(request: NextRequest) {
@@ -952,6 +1070,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Return in PromptOption format used by UI
+    // v2.1 Fix 1: Include status field in response
     return NextResponse.json({
       extractors: extractors.docs.map((p: any) => ({
         id: p.id,
@@ -959,6 +1078,7 @@ export async function POST(request: NextRequest) {
         key: p.key,
         type: p.type,
         usage: p.usage,
+        status: p.status, // v2.1: Required by tests
       })),
       verifiers: verifiers.docs.map((p: any) => ({
         id: p.id,
@@ -966,6 +1086,7 @@ export async function POST(request: NextRequest) {
         key: p.key,
         type: p.type,
         usage: p.usage,
+        status: p.status, // v2.1: Required by tests
       })),
     })
   } catch (error) {
@@ -1071,6 +1192,11 @@ export async function POST(request: NextRequest) {
       overrideAccess: true,
     })
 
+    // v2.1 Fix 8: Check prompt exists before validation
+    if (!extractorPrompt) {
+      return errorResponse('PROMPT_NOT_FOUND', `Extractor prompt not found: ${extractorPromptId}`, 400)
+    }
+
     // Validate extractor prompt (published, usage, tenant)
     validatePromptForUsageAndTenant(extractorPrompt, 'extractor', lessonTenantId)
 
@@ -1081,6 +1207,11 @@ export async function POST(request: NextRequest) {
       depth: 0,
       overrideAccess: true,
     })
+
+    // v2.1 Fix 8: Check prompt exists before validation
+    if (!verifierPrompt) {
+      return errorResponse('PROMPT_NOT_FOUND', `Verifier prompt not found: ${verifierPromptId}`, 400)
+    }
 
     // Validate verifier prompt (published, usage, tenant)
     validatePromptForUsageAndTenant(verifierPrompt, 'verifier', lessonTenantId)
@@ -1159,7 +1290,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { ObjectId } from 'mongodb'
-import { LOCK_TIMEOUT_MS, HEARTBEAT_INTERVAL_MS, TASK_SLUG, ENV } from '@/server/config/constants'
+import { LOCK_TIMEOUT_MS, HEARTBEAT_INTERVAL_MS, ENV } from '@/server/config/constants'
+// v2.1 Fix 7: Import shared pure helpers for testability
+import { atomicClaimJobQuery, atomicClaimJobUpdate } from '@/shared/exercise-conversion/helpers'
 
 function getJobCollection(payload: any) {
   const db = payload.db as any
@@ -1171,18 +1304,13 @@ function getJobCollection(payload: any) {
   }
 }
 
+// v2.1 Fix 7: Use shared pure helpers for query/update
 async function atomicClaimJob(coll: any): Promise<any> {
   const now = new Date()
-  const expiresAt = new Date(now.getTime() + LOCK_TIMEOUT_MS)
 
   const result = await coll.findOneAndUpdate(
-    {
-      $or: [
-        { taskSlug: TASK_SLUG, status: 'queued' },
-        { taskSlug: TASK_SLUG, status: 'running', lockExpiresAt: { $exists: true, $lt: now } },
-      ],
-    },
-    { $set: { status: 'running', claimedAt: now, lockExpiresAt: expiresAt } },
+    atomicClaimJobQuery(now),
+    atomicClaimJobUpdate(now, LOCK_TIMEOUT_MS),
     { sort: { createdAt: 1 }, returnDocument: 'after' },
   )
 
@@ -1317,6 +1445,7 @@ export async function getPdfAbsolutePath(mediaId: string, payload: any): Promise
 
 /**
  * Get PDF file size (for validation)
+ * v2.1 Fix 4: Enforce size limit in BOTH code paths (db field and fs fallback)
  */
 export async function getPdfFileSize(mediaId: string, payload: any): Promise<number> {
   const media = await payload.findByID({ collection: 'media', id: mediaId, depth: 0 })
@@ -1325,16 +1454,17 @@ export async function getPdfFileSize(mediaId: string, payload: any): Promise<num
     throw stageError('MEDIA_NOT_FOUND', `Media not found: ${mediaId}`)
   }
 
-  const filesize = media.filesize as number
+  let filesize = media.filesize as number
 
   // Fallback: if filesize is missing, resolve filePath and calculate from file system
   if (filesize === undefined || filesize === null) {
     const uploadDir = getUploadDir()
     const filePath = path.join(uploadDir, media.filename)
     const stats = fs.statSync(filePath)
-    return stats.size
+    filesize = stats.size
   }
 
+  // v2.1 Fix 4: Enforce size limit in BOTH code paths
   if (filesize > PDF_MAX_BYTES) {
     throw stageError('PDF_TOO_LARGE', `Size ${filesize} exceeds limit ${PDF_MAX_BYTES}`)
   }
@@ -1417,16 +1547,18 @@ export function canonicalStringify(obj: any): string {
 
 **File:** [`src/server/payload/jobs/pdf-to-exercises-task.ts`](src/server/payload/jobs/pdf-to-exercises-task.ts:1)
 
-**IMPORTANT:** Use normalized Gemini import paths:
+**IMPORTANT (v2.1):** Use EXISTING LLM infrastructure from the codebase:
 
-- `createGeminiPartsFromPdf` from `@/server/llm/gemini.client`
-- `generateContent` from `@/server/llm/gemini.client` (single module, single API)
+- `mapMultimodalToGemini` from `@/infra/llm/providers/gemini/multimodal-mapper`
+- `getGeminiClient` from `@/server/llm/gemini.client`
+- `MediaPartWithPath` type from `@/infra/llm/multimodal/types`
 
 ````typescript
 import type { JobTask } from 'payload'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import * as fs from 'fs'
+import { nanoid } from 'nanoid' // NEW (v2.1): For block ID generation
 import {
   PDF_MAX_BYTES,
   MAX_SEGMENT_PAGES,
@@ -1435,12 +1567,11 @@ import {
 import { getPdfAbsolutePath } from '@/server/services/pdf-fetcher'
 import { computeContentHash } from '@/server/utils/hash'
 
-import {
-  createGeminiPartsFromPdf,
-  generateContent,
-  toExerciseInput,
-  toPayloadContent,
-} from '@/server/llm/gemini.client'
+// v2.1: Use EXISTING LLM infrastructure
+import { mapMultimodalToGemini } from '@/infra/llm/providers/gemini/multimodal-mapper'
+import { getGeminiClient } from '@/server/llm/gemini.client'
+import type { MediaPartWithPath } from '@/infra/llm/multimodal/types'
+import { toExerciseInput, toPayloadContent } from '@/shared/exercise-conversion/helpers'
 import { z } from 'zod'
 
 export const pdfToExercisesTask: JobTask = {
@@ -1449,7 +1580,8 @@ export const pdfToExercisesTask: JobTask = {
   output: {},
 
   async handler({ job, req }) {
-    const payload = await getPayload({ config })
+    // v2.1 Fix 1: Use req.payload when available (testability), fallback to getPayload
+    const payload = req.payload ?? (await getPayload({ config }))
     const input = job.input as any
     const { lessonId, sourceDocId, tenantId } = input.ctx
 
@@ -1477,9 +1609,18 @@ export const pdfToExercisesTask: JobTask = {
       const segments = await segmentPdf(pdfPath, MAX_SEGMENT_PAGES)
       output.segmentsTotal = segments.length
 
-      // ========== Prepare Multimodal PDF Parts (SAME as Chat Media Upload) ==========
-      // Convert PDF to Gemini parts using the existing multimodal mapper
-      const pdfParts = await createGeminiPartsFromPdf(pdfPath)
+      // ========== Prepare Multimodal PDF Parts (v2.1: Use EXISTING infrastructure) ==========
+      // Create MediaPartWithPath for the PDF (same format as Chat Media Upload)
+      const mediaPartWithPath: MediaPartWithPath = {
+        mediaId: sourceDocId,
+        type: 'pdf',
+        absoluteFilePath: pdfPath,
+        publicUrl: '', // Not needed for server-side processing
+        mimeType: 'application/pdf',
+      }
+
+      // Convert PDF to Gemini parts using existing multimodal mapper
+      const geminiParts = await mapMultimodalToGemini([mediaPartWithPath], payload, req)
 
       // PASS 2: Extract + Verify + Persist
       for (let i = 0; i < segments.length; i++) {
@@ -1488,11 +1629,12 @@ export const pdfToExercisesTask: JobTask = {
 
         try {
           const exercises = await processSegmentWithMultimodal(payload, req, {
-            pdfParts, // Multimodal parts - NOT just text
+            geminiParts, // v2.1: Use existing infrastructure output
             pdfPath,
             segment,
             extractorPrompt: input.promptSnapshot.extractor,
             verifierPrompt: input.promptSnapshot.verifier,
+            output, // v2.1: Pass output for exercisesSkipped tracking
           })
 
           let created = 0
@@ -1597,19 +1739,21 @@ async function segmentPdf(pdfPath: string, maxPagesPerSegment: number) {
 
 /**
  * Process segment with REAL multimodal PDF attachment
+ * v2.1: Updated to use existing infrastructure and retry-once-then-skip verification
  */
 async function processSegmentWithMultimodal(
   payload: any,
   req: any,
   context: {
-    pdfParts: any[] // REAL multimodal parts from createGeminiPartsFromPdf
+    geminiParts: { currentMessage: any[] } // v2.1: Output from mapMultimodalToGemini
     pdfPath: string
     segment: { pageStart: number; pageEnd: number }
     extractorPrompt: string
     verifierPrompt: string
+    output: any // v2.1: For tracking exercisesSkipped
   },
 ) {
-  const { pdfParts, pdfPath, segment, extractorPrompt, verifierPrompt } = context
+  const { geminiParts, pdfPath, segment, extractorPrompt, verifierPrompt, output } = context
 
   // ========== Call Extractor with MULTIMODAL PDF Attachment ==========
   const extractorPromptWithContext = `${extractorPrompt}
@@ -1621,22 +1765,46 @@ Return a JSON array of exercises with this schema:
   {
     "title": "Exercise title",
     "blocks": [
-      { "type": "rich_text", "format": "md-math-v1", "value": "..." },
-      { "type": "latex", "latex": "\\\\frac{1}{2}", "renderMode": "block" }
+      { "type": "rich_text", "id": "optional-id", "format": "md-math-v1", "value": "..." },
+      { "type": "latex", "id": "optional-id", "latex": "\\\\frac{1}{2}", "renderMode": "block" }
     ],
     "orderInSegment": 1
   }
 ]`
 
-  // Send PDF as multimodal attachment, NOT as text
-  const extractorResponse = await callGeminiMultimodal(pdfParts, extractorPromptWithContext)
+  // v2.1: Use existing Gemini client infrastructure
+  const geminiClient = await getGeminiClient(payload)
+  const model = geminiClient.getGenerativeModel({ model: 'gemini-1.5-pro' })
+
+  const extractorResult = await model.generateContent({
+    contents: [{
+      role: 'user',
+      parts: [
+        { text: extractorPromptWithContext },
+        ...geminiParts.currentMessage,
+      ],
+    }],
+  })
+
+  const extractorResponse = extractorResult.response.text()
   const rawExtracted = parseExtractorResponse(extractorResponse)
 
   // ========== Schema Validation for Extractor Output ==========
   const extracted = validateExtractedExercises(rawExtracted, segment)
 
-  // ========== Call Verifier with MULTIMODAL PDF Attachment ==========
-  for (const exercise of extracted) {
+  // ========== v2.1: Enrich with block IDs if missing ==========
+  const enrichedExercises = extracted.map(exercise => ({
+    ...exercise,
+    blocks: exercise.blocks.map(block => ({
+      ...block,
+      id: block.id || nanoid(), // Generate ID if LLM didn't provide one
+    })),
+  }))
+
+  // ========== v2.1: Call Verifier with RETRY-ONCE-THEN-SKIP logic ==========
+  const validExercises: ExerciseExtracted[] = []
+
+  for (const exercise of enrichedExercises) {
     const verifierPromptWithContext = `${verifierPrompt}
 
 Exercise to verify:
@@ -1646,23 +1814,61 @@ Source PDF pages: ${segment.pageStart}-${segment.pageEnd}
 
 Return JSON: { "valid": boolean, "reason": "..." }`
 
-    const verifierResponse = await callGeminiMultimodal(pdfParts, verifierPromptWithContext)
-    const verification = parseVerifierResponse(verifierResponse)
+    // First verification attempt
+    let verification = await callVerifier(model, geminiParts, verifierPromptWithContext)
 
+    // v2.1: Retry once if verification fails
     if (!verification.valid) {
-      throw { code: 'VERIFICATION_FAILED', message: verification.reason }
+      console.log(`[PDF→Exercises] Verification failed for "${exercise.title}", retrying...`)
+      verification = await callVerifier(model, geminiParts, verifierPromptWithContext)
     }
+
+    // v2.1: Skip invalid exercises instead of failing the job
+    if (!verification.valid) {
+      console.warn(`[PDF→Exercises] Skipping exercise "${exercise.title}" after retry: ${verification.reason}`)
+      output.errors.push({
+        stage: 'PASS2_VERIFY',
+        pageRange: { start: segment.pageStart, end: segment.pageEnd },
+        code: 'VERIFICATION_FAILED',
+        message: verification.reason || 'Verification failed after retry',
+        exerciseTitle: exercise.title,
+        skipped: true,
+      })
+      output.exercisesSkipped = (output.exercisesSkipped || 0) + 1
+      continue // Skip this exercise, continue with others
+    }
+
+    validExercises.push(exercise)
   }
 
-  return extracted
+  return validExercises
 }
 
 /**
- * Call Gemini with multimodal PDF attachment (SAME as Chat Media Upload)
+ * v2.1: Helper to call verifier (extracted for retry logic)
  */
-async function callGeminiMultimodal(pdfParts: any[], prompt: string): Promise<string> {
-  return generateContent({ pdfParts, prompt })
+async function callVerifier(
+  model: any,
+  geminiParts: { currentMessage: any[] },
+  prompt: string,
+): Promise<{ valid: boolean; reason?: string }> {
+  try {
+    const result = await model.generateContent({
+      contents: [{
+        role: 'user',
+        parts: [
+          { text: prompt },
+          ...geminiParts.currentMessage,
+        ],
+      }],
+    })
+    return parseVerifierResponse(result.response.text())
+  } catch (error) {
+    return { valid: false, reason: `Verifier call failed: ${error}` }
+  }
 }
+
+// v2.1: callGeminiMultimodal removed - use model.generateContent directly with existing infrastructure
 
 function parseExtractorResponse(response: string): any[] {
   try {
@@ -1675,17 +1881,18 @@ function parseExtractorResponse(response: string): any[] {
 
 /**
  * Zod schema for ExerciseExtracted validation
+ * v2.1 Fix 1: Block `id` is OPTIONAL in extractor output - we generate with nanoid() after validation
  */
 const RichTextBlockSchema = z.object({
   type: z.literal('rich_text'),
-  id: z.string().min(1),
+  id: z.string().min(1).optional(), // v2.1: Optional - generated post-validation if missing
   format: z.literal('md-math-v1'),
   value: z.string(),
 })
 
 const LatexBlockSchema = z.object({
   type: z.literal('latex'),
-  id: z.string().min(1),
+  id: z.string().min(1).optional(), // v2.1: Optional - generated post-validation if missing
   latex: z.string().min(1),
   renderMode: z.enum(['block', 'inline']).default('block'),
 })
@@ -2297,28 +2504,66 @@ describe('POST /api/exercises/convert/queue', () => {
 
 **File:** [`tests/integration/prompts-for-conversion.test.ts`](tests/integration/prompts-for-conversion.test.ts:1)
 
+**v2.1 Fixes Applied:**
+- Fix 4: Use TEST_ADMIN_SECRET for auth (not session cookies)
+- Fix 5: Use PAYLOAD_PUBLIC_SERVER_URL env var consistently
+
 ```typescript
-describe('GET /api/prompts/for-conversion', () => {
+// v2.1 Fix 4 & 5: Use TEST_ADMIN_SECRET and standardized env var
+const BASE_URL = process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'
+const TEST_SECRET = process.env.TEST_ADMIN_SECRET
+
+describe('POST /api/prompts/for-conversion', () => {
   beforeAll(async () => {
     // Setup: tenant, course, lesson with tenant, prompts with usage
+    // Ensure NODE_ENV=test and TEST_ADMIN_SECRET are set
+  })
+
+  // v2.1 Fix 2: Test GET returns 405
+  describe('method validation', () => {
+    it('returns 405 for GET requests', async () => {
+      const response = await fetch(`${BASE_URL}/api/prompts/for-conversion`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${TEST_SECRET}` },
+      })
+      expect(response.status).toBe(405)
+      expect(response.headers.get('Allow')).toBe('POST')
+      const data = await response.json()
+      expect(data.error.code).toBe('METHOD_NOT_ALLOWED')
+    })
   })
 
   describe('authentication', () => {
-    it('rejects non-admin with 401', async () => {
-      const response = await fetch(`${url}/prompts/for-conversion`, {
+    it('rejects request without auth header with 401', async () => {
+      const response = await fetch(`${BASE_URL}/api/prompts/for-conversion`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${nonAdminToken}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lessonId }),
       })
       expect(response.status).toBe(401)
+    })
+
+    it('accepts TEST_ADMIN_SECRET in test environment', async () => {
+      const response = await fetch(`${BASE_URL}/api/prompts/for-conversion`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${TEST_SECRET}`,
+        },
+        body: JSON.stringify({ lessonId }),
+      })
+      expect(response.status).toBe(200)
     })
   })
 
   describe('tenant resolution', () => {
     it('resolves tenant from lesson → course → tenant', async () => {
-      const response = await fetch(`${url}/prompts/for-conversion`, {
+      const response = await fetch(`${BASE_URL}/api/prompts/for-conversion`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${adminToken}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${TEST_SECRET}`,
+        },
         body: JSON.stringify({ lessonId }),
       })
       expect(response.status).toBe(200)
@@ -2328,21 +2573,51 @@ describe('GET /api/prompts/for-conversion', () => {
   })
 
   describe('prompt filtering', () => {
-    it('returns only published prompts', async () => {
-      const response = await fetch(`${url}/prompts/for-conversion`, {
+    // v2.1 Fix 1: Test that status field is included
+    it('returns only published prompts with status field', async () => {
+      const response = await fetch(`${BASE_URL}/api/prompts/for-conversion`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${adminToken}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${TEST_SECRET}`,
+        },
         body: JSON.stringify({ lessonId }),
       })
       const data = await response.json()
+      // v2.1: Verify status field is present and all are published
       expect(data.extractors.every((p: any) => p.status === 'published')).toBe(true)
       expect(data.verifiers.every((p: any) => p.status === 'published')).toBe(true)
+      // Verify status field exists (not undefined)
+      if (data.extractors.length > 0) {
+        expect(data.extractors[0]).toHaveProperty('status')
+      }
+    })
+
+    it('excludes draft prompts from results', async () => {
+      // Create a draft prompt for the same tenant
+      const draftPrompt = await createPrompt({ status: 'draft', usage: 'extractor' })
+
+      const response = await fetch(`${BASE_URL}/api/prompts/for-conversion`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${TEST_SECRET}`,
+        },
+        body: JSON.stringify({ lessonId }),
+      })
+      const data = await response.json()
+
+      // Draft prompt should NOT appear in results
+      expect(data.extractors.find((p: any) => p.id === draftPrompt.id)).toBeUndefined()
     })
 
     it('filters by usage: extractor', async () => {
-      const response = await fetch(`${url}/prompts/for-conversion`, {
+      const response = await fetch(`${BASE_URL}/api/prompts/for-conversion`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${adminToken}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${TEST_SECRET}`,
+        },
         body: JSON.stringify({ lessonId }),
       })
       const data = await response.json()
@@ -2350,9 +2625,12 @@ describe('GET /api/prompts/for-conversion', () => {
     })
 
     it('filters by usage: verifier', async () => {
-      const response = await fetch(`${url}/prompts/for-conversion`, {
+      const response = await fetch(`${BASE_URL}/api/prompts/for-conversion`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${adminToken}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${TEST_SECRET}`,
+        },
         body: JSON.stringify({ lessonId }),
       })
       const data = await response.json()
@@ -2452,54 +2730,93 @@ describe('POST /api/exercises/convert/runner', () => {
 
 **File:** [`tests/contract/gemini-client.test.ts`](tests/contract/gemini-client.test.ts:1)
 
-```typescript
-import { createGeminiPartsFromPdf, generateContent } from '@/server/llm/gemini.client'
+**v2.1 Fix 2:** Aligned with existing LLM infrastructure (`mapMultimodalToGemini` + `getGeminiClient`)
 
-describe('Gemini Client Contract', () => {
-  describe('createGeminiPartsFromPdf', () => {
-    it('produces output matching expected shape for multimodal', async () => {
+**Actual function signature (from codebase):**
+```typescript
+mapMultimodalToGemini(
+  mediaPartsWithPath: MediaPartWithPath[],
+  payload: Payload,
+  req?: { headers: { authorization?: string; cookie?: string } },
+): Promise<{ currentMessage: Part[] }>
+```
+
+```typescript
+import { mapMultimodalToGemini } from '@/infra/llm/providers/gemini/multimodal-mapper'
+import { getGeminiClient } from '@/server/llm/gemini.client'
+import type { MediaPartWithPath } from '@/infra/llm/multimodal/types'
+import type { Payload } from 'payload'
+import path from 'path'
+
+// v2.1 Fix 2: Mock Payload with correct shape for multimodal mapper
+const mockPayload = {
+  findGlobal: jest.fn().mockResolvedValue({ geminiApiKey: 'test-key' }),
+  // Add any other methods the mapper might call
+} as unknown as Payload
+
+// v2.1 Fix 2: Mock req with correct shape (optional but matches real usage)
+const mockReq = {
+  headers: { authorization: undefined, cookie: undefined },
+}
+
+describe('Gemini Infrastructure Contract', () => {
+  describe('mapMultimodalToGemini', () => {
+    it('produces output matching expected shape { currentMessage: Part[] }', async () => {
       // Use a small test PDF file
       const pdfPath = path.join(__dirname, '../fixtures/sample.pdf')
-      const parts = await createGeminiPartsFromPdf(pdfPath)
+      const mediaPartWithPath: MediaPartWithPath = {
+        mediaId: 'test-media-id',
+        type: 'pdf',
+        absoluteFilePath: pdfPath,
+        publicUrl: '',
+        mimeType: 'application/pdf',
+      }
 
-      // Contract: must return array with inlineData for PDF
-      expect(Array.isArray(parts)).toBe(true)
-      expect(parts.length).toBeGreaterThan(0)
+      // v2.1 Fix 2: Call with same signature as task uses
+      const result = await mapMultimodalToGemini([mediaPartWithPath], mockPayload, mockReq)
 
-      // Each part should have mimeType and data
-      parts.forEach((part: any) => {
+      // Contract: must return { currentMessage: Part[] }
+      expect(result).toHaveProperty('currentMessage')
+      expect(Array.isArray(result.currentMessage)).toBe(true)
+      expect(result.currentMessage.length).toBeGreaterThan(0)
+
+      // Each part should have inlineData with mimeType and data
+      result.currentMessage.forEach((part: any) => {
         expect(part.inlineData).toBeDefined()
         expect(part.inlineData.mimeType).toBe('application/pdf')
-        expect(part.inlineData.data).toBeDefined()
+        expect(typeof part.inlineData.data).toBe('string') // base64
       })
     })
 
-    it('throws for non-existent file', async () => {
-      await expect(createGeminiPartsFromPdf('/nonexistent/file.pdf')).rejects.toThrow()
+    it('handles multiple media parts', async () => {
+      const pdfPath = path.join(__dirname, '../fixtures/sample.pdf')
+      const parts: MediaPartWithPath[] = [
+        { mediaId: 'pdf1', type: 'pdf', absoluteFilePath: pdfPath, publicUrl: '', mimeType: 'application/pdf' },
+      ]
+
+      // v2.1 Fix 2: Use consistent signature
+      const result = await mapMultimodalToGemini(parts, mockPayload, mockReq)
+
+      expect(result.currentMessage.length).toBe(parts.length)
     })
   })
 
-  describe('generateContent', () => {
-    it('accepts pdfParts and prompt, returns text', async () => {
-      const pdfParts = [
-        {
-          inlineData: {
-            mimeType: 'application/pdf',
-            data: Buffer.from('test').toString('base64'),
-          },
-        },
-      ]
-      const prompt = 'Extract exercises from this PDF'
+  describe('getGeminiClient', () => {
+    it('returns client with getGenerativeModel method', async () => {
+      const client = await getGeminiClient(mockPayload as any)
 
-      // Mock the actual API call or use a mock
-      const response = await generateContent({ pdfParts, prompt })
-
-      // Contract: must return string response
-      expect(typeof response).toBe('string')
+      // Contract: must have getGenerativeModel method
+      expect(client).toHaveProperty('getGenerativeModel')
+      expect(typeof client.getGenerativeModel).toBe('function')
     })
 
-    it('throws on API error', async () => {
-      // Test error handling contract
+    it('getGenerativeModel returns object with generateContent method', async () => {
+      const client = await getGeminiClient(mockPayload as any)
+      const model = client.getGenerativeModel({ model: 'gemini-1.5-pro' })
+
+      // Contract: model must have generateContent method
+      expect(model).toHaveProperty('generateContent')
+      expect(typeof model.generateContent).toBe('function')
     })
   })
 })
@@ -2511,28 +2828,93 @@ describe('Gemini Client Contract', () => {
 
 **File:** [`tests/integration/pdf-to-exercises-task.test.ts`](tests/integration/pdf-to-exercises-task.test.ts:1)
 
+**v2.1 Fix 3:** Mock the correct modules (`getGeminiClient` + `mapMultimodalToGemini`)
+
+**v2.1 Testability Fix:** Mock filesystem operations for PASS0 determinism
+
 ```typescript
-// Mock Gemini client before importing task
+// v2.1 Fix 3: Mock the ACTUAL modules used by the task
 jest.mock('@/server/llm/gemini.client', () => ({
-  createGeminiPartsFromPdf: jest.fn(),
-  generateContent: jest.fn(),
-  toExerciseInput: jest.fn((e) => e), // Passthrough for test
-  toPayloadContent: jest.fn((e) => e),
+  getGeminiClient: jest.fn(),
+}))
+
+jest.mock('@/infra/llm/providers/gemini/multimodal-mapper', () => ({
+  mapMultimodalToGemini: jest.fn(),
+}))
+
+// Mock pdfjs-dist for segmentation
+jest.mock('pdfjs-dist', () => ({
+  getDocument: jest.fn().mockReturnValue({
+    promise: Promise.resolve({ numPages: 2 }),
+  }),
+}))
+
+// v2.1 Testability Fix: Mock filesystem operations for PASS0
+// This allows tests to run without real PDF files on disk
+jest.mock('fs', () => ({
+  existsSync: jest.fn().mockReturnValue(true),
+  openSync: jest.fn().mockReturnValue(1),
+  readSync: jest.fn((fd, buffer) => {
+    // Write PDF magic bytes to buffer
+    Buffer.from('%PDF').copy(buffer)
+    return 4
+  }),
+  closeSync: jest.fn(),
+  readFileSync: jest.fn().mockReturnValue(Buffer.from('%PDF-1.4 mock content')),
+  statSync: jest.fn().mockReturnValue({ size: 1024 }), // 1KB mock file
+}))
+
+// Mock the pdf-fetcher to return a predictable path
+jest.mock('@/server/services/pdf-fetcher', () => ({
+  getPdfAbsolutePath: jest.fn().mockResolvedValue('/mock/path/test.pdf'),
+  getPdfFileSize: jest.fn().mockResolvedValue(1024),
 }))
 
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
+import { getGeminiClient } from '@/server/llm/gemini.client'
+import { mapMultimodalToGemini } from '@/infra/llm/providers/gemini/multimodal-mapper'
+import { getPdfAbsolutePath } from '@/server/services/pdf-fetcher'
+
+// Helper to create mock generateContent responses
+function mockExtractorResponse(exercises: any[]) {
+  return { response: { text: () => JSON.stringify(exercises) } }
+}
+
+function mockVerifierResponse(valid: boolean, reason?: string) {
+  return { response: { text: () => JSON.stringify({ valid, reason }) } }
+}
 
 describe('pdfToExercisesTask', () => {
   let mockPayload: any
   let mockReq: any
+  let mockGenerateContent: jest.Mock
 
   beforeEach(() => {
+    jest.clearAllMocks()
+
+    // Setup mock Gemini client
+    mockGenerateContent = jest.fn()
+    ;(getGeminiClient as jest.Mock).mockResolvedValue({
+      getGenerativeModel: () => ({
+        generateContent: mockGenerateContent,
+      }),
+    })
+
+    // Setup mock multimodal mapper
+    ;(mapMultimodalToGemini as jest.Mock).mockResolvedValue({
+      currentMessage: [{ inlineData: { mimeType: 'application/pdf', data: 'base64data' } }],
+    })
+
+    // v2.1: Reset pdf-fetcher mock
+    ;(getPdfAbsolutePath as jest.Mock).mockResolvedValue('/mock/path/test.pdf')
+
     mockPayload = {
       findByID: jest.fn(),
       find: jest.fn(),
       create: jest.fn(),
     }
-    mockReq = { payload: mockPayload }
+    // v2.1 Fix 1: req.payload is used by task handler
+    mockReq = { payload: mockPayload, headers: {} }
   })
 
   describe('deduplication', () => {
@@ -2540,6 +2922,13 @@ describe('pdfToExercisesTask', () => {
       mockPayload.findByID.mockResolvedValue({ filename: 'test.pdf', mimeType: 'application/pdf' })
       mockPayload.find.mockResolvedValue({ docs: [] }) // No duplicate
       mockPayload.create.mockResolvedValue({ id: 'new-exercise' })
+
+      // Mock extractor returns 1 exercise (without id - tests Fix 1)
+      mockGenerateContent
+        .mockResolvedValueOnce(mockExtractorResponse([
+          { title: 'Exercise 1', blocks: [{ type: 'latex', latex: 'x=1' }], orderInSegment: 1 }
+        ]))
+        .mockResolvedValueOnce(mockVerifierResponse(true))
 
       const mockJob = {
         id: 'job-1',
@@ -2549,14 +2938,21 @@ describe('pdfToExercisesTask', () => {
         },
       }
 
-      await pdfToExercisesTask.handler({ job: mockJob, req: mockReq })
+      const result = await pdfToExercisesTask.handler({ job: mockJob, req: mockReq })
 
       expect(mockPayload.create).toHaveBeenCalledTimes(1)
+      expect(result.exercisesCreated).toBe(1)
     })
 
     it('counts deduped when exercise already exists', async () => {
       mockPayload.findByID.mockResolvedValue({ filename: 'test.pdf', mimeType: 'application/pdf' })
       mockPayload.find.mockResolvedValue({ docs: [{ id: 'existing' }] }) // Duplicate exists
+
+      mockGenerateContent
+        .mockResolvedValueOnce(mockExtractorResponse([
+          { title: 'Exercise 1', blocks: [{ type: 'latex', latex: 'x=1' }], orderInSegment: 1 }
+        ]))
+        .mockResolvedValueOnce(mockVerifierResponse(true))
 
       const mockJob = {
         id: 'job-1',
@@ -2575,7 +2971,23 @@ describe('pdfToExercisesTask', () => {
 
   describe('metadata persistence', () => {
     it('persists conversion metadata fields correctly', async () => {
-      // Setup mocks...
+      mockPayload.findByID.mockResolvedValue({ filename: 'test.pdf', mimeType: 'application/pdf' })
+      mockPayload.find.mockResolvedValue({ docs: [] })
+      mockPayload.create.mockResolvedValue({ id: 'new-ex' })
+
+      mockGenerateContent
+        .mockResolvedValueOnce(mockExtractorResponse([
+          { title: 'Test Ex', blocks: [{ type: 'latex', latex: 'y=2' }], orderInSegment: 1 }
+        ]))
+        .mockResolvedValueOnce(mockVerifierResponse(true))
+
+      const mockJob = {
+        id: 'job-1',
+        input: {
+          ctx: { lessonId: 'l1', sourceDocId: 'm1', tenantId: 't1' },
+          promptSnapshot: { extractor: 'prompt', verifier: 'prompt' },
+        },
+      }
 
       await pdfToExercisesTask.handler({ job: mockJob, req: mockReq })
 
@@ -2594,9 +3006,20 @@ describe('pdfToExercisesTask', () => {
     })
   })
 
-  describe('error mapping', () => {
-    it('produces failed output error entry on verifier failure', async () => {
-      // Mock LLM to return invalid verification
+  // v2.1: New tests for retry-once-then-skip behavior
+  describe('verification retry and skip', () => {
+    it('retries verification once then skips invalid exercise', async () => {
+      mockPayload.findByID.mockResolvedValue({ filename: 'test.pdf', mimeType: 'application/pdf' })
+      mockPayload.find.mockResolvedValue({ docs: [] })
+
+      // Extractor returns 1 exercise
+      // Verifier fails twice (retry + final)
+      mockGenerateContent
+        .mockResolvedValueOnce(mockExtractorResponse([
+          { title: 'Bad Exercise', blocks: [{ type: 'latex', latex: 'invalid' }], orderInSegment: 1 }
+        ]))
+        .mockResolvedValueOnce(mockVerifierResponse(false, 'Invalid content'))  // First attempt
+        .mockResolvedValueOnce(mockVerifierResponse(false, 'Still invalid'))    // Retry attempt
 
       const mockJob = {
         id: 'job-1',
@@ -2608,13 +3031,80 @@ describe('pdfToExercisesTask', () => {
 
       const result = await pdfToExercisesTask.handler({ job: mockJob, req: mockReq })
 
-      expect(result.errors.length).toBeGreaterThan(0)
-      expect(result.errors[0]).toEqual({
-        stage: 'PASS2_VERIFY',
-        pageRange: { start: 1, end: 2 },
-        code: 'VERIFICATION_FAILED',
-        message: expect.any(String),
-      })
+      // Exercise should be skipped, not created
+      expect(mockPayload.create).not.toHaveBeenCalled()
+      expect(result.exercisesSkipped).toBe(1)
+      expect(result.exercisesCreated).toBe(0)
+
+      // Error should be recorded with skipped: true
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          stage: 'PASS2_VERIFY',
+          code: 'VERIFICATION_FAILED',
+          skipped: true,
+          exerciseTitle: 'Bad Exercise',
+        })
+      )
+    })
+
+    it('succeeds on retry after first verification failure', async () => {
+      mockPayload.findByID.mockResolvedValue({ filename: 'test.pdf', mimeType: 'application/pdf' })
+      mockPayload.find.mockResolvedValue({ docs: [] })
+      mockPayload.create.mockResolvedValue({ id: 'created' })
+
+      // Verifier fails first, succeeds on retry
+      mockGenerateContent
+        .mockResolvedValueOnce(mockExtractorResponse([
+          { title: 'Flaky Exercise', blocks: [{ type: 'latex', latex: 'x' }], orderInSegment: 1 }
+        ]))
+        .mockResolvedValueOnce(mockVerifierResponse(false, 'Temporary failure'))  // First attempt fails
+        .mockResolvedValueOnce(mockVerifierResponse(true))                         // Retry succeeds
+
+      const mockJob = {
+        id: 'job-1',
+        input: {
+          ctx: { lessonId: 'l1', sourceDocId: 'm1', tenantId: 't1' },
+          promptSnapshot: { extractor: 'prompt', verifier: 'prompt' },
+        },
+      }
+
+      const result = await pdfToExercisesTask.handler({ job: mockJob, req: mockReq })
+
+      // Exercise should be created after successful retry
+      expect(mockPayload.create).toHaveBeenCalledTimes(1)
+      expect(result.exercisesCreated).toBe(1)
+      expect(result.exercisesSkipped).toBe(0)
+    })
+  })
+
+  describe('block ID generation', () => {
+    it('generates nanoid for blocks without id', async () => {
+      mockPayload.findByID.mockResolvedValue({ filename: 'test.pdf', mimeType: 'application/pdf' })
+      mockPayload.find.mockResolvedValue({ docs: [] })
+      mockPayload.create.mockResolvedValue({ id: 'new' })
+
+      // Extractor returns block WITHOUT id (per Fix 1)
+      mockGenerateContent
+        .mockResolvedValueOnce(mockExtractorResponse([
+          { title: 'No ID Exercise', blocks: [{ type: 'latex', latex: 'z=3' }], orderInSegment: 1 }
+        ]))
+        .mockResolvedValueOnce(mockVerifierResponse(true))
+
+      const mockJob = {
+        id: 'job-1',
+        input: {
+          ctx: { lessonId: 'l1', sourceDocId: 'm1', tenantId: 't1' },
+          promptSnapshot: { extractor: 'prompt', verifier: 'prompt' },
+        },
+      }
+
+      await pdfToExercisesTask.handler({ job: mockJob, req: mockReq })
+
+      // Verify create was called with generated block id
+      const createCall = mockPayload.create.mock.calls[0][0]
+      expect(createCall.data.content.blocks[0].id).toBeDefined()
+      expect(typeof createCall.data.content.blocks[0].id).toBe('string')
+      expect(createCall.data.content.blocks[0].id.length).toBeGreaterThan(0)
     })
   })
 })
@@ -2943,18 +3433,20 @@ jobs:
 
 ### 16.1 Key Decisions
 
-| Area             | Decision                                                        |
-| ---------------- | --------------------------------------------------------------- |
-| Admin UI         | Convert button per PDF, modal for prompt selection              |
-| Tenant scoping   | Server-side derivation from Lesson.course.tenant                |
-| Prompt selection | Admin selects from published prompts filtered by tenant + usage |
-| Multimodal       | Reuse Chat Media Upload pipeline (createGeminiPartsFromPdf)     |
-| Media access     | Direct absoluteFilePath resolution (NO proxy)                   |
-| Exercises        | Created as draft, include latex block + conversion metadata     |
-| Dedupe           | Key: (lessonId, sourceDocId, contentHash)                       |
-| Pipeline         | Pass0 load → Pass1 segment → Pass2 extract+verify+persist       |
-| Lock             | Mongo-only with hardened reclaim                                |
-| Runner           | GitHub Actions cron every 5 min                                 |
+| Area             | Decision                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------- |
+| Admin UI         | Convert button per PDF, modal for prompt selection                                    |
+| Tenant scoping   | Server-side derivation from Lesson.course.tenant                                      |
+| Prompt selection | Admin selects from published prompts filtered by tenant + usage                       |
+| Multimodal       | **v2.1:** Use existing `mapMultimodalToGemini()` + `getGeminiClient()` infrastructure |
+| Media access     | Direct absoluteFilePath resolution (NO proxy)                                         |
+| Exercises        | Created as draft, include latex block + conversion metadata                           |
+| Dedupe           | Key: (lessonId, sourceDocId, contentHash)                                             |
+| Pipeline         | Pass0 load → Pass1 segment → Pass2 extract+verify+persist                             |
+| Lock             | Mongo-only with hardened reclaim                                                      |
+| Runner           | GitHub Actions cron every 5 min                                                       |
+| **Verification** | **v2.1:** Retry once, then skip invalid (don't fail job)                              |
+| **Block IDs**    | **v2.1:** Generate with `nanoid()` if LLM doesn't provide                             |
 
 ### 16.2 Error Codes
 
@@ -3037,7 +3529,7 @@ jobs:
   - [ ] Reclaims expired running job (lockExpiresAt < now)
   - [ ] Returns processed=false when no jobs
 - [ ] Contract tests for multimodal attachment pass:
-  - [ ] `tests/contract/gemini-client.test.ts` - pdfParts shape verified
+  - [ ] `tests/contract/gemini-client.test.ts` - existing `mapMultimodalToGemini` shape verified
 - [ ] Pure helper tests pass:
   - [ ] `buildJobsWhereQuery` produces correct where clause
   - [ ] `validatePromptForUsageAndTenant` throws correct errors
@@ -3047,6 +3539,8 @@ jobs:
   - [ ] Deduplication creates 1, counts deduped
   - [ ] Metadata fields persisted correctly
   - [ ] Error mapping produces correct stage/code/message
+  - [ ] **v2.1:** Verification retry-once-then-skip works correctly
+  - [ ] **v2.1:** `exercisesSkipped` tracked in output
 - [ ] `pnpm test` passes with no failures
 
 ### Stage 3 (Admin UI) - Done When:
@@ -3054,6 +3548,7 @@ jobs:
 - [ ] Status panel query verified by integration test:
   - [ ] `buildJobsWhereQuery` tested in isolation
   - [ ] API call returns expected job status structure
+  - [ ] **v2.1:** Status panel displays `exercisesSkipped` count
 - [ ] ConvertModal → queue endpoint verified (API-level):
   - [ ] Queue endpoint called with correct payload
   - [ ] Job ID returned and displayed
@@ -3074,12 +3569,57 @@ jobs:
 - [ ] Import map updated: `pnpm generate:importmap`
 - [ ] TypeScript compiles: `tsc --noEmit`
 
+### v2.1 Specific Checklist
+
+- [ ] Job task uses existing `mapMultimodalToGemini()` from `@/infra/llm/providers/gemini/multimodal-mapper`
+- [ ] Job task uses existing `getGeminiClient()` from `@/server/llm/gemini.client`
+- [ ] Verification retries once before skipping invalid exercises
+- [ ] `exercisesSkipped` tracked in job output schema
+- [ ] Block IDs generated with `nanoid()` if LLM doesn't provide them
+- [ ] `pdfjs-dist` works in Node.js environment (may need legacy build)
+- [ ] No new LLM client functions created (reuse existing infrastructure)
+
+### v2.1 API Fix Checklist (`/api/prompts/for-conversion`)
+
+- [ ] Response includes `status` field for all prompts (Fix 1)
+- [ ] GET requests return 405 with `Allow: POST` header (Fix 2)
+- [ ] Draft prompts never appear in response (Fix 3 - filtering works)
+- [ ] Tests authenticate via `TEST_ADMIN_SECRET` header (Fix 4)
+- [ ] Tests use `PAYLOAD_PUBLIC_SERVER_URL` env var (Fix 5)
+- [ ] Integration test "status field included" passes
+- [ ] Integration test "draft prompt filtered out" passes
+
+### v2.1 Consistency Fix Checklist
+
+- [ ] Extractor Zod schema: block `id` is `optional()` (Fix 1)
+- [ ] Contract tests use `mapMultimodalToGemini` + `getGeminiClient` (Fix 2)
+- [ ] Task behavior tests mock correct modules (Fix 3)
+- [ ] PDF fetcher enforces size limit in both code paths (Fix 4)
+- [ ] No duplicate file entries in LLP (Fix 5)
+- [ ] ConversionStatusPanel shows `exercisesSkipped` (Fix 6)
+- [ ] Runner endpoint uses shared pure helpers (Fix 7)
+- [ ] Queue endpoint returns `PROMPT_NOT_FOUND` before validation crash (Fix 8)
+- [ ] `pnpm test` passes with no failures
+- [ ] No references to removed/nonexistent LLM helper functions
+- [ ] Extractor output with missing block IDs succeeds end-to-end
+
+### v2.1 Testability Fix Checklist (Must-Pass CI)
+
+- [ ] Task handler uses `req.payload ?? getPayload({ config })` (testable via `req.payload`)
+- [ ] Contract tests call `mapMultimodalToGemini(parts, payload, req)` with exact signature
+- [ ] Task behavior tests mock `fs` operations for PASS0 determinism
+- [ ] Task behavior tests mock `getPdfAbsolutePath` to avoid real file dependency
+- [ ] `RawExtractedExercise` type has optional `id` on blocks
+- [ ] `ExerciseExtractedEnriched` type has required `id` on blocks
+- [ ] `enrichBlockIds()` function exists and is called after Zod validation
+- [ ] Tests genuinely exercise PASS0+PASS2 (no fake-green)
+
 ---
 
 ## LLP Length Guard
 
-> **No section removed, no summarization. LLP v2.0 preserved (with Agent Fixes).**
+> **No section removed, no summarization. LLP v2.1 preserved (with LLM Alignment + Verification Behavior fixes).**
 >
 > All content above is required for implementation.
 
-**End of LLP v2.0 (Agent Fixes Applied)**
+**End of LLP v2.1 (LLM Infrastructure Alignment Applied)**
