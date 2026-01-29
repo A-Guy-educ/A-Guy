@@ -101,8 +101,8 @@ export const Prompts: CollectionConfig = {
     },
   ],
   indexes: [
-    // Keep existing indexes
-    { fields: { tenant: 1, status: 1, usage: 1 }, name: 'idx_prompt_tenant_status_usage' },
+    // Compound index for tenant + status + usage filtering
+    { fields: ['tenant', 'status', 'usage'], name: 'idx_prompt_tenant_status_usage' },
   ],
   timestamps: true,
 }
