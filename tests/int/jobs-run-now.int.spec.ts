@@ -58,13 +58,27 @@ describe('Jobs Run Now', () => {
       },
     })
 
+    // Create a test category first (required for courses)
+    const category = await payload.create({
+      collection: 'categories',
+      data: {
+        title: 'Test Category',
+        slug: `test-category-${Date.now()}`,
+      },
+    })
+
     // Create a test course and chapter
     const course = await payload.create({
       collection: 'courses',
       data: {
+        courseLabel: 'Test',
         title: 'Test Course',
         slug: `test-course-${Date.now()}`,
         tenant: tenant.id,
+        categories: [category.id],
+        order: 0,
+        status: 'published',
+        isActive: true,
       } as any,
     })
 
