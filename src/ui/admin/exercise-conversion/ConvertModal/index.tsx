@@ -1,8 +1,5 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import * as DialogPrimitive from '@radix-ui/react-dialog'
-import { X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface ConvertModalProps {
@@ -20,73 +17,6 @@ interface PromptOption {
   usage: string
 }
 
-// Custom dialog components that work in Payload admin
-const Dialog = DialogPrimitive.Root
-const DialogTrigger = DialogPrimitive.Trigger
-const DialogClose = DialogPrimitive.Close
-const DialogOverlay = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Overlay
-    ref={ref}
-    className={cn(
-      'fixed inset-0 z-[1000] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-      className,
-    )}
-    {...props}
-  />
-))
-DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
-
-const DialogContent = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <div className="fixed left-[50%] top-[50%] z-[1001] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg">
-    <DialogPrimitive.Content ref={ref} className={cn('', className)} {...props}>
-      {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </div>
-))
-DialogContent.displayName = DialogPrimitive.Content.displayName
-
-const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)} {...props} />
-)
-DialogHeader.displayName = 'DialogHeader'
-
-const DialogTitle = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Title>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title
-    ref={ref}
-    className={cn('text-lg font-semibold leading-none tracking-tight', className)}
-    {...props}
-  />
-))
-DialogTitle.displayName = DialogPrimitive.Title.displayName
-
-const DialogDescription = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Description>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description
-    ref={ref}
-    className={cn('text-sm text-muted-foreground', className)}
-    {...props}
-  />
-))
-DialogDescription.displayName = DialogPrimitive.Description.displayName
-
-import { cn } from '@/infra/utils/ui'
-import * as React from 'react'
-
 export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertModalProps) {
   const [extractorPrompts, setExtractorPrompts] = useState<PromptOption[]>([])
   const [verifierPrompts, setVerifierPrompts] = useState<PromptOption[]>([])
@@ -96,11 +26,6 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [open, setOpen] = useState(false)
-
-  useEffect(() => {
-    setOpen(true)
-  }, [])
 
   useEffect(() => {
     async function loadPrompts() {
@@ -126,10 +51,8 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
       }
     }
 
-    if (open) {
-      loadPrompts()
-    }
-  }, [lessonId, open])
+    loadPrompts()
+  }, [lessonId])
 
   async function handleSubmit() {
     setIsSubmitting(true)
@@ -156,7 +79,6 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
       const data = await response.json()
       setSuccess(`Conversion queued! Job ID: ${data.jobId}`)
       setTimeout(() => {
-        setOpen(false)
         onClose()
       }, 2000)
     } catch (err) {
@@ -166,34 +88,36 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
     }
   }
 
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen)
-    if (!newOpen) {
-      onClose()
-    }
-  }
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Convert PDF to Exercises</DialogTitle>
-          <DialogDescription>File: {filename}</DialogDescription>
-        </DialogHeader>
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/80" onClick={onClose} />
 
+      {/* Modal content */}
+      <div className="relative z-[1001] bg-white dark:bg-zinc-900 rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+        {/* Header */}
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold">Convert PDF to Exercises</h2>
+          <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">File: {filename}</p>
+        </div>
+
+        {/* Error/Success messages */}
         {error && (
-          <div className="bg-destructive/15 text-destructive p-3 rounded-md text-sm">{error}</div>
+          <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded p-3 mb-4 text-sm">
+            {error}
+          </div>
         )}
         {success && (
-          <div className="bg-green-100 text-green-700 p-3 rounded-md text-sm">{success}</div>
+          <div className="bg-green-100 text-green-700 rounded p-3 mb-4 text-sm">{success}</div>
         )}
 
         {isLoading ? (
-          <div className="text-muted-foreground">Loading prompts...</div>
+          <div className="text-zinc-500">Loading prompts...</div>
         ) : (
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <label htmlFor="extractor" className="text-sm font-medium">
+          <div className="space-y-4">
+            {/* Extractor select */}
+            <div>
+              <label htmlFor="extractor" className="block text-sm font-medium mb-1">
                 Extractor Prompt
               </label>
               <select
@@ -201,7 +125,7 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
                 value={selectedExtractor}
                 onChange={(e) => setSelectedExtractor(e.target.value)}
                 required
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
               >
                 <option value="">Select extractor prompt...</option>
                 {extractorPrompts.map((prompt) => (
@@ -212,8 +136,9 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
               </select>
             </div>
 
-            <div className="grid gap-2">
-              <label htmlFor="verifier" className="text-sm font-medium">
+            {/* Verifier select */}
+            <div>
+              <label htmlFor="verifier" className="block text-sm font-medium mb-1">
                 Verifier Prompt
               </label>
               <select
@@ -221,7 +146,7 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
                 value={selectedVerifier}
                 onChange={(e) => setSelectedVerifier(e.target.value)}
                 required
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
               >
                 <option value="">Select verifier prompt...</option>
                 {verifierPrompts.map((prompt) => (
@@ -232,22 +157,45 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
               </select>
             </div>
 
-            <div className="flex justify-end gap-2 mt-4">
-              <DialogClose asChild>
-                <Button variant="outline" disabled={isSubmitting}>
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button
+            {/* Actions */}
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-sm font-medium disabled:opacity-50"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 rounded-md bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
                 disabled={isSubmitting || !selectedExtractor || !selectedVerifier}
               >
                 {isSubmitting ? 'Queuing...' : 'Queue Conversion'}
-              </Button>
+              </button>
             </div>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+
+        {/* Close button */}
+        <button
+          type="button"
+          className="absolute right-4 top-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+          onClick={onClose}
+        >
+          <span className="sr-only">Close</span>
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
   )
 }
