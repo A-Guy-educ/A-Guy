@@ -16,9 +16,11 @@ export const AI_MODELS = {
     temperature: 0.7, // More natural responses
     maxOutputTokens: 2048,
   },
-  // Future models can be added here:
-  // EXERCISE_EDITOR: { ... }
-  // TEXT_TO_EXERCISE: { ... }
+  PDF_TO_EXERCISE: {
+    name: 'gemini-2.0-flash-001', // 'gemini-1.5-pro'
+    temperature: 0.1, // Low for deterministic JSON output
+    maxOutputTokens: 8192,
+  },
 } as const
 
 export type AIModelKey = keyof typeof AI_MODELS

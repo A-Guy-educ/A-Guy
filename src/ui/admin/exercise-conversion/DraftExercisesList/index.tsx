@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 interface DraftExercisesListProps {
   lessonId: string
@@ -34,10 +34,13 @@ export function DraftExercisesList({ lessonId, sourceDocId }: DraftExercisesList
               { origin: { equals: 'conversion' } },
               { status: { equals: 'draft' } },
             ],
-          })
+          }),
         )
 
-        const response = await fetch(`/api/exercises?where=${where}&limit=100&sort=sourceOrderInSegment`)
+        const response = await fetch(
+          `/api/exercises?where=${where}&limit=100&sort=sourceOrderInSegment`,
+          { credentials: 'include' },
+        )
         if (response.ok) {
           const data = await response.json()
           setExercises(data.docs || [])

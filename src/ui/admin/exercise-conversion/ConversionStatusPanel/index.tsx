@@ -1,15 +1,7 @@
 'use client'
 
-import { buildJobsWhereQuery } from '@/lib/exercise-conversion/helpers'
 import { useEffect, useState } from 'react'
 
-interface ConversionStatusPanelProps {
-  lessonId: string
-  mediaId: string
-  onViewExercises?: () => void
-}
-
-// v2.1 Fix 6: Include exercisesSkipped and richer error fields
 interface JobStatus {
   id: string
   status: 'queued' | 'running' | 'completed' | 'failed'
@@ -19,16 +11,19 @@ interface JobStatus {
     segmentsFailed: number
     exercisesCreated: number
     exercisesDeduped: number
-    exercisesSkipped?: number // v2.1: Exercises that failed verification after retry
     errors: Array<{
       stage: string
       code: string
       message: string
-      exerciseTitle?: string // v2.1: Title of skipped exercise
-      skipped?: boolean // v2.1: True if exercise was skipped
     }>
   }
   updatedAt: string
+}
+
+interface ConversionStatusPanelProps {
+  lessonId: string
+  mediaId: string
+  onViewExercises?: () => void
 }
 
 export function ConversionStatusPanel({
@@ -38,23 +33,29 @@ export function ConversionStatusPanel({
 }: ConversionStatusPanelProps) {
   const [status, setStatus] = useState<JobStatus | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isRunning, setIsRunning] = useState(false)
 
   useEffect(() => {
     async function fetchStatus() {
       try {
-        // Fetch from Payload Jobs REST API with proper where clause
-        // Use relative URL to avoid cross-origin cookie issues
-        const where = encodeURIComponent(JSON.stringify(buildJobsWhereQuery(lessonId, mediaId)))
+        const response = await fetch(
+          `/api/exercises/convert/status?lessonId=${lessonId}&mediaId=${mediaId}&limit=1`,
+          { credentials: 'include' },
+        )
 
-        const response = await fetch(`/api/jobs?where=${where}&limit=1&sort=-createdAt`)
-        if (response.ok) {
-          const data = await response.json()
-          if (data.docs && data.docs.length > 0) {
-            setStatus(data.docs[0])
-          }
+        if (!response.ok) {
+          setStatus(null)
+          return
         }
-      } catch (_err) {
-        // Silently fail - no active job
+
+        const data = await response.json()
+        if (data.docs && data.docs.length > 0) {
+          setStatus(data.docs[0])
+        } else {
+          setStatus(null)
+        }
+      } catch {
+        setStatus(null)
       } finally {
         setIsLoading(false)
       }
@@ -64,6 +65,27 @@ export function ConversionStatusPanel({
     const interval = setInterval(fetchStatus, 10000)
     return () => clearInterval(interval)
   }, [lessonId, mediaId])
+
+  const handleRunNow = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (!status?.id) return
+
+    setIsRunning(true)
+    try {
+      await fetch('/api/jobs/run-immediate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId: status.id }),
+      })
+      // Refresh status
+      setStatus(null)
+      setIsLoading(true)
+    } catch (error) {
+      console.error('[ConversionStatusPanel] Error:', error)
+    } finally {
+      setIsRunning(false)
+    }
+  }
 
   if (isLoading) {
     return <div className="conversion-status loading">Loading status...</div>
@@ -77,11 +99,26 @@ export function ConversionStatusPanel({
     ? Math.round((status.output.segmentsDone / status.output.segmentsTotal) * 100)
     : 0
 
+  const canRun = status.status === 'queued' || status.status === 'failed'
+
   return (
     <div className={`conversion-status ${status.status}`}>
       <div className="status-header">
         <h3>Conversion Status</h3>
-        <span className={`badge badge-${status.status}`}>{status.status}</span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span className={`badge badge-${status.status}`}>{status.status}</span>
+          {canRun && (
+            <button
+              type="button"
+              className="btn btn--style-secondary"
+              onClick={handleRunNow}
+              disabled={isRunning}
+              style={{ padding: '4px 12px', fontSize: '12px' }}
+            >
+              {isRunning ? 'Running...' : '▶ Run Now'}
+            </button>
+          )}
+        </div>
       </div>
 
       {status.status === 'running' && (
@@ -105,10 +142,6 @@ export function ConversionStatusPanel({
                 {status.output.exercisesCreated} created
                 {status.output.exercisesDeduped > 0 &&
                   ` (${status.output.exercisesDeduped} deduped)`}
-                {/* v2.1 Fix 6: Show skipped count */}
-                {status.output.exercisesSkipped && status.output.exercisesSkipped > 0 && (
-                  <span className="skipped"> ({status.output.exercisesSkipped} skipped)</span>
-                )}
               </span>
             </div>
           </>

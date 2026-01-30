@@ -15,6 +15,7 @@ import { MetaTitleComponent as MetaTitleComponent_a8a977ebc872c5d5ea7ee689724c08
 import { MetaDescriptionComponent as MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { PreviewComponent as PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { SlugField as SlugField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
+import { LessonConversionPanel as LessonConversionPanel_057daf3b86f654d90edf003b44c43703 } from '@/ui/admin/exercise-conversion/LessonConversionPanel'
 import { ExerciseContentEditor as ExerciseContentEditor_d0c5d070052b5cabcf602f1e9878afd8 } from '@/ui/admin/ExerciseContentEditor'
 import { MediaPreview as MediaPreview_4b980c9a407724ef7c1755e3482d0258 } from '@/ui/admin/MediaPreview'
 import { FolderTableCell as FolderTableCell_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
@@ -50,6 +51,7 @@ export const importMap = {
   "@payloadcms/plugin-seo/client#MetaDescriptionComponent": MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#PreviewComponent": PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/ui#SlugField": SlugField_3817bf644402e67bfe6577f60ef982de,
+  "@/ui/admin/exercise-conversion/LessonConversionPanel#LessonConversionPanel": LessonConversionPanel_057daf3b86f654d90edf003b44c43703,
   "@/ui/admin/ExerciseContentEditor#ExerciseContentEditor": ExerciseContentEditor_d0c5d070052b5cabcf602f1e9878afd8,
   "@/ui/admin/MediaPreview#MediaPreview": MediaPreview_4b980c9a407724ef7c1755e3482d0258,
   "@payloadcms/ui/rsc#FolderTableCell": FolderTableCell_ab83ff7e88da8d3530831f296ec4756a,

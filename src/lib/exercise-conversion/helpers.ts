@@ -42,7 +42,7 @@ export function enrichBlockIds(raw: {
     blocks: raw.blocks.map((block) => ({
       ...block,
       id: block.id || nanoid(),
-      renderMode: block.type === 'latex' ? (block.renderMode || 'block') : undefined,
+      renderMode: block.type === 'latex' ? block.renderMode || 'block' : undefined,
     })),
   }
 }
@@ -128,23 +128,105 @@ export function normalizeExerciseForHash(extracted: {
 
 /**
  * Parse extractor response - pure string parsing.
+ * v2.2 Fix: Handle malformed JSON with escape sequence issues from LLM.
  */
 export function parseExtractorResponseText(responseText: string): any[] {
-  const jsonMatch =
-    responseText.match(/\[[\s\S]*\]/) || responseText.match(/```json\n([\s\S]*?)\n```/)
-  return JSON.parse(jsonMatch?.[1] || jsonMatch?.[0] || responseText)
+  try {
+    const jsonMatch =
+      responseText.match(/\[[\s\S]*\]/) || responseText.match(/```json\n([\s\S]*?)\n```/)
+    const jsonStr = jsonMatch?.[1] || jsonMatch?.[0] || responseText
+
+    // First attempt: direct parse
+    try {
+      return JSON.parse(jsonStr)
+    } catch {
+      // Second attempt: unescape double-backslashes (LLM sometimes double-escapes)
+      const unescaped = jsonStr.replace(/\\\\/g, '\\')
+      try {
+        return JSON.parse(unescaped)
+      } catch {
+        // Third attempt: try removing leading/trailing whitespace that might break parsing
+        const trimmed = jsonStr.trim()
+        try {
+          return JSON.parse(trimmed)
+        } catch {
+          // Fourth attempt: try to fix common issues - remove trailing commas
+          const fixed = trimmed.replace(/,\s*([}\]\]])/g, '$1')
+          try {
+            return JSON.parse(fixed)
+          } catch (finalError) {
+            console.error('[parseExtractorResponseText] Failed to parse:', {
+              originalLength: responseText.length,
+              snippet: responseText.substring(0, 200),
+              jsonMatchLength: jsonStr.length,
+            })
+            throw {
+              code: 'PARSE_EXTRACTOR_RESPONSE_FAILED',
+              message: `Failed to parse extractor response: ${finalError}`,
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    // Re-throw as structured error
+    if (error && typeof error === 'object' && 'code' in error) {
+      throw error
+    }
+    throw {
+      code: 'PARSE_EXTRACTOR_RESPONSE_FAILED',
+      message: `Failed to parse extractor response: ${error}`,
+    }
+  }
 }
 
 /**
  * Parse verifier response - pure string parsing.
+ * v2.2 Fix: Handle malformed JSON with escape sequence issues from LLM.
  */
 export function parseVerifierResponseText(responseText: string): {
   valid: boolean
   reason?: string
 } {
-  const jsonMatch =
-    responseText.match(/\{[\s\S]*\}/) || responseText.match(/```json\n([\s\S]*?)\n```/)
-  return JSON.parse(jsonMatch?.[1] || jsonMatch?.[0] || responseText)
+  try {
+    const jsonMatch =
+      responseText.match(/\{[\s\S]*\}/) || responseText.match(/```json\n([\s\S]*?)\n```/)
+    const jsonStr = jsonMatch?.[1] || jsonMatch?.[0] || responseText
+
+    // First attempt: direct parse
+    try {
+      return JSON.parse(jsonStr)
+    } catch {
+      // Second attempt: unescape double-backslashes
+      const unescaped = jsonStr.replace(/\\\\/g, '\\')
+      try {
+        return JSON.parse(unescaped)
+      } catch {
+        // Third attempt: trim and try again
+        const trimmed = jsonStr.trim()
+        try {
+          return JSON.parse(trimmed)
+        } catch (finalError) {
+          console.error('[parseVerifierResponseText] Failed to parse:', {
+            originalLength: responseText.length,
+            snippet: responseText.substring(0, 200),
+          })
+          throw {
+            code: 'PARSE_VERIFIER_RESPONSE_FAILED',
+            message: `Failed to parse verifier response: ${finalError}`,
+          }
+        }
+      }
+    }
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error) {
+      throw error
+    }
+    throw {
+      code: 'PARSE_VERIFIER_RESPONSE_FAILED',
+      message: `Failed to parse verifier response: ${error}`,
+    }
+  }
 }
 
 /**

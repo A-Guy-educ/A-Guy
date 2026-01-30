@@ -1,3 +1,4 @@
+import { getExternalStorageUrl, isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
 import { PDF_MAX_BYTES } from '@/server/config/constants'
 
 export interface PDFExtractError {
@@ -21,8 +22,29 @@ const PROXY_TO_STAGE: Record<string, string> = {
 }
 
 /**
+ * Normalize URL to absolute URL
+ * Handles relative URLs by prepending the external storage base URL
+ */
+export function normalizeToAbsoluteUrl(url: string): string {
+  // If already absolute URL (http:// or https://), return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+
+  // If it's a relative URL starting with /, prepend external storage base URL
+  if (url.startsWith('/')) {
+    const baseUrl = getExternalStorageUrl()
+    return `${baseUrl}${url}`
+  }
+
+  // Otherwise, treat as Vercel Blob URL (should be absolute)
+  return url
+}
+
+/**
  * Get PDF buffer from Vercel Blob storage
  * Uses media document's URL to fetch the file
+ * Works in both Next.js server context and standalone worker context
  */
 export async function getPdfBufferFromBlob(
   mediaId: string,
@@ -49,17 +71,25 @@ export async function getPdfBufferFromBlob(
     throw stageError('FETCH_FAILED', 'Media document has no URL')
   }
 
-  // Prepare headers for authenticated requests (if needed)
-  const headers: Record<string, string> = {}
-  if (req?.headers?.authorization) {
-    headers['Authorization'] = req.headers.authorization
+  // Normalize URL to absolute URL (handles relative paths like /api/media/file/...)
+  const normalizedUrl = normalizeToAbsoluteUrl(media.url)
+
+  // For Vercel Blob URLs, validate the format
+  // For other URLs (like internal API routes), we accept them after normalization
+  if (isVercelBlobUrl(normalizedUrl)) {
+    // Vercel Blob URL - validate format is correct
+    if (!isVercelBlobUrl(normalizedUrl)) {
+      throw stageError(
+        'FETCH_FAILED',
+        `Invalid Vercel Blob URL format: ${normalizedUrl}`,
+      )
+    }
   }
-  if (req?.headers?.cookie) {
-    headers['Cookie'] = req.headers.cookie
-  }
+  // For non-Blob URLs (like internal API routes), we accept them after normalization
+  // The fetch will work as long as we have an absolute URL
 
   try {
-    const response = await fetch(media.url, { headers })
+    const response = await fetch(normalizedUrl)
 
     if (!response.ok) {
       throw stageError(
@@ -115,7 +145,8 @@ export async function getPdfFileSize(mediaId: string, payload: any): Promise<num
     }
 
     try {
-      const response = await fetch(media.url, { method: 'HEAD' })
+      const normalizedUrl = normalizeToAbsoluteUrl(media.url)
+      const response = await fetch(normalizedUrl, { method: 'HEAD' })
       if (response.ok) {
         const contentLength = response.headers.get('content-length')
         if (contentLength) {

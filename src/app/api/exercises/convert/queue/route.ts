@@ -1,5 +1,5 @@
 import { validatePromptForUsageAndTenant } from '@/lib/exercise-conversion/helpers'
-import { ENV, MAX_PROMPT_SIZE_BYTES, TASK_SLUG } from '@/server/config/constants'
+import { ENV, MAX_PROMPT_SIZE_BYTES } from '@/server/config/constants'
 import { hashTextSha256 } from '@/server/utils/hash'
 import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
     const { user } = await payload.auth({ headers: request.headers })
 
     let isAdmin = false
-    if (user && Array.isArray(user.role) && (user.role as string[]).includes('admin')) {
+    // role is a select field (string), not an array
+    if (user && user.role === 'admin') {
       isAdmin = true
     }
 
@@ -59,21 +60,23 @@ export async function POST(request: NextRequest) {
     }
 
     // ========== Server-side Tenant Resolution (BEFORE prompt validation) ==========
-    const lesson = await payload.findByID({ collection: 'lessons', id: lessonId, depth: 2 })
+    // Tenant is directly on the lesson, not through course
+    const lesson = await payload.findByID({ collection: 'lessons', id: lessonId, depth: 0 })
 
     if (!lesson) {
       return errorResponse('LESSON_NOT_FOUND', 'Lesson not found', 404)
     }
 
-    // Get tenant from lesson's course (authoritative source)
-    const course = (lesson as any).course
-    const lessonTenantId = course?.tenant?.id || course?.tenant
+    const tenant = (lesson as any).tenant
+    const lessonTenantId = tenant?.id || tenant
     if (!lessonTenantId) {
       return errorResponse('VALIDATION_ERROR', 'Lesson has no tenant', 400)
     }
 
     // Validate media belongs to lesson
-    const mediaIds = ((lesson as any).media || []).map((m: any) => (typeof m === 'string' ? m : m.id))
+    const mediaIds = ((lesson as any).contentFiles || []).map((m: any) =>
+      typeof m === 'string' ? m : m.id,
+    )
     if (!mediaIds.includes(mediaId)) {
       return errorResponse('MEDIA_NOT_ATTACHED', 'Media is not attached to this lesson', 400)
     }
@@ -89,11 +92,19 @@ export async function POST(request: NextRequest) {
 
     // v2.1 Fix 8: Check prompt exists before validation
     if (!extractorPrompt) {
-      return errorResponse('PROMPT_NOT_FOUND', `Extractor prompt not found: ${extractorPromptId}`, 400)
+      return errorResponse(
+        'PROMPT_NOT_FOUND',
+        `Extractor prompt not found: ${extractorPromptId}`,
+        400,
+      )
     }
 
     // Validate extractor prompt (published, usage, tenant)
-    validatePromptForUsageAndTenant(extractorPrompt as unknown as { status: string; usage: string; tenant: any }, 'extractor', lessonTenantId)
+    validatePromptForUsageAndTenant(
+      extractorPrompt as unknown as { status: string; usage: string; tenant: any },
+      'extractor',
+      lessonTenantId,
+    )
 
     // Fetch verifier prompt once
     const verifierPrompt = await payload.findByID({
@@ -105,11 +116,19 @@ export async function POST(request: NextRequest) {
 
     // v2.1 Fix 8: Check prompt exists before validation
     if (!verifierPrompt) {
-      return errorResponse('PROMPT_NOT_FOUND', `Verifier prompt not found: ${verifierPromptId}`, 400)
+      return errorResponse(
+        'PROMPT_NOT_FOUND',
+        `Verifier prompt not found: ${verifierPromptId}`,
+        400,
+      )
     }
 
     // Validate verifier prompt (published, usage, tenant)
-    validatePromptForUsageAndTenant(verifierPrompt as unknown as { status: string; usage: string; tenant: any }, 'verifier', lessonTenantId)
+    validatePromptForUsageAndTenant(
+      verifierPrompt as unknown as { status: string; usage: string; tenant: any },
+      'verifier',
+      lessonTenantId,
+    )
 
     // ========== Prompt Size Validation (after validation passes) ==========
     // Use byteLength for accurate size check (UTF-8 encoding)
@@ -126,39 +145,6 @@ export async function POST(request: NextRequest) {
       return errorResponse('VALIDATION_ERROR', 'Verifier prompt template exceeds maximum size', 400)
     }
 
-    // ========== Queue Policy Check (Idempotency) ==========
-    // Block duplicates for same (lessonId, mediaId) when status is queued OR running
-    const now = new Date()
-    const existingJobs = await payload.find({
-      collection: 'jobs' as any,
-      where: {
-        and: [
-          { taskSlug: { equals: TASK_SLUG } },
-          { 'input.ctx.lessonId': { equals: lessonId } },
-          { 'input.ctx.sourceDocId': { equals: mediaId } },
-          {
-            or: [
-              { status: { equals: 'queued' } },
-              {
-                and: [
-                  { status: { equals: 'running' } },
-                  { lockExpiresAt: { greater_than: now } },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      limit: 1,
-      pagination: false,
-    })
-
-    if (existingJobs.docs.length > 0) {
-      return errorResponse('CONVERSION_ALREADY_RUNNING', 'A conversion is already queued or running', 409, {
-        runningJobId: existingJobs.docs[0].id,
-      })
-    }
-
     // ========== Store Prompt Snapshots (Immutability) ==========
     // Use existing hash utility
     const extractorHash = hashTextSha256(extractorPrompt.template)
@@ -166,7 +152,7 @@ export async function POST(request: NextRequest) {
 
     // ========== Queue the Job ==========
     const job = await payload.jobs.queue({
-      task: 'inline',
+      task: 'pdf_to_exercises',
       input: {
         ctx: { lessonId, sourceDocId: mediaId, tenantId: lessonTenantId },
         maxSegmentPages: 2,
