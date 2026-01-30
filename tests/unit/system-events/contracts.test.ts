@@ -206,14 +206,14 @@ describe('Schema Validation', () => {
     it('validates valid registration prompt payload', () => {
       const payload = {
         prompt_location: 'lesson_page',
-        trigger_reason: 'lesson_complete',
+        trigger_type: 'exercise_limit',
       }
       const result = RegistrationPromptShownSchema.safeParse(payload)
       expect(result.success).toBe(true)
     })
 
     it('rejects missing prompt_location', () => {
-      const payload = { trigger_reason: 'lesson_complete' }
+      const payload = { trigger_type: 'exercise_limit' }
       const result = RegistrationPromptShownSchema.safeParse(payload)
       expect(result.success).toBe(false)
     })
@@ -223,14 +223,14 @@ describe('Schema Validation', () => {
     it('validates valid registration completed payload', () => {
       const payload = {
         user_id: 'user_123',
-        registration_method: 'email',
+        auth_method: 'email',
       }
       const result = RegistrationCompletedSchema.safeParse(payload)
       expect(result.success).toBe(true)
     })
 
-    it('rejects invalid registration_method', () => {
-      const payload = { user_id: 'user_123', registration_method: 'invalid' }
+    it('rejects invalid auth_method', () => {
+      const payload = { user_id: 'user_123', auth_method: 'invalid' }
       const result = RegistrationCompletedSchema.safeParse(payload)
       expect(result.success).toBe(false)
     })

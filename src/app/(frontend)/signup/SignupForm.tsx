@@ -56,7 +56,7 @@ function SignupFormContent() {
         if (result.userId) {
           systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_COMPLETED, {
             user_id: result.userId,
-            registration_method: 'email',
+            auth_method: 'email',
           })
 
           // Track user_resolved with enriched user properties

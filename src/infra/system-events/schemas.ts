@@ -89,6 +89,8 @@ export type LessonStartedPayload = z.infer<typeof LessonStartedSchema>
 export const LessonEndedSchema = z
   .object({
     lesson_id: z.string().min(1, 'lesson_id is required'),
+    lesson_title: z.string().optional(),
+    course_id: z.string().optional(),
     duration_seconds: z.number().int().nonnegative(),
     completion_percentage: z.number().min(0).max(100).optional(),
     locale: z.string().optional(),
@@ -105,6 +107,9 @@ export const PdfViewedSchema = z
   .object({
     pdf_url: z.string().url('pdf_url must be a valid URL'),
     pdf_title: z.string().optional(),
+    file_name: z.string().optional(),
+    document_id: z.string().optional(),
+    lesson_id: z.string().optional(),
     page_number: z.number().int().positive().optional(),
     page_count: z.number().int().positive().optional(), // Total pages in document
     duration_seconds: z.number().int().nonnegative().optional(),
@@ -121,6 +126,7 @@ export type PdfViewedPayload = z.infer<typeof PdfViewedSchema>
 export const ChatMessageSubmittedSchema = z
   .object({
     conversation_id: z.string().min(1, 'conversation_id is required'),
+    lesson_id: z.string().optional(),
     message_type: z.enum(['user', 'assistant']),
     message_length: z.number().int().nonnegative(),
     locale: z.string().optional(),
@@ -136,7 +142,8 @@ export type ChatMessageSubmittedPayload = z.infer<typeof ChatMessageSubmittedSch
 export const RegistrationPromptShownSchema = z
   .object({
     prompt_location: z.string().min(1, 'prompt_location is required'),
-    trigger_reason: z.string().optional(),
+    trigger_type: z.enum(['exercise_limit', 'copilot_limit', 'feature_gate', 'manual']).optional(),
+    current_page: z.string().optional(),
     locale: z.string().optional(),
   })
   .strict()
@@ -150,7 +157,7 @@ export type RegistrationPromptShownPayload = z.infer<typeof RegistrationPromptSh
 export const RegistrationCompletedSchema = z
   .object({
     user_id: z.string().min(1, 'user_id is required'),
-    registration_method: z.enum(['email', 'social', 'anonymous_upgrade']),
+    auth_method: z.enum(['google', 'email']).optional(),
     locale: z.string().optional(),
   })
   .strict()

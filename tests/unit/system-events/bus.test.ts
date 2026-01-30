@@ -4,14 +4,33 @@
  * Tests for the event bus emit, subscribe, and unsubscribe functionality.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { systemEventBus } from '@/infra/system-events/bus'
 import { SYSTEM_EVENTS } from '@/infra/system-events/events'
 
+// Mock window for SSR testing
+const mockWindow = {
+  sessionStorage: {
+    getItem: vi.fn(() => 'test_session_id'),
+    setItem: vi.fn(),
+  },
+  location: {
+    pathname: '/test',
+  },
+}
+
 describe('Event Bus', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset bus state between tests
+    systemEventBus.reset()
+    // Mock window for SSR testing
+    vi.stubGlobal('window', mockWindow)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   describe('emit', () => {
@@ -100,7 +119,7 @@ describe('Event Bus', () => {
       const handler2 = vi.fn()
 
       const unsub1 = systemEventBus.on(SYSTEM_EVENTS.PAGE_VIEWED, handler1)
-      const unsub2 = systemEventBus.on(SYSTEM_EVENTS.PAGE_VIEWED, handler2)
+      const _unsub2 = systemEventBus.on(SYSTEM_EVENTS.PAGE_VIEWED, handler2)
 
       systemEventBus.emit(SYSTEM_EVENTS.PAGE_VIEWED, { page_path: '/test' })
 
@@ -172,7 +191,7 @@ describe('Event Bus', () => {
       systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_PROMPT_SHOWN, { prompt_location: 'lesson' })
       systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_COMPLETED, {
         user_id: 'u2',
-        registration_method: 'email',
+        auth_method: 'email',
       })
 
       expect(handler).toHaveBeenCalledTimes(10)

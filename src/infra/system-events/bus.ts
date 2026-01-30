@@ -137,6 +137,8 @@ export interface SystemEventBus {
   emit<E extends SystemEventName>(event: E, payload: SystemEventPayloads[E]): void
   on<E extends SystemEventName>(event: E, handler: SystemEventHandler<E>): Unsubscribe
   onAny(handler: AnySystemEventHandler): Unsubscribe
+  /** @internal - For testing purposes only */
+  reset(): void
 }
 
 /**
@@ -207,6 +209,12 @@ export const systemEventBus: SystemEventBus = {
     return () => {
       anyHandlers.delete(handler)
     }
+  },
+
+  reset(): void {
+    // Clear all handlers - for testing purposes only
+    handlers.clear()
+    anyHandlers.clear()
   },
 }
 
