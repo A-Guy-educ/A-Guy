@@ -1,9 +1,9 @@
 'use client'
 
 import { detectBrowserLocale } from '@/i18n/config'
-import { PRODUCT_EVENTS } from '@/infra/analytics/contracts/events'
-import { useAnalytics } from '@/infra/analytics/providers/AnalyticsProvider'
+import { identify } from '@/infra/analytics/core/tracker'
 import { updateCachedUserProperties } from '@/infra/analytics/utils/user-properties-cache'
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
 import { Button } from '@/ui/web/components/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/ui/web/components/card'
@@ -22,7 +22,6 @@ function SignupFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const returnTo = searchParams?.get('returnTo') || '/'
-  const analytics = useAnalytics()
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -53,18 +52,17 @@ function SignupFormContent() {
       } else {
         toast.success('Account created successfully!')
 
-        // Track registration completed and user identified
+        // Track registration completed and user resolved
         if (result.userId) {
-          analytics.track(PRODUCT_EVENTS.REGISTRATION_COMPLETED, {
+          systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_COMPLETED, {
             user_id: result.userId,
-            auth_method: 'email',
+            registration_method: 'email',
           })
 
-          // Track user_identified with enriched user properties
+          // Track user_resolved with enriched user properties
           const userProperties: Record<string, unknown> = {
             user_id: result.userId,
             is_new_user: true,
-            auth_method: 'email',
             signup_date: new Date().toISOString(),
             role: 'student', // Default role for new signups
           }
@@ -87,11 +85,14 @@ function SignupFormContent() {
           // Cache user properties for future sessions
           updateCachedUserProperties(userProperties)
 
-          // Track event with enriched properties
-          analytics.track(PRODUCT_EVENTS.USER_IDENTIFIED, userProperties)
+          // Emit user_resolved event via system event bus
+          systemEventBus.emit(SYSTEM_EVENTS.USER_RESOLVED, {
+            user_id: result.userId,
+            is_anonymous: false,
+          })
 
           // Also call identify() to ensure Mixpanel People properties are set
-          analytics.identify(result.userId, userProperties)
+          identify(result.userId, userProperties)
         }
 
         // Auto-login successful - redirect to returnTo

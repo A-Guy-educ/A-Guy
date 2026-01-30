@@ -1,14 +1,12 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { cn } from '@/infra/utils/ui'
+import React, { useEffect } from 'react'
 import type { Props as MediaProps } from '../types'
-import { useAnalytics } from '@/infra/analytics/providers/AnalyticsProvider'
-import { PRODUCT_EVENTS } from '@/infra/analytics/contracts/events'
 
 export const PDFMedia: React.FC<MediaProps> = (props) => {
   const { resource, className } = props
-  const analytics = useAnalytics()
 
   const pdfUrl = React.useMemo(() => {
     if (resource && typeof resource === 'object') {
@@ -25,20 +23,13 @@ export const PDFMedia: React.FC<MediaProps> = (props) => {
 
   // Track PDF viewed
   useEffect(() => {
-    if (resource && typeof resource === 'object' && resource.id) {
-      analytics.track(PRODUCT_EVENTS.PDF_VIEWED, {
-        document_id: resource.id,
-        page_count:
-          typeof resource === 'object' && 'pageCount' in resource
-            ? Number(resource.pageCount)
-            : undefined,
-        file_name:
-          typeof resource === 'object' && 'filename' in resource
-            ? String(resource.filename)
-            : undefined,
+    if (pdfUrl && resource && typeof resource === 'object') {
+      systemEventBus.emit(SYSTEM_EVENTS.PDF_VIEWED, {
+        pdf_url: pdfUrl,
+        pdf_title: 'filename' in resource ? String(resource.filename) : undefined,
       })
     }
-  }, [resource, analytics])
+  }, [pdfUrl, resource])
 
   if (!pdfUrl) {
     return null

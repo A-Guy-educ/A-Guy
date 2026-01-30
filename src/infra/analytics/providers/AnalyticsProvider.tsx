@@ -7,13 +7,15 @@
 
 'use client'
 
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { createContext, useContext, useEffect, type ReactNode } from 'react'
-import { analytics, initializeAnalytics, getSessionId, PRODUCT_EVENTS } from '../index'
 import { GA4Scripts } from '../adapters/ga4/scripts'
 import { MixpanelScripts } from '../adapters/mixpanel/scripts'
-import { analyticsConfig } from '../config'
-import type { Analytics } from '../types'
 import { UserIdentificationTracker } from '../components/UserIdentificationTracker'
+import { analyticsConfig } from '../config'
+import { analytics, getSessionId, initializeAnalytics } from '../index'
+import { initAnalyticsSubscriber } from '../system-events-subscriber'
+import type { Analytics } from '../types'
 
 /**
  * Analytics context
@@ -38,19 +40,26 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
     // Initialize analytics on mount
     initializeAnalytics()
 
-    // Track session_started once per session
-    const sessionStartedKey = 'analytics_session_started'
+    // Initialize system events subscriber (analytics integration)
+    const cleanupSubscriber = initAnalyticsSubscriber()
+
+    // Track session_started once per session via system event bus
+    const sessionStartedKey = 'system_events_session_started'
     const sessionStarted = sessionStorage.getItem(sessionStartedKey)
 
     if (!sessionStarted && analyticsConfig.enabled) {
       // getSessionId() creates the session ID if it doesn't exist
       const sessionId = getSessionId()
-      analytics.track(PRODUCT_EVENTS.SESSION_STARTED, {
+      systemEventBus.emit(SYSTEM_EVENTS.SESSION_STARTED, {
         session_id: sessionId,
-        is_anonymous: true, // Will be updated on user_identified
+        is_anonymous: true, // Will be updated on user_resolved
       })
 
       sessionStorage.setItem(sessionStartedKey, 'true')
+    }
+
+    return () => {
+      cleanupSubscriber()
     }
   }, [])
 

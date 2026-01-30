@@ -1,8 +1,7 @@
 'use client'
 
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { useEffect } from 'react'
-import { PRODUCT_EVENTS } from '@/infra/analytics/contracts/events'
-import { useAnalytics } from '@/infra/analytics/providers/AnalyticsProvider'
 
 interface CourseAnalyticsProps {
   courseId: string
@@ -10,14 +9,12 @@ interface CourseAnalyticsProps {
 }
 
 export function CourseAnalytics({ courseId, courseTitle }: CourseAnalyticsProps) {
-  const analytics = useAnalytics()
-
   useEffect(() => {
-    analytics.track(PRODUCT_EVENTS.COURSE_ENTERED, {
+    systemEventBus.emit(SYSTEM_EVENTS.COURSE_ENTERED, {
       course_id: courseId,
       course_title: courseTitle,
     })
-  }, [courseId, courseTitle, analytics])
+  }, [courseId, courseTitle])
 
   return null
 }
