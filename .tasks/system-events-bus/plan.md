@@ -1,8 +1,25 @@
 # SystemEvents Bus v0 - Implementation Plan
 
+> **Last Updated:** 2026-01-30
+> **Status:** Ready for implementation
+
+## Known Issues
+
+### 1. ✅ RESOLVED: session_id Location
+
+**Decision:** `session_id` is allowed in payloads that need it (e.g., `session_started`). The analytics subscriber reads `session_id` from the payload directly. This matches current analytics patterns and simplifies implementation.
+
+**Why:** Keeping `session_id` in payload avoids unnecessary mapping complexity. The analytics schema already has `session_id`, so we align with that.
+
+### 2. PDFMedia Path Correction
+
+The plan references `src/components/Media/PDFMedia/index.tsx` but actual path is `src/ui/web/media/PDFMedia/index.tsx`.
+
+---
+
 ## Overview
 
-Create a client-side pub/sub event bus in `src/lib/system-events/` that is completely separate from the existing `src/lib/analytics/` system. The bus validates payloads with Zod `.strict()` schemas, creates envelopes with metadata, and provides a React hook for usage.
+Create a client-side pub/sub event bus in `src/lib/system-events/` that is completely separate from the existing `src/infra/analytics/` system. The bus validates payloads with Zod `.strict()` schemas, creates envelopes with metadata, and provides a React hook for usage.
 
 ### Analytics Integration Strategy
 
@@ -104,12 +121,12 @@ export type SystemEventName = (typeof SYSTEM_EVENTS)[keyof typeof SYSTEM_EVENTS]
 
 Zod schemas with `.strict()` - critical difference from analytics schemas which don't use strict.
 
-**Key payload rules (No PII / No Content / No session_id):**
+**Key payload rules (No PII / No Content):**
 
-- ✅ IDs: `user_id`, `course_id`, `lesson_id`, `document_id`, `conversation_id`
+- ✅ IDs: `user_id`, `course_id`, `lesson_id`, `document_id`, `conversation_id`, `session_id`
 - ✅ Counters: `message_length`, `page_count`
 - ✅ Durations: `duration_seconds` (must be ≥0)
-- ❌ REJECT: `session_id` (belongs in meta only), `message_text`, `content`, `prompt`, `response`, `email`, `name`
+- ❌ REJECT: `message_text`, `content`, `prompt`, `response`, `email`, `name`
 
 **Example schema:**
 
@@ -148,8 +165,8 @@ export interface SystemEventMeta {
 
 export interface SystemEventEnvelope<T> {
   name: SystemEventName
-  payload: T // Validated payload (NO session_id here)
-  meta: SystemEventMeta // Metadata (session_id lives HERE only)
+  payload: T // Validated payload
+  meta: SystemEventMeta // Metadata
 }
 
 // Per-event payload type mapping (must match schemas exactly)
@@ -289,12 +306,10 @@ export type {
 
 ## Event Payload Definitions (v0) - 10 Events
 
-**Critical: NO `session_id` in ANY payload. It belongs in `meta` only.**
-
 | Event                       | Required Fields                          | Optional Fields                       |
 | --------------------------- | ---------------------------------------- | ------------------------------------- |
 | `page_viewed`               | `page_path`                              | `page_title`, `page_search`, `locale` |
-| `session_started`           | `is_anonymous`                           | `locale`                              |
+| `session_started`           | `session_id`, `is_anonymous`             | `locale`                              |
 | `user_resolved`             | `user_id`                                | `auth_method`                         |
 | `course_entered`            | `course_id`                              | `user_id`                             |
 | `lesson_started`            | `lesson_id`, `course_id`                 | `user_id`                             |
@@ -317,7 +332,6 @@ export type {
 - Valid payloads pass for each event type
 - Missing required fields fail
 - Unknown properties rejected (`.strict()` enforcement)
-- **`session_id` in payload rejected** (must be in meta only)
 - PII fields rejected (`email`, `name`, `message_text`, `content`, `prompt`, `response`)
 - Invalid values rejected (negative durations, empty strings where `.min(1)`)
 - Schema registry has entry for every `SYSTEM_EVENT` (10 total)
@@ -331,7 +345,6 @@ export type {
 - Envelope has correct structure: `{ name, payload, meta }`
 - **Meta contains numeric `timestamp`** (Unix ms, not ISO string)
 - Meta contains `session_id`, `route`, `bus_version: 'v0'`
-- **Payload does NOT contain `session_id`**
 - Multiple subscribers receive same event
 - Unsubscribe removes handler
 - Handler errors isolated (other handlers still called)
@@ -341,6 +354,13 @@ export type {
 - Dev mode throws on invalid payload
 - Consistent `session_id` across emissions (from sessionStorage)
 - **Type safety:** `emit()` is compile-time safe per event name (TS test)
+
+#### Edge Case Tests
+
+- **Race conditions:** Handlers registered AFTER emit should NOT receive event
+- **Handler order:** Multiple handlers receive events in subscription order
+- **Session storage errors:** Bus should not throw when sessionStorage unavailable
+- **Graceful fallback:** Generate session_id if sessionStorage throws
 
 ### `hooks.test.ts` (optional, can be in `bus.test.ts`)
 
@@ -358,7 +378,7 @@ export type {
 - **Fail-safe:** If `analytics.track()` throws, subscriber does NOT throw (error logged)
 - `USER_RESOLVED` calls both `analytics.track()` AND `analytics.identify()`
 - `REGISTRATION_COMPLETED` calls both `analytics.track()` AND `analytics.identify()`
-- `SESSION_STARTED` maps `session_id` from envelope `meta`, not payload
+- `SESSION_STARTED` reads `session_id` from envelope payload
 
 ### `no-direct-analytics-in-ui.int.spec.ts`
 
@@ -366,7 +386,7 @@ export type {
 - No `analytics.track()` calls in `src/components/`
 - No `analytics.identify()` calls in `src/app/(frontend)/`
 - No `analytics.identify()` calls in `src/components/`
-- Allowlist: `src/lib/analytics/**` is allowed to use `analytics.track()`
+- Allowlist: `src/infra/analytics/**` is allowed to use `analytics.track()`
 
 ---
 
@@ -376,7 +396,7 @@ export type {
 
 Analytics is a **subscriber** to the event bus, not a direct call target. All tracking flows through system events.
 
-### 7. `src/lib/analytics/system-events-subscriber.ts`
+### 7. `src/infra/analytics/system-events-subscriber.ts`
 
 **Full implementation with all 10 event mappings:**
 
@@ -432,7 +452,7 @@ export function initAnalyticsSubscriber(): () => void {
 
     safeSubscribe(SYSTEM_EVENTS.SESSION_STARTED, (envelope) => {
       analytics.track(PRODUCT_EVENTS.SESSION_STARTED, {
-        session_id: envelope.meta.session_id, // From meta, not payload
+        session_id: envelope.payload.session_id, // From payload
         is_anonymous: envelope.payload.is_anonymous,
         locale: envelope.payload.locale,
       })
@@ -526,7 +546,7 @@ function cleanup(): void {
 
 ### Initialization in AnalyticsProvider
 
-Modify `src/lib/analytics/providers/AnalyticsProvider.tsx`:
+Modify `src/infra/analytics/providers/AnalyticsProvider.tsx`:
 
 ```typescript
 import { initAnalyticsSubscriber } from '../system-events-subscriber'
@@ -574,7 +594,7 @@ Before:
 
 ```typescript
 // ❌ Direct analytics call
-import { analytics, PRODUCT_EVENTS } from '@/lib/analytics'
+import { analytics, PRODUCT_EVENTS } from '@/infra/analytics'
 
 export function LessonAnalytics({ lessonId, courseId, lessonTitle }: Props) {
   const startTime = useRef(Date.now())
@@ -644,7 +664,7 @@ describe('No direct analytics calls in UI code', () => {
     const searchPaths = ['src/app/(frontend)', 'src/components']
 
     // Allowlist: only analytics infrastructure can use analytics.track
-    const allowlist = ['src/lib/analytics/']
+    const allowlist = ['src/infra/analytics/']
 
     for (const searchPath of searchPaths) {
       const fullPath = path.join(process.cwd(), searchPath)
@@ -684,28 +704,28 @@ describe('No direct analytics calls in UI code', () => {
 - `src/lib/system-events/index.ts`
 - `src/lib/system-events/__tests__/contracts.test.ts`
 - `src/lib/system-events/__tests__/bus.test.ts`
-- `src/lib/analytics/system-events-subscriber.ts` - Analytics subscriber
-- `src/lib/analytics/__tests__/system-events-subscriber.test.ts` - Subscriber tests
+- `src/infra/analytics/system-events-subscriber.ts` - Analytics subscriber
+- `src/infra/analytics/__tests__/system-events-subscriber.test.ts` - Subscriber tests
 - `tests/int/guardrails/no-direct-analytics-in-ui.int.spec.ts` - Guardrail test
 
 **Modify:**
 
 - `vitest.config.mts` - Add `'src/**/*.test.ts'` to include pattern
-- `src/lib/analytics/providers/AnalyticsProvider.tsx` - Initialize subscriber + cleanup
+- `src/infra/analytics/providers/AnalyticsProvider.tsx` - Initialize subscriber + cleanup
 - **Migration (7 files):**
   - `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx`
   - `src/app/(frontend)/courses/[courseSlug]/_components/CourseAnalytics.tsx`
   - `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat/useNotebookChat.ts`
-  - `src/components/Media/PDFMedia/index.tsx`
+  - `src/ui/web/media/PDFMedia/index.tsx`
   - `src/app/(frontend)/signup/SignupForm.tsx`
-  - `src/lib/analytics/components/UserIdentificationTracker.tsx`
-  - `src/lib/analytics/providers/AnalyticsProvider.tsx` (move SESSION_STARTED)
+  - `src/infra/analytics/components/UserIdentificationTracker.tsx`
+  - `src/infra/analytics/providers/AnalyticsProvider.tsx` (move SESSION_STARTED)
 
 **Reference (patterns to follow):**
 
-- `src/lib/analytics/contracts/events.ts` - Event constants pattern
-- `src/lib/analytics/contracts/schemas.ts` - Schema structure (but add `.strict()`)
-- `src/lib/analytics/core/tracker.ts` - Session ID and SSR patterns
+- `src/infra/analytics/contracts/events.ts` - Event constants pattern
+- `src/infra/analytics/contracts/schemas.ts` - Schema structure (but add `.strict()`)
+- `src/infra/analytics/core/tracker.ts` - Session ID and SSR patterns
 
 ---
 
@@ -750,9 +770,8 @@ describe('No direct analytics calls in UI code', () => {
 ### Tests
 
 - [ ] `pnpm test` passes (all new tests)
-- [ ] Schema tests reject `session_id` in payloads
 - [ ] Bus tests verify numeric `timestamp` in meta
-- [ ] Bus tests verify `session_id` in meta only
+- [ ] Bus tests verify `session_id` present in envelope
 
 ### Manual Verification
 
@@ -769,7 +788,7 @@ describe('No direct analytics calls in UI code', () => {
   - `meta.timestamp` is number (Unix ms)
   - `meta.session_id` is string
   - `meta.bus_version` is `'v0'`
-  - `payload` has no `session_id`
+  - `session_started` payload includes `session_id`
 
 ### Analytics Integration
 
@@ -783,7 +802,7 @@ describe('No direct analytics calls in UI code', () => {
 
 ## Summary of Corrections Applied
 
-1. **Removed `session_id` from ALL payloads** - Lives in `meta` only
+1. **Simplified `session_id` handling** - `session_id` is allowed in payloads (e.g., `session_started`), matching analytics schema patterns
 2. **Changed `meta.timestamp` to numeric** - Unix ms via `Date.now()`, not ISO string
 3. **Fixed exports** - `SYSTEM_EVENTS` from `events.ts`, `systemEventBus` from `bus.ts`
 4. **Added `SystemEventPayloads` type map** - Compile-time safe `emit()` per event

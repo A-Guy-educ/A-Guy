@@ -1,65 +1,28 @@
-import { TASK_SLUG } from '@/server/config/constants'
-import config from '@payload-config'
-import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
+import { apiError, apiSuccess } from '@/server/api/responses'
+import { jobStatusQuerySchema } from '@/server/api/schemas/job-schemas'
+import { withApiHandler } from '@/server/api/with-api-handler'
+import { TASK_SLUGS } from '@/server/payload/jobs/constants'
+import { JobService } from '@/server/payload/services/job-service'
 
-export async function GET(request: NextRequest) {
-  try {
-    const payload = await getPayload({ config })
+export const GET = withApiHandler(
+  { auth: 'adminOrTest', querySchema: jobStatusQuerySchema },
+  async ({ payload, query, logger }) => {
+    try {
+      const jobService = JobService.fromPayload(payload)
+      const jobs = await jobService.findByContext(
+        TASK_SLUGS.PDF_TO_EXERCISES,
+        {
+          lessonId: query.lessonId,
+          sourceDocId: query.mediaId,
+        },
+        query.limit,
+      )
 
-    // Auth: Admin Session OR Vercel Cron
-    const { user } = await payload.auth({ headers: request.headers })
-    const authHeader = request.headers.get('authorization')
-
-    const isAdmin = user?.role === 'admin' || authHeader === `Bearer ${process.env.CRON_SECRET}`
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      logger.info({ count: jobs.length }, 'Fetched job statuses')
+      return apiSuccess({ docs: jobs })
+    } catch (error) {
+      logger.error({ error }, 'Failed to fetch job statuses')
+      return apiError('INTERNAL_ERROR', 'Failed to fetch job statuses', 500)
     }
-
-    // Parse query params
-    const { searchParams } = new URL(request.url)
-    const lessonId = searchParams.get('lessonId')
-    const mediaId = searchParams.get('mediaId')
-    const limit = parseInt(searchParams.get('limit') || '1')
-
-    if (!lessonId || !mediaId) {
-      return NextResponse.json({ error: 'lessonId and mediaId are required' }, { status: 400 })
-    }
-
-    // Use MongoDB native query via Payload's db adapter
-    // Payload's query API doesn't support dot notation for JSON fields (input.ctx.*)
-    const db = payload.db as { connection: { collection: (name: string) => unknown } }
-    const collection = db.connection.collection('payload-jobs')
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const docs = await (collection as any)
-      .find({
-        taskSlug: TASK_SLUG,
-        'input.ctx.lessonId': lessonId,
-        'input.ctx.sourceDocId': mediaId,
-      })
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .toArray()
-
-    // Compute status from raw MongoDB fields
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const docsWithStatus = docs.map((doc: any) => ({
-      ...doc,
-      id: doc._id?.toString() || doc._id, // Map MongoDB _id to id
-      status: doc.processing
-        ? 'running'
-        : doc.hasError
-          ? 'failed'
-          : doc.completedAt
-            ? 'completed'
-            : 'queued',
-    }))
-
-    return NextResponse.json({ docs: docsWithStatus })
-  } catch (error: any) {
-    console.error('[JobStatus] Error:', error)
-    // Return empty docs on error instead of 500
-    return NextResponse.json({ docs: [] })
-  }
-}
+  },
+)

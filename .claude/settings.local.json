@@ -45,7 +45,9 @@
       "Bash(git ls-tree:*)",
       "Bash(SKIP_HOOKS=1 git push:*)",
       "Bash(git diff:*)",
-      "WebFetch(domain:payloadcms.com)"
+      "WebFetch(domain:payloadcms.com)",
+      "Bash(pnpm exec mongosh:*)",
+      "Bash(docker-compose up:*)"
     ]
   }
 }
