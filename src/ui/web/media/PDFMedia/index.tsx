@@ -27,6 +27,7 @@ export const PDFMedia: React.FC<MediaProps> = (props) => {
       systemEventBus.emit(SYSTEM_EVENTS.PDF_VIEWED, {
         pdf_url: pdfUrl,
         pdf_title: 'filename' in resource ? String(resource.filename) : undefined,
+        page_count: 'pageCount' in resource ? Number(resource.pageCount) : undefined,
       })
     }
   }, [pdfUrl, resource])

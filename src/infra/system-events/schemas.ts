@@ -106,6 +106,7 @@ export const PdfViewedSchema = z
     pdf_url: z.string().url('pdf_url must be a valid URL'),
     pdf_title: z.string().optional(),
     page_number: z.number().int().positive().optional(),
+    page_count: z.number().int().positive().optional(), // Total pages in document
     duration_seconds: z.number().int().nonnegative().optional(),
     locale: z.string().optional(),
   })

@@ -169,6 +169,15 @@ describe('Schema Validation', () => {
       const result = PdfViewedSchema.safeParse(payload)
       expect(result.success).toBe(true)
     })
+
+    it('accepts optional page_count for document total pages', () => {
+      const payload = {
+        pdf_url: 'https://example.com/document.pdf',
+        page_count: 42,
+      }
+      const result = PdfViewedSchema.safeParse(payload)
+      expect(result.success).toBe(true)
+    })
   })
 
   describe('ChatMessageSubmittedSchema', () => {
