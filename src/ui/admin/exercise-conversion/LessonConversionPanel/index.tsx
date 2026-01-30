@@ -108,32 +108,32 @@ export const LessonConversionPanel = () => {
             </button>
           </div>
 
-            {/* Status Panel - always visible for this PDF */}
-            <ConversionStatusPanel
-              lessonId={String(lessonId)}
-              mediaId={pdf.id}
-              onViewExercises={() => setExpandedPdf(expandedPdf === pdf.id ? null : pdf.id)}
-            />
+          {/* Status Panel - always visible for this PDF */}
+          <ConversionStatusPanel
+            lessonId={String(lessonId)}
+            mediaId={pdf.id}
+            onViewExercises={() => setExpandedPdf(expandedPdf === pdf.id ? null : pdf.id)}
+          />
 
-            {/* Draft Exercises - expandable */}
-            {expandedPdf === pdf.id && (
-              <DraftExercisesList lessonId={String(lessonId)} sourceDocId={pdf.id} />
-            )}
+          {/* Draft Exercises - expandable */}
+          {expandedPdf === pdf.id && (
+            <DraftExercisesList lessonId={String(lessonId)} sourceDocId={pdf.id} />
+          )}
 
-            {/* Convert Modal */}
-            {activeModal === pdf.id && (
-              <Suspense fallback={<div>Loading...</div>}>
-                <ConvertModal
-                  lessonId={String(lessonId)}
-                  mediaId={pdf.id}
-                  filename={String(pdf.filename || pdf.id)}
-                  onClose={() => setActiveModal(null)}
-                />
-              </Suspense>
-            )}
-          </div>
-        ))}
-      </div>
+          {/* Convert Modal */}
+          {activeModal === pdf.id && (
+            <Suspense fallback={<div>Loading...</div>}>
+              <ConvertModal
+                lessonId={String(lessonId)}
+                mediaId={pdf.id}
+                filename={String(pdf.filename || pdf.id)}
+                onClose={() => setActiveModal(null)}
+              />
+            </Suspense>
+          )}
+        </div>
+      ))}
+    </div>
   )
 }
 

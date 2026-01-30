@@ -15,15 +15,13 @@ const BLOB_READONLY_TOKEN_ENV = 'BLOB_READONLY_TOKEN'
  * Get the appropriate Vercel Blob token from environment
  */
 function getBlobToken(readOnly = false): string {
-  const token = readOnly
-    ? process.env[BLOB_READONLY_TOKEN_ENV]
-    : process.env[BLOB_TOKEN_ENV]
+  const token = readOnly ? process.env[BLOB_READONLY_TOKEN_ENV] : process.env[BLOB_TOKEN_ENV]
 
   if (!token) {
     throw new Error(
       readOnly
         ? `Missing ${BLOB_READONLY_TOKEN_ENV} environment variable`
-        : `Missing ${BLOB_TOKEN_ENV} environment variable`
+        : `Missing ${BLOB_TOKEN_ENV} environment variable`,
     )
   }
 
@@ -131,17 +129,17 @@ export class VercelBlobAdapter {
     options?: {
       contentType?: string
       contentDisposition?: 'attachment' | 'inline'
-    }
+    },
   ): Promise<BlobUploadResult> {
     const pathname = this.buildPathname(filename)
 
     // Note: @vercel/blob requires 'public' access for all blobs
-    const result = await put(pathname, data as any, {
+    const result = (await put(pathname, data as any, {
       token: this.token,
       access: 'public',
       contentType: options?.contentType,
       cacheControlMaxAge: this.config.cacheControlSeconds,
-    }) as any
+    })) as any
 
     return {
       url: result.url,
@@ -163,7 +161,7 @@ export class VercelBlobAdapter {
   async uploadBuffer(
     filename: string,
     buffer: Buffer,
-    contentType: string
+    contentType: string,
   ): Promise<BlobUploadResult> {
     return this.upload(filename, buffer, { contentType })
   }
@@ -202,14 +200,8 @@ export class VercelBlobAdapter {
    * @param cursor - Pagination cursor from previous call
    * @returns List result with blobs and pagination info
    */
-  async list(
-    prefix?: string,
-    limit = 100,
-    cursor?: string
-  ): Promise<BlobListResult> {
-    const searchPrefix = prefix
-      ? this.buildPathname(prefix)
-      : `${this.config.directory}/`
+  async list(prefix?: string, limit = 100, cursor?: string): Promise<BlobListResult> {
+    const searchPrefix = prefix ? this.buildPathname(prefix) : `${this.config.directory}/`
 
     const result = await list({
       token: this.token,
@@ -297,7 +289,7 @@ export class VercelBlobAdapter {
    */
   async getSignedUrl(
     url: string,
-    _expiresIn = 3600 // 1 hour default (reserved for future use)
+    _expiresIn = 3600, // 1 hour default (reserved for future use)
   ): Promise<string> {
     // Note: @vercel/blob's put() returns a URL that may already be signed
     // For existing blobs, we need to use the download API
@@ -400,7 +392,7 @@ export function createBlobAdapter(config: VercelBlobConfig): VercelBlobAdapter {
 export async function uploadPdfBuffer(
   pdfBuffer: Buffer,
   filename: string,
-  options?: { directory?: string }
+  options?: { directory?: string },
 ): Promise<BlobUploadResult> {
   const adapter = new VercelBlobAdapter({
     directory: options?.directory || 'media/pdfs',
@@ -443,7 +435,7 @@ export async function getPdfBufferFromUrl(url: string): Promise<Buffer> {
 export async function uploadBrowserFile(
   file: File,
   filename: string,
-  directory = 'media'
+  directory = 'media',
 ): Promise<BlobUploadResult> {
   const adapter = new VercelBlobAdapter({
     directory,

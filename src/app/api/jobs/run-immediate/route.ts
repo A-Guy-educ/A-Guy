@@ -7,7 +7,8 @@ import { getPayload } from 'payload'
 
 async function getJobsCollection(configToUse: SanitizedConfig | Promise<SanitizedConfig>) {
   const resolvedConfig = await configToUse
-  const db = (resolvedConfig as { db?: { connection?: { collection: (name: string) => unknown } } }).db
+  const db = (resolvedConfig as { db?: { connection?: { collection: (name: string) => unknown } } })
+    .db
   const coll = db?.connection?.collection?.('payload-jobs')
   if (!coll) throw new Error('Cannot access Jobs collection')
   return coll
@@ -26,10 +27,7 @@ async function atomicClaimAndRunJob(
       _id: new ObjectId(jobId),
       processing: { $ne: true },
       hasError: { $ne: true },
-      $or: [
-        { lockExpiresAt: { $exists: false } },
-        { lockExpiresAt: { $lt: now } },
-      ],
+      $or: [{ lockExpiresAt: { $exists: false } }, { lockExpiresAt: { $lt: now } }],
     },
     {
       $set: {
@@ -63,10 +61,7 @@ async function updateJobStatus(
     update.jobOutput = output
   }
 
-  await coll.updateOne(
-    { _id: new ObjectId(jobId) },
-    { $set: update },
-  )
+  await coll.updateOne({ _id: new ObjectId(jobId) }, { $set: update })
 }
 
 export async function POST(request: NextRequest) {
@@ -90,7 +85,10 @@ export async function POST(request: NextRequest) {
     const job = await atomicClaimAndRunJob(coll, jobId)
 
     if (!job) {
-      return NextResponse.json({ error: 'Job not found, already running, or already completed' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Job not found, already running, or already completed' },
+        { status: 404 },
+      )
     }
 
     console.log(`[run-immediately] Executing job ${jobId} synchronously`)
@@ -136,7 +134,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: `Failed to execute job: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      {
+        error: `Failed to execute job: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      },
       { status: 500 },
     )
   }
