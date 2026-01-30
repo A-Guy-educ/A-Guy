@@ -307,28 +307,46 @@ export class VercelBlobAdapter {
 }
 
 /**
- * Default adapter instance for media storage
+ * Default adapter instance for media storage (lazy-loaded to avoid env var requirement during postinstall)
  */
-export const mediaBlobAdapter = new VercelBlobAdapter({
-  directory: 'media',
-  public: true,
-})
+let _mediaBlobAdapter: VercelBlobAdapter | null = null
+export function getMediaBlobAdapter(): VercelBlobAdapter {
+  if (!_mediaBlobAdapter) {
+    _mediaBlobAdapter = new VercelBlobAdapter({
+      directory: 'media',
+      public: true,
+    })
+  }
+  return _mediaBlobAdapter
+}
 
 /**
- * Default adapter instance for exercise assets
+ * Default adapter instance for exercise assets (lazy-loaded to avoid env var requirement during postinstall)
  */
-export const exerciseAssetsBlobAdapter = new VercelBlobAdapter({
-  directory: 'exercise-assets',
-  public: true,
-})
+let _exerciseAssetsBlobAdapter: VercelBlobAdapter | null = null
+export function getExerciseAssetsBlobAdapter(): VercelBlobAdapter {
+  if (!_exerciseAssetsBlobAdapter) {
+    _exerciseAssetsBlobAdapter = new VercelBlobAdapter({
+      directory: 'exercise-assets',
+      public: true,
+    })
+  }
+  return _exerciseAssetsBlobAdapter
+}
 
 /**
- * Adapter instance for private files
+ * Adapter instance for private files (lazy-loaded to avoid env var requirement during postinstall)
  */
-export const privateBlobAdapter = new VercelBlobAdapter({
-  directory: 'private',
-  public: false,
-})
+let _privateBlobAdapter: VercelBlobAdapter | null = null
+export function getPrivateBlobAdapter(): VercelBlobAdapter {
+  if (!_privateBlobAdapter) {
+    _privateBlobAdapter = new VercelBlobAdapter({
+      directory: 'private',
+      public: false,
+    })
+  }
+  return _privateBlobAdapter
+}
 
 /**
  * Helper function to check if a URL is a Vercel Blob URL

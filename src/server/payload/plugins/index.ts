@@ -1,18 +1,18 @@
+import { revalidateRedirects } from '@/server/payload/hooks/revalidateRedirects'
+import { beforeSyncWithSearch } from '@/ui/web/search/beforeSync'
+import { searchFields } from '@/ui/web/search/fieldOverrides'
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
 import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
-import { seoPlugin } from '@payloadcms/plugin-seo'
 import { searchPlugin } from '@payloadcms/plugin-search'
-import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
-import { Plugin } from 'payload'
-import { revalidateRedirects } from '@/server/payload/hooks/revalidateRedirects'
+import { seoPlugin } from '@payloadcms/plugin-seo'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
-import { searchFields } from '@/ui/web/search/fieldOverrides'
-import { beforeSyncWithSearch } from '@/ui/web/search/beforeSync'
+import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
+import { Plugin } from 'payload'
 
-import { Page } from '@/payload-types'
 import { getServerSideURL } from '@/infra/utils/getURL'
+import { Page } from '@/payload-types'
 
 // Temporarily disabled - @payloadcms/plugin-mcp not available in dependencies
 // TODO: Re-enable when MCP plugin is properly configured
@@ -97,13 +97,18 @@ export const plugins: Plugin[] = [
       },
     },
   }),
-  vercelBlobStorage({
-    collections: {
-      media: true,
-      'exercise-assets': true,
-    },
-    token: process.env.BLOB_READ_WRITE_TOKEN || '',
-  }),
+  // Only enable blob storage if token is available (handles CI/postinstall scenarios)
+  ...(process.env.BLOB_READ_WRITE_TOKEN
+    ? [
+        vercelBlobStorage({
+          collections: {
+            media: true,
+            'exercise-assets': true,
+          },
+          token: process.env.BLOB_READ_WRITE_TOKEN,
+        }),
+      ]
+    : []),
   // Only include MCP plugin when explicitly enabled
   ...(mcp ? [mcp] : []),
 ]

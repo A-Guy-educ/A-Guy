@@ -192,7 +192,11 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@sentry/cli",
+      "cpu-features",
+      "protobufjs",
       "sharp",
+      "ssh2",
       "esbuild",
       "unrs-resolver"
     ],
