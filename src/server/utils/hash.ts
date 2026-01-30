@@ -32,8 +32,7 @@ function normalizeForHash(exercise: ExerciseInput): string {
       b.content
         ?.trim()
         .replace(/\s+/g, ' ')
-        .replace(/\s*([+\-*/=^_])\s*/g, '$1')
-        .replace(/\s+/g, ' ') || '',
+        .replace(/\s*([+\-*/=^_])\s*/g, '$1') || '',
     latex: b.latex,
   }))
   return canonicalStringify({ title, blocks })
