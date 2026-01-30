@@ -18,43 +18,6 @@ interface Exercise {
   sourceOrderInSegment?: number
 }
 
-const listStyle: React.CSSProperties = {
-  marginTop: '0.75rem',
-  padding: '0.75rem',
-  background: 'var(--theme-elevation-50)',
-  borderRadius: '4px',
-}
-
-const listHeaderStyle: React.CSSProperties = {
-  margin: '0 0 0.5rem 0',
-  fontSize: '0.9rem',
-}
-
-const listStyleObj: React.CSSProperties = {
-  listStyle: 'none',
-  padding: 0,
-  margin: 0,
-}
-
-const listItemStyle: React.CSSProperties = {
-  marginBottom: '0.25rem',
-}
-
-const linkStyle: React.CSSProperties = {
-  background: 'none',
-  border: 'none',
-  color: 'var(--theme-text)',
-  cursor: 'pointer',
-  textAlign: 'left',
-  padding: '0.25rem 0',
-  width: '100%',
-}
-
-const pageRangeStyle: React.CSSProperties = {
-  color: 'var(--theme-elevation-400)',
-  fontSize: '0.85rem',
-}
-
 export function DraftExercisesList({ lessonId, sourceDocId }: DraftExercisesListProps) {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -94,32 +57,35 @@ export function DraftExercisesList({ lessonId, sourceDocId }: DraftExercisesList
 
   if (isLoading) {
     return (
-      <div style={{ ...listStyle, color: 'var(--theme-elevation-500)' }}>Loading exercises...</div>
+      <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 rounded">
+        Loading exercises...
+      </div>
     )
   }
 
   if (exercises.length === 0) {
     return (
-      <div style={listStyle}>
-        <p>No draft exercises found for this conversion.</p>
+      <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded">
+        <p className="text-zinc-500 dark:text-zinc-400 text-sm">
+          No draft exercises found for this conversion.
+        </p>
       </div>
     )
   }
 
   return (
-    <div style={listStyle}>
-      <h3 style={listHeaderStyle}>Draft Exercises ({exercises.length})</h3>
-      <ul style={listStyleObj}>
+    <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded">
+      <h3 className="text-sm font-medium mb-2">Draft Exercises ({exercises.length})</h3>
+      <ul className="list-none p-0 m-0">
         {exercises.map((exercise) => (
-          <li key={exercise.id} style={listItemStyle}>
+          <li key={exercise.id} className="mb-1">
             <button
-              style={linkStyle}
+              className="w-full text-left px-0 py-1 bg-transparent border-none text-zinc-700 dark:text-zinc-300 cursor-pointer hover:text-zinc-900 dark:hover:text-zinc-100 hover:underline"
               onClick={() => router.push(`/admin/collections/exercises/${exercise.id}`)}
             >
               {exercise.title}
               {exercise.sourcePageStart && exercise.sourcePageEnd && (
-                <span style={pageRangeStyle}>
-                  {' '}
+                <span className="text-zinc-400 dark:text-zinc-500 text-xs ml-1">
                   (Pages {exercise.sourcePageStart}-{exercise.sourcePageEnd})
                 </span>
               )}

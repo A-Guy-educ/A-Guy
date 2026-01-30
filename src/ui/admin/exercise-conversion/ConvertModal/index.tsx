@@ -17,97 +17,6 @@ interface PromptOption {
   usage: string
 }
 
-// Modal overlay styles
-const overlayStyle: React.CSSProperties = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  background: 'rgba(0, 0, 0, 0.5)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 1000,
-}
-
-// Modal content styles
-const contentStyle: React.CSSProperties = {
-  background: 'var(--theme-elevation-0)',
-  padding: '1.5rem',
-  borderRadius: '8px',
-  width: '100%',
-  maxWidth: '500px',
-  maxHeight: '90vh',
-  overflowY: 'auto',
-}
-
-const filenameStyle: React.CSSProperties = {
-  color: 'var(--theme-elevation-500)',
-  marginBottom: '1rem',
-}
-
-const errorBannerStyle: React.CSSProperties = {
-  padding: '0.75rem',
-  background: 'var(--theme-error-100)',
-  color: 'var(--theme-error-500)',
-  borderRadius: '4px',
-  marginBottom: '1rem',
-}
-
-const successBannerStyle: React.CSSProperties = {
-  padding: '0.75rem',
-  background: 'var(--theme-success-100)',
-  color: 'var(--theme-success-500)',
-  borderRadius: '4px',
-  marginBottom: '1rem',
-}
-
-const formFieldStyle: React.CSSProperties = {
-  marginBottom: '1rem',
-}
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  marginBottom: '0.25rem',
-  fontWeight: 500,
-}
-
-const selectStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '0.5rem',
-  border: '1px solid var(--theme-elevation-150)',
-  borderRadius: '4px',
-  background: 'var(--theme-elevation-0)',
-}
-
-const formActionsStyle: React.CSSProperties = {
-  display: 'flex',
-  gap: '0.5rem',
-  justifyContent: 'flex-end',
-  marginTop: '1.5rem',
-}
-
-const buttonSecondaryStyle: React.CSSProperties = {
-  padding: '0.5rem 1rem',
-  borderRadius: '4px',
-  fontWeight: 500,
-  cursor: 'pointer',
-  background: 'var(--theme-elevation-150)',
-  color: 'var(--theme-text)',
-  border: 'none',
-}
-
-const buttonPrimaryStyle: React.CSSProperties = {
-  padding: '0.5rem 1rem',
-  borderRadius: '4px',
-  fontWeight: 500,
-  cursor: 'pointer',
-  background: 'var(--theme-elevation-900)',
-  color: 'var(--theme-elevation-0)',
-  border: 'none',
-}
-
 export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertModalProps) {
   const [extractorPrompts, setExtractorPrompts] = useState<PromptOption[]>([])
   const [verifierPrompts, setVerifierPrompts] = useState<PromptOption[]>([])
@@ -121,7 +30,6 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
   useEffect(() => {
     async function loadPrompts() {
       try {
-        // Fetch prompts with overrideAccess: true via internal API
         const response = await fetch('/api/prompts/for-conversion', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -136,7 +44,7 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
         const data = await response.json()
         setExtractorPrompts(data.extractors || [])
         setVerifierPrompts(data.verifiers || [])
-      } catch (_err) {
+      } catch {
         setError('Failed to load prompts')
       } finally {
         setIsLoading(false)
@@ -181,20 +89,34 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
   }
 
   return (
-    <div style={overlayStyle} onClick={onClose}>
-      <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
-        <h2>Convert PDF to Exercises</h2>
-        <p style={filenameStyle}>File: {filename}</p>
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-zinc-900 p-6 rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-xl font-semibold mb-1">Convert PDF to Exercises</h2>
+        <p className="text-zinc-500 dark:text-zinc-400 mb-4">File: {filename}</p>
 
-        {error && <div style={errorBannerStyle}>{error}</div>}
-        {success && <div style={successBannerStyle}>{success}</div>}
+        {error && (
+          <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded p-3 mb-4">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded p-3 mb-4">
+            {success}
+          </div>
+        )}
 
         {isLoading ? (
-          <div style={{ color: 'var(--theme-elevation-500)' }}>Loading prompts...</div>
+          <div className="text-zinc-500">Loading prompts...</div>
         ) : (
           <div>
-            <div style={formFieldStyle}>
-              <label htmlFor="extractor" style={labelStyle}>
+            <div className="mb-4">
+              <label htmlFor="extractor" className="block font-medium mb-1">
                 Extractor Prompt
               </label>
               <select
@@ -202,7 +124,7 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
                 value={selectedExtractor}
                 onChange={(e) => setSelectedExtractor(e.target.value)}
                 required
-                style={selectStyle}
+                className="w-full p-2 border border-zinc-200 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800"
               >
                 <option value="">Select extractor prompt...</option>
                 {extractorPrompts.map((prompt) => (
@@ -213,8 +135,8 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
               </select>
             </div>
 
-            <div style={formFieldStyle}>
-              <label htmlFor="verifier" style={labelStyle}>
+            <div className="mb-4">
+              <label htmlFor="verifier" className="block font-medium mb-1">
                 Verifier Prompt
               </label>
               <select
@@ -222,7 +144,7 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
                 value={selectedVerifier}
                 onChange={(e) => setSelectedVerifier(e.target.value)}
                 required
-                style={selectStyle}
+                className="w-full p-2 border border-zinc-200 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800"
               >
                 <option value="">Select verifier prompt...</option>
                 {verifierPrompts.map((prompt) => (
@@ -233,14 +155,10 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
               </select>
             </div>
 
-            <div style={formActionsStyle}>
+            <div className="flex gap-2 justify-end mt-6">
               <button
                 type="button"
-                style={{
-                  ...buttonSecondaryStyle,
-                  opacity: isSubmitting ? 0.5 : 1,
-                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                }}
+                className="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded font-medium hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={onClose}
                 disabled={isSubmitting}
               >
@@ -248,14 +166,7 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
               </button>
               <button
                 type="button"
-                style={{
-                  ...buttonPrimaryStyle,
-                  opacity: isSubmitting || !selectedExtractor || !selectedVerifier ? 0.5 : 1,
-                  cursor:
-                    isSubmitting || !selectedExtractor || !selectedVerifier
-                      ? 'not-allowed'
-                      : 'pointer',
-                }}
+                className="px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
                 disabled={isSubmitting || !selectedExtractor || !selectedVerifier}
               >

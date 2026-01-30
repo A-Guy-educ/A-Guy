@@ -26,12 +26,12 @@ interface ConversionStatusPanelProps {
   onViewExercises?: () => void
 }
 
-// Badge color styles based on status
+// Badge color classes based on status
 const badgeColors = {
-  queued: 'background-color: var(--theme-warning-100); color: var(--theme-warning-500);',
-  running: 'background-color: var(--theme-info-100); color: var(--theme-info-500);',
-  completed: 'background-color: var(--theme-success-100); color: var(--theme-success-500);',
-  failed: 'background-color: var(--theme-error-100); color: var(--theme-error-500);',
+  queued: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+  running: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  completed: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  failed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 }
 
 export function ConversionStatusPanel({
@@ -92,7 +92,6 @@ export function ConversionStatusPanel({
         throw new Error(errorData.error || `HTTP ${response.status}`)
       }
 
-      // Refresh status
       setStatus(null)
       setIsLoading(true)
     } catch (error) {
@@ -105,14 +104,7 @@ export function ConversionStatusPanel({
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          padding: '0.75rem',
-          borderRadius: '4px',
-          background: 'var(--theme-elevation-100)',
-          color: 'var(--theme-elevation-500)',
-        }}
-      >
+      <div className="bg-zinc-100 dark:bg-zinc-800 text-zinc-500 p-3 rounded">
         Loading status...
       </div>
     )
@@ -129,57 +121,19 @@ export function ConversionStatusPanel({
   const canRun = status.status === 'queued' || status.status === 'failed'
 
   return (
-    <div
-      style={{
-        padding: '0.75rem',
-        borderRadius: '4px',
-        background: 'var(--theme-elevation-100)',
-        marginTop: '0.5rem',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '0.5rem',
-        }}
-      >
-        <h3 style={{ margin: 0, fontSize: '0.9rem' }}>Conversion Status</h3>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+    <div className="bg-zinc-100 dark:bg-zinc-800 p-3 rounded mt-2">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-sm font-medium m-0">Conversion Status</h3>
+        <div className="flex gap-2 items-center">
           <span
-            style={{
-              padding: '0.25rem 0.5rem',
-              borderRadius: '4px',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              ...Object.fromEntries(
-                badgeColors[status.status]
-                  .split('; ')
-                  .filter(Boolean)
-                  .map((s) => {
-                    const [key, value] = s.split(': ')
-                    return [key, value]
-                  }),
-              ),
-            }}
+            className={`px-2 py-0.5 rounded text-xs font-semibold uppercase ${badgeColors[status.status]}`}
           >
             {status.status}
           </span>
           {canRun && (
             <button
               type="button"
-              style={{
-                padding: '4px 12px',
-                borderRadius: '4px',
-                fontWeight: 500,
-                cursor: isRunning ? 'not-allowed' : 'pointer',
-                background: 'var(--theme-elevation-150)',
-                color: 'var(--theme-text)',
-                border: 'none',
-                opacity: isRunning ? 0.5 : 1,
-              }}
+              className="px-3 py-1 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded text-xs font-medium hover:bg-zinc-300 dark:hover:bg-zinc-600 disabled:opacity-50"
               onClick={handleRunNow}
               disabled={isRunning}
             >
@@ -190,41 +144,25 @@ export function ConversionStatusPanel({
       </div>
 
       {status.status === 'running' && (
-        <div
-          style={{
-            height: '8px',
-            background: 'var(--theme-elevation-200)',
-            borderRadius: '4px',
-            overflow: 'hidden',
-            marginBottom: '0.5rem',
-          }}
-        >
+        <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded overflow-hidden mb-2">
           <div
-            style={{
-              height: '100%',
-              background: 'var(--theme-success-500)',
-              width: `${progress}%`,
-              transition: 'width 0.3s ease',
-            }}
+            className="h-full bg-green-500 transition-all duration-300"
+            style={{ width: `${progress}%` }}
           />
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem' }}>
+      <div className="flex gap-4 text-sm">
         {status.output && (
           <>
             <div>
-              <span style={{ color: 'var(--theme-elevation-500)', marginRight: '0.25rem' }}>
-                Segments
-              </span>
+              <span className="text-zinc-500 dark:text-zinc-400 mr-1">Segments</span>
               <span>
                 {status.output.segmentsDone} / {status.output.segmentsTotal}
               </span>
             </div>
             <div>
-              <span style={{ color: 'var(--theme-elevation-500)', marginRight: '0.25rem' }}>
-                Exercises
-              </span>
+              <span className="text-zinc-500 dark:text-zinc-400 mr-1">Exercises</span>
               <span>
                 {status.output.exercisesCreated} created
                 {status.output.exercisesDeduped > 0 &&
@@ -237,16 +175,7 @@ export function ConversionStatusPanel({
 
       {status.status === 'completed' && onViewExercises && (
         <button
-          style={{
-            marginTop: '0.75rem',
-            padding: '0.5rem 1rem',
-            borderRadius: '4px',
-            fontWeight: 500,
-            cursor: 'pointer',
-            background: 'var(--theme-elevation-150)',
-            color: 'var(--theme-text)',
-            border: 'none',
-          }}
+          className="mt-3 px-4 py-1.5 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded text-sm font-medium hover:bg-zinc-300 dark:hover:bg-zinc-600"
           onClick={onViewExercises}
         >
           View Created Exercises
