@@ -79,10 +79,7 @@ export async function getPdfBufferFromBlob(
   if (isVercelBlobUrl(normalizedUrl)) {
     // Vercel Blob URL - validate format is correct
     if (!isVercelBlobUrl(normalizedUrl)) {
-      throw stageError(
-        'FETCH_FAILED',
-        `Invalid Vercel Blob URL format: ${normalizedUrl}`,
-      )
+      throw stageError('FETCH_FAILED', `Invalid Vercel Blob URL format: ${normalizedUrl}`)
     }
   }
   // For non-Blob URLs (like internal API routes), we accept them after normalization

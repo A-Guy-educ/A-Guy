@@ -28,9 +28,8 @@ describe('generateMultimodalCompletion', () => {
   })
 
   it('should call Gemini with prompt and PDF attachment', async () => {
-    const { generateMultimodalCompletion } = await import(
-      '@/infra/llm/providers/gemini/gemini.provider'
-    )
+    const { generateMultimodalCompletion } =
+      await import('@/infra/llm/providers/gemini/gemini.provider')
     const { getGeminiClient } = await import('@/server/llm/gemini.client')
 
     const mockPayload = {} as any
@@ -65,9 +64,8 @@ describe('generateMultimodalCompletion', () => {
   })
 
   it('should handle timeout', async () => {
-    const { generateMultimodalCompletion } = await import(
-      '@/infra/llm/providers/gemini/gemini.provider'
-    )
+    const { generateMultimodalCompletion } =
+      await import('@/infra/llm/providers/gemini/gemini.provider')
     const { getGeminiClient } = await import('@/server/llm/gemini.client')
 
     const mockPayload = {} as any
@@ -104,9 +102,8 @@ describe('generateMultimodalCompletion', () => {
   })
 
   it('should include attachments in the request', async () => {
-    const { generateMultimodalCompletion } = await import(
-      '@/infra/llm/providers/gemini/gemini.provider'
-    )
+    const { generateMultimodalCompletion } =
+      await import('@/infra/llm/providers/gemini/gemini.provider')
     const { getGeminiClient } = await import('@/server/llm/gemini.client')
 
     const mockPayload = {} as any

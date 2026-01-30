@@ -7,7 +7,12 @@
  * Run with: pnpm test:int -- --run tests/int/vercel-blob-adapter.int.spec.ts
  */
 
-import { VercelBlobAdapter, createBlobAdapter, getBlobPathname, isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
+import {
+  VercelBlobAdapter,
+  createBlobAdapter,
+  getBlobPathname,
+  isVercelBlobUrl,
+} from '@/infra/blob/vercel-blob-adapter'
 import { describe, expect, it } from 'vitest'
 
 describe('VercelBlobAdapter Integration', () => {
@@ -81,7 +86,7 @@ describe('VercelBlobAdapter Integration', () => {
       const result = await adapter.list('integration-tests')
 
       expect(result.blobs.length).toBeGreaterThan(0)
-      const testBlob = result.blobs.find(b => b.pathname.includes(testId))
+      const testBlob = result.blobs.find((b) => b.pathname.includes(testId))
       expect(testBlob).toBeDefined()
       expect(testBlob?.url).toBe(uploadedUrl)
     })
@@ -92,7 +97,9 @@ describe('VercelBlobAdapter Integration', () => {
       const exists = await adapter.exists(uploadedUrl)
       expect(exists).toBe(true)
 
-      const notExists = await adapter.exists('https://example.blob.vercel-storage.com/nonexistent-file.pdf')
+      const notExists = await adapter.exists(
+        'https://example.blob.vercel-storage.com/nonexistent-file.pdf',
+      )
       expect(notExists).toBe(false)
     })
   })
@@ -112,7 +119,9 @@ describe('VercelBlobAdapter Integration', () => {
     it('should return false when deleting non-existent file', async () => {
       if (isSkipped) return
 
-      const result = await adapter.delete('https://example.blob.vercel-storage.com/nonexistent-file.pdf')
+      const result = await adapter.delete(
+        'https://example.blob.vercel-storage.com/nonexistent-file.pdf',
+      )
       expect(result).toBe(false)
     })
   })
@@ -127,7 +136,11 @@ describe('VercelBlobAdapter Integration', () => {
       })
 
       const customFilename = `custom-test-${testId}.txt`
-      const result = await customAdapter.uploadBuffer(customFilename, Buffer.from('custom test'), 'text/plain')
+      const result = await customAdapter.uploadBuffer(
+        customFilename,
+        Buffer.from('custom test'),
+        'text/plain',
+      )
 
       expect(result.pathname).toBe(`custom-test-dir/${customFilename}`)
 
@@ -138,8 +151,12 @@ describe('VercelBlobAdapter Integration', () => {
 
   describe('URL Utilities', () => {
     it('should extract pathname from Vercel Blob URL', () => {
-      expect(getBlobPathname('https://example.blob.vercel-storage.com/media/file.pdf')).toBe('media/file.pdf')
-      expect(getBlobPathname('https://public.blob.vercel-storage.com/media/file.pdf')).toBe('media/file.pdf')
+      expect(getBlobPathname('https://example.blob.vercel-storage.com/media/file.pdf')).toBe(
+        'media/file.pdf',
+      )
+      expect(getBlobPathname('https://public.blob.vercel-storage.com/media/file.pdf')).toBe(
+        'media/file.pdf',
+      )
     })
 
     it('should validate Vercel Blob URLs', () => {

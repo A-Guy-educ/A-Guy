@@ -51,18 +51,23 @@ async function main() {
     })
 
     // Check if there are any errors related to migration files
-    const tscOutput = execSync('pnpm tsc --noEmit 2>&1 | grep -v "vercel-blob-adapter.int.spec.ts"', {
-      stdio: 'pipe',
-      cwd: path.join(__dirname, '..'),
-      shell: '/bin/zsh',
-    }).toString()
+    const tscOutput = execSync(
+      'pnpm tsc --noEmit 2>&1 | grep -v "vercel-blob-adapter.int.spec.ts"',
+      {
+        stdio: 'pipe',
+        cwd: path.join(__dirname, '..'),
+        shell: '/bin/zsh',
+      },
+    ).toString()
 
     if (tscOutput.trim() === '') {
       log('✅ TypeScript type check passed', colors.green)
       results.push(true)
     } else {
       // Check if errors are only pre-existing ones
-      const migrationRelatedErrors = tscOutput.match(/(gemini.provider|gemini-provider-multimodal|pdf-to-exercises-task|models\.ts)/g)
+      const migrationRelatedErrors = tscOutput.match(
+        /(gemini.provider|gemini-provider-multimodal|pdf-to-exercises-task|models\.ts)/g,
+      )
       if (!migrationRelatedErrors) {
         log('✅ TypeScript type check passed (no new errors)', colors.green)
         log('📝 Note: Only pre-existing errors in other files', colors.yellow)
@@ -76,7 +81,9 @@ async function main() {
   } catch (error) {
     // Exit code 1 means there were errors
     const tscOutput = error.stdout?.toString() || ''
-    const migrationRelatedErrors = tscOutput.match(/(gemini.provider|gemini-provider-multimodal|pdf-to-exercises-task|models\.ts)/g)
+    const migrationRelatedErrors = tscOutput.match(
+      /(gemini.provider|gemini-provider-multimodal|pdf-to-exercises-task|models\.ts)/g,
+    )
     if (!migrationRelatedErrors) {
       log('✅ TypeScript type check passed (no new errors)', colors.green)
       log('📝 Note: Only pre-existing errors in other files', colors.yellow)
@@ -88,15 +95,20 @@ async function main() {
   }
 
   // Unit tests for multimodal provider
-  results.push(runCommand('pnpm vitest run tests/unit/gemini-provider-multimodal.test.ts', 'Unit tests - Gemini multimodal'))
+  results.push(
+    runCommand(
+      'pnpm vitest run tests/unit/gemini-provider-multimodal.test.ts',
+      'Unit tests - Gemini multimodal',
+    ),
+  )
 
   // Summary
   log('\n' + '='.repeat(60), colors.cyan)
   log('📊 Verification Summary', colors.cyan)
   log('='.repeat(60), colors.cyan)
 
-  const passed = results.filter(r => r).length
-  const failed = results.filter(r => !r).length
+  const passed = results.filter((r) => r).length
+  const failed = results.filter((r) => !r).length
 
   if (failed === 0) {
     log(`✅ All migration checks passed (${passed}/${results.length})`, colors.green)

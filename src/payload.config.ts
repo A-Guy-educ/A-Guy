@@ -159,7 +159,15 @@ export default buildConfig({
         ...defaultJobsCollection.admin,
         hidden: false, // Make visible in admin sidebar
         group: 'System', // Group with other system collections
-        defaultColumns: ['taskSlug', 'inputCtx', 'status', 'progress', 'hasErrors', 'createdAt', 'completedAt'],
+        defaultColumns: [
+          'taskSlug',
+          'inputCtx',
+          'status',
+          'progress',
+          'hasErrors',
+          'createdAt',
+          'completedAt',
+        ],
       },
       access: {
         ...defaultJobsCollection.access,

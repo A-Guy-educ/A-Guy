@@ -223,10 +223,7 @@ async function updateJobStatus(
   }
 
   try {
-    await coll.updateOne(
-      { _id: new ObjectId(jobId) },
-      { $set: update },
-    )
+    await coll.updateOne({ _id: new ObjectId(jobId) }, { $set: update })
     console.log(`[PDF→Exercises] Job ${jobId} marked as ${status}`)
   } catch (err) {
     console.error(`[PDF→Exercises] Failed to update job status:`, err)

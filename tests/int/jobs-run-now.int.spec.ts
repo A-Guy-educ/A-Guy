@@ -8,25 +8,22 @@ let payload: Payload
 let originalDatabaseUrl: string | undefined
 
 describe('Jobs Run Now', () => {
-  beforeAll(
-    async () => {
-      // Save original DATABASE_URL and unset it before starting testcontainers
-      originalDatabaseUrl = process.env.DATABASE_URL
-      // @ts-expect-error - TypeScript doesn't allow delete on process.env
-      delete process.env.DATABASE_URL
+  beforeAll(async () => {
+    // Save original DATABASE_URL and unset it before starting testcontainers
+    originalDatabaseUrl = process.env.DATABASE_URL
+    // @ts-expect-error - TypeScript doesn't allow delete on process.env
+    delete process.env.DATABASE_URL
 
-      // Start MongoDB test container and set DATABASE_URL to testcontainers URL
-      const mongoUri = await startMongoContainer()
-      process.env.DATABASE_URL = mongoUri
+    // Start MongoDB test container and set DATABASE_URL to testcontainers URL
+    const mongoUri = await startMongoContainer()
+    process.env.DATABASE_URL = mongoUri
 
-      // Import config AFTER setting DATABASE_URL so it uses the test database
-      const config = await import('@payload-config')
+    // Import config AFTER setting DATABASE_URL so it uses the test database
+    const config = await import('@payload-config')
 
-      // Initialize Payload with the test MongoDB
-      payload = await getPayload({ config: config.default })
-    },
-    120000,
-  )
+    // Initialize Payload with the test MongoDB
+    payload = await getPayload({ config: config.default })
+  }, 120000)
 
   afterAll(async () => {
     // Restore original DATABASE_URL
@@ -207,7 +204,13 @@ describe('Jobs Run Now', () => {
     // First claim should succeed
     const firstClaim = await jobsColl.findOneAndUpdate(
       { _id: new ObjectId(job.id), processing: { $ne: true } },
-      { $set: { processing: true, startedAt: new Date(), lockExpiresAt: new Date(Date.now() + 60000) } },
+      {
+        $set: {
+          processing: true,
+          startedAt: new Date(),
+          lockExpiresAt: new Date(Date.now() + 60000),
+        },
+      },
       { returnDocument: 'after' },
     )
 
@@ -216,7 +219,13 @@ describe('Jobs Run Now', () => {
     // Second claim should fail (job is already processing)
     const secondClaim = await jobsColl.findOneAndUpdate(
       { _id: new ObjectId(job.id), processing: { $ne: true } },
-      { $set: { processing: true, startedAt: new Date(), lockExpiresAt: new Date(Date.now() + 60000) } },
+      {
+        $set: {
+          processing: true,
+          startedAt: new Date(),
+          lockExpiresAt: new Date(Date.now() + 60000),
+        },
+      },
       { returnDocument: 'after' },
     )
 

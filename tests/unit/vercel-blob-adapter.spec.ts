@@ -15,7 +15,7 @@ import {
   VercelBlobAdapter,
   createBlobAdapter,
   getBlobPathname,
-  isVercelBlobUrl
+  isVercelBlobUrl,
 } from '@/infra/blob/vercel-blob-adapter'
 import { del, list, put } from '@vercel/blob'
 
@@ -74,7 +74,7 @@ describe('VercelBlobAdapter', () => {
           token: 'test-token',
           access: 'public',
           contentType: 'application/pdf',
-        })
+        }),
       )
       expect(result.url).toBe(mockResult.url)
       expect(result.pathname).toBe(mockResult.pathname)
@@ -89,11 +89,7 @@ describe('VercelBlobAdapter', () => {
       const adapter = createBlobAdapter({ directory: 'custom' })
       await adapter.upload('test.pdf', Buffer.from('data'))
 
-      expect(put).toHaveBeenCalledWith(
-        'custom/test.pdf',
-        expect.anything(),
-        expect.anything()
-      )
+      expect(put).toHaveBeenCalledWith('custom/test.pdf', expect.anything(), expect.anything())
     })
   })
 
@@ -108,10 +104,9 @@ describe('VercelBlobAdapter', () => {
       const adapter = new VercelBlobAdapter()
       const result = await adapter.delete('https://example.blob.vercel-storage.com/media/test.pdf')
 
-      expect(del).toHaveBeenCalledWith(
-        'https://example.blob.vercel-storage.com/media/test.pdf',
-        { token: 'test-token' }
-      )
+      expect(del).toHaveBeenCalledWith('https://example.blob.vercel-storage.com/media/test.pdf', {
+        token: 'test-token',
+      })
       expect(result).toBe(true)
     })
 
@@ -219,7 +214,9 @@ describe('VercelBlobAdapter', () => {
       })
 
       const adapter = new VercelBlobAdapter()
-      const result = await adapter.getMetadata('https://example.blob.vercel-storage.com/media/test.pdf')
+      const result = await adapter.getMetadata(
+        'https://example.blob.vercel-storage.com/media/test.pdf',
+      )
 
       expect(result).toEqual({
         pathname: 'media/test.pdf',
@@ -235,7 +232,9 @@ describe('VercelBlobAdapter', () => {
       })
 
       const adapter = new VercelBlobAdapter()
-      const result = await adapter.getMetadata('https://example.blob.vercel-storage.com/media/test.pdf')
+      const result = await adapter.getMetadata(
+        'https://example.blob.vercel-storage.com/media/test.pdf',
+      )
 
       expect(result).toBeNull()
     })
@@ -248,7 +247,9 @@ describe('isVercelBlobUrl', () => {
   })
 
   it('should return true for public Vercel Blob URL', () => {
-    expect(isVercelBlobUrl('https://96hg0ck1hvrndmxp.public.blob.vercel-storage.com/media/test.pdf')).toBe(true)
+    expect(
+      isVercelBlobUrl('https://96hg0ck1hvrndmxp.public.blob.vercel-storage.com/media/test.pdf'),
+    ).toBe(true)
   })
 
   it('should return false for non-Vercel URL', () => {
@@ -262,19 +263,27 @@ describe('isVercelBlobUrl', () => {
 
 describe('getBlobPathname', () => {
   it('should extract pathname from Vercel Blob URL', () => {
-    expect(getBlobPathname('https://example.blob.vercel-storage.com/media/test.pdf')).toBe('media/test.pdf')
+    expect(getBlobPathname('https://example.blob.vercel-storage.com/media/test.pdf')).toBe(
+      'media/test.pdf',
+    )
   })
 
   it('should extract pathname from public Vercel Blob URL', () => {
-    expect(getBlobPathname('https://96hg0ck1hvrndmxp.public.blob.vercel-storage.com/media/test.pdf')).toBe('media/test.pdf')
+    expect(
+      getBlobPathname('https://96hg0ck1hvrndmxp.public.blob.vercel-storage.com/media/test.pdf'),
+    ).toBe('media/test.pdf')
   })
 
   it('should handle URL with query parameters', () => {
-    expect(getBlobPathname('https://example.blob.vercel-storage.com/media/test.pdf?token=abc')).toBe('media/test.pdf')
+    expect(
+      getBlobPathname('https://example.blob.vercel-storage.com/media/test.pdf?token=abc'),
+    ).toBe('media/test.pdf')
   })
 
   it('should return original string if no match', () => {
-    expect(getBlobPathname('https://example.com/media/test.pdf')).toBe('https://example.com/media/test.pdf')
+    expect(getBlobPathname('https://example.com/media/test.pdf')).toBe(
+      'https://example.com/media/test.pdf',
+    )
   })
 })
 

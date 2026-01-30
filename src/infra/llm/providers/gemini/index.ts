@@ -16,6 +16,5 @@ export {
   type ChatMessage,
   type GenerateChatInput,
   type GenerateChatOutput,
-  type GenerateMultimodalInput
-} from './gemini.provider';
-
+  type GenerateMultimodalInput,
+} from './gemini.provider'
