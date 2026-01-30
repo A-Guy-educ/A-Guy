@@ -37,25 +37,25 @@ jobs:
             -H "Authorization: Bearer $CRON_SECRET" \
             -H "Content-Type: application/json" \
             -w "\n%{http_code}")
-          
+
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
-          
+
           echo "Response: $BODY"
           echo "HTTP Status: $HTTP_CODE"
-          
+
           # Store response for potential use in later steps
           echo "body<<EOF" >> $GITHUB_OUTPUT
           echo "$BODY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
-          
+
           # Exit with error if request failed (non-2xx)
           if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
             echo "Runner request failed with status $HTTP_CODE"
             exit 1
           fi
-          
+
           # Parse response to check if job was processed
           PROCESSED=$(echo "$BODY" | jq -r '.processed // false')
           if [ "$PROCESSED" = "true" ]; then

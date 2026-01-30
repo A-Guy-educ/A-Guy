@@ -7,10 +7,12 @@ import { getPdfBufferFromBlob } from '@/server/services/pdf-fetcher'
 import { computeContentHash } from '@/server/utils/hash'
 import config from '@payload-config'
 // JobTask type is not exported from payload, define inline
+import { ObjectId } from 'mongodb'
 import { getPayload } from 'payload'
 
-// v2.1: Use EXISTING LLM infrastructure
+import { AI_MODELS } from '@/infra/llm/models'
 import type { MediaPartWithPath } from '@/infra/llm/multimodal/types'
+import { generateMultimodalCompletion } from '@/infra/llm/providers/gemini'
 import { mapMultimodalToGemini } from '@/infra/llm/providers/gemini/multimodal-mapper'
 import {
   enrichBlockIds,
@@ -19,7 +21,6 @@ import {
   toExerciseInput,
   toPayloadContent,
 } from '@/lib/exercise-conversion/helpers'
-import { getGeminiClient } from '@/server/llm/gemini.client'
 import { z } from 'zod'
 
 export const pdfToExercisesTask = {
@@ -46,13 +47,6 @@ export const pdfToExercisesTask = {
     }
 
     try {
-      // PASS 0: Load and Validate PDF from Vercel Blob
-      const pdfBuffer = await getPdfBufferFromBlob(sourceDocId, payload, req)
-
-      if (pdfBuffer.length > PDF_MAX_BYTES) {
-        throw { stage: 'PASS0_EXTRACT', code: 'PDF_TOO_LARGE', message: 'PDF too large' }
-      }
-
       // Fetch media document to get URL for multimodal mapper
       const media = await payload.findByID({
         collection: 'media',
@@ -67,6 +61,13 @@ export const pdfToExercisesTask = {
           code: 'MEDIA_NOT_FOUND',
           message: 'Media document has no URL',
         }
+      }
+
+      // PASS 0: Load and Validate PDF from Vercel Blob
+      const pdfBuffer = await getPdfBufferFromBlob(sourceDocId, payload, req)
+
+      if (pdfBuffer.length > PDF_MAX_BYTES) {
+        throw { stage: 'PASS0_EXTRACT', code: 'PDF_TOO_LARGE', message: 'PDF too large' }
       }
 
       // PASS 1: Segment Indexing (using buffer)
@@ -180,12 +181,56 @@ export const pdfToExercisesTask = {
         }
       }
 
+      // Mark job as completed
+      await updateJobStatus(payload, job.id, 'completed', output)
       return output
     } catch (error: any) {
       console.error(`[PDF→Exercises] Job ${job.id} failed:`, error)
+      await updateJobStatus(payload, job.id, 'failed', {
+        ...output,
+        error: error.message,
+      })
       throw error
     }
   },
+}
+
+/**
+ * Explicitly update job status in MongoDB to ensure proper status tracking
+ * This fixes the issue where jobs get stuck with "processing: true"
+ */
+async function updateJobStatus(
+  payload: any,
+  jobId: string,
+  status: 'completed' | 'failed',
+  output?: any,
+): Promise<void> {
+  const db = payload.db as any
+  const coll = db.connection?.collection?.('payload-jobs')
+  if (!coll) {
+    console.warn('[PDF→Exercises] Cannot update job status - jobs collection not accessible')
+    return
+  }
+
+  const update: any = {
+    processing: false,
+    completedAt: new Date(),
+    hasError: status === 'failed',
+  }
+
+  if (output) {
+    update.jobOutput = output
+  }
+
+  try {
+    await coll.updateOne(
+      { _id: new ObjectId(jobId) },
+      { $set: update },
+    )
+    console.log(`[PDF→Exercises] Job ${jobId} marked as ${status}`)
+  } catch (err) {
+    console.error(`[PDF→Exercises] Failed to update job status:`, err)
+  }
 }
 
 async function segmentPdf(pdfBuffer: Buffer, maxPagesPerSegment: number) {
@@ -205,17 +250,17 @@ async function segmentPdf(pdfBuffer: Buffer, maxPagesPerSegment: number) {
 
 /**
  * Process segment with REAL multimodal PDF attachment
- * v2.1: Updated to use existing infrastructure and retry-once-then-skip verification
+ * Uses Gemini provider for API calls with retry and timeout handling
  */
 async function processSegmentWithMultimodal(
   payload: any,
   req: any,
   context: {
-    geminiParts: { currentMessage: any[] } // v2.1: Output from mapMultimodalToGemini
+    geminiParts: { currentMessage: any[] } // Output from mapMultimodalToGemini
     segment: { pageStart: number; pageEnd: number }
     extractorPrompt: string
     verifierPrompt: string
-    output: any // v2.1: For tracking exercisesSkipped
+    output: any // For tracking exercisesSkipped
   },
 ) {
   const { geminiParts, segment, extractorPrompt, verifierPrompt, output } = context
@@ -237,29 +282,30 @@ Return a JSON array of exercises with this schema:
   }
 ]`
 
-  // v2.1: Use existing Gemini client infrastructure
-  const geminiClient = await getGeminiClient(payload)
-  const model = geminiClient.getGenerativeModel({ model: 'gemini-1.5-pro' })
+  // Use Gemini provider with AI_MODELS configuration
+  const extractorResult = await generateMultimodalCompletion(
+    {
+      prompt: extractorPromptWithContext,
+      model: AI_MODELS.PDF_TO_EXERCISE,
+      attachments: geminiParts.currentMessage
+        .filter((part: any) => part.inlineData)
+        .map((part: any) => ({
+          data: part.inlineData.data,
+          mimeType: part.inlineData.mimeType,
+        })),
+    },
+    payload,
+  )
 
-  const extractorResult = await model.generateContent({
-    contents: [
-      {
-        role: 'user',
-        parts: [{ text: extractorPromptWithContext }, ...geminiParts.currentMessage],
-      },
-    ],
-  })
-
-  const extractorResponse = extractorResult.response.text()
-  const rawExtracted = parseExtractorResponseText(extractorResponse)
+  const rawExtracted = parseExtractorResponseText(extractorResult.text)
 
   // ========== Schema Validation for Extractor Output ==========
   const extracted = validateExtractedExercises(rawExtracted, segment)
 
-  // ========== v2.1: Enrich with block IDs if missing ==========
+  // ========== Enrich with block IDs if missing ==========
   const enrichedExercises = extracted.map((exercise) => enrichBlockIds(exercise))
 
-  // ========== v2.1: Call Verifier with RETRY-ONCE-THEN-SKIP logic ==========
+  // ========== Call Verifier with RETRY-ONCE-THEN-SKIP logic ==========
   const validExercises: any[] = []
 
   for (const exercise of enrichedExercises) {
@@ -273,15 +319,15 @@ Source PDF pages: ${segment.pageStart}-${segment.pageEnd}
 Return JSON: { "valid": boolean, "reason": "..." }`
 
     // First verification attempt
-    let verification = await callVerifier(model, geminiParts, verifierPromptWithContext)
+    let verification = await callVerifier(payload, geminiParts, verifierPromptWithContext)
 
-    // v2.1: Retry once if verification fails
+    // Retry once if verification fails
     if (!verification.valid) {
       console.log(`[PDF→Exercises] Verification failed for "${exercise.title}", retrying...`)
-      verification = await callVerifier(model, geminiParts, verifierPromptWithContext)
+      verification = await callVerifier(payload, geminiParts, verifierPromptWithContext)
     }
 
-    // v2.1: Skip invalid exercises instead of failing the job
+    // Skip invalid exercises instead of failing the job
     if (!verification.valid) {
       console.warn(
         `[PDF→Exercises] Skipping exercise "${exercise.title}" after retry: ${verification.reason}`,
@@ -305,23 +351,28 @@ Return JSON: { "valid": boolean, "reason": "..." }`
 }
 
 /**
- * v2.1: Helper to call verifier (extracted for retry logic)
+ * Helper to call verifier using Gemini provider
  */
 async function callVerifier(
-  model: any,
+  payload: any,
   geminiParts: { currentMessage: any[] },
   prompt: string,
 ): Promise<{ valid: boolean; reason?: string }> {
   try {
-    const result = await model.generateContent({
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: prompt }, ...geminiParts.currentMessage],
-        },
-      ],
-    })
-    return parseVerifierResponseText(result.response.text())
+    const result = await generateMultimodalCompletion(
+      {
+        prompt,
+        model: AI_MODELS.PDF_TO_EXERCISE,
+        attachments: geminiParts.currentMessage
+          .filter((part: any) => part.inlineData)
+          .map((part: any) => ({
+            data: part.inlineData.data,
+            mimeType: part.inlineData.mimeType,
+          })),
+      },
+      payload,
+    )
+    return parseVerifierResponseText(result.text)
   } catch (error) {
     return { valid: false, reason: `Verifier call failed: ${error}` }
   }

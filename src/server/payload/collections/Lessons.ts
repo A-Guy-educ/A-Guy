@@ -1,9 +1,9 @@
 import type { CollectionConfig } from 'payload'
 
+import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
-import { tenantField } from '@/server/payload/fields/tenant'
 
 const formatSlug = (val: string): string =>
   val
@@ -151,6 +151,16 @@ export const Lessons: CollectionConfig = {
       hasMany: true,
       admin: {
         description: 'Upload lesson content files (PDFs, videos, images, etc.)',
+      },
+    },
+    // Exercise Conversion Panel (shows for each PDF - admin only)
+    {
+      name: 'conversionPanel',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/exercise-conversion/LessonConversionPanel#LessonConversionPanel',
+        },
       },
     },
     {

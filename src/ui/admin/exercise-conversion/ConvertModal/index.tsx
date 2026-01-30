@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface ConvertModalProps {
   lessonId: string
@@ -35,6 +35,7 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ lessonId }),
+          credentials: 'include',
         })
 
         if (!response.ok) {
@@ -54,8 +55,7 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
     loadPrompts()
   }, [lessonId])
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleSubmit() {
     setIsSubmitting(true)
     setError(null)
 
@@ -69,6 +69,7 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
           extractorPromptId: selectedExtractor,
           verifierPromptId: selectedVerifier,
         }),
+        credentials: 'include',
       })
 
       if (!response.ok) {
@@ -100,7 +101,7 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
         {isLoading ? (
           <div className="loading">Loading prompts...</div>
         ) : (
-          <form onSubmit={handleSubmit}>
+          <div className="modal-form" onSubmit={handleSubmit}>
             <div className="form-field">
               <label htmlFor="extractor">Extractor Prompt</label>
               <select
@@ -145,14 +146,15 @@ export function ConvertModal({ lessonId, mediaId, filename, onClose }: ConvertMo
                 Cancel
               </button>
               <button
-                type="submit"
+                type="button"
                 className="btn btn-primary"
+                onClick={handleSubmit}
                 disabled={isSubmitting || !selectedExtractor || !selectedVerifier}
               >
                 {isSubmitting ? 'Queuing...' : 'Queue Conversion'}
               </button>
             </div>
-          </form>
+          </div>
         )}
       </div>
     </div>

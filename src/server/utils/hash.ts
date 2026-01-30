@@ -41,10 +41,12 @@ function normalizeForHash(exercise: ExerciseInput): string {
 
 export function canonicalStringify(obj: any): string {
   if (obj === null) return 'null'
+  if (obj === undefined) return 'undefined' // v2.2 Fix: Handle undefined values
   if (typeof obj === 'boolean') return String(obj)
   if (typeof obj === 'number') return JSON.stringify(obj)
   if (typeof obj === 'string') return JSON.stringify(obj)
   if (Array.isArray(obj)) return '[' + obj.map(canonicalStringify).join(',') + ']'
+  if (typeof obj !== 'object') return JSON.stringify(obj) // v2.2 Fix: Handle other types
   const keys = Object.keys(obj).sort()
   const pairs = keys.map((k) => `${canonicalStringify(k)}:${canonicalStringify(obj[k])}`)
   return '{' + pairs.join(',') + '}'

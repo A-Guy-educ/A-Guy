@@ -29,20 +29,25 @@ export function LessonMediaActions({ media, lessonId }: LessonMediaActionsProps)
   )
 }
 
-function ConvertButton({ lessonId, mediaId, filename }: {
+function ConvertButton({
+  lessonId,
+  mediaId,
+  filename,
+}: {
   lessonId: string
   mediaId: string
   filename: string
 }) {
   const [isModalOpen, setIsModalOpen] = React.useState(false)
-  const ConvertModal = React.lazy(() => import('@/ui/admin/exercise-conversion/ConvertModal').then(m => ({ default: m.ConvertModal })))
+  const ConvertModal = React.lazy(() =>
+    import('@/ui/admin/exercise-conversion/ConvertModal').then((m) => ({
+      default: m.ConvertModal,
+    })),
+  )
 
   return (
     <>
-      <button
-        className="btn btn-secondary"
-        onClick={() => setIsModalOpen(true)}
-      >
+      <button className="btn btn-secondary" onClick={() => setIsModalOpen(true)}>
         Convert → Exercises
       </button>
 

@@ -38,6 +38,16 @@ export interface GenerateChatOutput {
   raw?: unknown
 }
 
+export interface GenerateMultimodalInput {
+  prompt: string
+  model: AIModel
+  attachments: Array<{
+    data: string // base64 encoded
+    mimeType: string // e.g., 'application/pdf'
+  }>
+  timeoutMs?: number
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration
 // ─────────────────────────────────────────────────────────────────────────────
@@ -73,6 +83,57 @@ export async function generateChatCompletion(
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       return await executeWithTimeout(input, timeoutMs, payload)
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+      const geminiError = wrapGeminiError(lastError)
+
+      // Don't retry non-retryable errors
+      if (!isRetryableError(lastError)) {
+        logger.error({ err: lastError, attempt }, '[GeminiProvider] Non-retryable error')
+        throw geminiError
+      }
+
+      // Retry with exponential backoff
+      if (attempt < MAX_RETRIES) {
+        const delay = RETRY_DELAY_MS * Math.pow(2, attempt)
+        logger.warn(
+          { err: lastError, attempt, delay, retrying: true },
+          '[GeminiProvider] Retrying after error',
+        )
+        await sleep(delay)
+      }
+    }
+  }
+
+  // All retries exhausted
+  logger.error({ err: lastError }, '[GeminiProvider] All retries exhausted')
+  throw wrapGeminiError(lastError ?? new Error('Unknown error'))
+}
+
+/**
+ * Generate a multimodal completion using Gemini
+ *
+ * Features:
+ * - Supports file attachments (PDF, images) via base64 inline data
+ * - Automatic retry with exponential backoff
+ * - Timeout handling
+ * - Error normalization
+ *
+ * @param input - Multimodal input with prompt, attachments, and model config
+ * @param payload - Payload instance for config access
+ * @returns Chat output with response text
+ * @throws GeminiError on failure after retries
+ */
+export async function generateMultimodalCompletion(
+  input: GenerateMultimodalInput,
+  payload: Payload,
+): Promise<GenerateChatOutput> {
+  const timeoutMs = input.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  let lastError: Error | null = null
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await executeMultimodalWithTimeout(input, timeoutMs, payload)
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
       const geminiError = wrapGeminiError(lastError)
@@ -162,6 +223,65 @@ async function executeWithTimeout(
   }
 }
 
+async function executeMultimodalWithTimeout(
+  input: GenerateMultimodalInput,
+  timeoutMs: number,
+  payload: Payload,
+): Promise<GenerateChatOutput> {
+  const client = await getGeminiClient(payload)
+
+  const model = client.getGenerativeModel({
+    model: input.model.name,
+    generationConfig: {
+      temperature: input.model.temperature,
+      maxOutputTokens: input.model.maxOutputTokens,
+    },
+  })
+
+  logger.debug(
+    {
+      promptLength: input.prompt.length,
+      attachmentCount: input.attachments.length,
+      mimeTypes: input.attachments.map((a) => a.mimeType),
+    },
+    '[GeminiProvider] Preparing multimodal request',
+  )
+
+  // Build parts array: text prompt + inline data attachments
+  const parts: Array<{ text: string } | { inlineData: { data: string; mimeType: string } }> = [
+    { text: input.prompt },
+  ]
+
+  for (const attachment of input.attachments) {
+    parts.push({
+      inlineData: {
+        data: attachment.data,
+        mimeType: attachment.mimeType,
+      },
+    })
+  }
+
+  // Create timeout promise
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Model call timed out after ${timeoutMs}ms`))
+    }, timeoutMs)
+  })
+
+  // Execute multimodal request with timeout
+  const result = await Promise.race([
+    model.generateContent({ contents: [{ role: 'user', parts }] }),
+    timeoutPromise,
+  ])
+
+  const text = extractResponseText(result.response)
+
+  return {
+    text,
+    raw: result,
+  }
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -172,3 +292,4 @@ function sleep(ms: number): Promise<void> {
 
 export { isGeminiApiKeyConfigured } from '@/server/llm/gemini.client'
 export { GeminiError, GeminiErrorCode } from './gemini.errors'
+

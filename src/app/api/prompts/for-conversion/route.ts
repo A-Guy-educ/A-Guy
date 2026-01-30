@@ -3,15 +3,25 @@ import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 
-type ErrorCode = 'UNAUTHORIZED' | 'VALIDATION_ERROR' | 'LESSON_NOT_FOUND' | 'INTERNAL_ERROR' | 'METHOD_NOT_ALLOWED'
+type ErrorCode =
+  | 'UNAUTHORIZED'
+  | 'VALIDATION_ERROR'
+  | 'LESSON_NOT_FOUND'
+  | 'INTERNAL_ERROR'
+  | 'METHOD_NOT_ALLOWED'
 
-function errorResponse(code: ErrorCode, message: string, status: number, headers?: Record<string, string>): NextResponse {
+function errorResponse(
+  code: ErrorCode,
+  message: string,
+  status: number,
+  headers?: Record<string, string>,
+): NextResponse {
   return NextResponse.json({ error: { code, message } }, { status, headers })
 }
 
 // v2.1 Fix 2: GET returns 405 Method Not Allowed
 export async function GET() {
-  return errorResponse('METHOD_NOT_ALLOWED', 'Use POST', 405, { 'Allow': 'POST' })
+  return errorResponse('METHOD_NOT_ALLOWED', 'Use POST', 405, { Allow: 'POST' })
 }
 
 export async function POST(request: NextRequest) {
@@ -22,7 +32,8 @@ export async function POST(request: NextRequest) {
     const { user } = await payload.auth({ headers: request.headers })
 
     let isAdmin = false
-    if (user && Array.isArray(user.role) && (user.role as string[]).includes('admin')) {
+    // role is a select field (string), not an array
+    if (user && user.role === 'admin') {
       isAdmin = true
     }
 
@@ -40,21 +51,22 @@ export async function POST(request: NextRequest) {
       return errorResponse('UNAUTHORIZED', 'Admin access required', 401)
     }
 
-    const { lessonId } = await request.json()
+    const body = await request.json()
+    const { lessonId } = body
 
     if (!lessonId) {
       return errorResponse('VALIDATION_ERROR', 'lessonId is required', 400)
     }
 
-    // Server-side tenant resolution: load lesson → course → tenant (authoritative)
-    const lesson = await payload.findByID({ collection: 'lessons', id: lessonId, depth: 2 })
+    // Server-side tenant resolution: tenant is directly on the lesson (not through course)
+    const lesson = await payload.findByID({ collection: 'lessons', id: lessonId, depth: 0 })
 
     if (!lesson) {
       return errorResponse('LESSON_NOT_FOUND', 'Lesson not found', 404)
     }
 
-    const course = (lesson as any).course
-    const tenantId = course?.tenant?.id || course?.tenant
+    const tenant = (lesson as any).tenant
+    const tenantId = tenant?.id || tenant
 
     if (!tenantId) {
       return errorResponse('VALIDATION_ERROR', 'Lesson has no tenant', 400)

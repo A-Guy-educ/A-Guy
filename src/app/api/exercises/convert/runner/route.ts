@@ -67,7 +67,10 @@ export async function POST(request: NextRequest) {
     const stopHeartbeat = heartbeatLoop(coll, job._id)
     try {
       // Use the raw Mongo collection to complete the job since payload.jobs.run doesn't accept jobId
-      await coll.updateOne({ _id: job._id }, { $set: { status: 'completed', completedAt: new Date() } })
+      await coll.updateOne(
+        { _id: job._id },
+        { $set: { status: 'completed', completedAt: new Date() } },
+      )
       return NextResponse.json({
         success: true,
         processed: true,
