@@ -1,12 +1,14 @@
 import { LOCK_TIMEOUT_MS } from '@/server/config/constants'
-import config from '@payload-config'
+import configPromise from '@payload-config'
 import { ObjectId } from 'mongodb'
 import { NextRequest, NextResponse } from 'next/server'
+import type { SanitizedConfig } from 'payload'
 import { getPayload } from 'payload'
 
-async function getJobsCollection(payload: Parameters<typeof getPayload>[0]['config']) {
-  const db = payload.db as { connection?: { collection: (name: string) => unknown } }
-  const coll = db.connection?.collection?.('payload-jobs')
+async function getJobsCollection(configToUse: SanitizedConfig | Promise<SanitizedConfig>) {
+  const resolvedConfig = await configToUse
+  const db = (resolvedConfig as { db?: { connection?: { collection: (name: string) => unknown } } }).db
+  const coll = db?.connection?.collection?.('payload-jobs')
   if (!coll) throw new Error('Cannot access Jobs collection')
   return coll
 }
@@ -69,7 +71,7 @@ async function updateJobStatus(
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = await getPayload({ config })
+    const payload = await getPayload({ config: configPromise })
     const { user } = await payload.auth({ headers: request.headers })
 
     // Admin-only access
@@ -84,7 +86,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'jobId is required' }, { status: 400 })
     }
 
-    const coll = await getJobsCollection(payload)
+    const coll = await getJobsCollection(configPromise)
     const job = await atomicClaimAndRunJob(coll, jobId)
 
     if (!job) {
@@ -121,8 +123,8 @@ export async function POST(request: NextRequest) {
 
     // Try to update job status to failed if we can identify the job
     try {
-      const payload = await getPayload({ config })
-      const coll = await getJobsCollection(payload)
+      const payload = await getPayload({ config: configPromise })
+      const coll = await getJobsCollection(configPromise)
       const { jobId } = await request.json().catch(() => ({}))
 
       if (jobId) {

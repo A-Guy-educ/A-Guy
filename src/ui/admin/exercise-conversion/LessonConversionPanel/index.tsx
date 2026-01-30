@@ -1,7 +1,7 @@
 'use client'
 
 import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
-import React, { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { ConversionStatusPanel } from '../ConversionStatusPanel'
 import { DraftExercisesList } from '../DraftExercisesList'
 
@@ -16,14 +16,10 @@ interface MediaItem {
   mimeType?: string
 }
 
-type LessonConversionPanelProps = {
-  // This is a UI field component - it doesn't receive props directly
-  // but uses useDocumentInfo and useFormFields hooks
-}
-
-export const LessonConversionPanel: React.FC<LessonConversionPanelProps> = () => {
+export const LessonConversionPanel = () => {
   const { id: lessonId } = useDocumentInfo()
-  const contentFilesField = useFormFields(([fields]: [Record<string, unknown>]) => fields.contentFiles)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const contentFilesField = useFormFields((context: any) => context.contentFiles)
 
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
