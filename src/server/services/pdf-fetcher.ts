@@ -3,6 +3,7 @@ import {
   getPdfBufferFromUrl,
   isVercelBlobUrl,
 } from '@/infra/blob/vercel-blob-adapter'
+import { fetchBuffer } from '@/infra/utils/http'
 import { PDF_MAX_BYTES } from '@/server/config/constants'
 
 export interface PDFExtractError {
@@ -77,9 +78,9 @@ export async function getPdfBufferFromBlob(
     // Vercel Blob URL - use adapter's optimized function
     pdfBuffer = await getPdfBufferFromUrl(media.url)
   } else {
-    // Payload API endpoint or relative URL - normalize to absolute and fetch
+    // Payload API endpoint or relative URL - use generic HTTP fetch
     const normalizedUrl = normalizeToAbsoluteUrl(media.url)
-    pdfBuffer = await getPdfBufferFromUrl(normalizedUrl)
+    pdfBuffer = await fetchBuffer(normalizedUrl)
   }
 
   // Validate size

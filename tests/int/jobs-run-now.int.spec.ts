@@ -136,21 +136,32 @@ describe('Jobs Run Now', () => {
       'application/pdf',
     )
 
-    // Create a test media record pointing to our blob storage URL
-    const media = await payload.create({
-      collection: 'media',
-      data: {
-        filename: 'test.pdf',
-        mimeType: 'application/pdf',
-        type: 'external',
-        externalUrl: blobResult.url,
-      } as any,
+    // Create a test media record directly in the database (bypass Payload upload)
+    // This is necessary because Payload's upload config expects actual file uploads
+    const db1 = payload.db as any
+    const mediaColl = db1.connection?.collection?.('media')
+    const mediaResult = await mediaColl.insertOne({
+      filename: 'test.pdf',
+      mimeType: 'application/pdf',
+      type: 'external',
+      externalUrl: blobResult.url,
+      url: blobResult.url, // Add URL field for compatibility
+      filesize: testPdfContent.length,
+      width: null,
+      height: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      tenant: new ObjectId(tenant.id),
+      createdBy: new ObjectId(user.id),
+      retentionPolicy: 'persistent',
     })
+    const media = { id: mediaResult.insertedId.toString() }
 
     // Create test prompts
     const extractorPrompt = await payload.create({
       collection: 'prompts',
       data: {
+        title: 'Test Extractor Prompt',
         slug: `test-extractor-${Date.now()}`,
         usage: 'extractor',
         template: 'Extract exercises from this content.',
@@ -162,6 +173,7 @@ describe('Jobs Run Now', () => {
     const verifierPrompt = await payload.create({
       collection: 'prompts',
       data: {
+        title: 'Test Verifier Prompt',
         slug: `test-verifier-${Date.now()}`,
         usage: 'verifier',
         template: 'Verify this exercise is valid.',
@@ -193,8 +205,7 @@ describe('Jobs Run Now', () => {
     expect(job.taskSlug).toBe('pdf_to_exercises')
 
     // Access the jobs collection directly to check status
-    const db = payload.db as any
-    const jobsColl = db.connection?.collection?.('payload-jobs')
+    const jobsColl = db1.connection?.collection?.('payload-jobs')
     const jobDoc = await jobsColl.findOne({ _id: new ObjectId(job.id) })
 
     expect(jobDoc).toBeDefined()
