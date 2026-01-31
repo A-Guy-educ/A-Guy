@@ -1,3 +1,4 @@
+import { loadRuntimeConfig } from '@/infra/config/runtime/runtime-config'
 import { LOCK_TIMEOUT_MS } from '@/server/config/constants'
 import configPromise from '@payload-config'
 import { ObjectId } from 'mongodb'
@@ -96,6 +97,12 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`[run-immediately] Executing job ${jobId} synchronously`)
+
+    // v2.1 Fix: Load runtime config before job execution
+    // This ensures getExternalStorageUrl() works correctly when fetching PDFs
+    console.log('[run-immediately] Loading runtime config...')
+    await loadRuntimeConfig(payload)
+    console.log('[run-immediately] Runtime config loaded')
 
     // Normalize job object: MongoDB returns _id (ObjectId), but task handler expects id (string)
     const job = {
