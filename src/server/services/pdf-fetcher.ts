@@ -1,4 +1,8 @@
+import { promises as fs } from 'fs'
+import path from 'path'
+
 import { getExternalStorageUrl, isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
+import { MEDIA_STORAGE_DIR } from '@/infra/config/storage'
 import { PDF_MAX_BYTES } from '@/server/config/constants'
 
 export interface PDFExtractError {
@@ -42,7 +46,52 @@ export function normalizeToAbsoluteUrl(url: string): string {
 }
 
 /**
- * Get PDF buffer from Vercel Blob storage
+ * Check if a URL is a local media path (relative URL pointing to public/media)
+ */
+function isLocalMediaPath(url: string): boolean {
+  // Local media URLs are relative paths like /media/filename.pdf
+  return url.startsWith('/media/') || url.startsWith('/api/media/')
+}
+
+/**
+ * Extract filename from a local media URL
+ */
+function extractFilenameFromLocalUrl(url: string): string {
+  // Handle /media/filename.pdf or /api/media/file/filename.pdf
+  if (url.startsWith('/media/')) {
+    return url.replace('/media/', '')
+  }
+  if (url.startsWith('/api/media/file/')) {
+    return url.replace('/api/media/file/', '')
+  }
+  // Fallback: get last path segment
+  return url.split('/').pop() || ''
+}
+
+/**
+ * Read PDF directly from local filesystem
+ */
+async function readLocalPdf(url: string): Promise<Buffer> {
+  const filename = extractFilenameFromLocalUrl(url)
+  if (!filename) {
+    throw stageError('FETCH_FAILED', `Could not extract filename from URL: ${url}`)
+  }
+
+  const filePath = path.join(MEDIA_STORAGE_DIR, filename)
+
+  try {
+    const pdfBuffer = await fs.readFile(filePath)
+    return pdfBuffer
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      throw stageError('MEDIA_NOT_FOUND', `File not found: ${filePath}`)
+    }
+    throw stageError('FETCH_FAILED', `Failed to read local file: ${error.message}`)
+  }
+}
+
+/**
+ * Get PDF buffer from storage (local filesystem or Vercel Blob)
  * Uses media document's URL to fetch the file
  * Works in both Next.js server context and standalone worker context
  */
@@ -63,40 +112,41 @@ export async function getPdfBufferFromBlob(
     throw stageError('NOT_PDF', `Expected application/pdf, got ${media.mimeType}`)
   }
 
-  // Get file size from media document (unused variable, kept for documentation)
-  const _filesize = media.filesize as number | undefined
-
-  // Fetch the file from Blob storage using the URL
+  // Fetch the file from storage using the URL
   if (!media.url) {
     throw stageError('FETCH_FAILED', 'Media document has no URL')
   }
 
-  // Normalize URL to absolute URL (handles relative paths like /api/media/file/...)
-  const normalizedUrl = normalizeToAbsoluteUrl(media.url)
-
-  // For Vercel Blob URLs, validate the format
-  // For other URLs (like internal API routes), we accept them after normalization
-  if (isVercelBlobUrl(normalizedUrl)) {
-    // Vercel Blob URL - validate format is correct
-    if (!isVercelBlobUrl(normalizedUrl)) {
-      throw stageError('FETCH_FAILED', `Invalid Vercel Blob URL format: ${normalizedUrl}`)
-    }
-  }
-  // For non-Blob URLs (like internal API routes), we accept them after normalization
-  // The fetch will work as long as we have an absolute URL
+  let pdfBuffer: Buffer
 
   try {
-    const response = await fetch(normalizedUrl)
-
-    if (!response.ok) {
-      throw stageError(
-        'FETCH_FAILED',
-        `Failed to fetch PDF: ${response.status} ${response.statusText}`,
-      )
+    // Check if this is a local file (relative URL) - read directly from filesystem
+    if (isLocalMediaPath(media.url)) {
+      pdfBuffer = await readLocalPdf(media.url)
+    } else if (isVercelBlobUrl(media.url)) {
+      // Vercel Blob URL - fetch via HTTP
+      const response = await fetch(media.url)
+      if (!response.ok) {
+        throw stageError(
+          'FETCH_FAILED',
+          `Failed to fetch PDF: ${response.status} ${response.statusText}`,
+        )
+      }
+      const arrayBuffer = await response.arrayBuffer()
+      pdfBuffer = Buffer.from(arrayBuffer)
+    } else {
+      // Other absolute URL - normalize and fetch
+      const normalizedUrl = normalizeToAbsoluteUrl(media.url)
+      const response = await fetch(normalizedUrl)
+      if (!response.ok) {
+        throw stageError(
+          'FETCH_FAILED',
+          `Failed to fetch PDF: ${response.status} ${response.statusText}`,
+        )
+      }
+      const arrayBuffer = await response.arrayBuffer()
+      pdfBuffer = Buffer.from(arrayBuffer)
     }
-
-    const arrayBuffer = await response.arrayBuffer()
-    const pdfBuffer = Buffer.from(arrayBuffer)
 
     // Validate size
     if (pdfBuffer.length > PDF_MAX_BYTES) {
@@ -124,7 +174,7 @@ export async function getPdfBufferFromBlob(
 
 /**
  * Get PDF file size (for validation)
- * Uses media document's filesize field or fetches to calculate
+ * Uses media document's filesize field or reads from filesystem/fetches to calculate
  */
 export async function getPdfFileSize(mediaId: string, payload: any): Promise<number> {
   const media = await payload.findByID({ collection: 'media', id: mediaId, depth: 0 })
@@ -135,23 +185,34 @@ export async function getPdfFileSize(mediaId: string, payload: any): Promise<num
 
   let filesize = media.filesize as number | undefined
 
-  // If filesize is missing, fetch the file to calculate size
+  // If filesize is missing, get it from the file
   if (filesize === undefined || filesize === null) {
     if (!media.url) {
       throw stageError('FETCH_FAILED', 'Media document has no URL')
     }
 
     try {
-      const normalizedUrl = normalizeToAbsoluteUrl(media.url)
-      const response = await fetch(normalizedUrl, { method: 'HEAD' })
-      if (response.ok) {
-        const contentLength = response.headers.get('content-length')
-        if (contentLength) {
-          filesize = parseInt(contentLength, 10)
+      // For local files, use fs.stat
+      if (isLocalMediaPath(media.url)) {
+        const filename = extractFilenameFromLocalUrl(media.url)
+        const filePath = path.join(MEDIA_STORAGE_DIR, filename)
+        const stats = await fs.stat(filePath)
+        filesize = stats.size
+      } else {
+        // For remote URLs, try HEAD request first
+        const normalizedUrl = isVercelBlobUrl(media.url)
+          ? media.url
+          : normalizeToAbsoluteUrl(media.url)
+        const response = await fetch(normalizedUrl, { method: 'HEAD' })
+        if (response.ok) {
+          const contentLength = response.headers.get('content-length')
+          if (contentLength) {
+            filesize = parseInt(contentLength, 10)
+          }
         }
       }
     } catch (_error) {
-      // Fallback: fetch full file if HEAD fails
+      // Fallback: fetch full file if stat/HEAD fails
       const buffer = await getPdfBufferFromBlob(mediaId, payload)
       filesize = buffer.length
     }
