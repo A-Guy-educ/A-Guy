@@ -86,9 +86,9 @@ export async function POST(request: NextRequest) {
     // Access the jobs collection through payload.db with a properly connected instance
     const coll = await getJobsCollection(payload)
 
-    const job = await atomicClaimAndRunJob(coll, jobId)
+    const jobDoc = await atomicClaimAndRunJob(coll, jobId)
 
-    if (!job) {
+    if (!jobDoc) {
       return NextResponse.json(
         { error: 'Job not found, already running, or already completed' },
         { status: 404 },
@@ -96,6 +96,12 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`[run-immediately] Executing job ${jobId} synchronously`)
+
+    // Normalize job object: MongoDB returns _id (ObjectId), but task handler expects id (string)
+    const job = {
+      ...jobDoc,
+      id: jobId, // Add string id for task handler compatibility
+    }
 
     // Execute the task synchronously by calling the handler directly
     const req = {
