@@ -42,7 +42,7 @@ afterAll(() => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockPayload: any = {
   find: vi.fn(() => Promise.resolve({ docs: [] })),
-  logger: { info: vi.fn() },
+  logger: { info: vi.fn(), warn: vi.fn() },
 }
 
 const TEST_TENANT_ID = 'test-tenant-123'
@@ -92,8 +92,8 @@ describe('Runtime Config (Tenant-Scoped)', () => {
       const result1 = await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
       const result2 = await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
-      // Should only call DB once
-      expect(mockPayload.find).toHaveBeenCalledTimes(1)
+      // First call: tenant lookup, Second call: config entries (both cached after first load)
+      expect(mockPayload.find).toHaveBeenCalledTimes(2)
       expect(result1.loadedAt).toEqual(result2.loadedAt)
       expect(result1).toEqual(result2)
     })
@@ -103,19 +103,22 @@ describe('Runtime Config (Tenant-Scoped)', () => {
 
       await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
-      expect(mockPayload.find).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            tenant: { equals: TEST_TENANT_ID },
-          }),
-          overrideAccess: true,
-          req: expect.objectContaining({
-            context: expect.objectContaining({
-              internalConfigLoad: true,
-            }),
+      // Verify the config entries query has the correct filter
+      const configQueryCall = mockPayload.find.mock.calls.find(
+        (call: any[]) => call[0]?.collection === 'config_entries',
+      )
+      expect(configQueryCall).toBeDefined()
+      expect(configQueryCall[0]).toMatchObject({
+        where: expect.objectContaining({
+          tenant: { equals: TEST_TENANT_ID },
+        }),
+        overrideAccess: true,
+        req: expect.objectContaining({
+          context: expect.objectContaining({
+            internalConfigLoad: true,
           }),
         }),
-      )
+      })
     })
 
     test('should rethrow DB errors (not wrap them)', async () => {
@@ -160,13 +163,13 @@ describe('Runtime Config (Tenant-Scoped)', () => {
     test('should clear cache and reload', async () => {
       mockPayload.find.mockResolvedValue({ docs: [] })
 
-      // First load
+      // First load: 2 calls (tenant + config)
       await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
-      expect(mockPayload.find).toHaveBeenCalledTimes(1)
-
-      // Reload - should clear cache and call DB again
-      await reloadRuntimeConfig(mockPayload)
       expect(mockPayload.find).toHaveBeenCalledTimes(2)
+
+      // Reload - should clear cache and call DB again (tenant + config)
+      await reloadRuntimeConfig(mockPayload)
+      expect(mockPayload.find).toHaveBeenCalledTimes(4)
     })
   })
 

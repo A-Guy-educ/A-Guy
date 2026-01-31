@@ -30,7 +30,7 @@ const PROXY_TO_STAGE: Record<string, string> = {
  * Normalize URL to absolute URL
  * Handles relative URLs by prepending the external storage base URL
  */
-export function normalizeToAbsoluteUrl(url: string): string {
+export async function normalizeToAbsoluteUrl(url: string): Promise<string> {
   // If already absolute URL (http:// or https://), return as-is
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url
@@ -38,7 +38,7 @@ export function normalizeToAbsoluteUrl(url: string): string {
 
   // If it's a relative URL starting with /, prepend external storage base URL
   if (url.startsWith('/')) {
-    const baseUrl = getExternalStorageUrl()
+    const baseUrl = await getExternalStorageUrl()
     return `${baseUrl}${url}`
   }
 
@@ -79,7 +79,7 @@ export async function getPdfBufferFromBlob(
     pdfBuffer = await getPdfBufferFromUrl(media.url)
   } else {
     // Payload API endpoint or relative URL - use generic HTTP fetch
-    const normalizedUrl = normalizeToAbsoluteUrl(media.url)
+    const normalizedUrl = await normalizeToAbsoluteUrl(media.url)
     pdfBuffer = await fetchBuffer(normalizedUrl)
   }
 
@@ -126,7 +126,7 @@ export async function getPdfFileSize(mediaId: string, payload: any): Promise<num
       if (isVercelBlobUrl(media.url)) {
         url = media.url
       } else {
-        url = normalizeToAbsoluteUrl(media.url)
+        url = await normalizeToAbsoluteUrl(media.url)
       }
 
       const response = await fetch(url, { method: 'HEAD' })

@@ -7,8 +7,8 @@
  */
 
 export class ConfigNotLoadedError extends Error {
-  constructor() {
-    super('Runtime config has not been loaded. Call loadRuntimeConfig() first.')
+  constructor(message?: string) {
+    super(message ?? 'Runtime config has not been loaded. Call loadRuntimeConfig() first.')
     this.name = 'ConfigNotLoadedError'
   }
 }

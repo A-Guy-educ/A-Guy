@@ -19,6 +19,7 @@
  */
 
 import type { ConfigEntry } from '@/payload-types'
+import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import type { Payload, Where } from 'payload'
 import { ConfigKind } from '../config-constants'
 import { decryptSecret } from '../config-crypto'
@@ -31,6 +32,8 @@ import type { LoadConfigResult, RuntimeConfigCache } from './types'
 
 let cache: RuntimeConfigCache | null = null
 let lastLoadResult: LoadConfigResult | null = null
+let defaultTenantId: string | null = null
+let defaultTenantLoaded = false
 
 // ============================================
 // Type Guards & Validators
@@ -69,6 +72,7 @@ function assertLoaded(): void {
  * - Decrypts secrets using config-crypto
  * - Passes context flag to bypass write-only UX hook
  * - Tenant-scoped cache structure: Map<tenantId, Map<key, value>>
+ * - Caches default tenant ID for global config lookups
  *
  * @param payload - Payload instance (must be initialized)
  * @param tenantId - Optional: load specific tenant only
@@ -101,6 +105,22 @@ export async function loadRuntimeConfig(
   const errors: LoadConfigResult['errors'] = []
   const variables = new Map<string, Map<string, string>>()
   const secrets = new Map<string, Map<string, string>>()
+
+  // Cache default tenant ID (for global config lookups)
+  if (!defaultTenantLoaded) {
+    try {
+      defaultTenantId = await getDefaultTenantId(payload)
+      defaultTenantLoaded = true
+    } catch (error) {
+      // Log but continue - default tenant might be created later
+      if (typeof payload.logger?.warn === 'function') {
+        payload.logger.warn({
+          msg: 'Could not load default tenant ID',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        })
+      }
+    }
+  }
 
   try {
     // Build query - optional tenant filter
@@ -177,14 +197,16 @@ export async function loadRuntimeConfig(
     }
 
     // SECURITY: Never log secrets - only metadata
-    payload.logger.info({
-      msg: 'Runtime config loaded',
-      variablesLoaded: lastLoadResult.variablesLoaded,
-      secretsLoaded: lastLoadResult.secretsLoaded,
-      tenantsLoaded: variables.size,
-      errorsCount: errors.length,
-      durationMs: duration,
-    })
+    if (typeof payload.logger?.info === 'function') {
+      payload.logger.info({
+        msg: 'Runtime config loaded',
+        variablesLoaded: lastLoadResult.variablesLoaded,
+        secretsLoaded: lastLoadResult.secretsLoaded,
+        tenantsLoaded: variables.size,
+        errorsCount: errors.length,
+        durationMs: duration,
+      })
+    }
 
     return lastLoadResult
   } catch (error) {
@@ -203,6 +225,8 @@ export async function reloadRuntimeConfig(payload: Payload): Promise<LoadConfigR
   // Reset state to force fresh load
   cache = null
   lastLoadResult = null
+  defaultTenantId = null
+  defaultTenantLoaded = false
 
   return loadRuntimeConfig(payload)
 }
@@ -216,7 +240,7 @@ export async function reloadRuntimeConfig(payload: Payload): Promise<LoadConfigR
  *
  * Note: process.env override is DISABLED for tenant-scoped config (per spec-3)
  *
- * @param tenantId - Tenant ID to scope the lookup
+ * @param tenantId - Tenant ID to scope the lookup (optional, uses default tenant)
  * @param key - Configuration key (exact match required)
  * @param options - Options for default value and error handling
  * @returns The configuration value
@@ -225,19 +249,25 @@ export async function reloadRuntimeConfig(payload: Payload): Promise<LoadConfigR
  * @throws ConfigKeyNotFoundError if key not found and no default
  */
 export function getVariable(
-  tenantId: string,
-  key: string,
+  tenantId?: string,
+  key?: string,
   options?: { defaultValue?: string; throwIfNotFound?: boolean },
 ): string {
   assertServerSide()
   assertLoaded()
 
+  const resolvedTenantId = tenantId ?? defaultTenantId
+  if (!resolvedTenantId) {
+    throw new ConfigNotLoadedError()
+  }
+
+  const resolvedKey = key ?? ''
   const { defaultValue, throwIfNotFound = true } = options ?? {}
 
   // Check tenant-specific cache
-  const tenantVariables = cache!.variables.get(tenantId)
-  if (tenantVariables?.has(key)) {
-    return tenantVariables.get(key)!
+  const tenantVariables = cache!.variables.get(resolvedTenantId)
+  if (tenantVariables?.has(resolvedKey)) {
+    return tenantVariables.get(resolvedKey)!
   }
 
   // Return default or throw
@@ -249,7 +279,7 @@ export function getVariable(
     return ''
   }
 
-  throw new ConfigKeyNotFoundError(key, 'variable', tenantId)
+  throw new ConfigKeyNotFoundError(resolvedKey, 'variable', resolvedTenantId)
 }
 
 /**
@@ -259,7 +289,7 @@ export function getVariable(
  * - Never logs the secret value
  * - Throws explicit error if not found
  *
- * @param tenantId - Tenant ID to scope the lookup
+ * @param tenantId - Tenant ID to scope the lookup (optional, uses default tenant)
  * @param key - Secret key (exact match required)
  * @param options - Options for default value and error handling
  * @returns The decrypted secret value
@@ -268,19 +298,25 @@ export function getVariable(
  * @throws ConfigKeyNotFoundError if key not found and no default
  */
 export function getSecret(
-  tenantId: string,
-  key: string,
+  tenantId?: string,
+  key?: string,
   options?: { defaultValue?: string; throwIfNotFound?: boolean },
 ): string {
   assertServerSide()
   assertLoaded()
 
+  const resolvedTenantId = tenantId ?? defaultTenantId
+  if (!resolvedTenantId) {
+    throw new ConfigNotLoadedError()
+  }
+
+  const resolvedKey = key ?? ''
   const { defaultValue, throwIfNotFound = true } = options ?? {}
 
   // Check tenant-specific cache (secrets)
-  const tenantSecrets = cache!.secrets.get(tenantId)
-  if (tenantSecrets?.has(key)) {
-    return tenantSecrets.get(key)!
+  const tenantSecrets = cache!.secrets.get(resolvedTenantId)
+  if (tenantSecrets?.has(resolvedKey)) {
+    return tenantSecrets.get(resolvedKey)!
   }
 
   // Return default or throw
@@ -292,7 +328,70 @@ export function getSecret(
     return ''
   }
 
-  throw new ConfigKeyNotFoundError(key, 'secret', tenantId)
+  throw new ConfigKeyNotFoundError(resolvedKey, 'secret', resolvedTenantId)
+}
+
+/**
+ * Get config value with ConfigEntries → env vars fallback
+ *
+ * This is an async function that:
+ * 1. First checks ConfigEntries (with default tenant)
+ * 2. Falls back to environment variables if not found
+ *
+ * @param key - Configuration key
+ * @param envVar - Environment variable name (defaults to same as key)
+ * @returns The configuration value or undefined
+ *
+ * Usage:
+ * ```typescript
+ * const storageUrl = await getConfigValue('NEXT_PUBLIC_EXTERNAL_STORAGE_URL')
+ * ```
+ */
+export async function getConfigValue(key: string, envVar?: string): Promise<string | undefined> {
+  assertServerSide()
+
+  // Try ConfigEntries first (if loaded)
+  if (cache && defaultTenantId) {
+    try {
+      const tenantVariables = cache.variables.get(defaultTenantId)
+      if (tenantVariables?.has(key)) {
+        return tenantVariables.get(key)
+      }
+    } catch {
+      // Continue to env var fallback
+    }
+  }
+
+  // Fall back to environment variable
+  const envKey = envVar ?? key
+  return process.env[envKey]
+}
+
+/**
+ * Get config value synchronously (requires config to be loaded)
+ *
+ * @param key - Configuration key
+ * @param options - Options for default value
+ * @returns The configuration value or default
+ */
+export function getConfigValueSync(
+  key: string,
+  options?: { defaultValue?: string; envVar?: string },
+): string {
+  assertServerSide()
+  assertLoaded()
+
+  // Try ConfigEntries first
+  if (defaultTenantId) {
+    const tenantVariables = cache!.variables.get(defaultTenantId)
+    if (tenantVariables?.has(key)) {
+      return tenantVariables.get(key)!
+    }
+  }
+
+  // Fall back to environment variable
+  const envKey = options?.envVar ?? key
+  return options?.defaultValue ?? process.env[envKey] ?? ''
 }
 
 // ============================================
@@ -333,19 +432,31 @@ export function getCacheMetadata(): {
 /**
  * Get all keys for a tenant (for introspection)
  */
-export function getVariableKeys(tenantId: string): string[] {
+export function getVariableKeys(tenantId?: string): string[] {
   assertServerSide()
   assertLoaded()
-  return cache!.variables.get(tenantId) ? Array.from(cache!.variables.get(tenantId)!.keys()) : []
+  const resolvedTenantId = tenantId ?? defaultTenantId
+  if (!resolvedTenantId) {
+    return []
+  }
+  return cache!.variables.get(resolvedTenantId)
+    ? Array.from(cache!.variables.get(resolvedTenantId)!.keys())
+    : []
 }
 
 /**
  * Get all secret keys for a tenant (for introspection, not values)
  */
-export function getSecretKeys(tenantId: string): string[] {
+export function getSecretKeys(tenantId?: string): string[] {
   assertServerSide()
   assertLoaded()
-  return cache!.secrets.get(tenantId) ? Array.from(cache!.secrets.get(tenantId)!.keys()) : []
+  const resolvedTenantId = tenantId ?? defaultTenantId
+  if (!resolvedTenantId) {
+    return []
+  }
+  return cache!.secrets.get(resolvedTenantId)
+    ? Array.from(cache!.secrets.get(resolvedTenantId)!.keys())
+    : []
 }
 
 /**
@@ -356,12 +467,21 @@ export function getLoadedTenantIds(): string[] {
 }
 
 /**
+ * Get the cached default tenant ID
+ */
+export function getCachedDefaultTenantId(): string | null {
+  return defaultTenantId
+}
+
+/**
  * Clear the in-memory cache
  * Useful for testing or graceful shutdown
  */
 export function clearConfigCache(): void {
   cache = null
   lastLoadResult = null
+  defaultTenantId = null
+  defaultTenantLoaded = false
 }
 
 // ============================================

@@ -6,6 +6,7 @@
  */
 
 import { del, list, put } from '@vercel/blob'
+import { getConfigValue } from '../config/runtime/runtime-config'
 
 // Environment variable names
 const BLOB_TOKEN_ENV = 'BLOB_READ_WRITE_TOKEN'
@@ -349,15 +350,25 @@ export function isVercelBlobUrl(url: string): boolean {
 
 /**
  * Get the external storage base URL for constructing absolute URLs
- * Uses NEXT_PUBLIC_EXTERNAL_STORAGE_URL if set, otherwise constructs from deployment URL
+ *
+ * Resolution order:
+ * 1. ConfigEntries with key 'NEXT_PUBLIC_EXTERNAL_STORAGE_URL' (default tenant)
+ * 2. NEXT_PUBLIC_SERVER_URL environment variable
+ * 3. NEXT_PUBLIC_DEPLOYMENT_URL environment variable
+ * 4. http://localhost:3000 (development fallback)
  */
-export function getExternalStorageUrl(): string {
-  // Use explicitly configured external storage URL
-  if (process.env.NEXT_PUBLIC_EXTERNAL_STORAGE_URL) {
-    return process.env.NEXT_PUBLIC_EXTERNAL_STORAGE_URL.replace(/\/$/, '')
+export async function getExternalStorageUrl(): Promise<string> {
+  // Try ConfigEntries first (requires loadRuntimeConfig to have been called)
+  const configValue = await getConfigValue('NEXT_PUBLIC_EXTERNAL_STORAGE_URL')
+  if (configValue) {
+    return configValue.replace(/\/$/, '')
   }
 
-  // Fallback to deployment URL
+  // Fallback to environment variables
+  if (process.env.NEXT_PUBLIC_SERVER_URL) {
+    return process.env.NEXT_PUBLIC_SERVER_URL.replace(/\/$/, '')
+  }
+
   if (process.env.NEXT_PUBLIC_DEPLOYMENT_URL) {
     return process.env.NEXT_PUBLIC_DEPLOYMENT_URL.replace(/\/$/, '')
   }
