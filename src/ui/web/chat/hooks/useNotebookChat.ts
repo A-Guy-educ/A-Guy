@@ -1,9 +1,8 @@
 import { ChatRole } from '@/infra/llm/chat-message-role'
-import { PRODUCT_EVENTS } from '@/infra/analytics/contracts/events'
-import { useAnalytics } from '@/infra/analytics/providers/AnalyticsProvider'
-// eslint-disable-next-line no-restricted-imports -- Client-side API service wrapper is safe to use in hooks
-import { apiService } from '@/server/services/api/api-service'
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
+
 import { logger } from '@/infra/utils/logger'
+import { apiService } from '@/server/services/api/api-service'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -66,7 +65,6 @@ export function useNotebookChat({
   maxFilesMessage = 'Maximum 5 files allowed',
   uploadFailedMessage = 'Failed to upload file',
 }: UseNotebookChatProps) {
-  const analytics = useAnalytics()
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -364,13 +362,11 @@ export function useNotebookChat({
 
     setUploadedMedia([])
 
-    // Track chat message sent (message length only, NOT content)
-    analytics.track(PRODUCT_EVENTS.CHAT_MESSAGE_SENT, {
+    // Track chat message submitted (message length only, NOT content)
+    systemEventBus.emit(SYSTEM_EVENTS.CHAT_MESSAGE_SUBMITTED, {
       conversation_id: contextKey || 'unknown',
+      message_type: 'user',
       message_length: message.length,
-      lesson_id: lessonId,
-      has_media: mediaIds.length > 0,
-      media_count: mediaIds.length,
     })
 
     try {

@@ -1,9 +1,9 @@
 'use client'
 
 import { detectBrowserLocale } from '@/i18n/config'
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { useEffect } from 'react'
-import { PRODUCT_EVENTS } from '../contracts/events'
-import { useAnalytics } from '../providers/AnalyticsProvider'
+import { identify } from '../core/tracker'
 import {
   getCachedUserProperties,
   shouldRefreshUserProperties,
@@ -11,15 +11,13 @@ import {
 } from '../utils/user-properties-cache'
 
 /**
- * Tracks user_identified event when user is logged in
+ * Tracks user_resolved event when user is logged in
  * Should be placed in the root layout after AnalyticsProvider
  *
  * Enhanced to send full user profile properties to Mixpanel People
  * Uses localStorage cache to persist user properties across sessions
  */
 export function UserIdentificationTracker() {
-  const analytics = useAnalytics()
-
   useEffect(() => {
     // Check if user is authenticated by checking for payload-token cookie
     const checkAuth = async () => {
@@ -34,7 +32,7 @@ export function UserIdentificationTracker() {
 
           if (trackedUserId !== cached.user_id) {
             // Identify user with cached properties
-            analytics.identify(cached.user_id, { ...cached })
+            identify(cached.user_id, { ...cached })
             sessionStorage.setItem('analytics_tracked_user_id', cached.user_id)
           }
           return
@@ -90,12 +88,15 @@ export function UserIdentificationTracker() {
               // Cache user properties for future sessions
               updateCachedUserProperties(userProperties)
 
-              // Track user_identified event with enriched properties
+              // Track user_resolved event with enriched properties
               // This will trigger both event tracking AND people.set() in Mixpanel
-              analytics.track(PRODUCT_EVENTS.USER_IDENTIFIED, userProperties)
+              systemEventBus.emit(SYSTEM_EVENTS.USER_RESOLVED, {
+                user_id: user.id,
+                is_anonymous: false,
+              })
 
               // Additionally call identify() to ensure user properties are set
-              analytics.identify(user.id, userProperties)
+              identify(user.id, userProperties)
 
               sessionStorage.setItem('analytics_tracked_user_id', user.id)
             }
@@ -107,7 +108,7 @@ export function UserIdentificationTracker() {
     }
 
     checkAuth()
-  }, [analytics])
+  }, [])
 
   return null
 }

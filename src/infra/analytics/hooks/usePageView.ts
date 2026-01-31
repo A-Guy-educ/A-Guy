@@ -7,10 +7,9 @@
 
 'use client'
 
-import { useEffect } from 'react'
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { PRODUCT_EVENTS } from '../contracts/events'
-import { useAnalytics } from '../providers/AnalyticsProvider'
+import { useEffect } from 'react'
 
 /**
  * Hook to automatically track page views
@@ -27,16 +26,15 @@ import { useAnalytics } from '../providers/AnalyticsProvider'
  * DO NOT use in multiple components - will cause duplicate events
  */
 export function usePageView() {
-  const analytics = useAnalytics()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Track page view on route change
-    analytics.track(PRODUCT_EVENTS.PAGE_VIEW, {
+    // Track page view on route change via system event bus
+    systemEventBus.emit(SYSTEM_EVENTS.PAGE_VIEWED, {
       page_path: pathname,
       page_search: searchParams.toString(),
       page_title: typeof document !== 'undefined' ? document.title : undefined,
     })
-  }, [pathname, searchParams, analytics])
+  }, [pathname, searchParams])
 }

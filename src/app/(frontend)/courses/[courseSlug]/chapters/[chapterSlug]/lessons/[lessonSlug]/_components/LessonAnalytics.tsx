@@ -1,8 +1,7 @@
 'use client'
 
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { useEffect, useRef } from 'react'
-import { PRODUCT_EVENTS } from '@/infra/analytics/contracts/events'
-import { useAnalytics } from '@/infra/analytics/providers/AnalyticsProvider'
 
 interface LessonAnalyticsProps {
   lessonId: string
@@ -11,28 +10,36 @@ interface LessonAnalyticsProps {
 }
 
 export function LessonAnalytics({ lessonId, courseId, lessonTitle }: LessonAnalyticsProps) {
-  const analytics = useAnalytics()
   const startTimeRef = useRef<number>(Date.now())
+  const hasEmittedEndedRef = useRef<boolean>(false)
 
   useEffect(() => {
     // Track lesson started
     startTimeRef.current = Date.now()
-    analytics.track(PRODUCT_EVENTS.LESSON_STARTED, {
+    hasEmittedEndedRef.current = false
+
+    systemEventBus.emit(SYSTEM_EVENTS.LESSON_STARTED, {
       lesson_id: lessonId,
       course_id: courseId,
       lesson_title: lessonTitle,
     })
 
-    // Track lesson completed on unmount (when user navigates away)
+    // Track lesson ended on unmount (when user navigates away)
     return () => {
+      // Prevent double emission in Strict Mode or rapid re-renders
+      if (hasEmittedEndedRef.current) {
+        return
+      }
+      hasEmittedEndedRef.current = true
+
       const durationSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000)
-      analytics.track(PRODUCT_EVENTS.LESSON_COMPLETED, {
+      systemEventBus.emit(SYSTEM_EVENTS.LESSON_ENDED, {
         lesson_id: lessonId,
         course_id: courseId,
         duration_seconds: durationSeconds,
       })
     }
-  }, [lessonId, courseId, lessonTitle, analytics])
+  }, [lessonId, courseId, lessonTitle])
 
   return null
 }
