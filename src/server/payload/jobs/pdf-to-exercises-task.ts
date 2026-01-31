@@ -10,6 +10,7 @@ import config from '@payload-config'
 import { ObjectId } from 'mongodb'
 import { getPayload } from 'payload'
 
+import { loadRuntimeConfig } from '@/infra/config/runtime'
 import { AI_MODELS } from '@/infra/llm/models'
 import type { MediaPartWithPath } from '@/infra/llm/multimodal/types'
 import { generateMultimodalCompletion } from '@/infra/llm/providers/gemini'
@@ -31,6 +32,11 @@ export const pdfToExercisesTask = {
   async handler({ job, req }: { job: any; req: any }) {
     // v2.1 Fix 1: Use req.payload when available (testability), fallback to getPayload
     const payload = req.payload ?? (await getPayload({ config }))
+
+    // v2.1 Fix: Ensure runtime config is loaded before accessing external storage URLs
+    // This prevents the job from falling back to localhost:3000 in production
+    await loadRuntimeConfig(payload)
+
     const input = job.input as any
     const { lessonId, sourceDocId, tenantId } = input.ctx
 
