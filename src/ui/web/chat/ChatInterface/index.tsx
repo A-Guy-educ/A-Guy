@@ -49,7 +49,6 @@ interface ChatInterfaceProps {
   showQuickActions?: boolean
   showResetButton?: boolean
   showMathTools?: boolean
-  showMobileToggle?: boolean
 
   // Display
   displayMode?: 'full' | 'input-only'
@@ -70,7 +69,6 @@ export function ChatInterface({
   showQuickActions = false,
   showResetButton = false,
   showMathTools = false,
-  showMobileToggle = false,
   displayMode = 'full',
   isMobile,
   viewMode,
@@ -319,7 +317,7 @@ export function ChatInterface({
         )}
 
         {/* Toolbar Above Input */}
-        {(showMathTools || showMobileToggle) && (
+        {(showMathTools || (isMobile && viewMode && onModeToggle)) && (
           <div className="flex gap-4 mb-2.5 px-1.5 justify-between items-center">
             {showMathTools && (
               <button
@@ -339,7 +337,7 @@ export function ChatInterface({
             )}
 
             {/* Mobile Toggle */}
-            {showMobileToggle && isMobile && viewMode && onModeToggle && (
+            {isMobile && viewMode && onModeToggle && (
               <button
                 type="button"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors bg-muted hover:bg-muted/80"
