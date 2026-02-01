@@ -108,7 +108,19 @@ describe('useNotebookChat', () => {
       result.current.handleSubmit({ preventDefault: () => undefined } as React.FormEvent)
     })
 
-    expect(toast.error).toHaveBeenCalledWith(defaultProps.authRequiredMessage)
+    // Auth errors now set chatError state instead of showing toast
+    expect(result.current.chatError).toEqual({
+      type: 'auth',
+      message: defaultProps.authRequiredMessage,
+    })
+    expect(toast.error).not.toHaveBeenCalled()
+
+    // Test dismissError
+    act(() => {
+      result.current.dismissError()
+    })
+
+    expect(result.current.chatError).toBeNull()
   })
 
   it('sends quick action prompts', async () => {
