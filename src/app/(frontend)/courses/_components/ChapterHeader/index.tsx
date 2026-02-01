@@ -12,7 +12,7 @@ export function ChapterHeader({ chapterLabel, title, description }: ChapterHeade
   const t = useTranslations('courses')
 
   return (
-    <div className="mb-8">
+    <div className="mb-8" data-chapter-header-version="v2-no-wrapper">
       {chapterLabel && (
         <span className="text-sm font-semibold text-muted-foreground mb-2 block">
           {t('chapter')} {chapterLabel}
