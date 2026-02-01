@@ -1,18 +1,28 @@
 // @vitest-environment jsdom
 import { NotebookChat } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat'
-import { useNotebookChat } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat/useNotebookChat'
+import { useNotebookChat } from '@/ui/web/chat'
 import { I18nProvider } from '@/ui/web/providers/I18n'
 import { fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import enMessages from '../../../src/i18n/en.json'
 
-vi.mock(
-  '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat/useNotebookChat',
-  () => ({
-    useNotebookChat: vi.fn(),
-  }),
-)
+vi.mock('@/ui/web/chat', () => ({
+  useNotebookChat: vi.fn(),
+  ChatInterface: ({
+    showQuickActions,
+    showResetButton,
+  }: {
+    showQuickActions?: boolean
+    showResetButton?: boolean
+  }) => (
+    <div data-testid="chat-interface">
+      {showQuickActions && <div>Quick Actions</div>}
+      {showResetButton && <div>Reset Button</div>}
+    </div>
+  ),
+  ChatMessageContent: ({ content }: { content: string }) => <div>{content}</div>,
+}))
 
 const mockUseNotebookChat = vi.mocked(useNotebookChat)
 

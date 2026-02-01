@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { useNotebookChat } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat/useNotebookChat'
+import { useNotebookChat } from '@/ui/web/chat'
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import { apiService } from '@/server/services/api/api-service'
 import { act, renderHook, waitFor } from '@testing-library/react'
