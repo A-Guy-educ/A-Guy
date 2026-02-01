@@ -147,6 +147,115 @@ export const Media: CollectionConfig = {
         read: () => true,
       },
     },
+    // File metadata fields (managed by Vercel Blob storage plugin)
+    {
+      name: 'url',
+      type: 'text',
+      admin: {
+        hidden: true,
+      },
+      access: {
+        create: () => true,
+        update: () => true,
+        read: () => true,
+      },
+    },
+    {
+      name: 'thumbnailURL',
+      type: 'text',
+      admin: {
+        hidden: true,
+      },
+      access: {
+        create: () => true,
+        update: () => true,
+        read: () => true,
+      },
+    },
+    {
+      name: 'filename',
+      type: 'text',
+      admin: {
+        hidden: true,
+      },
+      access: {
+        create: () => true,
+        update: () => true,
+        read: () => true,
+      },
+    },
+    {
+      name: 'mimeType',
+      type: 'text',
+      admin: {
+        hidden: true,
+      },
+      access: {
+        create: () => true,
+        update: () => true,
+        read: () => true,
+      },
+    },
+    {
+      name: 'filesize',
+      type: 'number',
+      admin: {
+        hidden: true,
+      },
+      access: {
+        create: () => true,
+        update: () => true,
+        read: () => true,
+      },
+    },
+    {
+      name: 'width',
+      type: 'number',
+      admin: {
+        hidden: true,
+      },
+      access: {
+        create: () => true,
+        update: () => true,
+        read: () => true,
+      },
+    },
+    {
+      name: 'height',
+      type: 'number',
+      admin: {
+        hidden: true,
+      },
+      access: {
+        create: () => true,
+        update: () => true,
+        read: () => true,
+      },
+    },
+    {
+      name: 'focalX',
+      type: 'number',
+      admin: {
+        hidden: true,
+      },
+      access: {
+        create: () => true,
+        update: () => true,
+        read: () => true,
+      },
+    },
+    {
+      name: 'focalY',
+      type: 'number',
+      admin: {
+        hidden: true,
+      },
+      access: {
+        create: () => true,
+        update: () => true,
+        read: () => true,
+      },
+    },
   ],
   hooks: {
     beforeValidate: [validateMediaUploadHook],
