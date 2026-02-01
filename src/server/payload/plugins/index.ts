@@ -31,10 +31,19 @@ const generateURL: GenerateURL<Page> = ({ doc }) => {
   return doc?.slug ? `${url}/${doc.slug}` : url
 }
 
-// Vercel Blob storage is REQUIRED - throw error if token not configured
-// This ensures all media uploads go to Vercel Blob (public .blob.vercel-storage.com URLs)
-// and prevents silent fallback to local storage which causes 401 errors
-function enforceBlobStorageToken(): void {
+// Vercel Blob storage plugin with runtime token validation
+// The token check runs at runtime (not during postinstall/generate:types)
+const vercelBlobPlugin = vercelBlobStorage({
+  // Enable blob storage for media and exercise-assets collections
+  collections: {
+    media: true,
+    'exercise-assets': true,
+  },
+  token: process.env.BLOB_READ_WRITE_TOKEN,
+})
+
+// Runtime validation function - called by payload.config.ts at startup
+export function validateBlobStorageConfig(): void {
   const blobToken = process.env.BLOB_READ_WRITE_TOKEN
   if (!blobToken) {
     throw new Error(
@@ -44,9 +53,6 @@ function enforceBlobStorageToken(): void {
     )
   }
 }
-
-// Immediately invoke the validation function at module load time
-enforceBlobStorageToken()
 
 export const plugins: Plugin[] = [
   redirectsPlugin({
@@ -114,15 +120,7 @@ export const plugins: Plugin[] = [
       },
     },
   }),
-  // Vercel Blob storage plugin - configured to intercept uploads and store in blob
-  vercelBlobStorage({
-    // Enable blob storage for media and exercise-assets collections
-    collections: {
-      media: true,
-      'exercise-assets': true,
-    },
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-  }),
+  vercelBlobPlugin,
   // Only include MCP plugin when explicitly enabled
   ...(mcp ? [mcp] : []),
 ]
