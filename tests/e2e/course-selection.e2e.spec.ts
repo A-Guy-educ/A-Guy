@@ -29,8 +29,8 @@ test.describe('Course Selection', () => {
     // Click the first "open course" button
     await page.locator('button:has-text("open course")').first().click()
 
-    // Wait for navigation to complete
-    await page.waitForURL(/\/courses\/[^/]+$/)
+    // Wait for navigation to home page
+    await page.waitForURL('/')
 
     // Verify localStorage was updated
     const userProfile = await page.evaluate(() => {
@@ -73,8 +73,8 @@ test.describe('Course Selection', () => {
     // Click a course
     await courseButton.click()
 
-    // Wait for navigation
-    await page.waitForURL(/\/courses\/[^/]+$/)
+    // Wait for navigation to home page
+    await page.waitForURL('/')
 
     // Verify mood was preserved
     const userProfile = await page.evaluate(() => {
@@ -88,7 +88,7 @@ test.describe('Course Selection', () => {
     expect(userProfile.gradeLevel).not.toBe('7') // Should have changed
   })
 
-  test('navigates to correct course page after selection', async ({ page }) => {
+  test('navigates to home page after course selection', async ({ page }) => {
     await page.goto('/courses')
 
     // Wait for courses to load
@@ -106,7 +106,7 @@ test.describe('Course Selection', () => {
     // Click first course
     await courseButton.click()
 
-    // Verify URL changed to a course page
-    await expect(page).toHaveURL(/\/courses\/[^/]+$/)
+    // Verify URL changed to home page
+    await expect(page).toHaveURL('/')
   })
 })

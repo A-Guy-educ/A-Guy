@@ -41,8 +41,8 @@ export function CourseCard({ course }: CourseCardProps) {
       lastVisit: new Date().toISOString(),
     })
 
-    // Navigate after localStorage is updated
-    router.push(`/courses/${course.slug}`)
+    // Navigate to home page after localStorage is updated
+    router.push('/')
   }
 
   return (
