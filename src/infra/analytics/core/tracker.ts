@@ -148,6 +148,35 @@ export function identify(userId: string, properties?: Record<string, unknown>): 
 }
 
 /**
+ * Alias anonymous user to registered user
+ *
+ * CRITICAL: Call this BEFORE identify() during registration
+ * to merge anonymous event history with the new user account
+ *
+ * @param userId - New user ID
+ * @param anonymousId - Previous anonymous ID (optional - Mixpanel will use current distinct_id)
+ */
+export function alias(userId: string, anonymousId?: string): void {
+  if (typeof window === 'undefined') return
+  if (!analyticsConfig.enabled) return
+
+  try {
+    if (analyticsConfig.debugMode) {
+      console.log('[Analytics] Alias:', { userId, anonymousId })
+    }
+
+    void initializeAdapters().then(() => {
+      // Only Mixpanel handles aliasing
+      if (analyticsConfig.mixpanel.enabled && mixpanelAdapter) {
+        mixpanelAdapter.aliasUser(userId, anonymousId)
+      }
+    })
+  } catch (err) {
+    console.error('[Analytics] Alias failed:', err)
+  }
+}
+
+/**
  * Reset user identity (on logout)
  */
 export function reset(): void {
@@ -195,5 +224,6 @@ export function initializeAnalytics(): void {
 export const analytics: Analytics = {
   track,
   identify,
+  alias,
   reset,
 }

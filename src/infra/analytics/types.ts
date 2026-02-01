@@ -50,6 +50,13 @@ export interface IdentifyFunction {
 }
 
 /**
+ * Alias function signature
+ */
+export interface AliasFunction {
+  (userId: string, anonymousId?: string): void
+}
+
+/**
  * Reset function signature
  */
 export interface ResetFunction {
@@ -62,6 +69,7 @@ export interface ResetFunction {
 export interface Analytics {
   track: TrackFunction
   identify: IdentifyFunction
+  alias: AliasFunction
   reset: ResetFunction
 }
 
