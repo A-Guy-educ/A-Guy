@@ -14,7 +14,6 @@ import { AI_MODELS } from '@/infra/llm/models'
 import type { MediaPartWithPath } from '@/infra/llm/multimodal/types'
 import { generateMultimodalCompletion } from '@/infra/llm/providers/gemini'
 import { mapMultimodalToGemini } from '@/infra/llm/providers/gemini/multimodal-mapper'
-import { getPdfWorkerUrl } from '@/infra/pdfjs/config'
 import {
   enrichBlockIds,
   parseExtractorResponseText,
@@ -233,8 +232,10 @@ async function updateJobStatus(
 async function segmentPdf(pdfBuffer: Buffer, maxPagesPerSegment: number) {
   const pdfjs = await import('pdfjs-dist')
 
-  // Configure worker URL from Vercel Blob CDN (fixes serverless environment issue)
-  pdfjs.GlobalWorkerOptions.workerSrc = await getPdfWorkerUrl()
+  // Disable worker to run on main thread synchronously
+  // This fixes "Only URLs with a scheme in: file and data are supported" error
+  // in Vercel serverless environment where ESM loader doesn't support https: worker URLs
+  pdfjs.GlobalWorkerOptions.workerSrc = ''
 
   // Use buffer data - cast to Uint8Array for pdfjs-dist compatibility
   const pdf = await pdfjs.getDocument({ data: Uint8Array.from(pdfBuffer) }).promise
