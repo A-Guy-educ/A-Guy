@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Cookie Utilities Unit Tests
  */
