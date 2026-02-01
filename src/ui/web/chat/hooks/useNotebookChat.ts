@@ -1,3 +1,5 @@
+'use client'
+
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 
