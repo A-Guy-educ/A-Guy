@@ -155,6 +155,7 @@
     "chatFullSolution": "מלא",
     "chatInputPlaceholder": "שלח הודעה...",
     "chatAuthRequired": "יש להתחבר כדי להשתמש בעוזר הבינה המלאכותית",
+    "chatAuthRequiredLogin": "התחבר",
     "chatAuthRequiredCTA": "הירשם כדי להמשיך",
     "chatErrorDismiss": "סגור התראה",
     "chatHintPrompt": "האם תוכל לתת לי רמז שיעזור לי לפתור את התרגיל?",

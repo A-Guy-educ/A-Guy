@@ -33,12 +33,21 @@ export function ChatErrorSurface({ type, message, onDismiss, className }: ChatEr
 
         {/* Auth Error CTA */}
         {type === 'auth' && (
-          <Link
-            href="/signup"
-            className="inline-block mt-2 text-sm font-semibold underline hover:no-underline transition-all"
-          >
-            {tCourses('chatAuthRequiredCTA')}
-          </Link>
+          <div className="flex items-center gap-2 mt-2 text-sm">
+            <Link
+              href="/login"
+              className="font-semibold underline hover:no-underline transition-all"
+            >
+              {tCourses('chatAuthRequiredLogin')}
+            </Link>
+            <span className="text-destructive/60">or</span>
+            <Link
+              href="/signup"
+              className="font-semibold underline hover:no-underline transition-all"
+            >
+              {tCourses('chatAuthRequiredCTA')}
+            </Link>
+          </div>
         )}
       </div>
 
