@@ -5,7 +5,7 @@ import { Media as MediaComponent } from '@/ui/web/media'
 import { notFound } from 'next/navigation'
 import { EmptyState } from '../../../../../_components/EmptyState'
 import { LessonAnalytics } from './_components/LessonAnalytics'
-import { ChatInterface } from './exercises/[exerciseId]/_components/ChatInterface'
+import { ChatInterface } from '@/ui/web/chat'
 import { ExerciseWorkspace } from './exercises/[exerciseId]/_components/ExerciseWorkspace'
 
 interface LessonPageProps {
@@ -77,7 +77,13 @@ export default async function LessonPage({ params }: LessonPageProps) {
         exerciseTitle={lesson.title}
         backUrl={`/courses/${courseSlug}/chapters/${chapterSlug}`}
         pdfContent={pdfContent}
-        chatContent={<ChatInterface lessonId={chatLessonId} />}
+        chatContent={
+          <ChatInterface
+            lessonId={chatLessonId}
+            translationNamespace="courses"
+            showMathTools={true}
+          />
+        }
       />
     </>
   )

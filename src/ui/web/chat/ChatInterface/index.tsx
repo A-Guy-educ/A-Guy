@@ -14,19 +14,51 @@ import {
   CheckCircle,
   Lightbulb,
   RefreshCw,
+  MessageSquare,
+  FileText,
 } from 'lucide-react'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { ChatMessageContent } from '../ChatMessageContent'
 import { useNotebookChat } from '../hooks/useNotebookChat'
 
+// Optional components - will be lazy-loaded if needed
+let FormulaPanel: React.ComponentType<{
+  isOpen: boolean
+  onClose: () => void
+  onInject: (template: string, cursorOffset: number) => void
+}> | null = null
+
+let MathPalette: React.ComponentType<{
+  isOpen: boolean
+  onInject: (template: string, cursorOffset: number) => void
+}> | null = null
+
+export type ViewMode = 'PDF' | 'Chat'
+
 interface ChatInterfaceProps {
+  // Context
   courseId?: string
   chapterId?: string
   lessonId?: string
   exerciseId?: string
+
+  // Translations
   translationNamespace?: string
+
+  // Features
   showQuickActions?: boolean
   showResetButton?: boolean
+  showMathTools?: boolean
+  showMobileToggle?: boolean
+
+  // Display
+  displayMode?: 'full' | 'input-only'
+
+  // Mobile
+  isMobile?: boolean
+  viewMode?: ViewMode
+  onModeToggle?: () => void
+  onChatInteraction?: () => void
 }
 
 export function ChatInterface({
@@ -37,6 +69,13 @@ export function ChatInterface({
   translationNamespace = 'homepage.ask',
   showQuickActions = false,
   showResetButton = false,
+  showMathTools = false,
+  showMobileToggle = false,
+  displayMode = 'full',
+  isMobile,
+  viewMode,
+  onModeToggle,
+  onChatInteraction,
 }: ChatInterfaceProps) {
   const t = useTranslations(translationNamespace)
   const tCourses = useTranslations('courses')
@@ -83,12 +122,71 @@ export function ChatInterface({
     uploadFailedMessage: tCourses('chatUploadFailed'),
   })
 
+  // Math tools state
+  const [isMathPaletteOpen, setIsMathPaletteOpen] = useState(false)
+  const [isFormulaPanelOpen, setIsFormulaPanelOpen] = useState(false)
+  const [mathPreview, setMathPreview] = useState('')
+
+  // Lazy-load math tools components if needed
+  useEffect(() => {
+    if (showMathTools && !FormulaPanel) {
+      import('@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/FormulaPanel').then(
+        (mod) => {
+          FormulaPanel = mod.FormulaPanel
+        },
+      )
+      import('@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/MathPalette').then(
+        (mod) => {
+          MathPalette = mod.MathPalette
+        },
+      )
+    }
+  }, [showMathTools])
+
+  // Update LaTeX preview
+  useEffect(() => {
+    if (showMathTools && (inputValue.includes('\\') || inputValue.includes('^'))) {
+      setMathPreview(inputValue)
+    } else {
+      setMathPreview('')
+    }
+  }, [inputValue, showMathTools])
+
+  const injectFormula = (template: string, cursorOffset: number) => {
+    if (!inputRef.current) return
+
+    const start = inputRef.current.selectionStart ?? 0
+    const end = inputRef.current.selectionEnd ?? 0
+    const before = inputValue.substring(0, start)
+    const after = inputValue.substring(end)
+
+    const newValue = before + template + after
+    setInputValue(newValue)
+
+    // Move cursor after state update
+    requestAnimationFrame(() => {
+      const newCursorPos = start + cursorOffset
+      inputRef.current?.setSelectionRange(newCursorPos, newCursorPos)
+      inputRef.current?.focus()
+    })
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
   }
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (showMathTools) {
+      setIsMathPaletteOpen(false)
+      setIsFormulaPanelOpen(false)
+    }
+
+    if (onChatInteraction) {
+      onChatInteraction()
+    }
+
     handleSubmit(e)
   }
 
@@ -112,8 +210,14 @@ export function ChatInterface({
         </div>
       )}
 
-      {/* Messages Area */}
-      <div ref={messagesContainerRef} className="flex-grow overflow-y-auto p-5 space-y-4 min-h-0">
+      {/* Messages Area - Hidden when displayMode is 'input-only' */}
+      <div
+        ref={messagesContainerRef}
+        className={cn(
+          'flex-grow overflow-y-auto p-5 space-y-4 min-h-0',
+          displayMode === 'input-only' && 'hidden',
+        )}
+      >
         {isLoadingHistory && (
           <div className="flex items-center justify-center p-4 text-muted-foreground text-sm">
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -192,7 +296,72 @@ export function ChatInterface({
       )}
 
       {/* Input Container */}
-      <div className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8">
+      <div className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative">
+        {/* Math Preview Popup */}
+        {showMathTools && mathPreview && (
+          <div className="absolute bottom-full left-5 right-5 mb-2.5 bg-card border border-primary-soft rounded-xl p-2.5 text-center shadow-panel z-20">
+            <span className="text-sm font-mono">{mathPreview}</span>
+          </div>
+        )}
+
+        {/* Formula Panel (Popup) */}
+        {showMathTools && FormulaPanel && (
+          <FormulaPanel
+            isOpen={isFormulaPanelOpen}
+            onClose={() => setIsFormulaPanelOpen(false)}
+            onInject={injectFormula}
+          />
+        )}
+
+        {/* Math Palette (Slide-out) */}
+        {showMathTools && MathPalette && (
+          <MathPalette isOpen={isMathPaletteOpen} onInject={injectFormula} />
+        )}
+
+        {/* Toolbar Above Input */}
+        {(showMathTools || showMobileToggle) && (
+          <div className="flex gap-4 mb-2.5 px-1.5 justify-between items-center">
+            {showMathTools && (
+              <button
+                type="button"
+                className={cn(
+                  'p-1 text-muted-foreground hover:text-primary transition-colors',
+                  isFormulaPanelOpen && 'text-primary',
+                )}
+                onClick={() => {
+                  setIsFormulaPanelOpen(!isFormulaPanelOpen)
+                  setIsMathPaletteOpen(false)
+                }}
+                aria-label={tCourses('formulaSheet')}
+              >
+                <BookOpen className="w-5 h-5" />
+              </button>
+            )}
+
+            {/* Mobile Toggle */}
+            {showMobileToggle && isMobile && viewMode && onModeToggle && (
+              <button
+                type="button"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors bg-muted hover:bg-muted/80"
+                onClick={onModeToggle}
+                aria-label={viewMode === 'PDF' ? tCourses('switchToChat') : tCourses('switchToPdf')}
+              >
+                {viewMode === 'PDF' ? (
+                  <>
+                    <MessageSquare className="w-4 h-4" />
+                    <span className="hidden sm:inline">{tCourses('chat')}</span>
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-4 h-4" />
+                    <span className="hidden sm:inline">{tCourses('content')}</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Media Preview Chips */}
         {uploadedMedia.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2.5 max-w-[850px] mx-auto">
@@ -220,6 +389,7 @@ export function ChatInterface({
           </div>
         )}
 
+        {/* Input Wrapper */}
         <form onSubmit={handleFormSubmit}>
           <div className="max-w-[850px] mx-auto bg-muted rounded-[30px] flex items-center px-4 py-1.5 border border-input gap-3">
             <input
@@ -237,6 +407,24 @@ export function ChatInterface({
               }}
               disabled={isLoading}
             />
+
+            {/* Math Keyboard Toggle */}
+            {showMathTools && (
+              <button
+                type="button"
+                className={cn(
+                  'p-1.5 text-muted-foreground hover:text-primary transition-colors',
+                  isMathPaletteOpen && 'text-primary',
+                )}
+                onClick={() => {
+                  setIsMathPaletteOpen(!isMathPaletteOpen)
+                  setIsFormulaPanelOpen(false)
+                }}
+                aria-label={tCourses('mathKeyboard')}
+              >
+                <span className="text-lg font-bold">ƒ</span>
+              </button>
+            )}
 
             {/* File Upload */}
             <button
@@ -268,7 +456,9 @@ export function ChatInterface({
             <button
               type="submit"
               className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-input hover:bg-primary/90 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isLoading || !inputValue.trim()}
+              disabled={
+                isLoading || isUploading || (!inputValue.trim() && uploadedMedia.length === 0)
+              }
               aria-label={tCourses('sendMessage')}
             >
               <Send className="w-5 h-5" />
