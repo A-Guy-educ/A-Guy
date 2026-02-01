@@ -20,6 +20,11 @@ export interface UploadedMedia {
   mimeType: string
 }
 
+export interface ChatError {
+  type: 'auth' | 'general'
+  message: string
+}
+
 // Media upload constraints
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
@@ -82,6 +87,9 @@ export function useNotebookChat({
   // Media upload state
   const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([])
   const [isUploading, setIsUploading] = useState(false)
+
+  // Error state
+  const [chatError, setChatError] = useState<ChatError | null>(null)
 
   // Compute contextKey based on available context (priority: Exercise > Lesson > Chapter > Course)
   const contextKey = useMemo(() => {
@@ -386,7 +394,7 @@ export function useNotebookChat({
 
       if (!result.success) {
         if (result.authRequired) {
-          toast.error(authRequiredMessage)
+          setChatError({ type: 'auth', message: authRequiredMessage })
         } else {
           toast.error(result.error || errorMessage)
         }
@@ -457,6 +465,10 @@ export function useNotebookChat({
     sendMessage(prompts[actionType])
   }
 
+  const dismissError = useCallback(() => {
+    setChatError(null)
+  }, [])
+
   return {
     messages,
     inputValue,
@@ -478,5 +490,8 @@ export function useNotebookChat({
     handleFileSelect,
     removeMedia,
     openFilePicker,
+    // Error handling
+    chatError,
+    dismissError,
   }
 }

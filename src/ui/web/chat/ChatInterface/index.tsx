@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { ChatMessageContent } from '../ChatMessageContent'
+import { ChatErrorSurface } from '../ChatErrorSurface'
 import { useNotebookChat } from '../hooks/useNotebookChat'
 
 // Optional components - will be lazy-loaded if needed
@@ -98,6 +99,9 @@ export function ChatInterface({
     handleFileSelect,
     removeMedia,
     openFilePicker,
+    // Error handling
+    chatError,
+    dismissError,
   } = useNotebookChat({
     initialMessage: t('chatWelcome'),
     authRequiredMessage: t('chatAuthRequired'),
@@ -290,6 +294,17 @@ export function ChatInterface({
             <BookOpen className="w-4 h-4 text-blue-500" />
             <span>{tCourses('chatFullSolution')}</span>
           </button>
+        </div>
+      )}
+
+      {/* Chat Error Surface */}
+      {chatError && (
+        <div className="flex-grow-0 flex-shrink-0 px-5 pt-3">
+          <ChatErrorSurface
+            type={chatError.type}
+            message={chatError.message}
+            onDismiss={dismissError}
+          />
         </div>
       )}
 

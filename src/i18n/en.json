@@ -155,6 +155,8 @@
     "chatFullSolution": "Full",
     "chatInputPlaceholder": "Send a message...",
     "chatAuthRequired": "Please sign in to use the AI helper",
+    "chatAuthRequiredCTA": "Sign up to continue",
+    "chatErrorDismiss": "Dismiss error",
     "chatHintPrompt": "Can you give me a hint to help me solve this?",
     "chatSolutionPrompt": "Can you explain the solution approach?",
     "chatFullSolutionPrompt": "Can you provide the complete solution with all steps?",
