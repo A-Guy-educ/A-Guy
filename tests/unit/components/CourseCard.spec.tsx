@@ -80,7 +80,7 @@ describe('CourseCard component', () => {
   it('updates localStorage and navigates when course is selected', () => {
     renderWithI18n(mockCourse)
 
-    const openButton = screen.getByRole('button', { name: enMessages.courses.openCourse })
+    const openButton = screen.getAllByRole('button', { name: enMessages.courses.openCourse })[0]
     fireEvent.click(openButton)
 
     // Check localStorage was updated
@@ -105,7 +105,7 @@ describe('CourseCard component', () => {
 
     renderWithI18n(mockCourse)
 
-    const openButton = screen.getByRole('button', { name: enMessages.courses.openCourse })
+    const openButton = screen.getAllByRole('button', { name: enMessages.courses.openCourse })[0]
     fireEvent.click(openButton)
 
     // Check mood was preserved
@@ -118,7 +118,7 @@ describe('CourseCard component', () => {
     const courseWithoutLabel = { ...mockCourse, courseLabel: '' }
     renderWithI18n(courseWithoutLabel)
 
-    const openButton = screen.getByRole('button', { name: enMessages.courses.openCourse })
+    const openButton = screen.getAllByRole('button', { name: enMessages.courses.openCourse })[0]
     fireEvent.click(openButton)
 
     const storedProfile = JSON.parse(localStorageMock.getItem('a-guy:user-profile') || '{}')
