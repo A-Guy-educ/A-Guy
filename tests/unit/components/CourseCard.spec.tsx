@@ -87,9 +87,7 @@ describe('CourseCard component', () => {
     fireEvent.click(openButton)
 
     // Check localStorage was updated
-    const storedProfile = JSON.parse(
-      localStorageMock.getItem('a-guy:user-profile') || '{}',
-    )
+    const storedProfile = JSON.parse(localStorageMock.getItem('a-guy:user-profile') || '{}')
     expect(storedProfile.gradeLevel).toBe('8')
     expect(storedProfile.lastVisit).toBeTruthy()
 
@@ -114,9 +112,7 @@ describe('CourseCard component', () => {
     fireEvent.click(openButton)
 
     // Check mood was preserved
-    const storedProfile = JSON.parse(
-      localStorageMock.getItem('a-guy:user-profile') || '{}',
-    )
+    const storedProfile = JSON.parse(localStorageMock.getItem('a-guy:user-profile') || '{}')
     expect(storedProfile.gradeLevel).toBe('8')
     expect(storedProfile.mood).toBe('happy')
   })
@@ -128,9 +124,7 @@ describe('CourseCard component', () => {
     const openButton = screen.getByText(enMessages.courses.openCourse)
     fireEvent.click(openButton)
 
-    const storedProfile = JSON.parse(
-      localStorageMock.getItem('a-guy:user-profile') || '{}',
-    )
+    const storedProfile = JSON.parse(localStorageMock.getItem('a-guy:user-profile') || '{}')
     expect(storedProfile.gradeLevel).toBe('8')
   })
 })

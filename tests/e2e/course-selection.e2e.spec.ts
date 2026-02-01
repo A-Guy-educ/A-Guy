@@ -17,7 +17,7 @@ test.describe('Course Selection', () => {
 
     // Check if there are any course cards
     const courseCards = await page.locator('button:has-text("open course")').count()
-    
+
     if (courseCards === 0) {
       test.skip()
       return
@@ -25,7 +25,7 @@ test.describe('Course Selection', () => {
 
     // Get the first course's label before clicking
     const firstCourseLabel = await page.locator('[class*="badge"]').first().textContent()
-    
+
     // Click the first "open course" button
     await page.locator('button:has-text("open course")').first().click()
 
@@ -59,9 +59,11 @@ test.describe('Course Selection', () => {
     await page.goto('/courses')
 
     // Wait for courses to load
-    const courseButton = await page.waitForSelector('button:has-text("open course")', {
-      timeout: 10000,
-    }).catch(() => null)
+    const courseButton = await page
+      .waitForSelector('button:has-text("open course")', {
+        timeout: 10000,
+      })
+      .catch(() => null)
 
     if (!courseButton) {
       test.skip()
@@ -90,9 +92,11 @@ test.describe('Course Selection', () => {
     await page.goto('/courses')
 
     // Wait for courses to load
-    const courseButton = await page.waitForSelector('button:has-text("open course")', {
-      timeout: 10000,
-    }).catch(() => null)
+    const courseButton = await page
+      .waitForSelector('button:has-text("open course")', {
+        timeout: 10000,
+      })
+      .catch(() => null)
 
     if (!courseButton) {
       test.skip()
