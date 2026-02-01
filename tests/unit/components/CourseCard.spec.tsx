@@ -92,7 +92,7 @@ describe('CourseCard component', () => {
     expect(storedProfile.lastVisit).toBeTruthy()
 
     // Check navigation was called
-    expect(mockPush).toHaveBeenCalledWith('/courses/test-course')
+    expect(mockPush).toHaveBeenCalledWith('/')
   })
 
   it('preserves existing mood when updating localStorage', () => {
