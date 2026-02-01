@@ -28,9 +28,13 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 })
 
-// Mock window.location
-delete (window as any).location
-window.location = { href: '' } as any
+// Mock next/navigation
+const mockPush = vi.fn()
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+  }),
+}))
 
 const mockCourse: Course = {
   id: 'test-course-1',
@@ -58,7 +62,6 @@ const renderWithI18n = (course: Course) => {
 beforeEach(() => {
   vi.clearAllMocks()
   localStorageMock.clear()
-  window.location.href = ''
 })
 
 describe('CourseCard component', () => {
@@ -89,7 +92,7 @@ describe('CourseCard component', () => {
     expect(storedProfile.lastVisit).toBeTruthy()
 
     // Check navigation was called
-    expect(window.location.href).toBe('/courses/test-course')
+    expect(mockPush).toHaveBeenCalledWith('/courses/test-course')
   })
 
   it('preserves existing mood when updating localStorage', () => {

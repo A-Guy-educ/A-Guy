@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import type { Course } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/web/components/card'
@@ -14,12 +15,15 @@ interface CourseCardProps {
 
 export function CourseCard({ course }: CourseCardProps) {
   const t = useTranslations('courses')
+  const router = useRouter()
 
   if (!course.slug) {
     return null
   }
 
-  const handleCourseSelect = () => {
+  const handleCourseSelect = (e: React.MouseEvent) => {
+    e.preventDefault()
+
     // Update localStorage with the selected course
     const gradeLevel = course.courseLabel || '8'
     const existingProfile = getUserProfile()
@@ -30,9 +34,8 @@ export function CourseCard({ course }: CourseCardProps) {
       lastVisit: new Date().toISOString(),
     })
 
-    // Navigate to the course page using window.location to ensure full page load
-    // This ensures localStorage is fully synced before guards check it
-    window.location.href = `/courses/${course.slug}`
+    // Navigate after localStorage is updated
+    router.push(`/courses/${course.slug}`)
   }
 
   return (
