@@ -3,6 +3,7 @@
 import { cn } from '@/infra/utils/ui'
 import { X, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useTranslations } from '@/ui/web/providers/I18n'
 
 export interface ChatErrorSurfaceProps {
@@ -14,6 +15,10 @@ export interface ChatErrorSurfaceProps {
 
 export function ChatErrorSurface({ type, message, onDismiss, className }: ChatErrorSurfaceProps) {
   const tCourses = useTranslations('courses')
+  const pathname = usePathname()
+
+  const loginUrl = `/login?returnTo=${encodeURIComponent(pathname)}`
+  const signupUrl = `/signup?returnTo=${encodeURIComponent(pathname)}`
 
   return (
     <div
@@ -35,14 +40,14 @@ export function ChatErrorSurface({ type, message, onDismiss, className }: ChatEr
         {type === 'auth' && (
           <div className="flex items-center gap-2 mt-2 text-sm">
             <Link
-              href="/login"
+              href={loginUrl}
               className="font-semibold underline hover:no-underline transition-all"
             >
               {tCourses('chatAuthRequiredLogin')}
             </Link>
             <span className="text-destructive/60">or</span>
             <Link
-              href="/signup"
+              href={signupUrl}
               className="font-semibold underline hover:no-underline transition-all"
             >
               {tCourses('chatAuthRequiredCTA')}
