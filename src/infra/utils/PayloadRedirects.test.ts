@@ -1,4 +1,4 @@
-import { isInternalPath, normalizePath } from '@/ui/web/PayloadRedirects'
+import { isInternalPath, normalizePath } from '@/infra/utils/path-utils'
 import { describe, expect, it } from 'vitest'
 
 describe('normalizePath', () => {
