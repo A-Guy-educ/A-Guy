@@ -1,7 +1,6 @@
 import { queryPublishedCourses } from '@/server/repos/queries/courses'
 import { CourseCard } from './_components/CourseCard'
 import { EmptyState } from './_components/EmptyState'
-import { CoursesHero } from './_components/CoursesHero'
 import { CoursesPageTitle } from './_components/CoursesPageTitle'
 
 export default async function CoursesPage() {
@@ -9,8 +8,6 @@ export default async function CoursesPage() {
 
   return (
     <div className="min-h-screen">
-      <CoursesHero />
-
       <div className="container mx-auto px-4 py-12 md:py-16">
         {courses.length === 0 ? (
           <EmptyState type="noCourses" />
