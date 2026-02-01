@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import type { Course } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/web/components/card'
@@ -15,7 +14,6 @@ interface CourseCardProps {
 
 export function CourseCard({ course }: CourseCardProps) {
   const t = useTranslations('courses')
-  const router = useRouter()
 
   if (!course.slug) {
     return null
@@ -32,8 +30,9 @@ export function CourseCard({ course }: CourseCardProps) {
       lastVisit: new Date().toISOString(),
     })
 
-    // Navigate to the course page
-    router.push(`/courses/${course.slug}`)
+    // Navigate to the course page using window.location to ensure full page load
+    // This ensures localStorage is fully synced before guards check it
+    window.location.href = `/courses/${course.slug}`
   }
 
   return (
