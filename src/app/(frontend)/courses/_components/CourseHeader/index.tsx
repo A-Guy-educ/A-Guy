@@ -19,8 +19,10 @@ export function CourseHeader({ courseLabel, title, description }: CourseHeaderPr
       {/* Sub-headline: "Study Program" - right-aligned (start in RTL) */}
       <h2 className="text-2xl md:text-3xl font-semibold text-start mb-6">{t('studyProgram')}</h2>
 
-      {/* Course title and description - left for context if needed */}
-      {title && <p className="text-xl font-medium text-muted-foreground mb-2">{title}</p>}
+      {/* Course title - as h3 for proper document structure */}
+      <h3 className="text-xl font-medium text-muted-foreground mb-2">{title}</h3>
+
+      {/* Description - optional supporting text */}
       {description && <p className="text-lg text-muted-foreground">{description}</p>}
     </header>
   )
