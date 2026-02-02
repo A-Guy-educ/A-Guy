@@ -55,9 +55,19 @@ export function getAnalyticsConfig(): AnalyticsConfig {
 }
 
 /**
- * Singleton config instance
+ * Singleton config instance (lazy-loaded to avoid SSR issues)
+ * Using Proxy to defer config creation until first access, ensuring it runs client-side
  */
-export const analyticsConfig = getAnalyticsConfig()
+let _analyticsConfig: AnalyticsConfig | null = null
+
+export const analyticsConfig: AnalyticsConfig = new Proxy({} as AnalyticsConfig, {
+  get(_target, prop) {
+    if (!_analyticsConfig) {
+      _analyticsConfig = getAnalyticsConfig()
+    }
+    return _analyticsConfig[prop as keyof AnalyticsConfig]
+  },
+})
 
 /**
  * Validate configuration (call before first use)
