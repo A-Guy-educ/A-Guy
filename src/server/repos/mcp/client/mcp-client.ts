@@ -7,30 +7,26 @@ const MCP_PROTOCOL_VERSION = '2025-11-25'
 
 export class MCPClient {
   private baseUrl: string
-  private initialized = false
-  private tools: MCPTool[] = []
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl
   }
 
+  /**
+   * List available MCP tools.
+   * Note: Does not cache tools as they may vary by user/tenant permissions.
+   */
   async listTools(headers?: HeadersInit): Promise<MCPTool[]> {
-    if (!this.initialized) {
-      await this.initialize(headers)
-    }
+    // Always initialize per-request to ensure proper auth context
+    await this.initialize(headers)
 
-    if (this.tools.length === 0) {
-      const response = await this.request<MCPListToolsResult>('tools/list', {}, headers)
-      this.tools = response.tools || []
-    }
-
-    return this.tools
+    const response = await this.request<MCPListToolsResult>('tools/list', {}, headers)
+    return response.tools || []
   }
 
   async callTool(name: string, args: Record<string, unknown>, headers?: HeadersInit) {
-    if (!this.initialized) {
-      await this.initialize(headers)
-    }
+    // Always initialize per-request to ensure proper auth context
+    await this.initialize(headers)
 
     return this.request<MCPToolResult>('tools/call', { name, arguments: args }, headers)
   }
@@ -48,7 +44,6 @@ export class MCPClient {
       },
       headers,
     )
-    this.initialized = true
   }
 
   private async request<T>(

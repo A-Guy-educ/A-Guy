@@ -8,6 +8,7 @@
  */
 'use client'
 
+import Link from 'next/link'
 import React from 'react'
 
 export const AdminChatDashboardWidget: React.FC = () => {
@@ -42,9 +43,9 @@ export const AdminChatDashboardWidget: React.FC = () => {
             Query content with AI tools
           </p>
         </div>
-        <a href="/admin/chat" className="btn btn--width-full btn--style-primary">
+        <Link href="/admin/chat" className="btn btn--width-full btn--style-primary">
           Open Chat
-        </a>
+        </Link>
       </div>
     </div>
   )

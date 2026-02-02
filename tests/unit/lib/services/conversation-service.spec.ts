@@ -65,11 +65,11 @@ describe('deriveContextLevel (standalone function)', () => {
   })
 
   it('should return "global" for unrecognized relation', () => {
-    expect(deriveContextLevel('unknown' as unknown)).toBe('global')
+    expect(deriveContextLevel('unknown')).toBe('global')
   })
 
   it('should return "global" for empty string', () => {
-    expect(deriveContextLevel('' as unknown)).toBe('global')
+    expect(deriveContextLevel('')).toBe('global')
   })
 })
 

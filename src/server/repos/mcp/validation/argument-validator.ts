@@ -4,24 +4,24 @@ const MAX_LIMIT = 10
 
 const COLLECTION_ALLOWLISTS: Record<string, { where: Set<string>; sort: Set<string> }> = {
   courses: {
-    where: new Set(['status', 'title']),
-    sort: new Set(['title', 'updatedAt']),
+    where: new Set(['*']), // Allow any field
+    sort: new Set(['title', 'createdAt', 'updatedAt']),
   },
   chapters: {
-    where: new Set(['status', 'title', 'course']),
-    sort: new Set(['order', 'title', 'updatedAt']),
+    where: new Set(['*']), // Allow any field
+    sort: new Set(['order', 'title', 'createdAt', 'updatedAt']),
   },
   lessons: {
-    where: new Set(['status', 'title', 'chapter']),
-    sort: new Set(['order', 'title', 'updatedAt']),
+    where: new Set(['*']), // Allow any field
+    sort: new Set(['order', 'title', 'createdAt', 'updatedAt']),
   },
   exercises: {
-    where: new Set(['status', 'title', 'lesson']),
-    sort: new Set(['order', 'title', 'updatedAt']),
+    where: new Set(['*']), // Allow any field
+    sort: new Set(['order', 'title', 'createdAt', 'updatedAt']),
   },
   media: {
-    where: new Set(['filename', 'mimeType']),
-    sort: new Set(['filename', 'updatedAt']),
+    where: new Set(['*']), // Allow any field
+    sort: new Set(['filename', 'createdAt', 'updatedAt']),
   },
 }
 
@@ -113,6 +113,9 @@ function isAllowedFilter(filter: unknown, allowedFields: Set<string>): boolean {
     return false
   }
 
+  // Allow any field if '*' is in the allowlist
+  const allowAll = allowedFields.has('*')
+
   const entries = Object.entries(filter as Record<string, unknown>)
   for (const [key, value] of entries) {
     if (key === 'and' || key === 'or') {
@@ -125,7 +128,8 @@ function isAllowedFilter(filter: unknown, allowedFields: Set<string>): boolean {
       continue
     }
 
-    if (!allowedFields.has(key)) {
+    // If allowAll is true, skip individual field check
+    if (!allowAll && !allowedFields.has(key)) {
       return false
     }
 

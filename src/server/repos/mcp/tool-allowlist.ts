@@ -40,11 +40,22 @@ export function isAllowedToolName(toolName: string): boolean {
 export function discoverAllowedTools(tools: MCPTool[]): Set<string> {
   const allowed = new Set<string>()
 
+  logger.info(
+    { totalTools: tools.length, toolNames: tools.map((t) => t.name) },
+    '[MCP] Discovering allowed tools from MCP server',
+  )
+
   for (const tool of tools) {
     if (isAllowedToolName(tool.name)) {
       allowed.add(tool.name)
+      logger.info({ toolName: tool.name }, '[MCP] Tool allowed')
     }
   }
+
+  logger.info(
+    { allowedCount: allowed.size, allowed: Array.from(allowed) },
+    '[MCP] Tool discovery complete',
+  )
 
   return allowed
 }

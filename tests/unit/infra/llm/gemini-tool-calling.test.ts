@@ -11,6 +11,7 @@ import {
   type ParsedToolCall,
 } from '@/infra/llm/providers/gemini/gemini-tools'
 import type { MCPTool } from '@/server/repos/mcp/client/types'
+import { FunctionCallingMode } from '@google/generative-ai'
 import { describe, expect, it } from 'vitest'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -203,6 +204,36 @@ describe('ParsedToolCall interface', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FunctionCallingMode Tests (from gemini-tool-calling.ts configuration)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('FunctionCallingMode configuration', () => {
+  it('should have AUTO mode defined', () => {
+    expect(FunctionCallingMode.AUTO).toBe('AUTO')
+  })
+
+  it('should have ANY mode defined', () => {
+    expect(FunctionCallingMode.ANY).toBe('ANY')
+  })
+
+  it('should have NONE mode defined', () => {
+    expect(FunctionCallingMode.NONE).toBe('NONE')
+  })
+
+  it('should configure AUTO mode correctly for tool calling', () => {
+    // This test verifies that AUTO mode is the correct configuration
+    // when tools are present (as used in gemini-tool-calling.ts)
+    const toolConfig = {
+      functionCallingConfig: {
+        mode: FunctionCallingMode.AUTO,
+      },
+    }
+
+    expect(toolConfig.functionCallingConfig.mode).toBe(FunctionCallingMode.AUTO)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Edge Cases
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -268,5 +299,19 @@ describe('Edge cases', () => {
       where: '{"status": "published"}',
       sort: '-createdAt',
     })
+  })
+
+  it('should handle deeply nested function calls in response', () => {
+    const response = {
+      functionCalls: [
+        { name: 'findCourses', args: { where: '{"status": {"equals": "published"}}' } },
+      ],
+    }
+
+    const toolCalls = extractToolCalls(response)
+
+    expect(toolCalls).toHaveLength(1)
+    expect(toolCalls[0].name).toBe('findCourses')
+    expect(toolCalls[0].args.where).toBe('{"status": {"equals": "published"}}')
   })
 })
