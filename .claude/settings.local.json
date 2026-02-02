@@ -1,6 +1,6 @@
 {
-  "mcpServers": {},
   "permissions": {
-    "allow": ["Bash(ls:*)"]
-  }
+    "allow": ["Bash(ls:*)", "Bash(git checkout:*)", "Bash(mongosh:*)"]
+  },
+  "mcpServers": {}
 }
