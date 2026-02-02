@@ -46,7 +46,15 @@ const eslintConfig = [
     },
   },
   {
-    ignores: ['.next/', 'node_modules/', '.cache/', 'dist/', 'build/', 'coverage/'],
+    ignores: [
+      '.next/',
+      'node_modules/',
+      '.cache/',
+      'dist/',
+      'build/',
+      'coverage/',
+      'src/app/(payload)/custom.scss',
+    ],
   },
 
   // =============================================================================
