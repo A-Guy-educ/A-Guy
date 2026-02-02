@@ -26,31 +26,31 @@
 
 | Component     | Location                                                      | Current Pattern                              |
 | ------------- | ------------------------------------------------------------- | -------------------------------------------- |
-| LoginForm     | `src/app/(frontend)/login/LoginForm.tsx`                      | Local `useState(false)` for `isLoading`      |
-| SignupForm    | `src/app/(frontend)/signup/SignupForm.tsx`                    | Local `useState(false)` for `isLoading`      |
+| LoginForm     | `src/app/(frontend)/login/LoginForm.tsx`                      | Local `useState(false)` for `isLoading` + Suspense boundary + `LoginFormSkeleton` |
+| SignupForm    | `src/app/(frontend)/signup/SignupForm.tsx`                    | Local `useState(false)` for `isLoading` + Suspense boundary + `SignupFormSkeleton` |
 | ChatInterface | `src/app/(frontend)/.../ChatInterface/index.tsx`              | Uses `isLoading` from `useNotebookChat` hook |
 | StudyContent  | `src/app/(frontend)/study/_components/StudyContent/index.tsx` | Local `useState(true)` for `isLoading`       |
-| HeaderClient  | `src/Header/Component.client.tsx`                             | Local `isAuthLoading` state                  |
+| HeaderClient  | `src/ui/web/header/Component.client.tsx`                      | Uses `isAuthLoading` from `useCurrentUser` hook |
 
 ### Existing Components to Leverage
 
 | Component | Location                                     | Purpose                                     |
 | --------- | -------------------------------------------- | ------------------------------------------- |
-| Spinner   | `src/components/shared/Loading/Spinner.tsx`  | Animated spinner with CVA variants          |
-| Skeleton  | `src/components/shared/Loading/Skeleton.tsx` | Skeleton placeholder with variants          |
-| Button    | `src/components/ui/button.tsx`               | No built-in loading state (needs extension) |
+| Button    | `src/ui/web/components/button.tsx`           | No built-in loading state (needs extension) |
+
+> **Note**: No shared Spinner or Skeleton components exist yet. These will be created as part of this implementation.
 
 ### User-Facing Fetch Calls (4 total)
 
-1. `HeaderClient.tsx:31` - `fetch('/api/users/me', ...)` - Auth check - **NOT WIRED** (keep silent)
-2. `UserIdentificationTracker.tsx:18` - `fetch('/api/users/me', ...)` - Analytics auth - **NOT WIRED** (silent)
-3. `StudyContent/index.tsx:41` - `fetch('/api/chapters/by-grade?grade=...')` - **WIRED** via `userApiClient`
-4. `ConvertButton.tsx:20` - `fetch('/api/exercises/import?lessonId=...')` - **NOT WIRED** (low-traffic internal tool)
+1. `src/ui/web/header/Component.client.tsx` - Uses `useCurrentUser` hook - Auth check - **NOT WIRED** (keep silent)
+2. `src/infra/analytics/components/UserIdentificationTracker.tsx:42` - `fetch('/api/users/me', ...)` - Analytics auth - **NOT WIRED** (silent)
+3. `src/app/(frontend)/study/_components/StudyContent/index.tsx:41` - `fetch('/api/chapters/by-grade?grade=...')` - **WIRED** via `userApiClient`
+4. `ConvertButton.tsx` - `fetch('/api/exercises/import?lessonId=...')` - **NOT WIRED** (low-traffic internal tool)
 
 ### Server Actions (2 total)
 
-1. `login_authenticate-action.ts` - Login with cookie setting
-2. `signup_createUser-action.ts` - Signup with auto-login
+1. `src/app/(frontend)/login/login_authenticate-action.ts` - Login with cookie setting
+2. `src/app/(frontend)/signup/actions/signup_createUser-action.ts` - Signup with auto-login
 
 ### Provider Hierarchy (insertion point)
 
@@ -58,12 +58,20 @@
 html
 └── body
     └── I18nProvider
-        └── Providers (src/providers/index.tsx)
+        └── Providers (src/ui/web/providers/index.tsx)
             └── ThemeProvider
                 └── AnalyticsProvider
                     └── HeaderThemeProvider
                         └── [children]
 ```
+
+### Import Path Convention (Updated)
+
+The codebase uses the following import conventions:
+- `@/ui/web/components/` - shadcn/ui components (button, card, input, etc.)
+- `@/ui/web/providers/` - React providers (I18n, Theme, etc.)
+- `@/infra/` - Infrastructure code (analytics, utils, etc.)
+- `@/client/` - Client-side utilities and hooks
 
 ---
 
@@ -114,7 +122,7 @@ type LoadingType = 'route' | 'screen' | 'inline' | 'action'
 
 ### A.1 Create LoadingManager Store
 
-**File**: `src/lib/loading/LoadingManager.ts`
+**File**: `src/infra/loading/LoadingManager.ts`
 
 ```typescript
 // Types
@@ -244,7 +252,7 @@ export const loadingManager = createLoadingManager()
 
 ### A.2 Create useLoadingState Hook (Direct Store Access)
 
-**File**: `src/lib/loading/hooks/useLoadingState.ts`
+**File**: `src/infra/loading/hooks/useLoadingState.ts`
 
 **NOTE**: No LoadingProvider context needed. We use the singleton store directly via `useSyncExternalStore`.
 This is simpler, avoids re-render cascades, and eliminates context wiring complexity.
@@ -293,7 +301,7 @@ export function useLoadingState(selector: LoadingSelector): boolean {
 
 ### A.4 Create RouteLoadingIndicator Component (Trigger-Based, Indeterminate)
 
-**File**: `src/lib/loading/components/RouteLoadingIndicator.tsx`
+**File**: `src/infra/loading/components/RouteLoadingIndicator.tsx`
 
 ```typescript
 'use client'
@@ -301,7 +309,7 @@ export function useLoadingState(selector: LoadingSelector): boolean {
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { loadingManager } from '../LoadingManager'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 import { LOADING_KEYS } from '../keys'
 
 const VISIBILITY_THRESHOLD_MS = 300 // Don't show for fast navigations
@@ -455,7 +463,7 @@ export function RouteLoadingIndicator() {
 
 ### A.5 Create URL Utility
 
-**File**: `src/lib/loading/utils/resolveHref.ts`
+**File**: `src/infra/loading/utils/resolveHref.ts`
 
 ```typescript
 import type { UrlObject } from 'url'
@@ -525,7 +533,7 @@ export function buildCurrentPath(pathname: string, searchParams: { toString(): s
 
 ### A.6 Create SystemLink Component (Trigger-Based Navigation)
 
-**File**: `src/lib/loading/components/SystemLink.tsx`
+**File**: `src/infra/loading/components/SystemLink.tsx`
 
 ```typescript
 'use client'
@@ -598,7 +606,7 @@ export const SystemLink = forwardRef<HTMLAnchorElement, SystemLinkProps>(
 
 ### A.7 Create useRouterWithLoading Hook
 
-**File**: `src/lib/loading/hooks/useRouterWithLoading.ts`
+**File**: `src/infra/loading/hooks/useRouterWithLoading.ts`
 
 ```typescript
 'use client'
@@ -662,7 +670,7 @@ export function useRouterWithLoading() {
 
 ### A.8 Create AsyncAction Wrapper
 
-**File**: `src/lib/loading/AsyncAction.ts`
+**File**: `src/infra/loading/AsyncAction.ts`
 
 ```typescript
 import { loadingManager, type LoadingManagerInstance } from './LoadingManager'
@@ -736,9 +744,9 @@ export function createAsyncAction(manager: LoadingManagerInstance) {
 export const asyncAction = createAsyncAction(loadingManager)
 ```
 
-### A.8 Create useAsyncAction Hook
+### A.9 Create useAsyncAction Hook
 
-**File**: `src/lib/loading/hooks/useAsyncAction.ts`
+**File**: `src/infra/loading/hooks/useAsyncAction.ts`
 
 ```typescript
 'use client'
@@ -786,30 +794,86 @@ export function useAsyncAction<T, A extends unknown[]>(
 }
 ```
 
-### A.9 Add RouteLoadingIndicator to Layout (No Provider Needed)
+### A.10 Create Spinner Component
+
+**File**: `src/infra/loading/components/Spinner.tsx`
+
+```typescript
+'use client'
+
+import { cn } from '@/infra/utils/ui'
+
+interface SpinnerProps {
+  size?: 'sm' | 'md' | 'lg'
+  className?: string
+}
+
+const sizeClasses = {
+  sm: 'h-4 w-4',
+  md: 'h-6 w-6',
+  lg: 'h-8 w-8',
+}
+
+/**
+ * Animated spinner component with size variants
+ * Uses CSS animation for performance
+ */
+export function Spinner({ size = 'md', className }: SpinnerProps) {
+  return (
+    <svg
+      className={cn('animate-spin', sizeClasses[size], className)}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      role="status"
+      aria-label="Loading"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  )
+}
+```
+
+### A.12 Add RouteLoadingIndicator to Layout (No Provider Needed)
 
 **File**: `src/app/(frontend)/layout.tsx` (modify existing)
 
 Add import and component:
 
 ```typescript
-import { RouteLoadingIndicator } from '@/lib/loading/components/RouteLoadingIndicator'
+import { RouteLoadingIndicator } from '@/infra/loading/components/RouteLoadingIndicator'
 
-// In the JSX, after <body> opening tag:
+// In the JSX, add RouteLoadingIndicator as first child inside Providers:
 <body>
   <I18nProvider locale={locale} messages={messages}>
     <Providers>
       <RouteLoadingIndicator />
       <LayoutClient />
-      {/* ... rest of layout */}
+      <AdminBar adminBarProps={{ preview: isEnabled }} />
+      <Header />
+      {children}
+      <Footer />
+      <Toaster />
     </Providers>
   </I18nProvider>
 </body>
 ```
 
-### A.10 Create Module Index
+### A.13 Create Module Index
 
-**File**: `src/lib/loading/index.ts`
+**File**: `src/infra/loading/index.ts`
 
 ```typescript
 // Core store (singleton + factory for testing)
@@ -839,6 +903,7 @@ export { resolveHrefToString, buildCurrentPath } from './utils/resolveHref'
 // Components
 export { RouteLoadingIndicator } from './components/RouteLoadingIndicator'
 export { SystemLink } from './components/SystemLink'
+export { Spinner } from './components/Spinner'
 // NOTE: LoadingBoundary and skeletons deferred to future task (not in this PR)
 
 // Keys
@@ -851,7 +916,7 @@ export { LOADING_KEYS, type LoadingKey } from './keys'
 
 ### B.1 Loading Keys Registry
 
-**File**: `src/lib/loading/keys.ts`
+**File**: `src/infra/loading/keys.ts`
 
 ```typescript
 /**
@@ -883,26 +948,44 @@ export type LoadingKey = (typeof LOADING_KEYS)[keyof typeof LOADING_KEYS]
 
 **File**: `src/app/(frontend)/login/LoginForm.tsx` (modify existing)
 
+The current LoginForm already has:
+- Local `isLoading` state with `useState`
+- Suspense boundary with `LoginFormSkeleton`
+- Google OAuth button
+- `returnTo` query param support
+
+Changes needed:
+1. Replace local `isLoading` state with `useAsyncAction` hook
+2. Replace `useRouter` with `useRouterWithLoading`
+3. Add Spinner component in loading state
+4. Replace `next/link` with `SystemLink` for the signup link
+
 ```typescript
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { Suspense, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { useTranslations } from '@/providers/I18n'
+import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
+import { Button } from '@/ui/web/components/button'
+import { Card, CardContent, CardFooter, CardHeader } from '@/ui/web/components/card'
+import { Input } from '@/ui/web/components/input'
+import { Label } from '@/ui/web/components/label'
+import { useTranslations } from '@/ui/web/providers/I18n'
 import { loginAction } from './login_authenticate-action'
-import { useAsyncAction } from '@/lib/loading/hooks/useAsyncAction'
-import { useRouterWithLoading } from '@/lib/loading/hooks/useRouterWithLoading'
-import { LOADING_KEYS } from '@/lib/loading/keys'
-import { Spinner } from '@/components/shared/Loading/Spinner'
+import { useAsyncAction } from '@/infra/loading/hooks/useAsyncAction'
+import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
+import { LOADING_KEYS } from '@/infra/loading/keys'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { Spinner } from '@/infra/loading/components/Spinner'
 
-export function LoginForm() {
+function LoginFormContent() {
   const t = useTranslations('auth.login')
+  const tOauth = useTranslations('auth.oauth')
   const router = useRouterWithLoading()
+  const searchParams = useSearchParams()
+  const returnTo = searchParams?.get('returnTo') || '/'
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -923,7 +1006,7 @@ export function LoginForm() {
 
     if (result.success) {
       window.dispatchEvent(new Event('auth:changed'))
-      router.push('/')
+      router.push(returnTo)
       router.refresh()
       return
     }
@@ -939,6 +1022,19 @@ export function LoginForm() {
         <p className="text-sm text-muted-foreground text-center">{t('subtitle')}</p>
       </CardHeader>
       <CardContent>
+        <div className="space-y-4">
+          <GoogleLoginButton returnTo={returnTo} className="w-full" />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                {tOauth('orDivider')}
+              </span>
+            </div>
+          </div>
+        </div>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">{t('email')}</Label>
@@ -985,13 +1081,25 @@ export function LoginForm() {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           {t('noAccount')}{' '}
-          <Link href="/signup" className="text-primary hover:underline">
+          <SystemLink href="/signup" className="text-primary hover:underline">
             {t('signupLink')}
-          </Link>
+          </SystemLink>
         </p>
       </CardFooter>
     </Card>
   )
+}
+
+export function LoginForm() {
+  return (
+    <Suspense fallback={<LoginFormSkeleton />}>
+      <LoginFormContent />
+    </Suspense>
+  )
+}
+
+function LoginFormSkeleton() {
+  // ... existing skeleton implementation
 }
 ```
 
@@ -999,29 +1107,50 @@ export function LoginForm() {
 
 **File**: `src/app/(frontend)/signup/SignupForm.tsx` (modify existing)
 
+The current SignupForm already has:
+- Local `isLoading` state with `useState`
+- Suspense boundary with `SignupFormSkeleton`
+- Google OAuth button
+- System event bus for analytics (`SYSTEM_EVENTS.REGISTRATION_COMPLETED`, `SYSTEM_EVENTS.USER_RESOLVED`)
+- `identify()` call for Mixpanel
+- `returnTo` query param support
+
+Changes needed:
+1. Replace local `isLoading` state with `useAsyncAction` hook
+2. Replace `useRouter` with `useRouterWithLoading`
+3. Add Spinner component in loading state
+4. Replace `next/link` with `SystemLink` for the login link
+
 ```typescript
 'use client'
 
-import React, { useState } from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import { signupAction } from './actions/signup_createUser-action'
+import React, { Suspense, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
-import { useTranslations } from '@/providers/I18n'
-import { SignupFormFields } from './SignupFormFields'
-import { validateSignupForm } from './actions/signup_validation-action'
-import { useAnalytics } from '@/lib/analytics/providers/AnalyticsProvider'
-import { PRODUCT_EVENTS } from '@/lib/analytics/contracts/events'
-import { useAsyncAction } from '@/lib/loading/hooks/useAsyncAction'
-import { useRouterWithLoading } from '@/lib/loading/hooks/useRouterWithLoading'
-import { LOADING_KEYS } from '@/lib/loading/keys'
-import { Spinner } from '@/components/shared/Loading/Spinner'
 
-export function SignupForm() {
+import { detectBrowserLocale } from '@/i18n/config'
+import { identify } from '@/infra/analytics/core/tracker'
+import { updateCachedUserProperties } from '@/infra/analytics/utils/user-properties-cache'
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
+import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
+import { Button } from '@/ui/web/components/button'
+import { Card, CardContent, CardFooter, CardHeader } from '@/ui/web/components/card'
+import { useTranslations } from '@/ui/web/providers/I18n'
+import { SignupFormFields } from './SignupFormFields'
+import { signupAction } from './actions/signup_createUser-action'
+import { validateSignupForm } from './actions/signup_validation-action'
+import { useAsyncAction } from '@/infra/loading/hooks/useAsyncAction'
+import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
+import { LOADING_KEYS } from '@/infra/loading/keys'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { Spinner } from '@/infra/loading/components/Spinner'
+
+function SignupFormContent() {
   const t = useTranslations('auth.signup')
+  const tOauth = useTranslations('auth.oauth')
   const router = useRouterWithLoading()
-  const analytics = useAnalytics()
+  const searchParams = useSearchParams()
+  const returnTo = searchParams?.get('returnTo') || '/'
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const { execute: executeSignup, isLoading } = useAsyncAction(
@@ -1056,23 +1185,50 @@ export function SignupForm() {
     }
 
     // Success path
-    const successData = result.data as { userId?: string; message?: string } | undefined
-    toast.success(successData?.message || 'Account created successfully!')
+    const successData = result.data as { userId?: string; message?: string; success?: boolean } | undefined
+    toast.success('Account created successfully!')
 
-    // Track registration completed and user identified
+    // Track registration completed and user resolved
     if (successData?.userId) {
-      analytics.track(PRODUCT_EVENTS.REGISTRATION_COMPLETED, {
+      systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_COMPLETED, {
         user_id: successData.userId,
         auth_method: 'email',
       })
-      analytics.track(PRODUCT_EVENTS.USER_IDENTIFIED, {
+
+      // Track user_resolved with enriched user properties
+      const userProperties: Record<string, unknown> = {
         user_id: successData.userId,
         is_new_user: true,
+        signup_date: new Date().toISOString(),
+        role: 'student',
+      }
+
+      // Add email and name from form (using Mixpanel reserved properties)
+      const email = formData.get('email') as string
+      const name = formData.get('name') as string
+      if (email) userProperties.$email = email
+      if (name) userProperties.$name = name
+
+      // Add locale from browser
+      if (typeof window !== 'undefined') {
+        userProperties.locale = detectBrowserLocale()
+      }
+
+      // Cache user properties for future sessions
+      updateCachedUserProperties(userProperties)
+
+      // Emit user_resolved event via system event bus
+      systemEventBus.emit(SYSTEM_EVENTS.USER_RESOLVED, {
+        user_id: successData.userId,
+        is_anonymous: false,
       })
+
+      // Call identify() to ensure Mixpanel People properties are set
+      identify(successData.userId, userProperties)
     }
 
-    // Auto-login successful - redirect to home
-    router.push('/')
+    // Auto-login successful - redirect to returnTo
+    router.push(returnTo)
     router.refresh()
   }
 
@@ -1084,6 +1240,19 @@ export function SignupForm() {
         </p>
       </CardHeader>
       <CardContent>
+        <div className="space-y-4">
+          <GoogleLoginButton returnTo={returnTo} className="w-full" />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                {tOauth('orDivider')}
+              </span>
+            </div>
+          </div>
+        </div>
         <form onSubmit={onSubmit} className="space-y-4">
           <SignupFormFields t={t} isLoading={isLoading} errors={errors} />
 
@@ -1102,13 +1271,25 @@ export function SignupForm() {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           {t('alreadyHaveAccount')}{' '}
-          <Link href="/login" className="text-primary hover:underline">
+          <SystemLink href="/login" className="text-primary hover:underline">
             {t('login')}
-          </Link>
+          </SystemLink>
         </p>
       </CardFooter>
     </Card>
   )
+}
+
+export function SignupForm() {
+  return (
+    <Suspense fallback={<SignupFormSkeleton />}>
+      <SignupFormContent />
+    </Suspense>
+  )
+}
+
+function SignupFormSkeleton() {
+  // ... existing skeleton implementation
 }
 ```
 
@@ -1118,7 +1299,7 @@ export function SignupForm() {
 
 ### C.1 Create userApiClient (with safe JSON parsing)
 
-**File**: `src/lib/loading/userApiClient.ts`
+**File**: `src/infra/loading/userApiClient.ts`
 
 ```typescript
 import { loadingManager, type LoadingType } from './LoadingManager'
@@ -1296,26 +1477,34 @@ export function createApiRequest<T>(
 
 **File**: `src/app/(frontend)/study/_components/StudyContent/index.tsx` (modify existing)
 
+The current StudyContent already has:
+- Local `isLoading` state with `useState(true)`
+- Simple loading text display
+
+Changes needed:
+1. Replace local `isLoading` state with `useLoadingState` hook
+2. Replace direct `fetch` with `userApiClient`
+3. Add proper skeleton loading UI
+
 ```typescript
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getUserProfile } from '@/lib/localStorage/userProfile'
+import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import {
   DEFAULT_LESSON_TYPE,
   getEffectiveLessonType,
   type LessonType,
-} from '@/lib/constants/lesson-types'
-import { useTranslations } from '@/providers/I18n'
+} from '@/server/constants/lesson-types'
+import { useTranslations } from '@/ui/web/providers/I18n'
 import type { Chapter, Lesson } from '@/payload-types'
 import { ChapterHeader } from '@/app/(frontend)/courses/_components/ChapterHeader'
 import { LessonCard } from '@/app/(frontend)/courses/_components/LessonCard'
 import { EmptyState } from '@/app/(frontend)/courses/_components/EmptyState'
-import { logger } from '@/utilities/logger'
-import { userApiClient } from '@/lib/loading/userApiClient'
-import { LOADING_KEYS } from '@/lib/loading/keys'
-import { useLoadingState } from '@/lib/loading/hooks/useLoadingState'
-import { Skeleton } from '@/components/shared/Loading/Skeleton'
+import { logger } from '@/infra/utils/logger'
+import { userApiClient } from '@/infra/loading/userApiClient'
+import { LOADING_KEYS } from '@/infra/loading/keys'
+import { useLoadingState } from '@/infra/loading/hooks/useLoadingState'
 
 interface ChapterWithLessons extends Chapter {
   lessons: Lesson[]
@@ -1454,7 +1643,7 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { loadingManager } from '../LoadingManager'
 import { Skeleton } from '@/components/shared/Loading/Skeleton'
-import { cn } from '@/utilities/ui'
+import { cn } from '@/infra/utils/ui'
 
 interface LoadingBoundaryProps {
   children: React.ReactNode
@@ -1626,7 +1815,7 @@ export { StudySkeleton } from './StudySkeleton'
 ## 7. File Structure
 
 ```
-src/lib/loading/
+src/infra/loading/
 ├── index.ts                          # Public API exports
 ├── LoadingManager.ts                 # Core state management store (singleton + factory)
 ├── AsyncAction.ts                    # Action wrapper utility (with DI factory)
@@ -1640,7 +1829,8 @@ src/lib/loading/
 │   └── useRouterWithLoading.ts       # Router hook with loading
 └── components/
     ├── RouteLoadingIndicator.tsx     # Indeterminate top bar (thin, never blocks UI)
-    └── SystemLink.tsx                # Trigger-based Link wrapper (URL normalized)
+    ├── SystemLink.tsx                # Trigger-based Link wrapper (URL normalized)
+    └── Spinner.tsx                   # Animated spinner component with size variants
 
 NOTE: No LoadingProvider.tsx - we use direct store access via useSyncExternalStore.
 NOTE: LoadingBoundary and skeletons deferred to future task (not in this PR).
@@ -1656,7 +1846,7 @@ NOTE: LoadingBoundary and skeletons deferred to future task (not in this PR).
 
 ```typescript
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { createLoadingManager } from '@/lib/loading/LoadingManager'
+import { createLoadingManager } from '@/infra/loading/LoadingManager'
 
 describe('LoadingManager', () => {
   let manager: ReturnType<typeof createLoadingManager>
@@ -1848,7 +2038,7 @@ describe('LoadingManager', () => {
 
 ```typescript
 import { describe, it, expect } from 'vitest'
-import { resolveHrefToString, buildCurrentPath } from '@/lib/loading/utils/resolveHref'
+import { resolveHrefToString, buildCurrentPath } from '@/infra/loading/utils/resolveHref'
 
 describe('resolveHrefToString', () => {
   it('should handle string paths', () => {
@@ -1941,7 +2131,7 @@ describe('buildCurrentPath', () => {
 
 ```typescript
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { createLoadingManager } from '@/lib/loading/LoadingManager'
+import { createLoadingManager } from '@/infra/loading/LoadingManager'
 
 /**
  * Testing strategy: Use dependency injection pattern
@@ -1955,7 +2145,7 @@ import { createLoadingManager } from '@/lib/loading/LoadingManager'
  */
 
 // Import the factory to create asyncAction with custom manager
-import { createAsyncAction } from '@/lib/loading/AsyncAction'
+import { createAsyncAction } from '@/infra/loading/AsyncAction'
 
 describe('asyncAction', () => {
   let testManager: ReturnType<typeof createLoadingManager>
@@ -2027,9 +2217,9 @@ describe('asyncAction', () => {
 
 ```typescript
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createLoadingManager } from '@/lib/loading/LoadingManager'
-import { createAsyncAction } from '@/lib/loading/AsyncAction'
-import { LOADING_KEYS } from '@/lib/loading/keys'
+import { createLoadingManager } from '@/infra/loading/LoadingManager'
+import { createAsyncAction } from '@/infra/loading/AsyncAction'
+import { LOADING_KEYS } from '@/infra/loading/keys'
 
 describe('Auth Form Loading Integration', () => {
   let testManager: ReturnType<typeof createLoadingManager>
@@ -2248,10 +2438,11 @@ test.describe('Auth Form Loading States', () => {
 
 Update only these **known user-facing navigation hotspots** to use `SystemLink`:
 
-- [ ] `src/Header/Component.client.tsx` - Main nav links
-- [ ] `src/Header/Nav/index.tsx` - Nav menu links (if separate)
-- [ ] `src/app/(frontend)/login/LoginForm.tsx` - Signup link
-- [ ] `src/app/(frontend)/signup/SignupForm.tsx` - Login link
+- [ ] `src/ui/web/header/Nav/index.tsx` - Login and Signup button links (lines 87-91)
+- [ ] `src/app/(frontend)/login/LoginForm.tsx` - Signup link in footer
+- [ ] `src/app/(frontend)/signup/SignupForm.tsx` - Login link in footer
+
+**Note**: The header's main nav uses `CMSLink` component which is dynamically rendered from CMS data. The login/signup buttons are the primary user-facing links to migrate.
 
 **Future task** (not this PR): Consider broader SystemLink adoption with proper review.
 
@@ -2261,16 +2452,17 @@ Update only these **known user-facing navigation hotspots** to use `SystemLink`:
 
 ### Phase 1: Infrastructure (Step A)
 
-- [ ] Create `src/lib/loading/LoadingManager.ts` (with version-based snapshots + safety timeout)
-- [ ] Create `src/lib/loading/hooks/useLoadingState.ts` (direct store access, no context)
-- [ ] Create `src/lib/loading/AsyncAction.ts` (with DI factory for testing)
-- [ ] Create `src/lib/loading/hooks/useAsyncAction.ts`
-- [ ] Create `src/lib/loading/hooks/useRouterWithLoading.ts`
-- [ ] Create `src/lib/loading/utils/resolveHref.ts` (URL normalization)
-- [ ] Create `src/lib/loading/components/RouteLoadingIndicator.tsx` (thin top bar only)
-- [ ] Create `src/lib/loading/components/SystemLink.tsx` (trigger-based)
-- [ ] Create `src/lib/loading/keys.ts` (only keys used in this task)
-- [ ] Create `src/lib/loading/index.ts`
+- [ ] Create `src/infra/loading/LoadingManager.ts` (with version-based snapshots + safety timeout)
+- [ ] Create `src/infra/loading/hooks/useLoadingState.ts` (direct store access, no context)
+- [ ] Create `src/infra/loading/AsyncAction.ts` (with DI factory for testing)
+- [ ] Create `src/infra/loading/hooks/useAsyncAction.ts`
+- [ ] Create `src/infra/loading/hooks/useRouterWithLoading.ts`
+- [ ] Create `src/infra/loading/utils/resolveHref.ts` (URL normalization)
+- [ ] Create `src/infra/loading/components/RouteLoadingIndicator.tsx` (thin top bar only)
+- [ ] Create `src/infra/loading/components/SystemLink.tsx` (trigger-based)
+- [ ] Create `src/infra/loading/components/Spinner.tsx` (animated spinner with size variants)
+- [ ] Create `src/infra/loading/keys.ts` (only keys used in this task)
+- [ ] Create `src/infra/loading/index.ts`
 - [ ] Update `src/app/(frontend)/layout.tsx` to include `RouteLoadingIndicator`
 - [ ] Add unit tests for `LoadingManager` (including snapshot immutability + safety timeout)
 - [ ] Run `pnpm typecheck` - verify no type errors
@@ -2290,7 +2482,7 @@ Update only these **known user-facing navigation hotspots** to use `SystemLink`:
 
 ### Phase 3: Fetch Wrapper (Step C)
 
-- [ ] Create `src/lib/loading/userApiClient.ts` (with safe JSON parsing)
+- [ ] Create `src/infra/loading/userApiClient.ts` (with safe JSON parsing)
 - [ ] Refactor `StudyContent` to use `userApiClient`
 - [ ] Update `StudyContent` to use proper skeleton loading
 - [ ] Verify loading state shows for chapters fetch
@@ -2300,9 +2492,9 @@ Update only these **known user-facing navigation hotspots** to use `SystemLink`:
 
 > **NOT IN THIS PR** - Defer to future task after core system stabilizes.
 
-~~- [ ] Create `src/lib/loading/components/LoadingBoundary.tsx` (with timer cleanup)~~
-~~- [ ] Create `src/lib/loading/components/skeletons/ChatSkeleton.tsx`~~
-~~- [ ] Create `src/lib/loading/components/skeletons/StudySkeleton.tsx`~~
+~~- [ ] Create `src/infra/loading/components/LoadingBoundary.tsx` (with timer cleanup)~~
+~~- [ ] Create `src/infra/loading/components/skeletons/ChatSkeleton.tsx`~~
+~~- [ ] Create `src/infra/loading/components/skeletons/StudySkeleton.tsx`~~
 ~~- [ ] Export skeletons from index~~
 
 ### Phase 5: Quality Assurance
@@ -2423,6 +2615,19 @@ Update only these **known user-facing navigation hotspots** to use `SystemLink`:
 | userApiClient returns raw HTML   | Return stable error message, not raw HTML                     |
 | EXERCISE_IMPORT unclear scope    | Clarified: not wired in this PR                               |
 
+### Key Fixes Applied (Round 5 - Codebase Alignment)
+
+| Issue                                     | Fix                                                                             |
+| ----------------------------------------- | ------------------------------------------------------------------------------- |
+| Import paths outdated (`@/lib/`, etc.)    | Updated to new structure: `@/infra/`, `@/ui/web/`, `@/client/`                  |
+| HeaderClient location wrong               | Updated to `src/ui/web/header/Component.client.tsx`                             |
+| No shared Spinner/Skeleton components     | Added Spinner component creation to the plan (A.10)                             |
+| Forms already have Suspense boundaries    | Plan now preserves existing `LoginFormSkeleton` / `SignupFormSkeleton`          |
+| SystemEventBus usage in SignupForm        | Plan updated to use `systemEventBus.emit(SYSTEM_EVENTS.*)` instead of analytics |
+| useCurrentUser hook in HeaderClient       | Noted that auth loading comes from `useCurrentUser` hook, not direct fetch      |
+| returnTo query param support              | Forms already support `returnTo` param; plan preserves this                     |
+| Google OAuth button in auth forms         | Plan preserves existing GoogleLoginButton integration                           |
+
 ---
 
 ## 12. Deliverable Definition
@@ -2458,13 +2663,19 @@ Update only these **known user-facing navigation hotspots** to use `SystemLink`:
 1. **Use `SystemLink` (not `next/link`) in hotspots**
 
 - Replace `Link` imports/usages with `SystemLink` in:
-  - `src/app/(frontend)/login/LoginForm.tsx` (Login → Signup)
-  - `src/app/(frontend)/signup/SignupForm.tsx` (Signup → Login)
-  - Header main nav links (the user-facing ones)
+  - `src/app/(frontend)/login/LoginForm.tsx` - Signup link in CardFooter
+  - `src/app/(frontend)/signup/SignupForm.tsx` - Login link in CardFooter
+  - `src/ui/web/header/Nav/index.tsx` - Login and Signup button links (lines 86-91)
 
 2. **Make route-indicator E2E deterministic**
 
 - Add a dev-only slow route (e.g. `/test-slow-nav` with `await setTimeout(1000)`), then assert:
   - progressbar becomes visible after threshold
   - progressbar disappears after navigation completes
-    OR remove the route-indicator E2E test (current version doesn’t verify the indicator reliably).
+    OR remove the route-indicator E2E test (current version doesn't verify the indicator reliably).
+
+3. **Create Spinner component**
+
+- The codebase doesn't have a shared Spinner component yet
+- Create `src/infra/loading/components/Spinner.tsx` with size variants (sm, md, lg)
+- Used in LoginForm and SignupForm submit buttons during loading state
