@@ -19,6 +19,7 @@ import {
   RegistrationCompletedSchema,
   RegistrationPromptShownSchema,
   SessionStartedSchema,
+  SiteInitSchema,
   UserResolvedSchema,
 } from '@/infra/system-events/schemas'
 
@@ -238,12 +239,13 @@ describe('Schema Validation', () => {
 })
 
 describe('Schema Registry', () => {
-  it('contains all 10 system events', () => {
+  it('contains all 11 system events', () => {
     const eventNames = Object.keys(eventSchemas)
-    expect(eventNames.length).toBe(10)
+    expect(eventNames.length).toBe(11)
   })
 
   it('maps each event name to its schema', () => {
+    expect(eventSchemas[SYSTEM_EVENTS.SITE_INIT]).toBe(SiteInitSchema)
     expect(eventSchemas[SYSTEM_EVENTS.PAGE_VIEWED]).toBe(PageViewedSchema)
     expect(eventSchemas[SYSTEM_EVENTS.SESSION_STARTED]).toBe(SessionStartedSchema)
     expect(eventSchemas[SYSTEM_EVENTS.USER_RESOLVED]).toBe(UserResolvedSchema)

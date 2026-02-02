@@ -160,10 +160,11 @@ describe('Event Bus', () => {
   })
 
   describe('different event types', () => {
-    it('handles all 10 event types', () => {
+    it('handles all 11 event types', () => {
       const handler = vi.fn()
 
       // Subscribe to each event type
+      systemEventBus.on(SYSTEM_EVENTS.SITE_INIT, handler)
       systemEventBus.on(SYSTEM_EVENTS.PAGE_VIEWED, handler)
       systemEventBus.on(SYSTEM_EVENTS.SESSION_STARTED, handler)
       systemEventBus.on(SYSTEM_EVENTS.USER_RESOLVED, handler)
@@ -176,6 +177,7 @@ describe('Event Bus', () => {
       systemEventBus.on(SYSTEM_EVENTS.REGISTRATION_COMPLETED, handler)
 
       // Emit each event
+      systemEventBus.emit(SYSTEM_EVENTS.SITE_INIT, {})
       systemEventBus.emit(SYSTEM_EVENTS.PAGE_VIEWED, { page_path: '/p1' })
       systemEventBus.emit(SYSTEM_EVENTS.SESSION_STARTED, { session_id: 's1', is_anonymous: true })
       systemEventBus.emit(SYSTEM_EVENTS.USER_RESOLVED, { user_id: 'u1', is_anonymous: false })
@@ -194,7 +196,7 @@ describe('Event Bus', () => {
         auth_method: 'email',
       })
 
-      expect(handler).toHaveBeenCalledTimes(10)
+      expect(handler).toHaveBeenCalledTimes(11)
     })
   })
 })
