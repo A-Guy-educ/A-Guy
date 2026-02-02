@@ -1,8 +1,6 @@
 {
   "mcpServers": {},
   "permissions": {
-    "allow": [
-      "Bash(ls:*)"
-    ]
+    "allow": ["Bash(ls:*)"]
   }
 }

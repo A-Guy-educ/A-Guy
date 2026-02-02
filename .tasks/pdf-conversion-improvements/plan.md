@@ -3,6 +3,7 @@
 ## Overview
 
 Improve the PDF-to-exercises conversion system with:
+
 1. **Dedicated Conversion Dashboard** - Standalone admin view for job management
 2. **Real-Time Streaming Logs** - SSE-based live updates replacing 10s polling
 3. **Structured Job Logging** - Granular progress tracking stored in MongoDB
@@ -106,7 +107,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: { jobId: string } },
 ): Promise<Response>
 // Returns ReadableStream with text/event-stream
 // Events: log, status, done, error
@@ -137,7 +138,7 @@ export async function GET(
 export async function collectSSEEvents(
   url: string,
   headers: HeadersInit,
-  options?: { timeout?: number; maxEvents?: number }
+  options?: { timeout?: number; maxEvents?: number },
 ): Promise<{ events: SSEEvent[]; closed: boolean }>
 ```
 
@@ -417,69 +418,72 @@ interface JobFiltersProps {
 
 ### New Files
 
-| File | Purpose |
-|------|---------|
-| `src/server/payload/jobs/types.ts` | Job log types and interfaces |
-| `src/server/payload/jobs/job-logger.ts` | Structured logging utility |
-| `src/app/api/jobs/[jobId]/stream/route.ts` | SSE streaming endpoint |
-| `src/app/api/jobs/list/route.ts` | Paginated job list |
-| `src/app/api/jobs/cancel/route.ts` | Cancel queued jobs |
-| `src/app/api/jobs/retry/route.ts` | Retry failed jobs |
-| `src/app/api/jobs/count/route.ts` | Count jobs by filter |
-| `src/ui/admin/ConversionDashboard/index.tsx` | Main dashboard view |
-| `src/ui/admin/ConversionDashboard/JobListTable.tsx` | Job list table |
-| `src/ui/admin/ConversionDashboard/JobDetailPanel.tsx` | Job detail with SSE |
-| `src/ui/admin/ConversionDashboard/ProgressTimeline.tsx` | Visual progress stepper |
-| `src/ui/admin/ConversionDashboard/LogViewer.tsx` | Searchable log viewer |
-| `src/ui/admin/ConversionDashboard/JobFilters.tsx` | Filter controls |
-| `src/ui/admin/ConversionDashboard/styles.css` | Dashboard styles |
-| `src/ui/admin/ConversionNavLink/index.tsx` | Admin nav link |
-| `tests/unit/server/jobs/job-logger.spec.ts` | Unit tests for logger |
-| `tests/int/jobs-stream.int.spec.ts` | SSE endpoint tests |
-| `tests/int/jobs-api.int.spec.ts` | Job API tests |
-| `tests/helpers/sse-client.ts` | SSE test helper |
-| `tests/e2e/conversion-dashboard.e2e.spec.ts` | E2E tests |
+| File                                                    | Purpose                      |
+| ------------------------------------------------------- | ---------------------------- |
+| `src/server/payload/jobs/types.ts`                      | Job log types and interfaces |
+| `src/server/payload/jobs/job-logger.ts`                 | Structured logging utility   |
+| `src/app/api/jobs/[jobId]/stream/route.ts`              | SSE streaming endpoint       |
+| `src/app/api/jobs/list/route.ts`                        | Paginated job list           |
+| `src/app/api/jobs/cancel/route.ts`                      | Cancel queued jobs           |
+| `src/app/api/jobs/retry/route.ts`                       | Retry failed jobs            |
+| `src/app/api/jobs/count/route.ts`                       | Count jobs by filter         |
+| `src/ui/admin/ConversionDashboard/index.tsx`            | Main dashboard view          |
+| `src/ui/admin/ConversionDashboard/JobListTable.tsx`     | Job list table               |
+| `src/ui/admin/ConversionDashboard/JobDetailPanel.tsx`   | Job detail with SSE          |
+| `src/ui/admin/ConversionDashboard/ProgressTimeline.tsx` | Visual progress stepper      |
+| `src/ui/admin/ConversionDashboard/LogViewer.tsx`        | Searchable log viewer        |
+| `src/ui/admin/ConversionDashboard/JobFilters.tsx`       | Filter controls              |
+| `src/ui/admin/ConversionDashboard/styles.css`           | Dashboard styles             |
+| `src/ui/admin/ConversionNavLink/index.tsx`              | Admin nav link               |
+| `tests/unit/server/jobs/job-logger.spec.ts`             | Unit tests for logger        |
+| `tests/int/jobs-stream.int.spec.ts`                     | SSE endpoint tests           |
+| `tests/int/jobs-api.int.spec.ts`                        | Job API tests                |
+| `tests/helpers/sse-client.ts`                           | SSE test helper              |
+| `tests/e2e/conversion-dashboard.e2e.spec.ts`            | E2E tests                    |
 
 ### Modified Files
 
-| File | Changes |
-|------|---------|
-| `src/server/payload/jobs/pdf-to-exercises-task.ts` | Add structured logging |
-| `src/ui/admin/exercise-conversion/LessonConversionPanel/index.tsx` | Simplify to compact version |
-| `src/payload.config.ts` | Register custom view + nav link |
-| `tests/int/jobs-run-now.int.spec.ts` | Add logging assertions |
+| File                                                               | Changes                         |
+| ------------------------------------------------------------------ | ------------------------------- |
+| `src/server/payload/jobs/pdf-to-exercises-task.ts`                 | Add structured logging          |
+| `src/ui/admin/exercise-conversion/LessonConversionPanel/index.tsx` | Simplify to compact version     |
+| `src/payload.config.ts`                                            | Register custom view + nav link |
+| `tests/int/jobs-run-now.int.spec.ts`                               | Add logging assertions          |
 
 ---
 
 ## Test Coverage Matrix
 
-| Requirement | Unit Tests | Integration Tests | E2E Tests |
-|-------------|------------|-------------------|-----------|
-| Structured logging | `job-logger.spec.ts` | `jobs-run-now.int.spec.ts` | - |
-| SSE streaming | - | `jobs-stream.int.spec.ts` | `conversion-dashboard.e2e.spec.ts` |
-| Job list API | - | `jobs-api.int.spec.ts` | - |
-| Job cancel API | - | `jobs-api.int.spec.ts` | - |
-| Job retry API | - | `jobs-api.int.spec.ts` | - |
-| Job count API | - | `jobs-api.int.spec.ts` | - |
-| Dashboard UI | - | - | `conversion-dashboard.e2e.spec.ts` |
-| Lesson page link | - | - | `conversion-dashboard.e2e.spec.ts` |
+| Requirement        | Unit Tests           | Integration Tests          | E2E Tests                          |
+| ------------------ | -------------------- | -------------------------- | ---------------------------------- |
+| Structured logging | `job-logger.spec.ts` | `jobs-run-now.int.spec.ts` | -                                  |
+| SSE streaming      | -                    | `jobs-stream.int.spec.ts`  | `conversion-dashboard.e2e.spec.ts` |
+| Job list API       | -                    | `jobs-api.int.spec.ts`     | -                                  |
+| Job cancel API     | -                    | `jobs-api.int.spec.ts`     | -                                  |
+| Job retry API      | -                    | `jobs-api.int.spec.ts`     | -                                  |
+| Job count API      | -                    | `jobs-api.int.spec.ts`     | -                                  |
+| Dashboard UI       | -                    | -                          | `conversion-dashboard.e2e.spec.ts` |
+| Lesson page link   | -                    | -                          | `conversion-dashboard.e2e.spec.ts` |
 
 ---
 
 ## Acceptance Criteria
 
 ### Phase 1 (Types + Logger)
+
 - [ ] `JobLogEntry` and `JobStage` types exported
 - [ ] `JobLogger` class appends logs atomically to MongoDB
 - [ ] Unit tests pass for logger
 
 ### Phase 2 (SSE)
+
 - [ ] SSE endpoint streams logs in real-time
 - [ ] SSE endpoint requires admin auth
 - [ ] SSE auto-closes on job completion
 - [ ] Integration tests pass
 
 ### Phase 3 (APIs)
+
 - [ ] List endpoint returns paginated, filtered jobs
 - [ ] Cancel endpoint marks queued jobs as cancelled
 - [ ] Retry endpoint creates new job with same input
@@ -488,12 +492,14 @@ interface JobFiltersProps {
 - [ ] Integration tests pass
 
 ### Phase 4 (Handler Update)
+
 - [ ] Job handler logs at each stage
 - [ ] Logs include relevant details (segment info, counts)
 - [ ] Existing job functionality unchanged
 - [ ] Integration tests pass
 
 ### Phase 5 (Dashboard)
+
 - [ ] Dashboard accessible at `/admin/conversion-jobs`
 - [ ] Job list displays with filtering
 - [ ] Job detail shows SSE-streamed logs
@@ -502,6 +508,7 @@ interface JobFiltersProps {
 - [ ] E2E tests pass
 
 ### Phase 6 (Lesson Page)
+
 - [ ] Lesson page shows compact conversion panel
 - [ ] Active job count badge visible
 - [ ] Link to dashboard works
