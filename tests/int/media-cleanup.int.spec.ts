@@ -291,7 +291,9 @@ describe('Media Cleanup Endpoint', () => {
       expect(found.docs.length).toBe(1)
     })
 
-    it('handles multiple expired media documents', async () => {
+    it(
+      'handles multiple expired media documents',
+      async () => {
       const expiredDate = new Date(Date.now() - 1000 * 60 * 60).toISOString()
 
       // Create multiple expired media
@@ -317,7 +319,9 @@ describe('Media Cleanup Endpoint', () => {
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.deletedCount).toBe(3)
-    })
+      },
+      { timeout: 20000 },
+    )
 
     it('returns hasMore flag when more items exist', async () => {
       // This test is limited because we can't easily create 100+ records

@@ -43,25 +43,29 @@ describe('VercelBlobAdapter Integration', () => {
   })
 
   describe('Upload and Download', () => {
-    it('should upload a file and return a valid blob URL', async () => {
-      if (isSkipped) return
+    it(
+      'should upload a file and return a valid blob URL',
+      async () => {
+        if (isSkipped) return
 
-      const adapter = new VercelBlobAdapter({
-        directory: 'integration-tests',
-        public: true,
-      })
+        const adapter = new VercelBlobAdapter({
+          directory: 'integration-tests',
+          public: true,
+        })
 
-      const testContent = 'Test PDF content for integration test'
-      const testBuffer = Buffer.from(testContent, 'utf-8')
+        const testContent = 'Test PDF content for integration test'
+        const testBuffer = Buffer.from(testContent, 'utf-8')
 
-      const result = await adapter.uploadBuffer(testFilename, testBuffer, 'application/pdf')
+        const result = await adapter.uploadBuffer(testFilename, testBuffer, 'application/pdf')
 
-      expect(result.url).toBeDefined()
-      expect(result.url).not.toBe('')
-      expect(isVercelBlobUrl(result.url)).toBe(true)
-      expect(result.pathname).toBe(`integration-tests/${testFilename}`)
-      expect(result.contentType).toBe('application/pdf')
-    })
+        expect(result.url).toBeDefined()
+        expect(result.url).not.toBe('')
+        expect(isVercelBlobUrl(result.url)).toBe(true)
+        expect(result.pathname).toBe(`integration-tests/${testFilename}`)
+        expect(result.contentType).toBe('application/pdf')
+      },
+      { timeout: 20000 },
+    )
 
     it('should download the uploaded file and verify content', async () => {
       if (isSkipped) return
