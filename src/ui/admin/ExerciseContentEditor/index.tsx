@@ -1,18 +1,18 @@
 'use client'
 
-import React from 'react'
-import { useField, useForm } from '@payloadcms/ui'
-import { Code, Plus, Trash2, MoveUp, MoveDown, Image as ImageIcon } from 'lucide-react'
-import Image from 'next/image'
-import { RichTextEditor } from './RichTextEditor'
-import { JSONInspector } from './JSONInspector'
-import { MediaPicker } from './MediaPicker'
-import { BlockTypeSelector } from './BlockTypeSelector'
+import type { Media } from '@/payload-types'
 import type { ContentBlock } from '@/server/payload/collections/Exercises'
 import { ExerciseBlockDefaults } from '@/server/payload/collections/Exercises'
-import type { Media } from '@/payload-types'
-import { generateId } from './utils'
+import { useField, useForm } from '@payloadcms/ui'
+import { Code, Image as ImageIcon, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
+import Image from 'next/image'
+import React from 'react'
+import { BlockTypeSelector } from './BlockTypeSelector'
 import './index.css'
+import { JSONInspector } from './JSONInspector'
+import { MediaPicker } from './MediaPicker'
+import { RichTextEditor } from './RichTextEditor'
+import { generateId } from './utils'
 
 /**
  * Exercise Content Editor - Strict Flat Blocks
@@ -602,7 +602,10 @@ function BlockMediaDisplay({ blockId, mediaIds, onRemoveMedia }: BlockMediaDispl
   return (
     <div className="block-media-preview">
       {mediaItems.map((media) => {
-        const thumbnailUrl = media.sizes?.thumbnail?.url || media.url
+        // Cast to any to bypass strict type checking for blob storage sizes
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mediaAny = media as any
+        const thumbnailUrl = mediaAny.sizes?.thumbnail?.url || media.url
         return (
           <div key={media.id} className="media-thumbnail-preview">
             {thumbnailUrl && (

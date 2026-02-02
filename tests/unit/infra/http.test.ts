@@ -100,5 +100,74 @@ describe('HTTP Utilities', () => {
       const timeoutCall = setTimeoutSpy.mock.calls[0]
       expect(timeoutCall[1]).toBe(500)
     })
+
+    it('should pass custom headers to fetch', async () => {
+      const testData = new Uint8Array([0x01, 0x02, 0x03])
+      const mockResponse = {
+        ok: true,
+        arrayBuffer: async () => testData.buffer,
+      }
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(mockResponse as Response)
+
+      const customHeaders = {
+        Authorization: 'Bearer test-token',
+        Cookie: 'session=abc123',
+      }
+
+      await fetchBuffer('https://example.com/file.pdf', 30000, customHeaders)
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        'https://example.com/file.pdf',
+        expect.objectContaining({
+          headers: customHeaders,
+        }),
+      )
+    })
+
+    it('should pass auth headers for protected resources', async () => {
+      const testData = new Uint8Array([0x25, 0x50, 0x44, 0x46]) // %PDF
+      const mockResponse = {
+        ok: true,
+        arrayBuffer: async () => testData.buffer,
+      }
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(mockResponse as Response)
+
+      // Simulate auth headers that would be passed from run-immediate route
+      const authHeaders = {
+        authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        cookie: 'payload-session=xyz789',
+      }
+
+      await fetchBuffer('https://api.example.com/protected/file.pdf', 30000, authHeaders)
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        'https://api.example.com/protected/file.pdf',
+        expect.objectContaining({
+          headers: {
+            authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            cookie: 'payload-session=xyz789',
+          },
+        }),
+      )
+    })
+
+    it('should work without headers (backward compatible)', async () => {
+      const testData = new Uint8Array([0x01, 0x02, 0x03])
+      const mockResponse = {
+        ok: true,
+        arrayBuffer: async () => testData.buffer,
+      }
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(mockResponse as Response)
+
+      // Call without headers - should still work
+      await fetchBuffer('https://example.com/public-file.pdf')
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        'https://example.com/public-file.pdf',
+        expect.objectContaining({
+          headers: undefined,
+        }),
+      )
+    })
   })
 })

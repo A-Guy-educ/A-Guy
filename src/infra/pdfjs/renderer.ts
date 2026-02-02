@@ -1,12 +1,22 @@
-import { CDN_BASE, VIEWER_URLS } from './config'
 import { logger } from '@/infra/utils/logger'
+import { CDN_BASE, VIEWER_URLS, initializePdfjsConfig } from './config'
+
+// Initialize config on first use (lazy initialization for backward compatibility)
+let _initialized = false
+async function ensureInitialized(): Promise<void> {
+  if (!_initialized) {
+    await initializePdfjsConfig()
+    _initialized = true
+  }
+}
 
 /**
  * Rewrite CSS to fix relative image paths
  * Converts url(images/...) to absolute CDN URLs
  */
-export function rewriteCss(css: string): string {
-  return css.replace(/url\(images\//g, `url(${CDN_BASE}/web/images/`)
+export function rewriteCss(css: string, cdnBase?: string): string {
+  const base = cdnBase || CDN_BASE
+  return css.replace(/url\(images\//g, `url(${base}/web/images/`)
 }
 
 /**
@@ -28,25 +38,37 @@ export function rewriteCss(css: string): string {
  *
  * @param html - Original viewer HTML
  * @param css - CSS content (should already have image paths rewritten via rewriteCss)
+ * @param cdnBase - Optional CDN base URL (will use config value if not provided)
+ * @param viewerUrls - Optional viewer URLs (will use config value if not provided)
  */
-export function renderViewerHtml(html: string, css: string): string {
+export async function renderViewerHtml(
+  html: string,
+  css: string,
+  cdnBase?: string,
+  viewerUrls?: typeof VIEWER_URLS,
+): Promise<string> {
+  await ensureInitialized()
+
+  const base = cdnBase || CDN_BASE
+  const urls = viewerUrls || VIEWER_URLS
+
   logger.debug('Starting HTML rewrite pipeline')
 
   let result = html
 
   // Step 1: Add base href right after <head>
-  result = result.replace('<head>', `<head>\n  <base href="${CDN_BASE}/web/">`)
+  result = result.replace('<head>', `<head>\n  <base href="${base}/web/">`)
 
   // Step 2: Replace viewer.mjs with CDN URL
-  result = result.replace('src="viewer.mjs"', `src="${VIEWER_URLS.mjs}"`)
+  result = result.replace('src="viewer.mjs"', `src="${urls.mjs}"`)
 
   // Step 3: Replace pdf.mjs references
   // - Relative path from prebuilt version
-  result = result.replace('src="../build/pdf.mjs"', `src="${VIEWER_URLS.pdfMjs}"`)
+  result = result.replace('src="../build/pdf.mjs"', `src="${urls.pdfMjs}"`)
   // - Mozilla CDN reference
   result = result.replace(
     'src="https://mozilla.github.io/pdf.js/build/pdf.mjs"',
-    `src="${VIEWER_URLS.pdfMjs}"`,
+    `src="${urls.pdfMjs}"`,
   )
 
   // Step 4: Remove locale references that cause 404s
@@ -95,7 +117,7 @@ export function renderViewerHtml(html: string, css: string): string {
       // Disable print keyboard shortcuts
       (function() {
         'use strict';
-        
+
         // Prevent printing via keyboard shortcuts
         document.addEventListener('keydown', function(e) {
           // Check for Ctrl+P (Windows/Linux) or Cmd+P (Mac)
@@ -106,13 +128,13 @@ export function renderViewerHtml(html: string, css: string): string {
             return false;
           }
         }, true);
-        
+
         // Override window.print to prevent programmatic printing
         window.print = function() {
           console.warn('Printing is disabled for this document');
           return false;
         };
-        
+
         // Disable context menu to prevent right-click print
         document.addEventListener('contextmenu', function(e) {
           e.preventDefault();
@@ -135,14 +157,20 @@ export function renderViewerHtml(html: string, css: string): string {
  * Validate that HTML rewrite was successful
  * Checks that critical asset URLs were replaced
  */
-export function validateRewrittenHtml(html: string): {
-  valid: boolean
-  issues: string[]
-} {
+export async function validateRewrittenHtml(
+  html: string,
+  cdnBase?: string,
+  viewerUrls?: typeof VIEWER_URLS,
+): Promise<{ valid: boolean; issues: string[] }> {
+  await ensureInitialized()
+
+  const base = cdnBase || CDN_BASE
+  const urls = viewerUrls || VIEWER_URLS
+
   const issues: string[] = []
 
   // Check that viewer.mjs was replaced
-  if (html.includes('src="viewer.mjs"') && !html.includes(`src="${VIEWER_URLS.mjs}"`)) {
+  if (html.includes('src="viewer.mjs"') && !html.includes(`src="${urls.mjs}"`)) {
     issues.push('viewer.mjs not replaced with CDN URL')
   }
 
@@ -155,7 +183,7 @@ export function validateRewrittenHtml(html: string): {
   }
 
   // Check that base href was added
-  if (!html.includes(`<base href="${CDN_BASE}/web/">`)) {
+  if (!html.includes(`<base href="${base}/web/">`)) {
     issues.push('base href not added')
   }
 

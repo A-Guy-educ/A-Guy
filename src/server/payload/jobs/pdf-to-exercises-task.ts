@@ -224,17 +224,20 @@ async function updateJobStatus(
 
   try {
     await coll.updateOne({ _id: new ObjectId(jobId) }, { $set: update })
-    console.log(`[PDF→Exercises] Job ${jobId} marked as ${status}`)
   } catch (err) {
     console.error(`[PDF→Exercises] Failed to update job status:`, err)
   }
 }
 
+/**
+ * Segment PDF into page ranges for batch processing
+ * Uses pdf-lib for serverless-compatible page counting
+ */
 async function segmentPdf(pdfBuffer: Buffer, maxPagesPerSegment: number) {
-  const pdfjs = await import('pdfjs-dist')
-  // Use buffer data - cast to Uint8Array for pdfjs-dist compatibility
-  const pdf = await pdfjs.getDocument({ data: Uint8Array.from(pdfBuffer) }).promise
-  const pageCount = pdf.numPages
+  // Use pdf-lib for serverless-compatible page counting
+  // pdf-lib has no worker thread issues on Vercel
+  const { getPageCount } = await import('@/server/utils/pdf-metadata')
+  const pageCount = await getPageCount(pdfBuffer)
 
   const segments = []
   for (let start = 1; start <= pageCount; start += maxPagesPerSegment) {
@@ -320,7 +323,6 @@ Return JSON: { "valid": boolean, "reason": "..." }`
 
     // Retry once if verification fails
     if (!verification.valid) {
-      console.log(`[PDF→Exercises] Verification failed for "${exercise.title}", retrying...`)
       verification = await callVerifier(payload, geminiParts, verifierPromptWithContext)
     }
 

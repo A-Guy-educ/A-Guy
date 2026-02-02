@@ -18,7 +18,6 @@ export const GET = withApiHandler(
         query.limit,
       )
 
-      logger.info({ count: jobs.length }, 'Fetched job statuses')
       return apiSuccess({ docs: jobs })
     } catch (error) {
       logger.error({ error }, 'Failed to fetch job statuses')

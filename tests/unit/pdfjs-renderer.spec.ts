@@ -1,6 +1,20 @@
-import { describe, it, expect } from 'vitest'
-import { rewriteCss, renderViewerHtml, validateRewrittenHtml } from '@/infra/pdfjs/renderer'
-import { CDN_BASE, VIEWER_URLS } from '@/infra/pdfjs/config'
+import { renderViewerHtml, rewriteCss, validateRewrittenHtml } from '@/infra/pdfjs/renderer'
+import { describe, expect, it, vi } from 'vitest'
+
+// Mock the vercel-blob-adapter module
+vi.mock('@/infra/blob/vercel-blob-adapter', () => ({
+  getExternalStorageUrl: vi.fn(),
+}))
+
+// Test constants
+const TEST_CDN_BASE = 'https://example.blob.vercel-storage.com/pdfjs/4.4.168'
+const TEST_VIEWER_URLS = {
+  html: `${TEST_CDN_BASE}/viewer-I6DnqEMX9W9cwNNvWKm3D8YvXdCzUA.html`,
+  mjs: `${TEST_CDN_BASE}/viewer-SyYgQ0jufpmBIqrWX2zGA21kZmurH6.mjs`,
+  css: `${TEST_CDN_BASE}/viewer-MgMiA2nNdPgVwb4uc8CAB6Twx6vmUC.css`,
+  pdfMjs: `${TEST_CDN_BASE}/build/pdf.mjs`,
+  pdfWorkerMjs: `${TEST_CDN_BASE}/build/pdf.worker.mjs`,
+}
 
 describe('rewriteCss', () => {
   it('should rewrite relative image paths to absolute CDN URLs', () => {
@@ -8,30 +22,30 @@ describe('rewriteCss', () => {
       .icon { background: url(images/icon.svg); }
       .logo { background: url(images/logo.png); }
     `
-    const rewritten = rewriteCss(css)
+    const rewritten = rewriteCss(css, TEST_CDN_BASE)
 
-    expect(rewritten).toContain(`url(${CDN_BASE}/web/images/icon.svg)`)
-    expect(rewritten).toContain(`url(${CDN_BASE}/web/images/logo.png)`)
+    expect(rewritten).toContain(`url(${TEST_CDN_BASE}/web/images/icon.svg)`)
+    expect(rewritten).toContain(`url(${TEST_CDN_BASE}/web/images/logo.png)`)
     expect(rewritten).not.toContain('url(images/')
   })
 
   it('should handle multiple images on same line', () => {
     const css = '.icons { background: url(images/a.svg), url(images/b.svg); }'
-    const rewritten = rewriteCss(css)
+    const rewritten = rewriteCss(css, TEST_CDN_BASE)
 
-    expect(rewritten).toContain(`url(${CDN_BASE}/web/images/a.svg)`)
-    expect(rewritten).toContain(`url(${CDN_BASE}/web/images/b.svg)`)
+    expect(rewritten).toContain(`url(${TEST_CDN_BASE}/web/images/a.svg)`)
+    expect(rewritten).toContain(`url(${TEST_CDN_BASE}/web/images/b.svg)`)
   })
 
   it('should not modify absolute URLs', () => {
     const css = '.external { background: url(https://example.com/image.png); }'
-    const rewritten = rewriteCss(css)
+    const rewritten = rewriteCss(css, TEST_CDN_BASE)
 
     expect(rewritten).toContain('url(https://example.com/image.png)')
   })
 
   it('should handle empty CSS', () => {
-    const rewritten = rewriteCss('')
+    const rewritten = rewriteCss('', TEST_CDN_BASE)
     expect(rewritten).toBe('')
   })
 
@@ -43,7 +57,7 @@ describe('rewriteCss', () => {
         background: url(images/test.svg);
       }
     `
-    const rewritten = rewriteCss(css)
+    const rewritten = rewriteCss(css, TEST_CDN_BASE)
 
     expect(rewritten).toContain('/* Comment */')
     expect(rewritten).toContain('.class {')
@@ -73,58 +87,57 @@ describe('renderViewerHtml', () => {
     .test { background: url(images/test.svg); }
   `
 
-  it('should add base href after <head>', () => {
-    const result = renderViewerHtml(mockHtml, mockCss)
-    expect(result).toContain(`<head>\n  <base href="${CDN_BASE}/web/">`)
+  it('should add base href after <head>', async () => {
+    const result = await renderViewerHtml(mockHtml, mockCss, TEST_CDN_BASE, TEST_VIEWER_URLS)
+    expect(result).toContain(`<head>\n  <base href="${TEST_CDN_BASE}/web/">`)
   })
 
-  it('should replace viewer.mjs with CDN URL', () => {
-    const result = renderViewerHtml(mockHtml, mockCss)
-    expect(result).toContain(`src="${VIEWER_URLS.mjs}"`)
+  it('should replace viewer.mjs with CDN URL', async () => {
+    const result = await renderViewerHtml(mockHtml, mockCss, TEST_CDN_BASE, TEST_VIEWER_URLS)
+    expect(result).toContain(`src="${TEST_VIEWER_URLS.mjs}"`)
     expect(result).not.toMatch(/src="viewer\.mjs"/)
   })
 
-  it('should replace relative pdf.mjs path', () => {
-    const result = renderViewerHtml(mockHtml, mockCss)
-    expect(result).toContain(`src="${VIEWER_URLS.pdfMjs}"`)
+  it('should replace relative pdf.mjs path', async () => {
+    const result = await renderViewerHtml(mockHtml, mockCss, TEST_CDN_BASE, TEST_VIEWER_URLS)
+    expect(result).toContain(`src="${TEST_VIEWER_URLS.pdfMjs}"`)
     expect(result).not.toMatch(/src="\.\.\/build\/pdf\.mjs"/)
   })
 
-  it('should replace Mozilla CDN pdf.mjs reference', () => {
+  it('should replace Mozilla CDN pdf.mjs reference', async () => {
     const htmlWithMozilla = mockHtml.replace(
       'src="../build/pdf.mjs"',
       'src="https://mozilla.github.io/pdf.js/build/pdf.mjs"',
     )
-    const result = renderViewerHtml(htmlWithMozilla, mockCss)
-    expect(result).toContain(`src="${VIEWER_URLS.pdfMjs}"`)
+    const result = await renderViewerHtml(htmlWithMozilla, mockCss, TEST_CDN_BASE, TEST_VIEWER_URLS)
+    expect(result).toContain(`src="${TEST_VIEWER_URLS.pdfMjs}"`)
     expect(result).not.toContain('src="https://mozilla.github.io/pdf.js/build/pdf.mjs"')
   })
 
-  it('should remove Mozilla locale references', () => {
-    const result = renderViewerHtml(mockHtml, mockCss)
+  it('should remove Mozilla locale references', async () => {
+    const result = await renderViewerHtml(mockHtml, mockCss, TEST_CDN_BASE, TEST_VIEWER_URLS)
     expect(result).not.toContain('https://mozilla.github.io/pdf.js/web/locale/locale.json')
   })
 
-  it('should remove local locale references', () => {
-    const result = renderViewerHtml(mockHtml, mockCss)
+  it('should remove local locale references', async () => {
+    const result = await renderViewerHtml(mockHtml, mockCss, TEST_CDN_BASE, TEST_VIEWER_URLS)
     expect(result).not.toContain('href="locale/locale.json"')
   })
 
-  it('should inline CSS with rewritten paths', () => {
-    // First rewrite CSS, then pass to renderViewerHtml (as the route does)
-    const rewrittenCss = rewriteCss(mockCss)
-    const result = renderViewerHtml(mockHtml, rewrittenCss)
+  it('should inline CSS with rewritten paths', async () => {
+    const rewrittenCss = rewriteCss(mockCss, TEST_CDN_BASE)
+    const result = await renderViewerHtml(mockHtml, rewrittenCss, TEST_CDN_BASE, TEST_VIEWER_URLS)
     expect(result).toContain('<style>')
-    expect(result).toContain(`url(${CDN_BASE}/web/images/test.svg)`)
+    expect(result).toContain(`url(${TEST_CDN_BASE}/web/images/test.svg)`)
   })
 
-  it('should remove external CSS link', () => {
-    const result = renderViewerHtml(mockHtml, mockCss)
+  it('should remove external CSS link', async () => {
+    const result = await renderViewerHtml(mockHtml, mockCss, TEST_CDN_BASE, TEST_VIEWER_URLS)
     expect(result).toContain('href="data:text/css;base64,REMOVED"')
   })
 
-  it('should preserve HTML structure', () => {
-    const result = renderViewerHtml(mockHtml, mockCss)
+  it('should preserve HTML structure', async () => {
+    const result = await renderViewerHtml(mockHtml, mockCss, TEST_CDN_BASE, TEST_VIEWER_URLS)
     expect(result).toContain('<!DOCTYPE html>')
     expect(result).toContain('<html>')
     expect(result).toContain('<body>')
@@ -132,7 +145,7 @@ describe('renderViewerHtml', () => {
     expect(result).toContain('</html>')
   })
 
-  it('should handle HTML without locale references', () => {
+  it('should handle HTML without locale references', async () => {
     const simpleHtml = `
 <html>
 <head>
@@ -141,8 +154,8 @@ describe('renderViewerHtml', () => {
 <body></body>
 </html>
     `.trim()
-    const result = renderViewerHtml(simpleHtml, '')
-    expect(result).toContain(`<base href="${CDN_BASE}/web/">`)
+    const result = await renderViewerHtml(simpleHtml, '', TEST_CDN_BASE, TEST_VIEWER_URLS)
+    expect(result).toContain(`<base href="${TEST_CDN_BASE}/web/">`)
   })
 })
 
@@ -151,60 +164,60 @@ describe('validateRewrittenHtml', () => {
 <!DOCTYPE html>
 <html>
 <head>
-  <base href="${CDN_BASE}/web/">
+  <base href="${TEST_CDN_BASE}/web/">
   <link rel="stylesheet" href="data:text/css;base64,REMOVED">
-  <script src="${VIEWER_URLS.mjs}" type="module"></script>
-  <script src="${VIEWER_URLS.pdfMjs}" type="module"></script>
+  <script src="${TEST_VIEWER_URLS.mjs}" type="module"></script>
+  <script src="${TEST_VIEWER_URLS.pdfMjs}" type="module"></script>
   <style>.test { color: red; }</style>
 </head>
 <body></body>
 </html>
   `.trim()
 
-  it('should validate correct HTML as valid', () => {
-    const result = validateRewrittenHtml(validHtml)
+  it('should validate correct HTML as valid', async () => {
+    const result = await validateRewrittenHtml(validHtml, TEST_CDN_BASE, TEST_VIEWER_URLS)
     expect(result.valid).toBe(true)
     expect(result.issues).toHaveLength(0)
   })
 
-  it('should detect missing base href', () => {
-    const html = validHtml.replace(`<base href="${CDN_BASE}/web/">`, '')
-    const result = validateRewrittenHtml(html)
+  it('should detect missing base href', async () => {
+    const html = validHtml.replace(`<base href="${TEST_CDN_BASE}/web/">`, '')
+    const result = await validateRewrittenHtml(html, TEST_CDN_BASE, TEST_VIEWER_URLS)
     expect(result.valid).toBe(false)
     expect(result.issues).toContain('base href not added')
   })
 
-  it('should detect unreplaced viewer.mjs', () => {
-    const html = validHtml.replace(`src="${VIEWER_URLS.mjs}"`, 'src="viewer.mjs"')
-    const result = validateRewrittenHtml(html)
+  it('should detect unreplaced viewer.mjs', async () => {
+    const html = validHtml.replace(`src="${TEST_VIEWER_URLS.mjs}"`, 'src="viewer.mjs"')
+    const result = await validateRewrittenHtml(html, TEST_CDN_BASE, TEST_VIEWER_URLS)
     expect(result.valid).toBe(false)
     expect(result.issues).toContain('viewer.mjs not replaced with CDN URL')
   })
 
-  it('should detect unreplaced pdf.mjs references', () => {
-    const html = validHtml.replace(`src="${VIEWER_URLS.pdfMjs}"`, 'src="../build/pdf.mjs"')
-    const result = validateRewrittenHtml(html)
+  it('should detect unreplaced pdf.mjs references', async () => {
+    const html = validHtml.replace(`src="${TEST_VIEWER_URLS.pdfMjs}"`, 'src="../build/pdf.mjs"')
+    const result = await validateRewrittenHtml(html, TEST_CDN_BASE, TEST_VIEWER_URLS)
     expect(result.valid).toBe(false)
     expect(result.issues).toContain('pdf.mjs references not replaced with CDN URL')
   })
 
-  it('should detect missing inline CSS', () => {
+  it('should detect missing inline CSS', async () => {
     const html = validHtml.replace('<style>.test { color: red; }</style>', '')
-    const result = validateRewrittenHtml(html)
+    const result = await validateRewrittenHtml(html, TEST_CDN_BASE, TEST_VIEWER_URLS)
     expect(result.valid).toBe(false)
     expect(result.issues).toContain('CSS not inlined correctly')
   })
 
-  it('should detect remaining external CSS link', () => {
+  it('should detect remaining external CSS link', async () => {
     const html = validHtml
       .replace('href="data:text/css;base64,REMOVED"', 'href="viewer.css"')
       .replace('<style>.test { color: red; }</style>', '')
-    const result = validateRewrittenHtml(html)
+    const result = await validateRewrittenHtml(html, TEST_CDN_BASE, TEST_VIEWER_URLS)
     expect(result.valid).toBe(false)
     expect(result.issues).toContain('CSS not inlined correctly')
   })
 
-  it('should detect multiple issues', () => {
+  it('should detect multiple issues', async () => {
     const html = `
 <html>
 <head>
@@ -214,7 +227,7 @@ describe('validateRewrittenHtml', () => {
 <body></body>
 </html>
     `.trim()
-    const result = validateRewrittenHtml(html)
+    const result = await validateRewrittenHtml(html, TEST_CDN_BASE, TEST_VIEWER_URLS)
     expect(result.valid).toBe(false)
     expect(result.issues.length).toBeGreaterThan(1)
     expect(result.issues).toContain('base href not added')
@@ -223,12 +236,12 @@ describe('validateRewrittenHtml', () => {
     expect(result.issues).toContain('CSS not inlined correctly')
   })
 
-  it('should handle edge case with Mozilla CDN reference', () => {
+  it('should handle edge case with Mozilla CDN reference', async () => {
     const html = validHtml.replace(
-      `src="${VIEWER_URLS.pdfMjs}"`,
+      `src="${TEST_VIEWER_URLS.pdfMjs}"`,
       'src="https://mozilla.github.io/pdf.js/build/pdf.mjs"',
     )
-    const result = validateRewrittenHtml(html)
+    const result = await validateRewrittenHtml(html, TEST_CDN_BASE, TEST_VIEWER_URLS)
     expect(result.valid).toBe(false)
     expect(result.issues).toContain('pdf.mjs references not replaced with CDN URL')
   })

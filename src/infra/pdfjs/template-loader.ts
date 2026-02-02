@@ -1,5 +1,14 @@
-import { CACHE_CONFIG, VIEWER_URLS } from './config'
 import { logger } from '@/infra/utils/logger'
+import { CACHE_CONFIG, VIEWER_URLS, initializePdfjsConfig } from './config'
+
+// Initialize config on first use (lazy initialization for backward compatibility)
+let _initialized = false
+async function ensureInitialized(): Promise<void> {
+  if (!_initialized) {
+    await initializePdfjsConfig()
+    _initialized = true
+  }
+}
 
 /**
  * Fetch helper with consistent error handling
@@ -43,9 +52,12 @@ const templateCache = new Map<string, string>()
  * Load viewer HTML template from Blob CDN
  * Result is cached in-memory to avoid repeated fetches
  */
-export async function loadViewerTemplate(): Promise<
-  { ok: true; html: string } | { ok: false; status: number; statusText: string }
-> {
+export async function loadViewerTemplate(
+  viewerUrls?: typeof VIEWER_URLS,
+): Promise<{ ok: true; html: string } | { ok: false; status: number; statusText: string }> {
+  await ensureInitialized()
+
+  const urls = viewerUrls || VIEWER_URLS
   const cacheKey = 'viewer-html'
 
   // Check cache first
@@ -56,8 +68,8 @@ export async function loadViewerTemplate(): Promise<
   }
 
   // Fetch from CDN
-  logger.debug({ url: VIEWER_URLS.html }, 'Fetching viewer HTML from CDN')
-  const result = await fetchText(VIEWER_URLS.html)
+  logger.debug({ url: urls.html }, 'Fetching viewer HTML from CDN')
+  const result = await fetchText(urls.html)
 
   if (!result.ok) {
     return result
@@ -74,9 +86,12 @@ export async function loadViewerTemplate(): Promise<
  * Load viewer CSS from Blob CDN
  * Result is cached in-memory to avoid repeated fetches
  */
-export async function loadViewerCss(): Promise<
-  { ok: true; css: string } | { ok: false; status: number; statusText: string }
-> {
+export async function loadViewerCss(
+  viewerUrls?: typeof VIEWER_URLS,
+): Promise<{ ok: true; css: string } | { ok: false; status: number; statusText: string }> {
+  await ensureInitialized()
+
+  const urls = viewerUrls || VIEWER_URLS
   const cacheKey = 'viewer-css'
 
   // Check cache first
@@ -87,8 +102,8 @@ export async function loadViewerCss(): Promise<
   }
 
   // Fetch from CDN
-  logger.debug({ url: VIEWER_URLS.css }, 'Fetching viewer CSS from CDN')
-  const result = await fetchText(VIEWER_URLS.css)
+  logger.debug({ url: urls.css }, 'Fetching viewer CSS from CDN')
+  const result = await fetchText(urls.css)
 
   if (!result.ok) {
     return result
