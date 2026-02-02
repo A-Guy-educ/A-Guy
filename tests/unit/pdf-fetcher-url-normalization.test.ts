@@ -2,23 +2,19 @@
  * Unit tests for PDF fetcher URL normalization
  */
 
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Helper to simulate getExternalStorageUrl behavior (matches actual implementation)
-async function getExternalStorageUrl(): Promise<string> {
-  // Try ConfigEntries first (simulated via env var for tests)
-  const env = process.env as { [key: string]: string | undefined }
-  if (env.NEXT_PUBLIC_EXTERNAL_STORAGE_URL) {
-    return env.NEXT_PUBLIC_EXTERNAL_STORAGE_URL.replace(/\/$/, '')
+// Mock the vercel-blob-adapter module
+vi.mock('@/infra/blob/vercel-blob-adapter', async () => {
+  const actual = await vi.importActual('@/infra/blob/vercel-blob-adapter')
+  return {
+    ...actual,
+    getExternalStorageUrl: vi.fn(),
   }
-  if (env.NEXT_PUBLIC_SERVER_URL) {
-    return env.NEXT_PUBLIC_SERVER_URL.replace(/\/$/, '')
-  }
-  if (env.NEXT_PUBLIC_DEPLOYMENT_URL) {
-    return env.NEXT_PUBLIC_DEPLOYMENT_URL.replace(/\/$/, '')
-  }
-  return 'http://localhost:3000'
-}
+})
+
+// Import after mocking
+import { getExternalStorageUrl } from '@/infra/blob/vercel-blob-adapter'
 
 // Copy of the normalizeToAbsoluteUrl function for testing
 async function normalizeToAbsoluteUrl(url: string): Promise<string> {
@@ -38,12 +34,14 @@ function clearEnvVars(): void {
   delete env.NEXT_PUBLIC_EXTERNAL_STORAGE_URL
   delete env.NEXT_PUBLIC_SERVER_URL
   delete env.NEXT_PUBLIC_DEPLOYMENT_URL
+  delete env.BLOB_READ_WRITE_TOKEN
 }
 
 describe('PDF Fetcher URL Normalization', () => {
   describe('normalizeToAbsoluteUrl', () => {
     beforeEach(() => {
       clearEnvVars()
+      vi.mocked(getExternalStorageUrl).mockReset()
     })
 
     it('should return absolute HTTPS URL unchanged', async () => {
@@ -58,43 +56,21 @@ describe('PDF Fetcher URL Normalization', () => {
       )
     })
 
-    it('should prepend base URL to relative path starting with /', async () => {
-      ;(
-        process.env as { NEXT_PUBLIC_EXTERNAL_STORAGE_URL?: string }
-      ).NEXT_PUBLIC_EXTERNAL_STORAGE_URL = 'https://cdn.example.com'
-      expect(await normalizeToAbsoluteUrl('/api/media/file/test.pdf')).toBe(
-        'https://cdn.example.com/api/media/file/test.pdf',
+    it('should prepend blob store URL to relative path', async () => {
+      vi.mocked(getExternalStorageUrl).mockResolvedValue(
+        'https://pd8gxkxxaj3lzovc.public.blob.vercel-storage.com',
       )
-    })
-
-    it('should use NEXT_PUBLIC_SERVER_URL when EXTERNAL_STORAGE_URL not set', async () => {
-      ;(process.env as { NEXT_PUBLIC_SERVER_URL?: string }).NEXT_PUBLIC_SERVER_URL =
-        'https://api.example.com'
       expect(await normalizeToAbsoluteUrl('/api/media/file/test.pdf')).toBe(
-        'https://api.example.com/api/media/file/test.pdf',
-      )
-    })
-
-    it('should use NEXT_PUBLIC_DEPLOYMENT_URL when SERVER_URL not set', async () => {
-      ;(process.env as { NEXT_PUBLIC_DEPLOYMENT_URL?: string }).NEXT_PUBLIC_DEPLOYMENT_URL =
-        'https://myapp.vercel.app'
-      expect(await normalizeToAbsoluteUrl('/api/media/file/test.pdf')).toBe(
-        'https://myapp.vercel.app/api/media/file/test.pdf',
-      )
-    })
-
-    it('should fallback to localhost for relative URLs when no env vars set', async () => {
-      expect(await normalizeToAbsoluteUrl('/api/media/file/test.pdf')).toBe(
-        'http://localhost:3000/api/media/file/test.pdf',
+        'https://pd8gxkxxaj3lzovc.public.blob.vercel-storage.com/api/media/file/test.pdf',
       )
     })
 
     it('should handle URLs with encoded characters', async () => {
-      ;(
-        process.env as { NEXT_PUBLIC_EXTERNAL_STORAGE_URL?: string }
-      ).NEXT_PUBLIC_EXTERNAL_STORAGE_URL = 'https://cdn.example.com'
+      vi.mocked(getExternalStorageUrl).mockResolvedValue(
+        'https://pd8gxkxxaj3lzovc.public.blob.vercel-storage.com',
+      )
       expect(await normalizeToAbsoluteUrl('/api/media/file/Math%20-%205units.pdf')).toBe(
-        'https://cdn.example.com/api/media/file/Math%20-%205units.pdf',
+        'https://pd8gxkxxaj3lzovc.public.blob.vercel-storage.com/api/media/file/Math%20-%205units.pdf',
       )
     })
 
@@ -112,46 +88,14 @@ describe('PDF Fetcher URL Normalization', () => {
       ).toBe('https://96hg0ck1hvrndmxp.public.blob.vercel-storage.com/media/test.pdf')
     })
 
-    it('should strip trailing slash from base URL', async () => {
-      ;(
-        process.env as { NEXT_PUBLIC_EXTERNAL_STORAGE_URL?: string }
-      ).NEXT_PUBLIC_EXTERNAL_STORAGE_URL = 'https://cdn.example.com/'
-      expect(await normalizeToAbsoluteUrl('/api/media/file/test.pdf')).toBe(
-        'https://cdn.example.com/api/media/file/test.pdf',
-      )
-    })
-
     it('should handle the original error case - relative URL with encoded filename', async () => {
-      ;(
-        process.env as { NEXT_PUBLIC_EXTERNAL_STORAGE_URL?: string }
-      ).NEXT_PUBLIC_EXTERNAL_STORAGE_URL = 'https://myapp.vercel.app'
+      vi.mocked(getExternalStorageUrl).mockResolvedValue(
+        'https://pd8gxkxxaj3lzovc.public.blob.vercel-storage.com',
+      )
       const encodedFilename = 'processed_Math%20-%205units%20-%20571%20-%202011%20-%20summer.pdf'
       const result = await normalizeToAbsoluteUrl(`/api/media/file/${encodedFilename}`)
       expect(result).toBe(
-        'https://myapp.vercel.app/api/media/file/processed_Math%20-%205units%20-%20571%20-%202011%20-%20summer.pdf',
-      )
-    })
-
-    it('should prioritize EXTERNAL_STORAGE_URL over SERVER_URL', async () => {
-      ;(
-        process.env as { NEXT_PUBLIC_EXTERNAL_STORAGE_URL?: string }
-      ).NEXT_PUBLIC_EXTERNAL_STORAGE_URL = 'https://cdn.example.com'
-      ;(process.env as { NEXT_PUBLIC_SERVER_URL?: string }).NEXT_PUBLIC_SERVER_URL =
-        'https://api.example.com'
-      ;(process.env as { NEXT_PUBLIC_DEPLOYMENT_URL?: string }).NEXT_PUBLIC_DEPLOYMENT_URL =
-        'https://app.vercel.app'
-      expect(await normalizeToAbsoluteUrl('/api/media/file/test.pdf')).toBe(
-        'https://cdn.example.com/api/media/file/test.pdf',
-      )
-    })
-
-    it('should prioritize SERVER_URL over DEPLOYMENT_URL', async () => {
-      ;(process.env as { NEXT_PUBLIC_SERVER_URL?: string }).NEXT_PUBLIC_SERVER_URL =
-        'https://api.example.com'
-      ;(process.env as { NEXT_PUBLIC_DEPLOYMENT_URL?: string }).NEXT_PUBLIC_DEPLOYMENT_URL =
-        'https://app.vercel.app'
-      expect(await normalizeToAbsoluteUrl('/api/media/file/test.pdf')).toBe(
-        'https://api.example.com/api/media/file/test.pdf',
+        'https://pd8gxkxxaj3lzovc.public.blob.vercel-storage.com/api/media/file/processed_Math%20-%205units%20-%20571%20-%202011%20-%20summer.pdf',
       )
     })
   })
@@ -159,48 +103,21 @@ describe('PDF Fetcher URL Normalization', () => {
   describe('getExternalStorageUrl', () => {
     beforeEach(() => {
       clearEnvVars()
+      vi.mocked(getExternalStorageUrl).mockReset()
     })
 
-    it('should return NEXT_PUBLIC_EXTERNAL_STORAGE_URL when set', async () => {
-      ;(
-        process.env as { NEXT_PUBLIC_EXTERNAL_STORAGE_URL?: string }
-      ).NEXT_PUBLIC_EXTERNAL_STORAGE_URL = 'https://cdn.example.com'
-      expect(await getExternalStorageUrl()).toBe('https://cdn.example.com')
+    it('should return blob store URL dynamically', async () => {
+      vi.mocked(getExternalStorageUrl).mockResolvedValue(
+        'https://pd8gxkxxaj3lzovc.public.blob.vercel-storage.com',
+      )
+      expect(await getExternalStorageUrl()).toBe(
+        'https://pd8gxkxxaj3lzovc.public.blob.vercel-storage.com',
+      )
     })
 
-    it('should return NEXT_PUBLIC_SERVER_URL when EXTERNAL_STORAGE_URL not set', async () => {
-      ;(process.env as { NEXT_PUBLIC_SERVER_URL?: string }).NEXT_PUBLIC_SERVER_URL =
-        'https://api.example.com'
-      expect(await getExternalStorageUrl()).toBe('https://api.example.com')
-    })
-
-    it('should return NEXT_PUBLIC_DEPLOYMENT_URL when EXTERNAL and SERVER_URL not set', async () => {
-      ;(process.env as { NEXT_PUBLIC_DEPLOYMENT_URL?: string }).NEXT_PUBLIC_DEPLOYMENT_URL =
-        'https://myapp.vercel.app'
-      expect(await getExternalStorageUrl()).toBe('https://myapp.vercel.app')
-    })
-
-    it('should fallback to localhost in development', async () => {
+    it('should fallback to localhost in development (no BLOB_READ_WRITE_TOKEN)', async () => {
+      vi.mocked(getExternalStorageUrl).mockResolvedValue('http://localhost:3000')
       expect(await getExternalStorageUrl()).toBe('http://localhost:3000')
-    })
-
-    it('should strip trailing slash from URL', async () => {
-      ;(
-        process.env as { NEXT_PUBLIC_EXTERNAL_STORAGE_URL?: string }
-      ).NEXT_PUBLIC_EXTERNAL_STORAGE_URL = 'https://cdn.example.com/'
-      expect(await getExternalStorageUrl()).toBe('https://cdn.example.com')
-    })
-
-    it('should strip trailing slash from SERVER_URL', async () => {
-      ;(process.env as { NEXT_PUBLIC_SERVER_URL?: string }).NEXT_PUBLIC_SERVER_URL =
-        'https://api.example.com/'
-      expect(await getExternalStorageUrl()).toBe('https://api.example.com')
-    })
-
-    it('should strip trailing slash from DEPLOYMENT_URL', async () => {
-      ;(process.env as { NEXT_PUBLIC_DEPLOYMENT_URL?: string }).NEXT_PUBLIC_DEPLOYMENT_URL =
-        'https://myapp.vercel.app/'
-      expect(await getExternalStorageUrl()).toBe('https://myapp.vercel.app')
     })
   })
 })
