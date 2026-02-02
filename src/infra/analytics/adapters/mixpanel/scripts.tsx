@@ -4,7 +4,7 @@
  * Loads Mixpanel SDK
  * Only loads when analytics is enabled
  *
- * NO session recording in this phase (per task requirements)
+ * Session recording enabled at 100% to capture all user sessions
  */
 
 'use client'
@@ -95,8 +95,8 @@ export function MixpanelScripts() {
             // NO auto-capture - we track explicitly
             track_pageview: false,
 
-            // NO session recording in this phase
-            record_sessions_percent: 0,
+            // Session recording enabled - 100% of sessions recorded for analysis
+            record_sessions_percent: 100,
 
             // Cookie-based persistence (fallback to localStorage)
             persistence: 'localStorage+cookie',
