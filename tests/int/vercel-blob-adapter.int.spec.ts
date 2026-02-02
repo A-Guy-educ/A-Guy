@@ -24,6 +24,7 @@ describe('VercelBlobAdapter Integration', () => {
   const testId = `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const testFilename = `integration-test-${testId}.pdf`
 
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   const describeIf = (condition: boolean, name: string, fn: () => void): void => {
     if (condition) {
       describe.skip(name, fn)
@@ -120,7 +121,7 @@ describe('VercelBlobAdapter Integration', () => {
 
       // List to find a valid URL
       const listResult = await adapter.list('integration-tests')
-      const testBlob = listResult.blobs.find((b) => b.pathname.includes(testId))
+      const testBlob = listResult.blobs.find((b: any) => b.pathname.includes(testId))
 
       if (!testBlob) {
         return
@@ -147,7 +148,7 @@ describe('VercelBlobAdapter Integration', () => {
 
       // List to find the uploaded file
       const listResult = await adapter.list('integration-tests')
-      const testBlob = listResult.blobs.find((b) => b.pathname.includes(testId))
+      const testBlob = listResult.blobs.find((b: any) => b.pathname.includes(testId))
 
       if (!testBlob) {
         return
