@@ -230,14 +230,13 @@ async function updateJobStatus(
 }
 
 async function segmentPdf(pdfBuffer: Buffer, maxPagesPerSegment: number) {
-  // Use legacy build for Node.js - designed for server-side, no worker needed
-  // This avoids the "ESM loader protocol" error with HTTPS worker URLs
+  // Use legacy build for Node.js - designed for server-side processing
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
 
-  // FIX: Explicitly set worker src to CDN to avoid Vercel filesystem issues
-  // Vercel bundler can't resolve the worker file from node_modules
-  const workerSrc = `https://unpkg.com/pdfjs-dist@4.10.38/legacy/build/pdf.worker.mjs`
-  pdfjs.GlobalWorkerOptions.workerSrc = workerSrc
+  // FIX: Disable worker entirely for Vercel compatibility
+  // Vercel's ESM loader doesn't support file:// or https:// worker URLs
+  // For simple page counting, we don't need a worker anyway
+  pdfjs.GlobalWorkerOptions.workerSrc = ''
 
   // Use buffer data - cast to Uint8Array for pdfjs-dist compatibility
   const pdf = await pdfjs.getDocument({ data: Uint8Array.from(pdfBuffer) }).promise
