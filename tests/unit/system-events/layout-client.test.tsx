@@ -10,19 +10,6 @@ import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Mock analytics hooks
-vi.mock('@/infra/analytics/hooks/usePageView', () => ({
-  usePageView: vi.fn(),
-}))
-
-vi.mock('@/infra/analytics/hooks/useSessionDuration', () => ({
-  useSessionDuration: vi.fn(),
-}))
-
-vi.mock('@/infra/analytics/hooks/usePageAbandonment', () => ({
-  usePageAbandonment: vi.fn(),
-}))
-
 describe('LayoutClient SITE_INIT', () => {
   beforeEach(() => {
     vi.clearAllMocks()

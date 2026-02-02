@@ -20,6 +20,7 @@ import { I18nProvider } from '@/ui/web/providers/I18n'
 import { cookies, headers } from 'next/headers'
 import './globals.css'
 import { LayoutClient } from './LayoutClient'
+import { AnalyticsProvider } from '@/infra/analytics'
 
 const assistant = Assistant({
   subsets: ['latin', 'hebrew'],
@@ -86,6 +87,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <I18nProvider locale={locale} messages={messages}>
           <Providers>
             <LayoutClient />
+            <AnalyticsProvider />
             <AdminBar
               adminBarProps={{
                 preview: isEnabled,

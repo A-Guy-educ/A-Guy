@@ -8,6 +8,9 @@
 // Core API
 export { analytics, initializeAnalytics, getSessionId } from './core/tracker'
 
+// Provider (for app initialization)
+export { AnalyticsProvider } from './AnalyticsProvider'
+
 // Event constants
 export { PRODUCT_EVENTS } from './contracts/events'
 export type { ProductEvent } from './contracts/events'
