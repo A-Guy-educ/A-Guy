@@ -109,6 +109,10 @@ export function MixpanelScripts() {
             record_mask_text_class: 'mp-mask',
             record_block_class: 'mp-block',
 
+            // Use sendBeacon for reliable event tracking during page unload
+            // sendBeacon is non-blocking and browsers prioritize it even during tab close
+            api_transport: 'sendBeacon',
+
             // Cookie-based persistence (fallback to localStorage)
             persistence: 'localStorage+cookie',
 
