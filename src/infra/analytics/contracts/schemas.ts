@@ -33,6 +33,39 @@ export const SessionStartedSchema = z.object({
 })
 
 /**
+ * session_ended - Track session end and duration
+ * Destination: GA4 + Mixpanel
+ * Priority: P0
+ */
+export const SessionEndedSchema = z.object({
+  session_id: z.string().describe('Client-side session identifier'),
+  duration_seconds: z.number().describe('Total session duration'),
+  page_views_count: z.number().describe('Number of pages viewed in session'),
+  last_active_page: z.string().optional().describe('Last page URL before leaving'),
+})
+
+/**
+ * page_abandoned - Track when user leaves a page
+ * Destination: Mixpanel
+ * Priority: P1
+ */
+export const PageAbandonedSchema = z.object({
+  page_url: z.string().describe('Page URL that was abandoned'),
+  time_on_page_seconds: z.number().describe('Time spent on page before leaving'),
+  scroll_depth_percent: z.number().optional().describe('Max scroll percentage reached'),
+})
+
+/**
+ * visibility_changed - Track tab/window visibility changes
+ * Destination: Mixpanel
+ * Priority: P1
+ */
+export const VisibilityChangedSchema = z.object({
+  visibility_state: z.enum(['visible', 'hidden']).describe('Tab visibility state'),
+  time_on_page_seconds: z.number().describe('Time spent on current page'),
+})
+
+/**
  * user_identified - Track user authentication
  * Destination: Mixpanel
  * Priority: P0
@@ -147,6 +180,9 @@ export const RegistrationCompletedSchema = z.object({
 export const eventSchemas = {
   [PRODUCT_EVENTS.PAGE_VIEW]: PageViewSchema,
   [PRODUCT_EVENTS.SESSION_STARTED]: SessionStartedSchema,
+  [PRODUCT_EVENTS.SESSION_ENDED]: SessionEndedSchema,
+  [PRODUCT_EVENTS.PAGE_ABANDONED]: PageAbandonedSchema,
+  [PRODUCT_EVENTS.VISIBILITY_CHANGED]: VisibilityChangedSchema,
   [PRODUCT_EVENTS.USER_IDENTIFIED]: UserIdentifiedSchema,
   [PRODUCT_EVENTS.COURSE_ENTERED]: CourseEnteredSchema,
   [PRODUCT_EVENTS.LESSON_STARTED]: LessonStartedSchema,
@@ -162,6 +198,9 @@ export const eventSchemas = {
  */
 export type PageViewProperties = z.infer<typeof PageViewSchema>
 export type SessionStartedProperties = z.infer<typeof SessionStartedSchema>
+export type SessionEndedProperties = z.infer<typeof SessionEndedSchema>
+export type PageAbandonedProperties = z.infer<typeof PageAbandonedSchema>
+export type VisibilityChangedProperties = z.infer<typeof VisibilityChangedSchema>
 export type UserIdentifiedProperties = z.infer<typeof UserIdentifiedSchema>
 export type CourseEnteredProperties = z.infer<typeof CourseEnteredSchema>
 export type LessonStartedProperties = z.infer<typeof LessonStartedSchema>
@@ -177,6 +216,9 @@ export type RegistrationCompletedProperties = z.infer<typeof RegistrationComplet
 export type EventProperties =
   | PageViewProperties
   | SessionStartedProperties
+  | SessionEndedProperties
+  | PageAbandonedProperties
+  | VisibilityChangedProperties
   | UserIdentifiedProperties
   | CourseEnteredProperties
   | LessonStartedProperties

@@ -25,6 +25,7 @@ export interface GA4Event {
 const GA4_EVENT_MAPPING: Partial<Record<string, string>> = {
   [PRODUCT_EVENTS.PAGE_VIEW]: 'page_view',
   [PRODUCT_EVENTS.SESSION_STARTED]: 'session_start',
+  [PRODUCT_EVENTS.SESSION_ENDED]: 'session_end',
   [PRODUCT_EVENTS.REGISTRATION_COMPLETED]: 'sign_up',
   // Other events use canonical names as-is
 }
