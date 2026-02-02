@@ -10,6 +10,14 @@ import { z } from 'zod'
 import { SYSTEM_EVENTS } from './events'
 
 // ============================================================================
+// Site Init Event
+// ============================================================================
+
+export const SiteInitSchema = z.object({}).strict()
+
+export type SiteInitPayload = z.infer<typeof SiteInitSchema>
+
+// ============================================================================
 // Page View Event
 // ============================================================================
 
@@ -201,6 +209,7 @@ export function containsPII(payload: Record<string, unknown>): string[] {
  * Used for validation and type inference.
  */
 export const eventSchemas = {
+  [SYSTEM_EVENTS.SITE_INIT]: SiteInitSchema,
   [SYSTEM_EVENTS.PAGE_VIEWED]: PageViewedSchema,
   [SYSTEM_EVENTS.SESSION_STARTED]: SessionStartedSchema,
   [SYSTEM_EVENTS.USER_RESOLVED]: UserResolvedSchema,
