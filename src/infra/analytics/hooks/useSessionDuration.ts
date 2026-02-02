@@ -3,6 +3,11 @@
  *
  * Tracks total session duration and sends session_ended event when user leaves.
  * Uses beforeunload event to capture when user closes tab/window or navigates away.
+ *
+ * Reliability: Mixpanel is configured with sendBeacon transport, which browsers
+ * prioritize even during page unload. This significantly improves event delivery
+ * compared to standard XHR, though 100% reliability is not guaranteed due to
+ * browser/network constraints.
  */
 
 'use client'

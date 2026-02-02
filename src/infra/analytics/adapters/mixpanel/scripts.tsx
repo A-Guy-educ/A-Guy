@@ -98,6 +98,10 @@ export function MixpanelScripts() {
             // NO session recording in this phase
             record_sessions_percent: 0,
 
+            // Use sendBeacon for reliable event tracking during page unload
+            // sendBeacon is non-blocking and browsers prioritize it even during tab close
+            api_transport: 'sendBeacon',
+
             // Cookie-based persistence (fallback to localStorage)
             persistence: 'localStorage+cookie',
 
