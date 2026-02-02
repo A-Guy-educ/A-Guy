@@ -4,13 +4,14 @@
  *
  * @fileType endpoint
  * @domain chat
- * @pattern authenticated-endpoint, validated-endpoint, context-scoped
- * @ai-summary Chat endpoint with context scoping, memory retrieval, and automatic maintenance
+ * @pattern authenticated-endpoint, validated-endpoint, context-scoped, admin-mode
+ * @ai-summary Chat endpoint with context scoping, memory retrieval, MCP tools for admins, and automatic maintenance
  *
  * Access: Authenticated users only
  *
  * Features:
  * - Context-scoped conversations (Course/Chapter/Lesson/Exercise)
+ * - Admin mode with MCP tools (no context required)
  * - Running summary of conversation history
  * - Long-term memory with hierarchical vector search
  * - Automatic maintenance and memory extraction
@@ -22,23 +23,32 @@ import { logger } from '@/infra/utils/logger'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { ConversationService } from '@/server/services/conversation-service'
-import { PayloadRequest } from 'payload'
+import type { PayloadRequest } from 'payload'
 import { z } from 'zod'
 
 import {
-  extractContextCandidate,
-  parseRequestBody,
-  validateContextExists,
-  resolveContext,
-  validateContextAccess,
-  getOrCreateConversation,
-  retrieveMemories,
-  fetchLessonContextForContext,
   composeFullSystemInstructions,
+  extractContextCandidate,
+  fetchLessonContextForContext,
+  getOrCreateConversation,
+  parseRequestBody,
   processMediaAttachments,
-  scheduleSummaryMaintenance,
+  resolveContext,
+  retrieveMemories,
   scheduleMemoryExtraction,
+  scheduleSummaryMaintenance,
+  validateContextAccess,
+  validateContextExists,
 } from './chat/index'
+
+// Admin mode types
+export interface AdminModeParams {
+  adminMode?: boolean
+  message: string
+  acknowledgment?: string
+  conversationId?: string
+  mediaIds?: string[]
+}
 
 export async function agentChat(req: PayloadRequest & { json?: () => Promise<unknown> }) {
   const requestId = crypto.randomUUID()
@@ -68,8 +78,25 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     const validated = parseResult.data
 
-    // 3) Extract and validate context candidate
+    // 3) Check if admin mode
+    const isAdmin = (req.user.role as AccountRole) === AccountRole.Admin
+    let adminMode = false
+
+    // Get raw body to check adminMode
+    const rawBody = await req.json()
+    if (isAdmin && typeof rawBody === 'object' && rawBody !== null && 'adminMode' in rawBody) {
+      adminMode = (rawBody as Record<string, unknown>).adminMode === true
+    }
+
+    // For admin mode, check if we have a context or adminMode
     const contextCandidate = extractContextCandidate(validated)
+
+    // Admin mode without context - use admin:user:{userId} context
+    if (adminMode && !contextCandidate) {
+      return handleAdminModeChat(req, requestId, validated, reqLogger)
+    }
+
+    // Regular mode - context required
     if (!contextCandidate) {
       return Response.json(
         { error: 'Missing context ID (requires exerciseId, lessonId, chapterId, or courseId)' },
@@ -77,271 +104,8 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       )
     }
 
-    const contextValidation = await validateContextExists(
-      req.payload,
-      contextCandidate,
-      req.user,
-      reqLogger,
-    )
-    if (!contextValidation.success) {
-      return Response.json(
-        { error: contextValidation.error },
-        { status: contextValidation.statusCode },
-      )
-    }
-
-    reqLogger.info(
-      {
-        userId: req.user.id,
-        exerciseId: validated.exerciseId,
-        lessonId: validated.lessonId,
-        chapterId: validated.chapterId,
-        courseId: validated.courseId,
-      },
-      'Processing chat request',
-    )
-
-    // 4) Initialize ConversationService and resolve context
-    const conversationService = new ConversationService(req.payload)
-    const context = await resolveContext(conversationService, validated)
-
-    reqLogger.info(
-      { userId: req.user.id, contextKey: context.contextKey, contextRelation: context.relationTo },
-      'Resolved context',
-    )
-
-    // 5) Validate context access
-    const hasAccess = await validateContextAccess(
-      conversationService,
-      req.user.id,
-      req.user.role as AccountRole,
-      context,
-    )
-    if (!hasAccess) {
-      return Response.json({ error: 'Unauthorized to access this context' }, { status: 403 })
-    }
-
-    // 6) Get or create conversation
-    const conversation = await getOrCreateConversation(conversationService, req.user.id, context)
-    const conversationId = conversation.id
-
-    reqLogger.info({ conversationId, contextKey: context.contextKey }, 'Using conversation')
-
-    // 7) Persist user message
-    const userMessage = {
-      role: 'user' as const,
-      content: validated.message,
-      timestamp: new Date().toISOString(),
-      media: validated.mediaIds?.map((id) => ({ mediaId: id })) || [],
-    }
-
-    reqLogger.info(
-      {
-        userMessageMedia: userMessage.media,
-        mediaCount: userMessage.media.length,
-      },
-      '[DEBUG] User message before save',
-    )
-
-    const conversationHistory = conversation.messages || []
-    const allMessages = [...conversationHistory, userMessage]
-
-    const updateResult = await req.payload.update({
-      collection: 'conversations',
-      id: conversationId,
-      data: {
-        messages: allMessages,
-        lastMessageAt: new Date().toISOString(),
-      },
-      user: req.user,
-      overrideAccess: true,
-    })
-
-    reqLogger.info(
-      {
-        savedMessages: updateResult.messages?.slice(-1).map((m) => ({
-          role: m.role,
-          hasMedia: !!m.media,
-          mediaCount: m.media?.length || 0,
-          media: m.media,
-        })),
-      },
-      '[DEBUG] Message after save',
-    )
-
-    reqLogger.info(
-      {
-        conversationId,
-        totalMessages: allMessages.length,
-        messagePreview: allMessages.slice(-3).map((m) => ({
-          role: m.role,
-          content: typeof m.content === 'string' ? m.content.substring(0, 50) : '',
-        })),
-      },
-      '[DEBUG] Conversation messages loaded',
-    )
-
-    // 8) Get recent window and retrieve memories
-    const recentMessages = getRecentWindow(allMessages as Message[])
-    reqLogger.info({ recentCount: recentMessages.length }, '[DEBUG] Recent window extracted')
-
-    const memoryResult = await retrieveMemories(
-      req.payload,
-      req.user.id,
-      conversationId,
-      context.contextKey,
-      recentMessages,
-      reqLogger,
-    )
-
-    // 9) Fetch lesson context and compose system instructions
-    const lessonContext = await fetchLessonContextForContext(
-      req.payload,
-      context,
-      req.user,
-      reqLogger,
-      validated.courseId,
-    )
-
-    let composedInstructions
-    try {
-      composedInstructions = await composeFullSystemInstructions(
-        req.payload,
-        lessonContext.lessonPrompt,
-        lessonContext.lessonContextText,
-        reqLogger,
-        lessonContext.coursePrompt,
-        lessonContext.courseContextText,
-      )
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('exceeds maximum')) {
-        return Response.json(
-          { error: 'Lesson context exceeds maximum allowed size' },
-          { status: 400 },
-        )
-      }
-      throw error
-    }
-
-    // 10) Validate media attachments
-    const mediaResult = await processMediaAttachments(
-      req.payload,
-      validated.mediaIds || [],
-      req.user.id,
-      req,
-      reqLogger,
-    )
-
-    if (!mediaResult.success) {
-      return Response.json(
-        { error: mediaResult.error, details: mediaResult.errorDetails },
-        { status: 400 },
-      )
-    }
-
-    // 11) Compose prompt using Context Policy V1
-    const composedPrompt = composePrompt(composedInstructions.instructions, {
-      systemMessage: composedInstructions.instructions,
-      summary: conversation?.summary || undefined,
-      memoryItems: memoryResult.items,
-      recentMessages: recentMessages,
-    })
-
-    logPromptSnapshot(conversationId, composedPrompt)
-
-    // 12) Call AI service
-    const modelCallStart = Date.now()
-    const result = await chatWithExerciseHelper(
-      {
-        message: validated.message,
-        acknowledgment: validated.acknowledgment,
-        composedPrompt: composedPrompt,
-        mediaPartsWithPath:
-          mediaResult.mediaPartsWithPath.length > 0 ? mediaResult.mediaPartsWithPath : undefined,
-        req: {
-          headers: {
-            authorization:
-              (req.headers && typeof req.headers.get === 'function'
-                ? req.headers.get('authorization')
-                : undefined) || undefined,
-            cookie:
-              (req.headers && typeof req.headers.get === 'function'
-                ? req.headers.get('cookie')
-                : undefined) || undefined,
-          },
-        },
-      },
-      req.payload,
-    )
-    const modelLatencyMs = Date.now() - modelCallStart
-
-    if (!result.success) {
-      reqLogger.error({ error: result.error, modelLatencyMs }, 'Chat request failed')
-      return Response.json(
-        { error: result.error || 'Failed to process chat message' },
-        { status: 500 },
-      )
-    }
-
-    // 13) Persist assistant response
-    const assistantMessage = {
-      role: 'assistant' as const,
-      content: result.message || '',
-      timestamp: new Date().toISOString(),
-    }
-
-    const updatedMessages = [...allMessages, assistantMessage]
-
-    try {
-      await req.payload.update({
-        collection: 'conversations',
-        id: conversationId,
-        data: {
-          messages: updatedMessages,
-          lastMessageAt: new Date().toISOString(),
-        },
-        user: req.user,
-        overrideAccess: true,
-      })
-    } catch (updateError) {
-      // Handle race condition where conversation was modified/deleted during long AI call
-      reqLogger.warn(
-        { err: updateError, conversationId },
-        'Failed to persist assistant response - conversation may have been modified',
-      )
-      // Still return the AI response to the user even if persistence failed
-    }
-
-    // 14) Log context usage
-    logContextUsage(
-      createContextLog({
-        conversationId,
-        userId: req.user.id,
-        policyVersion: composedPrompt.metadata.policyVersion,
-        summaryPresent: !!conversation?.summary,
-        summaryLength: composedPrompt.metadata.summaryLength,
-        memoryLocalCount: memoryResult.localCount,
-        memoryContextCount: memoryResult.contextCount,
-        memoryGlobalCount: memoryResult.globalCount,
-        memoryRetrievalLatencyMs: memoryResult.latencyMs,
-        messageWindowSize: composedPrompt.metadata.messageCount,
-        messageTotalCount: updatedMessages.length,
-        modelLatencyMs,
-        hierarchyKeys: memoryResult.hierarchyKeys,
-      }),
-    )
-
-    // 15) Schedule background tasks
-    scheduleSummaryMaintenance(req.payload, conversationId, reqLogger)
-    scheduleMemoryExtraction(req.payload, conversationId, req.user.id, context, req.user, reqLogger)
-
-    reqLogger.info('Chat request successful')
-    return Response.json({
-      success: true,
-      message: result.message,
-      conversationId,
-      contextKey: context.contextKey,
-    })
+    // Continue with regular context-scoped chat...
+    return handleContextScopedChat(req, requestId, validated, contextCandidate, reqLogger)
   } catch (error) {
     // Handle connection reset errors gracefully
     if (
@@ -362,4 +126,400 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
+
+/**
+ * Handle admin mode chat - no context required, uses admin:user:{userId} conversation
+ */
+async function handleAdminModeChat(
+  req: PayloadRequest,
+  requestId: string,
+  validated: z.infer<typeof import('./chat/request-validation').chatRequestSchema>,
+  reqLogger: typeof logger,
+) {
+  const userId = req.user?.id
+  if (!userId) {
+    return Response.json({ error: 'User ID not found' }, { status: 401 })
+  }
+
+  // Use admin:user:{userId} context key
+  const contextKey = `admin:user:${userId}`
+
+  reqLogger.info({ userId, contextKey }, 'Processing admin mode chat request')
+
+  // Initialize ConversationService
+  const conversationService = new ConversationService(req.payload)
+
+  // Get or create admin conversation
+  const conversation = await conversationService.getOrCreateActiveConversation(userId, {
+    relationTo: 'users',
+    value: userId,
+  } as any)
+  const conversationId = conversation.id
+
+  reqLogger.info({ conversationId, contextKey }, 'Using admin conversation')
+
+  // Persist user message
+  const userMessage = {
+    role: 'user' as const,
+    content: validated.message,
+    timestamp: new Date().toISOString(),
+    media: validated.mediaIds?.map((id) => ({ mediaId: id })) || [],
+  }
+
+  const conversationHistory = conversation.messages || []
+  const allMessages = [...conversationHistory, userMessage]
+
+  await req.payload.update({
+    collection: 'conversations',
+    id: conversationId,
+    data: {
+      messages: allMessages,
+      lastMessageAt: new Date().toISOString(),
+    },
+    user: req.user,
+    overrideAccess: true,
+  })
+
+  // Get recent window
+  const recentMessages = getRecentWindow(allMessages as Message[])
+
+  // For admin mode, use a simpler system prompt
+  const systemPrompt = `You are an AI assistant for the admin panel. You have access to MCP tools that can query the database.
+
+Available MCP tools:
+- findCourses: Query educational courses (filters: status, title; sort: title, updatedAt)
+- findChapters: Query course chapters (filters: status, title, course; sort: order, title, updatedAt)
+- findLessons: Query lessons (filters: status, title, chapter; sort: order, title, updatedAt)
+- findExercises: Query exercises (filters: status, title, lesson; sort: order, title, updatedAt)
+- findMedia: Query media files (filters: filename, mimeType; sort: filename, updatedAt)
+
+Use these tools when the user asks about courses, chapters, lessons, exercises, or media.
+Always use tools to provide accurate, up-to-date information from the database.
+When you use a tool, explain what you're querying and present the results clearly.
+
+Remember:
+- Results are tenant-scoped to the current tenant
+- Limit queries to reasonable sizes (default 10 results)
+- You can filter and sort results using the tool parameters`
+
+  // Compose messages for AI
+  const messages = [
+    { role: 'system' as const, content: systemPrompt },
+    ...recentMessages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+  ]
+
+  // Call AI service (without composed prompt for admin mode)
+  const modelCallStart = Date.now()
+  const result = await chatWithExerciseHelper(
+    {
+      message: validated.message,
+      acknowledgment: validated.acknowledgment || '',
+      composedPrompt: undefined,
+      req: {
+        headers: {
+          authorization:
+            (req.headers && typeof req.headers.get === 'function'
+              ? req.headers.get('authorization')
+              : undefined) || undefined,
+          cookie:
+            (req.headers && typeof req.headers.get === 'function'
+              ? req.headers.get('cookie')
+              : undefined) || undefined,
+        },
+      },
+    },
+    req.payload,
+  )
+  const modelLatencyMs = Date.now() - modelCallStart
+
+  if (!result.success) {
+    reqLogger.error({ error: result.error, modelLatencyMs }, 'Admin chat request failed')
+    return Response.json(
+      { error: result.error || 'Failed to process chat message' },
+      { status: 500 },
+    )
+  }
+
+  // Persist assistant response
+  const assistantMessage = {
+    role: 'assistant' as const,
+    content: result.message || '',
+    timestamp: new Date().toISOString(),
+  }
+
+  const updatedMessages = [...allMessages, assistantMessage]
+
+  try {
+    await req.payload.update({
+      collection: 'conversations',
+      id: conversationId,
+      data: {
+        messages: updatedMessages,
+        lastMessageAt: new Date().toISOString(),
+      },
+      user: req.user,
+      overrideAccess: true,
+    })
+  } catch (updateError) {
+    reqLogger.warn({ err: updateError, conversationId }, 'Failed to persist admin response')
+  }
+
+  reqLogger.info('Admin chat request successful')
+  return Response.json({
+    success: true,
+    message: result.message,
+    conversationId,
+    contextKey,
+  })
+}
+
+/**
+ * Handle regular context-scoped chat
+ */
+async function handleContextScopedChat(
+  req: PayloadRequest,
+  requestId: string,
+  validated: z.infer<typeof import('./chat/request-validation').chatRequestSchema>,
+  contextCandidate: NonNullable<ReturnType<typeof extractContextCandidate>>,
+  reqLogger: typeof logger,
+) {
+  const userId = req.user?.id
+  if (!userId) {
+    return Response.json({ error: 'User ID not found' }, { status: 401 })
+  }
+
+  const userRole = (req.user?.role as AccountRole) || AccountRole.Student
+
+  const contextValidation = await validateContextExists(
+    req.payload,
+    contextCandidate,
+    { id: userId },
+    logger as any,
+  )
+  if (!contextValidation.success) {
+    return Response.json(
+      { error: contextValidation.error },
+      { status: contextValidation.statusCode },
+    )
+  }
+
+  reqLogger.info(
+    {
+      userId,
+      exerciseId: validated.exerciseId,
+      lessonId: validated.lessonId,
+      chapterId: validated.chapterId,
+      courseId: validated.courseId,
+    },
+    'Processing chat request',
+  )
+
+  // Initialize ConversationService and resolve context
+  const conversationService = new ConversationService(req.payload)
+  const context = await resolveContext(conversationService, validated)
+
+  reqLogger.info(
+    { userId, contextKey: context.contextKey, contextRelation: context.relationTo },
+    'Resolved context',
+  )
+
+  // Validate context access
+  const hasAccess = await validateContextAccess(conversationService, userId, userRole, context)
+  if (!hasAccess) {
+    return Response.json({ error: 'Unauthorized to access this context' }, { status: 403 })
+  }
+
+  // Get or create conversation
+  const conversation = await getOrCreateConversation(conversationService, userId, context)
+  const conversationId = conversation.id
+
+  reqLogger.info({ conversationId, contextKey: context.contextKey }, 'Using conversation')
+
+  // Persist user message
+  const userMessage = {
+    role: 'user' as const,
+    content: validated.message,
+    timestamp: new Date().toISOString(),
+    media: validated.mediaIds?.map((id) => ({ mediaId: id })) || [],
+  }
+
+  const conversationHistory = conversation.messages || []
+  const allMessages = [...conversationHistory, userMessage]
+
+  await req.payload.update({
+    collection: 'conversations',
+    id: conversationId,
+    data: {
+      messages: allMessages,
+      lastMessageAt: new Date().toISOString(),
+    },
+    user: req.user,
+    overrideAccess: true,
+  })
+
+  // Get recent window and retrieve memories
+  const recentMessages = getRecentWindow(allMessages as Message[])
+
+  const memoryResult = await retrieveMemories(
+    req.payload,
+    userId,
+    conversationId,
+    context.contextKey,
+    recentMessages,
+    logger as any,
+  )
+
+  // Fetch lesson context and compose system instructions
+  const lessonContext = await fetchLessonContextForContext(
+    req.payload,
+    context,
+    { id: userId },
+    logger as any,
+    validated.courseId,
+  )
+
+  let composedInstructions
+  try {
+    composedInstructions = await composeFullSystemInstructions(
+      req.payload,
+      lessonContext.lessonPrompt,
+      lessonContext.lessonContextText,
+      logger as any,
+      lessonContext.coursePrompt,
+      lessonContext.courseContextText,
+    )
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('exceeds maximum')) {
+      return Response.json(
+        { error: 'Lesson context exceeds maximum allowed size' },
+        { status: 400 },
+      )
+    }
+    throw error
+  }
+
+  // Validate media attachments
+  const mediaResult = await processMediaAttachments(
+    req.payload,
+    validated.mediaIds || [],
+    userId,
+    req,
+    logger as any,
+  )
+
+  if (!mediaResult.success) {
+    return Response.json(
+      { error: mediaResult.error, details: mediaResult.errorDetails },
+      { status: 400 },
+    )
+  }
+
+  // Compose prompt using Context Policy V1
+  const composedPrompt = composePrompt(composedInstructions.instructions, {
+    systemMessage: composedInstructions.instructions,
+    summary: conversation?.summary || undefined,
+    memoryItems: memoryResult.items,
+    recentMessages: recentMessages,
+  })
+
+  logPromptSnapshot(conversationId, composedPrompt)
+
+  // Call AI service
+  const modelCallStart = Date.now()
+  const result = await chatWithExerciseHelper(
+    {
+      message: validated.message,
+      acknowledgment: validated.acknowledgment,
+      composedPrompt: composedPrompt,
+      mediaPartsWithPath:
+        mediaResult.mediaPartsWithPath.length > 0 ? mediaResult.mediaPartsWithPath : undefined,
+      req: {
+        headers: {
+          authorization:
+            (req.headers && typeof req.headers.get === 'function'
+              ? req.headers.get('authorization')
+              : undefined) || undefined,
+          cookie:
+            (req.headers && typeof req.headers.get === 'function'
+              ? req.headers.get('cookie')
+              : undefined) || undefined,
+        },
+      },
+    },
+    req.payload,
+  )
+  const modelLatencyMs = Date.now() - modelCallStart
+
+  if (!result.success) {
+    reqLogger.error({ error: result.error, modelLatencyMs }, 'Chat request failed')
+    return Response.json(
+      { error: result.error || 'Failed to process chat message' },
+      { status: 500 },
+    )
+  }
+
+  // Persist assistant response
+  const assistantMessage = {
+    role: 'assistant' as const,
+    content: result.message || '',
+    timestamp: new Date().toISOString(),
+  }
+
+  const updatedMessages = [...allMessages, assistantMessage]
+
+  try {
+    await req.payload.update({
+      collection: 'conversations',
+      id: conversationId,
+      data: {
+        messages: updatedMessages,
+        lastMessageAt: new Date().toISOString(),
+      },
+      user: req.user,
+      overrideAccess: true,
+    })
+  } catch (updateError) {
+    reqLogger.warn({ err: updateError, conversationId }, 'Failed to persist assistant response')
+  }
+
+  // Log context usage
+  logContextUsage(
+    createContextLog({
+      conversationId,
+      userId,
+      policyVersion: composedPrompt.metadata.policyVersion,
+      summaryPresent: !!conversation?.summary,
+      summaryLength: composedPrompt.metadata.summaryLength,
+      memoryLocalCount: memoryResult.localCount,
+      memoryContextCount: memoryResult.contextCount,
+      memoryGlobalCount: memoryResult.globalCount,
+      memoryRetrievalLatencyMs: memoryResult.latencyMs,
+      messageWindowSize: composedPrompt.metadata.messageCount,
+      messageTotalCount: updatedMessages.length,
+      modelLatencyMs,
+      hierarchyKeys: memoryResult.hierarchyKeys,
+    }),
+  )
+
+  // Schedule background tasks
+  scheduleSummaryMaintenance(req.payload, conversationId, logger as any)
+  if (req.user) {
+    scheduleMemoryExtraction(
+      req.payload,
+      conversationId,
+      userId,
+      context,
+      { id: userId },
+      logger as any,
+    )
+  }
+
+  reqLogger.info('Chat request successful')
+  return Response.json({
+    success: true,
+    message: result.message,
+    conversationId,
+    contextKey: context.contextKey,
+  })
 }

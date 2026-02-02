@@ -1,25 +1,25 @@
 'use client'
 
 import { ChatMessageRole } from '@/infra/llm/chat-message-role'
-import { useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
+import { useTranslations } from '@/ui/web/providers/I18n'
 import {
-  Loader2,
-  Send,
-  Plus,
-  X,
-  Image as ImageIcon,
-  FileUp,
   BookOpen,
   CheckCircle,
-  Lightbulb,
-  RefreshCw,
-  MessageSquare,
   FileText,
+  FileUp,
+  Image as ImageIcon,
+  Lightbulb,
+  Loader2,
+  MessageSquare,
+  Plus,
+  RefreshCw,
+  Send,
+  X,
 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
-import { ChatMessageContent } from '../ChatMessageContent'
 import { ChatErrorSurface } from '../ChatErrorSurface'
+import { ChatMessageContent } from '../ChatMessageContent'
 import { useNotebookChat } from '../hooks/useNotebookChat'
 
 // Optional components - will be lazy-loaded if needed
@@ -42,6 +42,10 @@ interface ChatInterfaceProps {
   chapterId?: string
   lessonId?: string
   exerciseId?: string
+
+  // Admin mode - uses user-specific context without course/lesson context
+  adminMode?: boolean
+  userId?: string
 
   // Translations
   translationNamespace?: string
@@ -66,6 +70,8 @@ export function ChatInterface({
   chapterId,
   lessonId,
   exerciseId,
+  adminMode = false,
+  userId,
   translationNamespace = 'homepage.ask',
   showQuickActions = false,
   showResetButton = false,
@@ -117,6 +123,8 @@ export function ChatInterface({
     chapterId,
     lessonId,
     exerciseId,
+    adminMode,
+    userId,
     // Media upload messages
     unsupportedFileTypeMessage: tCourses('chatUnsupportedFileType'),
     fileTooLargeMessage: tCourses('chatFileTooLarge'),

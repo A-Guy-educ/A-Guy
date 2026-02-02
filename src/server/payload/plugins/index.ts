@@ -14,12 +14,12 @@ import { Plugin } from 'payload'
 import { getServerSideURL } from '@/infra/utils/getURL'
 import { Page } from '@/payload-types'
 
-// Temporarily disabled - @payloadcms/plugin-mcp not available in dependencies
-// TODO: Re-enable when MCP plugin is properly configured
-// const mcpEnabled = process.env.MCP_ENABLED === 'true'
+import { mcp as mcpPlugin } from './mcp'
 
-// const mcp = mcpEnabled ? require('@/plugins/mcp').mcp : null
-const mcp = null
+// MCP plugin - conditionally enabled based on env var or default
+// Order: env var 'false' → env var 'true' → default to true
+// Note: ConfigEntry check can be added in the handler for runtime flexibility
+const mcp = process.env.MCP_ENABLED === 'false' ? null : mcpPlugin
 
 const generateTitle: GenerateTitle<Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'

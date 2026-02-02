@@ -45,6 +45,9 @@ interface UseNotebookChatProps {
   lessonId?: string
   chapterId?: string
   courseId?: string
+  // Admin mode - uses user-specific context without course/lesson context
+  adminMode?: boolean
+  userId?: string
   // Media upload messages
   unsupportedFileTypeMessage?: string
   fileTooLargeMessage?: string
@@ -67,6 +70,8 @@ export function useNotebookChat({
   lessonId,
   chapterId,
   courseId,
+  adminMode = false,
+  userId,
   unsupportedFileTypeMessage = 'Unsupported file type',
   fileTooLargeMessage = 'File too large (max 10MB)',
   maxFilesMessage = 'Maximum 5 files allowed',
@@ -91,14 +96,19 @@ export function useNotebookChat({
   // Error state
   const [chatError, setChatError] = useState<ChatError | null>(null)
 
-  // Compute contextKey based on available context (priority: Exercise > Lesson > Chapter > Course)
+  // Compute contextKey based on available context
+  // Priority for admin mode: user-specific admin context
+  // Priority for regular mode: Exercise > Lesson > Chapter > Course
   const contextKey = useMemo(() => {
+    if (adminMode && userId) {
+      return `admin:user:${userId}`
+    }
     if (exerciseId) return `exercises:${exerciseId}`
     if (lessonId) return `lessons:${lessonId}`
     if (chapterId) return `chapters:${chapterId}`
     if (courseId) return `courses:${courseId}`
     return null
-  }, [exerciseId, lessonId, chapterId, courseId])
+  }, [adminMode, userId, exerciseId, lessonId, chapterId, courseId])
 
   // Simple scroll to bottom using scrollTop instead of scrollIntoView
   // scrollIntoView can cause layout issues in nested flex containers
@@ -390,6 +400,7 @@ export function useNotebookChat({
           courseId,
         },
         mediaIds.length > 0 ? mediaIds : undefined,
+        adminMode, // Pass adminMode flag to API
       )
 
       if (!result.success) {

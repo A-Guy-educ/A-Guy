@@ -59,6 +59,7 @@ export const apiService = {
       courseId?: string
     },
     mediaIds?: string[],
+    adminMode?: boolean,
   ): Promise<ChatApiResponse> {
     try {
       const response = await fetch('/api/agent/chat', {
@@ -70,6 +71,7 @@ export const apiService = {
           acknowledgment,
           ...context,
           ...(mediaIds && mediaIds.length > 0 ? { mediaIds } : {}),
+          ...(adminMode ? { adminMode: true } : {}),
         }),
       })
 
