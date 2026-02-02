@@ -17,18 +17,7 @@ import type { AnalyticsConfig } from './types'
  * Debug mode is enabled in development only
  */
 export function getAnalyticsConfig(): AnalyticsConfig {
-  const isClient = typeof window !== 'undefined'
-
-  // Only initialize on client-side
-  if (!isClient) {
-    return {
-      enabled: false,
-      debugMode: false,
-      ga4: { measurementId: undefined, enabled: false },
-      mixpanel: { token: undefined, enabled: false },
-    }
-  }
-
+  // NEXT_PUBLIC_ env vars are available everywhere (SSR and client)
   const ga4MeasurementId = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID
   const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN
 

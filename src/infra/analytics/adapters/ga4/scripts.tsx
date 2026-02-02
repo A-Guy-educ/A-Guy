@@ -17,24 +17,30 @@ import { analyticsConfig } from '../../config'
  * Must be rendered in app layout
  */
 export function GA4Scripts() {
+  // Debug log to verify component is rendering and config state
+  console.log('[GA4Scripts] Rendering:', {
+    enabled: analyticsConfig.enabled,
+    ga4Enabled: analyticsConfig.ga4.enabled,
+    measurementId: analyticsConfig.ga4.measurementId,
+  })
+
   // Only load if enabled
   if (!analyticsConfig.enabled || !analyticsConfig.ga4.enabled) {
+    console.warn('[GA4Scripts] Not loading - analytics disabled')
     return null
   }
 
   const measurementId = analyticsConfig.ga4.measurementId
 
   if (!measurementId) {
-    if (analyticsConfig.debugMode) {
-      console.warn('[Analytics/GA4] No measurement ID - scripts not loaded')
-    }
+    console.warn('[Analytics/GA4] No measurement ID - scripts not loaded')
     return null
   }
 
   return (
     <>
       {/* Initialize gtag function FIRST (must run before gtag.js loads) */}
-      <Script id="ga4-init" strategy="beforeInteractive">
+      <Script id="ga4-init" strategy="afterInteractive">
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
