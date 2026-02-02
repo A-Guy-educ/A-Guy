@@ -8,7 +8,18 @@ import type { Logger } from 'pino'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { ConversationService } from '@/server/services/conversation-service'
 
-import type { ContextCandidate, ChatRequest, ContextRelation } from './request-validation'
+import type { ChatRequest, ContextCandidate, ContextRelation } from './request-validation'
+
+/**
+ * Context relations that support admin chat (includes categories)
+ */
+export const ADMIN_CHAT_CONTEXT_RELATIONS: ContextRelation[] = [
+  'courses',
+  'chapters',
+  'lessons',
+  'exercises',
+  'categories',
+]
 
 export interface ResolvedContext {
   contextKey: string
@@ -84,7 +95,7 @@ export async function validateContextAccess(
   context: ResolvedContext,
 ): Promise<boolean> {
   return conversationService.validateContextAccess(userId, userRole, {
-    relationTo: context.relationTo,
+    relationTo: context.relationTo as 'courses' | 'chapters' | 'lessons' | 'exercises',
     value: context.value,
   })
 }
@@ -98,7 +109,7 @@ export async function getOrCreateConversation(
   context: ResolvedContext,
 ) {
   return conversationService.getOrCreateActiveConversation(userId, {
-    relationTo: context.relationTo,
+    relationTo: context.relationTo as 'courses' | 'chapters' | 'lessons' | 'exercises',
     value: context.value,
   })
 }

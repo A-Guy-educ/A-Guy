@@ -13,15 +13,15 @@
  * - Support conversation reset (archive + create new)
  * - Validate enrollment/ownership for access control
  */
-import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { logger } from '@/infra/utils/logger'
+import { AccountRole } from '@/server/payload/collections/Users/roles'
 import type { Payload } from 'payload'
 
 /**
  * Context reference shape for polymorphic relationships
  */
 export interface ContextRef {
-  relationTo: 'courses' | 'chapters' | 'lessons' | 'exercises'
+  relationTo: 'courses' | 'chapters' | 'lessons' | 'exercises' | 'categories'
   value: string
 }
 
@@ -184,7 +184,7 @@ export class ConversationService {
 
   /**
    * Resolve context from UI state
-   * Priority: Exercise > Lesson > Chapter > Course
+   * Priority: Exercise > Lesson > Chapter > Course > Category
    * Prefers IDs over slugs to avoid resolver queries
    */
   async resolveContext(params: {
@@ -192,8 +192,9 @@ export class ConversationService {
     lessonId?: string
     chapterId?: string
     courseId?: string
+    categoryId?: string
   }): Promise<ResolvedContext> {
-    // Priority order: Exercise > Lesson > Chapter > Course
+    // Priority order: Exercise > Lesson > Chapter > Course > Category
     if (params.exerciseId) {
       return {
         relationTo: 'exercises',
@@ -223,6 +224,14 @@ export class ConversationService {
         relationTo: 'courses',
         value: params.courseId,
         contextKey: `courses:${params.courseId}`,
+      }
+    }
+
+    if (params.categoryId) {
+      return {
+        relationTo: 'categories',
+        value: params.categoryId,
+        contextKey: `categories:${params.categoryId}`,
       }
     }
 
@@ -387,8 +396,11 @@ export async function buildContextHierarchy(
       depth: 0,
     })
     keys.push(`courses:${chapter.course}`)
+  } else if (collection === 'categories') {
+    // Categories have no parent - they are top-level organizational units
+    // No additional keys to add
   }
-  // 'courses' collection has no parent
+  // 'courses' and 'categories' collections have no parent
 
   keys.push('global') // Always include user-global context
   return keys
@@ -399,12 +411,16 @@ export async function buildContextHierarchy(
  */
 export function deriveContextLevel(
   relationTo: ContextRef['relationTo'],
-): 'exercise' | 'lesson' | 'chapter' | 'course' | 'global' {
-  const mapping: Record<ContextRef['relationTo'], 'exercise' | 'lesson' | 'chapter' | 'course'> = {
+): 'exercise' | 'lesson' | 'chapter' | 'course' | 'category' | 'global' {
+  const mapping: Record<
+    ContextRef['relationTo'],
+    'exercise' | 'lesson' | 'chapter' | 'course' | 'category'
+  > = {
     exercises: 'exercise',
     lessons: 'lesson',
     chapters: 'chapter',
     courses: 'course',
+    categories: 'category',
   }
   return mapping[relationTo] || 'global'
 }

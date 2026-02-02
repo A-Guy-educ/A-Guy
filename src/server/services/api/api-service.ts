@@ -47,6 +47,7 @@ export const apiService = {
    * @param acknowledgment - The AI's acknowledgment message (from locale)
    * @param context - Context parameters (prefer IDs over slugs)
    * @param mediaIds - Optional array of media IDs to attach (max 5)
+   * @param adminMode - Optional admin mode flag (for legacy admin chat)
    * @returns Response with success status and either message or error
    */
   async chat(
@@ -57,6 +58,7 @@ export const apiService = {
       lessonId?: string
       chapterId?: string
       courseId?: string
+      categoryId?: string
     },
     mediaIds?: string[],
     adminMode?: boolean,

@@ -45,6 +45,8 @@ interface UseNotebookChatProps {
   lessonId?: string
   chapterId?: string
   courseId?: string
+  // Admin context - category for admin chat scope
+  categoryId?: string
   // Admin mode - uses user-specific context without course/lesson context
   adminMode?: boolean
   userId?: string
@@ -70,6 +72,7 @@ export function useNotebookChat({
   lessonId,
   chapterId,
   courseId,
+  categoryId,
   adminMode = false,
   userId,
   unsupportedFileTypeMessage = 'Unsupported file type',
@@ -98,7 +101,7 @@ export function useNotebookChat({
 
   // Compute contextKey based on available context
   // Priority for admin mode: user-specific admin context
-  // Priority for regular mode: Exercise > Lesson > Chapter > Course
+  // Priority for regular mode: Exercise > Lesson > Chapter > Course > Category
   const contextKey = useMemo(() => {
     if (adminMode && userId) {
       return `admin:user:${userId}`
@@ -107,8 +110,9 @@ export function useNotebookChat({
     if (lessonId) return `lessons:${lessonId}`
     if (chapterId) return `chapters:${chapterId}`
     if (courseId) return `courses:${courseId}`
+    if (categoryId) return `categories:${categoryId}`
     return null
-  }, [adminMode, userId, exerciseId, lessonId, chapterId, courseId])
+  }, [adminMode, userId, exerciseId, lessonId, chapterId, courseId, categoryId])
 
   // Simple scroll to bottom using scrollTop instead of scrollIntoView
   // scrollIntoView can cause layout issues in nested flex containers
@@ -398,6 +402,7 @@ export function useNotebookChat({
           lessonId,
           chapterId,
           courseId,
+          categoryId,
         },
         mediaIds.length > 0 ? mediaIds : undefined,
         adminMode, // Pass adminMode flag to API

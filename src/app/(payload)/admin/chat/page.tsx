@@ -53,9 +53,9 @@ export default function AdminChatPage() {
       const result = await apiService.chat(
         inputValue.trim(),
         'Understood.',
-        {},
+        {}, // No context needed for admin mode
         undefined,
-        true, // adminMode - uses admin:user:{userId} context internally
+        true, // adminMode: true
       )
 
       const responseContent =

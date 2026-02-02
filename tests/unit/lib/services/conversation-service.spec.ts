@@ -33,7 +33,7 @@ const createMockPayload = (overrides = {}): Payload =>
   }) as unknown as Payload
 
 // Mock User
-const createMockUser = (role: AccountRole = AccountRole.Student, id = 'user-123'): User =>
+const _createMockUser = (role: AccountRole = AccountRole.Student, id = 'user-123'): User =>
   ({
     id,
     email: 'test@example.com',
@@ -60,12 +60,16 @@ describe('deriveContextLevel (standalone function)', () => {
     expect(deriveContextLevel('courses')).toBe('course')
   })
 
+  it('should return "category" for categories relation', () => {
+    expect(deriveContextLevel('categories')).toBe('category')
+  })
+
   it('should return "global" for unrecognized relation', () => {
-    expect(deriveContextLevel('unknown' as any)).toBe('global')
+    expect(deriveContextLevel('unknown' as unknown)).toBe('global')
   })
 
   it('should return "global" for empty string', () => {
-    expect(deriveContextLevel('' as any)).toBe('global')
+    expect(deriveContextLevel('' as unknown)).toBe('global')
   })
 })
 
@@ -88,6 +92,11 @@ describe('ContextKey generation', () => {
   it('should generate correct key for courses', () => {
     const contextKey = `courses:jkl012`
     expect(contextKey).toBe('courses:jkl012')
+  })
+
+  it('should generate correct key for categories', () => {
+    const contextKey = `categories:admin`
+    expect(contextKey).toBe('categories:admin')
   })
 
   it('should handle special characters in ID', () => {
@@ -133,6 +142,12 @@ describe('ContextKey parsing', () => {
     const result = parseContextKey('courses:jkl012')
     expect(result.relationTo).toBe('courses')
     expect(result.id).toBe('jkl012')
+  })
+
+  it('should parse category context key', () => {
+    const result = parseContextKey('categories:admin')
+    expect(result.relationTo).toBe('categories')
+    expect(result.id).toBe('admin')
   })
 
   it('should throw error for invalid format', () => {
@@ -210,6 +225,16 @@ describe('buildContextHierarchy (standalone function)', () => {
 
     expect(result).toEqual(['courses:course-789', 'global'])
   })
+
+  it('should return hierarchy for category context (no parent)', async () => {
+    const mockPayload = createMockPayload({
+      findByID: vi.fn(),
+    })
+
+    const result = await buildContextHierarchy('categories:admin', mockPayload)
+
+    expect(result).toEqual(['categories:admin', 'global'])
+  })
 })
 
 describe('ConversationService (instance methods)', () => {
@@ -265,6 +290,17 @@ describe('ConversationService (instance methods)', () => {
       expect(result.relationTo).toBe('courses')
       expect(result.value).toBe('course-123')
       expect(result.contextKey).toBe('courses:course-123')
+    })
+
+    it('should return category context when only categoryId provided', async () => {
+      const service = new ConversationService(mockPayload)
+      const result = await service.resolveContext({
+        categoryId: 'admin',
+      })
+
+      expect(result.relationTo).toBe('categories')
+      expect(result.value).toBe('admin')
+      expect(result.contextKey).toBe('categories:admin')
     })
 
     it('should throw error when no context provided', async () => {
@@ -468,7 +504,7 @@ describe('ConversationService (instance methods)', () => {
 })
 
 describe('Context Resolution Priority', () => {
-  it('should follow priority: Exercise > Lesson > Chapter > Course', async () => {
+  it('should follow priority: Exercise > Lesson > Chapter > Course > Category', async () => {
     const mockPayload = createMockPayload()
     const service = new ConversationService(mockPayload)
 
@@ -477,6 +513,7 @@ describe('Context Resolution Priority', () => {
       lessonId: 'lesson-id',
       chapterId: 'chapter-id',
       courseId: 'course-id',
+      categoryId: 'category-id',
     })
 
     expect(result.relationTo).toBe('exercises')
@@ -491,6 +528,7 @@ describe('Context Resolution Priority', () => {
       lessonId: 'lesson-id',
       chapterId: 'chapter-id',
       courseId: 'course-id',
+      categoryId: 'category-id',
     })
 
     expect(result.relationTo).toBe('lessons')
@@ -504,20 +542,34 @@ describe('Context Resolution Priority', () => {
     const result = await service.resolveContext({
       chapterId: 'chapter-id',
       courseId: 'course-id',
+      categoryId: 'category-id',
     })
 
     expect(result.relationTo).toBe('chapters')
     expect(result.value).toBe('chapter-id')
   })
 
-  it('should select course when only course provided', async () => {
+  it('should select course when only course and category provided', async () => {
     const mockPayload = createMockPayload()
     const service = new ConversationService(mockPayload)
 
-    const result = await service.resolveContext({ courseId: 'course-id' })
+    const result = await service.resolveContext({
+      courseId: 'course-id',
+      categoryId: 'category-id',
+    })
 
     expect(result.relationTo).toBe('courses')
     expect(result.value).toBe('course-id')
+  })
+
+  it('should select category when only category provided', async () => {
+    const mockPayload = createMockPayload()
+    const service = new ConversationService(mockPayload)
+
+    const result = await service.resolveContext({ categoryId: 'admin' })
+
+    expect(result.relationTo).toBe('categories')
+    expect(result.value).toBe('admin')
   })
 })
 

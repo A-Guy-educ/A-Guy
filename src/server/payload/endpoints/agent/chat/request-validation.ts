@@ -12,6 +12,8 @@ export const chatRequestSchema = z.object({
   lessonId: z.string().optional(),
   chapterId: z.string().optional(),
   courseId: z.string().optional(),
+  // Admin context - category for admin chat scope
+  categoryId: z.string().optional(),
   // Media attachments (max 5)
   mediaIds: z.array(z.string()).max(5).optional(),
   // Admin mode flag (for admin chat without context)
@@ -20,7 +22,7 @@ export const chatRequestSchema = z.object({
 
 export type ChatRequest = z.infer<typeof chatRequestSchema>
 
-export type ContextRelation = 'exercises' | 'lessons' | 'chapters' | 'courses'
+export type ContextRelation = 'exercises' | 'lessons' | 'chapters' | 'courses' | 'categories'
 
 export interface ContextCandidate {
   relationTo: ContextRelation
@@ -29,7 +31,7 @@ export interface ContextCandidate {
 
 /**
  * Extract context candidate from validated request
- * Returns the most specific context (Exercise > Lesson > Chapter > Course)
+ * Returns the most specific context (Exercise > Lesson > Chapter > Course > Category)
  */
 export function extractContextCandidate(validated: ChatRequest): ContextCandidate | null {
   if (validated.exerciseId) {
@@ -43,6 +45,9 @@ export function extractContextCandidate(validated: ChatRequest): ContextCandidat
   }
   if (validated.courseId) {
     return { relationTo: 'courses', value: validated.courseId }
+  }
+  if (validated.categoryId) {
+    return { relationTo: 'categories', value: validated.categoryId }
   }
   return null
 }

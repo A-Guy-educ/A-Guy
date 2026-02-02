@@ -43,6 +43,9 @@ interface ChatInterfaceProps {
   lessonId?: string
   exerciseId?: string
 
+  // Admin context - category for admin chat scope
+  categoryId?: string
+
   // Admin mode - uses user-specific context without course/lesson context
   adminMode?: boolean
   userId?: string
@@ -70,6 +73,7 @@ export function ChatInterface({
   chapterId,
   lessonId,
   exerciseId,
+  categoryId,
   adminMode = false,
   userId,
   translationNamespace = 'homepage.ask',
@@ -123,6 +127,7 @@ export function ChatInterface({
     chapterId,
     lessonId,
     exerciseId,
+    categoryId,
     adminMode,
     userId,
     // Media upload messages
