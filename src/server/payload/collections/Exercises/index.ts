@@ -184,6 +184,18 @@ export const Exercises: CollectionConfig = {
         },
       ],
     },
+
+    // Preview field (sidebar)
+    {
+      name: 'preview',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: {
+          Field: '@/ui/admin/ExercisePreview#ExercisePreview',
+        },
+      },
+    },
   ],
 }
 
@@ -192,8 +204,8 @@ export { ExerciseBlockDefaults } from './defaults'
 export {
   ContentBlockSchema,
   ContentSchema,
-  QuestionFreeResponseBlockSchema,
   LatexBlockSchema,
+  QuestionFreeResponseBlockSchema,
   type ContentBlock,
   type LatexBlock,
 } from './schemas'
