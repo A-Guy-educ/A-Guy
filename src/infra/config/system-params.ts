@@ -69,7 +69,10 @@ export const SystemParams = {
   },
 }
 
-// Standalone exports for backward compatibility with existing code
+// =========================================
+// Standalone exports for backward compatibility
+// =========================================
+
 export function getPdfConversionMaxSegmentPages(tenantId?: string): number {
   return SystemParams.getPdfConversionMaxSegmentPages(tenantId)
 }
