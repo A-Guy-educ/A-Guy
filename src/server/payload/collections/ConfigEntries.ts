@@ -74,10 +74,12 @@ export const ConfigEntries: CollectionConfig = {
       options: [
         { label: 'Variable', value: ConfigKind.Variable },
         { label: 'Secret', value: ConfigKind.Secret },
+        { label: 'System Param', value: ConfigKind.SystemParam },
       ],
       defaultValue: ConfigKind.Variable,
       admin: {
-        description: 'Variable: stored as plaintext. Secret: encrypted at rest.',
+        description:
+          'Variable: stored as plaintext. Secret: encrypted at rest. System Param: application constants.',
         position: 'sidebar',
       },
     },

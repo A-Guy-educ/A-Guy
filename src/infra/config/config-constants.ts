@@ -13,6 +13,7 @@
 export const ConfigKind = {
   Variable: 'variable',
   Secret: 'secret',
+  SystemParam: 'system_param',
 } as const
 
 export type ConfigKind = (typeof ConfigKind)[keyof typeof ConfigKind]
