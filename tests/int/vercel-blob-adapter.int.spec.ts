@@ -106,7 +106,7 @@ describe('VercelBlobAdapter Integration', () => {
       }
 
       expect(result.blobs.length).toBeGreaterThan(0)
-      const testBlob = result.blobs.find((b) => b.pathname.includes(testId))
+      const testBlob = result.blobs.find((b: any) => b.pathname.includes(testId))
       expect(testBlob).toBeDefined()
     })
 
