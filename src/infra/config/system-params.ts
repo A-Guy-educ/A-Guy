@@ -68,3 +68,16 @@ export const SystemParams = {
     return parseInt(raw || '51200', 10)
   },
 }
+
+// Standalone exports for backward compatibility with existing code
+export function getPdfConversionMaxSegmentPages(tenantId?: string): number {
+  return SystemParams.getPdfConversionMaxSegmentPages(tenantId)
+}
+
+export function getPdfConversionMaxExercisesPerSegment(tenantId?: string): number {
+  return SystemParams.getPdfConversionMaxExercisesPerSegment(tenantId)
+}
+
+export function getPdfConversionMaxPromptSizeBytes(tenantId?: string): number {
+  return SystemParams.getPdfConversionMaxPromptSizeBytes(tenantId)
+}

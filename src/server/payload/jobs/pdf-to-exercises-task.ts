@@ -1,8 +1,8 @@
 import {
-  MAX_EXERCISES_PER_SEGMENT,
-  MAX_SEGMENT_PAGES,
-  PDF_MAX_BYTES,
-} from '@/server/config/constants'
+  getPdfConversionMaxExercisesPerSegment,
+  getPdfConversionMaxSegmentPages,
+} from '@/infra/config/system-params'
+import { PDF_MAX_BYTES } from '@/server/config/constants'
 import { getPdfBufferFromBlob } from '@/server/services/pdf-fetcher'
 import { computeContentHash } from '@/server/utils/hash'
 import config from '@payload-config'
@@ -71,7 +71,8 @@ export const pdfToExercisesTask = {
       }
 
       // PASS 1: Segment Indexing (using buffer)
-      const segments = await segmentPdf(pdfBuffer, MAX_SEGMENT_PAGES)
+      const maxSegmentPages = getPdfConversionMaxSegmentPages(tenantId)
+      const segments = await segmentPdf(pdfBuffer, maxSegmentPages)
       output.segmentsTotal = segments.length
 
       // ========== Prepare Multimodal PDF Parts (v2.1: Use EXISTING infrastructure) ==========
@@ -100,6 +101,7 @@ export const pdfToExercisesTask = {
             extractorPrompt: input.promptSnapshot.extractor,
             verifierPrompt: input.promptSnapshot.verifier,
             output, // v2.1: Pass output for exercisesSkipped tracking
+            tenantId,
           })
 
           let created = 0
@@ -261,9 +263,10 @@ async function processSegmentWithMultimodal(
     extractorPrompt: string
     verifierPrompt: string
     output: any // For tracking exercisesSkipped
+    tenantId?: string
   },
 ) {
-  const { geminiParts, segment, extractorPrompt, verifierPrompt, output } = context
+  const { geminiParts, segment, extractorPrompt, verifierPrompt, output, tenantId } = context
 
   // ========== Call Extractor with MULTIMODAL PDF Attachment ==========
   const extractorPromptWithContext = `${extractorPrompt}
@@ -300,7 +303,7 @@ Return a JSON array of exercises with this schema:
   const rawExtracted = parseExtractorResponseText(extractorResult.text)
 
   // ========== Schema Validation for Extractor Output ==========
-  const extracted = validateExtractedExercises(rawExtracted, segment)
+  const extracted = validateExtractedExercises(rawExtracted, segment, tenantId)
 
   // ========== Enrich with block IDs if missing ==========
   const enrichedExercises = extracted.map((exercise) => enrichBlockIds(exercise))
@@ -408,6 +411,7 @@ const ExerciseExtractedSchema = z.object({
 function validateExtractedExercises(
   raw: any[],
   segment: { pageStart: number; pageEnd: number },
+  tenantId?: string,
 ): any[] {
   const validated: any[] = []
   const errors: string[] = []
@@ -430,11 +434,12 @@ function validateExtractedExercises(
   }
 
   // Enforce MAX_EXERCISES_PER_SEGMENT limit
-  if (validated.length > MAX_EXERCISES_PER_SEGMENT) {
+  const maxExercisesPerSegment = getPdfConversionMaxExercisesPerSegment(tenantId)
+  if (validated.length > maxExercisesPerSegment) {
     console.warn(
-      `[PDF→Exercises] Truncated exercises from ${validated.length} to ${MAX_EXERCISES_PER_SEGMENT}`,
+      `[PDF→Exercises] Truncated exercises from ${validated.length} to ${maxExercisesPerSegment}`,
     )
-    validated.length = MAX_EXERCISES_PER_SEGMENT
+    validated.length = maxExercisesPerSegment
   }
 
   return validated
