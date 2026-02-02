@@ -291,27 +291,27 @@ describe('Media Cleanup Endpoint', () => {
       expect(found.docs.length).toBe(1)
     })
 
-    it(
-      'handles multiple expired media documents',
-      async () => {
+    it('handles multiple expired media documents', async () => {
       const expiredDate = new Date(Date.now() - 1000 * 60 * 60).toISOString()
 
-      // Create multiple expired media
-      await createTestMedia({
-        filename: 'expired-1.jpg',
-        retentionPolicy: 'ephemeral',
-        expiresAt: expiredDate,
-      })
-      await createTestMedia({
-        filename: 'expired-2.jpg',
-        retentionPolicy: 'ephemeral',
-        expiresAt: expiredDate,
-      })
-      await createTestMedia({
-        filename: 'expired-3.jpg',
-        retentionPolicy: 'ephemeral',
-        expiresAt: expiredDate,
-      })
+      // Create multiple expired media in parallel
+      await Promise.all([
+        createTestMedia({
+          filename: 'expired-1.jpg',
+          retentionPolicy: 'ephemeral',
+          expiresAt: expiredDate,
+        }),
+        createTestMedia({
+          filename: 'expired-2.jpg',
+          retentionPolicy: 'ephemeral',
+          expiresAt: expiredDate,
+        }),
+        createTestMedia({
+          filename: 'expired-3.jpg',
+          retentionPolicy: 'ephemeral',
+          expiresAt: expiredDate,
+        }),
+      ])
 
       const req = createCronRequest(`Bearer ${TEST_CRON_SECRET}`)
       const res = await mediaExpiryCleanupEndpoint.handler(req)
@@ -319,9 +319,7 @@ describe('Media Cleanup Endpoint', () => {
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.deletedCount).toBe(3)
-      },
-      { timeout: 20000 },
-    )
+    })
 
     it('returns hasMore flag when more items exist', async () => {
       // This test is limited because we can't easily create 100+ records

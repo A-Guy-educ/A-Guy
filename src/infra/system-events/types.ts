@@ -15,6 +15,7 @@ import type {
   RegistrationCompletedPayload,
   RegistrationPromptShownPayload,
   SessionStartedPayload,
+  SiteInitPayload,
   UserResolvedPayload,
 } from './schemas'
 
@@ -44,6 +45,7 @@ export interface SystemEventEnvelope<T> {
  * Per-event payload type mapping (must match schemas exactly).
  */
 export type SystemEventPayloads = {
+  'system.site_init': SiteInitPayload
   'system.page_viewed': PageViewedPayload
   'system.session_started': SessionStartedPayload
   'system.user_resolved': UserResolvedPayload

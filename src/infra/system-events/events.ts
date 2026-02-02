@@ -9,6 +9,8 @@
  * Use these constants when emitting or subscribing to events.
  */
 export const SYSTEM_EVENTS = {
+  /** Site initialized (fired once on app mount) */
+  SITE_INIT: 'system.site_init',
   /** User viewed a page */
   PAGE_VIEWED: 'system.page_viewed',
   /** New session started (first event in session) */

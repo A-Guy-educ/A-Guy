@@ -24,7 +24,6 @@ describe('VercelBlobAdapter Integration', () => {
   const testId = `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const testFilename = `integration-test-${testId}.pdf`
 
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   const describeIf = (condition: boolean, name: string, fn: () => void): void => {
     if (condition) {
       describe.skip(name, fn)
@@ -43,29 +42,25 @@ describe('VercelBlobAdapter Integration', () => {
   })
 
   describe('Upload and Download', () => {
-    it(
-      'should upload a file and return a valid blob URL',
-      async () => {
-        if (isSkipped) return
+    it('should upload a file and return a valid blob URL', async () => {
+      if (isSkipped) return
 
-        const adapter = new VercelBlobAdapter({
-          directory: 'integration-tests',
-          public: true,
-        })
+      const adapter = new VercelBlobAdapter({
+        directory: 'integration-tests',
+        public: true,
+      })
 
-        const testContent = 'Test PDF content for integration test'
-        const testBuffer = Buffer.from(testContent, 'utf-8')
+      const testContent = 'Test PDF content for integration test'
+      const testBuffer = Buffer.from(testContent, 'utf-8')
 
-        const result = await adapter.uploadBuffer(testFilename, testBuffer, 'application/pdf')
+      const result = await adapter.uploadBuffer(testFilename, testBuffer, 'application/pdf')
 
-        expect(result.url).toBeDefined()
-        expect(result.url).not.toBe('')
-        expect(isVercelBlobUrl(result.url)).toBe(true)
-        expect(result.pathname).toBe(`integration-tests/${testFilename}`)
-        expect(result.contentType).toBe('application/pdf')
-      },
-      { timeout: 20000 },
-    )
+      expect(result.url).toBeDefined()
+      expect(result.url).not.toBe('')
+      expect(isVercelBlobUrl(result.url)).toBe(true)
+      expect(result.pathname).toBe(`integration-tests/${testFilename}`)
+      expect(result.contentType).toBe('application/pdf')
+    })
 
     it('should download the uploaded file and verify content', async () => {
       if (isSkipped) return
@@ -111,7 +106,7 @@ describe('VercelBlobAdapter Integration', () => {
       }
 
       expect(result.blobs.length).toBeGreaterThan(0)
-      const testBlob = result.blobs.find((b: any) => b.pathname.includes(testId))
+      const testBlob = result.blobs.find((b) => b.pathname.includes(testId))
       expect(testBlob).toBeDefined()
     })
 
@@ -125,7 +120,7 @@ describe('VercelBlobAdapter Integration', () => {
 
       // List to find a valid URL
       const listResult = await adapter.list('integration-tests')
-      const testBlob = listResult.blobs.find((b: any) => b.pathname.includes(testId))
+      const testBlob = listResult.blobs.find((b) => b.pathname.includes(testId))
 
       if (!testBlob) {
         return
@@ -152,7 +147,7 @@ describe('VercelBlobAdapter Integration', () => {
 
       // List to find the uploaded file
       const listResult = await adapter.list('integration-tests')
-      const testBlob = listResult.blobs.find((b: any) => b.pathname.includes(testId))
+      const testBlob = listResult.blobs.find((b) => b.pathname.includes(testId))
 
       if (!testBlob) {
         return
