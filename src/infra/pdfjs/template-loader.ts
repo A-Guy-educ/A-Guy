@@ -1,14 +1,5 @@
 import { logger } from '@/infra/utils/logger'
-import { CACHE_CONFIG, VIEWER_URLS, initializePdfjsConfig } from './config'
-
-// Initialize config on first use (lazy initialization for backward compatibility)
-let _initialized = false
-async function ensureInitialized(): Promise<void> {
-  if (!_initialized) {
-    await initializePdfjsConfig()
-    _initialized = true
-  }
-}
+import { CACHE_CONFIG, VIEWER_URLS, type ViewerUrls } from './config'
 
 /**
  * Fetch helper with consistent error handling
@@ -53,10 +44,8 @@ const templateCache = new Map<string, string>()
  * Result is cached in-memory to avoid repeated fetches
  */
 export async function loadViewerTemplate(
-  viewerUrls?: typeof VIEWER_URLS,
+  viewerUrls?: ViewerUrls,
 ): Promise<{ ok: true; html: string } | { ok: false; status: number; statusText: string }> {
-  await ensureInitialized()
-
   const urls = viewerUrls || VIEWER_URLS
   const cacheKey = 'viewer-html'
 
@@ -87,10 +76,8 @@ export async function loadViewerTemplate(
  * Result is cached in-memory to avoid repeated fetches
  */
 export async function loadViewerCss(
-  viewerUrls?: typeof VIEWER_URLS,
+  viewerUrls?: ViewerUrls,
 ): Promise<{ ok: true; css: string } | { ok: false; status: number; statusText: string }> {
-  await ensureInitialized()
-
   const urls = viewerUrls || VIEWER_URLS
   const cacheKey = 'viewer-css'
 

@@ -286,6 +286,3 @@ describe('getBlobPathname', () => {
     )
   })
 })
-
-// Note: getExternalStorageUrl tests are in pdf-fetcher-url-normalization.test.ts
-// because it depends on environment variables that need to be set before module load

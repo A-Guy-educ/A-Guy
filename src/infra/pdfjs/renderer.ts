@@ -1,14 +1,5 @@
 import { logger } from '@/infra/utils/logger'
-import { CDN_BASE, VIEWER_URLS, initializePdfjsConfig } from './config'
-
-// Initialize config on first use (lazy initialization for backward compatibility)
-let _initialized = false
-async function ensureInitialized(): Promise<void> {
-  if (!_initialized) {
-    await initializePdfjsConfig()
-    _initialized = true
-  }
-}
+import { CDN_BASE, VIEWER_URLS, type ViewerUrls } from './config'
 
 /**
  * Rewrite CSS to fix relative image paths
@@ -45,10 +36,8 @@ export async function renderViewerHtml(
   html: string,
   css: string,
   cdnBase?: string,
-  viewerUrls?: typeof VIEWER_URLS,
+  viewerUrls?: ViewerUrls,
 ): Promise<string> {
-  await ensureInitialized()
-
   const base = cdnBase || CDN_BASE
   const urls = viewerUrls || VIEWER_URLS
 
@@ -160,10 +149,8 @@ export async function renderViewerHtml(
 export async function validateRewrittenHtml(
   html: string,
   cdnBase?: string,
-  viewerUrls?: typeof VIEWER_URLS,
+  viewerUrls?: ViewerUrls,
 ): Promise<{ valid: boolean; issues: string[] }> {
-  await ensureInitialized()
-
   const base = cdnBase || CDN_BASE
   const urls = viewerUrls || VIEWER_URLS
 

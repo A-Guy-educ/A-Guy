@@ -341,51 +341,6 @@ export function getPrivateBlobAdapter(): VercelBlobAdapter {
 }
 
 /**
- * Cached blob store URL - fetched dynamically on first call
- */
-let _blobStoreUrl: string | null = null
-
-/**
- * Get the blob store base URL dynamically from Vercel API
- * by listing blobs and extracting the base URL from the first result
- *
- * @returns The blob store base URL (e.g., https://pd8gxkxxaj3lzovc.public.blob.vercel-storage.com)
- */
-export async function getBlobStoreUrl(): Promise<string> {
-  if (_blobStoreUrl) {
-    return _blobStoreUrl
-  }
-
-  try {
-    const token = getBlobToken()
-    if (!token) {
-      throw new Error('BLOB_READ_WRITE_TOKEN not set')
-    }
-
-    // List one blob to get its URL and extract the store base URL
-    const result = await list({ token, limit: 1 })
-
-    if (result.blobs.length === 0) {
-      throw new Error('No blobs found in blob store')
-    }
-
-    // Extract base URL from first blob
-    // e.g., https://pd8gxkxxaj3lzovc.public.blob.vercel-storage.com/foo.png → https://pd8gxkxxaj3lzovc.public.blob.vercel-storage.com
-    const blobUrl = result.blobs[0].url
-    const match = blobUrl.match(/^https:\/\/[^/]+/)
-    if (match) {
-      _blobStoreUrl = match[0]
-      return _blobStoreUrl
-    }
-
-    throw new Error('Could not parse blob URL')
-  } catch (error) {
-    console.error('[getBlobStoreUrl] Failed to get blob store URL:', error)
-    throw error
-  }
-}
-
-/**
  * Helper function to check if a URL is a Vercel Blob URL
  */
 export function isVercelBlobUrl(url: string): boolean {
@@ -394,18 +349,9 @@ export function isVercelBlobUrl(url: string): boolean {
 
 /**
  * Get the external storage base URL for constructing absolute URLs
- *
- * For blob storage, this dynamically fetches the store URL from Vercel API.
- * For development (localhost), falls back to localhost:3000.
  */
 export async function getExternalStorageUrl(): Promise<string> {
-  // Check if running in development (no BLOB_READ_WRITE_TOKEN)
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return 'http://localhost:3000'
-  }
-
-  // Use dynamic blob store URL
-  return getBlobStoreUrl()
+  return 'http://localhost:3000'
 }
 
 /**
