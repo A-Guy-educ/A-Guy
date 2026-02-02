@@ -17,11 +17,14 @@
  * - Automatic maintenance and memory extraction
  */
 import { composePrompt, getRecentWindow, type Message } from '@/infra/llm/context-policy'
+import { AI_MODELS } from '@/infra/llm/models'
 import { createContextLog, logContextUsage, logPromptSnapshot } from '@/infra/llm/observability'
+import { generateChatCompletionWithTools } from '@/infra/llm/providers/gemini'
 import { chatWithExerciseHelper } from '@/infra/llm/services/exercise-chat-service'
 import { logger } from '@/infra/utils/logger'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { getMCPClient } from '@/server/repos/mcp/client/mcp-client'
 import { ConversationService } from '@/server/services/conversation-service'
 import type { PayloadRequest } from 'payload'
 import { z } from 'zod'
@@ -148,7 +151,7 @@ async function handleAdminModeChat(
   const conversation = await conversationService.getOrCreateActiveConversation(userId, {
     relationTo: 'users',
     value: userId,
-  } as any)
+  })
   const conversationId = conversation.id
 
   reqLogger.info({ conversationId, contextKey }, 'Using admin conversation')
@@ -178,6 +181,16 @@ async function handleAdminModeChat(
   // Get recent window
   const recentMessages = getRecentWindow(allMessages as Message[])
 
+  // Get MCP tools for tool calling
+  const mcpClient = getMCPClient()
+  let tools: Awaited<ReturnType<typeof mcpClient.listTools>> = []
+  try {
+    tools = await mcpClient.listTools()
+    reqLogger.debug({ toolCount: tools.length }, 'Loaded MCP tools for admin chat')
+  } catch (error) {
+    reqLogger.warn({ err: error }, 'Failed to load MCP tools, proceeding without tool calling')
+  }
+
   // For admin mode, use a simpler system prompt
   const systemPrompt = `You are an AI assistant for the admin panel. You have access to MCP tools that can query the database.
 
@@ -197,13 +210,81 @@ Remember:
 - Limit queries to reasonable sizes (default 10 results)
 - You can filter and sort results using the tool parameters`
 
-  // Compose messages for AI
-  const _messages = [
-    { role: 'system' as const, content: systemPrompt },
-    ...recentMessages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
-  ]
+  // Build messages for AI
+  const messages = recentMessages.map((m) => ({
+    role: m.role as 'user' | 'assistant',
+    content: m.content,
+  }))
 
-  // Call AI service (without composed prompt for admin mode)
+  // If we have tools, use tool calling
+  if (tools.length > 0) {
+    reqLogger.info({ toolCount: tools.length }, 'Using tool calling for admin chat')
+
+    const modelCallStart = Date.now()
+    const result = await generateChatCompletionWithTools(
+      {
+        system: systemPrompt,
+        messages,
+        model: AI_MODELS.EXERCISE_CHAT,
+        acknowledgment: validated.acknowledgment || 'Understood.',
+        tools,
+        toolExecutor: async (toolName, args) => {
+          reqLogger.debug({ toolName, args }, 'Executing MCP tool')
+          try {
+            const toolResult = await mcpClient.callTool(toolName, args)
+            const content = toolResult.content
+            if (Array.isArray(content)) {
+              return content.map((c) => (c as { text?: string }).text).join('\n')
+            }
+            return JSON.stringify(content)
+          } catch (error) {
+            reqLogger.error({ err: error, toolName, args }, 'Tool execution failed')
+            return `Error executing ${toolName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }
+        },
+      },
+      req.payload,
+    )
+    const modelLatencyMs = Date.now() - modelCallStart
+
+    reqLogger.info(
+      { modelLatencyMs, toolCalls: result.toolCalls?.length },
+      'Admin chat with tool calling completed',
+    )
+
+    // Persist assistant response
+    const assistantMessage = {
+      role: 'assistant' as const,
+      content: result.text || '',
+      timestamp: new Date().toISOString(),
+    }
+
+    const updatedMessages = [...allMessages, assistantMessage]
+
+    try {
+      await req.payload.update({
+        collection: 'conversations',
+        id: conversationId,
+        data: {
+          messages: updatedMessages,
+          lastMessageAt: new Date().toISOString(),
+        },
+        user: req.user,
+        overrideAccess: true,
+      })
+    } catch (updateError) {
+      reqLogger.warn({ err: updateError, conversationId }, 'Failed to persist admin response')
+    }
+
+    return Response.json({
+      success: true,
+      message: result.text,
+      conversationId,
+      contextKey,
+    })
+  }
+
+  // Fallback: No tools available, use regular chat
   const modelCallStart = Date.now()
   const result = await chatWithExerciseHelper(
     {
@@ -259,7 +340,7 @@ Remember:
     reqLogger.warn({ err: updateError, conversationId }, 'Failed to persist admin response')
   }
 
-  reqLogger.info('Admin chat request successful')
+  reqLogger.info('Admin chat request successful (fallback mode)')
   return Response.json({
     success: true,
     message: result.message,

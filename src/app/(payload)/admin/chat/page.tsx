@@ -25,11 +25,10 @@ const WELCOME_MESSAGE =
 
 export default function AdminChatPage() {
   const { user, isLoading } = useCurrentUser()
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: ChatRole.Assistant, content: WELCOME_MESSAGE },
-  ])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoadingMessage, setIsLoadingMessage] = useState(false)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -39,6 +38,36 @@ export default function AdminChatPage() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Load conversation history on mount
+  useEffect(() => {
+    async function loadConversationHistory() {
+      if (!user?.id || isLoading) return
+
+      const contextKey = `users:${user.id}`
+      try {
+        const result = await apiService.getConversation(contextKey)
+        if (result.success && result.exists && result.messages.length > 0) {
+          // Map ConversationMessage to ChatMessage
+          const mappedMessages: ChatMessage[] = result.messages.map((msg) => ({
+            role: msg.role as ChatRole,
+            content: msg.content,
+          }))
+          setMessages(mappedMessages)
+        } else {
+          // No existing conversation, show welcome message
+          setMessages([{ role: ChatRole.Assistant, content: WELCOME_MESSAGE }])
+        }
+      } catch (error) {
+        console.error('Failed to load conversation history:', error)
+        setMessages([{ role: ChatRole.Assistant, content: WELCOME_MESSAGE }])
+      } finally {
+        setIsLoadingHistory(false)
+      }
+    }
+
+    loadConversationHistory()
+  }, [user, isLoading])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,10 +100,10 @@ export default function AdminChatPage() {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || isLoadingHistory) {
     return (
       <div className="p-4">
-        <div className="loading">Loading...</div>
+        <div className="loading">Loading conversation...</div>
       </div>
     )
   }

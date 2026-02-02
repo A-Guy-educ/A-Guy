@@ -21,7 +21,7 @@ import type { Payload } from 'payload'
  * Context reference shape for polymorphic relationships
  */
 export interface ContextRef {
-  relationTo: 'courses' | 'chapters' | 'lessons' | 'exercises' | 'categories'
+  relationTo: 'courses' | 'chapters' | 'lessons' | 'exercises' | 'categories' | 'users'
   value: string
 }
 
@@ -414,13 +414,14 @@ export function deriveContextLevel(
 ): 'exercise' | 'lesson' | 'chapter' | 'course' | 'category' | 'global' {
   const mapping: Record<
     ContextRef['relationTo'],
-    'exercise' | 'lesson' | 'chapter' | 'course' | 'category'
+    'exercise' | 'lesson' | 'chapter' | 'course' | 'category' | 'global'
   > = {
     exercises: 'exercise',
     lessons: 'lesson',
     chapters: 'chapter',
     courses: 'course',
     categories: 'category',
+    users: 'global',
   }
-  return mapping[relationTo] || 'global'
+  return mapping[relationTo] ?? 'global'
 }

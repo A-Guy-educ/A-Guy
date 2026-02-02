@@ -92,19 +92,17 @@ function convertMCPToolToGeminiFunction(tool: MCPTool): GeminiFunctionDeclaratio
   }
 
   // For our read-only tools, we have well-known parameter structures
-  // Fall back to standard parameters if no schema provided
+  // Fall back to standard parameters if no schema provided or schema is empty
   if (Object.keys(properties).length === 0) {
     const standardParams = getStandardToolParams(tool.name)
-    if (standardParams) {
-      return {
-        name: tool.name,
-        description: tool.description || `Query ${tool.name.replace('find', '').toLowerCase()}`,
-        parameters: {
-          type: 'OBJECT',
-          properties: standardParams.properties,
-          required: standardParams.required,
-        },
-      }
+    return {
+      name: tool.name,
+      description: tool.description || `Query ${tool.name.replace('find', '').toLowerCase()}`,
+      parameters: {
+        type: 'OBJECT',
+        properties: standardParams.properties,
+        required: standardParams.required,
+      },
     }
   }
 
@@ -120,74 +118,62 @@ function convertMCPToolToGeminiFunction(tool: MCPTool): GeminiFunctionDeclaratio
 }
 
 /**
- * Get standard parameters for known tool names
+ * Get standard parameters for known tool names, or default params for unknown tools
  */
-function getStandardToolParams(
-  toolName: string,
-): { properties: Record<string, GeminiFunctionParameter>; required: string[] } | null {
-  const baseParams = {
+function getStandardToolParams(toolName: string): {
+  properties: Record<string, GeminiFunctionParameter>
+  required: string[]
+} {
+  const baseParams: Record<string, GeminiFunctionParameter> = {
     limit: {
-      type: 'INTEGER' as const,
+      type: 'INTEGER',
       description: 'Maximum number of results to return (1-10)',
     },
     page: {
-      type: 'INTEGER' as const,
+      type: 'INTEGER',
       description: 'Page number for pagination',
     },
     sort: {
-      type: 'STRING' as const,
+      type: 'STRING',
       description: 'Sort field (prefix with - for descending)',
     },
     where: {
-      type: 'STRING' as const,
+      type: 'STRING',
       description: 'JSON string with filter conditions',
     },
   }
 
   // Collection-specific params
-  const collectionParams: Record<string, { extra: Record<string, GeminiFunctionParameter> }> = {
+  const collectionParams: Record<string, Record<string, GeminiFunctionParameter>> = {
     findCourses: {
-      extra: {
-        status: { type: 'STRING' as const, description: 'Filter by status (draft/published)' },
-        title: { type: 'STRING' as const, description: 'Filter by title (contains)' },
-      },
+      status: { type: 'STRING', description: 'Filter by status (draft/published)' },
+      title: { type: 'STRING', description: 'Filter by title (contains)' },
     },
     findChapters: {
-      extra: {
-        status: { type: 'STRING' as const, description: 'Filter by status' },
-        title: { type: 'STRING' as const, description: 'Filter by title (contains)' },
-        course: { type: 'STRING' as const, description: 'Filter by course ID' },
-      },
+      status: { type: 'STRING', description: 'Filter by status' },
+      title: { type: 'STRING', description: 'Filter by title (contains)' },
+      course: { type: 'STRING', description: 'Filter by course ID' },
     },
     findLessons: {
-      extra: {
-        status: { type: 'STRING' as const, description: 'Filter by status' },
-        title: { type: 'STRING' as const, description: 'Filter by title (contains)' },
-        chapter: { type: 'STRING' as const, description: 'Filter by chapter ID' },
-      },
+      status: { type: 'STRING', description: 'Filter by status' },
+      title: { type: 'STRING', description: 'Filter by title (contains)' },
+      chapter: { type: 'STRING', description: 'Filter by chapter ID' },
     },
     findExercises: {
-      extra: {
-        status: { type: 'STRING' as const, description: 'Filter by status' },
-        title: { type: 'STRING' as const, description: 'Filter by title (contains)' },
-        lesson: { type: 'STRING' as const, description: 'Filter by lesson ID' },
-      },
+      status: { type: 'STRING', description: 'Filter by status' },
+      title: { type: 'STRING', description: 'Filter by title (contains)' },
+      lesson: { type: 'STRING', description: 'Filter by lesson ID' },
     },
     findMedia: {
-      extra: {
-        filename: { type: 'STRING' as const, description: 'Filter by filename (contains)' },
-        mimeType: { type: 'STRING' as const, description: 'Filter by MIME type' },
-      },
+      filename: { type: 'STRING', description: 'Filter by filename (contains)' },
+      mimeType: { type: 'STRING', description: 'Filter by MIME type' },
     },
   }
 
-  const config = collectionParams[toolName]
-  if (!config) {
-    return null
-  }
+  const extraParams = collectionParams[toolName] || {}
 
   return {
-    properties: { ...baseParams, ...config.extra },
+    properties: { ...baseParams, ...extraParams },
     required: [],
   }
 }

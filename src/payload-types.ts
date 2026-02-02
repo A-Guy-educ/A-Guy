@@ -906,6 +906,10 @@ export interface ConfigEntry {
    */
   kind: 'variable' | 'secret' | 'system_param';
   /**
+   * Optional title/description for this configuration entry
+   */
+  title?: string | null;
+  /**
    * Configuration value. Secrets are write-only after save.
    */
   value: string;
@@ -935,7 +939,7 @@ export interface ConfigAuditLog {
   /**
    * Type of config entry
    */
-  kind: 'variable' | 'secret';
+  kind: 'variable' | 'secret' | 'system_param';
   /**
    * Action performed
    */
@@ -2103,6 +2107,7 @@ export interface ConfigEntriesSelect<T extends boolean = true> {
   key?: T;
   tenant?: T;
   kind?: T;
+  title?: T;
   value?: T;
   enabled?: T;
   updatedAt?: T;

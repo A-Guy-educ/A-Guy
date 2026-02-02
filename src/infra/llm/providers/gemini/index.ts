@@ -3,7 +3,7 @@
  *
  * Usage:
  * ```ts
- * import { generateChatCompletion, isGeminiApiKeyConfigured } from '@/lib/ai/providers/gemini'
+ * import { generateChatCompletion, generateChatCompletionWithTools, isGeminiApiKeyConfigured } from '@/lib/ai/providers/gemini'
  * ```
  */
 export {
@@ -18,3 +18,10 @@ export {
   type GenerateChatOutput,
   type GenerateMultimodalInput,
 } from './gemini.provider'
+
+// Tool calling extensions
+export {
+  generateChatCompletionWithTools,
+  type ToolCallingInput,
+  type ToolCallingOutput,
+} from './gemini-tool-calling'

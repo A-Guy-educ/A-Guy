@@ -25,7 +25,7 @@ export const ConfigEntries: CollectionConfig = {
   slug: 'config_entries',
   admin: {
     useAsTitle: 'key',
-    defaultColumns: ['key', 'tenant', 'kind', 'enabled', 'updatedAt'],
+    defaultColumns: ['key', 'title', 'tenant', 'kind', 'enabled', 'updatedAt'],
     group: 'System',
     description:
       'Tenant-scoped configuration key/value store. Variables are plaintext, secrets are encrypted.',
@@ -81,6 +81,13 @@ export const ConfigEntries: CollectionConfig = {
         description:
           'Variable: stored as plaintext. Secret: encrypted at rest. System Param: application constants.',
         position: 'sidebar',
+      },
+    },
+    {
+      name: 'title',
+      type: 'text',
+      admin: {
+        description: 'Optional title/description for this configuration entry',
       },
     },
     {

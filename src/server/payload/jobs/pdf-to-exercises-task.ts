@@ -101,7 +101,7 @@ export const pdfToExercisesTask = {
             extractorPrompt: input.promptSnapshot.extractor,
             verifierPrompt: input.promptSnapshot.verifier,
             output, // v2.1: Pass output for exercisesSkipped tracking
-            tenantId,
+            tenantId, // For SystemParams access
           })
 
           let created = 0
@@ -263,7 +263,7 @@ async function processSegmentWithMultimodal(
     extractorPrompt: string
     verifierPrompt: string
     output: any // For tracking exercisesSkipped
-    tenantId?: string
+    tenantId: string // For SystemParams access
   },
 ) {
   const { geminiParts, segment, extractorPrompt, verifierPrompt, output, tenantId } = context
@@ -303,7 +303,8 @@ Return a JSON array of exercises with this schema:
   const rawExtracted = parseExtractorResponseText(extractorResult.text)
 
   // ========== Schema Validation for Extractor Output ==========
-  const extracted = validateExtractedExercises(rawExtracted, segment, tenantId)
+  const maxExercisesPerSegment = getPdfConversionMaxExercisesPerSegment(tenantId)
+  const extracted = validateExtractedExercises(rawExtracted, segment, maxExercisesPerSegment)
 
   // ========== Enrich with block IDs if missing ==========
   const enrichedExercises = extracted.map((exercise) => enrichBlockIds(exercise))
@@ -411,7 +412,7 @@ const ExerciseExtractedSchema = z.object({
 function validateExtractedExercises(
   raw: any[],
   segment: { pageStart: number; pageEnd: number },
-  tenantId?: string,
+  maxExercisesPerSegment: number,
 ): any[] {
   const validated: any[] = []
   const errors: string[] = []
@@ -433,8 +434,7 @@ function validateExtractedExercises(
     }
   }
 
-  // Enforce MAX_EXERCISES_PER_SEGMENT limit
-  const maxExercisesPerSegment = getPdfConversionMaxExercisesPerSegment(tenantId)
+  // Enforce max exercises per segment limit
   if (validated.length > maxExercisesPerSegment) {
     console.warn(
       `[PDF→Exercises] Truncated exercises from ${validated.length} to ${maxExercisesPerSegment}`,
