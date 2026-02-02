@@ -7,9 +7,9 @@
 
 'use client'
 
-import { usePageAbandonment } from '@/infra/analytics/hooks/usePageAbandonment'
 import { usePageView } from '@/infra/analytics/hooks/usePageView'
 import { useSessionDuration } from '@/infra/analytics/hooks/useSessionDuration'
+import { usePageAbandonment } from '@/infra/analytics/hooks/usePageAbandonment'
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { useEffect } from 'react'
 
