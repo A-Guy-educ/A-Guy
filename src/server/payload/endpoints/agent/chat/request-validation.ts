@@ -14,6 +14,8 @@ export const chatRequestSchema = z.object({
   courseId: z.string().optional(),
   // Media attachments (max 5)
   mediaIds: z.array(z.string()).max(5).optional(),
+  // Admin mode flag (for admin chat without context)
+  adminMode: z.boolean().optional(),
 })
 
 export type ChatRequest = z.infer<typeof chatRequestSchema>

@@ -55,7 +55,7 @@ export default function AdminChatPage() {
         'Understood.',
         {},
         undefined,
-        true, // adminMode
+        true, // adminMode - uses admin:user:{userId} context internally
       )
 
       const responseContent =

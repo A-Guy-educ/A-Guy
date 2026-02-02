@@ -80,13 +80,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     // 3) Check if admin mode
     const isAdmin = (req.user.role as AccountRole) === AccountRole.Admin
-    let adminMode = false
-
-    // Get raw body to check adminMode
-    const rawBody = await req.json()
-    if (isAdmin && typeof rawBody === 'object' && rawBody !== null && 'adminMode' in rawBody) {
-      adminMode = (rawBody as Record<string, unknown>).adminMode === true
-    }
+    const adminMode = isAdmin && validated.adminMode === true
 
     // For admin mode, check if we have a context or adminMode
     const contextCandidate = extractContextCandidate(validated)
@@ -204,7 +198,7 @@ Remember:
 - You can filter and sort results using the tool parameters`
 
   // Compose messages for AI
-  const messages = [
+  const _messages = [
     { role: 'system' as const, content: systemPrompt },
     ...recentMessages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
   ]
@@ -289,7 +283,10 @@ async function handleContextScopedChat(
     return Response.json({ error: 'User ID not found' }, { status: 401 })
   }
 
-  const userRole = (req.user?.role as AccountRole) || AccountRole.Student
+  // Safely get user role - only Users collection has roles
+  const userRole = isUsersCollectionUser(req.user)
+    ? ((req.user as unknown as { role: AccountRole }).role as AccountRole)
+    : AccountRole.Student
 
   const contextValidation = await validateContextExists(
     req.payload,
