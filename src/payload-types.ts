@@ -877,9 +877,9 @@ export interface ConfigEntry {
    */
   tenant: string | Tenant;
   /**
-   * Variable: stored as plaintext. Secret: encrypted at rest.
+   * Variable: stored as plaintext. Secret: encrypted at rest. System Param: application constants.
    */
-  kind: 'variable' | 'secret';
+  kind: 'variable' | 'secret' | 'system_param';
   /**
    * Configuration value. Secrets are write-only after save.
    */
