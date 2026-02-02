@@ -35,8 +35,9 @@ export async function POST(request: NextRequest) {
     const { user } = await payload.auth({ headers: request.headers })
 
     let isAdmin = false
-    // role is a select field (string), not an array
-    if (user && user.role === 'admin') {
+    // Check if user is from 'users' collection (has 'role' property)
+    // PayloadMcpApiKey doesn't have 'role', so we need to check collection
+    if (user && 'collection' in user && user.collection === 'users' && user.role === 'admin') {
       isAdmin = true
     }
 

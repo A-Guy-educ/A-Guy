@@ -126,7 +126,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 }
 
 /**
- * Handle admin mode chat - no context required, uses admin:user:{userId} conversation
+ * Handle admin mode chat - no context required, uses users:{userId} conversation
  */
 async function handleAdminModeChat(
   req: PayloadRequest,
@@ -139,8 +139,8 @@ async function handleAdminModeChat(
     return Response.json({ error: 'User ID not found' }, { status: 401 })
   }
 
-  // Use admin:user:{userId} context key
-  const contextKey = `admin:user:${userId}`
+  // Use users:{userId} context key (user-scoped conversation)
+  const contextKey = `users:${userId}`
 
   reqLogger.info({ userId, contextKey }, 'Processing admin mode chat request')
 
@@ -181,34 +181,48 @@ async function handleAdminModeChat(
   // Get recent window
   const recentMessages = getRecentWindow(allMessages as Message[])
 
+  // Extract auth headers to forward to MCP client
+  const authHeaders: HeadersInit = {}
+  if (req.headers) {
+    const cookie =
+      typeof req.headers.get === 'function' ? req.headers.get('cookie') : undefined
+    const authorization =
+      typeof req.headers.get === 'function' ? req.headers.get('authorization') : undefined
+    if (cookie) authHeaders['cookie'] = cookie
+    if (authorization) authHeaders['authorization'] = authorization
+  }
+
   // Get MCP tools for tool calling
   const mcpClient = getMCPClient()
   let tools: Awaited<ReturnType<typeof mcpClient.listTools>> = []
   try {
-    tools = await mcpClient.listTools()
-    reqLogger.debug({ toolCount: tools.length }, 'Loaded MCP tools for admin chat')
+    tools = await mcpClient.listTools(authHeaders)
+    reqLogger.info(
+      { toolCount: tools.length, toolNames: tools.map((t) => t.name) },
+      'Loaded MCP tools for admin chat',
+    )
   } catch (error) {
-    reqLogger.warn({ err: error }, 'Failed to load MCP tools, proceeding without tool calling')
+    reqLogger.error({ err: error }, 'Failed to load MCP tools, proceeding without tool calling')
   }
 
-  // For admin mode, use a simpler system prompt
-  const systemPrompt = `You are an AI assistant for the admin panel. You have access to MCP tools that can query the database.
+  // For admin mode, use a system prompt that instructs the AI to use tools
+  const systemPrompt = `You are an AI assistant for the admin panel of an educational platform. You have access to database query tools.
 
-Available MCP tools:
-- findCourses: Query educational courses (filters: status, title; sort: title, updatedAt)
-- findChapters: Query course chapters (filters: status, title, course; sort: order, title, updatedAt)
-- findLessons: Query lessons (filters: status, title, chapter; sort: order, title, updatedAt)
-- findExercises: Query exercises (filters: status, title, lesson; sort: order, title, updatedAt)
-- findMedia: Query media files (filters: filename, mimeType; sort: filename, updatedAt)
+IMPORTANT: You MUST use the provided tools to answer questions about data. Do NOT ask clarifying questions - just use the tools to query the database directly.
 
-Use these tools when the user asks about courses, chapters, lessons, exercises, or media.
-Always use tools to provide accurate, up-to-date information from the database.
-When you use a tool, explain what you're querying and present the results clearly.
+When the user asks about courses, chapters, lessons, exercises, or media:
+1. ALWAYS call the appropriate tool immediately
+2. Do NOT ask "which courses?" or "what do you mean?" - just query the database
+3. Present the results clearly after receiving tool output
 
-Remember:
-- Results are tenant-scoped to the current tenant
-- Limit queries to reasonable sizes (default 10 results)
-- You can filter and sort results using the tool parameters`
+Available tools:
+- findCourses: Query courses in the database
+- findChapters: Query chapters
+- findLessons: Query lessons
+- findExercises: Query exercises
+- findMedia: Query media files
+
+Example: If user asks "how many courses do we have?", call findCourses immediately and count the results.`
 
   // Build messages for AI
   const messages = recentMessages.map((m) => ({
@@ -231,7 +245,7 @@ Remember:
         toolExecutor: async (toolName, args) => {
           reqLogger.debug({ toolName, args }, 'Executing MCP tool')
           try {
-            const toolResult = await mcpClient.callTool(toolName, args)
+            const toolResult = await mcpClient.callTool(toolName, args, authHeaders)
             const content = toolResult.content
             if (Array.isArray(content)) {
               return content.map((c) => (c as { text?: string }).text).join('\n')

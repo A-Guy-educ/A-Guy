@@ -408,12 +408,13 @@ export async function buildContextHierarchy(
 
 /**
  * Derive context level from relationTo
+ * Handles unknown/invalid values by returning 'global'
  */
 export function deriveContextLevel(
-  relationTo: ContextRef['relationTo'],
+  relationTo: string,
 ): 'exercise' | 'lesson' | 'chapter' | 'course' | 'category' | 'global' {
   const mapping: Record<
-    ContextRef['relationTo'],
+    string,
     'exercise' | 'lesson' | 'chapter' | 'course' | 'category' | 'global'
   > = {
     exercises: 'exercise',
