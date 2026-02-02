@@ -98,6 +98,17 @@ export function MixpanelScripts() {
             // Session recording enabled - 100% of sessions recorded for analysis
             record_sessions_percent: 100,
 
+            // Session recording configuration - unmask all text elements
+            // By default Mixpanel masks all text with "*", setting to "" unmasks everything
+            record_mask_text_selector: '',  // Empty string = show all text
+            record_block_selector: '',       // Empty string = don't block any elements
+            record_collect_fonts: true,      // Collect fonts for better rendering
+
+            // Individual elements can still be masked by adding class="mp-mask"
+            // or blocked entirely with class="mp-block"
+            record_mask_text_class: 'mp-mask',
+            record_block_class: 'mp-block',
+
             // Cookie-based persistence (fallback to localStorage)
             persistence: 'localStorage+cookie',
 
