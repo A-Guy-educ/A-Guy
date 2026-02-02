@@ -1,5 +1,19 @@
 import { renderViewerHtml, rewriteCss } from '@/infra/pdfjs/renderer'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// Mock the blob adapter to avoid actual blob store calls
+vi.mock('@/infra/blob/vercel-blob-adapter', async () => {
+  const actual = await vi.importActual('@/infra/blob/vercel-blob-adapter')
+  return {
+    ...actual,
+    getBlobStoreUrl: vi.fn(async (_prefix?: string) => {
+      return 'https://example.blob.vercel-storage.com'
+    }),
+    getExternalStorageUrl: vi.fn(async () => {
+      return 'https://example.blob.vercel-storage.com'
+    }),
+  }
+})
 
 // Test constants
 const TEST_CDN_BASE = 'https://example.blob.vercel-storage.com/pdfjs/4.4.168'

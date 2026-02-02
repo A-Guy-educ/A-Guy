@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 // Mock the vercel-blob-adapter module
 vi.mock('@/infra/blob/vercel-blob-adapter', () => ({
-  getExternalStorageUrl: vi.fn(),
+  getBlobStoreUrl: vi.fn(),
 }))
 
 // Test constants
