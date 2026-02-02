@@ -36,6 +36,20 @@ import { Header } from '@/ui/web/header/config'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+/**
+ * Helper to check if user is admin
+ * Safely handles union type (User | PayloadMcpApiKey)
+ */
+function isAdminUser(req: PayloadRequest): boolean {
+  const user = req.user
+  if (!user) return false
+  // PayloadMcpApiKey doesn't have 'role', check collection first
+  if ('collection' in user && user.collection === 'users' && user.role === 'admin') {
+    return true
+  }
+  return false
+}
+
 // Validate DATABASE_URL is set and not empty
 // This prevents accidental fallback to localhost when Atlas connection string is expected
 const databaseUrl = process.env.DATABASE_URL
@@ -174,9 +188,9 @@ export default buildConfig({
       access: {
         ...defaultJobsCollection.access,
         // Admin-only access
-        read: ({ req }) => req.user?.role === 'admin',
-        update: ({ req }) => req.user?.role === 'admin',
-        delete: ({ req }) => req.user?.role === 'admin',
+        read: ({ req }) => isAdminUser(req),
+        update: ({ req }) => isAdminUser(req),
+        delete: ({ req }) => isAdminUser(req),
       },
       hooks: {
         afterRead: [

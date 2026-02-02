@@ -11,11 +11,17 @@
 import { logger } from '@/infra/utils/logger'
 import { getGeminiClient } from '@/server/llm/gemini.client'
 import type { MCPTool } from '@/server/repos/mcp/client/types'
-import type { Tool as GeminiTool } from '@google/generative-ai'
+import {
+  FunctionCallingMode,
+  type Tool as GeminiTool,
+  type Part,
+  type GenerateContentResult,
+  type FunctionCall,
+} from '@google/generative-ai'
 import type { Payload } from 'payload'
 import { mcpToolsToGeminiFunctionDeclarations, type ParsedToolCall } from './gemini-tools'
 import { isRetryableError, wrapGeminiError } from './gemini.errors'
-import { extractResponseText, mapMessagesToGeminiHistory } from './gemini.mapper'
+import { mapMessagesToGeminiHistory } from './gemini.mapper'
 import type { AIModel, ChatMessage, GenerateChatOutput } from './gemini.provider'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -36,9 +42,27 @@ export interface ToolCallingOutput extends GenerateChatOutput {
   toolCalls?: ParsedToolCall[]
 }
 
-interface ToolCallResponse {
-  functionCalls?: Array<{ name: string; args: Record<string, unknown> }>
-  response?: { text: () => string }
+/**
+ * Helper to extract function calls from Gemini response
+ * The SDK returns functionCalls() as a method, not a property
+ */
+function getFunctionCalls(result: GenerateContentResult): FunctionCall[] | undefined {
+  try {
+    return result.response.functionCalls()
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Helper to extract text from Gemini response
+ */
+function getResponseText(result: GenerateContentResult): string {
+  try {
+    return result.response.text()
+  } catch {
+    return ''
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -116,10 +140,27 @@ async function executeToolCallingWithTimeout(
   // Convert MCP tools to Gemini function declarations
   const functionDeclarations = mcpToolsToGeminiFunctionDeclarations(input.tools)
 
-  logger.debug(
-    { toolCount: functionDeclarations.length, tools: functionDeclarations.map((t) => t.name) },
-    '[GeminiToolCalling] Converted tools to function declarations',
+  // Log to verify tools are being loaded correctly
+  logger.info(
+    {
+      inputToolCount: input.tools.length,
+      allowedToolCount: functionDeclarations.length,
+      inputToolNames: input.tools.map((t) => t.name),
+      allowedToolNames: functionDeclarations.map((t) => t.name),
+      // Log first declaration to verify format
+      sampleDeclaration: functionDeclarations[0]
+        ? JSON.stringify(functionDeclarations[0])
+        : 'none',
+    },
+    '[GeminiToolCalling] Tools loaded and converted',
   )
+
+  if (functionDeclarations.length === 0) {
+    logger.error(
+      { inputTools: input.tools.map((t) => t.name) },
+      '[GeminiToolCalling] No tools available after allowlist filtering!',
+    )
+  }
 
   const model = client.getGenerativeModel({
     model: input.model.name,
@@ -131,6 +172,15 @@ async function executeToolCallingWithTimeout(
     tools:
       functionDeclarations.length > 0
         ? ([{ functionDeclarations }] as unknown as GeminiTool[])
+        : undefined,
+    // Configure tool calling mode to AUTO - Gemini will decide when to use tools
+    toolConfig:
+      functionDeclarations.length > 0
+        ? {
+            functionCallingConfig: {
+              mode: FunctionCallingMode.AUTO,
+            },
+          }
         : undefined,
   })
 
@@ -163,15 +213,25 @@ async function executeToolCallingWithTimeout(
   const initialResult = (await Promise.race([
     chat.sendMessage(finalMessage),
     timeoutPromise,
-  ])) as ToolCallResponse
+  ])) as GenerateContentResult
 
   // Check for tool calls and execute them
   const allToolCalls: ParsedToolCall[] = []
 
-  let currentResponse = initialResult
+  let currentResult = initialResult
+  let functionCalls = getFunctionCalls(currentResult)
   let iterations = 0
 
-  while (currentResponse.functionCalls && currentResponse.functionCalls.length > 0) {
+  logger.info(
+    {
+      hasFunctionCalls: !!functionCalls,
+      count: functionCalls?.length,
+      initialText: getResponseText(initialResult).substring(0, 200),
+    },
+    '[GeminiToolCalling] Initial response received',
+  )
+
+  while (functionCalls && functionCalls.length > 0) {
     iterations++
 
     // Prevent infinite loops
@@ -181,10 +241,10 @@ async function executeToolCallingWithTimeout(
     }
 
     // Execute each tool call
-    for (const call of currentResponse.functionCalls) {
+    for (const call of functionCalls) {
       const toolCall: ParsedToolCall = {
         name: call.name,
-        args: call.args || {},
+        args: (call.args as Record<string, unknown>) || {},
       }
       allToolCalls.push(toolCall)
 
@@ -196,15 +256,26 @@ async function executeToolCallingWithTimeout(
       try {
         const resultText = await input.toolExecutor(toolCall.name, toolCall.args)
 
-        // Send tool result back to Gemini
-        const functionResponse = { result: resultText }
-        const result = await Promise.race([
-          chat.sendMessage(JSON.stringify([{ functionResponse }])),
+        logger.debug(
+          { toolName: toolCall.name, resultLength: resultText.length },
+          '[GeminiToolCalling] Tool execution completed, sending response to Gemini',
+        )
+
+        // Send tool result back to Gemini using proper FunctionResponse format
+        const functionResponsePart: Part = {
+          functionResponse: {
+            name: toolCall.name,
+            response: { result: resultText },
+          },
+        }
+        const result = (await Promise.race([
+          chat.sendMessage([functionResponsePart]),
           timeoutPromise,
-        ])
+        ])) as GenerateContentResult
 
         // Check if more tool calls
-        currentResponse = result as ToolCallResponse
+        currentResult = result
+        functionCalls = getFunctionCalls(result)
       } catch (error) {
         logger.error(
           { err: error, toolName: toolCall.name },
@@ -213,21 +284,25 @@ async function executeToolCallingWithTimeout(
 
         // Send error result
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-        const functionResponse = { error: errorMessage }
-        await Promise.race([
-          chat.sendMessage(JSON.stringify([{ functionResponse }])),
-          timeoutPromise,
-        ])
+
+        // Send error response using proper FunctionResponse format
+        const errorResponsePart: Part = {
+          functionResponse: {
+            name: toolCall.name,
+            response: { error: errorMessage },
+          },
+        }
+        await Promise.race([chat.sendMessage([errorResponsePart]), timeoutPromise])
 
         // Break out of loop on error
+        functionCalls = undefined
         break
       }
     }
   }
 
   // Get final text response
-  const response = currentResponse.response || initialResult.response
-  const text = response ? extractResponseText(response) : ''
+  const text = getResponseText(currentResult)
 
   logger.debug(
     { textLength: text.length, toolCallCount: allToolCalls.length },
@@ -236,7 +311,7 @@ async function executeToolCallingWithTimeout(
 
   return {
     text,
-    raw: currentResponse,
+    raw: currentResult,
     toolCalls: allToolCalls,
   }
 }

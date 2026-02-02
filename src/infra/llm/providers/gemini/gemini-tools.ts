@@ -168,6 +168,11 @@ function getStandardToolParams(toolName: string): {
       filename: { type: 'STRING', description: 'Filter by filename (contains)' },
       mimeType: { type: 'STRING', description: 'Filter by MIME type' },
     },
+    // Generic 'any' property filter for all collections - allows querying by any field
+    '*': {
+      status: { type: 'STRING', description: 'Filter by status' },
+      title: { type: 'STRING', description: 'Filter by title (contains)' },
+    },
   }
 
   const extraParams = collectionParams[toolName] || {}

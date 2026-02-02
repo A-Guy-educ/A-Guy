@@ -220,6 +220,13 @@
       "noCourse": "No course selected. Please select a course from the home page."
     }
   },
+  "admin": {
+    "chat": {
+      "chatWelcome": "Hi! I'm your admin AI assistant. Ask me about courses, chapters, lessons, exercises, or media in your system.",
+      "chatInputPlaceholder": "Ask a question...",
+      "chatAuthRequired": "Please log in to access admin chat"
+    }
+  },
   "study": {
     "loading": "Loading...",
     "chooseCourse": "Choose Course",

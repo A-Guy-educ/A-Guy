@@ -13,9 +13,44 @@
  * @pattern plugin-configuration, read-only-access, tenant-scoped
  */
 
+import { AccountRole } from '@/server/payload/collections/Users/roles'
+import type { MCPAccessSettings } from '@payloadcms/plugin-mcp'
 import { mcpPlugin } from '@payloadcms/plugin-mcp'
+import type { PayloadRequest } from 'payload'
+
+/**
+ * Custom auth override that allows authenticated admin users to access MCP tools
+ * without requiring a separate API key.
+ */
+export async function overrideAuth(
+  req: PayloadRequest,
+  getDefaultMcpAccessSettings: () => Promise<MCPAccessSettings>,
+): Promise<MCPAccessSettings> {
+  // If user is authenticated via session (cookie) and is an admin, grant access
+  if (req.user && 'role' in req.user && req.user.role === AccountRole.Admin) {
+    // Return access settings that allow read operations for admins
+    return {
+      user: req.user,
+      // Grant find access to all configured collections
+      courses: { find: true, create: false, update: false, delete: false },
+      chapters: { find: true, create: false, update: false, delete: false },
+      lessons: { find: true, create: false, update: false, delete: false },
+      exercises: { find: true, create: false, update: false, delete: false },
+      media: { find: true, create: false, update: false, delete: false },
+    } as MCPAccessSettings
+  }
+
+  // Otherwise, fall back to default API key authentication
+  return getDefaultMcpAccessSettings()
+}
 
 export const mcp = mcpPlugin({
+  // User collection for authentication
+  userCollection: 'users',
+
+  // Custom auth override to allow session-based admin access
+  overrideAuth,
+
   // Collection configurations - read-only access
   collections: {
     courses: {

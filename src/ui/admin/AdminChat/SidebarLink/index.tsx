@@ -8,14 +8,15 @@
  */
 'use client'
 
+import Link from 'next/link'
 import React from 'react'
 
 export const AdminChatSidebarLink: React.FC = () => {
   return (
     <li className="nav__item">
-      <a href="/admin/chat" className="nav__link">
+      <Link href="/admin/chat" className="nav__link">
         <span className="nav__label">Admin Chat</span>
-      </a>
+      </Link>
     </li>
   )
 }

@@ -100,19 +100,17 @@ export function useNotebookChat({
   const [chatError, setChatError] = useState<ChatError | null>(null)
 
   // Compute contextKey based on available context
-  // Priority for admin mode: user-specific admin context
+  // For admin mode: use users:{userId} (user-scoped conversation)
   // Priority for regular mode: Exercise > Lesson > Chapter > Course > Category
   const contextKey = useMemo(() => {
-    if (adminMode && userId) {
-      return `admin:user:${userId}`
-    }
     if (exerciseId) return `exercises:${exerciseId}`
     if (lessonId) return `lessons:${lessonId}`
     if (chapterId) return `chapters:${chapterId}`
     if (courseId) return `courses:${courseId}`
     if (categoryId) return `categories:${categoryId}`
+    if (adminMode && userId) return `users:${userId}`
     return null
-  }, [adminMode, userId, exerciseId, lessonId, chapterId, courseId, categoryId])
+  }, [exerciseId, lessonId, chapterId, courseId, categoryId, adminMode, userId])
 
   // Simple scroll to bottom using scrollTop instead of scrollIntoView
   // scrollIntoView can cause layout issues in nested flex containers

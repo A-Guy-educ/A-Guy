@@ -1,6 +1,18 @@
 {
   "permissions": {
-    "allow": ["Bash(ls:*)", "Bash(git checkout:*)", "Bash(mongosh:*)"]
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(git checkout:*)",
+      "Bash(mongosh:*)",
+      "Bash(cat:*)",
+      "WebFetch(domain:payloadcms.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(find:*)",
+      "Bash(curl:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(grep:*)"
+    ]
   },
   "mcpServers": {}
 }
