@@ -93,9 +93,7 @@ export class JobService {
     if (ctx.sourceDocId) query['input.ctx.sourceDocId'] = ctx.sourceDocId
     if (ctx.tenantId) query['input.ctx.tenantId'] = ctx.tenantId
 
-    console.log('[JobService.findByContext] Query:', JSON.stringify(query))
     const docs = await this.collection.find(query).sort({ createdAt: -1 }).limit(limit).toArray()
-    console.log('[JobService.findByContext] Found docs:', docs.length)
 
     return docs.map((doc) => ({
       ...doc,

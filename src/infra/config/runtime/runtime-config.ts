@@ -158,7 +158,8 @@ export async function loadRuntimeConfig(
       }
 
       try {
-        if (kind === ConfigKind.Variable) {
+        // SystemParam is treated like Variable (plaintext, no encryption)
+        if (kind === ConfigKind.Variable || kind === ConfigKind.SystemParam) {
           variables.get(tId)!.set(key, value)
         } else if (kind === ConfigKind.Secret && value && value.length > 0) {
           secrets.get(tId)!.set(key, decryptSecret(value))

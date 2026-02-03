@@ -14,12 +14,12 @@ import { Plugin } from 'payload'
 import { getServerSideURL } from '@/infra/utils/getURL'
 import { Page } from '@/payload-types'
 
-// Temporarily disabled - @payloadcms/plugin-mcp not available in dependencies
-// TODO: Re-enable when MCP plugin is properly configured
-// const mcpEnabled = process.env.MCP_ENABLED === 'true'
+import { mcp as mcpPlugin } from './mcp'
 
-// const mcp = mcpEnabled ? require('@/plugins/mcp').mcp : null
-const mcp = null
+// MCP plugin - conditionally enabled based on env var or default
+// Order: env var 'false' → env var 'true' → default to true
+// Note: ConfigEntry check can be added in the handler for runtime flexibility
+const mcp = process.env.MCP_ENABLED === 'false' ? null : mcpPlugin
 
 const generateTitle: GenerateTitle<Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
@@ -29,6 +29,30 @@ const generateURL: GenerateURL<Page> = ({ doc }) => {
   const url = getServerSideURL()
 
   return doc?.slug ? `${url}/${doc.slug}` : url
+}
+
+// Vercel Blob storage plugin - throws error if token is not available
+// During type generation (PAYLOAD_GENERATE_TYPES=true), this is skipped
+let vercelBlobPlugin: Plugin | null = null
+if (process.env.PAYLOAD_GENERATE_TYPES !== 'true') {
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN
+
+  if (!blobToken) {
+    throw new Error(
+      'BLOB_READ_WRITE_TOKEN environment variable is required. ' +
+        'Vercel Blob storage is mandatory for this application. ' +
+        'Please set BLOB_READ_WRITE_TOKEN in your environment configuration.',
+    )
+  }
+
+  vercelBlobPlugin = vercelBlobStorage({
+    // Enable blob storage for media and exercise-assets collections
+    collections: {
+      media: true,
+      'exercise-assets': true,
+    },
+    token: blobToken,
+  })
 }
 
 export const plugins: Plugin[] = [
@@ -97,18 +121,7 @@ export const plugins: Plugin[] = [
       },
     },
   }),
-  // Only enable blob storage if token is available (handles CI/postinstall scenarios)
-  ...(process.env.BLOB_READ_WRITE_TOKEN
-    ? [
-        vercelBlobStorage({
-          collections: {
-            media: true,
-            'exercise-assets': true,
-          },
-          token: process.env.BLOB_READ_WRITE_TOKEN,
-        }),
-      ]
-    : []),
+  ...(vercelBlobPlugin ? [vercelBlobPlugin] : []),
   // Only include MCP plugin when explicitly enabled
   ...(mcp ? [mcp] : []),
 ]

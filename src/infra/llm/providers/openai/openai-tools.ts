@@ -238,7 +238,9 @@ export interface ParsedToolCall {
 /**
  * Check if a response contains tool calls
  */
-export function hasOpenAIToolCalls(response: unknown): response is {
+export function hasOpenAIToolCalls(
+  response: unknown,
+): response is {
   choices: Array<{
     message: { tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> }
   }>

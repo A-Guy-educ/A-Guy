@@ -53,7 +53,7 @@ export async function normalizeToAbsoluteUrl(url: string): Promise<string> {
 export async function getPdfBufferFromBlob(
   mediaId: string,
   payload: any,
-  _req?: { headers?: { authorization?: string; cookie?: string } },
+  req?: { headers?: { authorization?: string; cookie?: string } },
 ): Promise<Buffer> {
   // Fetch media document
   const media = await payload.findByID({ collection: 'media', id: mediaId, depth: 0 })
@@ -78,9 +78,19 @@ export async function getPdfBufferFromBlob(
     // Vercel Blob URL - use adapter's optimized function
     pdfBuffer = await getPdfBufferFromUrl(media.url)
   } else {
-    // Payload API endpoint or relative URL - use generic HTTP fetch
+    // Payload API endpoint or relative URL - use generic HTTP fetch with auth headers
     const normalizedUrl = await normalizeToAbsoluteUrl(media.url)
-    pdfBuffer = await fetchBuffer(normalizedUrl)
+
+    // Build auth headers from request if provided
+    const headers: Record<string, string> = {}
+    if (req?.headers?.authorization) {
+      headers['Authorization'] = req.headers.authorization
+    }
+    if (req?.headers?.cookie) {
+      headers['Cookie'] = req.headers.cookie
+    }
+
+    pdfBuffer = await fetchBuffer(normalizedUrl, 30000, headers)
   }
 
   // Validate size

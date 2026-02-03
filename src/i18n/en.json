@@ -155,6 +155,9 @@
     "chatFullSolution": "Full",
     "chatInputPlaceholder": "Send a message...",
     "chatAuthRequired": "Please sign in to use the AI helper",
+    "chatAuthRequiredLogin": "Log in",
+    "chatAuthRequiredCTA": "Sign up to continue",
+    "chatErrorDismiss": "Dismiss error",
     "chatHintPrompt": "Can you give me a hint to help me solve this?",
     "chatSolutionPrompt": "Can you explain the solution approach?",
     "chatFullSolutionPrompt": "Can you provide the complete solution with all steps?",
@@ -215,6 +218,13 @@
       "chatAuthRequired": "Please sign in to ask questions",
       "loading": "Loading...",
       "noCourse": "No course selected. Please select a course from the home page."
+    }
+  },
+  "admin": {
+    "chat": {
+      "chatWelcome": "Hi! I'm your admin AI assistant. Ask me about courses, chapters, lessons, exercises, or media in your system.",
+      "chatInputPlaceholder": "Ask a question...",
+      "chatAuthRequired": "Please log in to access admin chat"
     }
   },
   "study": {

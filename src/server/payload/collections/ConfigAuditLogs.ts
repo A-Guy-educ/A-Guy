@@ -62,6 +62,7 @@ export const ConfigAuditLogs: CollectionConfig = {
       options: [
         { label: 'Variable', value: ConfigKind.Variable },
         { label: 'Secret', value: ConfigKind.Secret },
+        { label: 'System Param', value: ConfigKind.SystemParam },
       ],
       admin: {
         description: 'Type of config entry',

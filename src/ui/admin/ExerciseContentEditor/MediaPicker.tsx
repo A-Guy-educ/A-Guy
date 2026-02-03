@@ -1,9 +1,9 @@
 'use client'
 
-import React from 'react'
+import type { Media } from '@/payload-types'
 import { useTranslation } from '@payloadcms/ui'
 import Image from 'next/image'
-import type { Media } from '@/payload-types'
+import React from 'react'
 
 interface MediaPickerProps {
   isOpen: boolean
@@ -116,7 +116,10 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({
             <div className="media-grid">
               {filteredMedia.map((item) => {
                 const isSelected = localSelectedIds.includes(item.id)
-                const thumbnailUrl = item.sizes?.thumbnail?.url || item.url
+                // Cast to any to bypass strict type checking for blob storage sizes
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const itemAny = item as any
+                const thumbnailUrl = itemAny.sizes?.thumbnail?.url || item.url
 
                 return (
                   <div

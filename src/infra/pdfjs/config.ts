@@ -9,17 +9,39 @@ export const PDFJS_VERSION = '4.4.168'
 
 export const CDN_BASE = `https://96hg0ck1hvrndmxp.public.blob.vercel-storage.com/pdfjs/${PDFJS_VERSION}`
 
-/**
- * PDF.js viewer asset URLs on Vercel Blob CDN
- * These are hashed URLs from the uploaded viewer files
- */
 export const VIEWER_URLS = {
   html: `${CDN_BASE}/viewer-I6DnqEMX9W9cwNNvWKm3D8YvXdCzUA.html`,
   mjs: `${CDN_BASE}/viewer-SyYgQ0jufpmBIqrWX2zGA21kZmurH6.mjs`,
   css: `${CDN_BASE}/viewer-MgMiA2nNdPgVwb4uc8CAB6Twx6vmUC.css`,
-  // Non-hashed pdf.mjs so worker can find pdf.worker.mjs in same directory
   pdfMjs: `${CDN_BASE}/build/pdf.mjs`,
-} as const
+  pdfWorkerMjs: `${CDN_BASE}/build/pdf.worker.mjs`,
+}
+
+/**
+ * Flexible viewer URLs type - allows both const and test types
+ */
+export type ViewerUrls = {
+  html: string
+  mjs: string
+  css: string
+  pdfMjs: string
+  pdfWorkerMjs: string
+}
+
+/**
+ * Get the PDF.js worker URL for server-side processing
+ * Must be called before using pdfjs-dist for segmentation
+ */
+export async function getPdfWorkerUrl(): Promise<string> {
+  return VIEWER_URLS.pdfWorkerMjs
+}
+
+/**
+ * Synchronous wrapper for VIEWER_URLS - returns the hardcoded viewer URLs
+ */
+export function getViewerUrls() {
+  return VIEWER_URLS
+}
 
 /**
  * Cache configuration

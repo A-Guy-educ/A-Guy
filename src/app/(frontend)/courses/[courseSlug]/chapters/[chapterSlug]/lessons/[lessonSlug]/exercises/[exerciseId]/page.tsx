@@ -3,7 +3,7 @@ import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryLessonBySlug } from '@/server/repos/queries/lessons'
 import { queryExerciseById } from '@/server/repos/queries/exercises'
 import { ExerciseWorkspace } from './_components/ExerciseWorkspace'
-import { ChatInterface } from './_components/ChatInterface'
+import { ChatInterface } from '@/ui/web/chat'
 import { ExerciseRenderer } from '@/ui/web/exerciserenderer'
 import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
 
@@ -66,7 +66,16 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
           />
         </div>
       }
-      chatContent={<ChatInterface exerciseId={exerciseId} />}
+      chatContent={
+        <ChatInterface
+          exerciseId={exerciseId}
+          lessonId={lesson.id}
+          translationNamespace="courses"
+          showQuickActions={true}
+          showResetButton={true}
+          showMathTools={true}
+        />
+      }
     />
   )
 }

@@ -17,10 +17,6 @@ export {
   readIntEnv,
 }
 
-export const MAX_SEGMENT_PAGES = 2
-export const MAX_EXERCISES_PER_SEGMENT = 1000
-export const MAX_PROMPT_SIZE_BYTES = 50 * 1024
-
 // Re-export TASK_SLUG for backward compatibility
 export const TASK_SLUG = TASK_SLUGS.PDF_TO_EXERCISES
 

@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { logger } from '@/infra/utils/logger'
 import { RESPONSE_HEADERS } from '@/infra/pdfjs/config'
-import { validateFileUrl, redactUrl } from '@/infra/pdfjs/validator'
-import { loadViewerTemplate, loadViewerCss } from '@/infra/pdfjs/template-loader'
-import { rewriteCss, renderViewerHtml, validateRewrittenHtml } from '@/infra/pdfjs/renderer'
+import { renderViewerHtml, rewriteCss, validateRewrittenHtml } from '@/infra/pdfjs/renderer'
+import { loadViewerCss, loadViewerTemplate } from '@/infra/pdfjs/template-loader'
+import { redactUrl, validateFileUrl } from '@/infra/pdfjs/validator'
+import { logger } from '@/infra/utils/logger'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * PDF.js Viewer Proxy
@@ -82,10 +82,10 @@ export async function GET(request: NextRequest) {
     const rewrittenCss = rewriteCss(cssResult.css)
 
     // Render final HTML
-    let html = renderViewerHtml(templateResult.html, rewrittenCss)
+    let html = await renderViewerHtml(templateResult.html, rewrittenCss)
 
     // Validate rewrite was successful
-    const validation = validateRewrittenHtml(html)
+    const validation = await validateRewrittenHtml(html)
     if (!validation.valid) {
       reqLogger.error({ issues: validation.issues }, 'HTML rewrite validation failed')
       return NextResponse.json({ error: 'PDF viewer rendering error' }, { status: 500 })

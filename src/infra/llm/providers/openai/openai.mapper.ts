@@ -53,7 +53,9 @@ export function extractTextFromOpenAIResponse(response: {
 /**
  * Check if response contains tool calls
  */
-export function hasToolCalls(response: unknown): response is {
+export function hasToolCalls(
+  response: unknown,
+): response is {
   choices: Array<{
     message: { tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> }
   }>

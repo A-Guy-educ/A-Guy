@@ -59,6 +59,10 @@ Find code examples using the AI-optimized indexes:
 2. **Always pass `req`** to nested operations in hooks for transaction safety
 3. **Use `req.context`** flags to prevent infinite hook loops
 
+## Storage Constraints
+
+**Vercel Blob Only** - This project uses Vercel Blob storage exclusively for file storage:
+
 ## Project Structure
 
 ```

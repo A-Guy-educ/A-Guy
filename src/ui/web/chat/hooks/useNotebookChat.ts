@@ -1,3 +1,5 @@
+'use client'
+
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 
@@ -16,6 +18,11 @@ export interface UploadedMedia {
   id: string
   filename: string
   mimeType: string
+}
+
+export interface ChatError {
+  type: 'auth' | 'general'
+  message: string
 }
 
 // Media upload constraints
@@ -38,6 +45,11 @@ interface UseNotebookChatProps {
   lessonId?: string
   chapterId?: string
   courseId?: string
+  // Admin context - category for admin chat scope
+  categoryId?: string
+  // Admin mode - uses user-specific context without course/lesson context
+  adminMode?: boolean
+  userId?: string
   // Media upload messages
   unsupportedFileTypeMessage?: string
   fileTooLargeMessage?: string
@@ -60,6 +72,9 @@ export function useNotebookChat({
   lessonId,
   chapterId,
   courseId,
+  categoryId,
+  adminMode = false,
+  userId,
   unsupportedFileTypeMessage = 'Unsupported file type',
   fileTooLargeMessage = 'File too large (max 10MB)',
   maxFilesMessage = 'Maximum 5 files allowed',
@@ -81,14 +96,21 @@ export function useNotebookChat({
   const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([])
   const [isUploading, setIsUploading] = useState(false)
 
-  // Compute contextKey based on available context (priority: Exercise > Lesson > Chapter > Course)
+  // Error state
+  const [chatError, setChatError] = useState<ChatError | null>(null)
+
+  // Compute contextKey based on available context
+  // For admin mode: use users:{userId} (user-scoped conversation)
+  // Priority for regular mode: Exercise > Lesson > Chapter > Course > Category
   const contextKey = useMemo(() => {
     if (exerciseId) return `exercises:${exerciseId}`
     if (lessonId) return `lessons:${lessonId}`
     if (chapterId) return `chapters:${chapterId}`
     if (courseId) return `courses:${courseId}`
+    if (categoryId) return `categories:${categoryId}`
+    if (adminMode && userId) return `users:${userId}`
     return null
-  }, [exerciseId, lessonId, chapterId, courseId])
+  }, [exerciseId, lessonId, chapterId, courseId, categoryId, adminMode, userId])
 
   // Simple scroll to bottom using scrollTop instead of scrollIntoView
   // scrollIntoView can cause layout issues in nested flex containers
@@ -378,13 +400,15 @@ export function useNotebookChat({
           lessonId,
           chapterId,
           courseId,
+          categoryId,
         },
         mediaIds.length > 0 ? mediaIds : undefined,
+        adminMode, // Pass adminMode flag to API
       )
 
       if (!result.success) {
         if (result.authRequired) {
-          toast.error(authRequiredMessage)
+          setChatError({ type: 'auth', message: authRequiredMessage })
         } else {
           toast.error(result.error || errorMessage)
         }
@@ -455,6 +479,10 @@ export function useNotebookChat({
     sendMessage(prompts[actionType])
   }
 
+  const dismissError = useCallback(() => {
+    setChatError(null)
+  }, [])
+
   return {
     messages,
     inputValue,
@@ -476,5 +504,8 @@ export function useNotebookChat({
     handleFileSelect,
     removeMedia,
     openFilePicker,
+    // Error handling
+    chatError,
+    dismissError,
   }
 }

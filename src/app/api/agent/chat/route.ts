@@ -1,8 +1,8 @@
+import { logger } from '@/infra/utils/logger/logger'
+import { agentChat } from '@/server/payload/endpoints/agent/chat'
+import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
-import config from '@payload-config'
-import { agentChat } from '@/server/payload/endpoints/agent/chat'
-import { logger } from '@/infra/utils/logger/logger'
 
 export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID()
@@ -14,10 +14,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     // Validate required fields
-    // At least one context ID must be provided (exerciseId, lessonId, chapterId, or courseId)
-    const hasContext = body.exerciseId || body.lessonId || body.chapterId || body.courseId
+    // At least one context ID must be provided OR adminMode must be true
+    const hasContext =
+      body.exerciseId || body.lessonId || body.chapterId || body.courseId || body.categoryId
+    const hasAdminMode = body.adminMode === true
 
-    if (!hasContext) {
+    if (!hasContext && !hasAdminMode) {
       logger.warn(
         {
           requestId,
@@ -26,13 +28,16 @@ export async function POST(request: NextRequest) {
             lessonId: body.lessonId,
             chapterId: body.chapterId,
             courseId: body.courseId,
+            categoryId: body.categoryId,
+            adminMode: body.adminMode,
           },
         },
-        'Missing context ID in chat request (requires exerciseId, lessonId, chapterId, or courseId)',
+        'Missing context ID in chat request (requires exerciseId, lessonId, chapterId, courseId, categoryId, or adminMode)',
       )
       return NextResponse.json(
         {
-          error: 'Missing context ID (requires exerciseId, lessonId, chapterId, or courseId)',
+          error:
+            'Missing context ID (requires exerciseId, lessonId, chapterId, courseId, categoryId, or adminMode)',
           requestId,
         },
         { status: 400 },

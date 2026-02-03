@@ -1,4 +1,5 @@
-import { ENV, MAX_PROMPT_SIZE_BYTES } from '@/server/config/constants'
+import { getPdfConversionMaxPromptSizeBytes } from '@/infra/config/system-params'
+import { ENV } from '@/server/config/constants'
 import { validatePromptForUsageAndTenant } from '@/server/services/exercise-conversion/helpers'
 import { hashTextSha256 } from '@/server/utils/hash'
 import config from '@payload-config'
@@ -34,8 +35,9 @@ export async function POST(request: NextRequest) {
     const { user } = await payload.auth({ headers: request.headers })
 
     let isAdmin = false
-    // role is a select field (string), not an array
-    if (user && user.role === 'admin') {
+    // Check if user is from 'users' collection (has 'role' property)
+    // PayloadMcpApiKey doesn't have 'role', so we need to check collection
+    if (user && 'collection' in user && user.collection === 'users' && user.role === 'admin') {
       isAdmin = true
     }
 
@@ -132,8 +134,9 @@ export async function POST(request: NextRequest) {
 
     // ========== Prompt Size Validation (after validation passes) ==========
     // Use byteLength for accurate size check (UTF-8 encoding)
+    const maxPromptSize = getPdfConversionMaxPromptSizeBytes(lessonTenantId)
     const extractorSize = Buffer.byteLength(extractorPrompt.template, 'utf8')
-    if (extractorSize > MAX_PROMPT_SIZE_BYTES) {
+    if (extractorSize > maxPromptSize) {
       return errorResponse(
         'VALIDATION_ERROR',
         'Extractor prompt template exceeds maximum size',
@@ -141,7 +144,7 @@ export async function POST(request: NextRequest) {
       )
     }
     const verifierSize = Buffer.byteLength(verifierPrompt.template, 'utf8')
-    if (verifierSize > MAX_PROMPT_SIZE_BYTES) {
+    if (verifierSize > maxPromptSize) {
       return errorResponse('VALIDATION_ERROR', 'Verifier prompt template exceeds maximum size', 400)
     }
 

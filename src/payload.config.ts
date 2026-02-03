@@ -28,12 +28,27 @@ import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/im
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
+import type { JobDocument } from '@/server/payload/jobs/types'
 import { plugins } from '@/server/payload/plugins'
 import { Footer } from '@/ui/web/footer/config'
 import { Header } from '@/ui/web/header/config'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+/**
+ * Helper to check if user is admin
+ * Safely handles union type (User | PayloadMcpApiKey)
+ */
+function isAdminUser(req: PayloadRequest): boolean {
+  const user = req.user
+  if (!user) return false
+  // PayloadMcpApiKey doesn't have 'role', check collection first
+  if ('collection' in user && user.collection === 'users' && user.role === 'admin') {
+    return true
+  }
+  return false
+}
 
 // Validate DATABASE_URL is set and not empty
 // This prevents accidental fallback to localhost when Atlas connection string is expected
@@ -61,7 +76,8 @@ export default buildConfig({
       beforeLogin: ['@/ui/admin/BeforeLogin'],
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
-      beforeDashboard: ['@/ui/admin/BeforeDashboard'],
+      beforeDashboard: ['@/ui/admin/BeforeDashboard', '@/ui/admin/AdminChat/DashboardWidget'],
+      beforeNavLinks: ['@/ui/admin/AdminChat/SidebarLink'],
     },
     importMap: {
       baseDir: path.resolve(dirname),
@@ -172,14 +188,15 @@ export default buildConfig({
       access: {
         ...defaultJobsCollection.access,
         // Admin-only access
-        read: ({ req }) => req.user?.role === 'admin',
-        update: ({ req }) => req.user?.role === 'admin',
-        delete: ({ req }) => req.user?.role === 'admin',
+        read: ({ req }) => isAdminUser(req),
+        update: ({ req }) => isAdminUser(req),
+        delete: ({ req }) => isAdminUser(req),
       },
       hooks: {
         afterRead: [
-          (args) => {
-            const job = args.doc as any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- args.doc type comes from Payload internal types
+          (args: any) => {
+            const job = args.doc as unknown as JobDocument
             // Compute display fields for admin UI
 
             // status: Compute from MongoDB fields
@@ -198,12 +215,14 @@ export default buildConfig({
 
             // progress: Show segments progress if available
             let progress = '—'
-            if (job?.output?.segmentsTotal) {
-              progress = `${job.output.segmentsDone || 0}/${job.output.segmentsTotal} segments`
+            const output = job?.output as Record<string, unknown> | undefined
+            if (output?.segmentsTotal && typeof output.segmentsTotal === 'number') {
+              progress = `${(output.segmentsDone as number) || 0}/${output.segmentsTotal} segments`
             }
 
             // hasErrors: Show ✅ or ❌
-            const hasErrors = job?.output?.errors?.length > 0 ? '❌' : '✅'
+            const errors = output?.errors as unknown[] | undefined
+            const hasErrors = (errors?.length ?? 0) > 0 ? '❌' : '✅'
 
             return {
               ...job,

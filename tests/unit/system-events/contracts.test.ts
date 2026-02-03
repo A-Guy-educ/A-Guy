@@ -145,7 +145,7 @@ describe('Schema Validation', () => {
   })
 
   describe('PdfViewedSchema', () => {
-    it('validates valid PDF viewed payload', () => {
+    it('validates valid PDF viewed payload with absolute URL', () => {
       const payload = {
         pdf_url: 'https://example.com/document.pdf',
         pdf_title: 'Document',
@@ -154,8 +154,44 @@ describe('Schema Validation', () => {
       expect(result.success).toBe(true)
     })
 
-    it('rejects invalid URL', () => {
+    it('accepts Vercel Blob URL', () => {
+      const payload = {
+        pdf_url: 'https://pub-xxxxx.blob.vercel-storage.com/media/document.pdf',
+      }
+      const result = PdfViewedSchema.safeParse(payload)
+      expect(result.success).toBe(true)
+    })
+
+    it('accepts relative path starting with /api/media', () => {
+      const payload = {
+        pdf_url: '/api/media/file/document.pdf',
+      }
+      const result = PdfViewedSchema.safeParse(payload)
+      expect(result.success).toBe(true)
+    })
+
+    it('accepts relative path with encoded characters', () => {
+      const payload = {
+        pdf_url: '/api/media/file/Math%20-%205units%20-%20571.pdf',
+      }
+      const result = PdfViewedSchema.safeParse(payload)
+      expect(result.success).toBe(true)
+    })
+
+    it('rejects invalid URL (not a URL and not a relative path)', () => {
       const payload = { pdf_url: 'not-a-url' }
+      const result = PdfViewedSchema.safeParse(payload)
+      expect(result.success).toBe(false)
+    })
+
+    it('rejects empty string', () => {
+      const payload = { pdf_url: '' }
+      const result = PdfViewedSchema.safeParse(payload)
+      expect(result.success).toBe(false)
+    })
+
+    it('rejects relative path not starting with /', () => {
+      const payload = { pdf_url: 'api/media/file.pdf' }
       const result = PdfViewedSchema.safeParse(payload)
       expect(result.success).toBe(false)
     })

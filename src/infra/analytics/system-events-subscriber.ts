@@ -194,8 +194,10 @@ export function initAnalyticsSubscriber(): () => void {
         user_id: payload.user_id,
         registration_method: payload.registration_method,
       })
-      // Also identify the new user
+      // Alias anonymous user to registered user, THEN identify
       if (payload.user_id) {
+        // CRITICAL: Call alias BEFORE identify to merge anonymous history
+        analytics.alias(payload.user_id)
         analytics.identify(payload.user_id, {
           registration_method: payload.registration_method,
         })

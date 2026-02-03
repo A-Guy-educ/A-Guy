@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { useNotebookChat } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat/useNotebookChat'
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import { apiService } from '@/server/services/api/api-service'
+import { useNotebookChat } from '@/ui/web/chat'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { toast } from 'sonner'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -86,8 +86,10 @@ describe('useNotebookChat', () => {
         lessonId: undefined,
         chapterId: undefined,
         courseId: undefined,
+        categoryId: undefined,
       },
       undefined,
+      false, // adminMode
     )
   })
 
@@ -108,7 +110,19 @@ describe('useNotebookChat', () => {
       result.current.handleSubmit({ preventDefault: () => undefined } as React.FormEvent)
     })
 
-    expect(toast.error).toHaveBeenCalledWith(defaultProps.authRequiredMessage)
+    // Auth errors now set chatError state instead of showing toast
+    expect(result.current.chatError).toEqual({
+      type: 'auth',
+      message: defaultProps.authRequiredMessage,
+    })
+    expect(toast.error).not.toHaveBeenCalled()
+
+    // Test dismissError
+    act(() => {
+      result.current.dismissError()
+    })
+
+    expect(result.current.chatError).toBeNull()
   })
 
   it('sends quick action prompts', async () => {
@@ -127,9 +141,46 @@ describe('useNotebookChat', () => {
         lessonId: undefined,
         chapterId: undefined,
         courseId: undefined,
+        categoryId: undefined,
       },
       undefined,
+      false, // adminMode
     )
+  })
+
+  it('uses categoryId for admin chat context', async () => {
+    const adminProps = {
+      ...defaultProps,
+      categoryId: 'admin',
+      exerciseId: undefined,
+    }
+    const { result } = renderHook(() => useNotebookChat(adminProps))
+
+    expect(result.current.contextKey).toBe('categories:admin')
+
+    await waitFor(() => expect(result.current.isLoadingHistory).toBe(false))
+    expect(apiService.getConversation).toHaveBeenCalledWith('categories:admin')
+  })
+
+  it('generates correct contextKey for category', () => {
+    const adminProps = {
+      ...defaultProps,
+      categoryId: 'admin-support',
+      exerciseId: undefined,
+    }
+    const { result } = renderHook(() => useNotebookChat(adminProps))
+
+    expect(result.current.contextKey).toBe('categories:admin-support')
+  })
+
+  it('prioritizes exercise over category', () => {
+    const props = {
+      ...defaultProps,
+      categoryId: 'admin',
+    }
+    const { result } = renderHook(() => useNotebookChat(props))
+
+    expect(result.current.contextKey).toBe('exercises:exercise-1')
   })
 
   it('resets conversation after confirmation', async () => {

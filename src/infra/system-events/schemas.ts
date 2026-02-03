@@ -103,9 +103,15 @@ export type LessonEndedPayload = z.infer<typeof LessonEndedSchema>
 // PDF Viewed Event
 // ============================================================================
 
+// URL validator that accepts both absolute URLs and /api/media relative paths
+const pdfUrlSchema = z.union([
+  z.string().url('pdf_url must be a valid URL'),
+  z.string().regex(/^\/api\/media\//, 'pdf_url must be a valid URL or /api/media/... path'),
+])
+
 export const PdfViewedSchema = z
   .object({
-    pdf_url: z.string().url('pdf_url must be a valid URL'),
+    pdf_url: pdfUrlSchema,
     pdf_title: z.string().optional(),
     file_name: z.string().optional(),
     document_id: z.string().optional(),

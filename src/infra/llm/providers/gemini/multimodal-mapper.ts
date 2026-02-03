@@ -5,8 +5,10 @@
 import type { Part } from '@google/generative-ai'
 import fs from 'fs/promises'
 
-import { logger } from '@/infra/utils/logger'
+import { isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
 import type { MediaPartWithPath } from '@/infra/llm/multimodal/types'
+import { logger } from '@/infra/utils/logger'
+import { normalizeToAbsoluteUrl } from '@/server/services/pdf-fetcher'
 import type { Payload } from 'payload'
 
 /**
@@ -91,6 +93,16 @@ async function convertMediaToGeminiPart(
         throw new Error('Media document has no file URL')
       }
 
+      // Normalize URL to handle local/relative URLs (fixes ECONNREFUSED errors)
+      let fetchUrl = mediaDoc.url
+      if (!isVercelBlobUrl(mediaDoc.url)) {
+        fetchUrl = await normalizeToAbsoluteUrl(mediaDoc.url)
+        logger.info(
+          { mediaId, originalUrl: mediaDoc.url, normalizedUrl: fetchUrl },
+          '[MultimodalMapper] Normalized URL for fetch',
+        )
+      }
+
       // Fetch the file using the URL with authentication headers
       const headers: Record<string, string> = {}
       if (req?.headers.authorization) {
@@ -101,11 +113,11 @@ async function convertMediaToGeminiPart(
       }
 
       logger.info(
-        { mediaId, publicUrl, hasAuth: !!req?.headers.authorization },
+        { mediaId, fetchUrl, hasAuth: !!req?.headers.authorization },
         '[MultimodalMapper] Fetching file with auth headers',
       )
 
-      const response = await fetch(publicUrl, { headers })
+      const response = await fetch(fetchUrl, { headers })
       if (!response.ok) {
         throw new Error(`HTTP fetch failed: ${response.status} ${response.statusText}`)
       }

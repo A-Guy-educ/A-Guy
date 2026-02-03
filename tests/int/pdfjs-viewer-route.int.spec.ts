@@ -1,7 +1,14 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { NextRequest } from 'next/server'
 import { GET } from '@/app/api/pdfjs-viewer/route'
 import { clearTemplateCache } from '@/infra/pdfjs/template-loader'
+import { NextRequest } from 'next/server'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock the vercel-blob-adapter module
+vi.mock('@/infra/blob/vercel-blob-adapter', () => ({
+  getExternalStorageUrl: vi.fn(),
+}))
+
+import { getExternalStorageUrl } from '@/infra/blob/vercel-blob-adapter'
 
 describe('PDF.js Viewer Route Integration', () => {
   const mockViewerHtml = `
@@ -25,6 +32,7 @@ describe('PDF.js Viewer Route Integration', () => {
   `.trim()
 
   const testOrigin = 'https://example.com'
+  const mockExternalUrl = 'https://example.blob.vercel-storage.com'
 
   beforeEach(() => {
     // Clear template cache before each test
@@ -32,6 +40,9 @@ describe('PDF.js Viewer Route Integration', () => {
 
     // Mock global fetch
     global.fetch = vi.fn()
+
+    // Mock getExternalStorageUrl to return the external URL
+    vi.mocked(getExternalStorageUrl).mockResolvedValue(mockExternalUrl)
   })
 
   afterEach(() => {

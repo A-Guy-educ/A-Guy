@@ -1,12 +1,13 @@
 'use client'
 
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { Course } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/web/components/card'
 import { Button } from '@/ui/web/components/button'
 import { Badge } from '@/ui/web/components/badge'
 import { ArrowRight } from 'lucide-react'
+import { setUserProfile, getUserProfile } from '@/client/state/localStorage/userProfile'
 
 interface CourseCardProps {
   course: Course
@@ -14,9 +15,34 @@ interface CourseCardProps {
 
 export function CourseCard({ course }: CourseCardProps) {
   const t = useTranslations('courses')
+  const router = useRouter()
 
-  if (!course.slug) {
+  // Early return if slug is missing or invalid
+  if (!course.slug || course.slug.trim() === '' || course.slug === '-') {
     return null
+  }
+
+  const handleCourseSelect = (e: React.MouseEvent) => {
+    e.preventDefault()
+
+    // Double-check slug is valid before navigation
+    if (!course.slug || course.slug.trim() === '' || course.slug === '-') {
+      console.error('Cannot navigate: invalid course slug', course)
+      return
+    }
+
+    // Update localStorage with the selected course
+    const gradeLevel = course.courseLabel || '8'
+    const existingProfile = getUserProfile()
+
+    setUserProfile({
+      gradeLevel,
+      mood: existingProfile?.mood || '',
+      lastVisit: new Date().toISOString(),
+    })
+
+    // Navigate to home page after localStorage is updated
+    router.push('/')
   }
 
   return (
@@ -43,16 +69,11 @@ export function CourseCard({ course }: CourseCardProps) {
 
         <CardFooter className="relative mt-auto pt-4">
           <Button
-            asChild
-            className="w-full group/btn bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300"
+            onClick={handleCourseSelect}
+            className="w-full group/btn bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 flex items-center justify-center gap-2"
           >
-            <Link
-              href={`/courses/${course.slug}`}
-              className="flex items-center justify-center gap-2"
-            >
-              {t('openCourse')}
-              <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-            </Link>
+            {t('openCourse')}
+            <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
           </Button>
         </CardFooter>
       </Card>

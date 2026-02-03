@@ -7,15 +7,23 @@
  *
  * @param url - The URL to fetch from (absolute URL)
  * @param timeoutMs - Request timeout in milliseconds (default 30 seconds)
+ * @param headers - Optional headers to include in the request
  * @returns Buffer containing the response body
  * @throws Error if fetch fails or times out
  */
-export async function fetchBuffer(url: string, timeoutMs = 30000): Promise<Buffer> {
+export async function fetchBuffer(
+  url: string,
+  timeoutMs = 30000,
+  headers?: Record<string, string>,
+): Promise<Buffer> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    const response = await fetch(url, { signal: controller.signal })
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers,
+    })
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} ${response.statusText}`)
