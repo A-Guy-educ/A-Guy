@@ -17,9 +17,12 @@
  * - Automatic maintenance and memory extraction
  */
 import { composePrompt, getRecentWindow, type Message } from '@/infra/llm/context-policy'
-import { AI_MODELS } from '@/infra/llm/models'
 import { createContextLog, logContextUsage, logPromptSnapshot } from '@/infra/llm/observability'
-import { generateChatCompletionWithTools } from '@/infra/llm/providers/gemini'
+import {
+  detectBestProvider,
+  getLLMProvider,
+  getProviderModelConfig,
+} from '@/infra/llm/providers/factory'
 import { chatWithExerciseHelper } from '@/infra/llm/services/exercise-chat-service'
 import { logger } from '@/infra/utils/logger'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
@@ -51,6 +54,28 @@ export interface AdminModeParams {
   acknowledgment?: string
   conversationId?: string
   mediaIds?: string[]
+}
+
+// Maximum messages to keep in conversation (leaves room for assistant response within 100 limit)
+const MAX_MESSAGES_BEFORE_ASSISTANT = 95
+
+/**
+ * Trim messages array to stay within maxRows limit
+ */
+interface ConversationMessage {
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: string
+  media?: Array<{ mediaId: string }>
+}
+
+function trimMessagesForUpdate(messages: Message[]): ConversationMessage[] {
+  return messages.slice(-MAX_MESSAGES_BEFORE_ASSISTANT).map((m) => ({
+    role: m.role,
+    content: m.content,
+    timestamp: typeof m.timestamp === 'string' ? m.timestamp : m.timestamp.toISOString(),
+    media: (m as unknown as { media?: Array<{ mediaId: string }> })?.media,
+  }))
 }
 
 export async function agentChat(req: PayloadRequest & { json?: () => Promise<unknown> }) {
@@ -165,7 +190,7 @@ async function handleAdminModeChat(
   }
 
   const conversationHistory = conversation.messages || []
-  const allMessages = [...conversationHistory, userMessage]
+  const allMessages = [...trimMessagesForUpdate(conversationHistory), userMessage]
 
   await req.payload.update({
     collection: 'conversations',
@@ -184,8 +209,7 @@ async function handleAdminModeChat(
   // Extract auth headers to forward to MCP client
   const authHeaders: HeadersInit = {}
   if (req.headers) {
-    const cookie =
-      typeof req.headers.get === 'function' ? req.headers.get('cookie') : undefined
+    const cookie = typeof req.headers.get === 'function' ? req.headers.get('cookie') : undefined
     const authorization =
       typeof req.headers.get === 'function' ? req.headers.get('authorization') : undefined
     if (cookie) authHeaders['cookie'] = cookie
@@ -234,15 +258,21 @@ Example: If user asks "how many courses do we have?", call findCourses immediate
   if (tools.length > 0) {
     reqLogger.info({ toolCount: tools.length }, 'Using tool calling for admin chat')
 
+    // Get provider from factory (respects LLM_PROVIDER env var)
+    // Use detectBestProvider to get the actual provider type based on availability
+    const providerType = await detectBestProvider(req.payload)
+    const provider = await getLLMProvider(req.payload)
+    const modelConfig = getProviderModelConfig(providerType, 'EXERCISE_CHAT')
+
     const modelCallStart = Date.now()
-    const result = await generateChatCompletionWithTools(
+    const result = await provider.generateChatCompletionWithTools(
       {
         system: systemPrompt,
         messages,
-        model: AI_MODELS.EXERCISE_CHAT,
+        model: modelConfig,
         acknowledgment: validated.acknowledgment || 'Understood.',
         tools,
-        toolExecutor: async (toolName, args) => {
+        toolExecutor: async (toolName: string, args: Record<string, unknown>) => {
           reqLogger.debug({ toolName, args }, 'Executing MCP tool')
           try {
             const toolResult = await mcpClient.callTool(toolName, args, authHeaders)
@@ -273,7 +303,7 @@ Example: If user asks "how many courses do we have?", call findCourses immediate
       timestamp: new Date().toISOString(),
     }
 
-    const updatedMessages = [...allMessages, assistantMessage]
+    const updatedMessages = [...trimMessagesForUpdate(allMessages), assistantMessage]
 
     try {
       await req.payload.update({
@@ -337,7 +367,7 @@ Example: If user asks "how many courses do we have?", call findCourses immediate
     timestamp: new Date().toISOString(),
   }
 
-  const updatedMessages = [...allMessages, assistantMessage]
+  const updatedMessages = [...trimMessagesForUpdate(allMessages), assistantMessage]
 
   try {
     await req.payload.update({
@@ -437,7 +467,7 @@ async function handleContextScopedChat(
   }
 
   const conversationHistory = conversation.messages || []
-  const allMessages = [...conversationHistory, userMessage]
+  const allMessages = [...trimMessagesForUpdate(conversationHistory), userMessage]
 
   await req.payload.update({
     collection: 'conversations',
@@ -558,7 +588,7 @@ async function handleContextScopedChat(
     timestamp: new Date().toISOString(),
   }
 
-  const updatedMessages = [...allMessages, assistantMessage]
+  const updatedMessages = [...trimMessagesForUpdate(allMessages), assistantMessage]
 
   try {
     await req.payload.update({

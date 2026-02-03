@@ -41,7 +41,7 @@ export interface ContextLog {
  * Use for monitoring and debugging
  */
 export function logContextUsage(log: ContextLog): void {
-  logger.info(log, '[Context Usage]')
+  logger.debug(log, '[Context Usage]')
 }
 
 /**

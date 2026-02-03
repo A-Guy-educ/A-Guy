@@ -10,10 +10,15 @@ import config from '@payload-config'
 import { ObjectId } from 'mongodb'
 import { getPayload } from 'payload'
 
-import { AI_MODELS } from '@/infra/llm/models'
 import type { MediaPartWithPath } from '@/infra/llm/multimodal/types'
-import { generateMultimodalCompletion } from '@/infra/llm/providers/gemini'
+import {
+  getLLMProvider,
+  getProviderModelConfig,
+  getProviderTypeFromEnv,
+  LLMProviderType,
+} from '@/infra/llm/providers/factory'
 import { mapMultimodalToGemini } from '@/infra/llm/providers/gemini/multimodal-mapper'
+import { mapMultimodalToOpenAI } from '@/infra/llm/providers/openai/multimodal-mapper'
 import {
   enrichBlockIds,
   parseExtractorResponseText,
@@ -86,8 +91,22 @@ export const pdfToExercisesTask = {
         mimeType: 'application/pdf',
       }
 
-      // Convert PDF to Gemini parts using existing multimodal mapper
-      const geminiParts = await mapMultimodalToGemini([mediaPartWithPath], payload, req)
+      // Use provider-appropriate multimodal mapper
+      const providerType = getProviderTypeFromEnv()
+      let attachments: Array<{ data: string; mimeType: string }>
+
+      if (providerType === LLMProviderType.OPENAI_COMPATIBLE) {
+        attachments = await mapMultimodalToOpenAI([mediaPartWithPath], payload, req)
+      } else {
+        // Convert to Gemini format, then extract attachments
+        const geminiParts = await mapMultimodalToGemini([mediaPartWithPath], payload, req)
+        attachments = geminiParts.currentMessage
+          .filter((part: any) => part.inlineData)
+          .map((part: any) => ({
+            data: part.inlineData.data,
+            mimeType: part.inlineData.mimeType,
+          }))
+      }
 
       // PASS 2: Extract + Verify + Persist
       for (let i = 0; i < segments.length; i++) {
@@ -96,7 +115,7 @@ export const pdfToExercisesTask = {
 
         try {
           const exercises = await processSegmentWithMultimodal(payload, req, {
-            geminiParts, // v2.1: Use existing infrastructure output
+            attachments, // Provider-agnostic attachment format
             segment,
             extractorPrompt: input.promptSnapshot.extractor,
             verifierPrompt: input.promptSnapshot.verifier,
@@ -258,7 +277,7 @@ async function processSegmentWithMultimodal(
   payload: any,
   req: any,
   context: {
-    geminiParts: { currentMessage: any[] } // Output from mapMultimodalToGemini
+    attachments: Array<{ data: string; mimeType: string }> // Provider-agnostic format
     segment: { pageStart: number; pageEnd: number }
     extractorPrompt: string
     verifierPrompt: string
@@ -266,7 +285,7 @@ async function processSegmentWithMultimodal(
     tenantId: string // For SystemParams access
   },
 ) {
-  const { geminiParts, segment, extractorPrompt, verifierPrompt, output, tenantId } = context
+  const { attachments, segment, extractorPrompt, verifierPrompt, output, tenantId } = context
 
   // ========== Call Extractor with MULTIMODAL PDF Attachment ==========
   const extractorPromptWithContext = `${extractorPrompt}
@@ -285,17 +304,15 @@ Return a JSON array of exercises with this schema:
   }
 ]`
 
-  // Use Gemini provider with AI_MODELS configuration
-  const extractorResult = await generateMultimodalCompletion(
+  // Use factory provider with AI_MODELS configuration
+  const provider = await getLLMProvider(payload)
+  const modelConfig = getProviderModelConfig(getProviderTypeFromEnv(), 'PDF_TO_EXERCISE')
+
+  const extractorResult = await provider.generateMultimodalCompletion(
     {
       prompt: extractorPromptWithContext,
-      model: AI_MODELS.PDF_TO_EXERCISE,
-      attachments: geminiParts.currentMessage
-        .filter((part: any) => part.inlineData)
-        .map((part: any) => ({
-          data: part.inlineData.data,
-          mimeType: part.inlineData.mimeType,
-        })),
+      model: modelConfig,
+      attachments,
     },
     payload,
   )
@@ -323,11 +340,11 @@ Source PDF pages: ${segment.pageStart}-${segment.pageEnd}
 Return JSON: { "valid": boolean, "reason": "..." }`
 
     // First verification attempt
-    let verification = await callVerifier(payload, geminiParts, verifierPromptWithContext)
+    let verification = await callVerifier(payload, attachments, verifierPromptWithContext)
 
     // Retry once if verification fails
     if (!verification.valid) {
-      verification = await callVerifier(payload, geminiParts, verifierPromptWithContext)
+      verification = await callVerifier(payload, attachments, verifierPromptWithContext)
     }
 
     // Skip invalid exercises instead of failing the job
@@ -354,24 +371,22 @@ Return JSON: { "valid": boolean, "reason": "..." }`
 }
 
 /**
- * Helper to call verifier using Gemini provider
+ * Helper to call verifier using factory provider
  */
 async function callVerifier(
   payload: any,
-  geminiParts: { currentMessage: any[] },
+  attachments: Array<{ data: string; mimeType: string }>,
   prompt: string,
 ): Promise<{ valid: boolean; reason?: string }> {
   try {
-    const result = await generateMultimodalCompletion(
+    const provider = await getLLMProvider(payload)
+    const modelConfig = getProviderModelConfig(getProviderTypeFromEnv(), 'PDF_TO_EXERCISE')
+
+    const result = await provider.generateMultimodalCompletion(
       {
         prompt,
-        model: AI_MODELS.PDF_TO_EXERCISE,
-        attachments: geminiParts.currentMessage
-          .filter((part: any) => part.inlineData)
-          .map((part: any) => ({
-            data: part.inlineData.data,
-            mimeType: part.inlineData.mimeType,
-          })),
+        model: modelConfig,
+        attachments,
       },
       payload,
     )
