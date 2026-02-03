@@ -142,11 +142,12 @@ describe('Observability', () => {
       })
 
       expect(logger.info).toHaveBeenCalled()
-      const infoCall = logger.info.mock.calls[0][0] as {
-        conversationId: string
-        operation: string
-        success: boolean
-      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const infoCall = (
+        logger.info as unknown as {
+          mock: { calls: Array<[{ conversationId: string; operation: string; success: boolean }]> }
+        }
+      ).mock.calls[0][0]
       expect(infoCall.conversationId).toBe('conv-123')
       expect(infoCall.operation).toBe('summary')
       expect(infoCall.success).toBe(true)
@@ -164,11 +165,12 @@ describe('Observability', () => {
       })
 
       expect(logger.error).toHaveBeenCalled()
-      const errorCall = logger.error.mock.calls[0][0] as {
-        conversationId: string
-        success: boolean
-        error: string
-      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorCall = (
+        logger.error as unknown as {
+          mock: { calls: Array<[{ conversationId: string; success: boolean; error: string }]> }
+        }
+      ).mock.calls[0][0]
       expect(errorCall.conversationId).toBe('conv-123')
       expect(errorCall.success).toBe(false)
       expect(errorCall.error).toBe('Rate limit exceeded')
