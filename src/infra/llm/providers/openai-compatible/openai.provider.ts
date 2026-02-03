@@ -14,7 +14,7 @@ import {
 } from '@/infra/llm/providers/shared'
 import { logger } from '@/infra/utils/logger'
 import type { Payload } from 'payload'
-import { getOpenAIClient } from './openai.client'
+import { getOpenAICompatibleClient } from './openai.client'
 import {
   extractTextFromOpenAIResponse,
   mapMessagesToOpenAIFormat,
@@ -147,7 +147,7 @@ async function executeWithTimeout(
   timeoutMs: number,
   payload: Payload,
 ): Promise<GenerateChatOutput> {
-  const client = await getOpenAIClient(payload)
+  const client = await getOpenAICompatibleClient(payload)
 
   // Build messages array with system message first
   const allMessages: ChatMessage[] = [{ role: 'system', content: input.system }, ...input.messages]
@@ -216,7 +216,7 @@ async function executeMultimodalWithTimeout(
   timeoutMs: number,
   payload: Payload,
 ): Promise<GenerateChatOutput> {
-  const client = await getOpenAIClient(payload)
+  const client = await getOpenAICompatibleClient(payload)
 
   // Log provider details for multimodal request
   logger.info(
@@ -296,4 +296,4 @@ async function executeMultimodalWithTimeout(
   }
 }
 
-export { isOpenAIApiKeyConfigured } from './openai.client'
+export { isOpenAICompatibleApiKeyConfigured } from './openai.client'

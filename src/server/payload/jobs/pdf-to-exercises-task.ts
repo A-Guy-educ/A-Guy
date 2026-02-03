@@ -18,7 +18,7 @@ import {
   LLMProviderType,
 } from '@/infra/llm/providers/factory'
 import { mapMultimodalToGemini } from '@/infra/llm/providers/gemini/multimodal-mapper'
-import { mapMultimodalToOpenAI } from '@/infra/llm/providers/openai/multimodal-mapper'
+import { mapMultimodalToOpenAI } from '@/infra/llm/providers/openai-compatible/multimodal-mapper'
 import {
   enrichBlockIds,
   parseExtractorResponseText,

@@ -2,7 +2,10 @@
  * OpenAI-Compatible Provider - Client Module
  * Handles SDK initialization, singleton caching, and environment config
  *
- * @internal This module is used by openai.provider.ts only
+ * This provider is for OpenAI-compatible APIs (MiniMax, TogetherAI, etc.)
+ * and should ONLY use OPENAI_COMPATIBLE_API_KEY - never falls back to OPENAI_API_KEY
+ *
+ * @internal This module is used by openai-compatible.provider.ts only
  */
 import { getSecret, isConfigLoaded, loadRuntimeConfig } from '@/infra/config/runtime'
 import { logger } from '@/infra/utils/logger'
@@ -23,20 +26,15 @@ async function ensureConfigLoaded(payload: Payload): Promise<void> {
 }
 
 /**
- * Check if OpenAI-compatible API key is configured via runtime config
- * Checks OPENAI_COMPATIBLE_API_KEY first, then falls back to OPENAI_API_KEY
+ * Check if OpenAI-compatible API key is configured
+ * ONLY checks OPENAI_COMPATIBLE_API_KEY - no fallback to OPENAI_API_KEY
  */
-export async function isOpenAIApiKeyConfigured(payload: Payload): Promise<boolean> {
+export async function isOpenAICompatibleApiKeyConfigured(payload: Payload): Promise<boolean> {
   try {
     await ensureConfigLoaded(payload)
 
-    // Check OPENAI_COMPATIBLE_API_KEY first (for custom endpoints)
+    // Check environment variable first
     if (process.env.OPENAI_COMPATIBLE_API_KEY) {
-      return true
-    }
-
-    // Then check OPENAI_API_KEY (for standard OpenAI)
-    if (process.env.OPENAI_API_KEY) {
       return true
     }
 
@@ -46,14 +44,7 @@ export async function isOpenAIApiKeyConfigured(payload: Payload): Promise<boolea
       tenantId: defaultTenantId,
       throwIfNotFound: false,
     })
-    if (!apiKey) {
-      const fallbackKey = getSecret('OPENAI_API_KEY', {
-        tenantId: defaultTenantId,
-        throwIfNotFound: false,
-      })
-      return !!fallbackKey
-    }
-    return true
+    return !!apiKey
   } catch {
     return false
   }
@@ -61,34 +52,23 @@ export async function isOpenAIApiKeyConfigured(payload: Payload): Promise<boolea
 
 /**
  * Get base URL for OpenAI-compatible endpoint
- * Checks OPENAI_COMPATIBLE_BASE_URL first, then falls back to OPENAI_BASE_URL
+ * ONLY checks OPENAI_COMPATIBLE_BASE_URL - no fallback to OPENAI_BASE_URL
  */
 export async function getOpenAICompatibleBaseUrl(payload: Payload): Promise<string | undefined> {
   try {
     await ensureConfigLoaded(payload)
 
-    // Check environment variables first
+    // Check environment variable first
     if (process.env.OPENAI_COMPATIBLE_BASE_URL) {
       return process.env.OPENAI_COMPATIBLE_BASE_URL
     }
 
-    if (process.env.OPENAI_BASE_URL) {
-      return process.env.OPENAI_BASE_URL
-    }
-
     // Then check runtime config using default tenant
     const defaultTenantId = await getDefaultTenantId(payload)
-    const baseUrl = getSecret('OPENAI_COMPATIBLE_BASE_URL', {
+    return getSecret('OPENAI_COMPATIBLE_BASE_URL', {
       tenantId: defaultTenantId,
       throwIfNotFound: false,
     })
-    if (!baseUrl) {
-      return getSecret('OPENAI_BASE_URL', {
-        tenantId: defaultTenantId,
-        throwIfNotFound: false,
-      })
-    }
-    return baseUrl
   } catch {
     return undefined
   }
@@ -96,34 +76,23 @@ export async function getOpenAICompatibleBaseUrl(payload: Payload): Promise<stri
 
 /**
  * Get API key for OpenAI-compatible endpoint
- * Checks OPENAI_COMPATIBLE_API_KEY first, then falls back to OPENAI_API_KEY
+ * ONLY returns OPENAI_COMPATIBLE_API_KEY - no fallback to OPENAI_API_KEY
  */
 export async function getOpenAICompatibleApiKey(payload: Payload): Promise<string | undefined> {
   try {
     await ensureConfigLoaded(payload)
 
-    // Check environment variables first
+    // Check environment variable first
     if (process.env.OPENAI_COMPATIBLE_API_KEY) {
       return process.env.OPENAI_COMPATIBLE_API_KEY
     }
 
-    if (process.env.OPENAI_API_KEY) {
-      return process.env.OPENAI_API_KEY
-    }
-
     // Then check runtime config using default tenant
     const defaultTenantId = await getDefaultTenantId(payload)
-    const apiKey = getSecret('OPENAI_COMPATIBLE_API_KEY', {
+    return getSecret('OPENAI_COMPATIBLE_API_KEY', {
       tenantId: defaultTenantId,
       throwIfNotFound: false,
     })
-    if (!apiKey) {
-      return getSecret('OPENAI_API_KEY', {
-        tenantId: defaultTenantId,
-        throwIfNotFound: false,
-      })
-    }
-    return apiKey
   } catch {
     return undefined
   }
@@ -132,14 +101,14 @@ export async function getOpenAICompatibleApiKey(payload: Payload): Promise<strin
 /**
  * Get or create OpenAI-compatible client singleton
  * @param payload - Payload instance for runtime config access
- * @throws OpenAIConfigError if API key not configured
+ * @throws Error if OPENAI_COMPATIBLE_API_KEY is not configured
  */
-export async function getOpenAIClient(payload: Payload): Promise<OpenAI> {
+export async function getOpenAICompatibleClient(payload: Payload): Promise<OpenAI> {
   if (!openaiClient) {
     await ensureConfigLoaded(payload)
 
-    // Get API key (supports both OPENAI_COMPATIBLE_API_KEY and OPENAI_API_KEY)
-    let apiKey = process.env.OPENAI_COMPATIBLE_API_KEY || process.env.OPENAI_API_KEY
+    // Get API key - ONLY use OPENAI_COMPATIBLE_API_KEY
+    let apiKey = process.env.OPENAI_COMPATIBLE_API_KEY
 
     if (!apiKey) {
       const defaultTenantId = await getDefaultTenantId(payload)
@@ -147,27 +116,26 @@ export async function getOpenAIClient(payload: Payload): Promise<OpenAI> {
         tenantId: defaultTenantId,
         throwIfNotFound: false,
       })
-      if (!apiKey) {
-        apiKey = getSecret('OPENAI_API_KEY', {
-          tenantId: defaultTenantId,
-          throwIfNotFound: false,
-        })
-      }
     }
 
     if (!apiKey) {
       throw new Error(
-        'OPENAI_COMPATIBLE_API_KEY or OPENAI_API_KEY environment variable is not configured.',
+        'OPENAI_COMPATIBLE_API_KEY environment variable is not configured. ' +
+          'This provider does not fall back to OPENAI_API_KEY.',
       )
     }
 
-    // Get base URL (supports both OPENAI_COMPATIBLE_BASE_URL and OPENAI_BASE_URL)
-    const baseURL = process.env.OPENAI_COMPATIBLE_BASE_URL || process.env.OPENAI_BASE_URL
+    // Get base URL - ONLY use OPENAI_COMPATIBLE_BASE_URL
+    const baseURL =
+      process.env.OPENAI_COMPATIBLE_BASE_URL || (await getOpenAICompatibleBaseUrl(payload))
 
     // Log client initialization
     const keyPrefix = apiKey.substring(0, 7)
     const keySuffix = apiKey.substring(apiKey.length - 4)
-    logger.debug({ baseURL, keyPrefix, keySuffix }, '[OpenAIClient] Initializing')
+    logger.debug(
+      { baseURL: baseURL || 'default', keyPrefix, keySuffix },
+      '[OpenAICompatibleClient] Initializing',
+    )
 
     openaiClient = new OpenAI({
       apiKey,
@@ -181,6 +149,6 @@ export async function getOpenAIClient(payload: Payload): Promise<OpenAI> {
  * Reset client singleton (for testing)
  * @internal
  */
-export function resetOpenAIClient(): void {
+export function resetOpenAICompatibleClient(): void {
   openaiClient = null
 }
