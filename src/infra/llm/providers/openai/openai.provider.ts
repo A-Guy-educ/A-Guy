@@ -5,10 +5,16 @@
  * @public This is the ONLY file consumers should import from
  */
 import type { AIModel } from '@/infra/llm/models'
+import {
+  createErrorClassifier,
+  LLM_DEFAULTS,
+  LLMError,
+  LLMErrorCode,
+  withRetry,
+} from '@/infra/llm/providers/shared'
 import { logger } from '@/infra/utils/logger'
 import type { Payload } from 'payload'
 import { getOpenAIClient } from './openai.client'
-import { isRetryableOpenAIError, wrapOpenAIError } from './openai.errors'
 import {
   extractTextFromOpenAIResponse,
   mapMessagesToOpenAIFormat,
@@ -49,13 +55,15 @@ export interface GenerateMultimodalInput {
   timeoutMs?: number
 }
 
+// Re-export from shared module for backwards compatibility
+export { LLMError as OpenAIError, LLMErrorCode as OpenAIErrorCode }
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DEFAULT_TIMEOUT_MS = 30_000
-const MAX_RETRIES = 2
-const RETRY_DELAY_MS = 1_000
+// Error classifier for OpenAI
+const { isRetryable, wrapError: wrapOpenAIError } = createErrorClassifier('openai')
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main API
@@ -78,37 +86,18 @@ export async function generateChatCompletion(
   input: GenerateChatInput,
   payload: Payload,
 ): Promise<GenerateChatOutput> {
-  const timeoutMs = input.timeoutMs ?? DEFAULT_TIMEOUT_MS
-  let lastError: Error | null = null
+  const timeoutMs = input.timeoutMs ?? LLM_DEFAULTS.chatTimeoutMs
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      return await executeWithTimeout(input, timeoutMs, payload)
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error))
-      const openaiError = wrapOpenAIError(lastError)
-
-      // Don't retry non-retryable errors
-      if (!isRetryableOpenAIError(lastError)) {
-        logger.error({ err: lastError, attempt }, '[OpenAIProvider] Non-retryable error')
-        throw openaiError
-      }
-
-      // Retry with exponential backoff
-      if (attempt < MAX_RETRIES) {
-        const delay = RETRY_DELAY_MS * Math.pow(2, attempt)
-        logger.warn(
-          { err: lastError, attempt, delay, retrying: true },
-          '[OpenAIProvider] Retrying after error',
-        )
-        await sleep(delay)
-      }
-    }
-  }
-
-  // All retries exhausted
-  logger.error({ err: lastError }, '[OpenAIProvider] All retries exhausted')
-  throw wrapOpenAIError(lastError ?? new Error('Unknown error'))
+  return withRetry<GenerateChatOutput, Error>(() => executeWithTimeout(input, timeoutMs, payload), {
+    maxRetries: LLM_DEFAULTS.maxRetries,
+    delayMs: LLM_DEFAULTS.retryDelayMs,
+    isRetryable,
+    wrapError: (e: Error) => wrapOpenAIError(e),
+    logPrefix: '[OpenAIProvider]',
+    onRetry: (error: Error, attempt: number) => {
+      logger.warn({ err: error, attempt, retrying: true }, '[OpenAIProvider] Retrying after error')
+    },
+  })
 }
 
 /**
@@ -129,37 +118,24 @@ export async function generateMultimodalCompletion(
   input: GenerateMultimodalInput,
   payload: Payload,
 ): Promise<GenerateChatOutput> {
-  const timeoutMs = input.timeoutMs ?? DEFAULT_TIMEOUT_MS
-  let lastError: Error | null = null
+  const timeoutMs = input.timeoutMs ?? LLM_DEFAULTS.chatTimeoutMs
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      return await executeMultimodalWithTimeout(input, timeoutMs, payload)
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error))
-      const openaiError = wrapOpenAIError(lastError)
-
-      // Don't retry non-retryable errors
-      if (!isRetryableOpenAIError(lastError)) {
-        logger.error({ err: lastError, attempt }, '[OpenAIProvider] Non-retryable error')
-        throw openaiError
-      }
-
-      // Retry with exponential backoff
-      if (attempt < MAX_RETRIES) {
-        const delay = RETRY_DELAY_MS * Math.pow(2, attempt)
+  return withRetry<GenerateChatOutput, Error>(
+    () => executeMultimodalWithTimeout(input, timeoutMs, payload),
+    {
+      maxRetries: LLM_DEFAULTS.maxRetries,
+      delayMs: LLM_DEFAULTS.retryDelayMs,
+      isRetryable,
+      wrapError: (e: Error) => wrapOpenAIError(e),
+      logPrefix: '[OpenAIProvider]',
+      onRetry: (error: Error, attempt: number) => {
         logger.warn(
-          { err: lastError, attempt, delay, retrying: true },
+          { err: error, attempt, retrying: true },
           '[OpenAIProvider] Retrying after error',
         )
-        await sleep(delay)
-      }
-    }
-  }
-
-  // All retries exhausted
-  logger.error({ err: lastError }, '[OpenAIProvider] All retries exhausted')
-  throw wrapOpenAIError(lastError ?? new Error('Unknown error'))
+      },
+    },
+  )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -196,10 +172,10 @@ async function executeWithTimeout(
   const startTime = Date.now()
 
   // Create timeout promise
+  const timeoutError = new Error(`Model call timed out after ${timeoutMs}ms`)
+  timeoutError.name = 'TimeoutError'
   const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => {
-      reject(new Error(`Model call timed out after ${timeoutMs}ms`))
-    }, timeoutMs)
+    setTimeout(() => reject(timeoutError), timeoutMs)
   })
 
   // Execute chat with timeout
@@ -276,10 +252,10 @@ async function executeMultimodalWithTimeout(
   }
 
   // Create timeout promise
+  const timeoutError = new Error(`Model call timed out after ${timeoutMs}ms`)
+  timeoutError.name = 'TimeoutError'
   const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => {
-      reject(new Error(`Model call timed out after ${timeoutMs}ms`))
-    }, timeoutMs)
+    setTimeout(() => reject(timeoutError), timeoutMs)
   })
 
   // Execute multimodal request with timeout
@@ -320,13 +296,4 @@ async function executeMultimodalWithTimeout(
   }
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Re-exports for convenience
-// ─────────────────────────────────────────────────────────────────────────────
-
 export { isOpenAIApiKeyConfigured } from './openai.client'
-export { OpenAIError, OpenAIErrorCode } from './openai.errors'

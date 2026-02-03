@@ -7,6 +7,7 @@
 import { getSecret, isConfigLoaded, loadRuntimeConfig } from '@/infra/config/runtime'
 // Note: getSecret keeps its old signature for secrets (tenantId, key, options)
 // These are API keys and should remain secrets
+import { logger } from '@/infra/utils/logger'
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { Payload } from 'payload'
@@ -76,9 +77,7 @@ export async function getGeminiClient(payload: Payload): Promise<GoogleGenerativ
     const keySource = process.env.GEMINI_API_KEY ? 'process.env' : 'runtime config'
     const keyPrefix = apiKey.substring(0, 7)
     const keySuffix = apiKey.substring(apiKey.length - 4)
-    console.log(
-      `[GeminiClient] Initializing with API key from ${keySource}: ${keyPrefix}...${keySuffix}`,
-    )
+    logger.debug({ keySource, keyPrefix, keySuffix }, '[GeminiClient] Initializing')
 
     geminiClient = new GoogleGenerativeAI(apiKey)
   }

@@ -5,6 +5,7 @@
  * @internal This module is used by openai.provider.ts only
  */
 import { getSecret, isConfigLoaded, loadRuntimeConfig } from '@/infra/config/runtime'
+import { logger } from '@/infra/utils/logger'
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import OpenAI from 'openai'
 import type { Payload } from 'payload'
@@ -166,9 +167,7 @@ export async function getOpenAIClient(payload: Payload): Promise<OpenAI> {
     // Log client initialization
     const keyPrefix = apiKey.substring(0, 7)
     const keySuffix = apiKey.substring(apiKey.length - 4)
-    console.log(
-      `[OpenAIClient] Initializing with baseURL: ${baseURL || 'default (OpenAI)'}, API key: ${keyPrefix}...${keySuffix}`,
-    )
+    logger.debug({ baseURL, keyPrefix, keySuffix }, '[OpenAIClient] Initializing')
 
     openaiClient = new OpenAI({
       apiKey,

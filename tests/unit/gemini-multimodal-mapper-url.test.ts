@@ -27,7 +27,7 @@ vi.mock('@/server/services/pdf-fetcher', () => ({
   normalizeToAbsoluteUrl: vi.fn(),
 }))
 
-vi.mock('@/server/llm/gemini.client', () => ({
+vi.mock('@/infra/llm/providers/gemini/gemini.client', () => ({
   getGeminiClient: vi.fn(),
 }))
 
@@ -50,7 +50,7 @@ describe('Gemini Multimodal Mapper URL Handling', () => {
         await import('@/infra/llm/providers/gemini/multimodal-mapper')
       const { isVercelBlobUrl } = await import('@/infra/blob/vercel-blob-adapter')
       const { normalizeToAbsoluteUrl } = await import('@/server/services/pdf-fetcher')
-      const { getGeminiClient } = await import('@/server/llm/gemini.client')
+      const { getGeminiClient } = await import('@/infra/llm/providers/gemini/gemini.client')
 
       // Setup: Vercel Blob URL detected
       ;(isVercelBlobUrl as any).mockReturnValue(true)
@@ -106,7 +106,7 @@ describe('Gemini Multimodal Mapper URL Handling', () => {
         await import('@/infra/llm/providers/gemini/multimodal-mapper')
       const { isVercelBlobUrl } = await import('@/infra/blob/vercel-blob-adapter')
       const { normalizeToAbsoluteUrl } = await import('@/server/services/pdf-fetcher')
-      const { getGeminiClient } = await import('@/server/llm/gemini.client')
+      const { getGeminiClient } = await import('@/infra/llm/providers/gemini/gemini.client')
 
       // Setup: NOT a Vercel Blob URL - should be normalized
       ;(isVercelBlobUrl as any).mockReturnValue(false)
@@ -158,7 +158,7 @@ describe('Gemini Multimodal Mapper URL Handling', () => {
         await import('@/infra/llm/providers/gemini/multimodal-mapper')
       const { isVercelBlobUrl } = await import('@/infra/blob/vercel-blob-adapter')
       const { normalizeToAbsoluteUrl } = await import('@/server/services/pdf-fetcher')
-      const { getGeminiClient } = await import('@/server/llm/gemini.client')
+      const { getGeminiClient } = await import('@/infra/llm/providers/gemini/gemini.client')
 
       // Setup: localhost URL - NOT a Blob URL
       ;(isVercelBlobUrl as any).mockReturnValue(false)
@@ -207,7 +207,7 @@ describe('Gemini Multimodal Mapper URL Handling', () => {
       const { mapMultimodalToGemini } =
         await import('@/infra/llm/providers/gemini/multimodal-mapper')
       const { isVercelBlobUrl } = await import('@/infra/blob/vercel-blob-adapter')
-      const { getGeminiClient } = await import('@/server/llm/gemini.client')
+      const { getGeminiClient } = await import('@/infra/llm/providers/gemini/gemini.client')
 
       // Mock Gemini client
       const mockModel = {
@@ -259,7 +259,7 @@ describe('Gemini Multimodal Mapper URL Handling', () => {
       const { mapMultimodalToGemini } =
         await import('@/infra/llm/providers/gemini/multimodal-mapper')
       const { isVercelBlobUrl } = await import('@/infra/blob/vercel-blob-adapter')
-      const { getGeminiClient } = await import('@/server/llm/gemini.client')
+      const { getGeminiClient } = await import('@/infra/llm/providers/gemini/gemini.client')
       const { logger } = await import('@/infra/utils/logger')
 
       // Mock fetch to fail

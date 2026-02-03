@@ -8,8 +8,8 @@
  * @domain ai
  * @pattern tool-calling, function-calling, mcp-integration
  */
+import { createErrorClassifier, LLM_DEFAULTS, withRetry } from '@/infra/llm/providers/shared'
 import { logger } from '@/infra/utils/logger'
-import { getGeminiClient } from '@/server/llm/gemini.client'
 import type { MCPTool } from '@/server/repos/mcp/client/types'
 import {
   FunctionCallingMode,
@@ -20,13 +20,17 @@ import {
 } from '@google/generative-ai'
 import type { Payload } from 'payload'
 import { mcpToolsToGeminiFunctionDeclarations, type ParsedToolCall } from './gemini-tools'
-import { isRetryableError, wrapGeminiError } from './gemini.errors'
+import { getGeminiClient } from './gemini.client'
 import { mapMessagesToGeminiHistory } from './gemini.mapper'
 import type { AIModel, ChatMessage, GenerateChatOutput } from './gemini.provider'
 
 // Provider identification for logging
 const PROVIDER_NAME = 'gemini'
 const PROVIDER_VERSION = '1.0'
+
+// Error classifier for Gemini
+const { isRetryable: isRetryableError, wrapError: wrapGeminiError } =
+  createErrorClassifier('gemini')
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -73,7 +77,6 @@ function getResponseText(result: GenerateContentResult): string {
 // Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DEFAULT_TIMEOUT_MS = 60_000 // Longer timeout for tool calling
 const MAX_TOOL_ITERATIONS = 5 // Prevent infinite loops
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -98,36 +101,24 @@ export async function generateChatCompletionWithTools(
   input: ToolCallingInput,
   payload: Payload,
 ): Promise<ToolCallingOutput> {
-  const timeoutMs = input.timeoutMs ?? DEFAULT_TIMEOUT_MS
-  let lastError: Error | null = null
+  const timeoutMs = input.timeoutMs ?? LLM_DEFAULTS.toolTimeoutMs
 
-  for (let attempt = 0; attempt <= 2; attempt++) {
-    try {
-      return await executeToolCallingWithTimeout(input, timeoutMs, payload)
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error))
-      const geminiError = wrapGeminiError(lastError)
-
-      // Don't retry non-retryable errors
-      if (!isRetryableError(lastError)) {
-        logger.error({ err: lastError, attempt }, '[GeminiToolCalling] Non-retryable error')
-        throw geminiError
-      }
-
-      // Retry with exponential backoff
-      if (attempt < 2) {
-        const delay = 1000 * Math.pow(2, attempt)
+  return withRetry<ToolCallingOutput, Error>(
+    () => executeToolCallingWithTimeout(input, timeoutMs, payload),
+    {
+      maxRetries: LLM_DEFAULTS.maxRetries,
+      delayMs: LLM_DEFAULTS.retryDelayMs,
+      isRetryable: isRetryableError,
+      wrapError: (e: Error) => wrapGeminiError(e),
+      logPrefix: '[GeminiToolCalling]',
+      onRetry: (error: Error, attempt: number) => {
         logger.warn(
-          { err: lastError, attempt, delay, retrying: true },
+          { err: error, attempt, retrying: true },
           '[GeminiToolCalling] Retrying after error',
         )
-        await sleep(delay)
-      }
-    }
-  }
-
-  logger.error({ err: lastError }, '[GeminiToolCalling] All retries exhausted')
-  throw wrapGeminiError(lastError ?? new Error('Unknown error'))
+      },
+    },
+  )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -223,9 +214,9 @@ async function executeToolCallingWithTimeout(
 
   // Create timeout promise
   const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => {
-      reject(new Error(`Tool calling request timed out after ${timeoutMs}ms`))
-    }, timeoutMs)
+    const timeoutError = new Error(`Tool calling request timed out after ${timeoutMs}ms`)
+    timeoutError.name = 'TimeoutError'
+    setTimeout(() => reject(timeoutError), timeoutMs)
   })
 
   // Start chat with tools
@@ -345,8 +336,4 @@ async function executeToolCallingWithTimeout(
     raw: currentResult,
     toolCalls: allToolCalls,
   }
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }

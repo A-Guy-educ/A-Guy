@@ -11,7 +11,8 @@
       "Bash(find:*)",
       "Bash(curl:*)",
       "Bash(pnpm typecheck:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(pnpm exec vitest:*)"
     ]
   },
   "mcpServers": {}

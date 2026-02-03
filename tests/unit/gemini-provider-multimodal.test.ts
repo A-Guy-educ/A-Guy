@@ -14,7 +14,7 @@ vi.mock('@/infra/utils/logger', () => ({
   },
 }))
 
-vi.mock('@/server/llm/gemini.client', () => ({
+vi.mock('@/infra/llm/providers/gemini/gemini.client', () => ({
   getGeminiClient: vi.fn(),
 }))
 
@@ -30,7 +30,7 @@ describe('generateMultimodalCompletion', () => {
   it('should call Gemini with prompt and PDF attachment', async () => {
     const { generateMultimodalCompletion } =
       await import('@/infra/llm/providers/gemini/gemini.provider')
-    const { getGeminiClient } = await import('@/server/llm/gemini.client')
+    const { getGeminiClient } = await import('@/infra/llm/providers/gemini/gemini.client')
 
     const mockPayload = {} as any
     const mockModel = {
@@ -66,7 +66,7 @@ describe('generateMultimodalCompletion', () => {
   it('should handle timeout', async () => {
     const { generateMultimodalCompletion } =
       await import('@/infra/llm/providers/gemini/gemini.provider')
-    const { getGeminiClient } = await import('@/server/llm/gemini.client')
+    const { getGeminiClient } = await import('@/infra/llm/providers/gemini/gemini.client')
 
     const mockPayload = {} as any
     const mockModel = {
@@ -104,7 +104,7 @@ describe('generateMultimodalCompletion', () => {
   it('should include attachments in the request', async () => {
     const { generateMultimodalCompletion } =
       await import('@/infra/llm/providers/gemini/gemini.provider')
-    const { getGeminiClient } = await import('@/server/llm/gemini.client')
+    const { getGeminiClient } = await import('@/infra/llm/providers/gemini/gemini.client')
 
     const mockPayload = {} as any
     const mockModel = {
