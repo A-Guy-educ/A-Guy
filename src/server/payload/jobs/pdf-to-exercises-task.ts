@@ -16,9 +16,10 @@ import { generateMultimodalCompletion } from '@/infra/llm/providers/gemini'
 import { mapMultimodalToGemini } from '@/infra/llm/providers/gemini/multimodal-mapper'
 import {
   enrichBlockIds,
+  isContentRicher,
+  normalizeExerciseInput,
   parseExtractorResponseText,
   parseVerifierResponseText,
-  toExerciseInput,
   toPayloadContent,
 } from '@/server/services/exercise-conversion/helpers'
 import { z } from 'zod'
@@ -106,10 +107,12 @@ export const pdfToExercisesTask = {
           let deduped = 0
 
           for (const exercise of exercises) {
-            // Apply canonical shape adapter for hashing
-            const exerciseInput = toExerciseInput(exercise)
-            const contentHash = computeContentHash(exerciseInput)
+            // Compute contentKey BEFORE enrichment for stable identity
+            const normalizedInput = normalizeExerciseInput(exercise)
+            const contentHash = computeContentHash(normalizedInput)
 
+            // Use Payload API to maintain hooks/tenant/ACL/validation
+            // Find existing exercise by (lessonId, sourceDocId, contentHash)
             const existing = await payload.find({
               collection: 'exercises',
               where: {
@@ -121,33 +124,81 @@ export const pdfToExercisesTask = {
               },
               limit: 1,
               depth: 0,
-              overrideAccess: true,
+              req,
             })
 
             if (existing.docs.length > 0) {
+              // Exercise exists - prefer richer content
+              const existingDoc = existing.docs[0]
+              const newPayloadContent = toPayloadContent(exercise)
+
+              // Only update if new content is strictly richer
+              if (isContentRicher(existingDoc.content, newPayloadContent)) {
+                await payload.update({
+                  collection: 'exercises',
+                  id: existingDoc.id,
+                  data: {
+                    content: newPayloadContent,
+                    sourcePageStart: segment.pageStart,
+                    sourcePageEnd: segment.pageEnd,
+                    sourceOrderInSegment: exercise.orderInSegment,
+                    conversionJobId: job.id,
+                    updatedAt: new Date(),
+                  },
+                  req,
+                })
+              }
               deduped++
             } else {
-              // Apply canonical shape adapter for persistence
+              // New exercise - create with enriched content
               const payloadContent = toPayloadContent(exercise)
-              await payload.create({
-                collection: 'exercises',
-                data: {
-                  title: exercise.title,
-                  content: payloadContent, // Match Exercise.content JSON schema
-                  status: 'draft',
-                  origin: 'conversion',
-                  tenant: tenantId,
-                  lesson: lessonId,
-                  sourceDoc: sourceDocId,
-                  conversionJobId: job.id,
-                  sourcePageStart: segment.pageStart,
-                  sourcePageEnd: segment.pageEnd,
-                  sourceOrderInSegment: exercise.orderInSegment,
-                  contentHash,
-                },
-                req,
-              })
-              created++
+              try {
+                await payload.create({
+                  collection: 'exercises',
+                  data: {
+                    title: exercise.title,
+                    content: payloadContent,
+                    status: 'draft',
+                    origin: 'conversion',
+                    tenant: tenantId,
+                    lesson: lessonId,
+                    sourceDoc: sourceDocId,
+                    conversionJobId: job.id,
+                    sourcePageStart: segment.pageStart,
+                    sourcePageEnd: segment.pageEnd,
+                    sourceOrderInSegment: exercise.orderInSegment,
+                    contentHash,
+                  },
+                  req,
+                })
+                created++
+              } catch (createError: any) {
+                // Handle duplicate key error (concurrency scenario)
+                if (createError.code === 11000 || createError.message?.includes('duplicate key')) {
+                  // Re-find and treat as deduped
+                  const retryFind = await payload.find({
+                    collection: 'exercises',
+                    where: {
+                      and: [
+                        { lesson: { equals: lessonId } },
+                        { sourceDoc: { equals: sourceDocId } },
+                        { contentHash: { equals: contentHash } },
+                      ],
+                    },
+                    limit: 1,
+                    depth: 0,
+                    req,
+                  })
+                  if (retryFind.docs.length > 0) {
+                    deduped++
+                  } else {
+                    // Index exists but document not found - rethrow
+                    throw createError
+                  }
+                } else {
+                  throw createError
+                }
+              }
             }
           }
 
