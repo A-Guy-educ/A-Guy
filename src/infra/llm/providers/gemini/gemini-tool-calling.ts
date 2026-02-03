@@ -13,10 +13,10 @@ import { getGeminiClient } from '@/server/llm/gemini.client'
 import type { MCPTool } from '@/server/repos/mcp/client/types'
 import {
   FunctionCallingMode,
-  type Tool as GeminiTool,
-  type Part,
-  type GenerateContentResult,
   type FunctionCall,
+  type Tool as GeminiTool,
+  type GenerateContentResult,
+  type Part,
 } from '@google/generative-ai'
 import type { Payload } from 'payload'
 import { mcpToolsToGeminiFunctionDeclarations, type ParsedToolCall } from './gemini-tools'
@@ -141,16 +141,14 @@ async function executeToolCallingWithTimeout(
   const functionDeclarations = mcpToolsToGeminiFunctionDeclarations(input.tools)
 
   // Log to verify tools are being loaded correctly
-  logger.info(
+  logger.debug(
     {
       inputToolCount: input.tools.length,
       allowedToolCount: functionDeclarations.length,
       inputToolNames: input.tools.map((t) => t.name),
       allowedToolNames: functionDeclarations.map((t) => t.name),
       // Log first declaration to verify format
-      sampleDeclaration: functionDeclarations[0]
-        ? JSON.stringify(functionDeclarations[0])
-        : 'none',
+      sampleDeclaration: functionDeclarations[0] ? JSON.stringify(functionDeclarations[0]) : 'none',
     },
     '[GeminiToolCalling] Tools loaded and converted',
   )
@@ -222,7 +220,7 @@ async function executeToolCallingWithTimeout(
   let functionCalls = getFunctionCalls(currentResult)
   let iterations = 0
 
-  logger.info(
+  logger.debug(
     {
       hasFunctionCalls: !!functionCalls,
       count: functionCalls?.length,

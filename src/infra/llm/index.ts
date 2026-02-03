@@ -19,6 +19,17 @@ export {
   type ChatMessage as ProviderChatMessage,
 } from './providers/gemini'
 
+// Provider factory for runtime provider switching
+export {
+  checkProviderAvailability,
+  detectBestProvider,
+  getLLMProvider,
+  getProviderModelConfig,
+  LLMProviderType,
+  type LLMProviderConfig,
+  type UnifiedLLMProvider,
+} from './providers/factory'
+
 // Model config
 export { AI_MODELS, type AIModelConfig, type AIModelKey } from './models'
 
