@@ -12,7 +12,7 @@ import { createErrorClassifier, LLM_DEFAULTS, withRetry } from '@/infra/llm/prov
 import { logger } from '@/infra/utils/logger'
 import type { MCPTool } from '@/server/repos/mcp/client/types'
 import type { Payload } from 'payload'
-import { getOpenAIClient } from './openai.client'
+import { getOpenAICompatibleClient } from './openai.client'
 import {
   extractTextFromOpenAIResponse,
   extractToolCalls,
@@ -106,7 +106,7 @@ async function executeToolCallingWithTimeout(
   timeoutMs: number,
   payload: Payload,
 ): Promise<ToolCallingOutput> {
-  const client = await getOpenAIClient(payload)
+  const client = await getOpenAICompatibleClient(payload)
 
   // Convert MCP tools to OpenAI function tools with required name field
   // OpenAI requires parameters with at least { type: 'object' }

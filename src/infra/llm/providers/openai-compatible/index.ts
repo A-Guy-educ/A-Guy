@@ -3,7 +3,7 @@
  *
  * Usage:
  * ```ts
- * import { generateChatCompletion, generateChatCompletionWithTools, isOpenAIApiKeyConfigured } from '@/lib/ai/providers/openai'
+ * import { generateChatCompletion, generateChatCompletionWithTools, isOpenAICompatibleApiKeyConfigured } from '@/infra/llm/providers/openai-compatible'
  * ```
  */
 
@@ -13,7 +13,7 @@ export type { AIModel, AIModelKey } from '@/infra/llm/models'
 export {
   generateChatCompletion,
   generateMultimodalCompletion,
-  isOpenAIApiKeyConfigured,
+  isOpenAICompatibleApiKeyConfigured,
   OpenAIError,
   OpenAIErrorCode,
   type GenerateChatInput,
