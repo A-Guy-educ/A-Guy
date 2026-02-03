@@ -1,3 +1,4 @@
+import { loadRuntimeConfig } from '@/infra/config/runtime/runtime-config'
 import { getPdfConversionMaxPromptSizeBytes } from '@/infra/config/system-params'
 import { ENV } from '@/server/config/constants'
 import { validatePromptForUsageAndTenant } from '@/server/services/exercise-conversion/helpers'
@@ -30,6 +31,9 @@ function errorResponse(
 export async function POST(request: NextRequest) {
   try {
     const payload = await getPayload({ config })
+
+    // Load runtime config for system params (getPdfConversionMaxPromptSizeBytes)
+    await loadRuntimeConfig(payload)
 
     // Auth: Admin Session OR Test-Only Secret
     const { user } = await payload.auth({ headers: request.headers })
