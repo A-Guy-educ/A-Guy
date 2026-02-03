@@ -6,13 +6,16 @@
  * import { generateChatCompletion, generateChatCompletionWithTools, isOpenAIApiKeyConfigured } from '@/lib/ai/providers/openai'
  * ```
  */
+
+// Re-export types from centralized models.ts (consolidated)
+export type { AIModel, AIModelKey } from '@/infra/llm/models'
+
 export {
   generateChatCompletion,
   generateMultimodalCompletion,
   isOpenAIApiKeyConfigured,
   OpenAIError,
   OpenAIErrorCode,
-  type AIModel,
   type GenerateChatInput,
   type GenerateChatOutput,
   type GenerateMultimodalInput,

@@ -1,22 +1,20 @@
 /**
  * AI Chat Service for Exercise Help
- * Orchestrates chat with Gemini provider (text and multimodal)
+ * Orchestrates chat with AI providers using factory pattern (text and multimodal)
+ *
+ * Uses factory pattern for provider-agnostic model selection.
+ * Supports Gemini and OpenAI-compatible providers via getLLMProvider.
  */
-import type { Part } from '@google/generative-ai'
 import type { Payload } from 'payload'
 
 import { logger } from '@/infra/utils/logger'
-import { getGeminiClient } from '@/server/llm/gemini.client'
 
 import type { ComposedPrompt } from '../context-policy'
-import { AI_MODELS } from '../models'
+import type { AIModel } from '../models'
 import type { MediaPartWithPath } from '../multimodal/types'
+import { detectBestProvider, getLLMProvider, getProviderModelConfig } from '../providers/factory'
+import type { ChatMessage as ProviderChatMessage } from '../providers/gemini'
 import { mapMultimodalToGemini } from '../providers/gemini/multimodal-mapper'
-import {
-  generateChatCompletion,
-  type AIModel,
-  type ChatMessage as ProviderChatMessage,
-} from '../providers/gemini'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -56,6 +54,11 @@ export async function chatWithExerciseHelper(
   payload: Payload,
 ): Promise<ExerciseChatResult> {
   try {
+    // Detect provider and get model config
+    const providerType = await detectBestProvider(payload)
+    const provider = await getLLMProvider(payload, { type: providerType })
+    const modelConfig = getProviderModelConfig(providerType, 'EXERCISE_CHAT')
+
     // Build messages from composedPrompt or legacy format
     let systemPrompt: string
     let messages: ProviderChatMessage[]
@@ -85,23 +88,24 @@ export async function chatWithExerciseHelper(
     }
 
     // Handle multimodal content if media is attached
+    // Note: Gemini-specific multimodal handling for now
     if (input.mediaPartsWithPath && input.mediaPartsWithPath.length > 0) {
       return await sendMultimodalToGemini(
         systemPrompt,
         input.message,
         input.mediaPartsWithPath,
-        AI_MODELS.EXERCISE_CHAT,
+        modelConfig,
         payload,
         input.req,
       )
     }
 
-    // Text-only path
-    const result = await generateChatCompletion(
+    // Text-only path using unified provider interface
+    const result = await provider.generateChatCompletion(
       {
         system: systemPrompt,
         messages,
-        model: AI_MODELS.EXERCISE_CHAT,
+        model: modelConfig,
         acknowledgment: input.acknowledgment,
       },
       payload,
@@ -134,17 +138,7 @@ async function sendMultimodalToGemini(
   payload: Payload,
   req?: { headers: { authorization?: string; cookie?: string } },
 ): Promise<ExerciseChatResult> {
-  const client = await getGeminiClient(payload)
-  const geminiModel = client.getGenerativeModel({
-    model: model.name,
-    systemInstruction: systemPrompt, // Proper system instruction format for Gemini
-    generationConfig: {
-      temperature: model.temperature,
-      maxOutputTokens: model.maxOutputTokens,
-    },
-  })
-
-  // Convert media to Gemini parts
+  // Convert media to Gemini parts using existing mapper
   const { currentMessage: multimodalParts } = await mapMultimodalToGemini(
     mediaPartsWithPath,
     payload,
@@ -160,8 +154,8 @@ async function sendMultimodalToGemini(
     '[ExerciseChat] Multimodal parts prepared for Gemini',
   )
 
-  // Build content: user message text + media parts (system instruction passed separately above)
-  const fullContents: Part[] = [{ text: userMessage }, ...multimodalParts]
+  // Build content: user message text + media parts
+  const fullContents = [{ text: userMessage }, ...multimodalParts]
 
   logger.info(
     {
@@ -173,16 +167,25 @@ async function sendMultimodalToGemini(
   )
 
   try {
-    const result = await geminiModel.generateContent({
-      contents: [{ role: 'user', parts: fullContents }],
-    })
-
-    const response = result.response
-    const text = response.text()
+    // Use unified provider interface with direct Gemini access for multimodal
+    const provider = await getLLMProvider(payload, { type: LLMProviderType.GEMINI })
+    const result = await provider.generateMultimodalCompletion(
+      {
+        prompt: `${systemPrompt}\n\n${userMessage}`,
+        model,
+        attachments: multimodalParts
+          .filter((p) => 'inlineData' in p)
+          .map((p) => ({
+            data: (p as { inlineData: { data: string } }).inlineData.data,
+            mimeType: (p as { inlineData: { mimeType: string } }).inlineData.mimeType,
+          })),
+      },
+      payload,
+    )
 
     return {
       success: true,
-      message: text,
+      message: result.text,
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
@@ -193,3 +196,6 @@ async function sendMultimodalToGemini(
     }
   }
 }
+
+// Re-export LLMProviderType for use in this file
+import { LLMProviderType } from '../providers/factory'

@@ -153,5 +153,71 @@ describe('LLM Provider Factory', () => {
       expect(config.name).toBe('MiniMax-M2.1')
       expect(config.maxOutputTokens).toBe(8192) // PDF_TO_EXERCISE uses 8192
     })
+
+    it('should return config with all required AIModel fields', async () => {
+      const { getProviderModelConfig, LLMProviderType } =
+        await import('@/infra/llm/providers/factory')
+      const config = getProviderModelConfig(LLMProviderType.GEMINI, 'EXERCISE_CHAT')
+      expect(config).toHaveProperty('name')
+      expect(config).toHaveProperty('temperature')
+      expect(config).toHaveProperty('maxOutputTokens')
+      expect(typeof config.name).toBe('string')
+      expect(typeof config.temperature).toBe('number')
+      expect(typeof config.maxOutputTokens).toBe('number')
+    })
+  })
+
+  describe('getProviderModelConfig with model overrides', () => {
+    beforeEach(() => {
+      // Reset to clean env
+      Object.keys(process.env).forEach((key) => {
+        if (key.startsWith('LLM_MODEL_OVERRIDE_')) {
+          delete process.env[key]
+        }
+      })
+    })
+
+    it('should use specific model override when LLM_MODEL_OVERRIDE_EXERCISE_CHAT is set', async () => {
+      setEnv({ LLM_MODEL_OVERRIDE_EXERCISE_CHAT: 'gemini-1.5-pro' })
+      const { getProviderModelConfig, LLMProviderType } =
+        await import('@/infra/llm/providers/factory')
+      const config = getProviderModelConfig(LLMProviderType.GEMINI, 'EXERCISE_CHAT')
+      expect(config.name).toBe('gemini-1.5-pro')
+      // Should still use registry temperature/maxOutputTokens
+      expect(config.temperature).toBe(0.7)
+      expect(config.maxOutputTokens).toBe(2048)
+    })
+
+    it('should use default override when specific override not set', async () => {
+      setEnv({ LLM_MODEL_OVERRIDE_DEFAULT: 'gpt-4o' })
+      const { getProviderModelConfig, LLMProviderType } =
+        await import('@/infra/llm/providers/factory')
+      const config = getProviderModelConfig(LLMProviderType.GEMINI, 'EXERCISE_CHAT')
+      expect(config.name).toBe('gpt-4o')
+      expect(config.temperature).toBe(0.7)
+      expect(config.maxOutputTokens).toBe(2048)
+    })
+
+    it('should prioritize specific override over default override', async () => {
+      setEnv({
+        LLM_MODEL_OVERRIDE_EXERCISE_CHAT: 'specific-model',
+        LLM_MODEL_OVERRIDE_DEFAULT: 'default-model',
+      })
+      const { getProviderModelConfig, LLMProviderType } =
+        await import('@/infra/llm/providers/factory')
+      const config = getProviderModelConfig(LLMProviderType.GEMINI, 'EXERCISE_CHAT')
+      expect(config.name).toBe('specific-model')
+    })
+
+    it('should use provider model name when no override is set', async () => {
+      setEnv({
+        LLM_MODEL_OVERRIDE_EXERCISE_CHAT: null,
+        LLM_MODEL_OVERRIDE_DEFAULT: null,
+      })
+      const { getProviderModelConfig, LLMProviderType } =
+        await import('@/infra/llm/providers/factory')
+      const config = getProviderModelConfig(LLMProviderType.GEMINI, 'EXERCISE_CHAT')
+      expect(config.name).toBe('gemini-2.0-flash-001')
+    })
   })
 })

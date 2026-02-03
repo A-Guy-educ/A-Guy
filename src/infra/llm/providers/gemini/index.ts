@@ -6,13 +6,16 @@
  * import { generateChatCompletion, generateChatCompletionWithTools, isGeminiApiKeyConfigured } from '@/lib/ai/providers/gemini'
  * ```
  */
+
+// Re-export types from centralized models.ts (consolidated)
+export type { AIModel, AIModelKey } from '@/infra/llm/models'
+
 export {
   GeminiError,
   GeminiErrorCode,
   generateChatCompletion,
   generateMultimodalCompletion,
   isGeminiApiKeyConfigured,
-  type AIModel,
   type ChatMessage,
   type GenerateChatInput,
   type GenerateChatOutput,

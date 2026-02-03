@@ -4,6 +4,7 @@
  *
  * @public This is the ONLY file consumers should import from
  */
+import type { AIModel } from '@/infra/llm/models'
 import { logger } from '@/infra/utils/logger'
 import { getGeminiClient } from '@/server/llm/gemini.client'
 import type { Payload } from 'payload'
@@ -19,11 +20,8 @@ export interface ChatMessage {
   content: string
 }
 
-export interface AIModel {
-  name: string
-  temperature: number
-  maxOutputTokens: number
-}
+// AIModel is imported from centralized models.ts (re-exported for convenience)
+export type { AIModel } from '@/infra/llm/models'
 
 export interface GenerateChatInput {
   system: string

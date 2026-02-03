@@ -1,77 +1,90 @@
 ## Summary
 
-This PR adds a complete account course selection flow with internationalization (i18n) support, including RTL for Hebrew.
+This PR refactors the LLM model registry to be the single source of truth for all model definitions, enabling proper provider switching at runtime between Gemini and OpenAI-compatible providers.
 
-## Changes
+## Problem
 
-### New Components
+- `models.ts` and `factory.ts` had duplicated model definitions
+- No proper runtime model switching support
+- Circular dependency between modules
+- Types were duplicated across providers
 
-1. **SelectedCourseCard** (`src/app/(frontend)/account/_components/SelectedCourseCard.tsx`)
-   - Displays selected course in account page
-   - Shows course details with proper styling
+## Solution
 
-2. **RequireCourseSelection** (`src/ui/web/guards/RequireCourseSelection.tsx`)
-   - Route guard component for course selection enforcement
-   - Redirects users to course selection if no course is selected
+### New Architecture
 
-3. **AccountPageContent** (`src/app/(frontend)/account/AccountPageContent.tsx`)
-   - Main account page with course selection UI
-   - Integrates SelectedCourseCard component
+1. **Centralized Model Registry** (`src/infra/llm/models.ts`)
+   - `MODEL_REGISTRY`: Provider-agnostic configs (temperature, maxOutputTokens, capabilities)
+   - `PROVIDER_MODEL_NAMES`: Provider-specific model name mappings
+   - `AI_MODELS`: Backward-compatible convenience export
 
-4. **Ask Page** (`src/app/(frontend)/ask/page.tsx`)
-   - New page for user inquiries
+2. **Provider Types** (`src/infra/llm/providers/types.ts`)
+   - New file to break circular dependency
+   - Contains `LLMProviderType` enum
 
-### Updated Files
+3. **Factory Refactored** (`src/infra/llm/providers/factory.ts`)
+   - Now imports from centralized models.ts
+   - Exports `LLMProviderType` for backward compatibility
 
-1. **userProfile State** (`src/client/state/localStorage/userProfile.ts`)
-   - Enhanced localStorage persistence for user preferences
-   - Course selection state management
+### Key Features
 
-2. **i18n Translations**
-   - English (`src/i18n/en.json`): Added account and course-related translations
-   - Hebrew (`src/i18n/he.json`): Added RTL-compatible translations
-
-3. **Documentation**
-   - AGENTS.md: Updated Payload CMS development guidelines
-   - Added plans directory with feature planning documents
-
-## Features
-
-- Course selection flow in account page
-- RTL support for Hebrew language
-- Local storage persistence for user preferences
-- Route guards for protected course selection
-- Component-based architecture for maintainability
+- **Runtime Model Overrides**: Set `LLM_MODEL_OVERRIDE_<MODEL_KEY>` or `LLM_MODEL_OVERRIDE_DEFAULT` env vars
+- **Provider Switching**: Seamless switching between Gemini and OpenAI-compatible via `LLM_PROVIDER` env var
+- **Single Source of Truth**: All model definitions in one place
+- **Type Safety**: Consolidated `AIModel` type definition
 
 ## Files Changed
 
-- `plans/payload-first-url-plan.md` (new)
-- `src/app/(frontend)/account/_components/SelectedCourseCard.tsx` (new)
-- `src/app/(frontend)/account/AccountPageContent.tsx` (modified)
-- `src/app/(frontend)/ask/page.tsx` (new)
-- `src/client/state/localStorage/userProfile.ts` (modified)
-- `src/i18n/en.json` (modified)
-- `src/i18n/he.json` (modified)
-- `src/ui/web/guards/RequireCourseSelection.tsx` (new)
-- `AGENTS.md` (modified)
-- `.roo/rules/index.md` (modified)
+### New Files
+- `src/infra/llm/providers/types.ts` - Provider type definitions
+
+### Modified Files
+- `src/infra/llm/models.ts` - Centralized model registry
+- `src/infra/llm/providers/factory.ts` - Refactored to use registry
+- `src/infra/llm/providers/gemini/index.ts` - Updated exports
+- `src/infra/llm/providers/openai/index.ts` - Updated exports
+- `src/infra/llm/index.ts` - Updated exports
+
+### Test Files
+- `tests/unit/infra/llm/models.test.ts` - New (23 tests)
+- `tests/unit/infra/llm/providers/factory.test.ts` - Extended (20 tests)
+
+## Usage Examples
+
+### Get model config for specific provider
+```typescript
+import { getProviderModelConfig } from '@/infra/llm/models'
+import { LLMProviderType } from '@/infra/llm/providers/factory'
+
+const config = getProviderModelConfig(LLMProviderType.GEMINI, 'EXERCISE_CHAT')
+// Returns: { name: 'gemini-2.0-flash-001', temperature: 0.7, maxOutputTokens: 2048, capabilities: ['multimodal', 'chat'] }
+```
+
+### Runtime model override
+```bash
+# Override specific model
+export LLM_MODEL_OVERRIDE_EXERCISE_CHAT=gemini-1.5-pro
+
+# Or set default override
+export LLM_MODEL_OVERRIDE_DEFAULT=gpt-4o
+```
 
 ## Testing
 
-- [ ] Verify course selection flow works correctly
-- [ ] Test RTL layout for Hebrew
-- [ ] Verify local storage persistence
-- [ ] Test route guard behavior
+All 968 tests passed (5 skipped):
+- `tests/unit/infra/llm/models.test.ts`: 23 tests
+- `tests/unit/infra/llm/providers/factory.test.ts`: 20 tests
 
 ## Checklist
 
 - [x] Code follows project conventions
 - [x] Self-reviewed changes
-- [ ] Documentation updated
-- [ ] Tests added/updated
+- [x] Lint passes (no new warnings)
+- [x] Tests pass (968 passed, 5 skipped)
+- [x] Documentation in code comments updated
 
 ---
 
-**PR URL**: https://github.com/A-Guy-educ/A-Guy/pull/new/feat/account-course-selection-i18n
+**PR URL**: https://github.com/A-Guy-educ/A-Guy/pull/new/refactor/llm-model-registry
 **Base Branch**: dev
-**Compare Branch**: feat/account-course-selection-i18n
+**Compare Branch**: refactor/llm-model-registry

@@ -6,34 +6,20 @@
  * @domain ai
  * @pattern provider-factory, abstraction, dependency-injection
  *
- * Uses centralized AI_MODELS from @/infra/llm/models.ts for model configurations.
- * Only defines provider-specific model name mappings (not temperature/maxTokens).
+ * Uses centralized MODEL_REGISTRY and PROVIDER_MODEL_NAMES from @/infra/llm/models.ts
+ * for model configurations. This ensures a single source of truth for all model definitions.
  */
 import type { Payload } from 'payload'
-import { AI_MODELS, type AIModelKey } from '../models'
+import { LLMProviderType } from './types'
+export { LLMProviderType }
 
-// Provider types - matches LLM_PROVIDER env var values
-export const LLMProviderType = {
-  GEMINI: 'gemini',
-  OPENAI_COMPATIBLE: 'openai-compatible',
-} as const
-
-export type LLMProviderType = (typeof LLMProviderType)[keyof typeof LLMProviderType]
-
-// Provider-specific model name mappings (maps AI_MODELS keys to provider-specific model names)
-// Temperature and maxOutputTokens come from centralized AI_MODELS
-const PROVIDER_MODEL_MAP: Record<LLMProviderType, Record<AIModelKey, string>> = {
-  [LLMProviderType.GEMINI]: {
-    IMAGE_TO_EXERCISE: 'gemini-2.0-flash-001',
-    EXERCISE_CHAT: 'gemini-2.0-flash-001',
-    PDF_TO_EXERCISE: 'gemini-2.0-flash-001',
-  },
-  [LLMProviderType.OPENAI_COMPATIBLE]: {
-    IMAGE_TO_EXERCISE: 'MiniMax-M2.1',
-    EXERCISE_CHAT: 'MiniMax-M2.1',
-    PDF_TO_EXERCISE: 'MiniMax-M2.1',
-  },
-}
+import {
+  MODEL_REGISTRY,
+  PROVIDER_MODEL_NAMES,
+  getModelNameOverride,
+  type AIModel,
+  type AIModelKey,
+} from '../models'
 
 // Configuration
 export interface LLMProviderConfig {
@@ -139,19 +125,20 @@ export interface UnifiedLLMProvider {
 
 /**
  * Get model config for a specific provider and task
- * Uses centralized AI_MODELS (temperature, maxOutputTokens) and provider-specific model names
+ * Uses centralized MODEL_REGISTRY (temperature, maxOutputTokens) and provider-specific model names
+ * Supports runtime overrides via LLM_MODEL_OVERRIDE_* environment variables
  */
 export function getProviderModelConfig(
   providerType: LLMProviderType,
   modelKey: AIModelKey = DEFAULT_MODEL_KEY,
-): { name: string; temperature: number; maxOutputTokens: number } {
-  const baseConfig = AI_MODELS[modelKey]
-  const providerModelName = PROVIDER_MODEL_MAP[providerType][modelKey]
+): AIModel {
+  // Check for runtime model name override first
+  const overrideName = getModelNameOverride(modelKey)
+  const modelName = overrideName ?? PROVIDER_MODEL_NAMES[providerType][modelKey]
 
   return {
-    name: providerModelName,
-    temperature: baseConfig.temperature,
-    maxOutputTokens: baseConfig.maxOutputTokens,
+    name: modelName,
+    ...MODEL_REGISTRY[modelKey],
   }
 }
 
