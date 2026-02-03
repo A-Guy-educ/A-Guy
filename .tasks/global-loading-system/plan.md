@@ -24,19 +24,19 @@
 
 ### Existing Loading Patterns
 
-| Component     | Location                                                      | Current Pattern                              |
-| ------------- | ------------------------------------------------------------- | -------------------------------------------- |
-| LoginForm     | `src/app/(frontend)/login/LoginForm.tsx`                      | Local `useState(false)` for `isLoading` + Suspense boundary + `LoginFormSkeleton` |
+| Component     | Location                                                      | Current Pattern                                                                    |
+| ------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| LoginForm     | `src/app/(frontend)/login/LoginForm.tsx`                      | Local `useState(false)` for `isLoading` + Suspense boundary + `LoginFormSkeleton`  |
 | SignupForm    | `src/app/(frontend)/signup/SignupForm.tsx`                    | Local `useState(false)` for `isLoading` + Suspense boundary + `SignupFormSkeleton` |
-| ChatInterface | `src/app/(frontend)/.../ChatInterface/index.tsx`              | Uses `isLoading` from `useNotebookChat` hook |
-| StudyContent  | `src/app/(frontend)/study/_components/StudyContent/index.tsx` | Local `useState(true)` for `isLoading`       |
-| HeaderClient  | `src/ui/web/header/Component.client.tsx`                      | Uses `isAuthLoading` from `useCurrentUser` hook |
+| ChatInterface | `src/app/(frontend)/.../ChatInterface/index.tsx`              | Uses `isLoading` from `useNotebookChat` hook                                       |
+| StudyContent  | `src/app/(frontend)/study/_components/StudyContent/index.tsx` | Local `useState(true)` for `isLoading`                                             |
+| HeaderClient  | `src/ui/web/header/Component.client.tsx`                      | Uses `isAuthLoading` from `useCurrentUser` hook                                    |
 
 ### Existing Components to Leverage
 
-| Component | Location                                     | Purpose                                     |
-| --------- | -------------------------------------------- | ------------------------------------------- |
-| Button    | `src/ui/web/components/button.tsx`           | No built-in loading state (needs extension) |
+| Component | Location                           | Purpose                                     |
+| --------- | ---------------------------------- | ------------------------------------------- |
+| Button    | `src/ui/web/components/button.tsx` | No built-in loading state (needs extension) |
 
 > **Note**: No shared Spinner or Skeleton components exist yet. These will be created as part of this implementation.
 
@@ -68,6 +68,7 @@ html
 ### Import Path Convention (Updated)
 
 The codebase uses the following import conventions:
+
 - `@/ui/web/components/` - shadcn/ui components (button, card, input, etc.)
 - `@/ui/web/providers/` - React providers (I18n, Theme, etc.)
 - `@/infra/` - Infrastructure code (analytics, utils, etc.)
@@ -949,12 +950,14 @@ export type LoadingKey = (typeof LOADING_KEYS)[keyof typeof LOADING_KEYS]
 **File**: `src/app/(frontend)/login/LoginForm.tsx` (modify existing)
 
 The current LoginForm already has:
+
 - Local `isLoading` state with `useState`
 - Suspense boundary with `LoginFormSkeleton`
 - Google OAuth button
 - `returnTo` query param support
 
 Changes needed:
+
 1. Replace local `isLoading` state with `useAsyncAction` hook
 2. Replace `useRouter` with `useRouterWithLoading`
 3. Add Spinner component in loading state
@@ -1108,6 +1111,7 @@ function LoginFormSkeleton() {
 **File**: `src/app/(frontend)/signup/SignupForm.tsx` (modify existing)
 
 The current SignupForm already has:
+
 - Local `isLoading` state with `useState`
 - Suspense boundary with `SignupFormSkeleton`
 - Google OAuth button
@@ -1116,6 +1120,7 @@ The current SignupForm already has:
 - `returnTo` query param support
 
 Changes needed:
+
 1. Replace local `isLoading` state with `useAsyncAction` hook
 2. Replace `useRouter` with `useRouterWithLoading`
 3. Add Spinner component in loading state
@@ -1478,10 +1483,12 @@ export function createApiRequest<T>(
 **File**: `src/app/(frontend)/study/_components/StudyContent/index.tsx` (modify existing)
 
 The current StudyContent already has:
+
 - Local `isLoading` state with `useState(true)`
 - Simple loading text display
 
 Changes needed:
+
 1. Replace local `isLoading` state with `useLoadingState` hook
 2. Replace direct `fetch` with `userApiClient`
 3. Add proper skeleton loading UI
@@ -2617,16 +2624,16 @@ Update only these **known user-facing navigation hotspots** to use `SystemLink`:
 
 ### Key Fixes Applied (Round 5 - Codebase Alignment)
 
-| Issue                                     | Fix                                                                             |
-| ----------------------------------------- | ------------------------------------------------------------------------------- |
-| Import paths outdated (`@/lib/`, etc.)    | Updated to new structure: `@/infra/`, `@/ui/web/`, `@/client/`                  |
-| HeaderClient location wrong               | Updated to `src/ui/web/header/Component.client.tsx`                             |
-| No shared Spinner/Skeleton components     | Added Spinner component creation to the plan (A.10)                             |
-| Forms already have Suspense boundaries    | Plan now preserves existing `LoginFormSkeleton` / `SignupFormSkeleton`          |
-| SystemEventBus usage in SignupForm        | Plan updated to use `systemEventBus.emit(SYSTEM_EVENTS.*)` instead of analytics |
-| useCurrentUser hook in HeaderClient       | Noted that auth loading comes from `useCurrentUser` hook, not direct fetch      |
-| returnTo query param support              | Forms already support `returnTo` param; plan preserves this                     |
-| Google OAuth button in auth forms         | Plan preserves existing GoogleLoginButton integration                           |
+| Issue                                  | Fix                                                                             |
+| -------------------------------------- | ------------------------------------------------------------------------------- |
+| Import paths outdated (`@/lib/`, etc.) | Updated to new structure: `@/infra/`, `@/ui/web/`, `@/client/`                  |
+| HeaderClient location wrong            | Updated to `src/ui/web/header/Component.client.tsx`                             |
+| No shared Spinner/Skeleton components  | Added Spinner component creation to the plan (A.10)                             |
+| Forms already have Suspense boundaries | Plan now preserves existing `LoginFormSkeleton` / `SignupFormSkeleton`          |
+| SystemEventBus usage in SignupForm     | Plan updated to use `systemEventBus.emit(SYSTEM_EVENTS.*)` instead of analytics |
+| useCurrentUser hook in HeaderClient    | Noted that auth loading comes from `useCurrentUser` hook, not direct fetch      |
+| returnTo query param support           | Forms already support `returnTo` param; plan preserves this                     |
+| Google OAuth button in auth forms      | Plan preserves existing GoogleLoginButton integration                           |
 
 ---
 
