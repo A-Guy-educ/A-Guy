@@ -9,6 +9,8 @@
  * Uses centralized MODEL_REGISTRY and PROVIDER_MODEL_NAMES from @/infra/llm/models.ts
  * for model configurations. This ensures a single source of truth for all model definitions.
  */
+import { getSystemParam, isConfigLoaded, loadRuntimeConfig } from '@/infra/config/runtime'
+import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import type { Payload } from 'payload'
 import { LLMProviderType } from './types'
 export { LLMProviderType }
@@ -31,28 +33,71 @@ export interface LLMProviderConfig {
 const DEFAULT_MODEL_KEY: AIModelKey = 'EXERCISE_CHAT'
 
 /**
- * Resolve provider type from LLM_PROVIDER environment variable
+ * Resolve provider type from LLM_PROVIDER (env var or runtime config)
  * Supports: 'gemini', 'openai-compatible'
  */
-export function getProviderTypeFromEnv(): LLMProviderType {
+export async function getProviderTypeFromEnv(payload?: Payload): Promise<LLMProviderType> {
+  // First check process.env for direct override
   const envValue = process.env.LLM_PROVIDER?.toLowerCase()
-
-  if (envValue === 'openai-compatible') {
-    return LLMProviderType.OPENAI_COMPATIBLE
+  if (envValue) {
+    console.log(`[LLMFactory] LLM_PROVIDER from process.env: ${envValue}`)
+    if (envValue === 'openai-compatible') {
+      return LLMProviderType.OPENAI_COMPATIBLE
+    }
+    return LLMProviderType.GEMINI
   }
 
-  // Default to gemini for 'gemini' or any other value/missing
+  // Then check runtime config (Config_entries)
+  if (payload) {
+    try {
+      let defaultTenantId: string | undefined
+      if (!isConfigLoaded()) {
+        defaultTenantId = await getDefaultTenantId(payload)
+        console.log(`[LLMFactory] Loading runtime config for tenant: ${defaultTenantId}`)
+        await loadRuntimeConfig(payload, defaultTenantId)
+      } else {
+        defaultTenantId = await getDefaultTenantId(payload)
+      }
+      console.log(
+        `[LLMFactory] Config loaded, looking up LLM_PROVIDER for tenant: ${defaultTenantId}`,
+      )
+      const configValue = getSystemParam('LLM_PROVIDER', {
+        tenantId: defaultTenantId,
+        throwIfNotFound: false,
+      })
+      console.log(`[LLMFactory] getSystemParam result: "${configValue}"`)
+      console.log(`[LLMFactory] getSystemParam result type: ${typeof configValue}`)
+      console.log(`[LLMFactory] getSystemParam result length: ${configValue?.length}`)
+      if (configValue) {
+        const normalizedValue = configValue.toLowerCase()
+        console.log(`[LLMFactory] LLM_PROVIDER from runtime config: ${normalizedValue}`)
+        if (normalizedValue === 'openai-compatible') {
+          return LLMProviderType.OPENAI_COMPATIBLE
+        }
+        return LLMProviderType.GEMINI
+      }
+    } catch (error) {
+      console.log(`[LLMFactory] Error reading LLM_PROVIDER from config: ${error}`)
+      // Config not loaded, continue with default
+    }
+  }
+
+  // Default to gemini
+  console.log('[LLMFactory] LLM_PROVIDER not configured, defaulting to gemini')
   return LLMProviderType.GEMINI
 }
 
 /**
- * Get provider type for a given config (uses env var if not explicitly set)
+ * Get provider type for a given config (uses env var or runtime config if not explicitly set)
  */
-function resolveProviderType(config?: Partial<LLMProviderConfig>): LLMProviderType {
+async function resolveProviderType(
+  config?: Partial<LLMProviderConfig>,
+  payload?: Payload,
+): Promise<LLMProviderType> {
   if (config?.type) {
     return config.type
   }
-  return getProviderTypeFromEnv()
+  return getProviderTypeFromEnv(payload)
 }
 
 /**
@@ -144,13 +189,14 @@ export function getProviderModelConfig(
 
 /**
  * Get the active LLM provider based on configuration
- * Respects LLM_PROVIDER env var if type is not explicitly provided
+ * Respects LLM_PROVIDER (env var or runtime config) if type is not explicitly provided
  */
 export async function getLLMProvider(
   payload: Payload,
   config?: Partial<LLMProviderConfig>,
 ): Promise<UnifiedLLMProvider> {
-  const providerType = resolveProviderType(config)
+  const providerType = await resolveProviderType(config, payload)
+  console.log(`[LLMFactory] Using provider type: ${providerType}`)
 
   switch (providerType) {
     case LLMProviderType.OPENAI_COMPATIBLE: {
@@ -184,17 +230,28 @@ export async function checkProviderAvailability(payload: Payload): Promise<{
 }
 
 /**
- * Auto-detect the best available provider (respects LLM_PROVIDER env var preference)
+ * Auto-detect the best available provider (respects LLM_PROVIDER preference from env or config)
  */
 export async function detectBestProvider(payload: Payload): Promise<LLMProviderType> {
-  // First check if user specified a preference via env var
-  const envProvider = getProviderTypeFromEnv()
+  // First check if user specified a preference via env var or runtime config
+  const envProvider = await getProviderTypeFromEnv(payload)
+  console.log(`[LLMFactory] detectBestProvider - preferred provider: ${envProvider}`)
 
   // Check if the preferred provider is available
   const availability = await checkProviderAvailability(payload)
+  console.log(`[LLMFactory] detectBestProvider - availability:`, availability)
 
   if (envProvider === LLMProviderType.OPENAI_COMPATIBLE && availability['openai-compatible']) {
+    console.log(
+      '[LLMFactory] detectBestProvider - using OPENAI_COMPATIBLE (preferred and available)',
+    )
     return LLMProviderType.OPENAI_COMPATIBLE
+  }
+
+  if (envProvider === LLMProviderType.OPENAI_COMPATIBLE && !availability['openai-compatible']) {
+    console.log(
+      '[LLMFactory] detectBestProvider - OPENAI_COMPATIBLE preferred but NOT available, falling back',
+    )
   }
 
   if (envProvider === LLMProviderType.GEMINI && availability.gemini) {
@@ -203,6 +260,7 @@ export async function detectBestProvider(payload: Payload): Promise<LLMProviderT
 
   // Fallback: prefer available provider
   if (availability['openai-compatible']) {
+    console.log('[LLMFactory] detectBestProvider - fallback: using OPENAI_COMPATIBLE (available)')
     return LLMProviderType.OPENAI_COMPATIBLE
   }
   if (availability.gemini) {
@@ -210,6 +268,7 @@ export async function detectBestProvider(payload: Payload): Promise<LLMProviderT
   }
 
   // Default to gemini if none configured
+  console.log('[LLMFactory] detectBestProvider - no providers available, defaulting to GEMINI')
   return LLMProviderType.GEMINI
 }
 

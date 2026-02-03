@@ -24,6 +24,10 @@ import { isRetryableError, wrapGeminiError } from './gemini.errors'
 import { mapMessagesToGeminiHistory } from './gemini.mapper'
 import type { AIModel, ChatMessage, GenerateChatOutput } from './gemini.provider'
 
+// Provider identification for logging
+const PROVIDER_NAME = 'gemini'
+const PROVIDER_VERSION = '1.0'
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -197,6 +201,26 @@ async function executeToolCallingWithTimeout(
     input.acknowledgment,
   )
 
+  // Log provider details for the tool calling request
+  logger.info(
+    {
+      provider: PROVIDER_NAME,
+      providerVersion: PROVIDER_VERSION,
+      model: input.model.name,
+      temperature: input.model.temperature,
+      maxOutputTokens: input.model.maxOutputTokens,
+      capabilities: input.model.capabilities ?? [],
+      toolCount: functionDeclarations.length,
+      historyLength: history.length,
+      messageCount: input.messages.length,
+      timeoutMs,
+      currentMessagePreview: finalMessage.substring(0, 100),
+    },
+    '[GeminiToolCalling] Tool calling request',
+  )
+
+  const startTime = Date.now()
+
   // Create timeout promise
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => {
@@ -301,9 +325,18 @@ async function executeToolCallingWithTimeout(
 
   // Get final text response
   const text = getResponseText(currentResult)
+  const processingTimeMs = Date.now() - startTime
 
-  logger.debug(
-    { textLength: text.length, toolCallCount: allToolCalls.length },
+  // Log successful completion
+  logger.info(
+    {
+      provider: PROVIDER_NAME,
+      providerVersion: PROVIDER_VERSION,
+      model: input.model.name,
+      processingTimeMs,
+      responseLength: text.length,
+      toolCallCount: allToolCalls.length,
+    },
     '[GeminiToolCalling] Tool calling completed',
   )
 

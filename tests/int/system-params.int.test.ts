@@ -7,7 +7,7 @@
  */
 
 import { ConfigKind } from '@/infra/config/config-constants'
-import { clearConfigCache, loadRuntimeConfig } from '@/infra/config/runtime'
+import { clearConfigCache, getSystemParam, loadRuntimeConfig } from '@/infra/config/runtime'
 import { SystemParams } from '@/infra/config/system-params'
 import config from '@payload-config'
 import { getPayload } from 'payload'
@@ -71,9 +71,8 @@ describe('SystemParams Integration', () => {
 
     await loadRuntimeConfig(payload, testTenantId)
 
-    // Verify it loads via getVariable (since SystemParam is treated like Variable)
-    const { getVariable } = await import('@/infra/config/runtime')
-    expect(getVariable(testTenantId, 'pdf_conversion_test_max_pages')).toBe('10')
+    // Verify it loads via getSystemParam (since SystemParam is treated like Variable)
+    expect(getSystemParam('pdf_conversion_test_max_pages', { tenantId: testTenantId })).toBe('10')
   })
 
   test('should return defaults when system params not seeded', async () => {
@@ -103,8 +102,7 @@ describe('SystemParams Integration', () => {
 
     await loadRuntimeConfig(payload, testTenantId)
 
-    // Should be accessible via getVariable (plaintext)
-    const { getVariable } = await import('@/infra/config/runtime')
-    expect(getVariable(testTenantId, 'pdf_conversion_test_exercises')).toBe('2000')
+    // Should be accessible via getSystemParam (plaintext)
+    expect(getSystemParam('pdf_conversion_test_exercises', { tenantId: testTenantId })).toBe('2000')
   })
 })

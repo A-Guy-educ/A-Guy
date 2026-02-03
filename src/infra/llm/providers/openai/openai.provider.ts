@@ -15,6 +15,10 @@ import {
   type ChatMessage,
 } from './openai.mapper'
 
+// Provider identification for logging
+const PROVIDER_NAME = 'openai-compatible'
+const PROVIDER_VERSION = '1.0'
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Public Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -174,13 +178,22 @@ async function executeWithTimeout(
 
   const messages = mapMessagesToOpenAIFormat(allMessages)
 
-  logger.debug(
+  // Log provider details for the request
+  logger.info(
     {
-      messageCount: messages.length,
+      provider: PROVIDER_NAME,
+      providerVersion: PROVIDER_VERSION,
       model: input.model.name,
+      temperature: input.model.temperature,
+      maxOutputTokens: input.model.maxOutputTokens,
+      capabilities: input.model.capabilities ?? [],
+      messageCount: messages.length,
+      timeoutMs,
     },
-    '[OpenAIProvider] Preparing chat request',
+    '[OpenAIProvider] Chat completion request',
   )
+
+  const startTime = Date.now()
 
   // Create timeout promise
   const timeoutPromise = new Promise<never>((_, reject) => {
@@ -201,7 +214,20 @@ async function executeWithTimeout(
     choices: Array<{ message: { content: string | null } }>
   }
 
+  const processingTimeMs = Date.now() - startTime
   const text = extractTextFromOpenAIResponse(completion)
+
+  // Log successful completion
+  logger.info(
+    {
+      provider: PROVIDER_NAME,
+      providerVersion: PROVIDER_VERSION,
+      model: input.model.name,
+      processingTimeMs,
+      responseLength: text.length,
+    },
+    '[OpenAIProvider] Chat completion completed',
+  )
 
   return {
     text,
@@ -216,14 +242,24 @@ async function executeMultimodalWithTimeout(
 ): Promise<GenerateChatOutput> {
   const client = await getOpenAIClient(payload)
 
-  logger.debug(
+  // Log provider details for multimodal request
+  logger.info(
     {
+      provider: PROVIDER_NAME,
+      providerVersion: PROVIDER_VERSION,
+      model: input.model.name,
+      temperature: input.model.temperature,
+      maxOutputTokens: input.model.maxOutputTokens,
+      capabilities: input.model.capabilities ?? [],
       promptLength: input.prompt.length,
       attachmentCount: input.attachments.length,
       mimeTypes: input.attachments.map((a) => a.mimeType),
+      timeoutMs,
     },
-    '[OpenAIProvider] Preparing multimodal request',
+    '[OpenAIProvider] Multimodal completion request',
   )
+
+  const startTime = Date.now()
 
   // Build content array: text prompt + image attachments
   const content: Array<
@@ -263,7 +299,20 @@ async function executeMultimodalWithTimeout(
     choices: Array<{ message: { content: string | null } }>
   }
 
+  const processingTimeMs = Date.now() - startTime
   const text = extractTextFromOpenAIResponse(completion)
+
+  // Log successful completion
+  logger.info(
+    {
+      provider: PROVIDER_NAME,
+      providerVersion: PROVIDER_VERSION,
+      model: input.model.name,
+      processingTimeMs,
+      responseLength: text.length,
+    },
+    '[OpenAIProvider] Multimodal completion completed',
+  )
 
   return {
     text,

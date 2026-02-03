@@ -23,6 +23,10 @@ import {
 } from './openai.mapper'
 import type { AIModel, GenerateChatOutput } from './openai.provider'
 
+// Provider identification for logging
+const PROVIDER_NAME = 'openai-compatible'
+const PROVIDER_VERSION = '1.0'
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -171,6 +175,25 @@ async function executeToolCallingWithTimeout(
   const allMessages: ChatMessage[] = [{ role: 'system', content: input.system }, ...input.messages]
 
   const messages = mapMessagesToOpenAIFormat(allMessages)
+
+  // Log provider details for the tool calling request
+  logger.info(
+    {
+      provider: PROVIDER_NAME,
+      providerVersion: PROVIDER_VERSION,
+      model: input.model.name,
+      temperature: input.model.temperature,
+      maxOutputTokens: input.model.maxOutputTokens,
+      capabilities: input.model.capabilities ?? [],
+      toolCount: functions.length,
+      messageCount: messages.length,
+      timeoutMs,
+      currentMessagePreview: allMessages[allMessages.length - 1]?.content?.substring(0, 100) ?? '',
+    },
+    '[OpenAIToolCalling] Tool calling request',
+  )
+
+  const startTime = Date.now()
 
   // Create timeout promise
   const timeoutPromise = new Promise<never>((_, reject) => {
@@ -335,9 +358,18 @@ async function executeToolCallingWithTimeout(
 
   // Get final text response
   const text = extractTextFromOpenAIResponse(completion)
+  const processingTimeMs = Date.now() - startTime
 
-  logger.debug(
-    { textLength: text.length, toolCallCount: allToolCalls.length },
+  // Log successful completion
+  logger.info(
+    {
+      provider: PROVIDER_NAME,
+      providerVersion: PROVIDER_VERSION,
+      model: input.model.name,
+      processingTimeMs,
+      responseLength: text.length,
+      toolCallCount: allToolCalls.length,
+    },
     '[OpenAIToolCalling] Tool calling completed',
   )
 

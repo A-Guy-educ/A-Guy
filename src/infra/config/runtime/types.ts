@@ -35,16 +35,6 @@ export interface LoadConfigResult {
 }
 
 /**
- * Options for getVariable/getSecret
- */
-export interface GetConfigOptions {
-  /** Default value if key not found */
-  defaultValue?: string
-  /** Whether to throw if not found (default: true) */
-  throwIfNotFound?: boolean
-}
-
-/**
  * @deprecated Kept for backward compatibility during migration
  * Use RuntimeConfigCache (tenant-scoped) instead
  */

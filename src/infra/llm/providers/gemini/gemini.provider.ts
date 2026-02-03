@@ -11,6 +11,10 @@ import type { Payload } from 'payload'
 import { isRetryableError, wrapGeminiError } from './gemini.errors'
 import { extractResponseText, mapMessagesToGeminiHistory } from './gemini.mapper'
 
+// Provider identification for logging
+const PROVIDER_NAME = 'gemini'
+const PROVIDER_VERSION = '1.0'
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Public Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -193,14 +197,24 @@ async function executeWithTimeout(
     input.acknowledgment,
   )
 
-  logger.debug(
+  // Log provider details for the request
+  logger.info(
     {
+      provider: PROVIDER_NAME,
+      providerVersion: PROVIDER_VERSION,
+      model: input.model.name,
+      temperature: input.model.temperature,
+      maxOutputTokens: input.model.maxOutputTokens,
+      capabilities: input.model.capabilities ?? [],
       historyLength: history.length,
       messageCount: input.messages.length,
-      currentMessagePreview: finalMessage.substring(0, 50),
+      timeoutMs,
+      currentMessagePreview: finalMessage.substring(0, 100),
     },
-    '[GeminiProvider] Prepared chat history',
+    '[GeminiProvider] Chat completion request',
   )
+
+  const startTime = Date.now()
 
   // Create timeout promise
   const timeoutPromise = new Promise<never>((_, reject) => {
@@ -213,7 +227,20 @@ async function executeWithTimeout(
   const chat = model.startChat({ history })
   const result = await Promise.race([chat.sendMessage(finalMessage), timeoutPromise])
 
+  const processingTimeMs = Date.now() - startTime
   const text = extractResponseText(result.response)
+
+  // Log successful completion
+  logger.info(
+    {
+      provider: PROVIDER_NAME,
+      providerVersion: PROVIDER_VERSION,
+      model: input.model.name,
+      processingTimeMs,
+      responseLength: text.length,
+    },
+    '[GeminiProvider] Chat completion completed',
+  )
 
   return {
     text,
@@ -236,14 +263,24 @@ async function executeMultimodalWithTimeout(
     },
   })
 
-  logger.debug(
+  // Log provider details for multimodal request
+  logger.info(
     {
+      provider: PROVIDER_NAME,
+      providerVersion: PROVIDER_VERSION,
+      model: input.model.name,
+      temperature: input.model.temperature,
+      maxOutputTokens: input.model.maxOutputTokens,
+      capabilities: input.model.capabilities ?? [],
       promptLength: input.prompt.length,
       attachmentCount: input.attachments.length,
       mimeTypes: input.attachments.map((a) => a.mimeType),
+      timeoutMs,
     },
-    '[GeminiProvider] Preparing multimodal request',
+    '[GeminiProvider] Multimodal completion request',
   )
+
+  const startTime = Date.now()
 
   // Build parts array: text prompt + inline data attachments
   const parts: Array<{ text: string } | { inlineData: { data: string; mimeType: string } }> = [
@@ -272,7 +309,20 @@ async function executeMultimodalWithTimeout(
     timeoutPromise,
   ])
 
+  const processingTimeMs = Date.now() - startTime
   const text = extractResponseText(result.response)
+
+  // Log successful completion
+  logger.info(
+    {
+      provider: PROVIDER_NAME,
+      providerVersion: PROVIDER_VERSION,
+      model: input.model.name,
+      processingTimeMs,
+      responseLength: text.length,
+    },
+    '[GeminiProvider] Multimodal completion completed',
+  )
 
   return {
     text,

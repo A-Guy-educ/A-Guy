@@ -41,11 +41,15 @@ export async function isOpenAIApiKeyConfigured(payload: Payload): Promise<boolea
 
     // Then check runtime config using default tenant
     const defaultTenantId = await getDefaultTenantId(payload)
-    const apiKey = getSecret(defaultTenantId, 'OPENAI_COMPATIBLE_API_KEY', {
+    const apiKey = getSecret('OPENAI_COMPATIBLE_API_KEY', {
+      tenantId: defaultTenantId,
       throwIfNotFound: false,
     })
     if (!apiKey) {
-      const fallbackKey = getSecret(defaultTenantId, 'OPENAI_API_KEY', { throwIfNotFound: false })
+      const fallbackKey = getSecret('OPENAI_API_KEY', {
+        tenantId: defaultTenantId,
+        throwIfNotFound: false,
+      })
       return !!fallbackKey
     }
     return true
@@ -73,11 +77,15 @@ export async function getOpenAICompatibleBaseUrl(payload: Payload): Promise<stri
 
     // Then check runtime config using default tenant
     const defaultTenantId = await getDefaultTenantId(payload)
-    const baseUrl = getSecret(defaultTenantId, 'OPENAI_COMPATIBLE_BASE_URL', {
+    const baseUrl = getSecret('OPENAI_COMPATIBLE_BASE_URL', {
+      tenantId: defaultTenantId,
       throwIfNotFound: false,
     })
     if (!baseUrl) {
-      return getSecret(defaultTenantId, 'OPENAI_BASE_URL', { throwIfNotFound: false })
+      return getSecret('OPENAI_BASE_URL', {
+        tenantId: defaultTenantId,
+        throwIfNotFound: false,
+      })
     }
     return baseUrl
   } catch {
@@ -104,11 +112,15 @@ export async function getOpenAICompatibleApiKey(payload: Payload): Promise<strin
 
     // Then check runtime config using default tenant
     const defaultTenantId = await getDefaultTenantId(payload)
-    const apiKey = getSecret(defaultTenantId, 'OPENAI_COMPATIBLE_API_KEY', {
+    const apiKey = getSecret('OPENAI_COMPATIBLE_API_KEY', {
+      tenantId: defaultTenantId,
       throwIfNotFound: false,
     })
     if (!apiKey) {
-      return getSecret(defaultTenantId, 'OPENAI_API_KEY', { throwIfNotFound: false })
+      return getSecret('OPENAI_API_KEY', {
+        tenantId: defaultTenantId,
+        throwIfNotFound: false,
+      })
     }
     return apiKey
   } catch {
@@ -130,9 +142,15 @@ export async function getOpenAIClient(payload: Payload): Promise<OpenAI> {
 
     if (!apiKey) {
       const defaultTenantId = await getDefaultTenantId(payload)
-      apiKey = getSecret(defaultTenantId, 'OPENAI_COMPATIBLE_API_KEY', { throwIfNotFound: false })
+      apiKey = getSecret('OPENAI_COMPATIBLE_API_KEY', {
+        tenantId: defaultTenantId,
+        throwIfNotFound: false,
+      })
       if (!apiKey) {
-        apiKey = getSecret(defaultTenantId, 'OPENAI_API_KEY', { throwIfNotFound: false })
+        apiKey = getSecret('OPENAI_API_KEY', {
+          tenantId: defaultTenantId,
+          throwIfNotFound: false,
+        })
       }
     }
 
@@ -144,6 +162,13 @@ export async function getOpenAIClient(payload: Payload): Promise<OpenAI> {
 
     // Get base URL (supports both OPENAI_COMPATIBLE_BASE_URL and OPENAI_BASE_URL)
     const baseURL = process.env.OPENAI_COMPATIBLE_BASE_URL || process.env.OPENAI_BASE_URL
+
+    // Log client initialization
+    const keyPrefix = apiKey.substring(0, 7)
+    const keySuffix = apiKey.substring(apiKey.length - 4)
+    console.log(
+      `[OpenAIClient] Initializing with baseURL: ${baseURL || 'default (OpenAI)'}, API key: ${keyPrefix}...${keySuffix}`,
+    )
 
     openaiClient = new OpenAI({
       apiKey,

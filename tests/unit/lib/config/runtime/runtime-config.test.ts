@@ -83,7 +83,7 @@ describe('Runtime Config (Tenant-Scoped)', () => {
       expect(isConfigLoaded()).toBe(true)
 
       // Verify secret was decrypted (tenant-scoped)
-      expect(getSecret(TEST_TENANT_ID, 'test_secret')).toBe(secretValue)
+      expect(getSecret('test_secret', { tenantId: TEST_TENANT_ID })).toBe(secretValue)
     })
 
     test('should be idempotent and return cached result', async () => {
@@ -188,11 +188,11 @@ describe('Runtime Config (Tenant-Scoped)', () => {
       })
 
       await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
-      expect(getVariable(TEST_TENANT_ID, 'DB_VAR')).toBe('db-value')
+      expect(getVariable('DB_VAR', { tenantId: TEST_TENANT_ID })).toBe('db-value')
     })
 
     test('should throw ConfigNotLoadedError if not loaded', () => {
-      expect(() => getVariable(TEST_TENANT_ID, 'any_key')).toThrow(
+      expect(() => getVariable('any_key', { tenantId: TEST_TENANT_ID })).toThrow(
         'Runtime config has not been loaded',
       )
     })
@@ -202,7 +202,7 @@ describe('Runtime Config (Tenant-Scoped)', () => {
 
       await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
-      expect(() => getVariable(TEST_TENANT_ID, 'missing_key')).toThrow(
+      expect(() => getVariable('missing_key', { tenantId: TEST_TENANT_ID })).toThrow(
         `Missing variable "missing_key" for tenant ${TEST_TENANT_ID}`,
       )
     })
@@ -212,7 +212,9 @@ describe('Runtime Config (Tenant-Scoped)', () => {
 
       await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
-      expect(getVariable(TEST_TENANT_ID, 'missing', { defaultValue: 'default' })).toBe('default')
+      expect(getVariable('missing', { tenantId: TEST_TENANT_ID, defaultValue: 'default' })).toBe(
+        'default',
+      )
     })
 
     test('should return empty string when throwIfNotFound is false', async () => {
@@ -220,7 +222,7 @@ describe('Runtime Config (Tenant-Scoped)', () => {
 
       await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
-      expect(getVariable(TEST_TENANT_ID, 'missing', { throwIfNotFound: false })).toBe('')
+      expect(getVariable('missing', { tenantId: TEST_TENANT_ID, throwIfNotFound: false })).toBe('')
     })
 
     test('should throw for different tenant', async () => {
@@ -239,10 +241,10 @@ describe('Runtime Config (Tenant-Scoped)', () => {
       await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
       // Should find for correct tenant
-      expect(getVariable(TEST_TENANT_ID, 'shared_key')).toBe('tenant-value')
+      expect(getVariable('shared_key', { tenantId: TEST_TENANT_ID })).toBe('tenant-value')
 
       // Should throw for different tenant
-      expect(() => getVariable('other-tenant', 'shared_key')).toThrow()
+      expect(() => getVariable('shared_key', { tenantId: 'other-tenant' })).toThrow()
     })
   })
 
@@ -263,7 +265,7 @@ describe('Runtime Config (Tenant-Scoped)', () => {
 
       await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
-      expect(getSecret(TEST_TENANT_ID, 'MY_SECRET')).toBe(secretValue)
+      expect(getSecret('MY_SECRET', { tenantId: TEST_TENANT_ID })).toBe(secretValue)
     })
 
     test('should throw ConfigKeyNotFoundError if secret missing', async () => {
@@ -271,7 +273,7 @@ describe('Runtime Config (Tenant-Scoped)', () => {
 
       await loadRuntimeConfig(mockPayload, TEST_TENANT_ID)
 
-      expect(() => getSecret(TEST_TENANT_ID, 'missing_secret')).toThrow(
+      expect(() => getSecret('missing_secret', { tenantId: TEST_TENANT_ID })).toThrow(
         `Missing secret "missing_secret" for tenant ${TEST_TENANT_ID}`,
       )
     })

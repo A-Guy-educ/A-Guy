@@ -5,6 +5,8 @@
  * @internal This module is used by gemini.provider.ts only
  */
 import { getSecret, isConfigLoaded, loadRuntimeConfig } from '@/infra/config/runtime'
+// Note: getSecret keeps its old signature for secrets (tenantId, key, options)
+// These are API keys and should remain secrets
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { Payload } from 'payload'
@@ -37,7 +39,10 @@ export async function isGeminiApiKeyConfigured(payload: Payload): Promise<boolea
 
     // Then check runtime config using default tenant
     const defaultTenantId = await getDefaultTenantId(payload)
-    const apiKey = getSecret(defaultTenantId, 'GEMINI_API_KEY', { throwIfNotFound: false })
+    const apiKey = getSecret('GEMINI_API_KEY', {
+      tenantId: defaultTenantId,
+      throwIfNotFound: false,
+    })
     return !!apiKey
   } catch {
     return false
@@ -60,12 +65,21 @@ export async function getGeminiClient(payload: Payload): Promise<GoogleGenerativ
     // Then check runtime config using default tenant
     if (!apiKey) {
       const defaultTenantId = await getDefaultTenantId(payload)
-      apiKey = getSecret(defaultTenantId, 'GEMINI_API_KEY', { throwIfNotFound: false })
+      apiKey = getSecret('GEMINI_API_KEY', { tenantId: defaultTenantId, throwIfNotFound: false })
     }
 
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY environment variable is not configured.')
     }
+
+    // Log API key source (masked for security)
+    const keySource = process.env.GEMINI_API_KEY ? 'process.env' : 'runtime config'
+    const keyPrefix = apiKey.substring(0, 7)
+    const keySuffix = apiKey.substring(apiKey.length - 4)
+    console.log(
+      `[GeminiClient] Initializing with API key from ${keySource}: ${keyPrefix}...${keySuffix}`,
+    )
+
     geminiClient = new GoogleGenerativeAI(apiKey)
   }
   return geminiClient

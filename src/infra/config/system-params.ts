@@ -12,7 +12,7 @@
  * Defaults match src/server/config/constants.ts values.
  */
 
-import { getVariable } from './runtime/runtime-config'
+import { getSystemParam } from './runtime/runtime-config'
 
 /**
  * System parameters accessors
@@ -31,7 +31,8 @@ export const SystemParams = {
    * @returns Number of pages per segment
    */
   getPdfConversionMaxSegmentPages(tenantId?: string): number {
-    const raw = getVariable(tenantId, 'pdf_conversion_max_segment_pages', {
+    const raw = getSystemParam('pdf_conversion_max_segment_pages', {
+      tenantId,
       defaultValue: '2',
       throwIfNotFound: false,
     })
@@ -46,7 +47,8 @@ export const SystemParams = {
    * @returns Max exercises per segment
    */
   getPdfConversionMaxExercisesPerSegment(tenantId?: string): number {
-    const raw = getVariable(tenantId, 'pdf_conversion_max_exercises_per_segment', {
+    const raw = getSystemParam('pdf_conversion_max_exercises_per_segment', {
+      tenantId,
       defaultValue: '1000',
       throwIfNotFound: false,
     })
@@ -61,7 +63,8 @@ export const SystemParams = {
    * @returns Max prompt size in bytes
    */
   getPdfConversionMaxPromptSizeBytes(tenantId?: string): number {
-    const raw = getVariable(tenantId, 'pdf_conversion_max_prompt_size_bytes', {
+    const raw = getSystemParam('pdf_conversion_max_prompt_size_bytes', {
+      tenantId,
       defaultValue: '51200',
       throwIfNotFound: false,
     })

@@ -237,38 +237,46 @@ export async function reloadRuntimeConfig(payload: Payload): Promise<LoadConfigR
 // ============================================
 
 /**
+ * Options for getVariable, getSecret, and getSystemParam
+ */
+export interface GetConfigOptions {
+  /** Tenant ID to scope the lookup (optional, uses default tenant) */
+  tenantId?: string
+  /** Default value if key not found */
+  defaultValue?: string
+  /** Whether to throw if not found (default: true) */
+  throwIfNotFound?: boolean
+}
+
+/**
  * Get a configuration variable for a specific tenant
  *
  * Note: process.env override is DISABLED for tenant-scoped config (per spec-3)
  *
- * @param tenantId - Tenant ID to scope the lookup (optional, uses default tenant)
  * @param key - Configuration key (exact match required)
- * @param options - Options for default value and error handling
+ * @param options - Options for tenant ID, default value, and error handling
  * @returns The configuration value
  *
  * @throws ConfigNotLoadedError if config not loaded
  * @throws ConfigKeyNotFoundError if key not found and no default
  */
 export function getVariable(
-  tenantId?: string,
-  key?: string,
-  options?: { defaultValue?: string; throwIfNotFound?: boolean },
+  key: string,
+  options?: { tenantId?: string; defaultValue?: string; throwIfNotFound?: boolean },
 ): string {
   assertServerSide()
   assertLoaded()
 
+  const { tenantId, defaultValue, throwIfNotFound = true } = options ?? {}
   const resolvedTenantId = tenantId ?? defaultTenantId
   if (!resolvedTenantId) {
     throw new ConfigNotLoadedError()
   }
 
-  const resolvedKey = key ?? ''
-  const { defaultValue, throwIfNotFound = true } = options ?? {}
-
   // Check tenant-specific cache
   const tenantVariables = cache!.variables.get(resolvedTenantId)
-  if (tenantVariables?.has(resolvedKey)) {
-    return tenantVariables.get(resolvedKey)!
+  if (tenantVariables?.has(key)) {
+    return tenantVariables.get(key)!
   }
 
   // Return default or throw
@@ -280,7 +288,7 @@ export function getVariable(
     return ''
   }
 
-  throw new ConfigKeyNotFoundError(resolvedKey, 'variable', resolvedTenantId)
+  throw new ConfigKeyNotFoundError(key, 'variable', resolvedTenantId)
 }
 
 /**
@@ -290,34 +298,30 @@ export function getVariable(
  * - Never logs the secret value
  * - Throws explicit error if not found
  *
- * @param tenantId - Tenant ID to scope the lookup (optional, uses default tenant)
  * @param key - Secret key (exact match required)
- * @param options - Options for default value and error handling
+ * @param options - Options for tenant ID, default value, and error handling
  * @returns The decrypted secret value
  *
  * @throws ConfigNotLoadedError if config not loaded
  * @throws ConfigKeyNotFoundError if key not found and no default
  */
 export function getSecret(
-  tenantId?: string,
-  key?: string,
-  options?: { defaultValue?: string; throwIfNotFound?: boolean },
+  key: string,
+  options?: { tenantId?: string; defaultValue?: string; throwIfNotFound?: boolean },
 ): string {
   assertServerSide()
   assertLoaded()
 
+  const { tenantId, defaultValue, throwIfNotFound = true } = options ?? {}
   const resolvedTenantId = tenantId ?? defaultTenantId
   if (!resolvedTenantId) {
     throw new ConfigNotLoadedError()
   }
 
-  const resolvedKey = key ?? ''
-  const { defaultValue, throwIfNotFound = true } = options ?? {}
-
   // Check tenant-specific cache (secrets)
   const tenantSecrets = cache!.secrets.get(resolvedTenantId)
-  if (tenantSecrets?.has(resolvedKey)) {
-    return tenantSecrets.get(resolvedKey)!
+  if (tenantSecrets?.has(key)) {
+    return tenantSecrets.get(key)!
   }
 
   // Return default or throw
@@ -329,7 +333,27 @@ export function getSecret(
     return ''
   }
 
-  throw new ConfigKeyNotFoundError(resolvedKey, 'secret', resolvedTenantId)
+  throw new ConfigKeyNotFoundError(key, 'secret', resolvedTenantId)
+}
+
+/**
+ * Get a system parameter for a specific tenant
+ *
+ * System parameters are application constants that can be managed at runtime.
+ * This is an alias to getVariable() for semantic clarity.
+ *
+ * @param key - System parameter key (exact match required)
+ * @param options - Options for tenant ID, default value, and error handling
+ * @returns The system parameter value
+ *
+ * @throws ConfigNotLoadedError if config not loaded
+ * @throws ConfigKeyNotFoundError if key not found and no default
+ */
+export function getSystemParam(
+  key: string,
+  options?: { tenantId?: string; defaultValue?: string; throwIfNotFound?: boolean },
+): string {
+  return getVariable(key, options)
 }
 
 /**
