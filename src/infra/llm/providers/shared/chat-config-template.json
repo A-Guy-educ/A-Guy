@@ -1,0 +1,43 @@
+{
+  "timeouts": {
+    "defaultMs": 30000,
+    "toolCallMs": 60000,
+    "streamingMs": 60000
+  },
+  "retry": {
+    "maxRetries": 2,
+    "delayMs": 1000,
+    "exponentialBase": 2,
+    "jitterFactor": 0.1
+  },
+  "tokens": {
+    "defaultMax": 4096,
+    "maxMax": 128000
+  },
+  "temperature": {
+    "min": 0,
+    "max": 2,
+    "default": 0.7
+  },
+  "multipart": {
+    "maxImages": 10,
+    "maxSizeMb": 20,
+    "supportedImages": ["image/jpeg", "image/png", "image/gif", "image/webp"],
+    "supportedPdfs": ["application/pdf"]
+  },
+  "providerUrls": {
+    "geminiApiBase": "https://generativelanguage.googleapis.com/v1beta",
+    "openaiCompatibleApiBase": "https://api.minimax.io/v1"
+  },
+  "defaultModels": {
+    "gemini": "gemini-2.0-flash-001",
+    "openaiCompatible": ""
+  },
+  "chatSettings": {
+    "maxToolIterations": 5,
+    "defaultMaxRetries": 2,
+    "defaultRetryDelayMs": 1000,
+    "defaultChatTimeoutMs": 30000,
+    "defaultToolTimeoutMs": 60000
+  }
+}

@@ -71,6 +71,7 @@ export interface Config {
     pages: Page;
     categories: Category;
     config_entries: ConfigEntry;
+    config_values: ConfigValue;
     config_audit_logs: ConfigAuditLog;
     conversations: Conversation;
     memory_items: MemoryItem;
@@ -108,6 +109,7 @@ export interface Config {
     pages: PagesSelect<false> | PagesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     config_entries: ConfigEntriesSelect<false> | ConfigEntriesSelect<true>;
+    config_values: ConfigValuesSelect<false> | ConfigValuesSelect<true>;
     config_audit_logs: ConfigAuditLogsSelect<false> | ConfigAuditLogsSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
     memory_items: MemoryItemsSelect<false> | MemoryItemsSelect<true>;
@@ -917,6 +919,41 @@ export interface ConfigEntry {
    * Enable or disable this configuration entry
    */
   enabled: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Tenant-scoped configuration values stored as JSON. Organized by feature domain (chat, pdf_conversion, global).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config_values".
+ */
+export interface ConfigValue {
+  id: string;
+  /**
+   * Feature domain for this configuration
+   */
+  domain: 'chat' | 'pdf_conversion' | 'global';
+  /**
+   * Tenant this configuration belongs to
+   */
+  tenant: string | Tenant;
+  /**
+   * Configuration values as JSON object
+   */
+  config:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Optional description of this configuration
+   */
+  description?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1805,6 +1842,10 @@ export interface PayloadLockedDocument {
         value: string | ConfigEntry;
       } | null)
     | ({
+        relationTo: 'config_values';
+        value: string | ConfigValue;
+      } | null)
+    | ({
         relationTo: 'config_audit_logs';
         value: string | ConfigAuditLog;
       } | null)
@@ -2110,6 +2151,18 @@ export interface ConfigEntriesSelect<T extends boolean = true> {
   title?: T;
   value?: T;
   enabled?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config_values_select".
+ */
+export interface ConfigValuesSelect<T extends boolean = true> {
+  domain?: T;
+  tenant?: T;
+  config?: T;
+  description?: T;
   updatedAt?: T;
   createdAt?: T;
 }

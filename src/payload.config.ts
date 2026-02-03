@@ -9,6 +9,7 @@ import { Categories } from '@/server/payload/collections/Categories'
 import { Chapters } from '@/server/payload/collections/Chapters'
 import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
 import { ConfigEntries } from '@/server/payload/collections/ConfigEntries'
+import { ConfigValues } from '@/server/payload/collections/ConfigValues'
 import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
@@ -115,6 +116,7 @@ export default buildConfig({
     Pages,
     Categories,
     ConfigEntries,
+    ConfigValues,
     ConfigAuditLogs,
     Conversations,
     MemoryItems,

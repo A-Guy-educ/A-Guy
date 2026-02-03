@@ -35,6 +35,30 @@ export interface LoadConfigResult {
 }
 
 /**
+ * Shape of the in-memory cache for ConfigValues (tenant-scoped, domain-grouped)
+ */
+export interface ConfigValuesCache {
+  /** Tenant-scoped domain configs: Map<tenantId, Map<domain, config>> */
+  values: Map<string, Map<string, Record<string, unknown>>>
+  /** Metadata about the cache state */
+  metadata: {
+    loadedAt: Date | null
+    entryCount: number
+    domainCount: number
+  }
+}
+
+/**
+ * Result of loading config values
+ */
+export interface LoadConfigValuesResult {
+  success: boolean
+  valuesLoaded: number
+  errors: Array<{ domain: string; tenantId: string; error: string }>
+  loadedAt: Date
+}
+
+/**
  * @deprecated Kept for backward compatibility during migration
  * Use RuntimeConfigCache (tenant-scoped) instead
  */
