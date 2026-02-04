@@ -87,6 +87,8 @@ export interface Config {
     posts: Post;
     'pricing-plans': PricingPlan;
     'mcp-audit-logs': McpAuditLog;
+    'conversion-jobs': ConversionJob;
+    'conversion-templates': ConversionTemplate;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -124,6 +126,8 @@ export interface Config {
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
+    'conversion-jobs': ConversionJobsSelect<false> | ConversionJobsSelect<true>;
+    'conversion-templates': ConversionTemplatesSelect<false> | ConversionTemplatesSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -666,9 +670,21 @@ export interface Prompt {
    */
   tenant: string | Tenant;
   /**
-   * Purpose of this prompt: chat conversation, PDF extraction, or PDF verification
+   * Purpose of this prompt: chat, PDF extraction, verification, or enrichment rounds
    */
-  usage?: ('chat' | 'extractor' | 'verifier') | null;
+  usage?:
+    | (
+        | 'chat'
+        | 'extractor'
+        | 'verifier'
+        | 'round_diagram'
+        | 'round_table'
+        | 'round_hints'
+        | 'round_solution'
+        | 'round_accessibility'
+        | 'round_custom'
+      )
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1226,6 +1242,18 @@ export interface Exercise {
    * SHA256 hash for deduplication
    */
   contentHash?: string | null;
+  /**
+   * Results from additional extraction rounds
+   */
+  enrichments?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1549,6 +1577,302 @@ export interface McpAuditLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversion-jobs".
+ */
+export interface ConversionJob {
+  id: string;
+  /**
+   * Auto-generated: "{Lesson Title} - {PDF Name}"
+   */
+  title: string;
+  /**
+   * Reference to payload-jobs collection _id
+   */
+  payloadJobId?: string | null;
+  lesson: string | Lesson;
+  /**
+   * Source PDF file
+   */
+  sourceMedia: string | Media;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  status: 'draft' | 'queued' | 'running' | 'paused' | 'review' | 'completed' | 'failed' | 'cancelled';
+  /**
+   * Current processing stage
+   */
+  currentStage?:
+    | (
+        | 'INIT'
+        | 'PDF_PREVIEW'
+        | 'CONFIGURATION'
+        | 'PDF_LOAD'
+        | 'PDF_SEGMENT'
+        | 'SEGMENT_QUEUE'
+        | 'SEGMENT_EXTRACT'
+        | 'SEGMENT_REVIEW'
+        | 'ROUND_PROCESSING'
+        | 'SEGMENT_VERIFY'
+        | 'VERIFICATION_REVIEW'
+        | 'SEGMENT_PERSIST'
+        | 'FINAL_APPROVAL'
+        | 'COMPLETE'
+        | 'FAILED'
+        | 'CANCELLED'
+        | 'PAUSED'
+      )
+    | null;
+  /**
+   * Human-readable stage status
+   */
+  currentStageMessage?: string | null;
+  progress?: {
+    totalPages?: number | null;
+    processedPages?: number | null;
+    totalSegments?: number | null;
+    completedSegments?: number | null;
+    failedSegments?: number | null;
+    totalExercises?: number | null;
+    approvedExercises?: number | null;
+    rejectedExercises?: number | null;
+    skippedExercises?: number | null;
+    dedupedExercises?: number | null;
+  };
+  config?: {
+    pageRange?: {
+      start?: number | null;
+      /**
+       * Leave empty for all pages
+       */
+      end?: number | null;
+      excludePages?:
+        | {
+            [k: string]: unknown;
+          }
+        | unknown[]
+        | string
+        | number
+        | boolean
+        | null;
+    };
+    segmentation?: {
+      pagesPerSegment?: number | null;
+      customBoundaries?:
+        | {
+            [k: string]: unknown;
+          }
+        | unknown[]
+        | string
+        | number
+        | boolean
+        | null;
+    };
+    extraction?: {
+      mode?: ('structured' | 'flexible') | null;
+      exerciseTypes?: ('mcq' | 'free_response' | 'select' | 'fill_blank' | 'matching')[] | null;
+      customInstructions?: string | null;
+    };
+    reviewMode?: ('auto' | 'segment' | 'batch' | 'manual') | null;
+  };
+  prompts: {
+    extractor: string | Prompt;
+    verifier: string | Prompt;
+    extractorSnapshot?: {
+      template?: string | null;
+      hash?: string | null;
+      capturedAt?: string | null;
+    };
+    verifierSnapshot?: {
+      template?: string | null;
+      hash?: string | null;
+      capturedAt?: string | null;
+    };
+  };
+  /**
+   * Additional extraction/enrichment rounds per exercise
+   */
+  additionalRounds?:
+    | {
+        name: string;
+        prompt: string | Prompt;
+        targetField: string;
+        triggerCondition?: ('always' | 'has_image' | 'has_table' | 'has_diagram' | 'custom') | null;
+        customCondition?: string | null;
+        order: number;
+        isEnabled?: boolean | null;
+        promptSnapshot?: {
+          template?: string | null;
+          hash?: string | null;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Processing state per segment
+   */
+  segments?:
+    | {
+        index: number;
+        pageStart: number;
+        pageEnd: number;
+        status?:
+          | ('pending' | 'processing' | 'extracted' | 'review' | 'verified' | 'completed' | 'failed' | 'skipped')
+          | null;
+        exerciseCount?: number | null;
+        errorMessage?: string | null;
+        processedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Exercises awaiting review/approval
+   */
+  pendingExercises?:
+    | {
+        segmentIndex: number;
+        orderInSegment: number;
+        title?: string | null;
+        content?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        enrichments?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        status?: ('pending' | 'approved' | 'rejected' | 'edited' | 'skipped') | null;
+        verificationResult?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        verificationMessage?: string | null;
+        adminNotes?: string | null;
+        savedExerciseId?: string | null;
+        scores?: {
+          confidence?: number | null;
+          completeness?: number | null;
+          complexity?: number | null;
+          duplicateLikelihood?: number | null;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Structured execution logs
+   */
+  logs?:
+    | {
+        timestamp: string;
+        level: 'info' | 'warn' | 'error';
+        stage: string;
+        message: string;
+        details?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  errors?:
+    | {
+        stage?: string | null;
+        code?: string | null;
+        message?: string | null;
+        details?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        timestamp?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  startedAt?: string | null;
+  pausedAt?: string | null;
+  completedAt?: string | null;
+  totalDurationMs?: number | null;
+  /**
+   * Template used to create this job
+   */
+  template?: (string | null) | ConversionTemplate;
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversion-templates".
+ */
+export interface ConversionTemplate {
+  id: string;
+  /**
+   * Template name (e.g., "Standard Math Extraction")
+   */
+  name: string;
+  /**
+   * When to use this template
+   */
+  description?: string | null;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Use as default for new conversions
+   */
+  isDefault?: boolean | null;
+  segmentation?: {
+    pagesPerSegment?: number | null;
+  };
+  extraction?: {
+    mode?: ('structured' | 'flexible') | null;
+    exerciseTypes?: ('mcq' | 'free_response' | 'select' | 'fill_blank' | 'matching')[] | null;
+    customInstructions?: string | null;
+  };
+  reviewMode?: ('auto' | 'segment' | 'batch' | 'manual') | null;
+  extractorPrompt?: (string | null) | Prompt;
+  verifierPrompt?: (string | null) | Prompt;
+  additionalRounds?:
+    | {
+        name: string;
+        prompt: string | Prompt;
+        targetField: string;
+        triggerCondition?: ('always' | 'has_image' | 'has_table' | 'has_diagram' | 'custom') | null;
+        customCondition?: string | null;
+        order: number;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1867,6 +2191,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'mcp-audit-logs';
         value: string | McpAuditLog;
+      } | null)
+    | ({
+        relationTo: 'conversion-jobs';
+        value: string | ConversionJob;
+      } | null)
+    | ({
+        relationTo: 'conversion-templates';
+        value: string | ConversionTemplate;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2281,6 +2613,7 @@ export interface ExercisesSelect<T extends boolean = true> {
   sourcePageEnd?: T;
   sourceOrderInSegment?: T;
   contentHash?: T;
+  enrichments?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2466,6 +2799,198 @@ export interface McpAuditLogsSelect<T extends boolean = true> {
   timestamp?: T;
   requestId?: T;
   durationMs?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversion-jobs_select".
+ */
+export interface ConversionJobsSelect<T extends boolean = true> {
+  title?: T;
+  payloadJobId?: T;
+  lesson?: T;
+  sourceMedia?: T;
+  tenant?: T;
+  status?: T;
+  currentStage?: T;
+  currentStageMessage?: T;
+  progress?:
+    | T
+    | {
+        totalPages?: T;
+        processedPages?: T;
+        totalSegments?: T;
+        completedSegments?: T;
+        failedSegments?: T;
+        totalExercises?: T;
+        approvedExercises?: T;
+        rejectedExercises?: T;
+        skippedExercises?: T;
+        dedupedExercises?: T;
+      };
+  config?:
+    | T
+    | {
+        pageRange?:
+          | T
+          | {
+              start?: T;
+              end?: T;
+              excludePages?: T;
+            };
+        segmentation?:
+          | T
+          | {
+              pagesPerSegment?: T;
+              customBoundaries?: T;
+            };
+        extraction?:
+          | T
+          | {
+              mode?: T;
+              exerciseTypes?: T;
+              customInstructions?: T;
+            };
+        reviewMode?: T;
+      };
+  prompts?:
+    | T
+    | {
+        extractor?: T;
+        verifier?: T;
+        extractorSnapshot?:
+          | T
+          | {
+              template?: T;
+              hash?: T;
+              capturedAt?: T;
+            };
+        verifierSnapshot?:
+          | T
+          | {
+              template?: T;
+              hash?: T;
+              capturedAt?: T;
+            };
+      };
+  additionalRounds?:
+    | T
+    | {
+        name?: T;
+        prompt?: T;
+        targetField?: T;
+        triggerCondition?: T;
+        customCondition?: T;
+        order?: T;
+        isEnabled?: T;
+        promptSnapshot?:
+          | T
+          | {
+              template?: T;
+              hash?: T;
+            };
+        id?: T;
+      };
+  segments?:
+    | T
+    | {
+        index?: T;
+        pageStart?: T;
+        pageEnd?: T;
+        status?: T;
+        exerciseCount?: T;
+        errorMessage?: T;
+        processedAt?: T;
+        id?: T;
+      };
+  pendingExercises?:
+    | T
+    | {
+        segmentIndex?: T;
+        orderInSegment?: T;
+        title?: T;
+        content?: T;
+        enrichments?: T;
+        status?: T;
+        verificationResult?: T;
+        verificationMessage?: T;
+        adminNotes?: T;
+        savedExerciseId?: T;
+        scores?:
+          | T
+          | {
+              confidence?: T;
+              completeness?: T;
+              complexity?: T;
+              duplicateLikelihood?: T;
+            };
+        id?: T;
+      };
+  logs?:
+    | T
+    | {
+        timestamp?: T;
+        level?: T;
+        stage?: T;
+        message?: T;
+        details?: T;
+        id?: T;
+      };
+  errors?:
+    | T
+    | {
+        stage?: T;
+        code?: T;
+        message?: T;
+        details?: T;
+        timestamp?: T;
+        id?: T;
+      };
+  startedAt?: T;
+  pausedAt?: T;
+  completedAt?: T;
+  totalDurationMs?: T;
+  template?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversion-templates_select".
+ */
+export interface ConversionTemplatesSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  tenant?: T;
+  isDefault?: T;
+  segmentation?:
+    | T
+    | {
+        pagesPerSegment?: T;
+      };
+  extraction?:
+    | T
+    | {
+        mode?: T;
+        exerciseTypes?: T;
+        customInstructions?: T;
+      };
+  reviewMode?: T;
+  extractorPrompt?: T;
+  verifierPrompt?: T;
+  additionalRounds?:
+    | T
+    | {
+        name?: T;
+        prompt?: T;
+        targetField?: T;
+        triggerCondition?: T;
+        customCondition?: T;
+        order?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
