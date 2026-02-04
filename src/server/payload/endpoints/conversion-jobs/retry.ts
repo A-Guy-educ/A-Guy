@@ -79,7 +79,7 @@ export const retryConversionHandler: PayloadHandler = async (req) => {
       segments: [],
       pendingExercises: [],
       completedExercises: [],
-      errors: [],
+      jobErrors: [],
     },
     req,
   })

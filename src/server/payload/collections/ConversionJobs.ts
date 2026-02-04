@@ -359,8 +359,9 @@ export const ConversionJobs: CollectionConfig = {
 
     // ===== Errors =====
     {
-      name: 'errors',
+      name: 'jobErrors',
       type: 'array',
+      admin: { description: 'Conversion errors encountered during processing' },
       fields: [
         { name: 'stage', type: 'text' },
         { name: 'code', type: 'text' },

@@ -161,7 +161,7 @@ export const startConversionHandler: PayloadHandler = async (req) => {
       id: job.id,
       data: {
         status: 'failed',
-        errors: [{ message: error instanceof Error ? error.message : 'Unknown error' }],
+        jobErrors: [{ message: error instanceof Error ? error.message : 'Unknown error' }],
         completedAt: new Date().toISOString(),
       },
       req,
