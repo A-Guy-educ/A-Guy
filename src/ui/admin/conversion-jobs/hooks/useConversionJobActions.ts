@@ -1,10 +1,10 @@
 /**
- * Hook for conversion job actions
+ * Hook for conversion job actions with approveAll support
  *
  * @fileType hook
  * @domain admin
  * @pattern action-hook
- * @ai-summary React hook for managing conversion job actions (pause, resume, cancel, retry)
+ * @ai-summary React hook for managing conversion job actions
  */
 
 'use client'
@@ -87,11 +87,51 @@ export function useConversionJobActions() {
     }
   }, [])
 
+  const approveAll = useCallback(async (jobId: string) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const response = await fetch(`/api/conversion-jobs/${jobId}/approve-all`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+      if (!response.ok) throw new Error('Failed to approve all')
+      return await response.json()
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error'))
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  const approveStage = useCallback(async (jobId: string, action?: 'approve' | 'skip') => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const response = await fetch(`/api/conversion-jobs/${jobId}/approve-stage`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      })
+      if (!response.ok) throw new Error('Failed to approve stage')
+      return await response.json()
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error'))
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
   return {
     pauseJob,
     resumeJob,
     cancelJob,
     retryJob,
+    approveAll,
+    approveStage,
     isLoading,
     error,
   }

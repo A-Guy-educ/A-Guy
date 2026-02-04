@@ -1,15 +1,17 @@
 /**
  * Approve Stage Handler
  *
- * Approves pending exercises after a review stage:
- * 1. Validates job exists and is in review status
- * 2. Approves pending exercises
- * 3. Updates job status to continue processing
+ * Approves the current review stage and continues processing:
+ * - Validates job is at a review gate
+ * - Determines next stage based on current stage and action
+ * - Updates job status to running
  */
 
 import config from '@payload-config'
 import type { PayloadHandler } from 'payload'
 import { APIError, getPayload } from 'payload'
+
+import { REVIEW_GATE_STAGES, STAGE_FLOW } from '../../services/conversion-review-service'
 
 export const approveStageHandler: PayloadHandler = async (req) => {
   const { id: jobId } = req.routeParams as { id?: string }
@@ -31,46 +33,38 @@ export const approveStageHandler: PayloadHandler = async (req) => {
     throw new APIError('Job not found', 404)
   }
 
-  // Validate job is in review status
-  if (job.status !== 'review') {
-    throw new APIError(`Job is not in review status. Current status: ${job.status}`, 400)
+  const jsonBody = req.json ? await req.json() : null
+  const body = (jsonBody || {}) as { action?: 'approve' | 'skip' }
+  const action = body?.action ?? 'approve'
+
+  // Validate current stage is a review gate
+  const currentStage = job.currentStage as string
+  if (!REVIEW_GATE_STAGES.includes(currentStage as any)) {
+    throw new Error(`Cannot approve stage: current stage is "${currentStage}"`)
   }
 
-  const pendingExercises = (job.pendingExercises as any[]) || []
+  // Determine next stage
+  const nextStage =
+    action === 'skip' ? 'SEGMENT_PERSIST' : STAGE_FLOW[currentStage as keyof typeof STAGE_FLOW]
 
-  // Move pending exercises to completed
-  const completedExercises = (job.completedExercises as any[]) || []
-
-  for (const pending of pendingExercises) {
-    completedExercises.push({
-      ...pending,
-      approvedAt: new Date().toISOString(),
-      status: 'approved',
-    })
-  }
-
-  // Update job
+  // Update job status
   await payload.update({
     collection: 'conversion-jobs',
     id: job.id,
     data: {
       status: 'running',
-      currentStage: 'SEGMENT_PERSIST',
-      currentStageMessage: 'Exercises approved, continuing processing',
-      pendingExercises: [],
-      completedExercises,
-      progress: {
-        ...(job.progress as object),
-        approvedExercises: completedExercises.length,
-      },
+      currentStage: nextStage,
+      currentStageMessage: action === 'skip' ? 'Stage skipped' : 'Stage approved',
     },
     req,
   })
 
   return Response.json({
     success: true,
-    message: `Approved ${pendingExercises.length} exercises`,
+    message: `Stage ${action === 'skip' ? 'skipped' : 'approved'}`,
     jobId: job.id,
-    approvedCount: pendingExercises.length,
+    previousStage: currentStage,
+    currentStage: nextStage,
+    status: 'running',
   })
 }

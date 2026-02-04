@@ -236,7 +236,7 @@ export default function ConversionJobDetailPage() {
                 {job.segments.map((seg) => (
                   <li key={seg.id} className="segment-item">
                     <span className="segment-pages">
-                      Pages {seg.pageRange.start}-{seg.pageRange.end}
+                      Pages {seg.pageStart}-{seg.pageEnd}
                     </span>
                     <span className={`segment-status status-${seg.status}`}>{seg.status}</span>
                     <span className="segment-exercises">{seg.exerciseCount} exercises</span>
@@ -255,8 +255,7 @@ export default function ConversionJobDetailPage() {
                   <li key={ex.id} className="exercise-item">
                     <span className="exercise-title">{ex.title}</span>
                     <span className="exercise-scores">
-                      {ex.qualityScores &&
-                        `Conf: ${Math.round(ex.qualityScores.confidence * 100)}%`}
+                      {ex.scores && `Conf: ${Math.round(ex.scores.confidence * 100)}%`}
                     </span>
                   </li>
                 ))}
