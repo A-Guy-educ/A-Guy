@@ -185,6 +185,15 @@ export const Exercises: CollectionConfig = {
       ],
     },
 
+    // v2: Conversion enrichments
+    {
+      name: 'enrichments',
+      type: 'json',
+      admin: {
+        description: 'Results from additional extraction rounds',
+      },
+    },
+
     // Preview field (sidebar)
     {
       name: 'preview',

@@ -91,11 +91,18 @@ export const Prompts: CollectionConfig = {
         { label: 'Chat', value: 'chat' },
         { label: 'PDF Extractor', value: 'extractor' },
         { label: 'PDF Verifier', value: 'verifier' },
+        // NEW: Enrichment round prompts
+        { label: 'Diagram Analyzer', value: 'round_diagram' },
+        { label: 'Table Extractor', value: 'round_table' },
+        { label: 'Hint Generator', value: 'round_hints' },
+        { label: 'Solution Extractor', value: 'round_solution' },
+        { label: 'Accessibility Describer', value: 'round_accessibility' },
+        { label: 'Custom Enrichment', value: 'round_custom' },
       ],
       defaultValue: 'chat',
       admin: {
         description:
-          'Purpose of this prompt: chat conversation, PDF extraction, or PDF verification',
+          'Purpose of this prompt: chat, PDF extraction, verification, or enrichment rounds',
         position: 'sidebar',
       },
     },

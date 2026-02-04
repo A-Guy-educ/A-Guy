@@ -175,3 +175,19 @@ export const ContentSchema = z
   .strict()
 
 export type ExerciseContent = z.infer<typeof ContentSchema>
+
+// ---------------------------------
+// Zod: Enrichments (v2 conversion)
+// ---------------------------------
+
+export const EnrichmentResultSchema = z.object({
+  roundId: z.string(),
+  roundName: z.string(),
+  extractedAt: z.string().datetime(),
+  promptHash: z.string(),
+  data: z.record(z.string(), z.unknown()).optional(),
+})
+
+export const EnrichmentsSchema = z.record(z.string(), EnrichmentResultSchema).optional()
+
+export type Enrichments = z.infer<typeof EnrichmentsSchema>

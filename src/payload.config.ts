@@ -10,6 +10,8 @@ import { Chapters } from '@/server/payload/collections/Chapters'
 import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
 import { ConfigEntries } from '@/server/payload/collections/ConfigEntries'
 import { Conversations } from '@/server/payload/collections/Conversations'
+import { ConversionJobs } from '@/server/payload/collections/ConversionJobs'
+import { ConversionTemplates } from '@/server/payload/collections/ConversionTemplates'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
 import { Exercises } from '@/server/payload/collections/Exercises'
@@ -131,6 +133,9 @@ export default buildConfig({
     Posts,
     PricingPlans,
     MCPAuditLogs,
+    // v2 conversion collections
+    ConversionJobs,
+    ConversionTemplates,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
