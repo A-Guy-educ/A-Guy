@@ -5,6 +5,8 @@
  * @domain config.runtime
  */
 
+export * from './config-values'
 export * from './errors'
 export * from './runtime-config'
 export * from './types'
+export * from './validate-chat-config'

@@ -13,6 +13,7 @@ import { Footer } from '@/ui/web/footer/Component'
 import { Header } from '@/ui/web/header/Component'
 import { Providers } from '@/ui/web/providers'
 import { InitTheme } from '@/ui/web/providers/Theme/InitTheme'
+import { RouteLoadingIndicator } from '@/infra/loading/components/RouteLoadingIndicator'
 
 import { cookieName, defaultLocale, getDirection, type Locale, locales } from '@/i18n/config'
 import { getServerSideURL } from '@/infra/utils/getURL'
@@ -86,6 +87,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <I18nProvider locale={locale} messages={messages}>
           <Providers>
+            <RouteLoadingIndicator />
             <LayoutClient />
             <AnalyticsProvider />
             <AdminBar

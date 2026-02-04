@@ -3,11 +3,10 @@
  *
  * @fileType integration-test
  * @domain config.system-params
- * @pattern integration, database
+ * @pattern integration, database, config-values
  */
 
-import { ConfigKind } from '@/infra/config/config-constants'
-import { clearConfigCache, getSystemParam, loadRuntimeConfig } from '@/infra/config/runtime'
+import { clearConfigValuesCache, loadConfigValues } from '@/infra/config/runtime/config-values'
 import { SystemParams } from '@/infra/config/system-params'
 import config from '@payload-config'
 import { getPayload } from 'payload'
@@ -15,7 +14,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 
 const TEST_TENANT_SLUG = 'system-params-test-tenant'
 
-describe('SystemParams Integration', () => {
+describe('SystemParams Integration (ConfigValues-based)', () => {
   let payload: Awaited<ReturnType<typeof getPayload>>
   let testTenantId: string
 
@@ -40,13 +39,13 @@ describe('SystemParams Integration', () => {
   })
 
   afterAll(async () => {
-    clearConfigCache()
+    clearConfigValuesCache()
     // Cleanup test entries
     try {
       await payload.delete({
-        collection: 'config_entries',
+        collection: 'config_values',
         where: {
-          and: [{ key: { like: 'pdf_conversion_test_' } }, { tenant: { equals: testTenantId } }],
+          and: [{ domain: { equals: 'global' } }, { tenant: { equals: testTenantId } }],
         },
       })
     } catch {
@@ -54,55 +53,51 @@ describe('SystemParams Integration', () => {
     }
   })
 
-  test('should load system params with SystemParam kind', async () => {
-    // Create a test system param
-    await payload.create({
-      collection: 'config_entries',
-      draft: false,
-      data: {
-        key: 'pdf_conversion_test_max_pages',
-        kind: ConfigKind.SystemParam,
-        value: '10',
-        enabled: true,
-        tenant: testTenantId,
-      },
-      overrideAccess: true,
-    })
-
-    await loadRuntimeConfig(payload, testTenantId)
-
-    // Verify it loads via getSystemParam (since SystemParam is treated like Variable)
-    expect(getSystemParam('pdf_conversion_test_max_pages', { tenantId: testTenantId })).toBe('10')
-  })
-
-  test('should return defaults when system params not seeded', async () => {
-    clearConfigCache()
-    await loadRuntimeConfig(payload, testTenantId)
+  test('should return default values when config not seeded', async () => {
+    clearConfigValuesCache()
+    await loadConfigValues(payload, testTenantId)
 
     // These should return defaults since params aren't seeded yet for this tenant
-    expect(SystemParams.getPdfConversionMaxSegmentPages(testTenantId)).toBe(2)
-    expect(SystemParams.getPdfConversionMaxExercisesPerSegment(testTenantId)).toBe(1000)
-    expect(SystemParams.getPdfConversionMaxPromptSizeBytes(testTenantId)).toBe(51200)
+    expect(await SystemParams.getPdfConversionMaxSegmentPages(testTenantId)).toBe(2)
+    expect(await SystemParams.getPdfConversionMaxExercisesPerSegment(testTenantId)).toBe(1000)
+    expect(await SystemParams.getPdfConversionMaxPromptSizeBytes(testTenantId)).toBe(51200)
   })
 
-  test('should handle SystemParam like Variable (no encryption)', async () => {
-    // Create system param
+  test('should load custom values from config_values', async () => {
+    // Create a test config value in the global domain
     await payload.create({
-      collection: 'config_entries',
+      collection: 'config_values',
       draft: false,
       data: {
-        key: 'pdf_conversion_test_exercises',
-        kind: ConfigKind.SystemParam,
-        value: '2000',
-        enabled: true,
+        domain: 'global',
+        config: { maxPages: 10, maxExercisesPerSegment: 500, maxPromptSizeBytes: 102400 },
         tenant: testTenantId,
       },
       overrideAccess: true,
     })
 
-    await loadRuntimeConfig(payload, testTenantId)
+    await loadConfigValues(payload, testTenantId)
 
-    // Should be accessible via getSystemParam (plaintext)
-    expect(getSystemParam('pdf_conversion_test_exercises', { tenantId: testTenantId })).toBe('2000')
+    // Verify it loads via SystemParams
+    expect(await SystemParams.getPdfConversionMaxSegmentPages(testTenantId)).toBe(10)
+  })
+
+  test('should override tenant-specific values', async () => {
+    // Create tenant-specific config value
+    await payload.create({
+      collection: 'config_values',
+      draft: false,
+      data: {
+        domain: 'global',
+        config: { maxExercisesPerSegment: 750 },
+        tenant: testTenantId,
+      },
+      overrideAccess: true,
+    })
+
+    await loadConfigValues(payload, testTenantId)
+
+    // Should use tenant-specific value
+    expect(await SystemParams.getPdfConversionMaxExercisesPerSegment(testTenantId)).toBe(750)
   })
 })

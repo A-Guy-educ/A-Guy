@@ -8,7 +8,8 @@ import { getServerSideURL } from '@/infra/utils/getURL'
 import { Categories } from '@/server/payload/collections/Categories'
 import { Chapters } from '@/server/payload/collections/Chapters'
 import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
-import { ConfigEntries } from '@/server/payload/collections/ConfigEntries'
+import { ConfigSecrets } from '@/server/payload/collections/ConfigSecrets'
+import { ConfigValues } from '@/server/payload/collections/ConfigValues'
 import { Conversations } from '@/server/payload/collections/Conversations'
 import { ConversionJobs } from '@/server/payload/collections/ConversionJobs'
 import { ConversionTemplates } from '@/server/payload/collections/ConversionTemplates'
@@ -116,7 +117,8 @@ export default buildConfig({
   collections: [
     Pages,
     Categories,
-    ConfigEntries,
+    ConfigSecrets,
+    ConfigValues,
     ConfigAuditLogs,
     Conversations,
     MemoryItems,

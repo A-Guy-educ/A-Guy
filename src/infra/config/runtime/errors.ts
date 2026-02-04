@@ -22,3 +22,11 @@ export class ConfigKeyNotFoundError extends Error {
     this.name = 'ConfigKeyNotFoundError'
   }
 }
+
+export class ConfigValueNotFoundError extends Error {
+  constructor(domain: string, tenantId: string, key?: string) {
+    const keyPart = key ? ` for key "${key}"` : ''
+    super(`Missing config values for domain "${domain}"${keyPart} for tenant ${tenantId}`)
+    this.name = 'ConfigValueNotFoundError'
+  }
+}

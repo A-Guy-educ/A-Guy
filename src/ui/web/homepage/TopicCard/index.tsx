@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import type { Chapter } from '@/payload-types'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/ui/web/components/card'
 import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
@@ -15,7 +15,7 @@ export function TopicCard({ chapter, progress, courseSlug }: TopicCardProps) {
   if (!chapter.slug) return null
 
   return (
-    <Link href={`/courses/${courseSlug}/chapters/${chapter.slug}`}>
+    <SystemLink href={`/courses/${courseSlug}/chapters/${chapter.slug}`}>
       <Card className="hover:bg-muted/50 transition-colors cursor-pointer h-full">
         <CardHeader className="flex flex-row items-center gap-4">
           <ProgressCircle percentage={progress} size={50} />
@@ -32,6 +32,6 @@ export function TopicCard({ chapter, progress, courseSlug }: TopicCardProps) {
           </div>
         </CardHeader>
       </Card>
-    </Link>
+    </SystemLink>
   )
 }

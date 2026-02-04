@@ -262,7 +262,7 @@ Example: If user asks "how many courses do we have?", call findCourses immediate
     // Use detectBestProvider to get the actual provider type based on availability
     const providerType = await detectBestProvider(req.payload)
     const provider = await getLLMProvider(req.payload)
-    const modelConfig = getProviderModelConfig(providerType, 'EXERCISE_CHAT')
+    const modelConfig = await getProviderModelConfig(providerType, 'EXERCISE_CHAT')
 
     const modelCallStart = Date.now()
     const result = await provider.generateChatCompletionWithTools(

@@ -32,15 +32,8 @@ export async function POST(request: NextRequest) {
   try {
     const payload = await getPayload({ config })
 
-    // v2.1 Fix: Load runtime config before accessing system params
-    // This ensures getPdfConversionMaxPromptSizeBytes() works correctly
-    if (process.env.VERCEL_ENV !== 'production') {
-      console.log('[queue] runtime config loading...')
-    }
+    // Load runtime config for system params (getPdfConversionMaxPromptSizeBytes)
     await loadRuntimeConfig(payload)
-    if (process.env.VERCEL_ENV !== 'production') {
-      console.log('[queue] runtime config loaded')
-    }
 
     // Auth: Admin Session OR Test-Only Secret
     const { user } = await payload.auth({ headers: request.headers })
@@ -145,7 +138,7 @@ export async function POST(request: NextRequest) {
 
     // ========== Prompt Size Validation (after validation passes) ==========
     // Use byteLength for accurate size check (UTF-8 encoding)
-    const maxPromptSize = getPdfConversionMaxPromptSizeBytes(lessonTenantId)
+    const maxPromptSize = await getPdfConversionMaxPromptSizeBytes(lessonTenantId)
     const extractorSize = Buffer.byteLength(extractorPrompt.template, 'utf8')
     if (extractorSize > maxPromptSize) {
       return errorResponse(

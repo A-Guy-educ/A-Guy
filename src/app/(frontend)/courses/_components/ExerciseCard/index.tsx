@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import type { Exercise } from '@/payload-types'
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/web/components/card'
 import { Button } from '@/ui/web/components/button'
@@ -90,11 +90,11 @@ export function ExerciseCard({
       </CardHeader>
       <CardFooter>
         <Button asChild>
-          <Link
+          <SystemLink
             href={`/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}/exercises/${exercise.id}`}
           >
             {t('startExercise')}
-          </Link>
+          </SystemLink>
         </Button>
       </CardFooter>
     </Card>

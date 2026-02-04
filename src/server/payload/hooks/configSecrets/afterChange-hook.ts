@@ -1,10 +1,10 @@
 /**
- * ConfigEntries After Change Hook
+ * ConfigSecrets After Change Hook
  *
  * @fileType hook
  * @domain config
  * @pattern audit-log
- * @ai-summary Creates audit log entries after config mutations
+ * @ai-summary Creates audit log entries after config secret mutations
  *
  * Security (CRITICAL):
  * - Always pass req to nested operations for transaction safety
@@ -56,7 +56,6 @@ export const afterChangeAuditLog: CollectionAfterChangeHook = async ({
     draft: false,
     data: {
       key: doc.key,
-      kind: doc.kind,
       action: action,
       actor: actorId,
       tenant: tenantId,

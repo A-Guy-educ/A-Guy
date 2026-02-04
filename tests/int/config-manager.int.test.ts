@@ -5,12 +5,11 @@
  * @fileType integration-test
  * @domain config
  * @pattern key-value-store, encryption, audit-log, tenant-scoped
- * @ai-summary Integration tests for tenant-scoped config manager functionality
+ * @ai-summary Integration tests for tenant-scoped config secrets functionality
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- Test file requires any for PayloadRequest typing */
 
-import { ConfigKind } from '@/infra/config/config-constants'
 import { decryptSecret, encryptSecret } from '@/infra/config/config-crypto'
 import type { Tenant, User } from '@/payload-types'
 import config from '@payload-config'
@@ -23,7 +22,7 @@ const TEST_ADMIN_PASSWORD = 'test-password-min-32-chars!!'
 const TEST_TENANT_1_SLUG = 'config-test-tenant-1'
 const TEST_TENANT_2_SLUG = 'config-test-tenant-2'
 
-describe('Config Manager (Tenant-Scoped)', () => {
+describe('Config Secrets (Tenant-Scoped)', () => {
   let payload: Awaited<ReturnType<typeof getPayload>>
   let adminUser: User
   let tenant1: Tenant
@@ -94,7 +93,7 @@ describe('Config Manager (Tenant-Scoped)', () => {
     try {
       const testTenantIds = [tenant1.id, tenant2.id]
       await payload.delete({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         where: {
           and: [{ key: { like: 'test_' } }, { tenant: { in: testTenantIds } }],
         },
@@ -110,37 +109,15 @@ describe('Config Manager (Tenant-Scoped)', () => {
     }
   })
 
-  describe('ConfigEntries Collection (Tenant-Scoped)', () => {
-    test('should create variable config entry with tenant', async () => {
-      const result = await payload.create({
-        collection: 'config_entries',
-        draft: false,
-        data: {
-          key: 'test_variable',
-          kind: ConfigKind.Variable,
-          value: 'plaintext-value',
-          enabled: true,
-          tenant: tenant1.id,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      expect(result.key).toBe('test_variable')
-      expect(result.kind).toBe(ConfigKind.Variable)
-      expect(result.value).toBe('plaintext-value')
-      expect(result.enabled).toBe(true)
-      expect(result.tenant).toBe(tenant1.id)
-    })
-
+  describe('ConfigSecrets Collection (Tenant-Scoped)', () => {
     test('should create secret config entry with encryption', async () => {
       const secretValue = 'my-super-secret-password'
 
       const result = await payload.create({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         draft: false,
         data: {
           key: 'test_secret',
-          kind: ConfigKind.Secret,
           value: secretValue,
           enabled: true,
           tenant: tenant1.id,
@@ -155,11 +132,10 @@ describe('Config Manager (Tenant-Scoped)', () => {
 
     test('should allow same key under different tenants', async () => {
       const result1 = await payload.create({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         draft: false,
         data: {
           key: 'shared_key',
-          kind: ConfigKind.Variable,
           value: 'tenant-1-value',
           enabled: true,
           tenant: tenant1.id,
@@ -168,11 +144,10 @@ describe('Config Manager (Tenant-Scoped)', () => {
       })
 
       const result2 = await payload.create({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         draft: false,
         data: {
           key: 'shared_key',
-          kind: ConfigKind.Variable,
           value: 'tenant-2-value',
           enabled: true,
           tenant: tenant2.id,
@@ -188,11 +163,10 @@ describe('Config Manager (Tenant-Scoped)', () => {
     test('should reject duplicate key in same tenant', async () => {
       // Create first entry
       await payload.create({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         draft: false,
         data: {
           key: 'unique_key',
-          kind: ConfigKind.Variable,
           value: 'value',
           enabled: true,
           tenant: tenant1.id,
@@ -203,11 +177,10 @@ describe('Config Manager (Tenant-Scoped)', () => {
       // Try to create duplicate in same tenant
       await expect(
         payload.create({
-          collection: 'config_entries',
+          collection: 'config_secrets',
           draft: false,
           data: {
             key: 'unique_key', // Same key
-            kind: ConfigKind.Variable,
             value: 'value',
             enabled: true,
             tenant: tenant1.id, // Same tenant
@@ -220,11 +193,10 @@ describe('Config Manager (Tenant-Scoped)', () => {
     test('should reject non-snake_case key', async () => {
       await expect(
         payload.create({
-          collection: 'config_entries',
+          collection: 'config_secrets',
           draft: false,
           data: {
             key: 'Invalid-Key-Format',
-            kind: ConfigKind.Variable,
             value: 'value',
             enabled: true,
             tenant: tenant1.id,
@@ -236,11 +208,10 @@ describe('Config Manager (Tenant-Scoped)', () => {
 
     test('should reject key change on update', async () => {
       const created = await payload.create({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         draft: false,
         data: {
           key: 'test_immutable',
-          kind: ConfigKind.Variable,
           value: 'value',
           enabled: true,
           tenant: tenant1.id,
@@ -250,7 +221,7 @@ describe('Config Manager (Tenant-Scoped)', () => {
 
       await expect(
         payload.update({
-          collection: 'config_entries',
+          collection: 'config_secrets',
           id: created.id,
           data: { key: 'new_key' },
           req: { user: adminUser } as any,
@@ -258,37 +229,12 @@ describe('Config Manager (Tenant-Scoped)', () => {
       ).rejects.toThrow(/cannot be changed/)
     })
 
-    test('should reject kind change on update', async () => {
+    test('should update enabled without sending key', async () => {
       const created = await payload.create({
-        collection: 'config_entries',
-        draft: false,
-        data: {
-          key: 'test_kind_immutable',
-          kind: ConfigKind.Variable,
-          value: 'value',
-          enabled: true,
-          tenant: tenant1.id,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      await expect(
-        payload.update({
-          collection: 'config_entries',
-          id: created.id,
-          data: { kind: ConfigKind.Secret },
-          req: { user: adminUser } as any,
-        }),
-      ).rejects.toThrow(/cannot be changed/)
-    })
-
-    test('should update enabled without sending key or kind', async () => {
-      const created = await payload.create({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         draft: false,
         data: {
           key: 'test_update_enabled_only',
-          kind: ConfigKind.Variable,
           value: 'value',
           enabled: true,
           tenant: tenant1.id,
@@ -297,7 +243,7 @@ describe('Config Manager (Tenant-Scoped)', () => {
       })
 
       const updated = await payload.update({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         id: created.id,
         data: { enabled: false },
         req: { user: adminUser } as any,
@@ -337,11 +283,10 @@ describe('Config Manager (Tenant-Scoped)', () => {
   describe('ConfigAuditLogs Collection (Tenant-Scoped)', () => {
     test('should create audit log on create with tenant', async () => {
       await payload.create({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         draft: false,
         data: {
           key: 'test_audit_create',
-          kind: ConfigKind.Variable,
           value: 'value',
           enabled: true,
           tenant: tenant1.id,
@@ -364,11 +309,10 @@ describe('Config Manager (Tenant-Scoped)', () => {
 
     test('should create audit log on update', async () => {
       const created = await payload.create({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         draft: false,
         data: {
           key: 'test_audit_update',
-          kind: ConfigKind.Variable,
           value: 'original',
           enabled: true,
           tenant: tenant1.id,
@@ -377,7 +321,7 @@ describe('Config Manager (Tenant-Scoped)', () => {
       })
 
       await payload.update({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         id: created.id,
         data: { value: 'updated' },
         req: { user: adminUser } as any,
@@ -396,11 +340,10 @@ describe('Config Manager (Tenant-Scoped)', () => {
 
     test('should create audit log on enable/disable', async () => {
       const created = await payload.create({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         draft: false,
         data: {
           key: 'test_audit_toggle',
-          kind: ConfigKind.Variable,
           value: 'value',
           enabled: true,
           tenant: tenant1.id,
@@ -409,7 +352,7 @@ describe('Config Manager (Tenant-Scoped)', () => {
       })
 
       await payload.update({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         id: created.id,
         data: { enabled: false },
         req: { user: adminUser } as any,
@@ -430,11 +373,10 @@ describe('Config Manager (Tenant-Scoped)', () => {
       const secretValue = 'super-secret-audit-test'
 
       await payload.create({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         draft: false,
         data: {
           key: 'test_audit_secret',
-          kind: ConfigKind.Secret,
           value: secretValue,
           enabled: true,
           tenant: tenant1.id,
@@ -460,11 +402,10 @@ describe('Config Manager (Tenant-Scoped)', () => {
       const secretValue = 'ui-secret-test'
 
       const created = await payload.create({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         draft: false,
         data: {
           key: 'test_ui_secret',
-          kind: ConfigKind.Secret,
           value: secretValue,
           enabled: true,
           tenant: tenant1.id,
@@ -476,7 +417,7 @@ describe('Config Manager (Tenant-Scoped)', () => {
       expect(created.value).toBe('')
 
       const fetched = await payload.findByID({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         id: created.id,
         req: { user: adminUser } as any,
       })
@@ -484,35 +425,14 @@ describe('Config Manager (Tenant-Scoped)', () => {
       expect(fetched.value).toBe('')
     })
 
-    test('should return plaintext value for variable after save', async () => {
-      const variableValue = 'ui-variable-test'
-
-      const created = await payload.create({
-        collection: 'config_entries',
-        draft: false,
-        data: {
-          key: 'test_ui_variable',
-          kind: ConfigKind.Variable,
-          value: variableValue,
-          enabled: true,
-          tenant: tenant1.id,
-        },
-        req: { user: adminUser } as any,
-      })
-
-      // Variables should return plaintext
-      expect(created.value).toBe(variableValue)
-    })
-
     test('encrypted value should still exist in database', async () => {
       const secretValue = 'db-encryption-test'
 
       await payload.create({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         draft: false,
         data: {
           key: 'test_db_encryption',
-          kind: ConfigKind.Secret,
           value: secretValue,
           enabled: true,
           tenant: tenant1.id,
@@ -522,7 +442,7 @@ describe('Config Manager (Tenant-Scoped)', () => {
 
       // For testing: use find with overrideAccess to bypass hooks
       const rawDocs = await payload.find({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         where: { key: { equals: 'test_db_encryption' } },
         overrideAccess: true,
         req: { user: adminUser } as any,
@@ -545,7 +465,6 @@ describe('Config Manager (Tenant-Scoped)', () => {
           draft: false,
           data: {
             key: 'direct_create_test',
-            kind: ConfigKind.Variable,
             action: 'created',
             actor: adminUser.id,
             tenant: tenant1.id,
@@ -557,11 +476,10 @@ describe('Config Manager (Tenant-Scoped)', () => {
 
     test('should allow hook to create audit entries via overrideAccess', async () => {
       await payload.create({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         draft: false,
         data: {
           key: 'test_hook_override_access',
-          kind: ConfigKind.Variable,
           value: 'value',
           enabled: true,
           tenant: tenant1.id,

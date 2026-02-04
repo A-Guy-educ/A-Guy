@@ -3,11 +3,10 @@
  *
  * @fileType integration-test
  * @domain config.runtime
- * @pattern integration, tenant-scoped
+ * @pattern integration, tenant-scoped, secrets
  */
 
-import { ConfigKind } from '@/infra/config/config-constants'
-import { clearConfigCache, getSecret, getVariable, loadRuntimeConfig } from '@/infra/config/runtime'
+import { clearConfigCache, getSecret, loadRuntimeConfig } from '@/infra/config/runtime'
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import config from '@payload-config'
 import { getPayload } from 'payload'
@@ -15,7 +14,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 
 const TEST_TENANT_SLUG = 'config-runtime-test-tenant'
 
-describe('Runtime Config Integration (Tenant-Scoped)', () => {
+describe('Runtime Config Integration (Tenant-Scoped Secrets)', () => {
   let payload: Awaited<ReturnType<typeof getPayload>>
   let testTenantId: string
 
@@ -44,7 +43,7 @@ describe('Runtime Config Integration (Tenant-Scoped)', () => {
     // Cleanup test entries
     try {
       await payload.delete({
-        collection: 'config_entries',
+        collection: 'config_secrets',
         where: {
           and: [{ key: { like: 'test_runtime_' } }, { tenant: { equals: testTenantId } }],
         },
@@ -54,27 +53,13 @@ describe('Runtime Config Integration (Tenant-Scoped)', () => {
     }
   })
 
-  test('should load tenant-scoped config from real DB', async () => {
+  test('should load tenant-scoped secrets from real DB', async () => {
     // Create test entries for tenant
     await payload.create({
-      collection: 'config_entries',
-      draft: false,
-      data: {
-        key: 'test_runtime_var',
-        kind: ConfigKind.Variable,
-        value: 'integration-test-value',
-        enabled: true,
-        tenant: testTenantId,
-      },
-      overrideAccess: true,
-    })
-
-    await payload.create({
-      collection: 'config_entries',
+      collection: 'config_secrets',
       draft: false,
       data: {
         key: 'test_runtime_secret',
-        kind: ConfigKind.Secret,
         value: 'integration-test-secret',
         enabled: true,
         tenant: testTenantId,
@@ -86,13 +71,9 @@ describe('Runtime Config Integration (Tenant-Scoped)', () => {
     const result = await loadRuntimeConfig(payload, testTenantId)
 
     expect(result.success).toBe(true)
-    expect(result.variablesLoaded).toBeGreaterThan(0)
     expect(result.secretsLoaded).toBeGreaterThan(0)
 
     // Verify tenant-scoped values
-    expect(getVariable('test_runtime_var', { tenantId: testTenantId })).toBe(
-      'integration-test-value',
-    )
     expect(getSecret('test_runtime_secret', { tenantId: testTenantId })).toBe(
       'integration-test-secret',
     )
@@ -101,12 +82,11 @@ describe('Runtime Config Integration (Tenant-Scoped)', () => {
   test('should isolate tenant configs', async () => {
     // Create entry for test tenant
     await payload.create({
-      collection: 'config_entries',
+      collection: 'config_secrets',
       draft: false,
       data: {
         key: 'test_runtime_isolated',
-        kind: ConfigKind.Variable,
-        value: 'tenant-specific-value',
+        value: 'tenant-specific-secret',
         enabled: true,
         tenant: testTenantId,
       },
@@ -116,24 +96,23 @@ describe('Runtime Config Integration (Tenant-Scoped)', () => {
     await loadRuntimeConfig(payload, testTenantId)
 
     // Should find the value for our tenant
-    expect(getVariable('test_runtime_isolated', { tenantId: testTenantId })).toBe(
-      'tenant-specific-value',
+    expect(getSecret('test_runtime_isolated', { tenantId: testTenantId })).toBe(
+      'tenant-specific-secret',
     )
 
     // Should throw for different tenant (default tenant)
     const defaultTenantId = await getDefaultTenantId(payload)
-    expect(() => getVariable('test_runtime_isolated', { tenantId: defaultTenantId })).toThrow()
+    expect(() => getSecret('test_runtime_isolated', { tenantId: defaultTenantId })).toThrow()
   })
 
   test('should not load disabled entries', async () => {
     // Create enabled entry
     await payload.create({
-      collection: 'config_entries',
+      collection: 'config_secrets',
       draft: false,
       data: {
         key: 'test_runtime_enabled',
-        kind: ConfigKind.Variable,
-        value: 'enabled-value',
+        value: 'enabled-secret',
         enabled: true,
         tenant: testTenantId,
       },
@@ -142,12 +121,11 @@ describe('Runtime Config Integration (Tenant-Scoped)', () => {
 
     // Create disabled entry
     await payload.create({
-      collection: 'config_entries',
+      collection: 'config_secrets',
       draft: false,
       data: {
         key: 'test_runtime_disabled',
-        kind: ConfigKind.Variable,
-        value: 'disabled-value',
+        value: 'disabled-secret',
         enabled: false,
         tenant: testTenantId,
       },
@@ -157,47 +135,23 @@ describe('Runtime Config Integration (Tenant-Scoped)', () => {
     await loadRuntimeConfig(payload, testTenantId)
 
     // Enabled should be loaded
-    expect(getVariable('test_runtime_enabled', { tenantId: testTenantId })).toBe('enabled-value')
+    expect(getSecret('test_runtime_enabled', { tenantId: testTenantId })).toBe('enabled-secret')
 
     // Disabled should NOT be loaded (throw error)
-    expect(() => getVariable('test_runtime_disabled', { tenantId: testTenantId })).toThrow()
-  })
-
-  test('should not leak secrets to logs', async () => {
-    await payload.create({
-      collection: 'config_entries',
-      draft: false,
-      data: {
-        key: 'test_runtime_leak',
-        kind: ConfigKind.Secret,
-        value: 'super-secret-value',
-        enabled: true,
-        tenant: testTenantId,
-      },
-      overrideAccess: true,
-    })
-
-    await loadRuntimeConfig(payload, testTenantId)
-
-    // The secret should be readable via API
-    expect(getSecret('test_runtime_leak', { tenantId: testTenantId })).toBe('super-secret-value')
+    expect(() => getSecret('test_runtime_disabled', { tenantId: testTenantId })).toThrow()
   })
 
   test('should return default value when key not found', async () => {
     await loadRuntimeConfig(payload, testTenantId)
 
-    expect(
-      getVariable('nonexistent_key', { tenantId: testTenantId, defaultValue: 'default' }),
-    ).toBe('default')
-    expect(
-      getSecret('nonexistent_secret', { tenantId: testTenantId, defaultValue: 'secret-default' }),
-    ).toBe('secret-default')
+    expect(getSecret('nonexistent_key', { tenantId: testTenantId, defaultValue: 'default' })).toBe(
+      'default',
+    )
   })
 
   test('should return empty string when throwIfNotFound is false', async () => {
     await loadRuntimeConfig(payload, testTenantId)
 
-    expect(getVariable('nonexistent', { tenantId: testTenantId, throwIfNotFound: false })).toBe('')
     expect(getSecret('nonexistent', { tenantId: testTenantId, throwIfNotFound: false })).toBe('')
   })
 })

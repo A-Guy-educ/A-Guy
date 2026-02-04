@@ -5,7 +5,7 @@ import React from 'react'
 import type { Header as HeaderType, User } from '@/payload-types'
 
 import { CMSLink } from '@/ui/web/Link'
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { SearchIcon } from 'lucide-react'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
 import { useTranslations } from '@/ui/web/providers/I18n'
@@ -60,13 +60,13 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, user, isAuthLoading 
       )}
 
       {/* Search */}
-      <Link
+      <SystemLink
         href="/search"
         className="p-2 rounded-lg hover:bg-hover transition-colors"
         aria-label="Search"
       >
         <SearchIcon className="w-5" />
-      </Link>
+      </SystemLink>
 
       {/* Separator before language switcher */}
       <div className="h-6 w-px bg-border" />
@@ -84,10 +84,10 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, user, isAuthLoading 
         ) : (
           <div data-testid="header-auth-buttons" className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/login">{tCommon('login')}</Link>
+              <SystemLink href="/login">{tCommon('login')}</SystemLink>
             </Button>
             <Button size="sm" asChild>
-              <Link href="/signup">{tCommon('signup')}</Link>
+              <SystemLink href="/signup">{tCommon('signup')}</SystemLink>
             </Button>
           </div>
         )}

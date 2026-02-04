@@ -4,15 +4,35 @@
  * @fileType wrapper
  * @domain config.system-params
  * @pattern type-safe-accessor
- * @ai-summary Type-safe accessors for system parameters stored in ConfigEntries
+ * @ai-summary Type-safe accessors for system parameters stored in ConfigValues
  *
  * These parameters are application constants that can be managed at runtime
- * by admins via the ConfigEntries collection with kind="system_param".
+ * by admins via the ConfigValues collection.
  *
  * Defaults match src/server/config/constants.ts values.
  */
 
-import { getSystemParam } from './runtime/runtime-config'
+import type { ConfigDomain } from './config-constants'
+import { getConfigValueByKey } from './runtime/config-values'
+
+const SYSTEM_PARAMS_DOMAIN: ConfigDomain = 'global'
+
+/**
+ * Get system param from ConfigValues (domain-grouped, non-secret configuration)
+ */
+async function getSystemParamValue(
+  key: string,
+  defaultValue?: string,
+): Promise<string | undefined> {
+  try {
+    const value = await getConfigValueByKey<string>(SYSTEM_PARAMS_DOMAIN, key, {
+      throwIfNotFound: false,
+    })
+    return value ?? defaultValue
+  } catch {
+    return defaultValue
+  }
+}
 
 /**
  * System parameters accessors
@@ -30,12 +50,8 @@ export const SystemParams = {
    * @default 2
    * @returns Number of pages per segment
    */
-  getPdfConversionMaxSegmentPages(tenantId?: string): number {
-    const raw = getSystemParam('pdf_conversion_max_segment_pages', {
-      tenantId,
-      defaultValue: '2',
-      throwIfNotFound: false,
-    })
+  async getPdfConversionMaxSegmentPages(_tenantId?: string): Promise<number> {
+    const raw = await getSystemParamValue('pdf_conversion_max_segment_pages', '2')
     return parseInt(raw || '2', 10)
   },
 
@@ -46,12 +62,8 @@ export const SystemParams = {
    * @default 1000
    * @returns Max exercises per segment
    */
-  getPdfConversionMaxExercisesPerSegment(tenantId?: string): number {
-    const raw = getSystemParam('pdf_conversion_max_exercises_per_segment', {
-      tenantId,
-      defaultValue: '1000',
-      throwIfNotFound: false,
-    })
+  async getPdfConversionMaxExercisesPerSegment(_tenantId?: string): Promise<number> {
+    const raw = await getSystemParamValue('pdf_conversion_max_exercises_per_segment', '1000')
     return parseInt(raw || '1000', 10)
   },
 
@@ -62,12 +74,8 @@ export const SystemParams = {
    * @default 51200 (50KB)
    * @returns Max prompt size in bytes
    */
-  getPdfConversionMaxPromptSizeBytes(tenantId?: string): number {
-    const raw = getSystemParam('pdf_conversion_max_prompt_size_bytes', {
-      tenantId,
-      defaultValue: '51200',
-      throwIfNotFound: false,
-    })
+  async getPdfConversionMaxPromptSizeBytes(_tenantId?: string): Promise<number> {
+    const raw = await getSystemParamValue('pdf_conversion_max_prompt_size_bytes', '51200')
     return parseInt(raw || '51200', 10)
   },
 }
@@ -76,14 +84,27 @@ export const SystemParams = {
 // Standalone exports for backward compatibility
 // =========================================
 
-export function getPdfConversionMaxSegmentPages(tenantId?: string): number {
+export async function getPdfConversionMaxSegmentPages(tenantId?: string): Promise<number> {
   return SystemParams.getPdfConversionMaxSegmentPages(tenantId)
 }
 
-export function getPdfConversionMaxExercisesPerSegment(tenantId?: string): number {
+export async function getPdfConversionMaxExercisesPerSegment(tenantId?: string): Promise<number> {
   return SystemParams.getPdfConversionMaxExercisesPerSegment(tenantId)
 }
 
-export function getPdfConversionMaxPromptSizeBytes(tenantId?: string): number {
+export async function getPdfConversionMaxPromptSizeBytes(tenantId?: string): Promise<number> {
   return SystemParams.getPdfConversionMaxPromptSizeBytes(tenantId)
+}
+
+/**
+ * @deprecated Kept for backward compatibility
+ * System params are now stored in ConfigValues (domain: 'global')
+ */
+export function getSystemParam(
+  _key: string,
+  _options?: { tenantId?: string; defaultValue?: string; throwIfNotFound?: boolean },
+): string {
+  throw new Error(
+    'getSystemParam() is deprecated. System params are now stored in ConfigValues (domain: "global"). Use getConfigValueByKey() instead.',
+  )
 }

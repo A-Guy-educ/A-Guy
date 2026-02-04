@@ -63,7 +63,7 @@ export type { SummaryResult } from '@/infra/llm/summary'
 
 export type { ContextLog } from '@/infra/llm/observability'
 
-export type { AIModelConfig, AIModelKey } from '@/infra/llm/models'
+export type { AIModelKey } from '@/infra/llm/models'
 
 // ============================================================================
 // Contract Types

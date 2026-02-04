@@ -63,7 +63,23 @@ recommended UI: top progress bar or tiny header indicator
 
 Rule
 
-Route indicator is “life sign”, not a modal.
+Route indicator is "life sign", not a modal.
+
+2.1. SystemLink (Local Loading Feedback)
+
+Navigation links that show local loading indication when clicked:
+
+provides immediate visual feedback on the clicked element
+
+shows reduced opacity (60%) when navigating
+
+prevents pointer events during navigation (no double-clicks)
+
+smooth transition (150ms) for professional feel
+
+Rule
+
+Every navigation link should provide local feedback in addition to global indicator.
 
 3. AsyncAction Wrapper (For Server Actions + Mutations)
 

@@ -100,7 +100,7 @@ export const pdfToExercisesTask = {
       }
 
       // PASS 1: Segment Indexing (using buffer)
-      const maxSegmentPages = getPdfConversionMaxSegmentPages(tenantId)
+      const maxSegmentPages = await getPdfConversionMaxSegmentPages(tenantId)
       const segments = await segmentPdf(pdfBuffer, maxSegmentPages)
       output.segmentsTotal = segments.length
 
@@ -447,7 +447,7 @@ Return a JSON array of exercises with this schema:
   const rawExtracted = parseExtractorResponseText(extractorResult.text)
 
   // ========== Schema Validation for Extractor Output ==========
-  const maxExercisesPerSegment = getPdfConversionMaxExercisesPerSegment(tenantId)
+  const maxExercisesPerSegment = await getPdfConversionMaxExercisesPerSegment(tenantId)
   const extracted = validateExtractedExercises(rawExtracted, segment, maxExercisesPerSegment)
 
   // ========== Enrich with block IDs if missing ==========

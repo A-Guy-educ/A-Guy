@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
@@ -24,7 +24,7 @@ export function NavigationBar() {
             const isActive = pathname === item.href
 
             return (
-              <Link
+              <SystemLink
                 key={item.key}
                 href={item.href}
                 className={cn(
@@ -36,7 +36,7 @@ export function NavigationBar() {
                 )}
               >
                 {t(item.key)}
-              </Link>
+              </SystemLink>
             )
           })}
         </div>

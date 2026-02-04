@@ -1,3 +1,7 @@
+// Initialize server-side config lazy loading before any other imports
+// This ensures config values can be lazily loaded when accessed
+import '@/infra/config/server-init'
+
 import { logger } from '@/infra/utils/logger/logger'
 import { agentChat } from '@/server/payload/endpoints/agent/chat'
 import config from '@payload-config'

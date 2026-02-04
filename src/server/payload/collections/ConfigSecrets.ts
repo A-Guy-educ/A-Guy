@@ -1,34 +1,33 @@
 /**
- * ConfigEntries Collection
+ * ConfigSecrets Collection
  *
  * @fileType collection-config
  * @domain config
  * @pattern key-value-store, encrypted-values
- * @ai-summary Config entries with encryption for secrets, audit logging, and write-only UX for secrets
+ * @ai-summary Tenant-scoped encrypted secrets. All values are always encrypted.
  *
  * Security (CRITICAL):
  * - Admin-only access for all operations
- * - Secrets encrypted at rest in database
- * - Admin UI never shows decrypted secrets after save (write-only)
+ * - All values encrypted at rest in database
+ * - Admin UI never shows decrypted values after save (write-only)
  * - Audit log tracks all mutations without leaking secrets
  */
 
 import type { CollectionConfig } from 'payload'
 
-import { ConfigKind, isSnakeCase } from '@/infra/config/config-constants'
+import { isSnakeCase } from '@/infra/config/config-constants'
 import { configAdminOnly } from '../access/configAdminOnly'
-import { afterChangeAuditLog } from '../hooks/configEntries/afterChange-hook'
-import { afterReadHideSecretValue } from '../hooks/configEntries/afterRead-hook'
-import { beforeChangeEncryptAndValidate } from '../hooks/configEntries/beforeChange-hook'
+import { afterChangeAuditLog } from '../hooks/configSecrets/afterChange-hook'
+import { afterReadHideSecretValue } from '../hooks/configSecrets/afterRead-hook'
+import { beforeChangeEncryptAndValidate } from '../hooks/configSecrets/beforeChange-hook'
 
-export const ConfigEntries: CollectionConfig = {
-  slug: 'config_entries',
+export const ConfigSecrets: CollectionConfig = {
+  slug: 'config_secrets',
   admin: {
     useAsTitle: 'key',
-    defaultColumns: ['key', 'title', 'tenant', 'kind', 'enabled', 'updatedAt'],
+    defaultColumns: ['key', 'title', 'tenant', 'enabled', 'updatedAt'],
     group: 'System',
-    description:
-      'Tenant-scoped configuration key/value store. Variables are plaintext, secrets are encrypted.',
+    description: 'Tenant-scoped encrypted secrets. All values are always encrypted.',
   },
   access: {
     create: configAdminOnly,
@@ -63,23 +62,7 @@ export const ConfigEntries: CollectionConfig = {
       required: true,
       index: true,
       admin: {
-        description: 'Tenant this config entry belongs to',
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'kind',
-      type: 'select',
-      required: true,
-      options: [
-        { label: 'Variable', value: ConfigKind.Variable },
-        { label: 'Secret', value: ConfigKind.Secret },
-        { label: 'System Param', value: ConfigKind.SystemParam },
-      ],
-      defaultValue: ConfigKind.Variable,
-      admin: {
-        description:
-          'Variable: stored as plaintext. Secret: encrypted at rest. System Param: application constants.',
+        description: 'Tenant this secret belongs to',
         position: 'sidebar',
       },
     },
@@ -87,7 +70,7 @@ export const ConfigEntries: CollectionConfig = {
       name: 'title',
       type: 'text',
       admin: {
-        description: 'Optional title/description for this configuration entry',
+        description: 'Optional title/description for this secret',
       },
     },
     {
@@ -95,11 +78,11 @@ export const ConfigEntries: CollectionConfig = {
       type: 'text',
       required: true,
       admin: {
-        description: 'Configuration value. Secrets are write-only after save.',
+        description: 'Secret value (write-only after save)',
       },
       hooks: {
         /**
-         * afterRead: Clear secret value to implement write-only UX
+         * afterRead: Clear value to implement write-only UX
          */
         afterRead: [afterReadHideSecretValue],
       },
@@ -111,13 +94,13 @@ export const ConfigEntries: CollectionConfig = {
       defaultValue: true,
       index: true,
       admin: {
-        description: 'Enable or disable this configuration entry',
+        description: 'Enable or disable this secret',
       },
     },
   ],
   hooks: {
     /**
-     * beforeChange: Encrypt secrets, validate key/kind immutability
+     * beforeChange: Encrypt values, validate key immutability
      * CRITICAL: Pass req to nested operations for transaction safety
      */
     beforeChange: [beforeChangeEncryptAndValidate],

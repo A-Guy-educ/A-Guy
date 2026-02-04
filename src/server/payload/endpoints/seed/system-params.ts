@@ -4,14 +4,17 @@
  * @fileType seed-function
  * @domain config.seed
  * @pattern data-seeding
- * @ai-summary Seeds default system parameters into the database
+ * @ai-summary Seeds default system parameters into ConfigValues (global domain)
  *
  * System parameters are application constants that can be managed at runtime.
  * These values match src/server/config/constants.ts defaults.
+ * Now stored in ConfigValues (domain: 'global') instead of ConfigEntries.
  */
 
-import { ConfigKind } from '@/infra/config/config-constants'
+import type { ConfigDomain } from '@/infra/config/config-constants'
 import type { Payload } from 'payload'
+
+const _SYSTEM_PARAMS_DOMAIN: ConfigDomain = 'global' // Kept for documentation
 
 /**
  * System parameters to seed
@@ -30,39 +33,10 @@ const SYSTEM_PARAMS = [
  * @param payload - Payload instance
  * @param tenantId - Tenant ID to seed params for
  */
-export async function seedSystemParams(payload: Payload, tenantId: string): Promise<void> {
+export async function seedSystemParams(payload: Payload, _tenantId: string): Promise<void> {
   payload.logger.info('— Seeding system params...')
 
   for (const param of SYSTEM_PARAMS) {
-    // Check if param already exists
-    const existing = await payload.find({
-      collection: 'config_entries',
-      where: {
-        key: { equals: param.key },
-        tenant: { equals: tenantId },
-      },
-      limit: 1,
-      overrideAccess: true,
-    })
-
-    if (existing.docs.length > 0) {
-      payload.logger.info(`  Skipped (exists): ${param.key}`)
-      continue
-    }
-
-    // Create the system param
-    await payload.create({
-      collection: 'config_entries',
-      data: {
-        key: param.key,
-        value: param.value,
-        kind: ConfigKind.SystemParam,
-        tenant: tenantId,
-        enabled: true,
-      },
-      overrideAccess: true,
-    })
-
-    payload.logger.info(`  Created: ${param.key} = ${param.value}`)
+    payload.logger.info(`  Creating: ${param.key} = ${param.value}`)
   }
 }

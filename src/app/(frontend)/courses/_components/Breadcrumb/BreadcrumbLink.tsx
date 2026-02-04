@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 
 interface BreadcrumbLinkProps {
   href: string
@@ -7,8 +7,8 @@ interface BreadcrumbLinkProps {
 
 export function BreadcrumbLink({ href, label }: BreadcrumbLinkProps) {
   return (
-    <Link href={href} className="text-blue-600 hover:underline">
+    <SystemLink href={href} className="text-blue-600 hover:underline">
       {label}
-    </Link>
+    </SystemLink>
   )
 }

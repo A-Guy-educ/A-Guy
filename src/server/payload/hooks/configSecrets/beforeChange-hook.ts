@@ -1,5 +1,5 @@
 /**
- * ConfigEntries Before Change Hook
+ * ConfigSecrets Before Change Hook
  *
  * @fileType hook
  * @domain config
@@ -8,20 +8,19 @@
  *
  * Security (CRITICAL):
  * - Always pass req to nested operations for transaction safety
- * - Encrypt secrets before storage
- * - Enforce key and kind immutability
+ * - Encrypt all values (secrets-only collection)
+ * - Enforce key immutability
  * - Store computed action in req.context for audit hook
  */
 
 import type { CollectionBeforeChangeHook, Payload, Where } from 'payload'
 
-import { ConfigKind, isSnakeCase, looksLikeSecret } from '@/infra/config/config-constants'
+import { isSnakeCase } from '@/infra/config/config-constants'
 import { encryptSecret } from '@/infra/config/config-crypto'
 
-// Type for ConfigEntries data (partial for validation)
-type ConfigEntriesFields = {
+// Type for ConfigSecrets data (partial for validation)
+type ConfigSecretsFields = {
   key: string
-  kind: string
   tenant: string | { id: string }
 }
 
@@ -37,7 +36,7 @@ async function checkTenantKeyUniqueness({
   req,
   originalDoc,
 }: {
-  data: Partial<ConfigEntriesFields>
+  data: Partial<ConfigSecretsFields>
   operation: 'create' | 'update'
   req: { payload: Payload }
   originalDoc?: { id: string; tenant: string | object }
@@ -68,7 +67,7 @@ async function checkTenantKeyUniqueness({
   }
 
   const existing = await req.payload.find({
-    collection: 'config_entries',
+    collection: 'config_secrets',
     where: whereQuery,
     limit: 1,
     req, // Pass req for potential transaction safety
@@ -88,8 +87,8 @@ async function checkTenantKeyUniqueness({
  */
 function getAction(
   operation: 'create' | 'update',
-  data: { enabled?: boolean; kind?: string },
-  originalDoc?: { enabled?: boolean; kind?: string },
+  data: { enabled?: boolean },
+  originalDoc?: { enabled?: boolean },
 ): 'created' | 'updated' | 'enabled' | 'disabled' {
   if (operation === 'create') {
     return 'created'
@@ -113,7 +112,7 @@ export const beforeChangeEncryptAndValidate: CollectionBeforeChangeHook = async 
   req,
   originalDoc,
 }) => {
-  const { payload } = req
+  const { payload: _payload } = req // Kept for context, payload used in sub-functions
 
   // =========================================================================
   // Tenant+Key Uniqueness Check
@@ -131,14 +130,6 @@ export const beforeChangeEncryptAndValidate: CollectionBeforeChangeHook = async 
   }
 
   // =========================================================================
-  // Kind Immutability Check
-  // Only compare if data.kind is provided (update may omit it)
-  // =========================================================================
-  if (operation === 'update' && data.kind !== undefined && originalDoc?.kind !== data.kind) {
-    throw new Error('Config kind cannot be changed after creation')
-  }
-
-  // =========================================================================
   // Key Format Validation (snake_case) - only on create or if key is provided
   // =========================================================================
   if (data.key && !isSnakeCase(data.key)) {
@@ -146,20 +137,9 @@ export const beforeChangeEncryptAndValidate: CollectionBeforeChangeHook = async 
   }
 
   // =========================================================================
-  // Secret-Like Key Warning (soft validation)
+  // Encrypt Secrets (ALL values encrypted in secrets-only collection)
   // =========================================================================
-  if (data.kind === ConfigKind.Variable && data.key && looksLikeSecret(data.key)) {
-    payload.logger.warn({
-      msg: 'Config entry with variable kind has secret-like key',
-      key: data.key,
-      userId: req.user?.id,
-    })
-  }
-
-  // =========================================================================
-  // Encrypt Secrets (deterministic - always encrypt when value provided)
-  // =========================================================================
-  if (data.kind === ConfigKind.Secret && data.value) {
+  if (data.value) {
     // Always encrypt when value is provided (treat as rotation)
     // On create: always encrypt
     // On update: only encrypt if value is explicitly provided

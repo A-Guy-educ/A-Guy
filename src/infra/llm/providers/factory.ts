@@ -9,7 +9,11 @@
  * Uses centralized MODEL_REGISTRY and PROVIDER_MODEL_NAMES from @/infra/llm/models.ts
  * for model configurations. This ensures a single source of truth for all model definitions.
  */
-import { getSystemParam, isConfigLoaded, loadRuntimeConfig } from '@/infra/config/runtime'
+import {
+  getConfigValueByKey,
+  isConfigValuesLoaded,
+  loadConfigValues,
+} from '@/infra/config/runtime/config-values'
 import { logger } from '@/infra/utils/logger'
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import type { Payload } from 'payload'
@@ -48,14 +52,14 @@ export async function getProviderTypeFromEnv(payload?: Payload): Promise<LLMProv
     return LLMProviderType.GEMINI
   }
 
-  // Then check runtime config (Config_entries)
+  // Then check runtime config (ConfigValues)
   if (payload) {
     try {
       let defaultTenantId: string | undefined
-      if (!isConfigLoaded()) {
+      if (!isConfigValuesLoaded()) {
         defaultTenantId = await getDefaultTenantId(payload)
-        logger.debug({ tenantId: defaultTenantId }, '[LLMFactory] Loading runtime config')
-        await loadRuntimeConfig(payload, defaultTenantId)
+        logger.debug({ tenantId: defaultTenantId }, '[LLMFactory] Loading config values')
+        await loadConfigValues(payload, defaultTenantId)
       } else {
         defaultTenantId = await getDefaultTenantId(payload)
       }
@@ -63,11 +67,11 @@ export async function getProviderTypeFromEnv(payload?: Payload): Promise<LLMProv
         { tenantId: defaultTenantId },
         '[LLMFactory] Config loaded, looking up LLM_PROVIDER',
       )
-      const configValue = getSystemParam('LLM_PROVIDER', {
+      const configValue = await getConfigValueByKey<string | undefined>('global', 'LLM_PROVIDER', {
         tenantId: defaultTenantId,
         throwIfNotFound: false,
       })
-      logger.debug({ configValue }, '[LLMFactory] getSystemParam result')
+      logger.debug({ configValue }, '[LLMFactory] getConfigValueByKey result')
       if (configValue) {
         const normalizedValue = configValue.toLowerCase()
         logger.debug(

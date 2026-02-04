@@ -1,6 +1,6 @@
 'use client'
 import { useHeaderTheme } from '@/ui/web/providers/HeaderTheme'
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { usePathname } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
@@ -72,12 +72,12 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         <div className="container">
           <div className="py-3 md:py-4 flex items-center justify-between text-header-foreground">
             {/* Logo */}
-            <Link
+            <SystemLink
               href="/"
               className="flex items-center gap-3 flex-shrink-0 hover:opacity-80 transition-opacity"
             >
               <TelescopeLogo className="h-8 w-auto" />
-            </Link>
+            </SystemLink>
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center">
