@@ -84,8 +84,33 @@ export default function TemplatesPage() {
         <div className="header-content">
           <h1>Conversion Templates</h1>
           <p className="page-description">
-            Save and reuse conversion configurations for consistent results
+            Templates save your conversion settings (prompts, segment size, exercise types, review
+            mode) for reuse. Create a template from successful conversions or configure one
+            manually, then apply it to new conversions for consistent results.
           </p>
+          <details className="template-help">
+            <summary>What can I save in a template?</summary>
+            <ul>
+              <li>
+                <strong>Prompts:</strong> Extractor and verifier prompts used for exercise
+                generation
+              </li>
+              <li>
+                <strong>Segmentation:</strong> Pages per segment and custom boundaries
+              </li>
+              <li>
+                <strong>Exercise Types:</strong> MCQ, free response, fill-in-blank, matching, and
+                more
+              </li>
+              <li>
+                <strong>Review Mode:</strong> Auto-approve, per-segment review, or manual approval
+              </li>
+              <li>
+                <strong>Additional Rounds:</strong> Extra AI enrichment steps for generated
+                exercises
+              </li>
+            </ul>
+          </details>
         </div>
         <button className="btn-create" onClick={() => setShowCreateForm(true)}>
           Create Template

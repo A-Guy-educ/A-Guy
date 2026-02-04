@@ -8,6 +8,7 @@
  */
 
 import config from '@payload-config'
+import type { ConversionJob } from '@payload-types'
 import type { PayloadHandler } from 'payload'
 import { APIError, getPayload } from 'payload'
 
@@ -31,9 +32,9 @@ export const approveAllHandler: PayloadHandler = async (req) => {
     throw new APIError('Job not found', 404)
   }
 
-  const pendingExercises = (job.pendingExercises as any[]) || []
-  const completedExercises = (job.completedExercises as any[]) || []
-  const segments = (job.segments as any[]) || []
+  const pendingExercises = (job.pendingExercises as ConversionJob['pendingExercises']) || []
+  const completedExercises: ConversionJob['pendingExercises'] = []
+  const segments = (job.segments as ConversionJob['segments']) || []
 
   // Approve all pending
   const now = new Date().toISOString()
@@ -61,18 +62,18 @@ export const approveAllHandler: PayloadHandler = async (req) => {
     id: job.id,
     data: {
       status: 'completed',
-      currentStage: 'COMPLETE',
-      currentStageMessage: 'All exercises approved',
-      completedAt: now,
-      pendingExercises: [],
-      completedExercises,
-      segments: updatedSegments,
       progress: {
         ...(job.progress as object),
+        currentStage: 'COMPLETE',
+        currentStageMessage: 'All exercises approved',
         totalExercises,
         approvedExercises: completedExercises.length,
         completedSegments: updatedSegments.length,
       },
+      completedAt: now,
+      pendingExercises: [],
+      completedExercises,
+      segments: updatedSegments,
     },
     req,
   })

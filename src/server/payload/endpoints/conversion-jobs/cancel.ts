@@ -54,7 +54,9 @@ export const cancelConversionHandler: PayloadHandler = async (req) => {
     id: job.id,
     data: {
       status: 'cancelled',
-      currentStageMessage: 'Conversion cancelled by user',
+      progress: {
+        currentStageMessage: 'Conversion cancelled by user',
+      },
       completedAt: new Date().toISOString(),
     },
     req,

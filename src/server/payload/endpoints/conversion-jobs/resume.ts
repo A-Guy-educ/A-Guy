@@ -62,7 +62,9 @@ export const resumeConversionHandler: PayloadHandler = async (req) => {
     id: job.id,
     data: {
       status: 'running',
-      currentStageMessage: 'Conversion resumed',
+      progress: {
+        currentStageMessage: 'Conversion resumed',
+      },
     },
     req,
   })

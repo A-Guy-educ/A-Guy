@@ -23,8 +23,10 @@ export interface ConversionJob {
     | 'completed'
     | 'failed'
     | 'cancelled'
-  currentStage: string
+  // Legacy: root-level for backward compatibility
+  currentStage?: string
   progress: {
+    currentStage?: string
     totalSegments: number
     completedSegments: number
     totalExercises: number

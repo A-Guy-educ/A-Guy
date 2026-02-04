@@ -15,9 +15,12 @@ export interface ConversionJobDetail {
   id: string
   title: string
   status: string
-  currentStage: string
+  // Legacy: root-level fields for backward compatibility
+  currentStage?: string
   currentStageMessage?: string
   progress: {
+    currentStage?: string
+    currentStageMessage?: string
     totalSegments: number
     completedSegments: number
     totalExercises: number

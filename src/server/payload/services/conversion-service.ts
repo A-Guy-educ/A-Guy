@@ -21,17 +21,20 @@ export interface CreateConversionInput {
  * Start conversion input
  */
 export interface StartConversionInput {
-  config: {
+  config?: {
     pageRange: { start: number; end?: number; excludePages: number[] }
     segmentation: { pagesPerSegment: number }
     extraction: { mode: string; exerciseTypes: string[]; customInstructions?: string }
     reviewMode: string
   }
-  prompts: {
-    extractorPromptId: string
-    verifierPromptId: string
+  prompts?: {
+    // Support both wizard format and API override format
+    extractorPromptId?: string
+    verifierPromptId?: string
+    extractor?: string // Wizard sends this
+    verifier?: string // Wizard sends this
   }
-  additionalRounds: Array<{
+  additionalRounds?: Array<{
     name: string
     promptId: string
     targetField: string

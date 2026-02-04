@@ -64,9 +64,9 @@ export const retryConversionHandler: PayloadHandler = async (req) => {
       status: 'queued',
       payloadJobId: typeof payloadJob.id === 'string' ? payloadJob.id : undefined,
       startedAt: new Date().toISOString(),
-      currentStage: 'INIT',
-      currentStageMessage: 'Conversion queued for retry',
       progress: {
+        currentStage: 'INIT',
+        currentStageMessage: 'Conversion queued for retry',
         totalSegments: 0,
         completedSegments: 0,
         failedSegments: 0,

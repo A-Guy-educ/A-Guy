@@ -2,6 +2,10 @@
  * New Conversion Page
  *
  * Route for creating new PDF-to-exercises conversions
+ * Supports URL query params for pre-populating from lesson conversion:
+ * - lessonId: Pre-select a lesson
+ * - mediaId: Pre-select a media/PDF file
+ * - templateId: Pre-populate from a template
  *
  * @fileType page
  * @domain admin
@@ -11,7 +15,16 @@
 
 import { ConversionWizard } from '@/ui/admin/conversion-jobs/wizard/ConversionWizard'
 
-export default function NewConversionPage() {
+interface NewConversionPageProps {
+  searchParams: Promise<{
+    lessonId?: string
+    mediaId?: string
+    templateId?: string
+  }>
+}
+
+export default async function NewConversionPage({ searchParams }: NewConversionPageProps) {
+  const params = await searchParams
   return (
     <div className="new-conversion-page">
       <header className="page-header">
@@ -21,7 +34,7 @@ export default function NewConversionPage() {
         </div>
       </header>
 
-      <ConversionWizard />
+      <ConversionWizard initialLessonId={params.lessonId} initialMediaId={params.mediaId} />
 
       <style>{`
         .new-conversion-page { padding: 1.5rem; max-width: 1000px; margin: 0 auto; }

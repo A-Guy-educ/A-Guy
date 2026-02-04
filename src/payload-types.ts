@@ -598,6 +598,9 @@ export interface Media {
     | number
     | boolean
     | null;
+  folder?: (string | null) | FolderInterface;
+  updatedAt: string;
+  createdAt: string;
   url?: string | null;
   thumbnailURL?: string | null;
   filename?: string | null;
@@ -607,9 +610,6 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
-  folder?: (string | null) | FolderInterface;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1627,36 +1627,39 @@ export interface ConversionJob {
    * Tenant scope for this document
    */
   tenant: string | Tenant;
+  /**
+   * Job status. Draft jobs are not yet started. Use the "Start" button to begin processing.
+   */
   status: 'draft' | 'queued' | 'running' | 'paused' | 'review' | 'completed' | 'failed' | 'cancelled';
-  /**
-   * Current processing stage
-   */
-  currentStage?:
-    | (
-        | 'INIT'
-        | 'PDF_PREVIEW'
-        | 'CONFIGURATION'
-        | 'PDF_LOAD'
-        | 'PDF_SEGMENT'
-        | 'SEGMENT_QUEUE'
-        | 'SEGMENT_EXTRACT'
-        | 'SEGMENT_REVIEW'
-        | 'ROUND_PROCESSING'
-        | 'SEGMENT_VERIFY'
-        | 'VERIFICATION_REVIEW'
-        | 'SEGMENT_PERSIST'
-        | 'FINAL_APPROVAL'
-        | 'COMPLETE'
-        | 'FAILED'
-        | 'CANCELLED'
-        | 'PAUSED'
-      )
-    | null;
-  /**
-   * Human-readable stage status
-   */
-  currentStageMessage?: string | null;
   progress?: {
+    /**
+     * Current processing stage
+     */
+    currentStage?:
+      | (
+          | 'INIT'
+          | 'PDF_PREVIEW'
+          | 'CONFIGURATION'
+          | 'PDF_LOAD'
+          | 'PDF_SEGMENT'
+          | 'SEGMENT_QUEUE'
+          | 'SEGMENT_EXTRACT'
+          | 'SEGMENT_REVIEW'
+          | 'ROUND_PROCESSING'
+          | 'SEGMENT_VERIFY'
+          | 'VERIFICATION_REVIEW'
+          | 'SEGMENT_PERSIST'
+          | 'FINAL_APPROVAL'
+          | 'COMPLETE'
+          | 'FAILED'
+          | 'CANCELLED'
+          | 'PAUSED'
+        )
+      | null;
+    /**
+     * Human-readable stage status
+     */
+    currentStageMessage?: string | null;
     totalPages?: number | null;
     processedPages?: number | null;
     totalSegments?: number | null;
@@ -2831,6 +2834,9 @@ export interface MediaSelect<T extends boolean = true> {
   retentionPolicy?: T;
   expiresAt?: T;
   sizes?: T;
+  folder?: T;
+  updatedAt?: T;
+  createdAt?: T;
   url?: T;
   thumbnailURL?: T;
   filename?: T;
@@ -2840,9 +2846,6 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
-  folder?: T;
-  updatedAt?: T;
-  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2919,11 +2922,11 @@ export interface ConversionJobsSelect<T extends boolean = true> {
   sourceMedia?: T;
   tenant?: T;
   status?: T;
-  currentStage?: T;
-  currentStageMessage?: T;
   progress?:
     | T
     | {
+        currentStage?: T;
+        currentStageMessage?: T;
         totalPages?: T;
         processedPages?: T;
         totalSegments?: T;

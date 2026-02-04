@@ -45,7 +45,9 @@ export const pauseConversionHandler: PayloadHandler = async (req) => {
     id: job.id,
     data: {
       status: 'paused',
-      currentStageMessage: 'Conversion paused by user',
+      progress: {
+        currentStageMessage: 'Conversion paused by user',
+      },
     },
     req,
   })

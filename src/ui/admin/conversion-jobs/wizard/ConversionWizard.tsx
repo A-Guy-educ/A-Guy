@@ -11,9 +11,9 @@
 
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ConfigStep } from './ConfigStep'
 import { ConfirmStep } from './ConfirmStep'
 import { PreviewStep } from './PreviewStep'
@@ -72,14 +72,19 @@ interface WizardConfig {
 
 export function ConversionWizard({ initialLessonId, initialMediaId }: ConversionWizardProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [currentStep, setCurrentStep] = useState<(typeof STEPS)[number]>('source')
   const [isLoading, setIsLoading] = useState(false)
-  const [lessonTitle, _setLessonTitle] = useState('')
-  const [mediaFilename, _setMediaFilename] = useState('')
+  const [lessonTitle, setLessonTitle] = useState('')
+  const [mediaFilename, setMediaFilename] = useState('')
+
+  // Support both props and URL query params
+  const lessonId = initialLessonId || searchParams.get('lessonId') || ''
+  const mediaId = initialMediaId || searchParams.get('mediaId') || ''
 
   const [config, setConfig] = useState<WizardConfig>({
-    lessonId: initialLessonId || '',
-    mediaId: initialMediaId || '',
+    lessonId,
+    mediaId,
     pageRange: { start: 1, excludePages: [] },
     segmentation: { pagesPerSegment: 2 },
     extraction: { mode: 'structured', exerciseTypes: ['mcq', 'free_response', 'select'] },
@@ -87,6 +92,38 @@ export function ConversionWizard({ initialLessonId, initialMediaId }: Conversion
     prompts: { extractorPromptId: '', verifierPromptId: '' },
     additionalRounds: [],
   })
+
+  // Auto-advance when lessonId and mediaId are provided
+  useEffect(() => {
+    if (lessonId && mediaId && currentStep === 'source') {
+      // Fetch lesson and media details
+      const fetchDetails = async () => {
+        try {
+          // Fetch lesson title
+          if (lessonId) {
+            const lessonRes = await fetch(`/api/lessons/${lessonId}`, { credentials: 'include' })
+            if (lessonRes.ok) {
+              const lessonData = await lessonRes.json()
+              setLessonTitle(lessonData.title || '')
+            }
+          }
+          // Fetch media filename
+          if (mediaId) {
+            const mediaRes = await fetch(`/api/media/${mediaId}`, { credentials: 'include' })
+            if (mediaRes.ok) {
+              const mediaData = await mediaRes.json()
+              setMediaFilename(mediaData.filename || mediaData.url || '')
+            }
+          }
+          // Auto-advance to next step
+          setCurrentStep('preview')
+        } catch (error) {
+          console.error('Failed to fetch details:', error)
+        }
+      }
+      fetchDetails()
+    }
+  }, [lessonId, mediaId, currentStep])
 
   const currentIndex = STEPS.indexOf(currentStep)
 

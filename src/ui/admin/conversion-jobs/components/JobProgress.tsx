@@ -49,11 +49,19 @@ const STAGE_LABELS: Record<string, string> = {
   COMPLETE: 'Complete',
 }
 
+// Helper to get current stage from job (supports both old and new schema locations)
+function getCurrentStage(job: ConversionJobDetail): string {
+  return job.progress?.currentStage || job.currentStage || 'INIT'
+}
+
 export function JobProgress({ job }: JobProgressProps) {
-  const currentStageIndex = STAGES.indexOf(job.currentStage)
+  const currentStage = getCurrentStage(job)
+  const currentStageIndex = STAGES.indexOf(currentStage)
   const progressPercent =
-    job.progress.totalSegments > 0
-      ? Math.round((job.progress.completedSegments / job.progress.totalSegments) * 100)
+    (job.progress?.totalSegments || 0) > 0
+      ? Math.round(
+          ((job.progress?.completedSegments || 0) / (job.progress?.totalSegments || 1)) * 100,
+        )
       : 0
 
   return (

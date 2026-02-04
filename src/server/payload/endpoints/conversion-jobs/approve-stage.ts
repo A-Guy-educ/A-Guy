@@ -38,8 +38,9 @@ export const approveStageHandler: PayloadHandler = async (req) => {
   const action = body?.action ?? 'approve'
 
   // Validate current stage is a review gate
-  const currentStage = job.currentStage as string
-  if (!REVIEW_GATE_STAGES.includes(currentStage as any)) {
+  // Support both old root-level and new progress-group locations
+  const currentStage = job.currentStage || job.progress?.currentStage || 'INIT'
+  if (!REVIEW_GATE_STAGES.includes(currentStage as (typeof REVIEW_GATE_STAGES)[number])) {
     throw new Error(`Cannot approve stage: current stage is "${currentStage}"`)
   }
 
@@ -53,8 +54,10 @@ export const approveStageHandler: PayloadHandler = async (req) => {
     id: job.id,
     data: {
       status: 'running',
-      currentStage: nextStage,
-      currentStageMessage: action === 'skip' ? 'Stage skipped' : 'Stage approved',
+      progress: {
+        currentStage: nextStage,
+        currentStageMessage: action === 'skip' ? 'Stage skipped' : 'Stage approved',
+      },
     },
     req,
   })

@@ -84,7 +84,7 @@ export function ConversionTable({ jobs, isLoading, onRowClick }: ConversionTable
               <td>
                 <span className={`status-badge ${STATUS_CLASSES[job.status]}`}>{job.status}</span>
               </td>
-              <td className="job-stage">{job.currentStage}</td>
+              <td className="job-stage">{job.progress?.currentStage || job.currentStage || '—'}</td>
               <td className="job-progress">
                 <div className="progress-bar-container">
                   <div className="progress-bar" style={{ width: `${calculateProgress(job)}%` }} />

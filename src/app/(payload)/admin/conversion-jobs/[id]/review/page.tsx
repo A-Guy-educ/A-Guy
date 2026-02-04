@@ -11,6 +11,8 @@
 
 'use client'
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- Payload polymorphic fields require any */
+
 import { useState } from 'react'
 
 import { ExerciseList } from '@/ui/admin/conversion-jobs/components/ExerciseList'
@@ -58,7 +60,8 @@ export default function ConversionJobReviewPage() {
   }
 
   const reviewStages = ['SEGMENT_REVIEW', 'VERIFICATION_REVIEW', 'FINAL_APPROVAL']
-  const _isInReview = reviewStages.includes(job.currentStage)
+  const currentStage = job.progress?.currentStage || job.currentStage || ''
+  const _isInReview = reviewStages.includes(currentStage)
   const pendingCount = (job.pendingExercises?.length || 0) as number
 
   const handleExerciseSelect = (index: number) => {
@@ -114,7 +117,7 @@ export default function ConversionJobReviewPage() {
               <div>
                 <h1 className="text-xl font-semibold">{job.title}</h1>
                 <p className="text-sm text-gray-500">
-                  {job.currentStage} • {pendingCount} pending exercises
+                  {currentStage} • {pendingCount} pending exercises
                 </p>
               </div>
             </div>

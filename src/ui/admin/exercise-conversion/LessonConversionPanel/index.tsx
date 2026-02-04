@@ -1,9 +1,9 @@
 'use client'
 
 import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
-import { Suspense, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { ConversionStatusPanel } from '../ConversionStatusPanel'
-import { ConvertForm } from '../ConvertForm'
 import { DraftExercisesList } from '../DraftExercisesList'
 
 interface MediaItem {
@@ -14,13 +14,13 @@ interface MediaItem {
 
 export const LessonConversionPanel = () => {
   const { id: lessonId } = useDocumentInfo()
+  const router = useRouter()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const contentFilesField = useFormFields(([fields]: any[]) => fields?.contentFiles)
   const contentFilesValue = contentFilesField?.value
 
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [activeForm, setActiveForm] = useState<string | null>(null)
   const [expandedPdf, setExpandedPdf] = useState<string | null>(null)
 
   // Resolve media IDs to full objects
@@ -181,23 +181,21 @@ export const LessonConversionPanel = () => {
               {pdf.filename || pdf.id}
             </span>
             <button
-              onClick={() => setActiveForm(activeForm === pdf.id ? null : pdf.id)}
+              onClick={() =>
+                router.push(`/admin/conversion-jobs/new?lessonId=${lessonId}&mediaId=${pdf.id}`)
+              }
               style={{
                 padding: '4px 12px',
                 fontSize: 11,
                 fontWeight: 500,
-                border: activeForm === pdf.id ? '1px solid var(--theme-elevation-200)' : 'none',
+                border: 'none',
                 borderRadius: 3,
-                backgroundColor:
-                  activeForm === pdf.id
-                    ? 'var(--theme-elevation-100)'
-                    : 'var(--theme-elevation-900)',
-                color:
-                  activeForm === pdf.id ? 'var(--theme-elevation-700)' : 'var(--theme-elevation-0)',
+                backgroundColor: 'var(--theme-elevation-900)',
+                color: 'var(--theme-elevation-0)',
                 cursor: 'pointer',
               }}
             >
-              {activeForm === pdf.id ? 'Cancel' : 'Convert'}
+              Convert
             </button>
           </div>
 
@@ -209,24 +207,6 @@ export const LessonConversionPanel = () => {
               onViewExercises={() => setExpandedPdf(expandedPdf === pdf.id ? null : pdf.id)}
             />
           </div>
-
-          {/* Inline Convert Form */}
-          {activeForm === pdf.id && (
-            <Suspense
-              fallback={
-                <div style={{ marginTop: 8, fontSize: 11, color: 'var(--theme-elevation-500)' }}>
-                  Loading...
-                </div>
-              }
-            >
-              <ConvertForm
-                lessonId={String(lessonId)}
-                mediaId={pdf.id}
-                filename={String(pdf.filename || pdf.id)}
-                onClose={() => setActiveForm(null)}
-              />
-            </Suspense>
-          )}
 
           {/* Draft Exercises */}
           {expandedPdf === pdf.id && (
