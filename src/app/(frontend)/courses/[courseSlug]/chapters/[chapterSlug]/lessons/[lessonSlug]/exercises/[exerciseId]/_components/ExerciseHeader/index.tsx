@@ -8,8 +8,8 @@ import { UserDropdown } from '@/ui/web/UserDropdown'
 import { Button } from '@/ui/web/components/button'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ArrowLeft, ArrowRight, Menu } from 'lucide-react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
 
 interface ExerciseHeaderProps {
   exerciseTitle: string
@@ -32,7 +32,7 @@ export function ExerciseHeader({
   const tCommon = useTranslations('common.header')
   const locale = useLocale()
   const rtl = isRTL(locale as 'en' | 'he')
-  const router = useRouter()
+  const router = useRouterWithLoading()
 
   const returnToParam = currentUrl ? `?returnTo=${encodeURIComponent(currentUrl)}` : ''
 
@@ -98,10 +98,10 @@ export function ExerciseHeader({
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>
-                <Link href={`/login${returnToParam}`}>{tCommon('login')}</Link>
+                <SystemLink href={`/login${returnToParam}`}>{tCommon('login')}</SystemLink>
               </Button>
               <Button size="sm" asChild>
-                <Link href={`/signup${returnToParam}`}>{tCommon('signup')}</Link>
+                <SystemLink href={`/signup${returnToParam}`}>{tCommon('signup')}</SystemLink>
               </Button>
             </>
           )}

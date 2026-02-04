@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { Button } from '@/ui/web/components/button'
 import { Badge } from '@/ui/web/components/badge'
 import { useTranslations } from '@/ui/web/providers/I18n'
@@ -37,9 +37,9 @@ export function ExercisePageHeader({
     <div className="mb-8">
       <div className="mb-6">
         <Button variant="outline" size="sm" asChild>
-          <Link href={`/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}`}>
+          <SystemLink href={`/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}`}>
             ← {t('backToLesson')}
-          </Link>
+          </SystemLink>
         </Button>
       </div>
 
