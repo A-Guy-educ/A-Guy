@@ -64,20 +64,35 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations;
+    'payload-mcp-api-keys': PayloadMcpApiKeyAuthOperations;
   };
   blocks: {};
   collections: {
     pages: Page;
-    posts: Post;
-    media: Media;
     categories: Category;
-    grades: Grade;
-    'pricing-plans': PricingPlan;
+    config_secrets: ConfigSecret;
+    config_values: ConfigValue;
+    config_audit_logs: ConfigAuditLog;
+    conversations: Conversation;
+    memory_items: MemoryItem;
+    tenants: Tenant;
+    courses: Course;
+    chapters: Chapter;
+    lessons: Lesson;
+    exercises: Exercise;
+    prompts: Prompt;
+    'exercise-assets': ExerciseAsset;
     users: User;
+    'user-progress': UserProgress;
+    media: Media;
+    posts: Post;
+    'pricing-plans': PricingPlan;
+    'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
     search: Search;
+    'payload-mcp-api-keys': PayloadMcpApiKey;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-folders': FolderInterface;
@@ -92,16 +107,30 @@ export interface Config {
   };
   collectionsSelect: {
     pages: PagesSelect<false> | PagesSelect<true>;
-    posts: PostsSelect<false> | PostsSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
-    grades: GradesSelect<false> | GradesSelect<true>;
-    'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
+    config_secrets: ConfigSecretsSelect<false> | ConfigSecretsSelect<true>;
+    config_values: ConfigValuesSelect<false> | ConfigValuesSelect<true>;
+    config_audit_logs: ConfigAuditLogsSelect<false> | ConfigAuditLogsSelect<true>;
+    conversations: ConversationsSelect<false> | ConversationsSelect<true>;
+    memory_items: MemoryItemsSelect<false> | MemoryItemsSelect<true>;
+    tenants: TenantsSelect<false> | TenantsSelect<true>;
+    courses: CoursesSelect<false> | CoursesSelect<true>;
+    chapters: ChaptersSelect<false> | ChaptersSelect<true>;
+    lessons: LessonsSelect<false> | LessonsSelect<true>;
+    exercises: ExercisesSelect<false> | ExercisesSelect<true>;
+    prompts: PromptsSelect<false> | PromptsSelect<true>;
+    'exercise-assets': ExerciseAssetsSelect<false> | ExerciseAssetsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
+    posts: PostsSelect<false> | PostsSelect<true>;
+    'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
+    'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     search: SearchSelect<false> | SearchSelect<true>;
+    'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
@@ -122,11 +151,16 @@ export interface Config {
     footer: FooterSelect<false> | FooterSelect<true>;
   };
   locale: null;
-  user: User & {
-    collection: 'users';
-  };
+  user:
+    | (User & {
+        collection: 'users';
+      })
+    | (PayloadMcpApiKey & {
+        collection: 'payload-mcp-api-keys';
+      });
   jobs: {
     tasks: {
+      pdf_to_exercises: TaskPdfToExercises;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -137,6 +171,24 @@ export interface Config {
   };
 }
 export interface UserAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
+  };
+}
+export interface PayloadMcpApiKeyAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -183,15 +235,10 @@ export interface Page {
           link: {
             type?: ('reference' | 'custom') | null;
             newTab?: boolean | null;
-            reference?:
-              | ({
-                  relationTo: 'pages';
-                  value: string | Page;
-                } | null)
-              | ({
-                  relationTo: 'posts';
-                  value: string | Post;
-                } | null);
+            reference?: {
+              relationTo: 'pages';
+              value: string | Page;
+            } | null;
             url?: string | null;
             label: string;
             /**
@@ -202,15 +249,10 @@ export interface Page {
           id?: string | null;
         }[]
       | null;
-    media?: (string | null) | Media;
   };
-  layout: (CallToActionBlock | ContentBlock | MediaBlock | ArchiveBlock | FormBlock)[];
+  layout: (CallToActionBlock | ContentBlock | ArchiveBlock | FormBlock | HtmlBlock)[];
   meta?: {
     title?: string | null;
-    /**
-     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
-     */
-    image?: (string | null) | Media;
     description?: string | null;
   };
   publishedAt?: string | null;
@@ -219,227 +261,13 @@ export interface Page {
    */
   generateSlug?: boolean | null;
   slug: string;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "posts".
- */
-export interface Post {
-  id: string;
-  title: string;
-  heroImage?: (string | null) | Media;
-  content: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  relatedPosts?: (string | Post)[] | null;
-  categories?: (string | Category)[] | null;
-  meta?: {
-    title?: string | null;
-    /**
-     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
-     */
-    image?: (string | null) | Media;
-    description?: string | null;
-  };
-  publishedAt?: string | null;
-  authors?: (string | User)[] | null;
-  populatedAuthors?:
-    | {
-        id?: string | null;
-        name?: string | null;
-      }[]
-    | null;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: string;
-  alt?: string | null;
-  caption?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  folder?: (string | null) | FolderInterface;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-  sizes?: {
-    thumbnail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    square?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    small?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    medium?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    large?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    xlarge?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    og?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-  };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "payload-folders".
- */
-export interface FolderInterface {
-  id: string;
-  name: string;
-  folder?: (string | null) | FolderInterface;
-  documentsAndFolders?: {
-    docs?: (
-      | {
-          relationTo?: 'payload-folders';
-          value: string | FolderInterface;
-        }
-      | {
-          relationTo?: 'media';
-          value: string | Media;
-        }
-    )[];
-    hasNextPage?: boolean;
-    totalDocs?: number;
-  };
-  folderType?: 'media'[] | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories".
- */
-export interface Category {
-  id: string;
-  title: string;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  parent?: (string | null) | Category;
-  breadcrumbs?:
-    | {
-        doc?: (string | null) | Category;
-        url?: string | null;
-        label?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: string;
-  name?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -466,15 +294,10 @@ export interface CallToActionBlock {
         link: {
           type?: ('reference' | 'custom') | null;
           newTab?: boolean | null;
-          reference?:
-            | ({
-                relationTo: 'pages';
-                value: string | Page;
-              } | null)
-            | ({
-                relationTo: 'posts';
-                value: string | Post;
-              } | null);
+          reference?: {
+            relationTo: 'pages';
+            value: string | Page;
+          } | null;
           url?: string | null;
           label: string;
           /**
@@ -516,15 +339,10 @@ export interface ContentBlock {
         link?: {
           type?: ('reference' | 'custom') | null;
           newTab?: boolean | null;
-          reference?:
-            | ({
-                relationTo: 'pages';
-                value: string | Page;
-              } | null)
-            | ({
-                relationTo: 'posts';
-                value: string | Post;
-              } | null);
+          reference?: {
+            relationTo: 'pages';
+            value: string | Page;
+          } | null;
           url?: string | null;
           label: string;
           /**
@@ -538,16 +356,6 @@ export interface ContentBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'content';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MediaBlock".
- */
-export interface MediaBlock {
-  media: string | Media;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'mediaBlock';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -570,18 +378,301 @@ export interface ArchiveBlock {
     [k: string]: unknown;
   } | null;
   populateBy?: ('collection' | 'selection') | null;
-  relationTo?: 'posts' | null;
+  relationTo?: 'courses' | null;
   categories?: (string | Category)[] | null;
   limit?: number | null;
   selectedDocs?:
     | {
-        relationTo: 'posts';
-        value: string | Post;
+        relationTo: 'courses';
+        value: string | Course;
       }[]
     | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'archive';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: string;
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  parent?: (string | null) | Category;
+  breadcrumbs?:
+    | {
+        doc?: (string | null) | Category;
+        url?: string | null;
+        label?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: string;
+  name?: string | null;
+  role: 'admin' | 'student';
+  googleSub?: string | null;
+  verifiedEmail?: string | null;
+  registrationMethod?: ('google' | 'email') | null;
+  registeredAt?: string | null;
+  googleProfile?: {
+    name?: string | null;
+  };
+  oauthLoginSecretEnc?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses".
+ */
+export interface Course {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Course identifier (e.g., "ח" or "8")
+   */
+  courseLabel: string;
+  /**
+   * Display title (e.g., "Course 8 Math")
+   */
+  title: string;
+  /**
+   * Detailed description of the course
+   */
+  description?: string | null;
+  /**
+   * Upload course-related media files (images, videos, documents, etc.)
+   */
+  mediaFiles?: (string | Media)[] | null;
+  /**
+   * Sort order for UI display
+   */
+  order: number;
+  /**
+   * Publication status of the course
+   */
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Whether this course is currently active
+   */
+  isActive: boolean;
+  categories: (string | Category)[];
+  /**
+   * AI system prompt for Ask tab chat in this course (uses default if not set)
+   */
+  prompt?: (string | null) | Prompt;
+  /**
+   * AI context text for this course. Injected into Ask tab chat prompts at runtime.
+   */
+  courseContextText?: string | null;
+  /**
+   * URL-friendly identifier (auto-generated from title if empty)
+   */
+  slug?: string | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+  };
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants".
+ */
+export interface Tenant {
+  id: string;
+  /**
+   * Tenant display name
+   */
+  name: string;
+  /**
+   * Tenant slug (used to resolve default tenant from env)
+   */
+  slug: string;
+  /**
+   * Tenant status flag
+   */
+  status?: ('active' | 'archived') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Auto-detected from file type (admin can override)
+   */
+  type: 'image' | 'video' | 'audio' | 'pdf' | 'svg' | 'document' | 'external' | 'other';
+  /**
+   * URL for external embed or link
+   */
+  externalUrl?: string | null;
+  /**
+   * Alternative text for images and SVGs (required for accessibility)
+   */
+  alt?: string | null;
+  caption?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  retentionPolicy: 'persistent' | 'ephemeral';
+  /**
+   * Auto-set for ephemeral media (30 days from creation)
+   */
+  expiresAt?: string | null;
+  /**
+   * Responsive image sizes metadata (auto-generated by blob storage)
+   */
+  sizes?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  folder?: (string | null) | FolderInterface;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-folders".
+ */
+export interface FolderInterface {
+  id: string;
+  name: string;
+  folder?: (string | null) | FolderInterface;
+  documentsAndFolders?: {
+    docs?: (
+      | {
+          relationTo?: 'payload-folders';
+          value: string | FolderInterface;
+        }
+      | {
+          relationTo?: 'media';
+          value: string | Media;
+        }
+    )[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  folderType?: 'media'[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prompts".
+ */
+export interface Prompt {
+  id: string;
+  /**
+   * Human-readable prompt name
+   */
+  title: string;
+  /**
+   * Machine-readable key (e.g., "default-tutor-v1")
+   */
+  key?: string | null;
+  /**
+   * System prompts are always included. Context prompts are lesson-specific.
+   */
+  type: 'system' | 'context';
+  /**
+   * System prompt template for AI tutor
+   */
+  template: string;
+  /**
+   * Only "published" prompts are used at runtime
+   */
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Use as fallback when lesson has no prompt
+   */
+  isDefaultForAgentChat?: boolean | null;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Purpose of this prompt: chat conversation, PDF extraction, or PDF verification
+   */
+  usage?: ('chat' | 'extractor' | 'verifier') | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -785,36 +876,609 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "grades".
+ * via the `definition` "HtmlBlock".
  */
-export interface Grade {
+export interface HtmlBlock {
+  /**
+   * Enter HTML content. Links must be relative (/path or #anchor). Allowed attributes: class, id, data-* on all tags; href (required), title, class, id, data-* on <a> tags; plus safe SVG attributes (e.g., viewBox, fill, stroke, d). No style=, target=, or on*= attributes allowed. The <style> tag is allowed.
+   */
+  html: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'html';
+}
+/**
+ * Tenant-scoped encrypted secrets. All values are always encrypted.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config_secrets".
+ */
+export interface ConfigSecret {
   id: string;
   /**
-   * Grade identifier (e.g., "ח" or "8")
+   * Configuration key (snake_case, immutable after creation)
    */
-  gradeLabel: string;
+  key: string;
   /**
-   * Display title (e.g., "Grade 8 Math Course")
+   * Tenant this secret belongs to
+   */
+  tenant: string | Tenant;
+  /**
+   * Optional title/description for this secret
+   */
+  title?: string | null;
+  /**
+   * Secret value (write-only after save)
+   */
+  value: string;
+  /**
+   * Enable or disable this secret
+   */
+  enabled: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Tenant-scoped configuration values stored as JSON. Organized by feature domain (chat, pdf_conversion, global).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config_values".
+ */
+export interface ConfigValue {
+  id: string;
+  /**
+   * Feature domain for this configuration
+   */
+  domain: 'chat' | 'pdf_conversion' | 'global';
+  /**
+   * Tenant this configuration belongs to
+   */
+  tenant: string | Tenant;
+  /**
+   * Configuration values as JSON object
+   */
+  config:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Optional description of this configuration
+   */
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Append-only audit log for config secret mutations. Secrets never stored in plaintext.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config_audit_logs".
+ */
+export interface ConfigAuditLog {
+  id: string;
+  /**
+   * Configuration key that was modified
+   */
+  key: string;
+  /**
+   * Tenant of the mutated config entry
+   */
+  tenant: string | Tenant;
+  /**
+   * Action performed
+   */
+  action: 'created' | 'updated' | 'enabled' | 'disabled';
+  /**
+   * Admin user who performed the action
+   */
+  actor: string | User;
+  /**
+   * Optional reason for the change
+   */
+  reason?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Context-scoped chat conversations with AI tutor
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversations".
+ */
+export interface Conversation {
+  id: string;
+  /**
+   * Student who owns this conversation
+   */
+  user: string | User;
+  /**
+   * Polymorphic context reference (Course/Chapter/Lesson/Exercise/Tenant)
+   */
+  contextRef:
+    | {
+        relationTo: 'courses';
+        value: string | Course;
+      }
+    | {
+        relationTo: 'chapters';
+        value: string | Chapter;
+      }
+    | {
+        relationTo: 'lessons';
+        value: string | Lesson;
+      }
+    | {
+        relationTo: 'exercises';
+        value: string | Exercise;
+      }
+    | {
+        relationTo: 'tenants';
+        value: string | Tenant;
+      };
+  /**
+   * Derived key for indexing (e.g., "exercises:abc123")
+   */
+  contextKey?: string | null;
+  /**
+   * Legacy field - use contextRef instead. Will be removed in future version.
+   */
+  exercise?: (string | null) | Exercise;
+  /**
+   * Conversation message history
+   */
+  messages?:
+    | {
+        role: 'user' | 'assistant';
+        /**
+         * Message content
+         */
+        content: string;
+        timestamp: string;
+        /**
+         * Media attachments for this message (max 5)
+         */
+        media?:
+          | {
+              mediaId: string | Media;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Compressed history of older messages
+   */
+  summary?: string | null;
+  /**
+   * When summary was last updated
+   */
+  summaryUpdatedAt?: string | null;
+  /**
+   * Summary includes messages up to this timestamp
+   */
+  summaryUntilTimestamp?: string | null;
+  /**
+   * Version of prompt composition policy
+   */
+  contextPolicyVersion: string;
+  /**
+   * Timestamp of last message (auto-updated)
+   */
+  lastMessageAt: string;
+  /**
+   * When this conversation was archived. Missing = active.
+   */
+  archivedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "chapters".
+ */
+export interface Chapter {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The course this chapter belongs to
+   */
+  course: string | Course;
+  /**
+   * Chapter identifier (e.g., "1", "A", "א")
+   */
+  chapterLabel?: string | null;
+  /**
+   * Chapter title
    */
   title: string;
   /**
-   * Detailed description of the grade course
+   * Detailed description of the chapter
    */
   description?: string | null;
   /**
-   * Sort order for UI display
+   * Upload chapter-related media files (images, videos, documents, etc.)
+   */
+  mediaFiles?: (string | Media)[] | null;
+  /**
+   * Sort order within the course
    */
   order: number;
   /**
-   * Publication status of the grade
+   * Publication status of the chapter
    */
   status: 'draft' | 'published' | 'archived';
   /**
-   * Whether this grade is currently active
+   * Whether this chapter is currently active
    */
   isActive: boolean;
+  /**
+   * URL-friendly identifier (auto-generated from title if empty)
+   */
+  slug?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lessons".
+ */
+export interface Lesson {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The chapter this lesson belongs to
+   */
+  chapter: string | Chapter;
+  /**
+   * The type of lesson: Learning content, Practice exercises, or Exam
+   */
+  type: 'learning' | 'practice' | 'exam';
+  /**
+   * Lesson title
+   */
+  title: string;
+  /**
+   * Detailed description of the lesson
+   */
+  description?: string | null;
+  /**
+   * Sort order within the course
+   */
+  order: number;
+  /**
+   * Publication status of the lesson
+   */
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Whether this lesson is currently active
+   */
+  isActive: boolean;
+  /**
+   * Upload lesson content files (PDFs, videos, images, etc.)
+   */
+  contentFiles?: (string | Media)[] | null;
+  /**
+   * AI context text for this lesson. Injected into chat prompts at runtime. NOT indexed or searchable.
+   */
+  lessonContextText?: string | null;
+  /**
+   * AI system prompt for this lesson (uses default if not set)
+   */
+  prompt?: (string | null) | Prompt;
+  /**
+   * URL-friendly identifier (auto-generated from title if empty)
+   */
+  slug?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exercises".
+ */
+export interface Exercise {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Exercise title (for admin reference)
+   */
+  title: string;
+  /**
+   * Order of exercise within the lesson (lower numbers appear first)
+   */
+  order: number;
+  /**
+   * The lesson this exercise belongs to
+   */
+  lesson: string | Lesson;
+  /**
+   * Ordered blocks stream. Use question_* blocks to add questions, and rich_text blocks for instructions/notes between questions.
+   */
+  content:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  origin: 'manual' | 'conversion' | 'import';
+  /**
+   * Original PDF media for conversion exercises
+   */
+  sourceDoc?: (string | null) | Media;
+  /**
+   * Payload job ID that created this exercise
+   */
+  conversionJobId?: string | null;
+  /**
+   * Starting page in source PDF
+   */
+  sourcePageStart?: number | null;
+  /**
+   * Ending page in source PDF
+   */
+  sourcePageEnd?: number | null;
+  /**
+   * Order within the segment (1-indexed)
+   */
+  sourceOrderInSegment?: number | null;
+  /**
+   * SHA256 hash for deduplication
+   */
+  contentHash?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Long-term memory items for AI chat context
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "memory_items".
+ */
+export interface MemoryItem {
+  id: string;
+  /**
+   * User ID for filtering (scalar field, NOT a relationship)
+   */
+  userId: string;
+  /**
+   * Optional conversation scope (scalar field, NOT a relationship)
+   */
+  conversationId?: string | null;
+  /**
+   * Context key (e.g., lessons:abc123) for scoped retrieval
+   */
+  contextKey?: string | null;
+  /**
+   * Context level where memory was extracted (analytics/debug only)
+   */
+  contextLevel?: ('exercise' | 'lesson' | 'chapter' | 'course' | 'global') | null;
+  /**
+   * Category of memory item
+   */
+  type: 'preference' | 'decision' | 'fact' | 'open_loop' | 'profile' | 'constraint' | 'other';
+  /**
+   * The memory content (max 2000 chars)
+   */
+  text: string;
+  /**
+   * Vector embedding (1536 dimensions) - auto-generated
+   */
+  embedding:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Importance scale 1-5 (higher = more important)
+   */
+  importance: number;
+  /**
+   * Status (use deprecated instead of deleting)
+   */
+  status: 'active' | 'deprecated';
+  /**
+   * Metadata about where this memory came from
+   */
+  source: {
+    /**
+     * Conversation where this memory was extracted
+     */
+    sourceConversationId?: string | null;
+    /**
+     * Timestamp of source message
+     */
+    sourceMessageTimestamp: string;
+    /**
+     * Who said the message this memory came from
+     */
+    sourceMessageRole: 'user' | 'assistant';
+  };
+  /**
+   * Convenience field for admin UI - DO NOT use for filtering
+   */
+  user?: (string | null) | User;
+  /**
+   * Convenience field for admin UI - DO NOT use for filtering
+   */
+  conversation?: (string | null) | Conversation;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exercise-assets".
+ */
+export interface ExerciseAsset {
+  id: string;
+  /**
+   * Alt text for accessibility
+   */
+  alt: string;
+  /**
+   * Optional caption for the figure
+   */
+  caption?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-progress".
+ */
+export interface UserProgress {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The user this progress belongs to
+   */
+  user: string | User;
+  /**
+   * Grade level (e.g., "8", "ח")
+   */
+  gradeLevel?: string | null;
+  progressRecords?:
+    | {
+        recordType: 'chapter' | 'lesson' | 'exercise';
+        /**
+         * ID of the chapter, lesson, or exercise
+         */
+        recordId: string;
+        /**
+         * Completion percentage (0-100)
+         */
+        completionPercentage?: number | null;
+        status?: ('not_started' | 'in_progress' | 'completed') | null;
+        /**
+         * Score for exercises (0-100)
+         */
+        score?: number | null;
+        /**
+         * Last time this record was accessed
+         */
+        lastAccessedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: string;
+  title: string;
+  heroImage?: (string | null) | Media;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  relatedPosts?: (string | Post)[] | null;
+  categories?: (string | Category)[] | null;
+  meta?: {
+    title?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (string | null) | Media;
+    description?: string | null;
+  };
+  publishedAt?: string | null;
+  authors?: (string | User)[] | null;
+  populatedAuthors?:
+    | {
+        id?: string | null;
+        name?: string | null;
+      }[]
+    | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -823,9 +1487,9 @@ export interface Grade {
 export interface PricingPlan {
   id: string;
   /**
-   * The grade this pricing plan applies to
+   * The lesson this pricing plan applies to
    */
-  grade: string | Grade;
+  lesson: string | Lesson;
   /**
    * Payment provider for this plan
    */
@@ -854,8 +1518,63 @@ export interface PricingPlan {
    * Whether this pricing plan is currently active
    */
   isActive?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-audit-logs".
+ */
+export interface McpAuditLog {
+  id: string;
+  /**
+   * Admin user who initiated the tool call
+   */
+  adminUserId: string | User;
+  /**
+   * Tenant scope for the tool call
+   */
+  tenantId: string | Tenant;
+  /**
+   * MCP tool name that was executed
+   */
+  toolName: string;
+  /**
+   * Sanitized arguments passed to the tool
+   */
+  args?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Number of records returned by the tool
+   */
+  resultCount?: number | null;
+  /**
+   * Whether the tool call succeeded
+   */
+  success: boolean;
+  /**
+   * When the tool call occurred
+   */
+  timestamp: string;
+  /**
+   * Request correlation ID
+   */
+  requestId: string;
+  /**
+   * Tool execution duration in milliseconds
+   */
+  durationMs?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -869,15 +1588,10 @@ export interface Redirect {
   from: string;
   to?: {
     type?: ('reference' | 'custom') | null;
-    reference?:
-      | ({
-          relationTo: 'pages';
-          value: string | Page;
-        } | null)
-      | ({
-          relationTo: 'posts';
-          value: string | Post;
-        } | null);
+    reference?: {
+      relationTo: 'pages';
+      value: string | Page;
+    } | null;
     url?: string | null;
   };
   updatedAt: string;
@@ -910,15 +1624,19 @@ export interface Search {
   id: string;
   title?: string | null;
   priority?: number | null;
-  doc: {
-    relationTo: 'posts';
-    value: string | Post;
-  };
+  doc:
+    | {
+        relationTo: 'courses';
+        value: string | Course;
+      }
+    | {
+        relationTo: 'posts';
+        value: string | Post;
+      };
   slug?: string | null;
   meta?: {
     title?: string | null;
     description?: string | null;
-    image?: (string | null) | Media;
   };
   categories?:
     | {
@@ -930,6 +1648,62 @@ export interface Search {
     | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * API keys control which collections, resources, tools, and prompts MCP clients can access
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-mcp-api-keys".
+ */
+export interface PayloadMcpApiKey {
+  id: string;
+  /**
+   * The user that the API key is associated with.
+   */
+  user: string | User;
+  /**
+   * A useful label for the API key.
+   */
+  label?: string | null;
+  /**
+   * The purpose of the API key.
+   */
+  description?: string | null;
+  courses?: {
+    /**
+     * Allow clients to find courses.
+     */
+    find?: boolean | null;
+  };
+  chapters?: {
+    /**
+     * Allow clients to find chapters.
+     */
+    find?: boolean | null;
+  };
+  lessons?: {
+    /**
+     * Allow clients to find lessons.
+     */
+    find?: boolean | null;
+  };
+  exercises?: {
+    /**
+     * Allow clients to find exercises.
+     */
+    find?: boolean | null;
+  };
+  media?: {
+    /**
+     * Allow clients to find media.
+     */
+    find?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  enableAPIKey?: boolean | null;
+  apiKey?: string | null;
+  apiKeyIndex?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1000,7 +1774,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'schedulePublish';
+        taskSlug: 'inline' | 'pdf_to_exercises' | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -1033,7 +1807,7 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'schedulePublish') | null;
+  taskSlug?: ('inline' | 'pdf_to_exercises' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -1052,28 +1826,80 @@ export interface PayloadLockedDocument {
         value: string | Page;
       } | null)
     | ({
-        relationTo: 'posts';
-        value: string | Post;
+        relationTo: 'categories';
+        value: string | Category;
+      } | null)
+    | ({
+        relationTo: 'config_secrets';
+        value: string | ConfigSecret;
+      } | null)
+    | ({
+        relationTo: 'config_values';
+        value: string | ConfigValue;
+      } | null)
+    | ({
+        relationTo: 'config_audit_logs';
+        value: string | ConfigAuditLog;
+      } | null)
+    | ({
+        relationTo: 'conversations';
+        value: string | Conversation;
+      } | null)
+    | ({
+        relationTo: 'memory_items';
+        value: string | MemoryItem;
+      } | null)
+    | ({
+        relationTo: 'tenants';
+        value: string | Tenant;
+      } | null)
+    | ({
+        relationTo: 'courses';
+        value: string | Course;
+      } | null)
+    | ({
+        relationTo: 'chapters';
+        value: string | Chapter;
+      } | null)
+    | ({
+        relationTo: 'lessons';
+        value: string | Lesson;
+      } | null)
+    | ({
+        relationTo: 'exercises';
+        value: string | Exercise;
+      } | null)
+    | ({
+        relationTo: 'prompts';
+        value: string | Prompt;
+      } | null)
+    | ({
+        relationTo: 'exercise-assets';
+        value: string | ExerciseAsset;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: string | User;
+      } | null)
+    | ({
+        relationTo: 'user-progress';
+        value: string | UserProgress;
       } | null)
     | ({
         relationTo: 'media';
         value: string | Media;
       } | null)
     | ({
-        relationTo: 'categories';
-        value: string | Category;
-      } | null)
-    | ({
-        relationTo: 'grades';
-        value: string | Grade;
+        relationTo: 'posts';
+        value: string | Post;
       } | null)
     | ({
         relationTo: 'pricing-plans';
         value: string | PricingPlan;
       } | null)
     | ({
-        relationTo: 'users';
-        value: string | User;
+        relationTo: 'mcp-audit-logs';
+        value: string | McpAuditLog;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1092,14 +1918,23 @@ export interface PayloadLockedDocument {
         value: string | Search;
       } | null)
     | ({
+        relationTo: 'payload-mcp-api-keys';
+        value: string | PayloadMcpApiKey;
+      } | null)
+    | ({
         relationTo: 'payload-folders';
         value: string | FolderInterface;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: string | User;
+      }
+    | {
+        relationTo: 'payload-mcp-api-keys';
+        value: string | PayloadMcpApiKey;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -1109,10 +1944,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: string;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: string | User;
+      }
+    | {
+        relationTo: 'payload-mcp-api-keys';
+        value: string | PayloadMcpApiKey;
+      };
   key?: string | null;
   value?:
     | {
@@ -1163,27 +2003,26 @@ export interface PagesSelect<T extends boolean = true> {
                   };
               id?: T;
             };
-        media?: T;
       };
   layout?:
     | T
     | {
         cta?: T | CallToActionBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
-        mediaBlock?: T | MediaBlockSelect<T>;
         archive?: T | ArchiveBlockSelect<T>;
         formBlock?: T | FormBlockSelect<T>;
+        html?: T | HtmlBlockSelect<T>;
       };
   meta?:
     | T
     | {
         title?: T;
-        image?: T;
         description?: T;
       };
   publishedAt?: T;
   generateSlug?: T;
   slug?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1240,15 +2079,6 @@ export interface ContentBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MediaBlock_select".
- */
-export interface MediaBlockSelect<T extends boolean = true> {
-  media?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "ArchiveBlock_select".
  */
 export interface ArchiveBlockSelect<T extends boolean = true> {
@@ -1271,6 +2101,350 @@ export interface FormBlockSelect<T extends boolean = true> {
   introContent?: T;
   id?: T;
   blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HtmlBlock_select".
+ */
+export interface HtmlBlockSelect<T extends boolean = true> {
+  html?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
+  createdBy?: T;
+  parent?: T;
+  breadcrumbs?:
+    | T
+    | {
+        doc?: T;
+        url?: T;
+        label?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config_secrets_select".
+ */
+export interface ConfigSecretsSelect<T extends boolean = true> {
+  key?: T;
+  tenant?: T;
+  title?: T;
+  value?: T;
+  enabled?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config_values_select".
+ */
+export interface ConfigValuesSelect<T extends boolean = true> {
+  domain?: T;
+  tenant?: T;
+  config?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config_audit_logs_select".
+ */
+export interface ConfigAuditLogsSelect<T extends boolean = true> {
+  key?: T;
+  tenant?: T;
+  action?: T;
+  actor?: T;
+  reason?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversations_select".
+ */
+export interface ConversationsSelect<T extends boolean = true> {
+  user?: T;
+  contextRef?: T;
+  contextKey?: T;
+  exercise?: T;
+  messages?:
+    | T
+    | {
+        role?: T;
+        content?: T;
+        timestamp?: T;
+        media?:
+          | T
+          | {
+              mediaId?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  summary?: T;
+  summaryUpdatedAt?: T;
+  summaryUntilTimestamp?: T;
+  contextPolicyVersion?: T;
+  lastMessageAt?: T;
+  archivedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "memory_items_select".
+ */
+export interface MemoryItemsSelect<T extends boolean = true> {
+  userId?: T;
+  conversationId?: T;
+  contextKey?: T;
+  contextLevel?: T;
+  type?: T;
+  text?: T;
+  embedding?: T;
+  importance?: T;
+  status?: T;
+  source?:
+    | T
+    | {
+        sourceConversationId?: T;
+        sourceMessageTimestamp?: T;
+        sourceMessageRole?: T;
+      };
+  user?: T;
+  conversation?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants_select".
+ */
+export interface TenantsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses_select".
+ */
+export interface CoursesSelect<T extends boolean = true> {
+  tenant?: T;
+  courseLabel?: T;
+  title?: T;
+  description?: T;
+  mediaFiles?: T;
+  order?: T;
+  status?: T;
+  isActive?: T;
+  categories?: T;
+  prompt?: T;
+  courseContextText?: T;
+  slug?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+      };
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "chapters_select".
+ */
+export interface ChaptersSelect<T extends boolean = true> {
+  tenant?: T;
+  course?: T;
+  chapterLabel?: T;
+  title?: T;
+  description?: T;
+  mediaFiles?: T;
+  order?: T;
+  status?: T;
+  isActive?: T;
+  slug?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lessons_select".
+ */
+export interface LessonsSelect<T extends boolean = true> {
+  tenant?: T;
+  chapter?: T;
+  type?: T;
+  title?: T;
+  description?: T;
+  order?: T;
+  status?: T;
+  isActive?: T;
+  contentFiles?: T;
+  lessonContextText?: T;
+  prompt?: T;
+  slug?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exercises_select".
+ */
+export interface ExercisesSelect<T extends boolean = true> {
+  tenant?: T;
+  title?: T;
+  order?: T;
+  lesson?: T;
+  content?: T;
+  createdBy?: T;
+  origin?: T;
+  sourceDoc?: T;
+  conversionJobId?: T;
+  sourcePageStart?: T;
+  sourcePageEnd?: T;
+  sourceOrderInSegment?: T;
+  contentHash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prompts_select".
+ */
+export interface PromptsSelect<T extends boolean = true> {
+  title?: T;
+  key?: T;
+  type?: T;
+  template?: T;
+  status?: T;
+  isDefaultForAgentChat?: T;
+  tenant?: T;
+  usage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exercise-assets_select".
+ */
+export interface ExerciseAssetsSelect<T extends boolean = true> {
+  alt?: T;
+  caption?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  role?: T;
+  googleSub?: T;
+  verifiedEmail?: T;
+  registrationMethod?: T;
+  registeredAt?: T;
+  googleProfile?:
+    | T
+    | {
+        name?: T;
+      };
+  oauthLoginSecretEnc?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-progress_select".
+ */
+export interface UserProgressSelect<T extends boolean = true> {
+  tenant?: T;
+  user?: T;
+  gradeLevel?: T;
+  progressRecords?:
+    | T
+    | {
+        recordType?: T;
+        recordId?: T;
+        completionPercentage?: T;
+        status?: T;
+        score?: T;
+        lastAccessedAt?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media_select".
+ */
+export interface MediaSelect<T extends boolean = true> {
+  tenant?: T;
+  type?: T;
+  externalUrl?: T;
+  alt?: T;
+  caption?: T;
+  createdBy?: T;
+  retentionPolicy?: T;
+  expiresAt?: T;
+  sizes?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  folder?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1299,144 +2473,17 @@ export interface PostsSelect<T extends boolean = true> {
       };
   generateSlug?: T;
   slug?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media_select".
- */
-export interface MediaSelect<T extends boolean = true> {
-  alt?: T;
-  caption?: T;
-  folder?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
-  sizes?:
-    | T
-    | {
-        thumbnail?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        square?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        small?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        medium?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        large?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        xlarge?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        og?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-      };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories_select".
- */
-export interface CategoriesSelect<T extends boolean = true> {
-  title?: T;
-  generateSlug?: T;
-  slug?: T;
-  parent?: T;
-  breadcrumbs?:
-    | T
-    | {
-        doc?: T;
-        url?: T;
-        label?: T;
-        id?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "grades_select".
- */
-export interface GradesSelect<T extends boolean = true> {
-  gradeLabel?: T;
-  title?: T;
-  description?: T;
-  order?: T;
-  status?: T;
-  isActive?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pricing-plans_select".
  */
 export interface PricingPlansSelect<T extends boolean = true> {
-  grade?: T;
+  lesson?: T;
   provider?: T;
   providerPlanId?: T;
   billingType?: T;
@@ -1444,31 +2491,24 @@ export interface PricingPlansSelect<T extends boolean = true> {
   price?: T;
   currency?: T;
   isActive?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
+ * via the `definition` "mcp-audit-logs_select".
  */
-export interface UsersSelect<T extends boolean = true> {
-  name?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
-    | T
-    | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
+export interface McpAuditLogsSelect<T extends boolean = true> {
+  adminUserId?: T;
+  tenantId?: T;
+  toolName?: T;
+  args?: T;
+  resultCount?: T;
+  success?: T;
+  timestamp?: T;
+  requestId?: T;
+  durationMs?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1649,7 +2689,6 @@ export interface SearchSelect<T extends boolean = true> {
     | {
         title?: T;
         description?: T;
-        image?: T;
       };
   categories?:
     | T
@@ -1661,6 +2700,45 @@ export interface SearchSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-mcp-api-keys_select".
+ */
+export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
+  user?: T;
+  label?: T;
+  description?: T;
+  courses?:
+    | T
+    | {
+        find?: T;
+      };
+  chapters?:
+    | T
+    | {
+        find?: T;
+      };
+  lessons?:
+    | T
+    | {
+        find?: T;
+      };
+  exercises?:
+    | T
+    | {
+        find?: T;
+      };
+  media?:
+    | T
+    | {
+        find?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  enableAPIKey?: T;
+  apiKey?: T;
+  apiKeyIndex?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1756,15 +2834,10 @@ export interface Header {
         link: {
           type?: ('reference' | 'custom') | null;
           newTab?: boolean | null;
-          reference?:
-            | ({
-                relationTo: 'pages';
-                value: string | Page;
-              } | null)
-            | ({
-                relationTo: 'posts';
-                value: string | Post;
-              } | null);
+          reference?: {
+            relationTo: 'pages';
+            value: string | Page;
+          } | null;
           url?: string | null;
           label: string;
         };
@@ -1785,15 +2858,10 @@ export interface Footer {
         link: {
           type?: ('reference' | 'custom') | null;
           newTab?: boolean | null;
-          reference?:
-            | ({
-                relationTo: 'pages';
-                value: string | Page;
-              } | null)
-            | ({
-                relationTo: 'posts';
-                value: string | Post;
-              } | null);
+          reference?: {
+            relationTo: 'pages';
+            value: string | Page;
+          } | null;
           url?: string | null;
           label: string;
         };
@@ -1848,6 +2916,14 @@ export interface FooterSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskPdf_to_exercises".
+ */
+export interface TaskPdfToExercises {
+  input?: unknown;
+  output?: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1906,6 +2982,16 @@ export interface CodeBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'code';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MediaBlock".
+ */
+export interface MediaBlock {
+  media: string | Media;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'mediaBlock';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
