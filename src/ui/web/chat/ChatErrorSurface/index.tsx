@@ -2,7 +2,7 @@
 
 import { cn } from '@/infra/utils/ui'
 import { X, AlertCircle } from 'lucide-react'
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from '@/ui/web/providers/I18n'
 
@@ -39,19 +39,19 @@ export function ChatErrorSurface({ type, message, onDismiss, className }: ChatEr
         {/* Auth Error CTA */}
         {type === 'auth' && (
           <div className="flex items-center gap-2 mt-2 text-sm">
-            <Link
+            <SystemLink
               href={loginUrl}
               className="font-semibold underline hover:no-underline transition-all"
             >
               {tCourses('chatAuthRequiredLogin')}
-            </Link>
+            </SystemLink>
             <span className="text-destructive/60">or</span>
-            <Link
+            <SystemLink
               href={signupUrl}
               className="font-semibold underline hover:no-underline transition-all"
             >
               {tCourses('chatAuthRequiredCTA')}
-            </Link>
+            </SystemLink>
           </div>
         )}
       </div>

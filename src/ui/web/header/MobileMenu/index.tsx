@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react'
 import { X, Menu } from 'lucide-react'
 import { CMSLink } from '@/ui/web/Link'
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { SearchIcon } from 'lucide-react'
 import type { Header as HeaderType, User } from '@/payload-types'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
@@ -117,14 +117,14 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           )}
 
           <div className="px-6 py-4 border-b border-border">
-            <Link
+            <SystemLink
               href="/search"
               onClick={onClose}
               className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted transition-colors"
             >
               <SearchIcon className="w-5 h-5 text-primary" />
               <span className="text-base">{tMenu('search')}</span>
-            </Link>
+            </SystemLink>
           </div>
 
           <div className="px-6 py-4">
