@@ -17,7 +17,7 @@ interface SystemLinkProps extends LinkProps {
 
 /**
  * Link component that registers route loading at trigger time
- * Shows local loading indication (opacity + cursor) when clicked
+ * Shows local loading indication (reduced opacity) when clicked
  *
  * Use this for all navigation links to provide consistent loading feedback
  */
@@ -81,7 +81,6 @@ export const SystemLink = forwardRef<HTMLAnchorElement, SystemLinkProps>(functio
         isLoading && 'opacity-60 pointer-events-none',
         'transition-opacity duration-150',
       )}
-      style={isLoading ? { cursor: 'progress' } : undefined}
       aria-disabled={isLoading}
       {...props}
     >

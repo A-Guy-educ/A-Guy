@@ -71,7 +71,7 @@ Navigation links that show local loading indication when clicked:
 
 provides immediate visual feedback on the clicked element
 
-shows reduced opacity (60%) and loading cursor when navigating
+shows reduced opacity (60%) when navigating
 
 prevents pointer events during navigation (no double-clicks)
 

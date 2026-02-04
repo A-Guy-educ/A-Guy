@@ -34,7 +34,6 @@ export function GoogleLoginButton({
         isNavigating && 'opacity-60 pointer-events-none',
         'transition-opacity duration-150',
       )}
-      style={isNavigating ? { cursor: 'progress' } : undefined}
       onClick={handleGoogleLogin}
     >
       <svg
