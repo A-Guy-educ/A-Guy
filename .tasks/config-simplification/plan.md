@@ -12,27 +12,27 @@
 
 ## 2. Requirements → Plan Map
 
-| Requirement                  | Stage    | Files                                | Tests                        |
-| ---------------------------- | -------- | ------------------------------------ | ---------------------------- |
-| CV-1 Collection creation     | 1.1      | ConfigValues.ts                      | config-values.int.spec.ts    |
-| CV-2 Domain enum             | 1.1      | config-constants.ts, ConfigValues.ts | config-values.int.spec.ts    |
-| CV-3 JSON storage            | 1.1      | ConfigValues.ts                      | config-values.int.spec.ts    |
-| CV-4 Partial config          | 1.2      | runtime-config.ts                    | config-values.int.spec.ts    |
-| CV-5 Domain retrieval        | 1.2      | runtime-config.ts                    | config-values.int.spec.ts    |
-| CV-6 Tenant scoping          | 1.1      | ConfigValues.ts, beforeChange-hook   | config-values.int.spec.ts    |
-| CV-7 Admin UI editing        | 1.1      | ConfigValues.ts admin config         | Manual verification          |
-| CV-8 Secret detection        | 1.3      | beforeChange-hook.ts                 | config-values.int.spec.ts    |
-| CV-9 Missing domain fallback | 1.2      | runtime-config.ts                    | config-values.int.spec.ts    |
-| CS-1 Rename collection       | 2.1      | ConfigSecrets.ts                     | config-secrets.int.spec.ts   |
-| CS-2 Remove kind field       | 2.1      | ConfigSecrets.ts, hooks              | config-secrets.int.spec.ts   |
-| CS-3 Always encrypt          | 2.1      | beforeChange-hook.ts                 | config-secrets.int.spec.ts   |
-| CS-4 Write-only UX           | 2.1      | afterRead-hook.ts                    | config-secrets.int.spec.ts   |
-| CS-5 Audit logging           | 2.1      | afterChange-hook.ts                  | config-secrets.int.spec.ts   |
-| CS-6 Update loader           | 2.2      | runtime-config.ts                    | runtime-config.int.spec.ts   |
-| CS-7 Migration               | 2.3      | migrate-config.ts                    | config-migration.int.spec.ts |
-| CC-1 Tenant isolation        | 1.1, 2.1 | Both collections                     | Both test files              |
-| CC-2 No runtime breaks       | 2.2      | runtime-config.ts                    | runtime-config.int.spec.ts   |
-| CC-3 Error messages          | 1.2, 2.2 | errors.ts                            | Both test files              |
+| Requirement | Stage | Files | Tests |
+|-------------|-------|-------|-------|
+| CV-1 Collection creation | 1.1 | ConfigValues.ts | config-values.int.spec.ts |
+| CV-2 Domain enum | 1.1 | config-constants.ts, ConfigValues.ts | config-values.int.spec.ts |
+| CV-3 JSON storage | 1.1 | ConfigValues.ts | config-values.int.spec.ts |
+| CV-4 Partial config | 1.2 | runtime-config.ts | config-values.int.spec.ts |
+| CV-5 Domain retrieval | 1.2 | runtime-config.ts | config-values.int.spec.ts |
+| CV-6 Tenant scoping | 1.1 | ConfigValues.ts, beforeChange-hook | config-values.int.spec.ts |
+| CV-7 Admin UI editing | 1.1 | ConfigValues.ts admin config | Manual verification |
+| CV-8 Secret detection | 1.3 | beforeChange-hook.ts | config-values.int.spec.ts |
+| CV-9 Missing domain fallback | 1.2 | runtime-config.ts | config-values.int.spec.ts |
+| CS-1 Rename collection | 2.1 | ConfigSecrets.ts | config-secrets.int.spec.ts |
+| CS-2 Remove kind field | 2.1 | ConfigSecrets.ts, hooks | config-secrets.int.spec.ts |
+| CS-3 Always encrypt | 2.1 | beforeChange-hook.ts | config-secrets.int.spec.ts |
+| CS-4 Write-only UX | 2.1 | afterRead-hook.ts | config-secrets.int.spec.ts |
+| CS-5 Audit logging | 2.1 | afterChange-hook.ts | config-secrets.int.spec.ts |
+| CS-6 Update loader | 2.2 | runtime-config.ts | runtime-config.int.spec.ts |
+| CS-7 Migration | 2.3 | migrate-config.ts | config-migration.int.spec.ts |
+| CC-1 Tenant isolation | 1.1, 2.1 | Both collections | Both test files |
+| CC-2 No runtime breaks | 2.2 | runtime-config.ts | runtime-config.int.spec.ts |
+| CC-3 Error messages | 1.2, 2.2 | errors.ts | Both test files |
 
 ---
 
@@ -49,7 +49,6 @@
 **Scope**: Create ConfigValues collection with domain-based JSON storage
 
 **Deliverables**:
-
 - `src/server/payload/collections/ConfigValues.ts`
 - `src/infra/config/config-constants.ts` (add ConfigDomain enum)
 - `src/server/payload/hooks/configValues/beforeChange-hook.ts`
@@ -125,20 +124,17 @@ export const CONFIG_DOMAINS = Object.values(ConfigDomain)
 ```
 
 **Verification**:
-
 - [ ] Collection appears in Admin UI under System group
 - [ ] Domain select shows 3 options
 - [ ] JSON editor works for config field
 - [ ] Types generated successfully
 
 **Exit Criteria**:
-
 - `pnpm generate:types` succeeds
 - `pnpm typecheck` passes
 - Collection visible in Admin UI
 
 **Constraints Check**: `compliant`
-
 - Uses Payload collection pattern ✓
 - No direct DB access ✓
 
@@ -151,7 +147,6 @@ export const CONFIG_DOMAINS = Object.values(ConfigDomain)
 **Scope**: Add functions to load and access domain-based config values
 
 **Deliverables**:
-
 - `src/infra/config/runtime/config-values.ts` (new)
 - Update `src/infra/config/runtime/index.ts` exports
 - Add `ConfigValueNotFoundError` to errors.ts
@@ -167,18 +162,18 @@ interface ConfigValuesCache {
 
 export async function loadConfigValues(
   payload: Payload,
-  tenantId?: string,
+  tenantId?: string
 ): Promise<LoadConfigValuesResult>
 
 export function getConfigDomain<T = Record<string, unknown>>(
   domain: ConfigDomain,
-  options?: { tenantId?: string },
+  options?: { tenantId?: string }
 ): T
 
 export function getConfigValue<T>(
   domain: ConfigDomain,
   key: string,
-  options?: { tenantId?: string; defaultValue?: T },
+  options?: { tenantId?: string; defaultValue?: T }
 ): T
 ```
 
@@ -210,13 +205,11 @@ describe('ConfigValues', () => {
 ```
 
 **Verification**:
-
 - [ ] All 7 tests pass
 - [ ] `getConfigDomain()` returns correct values
 - [ ] Missing domains return `{}`
 
 **Exit Criteria**:
-
 - Tests green: 7/7
 - `pnpm typecheck` passes
 
@@ -231,7 +224,6 @@ describe('ConfigValues', () => {
 **Scope**: Warn/block if config values contain secret-like keys
 
 **Deliverables**:
-
 - Update `src/server/payload/hooks/configValues/beforeChange-hook.ts`
 
 **Implementation Details**:
@@ -260,12 +252,10 @@ it('should warn when config contains secret-like keys', async () => {})
 ```
 
 **Verification**:
-
 - [ ] Warning logged for secret-like keys
 - [ ] Config still saves (soft validation)
 
 **Exit Criteria**:
-
 - Test passes
 - Warning visible in logs
 
@@ -286,7 +276,6 @@ it('should warn when config contains secret-like keys', async () => {})
 **Scope**: Transform config_entries → config_secrets (secrets only)
 
 **Deliverables**:
-
 - Rename `src/server/payload/collections/ConfigEntries.ts` → `ConfigSecrets.ts`
 - Update slug from `config_entries` to `config_secrets`
 - Remove `kind` field and related logic
@@ -298,7 +287,7 @@ it('should warn when config contains secret-like keys', async () => {})
 ```typescript
 // ConfigSecrets.ts changes
 export const ConfigSecrets: CollectionConfig = {
-  slug: 'config_secrets', // Changed from config_entries
+  slug: 'config_secrets',  // Changed from config_entries
   admin: {
     useAsTitle: 'key',
     defaultColumns: ['key', 'title', 'tenant', 'enabled', 'updatedAt'],
@@ -361,13 +350,11 @@ describe('ConfigSecrets', () => {
 ```
 
 **Verification**:
-
 - [ ] All 6 tests pass
 - [ ] No `kind` field in generated types
 - [ ] All values encrypted in DB
 
 **Exit Criteria**:
-
 - Tests green: 6/6
 - `pnpm generate:types` succeeds
 - `pnpm typecheck` passes
@@ -383,7 +370,6 @@ describe('ConfigSecrets', () => {
 **Scope**: Update runtime-config.ts to use config_secrets collection
 
 **Deliverables**:
-
 - Update `src/infra/config/runtime/runtime-config.ts`
 - Remove variables/systemParams from secrets loader
 - Integrate with config-values loader
@@ -402,7 +388,7 @@ export async function loadRuntimeConfig(
 ): Promise<LoadConfigResult> {
   // Load secrets from config_secrets
   const secretResult = await payload.find({
-    collection: 'config_secrets', // Changed from config_entries
+    collection: 'config_secrets',  // Changed from config_entries
     where: { enabled: { equals: true } },
     // ...
   })
@@ -439,13 +425,11 @@ describe('RuntimeConfig', () => {
 ```
 
 **Verification**:
-
 - [ ] All 3 tests pass
 - [ ] Existing `getSecret()` calls work
 - [ ] Config values accessible via `getConfigDomain()`
 
 **Exit Criteria**:
-
 - Tests green: 3/3
 - No runtime exceptions
 
@@ -460,7 +444,6 @@ describe('RuntimeConfig', () => {
 **Scope**: Migrate existing config_entries data to new structure
 
 **Deliverables**:
-
 - `src/scripts/migrate-config.ts`
 - Migration test
 
@@ -479,14 +462,14 @@ export async function migrateConfig(payload: Payload): Promise<MigrationResult> 
   })
 
   // Step 2: Migrate secrets (kind='secret')
-  for (const entry of existing.docs.filter((e) => e.kind === 'secret')) {
+  for (const entry of existing.docs.filter(e => e.kind === 'secret')) {
     await payload.create({
       collection: 'config_secrets',
       data: {
         key: entry.key,
         tenant: entry.tenant,
         title: entry.title,
-        value: entry.value, // Already encrypted
+        value: entry.value,  // Already encrypted
         enabled: entry.enabled,
       },
       overrideAccess: true,
@@ -497,7 +480,7 @@ export async function migrateConfig(payload: Payload): Promise<MigrationResult> 
   // Step 3: Migrate variables to config_values
   // Group by inferred domain
   const variablesByDomain = groupByDomain(
-    existing.docs.filter((e) => e.kind === 'variable' || e.kind === 'system_param'),
+    existing.docs.filter(e => e.kind === 'variable' || e.kind === 'system_param')
   )
 
   for (const [domain, entries] of variablesByDomain) {
@@ -542,13 +525,11 @@ describe('ConfigMigration', () => {
 ```
 
 **Verification**:
-
 - [ ] All 4 tests pass
 - [ ] Secrets preserved with encryption
 - [ ] Variables grouped by domain correctly
 
 **Exit Criteria**:
-
 - Tests green: 4/4
 - Migration script runs idempotently
 
@@ -569,14 +550,12 @@ describe('ConfigMigration', () => {
 **Scope**: Remove old config_entries references and deprecated getters
 
 **Deliverables**:
-
 - Remove `getVariableLegacy`, `getSecretLegacy`
 - Update all imports to use new collection names
 - Remove `ConfigKind.Variable`, `ConfigKind.SystemParam` (keep `ConfigKind.Secret` or remove entirely)
 - Update `config-constants.ts`
 
 **Exit Criteria**:
-
 - `pnpm typecheck` passes
 - No references to old patterns
 
@@ -587,13 +566,11 @@ describe('ConfigMigration', () => {
 **Scope**: Update CLAUDE.md and inline docs
 
 **Deliverables**:
-
 - Update `CLAUDE.md` config section
 - Update JSDoc in runtime-config.ts
 - Add migration notes to spec.md
 
 **Exit Criteria**:
-
 - Docs accurate
 - Examples work
 
@@ -601,19 +578,18 @@ describe('ConfigMigration', () => {
 
 ## 4. Test Plan (Staged)
 
-| Stage | Test File                    | Test Count | Red-First Focus                |
-| ----- | ---------------------------- | ---------- | ------------------------------ |
-| 1.1   | config-values.int.spec.ts    | 3          | CV-6 (tenant uniqueness)       |
-| 1.2   | config-values.int.spec.ts    | 4          | CV-9 (missing domain fallback) |
-| 1.3   | config-values.int.spec.ts    | 1          | CV-8 (secret detection)        |
-| 2.1   | config-secrets.int.spec.ts   | 6          | CS-3 (always encrypt)          |
-| 2.2   | runtime-config.int.spec.ts   | 3          | CC-2 (no runtime breaks)       |
-| 2.3   | config-migration.int.spec.ts | 4          | CS-7 (migration correctness)   |
+| Stage | Test File | Test Count | Red-First Focus |
+|-------|-----------|------------|-----------------|
+| 1.1 | config-values.int.spec.ts | 3 | CV-6 (tenant uniqueness) |
+| 1.2 | config-values.int.spec.ts | 4 | CV-9 (missing domain fallback) |
+| 1.3 | config-values.int.spec.ts | 1 | CV-8 (secret detection) |
+| 2.1 | config-secrets.int.spec.ts | 6 | CS-3 (always encrypt) |
+| 2.2 | runtime-config.int.spec.ts | 3 | CC-2 (no runtime breaks) |
+| 2.3 | config-migration.int.spec.ts | 4 | CS-7 (migration correctness) |
 
 **Total**: 21 tests
 
 **Critical Red-First Tests**:
-
 1. `CS-3`: Always encrypt — ensures no plaintext leaks
 2. `CC-2`: No runtime breaks — ensures backward compatibility
 3. `CS-7`: Migration correctness — ensures no data loss
@@ -640,12 +616,12 @@ Rollback: restore backup + revert collection changes
 
 ### Domain Inference Rules
 
-| Key Pattern                     | Inferred Domain                  |
-| ------------------------------- | -------------------------------- |
-| `pdf_conversion_*`              | `pdf_conversion`                 |
-| `chat_*`                        | `chat`                           |
+| Key Pattern | Inferred Domain |
+|-------------|-----------------|
+| `pdf_conversion_*` | `pdf_conversion` |
+| `chat_*` | `chat` |
 | `LLM_*`, `OPENAI_*`, `GEMINI_*` | `chat` (secrets stay as secrets) |
-| Others                          | `global`                         |
+| Others | `global` |
 
 ---
 
@@ -658,11 +634,11 @@ Feature flag: none (atomic deployment)
 
 ### Monitoring
 
-| Signal                     | Metric                   | Alert Threshold |
-| -------------------------- | ------------------------ | --------------- |
-| Config load failures       | Error logs               | Any error       |
-| Missing secrets at runtime | `ConfigKeyNotFoundError` | Any occurrence  |
-| Encryption failures        | Error logs               | Any error       |
+| Signal | Metric | Alert Threshold |
+|--------|--------|-----------------|
+| Config load failures | Error logs | Any error |
+| Missing secrets at runtime | `ConfigKeyNotFoundError` | Any occurrence |
+| Encryption failures | Error logs | Any error |
 
 ### Success Signals
 
@@ -696,32 +672,32 @@ Feature flag: none (atomic deployment)
 
 ### New Files
 
-| Path                                                         | Purpose                             |
-| ------------------------------------------------------------ | ----------------------------------- |
-| `src/server/payload/collections/ConfigValues.ts`             | Config values collection            |
-| `src/server/payload/collections/ConfigSecrets.ts`            | Config secrets collection (renamed) |
-| `src/server/payload/hooks/configValues/beforeChange-hook.ts` | Validation hook                     |
-| `src/infra/config/runtime/config-values.ts`                  | Config values loader                |
-| `src/scripts/migrate-config.ts`                              | Migration script                    |
-| `tests/int/config-values.int.spec.ts`                        | Config values tests                 |
-| `tests/int/config-secrets.int.spec.ts`                       | Config secrets tests                |
-| `tests/int/config-migration.int.spec.ts`                     | Migration tests                     |
+| Path | Purpose |
+|------|---------|
+| `src/server/payload/collections/ConfigValues.ts` | Config values collection |
+| `src/server/payload/collections/ConfigSecrets.ts` | Config secrets collection (renamed) |
+| `src/server/payload/hooks/configValues/beforeChange-hook.ts` | Validation hook |
+| `src/infra/config/runtime/config-values.ts` | Config values loader |
+| `src/scripts/migrate-config.ts` | Migration script |
+| `tests/int/config-values.int.spec.ts` | Config values tests |
+| `tests/int/config-secrets.int.spec.ts` | Config secrets tests |
+| `tests/int/config-migration.int.spec.ts` | Migration tests |
 
 ### Modified Files
 
-| Path                                              | Changes                             |
-| ------------------------------------------------- | ----------------------------------- |
+| Path | Changes |
+|------|---------|
 | `src/server/payload/collections/ConfigEntries.ts` | Rename → ConfigSecrets, remove kind |
-| `src/infra/config/config-constants.ts`            | Add ConfigDomain enum               |
-| `src/infra/config/runtime/runtime-config.ts`      | Use new collections                 |
-| `src/infra/config/runtime/index.ts`               | Export new functions                |
-| `src/payload.config.ts`                           | Register new collections            |
-| `CLAUDE.md`                                       | Update config documentation         |
+| `src/infra/config/config-constants.ts` | Add ConfigDomain enum |
+| `src/infra/config/runtime/runtime-config.ts` | Use new collections |
+| `src/infra/config/runtime/index.ts` | Export new functions |
+| `src/payload.config.ts` | Register new collections |
+| `CLAUDE.md` | Update config documentation |
 
 ### Deleted Files
 
-| Path                         | Reason                                       |
-| ---------------------------- | -------------------------------------------- |
+| Path | Reason |
+|------|--------|
 | (none until Stage 3 cleanup) | Migration preserves old collection initially |
 
 ---
