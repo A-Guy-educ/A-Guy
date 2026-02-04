@@ -182,6 +182,32 @@ export const Exercises: CollectionConfig = {
           type: 'text',
           admin: { description: 'SHA256 hash for deduplication' },
         },
+        // Stage 3: Idempotency fields (shadow fields - not yet enforcing uniqueness)
+        {
+          name: 'idempotencyKey',
+          type: 'text',
+          index: true, // Non-unique for now, will be unique in Stage 4
+          admin: {
+            description: 'Source-based identity key (tenant:lesson:doc:pages:ordinal:version)',
+            hidden: true, // Hidden from admin UI - technical field
+          },
+        },
+        {
+          name: 'specVersion',
+          type: 'text',
+          admin: {
+            description: 'Extraction spec version for idempotency key stability',
+            hidden: true,
+          },
+        },
+        {
+          name: 'extractionMeta',
+          type: 'json',
+          admin: {
+            description: 'Additional extraction metadata (segmentIndex, itemOrdinal)',
+            hidden: true,
+          },
+        },
       ],
     },
 

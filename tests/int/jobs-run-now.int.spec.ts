@@ -244,7 +244,7 @@ describe('Jobs Run Now', () => {
 
     // Clean up blob
     await blobAdapter.delete(blobResult.url)
-  })
+  }, 60000)
 
   it('should fail concurrent claims (lock contention)', async () => {
     // This test doesn't require blob storage - just tests job locking

@@ -78,6 +78,21 @@ export const SystemParams = {
     const raw = await getSystemParamValue('pdf_conversion_max_prompt_size_bytes', '51200')
     return parseInt(raw || '51200', 10)
   },
+
+  /**
+   * Enable idempotency-based upsert (Stage 4)
+   *
+   * When enabled, exercises are upserted by idempotencyKey (source position)
+   * instead of contentHash. This provides deterministic deduplication where
+   * re-running the same PDF produces the same exercises (Last Wins).
+   *
+   * @default true
+   * @returns Whether idempotency upsert is enabled
+   */
+  async getPdfConversionUseIdempotencyUpsert(_tenantId?: string): Promise<boolean> {
+    const raw = await getSystemParamValue('pdf_conversion_use_idempotency_upsert', 'true')
+    return raw === 'true'
+  },
 }
 
 // =========================================
@@ -94,6 +109,10 @@ export async function getPdfConversionMaxExercisesPerSegment(tenantId?: string):
 
 export async function getPdfConversionMaxPromptSizeBytes(tenantId?: string): Promise<number> {
   return SystemParams.getPdfConversionMaxPromptSizeBytes(tenantId)
+}
+
+export async function getPdfConversionUseIdempotencyUpsert(tenantId?: string): Promise<boolean> {
+  return SystemParams.getPdfConversionUseIdempotencyUpsert(tenantId)
 }
 
 /**
