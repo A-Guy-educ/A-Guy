@@ -116,8 +116,8 @@ async function migrate() {
       }
 
       // 5. Add errors array if missing
-      if (!job.errors) {
-        updates.errors = []
+      if (!job.jobErrors) {
+        updates.jobErrors = []
         needsUpdate = true
       }
 
