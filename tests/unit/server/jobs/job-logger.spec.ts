@@ -4,6 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { JobLogger } from '@/server/payload/jobs/job-logger'
 import type { JobLogEntry, JobStage } from '@/server/payload/jobs/types'
 
+interface UpdateOperation {
+  $push?: {
+    'output.logs'?: JobLogEntry
+  }
+  $set?: Record<string, unknown>
+}
+
 describe('JobLogger', () => {
   let mockCollection: Partial<Collection<Document>> & {
     updateOne: ReturnType<typeof vi.fn>
@@ -34,7 +41,7 @@ describe('JobLogger', () => {
       const update = callArgs[1]
 
       expect(filter).toEqual({ id: testJobId })
-      expect((update.$push as any)?.['output.logs']).toBeDefined()
+      expect((update as unknown as UpdateOperation)?.$push?.['output.logs']).toBeDefined()
     })
 
     it('should update currentStage and currentStageMessage', async () => {
@@ -54,17 +61,19 @@ describe('JobLogger', () => {
     })
 
     it('should include timestamp in ISO format', async () => {
-      const beforeTime = new Date().toISOString()
+      const beforeTime = Date.now()
       await logger.log('info', 'INIT', 'Test message')
-      const afterTime = new Date().toISOString()
+      const afterTime = Date.now()
 
       const callArgs = mockCollection.updateOne.mock.calls[0]
       const update = callArgs[1]
-      const logEntry = (update.$push as any)?.['output.logs']
+      const logEntry = (update as unknown as UpdateOperation)?.$push?.['output.logs']
 
-      expect(logEntry.timestamp).toBeDefined()
-      expect(logEntry.timestamp).toBeGreaterThanOrEqual(beforeTime)
-      expect(logEntry.timestamp).toBeLessThanOrEqual(afterTime)
+      expect(logEntry?.timestamp).toBeDefined()
+
+      const timestampMs = new Date(logEntry?.timestamp as string).getTime()
+      expect(timestampMs).toBeGreaterThanOrEqual(beforeTime)
+      expect(timestampMs).toBeLessThanOrEqual(afterTime)
     })
 
     it('should handle details object serialization', async () => {
@@ -74,9 +83,9 @@ describe('JobLogger', () => {
 
       const callArgs = mockCollection.updateOne.mock.calls[0]
       const update = callArgs[1]
-      const logEntry = (update.$push as any)?.['output.logs']
+      const logEntry = (update as unknown as UpdateOperation)?.$push?.['output.logs']
 
-      expect(logEntry.details).toEqual(details)
+      expect(logEntry?.details).toEqual(details)
     })
   })
 
@@ -86,9 +95,9 @@ describe('JobLogger', () => {
 
       const callArgs = mockCollection.updateOne.mock.calls[0]
       const update = callArgs[1]
-      const logEntry = (update.$push as any)?.['output.logs']
+      const logEntry = (update as unknown as UpdateOperation)?.$push?.['output.logs']
 
-      expect(logEntry.level).toBe('info')
+      expect(logEntry?.level).toBe('info')
     })
   })
 
@@ -98,9 +107,9 @@ describe('JobLogger', () => {
 
       const callArgs = mockCollection.updateOne.mock.calls[0]
       const update = callArgs[1]
-      const logEntry = (update.$push as any)?.['output.logs']
+      const logEntry = (update as unknown as UpdateOperation)?.$push?.['output.logs']
 
-      expect(logEntry.level).toBe('warn')
+      expect(logEntry?.level).toBe('warn')
     })
   })
 
@@ -110,9 +119,10 @@ describe('JobLogger', () => {
 
       const callArgs = mockCollection.updateOne.mock.calls[0]
       const update = callArgs[1]
-      const logEntry = (update.$push as any)?.['output.logs']
+      const logEntry = (update as unknown as UpdateOperation)?.$push?.['output.logs']
 
-      expect(logEntry.level).toBe('error')
+      expect(logEntry).toBeDefined()
+      expect(logEntry?.level).toBe('error')
     })
   })
 

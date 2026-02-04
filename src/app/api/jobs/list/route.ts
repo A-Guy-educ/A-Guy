@@ -1,10 +1,11 @@
 import { requireAdminOrTestSecret } from '@/server/api/auth'
 import { apiError, apiSuccess } from '@/server/api/responses'
 import { TASK_SLUGS } from '@/server/payload/jobs/constants'
-import type { JobStatus } from '@/server/payload/jobs/types'
+import type { JobDocument, JobStatus } from '@/server/payload/jobs/types'
 import { JobService } from '@/server/payload/services/job-service'
 import config from '@payload-config'
 import { NextRequest } from 'next/server'
+import type { User } from 'payload'
 import { getPayload } from 'payload'
 
 interface JobListQuery {
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest): Promise<Response> {
     // Auth check
     try {
       const { user } = await payload.auth({ headers: request.headers })
-      requireAdminOrTestSecret(user as any, authHeader)
+      requireAdminOrTestSecret(user as User | null, authHeader)
     } catch {
       return apiError('UNAUTHORIZED', 'Admin access required', 401)
     }
@@ -39,8 +40,8 @@ export async function GET(request: NextRequest): Promise<Response> {
       dateTo: searchParams.get('dateTo') || undefined,
     }
 
-    const page = parseInt(query.page, 10) || 1
-    const limit = Math.min(parseInt(query.limit, 10) || 20, 100)
+    const page = parseInt(query.page || '1', 10) || 1
+    const limit = Math.min(parseInt(query.limit || '20', 10) || 20, 100)
     const skip = (page - 1) * limit
 
     const jobService = JobService.fromPayload(payload)
@@ -108,6 +109,7 @@ export async function GET(request: NextRequest): Promise<Response> {
         .limit(limit)
         .toArray()) || []
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const jobsWithStatus = jobs.map((doc: any) => ({
       id: doc._id.toString(),
       taskSlug: doc.taskSlug,
@@ -118,7 +120,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       createdAt: doc.createdAt,
       input: doc.input,
       output: doc.jobOutput || doc.output,
-      status: jobService.computeStatus(doc as any),
+      status: jobService.computeStatus(doc as unknown as JobDocument),
     }))
 
     return apiSuccess({

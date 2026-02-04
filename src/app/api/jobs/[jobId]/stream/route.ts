@@ -1,13 +1,15 @@
 import { requireAdminOrTestSecret } from '@/server/api/auth'
 import { apiError } from '@/server/api/responses'
-import type { JobStatus } from '@/server/payload/jobs/types'
+import type { JobLogEntry, JobStatus } from '@/server/payload/jobs/types'
 import { JobService } from '@/server/payload/services/job-service'
 import config from '@payload-config'
 import { ObjectId } from 'mongodb'
 import { NextRequest } from 'next/server'
+import type { User } from 'payload'
 import { getPayload } from 'payload'
 
 // SSE configuration
+// todo: move to config values collection
 const POLL_INTERVAL_MS = 500
 const MAX_STREAM_DURATION_MS = 5 * 60 * 1000 // 5 minutes max
 const MAX_IDLE_MS = 30000 // 30 seconds idle before closing
@@ -26,7 +28,11 @@ function formatSSEEvent(event: StreamEvent): string {
   return result
 }
 
-function getJobStatus(doc: any): JobStatus {
+function getJobStatus(doc: {
+  processing?: boolean
+  hasError?: boolean
+  completedAt?: Date
+}): JobStatus {
   if (doc.processing) return 'running'
   if (doc.hasError) return 'failed'
   if (doc.completedAt) return 'completed'
@@ -47,7 +53,7 @@ export async function GET(
     // Auth check
     try {
       const { user } = await payload.auth({ headers: request.headers })
-      requireAdminOrTestSecret(user as any, authHeader)
+      requireAdminOrTestSecret(user as User | null, authHeader)
     } catch {
       return apiError('UNAUTHORIZED', 'Admin access required', 401)
     }
@@ -98,7 +104,7 @@ export async function GET(
           })
 
           // Send initial logs if any
-          const initialLogs = (job.output as any)?.logs || []
+          const initialLogs = (job.output as { logs?: JobLogEntry[] })?.logs || []
           if (initialLogs.length > 0) {
             sendEvent('logs', { logs: initialLogs, isInitial: true })
           }
@@ -114,7 +120,6 @@ export async function GET(
           }
 
           // Poll for updates
-          // eslint-disable-next-line no-constant-condition
           while (true) {
             // Check max stream duration
             if (Date.now() - startTime > MAX_STREAM_DURATION_MS) {
@@ -136,7 +141,7 @@ export async function GET(
             }
 
             const currentStatus = getJobStatus(updatedJob)
-            const logs = (updatedJob.output as any)?.logs || []
+            const logs = (updatedJob.output as { logs?: JobLogEntry[] })?.logs || []
             const newLogs = logs.slice(lastLogCount)
 
             // Send new logs
