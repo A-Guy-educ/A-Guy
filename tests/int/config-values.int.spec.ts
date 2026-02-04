@@ -88,6 +88,30 @@ describe('ConfigValues (Domain-Scoped Config)', () => {
     }
   })
 
+  /**
+   * Helper function to clean up test config entries for a specific tenant and domain
+   */
+  async function cleanupTestConfig(tenantId: string, domain: ConfigDomain): Promise<void> {
+    try {
+      const existing = await payload.find({
+        collection: 'config_values',
+        where: {
+          and: [{ domain: { equals: domain } }, { tenant: { equals: tenantId } }],
+        },
+        limit: 1,
+        depth: 0,
+      })
+      if (existing.docs.length > 0) {
+        await payload.delete({
+          collection: 'config_values',
+          id: existing.docs[0].id,
+        })
+      }
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+
   afterAll(async () => {
     // Cleanup test data with tenant filter
     try {
@@ -111,6 +135,9 @@ describe('ConfigValues (Domain-Scoped Config)', () => {
   describe('ConfigValues Collection', () => {
     // CV-1: Collection creation
     test('should create config values entry for domain', async () => {
+      // Clean up any existing config first to avoid uniqueness conflicts
+      await cleanupTestConfig(tenant1.id, ConfigDomain.Chat)
+
       const result = (await payload.create({
         collection: 'config_values',
         draft: false,
@@ -128,7 +155,7 @@ describe('ConfigValues (Domain-Scoped Config)', () => {
       })) as any
 
       expect(result.domain).toBe(ConfigDomain.Chat)
-      expect(result.tenant).toEqual({ id: tenant1.id })
+      expect(result.tenant.id).toBe(tenant1.id)
       expect(result.config).toEqual({
         enabled: true,
         maxMessages: 100,
@@ -207,6 +234,9 @@ describe('ConfigValues (Domain-Scoped Config)', () => {
 
     // CV-6: Tenant scoping
     test('should enforce tenant + domain uniqueness', async () => {
+      // Clean up first to ensure we start fresh
+      await cleanupTestConfig(tenant1.id, ConfigDomain.Chat)
+
       // Create first entry for tenant1, chat domain
       await payload.create({
         collection: 'config_values',
@@ -235,6 +265,10 @@ describe('ConfigValues (Domain-Scoped Config)', () => {
     })
 
     test('should allow same domain under different tenants', async () => {
+      // Clean up any existing configs for both tenants
+      await cleanupTestConfig(tenant1.id, ConfigDomain.Chat)
+      await cleanupTestConfig(tenant2.id, ConfigDomain.Chat)
+
       const result1 = (await payload.create({
         collection: 'config_values',
         draft: false,
@@ -258,13 +292,16 @@ describe('ConfigValues (Domain-Scoped Config)', () => {
       })) as any
 
       expect(result1.id).not.toBe(result2.id)
-      expect(result1.tenant).toBe(tenant1.id)
-      expect(result2.tenant).toBe(tenant2.id)
+      expect(result1.tenant.id).toBe(tenant1.id)
+      expect(result2.tenant.id).toBe(tenant2.id)
     })
 
     // CV-8: Secret detection
     test('should log warning when config contains secret-like keys', async () => {
       const warnSpy = vi.spyOn(payload.logger || console, 'warn').mockImplementation(() => {})
+
+      // Clean up first to avoid uniqueness conflicts
+      await cleanupTestConfig(tenant1.id, ConfigDomain.Global)
 
       await payload.create({
         collection: 'config_values',
@@ -297,6 +334,9 @@ describe('ConfigValues (Domain-Scoped Config)', () => {
   describe('Runtime Config Values Loader', () => {
     // CV-5: Domain retrieval
     test('should load and retrieve config by domain', async () => {
+      // Clean up first to avoid uniqueness conflicts
+      await cleanupTestConfig(tenant1.id, ConfigDomain.Chat)
+
       // Create test config
       await payload.create({
         collection: 'config_values',
@@ -319,7 +359,7 @@ describe('ConfigValues (Domain-Scoped Config)', () => {
       await clearConfigValuesCache()
       await loadConfigValues(payload, tenant1.id)
 
-      const chatConfig = getConfigDomain(ConfigDomain.Chat, {
+      const chatConfig = await getConfigDomain(ConfigDomain.Chat, {
         tenantId: tenant1.id,
       })
 
@@ -331,10 +371,12 @@ describe('ConfigValues (Domain-Scoped Config)', () => {
 
     // CV-9: Missing domain fallback
     test('should return empty object for missing domain', async () => {
-      const { getConfigDomain, clearConfigValuesCache } =
+      const { loadConfigValues, getConfigDomain, clearConfigValuesCache } =
         await import('@/infra/config/runtime/config-values')
 
       await clearConfigValuesCache()
+      // Load config values first to initialize the cache
+      await loadConfigValues(payload, tenant1.id)
 
       // Try to get a domain that doesn't exist
       const result = await getConfigDomain('nonexistent' as ConfigDomain, {
