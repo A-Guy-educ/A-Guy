@@ -30,10 +30,15 @@ Object.defineProperty(window, 'localStorage', {
 
 // Mock next/navigation
 const mockPush = vi.fn()
+const mockPathname = '/'
+const mockSearchParams = new URLSearchParams()
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
   }),
+  usePathname: () => mockPathname,
+  useSearchParams: () => mockSearchParams,
 }))
 
 const mockCourse: Course = {
@@ -91,8 +96,8 @@ describe('CourseCard component', () => {
     expect(storedProfile.gradeLevel).toBe('8')
     expect(storedProfile.lastVisit).toBeTruthy()
 
-    // Check navigation was called
-    expect(mockPush).toHaveBeenCalledWith('/')
+    // Check navigation was called (second arg is optional navigation options)
+    expect(mockPush).toHaveBeenCalledWith('/', undefined)
   })
 
   it('preserves existing mood when updating localStorage', () => {
