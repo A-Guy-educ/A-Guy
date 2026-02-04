@@ -8,26 +8,33 @@ import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
 import { Button } from '@/ui/web/components/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/ui/web/components/card'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import React, { Suspense, useState } from 'react'
 import { toast } from 'sonner'
 import { SignupFormFields } from './SignupFormFields'
 import { signupAction } from './actions/signup_createUser-action'
 import { validateSignupForm } from './actions/signup_validation-action'
+import { useAsyncAction } from '@/infra/loading/hooks/useAsyncAction'
+import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
+import { LOADING_KEYS } from '@/infra/loading/keys'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { Spinner } from '@/infra/loading/components/Spinner'
 
 function SignupFormContent() {
   const t = useTranslations('auth.signup')
   const tOauth = useTranslations('auth.oauth')
-  const router = useRouter()
+  const router = useRouterWithLoading()
   const searchParams = useSearchParams()
   const returnTo = searchParams?.get('returnTo') || '/'
-  const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const { execute: executeSignup, isLoading } = useAsyncAction(
+    (formData: FormData) => signupAction(formData),
+    { key: LOADING_KEYS.SIGNUP },
+  )
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setIsLoading(true)
     setErrors({})
 
     const formData = new FormData(event.currentTarget)
@@ -37,72 +44,65 @@ function SignupFormContent() {
 
     if (Object.keys(clientErrors).length > 0) {
       setErrors(clientErrors)
-      setIsLoading(false)
       return
     }
 
-    try {
-      const result = await signupAction(formData)
+    const result = await executeSignup(formData)
 
-      if (!result.success) {
-        if (result.errors) {
-          setErrors(result.errors)
-        }
-        toast.error(result.message || 'Signup failed')
-      } else {
-        toast.success('Account created successfully!')
-
-        // Track registration completed and user resolved
-        if (result.userId) {
-          systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_COMPLETED, {
-            user_id: result.userId,
-            auth_method: 'email',
-          })
-
-          // Track user_resolved with enriched user properties
-          const userProperties: Record<string, unknown> = {
-            user_id: result.userId,
-            is_new_user: true,
-            signup_date: new Date().toISOString(),
-            role: 'student', // Default role for new signups
-          }
-
-          // Add email and name from form (using Mixpanel reserved properties)
-          const email = formData.get('email') as string
-          const name = formData.get('name') as string
-          if (email) {
-            userProperties.$email = email
-          }
-          if (name) {
-            userProperties.$name = name
-          }
-
-          // Add locale from browser
-          if (typeof window !== 'undefined') {
-            userProperties.locale = detectBrowserLocale()
-          }
-
-          // Cache user properties for future sessions
-          updateCachedUserProperties(userProperties)
-
-          // Emit user_resolved event via system event bus
-          systemEventBus.emit(SYSTEM_EVENTS.USER_RESOLVED, {
-            user_id: result.userId,
-            is_anonymous: false,
-          })
-
-          // Also call identify() to ensure Mixpanel People properties are set
-          identify(result.userId, userProperties)
-        }
-
-        // Auto-login successful - redirect to returnTo
-        router.push(returnTo)
-        router.refresh()
+    if (!result.success) {
+      if (result.errors) {
+        setErrors(result.errors)
       }
-    } catch (_error) {
-      toast.error('An unexpected error occurred')
-    } finally {
-      setIsLoading(false)
+      toast.error(result.error || 'Signup failed')
+    } else {
+      toast.success('Account created successfully!')
+
+      // Track registration completed and user resolved
+      if (result.data?.userId) {
+        systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_COMPLETED, {
+          user_id: result.data.userId,
+          auth_method: 'email',
+        })
+
+        // Track user_resolved with enriched user properties
+        const userProperties: Record<string, unknown> = {
+          user_id: result.data.userId,
+          is_new_user: true,
+          signup_date: new Date().toISOString(),
+          role: 'student', // Default role for new signups
+        }
+
+        // Add email and name from form (using Mixpanel reserved properties)
+        const email = formData.get('email') as string
+        const name = formData.get('name') as string
+        if (email) {
+          userProperties.$email = email
+        }
+        if (name) {
+          userProperties.$name = name
+        }
+
+        // Add locale from browser
+        if (typeof window !== 'undefined') {
+          userProperties.locale = detectBrowserLocale()
+        }
+
+        // Cache user properties for future sessions
+        updateCachedUserProperties(userProperties)
+
+        // Emit user_resolved event via system event bus
+        systemEventBus.emit(SYSTEM_EVENTS.USER_RESOLVED, {
+          user_id: result.data.userId,
+          is_anonymous: false,
+        })
+
+        // Also call identify() to ensure Mixpanel People properties are set
+        identify(result.data.userId, userProperties)
+      }
+
+      // Auto-login successful - redirect to returnTo
+      router.push(returnTo)
+      router.refresh()
     }
   }
 
@@ -131,16 +131,23 @@ function SignupFormContent() {
           <SignupFormFields t={t} isLoading={isLoading} errors={errors} />
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? t('creatingAccount') : t('createAccount')}
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <Spinner size="sm" />
+                {t('creatingAccount')}
+              </span>
+            ) : (
+              t('createAccount')
+            )}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           {t('alreadyHaveAccount')}{' '}
-          <Link href="/login" className="text-primary hover:underline">
+          <SystemLink href="/login" className="text-primary hover:underline">
             {t('login')}
-          </Link>
+          </SystemLink>
         </p>
       </CardFooter>
     </Card>

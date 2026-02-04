@@ -1,7 +1,6 @@
 'use client'
 
-import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
 
 import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
@@ -11,28 +10,36 @@ import { Input } from '@/ui/web/components/input'
 import { Label } from '@/ui/web/components/label'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { loginAction } from './login_authenticate-action'
+import { useAsyncAction } from '@/infra/loading/hooks/useAsyncAction'
+import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
+import { LOADING_KEYS } from '@/infra/loading/keys'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { Spinner } from '@/infra/loading/components/Spinner'
 
 function LoginFormContent() {
   const t = useTranslations('auth.login')
   const tOauth = useTranslations('auth.oauth')
-  const router = useRouter()
+  const router = useRouterWithLoading()
   const searchParams = useSearchParams()
   const returnTo = searchParams?.get('returnTo') || '/'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const { execute: executeLogin, isLoading } = useAsyncAction(
+    (formData: FormData) => loginAction(formData),
+    { key: LOADING_KEYS.LOGIN },
+  )
 
   const isFormValid = email.trim() !== '' && password.trim() !== ''
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setIsLoading(true)
     setError(null)
 
     const formData = new FormData(event.currentTarget)
-    const result = await loginAction(formData)
+    const result = await executeLogin(formData)
 
     if (result.success) {
       window.dispatchEvent(new Event('auth:changed'))
@@ -42,7 +49,6 @@ function LoginFormContent() {
     }
 
     setError(result.error || 'invalidCredentials')
-    setIsLoading(false)
   }
 
   return (
@@ -96,16 +102,23 @@ function LoginFormContent() {
           {error && <p className="text-sm text-destructive">{t(`errors.${error}`)}</p>}
 
           <Button type="submit" className="w-full" disabled={!isFormValid || isLoading}>
-            {isLoading ? t('loggingIn') : t('loginButton')}
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <Spinner size="sm" />
+                {t('loggingIn')}
+              </span>
+            ) : (
+              t('loginButton')
+            )}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           {t('noAccount')}{' '}
-          <Link href="/signup" className="text-primary hover:underline">
+          <SystemLink href="/signup" className="text-primary hover:underline">
             {t('signupLink')}
-          </Link>
+          </SystemLink>
         </p>
       </CardFooter>
     </Card>
