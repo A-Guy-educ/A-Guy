@@ -592,9 +592,6 @@ export interface Media {
     | number
     | boolean
     | null;
-  folder?: (string | null) | FolderInterface;
-  updatedAt: string;
-  createdAt: string;
   url?: string | null;
   thumbnailURL?: string | null;
   filename?: string | null;
@@ -604,6 +601,9 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+  folder?: (string | null) | FolderInterface;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2390,9 +2390,6 @@ export interface MediaSelect<T extends boolean = true> {
   retentionPolicy?: T;
   expiresAt?: T;
   sizes?: T;
-  folder?: T;
-  updatedAt?: T;
-  createdAt?: T;
   url?: T;
   thumbnailURL?: T;
   filename?: T;
@@ -2402,6 +2399,9 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+  folder?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

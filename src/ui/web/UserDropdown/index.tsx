@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { useRouter } from 'next/navigation'
 import { LogOut, User as UserIcon } from 'lucide-react'
 
@@ -42,10 +42,10 @@ export function UserDropdown({ user }: { user: User }) {
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/account" className="flex items-center gap-2">
+          <SystemLink href="/account" className="flex items-center gap-2">
             <UserIcon className="w-4 h-4" />
             {t('myAccount')}
-          </Link>
+          </SystemLink>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

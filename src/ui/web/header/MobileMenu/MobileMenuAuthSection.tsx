@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { useRouter } from 'next/navigation'
 import { LogOut, User as UserIcon } from 'lucide-react'
 
@@ -34,10 +34,10 @@ export function MobileMenuAuthSection({
     return (
       <div className="flex flex-col gap-2">
         <Button variant="ghost" asChild className="justify-start gap-2">
-          <Link href="/account" onClick={onClose}>
+          <SystemLink href="/account" onClick={onClose}>
             <UserIcon className="w-4 h-4" />
             {tCommon('myAccount')}
-          </Link>
+          </SystemLink>
         </Button>
         <Button
           variant="ghost"
@@ -66,14 +66,14 @@ export function MobileMenuAuthSection({
   return (
     <div className="flex flex-col gap-2">
       <Button variant="ghost" asChild className="justify-start">
-        <Link href="/login" onClick={onClose}>
+        <SystemLink href="/login" onClick={onClose}>
           {tCommon('login')}
-        </Link>
+        </SystemLink>
       </Button>
       <Button asChild className="justify-start">
-        <Link href="/signup" onClick={onClose}>
+        <SystemLink href="/signup" onClick={onClose}>
           {tCommon('signup')}
-        </Link>
+        </SystemLink>
       </Button>
     </div>
   )

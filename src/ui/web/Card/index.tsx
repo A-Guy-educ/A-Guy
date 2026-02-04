@@ -1,7 +1,7 @@
 'use client'
 import { cn } from '@/infra/utils/ui'
 import useClickableCard from '@/infra/utils/useClickableCard'
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import React, { Fragment } from 'react'
 
 import type { Course, Post } from '@/payload-types'
@@ -68,9 +68,9 @@ export const Card: React.FC<{
         {titleToUse && (
           <div className="prose">
             <h3>
-              <Link className="not-prose" href={href} ref={link.ref}>
+              <SystemLink className="not-prose" href={href} ref={link.ref}>
                 {titleToUse}
-              </Link>
+              </SystemLink>
             </h3>
           </div>
         )}
