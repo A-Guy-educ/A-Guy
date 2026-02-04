@@ -78,7 +78,7 @@ export const SystemLink = forwardRef<HTMLAnchorElement, SystemLinkProps>(functio
       onClick={handleClick}
       className={cn(
         className,
-        isLoading && 'opacity-60 cursor-wait pointer-events-none',
+        isLoading && 'opacity-60 !cursor-wait pointer-events-none',
         'transition-opacity duration-150',
       )}
       aria-disabled={isLoading}
