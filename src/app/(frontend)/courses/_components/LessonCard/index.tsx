@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import type { Lesson } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/web/components/card'
@@ -40,11 +40,11 @@ export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps)
       </CardHeader>
       <CardFooter>
         <Button asChild>
-          <Link
+          <SystemLink
             href={`/courses/${courseSlug}/chapters/${effectiveChapterSlug}/lessons/${lesson.slug}`}
           >
             {t('viewLesson')}
-          </Link>
+          </SystemLink>
         </Button>
       </CardFooter>
     </Card>

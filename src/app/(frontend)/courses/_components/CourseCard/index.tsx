@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
 import type { Course } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/web/components/card'
@@ -15,7 +15,7 @@ interface CourseCardProps {
 
 export function CourseCard({ course }: CourseCardProps) {
   const t = useTranslations('courses')
-  const router = useRouter()
+  const router = useRouterWithLoading()
 
   // Early return if slug is missing or invalid
   if (!course.slug || course.slug.trim() === '' || course.slug === '-') {

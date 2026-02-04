@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
 
@@ -9,7 +9,7 @@ export function BackToCourses() {
   return (
     <nav className="mb-6">
       <Button variant="link" asChild className="pl-0">
-        <Link href="/courses">← {t('backToCourses')}</Link>
+        <SystemLink href="/courses">← {t('backToCourses')}</SystemLink>
       </Button>
     </nav>
   )
