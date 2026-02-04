@@ -1,3 +1,4 @@
+import { loadRuntimeConfig } from '@/infra/config/runtime/runtime-config'
 import { getPdfConversionMaxPromptSizeBytes } from '@/infra/config/system-params'
 import { ENV } from '@/server/config/constants'
 import { validatePromptForUsageAndTenant } from '@/server/services/exercise-conversion/helpers'
@@ -30,6 +31,16 @@ function errorResponse(
 export async function POST(request: NextRequest) {
   try {
     const payload = await getPayload({ config })
+
+    // v2.1 Fix: Load runtime config before accessing system params
+    // This ensures getPdfConversionMaxPromptSizeBytes() works correctly
+    if (process.env.VERCEL_ENV !== 'production') {
+      console.log('[queue] runtime config loading...')
+    }
+    await loadRuntimeConfig(payload)
+    if (process.env.VERCEL_ENV !== 'production') {
+      console.log('[queue] runtime config loaded')
+    }
 
     // Auth: Admin Session OR Test-Only Secret
     const { user } = await payload.auth({ headers: request.headers })

@@ -263,6 +263,43 @@ export function toExerciseInput(extracted: {
 }
 
 /**
+ * Normalize exercise for stable content identity - applied BEFORE enrichment.
+ * This ensures consistent hashing regardless of nanoid variations in block IDs.
+ * Only collapses whitespace - does NOT modify operator spacing to preserve meaning.
+ */
+export function normalizeExerciseInput(extracted: {
+  title: string
+  blocks: Array<{
+    type: string
+    id?: string
+    value?: string
+    format?: string
+    latex?: string
+    renderMode?: string
+  }>
+}): { title: string; blocks: Array<{ blockType: string; content?: string; latex?: string }> } {
+  return {
+    title: extracted.title.trim().replace(/\s+/g, ' '),
+    blocks: extracted.blocks.map((b) => {
+      if (b.type === 'rich_text') {
+        return {
+          blockType: 'rich_text',
+          content: b.value?.trim().replace(/\s+/g, ' '),
+        }
+      }
+      if (b.type === 'latex') {
+        return {
+          blockType: 'latex',
+          // Normalize LaTeX whitespace: collapse multiple spaces, trim
+          latex: b.latex?.trim().replace(/\s+/g, ' '),
+        }
+      }
+      return { blockType: b.type }
+    }),
+  }
+}
+
+/**
  * Adapter: Convert ExerciseExtractedEnriched to Payload content format
  * Maps to ContentBlockSchema union (LatexBlockSchema, RichTextBlockSchema, etc.)
  */
@@ -304,4 +341,58 @@ export function toPayloadContent(extracted: {
       return b
     }),
   }
+}
+
+/**
+ * Check if new content is strictly richer than existing content.
+ * Richer = more blocks, or has diagrams/TikZ that existing doesn't have.
+ */
+export function isContentRicher(
+  existingContent: { blocks: any[] },
+  newContent: { blocks: any[] },
+): boolean {
+  const existingBlocks = existingContent.blocks || []
+  const newBlocks = newContent.blocks || []
+
+  // More blocks = richer
+  if (newBlocks.length > existingBlocks.length) {
+    return true
+  }
+
+  // Check if new has TikZ/diagram blocks that existing doesn't
+  // TikZ is typically identified by renderMode or latex content patterns
+  const existingTikZ = existingBlocks.filter((b: any) => {
+    if (b.type !== 'latex') return false
+    const latex = b.latex?.toLowerCase() || ''
+    return (
+      latex.includes('tikz') || latex.includes('diagram') || latex.includes('begin{tikzpicture')
+    )
+  }).length
+
+  const newTikZ = newBlocks.filter((b: any) => {
+    if (b.type !== 'latex') return false
+    const latex = b.latex?.toLowerCase() || ''
+    return (
+      latex.includes('tikz') || latex.includes('diagram') || latex.includes('begin{tikzpicture')
+    )
+  }).length
+
+  if (newTikZ > existingTikZ) {
+    return true
+  }
+
+  // Check for content length (text content richness)
+  const existingText = existingBlocks
+    .filter((b: any) => b.type === 'rich_text')
+    .reduce((sum: number, b: any) => sum + (b.value?.length || 0), 0)
+
+  const newText = newBlocks
+    .filter((b: any) => b.type === 'rich_text')
+    .reduce((sum: number, b: any) => sum + (b.value?.length || 0), 0)
+
+  if (newText > existingText * 1.5) {
+    return true
+  }
+
+  return false
 }
