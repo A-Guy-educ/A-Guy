@@ -596,9 +596,6 @@ export interface Media {
     | number
     | boolean
     | null;
-  folder?: (string | null) | FolderInterface;
-  updatedAt: string;
-  createdAt: string;
   url?: string | null;
   thumbnailURL?: string | null;
   filename?: string | null;
@@ -608,6 +605,9 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+  folder?: (string | null) | FolderInterface;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1820,6 +1820,68 @@ export interface ConversionJob {
    * Template used to create this job
    */
   template?: (string | null) | ConversionTemplate;
+  /**
+   * Approved and persisted exercises
+   */
+  completedExercises?:
+    | {
+        segmentIndex: number;
+        orderInSegment: number;
+        title?: string | null;
+        content?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        enrichments?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        status?: ('approved' | 'edited' | 'skipped') | null;
+        verificationResult?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        adminNotes?: string | null;
+        savedExerciseId?: string | null;
+        approvedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Job has been finalized
+   */
+  isFinalized?: boolean | null;
+  /**
+   * When job was finalized
+   */
+  finalizedAt?: string | null;
+  /**
+   * Final conversion summary
+   */
+  summary?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
@@ -2723,9 +2785,6 @@ export interface MediaSelect<T extends boolean = true> {
   retentionPolicy?: T;
   expiresAt?: T;
   sizes?: T;
-  folder?: T;
-  updatedAt?: T;
-  createdAt?: T;
   url?: T;
   thumbnailURL?: T;
   filename?: T;
@@ -2735,6 +2794,9 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+  folder?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2950,6 +3012,24 @@ export interface ConversionJobsSelect<T extends boolean = true> {
   completedAt?: T;
   totalDurationMs?: T;
   template?: T;
+  completedExercises?:
+    | T
+    | {
+        segmentIndex?: T;
+        orderInSegment?: T;
+        title?: T;
+        content?: T;
+        enrichments?: T;
+        status?: T;
+        verificationResult?: T;
+        adminNotes?: T;
+        savedExerciseId?: T;
+        approvedAt?: T;
+        id?: T;
+      };
+  isFinalized?: T;
+  finalizedAt?: T;
+  summary?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

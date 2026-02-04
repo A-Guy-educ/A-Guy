@@ -1,17 +1,87 @@
+/**
+ * Approve All Handler
+ *
+ * Approves all pending exercises across all segments:
+ * 1. Validates job exists
+ * 2. Approves all pending exercises
+ * 3. Transitions job to completed if all done
+ */
+
+import config from '@payload-config'
 import type { PayloadHandler } from 'payload'
+import { APIError, getPayload } from 'payload'
 
 export const approveAllHandler: PayloadHandler = async (req) => {
-  const { id } = req.routeParams as { id?: string }
+  const { id: jobId } = req.routeParams as { id?: string }
 
-  // TODO: Implement approve all logic
-  // 1. Validate job exists and is in review status
-  // 2. Approve all pending segments
-  // 3. Skip remaining review stages
-  // 4. Move to final approval
+  if (!jobId) {
+    throw new APIError('Job ID required', 400)
+  }
+
+  const payload = req.payload ?? (await getPayload({ config }))
+
+  // Fetch the conversion job
+  const job = await payload.findByID({
+    collection: 'conversion-jobs',
+    id: jobId,
+    depth: 0,
+  })
+
+  if (!job) {
+    throw new APIError('Job not found', 404)
+  }
+
+  const pendingExercises = (job.pendingExercises as any[]) || []
+  const completedExercises = (job.completedExercises as any[]) || []
+  const segments = (job.segments as any[]) || []
+
+  // Approve all pending
+  const now = new Date().toISOString()
+  for (const pending of pendingExercises) {
+    completedExercises.push({
+      ...pending,
+      approvedAt: now,
+      status: 'approved',
+    })
+  }
+
+  // Mark all segments as completed
+  const updatedSegments = segments.map((seg) => ({
+    ...seg,
+    status: 'completed',
+    processedAt: seg.processedAt || now,
+  }))
+
+  // Calculate totals
+  const totalExercises = completedExercises.length
+
+  // Update job to completed
+  await payload.update({
+    collection: 'conversion-jobs',
+    id: job.id,
+    data: {
+      status: 'completed',
+      currentStage: 'COMPLETE',
+      currentStageMessage: 'All exercises approved',
+      completedAt: now,
+      pendingExercises: [],
+      completedExercises,
+      segments: updatedSegments,
+      progress: {
+        ...(job.progress as object),
+        totalExercises,
+        approvedExercises: completedExercises.length,
+        completedSegments: updatedSegments.length,
+      },
+    },
+    req,
+  })
 
   return Response.json({
     success: true,
-    message: 'Approve all not yet implemented',
-    jobId: id,
+    message: `Approved all ${pendingExercises.length} exercises`,
+    jobId: job.id,
+    approvedCount: pendingExercises.length,
+    status: 'completed',
   })
 }

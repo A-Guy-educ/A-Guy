@@ -384,6 +384,46 @@ export const ConversionJobs: CollectionConfig = {
       admin: { description: 'Template used to create this job' },
     },
 
+    // ===== Completed Exercises =====
+    {
+      name: 'completedExercises',
+      type: 'array',
+      admin: { description: 'Approved and persisted exercises' },
+      fields: [
+        { name: 'segmentIndex', type: 'number', required: true },
+        { name: 'orderInSegment', type: 'number', required: true },
+        { name: 'title', type: 'text' },
+        { name: 'content', type: 'json' },
+        { name: 'enrichments', type: 'json' },
+        {
+          name: 'status',
+          type: 'select',
+          options: ['approved', 'edited', 'skipped'],
+        },
+        { name: 'verificationResult', type: 'json' },
+        { name: 'adminNotes', type: 'textarea' },
+        { name: 'savedExerciseId', type: 'text' },
+        { name: 'approvedAt', type: 'date' },
+      ],
+    },
+
+    // ===== Finalization =====
+    {
+      name: 'isFinalized',
+      type: 'checkbox',
+      admin: { description: 'Job has been finalized' },
+    },
+    {
+      name: 'finalizedAt',
+      type: 'date',
+      admin: { description: 'When job was finalized' },
+    },
+    {
+      name: 'summary',
+      type: 'json',
+      admin: { description: 'Final conversion summary' },
+    },
+
     // ===== Audit =====
     {
       name: 'createdBy',
