@@ -28,6 +28,7 @@ import {
   toPayloadContent,
 } from '@/server/services/exercise-conversion/helpers'
 import { z } from 'zod'
+import { createJobLogger } from './job-logger'
 
 export const pdfToExercisesTask = {
   slug: 'pdf_to_exercises',
@@ -40,6 +41,9 @@ export const pdfToExercisesTask = {
     const input = job.input as any
     const { lessonId, sourceDocId, tenantId } = input.ctx
 
+    // Initialize structured logging
+    const jobLogger = await createJobLogger(job.id, payload)
+
     const output: any = {
       segmentsTotal: 0,
       segmentsDone: 0,
@@ -50,7 +54,17 @@ export const pdfToExercisesTask = {
       exercisesSkipped: 0, // v2.1: Track skipped exercises
       errors: [],
       segments: [],
+      logs: [],
+      currentStage: 'INIT',
+      currentStageMessage: 'Starting PDF to exercises conversion',
     }
+
+    // Log job start
+    await jobLogger?.info('INIT', 'Starting PDF to exercises conversion', {
+      lessonId,
+      sourceDocId,
+      tenantId,
+    })
 
     try {
       // Fetch media document to get URL for multimodal mapper
@@ -72,7 +86,16 @@ export const pdfToExercisesTask = {
       // PASS 0: Load and Validate PDF from Vercel Blob
       const pdfBuffer = await getPdfBufferFromBlob(sourceDocId, payload, req)
 
+      await jobLogger?.info('PDF_LOAD', 'Loading PDF from blob storage', {
+        url: media.url,
+        size: pdfBuffer.length,
+      })
+
       if (pdfBuffer.length > PDF_MAX_BYTES) {
+        await jobLogger?.error('PDF_LOAD', 'PDF too large', {
+          size: pdfBuffer.length,
+          maxSize: PDF_MAX_BYTES,
+        })
         throw { stage: 'PASS0_EXTRACT', code: 'PDF_TOO_LARGE', message: 'PDF too large' }
       }
 
@@ -80,6 +103,12 @@ export const pdfToExercisesTask = {
       const maxSegmentPages = getPdfConversionMaxSegmentPages(tenantId)
       const segments = await segmentPdf(pdfBuffer, maxSegmentPages)
       output.segmentsTotal = segments.length
+
+      await jobLogger?.info('PDF_SEGMENT', 'Segmented PDF', {
+        totalPages: pdfBuffer.length > 0 ? 'unknown' : 0, // page count would need pdf-lib
+        segmentCount: segments.length,
+        maxPagesPerSegment: maxSegmentPages,
+      })
 
       // ========== Prepare Multimodal PDF Parts (v2.1: Use EXISTING infrastructure) ==========
       // Create MediaPartWithPath for the PDF (same format as Chat Media Upload)
@@ -113,6 +142,14 @@ export const pdfToExercisesTask = {
       for (let i = 0; i < segments.length; i++) {
         output.currentSegmentIndex = i
         const segment = segments[i]
+
+        await jobLogger?.info('SEGMENT_EXTRACT', 'Processing segment', {
+          index: i,
+          pageStart: segment.pageStart,
+          pageEnd: segment.pageEnd,
+          segmentNumber: i + 1,
+          totalSegments: segments.length,
+        })
 
         try {
           const exercises = await processSegmentWithMultimodal(payload, req, {
@@ -230,13 +267,25 @@ export const pdfToExercisesTask = {
           output.exercisesCreated += created
           output.exercisesDeduped += deduped
           output.segmentsDone++
+
+          await jobLogger?.info('SEGMENT_VERIFY', 'Verifying exercises', {
+            count: exercises.length,
+          })
+
           output.segments?.push({
             index: i,
             pageStart: segment.pageStart,
             pageEnd: segment.pageEnd,
             status: 'done',
             exercisesCreated: created,
+            exercisesDeduped: deduped,
             exercisesSkipped: output.exercisesSkipped || 0,
+          })
+
+          await jobLogger?.info('SEGMENT_PERSIST', 'Saved exercises', {
+            created,
+            deduped,
+            skipped: output.exercisesSkipped || 0,
           })
         } catch (segmentError: any) {
           output.segmentsFailed++
@@ -252,15 +301,37 @@ export const pdfToExercisesTask = {
             pageEnd: segment.pageEnd,
             status: 'failed',
             exercisesCreated: 0,
+            error: segmentError.message,
+          })
+
+          await jobLogger?.error('SEGMENT_EXTRACT', 'Segment processing failed', {
+            index: i,
+            pageStart: segment.pageStart,
+            pageEnd: segment.pageEnd,
+            error: segmentError.message,
+            code: segmentError.code,
           })
           throw segmentError
         }
       }
 
       // Mark job as completed
+      await jobLogger?.info('COMPLETE', 'Conversion completed successfully', {
+        totalExercises: output.exercisesCreated,
+        totalSegments: segments.length,
+        segmentsCompleted: output.segmentsDone,
+        segmentsFailed: output.segmentsFailed,
+        deduped: output.exercisesDeduped,
+        skipped: output.exercisesSkipped,
+      })
       await updateJobStatus(payload, job.id, 'completed', output)
       return output
     } catch (error: any) {
+      await jobLogger?.error('FAILED', 'Conversion failed', {
+        error: error.message,
+        stage: error.stage || 'UNKNOWN',
+        code: error.code,
+      })
       console.error(`[PDF→Exercises] Job ${job.id} failed:`, error)
       await updateJobStatus(payload, job.id, 'failed', {
         ...output,

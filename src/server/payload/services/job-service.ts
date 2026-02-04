@@ -5,7 +5,11 @@ import { JOBS_COLLECTION } from '../jobs/constants'
 import type { JobContext, JobDocument, JobStatus, JobWithStatus } from '../jobs/types'
 
 export class JobService {
-  private constructor(private readonly collection: Collection<Document> | null) {}
+  private _collection: Collection<Document> | null
+
+  private constructor(collection: Collection<Document> | null) {
+    this._collection = collection
+  }
 
   static fromPayload(payload: Payload): JobService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,6 +34,13 @@ export class JobService {
     return new JobService(collection as Collection<Document> | null)
   }
 
+  /**
+   * Public accessor for the collection (for low-level operations like count, custom queries)
+   */
+  get collection(): Collection<Document> | null {
+    return this._collection
+  }
+
   computeStatus(doc: JobDocument): JobStatus {
     if (doc.processing) return 'running'
     if (doc.hasError) return 'failed'
@@ -38,11 +49,11 @@ export class JobService {
   }
 
   async claimJob(jobId: string): Promise<JobDocument | null> {
-    if (!this.collection) return null
+    if (!this._collection) return null
     const now = new Date()
     const expiresAt = new Date(now.getTime() + LOCK_TIMEOUT_MS)
 
-    const result = await this.collection.findOneAndUpdate(
+    const result = await this._collection.findOneAndUpdate(
       {
         _id: new ObjectId(jobId),
         processing: { $ne: true },
@@ -60,20 +71,20 @@ export class JobService {
     status: 'completed' | 'failed',
     output?: unknown,
   ): Promise<void> {
-    if (!this.collection) return
+    if (!this._collection) return
     const update: Record<string, unknown> = {
       processing: false,
       completedAt: new Date(),
       hasError: status === 'failed',
     }
     if (output !== undefined) update.output = output
-    await this.collection.updateOne({ _id: new ObjectId(jobId) }, { $set: update })
+    await this._collection.updateOne({ _id: new ObjectId(jobId) }, { $set: update })
   }
 
   async extendLock(jobId: string): Promise<void> {
-    if (!this.collection) return
+    if (!this._collection) return
     const expiresAt = new Date(Date.now() + LOCK_TIMEOUT_MS)
-    await this.collection.updateOne(
+    await this._collection.updateOne(
       { _id: new ObjectId(jobId) },
       { $set: { lockExpiresAt: expiresAt } },
     )
@@ -84,7 +95,7 @@ export class JobService {
     ctx: Partial<JobContext>,
     limit = 10,
   ): Promise<JobWithStatus[]> {
-    if (!this.collection) {
+    if (!this._collection) {
       console.warn('[JobService.findByContext] No collection available')
       return []
     }
@@ -93,27 +104,27 @@ export class JobService {
     if (ctx.sourceDocId) query['input.ctx.sourceDocId'] = ctx.sourceDocId
     if (ctx.tenantId) query['input.ctx.tenantId'] = ctx.tenantId
 
-    const docs = await this.collection.find(query).sort({ createdAt: -1 }).limit(limit).toArray()
+    const docs = await this._collection.find(query).sort({ createdAt: -1 }).limit(limit).toArray()
 
-    return docs.map((doc) => ({
+    return docs.map((doc: any) => ({
       ...doc,
       id: doc._id.toString(),
       status: this.computeStatus(doc as unknown as JobDocument),
       // Map jobOutput to output for UI compatibility
-      output: (doc as any).jobOutput || (doc as any).output,
+      output: doc.jobOutput || doc.output,
     })) as JobWithStatus[]
   }
 
   async getById(jobId: string): Promise<JobWithStatus | null> {
-    if (!this.collection) return null
-    const doc = await this.collection.findOne({ _id: new ObjectId(jobId) })
+    if (!this._collection) return null
+    const doc = await this._collection.findOne({ _id: new ObjectId(jobId) })
     if (!doc) return null
     return {
       ...doc,
       id: doc._id.toString(),
       status: this.computeStatus(doc as unknown as JobDocument),
       // Map jobOutput to output for UI compatibility
-      output: (doc as any).jobOutput || (doc as any).output,
+      output: doc.jobOutput || doc.output,
     } as JobWithStatus
   }
 }

@@ -22,11 +22,15 @@ Improve the PDF-to-exercises conversion system with:
 
 ## Phase 1: Backend Infrastructure - Structured Logging
 
-### Step 1.1: Create Job Types
+### Step 1.1: Extend Job Types
 
-**New File**: `src/server/payload/jobs/types.ts`
+**Modify File**: `src/server/payload/jobs/types.ts`
+
+Add the following types to the existing file (which already contains `JobStatus`, `JobDocument`, `PdfToExercisesOutput`, etc.):
 
 ```typescript
+// Add to existing types.ts file
+
 export interface JobLogEntry {
   timestamp: string
   level: 'info' | 'warn' | 'error'
@@ -46,21 +50,30 @@ export type JobStage =
   | 'FAILED'
   | 'CANCELLED'
 
-export interface JobOutputExtended {
-  // Existing fields
+// Extended output for PDF conversion with streaming support
+export interface PdfToExercisesOutputExtended extends PdfToExercisesOutput {
+  // Additional fields from existing handler
   segmentsTotal: number
   segmentsDone: number
   segmentsFailed: number
   currentSegmentIndex: number
-  exercisesCreated: number
   exercisesDeduped: number
   exercisesSkipped: number
-  errors: JobError[]
   segments: SegmentResult[]
   // New fields for streaming
   logs: JobLogEntry[]
   currentStage: JobStage
   currentStageMessage: string
+}
+
+export interface SegmentResult {
+  index: number
+  pageStart: number
+  pageEnd: number
+  exercisesCreated: number
+  exercisesDeduped: number
+  exercisesSkipped: number
+  error?: string
 }
 ```
 
@@ -134,7 +147,15 @@ export async function GET(
 
 **New File**: `tests/helpers/sse-client.ts`
 
+Create a shared test utility (new `tests/helpers/` directory for utilities usable across unit/int/e2e tests):
+
 ```typescript
+export interface SSEEvent {
+  type: string
+  data: unknown
+  id?: string
+}
+
 export async function collectSSEEvents(
   url: string,
   headers: HeadersInit,
@@ -367,12 +388,23 @@ interface JobFiltersProps {
 - [ ] Log viewer styling
 - [ ] Responsive breakpoints
 
-### Step 5.8: Register Dashboard in Payload Config
+### Step 5.8: Create Dashboard Page Route
 
-**Modify File**: `src/payload.config.ts`
+**New File**: `src/app/(payload)/admin/conversion-jobs/page.tsx`
 
-- [ ] Add custom view at path `/conversion-jobs`
-- [ ] Component: `@/ui/admin/ConversionDashboard`
+Create a Next.js page route (following the established pattern in `src/app/(payload)/admin/chat/page.tsx`):
+
+```typescript
+'use client'
+
+import { ConversionDashboard } from '@/ui/admin/ConversionDashboard'
+
+export default function ConversionJobsPage() {
+  return <ConversionDashboard />
+}
+```
+
+**Note**: Custom admin pages in this project use Next.js App Router pages under `src/app/(payload)/admin/`, not Payload's `admin.views` configuration.
 
 ### Step 5.9: Create Navigation Link
 
@@ -383,7 +415,7 @@ interface JobFiltersProps {
 
 **Modify File**: `src/payload.config.ts`
 
-- [ ] Add to `admin.components.afterNavLinks`
+- [ ] Add to `admin.components.beforeNavLinks` array (alongside existing `AdminChat/SidebarLink`)
 
 ---
 
@@ -420,8 +452,8 @@ interface JobFiltersProps {
 
 | File                                                    | Purpose                      |
 | ------------------------------------------------------- | ---------------------------- |
-| `src/server/payload/jobs/types.ts`                      | Job log types and interfaces |
 | `src/server/payload/jobs/job-logger.ts`                 | Structured logging utility   |
+| `src/app/(payload)/admin/conversion-jobs/page.tsx`      | Dashboard page route         |
 | `src/app/api/jobs/[jobId]/stream/route.ts`              | SSE streaming endpoint       |
 | `src/app/api/jobs/list/route.ts`                        | Paginated job list           |
 | `src/app/api/jobs/cancel/route.ts`                      | Cancel queued jobs           |
@@ -443,12 +475,13 @@ interface JobFiltersProps {
 
 ### Modified Files
 
-| File                                                               | Changes                         |
-| ------------------------------------------------------------------ | ------------------------------- |
-| `src/server/payload/jobs/pdf-to-exercises-task.ts`                 | Add structured logging          |
-| `src/ui/admin/exercise-conversion/LessonConversionPanel/index.tsx` | Simplify to compact version     |
-| `src/payload.config.ts`                                            | Register custom view + nav link |
-| `tests/int/jobs-run-now.int.spec.ts`                               | Add logging assertions          |
+| File                                                               | Changes                             |
+| ------------------------------------------------------------------ | ----------------------------------- |
+| `src/server/payload/jobs/types.ts`                                 | Add JobLogEntry, JobStage types     |
+| `src/server/payload/jobs/pdf-to-exercises-task.ts`                 | Add structured logging              |
+| `src/ui/admin/exercise-conversion/LessonConversionPanel/index.tsx` | Simplify to compact version         |
+| `src/payload.config.ts`                                            | Add to beforeNavLinks array         |
+| `tests/int/jobs-run-now.int.spec.ts`                               | Add logging assertions              |
 
 ---
 
@@ -471,7 +504,8 @@ interface JobFiltersProps {
 
 ### Phase 1 (Types + Logger)
 
-- [ ] `JobLogEntry` and `JobStage` types exported
+- [ ] `JobLogEntry` and `JobStage` types added to existing `types.ts`
+- [ ] `PdfToExercisesOutputExtended` type with logs/stage fields
 - [ ] `JobLogger` class appends logs atomically to MongoDB
 - [ ] Unit tests pass for logger
 

@@ -236,6 +236,26 @@ export const LessonConversionPanel = () => {
           )}
         </div>
       ))}
+
+      {/* Link to full dashboard */}
+      <div
+        style={{
+          marginTop: 12,
+          paddingTop: 8,
+          borderTop: '1px solid var(--theme-elevation-200)',
+        }}
+      >
+        <a
+          href={`/admin/conversion-jobs?lessonId=${lessonId}`}
+          style={{
+            fontSize: 11,
+            color: 'var(--theme-elevation-700)',
+            textDecoration: 'none',
+          }}
+        >
+          View all conversion jobs →
+        </a>
+      </div>
     </div>
   )
 }

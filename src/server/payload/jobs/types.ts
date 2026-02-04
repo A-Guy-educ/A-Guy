@@ -2,6 +2,27 @@ import type { ObjectId } from 'mongodb'
 
 export type JobStatus = 'queued' | 'running' | 'completed' | 'failed'
 
+export type LogLevel = 'info' | 'warn' | 'error'
+
+export type JobStage =
+  | 'INIT'
+  | 'PDF_LOAD'
+  | 'PDF_SEGMENT'
+  | 'SEGMENT_EXTRACT'
+  | 'SEGMENT_VERIFY'
+  | 'SEGMENT_PERSIST'
+  | 'COMPLETE'
+  | 'FAILED'
+  | 'CANCELLED'
+
+export interface JobLogEntry {
+  timestamp: string
+  level: LogLevel
+  stage: JobStage
+  message: string
+  details?: Record<string, unknown>
+}
+
 export interface JobContext {
   lessonId: string
   sourceDocId: string
@@ -65,3 +86,27 @@ export type TypedJob<TOutput = unknown> = Omit<JobDocument, 'input' | 'output'> 
 }
 
 export type PdfToExercisesJob = TypedJob<PdfToExercisesOutput>
+
+export interface SegmentResult {
+  index: number
+  pageStart: number
+  pageEnd: number
+  exercisesCreated: number
+  exercisesDeduped: number
+  exercisesSkipped: number
+  error?: string
+}
+
+// Extended output for PDF conversion with streaming support
+export interface PdfToExercisesOutputExtended extends PdfToExercisesOutput {
+  segmentsTotal: number
+  segmentsDone: number
+  segmentsFailed: number
+  currentSegmentIndex: number
+  exercisesDeduped: number
+  exercisesSkipped: number
+  segments: SegmentResult[]
+  logs: JobLogEntry[]
+  currentStage: JobStage
+  currentStageMessage: string
+}
