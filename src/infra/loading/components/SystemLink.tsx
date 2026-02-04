@@ -1,11 +1,13 @@
 'use client'
 
-import React, { forwardRef, useCallback } from 'react'
+import React, { forwardRef, useCallback, useState } from 'react'
 import Link, { type LinkProps } from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { cn } from '@/infra/utils/ui'
 import { loadingManager } from '../LoadingManager'
 import { LOADING_KEYS } from '../keys'
 import { resolveHrefToString, buildCurrentPath } from '../utils/resolveHref'
+import { useLoadingState } from '../hooks/useLoadingState'
 
 interface SystemLinkProps extends LinkProps {
   children: React.ReactNode
@@ -15,16 +17,21 @@ interface SystemLinkProps extends LinkProps {
 
 /**
  * Link component that registers route loading at trigger time
+ * Shows local loading indication (opacity + cursor) when clicked
  *
- * Use this for the migrated hotspots in this PR (Header nav, auth form links).
- * Expand to other navigation in a separate task after this stabilizes.
+ * Use this for all navigation links to provide consistent loading feedback
  */
 export const SystemLink = forwardRef<HTMLAnchorElement, SystemLinkProps>(function SystemLink(
-  { href, onClick, children, ...props },
+  { href, onClick, children, className, ...props },
   ref,
 ) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [wasClicked, setWasClicked] = useState(false)
+  const isRouteLoading = useLoadingState({ key: LOADING_KEYS.ROUTE_TRANSITION })
+
+  // Show loading state if this link was clicked and route is loading
+  const isLoading = wasClicked && isRouteLoading
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -57,6 +64,7 @@ export const SystemLink = forwardRef<HTMLAnchorElement, SystemLinkProps>(functio
 
       // Only register loading if actually navigating to different page
       if (currentPath !== targetPath) {
+        setWasClicked(true)
         loadingManager.register(LOADING_KEYS.ROUTE_TRANSITION, 'route')
       }
     },
@@ -64,7 +72,18 @@ export const SystemLink = forwardRef<HTMLAnchorElement, SystemLinkProps>(functio
   )
 
   return (
-    <Link ref={ref} href={href} onClick={handleClick} {...props}>
+    <Link
+      ref={ref}
+      href={href}
+      onClick={handleClick}
+      className={cn(
+        className,
+        isLoading && 'opacity-60 cursor-wait pointer-events-none',
+        'transition-opacity duration-150',
+      )}
+      aria-disabled={isLoading}
+      {...props}
+    >
       {children}
     </Link>
   )
