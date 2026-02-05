@@ -19,7 +19,7 @@ describe('PDF→Exercises Cleanup Regression', () => {
         { title: 'Ex2', blocks: [], orderInSegment: 2 },
       ]
 
-      const keyFn = (ex: EnrichedExercise) => `t1:l1:d1:1-3:${ex.orderInSegment}:v1`
+      const keyFn = (_ex: EnrichedExercise, systemIndex: number) => `t1:l1:d1:1-3:${systemIndex}:v1`
       const result = deduplicateByIdempotencyKey(exercises, keyFn)
 
       expect(result.exercises).toHaveLength(2)
@@ -37,7 +37,7 @@ describe('PDF→Exercises Cleanup Regression', () => {
       const job1Exercises: EnrichedExercise[] = [{ title: 'Ex1', blocks: [], orderInSegment: 1 }]
       const job2Exercises: EnrichedExercise[] = [{ title: 'Ex1', blocks: [], orderInSegment: 1 }]
 
-      const keyFn = (ex: EnrichedExercise) => `t1:l1:d1:1-3:${ex.orderInSegment}:v1`
+      const keyFn = (_ex: EnrichedExercise, systemIndex: number) => `t1:l1:d1:1-3:${systemIndex}:v1`
 
       const result1 = deduplicateByIdempotencyKey(job1Exercises, keyFn)
       const result2 = deduplicateByIdempotencyKey(job2Exercises, keyFn)
@@ -67,8 +67,8 @@ describe('PDF→Exercises Cleanup Regression', () => {
         orderInSegment: 1,
       }
 
-      // Key function for last-wins semantics
-      const keyFn = (ex: EnrichedExercise) => `t1:l1:d1:1-3:${ex.orderInSegment}:v1`
+      // Key function for last-wins semantics - each array position has unique systemIndex
+      const keyFn = (_ex: EnrichedExercise, systemIndex: number) => `t1:l1:d1:1-3:${systemIndex}:v1`
 
       const initialResult = deduplicateByIdempotencyKey([initialAttempt], keyFn)
       const retryResult = deduplicateByIdempotencyKey([retryAttempt], keyFn)
@@ -77,31 +77,36 @@ describe('PDF→Exercises Cleanup Regression', () => {
       expect(initialResult.exercises[0].blocks).toHaveLength(0)
       expect(retryResult.exercises[0].blocks).toHaveLength(1)
 
-      // Retry updates content via last-wins
-      const initialKey = keyFn(initialAttempt)
-      const retryKey = keyFn(retryAttempt)
+      // Retry updates content via last-wins - both use systemIndex=0
+      const initialKey = keyFn(initialAttempt, 0)
+      const retryKey = keyFn(retryAttempt, 0)
 
       expect(initialKey).toBe(retryKey)
-      expect(initialKey).toBe('t1:l1:d1:1-3:1:v1')
+      expect(initialKey).toBe('t1:l1:d1:1-3:0:v1')
     })
   })
 
   describe('In-memory dedup still works after cleanup', () => {
     test('deduplication by idempotency key works correctly', () => {
+      // Using orderInSegment in keyFn creates duplicates for deduplication test
+      // Ex1 and Ex1 Duplicate have same orderInSegment=1, so they share a key
       const exercises: EnrichedExercise[] = [
         { title: 'Ex1', blocks: [], orderInSegment: 1 },
         { title: 'Ex2', blocks: [], orderInSegment: 2 },
         { title: 'Ex1 Duplicate', blocks: [], orderInSegment: 1 },
       ]
 
-      const keyFn = (ex: EnrichedExercise) => `t1:l1:d1:1-3:${ex.orderInSegment}:v1`
+      const keyFn = (ex: EnrichedExercise, _systemIndex: number) =>
+        `t1:l1:d1:1-3:${ex.orderInSegment}:v1`
       const result = deduplicateByIdempotencyKey(exercises, keyFn)
 
-      // Last wins: keeps Ex1 Duplicate, drops original Ex1
+      // Last wins: keeps Ex1 Duplicate (last occurrence of key orderInSegment=1), drops original Ex1
       expect(result.exercises).toHaveLength(2)
       expect(result.droppedCount).toBe(1)
 
-      // Last occurrence of ordinal 1 is kept
+      // Order is preserved by original array position - unique keys keep their position
+      // Ex2 has unique key, stays at position 1
+      // Ex1 Duplicate is last occurrence of key, stays at position 2
       expect(result.exercises[0].title).toBe('Ex2')
       expect(result.exercises[1].title).toBe('Ex1 Duplicate')
     })
