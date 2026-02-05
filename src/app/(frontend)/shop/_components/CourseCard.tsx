@@ -31,33 +31,33 @@ export function CourseCard({
   const getIcon = () => {
     switch (icon) {
       case 'book':
-        return <BookOpen className="w-6 h-6 text-blue-500" />
+        return <BookOpen className="w-6 h-6 text-[hsl(var(--shop-badge-blue))]" />
       case 'graduation':
-        return <GraduationCap className="w-6 h-6 text-blue-500" />
+        return <GraduationCap className="w-6 h-6 text-[hsl(var(--shop-badge-blue))]" />
       case 'check':
-        return <CheckCircle className="w-6 h-6 text-green-500" />
+        return <CheckCircle className="w-6 h-6 text-[hsl(var(--shop-success))]" />
       default:
-        return <BookOpen className="w-6 h-6 text-blue-500" />
+        return <BookOpen className="w-6 h-6 text-[hsl(var(--shop-badge-blue))]" />
     }
   }
 
   const getButtonClasses = () => {
     if (buttonStyle === 'owned') {
-      return 'bg-green-50 text-green-600 px-6 py-2.5 rounded-xl'
+      return 'bg-[hsl(var(--shop-success-bg))] text-[hsl(var(--shop-success-dark))] px-6 py-2.5 rounded-xl'
     }
-    return 'bg-gray-50 px-6 py-2.5 rounded-xl hover:bg-blue-50 transition-colors'
+    return 'bg-gray-50 px-6 py-2.5 rounded-xl hover:bg-[hsl(var(--shop-badge-blue-bg))] transition-colors'
   }
 
   const getButtonTextColor = () => {
     if (buttonStyle === 'owned') {
-      return 'text-green-600'
+      return 'text-[hsl(var(--shop-success-dark))]'
     }
-    return 'text-blue-600 hover:text-[#8B1D25]'
+    return 'text-[hsl(var(--shop-badge-blue-dark))] hover:text-[hsl(var(--shop-primary))]'
   }
 
   const borderClass = isOwned
-    ? 'border-2 border-[#8B1D25]/20'
-    : 'border border-transparent hover:border-blue-100'
+    ? 'border-2 border-[hsl(var(--shop-primary))]/20'
+    : 'border border-transparent hover:border-[hsl(var(--shop-badge-blue-bg))]'
 
   return (
     <div
@@ -70,7 +70,7 @@ export function CourseCard({
     >
       {isOwned && (
         <span
-          className="absolute -top-3 left-6 bg-green-500 text-white px-4 py-1 rounded-full shadow-md uppercase tracking-wider"
+          className="absolute -top-3 left-6 bg-[hsl(var(--shop-success))] text-white px-4 py-1 rounded-full shadow-md uppercase tracking-wider"
           style={{ fontSize: '9px', fontWeight: 900 }}
         >
           הקורס שלך
