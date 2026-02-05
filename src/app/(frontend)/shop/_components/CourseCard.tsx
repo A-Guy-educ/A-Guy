@@ -1,20 +1,7 @@
 'use client'
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/ui/web/components/card'
-import { Button } from '@/ui/web/components/button'
-import { Badge } from '@/ui/web/components/badge'
-import { BookOpen, Check, GraduationCap } from 'lucide-react'
+import { BookOpen, GraduationCap, CheckCircle } from 'lucide-react'
 import { cn } from '@/infra/utils/ui'
-
-type IconType = 'book' | 'check' | 'graduation'
-type ButtonStyle = 'purchase' | 'owned'
 
 interface CourseCardProps {
   badge: string
@@ -22,17 +9,11 @@ interface CourseCardProps {
   title: string
   description: string
   price: number
-  icon: IconType
+  icon: 'book' | 'graduation' | 'check'
   iconBgColor: string
   buttonText: string
-  buttonStyle: ButtonStyle
+  buttonStyle: 'purchase' | 'owned'
   isOwned?: boolean
-}
-
-const iconMap = {
-  book: BookOpen,
-  check: Check,
-  graduation: GraduationCap,
 }
 
 export function CourseCard({
@@ -47,54 +28,94 @@ export function CourseCard({
   buttonStyle,
   isOwned = false,
 }: CourseCardProps) {
-  const Icon = iconMap[icon]
-
-  const getButtonStyles = () => {
-    switch (buttonStyle) {
-      case 'purchase':
-        return 'bg-primary text-primary-foreground hover:bg-primary/90'
-      case 'owned':
-        return 'bg-success/10 text-success cursor-not-allowed hover:bg-success/10 border border-success/20'
+  const getIcon = () => {
+    switch (icon) {
+      case 'book':
+        return <BookOpen className="w-6 h-6 text-blue-500" />
+      case 'graduation':
+        return <GraduationCap className="w-6 h-6 text-blue-500" />
+      case 'check':
+        return <CheckCircle className="w-6 h-6 text-green-500" />
+      default:
+        return <BookOpen className="w-6 h-6 text-blue-500" />
     }
   }
 
+  const getButtonClasses = () => {
+    if (buttonStyle === 'owned') {
+      return 'bg-green-50 text-green-600 px-6 py-2.5 rounded-xl'
+    }
+    return 'bg-gray-50 px-6 py-2.5 rounded-xl hover:bg-blue-50 transition-colors'
+  }
+
+  const getButtonTextColor = () => {
+    if (buttonStyle === 'owned') {
+      return 'text-green-600'
+    }
+    return 'text-blue-600 hover:text-[#8B1D25]'
+  }
+
+  const borderClass = isOwned
+    ? 'border-2 border-[#8B1D25]/20'
+    : 'border border-transparent hover:border-blue-100'
+
   return (
-    <div className="group relative">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 via-accent/50 to-primary/50 rounded-xl opacity-0 group-hover:opacity-100 blur transition duration-500" />
-      <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-lg">
-        <CardHeader className="pb-4">
-          <Badge variant="secondary" className={cn('w-fit text-xs font-bold', badgeColor)}>
-            {badge}
-          </Badge>
+    <div
+      className={cn(
+        'relative bg-white p-6 rounded-[2rem] flex flex-col',
+        borderClass,
+        'shadow-[0_1px_2px_0_rgba(60,64,67,.3),0_1px_3px_1px_rgba(60,64,67,.15)]',
+        'transition-all active:scale-[0.98]',
+      )}
+    >
+      {isOwned && (
+        <span
+          className="absolute -top-3 left-6 bg-green-500 text-white px-4 py-1 rounded-full shadow-md uppercase tracking-wider"
+          style={{ fontSize: '9px', fontWeight: 900 }}
+        >
+          הקורס שלך
+        </span>
+      )}
 
-          <div className="mt-4 flex items-start gap-4">
-            <div className={cn('p-3 rounded-xl flex-shrink-0', iconBgColor)}>
-              <Icon className={cn('w-6 h-6', isOwned ? 'text-success' : 'text-primary')} />
-            </div>
-
-            <div className="flex-1">
-              <CardTitle className="text-lg leading-tight">{title}</CardTitle>
-              <CardDescription className="mt-1">{description}</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pb-4">
-          <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-black text-foreground">₪{price}</span>
-            <span className="text-sm text-muted-foreground font-medium">/ קורס</span>
-          </div>
-        </CardContent>
-
-        <CardFooter>
-          <Button
-            className={cn('w-full font-bold text-sm', getButtonStyles())}
-            disabled={buttonStyle === 'owned'}
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <span
+            className={cn('block mb-1 uppercase tracking-widest', badgeColor)}
+            style={{ fontSize: '10px', fontWeight: 900 }}
           >
-            {buttonText}
-          </Button>
-        </CardFooter>
-      </Card>
+            {badge}
+          </span>
+          <h4 className="text-gray-900" style={{ fontSize: '20px', fontWeight: 900 }}>
+            {title}
+          </h4>
+          <p className="text-gray-400 mt-1" style={{ fontSize: '12px' }}>
+            {description}
+          </p>
+        </div>
+        <div
+          className={cn(
+            'w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0',
+            iconBgColor,
+          )}
+        >
+          {getIcon()}
+        </div>
+      </div>
+
+      <div className="mt-auto flex items-center justify-between pt-6 border-t border-gray-50">
+        <span
+          className={isOwned ? 'text-gray-300 italic line-through' : 'text-gray-900'}
+          style={{ fontSize: '20px', fontWeight: 900 }}
+        >
+          ₪{price}
+        </span>
+        <button
+          className={cn(getButtonClasses(), getButtonTextColor())}
+          style={{ fontSize: '12px', fontWeight: 700 }}
+        >
+          {buttonText}
+        </button>
+      </div>
     </div>
   )
 }

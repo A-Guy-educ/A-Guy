@@ -1,20 +1,10 @@
 'use client'
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/ui/web/components/card'
-import { Button } from '@/ui/web/components/button'
-import { Badge } from '@/ui/web/components/badge'
-import { Check, X, HelpCircle, BookOpen, Layers } from 'lucide-react'
+import { XCircle, CheckCircle2, HelpCircle, BookOpen, Layers } from 'lucide-react'
 import { cn } from '@/infra/utils/ui'
 
 type FeatureStyle = 'enabled' | 'disabled' | 'limited'
-type IconType = 'check' | 'x' | 'help' | 'book' | 'layers'
+type IconType = 'check' | 'x' | 'help'
 type ButtonStyle = 'current' | 'standard' | 'premium'
 
 interface Feature {
@@ -27,7 +17,7 @@ interface CourseCount {
   number: number
   text: string
   color: string
-  icon: IconType
+  icon: 'book' | 'layers'
 }
 
 interface PlanCardProps {
@@ -45,14 +35,6 @@ interface PlanCardProps {
   isPremium?: boolean
 }
 
-const iconMap = {
-  check: Check,
-  x: X,
-  help: HelpCircle,
-  book: BookOpen,
-  layers: Layers,
-}
-
 export function PlanCard({
   title,
   subtitle,
@@ -67,101 +49,121 @@ export function PlanCard({
   isBordered = false,
   isPremium = false,
 }: PlanCardProps) {
-  const FeatureIcon = ({ icon }: { icon: IconType }) => {
-    const Icon = iconMap[icon]
-    return <Icon className="w-4 h-4" />
-  }
-
-  const getFeatureStyles = (style: FeatureStyle) => {
-    switch (style) {
-      case 'enabled':
-        return 'text-success'
-      case 'disabled':
-        return 'text-muted-foreground/30'
-      case 'limited':
-        return 'text-warning'
-    }
-  }
-
-  const getButtonStyles = () => {
+  const getButtonClasses = () => {
     switch (buttonStyle) {
       case 'current':
-        return 'bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted'
+        return 'w-full py-4 rounded-2xl bg-gray-100 text-gray-500'
       case 'standard':
-        return 'bg-card text-foreground border-2 border-border hover:bg-muted'
+        return 'w-full py-4 rounded-2xl bg-gray-900 text-white shadow-lg hover:opacity-90'
       case 'premium':
-        return 'bg-primary text-primary-foreground hover:bg-primary/90'
+        return 'w-full py-4 rounded-2xl bg-[#8B1D25] text-white shadow-xl hover:scale-[1.02] transition-transform'
+      default:
+        return 'w-full py-4 rounded-2xl bg-gray-900 text-white'
     }
   }
 
-  const CourseIcon = iconMap[courseCount.icon]
+  const getFeatureIcon = (iconType: IconType) => {
+    switch (iconType) {
+      case 'x':
+        return <XCircle className="w-4 h-4 text-gray-200" />
+      case 'check':
+        return <CheckCircle2 className="w-4 h-4 text-green-500" />
+      case 'help':
+        return <HelpCircle className="w-4 h-4 text-yellow-500" />
+      default:
+        return null
+    }
+  }
+
+  const getFeatureStyle = (style: FeatureStyle) => {
+    switch (style) {
+      case 'disabled':
+        return 'text-gray-400 italic'
+      case 'enabled':
+        return 'font-medium text-gray-800'
+      case 'limited':
+        return 'text-gray-500'
+      default:
+        return 'text-gray-600'
+    }
+  }
+
+  const borderClass = isPremium
+    ? 'border-2 border-[#8B1D25]'
+    : isBordered
+      ? 'border border-gray-200'
+      : 'border border-gray-100'
 
   return (
-    <div className="group relative">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 via-accent/50 to-primary/50 rounded-xl opacity-0 group-hover:opacity-100 blur transition duration-500" />
-      <Card
-        className={cn(
-          'relative overflow-hidden transition-all duration-300',
-          isBordered && 'border-2 border-primary shadow-lg',
-          isPremium && 'border-primary shadow-xl',
-        )}
-      >
-        {badge && (
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-            <Badge className={cn('text-xs px-3 py-1', badgeColor)}>{badge}</Badge>
-          </div>
-        )}
+    <div
+      className={cn(
+        'relative bg-white rounded-[2.5rem] p-8 flex flex-col min-w-[300px] md:min-w-0',
+        borderClass,
+        'shadow-[0_1px_2px_0_rgba(60,64,67,.3),0_1px_3px_1px_rgba(60,64,67,.15)]',
+        'transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)]',
+      )}
+    >
+      {badge && (
+        <div
+          className={cn(
+            'absolute -top-4 left-1/2 -translate-x-1/2',
+            badgeColor,
+            'text-white px-6 py-2 rounded-full shadow-lg',
+          )}
+        >
+          <span className="uppercase tracking-widest" style={{ fontSize: '10px' }}>
+            {badge}
+          </span>
+        </div>
+      )}
 
-        <CardHeader className="text-center pb-4 pt-8">
-          <CardTitle className="text-2xl">{title}</CardTitle>
-          <CardDescription className="mt-1">{subtitle}</CardDescription>
+      <div className="mb-8">
+        <span
+          className={cn(
+            'block mb-2 uppercase tracking-widest',
+            isPremium ? 'text-[#8B1D25]' : 'text-gray-400',
+          )}
+          style={{ fontSize: '10px' }}
+        >
+          {subtitle}
+        </span>
+        <h3
+          className={cn('mb-1', isPremium ? 'text-[#8B1D25]' : 'text-gray-800')}
+          style={{ fontSize: '24px', fontWeight: 900 }}
+        >
+          {title}
+        </h3>
+        <div style={{ fontSize: '24px', fontWeight: 900 }} className="text-gray-900">
+          ₪{price}{' '}
+          <span style={{ fontSize: '14px', fontWeight: 400 }} className="text-gray-400">
+            / {period}
+          </span>
+        </div>
+      </div>
 
-          <div className="mt-6">
-            <div className="flex items-baseline justify-center gap-1">
-              <span className="text-4xl font-black text-foreground">₪{price}</span>
-              <span className="text-sm text-muted-foreground font-medium">/ {period}</span>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-4 px-6">
-          {/* Features List */}
-          <div className="space-y-3">
-            {features.map((feature, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <div className={cn('flex-shrink-0', getFeatureStyles(feature.style))}>
-                  <FeatureIcon icon={feature.icon} />
-                </div>
-                <span
-                  className={cn(
-                    'text-sm font-medium',
-                    feature.style === 'disabled' ? 'text-muted-foreground/50' : 'text-foreground',
-                  )}
-                >
-                  {feature.text}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Course Count */}
-          <div className="pt-4 border-t border-border">
-            <div className="flex items-center justify-center gap-2">
-              <CourseIcon className={cn('w-5 h-5', courseCount.color)} />
-              <span className={cn('text-sm', courseCount.color)}>{courseCount.text}</span>
-            </div>
-          </div>
-        </CardContent>
-
-        <CardFooter className="pt-6 px-6 pb-6">
-          <Button
-            className={cn('w-full font-bold text-sm', getButtonStyles())}
-            disabled={buttonStyle === 'current'}
+      <ul className="space-y-4 mb-10 flex-1">
+        {features.map((feature, index) => (
+          <li
+            key={index}
+            className={cn('flex items-center gap-3 text-sm', getFeatureStyle(feature.style))}
           >
-            {buttonText}
-          </Button>
-        </CardFooter>
-      </Card>
+            {getFeatureIcon(feature.icon)}
+            <span>{feature.text}</span>
+          </li>
+        ))}
+        <li className={cn('flex items-center gap-3 text-sm', courseCount.color)}>
+          {courseCount.icon === 'book' ? (
+            <BookOpen className="w-4 h-4" />
+          ) : (
+            <Layers className="w-4 h-4" />
+          )}
+          <span>{courseCount.text}</span>
+        </li>
+      </ul>
+
+      <button className={getButtonClasses()} style={{ fontSize: '14px' }}>
+        {buttonText}
+      </button>
     </div>
   )
 }
