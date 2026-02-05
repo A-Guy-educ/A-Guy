@@ -1,20 +1,19 @@
 /**
  * AI Chat Service for Exercise Help
- * Orchestrates chat with AI providers using factory pattern (text and multimodal)
+ * Orchestrates chat with AI providers using Genkit unified adapter
  *
- * Uses factory pattern for provider-agnostic model selection.
- * Supports Gemini and OpenAI-compatible providers via getLLMProvider.
+ * Migrated from factory pattern to Genkit for unified LLM operations.
+ * Supports Gemini and OpenAI-compatible providers via createGenkitUnifiedAdapter.
  */
 import type { Payload } from 'payload'
 
 import { logger } from '@/infra/utils/logger'
 
 import type { ComposedPrompt } from '../context-policy'
-import type { AIModel } from '../models'
+import { createGenkitUnifiedAdapter } from '../genkit/adapters/unified-adapter'
+import type { AIModel, AIModelKey } from '../models'
 import type { MediaPartWithPath } from '../multimodal/types'
-import { detectBestProvider, getLLMProvider, getProviderModelConfig } from '../providers/factory'
-import type { ChatMessage as ProviderChatMessage } from '../providers/gemini'
-import { mapMultimodalToGemini } from '../providers/gemini/multimodal-mapper'
+import { LLMProviderType } from '../providers/types'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -49,19 +48,25 @@ export function getSystemPrompt(): string {
   return LEGACY_FALLBACK
 }
 
+/**
+ * ChatMessage type used internally (local definition, replaces ProviderChatMessage)
+ */
+type InternalChatMessage = { role: 'user' | 'assistant'; content: string }
+
 export async function chatWithExerciseHelper(
   input: ExerciseChatInput,
   payload: Payload,
 ): Promise<ExerciseChatResult> {
   try {
-    // Detect provider and get model config
-    const providerType = await detectBestProvider(payload)
-    const provider = await getLLMProvider(payload, { type: providerType })
-    const modelConfig = getProviderModelConfig(providerType, 'EXERCISE_CHAT')
+    // Get Genkit-backed unified adapter (replaces factory pattern)
+    const adapter = await createGenkitUnifiedAdapter(payload)
+
+    // Resolve model configuration
+    const modelConfig = await resolveModelConfig('EXERCISE_CHAT')
 
     // Build messages from composedPrompt or legacy format
     let systemPrompt: string
-    let messages: ProviderChatMessage[]
+    let messages: InternalChatMessage[]
 
     if (input.composedPrompt) {
       // Extract system from composed prompt
@@ -88,20 +93,18 @@ export async function chatWithExerciseHelper(
     }
 
     // Handle multimodal content if media is attached
-    // Note: Gemini-specific multimodal handling for now
     if (input.mediaPartsWithPath && input.mediaPartsWithPath.length > 0) {
-      return await sendMultimodalToGemini(
+      return await sendMultimodalToGenkit(
         systemPrompt,
         input.message,
         input.mediaPartsWithPath,
         modelConfig,
         payload,
-        input.req,
       )
     }
 
-    // Text-only path using unified provider interface
-    const result = await provider.generateChatCompletion(
+    // Text-only path using unified Genkit adapter
+    const result = await adapter.generateChatCompletion(
       {
         system: systemPrompt,
         messages,
@@ -127,58 +130,87 @@ export async function chatWithExerciseHelper(
 }
 
 /**
- * Send multimodal content (text + media) to Gemini
- * Uses native Gemini multimodal API with inline base64 data
+ * Resolve model config from MODEL_REGISTRY (mirrors getProviderModelConfig)
  */
-async function sendMultimodalToGemini(
+async function resolveModelConfig(modelKey: AIModelKey): Promise<AIModel> {
+  const { getModelRegistryEntry, getProviderModelName } = await import('../models')
+  const entry = getModelRegistryEntry(modelKey)
+  return {
+    name: getProviderModelName(LLMProviderType.GEMINI, modelKey),
+    ...entry,
+  }
+}
+
+/**
+ * Send multimodal content (text + media) using Genkit adapter
+ * Uses unified adapter for multimodal generation
+ */
+async function sendMultimodalToGenkit(
   systemPrompt: string,
   userMessage: string,
   mediaPartsWithPath: MediaPartWithPath[],
   model: AIModel,
   payload: Payload,
-  req?: { headers: { authorization?: string; cookie?: string } },
 ): Promise<ExerciseChatResult> {
-  // Convert media to Gemini parts using existing mapper
-  const { currentMessage: multimodalParts } = await mapMultimodalToGemini(
-    mediaPartsWithPath,
-    payload,
-    req,
-  )
+  // Convert media parts to Genkit-compatible attachments
+  const attachments: Array<{ data: string; mimeType: string }> = []
+
+  for (const mediaPart of mediaPartsWithPath) {
+    if (mediaPart.mediaId) {
+      try {
+        const mediaDoc = await payload.findByID({
+          collection: 'media',
+          id: mediaPart.mediaId,
+          depth: 0,
+        })
+
+        if (mediaDoc && 'url' in mediaDoc && mediaDoc.url) {
+          // Fetch the image and convert to base64
+          const imageUrl = mediaDoc.url.startsWith('/')
+            ? `${process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'}${mediaDoc.url}`
+            : mediaDoc.url
+
+          const response = await fetch(imageUrl)
+          const arrayBuffer = await response.arrayBuffer()
+          const base64 = Buffer.from(arrayBuffer).toString('base64')
+
+          attachments.push({
+            data: base64,
+            mimeType: mediaDoc.mimeType || 'image/jpeg',
+          })
+        }
+      } catch (fetchError) {
+        logger.warn(
+          { err: fetchError, mediaId: mediaPart.mediaId },
+          '[ExerciseChat] Failed to fetch media',
+        )
+      }
+    }
+  }
 
   logger.info(
     {
       mediaInputCount: mediaPartsWithPath.length,
-      multimodalPartsCount: multimodalParts.length,
-      hasInlineData: multimodalParts.some((p) => 'inlineData' in p),
+      attachmentsCount: attachments.length,
     },
-    '[ExerciseChat] Multimodal parts prepared for Gemini',
+    '[ExerciseChat] Multimodal attachments prepared for Genkit',
   )
 
-  // Build content: user message text + media parts
-  const fullContents = [{ text: userMessage }, ...multimodalParts]
-
-  logger.info(
-    {
-      totalParts: fullContents.length,
-      textParts: fullContents.filter((p) => 'text' in p).length,
-      inlineDataParts: fullContents.filter((p) => 'inlineData' in p).length,
-    },
-    '[ExerciseChat] Sending to Gemini',
-  )
+  if (attachments.length === 0) {
+    return {
+      success: false,
+      error: 'No valid media attachments found',
+    }
+  }
 
   try {
-    // Use unified provider interface with direct Gemini access for multimodal
-    const provider = await getLLMProvider(payload, { type: LLMProviderType.GEMINI })
-    const result = await provider.generateMultimodalCompletion(
+    // Use Genkit unified adapter for multimodal
+    const adapter = await createGenkitUnifiedAdapter(payload)
+    const result = await adapter.generateMultimodalCompletion(
       {
         prompt: `${systemPrompt}\n\n${userMessage}`,
         model,
-        attachments: multimodalParts
-          .filter((p) => 'inlineData' in p)
-          .map((p) => ({
-            data: (p as { inlineData: { data: string } }).inlineData.data,
-            mimeType: (p as { inlineData: { mimeType: string } }).inlineData.mimeType,
-          })),
+        attachments,
       },
       payload,
     )
@@ -189,13 +221,10 @@ async function sendMultimodalToGemini(
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
-    logger.error({ err: error }, '[ExerciseChat] Multimodal Gemini call failed')
+    logger.error({ err: error }, '[ExerciseChat] Multimodal Genkit call failed')
     return {
       success: false,
       error: errorMessage,
     }
   }
 }
-
-// Re-export LLMProviderType for use in this file
-import { LLMProviderType } from '../providers/factory'

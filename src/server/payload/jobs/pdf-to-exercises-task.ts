@@ -8,17 +8,14 @@ import { computeContentHash } from '@/server/utils/hash'
 import config from '@payload-config'
 // JobTask type is not exported from payload, define inline
 import { ObjectId } from 'mongodb'
-import { getPayload } from 'payload'
+import { getPayload, type Payload } from 'payload'
 
 import type { MediaPartWithPath } from '@/infra/llm/multimodal/types'
 import {
   getLLMProvider,
   getProviderModelConfig,
   getProviderTypeFromEnv,
-  LLMProviderType,
 } from '@/infra/llm/providers/factory'
-import { mapMultimodalToGemini } from '@/infra/llm/providers/gemini/multimodal-mapper'
-import { mapMultimodalToOpenAI } from '@/infra/llm/providers/openai-compatible/multimodal-mapper'
 import {
   enrichBlockIds,
   normalizeExerciseInput,
@@ -96,22 +93,8 @@ export const pdfToExercisesTask = {
         mimeType: 'application/pdf',
       }
 
-      // Use provider-appropriate multimodal mapper
-      const providerType = await getProviderTypeFromEnv(payload)
-      let attachments: Array<{ data: string; mimeType: string }>
-
-      if (providerType === LLMProviderType.OPENAI_COMPATIBLE) {
-        attachments = await mapMultimodalToOpenAI([mediaPartWithPath], payload, req)
-      } else {
-        // Convert to Gemini format, then extract attachments
-        const geminiParts = await mapMultimodalToGemini([mediaPartWithPath], payload, req)
-        attachments = geminiParts.currentMessage
-          .filter((part: any) => part.inlineData)
-          .map((part: any) => ({
-            data: part.inlineData.data,
-            mimeType: part.inlineData.mimeType,
-          }))
-      }
+      // Convert PDF to base64 attachments for Genkit (provider-agnostic)
+      const attachments = await convertMediaToAttachments([mediaPartWithPath], payload)
 
       // PASS 2: Extract + Verify + Persist
       // Idempotency-based upsert is always enabled (no feature flag)
@@ -583,4 +566,49 @@ function validateExtractedExercises(
   }
 
   return validated
+}
+
+/**
+ * Convert MediaPartWithPath items to Genkit-compatible attachments
+ * Fetches media and converts to base64 format
+ */
+async function convertMediaToAttachments(
+  mediaParts: MediaPartWithPath[],
+  payload: Payload,
+): Promise<Array<{ data: string; mimeType: string }>> {
+  const attachments: Array<{ data: string; mimeType: string }> = []
+
+  for (const mediaPart of mediaParts) {
+    if (!mediaPart.mediaId) continue
+
+    try {
+      const mediaDoc = await payload.findByID({
+        collection: 'media',
+        id: mediaPart.mediaId,
+        depth: 0,
+      })
+
+      if (mediaDoc && 'url' in mediaDoc && mediaDoc.url) {
+        const imageUrl = mediaDoc.url.startsWith('/')
+          ? `${process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'}${mediaDoc.url}`
+          : mediaDoc.url
+
+        const response = await fetch(imageUrl)
+        const arrayBuffer = await response.arrayBuffer()
+        const base64 = Buffer.from(arrayBuffer).toString('base64')
+
+        attachments.push({
+          data: base64,
+          mimeType: mediaDoc.mimeType || mediaPart.mimeType || 'application/octet-stream',
+        })
+      }
+    } catch (fetchError) {
+      console.warn(
+        { err: fetchError, mediaId: mediaPart.mediaId },
+        '[PDF→Exercises] Failed to fetch media',
+      )
+    }
+  }
+
+  return attachments
 }

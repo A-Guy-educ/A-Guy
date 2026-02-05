@@ -97,14 +97,13 @@ export async function getProviderTypeFromEnv(payload?: Payload): Promise<LLMProv
 /**
  * Get provider type for a given config (uses env var or runtime config if not explicitly set)
  */
-async function resolveProviderType(
-  config?: Partial<LLMProviderConfig>,
-  payload?: Payload,
+async function _resolveProviderType(
+  _config?: Partial<LLMProviderConfig>,
+  _payload?: Payload,
 ): Promise<LLMProviderType> {
-  if (config?.type) {
-    return config.type
-  }
-  return getProviderTypeFromEnv(payload)
+  // This function is kept for interface compatibility but always returns GEMINI
+  // since Genkit uses Google AI plugin by default
+  return LLMProviderType.GEMINI
 }
 
 /**
@@ -198,119 +197,33 @@ export function getProviderModelConfig(
 
 /**
  * Get the active LLM provider based on configuration
- * Respects LLM_PROVIDER (env var or runtime config) if type is not explicitly provided
+ * Delegates to Genkit adapter for unified LLM operations.
  */
 export async function getLLMProvider(
   payload: Payload,
-  config?: Partial<LLMProviderConfig>,
+  _config?: Partial<LLMProviderConfig>,
 ): Promise<UnifiedLLMProvider> {
-  const providerType = await resolveProviderType(config, payload)
-  logger.debug({ providerType }, '[LLMFactory] Using provider type')
-
-  switch (providerType) {
-    case LLMProviderType.OPENAI_COMPATIBLE: {
-      const mod = await import('./openai-compatible')
-      return createOpenAIProvider(mod)
-    }
-    case LLMProviderType.GEMINI:
-    default: {
-      const mod = await import('./gemini')
-      return createGeminiProvider(mod)
-    }
-  }
+  logger.info('[LLMFactory] Using Genkit backend')
+  const { createGenkitUnifiedAdapter } = await import('../genkit/adapters/unified-adapter')
+  return createGenkitUnifiedAdapter(payload)
 }
 
 /**
- * Check which providers are available
+ * Check if providers are available (Genkit-based)
  */
 export async function checkProviderAvailability(payload: Payload): Promise<{
   gemini: boolean
   'openai-compatible': boolean
 }> {
-  const { isGeminiApiKeyConfigured } = await import('./gemini')
-  const { isOpenAICompatibleApiKeyConfigured } = await import('./openai-compatible')
-
-  const [gemini, openaiCompatible] = await Promise.all([
-    isGeminiApiKeyConfigured(payload),
-    isOpenAICompatibleApiKeyConfigured(payload),
-  ])
-
-  return { gemini, 'openai-compatible': openaiCompatible }
+  const { isGenkitConfigured } = await import('../genkit/adapters/unified-adapter')
+  const configured = await isGenkitConfigured(payload)
+  return { gemini: configured, 'openai-compatible': configured }
 }
 
 /**
- * Auto-detect the best available provider (respects LLM_PROVIDER preference from env or config)
+ * Auto-detect the best available provider
+ * Always returns GEMINI as Genkit uses Google AI plugin by default
  */
-export async function detectBestProvider(payload: Payload): Promise<LLMProviderType> {
-  // First check if user specified a preference via env var or runtime config
-  const envProvider = await getProviderTypeFromEnv(payload)
-  logger.debug({ preferredProvider: envProvider }, '[LLMFactory] detectBestProvider')
-
-  // Check if the preferred provider is available
-  const availability = await checkProviderAvailability(payload)
-  logger.debug({ availability }, '[LLMFactory] detectBestProvider - availability')
-
-  if (envProvider === LLMProviderType.OPENAI_COMPATIBLE && availability['openai-compatible']) {
-    logger.debug(
-      '[LLMFactory] detectBestProvider - using OPENAI_COMPATIBLE (preferred and available)',
-    )
-    return LLMProviderType.OPENAI_COMPATIBLE
-  }
-
-  if (envProvider === LLMProviderType.OPENAI_COMPATIBLE && !availability['openai-compatible']) {
-    logger.debug(
-      '[LLMFactory] detectBestProvider - OPENAI_COMPATIBLE preferred but NOT available, falling back',
-    )
-  }
-
-  if (envProvider === LLMProviderType.GEMINI && availability.gemini) {
-    return LLMProviderType.GEMINI
-  }
-
-  // Fallback: prefer available provider
-  if (availability['openai-compatible']) {
-    logger.debug('[LLMFactory] detectBestProvider - fallback: using OPENAI_COMPATIBLE (available)')
-    return LLMProviderType.OPENAI_COMPATIBLE
-  }
-  if (availability.gemini) {
-    return LLMProviderType.GEMINI
-  }
-
-  // Default to gemini if none configured
-  logger.debug('[LLMFactory] detectBestProvider - no providers available, defaulting to GEMINI')
+export async function detectBestProvider(_payload: Payload): Promise<LLMProviderType> {
   return LLMProviderType.GEMINI
-}
-
-// Adapter to unify Gemini's interface
-function createGeminiProvider(mod: {
-  generateChatCompletion: UnifiedLLMProvider['generateChatCompletion']
-  generateMultimodalCompletion: UnifiedLLMProvider['generateMultimodalCompletion']
-  generateChatCompletionWithTools: UnifiedLLMProvider['generateChatCompletionWithTools']
-  isGeminiApiKeyConfigured: (payload: Payload) => Promise<boolean>
-  GeminiErrorCode: Record<string, string>
-}): UnifiedLLMProvider {
-  return {
-    generateChatCompletion: mod.generateChatCompletion,
-    generateMultimodalCompletion: mod.generateMultimodalCompletion,
-    generateChatCompletionWithTools: mod.generateChatCompletionWithTools,
-    isConfigured: mod.isGeminiApiKeyConfigured,
-    errorCodes: mod.GeminiErrorCode,
-  }
-}
-
-// Adapter to unify OpenAI-compatible's interface
-function createOpenAIProvider(mod: {
-  generateChatCompletion: UnifiedLLMProvider['generateChatCompletion']
-  generateMultimodalCompletion: UnifiedLLMProvider['generateMultimodalCompletion']
-  generateChatCompletionWithTools: UnifiedLLMProvider['generateChatCompletionWithTools']
-  isOpenAICompatibleApiKeyConfigured: (payload: Payload) => Promise<boolean>
-  OpenAIErrorCode: Record<string, string>
-}): UnifiedLLMProvider {
-  return {
-    generateChatCompletion: mod.generateChatCompletion,
-    generateMultimodalCompletion: mod.generateMultimodalCompletion,
-    generateChatCompletionWithTools: mod.generateChatCompletionWithTools,
-    isConfigured: mod.isOpenAICompatibleApiKeyConfigured,
-    errorCodes: mod.OpenAIErrorCode,
-  }
 }
