@@ -17,24 +17,8 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
   const t = useTranslations('courses')
   const router = useRouterWithLoading()
 
-  // Early return if slug is missing or invalid
-  if (!course.slug || course.slug.trim() === '' || course.slug === '-') {
-    console.log('CourseCard: Filtering out course with invalid slug:', {
-      id: course.id,
-      title: course.title,
-      slug: course.slug,
-    })
-    return null
-  }
-
   const handleCourseSelect = (e: React.MouseEvent) => {
     e.preventDefault()
-
-    // Double-check slug is valid before navigation
-    if (!course.slug || course.slug.trim() === '' || course.slug === '-') {
-      console.error('Cannot navigate: invalid course slug', course)
-      return
-    }
 
     // Update localStorage with the selected course
     const gradeLevel = course.courseLabel || '8'
