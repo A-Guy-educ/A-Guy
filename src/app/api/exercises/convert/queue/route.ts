@@ -59,10 +59,16 @@ export async function POST(request: NextRequest) {
       return errorResponse('UNAUTHORIZED', 'Admin access required', 401)
     }
 
-    const { lessonId, mediaId, extractorPromptId, verifierPromptId } = await request.json()
+    const { lessonId, mediaId, extractorPromptId, verifierPromptId, diagramPromptId } =
+      await request.json()
 
+    // diagramPromptId is optional - Diagram Pass will be skipped if not provided
     if (!lessonId || !mediaId || !extractorPromptId || !verifierPromptId) {
-      return errorResponse('VALIDATION_ERROR', 'All fields are required', 400)
+      return errorResponse(
+        'VALIDATION_ERROR',
+        'lessonId, mediaId, extractorPromptId, and verifierPromptId are required',
+        400,
+      )
     }
 
     // ========== Server-side Tenant Resolution (BEFORE prompt validation) ==========
@@ -136,6 +142,33 @@ export async function POST(request: NextRequest) {
       lessonTenantId,
     )
 
+    // ========== Optional: Fetch and Validate Diagram Generator Prompt ==========
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let diagramPrompt: any = null
+    if (diagramPromptId) {
+      diagramPrompt = await payload.findByID({
+        collection: 'prompts',
+        id: diagramPromptId,
+        depth: 0,
+        overrideAccess: true,
+      })
+
+      if (!diagramPrompt) {
+        return errorResponse(
+          'PROMPT_NOT_FOUND',
+          `Diagram generator prompt not found: ${diagramPromptId}`,
+          400,
+        )
+      }
+
+      // Validate diagram prompt (published, usage, tenant)
+      validatePromptForUsageAndTenant(
+        diagramPrompt as unknown as { status: string; usage: string; tenant: any },
+        'diagram_generator' as any,
+        lessonTenantId,
+      )
+    }
+
     // ========== Prompt Size Validation (after validation passes) ==========
     // Use byteLength for accurate size check (UTF-8 encoding)
     const maxPromptSize = await getPdfConversionMaxPromptSizeBytes(lessonTenantId)
@@ -156,6 +189,7 @@ export async function POST(request: NextRequest) {
     // Use existing hash utility
     const extractorHash = hashTextSha256(extractorPrompt.template)
     const verifierHash = hashTextSha256(verifierPrompt.template)
+    const diagramHash = diagramPrompt ? hashTextSha256(diagramPrompt.template) : null
 
     // ========== Queue the Job ==========
     const job = await payload.jobs.queue({
@@ -163,17 +197,30 @@ export async function POST(request: NextRequest) {
       input: {
         ctx: { lessonId, sourceDocId: mediaId, tenantId: lessonTenantId },
         maxSegmentPages: 2,
-        promptRefs: { extractorPromptId, verifierPromptId },
-        promptSnapshot: { extractor: extractorPrompt.template, verifier: verifierPrompt.template },
-        promptSnapshotHash: { extractor: extractorHash, verifier: verifierHash },
+        promptRefs: {
+          extractorPromptId,
+          verifierPromptId,
+          diagramPromptId: diagramPromptId || null,
+        },
+        promptSnapshot: {
+          extractor: extractorPrompt.template,
+          verifier: verifierPrompt.template,
+          diagramGenerator: diagramPrompt?.template || null,
+        },
+        promptSnapshotHash: {
+          extractor: extractorHash,
+          verifier: verifierHash,
+          diagramGenerator: diagramHash,
+        },
       },
     })
 
     return NextResponse.json({ success: true, jobId: job.id, message: 'Conversion job queued' })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Queue] Error:', error)
-    if (error && typeof error === 'object' && 'code' in error) {
-      return errorResponse(error.code, error.message, 400)
+    if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
+      const typedError = error as { code: string; message: string }
+      return errorResponse(typedError.code as any, typedError.message, 400)
     }
     return errorResponse('INTERNAL_ERROR', 'Internal server error', 500)
   }

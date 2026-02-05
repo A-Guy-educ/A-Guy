@@ -65,9 +65,10 @@ export function buildJobsWhereQuery(lessonId: string, mediaId: string): object {
  * Validate prompt document for expected usage and tenant.
  * Returns void or throws typed error.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validatePromptForUsageAndTenant(
   promptDoc: { status: string; usage: string; tenant: any },
-  expectedUsage: 'extractor' | 'verifier',
+  expectedUsage: 'extractor' | 'verifier' | 'diagram_generator',
   lessonTenantId: string,
 ): void {
   if (promptDoc.status !== 'published') {
@@ -130,6 +131,7 @@ export function normalizeExerciseForHash(extracted: {
  * Parse extractor response - pure string parsing.
  * v2.2 Fix: Handle malformed JSON with escape sequence issues from LLM.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function parseExtractorResponseText(responseText: string): any[] {
   try {
     const jsonMatch =
@@ -303,6 +305,7 @@ export function normalizeExerciseInput(extracted: {
  * Adapter: Convert ExerciseExtractedEnriched to Payload content format
  * Maps to ContentBlockSchema union (LatexBlockSchema, RichTextBlockSchema, etc.)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function toPayloadContent(extracted: {
   title: string
   blocks: Array<{
