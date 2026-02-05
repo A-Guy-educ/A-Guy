@@ -88,6 +88,7 @@ export const Users: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description: 'Courses owned by this user',
+        allowCreate: false, // Don't allow creating new courses from here - select from existing only
       },
     },
     // OAuth fields
