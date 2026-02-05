@@ -1,7 +1,17 @@
+/**
+ * Normalize a URL to always include a scheme
+ */
+function normalizeUrl(url: string): string {
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return `https://${url}`
+  }
+  return url
+}
+
 export const getServerSideURL = () => {
   return (
-    process.env.NEXT_PUBLIC_SERVER_URL ||
-    process.env.VERCEL_URL ||
+    normalizeUrl(process.env.NEXT_PUBLIC_SERVER_URL || '') ||
+    normalizeUrl(process.env.VERCEL_URL || '') ||
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
       : 'http://localhost:3000')
