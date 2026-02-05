@@ -349,8 +349,18 @@ export function isVercelBlobUrl(url: string): boolean {
 
 /**
  * Get the external storage base URL for constructing absolute URLs
+ * Uses VERCEL_PROJECT_PRODUCTION_URL in production, localhost for development
  */
 export async function getExternalStorageUrl(): Promise<string> {
+  // Check for production environment
+  if (process.env.VERCEL === '1' && process.env.VERCEL_ENV === 'production') {
+    // Production: use the production URL
+    const prodUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    if (prodUrl) {
+      return `https://${prodUrl}`
+    }
+  }
+  // Development/other: use localhost
   return 'http://localhost:3000'
 }
 
