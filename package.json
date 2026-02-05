@@ -85,7 +85,8 @@
     "postinstall": "pnpm run generate:types",
     "release": "semantic-release",
     "release:dry-run": "semantic-release --dry-run",
-    "prepare": "husky"
+    "prepare": "husky",
+    "verify": "pnpm tsx scripts/verify.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
