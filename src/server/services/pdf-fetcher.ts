@@ -1,4 +1,5 @@
 import { getPdfBufferFromUrl, isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
+import { fetchBuffer } from '@/infra/utils/http'
 import { PDF_MAX_BYTES } from '@/server/config/constants'
 
 export interface PDFExtractError {
@@ -23,8 +24,8 @@ const PROXY_TO_STAGE: Record<string, string> = {
 
 /**
  * Normalize URL to absolute URL
- * Only returns the URL as-is if it's already absolute (http:// or https://)
- * Throws for relative URLs - use Vercel Blob URLs for PDFs
+ * Returns absolute URLs as-is (Vercel Blob URLs)
+ * For relative URLs, prepends the production server URL
  */
 export async function normalizeToAbsoluteUrl(url: string): Promise<string> {
   // If already absolute URL (http:// or https://), return as-is
@@ -32,11 +33,23 @@ export async function normalizeToAbsoluteUrl(url: string): Promise<string> {
     return url
   }
 
-  // Relative URLs are not supported - use Vercel Blob URLs
-  throw {
-    code: 'RELATIVE_URL_NOT_SUPPORTED',
-    message: `Relative URLs are not supported. Use Vercel Blob URLs. Got: ${url}`,
+  // For relative URLs, prepend the production server URL
+  // Use VERCEL_PROJECT_PRODUCTION_URL or NEXT_PUBLIC_SERVER_URL
+  if (url.startsWith('/')) {
+    let baseUrl: string
+    if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+      baseUrl = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    } else if (process.env.NEXT_PUBLIC_SERVER_URL) {
+      baseUrl = process.env.NEXT_PUBLIC_SERVER_URL
+    } else {
+      // Fallback to localhost for development
+      baseUrl = 'http://localhost:3000'
+    }
+    return `${baseUrl}${url}`
   }
+
+  // Treat as-is for any other case
+  return url
 }
 
 /**
@@ -65,11 +78,26 @@ export async function getPdfBufferFromBlob(
     throw stageError('FETCH_FAILED', 'Media document has no URL')
   }
 
-  // PDFs must use Vercel Blob URLs - fetch directly from blob storage
-  if (!isVercelBlobUrl(media.url)) {
-    throw stageError('NOT_BLOB_URL', `PDF URL must be a Vercel Blob URL. Got: ${media.url}`)
+  let pdfBuffer: Buffer
+
+  if (isVercelBlobUrl(media.url)) {
+    // Vercel Blob URL - fetch directly from blob storage
+    pdfBuffer = await getPdfBufferFromUrl(media.url)
+  } else {
+    // Relative URL or other absolute URL - normalize and fetch
+    const normalizedUrl = await normalizeToAbsoluteUrl(media.url)
+
+    // Build auth headers from request if provided
+    const headers: Record<string, string> = {}
+    if (_req?.headers?.authorization) {
+      headers['Authorization'] = _req.headers.authorization
+    }
+    if (_req?.headers?.cookie) {
+      headers['Cookie'] = _req.headers.cookie
+    }
+
+    pdfBuffer = await fetchBuffer(normalizedUrl, 30000, headers)
   }
-  const pdfBuffer = await getPdfBufferFromUrl(media.url)
 
   // Validate size
   if (pdfBuffer.length > PDF_MAX_BYTES) {
