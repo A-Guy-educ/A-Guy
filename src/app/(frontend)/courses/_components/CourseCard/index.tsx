@@ -6,6 +6,7 @@ import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading
 import { setUserProfile, getUserProfile } from '@/client/state/localStorage/userProfile'
 import type { Course } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
+import { Button } from '@/ui/web/components/button'
 
 interface CourseCardProps {
   course: Course
@@ -44,32 +45,17 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
     router.push('/')
   }
 
-  const getButtonClasses = () => {
-    if (isOwned) {
-      return 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] px-6 py-2.5 rounded-xl'
-    }
-    return 'bg-muted px-6 py-2.5 rounded-xl hover:bg-[hsl(var(--primary-soft))] transition-colors'
-  }
-
-  const getButtonText = () => {
-    if (isOwned) {
-      return t('openCourse')
-    }
-    return t('openCourse')
-  }
-
   const borderClass = isOwned
     ? 'border-2 border-[hsl(var(--primary))]/20'
     : 'border border-transparent hover:border-[hsl(var(--primary-soft))]'
 
   return (
-    <button
-      onClick={handleCourseSelect}
+    <div
       className={cn(
-        'relative bg-card p-6 rounded-[2rem] flex flex-col text-right w-full',
+        'relative bg-card p-6 rounded-[2rem] flex flex-col',
         borderClass,
         'shadow-[0_1px_2px_0_rgba(60,64,67,.3),0_1px_3px_1px_rgba(60,64,67,.15)]',
-        'transition-all active:scale-[0.98] hover:-translate-y-0.5',
+        'transition-all hover:-translate-y-0.5',
       )}
     >
       {isOwned && (
@@ -120,18 +106,19 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
         </div>
       </div>
 
-      <div className="mt-auto flex items-center justify-between pt-6 border-t border-border">
-        {/* Price placeholder - could be added when pricing is implemented */}
-        <span className="text-card-foreground" style={{ fontSize: '20px', fontWeight: 900 }}>
-          {/* ₪149 */}
-        </span>
-        <span
-          className={cn(getButtonClasses(), 'text-primary hover:text-[hsl(var(--primary))]')}
-          style={{ fontSize: '12px', fontWeight: 700 }}
+      <div className="mt-auto pt-6 border-t border-border">
+        <Button
+          onClick={handleCourseSelect}
+          className={cn(
+            'w-full',
+            isOwned
+              ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/20'
+              : 'bg-muted text-primary hover:bg-[hsl(var(--primary-soft))]',
+          )}
         >
-          {getButtonText()}
-        </span>
+          {t('openCourse')}
+        </Button>
       </div>
-    </button>
+    </div>
   )
 }
