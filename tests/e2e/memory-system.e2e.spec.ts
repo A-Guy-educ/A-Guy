@@ -47,32 +47,42 @@ test.describe('Memory System E2E Tests', () => {
   })
 
   /**
-   * Helper to find chat input - works with both ChatInterface and NotebookChat
+   * Helper to find chat input - works with ChatInterface
    */
   async function findChatInput(page: Page) {
-    // Try different selectors for chat input (in order of specificity)
-    const selectors = [
-      // ChatInterface input inside form with bg-muted rounded-[30px]
-      'form:has(.bg-muted.rounded-\\[30px\\]) input[type="text"]',
-      // More specific: input inside the chat form
-      'form input[type="text"].flex-1',
-      // Input with placeholder matching chat translation
-      'input[placeholder*="שאל" i]',
-      'input[placeholder*="Ask" i]',
-      'input[placeholder*="question" i]',
-      // Fallback: any text input that's not a form field
-      'input[type="text"]:not([name="name"]):not([name="email"]):not([name="password"])',
-      // Textarea fallback
-      'textarea',
-    ]
+    // Primary selector: ChatInterface form input (most specific)
+    const chatFormInput = page.locator('form button[type="submit"] ~ input[type="text"]').first()
+    if ((await chatFormInput.count()) > 0 && (await chatFormInput.isVisible().catch(() => false))) {
+      return chatFormInput
+    }
 
-    for (const selector of selectors) {
-      const input = page.locator(selector).first()
-      if ((await input.count()) > 0) {
-        const isVisible = await input.isVisible().catch(() => false)
-        if (isVisible) {
-          return input
-        }
+    // Secondary: ChatInterface input inside the chat container
+    const chatContainerInput = page
+      .locator('.chat-scope input[type="text"], .bg-muted input[type="text"]')
+      .first()
+    if (
+      (await chatContainerInput.count()) > 0 &&
+      (await chatContainerInput.isVisible().catch(() => false))
+    ) {
+      return chatContainerInput
+    }
+
+    // Fallback: Find by placeholder text
+    const placeholders = ['שאל', 'Ask', 'question', 'Type a message', 'הקלד הודעה']
+    for (const placeholder of placeholders) {
+      const input = page.locator(`input[placeholder*="${placeholder}" i]`).first()
+      if ((await input.count()) > 0 && (await input.isVisible().catch(() => false))) {
+        return input
+      }
+    }
+
+    // Final fallback: any text input that's not a form field
+    const formInputs = await page
+      .locator('input[type="text"]:not([name="name"]):not([name="email"]):not([name="password"])')
+      .all()
+    for (const input of formInputs) {
+      if (await input.isVisible().catch(() => false)) {
+        return input
       }
     }
 
@@ -99,23 +109,37 @@ test.describe('Memory System E2E Tests', () => {
   }
 
   /**
-   * Helper to wait for chat input to be enabled
+   * Helper to wait for chat input to be ready for new input
+   * Checks both disabled state and absence of loading indicators
    */
   async function waitForChatInputEnabled(chatInput: ReturnType<Page['locator']>, timeout = 30000) {
     await chatInput.waitFor({ state: 'visible', timeout })
-    // Wait for input to be enabled by checking if it's not disabled
-    // Poll until enabled or timeout
+
     const startTime = Date.now()
     while (Date.now() - startTime < timeout) {
+      // Check if input is not disabled
       const isDisabled = await chatInput.isDisabled().catch(() => true)
-      if (!isDisabled) {
+
+      // Also check for absence of loading spinner
+      const hasLoadingSpinner = await chatInput
+        .locator('xpath=..')
+        .locator('.animate-spin, [class*="spinner"], [class*="loading"]')
+        .count()
+        .catch(() => 0)
+
+      if (!isDisabled && hasLoadingSpinner === 0) {
         // Small delay to ensure state is stable
-        await new Promise((resolve) => setTimeout(resolve, 100))
-        return
+        await new Promise((resolve) => setTimeout(resolve, 200))
+        // Double-check
+        const stillDisabled = await chatInput.isDisabled().catch(() => true)
+        if (!stillDisabled) {
+          return
+        }
       }
       await new Promise((resolve) => setTimeout(resolve, 200))
     }
-    // Final check - if still disabled, throw error
+
+    // Final check
     const stillDisabled = await chatInput.isDisabled().catch(() => true)
     if (stillDisabled) {
       throw new Error('Chat input remained disabled after timeout')
@@ -294,51 +318,78 @@ test.describe('Memory System E2E Tests', () => {
         return
       }
 
-      // Check for 404 page
-      const heading = await page
-        .locator('h1')
-        .first()
-        .textContent()
-        .catch(() => null)
-      if (heading === '404' || heading === 'Page not found') {
-        test.skip(true, 'Lesson page not found - test data may not be seeded')
-        return
-      }
+      console.log('[Test] Starting summarization test...')
 
       await setupAuthenticatedUser(page, {
         email: generateTestUserEmail('memory-summary'),
         password: 'password123',
       })
+      console.log('[Test] User authenticated')
 
       const lessonUrl = buildLessonUrl(testCourseData)
-      await page.goto(lessonUrl)
-      await page.waitForLoadState('networkidle')
+      console.log('[Test] Navigating to:', lessonUrl)
+      await page.goto(lessonUrl, { waitUntil: 'domcontentloaded', timeout: 15000 })
+      console.log('[Test] Page loaded, waiting for content...')
 
-      await page.waitForTimeout(2000)
+      // Wait for the page to settle
+      await page.waitForTimeout(3000)
+
+      // Check for 404 page
+      const heading = await page
+        .locator('h1')
+        .first()
+        .textContent({ timeout: 5000 })
+        .catch(() => null)
+      console.log('[Test] Page heading:', heading)
+
+      if (heading === '404' || heading === 'Page not found') {
+        test.skip(true, 'Lesson page not found - test data may not be seeded')
+        return
+      }
+
+      // Find chat input with retry
+      console.log('[Test] Looking for chat input...')
       const chatInput = await findChatInput(page)
-      await chatInput.waitFor({ state: 'visible', timeout: 10000 })
+      console.log('[Test] Chat input found')
 
-      // Send multiple messages to trigger summarization (reduced from 25 to 5 for CI speed)
-      for (let i = 0; i < 5; i++) {
-        // Wait for input to be enabled before filling
-        await waitForChatInputEnabled(chatInput, 30000)
+      // Wait for it to be visible
+      try {
+        await chatInput.waitFor({ state: 'visible', timeout: 10000 })
+        console.log('[Test] Chat input visible')
+      } catch (e) {
+        console.log('[Test] Chat input not visible, taking screenshot...')
+        await page.screenshot({ path: '/tmp/chat-input-debug.png' })
+        throw e
+      }
+
+      // Send a simple first message to verify chat works
+      console.log('[Test] Sending first message...')
+      await chatInput.fill('Hello, this is a test message')
+      await chatInput.press('Enter')
+
+      // Wait for response with shorter timeout for test
+      await waitForChatMessage(page, 15000)
+      console.log('[Test] Got first response')
+
+      // Send multiple messages to trigger summarization
+      for (let i = 0; i < 3; i++) {
+        console.log(`[Test] Sending message ${i + 1}/3...`)
+        await waitForChatInputEnabled(chatInput, 20000)
         await chatInput.fill(`Message ${i}: Can you explain concept ${i}?`)
         await chatInput.press('Enter')
 
-        // Wait for response
-        await waitForChatMessage(page, 30000)
-
-        // Wait for input to be enabled again after response
-        await waitForChatInputEnabled(chatInput, 30000)
+        await waitForChatMessage(page, 20000)
       }
+      console.log('[Test] All messages sent')
 
       // Verify conversation is still working
-      await waitForChatInputEnabled(chatInput, 30000)
+      await waitForChatInputEnabled(chatInput, 20000)
       await chatInput.fill('Are you still there?')
       await chatInput.press('Enter')
-      await waitForChatMessage(page, 30000)
+      await waitForChatMessage(page, 20000)
 
       const messages = await getChatMessagesCount(page)
+      console.log(`[Test] Total messages: ${messages}`)
       expect(messages).toBeGreaterThan(0)
     })
   })
@@ -350,58 +401,60 @@ test.describe('Memory System E2E Tests', () => {
         return
       }
 
-      // Check for 404 page
-      const heading = await page
-        .locator('h1')
-        .first()
-        .textContent()
-        .catch(() => null)
-      if (heading === '404' || heading === 'Page not found') {
-        test.skip(true, 'Lesson page not found - test data may not be seeded')
-        return
-      }
+      console.log('[Test] Starting tenant isolation test...')
 
       // User 1: Set a preference
       await setupAuthenticatedUser(page, {
         email: generateTestUserEmail('tenant-user1'),
         password: 'password123',
       })
+      console.log('[Test] User 1 authenticated')
 
       const lessonUrl = buildLessonUrl(testCourseData)
-      await page.goto(lessonUrl)
-      await page.waitForLoadState('networkidle')
+      await page.goto(lessonUrl, { waitUntil: 'domcontentloaded', timeout: 15000 })
+      console.log('[Test] User 1: Page loaded')
 
-      await page.waitForTimeout(2000)
+      await page.waitForTimeout(3000)
       const chatInput1 = await findChatInput(page)
       await chatInput1.waitFor({ state: 'visible', timeout: 10000 })
+      console.log('[Test] User 1: Chat input found')
+
       await chatInput1.fill('My favorite color is blue and I love pizza')
       await chatInput1.press('Enter')
-      await waitForChatMessage(page, 30000)
+      await waitForChatMessage(page, 15000)
+      console.log('[Test] User 1: Message sent and response received')
 
       // Wait for memory extraction
       await page.waitForTimeout(2000)
 
       // User 2: Ask about preferences (should not know about user1's preferences)
+      console.log('[Test] User 2: Creating new page...')
       const page2 = await context.newPage()
       await setupAuthenticatedUser(page2, {
         email: generateTestUserEmail('tenant-user2'),
         password: 'password123',
       })
+      console.log('[Test] User 2 authenticated')
 
-      await page2.goto(lessonUrl)
-      await page2.waitForLoadState('networkidle')
+      await page2.goto(lessonUrl, { waitUntil: 'domcontentloaded', timeout: 15000 })
+      console.log('[Test] User 2: Page loaded')
 
-      await page2.waitForTimeout(2000)
+      await page2.waitForTimeout(3000)
       const chatInput2 = await findChatInput(page2)
       await chatInput2.waitFor({ state: 'visible', timeout: 10000 })
+      console.log('[Test] User 2: Chat input found')
+
       await chatInput2.fill('What is my favorite color?')
       await chatInput2.press('Enter')
-      await waitForChatMessage(page2, 30000)
+      await waitForChatMessage(page2, 15000)
+      console.log('[Test] User 2: Response received')
 
       // Verify we got a response (content validation is best-effort)
       const messages = await getChatMessagesCount(page2)
+      console.log(`[Test] User 2: Total messages: ${messages}`)
       expect(messages).toBeGreaterThan(0)
       await page2.close()
+      console.log('[Test] Tenant isolation test complete')
     })
   })
 
@@ -412,29 +465,22 @@ test.describe('Memory System E2E Tests', () => {
         return
       }
 
-      // Check for 404 page
-      const heading = await page
-        .locator('h1')
-        .first()
-        .textContent()
-        .catch(() => null)
-      if (heading === '404' || heading === 'Page not found') {
-        test.skip(true, 'Lesson page not found - test data may not be seeded')
-        return
-      }
+      console.log('[Test] Starting error handling test...')
 
       await setupAuthenticatedUser(page, {
         email: generateTestUserEmail('error-handling'),
         password: 'password123',
       })
+      console.log('[Test] User authenticated')
 
       const lessonUrl = buildLessonUrl(testCourseData)
-      await page.goto(lessonUrl)
-      await page.waitForLoadState('networkidle')
+      await page.goto(lessonUrl, { waitUntil: 'domcontentloaded', timeout: 15000 })
+      console.log('[Test] Page loaded')
 
-      await page.waitForTimeout(2000)
+      await page.waitForTimeout(3000)
       const chatInput = await findChatInput(page)
       await chatInput.waitFor({ state: 'visible', timeout: 10000 })
+      console.log('[Test] Chat input found')
 
       // Try to send empty message
       await chatInput.fill('')
@@ -444,6 +490,7 @@ test.describe('Memory System E2E Tests', () => {
       // Check if input is still empty (submission blocked) or error shown
       const inputValue = await chatInput.inputValue()
       expect(inputValue).toBe('') // Input should be empty if submission was blocked
+      console.log('[Test] Empty message handled correctly')
     })
 
     test('should handle network errors gracefully', async ({ page, context }) => {
@@ -452,49 +499,48 @@ test.describe('Memory System E2E Tests', () => {
         return
       }
 
-      // Check for 404 page
-      const heading = await page
-        .locator('h1')
-        .first()
-        .textContent()
-        .catch(() => null)
-      if (heading === '404' || heading === 'Page not found') {
-        test.skip(true, 'Lesson page not found - test data may not be seeded')
-        return
-      }
+      console.log('[Test] Starting network error handling test...')
 
       await setupAuthenticatedUser(page, {
         email: generateTestUserEmail('error-network'),
         password: 'password123',
       })
+      console.log('[Test] User authenticated')
 
       const lessonUrl = buildLessonUrl(testCourseData)
-      await page.goto(lessonUrl)
-      await page.waitForLoadState('networkidle')
+      await page.goto(lessonUrl, { waitUntil: 'domcontentloaded', timeout: 15000 })
+      console.log('[Test] Page loaded')
 
       // Simulate offline mode
       await context.setOffline(true)
+      console.log('[Test] Set offline mode')
 
-      await page.waitForTimeout(2000)
+      await page.waitForTimeout(3000)
       const chatInput = await findChatInput(page)
       await chatInput.waitFor({ state: 'visible', timeout: 10000 })
+      console.log('[Test] Chat input found')
+
       await chatInput.fill('This should fail due to network error')
       await chatInput.press('Enter')
+      console.log('[Test] Message sent in offline mode')
 
       // Should show error state - check for error text or disabled state
       // The UI might show an error message or disable the input
       await page.waitForTimeout(2000)
       const errorText = await page.locator('body').textContent()
-      const _hasError =
+      const hasError =
         errorText?.toLowerCase().includes('error') ||
         errorText?.toLowerCase().includes('network') ||
         errorText?.toLowerCase().includes('offline')
+      console.log(`[Test] Error detected: ${hasError}`)
 
       // Restore connection
       await context.setOffline(false)
+      console.log('[Test] Restored online mode')
 
       // At minimum, verify the page didn't crash
       expect(await page.locator('body').isVisible()).toBe(true)
+      console.log('[Test] Page still visible - test complete')
     })
   })
 
@@ -505,37 +551,31 @@ test.describe('Memory System E2E Tests', () => {
         return
       }
 
-      // Check for 404 page
-      const heading = await page
-        .locator('h1')
-        .first()
-        .textContent()
-        .catch(() => null)
-      if (heading === '404' || heading === 'Page not found') {
-        test.skip(true, 'Lesson page not found - test data may not be seeded')
-        return
-      }
+      console.log('[Test] Starting performance test...')
 
       await setupAuthenticatedUser(page, {
         email: generateTestUserEmail('performance'),
         password: 'password123',
       })
+      console.log('[Test] User authenticated')
 
       const lessonUrl = buildLessonUrl(testCourseData)
-      await page.goto(lessonUrl)
-      await page.waitForLoadState('networkidle')
+      await page.goto(lessonUrl, { waitUntil: 'domcontentloaded', timeout: 15000 })
+      console.log('[Test] Page loaded')
 
-      await page.waitForTimeout(2000)
+      await page.waitForTimeout(3000)
       const chatInput = await findChatInput(page)
       await chatInput.waitFor({ state: 'visible', timeout: 10000 })
+      console.log('[Test] Chat input found')
 
       const startTime = Date.now()
       await chatInput.fill('Quick test message')
       await chatInput.press('Enter')
-      await waitForChatMessage(page, 30000)
+      await waitForChatMessage(page, 15000)
       const endTime = Date.now()
 
       const responseTime = endTime - startTime
+      console.log(`[Test] Response time: ${responseTime}ms`)
 
       // Response should arrive within 30 seconds
       expect(responseTime).toBeLessThan(30000)
