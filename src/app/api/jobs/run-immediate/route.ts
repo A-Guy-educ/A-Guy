@@ -98,8 +98,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`[run-immediately] Executing job ${jobId} synchronously`)
 
-    // v2.1 Fix: Load runtime config before job execution
-    // This ensures getExternalStorageUrl() works correctly when fetching PDFs
+    // Load runtime config before job execution
     console.log('[run-immediately] Loading runtime config...')
     await loadRuntimeConfig(payload)
     console.log('[run-immediately] Runtime config loaded')

@@ -348,25 +348,6 @@ export function isVercelBlobUrl(url: string): boolean {
 }
 
 /**
- * Get the external storage base URL for constructing absolute URLs
- * Uses VERCEL_PROJECT_PRODUCTION_URL in production, localhost for development
- */
-export async function getExternalStorageUrl(): Promise<string> {
-  // Use NEXT_PUBLIC_SERVER_URL if set (allows override)
-  if (process.env.NEXT_PUBLIC_SERVER_URL) {
-    return process.env.NEXT_PUBLIC_SERVER_URL
-  }
-
-  // Use VERCEL_PROJECT_PRODUCTION_URL in production
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-  }
-
-  // Fallback to localhost for development
-  return 'http://localhost:3000'
-}
-
-/**
  * Helper function to extract the pathname from a Vercel Blob URL
  */
 export function getBlobPathname(url: string): string {
