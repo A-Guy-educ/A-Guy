@@ -594,6 +594,9 @@ export interface Media {
     | number
     | boolean
     | null;
+  folder?: (string | null) | FolderInterface;
+  updatedAt: string;
+  createdAt: string;
   url?: string | null;
   thumbnailURL?: string | null;
   filename?: string | null;
@@ -603,9 +606,6 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
-  folder?: (string | null) | FolderInterface;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1255,6 +1255,26 @@ export interface Exercise {
    * SHA256 hash for deduplication
    */
   contentHash?: string | null;
+  /**
+   * Source-based identity key (tenant:lesson:doc:pages:ordinal:version)
+   */
+  idempotencyKey?: string | null;
+  /**
+   * Extraction spec version for idempotency key stability
+   */
+  specVersion?: string | null;
+  /**
+   * Additional extraction metadata (segmentIndex, itemOrdinal)
+   */
+  extractionMeta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2324,6 +2344,9 @@ export interface ExercisesSelect<T extends boolean = true> {
   sourcePageEnd?: T;
   sourceOrderInSegment?: T;
   contentHash?: T;
+  idempotencyKey?: T;
+  specVersion?: T;
+  extractionMeta?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2433,6 +2456,9 @@ export interface MediaSelect<T extends boolean = true> {
   retentionPolicy?: T;
   expiresAt?: T;
   sizes?: T;
+  folder?: T;
+  updatedAt?: T;
+  createdAt?: T;
   url?: T;
   thumbnailURL?: T;
   filename?: T;
@@ -2442,9 +2468,6 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
-  folder?: T;
-  updatedAt?: T;
-  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

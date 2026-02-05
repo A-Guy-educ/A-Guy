@@ -1,7 +1,6 @@
 import {
   getPdfConversionMaxExercisesPerSegment,
   getPdfConversionMaxSegmentPages,
-  getPdfConversionUseIdempotencyUpsert,
 } from '@/infra/config/system-params'
 import { PDF_MAX_BYTES } from '@/server/config/constants'
 import { getPdfBufferFromBlob } from '@/server/services/pdf-fetcher'
@@ -115,8 +114,7 @@ export const pdfToExercisesTask = {
       }
 
       // PASS 2: Extract + Verify + Persist
-      // Stage 4: Check feature flag for idempotency-based upsert
-      const _useIdempotencyUpsert = await getPdfConversionUseIdempotencyUpsert(tenantId)
+      // Idempotency-based upsert is always enabled (no feature flag)
 
       for (let i = 0; i < segments.length; i++) {
         output.currentSegmentIndex = i
@@ -143,10 +141,9 @@ export const pdfToExercisesTask = {
             specVersion: SPEC_VERSION,
           })
 
-          // Perform in-memory dedup
-          const dedupResult = deduplicateByIdempotencyKey(
-            exercises,
-            computeIdempotencyKeyForExercise,
+          // Perform in-memory dedup using system ordinal (loop index)
+          const dedupResult = deduplicateByIdempotencyKey(exercises, (exercise, systemIndex) =>
+            computeIdempotencyKeyForExercise(exercise, systemIndex),
           )
           const deduplicatedExercises = dedupResult.exercises
 
@@ -157,17 +154,15 @@ export const pdfToExercisesTask = {
             )
           }
 
-          // Track idempotency keys for observability
-          const proposedIdempotencyKeys: string[] = deduplicatedExercises.map(
-            computeIdempotencyKeyForExercise,
-          )
-
+          // Track idempotency keys for observability using system ordinal
+          const proposedIdempotencyKeys: string[] = []
           let created = 0
           let deduped = 0
 
-          for (const exercise of deduplicatedExercises) {
-            // Stage 4: Compute idempotency key for upsert
-            const idempotencyKey = computeIdempotencyKeyForExercise(exercise)
+          for (let exIndex = 0; exIndex < deduplicatedExercises.length; exIndex++) {
+            const exercise = deduplicatedExercises[exIndex]
+            // Stage 4: Compute idempotency key for upsert using system ordinal (loop index)
+            const idempotencyKey = computeIdempotencyKeyForExercise(exercise, exIndex)
             proposedIdempotencyKeys.push(idempotencyKey)
 
             // Log idempotency key with content hash for correlation (observability)
