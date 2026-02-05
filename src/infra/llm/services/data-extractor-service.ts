@@ -2,13 +2,14 @@
  * Data extraction service using AI models
  * Extracts structured data from images (questions, options, answers)
  *
- * Uses factory pattern for provider-agnostic model selection.
- * Supports Gemini and OpenAI-compatible providers via getLLMProvider.
+ * Migrated to Genkit unified adapter for LLM operations.
  */
 import type { Payload } from 'payload'
-import type { AIModel } from '../models'
+import { createGenkitUnifiedAdapter } from '../genkit/adapters/unified-adapter'
+import type { AIModel, AIModelKey } from '../models'
+import { getModelRegistryEntry, getProviderModelName } from '../models'
 import { SIMPLE_TEXT_QUESTION_PROMPT } from '../prompts/simple-text-question'
-import { detectBestProvider, getLLMProvider, getProviderModelConfig } from '../providers/factory'
+import { LLMProviderType } from '../providers/types'
 import { optimizeImageForAI } from './image-optimizer-service'
 
 export interface ImageToExerciseInput {
@@ -51,16 +52,15 @@ export async function extractFromImage(
     // Optimize image
     const optimizedImage = await optimizeImageForAI(input.imageBuffer)
 
-    // Detect best available provider and get model config
-    const providerType = await detectBestProvider(payload)
-    const provider = await getLLMProvider(payload, { type: providerType })
-    modelConfig = getProviderModelConfig(providerType, 'IMAGE_TO_EXERCISE')
+    // Get Genkit-backed unified adapter (replaces factory pattern)
+    const adapter = await createGenkitUnifiedAdapter(payload)
+    modelConfig = resolveModelConfig('IMAGE_TO_EXERCISE')
 
     // Prepare multimodal input
     const prompt = `${SIMPLE_TEXT_QUESTION_PROMPT}\n\nExtract the question, options (A, B, C, D), correct answer, and explanation from this image. Return JSON with: question, options[], correctAnswer (index), explanation(optional).`
 
-    // Generate content using unified provider interface
-    const result = await provider.generateMultimodalCompletion(
+    // Generate content using Genkit adapter
+    const result = await adapter.generateMultimodalCompletion(
       {
         prompt,
         model: modelConfig,
@@ -127,6 +127,17 @@ export async function extractFromImage(
         imageSizeBytes: 0,
       },
     }
+  }
+}
+
+/**
+ * Resolve model config from MODEL_REGISTRY (mirrors getProviderModelConfig)
+ */
+function resolveModelConfig(modelKey: AIModelKey): AIModel {
+  const entry = getModelRegistryEntry(modelKey)
+  return {
+    name: getProviderModelName(LLMProviderType.GEMINI, modelKey),
+    ...entry,
   }
 }
 

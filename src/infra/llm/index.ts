@@ -8,16 +8,8 @@
  * - Auto-grading assistance
  */
 
-// Provider exports (new location)
-export {
-  GeminiError,
-  GeminiErrorCode,
-  generateChatCompletion,
-  isGeminiApiKeyConfigured,
-  type GenerateChatInput,
-  type GenerateChatOutput,
-  type ChatMessage as ProviderChatMessage,
-} from './providers/gemini'
+// Genkit-based provider exports
+export { createGenkitUnifiedAdapter, isGenkitConfigured } from './genkit'
 
 // Provider factory for runtime provider switching
 export {
@@ -29,6 +21,9 @@ export {
   type LLMProviderConfig,
   type UnifiedLLMProvider,
 } from './providers/factory'
+
+// Shared error handling
+export { createErrorClassifier, LLMError, LLMErrorCode } from './providers/shared/errors'
 
 // Model config - centralized from models.ts
 export {
