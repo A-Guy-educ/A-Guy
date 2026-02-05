@@ -427,6 +427,14 @@ export interface User {
   id: string;
   name?: string | null;
   role: 'admin' | 'student';
+  /**
+   * User membership tier
+   */
+  tier: 'free' | 'standard' | 'premium';
+  /**
+   * Courses owned by this user
+   */
+  ownedCourses?: (string | Course)[] | null;
   googleSub?: string | null;
   verifiedEmail?: string | null;
   registrationMethod?: ('google' | 'email') | null;
@@ -475,6 +483,10 @@ export interface Course {
    * Detailed description of the course
    */
   description?: string | null;
+  /**
+   * Course price in ILS (₪). Leave empty for free courses.
+   */
+  price?: number | null;
   /**
    * Upload course-related media files (images, videos, documents, etc.)
    */
@@ -2248,6 +2260,7 @@ export interface CoursesSelect<T extends boolean = true> {
   courseLabel?: T;
   title?: T;
   description?: T;
+  price?: T;
   mediaFiles?: T;
   order?: T;
   status?: T;
@@ -2370,6 +2383,8 @@ export interface ExerciseAssetsSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
+  tier?: T;
+  ownedCourses?: T;
   googleSub?: T;
   verifiedEmail?: T;
   registrationMethod?: T;

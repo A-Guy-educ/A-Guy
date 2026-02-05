@@ -28,7 +28,7 @@ export const Users: CollectionConfig = {
     update: adminOrSelf, // Admins can update all, users can update their own
   },
   admin: {
-    defaultColumns: ['name', 'email', 'role'],
+    defaultColumns: ['name', 'email', 'role', 'tier'],
     useAsTitle: 'name',
   },
   auth: {
@@ -63,6 +63,31 @@ export const Users: CollectionConfig = {
       },
       admin: {
         position: 'sidebar',
+      },
+    },
+    {
+      name: 'tier',
+      type: 'select',
+      required: true,
+      defaultValue: 'free',
+      options: [
+        { label: 'Free', value: 'free' },
+        { label: 'Standard', value: 'standard' },
+        { label: 'Premium', value: 'premium' },
+      ],
+      admin: {
+        position: 'sidebar',
+        description: 'User membership tier',
+      },
+    },
+    {
+      name: 'ownedCourses',
+      type: 'relationship',
+      relationTo: 'courses',
+      hasMany: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Courses owned by this user',
       },
     },
     // OAuth fields

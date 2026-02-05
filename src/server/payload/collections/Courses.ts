@@ -80,6 +80,15 @@ export const Courses: CollectionConfig = {
       },
     },
     {
+      name: 'price',
+      type: 'number',
+      required: false,
+      min: 0,
+      admin: {
+        description: 'Course price in ILS (₪). Leave empty for free courses.',
+      },
+    },
+    {
       name: 'mediaFiles',
       type: 'upload',
       relationTo: 'media',
