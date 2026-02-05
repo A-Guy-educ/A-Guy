@@ -19,6 +19,11 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
 
   // Early return if slug is missing or invalid
   if (!course.slug || course.slug.trim() === '' || course.slug === '-') {
+    console.log('CourseCard: Filtering out course with invalid slug:', {
+      id: course.id,
+      title: course.title,
+      slug: course.slug,
+    })
     return null
   }
 
