@@ -6,17 +6,6 @@ import { MembershipPlans } from './_components/MembershipPlans'
 export default async function CoursesPage() {
   const courses = await queryPublishedCourses()
 
-  // Debug: Log course info
-  console.log('Total courses fetched:', courses.length)
-  courses.forEach((course, idx) => {
-    console.log(`Course ${idx + 1}:`, {
-      id: course.id,
-      title: course.title,
-      slug: course.slug,
-      courseLabel: course.courseLabel,
-    })
-  })
-
   return (
     <div className="min-h-screen text-card-foreground antialiased" dir="rtl">
       {/* Store Header */}
