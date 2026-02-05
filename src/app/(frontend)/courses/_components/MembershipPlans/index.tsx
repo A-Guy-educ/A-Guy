@@ -1,6 +1,6 @@
 'use client'
 
-import { PlanCard } from './PlanCard'
+import { PlanCard } from '../PlanCard'
 import { useTranslations } from '@/ui/web/providers/I18n'
 
 export function MembershipPlans() {
