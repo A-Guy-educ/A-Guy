@@ -1,10 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowRight, Telescope } from 'lucide-react'
 import { PlanCard } from './_components/PlanCard'
 import { CourseCard } from './_components/CourseCard'
-import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { useTranslations } from '@/ui/web/providers/I18n'
 
 export default function ShopPage() {
@@ -30,7 +28,7 @@ export default function ShopPage() {
       courseCount: {
         number: 1,
         text: t('plans.free.courseCount'),
-        color: 'font-bold text-blue-600',
+        color: 'font-bold text-[hsl(var(--shop-badge-blue-dark))]',
         icon: 'book' as const,
       },
       buttonText: t('plans.free.currentPlan'),
@@ -54,7 +52,7 @@ export default function ShopPage() {
       courseCount: {
         number: 1,
         text: t('plans.standard.courseCount'),
-        color: 'font-bold text-blue-600',
+        color: 'font-bold text-[hsl(var(--shop-badge-blue-dark))]',
         icon: 'book' as const,
       },
       buttonText: t('plans.standard.selectPlan'),
@@ -67,7 +65,7 @@ export default function ShopPage() {
       price: 179,
       period: t('perMonth'),
       badge: t('plans.premium.badge'),
-      badgeColor: 'bg-[#8B1D25] font-black',
+      badgeColor: 'bg-[hsl(var(--shop-primary))] font-black',
       features: [
         {
           icon: 'check' as const,
@@ -85,7 +83,7 @@ export default function ShopPage() {
       courseCount: {
         number: 3,
         text: t('plans.premium.courseCount'),
-        color: 'font-bold text-[#8B1D25]',
+        color: 'font-bold text-[hsl(var(--shop-primary))]',
         icon: 'layers' as const,
       },
       buttonText: t('plans.premium.joinNow'),
@@ -97,35 +95,35 @@ export default function ShopPage() {
   const middleSchoolCourses = [
     {
       badge: t('courses.grade7'),
-      badgeColor: 'text-blue-500',
+      badgeColor: 'text-[hsl(var(--shop-badge-blue))]',
       title: t('courses.mathBasics'),
       description: t('courses.grade7Description'),
       price: 149,
       icon: 'book' as const,
-      iconBgColor: 'bg-blue-50',
+      iconBgColor: 'bg-[hsl(var(--shop-badge-blue-bg))]',
       buttonText: t('courses.purchaseCourse'),
       buttonStyle: 'purchase' as const,
     },
     {
       badge: t('courses.grade8'),
-      badgeColor: 'text-blue-500',
+      badgeColor: 'text-[hsl(var(--shop-badge-blue))]',
       title: t('courses.mathBasics'),
       description: t('courses.grade8Description'),
       price: 149,
       icon: 'check' as const,
-      iconBgColor: 'bg-green-50',
+      iconBgColor: 'bg-[hsl(var(--shop-success-bg))]',
       buttonText: t('courses.purchasedSuccessfully'),
       buttonStyle: 'owned' as const,
       isOwned: true,
     },
     {
       badge: t('courses.grade9'),
-      badgeColor: 'text-blue-500',
+      badgeColor: 'text-[hsl(var(--shop-badge-blue))]',
       title: t('courses.mathBasics'),
       description: t('courses.grade9Description'),
       price: 159,
       icon: 'graduation' as const,
-      iconBgColor: 'bg-blue-50',
+      iconBgColor: 'bg-[hsl(var(--shop-badge-blue-bg))]',
       buttonText: t('courses.purchaseCourse'),
       buttonStyle: 'purchase' as const,
     },
@@ -134,34 +132,34 @@ export default function ShopPage() {
   const highSchoolCourses = [
     {
       badge: 'כיתה י\' • 3 יח"ל',
-      badgeColor: 'text-red-500',
+      badgeColor: 'text-[hsl(var(--shop-badge-red))]',
       title: t('courses.questionnaire172'),
       description: t('courses.questionnaire172Description'),
       price: 199,
       icon: 'book' as const,
-      iconBgColor: 'bg-red-50',
+      iconBgColor: 'bg-[hsl(var(--shop-badge-red-bg))]',
       buttonText: t('courses.purchaseCourse'),
       buttonStyle: 'purchase' as const,
     },
     {
       badge: 'כיתה י"א • 4 יח"ל',
-      badgeColor: 'text-orange-500',
+      badgeColor: 'text-[hsl(var(--shop-badge-orange))]',
       title: t('courses.questionnaire471'),
       description: t('courses.questionnaire471Description'),
       price: 279,
       icon: 'book' as const,
-      iconBgColor: 'bg-orange-50',
+      iconBgColor: 'bg-[hsl(var(--shop-badge-orange-bg))]',
       buttonText: t('courses.purchaseCourse'),
       buttonStyle: 'purchase' as const,
     },
     {
       badge: 'כיתה י"ב • 5 יח"ל',
-      badgeColor: 'text-purple-500',
+      badgeColor: 'text-[hsl(var(--shop-badge-purple))]',
       title: t('courses.questionnaire572'),
       description: t('courses.questionnaire572Description'),
       price: 299,
       icon: 'book' as const,
-      iconBgColor: 'bg-purple-50',
+      iconBgColor: 'bg-[hsl(var(--shop-badge-purple-bg))]',
       buttonText: t('courses.purchaseCourse'),
       buttonStyle: 'purchase' as const,
     },
@@ -169,28 +167,6 @@ export default function ShopPage() {
 
   return (
     <div className="min-h-screen text-gray-800 antialiased" dir="rtl">
-      {/* Navbar */}
-      <nav className="bg-white border-b border-gray-100 py-2 px-6 md:px-12 flex items-center justify-between sticky top-0 z-50">
-        <div className="flex items-center gap-4">
-          <SystemLink
-            href="/"
-            className="flex items-center gap-2 text-gray-500 hover:text-[#8B1D25] transition-colors text-sm"
-          >
-            <ArrowRight className="w-4 h-4" />
-            <span>{t('backToLearning')}</span>
-          </SystemLink>
-        </div>
-
-        <div className="flex items-center gap-2 cursor-pointer">
-          <span className="text-[#8B1D25]" style={{ fontSize: '24px', fontWeight: 900 }}>
-            buyguy
-          </span>
-          <div className="w-8 h-8 bg-[#5A7D5B] rounded-full flex items-center justify-center shadow-sm">
-            <Telescope className="w-5 h-5 text-white" />
-          </div>
-        </div>
-      </nav>
-
       {/* Store Header */}
       <header className="bg-white border-b border-gray-100 pt-12 pb-10">
         <div className="max-w-5xl mx-auto px-6 text-center">
@@ -243,7 +219,7 @@ export default function ShopPage() {
                 onClick={() => setActiveCatalog('middle')}
                 className={`flex-1 py-3 rounded-xl transition-all ${
                   activeCatalog === 'middle'
-                    ? 'bg-white text-[#8B1D25] shadow-sm'
+                    ? 'bg-white text-[hsl(var(--shop-primary))] shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
                 style={{
@@ -257,7 +233,7 @@ export default function ShopPage() {
                 onClick={() => setActiveCatalog('high')}
                 className={`flex-1 py-3 rounded-xl transition-all ${
                   activeCatalog === 'high'
-                    ? 'bg-white text-[#8B1D25] shadow-sm'
+                    ? 'bg-white text-[hsl(var(--shop-primary))] shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
                 style={{
@@ -301,13 +277,13 @@ export default function ShopPage() {
             className="flex justify-center gap-6 text-gray-400"
             style={{ fontSize: '14px', fontWeight: 500 }}
           >
-            <a href="#" className="hover:text-[#8B1D25] transition-colors">
+            <a href="#" className="hover:text-[hsl(var(--shop-primary))] transition-colors">
               {t('footer.terms')}
             </a>
-            <a href="#" className="hover:text-[#8B1D25] transition-colors">
+            <a href="#" className="hover:text-[hsl(var(--shop-primary))] transition-colors">
               {t('footer.privacy')}
             </a>
-            <a href="#" className="hover:text-[#8B1D25] transition-colors">
+            <a href="#" className="hover:text-[hsl(var(--shop-primary))] transition-colors">
               {t('footer.contact')}
             </a>
           </div>

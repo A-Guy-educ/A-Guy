@@ -56,7 +56,7 @@ export function PlanCard({
       case 'standard':
         return 'w-full py-4 rounded-2xl bg-gray-900 text-white shadow-lg hover:opacity-90'
       case 'premium':
-        return 'w-full py-4 rounded-2xl bg-[#8B1D25] text-white shadow-xl hover:scale-[1.02] transition-transform'
+        return 'w-full py-4 rounded-2xl bg-[hsl(var(--shop-primary))] text-white shadow-xl hover:scale-[1.02] transition-transform'
       default:
         return 'w-full py-4 rounded-2xl bg-gray-900 text-white'
     }
@@ -67,9 +67,9 @@ export function PlanCard({
       case 'x':
         return <XCircle className="w-4 h-4 text-gray-200" />
       case 'check':
-        return <CheckCircle2 className="w-4 h-4 text-green-500" />
+        return <CheckCircle2 className="w-4 h-4 text-[hsl(var(--shop-success))]" />
       case 'help':
-        return <HelpCircle className="w-4 h-4 text-yellow-500" />
+        return <HelpCircle className="w-4 h-4 text-[hsl(var(--shop-warning))]" />
       default:
         return null
     }
@@ -89,7 +89,7 @@ export function PlanCard({
   }
 
   const borderClass = isPremium
-    ? 'border-2 border-[#8B1D25]'
+    ? 'border-2 border-[hsl(var(--shop-primary))]'
     : isBordered
       ? 'border border-gray-200'
       : 'border border-gray-100'
@@ -121,14 +121,14 @@ export function PlanCard({
         <span
           className={cn(
             'block mb-2 uppercase tracking-widest',
-            isPremium ? 'text-[#8B1D25]' : 'text-gray-400',
+            isPremium ? 'text-[hsl(var(--shop-primary))]' : 'text-gray-400',
           )}
           style={{ fontSize: '10px' }}
         >
           {subtitle}
         </span>
         <h3
-          className={cn('mb-1', isPremium ? 'text-[#8B1D25]' : 'text-gray-800')}
+          className={cn('mb-1', isPremium ? 'text-[hsl(var(--shop-primary))]' : 'text-gray-800')}
           style={{ fontSize: '24px', fontWeight: 900 }}
         >
           {title}
