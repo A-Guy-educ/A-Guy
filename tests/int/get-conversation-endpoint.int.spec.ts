@@ -101,6 +101,7 @@ beforeAll(async () => {
       email: `get-conv-${Date.now()}@example.com`,
       password: 'test123456',
       role: 'student',
+      tier: 'free',
     },
   })
   testUserId = user1.id
@@ -112,6 +113,7 @@ beforeAll(async () => {
       email: `get-conv-2-${Date.now()}@example.com`,
       password: 'test123456',
       role: 'student',
+      tier: 'free',
     },
   })
   testUserId2 = user2.id

@@ -16,6 +16,7 @@ export function buildUserData(input: UserFactoryInput = {}) {
     password: input.password ?? 'test123456',
     name: input.name ?? `Test User ${timestamp}`,
     role: input.role ?? AccountRole.Student,
+    tier: 'free' as const,
   }
 }
 

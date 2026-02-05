@@ -101,6 +101,7 @@ describe.skipIf(!hasOpenAIKey || !hasAtlasUrl)('Vector Search Validation Integra
         email: `test-vector-${Date.now()}@example.com`,
         password: 'test123456',
         role: 'student',
+        tier: 'free',
       },
     })
     testUserId = user.id
@@ -473,6 +474,7 @@ describe.skipIf(!hasOpenAIKey || !hasAtlasUrl)('Vector Search Validation Integra
           email: `other-vector-${Date.now()}@example.com`,
           password: 'test123456',
           role: 'student',
+          tier: 'free',
         },
       })
       otherUserId = otherUser.id

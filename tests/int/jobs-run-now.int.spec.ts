@@ -75,6 +75,7 @@ describe('Jobs Run Now', () => {
         email: `test-${Date.now()}@example.com`,
         password: 'test-password-123',
         role: 'admin',
+        tier: 'free',
       },
     })
 

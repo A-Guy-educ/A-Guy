@@ -61,6 +61,7 @@ export async function createTestUser(user: TestUser): Promise<TestUser> {
       email: user.email,
       password: user.password, // Payload will hash this automatically
       role: 'student',
+      tier: 'free',
     },
   })
 

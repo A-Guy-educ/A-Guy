@@ -46,6 +46,7 @@ describe('ConfigValues (Domain-Scoped Config)', () => {
             email: TEST_ADMIN_EMAIL,
             password: TEST_ADMIN_PASSWORD,
             role: 'admin',
+            tier: 'free',
           },
         })
       }

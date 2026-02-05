@@ -43,6 +43,7 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Conversion API', () => {
         email: testEmail,
         password: 'test-password-123',
         role: 'admin',
+        tier: 'free',
       },
     })
 

@@ -29,6 +29,7 @@ describe('overrideAuth', () => {
     createdAt: new Date().toISOString(),
     email: 'test@example.com',
     role,
+    tier: 'free',
     collection: 'users',
   })
 

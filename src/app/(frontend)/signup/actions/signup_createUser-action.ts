@@ -74,6 +74,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
           email,
           password,
           role: AccountRole.Student, // Force role - never trust client input
+          tier: 'free', // Default tier for new signups
         },
       })
 

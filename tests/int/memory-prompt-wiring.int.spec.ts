@@ -67,6 +67,7 @@ async function createTestUser(prefix: string): Promise<string> {
       email,
       password: 'test123456',
       role: 'student',
+      tier: 'free',
     },
   })
   testUsers.set(email, user.id)

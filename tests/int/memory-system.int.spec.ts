@@ -58,6 +58,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         email: `test-memory-${Date.now()}@example.com`,
         password: 'test123456',
         role: 'student',
+        tier: 'free',
       },
     })
     testUserId = user.id
@@ -759,6 +760,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
           email: `other-user-${Date.now()}@example.com`,
           password: 'test123456',
           role: 'student',
+          tier: 'free',
         },
       })
 

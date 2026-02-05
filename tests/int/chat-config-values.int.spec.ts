@@ -21,7 +21,7 @@ const TEST_TENANT_SLUG = 'chat-config-test-tenant'
 
 describe('ChatConfig Values', () => {
   let payload: Awaited<ReturnType<typeof getPayload>>
-  let adminUser: User
+  let __adminUser: User
   let tenant: Tenant
 
   beforeAll(async () => {
@@ -34,14 +34,15 @@ describe('ChatConfig Values', () => {
         where: { email: { equals: TEST_ADMIN_EMAIL } },
       })
       if (users.docs.length > 0) {
-        adminUser = users.docs[0]
+        _adminUser = users.docs[0]
       } else {
-        adminUser = await payload.create({
+        _adminUser = await payload.create({
           collection: 'users',
           data: {
             email: TEST_ADMIN_EMAIL,
             password: TEST_ADMIN_PASSWORD,
             role: 'admin',
+            tier: 'free',
           },
         })
       }
@@ -50,7 +51,7 @@ describe('ChatConfig Values', () => {
         collection: 'users',
         where: { email: { equals: TEST_ADMIN_EMAIL } },
       })
-      adminUser = users.docs[0]
+      _adminUser = users.docs[0]
     }
 
     // Create or find test tenant

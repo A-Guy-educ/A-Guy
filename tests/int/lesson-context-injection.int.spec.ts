@@ -12,7 +12,6 @@ import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
-import type { Lesson } from '@/payload-types'
 import { LESSON_CONTEXT_BLOCK_START, LESSON_CONTEXT_MAX_CHARS } from '@/infra/llm/lesson-context'
 
 // Skip tests if DATABASE_URL is not set
@@ -92,6 +91,7 @@ beforeAll(async () => {
       email: `lesson-context-int-${Date.now()}@example.com`,
       password: 'test123456',
       role: 'student',
+      tier: 'free',
     },
   })
   testUserId = user.id

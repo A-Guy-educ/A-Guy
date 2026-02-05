@@ -67,6 +67,7 @@ beforeAll(
         email: `agent-chat-int-${Date.now()}@example.com`,
         password: 'test123456',
         role: 'student',
+        tier: 'free',
       },
     })
     testUserId = user.id

@@ -61,6 +61,7 @@ beforeAll(async () => {
       email: `conversations-int-${Date.now()}@example.com`,
       password: 'test123456',
       role: 'student',
+      tier: 'free',
     },
   })
   testUserId = user.id
@@ -846,6 +847,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
           email: `conversations-access-${Date.now()}@example.com`,
           password: 'test123456',
           role: 'student',
+          tier: 'free',
         },
       })
       const testUserId2 = user2.id
@@ -945,6 +947,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
           email: `conversations-access-2-${Date.now()}@example.com`,
           password: 'test123456',
           role: 'student',
+          tier: 'free',
         },
       })
       const testUserId2 = user2.id
@@ -1014,6 +1017,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
           email: `conversations-admin-test-${Date.now()}@example.com`,
           password: 'test123456',
           role: 'student',
+          tier: 'free',
         },
       })
       const testUserId2 = user2.id
@@ -1025,6 +1029,7 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
           email: `conversations-admin-${Date.now()}@example.com`,
           password: 'test123456',
           role: 'admin',
+          tier: 'free',
         },
       })
       await payload.update({
