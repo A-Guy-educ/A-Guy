@@ -261,5 +261,69 @@
     "draftExercisesLoading": "טוען תרגילים...",
     "noDraftExercises": "לא נמצאו תרגילי טיוטה להמרה זו.",
     "pages": "עמודים {{start}}-{{end}}"
+  },
+  "shop": {
+    "backToLearning": "חזרה ללמידה",
+    "title": "חנות הקורסים",
+    "subtitle": "בחרו את המסלול שמתאים לכם והתקדמו להצלחה במתמטיקה.",
+    "membershipPlans": "מסלולי הצטרפות",
+    "courseCatalog": "קטלוג הקורסים",
+    "middleSchool": "חטיבת ביניים",
+    "highSchool": "תיכון",
+    "perMonth": "חודשי",
+    "perCourse": "קורס",
+    "plans": {
+      "free": {
+        "title": "חינמי",
+        "subtitle": "מסלול בסיסי",
+        "currentPlan": "המסלול הנוכחי",
+        "courseCount": "1 קורס"
+      },
+      "standard": {
+        "title": "סטנדרט",
+        "subtitle": "מסלול מורחב",
+        "selectPlan": "בחר מסלול",
+        "courseCount": "1 קורס"
+      },
+      "premium": {
+        "title": "פרימיום",
+        "subtitle": "מסלול פרימיום",
+        "badge": "הכי משתלם",
+        "joinNow": "הצטרף עכשיו",
+        "courseCount": "3 קורסים לבחירה"
+      }
+    },
+    "features": {
+      "learningSystemNo": "מערכת לימוד - ללא",
+      "learningSystemFull": "מערכת לימוד - מלא",
+      "practiceSystemFull": "מערכת תרגול - מלא",
+      "questionsLimited": "שאלות - מוגבל",
+      "examsNo": "בחינות - ללא",
+      "examsLimited": "בחינות - מוגבל"
+    },
+    "courses": {
+      "mathBasics": "מתמטיקה - בסיס",
+      "purchaseCourse": "רכישת קורס",
+      "purchasedSuccessfully": "רכוש בהצלחה",
+      "activeInSystem": "הקורס הפעיל שלך במערכת",
+      "grade7": "כיתה ז'",
+      "grade8": "כיתה ח'",
+      "grade9": "כיתה ט'",
+      "grade7Description": "יסודות החשבון, אלגברה וגיאומטריה",
+      "grade8Description": "הקורס הפעיל שלך במערכת",
+      "grade9Description": "הכנה למבחני המפמ\"ר והתיכון",
+      "questionnaire172": "שאלון 172",
+      "questionnaire471": "שאלון 471",
+      "questionnaire572": "שאלון 572",
+      "questionnaire172Description": "הכנה מלאה לשאלון הבגרות הראשון",
+      "questionnaire471Description": "אנליזה, גיאומטריה וטריגונומטריה",
+      "questionnaire572Description": "וקטורים, מרוכבים ולוגריתמים"
+    },
+    "footer": {
+      "platform": "buyguy Learning Platform",
+      "terms": "תנאי שימוש",
+      "privacy": "מדיניות פרטיות",
+      "contact": "צור קשר"
+    }
   }
 }

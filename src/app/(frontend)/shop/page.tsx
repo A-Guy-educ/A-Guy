@@ -5,72 +5,90 @@ import { ArrowRight, Telescope } from 'lucide-react'
 import { PlanCard } from './_components/PlanCard'
 import { CourseCard } from './_components/CourseCard'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { useTranslations } from '@/ui/web/providers/I18n'
 
 export default function ShopPage() {
+  const t = useTranslations('shop')
   const [activeCatalog, setActiveCatalog] = useState<'middle' | 'high'>('middle')
 
   const membershipPlans = [
     {
-      title: 'חינמי',
-      subtitle: 'מסלול בסיסי',
+      title: t('plans.free.title'),
+      subtitle: t('plans.free.subtitle'),
       price: 0,
-      period: 'חודשי',
+      period: t('perMonth'),
       features: [
-        { icon: 'x' as const, text: 'מערכת לימוד - ללא', style: 'disabled' as const },
-        { icon: 'check' as const, text: 'מערכת תרגול - מלא', style: 'enabled' as const },
-        { icon: 'help' as const, text: 'שאלות - מוגבל', style: 'limited' as const },
-        { icon: 'x' as const, text: 'בחינות - ללא', style: 'disabled' as const },
+        { icon: 'x' as const, text: t('features.learningSystemNo'), style: 'disabled' as const },
+        {
+          icon: 'check' as const,
+          text: t('features.practiceSystemFull'),
+          style: 'enabled' as const,
+        },
+        { icon: 'help' as const, text: t('features.questionsLimited'), style: 'limited' as const },
+        { icon: 'x' as const, text: t('features.examsNo'), style: 'disabled' as const },
       ],
       courseCount: {
         number: 1,
-        text: '1 קורס',
+        text: t('plans.free.courseCount'),
         color: 'font-bold text-primary',
         icon: 'book' as const,
       },
-      buttonText: 'המסלול הנוכחי',
+      buttonText: t('plans.free.currentPlan'),
       buttonStyle: 'current' as const,
     },
     {
-      title: 'סטנדרט',
-      subtitle: 'מסלול מורחב',
+      title: t('plans.standard.title'),
+      subtitle: t('plans.standard.subtitle'),
       price: 100,
-      period: 'חודשי',
+      period: t('perMonth'),
       features: [
-        { icon: 'x' as const, text: 'מערכת לימוד - ללא', style: 'disabled' as const },
-        { icon: 'check' as const, text: 'מערכת תרגול - מלא', style: 'enabled' as const },
-        { icon: 'help' as const, text: 'שאלות - מוגבל', style: 'limited' as const },
-        { icon: 'x' as const, text: 'בחינות - ללא', style: 'disabled' as const },
+        { icon: 'x' as const, text: t('features.learningSystemNo'), style: 'disabled' as const },
+        {
+          icon: 'check' as const,
+          text: t('features.practiceSystemFull'),
+          style: 'enabled' as const,
+        },
+        { icon: 'help' as const, text: t('features.questionsLimited'), style: 'limited' as const },
+        { icon: 'x' as const, text: t('features.examsNo'), style: 'disabled' as const },
       ],
       courseCount: {
         number: 1,
-        text: '1 קורס',
+        text: t('plans.standard.courseCount'),
         color: 'font-bold text-primary',
         icon: 'book' as const,
       },
-      buttonText: 'בחר מסלול',
+      buttonText: t('plans.standard.selectPlan'),
       buttonStyle: 'standard' as const,
       isBordered: true,
     },
     {
-      title: 'פרימיום',
-      subtitle: 'מסלול פרימיום',
+      title: t('plans.premium.title'),
+      subtitle: t('plans.premium.subtitle'),
       price: 179,
-      period: 'חודשי',
-      badge: 'הכי משתלם',
+      period: t('perMonth'),
+      badge: t('plans.premium.badge'),
       badgeColor: 'bg-primary font-black text-primary-foreground',
       features: [
-        { icon: 'check' as const, text: 'מערכת לימוד - מלא', style: 'enabled' as const },
-        { icon: 'check' as const, text: 'מערכת תרגול - מלא', style: 'enabled' as const },
-        { icon: 'help' as const, text: 'שאלות - מוגבל', style: 'limited' as const },
-        { icon: 'help' as const, text: 'בחינות - מוגבל', style: 'limited' as const },
+        {
+          icon: 'check' as const,
+          text: t('features.learningSystemFull'),
+          style: 'enabled' as const,
+        },
+        {
+          icon: 'check' as const,
+          text: t('features.practiceSystemFull'),
+          style: 'enabled' as const,
+        },
+        { icon: 'help' as const, text: t('features.questionsLimited'), style: 'limited' as const },
+        { icon: 'help' as const, text: t('features.examsLimited'), style: 'limited' as const },
       ],
       courseCount: {
         number: 3,
-        text: '3 קורסים לבחירה',
+        text: t('plans.premium.courseCount'),
         color: 'font-bold text-primary',
         icon: 'layers' as const,
       },
-      buttonText: 'הצטרף עכשיו',
+      buttonText: t('plans.premium.joinNow'),
       buttonStyle: 'premium' as const,
       isPremium: true,
     },
@@ -78,37 +96,37 @@ export default function ShopPage() {
 
   const middleSchoolCourses = [
     {
-      badge: "כיתה ז'",
+      badge: t('courses.grade7'),
       badgeColor: 'text-primary',
-      title: 'מתמטיקה - בסיס',
-      description: 'יסודות החשבון, אלגברה וגיאומטריה',
+      title: t('courses.mathBasics'),
+      description: t('courses.grade7Description'),
       price: 149,
       icon: 'book' as const,
       iconBgColor: 'bg-primary/10',
-      buttonText: 'רכישת קורס',
+      buttonText: t('courses.purchaseCourse'),
       buttonStyle: 'purchase' as const,
     },
     {
-      badge: "כיתה ח'",
+      badge: t('courses.grade8'),
       badgeColor: 'text-primary',
-      title: 'מתמטיקה - בסיס',
-      description: 'הקורס הפעיל שלך במערכת',
+      title: t('courses.mathBasics'),
+      description: t('courses.grade8Description'),
       price: 149,
       icon: 'check' as const,
       iconBgColor: 'bg-success/10',
-      buttonText: 'רכוש בהצלחה',
+      buttonText: t('courses.purchasedSuccessfully'),
       buttonStyle: 'owned' as const,
       isOwned: true,
     },
     {
-      badge: "כיתה ט'",
+      badge: t('courses.grade9'),
       badgeColor: 'text-primary',
-      title: 'מתמטיקה - בסיס',
-      description: 'הכנה למבחני המפמ"ר והתיכון',
+      title: t('courses.mathBasics'),
+      description: t('courses.grade9Description'),
       price: 159,
       icon: 'graduation' as const,
       iconBgColor: 'bg-primary/10',
-      buttonText: 'רכישת קורס',
+      buttonText: t('courses.purchaseCourse'),
       buttonStyle: 'purchase' as const,
     },
   ]
@@ -117,34 +135,34 @@ export default function ShopPage() {
     {
       badge: 'כיתה י\' • 3 יח"ל',
       badgeColor: 'text-destructive',
-      title: 'שאלון 172',
-      description: 'הכנה מלאה לשאלון הבגרות הראשון',
+      title: t('courses.questionnaire172'),
+      description: t('courses.questionnaire172Description'),
       price: 199,
       icon: 'book' as const,
       iconBgColor: 'bg-destructive/10',
-      buttonText: 'רכישת קורס',
+      buttonText: t('courses.purchaseCourse'),
       buttonStyle: 'purchase' as const,
     },
     {
       badge: 'כיתה י"א • 4 יח"ל',
       badgeColor: 'text-warning',
-      title: 'שאלון 471',
-      description: 'אנליזה, גיאומטריה וטריגונומטריה',
+      title: t('courses.questionnaire471'),
+      description: t('courses.questionnaire471Description'),
       price: 279,
       icon: 'book' as const,
       iconBgColor: 'bg-warning/10',
-      buttonText: 'רכישת קורס',
+      buttonText: t('courses.purchaseCourse'),
       buttonStyle: 'purchase' as const,
     },
     {
       badge: 'כיתה י"ב • 5 יח"ל',
       badgeColor: 'text-accent',
-      title: 'שאלון 572',
-      description: 'וקטורים, מרוכבים ולוגריתמים',
+      title: t('courses.questionnaire572'),
+      description: t('courses.questionnaire572Description'),
       price: 299,
       icon: 'book' as const,
       iconBgColor: 'bg-accent/10',
-      buttonText: 'רכישת קורס',
+      buttonText: t('courses.purchaseCourse'),
       buttonStyle: 'purchase' as const,
     },
   ]
@@ -159,7 +177,7 @@ export default function ShopPage() {
             className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm"
           >
             <ArrowRight className="w-4 h-4" />
-            <span>חזרה ללמידה</span>
+            <span>{t('backToLearning')}</span>
           </SystemLink>
         </div>
 
@@ -174,10 +192,8 @@ export default function ShopPage() {
       {/* Store Header */}
       <header className="bg-card border-b border-border pt-12 pb-10">
         <div className="max-w-5xl mx-auto px-6 text-center">
-          <h1 className="text-foreground mb-4 text-4xl font-black">חנות הקורסים</h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-            בחרו את המסלול שמתאים לכם והתקדמו להצלחה במתמטיקה.
-          </p>
+          <h1 className="text-foreground mb-4 text-4xl font-black">{t('title')}</h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">{t('subtitle')}</p>
         </div>
       </header>
 
@@ -186,7 +202,7 @@ export default function ShopPage() {
         <section className="mb-24">
           <div className="text-center mb-12">
             <h2 className="text-foreground uppercase tracking-widest text-2xl font-black">
-              מסלולי הצטרפות
+              {t('membershipPlans')}
             </h2>
           </div>
 
@@ -201,7 +217,7 @@ export default function ShopPage() {
         <section>
           <div className="text-center mb-10">
             <h2 className="text-foreground uppercase tracking-widest text-2xl font-black">
-              קטלוג הקורסים
+              {t('courseCatalog')}
             </h2>
           </div>
 
@@ -216,7 +232,7 @@ export default function ShopPage() {
                     : 'text-muted-foreground hover:text-foreground font-bold'
                 }`}
               >
-                חטיבת ביניים
+                {t('middleSchool')}
               </button>
               <button
                 onClick={() => setActiveCatalog('high')}
@@ -226,7 +242,7 @@ export default function ShopPage() {
                     : 'text-muted-foreground hover:text-foreground font-bold'
                 }`}
               >
-                תיכון
+                {t('highSchool')}
               </button>
             </div>
           </div>
@@ -253,17 +269,17 @@ export default function ShopPage() {
         {/* Footer */}
         <footer className="mt-24 pt-12 border-t border-border text-center">
           <p className="text-muted-foreground/50 uppercase mb-6 text-xs font-bold tracking-widest">
-            buyguy Learning Platform
+            {t('footer.platform')}
           </p>
           <div className="flex justify-center gap-6 text-muted-foreground text-sm font-medium">
             <a href="#" className="hover:text-primary transition-colors">
-              תנאי שימוש
+              {t('footer.terms')}
             </a>
             <a href="#" className="hover:text-primary transition-colors">
-              מדיניות פרטיות
+              {t('footer.privacy')}
             </a>
             <a href="#" className="hover:text-primary transition-colors">
-              צור קשר
+              {t('footer.contact')}
             </a>
           </div>
         </footer>
