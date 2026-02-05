@@ -45,7 +45,7 @@ export function CourseCard({
     if (buttonStyle === 'owned') {
       return 'bg-[hsl(var(--shop-success-bg))] text-[hsl(var(--shop-success-dark))] px-6 py-2.5 rounded-xl'
     }
-    return 'bg-gray-50 px-6 py-2.5 rounded-xl hover:bg-[hsl(var(--shop-badge-blue-bg))] transition-colors'
+    return 'bg-muted px-6 py-2.5 rounded-xl hover:bg-[hsl(var(--shop-badge-blue-bg))] transition-colors'
   }
 
   const getButtonTextColor = () => {
@@ -62,7 +62,7 @@ export function CourseCard({
   return (
     <div
       className={cn(
-        'relative bg-white p-6 rounded-[2rem] flex flex-col',
+        'relative bg-card p-6 rounded-[2rem] flex flex-col',
         borderClass,
         'shadow-[0_1px_2px_0_rgba(60,64,67,.3),0_1px_3px_1px_rgba(60,64,67,.15)]',
         'transition-all active:scale-[0.98]',
@@ -85,10 +85,10 @@ export function CourseCard({
           >
             {badge}
           </span>
-          <h4 className="text-gray-900" style={{ fontSize: '20px', fontWeight: 900 }}>
+          <h4 className="text-card-foreground" style={{ fontSize: '20px', fontWeight: 900 }}>
             {title}
           </h4>
-          <p className="text-gray-400 mt-1" style={{ fontSize: '12px' }}>
+          <p className="text-muted-foreground mt-1" style={{ fontSize: '12px' }}>
             {description}
           </p>
         </div>
@@ -102,9 +102,11 @@ export function CourseCard({
         </div>
       </div>
 
-      <div className="mt-auto flex items-center justify-between pt-6 border-t border-gray-50">
+      <div className="mt-auto flex items-center justify-between pt-6 border-t border-border">
         <span
-          className={isOwned ? 'text-gray-300 italic line-through' : 'text-gray-900'}
+          className={
+            isOwned ? 'text-muted-foreground/50 italic line-through' : 'text-card-foreground'
+          }
           style={{ fontSize: '20px', fontWeight: 900 }}
         >
           ₪{price}

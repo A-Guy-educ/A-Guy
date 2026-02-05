@@ -166,17 +166,17 @@ export default function ShopPage() {
   ]
 
   return (
-    <div className="min-h-screen text-gray-800 antialiased" dir="rtl">
+    <div className="min-h-screen text-card-foreground antialiased" dir="rtl">
       {/* Store Header */}
-      <header className="bg-white border-b border-gray-100 pt-12 pb-10">
+      <header className="bg-card border-b border-border pt-12 pb-10">
         <div className="max-w-5xl mx-auto px-6 text-center">
           <h1
-            className="text-gray-900 mb-4 whitespace-nowrap"
+            className="text-card-foreground mb-4 whitespace-nowrap"
             style={{ fontSize: '40px', fontWeight: 900 }}
           >
             {t('title')}
           </h1>
-          <p className="text-gray-500 max-w-2xl mx-auto" style={{ fontSize: '18px' }}>
+          <p className="text-muted-foreground max-w-2xl mx-auto" style={{ fontSize: '18px' }}>
             {t('subtitle')}
           </p>
         </div>
@@ -187,7 +187,7 @@ export default function ShopPage() {
         <section className="mb-24">
           <div className="text-center mb-12">
             <h2
-              className="text-gray-800 uppercase tracking-widest"
+              className="text-card-foreground uppercase tracking-widest"
               style={{ fontSize: '24px', fontWeight: 900 }}
             >
               {t('membershipPlans')}
@@ -205,7 +205,7 @@ export default function ShopPage() {
         <section>
           <div className="text-center mb-10">
             <h2
-              className="text-gray-800 uppercase tracking-widest"
+              className="text-card-foreground uppercase tracking-widest"
               style={{ fontSize: '24px', fontWeight: 900 }}
             >
               {t('courseCatalog')}
@@ -214,13 +214,13 @@ export default function ShopPage() {
 
           {/* Catalog Filter Tabs */}
           <div className="max-w-md mx-auto mb-12">
-            <div className="bg-gray-200/60 p-1.5 rounded-2xl flex items-center shadow-inner">
+            <div className="bg-muted p-1.5 rounded-2xl flex items-center shadow-inner">
               <button
                 onClick={() => setActiveCatalog('middle')}
                 className={`flex-1 py-3 rounded-xl transition-all ${
                   activeCatalog === 'middle'
-                    ? 'bg-white text-[hsl(var(--shop-primary))] shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-card text-[hsl(var(--shop-primary))] shadow-sm'
+                    : 'text-muted-foreground hover:text-card-foreground'
                 }`}
                 style={{
                   fontSize: '14px',
@@ -233,8 +233,8 @@ export default function ShopPage() {
                 onClick={() => setActiveCatalog('high')}
                 className={`flex-1 py-3 rounded-xl transition-all ${
                   activeCatalog === 'high'
-                    ? 'bg-white text-[hsl(var(--shop-primary))] shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-card text-[hsl(var(--shop-primary))] shadow-sm'
+                    : 'text-muted-foreground hover:text-card-foreground'
                 }`}
                 style={{
                   fontSize: '14px',
@@ -266,15 +266,15 @@ export default function ShopPage() {
         </section>
 
         {/* Footer */}
-        <footer className="mt-24 pt-12 border-t border-gray-100 text-center">
+        <footer className="mt-24 pt-12 border-t border-border text-center">
           <p
-            className="text-gray-300 uppercase mb-6"
+            className="text-muted-foreground/50 uppercase mb-6"
             style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.4em' }}
           >
             {t('footer.platform')}
           </p>
           <div
-            className="flex justify-center gap-6 text-gray-400"
+            className="flex justify-center gap-6 text-muted-foreground"
             style={{ fontSize: '14px', fontWeight: 500 }}
           >
             <a href="#" className="hover:text-[hsl(var(--shop-primary))] transition-colors">

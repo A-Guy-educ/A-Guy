@@ -52,13 +52,13 @@ export function PlanCard({
   const getButtonClasses = () => {
     switch (buttonStyle) {
       case 'current':
-        return 'w-full py-4 rounded-2xl bg-gray-100 text-gray-500'
+        return 'w-full py-4 rounded-2xl bg-muted text-muted-foreground'
       case 'standard':
-        return 'w-full py-4 rounded-2xl bg-gray-900 text-white shadow-lg hover:opacity-90'
+        return 'w-full py-4 rounded-2xl bg-foreground text-background shadow-lg hover:opacity-90'
       case 'premium':
         return 'w-full py-4 rounded-2xl bg-[hsl(var(--shop-primary))] text-white shadow-xl hover:scale-[1.02] transition-transform'
       default:
-        return 'w-full py-4 rounded-2xl bg-gray-900 text-white'
+        return 'w-full py-4 rounded-2xl bg-foreground text-background'
     }
   }
 
@@ -78,13 +78,13 @@ export function PlanCard({
   const getFeatureStyle = (style: FeatureStyle) => {
     switch (style) {
       case 'disabled':
-        return 'text-gray-400 italic'
+        return 'text-muted-foreground italic'
       case 'enabled':
-        return 'font-medium text-gray-800'
+        return 'font-medium text-card-foreground'
       case 'limited':
-        return 'text-gray-500'
+        return 'text-muted-foreground'
       default:
-        return 'text-gray-600'
+        return 'text-muted-foreground'
     }
   }
 
@@ -97,7 +97,7 @@ export function PlanCard({
   return (
     <div
       className={cn(
-        'relative bg-white rounded-[2.5rem] p-8 flex flex-col min-w-[300px] md:min-w-0',
+        'relative bg-card rounded-[2.5rem] p-8 flex flex-col min-w-[300px] md:min-w-0',
         borderClass,
         'shadow-[0_1px_2px_0_rgba(60,64,67,.3),0_1px_3px_1px_rgba(60,64,67,.15)]',
         'transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)]',
@@ -121,21 +121,24 @@ export function PlanCard({
         <span
           className={cn(
             'block mb-2 uppercase tracking-widest',
-            isPremium ? 'text-[hsl(var(--shop-primary))]' : 'text-gray-400',
+            isPremium ? 'text-[hsl(var(--shop-primary))]' : 'text-muted-foreground',
           )}
           style={{ fontSize: '10px' }}
         >
           {subtitle}
         </span>
         <h3
-          className={cn('mb-1', isPremium ? 'text-[hsl(var(--shop-primary))]' : 'text-gray-800')}
+          className={cn(
+            'mb-1',
+            isPremium ? 'text-[hsl(var(--shop-primary))]' : 'text-card-foreground',
+          )}
           style={{ fontSize: '24px', fontWeight: 900 }}
         >
           {title}
         </h3>
-        <div style={{ fontSize: '24px', fontWeight: 900 }} className="text-gray-900">
+        <div style={{ fontSize: '24px', fontWeight: 900 }} className="text-card-foreground">
           ₪{price}{' '}
-          <span style={{ fontSize: '14px', fontWeight: 400 }} className="text-gray-400">
+          <span style={{ fontSize: '14px', fontWeight: 400 }} className="text-muted-foreground">
             / {period}
           </span>
         </div>
