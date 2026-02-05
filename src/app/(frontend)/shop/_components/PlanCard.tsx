@@ -68,20 +68,20 @@ export function PlanCard({
   const getFeatureStyles = (style: FeatureStyle) => {
     switch (style) {
       case 'enabled':
-        return 'text-green-600'
+        return 'text-success'
       case 'disabled':
-        return 'text-gray-300'
+        return 'text-muted-foreground/30'
       case 'limited':
-        return 'text-orange-500'
+        return 'text-warning'
     }
   }
 
   const getButtonStyles = () => {
     switch (buttonStyle) {
       case 'current':
-        return 'bg-gray-100 text-gray-400 cursor-not-allowed hover:bg-gray-100'
+        return 'bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted'
       case 'standard':
-        return 'bg-white text-foreground border-2 border-border hover:bg-muted'
+        return 'bg-card text-foreground border-2 border-border hover:bg-muted'
       case 'premium':
         return 'bg-primary text-primary-foreground hover:bg-primary/90'
     }
@@ -126,7 +126,7 @@ export function PlanCard({
               <span
                 className={cn(
                   'text-sm font-medium',
-                  feature.style === 'disabled' ? 'text-gray-400' : 'text-foreground',
+                  feature.style === 'disabled' ? 'text-muted-foreground/50' : 'text-foreground',
                 )}
               >
                 {feature.text}

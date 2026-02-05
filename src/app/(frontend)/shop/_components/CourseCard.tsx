@@ -47,7 +47,7 @@ export function CourseCard({
       case 'purchase':
         return 'bg-primary text-primary-foreground hover:bg-primary/90'
       case 'owned':
-        return 'bg-green-50 text-green-700 cursor-not-allowed hover:bg-green-50 border border-green-200'
+        return 'bg-success/10 text-success cursor-not-allowed hover:bg-success/10 border border-success/20'
     }
   }
 
@@ -60,7 +60,7 @@ export function CourseCard({
 
         <div className="mt-4 flex items-start gap-4">
           <div className={cn('p-3 rounded-xl flex-shrink-0', iconBgColor)}>
-            <Icon className={cn('w-6 h-6', isOwned ? 'text-green-600' : 'text-blue-600')} />
+            <Icon className={cn('w-6 h-6', isOwned ? 'text-success' : 'text-primary')} />
           </div>
 
           <div className="flex-1">

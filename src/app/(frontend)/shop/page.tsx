@@ -24,7 +24,7 @@ export default function ShopPage() {
       courseCount: {
         number: 1,
         text: '1 קורס',
-        color: 'font-bold text-blue-600',
+        color: 'font-bold text-primary',
         icon: 'book' as const,
       },
       buttonText: 'המסלול הנוכחי',
@@ -44,7 +44,7 @@ export default function ShopPage() {
       courseCount: {
         number: 1,
         text: '1 קורס',
-        color: 'font-bold text-blue-600',
+        color: 'font-bold text-primary',
         icon: 'book' as const,
       },
       buttonText: 'בחר מסלול',
@@ -79,35 +79,35 @@ export default function ShopPage() {
   const middleSchoolCourses = [
     {
       badge: "כיתה ז'",
-      badgeColor: 'text-blue-500',
+      badgeColor: 'text-primary',
       title: 'מתמטיקה - בסיס',
       description: 'יסודות החשבון, אלגברה וגיאומטריה',
       price: 149,
       icon: 'book' as const,
-      iconBgColor: 'bg-blue-50',
+      iconBgColor: 'bg-primary/10',
       buttonText: 'רכישת קורס',
       buttonStyle: 'purchase' as const,
     },
     {
       badge: "כיתה ח'",
-      badgeColor: 'text-blue-500',
+      badgeColor: 'text-primary',
       title: 'מתמטיקה - בסיס',
       description: 'הקורס הפעיל שלך במערכת',
       price: 149,
       icon: 'check' as const,
-      iconBgColor: 'bg-green-50',
+      iconBgColor: 'bg-success/10',
       buttonText: 'רכוש בהצלחה',
       buttonStyle: 'owned' as const,
       isOwned: true,
     },
     {
       badge: "כיתה ט'",
-      badgeColor: 'text-blue-500',
+      badgeColor: 'text-primary',
       title: 'מתמטיקה - בסיס',
       description: 'הכנה למבחני המפמ"ר והתיכון',
       price: 159,
       icon: 'graduation' as const,
-      iconBgColor: 'bg-blue-50',
+      iconBgColor: 'bg-primary/10',
       buttonText: 'רכישת קורס',
       buttonStyle: 'purchase' as const,
     },
@@ -116,34 +116,34 @@ export default function ShopPage() {
   const highSchoolCourses = [
     {
       badge: 'כיתה י\' • 3 יח"ל',
-      badgeColor: 'text-red-500',
+      badgeColor: 'text-destructive',
       title: 'שאלון 172',
       description: 'הכנה מלאה לשאלון הבגרות הראשון',
       price: 199,
       icon: 'book' as const,
-      iconBgColor: 'bg-red-50',
+      iconBgColor: 'bg-destructive/10',
       buttonText: 'רכישת קורס',
       buttonStyle: 'purchase' as const,
     },
     {
       badge: 'כיתה י"א • 4 יח"ל',
-      badgeColor: 'text-orange-500',
+      badgeColor: 'text-warning',
       title: 'שאלון 471',
       description: 'אנליזה, גיאומטריה וטריגונומטריה',
       price: 279,
       icon: 'book' as const,
-      iconBgColor: 'bg-orange-50',
+      iconBgColor: 'bg-warning/10',
       buttonText: 'רכישת קורס',
       buttonStyle: 'purchase' as const,
     },
     {
       badge: 'כיתה י"ב • 5 יח"ל',
-      badgeColor: 'text-purple-500',
+      badgeColor: 'text-accent',
       title: 'שאלון 572',
       description: 'וקטורים, מרוכבים ולוגריתמים',
       price: 299,
       icon: 'book' as const,
-      iconBgColor: 'bg-purple-50',
+      iconBgColor: 'bg-accent/10',
       buttonText: 'רכישת קורס',
       buttonStyle: 'purchase' as const,
     },
@@ -207,13 +207,13 @@ export default function ShopPage() {
 
           {/* Catalog Filter Tabs */}
           <div className="max-w-md mx-auto mb-12">
-            <div className="bg-gray-200/60 p-1.5 rounded-2xl flex items-center shadow-inner">
+            <div className="bg-muted p-1.5 rounded-2xl flex items-center shadow-inner">
               <button
                 onClick={() => setActiveCatalog('middle')}
                 className={`flex-1 py-3 rounded-xl transition-all text-sm ${
                   activeCatalog === 'middle'
-                    ? 'bg-white text-primary shadow-sm font-black'
-                    : 'text-gray-500 hover:text-gray-700 font-bold'
+                    ? 'bg-card text-primary shadow-sm font-black'
+                    : 'text-muted-foreground hover:text-foreground font-bold'
                 }`}
               >
                 חטיבת ביניים
@@ -222,8 +222,8 @@ export default function ShopPage() {
                 onClick={() => setActiveCatalog('high')}
                 className={`flex-1 py-3 rounded-xl transition-all text-sm ${
                   activeCatalog === 'high'
-                    ? 'bg-white text-primary shadow-sm font-black'
-                    : 'text-gray-500 hover:text-gray-700 font-bold'
+                    ? 'bg-card text-primary shadow-sm font-black'
+                    : 'text-muted-foreground hover:text-foreground font-bold'
                 }`}
               >
                 תיכון
@@ -252,7 +252,7 @@ export default function ShopPage() {
 
         {/* Footer */}
         <footer className="mt-24 pt-12 border-t border-border text-center">
-          <p className="text-gray-300 uppercase mb-6 text-xs font-bold tracking-widest">
+          <p className="text-muted-foreground/50 uppercase mb-6 text-xs font-bold tracking-widest">
             buyguy Learning Platform
           </p>
           <div className="flex justify-center gap-6 text-muted-foreground text-sm font-medium">
