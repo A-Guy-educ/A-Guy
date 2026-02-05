@@ -21,12 +21,16 @@ import { mapMultimodalToGemini } from '@/infra/llm/providers/gemini/multimodal-m
 import { mapMultimodalToOpenAI } from '@/infra/llm/providers/openai-compatible/multimodal-mapper'
 import {
   enrichBlockIds,
-  isContentRicher,
   normalizeExerciseInput,
   parseExtractorResponseText,
   parseVerifierResponseText,
   toPayloadContent,
 } from '@/server/services/exercise-conversion/helpers'
+import {
+  createIdempotencyKeyFn,
+  deduplicateByIdempotencyKey,
+  SPEC_VERSION,
+} from '@/server/services/exercise-conversion/idempotency'
 import { z } from 'zod'
 
 export const pdfToExercisesTask = {
@@ -110,6 +114,8 @@ export const pdfToExercisesTask = {
       }
 
       // PASS 2: Extract + Verify + Persist
+      // Idempotency-based upsert is always enabled (no feature flag)
+
       for (let i = 0; i < segments.length; i++) {
         output.currentSegmentIndex = i
         const segment = segments[i]
@@ -124,24 +130,54 @@ export const pdfToExercisesTask = {
             tenantId, // For SystemParams access
           })
 
+          // ========== Stage 2: In-Memory Dedup ==========
+          // Deduplicate by idempotency key before DB writes
+          const computeIdempotencyKeyForExercise = createIdempotencyKeyFn({
+            tenantId,
+            lessonId,
+            sourceDocId,
+            pageStart: segment.pageStart,
+            pageEnd: segment.pageEnd,
+            specVersion: SPEC_VERSION,
+          })
+
+          // Perform in-memory dedup using system ordinal (loop index)
+          const dedupResult = deduplicateByIdempotencyKey(exercises, (exercise, systemIndex) =>
+            computeIdempotencyKeyForExercise(exercise, systemIndex),
+          )
+          const deduplicatedExercises = dedupResult.exercises
+
+          // Log dedup metrics
+          if (dedupResult.droppedCount > 0) {
+            console.log(
+              `[PDF→Exercises] Segment ${i}: in-memory dedup dropped ${dedupResult.droppedCount} duplicate exercises`,
+            )
+          }
+
+          // Track idempotency keys for observability using system ordinal
+          const proposedIdempotencyKeys: string[] = []
           let created = 0
           let deduped = 0
 
-          for (const exercise of exercises) {
-            // Compute contentKey BEFORE enrichment for stable identity
+          for (let exIndex = 0; exIndex < deduplicatedExercises.length; exIndex++) {
+            const exercise = deduplicatedExercises[exIndex]
+            // Stage 4: Compute idempotency key for upsert using system ordinal (loop index)
+            const idempotencyKey = computeIdempotencyKeyForExercise(exercise, exIndex)
+            proposedIdempotencyKeys.push(idempotencyKey)
+
+            // Log idempotency key with content hash for correlation (observability)
             const normalizedInput = normalizeExerciseInput(exercise)
             const contentHash = computeContentHash(normalizedInput)
+            console.log(
+              `[PDF→Exercises] Exercise idempotencyKey=${idempotencyKey}, contentHash=${contentHash}, title="${exercise.title}", orderInSegment=${exercise.orderInSegment}`,
+            )
 
-            // Use Payload API to maintain hooks/tenant/ACL/validation
-            // Find existing exercise by (lessonId, sourceDocId, contentHash)
+            // Stage 4: Upsert by idempotencyKey (Last Wins Semantics)
+            // Find existing exercise by idempotencyKey (source-based identity)
             const existing = await payload.find({
               collection: 'exercises',
               where: {
-                and: [
-                  { lesson: { equals: lessonId } },
-                  { sourceDoc: { equals: sourceDocId } },
-                  { contentHash: { equals: contentHash } },
-                ],
+                idempotencyKey: { equals: idempotencyKey },
               },
               limit: 1,
               depth: 0,
@@ -149,32 +185,36 @@ export const pdfToExercisesTask = {
               req,
             })
 
-            if (existing.docs.length > 0) {
-              // Exercise exists - prefer richer content
-              const existingDoc = existing.docs[0]
-              const newPayloadContent = toPayloadContent(exercise)
+            const payloadContent = toPayloadContent(exercise)
 
-              // Only update if new content is strictly richer
-              if (isContentRicher(existingDoc.content, newPayloadContent)) {
-                await payload.update({
-                  collection: 'exercises',
-                  id: existingDoc.id,
-                  data: {
-                    content: newPayloadContent,
-                    sourcePageStart: segment.pageStart,
-                    sourcePageEnd: segment.pageEnd,
-                    sourceOrderInSegment: exercise.orderInSegment,
-                    conversionJobId: job.id,
-                    updatedAt: new Date(),
+            if (existing.docs.length > 0) {
+              // Exercise exists with same idempotencyKey - Last Wins: always update
+              const existingDoc = existing.docs[0]
+              await payload.update({
+                collection: 'exercises',
+                id: existingDoc.id,
+                data: {
+                  title: exercise.title,
+                  content: payloadContent,
+                  sourcePageStart: segment.pageStart,
+                  sourcePageEnd: segment.pageEnd,
+                  sourceOrderInSegment: exercise.orderInSegment,
+                  conversionJobId: job.id,
+                  updatedAt: new Date(),
+                  // Keep idempotency fields updated
+                  idempotencyKey,
+                  specVersion: SPEC_VERSION,
+                  extractionMeta: {
+                    segmentIndex: i,
+                    itemOrdinal: exercise.orderInSegment,
                   },
-                  overrideAccess: true,
-                  req,
-                })
-              }
+                },
+                overrideAccess: true,
+                req,
+              })
               deduped++
             } else {
               // New exercise - create with enriched content
-              const payloadContent = toPayloadContent(exercise)
               try {
                 await payload.create({
                   collection: 'exercises',
@@ -191,23 +231,26 @@ export const pdfToExercisesTask = {
                     sourcePageEnd: segment.pageEnd,
                     sourceOrderInSegment: exercise.orderInSegment,
                     contentHash,
+                    // Stage 3 & 4: Populate idempotency fields
+                    idempotencyKey,
+                    specVersion: SPEC_VERSION,
+                    extractionMeta: {
+                      segmentIndex: i,
+                      itemOrdinal: exercise.orderInSegment,
+                    },
                   },
                   overrideAccess: true,
                   req,
                 })
                 created++
               } catch (createError: any) {
-                // Handle duplicate key error (concurrency scenario)
+                // Handle duplicate key error (concurrency scenario - race condition)
                 if (createError.code === 11000 || createError.message?.includes('duplicate key')) {
-                  // Re-find and treat as deduped
+                  // Someone else created it first - find and update (Last Wins)
                   const retryFind = await payload.find({
                     collection: 'exercises',
                     where: {
-                      and: [
-                        { lesson: { equals: lessonId } },
-                        { sourceDoc: { equals: sourceDocId } },
-                        { contentHash: { equals: contentHash } },
-                      ],
+                      idempotencyKey: { equals: idempotencyKey },
                     },
                     limit: 1,
                     depth: 0,
@@ -215,6 +258,27 @@ export const pdfToExercisesTask = {
                     req,
                   })
                   if (retryFind.docs.length > 0) {
+                    await payload.update({
+                      collection: 'exercises',
+                      id: retryFind.docs[0].id,
+                      data: {
+                        title: exercise.title,
+                        content: payloadContent,
+                        sourcePageStart: segment.pageStart,
+                        sourcePageEnd: segment.pageEnd,
+                        sourceOrderInSegment: exercise.orderInSegment,
+                        conversionJobId: job.id,
+                        updatedAt: new Date(),
+                        idempotencyKey,
+                        specVersion: SPEC_VERSION,
+                        extractionMeta: {
+                          segmentIndex: i,
+                          itemOrdinal: exercise.orderInSegment,
+                        },
+                      },
+                      overrideAccess: true,
+                      req,
+                    })
                     deduped++
                   } else {
                     // Index exists but document not found - rethrow
@@ -237,6 +301,10 @@ export const pdfToExercisesTask = {
             status: 'done',
             exercisesCreated: created,
             exercisesSkipped: output.exercisesSkipped || 0,
+            // Stage 1: Add proposed idempotency keys for observability
+            debug: {
+              proposedIdempotencyKeys,
+            },
           })
         } catch (segmentError: any) {
           output.segmentsFailed++
