@@ -1,7 +1,11 @@
 /**
  * Normalize a URL to always include a scheme
+ * Returns empty string for undefined/empty/whitespace input
  */
-function normalizeUrl(url: string): string {
+function normalizeUrl(url: string | undefined): string {
+  if (!url || !url.trim()) {
+    return ''
+  }
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     return `https://${url}`
   }
