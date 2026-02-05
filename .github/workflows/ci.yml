@@ -235,6 +235,7 @@ jobs:
       DEFAULT_TENANT_SLUG: default
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || '' }}
       NEXT_PUBLIC_SERVER_URL: http://localhost:3000
+      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
 
     services:
       mongodb:
