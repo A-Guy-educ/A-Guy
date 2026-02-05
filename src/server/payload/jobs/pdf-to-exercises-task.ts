@@ -20,6 +20,10 @@ import {
 import { mapMultimodalToGemini } from '@/infra/llm/providers/gemini/multimodal-mapper'
 import { mapMultimodalToOpenAI } from '@/infra/llm/providers/openai-compatible/multimodal-mapper'
 import {
+  createDiagramMetrics,
+  runDiagramPass,
+} from '@/server/services/exercise-conversion/diagram-pass'
+import {
   enrichBlockIds,
   normalizeExerciseInput,
   parseExtractorResponseText,
@@ -54,6 +58,13 @@ export const pdfToExercisesTask = {
       exercisesSkipped: 0, // v2.1: Track skipped exercises
       errors: [],
       segments: [],
+      // Diagram pass metrics (V1.0)
+      diagramsDetected: 0,
+      diagramPassAttempted: 0,
+      diagramPassSucceeded: 0,
+      diagramPassFailed: 0,
+      diagramPassSkipped: 0,
+      diagramPassLatencyMsTotal: 0,
     }
 
     try {
@@ -121,11 +132,44 @@ export const pdfToExercisesTask = {
         const segment = segments[i]
 
         try {
+          // ========== Fetch diagram generator prompt (optional) ==========
+          let diagramPrompt: string | null = null
+          if (input.promptSnapshot?.diagramGenerator) {
+            diagramPrompt = input.promptSnapshot.diagramGenerator
+          } else {
+            // Try to fetch published diagram_generator prompt for tenant
+            try {
+              const diagramPromptDoc = await payload.find({
+                collection: 'prompts',
+                where: {
+                  and: [
+                    { tenant: { equals: tenantId } },
+                    { status: { equals: 'published' } },
+                    { usage: { equals: 'diagram_generator' } },
+                  ],
+                },
+                limit: 1,
+                depth: 0,
+                overrideAccess: true,
+              })
+
+              if (diagramPromptDoc.docs.length > 0) {
+                diagramPrompt = diagramPromptDoc.docs[0].template as string
+              }
+            } catch (promptError) {
+              console.warn(
+                '[DiagramPass] Failed to fetch diagram prompt, continuing without:',
+                promptError,
+              )
+            }
+          }
+
           const exercises = await processSegmentWithMultimodal(payload, req, {
             attachments, // Provider-agnostic attachment format
             segment,
             extractorPrompt: input.promptSnapshot.extractor,
             verifierPrompt: input.promptSnapshot.verifier,
+            diagramPrompt, // V1.0: Optional diagram generation prompt
             output, // v2.1: Pass output for exercisesSkipped tracking
             tenantId, // For SystemParams access
           })
@@ -294,6 +338,18 @@ export const pdfToExercisesTask = {
           output.exercisesCreated += created
           output.exercisesDeduped += deduped
           output.segmentsDone++
+
+          // Aggregate diagram pass metrics
+          const diagramMetrics = (output as any).diagramPassMetricsForSegment
+          if (diagramMetrics) {
+            output.diagramsDetected += diagramMetrics.detected
+            output.diagramPassAttempted += diagramMetrics.attempted
+            output.diagramPassSucceeded += diagramMetrics.succeeded
+            output.diagramPassFailed += diagramMetrics.failed
+            output.diagramPassSkipped += diagramMetrics.skipped
+            output.diagramPassLatencyMsTotal += diagramMetrics.latencyMs
+          }
+
           output.segments?.push({
             index: i,
             pageStart: segment.pageStart,
@@ -304,6 +360,8 @@ export const pdfToExercisesTask = {
             // Stage 1: Add proposed idempotency keys for observability
             debug: {
               proposedIdempotencyKeys,
+              // V1.0: Diagram pass metrics per segment
+              diagramPass: diagramMetrics,
             },
           })
         } catch (segmentError: any) {
@@ -404,11 +462,13 @@ async function processSegmentWithMultimodal(
     segment: { pageStart: number; pageEnd: number }
     extractorPrompt: string
     verifierPrompt: string
+    diagramPrompt: string | null // V1.0: Optional diagram generation prompt
     output: any // For tracking exercisesSkipped
     tenantId: string // For SystemParams access
   },
 ) {
-  const { attachments, segment, extractorPrompt, verifierPrompt, output, tenantId } = context
+  const { attachments, segment, extractorPrompt, verifierPrompt, diagramPrompt, output, tenantId } =
+    context
 
   // ========== Call Extractor with MULTIMODAL PDF Attachment ==========
   const extractorPromptWithContext = `${extractorPrompt}
@@ -490,6 +550,24 @@ Return JSON: { "valid": boolean, "reason": "..." }`
 
     validExercises.push(exercise)
   }
+
+  // ========== V1.0: Diagram Pass ==========
+  // Run diagram pass after verification, mutates exercises in place
+  let diagramMetrics = createDiagramMetrics()
+
+  if (diagramPrompt && validExercises.length > 0) {
+    diagramMetrics = await runDiagramPass(payload, {
+      attachments,
+      segment,
+      diagramPrompt,
+      exercises: validExercises,
+    })
+  } else if (!diagramPrompt) {
+    diagramMetrics.skipped = validExercises.length // All skipped - no prompt configured
+  }
+
+  // Return diagram metrics via output for aggregation
+  output.diagramPassMetricsForSegment = diagramMetrics
 
   return validExercises
 }

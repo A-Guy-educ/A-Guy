@@ -9,6 +9,8 @@ export interface QueueConversionParams {
   mediaId: string
   extractorPromptId: string
   verifierPromptId: string
+  // V1.0: Optional diagram generator prompt
+  diagramPromptId?: string | null
 }
 
 export interface ConversionResult {
@@ -93,15 +95,34 @@ export class ExerciseConversionService {
       tenantId,
     }
 
+    // V1.0: Fetch diagram generator prompt (optional)
+    let diagramPromptTemplate: string | null = null
+    if (params.diagramPromptId) {
+      const diagramPrompt = await this.payload.findByID({
+        collection: 'prompts',
+        id: params.diagramPromptId,
+        depth: 0,
+      })
+
+      if (diagramPrompt && typeof diagramPrompt.template === 'string') {
+        diagramPromptTemplate = diagramPrompt.template
+      }
+    }
+
     // Take a snapshot of the prompts for reproducibility
     const promptSnapshot = {
       extractor: typeof extractorPrompt.template === 'string' ? extractorPrompt.template : '',
       verifier: typeof verifierPrompt.template === 'string' ? verifierPrompt.template : '',
+      // V1.0: Optional diagram generator prompt
+      diagramGenerator: diagramPromptTemplate,
     }
 
     // Compute hash of prompt content for change detection
     const extractorHash = await this.hashContent(promptSnapshot.extractor)
     const verifierHash = await this.hashContent(promptSnapshot.verifier)
+    const diagramGeneratorHash = diagramPromptTemplate
+      ? await this.hashContent(diagramPromptTemplate)
+      : null
 
     // Queue the job via Payload's job system
     const job = await this.payload.jobs.queue({
@@ -112,11 +133,15 @@ export class ExerciseConversionService {
         promptRefs: {
           extractorPromptId: params.extractorPromptId,
           verifierPromptId: params.verifierPromptId,
+          // V1.0: Optional diagram prompt reference
+          diagramPromptId: params.diagramPromptId || null,
         },
         promptSnapshot,
         promptSnapshotHash: {
           extractor: extractorHash,
           verifier: verifierHash,
+          // V1.0: Optional diagram generator hash
+          diagramGenerator: diagramGeneratorHash,
         },
       },
     })

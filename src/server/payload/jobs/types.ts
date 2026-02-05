@@ -36,22 +36,53 @@ export interface PdfToExercisesInput {
   promptRefs: {
     extractorPromptId: string
     verifierPromptId: string
+    // V1.0: Optional diagram generator prompt reference
+    diagramPromptId: string | null
   }
   promptSnapshot: {
     extractor: string
     verifier: string
+    // V1.0: Optional diagram generator prompt template
+    diagramGenerator: string | null
   }
   promptSnapshotHash: {
     extractor: string
     verifier: string
+    // V1.0: Optional diagram generator hash
+    diagramGenerator: string | null
   }
 }
 
 // Task-specific output types (Phase 3.2)
+export interface DiagramPassMetrics {
+  detected: number
+  attempted: number
+  succeeded: number
+  failed: number
+  skipped: number
+  latencyMs: number
+}
+
 export interface PdfToExercisesOutput {
   exerciseIds: string[]
   segmentCount: number
   errors?: string[]
+  // Diagram pass metrics (V1.0)
+  diagramsDetected: number
+  diagramPassAttempted: number
+  diagramPassSucceeded: number
+  diagramPassFailed: number
+  diagramPassSkipped: number
+  diagramPassLatencyMsTotal: number
+  segments: Array<{
+    pageStart: number
+    pageEnd: number
+    exerciseCount: number
+    debug?: {
+      proposedIdempotencyKeys: string[]
+      diagramPass?: DiagramPassMetrics
+    }
+  }>
 }
 
 // Generic typed job (Phase 3.2) - for type assertions in handlers
