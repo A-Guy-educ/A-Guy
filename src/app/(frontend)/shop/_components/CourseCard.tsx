@@ -1,6 +1,13 @@
 'use client'
 
-import { Card, CardContent, CardFooter, CardHeader } from '@/ui/web/components/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/ui/web/components/card'
 import { Button } from '@/ui/web/components/button'
 import { Badge } from '@/ui/web/components/badge'
 import { BookOpen, Check, GraduationCap } from 'lucide-react'
@@ -52,39 +59,42 @@ export function CourseCard({
   }
 
   return (
-    <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-lg">
-      <CardHeader className="pb-4">
-        <Badge variant="secondary" className={cn('w-fit text-xs font-bold', badgeColor)}>
-          {badge}
-        </Badge>
+    <div className="group relative">
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 via-accent/50 to-primary/50 rounded-xl opacity-0 group-hover:opacity-100 blur transition duration-500" />
+      <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-lg">
+        <CardHeader className="pb-4">
+          <Badge variant="secondary" className={cn('w-fit text-xs font-bold', badgeColor)}>
+            {badge}
+          </Badge>
 
-        <div className="mt-4 flex items-start gap-4">
-          <div className={cn('p-3 rounded-xl flex-shrink-0', iconBgColor)}>
-            <Icon className={cn('w-6 h-6', isOwned ? 'text-success' : 'text-primary')} />
+          <div className="mt-4 flex items-start gap-4">
+            <div className={cn('p-3 rounded-xl flex-shrink-0', iconBgColor)}>
+              <Icon className={cn('w-6 h-6', isOwned ? 'text-success' : 'text-primary')} />
+            </div>
+
+            <div className="flex-1">
+              <CardTitle className="text-lg leading-tight">{title}</CardTitle>
+              <CardDescription className="mt-1">{description}</CardDescription>
+            </div>
           </div>
+        </CardHeader>
 
-          <div className="flex-1">
-            <h3 className="text-lg font-black text-foreground leading-tight">{title}</h3>
-            <p className="text-sm text-muted-foreground mt-1 font-medium">{description}</p>
+        <CardContent className="pb-4">
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-black text-foreground">₪{price}</span>
+            <span className="text-sm text-muted-foreground font-medium">/ קורס</span>
           </div>
-        </div>
-      </CardHeader>
+        </CardContent>
 
-      <CardContent className="pb-4">
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-black text-foreground">₪{price}</span>
-          <span className="text-sm text-muted-foreground font-medium">/ קורס</span>
-        </div>
-      </CardContent>
-
-      <CardFooter>
-        <Button
-          className={cn('w-full font-bold text-sm', getButtonStyles())}
-          disabled={buttonStyle === 'owned'}
-        >
-          {buttonText}
-        </Button>
-      </CardFooter>
-    </Card>
+        <CardFooter>
+          <Button
+            className={cn('w-full font-bold text-sm', getButtonStyles())}
+            disabled={buttonStyle === 'owned'}
+          >
+            {buttonText}
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   )
 }
