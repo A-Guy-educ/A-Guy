@@ -7,6 +7,8 @@
 
 import { del, list, put } from '@vercel/blob'
 
+import { getServerSideURL } from '@/infra/utils/getURL'
+
 // Environment variable names
 const BLOB_TOKEN_ENV = 'BLOB_READ_WRITE_TOKEN'
 const BLOB_READONLY_TOKEN_ENV = 'BLOB_READONLY_TOKEN'
@@ -351,7 +353,7 @@ export function isVercelBlobUrl(url: string): boolean {
  * Get the external storage base URL for constructing absolute URLs
  */
 export async function getExternalStorageUrl(): Promise<string> {
-  return 'http://localhost:3000'
+  return getServerSideURL()
 }
 
 /**
