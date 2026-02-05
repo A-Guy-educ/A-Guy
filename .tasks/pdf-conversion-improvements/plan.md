@@ -8,18 +8,19 @@
 
 ## Summary of Fixed Decisions
 
-| Decision | Value |
-|----------|-------|
-| Uniqueness | **Source-based** (page range + position), NOT content-based |
-| Merge rule | **Last write wins** (no "richer wins", no heuristics) |
-| Retry effect | **None** on dedup/merge |
-| Scope | **Exercise-specific** (no generic platform) |
+| Decision     | Value                                                       |
+| ------------ | ----------------------------------------------------------- |
+| Uniqueness   | **Source-based** (page range + position), NOT content-based |
+| Merge rule   | **Last write wins** (no "richer wins", no heuristics)       |
+| Retry effect | **None** on dedup/merge                                     |
+| Scope        | **Exercise-specific** (no generic platform)                 |
 
 ---
 
 ## Current State Analysis
 
 ### Relevant Files
+
 - `src/server/payload/collections/Exercises/index.ts` - Collection schema
 - `src/server/payload/jobs/pdf-to-exercises-task.ts` - Conversion job
 - `src/server/services/exercise-conversion/helpers.ts` - Helpers (`isContentRicher`, `normalizeExerciseInput`)
@@ -27,11 +28,13 @@
 - `src/server/payload/migrations/003-add-exercise-unique-index.ts` - Current unique index
 
 ### Current Identity Model
+
 - **Unique key:** `(lesson, sourceDoc, contentHash)` via MongoDB index
 - **Lookup:** Find by `(lessonId, sourceDocId, contentHash)`
 - **Merge:** `isContentRicher()` - updates only if new content has more blocks/TikZ
 
 ### Problems (from spec)
+
 1. Same content on different pages → incorrectly deduped
 2. Minor LLM variations → different `contentHash` → duplicate exercises
 3. "Richer wins" merge creates ambiguity with retry flow
@@ -41,6 +44,7 @@
 ## Stage 1: Observability Only
 
 ### Goal
+
 Compute and log a source-based idempotency key for every extracted exercise. **No behavior change.**
 
 ### Tests First
@@ -102,21 +106,24 @@ TEST 1.7: Structured log emits idempotency key for each exercise
    - Log: `console.log(\`[PDF→Exercises] Exercise idempotencyKey=${key}, contentHash=${hash}\`)`
 
 ### Metrics to Verify
-| Metric | Description | Target |
-|--------|-------------|--------|
-| M1 | `extracted_items_total` | Logged per job |
-| M2 | `extracted_unique_contentHash_count` | Logged per job |
-| M3 | `extracted_unique_proposedIdKey_count` | Logged per job |
-| M4 | `extracted_collisions_by_proposedIdKey` | ~0 (indicates unstable ordinal) |
-| M5 | `same_contentHash_diff_pageRange_count` | >0 expected for repeated exercises |
+
+| Metric | Description                             | Target                             |
+| ------ | --------------------------------------- | ---------------------------------- |
+| M1     | `extracted_items_total`                 | Logged per job                     |
+| M2     | `extracted_unique_contentHash_count`    | Logged per job                     |
+| M3     | `extracted_unique_proposedIdKey_count`  | Logged per job                     |
+| M4     | `extracted_collisions_by_proposedIdKey` | ~0 (indicates unstable ordinal)    |
+| M5     | `same_contentHash_diff_pageRange_count` | >0 expected for repeated exercises |
 
 ### Exit Criteria
+
 - [ ] `computeIdempotencyKey` unit tests pass
 - [ ] Integration test confirms keys in job output
 - [ ] `exercisesCreated` / `exercisesDeduped` counts unchanged from baseline
 - [ ] M4 (collisions) is near zero on test PDFs
 
 ### Rollback Mechanism
+
 - Remove logging code and `debug` field from output
 - Delete `idempotency.ts` file
 - No data migration required
@@ -126,6 +133,7 @@ TEST 1.7: Structured log emits idempotency key for each exercise
 ## Stage 2: In-Memory Dedup (Segment-Level)
 
 ### Goal
+
 Deduplicate extractor output **within a segment** using the idempotency key before DB writes.
 
 ### Tests First
@@ -182,10 +190,11 @@ TEST 2.8: Duplicate key DB errors decrease
 ### Minimal Code Change Scope
 
 1. **New function in:** `src/server/services/exercise-conversion/idempotency.ts`
+
    ```ts
    export function deduplicateByIdempotencyKey(
      exercises: EnrichedExercise[],
-     keyFn: (ex: EnrichedExercise) => string
+     keyFn: (ex: EnrichedExercise) => string,
    ): { exercises: EnrichedExercise[]; droppedCount: number }
    ```
 
@@ -196,19 +205,22 @@ TEST 2.8: Duplicate key DB errors decrease
    - Update `output.exercisesDeduped += droppedCount`
 
 ### Metrics to Verify
-| Metric | Description | Target |
-|--------|-------------|--------|
-| M6 | `segment_inmemory_dedup_dropped_count` | >0 on known duplicate PDFs |
-| M7 | `db_write_attempts` before vs after | Decrease |
-| M8 | `duplicate_key_db_errors_count` | Decrease / zero |
+
+| Metric | Description                            | Target                     |
+| ------ | -------------------------------------- | -------------------------- |
+| M6     | `segment_inmemory_dedup_dropped_count` | >0 on known duplicate PDFs |
+| M7     | `db_write_attempts` before vs after    | Decrease                   |
+| M8     | `duplicate_key_db_errors_count`        | Decrease / zero            |
 
 ### Exit Criteria
+
 - [ ] Unit tests for dedup function pass
 - [ ] Integration test confirms reduced DB writes
 - [ ] M8 (duplicate key errors) decreases on problematic PDFs
 - [ ] Total persisted exercises matches expected (no unexpected loss)
 
 ### Rollback Mechanism
+
 - Add feature flag: `ENABLE_INMEMORY_DEDUP=false`
 - Skip dedup call when flag is false
 - No data changes to revert
@@ -218,6 +230,7 @@ TEST 2.8: Duplicate key DB errors decrease
 ## Stage 3: Shadow Identity Field
 
 ### Goal
+
 Persist `idempotencyKey` on Exercise documents **without enforcing uniqueness yet**.
 
 ### Tests First
@@ -269,6 +282,7 @@ TEST 3.7: Existing exercises without idempotencyKey remain readable
 
 1. **Modify:** `src/server/payload/collections/Exercises/index.ts`
    Add fields to Conversion Metadata collapsible:
+
    ```ts
    {
      name: 'idempotencyKey',
@@ -300,19 +314,22 @@ TEST 3.7: Existing exercises without idempotencyKey remain readable
 3. **Run:** `pnpm generate:types` to update `payload-types.ts`
 
 ### Metrics to Verify
-| Metric | Description | Target |
-|--------|-------------|--------|
-| M9 | `exercises_with_idempotencyKey_ratio` (new/updated) | 100% |
-| M10 | `idempotencyKey_null_count` (new writes) | 0 |
-| M11 | `idempotencyKey_backfill_needed_count` (existing) | Known legacy count |
+
+| Metric | Description                                         | Target             |
+| ------ | --------------------------------------------------- | ------------------ |
+| M9     | `exercises_with_idempotencyKey_ratio` (new/updated) | 100%               |
+| M10    | `idempotencyKey_null_count` (new writes)            | 0                  |
+| M11    | `idempotencyKey_backfill_needed_count` (existing)   | Known legacy count |
 
 ### Exit Criteria
+
 - [ ] Schema tests pass
 - [ ] Integration tests confirm field population
 - [ ] Existing exercises remain readable
 - [ ] No breaking changes to existing API responses
 
 ### Rollback Mechanism
+
 - Stop writing new fields in job task
 - Fields are optional, no migration to undo
 - Can drop fields from schema if needed (data remains, just not exposed)
@@ -322,6 +339,7 @@ TEST 3.7: Existing exercises without idempotencyKey remain readable
 ## Stage 4: Switch Source of Truth
 
 ### Goal
+
 Upsert by `idempotencyKey` with **Last wins** semantics. Re-running same PDF must not increase exercise count.
 
 ### Tests First
@@ -382,15 +400,16 @@ TEST 4.8: contentHash still computed for debugging
 ### Minimal Code Change Scope
 
 1. **New migration:** `src/server/payload/migrations/004-add-idempotency-key-index.ts`
+
    ```ts
    // Create unique index on idempotencyKey (single field, not compound)
    await db.collection('exercises').createIndex(
      { idempotencyKey: 1 },
      {
        unique: true,
-       sparse: true,  // Allow null for legacy docs
-       name: 'idx_exercise_idempotency_key_unique'
-     }
+       sparse: true, // Allow null for legacy docs
+       name: 'idx_exercise_idempotency_key_unique',
+     },
    )
    ```
 
@@ -398,6 +417,7 @@ TEST 4.8: contentHash still computed for debugging
    Replace current lookup/create/update logic:
 
    **Before:**
+
    ```ts
    // Find by (lessonId, sourceDocId, contentHash)
    const existing = await payload.find({ where: { ... contentHash ... } })
@@ -409,6 +429,7 @@ TEST 4.8: contentHash still computed for debugging
    ```
 
    **After:**
+
    ```ts
    // Find by idempotencyKey
    const idempotencyKey = computeIdempotencyKey({...})
@@ -442,20 +463,23 @@ TEST 4.8: contentHash still computed for debugging
 3. **Remove:** Call to `isContentRicher()` in persistence logic
 
 ### Metrics to Verify
-| Metric | Description | Target |
-|--------|-------------|--------|
-| M12 | `rerun_same_pdf_exercises_delta` | 0 |
-| M13 | `idempotency_upsert_update_count` | Matches expected |
-| M14 | `idempotency_upsert_create_count` | ~0 on reruns |
-| M15 | `contentHash_change_rate_on_updates` | Informational |
+
+| Metric | Description                          | Target           |
+| ------ | ------------------------------------ | ---------------- |
+| M12    | `rerun_same_pdf_exercises_delta`     | 0                |
+| M13    | `idempotency_upsert_update_count`    | Matches expected |
+| M14    | `idempotency_upsert_create_count`    | ~0 on reruns     |
+| M15    | `contentHash_change_rate_on_updates` | Informational    |
 
 ### Exit Criteria
+
 - [ ] Rerun test: same PDF produces 0 new exercises
 - [ ] Different page ranges → separate exercises (sampling verified)
 - [ ] Duplicate key errors eliminated
 - [ ] All tests pass
 
 ### Rollback Mechanism
+
 - Feature flag: `USE_IDEMPOTENCY_KEY_UPSERT=false`
 - When false: use old `(lessonId, sourceDocId, contentHash)` lookup
 - Keep old index alive until stability confirmed
@@ -466,6 +490,7 @@ TEST 4.8: contentHash still computed for debugging
 ## Stage 5: Cleanup (Optional, After Stability)
 
 ### Goal
+
 Remove legacy complexity after stability window.
 
 ### Tests First
@@ -492,14 +517,14 @@ TEST 5.3: Retry does not affect persistence decision
 ### Minimal Code Change Scope
 
 1. **New migration:** `src/server/payload/migrations/005-drop-content-hash-unique-index.ts`
+
    ```ts
    // Drop old unique index
    await db.collection('exercises').dropIndex('idx_exercise_unique_identity')
    // Keep non-unique index on contentHash for debugging queries
-   await db.collection('exercises').createIndex(
-     { contentHash: 1 },
-     { unique: false, name: 'idx_exercise_content_hash' }
-   )
+   await db
+     .collection('exercises')
+     .createIndex({ contentHash: 1 }, { unique: false, name: 'idx_exercise_content_hash' })
    ```
 
 2. **Delete:** `isContentRicher()` from `src/server/services/exercise-conversion/helpers.ts`
@@ -509,17 +534,20 @@ TEST 5.3: Retry does not affect persistence decision
 4. **Update:** Job output to remove legacy dedup metrics that no longer apply
 
 ### Metrics to Verify
-| Metric | Description | Target |
-|--------|-------------|--------|
-| M16 | `codepath_count_removed` | Track in PR |
-| M17 | `production_duplicate_incidence` | Stable/low |
+
+| Metric | Description                      | Target      |
+| ------ | -------------------------------- | ----------- |
+| M16    | `codepath_count_removed`         | Track in PR |
+| M17    | `production_duplicate_incidence` | Stable/low  |
 
 ### Exit Criteria
+
 - [ ] No regression in conversion success rate
 - [ ] No increase in duplicate exercises
 - [ ] Code is simpler (fewer branches, no heuristics)
 
 ### Rollback Mechanism
+
 - Keep migration plan reversible
 - If needed: recreate old unique index (rare)
 - Old code paths can be restored from git history
@@ -547,13 +575,13 @@ tests/
 
 ## Implementation Order Summary
 
-| Stage | Focus | Breaking Change | Feature Flag |
-|-------|-------|-----------------|--------------|
-| 1 | Observability | No | None needed |
-| 2 | In-memory dedup | No | `ENABLE_INMEMORY_DEDUP` |
-| 3 | Shadow field | No | None needed |
-| 4 | Switch to idempotency | Yes (behavior) | `USE_IDEMPOTENCY_KEY_UPSERT` |
-| 5 | Cleanup | No | Migration-gated |
+| Stage | Focus                 | Breaking Change | Feature Flag                 |
+| ----- | --------------------- | --------------- | ---------------------------- |
+| 1     | Observability         | No              | None needed                  |
+| 2     | In-memory dedup       | No              | `ENABLE_INMEMORY_DEDUP`      |
+| 3     | Shadow field          | No              | None needed                  |
+| 4     | Switch to idempotency | Yes (behavior)  | `USE_IDEMPOTENCY_KEY_UPSERT` |
+| 5     | Cleanup               | No              | Migration-gated              |
 
 ---
 
@@ -567,6 +595,7 @@ abc123:lesson456:doc789:1-3:2:v1
 ```
 
 ### Component Definitions
+
 - **tenantId**: From job input `ctx.tenantId`
 - **lessonId**: From job input `ctx.lessonId`
 - **sourceDocId**: From job input `ctx.sourceDocId`

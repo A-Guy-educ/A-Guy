@@ -75,47 +75,47 @@ Fix the idempotency-based deduplication system so it actually works. The current
 
 ### STAYS (Keep These)
 
-| Item | File | Reason |
-|------|------|--------|
-| `contentHash` field | Exercises collection | Debug/change signal - NOT for dedup |
-| `computeContentHash()` | hash.ts | Still computed for debugging |
-| `normalizeExerciseInput()` | helpers.ts | Supports contentHash computation |
-| contentHash in logs | pdf-to-exercises-task.ts | Useful for "same key, different content" detection |
-| `idempotencyKey` field | Exercises collection | Primary dedup mechanism (FIXED) |
-| `specVersion` field | Exercises collection | Version tracking |
-| `extractionMeta` field | Exercises collection | Debug metadata |
-| `origin` field | Exercises collection | Semantic marker for UI |
-| `sourceDoc` | Exercises collection | PDF reference |
-| `sourcePageStart/End` | Exercises collection | Page position |
-| `sourceOrderInSegment` | Exercises collection | LLM ordering (metadata only) |
-| `conversionJobId` | Exercises collection | Job tracking |
-| Migration 002 → 001 | backfill-exercise-origin | Sets default origin |
-| Migration 003 → 002 | create-media-retention-index | Media cleanup |
-| Migration 004 → 003 | add-idempotency-key-index | **THE** dedup index |
-| `computeIdempotencyKey()` | idempotency.ts | Core logic (FIXED to use system ordinal) |
-| `deduplicateByIdempotencyKey()` | idempotency.ts | In-memory dedup |
+| Item                            | File                         | Reason                                             |
+| ------------------------------- | ---------------------------- | -------------------------------------------------- |
+| `contentHash` field             | Exercises collection         | Debug/change signal - NOT for dedup                |
+| `computeContentHash()`          | hash.ts                      | Still computed for debugging                       |
+| `normalizeExerciseInput()`      | helpers.ts                   | Supports contentHash computation                   |
+| contentHash in logs             | pdf-to-exercises-task.ts     | Useful for "same key, different content" detection |
+| `idempotencyKey` field          | Exercises collection         | Primary dedup mechanism (FIXED)                    |
+| `specVersion` field             | Exercises collection         | Version tracking                                   |
+| `extractionMeta` field          | Exercises collection         | Debug metadata                                     |
+| `origin` field                  | Exercises collection         | Semantic marker for UI                             |
+| `sourceDoc`                     | Exercises collection         | PDF reference                                      |
+| `sourcePageStart/End`           | Exercises collection         | Page position                                      |
+| `sourceOrderInSegment`          | Exercises collection         | LLM ordering (metadata only)                       |
+| `conversionJobId`               | Exercises collection         | Job tracking                                       |
+| Migration 002 → 001             | backfill-exercise-origin     | Sets default origin                                |
+| Migration 003 → 002             | create-media-retention-index | Media cleanup                                      |
+| Migration 004 → 003             | add-idempotency-key-index    | **THE** dedup index                                |
+| `computeIdempotencyKey()`       | idempotency.ts               | Core logic (FIXED to use system ordinal)           |
+| `deduplicateByIdempotencyKey()` | idempotency.ts               | In-memory dedup                                    |
 
 ### REMOVED (Delete These)
 
-| Item | File | Reason |
-|------|------|--------|
-| `_useIdempotencyUpsert` variable | pdf-to-exercises-task.ts:119 | Declared but never used |
-| `getPdfConversionUseIdempotencyUpsert()` | system-params.ts | Feature flag never checked |
-| Import of above | pdf-to-exercises-task.ts:4 | Dead import |
-| Migration 001-create-conversion-indexes | migrations/ | Creates orphaned contentHash indexes |
-| Migration 003-add-exercise-unique-index | migrations/ | Creates orphaned contentHash index |
-| Migration 005-drop-content-hash-unique-index | migrations/ | Targets wrong index names |
-| `idx_exercise_dedup` | MongoDB | Orphaned unique index |
-| `idx_exercise_unique_identity` | MongoDB | Orphaned unique index |
-| Any "richer wins" comparison | pdf-to-exercises-task.ts | Merge is strictly "Last Wins" |
+| Item                                         | File                         | Reason                               |
+| -------------------------------------------- | ---------------------------- | ------------------------------------ |
+| `_useIdempotencyUpsert` variable             | pdf-to-exercises-task.ts:119 | Declared but never used              |
+| `getPdfConversionUseIdempotencyUpsert()`     | system-params.ts             | Feature flag never checked           |
+| Import of above                              | pdf-to-exercises-task.ts:4   | Dead import                          |
+| Migration 001-create-conversion-indexes      | migrations/                  | Creates orphaned contentHash indexes |
+| Migration 003-add-exercise-unique-index      | migrations/                  | Creates orphaned contentHash index   |
+| Migration 005-drop-content-hash-unique-index | migrations/                  | Targets wrong index names            |
+| `idx_exercise_dedup`                         | MongoDB                      | Orphaned unique index                |
+| `idx_exercise_unique_identity`               | MongoDB                      | Orphaned unique index                |
+| Any "richer wins" comparison                 | pdf-to-exercises-task.ts     | Merge is strictly "Last Wins"        |
 
 ### CHANGED (Modified)
 
-| Item | Change |
-|------|--------|
-| `computeIdempotencyKey()` | Use system ordinal (array index), not LLM `orderInSegment` |
-| `createIdempotencyKeyFn()` | Accept system ordinal parameter |
-| Upsert loop in task | Pass system ordinal (loop index) to key function |
+| Item                       | Change                                                     |
+| -------------------------- | ---------------------------------------------------------- |
+| `computeIdempotencyKey()`  | Use system ordinal (array index), not LLM `orderInSegment` |
+| `createIdempotencyKeyFn()` | Accept system ordinal parameter                            |
+| Upsert loop in task        | Pass system ordinal (loop index) to key function           |
 
 ---
 
@@ -145,6 +145,7 @@ Fix the idempotency-based deduplication system so it actually works. The current
 3. Check job output metrics
 
 **PASS:**
+
 - Run #2: `exercisesCreated = 0`
 - Run #2: `exercisesDeduped > 0` (should equal Run #1 created count)
 - Total exercise count in DB unchanged after Run #2
@@ -171,6 +172,7 @@ Fix the idempotency-based deduplication system so it actually works. The current
 3. Run conversion again (would produce contentHash B)
 
 **PASS:**
+
 - Same `idempotencyKey` → exercise updated in place
 - `contentHash` changed but no duplicate created
 - Exercise count unchanged
@@ -194,10 +196,12 @@ db.exercises.getIndexes()
 ```
 
 **PASS - Expected indexes:**
+
 - `_id_` (default)
 - `idx_exercise_idempotency_key_unique` (sparse, unique)
 
 **PASS - Should NOT exist:**
+
 - `idx_exercise_dedup`
 - `idx_exercise_unique_identity`
 - `idx_exercise_content_hash`
@@ -214,31 +218,33 @@ pnpm typecheck && pnpm lint && pnpm test
 
 ## Files to Modify
 
-| Action | File |
-|--------|------|
-| **EDIT** | `src/server/services/exercise-conversion/idempotency.ts` (fix key computation) |
-| **EDIT** | `src/server/payload/jobs/pdf-to-exercises-task.ts` (use system ordinal, remove dead code) |
-| **EDIT** | `src/infra/config/system-params.ts` (remove feature flag) |
-| **DELETE** | `src/server/payload/migrations/001-create-conversion-indexes.ts` |
-| **DELETE** | `src/server/payload/migrations/003-add-exercise-unique-index.ts` |
-| **DELETE** | `src/server/payload/migrations/005-drop-content-hash-unique-index.ts` |
-| **RENAME** | `002-backfill-exercise-origin.ts` → `001-backfill-exercise-origin.ts` |
-| **RENAME** | `003-create-media-retention-index.ts` → `002-create-media-retention-index.ts` |
-| **RENAME** | `004-add-idempotency-key-index.ts` → `003-add-idempotency-key-index.ts` |
-| **EDIT** | `tests/int/pdf-conversion-idempotency-upsert.int.spec.ts` |
-| **EDIT** | `tests/unit/idempotency-key.test.ts` |
-| **REGENERATE** | `src/payload-types.ts` (via `pnpm generate:types`) |
+| Action         | File                                                                                      |
+| -------------- | ----------------------------------------------------------------------------------------- |
+| **EDIT**       | `src/server/services/exercise-conversion/idempotency.ts` (fix key computation)            |
+| **EDIT**       | `src/server/payload/jobs/pdf-to-exercises-task.ts` (use system ordinal, remove dead code) |
+| **EDIT**       | `src/infra/config/system-params.ts` (remove feature flag)                                 |
+| **DELETE**     | `src/server/payload/migrations/001-create-conversion-indexes.ts`                          |
+| **DELETE**     | `src/server/payload/migrations/003-add-exercise-unique-index.ts`                          |
+| **DELETE**     | `src/server/payload/migrations/005-drop-content-hash-unique-index.ts`                     |
+| **RENAME**     | `002-backfill-exercise-origin.ts` → `001-backfill-exercise-origin.ts`                     |
+| **RENAME**     | `003-create-media-retention-index.ts` → `002-create-media-retention-index.ts`             |
+| **RENAME**     | `004-add-idempotency-key-index.ts` → `003-add-idempotency-key-index.ts`                   |
+| **EDIT**       | `tests/int/pdf-conversion-idempotency-upsert.int.spec.ts`                                 |
+| **EDIT**       | `tests/unit/idempotency-key.test.ts`                                                      |
+| **REGENERATE** | `src/payload-types.ts` (via `pnpm generate:types`)                                        |
 
 ---
 
 ## Key Insight: Why Duplicates Happen
 
 Current `idempotencyKey` format:
+
 ```
 {tenant}:{lesson}:{doc}:{pageStart}-{pageEnd}:{orderInSegment}:{specVersion}
 ```
 
 The `orderInSegment` comes from LLM extraction output. If LLM returns exercises in different order on re-run:
+
 - Run 1: Exercise A gets `orderInSegment=1` → key ends with `:1:v1`
 - Run 2: Exercise A gets `orderInSegment=2` → key ends with `:2:v1`
 - Different keys → no match → new exercise created → DUPLICATE

@@ -7,6 +7,7 @@ Complete the analytics setup for GA4 + Mixpanel with proper token configuration,
 ## Current State
 
 ✅ **Already Implemented:**
+
 - GA4 adapter fully integrated (`src/infra/analytics/adapters/ga4/`)
 - Mixpanel adapter fully integrated (`src/infra/analytics/adapters/mixpanel/`)
 - Session recording at 100% with text unmasking
@@ -15,6 +16,7 @@ Complete the analytics setup for GA4 + Mixpanel with proper token configuration,
 - Session tracking via sessionStorage
 
 ❌ **Needs Implementation:**
+
 - Update to correct GA4 measurement IDs and Mixpanel token
 - Environment-based token selection (prod vs temp GA4)
 - Enable Mixpanel autocapture
@@ -45,6 +47,7 @@ NEXT_PUBLIC_MIXPANEL_TOKEN=4472fb6738b41a819dbbf76fad44108e
 ```
 
 **Rationale:**
+
 - Keep both GA4 IDs documented
 - Use `NEXT_PUBLIC_GA4_MEASUREMENT_ID` as the active one
 - Prevents both GA4s from loading simultaneously
@@ -55,17 +58,20 @@ NEXT_PUBLIC_MIXPANEL_TOKEN=4472fb6738b41a819dbbf76fad44108e
 **File:** `src/infra/analytics/adapters/mixpanel/scripts.tsx`
 
 **Current (line 95):**
+
 ```typescript
 track_pageview: false,
 ```
 
 **Change to:**
+
 ```typescript
 track_pageview: true,
 autocapture: true,
 ```
 
 **Trade-offs:**
+
 - ✅ Pro: Captures all click events automatically (comprehensive tracking)
 - ✅ Pro: No manual event instrumentation needed
 - ❌ Con: Can create noisy data with generic event names
@@ -82,6 +88,7 @@ Create new tracking for session duration and abandonment points.
 **File:** `src/infra/analytics/contracts/events.ts`
 
 Add new event types:
+
 ```typescript
 export const PRODUCT_EVENTS = {
   // ... existing events ...
@@ -205,7 +212,7 @@ export function usePageAbandonment() {
     // Track scroll depth
     const handleScroll = () => {
       const scrollPercent = Math.round(
-        (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100
+        (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100,
       )
       maxScroll.current = Math.max(maxScroll.current, scrollPercent)
     }
@@ -275,6 +282,7 @@ const eventNameMap: Record<string, string> = {
 **File:** `docs/analytics-environment-setup.md` (NEW)
 
 Create documentation explaining:
+
 - Which tokens to use for which environment
 - How to switch between production and temp GA4
 - Governance process (must confirm with Ido)
@@ -298,6 +306,7 @@ Before deploying, confirm with Ido:
 ### Local Testing
 
 1. **Start dev server:**
+
    ```bash
    pnpm dev
    ```
@@ -326,6 +335,7 @@ Before deploying, confirm with Ido:
 ### Dashboard Verification
 
 **GA4 (https://analytics.google.com):**
+
 1. Go to Reports > Realtime
 2. Verify events appearing:
    - `page_view`
@@ -335,6 +345,7 @@ Before deploying, confirm with Ido:
 3. Check for duplicate events (should be none)
 
 **Mixpanel (https://mixpanel.com):**
+
 1. Go to Activity Feed
 2. Verify events appearing:
    - All 10+ canonical events
@@ -348,6 +359,7 @@ Before deploying, confirm with Ido:
 **Scenario:** User loads page, navigates, closes tab
 
 **Expected:**
+
 - 1x `session_started` (on first load)
 - 1x `page_view` per page navigation
 - 1x `session_ended` (on tab close)
@@ -355,6 +367,7 @@ Before deploying, confirm with Ido:
 - No duplicate session starts
 
 **How to verify:**
+
 - Check Mixpanel Activity Feed
 - Filter by your session ID
 - Count occurrences of each event
@@ -363,6 +376,7 @@ Before deploying, confirm with Ido:
 ## Critical Files
 
 ### Files to Modify:
+
 1. `.env.example` - Add GA4 prod/temp IDs
 2. `src/infra/analytics/adapters/mixpanel/scripts.tsx` - Enable autocapture (if confirmed)
 3. `src/infra/analytics/contracts/events.ts` - Add new events
@@ -372,6 +386,7 @@ Before deploying, confirm with Ido:
 7. `src/app/(frontend)/LayoutClient.tsx` - Add new hooks
 
 ### Files to Create:
+
 1. `src/infra/analytics/hooks/useSessionDuration.ts` - Session duration tracking
 2. `src/infra/analytics/hooks/usePageAbandonment.ts` - Page abandonment tracking
 3. `docs/analytics-environment-setup.md` - Environment documentation
@@ -379,42 +394,51 @@ Before deploying, confirm with Ido:
 ## Open Questions (Need Clarification)
 
 ### 1. Autocapture Decision
+
 **Question:** Should we enable Mixpanel autocapture?
 
 **Context:**
+
 - Task says `autocapture: true`
 - Current architecture has it disabled for intentional, clean tracking
 - Autocapture creates noisy data but captures everything
 
 **Options:**
+
 - A) Enable it as task requires (comprehensive but noisy)
 - B) Keep it disabled and use explicit tracking (clean but requires instrumentation)
 
 **Recommendation:** Clarify with Ido - does he want autocapture for quick wins, or prefer the current explicit tracking approach?
 
 ### 2. Environment Strategy
+
 **Question:** How to manage prod vs temp GA4?
 
 **Current approach:** Use `NEXT_PUBLIC_GA4_MEASUREMENT_ID` and manually switch value
 
 **Alternative:** Use runtime detection based on domain:
+
 ```typescript
-const measurementId = window.location.hostname === 'app.aguy.co.il'
-  ? 'G-M1QKYGXWVM' // Production
-  : 'G-49KEEFY1WE' // Staging/Temp
+const measurementId =
+  window.location.hostname === 'app.aguy.co.il'
+    ? 'G-M1QKYGXWVM' // Production
+    : 'G-49KEEFY1WE' // Staging/Temp
 ```
 
 **Recommendation:** Stick with env var approach for explicit control and verifiability.
 
 ### 3. Session End Reliability
+
 **Question:** How reliable is `beforeunload` event?
 
 **Context:**
+
 - `beforeunload` may not fire on mobile
 - Some browsers throttle it
 - Tab crashes won't trigger it
 
 **Mitigation:**
+
 - Use Page Visibility API as backup
 - Track `visibility_changed` with hidden state as proxy for abandonment
 - Accept that some sessions won't have explicit end event
@@ -422,33 +446,41 @@ const measurementId = window.location.hostname === 'app.aguy.co.il'
 ## Risks & Mitigations
 
 ### Risk 1: Duplicate Tracking
+
 **Scenario:** Both production and temp GA4 load simultaneously
 
 **Mitigation:**
+
 - Only set ONE `NEXT_PUBLIC_GA4_MEASUREMENT_ID` per environment
 - Document clearly in `.env.example`
 - Add validation warning if both prod/temp IDs are set
 
 ### Risk 2: Token Leakage
+
 **Scenario:** Production tokens committed to git
 
 **Mitigation:**
+
 - Never commit actual `.env` file
 - Use `.env.example` with placeholder values
 - Add pre-commit hook to block commits with actual tokens
 
 ### Risk 3: Wrong Token in Wrong Environment
+
 **Scenario:** Production GA4 used in staging, contaminating data
 
 **Mitigation:**
+
 - Require governance confirmation with Ido before deployment
 - Add console warning showing which tokens are active
 - Document token ownership in README
 
 ### Risk 4: Performance Impact
+
 **Scenario:** Too many tracking events slow down the app
 
 **Mitigation:**
+
 - Throttle scroll tracking (max 1 event per second)
 - Use `requestIdleCallback` for non-critical tracking
 - Make all tracking async and non-blocking
