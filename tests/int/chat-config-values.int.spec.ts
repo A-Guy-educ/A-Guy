@@ -21,7 +21,7 @@ const TEST_TENANT_SLUG = 'chat-config-test-tenant'
 
 describe('ChatConfig Values', () => {
   let payload: Awaited<ReturnType<typeof getPayload>>
-  let __adminUser: User
+  let _adminUser: User
   let tenant: Tenant
 
   beforeAll(async () => {
