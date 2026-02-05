@@ -65,7 +65,7 @@ export function PlanCard({
   const getFeatureIcon = (iconType: IconType) => {
     switch (iconType) {
       case 'x':
-        return <XCircle className="w-4 h-4 text-gray-200" />
+        return <XCircle className="w-4 h-4 text-muted-foreground/30" />
       case 'check':
         return <CheckCircle2 className="w-4 h-4 text-[hsl(var(--shop-success))]" />
       case 'help':
@@ -91,8 +91,8 @@ export function PlanCard({
   const borderClass = isPremium
     ? 'border-2 border-[hsl(var(--shop-primary))]'
     : isBordered
-      ? 'border border-gray-200'
-      : 'border border-gray-100'
+      ? 'border border-border'
+      : 'border border-border/50'
 
   return (
     <div
