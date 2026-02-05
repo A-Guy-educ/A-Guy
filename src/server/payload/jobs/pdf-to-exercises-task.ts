@@ -504,8 +504,14 @@ Return a JSON array of exercises with this schema:
   const rawExtracted = parseExtractorResponseText(extractorResult.text)
 
   // ========== Schema Validation for Extractor Output ==========
+  // Lenient validation: skips invalid exercises and logs errors (mirrors verifier pattern)
   const maxExercisesPerSegment = await getPdfConversionMaxExercisesPerSegment(tenantId)
-  const extracted = validateExtractedExercises(rawExtracted, segment, maxExercisesPerSegment)
+  const extracted = validateExtractedExercises(
+    rawExtracted,
+    segment,
+    maxExercisesPerSegment,
+    output,
+  )
 
   // ========== Enrich with block IDs if missing ==========
   const enrichedExercises = extracted.map((exercise) => enrichBlockIds(exercise))
@@ -625,31 +631,63 @@ const ExerciseExtractedSchema = z.object({
 
 /**
  * Validate extractor output against ExerciseExtracted schema
- * Returns validated array or throws INVALID_EXTRACTOR_OUTPUT error
+ * Lenient validation: skips invalid exercises and logs errors instead of failing the entire segment
+ * This mirrors the verifier pattern where invalid exercises are skipped rather than failing the job
  */
 function validateExtractedExercises(
   raw: any[],
   segment: { pageStart: number; pageEnd: number },
   maxExercisesPerSegment: number,
+  output?: {
+    errors: Array<{
+      stage: string
+      pageRange: any
+      code: string
+      message: string
+      skipped?: boolean
+    }>
+    exercisesSkipped?: number
+  },
 ): any[] {
   const validated: any[] = []
-  const errors: string[] = []
+  const validationErrors: string[] = []
+  let skippedCount = 0
 
   for (let i = 0; i < raw.length; i++) {
     const result = ExerciseExtractedSchema.safeParse(raw[i])
     if (result.success) {
       validated.push(result.data)
     } else {
-      errors.push(`Exercise ${i + 1}: ${result.error.message}`)
+      const errorMsg = `Exercise ${i + 1}: ${result.error.message}`
+      validationErrors.push(errorMsg)
+      skippedCount++
+
+      // Log the validation error
+      console.warn(`[PDF→Exercises] Skipping invalid exercise ${i + 1}: ${result.error.message}`)
+
+      // Track in output.errors if output object is provided (mirrors verifier pattern)
+      if (output?.errors) {
+        output.errors.push({
+          stage: 'PASS2_EXTRACT_VALIDATION',
+          pageRange: { start: segment.pageStart, end: segment.pageEnd },
+          code: 'VALIDATION_FAILED',
+          message: `Exercise ${i + 1}: ${result.error.message}`,
+          skipped: true,
+        })
+      }
     }
   }
 
-  if (errors.length > 0) {
-    throw {
-      code: 'INVALID_EXTRACTOR_OUTPUT',
-      message: `Schema validation failed: ${errors.join('; ')}`,
-      pageRange: { start: segment.pageStart, end: segment.pageEnd },
-    }
+  // Update skipped count in output
+  if (output && skippedCount > 0) {
+    output.exercisesSkipped = (output.exercisesSkipped || 0) + skippedCount
+  }
+
+  // Log summary of validation failures instead of throwing
+  if (validationErrors.length > 0) {
+    console.warn(
+      `[PDF→Exercises] Segment ${segment.pageStart}-${segment.pageEnd}: ${validationErrors.length}/${raw.length} exercises failed validation, proceeding with ${validated.length} valid exercises`,
+    )
   }
 
   // Enforce max exercises per segment limit
