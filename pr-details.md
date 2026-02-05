@@ -36,9 +36,11 @@ This PR refactors the LLM model registry to be the single source of truth for al
 ## Files Changed
 
 ### New Files
+
 - `src/infra/llm/providers/types.ts` - Provider type definitions
 
 ### Modified Files
+
 - `src/infra/llm/models.ts` - Centralized model registry
 - `src/infra/llm/providers/factory.ts` - Refactored to use registry
 - `src/infra/llm/providers/gemini/index.ts` - Updated exports
@@ -46,12 +48,14 @@ This PR refactors the LLM model registry to be the single source of truth for al
 - `src/infra/llm/index.ts` - Updated exports
 
 ### Test Files
+
 - `tests/unit/infra/llm/models.test.ts` - New (23 tests)
 - `tests/unit/infra/llm/providers/factory.test.ts` - Extended (20 tests)
 
 ## Usage Examples
 
 ### Get model config for specific provider
+
 ```typescript
 import { getProviderModelConfig } from '@/infra/llm/models'
 import { LLMProviderType } from '@/infra/llm/providers/factory'
@@ -61,6 +65,7 @@ const config = getProviderModelConfig(LLMProviderType.GEMINI, 'EXERCISE_CHAT')
 ```
 
 ### Runtime model override
+
 ```bash
 # Override specific model
 export LLM_MODEL_OVERRIDE_EXERCISE_CHAT=gemini-1.5-pro
@@ -72,6 +77,7 @@ export LLM_MODEL_OVERRIDE_DEFAULT=gpt-4o
 ## Testing
 
 All 968 tests passed (5 skipped):
+
 - `tests/unit/infra/llm/models.test.ts`: 23 tests
 - `tests/unit/infra/llm/providers/factory.test.ts`: 20 tests
 

@@ -15,17 +15,17 @@ Transform `configEntries` collection into a **secrets-only** collection called `
 
 ### Files to Modify
 
-| File | Current Purpose | Changes Needed |
-|------|-----------------|----------------|
-| `src/server/payload/collections/ConfigEntries.ts` | Collection with kind field (Variable/Secret/SystemParam) | Rename to ConfigSecrets.ts, remove kind field, always encrypt |
-| `src/infra/config/config-constants.ts` | Contains ConfigKind enum | Remove ConfigKind, remove looksLikeSecret, remove SECRET_KEY_PATTERNS |
-| `src/server/payload/hooks/configEntries/beforeChange-hook.ts` | Encrypts only secrets, validates kind | Always encrypt, remove kind logic |
-| `src/server/payload/hooks/configEntries/afterRead-hook.ts` | Hides value only for secrets | Always hide value (write-only for all) |
-| `src/server/payload/hooks/configEntries/afterChange-hook.ts` | Audit log with kind field | Remove kind from audit log |
-| `src/infra/config/runtime/runtime-config.ts` | Loads variables + secrets separately | Remove variables logic, secrets only |
-| `src/infra/config/runtime/types.ts` | Cache types with variables/secrets | Update for secrets-only |
-| `tests/int/config-manager.int.test.ts` | Tests Variable/Secret/SystemParam | Update for secrets-only |
-| `src/payload.config.ts` | Imports ConfigEntries | Update import |
+| File                                                          | Current Purpose                                          | Changes Needed                                                        |
+| ------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------- |
+| `src/server/payload/collections/ConfigEntries.ts`             | Collection with kind field (Variable/Secret/SystemParam) | Rename to ConfigSecrets.ts, remove kind field, always encrypt         |
+| `src/infra/config/config-constants.ts`                        | Contains ConfigKind enum                                 | Remove ConfigKind, remove looksLikeSecret, remove SECRET_KEY_PATTERNS |
+| `src/server/payload/hooks/configEntries/beforeChange-hook.ts` | Encrypts only secrets, validates kind                    | Always encrypt, remove kind logic                                     |
+| `src/server/payload/hooks/configEntries/afterRead-hook.ts`    | Hides value only for secrets                             | Always hide value (write-only for all)                                |
+| `src/server/payload/hooks/configEntries/afterChange-hook.ts`  | Audit log with kind field                                | Remove kind from audit log                                            |
+| `src/infra/config/runtime/runtime-config.ts`                  | Loads variables + secrets separately                     | Remove variables logic, secrets only                                  |
+| `src/infra/config/runtime/types.ts`                           | Cache types with variables/secrets                       | Update for secrets-only                                               |
+| `tests/int/config-manager.int.test.ts`                        | Tests Variable/Secret/SystemParam                        | Update for secrets-only                                               |
+| `src/payload.config.ts`                                       | Imports ConfigEntries                                    | Update import                                                         |
 
 ### Hook Directory Rename
 
@@ -40,11 +40,13 @@ src/server/payload/hooks/configEntries/  →  src/server/payload/hooks/configSec
 ### Step 1: Update config-constants.ts
 
 **Remove:**
+
 - `ConfigKind` enum
 - `SECRET_KEY_PATTERNS` array
 - `looksLikeSecret()` function
 
 **Keep:**
+
 - `ConfigDomain` (for ConfigValues)
 - `ConfigAction` (for audit logs)
 - `isSnakeCase()` (for key validation)
@@ -67,6 +69,7 @@ export function isSnakeCase(key: string): boolean { ... }
 ### Step 2: Rename Collection File
 
 Rename:
+
 ```
 src/server/payload/collections/ConfigEntries.ts → ConfigSecrets.ts
 ```
@@ -101,6 +104,7 @@ export const ConfigSecrets: CollectionConfig = {
 ### Step 3: Update beforeChange-hook.ts
 
 **Remove:**
+
 - Kind immutability check
 - Secret-like key warning (no variables anymore)
 - Conditional encryption based on kind
@@ -120,6 +124,7 @@ if (data.value) {
 ```
 
 Update collection reference:
+
 ```typescript
 // BEFORE
 collection: 'config_entries'
@@ -133,6 +138,7 @@ collection: 'config_secrets'
 ### Step 4: Update afterRead-hook.ts
 
 **Remove:**
+
 - Kind check (always hide value now)
 
 ```typescript
@@ -145,9 +151,9 @@ return value
 // AFTER
 // Always hide value (unless internal config load)
 if (req?.context?.internalConfigLoad === true) {
-  return value  // Return ciphertext for runtime loader
+  return value // Return ciphertext for runtime loader
 }
-return ''  // Always write-only for admin UI
+return '' // Always write-only for admin UI
 ```
 
 ---
@@ -155,6 +161,7 @@ return ''  // Always write-only for admin UI
 ### Step 5: Update afterChange-hook.ts
 
 **Remove:**
+
 - `kind` field from audit log creation
 
 ```typescript
@@ -199,6 +206,7 @@ Update all import paths.
 ### Step 8: Update runtime-config.ts
 
 **Major changes:**
+
 - Remove `variables` from cache (use ConfigValues for non-secrets)
 - Only load secrets
 - Remove `getVariable()`, `getSystemParam()`, `getVariableKeys()` functions
@@ -277,11 +285,13 @@ collections: [ConfigSecrets, ...]
 ### Step 12: Update payload-types.ts
 
 Run:
+
 ```bash
 pnpm generate:types
 ```
 
 This will regenerate types with:
+
 - `ConfigSecret` instead of `ConfigEntry`
 - No `kind` field in the type
 - Updated collection slug
@@ -293,10 +303,12 @@ This will regenerate types with:
 ### Database Migration
 
 Existing data in `config_entries`:
+
 1. **Variables** should have been migrated to ConfigValues already
 2. **Secrets** remain but collection slug changes
 
 Options:
+
 - A) Drop and recreate (clean slate)
 - B) MongoDB migration script to rename collection
 
@@ -312,13 +324,16 @@ Options:
 ## File Summary
 
 ### Files to Create
+
 - `src/server/payload/collections/ConfigSecrets.ts` (rename from ConfigEntries.ts)
 
 ### Files to Delete
+
 - `src/server/payload/collections/ConfigEntries.ts` (renamed)
 - `src/server/payload/hooks/configEntries/` (renamed to configSecrets/)
 
 ### Files to Modify
+
 1. `src/infra/config/config-constants.ts` - Remove ConfigKind
 2. `src/server/payload/hooks/configSecrets/beforeChange-hook.ts` - Always encrypt
 3. `src/server/payload/hooks/configSecrets/afterRead-hook.ts` - Always hide
