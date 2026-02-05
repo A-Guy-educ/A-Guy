@@ -1,0 +1,38 @@
+# Database connection string
+DATABASE_URL=mongodb+srv://office:OQnKEv8K93dPqFJV@aguy.tj3mrps.mongodb.net/A-Guy-Dev
+DATABASE_URL_ATLAS=mongodb+srv://office:OQnKEv8K93dPqFJV@aguy.tj3mrps.mongodb.net/A-Guy-Test
+CONFIG_MASTER_KEY=m9uhGBHmOAAWRUvNyRezwzWlsG9M78I54W20N7owVFw=
+# Or use a PG connection string
+#DATABASE_URL=postgresql://127.0.0.1:5432/your-database-name
+# Used to encrypt JWT tokens
+PAYLOAD_SECRET=m9uhGBHmOAAWRUvNyRezwzWlsG9M78I54W20N7owVFw=
+# Used to configure CORS, format links and more. No trailing slash
+NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+# Added by Payload
+BLOB_READ_WRITE_TOKEN="vercel_blob_rw_pd8gXkXXAj3lzoVC_2YpzH3gzFMtH5GomDdNWs3n3nVb10l"
+# Secret used to authenticate cron jobs
+CRON_SECRET=0edfbce86740eae2ebced733
+# Used to validate preview requests
+PREVIEW_SECRET=0edfbce86740eae2ebced733
+# Chat Context Feature Flags (default: false)
+SUMMARY_MAINTENANCE_ENABLED=true
+MEMORY_EXTRACTION_ENABLED=true
+MEMORY_RETRIEVAL_ENABLED=true
+# API Keys
+# ANTHROPIC_API_KEY=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
+ANTHROPIC_API_KEY=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
+DEEPSEEK_API_KEY=sk-a7b2e16a2d784fa69ad822bdd27c7838
+OPENAI_API_KEY=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
+GEMINI_API_KEY=AIzaSyA610a8vTulisLDgIF_94L71HFhvwv0nNc
+# minimax m2.1
+minimax_ANTHROPIC_BASE_URL=https://api.minimax.io/anthropic
+minimax_OPENAI_BASE_URL=https://api.minimax.io/v1
+minimax__API_KEY=sk-cp-MlLWB-r2xxxsoUCugSia0GW2qBmU4G5oSiG1FDN2dLezbYDvklaahxSL0k2nfI4Woua7mOBoKzTghNRVaU2wF7kZh_hxQPZIzMqR5T8e_UsFShU2O_tvDHc
+PAT_TOKEN=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
+DEFAULT_TENANT_SLUG=AGuy
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID="322967222801-6vv94dokr5nfmg71qpl0lsi1urggc85k.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET=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
+# LLM Provider Selection (default: gemini)
+OPENAI_COMPATIBLE_API_KEY=sk-cp-MlLWB-r2xxxsoUCugSia0GW2qBmU4G5oSiG1FDN2dLezbYDvklaahxSL0k2nfI4Woua7mOBoKzTghNRVaU2wF7kZh_hxQPZIzMqR5T8e_UsFShU2O_tvDHc
+OPENAI_COMPATIBLE_BASE_URL=https://api.minimax.io/v1

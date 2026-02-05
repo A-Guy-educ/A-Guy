@@ -45,6 +45,21 @@ const isAdminOrOwner: Access = ({ req }) => {
  */
 export const Exercises: CollectionConfig = {
   slug: 'exercises',
+
+  indexes: [
+    {
+      fields: {
+        tenant: 1,
+        idempotencyKey: 1,
+      },
+      options: {
+        unique: true,
+        name: 'tenant_idempotencyKey_unique',
+        partialFilterExpression: { idempotencyKey: { $type: 'string' } },
+      },
+    },
+  ],
+
   access: {
     create: authenticated,
     delete: isAdminOrOwner,
