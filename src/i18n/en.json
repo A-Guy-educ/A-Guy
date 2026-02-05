@@ -261,5 +261,69 @@
     "draftExercisesLoading": "Loading exercises...",
     "noDraftExercises": "No draft exercises found for this conversion.",
     "pages": "Pages {{start}}-{{end}}"
+  },
+  "shop": {
+    "backToLearning": "Back to Learning",
+    "title": "Course Store",
+    "subtitle": "Choose the plan that suits you and advance to success in mathematics.",
+    "membershipPlans": "Membership Plans",
+    "courseCatalog": "Course Catalog",
+    "middleSchool": "Middle School",
+    "highSchool": "High School",
+    "perMonth": "monthly",
+    "perCourse": "course",
+    "plans": {
+      "free": {
+        "title": "Free",
+        "subtitle": "Basic Plan",
+        "currentPlan": "Current Plan",
+        "courseCount": "1 course"
+      },
+      "standard": {
+        "title": "Standard",
+        "subtitle": "Extended Plan",
+        "selectPlan": "Select Plan",
+        "courseCount": "1 course"
+      },
+      "premium": {
+        "title": "Premium",
+        "subtitle": "Premium Plan",
+        "badge": "Best Value",
+        "joinNow": "Join Now",
+        "courseCount": "3 courses of your choice"
+      }
+    },
+    "features": {
+      "learningSystemNo": "Learning System - None",
+      "learningSystemFull": "Learning System - Full",
+      "practiceSystemFull": "Practice System - Full",
+      "questionsLimited": "Questions - Limited",
+      "examsNo": "Exams - None",
+      "examsLimited": "Exams - Limited"
+    },
+    "courses": {
+      "mathBasics": "Mathematics - Basics",
+      "purchaseCourse": "Purchase Course",
+      "purchasedSuccessfully": "Purchased Successfully",
+      "activeInSystem": "Your active course in the system",
+      "grade7": "Grade 7",
+      "grade8": "Grade 8",
+      "grade9": "Grade 9",
+      "grade7Description": "Fundamentals of arithmetic, algebra and geometry",
+      "grade8Description": "Your active course in the system",
+      "grade9Description": "Preparation for ministry exams and high school",
+      "questionnaire172": "Questionnaire 172",
+      "questionnaire471": "Questionnaire 471",
+      "questionnaire572": "Questionnaire 572",
+      "questionnaire172Description": "Complete preparation for the first matriculation questionnaire",
+      "questionnaire471Description": "Analysis, geometry and trigonometry",
+      "questionnaire572Description": "Vectors, complex numbers and logarithms"
+    },
+    "footer": {
+      "platform": "buyguy Learning Platform",
+      "terms": "Terms of Use",
+      "privacy": "Privacy Policy",
+      "contact": "Contact Us"
+    }
   }
 }
