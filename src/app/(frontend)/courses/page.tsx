@@ -1,27 +1,78 @@
 import { queryPublishedCourses } from '@/server/repos/queries/courses'
 import { CourseCard } from './_components/CourseCard'
 import { EmptyState } from './_components/EmptyState'
-import { CoursesPageTitle } from './_components/CoursesPageTitle'
+import { MembershipPlans } from './_components/MembershipPlans'
 
 export default async function CoursesPage() {
   const courses = await queryPublishedCourses()
 
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-12 md:py-16">
-        {courses.length === 0 ? (
-          <EmptyState type="noCourses" />
-        ) : (
-          <>
-            <CoursesPageTitle />
+    <div className="min-h-screen text-card-foreground antialiased" dir="rtl">
+      {/* Store Header */}
+      <header className="bg-card border-b border-border pt-12 pb-10">
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <h1
+            className="text-card-foreground mb-4 whitespace-nowrap"
+            style={{ fontSize: '40px', fontWeight: 900 }}
+          >
+            חנות הקורסים
+          </h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto" style={{ fontSize: '18px' }}>
+            בחר את התוכנית המתאימה לך והתקדם להצלחה במתמטיקה.
+          </p>
+        </div>
+      </header>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-20">
+        {/* Membership Plans Section */}
+        <MembershipPlans />
+
+        {/* Courses Section */}
+        <section>
+          <div className="text-center mb-10">
+            <h2
+              className="text-card-foreground uppercase tracking-widest"
+              style={{ fontSize: '24px', fontWeight: 900 }}
+            >
+              קטלוג קורסים
+            </h2>
+          </div>
+
+          {courses.length === 0 ? (
+            <EmptyState type="noCourses" />
+          ) : (
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               {courses.map((course) => (
                 <CourseCard key={course.id} course={course} />
               ))}
             </div>
-          </>
-        )}
+          )}
+        </section>
+
+        {/* Footer */}
+        <footer className="mt-24 pt-12 border-t border-border text-center">
+          <p
+            className="text-muted-foreground/50 uppercase mb-6"
+            style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.4em' }}
+          >
+            A-Guy Learning Platform
+          </p>
+          <div
+            className="flex justify-center gap-6 text-muted-foreground"
+            style={{ fontSize: '14px', fontWeight: 500 }}
+          >
+            <a href="#" className="hover:text-primary transition-colors">
+              תנאי שימוש
+            </a>
+            <a href="#" className="hover:text-primary transition-colors">
+              מדיניות פרטיות
+            </a>
+            <a href="#" className="hover:text-primary transition-colors">
+              צור קשר
+            </a>
+          </div>
+        </footer>
       </div>
     </div>
   )
@@ -29,7 +80,7 @@ export default async function CoursesPage() {
 
 export async function generateMetadata() {
   return {
-    title: 'Courses',
-    description: 'Browse all available courses',
+    title: 'חנות הקורסים - A-Guy',
+    description: 'בחר את התוכנית המתאימה לך והתקדם להצלחה במתמטיקה.',
   }
 }

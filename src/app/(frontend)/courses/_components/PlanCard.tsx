@@ -56,7 +56,7 @@ export function PlanCard({
       case 'standard':
         return 'w-full py-4 rounded-2xl bg-foreground text-background shadow-lg hover:opacity-90'
       case 'premium':
-        return 'w-full py-4 rounded-2xl bg-[hsl(var(--shop-primary))] text-white shadow-xl hover:scale-[1.02] transition-transform'
+        return 'w-full py-4 rounded-2xl bg-[hsl(var(--primary))] text-white shadow-xl hover:scale-[1.02] transition-transform'
       default:
         return 'w-full py-4 rounded-2xl bg-foreground text-background'
     }
@@ -67,9 +67,9 @@ export function PlanCard({
       case 'x':
         return <XCircle className="w-4 h-4 text-muted-foreground/30" />
       case 'check':
-        return <CheckCircle2 className="w-4 h-4 text-[hsl(var(--shop-success))]" />
+        return <CheckCircle2 className="w-4 h-4 text-[hsl(var(--success))]" />
       case 'help':
-        return <HelpCircle className="w-4 h-4 text-[hsl(var(--shop-warning))]" />
+        return <HelpCircle className="w-4 h-4 text-[hsl(var(--warning))]" />
       default:
         return null
     }
@@ -89,7 +89,7 @@ export function PlanCard({
   }
 
   const borderClass = isPremium
-    ? 'border-2 border-[hsl(var(--shop-primary))]'
+    ? 'border-2 border-[hsl(var(--primary))]'
     : isBordered
       ? 'border border-border'
       : 'border border-border/50'
@@ -121,17 +121,14 @@ export function PlanCard({
         <span
           className={cn(
             'block mb-2 uppercase tracking-widest',
-            isPremium ? 'text-[hsl(var(--shop-primary))]' : 'text-muted-foreground',
+            isPremium ? 'text-[hsl(var(--primary))]' : 'text-muted-foreground',
           )}
           style={{ fontSize: '10px' }}
         >
           {subtitle}
         </span>
         <h3
-          className={cn(
-            'mb-1',
-            isPremium ? 'text-[hsl(var(--shop-primary))]' : 'text-card-foreground',
-          )}
+          className={cn('mb-1', isPremium ? 'text-[hsl(var(--primary))]' : 'text-card-foreground')}
           style={{ fontSize: '24px', fontWeight: 900 }}
         >
           {title}

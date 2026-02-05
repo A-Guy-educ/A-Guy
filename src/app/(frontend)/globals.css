@@ -60,24 +60,9 @@
     --warning: 38 92% 50%;
     --error: 0 72% 51%;
 
-    /* Shop page colors - from Figma design */
-    --shop-primary: 356 66% 33%; /* #8B1D25 - burgundy red */
-    --shop-secondary: 113 13% 41%; /* #5A7D5B - sage green */
-
-    /* Shop semantic colors - course badges and states */
-    --shop-badge-blue: 217 91% 60%; /* Blue for course badges */
-    --shop-badge-blue-dark: 221 83% 53%; /* Darker blue for text */
-    --shop-badge-blue-bg: 214 95% 93%; /* Light blue background */
-    --shop-badge-red: 0 84% 60%; /* Red for course badges */
-    --shop-badge-red-bg: 0 86% 97%; /* Light red background */
-    --shop-badge-orange: 25 95% 53%; /* Orange for course badges */
-    --shop-badge-orange-bg: 24 95% 97%; /* Light orange background */
-    --shop-badge-purple: 271 91% 65%; /* Purple for course badges */
-    --shop-badge-purple-bg: 270 95% 97%; /* Light purple background */
-    --shop-success: 142 71% 45%; /* Green for success states */
-    --shop-success-dark: 142 76% 36%; /* Darker green for text */
-    --shop-success-bg: 138 76% 97%; /* Light green background */
-    --shop-warning: 38 92% 50%; /* Yellow for warnings */
+    /* Badge colors - for course categories */
+    --badge-orange: 25 95% 53%; /* Orange badge */
+    --badge-orange-bg: 24 95% 97%; /* Light orange background */
 
     /* Semantic colors - components use these */
     --header-bg: var(--card);
@@ -147,24 +132,9 @@
     --warning: 38 92% 50%;
     --error: 0 72% 51%;
 
-    /* Shop page colors - from Figma design (same in dark mode) */
-    --shop-primary: 356 66% 33%; /* #8B1D25 - burgundy red */
-    --shop-secondary: 113 13% 41%; /* #5A7D5B - sage green */
-
-    /* Shop semantic colors - course badges and states */
-    --shop-badge-blue: 217 91% 60%; /* Blue for course badges */
-    --shop-badge-blue-dark: 221 83% 53%; /* Darker blue for text */
-    --shop-badge-blue-bg: 214 95% 93%; /* Light blue background */
-    --shop-badge-red: 0 84% 60%; /* Red for course badges */
-    --shop-badge-red-bg: 0 86% 97%; /* Light red background */
-    --shop-badge-orange: 25 95% 53%; /* Orange for course badges */
-    --shop-badge-orange-bg: 24 95% 97%; /* Light orange background */
-    --shop-badge-purple: 271 91% 65%; /* Purple for course badges */
-    --shop-badge-purple-bg: 270 95% 97%; /* Light purple background */
-    --shop-success: 142 71% 45%; /* Green for success states */
-    --shop-success-dark: 142 76% 36%; /* Darker green for text */
-    --shop-success-bg: 138 76% 97%; /* Light green background */
-    --shop-warning: 38 92% 50%; /* Yellow for warnings */
+    /* Badge colors - for course categories */
+    --badge-orange: 25 95% 53%; /* Orange badge */
+    --badge-orange-bg: 24 95% 97%; /* Light orange background */
 
     /* Semantic colors - components use these */
     --header-bg: var(--card);
