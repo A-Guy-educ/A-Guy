@@ -128,36 +128,39 @@ export async function createGenkitUnifiedAdapter(
       const prompt =
         input.system + '\n\n' + input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
 
-      // Get streaming response (cast to any due to Genkit type complexity)
-      const streamingResponse = (await ai.generateStream({
+      // Get streaming response - Genkit returns { stream: AsyncIterable, response: Promise }
+      const result = await ai.generateStream({
         model: config.model,
         prompt,
-      })) as any
+      })
 
-      // Create async iterable from stream
+      // result.stream is already an AsyncIterable<GenerateResponseChunk>
+      const genkitStream = result.stream
+
+      // Wrap to return { text: string } format
       const stream: AsyncIterable<{ text: string }> = {
         [Symbol.asyncIterator]: () => {
-          const iterator = streamingResponse[Symbol.asyncIterator]()
+          const iterator = genkitStream[Symbol.asyncIterator]()
           return {
             async next() {
-              const result = await iterator.next()
-              if (result.done) {
+              const chunkResult = await iterator.next()
+              if (chunkResult.done) {
                 return { done: true, value: undefined }
               }
-              // Genkit stream returns chunks with text
+              // Genkit chunks have .text property
               return {
                 done: false,
-                value: { text: result.value?.text || '' },
+                value: { text: chunkResult.value?.text || '' },
               }
             },
           }
         },
       }
 
-      // Promise that resolves when streaming is complete
+      // Create response promise that handles errors
       const response = (async () => {
         try {
-          const finalResult = await streamingResponse
+          const finalResult = await result.response
           return { text: finalResult?.text || '' }
         } catch (error) {
           const llmError = errorAdapter.wrapError(
