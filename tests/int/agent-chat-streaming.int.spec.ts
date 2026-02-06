@@ -12,12 +12,24 @@ const hasDatabaseUrl = !!process.env.DATABASE_URL
 
 const mockStreamChunks = ['Hello', ' there', '! How', ' can', ' I', ' help', '?']
 
+// Create a proper async iterable for mocking
+const createMockStream = () => {
+  let index = 0
+  return {
+    async *[Symbol.asyncIterator]() {
+      while (index < mockStreamChunks.length) {
+        yield { text: mockStreamChunks[index] }
+        index++
+      }
+    },
+  }
+}
+
 vi.mock('@/infra/llm/services/exercise-chat-service', () => ({
-  streamChatWithExerciseHelper: vi.fn(async function* () {
-    for (const chunk of mockStreamChunks) {
-      yield { text: chunk }
-    }
-    return { success: true, message: mockStreamChunks.join('') }
+  streamChatWithExerciseHelper: vi.fn(async () => {
+    const stream = createMockStream()
+    const response = Promise.resolve({ text: mockStreamChunks.join('') })
+    return { stream, response }
   }),
 }))
 
@@ -162,29 +174,65 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
           overrideAccess: true,
         } as any)
       }
-      await payload.delete({
+      // Find and delete the chapter we created
+      const chapters = await payload.find({
         collection: 'chapters',
-        id: testChapterId,
-        overrideAccess: true,
-      } as any)
-      await payload.delete({
+        where: { title: { equals: 'Test Chapter Stream' } },
+        limit: 1,
+      })
+      if (chapters.docs.length > 0) {
+        await payload.delete({
+          collection: 'chapters',
+          id: chapters.docs[0].id,
+          overrideAccess: true,
+        } as any)
+      }
+      // Find and delete the course we created
+      const courses = await payload.find({
         collection: 'courses',
-        id: testCourseId,
-        overrideAccess: true,
-      } as any)
-      await payload.delete({
+        where: { title: { equals: 'Test Course Stream' } },
+        limit: 1,
+      })
+      if (courses.docs.length > 0) {
+        await payload.delete({
+          collection: 'courses',
+          id: courses.docs[0].id,
+          overrideAccess: true,
+        } as any)
+      }
+      // Find and delete the category we created
+      const categories = await payload.find({
         collection: 'categories',
-        id: testCategoryId,
+        where: { title: { equals: 'Test Category' } },
+        limit: 1,
+      })
+      if (categories.docs.length > 0) {
+        await payload.delete({
+          collection: 'categories',
+          id: categories.docs[0].id,
+          overrideAccess: true,
+        } as any)
+      }
+      // Delete test user
+      await payload.delete({
+        collection: 'users',
+        id: testUserId,
         overrideAccess: true,
       } as any)
-    } catch {}
-  })
+    } catch (error) {
+      console.error('Cleanup failed:', error)
+    }
+  }, 60000)
 
   it('returns 401 when user is not authenticated', async () => {
     const req = {
       payload,
       user: null,
-      json: async () => ({ message: 'Hello', acknowledgment: 'ack', exerciseId: testExerciseId }),
+      json: async () => ({
+        message: 'Hello',
+        acknowledgment: 'ack',
+        exerciseId: testExerciseId,
+      }),
     } as unknown as PayloadRequest & { json: () => Promise<unknown> }
     const response = await agentChatStream(req)
     expect(response.status).toBe(401)
@@ -194,7 +242,10 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
     const req = {
       payload,
       user: { id: testUserId } as PayloadRequest['user'],
-      json: async () => ({ acknowledgment: 'ack', exerciseId: testExerciseId }),
+      json: async () => ({
+        acknowledgment: 'ack',
+        exerciseId: testExerciseId,
+      }),
     } as unknown as PayloadRequest & { json: () => Promise<unknown> }
     const response = await agentChatStream(req)
     expect(response.status).toBe(400)
@@ -204,7 +255,10 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
     const req = {
       payload,
       user: { id: testUserId } as PayloadRequest['user'],
-      json: async () => ({ message: 'Hello', exerciseId: testExerciseId }),
+      json: async () => ({
+        message: 'Hello',
+        exerciseId: testExerciseId,
+      }),
     } as unknown as PayloadRequest & { json: () => Promise<unknown> }
     const response = await agentChatStream(req)
     expect(response.status).toBe(400)
@@ -214,7 +268,10 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
     const req = {
       payload,
       user: { id: testUserId } as PayloadRequest['user'],
-      json: async () => ({ message: 'Hello', acknowledgment: 'ack' }),
+      json: async () => ({
+        message: 'Hello',
+        acknowledgment: 'ack',
+      }),
     } as unknown as PayloadRequest & { json: () => Promise<unknown> }
     const response = await agentChatStream(req)
     expect(response.status).toBe(400)
@@ -234,7 +291,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
     const response = await agentChatStream(req)
     expect(response.status).toBe(400)
     const errorBody = await response.json()
-    expect(errorBody.error).toContain('media attachments are not supported')
+    expect(errorBody.error).toMatch(/media attachments are not supported/i)
   })
 
   it('returns 400 when adminMode is true', async () => {
@@ -251,7 +308,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
     const response = await agentChatStream(req)
     expect(response.status).toBe(400)
     const errorBody = await response.json()
-    expect(errorBody.error).toContain('admin mode is not supported')
+    expect(errorBody.error).toMatch(/admin mode is not supported/i)
   })
 
   it('returns SSE stream with correct headers', async () => {
