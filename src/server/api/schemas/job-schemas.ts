@@ -7,9 +7,9 @@ export const runJobSchema = z.object({
 })
 
 export const jobStatusQuerySchema = z.object({
-  lessonId: objectIdSchema,
-  mediaId: objectIdSchema,
-  limit: z.coerce.number().int().min(1).max(100).default(1),
+  lessonId: objectIdSchema.optional(),
+  mediaId: objectIdSchema.optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
 })
 
 export const queueConversionSchema = z.object({
@@ -17,6 +17,7 @@ export const queueConversionSchema = z.object({
   mediaId: objectIdSchema,
   extractorPromptId: objectIdSchema,
   verifierPromptId: objectIdSchema,
+  diagramPromptId: objectIdSchema.optional(),
 })
 
 export type RunJobInput = z.infer<typeof runJobSchema>
