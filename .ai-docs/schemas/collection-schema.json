@@ -1,0 +1,384 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aguy.com/schemas/payload-collection.json",
+  "title": "Payload CMS Collection Configuration",
+  "description": "Schema for validating Payload CMS collection configurations in the A-Guy platform",
+  "type": "object",
+  "required": ["slug", "fields", "access"],
+  "properties": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Collection identifier in kebab-case (e.g., 'courses', 'user-profiles')",
+      "examples": ["courses", "chapters", "exercises", "user-profiles"]
+    },
+    "access": {
+      "type": "object",
+      "description": "Access control functions (REQUIRED for security)",
+      "required": ["read", "create", "update", "delete"],
+      "properties": {
+        "read": {
+          "type": "string",
+          "description": "Access function for read operations (e.g., 'isPublished', 'isAuthenticated', 'isOwner')",
+          "examples": ["isPublished", "isAuthenticated", "isAdmin", "isOwner"]
+        },
+        "create": {
+          "type": "string",
+          "description": "Access function for create operations",
+          "examples": ["isAdmin", "isAuthenticated"]
+        },
+        "update": {
+          "type": "string",
+          "description": "Access function for update operations",
+          "examples": ["isAdmin", "isOwner"]
+        },
+        "delete": {
+          "type": "string",
+          "description": "Access function for delete operations",
+          "examples": ["isAdmin", "isOwner"]
+        }
+      }
+    },
+    "fields": {
+      "type": "array",
+      "description": "Field definitions for the collection",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-zA-Z][a-zA-Z0-9]*$",
+            "description": "Field name in camelCase"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "textarea",
+              "email",
+              "number",
+              "date",
+              "checkbox",
+              "select",
+              "relationship",
+              "upload",
+              "richText",
+              "json",
+              "array",
+              "blocks",
+              "group"
+            ],
+            "description": "Payload field type"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether the field is required"
+          },
+          "unique": {
+            "type": "boolean",
+            "description": "Whether the field value must be unique"
+          },
+          "index": {
+            "type": "boolean",
+            "description": "Whether to create a database index (REQUIRED for unique fields)"
+          },
+          "access": {
+            "type": "object",
+            "description": "Field-level access control",
+            "properties": {
+              "read": {
+                "type": "string"
+              },
+              "create": {
+                "type": "string"
+              },
+              "update": {
+                "type": "string"
+              }
+            }
+          },
+          "relationTo": {
+            "type": "string",
+            "description": "Target collection for relationship fields",
+            "examples": ["users", "courses", "media"]
+          },
+          "hasMany": {
+            "type": "boolean",
+            "description": "Whether relationship allows multiple items"
+          },
+          "options": {
+            "type": "array",
+            "description": "Options for select fields",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "required": ["label", "value"],
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "unique": {
+                  "const": true
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "index": {
+                  "const": true
+                }
+              },
+              "required": ["index"]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "relationship"
+                }
+              }
+            },
+            "then": {
+              "required": ["relationTo"]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "select"
+                }
+              }
+            },
+            "then": {
+              "required": ["options"]
+            }
+          }
+        ]
+      }
+    },
+    "admin": {
+      "type": "object",
+      "description": "Admin UI configuration",
+      "properties": {
+        "useAsTitle": {
+          "type": "string",
+          "description": "Field to use as document title in admin UI",
+          "examples": ["title", "name", "email"]
+        },
+        "defaultColumns": {
+          "type": "array",
+          "description": "Columns to display in list view",
+          "items": {
+            "type": "string"
+          },
+          "examples": [["title", "status", "createdAt"]]
+        },
+        "group": {
+          "type": "string",
+          "description": "Group name for organizing collections in admin sidebar",
+          "examples": ["Content", "Education", "System"]
+        }
+      }
+    },
+    "timestamps": {
+      "type": "boolean",
+      "description": "Whether to add createdAt and updatedAt fields (default: true)"
+    },
+    "versions": {
+      "oneOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "drafts": {
+              "type": "boolean"
+            },
+            "maxPerDoc": {
+              "type": "number"
+            }
+          }
+        }
+      ],
+      "description": "Version history configuration"
+    },
+    "hooks": {
+      "type": "object",
+      "description": "Lifecycle hooks for the collection",
+      "properties": {
+        "beforeChange": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "afterChange": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "beforeRead": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "afterRead": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "beforeDelete": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "afterDelete": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "slug": "courses",
+      "access": {
+        "read": "isPublished",
+        "create": "isAdmin",
+        "update": "isAdmin",
+        "delete": "isAdmin"
+      },
+      "admin": {
+        "useAsTitle": "title",
+        "defaultColumns": ["title", "status", "publishedAt"],
+        "group": "Education"
+      },
+      "fields": [
+        {
+          "name": "title",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "unique": true,
+          "index": true,
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "richText",
+          "required": true
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "options": ["draft", "published"],
+          "required": true
+        },
+        {
+          "name": "publishedAt",
+          "type": "date"
+        },
+        {
+          "name": "chapters",
+          "type": "relationship",
+          "relationTo": "chapters",
+          "hasMany": true
+        },
+        {
+          "name": "thumbnail",
+          "type": "upload",
+          "relationTo": "media"
+        }
+      ],
+      "timestamps": true
+    }
+  ],
+  "definitions": {
+    "patterns": {
+      "publishedContent": {
+        "description": "Collection with published/draft state",
+        "requiredFields": [
+          {
+            "name": "status",
+            "type": "select",
+            "options": ["draft", "published"]
+          },
+          {
+            "name": "publishedAt",
+            "type": "date"
+          }
+        ],
+        "requiredAccess": {
+          "read": "isPublished"
+        }
+      },
+      "userOwned": {
+        "description": "Collection with user ownership",
+        "requiredFields": [
+          {
+            "name": "owner",
+            "type": "relationship",
+            "relationTo": "users",
+            "required": true
+          }
+        ],
+        "requiredAccess": {
+          "read": "isOwner",
+          "update": "isOwner",
+          "delete": "isOwner"
+        }
+      },
+      "hierarchical": {
+        "description": "Collection with parent-child relationship",
+        "requiredFields": [
+          {
+            "name": "order",
+            "type": "number",
+            "required": true
+          }
+        ]
+      }
+    }
+  },
+  "notes": [
+    "CRITICAL: All collections MUST have access control defined for read, create, update, and delete operations",
+    "SECURITY: Unique fields MUST have index: true to prevent duplicates and enable efficient lookups",
+    "PERFORMANCE: Add index: true to frequently queried fields (e.g., slug, email)",
+    "BEST PRACTICE: Use isPublished access for public content, isAdmin for admin-only, isOwner for user-specific data",
+    "LIMITATION: Payload does not support nested objects in metadata - keep all fields flat",
+    "PATTERN: For published content, always include status field (draft/published) and publishedAt date field",
+    "PATTERN: For hierarchical data, include order field and parent relationship field",
+    "VALIDATION: Run 'pnpm generate:types' after modifying collection schema to update TypeScript types"
+  ]
+}

@@ -1,0 +1,557 @@
+{
+  "readmes": [
+    {
+      "path": "docs/access-control/README.md",
+      "title": "Payload Access Control Deep Dive",
+      "sections": [
+        "📂 Architecture Overview",
+        "🔒 Access Control Levels",
+        "🎯 Built-in Access Functions",
+        "📋 Access Control Patterns",
+        "🌳 Hierarchy Access Cascade",
+        "🔐 RBAC Patterns",
+        "🧪 Testing Access Control",
+        "🚫 Common Pitfalls",
+        "📊 Access Control Decision Tree",
+        "🔗 Related Documentation",
+        "📝 Access Control Checklist"
+      ],
+      "relativeUrl": "access-control/README.md",
+      "category": "access-control",
+      "wordCount": 593
+    },
+    {
+      "path": "docs/admin-components/README.md",
+      "title": "Payload Admin Custom Components Guide",
+      "sections": [
+        "📂 Architecture Overview",
+        "🎯 Current Custom Components",
+        "🔧 Component Registration",
+        "📝 Component Implementation",
+        "🎨 Styling Custom Components",
+        "🔍 Real Example: ExerciseContentEditor",
+        "🔄 Import Map Generation",
+        "🎓 Common Patterns",
+        "🧪 Testing Admin Components",
+        "🔒 Security Considerations",
+        "🚫 Common Pitfalls",
+        "📊 Component Checklist",
+        "🔗 Related Documentation"
+      ],
+      "relativeUrl": "admin-components/README.md",
+      "category": "admin-components",
+      "wordCount": 727
+    },
+    {
+      "path": "docs/ai/README.md",
+      "title": "AI Documentation Redirect",
+      "sections": [
+        "New Locations",
+        "Quick Reference",
+        "Scripts Updated",
+        "Migration Complete When"
+      ],
+      "relativeUrl": "ai/README.md",
+      "category": "ai",
+      "wordCount": 130
+    },
+    {
+      "path": "docs/ai-services/README.md",
+      "title": "AI Services Architecture",
+      "sections": [
+        "📂 Architecture Overview",
+        "🎯 Quick Start",
+        "📊 Service Registry",
+        "🏗️ Core Components",
+        "📦 Services",
+        "🔧 Integration Patterns",
+        "🛡️ Error Handling",
+        "🧪 Testing",
+        "🔗 Related Documentation",
+        "📈 Performance Metrics",
+        "🚀 Future Enhancements",
+        "💡 Best Practices",
+        "🔍 Troubleshooting"
+      ],
+      "relativeUrl": "ai-services/README.md",
+      "category": "ai-services",
+      "wordCount": 1379
+    },
+    {
+      "path": "docs/block-rendering/README.md",
+      "title": "Block Renderer Extension Guide",
+      "sections": [
+        "📂 Architecture Overview",
+        "🎯 Current Block Types",
+        "🔄 Rendering Pipeline",
+        "📝 5-Step Guide: Add New Block Type",
+        "🧪 Testing New Block Types",
+        "🎨 Math Rendering (KaTeX)",
+        "🔐 Best Practices",
+        "🎓 Common Patterns",
+        "🔍 Troubleshooting",
+        "📊 Block Type Checklist",
+        "🔗 Related Documentation",
+        "🚀 Future Block Types (Ideas)"
+      ],
+      "relativeUrl": "block-rendering/README.md",
+      "category": "block-rendering",
+      "wordCount": 905
+    },
+    {
+      "path": "docs/contracts/README.md",
+      "title": "Exercise Contracts",
+      "sections": [
+        "Overview",
+        "Structure",
+        "Usage",
+        "Key Design Principles",
+        "Block Types",
+        "Answer Spec Types",
+        "Testing",
+        "Examples",
+        "Future Enhancements",
+        "Contributing"
+      ],
+      "relativeUrl": "contracts/README.md",
+      "category": "contracts",
+      "wordCount": 330
+    },
+    {
+      "path": "docs/course-hierarchy/README.md",
+      "title": "Course Hierarchy Query Patterns",
+      "sections": [
+        "📂 Hierarchy Structure",
+        "🎯 Core Query Patterns",
+        "⚡ Performance Optimization",
+        "🔧 Common Use Cases",
+        "🛡️ Type Safety",
+        "📋 Query Reference Table",
+        "💡 Best Practices",
+        "🔗 Related Documentation",
+        "🚀 Future Enhancements"
+      ],
+      "relativeUrl": "course-hierarchy/README.md",
+      "category": "course-hierarchy",
+      "wordCount": 797
+    },
+    {
+      "path": "eslint-plugin-aguy/README.md",
+      "title": "ESLint Plugin for A-Guy Platform",
+      "sections": [
+        "Installation",
+        "Rules",
+        "Usage",
+        "Rule Details",
+        "Future Enhancements",
+        "Contributing",
+        "Resources"
+      ],
+      "relativeUrl": "eslint-plugin-aguy/README.md",
+      "category": "eslint-plugin-aguy",
+      "wordCount": 288
+    },
+    {
+      "path": "docs/exercise-import/README.md",
+      "title": "Exercise Import Pipeline",
+      "sections": [
+        "📂 Architecture Overview",
+        "🎯 Quick Start",
+        "📊 Import Methods Comparison",
+        "🔄 Validation Pipeline (4 Stages)",
+        "🛠️ Implementation Details",
+        "⚠️ Common Errors & Solutions",
+        "🧪 Manual Testing",
+        "🔍 Troubleshooting",
+        "🔗 Related Documentation",
+        "📈 Performance Metrics",
+        "💡 Best Practices",
+        "🚀 Future Enhancements"
+      ],
+      "relativeUrl": "exercise-import/README.md",
+      "category": "exercise-import",
+      "wordCount": 1513
+    },
+    {
+      "path": "docs/exercises/README.md",
+      "title": "Exercises Collection - Stage 0 Implementation",
+      "sections": [
+        "Overview",
+        "Architecture",
+        "Data Model",
+        "Quick Start",
+        "Implementation Details",
+        "Supported Question Types",
+        "Content Block Types",
+        "Testing",
+        "Related Documentation",
+        "Future Enhancements (Out of Stage 0 Scope)",
+        "Troubleshooting",
+        "Contributing",
+        "License"
+      ],
+      "relativeUrl": "exercises/README.md",
+      "category": "exercises",
+      "wordCount": 751
+    },
+    {
+      "path": "docs/features/chat-context/README.md",
+      "title": "Chat Context & Long-Term Memory System",
+      "sections": [
+        "Overview",
+        "Documentation",
+        "Architecture",
+        "Key Features",
+        "Collections",
+        "Implementation",
+        "Testing",
+        "Monitoring",
+        "Performance",
+        "Security",
+        "Troubleshooting",
+        "Resources",
+        "Contributing"
+      ],
+      "relativeUrl": "features/chat-context/README.md",
+      "category": "features",
+      "wordCount": 773
+    },
+    {
+      "path": "README.md",
+      "title": "Payload Website Template",
+      "sections": [
+        "Quick Start",
+        "How it works",
+        "Access control",
+        "Layout Builder",
+        "Lexical editor",
+        "Draft Preview",
+        "Live preview",
+        "On-demand Revalidation",
+        "SEO",
+        "Search",
+        "Redirects",
+        "Jobs and Scheduled Publish",
+        "Website",
+        "AI Memory System",
+        "Development",
+        "Production",
+        "Questions"
+      ],
+      "relativeUrl": "README.md",
+      "category": "root",
+      "wordCount": 1986
+    },
+    {
+      "path": "scripts/README.md",
+      "title": "PDF.js Vercel Blob CDN Setup",
+      "sections": [
+        "Why Vercel Blob CDN?",
+        "Prerequisites",
+        "Upload Process",
+        "Future Updates",
+        "Troubleshooting",
+        "Cost Estimate",
+        "Architecture",
+        "Questions?"
+      ],
+      "relativeUrl": "scripts/README.md",
+      "category": "scripts",
+      "wordCount": 575
+    },
+    {
+      "path": "src/app/README.md",
+      "title": "Application Routes",
+      "sections": ["Structure", "Patterns", "Key Files", "Common Tasks", "Related"],
+      "relativeUrl": "src/app/README.md",
+      "category": "src/app",
+      "wordCount": 172
+    },
+    {
+      "path": "src/client/README.md",
+      "title": "Client-Side Utilities",
+      "sections": ["Structure", "Patterns", "Key Files", "Common Tasks", "Related"],
+      "relativeUrl": "src/client/README.md",
+      "category": "src/client",
+      "wordCount": 169
+    },
+    {
+      "path": "src/components/README.md",
+      "title": "Payload Admin Components",
+      "sections": [
+        "Component Registry",
+        "Structure",
+        "Usage in Payload Config",
+        "Agent Guardrails",
+        "Related Documentation"
+      ],
+      "relativeUrl": "src/components/README.md",
+      "category": "src/components",
+      "wordCount": 431
+    },
+    {
+      "path": "src/infra/analytics/README.md",
+      "title": "Analytics System",
+      "sections": [
+        "Implementation Status",
+        "Architecture",
+        "Usage",
+        "Current Events (v1)",
+        "How to Add Event #11 (and Beyond)",
+        "Privacy & Payload Policy",
+        "Environment Configuration",
+        "Feature Flags Behavior",
+        "Validation Behavior",
+        "Page View Tracking",
+        "Session Tracking",
+        "User Identity Flow",
+        "Troubleshooting",
+        "Files Structure",
+        "Testing",
+        "Best Practices",
+        "Support"
+      ],
+      "relativeUrl": "src/infra/analytics/README.md",
+      "category": "src/infra",
+      "wordCount": 735
+    },
+    {
+      "path": "src/infra/llm/README.md",
+      "title": "LLM Infrastructure",
+      "sections": [
+        "Architecture Overview",
+        "Providers",
+        "Model Configurations",
+        "Services",
+        "Vector Search",
+        "Observability",
+        "Prompts",
+        "Agent Guardrails",
+        "Related Documentation",
+        "Quick Reference"
+      ],
+      "relativeUrl": "src/infra/llm/README.md",
+      "category": "src/infra",
+      "wordCount": 406
+    },
+    {
+      "path": "src/infra/README.md",
+      "title": "Infrastructure Layer",
+      "sections": [
+        "Structure",
+        "Auth System",
+        "Analytics System",
+        "LLM System",
+        "Contracts (JSON Schemas)",
+        "PDF.js Configuration",
+        "Type Definitions",
+        "Utils",
+        "Related Documentation"
+      ],
+      "relativeUrl": "src/infra/README.md",
+      "category": "src/infra",
+      "wordCount": 324
+    },
+    {
+      "path": "src/server/payload/blocks/README.md",
+      "title": "Payload CMS Blocks",
+      "sections": [
+        "Block Registry",
+        "Structure",
+        "Block Configuration Pattern",
+        "Usage in Collections",
+        "Rendering Blocks",
+        "Agent Guardrails",
+        "Related Documentation"
+      ],
+      "relativeUrl": "src/server/payload/blocks/README.md",
+      "category": "src/server",
+      "wordCount": 299
+    },
+    {
+      "path": "src/server/payload/collections/README.md",
+      "title": "Collections Overview",
+      "sections": [
+        "Available Collections",
+        "Access Control Patterns",
+        "Field Reuse Patterns",
+        "Ordering & Hierarchy",
+        "Admin UI Configuration",
+        "Layout Builder Integration",
+        "When to Create a New Collection",
+        "Common Patterns",
+        "Type Safety",
+        "Related Documentation",
+        "Quick Reference Commands"
+      ],
+      "relativeUrl": "src/server/payload/collections/README.md",
+      "category": "src/server",
+      "wordCount": 547
+    },
+    {
+      "path": "src/server/payload/endpoints/README.md",
+      "title": "Payload CMS Custom Endpoints",
+      "sections": [
+        "Endpoint Registry",
+        "Structure",
+        "Endpoint Pattern",
+        "Agent Chat Architecture",
+        "Cron Endpoints",
+        "Agent Guardrails",
+        "Related Documentation"
+      ],
+      "relativeUrl": "src/server/payload/endpoints/README.md",
+      "category": "src/server",
+      "wordCount": 337
+    },
+    {
+      "path": "src/server/README.md",
+      "title": "Server-Side Payload CMS",
+      "sections": [
+        "Structure",
+        "Collections",
+        "Access Control Patterns",
+        "Collection Pattern: RBAC",
+        "Collection Pattern: Hierarchical",
+        "Block Configurations",
+        "Query Utilities",
+        "Custom Endpoints",
+        "Related Documentation",
+        "File Reference"
+      ],
+      "relativeUrl": "src/server/README.md",
+      "category": "src/server",
+      "wordCount": 304
+    },
+    {
+      "path": "src/server/repos/README.md",
+      "title": "Repository Layer",
+      "sections": [
+        "Repository Registry",
+        "Structure",
+        "Query Pattern",
+        "MCP Client Pattern",
+        "Agent Guardrails",
+        "Related Documentation"
+      ],
+      "relativeUrl": "src/server/repos/README.md",
+      "category": "src/server",
+      "wordCount": 348
+    },
+    {
+      "path": "src/ui/admin/exercise/README.md",
+      "title": "Exercise Components",
+      "sections": ["Directory Structure", "Migration Status", "Guidelines"],
+      "relativeUrl": "src/ui/admin/exercise/README.md",
+      "category": "src/ui",
+      "wordCount": 112
+    },
+    {
+      "path": "src/ui/admin/README.md",
+      "title": "Admin Panel Components",
+      "sections": [
+        "Structure",
+        "Exercise Content Editor",
+        "Media Preview System",
+        "BeforeDashboard Component",
+        "BeforeLogin Component",
+        "Answer Spec JSON Field",
+        "Shared Admin Utilities",
+        "Related Documentation"
+      ],
+      "relativeUrl": "src/ui/admin/README.md",
+      "category": "src/ui",
+      "wordCount": 339
+    },
+    {
+      "path": "src/ui/shared/README.md",
+      "title": "Shared UI Components",
+      "sections": [
+        "Component Registry",
+        "Structure",
+        "Usage",
+        "Agent Guardrails",
+        "Related Documentation"
+      ],
+      "relativeUrl": "src/ui/shared/README.md",
+      "category": "src/ui",
+      "wordCount": 197
+    },
+    {
+      "path": "src/ui/web/README.md",
+      "title": "Web UI Components",
+      "sections": [
+        "Structure",
+        "Exercise Renderer (Core Feature)",
+        "Shared Components Usage",
+        "Header/Nav Pattern",
+        "Footer Pattern",
+        "i18n Support",
+        "Component Guidelines",
+        "File Organization",
+        "Related Documentation"
+      ],
+      "relativeUrl": "src/ui/web/README.md",
+      "category": "src/ui",
+      "wordCount": 208
+    },
+    {
+      "path": "src/ui/web/shared/README.md",
+      "title": "Shared Components",
+      "sections": ["Directory Structure", "Guidelines"],
+      "relativeUrl": "src/ui/web/shared/README.md",
+      "category": "src/ui",
+      "wordCount": 87
+    },
+    {
+      "path": "tests/README.md",
+      "title": "Testing Strategy",
+      "sections": [
+        "Test Structure",
+        "Test Types",
+        "Test File Naming",
+        "Writing Integration Tests",
+        "Writing E2E Tests",
+        "Test Data Patterns",
+        "Common Utilities",
+        "Running Tests",
+        "OpenAI API Mocking",
+        "Test Configuration",
+        "Best Practices",
+        "Debugging Tests",
+        "CI/CD Integration",
+        "Related Documentation",
+        "Quick Reference"
+      ],
+      "relativeUrl": "tests/README.md",
+      "category": "tests",
+      "wordCount": 689
+    }
+  ],
+  "metadata": {
+    "generatedAt": "2026-02-03T12:30:12.235Z",
+    "totalReadmes": 30,
+    "categories": {
+      "root": 1,
+      "access-control": 1,
+      "admin-components": 1,
+      "ai": 1,
+      "ai-services": 1,
+      "block-rendering": 1,
+      "contracts": 1,
+      "course-hierarchy": 1,
+      "exercise-import": 1,
+      "exercises": 1,
+      "features": 1,
+      "eslint-plugin-aguy": 1,
+      "scripts": 1,
+      "src/app": 1,
+      "src/client": 1,
+      "src/components": 1,
+      "src/infra": 3,
+      "src/server": 5,
+      "src/ui": 5,
+      "tests": 1
+    }
+  }
+}

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Replace the existing in-house LLM access layer with [Firebase Genkit](https://github.com/firebase/genkit) as the unified model interface, while preserving the configuration hierarchy and reusing existing utilities.
+Replace the existing in-house LLM access layer with [Firebase Genkit](https://github.com/firebase/genkit) as the unified model interface, while keeping ConfigValues as the source of truth for runtime configuration.
 
 ---
 
@@ -17,19 +17,11 @@ src/infra/llm/
 │   ├── factory.ts               # getLLMProvider(), getProviderTypeFromEnv(), UnifiedLLMProvider
 │   ├── types.ts                 # LLMProviderType enum (GEMINI, OPENAI_COMPATIBLE)
 │   ├── gemini/                  # Gemini SDK wrapper
-│   │   ├── gemini.provider.ts
-│   │   ├── gemini.client.ts
-│   │   ├── gemini.tools.ts
-│   │   └── multimodal-mapper.ts
 │   ├── openai-compatible/       # OpenAI-compatible SDK wrapper
-│   │   ├── openai.provider.ts
-│   │   ├── openai.client.ts
-│   │   ├── openai.tools.ts
-│   │   └── multimodal-mapper.ts
 │   └── shared/
-│       ├── chat-config.ts       # ChatConfig interface, getChatConfig()
-│       ├── retry.ts             # withRetry() exponential backoff (KEEP)
-│       └── errors.ts            # LLMError, error classification (KEEP)
+│       ├── chat-config.ts       # ChatConfig interface, getChatConfig(), getModelConfig()
+│       ├── retry.ts             # withRetry() exponential backoff
+│       └── errors.ts            # LLMError, error classification
 └── services/
     ├── exercise-chat-service.ts # Chat with exercises
     └── data-extractor-service.ts # Image → Exercise extraction
@@ -40,12 +32,10 @@ src/infra/llm/
 ```
 Priority (highest → lowest):
 1. process.env.* (LLM_PROVIDER, LLM_MODEL_OVERRIDE_*)
-2. ConfigSecrets (GEMINI_API_KEY, OPENAI_COMPATIBLE_API_KEY) - via runtime-config.ts
+2. ConfigSecrets (GEMINI_API_KEY, OPENAI_COMPATIBLE_API_KEY, OPENAI_COMPATIBLE_BASE_URL)
 3. ConfigValues/chat domain (models, timeouts, retry, temperature)
 4. MODEL_REGISTRY defaults (hardcoded fallbacks)
 ```
-
-**Note**: `OPENAI_COMPATIBLE_BASE_URL` should be added to ConfigSecrets for tenant-scoped configuration.
 
 ### Current Use Cases
 
@@ -62,14 +52,16 @@ Priority (highest → lowest):
 
 ### Q1: Config Shape Mapping
 
-| ConfigValues Key                    | Genkit Equivalent          | Action                         |
-| ----------------------------------- | -------------------------- | ------------------------------ |
-| `temperature.default`               | `config.temperature`       | Direct map                     |
-| `models.*.maxOutputTokens`          | `config.maxOutputTokens`   | Direct map                     |
-| `retry.*`                           | N/A (Genkit has no retry)  | **Keep** `withRetry()` wrapper |
-| `chatSettings.defaultChatTimeoutMs` | `config.timeout` (seconds) | Convert ms → s                 |
-| `models.*.gemini`                   | `googleai/{modelName}`     | Resolver prefixes              |
-| `models.*.openaiCompatible`         | `openai/{modelName}`       | Resolver prefixes              |
+| ConfigValues Key                    | Genkit Equivalent          | Action                     |
+| ----------------------------------- | -------------------------- | -------------------------- |
+| `temperature.default`               | `config.temperature`       | Direct map                 |
+| `models.*.maxOutputTokens`          | `config.maxOutputTokens`   | Direct map                 |
+| `retry.*`                           | N/A (Genkit has no retry)  | Keep `withRetry()` wrapper |
+| `chatSettings.defaultChatTimeoutMs` | `config.timeout` (seconds) | Convert ms → s             |
+| `models.*.gemini`                   | `googleai/{modelName}`     | Resolver prefixes          |
+| `models.*.openaiCompatible`         | `openai/{modelName}`       | Resolver prefixes          |
+
+**New keys needed**: None. Existing config is sufficient.
 
 ### Q2: Tenant Precedence
 
@@ -77,7 +69,7 @@ Priority (highest → lowest):
 
 ```
 1. Explicit tenantId parameter
-2. Cached defaultTenantId from runtime-config
+2. Cached defaultTenantId
 3. getDefaultTenantId(payload) fallback
 ```
 
@@ -122,9 +114,9 @@ Genkit instance initialized once per provider type. Model selection resolved per
 
 ### Q7: OpenAI-Compatible BaseURL Scope
 
-**Decision**: Per-tenant in ConfigSecrets (not environment-only).
+**Decision**: Per-tenant in ConfigValues (not environment-only).
 
-- Add `OPENAI_COMPATIBLE_BASE_URL` to ConfigSecrets key enumeration
+- Add `OPENAI_COMPATIBLE_BASE_URL` to ConfigSecrets (tenant-scoped)
 - Allows different OpenAI-compatible endpoints per tenant
 - Fallback to `process.env.OPENAI_COMPATIBLE_BASE_URL`
 
@@ -157,8 +149,6 @@ src/infra/llm/genkit/
 ├── adapters/
 │   ├── unified-adapter.ts       # UnifiedLLMProvider interface backed by Genkit
 │   └── error-adapter.ts         # Genkit errors → LLMError
-└── media/
-    └── media-adapter.ts         # Reuse existing multimodal mappers
 ```
 
 **Key implementation**:
@@ -177,7 +167,7 @@ export async function resolveGenkitConfig(
   tenantId?: string,
 ): Promise<GenkitModelConfig> {
   // 1. Check LLM_MODEL_OVERRIDE_* env vars
-  // 2. Load ConfigValues for tenant via getConfigDomain('chat')
+  // 2. Load ConfigValues for tenant
   // 3. Get model name from config.models[task][provider]
   // 4. Prefix with 'googleai/' or 'openai/'
   // 5. Return complete config
@@ -189,7 +179,6 @@ export async function resolveGenkitConfig(
 import { genkit } from 'genkit'
 import { googleAI } from '@genkit-ai/googleai'
 import { openAI } from 'genkitx-openai'
-import { getSecret } from '@/infra/config/runtime/runtime-config'
 
 // Cache per provider type (single provider per tenant)
 const instances = new Map<LLMProviderType, Genkit>()
@@ -201,17 +190,9 @@ export async function getGenkitInstance(payload: Payload, tenantId?: string): Pr
     return instances.get(providerType)!
   }
 
-  // Get API key from ConfigSecrets (tenant-scoped)
-  const apiKey =
-    providerType === LLMProviderType.GEMINI
-      ? getSecret('GEMINI_API_KEY', { tenantId })
-      : getSecret('OPENAI_COMPATIBLE_API_KEY', { tenantId })
-
-  // Get baseURL for OpenAI-compatible (tenant-scoped via ConfigSecrets)
-  const baseURL =
-    providerType === LLMProviderType.OPENAI_COMPATIBLE
-      ? getSecret('OPENAI_COMPATIBLE_BASE_URL', { tenantId, throwIfNotFound: false }) || undefined
-      : undefined
+  const apiKey = await getApiKeyForProvider(providerType, payload, tenantId)
+  // BaseURL now tenant-scoped via ConfigSecrets
+  const baseURL = await getOpenAICompatibleBaseUrl(payload, tenantId)
 
   const plugins =
     providerType === LLMProviderType.GEMINI ? [googleAI({ apiKey })] : [openAI({ apiKey, baseURL })]
@@ -295,7 +276,7 @@ export async function getLLMProvider(payload, config?): Promise<UnifiedLLMProvid
 ```
 src/infra/llm/genkit/tools/
 ├── mcp-tool-adapter.ts          # MCPTool → Genkit defineTool()
-└── tool-executor.ts              # Genkit tool execution wrapper
+└── tool-executor.ts             # Genkit tool execution wrapper
 ```
 
 **Files to modify**:
@@ -337,8 +318,8 @@ export function mcpToolToGenkitTool(mcpTool: MCPTool, executor: ToolExecutor) {
 ```
 src/infra/llm/genkit/flows/
 ├── index.ts
-├── pdf-extraction-flow.ts        # defineFlow for extraction
-└── pdf-verification-flow.ts       # defineFlow for verification
+├── pdf-extraction-flow.ts       # defineFlow for extraction
+└── pdf-verification-flow.ts     # defineFlow for verification
 ```
 
 **Files to modify**:
@@ -485,7 +466,7 @@ for (const exercise of exercises) {
 
 ### ConfigSecrets Addition
 
-- Add `OPENAI_COMPATIBLE_BASE_URL` as a tenant-scoped secret key (via ConfigSecrets collection)
+- Add `OPENAI_COMPATIBLE_BASE_URL` as a tenant-scoped secret key
 
 ---
 
@@ -529,20 +510,6 @@ Only enabled when `NODE_ENV !== 'production'`.
 
 ---
 
-## Reuse Opportunities
-
-### Existing Utilities to Preserve
-
-| Utility                   | Location                                           | Action                    |
-| ------------------------- | -------------------------------------------------- | ------------------------- |
-| `withRetry()`             | `shared/retry.ts`                                  | Wrap Genkit calls         |
-| `LLMError`                | `shared/errors.ts`                                 | Wrap Genkit errors        |
-| `createErrorClassifier()` | `shared/errors.ts`                                 | Classify retryable errors |
-| `mapMultimodalToGemini()` | `providers/gemini/multimodal-mapper.ts`            | Adapt for Genkit media    |
-| `mapMultimodalToOpenAI()` | `providers/openai-compatible/multimodal-mapper.ts` | Adapt for Genkit media    |
-
----
-
 ## Verification
 
 After implementation, verify:
@@ -554,29 +521,3 @@ After implementation, verify:
 5. **Tool calling**: Admin chat tools work as before
 6. **Error handling**: Retries and error classification preserved
 7. **Performance**: No significant degradation (< 20%)
-
----
-
-## Migration Timeline
-
-| Phase | Duration | Scope                       |
-| ----- | -------- | --------------------------- |
-| 1     | 1 week   | Foundation, config resolver |
-| 2     | 1 week   | Service migration           |
-| 3     | 1 week   | Tool calling                |
-| 4     | 1 week   | PDF flows                   |
-| 5     | 2 days   | Cleanup, observability      |
-
-**Total estimated time**: 5 weeks
-
----
-
-## Risk Mitigation
-
-| Risk                         | Mitigation                                      |
-| ---------------------------- | ----------------------------------------------- |
-| Genkit API changes           | Pin to specific version in package.json         |
-| Migration downtime           | Backward-compatible shim in factory.ts          |
-| Performance regression       | Benchmark before/after, monitor in production   |
-| Tool calling incompatibility | Comprehensive unit tests for MCP→Genkit adapter |
-| Tenant config issues         | Integration tests per tenant scenario           |

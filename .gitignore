@@ -32,9 +32,6 @@ NAMING.md
 STRICTNESS.md
 tasks/
 
-# Generated AI documentation indices
-.ai-docs/
-
 # Test coverage reports
 coverage/
 *.lcov
