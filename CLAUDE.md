@@ -19,10 +19,6 @@ This file serves as the entry point for Claude Code (AI assistant) when working 
 - Authentication patterns
 - Examples and code snippets
 
-**Read [CLAUDE_INTERNAL.md](./CLAUDE.md) - Internal team guidelines (if it exists):**
-
-- Internal conventions and patterns specific to this project
-
 ---
 
 ## Quick Commands Reference
@@ -124,57 +120,11 @@ Invoke skills using the Skill tool when needed.
 
 This codebase includes tools to help AI agents work efficiently:
 
-### Smart Documentation Loading
+- **SmartDocLoader** - Context-aware documentation loading
+- **DocSearch** - Keyword-based documentation search
+- **Pattern Index** - Find code examples by pattern
 
-Use SmartDocLoader for context-aware documentation loading:
-
-```typescript
-import { SmartDocLoader } from '@/lib/ai/smart-doc-loader' // src/infra/llm/smart-doc-loader.ts - OLD PATH
-
-// Creating a collection
-const docs = SmartDocLoader.forCollection('create')
-console.log(docs.estimatedTokens) // ~380 tokens
-
-// Creating a component
-const docs = SmartDocLoader.forComponent('create')
-// Returns: ~335 tokens, quick reference tier
-
-// Creating an endpoint
-const docs = SmartDocLoader.forEndpoint('create')
-// Returns: ~228 tokens, quick reference tier
-
-// Debugging
-const docs = SmartDocLoader.forDebugging('collection')
-// Returns: ~1158 tokens, deep reference tier
-```
-
-### Documentation Search
-
-Search for specific information:
-
-```typescript
-import { getDocSearch } from '@/lib/ai/doc-search' // src/infra/llm/doc-search.ts - OLD PATH
-
-const search = getDocSearch()
-const results = search.query('How do I create a published collection?', {
-  limit: 5,
-  category: 'quick-reference',
-})
-```
-
-### Pattern Discovery
-
-Find examples of specific patterns:
-
-```typescript
-// Load pattern index
-const index = require('./.ai-docs/indexes/pattern-index.json')
-
-// Find all files using RBAC pattern
-const rbacFiles = index.patterns['rbac'].files
-```
-
-See [BOOTSTRAP.md](.ai-docs/BOOTSTRAP.md) for full guide.
+See [AGENTS.md](./AGENTS.md) and [.ai-docs/BOOTSTRAP.md](.ai-docs/BOOTSTRAP.md) for details.
 
 ---
 
@@ -186,7 +136,7 @@ See [BOOTSTRAP.md](.ai-docs/BOOTSTRAP.md) for full guide.
 // ✅ Correct
 import { getPayload } from 'payload'
 import { User } from '@/payload-types'
-import { SmartDocLoader } from '@/lib/ai/smart-doc-loader' // src/infra/llm/smart-doc-loader.ts
+import { SmartDocLoader } from '@/lib/ai/smart-doc-loader'
 
 // ❌ Wrong (old path structure)
 import { SmartDocLoader } from '../../../lib/ai/smart-doc-loader'

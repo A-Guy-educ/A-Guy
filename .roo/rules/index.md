@@ -49,46 +49,12 @@ pnpm lint:fix         # Fix lint issues
 
 Find code examples using the AI-optimized indexes:
 
-- `docs/ai/indexes/pattern-index.json` - 132 files × 12 patterns
+- `.ai-docs/indexes/pattern-index.json` - 208 files × 24 patterns
 - `.ai-docs/readme-index.json` - 19 READMEs indexed
-- `docs/ai/indexes/doc-chunks.json` - 217 searchable chunks
-
-## Critical Security (from AGENTS.md)
-
-1. **Local API bypasses access control** - use `overrideAccess: false` when passing `user`
-2. **Always pass `req`** to nested operations in hooks for transaction safety
-3. **Use `req.context`** flags to prevent infinite hook loops
+- `.ai-docs/indexes/doc-chunks.json` - 248 searchable chunks
 
 ## Storage Constraints
 
-**Vercel Blob Only** - This project uses Vercel Blob storage exclusively for file storage:
+**Vercel Blob Only** - This project uses Vercel Blob storage exclusively for file storage.
 
-## Project Structure
-
-```
-src/
-├── app/
-│   ├── (frontend)/     # Frontend routes
-│   └── (payload)/      # Payload admin routes
-├── collections/        # Payload collection configs
-├── globals/            # Payload global configs
-├── components/         # React components
-├── access/             # Reusable access control functions
-├── hooks/              # Reusable hook functions
-└── lib/                # Business logic libraries
-```
-
-## AI Agent Tools
-
-```typescript
-// Load context-aware documentation
-import { SmartDocLoader } from '@/lib/ai/smart-doc-loader'
-const docs = SmartDocLoader.forCollection('create') // ~380 tokens
-
-// Search documentation
-import { getDocSearch } from '@/lib/ai/doc-search'
-const search = getDocSearch()
-const results = search.query('access control patterns')
-```
-
-See `docs/ai/README.md` for full AI tooling guide.
+See `AGENTS.md` and `.ai-docs/BOOTSTRAP.md` for AI tooling guide.
