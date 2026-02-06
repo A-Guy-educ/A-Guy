@@ -21,6 +21,7 @@ Display all sessions with metadata, filtering, and pagination.
 ```
 
 **Script:**
+
 ```bash
 node -e "
 const sm = require('./scripts/lib/session-manager');
@@ -60,6 +61,7 @@ Load and display a session's content (by ID or alias).
 ```
 
 **Script:**
+
 ```bash
 node -e "
 const sm = require('./scripts/lib/session-manager');
@@ -121,6 +123,7 @@ Create a memorable alias for a session.
 ```
 
 **Script:**
+
 ```bash
 node -e "
 const sm = require('./scripts/lib/session-manager');
@@ -161,6 +164,7 @@ Delete an existing alias.
 ```
 
 **Script:**
+
 ```bash
 node -e "
 const aa = require('./scripts/lib/session-aliases');
@@ -190,6 +194,7 @@ Show detailed information about a session.
 ```
 
 **Script:**
+
 ```bash
 node -e "
 const sm = require('./scripts/lib/session-manager');
@@ -237,6 +242,7 @@ Show all session aliases.
 ```
 
 **Script:**
+
 ```bash
 node -e "
 const aa = require('./scripts/lib/session-aliases');
@@ -263,6 +269,7 @@ if (aliases.length === 0) {
 ## Arguments
 
 $ARGUMENTS:
+
 - `list [options]` - List sessions
   - `--limit <n>` - Max sessions to show (default: 50)
   - `--date <YYYY-MM-DD>` - Filter by date

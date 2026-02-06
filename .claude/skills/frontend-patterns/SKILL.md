@@ -130,7 +130,7 @@ export function useToggle(initialValue = false): [boolean, () => void] {
   const [value, setValue] = useState(initialValue)
 
   const toggle = useCallback(() => {
-    setValue(v => !v)
+    setValue((v) => !v)
   }, [])
 
   return [value, toggle]
@@ -149,11 +149,7 @@ interface UseQueryOptions<T> {
   enabled?: boolean
 }
 
-export function useQuery<T>(
-  key: string,
-  fetcher: () => Promise<T>,
-  options?: UseQueryOptions<T>
-) {
+export function useQuery<T>(key: string, fetcher: () => Promise<T>, options?: UseQueryOptions<T>) {
   const [data, setData] = useState<T | null>(null)
   const [error, setError] = useState<Error | null>(null)
   const [loading, setLoading] = useState(false)
@@ -185,14 +181,15 @@ export function useQuery<T>(
 }
 
 // Usage
-const { data: markets, loading, error, refetch } = useQuery(
-  'markets',
-  () => fetch('/api/markets').then(r => r.json()),
-  {
-    onSuccess: data => console.log('Fetched', data.length, 'markets'),
-    onError: err => console.error('Failed:', err)
-  }
-)
+const {
+  data: markets,
+  loading,
+  error,
+  refetch,
+} = useQuery('markets', () => fetch('/api/markets').then((r) => r.json()), {
+  onSuccess: (data) => console.log('Fetched', data.length, 'markets'),
+  onError: (err) => console.error('Failed:', err),
+})
 ```
 
 ### Debounce Hook

@@ -10,14 +10,14 @@ An advanced learning system that turns your Claude Code sessions into reusable k
 
 ## What's New in v2
 
-| Feature | v1 | v2 |
-|---------|----|----|
-| Observation | Stop hook (session end) | PreToolUse/PostToolUse (100% reliable) |
-| Analysis | Main context | Background agent (Haiku) |
-| Granularity | Full skills | Atomic "instincts" |
-| Confidence | None | 0.3-0.9 weighted |
-| Evolution | Direct to skill | Instincts → cluster → skill/command/agent |
-| Sharing | None | Export/import instincts |
+| Feature     | v1                      | v2                                        |
+| ----------- | ----------------------- | ----------------------------------------- |
+| Observation | Stop hook (session end) | PreToolUse/PostToolUse (100% reliable)    |
+| Analysis    | Main context            | Background agent (Haiku)                  |
+| Granularity | Full skills             | Atomic "instincts"                        |
+| Confidence  | None                    | 0.3-0.9 weighted                          |
+| Evolution   | Direct to skill         | Instincts → cluster → skill/command/agent |
+| Sharing     | None                    | Export/import instincts                   |
 
 ## The Instinct Model
 
@@ -43,6 +43,7 @@ Use functional patterns over classes when appropriate.
 ```
 
 **Properties:**
+
 - **Atomic** — one trigger, one action
 - **Confidence-weighted** — 0.3 = tentative, 0.9 = near certain
 - **Domain-tagged** — code-style, testing, git, debugging, workflow, etc.
@@ -99,20 +100,28 @@ Add to your `~/.claude/settings.json`.
 ```json
 {
   "hooks": {
-    "PreToolUse": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh pre"
-      }]
-    }],
-    "PostToolUse": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh post"
-      }]
-    }]
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh pre"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/hooks/observe.sh post"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
@@ -122,20 +131,28 @@ Add to your `~/.claude/settings.json`.
 ```json
 {
   "hooks": {
-    "PreToolUse": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "~/.claude/skills/continuous-learning-v2/hooks/observe.sh pre"
-      }]
-    }],
-    "PostToolUse": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "~/.claude/skills/continuous-learning-v2/hooks/observe.sh post"
-      }]
-    }]
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/skills/continuous-learning-v2/hooks/observe.sh pre"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/skills/continuous-learning-v2/hooks/observe.sh post"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
@@ -160,12 +177,12 @@ touch ~/.claude/homunculus/observations.jsonl
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `/instinct-status` | Show all learned instincts with confidence |
-| `/evolve` | Cluster related instincts into skills/commands |
-| `/instinct-export` | Export instincts for sharing |
-| `/instinct-import <file>` | Import instincts from others |
+| Command                   | Description                                    |
+| ------------------------- | ---------------------------------------------- |
+| `/instinct-status`        | Show all learned instincts with confidence     |
+| `/evolve`                 | Cluster related instincts into skills/commands |
+| `/instinct-export`        | Export instincts for sharing                   |
+| `/instinct-import <file>` | Import instincts from others                   |
 
 ## Configuration
 
@@ -224,6 +241,7 @@ Edit `config.json`:
 ## Integration with Skill Creator
 
 When you use the [Skill Creator GitHub App](https://skill-creator.app), it now generates **both**:
+
 - Traditional SKILL.md files (for backward compatibility)
 - Instinct collections (for v2 learning system)
 
@@ -233,19 +251,21 @@ Instincts from repo analysis have `source: "repo-analysis"` and include the sour
 
 Confidence evolves over time:
 
-| Score | Meaning | Behavior |
-|-------|---------|----------|
-| 0.3 | Tentative | Suggested but not enforced |
-| 0.5 | Moderate | Applied when relevant |
-| 0.7 | Strong | Auto-approved for application |
-| 0.9 | Near-certain | Core behavior |
+| Score | Meaning      | Behavior                      |
+| ----- | ------------ | ----------------------------- |
+| 0.3   | Tentative    | Suggested but not enforced    |
+| 0.5   | Moderate     | Applied when relevant         |
+| 0.7   | Strong       | Auto-approved for application |
+| 0.9   | Near-certain | Core behavior                 |
 
 **Confidence increases** when:
+
 - Pattern is repeatedly observed
 - User doesn't correct the suggested behavior
 - Similar instincts from other sources agree
 
 **Confidence decreases** when:
+
 - User explicitly corrects the behavior
 - Pattern isn't observed for extended periods
 - Contradicting evidence appears
@@ -255,6 +275,7 @@ Confidence evolves over time:
 > "v1 relied on skills to observe. Skills are probabilistic—they fire ~50-80% of the time based on Claude's judgment."
 
 Hooks fire **100% of the time**, deterministically. This means:
+
 - Every tool call is observed
 - No patterns are missed
 - Learning is comprehensive
@@ -262,6 +283,7 @@ Hooks fire **100% of the time**, deterministically. This means:
 ## Backward Compatibility
 
 v2 is fully compatible with v1:
+
 - Existing `~/.claude/skills/learned/` skills still work
 - Stop hook still runs (but now also feeds into v2)
 - Gradual migration path: run both in parallel
@@ -281,4 +303,4 @@ v2 is fully compatible with v1:
 
 ---
 
-*Instinct-based learning: teaching Claude your patterns, one observation at a time.*
+_Instinct-based learning: teaching Claude your patterns, one observation at a time._

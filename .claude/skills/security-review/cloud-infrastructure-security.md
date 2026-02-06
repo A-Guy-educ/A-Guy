@@ -1,5 +1,5 @@
-| name | description |
-|------|-------------|
+| name                          | description                                                                                                                                                                                                                         |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | cloud-infrastructure-security | Use this skill when deploying to cloud platforms, configuring infrastructure, managing IAM policies, setting up logging/monitoring, or implementing CI/CD pipelines. Provides cloud security checklist aligned with best practices. |
 
 # Cloud & Infrastructure Security Skill
@@ -66,14 +66,14 @@ aws iam enable-mfa-device \
 
 ```typescript
 // ✅ CORRECT: Use cloud secrets manager
-import { SecretsManager } from '@aws-sdk/client-secrets-manager';
+import { SecretsManager } from '@aws-sdk/client-secrets-manager'
 
-const client = new SecretsManager({ region: 'us-east-1' });
-const secret = await client.getSecretValue({ SecretId: 'prod/api-key' });
-const apiKey = JSON.parse(secret.SecretString).key;
+const client = new SecretsManager({ region: 'us-east-1' })
+const secret = await client.getSecretValue({ SecretId: 'prod/api-key' })
+const apiKey = JSON.parse(secret.SecretString).key
 
 // ❌ WRONG: Hardcoded or in environment variables only
-const apiKey = process.env.API_KEY; // Not rotated, not audited
+const apiKey = process.env.API_KEY // Not rotated, not audited
 ```
 
 #### Secrets Rotation
@@ -102,14 +102,14 @@ aws secretsmanager rotate-secret \
 # ✅ CORRECT: Restricted security group
 resource "aws_security_group" "app" {
   name = "app-sg"
-  
+
   ingress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"]  # Internal VPC only
   }
-  
+
   egress {
     from_port   = 443
     to_port     = 443
@@ -143,24 +143,26 @@ resource "aws_security_group" "bad" {
 
 ```typescript
 // ✅ CORRECT: Comprehensive logging
-import { CloudWatchLogsClient, CreateLogStreamCommand } from '@aws-sdk/client-cloudwatch-logs';
+import { CloudWatchLogsClient, CreateLogStreamCommand } from '@aws-sdk/client-cloudwatch-logs'
 
 const logSecurityEvent = async (event: SecurityEvent) => {
   await cloudwatch.putLogEvents({
     logGroupName: '/aws/security/events',
     logStreamName: 'authentication',
-    logEvents: [{
-      timestamp: Date.now(),
-      message: JSON.stringify({
-        type: event.type,
-        userId: event.userId,
-        ip: event.ip,
-        result: event.result,
-        // Never log sensitive data
-      })
-    }]
-  });
-};
+    logEvents: [
+      {
+        timestamp: Date.now(),
+        message: JSON.stringify({
+          type: event.type,
+          userId: event.userId,
+          ip: event.ip,
+          result: event.result,
+          // Never log sensitive data
+        }),
+      },
+    ],
+  })
+}
 ```
 
 #### Verification Steps
@@ -188,19 +190,19 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: read  # Minimal permissions
-      
+      contents: read # Minimal permissions
+
     steps:
       - uses: actions/checkout@v4
-      
+
       # Scan for secrets
       - name: Secret scanning
         uses: trufflesecurity/trufflehog@main
-        
+
       # Dependency audit
       - name: Audit dependencies
         run: npm audit --audit-level=high
-        
+
       # Use OIDC, not long-lived tokens
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -215,7 +217,7 @@ jobs:
 // package.json - Use lock files and integrity checks
 {
   "scripts": {
-    "install": "npm ci",  // Use ci for reproducible builds
+    "install": "npm ci", // Use ci for reproducible builds
     "audit": "npm audit --audit-level=moderate",
     "check": "npm outdated"
   }
@@ -240,21 +242,21 @@ jobs:
 // ✅ CORRECT: Cloudflare Workers with security headers
 export default {
   async fetch(request: Request): Promise<Response> {
-    const response = await fetch(request);
-    
+    const response = await fetch(request)
+
     // Add security headers
-    const headers = new Headers(response.headers);
-    headers.set('X-Frame-Options', 'DENY');
-    headers.set('X-Content-Type-Options', 'nosniff');
-    headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    headers.set('Permissions-Policy', 'geolocation=(), microphone=()');
-    
+    const headers = new Headers(response.headers)
+    headers.set('X-Frame-Options', 'DENY')
+    headers.set('X-Content-Type-Options', 'nosniff')
+    headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+    headers.set('Permissions-Policy', 'geolocation=(), microphone=()')
+
     return new Response(response.body, {
       status: response.status,
-      headers
-    });
-  }
-};
+      headers,
+    })
+  },
+}
 ```
 
 #### WAF Rules
@@ -285,13 +287,13 @@ export default {
 resource "aws_db_instance" "main" {
   allocated_storage     = 20
   engine               = "postgres"
-  
+
   backup_retention_period = 30  # 30 days retention
   backup_window          = "03:00-04:00"
   maintenance_window     = "mon:04:00-mon:05:00"
-  
+
   enabled_cloudwatch_logs_exports = ["postgresql"]
-  
+
   deletion_protection = true  # Prevent accidental deletion
 }
 ```

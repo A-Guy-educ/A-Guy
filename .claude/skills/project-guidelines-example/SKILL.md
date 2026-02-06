@@ -9,6 +9,7 @@ Based on a real production application: [Zenith](https://zenith.chat) - AI-power
 ## When to Use
 
 Reference this skill when working on the specific project it's designed for. Project skills contain:
+
 - Architecture overview
 - File structure
 - Code patterns
@@ -20,6 +21,7 @@ Reference this skill when working on the specific project it's designed for. Pro
 ## Architecture Overview
 
 **Tech Stack:**
+
 - **Frontend**: Next.js 15 (App Router), TypeScript, React
 - **Backend**: FastAPI (Python), Pydantic models
 - **Database**: Supabase (PostgreSQL)
@@ -28,6 +30,7 @@ Reference this skill when working on the specific project it's designed for. Pro
 - **Testing**: Playwright (E2E), pytest (backend), React Testing Library
 
 **Services:**
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                         Frontend                            │
@@ -120,10 +123,7 @@ interface ApiResponse<T> {
   error?: string
 }
 
-async function fetchApi<T>(
-  endpoint: string,
-  options?: RequestInit
-): Promise<ApiResponse<T>> {
+async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
     const response = await fetch(`/api${endpoint}`, {
       ...options,
@@ -190,9 +190,7 @@ interface UseApiState<T> {
   error: string | null
 }
 
-export function useApi<T>(
-  fetchFn: () => Promise<ApiResponse<T>>
-) {
+export function useApi<T>(fetchFn: () => Promise<ApiResponse<T>>) {
   const [state, setState] = useState<UseApiState<T>>({
     data: null,
     loading: false,
@@ -200,7 +198,7 @@ export function useApi<T>(
   })
 
   const execute = useCallback(async () => {
-    setState(prev => ({ ...prev, loading: true, error: null }))
+    setState((prev) => ({ ...prev, loading: true, error: null }))
 
     const result = await fetchFn()
 
@@ -233,6 +231,7 @@ poetry run pytest tests/test_auth.py -v
 ```
 
 **Test structure:**
+
 ```python
 import pytest
 from httpx import AsyncClient
@@ -264,6 +263,7 @@ npm run test:e2e
 ```
 
 **Test structure:**
+
 ```typescript
 import { render, screen, fireEvent } from '@testing-library/react'
 import { WorkspacePanel } from './WorkspacePanel'

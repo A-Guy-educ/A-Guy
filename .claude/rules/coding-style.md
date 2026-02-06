@@ -9,7 +9,7 @@ Use spread operator for immutable updates:
 ```typescript
 // WRONG: Mutation
 function updateUser(user, name) {
-  user.name = name  // MUTATION!
+  user.name = name // MUTATION!
   return user
 }
 
@@ -17,7 +17,7 @@ function updateUser(user, name) {
 function updateUser(user, name) {
   return {
     ...user,
-    name
+    name,
   }
 }
 ```
@@ -45,7 +45,7 @@ import { z } from 'zod'
 
 const schema = z.object({
   email: z.string().email(),
-  age: z.number().int().min(0).max(150)
+  age: z.number().int().min(0).max(150),
 })
 
 const validated = schema.parse(input)

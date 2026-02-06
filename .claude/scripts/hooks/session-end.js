@@ -8,8 +8,8 @@
  * with timestamp for continuity tracking.
  */
 
-const path = require('path');
-const fs = require('fs');
+const path = require('path')
+const fs = require('fs')
 const {
   getSessionsDir,
   getDateString,
@@ -18,30 +18,30 @@ const {
   ensureDir,
   writeFile,
   replaceInFile,
-  log
-} = require('../lib/utils');
+  log,
+} = require('../lib/utils')
 
 async function main() {
-  const sessionsDir = getSessionsDir();
-  const today = getDateString();
-  const shortId = getSessionIdShort();
+  const sessionsDir = getSessionsDir()
+  const today = getDateString()
+  const shortId = getSessionIdShort()
   // Include session ID in filename for unique per-session tracking
-  const sessionFile = path.join(sessionsDir, `${today}-${shortId}-session.tmp`);
+  const sessionFile = path.join(sessionsDir, `${today}-${shortId}-session.tmp`)
 
-  ensureDir(sessionsDir);
+  ensureDir(sessionsDir)
 
-  const currentTime = getTimeString();
+  const currentTime = getTimeString()
 
   // If session file exists for today, update the end time
   if (fs.existsSync(sessionFile)) {
     const success = replaceInFile(
       sessionFile,
       /\*\*Last Updated:\*\*.*/,
-      `**Last Updated:** ${currentTime}`
-    );
+      `**Last Updated:** ${currentTime}`,
+    )
 
     if (success) {
-      log(`[SessionEnd] Updated session file: ${sessionFile}`);
+      log(`[SessionEnd] Updated session file: ${sessionFile}`)
     }
   } else {
     // Create new session file with template
@@ -69,16 +69,16 @@ async function main() {
 \`\`\`
 [relevant files]
 \`\`\`
-`;
+`
 
-    writeFile(sessionFile, template);
-    log(`[SessionEnd] Created session file: ${sessionFile}`);
+    writeFile(sessionFile, template)
+    log(`[SessionEnd] Created session file: ${sessionFile}`)
   }
 
-  process.exit(0);
+  process.exit(0)
 }
 
-main().catch(err => {
-  console.error('[SessionEnd] Error:', err.message);
-  process.exit(0);
-});
+main().catch((err) => {
+  console.error('[SessionEnd] Error:', err.message)
+  process.exit(0)
+})
