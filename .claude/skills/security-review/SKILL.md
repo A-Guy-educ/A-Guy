@@ -1,582 +1,494 @@
 ---
 name: security-review
-description: Deep security audit focused on Payload CMS patterns, access control, and common vulnerabilities
-allowed-tools: Read, Grep, Bash
+description: Use this skill when adding authentication, handling user input, working with secrets, creating API endpoints, or implementing payment/sensitive features. Provides comprehensive security checklist and patterns.
 ---
 
-# Security Review
+# Security Review Skill
 
-Comprehensive security audit for Payload CMS applications focusing on access control, Local API usage, hooks, and common vulnerabilities.
+This skill ensures all code follows security best practices and identifies potential vulnerabilities.
 
-## What This Skill Does
+## When to Activate
 
-1. Scans code for Payload-specific security issues
-2. Checks Local API access control patterns
-3. Validates transaction safety in hooks
-4. Detects hardcoded secrets
-5. Reviews authentication and authorization
-6. Generates detailed security report with recommendations
+- Implementing authentication or authorization
+- Handling user input or file uploads
+- Creating new API endpoints
+- Working with secrets or credentials
+- Implementing payment features
+- Storing or transmitting sensitive data
+- Integrating third-party APIs
 
-## Workflow
+## Security Checklist
 
-### Step 1: Understand Scope
+### 1. Secrets Management
 
-Ask user:
-
-- **What to review?** (specific files, changed files, entire codebase)
-- **Focus areas?** (access control, hooks, endpoints, all)
-
-If reviewing a PR or recent changes:
-
-```bash
-git diff main --name-only
-```
-
-### Step 2: Critical Security Checks
-
-Run these checks in order:
-
-#### Check 1: Local API Access Control
-
-**Issue**: When passing `user` to Local API, must set `overrideAccess: false`
-
-Search for Local API usage:
-
-```bash
-grep -r "payload\\.find\|payload\\.findByID\|payload\\.create\|payload\\.update\|payload\\.delete" src/ --include="*.ts" --include="*.tsx"
-```
-
-**Red flags**:
-
-- `overrideAccess: true` when `user` is passed
-- Missing `overrideAccess: false` when `user` is present
-- `req.user` passed without proper access control
-
-**Example violations**:
-
+#### ❌ NEVER Do This
 ```typescript
-// ❌ BAD: Bypasses access control
-await payload.find({
-  collection: 'posts',
-  user: req.user,
-  overrideAccess: true, // WRONG!
-})
-
-// ✅ GOOD: Enforces access control
-await payload.find({
-  collection: 'posts',
-  user: req.user,
-  overrideAccess: false,
-})
+const apiKey = "sk-proj-xxxxx"  // Hardcoded secret
+const dbPassword = "password123" // In source code
 ```
 
-#### Check 2: Transaction Safety in Hooks
-
-**Issue**: Hooks must pass `req` to nested operations to maintain transaction context
-
-Search for hooks:
-
-```bash
-grep -r "afterChange:\|beforeChange:\|afterDelete:\|beforeDelete:\|afterRead:\|beforeRead:" src/collections/ src/globals/ --include="*.ts" -A 10
-```
-
-**Red flags**:
-
-- Nested `payload.find/create/update/delete` without `req` parameter
-- Missing `req` in hook operations
-
-**Example violations**:
-
+#### ✅ ALWAYS Do This
 ```typescript
-// ❌ BAD: Missing req breaks transactions
-afterChange: [
-  async ({ doc, req }) => {
-    await req.payload.create({
-      collection: 'logs',
-      data: { action: 'created' },
-      // Missing: req
-    })
-  },
-]
+const apiKey = process.env.OPENAI_API_KEY
+const dbUrl = process.env.DATABASE_URL
 
-// ✅ GOOD: Passes req for transaction safety
-afterChange: [
-  async ({ doc, req }) => {
-    await req.payload.create({
-      collection: 'logs',
-      data: { action: 'created' },
-      req, // Maintains transaction
-    })
-  },
-]
-```
-
-#### Check 3: Hook Loop Prevention
-
-**Issue**: Hooks that trigger updates must use `skipHooks` to prevent infinite loops
-
-Search for hooks with updates:
-
-```bash
-grep -r "afterChange:\|beforeChange:" src/ --include="*.ts" -A 15 | grep -B 10 "payload\\.update"
-```
-
-**Red flags**:
-
-- `afterChange` or `beforeChange` hooks that call `update` without `context.skipHooks`
-- Recursive hook patterns
-
-**Example violations**:
-
-```typescript
-// ❌ BAD: Infinite loop
-afterChange: [
-  async ({ doc, req }) => {
-    await req.payload.update({
-      collection: 'posts',
-      id: doc.id,
-      data: { updatedAt: new Date() },
-      // Missing: context: { skipHooks: true }
-    })
-  },
-]
-
-// ✅ GOOD: Prevents loop
-afterChange: [
-  async ({ doc, req, context }) => {
-    if (context.skipHooks) return doc
-
-    await req.payload.update({
-      collection: 'posts',
-      id: doc.id,
-      data: { updatedAt: new Date() },
-      context: { skipHooks: true },
-    })
-  },
-]
-```
-
-#### Check 4: Hardcoded Secrets
-
-Search for potential secrets:
-
-```bash
-grep -r "apiKey\|api_key\|API_KEY\|secret\|SECRET\|password\|PASSWORD\|token\|TOKEN" src/ --include="*.ts" --include="*.tsx" | grep -v "process.env"
-```
-
-**Red flags**:
-
-- Hardcoded API keys, passwords, tokens
-- Secret values not from environment variables
-- Credentials in comments
-
-**Example violations**:
-
-```typescript
-// ❌ BAD: Hardcoded secret
-const apiKey = 'sk-1234567890abcdef'
-
-// ✅ GOOD: From environment
-const apiKey = process.env.API_KEY
-```
-
-#### Check 5: Authentication Bypass
-
-Search for authentication bypass patterns:
-
-```bash
-grep -r "overrideAccess.*true" src/ --include="*.ts"
-```
-
-**Red flags**:
-
-- `overrideAccess: true` in route handlers or server actions
-- Authentication checks that can be bypassed
-- Missing authentication on sensitive operations
-
-#### Check 6: SQL/NoSQL Injection
-
-Search for unsafe query construction:
-
-```bash
-grep -r "where.*\${\\|where.*\`" src/ --include="*.ts"
-```
-
-**Red flags**:
-
-- String interpolation in `where` clauses
-- Unsanitized user input in queries
-- Dynamic query construction without validation
-
-**Example violations**:
-
-```typescript
-// ❌ BAD: Injection vulnerability
-const results = await payload.find({
-  collection: 'posts',
-  where: {
-    title: { contains: req.query.search }, // Unsanitized
-  },
-})
-
-// ✅ GOOD: Validated input
-const searchSchema = z.string().max(100)
-const search = searchSchema.parse(req.query.search)
-
-const results = await payload.find({
-  collection: 'posts',
-  where: {
-    title: { contains: search },
-  },
-})
-```
-
-#### Check 7: Missing Input Validation
-
-Search for route handlers and server actions:
-
-```bash
-grep -r "export async function POST\|export async function PUT\|'use server'" src/ --include="*.ts" -A 5
-```
-
-**Red flags**:
-
-- No Zod schema validation
-- Direct use of `req.body` or form data without parsing
-- Missing type validation on API boundaries
-
-**Example violations**:
-
-```typescript
-// ❌ BAD: No validation
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-  // Uses body directly without validation
+// Verify secrets exist
+if (!apiKey) {
+  throw new Error('OPENAI_API_KEY not configured')
 }
+```
 
-// ✅ GOOD: Zod validation
+#### Verification Steps
+- [ ] No hardcoded API keys, tokens, or passwords
+- [ ] All secrets in environment variables
+- [ ] `.env.local` in .gitignore
+- [ ] No secrets in git history
+- [ ] Production secrets in hosting platform (Vercel, Railway)
+
+### 2. Input Validation
+
+#### Always Validate User Input
+```typescript
 import { z } from 'zod'
 
-const schema = z.object({
-  title: z.string().min(1).max(200),
-  content: z.string(),
+// Define validation schema
+const CreateUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).max(100),
+  age: z.number().int().min(0).max(150)
 })
 
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const validated = schema.parse(body) // Throws on invalid input
-}
-```
-
-#### Check 8: XSS Vulnerabilities
-
-Search for dangerous HTML rendering:
-
-```bash
-grep -r "dangerouslySetInnerHTML\|innerHTML" src/ --include="*.tsx" --include="*.ts"
-```
-
-**Red flags**:
-
-- `dangerouslySetInnerHTML` with user input
-- Direct DOM manipulation with unsanitized content
-- Missing sanitization on rich text output
-
-#### Check 9: CSRF Protection
-
-Check API routes for CSRF protection:
-
-```bash
-grep -r "export async function POST\|export async function PUT\|export async function DELETE" src/app/api --include="*.ts" -B 2
-```
-
-**Red flags**:
-
-- State-changing operations without CSRF tokens
-- Missing origin validation
-- Public POST/PUT/DELETE endpoints without protection
-
-#### Check 10: File Upload Security
-
-Search for file upload handling:
-
-```bash
-grep -r "type: 'upload'" src/collections --include="*.ts" -A 5
-```
-
-**Red flags**:
-
-- Missing file type validation
-- No file size limits
-- Unrestricted file extensions
-- Files served from public directory
-
-### Step 3: Access Control Patterns Review
-
-Check collection access control:
-
-```bash
-grep -r "access:" src/collections --include="*.ts" -A 10
-```
-
-**Verify**:
-
-- Each collection has proper `access` configuration
-- Custom access functions check `req.user` properly
-- No overly permissive access (all operations set to `true`)
-- Admin-only operations are protected
-
-**Common patterns to verify**:
-
-```typescript
-// Public read, authenticated write
-access: {
-  create: authenticated,
-  delete: authenticated,
-  read: anyone,
-  update: authenticated,
-}
-
-// User owns record
-access: {
-  update: ({ req: { user } }) => {
-    if (!user) return false
-    return { createdBy: { equals: user.id } }
+// Validate before processing
+export async function createUser(input: unknown) {
+  try {
+    const validated = CreateUserSchema.parse(input)
+    return await db.users.create(validated)
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { success: false, errors: error.errors }
+    }
+    throw error
   }
 }
 ```
 
-### Step 4: Generate Security Report
-
-Create structured report with:
-
-1. **Executive Summary**
-   - Total issues found
-   - Severity breakdown (Critical, High, Medium, Low)
-   - Overall risk assessment
-
-2. **Critical Issues** (fix immediately)
-   - Authentication bypasses
-   - Hardcoded secrets
-   - SQL/NoSQL injection
-   - Missing access control
-
-3. **High Priority Issues** (fix soon)
-   - Missing input validation
-   - XSS vulnerabilities
-   - CSRF vulnerabilities
-   - Insecure file uploads
-
-4. **Medium Priority Issues** (address in next sprint)
-   - Transaction safety issues
-   - Hook loop risks
-   - Logging sensitive data
-   - Weak error messages
-
-5. **Low Priority Issues** (nice to have)
-   - Code quality improvements
-   - Documentation gaps
-   - Testing coverage
-
-6. **Recommendations**
-   - Specific code fixes with examples
-   - Architecture improvements
-   - Security best practices to adopt
-
-### Step 5: Provide Fixes
-
-For each issue found, provide:
-
-- **Location**: File and line number
-- **Issue**: What's wrong
-- **Risk**: Why it's a problem
-- **Fix**: Code example showing correct implementation
-
-## Security Report Template
-
-````markdown
-# Security Review Report
-
-**Date**: YYYY-MM-DD
-**Reviewer**: Claude Code
-**Scope**: [files/directories reviewed]
-
-## Executive Summary
-
-- **Total Issues**: X
-- **Critical**: X
-- **High**: X
-- **Medium**: X
-- **Low**: X
-
-**Risk Level**: [Critical/High/Medium/Low]
-
-## Critical Issues
-
-### 1. [Issue Title]
-
-**Location**: `src/path/to/file.ts:123`
-
-**Issue**:
-[Description of the problem]
-
-**Risk**:
-[Security implications]
-
-**Current Code**:
-
+#### File Upload Validation
 ```typescript
-// Bad code
+function validateFileUpload(file: File) {
+  // Size check (5MB max)
+  const maxSize = 5 * 1024 * 1024
+  if (file.size > maxSize) {
+    throw new Error('File too large (max 5MB)')
+  }
+
+  // Type check
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error('Invalid file type')
+  }
+
+  // Extension check
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif']
+  const extension = file.name.toLowerCase().match(/\.[^.]+$/)?.[0]
+  if (!extension || !allowedExtensions.includes(extension)) {
+    throw new Error('Invalid file extension')
+  }
+
+  return true
+}
 ```
-````
 
-**Fix**:
+#### Verification Steps
+- [ ] All user inputs validated with schemas
+- [ ] File uploads restricted (size, type, extension)
+- [ ] No direct use of user input in queries
+- [ ] Whitelist validation (not blacklist)
+- [ ] Error messages don't leak sensitive info
 
+### 3. SQL Injection Prevention
+
+#### ❌ NEVER Concatenate SQL
 ```typescript
-// Corrected code
+// DANGEROUS - SQL Injection vulnerability
+const query = `SELECT * FROM users WHERE email = '${userEmail}'`
+await db.query(query)
 ```
+
+#### ✅ ALWAYS Use Parameterized Queries
+```typescript
+// Safe - parameterized query
+const { data } = await supabase
+  .from('users')
+  .select('*')
+  .eq('email', userEmail)
+
+// Or with raw SQL
+await db.query(
+  'SELECT * FROM users WHERE email = $1',
+  [userEmail]
+)
+```
+
+#### Verification Steps
+- [ ] All database queries use parameterized queries
+- [ ] No string concatenation in SQL
+- [ ] ORM/query builder used correctly
+- [ ] Supabase queries properly sanitized
+
+### 4. Authentication & Authorization
+
+#### JWT Token Handling
+```typescript
+// ❌ WRONG: localStorage (vulnerable to XSS)
+localStorage.setItem('token', token)
+
+// ✅ CORRECT: httpOnly cookies
+res.setHeader('Set-Cookie',
+  `token=${token}; HttpOnly; Secure; SameSite=Strict; Max-Age=3600`)
+```
+
+#### Authorization Checks
+```typescript
+export async function deleteUser(userId: string, requesterId: string) {
+  // ALWAYS verify authorization first
+  const requester = await db.users.findUnique({
+    where: { id: requesterId }
+  })
+
+  if (requester.role !== 'admin') {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 403 }
+    )
+  }
+
+  // Proceed with deletion
+  await db.users.delete({ where: { id: userId } })
+}
+```
+
+#### Row Level Security (Supabase)
+```sql
+-- Enable RLS on all tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- Users can only view their own data
+CREATE POLICY "Users view own data"
+  ON users FOR SELECT
+  USING (auth.uid() = id);
+
+-- Users can only update their own data
+CREATE POLICY "Users update own data"
+  ON users FOR UPDATE
+  USING (auth.uid() = id);
+```
+
+#### Verification Steps
+- [ ] Tokens stored in httpOnly cookies (not localStorage)
+- [ ] Authorization checks before sensitive operations
+- [ ] Row Level Security enabled in Supabase
+- [ ] Role-based access control implemented
+- [ ] Session management secure
+
+### 5. XSS Prevention
+
+#### Sanitize HTML
+```typescript
+import DOMPurify from 'isomorphic-dompurify'
+
+// ALWAYS sanitize user-provided HTML
+function renderUserContent(html: string) {
+  const clean = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p'],
+    ALLOWED_ATTR: []
+  })
+  return <div dangerouslySetInnerHTML={{ __html: clean }} />
+}
+```
+
+#### Content Security Policy
+```typescript
+// next.config.js
+const securityHeaders = [
+  {
+    key: 'Content-Security-Policy',
+    value: `
+      default-src 'self';
+      script-src 'self' 'unsafe-eval' 'unsafe-inline';
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data: https:;
+      font-src 'self';
+      connect-src 'self' https://api.example.com;
+    `.replace(/\s{2,}/g, ' ').trim()
+  }
+]
+```
+
+#### Verification Steps
+- [ ] User-provided HTML sanitized
+- [ ] CSP headers configured
+- [ ] No unvalidated dynamic content rendering
+- [ ] React's built-in XSS protection used
+
+### 6. CSRF Protection
+
+#### CSRF Tokens
+```typescript
+import { csrf } from '@/lib/csrf'
+
+export async function POST(request: Request) {
+  const token = request.headers.get('X-CSRF-Token')
+
+  if (!csrf.verify(token)) {
+    return NextResponse.json(
+      { error: 'Invalid CSRF token' },
+      { status: 403 }
+    )
+  }
+
+  // Process request
+}
+```
+
+#### SameSite Cookies
+```typescript
+res.setHeader('Set-Cookie',
+  `session=${sessionId}; HttpOnly; Secure; SameSite=Strict`)
+```
+
+#### Verification Steps
+- [ ] CSRF tokens on state-changing operations
+- [ ] SameSite=Strict on all cookies
+- [ ] Double-submit cookie pattern implemented
+
+### 7. Rate Limiting
+
+#### API Rate Limiting
+```typescript
+import rateLimit from 'express-rate-limit'
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per window
+  message: 'Too many requests'
+})
+
+// Apply to routes
+app.use('/api/', limiter)
+```
+
+#### Expensive Operations
+```typescript
+// Aggressive rate limiting for searches
+const searchLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // 10 requests per minute
+  message: 'Too many search requests'
+})
+
+app.use('/api/search', searchLimiter)
+```
+
+#### Verification Steps
+- [ ] Rate limiting on all API endpoints
+- [ ] Stricter limits on expensive operations
+- [ ] IP-based rate limiting
+- [ ] User-based rate limiting (authenticated)
+
+### 8. Sensitive Data Exposure
+
+#### Logging
+```typescript
+// ❌ WRONG: Logging sensitive data
+console.log('User login:', { email, password })
+console.log('Payment:', { cardNumber, cvv })
+
+// ✅ CORRECT: Redact sensitive data
+console.log('User login:', { email, userId })
+console.log('Payment:', { last4: card.last4, userId })
+```
+
+#### Error Messages
+```typescript
+// ❌ WRONG: Exposing internal details
+catch (error) {
+  return NextResponse.json(
+    { error: error.message, stack: error.stack },
+    { status: 500 }
+  )
+}
+
+// ✅ CORRECT: Generic error messages
+catch (error) {
+  console.error('Internal error:', error)
+  return NextResponse.json(
+    { error: 'An error occurred. Please try again.' },
+    { status: 500 }
+  )
+}
+```
+
+#### Verification Steps
+- [ ] No passwords, tokens, or secrets in logs
+- [ ] Error messages generic for users
+- [ ] Detailed errors only in server logs
+- [ ] No stack traces exposed to users
+
+### 9. Blockchain Security (Solana)
+
+#### Wallet Verification
+```typescript
+import { verify } from '@solana/web3.js'
+
+async function verifyWalletOwnership(
+  publicKey: string,
+  signature: string,
+  message: string
+) {
+  try {
+    const isValid = verify(
+      Buffer.from(message),
+      Buffer.from(signature, 'base64'),
+      Buffer.from(publicKey, 'base64')
+    )
+    return isValid
+  } catch (error) {
+    return false
+  }
+}
+```
+
+#### Transaction Verification
+```typescript
+async function verifyTransaction(transaction: Transaction) {
+  // Verify recipient
+  if (transaction.to !== expectedRecipient) {
+    throw new Error('Invalid recipient')
+  }
+
+  // Verify amount
+  if (transaction.amount > maxAmount) {
+    throw new Error('Amount exceeds limit')
+  }
+
+  // Verify user has sufficient balance
+  const balance = await getBalance(transaction.from)
+  if (balance < transaction.amount) {
+    throw new Error('Insufficient balance')
+  }
+
+  return true
+}
+```
+
+#### Verification Steps
+- [ ] Wallet signatures verified
+- [ ] Transaction details validated
+- [ ] Balance checks before transactions
+- [ ] No blind transaction signing
+
+### 10. Dependency Security
+
+#### Regular Updates
+```bash
+# Check for vulnerabilities
+npm audit
+
+# Fix automatically fixable issues
+npm audit fix
+
+# Update dependencies
+npm update
+
+# Check for outdated packages
+npm outdated
+```
+
+#### Lock Files
+```bash
+# ALWAYS commit lock files
+git add package-lock.json
+
+# Use in CI/CD for reproducible builds
+npm ci  # Instead of npm install
+```
+
+#### Verification Steps
+- [ ] Dependencies up to date
+- [ ] No known vulnerabilities (npm audit clean)
+- [ ] Lock files committed
+- [ ] Dependabot enabled on GitHub
+- [ ] Regular security updates
+
+## Security Testing
+
+### Automated Security Tests
+```typescript
+// Test authentication
+test('requires authentication', async () => {
+  const response = await fetch('/api/protected')
+  expect(response.status).toBe(401)
+})
+
+// Test authorization
+test('requires admin role', async () => {
+  const response = await fetch('/api/admin', {
+    headers: { Authorization: `Bearer ${userToken}` }
+  })
+  expect(response.status).toBe(403)
+})
+
+// Test input validation
+test('rejects invalid input', async () => {
+  const response = await fetch('/api/users', {
+    method: 'POST',
+    body: JSON.stringify({ email: 'not-an-email' })
+  })
+  expect(response.status).toBe(400)
+})
+
+// Test rate limiting
+test('enforces rate limits', async () => {
+  const requests = Array(101).fill(null).map(() =>
+    fetch('/api/endpoint')
+  )
+
+  const responses = await Promise.all(requests)
+  const tooManyRequests = responses.filter(r => r.status === 429)
+
+  expect(tooManyRequests.length).toBeGreaterThan(0)
+})
+```
+
+## Pre-Deployment Security Checklist
+
+Before ANY production deployment:
+
+- [ ] **Secrets**: No hardcoded secrets, all in env vars
+- [ ] **Input Validation**: All user inputs validated
+- [ ] **SQL Injection**: All queries parameterized
+- [ ] **XSS**: User content sanitized
+- [ ] **CSRF**: Protection enabled
+- [ ] **Authentication**: Proper token handling
+- [ ] **Authorization**: Role checks in place
+- [ ] **Rate Limiting**: Enabled on all endpoints
+- [ ] **HTTPS**: Enforced in production
+- [ ] **Security Headers**: CSP, X-Frame-Options configured
+- [ ] **Error Handling**: No sensitive data in errors
+- [ ] **Logging**: No sensitive data logged
+- [ ] **Dependencies**: Up to date, no vulnerabilities
+- [ ] **Row Level Security**: Enabled in Supabase
+- [ ] **CORS**: Properly configured
+- [ ] **File Uploads**: Validated (size, type)
+- [ ] **Wallet Signatures**: Verified (if blockchain)
+
+## Resources
+
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [Next.js Security](https://nextjs.org/docs/security)
+- [Supabase Security](https://supabase.com/docs/guides/auth)
+- [Web Security Academy](https://portswigger.net/web-security)
 
 ---
 
-## High Priority Issues
-
-[Same format as Critical]
-
-## Medium Priority Issues
-
-[Same format as Critical]
-
-## Low Priority Issues
-
-[Same format as Critical]
-
-## Recommendations
-
-1. **Immediate Actions**
-   - [Action items for critical issues]
-
-2. **Short-term Improvements**
-   - [Action items for high priority]
-
-3. **Long-term Strategy**
-   - [Architecture and process improvements]
-
-## Conclusion
-
-[Summary and overall assessment]
-
-````
-
-## Common Vulnerability Patterns
-
-### 1. Access Control Bypass
-```typescript
-// ❌ Bypasses access control
-await payload.find({
-  collection: 'users',
-  overrideAccess: true,
-})
-
-// ✅ Enforces access control
-await payload.find({
-  collection: 'users',
-  user: req.user,
-  overrideAccess: false,
-})
-````
-
-### 2. Transaction Isolation
-
-```typescript
-// ❌ Breaks transaction context
-afterChange: [
-  async ({ doc, req }) => {
-    await req.payload.create({
-      collection: 'logs',
-      data: { action: 'created' },
-    })
-  },
-]
-
-// ✅ Maintains transaction
-afterChange: [
-  async ({ doc, req }) => {
-    await req.payload.create({
-      collection: 'logs',
-      data: { action: 'created' },
-      req,
-    })
-  },
-]
-```
-
-### 3. Hook Infinite Loop
-
-```typescript
-// ❌ Causes infinite loop
-afterChange: [
-  async ({ doc, req }) => {
-    await req.payload.update({
-      collection: 'posts',
-      id: doc.id,
-      data: { views: (doc.views || 0) + 1 },
-    })
-  },
-]
-
-// ✅ Prevents loop
-afterChange: [
-  async ({ doc, req, context }) => {
-    if (context.skipHooks) return
-
-    await req.payload.update({
-      collection: 'posts',
-      id: doc.id,
-      data: { views: (doc.views || 0) + 1 },
-      context: { skipHooks: true },
-    })
-  },
-]
-```
-
-### 4. Missing Validation
-
-```typescript
-// ❌ No input validation
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-  await payload.create({
-    collection: 'posts',
-    data: body, // Dangerous!
-  })
-}
-
-// ✅ With validation
-const schema = z.object({
-  title: z.string().min(1).max(200),
-  content: z.string(),
-})
-
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const validated = schema.parse(body)
-  await payload.create({
-    collection: 'posts',
-    data: validated,
-  })
-}
-```
-
-## Success Criteria
-
-- [ ] All critical areas scanned
-- [ ] Issues categorized by severity
-- [ ] Fixes provided for each issue
-- [ ] Report generated with actionable recommendations
-- [ ] User understands security risks and fixes
-
-## Related Documentation
-
-- Project security: [AGENTS.md](../../../AGENTS.md) - Security Patterns section
-- Payload access control: https://payloadcms.com/docs/access-control
-- OWASP Top 10: https://owasp.org/www-project-top-ten/
+**Remember**: Security is not optional. One vulnerability can compromise the entire platform. When in doubt, err on the side of caution.
