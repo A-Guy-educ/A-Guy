@@ -66,6 +66,21 @@ const submitButtonDisabledStyle: React.CSSProperties = {
   opacity: 0.6,
 }
 
+const emptyStateStyle: React.CSSProperties = {
+  padding: 12,
+  fontSize: 13,
+  color: 'var(--theme-elevation-600)',
+  backgroundColor: 'var(--theme-elevation-50)',
+  borderRadius: 4,
+  border: '1px dashed var(--theme-elevation-300)',
+}
+
+const helperTextStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: 'var(--theme-elevation-500)',
+  marginTop: 4,
+}
+
 export function ConversionForm({ onQueued }: ConversionFormProps) {
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null)
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null)
@@ -96,6 +111,7 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ lessonId: selectedLessonId }),
+          credentials: 'include',
         })
 
         if (!response.ok) {
@@ -207,11 +223,24 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
 
       {isLoadingPrompts ? (
         <div style={loadingStyle}>Loading prompts...</div>
+      ) : !selectedLessonId ? (
+        <div style={emptyStateStyle}>Select a lesson above to load available prompts</div>
+      ) : prompts.extractors.length === 0 && prompts.verifiers.length === 0 ? (
+        <div style={emptyStateStyle}>
+          <strong>No prompts found</strong>
+          <p style={{ margin: '4px 0 0 0' }}>
+            Create published prompts with usage types extractor and verifier for the selected lesson
+            tenant
+          </p>
+        </div>
       ) : (
         <>
           <div style={fieldGroupStyle}>
             <label htmlFor="extractor-prompt" style={labelStyle}>
               Extractor Prompt *
+              {prompts.extractors.length > 0 && (
+                <span style={helperTextStyle}>({prompts.extractors.length} available)</span>
+              )}
             </label>
             <select
               id="extractor-prompt"
@@ -232,6 +261,9 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
           <div style={fieldGroupStyle}>
             <label htmlFor="verifier-prompt" style={labelStyle}>
               Verifier Prompt *
+              {prompts.verifiers.length > 0 && (
+                <span style={helperTextStyle}>({prompts.verifiers.length} available)</span>
+              )}
             </label>
             <select
               id="verifier-prompt"
@@ -252,6 +284,9 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
           <div style={fieldGroupStyle}>
             <label htmlFor="diagram-prompt" style={labelStyle}>
               Diagram Generator (optional)
+              {prompts.diagramGenerators.length > 0 && (
+                <span style={helperTextStyle}>({prompts.diagramGenerators.length} available)</span>
+              )}
             </label>
             <select
               id="diagram-prompt"
