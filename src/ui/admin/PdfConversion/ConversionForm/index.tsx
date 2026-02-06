@@ -11,6 +11,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { LessonSelector } from '../LessonSelector'
 import { PdfSelector } from '../PdfSelector'
+import {
+  cardStyle,
+  errorBannerStyle,
+  fieldGroupStyle,
+  labelStyle,
+  sectionHeadingStyle,
+  selectStyle,
+  successBannerStyle,
+} from '../styles'
 
 interface PromptOption {
   id: string
@@ -29,6 +38,32 @@ interface LessonOption {
 
 interface ConversionFormProps {
   onQueued: () => void
+}
+
+const loadingStyle: React.CSSProperties = {
+  fontSize: 13,
+  color: 'var(--theme-elevation-500)',
+}
+
+const submitButtonStyle: React.CSSProperties = {
+  width: '100%',
+  height: 36,
+  padding: '0 16px',
+  fontSize: 13,
+  fontWeight: 500,
+  backgroundColor: 'var(--theme-elevation-800)',
+  color: 'white',
+  border: 'none',
+  borderRadius: 4,
+  cursor: 'pointer',
+  marginTop: 8,
+}
+
+const submitButtonDisabledStyle: React.CSSProperties = {
+  ...submitButtonStyle,
+  backgroundColor: 'var(--theme-elevation-400)',
+  cursor: 'not-allowed',
+  opacity: 0.6,
 }
 
 export function ConversionForm({ onQueued }: ConversionFormProps) {
@@ -150,44 +185,37 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
   const isFormValid = selectedLessonId && selectedMediaId && extractorPromptId && verifierPromptId
 
   return (
-    <form
-      className="bg-white rounded-lg border border-gray-200 p-4 space-y-4"
-      onSubmit={handleSubmit}
-    >
-      <h2 className="text-lg font-semibold">Convert PDF to Exercises</h2>
+    <form style={cardStyle} onSubmit={handleSubmit}>
+      <h2 style={sectionHeadingStyle}>Convert PDF to Exercises</h2>
 
-      {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">
-          Conversion job queued successfully!
-        </div>
-      )}
+      {error && <div style={errorBannerStyle}>{error}</div>}
+      {success && <div style={successBannerStyle}>Conversion job queued successfully!</div>}
 
-      <LessonSelector selectedLessonId={selectedLessonId} onSelectLesson={handleLessonSelect} />
+      <div style={fieldGroupStyle}>
+        <LessonSelector selectedLessonId={selectedLessonId} onSelectLesson={handleLessonSelect} />
+      </div>
 
       {selectedLessonId && (
-        <PdfSelector
-          lessonId={selectedLessonId}
-          selectedMediaId={selectedMediaId}
-          onSelectMedia={setSelectedMediaId}
-        />
+        <div style={fieldGroupStyle}>
+          <PdfSelector
+            lessonId={selectedLessonId}
+            selectedMediaId={selectedMediaId}
+            onSelectMedia={setSelectedMediaId}
+          />
+        </div>
       )}
 
       {isLoadingPrompts ? (
-        <div className="text-sm text-gray-500">Loading prompts...</div>
+        <div style={loadingStyle}>Loading prompts...</div>
       ) : (
         <>
-          <div className="space-y-1">
-            <label htmlFor="extractor-prompt" className="block text-sm font-medium text-gray-700">
+          <div style={fieldGroupStyle}>
+            <label htmlFor="extractor-prompt" style={labelStyle}>
               Extractor Prompt *
             </label>
             <select
               id="extractor-prompt"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              style={selectStyle}
               value={extractorPromptId}
               onChange={(e) => setExtractorPromptId(e.target.value)}
               required
@@ -201,13 +229,13 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
             </select>
           </div>
 
-          <div className="space-y-1">
-            <label htmlFor="verifier-prompt" className="block text-sm font-medium text-gray-700">
+          <div style={fieldGroupStyle}>
+            <label htmlFor="verifier-prompt" style={labelStyle}>
               Verifier Prompt *
             </label>
             <select
               id="verifier-prompt"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              style={selectStyle}
               value={verifierPromptId}
               onChange={(e) => setVerifierPromptId(e.target.value)}
               required
@@ -221,13 +249,13 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
             </select>
           </div>
 
-          <div className="space-y-1">
-            <label htmlFor="diagram-prompt" className="block text-sm font-medium text-gray-700">
+          <div style={fieldGroupStyle}>
+            <label htmlFor="diagram-prompt" style={labelStyle}>
               Diagram Generator (optional)
             </label>
             <select
               id="diagram-prompt"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              style={selectStyle}
               value={diagramPromptId}
               onChange={(e) => setDiagramPromptId(e.target.value)}
             >
@@ -244,7 +272,7 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
 
       <button
         type="submit"
-        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
+        style={isFormValid && !isSubmitting ? submitButtonStyle : submitButtonDisabledStyle}
         disabled={!isFormValid || isSubmitting}
       >
         {isSubmitting ? 'Queuing...' : 'Start Conversion'}

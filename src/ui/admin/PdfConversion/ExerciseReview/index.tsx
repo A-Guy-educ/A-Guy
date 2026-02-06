@@ -9,6 +9,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import {
+  cardStyle,
+  exerciseCardStyle,
+  exerciseMetaStyle,
+  exerciseTitleStyle,
+  getBadgeStyle,
+  sectionHeadingStyle,
+} from '../styles'
 
 interface Exercise {
   id: string
@@ -19,6 +27,43 @@ interface Exercise {
 
 interface ExerciseReviewProps {
   jobId: string
+}
+
+const loadingStyle: React.CSSProperties = {
+  ...cardStyle,
+}
+
+const errorStyle: React.CSSProperties = {
+  ...cardStyle,
+}
+
+const emptyStyle: React.CSSProperties = {
+  ...cardStyle,
+}
+
+const listStyle: React.CSSProperties = {
+  listStyle: 'none',
+  padding: 0,
+  margin: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 8,
+}
+
+const exerciseContentStyle: React.CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+}
+
+const openButtonStyle: React.CSSProperties = {
+  padding: '4px 12px',
+  fontSize: 13,
+  backgroundColor: 'var(--theme-elevation-200)',
+  color: 'var(--theme-elevation-800)',
+  border: 'none',
+  borderRadius: 3,
+  cursor: 'pointer',
+  whiteSpace: 'nowrap' as const,
 }
 
 export function ExerciseReview({ jobId }: ExerciseReviewProps) {
@@ -57,27 +102,31 @@ export function ExerciseReview({ jobId }: ExerciseReviewProps) {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h3 className="text-lg font-semibold mb-3">Exercises</h3>
-        <div className="text-sm text-gray-500">Loading exercises...</div>
+      <div style={loadingStyle}>
+        <h3 style={sectionHeadingStyle}>Exercises</h3>
+        <div style={{ fontSize: 13, color: 'var(--theme-elevation-500)' }}>
+          Loading exercises...
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h3 className="text-lg font-semibold mb-3">Exercises</h3>
-        <div className="text-sm text-red-600">{error}</div>
+      <div style={errorStyle}>
+        <h3 style={sectionHeadingStyle}>Exercises</h3>
+        <div style={{ fontSize: 13, color: 'var(--theme-error)' }}>{error}</div>
       </div>
     )
   }
 
   if (exercises.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h3 className="text-lg font-semibold mb-3">Exercises</h3>
-        <div className="text-sm text-gray-500">No exercises found for this job</div>
+      <div style={emptyStyle}>
+        <h3 style={sectionHeadingStyle}>Exercises</h3>
+        <div style={{ fontSize: 13, color: 'var(--theme-elevation-500)' }}>
+          No exercises found for this job
+        </div>
       </div>
     )
   }
@@ -88,43 +137,28 @@ export function ExerciseReview({ jobId }: ExerciseReviewProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <h3 className="text-lg font-semibold mb-3">Exercises ({exercises.length})</h3>
-      <ul className="space-y-2">
+    <div style={cardStyle}>
+      <h3 style={sectionHeadingStyle}>Exercises ({exercises.length})</h3>
+      <ul style={listStyle}>
         {exercises.map((exercise) => (
-          <li
-            key={exercise.id}
-            className="p-3 border border-gray-200 rounded-lg hover:border-gray-300"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {truncateTitle(exercise.title)}
-                </p>
-                {exercise.sourcePages && (
-                  <p className="text-xs text-gray-500">Pages {exercise.sourcePages}</p>
-                )}
-                {exercise._status && (
-                  <span
-                    className={`inline-block mt-1 px-2 py-0.5 text-xs rounded ${
-                      exercise._status === 'published'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {exercise._status}
-                  </span>
-                )}
-              </div>
-              <a
-                href={`/admin/collections/exercises/${exercise.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-800 rounded transition-colors whitespace-nowrap"
-              >
-                Open in Editor
-              </a>
+          <li key={exercise.id} style={exerciseCardStyle}>
+            <div style={exerciseContentStyle}>
+              <p style={exerciseTitleStyle}>{truncateTitle(exercise.title)}</p>
+              {exercise.sourcePages && (
+                <p style={exerciseMetaStyle}>Pages {exercise.sourcePages}</p>
+              )}
+              {exercise._status && (
+                <span style={getBadgeStyle(exercise._status)}>{exercise._status}</span>
+              )}
             </div>
+            <a
+              href={`/admin/collections/exercises/${exercise.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={openButtonStyle}
+            >
+              Open in Editor
+            </a>
           </li>
         ))}
       </ul>

@@ -9,6 +9,15 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import {
+  cardStyle,
+  getBadgeStyle,
+  jobCardSelectedStyle,
+  jobCardStyle,
+  progressBarContainerStyle,
+  progressBarFillStyle,
+  sectionHeadingStyle,
+} from '../styles'
 
 interface JobStatus {
   id: string
@@ -44,21 +53,127 @@ interface JobHistoryProps {
   onSelectJob: (jobId: string) => void
 }
 
-// Badge colors using Tailwind classes
-const getBadgeClasses = (status: string): string => {
-  switch (status) {
-    case 'queued':
-      return 'bg-amber-100 text-amber-800'
-    case 'running':
-      return 'bg-blue-100 text-blue-800'
-    case 'completed':
-      return 'bg-green-100 text-green-800'
-    case 'failed':
-      return 'bg-red-100 text-red-800'
-    default:
-      return 'bg-gray-100 text-gray-800'
-  }
+const loadingStyle: React.CSSProperties = {
+  ...cardStyle,
 }
+
+const errorStyle: React.CSSProperties = {
+  ...cardStyle,
+}
+
+const emptyStyle: React.CSSProperties = {
+  ...cardStyle,
+}
+
+const listStyle: React.CSSProperties = {
+  listStyle: 'none',
+  padding: 0,
+  margin: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
+}
+
+const headerStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  marginBottom: 12,
+}
+
+const pollingStyle: React.CSSProperties = {
+  color: 'var(--theme-elevation-400)',
+  fontSize: 16,
+  animation: 'spin 1s linear infinite',
+}
+
+const jobCardHeaderStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 8,
+}
+
+const jobNameStyle: React.CSSProperties = {
+  fontWeight: 500,
+  color: 'var(--theme-elevation-1000)',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+}
+
+const progressContainerStyle: React.CSSProperties = {
+  marginBottom: 8,
+}
+
+const progressTextStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: 'var(--theme-elevation-600)',
+  marginTop: 4,
+}
+
+const statsStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: 16,
+  fontSize: 13,
+  color: 'var(--theme-elevation-600)',
+  marginBottom: 4,
+}
+
+const dateStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: 'var(--theme-elevation-500)',
+  marginBottom: 8,
+}
+
+const errorSummaryStyle: React.CSSProperties = {
+  fontSize: 13,
+  color: 'var(--theme-error)',
+  cursor: 'pointer',
+  marginBottom: 8,
+}
+
+const errorListStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: 'var(--theme-error)',
+  paddingLeft: 16,
+  marginTop: 4,
+}
+
+const buttonGroupStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: 8,
+}
+
+const runNowButtonStyle: React.CSSProperties = {
+  padding: '4px 12px',
+  fontSize: 13,
+  backgroundColor: 'var(--theme-elevation-200)',
+  color: 'var(--theme-elevation-800)',
+  border: 'none',
+  borderRadius: 3,
+  cursor: 'pointer',
+}
+
+const viewButtonStyle: React.CSSProperties = {
+  padding: '4px 12px',
+  fontSize: 13,
+  backgroundColor: 'var(--theme-elevation-100)',
+  color: 'var(--theme-info)',
+  border: 'none',
+  borderRadius: 3,
+  cursor: 'pointer',
+}
+
+// Add spin animation via style tag
+const spinAnimation = (
+  <style>{`
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  `}</style>
+)
 
 export function JobHistory({ refreshKey, selectedJobId, onSelectJob }: JobHistoryProps) {
   const [jobs, setJobs] = useState<JobStatus[]>([])
@@ -174,39 +289,43 @@ export function JobHistory({ refreshKey, selectedJobId, onSelectJob }: JobHistor
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h3 className="text-lg font-semibold mb-3">Job History</h3>
-        <div className="text-sm text-gray-500">Loading...</div>
+      <div style={loadingStyle}>
+        <h3 style={sectionHeadingStyle}>Job History</h3>
+        <div style={{ fontSize: 13, color: 'var(--theme-elevation-500)' }}>Loading...</div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h3 className="text-lg font-semibold mb-3">Job History</h3>
-        <div className="text-sm text-red-600">{error}</div>
+      <div style={errorStyle}>
+        <h3 style={sectionHeadingStyle}>Job History</h3>
+        <div style={{ fontSize: 13, color: 'var(--theme-error)' }}>{error}</div>
       </div>
     )
   }
 
   if (jobs.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h3 className="text-lg font-semibold mb-3">Job History</h3>
-        <div className="text-sm text-gray-500">No conversion jobs yet</div>
+      <div style={emptyStyle}>
+        <h3 style={sectionHeadingStyle}>Job History</h3>
+        <div style={{ fontSize: 13, color: 'var(--theme-elevation-500)' }}>
+          No conversion jobs yet
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <h3 className="text-lg font-semibold mb-3">
-        Job History {isPolling && <span className="text-gray-400 animate-spin">↻</span>}
+    <div style={cardStyle}>
+      {spinAnimation}
+      <h3 style={headerStyle}>
+        <span style={sectionHeadingStyle}>Job History</span>
+        {isPolling && <span style={pollingStyle}>↻</span>}
       </h3>
-      <ul className="space-y-3">
+      <ul style={listStyle}>
         {jobs.map((job) => {
-          const badgeClasses = getBadgeClasses(job.status)
+          const badgeStyleObj = getBadgeStyle(job.status)
           const hasErrors = job.output?.errors && job.output.errors.length > 0
           const progress = job.output?.segmentsTotal
             ? Math.round(((job.output.segmentsDone || 0) / job.output.segmentsTotal) * 100)
@@ -215,53 +334,42 @@ export function JobHistory({ refreshKey, selectedJobId, onSelectJob }: JobHistor
           return (
             <li
               key={job.id}
-              className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                selectedJobId === job.id
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
+              style={selectedJobId === job.id ? jobCardSelectedStyle : jobCardStyle}
               onClick={() => onSelectJob(job.id)}
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-gray-900 truncate">{getJobName(job)}</span>
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${badgeClasses}`}>
-                  {job.status.toUpperCase()}
-                </span>
+              <div style={jobCardHeaderStyle}>
+                <span style={jobNameStyle}>{getJobName(job)}</span>
+                <span style={badgeStyleObj}>{job.status.toUpperCase()}</span>
               </div>
 
               {job.status === 'running' && progress !== null && (
-                <div className="mb-2">
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-600 h-2 rounded-full transition-all"
-                      style={{ width: `${progress}%` }}
-                    />
+                <div style={progressContainerStyle}>
+                  <div style={progressBarContainerStyle}>
+                    <div style={{ ...progressBarFillStyle, width: `${progress}%` }} />
                   </div>
-                  <span className="text-xs text-gray-600">{progress}%</span>
+                  <span style={progressTextStyle}>{progress}%</span>
                 </div>
               )}
 
-              <div className="flex items-center gap-4 text-sm text-gray-600 mb-1">
+              <div style={statsStyle}>
                 {job.output?.segmentsTotal !== undefined && (
                   <span>
                     {job.output.segmentsDone || 0}/{job.output.segmentsTotal} segments
                   </span>
                 )}
                 {job.output?.exercisesCreated !== undefined && (
-                  <span>{job.output.exercisesCreated} exercises</span>
+                  <span>· {job.output.exercisesCreated} exercises</span>
                 )}
               </div>
 
-              <div className="text-xs text-gray-500 mb-2">
-                {formatDate(job.updatedAt || job.createdAt)}
-              </div>
+              <div style={dateStyle}>{formatDate(job.updatedAt || job.createdAt)}</div>
 
               {hasErrors && (
-                <details className="mb-2">
-                  <summary className="text-sm text-red-600 cursor-pointer">
+                <details style={{ marginBottom: 8 }}>
+                  <summary style={errorSummaryStyle}>
                     Show errors ({job.output?.errors?.length})
                   </summary>
-                  <ul className="mt-1 text-xs text-red-700 pl-4">
+                  <ul style={errorListStyle}>
                     {job.output?.errors?.map((err, idx) => (
                       <li key={idx}>
                         {err.stage}: {err.message}
@@ -271,18 +379,15 @@ export function JobHistory({ refreshKey, selectedJobId, onSelectJob }: JobHistor
                 </details>
               )}
 
-              <div className="flex gap-2">
+              <div style={buttonGroupStyle}>
                 {(job.status === 'queued' || job.status === 'failed') && (
-                  <button
-                    className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                    onClick={(e) => handleRunNow(job.id, e)}
-                  >
+                  <button style={runNowButtonStyle} onClick={(e) => handleRunNow(job.id, e)}>
                     Run Now
                   </button>
                 )}
                 {job.status === 'completed' && (
                   <button
-                    className="px-3 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-800 rounded transition-colors"
+                    style={viewButtonStyle}
                     onClick={(e) => {
                       e.stopPropagation()
                       onSelectJob(job.id)

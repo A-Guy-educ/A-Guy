@@ -9,6 +9,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { labelStyle } from '../styles'
 
 interface PdfFile {
   id: string
@@ -20,6 +21,55 @@ interface PdfSelectorProps {
   lessonId: string
   selectedMediaId: string | null
   onSelectMedia: (mediaId: string) => void
+}
+
+const loadingStyle: React.CSSProperties = {
+  fontSize: 13,
+  color: 'var(--theme-elevation-500)',
+  marginTop: 4,
+}
+
+const errorStyle: React.CSSProperties = {
+  fontSize: 13,
+  color: 'var(--theme-error)',
+}
+
+const emptyStyle: React.CSSProperties = {
+  fontSize: 13,
+  color: 'var(--theme-elevation-500)',
+  marginTop: 4,
+}
+
+const fieldGroupStyle: React.CSSProperties = {
+  marginTop: 8,
+}
+
+const radioGroupStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
+}
+
+const radioLabelStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  padding: '8px 12px',
+  borderRadius: 3,
+  cursor: 'pointer',
+  fontSize: 13,
+  color: 'var(--theme-elevation-1000)',
+}
+
+const radioLabelSelectedStyle: React.CSSProperties = {
+  ...radioLabelStyle,
+  backgroundColor: 'var(--theme-elevation-100)',
+  border: '1px solid var(--theme-elevation-400)',
+}
+
+const radioLabelUnselectedStyle: React.CSSProperties = {
+  ...radioLabelStyle,
+  border: '1px solid transparent',
 }
 
 export function PdfSelector({ lessonId, selectedMediaId, onSelectMedia }: PdfSelectorProps) {
@@ -43,14 +93,19 @@ export function PdfSelector({ lessonId, selectedMediaId, onSelectMedia }: PdfSel
         }
         const data = await response.json()
         const contentFiles = data.contentFiles || []
+
+        // Handle both shapes: flat media objects and nested media objects
         const pdfs: PdfFile[] = contentFiles
-          .filter(
-            (file: { media?: { mimeType: string } }) => file.media?.mimeType === 'application/pdf',
-          )
-          .map((file: { media: { id: string; filename: string; mimeType: string } }) => ({
-            id: file.media.id,
-            filename: file.media.filename,
-            mimeType: file.media.mimeType,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .filter((file: any) => {
+            const mime = file.mimeType || file.media?.mimeType
+            return mime === 'application/pdf'
+          })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((file: any) => ({
+            id: file.id || file.media?.id,
+            filename: file.filename || file.media?.filename || 'Unknown',
+            mimeType: file.mimeType || file.media?.mimeType || 'application/pdf',
           }))
         setPdfFiles(pdfs)
       } catch (err) {
@@ -74,43 +129,39 @@ export function PdfSelector({ lessonId, selectedMediaId, onSelectMedia }: PdfSel
 
   if (isLoading) {
     return (
-      <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">Select PDF</label>
-        <div className="text-sm text-gray-500">Loading PDF files...</div>
-      </div>
+      <fieldset style={fieldGroupStyle}>
+        <legend style={labelStyle}>Select PDF</legend>
+        <div style={loadingStyle}>Loading PDF files...</div>
+      </fieldset>
     )
   }
 
   if (error) {
     return (
-      <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">Select PDF</label>
-        <div className="text-sm text-red-600">{error}</div>
-      </div>
+      <fieldset style={fieldGroupStyle}>
+        <legend style={labelStyle}>Select PDF</legend>
+        <div style={errorStyle}>{error}</div>
+      </fieldset>
     )
   }
 
   if (pdfFiles.length === 0) {
     return (
-      <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">Select PDF</label>
-        <div className="text-sm text-gray-500">No PDFs attached to this lesson</div>
-      </div>
+      <fieldset style={fieldGroupStyle}>
+        <legend style={labelStyle}>Select PDF</legend>
+        <div style={emptyStyle}>No PDFs attached to this lesson</div>
+      </fieldset>
     )
   }
 
   return (
-    <fieldset className="space-y-2">
-      <legend className="text-sm font-medium text-gray-700">Select PDF</legend>
-      <div className="space-y-1">
+    <fieldset style={fieldGroupStyle}>
+      <legend style={labelStyle}>Select PDF</legend>
+      <div style={radioGroupStyle}>
         {pdfFiles.map((pdf) => (
           <label
             key={pdf.id}
-            className={`flex items-center gap-2 p-2 rounded cursor-pointer ${
-              selectedMediaId === pdf.id
-                ? 'bg-blue-50 border border-blue-200'
-                : 'hover:bg-gray-50 border border-transparent'
-            }`}
+            style={selectedMediaId === pdf.id ? radioLabelSelectedStyle : radioLabelUnselectedStyle}
           >
             <input
               type="radio"
@@ -118,9 +169,9 @@ export function PdfSelector({ lessonId, selectedMediaId, onSelectMedia }: PdfSel
               value={pdf.id}
               checked={selectedMediaId === pdf.id}
               onChange={() => handleSelect(pdf.id)}
-              className="text-blue-600"
+              style={{ marginRight: 8 }}
             />
-            <span className="text-sm text-gray-900">{pdf.filename}</span>
+            <span style={{ fontSize: 13 }}>{pdf.filename}</span>
           </label>
         ))}
       </div>
