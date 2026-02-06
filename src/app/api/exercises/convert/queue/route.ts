@@ -59,17 +59,9 @@ export async function POST(request: NextRequest) {
       return errorResponse('UNAUTHORIZED', 'Admin access required', 401)
     }
 
-    const { lessonId, mediaId, extractorPromptId, verifierPromptId, diagramPromptId } =
-      await request.json()
+    const { lessonId, mediaId, extractorPromptId, verifierPromptId } = await request.json()
 
-    // diagramPromptId is optional - Diagram Pass will be skipped if not provided
-    if (!lessonId || !mediaId || !extractorPromptId || !verifierPromptId) {
-      return errorResponse(
-        'VALIDATION_ERROR',
-        'lessonId, mediaId, extractorPromptId, and verifierPromptId are required',
-        400,
-      )
-    }
+    // lessonId, mediaId, extractorPromptId, and verifierPromptId are required
 
     // ========== Server-side Tenant Resolution (BEFORE prompt validation) ==========
     // Tenant is directly on the lesson, not through course
@@ -142,33 +134,6 @@ export async function POST(request: NextRequest) {
       lessonTenantId,
     )
 
-    // ========== Optional: Fetch and Validate Diagram Generator Prompt ==========
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let diagramPrompt: any = null
-    if (diagramPromptId) {
-      diagramPrompt = await payload.findByID({
-        collection: 'prompts',
-        id: diagramPromptId,
-        depth: 0,
-        overrideAccess: true,
-      })
-
-      if (!diagramPrompt) {
-        return errorResponse(
-          'PROMPT_NOT_FOUND',
-          `Diagram generator prompt not found: ${diagramPromptId}`,
-          400,
-        )
-      }
-
-      // Validate diagram prompt (published, usage, tenant)
-      validatePromptForUsageAndTenant(
-        diagramPrompt as unknown as { status: string; usage: string; tenant: any },
-        'diagram_generator' as any,
-        lessonTenantId,
-      )
-    }
-
     // ========== Prompt Size Validation (after validation passes) ==========
     // Use byteLength for accurate size check (UTF-8 encoding)
     const maxPromptSize = await getPdfConversionMaxPromptSizeBytes(lessonTenantId)
@@ -189,7 +154,6 @@ export async function POST(request: NextRequest) {
     // Use existing hash utility
     const extractorHash = hashTextSha256(extractorPrompt.template)
     const verifierHash = hashTextSha256(verifierPrompt.template)
-    const diagramHash = diagramPrompt ? hashTextSha256(diagramPrompt.template) : null
 
     // ========== Queue the Job ==========
     const job = await payload.jobs.queue({
@@ -200,17 +164,14 @@ export async function POST(request: NextRequest) {
         promptRefs: {
           extractorPromptId,
           verifierPromptId,
-          diagramPromptId: diagramPromptId || null,
         },
         promptSnapshot: {
           extractor: extractorPrompt.template,
           verifier: verifierPrompt.template,
-          diagramGenerator: diagramPrompt?.template || null,
         },
         promptSnapshotHash: {
           extractor: extractorHash,
           verifier: verifierHash,
-          diagramGenerator: diagramHash,
         },
       },
     })

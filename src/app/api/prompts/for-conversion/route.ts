@@ -103,21 +103,6 @@ export async function POST(request: NextRequest) {
       overrideAccess: true,
     })
 
-    // Fetch published diagram_generator prompts for this tenant (optional for Diagram Pass)
-    const diagramGenerators = await payload.find({
-      collection: 'prompts',
-      where: {
-        and: [
-          { tenant: { equals: tenantId } },
-          { status: { equals: 'published' } },
-          { usage: { equals: 'diagram_generator' } },
-        ],
-      },
-      limit: 100,
-      depth: 0,
-      overrideAccess: true,
-    })
-
     // Return in PromptOption format used by UI
     // v2.1 Fix 1: Include status field in response
     return NextResponse.json({
@@ -136,14 +121,6 @@ export async function POST(request: NextRequest) {
         type: p.type,
         usage: p.usage,
         status: p.status, // v2.1: Required by tests
-      })),
-      diagramGenerators: diagramGenerators.docs.map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        key: p.key,
-        type: p.type,
-        usage: p.usage,
-        status: p.status,
       })),
     })
   } catch (error) {
