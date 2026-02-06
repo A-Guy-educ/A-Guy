@@ -1,30 +1,68 @@
 import { NextResponse } from 'next/server'
+import { execSync } from 'child_process'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
-/**
- * Health check endpoint for Playwright and monitoring tools
- *
- * This endpoint is designed to be:
- * - Fast (< 10ms response time)
- * - No database queries
- * - No Payload initialization
- * - No dynamic APIs (headers, cookies, draftMode)
- * - Always available as a dynamic route
- *
- * Used by:
- * - Playwright webServer health checks
- * - CI/CD monitoring
- * - Load balancer health checks
- */
-export const dynamic = 'force-dynamic' // Explicitly mark as dynamic to avoid static generation issues
+export const dynamic = 'force-dynamic'
 
-export async function GET() {
-  // Simple, fast response - no database, no Payload, no dynamic APIs
-  return NextResponse.json(
-    {
-      status: 'ok',
-      timestamp: Date.now(),
-      uptime: process.uptime(),
-    },
-    { status: 200 },
-  )
+interface HealthResponse {
+  ok: boolean
+  gitSha: string
+  payloadVersion: string
+  projectVersion: string
+  timestamp: string
+}
+
+function getGitSha(): string {
+  if (process.env.GIT_SHA) {
+    return process.env.GIT_SHA
+  }
+  try {
+    return execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim()
+  } catch {
+    return 'unknown'
+  }
+}
+
+function getPayloadVersion(): string {
+  try {
+    const packageJsonPath = join(process.cwd(), 'package.json')
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
+    return packageJson.dependencies?.payload || packageJson.devDependencies?.payload || 'unknown'
+  } catch {
+    return 'unknown'
+  }
+}
+
+function getProjectVersion(): string {
+  try {
+    const packageJsonPath = join(process.cwd(), 'package.json')
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
+    return packageJson.version || 'unknown'
+  } catch {
+    return 'unknown'
+  }
+}
+
+export async function GET(): Promise<
+  NextResponse<HealthResponse> | NextResponse<{ error: string }>
+> {
+  try {
+    const gitSha = getGitSha()
+    const payloadVersion = getPayloadVersion()
+    const projectVersion = getProjectVersion()
+    const timestamp = new Date().toISOString()
+
+    const response: HealthResponse = {
+      ok: true,
+      gitSha,
+      payloadVersion,
+      projectVersion,
+      timestamp,
+    }
+
+    return NextResponse.json(response, { status: 200 })
+  } catch {
+    return NextResponse.json({ error: 'Health check failed' }, { status: 500 })
+  }
 }
