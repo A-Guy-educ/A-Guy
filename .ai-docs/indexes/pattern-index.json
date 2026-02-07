@@ -8,19 +8,19 @@
         "src/app/(frontend)/[slug]/page.client.tsx",
         "src/app/(frontend)/_components/HomePage/index.tsx",
         "src/app/(frontend)/account/AccountPageContent.tsx",
+        "src/app/(frontend)/account/_components/SelectedCourseCard.tsx",
+        "src/app/(frontend)/ask/_components/AskContent/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/CourseAnalytics.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConvertButton.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonContent.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
-        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ChatInterface/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExerciseHeader/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExercisePageContent/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExercisePageHeader/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExerciseWorkspace/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/FormulaPanel/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/MathPalette/index.tsx",
-        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookFormulas/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookNotes/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookWorkspace/index.tsx",
@@ -47,28 +47,45 @@
         "src/app/(frontend)/signup/SignupForm.tsx",
         "src/app/(frontend)/signup/SignupPageContent.tsx",
         "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+        "src/app/(payload)/admin/chat/page.tsx",
         "src/app/global-error.tsx",
+        "src/client/hooks/useCurrentUser.ts",
+        "src/components/courses/PDFViewer/PDFEmbed.tsx",
+        "src/components/ui/HealthBadge.tsx",
+        "src/infra/analytics/AnalyticsProvider.tsx",
         "src/infra/analytics/adapters/ga4/adapter.ts",
         "src/infra/analytics/adapters/ga4/scripts.tsx",
         "src/infra/analytics/adapters/mixpanel/adapter.ts",
         "src/infra/analytics/adapters/mixpanel/scripts.tsx",
         "src/infra/analytics/components/UserIdentificationTracker.tsx",
         "src/infra/analytics/core/tracker.ts",
+        "src/infra/analytics/hooks/usePageAbandonment.ts",
         "src/infra/analytics/hooks/usePageView.ts",
+        "src/infra/analytics/hooks/useSessionDuration.ts",
         "src/infra/analytics/providers/AnalyticsProvider.tsx",
+        "src/infra/loading/components/RouteLoadingIndicator.tsx",
+        "src/infra/loading/components/Spinner.tsx",
+        "src/infra/loading/components/SystemLink.tsx",
+        "src/infra/loading/hooks/useAsyncAction.ts",
+        "src/infra/loading/hooks/useLoadingState.ts",
+        "src/infra/loading/hooks/useRouterWithLoading.ts",
         "src/infra/utils/useClickableCard.ts",
         "src/server/payload/blocks/Code/Component.client.tsx",
         "src/server/payload/blocks/Code/CopyButton.tsx",
         "src/server/payload/blocks/Form/Component.tsx",
         "src/server/payload/blocks/Form/Error/index.tsx",
+        "src/ui/admin/AdminChat/DashboardWidget/index.tsx",
+        "src/ui/admin/AdminChat/SidebarLink/index.tsx",
         "src/ui/admin/AnswerSpecJsonField/index.tsx",
         "src/ui/admin/ExerciseContentEditor/BlockTypeSelector.tsx",
         "src/ui/admin/ExerciseContentEditor/JSONInspector.tsx",
         "src/ui/admin/ExerciseContentEditor/MediaPicker.tsx",
         "src/ui/admin/ExerciseContentEditor/RichTextEditor.tsx",
         "src/ui/admin/ExerciseContentEditor/index.tsx",
+        "src/ui/admin/ExercisePreview/index.tsx",
         "src/ui/admin/Footer/index.tsx",
         "src/ui/admin/Header/index.tsx",
+        "src/ui/admin/HtmlBlock/Field.tsx",
         "src/ui/admin/MediaPreview/AudioPreview.tsx",
         "src/ui/admin/MediaPreview/DocumentPreview.tsx",
         "src/ui/admin/MediaPreview/ExternalPreview.tsx",
@@ -78,6 +95,11 @@
         "src/ui/admin/MediaPreview/SVGPreview.tsx",
         "src/ui/admin/MediaPreview/VideoPreview.tsx",
         "src/ui/admin/MediaPreview/index.tsx",
+        "src/ui/admin/exercise-conversion/ConversionStatusPanel/index.tsx",
+        "src/ui/admin/exercise-conversion/ConvertForm/index.tsx",
+        "src/ui/admin/exercise-conversion/DraftExercisesList/index.tsx",
+        "src/ui/admin/exercise-conversion/LessonConversionPanel/index.tsx",
+        "src/ui/admin/exercise-conversion/LessonMediaActions/index.tsx",
         "src/ui/admin/shared/AdvancedJsonPanel.tsx",
         "src/ui/admin/shared/CollapsibleSection.tsx",
         "src/ui/admin/shared/ErrorDisplay.tsx",
@@ -90,7 +112,10 @@
         "src/ui/web/Pagination/index.tsx",
         "src/ui/web/UserDropdown/index.tsx",
         "src/ui/web/auth/GoogleLoginButton.tsx",
+        "src/ui/web/chat/ChatErrorSurface/index.tsx",
+        "src/ui/web/chat/ChatInterface/index.tsx",
         "src/ui/web/chat/ChatMessageContent/index.tsx",
+        "src/ui/web/chat/hooks/useNotebookChat.ts",
         "src/ui/web/components/avatar.tsx",
         "src/ui/web/components/checkbox.tsx",
         "src/ui/web/components/command.tsx",
@@ -106,6 +131,7 @@
         "src/ui/web/exerciserenderer/questions/McqQuestion/index.tsx",
         "src/ui/web/exerciserenderer/questions/TrueFalseQuestion/index.tsx",
         "src/ui/web/footer/RowLabel.tsx",
+        "src/ui/web/guards/RequireCourseSelection.tsx",
         "src/ui/web/header/Component.client.tsx",
         "src/ui/web/header/MobileMenu/MobileMenuAuthSection.tsx",
         "src/ui/web/header/MobileMenu/index.tsx",
@@ -138,19 +164,18 @@
       "description": "Component with internationalization support",
       "files": [
         "src/app/(frontend)/account/AccountPageContent.tsx",
+        "src/app/(frontend)/account/_components/SelectedCourseCard.tsx",
+        "src/app/(frontend)/ask/_components/AskContent/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonContent.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
-        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ChatInterface/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExerciseHeader/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExercisePageHeader/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/FormulaPanel/index.tsx",
-        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookFormulas/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookNotes/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookWorkspace/index.tsx",
         "src/app/(frontend)/courses/_components/BackToCourses/index.tsx",
         "src/app/(frontend)/courses/_components/ChapterCard/index.tsx",
-        "src/app/(frontend)/courses/_components/ChapterHeader/index.tsx",
         "src/app/(frontend)/courses/_components/ChapterPageBreadcrumb/index.tsx",
         "src/app/(frontend)/courses/_components/ChaptersSectionTitle/index.tsx",
         "src/app/(frontend)/courses/_components/CourseCard/index.tsx",
@@ -170,6 +195,8 @@
         "src/ui/web/LanguageSwitcher/index.tsx",
         "src/ui/web/UserDropdown/index.tsx",
         "src/ui/web/auth/GoogleLoginButton.tsx",
+        "src/ui/web/chat/ChatErrorSurface/index.tsx",
+        "src/ui/web/chat/ChatInterface/index.tsx",
         "src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx",
         "src/ui/web/header/MobileMenu/MobileMenuAuthSection.tsx",
         "src/ui/web/header/MobileMenu/index.tsx",
@@ -183,13 +210,15 @@
       "pattern": "tailwind-component",
       "description": "Component using Tailwind CSS utilities",
       "files": [
-        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ChatInterface/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExerciseHeader/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExerciseWorkspace/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/MathPalette/index.tsx",
-        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookWorkspace/index.tsx",
         "src/app/(frontend)/courses/_components/LessonHeader/index.tsx",
         "src/app/(frontend)/layout.tsx",
+        "src/infra/loading/components/RouteLoadingIndicator.tsx",
+        "src/infra/loading/components/Spinner.tsx",
+        "src/infra/loading/components/SystemLink.tsx",
         "src/server/payload/blocks/Banner/Component.tsx",
         "src/server/payload/blocks/Content/Component.tsx",
         "src/server/payload/blocks/MediaBlock/Component.tsx",
@@ -199,6 +228,9 @@
         "src/ui/web/Link/index.tsx",
         "src/ui/web/Pagination/index.tsx",
         "src/ui/web/RichText/index.tsx",
+        "src/ui/web/auth/GoogleLoginButton.tsx",
+        "src/ui/web/chat/ChatErrorSurface/index.tsx",
+        "src/ui/web/chat/ChatInterface/index.tsx",
         "src/ui/web/chat/ChatMessageContent/index.tsx",
         "src/ui/web/components/avatar.tsx",
         "src/ui/web/components/badge.tsx",
@@ -251,11 +283,22 @@
         "src/app/api/agent/chat/route.ts",
         "src/app/api/agent/conversation/route.ts",
         "src/app/api/agent/reset-chat/route.ts",
+        "src/app/api/exercises/convert/queue/route.ts",
         "src/app/api/exercises/import/route.ts",
+        "src/app/api/jobs/run-immediate/route.ts",
+        "src/app/api/prompts/for-conversion/route.ts",
+        "src/infra/analytics/system-events-subscriber.ts",
+        "src/server/api/with-api-handler.ts",
         "src/server/payload/endpoints/agent/chat.ts",
         "src/server/payload/endpoints/agent/get-conversation.ts",
-        "src/server/payload/endpoints/agent/reset-chat.ts"
+        "src/server/payload/endpoints/agent/reset-chat.ts",
+        "src/server/payload/endpoints/cron/media-expiry.ts"
       ]
+    },
+    "admin-page": {
+      "pattern": "admin-page",
+      "description": "No description available",
+      "files": ["src/app/(payload)/admin/chat/page.tsx"]
     },
     "api-endpoint": {
       "pattern": "api-endpoint",
@@ -266,13 +309,19 @@
         "src/app/api/agent/reset-chat/route.ts",
         "src/app/api/chapters/by-grade/route.ts",
         "src/app/api/example/route.ts",
+        "src/app/api/exercises/convert/queue/route.ts",
+        "src/app/api/exercises/convert/runner/route.ts",
         "src/app/api/exercises/import/route.ts",
+        "src/app/api/jobs/run-immediate/route.ts",
         "src/app/api/oauth/google/callback/oauth_callback_helpers.ts",
         "src/app/api/oauth/google/callback/route.ts",
         "src/app/api/oauth/google/route.ts",
         "src/app/api/pdfjs-viewer/route.ts",
+        "src/app/api/prompts/for-conversion/route.ts",
         "src/infra/auth/oauth_cookies.ts",
-        "src/infra/auth/oauth_state.ts"
+        "src/infra/auth/oauth_state.ts",
+        "src/server/api/responses.ts",
+        "src/server/api/with-api-handler.ts"
       ]
     },
     "oauth": {
@@ -295,7 +344,121 @@
     "encryption": {
       "pattern": "encryption",
       "description": "No description available",
-      "files": ["src/infra/auth/oauth_crypto.ts"]
+      "files": [
+        "src/infra/auth/oauth_crypto.ts",
+        "src/infra/config/config-crypto.ts",
+        "src/server/payload/hooks/configSecrets/beforeChange-hook.ts"
+      ]
+    },
+    "constants": {
+      "pattern": "constants",
+      "description": "No description available",
+      "files": ["src/infra/config/config-constants.ts"]
+    },
+    "singleton": {
+      "pattern": "singleton",
+      "description": "No description available",
+      "files": [
+        "src/infra/config/runtime/config-values.ts",
+        "src/infra/config/runtime/runtime-config.ts",
+        "src/infra/llm/genkit/genkit-instance.ts"
+      ]
+    },
+    "in-memory-cache": {
+      "pattern": "in-memory-cache",
+      "description": "No description available",
+      "files": [
+        "src/infra/config/runtime/config-values.ts",
+        "src/infra/config/runtime/runtime-config.ts"
+      ]
+    },
+    "domain-config-loader": {
+      "pattern": "domain-config-loader",
+      "description": "No description available",
+      "files": ["src/infra/config/runtime/config-values.ts"]
+    },
+    "error-handling": {
+      "pattern": "error-handling",
+      "description": "No description available",
+      "files": [
+        "src/infra/config/runtime/errors.ts",
+        "src/infra/llm/genkit/adapters/error-adapter.ts"
+      ]
+    },
+    "config-loader": {
+      "pattern": "config-loader",
+      "description": "No description available",
+      "files": ["src/infra/config/runtime/runtime-config.ts"]
+    },
+    "types": {
+      "pattern": "types",
+      "description": "No description available",
+      "files": ["src/infra/config/runtime/types.ts"]
+    },
+    "runtime-validation": {
+      "pattern": "runtime-validation",
+      "description": "No description available",
+      "files": ["src/infra/config/runtime/validate-chat-config.ts"]
+    },
+    "config-sanity-check": {
+      "pattern": "config-sanity-check",
+      "description": "No description available",
+      "files": ["src/infra/config/runtime/validate-chat-config.ts"]
+    },
+    "type-safe-accessor": {
+      "pattern": "type-safe-accessor",
+      "description": "No description available",
+      "files": ["src/infra/config/system-params.ts"]
+    },
+    "genkit": {
+      "pattern": "genkit",
+      "description": "No description available",
+      "files": [
+        "src/infra/llm/genkit/adapters/error-adapter.ts",
+        "src/infra/llm/genkit/adapters/unified-adapter.ts",
+        "src/infra/llm/genkit/config-resolver.ts",
+        "src/infra/llm/genkit/genkit-instance.ts",
+        "src/infra/llm/genkit/index.ts"
+      ]
+    },
+    "abstraction": {
+      "pattern": "abstraction",
+      "description": "No description available",
+      "files": [
+        "src/infra/llm/genkit/adapters/unified-adapter.ts",
+        "src/infra/llm/genkit/index.ts",
+        "src/infra/llm/providers/factory.ts"
+      ]
+    },
+    "provider-abstraction": {
+      "pattern": "provider-abstraction",
+      "description": "No description available",
+      "files": ["src/infra/llm/genkit/adapters/unified-adapter.ts", "src/infra/llm/genkit/index.ts"]
+    },
+    "config-mapping": {
+      "pattern": "config-mapping",
+      "description": "No description available",
+      "files": ["src/infra/llm/genkit/config-resolver.ts"]
+    },
+    "lazy-loading": {
+      "pattern": "lazy-loading",
+      "description": "No description available",
+      "files": ["src/infra/llm/genkit/genkit-instance.ts"]
+    },
+    "genkit-tools": {
+      "pattern": "genkit-tools",
+      "description": "No description available",
+      "files": ["src/infra/llm/genkit/tools/genkit-tools.ts"]
+    },
+    "tool-calling": {
+      "pattern": "tool-calling",
+      "description": "No description available",
+      "files": ["src/infra/llm/genkit/tools/genkit-tools.ts"]
+    },
+    "mcp-integration": {
+      "pattern": "mcp-integration",
+      "description": "No description available",
+      "files": ["src/infra/llm/genkit/tools/genkit-tools.ts"]
     },
     "single-responsibility": {
       "pattern": "single-responsibility",
@@ -311,6 +474,31 @@
       "pattern": "server-only",
       "description": "No description available",
       "files": ["src/infra/llm/prompt-composer.server.ts", "src/infra/llm/system-prompts.server.ts"]
+    },
+    "provider-factory": {
+      "pattern": "provider-factory",
+      "description": "No description available",
+      "files": ["src/infra/llm/providers/factory.ts"]
+    },
+    "dependency-injection": {
+      "pattern": "dependency-injection",
+      "description": "No description available",
+      "files": ["src/infra/llm/providers/factory.ts"]
+    },
+    "data-transformation": {
+      "pattern": "data-transformation",
+      "description": "No description available",
+      "files": ["src/infra/llm/providers/shared/media-reader.ts"]
+    },
+    "retry": {
+      "pattern": "retry",
+      "description": "No description available",
+      "files": ["src/infra/llm/providers/shared/retry.ts"]
+    },
+    "timeout": {
+      "pattern": "timeout",
+      "description": "No description available",
+      "files": ["src/infra/llm/providers/shared/timeout.ts"]
     },
     "context-aware-loading": {
       "pattern": "context-aware-loading",
@@ -340,12 +528,20 @@
       "description": "No description available",
       "files": ["src/infra/types/index.ts"]
     },
+    "admin-only": {
+      "pattern": "admin-only",
+      "description": "No description available",
+      "files": ["src/server/payload/access/configAdminOnly.ts"]
+    },
     "access-control": {
       "pattern": "access-control",
       "description": "Explicit access control defined for CRUD operations",
       "files": [
         "src/server/payload/collections/Categories.ts",
         "src/server/payload/collections/Chapters.ts",
+        "src/server/payload/collections/ConfigAuditLogs.ts",
+        "src/server/payload/collections/ConfigSecrets.ts",
+        "src/server/payload/collections/ConfigValues.ts",
         "src/server/payload/collections/Conversations.ts",
         "src/server/payload/collections/Courses.ts",
         "src/server/payload/collections/ExerciseAssets.ts",
@@ -378,9 +574,12 @@
       "description": "Payload lifecycle hooks (beforeChange, afterChange, etc.)",
       "files": [
         "src/server/payload/collections/Chapters.ts",
+        "src/server/payload/collections/ConfigSecrets.ts",
+        "src/server/payload/collections/ConfigValues.ts",
         "src/server/payload/collections/Conversations.ts",
         "src/server/payload/collections/Courses.ts",
         "src/server/payload/collections/Lessons.ts",
+        "src/server/payload/collections/Media/hooks/enforceRetentionPolicy.ts",
         "src/server/payload/collections/Media/index.ts",
         "src/server/payload/collections/Pages/index.ts",
         "src/server/payload/collections/Posts/index.ts",
@@ -389,10 +588,41 @@
         "src/server/payload/collections/Users/hooks/preventLastAdminDemotion-hook.ts",
         "src/server/payload/collections/Users/index.ts",
         "src/server/payload/fields/createdBy.ts",
+        "src/server/payload/hooks/configSecrets/afterChange-hook.ts",
+        "src/server/payload/hooks/configSecrets/beforeChange-hook.ts",
+        "src/server/payload/hooks/configValues/beforeChange-hook.ts",
         "src/server/payload/plugins/index.ts",
         "src/ui/web/footer/config.ts",
         "src/ui/web/header/config.ts"
       ]
+    },
+    "audit-log": {
+      "pattern": "audit-log",
+      "description": "No description available",
+      "files": [
+        "src/server/payload/collections/ConfigAuditLogs.ts",
+        "src/server/payload/hooks/configSecrets/afterChange-hook.ts"
+      ]
+    },
+    "key-value-store": {
+      "pattern": "key-value-store",
+      "description": "No description available",
+      "files": ["src/server/payload/collections/ConfigSecrets.ts"]
+    },
+    "encrypted-values": {
+      "pattern": "encrypted-values",
+      "description": "No description available",
+      "files": ["src/server/payload/collections/ConfigSecrets.ts"]
+    },
+    "domain-scoped-config": {
+      "pattern": "domain-scoped-config",
+      "description": "No description available",
+      "files": ["src/server/payload/collections/ConfigValues.ts"]
+    },
+    "json-storage": {
+      "pattern": "json-storage",
+      "description": "No description available",
+      "files": ["src/server/payload/collections/ConfigValues.ts"]
     },
     "user-owned": {
       "pattern": "user-owned",
@@ -428,14 +658,74 @@
       "description": "API endpoint with Zod validation",
       "files": [
         "src/server/payload/endpoints/agent/chat.ts",
+        "src/server/payload/endpoints/agent/chat/request-validation.ts",
         "src/server/payload/endpoints/agent/get-conversation.ts",
-        "src/server/payload/endpoints/agent/reset-chat.ts"
+        "src/server/payload/endpoints/agent/reset-chat.ts",
+        "src/server/payload/jobs/pdf-to-exercises-task.ts"
       ]
+    },
+    "admin-mode": {
+      "pattern": "admin-mode",
+      "description": "No description available",
+      "files": ["src/server/payload/endpoints/agent/chat.ts"]
+    },
+    "cron-endpoint": {
+      "pattern": "cron-endpoint",
+      "description": "No description available",
+      "files": ["src/server/payload/endpoints/cron/media-expiry.ts"]
+    },
+    "data-seeding": {
+      "pattern": "data-seeding",
+      "description": "No description available",
+      "files": ["src/server/payload/endpoints/seed/system-params.ts"]
+    },
+    "write-only-ux": {
+      "pattern": "write-only-ux",
+      "description": "No description available",
+      "files": ["src/server/payload/hooks/configSecrets/afterRead-hook.ts"]
+    },
+    "validation": {
+      "pattern": "validation",
+      "description": "No description available",
+      "files": [
+        "src/server/payload/hooks/configSecrets/beforeChange-hook.ts",
+        "src/server/payload/hooks/configValues/beforeChange-hook.ts"
+      ]
+    },
+    "secret-detection": {
+      "pattern": "secret-detection",
+      "description": "No description available",
+      "files": ["src/server/payload/hooks/configValues/beforeChange-hook.ts"]
+    },
+    "plugin-configuration": {
+      "pattern": "plugin-configuration",
+      "description": "No description available",
+      "files": ["src/server/payload/plugins/mcp/index.ts"]
+    },
+    "read-only-access": {
+      "pattern": "read-only-access",
+      "description": "No description available",
+      "files": ["src/server/payload/plugins/mcp/index.ts"]
+    },
+    "tenant-scoped": {
+      "pattern": "tenant-scoped",
+      "description": "No description available",
+      "files": ["src/server/payload/plugins/mcp/index.ts"]
     },
     "service-layer": {
       "pattern": "service-layer",
       "description": "No description available",
       "files": ["src/server/services/conversation-service.ts"]
+    },
+    "admin-dashboard-widget": {
+      "pattern": "admin-dashboard-widget",
+      "description": "No description available",
+      "files": ["src/ui/admin/AdminChat/DashboardWidget/index.tsx"]
+    },
+    "admin-sidebar-link": {
+      "pattern": "admin-sidebar-link",
+      "description": "No description available",
+      "files": ["src/ui/admin/AdminChat/SidebarLink/index.tsx"]
     },
     "variant-component": {
       "pattern": "variant-component",
@@ -462,7 +752,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": []
+      "dependencies": ["react"]
     },
     "src/app/(frontend)/[slug]/page.client.tsx": {
       "path": "src/app/(frontend)/[slug]/page.client.tsx",
@@ -487,6 +777,22 @@
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": []
+    },
+    "src/app/(frontend)/account/_components/SelectedCourseCard.tsx": {
+      "path": "src/app/(frontend)/account/_components/SelectedCourseCard.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["next/link", "next/navigation", "react"]
+    },
+    "src/app/(frontend)/ask/_components/AskContent/index.tsx": {
+      "path": "src/app/(frontend)/ask/_components/AskContent/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "lucide-react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/_components/CourseAnalytics.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/CourseAnalytics.tsx",
@@ -528,21 +834,13 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
-    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ChatInterface/index.tsx": {
-      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ChatInterface/index.tsx",
-      "type": "unknown",
-      "domain": "general",
-      "patterns": ["tailwind-component", "i18n-component", "client-component"],
-      "aiSummary": "",
-      "dependencies": ["lucide-react", "react"]
-    },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExerciseHeader/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExerciseHeader/index.tsx",
       "type": "unknown",
       "domain": "general",
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react", "next/navigation"]
+      "dependencies": ["lucide-react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExercisePageContent/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExercisePageContent/index.tsx",
@@ -558,15 +856,15 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/link"]
+      "dependencies": []
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExerciseWorkspace/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/ExerciseWorkspace/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["client-component"],
+      "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react"]
+      "dependencies": ["next/navigation", "react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/FormulaPanel/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/FormulaPanel/index.tsx",
@@ -583,14 +881,6 @@
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["react"]
-    },
-    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat/index.tsx": {
-      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookChat/index.tsx",
-      "type": "unknown",
-      "domain": "general",
-      "patterns": ["tailwind-component", "i18n-component", "client-component"],
-      "aiSummary": "",
-      "dependencies": ["lucide-react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookFormulas/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/NotebookFormulas/index.tsx",
@@ -622,7 +912,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/link"]
+      "dependencies": []
     },
     "src/app/(frontend)/courses/_components/ChapterCard/index.tsx": {
       "path": "src/app/(frontend)/courses/_components/ChapterCard/index.tsx",
@@ -630,13 +920,13 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/link"]
+      "dependencies": []
     },
     "src/app/(frontend)/courses/_components/ChapterHeader/index.tsx": {
       "path": "src/app/(frontend)/courses/_components/ChapterHeader/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": []
     },
@@ -662,7 +952,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/link", "lucide-react"]
+      "dependencies": ["lucide-react"]
     },
     "src/app/(frontend)/courses/_components/CoursesHero/index.tsx": {
       "path": "src/app/(frontend)/courses/_components/CoursesHero/index.tsx",
@@ -694,7 +984,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/link"]
+      "dependencies": []
     },
     "src/app/(frontend)/courses/_components/LessonCard/index.tsx": {
       "path": "src/app/(frontend)/courses/_components/LessonCard/index.tsx",
@@ -702,7 +992,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/link"]
+      "dependencies": []
     },
     "src/app/(frontend)/courses/_components/LessonHeader/index.tsx": {
       "path": "src/app/(frontend)/courses/_components/LessonHeader/index.tsx",
@@ -741,7 +1031,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "next/link", "next/navigation"]
+      "dependencies": ["next/navigation", "react"]
     },
     "src/app/(frontend)/login/LoginPageContent.tsx": {
       "path": "src/app/(frontend)/login/LoginPageContent.tsx",
@@ -819,7 +1109,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/link", "next/navigation", "react", "sonner"]
+      "dependencies": ["next/navigation", "react", "sonner"]
     },
     "src/app/(frontend)/signup/SignupPageContent.tsx": {
       "path": "src/app/(frontend)/signup/SignupPageContent.tsx",
@@ -837,13 +1127,21 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/app/(payload)/admin/chat/page.tsx": {
+      "path": "src/app/(payload)/admin/chat/page.tsx",
+      "type": "page",
+      "domain": "admin",
+      "patterns": ["admin-page", "client-component"],
+      "aiSummary": "Dedicated admin chat interface for querying content via MCP tools",
+      "dependencies": []
+    },
     "src/app/api/agent/chat/route.ts": {
       "path": "src/app/api/agent/chat/route.ts",
       "type": "unknown",
       "domain": "general",
       "patterns": ["api-endpoint", "authenticated-endpoint"],
       "aiSummary": "",
-      "dependencies": ["next/server", "payload", "@payload-config"]
+      "dependencies": ["@payload-config", "next/server", "payload"]
     },
     "src/app/api/agent/conversation/route.ts": {
       "path": "src/app/api/agent/conversation/route.ts",
@@ -877,6 +1175,22 @@
       "aiSummary": "",
       "dependencies": ["next/server", "zod", "@sentry/nextjs", "crypto"]
     },
+    "src/app/api/exercises/convert/queue/route.ts": {
+      "path": "src/app/api/exercises/convert/queue/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "next/server", "payload"]
+    },
+    "src/app/api/exercises/convert/runner/route.ts": {
+      "path": "src/app/api/exercises/convert/runner/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "mongodb", "next/server", "payload"]
+    },
     "src/app/api/exercises/import/route.ts": {
       "path": "src/app/api/exercises/import/route.ts",
       "type": "unknown",
@@ -884,6 +1198,14 @@
       "patterns": ["api-endpoint", "authenticated-endpoint"],
       "aiSummary": "",
       "dependencies": ["next/server", "payload", "@payload-config"]
+    },
+    "src/app/api/jobs/run-immediate/route.ts": {
+      "path": "src/app/api/jobs/run-immediate/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "mongodb", "next/server", "payload"]
     },
     "src/app/api/oauth/google/callback/oauth_callback_helpers.ts": {
       "path": "src/app/api/oauth/google/callback/oauth_callback_helpers.ts",
@@ -917,6 +1239,14 @@
       "aiSummary": "",
       "dependencies": ["next/server"]
     },
+    "src/app/api/prompts/for-conversion/route.ts": {
+      "path": "src/app/api/prompts/for-conversion/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "next/server", "payload"]
+    },
     "src/app/global-error.tsx": {
       "path": "src/app/global-error.tsx",
       "type": "unknown",
@@ -924,6 +1254,38 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["@sentry/nextjs", "next/error", "react"]
+    },
+    "src/client/hooks/useCurrentUser.ts": {
+      "path": "src/client/hooks/useCurrentUser.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/components/courses/PDFViewer/PDFEmbed.tsx": {
+      "path": "src/components/courses/PDFViewer/PDFEmbed.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/components/ui/HealthBadge.tsx": {
+      "path": "src/components/ui/HealthBadge.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/infra/analytics/AnalyticsProvider.tsx": {
+      "path": "src/infra/analytics/AnalyticsProvider.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
     },
     "src/infra/analytics/adapters/ga4/adapter.ts": {
       "path": "src/infra/analytics/adapters/ga4/adapter.ts",
@@ -973,8 +1335,24 @@
       "aiSummary": "",
       "dependencies": []
     },
+    "src/infra/analytics/hooks/usePageAbandonment.ts": {
+      "path": "src/infra/analytics/hooks/usePageAbandonment.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "next/navigation"]
+    },
     "src/infra/analytics/hooks/usePageView.ts": {
       "path": "src/infra/analytics/hooks/usePageView.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["next/navigation", "react"]
+    },
+    "src/infra/analytics/hooks/useSessionDuration.ts": {
+      "path": "src/infra/analytics/hooks/useSessionDuration.ts",
       "type": "unknown",
       "domain": "general",
       "patterns": ["client-component"],
@@ -988,6 +1366,14 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["react"]
+    },
+    "src/infra/analytics/system-events-subscriber.ts": {
+      "path": "src/infra/analytics/system-events-subscriber.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": []
     },
     "src/infra/auth/oauth_constants.ts": {
       "path": "src/infra/auth/oauth_constants.ts",
@@ -1061,6 +1447,118 @@
       "aiSummary": "Build canonical public base URLs for OAuth callbacks",
       "dependencies": ["next/server"]
     },
+    "src/infra/config/config-constants.ts": {
+      "path": "src/infra/config/config-constants.ts",
+      "type": "utility",
+      "domain": "config",
+      "patterns": ["constants"],
+      "aiSummary": "Configuration constants for the config manager",
+      "dependencies": []
+    },
+    "src/infra/config/config-crypto.ts": {
+      "path": "src/infra/config/config-crypto.ts",
+      "type": "utility",
+      "domain": "config",
+      "patterns": ["encryption"],
+      "aiSummary": "AES-256-GCM encryption for config secrets",
+      "dependencies": ["crypto"]
+    },
+    "src/infra/config/runtime/config-values.ts": {
+      "path": "src/infra/config/runtime/config-values.ts",
+      "type": "implementation",
+      "domain": "config.runtime",
+      "patterns": ["singleton", "in-memory-cache", "domain-config-loader"],
+      "aiSummary": "Server-side runtime config values loader with DB→memory caching (tenant-scoped, domain-grouped)",
+      "dependencies": ["payload", "@payload-config"]
+    },
+    "src/infra/config/runtime/errors.ts": {
+      "path": "src/infra/config/runtime/errors.ts",
+      "type": "error-definition",
+      "domain": "config.runtime",
+      "patterns": ["error-handling"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/infra/config/runtime/runtime-config.ts": {
+      "path": "src/infra/config/runtime/runtime-config.ts",
+      "type": "implementation",
+      "domain": "config.runtime",
+      "patterns": ["singleton", "in-memory-cache", "config-loader"],
+      "aiSummary": "Server-side runtime config loader for secrets only (DB→memory caching, tenant-scoped)",
+      "dependencies": ["payload", "@payload-config"]
+    },
+    "src/infra/config/runtime/types.ts": {
+      "path": "src/infra/config/runtime/types.ts",
+      "type": "type-definition",
+      "domain": "config.runtime",
+      "patterns": ["types"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/infra/config/runtime/validate-chat-config.ts": {
+      "path": "src/infra/config/runtime/validate-chat-config.ts",
+      "type": "implementation",
+      "domain": "config.validation",
+      "patterns": ["runtime-validation", "config-sanity-check"],
+      "aiSummary": "Validates chat configuration values at runtime to ensure required paths exist and values are within expected ranges",
+      "dependencies": []
+    },
+    "src/infra/config/system-params.ts": {
+      "path": "src/infra/config/system-params.ts",
+      "type": "wrapper",
+      "domain": "config.system-params",
+      "patterns": ["type-safe-accessor"],
+      "aiSummary": "Type-safe accessors for system parameters stored in ConfigValues",
+      "dependencies": []
+    },
+    "src/infra/llm/genkit/adapters/error-adapter.ts": {
+      "path": "src/infra/llm/genkit/adapters/error-adapter.ts",
+      "type": "adapter",
+      "domain": "ai",
+      "patterns": ["error-handling", "genkit"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/infra/llm/genkit/adapters/unified-adapter.ts": {
+      "path": "src/infra/llm/genkit/adapters/unified-adapter.ts",
+      "type": "adapter",
+      "domain": "ai",
+      "patterns": ["abstraction", "genkit", "provider-abstraction"],
+      "aiSummary": "",
+      "dependencies": ["payload"]
+    },
+    "src/infra/llm/genkit/config-resolver.ts": {
+      "path": "src/infra/llm/genkit/config-resolver.ts",
+      "type": "implementation",
+      "domain": "ai",
+      "patterns": ["config-mapping", "genkit"],
+      "aiSummary": "",
+      "dependencies": ["payload"]
+    },
+    "src/infra/llm/genkit/genkit-instance.ts": {
+      "path": "src/infra/llm/genkit/genkit-instance.ts",
+      "type": "implementation",
+      "domain": "ai",
+      "patterns": ["singleton", "genkit", "lazy-loading"],
+      "aiSummary": "",
+      "dependencies": ["@genkit-ai/googleai", "genkit", "genkitx-openai", "payload"]
+    },
+    "src/infra/llm/genkit/index.ts": {
+      "path": "src/infra/llm/genkit/index.ts",
+      "type": "index",
+      "domain": "ai",
+      "patterns": ["abstraction", "genkit", "provider-abstraction"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/infra/llm/genkit/tools/genkit-tools.ts": {
+      "path": "src/infra/llm/genkit/tools/genkit-tools.ts",
+      "type": "module",
+      "domain": "ai",
+      "patterns": ["genkit-tools", "tool-calling", "mcp-integration"],
+      "aiSummary": "",
+      "dependencies": ["genkit"]
+    },
     "src/infra/llm/lesson-context.ts": {
       "path": "src/infra/llm/lesson-context.ts",
       "type": "ai-utility",
@@ -1074,6 +1572,38 @@
       "type": "ai-utility",
       "domain": "chat",
       "patterns": ["server-only"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/infra/llm/providers/factory.ts": {
+      "path": "src/infra/llm/providers/factory.ts",
+      "type": "factory",
+      "domain": "ai",
+      "patterns": ["provider-factory", "abstraction", "dependency-injection"],
+      "aiSummary": "",
+      "dependencies": ["payload"]
+    },
+    "src/infra/llm/providers/shared/media-reader.ts": {
+      "path": "src/infra/llm/providers/shared/media-reader.ts",
+      "type": "utility",
+      "domain": "ai",
+      "patterns": ["data-transformation"],
+      "aiSummary": "",
+      "dependencies": ["payload"]
+    },
+    "src/infra/llm/providers/shared/retry.ts": {
+      "path": "src/infra/llm/providers/shared/retry.ts",
+      "type": "utility",
+      "domain": "ai",
+      "patterns": ["retry"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/infra/llm/providers/shared/timeout.ts": {
+      "path": "src/infra/llm/providers/shared/timeout.ts",
+      "type": "utility",
+      "domain": "ai",
+      "patterns": ["timeout"],
       "aiSummary": "",
       "dependencies": []
     },
@@ -1101,6 +1631,54 @@
       "aiSummary": "",
       "dependencies": ["@payloadcms/db-mongodb", "mongodb", "payload"]
     },
+    "src/infra/loading/components/RouteLoadingIndicator.tsx": {
+      "path": "src/infra/loading/components/RouteLoadingIndicator.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "next/navigation"]
+    },
+    "src/infra/loading/components/Spinner.tsx": {
+      "path": "src/infra/loading/components/Spinner.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/infra/loading/components/SystemLink.tsx": {
+      "path": "src/infra/loading/components/SystemLink.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "next/link", "next/navigation"]
+    },
+    "src/infra/loading/hooks/useAsyncAction.ts": {
+      "path": "src/infra/loading/hooks/useAsyncAction.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/infra/loading/hooks/useLoadingState.ts": {
+      "path": "src/infra/loading/hooks/useLoadingState.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/infra/loading/hooks/useRouterWithLoading.ts": {
+      "path": "src/infra/loading/hooks/useRouterWithLoading.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["next/navigation", "react"]
+    },
     "src/infra/types/index.ts": {
       "path": "src/infra/types/index.ts",
       "type": "utility",
@@ -1116,6 +1694,30 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["react", "next/navigation"]
+    },
+    "src/server/api/responses.ts": {
+      "path": "src/server/api/responses.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["next/server", "zod"]
+    },
+    "src/server/api/with-api-handler.ts": {
+      "path": "src/server/api/with-api-handler.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "next/server", "payload", "zod"]
+    },
+    "src/server/payload/access/configAdminOnly.ts": {
+      "path": "src/server/payload/access/configAdminOnly.ts",
+      "type": "access-control",
+      "domain": "config",
+      "patterns": ["admin-only"],
+      "aiSummary": "Access control that restricts config operations to admins only",
+      "dependencies": ["payload"]
     },
     "src/server/payload/blocks/Banner/Component.tsx": {
       "path": "src/server/payload/blocks/Banner/Component.tsx",
@@ -1195,6 +1797,30 @@
       "aiSummary": "",
       "dependencies": ["payload"]
     },
+    "src/server/payload/collections/ConfigAuditLogs.ts": {
+      "path": "src/server/payload/collections/ConfigAuditLogs.ts",
+      "type": "collection-config",
+      "domain": "config",
+      "patterns": ["audit-log", "access-control"],
+      "aiSummary": "Append-only audit log for config secret mutations",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/ConfigSecrets.ts": {
+      "path": "src/server/payload/collections/ConfigSecrets.ts",
+      "type": "collection-config",
+      "domain": "config",
+      "patterns": ["key-value-store", "encrypted-values", "access-control", "payload-hooks"],
+      "aiSummary": "Tenant-scoped encrypted secrets. All values are always encrypted.",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/ConfigValues.ts": {
+      "path": "src/server/payload/collections/ConfigValues.ts",
+      "type": "collection-config",
+      "domain": "config",
+      "patterns": ["domain-scoped-config", "json-storage", "access-control", "payload-hooks"],
+      "aiSummary": "Domain-based configuration values stored as JSON, tenant-scoped",
+      "dependencies": ["payload"]
+    },
     "src/server/payload/collections/Conversations.ts": {
       "path": "src/server/payload/collections/Conversations.ts",
       "type": "collection-config",
@@ -1243,13 +1869,21 @@
       "aiSummary": "",
       "dependencies": ["payload"]
     },
+    "src/server/payload/collections/Media/hooks/enforceRetentionPolicy.ts": {
+      "path": "src/server/payload/collections/Media/hooks/enforceRetentionPolicy.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["payload-hooks"],
+      "aiSummary": "",
+      "dependencies": ["payload"]
+    },
     "src/server/payload/collections/Media/index.ts": {
       "path": "src/server/payload/collections/Media/index.ts",
       "type": "unknown",
       "domain": "general",
       "patterns": ["access-control", "payload-hooks"],
       "aiSummary": "",
-      "dependencies": ["payload", "path", "url"]
+      "dependencies": ["payload"]
     },
     "src/server/payload/collections/MemoryItems.ts": {
       "path": "src/server/payload/collections/MemoryItems.ts",
@@ -1339,12 +1973,20 @@
       "aiSummary": "Users collection with authentication, RBAC roles, and audit hooks",
       "dependencies": ["payload"]
     },
+    "src/server/payload/endpoints/agent/chat/request-validation.ts": {
+      "path": "src/server/payload/endpoints/agent/chat/request-validation.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["validated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["zod"]
+    },
     "src/server/payload/endpoints/agent/chat.ts": {
       "path": "src/server/payload/endpoints/agent/chat.ts",
       "type": "endpoint",
       "domain": "chat",
-      "patterns": ["authenticated-endpoint", "validated-endpoint", "context-scoped"],
-      "aiSummary": "Chat endpoint with context scoping, memory retrieval, and automatic maintenance",
+      "patterns": ["authenticated-endpoint", "validated-endpoint", "context-scoped", "admin-mode"],
+      "aiSummary": "Chat endpoint with context scoping, memory retrieval, MCP tools for admins, and automatic maintenance",
       "dependencies": ["payload", "zod"]
     },
     "src/server/payload/endpoints/agent/get-conversation.ts": {
@@ -1363,6 +2005,22 @@
       "aiSummary": "Reset endpoint for context-scoped conversations",
       "dependencies": ["payload", "zod"]
     },
+    "src/server/payload/endpoints/cron/media-expiry.ts": {
+      "path": "src/server/payload/endpoints/cron/media-expiry.ts",
+      "type": "endpoint",
+      "domain": "media",
+      "patterns": ["cron-endpoint", "authenticated-endpoint"],
+      "aiSummary": "Deletes expired ephemeral media files and database records",
+      "dependencies": ["fs/promises", "payload", "pino"]
+    },
+    "src/server/payload/endpoints/seed/system-params.ts": {
+      "path": "src/server/payload/endpoints/seed/system-params.ts",
+      "type": "seed-function",
+      "domain": "config.seed",
+      "patterns": ["data-seeding"],
+      "aiSummary": "Seeds default system parameters into ConfigValues (global domain)",
+      "dependencies": ["payload"]
+    },
     "src/server/payload/fields/createdBy.ts": {
       "path": "src/server/payload/fields/createdBy.ts",
       "type": "unknown",
@@ -1370,6 +2028,46 @@
       "patterns": ["payload-hooks"],
       "aiSummary": "",
       "dependencies": ["payload"]
+    },
+    "src/server/payload/hooks/configSecrets/afterChange-hook.ts": {
+      "path": "src/server/payload/hooks/configSecrets/afterChange-hook.ts",
+      "type": "hook",
+      "domain": "config",
+      "patterns": ["audit-log", "payload-hooks"],
+      "aiSummary": "Creates audit log entries after config secret mutations",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/hooks/configSecrets/afterRead-hook.ts": {
+      "path": "src/server/payload/hooks/configSecrets/afterRead-hook.ts",
+      "type": "hook",
+      "domain": "config",
+      "patterns": ["write-only-ux"],
+      "aiSummary": "Clears all values in Admin UI responses (secrets-only collection), but skips for internal runtime load",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/hooks/configSecrets/beforeChange-hook.ts": {
+      "path": "src/server/payload/hooks/configSecrets/beforeChange-hook.ts",
+      "type": "hook",
+      "domain": "config",
+      "patterns": ["validation", "encryption", "payload-hooks"],
+      "aiSummary": "Encrypts secrets and validates config entries before save",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/hooks/configValues/beforeChange-hook.ts": {
+      "path": "src/server/payload/hooks/configValues/beforeChange-hook.ts",
+      "type": "hook",
+      "domain": "config",
+      "patterns": ["validation", "secret-detection", "payload-hooks"],
+      "aiSummary": "Validates config values and detects secret-like keys before save",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/jobs/pdf-to-exercises-task.ts": {
+      "path": "src/server/payload/jobs/pdf-to-exercises-task.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["validated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "mongodb", "payload", "zod"]
     },
     "src/server/payload/plugins/index.ts": {
       "path": "src/server/payload/plugins/index.ts",
@@ -1381,13 +2079,21 @@
         "@payloadcms/plugin-form-builder",
         "@payloadcms/plugin-nested-docs",
         "@payloadcms/plugin-redirects",
-        "@payloadcms/plugin-seo",
         "@payloadcms/plugin-search",
-        "@payloadcms/storage-vercel-blob",
-        "payload",
+        "@payloadcms/plugin-seo",
         "@payloadcms/plugin-seo/types",
-        "@payloadcms/richtext-lexical"
+        "@payloadcms/richtext-lexical",
+        "@payloadcms/storage-vercel-blob",
+        "payload"
       ]
+    },
+    "src/server/payload/plugins/mcp/index.ts": {
+      "path": "src/server/payload/plugins/mcp/index.ts",
+      "type": "plugin-config",
+      "domain": "mcp",
+      "patterns": ["plugin-configuration", "read-only-access", "tenant-scoped"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/plugin-mcp", "payload"]
     },
     "src/server/services/conversation-service.ts": {
       "path": "src/server/services/conversation-service.ts",
@@ -1396,6 +2102,22 @@
       "patterns": ["service-layer", "context-scoped"],
       "aiSummary": "Service for managing conversations with context scoping and access control",
       "dependencies": ["payload"]
+    },
+    "src/ui/admin/AdminChat/DashboardWidget/index.tsx": {
+      "path": "src/ui/admin/AdminChat/DashboardWidget/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["admin-dashboard-widget", "client-component"],
+      "aiSummary": "Quick access widget for admin chat on the dashboard",
+      "dependencies": ["next/link", "react"]
+    },
+    "src/ui/admin/AdminChat/SidebarLink/index.tsx": {
+      "path": "src/ui/admin/AdminChat/SidebarLink/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["admin-sidebar-link", "client-component"],
+      "aiSummary": "Navigation link for admin chat in the sidebar",
+      "dependencies": ["next/link", "react"]
     },
     "src/ui/admin/AnswerSpecJsonField/index.tsx": {
       "path": "src/ui/admin/AnswerSpecJsonField/index.tsx",
@@ -1427,7 +2149,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "@payloadcms/ui", "next/image"]
+      "dependencies": ["@payloadcms/ui", "next/image", "react"]
     },
     "src/ui/admin/ExerciseContentEditor/RichTextEditor.tsx": {
       "path": "src/ui/admin/ExerciseContentEditor/RichTextEditor.tsx",
@@ -1443,7 +2165,15 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "@payloadcms/ui", "lucide-react", "next/image"]
+      "dependencies": ["@payloadcms/ui", "lucide-react", "next/image", "react"]
+    },
+    "src/ui/admin/ExercisePreview/index.tsx": {
+      "path": "src/ui/admin/ExercisePreview/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui"]
     },
     "src/ui/admin/Footer/index.tsx": {
       "path": "src/ui/admin/Footer/index.tsx",
@@ -1460,6 +2190,14 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["@payloadcms/ui"]
+    },
+    "src/ui/admin/HtmlBlock/Field.tsx": {
+      "path": "src/ui/admin/HtmlBlock/Field.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "payload", "react"]
     },
     "src/ui/admin/MediaPreview/AudioPreview.tsx": {
       "path": "src/ui/admin/MediaPreview/AudioPreview.tsx",
@@ -1533,6 +2271,46 @@
       "aiSummary": "",
       "dependencies": ["@payloadcms/ui", "payload"]
     },
+    "src/ui/admin/exercise-conversion/ConversionStatusPanel/index.tsx": {
+      "path": "src/ui/admin/exercise-conversion/ConversionStatusPanel/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/ui/admin/exercise-conversion/ConvertForm/index.tsx": {
+      "path": "src/ui/admin/exercise-conversion/ConvertForm/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/ui/admin/exercise-conversion/DraftExercisesList/index.tsx": {
+      "path": "src/ui/admin/exercise-conversion/DraftExercisesList/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["next/navigation", "react"]
+    },
+    "src/ui/admin/exercise-conversion/LessonConversionPanel/index.tsx": {
+      "path": "src/ui/admin/exercise-conversion/LessonConversionPanel/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "react"]
+    },
+    "src/ui/admin/exercise-conversion/LessonMediaActions/index.tsx": {
+      "path": "src/ui/admin/exercise-conversion/LessonMediaActions/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "react"]
+    },
     "src/ui/admin/shared/AdvancedJsonPanel.tsx": {
       "path": "src/ui/admin/shared/AdvancedJsonPanel.tsx",
       "type": "unknown",
@@ -1571,7 +2349,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/link", "react"]
+      "dependencies": ["react"]
     },
     "src/ui/web/CollectionArchive/index.tsx": {
       "path": "src/ui/web/CollectionArchive/index.tsx",
@@ -1611,7 +2389,7 @@
       "domain": "general",
       "patterns": ["tailwind-component"],
       "aiSummary": "",
-      "dependencies": ["next/link", "react"]
+      "dependencies": ["react"]
     },
     "src/ui/web/LivePreviewListener/index.tsx": {
       "path": "src/ui/web/LivePreviewListener/index.tsx",
@@ -1643,15 +2421,31 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "next/link", "next/navigation", "lucide-react"]
+      "dependencies": ["react", "next/navigation", "lucide-react"]
     },
     "src/ui/web/auth/GoogleLoginButton.tsx": {
       "path": "src/ui/web/auth/GoogleLoginButton.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": []
+      "dependencies": ["react"]
+    },
+    "src/ui/web/chat/ChatErrorSurface/index.tsx": {
+      "path": "src/ui/web/chat/ChatErrorSurface/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react", "next/navigation"]
+    },
+    "src/ui/web/chat/ChatInterface/index.tsx": {
+      "path": "src/ui/web/chat/ChatInterface/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
     },
     "src/ui/web/chat/ChatMessageContent/index.tsx": {
       "path": "src/ui/web/chat/ChatMessageContent/index.tsx",
@@ -1660,6 +2454,14 @@
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["hast", "react-markdown", "rehype-katex", "remark-math", "unist-util-visit"]
+    },
+    "src/ui/web/chat/hooks/useNotebookChat.ts": {
+      "path": "src/ui/web/chat/hooks/useNotebookChat.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "sonner"]
     },
     "src/ui/web/components/avatar.tsx": {
       "path": "src/ui/web/components/avatar.tsx",
@@ -1861,13 +2663,21 @@
       "aiSummary": "",
       "dependencies": ["payload"]
     },
+    "src/ui/web/guards/RequireCourseSelection.tsx": {
+      "path": "src/ui/web/guards/RequireCourseSelection.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["next/navigation", "react"]
+    },
     "src/ui/web/header/Component.client.tsx": {
       "path": "src/ui/web/header/Component.client.tsx",
       "type": "unknown",
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["next/link", "next/navigation", "react"]
+      "dependencies": ["next/navigation", "react"]
     },
     "src/ui/web/header/MobileMenu/MobileMenuAuthSection.tsx": {
       "path": "src/ui/web/header/MobileMenu/MobileMenuAuthSection.tsx",
@@ -1875,7 +2685,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "next/link", "next/navigation", "lucide-react"]
+      "dependencies": ["react", "next/navigation", "lucide-react"]
     },
     "src/ui/web/header/MobileMenu/index.tsx": {
       "path": "src/ui/web/header/MobileMenu/index.tsx",
@@ -1883,7 +2693,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react", "next/link"]
+      "dependencies": ["react", "lucide-react"]
     },
     "src/ui/web/header/Nav/index.tsx": {
       "path": "src/ui/web/header/Nav/index.tsx",
@@ -1891,7 +2701,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "next/link", "lucide-react"]
+      "dependencies": ["react", "lucide-react"]
     },
     "src/ui/web/header/RowLabel.tsx": {
       "path": "src/ui/web/header/RowLabel.tsx",
@@ -1939,7 +2749,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/link", "next/navigation"]
+      "dependencies": ["next/navigation"]
     },
     "src/ui/web/homepage/TopicCard/index.tsx": {
       "path": "src/ui/web/homepage/TopicCard/index.tsx",
@@ -1947,7 +2757,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["next/link"]
+      "dependencies": []
     },
     "src/ui/web/media/AudioMedia/index.tsx": {
       "path": "src/ui/web/media/AudioMedia/index.tsx",
@@ -2151,8 +2961,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-01-24T08:15:16.609Z",
-    "totalFiles": 208,
-    "totalPatterns": 24
+    "generatedAt": "2026-02-07T12:59:06.932Z",
+    "totalFiles": 273,
+    "totalPatterns": 65
   }
 }

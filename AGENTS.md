@@ -24,13 +24,19 @@ src/
 ├── app/
 │   ├── (frontend)/          # Frontend routes
 │   └── (payload)/           # Payload admin routes
-├── collections/             # Collection configs
+├── collections/              # Collection configs
 ├── globals/                 # Global configs
-├── components/              # Custom React components
+├── ui/                      # React components (PAYLOAD-FIRST - use this directory)
+│   ├── admin/               # Payload admin UI components
+│   └── web/                 # Frontend/consumer UI components
 ├── hooks/                   # Hook functions
 ├── access/                  # Access control functions
+├── server/                  # Server-side code
 └── payload.config.ts        # Main config
 ```
+
+> ⚠️ **DEPRECATED**: `src/components/` is deprecated. Migrate all components to `src/ui/web/` or `src/ui/admin/`.
+> See [src/FILE_STRUCTURE_GUIDE.md](./src/FILE_STRUCTURE_GUIDE.md) for migration patterns.
 
 ## Configuration
 

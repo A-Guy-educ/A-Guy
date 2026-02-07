@@ -24,6 +24,7 @@ const requireCollectionAccess = require('./rules/require-collection-access.js')
 const noNestedMetadata = require('./rules/no-nested-metadata.js')
 const tailwindOnlyComponents = require('./rules/tailwind-only-components.js')
 const requireAuthEndpoints = require('./rules/require-auth-endpoints.js')
+const fileLocation = require('./rules/file-location.js')
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 module.exports = {
@@ -36,5 +37,6 @@ module.exports = {
     'no-nested-metadata': noNestedMetadata,
     'tailwind-only-components': tailwindOnlyComponents,
     'require-auth-endpoints': requireAuthEndpoints,
+    'file-location': fileLocation,
   },
 }
