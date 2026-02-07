@@ -91,12 +91,11 @@ export const Prompts: CollectionConfig = {
         { label: 'Chat', value: 'chat' },
         { label: 'PDF Extractor', value: 'extractor' },
         { label: 'PDF Verifier', value: 'verifier' },
-        { label: 'Diagram Generator', value: 'diagram_generator' },
       ],
       defaultValue: 'chat',
       admin: {
         description:
-          'Purpose of this prompt: chat conversation, PDF extraction, PDF verification, or diagram-to-TikZ generation',
+          'Purpose of this prompt: chat conversation, PDF extraction, or PDF verification',
         position: 'sidebar',
       },
     },

@@ -40,17 +40,6 @@ describe('exercise-conversion helpers', () => {
       expect(() => validatePromptForUsageAndTenant(prompt, 'verifier', 'tenant-123')).not.toThrow()
     })
 
-    it('should pass for valid diagram_generator prompt', () => {
-      const prompt = {
-        status: 'published',
-        usage: 'diagram_generator',
-        tenant: { id: 'tenant-123' },
-      }
-      expect(() =>
-        validatePromptForUsageAndTenant(prompt, 'diagram_generator', 'tenant-123'),
-      ).not.toThrow()
-    })
-
     it('should throw for draft prompt', () => {
       const prompt = {
         status: 'draft',

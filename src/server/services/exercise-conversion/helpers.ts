@@ -68,7 +68,7 @@ export function buildJobsWhereQuery(lessonId: string, mediaId: string): object {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validatePromptForUsageAndTenant(
   promptDoc: { status: string; usage: string; tenant: any },
-  expectedUsage: 'extractor' | 'verifier' | 'diagram_generator',
+  expectedUsage: 'extractor' | 'verifier',
   lessonTenantId: string,
 ): void {
   if (promptDoc.status !== 'published') {

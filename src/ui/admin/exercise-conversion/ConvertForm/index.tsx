@@ -20,10 +20,8 @@ interface PromptOption {
 export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFormProps) {
   const [extractorPrompts, setExtractorPrompts] = useState<PromptOption[]>([])
   const [verifierPrompts, setVerifierPrompts] = useState<PromptOption[]>([])
-  const [diagramPrompts, setDiagramPrompts] = useState<PromptOption[]>([])
   const [selectedExtractor, setSelectedExtractor] = useState<string>('')
   const [selectedVerifier, setSelectedVerifier] = useState<string>('')
-  const [selectedDiagram, setSelectedDiagram] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -46,7 +44,6 @@ export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFor
         const data = await response.json()
         setExtractorPrompts(data.extractors || [])
         setVerifierPrompts(data.verifiers || [])
-        setDiagramPrompts(data.diagramGenerators || [])
       } catch {
         setError('Failed to load prompts')
       } finally {
@@ -70,7 +67,6 @@ export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFor
           mediaId,
           extractorPromptId: selectedExtractor,
           verifierPromptId: selectedVerifier,
-          diagramPromptId: selectedDiagram || undefined, // Optional - omit if not selected
         }),
         credentials: 'include',
       })
@@ -208,29 +204,6 @@ export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFor
           >
             <option value="">Select Verifier...</option>
             {verifierPrompts.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.title}
-              </option>
-            ))}
-          </select>
-
-          {/* Diagram Generator - Optional */}
-          <select
-            value={selectedDiagram}
-            onChange={(e) => setSelectedDiagram(e.target.value)}
-            style={{
-              width: '100%',
-              height: 28,
-              padding: '0 8px',
-              fontSize: 12,
-              border: '1px solid var(--theme-elevation-200)',
-              borderRadius: 3,
-              backgroundColor: 'var(--theme-elevation-0)',
-              color: 'var(--theme-elevation-1000)',
-            }}
-          >
-            <option value="">Diagram Generator (optional)</option>
-            {diagramPrompts.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.title}
               </option>
