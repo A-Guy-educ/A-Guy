@@ -7,6 +7,15 @@
     },
     "plan": {
       "model": "anthropic/claude-opus-4-6"
+    },
+    "spec": {
+      "model": "openai/gpt-5.2"
+    },
+    "verify": {
+      "model": "minimax/MiniMax-M2.1"
+    },
+    "advisor": {
+      "model": "openai/gpt-5.2"
     }
   },
   "mcp": {
