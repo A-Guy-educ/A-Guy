@@ -15,7 +15,7 @@ export default async function CoursesPage() {
             className="text-card-foreground mb-4 whitespace-nowrap"
             style={{ fontSize: '40px', fontWeight: 900 }}
           >
-            חנות הקורסים
+            קטלוג קורסים
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto" style={{ fontSize: '18px' }}>
             בחר את התוכנית המתאימה לך והתקדם להצלחה במתמטיקה.
@@ -35,7 +35,7 @@ export default async function CoursesPage() {
               className="text-card-foreground uppercase tracking-widest"
               style={{ fontSize: '24px', fontWeight: 900 }}
             >
-              קטלוג קורסים
+              חנות הקורסים
             </h2>
           </div>
 
@@ -49,30 +49,6 @@ export default async function CoursesPage() {
             </div>
           )}
         </section>
-
-        {/* Footer */}
-        <footer className="mt-24 pt-12 border-t border-border text-center">
-          <p
-            className="text-muted-foreground/50 uppercase mb-6"
-            style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.4em' }}
-          >
-            A-Guy Learning Platform
-          </p>
-          <div
-            className="flex justify-center gap-6 text-muted-foreground"
-            style={{ fontSize: '14px', fontWeight: 500 }}
-          >
-            <a href="#" className="hover:text-primary transition-colors">
-              תנאי שימוש
-            </a>
-            <a href="#" className="hover:text-primary transition-colors">
-              מדיניות פרטיות
-            </a>
-            <a href="#" className="hover:text-primary transition-colors">
-              צור קשר
-            </a>
-          </div>
-        </footer>
       </div>
     </div>
   )
@@ -80,7 +56,7 @@ export default async function CoursesPage() {
 
 export async function generateMetadata() {
   return {
-    title: 'חנות הקורסים - A-Guy',
+    title: 'קטלוג קורסים - A-Guy',
     description: 'בחר את התוכנית המתאימה לך והתקדם להצלחה במתמטיקה.',
   }
 }
