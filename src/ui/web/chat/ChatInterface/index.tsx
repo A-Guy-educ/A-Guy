@@ -103,11 +103,12 @@ export function ChatInterface({
     handleSubmit,
     handleQuickAction,
     handleReset,
-    // Media upload
-    uploadedMedia,
-    isUploading,
-    handleFileSelect,
-    removeMedia,
+    // Direct-to-Blob uploads
+    directUploads,
+    addDirectUploads,
+    removeDirectUpload,
+    isDirectUploading,
+    completedChatAssetIds,
     openFilePicker,
     // Error handling
     chatError,
@@ -268,6 +269,24 @@ export function ChatInterface({
                   ))}
                 </div>
               )}
+              {msg.chatAssets && msg.chatAssets.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {msg.chatAssets.map((asset, assetIdx) => (
+                    <div
+                      key={assetIdx}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
+                        msg.role === ChatMessageRole.User ? 'bg-primary-foreground/20' : 'bg-muted',
+                      )}
+                    >
+                      <FileUp className="w-3 h-3" />
+                      <span className="max-w-[120px] truncate">
+                        {asset.filename || `attachment-${assetIdx + 1}`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <ChatMessageContent content={msg.content} />
             </div>
           ))}
@@ -388,23 +407,50 @@ export function ChatInterface({
           </div>
         )}
 
-        {/* Media Preview Chips */}
-        {uploadedMedia.length > 0 && (
+        {/* Direct Upload Previews */}
+        {directUploads.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2.5 max-w-[850px] mx-auto">
-            {uploadedMedia.map((media) => (
+            {directUploads.map((file) => (
               <div
-                key={media.id}
-                className="flex items-center gap-1.5 bg-muted rounded-full px-3 py-1.5 text-sm border border-input"
-              >
-                {media.mimeType.startsWith('image/') ? (
-                  <ImageIcon className="w-4 h-4 text-muted-foreground" />
-                ) : (
-                  <FileUp className="w-4 h-4 text-muted-foreground" />
+                key={file.localId}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm border',
+                  file.status === 'complete' &&
+                    'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950',
+                  file.status === 'failed' &&
+                    'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950',
+                  file.status === 'uploading' && 'border-border bg-muted',
+                  file.status === 'finalizing' && 'border-border bg-muted',
+                  file.status === 'cancelled' && 'border-muted bg-muted/50',
+                  file.status === 'queued' && 'border-border bg-muted',
                 )}
-                <span className="max-w-[120px] truncate text-foreground">{media.filename}</span>
+              >
+                {file.file.type.startsWith('image/') ? (
+                  <ImageIcon
+                    className={cn(
+                      'w-4 h-4',
+                      file.status === 'failed' ? 'text-red-500' : 'text-muted-foreground',
+                    )}
+                  />
+                ) : (
+                  <FileUp
+                    className={cn(
+                      'w-4 h-4',
+                      file.status === 'failed' ? 'text-red-500' : 'text-muted-foreground',
+                    )}
+                  />
+                )}
+                <span className="max-w-[120px] truncate text-foreground">{file.file.name}</span>
+                {file.status === 'uploading' && (
+                  <span className="text-xs text-muted-foreground">{file.progress}%</span>
+                )}
+                {file.status === 'complete' && (
+                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                )}
+                {file.status === 'failed' && <span className="text-xs text-red-500">Failed</span>}
                 <button
                   type="button"
-                  onClick={() => removeMedia(media.id)}
+                  onClick={() => removeDirectUpload(file.localId)}
                   className="p-0.5 hover:bg-destructive/20 rounded-full transition-colors"
                   aria-label={tCourses('chatRemoveFile')}
                 >
@@ -457,13 +503,17 @@ export function ChatInterface({
               type="button"
               className={cn(
                 'p-1.5 text-muted-foreground hover:text-primary transition-colors',
-                isUploading && 'opacity-50 cursor-not-allowed',
+                isDirectUploading && 'opacity-50 cursor-not-allowed',
               )}
               onClick={openFilePicker}
-              disabled={isUploading || uploadedMedia.length >= 5}
+              disabled={
+                isDirectUploading ||
+                directUploads.filter((f) => f.status !== 'cancelled' && f.status !== 'failed')
+                  .length >= 5
+              }
               aria-label={tCourses('chatAttachFile')}
             >
-              {isUploading ? (
+              {isDirectUploading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <Plus className="w-5 h-5" />
@@ -473,9 +523,12 @@ export function ChatInterface({
               ref={fileInputRef}
               type="file"
               className="hidden"
-              accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
               multiple
-              onChange={(e) => handleFileSelect(e.target.files)}
+              onChange={(e) => {
+                if (e.target.files) addDirectUploads(e.target.files)
+                e.target.value = ''
+              }}
             />
 
             {/* Send Button */}
@@ -483,7 +536,9 @@ export function ChatInterface({
               type="submit"
               className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-input hover:bg-primary/90 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={
-                isLoading || isUploading || (!inputValue.trim() && uploadedMedia.length === 0)
+                isLoading ||
+                isDirectUploading ||
+                (!inputValue.trim() && completedChatAssetIds.length === 0)
               }
               aria-label={tCourses('sendMessage')}
             >
