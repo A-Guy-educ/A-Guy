@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import React from 'react'
 import { HealthBadge } from '@/ui/web/components/HealthBadge'
-import { render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import React from 'react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 interface HealthResponse {
   ok: boolean
@@ -29,12 +29,18 @@ const unhealthyResponse: HealthResponse = {
 }
 
 const renderHealthBadge = (showVersion = false) => {
-  return render(React.createElement(HealthBadge, { showVersion }))
+  const result = render(React.createElement(HealthBadge, { showVersion }))
+  return result
 }
 
 describe('HealthBadge component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.restoreAllMocks()
   })
 
   describe('loading state', () => {
