@@ -8,5 +8,17 @@
     "plan": {
       "model": "anthropic/claude-opus-4-6"
     }
+  },
+  "mcp": {
+    "chrome-devtools": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--isolated=true",
+        "--no-usage-statistics"
+      ]
+    }
   }
 }
