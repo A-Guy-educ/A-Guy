@@ -14,7 +14,7 @@ import {
 } from '@/server/chat-assets/constants'
 import { isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
 import { getMediaBlobAdapter } from '@/infra/blob/vercel-blob-adapter'
-import { FINALIZE_ROUTE_LIMITER } from '@/server/utils/rate-limiter'
+import { FINALIZE_ROUTE_LIMITER } from '@/server/utils/redis-rate-limiter'
 
 const finalizeSchema = z.object({
   uploadSessionId: z.string().min(1),
@@ -35,7 +35,7 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const rateLimitKey = userId
-    if (!FINALIZE_ROUTE_LIMITER.check(rateLimitKey)) {
+    if (!(await FINALIZE_ROUTE_LIMITER.check(rateLimitKey))) {
       return Response.json({ error: 'Rate limit exceeded' }, { status: 429 })
     }
 

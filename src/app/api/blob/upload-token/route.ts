@@ -15,7 +15,7 @@ import {
 } from '@/server/chat-assets/constants'
 import { buildChatAssetPathname } from '@/server/chat-assets/pathname'
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
-import { TOKEN_ROUTE_LIMITER } from '@/server/utils/rate-limiter'
+import { TOKEN_ROUTE_LIMITER } from '@/server/utils/redis-rate-limiter'
 
 const clientPayloadSchema = z.object({
   originalFilename: z.string().min(1).max(255),
@@ -39,7 +39,7 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const rateLimitKey = userId
-    if (!TOKEN_ROUTE_LIMITER.check(rateLimitKey)) {
+    if (!(await TOKEN_ROUTE_LIMITER.check(rateLimitKey))) {
       return Response.json({ error: 'Rate limit exceeded' }, { status: 429 })
     }
 

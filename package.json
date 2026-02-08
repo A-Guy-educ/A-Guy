@@ -114,6 +114,7 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@sentry/nextjs": "^10.32.1",
     "@vercel/blob": "^2.0.0",
+    "@vercel/kv": "^3.0.0",
     "ajv": "^8.17.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
