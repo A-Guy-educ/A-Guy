@@ -129,6 +129,15 @@ describe('Job Schemas', () => {
         lessonId: '507f1f77bcf86cd799439011',
         mediaId: '507f1f77bcf86cd799439012',
         extractorPromptId: '507f1f77bcf86cd799439013',
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('should accept backward compatible request with legacy verifierPromptId', () => {
+      const result = queueConversionSchema.safeParse({
+        lessonId: '507f1f77bcf86cd799439011',
+        mediaId: '507f1f77bcf86cd799439012',
+        extractorPromptId: '507f1f77bcf86cd799439013',
         verifierPromptId: '507f1f77bcf86cd799439014',
       })
       expect(result.success).toBe(true)

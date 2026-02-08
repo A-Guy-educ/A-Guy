@@ -31,15 +31,6 @@ describe('exercise-conversion helpers', () => {
       expect(() => validatePromptForUsageAndTenant(prompt, 'extractor', 'tenant-123')).not.toThrow()
     })
 
-    it('should pass for valid verifier prompt', () => {
-      const prompt = {
-        status: 'published',
-        usage: 'verifier',
-        tenant: { id: 'tenant-123' },
-      }
-      expect(() => validatePromptForUsageAndTenant(prompt, 'verifier', 'tenant-123')).not.toThrow()
-    })
-
     it('should throw for draft prompt', () => {
       const prompt = {
         status: 'draft',
@@ -54,11 +45,11 @@ describe('exercise-conversion helpers', () => {
     it('should throw for wrong usage type', () => {
       const prompt = {
         status: 'published',
-        usage: 'extractor',
+        usage: 'chat',
         tenant: { id: 'tenant-123' },
       }
-      expect(() => validatePromptForUsageAndTenant(prompt, 'verifier', 'tenant-123')).toThrow(
-        'Prompt usage is extractor',
+      expect(() => validatePromptForUsageAndTenant(prompt, 'extractor', 'tenant-123')).toThrow(
+        'Prompt usage is chat',
       )
     })
 

@@ -8,7 +8,8 @@ export interface QueueConversionParams {
   lessonId: string
   mediaId: string
   extractorPromptId: string
-  verifierPromptId: string
+  // DEPRECATED: verifierPromptId is no longer used, but kept optional for backward compat
+  verifierPromptId?: string
 }
 
 export interface ConversionResult {
@@ -70,15 +71,7 @@ export class ExerciseConversionService {
       throw ApiErrors.notFound('Extractor Prompt')
     }
 
-    const verifierPrompt = await this.payload.findByID({
-      collection: 'prompts',
-      id: params.verifierPromptId,
-      depth: 0,
-    })
-
-    if (!verifierPrompt) {
-      throw ApiErrors.notFound('Verifier Prompt')
-    }
+    // verifierPromptId is deprecated; even if present in params, we omit it from job input.
 
     // Get tenant ID from lesson
     const tenantId =
@@ -96,12 +89,10 @@ export class ExerciseConversionService {
     // Take a snapshot of the prompts for reproducibility
     const promptSnapshot = {
       extractor: typeof extractorPrompt.template === 'string' ? extractorPrompt.template : '',
-      verifier: typeof verifierPrompt.template === 'string' ? verifierPrompt.template : '',
     }
 
     // Compute hash of prompt content for change detection
     const extractorHash = await this.hashContent(promptSnapshot.extractor)
-    const verifierHash = await this.hashContent(promptSnapshot.verifier)
 
     // Queue the job via Payload's job system
     const job = await this.payload.jobs.queue({
@@ -111,12 +102,10 @@ export class ExerciseConversionService {
         maxSegmentPages: 3,
         promptRefs: {
           extractorPromptId: params.extractorPromptId,
-          verifierPromptId: params.verifierPromptId,
         },
         promptSnapshot,
         promptSnapshotHash: {
           extractor: extractorHash,
-          verifier: verifierHash,
         },
       },
     })

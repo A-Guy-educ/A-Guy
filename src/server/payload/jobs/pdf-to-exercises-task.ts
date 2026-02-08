@@ -20,7 +20,6 @@ import {
   enrichBlockIds,
   normalizeExerciseInput,
   parseExtractorResponseText,
-  parseVerifierResponseText,
   toPayloadContent,
 } from '@/server/services/exercise-conversion/helpers'
 import {
@@ -51,6 +50,7 @@ export const pdfToExercisesTask = {
       exercisesSkipped: 0, // v2.1: Track skipped exercises
       errors: [],
       segments: [],
+      verifierDisabled: true,
     }
 
     try {
@@ -108,7 +108,6 @@ export const pdfToExercisesTask = {
             attachments, // Provider-agnostic attachment format
             segment,
             extractorPrompt: input.promptSnapshot.extractor,
-            verifierPrompt: input.promptSnapshot.verifier,
             output, // v2.1: Pass output for exercisesSkipped tracking
             tenantId, // For SystemParams access
           })
@@ -310,6 +309,11 @@ export const pdfToExercisesTask = {
 
       // Mark job as completed
       await updateJobStatus(payload, job.id, 'completed', output)
+
+      console.info(
+        `[PDF→Exercises] Job complete: extracted=${output.segmentsDone}, schemaSkipped=${output.exercisesSkipped}, persisted=${output.exercisesCreated}, verifierDisabled=true`,
+      )
+
       return output
     } catch (error: any) {
       console.error(`[PDF→Exercises] Job ${job.id} failed:`, error)
@@ -386,12 +390,11 @@ async function processSegmentWithMultimodal(
     attachments: Array<{ data: string; mimeType: string }> // Provider-agnostic format
     segment: { pageStart: number; pageEnd: number }
     extractorPrompt: string
-    verifierPrompt: string
     output: any // For tracking exercisesSkipped
     tenantId: string // For SystemParams access
   },
 ) {
-  const { attachments, segment, extractorPrompt, verifierPrompt, output, tenantId } = context
+  const { attachments, segment, extractorPrompt, output, tenantId } = context
 
   // ========== Call Extractor with MULTIMODAL PDF Attachment ==========
   const extractorPromptWithContext = `${extractorPrompt}
@@ -439,75 +442,11 @@ Return a JSON array of exercises with this schema:
   // ========== Enrich with block IDs if missing ==========
   const enrichedExercises = extracted.map((exercise) => enrichBlockIds(exercise))
 
-  // ========== Call Verifier with RETRY-ONCE-THEN-SKIP logic ==========
-  const validExercises: any[] = []
+  console.info(
+    '[PDF→Exercises] Verifier step disabled; exercises pass through after schema validation only',
+  )
 
-  for (const exercise of enrichedExercises) {
-    const verifierPromptWithContext = `${verifierPrompt}
-
-Exercise to verify:
-${JSON.stringify(exercise, null, 2)}
-
-Source PDF pages: ${segment.pageStart}-${segment.pageEnd}
-
-Return JSON: { "valid": boolean, "reason": "..." }`
-
-    // First verification attempt
-    let verification = await callVerifier(payload, attachments, verifierPromptWithContext)
-
-    // Retry once if verification fails
-    if (!verification.valid) {
-      verification = await callVerifier(payload, attachments, verifierPromptWithContext)
-    }
-
-    // Skip invalid exercises instead of failing the job
-    if (!verification.valid) {
-      console.warn(
-        `[PDF→Exercises] Skipping exercise "${exercise.title}" after retry: ${verification.reason}`,
-      )
-      output.errors.push({
-        stage: 'PASS2_VERIFY',
-        pageRange: { start: segment.pageStart, end: segment.pageEnd },
-        code: 'VERIFICATION_FAILED',
-        message: verification.reason || 'Verification failed after retry',
-        exerciseTitle: exercise.title,
-        skipped: true,
-      })
-      output.exercisesSkipped = (output.exercisesSkipped || 0) + 1
-      continue // Skip this exercise, continue with others
-    }
-
-    validExercises.push(exercise)
-  }
-
-  return validExercises
-}
-
-/**
- * Helper to call verifier using factory provider
- */
-async function callVerifier(
-  payload: any,
-  attachments: Array<{ data: string; mimeType: string }>,
-  prompt: string,
-): Promise<{ valid: boolean; reason?: string }> {
-  try {
-    const provider = await getLLMProvider(payload)
-    const providerType = await getProviderTypeFromEnv(payload)
-    const modelConfig = getProviderModelConfig(providerType, 'PDF_TO_EXERCISE')
-
-    const result = await provider.generateMultimodalCompletion(
-      {
-        prompt,
-        model: modelConfig,
-        attachments,
-      },
-      payload,
-    )
-    return parseVerifierResponseText(result.text)
-  } catch (error) {
-    return { valid: false, reason: `Verifier call failed: ${error}` }
-  }
+  return enrichedExercises
 }
 
 /**

@@ -668,9 +668,9 @@ export interface Prompt {
    */
   tenant: string | Tenant;
   /**
-   * Purpose of this prompt: chat conversation, PDF extraction, or PDF verification
+   * Purpose of this prompt: chat conversation or PDF extraction
    */
-  usage?: ('chat' | 'extractor' | 'verifier') | null;
+  usage?: ('chat' | 'extractor') | null;
   updatedAt: string;
   createdAt: string;
 }

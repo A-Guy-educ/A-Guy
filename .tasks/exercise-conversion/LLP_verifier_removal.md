@@ -70,7 +70,8 @@ Generated (do not edit manually):
 
 1. Create a feature branch.
 2. Ensure Node/pnpm are available.
-3. Confirm you can run:
+3. Ensure MongoDB is running (`pnpm db:start`) and dev server can start (`pnpm dev`).
+4. Confirm you can run:
 
 ```bash
 pnpm -v
@@ -127,6 +128,11 @@ options: [
 
 Note: legacy documents with `usage = verifier` remain in DB (no migration).
 
+**Admin UX impact**: Legacy verifier prompts will display with `usage = 'verifier'` in the Prompts collection admin UI, but the field's select dropdown will no longer include that option. This is acceptable; admins can manually delete these documents. Add a follow-up ticket to either:
+
+- Migrate legacy docs to a new `usage = 'legacy_verifier'` (with admin filter to hide them), OR
+- Add a data migration to delete them entirely.
+
 ### Layer 2: Helpers
 
 #### Step 4 - Remove verifier parsing helper and narrow prompt validation to extractor
@@ -148,7 +154,9 @@ Delete the entire `parseVerifierResponseText` function.
 
 File: `src/server/payload/services/exercise-conversion-service.ts`
 
-- Remove `verifierPromptId` from `QueueConversionParams`
+- Remove `verifierPromptId` from `QueueConversionParams` type signature.
+- **If the function still receives it** (e.g., via spread or partial params), explicitly ignore it and do NOT pass it to `payload.jobs.queue`.
+- Add inline comment: `// verifierPromptId is deprecated; even if present in params, we omit it from job input.`
 - Remove verifier prompt fetch + not-found check
 - Remove verifier from `promptSnapshot`
 - Remove verifier hash computation
@@ -194,9 +202,17 @@ Clean up comments:
 - Remove references to "verifier pattern" in comments.
 - Do not remove schema validation skip logic; it remains the only gate.
 
-Recommended observability (non-breaking):
+**Mandatory observability** (non-breaking):
 
-- Add `output.verifierDisabled = true` to the job output object initialization (output is `any` in the task).
+- Add `output.verifierDisabled = true` to the job output object initialization.
+- **If `output` has a TypeScript type**, update the type definition to include `verifierDisabled?: boolean` to avoid build errors.
+- At job completion (before final return), add info log:
+  ```ts
+  console.info(
+    `[PDF→Exercises] Job complete: extracted=${totalExtracted}, schemaSkipped=${schemaSkipped}, persisted=${persistedCount}, verifierDisabled=true`,
+  )
+  ```
+- Ensure these counters are already tracked or derive them from existing variables (e.g., `enrichedExercises.length`).
 
 ### Layer 4: API Routes
 
@@ -219,14 +235,22 @@ File: `src/app/api/exercises/convert/queue/route.ts`
 
 Request body:
 
-- Stop destructuring `verifierPromptId`.
+- Stop destructuring `verifierPromptId` from the validated body.
+- **Add deprecation warning**: After Zod validation, if `body.verifierPromptId` is present, emit:
+  ```ts
+  if (body.verifierPromptId) {
+    console.warn(
+      '[Queue API] verifierPromptId is deprecated and ignored. Remove from client. Will be rejected after next release.',
+    )
+  }
+  ```
 - Update comment that currently says verifierPromptId is required.
 
 Prompt fetching/validation:
 
 - Delete verifier prompt `findByID` block.
 - Remove verifier `validatePromptForUsageAndTenant(..., 'verifier', ...)` call.
-- Remove verifier prompt size check.
+- Remove verifier prompt size check. **IMPORTANT**: Ensure extractor size check remains intact (do NOT remove it).
 - Remove verifier hash computation.
 
 Job input snapshot:
@@ -347,6 +371,7 @@ Run in order, stop on first failure:
 
 ```bash
 pnpm tsc --noEmit
+pnpm format:check
 pnpm lint
 pnpm test
 ```
@@ -356,7 +381,9 @@ pnpm test
 - Admin UI: PDF conversion page shows only extractor selector (no verifier selector).
 - API: `/api/prompts/for-conversion` returns only `extractors`.
 - API: `/api/exercises/convert/queue` succeeds without `verifierPromptId`.
+- Queue a real job via admin UI and verify job output includes `verifierDisabled: true` and counter logs in job runner output.
 - Prompts collection: existing `usage = verifier` docs may display as legacy; this is accepted.
+- **Optional**: In Prompts collection admin, open a legacy verifier prompt and edit a non-usage field (e.g., title). Verify save succeeds without UI errors or auto-clearing the usage field.
 
 ### Layer 10: Final Repo-Wide Verification (do not skip)
 
@@ -374,6 +401,8 @@ rg -n "parseVerifierResponseText" src tests
 rg -n "callVerifier" src tests
 rg -n "selectVerifier" src tests
 rg -n "verifierPrompt" src tests
+rg -n "validatePromptForUsageAndTenant" src tests  # Ensure no stray 'verifier' callers remain
+rg -n "verifierDisabled" src tests  # Should only appear in job task output and this plan
 ```
 
 Allowed exceptions:
@@ -394,9 +423,13 @@ Must return zero hits.
 
 If this change causes production issues:
 
-1. Revert the PR (code rollback).
+1. **Immediate**: Revert the PR (code rollback via git revert + redeploy).
 2. Because legacy verifier prompt documents were never deleted from the DB, reverting restores the old behavior immediately.
-3. Caveat: jobs queued after this change will not include verifier snapshot fields; if reverting to old code that requires them, those jobs may fail. If needed, manually re-queue those jobs with the old UI/inputs.
+3. **In-flight jobs fix** (choose one):
+   - **Default (recommended)**: Patch the reverted code to make verifier fields optional in job input types (same as Step 1 of this plan) so in-flight jobs without verifier snapshot can complete.
+   - **Alternative**: If reverted code requires verifier fields, manually re-queue all jobs created during the no-verifier window using the old admin UI.
+4. **Post-rollback audit**: Run `rg -n "verifierPromptId" src/server/payload/jobs` to confirm optional fields are present in reverted code.
+5. Investigate root cause before attempting removal again.
 
 ## PR Description (copy/paste template)
 
@@ -411,6 +444,8 @@ If this change causes production issues:
 - Removed `parseVerifierResponseText` and `callVerifier`
 - Narrowed `validatePromptForUsageAndTenant` to `extractor` only
 - Removed verifier i18n keys (en + he)
+- Added deprecation warning log when legacy `verifierPromptId` is posted to queue API
+- Added mandatory observability: `output.verifierDisabled=true` + counter logs in job task
 
 ## Backward Compatibility
 
@@ -437,10 +472,13 @@ If this change causes production issues:
 - Remove `verifierPromptId` from `src/server/api/schemas/job-schemas.ts` (stop accepting it)
 - Optionally return a 400 error if `verifierPromptId` is posted after deprecation window
 
-2. Phase 2 (separate plan)
-
-- Implement hardcoded contract verifier (deterministic checks) and decide on failure handling (skip vs flag vs block).
-
 3. Monitoring (recommended)
 
 - Track extracted vs schema-skipped counts per job for post-deploy quality correlation.
+
+4. Legacy Prompts cleanup (recommended)
+
+- Decide on migration strategy for `usage='verifier'` documents in Prompts collection:
+  - Option A: Migrate to `usage='legacy_verifier'` + add admin filter to hide
+  - Option B: Data migration to delete entirely
+  - Option C: Accept they remain visible but unsupported in admin (current state)

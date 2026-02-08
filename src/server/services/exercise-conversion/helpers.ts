@@ -68,7 +68,7 @@ export function buildJobsWhereQuery(lessonId: string, mediaId: string): object {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validatePromptForUsageAndTenant(
   promptDoc: { status: string; usage: string; tenant: any },
-  expectedUsage: 'extractor' | 'verifier',
+  expectedUsage: 'extractor',
   lessonTenantId: string,
 ): void {
   if (promptDoc.status !== 'published') {
@@ -178,55 +178,6 @@ export function parseExtractorResponseText(responseText: string): any[] {
     throw {
       code: 'PARSE_EXTRACTOR_RESPONSE_FAILED',
       message: `Failed to parse extractor response: ${error}`,
-    }
-  }
-}
-
-/**
- * Parse verifier response - pure string parsing.
- * v2.2 Fix: Handle malformed JSON with escape sequence issues from LLM.
- */
-export function parseVerifierResponseText(responseText: string): {
-  valid: boolean
-  reason?: string
-} {
-  try {
-    const jsonMatch =
-      responseText.match(/\{[\s\S]*\}/) || responseText.match(/```json\n([\s\S]*?)\n```/)
-    const jsonStr = jsonMatch?.[1] || jsonMatch?.[0] || responseText
-
-    // First attempt: direct parse
-    try {
-      return JSON.parse(jsonStr)
-    } catch {
-      // Second attempt: unescape double-backslashes
-      const unescaped = jsonStr.replace(/\\\\/g, '\\')
-      try {
-        return JSON.parse(unescaped)
-      } catch {
-        // Third attempt: trim and try again
-        const trimmed = jsonStr.trim()
-        try {
-          return JSON.parse(trimmed)
-        } catch (finalError) {
-          console.error('[parseVerifierResponseText] Failed to parse:', {
-            originalLength: responseText.length,
-            snippet: responseText.substring(0, 200),
-          })
-          throw {
-            code: 'PARSE_VERIFIER_RESPONSE_FAILED',
-            message: `Failed to parse verifier response: ${finalError}`,
-          }
-        }
-      }
-    }
-  } catch (error) {
-    if (error && typeof error === 'object' && 'code' in error) {
-      throw error
-    }
-    throw {
-      code: 'PARSE_VERIFIER_RESPONSE_FAILED',
-      message: `Failed to parse verifier response: ${error}`,
     }
   }
 }

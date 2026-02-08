@@ -88,33 +88,10 @@ export async function POST(request: NextRequest) {
       overrideAccess: true,
     })
 
-    // Fetch published verifier prompts for this tenant
-    const verifiers = await payload.find({
-      collection: 'prompts',
-      where: {
-        and: [
-          { tenant: { equals: tenantId } },
-          { status: { equals: 'published' } },
-          { usage: { equals: 'verifier' } },
-        ],
-      },
-      limit: 100,
-      depth: 0,
-      overrideAccess: true,
-    })
-
     // Return in PromptOption format used by UI
     // v2.1 Fix 1: Include status field in response
     return NextResponse.json({
       extractors: extractors.docs.map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        key: p.key,
-        type: p.type,
-        usage: p.usage,
-        status: p.status, // v2.1: Required by tests
-      })),
-      verifiers: verifiers.docs.map((p: any) => ({
         id: p.id,
         title: p.title,
         key: p.key,

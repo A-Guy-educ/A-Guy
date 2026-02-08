@@ -35,15 +35,18 @@ export interface PdfToExercisesInput {
   maxSegmentPages: number
   promptRefs: {
     extractorPromptId: string
-    verifierPromptId: string
+    // DEPRECATED: legacy field, ignored at runtime. Hard-delete after next release.
+    verifierPromptId?: string
   }
   promptSnapshot: {
     extractor: string
-    verifier: string
+    // DEPRECATED: legacy field, ignored at runtime. Hard-delete after next release.
+    verifier?: string
   }
   promptSnapshotHash: {
     extractor: string
-    verifier: string
+    // DEPRECATED: legacy field, ignored at runtime. Hard-delete after next release.
+    verifier?: string
   }
 }
 

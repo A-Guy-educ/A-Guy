@@ -170,32 +170,18 @@ describe('Jobs Run Now', () => {
       } as any,
     })
 
-    const verifierPrompt = await payload.create({
-      collection: 'prompts',
-      data: {
-        title: 'Test Verifier Prompt',
-        slug: `test-verifier-${Date.now()}`,
-        usage: 'verifier',
-        template: 'Verify this exercise is valid.',
-        status: 'published',
-        tenant: tenant.id,
-      } as any,
-    })
-
     // Queue a job
     const job = await payload.jobs.queue({
       task: 'pdf_to_exercises',
       input: {
         ctx: { lessonId: lesson.id, sourceDocId: media.id, tenantId: tenant.id },
         maxSegmentPages: 2,
-        promptRefs: { extractorPromptId: extractorPrompt.id, verifierPromptId: verifierPrompt.id },
+        promptRefs: { extractorPromptId: extractorPrompt.id },
         promptSnapshot: {
           extractor: extractorPrompt.template,
-          verifier: verifierPrompt.template,
         },
         promptSnapshotHash: {
           extractor: 'test-hash-1',
-          verifier: 'test-hash-2',
         },
       },
     })
@@ -238,7 +224,6 @@ describe('Jobs Run Now', () => {
     await payload.delete({ collection: 'courses', id: course.id })
     await payload.delete({ collection: 'media', id: media.id })
     await payload.delete({ collection: 'prompts', id: extractorPrompt.id })
-    await payload.delete({ collection: 'prompts', id: verifierPrompt.id })
     await payload.delete({ collection: 'users', id: user.id })
     await payload.delete({ collection: 'tenants', id: tenant.id })
 
@@ -257,9 +242,9 @@ describe('Jobs Run Now', () => {
       input: {
         ctx: { lessonId: 'test-lesson', sourceDocId: 'test-media', tenantId: 'test-tenant' },
         maxSegmentPages: 2,
-        promptRefs: { extractorPromptId: 'test-extractor', verifierPromptId: 'test-verifier' },
-        promptSnapshot: { extractor: 'test', verifier: 'test' },
-        promptSnapshotHash: { extractor: 'hash1', verifier: 'hash2' },
+        promptRefs: { extractorPromptId: 'test-extractor' },
+        promptSnapshot: { extractor: 'test' },
+        promptSnapshotHash: { extractor: 'hash1' },
       },
     })
 

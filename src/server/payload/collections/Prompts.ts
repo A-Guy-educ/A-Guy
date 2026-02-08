@@ -83,19 +83,17 @@ export const Prompts: CollectionConfig = {
     },
     // ADD: tenant scoping
     tenantField,
-    // ADD: usage for conversion (extractor/verifier) - NOT a replacement for type field
+    // ADD: usage for conversion (extractor only) - NOT a replacement for type field
     {
       name: 'usage',
       type: 'select',
       options: [
         { label: 'Chat', value: 'chat' },
         { label: 'PDF Extractor', value: 'extractor' },
-        { label: 'PDF Verifier', value: 'verifier' },
       ],
       defaultValue: 'chat',
       admin: {
-        description:
-          'Purpose of this prompt: chat conversation, PDF extraction, or PDF verification',
+        description: 'Purpose of this prompt: chat conversation or PDF extraction',
         position: 'sidebar',
       },
     },

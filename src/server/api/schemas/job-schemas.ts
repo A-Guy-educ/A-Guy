@@ -16,7 +16,8 @@ export const queueConversionSchema = z.object({
   lessonId: objectIdSchema,
   mediaId: objectIdSchema,
   extractorPromptId: objectIdSchema,
-  verifierPromptId: objectIdSchema,
+  // DEPRECATED: accepted for backward compat, ignored. Remove after next release.
+  verifierPromptId: objectIdSchema.optional(),
   diagramPromptId: objectIdSchema.optional(),
 })
 

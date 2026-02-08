@@ -68,7 +68,7 @@ export const SystemParams = {
   },
 
   /**
-   * Maximum allowed size for extractor/verifier prompts in bytes
+   * Maximum allowed size for extractor prompts in bytes
    *
    * @param tenantId - Optional tenant ID (uses default if not provided)
    * @default 51200 (50KB)

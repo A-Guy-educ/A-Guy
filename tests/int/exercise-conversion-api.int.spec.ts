@@ -167,20 +167,6 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Conversion API', () => {
         } as any,
       })
 
-      // Create verifier prompt
-      const verifierPrompt = await payload.create({
-        collection: 'prompts',
-        data: {
-          title: `Test Verifier ${timestamp}`,
-          key: `verifier-${timestamp}`,
-          template: 'Verify the exercise is correct',
-          type: 'system',
-          usage: 'verifier',
-          status: 'published',
-          tenant: 'default',
-        } as any,
-      })
-
       // Now test the endpoint with TEST_ADMIN_SECRET
       const response = await fetch('http://localhost:3000/api/prompts/for-conversion', {
         method: 'POST',
@@ -196,11 +182,10 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Conversion API', () => {
 
       const data = await response.json()
       expect(data.extractors).toBeDefined()
-      expect(data.verifiers).toBeDefined()
+      expect(data.verifiers).toBeUndefined()
 
       // Clean up test prompts
       await payload.delete({ collection: 'prompts', id: extractorPrompt.id })
-      await payload.delete({ collection: 'prompts', id: verifierPrompt.id })
       await payload.delete({ collection: 'lessons', id: lesson.id })
       await payload.delete({ collection: 'chapters', id: chapter.id })
       await payload.delete({ collection: 'courses', id: course.id })
@@ -219,7 +204,6 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Conversion API', () => {
             lessonId: 'some-lesson-id',
             mediaId: 'some-media-id',
             extractorPromptId: 'some-prompt-id',
-            verifierPromptId: 'some-prompt-id',
           }),
         },
       )
@@ -301,20 +285,6 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Conversion API', () => {
         } as any,
       })
 
-      // Create verifier prompt
-      const verifierPrompt = await payload.create({
-        collection: 'prompts',
-        data: {
-          title: `Test Verifier Queue ${timestamp}`,
-          key: `verifier-queue-${timestamp}`,
-          template: 'Verify the exercise is correct',
-          type: 'system',
-          usage: 'verifier',
-          status: 'published',
-          tenant: 'default',
-        } as any,
-      })
-
       // Create media file
       const media = await payload.create({
         collection: 'media',
@@ -335,7 +305,6 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Conversion API', () => {
           lessonId: lesson.id,
           mediaId: media.id,
           extractorPromptId: extractorPrompt.id,
-          verifierPromptId: verifierPrompt.id,
         }),
       })
 
@@ -348,7 +317,6 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Conversion API', () => {
 
       // Clean up test data
       await payload.delete({ collection: 'prompts', id: extractorPrompt.id })
-      await payload.delete({ collection: 'prompts', id: verifierPrompt.id })
       await payload.delete({ collection: 'media', id: media.id })
       await payload.delete({ collection: 'lessons', id: lesson.id })
       await payload.delete({ collection: 'chapters', id: chapter.id })

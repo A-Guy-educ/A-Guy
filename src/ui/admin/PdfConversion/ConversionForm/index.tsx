@@ -85,13 +85,11 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null)
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null)
   const [extractorPromptId, setExtractorPromptId] = useState<string>('')
-  const [verifierPromptId, setVerifierPromptId] = useState<string>('')
   const [diagramPromptId, setDiagramPromptId] = useState<string>('')
   const [prompts, setPrompts] = useState<{
     extractors: PromptOption[]
-    verifiers: PromptOption[]
     diagramGenerators: PromptOption[]
-  }>({ extractors: [], verifiers: [], diagramGenerators: [] })
+  }>({ extractors: [], diagramGenerators: [] })
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -99,7 +97,7 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
 
   useEffect(() => {
     if (!selectedLessonId) {
-      setPrompts({ extractors: [], verifiers: [], diagramGenerators: [] })
+      setPrompts({ extractors: [], diagramGenerators: [] })
       return
     }
 
@@ -122,7 +120,6 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
         const data = await response.json()
         setPrompts({
           extractors: data.extractors || [],
-          verifiers: data.verifiers || [],
           diagramGenerators: data.diagramGenerators || [],
         })
       } catch (err) {
@@ -140,7 +137,6 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
     setSelectedLessonId(lessonId)
     setSelectedMediaId(null)
     setExtractorPromptId('')
-    setVerifierPromptId('')
     setDiagramPromptId('')
   }, [])
 
@@ -149,7 +145,7 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
     setError(null)
     setSuccess(false)
 
-    if (!selectedLessonId || !selectedMediaId || !extractorPromptId || !verifierPromptId) {
+    if (!selectedLessonId || !selectedMediaId || !extractorPromptId) {
       setError('Please fill in all required fields')
       return
     }
@@ -161,7 +157,6 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
         lessonId: selectedLessonId,
         mediaId: selectedMediaId,
         extractorPromptId,
-        verifierPromptId,
       }
 
       if (diagramPromptId) {
@@ -188,7 +183,6 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
         setSelectedLessonId(null)
         setSelectedMediaId(null)
         setExtractorPromptId('')
-        setVerifierPromptId('')
         setDiagramPromptId('')
       }, 2000)
     } catch (err) {
@@ -198,7 +192,7 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
     }
   }
 
-  const isFormValid = selectedLessonId && selectedMediaId && extractorPromptId && verifierPromptId
+  const isFormValid = selectedLessonId && selectedMediaId && extractorPromptId
 
   return (
     <form style={cardStyle} onSubmit={handleSubmit}>
@@ -225,12 +219,11 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
         <div style={loadingStyle}>Loading prompts...</div>
       ) : !selectedLessonId ? (
         <div style={emptyStateStyle}>Select a lesson above to load available prompts</div>
-      ) : prompts.extractors.length === 0 && prompts.verifiers.length === 0 ? (
+      ) : prompts.extractors.length === 0 ? (
         <div style={emptyStateStyle}>
-          <strong>No prompts found</strong>
+          <strong>No extractor prompts found</strong>
           <p style={{ margin: '4px 0 0 0' }}>
-            Create published prompts with usage types extractor and verifier for the selected lesson
-            tenant
+            Create a published prompt with usage type extractor for the selected lesson tenant
           </p>
         </div>
       ) : (
@@ -251,29 +244,6 @@ export function ConversionForm({ onQueued }: ConversionFormProps) {
             >
               <option value="">Select extractor prompt</option>
               {prompts.extractors.map((prompt) => (
-                <option key={prompt.id} value={prompt.id}>
-                  {prompt.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div style={fieldGroupStyle}>
-            <label htmlFor="verifier-prompt" style={labelStyle}>
-              Verifier Prompt *
-              {prompts.verifiers.length > 0 && (
-                <span style={helperTextStyle}>({prompts.verifiers.length} available)</span>
-              )}
-            </label>
-            <select
-              id="verifier-prompt"
-              style={selectStyle}
-              value={verifierPromptId}
-              onChange={(e) => setVerifierPromptId(e.target.value)}
-              required
-            >
-              <option value="">Select verifier prompt</option>
-              {prompts.verifiers.map((prompt) => (
                 <option key={prompt.id} value={prompt.id}>
                   {prompt.title}
                 </option>

@@ -59,9 +59,17 @@ export async function POST(request: NextRequest) {
       return errorResponse('UNAUTHORIZED', 'Admin access required', 401)
     }
 
-    const { lessonId, mediaId, extractorPromptId, verifierPromptId } = await request.json()
+    const body = await request.json()
+    const { lessonId, mediaId, extractorPromptId, verifierPromptId } = body
 
-    // lessonId, mediaId, extractorPromptId, and verifierPromptId are required
+    // Deprecation warning for legacy verifierPromptId
+    if (verifierPromptId) {
+      console.warn(
+        '[Queue API] verifierPromptId is deprecated and ignored. Remove from client. Will be rejected after next release.',
+      )
+    }
+
+    // lessonId, mediaId, and extractorPromptId are required
 
     // ========== Server-side Tenant Resolution (BEFORE prompt validation) ==========
     // Tenant is directly on the lesson, not through course
@@ -110,30 +118,6 @@ export async function POST(request: NextRequest) {
       lessonTenantId,
     )
 
-    // Fetch verifier prompt once
-    const verifierPrompt = await payload.findByID({
-      collection: 'prompts',
-      id: verifierPromptId,
-      depth: 0,
-      overrideAccess: true,
-    })
-
-    // v2.1 Fix 8: Check prompt exists before validation
-    if (!verifierPrompt) {
-      return errorResponse(
-        'PROMPT_NOT_FOUND',
-        `Verifier prompt not found: ${verifierPromptId}`,
-        400,
-      )
-    }
-
-    // Validate verifier prompt (published, usage, tenant)
-    validatePromptForUsageAndTenant(
-      verifierPrompt as unknown as { status: string; usage: string; tenant: any },
-      'verifier',
-      lessonTenantId,
-    )
-
     // ========== Prompt Size Validation (after validation passes) ==========
     // Use byteLength for accurate size check (UTF-8 encoding)
     const maxPromptSize = await getPdfConversionMaxPromptSizeBytes(lessonTenantId)
@@ -145,15 +129,10 @@ export async function POST(request: NextRequest) {
         400,
       )
     }
-    const verifierSize = Buffer.byteLength(verifierPrompt.template, 'utf8')
-    if (verifierSize > maxPromptSize) {
-      return errorResponse('VALIDATION_ERROR', 'Verifier prompt template exceeds maximum size', 400)
-    }
 
     // ========== Store Prompt Snapshots (Immutability) ==========
     // Use existing hash utility
     const extractorHash = hashTextSha256(extractorPrompt.template)
-    const verifierHash = hashTextSha256(verifierPrompt.template)
 
     // ========== Queue the Job ==========
     const job = await payload.jobs.queue({
@@ -163,15 +142,12 @@ export async function POST(request: NextRequest) {
         maxSegmentPages: 2,
         promptRefs: {
           extractorPromptId,
-          verifierPromptId,
         },
         promptSnapshot: {
           extractor: extractorPrompt.template,
-          verifier: verifierPrompt.template,
         },
         promptSnapshotHash: {
           extractor: extractorHash,
-          verifier: verifierHash,
         },
       },
     })

@@ -19,9 +19,7 @@ interface PromptOption {
 
 export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFormProps) {
   const [extractorPrompts, setExtractorPrompts] = useState<PromptOption[]>([])
-  const [verifierPrompts, setVerifierPrompts] = useState<PromptOption[]>([])
   const [selectedExtractor, setSelectedExtractor] = useState<string>('')
-  const [selectedVerifier, setSelectedVerifier] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -43,7 +41,6 @@ export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFor
 
         const data = await response.json()
         setExtractorPrompts(data.extractors || [])
-        setVerifierPrompts(data.verifiers || [])
       } catch {
         setError('Failed to load prompts')
       } finally {
@@ -66,7 +63,6 @@ export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFor
           lessonId,
           mediaId,
           extractorPromptId: selectedExtractor,
-          verifierPromptId: selectedVerifier,
         }),
         credentials: 'include',
       })
@@ -188,28 +184,6 @@ export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFor
             ))}
           </select>
 
-          <select
-            value={selectedVerifier}
-            onChange={(e) => setSelectedVerifier(e.target.value)}
-            style={{
-              width: '100%',
-              height: 28,
-              padding: '0 8px',
-              fontSize: 12,
-              border: '1px solid var(--theme-elevation-200)',
-              borderRadius: 3,
-              backgroundColor: 'var(--theme-elevation-0)',
-              color: 'var(--theme-elevation-1000)',
-            }}
-          >
-            <option value="">Select Verifier...</option>
-            {verifierPrompts.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.title}
-              </option>
-            ))}
-          </select>
-
           <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
             <button
               onClick={onClose}
@@ -230,7 +204,7 @@ export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFor
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting || !selectedExtractor || !selectedVerifier}
+              disabled={isSubmitting || !selectedExtractor}
               style={{
                 padding: '4px 12px',
                 fontSize: 11,
@@ -239,11 +213,8 @@ export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFor
                 borderRadius: 3,
                 backgroundColor: 'var(--theme-elevation-900)',
                 color: 'var(--theme-elevation-0)',
-                cursor:
-                  isSubmitting || !selectedExtractor || !selectedVerifier
-                    ? 'not-allowed'
-                    : 'pointer',
-                opacity: isSubmitting || !selectedExtractor || !selectedVerifier ? 0.5 : 1,
+                cursor: isSubmitting || !selectedExtractor ? 'not-allowed' : 'pointer',
+                opacity: isSubmitting || !selectedExtractor ? 0.5 : 1,
               }}
             >
               {isSubmitting ? '...' : 'Convert'}
