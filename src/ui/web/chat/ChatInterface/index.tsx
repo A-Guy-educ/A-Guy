@@ -131,11 +131,6 @@ export function ChatInterface({
     categoryId,
     adminMode,
     userId,
-    // Media upload messages
-    unsupportedFileTypeMessage: tCourses('chatUnsupportedFileType'),
-    fileTooLargeMessage: tCourses('chatFileTooLarge'),
-    maxFilesMessage: tCourses('chatMaxFiles'),
-    uploadFailedMessage: tCourses('chatUploadFailed'),
   })
 
   // Math tools state

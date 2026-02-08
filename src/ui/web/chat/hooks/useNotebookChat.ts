@@ -16,21 +16,10 @@ export interface ChatMessage {
   chatAssets?: Array<{ chatAssetId: string; filename?: string }>
 }
 
-export interface UploadedMedia {
-  id: string
-  filename: string
-  mimeType: string
-}
-
 export interface ChatError {
   type: 'auth' | 'general'
   message: string
 }
-
-// Legacy media upload constraints
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const MAX_FILES = 5
 
 interface UseNotebookChatProps {
   initialMessage: string
@@ -52,11 +41,6 @@ interface UseNotebookChatProps {
   // Admin mode - uses user-specific context without course/lesson context
   adminMode?: boolean
   userId?: string
-  // Media upload messages
-  unsupportedFileTypeMessage?: string
-  fileTooLargeMessage?: string
-  maxFilesMessage?: string
-  uploadFailedMessage?: string
 }
 
 export function useNotebookChat({
@@ -77,10 +61,6 @@ export function useNotebookChat({
   categoryId,
   adminMode = false,
   userId,
-  unsupportedFileTypeMessage = 'Unsupported file type',
-  fileTooLargeMessage = 'File too large (max 10MB)',
-  maxFilesMessage = 'Maximum 5 files allowed',
-  uploadFailedMessage = 'Failed to upload file',
 }: UseNotebookChatProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -93,10 +73,6 @@ export function useNotebookChat({
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
-
-  // Media upload state
-  const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([])
-  const [isUploading, setIsUploading] = useState(false)
 
   // Direct-to-Blob chat asset uploads
   const {
@@ -296,112 +272,25 @@ export function useNotebookChat({
     loadConversationHistory()
   }, [contextKey])
 
-  // Handle file selection for media upload
-  const handleFileSelect = useCallback(
-    async (files: FileList | null) => {
-      if (!files || files.length === 0) return
-
-      // Check max files limit
-      if (uploadedMedia.length + files.length > MAX_FILES) {
-        toast.error(maxFilesMessage)
-        return
-      }
-
-      setIsUploading(true)
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-
-        // Validate file type
-        if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-          toast.error(`${file.name}: ${unsupportedFileTypeMessage}`)
-          continue
-        }
-
-        // Validate file size
-        if (file.size > MAX_FILE_SIZE) {
-          toast.error(`${file.name}: ${fileTooLargeMessage}`)
-          continue
-        }
-
-        try {
-          const formData = new FormData()
-          formData.append('file', file)
-
-          const response = await fetch('/api/media', {
-            method: 'POST',
-            credentials: 'include',
-            body: formData,
-          })
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            throw new Error(errorData.message || errorData.error || 'Upload failed')
-          }
-
-          const doc = await response.json()
-          setUploadedMedia((prev) => [
-            ...prev,
-            {
-              id: doc.doc?.id || doc.id,
-              filename: doc.doc?.filename || doc.filename || file.name,
-              mimeType: file.type,
-            },
-          ])
-        } catch (error) {
-          logger.error({ err: error, filename: file.name }, 'Media upload failed')
-          toast.error(`${file.name}: ${uploadFailedMessage}`)
-        }
-      }
-
-      setIsUploading(false)
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    },
-    [
-      uploadedMedia.length,
-      maxFilesMessage,
-      unsupportedFileTypeMessage,
-      fileTooLargeMessage,
-      uploadFailedMessage,
-    ],
-  )
-
-  // Remove uploaded media
-  const removeMedia = useCallback((mediaId: string) => {
-    setUploadedMedia((prev) => prev.filter((m) => m.id !== mediaId))
-  }, [])
-
   // Trigger file picker
   const openFilePicker = useCallback(() => {
     fileInputRef.current?.click()
   }, [])
 
   const sendMessage = async (message: string) => {
-    if (
-      (!message.trim() && uploadedMedia.length === 0 && completedChatAssetIds.length === 0) ||
-      isLoading
-    )
-      return
+    if ((!message.trim() && completedChatAssetIds.length === 0) || isLoading) return
 
-    // Capture mediaIds and metadata before clearing
-    const mediaIds = uploadedMedia.map((m) => m.id)
-    const mediaMetadata = uploadedMedia.map((m) => ({ mediaId: m.id, filename: m.filename }))
+    // Capture chat asset metadata before clearing
     const chatAssetMetadata = completedChatAssetIds.map((id) => ({ chatAssetId: id }))
 
     const userMessage: ChatMessage = {
       role: ChatRole.User,
       content: message,
-      media: mediaMetadata.length > 0 ? mediaMetadata : undefined,
       chatAssets: chatAssetMetadata.length > 0 ? chatAssetMetadata : undefined,
     }
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
     setIsLoading(true)
-
-    setUploadedMedia([])
 
     // Track chat message submitted (message length only, NOT content)
     systemEventBus.emit(SYSTEM_EVENTS.CHAT_MESSAGE_SUBMITTED, {
@@ -418,14 +307,14 @@ export function useNotebookChat({
       categoryId,
     }
 
-    // Use streaming when no media attached and not in admin mode
-    const hasAttachments = mediaIds.length > 0 || completedChatAssetIds.length > 0
+    // Use streaming when no attachments and not in admin mode
+    const hasAttachments = completedChatAssetIds.length > 0
     const useStreaming = !hasAttachments && !adminMode
 
     if (useStreaming) {
       await streamMessage(message, acknowledgment, context)
     } else {
-      await sendMessageSync(message, acknowledgment, context, mediaIds, completedChatAssetIds)
+      await sendMessageSync(message, acknowledgment, context, [], completedChatAssetIds)
     }
   }
 
@@ -588,13 +477,6 @@ export function useNotebookChat({
     sendMessage(inputValue)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      sendMessage(inputValue)
-    }
-  }
-
   const handleQuickAction = (actionType: 'hint' | 'solution' | 'full') => {
     const prompts = {
       hint: hintPrompt,
@@ -629,14 +511,8 @@ export function useNotebookChat({
     contextKey,
     setInputValue,
     handleSubmit,
-    handleKeyDown,
     handleQuickAction,
     handleReset,
-    // Legacy media upload
-    uploadedMedia,
-    isUploading,
-    handleFileSelect,
-    removeMedia,
     openFilePicker,
     // Direct-to-Blob chat asset uploads
     directUploads,
