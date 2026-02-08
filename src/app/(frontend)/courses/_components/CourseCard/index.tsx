@@ -1,8 +1,11 @@
 'use client'
 
-import { BookOpen, CheckCircle } from 'lucide-react'
+import { BookOpen, CheckCircle, Loader2 } from 'lucide-react'
+import { useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
+import { useLoadingState } from '@/infra/loading/hooks/useLoadingState'
+import { LOADING_KEYS } from '@/infra/loading/keys'
 import { setUserProfile, getUserProfile } from '@/client/state/localStorage/userProfile'
 import type { Course } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
@@ -16,9 +19,17 @@ interface CourseCardProps {
 export function CourseCard({ course, isOwned = false }: CourseCardProps) {
   const t = useTranslations('courses')
   const router = useRouterWithLoading()
+  const [wasClicked, setWasClicked] = useState(false)
+  const isRouteLoading = useLoadingState({ key: LOADING_KEYS.ROUTE_TRANSITION })
+
+  // Show loading state if this button was clicked and route is loading
+  const isLoading = wasClicked && isRouteLoading
 
   const handleCourseSelect = (e: React.MouseEvent) => {
     e.preventDefault()
+
+    // Mark that this button was clicked
+    setWasClicked(true)
 
     // Update localStorage with the selected course
     const gradeLevel = course.courseLabel || '8'
@@ -98,6 +109,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
       <div className="mt-auto pt-6 border-t border-border">
         <Button
           onClick={handleCourseSelect}
+          disabled={isLoading}
           className={cn(
             'w-full',
             isOwned
@@ -105,7 +117,14 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
               : 'bg-muted text-primary hover:bg-[hsl(var(--primary-soft))]',
           )}
         >
-          {t('openCourse')}
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              {t('openCourse')}
+            </>
+          ) : (
+            t('openCourse')
+          )}
         </Button>
       </div>
     </div>
