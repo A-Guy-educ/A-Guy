@@ -102,6 +102,9 @@
   "courses": {
     "title": "Courses",
     "description": "Browse all available courses",
+    "shopTitle": "Course Shop",
+    "shopDescription": "Choose the right plan for you and progress to success in mathematics.",
+    "catalogTitle": "Course Catalog",
     "heroTitle": "The Future of Online Learning",
     "heroDescription": "Master new skills with our project-based courses, interactive quizzes, and a supportive community of learners.",
     "liveContent": "New content added regularly",
