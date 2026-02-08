@@ -112,6 +112,68 @@ export async function createGenkitUnifiedAdapter(
     },
 
     /**
+     * Generate streaming chat completion
+     * Returns a stream of chunks and a promise that resolves when streaming is complete
+     */
+    generateStreamingChatCompletion: async (
+      input: ChatCompletionInput,
+      payloadInstance: Payload,
+    ) => {
+      const modelKey = getModelKeyFromModelName(input.model.name) || 'EXERCISE_CHAT'
+      const config = await resolveGenkitConfig(modelKey, tenantId, payloadInstance)
+
+      const ai = await getGenkitInstance(payloadInstance, tenantId)
+
+      // Build prompt
+      const prompt =
+        input.system + '\n\n' + input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
+
+      // Get streaming response - Genkit returns { stream: AsyncIterable, response: Promise }
+      const result = await ai.generateStream({
+        model: config.model,
+        prompt,
+      })
+
+      // result.stream is already an AsyncIterable<GenerateResponseChunk>
+      const genkitStream = result.stream
+
+      // Wrap to return { text: string } format
+      const stream: AsyncIterable<{ text: string }> = {
+        [Symbol.asyncIterator]: () => {
+          const iterator = genkitStream[Symbol.asyncIterator]()
+          return {
+            async next() {
+              const chunkResult = await iterator.next()
+              if (chunkResult.done) {
+                return { done: true, value: undefined }
+              }
+              // Genkit chunks have .text property
+              return {
+                done: false,
+                value: { text: chunkResult.value?.text || '' },
+              }
+            },
+          }
+        },
+      }
+
+      // Create response promise that handles errors
+      const response = (async () => {
+        try {
+          const finalResult = await result.response
+          return { text: finalResult?.text || '' }
+        } catch (error) {
+          const llmError = errorAdapter.wrapError(
+            error instanceof Error ? error : new Error(String(error)),
+          )
+          throw llmError
+        }
+      })()
+
+      return { stream, response }
+    },
+
+    /**
      * Generate multimodal completion
      */
     generateMultimodalCompletion: async (

@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@/server/services/api/api-service', () => ({
   apiService: {
     chat: vi.fn(),
+    chatStream: vi.fn(),
     getConversation: vi.fn(),
     resetChat: vi.fn(),
   },
@@ -42,14 +43,20 @@ beforeEach(() => {
     exists: false,
     messages: [],
   })
-  ;(apiService.chat as ReturnType<typeof vi.fn>).mockResolvedValue({
-    success: true,
-    message: 'Assistant reply',
-  })
   ;(apiService.resetChat as ReturnType<typeof vi.fn>).mockResolvedValue({
     success: true,
   })
   vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+  // Default mock for chatStream - successful streaming response
+  async function* mockSuccessfulStream(): AsyncGenerator<{ type: string; chunk?: string }> {
+    yield { type: 'chunk', chunk: 'A' }
+    yield { type: 'chunk', chunk: 'ss' }
+    yield { type: 'chunk', chunk: 'istant' }
+    yield { type: 'chunk', chunk: ' reply' }
+    yield { type: 'done' }
+  }
+  ;(apiService.chatStream as ReturnType<typeof vi.fn>).mockReturnValue(mockSuccessfulStream())
 })
 
 describe('useNotebookChat', () => {
@@ -78,26 +85,21 @@ describe('useNotebookChat', () => {
     })
 
     await waitFor(() => expect(result.current.messages).toHaveLength(3))
-    expect(apiService.chat).toHaveBeenCalledWith(
-      'Hello',
-      defaultProps.acknowledgment,
-      {
-        exerciseId: defaultProps.exerciseId,
-        lessonId: undefined,
-        chapterId: undefined,
-        courseId: undefined,
-        categoryId: undefined,
-      },
-      undefined,
-      false, // adminMode
-    )
+    expect(apiService.chatStream).toHaveBeenCalledWith('Hello', defaultProps.acknowledgment, {
+      exerciseId: defaultProps.exerciseId,
+      lessonId: undefined,
+      chapterId: undefined,
+      courseId: undefined,
+      categoryId: undefined,
+    })
   })
 
   it('shows auth error when chat requires authentication', async () => {
-    ;(apiService.chat as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      success: false,
-      authRequired: true,
-    })
+    // Create async generator for streaming auth error
+    async function* mockAuthErrorStream(): AsyncGenerator<{ type: string; error?: string }> {
+      yield { type: 'error', error: 'Unauthorized - authentication required' }
+    }
+    ;(apiService.chatStream as ReturnType<typeof vi.fn>).mockReturnValueOnce(mockAuthErrorStream())
 
     const { result } = renderHook(() => useNotebookChat(defaultProps))
     await waitFor(() => expect(result.current.isLoadingHistory).toBe(false))

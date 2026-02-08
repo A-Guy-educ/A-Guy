@@ -1,0 +1,255 @@
+/**
+ * Streaming Chat Endpoint Handler
+ * Handles SSE-based streaming for context-scoped chat
+ *
+ * @fileType endpoint
+ * @domain chat
+ * @pattern streaming, sse, server-sent-events
+ *
+ * Features:
+ * - SSE delivery with chunk/done/error events
+ * - Persistence after stream completion
+ * - Background tasks after stream completes
+ * - Partial text persistence on error/disconnect
+ */
+import { streamChatWithExerciseHelper } from '@/infra/llm/services/exercise-chat-service'
+import { logger } from '@/infra/utils/logger'
+import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
+import type { PayloadRequest } from 'payload'
+import { z } from 'zod'
+import { scheduleMemoryExtraction, scheduleSummaryMaintenance } from './chat/background-tasks'
+import type { ResolvedContext } from './chat/context-resolution'
+import { chatRequestSchema, parseRequestBody } from './chat/index'
+import {
+  extractPipelineContextCandidate,
+  persistAssistantMessage,
+  runChatPipeline,
+} from './chat/pipeline'
+import {
+  createSSEHeaders,
+  formatChunkEvent,
+  formatDoneEvent,
+  formatErrorEvent,
+} from './chat/sse-helpers'
+
+/**
+ * Handle streaming chat for context-scoped conversations
+ * Uses SSE to stream tokens as they're generated
+ */
+export async function agentChatStream(
+  req: PayloadRequest & { json?: () => Promise<unknown> },
+): Promise<Response> {
+  const requestId = crypto.randomUUID()
+  const reqLogger = logger.child({ requestId })
+
+  // 1) Auth check
+  if (!req.user) {
+    return Response.json({ error: 'Authentication required' }, { status: 401 })
+  }
+  if (!isUsersCollectionUser(req.user)) {
+    return Response.json({ error: 'Authentication required' }, { status: 401 })
+  }
+
+  try {
+    // 2) Parse and validate request body
+    if (!req.json) {
+      return Response.json({ error: 'Invalid request' }, { status: 400 })
+    }
+
+    const parseResult = await parseRequestBody(req.json.bind(req))
+    if (!parseResult.success) {
+      return Response.json(
+        { error: 'Invalid request', details: parseResult.error.issues },
+        { status: 400 },
+      )
+    }
+
+    const validated: z.infer<typeof chatRequestSchema> = parseResult.data
+
+    // 3) Check if admin mode - streaming doesn't support admin mode
+    // Reject adminMode regardless of user role (streaming doesn't support it)
+    if (validated.adminMode === true) {
+      return Response.json(
+        { error: 'Admin mode is not supported in streaming mode' },
+        { status: 400 },
+      )
+    }
+
+    // 4) Check for media attachments - streaming doesn't support multimodal
+    if (validated.mediaIds && validated.mediaIds.length > 0) {
+      return Response.json(
+        { error: 'Media attachments are not supported in streaming mode' },
+        { status: 400 },
+      )
+    }
+
+    // 5) Extract context candidate
+    const contextCandidate = extractPipelineContextCandidate(validated)
+    if (!contextCandidate) {
+      return Response.json(
+        { error: 'Missing context ID (requires exerciseId, lessonId, chapterId, or courseId)' },
+        { status: 400 },
+      )
+    }
+
+    // 6) Run shared pipeline
+    const pipelineResult = await runChatPipeline(
+      req,
+      requestId,
+      validated,
+      contextCandidate,
+      reqLogger,
+    )
+
+    if ('response' in pipelineResult) {
+      return pipelineResult.response
+    }
+
+    const { result: pipelineData } = pipelineResult
+    const { conversationId, context, allMessages, composedPrompt } = pipelineData
+
+    reqLogger.info({ conversationId, contextKey: context.contextKey }, 'Starting streaming chat')
+
+    // 7) Call streaming LLM
+    let streamingResult
+    try {
+      streamingResult = await streamChatWithExerciseHelper(
+        {
+          message: validated.message,
+          acknowledgment: validated.acknowledgment || '',
+          composedPrompt: composedPrompt,
+          req: {
+            headers: {
+              authorization:
+                (req.headers && typeof req.headers.get === 'function'
+                  ? req.headers.get('authorization')
+                  : undefined) || undefined,
+              cookie:
+                (req.headers && typeof req.headers.get === 'function'
+                  ? req.headers.get('cookie')
+                  : undefined) || undefined,
+            },
+          },
+        },
+        req.payload,
+      )
+    } catch (streamError) {
+      const errorMessage = streamError instanceof Error ? streamError.message : String(streamError)
+      reqLogger.error({ err: streamError }, 'Streaming chat failed')
+      return Response.json(
+        { error: errorMessage || 'Failed to start streaming chat' },
+        { status: 500 },
+      )
+    }
+
+    const { stream } = streamingResult
+
+    // 8) Create SSE ReadableStream
+    const sseStream = new ReadableStream({
+      async start(controller) {
+        let fullText = ''
+
+        try {
+          // Iterate over stream chunks
+          for await (const chunk of stream) {
+            fullText += chunk.text
+            // Enqueue SSE chunk event
+            controller.enqueue(formatChunkEvent(chunk.text))
+          }
+
+          reqLogger.info({ conversationId, textLength: fullText.length }, 'Stream completed')
+
+          // Stream completed normally - persist assistant message
+          try {
+            await persistAssistantMessage(
+              req.payload,
+              conversationId,
+              allMessages,
+              fullText,
+              req.user,
+            )
+            reqLogger.info({ conversationId }, 'Assistant message persisted')
+          } catch (persistError) {
+            reqLogger.warn(
+              { err: persistError, conversationId },
+              'Failed to persist assistant message',
+            )
+          }
+
+          // Schedule background tasks
+          try {
+            scheduleSummaryMaintenance(req.payload, conversationId, reqLogger as any)
+            if (req.user) {
+              scheduleMemoryExtraction(
+                req.payload,
+                conversationId,
+                req.user.id,
+                context as ResolvedContext,
+                { id: req.user.id },
+                reqLogger as any,
+              )
+            }
+          } catch (bgError) {
+            reqLogger.warn({ err: bgError, conversationId }, 'Failed to schedule background tasks')
+          }
+
+          // Enqueue done event
+          controller.enqueue(formatDoneEvent({ conversationId, contextKey: context.contextKey }))
+          controller.close()
+        } catch (error) {
+          reqLogger.error({ err: error, conversationId }, 'Error during streaming')
+
+          // Persist partial text if any
+          if (fullText.length > 0) {
+            try {
+              await persistAssistantMessage(
+                req.payload,
+                conversationId,
+                allMessages,
+                fullText,
+                req.user,
+              )
+              reqLogger.info(
+                { conversationId, textLength: fullText.length },
+                'Partial assistant message persisted after error',
+              )
+            } catch (persistError) {
+              reqLogger.warn(
+                { err: persistError, conversationId },
+                'Failed to persist partial assistant message',
+              )
+            }
+          }
+
+          // Enqueue error event
+          const errorMessage = error instanceof Error ? error.message : 'Stream error'
+          controller.enqueue(formatErrorEvent(errorMessage, 'STREAM_ERROR'))
+          controller.error(error)
+        }
+      },
+    })
+
+    return new Response(sseStream, {
+      headers: createSSEHeaders(),
+    })
+  } catch (error) {
+    // Handle connection reset errors gracefully
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error as { code: string }).code === 'ECONNRESET'
+    ) {
+      reqLogger.debug({ err: error }, 'Client disconnected during streaming chat request')
+      return Response.json({ error: 'Request cancelled' }, { status: 499 })
+    }
+
+    reqLogger.error({ err: error }, 'Streaming chat endpoint error')
+
+    if (error instanceof z.ZodError) {
+      return Response.json({ error: 'Invalid request', details: error.issues }, { status: 400 })
+    }
+
+    return Response.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

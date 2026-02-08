@@ -136,6 +136,21 @@ export interface UnifiedLLMProvider {
     payload: Payload,
   ) => Promise<{ text: string; raw?: unknown }>
 
+  // Streaming chat (optional - falls back to generateChatCompletion if not implemented)
+  generateStreamingChatCompletion?: (
+    input: {
+      system: string
+      messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
+      model: { name: string; temperature: number; maxOutputTokens: number }
+      acknowledgment: string
+      timeoutMs?: number
+    },
+    payload: Payload,
+  ) => Promise<{
+    stream: AsyncIterable<{ text: string }>
+    response: Promise<{ text: string }>
+  }>
+
   // Multimodal
   generateMultimodalCompletion: (
     input: {

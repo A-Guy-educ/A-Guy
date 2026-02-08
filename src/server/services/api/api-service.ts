@@ -39,6 +39,17 @@ export interface ResetChatApiResponse {
   error?: string
 }
 
+/**
+ * SSE Event types for streaming chat
+ */
+export interface ChatStreamEvent {
+  type: 'chunk' | 'done' | 'error'
+  text?: string
+  conversationId?: string
+  contextKey?: string
+  error?: string
+}
+
 export const apiService = {
   /**
    * Send a message to the AI chat assistant
@@ -211,6 +222,95 @@ export const apiService = {
       return { success: false, error: 'Reset failed' }
     } catch (_error) {
       return { success: false, error: 'Network error' }
+    }
+  },
+
+  /**
+   * Stream a chat response using SSE
+   *
+   * @param message - The user's message
+   * @param acknowledgment - The AI's acknowledgment message (from locale)
+   * @param context - Context parameters (prefer IDs over slugs)
+   * @returns Async generator yielding typed stream events
+   * @throws Error if media attachments or admin mode are requested
+   */
+  async *chatStream(
+    message: string,
+    acknowledgment: string,
+    context: {
+      exerciseId?: string
+      lessonId?: string
+      chapterId?: string
+      courseId?: string
+      categoryId?: string
+    },
+  ): AsyncGenerator<ChatStreamEvent, void, unknown> {
+    const response = await fetch('/api/agent/chat/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        message,
+        acknowledgment,
+        ...context,
+      }),
+    })
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        yield { type: 'error', error: 'Authentication required' }
+        return
+      }
+
+      const errorData = await response.json().catch(() => ({}))
+      yield { type: 'error', error: errorData.error || 'Request failed' }
+      return
+    }
+
+    const reader = response.body?.getReader()
+    if (!reader) {
+      yield { type: 'error', error: 'Stream not available' }
+      return
+    }
+
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          const trimmedLine = line.trim()
+          if (trimmedLine.startsWith('event: ')) {
+            const eventType = trimmedLine.slice(7).trim() as 'chunk' | 'done' | 'error'
+
+            // Find the corresponding data line (next line that starts with 'data: ')
+            const dataIndex = lines.indexOf(line) + 1
+            if (dataIndex < lines.length && lines[dataIndex].trim().startsWith('data: ')) {
+              try {
+                const eventData = JSON.parse(lines[dataIndex].trim().slice(6))
+                yield {
+                  type: eventType,
+                  ...(eventData.text !== undefined && { text: eventData.text }),
+                  ...(eventData.conversationId && { conversationId: eventData.conversationId }),
+                  ...(eventData.contextKey && { contextKey: eventData.contextKey }),
+                  ...(eventData.error && { error: eventData.error }),
+                }
+              } catch {
+                // Ignore JSON parse errors
+              }
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock()
     }
   },
 }

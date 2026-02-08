@@ -130,6 +130,79 @@ export async function chatWithExerciseHelper(
 }
 
 /**
+ * Streaming chat result interface
+ */
+export interface StreamingChatResult {
+  stream: AsyncIterable<{ text: string }>
+  response: Promise<{ text: string }>
+}
+
+/**
+ * Stream chat with exercise helper
+ * Returns a stream of chunks and a promise that resolves when streaming is complete
+ * Throws if the provider doesn't support streaming
+ */
+export async function streamChatWithExerciseHelper(
+  input: ExerciseChatInput,
+  payload: Payload,
+): Promise<StreamingChatResult> {
+  // Check for media - streaming doesn't support multimodal
+  if (input.mediaPartsWithPath && input.mediaPartsWithPath.length > 0) {
+    throw new Error('Multimedia content is not supported in streaming mode')
+  }
+
+  // Get Genkit-backed unified adapter
+  const adapter = await createGenkitUnifiedAdapter(payload)
+
+  // Check if streaming is supported
+  if (!adapter.generateStreamingChatCompletion) {
+    throw new Error('Streaming is not supported by the current LLM provider')
+  }
+
+  // Resolve model configuration
+  const modelConfig = await resolveModelConfig('EXERCISE_CHAT')
+
+  // Build messages from composedPrompt or legacy format
+  let systemPrompt: string
+  let messages: InternalChatMessage[]
+
+  if (input.composedPrompt) {
+    // Extract system from composed prompt
+    const systemMsg = input.composedPrompt.messages.find((m) => m.role === 'system')
+    systemPrompt = systemMsg?.content ?? LEGACY_FALLBACK
+
+    // Convert to provider format
+    messages = input.composedPrompt.messages
+      .filter((m) => m.role !== 'system')
+      .map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }))
+  } else {
+    // Legacy path
+    systemPrompt = getSystemPrompt()
+    messages =
+      input.conversationHistory?.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })) ?? []
+    // Add current message
+    messages.push({ role: 'user', content: input.message })
+  }
+
+  // Call streaming API
+  return adapter.generateStreamingChatCompletion(
+    {
+      system: systemPrompt,
+      messages,
+      model: modelConfig,
+      acknowledgment: input.acknowledgment,
+    },
+    payload,
+  )
+}
+
+/**
  * Resolve model config from MODEL_REGISTRY (mirrors getProviderModelConfig)
  */
 async function resolveModelConfig(modelKey: AIModelKey): Promise<AIModel> {
