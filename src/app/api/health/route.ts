@@ -66,3 +66,8 @@ export async function GET(): Promise<
     return NextResponse.json({ error: 'Health check failed' }, { status: 500 })
   }
 }
+
+// Simple ping endpoint for load balancers and health checks - no expensive operations
+export async function HEAD(): Promise<NextResponse> {
+  return new NextResponse(null, { status: 200 })
+}
