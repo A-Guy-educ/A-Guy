@@ -1,14 +1,3 @@
-export const __genkit_exports__ = true
-/**
- * Unified Adapter
- * Provides UnifiedLLMProvider interface backed by Genkit
- *
- * @fileType adapter
- * @domain ai
- * @pattern abstraction, genkit, provider-abstraction
- *
- * Maintains backward compatibility with existing UnifiedLLMProvider interface
- */
 import type { AIModel, AIModelKey } from '@/infra/llm/models'
 import type { UnifiedLLMProvider } from '@/infra/llm/providers/factory'
 import { LLMErrorCode } from '@/infra/llm/providers/shared/errors'
@@ -17,6 +6,28 @@ import type { Payload } from 'payload'
 import { resolveGenkitConfig } from '../config-resolver'
 import { getGenkitInstance } from '../genkit-instance'
 import { getErrorAdapter } from './error-adapter'
+
+/**
+ * Build prompt with system text prepended as fallback.
+ * This ensures providers/models that ignore the `system` parameter still receive instructions.
+ *
+ * @param system - The system prompt text
+ * @param messages - The chat messages
+ * @returns Prompt string with system text at the top (if system is not empty)
+ */
+function buildPromptWithSystemFallback(
+  system: string,
+  messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
+): string {
+  const messagesPrompt = messages.map((m) => `${m.role}: ${m.content}`).join('\n')
+
+  // Only prepend system if it's not empty to avoid double-injection
+  if (system && system.trim()) {
+    return `system: ${system}\n${messagesPrompt}`
+  }
+
+  return messagesPrompt
+}
 
 /**
  * Chat completion input
@@ -81,7 +92,8 @@ export async function createGenkitUnifiedAdapter(
       return withRetry(
         async () => {
           try {
-            const prompt = input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
+            // Build prompt with system text as fallback (for providers that ignore `system` param)
+            const prompt = buildPromptWithSystemFallback(input.system, input.messages)
 
             const result = await ai.generate({
               model: config.model,
@@ -122,8 +134,8 @@ export async function createGenkitUnifiedAdapter(
 
       const ai = await getGenkitInstance(payloadInstance, tenantId)
 
-      // Build prompt
-      const prompt = input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
+      // Build prompt with system text as fallback (for providers that ignore `system` param)
+      const prompt = buildPromptWithSystemFallback(input.system, input.messages)
 
       // Get streaming response - Genkit returns { stream: AsyncIterable, response: Promise }
       const result = await ai.generateStream({
@@ -230,7 +242,8 @@ export async function createGenkitUnifiedAdapter(
       return withRetry(
         async () => {
           try {
-            const prompt = input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
+            // Build prompt with system text as fallback (for providers that ignore `system` param)
+            const prompt = buildPromptWithSystemFallback(input.system, input.messages)
 
             const result = await ai.generate({
               model: config.model,

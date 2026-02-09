@@ -1,9 +1,9 @@
 /**
  * Unit test for Genkit adapter system prompt wiring
  *
- * Verifies that system prompts are passed as first-class parameters
- * to Genkit's generate/generateStream functions, rather than being
- * flattened into the user prompt string.
+ * Verifies that system prompts are:
+ * 1. Passed as first-class parameters to Genkit's generate/generateStream functions
+ * 2. ALSO prepended to the prompt string as fallback for providers/models that ignore `system` param
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -62,7 +62,7 @@ describe('Genkit Adapter - System Prompt Wiring', () => {
   })
 
   describe('generateStreamingChatCompletion', () => {
-    it('should pass system as separate parameter, not in prompt', async () => {
+    it('should pass system as separate parameter AND prepend to prompt as fallback', async () => {
       const mockPayload = {} as any
       const adapter = await createGenkitUnifiedAdapter(mockPayload)
 
@@ -96,17 +96,53 @@ describe('Genkit Adapter - System Prompt Wiring', () => {
 
       // System should be a separate parameter
       expect(callArgs.system).toBe('Always use \\frac{a}{b} for fractions')
-      expect(callArgs.system).not.toContain('user:')
-      expect(callArgs.system).not.toContain('what is 1/2?')
 
-      // Prompt should only contain user/assistant messages, not system
-      expect(callArgs.prompt).not.toContain('Always use')
+      // Prompt should ALSO contain system text at the top (fallback behavior)
+      expect(callArgs.prompt).toContain('system: Always use \\frac{a}{b} for fractions')
       expect(callArgs.prompt).toContain('user: what is 1/2?')
+
+      // Verify order: system should be at the top of prompt
+      expect(callArgs.prompt).toMatch(/^system: /)
+    })
+
+    it('should not duplicate system when system is empty', async () => {
+      const mockPayload = {} as any
+      const adapter = await createGenkitUnifiedAdapter(mockPayload)
+
+      // Setup mock to return a valid stream
+      const mockStream = {
+        [Symbol.asyncIterator]: () => ({
+          next: async () => ({ done: true, value: undefined }),
+        }),
+      }
+      mockGenerateStream.mockResolvedValue({
+        stream: mockStream,
+        response: Promise.resolve({ text: 'test response' }),
+      })
+
+      // Call with empty system
+      await adapter.generateStreamingChatCompletion!(
+        {
+          system: '',
+          messages: [{ role: 'user', content: 'hello' }],
+          model: { name: 'test-chat', temperature: 0.7, maxOutputTokens: 1000 },
+          acknowledgment: '',
+        },
+        mockPayload,
+      )
+
+      const callArgs = mockGenerateStream.mock.calls[0][0]
+
+      // System should still be passed as separate param (empty)
+      expect(callArgs.system).toBe('')
+
+      // Prompt should NOT have empty "system:" prefix - should just be user message
+      expect(callArgs.prompt).toBe('user: hello')
     })
   })
 
   describe('generateChatCompletion', () => {
-    it('should pass system as separate parameter, not in prompt', async () => {
+    it('should pass system as separate parameter AND prepend to prompt as fallback', async () => {
       const mockPayload = {} as any
       const adapter = await createGenkitUnifiedAdapter(mockPayload)
 
@@ -135,17 +171,52 @@ describe('Genkit Adapter - System Prompt Wiring', () => {
 
       // System should be a separate parameter
       expect(callArgs.system).toBe('Always use \\frac{a}{b} for fractions')
-      expect(callArgs.system).not.toContain('user:')
-      expect(callArgs.system).not.toContain('what is 1/2?')
 
-      // Prompt should only contain user/assistant messages, not system
-      expect(callArgs.prompt).not.toContain('Always use')
+      // Prompt should ALSO contain system text at the top (fallback behavior)
+      expect(callArgs.prompt).toContain('system: Always use \\frac{a}{b} for fractions')
       expect(callArgs.prompt).toContain('user: what is 1/2?')
+
+      // Verify order: system should be at the top of prompt
+      expect(callArgs.prompt).toMatch(/^system: /)
+    })
+
+    it('should handle multiple messages with system fallback', async () => {
+      const mockPayload = {} as any
+      const adapter = await createGenkitUnifiedAdapter(mockPayload)
+
+      mockGenerate.mockResolvedValue({
+        text: 'test response',
+        raw: {},
+      })
+
+      await adapter.generateChatCompletion!(
+        {
+          system: 'Be concise and helpful',
+          messages: [
+            { role: 'user', content: 'Hello' },
+            { role: 'assistant', content: 'Hi there!' },
+            { role: 'user', content: 'How are you?' },
+          ],
+          model: { name: 'test-chat', temperature: 0.7, maxOutputTokens: 1000 },
+          acknowledgment: '',
+        },
+        mockPayload,
+      )
+
+      const callArgs = mockGenerate.mock.calls[0][0]
+
+      // Verify system is at the top
+      expect(callArgs.prompt).toMatch(/^system: Be concise and helpful\n/)
+
+      // Verify all messages are present in order
+      expect(callArgs.prompt).toContain('user: Hello')
+      expect(callArgs.prompt).toContain('assistant: Hi there!')
+      expect(callArgs.prompt).toContain('user: How are you?')
     })
   })
 
   describe('generateChatCompletionWithTools', () => {
-    it('should pass system as separate parameter, not in prompt', async () => {
+    it('should pass system as separate parameter AND prepend to prompt as fallback', async () => {
       const mockPayload = {} as any
       const adapter = await createGenkitUnifiedAdapter(mockPayload)
 
@@ -183,12 +254,13 @@ describe('Genkit Adapter - System Prompt Wiring', () => {
 
       // System should be a separate parameter
       expect(callArgs.system).toBe('Always use \\frac{a}{b} for fractions')
-      expect(callArgs.system).not.toContain('user:')
-      expect(callArgs.system).not.toContain('what is 1/2')
 
-      // Prompt should only contain user/assistant messages, not system
-      expect(callArgs.prompt).not.toContain('Always use')
+      // Prompt should ALSO contain system text at the top (fallback behavior)
+      expect(callArgs.prompt).toContain('system: Always use \\frac{a}{b} for fractions')
       expect(callArgs.prompt).toContain('user: what is 1/2 + 1/3?')
+
+      // Verify order: system should be at the top of prompt
+      expect(callArgs.prompt).toMatch(/^system: /)
     })
   })
 })
