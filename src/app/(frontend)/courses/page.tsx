@@ -1,7 +1,6 @@
 import { queryPublishedCourses } from '@/server/repos/queries/courses'
 import { CourseCard } from './_components/CourseCard'
 import { EmptyState } from './_components/EmptyState'
-import { MembershipPlans } from './_components/MembershipPlans'
 import { CourseShopHeader } from './_components/CourseShopHeader'
 import { CourseCatalogHeader } from './_components/CourseCatalogHeader'
 
@@ -15,9 +14,6 @@ export default async function CoursesPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-20">
-        {/* Membership Plans Section */}
-        <MembershipPlans />
-
         {/* Courses Section */}
         <section>
           <CourseCatalogHeader />
