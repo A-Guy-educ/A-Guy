@@ -98,7 +98,7 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
               <CardContent className="pt-6 pb-8 flex justify-center">
                 <Button onClick={handleStart} size="lg" className="min-w-[200px]">
                   {t('exercisesPagerStart')}
-                  <ChevronRight className="ml-2 h-5 w-5" />
+                  <ChevronLeft className="ms-2 h-5 w-5 rtl:rotate-0 ltr:rotate-180" />
                 </Button>
               </CardContent>
             </Card>
@@ -162,7 +162,7 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
             size="lg"
             className="min-w-[120px]"
           >
-            <ChevronLeft className="mr-2 h-5 w-5" />
+            <ChevronRight className="me-2 h-5 w-5 rtl:rotate-0 ltr:rotate-180" />
             {t('exercisesPagerPrev')}
           </Button>
 
@@ -177,7 +177,7 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
           {/* Next Button */}
           <Button onClick={handleNext} disabled={!canGoNext} size="lg" className="min-w-[120px]">
             {t('exercisesPagerNext')}
-            <ChevronRight className="ml-2 h-5 w-5" />
+            <ChevronLeft className="ms-2 h-5 w-5 rtl:rotate-0 ltr:rotate-180" />
           </Button>
         </div>
       </div>
