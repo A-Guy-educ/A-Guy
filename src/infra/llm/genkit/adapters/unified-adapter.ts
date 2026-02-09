@@ -81,13 +81,11 @@ export async function createGenkitUnifiedAdapter(
       return withRetry(
         async () => {
           try {
-            const prompt =
-              input.system +
-              '\n\n' +
-              input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
+            const prompt = input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
 
             const result = await ai.generate({
               model: config.model,
+              system: input.system,
               prompt,
             })
 
@@ -125,12 +123,12 @@ export async function createGenkitUnifiedAdapter(
       const ai = await getGenkitInstance(payloadInstance, tenantId)
 
       // Build prompt
-      const prompt =
-        input.system + '\n\n' + input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
+      const prompt = input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
 
       // Get streaming response - Genkit returns { stream: AsyncIterable, response: Promise }
       const result = await ai.generateStream({
         model: config.model,
+        system: input.system,
         prompt,
       })
 
@@ -232,13 +230,11 @@ export async function createGenkitUnifiedAdapter(
       return withRetry(
         async () => {
           try {
-            const prompt =
-              input.system +
-              '\n\n' +
-              input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
+            const prompt = input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
 
             const result = await ai.generate({
               model: config.model,
+              system: input.system,
               prompt,
             })
 
