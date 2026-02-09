@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-type PageType = 'intro' | 'exercise' | 'completed'
+type PageType = 'intro' | 'exercise' | 'outro'
 
 interface PageState {
   type: PageType
@@ -22,7 +22,7 @@ export function useExercisesPager(totalExercises: number) {
     const nextPage = pageState.pageNumber + 1
 
     if (nextPage === totalPages - 1) {
-      setPageState({ type: 'completed', pageNumber: nextPage })
+      setPageState({ type: 'outro', pageNumber: nextPage })
     } else if (nextPage > 0 && nextPage < totalPages - 1) {
       setPageState({
         type: 'exercise',
@@ -54,9 +54,12 @@ export function useExercisesPager(totalExercises: number) {
     })
   }
 
+  const progressPercent = ((pageState.pageNumber + 1) / totalPages) * 100
+
   return {
     pageState,
     totalPages,
+    progressPercent,
     canGoNext: pageState.pageNumber < totalPages - 1,
     canGoPrev: pageState.pageNumber > 0,
     handleNext,
