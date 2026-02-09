@@ -139,10 +139,24 @@ export function areMathDelimitersBalanced(content: string): boolean {
 
           const nextChar = content[nextPos]
 
-          // Rule 3: Escaped dollar - ANY number of backslashes followed by $
-          if (nextChar === '$') {
+          // Rule 3: Escaped dollar - ONLY 1-3 backslashes followed by $
+          if (bsCount >= 1 && bsCount <= 3 && nextChar === '$') {
             // Escaped dollar - skip all backslashes + the dollar
             i = nextPos + 1
+            continue
+          }
+
+          // 4+ backslashes followed by $ is NOT an escaped dollar
+          // It follows normal parsing rules
+          if (nextChar === '$') {
+            if (i + 1 < length && content[i + 1] === '$') {
+              state = 'IN_DOUBLE_DOLLAR'
+              i += 2
+              continue
+            }
+            // Single dollar
+            state = 'IN_DOLLAR'
+            i++
             continue
           }
 
@@ -221,6 +235,7 @@ export function areMathDelimitersBalanced(content: string): boolean {
 
       case 'IN_PAREN': {
         // Check for escaped close: \ followed by )
+        // Only 1-3 backslashes followed by ) closes the paren
         if (char === '\\') {
           let bsCount = 1
           while (bsCount < 4 && i + bsCount < length && content[i + bsCount] === '\\') {
@@ -230,7 +245,7 @@ export function areMathDelimitersBalanced(content: string): boolean {
           const nextPos = i + bsCount
 
           if (nextPos >= length) {
-            // Trailing backslash
+            // Trailing backslash - just advance
             i++
             continue
           }
@@ -246,18 +261,15 @@ export function areMathDelimitersBalanced(content: string): boolean {
           continue
         }
 
-        if (char === ')') {
-          state = 'NORMAL'
-          i++
-          continue
-        }
-
+        // Bare ) does NOT close IN_PAREN - it's plain text
+        // Only escaped \) closes
         i++
         break
       }
 
       case 'IN_BRACKET': {
         // Check for escaped close: \ followed by ]
+        // Only 1-3 backslashes followed by ] closes the bracket
         if (char === '\\') {
           let bsCount = 1
           while (bsCount < 4 && i + bsCount < length && content[i + bsCount] === '\\') {
@@ -267,7 +279,7 @@ export function areMathDelimitersBalanced(content: string): boolean {
           const nextPos = i + bsCount
 
           if (nextPos >= length) {
-            // Trailing backslash
+            // Trailing backslash - just advance
             i++
             continue
           }
@@ -283,12 +295,8 @@ export function areMathDelimitersBalanced(content: string): boolean {
           continue
         }
 
-        if (char === ']') {
-          state = 'NORMAL'
-          i++
-          continue
-        }
-
+        // Bare ] does NOT close IN_BRACKET - it's plain text
+        // Only escaped \] closes
         i++
         break
       }

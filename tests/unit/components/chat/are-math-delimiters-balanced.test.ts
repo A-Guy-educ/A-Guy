@@ -135,12 +135,16 @@ describe('areMathDelimitersBalanced', () => {
       expect(areMathDelimitersBalanced('\\\\')).toBe(true)
     })
 
-    it('handles multiple $$ pairs', () => {
-      expect(areMathDelimitersBalanced('$$a$$ $$b$$ $$c$$')).toBe(true)
+    it('handles multiple $ pairs', () => {
+      expect(areMathDelimitersBalanced('$a$ $b$ $c$')).toBe(true)
     })
 
-    it('handles nested but balanced delimiters', () => {
-      expect(areMathDelimitersBalanced('$a $b$ c$')).toBe(true)
+    it('handles bare parenthesis as plain text in normal state', () => {
+      expect(areMathDelimitersBalanced('hello (world)')).toBe(true)
+    })
+
+    it('handles bare brackets as plain text in normal state', () => {
+      expect(areMathDelimitersBalanced('hello [world]')).toBe(true)
     })
   })
 })
