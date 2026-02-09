@@ -2,12 +2,15 @@
 
 import { cn } from '@/infra/utils/ui'
 import type { Element, Root } from 'hast'
+import { useMemo } from 'react'
 import type { Components } from 'react-markdown'
 import ReactMarkdown from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
 import remarkMath from 'remark-math'
 import { visit } from 'unist-util-visit'
+import { areMathDelimitersBalanced } from './are-math-delimiters-balanced'
 import { normalizeLatexDelimiters } from './normalize-latex'
+import { rehypeKatexErrorHandler } from './rehype-katex-error-handler'
 
 interface ChatMessageContentProps {
   content: string
@@ -149,17 +152,27 @@ function rehypeMathWrapper() {
   }
 }
 
+// Module-level constants to avoid ReactMarkdown pipeline re-creation
+const REMARK_PLUGINS_MATH = [remarkMath]
+const REMARK_PLUGINS_NONE: never[] = []
+const REHYPE_PLUGINS_MATH = [rehypeKatex, rehypeKatexErrorHandler, rehypeMathWrapper]
+const REHYPE_PLUGINS_NONE: never[] = []
+
 export function ChatMessageContent({ content, className }: ChatMessageContentProps) {
-  const normalizedContent = normalizeLatexDelimiters(content)
+  const balanced = useMemo(() => areMathDelimitersBalanced(content), [content])
+  const processedContent = useMemo(
+    () => (balanced ? normalizeLatexDelimiters(content) : content),
+    [balanced, content],
+  )
 
   return (
     <div className={cn('chat-message-content leading-relaxed', className)}>
       <ReactMarkdown
-        remarkPlugins={[remarkMath]}
-        rehypePlugins={[rehypeKatex, rehypeMathWrapper]}
+        remarkPlugins={balanced ? REMARK_PLUGINS_MATH : REMARK_PLUGINS_NONE}
+        rehypePlugins={balanced ? REHYPE_PLUGINS_MATH : REHYPE_PLUGINS_NONE}
         components={markdownComponents}
       >
-        {normalizedContent}
+        {processedContent}
       </ReactMarkdown>
     </div>
   )
