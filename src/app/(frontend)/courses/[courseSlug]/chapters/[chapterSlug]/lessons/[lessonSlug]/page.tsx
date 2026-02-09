@@ -9,8 +9,7 @@ import { LessonAnalytics } from './_components/LessonAnalytics'
 import { ChatInterface } from '@/ui/web/chat'
 import { ExerciseWorkspace } from './exercises/[exerciseId]/_components/ExerciseWorkspace'
 import { ExercisesPager } from './_components/ExercisesPager'
-import { Button } from '@/ui/web/components/button'
-import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { BackToChapter } from '../../../../../_components/BackToChapter'
 
 interface LessonPageProps {
   params: Promise<{
@@ -72,9 +71,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           <div className="w-full h-full flex flex-col items-center justify-center p-8">
             <EmptyState type="noPDF" />
             <div className="mt-8">
-              <Button asChild variant="outline" size="lg">
-                <SystemLink href={backUrl}>Back to Chapter</SystemLink>
-              </Button>
+              <BackToChapter href={backUrl} />
             </div>
           </div>
         )}

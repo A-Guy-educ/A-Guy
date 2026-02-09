@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import type { Exercise } from '@/payload-types'
 import { Button } from '@/ui/web/components/button'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
@@ -9,6 +8,7 @@ import { BookOpen, ChevronLeft, ChevronRight, Layers, Sparkles } from 'lucide-re
 import { useTranslations } from '@/ui/web/providers/I18n'
 import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
 import { Progress } from '@/ui/web/components/progress'
+import { useExercisesPager } from './useExercisesPager'
 
 interface ExercisesPagerProps {
   exercises: Exercise[]
@@ -16,79 +16,20 @@ interface ExercisesPagerProps {
   backUrl: string
 }
 
-type PageType = 'intro' | 'exercise' | 'outro'
-
-interface PageState {
-  type: PageType
-  /** 0 = intro, 1..N = exercise index, N+1 = outro */
-  pageNumber: number
-  /** For exercise pages, the exercise being displayed */
-  exerciseIndex?: number
-}
-
 export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPagerProps) {
   const t = useTranslations('courses')
-
-  const [pageState, setPageState] = useState<PageState>({
-    type: 'intro',
-    pageNumber: 0,
-  })
-
-  const totalExercises = exercises.length
-  const totalPages = totalExercises + 2 // intro + exercises + outro
-  const progressPercent = ((pageState.pageNumber + 1) / totalPages) * 100
-
-  const handleNext = () => {
-    const nextPage = pageState.pageNumber + 1
-
-    if (nextPage === totalPages - 1) {
-      setPageState({ type: 'outro', pageNumber: nextPage })
-    } else if (nextPage > 0 && nextPage < totalPages - 1) {
-      setPageState({
-        type: 'exercise',
-        pageNumber: nextPage,
-        exerciseIndex: nextPage - 1,
-      })
-    }
-  }
-
-  const handlePrev = () => {
-    const prevPage = pageState.pageNumber - 1
-
-    if (prevPage === 0) {
-      setPageState({ type: 'intro', pageNumber: 0 })
-    } else if (prevPage > 0 && prevPage < totalPages - 1) {
-      setPageState({
-        type: 'exercise',
-        pageNumber: prevPage,
-        exerciseIndex: prevPage - 1,
-      })
-    }
-  }
-
-  const handleStart = () => {
-    setPageState({
-      type: 'exercise',
-      pageNumber: 1,
-      exerciseIndex: 0,
-    })
-  }
-
-  const canGoNext = pageState.pageNumber < totalPages - 1
-  const canGoPrev = pageState.pageNumber > 0
+  const { pageState, progressPercent, canGoNext, canGoPrev, handleNext, handlePrev, handleStart } =
+    useExercisesPager(exercises.length)
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Progress Bar */}
       <Progress value={progressPercent} className="h-1.5 rounded-none" />
 
-      {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-3xl">
           {/* ── Intro Page ── */}
           {pageState.type === 'intro' && (
             <div className="space-y-8">
-              {/* Header */}
               <header className="text-center">
                 <span className="inline-block px-4 py-1.5 bg-muted text-muted-foreground rounded-full text-[10px] tracking-[0.2em] uppercase mb-5 border border-border/40">
                   {t('exercisesPagerIntro')}
@@ -99,7 +40,6 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
                 <div className="w-20 h-1 bg-primary mx-auto rounded-full" />
               </header>
 
-              {/* Intro Card */}
               <div className="bg-card rounded-3xl p-8 md:p-10 border border-border/60 shadow-xl shadow-muted/50 text-center">
                 <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-primary/10 border border-primary/20">
                   <BookOpen className="w-9 h-9 text-primary" />
@@ -109,20 +49,18 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
                   {t('exercisesPagerWelcome')}
                 </h2>
                 <p className="text-muted-foreground mb-10 text-base leading-relaxed max-w-md mx-auto">
-                  {t('exercisesPagerIntroDescriptionPart1')} {totalExercises}{' '}
+                  {t('exercisesPagerIntroDescriptionPart1')} {exercises.length}{' '}
                   {t('exercisesPagerIntroDescriptionPart2')}
                 </p>
 
-                {/* Exercise count indicator */}
                 <div className="inline-flex items-center gap-3 px-5 py-3 bg-muted rounded-2xl border border-border/60 mb-10">
                   <Layers className="w-5 h-5 text-primary" />
-                  <span className="text-primary text-xl font-medium">{totalExercises}</span>
+                  <span className="text-primary text-xl font-medium">{exercises.length}</span>
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
                     {t('exercise')}
                   </span>
                 </div>
 
-                {/* CTA */}
                 <Button
                   onClick={handleStart}
                   size="lg"
@@ -138,7 +76,6 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
           {/* ── Exercise Page ── */}
           {pageState.type === 'exercise' && pageState.exerciseIndex !== undefined && (
             <div className="space-y-8">
-              {/* Exercise Context Card */}
               <div className="bg-card rounded-3xl p-6 md:p-8 border border-border/60 shadow-lg shadow-muted/40 relative overflow-hidden">
                 <div className="absolute top-0 end-0 w-1.5 h-full bg-primary rounded-s-full" />
                 <div className="flex items-center gap-3 mb-3">
@@ -147,7 +84,7 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
                   </div>
                   <div>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em]">
-                      {t('exercise')} {pageState.exerciseIndex + 1} {t('of')} {totalExercises}
+                      {t('exercise')} {pageState.exerciseIndex + 1} {t('of')} {exercises.length}
                     </p>
                     <h2 className="text-xl font-medium text-foreground">
                       {exercises[pageState.exerciseIndex]?.title}
@@ -156,7 +93,6 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
                 </div>
               </div>
 
-              {/* Exercise Content */}
               <div className="bg-card rounded-3xl p-6 md:p-8 border border-border/60 shadow-lg shadow-muted/40">
                 <ExerciseRenderer
                   content={
@@ -167,7 +103,6 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
                 />
               </div>
 
-              {/* Navigation */}
               <div className="flex justify-between items-center pt-4">
                 <Button
                   variant="ghost"
@@ -193,7 +128,6 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
           {/* ── Outro Page ── */}
           {pageState.type === 'outro' && (
             <div className="space-y-8">
-              {/* Header */}
               <header className="text-center">
                 <span className="inline-block px-4 py-1.5 bg-secondary/10 text-secondary rounded-full text-[10px] tracking-[0.2em] uppercase mb-5 border border-secondary/20">
                   {t('exercisesPagerCompleted')}
@@ -204,7 +138,6 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
                 <div className="w-20 h-1 bg-secondary mx-auto rounded-full" />
               </header>
 
-              {/* Completion Card */}
               <div className="bg-card rounded-3xl p-8 md:p-10 border border-border/60 shadow-xl shadow-muted/50 text-center">
                 <div className="w-20 h-20 bg-secondary/10 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-secondary/10 border border-secondary/20">
                   <Sparkles className="w-9 h-9 text-secondary" />
@@ -217,7 +150,6 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
                   {t('exercisesPagerCompletedDescription')}
                 </p>
 
-                {/* Completion CTA */}
                 <Button
                   asChild
                   size="lg"
@@ -231,7 +163,6 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
                 </Button>
               </div>
 
-              {/* Back link */}
               <div className="flex justify-center pt-4">
                 <Button
                   variant="ghost"
