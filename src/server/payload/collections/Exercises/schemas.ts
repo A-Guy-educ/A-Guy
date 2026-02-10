@@ -1,9 +1,15 @@
 import { z } from 'zod'
 
+// Use shared types for API surface (matching client)
+// Zod schemas are used for validation only
+export type ContentBlock = import('@/shared/exercise-content/types').ContentBlock
+export type LatexBlock = import('@/shared/exercise-content/types').LatexBlock
+export type ContentData = import('@/shared/exercise-content/types').ContentData
+
 // ---------------------------------
 // Zod: Inline Rich Text (NO id)
 // ---------------------------------
-export const InlineRichTextSchema = z
+const InlineRichTextSchema = z
   .object({
     type: z.literal('rich_text'),
     format: z.literal('md-math-v1'),
@@ -145,7 +151,7 @@ export const QuestionFreeResponseBlockSchema = z
 // ---------------------------------
 // Zod: Latex Block
 // ---------------------------------
-export const LatexBlockSchema = z
+const LatexBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('latex'),
@@ -154,19 +160,15 @@ export const LatexBlockSchema = z
   })
   .strict()
 
-export type LatexBlock = z.infer<typeof LatexBlockSchema>
-
 // ---------------------------------
-// Zod: Content union (exported for admin components)
+// Zod: Content union (validation only - use shared types for API)
 // ---------------------------------
-export const ContentBlockSchema = z.discriminatedUnion('type', [
+const ContentBlockSchema = z.discriminatedUnion('type', [
   RichTextBlockSchema,
   QuestionSelectBlockSchema,
   QuestionFreeResponseBlockSchema,
   LatexBlockSchema,
 ])
-
-export type ContentBlock = z.infer<typeof ContentBlockSchema>
 
 export const ContentSchema = z
   .object({

@@ -3,8 +3,7 @@
 import React from 'react'
 import { Copy, Edit, X, Check, RotateCcw, AlignLeft } from 'lucide-react'
 import { Highlight, themes } from 'prism-react-renderer'
-import type { ContentBlock } from '@/server/payload/collections/Exercises'
-import { ContentBlockSchema } from '@/server/payload/collections/Exercises'
+import type { ContentBlock } from '@/shared/exercise-content/types'
 
 interface JSONInspectorProps {
   block: ContentBlock | null // Selected block
@@ -64,18 +63,24 @@ export const JSONInspector: React.FC<JSONInspectorProps> = ({ block, mode, onApp
       }
     }
 
-    // Try Zod schema validation (validates all block types)
-    const result = ContentBlockSchema.safeParse(parsed)
-    if (!result.success) {
-      const firstError = result.error.issues[0]
-      const path = firstError.path.join('.')
-      return {
-        valid: false,
-        error: `Schema validation error at ${path}: ${firstError.message}`,
-      }
+    // Basic structure validation (full schema validation happens on server)
+    if (!parsed || typeof parsed !== 'object') {
+      return { valid: false, error: 'Expected object' }
     }
 
-    return { valid: true, data: result.data }
+    const obj = parsed as Record<string, unknown>
+    if (!obj.type || typeof obj.type !== 'string') {
+      return { valid: false, error: 'Missing or invalid "type" field' }
+    }
+
+    // Validate based on block type
+    const validTypes = ['rich_text', 'question_select', 'question_free_response', 'latex']
+    if (!validTypes.includes(obj.type as string)) {
+      return { valid: false, error: `Invalid block type: ${obj.type}` }
+    }
+
+    // Return the parsed data as ContentBlock
+    return { valid: true, data: parsed as ContentBlock }
   }
 
   const handleApply = () => {

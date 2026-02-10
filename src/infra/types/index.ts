@@ -75,9 +75,8 @@ export type { ContentBlock, ExerciseContent } from '@/server/payload/collections
 
 // Re-export from Exercises collection index for convenience
 export type {
-  ContentBlockSchema,
   ContentSchema,
-  QuestionFreeResponseBlockSchema,
+  ExerciseContent as ExerciseContentType,
 } from '@/server/payload/collections/Exercises/index'
 
 // ============================================================================
