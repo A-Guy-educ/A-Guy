@@ -230,9 +230,9 @@ async function handleAdminModeChat(
   }
 
   // For admin mode, use a system prompt that instructs the AI to use tools
-  const systemPrompt = `You are an AI assistant for the admin panel of an educational platform. You have access to database query tools.
+  const systemPrompt = `You are an AI assistant for the admin panel of an educational platform. You have access to database query and creation tools.
 
-IMPORTANT: You MUST use the provided tools to answer questions about data. Do NOT ask clarifying questions - just use the tools to query the database directly.
+IMPORTANT: You MUST use the provided tools to answer questions about data and create new content. Do NOT ask clarifying questions - just use the tools to interact with the database directly.
 
 When the user asks about courses, chapters, lessons, exercises, or media:
 1. ALWAYS call the appropriate tool immediately
@@ -245,8 +245,12 @@ Available tools:
 - findLessons: Query lessons
 - findExercises: Query exercises
 - findMedia: Query media files
+- createCourses: Create a new course
+- createChapters: Create a new chapter in a course
+- createLessons: Create a new lesson in a chapter
 
-Example: If user asks "how many courses do we have?", call findCourses immediately and count the results.`
+Example: If user asks "how many courses do we have?", call findCourses immediately and count the results.
+Example: If user asks "create a new course about Python programming", call createCourses with appropriate data.`
 
   // Build messages for AI
   const messages = recentMessages.map((m) => ({
