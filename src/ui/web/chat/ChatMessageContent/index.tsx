@@ -2,19 +2,19 @@
 
 import { cn } from '@/infra/utils/ui'
 import type { Element, Root } from 'hast'
-import { useMemo } from 'react'
 import type { Components } from 'react-markdown'
 import ReactMarkdown from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
 import remarkMath from 'remark-math'
 import { visit } from 'unist-util-visit'
-import { areMathDelimitersBalanced } from './are-math-delimiters-balanced'
 import { normalizeLatexDelimiters } from './normalize-latex'
 import { rehypeKatexErrorHandler } from './rehype-katex-error-handler'
 
 interface ChatMessageContentProps {
   content: string
   className?: string
+  /** When true, skip math rendering (use during streaming to avoid partial-LaTeX errors) */
+  isStreaming?: boolean
 }
 
 /**
@@ -158,18 +158,15 @@ const REMARK_PLUGINS_NONE: never[] = []
 const REHYPE_PLUGINS_MATH = [rehypeKatex, rehypeKatexErrorHandler, rehypeMathWrapper]
 const REHYPE_PLUGINS_NONE: never[] = []
 
-export function ChatMessageContent({ content, className }: ChatMessageContentProps) {
-  const balanced = useMemo(() => areMathDelimitersBalanced(content), [content])
-  const processedContent = useMemo(
-    () => (balanced ? normalizeLatexDelimiters(content) : content),
-    [balanced, content],
-  )
+export function ChatMessageContent({ content, className, isStreaming }: ChatMessageContentProps) {
+  const enableMath = !isStreaming
+  const processedContent = enableMath ? normalizeLatexDelimiters(content) : content
 
   return (
     <div className={cn('chat-message-content leading-relaxed', className)}>
       <ReactMarkdown
-        remarkPlugins={balanced ? REMARK_PLUGINS_MATH : REMARK_PLUGINS_NONE}
-        rehypePlugins={balanced ? REHYPE_PLUGINS_MATH : REHYPE_PLUGINS_NONE}
+        remarkPlugins={enableMath ? REMARK_PLUGINS_MATH : REMARK_PLUGINS_NONE}
+        rehypePlugins={enableMath ? REHYPE_PLUGINS_MATH : REHYPE_PLUGINS_NONE}
         components={markdownComponents}
       >
         {processedContent}

@@ -170,75 +170,58 @@ describe('ChatMessageContent', () => {
     })
   })
 
-  describe('Streaming math safety', () => {
-    it('does not render math for partial \\[ content during streaming', () => {
-      const { container } = render(<ChatMessageContent content="\\[ f(x) = " />)
+  describe('Streaming math safety (isStreaming prop)', () => {
+    it('does not render math when isStreaming is true', () => {
+      const { container } = render(
+        <ChatMessageContent content={'$$\nx^2\n$$'} isStreaming={true} />,
+      )
 
-      // No katex rendering when delimiters are unbalanced
-      expect(container.querySelector('.katex')).toBeNull()
-      expect(container.querySelector('.katex-display')).toBeNull()
-      expect(container.querySelector('.katex-error')).toBeNull()
-      // Raw delimiters should be visible as text
-      expect(container.textContent).toContain('\\[')
-      expect(container.textContent).toContain('f(x) =')
-    })
-
-    it('does not render math for partial $$ content during streaming', () => {
-      const { container } = render(<ChatMessageContent content="$$\n\\int" />)
-
-      // No katex rendering when delimiters are unbalanced
+      // No katex rendering during streaming
       expect(container.querySelector('.katex')).toBeNull()
       expect(container.querySelector('.katex-display')).toBeNull()
       expect(container.querySelector('.katex-error')).toBeNull()
     })
 
-    it('does not render math for partial $ content during streaming', () => {
-      const { container } = render(<ChatMessageContent content="The $x" />)
+    it('does not render inline math when isStreaming is true', () => {
+      const { container } = render(
+        <ChatMessageContent content="The answer is $x^2$" isStreaming={true} />,
+      )
 
-      // No katex rendering when delimiters are unbalanced
       expect(container.querySelector('.katex')).toBeNull()
-      expect(container.querySelector('.katex-display')).toBeNull()
-      expect(container.querySelector('.katex-error')).toBeNull()
-      // Raw delimiter should be visible
       expect(container.textContent).toContain('$')
     })
 
-    it('renders complete \\[...\\] math normally', () => {
-      const { container } = render(<ChatMessageContent content={'\\[ x^2 \\]'} />)
+    it('renders math when isStreaming is false', () => {
+      const { container } = render(
+        <ChatMessageContent content={'\\[ x^2 \\]'} isStreaming={false} />,
+      )
 
-      // Complete balanced content should render math
       const blockMath = container.querySelector('.isolate.block')
       expect(blockMath).not.toBeNull()
       expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
     })
 
-    it('handles escaped dollar', () => {
-      const { container } = render(
-        <ChatMessageContent content="Price is \\$100 and $\\frac{1}{2}$" />,
-      )
+    it('renders math when isStreaming is undefined (default)', () => {
+      const { container } = render(<ChatMessageContent content={'\\[ x^2 \\]'} />)
 
-      // After normalizeLatexDelimiters, \$ becomes $ and $100 becomes math
-      // The key is that it doesn't show red katex-error
+      const blockMath = container.querySelector('.isolate.block')
+      expect(blockMath).not.toBeNull()
+      expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
+    })
+
+    it('does not show katex-error for invalid but complete LaTeX', () => {
+      const { container } = render(<ChatMessageContent content={'$$\n\\undefinedcommand{}\n$$'} />)
+
+      // Invalid LaTeX should not show katex-error (handled by error handler)
       expect(container.querySelector('.katex-error')).toBeNull()
-      // Balanced $...$ should render as math
-      expect(container.querySelector('.katex')).not.toBeNull()
+      expect(container.textContent).toContain('\\undefinedcommand{}')
     })
 
     it('skips math parsing inside code fences', () => {
       const { container } = render(<ChatMessageContent content="```\n$100\n```" />)
 
-      // Dollar inside code fence should not be parsed as math
       expect(container.querySelector('.katex')).toBeNull()
       expect(container.querySelector('.katex-error')).toBeNull()
-    })
-
-    it('does not show katex-error for invalid but balanced LaTeX', () => {
-      const { container } = render(<ChatMessageContent content={'$$\n\\undefinedcommand{}\n$$'} />)
-
-      // Invalid LaTeX should not show katex-error (handled by error handler)
-      expect(container.querySelector('.katex-error')).toBeNull()
-      // The error handler should have replaced it with text
-      expect(container.textContent).toContain('\\undefinedcommand{}')
     })
   })
 })
