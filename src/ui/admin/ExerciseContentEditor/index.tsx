@@ -1,8 +1,8 @@
 'use client'
 
 import type { Media } from '@/payload-types'
-import type { ContentBlock } from '@/shared/exercise-content/types'
 import { ExerciseBlockDefaults, generateId } from '@/shared/exercise-content/defaults'
+import type { ContentBlock } from '@/shared/exercise-content/types'
 import { useField, useForm } from '@payloadcms/ui'
 import { Code, Image as ImageIcon, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
 import Image from 'next/image'
@@ -20,6 +20,7 @@ import { RichTextEditor } from './RichTextEditor'
  * - rich_text (content blocks)
  * - question_select (true_false and mcq variants)
  * - question_free_response
+ * - question_table (table-based with fillable cells)
  */
 
 const DEFAULT_BLOCKS: ContentBlock[] = [
@@ -509,6 +510,7 @@ function BlockList({
                   {block.type === 'question_select' &&
                     (block.variant === 'mcq' ? 'Multiple Choice Question' : 'Select Question')}
                   {block.type === 'question_free_response' && 'Free Response Question'}
+                  {block.type === 'question_table' && 'Table Question'}
                 </div>
                 <JSONInspector
                   block={block}

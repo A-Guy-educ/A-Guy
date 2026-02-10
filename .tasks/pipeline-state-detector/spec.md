@@ -13,6 +13,7 @@ The `.opencode/PIPELINE.md` defines a deterministic state machine for task orche
 ## Phase 1 Scope: Read-Only State Detector
 
 A single TypeScript file that:
+
 1. Reads the filesystem to check which artifacts exist for a given task
 2. Resolves the pipeline state using top-down rule evaluation
 3. Outputs the DRIVER OUTPUT CONTRACT (markdown or JSON)
@@ -41,15 +42,13 @@ Single file, `#!/usr/bin/env tsx`, matching the project's existing script conven
 ### Key Types
 
 ```typescript
-type PipelineState =
-  | 'NO_TASK' | 'TASK_ONLY' | 'SPEC_READY'
-  | 'BUILD' | 'VERIFY' | 'DONE'
+type PipelineState = 'NO_TASK' | 'TASK_ONLY' | 'SPEC_READY' | 'BUILD' | 'VERIFY' | 'DONE'
 
 interface ArtifactSnapshot {
   taskId: string
-  taskFileExists: boolean      // .tasks/<task-id>/task.md
-  specFileExists: boolean      // .tasks/<task-id>/spec.md
-  planFileExists: boolean      // .tasks/<task-id>/plan.md
+  taskFileExists: boolean // .tasks/<task-id>/task.md
+  specFileExists: boolean // .tasks/<task-id>/spec.md
+  planFileExists: boolean // .tasks/<task-id>/plan.md
   latestVerify: VerifyReportSummary | null
 }
 
@@ -117,7 +116,7 @@ Since the user chose unified `.tasks/<task-id>/`, the pipeline expects:
   verify-*.md       ← verify reports (matches existing convention)
 ```
 
-**Note**: Existing tasks like `20260702-pipe-001-health-endpoint-badge` already have spec.md, plan.md, and verify-*.md but NOT a task.md file. The pipeline script will also check for any `.md` file matching common task file names (task.md, prd.md, hls.md, llp.md) as a "task exists" signal — since existing tasks use varied naming.
+**Note**: Existing tasks like `20260702-pipe-001-health-endpoint-badge` already have spec.md, plan.md, and verify-\*.md but NOT a task.md file. The pipeline script will also check for any `.md` file matching common task file names (task.md, prd.md, hls.md, llp.md) as a "task exists" signal — since existing tasks use varied naming.
 
 ### package.json Addition
 
@@ -170,7 +169,7 @@ rm -rf .tasks/test-pipeline
 
 ## Files Changed
 
-| File | Action | Lines |
-|------|--------|-------|
-| `scripts/pipeline.ts` | CREATE | ~240 |
-| `package.json` | EDIT | +1 (add `pipeline` script) |
+| File                  | Action | Lines                      |
+| --------------------- | ------ | -------------------------- |
+| `scripts/pipeline.ts` | CREATE | ~240                       |
+| `package.json`        | EDIT   | +1 (add `pipeline` script) |

@@ -1,9 +1,9 @@
 'use client'
 
-import React from 'react'
-import { Copy, Edit, X, Check, RotateCcw, AlignLeft } from 'lucide-react'
-import { Highlight, themes } from 'prism-react-renderer'
 import type { ContentBlock } from '@/shared/exercise-content/types'
+import { AlignLeft, Check, Copy, Edit, RotateCcw, X } from 'lucide-react'
+import { Highlight, themes } from 'prism-react-renderer'
+import React from 'react'
 
 interface JSONInspectorProps {
   block: ContentBlock | null // Selected block
@@ -74,7 +74,13 @@ export const JSONInspector: React.FC<JSONInspectorProps> = ({ block, mode, onApp
     }
 
     // Validate based on block type
-    const validTypes = ['rich_text', 'question_select', 'question_free_response', 'latex']
+    const validTypes = [
+      'rich_text',
+      'question_select',
+      'question_free_response',
+      'question_table',
+      'latex',
+    ]
     if (!validTypes.includes(obj.type as string)) {
       return { valid: false, error: `Invalid block type: ${obj.type}` }
     }
