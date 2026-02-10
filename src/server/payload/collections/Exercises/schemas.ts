@@ -1,9 +1,15 @@
 import { z } from 'zod'
 
+// Use shared types for API surface (matching client)
+// Zod schemas are used for validation only
+export type ContentBlock = import('@/shared/exercise-content/types').ContentBlock
+export type LatexBlock = import('@/shared/exercise-content/types').LatexBlock
+export type ContentData = import('@/shared/exercise-content/types').ContentData
+
 // ---------------------------------
 // Zod: Inline Rich Text (NO id)
 // ---------------------------------
-export const InlineRichTextSchema = z
+const InlineRichTextSchema = z
   .object({
     type: z.literal('rich_text'),
     format: z.literal('md-math-v1'),
@@ -145,7 +151,7 @@ export const QuestionFreeResponseBlockSchema = z
 // ---------------------------------
 // Zod: Latex Block
 // ---------------------------------
-export const LatexBlockSchema = z
+const LatexBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('latex'),
@@ -154,133 +160,15 @@ export const LatexBlockSchema = z
   })
   .strict()
 
-export type LatexBlock = z.infer<typeof LatexBlockSchema>
-
 // ---------------------------------
-// Zod: Table Answer Schema
+// Zod: Content union (validation only - use shared types for API)
 // ---------------------------------
-const TableAnswerSchema = z
-  .record(z.string(), z.string())
-  .refine((answers) => {
-    const keyRegex = /^\d+-\d+$/
-    for (const key of Object.keys(answers)) {
-      if (!keyRegex.test(key)) {
-        return false
-      }
-    }
-    return true
-  }, 'Answer keys must be in format "rowIdx-colIdx" (e.g., "0-1")')
-  .optional()
-
-// ---------------------------------
-// Zod: Table Block
-// ---------------------------------
-const TableBlockSchema = z
-  .object({
-    solutionFill: z.boolean().default(false),
-    headers: z.array(z.string()).min(1),
-    rowsData: z.array(z.array(z.string())).min(1),
-    answers: TableAnswerSchema,
-    showBorders: z.boolean().default(true),
-    showHeader: z.boolean().default(true),
-    columnAlignment: z.array(z.enum(['left', 'center', 'right'])).optional(),
-  })
-  .strict()
-  .superRefine((table, ctx) => {
-    const headerCount = table.headers.length
-
-    for (let rowIdx = 0; rowIdx < table.rowsData.length; rowIdx++) {
-      const row = table.rowsData[rowIdx]
-      if (row.length !== headerCount) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Row ${rowIdx} has ${row.length} cells, but headers define ${headerCount} columns`,
-          path: ['rowsData', rowIdx],
-        })
-      }
-    }
-
-    if (table.columnAlignment && table.columnAlignment.length !== headerCount) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `columnAlignment has ${table.columnAlignment.length} items, but headers define ${headerCount} columns`,
-        path: ['columnAlignment'],
-      })
-    }
-
-    if (table.solutionFill) {
-      if (!table.answers || Object.keys(table.answers).length === 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'When solutionFill is true, answers must have at least one entry',
-          path: ['answers'],
-        })
-      }
-
-      for (const [key] of Object.entries(table.answers || {})) {
-        const [rowIdx, colIdx] = key.split('-').map(Number)
-
-        if (rowIdx >= table.rowsData.length || colIdx >= headerCount) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Answer key "${key}" references out-of-bounds cell`,
-            path: ['answers', key],
-          })
-        } else if (table.rowsData[rowIdx][colIdx] !== '') {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Answer key "${key}" points to a non-empty cell (fillable cells must be empty)`,
-            path: ['answers', key],
-          })
-        }
-      }
-
-      for (let rowIdx = 0; rowIdx < table.rowsData.length; rowIdx++) {
-        for (let colIdx = 0; colIdx < table.rowsData[rowIdx].length; colIdx++) {
-          if (table.rowsData[rowIdx][colIdx] === '') {
-            const key = `${rowIdx}-${colIdx}`
-            if (!table.answers || !(key in table.answers)) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `Empty cell at ${key} must have a corresponding answer key`,
-                path: ['rowsData', rowIdx, colIdx],
-              })
-            }
-          }
-        }
-      }
-    }
-  })
-
-// ---------------------------------
-// Zod: Question Table Block
-// ---------------------------------
-export const QuestionTableBlockSchema = z
-  .object({
-    id: z.string().min(1),
-    type: z.literal('question_table'),
-    prompt: InlineRichTextSchema,
-    table: TableBlockSchema,
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
-  })
-  .strict()
-
-// ---------------------------------
-// Zod: Content union (exported for admin components)
-// ---------------------------------
-export const ContentBlockSchema = z.discriminatedUnion('type', [
+const ContentBlockSchema = z.discriminatedUnion('type', [
   RichTextBlockSchema,
   QuestionSelectBlockSchema,
   QuestionFreeResponseBlockSchema,
   LatexBlockSchema,
-  QuestionTableBlockSchema,
 ])
-
-export type ContentBlock = z.infer<typeof ContentBlockSchema>
-
-export type QuestionTableBlock = z.infer<typeof QuestionTableBlockSchema>
 
 export const ContentSchema = z
   .object({

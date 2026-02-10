@@ -13,8 +13,8 @@ export interface ExerciseWorkspaceProps {
   exerciseTitle: string
   /** Optional back URL for navigation */
   backUrl?: string
-  /** PDF or exercise content to display */
-  pdfContent: React.ReactNode
+  /** Primary content to display (PDF or exercise content) */
+  primaryContent: React.ReactNode
   /** Chat interface component */
   chatContent: React.ReactNode
 }
