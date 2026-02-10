@@ -1,8 +1,8 @@
 'use client'
 
 import type { Media } from '@/payload-types'
-import type { ContentBlock } from '@/server/payload/collections/Exercises'
-import { ExerciseBlockDefaults } from '@/server/payload/collections/Exercises'
+import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'
+import { ExerciseBlockDefaults } from '@/server/payload/collections/Exercises/defaults'
 import { useField, useForm } from '@payloadcms/ui'
 import { Code, Image as ImageIcon, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
 import Image from 'next/image'

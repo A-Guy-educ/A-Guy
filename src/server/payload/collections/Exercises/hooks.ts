@@ -1,8 +1,12 @@
 import type { FieldHook } from 'payload'
 
-import { getPayload } from 'payload'
-import configPromise from '@payload-config'
 import { formatSlug } from '@/utilities/formatSlug'
+
+async function getPayloadInstance() {
+  const { getPayload } = await import('payload')
+  const { default: config } = await import('@payload-config')
+  return getPayload({ config })
+}
 
 export const generateSlug: FieldHook = async ({ value, operation, originalDoc, siblingData }) => {
   if (operation === 'delete') {
@@ -16,7 +20,7 @@ export const generateSlug: FieldHook = async ({ value, operation, originalDoc, s
     return value || undefined
   }
 
-  const payload = await getPayload({ config: configPromise })
+  const payload = await getPayloadInstance()
   const lessonId =
     siblingData.lesson || (typeof originalDoc?.lesson === 'string' ? originalDoc.lesson : null)
 
@@ -62,7 +66,7 @@ export const validateSlugUniqueness: FieldHook = async ({
     return value
   }
 
-  const payload = await getPayload({ config: configPromise })
+  const payload = await getPayloadInstance()
   const lessonId =
     siblingData.lesson || (typeof originalDoc?.lesson === 'string' ? originalDoc.lesson : null)
 
