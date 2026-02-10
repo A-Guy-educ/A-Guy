@@ -28,6 +28,10 @@ function buildPromptWithSystemFallback(
   }
 
   return messagesPrompt
+  }
+
+ /**
+
  * Extract key parameter names from MCP tool inputSchema for enhanced descriptions.
  * The MCP plugin generates complex schemas, but we just need the top-level field names.
  */
