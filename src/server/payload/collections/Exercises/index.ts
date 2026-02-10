@@ -8,6 +8,7 @@ import { createdByField } from '../../fields/createdBy'
 import { AccountRole } from '../Users/roles'
 import { DEFAULT_CONTENT } from './defaults'
 import { ContentSchema } from './schemas'
+import { generateSlug, validateSlugUniqueness } from './hooks'
 
 /**
  * Access control - Exercise-specific
@@ -88,6 +89,20 @@ export const Exercises: CollectionConfig = {
           required: true,
           index: true,
           admin: { description: 'The lesson this exercise belongs to' },
+        },
+        {
+          name: 'slug',
+          type: 'text',
+          required: false,
+          index: true,
+          admin: {
+            description:
+              'URL-friendly identifier (auto-generated from title, unique within lesson)',
+          },
+          hooks: {
+            beforeChange: [generateSlug],
+            beforeValidate: [validateSlugUniqueness],
+          },
         },
       ],
     },

@@ -204,7 +204,8 @@
     "exercisesPagerPrev": "Previous",
     "exercisesPagerNext": "Next",
     "exercisesPagerIntro": "Intro",
-    "exercisesPagerCompleted": "Completed"
+    "exercisesPagerCompleted": "Completed",
+    "exercisesPagerBackToLesson": "Back to Lesson"
   },
   "homepage": {
     "nav": {

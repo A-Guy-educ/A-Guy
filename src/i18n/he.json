@@ -204,7 +204,8 @@
     "exercisesPagerPrev": "הקודם",
     "exercisesPagerNext": "הבא",
     "exercisesPagerIntro": "פתיחה",
-    "exercisesPagerCompleted": "הושלם"
+    "exercisesPagerCompleted": "הושלם",
+    "exercisesPagerBackToLesson": "חזור לשיעור"
   },
   "homepage": {
     "nav": {
