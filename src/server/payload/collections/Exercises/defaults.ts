@@ -156,4 +156,31 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
     solution: DEFAULT_HINT_SOLUTION(),
     fullSolution: DEFAULT_HINT_SOLUTION(),
   }),
+
+  question_table: () => ({
+    id: generateId(),
+    type: 'question_table' as const,
+    prompt: {
+      type: 'rich_text' as const,
+      format: 'md-math-v1' as const,
+      value: 'Complete the table:',
+      mediaIds: [] as string[],
+    },
+    table: {
+      solutionFill: false,
+      headers: ['Column 1', 'Column 2', 'Column 3'],
+      rowsData: [
+        ['', '', ''],
+        ['', '', ''],
+        ['', '', ''],
+      ],
+      answers: {},
+      showBorders: true,
+      showHeader: true,
+      columnAlignment: ['left', 'center', 'right'],
+    },
+    hint: DEFAULT_HINT_SOLUTION(),
+    solution: DEFAULT_HINT_SOLUTION(),
+    fullSolution: DEFAULT_HINT_SOLUTION(),
+  }),
 }

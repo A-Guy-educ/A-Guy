@@ -510,6 +510,7 @@ function BlockList({
                   {block.type === 'question_select' &&
                     (block.variant === 'mcq' ? 'Multiple Choice Question' : 'Select Question')}
                   {block.type === 'question_free_response' && 'Free Response Question'}
+                  {block.type === 'question_table' && 'Table Question'}
                 </div>
                 <JSONInspector
                   block={block}
