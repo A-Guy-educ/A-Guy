@@ -32,25 +32,25 @@ describe('isAllowedToolName', () => {
     })
   })
 
-  describe('blocklisted keywords - create operations', () => {
-    it('rejects createCourses', () => {
-      expect(isAllowedToolName('createCourses')).toBe(false)
+  describe('allowed create operations', () => {
+    it('allows createCourses', () => {
+      expect(isAllowedToolName('createCourses')).toBe(true)
     })
 
-    it('rejects createChapters', () => {
-      expect(isAllowedToolName('createChapters')).toBe(false)
+    it('allows createChapters', () => {
+      expect(isAllowedToolName('createChapters')).toBe(true)
     })
 
-    it('rejects createLessons', () => {
-      expect(isAllowedToolName('createLessons')).toBe(false)
+    it('allows createLessons', () => {
+      expect(isAllowedToolName('createLessons')).toBe(true)
     })
 
-    it('rejects createExercises', () => {
-      expect(isAllowedToolName('createExercises')).toBe(false)
+    it('allows createCourses with underscore format', () => {
+      expect(isAllowedToolName('courses_create')).toBe(true)
     })
 
-    it('rejects createMedia', () => {
-      expect(isAllowedToolName('createMedia')).toBe(false)
+    it('allows createCourses with colon format', () => {
+      expect(isAllowedToolName('courses:create')).toBe(true)
     })
   })
 
@@ -198,10 +198,10 @@ describe('discoverAllowedTools', () => {
 
     const allowed = discoverAllowedTools(tools)
 
-    expect(allowed.size).toBe(2)
+    expect(allowed.size).toBe(3)
     expect(allowed.has('findCourses')).toBe(true)
+    expect(allowed.has('createCourses')).toBe(true)
     expect(allowed.has('findChapters')).toBe(true)
-    expect(allowed.has('createCourses')).toBe(false)
     expect(allowed.has('deleteChapters')).toBe(false)
   })
 
@@ -213,7 +213,7 @@ describe('discoverAllowedTools', () => {
 
   it('handles array with only invalid tools', () => {
     const tools = [
-      createMockTool('createCourses'),
+      createMockTool('deleteCourses'),
       createMockTool('updateChapters'),
       createMockTool('deleteLessons'),
     ]
