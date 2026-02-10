@@ -36,3 +36,20 @@ export const queryExerciseById = cache(async ({ id }: { id: string }) => {
     return null
   }
 })
+
+export const queryExerciseBySlug = cache(
+  async ({ lessonId, slug }: { lessonId: string; slug: string }) => {
+    const payload = await getPayload({ config: configPromise })
+
+    const result = await payload.find({
+      collection: 'exercises',
+      where: {
+        and: [{ lesson: { equals: lessonId } }, { slug: { equals: slug } }],
+      },
+      limit: 1,
+      depth: 2,
+    })
+
+    return result.docs[0] || null
+  },
+)

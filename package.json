@@ -147,6 +147,7 @@
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
     "require-in-the-middle": "^8.0.1",
+    "slugify": "^1.6.6",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",

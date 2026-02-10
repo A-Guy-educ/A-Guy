@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation'
 import { EmptyState } from '../../../../../_components/EmptyState'
 import { LessonAnalytics } from './_components/LessonAnalytics'
 import { ChatInterface } from '@/ui/web/chat'
-import { ExerciseWorkspace } from './exercises/[exerciseId]/_components/ExerciseWorkspace'
+import { ExerciseWorkspace } from './exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 import { ExercisesPager } from './_components/ExercisesPager'
 import { BackToChapter } from '../../../../../_components/BackToChapter'
 
@@ -65,7 +65,14 @@ export default async function LessonPage({ params }: LessonPageProps) {
       <>
         <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
         {hasExercises ? (
-          <ExercisesPager exercises={exercises} lessonTitle={lesson.title} backUrl={backUrl} />
+          <ExercisesPager
+            exercises={exercises}
+            lessonTitle={lesson.title}
+            backUrl={backUrl}
+            courseSlug={courseSlug}
+            chapterSlug={chapterSlug}
+            lessonSlug={lessonSlug}
+          />
         ) : (
           // Empty state: no document and no exercises
           <div className="w-full h-full flex flex-col items-center justify-center p-8">

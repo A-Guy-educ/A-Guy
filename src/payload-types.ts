@@ -1215,6 +1215,10 @@ export interface Exercise {
    */
   lesson: string | Lesson;
   /**
+   * URL-friendly identifier (auto-generated from title, unique within lesson)
+   */
+  slug?: string | null;
+  /**
    * Ordered blocks stream. Use question_* blocks to add questions, and rich_text blocks for instructions/notes between questions.
    */
   content:
@@ -2347,6 +2351,7 @@ export interface ExercisesSelect<T extends boolean = true> {
   title?: T;
   order?: T;
   lesson?: T;
+  slug?: T;
   content?: T;
   createdBy?: T;
   origin?: T;
