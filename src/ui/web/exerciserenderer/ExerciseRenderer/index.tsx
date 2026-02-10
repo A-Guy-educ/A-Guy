@@ -54,7 +54,7 @@ export function ExerciseRenderer({
   const [checkResults, setCheckResults] = useState<Record<string, CheckResult>>({})
   const [hasChecked, setHasChecked] = useState<Record<string, boolean>>({})
 
-  const handleAnswerChange = (questionId: string, answer: UserAnswer) => {
+  const handleAnswerChange = async (questionId: string, answer: UserAnswer) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }))
 
     // For true/false questions, check immediately on selection
@@ -64,7 +64,7 @@ export function ExerciseRenderer({
       answer.type === 'true_false' &&
       answer.value !== null
     ) {
-      const result = checkQuestionAnswer(question, answer)
+      const result = await checkQuestionAnswer(question, answer)
       setCheckResults((prev) => ({ ...prev, [questionId]: result }))
       setHasChecked((prev) => ({ ...prev, [questionId]: true }))
     } else {
@@ -78,11 +78,11 @@ export function ExerciseRenderer({
     }
   }
 
-  const handleCheckAnswer = (questionId: string) => {
+  const handleCheckAnswer = async (questionId: string) => {
     const question = questionBlocks.find((q) => q.id === questionId)
     if (!question) return
 
-    const result = checkQuestionAnswer(question, answers[questionId])
+    const result = await checkQuestionAnswer(question, answers[questionId])
     setCheckResults((prev) => ({ ...prev, [questionId]: result }))
     setHasChecked((prev) => ({ ...prev, [questionId]: true }))
   }
@@ -124,7 +124,7 @@ export function ExerciseRenderer({
 
           // Question blocks - render with answer UI
           const question = block as QuestionBlock
-          const answer = answers[question.id]
+          const answer = answers[question.id] ?? getInitialAnswer(question)
           const checkResult = checkResults[question.id] || null
           const checked = hasChecked[question.id] || false
           const disabled = checked && checkResult?.isCorrect

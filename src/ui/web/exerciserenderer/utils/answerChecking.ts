@@ -7,8 +7,12 @@ import type { QuestionBlock, UserAnswer, CheckResult } from '../types'
 
 /**
  * Check if a user's answer is correct for a given question
+ * Returns a Promise to support future async validation (e.g. AI/Gemini)
  */
-export function checkQuestionAnswer(question: QuestionBlock, answer: UserAnswer): CheckResult {
+export async function checkQuestionAnswer(
+  question: QuestionBlock,
+  answer: UserAnswer,
+): Promise<CheckResult> {
   switch (question.type) {
     case 'question_select': {
       // Check variant to determine answer type

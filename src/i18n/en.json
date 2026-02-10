@@ -102,12 +102,16 @@
   "courses": {
     "title": "Courses",
     "description": "Browse all available courses",
+    "shopTitle": "Course Shop",
+    "shopDescription": "Choose the right plan for you and progress to success in mathematics.",
+    "catalogTitle": "Course Catalog",
     "heroTitle": "The Future of Online Learning",
     "heroDescription": "Master new skills with our project-based courses, interactive quizzes, and a supportive community of learners.",
     "liveContent": "New content added regularly",
     "featuredTitle": "Featured Courses",
     "featuredDescription": "Hand-picked courses to help you on your learning journey.",
     "backToCourses": "Back to Courses",
+    "backToChapter": "Back to Chapter",
     "openCourse": "Open Course",
     "viewChapter": "View Chapter",
     "viewLesson": "View Lesson",
@@ -187,7 +191,20 @@
     "trigonometryFormulas": "Trigonometry",
     "formulaSubtitle": "Helper Formulas",
     "notesSubtitle": "Personal Notes",
-    "notesPlaceholder": "Add your notes here..."
+    "notesPlaceholder": "Add your notes here...",
+    "selectBadge": "Select",
+    "of": "of",
+    "exercisesPagerIntroDescriptionPart1": "This lesson contains",
+    "exercisesPagerIntroDescriptionPart2": "exercises. Let's begin!",
+    "exercisesPagerWelcome": "Welcome to the Lesson",
+    "exercisesPagerStart": "Start",
+    "exercisesPagerCompletedTitle": "Great Work!",
+    "exercisesPagerCompletedDescription": "You've completed all exercises for this lesson.",
+    "exercisesPagerComplete": "Complete",
+    "exercisesPagerPrev": "Previous",
+    "exercisesPagerNext": "Next",
+    "exercisesPagerIntro": "Intro",
+    "exercisesPagerCompleted": "Completed"
   },
   "homepage": {
     "nav": {
@@ -261,5 +278,69 @@
     "draftExercisesLoading": "Loading exercises...",
     "noDraftExercises": "No draft exercises found for this conversion.",
     "pages": "Pages {{start}}-{{end}}"
+  },
+  "shop": {
+    "backToLearning": "Back to Learning",
+    "title": "Course Store",
+    "subtitle": "Choose the plan that suits you and advance to success in mathematics.",
+    "membershipPlans": "Membership Plans",
+    "courseCatalog": "Course Catalog",
+    "middleSchool": "Middle School",
+    "highSchool": "High School",
+    "perMonth": "monthly",
+    "perCourse": "course",
+    "plans": {
+      "free": {
+        "title": "Free",
+        "subtitle": "Basic Plan",
+        "currentPlan": "Current Plan",
+        "courseCount": "1 course"
+      },
+      "standard": {
+        "title": "Standard",
+        "subtitle": "Extended Plan",
+        "selectPlan": "Select Plan",
+        "courseCount": "1 course"
+      },
+      "premium": {
+        "title": "Premium",
+        "subtitle": "Premium Plan",
+        "badge": "Best Value",
+        "joinNow": "Join Now",
+        "courseCount": "3 courses of your choice"
+      }
+    },
+    "features": {
+      "learningSystemNo": "Learning System - None",
+      "learningSystemFull": "Learning System - Full",
+      "practiceSystemFull": "Practice System - Full",
+      "questionsLimited": "Questions - Limited",
+      "examsNo": "Exams - None",
+      "examsLimited": "Exams - Limited"
+    },
+    "courses": {
+      "mathBasics": "Mathematics - Basics",
+      "purchaseCourse": "Purchase Course",
+      "purchasedSuccessfully": "Purchased Successfully",
+      "activeInSystem": "Your active course in the system",
+      "grade7": "Grade 7",
+      "grade8": "Grade 8",
+      "grade9": "Grade 9",
+      "grade7Description": "Fundamentals of arithmetic, algebra and geometry",
+      "grade8Description": "Your active course in the system",
+      "grade9Description": "Preparation for ministry exams and high school",
+      "questionnaire172": "Questionnaire 172",
+      "questionnaire471": "Questionnaire 471",
+      "questionnaire572": "Questionnaire 572",
+      "questionnaire172Description": "Complete preparation for the first matriculation questionnaire",
+      "questionnaire471Description": "Analysis, geometry and trigonometry",
+      "questionnaire572Description": "Vectors, complex numbers and logarithms"
+    },
+    "footer": {
+      "platform": "A-Guy Learning Platform",
+      "terms": "Terms of Use",
+      "privacy": "Privacy Policy",
+      "contact": "Contact Us"
+    }
   }
 }

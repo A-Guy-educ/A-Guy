@@ -69,7 +69,7 @@ describe('overrideAuth', () => {
     expect((result as any).media.find).toBe(true)
   })
 
-  it('does not grant write access to admin users', async () => {
+  it('grants create access for courses, chapters, lessons to admins', async () => {
     const { overrideAuth } = await import('@/server/payload/plugins/mcp')
     const adminUser = createMockUser('admin')
     const mockReq = createMockReq(adminUser)
@@ -77,12 +77,27 @@ describe('overrideAuth', () => {
     const result = await overrideAuth(mockReq as any, mockDefaultAuth)
 
     const r = result as any
-    expect(r.courses.create).toBe(false)
+    expect(r.courses.create).toBe(true)
+    expect(r.chapters.create).toBe(true)
+    expect(r.lessons.create).toBe(true)
+    expect(r.exercises.create).toBe(false)
+    expect(r.media.create).toBe(false)
+  })
+
+  it('denies update and delete access to all collections for admins', async () => {
+    const { overrideAuth } = await import('@/server/payload/plugins/mcp')
+    const adminUser = createMockUser('admin')
+    const mockReq = createMockReq(adminUser)
+
+    const result = await overrideAuth(mockReq as any, mockDefaultAuth)
+
+    const r = result as any
     expect(r.courses.update).toBe(false)
     expect(r.courses.delete).toBe(false)
-    expect(r.chapters.create).toBe(false)
     expect(r.chapters.update).toBe(false)
     expect(r.chapters.delete).toBe(false)
+    expect(r.lessons.update).toBe(false)
+    expect(r.lessons.delete).toBe(false)
   })
 
   it('preserves user object in result', async () => {
@@ -132,7 +147,7 @@ describe('overrideAuth', () => {
     expect(r.media.find).toBe(true)
   })
 
-  it('denies all write access to all collections for admins', async () => {
+  it('grants find and create access for courses, chapters, lessons for admins', async () => {
     const { overrideAuth } = await import('@/server/payload/plugins/mcp')
     const adminUser = createMockUser('admin')
     const mockReq = createMockReq(adminUser)
@@ -140,12 +155,30 @@ describe('overrideAuth', () => {
     const result = await overrideAuth(mockReq as any, mockDefaultAuth)
     const r = result as any
 
-    const collections = ['courses', 'chapters', 'lessons', 'exercises', 'media'] as const
-    for (const collection of collections) {
-      expect(r[collection].create).toBe(false)
-      expect(r[collection].update).toBe(false)
-      expect(r[collection].delete).toBe(false)
-    }
+    expect(r.courses.find).toBe(true)
+    expect(r.courses.create).toBe(true)
+    expect(r.courses.update).toBe(false)
+    expect(r.courses.delete).toBe(false)
+
+    expect(r.chapters.find).toBe(true)
+    expect(r.chapters.create).toBe(true)
+    expect(r.chapters.update).toBe(false)
+    expect(r.chapters.delete).toBe(false)
+
+    expect(r.lessons.find).toBe(true)
+    expect(r.lessons.create).toBe(true)
+    expect(r.lessons.update).toBe(false)
+    expect(r.lessons.delete).toBe(false)
+
+    expect(r.exercises.find).toBe(true)
+    expect(r.exercises.create).toBe(false)
+    expect(r.exercises.update).toBe(false)
+    expect(r.exercises.delete).toBe(false)
+
+    expect(r.media.find).toBe(true)
+    expect(r.media.create).toBe(false)
+    expect(r.media.update).toBe(false)
+    expect(r.media.delete).toBe(false)
   })
 
   it('returns valid structure', async () => {

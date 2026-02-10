@@ -45,8 +45,8 @@ const markdownComponents: Components = {
   h6: ({ children }) => (
     <h6 className="text-base font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h6>
   ),
-  ul: ({ children }) => <ul className="mb-4 pl-5 list-disc">{children}</ul>,
-  ol: ({ children }) => <ol className="mb-4 pl-5 list-decimal">{children}</ol>,
+  ul: ({ children }) => <ul className="mb-4 ps-5 list-disc">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-4 ps-5 list-decimal">{children}</ol>,
   li: ({ children }) => <li className="mb-1 leading-relaxed">{children}</li>,
   strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
   em: ({ children }) => <em className="not-italic font-medium">{children}</em>,
@@ -64,7 +64,7 @@ const markdownComponents: Components = {
     </pre>
   ),
   blockquote: ({ children }) => (
-    <blockquote className="border-l-4 border-primary mb-4 pl-4 text-muted-foreground">
+    <blockquote className="border-s-4 border-primary mb-4 ps-4 text-muted-foreground">
       {children}
     </blockquote>
   ),

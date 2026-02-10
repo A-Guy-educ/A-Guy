@@ -2,6 +2,7 @@ import type { AIModel, AIModelKey } from '@/infra/llm/models'
 import type { UnifiedLLMProvider } from '@/infra/llm/providers/factory'
 import { LLMErrorCode } from '@/infra/llm/providers/shared/errors'
 import { withRetry } from '@/infra/llm/providers/shared/retry'
+import { tool } from 'genkit'
 import type { Payload } from 'payload'
 import { resolveGenkitConfig } from '../config-resolver'
 import { getGenkitInstance } from '../genkit-instance'
@@ -27,6 +28,36 @@ function buildPromptWithSystemFallback(
   }
 
   return messagesPrompt
+ * Extract key parameter names from MCP tool inputSchema for enhanced descriptions.
+ * The MCP plugin generates complex schemas, but we just need the top-level field names.
+ */
+function extractKeyParams(inputSchema: Record<string, unknown> | undefined): string[] {
+  if (!inputSchema || typeof inputSchema !== 'object') return []
+  const params = inputSchema.properties
+  if (!params || typeof params !== 'object') return []
+  return Object.keys(params).slice(0, 10)
+}
+
+/**
+ * Build enhanced tool description with key parameters for better LLM guidance.
+ */
+function buildToolDescription(
+  baseDescription: string,
+  inputSchema: Record<string, unknown> | undefined,
+): string {
+  const keyParams = extractKeyParams(inputSchema)
+  if (keyParams.length === 0) return baseDescription
+
+  const requiredParams = new Set<string>()
+  if (inputSchema && Array.isArray((inputSchema as Record<string, unknown>).required)) {
+    for (const req of (inputSchema as Record<string, unknown>).required as string[]) {
+      requiredParams.add(req)
+    }
+  }
+
+  const paramList = keyParams.map((p) => (requiredParams.has(p) ? `${p}*` : p)).join(', ')
+
+  return `${baseDescription} Parameters: ${paramList}`
 }
 
 /**
@@ -242,13 +273,45 @@ export async function createGenkitUnifiedAdapter(
       return withRetry(
         async () => {
           try {
-            // Build prompt with system text as fallback (for providers that ignore `system` param)
-            const prompt = buildPromptWithSystemFallback(input.system, input.messages)
+            const genkitTools = input.tools.map((t) =>
+              tool(
+                {
+                  name: t.name,
+                  description: buildToolDescription(t.description || '', t.inputSchema),
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } as any,
+                async (args) => {
+                  const result = await input.toolExecutor(t.name, args as Record<string, unknown>)
+                  return result
+                },
+              ),
+            )
+
+            // Build messages ensuring first non-system message is 'user'
+            const systemMessage = { role: 'system' as const, content: [{ text: input.system }] }
+            const userAssistantMessages = input.messages.map((m) => ({
+              role: m.role === 'assistant' ? 'model' : m.role,
+              content: [{ text: m.content }],
+            }))
+
+            // Ensure first non-system message is 'user'
+            let messages: any[]
+            if (userAssistantMessages.length > 0 && userAssistantMessages[0].role !== 'user') {
+              messages = [
+                systemMessage,
+                { role: 'user', content: [{ text: 'Please continue.' }] },
+                ...userAssistantMessages,
+              ]
+            } else {
+              messages = [systemMessage, ...userAssistantMessages]
+            }
 
             const result = await ai.generate({
               model: config.model,
-              system: input.system,
-              prompt,
+              messages,
+              tools: genkitTools as any,
+              toolChoice: 'auto',
+              maxTurns: 5,
             })
 
             return {
