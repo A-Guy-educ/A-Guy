@@ -1,243 +1,205 @@
 # PRIMARY AGENT PIPELINE (Operational State Machine)
 
-This pipeline is written for the **PRIMARY DRIVER agent**.
-The driver does not reason intuitively.
-It follows this document mechanically.
-
-Source of truth:
-
-- Task file
-- Spec file
-- Plan output
-- Git state
-- Verify report
-
-If any required artifact is missing or ambiguous — STOP.
+This pipeline is implemented in `scripts/pipeline.ts`. It detects artifacts, resolves pipeline state, and can invoke OpenCode agents.
 
 ---
 
-## ARTIFACTS (Required Files)
+## INSTALLATION
 
-- Task: `.opencode/tasks/<task-id>.md`
-- Spec: `docs/specs/<task-id>.spec.md`
-- Plan: referenced output from Plan agent
-- Verify Report: last verify output (PASS/FAIL)
+### Required: OpenCode CLI
 
----
+```bash
+# Install globally
+pnpm setup:opencode
 
-## STATE DETECTION (Evaluate Top → Down)
+# Or manually
+curl -fsSL https://opencode.ai/install | bash
 
-Evaluate states in this exact order.
-The **first matching rule wins**.
+# Verify installation
+~/.opencode/bin/opencode --version
+```
 
----
+### GitHub Actions (Linux x86_64)
 
-### STATE 0 — NO TASK
+Add to your workflow:
 
-Condition:
+```yaml
+- name: Install OpenCode CLI
+  run: curl -L https://opencode.ai/install | sudo bash
+```
 
-- No file exists at `.opencode/tasks/<task-id>.md`
-
-Action:
-
-- STOP
-- Ask user to create a Task file
-
----
-
-### BLOCKED — CLARIFICATION REQUIRED
-
-Condition:
-
-- Task objective is ambiguous
-- Scope is unclear
-- Success Definition is not testable
-- Conflicting constraints exist
-
-Action:
-
-- STOP pipeline execution
-- Ask clarifying questions
-- Do NOT proceed to Spec
-- Do NOT guess
-
-Exit Condition:
-
-- Task updated with answers
-- Ambiguity resolved
+Or use the provided workflow: `.github/workflows/pipeline.yml`
 
 ---
 
-### STATE 1 — TASK ONLY
+## CLI USAGE
 
-Condition:
+```bash
+# Read-only state detection
+pnpm pipeline --task-id=<id>
+pnpm pipeline --task-id=<id> --format=json
 
-- Task exists
-- Spec does NOT exist
+# List all tasks
+pnpm pipeline --list
 
-Next Agent:
+# Watch mode for continuous monitoring
+pnpm pipeline --task-id=<id> --watch
 
-- `spec`
+# Run agent for current state
+pnpm pipeline --task-id=<id> --run
 
-Instruction:
-
-- Produce a spec strictly from the task
-- Write only `docs/specs/<task-id>.spec.md`
-- Do not write code
-- Do not plan implementation
-
----
-
-### STATE 2 — SPEC READY
-
-Condition:
-
-- Spec exists
-- Plan does NOT exist
-
-Next Agent:
-
-- `plan`
-
-Instruction:
-
-- Produce an execution plan derived from the spec
-- Reference spec requirements explicitly
-- Do not write code
-- Do not modify spec
+# Run BUILD-VERIFY loop
+pnpm pipeline:run --task-id=<id>
+```
 
 ---
 
-### STATE 3 — BUILD
+## STATE MACHINE (Top-Down)
 
-Condition:
-
-- Spec exists
-- Plan exists
-- AND (no commits exist after plan OR returning from verify FAIL)
-
-Next Agent:
-
-- `build`
-
-Instruction:
-
-- Pull latest `dev`
-- Create a new working branch from `dev` named: `<type>/<kebab-case>`
-- Validate the branch name by running: `pnpm check:branch`
-- All work must be done on this branch only
-- Implement strictly according to spec + plan
-- Commit and push changes
-- You own Git (commit / push / branch management)
-- You may consult subagents
-- You MUST NOT change the spec
-- You MUST NOT expand scope
-
-Exit Condition:
-
-- One or more commits pushed that address the plan or verify fix list
+| State        | Condition                                               | Next Agent |
+| ------------ | ------------------------------------------------------- | ---------- |
+| `NO_TASK`    | No task directory                                       | none       |
+| `TASK_ONLY`  | Task exists, no spec                                    | `spec`     |
+| `SPEC_READY` | Spec exists, no plan                                    | `plan`     |
+| `BUILD`      | Plan exists, no verify OR verify fail OR no new commits | `build`    |
+| `VERIFY`     | Verify exists, new commits since verify                 | `verify`   |
+| `DONE`       | Verify PASS/COMPLIANT                                   | none       |
 
 ---
 
-### STATE 4 — VERIFY
+## ARTIFACTS (`.tasks/<task-id>/`)
 
-Condition:
-
-- New commits exist since last verify
-- OR no verify has been run yet
-
-Next Agent:
-
-- `verify`
-
-Instruction:
-
-- Run hard gate (lint/typecheck/tests/build)
-- Run soft gate (spec compliance)
-- Output PASS or FAIL with an ordered fix list
-- Do not modify code
-- Do not commit
-- Do not open PRs
+```
+.tasks/<task-id>/
+  {task.md,prd.md,hls.md,llp.md,gap.md}  → Task definition
+  spec.md                                 → Requirements
+  plan.md                                 → Implementation steps
+  verify-YYYYMMDD-HHMMSS.md               → Verification report
+```
 
 ---
 
-### STATE 5 — VERIFY FAILED → RETURN TO BUILD
+## AGENTS (`.opencode/agents/`)
 
-Condition:
-
-- Last verify result = FAIL
-
-Action:
-
-- **IMMEDIATE RETURN TO STATE 3 (BUILD)**
-
-Rule:
-
-- No transition to Spec or Plan is allowed automatically
-- Fixes must be applied by Build only
-- Scope must not change
+| Agent              | File                  | Purpose                      |
+| ------------------ | --------------------- | ---------------------------- |
+| `spec`             | `spec.md`             | Write requirements spec      |
+| `plan`             | `plan.md`             | Create implementation plan   |
+| `build`            | `build.md`            | Implement & commit           |
+| `verify`           | `verify.md`           | Run gates, output PASS/FAIL  |
+| `advisor`          | `advisor.md`          | Strategic advisor (subagent) |
+| `code-reviewer`    | `code-reviewer.md`    | Code quality (subagent)      |
+| `security-auditor` | `security-auditor.md` | Security review (subagent)   |
+| `payload-expert`   | `payload-expert.md`   | Payload CMS (subagent)       |
 
 ---
 
-### STATE 6 — DONE
+## PHASE 1: State Detection
 
-Condition:
+Runs without agent invocation. Outputs:
 
-- Last verify result = PASS
+```markdown
+# Pipeline State Report
 
-Action:
+## Overview
 
-- STOP
-- Task is complete and merge-ready
+| Property          | Value      |
+| ----------------- | ---------- |
+| **Task ID**       | `<id>`     |
+| **Current State** | `🔨 BUILD` |
+| **Next Agent**    | `build`    |
 
----
+## Artifacts
 
-## CRITICAL LOOP (NON-NEGOTIABLE)
+| Artifact | Status |
+| -------- | ------ |
+| spec.md  | ✅     |
+| plan.md  | ✅     |
 
-STATE 3 (BUILD)
-→ STATE 4 (VERIFY)
-→ FAIL → STATE 3 (BUILD)
-→ PASS → STATE 6 (DONE)
+## Git State
 
-Verify never advances the pipeline.
-Verify only blocks or releases.
-
----
-
-## DRIVER RULES (ABSOLUTE)
-
-- Only **one agent** runs at a time
-- The driver never skips states
-- The driver never changes artifacts owned by other stages
-- Verify FAIL never reopens Spec or Plan automatically
-- Spec or Plan changes require **explicit manual restart**
-- Progress = artifacts + commits, not discussion
+| Property                 | Value         |
+| ------------------------ | ------------- |
+| **Branch**               | `feature/xxx` |
+| **Commits Since Verify** | 5             |
+```
 
 ---
 
-## PRIMARY DRIVER OUTPUT CONTRACT
+## PHASE 2: Git State Detection
 
-Every driver/orchestrator run MUST output exactly:
+Automatically detected:
 
-- Current State
-- Blocking Condition (if any)
-- Next Agent to Run
-- Exact Instruction to That Agent
+- `currentBranch` - `git rev-parse --abbrev-ref HEAD`
+- `lastCommitHash` - `git rev-parse HEAD`
+- `hasUncommittedChanges` - `git status --porcelain`
+- `commitsSinceVerify` - count commits since verify report
 
-No commentary. No alternatives.
+**VERIFY triggers when:**
+
+- Verify report exists
+- Final result = FAIL or COMPLIANT
+- New commits since verify
 
 ---
 
-## FAILURE HANDLING
+## PHASE 3: Agent Invocation
 
-If:
+Invoked via `--run` or `pipeline:run`:
 
-- An artifact is unclear
-- Commands cannot be determined
-- State cannot be classified
+1. Detect current state
+2. Get agent from state config
+3. Create task context (reads task/spec/plan)
+4. Invoke: `npx opencode --agent <agent-file> --project <cwd>`
+5. Agent writes to artifacts
+6. Re-evaluate state
 
-Then:
+**Requirements:**
 
-- STOP
-- Report the missing or ambiguous input
-- Do not guess
+- OpenCode CLI installed: `npm install -g @opencode-ai/cli`
+- Agent files in `.opencode/agents/`
+
+**Loop (BUILD-VERIFY):**
+
+```
+BUILD → (new commits) → VERIFY → FAIL → BUILD
+                               ↓ PASS → DONE
+Max iterations: 5 (configurable)
+```
+
+---
+
+## DRIVER OUTPUT CONTRACT
+
+```typescript
+interface DriverOutput {
+  currentState: PipelineState
+  blockingCondition: string | null
+  nextAgent: string | null
+  instruction: string | null
+  artifacts: {
+    taskId: string
+    specFileExists: boolean
+    planFileExists: boolean
+    latestVerify: VerifyReportSummary | null
+    gitState: GitStateSummary | null
+  }
+}
+```
+
+---
+
+## IMPLEMENTATION
+
+| Component       | Location                             |
+| --------------- | ------------------------------------ |
+| Pipeline script | `scripts/pipeline.ts`                |
+| Agents          | `.opencode/agents/*.md`              |
+| Config          | `scripts/pipeline.ts:DEFAULT_CONFIG` |
+
+```bash
+# Development
+pnpm pipeline --task-id=<id>        # Detect state
+pnpm pipeline --task-id=<id> --run   # Invoke agent
+pnpm pipeline:run --task-id=<id>     # Full loop
+```
