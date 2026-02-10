@@ -66,9 +66,6 @@ interface ChatInterfaceProps {
   viewMode?: ViewMode
   onModeToggle?: () => void
   onChatInteraction?: () => void
-
-  // Message transformation
-  transformAssistantMessage?: (content: string) => string
 }
 
 export function ChatInterface({
@@ -88,7 +85,6 @@ export function ChatInterface({
   viewMode,
   onModeToggle,
   onChatInteraction,
-  transformAssistantMessage,
 }: ChatInterfaceProps) {
   const t = useTranslations(translationNamespace)
   const tCourses = useTranslations('courses')
@@ -272,13 +268,7 @@ export function ChatInterface({
                   ))}
                 </div>
               )}
-              <ChatMessageContent
-                content={
-                  transformAssistantMessage && msg.role === ChatMessageRole.Assistant
-                    ? transformAssistantMessage(msg.content)
-                    : msg.content
-                }
-              />
+              <ChatMessageContent content={msg.content} />
             </div>
           ))}
         {isLoading && (

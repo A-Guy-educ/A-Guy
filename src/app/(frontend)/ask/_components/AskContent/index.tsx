@@ -7,16 +7,6 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-// Utility to wrap standalone numeric fractions with LaTeX delimiters
-// Only converts patterns like "1/2", "3/4", not x/3 or (x+1)/(x-2)
-// Avoids URLs (http://) and paths (a/b/c)
-export function wrapNumericFractions(text: string): string {
-  // Match standalone numeric fractions: digits/digits surrounded by word boundaries
-  // Avoids fractions already in $...$ by not matching after $ signs
-  // Also avoids URLs/paths by not matching after a slash
-  return text.replace(/(?<![$/])\b(\d+)\s*\/\s*(\d+)\b(?![\/$])/g, '$\\frac{$1}{$2}$')
-}
-
 export function AskContent() {
   const t = useTranslations('homepage.ask')
   const [courseId, setCourseId] = useState<string>('')
@@ -80,8 +70,7 @@ export function AskContent() {
     <div className="container mx-auto px-4 py-8 h-[calc(100vh-200px)]">
       <ChatInterface
         courseId={courseId}
-        translationNamespace="courses"
-        transformAssistantMessage={wrapNumericFractions}
+        translationNamespace="homepage.ask"
       />
     </div>
   )
