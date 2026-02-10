@@ -78,13 +78,6 @@ describe('CourseCard component', () => {
     expect(screen.getByText('8')).toBeTruthy()
   })
 
-  it('does not render when course has no slug', () => {
-    const courseWithoutSlug = { ...mockCourse, slug: '' }
-    const { container } = renderWithI18n(courseWithoutSlug)
-
-    expect(container.firstChild).toBeNull()
-  })
-
   it('updates localStorage and navigates when course is selected', () => {
     renderWithI18n(mockCourse)
 

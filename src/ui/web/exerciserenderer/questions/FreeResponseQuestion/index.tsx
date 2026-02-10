@@ -6,7 +6,7 @@
 'use client'
 
 import React from 'react'
-import { Input } from '@/ui/web/components/input'
+import { Textarea } from '@/ui/web/components/textarea'
 import type { QuestionFreeResponseBlock, UserAnswer, CheckResult, RichTextBlock } from '../../types'
 import { RichTextRenderer } from '../../blocks/RichTextRenderer'
 
@@ -27,7 +27,7 @@ export function FreeResponseQuestion({
   checkResult: _checkResult,
   t,
 }: FreeResponseQuestionProps) {
-  const value = answer.type === 'free_response' ? answer.value : ''
+  const value = answer?.type === 'free_response' ? answer.value : ''
 
   // Convert InlineRichText to RichTextBlock for renderer
   const promptBlock: RichTextBlock = {
@@ -41,13 +41,13 @@ export function FreeResponseQuestion({
       <div className="text-base font-medium text-foreground leading-relaxed">
         <RichTextRenderer block={promptBlock} />
       </div>
-      <Input
-        type="text"
+      <Textarea
         value={value}
         onChange={(e) => onChange({ type: 'free_response', value: e.target.value })}
         disabled={disabled}
         placeholder={t('enterAnswer')}
-        className="text-base p-6"
+        className="text-base p-4 min-h-[120px] resize-y"
+        rows={4}
       />
     </div>
   )
