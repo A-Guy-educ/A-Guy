@@ -7,12 +7,13 @@
 
 import type {
   ContentBlock,
-  RichTextBlock,
-  QuestionSelectTrueFalseBlock,
-  QuestionSelectMcqBlock,
-  QuestionFreeResponseBlock,
-  LatexBlock,
   InlineRichText,
+  LatexBlock,
+  QuestionFreeResponseBlock,
+  QuestionSelectMcqBlock,
+  QuestionSelectTrueFalseBlock,
+  QuestionTableBlock,
+  RichTextBlock,
   TrueFalseAnswer,
 } from './types'
 import { generateId } from './types'
@@ -171,6 +172,32 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
       mediaIds: [],
     },
     answer: { ...DEFAULT_FREE_RESPONSE_ANSWER },
+    hint: DEFAULT_HINT_SOLUTION(),
+    solution: DEFAULT_HINT_SOLUTION(),
+    fullSolution: DEFAULT_HINT_SOLUTION(),
+  }),
+
+  question_table: (): QuestionTableBlock => ({
+    id: generateId(),
+    type: 'question_table',
+    prompt: {
+      type: 'rich_text',
+      format: 'md-math-v1',
+      value: 'Complete the table:',
+      mediaIds: [],
+    },
+    table: {
+      solutionFill: false,
+      headers: ['Column 1', 'Column 2', 'Column 3'],
+      rowsData: [
+        ['', '', ''],
+        ['', '', ''],
+      ],
+      answers: {},
+      showBorders: true,
+      showHeader: true,
+      columnAlignment: ['left', 'center', 'right'],
+    },
     hint: DEFAULT_HINT_SOLUTION(),
     solution: DEFAULT_HINT_SOLUTION(),
     fullSolution: DEFAULT_HINT_SOLUTION(),

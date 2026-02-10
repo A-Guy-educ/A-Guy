@@ -98,6 +98,32 @@ export interface QuestionFreeResponseBlock {
 }
 
 // ---------------------------------
+// Table Block (used inside QuestionTableBlock)
+// ---------------------------------
+export interface TableBlock {
+  solutionFill: boolean
+  headers: string[]
+  rowsData: string[][]
+  answers: Record<string, string> | undefined
+  showBorders: boolean
+  showHeader: boolean
+  columnAlignment?: ('left' | 'center' | 'right')[]
+}
+
+// ---------------------------------
+// Question Table Block
+// ---------------------------------
+export interface QuestionTableBlock {
+  id: string
+  type: 'question_table'
+  prompt: InlineRichText
+  table: TableBlock
+  hint?: InlineRichText
+  solution?: InlineRichText
+  fullSolution?: InlineRichText
+}
+
+// ---------------------------------
 // Latex Block
 // ---------------------------------
 export interface LatexBlock {
@@ -115,6 +141,7 @@ export type ContentBlock =
   | QuestionSelectTrueFalseBlock
   | QuestionSelectMcqBlock
   | QuestionFreeResponseBlock
+  | QuestionTableBlock
   | LatexBlock
 
 // ---------------------------------
