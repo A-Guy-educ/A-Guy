@@ -5,7 +5,8 @@ import { Button } from '@/ui/web/components/button'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { ExerciseRenderer } from '@/ui/web/exerciserenderer'
 import { BookOpen, ChevronLeft, ChevronRight, Layers, Sparkles } from 'lucide-react'
-import { useTranslations } from '@/ui/web/providers/I18n'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
+import { getSectionLabel } from '@/infra/utils/getSectionLabel'
 import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
 import { Progress } from '@/ui/web/components/progress'
 import { useExercisesPager } from './useExercisesPager'
@@ -18,8 +19,13 @@ interface ExercisesPagerProps {
 
 export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPagerProps) {
   const t = useTranslations('courses')
-  const { pageState, progressPercent, canGoNext, canGoPrev, handleNext, handlePrev, handleStart } =
-    useExercisesPager(exercises.length)
+  const locale = useLocale()
+  const pager = useExercisesPager(exercises.length)
+  const sectionLabel =
+    pager.pageState.type === 'exercise' && pager.pageState.exerciseIndex !== undefined
+      ? getSectionLabel({ index: pager.pageState.exerciseIndex, locale })
+      : null
+  const { pageState, progressPercent, canGoNext, canGoPrev, handleNext, handlePrev, handleStart } = pager
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -78,15 +84,22 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
             <div className="space-y-8">
               <div className="bg-card rounded-3xl p-6 md:p-8 border border-border/60 shadow-lg shadow-muted/40 relative overflow-hidden">
                 <div className="absolute top-0 end-0 w-1.5 h-full bg-primary rounded-s-full" />
-                <div className="flex items-center gap-3 mb-3">
+<div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                     <Layers className="w-5 h-5 text-primary" />
                   </div>
-                  <div>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em]">
-                      {t('exercise')} {pageState.exerciseIndex + 1} {t('of')} {exercises.length}
-                    </p>
-                    <h2 className="text-xl font-medium text-foreground">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      {sectionLabel && (
+                        <span className="inline-flex items-center justify-center h-6 min-w-6 px-2 rounded-full bg-primary/10 text-primary text-[11px] font-medium border border-primary/20">
+                          {sectionLabel}
+                        </span>
+                      )}
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em]">
+                        {t('exercise')} {pageState.exerciseIndex + 1} {t('of')} {exercises.length}
+                      </p>
+                    </div>
+                    <h2 className="text-xl font-medium text-foreground truncate">
                       {exercises[pageState.exerciseIndex]?.title}
                     </h2>
                   </div>
