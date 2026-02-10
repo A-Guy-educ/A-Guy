@@ -1,96 +1,59 @@
 ## Summary
 
-This PR refactors the LLM model registry to be the single source of truth for all model definitions, enabling proper provider switching at runtime between Gemini and OpenAI-compatible providers.
+This PR enables MCP (Model Context Protocol) tool access for creating courses, chapters, and lessons, and enhances the Genkit adapter with proper tool handling for the AI agent.
 
-## Problem
+## Changes
 
-- `models.ts` and `factory.ts` had duplicated model definitions
-- No proper runtime model switching support
-- Circular dependency between modules
-- Types were duplicated across providers
+### MCP Auth & Tool Allowlist Updates
 
-## Solution
+1. **src/server/payload/plugins/mcp/index.ts** - Updated `overrideAuth` to grant create permissions for courses, chapters, and lessons while maintaining read-only for exercises and media
 
-### New Architecture
+2. **src/server/repos/mcp/tool-allowlist.ts** - Removed create operations from blocklist for `courses`, `chapters`, and `lessons` collections
 
-1. **Centralized Model Registry** (`src/infra/llm/models.ts`)
-   - `MODEL_REGISTRY`: Provider-agnostic configs (temperature, maxOutputTokens, capabilities)
-   - `PROVIDER_MODEL_NAMES`: Provider-specific model name mappings
-   - `AI_MODELS`: Backward-compatible convenience export
+3. **src/payload-types.ts** - Generated type updates reflecting new `create` permissions in `PayloadMcpApiKey`
 
-2. **Provider Types** (`src/infra/llm/providers/types.ts`)
-   - New file to break circular dependency
-   - Contains `LLMProviderType` enum
+### Genkit Adapter Enhancement
 
-3. **Factory Refactored** (`src/infra/llm/providers/factory.ts`)
-   - Now imports from centralized models.ts
-   - Exports `LLMProviderType` for backward compatibility
+4. **src/infra/llm/genkit/adapters/unified-adapter.ts** - Major refactor to properly handle MCP tools:
+   - Added `extractKeyParams()` and `buildToolDescription()` helpers for enhanced LLM guidance
+   - Integrated Genkit `tool()` wrapper for proper tool definitions
+   - Fixed message role handling (ensures first non-system message is 'user')
+   - Added `toolChoice: 'auto'` and `maxTurns: 5` configuration
 
-### Key Features
+5. **src/server/payload/endpoints/agent/chat.ts** - Minor adjustments to support new tool handling
 
-- **Runtime Model Overrides**: Set `LLM_MODEL_OVERRIDE_<MODEL_KEY>` or `LLM_MODEL_OVERRIDE_DEFAULT` env vars
-- **Provider Switching**: Seamless switching between Gemini and OpenAI-compatible via `LLM_PROVIDER` env var
-- **Single Source of Truth**: All model definitions in one place
-- **Type Safety**: Consolidated `AIModel` type definition
+### Tests Updated
+
+6. **tests/unit/server/payload/plugins/mcp-auth.test.ts** - Updated test expectations for new auth behavior
+7. **tests/unit/server/repos/mcp/tool-allowlist.test.ts** - Updated tests to verify create operations now allowed
+
+### Documentation
+
+8. **docs/features/guest-chat/spec.md** - New specification document
 
 ## Files Changed
 
-### New Files
-
-- `src/infra/llm/providers/types.ts` - Provider type definitions
-
-### Modified Files
-
-- `src/infra/llm/models.ts` - Centralized model registry
-- `src/infra/llm/providers/factory.ts` - Refactored to use registry
-- `src/infra/llm/providers/gemini/index.ts` - Updated exports
-- `src/infra/llm/providers/openai/index.ts` - Updated exports
-- `src/infra/llm/index.ts` - Updated exports
-
-### Test Files
-
-- `tests/unit/infra/llm/models.test.ts` - New (23 tests)
-- `tests/unit/infra/llm/providers/factory.test.ts` - Extended (20 tests)
-
-## Usage Examples
-
-### Get model config for specific provider
-
-```typescript
-import { getProviderModelConfig } from '@/infra/llm/models'
-import { LLMProviderType } from '@/infra/llm/providers/factory'
-
-const config = getProviderModelConfig(LLMProviderType.GEMINI, 'EXERCISE_CHAT')
-// Returns: { name: 'gemini-2.0-flash-001', temperature: 0.7, maxOutputTokens: 2048, capabilities: ['multimodal', 'chat'] }
 ```
-
-### Runtime model override
-
-```bash
-# Override specific model
-export LLM_MODEL_OVERRIDE_EXERCISE_CHAT=gemini-1.5-pro
-
-# Or set default override
-export LLM_MODEL_OVERRIDE_DEFAULT=gpt-4o
+ src/infra/llm/genkit/adapters/unified-adapter.ts   | 76 ++++++++++++++++++++--
+ src/payload-types.ts                               | 27 ++++++--
+ src/server/payload/endpoints/agent/chat.ts         | 10 ++-
+ src/server/payload/plugins/mcp/index.ts            | 18 ++---
+ src/server/repos/mcp/tool-allowlist.ts             | 22 +++++--
+ tests/unit/server/payload/plugins/mcp-auth.test.ts | 53 ++++++++++++---
+ tests/unit/server/repos/mcp/tool-allowlist.test.ts | 28 ++++----
 ```
 
 ## Testing
 
-All 968 tests passed (5 skipped):
+Run tests to verify:
 
-- `tests/unit/infra/llm/models.test.ts`: 23 tests
-- `tests/unit/infra/llm/providers/factory.test.ts`: 20 tests
+```bash
+pnpm test -- --testPathPattern="mcp"
+```
 
 ## Checklist
 
 - [x] Code follows project conventions
 - [x] Self-reviewed changes
-- [x] Lint passes (no new warnings)
-- [x] Tests pass (968 passed, 5 skipped)
-- [x] Documentation in code comments updated
-
----
-
-**PR URL**: https://github.com/A-Guy-educ/A-Guy/pull/new/refactor/llm-model-registry
-**Base Branch**: dev
-**Compare Branch**: refactor/llm-model-registry
+- [x] Tests pass
+- [x] Types generated

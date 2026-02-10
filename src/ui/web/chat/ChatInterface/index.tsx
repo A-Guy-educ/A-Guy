@@ -145,12 +145,12 @@ export function ChatInterface({
   // Lazy-load math tools components if needed
   useEffect(() => {
     if (showMathTools && !FormulaPanel) {
-      import('@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/FormulaPanel').then(
+      import('@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/FormulaPanel').then(
         (mod) => {
           FormulaPanel = mod.FormulaPanel
         },
       )
-      import('@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseId]/_components/MathPalette').then(
+      import('@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/MathPalette').then(
         (mod) => {
           MathPalette = mod.MathPalette
         },

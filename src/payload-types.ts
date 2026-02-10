@@ -1215,6 +1215,10 @@ export interface Exercise {
    */
   lesson: string | Lesson;
   /**
+   * URL-friendly identifier (auto-generated from title, unique within lesson)
+   */
+  slug?: string | null;
+  /**
    * Ordered blocks stream. Use question_* blocks to add questions, and rich_text blocks for instructions/notes between questions.
    */
   content:
@@ -1694,18 +1698,30 @@ export interface PayloadMcpApiKey {
      * Allow clients to find courses.
      */
     find?: boolean | null;
+    /**
+     * Allow clients to create courses.
+     */
+    create?: boolean | null;
   };
   chapters?: {
     /**
      * Allow clients to find chapters.
      */
     find?: boolean | null;
+    /**
+     * Allow clients to create chapters.
+     */
+    create?: boolean | null;
   };
   lessons?: {
     /**
      * Allow clients to find lessons.
      */
     find?: boolean | null;
+    /**
+     * Allow clients to create lessons.
+     */
+    create?: boolean | null;
   };
   exercises?: {
     /**
@@ -2335,6 +2351,7 @@ export interface ExercisesSelect<T extends boolean = true> {
   title?: T;
   order?: T;
   lesson?: T;
+  slug?: T;
   content?: T;
   createdBy?: T;
   origin?: T;
@@ -2736,16 +2753,19 @@ export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
     | T
     | {
         find?: T;
+        create?: T;
       };
   chapters?:
     | T
     | {
         find?: T;
+        create?: T;
       };
   lessons?:
     | T
     | {
         find?: T;
+        create?: T;
       };
   exercises?:
     | T

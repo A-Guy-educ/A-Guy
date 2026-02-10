@@ -7,10 +7,18 @@ const ALLOWED_TOOL_NAMES = new Set([
   'findLessons',
   'findExercises',
   'findMedia',
+  'createCourses',
+  'createChapters',
+  'createLessons',
+  'courses_create',
+  'chapters_create',
+  'lessons_create',
+  'courses:create',
+  'chapters:create',
+  'lessons:create',
 ])
 
 const BLOCKLIST_KEYWORDS = [
-  'create',
   'update',
   'delete',
   'insert',
@@ -22,6 +30,10 @@ const BLOCKLIST_KEYWORDS = [
 ]
 
 export function isAllowedToolName(toolName: string): boolean {
+  if (ALLOWED_TOOL_NAMES.has(toolName)) {
+    return true
+  }
+
   const lower = toolName.toLowerCase()
   for (const keyword of BLOCKLIST_KEYWORDS) {
     if (lower.includes(keyword)) {
@@ -29,12 +41,8 @@ export function isAllowedToolName(toolName: string): boolean {
     }
   }
 
-  if (!ALLOWED_TOOL_NAMES.has(toolName)) {
-    logger.warn({ toolName }, '[MCP] Unknown tool pattern rejected')
-    return false
-  }
-
-  return true
+  logger.warn({ toolName }, '[MCP] Unknown tool pattern rejected')
+  return false
 }
 
 export function discoverAllowedTools(tools: MCPTool[]): Set<string> {

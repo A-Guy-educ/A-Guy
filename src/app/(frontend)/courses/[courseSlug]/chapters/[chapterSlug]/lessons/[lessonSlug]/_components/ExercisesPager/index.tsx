@@ -15,9 +15,19 @@ interface ExercisesPagerProps {
   exercises: Exercise[]
   lessonTitle: string
   backUrl: string
+  courseSlug: string
+  chapterSlug: string
+  lessonSlug: string
 }
 
-export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPagerProps) {
+export function ExercisesPager({
+  exercises,
+  lessonTitle,
+  backUrl,
+  courseSlug,
+  chapterSlug,
+  lessonSlug,
+}: ExercisesPagerProps) {
   const t = useTranslations('courses')
   const locale = useLocale()
   const pager = useExercisesPager(exercises.length)
@@ -33,7 +43,6 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
 
       <main className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-3xl">
-          {/* ── Intro Page ── */}
           {pageState.type === 'intro' && (
             <div className="space-y-8">
               <header className="text-center">
@@ -55,13 +64,13 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
                   {t('exercisesPagerWelcome')}
                 </h2>
                 <p className="text-muted-foreground mb-10 text-base leading-relaxed max-w-md mx-auto">
-                  {t('exercisesPagerIntroDescriptionPart1')} {exercises.length}{' '}
+                  {t('exercisesPagerIntroDescriptionPart1')} {totalExercises}{' '}
                   {t('exercisesPagerIntroDescriptionPart2')}
                 </p>
 
                 <div className="inline-flex items-center gap-3 px-5 py-3 bg-muted rounded-2xl border border-border/60 mb-10">
                   <Layers className="w-5 h-5 text-primary" />
-                  <span className="text-primary text-xl font-medium">{exercises.length}</span>
+                  <span className="text-primary text-xl font-medium">{totalExercises}</span>
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
                     {t('exercise')}
                   </span>
@@ -79,8 +88,7 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
             </div>
           )}
 
-          {/* ── Exercise Page ── */}
-          {pageState.type === 'exercise' && pageState.exerciseIndex !== undefined && (
+          {pageState.type === 'exercise' && typeof pageState.exerciseIndex === 'number' && (
             <div className="space-y-8">
               <div className="bg-card rounded-3xl p-6 md:p-8 border border-border/60 shadow-lg shadow-muted/40 relative overflow-hidden">
                 <div className="absolute top-0 end-0 w-1.5 h-full bg-primary rounded-s-full" />
@@ -107,13 +115,17 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
               </div>
 
               <div className="bg-card rounded-3xl p-6 md:p-8 border border-border/60 shadow-lg shadow-muted/40">
-                <ExerciseRenderer
-                  content={
-                    exercises[pageState.exerciseIndex]?.content as unknown as ExerciseContentData
-                  }
-                  mode="student"
-                  showCheckAnswer={true}
-                />
+                {typeof pageState.exerciseIndex === 'number' &&
+                  exercises[pageState.exerciseIndex] && (
+                    <ExerciseRenderer
+                      content={
+                        exercises[pageState.exerciseIndex]!
+                          .content as unknown as ExerciseContentData
+                      }
+                      mode="student"
+                      showCheckAnswer={true}
+                    />
+                  )}
               </div>
 
               <div className="flex justify-between items-center pt-4">
@@ -138,7 +150,6 @@ export function ExercisesPager({ exercises, lessonTitle, backUrl }: ExercisesPag
             </div>
           )}
 
-          {/* ── Outro Page ── */}
           {pageState.type === 'outro' && (
             <div className="space-y-8">
               <header className="text-center">

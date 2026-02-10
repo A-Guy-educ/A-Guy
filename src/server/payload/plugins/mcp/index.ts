@@ -28,13 +28,13 @@ export async function overrideAuth(
 ): Promise<MCPAccessSettings> {
   // If user is authenticated via session (cookie) and is an admin, grant access
   if (req.user && 'role' in req.user && req.user.role === AccountRole.Admin) {
-    // Return access settings that allow read operations for admins
+    // Return access settings that allow find and create operations for admins
     return {
       user: req.user,
-      // Grant find access to all configured collections
-      courses: { find: true, create: false, update: false, delete: false },
-      chapters: { find: true, create: false, update: false, delete: false },
-      lessons: { find: true, create: false, update: false, delete: false },
+      // Grant find and create access to courses, chapters, lessons for admins
+      courses: { find: true, create: true, update: false, delete: false },
+      chapters: { find: true, create: true, update: false, delete: false },
+      lessons: { find: true, create: true, update: false, delete: false },
       exercises: { find: true, create: false, update: false, delete: false },
       media: { find: true, create: false, update: false, delete: false },
     } as MCPAccessSettings
@@ -56,8 +56,8 @@ export const mcp = mcpPlugin({
     courses: {
       description: 'Educational courses with lessons and exercises',
       enabled: {
-        find: true, // Read operations allowed
-        create: false,
+        find: true,
+        create: true,
         update: false,
         delete: false,
       },
@@ -66,7 +66,7 @@ export const mcp = mcpPlugin({
       description: 'Course chapters that group lessons together',
       enabled: {
         find: true,
-        create: false,
+        create: true,
         update: false,
         delete: false,
       },
@@ -75,7 +75,7 @@ export const mcp = mcpPlugin({
       description: 'Individual lessons within chapters',
       enabled: {
         find: true,
-        create: false,
+        create: true,
         update: false,
         delete: false,
       },
