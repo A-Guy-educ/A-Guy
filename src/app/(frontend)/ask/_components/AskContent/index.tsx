@@ -1,11 +1,11 @@
 'use client'
 
-import { getUserProfile } from '@/client/state/localStorage/userProfile'
-import { logger } from '@/infra/utils/logger'
-import { ChatInterface } from '@/ui/web/chat'
-import { useTranslations } from '@/ui/web/providers/I18n'
-import { Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { getUserProfile } from '@/client/state/localStorage/userProfile'
+import { ChatInterface } from '@/ui/web/chat'
+import { logger } from '@/infra/utils/logger'
+import { Loader2 } from 'lucide-react'
+import { useTranslations } from '@/ui/web/providers/I18n'
 
 export function AskContent() {
   const t = useTranslations('homepage.ask')
@@ -68,10 +68,7 @@ export function AskContent() {
 
   return (
     <div className="container mx-auto px-4 py-8 h-[calc(100vh-200px)]">
-      <ChatInterface
-        courseId={courseId}
-        translationNamespace="homepage.ask"
-      />
+      <ChatInterface courseId={courseId} translationNamespace="homepage.ask" />
     </div>
   )
 }
