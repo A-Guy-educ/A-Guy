@@ -99,6 +99,7 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
       courseSlug={courseSlug}
       chapterSlug={chapterSlug}
       lessonSlug={lessonSlug}
+      lessonId={lesson.id}
     />
   )
 }
