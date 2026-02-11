@@ -35,3 +35,6 @@ tasks/
 # Test coverage reports
 coverage/
 *.lcov
+
+# Auditor run bundles (ephemeral, only auditor.json is durable)
+.tasks/*/runs/*/bundle.json
