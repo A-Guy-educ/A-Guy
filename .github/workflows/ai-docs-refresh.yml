@@ -2,7 +2,6 @@ name: AI Docs Refresh (Daily)
 
 on:
   schedule:
-    # Daily at 01:15 UTC
     - cron: '15 1 * * *'
   workflow_dispatch: {}
 
@@ -21,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -31,22 +30,28 @@ jobs:
           version: 9
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: '22'
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate AI docs indexes
+      - name: Generate all AI docs (indexes + patterns + docs)
         run: pnpm run ai:generate-all
 
-      - name: Validate AI docs artifacts
+      - name: Generate agent indexes (readme + route + collection-slug maps)
+        run: pnpm run ai:generate-all-indexes
+
+      - name: Validate all AI docs artifacts
         run: pnpm run ai:docs:validate
 
+      - name: Validate agent indexes
+        run: pnpm run ai:validate-indexes
+
       - name: Create or update PR
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           branch: chore/ai-docs-refresh
           base: dev
@@ -55,10 +60,17 @@ jobs:
           body: |
             Automated daily refresh of AI docs artifacts.
 
-            - Regenerated: `.ai-docs/indexes/*`
-            - Commands:
-              - `pnpm run ai:generate-all`
-              - `pnpm run ai:docs:validate`
+            Generated + validated:
+            - `.ai-docs/indexes/*` (docs, patterns, readme, route, collection-slug)
+            - `.ai-docs/quick-reference/**`
+            - `.ai-docs/schemas/**`
+            - `.ai-docs/BOOTSTRAP.md`
+
+            Commands:
+            - `pnpm run ai:generate-all`
+            - `pnpm run ai:generate-all-indexes`
+            - `pnpm run ai:docs:validate`
+            - `pnpm run ai:validate-indexes`
           labels: |
             automation
             ai-docs

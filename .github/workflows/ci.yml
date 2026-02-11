@@ -6,24 +6,16 @@ on:
   pull_request:
     branches: [main, dev]
 
-# Concurrency: Cancel in-progress runs for the same branch
-# But don't use aggressive cancellation for long-running jobs
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # =============================================================================
-  # FAST GATE - Must pass before any heavy jobs run
-  # Includes: lint, typecheck, unit tests, security audit
-  # =============================================================================
   fast-gate:
     name: Fast Gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      # DATABASE_URL is required for postinstall -> generate:types
-      # Falls back to a dummy connection string if secret is not available (e.g., fork PRs)
       DATABASE_URL: ${{ secrets.DATABASE_URL || 'mongodb://localhost:27017/test' }}
 
     steps:
@@ -40,24 +32,6 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
-
-      - name: Cache pnpm store
-        uses: actions/cache@v5
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
-      - name: Cache TypeScript
-        uses: actions/cache@v5
-        with:
-          path: |
-            .tsbuildinfo
-            **/.tsbuildinfo
-          key: ${{ runner.os }}-tsc-${{ hashFiles('**/tsconfig.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-tsc-
 
       - name: Verify DATABASE_URL is set
         run: |
@@ -94,10 +68,6 @@ jobs:
           fi
         continue-on-error: true
 
-  # =============================================================================
-  # INTEGRATION TESTS - Runs after Fast Gate passes
-  # Uses MongoDB service container (single DB strategy)
-  # =============================================================================
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
@@ -136,14 +106,6 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
-      - name: Cache pnpm store
-        uses: actions/cache@v5
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -152,10 +114,6 @@ jobs:
         env:
           USE_MONGO_SERVICE: 'true'
 
-  # =============================================================================
-  # BUILD - Runs after Fast Gate passes (parallel with integration tests)
-  # Verifies the application builds successfully
-  # =============================================================================
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -194,38 +152,23 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
-      - name: Cache pnpm store
-        uses: actions/cache@v5
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
-      - name: Cache Next.js build
-        uses: actions/cache@v5
-        with:
-          path: |
-            .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build application
         run: pnpm build
 
-  # =============================================================================
-  # E2E SYSTEM TESTS - Full Playwright suite
-  # Only runs on main/dev push (not on PRs)
-  # =============================================================================
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-build
+          path: .next/
+          retention-days: 1
+
   e2e-system-tests:
     name: E2E System Tests
     runs-on: ubuntu-latest
-    needs: [fast-gate]
-    # Only run full E2E on push to main/dev, not on PRs
+    needs: [fast-gate, build]
     if: github.event_name == 'push'
     timeout-minutes: 20
     env:
@@ -263,13 +206,14 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
-      - name: Cache pnpm store
-        uses: actions/cache@v5
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
         with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
+          name: next-build
+          path: .next/
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Cache Playwright browsers
         uses: actions/cache@v5
@@ -279,9 +223,6 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-playwright-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
@@ -295,6 +236,7 @@ jobs:
         run: pnpm test:e2e
         env:
           USE_MONGO_SERVICE: 'true'
+          SKIP_BUILD: 'true'
 
       - name: Upload Playwright report
         if: failure()
