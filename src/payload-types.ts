@@ -145,10 +145,12 @@ export interface Config {
   globals: {
     header: Header;
     footer: Footer;
+    'wrong-answer-prompt': WrongAnswerPrompt;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    'wrong-answer-prompt': WrongAnswerPromptSelect<false> | WrongAnswerPromptSelect<true>;
   };
   locale: null;
   user:
@@ -2916,6 +2918,19 @@ export interface Footer {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wrong-answer-prompt".
+ */
+export interface WrongAnswerPrompt {
+  id: string;
+  /**
+   * Prompt sent to the AI when a student answers incorrectly. Use {{questionData}} and {{studentAnswer}} as placeholders.
+   */
+  template: string;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -2956,6 +2971,16 @@ export interface FooterSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wrong-answer-prompt_select".
+ */
+export interface WrongAnswerPromptSelect<T extends boolean = true> {
+  template?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

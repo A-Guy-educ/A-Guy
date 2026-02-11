@@ -145,14 +145,11 @@ export function ChatInterface({
   const promptTemplateRef = useRef(FALLBACK_TEMPLATE)
 
   useEffect(() => {
-    fetch(
-      '/api/prompts?where[key][equals]=incorrect-answer-help&where[status][equals]=published&limit=1&depth=0',
-      { credentials: 'include' },
-    )
+    fetch('/api/globals/wrong-answer-prompt', { credentials: 'include' })
       .then((r) => r.json())
       .then((data) => {
-        if (data.docs?.[0]?.template) {
-          promptTemplateRef.current = data.docs[0].template
+        if (data.template) {
+          promptTemplateRef.current = data.template
         }
       })
       .catch(() => {})

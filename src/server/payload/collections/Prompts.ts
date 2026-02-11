@@ -7,7 +7,7 @@ export const Prompts: CollectionConfig = {
   slug: 'prompts',
   access: {
     create: adminOnly,
-    read: ({ req }) => Boolean(req.user), // Authenticated users can read; overrideAccess used server-side
+    read: adminOnly, // OverrideAccess: true used server-side in queue endpoint
     update: adminOnly,
     delete: adminOnly,
   },
