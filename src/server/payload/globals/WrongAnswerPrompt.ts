@@ -20,6 +20,15 @@ export const WrongAnswerPrompt: GlobalConfig = {
   },
   fields: [
     {
+      name: 'resetButton',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/WrongAnswerPrompt/ResetDefaultButton',
+        },
+      },
+    },
+    {
       name: 'template',
       type: 'textarea',
       defaultValue: DEFAULT_TEMPLATE,

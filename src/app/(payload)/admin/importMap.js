@@ -29,6 +29,7 @@ import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from 
 import { FolderTypeField as FolderTypeField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
 import { RowLabel as RowLabel_49a0f2da415e33c790acf24cb6dd5091 } from '@/ui/admin/Header'
 import { RowLabel as RowLabel_4ed9de7504772fe9568f4f8054c5cb47 } from '@/ui/admin/Footer'
+import { default as default_7eaaa70010eb232cf70cb0a799101d77 } from '@/ui/admin/WrongAnswerPrompt/ResetDefaultButton'
 import { default as default_c259230fb9bab1a58b8cb0b2cc96501a } from '@/ui/admin/BeforeDashboard'
 import { default as default_016129c5e178a72215a550b5b56f066c } from '@/ui/admin/AdminChat/DashboardWidget'
 import { default as default_e8db4fbd97550d4d717940b5cf0234f3 } from '@/ui/admin/BeforeLogin'
@@ -69,6 +70,7 @@ export const importMap = {
   "@payloadcms/ui#FolderTypeField": FolderTypeField_3817bf644402e67bfe6577f60ef982de,
   "@/ui/admin/Header#RowLabel": RowLabel_49a0f2da415e33c790acf24cb6dd5091,
   "@/ui/admin/Footer#RowLabel": RowLabel_4ed9de7504772fe9568f4f8054c5cb47,
+  "@/ui/admin/WrongAnswerPrompt/ResetDefaultButton#default": default_7eaaa70010eb232cf70cb0a799101d77,
   "@/ui/admin/BeforeDashboard#default": default_c259230fb9bab1a58b8cb0b2cc96501a,
   "@/ui/admin/AdminChat/DashboardWidget#default": default_016129c5e178a72215a550b5b56f066c,
   "@/ui/admin/BeforeLogin#default": default_e8db4fbd97550d4d717940b5cf0234f3,
