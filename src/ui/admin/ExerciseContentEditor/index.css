@@ -1492,7 +1492,7 @@
   gap: 1rem;
 }
 
-.tf-radio-group {
+.tf-option-row {
   display: flex;
   gap: 0.75rem;
 }
@@ -1508,6 +1508,9 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .tf-radio-option:hover {
@@ -1519,6 +1522,48 @@
   border-color: var(--theme-success-500);
   background: var(--theme-success-50);
   color: var(--theme-success-700);
+}
+
+.tf-radio-indicator {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--theme-elevation-300);
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.tf-radio-option--selected .tf-radio-indicator {
+  border-color: var(--theme-success-500);
+}
+
+.tf-radio-option--selected .tf-radio-indicator::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: var(--theme-success-500);
+  border-radius: 50%;
+}
+
+.tf-option-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: inherit;
+  outline: none;
+  min-width: 0;
+  padding: 0;
+}
+
+.tf-option-input:focus {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* MCQ Editor */
