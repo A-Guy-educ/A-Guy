@@ -34,6 +34,7 @@ const defaultProps = {
   resetErrorMessage: 'Reset error',
   acknowledgment: 'Acknowledged',
   exerciseId: 'exercise-1',
+  lessonId: 'lesson-1',
 }
 
 beforeEach(() => {
@@ -68,7 +69,7 @@ describe('useNotebookChat', () => {
     ])
 
     await waitFor(() => expect(result.current.isLoadingHistory).toBe(false))
-    expect(apiService.getConversation).toHaveBeenCalledWith('exercises:exercise-1')
+    expect(apiService.getConversation).toHaveBeenCalledWith('lessons:lesson-1')
   })
 
   it('sends messages and appends assistant reply', async () => {
@@ -87,7 +88,7 @@ describe('useNotebookChat', () => {
     await waitFor(() => expect(result.current.messages).toHaveLength(3))
     expect(apiService.chatStream).toHaveBeenCalledWith('Hello', defaultProps.acknowledgment, {
       exerciseId: defaultProps.exerciseId,
-      lessonId: undefined,
+      lessonId: defaultProps.lessonId,
       chapterId: undefined,
       courseId: undefined,
       categoryId: undefined,
@@ -140,7 +141,7 @@ describe('useNotebookChat', () => {
       defaultProps.acknowledgment,
       {
         exerciseId: defaultProps.exerciseId,
-        lessonId: undefined,
+        lessonId: defaultProps.lessonId,
         chapterId: undefined,
         courseId: undefined,
         categoryId: undefined,
@@ -155,6 +156,7 @@ describe('useNotebookChat', () => {
       ...defaultProps,
       categoryId: 'admin',
       exerciseId: undefined,
+      lessonId: undefined,
     }
     const { result } = renderHook(() => useNotebookChat(adminProps))
 
@@ -169,20 +171,21 @@ describe('useNotebookChat', () => {
       ...defaultProps,
       categoryId: 'admin-support',
       exerciseId: undefined,
+      lessonId: undefined,
     }
     const { result } = renderHook(() => useNotebookChat(adminProps))
 
     expect(result.current.contextKey).toBe('categories:admin-support')
   })
 
-  it('prioritizes exercise over category', () => {
+  it('prioritizes lesson over exercise and category', () => {
     const props = {
       ...defaultProps,
       categoryId: 'admin',
     }
     const { result } = renderHook(() => useNotebookChat(props))
 
-    expect(result.current.contextKey).toBe('exercises:exercise-1')
+    expect(result.current.contextKey).toBe('lessons:lesson-1')
   })
 
   it('resets conversation after confirmation', async () => {
@@ -193,7 +196,7 @@ describe('useNotebookChat', () => {
       await result.current.handleReset()
     })
 
-    expect(apiService.resetChat).toHaveBeenCalledWith('exercises:exercise-1')
+    expect(apiService.resetChat).toHaveBeenCalledWith('lessons:lesson-1')
     expect(toast.success).toHaveBeenCalledWith(defaultProps.resetSuccessMessage)
     expect(result.current.messages).toEqual([
       { role: ChatRole.Assistant, content: defaultProps.initialMessage },

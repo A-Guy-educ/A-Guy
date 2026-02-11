@@ -52,6 +52,7 @@ interface ChatInterfaceProps {
 
   // Translations
   translationNamespace?: string
+  guestLimitMessage?: string
 
   // Features
   showQuickActions?: boolean
@@ -77,6 +78,7 @@ export function ChatInterface({
   adminMode = false,
   userId,
   translationNamespace = 'homepage.ask',
+  guestLimitMessage: _guestLimitMessage,
   showQuickActions = false,
   showResetButton = false,
   showMathTools = false,
@@ -115,6 +117,7 @@ export function ChatInterface({
   } = useNotebookChat({
     initialMessage: t('chatWelcome'),
     authRequiredMessage: t('chatAuthRequired'),
+    guestLimitMessage: tCourses('chatGuestLimitMessage'),
     errorMessage: tCourses('chatError'),
     hintPrompt: tCourses('chatHintPrompt'),
     solutionPrompt: tCourses('chatSolutionPrompt'),

@@ -164,6 +164,16 @@ export const GuestSessions: CollectionConfig = {
         },
       },
     },
+    {
+      name: 'messageCount',
+      type: 'number',
+      required: true,
+      defaultValue: 0,
+      admin: {
+        description:
+          'Total messages sent in this guest session (capped at GUEST_SESSION_MAX_MESSAGES)',
+      },
+    },
   ],
   timestamps: true,
 }

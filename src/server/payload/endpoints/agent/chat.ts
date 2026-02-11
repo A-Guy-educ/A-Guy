@@ -36,6 +36,7 @@ import {
 import { checkRateLimit } from '@/server/services/rate-limit'
 import {
   buildGuestSessionCookieHeader,
+  checkAndIncrementGuestMessageCount,
   createGuestSession,
   getGuestSessionByToken,
   getGuestSessionCookie,
@@ -158,6 +159,23 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
   if (!user && guestSession) {
     reqLogger.info({ guestSessionId: guestSession.id }, 'Processing guest chat request')
+
+    const messageLimit = await checkAndIncrementGuestMessageCount(guestSession.id)
+    if (!messageLimit.allowed) {
+      return Response.json(
+        {
+          error: 'Guest message limit reached. Sign up for unlimited access.',
+          isGuestMode: true,
+          retryAfter: null,
+        },
+        {
+          status: 429,
+          headers: {
+            'X-Guest-Message-Limit': 'true',
+          },
+        },
+      )
+    }
   }
 
   try {

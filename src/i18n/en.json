@@ -161,6 +161,7 @@
     "chatAuthRequired": "Please sign in to use the AI helper",
     "chatAuthRequiredLogin": "Log in",
     "chatAuthRequiredCTA": "Sign up to continue",
+    "chatGuestLimitMessage": "Guest message limit reached. Sign up for unlimited access.",
     "chatErrorDismiss": "Dismiss error",
     "chatHintPrompt": "Can you give me a hint to help me solve this?",
     "chatSolutionPrompt": "Can you explain the solution approach?",

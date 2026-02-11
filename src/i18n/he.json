@@ -161,6 +161,7 @@
     "chatAuthRequired": "יש להתחבר כדי להשתמש בעוזר הבינה המלאכותית",
     "chatAuthRequiredLogin": "התחבר",
     "chatAuthRequiredCTA": "הירשם כדי להמשיך",
+    "chatGuestLimitMessage": "הגעת למגבלת ההודעות לאורחים. הירשם כדי לקבל גישה בלתי מוגבלת.",
     "chatErrorDismiss": "סגור התראה",
     "chatHintPrompt": "האם תוכל לתת לי רמז שיעזור לי לפתור את התרגיל?",
     "chatSolutionPrompt": "האם תוכל להסביר את גישת הפתרון?",

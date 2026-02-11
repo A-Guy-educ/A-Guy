@@ -1136,6 +1136,10 @@ export interface GuestSession {
    * When this session was claimed by a user
    */
   claimedAt?: string | null;
+  /**
+   * Total messages sent in this guest session (capped at GUEST_SESSION_MAX_MESSAGES)
+   */
+  messageCount: number;
   updatedAt: string;
 }
 /**
@@ -2319,6 +2323,7 @@ export interface GuestSessionsSelect<T extends boolean = true> {
   status?: T;
   claimedByUser?: T;
   claimedAt?: T;
+  messageCount?: T;
   updatedAt?: T;
 }
 /**

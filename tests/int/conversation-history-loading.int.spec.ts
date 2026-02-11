@@ -10,12 +10,11 @@
  * - Access control ensures users only see their own conversations
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Payload } from 'payload'
-import { getPayload } from 'payload'
-import type { PayloadRequest } from 'payload'
-import { agentChat } from '@/server/payload/endpoints/agent/chat'
 import { startMongoContainer, stopMongoContainer } from '@/infra/utils/test/mongodb-container'
+import { agentChat } from '@/server/payload/endpoints/agent/chat'
+import type { Payload, PayloadRequest } from 'payload'
+import { getPayload } from 'payload'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock AI and vector-related services
 
@@ -776,9 +775,9 @@ describe('Conversation History Loading', () => {
     expect(user1Result.docs.length).toBe(1)
     expect(user1Result.docs[0].id).toBe(conv1.id)
     const user1UserId =
-      typeof user1Result.docs[0].user === 'object'
+      user1Result.docs[0]?.user && typeof user1Result.docs[0].user === 'object'
         ? user1Result.docs[0].user.id
-        : user1Result.docs[0].user
+        : user1Result.docs[0]?.user
     expect(user1UserId).toBe(testUserId)
     expect(user1Result.docs[0].messages?.some((m: any) => m.content.includes('User 1'))).toBe(true)
     expect(user1Result.docs[0].messages?.some((m: any) => m.content.includes('User 2'))).toBe(false)
@@ -802,9 +801,9 @@ describe('Conversation History Loading', () => {
     expect(user2Result.docs.length).toBe(1)
     expect(user2Result.docs[0].id).toBe(conv2.id)
     const user2UserId =
-      typeof user2Result.docs[0].user === 'object'
+      user2Result.docs[0]?.user && typeof user2Result.docs[0].user === 'object'
         ? user2Result.docs[0].user.id
-        : user2Result.docs[0].user
+        : user2Result.docs[0]?.user
     expect(user2UserId).toBe(testUserId2)
     expect(user2Result.docs[0].messages?.some((m: any) => m.content.includes('User 2'))).toBe(true)
     expect(user2Result.docs[0].messages?.some((m: any) => m.content.includes('User 1'))).toBe(false)
@@ -884,7 +883,9 @@ describe('Conversation History Loading', () => {
 
     // Verify user ownership
     const conversationUserId =
-      typeof result.docs[0].user === 'object' ? result.docs[0].user.id : result.docs[0].user
+      result.docs[0]?.user && typeof result.docs[0].user === 'object'
+        ? result.docs[0].user.id
+        : result.docs[0]?.user
     expect(conversationUserId).toBe(testUserId)
 
     // Verify messages are included
@@ -974,9 +975,9 @@ describe('Conversation History Loading', () => {
     expect(user1Result.docs.length).toBe(1)
     expect(user1Result.docs[0].id).toBe(conv1.id)
     const user1UserId =
-      typeof user1Result.docs[0].user === 'object'
+      user1Result.docs[0]?.user && typeof user1Result.docs[0].user === 'object'
         ? user1Result.docs[0].user.id
-        : user1Result.docs[0].user
+        : user1Result.docs[0]?.user
     expect(user1UserId).toBe(testUserId)
 
     // Test User 2 - should only see their own conversation
@@ -999,9 +1000,9 @@ describe('Conversation History Loading', () => {
     expect(user2Result.docs.length).toBe(1)
     expect(user2Result.docs[0].id).toBe(conv2.id)
     const user2UserId =
-      typeof user2Result.docs[0].user === 'object'
+      user2Result.docs[0]?.user && typeof user2Result.docs[0].user === 'object'
         ? user2Result.docs[0].user.id
-        : user2Result.docs[0].user
+        : user2Result.docs[0]?.user
     expect(user2UserId).toBe(testUserId2)
 
     // Verify REST API response format

@@ -19,6 +19,7 @@ import { logger } from '@/infra/utils/logger'
 import {
   GUEST_SESSION_SLIDING_TTL_DAYS,
   GUEST_SESSION_HARD_CAP_DAYS,
+  GUEST_SESSION_MAX_MESSAGES,
 } from '@/server/config/constants'
 
 export const GUEST_SESSION_COOKIE_NAME = 'guest_session'
@@ -34,6 +35,7 @@ export interface GuestSessionDoc {
   status: 'active' | 'expired' | 'revoked'
   claimedByUser?: string
   claimedAt?: string
+  messageCount: number
 }
 
 export function generateSessionToken(): string {
@@ -237,6 +239,55 @@ export async function revokeGuestSession(
   })
 
   return updated as GuestSessionDoc
+}
+
+export interface GuestMessageLimitResult {
+  allowed: boolean
+  remaining: number
+  current: number
+  max: number
+}
+
+export async function checkAndIncrementGuestMessageCount(
+  guestSessionId: string,
+): Promise<GuestMessageLimitResult> {
+  const payload = await getPayload({ config })
+
+  const session = await payload.findByID({
+    collection: 'guest-sessions' as any,
+    id: guestSessionId,
+  })
+
+  if (!session) {
+    return { allowed: false, remaining: 0, current: 0, max: GUEST_SESSION_MAX_MESSAGES }
+  }
+
+  const doc = session as GuestSessionDoc
+  const currentCount = doc.messageCount ?? 0
+
+  if (currentCount >= GUEST_SESSION_MAX_MESSAGES) {
+    return {
+      allowed: false,
+      remaining: 0,
+      current: currentCount,
+      max: GUEST_SESSION_MAX_MESSAGES,
+    }
+  }
+
+  await payload.update({
+    collection: 'guest-sessions' as any,
+    id: guestSessionId,
+    data: {
+      messageCount: currentCount + 1,
+    },
+  })
+
+  return {
+    allowed: true,
+    remaining: GUEST_SESSION_MAX_MESSAGES - currentCount - 1,
+    current: currentCount + 1,
+    max: GUEST_SESSION_MAX_MESSAGES,
+  }
 }
 
 export function hashIP(ip: string | null): string {

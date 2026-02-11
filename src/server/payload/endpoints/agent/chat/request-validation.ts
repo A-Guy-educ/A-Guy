@@ -31,14 +31,15 @@ export interface ContextCandidate {
 
 /**
  * Extract context candidate from validated request
- * Returns the most specific context (Exercise > Lesson > Chapter > Course > Category)
+ * Returns the most specific context (Lesson > Exercise > Chapter > Course > Category)
+ * Lessons take priority over exercises so all exercises in a lesson share one conversation.
  */
 export function extractContextCandidate(validated: ChatRequest): ContextCandidate | null {
-  if (validated.exerciseId) {
-    return { relationTo: 'exercises', value: validated.exerciseId }
-  }
   if (validated.lessonId) {
     return { relationTo: 'lessons', value: validated.lessonId }
+  }
+  if (validated.exerciseId) {
+    return { relationTo: 'exercises', value: validated.exerciseId }
   }
   if (validated.chapterId) {
     return { relationTo: 'chapters', value: validated.chapterId }

@@ -196,8 +196,9 @@ export class ConversationService {
 
   /**
    * Resolve context from UI state
-   * Priority: Exercise > Lesson > Chapter > Course > Category
-   * Prefers IDs over slugs to avoid resolver queries
+   * Priority: Lesson > Exercise (resolves to parent lesson) > Chapter > Course > Category
+   * Exercises within the same lesson share a single conversation.
+   * When only exerciseId is provided, the parent lesson is looked up from DB.
    */
   async resolveContext(params: {
     exerciseId?: string
@@ -206,20 +207,36 @@ export class ConversationService {
     courseId?: string
     categoryId?: string
   }): Promise<ResolvedContext> {
-    // Priority order: Exercise > Lesson > Chapter > Course > Category
-    if (params.exerciseId) {
-      return {
-        relationTo: 'exercises',
-        value: params.exerciseId,
-        contextKey: `exercises:${params.exerciseId}`,
-      }
-    }
-
+    // Priority order: Lesson > Exercise (→ parent lesson) > Chapter > Course > Category
     if (params.lessonId) {
       return {
         relationTo: 'lessons',
         value: params.lessonId,
         contextKey: `lessons:${params.lessonId}`,
+      }
+    }
+
+    if (params.exerciseId) {
+      // Look up the parent lesson so all exercises in the same lesson share one conversation
+      const exercise = await this.payload.findByID({
+        collection: 'exercises',
+        id: params.exerciseId,
+        depth: 0,
+      })
+      const lessonId =
+        typeof exercise.lesson === 'string' ? exercise.lesson : (exercise.lesson as any)?.id
+      if (lessonId) {
+        return {
+          relationTo: 'lessons',
+          value: lessonId,
+          contextKey: `lessons:${lessonId}`,
+        }
+      }
+      // Fallback if lesson relationship is somehow missing
+      return {
+        relationTo: 'exercises',
+        value: params.exerciseId,
+        contextKey: `exercises:${params.exerciseId}`,
       }
     }
 
