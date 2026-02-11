@@ -17,7 +17,7 @@ import {
   Send,
   X,
 } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ChatErrorSurface } from '../ChatErrorSurface'
 import { ChatMessageContent } from '../ChatMessageContent'
 import { useNotebookChat } from '../hooks/useNotebookChat'
@@ -114,6 +114,8 @@ export function ChatInterface({
     // Error handling
     chatError,
     dismissError,
+    // Programmatic contextual help
+    sendContextualHelp,
   } = useNotebookChat({
     initialMessage: t('chatWelcome'),
     authRequiredMessage: t('chatAuthRequired'),
@@ -139,6 +141,25 @@ export function ChatInterface({
     maxFilesMessage: tCourses('chatMaxFiles'),
     uploadFailedMessage: tCourses('chatUploadFailed'),
   })
+
+  // Auto-send contextual help on incorrect answer (ref pattern for stable listener)
+  const incorrectAnswerRef = useRef<(e: Event) => void>(() => {})
+  incorrectAnswerRef.current = (e: Event) => {
+    const { questionJson, studentAnswer } = (e as CustomEvent).detail as {
+      questionJson: string
+      studentAnswer: string
+    }
+    onChatInteraction?.()
+    sendContextualHelp(
+      `The student answered incorrectly. Here is the full question data:\n${questionJson}\n\nThe student's answer was: "${studentAnswer}"\n\nPlease help them understand why their answer is wrong and guide them toward the correct solution. Be encouraging and supportive.`,
+    )
+  }
+
+  useEffect(() => {
+    const handler = (e: Event) => incorrectAnswerRef.current(e)
+    window.addEventListener('exercise-incorrect-answer', handler)
+    return () => window.removeEventListener('exercise-incorrect-answer', handler)
+  }, [])
 
   // Math tools state
   const [isMathPaletteOpen, setIsMathPaletteOpen] = useState(false)

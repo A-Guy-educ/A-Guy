@@ -6,7 +6,7 @@
 
 'use client'
 
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card } from '@/ui/web/components/card'
@@ -26,6 +26,23 @@ import { McqQuestion } from '../questions/McqQuestion'
 import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
 import { QuestionCard } from '../components/QuestionCard'
 import { checkQuestionAnswer, getInitialAnswer } from '../utils/answerChecking'
+
+/**
+ * Format student's answer as readable text for AI context
+ */
+function formatStudentAnswer(question: QuestionBlock, answer: UserAnswer): string {
+  if (answer.type === 'true_false') {
+    return answer.value === true ? 'True' : 'False'
+  }
+  if (answer.type === 'mcq' && question.type === 'question_select' && question.variant === 'mcq') {
+    const selected = question.answer.options.filter((o) => answer.selectedIds.includes(o.id))
+    return selected.map((o) => o.content.value).join(', ')
+  }
+  if (answer.type === 'free_response') {
+    return answer.value
+  }
+  return ''
+}
 
 /**
  * Main Exercise Renderer Component
@@ -53,6 +70,7 @@ export function ExerciseRenderer({
 
   const [checkResults, setCheckResults] = useState<Record<string, CheckResult>>({})
   const [hasChecked, setHasChecked] = useState<Record<string, boolean>>({})
+  const chatTriggeredRef = useRef<Set<string>>(new Set())
 
   const handleAnswerChange = async (questionId: string, answer: UserAnswer) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }))
@@ -67,8 +85,19 @@ export function ExerciseRenderer({
       const result = await checkQuestionAnswer(question, answer)
       setCheckResults((prev) => ({ ...prev, [questionId]: result }))
       setHasChecked((prev) => ({ ...prev, [questionId]: true }))
+      if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
+        chatTriggeredRef.current.add(questionId)
+        window.dispatchEvent(
+          new CustomEvent('exercise-incorrect-answer', {
+            detail: {
+              questionJson: JSON.stringify(question),
+              studentAnswer: formatStudentAnswer(question, answer),
+            },
+          }),
+        )
+      }
     } else {
-      // For other question types, clear the check result
+      // For other question types, clear the check result (chat trigger stays — one per question)
       setCheckResults((prev) => {
         const next = { ...prev }
         delete next[questionId]
@@ -85,6 +114,17 @@ export function ExerciseRenderer({
     const result = await checkQuestionAnswer(question, answers[questionId])
     setCheckResults((prev) => ({ ...prev, [questionId]: result }))
     setHasChecked((prev) => ({ ...prev, [questionId]: true }))
+    if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
+      chatTriggeredRef.current.add(questionId)
+      window.dispatchEvent(
+        new CustomEvent('exercise-incorrect-answer', {
+          detail: {
+            questionJson: JSON.stringify(question),
+            studentAnswer: formatStudentAnswer(question, answers[questionId]),
+          },
+        }),
+      )
+    }
   }
 
   // Validate content structure

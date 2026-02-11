@@ -50,11 +50,11 @@ describe('Middleware - Locale Routing', () => {
       expect(response.headers.get('x-locale')).toBe('he')
     })
 
-    it('should default to "en" when Accept-Language is not supported', () => {
+    it('should default to "he" when Accept-Language is not supported', () => {
       const request = createRequest('example.com', '/', 'fr-FR,fr;q=0.9')
       const response = middleware(request)
 
-      expect(response.headers.get('x-locale')).toBe('en')
+      expect(response.headers.get('x-locale')).toBe('he')
     })
 
     it('should use cookie locale when available', () => {
