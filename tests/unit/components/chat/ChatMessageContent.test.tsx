@@ -169,4 +169,59 @@ describe('ChatMessageContent', () => {
       expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
     })
   })
+
+  describe('Streaming math safety (isStreaming prop)', () => {
+    it('does not render math when isStreaming is true', () => {
+      const { container } = render(
+        <ChatMessageContent content={'$$\nx^2\n$$'} isStreaming={true} />,
+      )
+
+      // No katex rendering during streaming
+      expect(container.querySelector('.katex')).toBeNull()
+      expect(container.querySelector('.katex-display')).toBeNull()
+      expect(container.querySelector('.katex-error')).toBeNull()
+    })
+
+    it('does not render inline math when isStreaming is true', () => {
+      const { container } = render(
+        <ChatMessageContent content="The answer is $x^2$" isStreaming={true} />,
+      )
+
+      expect(container.querySelector('.katex')).toBeNull()
+      expect(container.textContent).toContain('$')
+    })
+
+    it('renders math when isStreaming is false', () => {
+      const { container } = render(
+        <ChatMessageContent content={'\\[ x^2 \\]'} isStreaming={false} />,
+      )
+
+      const blockMath = container.querySelector('.isolate.block')
+      expect(blockMath).not.toBeNull()
+      expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
+    })
+
+    it('renders math when isStreaming is undefined (default)', () => {
+      const { container } = render(<ChatMessageContent content={'\\[ x^2 \\]'} />)
+
+      const blockMath = container.querySelector('.isolate.block')
+      expect(blockMath).not.toBeNull()
+      expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
+    })
+
+    it('does not show katex-error for invalid but complete LaTeX', () => {
+      const { container } = render(<ChatMessageContent content={'$$\n\\undefinedcommand{}\n$$'} />)
+
+      // Invalid LaTeX should not show katex-error (handled by error handler)
+      expect(container.querySelector('.katex-error')).toBeNull()
+      expect(container.textContent).toContain('\\undefinedcommand{}')
+    })
+
+    it('skips math parsing inside code fences', () => {
+      const { container } = render(<ChatMessageContent content="```\n$100\n```" />)
+
+      expect(container.querySelector('.katex')).toBeNull()
+      expect(container.querySelector('.katex-error')).toBeNull()
+    })
+  })
 })

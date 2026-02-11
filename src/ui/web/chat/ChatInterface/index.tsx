@@ -268,7 +268,10 @@ export function ChatInterface({
                   ))}
                 </div>
               )}
-              <ChatMessageContent content={msg.content} />
+              <ChatMessageContent
+                content={msg.content}
+                isStreaming={isLoading && idx === messages.length - 1}
+              />
             </div>
           ))}
         {isLoading && (
