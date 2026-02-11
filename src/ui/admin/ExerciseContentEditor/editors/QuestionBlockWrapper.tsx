@@ -3,30 +3,83 @@
 import React from 'react'
 import type { ContentBlock } from '@/shared/exercise-content/types'
 import { AdvancedJsonPanel } from '../../shared/AdvancedJsonPanel'
+import { MoveUp, MoveDown, Plus, Trash2 } from 'lucide-react'
 
 interface QuestionBlockWrapperProps {
   blockType: string
   block: ContentBlock
   onBlockChange: (block: ContentBlock) => void
-  children: React.ReactNode
+  onMoveUp?: () => void
+  onMoveDown?: () => void
+  onAdd?: () => void
+  onDelete?: () => void
+  canMoveUp?: boolean
+  canMoveDown?: boolean
+  canDelete?: boolean
+  children?: React.ReactNode
 }
 
 export const QuestionBlockWrapper: React.FC<QuestionBlockWrapperProps> = ({
   blockType,
   block,
   onBlockChange,
+  onMoveUp,
+  onMoveDown,
+  onAdd,
+  onDelete,
+  canMoveUp = false,
+  canMoveDown = false,
+  canDelete = true,
   children,
 }) => {
   return (
-    <div className="question-block-wrapper">
-      <div className="question-block-type-badge">{blockType}</div>
-      <div className="question-block-content">{children}</div>
-      <div className="question-block-json-toggle">
-        <AdvancedJsonPanel
-          value={block}
-          onChange={(value) => onBlockChange(value as ContentBlock)}
-          label="Advanced JSON"
-        />
+    <div className="container-block container-block--level-0">
+      <div className="container-block__header">
+        <div className="container-block__header-left">
+          <span className="container-block__title">{blockType}</span>
+        </div>
+        <div className="container-block__actions">
+          <button
+            type="button"
+            className="icon-button"
+            onClick={onMoveUp}
+            disabled={!canMoveUp}
+            title="Move up"
+          >
+            <MoveUp size={14} />
+          </button>
+          <button
+            type="button"
+            className="icon-button"
+            onClick={onMoveDown}
+            disabled={!canMoveDown}
+            title="Move down"
+          >
+            <MoveDown size={14} />
+          </button>
+          <button type="button" className="icon-button" onClick={onAdd} title="Add block below">
+            <Plus size={14} />
+          </button>
+          <button
+            type="button"
+            className="icon-button icon-button--delete"
+            onClick={onDelete}
+            disabled={!canDelete}
+            title="Delete block"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </div>
+      <div className="container-block__body">
+        <div className="question-block-content">{children}</div>
+        <div className="question-block-json-toggle">
+          <AdvancedJsonPanel
+            value={block}
+            onChange={(value) => onBlockChange(value as ContentBlock)}
+            label="Advanced JSON"
+          />
+        </div>
       </div>
     </div>
   )
