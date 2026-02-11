@@ -146,11 +146,6 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
 
     updateLocalValue({ blocks: newBlocks })
     setSelectedBlockId(newBlock.id)
-
-    // Open JSON panel for question blocks
-    if (blockType !== 'rich_text') {
-      setIsJsonPanelOpen(true)
-    }
   }
 
   // Delete block
