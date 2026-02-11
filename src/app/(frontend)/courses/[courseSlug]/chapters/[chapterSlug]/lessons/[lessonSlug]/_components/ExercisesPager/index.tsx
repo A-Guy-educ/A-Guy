@@ -1,14 +1,14 @@
 'use client'
 
+import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { getSectionLabel } from '@/infra/utils/getSectionLabel'
 import type { Exercise } from '@/payload-types'
 import { Button } from '@/ui/web/components/button'
-import { SystemLink } from '@/infra/loading/components/SystemLink'
-import { ExerciseRenderer } from '@/ui/web/exerciserenderer'
-import { BookOpen, ChevronLeft, ChevronRight, Layers, Sparkles } from 'lucide-react'
-import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
-import { getSectionLabel } from '@/infra/utils/getSectionLabel'
-import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
 import { Progress } from '@/ui/web/components/progress'
+import { ExerciseRenderer } from '@/ui/web/exerciserenderer'
+import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
+import { BookOpen, ChevronLeft, ChevronRight, Layers, Sparkles } from 'lucide-react'
 import { useExercisesPager } from './useExercisesPager'
 
 interface ExercisesPagerProps {
@@ -30,12 +30,21 @@ export function ExercisesPager({
 }: ExercisesPagerProps) {
   const t = useTranslations('courses')
   const locale = useLocale()
-  const pager = useExercisesPager(exercises.length)
+  const pager = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug })
   const sectionLabel =
     pager.pageState.type === 'exercise' && pager.pageState.exerciseIndex !== undefined
       ? getSectionLabel({ index: pager.pageState.exerciseIndex, locale })
       : null
-  const { pageState, progressPercent, canGoNext, canGoPrev, handleNext, handlePrev, handleStart } = pager
+  const {
+    pageState,
+    progressPercent,
+    canGoNext,
+    canGoPrev,
+    handleNext,
+    handlePrev,
+    handleStart,
+    totalExercises,
+  } = pager
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -92,7 +101,7 @@ export function ExercisesPager({
             <div className="space-y-8">
               <div className="bg-card rounded-3xl p-6 md:p-8 border border-border/60 shadow-lg shadow-muted/40 relative overflow-hidden">
                 <div className="absolute top-0 end-0 w-1.5 h-full bg-primary rounded-s-full" />
-<div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                     <Layers className="w-5 h-5 text-primary" />
                   </div>
