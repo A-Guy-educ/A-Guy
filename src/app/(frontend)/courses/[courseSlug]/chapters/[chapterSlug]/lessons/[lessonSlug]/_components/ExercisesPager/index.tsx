@@ -18,6 +18,7 @@ interface ExercisesPagerProps {
   courseSlug: string
   chapterSlug: string
   lessonSlug: string
+  lessonId: string
 }
 
 export function ExercisesPager({
@@ -27,6 +28,7 @@ export function ExercisesPager({
   courseSlug,
   chapterSlug,
   lessonSlug,
+  lessonId: _lessonId,
 }: ExercisesPagerProps) {
   const t = useTranslations('courses')
   const locale = useLocale()
