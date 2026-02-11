@@ -27,6 +27,9 @@ export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps)
     return null
   }
 
+  const basePath = `/courses/${courseSlug}/chapters/${effectiveChapterSlug}/lessons/${lesson.slug}`
+  const href = lesson.introEnabled ? `${basePath}/about` : basePath
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
@@ -40,11 +43,7 @@ export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps)
       </CardHeader>
       <CardFooter>
         <Button asChild>
-          <SystemLink
-            href={`/courses/${courseSlug}/chapters/${effectiveChapterSlug}/lessons/${lesson.slug}`}
-          >
-            {t('viewLesson')}
-          </SystemLink>
+          <SystemLink href={href}>{t('viewLesson')}</SystemLink>
         </Button>
       </CardFooter>
     </Card>

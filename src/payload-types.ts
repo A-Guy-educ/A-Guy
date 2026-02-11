@@ -596,9 +596,6 @@ export interface Media {
     | number
     | boolean
     | null;
-  folder?: (string | null) | FolderInterface;
-  updatedAt: string;
-  createdAt: string;
   url?: string | null;
   thumbnailURL?: string | null;
   filename?: string | null;
@@ -608,6 +605,9 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+  folder?: (string | null) | FolderInterface;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1233,6 +1233,18 @@ export interface Lesson {
    * Whether this lesson is currently active
    */
   isActive: boolean;
+  /**
+   * Show an intro/about page before the lesson starts
+   */
+  introEnabled?: boolean | null;
+  /**
+   * Short explanation shown on the intro page (what the student will learn)
+   */
+  introDescription?: string | null;
+  /**
+   * Image, SVG, or video displayed on the intro page
+   */
+  introMedia?: (string | null) | Media;
   /**
    * Upload lesson content files (PDFs, videos, images, etc.)
    */
@@ -2422,6 +2434,9 @@ export interface LessonsSelect<T extends boolean = true> {
   order?: T;
   status?: T;
   isActive?: T;
+  introEnabled?: T;
+  introDescription?: T;
+  introMedia?: T;
   contentFiles?: T;
   lessonContextText?: T;
   prompt?: T;
@@ -2561,9 +2576,6 @@ export interface MediaSelect<T extends boolean = true> {
   retentionPolicy?: T;
   expiresAt?: T;
   sizes?: T;
-  folder?: T;
-  updatedAt?: T;
-  createdAt?: T;
   url?: T;
   thumbnailURL?: T;
   filename?: T;
@@ -2573,6 +2585,9 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+  folder?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

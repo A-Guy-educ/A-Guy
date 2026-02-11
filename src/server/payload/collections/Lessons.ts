@@ -144,6 +144,34 @@ export const Lessons: CollectionConfig = {
         description: 'Whether this lesson is currently active',
       },
     },
+    // --- Intro Page (pre-lesson context screen) ---
+    {
+      name: 'introEnabled',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'Show an intro/about page before the lesson starts',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'introDescription',
+      type: 'textarea',
+      admin: {
+        description: 'Short explanation shown on the intro page (what the student will learn)',
+        condition: (data) => Boolean(data?.introEnabled),
+      },
+    },
+    {
+      name: 'introMedia',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description: 'Image, SVG, or video displayed on the intro page',
+        condition: (data) => Boolean(data?.introEnabled),
+      },
+    },
+    // --- Lesson Content ---
     {
       name: 'contentFiles',
       type: 'upload',
