@@ -16,8 +16,8 @@ export const TrueFalseEditor: React.FC<TrueFalseEditorProps> = ({ block, onChang
   const trueOption = block.options?.[0]
   const falseOption = block.options?.[1]
 
-  const trueLabel = trueOption?.label?.value || 'True'
-  const falseLabel = falseOption?.label?.value || 'False'
+  const trueLabel = trueOption?.label?.value ?? 'True'
+  const falseLabel = falseOption?.label?.value ?? 'False'
 
   const updateOptionLabel = (optionIndex: number, newValue: string) => {
     if (!block.options) return
