@@ -440,6 +440,12 @@ function getBlockTypeLabel(block: ContentBlock): string {
 function renderQuestionEditor(
   block: ContentBlock,
   onChange: (block: ContentBlock) => void,
+  blockIndex: number,
+  blockCount: number,
+  onMoveUp: () => void,
+  onMoveDown: () => void,
+  onAdd: () => void,
+  onDelete: () => void,
 ): React.ReactNode {
   if (block.type === 'question_select' && block.variant === 'true_false') {
     return (
@@ -447,6 +453,13 @@ function renderQuestionEditor(
         blockType={getBlockTypeLabel(block)}
         block={block}
         onBlockChange={onChange}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onAdd={onAdd}
+        onDelete={onDelete}
+        canMoveUp={blockIndex > 0}
+        canMoveDown={blockIndex < blockCount - 1}
+        canDelete={blockCount > 1}
       >
         <TrueFalseEditor
           block={block as import('@/shared/exercise-content/types').QuestionSelectTrueFalseBlock}
@@ -461,6 +474,13 @@ function renderQuestionEditor(
         blockType={getBlockTypeLabel(block)}
         block={block}
         onBlockChange={onChange}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onAdd={onAdd}
+        onDelete={onDelete}
+        canMoveUp={blockIndex > 0}
+        canMoveDown={blockIndex < blockCount - 1}
+        canDelete={blockCount > 1}
       >
         <McqEditor
           block={block as import('@/shared/exercise-content/types').QuestionSelectMcqBlock}
@@ -475,6 +495,13 @@ function renderQuestionEditor(
         blockType={getBlockTypeLabel(block)}
         block={block}
         onBlockChange={onChange}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onAdd={onAdd}
+        onDelete={onDelete}
+        canMoveUp={blockIndex > 0}
+        canMoveDown={blockIndex < blockCount - 1}
+        canDelete={blockCount > 1}
       >
         <FreeResponseEditor
           block={block as import('@/shared/exercise-content/types').QuestionFreeResponseBlock}
@@ -489,6 +516,13 @@ function renderQuestionEditor(
         blockType={getBlockTypeLabel(block)}
         block={block}
         onBlockChange={onChange}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onAdd={onAdd}
+        onDelete={onDelete}
+        canMoveUp={blockIndex > 0}
+        canMoveDown={blockIndex < blockCount - 1}
+        canDelete={blockCount > 1}
       >
         <TableEditor
           block={block as import('@/shared/exercise-content/types').QuestionTableBlock}
@@ -525,97 +559,107 @@ function BlockList({
 }: BlockListProps) {
   return (
     <div className="block-list">
-      {blocks.map((block, index) => (
-        <div
-          key={block.id}
-          className={`block-item ${selectedBlockId === block.id ? 'block-item--selected' : ''}`}
-        >
-          <div className="block-header">
-            <div className="block-header-left">
-              <span className="block-number">Block {index + 1}</span>
-            </div>
-            <div className="block-actions">
-              <button
-                className="block-action-button"
-                onClick={() => onMoveBlock(block.id, 'up')}
-                disabled={index === 0}
-                title="Move up"
-                type="button"
-              >
-                <MoveUp size={14} />
-              </button>
-              <button
-                className="block-action-button"
-                onClick={() => onMoveBlock(block.id, 'down')}
-                disabled={index === blocks.length - 1}
-                title="Move down"
-                type="button"
-              >
-                <MoveDown size={14} />
-              </button>
-              <button
-                className="block-action-button"
-                onClick={() => onAddBlock(index)}
-                title="Add block below"
-                type="button"
-              >
-                <Plus size={14} />
-              </button>
-              <button
-                className="block-action-button block-action-button--danger"
-                onClick={() => onDeleteBlock(block.id)}
-                disabled={blocks.length === 1}
-                title="Delete block"
-                type="button"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          </div>
-          <div className="block-content">
-            {block.type === 'rich_text' ? (
-              <div onClick={() => onSelect(block.id)} onFocus={() => onSelect(block.id)}>
-                <RichTextEditor
-                  value={block.value}
-                  onChange={(value) => onUpdateBlock(block.id, { value })}
-                />
-              </div>
+      {blocks.map((block, index) => {
+        const isRichText = block.type === 'rich_text'
+
+        return (
+          <div
+            key={block.id}
+            className={`block-item ${selectedBlockId === block.id ? 'block-item--selected' : ''}`}
+          >
+            {isRichText ? (
+              <>
+                <div className="block-header">
+                  <div className="block-header-left">
+                    <span className="block-number">Block {index + 1}</span>
+                  </div>
+                  <div className="block-actions">
+                    <button
+                      className="block-action-button"
+                      onClick={() => onMoveBlock(block.id, 'up')}
+                      disabled={index === 0}
+                      title="Move up"
+                      type="button"
+                    >
+                      <MoveUp size={14} />
+                    </button>
+                    <button
+                      className="block-action-button"
+                      onClick={() => onMoveBlock(block.id, 'down')}
+                      disabled={index === blocks.length - 1}
+                      title="Move down"
+                      type="button"
+                    >
+                      <MoveDown size={14} />
+                    </button>
+                    <button
+                      className="block-action-button"
+                      onClick={() => onAddBlock(index)}
+                      title="Add block below"
+                      type="button"
+                    >
+                      <Plus size={14} />
+                    </button>
+                    <button
+                      className="block-action-button block-action-button--danger"
+                      onClick={() => onDeleteBlock(block.id)}
+                      disabled={blocks.length === 1}
+                      title="Delete block"
+                      type="button"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+                <div className="block-content">
+                  <div onClick={() => onSelect(block.id)} onFocus={() => onSelect(block.id)}>
+                    <RichTextEditor
+                      value={block.value}
+                      onChange={(value) => onUpdateBlock(block.id, { value })}
+                    />
+                  </div>
+                </div>
+                <div className="block-media-section">
+                  <button
+                    type="button"
+                    className="block-media-button"
+                    onClick={() => onOpenMediaPicker(block.id)}
+                    title="Attach media"
+                  >
+                    <ImageIcon size={14} />
+                    <span>
+                      {block.mediaIds && block.mediaIds.length > 0
+                        ? `${block.mediaIds.length} media attached`
+                        : 'Attach media'}
+                    </span>
+                  </button>
+
+                  {block.mediaIds && block.mediaIds.length > 0 && (
+                    <BlockMediaDisplay
+                      blockId={block.id}
+                      mediaIds={block.mediaIds}
+                      onRemoveMedia={onRemoveMedia}
+                    />
+                  )}
+                </div>
+              </>
             ) : (
               <div className="question-block-json-editor">
-                {renderQuestionEditor(block, (updatedBlock) =>
-                  onUpdateBlock(block.id, updatedBlock),
+                {renderQuestionEditor(
+                  block,
+                  (updatedBlock) => onUpdateBlock(block.id, updatedBlock),
+                  index,
+                  blocks.length,
+                  () => onMoveBlock(block.id, 'up'),
+                  () => onMoveBlock(block.id, 'down'),
+                  () => onAddBlock(index),
+                  () => onDeleteBlock(block.id),
                 )}
               </div>
             )}
           </div>
-
-          {block.type === 'rich_text' && (
-            <div className="block-media-section">
-              <button
-                type="button"
-                className="block-media-button"
-                onClick={() => onOpenMediaPicker(block.id)}
-                title="Attach media"
-              >
-                <ImageIcon size={14} />
-                <span>
-                  {block.mediaIds && block.mediaIds.length > 0
-                    ? `${block.mediaIds.length} media attached`
-                    : 'Attach media'}
-                </span>
-              </button>
-
-              {block.mediaIds && block.mediaIds.length > 0 && (
-                <BlockMediaDisplay
-                  blockId={block.id}
-                  mediaIds={block.mediaIds}
-                  onRemoveMedia={onRemoveMedia}
-                />
-              )}
-            </div>
-          )}
-        </div>
-      ))}
+        )
+      })}
 
       {blocks.length === 0 && (
         <div className="empty-state">
