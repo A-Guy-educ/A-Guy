@@ -589,6 +589,17 @@ export function useNotebookChat({
     setMessages((prev) => [...prev, { role: ChatRole.Assistant, content }])
   }, [])
 
+  /**
+   * Send a contextual help prompt to the AI without showing a user message bubble.
+   * Only the AI's streaming response appears in the chat.
+   */
+  const sendContextualHelp = async (prompt: string) => {
+    if (isLoading || isLoadingHistory) return
+    setIsLoading(true)
+    const context = { exerciseId, lessonId, chapterId, courseId, categoryId }
+    await streamMessage(prompt, acknowledgment, context)
+  }
+
   const dismissError = useCallback(() => {
     setChatError(null)
   }, [])
@@ -619,5 +630,6 @@ export function useNotebookChat({
     dismissError,
     // Programmatic message injection
     addAssistantMessage,
+    sendContextualHelp,
   }
 }

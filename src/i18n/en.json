@@ -205,8 +205,7 @@
     "exercisesPagerNext": "Next",
     "exercisesPagerIntro": "Intro",
     "exercisesPagerCompleted": "Completed",
-    "exercisesPagerBackToLesson": "Back to Lesson",
-    "chatIncorrectAnswerSuggestion": "Hey, it looks like that answer isn't quite right. Want me to help you work through it?"
+    "exercisesPagerBackToLesson": "Back to Lesson"
   },
   "homepage": {
     "nav": {

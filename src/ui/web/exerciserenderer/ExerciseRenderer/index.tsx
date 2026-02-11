@@ -28,6 +28,23 @@ import { QuestionCard } from '../components/QuestionCard'
 import { checkQuestionAnswer, getInitialAnswer } from '../utils/answerChecking'
 
 /**
+ * Format student's answer as readable text for AI context
+ */
+function formatStudentAnswer(question: QuestionBlock, answer: UserAnswer): string {
+  if (answer.type === 'true_false') {
+    return answer.value === true ? 'True' : 'False'
+  }
+  if (answer.type === 'mcq' && question.type === 'question_select' && question.variant === 'mcq') {
+    const selected = question.answer.options.filter((o) => answer.selectedIds.includes(o.id))
+    return selected.map((o) => o.content.value).join(', ')
+  }
+  if (answer.type === 'free_response') {
+    return answer.value
+  }
+  return ''
+}
+
+/**
  * Main Exercise Renderer Component
  */
 export function ExerciseRenderer({
@@ -70,7 +87,14 @@ export function ExerciseRenderer({
       setHasChecked((prev) => ({ ...prev, [questionId]: true }))
       if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
         chatTriggeredRef.current.add(questionId)
-        window.dispatchEvent(new CustomEvent('exercise-incorrect-answer'))
+        window.dispatchEvent(
+          new CustomEvent('exercise-incorrect-answer', {
+            detail: {
+              questionPrompt: question.prompt.value,
+              studentAnswer: formatStudentAnswer(question, answer),
+            },
+          }),
+        )
       }
     } else {
       // For other question types, clear the check result and reset trigger
@@ -93,7 +117,14 @@ export function ExerciseRenderer({
     setHasChecked((prev) => ({ ...prev, [questionId]: true }))
     if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
       chatTriggeredRef.current.add(questionId)
-      window.dispatchEvent(new CustomEvent('exercise-incorrect-answer'))
+      window.dispatchEvent(
+        new CustomEvent('exercise-incorrect-answer', {
+          detail: {
+            questionPrompt: question.prompt.value,
+            studentAnswer: formatStudentAnswer(question, answers[questionId]),
+          },
+        }),
+      )
     }
   }
 

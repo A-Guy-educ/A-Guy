@@ -17,7 +17,7 @@ import {
   Send,
   X,
 } from 'lucide-react'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ChatErrorSurface } from '../ChatErrorSurface'
 import { ChatMessageContent } from '../ChatMessageContent'
 import { useNotebookChat } from '../hooks/useNotebookChat'
@@ -112,8 +112,8 @@ export function ChatInterface({
     // Error handling
     chatError,
     dismissError,
-    // Programmatic message injection
-    addAssistantMessage,
+    // Programmatic contextual help
+    sendContextualHelp,
   } = useNotebookChat({
     initialMessage: t('chatWelcome'),
     authRequiredMessage: t('chatAuthRequired'),
@@ -139,16 +139,24 @@ export function ChatInterface({
     uploadFailedMessage: tCourses('chatUploadFailed'),
   })
 
-  // Auto-open chat on incorrect answer
-  const handleIncorrectAnswer = useCallback(() => {
+  // Auto-send contextual help on incorrect answer (ref pattern for stable listener)
+  const incorrectAnswerRef = useRef<(e: Event) => void>(() => {})
+  incorrectAnswerRef.current = (e: Event) => {
+    const { questionPrompt, studentAnswer } = (e as CustomEvent).detail as {
+      questionPrompt: string
+      studentAnswer: string
+    }
     onChatInteraction?.()
-    addAssistantMessage(tCourses('chatIncorrectAnswerSuggestion'))
-  }, [onChatInteraction, addAssistantMessage, tCourses])
+    sendContextualHelp(
+      `I got this question wrong: "${questionPrompt}". My answer was "${studentAnswer}" but it's incorrect. Can you help me understand why and guide me to the right answer?`,
+    )
+  }
 
   useEffect(() => {
-    window.addEventListener('exercise-incorrect-answer', handleIncorrectAnswer)
-    return () => window.removeEventListener('exercise-incorrect-answer', handleIncorrectAnswer)
-  }, [handleIncorrectAnswer])
+    const handler = (e: Event) => incorrectAnswerRef.current(e)
+    window.addEventListener('exercise-incorrect-answer', handler)
+    return () => window.removeEventListener('exercise-incorrect-answer', handler)
+  }, [])
 
   // Math tools state
   const [isMathPaletteOpen, setIsMathPaletteOpen] = useState(false)

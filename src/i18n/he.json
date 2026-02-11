@@ -205,8 +205,7 @@
     "exercisesPagerNext": "הבא",
     "exercisesPagerIntro": "פתיחה",
     "exercisesPagerCompleted": "הושלם",
-    "exercisesPagerBackToLesson": "חזור לשיעור",
-    "chatIncorrectAnswerSuggestion": "היי, נראה שהתשובה לא לגמרי נכונה. רוצה שאעזור לך לעבור על זה?"
+    "exercisesPagerBackToLesson": "חזור לשיעור"
   },
   "homepage": {
     "nav": {
