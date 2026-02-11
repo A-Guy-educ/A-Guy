@@ -439,7 +439,6 @@ function renderQuestionEditor(
   blockCount: number,
   onMoveUp: () => void,
   onMoveDown: () => void,
-  onAdd: () => void,
   onDelete: () => void,
 ): React.ReactNode {
   if (block.type === 'question_select' && block.variant === 'true_false') {
@@ -450,7 +449,6 @@ function renderQuestionEditor(
         onBlockChange={onChange}
         onMoveUp={onMoveUp}
         onMoveDown={onMoveDown}
-        onAdd={onAdd}
         onDelete={onDelete}
         canMoveUp={blockIndex > 0}
         canMoveDown={blockIndex < blockCount - 1}
@@ -471,7 +469,6 @@ function renderQuestionEditor(
         onBlockChange={onChange}
         onMoveUp={onMoveUp}
         onMoveDown={onMoveDown}
-        onAdd={onAdd}
         onDelete={onDelete}
         canMoveUp={blockIndex > 0}
         canMoveDown={blockIndex < blockCount - 1}
@@ -492,7 +489,6 @@ function renderQuestionEditor(
         onBlockChange={onChange}
         onMoveUp={onMoveUp}
         onMoveDown={onMoveDown}
-        onAdd={onAdd}
         onDelete={onDelete}
         canMoveUp={blockIndex > 0}
         canMoveDown={blockIndex < blockCount - 1}
@@ -513,7 +509,6 @@ function renderQuestionEditor(
         onBlockChange={onChange}
         onMoveUp={onMoveUp}
         onMoveDown={onMoveDown}
-        onAdd={onAdd}
         onDelete={onDelete}
         canMoveUp={blockIndex > 0}
         canMoveDown={blockIndex < blockCount - 1}
@@ -588,14 +583,6 @@ function BlockList({
                       <MoveDown size={14} />
                     </button>
                     <button
-                      className="block-action-button"
-                      onClick={() => onAddBlock(index)}
-                      title="Add block below"
-                      type="button"
-                    >
-                      <Plus size={14} />
-                    </button>
-                    <button
                       className="block-action-button block-action-button--danger"
                       onClick={() => onDeleteBlock(block.id)}
                       disabled={blocks.length === 1}
@@ -647,7 +634,6 @@ function BlockList({
                   blocks.length,
                   () => onMoveBlock(block.id, 'up'),
                   () => onMoveBlock(block.id, 'down'),
-                  () => onAddBlock(index),
                   () => onDeleteBlock(block.id),
                 )}
               </div>
@@ -655,6 +641,11 @@ function BlockList({
           </div>
         )
       })}
+
+      <button className="add-block-button" onClick={() => onAddBlock()} type="button">
+        <Plus size={16} />
+        Add Block
+      </button>
 
       {blocks.length === 0 && (
         <div className="empty-state">

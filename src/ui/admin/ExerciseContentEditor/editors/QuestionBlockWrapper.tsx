@@ -3,7 +3,7 @@
 import React from 'react'
 import type { ContentBlock } from '@/shared/exercise-content/types'
 import { AdvancedJsonPanel } from '../../shared/AdvancedJsonPanel'
-import { MoveUp, MoveDown, Plus, Trash2 } from 'lucide-react'
+import { MoveUp, MoveDown, Trash2 } from 'lucide-react'
 
 interface QuestionBlockWrapperProps {
   blockType: string
@@ -11,7 +11,6 @@ interface QuestionBlockWrapperProps {
   onBlockChange: (block: ContentBlock) => void
   onMoveUp?: () => void
   onMoveDown?: () => void
-  onAdd?: () => void
   onDelete?: () => void
   canMoveUp?: boolean
   canMoveDown?: boolean
@@ -25,7 +24,6 @@ export const QuestionBlockWrapper: React.FC<QuestionBlockWrapperProps> = ({
   onBlockChange,
   onMoveUp,
   onMoveDown,
-  onAdd,
   onDelete,
   canMoveUp = false,
   canMoveDown = false,
@@ -56,9 +54,6 @@ export const QuestionBlockWrapper: React.FC<QuestionBlockWrapperProps> = ({
             title="Move down"
           >
             <MoveDown size={14} />
-          </button>
-          <button type="button" className="icon-button" onClick={onAdd} title="Add block below">
-            <Plus size={14} />
           </button>
           <button
             type="button"
