@@ -585,6 +585,10 @@ export function useNotebookChat({
     sendMessageSync(prompt, acknowledgment, context)
   }
 
+  const addAssistantMessage = useCallback((content: string) => {
+    setMessages((prev) => [...prev, { role: ChatRole.Assistant, content }])
+  }, [])
+
   const dismissError = useCallback(() => {
     setChatError(null)
   }, [])
@@ -613,5 +617,7 @@ export function useNotebookChat({
     // Error handling
     chatError,
     dismissError,
+    // Programmatic message injection
+    addAssistantMessage,
   }
 }

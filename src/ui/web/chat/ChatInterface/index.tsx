@@ -17,7 +17,7 @@ import {
   Send,
   X,
 } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { ChatErrorSurface } from '../ChatErrorSurface'
 import { ChatMessageContent } from '../ChatMessageContent'
 import { useNotebookChat } from '../hooks/useNotebookChat'
@@ -112,6 +112,8 @@ export function ChatInterface({
     // Error handling
     chatError,
     dismissError,
+    // Programmatic message injection
+    addAssistantMessage,
   } = useNotebookChat({
     initialMessage: t('chatWelcome'),
     authRequiredMessage: t('chatAuthRequired'),
@@ -136,6 +138,17 @@ export function ChatInterface({
     maxFilesMessage: tCourses('chatMaxFiles'),
     uploadFailedMessage: tCourses('chatUploadFailed'),
   })
+
+  // Auto-open chat on incorrect answer
+  const handleIncorrectAnswer = useCallback(() => {
+    onChatInteraction?.()
+    addAssistantMessage(tCourses('chatIncorrectAnswerSuggestion'))
+  }, [onChatInteraction, addAssistantMessage, tCourses])
+
+  useEffect(() => {
+    window.addEventListener('exercise-incorrect-answer', handleIncorrectAnswer)
+    return () => window.removeEventListener('exercise-incorrect-answer', handleIncorrectAnswer)
+  }, [handleIncorrectAnswer])
 
   // Math tools state
   const [isMathPaletteOpen, setIsMathPaletteOpen] = useState(false)
