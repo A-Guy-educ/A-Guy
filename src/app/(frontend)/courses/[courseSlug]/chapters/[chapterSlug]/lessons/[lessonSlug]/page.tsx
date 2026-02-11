@@ -72,6 +72,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             courseSlug={courseSlug}
             chapterSlug={chapterSlug}
             lessonSlug={lessonSlug}
+            lessonId={lesson.id}
           />
         ) : (
           // Empty state: no document and no exercises
@@ -87,7 +88,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
   }
 
   // Case 2: Document exists -> Keep existing behavior with ExerciseWorkspace
-  const pdfContent = (
+  const primaryContent = (
     <div className="w-full h-full flex flex-col">
       {validFiles.map((file, index) => (
         <div key={file.id} className="w-full h-full flex-shrink-0">
@@ -108,7 +109,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
       <ExerciseWorkspace
         exerciseTitle={lesson.title}
         backUrl={backUrl}
-        pdfContent={pdfContent}
+        primaryContent={primaryContent}
         chatContent={
           <ChatInterface
             lessonId={chatLessonId}

@@ -15,7 +15,8 @@
       "Bash(pnpm exec vitest:*)",
       "WebFetch(domain:firebase.google.com)",
       "WebFetch(domain:genkit.dev)",
-      "WebFetch(domain:www.assistant-ui.com)"
+      "WebFetch(domain:www.assistant-ui.com)",
+      "Bash(xargs:*)"
     ]
   },
   "mcpServers": {}

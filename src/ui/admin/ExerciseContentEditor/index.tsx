@@ -1,8 +1,8 @@
 'use client'
 
 import type { Media } from '@/payload-types'
-import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'
-import { ExerciseBlockDefaults } from '@/server/payload/collections/Exercises/defaults'
+import { ExerciseBlockDefaults, generateId } from '@/shared/exercise-content/defaults'
+import type { ContentBlock } from '@/shared/exercise-content/types'
 import { useField, useForm } from '@payloadcms/ui'
 import { Code, Image as ImageIcon, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
 import Image from 'next/image'
@@ -12,7 +12,6 @@ import './index.css'
 import { JSONInspector } from './JSONInspector'
 import { MediaPicker } from './MediaPicker'
 import { RichTextEditor } from './RichTextEditor'
-import { generateId } from './utils'
 
 /**
  * Exercise Content Editor - Strict Flat Blocks
@@ -21,6 +20,7 @@ import { generateId } from './utils'
  * - rich_text (content blocks)
  * - question_select (true_false and mcq variants)
  * - question_free_response
+ * - question_table (table-based with fillable cells)
  */
 
 const DEFAULT_BLOCKS: ContentBlock[] = [

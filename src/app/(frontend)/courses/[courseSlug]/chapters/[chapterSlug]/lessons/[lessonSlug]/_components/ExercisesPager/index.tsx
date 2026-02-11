@@ -10,6 +10,8 @@ import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { BookOpen, ChevronLeft, ChevronRight, Layers, Sparkles } from 'lucide-react'
 import { useExercisesPager } from './useExercisesPager'
+import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
+import { ChatInterface } from '@/ui/web/chat'
 
 interface ExercisesPagerProps {
   exercises: Exercise[]
@@ -18,6 +20,7 @@ interface ExercisesPagerProps {
   courseSlug: string
   chapterSlug: string
   lessonSlug: string
+  lessonId: string
 }
 
 export function ExercisesPager({
@@ -27,6 +30,7 @@ export function ExercisesPager({
   courseSlug,
   chapterSlug,
   lessonSlug,
+  lessonId,
 }: ExercisesPagerProps) {
   const t = useTranslations('courses')
   const locale = useLocale()
@@ -44,7 +48,84 @@ export function ExercisesPager({
     handlePrev,
     handleStart,
     totalExercises,
-  } = pager
+  } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug })
+
+  const exerciseOrdinal = getExerciseOrdinal()
+  const currentExercise =
+    typeof pageState.exerciseIndex === 'number' ? exercises[pageState.exerciseIndex] : null
+
+  if (pageState.type === 'exercise' && currentExercise) {
+    return (
+      <ExerciseWorkspace
+        exerciseTitle={currentExercise.title}
+        backUrl={backUrl}
+        primaryContent={
+          <div className="h-full flex flex-col">
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <div className="w-full p-4 md:p-6 space-y-4">
+                <Progress value={progressPercent} className="h-1 rounded-full" />
+
+                <div className="bg-card rounded-2xl p-5 md:p-6 border border-border/60 shadow-sm">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <Layers className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em]">
+                        {exerciseOrdinal !== null
+                          ? `${t('exercise')} ${exerciseOrdinal} ${t('of')} ${totalExercises}`
+                          : ''}
+                      </p>
+                      <h2 className="text-lg font-medium text-foreground">
+                        {currentExercise.title}
+                      </h2>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-card rounded-2xl p-5 md:p-6 border border-border/60 shadow-sm">
+                  <ExerciseRenderer
+                    content={currentExercise.content as unknown as ExerciseContentData}
+                    mode="student"
+                    showCheckAnswer={true}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="shrink-0 border-t border-border bg-card px-4 py-3">
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="ghost"
+                  onClick={handlePrev}
+                  disabled={!canGoPrev}
+                  className="text-muted-foreground text-sm hover:text-foreground gap-1.5"
+                >
+                  <ChevronRight className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />{' '}
+                  {t('exercisesPagerPrev')}
+                </Button>
+                <Button
+                  onClick={handleNext}
+                  disabled={!canGoNext}
+                  className="px-6 py-2 rounded-xl text-sm"
+                >
+                  {t('exercisesPagerNext')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        }
+        chatContent={
+          <ChatInterface
+            lessonId={lessonId}
+            exerciseId={currentExercise.id}
+            translationNamespace="courses"
+            showMathTools={true}
+          />
+        }
+      />
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

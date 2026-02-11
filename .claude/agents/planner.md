@@ -130,3 +130,69 @@ Create detailed steps with:
 - Performance bottlenecks
 
 **Remember**: A great plan is specific, actionable, and considers both the happy path and edge cases. The best plans enable confident, incremental implementation.
+
+## Junior-Friendly Low-Level Plans
+
+When instructed to create a "junior-friendly low-level plan", you MUST:
+
+### Detail Level
+
+- Include EVERY file that will be modified (not just "important" ones)
+- List ALL new files to create with their exact paths
+- Specify line numbers or approximate ranges when possible
+- Break down large steps into 5-15 line chunks
+- Include copy-paste ready code snippets for complex changes
+
+### Step Granularity
+
+- Each step should take 10-30 minutes to complete
+- Include "obvious" steps that experienced devs skip (e.g., "scroll to line 45")
+- Specify exact imports to add, not just "add error handling"
+- Show the BEFORE and AFTER state for non-trivial changes
+
+### Educational Elements
+
+- Explain WHY behind each architectural decision
+- Point to similar patterns elsewhere in the codebase
+- Warn about common pitfalls in 1-2 sentences
+- Link to relevant documentation or existing code that implements similar logic
+
+### Format for Low-Level Plans
+
+````markdown
+## Step N: [Descriptive Title]
+
+**File**: `src/path/to/file.ts:45-72`  
+**New/Created**: No  
+**Time**: ~15 minutes
+
+**What to do:**
+
+1. Navigate to `src/path/to/file.ts`
+2. After line 44 (the `const config = ...` line), add:
+
+```typescript
+// NEW: Handle edge case for empty input
+if (input === null || input === undefined) {
+  logger.warn('Received null/undefined input, skipping processing')
+  return null
+}
+```
+````
+
+3. The change adds ~8 lines
+
+**Why**: This prevents runtime errors when downstream services return null.
+
+**Reference**: Similar pattern in `src/utils/validator.ts:23-31`
+
+**Check**: After adding, verify the file still typechecks: `pnpm tsc --noEmit`
+
+```
+
+### Anti-Patterns to Avoid
+- Don't skip "obvious" import statements
+- Don't skip npm/pnpm install commands
+- Don't skip running generate:types after schema changes
+- Don't skip restart steps (dev server, type generation)
+```

@@ -1,7 +1,7 @@
 'use client'
 
+import { CheckSquare, Edit3, FileText, List, Table as TableIcon, X } from 'lucide-react'
 import React from 'react'
-import { FileText, CheckSquare, List, Edit3, Grid, X } from 'lucide-react'
 
 interface BlockTypeSelectorProps {
   isOpen: boolean
@@ -49,8 +49,8 @@ export const BlockTypeSelector: React.FC<BlockTypeSelectorProps> = ({
     {
       type: 'question_table',
       label: 'Table Question',
-      description: 'Table with rows and columns, optional fillable cells',
-      icon: <Grid size={20} />,
+      description: 'Table-based question with fillable cells',
+      icon: <TableIcon size={20} />,
     },
   ]
 
