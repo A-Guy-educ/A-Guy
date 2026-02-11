@@ -4,12 +4,13 @@
  *
  * @fileType endpoint
  * @domain chat
- * @pattern authenticated-endpoint, validated-endpoint, context-scoped, admin-mode
- * @ai-summary Chat endpoint with context scoping, memory retrieval, MCP tools for admins, and automatic maintenance
+ * @pattern authenticated-endpoint, validated-endpoint, context-scoped, admin-mode, guest-session
+ * @ai-summary Chat endpoint with context scoping, memory retrieval, MCP tools for admins, guest sessions, and automatic maintenance
  *
- * Access: Authenticated users only
+ * Access: Authenticated users OR guest sessions
  *
  * Features:
+ * - Guest sessions for anonymous users (7-day sliding TTL, 30-day hard cap)
  * - Context-scoped conversations (Course/Chapter/Lesson/Exercise)
  * - Admin mode with MCP tools (no context required)
  * - Running summary of conversation history
@@ -29,6 +30,15 @@ import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollection
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { getMCPClient } from '@/server/repos/mcp/client/mcp-client'
 import { ConversationService } from '@/server/services/conversation-service'
+import { checkRateLimit } from '@/server/services/rate-limit'
+import {
+  createGuestSession,
+  getGuestSessionByToken,
+  getGuestSessionCookie,
+  hashIP,
+  hashUserAgent,
+  setGuestSessionCookie,
+} from '@/server/services/guest-session'
 import type { PayloadRequest } from 'payload'
 import { z } from 'zod'
 
@@ -82,12 +92,69 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
   const requestId = crypto.randomUUID()
   const reqLogger = logger.child({ requestId })
 
-  // 1) Auth - endpoints not authenticated by default
-  if (!req.user) {
-    return Response.json({ error: 'Authentication required' }, { status: 401 })
+  let guestSession: Awaited<ReturnType<typeof getGuestSessionByToken>> | null = null
+  let isGuestMode = false
+
+  // 1) Auth - check for authenticated user OR guest session
+  const { user } = await req.payload.auth({ headers: req.headers })
+
+  if (!user) {
+    // Check for guest session
+    const guestToken = getGuestSessionCookie(req.headers as unknown as Headers)
+    if (guestToken) {
+      guestSession = await getGuestSessionByToken(guestToken)
+    }
+
+    if (!guestSession) {
+      // Create new guest session
+      const ipHash = hashIP(req.headers?.get('x-forwarded-for') || req.headers?.get('x-real-ip'))
+      const userAgentHash = hashUserAgent(req.headers?.get('user-agent'))
+
+      // Check rate limit for new guests
+      const rateLimitResult = checkRateLimit(ipHash, userAgentHash)
+      if (!rateLimitResult.allowed) {
+        return Response.json(
+          {
+            error: 'Too many requests. Please try again later.',
+            isGuestMode: true,
+            retryAfter: Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000),
+          },
+          {
+            status: 429,
+            headers: {
+              'Retry-After': String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)),
+              'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+              'X-RateLimit-Reset': String(rateLimitResult.resetAt),
+            },
+          },
+        )
+      }
+
+      const { session, token } = await createGuestSession({
+        req: req as unknown as Request,
+        ipHash,
+        userAgentHash,
+      })
+      guestSession = session
+      isGuestMode = true
+
+      // Set cookie on response
+      setGuestSessionCookie(token, req.headers as unknown as Headers)
+    } else {
+      isGuestMode = true
+    }
   }
-  if (!isUsersCollectionUser(req.user)) {
-    return Response.json({ error: 'Authentication required' }, { status: 401 })
+
+  // No auth at all - reject
+  if (!user && !guestSession) {
+    return Response.json(
+      { error: 'Authentication or guest session required', isGuestMode: false },
+      { status: 401 },
+    )
+  }
+
+  if (!user && guestSession) {
+    reqLogger.info({ guestSessionId: guestSession.id }, 'Processing guest chat request')
   }
 
   try {
@@ -106,8 +173,14 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     const validated = parseResult.data
 
-    // 3) Check if admin mode
-    const isAdmin = (req.user.role as AccountRole) === AccountRole.Admin
+    // Safely extract user info (may be null for guests)
+    const userId = user?.id
+    const userRole = isUsersCollectionUser(user)
+      ? ((user as unknown as { role: AccountRole }).role as AccountRole)
+      : AccountRole.Student
+    const isAdmin = userRole === AccountRole.Admin
+
+    // 3) Check if admin mode (guests cannot use admin mode)
     const adminMode = isAdmin && validated.adminMode === true
 
     // For admin mode, check if we have a context or adminMode
@@ -127,7 +200,16 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     }
 
     // Continue with regular context-scoped chat...
-    return handleContextScopedChat(req, requestId, validated, contextCandidate, reqLogger)
+    return handleContextScopedChat(
+      req,
+      requestId,
+      validated,
+      contextCandidate,
+      reqLogger,
+      userId,
+      guestSession?.id,
+      isGuestMode,
+    )
   } catch (error) {
     // Handle connection reset errors gracefully
     if (
@@ -406,26 +488,35 @@ async function handleContextScopedChat(
   validated: z.infer<typeof import('./chat/request-validation').chatRequestSchema>,
   contextCandidate: NonNullable<ReturnType<typeof extractContextCandidate>>,
   reqLogger: typeof logger,
+  userId: string | undefined,
+  guestSessionId: string | undefined,
+  isGuestMode: boolean,
 ) {
-  const userId = req.user?.id
-  if (!userId) {
-    return Response.json({ error: 'User ID not found' }, { status: 401 })
+  // Require either authenticated user or guest session
+  if (!userId && !guestSessionId) {
+    return Response.json(
+      { error: 'User ID or guest session required', isGuestMode: false },
+      { status: 401 },
+    )
   }
 
-  // Safely get user role - only Users collection has roles
-  const userRole = isUsersCollectionUser(req.user)
-    ? ((req.user as unknown as { role: AccountRole }).role as AccountRole)
-    : AccountRole.Student
+  const userRole =
+    userId && isUsersCollectionUser(req.user)
+      ? ((req.user as unknown as { role: AccountRole }).role as AccountRole)
+      : AccountRole.Student
+
+  // Determine owner ID (user or guest session)
+  const ownerId = userId ?? guestSessionId!
 
   const contextValidation = await validateContextExists(
     req.payload,
     contextCandidate,
-    { id: userId },
+    { id: ownerId },
     logger as any,
   )
   if (!contextValidation.success) {
     return Response.json(
-      { error: contextValidation.error },
+      { error: contextValidation.error, isGuestMode },
       { status: contextValidation.statusCode },
     )
   }
@@ -433,6 +524,7 @@ async function handleContextScopedChat(
   reqLogger.info(
     {
       userId,
+      guestSessionId,
       exerciseId: validated.exerciseId,
       lessonId: validated.lessonId,
       chapterId: validated.chapterId,
@@ -445,22 +537,43 @@ async function handleContextScopedChat(
   const conversationService = new ConversationService(req.payload)
   const context = await resolveContext(conversationService, validated)
 
+  // Add guestSessionId to context if applicable
+  if (guestSessionId) {
+    ;(context as { guestSessionId?: string }).guestSessionId = guestSessionId
+  }
+
   reqLogger.info(
-    { userId, contextKey: context.contextKey, contextRelation: context.relationTo },
+    { ownerId, contextKey: context.contextKey, contextRelation: context.relationTo, isGuestMode },
     'Resolved context',
   )
 
   // Validate context access
-  const hasAccess = await validateContextAccess(conversationService, userId, userRole, context)
+  const hasAccess = await validateContextAccess(
+    conversationService,
+    ownerId,
+    userRole,
+    context as Parameters<typeof validateContextAccess>[3],
+  )
   if (!hasAccess) {
-    return Response.json({ error: 'Unauthorized to access this context' }, { status: 403 })
+    return Response.json(
+      { error: 'Unauthorized to access this context', isGuestMode },
+      { status: 403 },
+    )
   }
 
-  // Get or create conversation
-  const conversation = await getOrCreateConversation(conversationService, userId, context)
+  // Get or create conversation (supports guests)
+  const conversation = await getOrCreateConversation(
+    conversationService,
+    ownerId,
+    context as Parameters<typeof getOrCreateConversation>[2],
+    guestSessionId,
+  )
   const conversationId = conversation.id
 
-  reqLogger.info({ conversationId, contextKey: context.contextKey }, 'Using conversation')
+  reqLogger.info(
+    { conversationId, contextKey: context.contextKey, isGuestMode },
+    'Using conversation',
+  )
 
   // Persist user message
   const userMessage = {
@@ -489,7 +602,7 @@ async function handleContextScopedChat(
 
   const memoryResult = await retrieveMemories(
     req.payload,
-    userId,
+    ownerId,
     conversationId,
     context.contextKey,
     recentMessages,
@@ -500,7 +613,7 @@ async function handleContextScopedChat(
   const lessonContext = await fetchLessonContextForContext(
     req.payload,
     context,
-    { id: userId },
+    { id: ownerId },
     logger as any,
     validated.courseId,
   )
@@ -529,7 +642,7 @@ async function handleContextScopedChat(
   const mediaResult = await processMediaAttachments(
     req.payload,
     validated.mediaIds || [],
-    userId,
+    ownerId,
     req,
     logger as any,
   )
@@ -613,7 +726,7 @@ async function handleContextScopedChat(
   logContextUsage(
     createContextLog({
       conversationId,
-      userId,
+      userId: ownerId,
       policyVersion: composedPrompt.metadata.policyVersion,
       summaryPresent: !!conversation?.summary,
       summaryLength: composedPrompt.metadata.summaryLength,
@@ -630,22 +743,24 @@ async function handleContextScopedChat(
 
   // Schedule background tasks
   scheduleSummaryMaintenance(req.payload, conversationId, logger as any)
-  if (req.user) {
+  if (ownerId) {
     scheduleMemoryExtraction(
       req.payload,
       conversationId,
-      userId,
+      ownerId,
       context,
-      { id: userId },
+      { id: ownerId },
       logger as any,
     )
   }
 
   reqLogger.info('Chat request successful')
+
   return Response.json({
     success: true,
     message: result.message,
     conversationId,
     contextKey: context.contextKey,
+    isGuestMode,
   })
 }

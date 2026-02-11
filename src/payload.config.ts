@@ -33,6 +33,7 @@ import type { JobDocument } from '@/server/payload/jobs/types'
 import { plugins } from '@/server/payload/plugins'
 import { Footer } from '@/ui/web/footer/config'
 import { Header } from '@/ui/web/header/config'
+import { GuestSessions } from '@/server/payload/collections/GuestSessions'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -119,6 +120,7 @@ export default buildConfig({
     ConfigValues,
     ConfigAuditLogs,
     Conversations,
+    GuestSessions,
     MemoryItems,
     Tenants,
     Courses,

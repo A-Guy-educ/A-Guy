@@ -2,6 +2,8 @@
 
 import { cookies } from 'next/headers'
 import { getPayload } from 'payload'
+import { claimGuestConversations } from '@/server/services/guest-session-upgrade'
+import { clearGuestSessionCookie, GUEST_SESSION_COOKIE_NAME } from '@/server/services/guest-session'
 
 type CookieStore = {
   set: (
@@ -15,6 +17,7 @@ type CookieStore = {
       maxAge: number
     },
   ) => void
+  delete: (name: string, options?: { path: string }) => void
 }
 
 export async function loginAction(formData: FormData, cookieStore?: CookieStore) {
@@ -70,6 +73,21 @@ export async function loginAction(formData: FormData, cookieStore?: CookieStore)
         maxAge: 60 * 60 * 24 * 7,
         ...(authCookies?.domain ? { domain: authCookies.domain } : {}),
       })
+
+      if (result.user?.id) {
+        try {
+          const headers = new Headers()
+          const currentCookies = await cookies()
+          const guestToken = currentCookies.get(GUEST_SESSION_COOKIE_NAME)?.value
+          if (guestToken) {
+            await claimGuestConversations(result.user.id, guestToken, headers)
+            clearGuestSessionCookie(headers)
+            resolvedCookieStore.delete(GUEST_SESSION_COOKIE_NAME)
+          }
+        } catch (claimError) {
+          console.error('Failed to claim guest conversations:', claimError)
+        }
+      }
 
       return { success: true }
     }

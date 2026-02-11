@@ -99,6 +99,9 @@ export function useNotebookChat({
   // Error state
   const [chatError, setChatError] = useState<ChatError | null>(null)
 
+  // Guest mode state
+  const [isGuestMode, setIsGuestMode] = useState(false)
+
   // Compute contextKey based on available context
   // For admin mode: use users:{userId} (user-scoped conversation)
   // Priority for regular mode: Exercise > Lesson > Chapter > Course > Category
@@ -253,8 +256,17 @@ export function useNotebookChat({
           if (result.success && !result.exists) {
             // No conversation exists yet - keep initial welcome message
             logger.debug({ contextKey }, '[useNotebookChat] No conversation found for contextKey')
+            // Track guest mode status
+            if (result.isGuestMode) {
+              setIsGuestMode(true)
+            }
             setIsLoadingHistory(false)
             return
+          }
+
+          // Track guest mode from successful response
+          if (result.isGuestMode) {
+            setIsGuestMode(true)
           }
 
           // API call failed
@@ -505,11 +517,16 @@ export function useNotebookChat({
 
       if (!result.success) {
         if (result.authRequired) {
-          setChatError({ type: 'auth', message: authRequiredMessage })
+          setChatError({ type: 'auth' as const, message: authRequiredMessage })
         } else {
           toast.error(result.error || errorMessage)
         }
         return
+      }
+
+      // Track guest mode
+      if (result.isGuestMode) {
+        setIsGuestMode(true)
       }
 
       if (result.message) {
@@ -540,6 +557,10 @@ export function useNotebookChat({
         // Clear messages and show welcome
         setMessages([{ role: ChatRole.Assistant, content: initialMessage }])
         toast.success(resetSuccessMessage)
+        // Track guest mode
+        if (result.isGuestMode) {
+          setIsGuestMode(true)
+        }
       } else {
         toast.error(result.error || resetErrorMessage)
       }
@@ -613,5 +634,7 @@ export function useNotebookChat({
     // Error handling
     chatError,
     dismissError,
+    // Guest mode
+    isGuestMode,
   }
 }

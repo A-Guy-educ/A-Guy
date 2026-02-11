@@ -70,24 +70,31 @@ export async function runChatPipeline(
   validated: z.infer<typeof import('./request-validation').chatRequestSchema>,
   contextCandidate: ContextCandidate,
   reqLogger: typeof logger,
+  guestSessionId?: string,
 ): Promise<{ result: ChatPipelineResult } | { response: Response }> {
   const userId = req.user?.id
-  if (!userId) {
+
+  // Require either authenticated user or guest session
+  if (!userId && !guestSessionId) {
     return {
-      response: Response.json({ error: 'User ID not found' }, { status: 401 }),
+      response: Response.json({ error: 'User ID or guest session required' }, { status: 401 }),
     }
   }
 
   // Safely get user role
-  const userRole = isUsersCollectionUser(req.user)
-    ? ((req.user as unknown as { role: AccountRole }).role as AccountRole)
-    : AccountRole.Student
+  const userRole =
+    userId && isUsersCollectionUser(req.user)
+      ? ((req.user as unknown as { role: AccountRole }).role as AccountRole)
+      : AccountRole.Student
+
+  // Determine owner ID (user or guest session)
+  const ownerId = userId ?? guestSessionId!
 
   // Validate context exists
   const contextValidation = await validateContextExists(
     req.payload,
     contextCandidate,
-    { id: userId },
+    { id: ownerId },
     reqLogger as any,
   )
   if (!contextValidation.success) {
@@ -102,6 +109,7 @@ export async function runChatPipeline(
   reqLogger.info(
     {
       userId,
+      guestSessionId,
       exerciseId: validated.exerciseId,
       lessonId: validated.lessonId,
       chapterId: validated.chapterId,
@@ -115,20 +123,36 @@ export async function runChatPipeline(
   const context = await resolveContext(conversationService, validated)
 
   reqLogger.info(
-    { userId, contextKey: context.contextKey, contextRelation: context.relationTo },
+    {
+      ownerId,
+      contextKey: context.contextKey,
+      contextRelation: context.relationTo,
+      guestSessionId,
+    },
     'Resolved context',
   )
 
   // Validate context access
-  const hasAccess = await validateContextAccess(conversationService, userId, userRole, context)
+  const hasAccess = await validateContextAccess(
+    conversationService,
+    ownerId,
+    userRole,
+    context,
+    guestSessionId,
+  )
   if (!hasAccess) {
     return {
       response: Response.json({ error: 'Unauthorized to access this context' }, { status: 403 }),
     }
   }
 
-  // Get or create conversation
-  const conversation = await getOrCreateConversation(conversationService, userId, context)
+  // Get or create conversation (supports guests)
+  const conversation = await getOrCreateConversation(
+    conversationService,
+    ownerId,
+    context,
+    guestSessionId,
+  )
   const conversationId = conversation.id
 
   reqLogger.info({ conversationId, contextKey: context.contextKey }, 'Using conversation')
@@ -160,7 +184,7 @@ export async function runChatPipeline(
 
   const memoryResult = await retrieveMemories(
     req.payload,
-    userId,
+    ownerId,
     conversationId,
     context.contextKey,
     recentMessages,
@@ -171,7 +195,7 @@ export async function runChatPipeline(
   const lessonContext = await fetchLessonContextForContext(
     req.payload,
     context,
-    { id: userId },
+    { id: ownerId },
     reqLogger as any,
     validated.courseId,
   )
@@ -202,7 +226,7 @@ export async function runChatPipeline(
   const mediaResult = await processMediaAttachments(
     req.payload,
     validated.mediaIds || [],
-    userId,
+    ownerId,
     req,
     reqLogger as any,
   )

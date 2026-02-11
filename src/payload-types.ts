@@ -74,6 +74,7 @@ export interface Config {
     config_values: ConfigValue;
     config_audit_logs: ConfigAuditLog;
     conversations: Conversation;
+    'guest-sessions': GuestSession;
     memory_items: MemoryItem;
     tenants: Tenant;
     courses: Course;
@@ -112,6 +113,7 @@ export interface Config {
     config_values: ConfigValuesSelect<false> | ConfigValuesSelect<true>;
     config_audit_logs: ConfigAuditLogsSelect<false> | ConfigAuditLogsSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
+    'guest-sessions': GuestSessionsSelect<false> | GuestSessionsSelect<true>;
     memory_items: MemoryItemsSelect<false> | MemoryItemsSelect<true>;
     tenants: TenantsSelect<false> | TenantsSelect<true>;
     courses: CoursesSelect<false> | CoursesSelect<true>;
@@ -993,9 +995,13 @@ export interface ConfigAuditLog {
 export interface Conversation {
   id: string;
   /**
-   * Student who owns this conversation
+   * Student who owns this conversation (null for guest-owned)
    */
-  user: string | User;
+  user?: (string | null) | User;
+  /**
+   * Guest session owner (set for anonymous chats)
+   */
+  guestSession?: (string | null) | GuestSession;
   /**
    * Polymorphic context reference (Course/Chapter/Lesson/Exercise/Tenant)
    */
@@ -1077,6 +1083,60 @@ export interface Conversation {
   archivedAt?: string | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * Anonymous user sessions for guest chat
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guest-sessions".
+ */
+export interface GuestSession {
+  id: string;
+  /**
+   * SHA-256 hash of session token (never store raw token)
+   */
+  tokenHash: string;
+  /**
+   * Allows token rotation/invalidation without session deletion
+   */
+  tokenVersion: number;
+  /**
+   * Session creation timestamp
+   */
+  createdAt: string;
+  /**
+   * Last activity timestamp (extends sliding TTL)
+   */
+  lastActiveAt: string;
+  /**
+   * Sliding TTL expiration (extends on activity, clamped by hard cap)
+   */
+  expiresAt: string;
+  /**
+   * Absolute hard cap - session cannot extend beyond this
+   */
+  hardExpiresAt: string;
+  /**
+   * SHA-256 hash of IP address (privacy-preserving abuse tracking)
+   */
+  ipHash?: string | null;
+  /**
+   * SHA-256 hash of User-Agent (privacy-preserving abuse tracking)
+   */
+  userAgentHash?: string | null;
+  /**
+   * Session status: active = usable, expired = past TTL, revoked = claimed by user
+   */
+  status: 'active' | 'expired' | 'revoked';
+  /**
+   * User who claimed this session on upgrade
+   */
+  claimedByUser?: (string | null) | User;
+  /**
+   * When this session was claimed by a user
+   */
+  claimedAt?: string | null;
+  updatedAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1882,6 +1942,10 @@ export interface PayloadLockedDocument {
         value: string | Conversation;
       } | null)
     | ({
+        relationTo: 'guest-sessions';
+        value: string | GuestSession;
+      } | null)
+    | ({
         relationTo: 'memory_items';
         value: string | MemoryItem;
       } | null)
@@ -2212,6 +2276,7 @@ export interface ConfigAuditLogsSelect<T extends boolean = true> {
  */
 export interface ConversationsSelect<T extends boolean = true> {
   user?: T;
+  guestSession?: T;
   contextRef?: T;
   contextKey?: T;
   exercise?: T;
@@ -2237,6 +2302,24 @@ export interface ConversationsSelect<T extends boolean = true> {
   archivedAt?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guest-sessions_select".
+ */
+export interface GuestSessionsSelect<T extends boolean = true> {
+  tokenHash?: T;
+  tokenVersion?: T;
+  createdAt?: T;
+  lastActiveAt?: T;
+  expiresAt?: T;
+  hardExpiresAt?: T;
+  ipHash?: T;
+  userAgentHash?: T;
+  status?: T;
+  claimedByUser?: T;
+  claimedAt?: T;
+  updatedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

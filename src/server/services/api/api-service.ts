@@ -14,6 +14,7 @@ export interface ChatApiResponse {
   authRequired?: boolean
   conversationId?: string
   contextKey?: string
+  isGuestMode?: boolean
 }
 
 export interface ConversationMessage {
@@ -30,6 +31,7 @@ export interface ConversationApiResponse {
   error?: string
   authRequired?: boolean
   contextKey?: string
+  isGuestMode?: boolean
 }
 
 export interface ResetChatApiResponse {
@@ -37,6 +39,7 @@ export interface ResetChatApiResponse {
   conversationId?: string
   contextKey?: string
   error?: string
+  isGuestMode?: boolean
 }
 
 /**

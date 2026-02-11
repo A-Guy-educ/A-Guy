@@ -38,6 +38,7 @@ export function formatChunkEvent(text: string): Uint8Array {
 export interface SSEDoneEventData {
   conversationId: string
   contextKey: string
+  isGuestMode?: boolean
 }
 
 export function formatDoneEvent(data: SSEDoneEventData): Uint8Array {

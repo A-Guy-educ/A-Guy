@@ -14,7 +14,6 @@
  */
 import { streamChatWithExerciseHelper } from '@/infra/llm/services/exercise-chat-service'
 import { logger } from '@/infra/utils/logger'
-import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import type { PayloadRequest } from 'payload'
 import { z } from 'zod'
 import { scheduleMemoryExtraction, scheduleSummaryMaintenance } from './chat/background-tasks'
@@ -31,6 +30,15 @@ import {
   formatDoneEvent,
   formatErrorEvent,
 } from './chat/sse-helpers'
+import { checkRateLimit } from '@/server/services/rate-limit'
+import {
+  createGuestSession,
+  getGuestSessionByToken,
+  getGuestSessionCookie,
+  hashIP,
+  hashUserAgent,
+  setGuestSessionCookie,
+} from '@/server/services/guest-session'
 
 /**
  * Handle streaming chat for context-scoped conversations
@@ -42,12 +50,65 @@ export async function agentChatStream(
   const requestId = crypto.randomUUID()
   const reqLogger = logger.child({ requestId })
 
-  // 1) Auth check
-  if (!req.user) {
-    return Response.json({ error: 'Authentication required' }, { status: 401 })
+  let guestSession: Awaited<ReturnType<typeof getGuestSessionByToken>> | null = null
+  let isGuestMode = false
+
+  // 1) Auth - check for authenticated user OR guest session
+  const { user } = await req.payload.auth({ headers: req.headers })
+
+  if (!user) {
+    // Check for guest session
+    const guestToken = getGuestSessionCookie(req.headers as unknown as Headers)
+    if (guestToken) {
+      guestSession = await getGuestSessionByToken(guestToken)
+    }
+
+    if (!guestSession) {
+      // Create new guest session
+      const ipHash = hashIP(req.headers?.get('x-forwarded-for') || req.headers?.get('x-real-ip'))
+      const userAgentHash = hashUserAgent(req.headers?.get('user-agent'))
+
+      // Check rate limit for new guests
+      const rateLimitResult = checkRateLimit(ipHash, userAgentHash)
+      if (!rateLimitResult.allowed) {
+        return Response.json(
+          {
+            error: 'Too many requests. Please try again later.',
+            isGuestMode: true,
+            retryAfter: Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000),
+          },
+          {
+            status: 429,
+            headers: {
+              'Retry-After': String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)),
+              'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+              'X-RateLimit-Reset': String(rateLimitResult.resetAt),
+            },
+          },
+        )
+      }
+
+      const { session, token } = await createGuestSession({
+        req: req as unknown as Request,
+        ipHash,
+        userAgentHash,
+      })
+      guestSession = session
+      isGuestMode = true
+
+      // Set cookie on response
+      setGuestSessionCookie(token, req.headers as unknown as Headers)
+    } else {
+      isGuestMode = true
+    }
   }
-  if (!isUsersCollectionUser(req.user)) {
-    return Response.json({ error: 'Authentication required' }, { status: 401 })
+
+  // No auth at all - reject
+  if (!user && !guestSession) {
+    return Response.json(
+      { error: 'Authentication or guest session required', isGuestMode: false },
+      { status: 401 },
+    )
   }
 
   try {
@@ -99,6 +160,7 @@ export async function agentChatStream(
       validated,
       contextCandidate,
       reqLogger,
+      guestSession?.id,
     )
 
     if ('response' in pipelineResult) {
@@ -179,13 +241,15 @@ export async function agentChatStream(
           // Schedule background tasks
           try {
             scheduleSummaryMaintenance(req.payload, conversationId, reqLogger as any)
-            if (req.user) {
+            // Schedule memory extraction for both users and guests
+            const memoryOwnerId = req.user?.id ?? guestSession?.id
+            if (memoryOwnerId) {
               scheduleMemoryExtraction(
                 req.payload,
                 conversationId,
-                req.user.id,
+                memoryOwnerId,
                 context as ResolvedContext,
-                { id: req.user.id },
+                { id: memoryOwnerId },
                 reqLogger as any,
               )
             }
@@ -193,8 +257,10 @@ export async function agentChatStream(
             reqLogger.warn({ err: bgError, conversationId }, 'Failed to schedule background tasks')
           }
 
-          // Enqueue done event
-          controller.enqueue(formatDoneEvent({ conversationId, contextKey: context.contextKey }))
+          // Enqueue done event with guest mode status
+          controller.enqueue(
+            formatDoneEvent({ conversationId, contextKey: context.contextKey, isGuestMode }),
+          )
           controller.close()
         } catch (error) {
           reqLogger.error({ err: error, conversationId }, 'Error during streaming')
