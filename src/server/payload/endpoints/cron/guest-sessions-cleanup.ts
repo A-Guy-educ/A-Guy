@@ -20,7 +20,7 @@ import type { Logger } from 'pino'
 
 import { withCronMiddleware, type CronResult } from './cron-middleware'
 
-import { GUEST_SESSION_HARD_CAP_DAYS } from '@/server/config/constants'
+import { getGuestChatConfig } from '@/server/config/guest-chat-config'
 
 interface GuestSessionDocument {
   id: string
@@ -50,7 +50,8 @@ async function findGuestSessionsToCleanup(
   payload: Payload,
   now: Date,
 ): Promise<{ docs: GuestSessionDocument[]; totalDocs: number }> {
-  const hardCapDate = new Date(now.getTime() - GUEST_SESSION_HARD_CAP_DAYS * 24 * 60 * 60 * 1000)
+  const guestConfig = await getGuestChatConfig()
+  const hardCapDate = new Date(now.getTime() - guestConfig.hard_cap_days * 24 * 60 * 60 * 1000)
   const hardCapDateISO = hardCapDate.toISOString()
 
   const result = await payload.find({

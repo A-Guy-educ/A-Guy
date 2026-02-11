@@ -10,10 +10,7 @@
  * - Memory cleanup via periodic TTL expiration
  */
 import { logger } from '@/infra/utils/logger'
-import {
-  GUEST_SESSION_RATE_LIMIT_MAX_REQUESTS,
-  GUEST_SESSION_RATE_LIMIT_WINDOW_MS,
-} from '@/server/config/constants'
+import { getGuestChatConfig } from '@/server/config/guest-chat-config'
 
 interface RateLimitEntry {
   count: number
@@ -40,18 +37,24 @@ export function getRateLimitKey(ipHash: string, userAgentHash: string): string {
 /**
  * Check if a request is within rate limits
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   ipHash: string,
   userAgentHash: string,
-  maxRequests: number = GUEST_SESSION_RATE_LIMIT_MAX_REQUESTS,
-  windowMs: number = GUEST_SESSION_RATE_LIMIT_WINDOW_MS,
-): RateLimitResult {
+  maxRequests?: number,
+  windowMs?: number,
+): Promise<RateLimitResult> {
+  if (maxRequests === undefined || windowMs === undefined) {
+    const guestConfig = await getGuestChatConfig()
+    maxRequests = maxRequests ?? guestConfig.rate_limit_max_requests
+    windowMs = windowMs ?? guestConfig.rate_limit_window_ms
+  }
+
   const key = getRateLimitKey(ipHash, userAgentHash)
   const now = Date.now()
 
   // Periodic cleanup of expired entries
   if (now - lastCleanup > CLEANUP_INTERVAL_MS) {
-    cleanupExpiredEntries(now)
+    await cleanupExpiredEntries(now, windowMs)
     lastCleanup = now
   }
 
@@ -109,12 +112,18 @@ export function checkRateLimit(
 /**
  * Get remaining requests for a key without incrementing
  */
-export function getRemainingRequests(
+export async function getRemainingRequests(
   ipHash: string,
   userAgentHash: string,
-  maxRequests: number = GUEST_SESSION_RATE_LIMIT_MAX_REQUESTS,
-  windowMs: number = GUEST_SESSION_RATE_LIMIT_WINDOW_MS,
-): RateLimitResult {
+  maxRequests?: number,
+  windowMs?: number,
+): Promise<RateLimitResult> {
+  if (maxRequests === undefined || windowMs === undefined) {
+    const guestConfig = await getGuestChatConfig()
+    maxRequests = maxRequests ?? guestConfig.rate_limit_max_requests
+    windowMs = windowMs ?? guestConfig.rate_limit_window_ms
+  }
+
   const key = getRateLimitKey(ipHash, userAgentHash)
   const now = Date.now()
 
@@ -146,8 +155,7 @@ export function resetRateLimit(ipHash: string, userAgentHash: string): void {
 /**
  * Cleanup expired entries from the cache
  */
-function cleanupExpiredEntries(now: number): void {
-  const windowMs = GUEST_SESSION_RATE_LIMIT_WINDOW_MS
+async function cleanupExpiredEntries(now: number, windowMs: number): Promise<void> {
   let cleaned = 0
 
   for (const [key, entry] of rateLimitCache.entries()) {
@@ -168,11 +176,16 @@ function cleanupExpiredEntries(now: number): void {
 /**
  * Get current cache statistics
  */
-export function getRateLimitStats(): { size: number; maxRequests: number; windowMs: number } {
+export async function getRateLimitStats(): Promise<{
+  size: number
+  maxRequests: number
+  windowMs: number
+}> {
+  const guestConfig = await getGuestChatConfig()
   return {
     size: rateLimitCache.size,
-    maxRequests: GUEST_SESSION_RATE_LIMIT_MAX_REQUESTS,
-    windowMs: GUEST_SESSION_RATE_LIMIT_WINDOW_MS,
+    maxRequests: guestConfig.rate_limit_max_requests,
+    windowMs: guestConfig.rate_limit_window_ms,
   }
 }
 

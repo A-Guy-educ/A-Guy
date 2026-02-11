@@ -26,11 +26,3 @@ export const ENV = {
   TEST_ADMIN_SECRET: 'TEST_ADMIN_SECRET',
   NODE_ENV: 'NODE_ENV',
 } as const
-
-// Guest Session Configuration
-export const GUEST_SESSION_SLIDING_TTL_DAYS = 7
-export const GUEST_SESSION_HARD_CAP_DAYS = 30
-export const GUEST_SESSION_MAX_CONVERSATIONS = 5
-export const GUEST_SESSION_MAX_MESSAGES = 5
-export const GUEST_SESSION_RATE_LIMIT_WINDOW_MS = 60 * 1000 // 1 minute
-export const GUEST_SESSION_RATE_LIMIT_MAX_REQUESTS = 1

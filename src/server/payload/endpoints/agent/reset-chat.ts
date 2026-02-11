@@ -68,7 +68,7 @@ export async function agentResetChat(req: PayloadRequest & { json?: () => Promis
       guestSession = session
       isGuestMode = true
 
-      guestCookieHeader = buildGuestSessionCookieHeader(token)
+      guestCookieHeader = await buildGuestSessionCookieHeader(token)
     } else {
       isGuestMode = true
     }

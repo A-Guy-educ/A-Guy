@@ -16,11 +16,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import crypto from 'crypto'
 import { logger } from '@/infra/utils/logger'
-import {
-  GUEST_SESSION_SLIDING_TTL_DAYS,
-  GUEST_SESSION_HARD_CAP_DAYS,
-  GUEST_SESSION_MAX_MESSAGES,
-} from '@/server/config/constants'
+import { getGuestChatConfig } from '@/server/config/guest-chat-config'
 
 export const GUEST_SESSION_COOKIE_NAME = 'guest_session'
 
@@ -57,8 +53,9 @@ export function verifyTokenHash(storedHash: string, token: string): boolean {
   }
 }
 
-export function buildGuestSessionCookieHeader(token: string): string {
-  const maxAge = GUEST_SESSION_HARD_CAP_DAYS * 24 * 60 * 60
+export async function buildGuestSessionCookieHeader(token: string): Promise<string> {
+  const guestConfig = await getGuestChatConfig()
+  const maxAge = guestConfig.hard_cap_days * 24 * 60 * 60
   return [
     `${GUEST_SESSION_COOKIE_NAME}=${token}`,
     'HttpOnly',
@@ -84,8 +81,12 @@ export function buildClearGuestSessionCookieHeader(): string {
     .join('; ')
 }
 
-export function setGuestSessionCookie(token: string, headers: Headers = new Headers()): void {
-  const maxAge = GUEST_SESSION_HARD_CAP_DAYS * 24 * 60 * 60
+export async function setGuestSessionCookie(
+  token: string,
+  headers: Headers = new Headers(),
+): Promise<void> {
+  const guestConfig = await getGuestChatConfig()
+  const maxAge = guestConfig.hard_cap_days * 24 * 60 * 60
 
   headers.append(
     'Set-Cookie',
@@ -136,11 +137,12 @@ export async function createGuestSession(options: {
   const tokenHash = hashToken(token)
   const now = new Date()
 
+  const guestConfig = await getGuestChatConfig()
   const hardExpiresAt = new Date(now)
-  hardExpiresAt.setDate(hardExpiresAt.getDate() + GUEST_SESSION_HARD_CAP_DAYS)
+  hardExpiresAt.setDate(hardExpiresAt.getDate() + guestConfig.hard_cap_days)
 
   const expiresAt = new Date(now)
-  expiresAt.setDate(expiresAt.getDate() + GUEST_SESSION_SLIDING_TTL_DAYS)
+  expiresAt.setDate(expiresAt.getDate() + guestConfig.sliding_ttl_days)
 
   const session = await payload.create({
     collection: 'guest-sessions' as any,
@@ -203,8 +205,9 @@ export async function updateGuestSessionActivity(
   const hardExpiresAt = new Date(doc.hardExpiresAt)
   const now = new Date()
 
+  const guestConfig = await getGuestChatConfig()
   const newExpiresAt = new Date(now)
-  newExpiresAt.setDate(newExpiresAt.getDate() + GUEST_SESSION_SLIDING_TTL_DAYS)
+  newExpiresAt.setDate(newExpiresAt.getDate() + guestConfig.sliding_ttl_days)
 
   if (newExpiresAt > hardExpiresAt) {
     newExpiresAt.setTime(hardExpiresAt.getTime())
@@ -252,6 +255,7 @@ export async function checkAndIncrementGuestMessageCount(
   guestSessionId: string,
 ): Promise<GuestMessageLimitResult> {
   const payload = await getPayload({ config })
+  const guestConfig = await getGuestChatConfig()
 
   const session = await payload.findByID({
     collection: 'guest-sessions' as any,
@@ -259,18 +263,18 @@ export async function checkAndIncrementGuestMessageCount(
   })
 
   if (!session) {
-    return { allowed: false, remaining: 0, current: 0, max: GUEST_SESSION_MAX_MESSAGES }
+    return { allowed: false, remaining: 0, current: 0, max: guestConfig.max_messages }
   }
 
   const doc = session as GuestSessionDoc
   const currentCount = doc.messageCount ?? 0
 
-  if (currentCount >= GUEST_SESSION_MAX_MESSAGES) {
+  if (currentCount >= guestConfig.max_messages) {
     return {
       allowed: false,
       remaining: 0,
       current: currentCount,
-      max: GUEST_SESSION_MAX_MESSAGES,
+      max: guestConfig.max_messages,
     }
   }
 
@@ -284,9 +288,9 @@ export async function checkAndIncrementGuestMessageCount(
 
   return {
     allowed: true,
-    remaining: GUEST_SESSION_MAX_MESSAGES - currentCount - 1,
+    remaining: guestConfig.max_messages - currentCount - 1,
     current: currentCount + 1,
-    max: GUEST_SESSION_MAX_MESSAGES,
+    max: guestConfig.max_messages,
   }
 }
 

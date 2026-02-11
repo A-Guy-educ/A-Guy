@@ -931,7 +931,7 @@ export interface ConfigValue {
   /**
    * Feature domain for this configuration
    */
-  domain: 'chat' | 'pdf_conversion' | 'global';
+  domain: 'chat' | 'pdf_conversion' | 'global' | 'guest_chat';
   /**
    * Tenant this configuration belongs to
    */

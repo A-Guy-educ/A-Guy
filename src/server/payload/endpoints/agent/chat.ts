@@ -116,7 +116,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       const userAgentHash = hashUserAgent(req.headers?.get('user-agent'))
 
       // Check rate limit for new guests
-      const rateLimitResult = checkRateLimit(ipHash, userAgentHash)
+      const rateLimitResult = await checkRateLimit(ipHash, userAgentHash)
       if (!rateLimitResult.allowed) {
         return Response.json(
           {
@@ -143,7 +143,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       guestSession = session
       isGuestMode = true
 
-      guestCookieHeader = buildGuestSessionCookieHeader(token)
+      guestCookieHeader = await buildGuestSessionCookieHeader(token)
     } else {
       isGuestMode = true
     }

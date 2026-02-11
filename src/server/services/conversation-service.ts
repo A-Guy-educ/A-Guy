@@ -14,8 +14,8 @@
  * - Validate enrollment/ownership for access control
  */
 import { logger } from '@/infra/utils/logger'
-import { GUEST_SESSION_MAX_CONVERSATIONS } from '@/server/config/constants'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { getGuestChatConfig } from '@/server/config/guest-chat-config'
 import type { Payload } from 'payload'
 
 export class GuestConversationLimitError extends Error {
@@ -419,8 +419,9 @@ export class ConversationService {
       limit: 0,
     })
 
-    if (countResult.totalDocs >= GUEST_SESSION_MAX_CONVERSATIONS) {
-      throw new GuestConversationLimitError(GUEST_SESSION_MAX_CONVERSATIONS)
+    const guestConfig = await getGuestChatConfig()
+    if (countResult.totalDocs >= guestConfig.max_conversations) {
+      throw new GuestConversationLimitError(guestConfig.max_conversations)
     }
 
     const newConv = await this.payload.create({
