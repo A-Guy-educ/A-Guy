@@ -12,6 +12,11 @@ import './index.css'
 import { JSONInspector } from './JSONInspector'
 import { MediaPicker } from './MediaPicker'
 import { RichTextEditor } from './RichTextEditor'
+import { QuestionBlockWrapper } from './editors/QuestionBlockWrapper'
+import { TrueFalseEditor } from './editors/TrueFalseEditor'
+import { McqEditor } from './editors/McqEditor'
+import { FreeResponseEditor } from './editors/FreeResponseEditor'
+import { TableEditor } from './editors/TableEditor'
 
 /**
  * Exercise Content Editor - Strict Flat Blocks
@@ -424,6 +429,77 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   )
 }
 
+function getBlockTypeLabel(block: ContentBlock): string {
+  if (block.type === 'question_select' && block.variant === 'true_false') return 'True / False'
+  if (block.type === 'question_select' && block.variant === 'mcq') return 'Multiple Choice'
+  if (block.type === 'question_free_response') return 'Free Response'
+  if (block.type === 'question_table') return 'Table Question'
+  return block.type
+}
+
+function renderQuestionEditor(
+  block: ContentBlock,
+  onChange: (block: ContentBlock) => void,
+): React.ReactNode {
+  if (block.type === 'question_select' && block.variant === 'true_false') {
+    return (
+      <QuestionBlockWrapper
+        blockType={getBlockTypeLabel(block)}
+        block={block}
+        onBlockChange={onChange}
+      >
+        <TrueFalseEditor
+          block={block as import('@/shared/exercise-content/types').QuestionSelectTrueFalseBlock}
+          onChange={onChange}
+        />
+      </QuestionBlockWrapper>
+    )
+  }
+  if (block.type === 'question_select' && block.variant === 'mcq') {
+    return (
+      <QuestionBlockWrapper
+        blockType={getBlockTypeLabel(block)}
+        block={block}
+        onBlockChange={onChange}
+      >
+        <McqEditor
+          block={block as import('@/shared/exercise-content/types').QuestionSelectMcqBlock}
+          onChange={onChange}
+        />
+      </QuestionBlockWrapper>
+    )
+  }
+  if (block.type === 'question_free_response') {
+    return (
+      <QuestionBlockWrapper
+        blockType={getBlockTypeLabel(block)}
+        block={block}
+        onBlockChange={onChange}
+      >
+        <FreeResponseEditor
+          block={block as import('@/shared/exercise-content/types').QuestionFreeResponseBlock}
+          onChange={onChange}
+        />
+      </QuestionBlockWrapper>
+    )
+  }
+  if (block.type === 'question_table') {
+    return (
+      <QuestionBlockWrapper
+        blockType={getBlockTypeLabel(block)}
+        block={block}
+        onBlockChange={onChange}
+      >
+        <TableEditor
+          block={block as import('@/shared/exercise-content/types').QuestionTableBlock}
+          onChange={onChange}
+        />
+      </QuestionBlockWrapper>
+    )
+  }
+  return <JSONInspector block={block} mode="edit" onApply={onChange} />
+}
+
 interface BlockListProps {
   blocks: ContentBlock[]
   selectedBlockId: string | null
@@ -506,17 +582,9 @@ function BlockList({
               </div>
             ) : (
               <div className="question-block-json-editor">
-                <div className="question-block-type-badge">
-                  {block.type === 'question_select' &&
-                    (block.variant === 'mcq' ? 'Multiple Choice Question' : 'Select Question')}
-                  {block.type === 'question_free_response' && 'Free Response Question'}
-                  {block.type === 'question_table' && 'Table Question'}
-                </div>
-                <JSONInspector
-                  block={block}
-                  mode="edit"
-                  onApply={(updatedBlock) => onUpdateBlock(block.id, updatedBlock)}
-                />
+                {renderQuestionEditor(block, (updatedBlock) =>
+                  onUpdateBlock(block.id, updatedBlock),
+                )}
               </div>
             )}
           </div>
