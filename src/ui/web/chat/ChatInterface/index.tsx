@@ -2,6 +2,7 @@
 
 import { ChatMessageRole } from '@/infra/llm/chat-message-role'
 import { cn } from '@/infra/utils/ui'
+import { apiService } from '@/server/services/api/api-service'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import {
   BookOpen,
@@ -139,6 +140,19 @@ export function ChatInterface({
     uploadFailedMessage: tCourses('chatUploadFailed'),
   })
 
+  // Fetch admin-configured prompt template on mount
+  const FALLBACK_TEMPLATE =
+    'The student answered incorrectly. Here is the full question data:\n{{questionData}}\n\nThe student\'s answer was: "{{studentAnswer}}"\n\nPlease help them understand why their answer is wrong and guide them toward the correct solution. Be encouraging and supportive.'
+  const promptTemplateRef = useRef(FALLBACK_TEMPLATE)
+
+  useEffect(() => {
+    apiService.getPromptTemplate('incorrect-answer-help').then((res) => {
+      if (res.success && res.template) {
+        promptTemplateRef.current = res.template
+      }
+    })
+  }, [])
+
   // Auto-send contextual help on incorrect answer (ref pattern for stable listener)
   const incorrectAnswerRef = useRef<(e: Event) => void>(() => {})
   incorrectAnswerRef.current = (e: Event) => {
@@ -146,10 +160,11 @@ export function ChatInterface({
       questionJson: string
       studentAnswer: string
     }
+    const prompt = promptTemplateRef.current
+      .replace(/\{\{questionData\}\}/g, questionJson)
+      .replace(/\{\{studentAnswer\}\}/g, studentAnswer)
     onChatInteraction?.()
-    sendContextualHelp(
-      `The student answered incorrectly. Here is the full question data:\n${questionJson}\n\nThe student's answer was: "${studentAnswer}"\n\nPlease help them understand why their answer is wrong and guide them toward the correct solution. Be encouraging and supportive.`,
-    )
+    sendContextualHelp(prompt)
   }
 
   useEffect(() => {
