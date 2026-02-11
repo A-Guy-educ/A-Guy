@@ -48,7 +48,8 @@ export function ExercisesPager({
     handlePrev,
     handleStart,
     totalExercises,
-  } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug })
+    getExerciseOrdinal,
+  } = pager
 
   const exerciseOrdinal = getExerciseOrdinal()
   const currentExercise =
