@@ -22,6 +22,7 @@ interface TrueFalseQuestionProps {
   onChange: (answer: UserAnswer) => void
   disabled: boolean
   checkResult: CheckResult | null
+  subLabel?: string | null
 }
 
 export function TrueFalseQuestion({
@@ -30,6 +31,7 @@ export function TrueFalseQuestion({
   onChange,
   disabled,
   checkResult,
+  subLabel,
 }: TrueFalseQuestionProps) {
   const value = answer.type === 'true_false' ? answer.value : null
 
@@ -67,6 +69,14 @@ export function TrueFalseQuestion({
   return (
     <div className="flex flex-col gap-4">
       <div className="text-base font-medium text-foreground leading-relaxed">
+        {subLabel && (
+          <span
+            data-testid={`statement-label-${subLabel}`}
+            className="inline-flex items-center justify-center h-6 min-w-6 px-2 rounded-full bg-primary/10 text-primary text-[11px] font-medium border border-primary/20 me-2"
+          >
+            {subLabel}
+          </span>
+        )}
         <RichTextRenderer block={promptBlock} />
       </div>
       <div className="flex gap-3">

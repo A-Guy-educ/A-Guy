@@ -19,6 +19,7 @@ interface McqQuestionProps {
   disabled: boolean
   checkResult: CheckResult | null
   t: (key: string) => string
+  subLabel?: string | null
 }
 
 export function McqQuestion({
@@ -28,6 +29,7 @@ export function McqQuestion({
   disabled,
   checkResult: _checkResult,
   t,
+  subLabel,
 }: McqQuestionProps) {
   const selectedIds = answer.type === 'mcq' ? answer.selectedIds : []
 
@@ -56,6 +58,14 @@ export function McqQuestion({
   return (
     <div className="flex flex-col gap-4">
       <div className="text-base font-medium text-foreground leading-relaxed">
+        {subLabel && (
+          <span
+            data-testid={`statement-label-${subLabel}`}
+            className="inline-flex items-center justify-center h-6 min-w-6 px-2 rounded-full bg-primary/10 text-primary text-[11px] font-medium border border-primary/20 me-2"
+          >
+            {subLabel}
+          </span>
+        )}
         <RichTextRenderer block={promptBlock} />
       </div>
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">

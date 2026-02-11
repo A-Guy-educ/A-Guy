@@ -8,7 +8,7 @@
 
 import React, { useState } from 'react'
 import { cn } from '@/infra/utils/ui'
-import { useTranslations } from '@/ui/web/providers/I18n'
+import { useTranslations, useLocale } from '@/ui/web/providers/I18n'
 import { Card } from '@/ui/web/components/card'
 import { XCircle } from 'lucide-react'
 import type {
@@ -26,6 +26,7 @@ import { McqQuestion } from '../questions/McqQuestion'
 import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
 import { QuestionCard } from '../components/QuestionCard'
 import { checkQuestionAnswer, getInitialAnswer } from '../utils/answerChecking'
+import { getSectionLabel } from '@/infra/utils/getSectionLabel'
 
 /**
  * Main Exercise Renderer Component
@@ -37,11 +38,15 @@ export function ExerciseRenderer({
   className = '',
 }: ExerciseRendererProps) {
   const t = useTranslations('courses')
+  const locale = useLocale()
 
   // Track answers and check results for each question block
   const questionBlocks = content.blocks.filter(
     (block) => block.type === 'question_select' || block.type === 'question_free_response',
   ) as QuestionBlock[]
+
+  // Count question blocks for subquestion labeling
+  const questionBlockCount = questionBlocks.length
 
   const [answers, setAnswers] = useState<Record<string, UserAnswer>>(() => {
     const initial: Record<string, UserAnswer> = {}
@@ -109,32 +114,41 @@ export function ExerciseRenderer({
   return (
     <div className={cn('w-full max-w-3xl mx-auto', className)}>
       <div className="flex flex-col gap-6">
-        {content.blocks.map((block) => {
-          // Rich text block - just render content
-          if (block.type === 'rich_text') {
+        {(() => {
+          let questionIndex = 0
+          return content.blocks.map((block) => {
+            // Rich text block - just render content
+            if (block.type === 'rich_text') {
+              return (
+                <div
+                  key={block.id}
+                  className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed"
+                >
+                  <RichTextRenderer block={block} />
+                </div>
+              )
+            }
+
+            // Question blocks - render with answer UI
+            const question = block as QuestionBlock
+            const answer = answers[question.id] ?? getInitialAnswer(question)
+            const checkResult = checkResults[question.id] || null
+            const checked = hasChecked[question.id] || false
+            const disabled = checked && checkResult?.isCorrect
+
+            // True/False questions don't show check button (immediate feedback)
+            const showCheckButton =
+              showCheckAnswer &&
+              !(question.type === 'question_select' && question.variant === 'true_false')
+
+            // Compute subquestion label if there are 2+ question blocks
+            const subLabel =
+              questionBlockCount >= 2
+                ? getSectionLabel({ index: questionIndex, locale, lowercase: true })
+                : null
+            questionIndex++
+
             return (
-              <div
-                key={block.id}
-                className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed"
-              >
-                <RichTextRenderer block={block} />
-              </div>
-            )
-          }
-
-          // Question blocks - render with answer UI
-          const question = block as QuestionBlock
-          const answer = answers[question.id] ?? getInitialAnswer(question)
-          const checkResult = checkResults[question.id] || null
-          const checked = hasChecked[question.id] || false
-          const disabled = checked && checkResult?.isCorrect
-
-          // True/False questions don't show check button (immediate feedback)
-          const showCheckButton =
-            showCheckAnswer &&
-            !(question.type === 'question_select' && question.variant === 'true_false')
-
-          return (
             <QuestionCard
               key={question.id}
               showCheckButton={showCheckButton}
@@ -154,6 +168,7 @@ export function ExerciseRenderer({
                   onChange={(ans) => handleAnswerChange(question.id, ans)}
                   disabled={!!disabled}
                   checkResult={checkResult}
+                  subLabel={subLabel}
                 />
               )}
               {question.type === 'question_select' && question.variant === 'mcq' && (
@@ -164,6 +179,7 @@ export function ExerciseRenderer({
                   disabled={!!disabled}
                   checkResult={checkResult}
                   t={t}
+                  subLabel={subLabel}
                 />
               )}
               {question.type === 'question_free_response' && (
@@ -174,11 +190,12 @@ export function ExerciseRenderer({
                   disabled={!!disabled}
                   checkResult={checkResult}
                   t={t}
+                  subLabel={subLabel}
                 />
               )}
             </QuestionCard>
           )
-        })}
+        })()}
       </div>
     </div>
   )
