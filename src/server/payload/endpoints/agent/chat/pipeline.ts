@@ -10,7 +10,10 @@ import { composePrompt, getRecentWindow, type Message } from '@/infra/llm/contex
 import { logger } from '@/infra/utils/logger'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
-import { ConversationService } from '@/server/services/conversation-service'
+import {
+  ConversationService,
+  GuestConversationLimitError,
+} from '@/server/services/conversation-service'
 import type { PayloadRequest } from 'payload'
 import { z } from 'zod'
 import {
@@ -147,12 +150,25 @@ export async function runChatPipeline(
   }
 
   // Get or create conversation (supports guests)
-  const conversation = await getOrCreateConversation(
-    conversationService,
-    ownerId,
-    context,
-    guestSessionId,
-  )
+  let conversation
+  try {
+    conversation = await getOrCreateConversation(
+      conversationService,
+      ownerId,
+      context,
+      guestSessionId,
+    )
+  } catch (error) {
+    if (error instanceof GuestConversationLimitError) {
+      return {
+        response: Response.json(
+          { error: error.message, code: 'GUEST_LIMIT_REACHED', isGuestMode: !!guestSessionId },
+          { status: 403 },
+        ),
+      }
+    }
+    throw error
+  }
   const conversationId = conversation.id
 
   reqLogger.info({ conversationId, contextKey: context.contextKey }, 'Using conversation')

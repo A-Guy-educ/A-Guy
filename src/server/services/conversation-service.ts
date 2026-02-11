@@ -15,7 +15,17 @@
  */
 import { logger } from '@/infra/utils/logger'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { GUEST_SESSION_MAX_CONVERSATIONS } from '@/server/config/constants'
 import type { Payload } from 'payload'
+
+export class GuestConversationLimitError extends Error {
+  constructor(limit: number) {
+    super(
+      `Guest session has reached the maximum of ${limit} conversations. Please sign up to continue.`,
+    )
+    this.name = 'GuestConversationLimitError'
+  }
+}
 
 /**
  * Context reference shape for polymorphic relationships
@@ -381,6 +391,19 @@ export class ConversationService {
         'Found existing active guest conversation',
       )
       return existingConv.docs[0] as unknown as ConversationWithHistory
+    }
+
+    // Check conversation limit before creating new one
+    const countResult = await this.payload.find({
+      collection: 'conversations',
+      where: {
+        and: [{ guestSession: { equals: guestSessionId } }, { archivedAt: { exists: false } }],
+      },
+      limit: 0,
+    })
+
+    if (countResult.totalDocs >= GUEST_SESSION_MAX_CONVERSATIONS) {
+      throw new GuestConversationLimitError(GUEST_SESSION_MAX_CONVERSATIONS)
     }
 
     const newConv = await this.payload.create({

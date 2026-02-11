@@ -32,12 +32,12 @@ import {
 } from './chat/sse-helpers'
 import { checkRateLimit } from '@/server/services/rate-limit'
 import {
+  buildGuestSessionCookieHeader,
   createGuestSession,
   getGuestSessionByToken,
   getGuestSessionCookie,
   hashIP,
   hashUserAgent,
-  setGuestSessionCookie,
 } from '@/server/services/guest-session'
 
 /**
@@ -52,6 +52,7 @@ export async function agentChatStream(
 
   let guestSession: Awaited<ReturnType<typeof getGuestSessionByToken>> | null = null
   let isGuestMode = false
+  let guestCookieHeader: string | undefined
 
   // 1) Auth - check for authenticated user OR guest session
   const { user } = await req.payload.auth({ headers: req.headers })
@@ -96,8 +97,7 @@ export async function agentChatStream(
       guestSession = session
       isGuestMode = true
 
-      // Set cookie on response
-      setGuestSessionCookie(token, req.headers as unknown as Headers)
+      guestCookieHeader = buildGuestSessionCookieHeader(token)
     } else {
       isGuestMode = true
     }
@@ -295,8 +295,12 @@ export async function agentChatStream(
       },
     })
 
+    const responseHeaders = new Headers(createSSEHeaders())
+    if (guestCookieHeader) {
+      responseHeaders.set('Set-Cookie', guestCookieHeader)
+    }
     return new Response(sseStream, {
-      headers: createSSEHeaders(),
+      headers: responseHeaders,
     })
   } catch (error) {
     // Handle connection reset errors gracefully

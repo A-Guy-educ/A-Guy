@@ -22,12 +22,12 @@ import { logger } from '@/infra/utils/logger'
 import { PayloadRequest } from 'payload'
 import { z } from 'zod'
 import {
+  buildGuestSessionCookieHeader,
   createGuestSession,
   getGuestSessionByToken,
   getGuestSessionCookie,
   hashIP,
   hashUserAgent,
-  setGuestSessionCookie,
 } from '@/server/services/guest-session'
 
 const requestSchema = z.object({
@@ -44,6 +44,7 @@ export async function agentResetChat(req: PayloadRequest & { json?: () => Promis
 
   let guestSession: Awaited<ReturnType<typeof getGuestSessionByToken>> | null = null
   let isGuestMode = false
+  let guestCookieHeader: string | undefined
 
   // 1) Auth - check for authenticated user OR guest session
   const { user } = await req.payload.auth({ headers: req.headers })
@@ -67,8 +68,7 @@ export async function agentResetChat(req: PayloadRequest & { json?: () => Promis
       guestSession = session
       isGuestMode = true
 
-      // Set cookie on response
-      setGuestSessionCookie(token, req.headers as unknown as Headers)
+      guestCookieHeader = buildGuestSessionCookieHeader(token)
     } else {
       isGuestMode = true
     }
@@ -125,12 +125,19 @@ export async function agentResetChat(req: PayloadRequest & { json?: () => Promis
       'Chat reset successful',
     )
 
-    return Response.json({
-      success: true,
-      conversationId: newConversation.id,
-      contextKey: validated.contextKey,
-      isGuestMode,
-    })
+    const headers: HeadersInit = {}
+    if (guestCookieHeader) {
+      headers['Set-Cookie'] = guestCookieHeader
+    }
+    return Response.json(
+      {
+        success: true,
+        conversationId: newConversation.id,
+        contextKey: validated.contextKey,
+        isGuestMode,
+      },
+      { headers },
+    )
   } catch (error) {
     reqLogger.error({ err: error }, 'Reset chat endpoint error')
 

@@ -102,8 +102,10 @@ export async function getConversation(req: PayloadRequest & { json?: () => Promi
         limit: 1,
         sort: '-lastMessageAt',
         depth: 2,
-        user: user ?? undefined,
-        overrideAccess: false,
+        // Use overrideAccess: true for guests since session was validated from cookie
+        // The where clause already filters by the verified guestSessionId
+        user: guestSessionId ? undefined : (user ?? undefined),
+        overrideAccess: !!guestSessionId,
       })
 
       if (result.docs.length > 0) {

@@ -55,6 +55,33 @@ export function verifyTokenHash(storedHash: string, token: string): boolean {
   }
 }
 
+export function buildGuestSessionCookieHeader(token: string): string {
+  const maxAge = GUEST_SESSION_HARD_CAP_DAYS * 24 * 60 * 60
+  return [
+    `${GUEST_SESSION_COOKIE_NAME}=${token}`,
+    'HttpOnly',
+    process.env.NODE_ENV === 'production' ? 'Secure' : '',
+    'SameSite=Lax',
+    'Path=/',
+    `Max-Age=${maxAge}`,
+  ]
+    .filter(Boolean)
+    .join('; ')
+}
+
+export function buildClearGuestSessionCookieHeader(): string {
+  return [
+    `${GUEST_SESSION_COOKIE_NAME}=`,
+    'HttpOnly',
+    process.env.NODE_ENV === 'production' ? 'Secure' : '',
+    'SameSite=Lax',
+    'Path=/',
+    'Max-Age=0',
+  ]
+    .filter(Boolean)
+    .join('; ')
+}
+
 export function setGuestSessionCookie(token: string, headers: Headers = new Headers()): void {
   const maxAge = GUEST_SESSION_HARD_CAP_DAYS * 24 * 60 * 60
 

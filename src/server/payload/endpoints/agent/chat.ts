@@ -29,15 +29,18 @@ import { logger } from '@/infra/utils/logger'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { getMCPClient } from '@/server/repos/mcp/client/mcp-client'
-import { ConversationService } from '@/server/services/conversation-service'
+import {
+  ConversationService,
+  GuestConversationLimitError,
+} from '@/server/services/conversation-service'
 import { checkRateLimit } from '@/server/services/rate-limit'
 import {
+  buildGuestSessionCookieHeader,
   createGuestSession,
   getGuestSessionByToken,
   getGuestSessionCookie,
   hashIP,
   hashUserAgent,
-  setGuestSessionCookie,
 } from '@/server/services/guest-session'
 import type { PayloadRequest } from 'payload'
 import { z } from 'zod'
@@ -94,6 +97,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
   let guestSession: Awaited<ReturnType<typeof getGuestSessionByToken>> | null = null
   let isGuestMode = false
+  let guestCookieHeader: string | undefined
 
   // 1) Auth - check for authenticated user OR guest session
   const { user } = await req.payload.auth({ headers: req.headers })
@@ -138,8 +142,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       guestSession = session
       isGuestMode = true
 
-      // Set cookie on response
-      setGuestSessionCookie(token, req.headers as unknown as Headers)
+      guestCookieHeader = buildGuestSessionCookieHeader(token)
     } else {
       isGuestMode = true
     }
@@ -209,6 +212,7 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       userId,
       guestSession?.id,
       isGuestMode,
+      guestCookieHeader,
     )
   } catch (error) {
     // Handle connection reset errors gracefully
@@ -491,10 +495,23 @@ async function handleContextScopedChat(
   userId: string | undefined,
   guestSessionId: string | undefined,
   isGuestMode: boolean,
+  guestCookieHeader?: string,
 ) {
+  // Helper to build response with optional Set-Cookie header
+  const jsonWithCookie = (
+    body: Record<string, unknown>,
+    options?: { status?: number; cookieHeader?: string },
+  ): Response => {
+    const headers: HeadersInit = {}
+    if (options?.cookieHeader) {
+      headers['Set-Cookie'] = options.cookieHeader
+    }
+    return Response.json(body, { status: options?.status, headers })
+  }
+
   // Require either authenticated user or guest session
   if (!userId && !guestSessionId) {
-    return Response.json(
+    return jsonWithCookie(
       { error: 'User ID or guest session required', isGuestMode: false },
       { status: 401 },
     )
@@ -515,9 +532,9 @@ async function handleContextScopedChat(
     logger as any,
   )
   if (!contextValidation.success) {
-    return Response.json(
+    return jsonWithCookie(
       { error: contextValidation.error, isGuestMode },
-      { status: contextValidation.statusCode },
+      { status: contextValidation.statusCode, cookieHeader: guestCookieHeader },
     )
   }
 
@@ -555,19 +572,30 @@ async function handleContextScopedChat(
     context as Parameters<typeof validateContextAccess>[3],
   )
   if (!hasAccess) {
-    return Response.json(
+    return jsonWithCookie(
       { error: 'Unauthorized to access this context', isGuestMode },
-      { status: 403 },
+      { status: 403, cookieHeader: guestCookieHeader },
     )
   }
 
   // Get or create conversation (supports guests)
-  const conversation = await getOrCreateConversation(
-    conversationService,
-    ownerId,
-    context as Parameters<typeof getOrCreateConversation>[2],
-    guestSessionId,
-  )
+  let conversation
+  try {
+    conversation = await getOrCreateConversation(
+      conversationService,
+      ownerId,
+      context as Parameters<typeof getOrCreateConversation>[2],
+      guestSessionId,
+    )
+  } catch (error) {
+    if (error instanceof GuestConversationLimitError) {
+      return jsonWithCookie(
+        { error: error.message, code: 'GUEST_LIMIT_REACHED', isGuestMode },
+        { status: 403, cookieHeader: guestCookieHeader },
+      )
+    }
+    throw error
+  }
   const conversationId = conversation.id
 
   reqLogger.info(
@@ -630,9 +658,9 @@ async function handleContextScopedChat(
     )
   } catch (error) {
     if (error instanceof Error && error.message.includes('exceeds maximum')) {
-      return Response.json(
+      return jsonWithCookie(
         { error: 'Lesson context exceeds maximum allowed size' },
-        { status: 400 },
+        { status: 400, cookieHeader: guestCookieHeader },
       )
     }
     throw error
@@ -648,9 +676,9 @@ async function handleContextScopedChat(
   )
 
   if (!mediaResult.success) {
-    return Response.json(
+    return jsonWithCookie(
       { error: mediaResult.error, details: mediaResult.errorDetails },
-      { status: 400 },
+      { status: 400, cookieHeader: guestCookieHeader },
     )
   }
 
@@ -692,9 +720,9 @@ async function handleContextScopedChat(
 
   if (!result.success) {
     reqLogger.error({ error: result.error, modelLatencyMs }, 'Chat request failed')
-    return Response.json(
+    return jsonWithCookie(
       { error: result.error || 'Failed to process chat message' },
-      { status: 500 },
+      { status: 500, cookieHeader: guestCookieHeader },
     )
   }
 
@@ -756,11 +784,14 @@ async function handleContextScopedChat(
 
   reqLogger.info('Chat request successful')
 
-  return Response.json({
-    success: true,
-    message: result.message,
-    conversationId,
-    contextKey: context.contextKey,
-    isGuestMode,
-  })
+  return jsonWithCookie(
+    {
+      success: true,
+      message: result.message,
+      conversationId,
+      contextKey: context.contextKey,
+      isGuestMode,
+    },
+    { cookieHeader: guestCookieHeader },
+  )
 }
