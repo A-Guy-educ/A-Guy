@@ -265,8 +265,13 @@ beforeAll(async () => {
 
   // Resolve the contextKey that agentChat will actually use
   // agentChat resolves exerciseId -> parent lesson, so contextKey = "lessons:<lessonId>"
-  const exerciseDoc = await payload.findByID({ collection: 'exercises', id: testExerciseId, depth: 0 })
-  const resolvedLessonId = typeof exerciseDoc.lesson === 'string' ? exerciseDoc.lesson : (exerciseDoc.lesson as any)?.id
+  const exerciseDoc = await payload.findByID({
+    collection: 'exercises',
+    id: testExerciseId,
+    depth: 0,
+  })
+  const resolvedLessonId =
+    typeof exerciseDoc.lesson === 'string' ? exerciseDoc.lesson : (exerciseDoc.lesson as any)?.id
   testContextKey = resolvedLessonId ? `lessons:${resolvedLessonId}` : `exercises:${testExerciseId}`
   // Drop test-created indexes from other test files to prevent conflicts
 
