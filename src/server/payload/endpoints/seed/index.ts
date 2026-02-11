@@ -2,7 +2,6 @@ import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest } from 'payloa
 
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import { seedChatConfig } from './chat-config'
-import { seedIncorrectAnswerPrompt } from './prompts'
 import { contactForm as contactFormData } from './contact-form'
 import { contact as contactPageData } from './contact-page'
 import { seedSystemParams } from './system-params'
@@ -145,7 +144,6 @@ export const seed = async ({
   if (defaultTenantId) {
     await seedSystemParams(payload, defaultTenantId)
     await seedChatConfig(payload, defaultTenantId)
-    await seedIncorrectAnswerPrompt(payload, defaultTenantId)
   }
 
   payload.logger.info('Seeded database successfully!')

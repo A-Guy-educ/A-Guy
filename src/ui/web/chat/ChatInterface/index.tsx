@@ -2,7 +2,6 @@
 
 import { ChatMessageRole } from '@/infra/llm/chat-message-role'
 import { cn } from '@/infra/utils/ui'
-import { apiService } from '@/server/services/api/api-service'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import {
   BookOpen,
@@ -140,17 +139,23 @@ export function ChatInterface({
     uploadFailedMessage: tCourses('chatUploadFailed'),
   })
 
-  // Fetch admin-configured prompt template on mount
+  // Fetch admin-configured prompt template on mount (falls back to hardcoded default)
   const FALLBACK_TEMPLATE =
     'The student answered incorrectly. Here is the full question data:\n{{questionData}}\n\nThe student\'s answer was: "{{studentAnswer}}"\n\nPlease help them understand why their answer is wrong and guide them toward the correct solution. Be encouraging and supportive.'
   const promptTemplateRef = useRef(FALLBACK_TEMPLATE)
 
   useEffect(() => {
-    apiService.getPromptTemplate('incorrect-answer-help').then((res) => {
-      if (res.success && res.template) {
-        promptTemplateRef.current = res.template
-      }
-    })
+    fetch(
+      '/api/prompts?where[key][equals]=incorrect-answer-help&where[status][equals]=published&limit=1&depth=0',
+      { credentials: 'include' },
+    )
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.docs?.[0]?.template) {
+          promptTemplateRef.current = data.docs[0].template
+        }
+      })
+      .catch(() => {})
   }, [])
 
   // Auto-send contextual help on incorrect answer (ref pattern for stable listener)

@@ -226,30 +226,6 @@ export const apiService = {
   },
 
   /**
-   * Fetch a published prompt template by key
-   *
-   * @param key - The prompt key (e.g., "incorrect-answer-help")
-   * @returns Response with success status and optional template string
-   */
-  async getPromptTemplate(key: string): Promise<{ success: boolean; template?: string }> {
-    try {
-      const response = await fetch(`/api/prompts/template?key=${encodeURIComponent(key)}`, {
-        method: 'GET',
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        return { success: false }
-      }
-
-      const data = await response.json()
-      return { success: data.success, template: data.template }
-    } catch {
-      return { success: false }
-    }
-  },
-
-  /**
    * Stream a chat response using SSE
    *
    * @param message - The user's message
