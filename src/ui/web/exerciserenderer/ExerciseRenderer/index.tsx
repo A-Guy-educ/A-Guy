@@ -97,8 +97,7 @@ export function ExerciseRenderer({
         )
       }
     } else {
-      // For other question types, clear the check result and reset trigger
-      chatTriggeredRef.current.delete(questionId)
+      // For other question types, clear the check result (chat trigger stays — one per question)
       setCheckResults((prev) => {
         const next = { ...prev }
         delete next[questionId]
