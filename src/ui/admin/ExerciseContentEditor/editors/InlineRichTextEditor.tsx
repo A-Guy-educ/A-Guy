@@ -2,7 +2,19 @@
 
 import React from 'react'
 import type { InlineRichText } from '@/shared/exercise-content/types'
-import { Bold, Italic, Code, Sigma, Heading1, Link as LinkIcon } from 'lucide-react'
+import type { Media } from '@/payload-types'
+import {
+  Bold,
+  Italic,
+  Code,
+  Sigma,
+  Heading1,
+  Link as LinkIcon,
+  Image as ImageIcon,
+  X,
+} from 'lucide-react'
+import Image from 'next/image'
+import { MediaPicker } from '../MediaPicker'
 
 interface InlineRichTextEditorProps {
   value: InlineRichText
@@ -18,6 +30,9 @@ export const InlineRichTextEditor: React.FC<InlineRichTextEditorProps> = ({
   minHeight = '80px',
 }) => {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+  const [mediaPickerOpen, setMediaPickerOpen] = React.useState(false)
+  const [mediaItems, setMediaItems] = React.useState<Media[]>([])
+  const [loadingMedia, setLoadingMedia] = React.useState(false)
 
   const insertText = (before: string, after: string = '') => {
     const textarea = textareaRef.current
@@ -36,6 +51,40 @@ export const InlineRichTextEditor: React.FC<InlineRichTextEditorProps> = ({
       textarea.focus()
       textarea.setSelectionRange(start + before.length, end + before.length)
     }, 0)
+  }
+
+  React.useEffect(() => {
+    const fetchMedia = async () => {
+      if (!value.mediaIds || value.mediaIds.length === 0) {
+        setMediaItems([])
+        return
+      }
+
+      setLoadingMedia(true)
+      try {
+        const fetchPromises = value.mediaIds.map((id) =>
+          fetch(`/api/media/${id}`).then((res) => (res.ok ? res.json() : null)),
+        )
+        const results = await Promise.all(fetchPromises)
+        setMediaItems(results.filter(Boolean) as Media[])
+      } catch {
+        setMediaItems([])
+      } finally {
+        setLoadingMedia(false)
+      }
+    }
+
+    fetchMedia()
+  }, [value.mediaIds])
+
+  const handleMediaSave = (mediaIds: string[]) => {
+    onChange({ ...value, mediaIds })
+    setMediaPickerOpen(false)
+  }
+
+  const handleRemoveMedia = (mediaId: string) => {
+    const newMediaIds = (value.mediaIds || []).filter((id) => id !== mediaId)
+    onChange({ ...value, mediaIds: newMediaIds })
   }
 
   return (
@@ -65,6 +114,13 @@ export const InlineRichTextEditor: React.FC<InlineRichTextEditorProps> = ({
         <button className="toolbar-button" onClick={() => insertText('[', '](url)')} title="Link">
           <LinkIcon size={14} />
         </button>
+        <button
+          className="toolbar-button toolbar-button--media"
+          onClick={() => setMediaPickerOpen(true)}
+          title="Attach media"
+        >
+          <ImageIcon size={14} />
+        </button>
       </div>
 
       <textarea
@@ -76,7 +132,57 @@ export const InlineRichTextEditor: React.FC<InlineRichTextEditorProps> = ({
         placeholder={placeholder}
       />
 
+      {value.mediaIds && value.mediaIds.length > 0 && (
+        <div className="inline-rich-text-media">
+          {loadingMedia && <div className="inline-rich-text-media-loading">Loading media...</div>}
+          {!loadingMedia && mediaItems.length > 0 && (
+            <div className="inline-rich-text-media-list">
+              {mediaItems.map((item) => {
+                const isImage = item.type === 'image'
+                const thumbnailUrl =
+                  (item as unknown as { sizes?: { thumbnail?: { url: string } } }).sizes?.thumbnail
+                    ?.url || item.url
+
+                return (
+                  <div key={item.id} className="inline-rich-text-media-item">
+                    {thumbnailUrl && isImage ? (
+                      <Image
+                        src={thumbnailUrl}
+                        alt={item.alt || item.filename || 'Media'}
+                        width={40}
+                        height={40}
+                        className="inline-rich-text-media-thumb"
+                      />
+                    ) : (
+                      <div className="inline-rich-text-media-icon">
+                        <ImageIcon size={16} />
+                      </div>
+                    )}
+                    <span className="inline-rich-text-media-name">{item.filename}</span>
+                    <button
+                      type="button"
+                      className="inline-rich-text-media-remove"
+                      onClick={() => handleRemoveMedia(item.id)}
+                      title="Remove media"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="inline-rich-text-footer">{value.value.length} characters</div>
+
+      <MediaPicker
+        isOpen={mediaPickerOpen}
+        onClose={() => setMediaPickerOpen(false)}
+        selectedMediaIds={value.mediaIds || []}
+        onSave={handleMediaSave}
+      />
     </div>
   )
 }

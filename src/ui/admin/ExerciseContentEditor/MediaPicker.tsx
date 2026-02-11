@@ -4,6 +4,7 @@ import type { Media } from '@/payload-types'
 import { useTranslation } from '@payloadcms/ui'
 import Image from 'next/image'
 import React from 'react'
+import { Upload } from 'lucide-react'
 
 interface MediaPickerProps {
   isOpen: boolean
@@ -11,6 +12,9 @@ interface MediaPickerProps {
   selectedMediaIds: string[]
   onSave: (mediaIds: string[]) => void
 }
+
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
 export const MediaPicker: React.FC<MediaPickerProps> = ({
   isOpen,
@@ -24,6 +28,9 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({
   const [error, setError] = React.useState<string | null>(null)
   const [searchTerm, setSearchTerm] = React.useState('')
   const [localSelectedIds, setLocalSelectedIds] = React.useState<string[]>(selectedMediaIds)
+  const [uploading, setUploading] = React.useState(false)
+  const [uploadError, setUploadError] = React.useState<string | null>(null)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   // Sync local selection with prop changes
   React.useEffect(() => {
@@ -79,6 +86,79 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({
     onClose()
   }
 
+  const handleFileSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+
+    setUploading(true)
+    setUploadError(null)
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+
+      // Validate file type
+      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+        setUploadError('Invalid file type. Allowed: JPEG, PNG, WebP, PDF')
+        continue
+      }
+
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        setUploadError('File too large. Maximum size is 10MB')
+        continue
+      }
+
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await fetch('/api/media', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || errorData.error || 'Upload failed')
+        }
+
+        const doc = await response.json()
+        const newMediaId = doc.doc?.id || doc.id
+
+        // Add to local selection
+        setLocalSelectedIds((prev) => [...prev, newMediaId])
+
+        // Add to media list so it appears in grid
+        setMedia((prev) => [
+          {
+            id: newMediaId,
+            filename: doc.doc?.filename || doc.filename || file.name,
+            url: doc.doc?.url || doc.url,
+            alt: '',
+            type: file.type.startsWith('image/') ? 'image' : 'pdf',
+            filesize: file.size,
+            mimeType: file.type,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          } as Media,
+          ...prev,
+        ])
+      } catch (err) {
+        setUploadError(err instanceof Error ? err.message : 'Upload failed')
+      }
+    }
+
+    setUploading(false)
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const triggerFilePicker = () => {
+    fileInputRef.current?.click()
+  }
+
   if (!isOpen) return null
 
   return (
@@ -89,6 +169,29 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({
           <button type="button" className="media-picker-close" onClick={handleCancel}>
             ×
           </button>
+        </div>
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          accept={ALLOWED_MIME_TYPES.join(',')}
+          multiple
+          onChange={(e) => handleFileSelect(e.target.files)}
+        />
+
+        <div className="media-picker-upload">
+          <button
+            type="button"
+            className="media-picker-upload-btn"
+            onClick={triggerFilePicker}
+            disabled={uploading}
+          >
+            <Upload size={16} />
+            <span>{uploading ? 'Uploading...' : 'Upload new file'}</span>
+          </button>
+          {uploading && <div className="media-picker-uploading">Uploading...</div>}
+          {uploadError && <div className="media-picker-upload-error">{uploadError}</div>}
         </div>
 
         <div className="media-picker-search">
