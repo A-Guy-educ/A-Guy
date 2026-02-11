@@ -90,7 +90,7 @@ export function ExerciseRenderer({
         window.dispatchEvent(
           new CustomEvent('exercise-incorrect-answer', {
             detail: {
-              questionPrompt: question.prompt.value,
+              questionJson: JSON.stringify(question),
               studentAnswer: formatStudentAnswer(question, answer),
             },
           }),
@@ -120,7 +120,7 @@ export function ExerciseRenderer({
       window.dispatchEvent(
         new CustomEvent('exercise-incorrect-answer', {
           detail: {
-            questionPrompt: question.prompt.value,
+            questionJson: JSON.stringify(question),
             studentAnswer: formatStudentAnswer(question, answers[questionId]),
           },
         }),

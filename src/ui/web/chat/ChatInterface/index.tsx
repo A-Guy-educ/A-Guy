@@ -142,13 +142,13 @@ export function ChatInterface({
   // Auto-send contextual help on incorrect answer (ref pattern for stable listener)
   const incorrectAnswerRef = useRef<(e: Event) => void>(() => {})
   incorrectAnswerRef.current = (e: Event) => {
-    const { questionPrompt, studentAnswer } = (e as CustomEvent).detail as {
-      questionPrompt: string
+    const { questionJson, studentAnswer } = (e as CustomEvent).detail as {
+      questionJson: string
       studentAnswer: string
     }
     onChatInteraction?.()
     sendContextualHelp(
-      `I got this question wrong: "${questionPrompt}". My answer was "${studentAnswer}" but it's incorrect. Can you help me understand why and guide me to the right answer?`,
+      `The student answered incorrectly. Here is the full question data:\n${questionJson}\n\nThe student's answer was: "${studentAnswer}"\n\nPlease help them understand why their answer is wrong and guide them toward the correct solution. Be encouraging and supportive.`,
     )
   }
 
