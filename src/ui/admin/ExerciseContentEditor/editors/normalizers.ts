@@ -39,9 +39,15 @@ export function removeOptionAndNormalize(
   optionId: string,
 ): QuestionSelectMcqBlock {
   const newBlock = { ...block }
-  const optionIds = new Set(
-    newBlock.answer.options.map((o) => o.id).filter((id) => id !== optionId),
-  )
+
+  // Actually remove the option from the options array
+  newBlock.answer = {
+    ...newBlock.answer,
+    options: newBlock.answer.options.filter((o) => o.id !== optionId),
+  }
+
+  // Get remaining option IDs from the filtered options
+  const optionIds = new Set(newBlock.answer.options.map((o) => o.id))
 
   // Remove deleted option from correctOptionIds
   newBlock.answer.correctOptionIds = newBlock.answer.correctOptionIds.filter((id) =>
