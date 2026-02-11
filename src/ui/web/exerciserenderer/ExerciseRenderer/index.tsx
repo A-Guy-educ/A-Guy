@@ -6,7 +6,7 @@
 
 'use client'
 
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card } from '@/ui/web/components/card'
@@ -53,6 +53,7 @@ export function ExerciseRenderer({
 
   const [checkResults, setCheckResults] = useState<Record<string, CheckResult>>({})
   const [hasChecked, setHasChecked] = useState<Record<string, boolean>>({})
+  const chatTriggeredRef = useRef<Set<string>>(new Set())
 
   const handleAnswerChange = async (questionId: string, answer: UserAnswer) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }))
@@ -67,8 +68,13 @@ export function ExerciseRenderer({
       const result = await checkQuestionAnswer(question, answer)
       setCheckResults((prev) => ({ ...prev, [questionId]: result }))
       setHasChecked((prev) => ({ ...prev, [questionId]: true }))
+      if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
+        chatTriggeredRef.current.add(questionId)
+        window.dispatchEvent(new CustomEvent('exercise-incorrect-answer'))
+      }
     } else {
-      // For other question types, clear the check result
+      // For other question types, clear the check result and reset trigger
+      chatTriggeredRef.current.delete(questionId)
       setCheckResults((prev) => {
         const next = { ...prev }
         delete next[questionId]
@@ -85,6 +91,10 @@ export function ExerciseRenderer({
     const result = await checkQuestionAnswer(question, answers[questionId])
     setCheckResults((prev) => ({ ...prev, [questionId]: result }))
     setHasChecked((prev) => ({ ...prev, [questionId]: true }))
+    if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
+      chatTriggeredRef.current.add(questionId)
+      window.dispatchEvent(new CustomEvent('exercise-incorrect-answer'))
+    }
   }
 
   // Validate content structure

@@ -66,6 +66,16 @@ export function SplitPaneLayout({
     }
   }, [viewMode, storageKey])
 
+  useEffect(() => {
+    const handleIncorrectAnswer = () => {
+      if (!isDesktop && viewMode === 'PDF') {
+        setChatExpandedInPdf(true)
+      }
+    }
+    window.addEventListener('exercise-incorrect-answer', handleIncorrectAnswer)
+    return () => window.removeEventListener('exercise-incorrect-answer', handleIncorrectAnswer)
+  }, [isDesktop, viewMode])
+
   const handleModeToggle = useCallback(() => {
     setViewMode((prev) => {
       const newMode = prev === 'PDF' ? 'CHAT' : 'PDF'
