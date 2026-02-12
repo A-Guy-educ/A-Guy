@@ -120,7 +120,7 @@ export const Exercises: CollectionConfig = {
           validate: (value: unknown) => {
             const result = ContentSchema.safeParse(value)
             if (result.success) return true
-            return 'Invalid content. Expected: { blocks: (rich_text | question_select | question_mcq | question_free_response)[] }.'
+            return 'Invalid content. Expected: { blocks: (rich_text | question_select | question_free_response | question_table | latex)[] }.'
           },
           admin: {
             description:

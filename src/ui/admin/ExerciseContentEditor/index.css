@@ -92,6 +92,23 @@
   color: var(--theme-elevation-600);
 }
 
+.editor-validation-error {
+  margin: 0 0 1rem 0;
+  padding: 1rem;
+  background: var(--theme-error-50);
+  border: 1px solid var(--theme-error-300);
+  border-radius: 4px;
+  color: var(--theme-error-900);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.editor-validation-error strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
 .editor-badge {
   font-size: 0.75rem;
   font-family: monospace;

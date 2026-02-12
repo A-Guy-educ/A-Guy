@@ -58,6 +58,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   const [currentBlockForMedia, setCurrentBlockForMedia] = React.useState<string | null>(null)
   const [blockTypeSelectorOpen, setBlockTypeSelectorOpen] = React.useState(false)
   const [insertAtIndex, setInsertAtIndex] = React.useState<number | undefined>(undefined)
+  const [validationError, setValidationError] = React.useState<string | null>(null)
   const [jsonPanelWidth, setJsonPanelWidth] = React.useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('exercise-editor-json-panel-width')
@@ -77,6 +78,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
     (newValue: any) => {
       setLocalValue(newValue)
       setHasUnsavedChanges(true)
+      setValidationError(null) // Clear validation errors when content changes
 
       // Cancel any pending setModified(false) calls
       if (modifyTimeoutRef.current) {
@@ -235,12 +237,51 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
     handleUpdateBlock(blockId, { mediaIds: newMediaIds })
   }
 
+  // Validate Solution Fill Mode tables
+  const validateSolutionFillTables = (value: { blocks: ContentBlock[] }): string | null => {
+    for (const block of value.blocks) {
+      if (block.type === 'question_table') {
+        const tableBlock = block as import('@/shared/exercise-content/types').QuestionTableBlock
+        if (tableBlock.table.solutionFill) {
+          const missingAnswers: string[] = []
+          
+          for (let rowIdx = 0; rowIdx < tableBlock.table.rowsData.length; rowIdx++) {
+            for (let colIdx = 0; colIdx < tableBlock.table.rowsData[rowIdx].length; colIdx++) {
+              if (tableBlock.table.rowsData[rowIdx][colIdx] === '') {
+                const key = `${rowIdx}-${colIdx}`
+                if (!tableBlock.table.answers || !(key in tableBlock.table.answers)) {
+                  missingAnswers.push(`Row ${rowIdx + 1}, Col ${colIdx + 1}`)
+                }
+              }
+            }
+          }
+          
+          if (missingAnswers.length > 0) {
+            const count = missingAnswers.length
+            const preview = missingAnswers.slice(0, 10).join(', ')
+            const more = count > 10 ? ` and ${count - 10} more` : ''
+            return `Solution Fill Mode requires all empty cells to have answers. ${count} empty cell${count > 1 ? 's' : ''} missing answers: ${preview}${more}. Please complete all answers or disable Solution Fill Mode.`
+          }
+        }
+      }
+    }
+    return null
+  }
+
   // Save changes
   const handleSave = async () => {
     if (modifyTimeoutRef.current) {
       clearTimeout(modifyTimeoutRef.current)
       modifyTimeoutRef.current = null
     }
+
+    // Validate Solution Fill Mode tables before saving
+    const validationErrorMsg = validateSolutionFillTables(localValue)
+    if (validationErrorMsg) {
+      setValidationError(validationErrorMsg)
+      return
+    }
+    setValidationError(null)
 
     isSavingRef.current = true
     setIsSaving(true)
@@ -343,6 +384,12 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
           <div className="editor-badge">Flat Blocks</div>
         </div>
       </div>
+
+      {validationError && (
+        <div className="editor-validation-error">
+          <strong>⚠ Cannot Save:</strong> {validationError}
+        </div>
+      )}
 
       {isMobile ? (
         <>
