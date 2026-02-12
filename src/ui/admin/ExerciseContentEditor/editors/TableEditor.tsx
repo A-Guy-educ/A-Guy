@@ -14,6 +14,12 @@ interface TableEditorProps {
 export const TableEditor: React.FC<TableEditorProps> = ({ block, onChange }) => {
   const { table } = block
 
+  // Check if table has any empty cells
+  const hasEmptyCells = React.useMemo(
+    () => table.rowsData.some((row) => row.some((cell) => cell === '')),
+    [table.rowsData],
+  )
+
   const handleHeaderChange = (index: number, value: string) => {
     const newHeaders = [...table.headers]
     newHeaders[index] = value
@@ -72,9 +78,16 @@ export const TableEditor: React.FC<TableEditorProps> = ({ block, onChange }) => 
     const newRowsData = [...table.rowsData]
     newRowsData[rowIndex] = [...newRowsData[rowIndex]]
     newRowsData[rowIndex][colIndex] = value
+
+    // Check if this change results in no empty cells
+    const willHaveEmptyCells = newRowsData.some((row) => row.some((cell) => cell === ''))
+
+    // If Solution Fill is enabled and we're filling the last empty cell, auto-disable it
+    const newSolutionFill = table.solutionFill && willHaveEmptyCells ? true : false
+
     onChange({
       ...block,
-      table: { ...table, rowsData: newRowsData },
+      table: { ...table, rowsData: newRowsData, solutionFill: newSolutionFill },
     })
   }
 
@@ -118,17 +131,7 @@ export const TableEditor: React.FC<TableEditorProps> = ({ block, onChange }) => 
         table: { ...table, solutionFill: false },
       })
     } else {
-      // Turning on - check if there are empty cells
-      const hasEmptyCells = table.rowsData.some((row) => row.some((cell) => cell === ''))
-
-      if (!hasEmptyCells) {
-        // Show alert and don't enable
-        alert(
-          'Solution Fill Mode requires at least one empty cell in the table. Please clear at least one cell to enable this mode.',
-        )
-        return
-      }
-
+      // Turning on - only allowed if there are empty cells (toggle will be disabled if not)
       onChange({
         ...block,
         table: { ...table, solutionFill: true, answers: table.answers || {} },
@@ -186,6 +189,7 @@ export const TableEditor: React.FC<TableEditorProps> = ({ block, onChange }) => 
               type="checkbox"
               checked={table.solutionFill}
               onChange={handleToggleSolutionFill}
+              disabled={!hasEmptyCells}
             />
             <span>Solution Fill Mode</span>
           </label>

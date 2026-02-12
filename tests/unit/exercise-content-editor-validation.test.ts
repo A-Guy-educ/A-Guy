@@ -205,12 +205,14 @@ describe('validateSolutionFillTables', () => {
 })
 
 /**
- * UI Guard Behavior (implemented in TableEditor.tsx):
+ * UI State Sync Behavior (implemented in TableEditor.tsx):
  *
- * When user attempts to enable Solution Fill Mode toggle:
- * - If table has NO empty cells: show alert and prevent enabling
- * - If table has empty cells: allow enabling
+ * Solution Fill Mode toggle behavior:
+ * - Toggle is DISABLED when table has no empty cells (no alert shown)
+ * - When user fills the last empty cell: Solution Fill automatically turns OFF in UI
+ * - This is immediate UI state synchronization, not save-time normalization
  *
- * This prevents the invalid state from being created in the UI,
- * ensuring validation only needs to check for missing answers.
+ * Validation remains as safety backup:
+ * - If solutionFill=true reaches save with no empty cells: validation blocks with error
+ * - If solutionFill=true with missing answers: validation blocks with error
  */
