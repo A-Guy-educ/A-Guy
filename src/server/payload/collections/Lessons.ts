@@ -158,8 +158,7 @@ export const Lessons: CollectionConfig = {
       name: 'introDescription',
       type: 'textarea',
       admin: {
-        description:
-          'HTML content for the intro page. Supports raw HTML (bold, lists, etc). Paste from ChatGPT or write directly.',
+        description: 'HTML content for the intro page. Supports raw HTML (bold, lists, etc).',
         condition: (data) => Boolean(data?.introEnabled),
       },
     },
