@@ -226,6 +226,7 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Duplicate API', () => {
 
       expect(duplicate1.slug).toBeDefined()
       expect(duplicate1.slug).not.toBe('test-exercise')
+      expect(duplicate1.slug).not.toBe(exercise1.slug) // Ensure uniqueness
       // Slug will be based on "Test Exercise (Copy)" title -> "test-exercise-copy-N"
       expect(duplicate1.slug).toMatch(/^test-exercise-copy(-\d+)?$/)
 
