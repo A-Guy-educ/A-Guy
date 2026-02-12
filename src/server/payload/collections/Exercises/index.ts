@@ -100,8 +100,7 @@ export const Exercises: CollectionConfig = {
               'URL-friendly identifier (auto-generated from title, unique within lesson)',
           },
           hooks: {
-            beforeChange: [generateSlug],
-            beforeValidate: [validateSlugUniqueness],
+            beforeValidate: [generateSlug, validateSlugUniqueness],
           },
         },
       ],
