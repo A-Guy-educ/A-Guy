@@ -153,7 +153,12 @@ export function ChatInterface({
     }
     onChatInteraction?.()
     setIsHelpLoading(true)
-    const result = await apiService.wrongAnswerHelp(questionJson, studentAnswer)
+    const result = await apiService.wrongAnswerHelp(questionJson, studentAnswer, {
+      exerciseId,
+      lessonId,
+      chapterId,
+      courseId,
+    })
     if (result.success && result.response) {
       addAssistantMessage(result.response)
     }

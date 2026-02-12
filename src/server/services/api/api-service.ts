@@ -239,17 +239,24 @@ export const apiService = {
 
   /**
    * Get AI help for a wrong answer (calls Gemini directly, bypasses chat pipeline)
+   * The AI response is persisted in the conversation so it appears in history.
    */
   async wrongAnswerHelp(
     questionJson: string,
     studentAnswer: string,
+    context?: {
+      exerciseId?: string
+      lessonId?: string
+      chapterId?: string
+      courseId?: string
+    },
   ): Promise<{ success: boolean; response?: string; error?: string }> {
     try {
       const response = await fetch('/api/agent/wrong-answer-help', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ questionJson, studentAnswer }),
+        body: JSON.stringify({ questionJson, studentAnswer, ...context }),
       })
 
       const data = await response.json()
