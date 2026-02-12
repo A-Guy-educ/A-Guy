@@ -2923,9 +2923,9 @@ export interface Footer {
 export interface WrongAnswerPrompt {
   id: string;
   /**
-   * Prompt sent to the AI when a student answers incorrectly. Use {{questionData}} and {{studentAnswer}} as placeholders.
+   * Prompt sent to the AI when a student answers incorrectly. Use {{questionData}} and {{studentAnswer}} as placeholders. Leave empty to disable automatic help on wrong answers.
    */
-  template: string;
+  template?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }

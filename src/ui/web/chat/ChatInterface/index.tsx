@@ -139,10 +139,8 @@ export function ChatInterface({
     uploadFailedMessage: tCourses('chatUploadFailed'),
   })
 
-  // Fetch admin-configured prompt template on mount (falls back to hardcoded default)
-  const FALLBACK_TEMPLATE =
-    'The student answered incorrectly. Here is the full question data:\n{{questionData}}\n\nThe student\'s answer was: "{{studentAnswer}}"\n\nPlease help them understand why their answer is wrong and guide them toward the correct solution. Be encouraging and supportive.'
-  const promptTemplateRef = useRef(FALLBACK_TEMPLATE)
+  // Fetch admin-configured prompt template on mount (no hardcoded fallback)
+  const promptTemplateRef = useRef<string | null>(null)
 
   useEffect(() => {
     fetch('/api/globals/wrong-answer-prompt', { credentials: 'include' })
@@ -158,6 +156,8 @@ export function ChatInterface({
   // Auto-send contextual help on incorrect answer (ref pattern for stable listener)
   const incorrectAnswerRef = useRef<(e: Event) => void>(() => {})
   incorrectAnswerRef.current = (e: Event) => {
+    if (!promptTemplateRef.current) return
+
     const { questionJson, studentAnswer } = (e as CustomEvent).detail as {
       questionJson: string
       studentAnswer: string
