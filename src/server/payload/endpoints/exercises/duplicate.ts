@@ -52,7 +52,7 @@ export async function duplicateExercise(req: PayloadRequest) {
     }
 
     // 6) Create the duplicate exercise
-    // The beforeChange hooks (generateSlug) will automatically:
+    // The beforeValidate hooks (generateSlug) will automatically:
     // - Generate a unique slug by appending -2, -3, etc. if needed
     // - Ensure slug uniqueness within the lesson
     const duplicatedExercise = await req.payload.create({

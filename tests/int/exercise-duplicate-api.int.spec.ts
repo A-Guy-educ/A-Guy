@@ -241,13 +241,24 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Duplicate API', () => {
     })
 
     it('should enforce slug uniqueness within the same lesson', async () => {
-      // Create two exercises in different lessons
+      // Create another chapter and lesson for testing cross-lesson slug uniqueness
+      const chapter2 = await payload.create({
+        collection: 'chapters',
+        data: {
+          title: 'Another Chapter',
+          slug: 'another-chapter',
+          course: '000000000000000000000000', // Dummy course ID (not critical for this test)
+          order: 2,
+          tenant: testTenantId,
+        },
+      })
+
       const lesson2 = await payload.create({
         collection: 'lessons',
         data: {
           title: 'Another Lesson',
           slug: 'another-lesson',
-          chapter: '000000000000000000000000', // Dummy chapter ID
+          chapter: typeof chapter2.id === 'string' ? chapter2.id : String(chapter2.id),
           order: 2,
           tenant: testTenantId,
         },
@@ -285,8 +296,15 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Duplicate API', () => {
       expect(exercise1.slug).toBe('same-slug')
       expect(exercise2.slug).toBe('same-slug')
 
-      // Clean up lesson 2
-      await payload.delete({ collection: 'lessons', id: lesson2Id })
+      // Clean up lesson 2 and chapter 2
+      await payload.delete({
+        collection: 'lessons',
+        id: lesson2Id,
+      })
+      await payload.delete({
+        collection: 'chapters',
+        id: typeof chapter2.id === 'string' ? chapter2.id : String(chapter2.id),
+      })
     })
   })
 })
