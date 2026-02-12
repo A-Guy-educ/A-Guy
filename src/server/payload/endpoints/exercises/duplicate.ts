@@ -44,9 +44,7 @@ export async function duplicateExercise(req: PayloadRequest) {
     // 5) Prepare duplicate data
     const duplicateData = {
       ...exerciseData,
-      // Force slug regeneration by not providing it
       // The generateSlug hook will create a unique slug based on the title
-      slug: undefined,
       // Append " (Copy)" to title to make it clear it's a duplicate
       title: `${exerciseData.title} (Copy)`,
     }

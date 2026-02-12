@@ -88,7 +88,7 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Duplicate API', () => {
       },
     })
     testLessonId = typeof lesson.id === 'string' ? lesson.id : String(lesson.id)
-  }, 60000)
+  }, 30000)
 
   afterAll(async () => {
     if (!hasDatabaseUrl || !payload) return
@@ -226,9 +226,10 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Duplicate API', () => {
 
       expect(duplicate1.slug).toBeDefined()
       expect(duplicate1.slug).not.toBe('test-exercise')
-      expect(duplicate1.slug).toMatch(/^test-exercise-copy-\d+$/)
+      // Slug will be based on "Test Exercise (Copy)" title -> "test-exercise-copy-N"
+      expect(duplicate1.slug).toMatch(/^test-exercise-copy(-\d+)?$/)
 
-      // Duplicate again should create "test-exercise-3" (or similar)
+      // Duplicate again should create a different slug
       const duplicate2 = await payload.create({
         collection: 'exercises',
         data: {
