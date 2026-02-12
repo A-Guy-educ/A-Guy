@@ -1,12 +1,8 @@
 'use client'
 
 import { cn } from '@/infra/utils/ui'
-import type { Element, Root } from 'hast'
 import type { Components } from 'react-markdown'
-import ReactMarkdown from 'react-markdown'
-import rehypeKatex from 'rehype-katex'
-import remarkMath from 'remark-math'
-import { visit } from 'unist-util-visit'
+import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
 import { normalizeLatexDelimiters } from './normalize-latex'
 
 interface ChatMessageContentProps {
@@ -22,7 +18,7 @@ interface ChatMessageContentProps {
  * - Emphasis: bold only (em rendered as font-medium, not italic)
  * - Lists: proper indentation and spacing
  */
-const markdownComponents: Components = {
+const chatMarkdownComponents: Components = {
   p: ({ children }) => <p className="mb-4 leading-relaxed first:mt-0 last:mb-0">{children}</p>,
   h1: ({ children }) => (
     <h1 className="text-xl font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h1>
@@ -69,98 +65,23 @@ const markdownComponents: Components = {
 }
 
 /**
- * Rehype plugin to wrap KaTeX output with RTL isolation.
- * Adds wrapper elements at the AST level before React rendering.
+ * Chat message content renderer.
+ *
+ * WHAT THIS ADDS ON TOP OF MathMarkdown:
+ * 1. normalizeLatexDelimiters() — converts LLM-style delimiters (\[...\], \(...\))
+ *    to the standard $$...$$ that remark-math understands.
+ * 2. chatMarkdownComponents — custom Tailwind-styled typography for chat bubbles.
+ * 3. "chat-message-content" CSS class — triggers chat-specific KaTeX styling
+ *    (muted background, rounded corners, padding) defined in globals.css lines 422-436.
  */
-function rehypeMathWrapper() {
-  return (tree: Root) => {
-    visit(tree, 'element', (node: Element, index, parent) => {
-      if (!parent || typeof index !== 'number') return
-
-      const className = Array.isArray(node.properties?.className)
-        ? node.properties.className.join(' ')
-        : String(node.properties?.className || '')
-
-      // Skip if already wrapped (check for Tailwind classes we use)
-      if (
-        className.includes('isolate') &&
-        (className.includes('inline-block') || className.includes('block'))
-      ) {
-        return
-      }
-
-      // Check if parent is already a math wrapper or a katex element (to avoid nested wrapping)
-      if (parent.type === 'element') {
-        const parentClassName = Array.isArray(parent.properties?.className)
-          ? parent.properties.className.join(' ')
-          : String(parent.properties?.className || '')
-
-        // Skip if parent is already wrapped (check for Tailwind classes we use)
-        if (
-          parentClassName.includes('isolate') &&
-          (parentClassName.includes('inline-block') || parentClassName.includes('block'))
-        ) {
-          return
-        }
-
-        // Skip if parent is a katex element (we only wrap top-level katex)
-        if (parentClassName.includes('katex')) {
-          return
-        }
-      }
-
-      // Block math: wrap katex-display
-      if (className.includes('katex-display')) {
-        const wrapper: Element = {
-          type: 'element',
-          tagName: 'div',
-          properties: {
-            dir: 'ltr',
-            className: ['isolate', 'block', 'text-center', 'mt-3', 'mb-3'],
-          },
-          children: [node],
-        }
-        if (parent.type === 'element' || parent.type === 'root') {
-          parent.children[index] = wrapper
-        }
-        return
-      }
-
-      // Inline math: wrap katex (only top-level, not nested)
-      if (
-        className.includes('katex') &&
-        !className.includes('katex-display') &&
-        node.tagName === 'span'
-      ) {
-        const wrapper: Element = {
-          type: 'element',
-          tagName: 'span',
-          properties: {
-            dir: 'ltr',
-            className: ['isolate', 'inline-block', 'align-middle'],
-          },
-          children: [node],
-        }
-        if (parent.type === 'element' || parent.type === 'root') {
-          parent.children[index] = wrapper
-        }
-      }
-    })
-  }
-}
-
 export function ChatMessageContent({ content, className }: ChatMessageContentProps) {
   const normalizedContent = normalizeLatexDelimiters(content)
 
   return (
-    <div className={cn('chat-message-content leading-relaxed', className)}>
-      <ReactMarkdown
-        remarkPlugins={[remarkMath]}
-        rehypePlugins={[rehypeKatex, rehypeMathWrapper]}
-        components={markdownComponents}
-      >
-        {normalizedContent}
-      </ReactMarkdown>
-    </div>
+    <MathMarkdown
+      content={normalizedContent}
+      className={cn('chat-message-content leading-relaxed', className)}
+      components={chatMarkdownComponents}
+    />
   )
 }

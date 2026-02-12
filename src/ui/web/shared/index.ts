@@ -33,3 +33,7 @@ export { EmptyState } from './EmptyState/EmptyState'
 export type { EmptyStateProps } from './EmptyState/EmptyState'
 export { ErrorState } from './EmptyState/ErrorState'
 export type { ErrorStateProps } from './EmptyState/ErrorState'
+
+// Markdown
+export { MathMarkdown } from './MathMarkdown'
+export type { MathMarkdownProps } from './MathMarkdown'
