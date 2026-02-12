@@ -1,10 +1,12 @@
 /**
  * Rich Text Renderer
- * Renders markdown with math support (KaTeX) using the shared MathMarkdown component.
+ * Renders markdown with math support (KaTeX) using the shared MathMarkdown component,
+ * plus any attached media.
  */
 
 import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
 import { preprocessNewlines } from '@/infra/utils/textPreprocessing'
+import { MediaAttachments } from '../../components/MediaAttachments'
 
 interface RichTextRendererProps {
   block: {
@@ -19,9 +21,12 @@ export function RichTextRenderer({ block }: RichTextRendererProps) {
   const processedValue = preprocessNewlines(block.value)
 
   return (
-    <MathMarkdown
-      content={processedValue}
-      className="rich-text-content leading-relaxed text-foreground"
-    />
+    <>
+      <MathMarkdown
+        content={processedValue}
+        className="rich-text-content leading-relaxed text-foreground"
+      />
+      <MediaAttachments mediaIds={block.mediaIds} />
+    </>
   )
 }
