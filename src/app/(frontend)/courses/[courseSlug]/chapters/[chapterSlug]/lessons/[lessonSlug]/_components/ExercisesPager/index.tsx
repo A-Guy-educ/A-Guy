@@ -1,16 +1,17 @@
 'use client'
 
-import type { Exercise } from '@/payload-types'
+import type { Exercise, Media as MediaType } from '@/payload-types'
 import { Button } from '@/ui/web/components/button'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { ExerciseRenderer } from '@/ui/web/exerciserenderer'
-import { BookOpen, ChevronLeft, ChevronRight, Layers, Sparkles } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, Info, Layers, Sparkles } from 'lucide-react'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
 import { Progress } from '@/ui/web/components/progress'
 import { useExercisesPager } from './useExercisesPager'
 import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 import { ChatInterface } from '@/ui/web/chat'
+import { getMediaUrl } from '@/infra/utils/getMediaUrl'
 
 interface ExercisesPagerProps {
   exercises: Exercise[]
@@ -20,6 +21,8 @@ interface ExercisesPagerProps {
   chapterSlug: string
   lessonSlug: string
   lessonId: string
+  introDescription?: string | null
+  introMedia?: MediaType | string | number | null
 }
 
 export function ExercisesPager({
@@ -30,8 +33,11 @@ export function ExercisesPager({
   chapterSlug,
   lessonSlug,
   lessonId,
+  introDescription,
+  introMedia,
 }: ExercisesPagerProps) {
   const t = useTranslations('courses')
+  const hasAboutPage = Boolean(introDescription || (introMedia && typeof introMedia === 'object'))
   const {
     pageState,
     progressPercent,
@@ -40,9 +46,12 @@ export function ExercisesPager({
     handleNext,
     handlePrev,
     handleStart,
+    handleStartExercises,
     getExerciseOrdinal,
     totalExercises,
-  } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug })
+  } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug, hasAboutPage })
+
+  const introMediaObj = introMedia && typeof introMedia === 'object' ? introMedia : null
 
   const exerciseOrdinal = getExerciseOrdinal()
   const currentExercise =
@@ -166,6 +175,53 @@ export function ExercisesPager({
                   className="w-full py-6 rounded-2xl text-lg shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
                 >
                   {t('exercisesPagerStart')}{' '}
+                  <ChevronLeft className="w-5 h-5 ms-2 rtl:rotate-0 ltr:rotate-180" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {pageState.type === 'about' && (
+            <div className="space-y-8">
+              <header className="text-center">
+                <span className="inline-block px-4 py-1.5 bg-muted text-muted-foreground rounded-full text-[10px] tracking-[0.2em] uppercase mb-5 border border-border/40">
+                  {t('exercisesPagerIntro')}
+                </span>
+                <h1 className="text-4xl md:text-[42px] font-medium leading-tight text-foreground mb-3">
+                  {lessonTitle}
+                </h1>
+                <div className="w-20 h-1 bg-primary mx-auto rounded-full" />
+              </header>
+
+              <div className="bg-card rounded-3xl p-8 md:p-10 border border-border/60 shadow-xl shadow-muted/50">
+                <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-primary/10 border border-primary/20">
+                  <Info className="w-9 h-9 text-primary" />
+                </div>
+
+                {introDescription && (
+                  <div
+                    className="prose prose-lg dark:prose-invert max-w-md mx-auto mb-8 text-muted-foreground leading-relaxed text-start [&_ul]:list-inside [&_ol]:list-inside"
+                    dangerouslySetInnerHTML={{ __html: introDescription }}
+                  />
+                )}
+
+                {introMediaObj?.url && (
+                  <div className="mx-auto max-h-80 overflow-hidden rounded-2xl mb-8">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={getMediaUrl(introMediaObj.url)}
+                      alt={introMediaObj.alt || ''}
+                      className="mx-auto max-h-80 w-auto object-contain"
+                    />
+                  </div>
+                )}
+
+                <Button
+                  onClick={handleStartExercises}
+                  size="lg"
+                  className="w-full py-6 rounded-2xl text-lg shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
+                >
+                  {t('startLesson')}{' '}
                   <ChevronLeft className="w-5 h-5 ms-2 rtl:rotate-0 ltr:rotate-180" />
                 </Button>
               </div>

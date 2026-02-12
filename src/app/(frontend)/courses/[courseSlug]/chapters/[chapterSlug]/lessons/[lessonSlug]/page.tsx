@@ -73,6 +73,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
             chapterSlug={chapterSlug}
             lessonSlug={lessonSlug}
             lessonId={lesson.id}
+            introDescription={lesson.introEnabled ? lesson.introDescription : null}
+            introMedia={lesson.introEnabled ? lesson.introMedia : null}
           />
         ) : (
           // Empty state: no document and no exercises
