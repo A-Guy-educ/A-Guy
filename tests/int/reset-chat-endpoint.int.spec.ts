@@ -107,6 +107,11 @@ afterAll(async () => {
     await payload.delete({ collection: 'users', id: testUserIdTwo, overrideAccess: true })
   }
 
+  // Close DB connection before stopping container
+  if (payload?.db?.destroy) {
+    await payload.db.destroy()
+  }
+
   await stopMongoContainer()
 
   if (originalDatabaseUrl !== undefined) {

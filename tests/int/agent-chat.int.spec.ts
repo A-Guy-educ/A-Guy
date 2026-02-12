@@ -246,6 +246,11 @@ afterAll(async () => {
       id: testUserId,
     })
   }
+
+  // Close DB connection to prevent connection leaks
+  if (payload.db?.destroy) {
+    await payload.db.destroy()
+  }
 }, 30000)
 
 describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {

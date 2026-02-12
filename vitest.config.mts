@@ -9,6 +9,8 @@ loadEnv({ path: '.env.test', override: true })
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
+    fileParallelism: false, // Run test files sequentially to avoid exhausting MongoDB connection pool
+    globalSetup: ['./tests/setup/global-int-setup.ts'],
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     include: ['tests/int/**/*.int.spec.ts', 'tests/int/**/*.int.spec.tsx'],

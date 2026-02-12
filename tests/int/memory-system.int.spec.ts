@@ -128,6 +128,11 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
         id: testUserId,
       })
     }
+
+    // Close DB connection to prevent connection leaks
+    if (payload?.db?.destroy) {
+      await payload.db.destroy()
+    }
   }, 30000) // 30s timeout for cleanup
 
   describe('Embeddings Service', () => {

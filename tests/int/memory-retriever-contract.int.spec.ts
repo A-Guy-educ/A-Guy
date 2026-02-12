@@ -213,6 +213,11 @@ afterAll(async () => {
   for (const userId of testUsers.values()) {
     await payload.delete({ collection: 'users', id: userId }).catch(() => {})
   }
+
+  // Close DB connection to prevent connection leaks
+  if (payload.db?.destroy) {
+    await payload.db.destroy()
+  }
 }, 60000)
 
 describe.skipIf(!hasDatabaseUrl)('Retriever Contract Tests (Deterministic)', () => {

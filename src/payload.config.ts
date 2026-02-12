@@ -112,6 +112,10 @@ export default buildConfig({
   editor: defaultLexical,
   db: mongooseAdapter({
     url: databaseUrl,
+    connectOptions: {
+      // Reduce pool size for tests to avoid exhausting Atlas connection limits
+      maxPoolSize: process.env.VITEST ? 5 : 100,
+    },
   }),
   collections: [
     Pages,

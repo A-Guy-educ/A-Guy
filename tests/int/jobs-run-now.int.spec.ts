@@ -49,6 +49,11 @@ describe('Jobs Run Now', () => {
       delete process.env.DATABASE_URL
     }
 
+    // Close DB connection before stopping container
+    if (payload?.db?.destroy) {
+      await payload.db.destroy()
+    }
+
     // Stop MongoDB container
     await stopMongoContainer()
   })

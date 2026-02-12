@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { beforeAll, beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 import { loginAction } from '@/app/(frontend)/login/login_authenticate-action'
@@ -40,6 +40,13 @@ describe('Login Action', () => {
       await payload.delete({ collection: 'users', id: testUser.id })
     } catch {
       // Ignore cleanup errors
+    }
+  })
+
+  afterAll(async () => {
+    // Close DB connection to prevent connection leaks
+    if (payload?.db?.destroy) {
+      await payload.db.destroy()
     }
   })
 

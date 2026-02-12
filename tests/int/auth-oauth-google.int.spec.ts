@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 import { encrypt, decrypt, generateSecret } from '@/infra/auth/oauth_crypto'
@@ -310,5 +310,12 @@ describe('Google OAuth Integration', () => {
       // Cleanup
       await payload.delete({ collection: 'users', id: user.id })
     })
+  })
+
+  afterAll(async () => {
+    // Close DB connection to prevent connection leaks
+    if (payload?.db?.destroy) {
+      await payload.db.destroy()
+    }
   })
 })

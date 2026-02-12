@@ -264,6 +264,11 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
     } catch (error) {
       console.error('Cleanup failed:', error)
     }
+
+    // Close DB connection to prevent connection leaks
+    if (payload.db?.destroy) {
+      await payload.db.destroy()
+    }
   }, 60000)
 
   it('returns 401 when user is not authenticated', async () => {

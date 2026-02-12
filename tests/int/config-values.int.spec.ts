@@ -130,6 +130,11 @@ describe('ConfigValues (Domain-Scoped Config)', () => {
     } catch {
       // Ignore cleanup errors
     }
+
+    // Close DB connection to prevent connection leaks
+    if (payload.db?.destroy) {
+      await payload.db.destroy()
+    }
   })
 
   describe('ConfigValues Collection', () => {

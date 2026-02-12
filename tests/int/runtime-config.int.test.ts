@@ -51,6 +51,11 @@ describe('Runtime Config Integration (Tenant-Scoped Secrets)', () => {
     } catch {
       // Ignore cleanup errors
     }
+
+    // Close DB connection to prevent connection leaks
+    if (payload.db?.destroy) {
+      await payload.db.destroy()
+    }
   })
 
   test('should load tenant-scoped secrets from real DB', async () => {
