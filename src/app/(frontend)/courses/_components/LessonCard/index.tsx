@@ -27,8 +27,7 @@ export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps)
     return null
   }
 
-  const basePath = `/courses/${courseSlug}/chapters/${effectiveChapterSlug}/lessons/${lesson.slug}`
-  const href = lesson.introEnabled ? `${basePath}/about` : basePath
+  const href = `/courses/${courseSlug}/chapters/${effectiveChapterSlug}/lessons/${lesson.slug}`
 
   return (
     <Card className="hover:shadow-md transition-shadow">
