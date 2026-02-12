@@ -21,7 +21,7 @@ interface RichTextRendererProps {
 
 export function RichTextRenderer({ block }: RichTextRendererProps) {
   const processedValue = preprocessNewlines(block.value)
-  
+
   return (
     <div className="rich-text-content leading-relaxed text-foreground">
       <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
