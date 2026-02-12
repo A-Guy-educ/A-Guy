@@ -18,6 +18,7 @@ import { McqEditor } from './editors/McqEditor'
 import { FreeResponseEditor } from './editors/FreeResponseEditor'
 import { TableEditor } from './editors/TableEditor'
 import { deepCloneBlock } from './utils'
+import { validateSolutionFillTables } from './validation'
 
 /**
  * Exercise Content Editor - Strict Flat Blocks
@@ -235,37 +236,6 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
     if (!block || block.type !== 'rich_text') return
     const newMediaIds = (block.mediaIds || []).filter((id: string) => id !== mediaId)
     handleUpdateBlock(blockId, { mediaIds: newMediaIds })
-  }
-
-  // Validate Solution Fill Mode tables
-  const validateSolutionFillTables = (value: { blocks: ContentBlock[] }): string | null => {
-    for (const block of value.blocks) {
-      if (block.type === 'question_table') {
-        const tableBlock = block as import('@/shared/exercise-content/types').QuestionTableBlock
-        if (tableBlock.table.solutionFill) {
-          const missingAnswers: string[] = []
-          
-          for (let rowIdx = 0; rowIdx < tableBlock.table.rowsData.length; rowIdx++) {
-            for (let colIdx = 0; colIdx < tableBlock.table.rowsData[rowIdx].length; colIdx++) {
-              if (tableBlock.table.rowsData[rowIdx][colIdx] === '') {
-                const key = `${rowIdx}-${colIdx}`
-                if (!tableBlock.table.answers || !(key in tableBlock.table.answers)) {
-                  missingAnswers.push(`Row ${rowIdx + 1}, Col ${colIdx + 1}`)
-                }
-              }
-            }
-          }
-          
-          if (missingAnswers.length > 0) {
-            const count = missingAnswers.length
-            const preview = missingAnswers.slice(0, 10).join(', ')
-            const more = count > 10 ? ` and ${count - 10} more` : ''
-            return `Solution Fill Mode requires all empty cells to have answers. ${count} empty cell${count > 1 ? 's' : ''} missing answers: ${preview}${more}. Please complete all answers or disable Solution Fill Mode.`
-          }
-        }
-      }
-    }
-    return null
   }
 
   // Save changes
