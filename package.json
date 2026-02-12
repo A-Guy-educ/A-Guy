@@ -84,7 +84,7 @@
     "precommit": "lint-staged",
     "release": "semantic run generate:types-release",
     "release:dry-run": "semantic-release --dry-run",
-    "prepare": "husky",
+    "prepare": "husky && chmod +x .husky/pre-commit .husky/commit-msg .husky/pre-push .husky/post-commit .husky/post-merge .husky/check-secrets .husky/check-no-css .husky/check-archivedAt-invariant .husky/skip-hooks.sh",
     "verify": "pnpm tsx scripts/verify.ts",
     "pipeline": "pnpm tsx scripts/pipeline.ts",
     "pipeline:run": "pnpm pipeline --run",
