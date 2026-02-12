@@ -142,17 +142,34 @@ export function ChatInterface({
     uploadFailedMessage: tCourses('chatUploadFailed'),
   })
 
+  // Fetch admin-configured prompt template on mount (no hardcoded fallback)
+  const promptTemplateRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/globals/wrong-answer-prompt', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.template) {
+          promptTemplateRef.current = data.template
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   // Auto-send contextual help on incorrect answer (ref pattern for stable listener)
   const incorrectAnswerRef = useRef<(e: Event) => void>(() => {})
   incorrectAnswerRef.current = (e: Event) => {
+    if (!promptTemplateRef.current) return
+
     const { questionJson, studentAnswer } = (e as CustomEvent).detail as {
       questionJson: string
       studentAnswer: string
     }
+    const prompt = promptTemplateRef.current
+      .replace(/\{\{questionData\}\}/g, questionJson)
+      .replace(/\{\{studentAnswer\}\}/g, studentAnswer)
     onChatInteraction?.()
-    sendContextualHelp(
-      `The student answered incorrectly. Here is the full question data:\n${questionJson}\n\nThe student's answer was: "${studentAnswer}"\n\nPlease help them understand why their answer is wrong and guide them toward the correct solution. Be encouraging and supportive.`,
-    )
+    sendContextualHelp(prompt)
   }
 
   useEffect(() => {

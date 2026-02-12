@@ -1,4 +1,4 @@
-import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest } from 'payload'
+import type { CollectionSlug, Payload, PayloadRequest } from 'payload'
 
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import { seedChatConfig } from './chat-config'
@@ -9,7 +9,7 @@ import { seedSystemParams } from './system-params'
 
 const collections: CollectionSlug[] = ['categories', 'pages', 'forms', 'form-submissions', 'search']
 
-const globals: GlobalSlug[] = ['header', 'footer']
+const globals: ('header' | 'footer')[] = ['header', 'footer']
 
 const categories = ['Technology', 'News', 'Finance', 'Design', 'Software', 'Engineering']
 

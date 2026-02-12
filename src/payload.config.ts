@@ -31,6 +31,7 @@ import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
 import type { JobDocument } from '@/server/payload/jobs/types'
 import { plugins } from '@/server/payload/plugins'
+import { WrongAnswerPrompt } from '@/server/payload/globals/WrongAnswerPrompt'
 import { Footer } from '@/ui/web/footer/config'
 import { Header } from '@/ui/web/header/config'
 import { GuestSessions } from '@/server/payload/collections/GuestSessions'
@@ -137,7 +138,7 @@ export default buildConfig({
     MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer],
+  globals: [Header, Footer, WrongAnswerPrompt],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,
