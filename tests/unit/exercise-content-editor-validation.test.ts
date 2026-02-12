@@ -95,7 +95,7 @@ describe('validateSolutionFillTables', () => {
     expect(result).toContain('Solution Fill Mode requires all empty cells to have answers')
   })
 
-  it('should return error when solutionFill is true but table has no empty cells', () => {
+  it('should auto-disable solutionFill when table has no empty cells (normalization)', () => {
     const block: QuestionTableBlock = {
       id: 'block-1',
       type: 'question_table',
@@ -119,9 +119,10 @@ describe('validateSolutionFillTables', () => {
 
     const result = validateSolutionFillTables({ blocks: [block as ContentBlock] })
 
-    expect(result).not.toBeNull()
-    expect(result).toContain('Solution Fill Mode requires at least one empty cell')
-    expect(result).toContain('Clear at least one cell or disable Solution Fill Mode')
+    // Should not return error - normalization happens automatically
+    expect(result).toBeNull()
+    // Verify that solutionFill was auto-disabled
+    expect(block.table.solutionFill).toBe(false)
   })
 
   it('should limit preview to first 10 cells and show count', () => {
