@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { preprocessNewlines } from '@/ui/web/exerciserenderer/blocks/RichTextRenderer/utils'
+import { preprocessNewlines } from '@/infra/utils/textPreprocessing'
 
 describe('RichTextRenderer - newline preprocessing', () => {
   it('should convert single newline to hard break (two spaces + newline)', () => {
