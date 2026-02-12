@@ -81,6 +81,7 @@ export function McqQuestion({
                 isSelected && 'border-primary bg-primary/10 shadow-sm',
                 disabled && 'opacity-60 cursor-not-allowed',
               )}
+              onClick={() => !question.answer.multiSelect && handleOptionClick(option.id)}
             >
               {question.answer.multiSelect ? (
                 <Checkbox
