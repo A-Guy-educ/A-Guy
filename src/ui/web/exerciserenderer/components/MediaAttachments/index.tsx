@@ -2,12 +2,56 @@
 
 import React from 'react'
 import { cn } from '@/infra/utils/ui'
-import { Media } from '@/ui/web/media'
+import { getMediaUrl } from '@/infra/utils/getMediaUrl'
+import type { Media } from '@/payload-types'
 import { useMediaMap } from '../../context/MediaMapContext'
 
 interface MediaAttachmentsProps {
   mediaIds: string[] | undefined
   className?: string
+}
+
+function isImageType(media: Media): boolean {
+  return media.type === 'image' || media.type === 'svg'
+}
+
+function isVideoType(media: Media): boolean {
+  return media.type === 'video'
+}
+
+/**
+ * Renders a single media item.
+ * Uses plain <img> / <video> to avoid Next.js Image optimization domain issues.
+ */
+function MediaItem({ media }: { media: Media }) {
+  const src = getMediaUrl(media.url, media.updatedAt)
+
+  if (!src) return null
+
+  if (isVideoType(media)) {
+    return (
+      <video controls playsInline className="w-full max-h-96">
+        <source src={src} type={media.mimeType || undefined} />
+      </video>
+    )
+  }
+
+  if (isImageType(media)) {
+    return (
+      /* eslint-disable-next-line @next/next/no-img-element */
+      <img src={src} alt={media.alt || ''} className="w-full h-auto max-h-96 object-contain" />
+    )
+  }
+
+  // Fallback for other types — render as image if URL exists
+  return (
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src={src}
+      alt={media.alt || media.filename || ''}
+      className="w-full h-auto max-h-96 object-contain"
+    />
+  )
 }
 
 /**
@@ -30,15 +74,9 @@ export function MediaAttachments({ mediaIds, className }: MediaAttachmentsProps)
       {resolved.map((media) => (
         <div
           key={media.id}
-          className="rounded-xl overflow-hidden border border-border/60 bg-muted/30"
+          className="rounded-xl overflow-hidden border border-border/60 bg-muted/30 flex items-center justify-center"
         >
-          <Media
-            resource={media}
-            imgClassName="w-full h-auto max-h-96 object-contain"
-            videoClassName="w-full max-h-96"
-            htmlElement="div"
-            className="flex items-center justify-center"
-          />
+          <MediaItem media={media} />
         </div>
       ))}
     </div>
