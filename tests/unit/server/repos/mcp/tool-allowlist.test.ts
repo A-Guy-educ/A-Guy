@@ -267,3 +267,101 @@ describe('discoverAllowedTools', () => {
     expect(allowed.size).toBe(2)
   })
 })
+
+describe('Student-specific tool allowlist', () => {
+  const createMockTool = (name: string): MCPTool => ({
+    name,
+    description: `Tool for ${name}`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'integer', description: 'Max results' },
+      },
+    },
+  })
+
+  describe('STUDENT_ALLOWED_TOOL_NAMES', () => {
+    it('contains only getActiveExerciseContext', async () => {
+      const { STUDENT_ALLOWED_TOOL_NAMES } = await import('@/server/repos/mcp/tool-allowlist')
+      expect(STUDENT_ALLOWED_TOOL_NAMES.size).toBe(1)
+      expect(STUDENT_ALLOWED_TOOL_NAMES.has('getActiveExerciseContext')).toBe(true)
+    })
+  })
+
+  describe('isStudentAllowedToolName', () => {
+    it('allows getActiveExerciseContext', async () => {
+      const { isStudentAllowedToolName } = await import('@/server/repos/mcp/tool-allowlist')
+      expect(isStudentAllowedToolName('getActiveExerciseContext')).toBe(true)
+    })
+
+    it('rejects findCourses (admin tool)', async () => {
+      const { isStudentAllowedToolName } = await import('@/server/repos/mcp/tool-allowlist')
+      expect(isStudentAllowedToolName('findCourses')).toBe(false)
+    })
+
+    it('rejects findExercises (admin tool)', async () => {
+      const { isStudentAllowedToolName } = await import('@/server/repos/mcp/tool-allowlist')
+      expect(isStudentAllowedToolName('findExercises')).toBe(false)
+    })
+
+    it('rejects createCourses (admin tool)', async () => {
+      const { isStudentAllowedToolName } = await import('@/server/repos/mcp/tool-allowlist')
+      expect(isStudentAllowedToolName('createCourses')).toBe(false)
+    })
+
+    it('rejects unknown tools', async () => {
+      const { isStudentAllowedToolName } = await import('@/server/repos/mcp/tool-allowlist')
+      expect(isStudentAllowedToolName('someRandomTool')).toBe(false)
+    })
+
+    it('rejects empty string', async () => {
+      const { isStudentAllowedToolName } = await import('@/server/repos/mcp/tool-allowlist')
+      expect(isStudentAllowedToolName('')).toBe(false)
+    })
+  })
+
+  describe('discoverStudentAllowedTools', () => {
+    it('filters array to only student-allowed tools', async () => {
+      const { discoverStudentAllowedTools } = await import('@/server/repos/mcp/tool-allowlist')
+      const tools = [
+        createMockTool('getActiveExerciseContext'),
+        createMockTool('findCourses'),
+        createMockTool('findExercises'),
+        createMockTool('createCourses'),
+      ]
+
+      const allowed = discoverStudentAllowedTools(tools)
+
+      expect(allowed.length).toBe(1)
+      expect(allowed[0].name).toBe('getActiveExerciseContext')
+    })
+
+    it('returns empty array when no student tools present', async () => {
+      const { discoverStudentAllowedTools } = await import('@/server/repos/mcp/tool-allowlist')
+      const tools = [createMockTool('findCourses'), createMockTool('createCourses')]
+
+      const allowed = discoverStudentAllowedTools(tools)
+
+      expect(allowed.length).toBe(0)
+    })
+
+    it('handles empty array', async () => {
+      const { discoverStudentAllowedTools } = await import('@/server/repos/mcp/tool-allowlist')
+      const allowed = discoverStudentAllowedTools([])
+
+      expect(allowed.length).toBe(0)
+    })
+
+    it('handles array with only student tools', async () => {
+      const { discoverStudentAllowedTools } = await import('@/server/repos/mcp/tool-allowlist')
+      const tools = [
+        createMockTool('getActiveExerciseContext'),
+        createMockTool('getActiveExerciseContext'), // Duplicate
+      ]
+
+      const allowed = discoverStudentAllowedTools(tools)
+
+      expect(allowed.length).toBe(2)
+    })
+  })
+})
