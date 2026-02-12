@@ -302,15 +302,27 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Duplicate API', () => {
       expect(exercise1.slug).toBe('same-slug')
       expect(exercise2.slug).toBe('same-slug')
 
-      // Clean up lesson 2 and chapter 2
-      await payload.delete({
-        collection: 'lessons',
-        id: lesson2Id,
-      })
-      await payload.delete({
-        collection: 'chapters',
-        id: typeof chapter2.id === 'string' ? chapter2.id : String(chapter2.id),
-      })
+      // Clean up exercises in lesson 2, then lesson 2, then chapter 2
+      try {
+        await payload.delete({
+          collection: 'exercises',
+          id: typeof exercise2.id === 'string' ? exercise2.id : String(exercise2.id),
+        })
+        await payload.delete({
+          collection: 'exercises',
+          id: typeof exercise1.id === 'string' ? exercise1.id : String(exercise1.id),
+        })
+        await payload.delete({
+          collection: 'lessons',
+          id: lesson2Id,
+        })
+        await payload.delete({
+          collection: 'chapters',
+          id: typeof chapter2.id === 'string' ? chapter2.id : String(chapter2.id),
+        })
+      } catch (error) {
+        console.warn('Test cleanup failed:', error)
+      }
     })
   })
 })
