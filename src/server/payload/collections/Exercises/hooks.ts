@@ -45,10 +45,12 @@ export const generateSlug: FieldHook = async ({ value, operation, originalDoc, s
       break
     }
 
+    // If updating the same document, keep the slug
     if (originalDoc?.id && existing.docs[0]?.id === originalDoc.id) {
       break
     }
 
+    // For create operations (including duplicate), generate a unique slug
     slug = `${baseSlug}-${counter}`
     counter++
   }
