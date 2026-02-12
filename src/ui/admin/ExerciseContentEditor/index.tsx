@@ -4,7 +4,7 @@ import type { Media } from '@/payload-types'
 import { ExerciseBlockDefaults, generateId } from '@/shared/exercise-content/defaults'
 import type { ContentBlock } from '@/shared/exercise-content/types'
 import { useField, useForm } from '@payloadcms/ui'
-import { Code, Image as ImageIcon, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
+import { Code, Image as ImageIcon, MoveDown, MoveUp, Plus, Copy, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import React from 'react'
 import { BlockTypeSelector } from './BlockTypeSelector'
@@ -17,6 +17,7 @@ import { TrueFalseEditor } from './editors/TrueFalseEditor'
 import { McqEditor } from './editors/McqEditor'
 import { FreeResponseEditor } from './editors/FreeResponseEditor'
 import { TableEditor } from './editors/TableEditor'
+import { deepCloneBlock } from './utils'
 
 /**
  * Exercise Content Editor - Strict Flat Blocks
@@ -191,6 +192,22 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
     updateLocalValue({ blocks: newBlocks })
   }
 
+  // Duplicate block
+  const handleDuplicateBlock = (blockId: string) => {
+    const index = blocks.findIndex((b) => b.id === blockId)
+    if (index === -1) return
+
+    const originalBlock = blocks[index]
+    const duplicatedBlock = deepCloneBlock(originalBlock)
+
+    const newBlocks = [...blocks]
+    // Insert duplicate right after the original
+    newBlocks.splice(index + 1, 0, duplicatedBlock)
+
+    updateLocalValue({ blocks: newBlocks })
+    setSelectedBlockId(duplicatedBlock.id)
+  }
+
   // Apply JSON changes
   const handleJsonApply = (updatedBlock: ContentBlock) => {
     if (!selectedBlockId) return
@@ -353,6 +370,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
                 onDeleteBlock={handleDeleteBlock}
                 onUpdateBlock={handleUpdateBlock}
                 onMoveBlock={handleMoveBlock}
+                onDuplicateBlock={handleDuplicateBlock}
                 onOpenMediaPicker={handleOpenMediaPicker}
                 onRemoveMedia={handleRemoveMedia}
               />
@@ -379,6 +397,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
               onDeleteBlock={handleDeleteBlock}
               onUpdateBlock={handleUpdateBlock}
               onMoveBlock={handleMoveBlock}
+              onDuplicateBlock={handleDuplicateBlock}
               onOpenMediaPicker={handleOpenMediaPicker}
               onRemoveMedia={handleRemoveMedia}
             />
@@ -439,6 +458,7 @@ function renderQuestionEditor(
   blockCount: number,
   onMoveUp: () => void,
   onMoveDown: () => void,
+  onDuplicate: () => void,
   onDelete: () => void,
 ): React.ReactNode {
   if (block.type === 'question_select' && block.variant === 'true_false') {
@@ -449,6 +469,7 @@ function renderQuestionEditor(
         onBlockChange={onChange}
         onMoveUp={onMoveUp}
         onMoveDown={onMoveDown}
+        onDuplicate={onDuplicate}
         onDelete={onDelete}
         canMoveUp={blockIndex > 0}
         canMoveDown={blockIndex < blockCount - 1}
@@ -469,6 +490,7 @@ function renderQuestionEditor(
         onBlockChange={onChange}
         onMoveUp={onMoveUp}
         onMoveDown={onMoveDown}
+        onDuplicate={onDuplicate}
         onDelete={onDelete}
         canMoveUp={blockIndex > 0}
         canMoveDown={blockIndex < blockCount - 1}
@@ -489,6 +511,7 @@ function renderQuestionEditor(
         onBlockChange={onChange}
         onMoveUp={onMoveUp}
         onMoveDown={onMoveDown}
+        onDuplicate={onDuplicate}
         onDelete={onDelete}
         canMoveUp={blockIndex > 0}
         canMoveDown={blockIndex < blockCount - 1}
@@ -509,6 +532,7 @@ function renderQuestionEditor(
         onBlockChange={onChange}
         onMoveUp={onMoveUp}
         onMoveDown={onMoveDown}
+        onDuplicate={onDuplicate}
         onDelete={onDelete}
         canMoveUp={blockIndex > 0}
         canMoveDown={blockIndex < blockCount - 1}
@@ -532,6 +556,7 @@ interface BlockListProps {
   onDeleteBlock: (id: string) => void
   onUpdateBlock: (id: string, updates: Partial<ContentBlock>) => void
   onMoveBlock: (id: string, direction: 'up' | 'down') => void
+  onDuplicateBlock: (id: string) => void
   onOpenMediaPicker: (blockId: string) => void
   onRemoveMedia: (blockId: string, mediaId: string) => void
 }
@@ -544,6 +569,7 @@ function BlockList({
   onDeleteBlock,
   onUpdateBlock,
   onMoveBlock,
+  onDuplicateBlock,
   onOpenMediaPicker,
   onRemoveMedia,
 }: BlockListProps) {
@@ -581,6 +607,14 @@ function BlockList({
                       type="button"
                     >
                       <MoveDown size={14} />
+                    </button>
+                    <button
+                      className="block-action-button"
+                      onClick={() => onDuplicateBlock(block.id)}
+                      title="Duplicate block"
+                      type="button"
+                    >
+                      <Copy size={14} />
                     </button>
                     <button
                       className="block-action-button block-action-button--danger"
@@ -634,6 +668,7 @@ function BlockList({
                   blocks.length,
                   () => onMoveBlock(block.id, 'up'),
                   () => onMoveBlock(block.id, 'down'),
+                  () => onDuplicateBlock(block.id),
                   () => onDeleteBlock(block.id),
                 )}
               </div>
