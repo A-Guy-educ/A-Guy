@@ -2,12 +2,8 @@ import { z } from 'zod'
 
 // Use shared types for API surface (matching client)
 // Zod schemas are used for validation only
-export type LatexBlock = import('./types').LatexBlock
-export type ContentData = import('./types').ContentData
-
-// Import graphics contracts for Geometry and Axis schemas
-import { AxisSpecV1Schema } from '@/infra/contracts/graphics/axis.v1'
-import { GeometrySpecV1Schema } from '@/infra/contracts/graphics/geometry.v1'
+export type LatexBlock = import('@/infra/llm/services/exercise-content/types').LatexBlock
+export type ContentData = import('@/infra/llm/services/exercise-content/types').ContentData
 
 // ---------------------------------
 // Zod: Inline Rich Text (NO id)
@@ -215,16 +211,46 @@ const TableBlockSchema = z
       })
     }
 
-    // Validate answer keys are within table bounds
-    for (const [key] of Object.entries(table.answers || {})) {
-      const [rowIdx, colIdx] = key.split('-').map(Number)
-
-      if (rowIdx >= table.rowsData.length || colIdx >= headerCount) {
+    if (table.solutionFill) {
+      if (!table.answers || Object.keys(table.answers).length === 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Answer key "${key}" references out-of-bounds cell`,
-          path: ['answers', key],
+          message: 'When solutionFill is true, answers must have at least one entry',
+          path: ['answers'],
         })
+      }
+
+      for (const [key] of Object.entries(table.answers || {})) {
+        const [rowIdx, colIdx] = key.split('-').map(Number)
+
+        if (rowIdx >= table.rowsData.length || colIdx >= headerCount) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Answer key "${key}" references out-of-bounds cell`,
+            path: ['answers', key],
+          })
+        } else if (table.rowsData[rowIdx][colIdx] !== '') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Answer key "${key}" points to a non-empty cell (fillable cells must be empty)`,
+            path: ['answers', key],
+          })
+        }
+      }
+
+      for (let rowIdx = 0; rowIdx < table.rowsData.length; rowIdx++) {
+        for (let colIdx = 0; colIdx < table.rowsData[rowIdx].length; colIdx++) {
+          if (table.rowsData[rowIdx][colIdx] === '') {
+            const key = `${rowIdx}-${colIdx}`
+            if (!table.answers || !(key in table.answers)) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `Empty cell at ${key} must have a corresponding answer key`,
+                path: ['rowsData', rowIdx, colIdx],
+              })
+            }
+          }
+        }
       }
     }
   })
@@ -245,281 +271,6 @@ export const QuestionTableBlockSchema = z
   .strict()
 
 // ---------------------------------
-// Zod: Matching Option Schema
-// ---------------------------------
-const MatchingOptionSchema = z
-  .object({
-    id: z.string().min(1),
-    content: InlineRichTextSchema,
-  })
-  .strict()
-
-// ---------------------------------
-// Zod: Matching Pair Schema (answer)
-// ---------------------------------
-const MatchingPairSchema = z
-  .object({
-    optionId: z.string().min(1),
-    matchId: z.string().min(1),
-  })
-  .strict()
-
-// ---------------------------------
-// Zod: Question Matching Block Schema
-// ---------------------------------
-export const QuestionMatchingBlockSchema = z
-  .object({
-    id: z.string().min(1),
-    type: z.literal('question_matching'),
-    prompt: InlineRichTextSchema,
-    leftColumn: z.array(MatchingOptionSchema).min(2),
-    rightColumn: z.array(MatchingOptionSchema).min(2),
-    correctPairs: z.array(MatchingPairSchema).min(1),
-    shuffleRightColumn: z.boolean().default(true),
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
-  })
-  .strict()
-  .superRefine((data, ctx) => {
-    // Validate all option IDs exist in their respective columns
-    const leftIds = new Set(data.leftColumn.map((o) => o.id))
-    const rightIds = new Set(data.rightColumn.map((o) => o.id))
-
-    for (const pair of data.correctPairs) {
-      if (!leftIds.has(pair.optionId)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `correctPairs contains unknown optionId: ${pair.optionId}`,
-          path: ['correctPairs'],
-        })
-      }
-      if (!rightIds.has(pair.matchId)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `correctPairs contains unknown matchId: ${pair.matchId}`,
-          path: ['correctPairs'],
-        })
-      }
-    }
-  })
-
-// ---------------------------------
-// Zod: SVG Hotspot Schema
-// ---------------------------------
-const SvgHotspotSchema = z
-  .object({
-    id: z.string().min(1),
-    selector: z.string().min(1),
-    label: z.string().optional(),
-  })
-  .strict()
-
-// ---------------------------------
-// Zod: SVG Block Schema
-// ---------------------------------
-const SvgBlockSchema = z
-  .object({
-    id: z.string().min(1),
-    type: z.literal('svg'),
-    value: z.string().min(1),
-    altText: z.string().optional(),
-    caption: InlineRichTextSchema.optional(),
-    interactive: z.boolean().optional(),
-    hotspots: z.array(SvgHotspotSchema).optional(),
-    correctHotspotIds: z.array(z.string().min(1)).optional(),
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
-  })
-  .strict()
-  .superRefine((data, ctx) => {
-    if (data.correctHotspotIds && data.hotspots) {
-      const hotspotIds = new Set(data.hotspots.map((h) => h.id))
-      for (const id of data.correctHotspotIds) {
-        if (!hotspotIds.has(id)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `correctHotspotIds contains unknown hotspot id: ${id}`,
-            path: ['correctHotspotIds'],
-          })
-        }
-      }
-    }
-    if (data.interactive && (!data.hotspots || data.hotspots.length === 0)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Interactive SVG must have at least one hotspot',
-        path: ['hotspots'],
-      })
-    }
-  })
-
-// ---------------------------------
-// Zod: Question Answer Schema (used by Geometry + Axis)
-// ---------------------------------
-const QuestionAnswerSchema = z.discriminatedUnion('kind', [
-  z
-    .object({
-      kind: z.literal('numeric'),
-      value: z.number(),
-      tolerance: z.number().positive().optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal('mcq'),
-      options: z.array(McqOptionSchema).min(2),
-      correctOptionIds: z.array(z.string().min(1)).min(1),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal('free_response'),
-      acceptedAnswers: z.array(z.string().min(1)).min(1),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal('point'),
-      x: z.number(),
-      y: z.number(),
-      tolerance: z.number().positive().optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal('function'),
-      acceptedExpressions: z.array(z.string().min(1)).min(1),
-    })
-    .strict(),
-])
-
-// ---------------------------------
-// Zod: Question Geometry Block Schema
-// ---------------------------------
-export const QuestionGeometryBlockSchema = z
-  .object({
-    id: z.string().min(1),
-    type: z.literal('question_geometry'),
-    prompt: InlineRichTextSchema,
-    geometry: GeometrySpecV1Schema,
-    answer: QuestionAnswerSchema.optional(),
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
-  })
-  .strict()
-
-// ---------------------------------
-// Zod: Question Axis Block Schema
-// ---------------------------------
-export const QuestionAxisBlockSchema = z
-  .object({
-    id: z.string().min(1),
-    type: z.literal('question_axis'),
-    prompt: InlineRichTextSchema,
-    axis: AxisSpecV1Schema,
-    answer: QuestionAnswerSchema.optional(),
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
-  })
-  .strict()
-
-// ---------------------------------
-// Zod: HTML Block (WYSIWYG content stored as sanitized HTML string)
-// ---------------------------------
-
-// Allowlist of tags Quill can produce + safe formatting tags
-const HTML_ALLOWED_TAGS = new Set([
-  'p',
-  'br',
-  'hr',
-  'span',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'strong',
-  'b',
-  'em',
-  'i',
-  'u',
-  's',
-  'del',
-  'ins',
-  'mark',
-  'sub',
-  'sup',
-  'ul',
-  'ol',
-  'li',
-  'blockquote',
-  'pre',
-  'code',
-  'a',
-  'img',
-  'div',
-  'section',
-  'table',
-  'thead',
-  'tbody',
-  'tr',
-  'th',
-  'td',
-])
-
-// Patterns that are dangerous regardless of tag allowlist
-const DANGEROUS_HTML_PATTERNS = [
-  /\bon\w+\s*=/i, // inline event handlers (onclick, onload, etc.)
-  /javascript\s*:/i, // javascript: URLs
-  /vbscript\s*:/i, // vbscript: URLs
-  /data\s*:[^,]*;base64/i, // data: URIs with base64 (in href/src context)
-]
-
-function validateHtmlTags(html: string): boolean {
-  const tagPattern = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi
-  let match
-  while ((match = tagPattern.exec(html)) !== null) {
-    if (!HTML_ALLOWED_TAGS.has(match[1].toLowerCase())) {
-      return false
-    }
-  }
-  return true
-}
-
-export const HtmlBlockSchema = z
-  .object({
-    id: z.string().min(1),
-    type: z.literal('html'),
-    html: z
-      .string()
-      .refine(
-        (html) => validateHtmlTags(html),
-        'HTML contains disallowed tags. Only safe formatting tags are permitted.',
-      )
-      .refine(
-        (html) => !DANGEROUS_HTML_PATTERNS.some((pattern) => pattern.test(html)),
-        'HTML contains blocked content (event handlers, javascript:, vbscript:, or data: URLs)',
-      ),
-  })
-  .strict()
-
-// ---------------------------------
-// Zod: Media Block (reference to a single media item)
-// ---------------------------------
-export const MediaBlockSchema = z
-  .object({
-    id: z.string().min(1),
-    type: z.literal('media'),
-    mediaId: z.string().min(1),
-  })
-  .strict()
-
-// ---------------------------------
 // Zod: Content union (exported for admin components)
 // ---------------------------------
 export const ContentBlockSchema = z.discriminatedUnion('type', [
@@ -528,12 +279,6 @@ export const ContentBlockSchema = z.discriminatedUnion('type', [
   QuestionFreeResponseBlockSchema,
   LatexBlockSchema,
   QuestionTableBlockSchema,
-  QuestionMatchingBlockSchema,
-  SvgBlockSchema,
-  QuestionGeometryBlockSchema,
-  QuestionAxisBlockSchema,
-  HtmlBlockSchema,
-  MediaBlockSchema,
 ])
 
 export type ContentBlock = z.infer<typeof ContentBlockSchema>

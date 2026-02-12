@@ -12,8 +12,11 @@
 import { z } from 'zod'
 import type { PayloadRequest } from 'payload'
 
-import { sanitizeExerciseContentForStudent } from '@/shared/exercise-content/sanitize'
-import type { SanitizedExerciseContent, ContentData } from '@/shared/exercise-content/sanitize'
+import { sanitizeExerciseContentForStudent } from '@/infra/llm/services/exercise-content/sanitize'
+import type {
+  SanitizedExerciseContent,
+  ContentData,
+} from '@/infra/llm/services/exercise-content/sanitize'
 
 /**
  * Tool parameters schema for getActiveExerciseContext

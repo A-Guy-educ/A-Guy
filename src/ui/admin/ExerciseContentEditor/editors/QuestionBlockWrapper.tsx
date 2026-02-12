@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
+import type { ContentBlock } from '@/infra/llm/services/exercise-content/types'
 import { AdvancedJsonPanel } from '../../shared/AdvancedJsonPanel'
 import { MoveUp, MoveDown, Copy, Trash2 } from 'lucide-react'
 

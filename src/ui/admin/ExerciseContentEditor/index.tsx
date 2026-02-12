@@ -1,10 +1,10 @@
 'use client'
 
 import type { Media } from '@/payload-types'
-import { ExerciseBlockDefaults, generateId } from '@/server/payload/collections/Exercises/defaults'
-import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
+import { ExerciseBlockDefaults, generateId } from '@/infra/llm/services/exercise-content/defaults'
+import type { ContentBlock } from '@/infra/llm/services/exercise-content/types'
 import { useField, useForm } from '@payloadcms/ui'
-import { Code, Copy, Image as ImageIcon, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
+import { Code, Image as ImageIcon, MoveDown, MoveUp, Plus, Copy, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import React from 'react'
 import { BlockTypeSelector } from './BlockTypeSelector'
@@ -12,17 +12,11 @@ import './index.css'
 import { JSONInspector } from './JSONInspector'
 import { MediaPicker } from './MediaPicker'
 import { RichTextEditor } from './RichTextEditor'
-import { FreeResponseEditor } from './editors/FreeResponseEditor'
-import { AxisEditor } from './editors/AxisEditor'
-import { GeometryEditor } from './editors/GeometryEditor'
-import { HtmlBlockEditor } from './editors/HtmlBlockEditor'
-import { MediaBlockEditor } from './editors/MediaBlockEditor'
-import { MatchingEditor } from './editors/MatchingEditor'
-import { SvgEditor } from './editors/SvgEditor'
-import { McqEditor } from './editors/McqEditor'
 import { QuestionBlockWrapper } from './editors/QuestionBlockWrapper'
-import { TableEditor } from './editors/TableEditor'
 import { TrueFalseEditor } from './editors/TrueFalseEditor'
+import { McqEditor } from './editors/McqEditor'
+import { FreeResponseEditor } from './editors/FreeResponseEditor'
+import { TableEditor } from './editors/TableEditor'
 import { deepCloneBlock } from './utils'
 
 /**
@@ -229,14 +223,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   // Save media selection
   const handleMediaSave = (mediaIds: string[]) => {
     if (currentBlockForMedia) {
-      const block = blocks.find((b) => b.id === currentBlockForMedia)
-      if (block?.type === 'media') {
-        // Media block: single mediaId
-        handleUpdateBlock(currentBlockForMedia, { mediaId: mediaIds[0] || '' })
-      } else {
-        // Rich text block: array of mediaIds
-        handleUpdateBlock(currentBlockForMedia, { mediaIds })
-      }
+      handleUpdateBlock(currentBlockForMedia, { mediaIds })
     }
   }
 
@@ -461,12 +448,6 @@ function getBlockTypeLabel(block: ContentBlock): string {
   if (block.type === 'question_select' && block.variant === 'mcq') return 'Multiple Choice'
   if (block.type === 'question_free_response') return 'Free Response'
   if (block.type === 'question_table') return 'Table Question'
-  if (block.type === 'html') return 'HTML Block'
-  if (block.type === 'question_matching') return 'Matching'
-  if (block.type === 'svg') return 'SVG Image'
-  if (block.type === 'media') return 'Media'
-  if (block.type === 'question_geometry') return 'Geometry'
-  if (block.type === 'question_axis') return 'Axis Graph'
   return block.type
 }
 
@@ -496,7 +477,7 @@ function renderQuestionEditor(
       >
         <TrueFalseEditor
           block={
-            block as import('@/server/payload/collections/Exercises/types').QuestionSelectTrueFalseBlock
+            block as import('@/infra/llm/services/exercise-content/types').QuestionSelectTrueFalseBlock
           }
           onChange={onChange}
         />
@@ -519,7 +500,7 @@ function renderQuestionEditor(
       >
         <McqEditor
           block={
-            block as import('@/server/payload/collections/Exercises/types').QuestionSelectMcqBlock
+            block as import('@/infra/llm/services/exercise-content/types').QuestionSelectMcqBlock
           }
           onChange={onChange}
         />
@@ -542,7 +523,7 @@ function renderQuestionEditor(
       >
         <FreeResponseEditor
           block={
-            block as import('@/server/payload/collections/Exercises/types').QuestionFreeResponseBlock
+            block as import('@/infra/llm/services/exercise-content/types').QuestionFreeResponseBlock
           }
           onChange={onChange}
         />
@@ -564,95 +545,7 @@ function renderQuestionEditor(
         canDelete={blockCount > 1}
       >
         <TableEditor
-          block={block as import('@/server/payload/collections/Exercises/types').QuestionTableBlock}
-          onChange={onChange}
-        />
-      </QuestionBlockWrapper>
-    )
-  }
-  if (block.type === 'question_matching') {
-    return (
-      <QuestionBlockWrapper
-        blockType={getBlockTypeLabel(block)}
-        block={block}
-        onBlockChange={onChange}
-        onMoveUp={onMoveUp}
-        onMoveDown={onMoveDown}
-        onDuplicate={onDuplicate}
-        onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
-        canDelete={blockCount > 1}
-      >
-        <MatchingEditor
-          block={
-            block as import('@/server/payload/collections/Exercises/types').QuestionMatchingBlock
-          }
-          onChange={onChange}
-        />
-      </QuestionBlockWrapper>
-    )
-  }
-  if (block.type === 'svg') {
-    return (
-      <QuestionBlockWrapper
-        blockType={getBlockTypeLabel(block)}
-        block={block}
-        onBlockChange={onChange}
-        onMoveUp={onMoveUp}
-        onMoveDown={onMoveDown}
-        onDuplicate={onDuplicate}
-        onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
-        canDelete={blockCount > 1}
-      >
-        <SvgEditor
-          block={block as import('@/server/payload/collections/Exercises/types').SvgBlock}
-          onChange={onChange}
-        />
-      </QuestionBlockWrapper>
-    )
-  }
-  if (block.type === 'question_geometry') {
-    return (
-      <QuestionBlockWrapper
-        blockType={getBlockTypeLabel(block)}
-        block={block}
-        onBlockChange={onChange}
-        onMoveUp={onMoveUp}
-        onMoveDown={onMoveDown}
-        onDuplicate={onDuplicate}
-        onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
-        canDelete={blockCount > 1}
-      >
-        <GeometryEditor
-          block={
-            block as import('@/server/payload/collections/Exercises/types').QuestionGeometryBlock
-          }
-          onChange={onChange}
-        />
-      </QuestionBlockWrapper>
-    )
-  }
-  if (block.type === 'question_axis') {
-    return (
-      <QuestionBlockWrapper
-        blockType={getBlockTypeLabel(block)}
-        block={block}
-        onBlockChange={onChange}
-        onMoveUp={onMoveUp}
-        onMoveDown={onMoveDown}
-        onDuplicate={onDuplicate}
-        onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
-        canDelete={blockCount > 1}
-      >
-        <AxisEditor
-          block={block as import('@/server/payload/collections/Exercises/types').QuestionAxisBlock}
+          block={block as import('@/infra/llm/services/exercise-content/types').QuestionTableBlock}
           onChange={onChange}
         />
       </QuestionBlockWrapper>
@@ -674,67 +567,6 @@ interface BlockListProps {
   onRemoveMedia: (blockId: string, mediaId: string) => void
 }
 
-function ContentBlockHeader({
-  blockId,
-  index,
-  blockCount,
-  onMoveBlock,
-  onDuplicateBlock,
-  onDeleteBlock,
-}: {
-  blockId: string
-  index: number
-  blockCount: number
-  onMoveBlock: (id: string, direction: 'up' | 'down') => void
-  onDuplicateBlock: (id: string) => void
-  onDeleteBlock: (id: string) => void
-}) {
-  return (
-    <div className="block-header">
-      <div className="block-header-left">
-        <span className="block-number">Block {index + 1}</span>
-      </div>
-      <div className="block-actions">
-        <button
-          className="block-action-button"
-          onClick={() => onMoveBlock(blockId, 'up')}
-          disabled={index === 0}
-          title="Move up"
-          type="button"
-        >
-          <MoveUp size={14} />
-        </button>
-        <button
-          className="block-action-button"
-          onClick={() => onMoveBlock(blockId, 'down')}
-          disabled={index === blockCount - 1}
-          title="Move down"
-          type="button"
-        >
-          <MoveDown size={14} />
-        </button>
-        <button
-          className="block-action-button"
-          onClick={() => onDuplicateBlock(blockId)}
-          title="Duplicate block"
-          type="button"
-        >
-          <Copy size={14} />
-        </button>
-        <button
-          className="block-action-button block-action-button--danger"
-          onClick={() => onDeleteBlock(blockId)}
-          disabled={blockCount === 1}
-          title="Delete block"
-          type="button"
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
-    </div>
-  )
-}
-
 function BlockList({
   blocks,
   selectedBlockId,
@@ -751,8 +583,6 @@ function BlockList({
     <div className="block-list">
       {blocks.map((block, index) => {
         const isRichText = block.type === 'rich_text'
-        const isHtml = block.type === 'html'
-        const isMedia = block.type === 'media'
 
         return (
           <div
@@ -761,14 +591,48 @@ function BlockList({
           >
             {isRichText ? (
               <>
-                <ContentBlockHeader
-                  blockId={block.id}
-                  index={index}
-                  blockCount={blocks.length}
-                  onMoveBlock={onMoveBlock}
-                  onDuplicateBlock={onDuplicateBlock}
-                  onDeleteBlock={onDeleteBlock}
-                />
+                <div className="block-header">
+                  <div className="block-header-left">
+                    <span className="block-number">Block {index + 1}</span>
+                  </div>
+                  <div className="block-actions">
+                    <button
+                      className="block-action-button"
+                      onClick={() => onMoveBlock(block.id, 'up')}
+                      disabled={index === 0}
+                      title="Move up"
+                      type="button"
+                    >
+                      <MoveUp size={14} />
+                    </button>
+                    <button
+                      className="block-action-button"
+                      onClick={() => onMoveBlock(block.id, 'down')}
+                      disabled={index === blocks.length - 1}
+                      title="Move down"
+                      type="button"
+                    >
+                      <MoveDown size={14} />
+                    </button>
+                    <button
+                      className="block-action-button"
+                      onClick={() => onDuplicateBlock(block.id)}
+                      title="Duplicate block"
+                      type="button"
+                    >
+                      <Copy size={14} />
+                    </button>
+                    <button
+                      className="block-action-button block-action-button--danger"
+                      onClick={() => onDeleteBlock(block.id)}
+                      disabled={blocks.length === 1}
+                      title="Delete block"
+                      type="button"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
                 <div className="block-content">
                   <div onClick={() => onSelect(block.id)} onFocus={() => onSelect(block.id)}>
                     <RichTextEditor
@@ -799,45 +663,6 @@ function BlockList({
                       onRemoveMedia={onRemoveMedia}
                     />
                   )}
-                </div>
-              </>
-            ) : isMedia ? (
-              <>
-                <ContentBlockHeader
-                  blockId={block.id}
-                  index={index}
-                  blockCount={blocks.length}
-                  onMoveBlock={onMoveBlock}
-                  onDuplicateBlock={onDuplicateBlock}
-                  onDeleteBlock={onDeleteBlock}
-                />
-                <div className="block-content" onClick={() => onSelect(block.id)}>
-                  <MediaBlockEditor
-                    block={
-                      block as import('@/server/payload/collections/Exercises/types').MediaBlock
-                    }
-                    onChange={(updatedBlock) => onUpdateBlock(block.id, updatedBlock)}
-                    onOpenMediaPicker={() => onOpenMediaPicker(block.id)}
-                  />
-                </div>
-              </>
-            ) : isHtml ? (
-              <>
-                <ContentBlockHeader
-                  blockId={block.id}
-                  index={index}
-                  blockCount={blocks.length}
-                  onMoveBlock={onMoveBlock}
-                  onDuplicateBlock={onDuplicateBlock}
-                  onDeleteBlock={onDeleteBlock}
-                />
-                <div className="block-content" onClick={() => onSelect(block.id)}>
-                  <HtmlBlockEditor
-                    block={
-                      block as import('@/server/payload/collections/Exercises/types').HtmlBlock
-                    }
-                    onChange={(updatedBlock) => onUpdateBlock(block.id, updatedBlock)}
-                  />
                 </div>
               </>
             ) : (
@@ -920,8 +745,7 @@ function BlockMediaDisplay({ blockId, mediaIds, onRemoveMedia }: BlockMediaDispl
         // Cast to any to bypass strict type checking for blob storage sizes
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mediaAny = media as any
-        // Use thumbnailURL (set by adminThumbnail) first, then fall back to sizes.thumbnail.url
-        const thumbnailUrl = media.thumbnailURL || mediaAny.sizes?.thumbnail?.url || media.url
+        const thumbnailUrl = mediaAny.sizes?.thumbnail?.url || media.url
         return (
           <div key={media.id} className="media-thumbnail-preview">
             {thumbnailUrl && (

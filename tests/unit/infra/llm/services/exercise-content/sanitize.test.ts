@@ -7,14 +7,14 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { sanitizeExerciseContentForStudent } from '@/shared/exercise-content/sanitize'
-import type { ContentData, InlineRichText } from '@/shared/exercise-content/types'
+import { sanitizeExerciseContentForStudent } from '@/infra/llm/services/exercise-content/sanitize'
+import type { ContentData, InlineRichText } from '@/infra/llm/services/exercise-content/types'
 import type {
   SanitizedTrueFalseBlock,
   SanitizedMcqBlock,
   SanitizedTableBlock,
   SanitizedFreeResponseBlock,
-} from '@/shared/exercise-content/sanitize'
+} from '@/infra/llm/services/exercise-content/sanitize'
 
 // =============================================================================
 // TEST HELPERS

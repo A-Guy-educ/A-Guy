@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import type { InlineRichText } from '@/server/payload/collections/Exercises/types'
+import type { InlineRichText } from '@/infra/llm/services/exercise-content/types'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
 import { InlineRichTextEditor } from './InlineRichTextEditor'
 import { Plus, X } from 'lucide-react'

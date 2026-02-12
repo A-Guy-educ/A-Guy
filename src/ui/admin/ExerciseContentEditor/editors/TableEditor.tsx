@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import type { QuestionTableBlock } from '@/server/payload/collections/Exercises/types'
+import type { QuestionTableBlock } from '@/infra/llm/services/exercise-content/types'
 import { InlineRichTextEditor } from './InlineRichTextEditor'
 import { HintSolutionPanel } from './HintSolutionPanel'
 import { Plus, Trash2 } from 'lucide-react'
@@ -72,15 +72,9 @@ export const TableEditor: React.FC<TableEditorProps> = ({ block, onChange }) => 
     const newRowsData = [...table.rowsData]
     newRowsData[rowIndex] = [...newRowsData[rowIndex]]
     newRowsData[rowIndex][colIndex] = value
-    // Clean up answer key when cell gets content (no longer fillable)
-    const key = `${rowIndex}-${colIndex}`
-    const newAnswers = { ...(table.answers || {}) }
-    if (value !== '' && key in newAnswers) {
-      delete newAnswers[key]
-    }
     onChange({
       ...block,
-      table: { ...table, rowsData: newRowsData, answers: newAnswers },
+      table: { ...table, rowsData: newRowsData },
     })
   }
 
@@ -234,43 +228,28 @@ export const TableEditor: React.FC<TableEditorProps> = ({ block, onChange }) => 
             <div key={rowIndex} className="table-row">
               <div className="table-row-label">Row {rowIndex + 1}</div>
               <div className="table-row-cells">
-                {row.map((cell, colIndex) => {
-                  const isFillable = table.solutionFill && cell === ''
-                  return (
-                    <div
-                      key={colIndex}
-                      className={`table-cell-wrapper${isFillable ? ' table-cell-wrapper--fillable' : ''}`}
-                    >
-                      {table.solutionFill && (
-                        <span className="table-cell-label">
-                          {cell === '' ? 'Student fills in' : 'Display'}
-                        </span>
-                      )}
-                      <input
-                        type="text"
-                        className="table-cell-input"
-                        style={{ textAlign: table.columnAlignment?.[colIndex] || 'left' }}
-                        value={cell}
-                        onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
-                        placeholder={
-                          table.solutionFill ? 'Type text or leave empty for fill-in' : ''
-                        }
-                      />
-                      {isFillable && (
-                        <div className="table-solution-input-wrapper">
-                          <label className="table-solution-label">Answer:</label>
-                          <input
-                            type="text"
-                            className="table-solution-input"
-                            placeholder="Type the correct answer"
-                            value={table.answers?.[`${rowIndex}-${colIndex}`] || ''}
-                            onChange={(e) => handleAnswerChange(rowIndex, colIndex, e.target.value)}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
+                {row.map((cell, colIndex) => (
+                  <div key={colIndex} className="table-cell-wrapper">
+                    <input
+                      type="text"
+                      className="table-cell-input"
+                      style={{ textAlign: table.columnAlignment?.[colIndex] || 'left' }}
+                      value={cell}
+                      onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
+                    />
+                    {table.solutionFill && (
+                      <div className="table-solution-input-wrapper">
+                        <input
+                          type="text"
+                          className="table-solution-input"
+                          placeholder="Answer"
+                          value={table.answers?.[`${rowIndex}-${colIndex}`] || ''}
+                          onChange={(e) => handleAnswerChange(rowIndex, colIndex, e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
               <button
                 type="button"

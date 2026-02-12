@@ -2,7 +2,7 @@
  * Utilities for flat block list (no containers, no hierarchy)
  */
 
-import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
+import type { ContentBlock } from '@/infra/llm/services/exercise-content/types'
 
 export const generateId = () => {
   return typeof crypto !== 'undefined' && crypto.randomUUID
@@ -45,24 +45,6 @@ export function deepCloneBlock(block: ContentBlock): ContentBlock {
     // For table blocks, we don't need to regenerate answer keys
     // since they're position-based (e.g., "0-1" for row 0, col 1)
     // The answer keys remain valid for the cloned table structure
-  } else if (cloned.type === 'question_matching') {
-    const oldToNewLeft = new Map<string, string>()
-    const oldToNewRight = new Map<string, string>()
-
-    cloned.leftColumn = cloned.leftColumn.map((opt) => {
-      const newId = generateId()
-      oldToNewLeft.set(opt.id, newId)
-      return { ...opt, id: newId }
-    })
-    cloned.rightColumn = cloned.rightColumn.map((opt) => {
-      const newId = generateId()
-      oldToNewRight.set(opt.id, newId)
-      return { ...opt, id: newId }
-    })
-    cloned.correctPairs = cloned.correctPairs.map((pair) => ({
-      optionId: oldToNewLeft.get(pair.optionId) || pair.optionId,
-      matchId: oldToNewRight.get(pair.matchId) || pair.matchId,
-    }))
   }
 
   return cloned

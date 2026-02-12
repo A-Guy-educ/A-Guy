@@ -1,8 +1,8 @@
 'use client'
 
 import React from 'react'
-import type { QuestionSelectMcqBlock } from '@/server/payload/collections/Exercises/types'
-import { generateId } from '@/server/payload/collections/Exercises/types'
+import type { QuestionSelectMcqBlock } from '@/infra/llm/services/exercise-content/types'
+import { generateId } from '@/infra/llm/services/exercise-content/types'
 import { InlineRichTextEditor } from './InlineRichTextEditor'
 import { HintSolutionPanel } from './HintSolutionPanel'
 import {
