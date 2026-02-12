@@ -8,7 +8,9 @@ import type { ContentBlock, QuestionTableBlock } from '@/shared/exercise-content
  * Validates Solution Fill Mode tables.
  * Returns an error message if validation fails, null if valid.
  *
- * When solutionFill is true, all empty cells must have corresponding answers.
+ * When solutionFill is true:
+ * - Table must have at least one empty cell
+ * - All empty cells must have corresponding answers
  * This performs client-side validation before save to provide immediate feedback.
  */
 export function validateSolutionFillTables(value: { blocks: ContentBlock[] }): string | null {
@@ -16,13 +18,15 @@ export function validateSolutionFillTables(value: { blocks: ContentBlock[] }): s
     if (block.type === 'question_table') {
       const tableBlock = block as QuestionTableBlock
       if (tableBlock.table.solutionFill) {
+        let emptyCellCount = 0
         let missingCount = 0
         const missingPreview: string[] = []
 
-        // Count all missing cells, collect only first 10 for preview
+        // Count empty cells and check which are missing answers
         for (let rowIdx = 0; rowIdx < tableBlock.table.rowsData.length; rowIdx++) {
           for (let colIdx = 0; colIdx < tableBlock.table.rowsData[rowIdx].length; colIdx++) {
             if (tableBlock.table.rowsData[rowIdx][colIdx] === '') {
+              emptyCellCount++
               const key = `${rowIdx}-${colIdx}`
               if (!tableBlock.table.answers || !(key in tableBlock.table.answers)) {
                 missingCount++
@@ -35,6 +39,12 @@ export function validateSolutionFillTables(value: { blocks: ContentBlock[] }): s
           }
         }
 
+        // Check if no empty cells exist - Solution Fill Mode requires at least one
+        if (emptyCellCount === 0) {
+          return `Solution Fill Mode requires at least one empty cell in the table. Clear at least one cell or disable Solution Fill Mode.`
+        }
+
+        // Check if any empty cells are missing answers
         if (missingCount > 0) {
           const preview = missingPreview.join(', ')
           const more = missingCount > 10 ? ` and ${missingCount - 10} more` : ''

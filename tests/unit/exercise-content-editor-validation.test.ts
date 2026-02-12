@@ -95,6 +95,35 @@ describe('validateSolutionFillTables', () => {
     expect(result).toContain('Solution Fill Mode requires all empty cells to have answers')
   })
 
+  it('should return error when solutionFill is true but table has no empty cells', () => {
+    const block: QuestionTableBlock = {
+      id: 'block-1',
+      type: 'question_table',
+      prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Test', mediaIds: [] },
+      table: {
+        solutionFill: true,
+        headers: ['Col 1', 'Col 2'],
+        rowsData: [
+          ['A', 'B'],
+          ['C', 'D'],
+        ],
+        answers: {}, // No empty cells, so no answers needed/allowed
+        showBorders: true,
+        showHeader: true,
+        columnAlignment: ['left', 'left'],
+      },
+      hint: { type: 'rich_text', format: 'md-math-v1', value: '', mediaIds: [] },
+      solution: { type: 'rich_text', format: 'md-math-v1', value: '', mediaIds: [] },
+      fullSolution: { type: 'rich_text', format: 'md-math-v1', value: '', mediaIds: [] },
+    }
+
+    const result = validateSolutionFillTables({ blocks: [block as ContentBlock] })
+
+    expect(result).not.toBeNull()
+    expect(result).toContain('Solution Fill Mode requires at least one empty cell')
+    expect(result).toContain('Clear at least one cell or disable Solution Fill Mode')
+  })
+
   it('should limit preview to first 10 cells and show count', () => {
     // Create a table with 15 empty cells
     const rowsData = Array(5)
