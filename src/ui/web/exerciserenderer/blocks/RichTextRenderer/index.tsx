@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
 import remarkMath from 'remark-math'
 import 'katex/dist/katex.min.css'
+import { preprocessNewlines } from './utils'
 
 interface RichTextRendererProps {
   block: {
@@ -16,17 +17,6 @@ interface RichTextRendererProps {
     value: string
     mediaIds?: string[]
   }
-}
-
-/**
- * Preprocess text to render single newlines as visible line breaks.
- * Converts single \n to two trailing spaces + \n (Markdown hard line break).
- * Preserves existing hard breaks and paragraph breaks.
- */
-function preprocessNewlines(text: string): string {
-  // Replace single newlines with hard breaks (two spaces + newline)
-  // But preserve existing hard breaks and paragraph breaks (multiple newlines)
-  return text.replace(/([^\n])\n(?!\n)/g, '$1  \n')
 }
 
 export function RichTextRenderer({ block }: RichTextRendererProps) {

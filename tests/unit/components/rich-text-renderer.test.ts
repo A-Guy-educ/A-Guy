@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest'
-
-/**
- * Preprocess text to render single newlines as visible line breaks.
- * This is the same function from RichTextRenderer.
- */
-function preprocessNewlines(text: string): string {
-  return text.replace(/([^\n])\n(?!\n)/g, '$1  \n')
-}
+import { preprocessNewlines } from '@/ui/web/exerciserenderer/blocks/RichTextRenderer/utils'
 
 describe('RichTextRenderer - newline preprocessing', () => {
   it('should convert single newline to hard break (two spaces + newline)', () => {
@@ -53,8 +46,8 @@ describe('RichTextRenderer - newline preprocessing', () => {
 
   it('should handle text ending with newline', () => {
     const input = 'Line 1\nLine 2\n'
-    // Note: trailing newline gets two spaces added because it's not followed by another newline
-    const expected = 'Line 1  \nLine 2  \n'
+    // Trailing newline should not get spaces added (no content after it)
+    const expected = 'Line 1  \nLine 2\n'
     expect(preprocessNewlines(input)).toBe(expected)
   })
 
@@ -66,8 +59,8 @@ describe('RichTextRenderer - newline preprocessing', () => {
 
   it('should preserve existing hard breaks (two spaces + newline)', () => {
     const input = 'Line 1  \nLine 2'
-    const expected = 'Line 1    \nLine 2'
-    // Note: This adds more spaces, but that's acceptable as it still renders correctly
+    // Should not add more spaces when they already exist
+    const expected = 'Line 1  \nLine 2'
     expect(preprocessNewlines(input)).toBe(expected)
   })
 
