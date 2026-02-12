@@ -15,7 +15,10 @@ describe('validateSolutionFillTables', () => {
       table: {
         solutionFill: false,
         headers: ['Col 1', 'Col 2'],
-        rowsData: [['', 'B'], ['C', '']],
+        rowsData: [
+          ['', 'B'],
+          ['C', ''],
+        ],
         answers: {}, // No answers, but solutionFill is false
         showBorders: true,
         showHeader: true,
@@ -38,7 +41,10 @@ describe('validateSolutionFillTables', () => {
       table: {
         solutionFill: true,
         headers: ['Col 1', 'Col 2'],
-        rowsData: [['', 'B'], ['C', '']],
+        rowsData: [
+          ['', 'B'],
+          ['C', ''],
+        ],
         answers: {
           '0-0': 'Answer for 0-0',
           '1-1': 'Answer for 1-1',
@@ -64,7 +70,10 @@ describe('validateSolutionFillTables', () => {
       table: {
         solutionFill: true,
         headers: ['Col 1', 'Col 2'],
-        rowsData: [['', 'B'], ['C', '']],
+        rowsData: [
+          ['', 'B'],
+          ['C', ''],
+        ],
         answers: {
           '0-0': 'Answer for 0-0',
           // Missing answer for 1-1
@@ -79,7 +88,7 @@ describe('validateSolutionFillTables', () => {
     }
 
     const result = validateSolutionFillTables({ blocks: [block as ContentBlock] })
-    
+
     expect(result).not.toBeNull()
     expect(result).toContain('1 empty cell missing answers')
     expect(result).toContain('Row 2, Col 2')
@@ -88,8 +97,10 @@ describe('validateSolutionFillTables', () => {
 
   it('should limit preview to first 10 cells and show count', () => {
     // Create a table with 15 empty cells
-    const rowsData = Array(5).fill(null).map(() => ['', '', ''])
-    
+    const rowsData = Array(5)
+      .fill(null)
+      .map(() => ['', '', ''])
+
     const block: QuestionTableBlock = {
       id: 'block-1',
       type: 'question_table',
@@ -109,7 +120,7 @@ describe('validateSolutionFillTables', () => {
     }
 
     const result = validateSolutionFillTables({ blocks: [block as ContentBlock] })
-    
+
     expect(result).not.toBeNull()
     expect(result).toContain('15 empty cells missing answers')
     expect(result).toContain('and 5 more')
@@ -155,10 +166,10 @@ describe('validateSolutionFillTables', () => {
       fullSolution: { type: 'rich_text', format: 'md-math-v1', value: '', mediaIds: [] },
     }
 
-    const result = validateSolutionFillTables({ 
-      blocks: [validBlock as ContentBlock, invalidBlock as ContentBlock] 
+    const result = validateSolutionFillTables({
+      blocks: [validBlock as ContentBlock, invalidBlock as ContentBlock],
     })
-    
+
     // Should fail because one block is invalid
     expect(result).not.toBeNull()
   })

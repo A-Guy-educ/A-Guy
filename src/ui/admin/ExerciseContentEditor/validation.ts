@@ -7,13 +7,11 @@ import type { ContentBlock, QuestionTableBlock } from '@/shared/exercise-content
 /**
  * Validates Solution Fill Mode tables.
  * Returns an error message if validation fails, null if valid.
- * 
+ *
  * When solutionFill is true, all empty cells must have corresponding answers.
  * This performs client-side validation before save to provide immediate feedback.
  */
-export function validateSolutionFillTables(value: {
-  blocks: ContentBlock[]
-}): string | null {
+export function validateSolutionFillTables(value: { blocks: ContentBlock[] }): string | null {
   for (const block of value.blocks) {
     if (block.type === 'question_table') {
       const tableBlock = block as QuestionTableBlock

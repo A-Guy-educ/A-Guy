@@ -114,4 +114,3 @@ describe('Solution Fill Mode - Schema Contract', () => {
     expect(result.success).toBe(true)
   })
 })
-
