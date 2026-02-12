@@ -28,7 +28,7 @@ export function LessonIntro({ lesson, lessonUrl }: LessonIntroProps) {
           <h1 className="text-4xl font-bold tracking-tight">{lesson.title}</h1>
           {description && (
             <div
-              className="prose prose-lg dark:prose-invert max-w-none text-muted-foreground leading-relaxed"
+              className="prose prose-lg dark:prose-invert max-w-none text-muted-foreground leading-relaxed text-start [&_ul]:list-inside [&_ol]:list-inside"
               dangerouslySetInnerHTML={{ __html: description }}
             />
           )}
