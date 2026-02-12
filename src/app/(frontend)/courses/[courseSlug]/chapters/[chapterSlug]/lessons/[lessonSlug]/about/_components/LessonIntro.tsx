@@ -25,12 +25,8 @@ export function LessonIntro({ lesson, lessonUrl }: LessonIntroProps) {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
       <div className="w-full max-w-2xl space-y-8 text-center">
         {introMedia && (
-          <div className="mx-auto max-h-80 overflow-hidden rounded-xl">
-            <Media
-              resource={introMedia}
-              className="mx-auto max-h-80 w-auto object-contain"
-              htmlElement={null}
-            />
+          <div className="relative mx-auto h-80 w-full overflow-hidden rounded-xl">
+            <Media resource={introMedia} fill imgClassName="object-contain" />
           </div>
         )}
 
