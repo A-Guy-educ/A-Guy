@@ -1238,7 +1238,7 @@ export interface Lesson {
    */
   introEnabled?: boolean | null;
   /**
-   * HTML content for the intro page. Supports raw HTML (bold, lists, etc). Paste from ChatGPT or write directly.
+   * HTML content for the intro page. Supports raw HTML (bold, lists, etc).
    */
   introDescription?: string | null;
   /**
