@@ -238,6 +238,33 @@ export const apiService = {
   },
 
   /**
+   * Get AI help for a wrong answer (calls Gemini directly, bypasses chat pipeline)
+   */
+  async wrongAnswerHelp(
+    questionJson: string,
+    studentAnswer: string,
+  ): Promise<{ success: boolean; response?: string; error?: string }> {
+    try {
+      const response = await fetch('/api/agent/wrong-answer-help', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ questionJson, studentAnswer }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Request failed' }
+      }
+
+      return { success: true, response: data.response }
+    } catch {
+      return { success: false, error: 'Network error' }
+    }
+  },
+
+  /**
    * Stream a chat response using SSE
    *
    * @param message - The user's message

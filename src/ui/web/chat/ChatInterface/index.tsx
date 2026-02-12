@@ -2,6 +2,7 @@
 
 import { ChatMessageRole } from '@/infra/llm/chat-message-role'
 import { cn } from '@/infra/utils/ui'
+import { apiService } from '@/server/services/api/api-service'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import {
   BookOpen,
@@ -114,8 +115,8 @@ export function ChatInterface({
     // Error handling
     chatError,
     dismissError,
-    // Programmatic contextual help
-    sendContextualHelp,
+    // Programmatic message injection
+    addAssistantMessage,
   } = useNotebookChat({
     initialMessage: t('chatWelcome'),
     authRequiredMessage: t('chatAuthRequired'),
@@ -142,17 +143,21 @@ export function ChatInterface({
     uploadFailedMessage: tCourses('chatUploadFailed'),
   })
 
-  // Auto-send contextual help on incorrect answer (ref pattern for stable listener)
+  // Wrong-answer help: call Gemini directly (bypasses chat pipeline)
+  const [isHelpLoading, setIsHelpLoading] = useState(false)
   const incorrectAnswerRef = useRef<(e: Event) => void>(() => {})
-  incorrectAnswerRef.current = (e: Event) => {
+  incorrectAnswerRef.current = async (e: Event) => {
     const { questionJson, studentAnswer } = (e as CustomEvent).detail as {
       questionJson: string
       studentAnswer: string
     }
     onChatInteraction?.()
-    sendContextualHelp(
-      `The student answered incorrectly. Here is the full question data:\n${questionJson}\n\nThe student's answer was: "${studentAnswer}"\n\nPlease help them understand why their answer is wrong and guide them toward the correct solution. Be encouraging and supportive.`,
-    )
+    setIsHelpLoading(true)
+    const result = await apiService.wrongAnswerHelp(questionJson, studentAnswer)
+    if (result.success && result.response) {
+      addAssistantMessage(result.response)
+    }
+    setIsHelpLoading(false)
   }
 
   useEffect(() => {
@@ -295,7 +300,7 @@ export function ChatInterface({
               <ChatMessageContent content={msg.content} />
             </div>
           ))}
-        {isLoading && (
+        {(isLoading || isHelpLoading) && (
           <div className="mr-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-[20px] rounded-br-[4px] max-w-[85%] flex items-center gap-2 shadow-sm">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span>{tCourses('chatThinking')}</span>
