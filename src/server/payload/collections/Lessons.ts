@@ -156,7 +156,7 @@ export const Lessons: CollectionConfig = {
     },
     {
       name: 'introDescription',
-      type: 'textarea',
+      type: 'richText',
       admin: {
         description: 'Short explanation shown on the intro page (what the student will learn)',
         condition: (data) => Boolean(data?.introEnabled),

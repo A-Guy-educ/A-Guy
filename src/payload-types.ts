@@ -1240,7 +1240,21 @@ export interface Lesson {
   /**
    * Short explanation shown on the intro page (what the student will learn)
    */
-  introDescription?: string | null;
+  introDescription?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   /**
    * Image, SVG, or video displayed on the intro page
    */
