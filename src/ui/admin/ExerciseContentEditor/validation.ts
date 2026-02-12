@@ -5,12 +5,12 @@
 import type { ContentBlock, QuestionTableBlock } from '@/shared/exercise-content/types'
 
 /**
- * Validates and normalizes Solution Fill Mode tables.
+ * Validates Solution Fill Mode tables.
  * Returns an error message if validation fails, null if valid.
  *
  * When solutionFill is true:
- * - If no empty cells exist: auto-disable solutionFill (normalization)
- * - If empty cells exist: all empty cells must have corresponding answers
+ * - Table must have at least one empty cell
+ * - All empty cells must have corresponding answers
  * This performs client-side validation before save to provide immediate feedback.
  */
 export function validateSolutionFillTables(value: { blocks: ContentBlock[] }): string | null {
@@ -39,11 +39,9 @@ export function validateSolutionFillTables(value: { blocks: ContentBlock[] }): s
           }
         }
 
-        // Auto-disable solutionFill if no empty cells exist (normalization)
+        // Check if no empty cells exist - Solution Fill Mode requires at least one
         if (emptyCellCount === 0) {
-          tableBlock.table.solutionFill = false
-          // Continue processing - this is now valid
-          continue
+          return `Solution Fill Mode requires at least one empty cell in the table. Clear at least one cell or disable Solution Fill Mode.`
         }
 
         // Check if any empty cells are missing answers

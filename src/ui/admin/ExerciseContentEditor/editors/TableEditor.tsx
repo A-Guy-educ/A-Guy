@@ -112,11 +112,23 @@ export const TableEditor: React.FC<TableEditorProps> = ({ block, onChange }) => 
 
   const handleToggleSolutionFill = () => {
     if (table.solutionFill) {
+      // Turning off - always allowed
       onChange({
         ...block,
         table: { ...table, solutionFill: false },
       })
     } else {
+      // Turning on - check if there are empty cells
+      const hasEmptyCells = table.rowsData.some((row) => row.some((cell) => cell === ''))
+
+      if (!hasEmptyCells) {
+        // Show alert and don't enable
+        alert(
+          'Solution Fill Mode requires at least one empty cell in the table. Please clear at least one cell to enable this mode.',
+        )
+        return
+      }
+
       onChange({
         ...block,
         table: { ...table, solutionFill: true, answers: table.answers || {} },

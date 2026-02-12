@@ -95,7 +95,7 @@ describe('validateSolutionFillTables', () => {
     expect(result).toContain('Solution Fill Mode requires all empty cells to have answers')
   })
 
-  it('should auto-disable solutionFill when table has no empty cells (normalization)', () => {
+  it('should return error when solutionFill is true but table has no empty cells', () => {
     const block: QuestionTableBlock = {
       id: 'block-1',
       type: 'question_table',
@@ -119,10 +119,9 @@ describe('validateSolutionFillTables', () => {
 
     const result = validateSolutionFillTables({ blocks: [block as ContentBlock] })
 
-    // Should not return error - normalization happens automatically
-    expect(result).toBeNull()
-    // Verify that solutionFill was auto-disabled
-    expect(block.table.solutionFill).toBe(false)
+    expect(result).not.toBeNull()
+    expect(result).toContain('Solution Fill Mode requires at least one empty cell')
+    expect(result).toContain('Clear at least one cell or disable Solution Fill Mode')
   })
 
   it('should limit preview to first 10 cells and show count', () => {
@@ -204,3 +203,14 @@ describe('validateSolutionFillTables', () => {
     expect(result).not.toBeNull()
   })
 })
+
+/**
+ * UI Guard Behavior (implemented in TableEditor.tsx):
+ *
+ * When user attempts to enable Solution Fill Mode toggle:
+ * - If table has NO empty cells: show alert and prevent enabling
+ * - If table has empty cells: allow enabling
+ *
+ * This prevents the invalid state from being created in the UI,
+ * ensuring validation only needs to check for missing answers.
+ */
