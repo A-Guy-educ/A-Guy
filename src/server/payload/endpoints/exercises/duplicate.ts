@@ -55,7 +55,8 @@ export async function duplicateExercise(req: PayloadRequest) {
     // - Ensure slug uniqueness within the lesson
     const duplicatedExercise = await req.payload.create({
       collection: 'exercises',
-      data: duplicateData as Partial<Exercise>,
+      // @ts-expect-error - duplicateData is missing 'id' field which is auto-generated
+      data: duplicateData,
     })
 
     return Response.json({

@@ -10,8 +10,13 @@ import type { PayloadRequest } from 'payload'
 import config from '@payload-config'
 import { duplicateExercise } from '@/server/payload/endpoints/exercises/duplicate'
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
+    const { id } = await params
+
     // Get Payload instance
     const payload = await getPayload({ config })
 
@@ -24,7 +29,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       user: user || undefined,
       url: request.url,
       headers: request.headers,
-      routeParams: { id: params.id },
+      routeParams: { id },
       context: {},
     } as PayloadRequest
 
