@@ -13,8 +13,18 @@ interface MediaPickerProps {
   onSave: (mediaIds: string[]) => void
 }
 
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/svg+xml',
+  'video/mp4',
+  'video/webm',
+  'application/pdf',
+]
+const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB (videos can be large)
 
 export const MediaPicker: React.FC<MediaPickerProps> = ({
   isOpen,
@@ -97,13 +107,13 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({
 
       // Validate file type
       if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-        setUploadError('Invalid file type. Allowed: JPEG, PNG, WebP, PDF')
+        setUploadError('Invalid file type. Allowed: JPEG, PNG, WebP, GIF, SVG, MP4, WebM, PDF')
         continue
       }
 
       // Validate file size
       if (file.size > MAX_FILE_SIZE) {
-        setUploadError('File too large. Maximum size is 10MB')
+        setUploadError('File too large. Maximum size is 100MB')
         continue
       }
 
@@ -135,7 +145,14 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({
             filename: doc.doc?.filename || doc.filename || file.name,
             url: doc.doc?.url || doc.url,
             alt: '',
-            type: file.type.startsWith('image/') ? 'image' : 'pdf',
+            type:
+              file.type === 'image/svg+xml'
+                ? 'svg'
+                : file.type.startsWith('video/')
+                  ? 'video'
+                  : file.type.startsWith('image/')
+                    ? 'image'
+                    : 'pdf',
             filesize: file.size,
             mimeType: file.type,
             createdAt: new Date().toISOString(),
