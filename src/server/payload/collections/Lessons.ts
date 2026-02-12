@@ -156,9 +156,10 @@ export const Lessons: CollectionConfig = {
     },
     {
       name: 'introDescription',
-      type: 'richText',
+      type: 'textarea',
       admin: {
-        description: 'Short explanation shown on the intro page (what the student will learn)',
+        description:
+          'HTML content for the intro page. Supports raw HTML (bold, lists, etc). Paste from ChatGPT or write directly.',
         condition: (data) => Boolean(data?.introEnabled),
       },
     },

@@ -5,7 +5,6 @@ import { getMediaUrl } from '@/infra/utils/getMediaUrl'
 import type { Lesson, Media as MediaType } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
-import RichText from '@/ui/web/RichText'
 
 interface LessonIntroProps {
   lesson: Lesson
@@ -20,23 +19,18 @@ export function LessonIntro({ lesson, lessonUrl }: LessonIntroProps) {
       ? (lesson.introMedia as MediaType)
       : null
 
-  const hasIntroRichText = lesson.introDescription?.root?.children?.length
+  const description = lesson.introDescription || lesson.description
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
       <div className="w-full max-w-2xl space-y-8 text-center">
         <div className="space-y-4">
           <h1 className="text-4xl font-bold tracking-tight">{lesson.title}</h1>
-          {hasIntroRichText ? (
-            <RichText
-              data={lesson.introDescription!}
-              enableGutter={false}
-              className="text-lg text-muted-foreground leading-relaxed"
+          {description && (
+            <div
+              className="prose prose-lg dark:prose-invert max-w-none text-muted-foreground leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: description }}
             />
-          ) : (
-            lesson.description && (
-              <p className="text-lg text-muted-foreground leading-relaxed">{lesson.description}</p>
-            )
           )}
         </div>
 

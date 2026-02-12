@@ -1238,23 +1238,9 @@ export interface Lesson {
    */
   introEnabled?: boolean | null;
   /**
-   * Short explanation shown on the intro page (what the student will learn)
+   * HTML content for the intro page. Supports raw HTML (bold, lists, etc). Paste from ChatGPT or write directly.
    */
-  introDescription?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
+  introDescription?: string | null;
   /**
    * Image, SVG, or video displayed on the intro page
    */
