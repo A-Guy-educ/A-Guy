@@ -20,6 +20,7 @@ interface TrueFalseQuestionProps {
   question: QuestionSelectTrueFalseBlock
   answer: UserAnswer
   onChange: (answer: UserAnswer) => void
+  onFocus?: () => void
   disabled: boolean
   checkResult: CheckResult | null
 }
@@ -28,6 +29,7 @@ export function TrueFalseQuestion({
   question,
   answer,
   onChange,
+  onFocus,
   disabled,
   checkResult,
 }: TrueFalseQuestionProps) {
@@ -83,7 +85,11 @@ export function TrueFalseQuestion({
             <button
               key={option.id}
               type="button"
-              onClick={() => onChange({ type: 'true_false', value: option.value })}
+              onClick={() => {
+                onChange({ type: 'true_false', value: option.value })
+                onFocus?.()
+              }}
+              onFocus={onFocus}
               disabled={disabled}
               className={cn(
                 'flex-1 relative overflow-hidden px-6 py-4 rounded-lg border-2 font-medium text-base transition-all duration-200',

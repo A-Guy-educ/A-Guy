@@ -111,15 +111,19 @@ describe('overrideAuth', () => {
     expect(result.user).toBe(mockUser)
   })
 
-  it('falls back to default auth for regular users', async () => {
+  it('grants custom tool access for students without calling default auth', async () => {
     const { overrideAuth } = await import('@/server/payload/plugins/mcp')
-    const regularUser = createMockUser('student')
-    const mockReq = createMockReq(regularUser)
+    const studentUser = createMockUser('student')
+    const mockReq = createMockReq(studentUser)
 
     const result = await overrideAuth(mockReq as any, mockDefaultAuth)
 
-    expect(mockDefaultAuth).toHaveBeenCalled()
-    expect((result as any).courses.find).toBe(false)
+    // Students should NOT fall back to default auth - they get custom auth
+    expect(mockDefaultAuth).not.toHaveBeenCalled()
+    // Students get exercises.find access for getActiveExerciseContext tool
+    expect((result as any).exercises.find).toBe(true)
+    // Students get custom tool access
+    expect((result as any).custom.getActiveExerciseContext).toBe(true)
   })
 
   it('falls back to default auth when no user', async () => {

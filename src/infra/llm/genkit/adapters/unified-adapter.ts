@@ -333,6 +333,103 @@ export async function createGenkitUnifiedAdapter(
     },
 
     /**
+     * Generate streaming chat completion with tools
+     * Returns a stream of chunks and a promise that resolves when streaming is complete
+     */
+    generateStreamingChatCompletionWithTools: async (
+      input: ToolCallingInput,
+      payloadInstance: Payload,
+    ) => {
+      const modelKey = getModelKeyFromModelName(input.model.name) || 'EXERCISE_CHAT'
+      const config = await resolveGenkitConfig(modelKey, tenantId, payloadInstance)
+
+      const ai = await getGenkitInstance(payloadInstance, tenantId)
+
+      // Build Genkit tools
+      const genkitTools = input.tools.map((t) =>
+        tool(
+          {
+            name: t.name,
+            description: buildToolDescription(t.description || '', t.inputSchema),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any,
+          async (args) => {
+            const result = await input.toolExecutor(t.name, args as Record<string, unknown>)
+            return result
+          },
+        ),
+      )
+
+      // Build messages
+      const systemMessage = { role: 'system' as const, content: [{ text: input.system }] }
+      const userAssistantMessages = input.messages.map((m) => ({
+        role: m.role === 'assistant' ? 'model' : m.role,
+        content: [{ text: m.content }],
+      }))
+
+      // Ensure first non-system message is 'user'
+      let messages: any[]
+      if (userAssistantMessages.length > 0 && userAssistantMessages[0].role !== 'user') {
+        messages = [
+          systemMessage,
+          { role: 'user', content: [{ text: 'Please continue.' }] },
+          ...userAssistantMessages,
+        ]
+      } else {
+        messages = [systemMessage, ...userAssistantMessages]
+      }
+
+      // Get streaming response
+      const result = await ai.generateStream({
+        model: config.model,
+        messages,
+        tools: genkitTools as any,
+        toolChoice: 'auto',
+        maxTurns: 5,
+      })
+
+      // Wrap stream to return { text: string } format
+      const genkitStream = result.stream
+      const stream: AsyncIterable<{ text: string }> = {
+        [Symbol.asyncIterator]: () => {
+          const iterator = genkitStream[Symbol.asyncIterator]()
+          return {
+            async next() {
+              const chunkResult = await iterator.next()
+              if (chunkResult.done) {
+                return { done: true, value: undefined }
+              }
+              // Genkit chunks have .text property
+              return {
+                done: false,
+                value: { text: chunkResult.value?.text || '' },
+              }
+            },
+          }
+        },
+      }
+
+      // Create response promise that handles errors and extracts tool calls
+      const response = (async () => {
+        try {
+          const finalResult = await result.response
+          return {
+            text: finalResult?.text || '',
+            toolCalls: [],
+          }
+        } catch (error) {
+          const llmError = errorAdapter.wrapError(
+            error instanceof Error ? error : new Error(String(error)),
+            LLMErrorCode.API_ERROR,
+          )
+          throw llmError
+        }
+      })()
+
+      return { stream, response }
+    },
+
+    /**
      * Check if provider is configured
      */
     isConfigured: async (payloadInstance: Payload) => {

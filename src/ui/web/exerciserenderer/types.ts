@@ -4,30 +4,12 @@
  * Supports block-based structure with multiple question blocks
  */
 
-import type {
-  QuestionMatchingBlock,
-  SvgBlock,
-  MatchingOption,
-  MatchingPair,
-  SvgHotspot,
-} from '@/server/payload/collections/Exercises/types'
-
-export type { QuestionMatchingBlock, SvgBlock, MatchingOption, MatchingPair, SvgHotspot }
-
 export type PreviewMode = 'student' | 'debug'
 
 export type UserAnswer =
   | { type: 'mcq'; selectedIds: string[] }
   | { type: 'true_false'; value: boolean | null }
   | { type: 'free_response'; value: string }
-  | { type: 'table'; cellValues: Record<string, string> }
-  | { type: 'matching'; connections: Array<{ leftId: string; rightId: string }> }
-  | { type: 'svg'; selectedHotspotIds: string[] }
-
-export interface TableCellResult {
-  key: string
-  isCorrect: boolean
-}
 
 export interface CheckResult {
   isCorrect: boolean
@@ -84,19 +66,6 @@ export interface FreeResponseAnswer {
 }
 
 /**
- * Table block data - used inside QuestionTableBlock
- */
-export interface TableBlock {
-  solutionFill: boolean
-  headers: string[]
-  rowsData: string[][]
-  answers: Record<string, string> | undefined
-  showBorders: boolean
-  showHeader: boolean
-  columnAlignment?: ('left' | 'center' | 'right')[]
-}
-
-/**
  * Question block types
  */
 // True/False variant
@@ -141,29 +110,9 @@ export interface QuestionFreeResponseBlock {
   fullSolution?: InlineRichText
 }
 
-export interface QuestionTableBlock {
-  id: string
-  type: 'question_table'
-  prompt: InlineRichText
-  table: TableBlock
-  hint?: InlineRichText
-  solution?: InlineRichText
-  fullSolution?: InlineRichText
-}
+export type QuestionBlock = QuestionSelectBlock | QuestionFreeResponseBlock
 
-export type QuestionBlock =
-  | QuestionSelectBlock
-  | QuestionFreeResponseBlock
-  | QuestionTableBlock
-  | QuestionMatchingBlock
-
-export interface HtmlBlock {
-  id: string
-  type: 'html'
-  html: string
-}
-
-export type ContentBlock = RichTextBlock | HtmlBlock | QuestionBlock | SvgBlock
+export type ContentBlock = RichTextBlock | QuestionBlock
 
 /**
  * Content structure - block-based with questions
@@ -180,8 +129,22 @@ export interface ExerciseRendererProps {
   mode?: PreviewMode
   showCheckAnswer?: boolean
   className?: string
-  /** Pre-resolved media objects keyed by ID, for rendering mediaIds in blocks */
-  mediaMap?: Record<string, import('@/payload-types').Media>
-  /** Exercise number to display in the bubble (defaults to 1) */
-  exerciseNumber?: number
+  /**
+   * Callback when the active block changes (user focuses a question)
+   */
+  onActiveBlockChange?: (blockId: string | null) => void
+}
+
+/**
+ * Common props for question components
+ */
+export interface QuestionComponentProps {
+  question: QuestionBlock
+  answer: UserAnswer
+  onChange: (answer: UserAnswer) => void
+  onFocus?: () => void
+  disabled?: boolean
+  checkResult: CheckResult | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  t: any
 }

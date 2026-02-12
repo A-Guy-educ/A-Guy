@@ -20,9 +20,7 @@ import {
 import React, { useEffect, useRef, useState } from 'react'
 import { ChatErrorSurface } from '../ChatErrorSurface'
 import { ChatMessageContent } from '../ChatMessageContent'
-import { TTSButton } from '../TTSButton'
 import { useNotebookChat } from '../hooks/useNotebookChat'
-import { useTTS } from '../hooks/useTTS'
 
 // Optional components - will be lazy-loaded if needed
 let FormulaPanel: React.ComponentType<{
@@ -44,30 +42,6 @@ interface ChatInterfaceProps {
   chapterId?: string
   lessonId?: string
   exerciseId?: string
-
-  // Exercise context (optional - for injecting exercise context on navigation)
-  // Using loose types to accommodate Payload's Exercise type which may have slight variations
-  currentExercise?: {
-    id: string
-    title: string
-    content: {
-      blocks: Array<{
-        id: string
-        type: string
-        [key: string]: unknown
-      }>
-    }
-  }
-  mediaMap?: Record<
-    string,
-    {
-      id: string
-      url?: string | null
-      filename?: string
-      mimeType?: string
-      altText?: string
-    }
-  >
 
   // Admin context - category for admin chat scope
   categoryId?: string
@@ -100,8 +74,6 @@ export function ChatInterface({
   chapterId,
   lessonId,
   exerciseId,
-  currentExercise,
-  mediaMap,
   categoryId,
   adminMode = false,
   userId,
@@ -119,6 +91,14 @@ export function ChatInterface({
   const t = useTranslations(translationNamespace)
   const tCourses = useTranslations('courses')
 
+  // Track active block for student tool-calling
+  const [activeBlockId, setActiveBlockId] = useState<string | undefined>()
+
+  // Reset activeBlockId when exercise changes (FR-005: no stale context)
+  useEffect(() => {
+    setActiveBlockId(undefined)
+  }, [exerciseId])
+
   const {
     messages,
     inputValue,
@@ -133,26 +113,17 @@ export function ChatInterface({
     handleSubmit,
     handleQuickAction,
     handleReset,
-    // Direct-to-Blob uploads
-    directUploads,
-    addDirectUploads,
-    removeDirectUpload,
-    isDirectUploading,
-    completedChatAssetIds,
+    // Media upload
+    uploadedMedia,
+    isUploading,
+    handleFileSelect,
+    removeMedia,
     openFilePicker,
     // Error handling
     chatError,
     dismissError,
-    // External media injection (Ask page uploads)
-    addExternalMedia,
-    askMedia: _askMedia,
-    clearAskMedia: _clearAskMedia,
-    // Programmatic message injection
-    injectExerciseContext,
-    // Contextual help for incorrect answers
+    // Programmatic contextual help
     sendContextualHelp,
-    sendContextualHelpWithMedia,
-    sendContextualHelpWithMediaId,
   } = useNotebookChat({
     initialMessage: t('chatWelcome'),
     authRequiredMessage: t('chatAuthRequired'),
@@ -169,12 +140,16 @@ export function ChatInterface({
     chapterId,
     lessonId,
     exerciseId,
+    activeBlockId,
     categoryId,
     adminMode,
     userId,
+    // Media upload messages
+    unsupportedFileTypeMessage: tCourses('chatUnsupportedFileType'),
+    fileTooLargeMessage: tCourses('chatFileTooLarge'),
+    maxFilesMessage: tCourses('chatMaxFiles'),
+    uploadFailedMessage: tCourses('chatUploadFailed'),
   })
-
-  const { speak, playingMessageId } = useTTS()
 
   // Auto-send contextual help on incorrect answer (ref pattern for stable listener)
   const incorrectAnswerRef = useRef<(e: Event) => void>(() => {})
@@ -195,75 +170,17 @@ export function ChatInterface({
     return () => window.removeEventListener('exercise-incorrect-answer', handler)
   }, [])
 
-  // Ask page: attach uploaded exercise images to the chat's pending media
-  const askMediaAttachRef = useRef<(e: Event) => void>(() => {})
-  askMediaAttachRef.current = (e: Event) => {
-    const { mediaId, filename } = (e as CustomEvent).detail as {
-      mediaId: string
-      filename: string
-    }
-    addExternalMedia(mediaId, filename)
-  }
-
+  // Listen for active block changes from ExerciseRenderer
   useEffect(() => {
-    const handler = (e: Event) => askMediaAttachRef.current(e)
-    window.addEventListener('ask-media-attach', handler)
-    return () => window.removeEventListener('ask-media-attach', handler)
-  }, [])
-
-  // Ask page actions (hint, solution, check solution from canvas)
-  const askActionRef = useRef<(e: Event) => void>(() => {})
-  askActionRef.current = (e: Event) => {
-    const { type, title, imageData, mediaId } = (e as CustomEvent).detail as {
-      type: 'hint' | 'solution' | 'check'
-      title: string
-      imageData?: string
-      mediaId?: string
-    }
-    onChatInteraction?.()
-    if (type === 'hint') {
-      if (mediaId) {
-        sendContextualHelpWithMediaId(
-          `The student is working on "${title}" and needs a hint. Look at the uploaded exercise image carefully. Provide a helpful hint without giving away the answer. Be encouraging.`,
-          mediaId,
-        )
-      } else {
-        sendContextualHelp(
-          `The student is working on "${title}" and needs a hint. Provide a helpful hint without giving away the answer. Be encouraging.`,
-        )
+    const handler = (e: Event) => {
+      const { activeBlockId: newBlockId } = (e as CustomEvent).detail as {
+        activeBlockId: string
       }
-    } else if (type === 'solution') {
-      if (mediaId) {
-        sendContextualHelpWithMediaId(
-          `The student is working on "${title}" and wants to see the solution approach. Look at the uploaded exercise image carefully. Guide them step by step through the solution.`,
-          mediaId,
-        )
-      } else {
-        sendContextualHelp(
-          `The student is working on "${title}" and wants to see the solution approach. Guide them step by step through the solution.`,
-        )
-      }
-    } else if (type === 'check' && imageData) {
-      sendContextualHelpWithMedia(
-        `The student drew a solution for "${title}" on the canvas. You are receiving two images: the first is the student's handwritten work from the canvas, and the second is the original exercise/question. Compare the student's work against the original question and tell them if their approach and answer look correct. Be encouraging and supportive.`,
-        imageData,
-        mediaId ? [mediaId] : undefined,
-      )
+      setActiveBlockId(newBlockId)
     }
-  }
-
-  useEffect(() => {
-    const handler = (e: Event) => askActionRef.current(e)
-    window.addEventListener('ask-action', handler)
-    return () => window.removeEventListener('ask-action', handler)
+    window.addEventListener('exercise-active-block-change', handler)
+    return () => window.removeEventListener('exercise-active-block-change', handler)
   }, [])
-
-  // Inject exercise context when student navigates to an exercise
-  useEffect(() => {
-    if (currentExercise && injectExerciseContext) {
-      injectExerciseContext(currentExercise, mediaMap)
-    }
-  }, [currentExercise, injectExerciseContext, mediaMap])
 
   // Math tools state
   const [isMathPaletteOpen, setIsMathPaletteOpen] = useState(false)
@@ -363,81 +280,44 @@ export function ChatInterface({
       >
         {isLoadingHistory && (
           <div className="flex items-center justify-center p-4 text-muted-foreground text-sm">
-            <Loader2 className="w-4 h-4 animate-spin me-2" />
+            <Loader2 className="w-4 h-4 animate-spin mr-2" />
             {tCourses('chatLoadingHistory')}
           </div>
         )}
         {!isLoadingHistory &&
-          messages.map((msg, idx) => {
-            const isAssistant = msg.role !== ChatMessageRole.User
-            const messageId = `msg-${idx}`
-            const isCurrentlyPlaying = playingMessageId === messageId
-
-            return (
-              <div
-                key={idx}
-                className={cn(
-                  'max-w-[85%] px-[18px] py-3.5 text-base leading-relaxed shadow-sm',
-                  msg.role === ChatMessageRole.User
-                    ? 'ms-auto bg-primary text-primary-foreground rounded-[20px] rounded-bl-[4px]'
-                    : 'me-auto bg-card text-foreground border border-border rounded-[20px] rounded-br-[4px]',
-                  isCurrentlyPlaying && 'ring-2 ring-primary/30',
-                )}
-              >
-                {msg.media && msg.media.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {msg.media.map((mediaItem, mediaIdx) => (
-                      <div
-                        key={mediaIdx}
-                        className={cn(
-                          'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
-                          msg.role === ChatMessageRole.User
-                            ? 'bg-primary-foreground/20'
-                            : 'bg-muted',
-                        )}
-                      >
-                        <ImageIcon className="w-3 h-3" />
-                        <span className="max-w-[120px] truncate">
-                          {mediaItem.filename || `media-${mediaIdx + 1}`}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {msg.chatAssets && msg.chatAssets.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {msg.chatAssets.map((asset, assetIdx) => (
-                      <div
-                        key={assetIdx}
-                        className={cn(
-                          'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
-                          msg.role === ChatMessageRole.User
-                            ? 'bg-primary-foreground/20'
-                            : 'bg-muted',
-                        )}
-                      >
-                        <FileUp className="w-3 h-3" />
-                        <span className="max-w-[120px] truncate">
-                          {asset.filename || `attachment-${assetIdx + 1}`}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <ChatMessageContent content={msg.content} />
-                {isAssistant && (
-                  <TTSButton
-                    isPlaying={isCurrentlyPlaying}
-                    onToggle={() => speak(messageId, msg.content)}
-                    labelPlay={tCourses('chatReadAloud')}
-                    labelStop={tCourses('chatStopReading')}
-                  />
-                )}
-              </div>
-            )
-          })}
+          messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={cn(
+                'max-w-[85%] px-[18px] py-3.5 text-base leading-relaxed shadow-sm',
+                msg.role === ChatMessageRole.User
+                  ? 'ml-auto bg-primary text-primary-foreground rounded-[20px] rounded-bl-[4px]'
+                  : 'mr-auto bg-card text-foreground border border-border rounded-[20px] rounded-br-[4px]',
+              )}
+            >
+              {msg.media && msg.media.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {msg.media.map((mediaItem, mediaIdx) => (
+                    <div
+                      key={mediaIdx}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
+                        msg.role === ChatMessageRole.User ? 'bg-primary-foreground/20' : 'bg-muted',
+                      )}
+                    >
+                      <ImageIcon className="w-3 h-3" />
+                      <span className="max-w-[120px] truncate">
+                        {mediaItem.filename || `media-${mediaIdx + 1}`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <ChatMessageContent content={msg.content} />
+            </div>
+          ))}
         {isLoading && (
-          <div className="me-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-[20px] rounded-br-[4px] max-w-[85%] flex items-center gap-2 shadow-sm">
+          <div className="mr-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-[20px] rounded-br-[4px] max-w-[85%] flex items-center gap-2 shadow-sm">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span>{tCourses('chatThinking')}</span>
           </div>
@@ -490,7 +370,7 @@ export function ChatInterface({
       <div className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative">
         {/* Math Preview Popup */}
         {showMathTools && mathPreview && (
-          <div className="absolute bottom-full start-5 end-5 mb-2.5 bg-card border border-primary-soft rounded-xl p-2.5 text-center shadow-panel z-20">
+          <div className="absolute bottom-full left-5 right-5 mb-2.5 bg-card border border-primary-soft rounded-xl p-2.5 text-center shadow-panel z-20">
             <span className="text-sm font-mono">{mathPreview}</span>
           </div>
         )}
@@ -553,50 +433,23 @@ export function ChatInterface({
           </div>
         )}
 
-        {/* Direct Upload Previews */}
-        {directUploads.length > 0 && (
+        {/* Media Preview Chips */}
+        {uploadedMedia.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2.5 max-w-[850px] mx-auto">
-            {directUploads.map((file) => (
+            {uploadedMedia.map((media) => (
               <div
-                key={file.localId}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm border',
-                  file.status === 'complete' &&
-                    'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950',
-                  file.status === 'failed' &&
-                    'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950',
-                  file.status === 'uploading' && 'border-border bg-muted',
-                  file.status === 'finalizing' && 'border-border bg-muted',
-                  file.status === 'cancelled' && 'border-muted bg-muted/50',
-                  file.status === 'queued' && 'border-border bg-muted',
-                )}
+                key={media.id}
+                className="flex items-center gap-1.5 bg-muted rounded-full px-3 py-1.5 text-sm border border-input"
               >
-                {file.file.type.startsWith('image/') ? (
-                  <ImageIcon
-                    className={cn(
-                      'w-4 h-4',
-                      file.status === 'failed' ? 'text-red-500' : 'text-muted-foreground',
-                    )}
-                  />
+                {media.mimeType.startsWith('image/') ? (
+                  <ImageIcon className="w-4 h-4 text-muted-foreground" />
                 ) : (
-                  <FileUp
-                    className={cn(
-                      'w-4 h-4',
-                      file.status === 'failed' ? 'text-red-500' : 'text-muted-foreground',
-                    )}
-                  />
+                  <FileUp className="w-4 h-4 text-muted-foreground" />
                 )}
-                <span className="max-w-[120px] truncate text-foreground">{file.file.name}</span>
-                {file.status === 'uploading' && (
-                  <span className="text-xs text-muted-foreground">{file.progress}%</span>
-                )}
-                {file.status === 'complete' && (
-                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                )}
-                {file.status === 'failed' && <span className="text-xs text-red-500">Failed</span>}
+                <span className="max-w-[120px] truncate text-foreground">{media.filename}</span>
                 <button
                   type="button"
-                  onClick={() => removeDirectUpload(file.localId)}
+                  onClick={() => removeMedia(media.id)}
                   className="p-0.5 hover:bg-destructive/20 rounded-full transition-colors"
                   aria-label={tCourses('chatRemoveFile')}
                 >
@@ -649,17 +502,13 @@ export function ChatInterface({
               type="button"
               className={cn(
                 'p-1.5 text-muted-foreground hover:text-primary transition-colors',
-                isDirectUploading && 'opacity-50 cursor-not-allowed',
+                isUploading && 'opacity-50 cursor-not-allowed',
               )}
               onClick={openFilePicker}
-              disabled={
-                isDirectUploading ||
-                directUploads.filter((f) => f.status !== 'cancelled' && f.status !== 'failed')
-                  .length >= 5
-              }
+              disabled={isUploading || uploadedMedia.length >= 5}
               aria-label={tCourses('chatAttachFile')}
             >
-              {isDirectUploading ? (
+              {isUploading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <Plus className="w-5 h-5" />
@@ -669,12 +518,9 @@ export function ChatInterface({
               ref={fileInputRef}
               type="file"
               className="hidden"
-              accept="image/jpeg,image/png,image/webp,application/pdf"
+              accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
               multiple
-              onChange={(e) => {
-                if (e.target.files) addDirectUploads(e.target.files)
-                e.target.value = ''
-              }}
+              onChange={(e) => handleFileSelect(e.target.files)}
             />
 
             {/* Send Button */}
@@ -682,9 +528,7 @@ export function ChatInterface({
               type="submit"
               className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-input hover:bg-primary/90 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={
-                isLoading ||
-                isDirectUploading ||
-                (!inputValue.trim() && completedChatAssetIds.length === 0)
+                isLoading || isUploading || (!inputValue.trim() && uploadedMedia.length === 0)
               }
               aria-label={tCourses('sendMessage')}
             >

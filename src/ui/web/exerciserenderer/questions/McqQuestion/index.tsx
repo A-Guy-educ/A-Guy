@@ -16,6 +16,7 @@ interface McqQuestionProps {
   question: QuestionSelectMcqBlock
   answer: UserAnswer
   onChange: (answer: UserAnswer) => void
+  onFocus?: () => void
   disabled: boolean
   checkResult: CheckResult | null
   t: (key: string) => string
@@ -34,6 +35,7 @@ export function McqQuestion({
   question,
   answer,
   onChange,
+  onFocus,
   disabled,
   checkResult: _checkResult,
   t,
@@ -93,7 +95,12 @@ export function McqQuestion({
                 isSelected && 'border-primary bg-primary/10 shadow-sm',
                 disabled && 'opacity-60 cursor-not-allowed',
               )}
-              onClick={() => !question.answer.multiSelect && handleOptionClick(option.id)}
+              onClick={() => {
+                if (!question.answer.multiSelect) {
+                  handleOptionClick(option.id)
+                }
+                onFocus?.()
+              }}
             >
               {question.answer.multiSelect ? (
                 <Checkbox

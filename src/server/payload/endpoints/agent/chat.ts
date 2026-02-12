@@ -25,6 +25,11 @@ import {
   getProviderModelConfig,
 } from '@/infra/llm/providers/factory'
 import { chatWithExerciseHelper } from '@/infra/llm/services/exercise-chat-service'
+import {
+  STUDENT_CHAT_TOOLS,
+  buildStudentToolExecutor,
+  chatWithStudentTools,
+} from '@/infra/llm/services/student-tool-calling'
 import { logger } from '@/infra/utils/logger'
 import type { Logger } from 'pino'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
@@ -716,8 +721,127 @@ async function handleContextScopedChat(
 
   logPromptSnapshot(conversationId, composedPrompt)
 
-  // Call AI service
+  // Check if student tool-calling should be used
+  // Conditions: not admin, exerciseId present, and user is authenticated (not guest)
+  const isStudentMode = userRole !== AccountRole.Admin && validated.exerciseId && userId
+
+  // Call AI service - use student tool-calling if available, otherwise regular chat
   const modelCallStart = Date.now()
+
+  // Student mode with tool-calling (authenticated users with exercise context)
+  if (isStudentMode) {
+    reqLogger.info('Using student mode with tool-calling')
+
+    try {
+      // Get MCP client for student tools
+      const { getMCPClient } = await import('@/server/repos/mcp/client/mcp-client')
+      const mcpClient = getMCPClient()
+
+      // Build auth headers for MCP requests
+      const authHeaders: Record<string, string> = {
+        authorization:
+          (req.headers && typeof req.headers.get === 'function'
+            ? req.headers.get('authorization')
+            : undefined) || '',
+        cookie:
+          (req.headers && typeof req.headers.get === 'function'
+            ? req.headers.get('cookie')
+            : undefined) || '',
+      }
+
+      // Build request context for tool validation
+      const requestContext = {
+        exerciseId: validated.exerciseId,
+      }
+
+      // Build tool executor with validation
+      const toolExecutor = buildStudentToolExecutor(
+        mcpClient,
+        authHeaders,
+        reqLogger,
+        requestContext,
+      )
+
+      // Build messages for AI
+      const messages = recentMessages.map((m) => ({
+        role: m.role as 'user' | 'assistant' | 'system',
+        content: m.content,
+      }))
+
+      // Build exercise context hint for system prompt
+      const exerciseContextSuffix = [
+        `\n\n---\n[Exercise Context]`,
+        `The student is currently viewing exercise ID '${validated.exerciseId}'.`,
+        validated.activeBlockId
+          ? `Active question block: '${validated.activeBlockId}'.`
+          : 'No specific question block is focused.',
+        `Use the getActiveExerciseContext tool to fetch the full exercise content before answering questions about it.`,
+        `Do not ask the student to paste or describe the exercise — you can fetch it automatically.`,
+      ].join(' ')
+
+      // Execute student chat with tools
+      // Get system prompt from first message and append exercise context
+      const baseSystemPrompt = composedPrompt.messages[0]?.content || ''
+      const systemPrompt = baseSystemPrompt + exerciseContextSuffix
+      const result = await chatWithStudentTools(
+        await getLLMProvider(req.payload),
+        req.payload,
+        systemPrompt,
+        messages,
+        STUDENT_CHAT_TOOLS,
+        toolExecutor,
+      )
+
+      const modelLatencyMs = Date.now() - modelCallStart
+
+      reqLogger.info({ modelLatencyMs }, 'Student chat with tools completed')
+
+      // Persist assistant response
+      const assistantMessage = {
+        role: 'assistant' as const,
+        content: result.text || '',
+        timestamp: new Date().toISOString(),
+      }
+
+      const updatedMessages = [...trimMessagesForUpdate(allMessages), assistantMessage]
+
+      try {
+        await req.payload.update({
+          collection: 'conversations',
+          id: conversationId,
+          data: {
+            messages: updatedMessages,
+            lastMessageAt: new Date().toISOString(),
+          },
+          user: req.user,
+          overrideAccess: true,
+        })
+      } catch (updateError) {
+        reqLogger.warn({ err: updateError, conversationId }, 'Failed to persist assistant response')
+      }
+
+      reqLogger.info('Student chat request successful')
+
+      return jsonWithCookie(
+        {
+          success: true,
+          message: result.text,
+          conversationId,
+          contextKey: context.contextKey,
+          isGuestMode,
+        },
+        { cookieHeader: guestCookieHeader },
+      )
+    } catch (toolError) {
+      // If tool-calling fails, fall back to regular chat
+      reqLogger.warn(
+        { err: toolError },
+        'Student tool-calling failed, falling back to regular chat',
+      )
+    }
+  }
+
+  // Regular chat (fallback or for guests/non-authenticated users)
   const result = await chatWithExerciseHelper(
     {
       message: validated.message,

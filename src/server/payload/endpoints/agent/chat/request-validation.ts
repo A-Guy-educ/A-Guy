@@ -12,6 +12,8 @@ export const chatRequestSchema = z.object({
   lessonId: z.string().optional(),
   chapterId: z.string().optional(),
   courseId: z.string().optional(),
+  // Active question block within the exercise (last interacted)
+  activeBlockId: z.string().optional(),
   // Admin context - category for admin chat scope
   categoryId: z.string().optional(),
   // Legacy media attachments (max 5)

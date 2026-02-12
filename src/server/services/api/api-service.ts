@@ -79,6 +79,7 @@ export const apiService = {
     mediaIds?: string[],
     chatAssetIds?: string[],
     adminMode?: boolean,
+    activeBlockId?: string,
   ): Promise<ChatApiResponse> {
     try {
       const response = await fetch('/api/agent/chat', {
@@ -92,6 +93,7 @@ export const apiService = {
           ...(mediaIds && mediaIds.length > 0 ? { mediaIds } : {}),
           ...(chatAssetIds && chatAssetIds.length > 0 ? { chatAssetIds } : {}),
           ...(adminMode ? { adminMode: true } : {}),
+          ...(activeBlockId ? { activeBlockId } : {}),
         }),
       })
 
@@ -261,6 +263,7 @@ export const apiService = {
       chapterId?: string
       courseId?: string
       categoryId?: string
+      activeBlockId?: string
     },
     options?: { hidden?: boolean },
   ): AsyncGenerator<ChatStreamEvent, void, unknown> {

@@ -184,6 +184,30 @@ export interface UnifiedLLMProvider {
     toolCalls?: Array<{ name: string; args: Record<string, unknown> }>
   }>
 
+  // Streaming tool calling (optional - falls back to non-streaming if not implemented)
+  generateStreamingChatCompletionWithTools?: (
+    input: {
+      system: string
+      messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
+      model: { name: string; temperature: number; maxOutputTokens: number }
+      acknowledgment: string
+      tools: Array<{
+        name: string
+        description?: string
+        inputSchema?: Record<string, unknown>
+      }>
+      toolExecutor: (name: string, args: Record<string, unknown>) => Promise<string>
+      timeoutMs?: number
+    },
+    payload: Payload,
+  ) => Promise<{
+    stream: AsyncIterable<{ text: string }>
+    response: Promise<{
+      text: string
+      toolCalls?: Array<{ name: string; args: Record<string, unknown> }>
+    }>
+  }>
+
   // Config check
   isConfigured: (payload: Payload) => Promise<boolean>
 

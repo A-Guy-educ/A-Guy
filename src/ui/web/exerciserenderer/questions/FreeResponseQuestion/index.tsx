@@ -14,6 +14,7 @@ interface FreeResponseQuestionProps {
   question: QuestionFreeResponseBlock
   answer: UserAnswer
   onChange: (answer: UserAnswer) => void
+  onFocus?: () => void
   disabled: boolean
   checkResult: CheckResult | null
   t: (key: string) => string
@@ -23,6 +24,7 @@ export function FreeResponseQuestion({
   question,
   answer,
   onChange,
+  onFocus,
   disabled,
   checkResult: _checkResult,
   t,
@@ -63,6 +65,7 @@ export function FreeResponseQuestion({
         ref={textareaRef}
         value={value}
         onChange={(e) => onChange({ type: 'free_response', value: e.target.value })}
+        onFocus={onFocus}
         disabled={disabled}
         placeholder={t('enterAnswer')}
         className="text-base min-h-0 resize-none overflow-hidden"

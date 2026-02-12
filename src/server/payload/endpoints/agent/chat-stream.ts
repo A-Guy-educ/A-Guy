@@ -13,6 +13,11 @@
  * - Partial text persistence on error/disconnect
  */
 import { streamChatWithExerciseHelper } from '@/infra/llm/services/exercise-chat-service'
+import {
+  STUDENT_CHAT_TOOLS,
+  buildStudentToolExecutor,
+  streamingChatWithStudentTools,
+} from '@/infra/llm/services/student-tool-calling'
 import { logger } from '@/infra/utils/logger'
 import type { Logger } from 'pino'
 import type { PayloadRequest } from 'payload'
@@ -31,6 +36,8 @@ import {
   formatDoneEvent,
   formatErrorEvent,
 } from './chat/sse-helpers'
+import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
+import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { checkRateLimit } from '@/server/services/rate-limit'
 import {
   buildGuestSessionCookieHeader,
@@ -196,29 +203,107 @@ export async function agentChatStream(
 
     reqLogger.info({ conversationId, contextKey: context.contextKey }, 'Starting streaming chat')
 
-    // 7) Call streaming LLM
+    // Check if student tool-calling should be used
+    // Conditions: authenticated student (not admin), exerciseId present
+    const userId = user?.id
+    const userRole = isUsersCollectionUser(user)
+      ? ((user as unknown as { role: AccountRole }).role as AccountRole)
+      : AccountRole.Student
+    const isStudentMode = userRole !== AccountRole.Admin && validated.exerciseId && userId
+
+    // 7) Call streaming LLM - use student tool-calling if applicable
     let streamingResult
     try {
-      streamingResult = await streamChatWithExerciseHelper(
-        {
-          message: validated.message,
-          acknowledgment: validated.acknowledgment || '',
-          composedPrompt: composedPrompt,
-          req: {
-            headers: {
-              authorization:
-                (req.headers && typeof req.headers.get === 'function'
-                  ? req.headers.get('authorization')
-                  : undefined) || undefined,
-              cookie:
-                (req.headers && typeof req.headers.get === 'function'
-                  ? req.headers.get('cookie')
-                  : undefined) || undefined,
+      if (isStudentMode) {
+        reqLogger.info('Using student mode with streaming tool-calling')
+
+        // Get MCP client for student tools
+        const { getMCPClient } = await import('@/server/repos/mcp/client/mcp-client')
+        const mcpClient = getMCPClient()
+
+        // Build auth headers for MCP requests
+        const authHeaders: Record<string, string> = {
+          authorization:
+            (req.headers && typeof req.headers.get === 'function'
+              ? req.headers.get('authorization')
+              : undefined) || '',
+          cookie:
+            (req.headers && typeof req.headers.get === 'function'
+              ? req.headers.get('cookie')
+              : undefined) || '',
+        }
+
+        // Build request context for tool validation
+        const requestContext = {
+          exerciseId: validated.exerciseId,
+        }
+
+        // Build tool executor with validation
+        const toolExecutor = buildStudentToolExecutor(
+          mcpClient,
+          authHeaders,
+          reqLogger,
+          requestContext,
+        )
+
+        // Build messages for AI
+        const recentMessages = allMessages.slice(-95)
+        const messages = recentMessages.map((m) => ({
+          role: m.role as 'user' | 'assistant' | 'system',
+          content: m.content,
+        }))
+
+        // Build exercise context hint for system prompt
+        const exerciseContextSuffix = [
+          `\n\n---\n[Exercise Context]`,
+          `The student is currently viewing exercise ID '${validated.exerciseId}'.`,
+          validated.activeBlockId
+            ? `Active question block: '${validated.activeBlockId}'.`
+            : 'No specific question block is focused.',
+          `Use the getActiveExerciseContext tool to fetch the full exercise content before answering questions about it.`,
+          `Do not ask the student to paste or describe the exercise — you can fetch it automatically.`,
+        ].join(' ')
+
+        // Get system prompt from composed prompt and append exercise context
+        const baseSystemPrompt = composedPrompt.messages[0]?.content || ''
+        const systemPrompt = baseSystemPrompt + exerciseContextSuffix
+
+        // Get provider
+        const { getLLMProvider } = await import('@/infra/llm/providers/factory')
+        const provider = await getLLMProvider(req.payload)
+
+        // Execute streaming student chat with tools
+        streamingResult = await streamingChatWithStudentTools(
+          provider,
+          req.payload,
+          systemPrompt,
+          messages,
+          STUDENT_CHAT_TOOLS,
+          toolExecutor,
+        )
+      } else {
+        // Regular streaming chat
+        streamingResult = await streamChatWithExerciseHelper(
+          {
+            message: validated.message,
+            acknowledgment: validated.acknowledgment || '',
+            composedPrompt: composedPrompt,
+            req: {
+              headers: {
+                authorization:
+                  (req.headers && typeof req.headers.get === 'function'
+                    ? req.headers.get('authorization')
+                    : undefined) || undefined,
+                cookie:
+                  (req.headers && typeof req.headers.get === 'function'
+                    ? req.headers.get('cookie')
+                    : undefined) || undefined,
+              },
             },
           },
-        },
-        req.payload,
-      )
+          req.payload,
+        )
+      }
     } catch (streamError) {
       const errorMessage = streamError instanceof Error ? streamError.message : String(streamError)
       reqLogger.error({ err: streamError }, 'Streaming chat failed')

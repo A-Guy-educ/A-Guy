@@ -17,16 +17,23 @@ import { AccountRole } from '@/server/payload/collections/Users/roles'
 import type { MCPAccessSettings } from '@payloadcms/plugin-mcp'
 import { mcpPlugin } from '@payloadcms/plugin-mcp'
 import type { PayloadRequest } from 'payload'
+import { z } from 'zod'
+
+// Import student tools
+import { getActiveExerciseContextTool } from './student-tools'
 
 /**
- * Custom auth override that allows authenticated admin users to access MCP tools
+ * Custom auth override that allows authenticated admin users and students to access MCP tools
  * without requiring a separate API key.
+ *
+ * - Admins: Full access to read collections and create operations
+ * - Students: Access only to student-specific tools (e.g., getActiveExerciseContext)
  */
 export async function overrideAuth(
   req: PayloadRequest,
   getDefaultMcpAccessSettings: () => Promise<MCPAccessSettings>,
 ): Promise<MCPAccessSettings> {
-  // If user is authenticated via session (cookie) and is an admin, grant access
+  // If user is authenticated via session (cookie) and is an admin, grant full access
   if (req.user && 'role' in req.user && req.user.role === AccountRole.Admin) {
     // Return access settings that allow find and create operations for admins
     return {
@@ -37,6 +44,20 @@ export async function overrideAuth(
       lessons: { find: true, create: true, update: false, delete: false },
       exercises: { find: true, create: false, update: false, delete: false },
       media: { find: true, create: false, update: false, delete: false },
+    } as MCPAccessSettings
+  }
+
+  // If user is authenticated via session (cookie) and is a student, grant limited tool access
+  if (req.user && 'role' in req.user && req.user.role === AccountRole.Student) {
+    return {
+      user: req.user,
+      // Students only get access to student-specific tools
+      custom: {
+        // Allow getActiveExerciseContext tool for student chat context grounding
+        getActiveExerciseContext: true,
+      },
+      // Grant read-only access to exercises for context fetching
+      exercises: { find: true, create: false, update: false, delete: false },
     } as MCPAccessSettings
   }
 
@@ -113,5 +134,19 @@ export const mcp = mcpPlugin({
         version: '1.0.0',
       },
     },
+    // Custom tools for student chat context grounding
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tools: [
+      {
+        name: getActiveExerciseContextTool.name,
+        description: getActiveExerciseContextTool.description,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        parameters: {
+          exerciseId: z.string() as any,
+          activeBlockId: z.string().optional() as any,
+        },
+        handler: getActiveExerciseContextTool.handler,
+      },
+    ] as any,
   },
 })
