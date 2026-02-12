@@ -18,6 +18,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 let payload: Payload
 let testTenantId: string
 let testUserId: string
+let testCourseId: string
+let testChapterId: string
 let testLessonId: string
 
 // Skip tests if DATABASE_URL is not set
@@ -61,24 +63,26 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Duplicate API', () => {
         tenant: testTenantId,
       },
     })
+    testCourseId = typeof course.id === 'string' ? course.id : String(course.id)
 
     const chapter = await payload.create({
       collection: 'chapters',
       data: {
         title: `Test Chapter ${timestamp}`,
         slug: `test-chapter-${timestamp}`,
-        course: typeof course.id === 'string' ? course.id : String(course.id),
+        course: testCourseId,
         order: 1,
         tenant: testTenantId,
       },
     })
+    testChapterId = typeof chapter.id === 'string' ? chapter.id : String(chapter.id)
 
     const lesson = await payload.create({
       collection: 'lessons',
       data: {
         title: `Test Lesson ${timestamp}`,
         slug: `test-lesson-${timestamp}`,
-        chapter: typeof chapter.id === 'string' ? chapter.id : String(chapter.id),
+        chapter: testChapterId,
         order: 1,
         tenant: testTenantId,
       },
@@ -107,8 +111,10 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Duplicate API', () => {
         })
       }
 
-      // Delete test lesson, chapter, course, user, tenant
+      // Delete test lesson, chapter, course, user, tenant (in correct order)
       await payload.delete({ collection: 'lessons', id: testLessonId })
+      await payload.delete({ collection: 'chapters', id: testChapterId })
+      await payload.delete({ collection: 'courses', id: testCourseId })
       await payload.delete({ collection: 'users', id: testUserId })
       await payload.delete({ collection: 'tenants', id: testTenantId })
     } catch (error) {
@@ -247,7 +253,7 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Duplicate API', () => {
         data: {
           title: 'Another Chapter',
           slug: 'another-chapter',
-          course: '000000000000000000000000', // Dummy course ID (not critical for this test)
+          course: testCourseId, // Use the actual test course
           order: 2,
           tenant: testTenantId,
         },

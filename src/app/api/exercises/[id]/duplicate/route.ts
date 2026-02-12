@@ -28,7 +28,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       context: {},
     } as PayloadRequest
 
-    console.log('[API Route] Calling duplicateExercise for exercise ID:', params.id)
     return await duplicateExercise(payloadRequest)
   } catch (error) {
     console.error('[API Route] Error in /api/exercises/[id]/duplicate:', error)
