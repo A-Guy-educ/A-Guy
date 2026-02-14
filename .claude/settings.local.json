@@ -16,7 +16,14 @@
       "WebFetch(domain:firebase.google.com)",
       "WebFetch(domain:genkit.dev)",
       "WebFetch(domain:www.assistant-ui.com)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(pnpm format:check:*)",
+      "Bash(pnpm exec prettier:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(__NEW_LINE_0f54b2f4208bdeed__ echo \"\")",
+      "Bash(ocode --version:*)",
+      "Bash(/Users/aguy/.opencode/bin/opencode run:*)",
+      "Bash(gtimeout 5 /Users/aguy/.opencode/bin/opencode run:*)"
     ]
   },
   "mcpServers": {}

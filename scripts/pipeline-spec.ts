@@ -5,6 +5,7 @@
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
+import { preflight } from './preflight'
 
 const taskId = process.argv[2]
 
@@ -17,14 +18,8 @@ if (!taskId) {
 const projectDir = process.cwd()
 const taskDir = path.join(projectDir, '.tasks', taskId)
 
-// R3: Check ocode CLI availability
-try {
-  execSync('which ocode', { stdio: 'pipe' })
-} catch {
-  console.error('Error: ocode CLI not found.')
-  console.error('Install: curl -fsSL https://opencode.ai/install | bash')
-  process.exit(1)
-}
+// Quick Win #1: Pre-flight validation
+preflight()
 
 // R12: Ensure task directory exists
 if (!fs.existsSync(taskDir)) {

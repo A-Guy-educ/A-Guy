@@ -5,6 +5,7 @@
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
+import { preflight } from './preflight'
 
 const taskId = process.argv[2]
 
@@ -17,14 +18,8 @@ if (!taskId) {
 const projectDir = process.cwd()
 const taskDir = path.join(projectDir, '.tasks', taskId)
 
-// R3: Check ocode CLI availability
-try {
-  execSync('which ocode', { stdio: 'pipe' })
-} catch {
-  console.error('Error: ocode CLI not found.')
-  console.error('Install: curl -fsSL https://opencode.ai/install | bash')
-  process.exit(1)
-}
+// Quick Win #1: Pre-flight validation
+preflight()
 
 // Check that clarification exists
 if (!fs.existsSync(path.join(taskDir, 'clarified.md'))) {
@@ -70,17 +65,103 @@ function commitTaskFiles(): void {
   }
 }
 
+// Quick Win #2: Extract failure summary from verify.md
+interface VerifySummary {
+  typeScriptErrors: number
+  testFailures: number
+  lintErrors: number
+  errorSamples: string[]
+}
+
+function extractVerifySummary(content: string): VerifySummary {
+  const summary: VerifySummary = {
+    typeScriptErrors: 0,
+    testFailures: 0,
+    lintErrors: 0,
+    errorSamples: [],
+  }
+
+  // Extract TypeScript errors
+  const tsMatch = content.match(/TypeScript.*?(\d+)\s+error/i)
+  if (tsMatch) {
+    summary.typeScriptErrors = parseInt(tsMatch[1])
+  }
+
+  // Extract test failures
+  const testMatch = content.match(/Tests?.*?(\d+)\s+fail/i)
+  if (testMatch) {
+    summary.testFailures = parseInt(testMatch[1])
+  }
+
+  // Extract lint errors
+  const lintMatch = content.match(/Lint.*?(\d+)\s+error/i)
+  if (lintMatch) {
+    summary.lintErrors = parseInt(lintMatch[1])
+  }
+
+  // Extract error samples (lines starting with - or • or containing "error:")
+  const lines = content.split('\n')
+  for (const line of lines) {
+    if (
+      (line.trim().startsWith('-') || line.trim().startsWith('•')) &&
+      (line.includes('error') || line.includes('Error') || line.includes('✗'))
+    ) {
+      const cleaned = line.trim().replace(/^[-•]\s*/, '')
+      if (cleaned.length > 10 && summary.errorSamples.length < 5) {
+        summary.errorSamples.push(cleaned)
+      }
+    }
+  }
+
+  return summary
+}
+
+// Quick Win #3: Better error context
+function showStageErrorContext(stage: string): void {
+  console.error(`\nCommon causes for ${stage} failure:`)
+
+  if (stage === 'build') {
+    console.error(`  • Agent didn't create build.md output file`)
+    console.error(`  • Git operation failed (merge conflict, permissions)`)
+    console.error(`  • TypeScript/lint errors in generated code`)
+    console.error(`  • Import path issues`)
+  } else if (stage === 'test') {
+    console.error(`  • Test files not created in correct directory`)
+    console.error(`  • Import errors in test code`)
+    console.error(`  • Missing test dependencies`)
+  } else if (stage === 'verify') {
+    console.error(`  • TypeScript compilation errors`)
+    console.error(`  • Linting failures`)
+    console.error(`  • Test failures`)
+    console.error(`  • See verify.md for details`)
+  } else if (stage === 'plan') {
+    console.error(`  • Context missing from .context.md`)
+    console.error(`  • Insufficient clarification`)
+  } else if (stage === 'pr') {
+    console.error(`  • Branch not pushed to remote`)
+    console.error(`  • GitHub CLI (gh) not configured`)
+    console.error(`  • Missing PR permissions`)
+  }
+
+  console.error(`\n💡 Next steps:`)
+  console.error(`  1. Check .tasks/${taskId}/${stage}.md for details (if exists)`)
+  console.error(`  2. Review agent output above`)
+  console.error(`  3. Fix issues and run: pnpm pipeline:rerun ${taskId} --feedback "<issue>"`)
+  console.error(`  4. Or fix manually and run: pnpm pipeline:impl ${taskId}`)
+}
+
 // Always run: plan → build → test → verify → auditor → pr
 const stages = ['plan', 'build', 'test', 'verify', 'auditor', 'pr']
 
 // Model per stage: smarter models for planning/analysis, fast for execution
+// Source of truth: opencode.json
 const stageModels: Record<string, string> = {
-  plan: 'openai/gpt-5.2',      // Good for architecture planning
-  build: 'minimax/MiniMax-M2.1', // Fast for implementation
-  test: 'minimax/MiniMax-M2.1',  // Fast for test writing
-  verify: 'minimax/MiniMax-M2.1', // Fast for verification
-  auditor: 'anthropic/claude-opus-4-6', // Good for analysis
-  pr: 'minimax/MiniMax-M2.1',   // Fast for PR creation
+  plan: 'anthropic/claude-opus-4-6', // Deep architecture planning
+  build: 'minimax/MiniMax-M2.1', // Fast implementation
+  test: 'minimax/MiniMax-M2.1', // Fast test writing
+  verify: 'minimax/MiniMax-M2.1', // Fast verification
+  auditor: 'anthropic/claude-opus-4-6', // Deep analysis
+  pr: 'minimax/MiniMax-M2.1', // Fast PR creation
 }
 
 console.log(`=== Pipeline Impl: ${taskId} ===`)
@@ -116,9 +197,19 @@ for (let i = 0; i < stages.length; i++) {
         stdio: 'inherit',
       },
     )
+
+    // R9: Validate that agent created output file
+    if (!fs.existsSync(outputFile)) {
+      console.error(`\n❌ Stage "${stage}" completed but did not create ${outputFile}`)
+      console.error(
+        `The ${stage} agent MUST create an output file as specified in .opencode/agents/${stage}.md`,
+      )
+      console.error('Check agent definition and ensure it writes the required output.')
+      process.exit(1)
+    }
   } catch {
     console.error(`\n❌ Stage "${stage}" failed for ${taskId}`)
-    console.error('Fix the issue and re-run. Completed stages will be skipped.')
+    showStageErrorContext(stage)
     process.exit(1)
   }
 
@@ -127,8 +218,35 @@ for (let i = 0; i < stages.length; i++) {
     const content = fs.readFileSync(outputFile, 'utf-8')
     if (/FAIL/i.test(content)) {
       console.error(`\n❌ Verification FAILED for ${taskId}`)
-      console.error(`See: ${outputFile}`)
-      console.error('Fix issues and re-run. The verify stage will re-run automatically.')
+
+      // Quick Win #2: Show failure summary
+      const summary = extractVerifySummary(content)
+
+      if (summary.typeScriptErrors > 0 || summary.testFailures > 0 || summary.lintErrors > 0) {
+        console.error('\n📋 Failure Summary:')
+
+        if (summary.typeScriptErrors > 0) {
+          console.error(`  TypeScript: ${summary.typeScriptErrors} error(s)`)
+        }
+        if (summary.testFailures > 0) {
+          console.error(`  Tests: ${summary.testFailures} failure(s)`)
+        }
+        if (summary.lintErrors > 0) {
+          console.error(`  Lint: ${summary.lintErrors} error(s)`)
+        }
+
+        if (summary.errorSamples.length > 0) {
+          console.error('\n  Sample errors:')
+          summary.errorSamples.forEach((err) => console.error(`    - ${err}`))
+        }
+      }
+
+      console.error(`\n📄 Full report: ${outputFile}`)
+      console.error('\n💡 Next steps:')
+      console.error(`  1. Review errors above`)
+      console.error(`  2. Fix and run: pnpm pipeline:rerun ${taskId} --feedback "<fix description>"`)
+      console.error(`  3. Or fix manually and run: pnpm pipeline:impl ${taskId}`)
+
       process.exit(1)
     }
     // Commit task files after verify passes

@@ -43,26 +43,26 @@ export async function Footer() {
 
   return (
     <footer className="mt-auto border-t border-border bg-footer text-card-foreground relative z-0">
-      <div className="container py-8 gap-8 flex flex-col md:flex-row md:justify-between">
+      <div className="container py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <SystemLink className="flex items-center" href="/">
-          <TelescopeLogo className="h-8 w-auto" />
+          <TelescopeLogo className="h-6 w-auto" />
         </SystemLink>
 
-        <div className="flex flex-col-reverse items-start md:flex-row gap-4 md:items-center">
-          <ThemeSelector />
-          <nav className="flex flex-col md:flex-row gap-4 items-center">
+        <div className="flex items-center gap-3 text-sm">
+          <nav className="flex items-center gap-3">
             {navItems.map(({ link }, i) => {
               return (
                 <CMSLink
-                  className="text-card-foreground hover:text-primary transition-colors"
+                  className="text-card-foreground hover:text-primary transition-colors text-sm"
                   key={i}
                   {...link}
                 />
               )
             })}
-            <span className="hidden md:inline-block mx-2 text-muted-foreground/30">|</span>
+            <span className="text-muted-foreground/30">|</span>
             <VersionDisplay version={version} />
           </nav>
+          <ThemeSelector />
         </div>
       </div>
     </footer>
