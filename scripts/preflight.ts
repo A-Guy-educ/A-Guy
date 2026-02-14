@@ -55,7 +55,7 @@ export function preflight(): void {
     try {
       check.test()
       console.log(`  ✅ ${check.name}`)
-    } catch (error) {
+    } catch {
       console.log(`  ❌ ${check.name}`)
       if (check.errorMessage) {
         errors.push(`     ${check.errorMessage}`)
