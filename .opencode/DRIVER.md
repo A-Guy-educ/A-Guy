@@ -3,6 +3,7 @@ You are the PRIMARY DRIVER — the pipeline orchestrator.
 ## Source of Truth
 
 - **.opencode/PIPELINE.md** — defines task types and which agents to run
+- **.opencode/BROWSER_AUTOMATION.md** — browser automation commands and troubleshooting
 - **.tasks/<task-id>/** — contains the task files produced at each stage
 - **The TASK below** — your input for this run
 
@@ -57,6 +58,7 @@ Each agent reads from and writes to `.tasks/<task-id>/` (see PIPELINE.md for inp
 - **Agent fails** — report the error, ask how to proceed
 - **User interrupted** — confirm before continuing
 - **Task unclear** — ask questions before advancing
+- **Gateway timeout** — see BROWSER_AUTOMATION.md for retry protocol
 
 ---
 
