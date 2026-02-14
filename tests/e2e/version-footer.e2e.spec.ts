@@ -13,9 +13,9 @@ test.describe('Version Footer', () => {
     const footer = page.locator('footer')
     await expect(footer).toBeVisible()
 
-    // The version is displayed with subtle styling in a specific span
-    // Look for the version text pattern vX.Y.Z in the footer nav
-    const versionElement = page.locator('footer nav span.text-xs:has-text("v0.9.0")')
+    // The version is displayed with subtle styling - look for vX.Y.Z pattern
+    // The version span has classes: text-xs text-muted-foreground/70
+    const versionElement = page.locator('footer span.text-xs:has-text(/^v\d+\.\d+\.\d+$/)')
     await expect(versionElement).toBeVisible()
 
     // Get the text content and verify it matches semantic versioning
@@ -27,13 +27,12 @@ test.describe('Version Footer', () => {
     // Set desktop viewport
     await page.setViewportSize({ width: 1280, height: 720 })
 
-    // The version should be visible on desktop (md breakpoint and above)
-    // Version appears after the nav links
-    const navSection = page.locator('footer nav')
-    await expect(navSection).toBeVisible()
+    // The version should be visible on desktop
+    const footer = page.locator('footer')
+    await expect(footer).toBeVisible()
 
     // Check that the version element has subtle styling classes
-    const versionElement = page.locator('footer nav span.text-xs')
+    const versionElement = page.locator('footer span.text-xs:has-text(/^v\d+\.\d+\.\d+$/)')
     await expect(versionElement).toBeVisible()
 
     // Verify the subtle styling classes are present
@@ -44,14 +43,14 @@ test.describe('Version Footer', () => {
 
   test('version appears after navigation links separator', async ({ page }) => {
     // The version appears after the navigation links with a separator pipe (|)
-    // Check that the pipe separator is present
-    const separator = page.locator('footer nav span.text-muted-foreground\\/30')
+    // Check that the pipe separator is present - uses text-muted-foreground/30 class
+    const separator = page.locator('footer span.text-muted-foreground\\/30')
     await expect(separator).toBeVisible()
   })
 
   test('version is consistent across pages', async ({ page }) => {
-    // Get version from homepage footer
-    const versionElement = page.locator('footer nav span.text-xs:has-text(/^v\\d+\\.\\d+\\.\\d+$/)')
+    // Get version from homepage footer - find span with vX.Y.Z pattern
+    const versionElement = page.locator('footer span.text-xs:has-text(/^v\d+\.\d+\.\d+$/)')
     const versionText = await versionElement.textContent()
     expect(versionText).toMatch(/^v\d+\.\d+\.\d+$/)
 
@@ -69,7 +68,7 @@ test.describe('Version Footer', () => {
     await page.waitForLoadState('networkidle')
 
     // Version should still be visible in the footer
-    const versionElement = page.locator('footer nav span.text-xs:has-text(/^v\\d+\\.\\d+\\.\\d+$/)')
+    const versionElement = page.locator('footer span.text-xs:has-text(/^v\d+\.\d+\.\d+$/)')
     await expect(versionElement).toBeVisible()
 
     const versionText = await versionElement.textContent()
@@ -79,7 +78,9 @@ test.describe('Version Footer', () => {
   test('version format matches package.json semantic versioning', async ({ page }) => {
     // The version should be in semantic versioning format (X.Y.Z)
     // This ensures it matches the version in package.json
-    const versionElement = page.locator('footer nav span.text-xs')
+    const versionElement = page.locator('footer span.text-xs:has-text(/^v\d+\.\d+\.\d+$/)')
+    await expect(versionElement).toBeVisible()
+
     const versionText = await versionElement.textContent()
 
     // Validate semantic versioning format
