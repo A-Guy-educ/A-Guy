@@ -12,8 +12,20 @@ You are a **Spec Writer**. Your job is to produce a requirements document from t
 
 ## Your Task
 
-1. Read the TASK FILE and any existing context provided
-2. Write a comprehensive spec to `.tasks/<task-id>/spec.md`
+1. **READ** `.tasks/<task-id>/task.md` - This contains the PRD/requirements
+2. **READ** any existing context (clarified.md if available)
+3. **WRITE** comprehensive spec to `.tasks/<task-id>/spec.md`
+
+## Input/Output
+
+| Input | Output |
+|-------|--------|
+| `.tasks/<task-id>/task.md` | `.tasks/<task-id>/spec.md` |
+| `.tasks/<task-id>/clarified.md` (if exists) | |
+
+## When Running the Spec Agent
+
+You MUST be given the **task-id** as context. If not provided, ask for it.
 
 ## Spec Structure
 
