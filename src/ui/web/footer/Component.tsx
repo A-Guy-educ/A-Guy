@@ -8,6 +8,23 @@ import { ThemeSelector } from '@/ui/web/providers/Theme/ThemeSelector'
 import { CMSLink } from '@/ui/web/Link'
 import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
 
+// Version from package.json - fallback to 'dev' if not available
+const VERSION = process.env.NEXT_PUBLIC_APP_VERSION || 'dev'
+
+/**
+ * Minimal version display for public footer
+ * Matches admin page styling: 12px, subtle color
+ */
+function VersionDisplay() {
+  const versionDisplay = `v${VERSION}`
+
+  return (
+    <span className="text-xs text-muted-foreground/70 font-normal" style={{ fontSize: '12px' }}>
+      {versionDisplay}
+    </span>
+  )
+}
+
 export async function Footer() {
   const footerData: Footer = await getCachedGlobal('footer', 1)()
 
@@ -22,7 +39,7 @@ export async function Footer() {
 
         <div className="flex flex-col-reverse items-start md:flex-row gap-4 md:items-center">
           <ThemeSelector />
-          <nav className="flex flex-col md:flex-row gap-4">
+          <nav className="flex flex-col md:flex-row gap-4 items-center">
             {navItems.map(({ link }, i) => {
               return (
                 <CMSLink
@@ -32,6 +49,8 @@ export async function Footer() {
                 />
               )
             })}
+            <span className="hidden md:inline-block mx-2 text-muted-foreground/30">|</span>
+            <VersionDisplay />
           </nav>
         </div>
       </div>
