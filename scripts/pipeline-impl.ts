@@ -73,6 +73,16 @@ function commitTaskFiles(): void {
 // Always run: plan → build → test → verify → auditor → pr
 const stages = ['plan', 'build', 'test', 'verify', 'auditor', 'pr']
 
+// Model per stage: smarter models for planning/analysis, fast for execution
+const stageModels: Record<string, string> = {
+  plan: 'openai/gpt-5.2',      // Good for architecture planning
+  build: 'minimax/MiniMax-M2.1', // Fast for implementation
+  test: 'minimax/MiniMax-M2.1',  // Fast for test writing
+  verify: 'minimax/MiniMax-M2.1', // Fast for verification
+  auditor: 'anthropic/claude-opus-4-6', // Good for analysis
+  pr: 'minimax/MiniMax-M2.1',   // Fast for PR creation
+}
+
 console.log(`=== Pipeline Impl: ${taskId} ===`)
 
 for (let i = 0; i < stages.length; i++) {
@@ -98,8 +108,9 @@ for (let i = 0; i < stages.length; i++) {
 
   // R4: try/catch around execSync
   try {
+    const model = stageModels[stage] || 'minimax/MiniMax-M2.1'
     execSync(
-      `ocode run --agent ${stage} "Execute ${stage} for ${taskId}. Read context from .tasks/${taskId}/.context.md"`,
+      `ocode run --agent ${stage} -m ${model} "Execute ${stage} for ${taskId}. Read context from .tasks/${taskId}/.context.md"`,
       {
         cwd: projectDir,
         stdio: 'inherit',
