@@ -244,7 +244,9 @@ for (let i = 0; i < stages.length; i++) {
       console.error(`\n📄 Full report: ${outputFile}`)
       console.error('\n💡 Next steps:')
       console.error(`  1. Review errors above`)
-      console.error(`  2. Fix and run: pnpm pipeline:rerun ${taskId} --feedback "<fix description>"`)
+      console.error(
+        `  2. Fix and run: pnpm pipeline:rerun ${taskId} --feedback "<fix description>"`,
+      )
       console.error(`  3. Or fix manually and run: pnpm pipeline:impl ${taskId}`)
 
       process.exit(1)

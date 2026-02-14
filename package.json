@@ -88,7 +88,8 @@
     "verify": "pnpm tsx scripts/verify.ts",
     "setup:opencode": "curl -fsSL https://opencode.ai/install | bash",
     "pipeline:spec": "pnpm tsx scripts/pipeline-spec.ts",
-    "pipeline:impl": "pnpm tsx scripts/pipeline-impl.ts"
+    "pipeline:impl": "pnpm tsx scripts/pipeline-impl.ts",
+    "pipeline:rerun": "pnpm tsx scripts/pipeline-rerun.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.28.0",

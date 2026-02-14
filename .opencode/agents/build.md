@@ -45,11 +45,44 @@ git commit -m "<type>(<task-id>): description"
 git push -u origin <branch>
 ```
 
+## Output
+
+**REQUIRED:** Write a build report to `.tasks/<task-id>/build.md`:
+
+```markdown
+# Build Report: <task-id>
+
+## Implementation Summary
+
+- **Branch:** <branch-name>
+- **Commits:** <commit-hash(es)>
+- **Files Modified:**
+  - path/to/file1
+  - path/to/file2
+
+## Changes Made
+
+1. [Description of change 1]
+2. [Description of change 2]
+3. [Description of change 3]
+
+## Quality Checks
+
+- ✅/❌ TypeScript: <status>
+- ✅/❌ Linting: <status>
+- ✅/❌ Branch pushed to remote
+
+## Status
+
+<Implementation status and any notes>
+```
+
 ## Exit Criteria
 
 - One or more commits pushed
 - Branch is up-to-date with remote
 - Quality checks pass
+- **build.md report created**
 
 ## Rules
 
@@ -57,3 +90,4 @@ git push -u origin <branch>
 - The PR agent only opens the GitHub PR — you handle all git operations
 - You may consult subagents (code-reviewer, security-auditor, payload-expert)
 - If verify has failed: fix only the reported issues
+- **You MUST create the build.md report** — the pipeline depends on this file existing

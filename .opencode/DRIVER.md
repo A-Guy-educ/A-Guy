@@ -162,26 +162,93 @@ If any command fails (non-zero exit code):
    - Location: `.tasks/<task-id>/<stage>.md` (if partially written)
 4. **STOP.** Ask the user how to proceed.
 
+**Recovery Options:**
+
+- **Rerun with feedback** (recommended): `pnpm pipeline:rerun <task-id> --feedback "issue description"` - See [PIPELINE_RERUN.md](.opencode/PIPELINE_RERUN.md)
+- **Manual fix then retry**: Fix code directly, then `pnpm pipeline:impl <task-id>`
+- **Start over**: Delete task directory and begin from Step 1
+
 ### Recovery Flow
 
-When the user has fixed the issue:
+When the user has fixed the issue or provided feedback:
 
 - **To retry**: Re-run from Step 3 (checks for clarified.md and continues from there)
 - **Pipeline is idempotent**: Completed stages are automatically skipped
 - **Verify special case**: Stale verify.md is deleted before re-verification to ensure fresh validation
+- **With feedback**: Use `pipeline:rerun` to provide feedback and auto-delete failed stages
 
-Example:
+Examples:
 
 ```bash
-# User fixes the issue, then:
+# Option 1: Rerun with feedback (agent learns)
+pnpm pipeline:rerun <task-id> --feedback "Version display shows undefined"
+pnpm pipeline:impl <task-id>
+
+# Option 2: Manual fix then retry
+# [fix code manually]
 pnpm pipeline:impl <task-id>  # Automatically skips completed stages
+
+# Option 3: Rerun from specific stage
+pnpm pipeline:rerun <task-id> --from plan --feedback "Plan should use different approach"
+pnpm pipeline:impl <task-id>
 ```
 
 **Important**: Do NOT manually delete output files to force re-runs. The pipeline scripts handle this automatically (verify.md deletion is intentional, see `pipeline-impl.ts:93-96`).
 
+## Rerun Command (When User Asks to Rerun)
+
+When the user says **"rerun with feedback"** or **"try again with this fix"**:
+
+### Step 1: Extract Feedback
+
+Identify what the user wants fixed:
+
+- User's description of the issue
+- Relevant error messages from previous run
+- Specific requirements that weren't met
+
+### Step 2: Run Rerun Command
+
+```bash
+pnpm pipeline:rerun <task-id> --feedback "<extracted-feedback>"
+```
+
+**Examples:**
+
+```bash
+# User says: "The version is showing undefined, it's not reading package.json correctly"
+pnpm pipeline:rerun 260214-version-footer --feedback "Version shows undefined - getVersion() not reading package.json correctly"
+
+# User says: "Rerun from plan, use server component instead of client"
+pnpm pipeline:rerun 260214-version-footer --from plan --feedback "Should use server component async pattern, not client-side fetch"
+
+# User says: "Tests are wrong, they check the wrong CSS class"
+pnpm pipeline:rerun 260214-version-footer --from test --feedback "Tests check wrong selector, footer uses .version-text not #version"
+```
+
+### Step 3: Continue Pipeline
+
+After rerun setup completes, continue with implementation:
+
+```bash
+pnpm pipeline:impl <task-id>
+```
+
+### Step 4: Report Results
+
+Monitor the pipeline and report:
+
+- If successful: Report PR URL from `pr.md`
+- If failed again: Report error and ask user how to proceed
+
+**Note:** See [PIPELINE_RERUN.md](.opencode/PIPELINE_RERUN.md) for complete rerun documentation.
+
+---
+
 ## Handling Edge Cases
 
 - **User says "continue" or "retry"** → Re-run Step 3 (it will skip completed stages automatically)
+- **User says "rerun with feedback"** → Use rerun command (see above)
 - **User provides new task** → Start from Step 1 with the new task
 - **Agent timeout** → See `.opencode/BROWSER_AUTOMATION.md` for retry protocol
 
