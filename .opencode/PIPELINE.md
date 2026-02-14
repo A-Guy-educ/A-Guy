@@ -8,71 +8,141 @@ Automated development pipeline for A-Guy project using OpenCode CLI agents.
 spec → clarify → plan → build → test → verify → auditor → pr
 ```
 
-| Stage | Agent | Description | Input | Output |
-|-------|-------|------------|-------|--------|
-| 1 | spec | Requirements definition | task.md | spec.md |
-| 2 | clarify | Collect operator Q&A | task.md, spec.md | questions.md |
-| 3 | plan | Architecture, implementation steps | clarified.md | plan.md |
-| 4 | build | Write implementation code | plan.md | build.md |
-| 5 | test | Write E2E/integration tests | build.md | test.md |
-| 6 | verify | Run tests, validate | test.md | verify.md |
-| 7 | auditor | Process improvement analysis | verify.md | auditor.md |
-| 8 | pr | Create branch, commit, open PR | all above | pr.md |
+| Agent   | Description                        | Input            | Output       |
+| ------- | ---------------------------------- | ---------------- | ------------ |
+| spec    | Requirements definition            | task.md          | spec.md      |
+| clarify | Collect operator Q&A               | task.md, spec.md | questions.md |
+| plan    | Architecture, implementation steps | clarified.md     | plan.md      |
+| build   | Write implementation code          | plan.md          | build.md     |
+| test    | Write E2E/integration tests        | build.md         | test.md      |
+| verify  | Run tests, validate                | test.md          | verify.md    |
+| auditor | Process improvement analysis       | verify.md        | auditor.md   |
+| pr      | Create branch, commit, open PR     | all above        | pr.md        |
 
 ## Task Types & Pipelines
 
-| Task Type | Pipeline |
-|-----------|----------|
-| feat | spec → clarify → plan → build → test → verify → auditor → pr |
-| fix | clarify → plan → build → test → verify → auditor → pr |
-| refactor | clarify → plan → build → test → verify → auditor → pr |
-| security | clarify → plan → build → test → verify → auditor → pr |
-| chore | build → test → verify → auditor → pr |
-| docs | build → auditor → pr |
-| test | build → test → verify → auditor → pr |
-| auditor-followup | build → verify → pr |
+| Task Type        | Pipeline                                                     |
+| ---------------- | ------------------------------------------------------------ |
+| feat             | spec → clarify → plan → build → test → verify → auditor → pr |
+| fix              | clarify → plan → build → test → verify → auditor → pr        |
+| refactor         | clarify → plan → build → test → verify → auditor → pr        |
+| security         | clarify → plan → build → test → verify → auditor → pr        |
+| chore            | build → test → verify → auditor → pr                         |
+| docs             | build → auditor → pr                                         |
+| test             | build → test → verify → auditor → pr                         |
+| auditor-followup | build → verify → pr                                          |
 
-## How to Provide Requirements
+## Running the Pipeline
 
-### Step 1: Create Task File
-Create `.tasks/<YYMMDD-task-name>/task.md` with your PRD:
+### Create Task File
+
+Create `.tasks/<YYMMDD-task-name>/task.md` with your requirements:
 
 ```markdown
 # Task: <task-id>
 
 ## Description
+
 Brief description of what to build
 
 ## Requirements
+
 - Requirement 1
 - Requirement 2
 
 ## Acceptance Criteria
+
 - [ ] Criterion 1
 - [ ] Criterion 2
 ```
 
-### Step 2: Run Spec Agent
+### Run Agents by Task Type
+
+#### feat (new feature)
+
 ```bash
-ocode run --agent spec "Create spec for task 260214-seo-meta-tags"
-# Reads: .tasks/260214-seo-meta-tags/task.md
-# Writes: .tasks/260214-seo-meta-tags/spec.md
+ocode run --agent spec "Create spec for YYMMDD-task-name"
+ocode run --agent clarify "Generate questions for YYMMDD-task-name"
+# (operator answers in clarified.md)
+ocode run --agent plan "Create plan for YYMMDD-task-name"
+ocode run --agent build "Implement YYMMDD-task-name"
+ocode run --agent test "Write tests for YYMMDD-task-name"
+ocode run --agent verify "Verify tests for YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
 ```
 
-### Step 3: Run Clarify Agent
+#### fix (bug fix)
+
 ```bash
-ocode run --agent clarify "Generate questions for task 260214-seo-meta-tags"
-# Reads: task.md, spec.md
-# Writes: questions.md
+ocode run --agent clarify "Generate questions for YYMMDD-task-name"
+# (operator answers in clarified.md)
+ocode run --agent plan "Create plan for YYMMDD-task-name"
+ocode run --agent build "Fix YYMMDD-task-name"
+ocode run --agent test "Write tests for YYMMDD-task-name"
+ocode run --agent verify "Verify fix for YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
 ```
 
-### Operator answers questions in questions.md → creates clarified.md
+#### refactor (restructure code)
 
-### Step 4: Continue Pipeline
 ```bash
-ocode run --agent plan "Create plan for 260214-seo-meta-tags"
-ocode run --agent build "Implement 260214-seo-meta-tags"
-# ... continue with test, verify, auditor, pr
+ocode run --agent clarify "Generate questions for YYMMDD-task-name"
+ocode run --agent plan "Create plan for YYMMDD-task-name"
+ocode run --agent build "Refactor YYMMDD-task-name"
+ocode run --agent test "Write tests for YYMMDD-task-name"
+ocode run --agent verify "Verify refactor for YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
+```
+
+#### security (security fix)
+
+```bash
+ocode run --agent clarify "Generate questions for YYMMDD-task-name"
+ocode run --agent plan "Create plan for YYMMDD-task-name"
+ocode run --agent build "Fix security issue YYMMDD-task-name"
+ocode run --agent test "Write tests for YYMMDD-task-name"
+ocode run --agent verify "Verify security fix for YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
+```
+
+#### chore (maintenance)
+
+```bash
+ocode run --agent build "Perform chore YYMMDD-task-name"
+ocode run --agent test "Write tests for YYMMDD-task-name"
+ocode run --agent verify "Verify chore YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
+```
+
+#### docs (documentation)
+
+```bash
+ocode run --agent build "Write documentation for YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
+```
+
+#### test (add tests)
+
+```bash
+ocode run --agent build "Add tests for YYMMDD-task-name"
+ocode run --agent test "Write tests for YYMMDD-task-name"
+ocode run --agent verify "Verify tests for YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
+```
+
+#### auditor-followup (follow-up on auditor feedback)
+
+```bash
+ocode run --agent build "Implement auditor feedback for YYMMDD-task-name"
+ocode run --agent verify "Verify changes for YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
 ```
 
 ## Commit Format
@@ -87,6 +157,7 @@ Conventional commits required:
 ```
 
 ### Valid Types
+
 - `feat` - New feature
 - `fix` - Bug fix
 - `docs` - Documentation
@@ -101,6 +172,7 @@ Conventional commits required:
 - `security` - Security
 
 ### Rules
+
 - Type must be lowercase
 - Subject must be sentence-case (first letter capitalized)
 - Body lines under 100 characters
@@ -140,14 +212,17 @@ Run commit validation before committing:
 ## Troubleshooting
 
 ### Pre-commit checks fail
+
 1. Run `pnpm lint:fix` to auto-fix issues
 2. Run `./scripts/validate-commit.sh <commit-msg>` to check format
 
 ### Type checking fails
+
 1. Check for TypeScript errors: `pnpm typecheck`
 2. Fix errors before committing
 
 ### Push verification fails
+
 1. Run `pnpm verify` locally
 2. Fix any issues before pushing
 

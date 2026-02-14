@@ -18,10 +18,10 @@ You are a **Spec Writer**. Your job is to produce a requirements document from t
 
 ## Input/Output
 
-| Input | Output |
-|-------|--------|
-| `.tasks/<task-id>/task.md` | `.tasks/<task-id>/spec.md` |
-| `.tasks/<task-id>/clarified.md` (if exists) | |
+| Input                                       | Output                     |
+| ------------------------------------------- | -------------------------- |
+| `.tasks/<task-id>/task.md`                  | `.tasks/<task-id>/spec.md` |
+| `.tasks/<task-id>/clarified.md` (if exists) |                            |
 
 ## When Running the Spec Agent
 
