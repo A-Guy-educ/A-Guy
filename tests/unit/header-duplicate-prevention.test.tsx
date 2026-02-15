@@ -298,7 +298,7 @@ describe('Header duplicate prevention', () => {
       const { container } = renderComponent({
         title: 'Introduction to Variables',
         description: 'Learn about variable types',
-        lessonOrder: 1,
+        order: 1,
       })
 
       expect(screen.getByText('Introduction to Variables')).toBeTruthy()
@@ -309,7 +309,7 @@ describe('Header duplicate prevention', () => {
       const { container } = renderComponent({
         title: 'Introduction to Variables',
         description: 'Introduction to Variables',
-        lessonOrder: 1,
+        order: 1,
       })
 
       const paragraphs = container.querySelectorAll('p.text-xl')
@@ -320,7 +320,7 @@ describe('Header duplicate prevention', () => {
       const { container } = renderComponent({
         title: 'Introduction to Variables',
         description: '  INTRODUCTION   TO   VARIABLES  ',
-        lessonOrder: 1,
+        order: 1,
       })
 
       const paragraphs = container.querySelectorAll('p.text-xl')
@@ -331,7 +331,7 @@ describe('Header duplicate prevention', () => {
       const { container } = renderComponent({
         title: 'Introduction to Variables',
         description: null,
-        lessonOrder: 1,
+        order: 1,
       })
 
       const paragraphs = container.querySelectorAll('p.text-xl')
@@ -342,7 +342,7 @@ describe('Header duplicate prevention', () => {
       const { container } = renderComponent({
         title: 'Introduction to Variables',
         description: undefined,
-        lessonOrder: 1,
+        order: 1,
       })
 
       const paragraphs = container.querySelectorAll('p.text-xl')
@@ -353,7 +353,7 @@ describe('Header duplicate prevention', () => {
       const { container } = renderComponent({
         title: 'Test',
         description: 'Test\n',
-        lessonOrder: 1,
+        order: 1,
       })
 
       const paragraphs = container.querySelectorAll('p.text-xl')
