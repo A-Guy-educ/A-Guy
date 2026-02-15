@@ -2,8 +2,6 @@
 
 Automated development pipeline for A-Guy project using OpenCode CLI agents.
 
-**Note:** For LLM agent execution, see `.opencode/DRIVER.md`. This document is a human reference.
-
 ## Pipeline Stages
 
 ```
@@ -13,78 +11,139 @@ spec → clarify → plan → build → test → verify → auditor → pr
 | Agent   | Description                        | Input            | Output       |
 | ------- | ---------------------------------- | ---------------- | ------------ |
 | spec    | Requirements definition            | task.md          | spec.md      |
-| clarify | Generate clarifying questions      | task.md, spec.md | questions.md |
+| clarify | Collect operator Q&A               | task.md, spec.md | questions.md |
 | plan    | Architecture, implementation steps | clarified.md     | plan.md      |
 | build   | Write implementation code          | plan.md          | build.md     |
 | test    | Write E2E/integration tests        | build.md         | test.md      |
 | verify  | Run tests, validate                | test.md          | verify.md    |
 | auditor | Process improvement analysis       | verify.md        | auditor.md   |
-| pr      | Create pull request                | all above        | pr.md        |
+| pr      | Create branch, commit, open PR     | all above        | pr.md        |
 
-## Task Types
+## Task Types & Pipelines
 
-Task type is **metadata only** — affects branch prefix and commit type, NOT pipeline:
-
-| Type             | Branch    | Commit        |
-| ---------------- | --------- | ------------- |
-| feat             | feat/     | feat(...)     |
-| fix              | fix/      | fix(...)      |
-| refactor         | refactor/ | refactor(...) |
-| chore            | chore/    | chore(...)    |
-| docs             | docs/     | docs(...)     |
-| security         | security/ | security(...) |
-| test             | test/     | test(...)     |
-| auditor-followup | feat/     | feat(...)     |
-
-## Task Structure
-
-```
-.tasks/
-└── <YYMMDD-task-name>/
-    ├── task.md           # PRD/requirements (USER writes this)
-    ├── spec.md           # Detailed spec (spec agent writes)
-    ├── questions.md      # Clarifying questions (clarify agent writes)
-    ├── clarified.md     # Answers (USER writes — ONLY human artifact)
-    ├── plan.md           # Implementation plan (plan agent writes)
-    ├── build.md          # Build output (build agent writes)
-    ├── test.md           # Test output (test agent writes)
-    ├── verify.md         # Verification results (verify agent writes)
-    ├── auditor.md        # Auditor analysis (auditor agent writes)
-    └── pr.md             # PR summary (pr agent writes)
-```
+| Task Type        | Pipeline                                                     |
+| ---------------- | ------------------------------------------------------------ |
+| feat             | spec → clarify → plan → build → test → verify → auditor → pr |
+| fix              | clarify → plan → build → test → verify → auditor → pr        |
+| refactor         | clarify → plan → build → test → verify → auditor → pr        |
+| security         | clarify → plan → build → test → verify → auditor → pr        |
+| chore            | build → test → verify → auditor → pr                         |
+| docs             | build → auditor → pr                                         |
+| test             | build → test → verify → auditor → pr                         |
+| auditor-followup | build → verify → pr                                          |
 
 ## Running the Pipeline
 
-### Phase 1: Spec + Clarify (stops for user)
+### Create Task File
 
-```bash
-pnpm pipeline:spec <task-id>
+Create `.tasks/<YYMMDD-task-name>/task.md` with your requirements:
+
+```markdown
+# Task: <task-id>
+
+## Description
+
+Brief description of what to build
+
+## Requirements
+
+- Requirement 1
+- Requirement 2
+
+## Acceptance Criteria
+
+- [ ] Criterion 1
+- [ ] Criterion 2
 ```
 
-This runs:
+### Run Agents by Task Type
 
-1. **spec agent** — reads `task.md`, writes `spec.md`
-2. **clarify agent** — reads `task.md + spec.md`, writes `questions.md`
-
-**STOPS here.** User must:
-
-1. Read `.tasks/<task-id>/questions.md`
-2. Write answers to `.tasks/<task-id>/clarified.md`
-
-### Phase 2: Implementation through PR (autonomous)
+#### feat (new feature)
 
 ```bash
-pnpm pipeline:impl <task-id>
+ocode run --agent spec "Create spec for YYMMDD-task-name"
+ocode run --agent clarify "Generate questions for YYMMDD-task-name"
+# (operator answers in clarified.md)
+ocode run --agent plan "Create plan for YYMMDD-task-name"
+ocode run --agent build "Implement YYMMDD-task-name"
+ocode run --agent test "Write tests for YYMMDD-task-name"
+ocode run --agent verify "Verify tests for YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
 ```
 
-This runs (if outputs don't already exist):
+#### fix (bug fix)
 
-1. **plan agent** — reads `task.md + spec.md + clarified.md`, writes `plan.md`
-2. **build agent** — reads `plan.md + spec.md`, implements, writes `build.md`
-3. **test agent** — reads `build.md + spec.md`, writes tests, writes `test.md`
-4. **verify agent** — runs `pnpm verify`, writes `verify.md`
-5. **auditor agent** — analyzes run, writes `auditor.md`
-6. **pr agent** — opens GitHub PR, writes `pr.md`
+```bash
+ocode run --agent clarify "Generate questions for YYMMDD-task-name"
+# (operator answers in clarified.md)
+ocode run --agent plan "Create plan for YYMMDD-task-name"
+ocode run --agent build "Fix YYMMDD-task-name"
+ocode run --agent test "Write tests for YYMMDD-task-name"
+ocode run --agent verify "Verify fix for YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
+```
+
+#### refactor (restructure code)
+
+```bash
+ocode run --agent clarify "Generate questions for YYMMDD-task-name"
+ocode run --agent plan "Create plan for YYMMDD-task-name"
+ocode run --agent build "Refactor YYMMDD-task-name"
+ocode run --agent test "Write tests for YYMMDD-task-name"
+ocode run --agent verify "Verify refactor for YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
+```
+
+#### security (security fix)
+
+```bash
+ocode run --agent clarify "Generate questions for YYMMDD-task-name"
+ocode run --agent plan "Create plan for YYMMDD-task-name"
+ocode run --agent build "Fix security issue YYMMDD-task-name"
+ocode run --agent test "Write tests for YYMMDD-task-name"
+ocode run --agent verify "Verify security fix for YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
+```
+
+#### chore (maintenance)
+
+```bash
+ocode run --agent build "Perform chore YYMMDD-task-name"
+ocode run --agent test "Write tests for YYMMDD-task-name"
+ocode run --agent verify "Verify chore YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
+```
+
+#### docs (documentation)
+
+```bash
+ocode run --agent build "Write documentation for YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
+```
+
+#### test (add tests)
+
+```bash
+ocode run --agent build "Add tests for YYMMDD-task-name"
+ocode run --agent test "Write tests for YYMMDD-task-name"
+ocode run --agent verify "Verify tests for YYMMDD-task-name"
+ocode run --agent auditor "Analyze YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
+```
+
+#### auditor-followup (follow-up on auditor feedback)
+
+```bash
+ocode run --agent build "Implement auditor feedback for YYMMDD-task-name"
+ocode run --agent verify "Verify changes for YYMMDD-task-name"
+ocode run --agent pr "Create PR for YYMMDD-task-name"
+```
 
 ## Commit Format
 
@@ -125,6 +184,22 @@ Conventional commits required:
 - `chore/<task-name>` - Maintenance
 - `refactor/<task-name>` - Refactoring
 - `docs/<task-name>` - Documentation
+
+## Task Structure
+
+```
+.tasks/
+└── <YYMMDD-task-name>/
+    ├── task.md           # PRD/requirements (YOU write this)
+    ├── clarified.md      # Q&A answers (operator provides)
+    ├── spec.md           # Detailed spec (spec agent writes)
+    ├── plan.md           # Implementation plan (plan agent writes)
+    ├── build.md          # Build output (build agent writes)
+    ├── test.md           # Test output (test agent writes)
+    ├── verify.md         # Verification results (verify agent writes)
+    ├── auditor.md        # Auditor analysis (auditor agent writes)
+    └── pr.md             # PR summary (pr agent writes)
+```
 
 ## Validation
 

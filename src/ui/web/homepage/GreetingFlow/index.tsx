@@ -9,9 +9,9 @@ import { setUserProfile } from '@/client/state/localStorage/userProfile'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import type { Course } from '@/payload-types'
 
-type FlowStep = 'greeting' | 'mood' | 'courses' | 'complete'
+type FlowStep = 'greeting' | 'mood' | 'moodResponse' | 'courses' | 'complete'
 
-const MOODS = ['happy', 'neutral', 'sad', 'excited'] as const
+const MOODS = ['excellent', 'great', 'tired'] as const
 
 export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
   const t = useTranslations('homepage.greeting')
@@ -22,14 +22,14 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
 
   const handleMoodSelect = (mood: string) => {
     setSelectedMood(mood)
-    setStep('courses')
+    setStep('moodResponse')
   }
 
   useEffect(() => {
     if (step === 'courses') {
       setIsLoadingCourses(true)
       fetch(
-        '/api/courses?where[status][equals]=published&where[isActive][equals]=true&sort=order&depth=2',
+        '/api/courses?where[status][equals]=published&where[isActive][equals]=true&sort=order&depth=2&limit=1000&pagination=false',
       )
         .then((res) => res.json())
         .then((data) => {
@@ -65,7 +65,7 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
           <TypingAnimation
             text={t('welcome')}
             speed={50}
-            onComplete={() => setTimeout(() => setStep('mood'), 500)}
+            onComplete={() => setTimeout(() => setStep('mood'), 2000)}
             className="text-2xl md:text-4xl mb-8"
           />
         </div>
@@ -74,7 +74,7 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
       {step === 'mood' && (
         <div className="max-w-md w-full space-y-6">
           <h2 className="text-xl text-center">{t('moodQuestion')}</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {MOODS.map((mood) => (
               <Button
                 key={mood}
@@ -87,6 +87,17 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
               </Button>
             ))}
           </div>
+        </div>
+      )}
+
+      {step === 'moodResponse' && (
+        <div className="max-w-2xl text-center">
+          <TypingAnimation
+            text={t(`moodResponses.${selectedMood}`)}
+            speed={50}
+            onComplete={() => setTimeout(() => setStep('courses'), 1500)}
+            className="text-2xl md:text-4xl mb-8"
+          />
         </div>
       )}
 

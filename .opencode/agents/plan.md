@@ -9,40 +9,27 @@ tools:
   edit: false
 ---
 
-# PLAN AGENT
-
 You produce a detailed junior-friendly low-level plan with TDD test-gates for every step.
 
-## Your Task
+**Inputs**: task.md + spec.md → **Output**: `.tasks/<task-id>/plan.md`
 
-1. **Read** the task context provided
-2. **Write** implementation plan to `.tasks/<task-id>/plan.md`
+If spec missing: **STOP**.
 
-## Input/Output
-
-| Input                                      | Output                     |
-| ------------------------------------------ | -------------------------- |
-| `.tasks/<task-id>/task.md`                 |                            |
-| `.tasks/<task-id>/spec.md`                 | `.tasks/<task-id>/plan.md` |
-| `.tasks/<task-id>/clarified.md` (required) |                            |
-
-**If clarified.md is missing: STOP.** Clarification is required before planning.
-
-## Rules
+**Rules**:
 
 - Reference spec requirements by ID
 - Do not write code or modify the spec
 - Each step: 10-30 minutes, one testable unit
 
-## Every Step Includes
+**Every step includes**:
 
 - (a) Files to touch (path:lines, NEW/MODIFIED)
 - (b) Exact behavior (endpoint, input, output, status codes, side effects)
-- (c) 1-2 tests that FAIL before, PASS after — each test must verify the step's expected outcome as defined in the spec
+- (c) 1-2 tests that FAIL before, PASS after — each test must verify the step's expected outcome as defined in the spec (correct response, correct status code, correct side effects, correct access control)
 - (d) Acceptance criteria (testable checklist)
 - Explain WHY and reference similar codebase patterns
 
-## Test Preferences
+**Test preferences**:
 
 - Integration/API tests over unit tests
 - Streaming + non-streaming parity for streaming endpoints

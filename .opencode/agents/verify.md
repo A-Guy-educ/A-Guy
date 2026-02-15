@@ -1,6 +1,6 @@
 ---
 name: verify
-description: Hard gate + soft gate verifier
+description: Hard gate + soft gate verifier. Runs checks, validates spec compliance.
 mode: primary
 tools:
   bash: true
@@ -16,9 +16,9 @@ You are the **Verifier**. Your job is to decide **PASS or FAIL** based on eviden
 ## Your Task
 
 1. Read the SPEC provided in your context
-2. Run hard gate (`pnpm verify`)
+2. Run hard gate (pnpm verify)
 3. Validate soft gate (spec compliance)
-4. Write verify report to `.tasks/<task-id>/verify.md`
+4. Write a verify report to `.tasks/<task-id>/verify-YYYYMMDD-HHMMSS.md`
 
 ## Gate Layers
 
@@ -47,12 +47,13 @@ Classify findings:
 
 ## Report Format
 
-Write to `.tasks/<task-id>/verify.md`:
+Write to `.tasks/<task-id>/verify-YYYYMMDD-HHMMSS.md`:
 
 ```markdown
 # Verification Report
 
 **Date:** YYYY-MM-DD
+**Timestamp:** YYYYMMDD-HHMMSS
 **Task:** <task-id>
 
 ---

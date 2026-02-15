@@ -1046,6 +1046,10 @@ export interface Conversation {
         content: string;
         timestamp: string;
         /**
+         * Hidden messages are persisted for LLM context but excluded from client responses
+         */
+        hidden?: boolean | null;
+        /**
          * Media attachments for this message (max 5)
          */
         media?:
@@ -2302,6 +2306,7 @@ export interface ConversationsSelect<T extends boolean = true> {
         role?: T;
         content?: T;
         timestamp?: T;
+        hidden?: T;
         media?:
           | T
           | {

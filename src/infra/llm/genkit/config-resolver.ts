@@ -41,6 +41,7 @@ interface ChatConfig {
     exerciseChat: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
     imageToExercise: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
     pdfToExercise: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
+    answerValidation: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
   }
 }
 
@@ -122,6 +123,7 @@ function mapModelKeyToConfigKey(modelKey: AIModelKey): keyof ChatConfig['models'
     IMAGE_TO_EXERCISE: 'imageToExercise',
     EXERCISE_CHAT: 'exerciseChat',
     PDF_TO_EXERCISE: 'pdfToExercise',
+    ANSWER_VALIDATION: 'answerValidation',
   }
   return mapping[modelKey]
 }

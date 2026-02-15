@@ -6,7 +6,7 @@
 
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card } from '@/ui/web/components/card'
@@ -25,7 +25,11 @@ import { TrueFalseQuestion } from '../questions/TrueFalseQuestion'
 import { McqQuestion } from '../questions/McqQuestion'
 import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
 import { QuestionCard } from '../components/QuestionCard'
-import { checkQuestionAnswer, getInitialAnswer } from '../utils/answerChecking'
+import {
+  checkQuestionAnswer,
+  getInitialAnswer,
+  type AnswerErrorMessages,
+} from '../utils/answerChecking'
 import { MediaMapProvider } from '../context/MediaMapContext'
 
 /**
@@ -59,6 +63,21 @@ export function ExerciseRenderer({
 }: ExerciseRendererProps) {
   const t = useTranslations('courses')
 
+  const errorMessages: AnswerErrorMessages = useMemo(
+    () => ({
+      invalidAnswerType: t('invalidAnswerType'),
+      selectTrueFalse: t('selectTrueFalse'),
+      noCorrectAnswer: t('noCorrectAnswer'),
+      selectAnAnswer: t('selectAnAnswer'),
+      enterAnAnswer: t('enterAnAnswer'),
+      unknownVariant: t('unknownVariant'),
+      validationFailed: t('validationFailed'),
+      validationError: t('validationError'),
+      connectionError: t('connectionError'),
+    }),
+    [t],
+  )
+
   // Track answers and check results for each question block
   const questionBlocks = content.blocks.filter(
     (block) => block.type === 'question_select' || block.type === 'question_free_response',
@@ -74,6 +93,7 @@ export function ExerciseRenderer({
 
   const [checkResults, setCheckResults] = useState<Record<string, CheckResult>>({})
   const [hasChecked, setHasChecked] = useState<Record<string, boolean>>({})
+  const [isChecking, setIsChecking] = useState<Record<string, boolean>>({})
   const chatTriggeredRef = useRef<Set<string>>(new Set())
 
   const handleAnswerChange = async (questionId: string, answer: UserAnswer) => {
@@ -86,7 +106,7 @@ export function ExerciseRenderer({
       answer.type === 'true_false' &&
       answer.value !== null
     ) {
-      const result = await checkQuestionAnswer(question, answer)
+      const result = await checkQuestionAnswer(question, answer, errorMessages)
       setCheckResults((prev) => ({ ...prev, [questionId]: result }))
       setHasChecked((prev) => ({ ...prev, [questionId]: true }))
       if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
@@ -115,19 +135,24 @@ export function ExerciseRenderer({
     const question = questionBlocks.find((q) => q.id === questionId)
     if (!question) return
 
-    const result = await checkQuestionAnswer(question, answers[questionId])
-    setCheckResults((prev) => ({ ...prev, [questionId]: result }))
-    setHasChecked((prev) => ({ ...prev, [questionId]: true }))
-    if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
-      chatTriggeredRef.current.add(questionId)
-      window.dispatchEvent(
-        new CustomEvent('exercise-incorrect-answer', {
-          detail: {
-            questionJson: JSON.stringify(question),
-            studentAnswer: formatStudentAnswer(question, answers[questionId]),
-          },
-        }),
-      )
+    setIsChecking((prev) => ({ ...prev, [questionId]: true }))
+    try {
+      const result = await checkQuestionAnswer(question, answers[questionId], errorMessages)
+      setCheckResults((prev) => ({ ...prev, [questionId]: result }))
+      setHasChecked((prev) => ({ ...prev, [questionId]: true }))
+      if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
+        chatTriggeredRef.current.add(questionId)
+        window.dispatchEvent(
+          new CustomEvent('exercise-incorrect-answer', {
+            detail: {
+              questionJson: JSON.stringify(question),
+              studentAnswer: formatStudentAnswer(question, answers[questionId]),
+            },
+          }),
+        )
+      }
+    } finally {
+      setIsChecking((prev) => ({ ...prev, [questionId]: false }))
     }
   }
 
@@ -185,6 +210,7 @@ export function ExerciseRenderer({
                 showCheckButton={showCheckButton}
                 onCheckAnswer={() => handleCheckAnswer(question.id)}
                 disabled={!!disabled}
+                loading={!!isChecking[question.id]}
                 checked={checked}
                 checkResult={checkResult}
                 checkAnswerText={t('checkAnswer')}

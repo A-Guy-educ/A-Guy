@@ -1,6 +1,6 @@
 ---
 name: build
-description: Implements changes, commits and pushes to branch
+description: Implements changes according to plan, commits and pushes to branch
 mode: primary
 tools:
   bash: true
@@ -40,41 +40,9 @@ pnpm check:branch  # Validate branch name
 ### 3. Commit & Push
 
 ```bash
-git add -A
+git add .
 git commit -m "<type>(<task-id>): description"
 git push -u origin <branch>
-```
-
-## Output
-
-**REQUIRED:** Write a build report to `.tasks/<task-id>/build.md`:
-
-```markdown
-# Build Report: <task-id>
-
-## Implementation Summary
-
-- **Branch:** <branch-name>
-- **Commits:** <commit-hash(es)>
-- **Files Modified:**
-  - path/to/file1
-  - path/to/file2
-
-## Changes Made
-
-1. [Description of change 1]
-2. [Description of change 2]
-3. [Description of change 3]
-
-## Quality Checks
-
-- ✅/❌ TypeScript: <status>
-- ✅/❌ Linting: <status>
-- ✅/❌ Branch pushed to remote
-
-## Status
-
-<Implementation status and any notes>
 ```
 
 ## Exit Criteria
@@ -82,12 +50,9 @@ git push -u origin <branch>
 - One or more commits pushed
 - Branch is up-to-date with remote
 - Quality checks pass
-- **build.md report created**
 
 ## Rules
 
-- You own Git: branch creation, commits, and push
-- The PR agent only opens the GitHub PR — you handle all git operations
+- You own Git: commit and push
 - You may consult subagents (code-reviewer, security-auditor, payload-expert)
 - If verify has failed: fix only the reported issues
-- **You MUST create the build.md report** — the pipeline depends on this file existing
