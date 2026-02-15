@@ -77,12 +77,18 @@ interface ColorTextNode extends Parent {
  * - Supports nested markdown inside the braces (bold, italic, links, math, etc.)
  * - Creates custom nodes with hProperties that remark-rehype will transform to HTML
  * - Leaves unknown colors as literal text (security fallback)
+ * - If closing brace not found, outputs original nodes unchanged (no partial edits)
+ *
+ * SCOPE:
+ * - Transforms color syntax in paragraphs, headings, and list items
+ * - Does NOT transform in other contexts (code blocks, tables, etc.)
  *
  * SECURITY:
  * - Only whitelisted colors (red, orange, yellow, green, blue, purple, pink, gray) are transformed
  * - Uses data.hName and data.hProperties which are safe remark-rehype directives
  * - No raw HTML is generated
  * - Only CSS classes are added, no inline styles
+ * - Defensive validation ensures only whitelisted colors generate colored nodes
  *
  * USAGE:
  * ```typescript
@@ -105,8 +111,9 @@ interface ColorTextNode extends Parent {
  */
 export function remarkColorSyntax() {
   return (tree: Root) => {
-    visit(tree, 'paragraph', (paragraph: Parent) => {
-      paragraph.children = transformChildren(paragraph.children)
+    // Visit paragraphs, headings, and list items where color syntax is allowed
+    visit(tree, ['paragraph', 'heading', 'listItem'], (node: Parent) => {
+      node.children = transformChildren(node.children)
     })
   }
 }
@@ -265,6 +272,14 @@ function transformChildren(children: Node[]): Node[] {
     }
 
     if (foundClosing) {
+      // Defensive validation: Double-check color is still whitelisted
+      if (!isAllowedColor(color)) {
+        // This shouldn't happen due to earlier check, but be defensive
+        result.push(node)
+        i++
+        continue
+      }
+
       // Create the colored text node
       const colorNode: ColorTextNode = {
         type: 'colorText',
@@ -295,7 +310,8 @@ function transformChildren(children: Node[]): Node[] {
       // Continue from the node after the closing brace
       i = closingNodeIndex + 1
     } else {
-      // No closing brace found - output original node unchanged
+      // No closing brace found - output original nodes unchanged (no partial edits)
+      // This includes the opening marker and any collected content
       result.push(node)
       i++
     }
