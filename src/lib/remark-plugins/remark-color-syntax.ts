@@ -5,8 +5,31 @@
  * @ai-summary Remark plugin to transform ::color{text} syntax into safe colored text spans
  */
 
-import type { Root, Text, Parent, PhrasingContent } from 'mdast'
-import { visit, SKIP } from 'unist-util-visit'
+import { visit } from 'unist-util-visit'
+
+// Local type definitions for mdast nodes (to avoid adding new dependencies)
+// These are minimal definitions needed for this plugin
+
+interface Node {
+  type: string
+  data?: Record<string, unknown>
+}
+
+interface Parent extends Node {
+  children: Node[]
+}
+
+interface Text extends Node {
+  type: 'text'
+  value: string
+}
+
+type PhrasingContent = Text | ColorTextNode
+
+interface Root extends Parent {
+  type: 'root'
+  children: Node[]
+}
 
 /**
  * Whitelisted colors that are allowed for rendering.
@@ -56,7 +79,7 @@ interface ColorTextNode extends Parent {
  * ```typescript
  * import { remarkColorSyntax } from './remark-color-syntax'
  * import ReactMarkdown from 'react-markdown'
- * 
+ *
  * <ReactMarkdown
  *   remarkPlugins={[remarkMath, remarkColorSyntax]}
  *   rehypePlugins={[rehypeKatex]}
@@ -78,14 +101,13 @@ export function remarkColorSyntax() {
       // Process each child text node
       for (let i = 0; i < paragraph.children.length; i++) {
         const node = paragraph.children[i]
-        
+
         if (node.type !== 'text') continue
-        
+
         const text = (node as Text).value
         const regex = /::(red|blue|green)\{([^}]*)\}/g
         let match: RegExpExecArray | null
-        const replacements: Array<{ index: number; nodes: PhrasingContent[] }> = []
-        
+
         // Find all matches in this text node
         const matches: Array<{ color: string; content: string; start: number; end: number }> = []
         while ((match = regex.exec(text)) !== null) {
@@ -96,19 +118,19 @@ export function remarkColorSyntax() {
             end: match.index + match[0].length,
           })
         }
-        
+
         if (matches.length === 0) continue
-        
+
         // Build replacement nodes
         const newNodes: PhrasingContent[] = []
         let lastEnd = 0
-        
+
         for (const { color, content, start, end } of matches) {
           // Only process whitelisted colors
           if (!isAllowedColor(color)) {
             continue
           }
-          
+
           // Add text before the match
           if (start > lastEnd) {
             newNodes.push({
@@ -116,7 +138,7 @@ export function remarkColorSyntax() {
               value: text.substring(lastEnd, start),
             })
           }
-          
+
           // Create the colored text node with hast properties
           const colorNode: ColorTextNode = {
             type: 'colorText',
@@ -133,11 +155,11 @@ export function remarkColorSyntax() {
               },
             },
           }
-          
+
           newNodes.push(colorNode as PhrasingContent)
           lastEnd = end
         }
-        
+
         // Add remaining text
         if (lastEnd < text.length) {
           newNodes.push({
@@ -145,7 +167,7 @@ export function remarkColorSyntax() {
             value: text.substring(lastEnd),
           })
         }
-        
+
         // Replace the text node with the new nodes
         if (newNodes.length > 0) {
           paragraph.children.splice(i, 1, ...newNodes)
