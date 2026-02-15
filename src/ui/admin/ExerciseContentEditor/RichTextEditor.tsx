@@ -33,7 +33,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
     }, 0)
   }
 
-  const insertColor = (color: 'red' | 'blue' | 'green') => {
+  const insertColor = (
+    color: 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' | 'pink' | 'gray',
+  ) => {
     insertText(`::${color}{`, '}')
     setShowColorPicker(false)
   }
@@ -97,14 +99,39 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
                 title="Red"
               />
               <button
-                className="color-option color-option--blue"
-                onClick={() => insertColor('blue')}
-                title="Blue"
+                className="color-option color-option--orange"
+                onClick={() => insertColor('orange')}
+                title="Orange"
+              />
+              <button
+                className="color-option color-option--yellow"
+                onClick={() => insertColor('yellow')}
+                title="Yellow"
               />
               <button
                 className="color-option color-option--green"
                 onClick={() => insertColor('green')}
                 title="Green"
+              />
+              <button
+                className="color-option color-option--blue"
+                onClick={() => insertColor('blue')}
+                title="Blue"
+              />
+              <button
+                className="color-option color-option--purple"
+                onClick={() => insertColor('purple')}
+                title="Purple"
+              />
+              <button
+                className="color-option color-option--pink"
+                onClick={() => insertColor('pink')}
+                title="Pink"
+              />
+              <button
+                className="color-option color-option--gray"
+                onClick={() => insertColor('gray')}
+                title="Gray"
               />
             </div>
           )}

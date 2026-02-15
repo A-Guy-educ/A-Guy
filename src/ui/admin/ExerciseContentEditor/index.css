@@ -209,7 +209,8 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.5rem;
   padding: 0.5rem;
   background: var(--theme-elevation-50);
@@ -237,12 +238,32 @@
   background: hsl(var(--error));
 }
 
-.color-option--blue {
-  background: hsl(217 91% 60%);
+.color-option--orange {
+  background: hsl(25 95% 53%);
+}
+
+.color-option--yellow {
+  background: hsl(45 93% 47%);
 }
 
 .color-option--green {
   background: hsl(var(--success));
+}
+
+.color-option--blue {
+  background: hsl(217 91% 60%);
+}
+
+.color-option--purple {
+  background: hsl(271 91% 65%);
+}
+
+.color-option--pink {
+  background: hsl(330 81% 60%);
+}
+
+.color-option--gray {
+  background: hsl(220 8% 45%);
 }
 
 .rich-text-textarea {

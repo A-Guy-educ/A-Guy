@@ -35,7 +35,16 @@ interface Root extends Parent {
  * Whitelisted colors that are allowed for rendering.
  * Any color not in this list will be rendered as literal text.
  */
-const ALLOWED_COLORS = ['red', 'blue', 'green'] as const
+const ALLOWED_COLORS = [
+  'red',
+  'orange',
+  'yellow',
+  'green',
+  'blue',
+  'purple',
+  'pink',
+  'gray',
+] as const
 type AllowedColor = (typeof ALLOWED_COLORS)[number]
 
 /**
@@ -64,13 +73,13 @@ interface ColorTextNode extends Parent {
  * Remark plugin to transform ::color{text} syntax into safe colored spans.
  *
  * WHAT IT DOES:
- * - Parses ::red{...}, ::blue{...}, ::green{...} syntax
+ * - Parses ::red{...}, ::orange{...}, ::yellow{...}, ::green{...}, ::blue{...}, ::purple{...}, ::pink{...}, ::gray{...} syntax
  * - Supports nested markdown inside the braces (bold, italic, links, math, etc.)
  * - Creates custom nodes with hProperties that remark-rehype will transform to HTML
  * - Leaves unknown colors as literal text (security fallback)
  *
  * SECURITY:
- * - Only whitelisted colors (red, blue, green) are transformed
+ * - Only whitelisted colors (red, orange, yellow, green, blue, purple, pink, gray) are transformed
  * - Uses data.hName and data.hProperties which are safe remark-rehype directives
  * - No raw HTML is generated
  * - Only CSS classes are added, no inline styles
@@ -126,7 +135,7 @@ function transformChildren(children: Node[]): Node[] {
     const text = (node as Text).value
 
     // Look for opening marker ::color{
-    const markerMatch = text.match(/::(red|blue|green)\{/)
+    const markerMatch = text.match(/::(red|orange|yellow|green|blue|purple|pink|gray)\{/)
 
     if (!markerMatch) {
       // No marker found, keep node as-is
