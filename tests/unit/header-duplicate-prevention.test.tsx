@@ -34,9 +34,7 @@ describe('normalizeComparableText utility', () => {
   })
 
   it('normalizes multiple whitespace and newlines', () => {
-    expect(normalizeComparableText('  HELLO\nWORLD  ')).toBe(
-      normalizeComparableText('hello world'),
-    )
+    expect(normalizeComparableText('  HELLO\nWORLD  ')).toBe(normalizeComparableText('hello world'))
   })
 })
 
