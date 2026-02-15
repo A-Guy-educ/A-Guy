@@ -167,19 +167,11 @@ function transformChildren(children: Node[]): Node[] {
       continue
     }
 
-    // Text before the marker
-    if (markerIndex > 0) {
-      const textNode: Text = {
-        type: 'text',
-        value: text.substring(0, markerIndex),
-      }
-      result.push(textNode)
-    }
-
     // Text after the opening marker (within same node)
     const remainingText = text.substring(markerEnd)
 
-    // Now collect nodes until we find closing } with proper brace matching
+    // IMPORTANT: Scan forward to find closing brace BEFORE making any edits
+    // This ensures "no partial edits" - if no closing found, we output original node
     const collectedNodes: Node[] = []
     let foundClosing = false
     let closingNodeIndex = i
@@ -277,12 +269,22 @@ function transformChildren(children: Node[]): Node[] {
     }
 
     if (foundClosing) {
+      // Closing brace was found - now we can safely emit transformed nodes
       // Defensive validation: Double-check color is still whitelisted
       if (!isAllowedColor(color)) {
         // This shouldn't happen due to earlier check, but be defensive
         result.push(node)
         i++
         continue
+      }
+
+      // Text before the marker (only emit if closing brace found)
+      if (markerIndex > 0) {
+        const textNode: Text = {
+          type: 'text',
+          value: text.substring(0, markerIndex),
+        }
+        result.push(textNode)
       }
 
       // Create the colored text node
@@ -315,8 +317,8 @@ function transformChildren(children: Node[]): Node[] {
       // Continue from the node after the closing brace
       i = closingNodeIndex + 1
     } else {
-      // No closing brace found - output original nodes unchanged (no partial edits)
-      // This includes the opening marker and any collected content
+      // No closing brace found - output original node unchanged (no partial edits)
+      // This preserves the opening marker ::color{ and all content as-is
       result.push(node)
       i++
     }
