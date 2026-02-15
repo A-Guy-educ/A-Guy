@@ -63,7 +63,13 @@ describe('Whitespace Normalization - Hook Unit Test', () => {
     const block = createTableBlock([[' abc ', '   ']], false)
     const data = { content: { blocks: [block as ContentBlock] } }
 
-    const normalized = await normalizeTableCellWhitespace({ data, operation: 'create', req: {} as any })
+    const normalized = await normalizeTableCellWhitespace({ 
+      data, 
+      operation: 'create', 
+      req: {} as any,
+      collection: {} as any,
+      context: {} as any,
+    })
 
     const normalizedBlock = normalized.content.blocks[0] as QuestionTableBlock
     expect(normalizedBlock.table.rowsData[0][0]).toBe('abc') // Trimmed
@@ -76,7 +82,13 @@ describe('Whitespace Normalization - E2E Validation', () => {
     const block = createTableBlock([['   ']], true, {}) // Whitespace cell, no answer
     const data = { content: { blocks: [block as ContentBlock] } }
 
-    const normalized = await normalizeTableCellWhitespace({ data, operation: 'create', req: {} as any })
+    const normalized = await normalizeTableCellWhitespace({ 
+      data, 
+      operation: 'create', 
+      req: {} as any,
+      collection: {} as any,
+      context: {} as any,
+    })
     const normalizedBlock = normalized.content.blocks[0] as QuestionTableBlock
     expect(normalizedBlock.table.rowsData[0][0]).toBe('') // Normalized to empty
 
@@ -91,7 +103,13 @@ describe('Whitespace Normalization - E2E Validation', () => {
     const block = createTableBlock([['   ']], true, { '0-0': 'Answer' }) // Whitespace cell with answer
     const data = { content: { blocks: [block as ContentBlock] } }
 
-    const normalized = await normalizeTableCellWhitespace({ data, operation: 'create', req: {} as any })
+    const normalized = await normalizeTableCellWhitespace({ 
+      data, 
+      operation: 'create', 
+      req: {} as any,
+      collection: {} as any,
+      context: {} as any,
+    })
     const normalizedBlock = normalized.content.blocks[0] as QuestionTableBlock
     expect(normalizedBlock.table.rowsData[0][0]).toBe('') // Normalized to empty
 
@@ -103,7 +121,13 @@ describe('Whitespace Normalization - E2E Validation', () => {
     const block = createTableBlock([['  hello  ', '  world  ']], false)
     const data = { content: { blocks: [block as ContentBlock] } }
 
-    const normalized = await normalizeTableCellWhitespace({ data, operation: 'create', req: {} as any })
+    const normalized = await normalizeTableCellWhitespace({ 
+      data, 
+      operation: 'create', 
+      req: {} as any,
+      collection: {} as any,
+      context: {} as any,
+    })
     const normalizedBlock = normalized.content.blocks[0] as QuestionTableBlock
     expect(normalizedBlock.table.rowsData[0]).toEqual(['hello', 'world'])
 

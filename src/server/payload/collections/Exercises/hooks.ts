@@ -17,9 +17,8 @@ async function getPayloadInstance() {
  */
 export const normalizeTableCellWhitespace: CollectionBeforeValidateHook = async ({
   data,
-  operation,
 }) => {
-  if (operation === 'delete' || !data?.content?.blocks) {
+  if (!data?.content?.blocks) {
     return data
   }
 
