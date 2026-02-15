@@ -6,6 +6,7 @@ import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import readline from 'readline'
+import { writeAgentContext, ALL_IMPL_STAGES } from './pipeline-utils'
 
 const args = process.argv.slice(2)
 const taskId = args.find((arg) => !arg.startsWith('--'))
@@ -22,7 +23,7 @@ if (!taskId) {
   console.log('')
   console.log('Options:')
   console.log('  --feedback "text"  Add feedback for what went wrong')
-  console.log('  --from <stage>     Re-run from specific stage (plan|build|test|verify)')
+  console.log(`  --from <stage>     Re-run from specific stage (${ALL_IMPL_STAGES.join('|')})`)
   console.log('')
   console.log('Interactive mode (prompts for feedback) if no --feedback provided.')
   process.exit(1)
@@ -44,12 +45,11 @@ if (feedbackArg) {
 }
 
 // Parse from stage
-const validStages = ['plan', 'build', 'test', 'verify', 'auditor', 'pr']
 let fromStage = 'build' // default to re-running from build
 if (fromArg) {
   const stage = fromArg.split('=')[1]
-  if (!validStages.includes(stage)) {
-    console.error(`Error: Invalid stage "${stage}". Valid stages: ${validStages.join(', ')}`)
+  if (!ALL_IMPL_STAGES.includes(stage)) {
+    console.error(`Error: Invalid stage "${stage}". Valid stages: ${ALL_IMPL_STAGES.join(', ')}`)
     process.exit(1)
   }
   fromStage = stage
@@ -126,12 +126,11 @@ fs.writeFileSync(feedbackFile, feedbackContent)
 console.log(`✓ Feedback saved to: rerun-feedback.md`)
 
 // Step 3: Delete stage files from the rerun point onwards
-const stageOrder = ['plan', 'build', 'test', 'verify', 'auditor', 'pr']
-const fromIndex = stageOrder.indexOf(fromStage)
+const fromIndex = ALL_IMPL_STAGES.indexOf(fromStage)
 
 const filesToDelete: string[] = []
-for (let i = fromIndex; i < stageOrder.length; i++) {
-  const stageFile = path.join(taskDir, `${stageOrder[i]}.md`)
+for (let i = fromIndex; i < ALL_IMPL_STAGES.length; i++) {
+  const stageFile = path.join(taskDir, `${ALL_IMPL_STAGES[i]}.md`)
   if (fs.existsSync(stageFile)) {
     filesToDelete.push(stageFile)
   }
@@ -151,27 +150,7 @@ if (filesToDelete.length > 0) {
 
 // Step 4: Update .context.md to include feedback
 console.log('\n📋 Updating context with feedback...')
-
-const contextFiles = [
-  'task.md',
-  'spec.md',
-  'clarified.md',
-  'plan.md',
-  'build.md',
-  'test.md',
-  'verify.md',
-  'rerun-feedback.md', // Include feedback
-]
-
-const parts: string[] = []
-for (const file of contextFiles) {
-  const p = path.join(taskDir, file)
-  if (fs.existsSync(p)) {
-    parts.push(`# ${file}\n\n${fs.readFileSync(p, 'utf-8')}`)
-  }
-}
-
-fs.writeFileSync(path.join(taskDir, '.context.md'), parts.join('\n\n---\n\n'))
+writeAgentContext(taskDir)
 console.log('✓ Context updated with feedback')
 
 // Step 5: Optionally update spec/plan if requested
@@ -190,7 +169,7 @@ console.log('')
 console.log('The following will happen:')
 console.log(`  1. Pipeline will skip stages before ${fromStage}`)
 console.log(`  2. ${fromStage} agent will see feedback in .context.md`)
-console.log(`  3. Pipeline continues: ${stageOrder.slice(fromIndex).join(' → ')}`)
+console.log(`  3. Pipeline continues: ${ALL_IMPL_STAGES.slice(fromIndex).join(' → ')}`)
 console.log('')
 console.log('Run this command to continue:')
 console.log('')

@@ -4,6 +4,7 @@ import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
 import { tenantField } from '@/server/payload/fields/tenant'
+import { computeAdminTitle } from '../hooks/chapters/computeAdminTitle'
 
 const formatSlug = (val: string): string =>
   val
@@ -27,10 +28,11 @@ export const Chapters: CollectionConfig = {
         }
         return data
       },
+      computeAdminTitle,
     ],
   },
   admin: {
-    useAsTitle: 'title',
+    useAsTitle: 'adminTitle',
     defaultColumns: ['course', 'chapterLabel', 'title', 'order', 'status', 'isActive', 'updatedAt'],
   },
   fields: [
@@ -61,6 +63,14 @@ export const Chapters: CollectionConfig = {
       index: true,
       admin: {
         description: 'Chapter title',
+      },
+    },
+    {
+      name: 'adminTitle',
+      type: 'text',
+      admin: {
+        hidden: true,
+        description: 'Auto-computed display title for admin (chapter title — course title)',
       },
     },
     {
