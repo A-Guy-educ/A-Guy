@@ -5,14 +5,7 @@ import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-
-/**
- * Normalizes text for comparison by trimming whitespace,
- * collapsing multiple spaces, and converting to lowercase.
- */
-function normalizeText(text: string): string {
-  return text.trim().replace(/\s+/g, ' ').toLowerCase()
-}
+import { normalizeComparableText } from '@/infra/utils/normalizeComparableText'
 
 interface LessonHeaderProps {
   order: number
@@ -26,7 +19,8 @@ export function LessonHeader({ order, title, description }: LessonHeaderProps) {
   const rtl = isRTL(locale as 'en' | 'he')
   const router = useRouter()
 
-  const shouldShowDescription = description && normalizeText(description) !== normalizeText(title)
+  const shouldShowDescription =
+    description && normalizeComparableText(description) !== normalizeComparableText(title)
 
   const handleBack = () => {
     if (window.history.length > 1) {

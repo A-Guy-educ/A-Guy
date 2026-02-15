@@ -1,12 +1,6 @@
 'use client'
 
-/**
- * Normalizes text for comparison by trimming whitespace,
- * collapsing multiple spaces, and converting to lowercase.
- */
-function normalizeText(text: string): string {
-  return text.trim().replace(/\s+/g, ' ').toLowerCase()
-}
+import { normalizeComparableText } from '@/infra/utils/normalizeComparableText'
 
 interface ChapterHeaderProps {
   chapterLabel?: string | null
@@ -15,7 +9,8 @@ interface ChapterHeaderProps {
 }
 
 export function ChapterHeader({ title, description }: ChapterHeaderProps) {
-  const shouldShowDescription = description && normalizeText(description) !== normalizeText(title)
+  const shouldShowDescription =
+    description && normalizeComparableText(description) !== normalizeComparableText(title)
 
   return (
     <div className="mb-8">
