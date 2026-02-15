@@ -34,7 +34,10 @@ const createTableBlock = (
 describe('Solution Fill Mode - Schema Contract', () => {
   it('should reject solutionFill=true with missing answers (schema requirement)', () => {
     const block = createTableBlock(
-      [['', 'B'], ['C', '']],
+      [
+        ['', 'B'],
+        ['C', ''],
+      ],
       true,
       { '0-0': 'Answer for 0-0' }, // Missing answer for 1-1
     )
@@ -49,7 +52,10 @@ describe('Solution Fill Mode - Schema Contract', () => {
 
   it('should accept solutionFill=true when all empty cells have answers', () => {
     const block = createTableBlock(
-      [['', 'B'], ['C', '']],
+      [
+        ['', 'B'],
+        ['C', ''],
+      ],
       true,
       { '0-0': 'Answer for 0-0', '1-1': 'Answer for 1-1' },
     )
@@ -63,9 +69,9 @@ describe('Whitespace Normalization - Hook Unit Test', () => {
     const block = createTableBlock([[' abc ', '   ']], false)
     const data = { content: { blocks: [block as ContentBlock] } }
 
-    const normalized = await normalizeTableCellWhitespace({ 
-      data, 
-      operation: 'create', 
+    const normalized = await normalizeTableCellWhitespace({
+      data,
+      operation: 'create',
       req: {} as any,
       collection: {} as any,
       context: {} as any,
@@ -82,9 +88,9 @@ describe('Whitespace Normalization - E2E Validation', () => {
     const block = createTableBlock([['   ']], true, {}) // Whitespace cell, no answer
     const data = { content: { blocks: [block as ContentBlock] } }
 
-    const normalized = await normalizeTableCellWhitespace({ 
-      data, 
-      operation: 'create', 
+    const normalized = await normalizeTableCellWhitespace({
+      data,
+      operation: 'create',
       req: {} as any,
       collection: {} as any,
       context: {} as any,
@@ -103,9 +109,9 @@ describe('Whitespace Normalization - E2E Validation', () => {
     const block = createTableBlock([['   ']], true, { '0-0': 'Answer' }) // Whitespace cell with answer
     const data = { content: { blocks: [block as ContentBlock] } }
 
-    const normalized = await normalizeTableCellWhitespace({ 
-      data, 
-      operation: 'create', 
+    const normalized = await normalizeTableCellWhitespace({
+      data,
+      operation: 'create',
       req: {} as any,
       collection: {} as any,
       context: {} as any,
@@ -121,9 +127,9 @@ describe('Whitespace Normalization - E2E Validation', () => {
     const block = createTableBlock([['  hello  ', '  world  ']], false)
     const data = { content: { blocks: [block as ContentBlock] } }
 
-    const normalized = await normalizeTableCellWhitespace({ 
-      data, 
-      operation: 'create', 
+    const normalized = await normalizeTableCellWhitespace({
+      data,
+      operation: 'create',
       req: {} as any,
       collection: {} as any,
       context: {} as any,

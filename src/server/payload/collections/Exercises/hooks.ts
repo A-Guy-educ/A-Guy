@@ -15,9 +15,7 @@ async function getPayloadInstance() {
  * Rule: Whitespace-only cells (e.g., '   ') become empty strings ('').
  * This ensures consistent behavior across UI, client validation, and backend validation.
  */
-export const normalizeTableCellWhitespace: CollectionBeforeValidateHook = async ({
-  data,
-}) => {
+export const normalizeTableCellWhitespace: CollectionBeforeValidateHook = async ({ data }) => {
   if (!data?.content?.blocks) {
     return data
   }
