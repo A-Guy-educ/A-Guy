@@ -112,9 +112,14 @@ interface ColorTextNode extends Parent {
 export function remarkColorSyntax() {
   return (tree: Root) => {
     // Visit paragraphs, headings, and list items where color syntax is allowed
-    visit(tree, ['paragraph', 'heading', 'listItem'], (node: Parent) => {
+    // We call visit separately for each node type due to TypeScript limitations
+    const transformer = (node: Parent) => {
       node.children = transformChildren(node.children)
-    })
+    }
+    
+    visit(tree, 'paragraph', transformer)
+    visit(tree, 'heading', transformer)
+    visit(tree, 'listItem', transformer)
   }
 }
 
