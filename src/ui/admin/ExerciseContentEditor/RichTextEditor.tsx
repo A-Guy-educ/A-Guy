@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Bold, Italic, Code, Sigma, Heading1, Link as LinkIcon } from 'lucide-react'
+import { Bold, Italic, Code, Sigma, Heading1, Link as LinkIcon, Palette } from 'lucide-react'
 
 interface RichTextEditorProps {
   value: string
@@ -10,6 +10,8 @@ interface RichTextEditorProps {
 
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+  const [showColorPicker, setShowColorPicker] = React.useState(false)
+  const colorPickerRef = React.useRef<HTMLDivElement>(null)
 
   const insertText = (before: string, after: string = '') => {
     const textarea = textareaRef.current
@@ -30,6 +32,27 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
       textarea.setSelectionRange(start + before.length, end + before.length)
     }, 0)
   }
+
+  const insertColor = (color: 'red' | 'blue' | 'green') => {
+    insertText(`::${color}{`, '}')
+    setShowColorPicker(false)
+  }
+
+  // Click-outside handler
+  React.useEffect(() => {
+    if (!showColorPicker) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
+        setShowColorPicker(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showColorPicker])
 
   return (
     <div className="rich-text-editor">
@@ -58,6 +81,34 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
         <button className="toolbar-button" onClick={() => insertText('[', '](url)')} title="Link">
           <LinkIcon size={14} />
         </button>
+        <div className="toolbar-button-wrapper" ref={colorPickerRef}>
+          <button
+            className="toolbar-button"
+            onClick={() => setShowColorPicker(!showColorPicker)}
+            title="Text Color"
+          >
+            <Palette size={14} />
+          </button>
+          {showColorPicker && (
+            <div className="color-picker-dropdown">
+              <button
+                className="color-option color-option--red"
+                onClick={() => insertColor('red')}
+                title="Red"
+              />
+              <button
+                className="color-option color-option--blue"
+                onClick={() => insertColor('blue')}
+                title="Blue"
+              />
+              <button
+                className="color-option color-option--green"
+                onClick={() => insertColor('green')}
+                title="Green"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <textarea

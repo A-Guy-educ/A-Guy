@@ -201,6 +201,50 @@
   margin: 0 0.25rem;
 }
 
+.toolbar-button-wrapper {
+  position: relative;
+}
+
+.color-picker-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--theme-elevation-50);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.color-option {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.color-option:hover {
+  border-color: var(--theme-elevation-400);
+  transform: scale(1.1);
+}
+
+.color-option--red {
+  background: hsl(var(--error));
+}
+
+.color-option--blue {
+  background: hsl(217 91% 60%);
+}
+
+.color-option--green {
+  background: hsl(var(--success));
+}
+
 .rich-text-textarea {
   width: 100%;
   min-height: 200px;
