@@ -218,12 +218,16 @@
     },
     "greeting": {
       "welcome": "שלום! אני המורה הדיגיטלי שלך 🤖",
-      "moodQuestion": "איך אתה מרגיש היום?",
+      "moodQuestion": "איך אתה היום?",
       "moods": {
-        "happy": "😊 שמח",
-        "neutral": "😐 רגוע",
-        "sad": "😔 עצוב",
-        "excited": "🤩 נלהב"
+        "excellent": "מצויין 😄",
+        "great": "אחלה 🙂",
+        "tired": "קצת עייף 🥱"
+      },
+      "moodResponses": {
+        "excellent": "יאללה נרים קצב",
+        "great": "קדימה אז נתחיל ללמוד",
+        "tired": "היום נהייה ממוקדים"
       },
       "gradeQuestion": "באיזו כיתה אתה לומד?",
       "selectGrade": "בחר כיתה",
