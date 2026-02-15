@@ -11,8 +11,8 @@ interface Check {
 export function preflight(): void {
   const checks: Check[] = [
     {
-      name: 'ocode CLI',
-      test: () => execSync('which ocode', { stdio: 'pipe' }),
+      name: 'ocode CLI (via pnpm)',
+      test: () => execSync('pnpm ocode --version', { stdio: 'pipe' }),
       errorMessage: 'Install: curl -fsSL https://opencode.ai/install | bash',
     },
     {

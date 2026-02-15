@@ -1,11 +1,18 @@
 #!/usr/bin/env ts-node
 // pipeline-impl.ts - Runs plan through PR (Phase 2)
 // Usage: pnpm pipeline:impl <task-id>
+// Reads task.json to determine which pipeline to run.
 
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import { preflight } from './preflight'
+import {
+  writeAgentContext,
+  readTask,
+  stageOutputFile,
+  SPEC_EXECUTE_VERIFY_STAGES,
+} from './pipeline-utils'
 
 const taskId = process.argv[2]
 
@@ -21,33 +28,57 @@ const taskDir = path.join(projectDir, '.tasks', taskId)
 // Quick Win #1: Pre-flight validation
 preflight()
 
-// Check that clarification exists
+// Read task definition to determine pipeline
+const taskDef = readTask(taskDir)
+
+if (!taskDef) {
+  console.error(`Error: ${taskDir}/task.json not found`)
+  console.log('Run "pnpm pipeline:spec <task-id>" first.')
+  process.exit(1)
+}
+
+// Route based on task definition
+if (taskDef.pipeline === 'spec_only') {
+  console.log('')
+  console.log('========================================')
+  console.log(`Pipeline: spec_only (task_type: ${taskDef.task_type})`)
+  console.log('')
+  console.log('This task was classified as spec-only.')
+  console.log('No implementation stages will run.')
+  console.log('')
+  console.log('Artifacts created during pipeline:spec:')
+  console.log(`  • ${taskDir}/task.json`)
+  console.log(`  • ${taskDir}/spec.md`)
+  console.log(`  • ${taskDir}/questions.md`)
+  console.log('========================================')
+  console.log('')
+  process.exit(0)
+}
+
+// Check that clarification exists (only needed for spec_execute_verify)
 if (!fs.existsSync(path.join(taskDir, 'clarified.md'))) {
   console.error(`Error: ${taskDir}/clarified.md not found`)
   console.log('Run "pnpm pipeline:spec <task-id>" first to generate questions.')
   process.exit(1)
 }
 
-// R8: Write agent context file
-function writeAgentContext(): void {
-  const contextFiles = [
-    'task.md',
-    'spec.md',
-    'clarified.md',
-    'plan.md',
-    'build.md',
-    'test.md',
-    'verify.md',
-  ]
-  const parts: string[] = []
-  for (const file of contextFiles) {
-    const p = path.join(taskDir, file)
-    if (fs.existsSync(p)) {
-      parts.push(`# ${file}\n\n${fs.readFileSync(p, 'utf-8')}`)
-    }
-  }
-  fs.writeFileSync(path.join(taskDir, '.context.md'), parts.join('\n\n---\n\n'))
+// spec_execute_verify pipeline
+const stages = SPEC_EXECUTE_VERIFY_STAGES
+
+// Model per stage: smarter models for planning/analysis, fast for execution
+// Source of truth: opencode.json
+const stageModels: Record<string, string> = {
+  plan: 'anthropic/claude-opus-4-6', // Deep architecture planning
+  build: 'minimax/MiniMax-M2.1', // Fast implementation
+  test: 'minimax/MiniMax-M2.1', // Fast test writing
+  verify: 'minimax/MiniMax-M2.1', // Fast verification
+  auditor: 'anthropic/claude-opus-4-6', // Deep analysis
+  pr: 'minimax/MiniMax-M2.1', // Fast PR creation
 }
+
+console.log(`=== Pipeline Impl: ${taskId} ===`)
+console.log(`Pipeline: ${taskDef.pipeline} (${taskDef.task_type}, risk: ${taskDef.risk_level})`)
+console.log('')
 
 // Commit task files to preserve pipeline artifacts
 function commitTaskFiles(): void {
@@ -150,25 +181,9 @@ function showStageErrorContext(stage: string): void {
   console.error(`  4. Or fix manually and run: pnpm pipeline:impl ${taskId}`)
 }
 
-// Always run: plan → build → test → verify → auditor → pr
-const stages = ['plan', 'build', 'test', 'verify', 'auditor', 'pr']
-
-// Model per stage: smarter models for planning/analysis, fast for execution
-// Source of truth: opencode.json
-const stageModels: Record<string, string> = {
-  plan: 'anthropic/claude-opus-4-6', // Deep architecture planning
-  build: 'minimax/MiniMax-M2.1', // Fast implementation
-  test: 'minimax/MiniMax-M2.1', // Fast test writing
-  verify: 'minimax/MiniMax-M2.1', // Fast verification
-  auditor: 'anthropic/claude-opus-4-6', // Deep analysis
-  pr: 'minimax/MiniMax-M2.1', // Fast PR creation
-}
-
-console.log(`=== Pipeline Impl: ${taskId} ===`)
-
 for (let i = 0; i < stages.length; i++) {
   const stage = stages[i]
-  const outputFile = path.join(taskDir, `${stage}.md`)
+  const outputFile = stageOutputFile(taskDir, stage)
 
   // R2: Delete stale verify.md before re-running verify
   if (stage === 'verify' && fs.existsSync(outputFile)) {
@@ -185,13 +200,13 @@ for (let i = 0; i < stages.length; i++) {
   console.log(`[${i + 1}/${stages.length}] Running ${stage} agent...`)
 
   // R8: Write context file before invoking agent
-  writeAgentContext()
+  writeAgentContext(taskDir)
 
   // R4: try/catch around execSync
   try {
     const model = stageModels[stage] || 'minimax/MiniMax-M2.1'
     execSync(
-      `ocode run --agent ${stage} -m ${model} "Execute ${stage} for ${taskId}. Read context from .tasks/${taskId}/.context.md"`,
+      `pnpm ocode run --agent ${stage} -m ${model} "Execute ${stage} for ${taskId}. Read context from .tasks/${taskId}/.context.md"`,
       {
         cwd: projectDir,
         stdio: 'inherit',
