@@ -24,11 +24,18 @@ describe('remarkColorSyntax - Basic Parsing', () => {
     expect(redSpan?.textContent).toBe('important text')
   })
 
-  it('should parse ::blue{text} and render with aguy-color-blue class', () => {
-    const { container } = renderColorMarkdown('::blue{information}')
-    const blueSpan = container.querySelector('.aguy-color-blue')
-    expect(blueSpan).not.toBeNull()
-    expect(blueSpan?.textContent).toBe('information')
+  it('should parse ::orange{text} and render with aguy-color-orange class', () => {
+    const { container } = renderColorMarkdown('::orange{warning text}')
+    const orangeSpan = container.querySelector('.aguy-color-orange')
+    expect(orangeSpan).not.toBeNull()
+    expect(orangeSpan?.textContent).toBe('warning text')
+  })
+
+  it('should parse ::yellow{text} and render with aguy-color-yellow class', () => {
+    const { container } = renderColorMarkdown('::yellow{highlighted text}')
+    const yellowSpan = container.querySelector('.aguy-color-yellow')
+    expect(yellowSpan).not.toBeNull()
+    expect(yellowSpan?.textContent).toBe('highlighted text')
   })
 
   it('should parse ::green{text} and render with aguy-color-green class', () => {
@@ -36,6 +43,34 @@ describe('remarkColorSyntax - Basic Parsing', () => {
     const greenSpan = container.querySelector('.aguy-color-green')
     expect(greenSpan).not.toBeNull()
     expect(greenSpan?.textContent).toBe('success message')
+  })
+
+  it('should parse ::blue{text} and render with aguy-color-blue class', () => {
+    const { container } = renderColorMarkdown('::blue{information}')
+    const blueSpan = container.querySelector('.aguy-color-blue')
+    expect(blueSpan).not.toBeNull()
+    expect(blueSpan?.textContent).toBe('information')
+  })
+
+  it('should parse ::purple{text} and render with aguy-color-purple class', () => {
+    const { container } = renderColorMarkdown('::purple{special note}')
+    const purpleSpan = container.querySelector('.aguy-color-purple')
+    expect(purpleSpan).not.toBeNull()
+    expect(purpleSpan?.textContent).toBe('special note')
+  })
+
+  it('should parse ::pink{text} and render with aguy-color-pink class', () => {
+    const { container } = renderColorMarkdown('::pink{emphasis}')
+    const pinkSpan = container.querySelector('.aguy-color-pink')
+    expect(pinkSpan).not.toBeNull()
+    expect(pinkSpan?.textContent).toBe('emphasis')
+  })
+
+  it('should parse ::gray{text} and render with aguy-color-gray class', () => {
+    const { container } = renderColorMarkdown('::gray{muted text}')
+    const graySpan = container.querySelector('.aguy-color-gray')
+    expect(graySpan).not.toBeNull()
+    expect(graySpan?.textContent).toBe('muted text')
   })
 })
 
@@ -81,23 +116,23 @@ describe('remarkColorSyntax - Nested Markdown', () => {
 
 describe('remarkColorSyntax - Unknown Color Fallback', () => {
   it('should render unknown color as literal text', () => {
-    const { container } = renderColorMarkdown('::purple{text}')
+    const { container } = renderColorMarkdown('::violet{text}')
     // Should not have any color class
-    expect(container.querySelector('.aguy-color-purple')).toBeNull()
+    expect(container.querySelector('.aguy-color-violet')).toBeNull()
     // Should render as literal text
-    expect(container.textContent).toContain('::purple{text}')
+    expect(container.textContent).toContain('::violet{text}')
   })
 
-  it('should render ::yellow{} as literal text', () => {
-    const { container } = renderColorMarkdown('::yellow{warning}')
-    expect(container.querySelector('.aguy-color-yellow')).toBeNull()
-    expect(container.textContent).toContain('::yellow{warning}')
+  it('should render ::brown{} as literal text', () => {
+    const { container } = renderColorMarkdown('::brown{warning}')
+    expect(container.querySelector('.aguy-color-brown')).toBeNull()
+    expect(container.textContent).toContain('::brown{warning}')
   })
 
-  it('should render ::orange{} as literal text', () => {
-    const { container } = renderColorMarkdown('::orange{alert}')
-    expect(container.querySelector('.aguy-color-orange')).toBeNull()
-    expect(container.textContent).toContain('::orange{alert}')
+  it('should render ::white{} as literal text', () => {
+    const { container } = renderColorMarkdown('::white{alert}')
+    expect(container.querySelector('.aguy-color-white')).toBeNull()
+    expect(container.textContent).toContain('::white{alert}')
   })
 })
 

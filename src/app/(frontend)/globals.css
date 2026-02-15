@@ -444,10 +444,30 @@ html[data-theme='light'] {
   color: hsl(var(--error));
 }
 
+.aguy-color-orange {
+  color: hsl(25 95% 53%); /* Vibrant orange */
+}
+
+.aguy-color-yellow {
+  color: hsl(45 93% 47%); /* Golden yellow */
+}
+
 .aguy-color-green {
   color: hsl(var(--success));
 }
 
 .aguy-color-blue {
   color: hsl(217 91% 60%);
+}
+
+.aguy-color-purple {
+  color: hsl(271 91% 65%); /* Matches --accent */
+}
+
+.aguy-color-pink {
+  color: hsl(330 81% 60%); /* Bright pink */
+}
+
+.aguy-color-gray {
+  color: hsl(220 8% 45%); /* Matches --muted-foreground */
 }
