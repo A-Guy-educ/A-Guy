@@ -44,6 +44,7 @@ export function trimMessagesForUpdatePipeline(messages: Message[]): ChatMessage[
     content: m.content,
     timestamp: typeof m.timestamp === 'string' ? m.timestamp : m.timestamp.toISOString(),
     media: (m as unknown as { media?: Array<{ mediaId: string }> })?.media,
+    ...((m as unknown as { hidden?: boolean })?.hidden && { hidden: true }),
   }))
 }
 
@@ -173,12 +174,13 @@ export async function runChatPipeline(
 
   reqLogger.info({ conversationId, contextKey: context.contextKey }, 'Using conversation')
 
-  // Persist user message
+  // Persist user message (optionally hidden for contextual help prompts)
   const userMessage = {
     role: 'user' as const,
     content: validated.message,
     timestamp: new Date().toISOString(),
     media: validated.mediaIds?.map((id: string) => ({ mediaId: id })) || [],
+    ...(validated.hidden && { hidden: true }),
   }
 
   const conversationHistory = conversation.messages || []

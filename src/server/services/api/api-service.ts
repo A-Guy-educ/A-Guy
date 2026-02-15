@@ -256,6 +256,7 @@ export const apiService = {
       courseId?: string
       categoryId?: string
     },
+    options?: { hidden?: boolean },
   ): AsyncGenerator<ChatStreamEvent, void, unknown> {
     const response = await fetch('/api/agent/chat/stream', {
       method: 'POST',
@@ -265,6 +266,7 @@ export const apiService = {
         message,
         acknowledgment,
         ...context,
+        ...(options?.hidden && { hidden: true }),
       }),
     })
 

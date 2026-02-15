@@ -178,6 +178,8 @@ export async function getConversation(req: PayloadRequest & { json?: () => Promi
         if (!msg || !msg.role || !msg.content) return false
         if (typeof msg.content !== 'string' || msg.content.trim().length === 0) return false
         if (msg.role !== 'user' && msg.role !== 'assistant') return false
+        // Exclude hidden messages (contextual help prompts) from client responses
+        if (msg.hidden) return false
         return true
       })
       .map((msg) => {
