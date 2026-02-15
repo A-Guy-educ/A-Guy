@@ -8,54 +8,37 @@ import { ContentSchema } from '@/server/payload/collections/Exercises/schemas'
 import { normalizeTableCellWhitespace } from '@/server/payload/collections/Exercises/hooks'
 import type { QuestionTableBlock, ContentBlock } from '@/shared/exercise-content/types'
 
+// Test fixture builder
+const createTableBlock = (
+  rowsData: string[][],
+  solutionFill: boolean,
+  answers: Record<string, string> = {},
+): QuestionTableBlock => ({
+  id: 'block-1',
+  type: 'question_table',
+  prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Complete the table:', mediaIds: [] },
+  table: {
+    solutionFill,
+    headers: rowsData[0].map((_, i) => `Column ${i + 1}`),
+    rowsData,
+    answers,
+    showBorders: true,
+    showHeader: true,
+    columnAlignment: rowsData[0].map(() => 'left' as const),
+  },
+  hint: { type: 'rich_text', format: 'md-math-v1', value: '', mediaIds: [] },
+  solution: { type: 'rich_text', format: 'md-math-v1', value: '', mediaIds: [] },
+  fullSolution: { type: 'rich_text', format: 'md-math-v1', value: '', mediaIds: [] },
+})
+
 describe('Solution Fill Mode - Schema Contract', () => {
   it('should reject solutionFill=true with missing answers (schema requirement)', () => {
-    const block: QuestionTableBlock = {
-      id: 'block-1',
-      type: 'question_table',
-      prompt: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: 'Complete the table:',
-        mediaIds: [],
-      },
-      table: {
-        solutionFill: true,
-        headers: ['Column 1', 'Column 2'],
-        rowsData: [
-          ['', 'B'], // Empty at 0-0
-          ['C', ''], // Empty at 1-1
-        ],
-        answers: {
-          '0-0': 'Answer for 0-0',
-          // Missing answer for 1-1 - violates schema
-        },
-        showBorders: true,
-        showHeader: true,
-        columnAlignment: ['left', 'left'],
-      },
-      hint: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-      solution: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-      fullSolution: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-    }
-
-    const content = { blocks: [block as ContentBlock] }
-    const result = ContentSchema.safeParse(content)
+    const block = createTableBlock(
+      [['', 'B'], ['C', '']],
+      true,
+      { '0-0': 'Answer for 0-0' }, // Missing answer for 1-1
+    )
+    const result = ContentSchema.safeParse({ blocks: [block as ContentBlock] })
 
     expect(result.success).toBe(false)
     if (!result.success) {
@@ -65,240 +48,65 @@ describe('Solution Fill Mode - Schema Contract', () => {
   })
 
   it('should accept solutionFill=true when all empty cells have answers', () => {
-    const block: QuestionTableBlock = {
-      id: 'block-1',
-      type: 'question_table',
-      prompt: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: 'Complete the table:',
-        mediaIds: [],
-      },
-      table: {
-        solutionFill: true,
-        headers: ['Column 1', 'Column 2'],
-        rowsData: [
-          ['', 'B'], // Empty at 0-0
-          ['C', ''], // Empty at 1-1
-        ],
-        answers: {
-          '0-0': 'Answer for 0-0',
-          '1-1': 'Answer for 1-1',
-        },
-        showBorders: true,
-        showHeader: true,
-        columnAlignment: ['left', 'left'],
-      },
-      hint: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-      solution: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-      fullSolution: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-    }
-
-    const content = { blocks: [block as ContentBlock] }
-    const result = ContentSchema.safeParse(content)
-
+    const block = createTableBlock(
+      [['', 'B'], ['C', '']],
+      true,
+      { '0-0': 'Answer for 0-0', '1-1': 'Answer for 1-1' },
+    )
+    const result = ContentSchema.safeParse({ blocks: [block as ContentBlock] })
     expect(result.success).toBe(true)
   })
 })
 
-describe('Whitespace Normalization', () => {
-  it('should treat whitespace-only cells as empty and require answers when solutionFill=true', async () => {
-    const block: QuestionTableBlock = {
-      id: 'block-1',
-      type: 'question_table',
-      prompt: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: 'Complete the table:',
-        mediaIds: [],
-      },
-      table: {
-        solutionFill: true,
-        headers: ['Column 1'],
-        rowsData: [
-          ['   '], // Whitespace-only cell at 0-0
-        ],
-        answers: {}, // Missing answer for 0-0
-        showBorders: true,
-        showHeader: true,
-        columnAlignment: ['left'],
-      },
-      hint: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-      solution: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-      fullSolution: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-    }
-
+describe('Whitespace Normalization - Hook Unit Test', () => {
+  it('should normalize table cell whitespace: trim non-empty, convert whitespace-only to empty', async () => {
+    const block = createTableBlock([[' abc ', '   ']], false)
     const data = { content: { blocks: [block as ContentBlock] } }
 
-    // Normalize data (simulating hook execution)
-    const normalized = await normalizeTableCellWhitespace({
-      data,
-      operation: 'create',
-      req: {} as any,
-    })
+    const normalized = await normalizeTableCellWhitespace({ data, operation: 'create', req: {} as any })
 
-    // Verify normalization converted whitespace to empty string
     const normalizedBlock = normalized.content.blocks[0] as QuestionTableBlock
-    expect(normalizedBlock.table.rowsData[0][0]).toBe('')
+    expect(normalizedBlock.table.rowsData[0][0]).toBe('abc') // Trimmed
+    expect(normalizedBlock.table.rowsData[0][1]).toBe('') // Whitespace-only → empty
+  })
+})
 
-    // Verify schema validation fails (missing answer for empty cell)
+describe('Whitespace Normalization - E2E Validation', () => {
+  it('should fail validation when whitespace-only cell lacks answer (solutionFill=true)', async () => {
+    const block = createTableBlock([['   ']], true, {}) // Whitespace cell, no answer
+    const data = { content: { blocks: [block as ContentBlock] } }
+
+    const normalized = await normalizeTableCellWhitespace({ data, operation: 'create', req: {} as any })
+    const normalizedBlock = normalized.content.blocks[0] as QuestionTableBlock
+    expect(normalizedBlock.table.rowsData[0][0]).toBe('') // Normalized to empty
+
     const result = ContentSchema.safeParse(normalized.content)
     expect(result.success).toBe(false)
     if (!result.success) {
-      const errors = result.error.issues.map((i) => i.message)
-      expect(errors.some((e) => e.includes('Empty cell at 0-0'))).toBe(true)
+      expect(result.error.issues.some((i) => i.message.includes('Empty cell at 0-0'))).toBe(true)
     }
   })
 
-  it('should accept whitespace-only cells with provided answers when solutionFill=true', async () => {
-    const block: QuestionTableBlock = {
-      id: 'block-1',
-      type: 'question_table',
-      prompt: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: 'Complete the table:',
-        mediaIds: [],
-      },
-      table: {
-        solutionFill: true,
-        headers: ['Column 1'],
-        rowsData: [
-          ['   '], // Whitespace-only cell at 0-0
-        ],
-        answers: {
-          '0-0': 'Answer for 0-0', // Answer provided
-        },
-        showBorders: true,
-        showHeader: true,
-        columnAlignment: ['left'],
-      },
-      hint: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-      solution: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-      fullSolution: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-    }
-
+  it('should pass validation when whitespace-only cell has answer (solutionFill=true)', async () => {
+    const block = createTableBlock([['   ']], true, { '0-0': 'Answer' }) // Whitespace cell with answer
     const data = { content: { blocks: [block as ContentBlock] } }
 
-    // Normalize data (simulating hook execution)
-    const normalized = await normalizeTableCellWhitespace({
-      data,
-      operation: 'create',
-      req: {} as any,
-    })
-
-    // Verify normalization converted whitespace to empty string
+    const normalized = await normalizeTableCellWhitespace({ data, operation: 'create', req: {} as any })
     const normalizedBlock = normalized.content.blocks[0] as QuestionTableBlock
-    expect(normalizedBlock.table.rowsData[0][0]).toBe('')
+    expect(normalizedBlock.table.rowsData[0][0]).toBe('') // Normalized to empty
 
-    // Verify schema validation passes (answer provided for empty cell)
     const result = ContentSchema.safeParse(normalized.content)
     expect(result.success).toBe(true)
   })
 
-  it('should trim leading/trailing whitespace from non-empty cells', async () => {
-    const block: QuestionTableBlock = {
-      id: 'block-1',
-      type: 'question_table',
-      prompt: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: 'Complete the table:',
-        mediaIds: [],
-      },
-      table: {
-        solutionFill: false,
-        headers: ['Column 1', 'Column 2'],
-        rowsData: [
-          ['  hello  ', '  world  '], // Cells with leading/trailing whitespace
-          [' abc ', ' xyz '],
-        ],
-        showBorders: true,
-        showHeader: true,
-        columnAlignment: ['left', 'left'],
-      },
-      hint: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-      solution: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-      fullSolution: {
-        type: 'rich_text',
-        format: 'md-math-v1',
-        value: '',
-        mediaIds: [],
-      },
-    }
-
+  it('should trim non-empty cells and pass validation', async () => {
+    const block = createTableBlock([['  hello  ', '  world  ']], false)
     const data = { content: { blocks: [block as ContentBlock] } }
 
-    // Normalize data (simulating hook execution)
-    const normalized = await normalizeTableCellWhitespace({
-      data,
-      operation: 'create',
-      req: {} as any,
-    })
-
-    // Verify trimming
+    const normalized = await normalizeTableCellWhitespace({ data, operation: 'create', req: {} as any })
     const normalizedBlock = normalized.content.blocks[0] as QuestionTableBlock
-    expect(normalizedBlock.table.rowsData[0][0]).toBe('hello')
-    expect(normalizedBlock.table.rowsData[0][1]).toBe('world')
-    expect(normalizedBlock.table.rowsData[1][0]).toBe('abc')
-    expect(normalizedBlock.table.rowsData[1][1]).toBe('xyz')
+    expect(normalizedBlock.table.rowsData[0]).toEqual(['hello', 'world'])
 
-    // Verify schema validation passes
     const result = ContentSchema.safeParse(normalized.content)
     expect(result.success).toBe(true)
   })
