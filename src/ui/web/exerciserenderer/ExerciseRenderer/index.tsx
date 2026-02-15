@@ -74,6 +74,7 @@ export function ExerciseRenderer({
 
   const [checkResults, setCheckResults] = useState<Record<string, CheckResult>>({})
   const [hasChecked, setHasChecked] = useState<Record<string, boolean>>({})
+  const [isChecking, setIsChecking] = useState<Record<string, boolean>>({})
   const chatTriggeredRef = useRef<Set<string>>(new Set())
 
   const handleAnswerChange = async (questionId: string, answer: UserAnswer) => {
@@ -115,19 +116,24 @@ export function ExerciseRenderer({
     const question = questionBlocks.find((q) => q.id === questionId)
     if (!question) return
 
-    const result = await checkQuestionAnswer(question, answers[questionId])
-    setCheckResults((prev) => ({ ...prev, [questionId]: result }))
-    setHasChecked((prev) => ({ ...prev, [questionId]: true }))
-    if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
-      chatTriggeredRef.current.add(questionId)
-      window.dispatchEvent(
-        new CustomEvent('exercise-incorrect-answer', {
-          detail: {
-            questionJson: JSON.stringify(question),
-            studentAnswer: formatStudentAnswer(question, answers[questionId]),
-          },
-        }),
-      )
+    setIsChecking((prev) => ({ ...prev, [questionId]: true }))
+    try {
+      const result = await checkQuestionAnswer(question, answers[questionId])
+      setCheckResults((prev) => ({ ...prev, [questionId]: result }))
+      setHasChecked((prev) => ({ ...prev, [questionId]: true }))
+      if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
+        chatTriggeredRef.current.add(questionId)
+        window.dispatchEvent(
+          new CustomEvent('exercise-incorrect-answer', {
+            detail: {
+              questionJson: JSON.stringify(question),
+              studentAnswer: formatStudentAnswer(question, answers[questionId]),
+            },
+          }),
+        )
+      }
+    } finally {
+      setIsChecking((prev) => ({ ...prev, [questionId]: false }))
     }
   }
 
@@ -185,6 +191,7 @@ export function ExerciseRenderer({
                 showCheckButton={showCheckButton}
                 onCheckAnswer={() => handleCheckAnswer(question.id)}
                 disabled={!!disabled}
+                loading={!!isChecking[question.id]}
                 checked={checked}
                 checkResult={checkResult}
                 checkAnswerText={t('checkAnswer')}
