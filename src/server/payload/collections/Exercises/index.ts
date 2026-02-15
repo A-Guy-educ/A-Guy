@@ -8,7 +8,7 @@ import { createdByField } from '../../fields/createdBy'
 import { AccountRole } from '../Users/roles'
 import { DEFAULT_CONTENT } from './defaults'
 import { ContentSchema } from './schemas'
-import { generateSlug, validateSlugUniqueness } from './hooks'
+import { generateSlug, normalizeTableCellWhitespace, validateSlugUniqueness } from './hooks'
 
 /**
  * Access control - Exercise-specific
@@ -56,6 +56,10 @@ export const Exercises: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['order', 'title', 'lesson', 'updatedAt'],
+  },
+
+  hooks: {
+    beforeValidate: [normalizeTableCellWhitespace],
   },
 
   fields: [

@@ -1,4 +1,4 @@
-import type { FieldHook } from 'payload'
+import type { CollectionBeforeValidateHook, FieldHook } from 'payload'
 
 import { formatSlug } from '@/utilities/formatSlug'
 
@@ -6,6 +6,54 @@ async function getPayloadInstance() {
   const { getPayload } = await import('payload')
   const { default: config } = await import('@payload-config')
   return getPayload({ config })
+}
+
+/**
+ * Normalize whitespace in table cells to ensure consistent empty-cell detection.
+ * Runs before validation to ensure schema sees normalized data.
+ *
+ * Rule: Whitespace-only cells (e.g., '   ') become empty strings ('').
+ * This ensures consistent behavior across UI, client validation, and backend validation.
+ */
+export const normalizeTableCellWhitespace: CollectionBeforeValidateHook = async ({
+  data,
+  operation,
+}) => {
+  if (operation === 'delete' || !data?.content?.blocks) {
+    return data
+  }
+
+  // Traverse content blocks and normalize table cells
+  const normalizedBlocks = data.content.blocks.map((block: any) => {
+    if (block.type !== 'question_table' || !block.table?.rowsData) {
+      return block
+    }
+
+    // Normalize rowsData: trim all cells, convert whitespace-only to empty string
+    const normalizedRowsData = block.table.rowsData.map((row: any[]) =>
+      row.map((cell: any) => {
+        if (typeof cell !== 'string') return cell
+        const trimmed = cell.trim()
+        return trimmed === '' ? '' : trimmed
+      }),
+    )
+
+    return {
+      ...block,
+      table: {
+        ...block.table,
+        rowsData: normalizedRowsData,
+      },
+    }
+  })
+
+  return {
+    ...data,
+    content: {
+      ...data.content,
+      blocks: normalizedBlocks,
+    },
+  }
 }
 
 export const generateSlug: FieldHook = async ({ value, operation, originalDoc, siblingData }) => {
