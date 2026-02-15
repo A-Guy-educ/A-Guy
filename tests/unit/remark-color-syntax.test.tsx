@@ -103,7 +103,9 @@ describe('remarkColorSyntax - Unknown Color Fallback', () => {
 
 describe('remarkColorSyntax - Multiple Tokens', () => {
   it('should handle multiple color tokens in one paragraph', () => {
-    const { container } = renderColorMarkdown('This is ::red{red} and ::blue{blue} and ::green{green}')
+    const { container } = renderColorMarkdown(
+      'This is ::red{red} and ::blue{blue} and ::green{green}',
+    )
     expect(container.querySelector('.aguy-color-red')).not.toBeNull()
     expect(container.querySelector('.aguy-color-blue')).not.toBeNull()
     expect(container.querySelector('.aguy-color-green')).not.toBeNull()
@@ -149,12 +151,12 @@ describe('remarkColorSyntax - Unmatched Braces', () => {
 describe('remarkColorSyntax - Handler Whitelist Enforcement', () => {
   it('should only generate spans for whitelisted colors', () => {
     const { container } = renderColorMarkdown('::red{red} ::blue{blue} ::green{green}')
-    
+
     // Count the number of aguy-color spans
     const redSpans = container.querySelectorAll('.aguy-color-red')
     const blueSpans = container.querySelectorAll('.aguy-color-blue')
     const greenSpans = container.querySelectorAll('.aguy-color-green')
-    
+
     expect(redSpans.length).toBe(1)
     expect(blueSpans.length).toBe(1)
     expect(greenSpans.length).toBe(1)
@@ -203,5 +205,52 @@ describe('remarkColorSyntax - Edge Cases', () => {
     const { container } = renderColorMarkdown('::red{First paragraph}\n\n::blue{Second paragraph}')
     expect(container.querySelector('.aguy-color-red')).not.toBeNull()
     expect(container.querySelector('.aguy-color-blue')).not.toBeNull()
+  })
+})
+
+describe('remarkColorSyntax - Marker Removal', () => {
+  it('should not render opening marker :: in output', () => {
+    const { container } = renderColorMarkdown('::red{hello}')
+    // Should not contain the :: marker
+    expect(container.textContent).not.toContain('::red')
+    expect(container.textContent).not.toContain('::')
+    expect(container.textContent).toContain('hello')
+  })
+
+  it('should not render opening brace { in output', () => {
+    const { container } = renderColorMarkdown('::blue{world}')
+    const blueSpan = container.querySelector('.aguy-color-blue')
+    expect(blueSpan?.textContent).toBe('world')
+    // The visible text should not contain the opening brace
+    expect(container.textContent).not.toContain('::blue{')
+  })
+
+  it('should not render closing brace } for color syntax', () => {
+    const { container } = renderColorMarkdown('::green{test}')
+    const greenSpan = container.querySelector('.aguy-color-green')
+    expect(greenSpan?.textContent).toBe('test')
+    // Should not have trailing brace
+    expect(greenSpan?.textContent).not.toContain('}')
+  })
+
+  it('should remove all markers in nested markdown case', () => {
+    const { container } = renderColorMarkdown('::red{**bold text**}')
+    const redSpan = container.querySelector('.aguy-color-red')
+    // Should have the bold element but no markers
+    expect(redSpan?.querySelector('strong')).not.toBeNull()
+    expect(redSpan?.querySelector('strong')?.textContent).toBe('bold text')
+    // Should not contain any markers
+    expect(container.textContent).not.toContain('::red')
+    expect(container.textContent).not.toContain('{')
+    expect(container.textContent).not.toContain('}')
+  })
+
+  it('should preserve nested braces inside content', () => {
+    const { container } = renderColorMarkdown('::red{code {x} here}')
+    const redSpan = container.querySelector('.aguy-color-red')
+    // The nested braces should be preserved
+    expect(redSpan?.textContent).toContain('{x}')
+    // But not the outer marker braces
+    expect(container.textContent).not.toContain('::red{')
   })
 })

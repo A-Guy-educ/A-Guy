@@ -96,85 +96,201 @@ interface ColorTextNode extends Parent {
  */
 export function remarkColorSyntax() {
   return (tree: Root) => {
-    // Visit all paragraphs and process their text content
     visit(tree, 'paragraph', (paragraph: Parent) => {
-      // Process each child text node
-      for (let i = 0; i < paragraph.children.length; i++) {
-        const node = paragraph.children[i]
-
-        if (node.type !== 'text') continue
-
-        const text = (node as Text).value
-        const regex = /::(red|blue|green)\{([^}]*)\}/g
-        let match: RegExpExecArray | null
-
-        // Find all matches in this text node
-        const matches: Array<{ color: string; content: string; start: number; end: number }> = []
-        while ((match = regex.exec(text)) !== null) {
-          matches.push({
-            color: match[1],
-            content: match[2],
-            start: match.index,
-            end: match.index + match[0].length,
-          })
-        }
-
-        if (matches.length === 0) continue
-
-        // Build replacement nodes
-        const newNodes: PhrasingContent[] = []
-        let lastEnd = 0
-
-        for (const { color, content, start, end } of matches) {
-          // Only process whitelisted colors
-          if (!isAllowedColor(color)) {
-            continue
-          }
-
-          // Add text before the match
-          if (start > lastEnd) {
-            newNodes.push({
-              type: 'text',
-              value: text.substring(lastEnd, start),
-            })
-          }
-
-          // Create the colored text node with hast properties
-          const colorNode: ColorTextNode = {
-            type: 'colorText',
-            children: [
-              {
-                type: 'text',
-                value: content,
-              },
-            ],
-            data: {
-              hName: 'span',
-              hProperties: {
-                className: [`aguy-color-${color}`],
-              },
-            },
-          }
-
-          newNodes.push(colorNode as PhrasingContent)
-          lastEnd = end
-        }
-
-        // Add remaining text
-        if (lastEnd < text.length) {
-          newNodes.push({
-            type: 'text',
-            value: text.substring(lastEnd),
-          })
-        }
-
-        // Replace the text node with the new nodes
-        if (newNodes.length > 0) {
-          paragraph.children.splice(i, 1, ...newNodes)
-          // Skip the newly inserted nodes
-          i += newNodes.length - 1
-        }
-      }
+      paragraph.children = transformChildren(paragraph.children)
     })
   }
+}
+
+/**
+ * Transform children nodes to handle color syntax.
+ * Single-pass loop that collects nodes between opening marker and closing brace.
+ *
+ * @param children - Array of child nodes to process
+ * @returns Transformed array of nodes with color markers replaced by colorText nodes
+ */
+function transformChildren(children: Node[]): Node[] {
+  const result: Node[] = []
+  let i = 0
+
+  while (i < children.length) {
+    const node = children[i]
+
+    // Only check text nodes for opening markers
+    if (node.type !== 'text') {
+      result.push(node)
+      i++
+      continue
+    }
+
+    const text = (node as Text).value
+
+    // Look for opening marker ::color{
+    const markerMatch = text.match(/::(red|blue|green)\{/)
+
+    if (!markerMatch) {
+      // No marker found, keep node as-is
+      result.push(node)
+      i++
+      continue
+    }
+
+    const color = markerMatch[1]
+    const markerIndex = markerMatch.index!
+    const markerEnd = markerIndex + markerMatch[0].length
+
+    // Only process whitelisted colors
+    if (!isAllowedColor(color)) {
+      result.push(node)
+      i++
+      continue
+    }
+
+    // Text before the marker
+    if (markerIndex > 0) {
+      const textNode: Text = {
+        type: 'text',
+        value: text.substring(0, markerIndex),
+      }
+      result.push(textNode)
+    }
+
+    // Text after the opening marker (within same node)
+    const remainingText = text.substring(markerEnd)
+
+    // Now collect nodes until we find closing } with proper brace matching
+    const collectedNodes: Node[] = []
+    let foundClosing = false
+    let closingNodeIndex = i
+    let textAfterClosing = ''
+    let braceDepth = 0 // Track nested braces
+
+    // Check if closing brace is in the remaining text of current node
+    let closingBraceIndex = -1
+    for (let pos = 0; pos < remainingText.length; pos++) {
+      if (remainingText[pos] === '{') {
+        braceDepth++
+      } else if (remainingText[pos] === '}') {
+        if (braceDepth === 0) {
+          // This is the matching closing brace
+          closingBraceIndex = pos
+          break
+        } else {
+          braceDepth--
+        }
+      }
+    }
+
+    if (closingBraceIndex !== -1) {
+      // Closing brace is in the same text node
+      const contentBeforeClosing = remainingText.substring(0, closingBraceIndex)
+      if (contentBeforeClosing) {
+        const textNode: Text = {
+          type: 'text',
+          value: contentBeforeClosing,
+        }
+        collectedNodes.push(textNode)
+      }
+      textAfterClosing = remainingText.substring(closingBraceIndex + 1)
+      foundClosing = true
+      closingNodeIndex = i
+    } else {
+      // Add remaining text from current node if any
+      if (remainingText) {
+        const textNode: Text = {
+          type: 'text',
+          value: remainingText,
+        }
+        collectedNodes.push(textNode)
+      }
+
+      // Look for closing brace in subsequent nodes
+      let j = i + 1
+      while (j < children.length && !foundClosing) {
+        const nextNode = children[j]
+
+        if (nextNode.type === 'text') {
+          const nextText = (nextNode as Text).value
+          let nextClosingIndex = -1
+
+          // Find matching closing brace with proper depth tracking
+          for (let pos = 0; pos < nextText.length; pos++) {
+            if (nextText[pos] === '{') {
+              braceDepth++
+            } else if (nextText[pos] === '}') {
+              if (braceDepth === 0) {
+                // This is the matching closing brace
+                nextClosingIndex = pos
+                break
+              } else {
+                braceDepth--
+              }
+            }
+          }
+
+          if (nextClosingIndex !== -1) {
+            // Found closing brace
+            const contentBeforeClosing = nextText.substring(0, nextClosingIndex)
+            if (contentBeforeClosing) {
+              const textNode: Text = {
+                type: 'text',
+                value: contentBeforeClosing,
+              }
+              collectedNodes.push(textNode)
+            }
+            textAfterClosing = nextText.substring(nextClosingIndex + 1)
+            foundClosing = true
+            closingNodeIndex = j
+            break
+          } else {
+            // No closing brace in this node, collect entire node
+            collectedNodes.push(nextNode)
+          }
+        } else {
+          // Non-text node (e.g., strong, emphasis), collect it
+          collectedNodes.push(nextNode)
+        }
+
+        j++
+      }
+    }
+
+    if (foundClosing) {
+      // Create the colored text node
+      const colorNode: ColorTextNode = {
+        type: 'colorText',
+        children: collectedNodes as PhrasingContent[],
+        data: {
+          hName: 'span',
+          hProperties: {
+            className: [`aguy-color-${color}`],
+          },
+        },
+      }
+
+      result.push(colorNode as Node)
+
+      // If there's text after the closing brace, we need to recursively process it
+      // because it might contain more color markers
+      if (textAfterClosing) {
+        // Recursively process the remaining text by creating a new text node
+        // and processing it as if it were a new child
+        const textNode: Text = {
+          type: 'text',
+          value: textAfterClosing,
+        }
+        const remainingNodes = transformChildren([textNode])
+        result.push(...remainingNodes)
+      }
+
+      // Continue from the node after the closing brace
+      i = closingNodeIndex + 1
+    } else {
+      // No closing brace found - output original node unchanged
+      result.push(node)
+      i++
+    }
+  }
+
+  return result
 }
