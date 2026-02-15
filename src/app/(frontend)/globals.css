@@ -434,3 +434,20 @@ html[data-theme='light'] {
 .bg-primary .chat-message-content .katex {
   @apply bg-inherit text-inherit;
 }
+
+/* ===================================================================
+   Color Syntax Support
+   =================================================================== */
+
+/* Color classes for ::color{} markdown syntax (exercise editor) */
+.aguy-color-red {
+  color: hsl(var(--error));
+}
+
+.aguy-color-green {
+  color: hsl(var(--success));
+}
+
+.aguy-color-blue {
+  color: hsl(217 91% 60%);
+}

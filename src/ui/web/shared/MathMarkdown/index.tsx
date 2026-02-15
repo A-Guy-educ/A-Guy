@@ -13,6 +13,7 @@ import ReactMarkdown from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
 import remarkMath from 'remark-math'
 import { rehypeMathWrapper } from './rehype-math-wrapper'
+import { remarkColorSyntax } from '@/lib/remark-plugins/remark-color-syntax'
 
 export interface MathMarkdownProps {
   /** The markdown string to render. Supports $...$ (inline) and $$...$$ (block) math. */
@@ -60,7 +61,7 @@ export function MathMarkdown({ content, className, components }: MathMarkdownPro
   return (
     <div className={cn(className)}>
       <ReactMarkdown
-        remarkPlugins={[remarkMath]}
+        remarkPlugins={[remarkMath, remarkColorSyntax]}
         rehypePlugins={[rehypeKatex, rehypeMathWrapper]}
         components={components}
       >
