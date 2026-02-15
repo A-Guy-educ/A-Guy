@@ -5,7 +5,7 @@
 
 'use client'
 
-import React from 'react'
+import React, { useRef, useCallback, useLayoutEffect } from 'react'
 import { Textarea } from '@/ui/web/components/textarea'
 import type { QuestionFreeResponseBlock, UserAnswer, CheckResult, RichTextBlock } from '../../types'
 import { RichTextRenderer } from '../../blocks/RichTextRenderer'
@@ -36,18 +36,37 @@ export function FreeResponseQuestion({
     mediaIds: question.prompt.mediaIds || [],
   }
 
+  // Auto-resize logic
+  const MAX_HEIGHT = 160
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const autoResize = useCallback(() => {
+    const el = textareaRef.current
+    if (!el) return
+
+    el.style.height = 'auto'
+    const clamped = Math.min(el.scrollHeight, MAX_HEIGHT)
+    el.style.height = `${clamped}px`
+    el.style.overflowY = el.scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
+  }, [])
+
+  useLayoutEffect(() => {
+    autoResize()
+  }, [value, autoResize])
+
   return (
     <div className="flex flex-col gap-4">
       <div className="text-base font-medium text-foreground leading-relaxed">
         <RichTextRenderer block={promptBlock} />
       </div>
       <Textarea
+        ref={textareaRef}
         value={value}
         onChange={(e) => onChange({ type: 'free_response', value: e.target.value })}
         disabled={disabled}
         placeholder={t('enterAnswer')}
-        className="text-base p-4 min-h-[120px] resize-y"
-        rows={4}
+        className="text-base min-h-0 resize-none overflow-hidden"
+        rows={1}
       />
     </div>
   )
