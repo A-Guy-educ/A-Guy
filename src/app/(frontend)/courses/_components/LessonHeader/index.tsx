@@ -6,6 +6,14 @@ import { cn } from '@/infra/utils/ui'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
+/**
+ * Normalizes text for comparison by trimming whitespace,
+ * collapsing multiple spaces, and converting to lowercase.
+ */
+function normalizeText(text: string): string {
+  return text.trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
 interface LessonHeaderProps {
   order: number
   title: string
@@ -17,6 +25,8 @@ export function LessonHeader({ order, title, description }: LessonHeaderProps) {
   const locale = useLocale()
   const rtl = isRTL(locale as 'en' | 'he')
   const router = useRouter()
+
+  const shouldShowDescription = description && normalizeText(description) !== normalizeText(title)
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -45,7 +55,7 @@ export function LessonHeader({ order, title, description }: LessonHeaderProps) {
         </span>
       </div>
       <h1 className="text-4xl font-bold mb-4">{title}</h1>
-      {description && <p className="text-xl text-muted-foreground">{description}</p>}
+      {shouldShowDescription && <p className="text-xl text-muted-foreground">{description}</p>}
     </header>
   )
 }
