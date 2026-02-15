@@ -1,11 +1,11 @@
 'use client'
 
 import { isRTL } from '@/i18n/config'
-import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
+import { normalizeComparableText } from '@/infra/utils/normalizeComparableText'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { normalizeComparableText } from '@/infra/utils/normalizeComparableText'
 
 interface LessonHeaderProps {
   order: number

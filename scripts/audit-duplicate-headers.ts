@@ -58,6 +58,13 @@ async function auditCollection(payload: Payload, collectionName: string): Promis
     result.total = docs.length
     logger.info(`Found ${result.total} records in ${collectionName}`)
 
+    // Warn if we hit the limit (results may be incomplete)
+    if (docs.length === 10000) {
+      logger.warn(
+        `⚠️  Reached limit of 10000 records for ${collectionName}. Results may be incomplete.`,
+      )
+    }
+
     // Analyze each document
     for (const doc of docs as CollectionDoc[]) {
       const { title, description, slug } = doc
