@@ -3,7 +3,7 @@
  * Logic for checking user answers against correct answers
  */
 
-import type { QuestionBlock, UserAnswer, CheckResult } from '../types'
+import type { QuestionBlock, QuestionFreeResponseBlock, UserAnswer, CheckResult } from '../types'
 
 /**
  * Check if a user's answer is correct for a given question
@@ -56,17 +56,43 @@ export async function checkQuestionAnswer(
         return { isCorrect: false, message: 'Please enter an answer' }
       }
 
-      const { acceptedAnswers } = question.answer
-
-      // Case-insensitive matching for all answers
-      const normalized = userValue.toLowerCase().trim()
-      for (const accepted of acceptedAnswers) {
-        if (normalized === accepted.toLowerCase().trim()) {
-          return { isCorrect: true }
-        }
-      }
-      return { isCorrect: false }
+      return validateFreeResponseOnServer(question, userValue)
     }
+  }
+}
+
+/**
+ * Validate free-response answer via server endpoint (DB normalization + LLM fallback)
+ */
+async function validateFreeResponseOnServer(
+  question: QuestionFreeResponseBlock,
+  studentAnswer: string,
+): Promise<CheckResult> {
+  try {
+    const response = await fetch('/api/exercises/validate-answer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        questionId: question.id,
+        questionText: question.prompt.value,
+        acceptedAnswers: question.answer.acceptedAnswers,
+        studentAnswer,
+      }),
+    })
+
+    if (!response.ok) {
+      return { isCorrect: false, message: 'Unable to validate answer. Please try again.' }
+    }
+
+    const result = await response.json()
+
+    if (!result.success) {
+      return { isCorrect: false, message: result.error || 'Validation failed' }
+    }
+
+    return { isCorrect: result.data.isCorrect }
+  } catch {
+    return { isCorrect: false, message: 'Connection error. Please check your network.' }
   }
 }
 
