@@ -29,7 +29,7 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
     if (step === 'courses') {
       setIsLoadingCourses(true)
       fetch(
-        '/api/courses?where[status][equals]=published&where[isActive][equals]=true&sort=order&depth=2',
+        '/api/courses?where[status][equals]=published&where[isActive][equals]=true&sort=order&depth=2&limit=1000&pagination=false',
       )
         .then((res) => res.json())
         .then((data) => {
