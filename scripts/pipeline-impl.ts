@@ -65,16 +65,6 @@ if (!fs.existsSync(path.join(taskDir, 'clarified.md'))) {
 // spec_execute_verify pipeline
 const stages = SPEC_EXECUTE_VERIFY_STAGES
 
-// Model per stage: smarter models for planning/analysis, fast for execution
-// Source of truth: opencode.json
-const stageModels: Record<string, string> = {
-  plan: 'anthropic/claude-opus-4-6', // Deep architecture planning
-  build: 'minimax/MiniMax-M2.1', // Fast implementation
-  test: 'minimax/MiniMax-M2.1', // Fast test writing
-  verify: 'minimax/MiniMax-M2.1', // Fast verification
-  auditor: 'anthropic/claude-opus-4-6', // Deep analysis
-  pr: 'minimax/MiniMax-M2.1', // Fast PR creation
-}
 
 console.log(`=== Pipeline Impl: ${taskId} ===`)
 console.log(`Pipeline: ${taskDef.pipeline} (${taskDef.task_type}, risk: ${taskDef.risk_level})`)
@@ -204,9 +194,8 @@ for (let i = 0; i < stages.length; i++) {
 
   // R4: try/catch around execSync
   try {
-    const model = stageModels[stage] || 'minimax/MiniMax-M2.1'
     execSync(
-      `pnpm ocode run --agent ${stage} -m ${model} "Execute ${stage} for ${taskId}. Read context from .tasks/${taskId}/.context.md"`,
+      `pnpm ocode run --agent ${stage} "Execute ${stage} for ${taskId}. Read context from .tasks/${taskId}/.context.md"`,
       {
         cwd: projectDir,
         stdio: 'inherit',

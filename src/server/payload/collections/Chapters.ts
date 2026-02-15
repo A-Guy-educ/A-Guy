@@ -5,6 +5,7 @@ import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
 import { tenantField } from '@/server/payload/fields/tenant'
 import { computeAdminTitle } from '../hooks/chapters/computeAdminTitle'
+import { computeAdminTitleOnRead } from '../hooks/chapters/computeAdminTitleOnRead'
 
 const formatSlug = (val: string): string =>
   val
@@ -30,6 +31,7 @@ export const Chapters: CollectionConfig = {
       },
       computeAdminTitle,
     ],
+    afterRead: [computeAdminTitleOnRead],
   },
   admin: {
     useAsTitle: 'adminTitle',

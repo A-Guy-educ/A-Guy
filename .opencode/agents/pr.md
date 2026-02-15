@@ -27,86 +27,59 @@ spec → plan → build → test → verify → auditor → pr
 
 ## What You Must Do
 
-### 1. Create a Branch
+### 1. Commit All Remaining Changes
 
-Create a branch based on task type and name:
-
-- `feat/<task-name>` - for features
-- `fix/<task-name>` - for bug fixes
-- `chore/<task-name>` - for maintenance
-- `refactor/<task-name>` - for refactoring
-- `docs/<task-name>` - for documentation
-
-### 2. Commit Changes
-
-**IMPORTANT:** Stage ALL changes before committing, not just specific files:
+The build agent may have left uncommitted changes. **Always** commit everything first:
 
 ```bash
-# Stage EVERYTHING (task files, config, new files)
 git add -A
-
-# Commit with conventional format
-git commit -m "<type>(<scope>): <subject>
-
-- Include task ID if applicable
-- Bullet points for key changes"
-
-# Push to remote
-git push -u origin <branch-name>
+git status
+# If there are staged changes:
+git commit -m "<type>(<task-id>): <short description>"
 ```
 
-**NEVER commit with `git add <specific-files>` only.**
+### 2. Push Branch to Remote
+
+Ensure the branch is published:
+
+```bash
+git push -u origin $(git branch --show-current)
+```
 
 ### 3. Create Pull Request
 
-Create a PR with:
-
-- Title following convention
-- Description summarizing changes
-- Link to task if applicable
-
-## Commands
+Create a PR targeting `dev` and **include the PR URL in your output**:
 
 ```bash
-# Create branch
-git checkout -b <branch-name>
+gh pr create \
+  --base dev \
+  --title "<type>(<task-id>): <short description>" \
+  --body "## Summary
+<Brief description from spec/plan>
 
-# Stage all changes
-git add -A
-
-# Commit with message
-git commit -m "<task-id>: Description of changes"
-
-# Push branch
-git push -u origin <branch-name>
-
-# Create PR (via GitHub CLI or git API)
-gh pr create --title "feat: Add feature" --body "Description"
+## Task
+Task ID: <task-id>"
 ```
 
-## Output Format
+**You MUST include the PR URL in your output and in pr.md.**
 
-Write summary to: `.tasks/<taskId>/pr.md`
+### 4. Write Output File (REQUIRED)
+
+**You MUST write this file or the pipeline will fail.**
+
+Write to: `.tasks/<taskId>/pr.md`
 
 ```markdown
 # PR Agent Report: <taskId>
 
-## Branch Created
-
-- **Branch:** feat/<task-name>
-- **Remote:** origin
-
-## Commits
-
-- <commit-hash> - <task-id>: Description
+## Branch
+- **Branch:** <branch-name>
+- **Base:** dev
 
 ## Pull Request
-
 - **Title:** <pr-title>
 - **URL:** <pr-url>
 - **Status:** OPEN
-
-## Notes
-
-- Any additional notes about the PR
 ```
+
+Use the Write tool to create this file. The pipeline validates that this file exists after you finish.
