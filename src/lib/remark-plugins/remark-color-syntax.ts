@@ -116,7 +116,7 @@ export function remarkColorSyntax() {
     const transformer = (node: Parent) => {
       node.children = transformChildren(node.children)
     }
-    
+
     visit(tree, 'paragraph', transformer)
     visit(tree, 'heading', transformer)
     visit(tree, 'listItem', transformer)
