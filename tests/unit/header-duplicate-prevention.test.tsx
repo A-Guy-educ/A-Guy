@@ -1,12 +1,43 @@
 // @vitest-environment jsdom
 import { render, screen, cleanup } from '@testing-library/react'
-import { describe, expect, it, afterEach } from 'vitest'
+import { describe, expect, it, afterEach, vi, beforeEach } from 'vitest'
 import { CourseHeader } from '@/app/(frontend)/courses/_components/CourseHeader'
 import { ChapterHeader } from '@/app/(frontend)/courses/_components/ChapterHeader'
+import { LessonHeader } from '@/app/(frontend)/courses/_components/LessonHeader'
+import { normalizeComparableText } from '@/infra/utils/normalizeComparableText'
+import { I18nProvider } from '@/ui/web/providers/I18n'
+import enMessages from '@/i18n/en.json'
 
-// Clean up DOM after each test to prevent accumulation
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  usePathname: () => '/test',
+  useSearchParams: () => new URLSearchParams(),
+}))
+
+// Clean up DOM and mocks after each test
 afterEach(() => {
   cleanup()
+})
+
+beforeEach(() => {
+  vi.clearAllMocks()
+})
+
+describe('normalizeComparableText utility', () => {
+  it('normalizes newlines as whitespace', () => {
+    expect(normalizeComparableText('גיאומטריה\n')).toBe(normalizeComparableText('גיאומטריה'))
+  })
+
+  it('normalizes multiple whitespace and newlines', () => {
+    expect(normalizeComparableText('  HELLO\nWORLD  ')).toBe(
+      normalizeComparableText('hello world'),
+    )
+  })
 })
 
 describe('Header duplicate prevention', () => {
@@ -114,19 +145,22 @@ describe('Header duplicate prevention', () => {
       expect(paragraphs[0].textContent).toBe('לימוד צורות וזוויות')
     })
 
-    // Newline handling - documented behavior (verified to work in isolation)
-    it('documents that newlines are treated as whitespace in normalization', () => {
-      // Note: This test documents expected behavior.
-      // Normalization with trim().replace(/\s+/g, ' ').toLowerCase()
-      // treats \n as whitespace, making "Text\n" === "Text" after normalization.
-      // This has been verified to work in production and isolated tests.
+    it('does not render description with trailing newline', () => {
+      const renderComponent = (props: any) =>
+        render(
+          <I18nProvider locale="en" messages={enMessages}>
+            <CourseHeader {...props} />
+          </I18nProvider>,
+        )
 
-      // For test stability, we use a simple assertion
-      const result = render(
-        <CourseHeader courseLabel="Course" title="Test" description="Different text" />,
-      )
-      const paragraphs = result.container.querySelectorAll('p.text-xl')
-      expect(paragraphs).toHaveLength(1) // Shows description when different
+      const { container } = renderComponent({
+        courseLabel: 'Course',
+        title: 'Test',
+        description: 'Test\n',
+      })
+
+      const paragraphs = container.querySelectorAll('p.text-xl')
+      expect(paragraphs).toHaveLength(0)
     })
 
     // Trailing punctuation (current behavior - different strings)
@@ -224,16 +258,21 @@ describe('Header duplicate prevention', () => {
       expect(paragraphs[0].textContent).toBe('לימוד צורות וזוויות')
     })
 
-    // Newline handling - documented behavior (verified to work in isolation)
-    it('documents that newlines are treated as whitespace in normalization', () => {
-      // Note: This test documents expected behavior.
-      // Normalization treats \n as whitespace via /\s+/g regex.
-      // This has been verified to work in production and isolated unit tests.
+    it('does not render description with trailing newline', () => {
+      const renderComponent = (props: any) =>
+        render(
+          <I18nProvider locale="en" messages={enMessages}>
+            <ChapterHeader {...props} />
+          </I18nProvider>,
+        )
 
-      // Test a different case that works reliably
-      const result = render(<ChapterHeader title="Test" description="Different" />)
-      const paragraphs = result.container.querySelectorAll('p.text-xl')
-      expect(paragraphs).toHaveLength(1) // Shows description when different
+      const { container } = renderComponent({
+        title: 'Test',
+        description: 'Test\n',
+      })
+
+      const paragraphs = container.querySelectorAll('p.text-xl')
+      expect(paragraphs).toHaveLength(0)
     })
 
     // Trailing punctuation (current behavior - different strings)
@@ -245,6 +284,81 @@ describe('Header duplicate prevention', () => {
       // Punctuation makes them different, so both should render
       const paragraphs = container.querySelectorAll('p.text-xl')
       expect(paragraphs).toHaveLength(1)
+    })
+  })
+
+  describe('LessonHeader', () => {
+    const renderComponent = (props: any) =>
+      render(
+        <I18nProvider locale="en" messages={enMessages}>
+          <LessonHeader {...props} />
+        </I18nProvider>,
+      )
+
+    it('renders title and description when they differ', () => {
+      const { container } = renderComponent({
+        title: 'Introduction to Variables',
+        description: 'Learn about variable types',
+        lessonOrder: 1,
+      })
+
+      expect(screen.getByText('Introduction to Variables')).toBeTruthy()
+      expect(screen.getByText('Learn about variable types')).toBeTruthy()
+    })
+
+    it('does not render description when identical to title', () => {
+      const { container } = renderComponent({
+        title: 'Introduction to Variables',
+        description: 'Introduction to Variables',
+        lessonOrder: 1,
+      })
+
+      const paragraphs = container.querySelectorAll('p.text-xl')
+      expect(paragraphs).toHaveLength(0)
+    })
+
+    it('does not render description when normalized text matches', () => {
+      const { container } = renderComponent({
+        title: 'Introduction to Variables',
+        description: '  INTRODUCTION   TO   VARIABLES  ',
+        lessonOrder: 1,
+      })
+
+      const paragraphs = container.querySelectorAll('p.text-xl')
+      expect(paragraphs).toHaveLength(0)
+    })
+
+    it('does not render description when null', () => {
+      const { container } = renderComponent({
+        title: 'Introduction to Variables',
+        description: null,
+        lessonOrder: 1,
+      })
+
+      const paragraphs = container.querySelectorAll('p.text-xl')
+      expect(paragraphs).toHaveLength(0)
+    })
+
+    it('does not render description when undefined', () => {
+      const { container } = renderComponent({
+        title: 'Introduction to Variables',
+        description: undefined,
+        lessonOrder: 1,
+      })
+
+      const paragraphs = container.querySelectorAll('p.text-xl')
+      expect(paragraphs).toHaveLength(0)
+    })
+
+    it('does not render description with trailing newline', () => {
+      const { container } = renderComponent({
+        title: 'Test',
+        description: 'Test\n',
+        lessonOrder: 1,
+      })
+
+      const paragraphs = container.querySelectorAll('p.text-xl')
+      expect(paragraphs).toHaveLength(0)
     })
   })
 })
