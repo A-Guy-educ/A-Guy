@@ -9,6 +9,7 @@ loadEnv({ path: '.env.test', override: true })
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
+    environment: 'node',
     include: [
       'tests/unit/**/*.spec.ts',
       'tests/unit/**/*.test.ts',
