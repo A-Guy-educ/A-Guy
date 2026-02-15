@@ -5,38 +5,48 @@
 
 import type { QuestionBlock, QuestionFreeResponseBlock, UserAnswer, CheckResult } from '../types'
 
+export interface AnswerErrorMessages {
+  invalidAnswerType: string
+  selectTrueFalse: string
+  noCorrectAnswer: string
+  selectAnAnswer: string
+  enterAnAnswer: string
+  unknownVariant: string
+  validationFailed: string
+  validationError: string
+  connectionError: string
+}
+
 /**
  * Check if a user's answer is correct for a given question
- * Returns a Promise to support future async validation (e.g. AI/Gemini)
  */
 export async function checkQuestionAnswer(
   question: QuestionBlock,
   answer: UserAnswer,
+  messages: AnswerErrorMessages,
 ): Promise<CheckResult> {
   switch (question.type) {
     case 'question_select': {
-      // Check variant to determine answer type
       if (question.variant === 'true_false') {
         if (answer.type !== 'true_false') {
-          return { isCorrect: false, message: 'Invalid answer type' }
+          return { isCorrect: false, message: messages.invalidAnswerType }
         }
         if (answer.value === null || answer.value === undefined) {
-          return { isCorrect: false, message: 'Please select True or False' }
+          return { isCorrect: false, message: messages.selectTrueFalse }
         }
         if (!question.answer.correctOptionId) {
-          return { isCorrect: false, message: 'No correct answer defined' }
+          return { isCorrect: false, message: messages.noCorrectAnswer }
         }
-        // Convert user's boolean answer to option id and compare
         const userOptionId = answer.value ? 'true' : 'false'
         return {
           isCorrect: userOptionId === question.answer.correctOptionId,
         }
       } else if (question.variant === 'mcq') {
         if (answer.type !== 'mcq') {
-          return { isCorrect: false, message: 'Invalid answer type' }
+          return { isCorrect: false, message: messages.invalidAnswerType }
         }
         if (answer.selectedIds.length === 0) {
-          return { isCorrect: false, message: 'Please select an answer' }
+          return { isCorrect: false, message: messages.selectAnAnswer }
         }
         const userIds = [...answer.selectedIds].sort()
         const correctIds = [...question.answer.correctOptionIds].sort()
@@ -44,19 +54,19 @@ export async function checkQuestionAnswer(
           userIds.length === correctIds.length && userIds.every((id, idx) => id === correctIds[idx])
         return { isCorrect }
       }
-      return { isCorrect: false, message: 'Unknown question variant' }
+      return { isCorrect: false, message: messages.unknownVariant }
     }
 
     case 'question_free_response': {
       if (answer.type !== 'free_response') {
-        return { isCorrect: false, message: 'Invalid answer type' }
+        return { isCorrect: false, message: messages.invalidAnswerType }
       }
       const userValue = answer.value.trim()
       if (userValue === '') {
-        return { isCorrect: false, message: 'Please enter an answer' }
+        return { isCorrect: false, message: messages.enterAnAnswer }
       }
 
-      return validateFreeResponseOnServer(question, userValue)
+      return validateFreeResponseOnServer(question, userValue, messages)
     }
   }
 }
@@ -67,6 +77,7 @@ export async function checkQuestionAnswer(
 async function validateFreeResponseOnServer(
   question: QuestionFreeResponseBlock,
   studentAnswer: string,
+  messages: AnswerErrorMessages,
 ): Promise<CheckResult> {
   try {
     const response = await fetch('/api/exercises/validate-answer', {
@@ -81,18 +92,18 @@ async function validateFreeResponseOnServer(
     })
 
     if (!response.ok) {
-      return { isCorrect: false, message: 'Unable to validate answer. Please try again.' }
+      return { isCorrect: false, message: messages.validationFailed }
     }
 
     const result = await response.json()
 
     if (!result.success) {
-      return { isCorrect: false, message: result.error || 'Validation failed' }
+      return { isCorrect: false, message: result.error || messages.validationError }
     }
 
     return { isCorrect: result.data.isCorrect }
   } catch {
-    return { isCorrect: false, message: 'Connection error. Please check your network.' }
+    return { isCorrect: false, message: messages.connectionError }
   }
 }
 
