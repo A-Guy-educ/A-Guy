@@ -215,7 +215,7 @@ const TableBlockSchema = z
       })
     }
 
-    // Validate answer keys point to valid, empty cells (when answers exist)
+    // Validate answer keys are within table bounds
     for (const [key] of Object.entries(table.answers || {})) {
       const [rowIdx, colIdx] = key.split('-').map(Number)
 
@@ -223,12 +223,6 @@ const TableBlockSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: `Answer key "${key}" references out-of-bounds cell`,
-          path: ['answers', key],
-        })
-      } else if (table.rowsData[rowIdx][colIdx] !== '') {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Answer key "${key}" points to a non-empty cell (fillable cells must be empty)`,
           path: ['answers', key],
         })
       }
