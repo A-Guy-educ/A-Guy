@@ -104,8 +104,9 @@ async function renderPdfPageToImage(
   const { createCanvas } = await import('@napi-rs/canvas')
 
   // Load PDF document
+  // pdfjs-dist v4.x requires Uint8Array, not Node.js Buffer
   const loadingTask = pdfjsLib.getDocument({
-    data: pdfBuffer,
+    data: new Uint8Array(pdfBuffer),
     useSystemFonts: true,
     enableXfa: false,
   })
