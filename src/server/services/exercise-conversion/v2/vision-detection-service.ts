@@ -101,7 +101,7 @@ async function renderPdfPageToImage(
 ): Promise<{ pageImageBuffer: Buffer; pageWidth: number; pageHeight: number }> {
   // Dynamic imports for pdfjs-dist
   const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const { createCanvas } = await import('canvas')
+  const { createCanvas } = await import('@napi-rs/canvas')
 
   // Load PDF document
   const loadingTask = pdfjsLib.getDocument({
@@ -137,15 +137,8 @@ async function renderPdfPageToImage(
     viewport,
   }).promise
 
-  // Convert to PNG buffer
-  const pageImageBuffer = await new Promise<Buffer>((resolve, reject) => {
-    const chunks: Buffer[] = []
-    const stream = canvas.createPNGStream() as NodeJS.ReadableStream
-
-    stream.on('data', (chunk: Buffer) => chunks.push(chunk))
-    stream.on('end', () => resolve(Buffer.concat(chunks)))
-    stream.on('error', reject)
-  })
+  // Convert to PNG buffer using @napi-rs/canvas encode method
+  const pageImageBuffer = Buffer.from(await canvas.encode('png'))
 
   return { pageImageBuffer, pageWidth: width, pageHeight: height }
 }
