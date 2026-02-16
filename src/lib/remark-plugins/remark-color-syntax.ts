@@ -270,8 +270,8 @@ function transformChildren(children: Node[]): Node[] {
 
     if (foundClosing) {
       // Closing brace was found - now we can safely emit transformed nodes
-      // Defensive validation: Double-check color is still whitelisted
-      if (!isAllowedColor(color)) {
+      // Defensive validation: Double-check highlight token is still whitelisted
+      if (!isAllowedHighlight(token)) {
         // This shouldn't happen due to earlier check, but be defensive
         result.push(node)
         i++

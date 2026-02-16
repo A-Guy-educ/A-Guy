@@ -24,18 +24,18 @@ describe('remarkColorSyntax - Basic Parsing', () => {
     expect(redSpan?.textContent).toBe('important text')
   })
 
-  it('should parse ::text-highlight-2{text} and render with aguy-color-orange class', () => {
+  it('should parse ::text-highlight-2{text} and render with aguy-text-highlight-2 class', () => {
     const { container } = renderHighlightMarkdown('::text-highlight-2{warning text}')
-    const highlight2Span = container.querySelector('.aguy-color-orange')
-    expect(orangeSpan).not.toBeNull()
-    expect(orangeSpan?.textContent).toBe('warning text')
+    const highlight2Span = container.querySelector('.aguy-text-highlight-2')
+    expect(highlight2Span).not.toBeNull()
+    expect(highlight2Span?.textContent).toBe('warning text')
   })
 
-  it('should parse ::text-highlight-3{text} and render with aguy-color-yellow class', () => {
+  it('should parse ::text-highlight-3{text} and render with aguy-text-highlight-3 class', () => {
     const { container } = renderHighlightMarkdown('::text-highlight-3{highlighted text}')
-    const highlight3Span = container.querySelector('.aguy-color-yellow')
-    expect(yellowSpan).not.toBeNull()
-    expect(yellowSpan?.textContent).toBe('highlighted text')
+    const highlight3Span = container.querySelector('.aguy-text-highlight-3')
+    expect(highlight3Span).not.toBeNull()
+    expect(highlight3Span?.textContent).toBe('highlighted text')
   })
 
   it('should parse ::text-highlight-4{text} and render with aguy-text-highlight-4 class', () => {
@@ -48,29 +48,29 @@ describe('remarkColorSyntax - Basic Parsing', () => {
   it('should parse ::text-highlight-5{text} and render with aguy-text-highlight-5 class', () => {
     const { container } = renderHighlightMarkdown('::text-highlight-5{information}')
     const highlight5Span = container.querySelector('.aguy-text-highlight-5')
-    expect(blueSpan).not.toBeNull()
-    expect(blueSpan?.textContent).toBe('information')
+    expect(highlight5Span).not.toBeNull()
+    expect(highlight5Span?.textContent).toBe('information')
   })
 
   it('should parse ::text-highlight-6{text} and render with aguy-text-highlight-6 class', () => {
     const { container } = renderHighlightMarkdown('::text-highlight-6{special note}')
     const highlight6Span = container.querySelector('.aguy-text-highlight-6')
-    expect(purpleSpan).not.toBeNull()
-    expect(purpleSpan?.textContent).toBe('special note')
+    expect(highlight6Span).not.toBeNull()
+    expect(highlight6Span?.textContent).toBe('special note')
   })
 
-  it('should parse ::text-highlight-7{text} and render with aguy-color-pink class', () => {
+  it('should parse ::text-highlight-7{text} and render with aguy-text-highlight-7 class', () => {
     const { container } = renderHighlightMarkdown('::text-highlight-7{emphasis}')
-    const pinkSpan = container.querySelector('.aguy-color-pink')
-    expect(pinkSpan).not.toBeNull()
-    expect(pinkSpan?.textContent).toBe('emphasis')
+    const highlight7Span = container.querySelector('.aguy-text-highlight-7')
+    expect(highlight7Span).not.toBeNull()
+    expect(highlight7Span?.textContent).toBe('emphasis')
   })
 
   it('should parse ::text-highlight-8{text} and render with aguy-text-highlight-8 class', () => {
     const { container } = renderHighlightMarkdown('::text-highlight-8{muted text}')
     const highlight8Span = container.querySelector('.aguy-text-highlight-8')
-    expect(graySpan).not.toBeNull()
-    expect(graySpan?.textContent).toBe('muted text')
+    expect(highlight8Span).not.toBeNull()
+    expect(highlight8Span?.textContent).toBe('muted text')
   })
 })
 
@@ -85,8 +85,8 @@ describe('remarkColorSyntax - Nested Markdown', () => {
   it('should support italic text inside color syntax', () => {
     const { container } = renderHighlightMarkdown('::text-highlight-5{*italic text*}')
     const highlight5Span = container.querySelector('.aguy-text-highlight-5')
-    expect(blueSpan).not.toBeNull()
-    expect(blueSpan?.querySelector('em')).not.toBeNull()
+    expect(highlight5Span).not.toBeNull()
+    expect(highlight5Span?.querySelector('em')).not.toBeNull()
   })
 
   it('should support mixed formatting inside color syntax', () => {
@@ -107,8 +107,8 @@ describe('remarkColorSyntax - Nested Markdown', () => {
   it('should support links inside color syntax', () => {
     const { container } = renderHighlightMarkdown('::text-highlight-5{[click here](https://example.com)}')
     const highlight5Span = container.querySelector('.aguy-text-highlight-5')
-    expect(blueSpan).not.toBeNull()
-    const link = blueSpan?.querySelector('a')
+    expect(highlight5Span).not.toBeNull()
+    const link = highlight5Span?.querySelector('a')
     expect(link).not.toBeNull()
     expect(link?.getAttribute('href')).toBe('https://example.com')
   })
@@ -193,7 +193,7 @@ describe('remarkColorSyntax - Handler Whitelist Enforcement', () => {
     const greenSpans = container.querySelectorAll('.aguy-text-highlight-4')
 
     expect(redSpans.length).toBe(1)
-    expect(blueSpans.length).toBe(1)
+    expect(highlight5Spans.length).toBe(1)
     expect(greenSpans.length).toBe(1)
   })
 
@@ -208,9 +208,9 @@ describe('remarkColorSyntax - Handler Whitelist Enforcement', () => {
     const { container } = renderHighlightMarkdown('::text-highlight-5{text}')
     const highlight5Span = container.querySelector('.aguy-text-highlight-5')
     // Should only have class attribute, not style or data-color
-    expect(blueSpan).not.toBeNull()
-    expect(blueSpan?.getAttribute('style')).toBeNull()
-    expect(blueSpan?.getAttribute('data-color')).toBeNull()
+    expect(highlight5Span).not.toBeNull()
+    expect(highlight5Span?.getAttribute('style')).toBeNull()
+    expect(highlight5Span?.getAttribute('data-color')).toBeNull()
   })
 })
 
@@ -255,7 +255,7 @@ describe('remarkColorSyntax - Marker Removal', () => {
   it('should not render opening brace { in output', () => {
     const { container } = renderHighlightMarkdown('::text-highlight-5{world}')
     const highlight5Span = container.querySelector('.aguy-text-highlight-5')
-    expect(blueSpan?.textContent).toBe('world')
+    expect(highlight5Span?.textContent).toBe('world')
     // The visible text should not contain the opening brace
     expect(container.textContent).not.toContain('::text-highlight-5{')
   })
