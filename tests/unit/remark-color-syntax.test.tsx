@@ -182,7 +182,8 @@ describe('remarkColorSyntax - Unmatched Braces', () => {
     expect(redSpan).not.toBeNull()
     // Only captures up to first }, remaining text stays outside
     expect(redSpan?.textContent).toBe('outer {inner')
-    expect(container.textContent).toContain('} text}')
+    // Remaining text after first } is " text}" (not "} text}")
+    expect(container.textContent).toContain('text}')
   })
 
   it('should handle empty color syntax', () => {
