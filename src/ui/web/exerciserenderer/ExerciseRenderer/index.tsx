@@ -17,6 +17,7 @@ import type {
   QuestionSelectTrueFalseBlock,
   QuestionSelectMcqBlock,
   QuestionFreeResponseBlock,
+  QuestionTableBlock,
   UserAnswer,
   CheckResult,
 } from '../types'
@@ -24,6 +25,7 @@ import { RichTextRenderer } from '../blocks/RichTextRenderer'
 import { TrueFalseQuestion } from '../questions/TrueFalseQuestion'
 import { McqQuestion } from '../questions/McqQuestion'
 import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
+import { TableQuestion } from '../questions/TableQuestion'
 import { QuestionCard } from '../components/QuestionCard'
 import {
   checkQuestionAnswer,
@@ -45,6 +47,11 @@ function formatStudentAnswer(question: QuestionBlock, answer: UserAnswer): strin
   }
   if (answer.type === 'free_response') {
     return answer.value
+  }
+  if (answer.type === 'table') {
+    return Object.entries(answer.cellValues)
+      .map(([key, val]) => `[${key}]: ${val}`)
+      .join(', ')
   }
   return ''
 }
@@ -80,7 +87,10 @@ export function ExerciseRenderer({
 
   // Track answers and check results for each question block
   const questionBlocks = content.blocks.filter(
-    (block) => block.type === 'question_select' || block.type === 'question_free_response',
+    (block) =>
+      block.type === 'question_select' ||
+      block.type === 'question_free_response' ||
+      block.type === 'question_table',
   ) as QuestionBlock[]
 
   const [answers, setAnswers] = useState<Record<string, UserAnswer>>(() => {
@@ -156,6 +166,23 @@ export function ExerciseRenderer({
     }
   }
 
+  const handleTableCheckResult = (questionId: string, isCorrect: boolean) => {
+    setCheckResults((prev) => ({ ...prev, [questionId]: { isCorrect } }))
+    setHasChecked((prev) => ({ ...prev, [questionId]: true }))
+    if (!isCorrect && !chatTriggeredRef.current.has(questionId)) {
+      chatTriggeredRef.current.add(questionId)
+      const question = questionBlocks.find((q) => q.id === questionId)
+      window.dispatchEvent(
+        new CustomEvent('exercise-incorrect-answer', {
+          detail: {
+            questionJson: JSON.stringify(question),
+            studentAnswer: formatStudentAnswer(question!, answers[questionId]),
+          },
+        }),
+      )
+    }
+  }
+
   // Validate content structure
   if (!content?.blocks || !Array.isArray(content.blocks)) {
     return (
@@ -199,10 +226,11 @@ export function ExerciseRenderer({
             const checked = hasChecked[question.id] || false
             const disabled = checked && checkResult?.isCorrect
 
-            // True/False questions don't show check button (immediate feedback)
+            // True/False and Table questions don't use the generic check button
             const showCheckButton =
               showCheckAnswer &&
-              !(question.type === 'question_select' && question.variant === 'true_false')
+              !(question.type === 'question_select' && question.variant === 'true_false') &&
+              question.type !== 'question_table'
 
             return (
               <QuestionCard
@@ -244,6 +272,18 @@ export function ExerciseRenderer({
                     onChange={(ans) => handleAnswerChange(question.id, ans)}
                     disabled={!!disabled}
                     checkResult={checkResult}
+                    t={t}
+                  />
+                )}
+                {question.type === 'question_table' && (
+                  <TableQuestion
+                    question={question as QuestionTableBlock}
+                    answer={answer}
+                    onChange={(ans) => handleAnswerChange(question.id, ans)}
+                    disabled={!!disabled}
+                    checked={checked}
+                    allCorrect={!!disabled}
+                    onCheckResult={(correct) => handleTableCheckResult(question.id, correct)}
                     t={t}
                   />
                 )}
