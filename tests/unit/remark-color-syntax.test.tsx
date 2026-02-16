@@ -90,7 +90,9 @@ describe('remarkColorSyntax - Nested Markdown', () => {
   })
 
   it('should support mixed formatting inside color syntax', () => {
-    const { container } = renderHighlightMarkdown('::text-highlight-4{some **bold** and *italic* text}')
+    const { container } = renderHighlightMarkdown(
+      '::text-highlight-4{some **bold** and *italic* text}',
+    )
     const greenSpan = container.querySelector('.aguy-text-highlight-4')
     expect(greenSpan).not.toBeNull()
     expect(greenSpan?.querySelector('strong')).not.toBeNull()
@@ -105,7 +107,9 @@ describe('remarkColorSyntax - Nested Markdown', () => {
   })
 
   it('should support links inside color syntax', () => {
-    const { container } = renderHighlightMarkdown('::text-highlight-5{[click here](https://example.com)}')
+    const { container } = renderHighlightMarkdown(
+      '::text-highlight-5{[click here](https://example.com)}',
+    )
     const highlight5Span = container.querySelector('.aguy-text-highlight-5')
     expect(highlight5Span).not.toBeNull()
     const link = highlight5Span?.querySelector('a')
@@ -147,13 +151,17 @@ describe('remarkColorSyntax - Multiple Tokens', () => {
   })
 
   it('should handle adjacent color tokens', () => {
-    const { container } = renderHighlightMarkdown('::text-highlight-1{first}::text-highlight-5{second}')
+    const { container } = renderHighlightMarkdown(
+      '::text-highlight-1{first}::text-highlight-5{second}',
+    )
     expect(container.querySelector('.aguy-text-highlight-1')).not.toBeNull()
     expect(container.querySelector('.aguy-text-highlight-5')).not.toBeNull()
   })
 
   it('should handle color tokens with text in between', () => {
-    const { container } = renderHighlightMarkdown('Start ::text-highlight-1{important} middle ::text-highlight-5{info} end')
+    const { container } = renderHighlightMarkdown(
+      'Start ::text-highlight-1{important} middle ::text-highlight-5{info} end',
+    )
     expect(container.textContent).toContain('Start')
     expect(container.querySelector('.aguy-text-highlight-1')).not.toBeNull()
     expect(container.textContent).toContain('middle')
@@ -185,7 +193,9 @@ describe('remarkColorSyntax - Unmatched Braces', () => {
 
 describe('remarkColorSyntax - Handler Whitelist Enforcement', () => {
   it('should only generate spans for whitelisted colors', () => {
-    const { container } = renderHighlightMarkdown('::text-highlight-1{red} ::text-highlight-5{blue} ::text-highlight-4{green}')
+    const { container } = renderHighlightMarkdown(
+      '::text-highlight-1{red} ::text-highlight-5{blue} ::text-highlight-4{green}',
+    )
 
     // Count the number of aguy-color spans
     const redSpans = container.querySelectorAll('.aguy-text-highlight-1')
@@ -237,7 +247,9 @@ describe('remarkColorSyntax - Edge Cases', () => {
   })
 
   it('should handle multiple paragraphs with color syntax', () => {
-    const { container } = renderHighlightMarkdown('::text-highlight-1{First paragraph}\n\n::text-highlight-5{Second paragraph}')
+    const { container } = renderHighlightMarkdown(
+      '::text-highlight-1{First paragraph}\n\n::text-highlight-5{Second paragraph}',
+    )
     expect(container.querySelector('.aguy-text-highlight-1')).not.toBeNull()
     expect(container.querySelector('.aguy-text-highlight-5')).not.toBeNull()
   })
