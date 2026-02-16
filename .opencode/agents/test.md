@@ -123,6 +123,8 @@ Create a summary markdown file: `.tasks/<taskId>/test.md`
 - Suggestions for test data improvements
 ```
 
+**STOP CONDITION**: After you write test.md, you are DONE. Do NOT read or verify the file afterward. The pipeline validates file existence automatically.
+
 ## Hard Rules
 
 - Write Playwright tests only (E2E/integration)

@@ -118,6 +118,8 @@ Write to: `.tasks/<taskId>/auditor.md`
 - **Responsibility Boundary:** verifier
 ```
 
+**STOP CONDITION**: After you write auditor.md, you are DONE. Do NOT read or verify the file afterward. The pipeline validates file existence automatically.
+
 ## Hard Rules
 
 - EXACTLY one improvement per task

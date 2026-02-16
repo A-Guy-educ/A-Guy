@@ -85,3 +85,5 @@ Write to: `.tasks/<taskId>/pr.md`
 ```
 
 Use the Write tool to create this file. The pipeline validates that this file exists after you finish.
+
+**STOP CONDITION**: After you write pr.md, you are DONE. Do NOT read or verify the file afterward. Write and stop immediately.

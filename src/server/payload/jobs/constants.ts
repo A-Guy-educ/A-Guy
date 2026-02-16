@@ -61,6 +61,9 @@ export const TASK_SLUGS = {
   PDF_TO_EXERCISES_V2: 'pdf_to_exercises_v2' as const,
 } as const
 
+// Separate export for convenience (same value as TASK_SLUGS.PDF_TO_EXERCISES_V2)
+export const PDF_TO_EXERCISES_V2 = 'pdf_to_exercises_v2' as const
+
 export const LOCK_TIMEOUT_MS = readIntEnv('LOCK_TIMEOUT_MS', 5 * 60 * 1000, { min: 1000 })
 export const HEARTBEAT_INTERVAL_MS = readIntEnv('HEARTBEAT_INTERVAL_MS', 30 * 1000, { min: 1000 })
 export const LOCK_RECLAIM_THRESHOLD_MS = 0
