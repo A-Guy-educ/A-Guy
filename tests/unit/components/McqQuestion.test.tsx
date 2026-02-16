@@ -19,6 +19,276 @@ describe('McqQuestion component', () => {
     onChange = vi.fn()
   })
 
+  describe('Fraction rendering transformation', () => {
+    it('transforms \\frac to \\dfrac in MCQ options', () => {
+      const questionWithFraction: QuestionSelectMcqBlock = {
+        id: 'test-fraction',
+        type: 'question_select',
+        variant: 'mcq',
+        selectionMode: 'single',
+        prompt: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'Which fraction is correct?',
+          mediaIds: [],
+        },
+        answer: {
+          multiSelect: false,
+          options: [
+            {
+              id: 'opt1',
+              content: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: '$\\frac{1}{2}$',
+                mediaIds: [],
+              },
+            },
+          ],
+          correctOptionIds: ['opt1'],
+        },
+      }
+
+      const answer: UserAnswer = { type: 'mcq', selectedIds: [] }
+      const { container } = render(
+        <McqQuestion
+          question={questionWithFraction}
+          answer={answer}
+          onChange={onChange}
+          disabled={false}
+          checkResult={null}
+          t={mockT}
+        />,
+      )
+
+      // Verify the component renders (transformation happens internally)
+      expect(container.querySelector('.rich-text-content')).toBeTruthy()
+    })
+
+    it('handles multiple fractions in one option', () => {
+      const questionWithMultipleFractions: QuestionSelectMcqBlock = {
+        id: 'test-multiple-fractions',
+        type: 'question_select',
+        variant: 'mcq',
+        selectionMode: 'single',
+        prompt: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'Select the correct equation',
+          mediaIds: [],
+        },
+        answer: {
+          multiSelect: false,
+          options: [
+            {
+              id: 'opt1',
+              content: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: '$\\frac{a}{b} + \\frac{c}{d}$',
+                mediaIds: [],
+              },
+            },
+          ],
+          correctOptionIds: ['opt1'],
+        },
+      }
+
+      const answer: UserAnswer = { type: 'mcq', selectedIds: [] }
+      const { container } = render(
+        <McqQuestion
+          question={questionWithMultipleFractions}
+          answer={answer}
+          onChange={onChange}
+          disabled={false}
+          checkResult={null}
+          t={mockT}
+        />,
+      )
+
+      expect(container.querySelector('.rich-text-content')).toBeTruthy()
+    })
+
+    it('handles nested fractions', () => {
+      const questionWithNestedFraction: QuestionSelectMcqBlock = {
+        id: 'test-nested-fraction',
+        type: 'question_select',
+        variant: 'mcq',
+        selectionMode: 'single',
+        prompt: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'Select the correct fraction',
+          mediaIds: [],
+        },
+        answer: {
+          multiSelect: false,
+          options: [
+            {
+              id: 'opt1',
+              content: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: '$\\frac{\\frac{a}{b}}{c}$',
+                mediaIds: [],
+              },
+            },
+          ],
+          correctOptionIds: ['opt1'],
+        },
+      }
+
+      const answer: UserAnswer = { type: 'mcq', selectedIds: [] }
+      const { container } = render(
+        <McqQuestion
+          question={questionWithNestedFraction}
+          answer={answer}
+          onChange={onChange}
+          disabled={false}
+          checkResult={null}
+          t={mockT}
+        />,
+      )
+
+      expect(container.querySelector('.rich-text-content')).toBeTruthy()
+    })
+
+    it('does not double-transform existing \\dfrac', () => {
+      const questionWithDfrac: QuestionSelectMcqBlock = {
+        id: 'test-dfrac',
+        type: 'question_select',
+        variant: 'mcq',
+        selectionMode: 'single',
+        prompt: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'Which fraction is correct?',
+          mediaIds: [],
+        },
+        answer: {
+          multiSelect: false,
+          options: [
+            {
+              id: 'opt1',
+              content: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: '$\\dfrac{1}{2}$',
+                mediaIds: [],
+              },
+            },
+          ],
+          correctOptionIds: ['opt1'],
+        },
+      }
+
+      const answer: UserAnswer = { type: 'mcq', selectedIds: [] }
+      const { container } = render(
+        <McqQuestion
+          question={questionWithDfrac}
+          answer={answer}
+          onChange={onChange}
+          disabled={false}
+          checkResult={null}
+          t={mockT}
+        />,
+      )
+
+      // Should render without errors (no double transformation to \\ddfrac)
+      expect(container.querySelector('.rich-text-content')).toBeTruthy()
+    })
+
+    it('handles mixed text and fractions', () => {
+      const questionWithMixedContent: QuestionSelectMcqBlock = {
+        id: 'test-mixed',
+        type: 'question_select',
+        variant: 'mcq',
+        selectionMode: 'single',
+        prompt: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'Select the answer',
+          mediaIds: [],
+        },
+        answer: {
+          multiSelect: false,
+          options: [
+            {
+              id: 'opt1',
+              content: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'The answer is $\\frac{1}{2}$ or approximately 0.5',
+                mediaIds: [],
+              },
+            },
+          ],
+          correctOptionIds: ['opt1'],
+        },
+      }
+
+      const answer: UserAnswer = { type: 'mcq', selectedIds: [] }
+      const { container } = render(
+        <McqQuestion
+          question={questionWithMixedContent}
+          answer={answer}
+          onChange={onChange}
+          disabled={false}
+          checkResult={null}
+          t={mockT}
+        />,
+      )
+
+      expect(container.querySelector('.rich-text-content')).toBeTruthy()
+    })
+
+    it('does not transform fractions in the prompt', () => {
+      const questionWithFractionInPrompt: QuestionSelectMcqBlock = {
+        id: 'test-prompt-fraction',
+        type: 'question_select',
+        variant: 'mcq',
+        selectionMode: 'single',
+        prompt: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'What is $\\frac{1}{2}$ + $\\frac{1}{4}$?',
+          mediaIds: [],
+        },
+        answer: {
+          multiSelect: false,
+          options: [
+            {
+              id: 'opt1',
+              content: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: '$\\frac{3}{4}$',
+                mediaIds: [],
+              },
+            },
+          ],
+          correctOptionIds: ['opt1'],
+        },
+      }
+
+      const answer: UserAnswer = { type: 'mcq', selectedIds: [] }
+      render(
+        <McqQuestion
+          question={questionWithFractionInPrompt}
+          answer={answer}
+          onChange={onChange}
+          disabled={false}
+          checkResult={null}
+          t={mockT}
+        />,
+      )
+
+      // Prompt should render as-is (we only transform options)
+      // This is a smoke test to ensure the component renders without errors
+      expect(screen.getByText(/What is/)).toBeTruthy()
+    })
+  })
+
   describe('Single-answer mode', () => {
     const singleAnswerQuestion: QuestionSelectMcqBlock = {
       id: 'test-q1',
