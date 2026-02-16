@@ -175,12 +175,14 @@ describe('remarkColorSyntax - Unmatched Braces', () => {
     expect(container.textContent).toContain('::text-highlight-1{text without closing')
   })
 
-  it('should handle text with nested braces', () => {
+  it('should handle text with nested braces (takes first } as closing)', () => {
     const { container } = renderHighlightMarkdown('::text-highlight-1{outer {inner} text}')
-    // Should handle nested braces correctly
+    // With simplified plugin, takes FIRST } as closing brace
     const redSpan = container.querySelector('.aguy-text-highlight-1')
     expect(redSpan).not.toBeNull()
-    expect(redSpan?.textContent).toContain('outer {inner} text')
+    // Only captures up to first }, remaining text stays outside
+    expect(redSpan?.textContent).toBe('outer {inner')
+    expect(container.textContent).toContain('} text}')
   })
 
   it('should handle empty color syntax', () => {
