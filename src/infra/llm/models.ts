@@ -52,7 +52,11 @@ export interface AIModel {
  * Union type of all valid model keys
  * Add new models here to extend the registry
  */
-export type AIModelKey = 'IMAGE_TO_EXERCISE' | 'EXERCISE_CHAT' | 'PDF_TO_EXERCISE'
+export type AIModelKey =
+  | 'IMAGE_TO_EXERCISE'
+  | 'EXERCISE_CHAT'
+  | 'PDF_TO_EXERCISE'
+  | 'ANSWER_VALIDATION'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Model Registry - Single Source of Truth
@@ -84,6 +88,11 @@ export const MODEL_REGISTRY: Record<AIModelKey, Omit<AIModel, 'name'>> = {
     maxOutputTokens: 8192,
     capabilities: ['document', 'extraction'],
   },
+  ANSWER_VALIDATION: {
+    temperature: 0.2,
+    maxOutputTokens: 512,
+    capabilities: ['chat', 'validation'],
+  },
 } as const
 
 /**
@@ -98,11 +107,13 @@ export const PROVIDER_MODEL_NAMES: Record<LLMProviderType, Record<AIModelKey, st
     IMAGE_TO_EXERCISE: 'gemini-2.0-flash-001',
     EXERCISE_CHAT: 'gemini-2.0-flash-001',
     PDF_TO_EXERCISE: 'gemini-2.0-flash-001',
+    ANSWER_VALIDATION: 'gemini-2.0-flash-001',
   },
   [LLMProviderType.OPENAI_COMPATIBLE]: {
     IMAGE_TO_EXERCISE: 'MiniMax-M2.1',
     EXERCISE_CHAT: 'MiniMax-M2.1',
     PDF_TO_EXERCISE: 'MiniMax-M2.1',
+    ANSWER_VALIDATION: 'MiniMax-M2.1',
   },
 } as const
 
@@ -159,6 +170,10 @@ export const AI_MODELS: Record<AIModelKey, AIModel> = {
   PDF_TO_EXERCISE: {
     ...MODEL_REGISTRY.PDF_TO_EXERCISE,
     name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].PDF_TO_EXERCISE,
+  },
+  ANSWER_VALIDATION: {
+    ...MODEL_REGISTRY.ANSWER_VALIDATION,
+    name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].ANSWER_VALIDATION,
   },
 } as const
 

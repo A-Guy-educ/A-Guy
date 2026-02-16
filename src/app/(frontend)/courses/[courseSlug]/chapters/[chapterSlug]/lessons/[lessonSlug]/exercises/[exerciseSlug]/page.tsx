@@ -6,6 +6,8 @@ import {
   queryExerciseBySlug,
   queryExercisesByLesson,
 } from '@/server/repos/queries/exercises'
+import { queryMediaByIds } from '@/server/repos/queries/media'
+import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
 import { ExercisesPager } from '../../_components/ExercisesPager'
 
 const OBJECT_ID_REGEX = /^[0-9a-fA-F]{24}$/
@@ -91,6 +93,8 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
 
   const backUrl = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}`
 
+  const mediaMap = await queryMediaByIds(extractAllMediaIds(exercises))
+
   return (
     <ExercisesPager
       exercises={exercises}
@@ -100,6 +104,7 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
       chapterSlug={chapterSlug}
       lessonSlug={lessonSlug}
       lessonId={lesson.id}
+      mediaMap={mediaMap}
     />
   )
 }

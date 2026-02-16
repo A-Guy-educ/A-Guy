@@ -6,7 +6,7 @@
 
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card } from '@/ui/web/components/card'
@@ -25,7 +25,12 @@ import { TrueFalseQuestion } from '../questions/TrueFalseQuestion'
 import { McqQuestion } from '../questions/McqQuestion'
 import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
 import { QuestionCard } from '../components/QuestionCard'
-import { checkQuestionAnswer, getInitialAnswer } from '../utils/answerChecking'
+import {
+  checkQuestionAnswer,
+  getInitialAnswer,
+  type AnswerErrorMessages,
+} from '../utils/answerChecking'
+import { MediaMapProvider } from '../context/MediaMapContext'
 
 /**
  * Format student's answer as readable text for AI context
@@ -47,13 +52,31 @@ function formatStudentAnswer(question: QuestionBlock, answer: UserAnswer): strin
 /**
  * Main Exercise Renderer Component
  */
+const EMPTY_MEDIA_MAP = {} as const
+
 export function ExerciseRenderer({
   content,
   mode: _mode = 'student',
   showCheckAnswer = true,
   className = '',
+  mediaMap = EMPTY_MEDIA_MAP,
 }: ExerciseRendererProps) {
   const t = useTranslations('courses')
+
+  const errorMessages: AnswerErrorMessages = useMemo(
+    () => ({
+      invalidAnswerType: t('invalidAnswerType'),
+      selectTrueFalse: t('selectTrueFalse'),
+      noCorrectAnswer: t('noCorrectAnswer'),
+      selectAnAnswer: t('selectAnAnswer'),
+      enterAnAnswer: t('enterAnAnswer'),
+      unknownVariant: t('unknownVariant'),
+      validationFailed: t('validationFailed'),
+      validationError: t('validationError'),
+      connectionError: t('connectionError'),
+    }),
+    [t],
+  )
 
   // Track answers and check results for each question block
   const questionBlocks = content.blocks.filter(
@@ -70,6 +93,7 @@ export function ExerciseRenderer({
 
   const [checkResults, setCheckResults] = useState<Record<string, CheckResult>>({})
   const [hasChecked, setHasChecked] = useState<Record<string, boolean>>({})
+  const [isChecking, setIsChecking] = useState<Record<string, boolean>>({})
   const chatTriggeredRef = useRef<Set<string>>(new Set())
 
   const handleAnswerChange = async (questionId: string, answer: UserAnswer) => {
@@ -82,7 +106,7 @@ export function ExerciseRenderer({
       answer.type === 'true_false' &&
       answer.value !== null
     ) {
-      const result = await checkQuestionAnswer(question, answer)
+      const result = await checkQuestionAnswer(question, answer, errorMessages)
       setCheckResults((prev) => ({ ...prev, [questionId]: result }))
       setHasChecked((prev) => ({ ...prev, [questionId]: true }))
       if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
@@ -111,19 +135,24 @@ export function ExerciseRenderer({
     const question = questionBlocks.find((q) => q.id === questionId)
     if (!question) return
 
-    const result = await checkQuestionAnswer(question, answers[questionId])
-    setCheckResults((prev) => ({ ...prev, [questionId]: result }))
-    setHasChecked((prev) => ({ ...prev, [questionId]: true }))
-    if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
-      chatTriggeredRef.current.add(questionId)
-      window.dispatchEvent(
-        new CustomEvent('exercise-incorrect-answer', {
-          detail: {
-            questionJson: JSON.stringify(question),
-            studentAnswer: formatStudentAnswer(question, answers[questionId]),
-          },
-        }),
-      )
+    setIsChecking((prev) => ({ ...prev, [questionId]: true }))
+    try {
+      const result = await checkQuestionAnswer(question, answers[questionId], errorMessages)
+      setCheckResults((prev) => ({ ...prev, [questionId]: result }))
+      setHasChecked((prev) => ({ ...prev, [questionId]: true }))
+      if (!result.isCorrect && !chatTriggeredRef.current.has(questionId)) {
+        chatTriggeredRef.current.add(questionId)
+        window.dispatchEvent(
+          new CustomEvent('exercise-incorrect-answer', {
+            detail: {
+              questionJson: JSON.stringify(question),
+              studentAnswer: formatStudentAnswer(question, answers[questionId]),
+            },
+          }),
+        )
+      }
+    } finally {
+      setIsChecking((prev) => ({ ...prev, [questionId]: false }))
     }
   }
 
@@ -147,79 +176,82 @@ export function ExerciseRenderer({
   }
 
   return (
-    <div className={cn('w-full max-w-3xl mx-auto', className)}>
-      <div className="flex flex-col gap-6">
-        {content.blocks.map((block) => {
-          // Rich text block - just render content
-          if (block.type === 'rich_text') {
+    <MediaMapProvider value={mediaMap}>
+      <div className={cn('w-full max-w-3xl mx-auto', className)}>
+        <div className="flex flex-col gap-6">
+          {content.blocks.map((block) => {
+            // Rich text block - just render content
+            if (block.type === 'rich_text') {
+              return (
+                <div
+                  key={block.id}
+                  className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed"
+                >
+                  <RichTextRenderer block={block} />
+                </div>
+              )
+            }
+
+            // Question blocks - render with answer UI
+            const question = block as QuestionBlock
+            const answer = answers[question.id] ?? getInitialAnswer(question)
+            const checkResult = checkResults[question.id] || null
+            const checked = hasChecked[question.id] || false
+            const disabled = checked && checkResult?.isCorrect
+
+            // True/False questions don't show check button (immediate feedback)
+            const showCheckButton =
+              showCheckAnswer &&
+              !(question.type === 'question_select' && question.variant === 'true_false')
+
             return (
-              <div
-                key={block.id}
-                className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed"
+              <QuestionCard
+                key={question.id}
+                showCheckButton={showCheckButton}
+                onCheckAnswer={() => handleCheckAnswer(question.id)}
+                disabled={!!disabled}
+                loading={!!isChecking[question.id]}
+                checked={checked}
+                checkResult={checkResult}
+                checkAnswerText={t('checkAnswer')}
+                correctText={t('correct')}
+                incorrectText={t('incorrect')}
               >
-                <RichTextRenderer block={block} />
-              </div>
+                {/* Render appropriate question component based on type */}
+                {question.type === 'question_select' && question.variant === 'true_false' && (
+                  <TrueFalseQuestion
+                    question={question as QuestionSelectTrueFalseBlock}
+                    answer={answer}
+                    onChange={(ans) => handleAnswerChange(question.id, ans)}
+                    disabled={!!disabled}
+                    checkResult={checkResult}
+                  />
+                )}
+                {question.type === 'question_select' && question.variant === 'mcq' && (
+                  <McqQuestion
+                    question={question as QuestionSelectMcqBlock}
+                    answer={answer}
+                    onChange={(ans) => handleAnswerChange(question.id, ans)}
+                    disabled={!!disabled}
+                    checkResult={checkResult}
+                    t={t}
+                  />
+                )}
+                {question.type === 'question_free_response' && (
+                  <FreeResponseQuestion
+                    question={question as QuestionFreeResponseBlock}
+                    answer={answer}
+                    onChange={(ans) => handleAnswerChange(question.id, ans)}
+                    disabled={!!disabled}
+                    checkResult={checkResult}
+                    t={t}
+                  />
+                )}
+              </QuestionCard>
             )
-          }
-
-          // Question blocks - render with answer UI
-          const question = block as QuestionBlock
-          const answer = answers[question.id] ?? getInitialAnswer(question)
-          const checkResult = checkResults[question.id] || null
-          const checked = hasChecked[question.id] || false
-          const disabled = checked && checkResult?.isCorrect
-
-          // True/False questions don't show check button (immediate feedback)
-          const showCheckButton =
-            showCheckAnswer &&
-            !(question.type === 'question_select' && question.variant === 'true_false')
-
-          return (
-            <QuestionCard
-              key={question.id}
-              showCheckButton={showCheckButton}
-              onCheckAnswer={() => handleCheckAnswer(question.id)}
-              disabled={!!disabled}
-              checked={checked}
-              checkResult={checkResult}
-              checkAnswerText={t('checkAnswer')}
-              correctText={t('correct')}
-              incorrectText={t('incorrect')}
-            >
-              {/* Render appropriate question component based on type */}
-              {question.type === 'question_select' && question.variant === 'true_false' && (
-                <TrueFalseQuestion
-                  question={question as QuestionSelectTrueFalseBlock}
-                  answer={answer}
-                  onChange={(ans) => handleAnswerChange(question.id, ans)}
-                  disabled={!!disabled}
-                  checkResult={checkResult}
-                />
-              )}
-              {question.type === 'question_select' && question.variant === 'mcq' && (
-                <McqQuestion
-                  question={question as QuestionSelectMcqBlock}
-                  answer={answer}
-                  onChange={(ans) => handleAnswerChange(question.id, ans)}
-                  disabled={!!disabled}
-                  checkResult={checkResult}
-                  t={t}
-                />
-              )}
-              {question.type === 'question_free_response' && (
-                <FreeResponseQuestion
-                  question={question as QuestionFreeResponseBlock}
-                  answer={answer}
-                  onChange={(ans) => handleAnswerChange(question.id, ans)}
-                  disabled={!!disabled}
-                  checkResult={checkResult}
-                  t={t}
-                />
-              )}
-            </QuestionCard>
-          )
-        })}
+          })}
+        </div>
       </div>
-    </div>
+    </MediaMapProvider>
   )
 }

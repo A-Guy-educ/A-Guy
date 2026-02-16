@@ -67,11 +67,25 @@ function main(): void {
 
   // Pre-commit verifications
   info('pre-commit verifications:')
+
+  // R10: Wrap generate commands in try/catch
   info('generating types')
-  execSync('pnpm generate:types', { stdio: 'inherit' })
+  try {
+    execSync('pnpm generate:types', { stdio: 'inherit' })
+    success('Types generated')
+  } catch {
+    error('Types generation failed')
+    process.exit(1)
+  }
 
   info('generating import map')
-  execSync('pnpm generate:importmap', { stdio: 'inherit' })
+  try {
+    execSync('pnpm generate:importmap', { stdio: 'inherit' })
+    success('Import map generated')
+  } catch {
+    error('Import map generation failed')
+    process.exit(1)
+  }
 
   info('running verifications:')
 

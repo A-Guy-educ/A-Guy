@@ -1,6 +1,8 @@
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryLessonBySlug } from '@/server/repos/queries/lessons'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
+import { queryMediaByIds } from '@/server/repos/queries/media'
+import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
 import type { Media } from '@/payload-types'
 import { Media as MediaComponent } from '@/ui/web/media'
 import { notFound } from 'next/navigation'
@@ -59,6 +61,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const hasContent = validFiles.length > 0
   const hasExercises = exercises.length > 0
 
+  // Batch-fetch all media referenced inside exercise content blocks
+  const mediaMap = hasExercises ? await queryMediaByIds(extractAllMediaIds(exercises)) : {}
+
   // Case 1: No document attached -> Show exercises pager if exercises exist
   if (!hasContent) {
     return (
@@ -75,6 +80,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             lessonId={lesson.id}
             introDescription={lesson.introEnabled ? lesson.introDescription : null}
             introMedia={lesson.introEnabled ? lesson.introMedia : null}
+            mediaMap={mediaMap}
           />
         ) : (
           // Empty state: no document and no exercises

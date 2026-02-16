@@ -18,6 +18,8 @@ export const chatRequestSchema = z.object({
   mediaIds: z.array(z.string()).max(5).optional(),
   // Admin mode flag (for admin chat without context)
   adminMode: z.boolean().optional(),
+  // Hidden flag — message persisted for LLM context but excluded from client responses
+  hidden: z.boolean().optional(),
 })
 
 export type ChatRequest = z.infer<typeof chatRequestSchema>

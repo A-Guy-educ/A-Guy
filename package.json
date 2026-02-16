@@ -86,11 +86,11 @@
     "release:dry-run": "semantic-release --dry-run",
     "prepare": "husky && chmod +x .husky/pre-commit .husky/commit-msg .husky/pre-push .husky/post-commit .husky/post-merge .husky/check-secrets .husky/check-no-css .husky/check-archivedAt-invariant .husky/skip-hooks.sh",
     "verify": "pnpm tsx scripts/verify.ts",
-    "pipeline": "pnpm tsx scripts/pipeline.ts",
-    "pipeline:run": "pnpm pipeline --run",
+    "ocode": "opencode",
     "setup:opencode": "curl -fsSL https://opencode.ai/install | bash",
-    "validate-auditor": "pnpm tsx scripts/pipeline/validate-auditor.ts",
-    "aggregate-auditor": "pnpm tsx scripts/pipeline/aggregate-auditor.ts"
+    "pipeline:spec": "pnpm tsx scripts/pipeline-spec.ts",
+    "pipeline:impl": "pnpm tsx scripts/pipeline-impl.ts",
+    "pipeline:rerun": "pnpm tsx scripts/pipeline-rerun.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.28.0",

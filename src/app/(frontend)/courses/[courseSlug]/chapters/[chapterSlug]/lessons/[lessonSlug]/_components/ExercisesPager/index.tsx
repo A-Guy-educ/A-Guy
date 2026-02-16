@@ -23,6 +23,7 @@ interface ExercisesPagerProps {
   lessonId: string
   introDescription?: string | null
   introMedia?: MediaType | string | number | null
+  mediaMap?: Record<string, MediaType>
 }
 
 export function ExercisesPager({
@@ -35,6 +36,7 @@ export function ExercisesPager({
   lessonId,
   introDescription,
   introMedia,
+  mediaMap,
 }: ExercisesPagerProps) {
   const t = useTranslations('courses')
   const hasAboutPage = Boolean(introDescription || (introMedia && typeof introMedia === 'object'))
@@ -91,6 +93,7 @@ export function ExercisesPager({
                     content={currentExercise.content as unknown as ExerciseContentData}
                     mode="student"
                     showCheckAnswer={true}
+                    mediaMap={mediaMap}
                   />
                 </div>
               </div>
