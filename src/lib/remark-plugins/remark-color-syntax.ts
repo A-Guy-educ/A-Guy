@@ -201,9 +201,7 @@ function transformChildren(children: Node[]): Node[] {
     const textAfterClosing = textAfterMarker.substring(closingIndex + 1)
     if (textAfterClosing) {
       // Recursively process in case there are more highlights
-      const remainingNodes = transformChildren([
-        { type: 'text', value: textAfterClosing } as Text,
-      ])
+      const remainingNodes = transformChildren([{ type: 'text', value: textAfterClosing } as Text])
       result.push(...remainingNodes)
     }
   }
