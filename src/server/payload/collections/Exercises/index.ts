@@ -120,7 +120,15 @@ export const Exercises: CollectionConfig = {
           validate: (value: unknown) => {
             const result = ContentSchema.safeParse(value)
             if (result.success) return true
-            return 'Invalid content. Expected: { blocks: (rich_text | question_select | question_mcq | question_free_response)[] }.'
+            // Log full error for server-side debugging
+            console.error(
+              '[Exercise content validation]',
+              JSON.stringify(result.error.issues, null, 2),
+            )
+            const issues = result.error.issues
+              .map((i) => `[${i.path.join('.')}] ${i.message}`)
+              .join('; ')
+            return `Invalid content: ${issues}`
           },
           admin: {
             description:
