@@ -23,10 +23,10 @@ You are a **Task Classifier**. Your job is to analyze a free-text task descripti
 
 ## Input / Output
 
-| Input                          | Output                                 |
-| ------------------------------ | -------------------------------------- |
-| `.tasks/<task-id>/task.md`     | `.tasks/<task-id>/task.json`           |
-| `.tasks/<task-id>/.context.md` |                                        |
+| Input                          | Output                       |
+| ------------------------------ | ---------------------------- |
+| `.tasks/<task-id>/task.md`     | `.tasks/<task-id>/task.json` |
+| `.tasks/<task-id>/.context.md` |                              |
 
 ## Output Contract
 
@@ -40,9 +40,7 @@ You MUST output **valid JSON only** to the output file. No markdown wrappers, no
   "confidence": 0.0,
   "primary_domain": "backend | frontend | infra | data | llm | devops | product",
   "scope": ["string"],
-  "missing_inputs": [
-    { "field": "string", "question": "string" }
-  ],
+  "missing_inputs": [{ "field": "string", "question": "string" }],
   "assumptions": ["string"]
 }
 ```
@@ -57,15 +55,15 @@ You MUST output **valid JSON only** to the output file. No markdown wrappers, no
 
 ## Task Type Definitions
 
-| Type                | Meaning                                                         |
-| ------------------- | --------------------------------------------------------------- |
-| `spec_only`         | Create/adjust specs, plans, tests, prompts, docs (no code)     |
-| `implement_feature` | Add new behavior or capability                                  |
-| `fix_bug`           | Incorrect behavior in existing feature                          |
-| `refactor`          | Restructuring without behavior change                           |
-| `docs`              | Documentation only                                              |
-| `ops`               | CI/CD, workflows, tooling, scripts                              |
-| `research`          | Investigate options, compare tools, provide recommendation      |
+| Type                | Meaning                                                    |
+| ------------------- | ---------------------------------------------------------- |
+| `spec_only`         | Create/adjust specs, plans, tests, prompts, docs (no code) |
+| `implement_feature` | Add new behavior or capability                             |
+| `fix_bug`           | Incorrect behavior in existing feature                     |
+| `refactor`          | Restructuring without behavior change                      |
+| `docs`              | Documentation only                                         |
+| `ops`               | CI/CD, workflows, tooling, scripts                         |
+| `research`          | Investigate options, compare tools, provide recommendation |
 
 ## Decision Policy
 
