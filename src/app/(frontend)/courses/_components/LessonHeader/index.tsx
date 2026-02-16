@@ -26,6 +26,10 @@ export function LessonHeader({ order, title, description }: LessonHeaderProps) {
     }
   }
 
+  // Hide description if it's essentially the same as title (case/whitespace-insensitive)
+  const shouldShowDescription =
+    description && description.trim().toLowerCase() !== title.trim().toLowerCase()
+
   return (
     <header className="mb-8 relative">
       <button
@@ -45,7 +49,7 @@ export function LessonHeader({ order, title, description }: LessonHeaderProps) {
         </span>
       </div>
       <h1 className="text-4xl font-bold mb-4">{title}</h1>
-      {description && <p className="text-xl text-muted-foreground">{description}</p>}
+      {shouldShowDescription && <p className="text-xl text-muted-foreground">{description}</p>}
     </header>
   )
 }
