@@ -262,6 +262,25 @@ export function V2StatusPanel({ lessonId, mediaId, onRefresh }: V2StatusPanelPro
         )}
       </div>
 
+      {status.output?.errors && status.output.errors.length > 0 && (
+        <div
+          style={{
+            marginTop: 8,
+            padding: 6,
+            backgroundColor: 'var(--theme-error-100)',
+            borderRadius: 3,
+            fontSize: 10,
+            color: 'var(--theme-error)',
+          }}
+        >
+          {status.output.errors.map((error, i) => (
+            <div key={i}>
+              ❌ Page {error.pageIndex + 1}: {error.reason}
+            </div>
+          ))}
+        </div>
+      )}
+
       {status.output?.warnings && status.output.warnings.length > 0 && (
         <div
           style={{
