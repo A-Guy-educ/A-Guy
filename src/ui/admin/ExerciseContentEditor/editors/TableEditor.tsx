@@ -258,10 +258,11 @@ export const TableEditor: React.FC<TableEditorProps> = ({ block, onChange }) => 
                       />
                       {isFillable && (
                         <div className="table-solution-input-wrapper">
+                          <label className="table-solution-label">Answer:</label>
                           <input
                             type="text"
                             className="table-solution-input"
-                            placeholder="Expected answer"
+                            placeholder="Type the correct answer"
                             value={table.answers?.[`${rowIndex}-${colIndex}`] || ''}
                             onChange={(e) => handleAnswerChange(rowIndex, colIndex, e.target.value)}
                           />
