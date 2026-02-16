@@ -6,12 +6,43 @@ import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import readline from 'readline'
-import { writeAgentContext, ALL_IMPL_STAGES } from './pipeline-utils'
+import { ALL_IMPL_STAGES, writeAgentContext } from './pipeline-utils'
 
 const args = process.argv.slice(2)
-const taskId = args.find((arg) => !arg.startsWith('--'))
-const feedbackArg = args.find((arg) => arg.startsWith('--feedback'))
-const fromArg = args.find((arg) => arg.startsWith('--from'))
+
+// Simple arg parser: extract named options and positional args
+function parseArgs(argv: string[]): {
+  positional: string[]
+  options: Record<string, string | true>
+} {
+  const positional: string[] = []
+  const options: Record<string, string | true> = {}
+  let i = 0
+  while (i < argv.length) {
+    const arg = argv[i]
+    if (arg.startsWith('--')) {
+      if (arg.includes('=')) {
+        const [key, ...rest] = arg.split('=')
+        options[key.slice(2)] = rest.join('=')
+      } else {
+        const next = argv[i + 1]
+        if (next && !next.startsWith('--')) {
+          options[arg.slice(2)] = next
+          i++
+        } else {
+          options[arg.slice(2)] = true
+        }
+      }
+    } else {
+      positional.push(arg)
+    }
+    i++
+  }
+  return { positional, options }
+}
+
+const parsed = parseArgs(args)
+const taskId = parsed.positional[0]
 
 if (!taskId) {
   console.log('Usage: pnpm pipeline:rerun <task-id> [--feedback "issue"] [--from <stage>]')
@@ -39,15 +70,13 @@ if (!fs.existsSync(taskDir)) {
 }
 
 // Parse feedback
-let feedback: string | null = null
-if (feedbackArg) {
-  feedback = feedbackArg.split('=')[1]?.replace(/^["']|["']$/g, '') || null
-}
+let feedback: string | null =
+  typeof parsed.options.feedback === 'string' ? parsed.options.feedback : null
 
 // Parse from stage
 let fromStage = 'build' // default to re-running from build
-if (fromArg) {
-  const stage = fromArg.split('=')[1]
+if (parsed.options.from) {
+  const stage = typeof parsed.options.from === 'string' ? parsed.options.from : ''
   if (!ALL_IMPL_STAGES.includes(stage)) {
     console.error(`Error: Invalid stage "${stage}". Valid stages: ${ALL_IMPL_STAGES.join(', ')}`)
     process.exit(1)
@@ -160,41 +189,21 @@ if (fromStage === 'plan') {
   console.log('    and can revise the plan accordingly.')
 }
 
-// Step 6: Ask user to confirm
+// Step 6: Run pipeline
 console.log('')
-console.log('═══════════════════════════════════════════════════════════')
-console.log('Ready to re-run pipeline from:', fromStage)
-console.log('═══════════════════════════════════════════════════════════')
-console.log('')
-console.log('The following will happen:')
-console.log(`  1. Pipeline will skip stages before ${fromStage}`)
-console.log(`  2. ${fromStage} agent will see feedback in .context.md`)
-console.log(`  3. Pipeline continues: ${ALL_IMPL_STAGES.slice(fromIndex).join(' → ')}`)
-console.log('')
-console.log('Run this command to continue:')
-console.log('')
-console.log(`  pnpm pipeline:impl ${taskId}`)
-console.log('')
-console.log('Or run with auto-continue (if you trust the setup):')
-console.log('')
-console.log(`  pnpm pipeline:impl ${taskId} && echo "✅ Pipeline complete"`)
+console.log(`🚀 Re-running pipeline: ${ALL_IMPL_STAGES.slice(fromIndex).join(' → ')}`)
 console.log('')
 
-// Optional: Auto-run if --auto flag is present
-if (args.includes('--auto')) {
-  console.log('🚀 Auto-run enabled, starting pipeline...')
+try {
+  execSync(`pnpm pipeline:impl ${taskId}`, {
+    cwd: projectDir,
+    stdio: 'inherit',
+  })
   console.log('')
-  try {
-    execSync(`pnpm pipeline:impl ${taskId}`, {
-      cwd: projectDir,
-      stdio: 'inherit',
-    })
-    console.log('')
-    console.log('✅ Pipeline rerun complete!')
-  } catch (_error) {
-    console.error('')
-    console.error('❌ Pipeline rerun failed')
-    console.error('Review the output above and the feedback in rerun-feedback.md')
-    process.exit(1)
-  }
+  console.log('✅ Pipeline rerun complete!')
+} catch (_error) {
+  console.error('')
+  console.error('❌ Pipeline rerun failed')
+  console.error('Review the output above and the feedback in rerun-feedback.md')
+  process.exit(1)
 }

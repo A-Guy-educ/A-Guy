@@ -29,6 +29,7 @@ import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/im
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
+import { runBackfillOnInit } from '@/server/payload/migrations/backfillAdminTitle'
 import type { JobDocument } from '@/server/payload/jobs/types'
 import { plugins } from '@/server/payload/plugins'
 import { Footer } from '@/ui/web/footer/config'
@@ -247,5 +248,8 @@ export default buildConfig({
         ],
       },
     }),
+  },
+  onInit: async (payload) => {
+    await runBackfillOnInit(payload)
   },
 })

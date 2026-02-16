@@ -3,7 +3,7 @@
   "instructions": [".ai-docs/BOOTSTRAP.md", ".ai-docs/quick-reference/CHEAT-SHEET.md"],
   "agent": {
     "build": {
-      "model": "minimax/MiniMax-M2.1",
+      "model": "minimax-coding-plan/MiniMax-M2.1",
       "description": "Building features, refactoring, implementing changes"
     },
     "plan": {
@@ -19,11 +19,11 @@
       "description": "Collects operator questions and answers"
     },
     "verify": {
-      "model": "minimax/MiniMax-M2.1",
+      "model": "minimax-coding-plan/MiniMax-M2.1",
       "description": "Runs tests, validates implementation passes all gates"
     },
     "test": {
-      "model": "minimax/MiniMax-M2.1",
+      "model": "minimax-coding-plan/MiniMax-M2.1",
       "description": "Writes E2E and integration tests using Playwright"
     },
     "advisor": {
@@ -31,11 +31,11 @@
       "description": "Code review, suggestions, best practices"
     },
     "auditor": {
-      "model": "minimax/MiniMax-M2.1",
+      "model": "minimax-coding-plan/MiniMax-M2.1",
       "description": "Process improvement analysis agent"
     },
     "pr": {
-      "model": "minimax/MiniMax-M2.1",
+      "model": "minimax-coding-plan/MiniMax-M2.1",
       "description": "Creates branch, commits changes, opens pull request"
     }
   },

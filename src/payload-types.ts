@@ -1169,6 +1169,10 @@ export interface Chapter {
    */
   title: string;
   /**
+   * Auto-computed display title for admin (chapter title — course title)
+   */
+  adminTitle?: string | null;
+  /**
    * Detailed description of the chapter
    */
   description?: string | null;
@@ -2416,6 +2420,7 @@ export interface ChaptersSelect<T extends boolean = true> {
   course?: T;
   chapterLabel?: T;
   title?: T;
+  adminTitle?: T;
   description?: T;
   mediaFiles?: T;
   order?: T;

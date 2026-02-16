@@ -6,13 +6,13 @@
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
-import { preflight } from './preflight'
 import {
-  writeAgentContext,
   readTask,
-  stageOutputFile,
   SPEC_EXECUTE_VERIFY_STAGES,
+  stageOutputFile,
+  writeAgentContext,
 } from './pipeline-utils'
+import { preflight } from './preflight'
 
 const taskId = process.argv[2]
 
@@ -63,18 +63,24 @@ if (!fs.existsSync(path.join(taskDir, 'clarified.md'))) {
 }
 
 // spec_execute_verify pipeline
-const stages = SPEC_EXECUTE_VERIFY_STAGES
+// Skip auditor on reruns — it's a process analysis stage, not needed when fixing code
+const isRerun = fs.existsSync(path.join(taskDir, 'rerun-feedback.md'))
+const SKIP_ON_RERUN = ['auditor']
+const stages = isRerun
+  ? SPEC_EXECUTE_VERIFY_STAGES.filter((s) => !SKIP_ON_RERUN.includes(s))
+  : SPEC_EXECUTE_VERIFY_STAGES
 
-// Model per stage: smarter models for planning/analysis, fast for execution
-// Source of truth: opencode.json
-const stageModels: Record<string, string> = {
-  plan: 'anthropic/claude-opus-4-6', // Deep architecture planning
-  build: 'minimax/MiniMax-M2.1', // Fast implementation
-  test: 'minimax/MiniMax-M2.1', // Fast test writing
-  verify: 'minimax/MiniMax-M2.1', // Fast verification
-  auditor: 'anthropic/claude-opus-4-6', // Deep analysis
-  pr: 'minimax/MiniMax-M2.1', // Fast PR creation
+// Stage timeouts (ms) — kills agent process if exceeded
+const STAGE_TIMEOUTS: Record<string, number> = {
+  architect: 5 * 60_000,
+  build: 30 * 60_000,
+  test: 10 * 60_000,
+  verify: 5 * 60_000,
+  auditor: 5 * 60_000,
+  pr: 5 * 60_000,
 }
+const DEFAULT_TIMEOUT = 10 * 60_000
+const MAX_RETRIES = 2
 
 console.log(`=== Pipeline Impl: ${taskId} ===`)
 console.log(`Pipeline: ${taskDef.pipeline} (${taskDef.task_type}, risk: ${taskDef.risk_level})`)
@@ -165,7 +171,7 @@ function showStageErrorContext(stage: string): void {
     console.error(`  • Linting failures`)
     console.error(`  • Test failures`)
     console.error(`  • See verify.md for details`)
-  } else if (stage === 'plan') {
+  } else if (stage === 'architect') {
     console.error(`  • Context missing from .context.md`)
     console.error(`  • Insufficient clarification`)
   } else if (stage === 'pr') {
@@ -181,9 +187,53 @@ function showStageErrorContext(stage: string): void {
   console.error(`  4. Or fix manually and run: pnpm pipeline:impl ${taskId}`)
 }
 
+// Branch setup: ensure we're on a feature branch before build
+function ensureFeatureBranch(): void {
+  const currentBranch = execSync('git branch --show-current', {
+    cwd: projectDir,
+    encoding: 'utf-8',
+  }).trim()
+
+  if (currentBranch !== 'dev' && currentBranch !== 'main') {
+    console.log(`[branch] Already on feature branch: ${currentBranch}`)
+    return
+  }
+
+  // Determine branch prefix from task type
+  const prefixMap: Record<string, string> = {
+    implement_feature: 'feat',
+    fix_bug: 'fix',
+    refactor: 'refactor',
+    docs: 'docs',
+    ops: 'chore',
+  }
+  const prefix = prefixMap[taskDef!.task_type] || 'feat'
+  const branchName = `${prefix}/${taskId}`
+
+  console.log(`[branch] Setting up feature branch: ${branchName}`)
+  execSync('git fetch origin dev', { cwd: projectDir, stdio: 'inherit' })
+  execSync('git checkout dev', { cwd: projectDir, stdio: 'inherit' })
+  execSync('git pull origin dev', { cwd: projectDir, stdio: 'inherit' })
+  execSync(`git checkout -b ${branchName}`, { cwd: projectDir, stdio: 'inherit' })
+  console.log(`[branch] Created and switched to: ${branchName}`)
+}
+
 for (let i = 0; i < stages.length; i++) {
   const stage = stages[i]
   const outputFile = stageOutputFile(taskDir, stage)
+
+  // Set up feature branch before build stage
+  if (stage === 'build' && !fs.existsSync(outputFile)) {
+    ensureFeatureBranch()
+  }
+
+  // On rerun: always re-run architect so it can evaluate feedback and revise approach
+  // If plan.md still exists (rerun started from build), snapshot context then delete
+  if (stage === 'architect' && isRerun && fs.existsSync(outputFile)) {
+    writeAgentContext(taskDir) // captures old plan + feedback into .context.md
+    fs.unlinkSync(outputFile)
+    console.log(`[${i + 1}/${stages.length}] Rerun: deleting stale plan.md for re-evaluation`)
+  }
 
   // R2: Delete stale verify.md before re-running verify
   if (stage === 'verify' && fs.existsSync(outputFile)) {
@@ -200,32 +250,71 @@ for (let i = 0; i < stages.length; i++) {
   console.log(`[${i + 1}/${stages.length}] Running ${stage} agent...`)
 
   // R8: Write context file before invoking agent
-  writeAgentContext(taskDir)
+  // On rerun + architect stage: rerun script already prepared .context.md with old plan preserved
+  if (!(stage === 'architect' && isRerun)) {
+    writeAgentContext(taskDir)
+  }
 
-  // R4: try/catch around execSync
-  try {
-    const model = stageModels[stage] || 'minimax/MiniMax-M2.1'
-    execSync(
-      `pnpm ocode run --agent ${stage} -m ${model} "Execute ${stage} for ${taskId}. Read context from .tasks/${taskId}/.context.md"`,
-      {
-        cwd: projectDir,
-        stdio: 'inherit',
-      },
-    )
+  // R4: try/catch around execSync with timeout + retry
+  const timeout = STAGE_TIMEOUTS[stage] ?? DEFAULT_TIMEOUT
+  let succeeded = false
 
-    // R9: Validate that agent created output file
-    if (!fs.existsSync(outputFile)) {
-      console.error(`\n❌ Stage "${stage}" completed but did not create ${outputFile}`)
-      console.error(
-        `The ${stage} agent MUST create an output file as specified in .opencode/agents/${stage}.md`,
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      console.log(`\n🔄 Retry ${attempt}/${MAX_RETRIES} for ${stage}...`)
+    }
+
+    try {
+      execSync(
+        `pnpm ocode run --agent ${stage} "Execute ${stage} for ${taskId}. Read context from .tasks/${taskId}/.context.md"`,
+        {
+          cwd: projectDir,
+          stdio: 'inherit',
+          timeout,
+        },
       )
-      console.error('Check agent definition and ensure it writes the required output.')
+      succeeded = true
+      break
+    } catch (error: unknown) {
+      const execError = error as { killed?: boolean; signal?: string }
+
+      // Timeout: process was killed by execSync
+      if (execError.killed) {
+        const mins = Math.round(timeout / 60_000)
+        console.error(
+          `\n⏰ Stage "${stage}" timed out after ${mins} minutes (attempt ${attempt + 1}/${MAX_RETRIES + 1})`,
+        )
+        if (attempt < MAX_RETRIES) {
+          console.log(`   Retrying...`)
+          continue
+        }
+        console.error(`\n❌ Stage "${stage}" timed out ${MAX_RETRIES + 1} times for ${taskId}`)
+        showStageErrorContext(stage)
+        process.exit(1)
+      }
+
+      // Non-timeout error: fail immediately
+      console.error(`\n❌ Stage "${stage}" failed for ${taskId}`)
+      showStageErrorContext(stage)
       process.exit(1)
     }
-  } catch {
-    console.error(`\n❌ Stage "${stage}" failed for ${taskId}`)
-    showStageErrorContext(stage)
-    process.exit(1)
+  }
+
+  // R9: Validate that agent created output file
+  if (succeeded) {
+    const SOFT_STAGES = ['auditor']
+    if (!fs.existsSync(outputFile)) {
+      if (SOFT_STAGES.includes(stage)) {
+        console.warn(`\n⚠️  Stage "${stage}" did not create ${outputFile} (non-blocking)`)
+      } else {
+        console.error(`\n❌ Stage "${stage}" completed but did not create ${outputFile}`)
+        console.error(
+          `The ${stage} agent MUST create an output file as specified in .opencode/agents/${stage}.md`,
+        )
+        console.error('Check agent definition and ensure it writes the required output.')
+        process.exit(1)
+      }
+    }
   }
 
   // R1: Check verify content for FAIL
