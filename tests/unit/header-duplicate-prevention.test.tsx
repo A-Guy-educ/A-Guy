@@ -17,11 +17,7 @@ describe('Header Duplicate Prevention', () => {
 
     it('should hide description when identical to title', () => {
       const { container } = render(
-        <CourseHeader
-          courseLabel="Course"
-          title="Introduction"
-          description="Introduction"
-        />,
+        <CourseHeader courseLabel="Course" title="Introduction" description="Introduction" />,
       )
       const description = container.querySelector('p.text-muted-foreground')
       expect(description).toBeNull()
@@ -29,11 +25,7 @@ describe('Header Duplicate Prevention', () => {
 
     it('should show description when only case differs', () => {
       const { container } = render(
-        <CourseHeader
-          courseLabel="Course"
-          title="Introduction"
-          description="  INTRODUCTION  "
-        />,
+        <CourseHeader courseLabel="Course" title="Introduction" description="  INTRODUCTION  " />,
       )
       const description = container.querySelector('p.text-muted-foreground')
       expect(description).toBeTruthy()
@@ -52,9 +44,7 @@ describe('Header Duplicate Prevention', () => {
     })
 
     it('should hide description when identical to title', () => {
-      const { container } = render(
-        <ChapterHeader title="Chapter One" description="Chapter One" />,
-      )
+      const { container } = render(<ChapterHeader title="Chapter One" description="Chapter One" />)
       const description = container.querySelector('p.text-muted-foreground')
       expect(description).toBeNull()
     })
