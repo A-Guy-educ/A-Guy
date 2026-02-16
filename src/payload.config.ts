@@ -14,7 +14,9 @@ import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
 import { Exercises } from '@/server/payload/collections/Exercises'
+import { GuestSessions } from '@/server/payload/collections/GuestSessions'
 import { Lessons } from '@/server/payload/collections/Lessons'
+import { LessonSessions } from '@/server/payload/collections/LessonSessions'
 import { MCPAuditLogs } from '@/server/payload/collections/MCPAuditLogs'
 import { Media } from '@/server/payload/collections/Media'
 import { MemoryItems } from '@/server/payload/collections/MemoryItems'
@@ -29,12 +31,12 @@ import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/im
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
-import { runBackfillOnInit } from '@/server/payload/migrations/backfillAdminTitle'
 import type { JobDocument } from '@/server/payload/jobs/types'
+import { runBackfillOnInit } from '@/server/payload/migrations/backfillAdminTitle'
+import { createLessonSessionIndexes } from '@/server/payload/migrations/createLessonSessionIndex'
 import { plugins } from '@/server/payload/plugins'
 import { Footer } from '@/ui/web/footer/config'
 import { Header } from '@/ui/web/header/config'
-import { GuestSessions } from '@/server/payload/collections/GuestSessions'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -144,6 +146,7 @@ export default buildConfig({
     Posts,
     PricingPlans,
     MCPAuditLogs,
+    LessonSessions,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
@@ -251,5 +254,6 @@ export default buildConfig({
   },
   onInit: async (payload) => {
     await runBackfillOnInit(payload)
+    await createLessonSessionIndexes(payload)
   },
 })

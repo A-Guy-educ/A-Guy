@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>A‑Guy – דמו שיעור בלוקים (נקודות קיצון)</title>
+<style>
+:root{
+  --primary:#8B1D25;
+  --primary2:#a82230;
+  --green:#5A7D5B;
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --muted:#6b7280;
+  --border:rgba(229,231,235,.9);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:linear-gradient(135deg,#f7f7fb,#fff,#f7f7fb); color:#111827}
+.nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.85);backdrop-filter:blur(16px); border-bottom:1px solid var(--border); padding:14px 18px; display:flex; align-items:center; justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px; font-weight:700; letter-spacing:.2px}
+.badge{font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:#9ca3af; border:1px solid var(--border); padding:6px 10px; border-radius:999px; background:linear-gradient(90deg,#f3f4f6,#fff)}
+.logo{width:34px;height:34px;border-radius:999px; background:linear-gradient(135deg,var(--green),#4a6d4b); display:grid; place-items:center; color:#fff; box-shadow:0 10px 18px rgba(90,125,91,.18)}
+.progress{height:6px;background:rgba(229,231,235,.6)}
+.progress > div{height:100%; width:0%; background:linear-gradient(270deg,var(--primary),var(--primary2)); transition:width .35s ease}
+.wrap{max-width:1100px;margin:0 auto; padding:18px; display:grid; gap:16px; grid-template-columns:1fr 320px}
+@media (max-width:980px){.wrap{grid-template-columns:1fr} .side{order:-1}}
+.stream{min-height:calc(100vh - 120px)}
+.block{background:linear-gradient(135deg,var(--card),rgba(249,250,251,.6)); border:1px solid var(--border); border-radius:22px; padding:18px; box-shadow:0 18px 40px rgba(17,24,39,.06); margin-bottom:14px; overflow:hidden; position:relative}
+.block.bot::after{content:""; position:absolute; right:0; top:0; bottom:0; width:6px; background:linear-gradient(180deg,var(--primary),var(--primary2))}
+.block.student::after{content:""; position:absolute; right:0; top:0; bottom:0; width:6px; background:linear-gradient(180deg,var(--green),#4a6d4b)}
+.h{display:flex; align-items:flex-start; justify-content:space-between; gap:12px}
+.title{font-size:18px; font-weight:700; margin:0 0 10px 0}
+.meta{font-size:12px;color:var(--muted)}
+.bullets{margin:10px 0 0 0; padding:0 18px 0 0; color:#111827}
+.bullets li{margin:8px 0; line-height:1.45}
+.bodytext{line-height:1.65; color:#111827}
+.controls{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px}
+.btn{border:1px solid var(--border); background:#fff; color:#111827; padding:10px 12px; border-radius:14px; font-size:14px; cursor:pointer; box-shadow:0 8px 16px rgba(17,24,39,.04); transition:transform .15s ease, box-shadow .15s ease}
+.btn:hover{transform:translateY(-1px); box-shadow:0 14px 22px rgba(17,24,39,.08)}
+.btnPrimary{border:none; color:#fff; background:linear-gradient(270deg,var(--primary),var(--primary2)); padding:11px 14px}
+.btnGreen{border:none; color:#fff; background:linear-gradient(135deg,var(--green),#4a6d4b)}
+.input{width:100%; max-width:360px; padding:11px 12px; border-radius:14px; border:1px solid var(--border); outline:none; font-size:14px}
+.imgWrap{margin-top:12px; border-radius:18px; border:1px solid var(--border); overflow:hidden; background:#fff}
+.imgWrap img{display:block; width:100%; height:auto}
+.canvasLayer{position:absolute; inset:0; pointer-events:none}
+.side{position:sticky; top:86px; align-self:start}
+.panel{background:rgba(255,255,255,.85); backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:22px; padding:14px; box-shadow:0 18px 40px rgba(17,24,39,.06)}
+.kv{display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid rgba(229,231,235,.6)}
+.kv:last-child{border-bottom:none}
+.k{color:var(--muted); font-size:12px}
+.v{font-weight:700}
+.log{margin-top:12px; font-size:12px; color:var(--muted); max-height:220px; overflow:auto; padding-right:6px}
+.log div{padding:6px 0; border-bottom:1px dashed rgba(229,231,235,.7)}
+.smallNote{font-size:12px;color:var(--muted); margin-top:8px}
+.typingCaret::after{content:"▋"; margin-right:2px; animation:blink 1s infinite}
+@keyframes blink{0%,50%{opacity:1} 51%,100%{opacity:0}}
+</style>
+</head>
+<body>
+  <div class="nav">
+    <div class="brand">
+      <div class="logo">G</div>
+      <div>
+        <div style="font-weight:800">buyguy</div>
+        <div class="meta">דמו שיעור • נקודות קיצון</div>
+      </div>
+    </div>
+    <div class="badge">BLOCK‑BASED • LLM‑READY</div>
+  </div>
+  <div class="progress"><div id="pbar"></div></div>
+
+  <div class="wrap">
+    <div class="stream" id="stream"></div>
+
+    <div class="side">
+      <div class="panel">
+        <div class="kv"><div class="k">טון</div><div class="v" id="tone">—</div></div>
+        <div class="kv"><div class="k">Skill Score</div><div class="v" id="skill">0</div></div>
+        <div class="kv"><div class="k">בלוקים הוצגו</div><div class="v" id="shown">0</div></div>
+        <div class="smallNote">כפתור "המשך" תמיד זמין: לחיצה בזמן כתיבה = מציג הכל, לחיצה נוספת = מתקדם.</div>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const LESSON = [{"type": "emotion", "prompt": "היי 🙂 איך אתה מרגיש היום לפני שמתחילים?", "choices": ["מעולה 🔥", "בסדר 🙂", "קצת לחוץ/ה 😅", "קשה לי היום 😕"]}, {"type": "text", "title": "ברוכים הבאים", "text": "בשיעור הזה נלמד לחקור פונקציית פולינום: נקודות קיצון, תחומי עלייה/ירידה, שרטוט, וגם מקרים של תחום סגור ופרמטר."}, {"type": "checkin"}, {"type": "media_question", "title": "חימום עם גרף", "text": "בשרטוט הבא מסומנות הנקודות A ו־B. מה הן מייצגות?", "image": "/mnt/data/_media_extrema/word/media/image1.png", "choices": [{"label": "נקודות חיתוך עם הצירים", "correct": false}, {"label": "נקודות קיצון (מקסימום/מינימום)", "correct": true}], "onCorrect": "בדיוק ✅ A ו־B הן נקודות קיצון.", "onWrong": "כמעט 🙂 שים/י לב: הנקודות מסומנות בראש/בתחתית 'גבעה' ו'עמק'."}, {"type": "explain", "title": "מהי נקודת קיצון?", "bullets": ["נקודות קיצון (מינימום/מקסימום) הן נקודות שבהן שיפוע המשיק לפונקציה מקביל לציר ה‑x, ולכן השיפוע הוא 0.", "שיפוע המשיק בנקודה שווה לערך הנגזרת של הפונקציה בנקודה.", "לכן כדי למצוא נקודות קיצון משווים את הנגזרת לאפס:  f′(x)=0."]}, {"type": "checkin"}, {"type": "mcq", "question": "מה מיוחד בשיפוע המשיק בנקודת קיצון?", "choices": [{"label": "השיפוע 2", "correct": false}, {"label": "השיפוע 0", "correct": true}], "onCorrect": "מעולה ✅ בנקודת קיצון השיפוע 0.", "onWrong": "לא בדיוק. בנקודת קיצון המשיק אופקי ולכן השיפוע 0."}, {"type": "mcq", "question": "מה ההגדרה הנכונה ביותר של נגזרת?", "choices": [{"label": "ערך הנגזרת הוא השיפוע של המשיק לגרף הפונקציה בנקודה.", "correct": true}, {"label": "הנגזרת היא נקודת החיתוך של הפונקציה עם ציר ה‑x.", "correct": false}], "onCorrect": "בול ✅ נגזרת = שיפוע המשיק.", "onWrong": "כמעט 🙂 נגזרת מתארת שיפוע משיק, לא נקודות חיתוך."}, {"type": "checkin"}, {"type": "explain", "title": "שלבי מציאת נקודות קיצון", "bullets": ["(1) גוזרים את הפונקציה f(x) ומקבלים f′(x).", "(2) משווים f′(x)=0 ופותרים כדי למצוא ערכי x חשודים לקיצון.", "(3) מציבים את ערכי x בפונקציה כדי לקבל y (כלומר נקודות (x,y))."]}, {"type": "checkin"}, {"type": "explain", "title": null, "bullets": ["(4) קובעים את סוג הקיצון (מינימום/מקסימום) בעזרת תחומי עלייה/ירידה או נגזרת שנייה."]}, {"type": "checkin"}, {"type": "text", "title": "שימו לב", "text": "קיימות נקודות שבהן f′(x)=0 אבל הן לא נקודות קיצון — אלו נקודות פיתול. לכן תמיד צריך לבדוק את סוג הנקודה."}, {"type": "checkin"}, {"type": "explain", "title": "תחומי עלייה וירידה", "bullets": ["כאשר ערך הנגזרת שלילי — הפונקציה יורדת.", "כאשר ערך הנגזרת חיובי — הפונקציה עולה.", "כדי לקבוע תחומים, בוחרים ערך x אחד מכל תחום ומציבים בנגזרת."]}, {"type": "checkin"}, {"type": "open", "question": "תרגול קצר: כתוב/י את 3 השלבים הראשונים למציאת נקודות קיצון (במילים).", "onSubmit": "מעולה. גם אם ניסחת אחרת — העיקר: נגזרת → השוואה ל‑0 → פתרון."}, {"type": "checkin"}, {"type": "graph_help", "title": "עזרה על הגרף", "text": "רוצה שאסמן על הגרף את נקודות הקיצון A ו‑B ואצייר קווי עזר?", "image": "/mnt/data/_media_extrema/word/media/image1.png"}, {"type": "mcq", "question": "אם מצאנו ערך x שמקיים f′(x)=0 — מה עושים עכשיו כדי למצוא את נקודת הקיצון עצמה?", "choices": [{"label": "מציבים את x בפונקציה f(x) כדי לקבל y.", "correct": true}, {"label": "מציבים את x בנגזרת שוב ומקבלים y.", "correct": false}], "onCorrect": "נכון ✅ מציבים ב‑f(x) כדי לקבל y.", "onWrong": "כמעט 🙂 כדי לקבל y של הנקודה צריך להציב ב‑f(x), לא ב‑f′(x).", "remedial": {"title": "חידוד קצר", "text": "הנגזרת נותנת שיפוע. כדי לקבל נקודה (x,y) צריך את ערך הפונקציה: y=f(x).", "easy": {"question": "אז מה הערך הנכון לקבלת y?", "choices": [{"label": "y=f(x)", "correct": true}, {"label": "y=f′(x)", "correct": false}], "onCorrect": "בול ✅ ממשיכים.", "onWrong": "לא נורא — y תמיד שייך לפונקציה עצמה: y=f(x)."}}}, {"type": "checkin"}, {"type": "explain", "title": "קיצון בתחום סגור", "bullets": ["בחקירה בתחום סגור [a,b] מחפשים גם נקודות קיצון פנימיות וגם בודקים את קצות התחום.", "קיצון מוחלט הוא הערך הגדול/קטן ביותר בתחום — יכול להיות גם בקצה."]}, {"type": "checkin"}, {"type": "explain", "title": "חקירה עם פרמטר", "bullets": ["לפעמים הפונקציה תלויה בפרמטר (למשל a או b).", "אם נתון שנקודת קיצון נמצאת ב‑x=c, משתמשים בתנאי f′(c)=0 כדי למצוא את הפרמטר."]}, {"type": "checkin"}, {"type": "text", "title": "סיכום קצר", "text": "המתכון: נגזרת → f′=0 → נקודות חשודות → קובעים סוג בעזרת עלייה/ירידה → בונים שרטוט. בתחום סגור מוסיפים בדיקת קצוות."}, {"type": "end", "title": "סיימנו את הדמו 🎉", "text": "כל הכבוד! אם תרצה/י, אפשר להמשיך לתרגול נוסף עם פונקציות ספציפיות מהבגרות."}];
+
+const state = {
+  i: 0,
+  tone: null,
+  skill: 0,
+  shown: 0,
+  typing: {active:false, el:null, full:""}
+};
+
+const checkinVariants = [
+ "רגע קצר 🙂 זה ברור עד כאן, או שתרצה/י עוד חידוד?",
+ "איך הולך עד עכשיו? להמשיך או לעצור להסבר קצר?",
+ "ברור/ה לך? אם לא — אני מוסיף/ה עוד דקה של הסבר.",
+ "לפני שממשיכים — הכל ברור? אפשר גם לבקש חידוד."
+];
+
+function $(id){ return document.getElementById(id); }
+function log(msg){
+  const el=document.createElement('div');
+  el.textContent=msg;
+  $('log').prepend(el);
+}
+function updateSide(){
+  $('tone').textContent = state.tone ?? "—";
+  $('skill').textContent = String(state.skill);
+  $('shown').textContent = String(state.shown);
+  $('pbar').style.width = ((Math.min(state.i, LESSON.length-1)+1)/LESSON.length*100).toFixed(1)+"%";
+}
+function scrollBottom(){ window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'}); }
+
+function finishTyping(){
+  if(!state.typing.active) return false;
+  state.typing.el.innerHTML = state.typing.full;
+  state.typing.active = false;
+  state.typing.el.classList.remove('typingCaret');
+  state.typing.el = null;
+  state.typing.full = "";
+  return true;
+}
+
+function typewriter(el, html, speed=16){
+  finishTyping();
+  state.typing.active=true;
+  state.typing.el=el;
+  state.typing.full=html;
+  el.classList.add('typingCaret');
+
+  // type plain text then swap to html at end
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const plain = tmp.textContent || tmp.innerText || "";
+  el.textContent = "";
+  let i=0;
+  const t = setInterval(()=>{
+    if(!state.typing.active){ clearInterval(t); return; }
+    el.textContent += plain.charAt(i);
+    i++;
+    if(i>=plain.length){
+      clearInterval(t);
+      el.innerHTML = html;
+      state.typing.active=false;
+      el.classList.remove('typingCaret');
+      state.typing.el=null;
+      state.typing.full="";
+    }
+  }, speed);
+}
+
+function renderBlock(block, role="bot"){
+  const stream = $('stream');
+  const wrap = document.createElement('div');
+  wrap.className = 'block ' + (role==='student' ? 'student' : 'bot');
+
+  const header = document.createElement('div');
+  header.className = 'h';
+
+  const left = document.createElement('div');
+  const title = document.createElement('div');
+  title.className='title';
+  title.textContent = block.title || (role==='student' ? "תשובת תלמיד" : "A‑Guy");
+  left.appendChild(title);
+
+  const meta = document.createElement('div');
+  meta.className='meta';
+  meta.textContent = role==='student' ? "תלמיד" : "מורה AI";
+  left.appendChild(meta);
+
+  header.appendChild(left);
+  wrap.appendChild(header);
+
+  const content = document.createElement('div');
+  content.className='bodytext';
+  wrap.appendChild(content);
+
+  // media (image)
+  let imgEl = null;
+  if(block.image){
+    const iw = document.createElement('div');
+    iw.className='imgWrap';
+    const img=document.createElement('img');
+    img.src = block.image;
+    img.alt = "media";
+    imgEl = img;
+    iw.appendChild(img);
+    wrap.appendChild(iw);
+  }
+
+  const controls = document.createElement('div');
+  controls.className='controls';
+  wrap.appendChild(controls);
+
+  stream.appendChild(wrap);
+  state.shown++;
+  updateSide();
+  scrollBottom();
+
+  return {wrap, content, controls, imgEl};
+}
+
+function addContinue(controls){
+  const b=document.createElement('button');
+  b.className='btn btnPrimary';
+  b.textContent='המשך';
+  b.onclick=()=>{
+    if(finishTyping()) return;
+    next();
+  };
+  controls.appendChild(b);
+}
+
+function next(){
+  state.i++;
+  if(state.i >= LESSON.length) return;
+  showCurrent();
+}
+
+function showCurrent(){
+  const block = LESSON[state.i];
+  if(!block) return;
+
+  // Check-in block is synthetic
+  if(block.type==='checkin'){
+    const variant = checkinVariants[Math.abs(hash(blocksKey(state.i))) % checkinVariants.length];
+    const ui = renderBlock({title:"בדיקת הבנה", text:variant}, "bot");
+    typewriter(ui.content, `<div><strong>${esc(variant)}</strong></div><div class="meta">בחר/י אפשרות או לחץ/י המשך.</div>`);
+    // choices
+    const yes = document.createElement('button');
+    yes.className='btn';
+    yes.textContent='ברור, אפשר להתקדם';
+    yes.onclick=()=>{
+      if(finishTyping()) return;
+      renderBlock({title:"", text:"ברור, אפשר להתקדם"}, "student");
+      renderBlock({title:"A‑Guy", text:"מעולה ✅ ממשיכים."}, "bot");
+      next();
+    };
+    const no = document.createElement('button');
+    no.className='btn';
+    no.textContent='לא בטוח/ה — עוד הסבר קצר';
+    no.onclick=()=>{
+      if(finishTyping()) return;
+      renderBlock({title:"", text:"לא בטוח/ה — עוד הסבר קצר"}, "student");
+      const extra = renderBlock({title:"עוד חידוד", text:"בנקודת קיצון: f′(x)=0 נותן x חשוד. כדי לדעת מינימום/מקסימום חייבים לבדוק שינוי סימן של הנגזרת או תחומי עלייה/ירידה."}, "bot");
+      typewriter(extra.content, `<div>${esc("בנקודת קיצון: f′(x)=0 נותן x חשוד. כדי לדעת מינימום/מקסימום חייבים לבדוק שינוי סימן של הנגזרת או תחומי עלייה/ירידה.")}</div>`);
+      next();
+    };
+    ui.controls.appendChild(yes);
+    ui.controls.appendChild(no);
+    addContinue(ui.controls);
+    log("checkin_shown");
+    return;
+  }
+
+  if(block.type==='emotion'){
+    const ui = renderBlock({title:"פתיחה", text:block.prompt}, "bot");
+    typewriter(ui.content, `<div><strong>${esc(block.prompt)}</strong></div><div class="meta">בחר/י תשובה למטה.</div>`);
+    block.choices.forEach(ch=>{
+      const b=document.createElement('button');
+      b.className='btn';
+      b.textContent=ch;
+      b.onclick=()=>{
+        if(finishTyping()) return;
+        renderBlock({text:ch}, "student");
+        // set tone
+        if(ch.includes("מעולה")) state.tone="אנרגטי";
+        else if(ch.includes("בסדר")) state.tone="רגוע";
+        else if(ch.includes("לחוץ")) state.tone="תומך";
+        else state.tone="עדין";
+        updateSide();
+        const reply = {
+          "אנרגטי":"מעולה! נרוץ קדימה ונאתגר את עצמנו 💪",
+          "רגוע":"יופי 🙂 נתקדם צעד‑צעד בקצב נוח.",
+          "תומך":"הכל טוב 😅 נתקדם לאט, ואם צריך נעצור לחידוד.",
+          "עדין":"קודם כל תודה ששיתפת. נתקדם בעדינות — אני איתך."
+        }[state.tone];
+        const rui = renderBlock({title:"A‑Guy", text:reply}, "bot");
+        typewriter(rui.content, `<div>${esc(reply)}</div>`);
+        log("emotion_selected");
+        next();
+      };
+      ui.controls.appendChild(b);
+    });
+    addContinue(ui.controls);
+    return;
+  }
+
+  if(block.type==='text'){
+    const ui = renderBlock({title:block.title||"המשך", text:block.text}, "bot");
+    typewriter(ui.content, `<div>${esc(block.text)}</div>`);
+    addContinue(ui.controls);
+    return;
+  }
+
+  if(block.type==='explain'){
+    const ui = renderBlock({title:block.title||"הסבר", text:""}, "bot");
+    const lis = (block.bullets||[]).map(x=>`<li>${esc(x)}</li>`).join("");
+    const html = `<ul class="bullets">${lis}</ul>`;
+    typewriter(ui.content, html);
+    addContinue(ui.controls);
+    return;
+  }
+
+  if(block.type==='mcq'){
+    const ui = renderBlock({title:"שאלה", text:block.question}, "bot");
+    typewriter(ui.content, `<div><strong>${esc(block.question)}</strong></div>`);
+    block.choices.forEach(ch=>{
+      const b=document.createElement('button');
+      b.className='btn';
+      b.textContent=ch.label;
+      b.onclick=()=>{
+        if(finishTyping()) return;
+        renderBlock({text:ch.label}, "student");
+        const correct = !!ch.correct;
+        if(correct) state.skill += 1;
+        else state.skill -= 1;
+        updateSide();
+        const msg = correct ? (block.onCorrect||"נכון ✅") : (block.onWrong||"לא נכון 🙂");
+        const rui = renderBlock({title:"A‑Guy", text:msg}, "bot");
+        typewriter(rui.content, `<div>${esc(msg)}</div>`);
+        log("mcq_answered");
+        if(!correct && block.remedial){
+          // remedial flow
+          const rem = renderBlock({title:block.remedial.title||"חיזוק", text:block.remedial.text}, "bot");
+          typewriter(rem.content, `<div>${esc(block.remedial.text)}</div>`);
+          // easy question
+          const eq = block.remedial.easy;
+          const eqUi = renderBlock({title:"שאלה קלה", text:eq.question}, "bot");
+          typewriter(eqUi.content, `<div><strong>${esc(eq.question)}</strong></div>`);
+          eq.choices.forEach(ee=>{
+            const bb=document.createElement('button');
+            bb.className='btn';
+            bb.textContent=ee.label;
+            bb.onclick=()=>{
+              if(finishTyping()) return;
+              renderBlock({text:ee.label}, "student");
+              const ok=!!ee.correct;
+              const mm = ok ? eq.onCorrect : eq.onWrong;
+              const rr = renderBlock({title:"A‑Guy", text:mm}, "bot");
+              typewriter(rr.content, `<div>${esc(mm)}</div>`);
+              log("remedial_done");
+              next();
+            };
+            eqUi.controls.appendChild(bb);
+          });
+          addContinue(eqUi.controls);
+          return;
+        }
+        next();
+      };
+      ui.controls.appendChild(b);
+    });
+    addContinue(ui.controls);
+    return;
+  }
+
+  if(block.type==='media_question'){
+    const ui = renderBlock({title:block.title||"שאלה עם גרף", text:block.text, image:block.image}, "bot");
+    typewriter(ui.content, `<div><strong>${esc(block.text)}</strong></div>`);
+    // Add help button for marking points
+    const help=document.createElement('button');
+    help.className='btn btnGreen';
+    help.textContent='עזרה: סמן נקודות קיצון על הגרף';
+    help.onclick=()=>{
+      if(finishTyping()) return;
+      const r = renderBlock({title:"A‑Guy", text:"בכיף. אני מסמן את A (מקסימום מקומי) ואת B (מינימום מקומי), והמשיקים שם אופקיים."}, "bot");
+      typewriter(r.content, `<div>${esc("בכיף. אני מסמן את A (מקסימום מקומי) ואת B (מינימום מקומי), והמשיקים שם אופקיים.")}</div>`);
+      annotateImage(ui.wrap);
+      log("graph_help");
+    };
+    ui.controls.appendChild(help);
+
+    block.choices.forEach(ch=>{
+      const b=document.createElement('button');
+      b.className='btn';
+      b.textContent=ch.label;
+      b.onclick=()=>{
+        if(finishTyping()) return;
+        renderBlock({text:ch.label}, "student");
+        const correct=!!ch.correct;
+        state.skill += correct ? 1 : -1;
+        updateSide();
+        const msg = correct ? (block.onCorrect||"נכון ✅") : (block.onWrong||"לא נכון 🙂");
+        const rui = renderBlock({title:"A‑Guy", text:msg}, "bot");
+        typewriter(rui.content, `<div>${esc(msg)}</div>`);
+        next();
+      };
+      ui.controls.appendChild(b);
+    });
+    addContinue(ui.controls);
+    return;
+  }
+
+  if(block.type==='graph_help'){
+    const ui = renderBlock({title:block.title||"עזרה", text:block.text, image:block.image}, "bot");
+    typewriter(ui.content, `<div><strong>${esc(block.text)}</strong></div><div class="meta">אפשר גם ללחוץ המשך ולהתקדם.</div>`);
+    const b=document.createElement('button');
+    b.className='btn btnGreen';
+    b.textContent='סמן עכשיו';
+    b.onclick=()=>{
+      if(finishTyping()) return;
+      annotateImage(ui.wrap);
+      const r = renderBlock({title:"A‑Guy", text:"סימנתי 🙂 שים/י לב שהמשיק ב‑A וב‑B אופקי (שיפוע 0)."}, "bot");
+      typewriter(r.content, `<div>${esc("סימנתי 🙂 שים/י לב שהמשיק ב‑A וב‑B אופקי (שיפוע 0).")}</div>`);
+      log("graph_annotated");
+    };
+    ui.controls.appendChild(b);
+    addContinue(ui.controls);
+    return;
+  }
+
+  if(block.type==='open'){
+    const ui = renderBlock({title:"שאלה פתוחה", text:block.question}, "bot");
+    typewriter(ui.content, `<div><strong>${esc(block.question)}</strong></div>`);
+    const inp=document.createElement('input');
+    inp.className='input';
+    inp.placeholder='כתוב/י כאן…';
+    const send=document.createElement('button');
+    send.className='btn btnPrimary';
+    send.textContent='שלח';
+    send.onclick=()=>{
+      if(finishTyping()) return;
+      const val=inp.value.trim();
+      if(!val) return;
+      renderBlock({text:val}, "student");
+      const msg = block.onSubmit || "קיבלתי ✅";
+      const rui = renderBlock({title:"A‑Guy", text:msg}, "bot");
+      typewriter(rui.content, `<div>${esc(msg)}</div>`);
+      log("open_submitted");
+      next();
+    };
+    ui.controls.appendChild(inp);
+    ui.controls.appendChild(send);
+    addContinue(ui.controls);
+    return;
+  }
+
+  if(block.type==='end'){
+    const ui = renderBlock({title:block.title||"סיום", text:block.text}, "bot");
+    typewriter(ui.content, `<div><strong>${esc(block.text)}</strong></div>`);
+    const again=document.createElement('button');
+    again.className='btn btnGreen';
+    again.textContent='התחל מחדש';
+    again.onclick=()=>{ location.reload(); };
+    ui.controls.appendChild(again);
+    return;
+  }
+}
+
+function annotateImage(blockEl){
+  // Create canvas overlay over image
+  const img = blockEl.querySelector('img');
+  if(!img) return;
+  const wrap = img.parentElement;
+  wrap.style.position='relative';
+
+  let canvas = wrap.querySelector('canvas');
+  if(!canvas){
+    canvas = document.createElement('canvas');
+    canvas.className='canvasLayer';
+    canvas.width = img.clientWidth;
+    canvas.height = img.clientHeight;
+    canvas.style.width = img.clientWidth+'px';
+    canvas.style.height = img.clientHeight+'px';
+    wrap.appendChild(canvas);
+  } else {
+    canvas.width = img.clientWidth;
+    canvas.height = img.clientHeight;
+  }
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Approximate locations for A and B on this specific image
+  const A={x: canvas.width*0.24, y: canvas.height*0.18};
+  const B={x: canvas.width*0.62, y: canvas.height*0.72};
+
+  function drawPoint(pt, label){
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 8, 0, Math.PI*2);
+    ctx.fillStyle='rgba(139,29,37,.95)';
+    ctx.fill();
+    ctx.lineWidth=3;
+    ctx.strokeStyle='rgba(255,255,255,.95)';
+    ctx.stroke();
+    ctx.font='bold 18px system-ui';
+    ctx.fillStyle='#111827';
+    ctx.fillText(label, pt.x+12, pt.y-12);
+    // tangent line
+    ctx.beginPath();
+    ctx.setLineDash([10,8]);
+    ctx.moveTo(pt.x-120, pt.y);
+    ctx.lineTo(pt.x+120, pt.y);
+    ctx.strokeStyle='rgba(90,125,91,.85)';
+    ctx.lineWidth=3;
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Animate
+  let t=0;
+  const anim=setInterval(()=>{
+    t++;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const alpha=Math.min(1, t/12);
+    ctx.globalAlpha=alpha;
+    drawPoint(A,"A");
+    if(t>8) drawPoint(B,"B");
+    ctx.globalAlpha=1;
+    if(t>18) clearInterval(anim);
+  }, 30);
+}
+
+function esc(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+function hash(s){ let h=0; for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i); h|=0;} return h; }
+function blocksKey(i){ return "blk_"+i; }
+
+function start(){
+  state.i=0;
+  updateSide();
+  showCurrent();
+}
+start();
+</script>
+</body>
+</html>

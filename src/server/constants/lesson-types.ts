@@ -1,4 +1,4 @@
-export const LESSON_TYPES = ['learning', 'practice', 'exam'] as const
+export const LESSON_TYPES = ['learning', 'practice', 'exam', 'interactive_demo'] as const
 
 export type LessonType = (typeof LESSON_TYPES)[number]
 

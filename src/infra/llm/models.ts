@@ -57,6 +57,7 @@ export type AIModelKey =
   | 'EXERCISE_CHAT'
   | 'PDF_TO_EXERCISE'
   | 'ANSWER_VALIDATION'
+  | 'INTERACTIVE_REMEDIATION'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Model Registry - Single Source of Truth
@@ -93,6 +94,11 @@ export const MODEL_REGISTRY: Record<AIModelKey, Omit<AIModel, 'name'>> = {
     maxOutputTokens: 512,
     capabilities: ['chat', 'validation'],
   },
+  INTERACTIVE_REMEDIATION: {
+    temperature: 0.4,
+    maxOutputTokens: 1024,
+    capabilities: ['chat', 'remediation'],
+  },
 } as const
 
 /**
@@ -108,12 +114,14 @@ export const PROVIDER_MODEL_NAMES: Record<LLMProviderType, Record<AIModelKey, st
     EXERCISE_CHAT: 'gemini-2.0-flash-001',
     PDF_TO_EXERCISE: 'gemini-2.0-flash-001',
     ANSWER_VALIDATION: 'gemini-2.0-flash-001',
+    INTERACTIVE_REMEDIATION: 'gemini-2.0-flash-001',
   },
   [LLMProviderType.OPENAI_COMPATIBLE]: {
     IMAGE_TO_EXERCISE: 'MiniMax-M2.1',
     EXERCISE_CHAT: 'MiniMax-M2.1',
     PDF_TO_EXERCISE: 'MiniMax-M2.1',
     ANSWER_VALIDATION: 'MiniMax-M2.1',
+    INTERACTIVE_REMEDIATION: 'MiniMax-M2.1',
   },
 } as const
 
@@ -174,6 +182,10 @@ export const AI_MODELS: Record<AIModelKey, AIModel> = {
   ANSWER_VALIDATION: {
     ...MODEL_REGISTRY.ANSWER_VALIDATION,
     name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].ANSWER_VALIDATION,
+  },
+  INTERACTIVE_REMEDIATION: {
+    ...MODEL_REGISTRY.INTERACTIVE_REMEDIATION,
+    name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].INTERACTIVE_REMEDIATION,
   },
 } as const
 

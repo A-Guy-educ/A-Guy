@@ -89,6 +89,7 @@ export interface Config {
     posts: Post;
     'pricing-plans': PricingPlan;
     'mcp-audit-logs': McpAuditLog;
+    'lesson-sessions': LessonSession;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -128,6 +129,7 @@ export interface Config {
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
+    'lesson-sessions': LessonSessionsSelect<false> | LessonSessionsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -931,7 +933,7 @@ export interface ConfigValue {
   /**
    * Feature domain for this configuration
    */
-  domain: 'chat' | 'pdf_conversion' | 'global' | 'guest_chat';
+  domain: 'chat' | 'pdf_conversion' | 'global' | 'guest_chat' | 'interactive_demo';
   /**
    * Tenant this configuration belongs to
    */
@@ -1220,7 +1222,7 @@ export interface Lesson {
   /**
    * The type of lesson: Learning content, Practice exercises, or Exam
    */
-  type: 'learning' | 'practice' | 'exam';
+  type: 'learning' | 'practice' | 'exam' | 'interactive_demo';
   /**
    * Lesson title
    */
@@ -1269,6 +1271,30 @@ export interface Lesson {
    * URL-friendly identifier (auto-generated from title if empty)
    */
   slug?: string | null;
+  /**
+   * JSON lesson script for interactive_demo lessons (blocks array)
+   */
+  lessonScript?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Enable AI remediation for incorrect answers
+   */
+  remediationEnabled?: boolean | null;
+  /**
+   * Enable typewriter reveal animation
+   */
+  typewriterEnabled?: boolean | null;
+  /**
+   * Enable basic skill score adaptivity
+   */
+  adaptivityEnabled?: boolean | null;
   /**
    * User who created this document
    */
@@ -1686,6 +1712,84 @@ export interface McpAuditLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lesson-sessions".
+ */
+export interface LessonSession {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  user: string | User;
+  lesson: string | Lesson;
+  status: 'active' | 'completed';
+  /**
+   * Current phase: awaiting_input (question needs answer) or awaiting_continue (ready for next)
+   */
+  currentPhase: 'awaiting_input' | 'awaiting_continue';
+  currentBlockIndex: number;
+  skillScore: number;
+  /**
+   * Session interaction history (capped at 200 entries)
+   */
+  history?:
+    | {
+        role: 'system' | 'user' | 'assistant';
+        blockType: 'content' | 'mcq' | 'open' | 'remediation';
+        /**
+         * Markdown/math content (md-math-v1)
+         */
+        content: string;
+        timestamp: string;
+        metadata?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  startedAt: string;
+  completedAt?: string | null;
+  schemaVersion: number;
+  version: number;
+  /**
+   * Recent action results for idempotent retry support (FIFO, max 50)
+   */
+  processedActions?:
+    | {
+        actionId: string;
+        createdAt: string;
+        response:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  remediationCounts?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -2024,6 +2128,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'mcp-audit-logs';
         value: string | McpAuditLog;
+      } | null)
+    | ({
+        relationTo: 'lesson-sessions';
+        value: string | LessonSession;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2451,6 +2559,10 @@ export interface LessonsSelect<T extends boolean = true> {
   lessonContextText?: T;
   prompt?: T;
   slug?: T;
+  lessonScript?: T;
+  remediationEnabled?: T;
+  typewriterEnabled?: T;
+  adaptivityEnabled?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2662,6 +2774,44 @@ export interface McpAuditLogsSelect<T extends boolean = true> {
   timestamp?: T;
   requestId?: T;
   durationMs?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lesson-sessions_select".
+ */
+export interface LessonSessionsSelect<T extends boolean = true> {
+  tenant?: T;
+  user?: T;
+  lesson?: T;
+  status?: T;
+  currentPhase?: T;
+  currentBlockIndex?: T;
+  skillScore?: T;
+  history?:
+    | T
+    | {
+        role?: T;
+        blockType?: T;
+        content?: T;
+        timestamp?: T;
+        metadata?: T;
+        id?: T;
+      };
+  startedAt?: T;
+  completedAt?: T;
+  schemaVersion?: T;
+  version?: T;
+  processedActions?:
+    | T
+    | {
+        actionId?: T;
+        createdAt?: T;
+        response?: T;
+        id?: T;
+      };
+  remediationCounts?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
