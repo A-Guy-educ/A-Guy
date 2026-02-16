@@ -82,6 +82,16 @@
     /* Command palette / Modals */
     --surface-elevated: var(--background);
     --surface-elevated-fg: var(--foreground);
+
+    /* Text highlight tokens - for markdown ::text-highlight-N{} syntax */
+    --text-highlight-1: 0 72% 51%; /* Red */
+    --text-highlight-2: 25 95% 53%; /* Orange */
+    --text-highlight-3: 45 93% 47%; /* Yellow */
+    --text-highlight-4: 142 71% 45%; /* Green */
+    --text-highlight-5: 217 91% 60%; /* Blue */
+    --text-highlight-6: 271 91% 65%; /* Purple */
+    --text-highlight-7: 330 81% 60%; /* Pink */
+    --text-highlight-8: 220 8% 45%; /* Gray */
   }
 
   [data-theme='dark'] {
@@ -154,6 +164,16 @@
     /* Command palette / Modals */
     --surface-elevated: var(--card);
     --surface-elevated-fg: var(--card-foreground);
+
+    /* Text highlight tokens - for markdown ::text-highlight-N{} syntax */
+    --text-highlight-1: 0 72% 51%; /* Red */
+    --text-highlight-2: 25 95% 53%; /* Orange */
+    --text-highlight-3: 45 93% 47%; /* Yellow */
+    --text-highlight-4: 142 71% 45%; /* Green */
+    --text-highlight-5: 217 91% 60%; /* Blue */
+    --text-highlight-6: 271 91% 65%; /* Purple */
+    --text-highlight-7: 330 81% 60%; /* Pink */
+    --text-highlight-8: 220 8% 45%; /* Gray */
   }
 }
 
@@ -439,35 +459,35 @@ html[data-theme='light'] {
    Color Syntax Support
    =================================================================== */
 
-/* Color classes for ::color{} markdown syntax (exercise editor) */
-.aguy-color-red {
-  color: hsl(var(--error));
+/* Text highlight classes for ::text-highlight-N{} markdown syntax (exercise editor) */
+.aguy-text-highlight-1 {
+  color: hsl(var(--text-highlight-1));
 }
 
-.aguy-color-orange {
-  color: hsl(25 95% 53%); /* Vibrant orange */
+.aguy-text-highlight-2 {
+  color: hsl(var(--text-highlight-2));
 }
 
-.aguy-color-yellow {
-  color: hsl(45 93% 47%); /* Golden yellow */
+.aguy-text-highlight-3 {
+  color: hsl(var(--text-highlight-3));
 }
 
-.aguy-color-green {
-  color: hsl(var(--success));
+.aguy-text-highlight-4 {
+  color: hsl(var(--text-highlight-4));
 }
 
-.aguy-color-blue {
-  color: hsl(217 91% 60%);
+.aguy-text-highlight-5 {
+  color: hsl(var(--text-highlight-5));
 }
 
-.aguy-color-purple {
-  color: hsl(271 91% 65%); /* Matches --accent */
+.aguy-text-highlight-6 {
+  color: hsl(var(--text-highlight-6));
 }
 
-.aguy-color-pink {
-  color: hsl(330 81% 60%); /* Bright pink */
+.aguy-text-highlight-7 {
+  color: hsl(var(--text-highlight-7));
 }
 
-.aguy-color-gray {
-  color: hsl(220 8% 45%); /* Matches --muted-foreground */
+.aguy-text-highlight-8 {
+  color: hsl(var(--text-highlight-8));
 }

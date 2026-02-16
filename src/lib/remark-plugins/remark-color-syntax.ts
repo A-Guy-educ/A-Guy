@@ -24,7 +24,7 @@ interface Text extends Node {
   value: string
 }
 
-type PhrasingContent = Text | ColorTextNode
+type PhrasingContent = Text | HighlightTextNode
 
 interface Root extends Parent {
   type: 'root'
@@ -32,34 +32,34 @@ interface Root extends Parent {
 }
 
 /**
- * Whitelisted colors that are allowed for rendering.
- * Any color not in this list will be rendered as literal text.
+ * Whitelisted highlight tokens that are allowed for rendering.
+ * Any token not in this list will be rendered as literal text.
  */
-const ALLOWED_COLORS = [
-  'red',
-  'orange',
-  'yellow',
-  'green',
-  'blue',
-  'purple',
-  'pink',
-  'gray',
+const ALLOWED_HIGHLIGHTS = [
+  'text-highlight-1',
+  'text-highlight-2',
+  'text-highlight-3',
+  'text-highlight-4',
+  'text-highlight-5',
+  'text-highlight-6',
+  'text-highlight-7',
+  'text-highlight-8',
 ] as const
-type AllowedColor = (typeof ALLOWED_COLORS)[number]
+type AllowedHighlight = (typeof ALLOWED_HIGHLIGHTS)[number]
 
 /**
- * Check if a string is a whitelisted color.
+ * Check if a string is a whitelisted highlight token.
  */
-function isAllowedColor(color: string): color is AllowedColor {
-  return ALLOWED_COLORS.includes(color as AllowedColor)
+function isAllowedHighlight(token: string): token is AllowedHighlight {
+  return ALLOWED_HIGHLIGHTS.includes(token as AllowedHighlight)
 }
 
 /**
- * Custom mdast node for colored text with hast data.
+ * Custom mdast node for highlighted text with hast data.
  * The data.hName and data.hProperties will be used by remark-rehype.
  */
-interface ColorTextNode extends Parent {
-  type: 'colorText'
+interface HighlightTextNode extends Parent {
+  type: 'highlightText'
   children: PhrasingContent[]
   data: {
     hName: 'span'
@@ -70,25 +70,25 @@ interface ColorTextNode extends Parent {
 }
 
 /**
- * Remark plugin to transform ::color{text} syntax into safe colored spans.
+ * Remark plugin to transform ::text-highlight-N{text} syntax into safe highlighted spans.
  *
  * WHAT IT DOES:
- * - Parses ::red{...}, ::orange{...}, ::yellow{...}, ::green{...}, ::blue{...}, ::purple{...}, ::pink{...}, ::gray{...} syntax
+ * - Parses ::text-highlight-1{...} through ::text-highlight-8{...} syntax
  * - Supports nested markdown inside the braces (bold, italic, links, math, etc.)
  * - Creates custom nodes with hProperties that remark-rehype will transform to HTML
- * - Leaves unknown colors as literal text (security fallback)
+ * - Leaves unknown tokens as literal text (security fallback)
  * - If closing brace not found, outputs original nodes unchanged (no partial edits)
  *
  * SCOPE:
- * - Transforms color syntax in paragraphs, headings, and list items
+ * - Transforms highlight syntax in paragraphs, headings, and list items
  * - Does NOT transform in other contexts (code blocks, tables, etc.)
  *
  * SECURITY:
- * - Only whitelisted colors (red, orange, yellow, green, blue, purple, pink, gray) are transformed
+ * - Only whitelisted tokens (text-highlight-1 through text-highlight-8) are transformed
  * - Uses data.hName and data.hProperties which are safe remark-rehype directives
  * - No raw HTML is generated
  * - Only CSS classes are added, no inline styles
- * - Defensive validation ensures only whitelisted colors generate colored nodes
+ * - Defensive validation ensures only whitelisted tokens generate highlighted nodes
  *
  * USAGE:
  * ```typescript
@@ -102,12 +102,12 @@ interface ColorTextNode extends Parent {
  * ```
  *
  * @example
- * Input:  "This is ::red{important text} here"
- * Output: Renders as: <p>This is <span class="aguy-color-red">important text</span> here</p>
+ * Input:  "This is ::text-highlight-1{important text} here"
+ * Output: Renders as: <p>This is <span class="aguy-text-highlight-1">important text</span> here</p>
  *
  * @example Nested markdown
- * Input:  "::blue{**bold** and *italic*}"
- * Output: Renders as: <p><span class="aguy-color-blue"><strong>bold</strong> and <em>italic</em></span></p>
+ * Input:  "::text-highlight-5{**bold** and *italic*}"
+ * Output: Renders as: <p><span class="aguy-text-highlight-5"><strong>bold</strong> and <em>italic</em></span></p>
  */
 export function remarkColorSyntax() {
   return (tree: Root) => {
@@ -124,11 +124,11 @@ export function remarkColorSyntax() {
 }
 
 /**
- * Transform children nodes to handle color syntax.
+ * Transform children nodes to handle highlight syntax.
  * Single-pass loop that collects nodes between opening marker and closing brace.
  *
  * @param children - Array of child nodes to process
- * @returns Transformed array of nodes with color markers replaced by colorText nodes
+ * @returns Transformed array of nodes with highlight markers replaced by highlightText nodes
  */
 function transformChildren(children: Node[]): Node[] {
   const result: Node[] = []
@@ -146,8 +146,8 @@ function transformChildren(children: Node[]): Node[] {
 
     const text = (node as Text).value
 
-    // Look for opening marker ::color{
-    const markerMatch = text.match(/::(red|orange|yellow|green|blue|purple|pink|gray)\{/)
+    // Look for opening marker ::text-highlight-N{
+    const markerMatch = text.match(/::(text-highlight-[1-8])\{/)
 
     if (!markerMatch) {
       // No marker found, keep node as-is
@@ -156,12 +156,12 @@ function transformChildren(children: Node[]): Node[] {
       continue
     }
 
-    const color = markerMatch[1]
+    const token = markerMatch[1]
     const markerIndex = markerMatch.index!
     const markerEnd = markerIndex + markerMatch[0].length
 
-    // Only process whitelisted colors
-    if (!isAllowedColor(color)) {
+    // Only process whitelisted tokens
+    if (!isAllowedHighlight(token)) {
       result.push(node)
       i++
       continue
@@ -287,22 +287,22 @@ function transformChildren(children: Node[]): Node[] {
         result.push(textNode)
       }
 
-      // Create the colored text node
-      const colorNode: ColorTextNode = {
-        type: 'colorText',
+      // Create the highlighted text node
+      const highlightNode: HighlightTextNode = {
+        type: 'highlightText',
         children: collectedNodes as PhrasingContent[],
         data: {
           hName: 'span',
           hProperties: {
-            className: [`aguy-color-${color}`],
+            className: [`aguy-${token}`],
           },
         },
       }
 
-      result.push(colorNode as Node)
+      result.push(highlightNode as Node)
 
       // If there's text after the closing brace, we need to recursively process it
-      // because it might contain more color markers
+      // because it might contain more highlight markers
       if (textAfterClosing) {
         // Recursively process the remaining text by creating a new text node
         // and processing it as if it were a new child
@@ -318,7 +318,7 @@ function transformChildren(children: Node[]): Node[] {
       i = closingNodeIndex + 1
     } else {
       // No closing brace found - output original node unchanged (no partial edits)
-      // This preserves the opening marker ::color{ and all content as-is
+      // This preserves the opening marker ::text-highlight-N{ and all content as-is
       result.push(node)
       i++
     }

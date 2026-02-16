@@ -33,10 +33,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
     }, 0)
   }
 
-  const insertColor = (
-    color: 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' | 'pink' | 'gray',
-  ) => {
-    insertText(`::${color}{`, '}')
+  const insertHighlight = (highlight: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8) => {
+    insertText(`::text-highlight-${highlight}{`, '}')
     setShowColorPicker(false)
   }
 
@@ -94,44 +92,44 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
           {showColorPicker && (
             <div className="color-picker-dropdown">
               <button
-                className="color-option color-option--red"
-                onClick={() => insertColor('red')}
-                title="Red"
+                className="color-option color-option--highlight-1"
+                onClick={() => insertHighlight(1)}
+                title="Highlight 1 (Red)"
               />
               <button
-                className="color-option color-option--orange"
-                onClick={() => insertColor('orange')}
-                title="Orange"
+                className="color-option color-option--highlight-2"
+                onClick={() => insertHighlight(2)}
+                title="Highlight 2 (Orange)"
               />
               <button
-                className="color-option color-option--yellow"
-                onClick={() => insertColor('yellow')}
-                title="Yellow"
+                className="color-option color-option--highlight-3"
+                onClick={() => insertHighlight(3)}
+                title="Highlight 3 (Yellow)"
               />
               <button
-                className="color-option color-option--green"
-                onClick={() => insertColor('green')}
-                title="Green"
+                className="color-option color-option--highlight-4"
+                onClick={() => insertHighlight(4)}
+                title="Highlight 4 (Green)"
               />
               <button
-                className="color-option color-option--blue"
-                onClick={() => insertColor('blue')}
-                title="Blue"
+                className="color-option color-option--highlight-5"
+                onClick={() => insertHighlight(5)}
+                title="Highlight 5 (Blue)"
               />
               <button
-                className="color-option color-option--purple"
-                onClick={() => insertColor('purple')}
-                title="Purple"
+                className="color-option color-option--highlight-6"
+                onClick={() => insertHighlight(6)}
+                title="Highlight 6 (Purple)"
               />
               <button
-                className="color-option color-option--pink"
-                onClick={() => insertColor('pink')}
-                title="Pink"
+                className="color-option color-option--highlight-7"
+                onClick={() => insertHighlight(7)}
+                title="Highlight 7 (Pink)"
               />
               <button
-                className="color-option color-option--gray"
-                onClick={() => insertColor('gray')}
-                title="Gray"
+                className="color-option color-option--highlight-8"
+                onClick={() => insertHighlight(8)}
+                title="Highlight 8 (Gray)"
               />
             </div>
           )}
