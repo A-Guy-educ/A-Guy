@@ -57,20 +57,41 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
   return (
     <div className="rich-text-editor">
       <div className="rich-text-toolbar">
-        <button className="toolbar-button" onClick={() => insertText('**', '**')} title="Bold">
+        <button
+          type="button"
+          className="toolbar-button"
+          onClick={() => insertText('**', '**')}
+          title="Bold"
+        >
           <Bold size={14} />
         </button>
-        <button className="toolbar-button" onClick={() => insertText('*', '*')} title="Italic">
+        <button
+          type="button"
+          className="toolbar-button"
+          onClick={() => insertText('*', '*')}
+          title="Italic"
+        >
           <Italic size={14} />
         </button>
         <div className="toolbar-divider" />
-        <button className="toolbar-button" onClick={() => insertText('# ')} title="Heading">
+        <button
+          type="button"
+          className="toolbar-button"
+          onClick={() => insertText('# ')}
+          title="Heading"
+        >
           <Heading1 size={14} />
         </button>
-        <button className="toolbar-button" onClick={() => insertText('`', '`')} title="Code">
+        <button
+          type="button"
+          className="toolbar-button"
+          onClick={() => insertText('`', '`')}
+          title="Code"
+        >
           <Code size={14} />
         </button>
         <button
+          type="button"
           className="toolbar-button"
           onClick={() => insertText('$', '$')}
           title="Math (Inline)"
@@ -78,11 +99,17 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
           <Sigma size={14} />
         </button>
         <div className="toolbar-divider" />
-        <button className="toolbar-button" onClick={() => insertText('[', '](url)')} title="Link">
+        <button
+          type="button"
+          className="toolbar-button"
+          onClick={() => insertText('[', '](url)')}
+          title="Link"
+        >
           <LinkIcon size={14} />
         </button>
         <div className="toolbar-button-wrapper" ref={colorPickerRef}>
           <button
+            type="button"
             className="toolbar-button"
             onClick={() => setShowColorPicker(!showColorPicker)}
             title="Text Color"
@@ -92,41 +119,49 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
           {showColorPicker && (
             <div className="color-picker-dropdown">
               <button
+                type="button"
                 className="color-option color-option--highlight-1"
                 onClick={() => insertHighlight(1)}
                 title="Highlight 1 (Red)"
               />
               <button
+                type="button"
                 className="color-option color-option--highlight-2"
                 onClick={() => insertHighlight(2)}
                 title="Highlight 2 (Orange)"
               />
               <button
+                type="button"
                 className="color-option color-option--highlight-3"
                 onClick={() => insertHighlight(3)}
                 title="Highlight 3 (Yellow)"
               />
               <button
+                type="button"
                 className="color-option color-option--highlight-4"
                 onClick={() => insertHighlight(4)}
                 title="Highlight 4 (Green)"
               />
               <button
+                type="button"
                 className="color-option color-option--highlight-5"
                 onClick={() => insertHighlight(5)}
                 title="Highlight 5 (Blue)"
               />
               <button
+                type="button"
                 className="color-option color-option--highlight-6"
                 onClick={() => insertHighlight(6)}
                 title="Highlight 6 (Purple)"
               />
               <button
+                type="button"
                 className="color-option color-option--highlight-7"
                 onClick={() => insertHighlight(7)}
                 title="Highlight 7 (Pink)"
               />
               <button
+                type="button"
                 className="color-option color-option--highlight-8"
                 onClick={() => insertHighlight(8)}
                 title="Highlight 8 (Gray)"
