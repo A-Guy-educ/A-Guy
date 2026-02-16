@@ -8,7 +8,7 @@ import {
 
 describe('lesson type constants', () => {
   it('exposes the supported lesson types', () => {
-    expect(LESSON_TYPES).toEqual(['learning', 'practice', 'exam'])
+    expect(LESSON_TYPES).toEqual(['learning', 'practice', 'exam', 'interactive_demo'])
   })
 
   it('uses learning as the default type', () => {
