@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { McqQuestion } from '@/ui/web/exerciserenderer/questions/McqQuestion'
 import type { QuestionSelectMcqBlock, UserAnswer } from '@/ui/web/exerciserenderer/types'
-import { fireEvent, render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockT = (key: string) => {
   const translations: Record<string, string> = {
@@ -17,6 +17,10 @@ describe('McqQuestion component', () => {
 
   beforeEach(() => {
     onChange = vi.fn()
+  })
+
+  afterEach(() => {
+    cleanup()
   })
 
   describe('Fraction rendering transformation', () => {
