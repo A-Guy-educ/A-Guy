@@ -2,7 +2,6 @@
 
 import { isRTL } from '@/i18n/config'
 import { cn } from '@/infra/utils/ui'
-import { normalizeComparableText } from '@/infra/utils/normalizeComparableText'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -18,9 +17,6 @@ export function LessonHeader({ order, title, description }: LessonHeaderProps) {
   const locale = useLocale()
   const rtl = isRTL(locale as 'en' | 'he')
   const router = useRouter()
-
-  const shouldShowDescription =
-    description && normalizeComparableText(description) !== normalizeComparableText(title)
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -49,7 +45,7 @@ export function LessonHeader({ order, title, description }: LessonHeaderProps) {
         </span>
       </div>
       <h1 className="text-4xl font-bold mb-4">{title}</h1>
-      {shouldShowDescription && <p className="text-xl text-muted-foreground">{description}</p>}
+      {description && <p className="text-xl text-muted-foreground">{description}</p>}
     </header>
   )
 }
