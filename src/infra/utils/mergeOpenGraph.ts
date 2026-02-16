@@ -1,16 +1,20 @@
 import type { Metadata } from 'next'
-import { getServerSideURL } from './getURL'
 
 const defaultOpenGraph: Metadata['openGraph'] = {
   type: 'website',
-  description: 'An open-source website built with Payload and Next.js.',
+  title: 'A-Guy | תרגול מתמטיקה אינטראקטיבי',
+  description:
+    'פלטפורמה לתרגול מתמטיקה עם שיעורים מסודרים, תרגילים ממוקדים, משוב מיידי והסברים ברורים שלב אחר שלב – בנויה להתקדמות עקבית ואמיתית.',
+  url: 'https://www.aguy.co.il/',
+  siteName: 'A-Guy',
   images: [
     {
-      url: `${getServerSideURL()}/website-template-OG.webp`,
+      url: 'https://www.aguy.co.il/api/media/file/telescope.4ee60378.svg',
+      width: 1200,
+      height: 630,
+      alt: 'A-Guy - תרגול מתמטיקה אינטראקטיבי',
     },
   ],
-  siteName: 'Payload Website Template',
-  title: 'Payload Website Template',
 }
 
 export const mergeOpenGraph = (og?: Metadata['openGraph']): Metadata['openGraph'] => {

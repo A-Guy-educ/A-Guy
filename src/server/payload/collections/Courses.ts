@@ -13,6 +13,7 @@ import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
 import { tenantField } from '@/server/payload/fields/tenant'
+import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
 
 const formatSlug = (val: string): string =>
   val
@@ -37,6 +38,7 @@ export const Courses: CollectionConfig = {
         return data
       },
     ],
+    afterChange: [cascadeAdminTitle],
   },
   admin: {
     useAsTitle: 'title',

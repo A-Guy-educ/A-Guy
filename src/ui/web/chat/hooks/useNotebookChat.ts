@@ -437,9 +437,10 @@ export function useNotebookChat({
       courseId?: string
       categoryId?: string
     },
+    options?: { hidden?: boolean },
   ) => {
     try {
-      const stream = apiService.chatStream(message, acknowledgment, context)
+      const stream = apiService.chatStream(message, acknowledgment, context, options)
 
       // Create placeholder assistant message for streaming
       const placeholderMessage: ChatMessage = {
@@ -627,13 +628,14 @@ export function useNotebookChat({
 
   /**
    * Send a contextual help prompt to the AI without showing a user message bubble.
+   * The prompt is persisted as hidden (for LLM context) but excluded from client responses.
    * Only the AI's streaming response appears in the chat.
    */
   const sendContextualHelp = async (prompt: string) => {
     if (isLoading || isLoadingHistory) return
     setIsLoading(true)
     const context = { exerciseId, lessonId, chapterId, courseId, categoryId }
-    await streamMessage(prompt, acknowledgment, context)
+    await streamMessage(prompt, acknowledgment, context, { hidden: true })
   }
 
   const dismissError = useCallback(() => {

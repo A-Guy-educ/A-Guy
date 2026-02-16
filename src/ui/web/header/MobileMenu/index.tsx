@@ -16,6 +16,7 @@ interface MobileMenuProps {
   data: HeaderType
   user: User | null
   isAuthLoading: boolean
+  version: string
 }
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({
@@ -24,6 +25,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   data,
   user,
   isAuthLoading,
+  version,
 }) => {
   const tCommon = useTranslations('common.header')
   const tMenu = useTranslations('common.mobileMenu')
@@ -136,6 +138,11 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 
           <div className="px-6 py-4 border-t border-border mt-auto">
             <MobileMenuAuthSection user={user} isAuthLoading={isAuthLoading} onClose={onClose} />
+          </div>
+
+          {/* Version number - mobile only */}
+          <div className="px-6 py-4 border-t border-border">
+            <p className="text-xs text-muted-foreground/70 font-normal text-center">v{version}</p>
           </div>
         </nav>
       </div>

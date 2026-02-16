@@ -86,13 +86,18 @@ describe('useNotebookChat', () => {
     })
 
     await waitFor(() => expect(result.current.messages).toHaveLength(3))
-    expect(apiService.chatStream).toHaveBeenCalledWith('Hello', defaultProps.acknowledgment, {
-      exerciseId: defaultProps.exerciseId,
-      lessonId: defaultProps.lessonId,
-      chapterId: undefined,
-      courseId: undefined,
-      categoryId: undefined,
-    })
+    expect(apiService.chatStream).toHaveBeenCalledWith(
+      'Hello',
+      defaultProps.acknowledgment,
+      {
+        exerciseId: defaultProps.exerciseId,
+        lessonId: defaultProps.lessonId,
+        chapterId: undefined,
+        courseId: undefined,
+        categoryId: undefined,
+      },
+      undefined,
+    )
   })
 
   it('shows auth error when chat requires authentication', async () => {

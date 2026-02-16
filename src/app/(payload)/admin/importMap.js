@@ -31,6 +31,7 @@ import { RowLabel as RowLabel_49a0f2da415e33c790acf24cb6dd5091 } from '@/ui/admi
 import { RowLabel as RowLabel_4ed9de7504772fe9568f4f8054c5cb47 } from '@/ui/admin/Footer'
 import { default as default_c259230fb9bab1a58b8cb0b2cc96501a } from '@/ui/admin/BeforeDashboard'
 import { default as default_016129c5e178a72215a550b5b56f066c } from '@/ui/admin/AdminChat/DashboardWidget'
+import { default as default_759821dbe781e78024abfaf95f6442c4 } from '@/ui/admin/VersionInfo'
 import { default as default_e8db4fbd97550d4d717940b5cf0234f3 } from '@/ui/admin/BeforeLogin'
 import { default as default_164c9a24e274ad3cd69e6bbec59bbe86 } from '@/ui/admin/AdminChat/SidebarLink'
 import { default as default_7545204935b55fcf02b3be70dde90fc1 } from '@/ui/admin/PdfConversion/SidebarLink'
@@ -71,6 +72,7 @@ export const importMap = {
   "@/ui/admin/Footer#RowLabel": RowLabel_4ed9de7504772fe9568f4f8054c5cb47,
   "@/ui/admin/BeforeDashboard#default": default_c259230fb9bab1a58b8cb0b2cc96501a,
   "@/ui/admin/AdminChat/DashboardWidget#default": default_016129c5e178a72215a550b5b56f066c,
+  "@/ui/admin/VersionInfo#default": default_759821dbe781e78024abfaf95f6442c4,
   "@/ui/admin/BeforeLogin#default": default_e8db4fbd97550d4d717940b5cf0234f3,
   "@/ui/admin/AdminChat/SidebarLink#default": default_164c9a24e274ad3cd69e6bbec59bbe86,
   "@/ui/admin/PdfConversion/SidebarLink#default": default_7545204935b55fcf02b3be70dde90fc1,

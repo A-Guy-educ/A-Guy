@@ -89,7 +89,7 @@ export function TrueFalseQuestion({
                 'flex-1 relative overflow-hidden px-6 py-4 rounded-lg border-2 font-medium text-base transition-all duration-200',
                 'border-border bg-card',
                 'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                !disabled && 'hover:border-primary hover:bg-primary/5 cursor-pointer',
+                !disabled && 'hover:border-muted-foreground hover:bg-muted cursor-pointer',
                 isSelected &&
                   !showFeedback &&
                   'border-primary bg-primary/10 text-primary shadow-sm',

@@ -1,5 +1,17 @@
 /* Exercise Content Editor Styles */
 
+/* Text highlight tokens - CSS variables for admin UI */
+:root {
+  --text-highlight-1: 0 72% 51%; /* Red */
+  --text-highlight-2: 25 95% 53%; /* Orange */
+  --text-highlight-3: 45 93% 47%; /* Yellow */
+  --text-highlight-4: 142 71% 45%; /* Green */
+  --text-highlight-5: 217 91% 60%; /* Blue */
+  --text-highlight-6: 271 91% 65%; /* Purple */
+  --text-highlight-7: 330 81% 60%; /* Pink */
+  --text-highlight-8: 220 8% 45%; /* Gray */
+}
+
 .exercise-content-editor {
   width: 100%;
   max-width: 100%;
@@ -199,6 +211,71 @@
   width: 1px;
   background: var(--theme-elevation-200);
   margin: 0 0.25rem;
+}
+
+.toolbar-button-wrapper {
+  position: relative;
+}
+
+.color-picker-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--theme-elevation-50);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.color-option {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.color-option:hover {
+  border-color: var(--theme-elevation-400);
+  transform: scale(1.1);
+}
+
+.color-option--highlight-1 {
+  background: hsl(var(--text-highlight-1));
+}
+
+.color-option--highlight-2 {
+  background: hsl(var(--text-highlight-2));
+}
+
+.color-option--highlight-3 {
+  background: hsl(var(--text-highlight-3));
+}
+
+.color-option--highlight-4 {
+  background: hsl(var(--text-highlight-4));
+}
+
+.color-option--highlight-5 {
+  background: hsl(var(--text-highlight-5));
+}
+
+.color-option--highlight-6 {
+  background: hsl(var(--text-highlight-6));
+}
+
+.color-option--highlight-7 {
+  background: hsl(var(--text-highlight-7));
+}
+
+.color-option--highlight-8 {
+  background: hsl(var(--text-highlight-8));
 }
 
 .rich-text-textarea {

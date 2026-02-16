@@ -148,6 +148,15 @@
     "selectOne": "Select one answer",
     "enterNumber": "Enter a number...",
     "enterAnswer": "Enter your answer...",
+    "validationFailed": "Unable to validate answer. Please try again.",
+    "validationError": "Validation failed",
+    "connectionError": "Connection error. Please check your network.",
+    "invalidAnswerType": "Invalid answer type",
+    "selectTrueFalse": "Please select True or False",
+    "noCorrectAnswer": "No correct answer defined",
+    "selectAnAnswer": "Please select an answer",
+    "enterAnAnswer": "Please enter an answer",
+    "unknownVariant": "Unknown question variant",
     "notebookTitle": "Practice Notebook",
     "chatTab": "Chat",
     "chatTitle": "Chat",
@@ -218,12 +227,16 @@
     },
     "greeting": {
       "welcome": "Hello! I'm your digital teacher 🤖",
-      "moodQuestion": "How are you feeling today?",
+      "moodQuestion": "How are you today?",
       "moods": {
-        "happy": "😊 Happy",
-        "neutral": "😐 Calm",
-        "sad": "😔 Sad",
-        "excited": "🤩 Excited"
+        "excellent": "Excellent 😄",
+        "great": "Great 🙂",
+        "tired": "A bit tired 🥱"
+      },
+      "moodResponses": {
+        "excellent": "Let's pick up the pace",
+        "great": "Let's start learning then",
+        "tired": "Today we'll be focused"
       },
       "gradeQuestion": "What grade are you in?",
       "selectGrade": "Select grade",

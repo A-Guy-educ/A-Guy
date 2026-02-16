@@ -1046,6 +1046,10 @@ export interface Conversation {
         content: string;
         timestamp: string;
         /**
+         * Hidden messages are persisted for LLM context but excluded from client responses
+         */
+        hidden?: boolean | null;
+        /**
          * Media attachments for this message (max 5)
          */
         media?:
@@ -1164,6 +1168,10 @@ export interface Chapter {
    * Chapter title
    */
   title: string;
+  /**
+   * Auto-computed display title for admin (chapter title — course title)
+   */
+  adminTitle?: string | null;
   /**
    * Detailed description of the chapter
    */
@@ -2302,6 +2310,7 @@ export interface ConversationsSelect<T extends boolean = true> {
         role?: T;
         content?: T;
         timestamp?: T;
+        hidden?: T;
         media?:
           | T
           | {
@@ -2411,6 +2420,7 @@ export interface ChaptersSelect<T extends boolean = true> {
   course?: T;
   chapterLabel?: T;
   title?: T;
+  adminTitle?: T;
   description?: T;
   mediaFiles?: T;
   order?: T;

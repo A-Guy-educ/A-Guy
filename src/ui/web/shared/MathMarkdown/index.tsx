@@ -13,6 +13,7 @@ import ReactMarkdown from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
 import remarkMath from 'remark-math'
 import { rehypeMathWrapper } from './rehype-math-wrapper'
+import { remarkColorSyntax } from '@/lib/remark-plugins/remark-color-syntax'
 
 export interface MathMarkdownProps {
   /** The markdown string to render. Supports $...$ (inline) and $$...$$ (block) math. */
@@ -34,16 +35,24 @@ export interface MathMarkdownProps {
 }
 
 /**
- * Shared markdown renderer with math (KaTeX) support and RTL isolation.
+ * Shared markdown renderer with math (KaTeX) support, color syntax, and RTL isolation.
  *
  * This is the BASE component — use it directly for exercise content,
  * or wrap it (like ChatMessageContent does) when you need extra behavior.
  *
  * WHAT IT DOES:
  * 1. Parses $...$ and $$...$$ delimiters in the markdown string (remarkMath)
- * 2. Converts them to KaTeX HTML (rehypeKatex)
- * 3. Wraps KaTeX output with dir="ltr" for RTL language support (rehypeMathWrapper)
- * 4. Renders the result as React elements
+ * 2. Parses ::color{text} syntax for safe colored text (remarkColorSyntax)
+ * 3. Converts them to KaTeX HTML (rehypeKatex)
+ * 4. Wraps KaTeX output with dir="ltr" for RTL language support (rehypeMathWrapper)
+ * 5. Renders the result as React elements
+ *
+ * PLUGIN WIRING:
+ * This component serves as the SINGLE SOURCE for both RichTextRenderer and ChatMessageContent.
+ * By wiring remarkColorSyntax here, we ensure color syntax works in:
+ * - Exercise rich text blocks (via RichTextRenderer)
+ * - AI chat responses (via ChatMessageContent)
+ * - Any other markdown content that uses this base component
  *
  * WHAT IT DOES NOT DO (on purpose):
  * - LaTeX delimiter normalization (\[...\] -> $$...$$) — that's chat-specific
@@ -55,12 +64,15 @@ export interface MathMarkdownProps {
  *
  * @example With custom components (chat)
  * <MathMarkdown content={text} components={chatComponents} className="chat-message-content" />
+ *
+ * @example With color syntax
+ * <MathMarkdown content="This is ::red{important} and ::blue{informational}" />
  */
 export function MathMarkdown({ content, className, components }: MathMarkdownProps) {
   return (
     <div className={cn(className)}>
       <ReactMarkdown
-        remarkPlugins={[remarkMath]}
+        remarkPlugins={[remarkMath, remarkColorSyntax]}
         rehypePlugins={[rehypeKatex, rehypeMathWrapper]}
         components={components}
       >

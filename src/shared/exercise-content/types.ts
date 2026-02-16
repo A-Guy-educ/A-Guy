@@ -6,6 +6,9 @@
  * - Client: Admin UI components
  */
 
+import type { AxisSpecV1 } from '@/infra/contracts/graphics/axis.v1'
+import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
+
 // ---------------------------------
 // Inline Rich Text (used inside question blocks - NO id)
 // ---------------------------------
@@ -134,6 +137,75 @@ export interface LatexBlock {
 }
 
 // ---------------------------------
+// Matching Option (single item in left or right column)
+// ---------------------------------
+export interface MatchingOption {
+  id: string
+  content: InlineRichText
+}
+
+// ---------------------------------
+// Matching Pair (answer key - which left matches which right)
+// ---------------------------------
+export interface MatchingPair {
+  optionId: string // ID from left column
+  matchId: string // ID from right column that matches
+}
+
+// ---------------------------------
+// Question Matching Block
+// ---------------------------------
+export interface QuestionMatchingBlock {
+  id: string
+  type: 'question_matching'
+  prompt: InlineRichText
+  leftColumn: MatchingOption[] // Items to match from
+  rightColumn: MatchingOption[] // Items to match to
+  correctPairs: MatchingPair[] // Answer key
+  shuffleRightColumn?: boolean // UI can shuffle for display
+  hint?: InlineRichText
+  solution?: InlineRichText
+  fullSolution?: InlineRichText
+}
+
+// ---------------------------------
+// SVG Block (raw SVG markup)
+// ---------------------------------
+export interface SvgBlock {
+  id: string
+  type: 'svg'
+  value: string // Raw SVG markup
+  altText?: string // Accessibility description
+  caption?: InlineRichText
+}
+
+// ---------------------------------
+// Question Geometry Block
+// ---------------------------------
+export interface QuestionGeometryBlock {
+  id: string
+  type: 'question_geometry'
+  prompt: InlineRichText
+  geometry: GeometrySpecV1
+  hint?: InlineRichText
+  solution?: InlineRichText
+  fullSolution?: InlineRichText
+}
+
+// ---------------------------------
+// Question Axis Block
+// ---------------------------------
+export interface QuestionAxisBlock {
+  id: string
+  type: 'question_axis'
+  prompt: InlineRichText
+  axis: AxisSpecV1
+  hint?: InlineRichText
+  solution?: InlineRichText
+  fullSolution?: InlineRichText
+}
+
+// ---------------------------------
 // Union Type
 // ---------------------------------
 export type ContentBlock =
@@ -143,6 +215,10 @@ export type ContentBlock =
   | QuestionFreeResponseBlock
   | QuestionTableBlock
   | LatexBlock
+  | QuestionMatchingBlock
+  | SvgBlock
+  | QuestionGeometryBlock
+  | QuestionAxisBlock
 
 // ---------------------------------
 // Content Container

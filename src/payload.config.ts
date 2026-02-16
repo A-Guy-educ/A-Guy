@@ -29,6 +29,7 @@ import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/im
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
+import { runBackfillOnInit } from '@/server/payload/migrations/backfillAdminTitle'
 import type { JobDocument } from '@/server/payload/jobs/types'
 import { plugins } from '@/server/payload/plugins'
 import { Footer } from '@/ui/web/footer/config'
@@ -78,7 +79,11 @@ export default buildConfig({
       beforeLogin: ['@/ui/admin/BeforeLogin'],
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
-      beforeDashboard: ['@/ui/admin/BeforeDashboard', '@/ui/admin/AdminChat/DashboardWidget'],
+      beforeDashboard: [
+        '@/ui/admin/BeforeDashboard',
+        '@/ui/admin/AdminChat/DashboardWidget',
+        '@/ui/admin/VersionInfo',
+      ],
       beforeNavLinks: ['@/ui/admin/AdminChat/SidebarLink', '@/ui/admin/PdfConversion/SidebarLink'],
     },
     importMap: {
@@ -243,5 +248,8 @@ export default buildConfig({
         ],
       },
     }),
+  },
+  onInit: async (payload) => {
+    await runBackfillOnInit(payload)
   },
 })

@@ -178,6 +178,15 @@ export const Conversations: CollectionConfig = {
           },
         },
         {
+          name: 'hidden',
+          type: 'checkbox',
+          defaultValue: false,
+          admin: {
+            description:
+              'Hidden messages are persisted for LLM context but excluded from client responses',
+          },
+        },
+        {
           name: 'media',
           type: 'array',
           maxRows: 5,

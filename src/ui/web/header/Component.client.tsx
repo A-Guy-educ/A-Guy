@@ -13,9 +13,10 @@ import { HeaderNav } from './Nav'
 
 interface HeaderClientProps {
   data: Header
+  version: string
 }
 
-export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
+export const HeaderClient: React.FC<HeaderClientProps> = ({ data, version }) => {
   const { user, isLoading: isAuthLoading } = useCurrentUser()
   /* Storing the value in a useState to avoid hydration errors */
   const [theme, setTheme] = useState<string | null>(null)
@@ -97,6 +98,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         data={data}
         user={user}
         isAuthLoading={isAuthLoading}
+        version={version}
       />
     </>
   )

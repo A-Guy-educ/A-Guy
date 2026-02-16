@@ -3,19 +3,40 @@
   "instructions": [".ai-docs/BOOTSTRAP.md", ".ai-docs/quick-reference/CHEAT-SHEET.md"],
   "agent": {
     "build": {
-      "model": "minimax/MiniMax-M2.1"
+      "model": "minimax-coding-plan/MiniMax-M2.1",
+      "description": "Building features, refactoring, implementing changes"
     },
     "plan": {
-      "model": "anthropic/claude-opus-4-6"
+      "model": "anthropic/claude-opus-4-6",
+      "description": "Planning tasks, architecture design, complex problem solving"
     },
     "spec": {
-      "model": "openai/gpt-5.2"
+      "model": "openai/gpt-5.2",
+      "description": "Spec writing, API design, documentation"
+    },
+    "clarify": {
+      "model": "openai/gpt-5.2",
+      "description": "Collects operator questions and answers"
     },
     "verify": {
-      "model": "minimax/MiniMax-M2.1"
+      "model": "minimax-coding-plan/MiniMax-M2.1",
+      "description": "Runs tests, validates implementation passes all gates"
+    },
+    "test": {
+      "model": "minimax-coding-plan/MiniMax-M2.1",
+      "description": "Writes E2E and integration tests using Playwright"
     },
     "advisor": {
-      "model": "openai/gpt-5.2"
+      "model": "openai/gpt-5.2",
+      "description": "Code review, suggestions, best practices"
+    },
+    "auditor": {
+      "model": "minimax-coding-plan/MiniMax-M2.1",
+      "description": "Process improvement analysis agent"
+    },
+    "pr": {
+      "model": "minimax-coding-plan/MiniMax-M2.1",
+      "description": "Creates branch, commits changes, opens pull request"
     }
   },
   "mcp": {
