@@ -27,7 +27,7 @@ describe('Header Duplicate Prevention', () => {
       expect(description).toBeNull()
     })
 
-    it('should hide description when matching title with different case/whitespace', () => {
+    it('should show description when only case differs', () => {
       const { container } = render(
         <CourseHeader
           courseLabel="Course"
@@ -36,7 +36,8 @@ describe('Header Duplicate Prevention', () => {
         />,
       )
       const description = container.querySelector('p.text-muted-foreground')
-      expect(description).toBeNull()
+      expect(description).toBeTruthy()
+      expect(description?.textContent).toBe('  INTRODUCTION  ')
     })
   })
 
@@ -58,12 +59,13 @@ describe('Header Duplicate Prevention', () => {
       expect(description).toBeNull()
     })
 
-    it('should hide description when matching title with different case/whitespace', () => {
+    it('should show description when only case differs', () => {
       const { container } = render(
         <ChapterHeader title="Chapter One" description="  chapter one  " />,
       )
       const description = container.querySelector('p.text-muted-foreground')
-      expect(description).toBeNull()
+      expect(description).toBeTruthy()
+      expect(description?.textContent).toBe('  chapter one  ')
     })
   })
 })

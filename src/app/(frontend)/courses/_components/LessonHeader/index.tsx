@@ -26,9 +26,8 @@ export function LessonHeader({ order, title, description }: LessonHeaderProps) {
     }
   }
 
-  // Hide description if it's essentially the same as title (case/whitespace-insensitive)
-  const shouldShowDescription =
-    description && description.trim().toLowerCase() !== title.trim().toLowerCase()
+  // Hide description if it's exactly the same as title (after trimming whitespace)
+  const shouldShowDescription = description && description.trim() !== title.trim()
 
   return (
     <header className="mb-8 relative">
