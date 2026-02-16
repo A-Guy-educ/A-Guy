@@ -1,8 +1,8 @@
 'use client'
 
 import { isRTL } from '@/i18n/config'
-import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -26,6 +26,9 @@ export function LessonHeader({ order, title, description }: LessonHeaderProps) {
     }
   }
 
+  // Hide description if it's exactly the same as title (after trimming whitespace)
+  const shouldShowDescription = description && description.trim() !== title.trim()
+
   return (
     <header className="mb-8 relative">
       <button
@@ -45,7 +48,7 @@ export function LessonHeader({ order, title, description }: LessonHeaderProps) {
         </span>
       </div>
       <h1 className="text-4xl font-bold mb-4">{title}</h1>
-      {description && <p className="text-xl text-muted-foreground">{description}</p>}
+      {shouldShowDescription && <p className="text-xl text-muted-foreground">{description}</p>}
     </header>
   )
 }

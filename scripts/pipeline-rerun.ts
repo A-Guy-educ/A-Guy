@@ -6,7 +6,7 @@ import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import readline from 'readline'
-import { writeAgentContext, ALL_IMPL_STAGES } from './pipeline-utils'
+import { ALL_IMPL_STAGES, writeAgentContext } from './pipeline-utils'
 
 const args = process.argv.slice(2)
 
@@ -193,6 +193,7 @@ if (fromStage === 'plan') {
 console.log('')
 console.log(`🚀 Re-running pipeline: ${ALL_IMPL_STAGES.slice(fromIndex).join(' → ')}`)
 console.log('')
+
 try {
   execSync(`pnpm pipeline:impl ${taskId}`, {
     cwd: projectDir,

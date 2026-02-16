@@ -6,13 +6,13 @@
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
-import { preflight } from './preflight'
 import {
-  writeAgentContext,
   readTask,
-  stageOutputFile,
   SPEC_EXECUTE_VERIFY_STAGES,
+  stageOutputFile,
+  writeAgentContext,
 } from './pipeline-utils'
+import { preflight } from './preflight'
 
 const taskId = process.argv[2]
 

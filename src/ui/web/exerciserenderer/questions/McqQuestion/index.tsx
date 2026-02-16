@@ -21,6 +21,15 @@ interface McqQuestionProps {
   t: (key: string) => string
 }
 
+/**
+ * Transform \frac to \dfrac for display-style fractions in MCQ options
+ * This improves readability by rendering fractions larger
+ * Note: \frac does not occur as substring in \dfrac, so simple replacement is safe
+ */
+function transformFractionsToDisplayStyle(content: string): string {
+  return content.replace(/\\frac\b/g, '\\dfrac')
+}
+
 export function McqQuestion({
   question,
   answer,
@@ -65,8 +74,11 @@ export function McqQuestion({
       <div className="flex flex-col gap-3">
         {question.answer.options.map((option) => {
           const isSelected = selectedIds.includes(option.id)
+          // Transform fractions to display style for better readability in MCQ options
+          const transformedValue = transformFractionsToDisplayStyle(option.content.value)
           const optionBlock: RichTextBlock = {
             ...option.content,
+            value: transformedValue,
             id: `${question.id}-option-${option.id}`,
             mediaIds: option.content.mediaIds || [],
           }
