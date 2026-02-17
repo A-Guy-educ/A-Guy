@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { AnswerDock } from './components/AnswerDock'
 import { BlockStream } from './components/BlockStream'
 import { ContinueButton } from './components/ContinueButton'
+import { ProgressBar } from './components/ProgressBar'
 import { SessionControls } from './components/SessionControls'
 import { SessionSidebar } from './components/SessionSidebar'
 import { useInteractiveSession } from './hooks/useInteractiveSession'
@@ -35,6 +36,7 @@ export function InteractiveDemoView({
     skillScore,
     remediation,
     isSubmitting,
+    totalBlocks,
     start,
     submitAnswer,
     next,
@@ -127,25 +129,37 @@ export function InteractiveDemoView({
     <div className="interactive-demo-view min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background border-b border-border px-4 py-3">
-        <div className="container max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <a href={backUrl} className="text-sm text-muted-foreground hover:text-foreground">
-              ← Back
-            </a>
-            <Heading level="h2" className="text-lg font-semibold">
-              {lessonTitle}
-            </Heading>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Skill score badge */}
-            <div className="text-sm text-muted-foreground">
-              {t('score')}: {skillScore}
+        <div className="container max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-4">
+              <a href={backUrl} className="text-sm text-muted-foreground hover:text-foreground">
+                ← Back
+              </a>
+              <Heading level="h2" className="text-lg font-semibold">
+                {lessonTitle}
+              </Heading>
             </div>
 
-            {/* Reset button */}
-            <SessionControls onReset={handleReset} t={translations} />
+            <div className="flex items-center gap-4">
+              {/* Skill score badge */}
+              <div className="text-sm text-muted-foreground">
+                {t('score')}: {skillScore}
+              </div>
+
+              {/* Reset button */}
+              <SessionControls onReset={handleReset} t={translations} />
+            </div>
           </div>
+
+          {/* Progress bar */}
+          {totalBlocks > 0 && (
+            <div className="flex items-center gap-3">
+              <ProgressBar current={currentBlockIndex + 1} total={totalBlocks} />
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {currentBlockIndex + 1}/{totalBlocks}
+              </span>
+            </div>
+          )}
         </div>
       </header>
 

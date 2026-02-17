@@ -25,6 +25,7 @@ export function useInteractiveSession(
     skillScore: 0,
     remediation: null,
     isSubmitting: false,
+    totalBlocks: 0,
   })
 
   const callApi = useCallback(async (request: StepRequest): Promise<StepResponse> => {
@@ -63,6 +64,7 @@ export function useInteractiveSession(
         skillScore: response.skillScore,
         remediation: null,
         isSubmitting: false,
+        totalBlocks: response.totalBlocks || 0,
       })
     } catch {
       setState((prev) => ({ ...prev, status: 'error' }))
@@ -92,6 +94,7 @@ export function useInteractiveSession(
           remediation: response.remediation ?? null,
           isCorrect: response.isCorrect,
           isSubmitting: false,
+          totalBlocks: response.totalBlocks || state.totalBlocks,
           // Keep existing blocks, append new block if provided
           blocks: response.block ? [...state.blocks, response.block] : state.blocks,
           currentBlockIndex: response.block ? state.blocks.length : state.currentBlockIndex,
@@ -122,6 +125,7 @@ export function useInteractiveSession(
         currentPhase: response.currentPhase,
         skillScore: response.skillScore,
         isSubmitting: false,
+        totalBlocks: response.totalBlocks || state.totalBlocks,
         // Keep existing blocks, append new block if provided
         blocks: response.block ? [...state.blocks, response.block] : state.blocks,
         currentBlockIndex: response.block ? state.blocks.length : state.currentBlockIndex,
@@ -153,6 +157,7 @@ export function useInteractiveSession(
         skillScore: response.skillScore,
         remediation: null,
         isSubmitting: false,
+        totalBlocks: response.totalBlocks || 0,
       })
     } catch {
       setState((prev) => ({ ...prev, status: 'error' }))

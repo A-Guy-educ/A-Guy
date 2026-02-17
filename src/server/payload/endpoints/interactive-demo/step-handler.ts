@@ -78,6 +78,7 @@ function buildStepResponse(
   block: ReturnType<typeof sanitizeBlockForClient> | null,
   skillScore: number,
   schemaVersion: number,
+  totalBlocks?: number,
   isCorrect?: boolean,
   feedback?: string,
   remediation?: string,
@@ -90,6 +91,7 @@ function buildStepResponse(
     block,
     skillScore,
     schemaVersion,
+    ...(totalBlocks !== undefined && { totalBlocks }),
     ...(isCorrect !== undefined && { isCorrect }),
     ...(feedback !== undefined && { feedback }),
     ...(remediation !== undefined && { remediation }),
@@ -198,6 +200,7 @@ async function handleStart(
       currentBlock ? sanitizeBlockForClient(currentBlock) : null,
       session.skillScore,
       session.schemaVersion,
+      script.blocks.length,
     )
   }
 
@@ -236,6 +239,7 @@ async function handleStart(
       sanitizeBlockForClient(firstBlock),
       0,
       1,
+      script.blocks.length,
     )
   } catch (err) {
     if (isDuplicateKeyError(err)) {
@@ -262,6 +266,7 @@ async function handleStart(
           currentBlock ? sanitizeBlockForClient(currentBlock) : null,
           session.skillScore,
           session.schemaVersion,
+          script.blocks.length,
         )
       }
     }
@@ -368,6 +373,7 @@ async function handleAnswer(
             sanitizeBlockForClient(currentBlock),
             newSkillScore,
             session.schemaVersion,
+            script.blocks.length,
             isCorrect,
             feedback,
           ),
@@ -386,6 +392,7 @@ async function handleAnswer(
     sanitizeBlockForClient(currentBlock),
     updatedSession.skillScore,
     updatedSession.schemaVersion,
+    script.blocks.length,
     isCorrect,
     feedback,
   )
@@ -465,6 +472,7 @@ async function handleNext(
           newStatus === 'completed' ? null : sanitizeBlockForClient(script.blocks[nextIndex]),
           session.skillScore,
           session.schemaVersion,
+          script.blocks.length,
         ),
       },
     ] as NonNullable<LessonSession['processedActions']>,
@@ -491,6 +499,7 @@ async function handleNext(
     newStatus === 'completed' ? null : sanitizeBlockForClient(script.blocks[nextIndex]),
     updatedSession.skillScore,
     updatedSession.schemaVersion,
+    script.blocks.length,
   )
 }
 
@@ -586,5 +595,6 @@ async function handleReset(
     sanitizeBlockForClient(firstBlock),
     0,
     1,
+    script.blocks.length,
   )
 }

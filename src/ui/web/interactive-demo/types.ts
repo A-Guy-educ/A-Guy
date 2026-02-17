@@ -40,6 +40,7 @@ export interface SessionState {
   remediation: string | null
   isSubmitting: boolean
   isCorrect?: boolean
+  totalBlocks: number
 }
 
 export interface StepResponse {
@@ -51,6 +52,7 @@ export interface StepResponse {
   isCorrect?: boolean
   status: 'active' | 'completed'
   message?: string
+  totalBlocks?: number
 }
 
 export interface StepRequest {
