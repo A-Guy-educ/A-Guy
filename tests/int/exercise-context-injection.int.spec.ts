@@ -11,22 +11,21 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 const hasDatabaseUrl = !!process.env.DATABASE_URL
 
-// Create a proper async iterable for mocking - defined outside vi.mock
-const createMockStream = () => {
+vi.mock('@/infra/llm/services/exercise-chat-service', async () => {
+  const actual = await vi.importActual('@/infra/llm/services/exercise-chat-service')
   return {
-    async *[Symbol.asyncIterator]() {
-      yield { text: 'Hello' }
-    },
+    ...actual,
+    streamChatWithExerciseHelper: vi.fn(async (_input: unknown, _payload: unknown) => {
+      // Simulate successful chat response
+      const stream = {
+        async *[Symbol.asyncIterator]() {
+          yield { text: 'AI response' }
+        },
+      }
+      return { stream, response: Promise.resolve({ text: 'AI response' }) }
+    }),
   }
-}
-
-vi.mock('@/infra/llm/services/exercise-chat-service', () => ({
-  streamChatWithExerciseHelper: vi.fn(async () => {
-    const stream = createMockStream()
-    const response = Promise.resolve({ text: 'Hello' })
-    return { stream, response }
-  }),
-}))
+})
 
 vi.mock('@/infra/llm/vector-index-check', () => ({
   isVectorIndexAvailable: vi.fn(async () => false),
@@ -382,9 +381,18 @@ Content Blocks:
       limit: 1,
     })
     const hiddenMessages = (conv.docs[0].messages || []).filter((m: any) => m.hidden === true)
+
+    // Should have at least 2 hidden messages from steps 1 and 2
     expect(hiddenMessages.length).toBeGreaterThanOrEqual(2)
+
+    // Verify one has exercise context
     expect(hiddenMessages.some((m: any) => m.content.includes('[EXERCISE CONTEXT]'))).toBe(true)
-    expect(hiddenMessages.some((m: any) => m.content.includes('answered incorrectly'))).toBe(true)
+
+    // Verify one has "answered incorrectly" - THIS IS THE KEY ASSERTION
+    const hasIncorrectAnswerMsg = hiddenMessages.some((m: any) =>
+      m.content.toLowerCase().includes('answered incorrectly'),
+    )
+    expect(hasIncorrectAnswerMsg).toBe(true)
 
     // 4. Verify client only sees AI responses (not hidden messages)
     const getRes = await getConversation({

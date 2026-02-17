@@ -44,7 +44,7 @@ export function trimMessagesForUpdatePipeline(messages: Message[]): ChatMessage[
     content: m.content,
     timestamp: typeof m.timestamp === 'string' ? m.timestamp : m.timestamp.toISOString(),
     media: (m as unknown as { media?: Array<{ mediaId: string }> })?.media,
-    ...((m as unknown as { hidden?: boolean })?.hidden && { hidden: true }),
+    hidden: (m as unknown as { hidden?: boolean })?.hidden === true,
   }))
 }
 
@@ -180,7 +180,7 @@ export async function runChatPipeline(
     content: validated.message,
     timestamp: new Date().toISOString(),
     media: validated.mediaIds?.map((id: string) => ({ mediaId: id })) || [],
-    ...(validated.hidden && { hidden: true }),
+    hidden: validated.hidden === true,
   }
 
   const conversationHistory = conversation.messages || []
