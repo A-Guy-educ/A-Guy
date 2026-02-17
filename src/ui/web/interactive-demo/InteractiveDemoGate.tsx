@@ -20,7 +20,7 @@ export async function InteractiveDemoGate({
   console.log('[InteractiveDemoGate] Debug values:', {
     isInteractiveDemoEnabled,
     'typeof isInteractiveDemoEnabled': typeof isInteractiveDemoEnabled,
-    'showComingSoon': !isInteractiveDemoEnabled,
+    showComingSoon: !isInteractiveDemoEnabled,
   })
 
   // Per requirement #3: Show "Coming Soon" only when interactive_demo is NOT enabled
