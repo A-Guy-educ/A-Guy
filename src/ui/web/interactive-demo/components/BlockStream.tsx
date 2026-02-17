@@ -55,7 +55,6 @@ export function BlockStream({
     item:
       | { type: 'block'; data: ClientBlock; index: number }
       | { type: 'message'; data: ClientMessage },
-    displayIndex: number,
   ) => {
     if (item.type === 'message') {
       return (
@@ -120,7 +119,7 @@ export function BlockStream({
 
   return (
     <div className="interactive-demo-block-stream space-y-4">
-      {allItems.map((item, idx) => renderItem(item, idx))}
+      {allItems.map((item) => renderItem(item))}
     </div>
   )
 }
