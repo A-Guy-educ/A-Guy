@@ -112,6 +112,10 @@ export async function handleStep(
     id: lessonId,
     depth: 0,
     overrideAccess: true,
+    select: {
+      lessonScript: true,
+      type: true,
+    },
   })
 
   if (!lesson) {
