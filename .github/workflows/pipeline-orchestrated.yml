@@ -1,0 +1,330 @@
+# Orchestrated Pipeline - Runs multi-agent pipeline in CI via OpenCode GitHub mode
+# Triggers: workflow_dispatch, issue_comment (/oc <subcommand>)
+
+name: pipeline-orchestrated
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_id:
+        description: 'Task ID to run'
+        required: true
+        type: string
+      mode:
+        description: 'Pipeline mode: spec, impl, rerun, full, status'
+        required: false
+        type: string
+        default: 'full'
+      dry_run:
+        description: 'Dry run mode (no actual execution)'
+        required: false
+        type: boolean
+        default: false
+      feedback:
+        description: 'Feedback for rerun mode'
+        required: false
+        type: string
+        default: ''
+      from_stage:
+        description: 'Stage to restart from (for rerun)'
+        required: false
+        type: string
+        default: ''
+
+  issue_comment:
+    types: [created]
+
+# Concurrency: task_id for dispatch, issue.number for comments
+concurrency:
+  group: pipeline-${{ github.event.inputs.task_id || github.event.issue.number }}
+  cancel-in-progress: false
+
+# Permissions: parse job is read-only, orchestrate job needs write
+permissions:
+  issues: read
+  pull-requests: read
+  contents: read
+
+jobs:
+  # Job 1: Parse trigger, validate inputs, gate execution
+  parse:
+    runs-on: ubuntu-latest
+    outputs:
+      task_id: ${{ steps.parse.outputs.task_id }}
+      mode: ${{ steps.parse.outputs.mode }}
+      dry_run: ${{ steps.parse.outputs.dry_run }}
+      from_stage: ${{ steps.parse.outputs.from_stage }}
+      feedback: ${{ steps.parse.outputs.feedback }}
+      issue_number: ${{ steps.parse.outputs.issue_number }}
+      valid: ${{ steps.parse.outputs.valid }}
+      trigger_type: ${{ steps.parse.outputs.trigger_type }}
+    steps:
+      - name: Determine trigger type
+        id: trigger
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "type=dispatch" >> $GITHUB_OUTPUT
+          else
+            echo "type=comment" >> $GITHUB_OUTPUT
+          fi
+
+      # For comments: validate safety filters before parsing
+      - name: Validate comment trigger safety
+        if: steps.trigger.outputs.type == 'comment'
+        id: safety
+        run: |
+          # Bot filter: ignore comments from known bot accounts
+          AUTHOR="${{ github.event.comment.user.login }}"
+          if [[ "$AUTHOR" == "github-actions[bot]" ]] || [[ "$AUTHOR" == "bot" ]]; then
+            echo "valid=false" >> $GITHUB_OUTPUT
+            echo "reason=bot" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Author association: only OWNER, MEMBER, COLLABORATOR
+          ASSOCIATION="${{ github.event.comment.author_association }}"
+          if [[ "$ASSOCIATION" != "OWNER" ]] && [[ "$ASSOCIATION" != "MEMBER" ]] && [[ "$ASSOCIATION" != "COLLABORATOR" ]]; then
+            echo "valid=false" >> $GITHUB_OUTPUT
+            echo "reason=unauthorized" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Pattern: must match ^/oc\s+
+          BODY="${{ github.event.comment.body }}"
+          if ! echo "$BODY" | grep -qE '^/oc\s+'; then
+            echo "valid=false" >> $GITHUB_OUTPUT
+            echo "reason=pattern" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "valid=true" >> $GITHUB_OUTPUT
+
+      # Parse command from comment or dispatch inputs
+      - name: Parse command inputs
+        id: parse
+        env:
+          # Safety
+          SAFETY_VALID: ${{ steps.safety.outputs.valid }}
+          SAFETY_REASON: ${{ steps.safety.outputs.reason }}
+          TRIGGER_TYPE: ${{ steps.trigger.outputs.type }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          # Dispatch inputs
+          DISPATCH_TASK_ID: ${{ github.event.inputs.task_id }}
+          DISPATCH_MODE: ${{ github.event.inputs.mode }}
+          DISPATCH_DRY_RUN: ${{ github.event.inputs.dry_run }}
+          DISPATCH_FEEDBACK: ${{ github.event.inputs.feedback }}
+          DISPATCH_FROM_STAGE: ${{ github.event.inputs.from_stage }}
+        run: |
+          # Default outputs
+          echo "task_id=" >> $GITHUB_OUTPUT
+          echo "mode=full" >> $GITHUB_OUTPUT
+          echo "dry_run=false" >> $GITHUB_OUTPUT
+          echo "from_stage=" >> $GITHUB_OUTPUT
+          echo "feedback=" >> $GITHUB_OUTPUT
+          echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+          echo "trigger_type=$TRIGGER_TYPE" >> $GITHUB_OUTPUT
+          echo "valid=false" >> $GITHUB_OUTPUT
+
+          # Check safety for comments
+          if [[ "$TRIGGER_TYPE" == "comment" ]]; then
+            if [[ "$SAFETY_VALID" != "true" ]]; then
+              echo "=== Safety check failed: $SAFETY_REASON ==="
+              exit 0
+            fi
+          fi
+
+          # Parse dispatch inputs
+          if [[ "$TRIGGER_TYPE" == "dispatch" ]]; then
+            if [[ -z "$DISPATCH_TASK_ID" ]]; then
+              echo "=== Error: task_id is required for dispatch ==="
+              exit 0
+            fi
+            echo "task_id=$DISPATCH_TASK_ID" >> $GITHUB_OUTPUT
+            echo "mode=${DISPATCH_MODE:-full}" >> $GITHUB_OUTPUT
+            echo "dry_run=$DISPATCH_DRY_RUN" >> $GITHUB_OUTPUT
+            echo "feedback=$DISPATCH_FEEDBACK" >> $GITHUB_OUTPUT
+            echo "from_stage=$DISPATCH_FROM_STAGE" >> $GITHUB_OUTPUT
+            echo "valid=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Parse comment: /oc <subcommand> <task-id> [options]
+          # Example: /oc spec 260217-user-metrics
+          #          /oc impl 260217-user-metrics --feedback "fix this"
+          BODY="$COMMENT_BODY"
+
+          # Remove /oc prefix and normalize whitespace
+          CMD=$(echo "$BODY" | sed 's/^/oc\s*//' | xargs)
+
+          # Extract subcommand (first word)
+          SUBCMD=$(echo "$CMD" | cut -d' ' -f1)
+          REST=$(echo "$CMD" | cut -d' ' -f2-)
+
+          # Validate subcommand
+          case "$SUBCMD" in
+            spec|impl|rerun|status|full)
+              echo "mode=$SUBCMD" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "=== Error: Unknown subcommand: $SUBCMD ==="
+              echo "Valid: spec, impl, rerun, status, full"
+              # Post error comment
+              gh issue comment $ISSUE_NUMBER --body "❌ Unknown command \`$SUBCMD\`. Valid commands: \`spec\`, \`impl\`, \`rerun\`, \`status\`, \`full\`"
+              exit 0
+              ;;
+          esac
+
+          # Extract task-id (next word, must exist for spec/impl/rerun/full)
+          TASK_ID=$(echo "$REST" | xargs | cut -d' ' -f1)
+
+          if [[ -z "$TASK_ID" ]]; then
+            echo "=== Error: task-id is required ==="
+            gh issue comment $ISSUE_NUMBER --body "❌ Task ID is required. Usage: \`/oc $SUBCMD <task-id> [--options]\`"
+            exit 0
+          fi
+
+          # Validate task-id format (YYMMDD-something)
+          if ! echo "$TASK_ID" | grep -qE '^[0-9]{6}-[a-zA-Z0-9-]+$'; then
+            echo "=== Error: Invalid task-id format: $TASK_ID ==="
+            gh issue comment $ISSUE_NUMBER --body "❌ Invalid task ID format: \`$TASK_ID\`. Expected: \`YYMMDD-description\` (e.g., \`260217-user-metrics\`)"
+            exit 0
+          fi
+
+          echo "task_id=$TASK_ID" >> $GITHUB_OUTPUT
+          echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+          echo "trigger_type=$TRIGGER_TYPE" >> $GITHUB_OUTPUT
+
+          # Parse remaining options (--feedback, --from, --dry-run)
+          OPTIONS=$(echo "$REST" | cut -d' ' -f2-)
+
+          if echo "$OPTIONS" | grep -q '\--dry-run'; then
+            echo "dry_run=true" >> $GITHUB_OUTPUT
+          fi
+
+          # Extract --feedback value
+          FEEDBACK=$(echo "$OPTIONS" | sed -n 's/.*--feedback[" ]\s*[" ]*\([^" ]*\).*/\1/p' | xargs)
+          if [[ -n "$FEEDBACK" ]]; then
+            # Handle quoted feedback
+            FEEDBACK=$(echo "$OPTIONS" | sed -n 's/.*--feedback[" ]*\(["]\)\([^"]*\)\1.*/\2/p' | xargs)
+            if [[ -z "$FEEDBACK" ]]; then
+              FEEDBACK=$(echo "$OPTIONS" | sed -n 's/.*--feedback\s\+\(.*\)$/\1/p' | xargs)
+            fi
+            echo "feedback=$FEEDBACK" >> $GITHUB_OUTPUT
+          fi
+
+          # Extract --from value
+          FROM_STAGE=$(echo "$OPTIONS" | sed -n 's/.*--from[" ]\s*\([^" ]*\).*/\1/p' | xargs)
+          if [[ -n "$FROM_STAGE" ]]; then
+            echo "from_stage=$FROM_STAGE" >> $GITHUB_OUTPUT
+          fi
+
+          echo "valid=true" >> $GITHUB_OUTPUT
+          echo "=== Parsed: mode=$SUBCMD, task_id=$TASK_ID ==="
+
+  # Job 2: Orchestrate - run the pipeline
+  orchestrate:
+    needs: parse
+    if: needs.parse.outputs.valid == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # OpenCode GitHub App OIDC
+      contents: write # Branch/commit operations
+      pull-requests: write # Create PRs, post comments
+      issues: write # Post status comments
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install OpenCode CLI
+        run: |
+          curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
+          $HOME/.opencode/bin/opencode --version
+
+      - name: Obtain GitHub App installation token
+        id: auth
+        uses: anomalyco/opencode/github@latest
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+
+      - name: Run orchestrated pipeline
+        env:
+          # Auth
+          OPENCODE_GITHUB_TOKEN: ${{ steps.auth.outputs.token }}
+
+          # LLM provider keys (all available)
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+
+          # Parsed inputs from parse job
+          TASK_ID: ${{ needs.parse.outputs.task_id }}
+          MODE: ${{ needs.parse.outputs.mode }}
+          DRY_RUN: ${{ needs.parse.outputs.dry_run }}
+          FEEDBACK: ${{ needs.parse.outputs.feedback }}
+          FROM_STAGE: ${{ needs.parse.outputs.from_stage }}
+          ISSUE_NUMBER: ${{ needs.parse.outputs.issue_number }}
+          TRIGGER_TYPE: ${{ needs.parse.outputs.trigger_type }}
+
+          # GitHub context
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          echo "=== Starting orchestrated pipeline ==="
+          echo "Task: $TASK_ID"
+          echo "Mode: $MODE"
+          echo "Dry run: $DRY_RUN"
+          echo "Trigger: $TRIGGER_TYPE"
+
+          # Post starting comment
+          if [[ -n "$ISSUE_NUMBER" ]]; then
+            gh issue comment $ISSUE_NUMBER --body "🔄 Pipeline starting for \`$TASK_ID\` (mode: $MODE)
+          Run: $RUN_URL"
+          fi
+
+          # Run orchestrator
+          pnpm pipeline:orchestrate \
+            --task-id="$TASK_ID" \
+            --mode="$MODE" \
+            --issue-number="${ISSUE_NUMBER:-}" \
+            --trigger-type="$TRIGGER_TYPE" \
+            ${DRY_RUN:+--dry-run} \
+            ${FEEDBACK:+--feedback="$FEEDBACK"} \
+            ${FROM_STAGE:+--from="$FROM_STAGE"}
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-${{ needs.parse.outputs.task_id }}-${{ github.run_id }}
+          path: .tasks/${{ needs.parse.outputs.task_id }}/
+          retention-days: 7
+
+      - name: Post completion comment
+        if: always() && needs.parse.outputs.issue_number != ''
+        env:
+          STATUS: ${{ job.status }}
+          TASK_ID: ${{ needs.parse.outputs.task_id }}
+          ISSUE_NUMBER: ${{ needs.parse.outputs.issue_number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [[ "$STATUS" == "success" ]]; then
+            gh issue comment $ISSUE_NUMBER --body "✅ Pipeline completed for \`$TASK_ID\`
+          Run: $RUN_URL"
+          else
+            gh issue comment $ISSUE_NUMBER --body "❌ Pipeline failed for \`$TASK_ID\`
+          Run: $RUN_URL"
+          fi
