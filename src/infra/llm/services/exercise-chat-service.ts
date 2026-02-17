@@ -103,6 +103,7 @@ export async function chatWithExerciseHelper(
         input.mediaPartsWithPath,
         modelConfig,
         payload,
+        input.req,
       )
     }
 
@@ -219,7 +220,7 @@ async function resolveModelConfig(modelKey: AIModelKey): Promise<AIModel> {
 
 /**
  * Send multimodal content (text + media) using Genkit adapter
- * Uses unified adapter for multimodal generation
+ * Fetches media via publicUrl with forwarded auth cookies (serverless compatible)
  */
 async function sendMultimodalToGenkit(
   systemPrompt: string,
@@ -227,36 +228,35 @@ async function sendMultimodalToGenkit(
   mediaPartsWithPath: MediaPartWithPath[],
   model: AIModel,
   payload: Payload,
+  reqContext?: { headers: { authorization?: string; cookie?: string } },
 ): Promise<ExerciseChatResult> {
-  // Convert media parts to Genkit-compatible attachments
-  // Fetches the direct blob URL from the media document (no auth required)
-  // since the Payload file-serving endpoint requires authentication
+  // Convert media parts to Genkit-compatible base64 attachments
+  // Uses publicUrl (absolute URL built from request origin) with forwarded cookies
   const attachments: Array<{ data: string; mimeType: string }> = []
+
+  // Build fetch headers with forwarded auth cookies for server-to-server calls
+  const fetchHeaders: Record<string, string> = {}
+  if (reqContext?.headers.cookie) {
+    fetchHeaders.cookie = reqContext.headers.cookie
+  }
+  if (reqContext?.headers.authorization) {
+    fetchHeaders.authorization = reqContext.headers.authorization
+  }
 
   for (const mediaPart of mediaPartsWithPath) {
     try {
-      // Get the media doc to access the direct blob URL
-      const mediaDoc = await payload.findByID({
-        collection: 'media',
-        id: mediaPart.mediaId,
-        depth: 0,
-        overrideAccess: true,
-      })
-
-      const blobUrl = (mediaDoc as { url?: string }).url
-      if (!blobUrl) {
-        logger.warn(
-          { mediaId: mediaPart.mediaId },
-          '[ExerciseChat] Media document has no url field',
-        )
+      if (!mediaPart.publicUrl) {
+        logger.warn({ mediaId: mediaPart.mediaId }, '[ExerciseChat] Media part has no publicUrl')
         continue
       }
 
-      const response = await fetch(blobUrl)
+      const response = await fetch(mediaPart.publicUrl, {
+        headers: fetchHeaders,
+      })
       if (!response.ok) {
         logger.warn(
-          { mediaId: mediaPart.mediaId, status: response.status, url: blobUrl },
-          '[ExerciseChat] Failed to fetch media from blob - non-OK response',
+          { mediaId: mediaPart.mediaId, status: response.status, url: mediaPart.publicUrl },
+          '[ExerciseChat] Failed to fetch media - non-OK response',
         )
         continue
       }
