@@ -16,6 +16,13 @@ export async function InteractiveDemoGate({
   typewriterEnabled,
 }: InteractiveDemoGateProps) {
   const config = await getInteractiveDemoConfig()
+  
+  // Debug logging to troubleshoot config issues
+  console.debug('[InteractiveDemoGate] Config retrieved:', {
+    enabled: config.enabled,
+    enabledType: typeof config.enabled,
+    rawConfig: config,
+  })
 
   if (!config.enabled) {
     return (
