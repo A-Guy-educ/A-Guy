@@ -215,46 +215,16 @@ const TableBlockSchema = z
       })
     }
 
-    if (table.solutionFill) {
-      if (!table.answers || Object.keys(table.answers).length === 0) {
+    // Validate answer keys are within table bounds
+    for (const [key] of Object.entries(table.answers || {})) {
+      const [rowIdx, colIdx] = key.split('-').map(Number)
+
+      if (rowIdx >= table.rowsData.length || colIdx >= headerCount) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'When solutionFill is true, answers must have at least one entry',
-          path: ['answers'],
+          message: `Answer key "${key}" references out-of-bounds cell`,
+          path: ['answers', key],
         })
-      }
-
-      for (const [key] of Object.entries(table.answers || {})) {
-        const [rowIdx, colIdx] = key.split('-').map(Number)
-
-        if (rowIdx >= table.rowsData.length || colIdx >= headerCount) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Answer key "${key}" references out-of-bounds cell`,
-            path: ['answers', key],
-          })
-        } else if (table.rowsData[rowIdx][colIdx] !== '') {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Answer key "${key}" points to a non-empty cell (fillable cells must be empty)`,
-            path: ['answers', key],
-          })
-        }
-      }
-
-      for (let rowIdx = 0; rowIdx < table.rowsData.length; rowIdx++) {
-        for (let colIdx = 0; colIdx < table.rowsData[rowIdx].length; colIdx++) {
-          if (table.rowsData[rowIdx][colIdx] === '') {
-            const key = `${rowIdx}-${colIdx}`
-            if (!table.answers || !(key in table.answers)) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `Empty cell at ${key} must have a corresponding answer key`,
-                path: ['rowsData', rowIdx, colIdx],
-              })
-            }
-          }
-        }
       }
     }
   })

@@ -68,6 +68,10 @@ export async function checkQuestionAnswer(
 
       return validateFreeResponseOnServer(question, userValue, messages)
     }
+
+    case 'question_table':
+      // Table validation is handled client-side in TableQuestion component
+      return { isCorrect: false, message: messages.invalidAnswerType }
   }
 }
 
@@ -121,5 +125,7 @@ export function getInitialAnswer(question: QuestionBlock): UserAnswer {
       return { type: 'true_false', value: null } // fallback
     case 'question_free_response':
       return { type: 'free_response', value: '' }
+    case 'question_table':
+      return { type: 'table', cellValues: {} }
   }
 }

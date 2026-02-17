@@ -107,13 +107,22 @@ export default async function LessonPage({ params }: LessonPageProps) {
             mediaMap={mediaMap}
           />
         ) : (
-          // Empty state: no document and no exercises
-          <div className="w-full h-full flex flex-col items-center justify-center p-8">
-            <EmptyState type="noPDF" />
-            <div className="mt-8">
-              <BackToChapter href={backUrl} />
-            </div>
-          </div>
+          // Empty lesson: show ExerciseWorkspace with DynamicLesson as primaryContent
+          <>
+            <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
+            <ExerciseWorkspace
+              exerciseTitle={lesson.title}
+              backUrl={backUrl}
+              primaryContent={<DynamicLesson />}
+              chatContent={
+                <ChatInterface
+                  lessonId={chatLessonId}
+                  translationNamespace="courses"
+                  showMathTools={true}
+                />
+              }
+            />
+          </>
         )}
       </>
     )
