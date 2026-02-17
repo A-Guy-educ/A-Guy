@@ -8,6 +8,7 @@ import { AnswerDock } from './components/AnswerDock'
 import { BlockStream } from './components/BlockStream'
 import { ContinueButton } from './components/ContinueButton'
 import { SessionControls } from './components/SessionControls'
+import { SessionSidebar } from './components/SessionSidebar'
 import { useInteractiveSession } from './hooks/useInteractiveSession'
 
 interface InteractiveDemoViewProps {
@@ -26,6 +27,7 @@ export function InteractiveDemoView({
   const t = useTranslations('interactiveDemo')
   const {
     status,
+    sessionId,
     currentBlockIndex,
     currentPhase,
     blocks,
@@ -40,10 +42,21 @@ export function InteractiveDemoView({
 
   const [mcqSelectedAnswer, setMcqSelectedAnswer] = useState<string | null>(null)
   const [openAnswer, setOpenAnswer] = useState('')
+  const [events, setEvents] = useState<Array<{ action: string; timestamp: string }>>([])
+
+  // Track events for sidebar
+  const addEvent = (action: string) => {
+    const timestamp = new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+    setEvents((prev) => [{ action, timestamp }, ...prev].slice(0, 5))
+  }
 
   // Start the session on mount
   useEffect(() => {
-    start()
+    start().then(() => addEvent('start'))
   }, [start])
 
   // Reset answer state when moving to a new block
@@ -58,19 +71,24 @@ export function InteractiveDemoView({
 
     if (currentBlock.type === 'mcq' && mcqSelectedAnswer) {
       await submitAnswer({ selected: mcqSelectedAnswer })
+      addEvent('answer')
     } else if (currentBlock.type === 'open' && openAnswer.trim()) {
       await submitAnswer(openAnswer.trim())
+      addEvent('answer')
     }
   }
 
   const handleNext = async () => {
     await next()
+    addEvent('next')
   }
 
   const handleReset = async () => {
     await reset()
     setMcqSelectedAnswer(null)
     setOpenAnswer('')
+    setEvents([])
+    addEvent('reset')
   }
 
   if (status === 'loading') {
@@ -123,33 +141,49 @@ export function InteractiveDemoView({
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="container max-w-4xl mx-auto px-4 py-6 pb-32">
-        <BlockStream
-          blocks={blocks}
-          typewriterEnabled={typewriterEnabled}
-          currentBlockIndex={currentBlockIndex}
-          currentPhase={currentPhase}
-          mcqSelectedAnswer={mcqSelectedAnswer}
-          openAnswer={openAnswer}
-          onMcqSelect={setMcqSelectedAnswer}
-          onOpenChange={setOpenAnswer}
-          isSubmitting={isSubmitting}
-          remediation={remediation}
-          t={translations}
-        />
+      {/* Main content - two column layout */}
+      <main className="container max-w-7xl mx-auto px-4 py-6 pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+          {/* Left: Block stream */}
+          <div className="min-w-0">
+            <BlockStream
+              blocks={blocks}
+              typewriterEnabled={typewriterEnabled}
+              currentBlockIndex={currentBlockIndex}
+              currentPhase={currentPhase}
+              mcqSelectedAnswer={mcqSelectedAnswer}
+              openAnswer={openAnswer}
+              onMcqSelect={setMcqSelectedAnswer}
+              onOpenChange={setOpenAnswer}
+              isSubmitting={isSubmitting}
+              remediation={remediation}
+              t={translations}
+            />
 
-        {/* Completion message */}
-        {status === 'completed' && (
-          <div className="text-center py-12">
-            <Heading level="h2" className="text-2xl font-bold mb-4">
-              {t('completed')}
-            </Heading>
-            <p className="text-muted-foreground">
-              {t('score')}: {skillScore}
-            </p>
+            {/* Completion message */}
+            {status === 'completed' && (
+              <div className="text-center py-12">
+                <Heading level="h2" className="text-2xl font-bold mb-4">
+                  {t('completed')}
+                </Heading>
+                <p className="text-muted-foreground">
+                  {t('score')}: {skillScore}
+                </p>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Right: Sidebar */}
+          <aside className="hidden lg:block">
+            <SessionSidebar
+              skillScore={skillScore}
+              blocksShown={blocks.length}
+              currentPhase={currentPhase}
+              sessionId={sessionId}
+              events={events}
+            />
+          </aside>
+        </div>
       </main>
 
       {/* Bottom dock */}
