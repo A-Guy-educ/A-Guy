@@ -6,23 +6,38 @@
 
 import type { ScriptBlock } from '../../collections/Lessons/interactive-demo-schema'
 
-interface ClientBlock {
-  type: string
-  content?: object
-  options?: object[]
+export interface ClientBlock {
+  id: string
+  type: 'content' | 'mcq' | 'open'
+  content: ClientRichText
+  options?: ClientMcqOption[]
   media?: string
+}
+
+export interface ClientRichText {
+  type: 'rich_text'
+  format: 'md-math-v1'
+  value: string
+  mediaIds: string[]
+}
+
+export interface ClientMcqOption {
+  id: string
+  content: ClientRichText
 }
 
 export function sanitizeBlockForClient(block: ScriptBlock): ClientBlock {
   switch (block.type) {
     case 'content':
       return {
+        id: block.id,
         type: 'content',
         content: block.content,
         media: block.media,
       }
     case 'mcq':
       return {
+        id: block.id,
         type: 'mcq',
         content: block.prompt,
         options: block.options.map((opt) => ({
@@ -33,6 +48,7 @@ export function sanitizeBlockForClient(block: ScriptBlock): ClientBlock {
       }
     case 'open':
       return {
+        id: block.id,
         type: 'open',
         content: block.prompt,
         media: block.media,
@@ -41,7 +57,7 @@ export function sanitizeBlockForClient(block: ScriptBlock): ClientBlock {
       // Handle unknown block types gracefully
       const _exhaustive: never = block
       console.warn('Unknown block type:', _exhaustive)
-      return { type: 'unknown' }
+      return { type: 'unknown' } as unknown as ClientBlock
     }
   }
 }

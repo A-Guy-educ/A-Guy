@@ -358,5 +358,20 @@
       "privacy": "מדיניות פרטיות",
       "contact": "צור קשר"
     }
+  },
+  "interactiveDemo": {
+    "continue": "המשך",
+    "submit": "שלח תשובה",
+    "correct": "מעולה!",
+    "incorrect": "לא נכון.",
+    "incorrectOpenDefault": "לא נכון. בדוק את הפורמט ונסה שוב.",
+    "comingSoon": "סוג שיעור זה יגיע בקרוב",
+    "completed": "השיעור הושלם!",
+    "reset": "התחל מחדש",
+    "resetConfirm": "האם אתה בטוח? זה יאפס את השיעור מההתחלה.",
+    "score": "ציון",
+    "typeAnswer": "הקלד את התשובה שלך...",
+    "loading": "טוען שיעור...",
+    "selectOption": "בחר תשובה"
   }
 }

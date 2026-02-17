@@ -1,17 +1,17 @@
-import { queryCourseBySlug } from '@/server/repos/queries/courses'
-import { queryLessonBySlug } from '@/server/repos/queries/lessons'
-import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
-import { queryMediaByIds } from '@/server/repos/queries/media'
-import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
 import type { Media } from '@/payload-types'
+import { queryCourseBySlug } from '@/server/repos/queries/courses'
+import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
+import { queryLessonBySlug } from '@/server/repos/queries/lessons'
+import { queryMediaByIds } from '@/server/repos/queries/media'
+import { ChatInterface } from '@/ui/web/chat'
+import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
 import { Media as MediaComponent } from '@/ui/web/media'
 import { notFound } from 'next/navigation'
-import { EmptyState } from '../../../../../_components/EmptyState'
-import { LessonAnalytics } from './_components/LessonAnalytics'
-import { ChatInterface } from '@/ui/web/chat'
-import { ExerciseWorkspace } from './exercises/[exerciseSlug]/_components/ExerciseWorkspace'
-import { ExercisesPager } from './_components/ExercisesPager'
 import { BackToChapter } from '../../../../../_components/BackToChapter'
+import { EmptyState } from '../../../../../_components/EmptyState'
+import { ExercisesPager } from './_components/ExercisesPager'
+import { LessonAnalytics } from './_components/LessonAnalytics'
+import { ExerciseWorkspace } from './exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 
 interface LessonPageProps {
   params: Promise<{
@@ -49,9 +49,26 @@ export default async function LessonPage({ params }: LessonPageProps) {
     notFound()
   }
 
+  const backUrl = `/courses/${courseSlug}/chapters/${chapterSlug}`
+
+  // Interactive Demo: additive code path gated by lesson.type === 'interactive_demo'
+  if (lesson.type === 'interactive_demo') {
+    const { InteractiveDemoGate } = await import('@/ui/web/interactive-demo/InteractiveDemoGate')
+    return (
+      <>
+        <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
+        <InteractiveDemoGate
+          lessonId={lesson.id}
+          lessonTitle={lesson.title}
+          backUrl={backUrl}
+          typewriterEnabled={lesson.typewriterEnabled ?? true}
+        />
+      </>
+    )
+  }
+
   // Use lesson-scoped chat context to keep history stable across refreshes
   const chatLessonId = lesson.id
-  const backUrl = `/courses/${courseSlug}/chapters/${chapterSlug}`
 
   const validFiles =
     lesson.contentFiles

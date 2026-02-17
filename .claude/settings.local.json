@@ -29,7 +29,8 @@
       "Bash(pnpm pipeline:rerun:*)",
       "Bash(pnpm tsc:*)",
       "Bash(pnpm tsx:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npx eslint:*)"
     ]
   },
   "mcpServers": {}

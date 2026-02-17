@@ -358,5 +358,20 @@
       "privacy": "Privacy Policy",
       "contact": "Contact Us"
     }
+  },
+  "interactiveDemo": {
+    "continue": "Continue",
+    "submit": "Submit Answer",
+    "correct": "Correct!",
+    "incorrect": "Not quite right.",
+    "incorrectOpenDefault": "Not quite. Check your formatting and try again.",
+    "comingSoon": "This lesson type is coming soon",
+    "completed": "Lesson Complete!",
+    "reset": "Start Over",
+    "resetConfirm": "Are you sure? This will restart the lesson from the beginning.",
+    "score": "Score",
+    "typeAnswer": "Type your answer...",
+    "loading": "Loading lesson...",
+    "selectOption": "Select an answer"
   }
 }
