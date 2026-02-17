@@ -81,10 +81,10 @@ export async function stitchVertical(
 
   // Re-read heights after potential resize
   const finalTopHeight =
-    topWidth < canvasWidth ? (await sharp(resizedTop).metadata()).height ?? topHeight : topHeight
+    topWidth < canvasWidth ? ((await sharp(resizedTop).metadata()).height ?? topHeight) : topHeight
   const finalBottomHeight =
     bottomWidth < canvasWidth
-      ? (await sharp(resizedBottom).metadata()).height ?? bottomHeight
+      ? ((await sharp(resizedBottom).metadata()).height ?? bottomHeight)
       : bottomHeight
 
   return sharp({

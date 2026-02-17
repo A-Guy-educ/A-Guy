@@ -54,9 +54,7 @@ export async function detectExercisesVisionCombo(
     `[V2-Combo] Page ${pageIndex}: Vision LLM found ${visionResult.exercises.length} exercise(s), continues=${visionResult.continuesFromPrevious}`,
   )
   for (const ex of visionResult.exercises) {
-    console.log(
-      `[V2-Combo]   Vision: label="${ex.label}" approxY=${ex.startY.toFixed(3)}`,
-    )
+    console.log(`[V2-Combo]   Vision: label="${ex.label}" approxY=${ex.startY.toFixed(3)}`)
   }
 
   if (visionResult.exercises.length === 0) {
@@ -170,10 +168,7 @@ function computeContentBounds(
  * Filter out header/footer lines that repeat across pages.
  * Simplified version — same logic as text-detection-service.
  */
-function filterContentLines(
-  pageLines: TextLine[],
-  allPagesTextLines: TextLine[][],
-): TextLine[] {
+function filterContentLines(pageLines: TextLine[], allPagesTextLines: TextLine[][]): TextLine[] {
   if (allPagesTextLines.length <= 1) return pageLines
 
   const HEADER_ZONE = 0.08
