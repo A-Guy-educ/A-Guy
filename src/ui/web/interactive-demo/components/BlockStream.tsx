@@ -43,31 +43,7 @@ export function BlockStream({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   t,
 }: BlockStreamProps) {
-  // Merge blocks and client messages, sorted by their insertion order
-  const allItems: Array<
-    { type: 'block'; data: ClientBlock; index: number } | { type: 'message'; data: ClientMessage }
-  > = [
-    ...blocks.map((block, index) => ({ type: 'block' as const, data: block, index })),
-    ...clientMessages.map((message) => ({ type: 'message' as const, data: message })),
-  ]
-
-  const renderItem = (
-    item:
-      | { type: 'block'; data: ClientBlock; index: number }
-      | { type: 'message'; data: ClientMessage },
-  ) => {
-    if (item.type === 'message') {
-      return (
-        <div key={item.data.id} className="mb-4">
-          <BlockReveal typewriterEnabled={false} delay={0}>
-            <ClientMessageBlock message={item.data} />
-          </BlockReveal>
-        </div>
-      )
-    }
-
-    const block = item.data
-    const index = item.index
+  const renderBlock = (block: ClientBlock, index: number) => {
     const isCurrentBlock = index === currentBlockIndex
     const isPastBlock = index < currentBlockIndex
     const showBlock = isPastBlock || isCurrentBlock
@@ -102,7 +78,7 @@ export function BlockStream({
     })()
 
     return (
-      <div key={block.id} className="mb-4">
+      <div key={`block-${block.id}`} className="mb-4">
         <BlockReveal
           typewriterEnabled={typewriterEnabled && isCurrentBlock}
           delay={index * 200}
@@ -117,9 +93,22 @@ export function BlockStream({
     )
   }
 
+  const renderMessage = (message: ClientMessage) => {
+    return (
+      <div key={`message-${message.id}`} className="mb-4">
+        <BlockReveal typewriterEnabled={false} delay={0}>
+          <ClientMessageBlock message={message} />
+        </BlockReveal>
+      </div>
+    )
+  }
+
   return (
     <div className="interactive-demo-block-stream space-y-4">
-      {allItems.map((item) => renderItem(item))}
+      {/* Render blocks in order */}
+      {blocks.map((block, index) => renderBlock(block, index))}
+      {/* Render client messages after blocks */}
+      {clientMessages.map((message) => renderMessage(message))}
     </div>
   )
 }
