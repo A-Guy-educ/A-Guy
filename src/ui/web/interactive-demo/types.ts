@@ -41,7 +41,7 @@ export interface StepResponse {
   skillScore: number
   remediation: string | null
   isCorrect?: boolean
-  completed: boolean
+  status: 'active' | 'completed'
   message?: string
 }
 
