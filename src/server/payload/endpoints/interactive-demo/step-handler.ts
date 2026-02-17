@@ -6,7 +6,7 @@
  */
 
 import type { LessonSession } from '@/payload-types'
-import { apiError } from '@/server/api/responses'
+import type { ApiErrorCode } from '@/server/api/responses'
 import { getInteractiveDemoConfig } from '@/server/config/interactive-demo-config'
 import type { Payload, User } from 'payload'
 import { z } from 'zod'
@@ -16,6 +16,20 @@ import { buildHistoryEntry } from './build-history-entry'
 import { evaluateMcq, evaluateOpen, getMcqFeedback, getOpenFeedback } from './evaluate'
 import { sanitizeBlockForClient } from './sanitize-block'
 import { StepRequestSchema, StepResponse } from './schemas'
+
+/**
+ * Step handler error - thrown for validation and business logic errors
+ */
+export class StepHandlerError extends Error {
+  constructor(
+    public code: ApiErrorCode,
+    message: string,
+    public status: number,
+  ) {
+    super(message)
+    this.name = 'StepHandlerError'
+  }
+}
 
 /**
  * Get the initial phase based on the first block type
@@ -101,24 +115,24 @@ export async function handleStep(
   })
 
   if (!lesson) {
-    throw apiError('LESSON_NOT_FOUND', 'Lesson not found', 404)
+    throw new StepHandlerError('LESSON_NOT_FOUND', 'Lesson not found', 404)
   }
 
   if (lesson.type !== 'interactive_demo') {
-    throw apiError('LESSON_NOT_INTERACTIVE', 'Lesson is not an interactive demo', 400)
+    throw new StepHandlerError('LESSON_NOT_INTERACTIVE', 'Lesson is not an interactive demo', 400)
   }
 
   // Feature flag gate
   const config = await getInteractiveDemoConfig()
   if (!config.enabled) {
-    throw apiError('FEATURE_DISABLED', 'Interactive demo feature is disabled', 403)
+    throw new StepHandlerError('FEATURE_DISABLED', 'Interactive demo feature is disabled', 403)
   }
 
   // Parse lesson script
   const script = lesson.lessonScript ? LessonScriptSchema.parse(lesson.lessonScript) : null
 
   if (!script) {
-    throw apiError('VALIDATION_ERROR', 'Lesson has no script', 400)
+    throw new StepHandlerError('VALIDATION_ERROR', 'Lesson has no script', 400)
   }
 
   // Handle different actions
@@ -128,13 +142,13 @@ export async function handleStep(
 
     case 'answer':
       if (!sessionId) {
-        throw apiError('SESSION_NOT_FOUND', 'Session ID required', 400)
+        throw new StepHandlerError('SESSION_NOT_FOUND', 'Session ID required', 400)
       }
       return handleAnswer(payload, sessionId, script, answer, selectedOptionIds, clientActionId)
 
     case 'next':
       if (!sessionId) {
-        throw apiError('SESSION_NOT_FOUND', 'Session ID required', 400)
+        throw new StepHandlerError('SESSION_NOT_FOUND', 'Session ID required', 400)
       }
       return handleNext(payload, sessionId, script, clientActionId)
 
@@ -142,7 +156,7 @@ export async function handleStep(
       return handleReset(payload, user, lessonId, script)
 
     default:
-      throw apiError('VALIDATION_ERROR', 'Invalid action', 400)
+      throw new StepHandlerError('VALIDATION_ERROR', 'Invalid action', 400)
   }
 }
 
@@ -270,7 +284,7 @@ async function handleAnswer(
   })
 
   if (!session) {
-    throw apiError('SESSION_NOT_FOUND', 'Session not found', 404)
+    throw new StepHandlerError('SESSION_NOT_FOUND', 'Session not found', 404)
   }
 
   // Check idempotency
@@ -281,12 +295,12 @@ async function handleAnswer(
   }
 
   if (session.currentPhase !== 'awaiting_input') {
-    throw apiError('INVALID_STATE_TRANSITION', 'Not awaiting input', 400)
+    throw new StepHandlerError('INVALID_STATE_TRANSITION', 'Not awaiting input', 400)
   }
 
   const currentBlock = script.blocks[session.currentBlockIndex]
   if (!currentBlock) {
-    throw apiError('VALIDATION_ERROR', 'Invalid block index', 400)
+    throw new StepHandlerError('VALIDATION_ERROR', 'Invalid block index', 400)
   }
 
   // Evaluate answer
@@ -305,7 +319,7 @@ async function handleAnswer(
     feedback = getOpenFeedback(isCorrect, currentBlock.answerFormatHint)
     userAnswerContent = answer
   } else {
-    throw apiError('VALIDATION_ERROR', 'Invalid answer format', 400)
+    throw new StepHandlerError('VALIDATION_ERROR', 'Invalid answer format', 400)
   }
 
   const newSkillScore = session.skillScore + (isCorrect ? 1 : 0)
@@ -390,7 +404,7 @@ async function handleNext(
   })
 
   if (!session) {
-    throw apiError('SESSION_NOT_FOUND', 'Session not found', 404)
+    throw new StepHandlerError('SESSION_NOT_FOUND', 'Session not found', 404)
   }
 
   // Check idempotency
@@ -401,7 +415,7 @@ async function handleNext(
   }
 
   if (session.currentPhase !== 'awaiting_continue') {
-    throw apiError('INVALID_STATE_TRANSITION', 'Not ready for next', 400)
+    throw new StepHandlerError('INVALID_STATE_TRANSITION', 'Not ready for next', 400)
   }
 
   const nextIndex = session.currentBlockIndex + 1
@@ -557,7 +571,7 @@ async function handleReset(
   })
 
   if (activeSessions.docs.length === 0) {
-    throw apiError('SESSION_NOT_FOUND', 'Failed to create session', 500)
+    throw new StepHandlerError('SESSION_NOT_FOUND', 'Failed to create session', 500)
   }
 
   return buildStepResponse(

@@ -1,6 +1,9 @@
 import { apiError, apiSuccess, parseAndValidate } from '@/server/api/responses'
 import { StepRequestSchema } from '@/server/payload/endpoints/interactive-demo/schemas'
-import { handleStep } from '@/server/payload/endpoints/interactive-demo/step-handler'
+import {
+  handleStep,
+  StepHandlerError,
+} from '@/server/payload/endpoints/interactive-demo/step-handler'
 import config from '@payload-config'
 import type { NextRequest } from 'next/server'
 import { getPayload } from 'payload'
@@ -24,6 +27,12 @@ export async function POST(request: NextRequest) {
     const response = await handleStep(payload, user as any, parsed.data as any)
     return apiSuccess(response)
   } catch (error) {
+    // Handle step handler errors with proper status codes
+    if (error instanceof StepHandlerError) {
+      return apiError(error.code, error.message, error.status)
+    }
+
+    // Handle unexpected errors
     console.error('Interactive demo step error:', error)
     return apiError('INTERNAL_ERROR', 'Internal server error', 500)
   }
