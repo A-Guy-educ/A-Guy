@@ -1,7 +1,8 @@
 'use client'
 
-import type { ClientBlock } from '../types'
+import type { ClientBlock, ClientMessage } from '../types'
 import { BlockReveal } from './BlockReveal'
+import { ClientMessageBlock } from './ClientMessageBlock'
 import { ContentBlock } from './ContentBlock'
 import { McqBlock } from './McqBlock'
 import { OpenBlock } from './OpenBlock'
@@ -9,6 +10,7 @@ import { RemediationBubble } from './RemediationBubble'
 
 interface BlockStreamProps {
   blocks: ClientBlock[]
+  clientMessages: ClientMessage[]
   typewriterEnabled: boolean
   currentBlockIndex: number
   currentPhase: 'awaiting_input' | 'awaiting_continue' | null
@@ -26,6 +28,7 @@ interface BlockStreamProps {
 
 export function BlockStream({
   blocks,
+  clientMessages,
   typewriterEnabled,
   currentBlockIndex,
   currentPhase,
@@ -38,7 +41,32 @@ export function BlockStream({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   t,
 }: BlockStreamProps) {
-  const renderBlock = (block: ClientBlock, index: number) => {
+  // Merge blocks and client messages, sorted by their insertion order
+  const allItems: Array<
+    { type: 'block'; data: ClientBlock; index: number } | { type: 'message'; data: ClientMessage }
+  > = [
+    ...blocks.map((block, index) => ({ type: 'block' as const, data: block, index })),
+    ...clientMessages.map((message) => ({ type: 'message' as const, data: message })),
+  ]
+
+  const renderItem = (
+    item:
+      | { type: 'block'; data: ClientBlock; index: number }
+      | { type: 'message'; data: ClientMessage },
+    displayIndex: number,
+  ) => {
+    if (item.type === 'message') {
+      return (
+        <div key={item.data.id} className="mb-4">
+          <BlockReveal typewriterEnabled={false} delay={0}>
+            <ClientMessageBlock message={item.data} />
+          </BlockReveal>
+        </div>
+      )
+    }
+
+    const block = item.data
+    const index = item.index
     const isCurrentBlock = index === currentBlockIndex
     const isPastBlock = index < currentBlockIndex
     const showBlock = isPastBlock || isCurrentBlock
@@ -86,7 +114,7 @@ export function BlockStream({
 
   return (
     <div className="interactive-demo-block-stream space-y-4">
-      {blocks.map((block, index) => renderBlock(block, index))}
+      {allItems.map((item, idx) => renderItem(item, idx))}
     </div>
   )
 }

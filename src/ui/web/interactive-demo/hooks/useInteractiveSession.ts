@@ -8,6 +8,7 @@ interface UseInteractiveSessionReturn extends SessionState {
   submitAnswer: (answer: string | { selected: string }) => Promise<void>
   next: () => Promise<void>
   reset: () => Promise<void>
+  addClientMessage: (message: string) => void
 }
 
 export function useInteractiveSession(
@@ -20,6 +21,7 @@ export function useInteractiveSession(
     currentBlockIndex: 0,
     currentPhase: null,
     blocks: [],
+    clientMessages: [],
     skillScore: 0,
     remediation: null,
     isSubmitting: false,
@@ -57,6 +59,7 @@ export function useInteractiveSession(
         currentBlockIndex: 0,
         currentPhase: response.currentPhase,
         blocks: response.block ? [response.block] : [],
+        clientMessages: [],
         skillScore: response.skillScore,
         remediation: null,
         isSubmitting: false,
@@ -146,6 +149,7 @@ export function useInteractiveSession(
         currentBlockIndex: 0,
         currentPhase: response.currentPhase,
         blocks: response.block ? [response.block] : [],
+        clientMessages: [],
         skillScore: response.skillScore,
         remediation: null,
         isSubmitting: false,
@@ -155,11 +159,32 @@ export function useInteractiveSession(
     }
   }, [state, lessonId, callApi])
 
+  const addClientMessage = useCallback((message: string) => {
+    setState((prev) => ({
+      ...prev,
+      clientMessages: [
+        ...prev.clientMessages,
+        {
+          id: crypto.randomUUID(),
+          type: 'client_message' as const,
+          content: {
+            type: 'rich_text' as const,
+            format: 'md-math-v1' as const,
+            value: message,
+            mediaIds: [],
+          },
+          role: 'user' as const,
+        },
+      ],
+    }))
+  }, [])
+
   return {
     ...state,
     start,
     submitAnswer,
     next,
     reset,
+    addClientMessage,
   }
 }

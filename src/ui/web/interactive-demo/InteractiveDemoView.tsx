@@ -31,6 +31,7 @@ export function InteractiveDemoView({
     currentBlockIndex,
     currentPhase,
     blocks,
+    clientMessages,
     skillScore,
     remediation,
     isSubmitting,
@@ -38,6 +39,7 @@ export function InteractiveDemoView({
     submitAnswer,
     next,
     reset,
+    addClientMessage,
   } = useInteractiveSession(lessonId, lessonTitle)
 
   const [mcqSelectedAnswer, setMcqSelectedAnswer] = useState<string | null>(null)
@@ -70,9 +72,15 @@ export function InteractiveDemoView({
     if (!currentBlock) return
 
     if (currentBlock.type === 'mcq' && mcqSelectedAnswer) {
+      // Find the selected option text
+      const selectedOption = currentBlock.options?.find((opt) => opt.id === mcqSelectedAnswer)
+      if (selectedOption) {
+        addClientMessage(selectedOption.content.value)
+      }
       await submitAnswer({ selected: mcqSelectedAnswer })
       addEvent('answer')
     } else if (currentBlock.type === 'open' && openAnswer.trim()) {
+      addClientMessage(openAnswer.trim())
       await submitAnswer(openAnswer.trim())
       addEvent('answer')
     }
@@ -148,6 +156,7 @@ export function InteractiveDemoView({
           <div className="min-w-0">
             <BlockStream
               blocks={blocks}
+              clientMessages={clientMessages}
               typewriterEnabled={typewriterEnabled}
               currentBlockIndex={currentBlockIndex}
               currentPhase={currentPhase}
