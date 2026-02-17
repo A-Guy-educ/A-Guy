@@ -55,7 +55,7 @@ export function useInteractiveSession(
         status: 'active',
         currentBlockIndex: 0,
         currentPhase: response.currentPhase,
-        blocks: response.currentBlock ? [response.currentBlock] : [],
+        blocks: response.block ? [response.block] : [],
         skillScore: response.skillScore,
         remediation: null,
         isSubmitting: false,
@@ -89,8 +89,8 @@ export function useInteractiveSession(
           isCorrect: response.isCorrect,
           isSubmitting: false,
           // Keep existing blocks, append new block if provided
-          blocks: response.currentBlock ? [...state.blocks, response.currentBlock] : state.blocks,
-          currentBlockIndex: response.currentBlock ? state.blocks.length : state.currentBlockIndex,
+          blocks: response.block ? [...state.blocks, response.block] : state.blocks,
+          currentBlockIndex: response.block ? state.blocks.length : state.currentBlockIndex,
         })
       } catch {
         setState((prev) => ({ ...prev, isSubmitting: false, status: 'error' }))
@@ -119,8 +119,8 @@ export function useInteractiveSession(
         skillScore: response.skillScore,
         isSubmitting: false,
         // Keep existing blocks, append new block if provided
-        blocks: response.currentBlock ? [...state.blocks, response.currentBlock] : state.blocks,
-        currentBlockIndex: response.currentBlock ? state.blocks.length : state.currentBlockIndex,
+        blocks: response.block ? [...state.blocks, response.block] : state.blocks,
+        currentBlockIndex: response.block ? state.blocks.length : state.currentBlockIndex,
         status: response.completed ? 'completed' : 'active',
       })
     } catch {
@@ -129,15 +129,13 @@ export function useInteractiveSession(
   }, [state, lessonId, callApi])
 
   const reset = useCallback(async () => {
-    if (!state.sessionId) return
-
     setState((prev) => ({ ...prev, status: 'loading' }))
 
     try {
       const response = await callApi({
         action: 'reset',
         lessonId,
-        sessionId: state.sessionId,
+        sessionId: state.sessionId || undefined,
         clientActionId: crypto.randomUUID(),
       })
 
@@ -146,7 +144,7 @@ export function useInteractiveSession(
         status: 'active',
         currentBlockIndex: 0,
         currentPhase: response.currentPhase,
-        blocks: response.currentBlock ? [response.currentBlock] : [],
+        blocks: response.block ? [response.block] : [],
         skillScore: response.skillScore,
         remediation: null,
         isSubmitting: false,
