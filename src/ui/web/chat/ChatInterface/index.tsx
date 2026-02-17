@@ -43,6 +43,30 @@ interface ChatInterfaceProps {
   lessonId?: string
   exerciseId?: string
 
+  // Exercise context (optional - for injecting exercise context on navigation)
+  // Using loose types to accommodate Payload's Exercise type which may have slight variations
+  currentExercise?: {
+    id: string
+    title: string
+    content: {
+      blocks: Array<{
+        id: string
+        type: string
+        [key: string]: unknown
+      }>
+    }
+  }
+  mediaMap?: Record<
+    string,
+    {
+      id: string
+      url?: string | null
+      filename?: string
+      mimeType?: string
+      altText?: string
+    }
+  >
+
   // Admin context - category for admin chat scope
   categoryId?: string
 
@@ -74,6 +98,8 @@ export function ChatInterface({
   chapterId,
   lessonId,
   exerciseId,
+  currentExercise,
+  mediaMap,
   categoryId,
   adminMode = false,
   userId,
@@ -114,7 +140,9 @@ export function ChatInterface({
     // Error handling
     chatError,
     dismissError,
-    // Programmatic contextual help
+    // Programmatic message injection
+    injectExerciseContext,
+    // Contextual help for incorrect answers
     sendContextualHelp,
   } = useNotebookChat({
     initialMessage: t('chatWelcome'),
@@ -160,6 +188,13 @@ export function ChatInterface({
     window.addEventListener('exercise-incorrect-answer', handler)
     return () => window.removeEventListener('exercise-incorrect-answer', handler)
   }, [])
+
+  // Inject exercise context when student navigates to an exercise
+  useEffect(() => {
+    if (currentExercise && injectExerciseContext) {
+      injectExerciseContext(currentExercise, mediaMap)
+    }
+  }, [currentExercise, injectExerciseContext, mediaMap])
 
   // Math tools state
   const [isMathPaletteOpen, setIsMathPaletteOpen] = useState(false)

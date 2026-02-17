@@ -14,6 +14,9 @@ const ValidateAnswerSchema = z.object({
   questionText: z.string().min(1),
   acceptedAnswers: z.array(z.string().min(1)).min(1),
   studentAnswer: z.string(),
+  // Optional question metadata for enhanced LLM validation
+  questionType: z.string().optional(),
+  questionVariant: z.string().optional(),
 })
 
 export async function validateAnswer(req: PayloadRequest & { json?: () => Promise<unknown> }) {
@@ -68,6 +71,8 @@ export async function validateAnswer(req: PayloadRequest & { json?: () => Promis
       questionText: input.questionText,
       acceptedAnswers: input.acceptedAnswers,
       studentAnswer: input.studentAnswer,
+      questionType: input.questionType,
+      questionVariant: input.questionVariant,
     },
     req.payload,
   )

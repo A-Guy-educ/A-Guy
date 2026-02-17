@@ -1,6 +1,7 @@
 'use client'
 
 import { ChatRole } from '@/infra/llm/chat-message-role'
+import { formatExerciseContextMessage } from '@/infra/llm/exercise-context'
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 
 import { logger } from '@/infra/utils/logger'
@@ -103,6 +104,9 @@ export function useNotebookChat({
 
   // Guest mode state
   const [_isGuestMode, setIsGuestMode] = useState(false)
+
+  // Track last injected exercise ID to avoid duplicate context injection
+  const lastInjectedExerciseId = useRef<string | null>(null)
 
   // Compute contextKey based on available context
   // For admin mode: use users:{userId} (user-scoped conversation)
@@ -627,6 +631,63 @@ export function useNotebookChat({
   }, [])
 
   /**
+   * Inject exercise context as a hidden message when student navigates to an exercise.
+   * The context is persisted for LLM context but excluded from client responses.
+   * Deduplicates: skips injection if same exerciseId was already injected.
+   */
+  const injectExerciseContext = useCallback(
+    async (
+      exercise: {
+        id: string
+        title: string
+        content: {
+          blocks: Array<{
+            id: string
+            type: string
+            [key: string]: unknown
+          }>
+        }
+      },
+      mediaMap?: Record<
+        string,
+        {
+          id: string
+          url?: string | null
+          filename?: string
+          mimeType?: string
+          altText?: string
+        }
+      >,
+    ) => {
+      if (isLoading || isLoadingHistory) return
+      if (lastInjectedExerciseId.current === exercise.id) return
+
+      lastInjectedExerciseId.current = exercise.id
+
+      const formatted = formatExerciseContextMessage(
+        exercise.title,
+        exercise.content.blocks,
+        mediaMap,
+      )
+      const prompt = `The student is now viewing the following exercise. Use this context to help them if they ask questions.\n\n${formatted}`
+
+      const context = { exerciseId, lessonId, chapterId, courseId, categoryId }
+      await streamMessage(prompt, acknowledgment, context, { hidden: true })
+    },
+    [
+      isLoading,
+      isLoadingHistory,
+      streamMessage,
+      acknowledgment,
+      exerciseId,
+      lessonId,
+      chapterId,
+      courseId,
+      categoryId,
+    ],
+  )
+
+  /**
    * Send a contextual help prompt to the AI without showing a user message bubble.
    * The prompt is persisted as hidden (for LLM context) but excluded from client responses.
    * Only the AI's streaming response appears in the chat.
@@ -670,6 +731,7 @@ export function useNotebookChat({
     isGuestMode: _isGuestMode,
     // Programmatic message injection
     addAssistantMessage,
+    injectExerciseContext,
     sendContextualHelp,
   }
 }

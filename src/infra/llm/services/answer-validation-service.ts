@@ -13,6 +13,9 @@ export interface LLMValidationInput {
   questionText: string
   acceptedAnswers: string[]
   studentAnswer: string
+  // Optional question metadata for type-specific validation
+  questionType?: string
+  questionVariant?: string
 }
 
 export interface LLMValidationResult {
@@ -59,13 +62,22 @@ export async function validateWithLLM(
 }
 
 function buildUserPrompt(input: LLMValidationInput): string {
-  return [
-    `Question: "${input.questionText}"`,
-    `Accepted Answers: ${JSON.stringify(input.acceptedAnswers)}`,
-    `Student Answer: "${input.studentAnswer}"`,
-    '',
-    'Is the student answer semantically equivalent to any accepted answer?',
-  ].join('\n')
+  const parts: string[] = []
+
+  // Question with optional type info
+  if (input.questionType) {
+    const typeInfo = input.questionVariant
+      ? `Question Type: ${input.questionType} (variant: ${input.questionVariant})`
+      : `Question Type: ${input.questionType}`
+    parts.push(typeInfo)
+  }
+  parts.push(`Question: "${input.questionText}"`)
+  parts.push(`Accepted Answers: ${JSON.stringify(input.acceptedAnswers)}`)
+  parts.push(`Student Answer: "${input.studentAnswer}"`)
+  parts.push('')
+  parts.push('Is the student answer semantically equivalent to any accepted answer?')
+
+  return parts.join('\n')
 }
 
 function parseLLMResponse(text: string): LLMValidationResult {

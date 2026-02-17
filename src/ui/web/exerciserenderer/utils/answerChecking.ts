@@ -92,6 +92,7 @@ async function validateFreeResponseOnServer(
         questionText: question.prompt.value,
         acceptedAnswers: question.answer.acceptedAnswers,
         studentAnswer,
+        questionType: question.type,
       }),
     })
 

@@ -125,6 +125,30 @@ export function ExercisesPager({
           <ChatInterface
             lessonId={lessonId}
             exerciseId={currentExercise.id}
+            currentExercise={{
+              id: currentExercise.id,
+              title: currentExercise.title,
+              content: {
+                blocks: (currentExercise.content as unknown as ExerciseContentData).blocks.map(
+                  (block) => {
+                    const { id, type, ...rest } = block
+                    return { id, type, ...rest }
+                  },
+                ),
+              },
+            }}
+            mediaMap={
+              mediaMap as Record<
+                string,
+                {
+                  id: string
+                  url?: string | null
+                  filename?: string
+                  mimeType?: string
+                  altText?: string
+                }
+              >
+            }
             translationNamespace="courses"
             showMathTools={true}
           />
