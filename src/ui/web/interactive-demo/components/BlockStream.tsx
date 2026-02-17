@@ -20,6 +20,7 @@ interface BlockStreamProps {
   onOpenChange: (value: string) => void
   isSubmitting: boolean
   remediation: string | null
+  onTypingStateChange?: (isTyping: boolean, finishTyping: () => void) => void
   t: {
     selectOption: string
     typeAnswer: string
@@ -38,6 +39,7 @@ export function BlockStream({
   onOpenChange,
   isSubmitting,
   remediation,
+  onTypingStateChange,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   t,
 }: BlockStreamProps) {
@@ -102,7 +104,11 @@ export function BlockStream({
 
     return (
       <div key={block.id} className="mb-4">
-        <BlockReveal typewriterEnabled={typewriterEnabled} delay={index * 200}>
+        <BlockReveal
+          typewriterEnabled={typewriterEnabled && isCurrentBlock}
+          delay={index * 200}
+          onTypingStateChange={isCurrentBlock ? onTypingStateChange : undefined}
+        >
           {blockContent}
         </BlockReveal>
 

@@ -47,6 +47,13 @@ export function InteractiveDemoView({
   const [mcqSelectedAnswer, setMcqSelectedAnswer] = useState<string | null>(null)
   const [openAnswer, setOpenAnswer] = useState('')
   const [events, setEvents] = useState<Array<{ action: string; timestamp: string }>>([])
+  const [isTyping, setIsTyping] = useState(false)
+  const [finishTypingFn, setFinishTypingFn] = useState<(() => void) | null>(null)
+
+  const handleTypingStateChange = (typing: boolean, finishFn: () => void) => {
+    setIsTyping(typing)
+    setFinishTypingFn(() => finishFn)
+  }
 
   // Track events for sidebar
   const addEvent = (action: string) => {
@@ -89,6 +96,12 @@ export function InteractiveDemoView({
   }
 
   const handleNext = async () => {
+    // If typing is in progress, finish it first
+    if (isTyping && finishTypingFn) {
+      finishTypingFn()
+      return
+    }
+
     await next()
     addEvent('next')
   }
@@ -180,6 +193,7 @@ export function InteractiveDemoView({
               onOpenChange={setOpenAnswer}
               isSubmitting={isSubmitting}
               remediation={remediation}
+              onTypingStateChange={handleTypingStateChange}
               t={translations}
             />
 
