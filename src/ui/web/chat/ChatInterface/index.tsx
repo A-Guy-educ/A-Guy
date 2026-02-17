@@ -105,17 +105,19 @@ export function ChatInterface({
     handleSubmit,
     handleQuickAction,
     handleReset,
-    // Media upload
+    // Media upload (one-shot)
     uploadedMedia,
     isUploading,
     handleFileSelect,
     removeMedia,
     openFilePicker,
+    // Persistent context media (Ask page exercise photos)
+    contextMedia: _contextMedia,
+    addContextMedia,
+    removeContextMedia: _removeContextMedia,
     // Error handling
     chatError,
     dismissError,
-    // External media injection (Ask page uploads)
-    addExternalMedia,
     // Programmatic contextual help
     sendContextualHelp,
     sendContextualHelpWithMedia,
@@ -172,7 +174,7 @@ export function ChatInterface({
       mediaId: string
       filename: string
     }
-    addExternalMedia(mediaId, filename)
+    addContextMedia(mediaId, filename)
   }
 
   useEffect(() => {

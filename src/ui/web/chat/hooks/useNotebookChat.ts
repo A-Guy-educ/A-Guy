@@ -94,9 +94,12 @@ export function useNotebookChat({
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
 
-  // Media upload state
+  // Media upload state (one-shot: cleared after sending)
   const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([])
   const [isUploading, setIsUploading] = useState(false)
+
+  // Context media state (persistent: stays attached across messages, e.g. exercise photos)
+  const [contextMedia, setContextMedia] = useState<UploadedMedia[]>([])
 
   // Error state
   const [chatError, setChatError] = useState<ChatError | null>(null)
@@ -384,19 +387,26 @@ export function useNotebookChat({
   const sendMessage = async (message: string) => {
     if ((!message.trim() && uploadedMedia.length === 0) || isLoading) return
 
-    // Capture mediaIds and metadata before clearing
-    const mediaIds = uploadedMedia.map((m) => m.id)
-    const mediaMetadata = uploadedMedia.map((m) => ({ mediaId: m.id, filename: m.filename }))
+    // Merge one-shot uploads + persistent context media
+    const oneshotIds = uploadedMedia.map((m) => m.id)
+    const contextIds = contextMedia.map((m) => m.id)
+    const allMediaIds = [...oneshotIds, ...contextIds]
+
+    const allMediaMeta = [
+      ...uploadedMedia.map((m) => ({ mediaId: m.id, filename: m.filename })),
+      ...contextMedia.map((m) => ({ mediaId: m.id, filename: m.filename })),
+    ]
 
     const userMessage: ChatMessage = {
       role: ChatRole.User,
       content: message,
-      media: mediaMetadata.length > 0 ? mediaMetadata : undefined,
+      media: allMediaMeta.length > 0 ? allMediaMeta : undefined,
     }
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
     setIsLoading(true)
 
+    // Clear one-shot uploads only — context media persists
     setUploadedMedia([])
 
     // Track chat message submitted (message length only, NOT content)
@@ -415,12 +425,12 @@ export function useNotebookChat({
     }
 
     // Use streaming when no media attached and not in admin mode
-    const useStreaming = mediaIds.length === 0 && !adminMode
+    const useStreaming = allMediaIds.length === 0 && !adminMode
 
     if (useStreaming) {
       await streamMessage(message, acknowledgment, context)
     } else {
-      await sendMessageSync(message, acknowledgment, context, mediaIds)
+      await sendMessageSync(message, acknowledgment, context, allMediaIds)
     }
   }
 
@@ -689,18 +699,24 @@ export function useNotebookChat({
   }, [])
 
   /**
-   * Add externally-uploaded media (e.g. from Ask page upload) to pending attachments.
-   * The media will be sent with the user's next chat message.
+   * Add persistent context media (e.g. exercise photos from Ask page).
+   * Unlike uploadedMedia, context media is NOT cleared after sending — it stays
+   * attached so the AI can reference the images across multiple messages.
    */
-  const addExternalMedia = useCallback(
+  const addContextMedia = useCallback(
     (mediaId: string, filename: string, mimeType = 'image/jpeg') => {
-      setUploadedMedia((prev) => {
+      setContextMedia((prev) => {
         if (prev.some((m) => m.id === mediaId)) return prev
         return [...prev, { id: mediaId, filename, mimeType }]
       })
     },
     [],
   )
+
+  /** Remove a persistent context media item */
+  const removeContextMedia = useCallback((mediaId: string) => {
+    setContextMedia((prev) => prev.filter((m) => m.id !== mediaId))
+  }, [])
 
   /**
    * Send a contextual help prompt with an already-uploaded media ID.
@@ -734,13 +750,16 @@ export function useNotebookChat({
     handleKeyDown,
     handleQuickAction,
     handleReset,
-    // Media upload
+    // Media upload (one-shot)
     uploadedMedia,
     isUploading,
     handleFileSelect,
     removeMedia,
     openFilePicker,
-    addExternalMedia,
+    // Persistent context media (stays across messages)
+    contextMedia,
+    addContextMedia,
+    removeContextMedia,
     // Error handling
     chatError,
     dismissError,
