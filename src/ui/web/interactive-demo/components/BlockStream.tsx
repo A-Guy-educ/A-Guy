@@ -73,7 +73,7 @@ export function BlockStream({
     })()
 
     return (
-      <div key={block.id} className="mb-6">
+      <div key={block.id} className="mb-4">
         <BlockReveal typewriterEnabled={typewriterEnabled} delay={index * 200}>
           {blockContent}
         </BlockReveal>
@@ -85,7 +85,7 @@ export function BlockStream({
   }
 
   return (
-    <div className="interactive-demo-block-stream space-y-6">
+    <div className="interactive-demo-block-stream space-y-4">
       {blocks.map((block, index) => renderBlock(block, index))}
     </div>
   )
