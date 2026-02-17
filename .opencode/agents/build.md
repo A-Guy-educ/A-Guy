@@ -67,6 +67,8 @@ Write to: `.tasks/<taskId>/build.md`
 
 Use the Write tool to create this file.
 
+**STOP CONDITION**: After you write build.md, you are DONE. Do NOT read or verify the file afterward. The pipeline validates file existence automatically.
+
 ## Exit Criteria
 
 - One or more commits pushed

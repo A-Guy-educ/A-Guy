@@ -185,6 +185,7 @@ export function readTask(taskDir: string): TaskDefinition | null {
 const STAGE_OUTPUT_MAP: Record<string, string> = {
   taskify: 'task.json',
   clarify: 'questions.md',
+  architect: 'plan.md',
 }
 
 export function stageOutputFile(taskDir: string, stage: string): string {
@@ -195,7 +196,42 @@ export function stageOutputFile(taskDir: string, stage: string): string {
 // --- Pipeline stage definitions ---
 
 export const SPEC_ONLY_STAGES = ['spec', 'clarify']
-export const SPEC_EXECUTE_VERIFY_STAGES = ['plan', 'build', 'test', 'verify', 'auditor', 'pr']
+export const SPEC_EXECUTE_VERIFY_STAGES = ['architect', 'build', 'test', 'verify', 'auditor', 'pr']
 
 // All valid stages for rerun
 export const ALL_IMPL_STAGES = [...SPEC_EXECUTE_VERIFY_STAGES]
+
+// --- Dry-run support ---
+
+const DRY_RUN_OUTPUTS: Record<string, (taskId: string) => string> = {
+  taskify: () =>
+    JSON.stringify(
+      {
+        task_type: 'implement_feature',
+        pipeline: 'spec_execute_verify',
+        risk_level: 'medium',
+        confidence: 0.9,
+        primary_domain: 'backend',
+        scope: ['[dry-run] Mock scope item'],
+        missing_inputs: [],
+        assumptions: ['[dry-run] Mock assumption'],
+      },
+      null,
+      2,
+    ),
+  spec: (taskId) => `# Spec (dry-run)\n\nMock spec for ${taskId}.\n`,
+  clarify: (taskId) => `# Questions (dry-run)\n\n1. Mock question for ${taskId}?\n`,
+  architect: (taskId) => `# Plan (dry-run)\n\nMock plan for ${taskId}.\n`,
+  build: (taskId) => `# Build (dry-run)\n\nMock build output for ${taskId}.\n`,
+  test: (taskId) => `# Test (dry-run)\n\nMock test output for ${taskId}.\n`,
+  verify: (taskId) => `# Verify (dry-run)\n\nResult: PASS\n\nMock verification for ${taskId}.\n`,
+  auditor: (taskId) => `# Auditor (dry-run)\n\nMock auditor output for ${taskId}.\n`,
+  pr: (taskId) => `# PR (dry-run)\n\nMock PR output for ${taskId}.\n`,
+}
+
+export function writeDryRunOutput(taskDir: string, stage: string, taskId: string): void {
+  const outputFile = stageOutputFile(taskDir, stage)
+  const generator = DRY_RUN_OUTPUTS[stage]
+  const content = generator ? generator(taskId) : `# ${stage} (dry-run)\n\nMock output.\n`
+  fs.writeFileSync(outputFile, content)
+}

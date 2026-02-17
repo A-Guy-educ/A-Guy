@@ -18,7 +18,7 @@ You are the **Verifier**. Your job is to decide **PASS or FAIL** based on eviden
 1. Read the SPEC provided in your context
 2. Run hard gate (pnpm verify)
 3. Validate soft gate (spec compliance)
-4. Write a verify report to `.tasks/<task-id>/verify-YYYYMMDD-HHMMSS.md`
+4. Write a verify report to `.tasks/<task-id>/verify.md`
 
 ## Gate Layers
 
@@ -47,13 +47,11 @@ Classify findings:
 
 ## Report Format
 
-Write to `.tasks/<task-id>/verify-YYYYMMDD-HHMMSS.md`:
+Write to `.tasks/<task-id>/verify.md`:
 
 ```markdown
 # Verification Report
 
-**Date:** YYYY-MM-DD
-**Timestamp:** YYYYMMDD-HHMMSS
 **Task:** <task-id>
 
 ---
@@ -77,6 +75,8 @@ Write to `.tasks/<task-id>/verify-YYYYMMDD-HHMMSS.md`:
 
 **Overall Assessment:** PASS / FAIL
 ```
+
+**STOP CONDITION**: After you write the verify report file, you are DONE. Do NOT read or verify it afterward. The pipeline validates file existence automatically.
 
 ## Rules
 

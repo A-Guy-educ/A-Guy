@@ -165,6 +165,7 @@ export interface Config {
   jobs: {
     tasks: {
       pdf_to_exercises: TaskPdfToExercises;
+      pdf_to_exercises_v2: TaskPdfToExercisesV2;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -1389,6 +1390,26 @@ export interface Exercise {
     | number
     | boolean
     | null;
+  /**
+   * Pipeline version (1=text extraction, 2=image crops)
+   */
+  pipelineVersion?: number | null;
+  /**
+   * Zero-based page index in source PDF (V2 image crops)
+   */
+  sourcePageIndex?: number | null;
+  /**
+   * Normalized bounding box {x,y,width,height} 0..1 (V2 image crops)
+   */
+  sourceBboxNormalized?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1998,7 +2019,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'pdf_to_exercises' | 'schedulePublish';
+        taskSlug: 'inline' | 'pdf_to_exercises' | 'pdf_to_exercises_v2' | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -2031,7 +2052,7 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'pdf_to_exercises' | 'schedulePublish') | null;
+  taskSlug?: ('inline' | 'pdf_to_exercises' | 'pdf_to_exercises_v2' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -2589,6 +2610,9 @@ export interface ExercisesSelect<T extends boolean = true> {
   idempotencyKey?: T;
   specVersion?: T;
   extractionMeta?: T;
+  pipelineVersion?: T;
+  sourcePageIndex?: T;
+  sourceBboxNormalized?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3228,6 +3252,14 @@ export interface FooterSelect<T extends boolean = true> {
  * via the `definition` "TaskPdf_to_exercises".
  */
 export interface TaskPdfToExercises {
+  input?: unknown;
+  output?: unknown;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskPdf_to_exercises_v2".
+ */
+export interface TaskPdfToExercisesV2 {
   input?: unknown;
   output?: unknown;
 }

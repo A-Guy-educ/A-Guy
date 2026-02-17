@@ -43,18 +43,23 @@ function parseArgs(argv: string[]): {
 
 const parsed = parseArgs(args)
 const taskId = parsed.positional[0]
+const dryRun = parsed.options['dry-run'] === true
 
 if (!taskId) {
-  console.log('Usage: pnpm pipeline:rerun <task-id> [--feedback "issue"] [--from <stage>]')
+  console.log(
+    'Usage: pnpm pipeline:rerun <task-id> [--feedback "issue"] [--from <stage>] [--dry-run]',
+  )
   console.log('')
   console.log('Examples:')
   console.log('  pnpm pipeline:rerun 260214-version-footer')
   console.log('  pnpm pipeline:rerun 260214-version-footer --feedback "Version not displaying"')
   console.log('  pnpm pipeline:rerun 260214-version-footer --from build')
+  console.log('  pnpm pipeline:rerun 260214-version-footer --dry-run')
   console.log('')
   console.log('Options:')
   console.log('  --feedback "text"  Add feedback for what went wrong')
   console.log(`  --from <stage>     Re-run from specific stage (${ALL_IMPL_STAGES.join('|')})`)
+  console.log('  --dry-run          Write mock outputs instead of calling agents')
   console.log('')
   console.log('Interactive mode (prompts for feedback) if no --feedback provided.')
   process.exit(1)
@@ -84,7 +89,7 @@ if (parsed.options.from) {
   fromStage = stage
 }
 
-console.log(`=== Pipeline Rerun: ${taskId} ===`)
+console.log(`=== Pipeline Rerun: ${taskId}${dryRun ? ' (DRY-RUN)' : ''} ===`)
 console.log(`Re-running from: ${fromStage}`)
 console.log('')
 
@@ -183,9 +188,9 @@ writeAgentContext(taskDir)
 console.log('✓ Context updated with feedback')
 
 // Step 5: Optionally update spec/plan if requested
-if (fromStage === 'plan') {
-  console.log('\n⚠️  Re-running from plan stage.')
-  console.log('    The plan agent will see the feedback in .context.md')
+if (fromStage === 'architect') {
+  console.log('\n⚠️  Re-running from architect stage.')
+  console.log('    The architect agent will see the feedback in .context.md')
   console.log('    and can revise the plan accordingly.')
 }
 
@@ -195,7 +200,7 @@ console.log(`🚀 Re-running pipeline: ${ALL_IMPL_STAGES.slice(fromIndex).join('
 console.log('')
 
 try {
-  execSync(`pnpm pipeline:impl ${taskId}`, {
+  execSync(`pnpm pipeline:impl ${dryRun ? '--dry-run ' : ''}${taskId}`, {
     cwd: projectDir,
     stdio: 'inherit',
   })

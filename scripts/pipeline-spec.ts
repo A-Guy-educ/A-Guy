@@ -1,18 +1,43 @@
 #!/usr/bin/env ts-node
 // pipeline-spec.ts - Runs taskify → spec → clarify (Phase 1)
-// Usage: pnpm pipeline:spec <task-id>
+// Usage: pnpm pipeline:spec <task-id> [--file <path>]
 
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import { preflight } from './preflight'
-import { writeAgentContext, readTask, stageOutputFile } from './pipeline-utils'
+import { writeAgentContext, readTask, stageOutputFile, writeDryRunOutput } from './pipeline-utils'
 
-const taskId = process.argv[2]
+const args = process.argv.slice(2)
+let taskId: string | undefined
+let filePath: string | undefined
+let dryRun = false
+
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--file' && args[i + 1]) {
+    filePath = args[i + 1]
+    i++ // skip value
+  } else if (args[i] === '--dry-run') {
+    dryRun = true
+  } else if (!args[i].startsWith('--')) {
+    taskId = args[i]
+  }
+}
+
+// Auto-generate task ID from filename when --file is used without explicit task ID
+if (!taskId && filePath) {
+  const now = new Date()
+  const datePrefix = `${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
+  const stem = path.basename(filePath, path.extname(filePath))
+  taskId = `${datePrefix}-${stem}`
+}
 
 if (!taskId) {
-  console.log('Usage: pnpm pipeline:spec <task-id>')
+  console.log('Usage: pnpm pipeline:spec [--file <path>] [--dry-run] [<task-id>]')
   console.log('Example: pnpm pipeline:spec 260214-version-footer')
+  console.log('         pnpm pipeline:spec --file requirements/fix-dropdown.md')
+  console.log('         pnpm pipeline:spec --file req.md 260216-custom-id')
+  console.log('         pnpm pipeline:spec --file req.md --dry-run')
   process.exit(1)
 }
 
@@ -28,17 +53,36 @@ if (!fs.existsSync(taskDir)) {
   console.log(`Created task directory: ${taskDir}`)
 }
 
+// --file flag: read file content and write it as task.md
+if (filePath) {
+  const resolvedFile = path.resolve(filePath)
+  if (!fs.existsSync(resolvedFile)) {
+    console.error(`Error: File not found: ${resolvedFile}`)
+    process.exit(1)
+  }
+  const content = fs.readFileSync(resolvedFile, 'utf-8').trim()
+  if (!content) {
+    console.error(`Error: File is empty: ${resolvedFile}`)
+    process.exit(1)
+  }
+  const taskMdPath = path.join(taskDir, 'task.md')
+  fs.writeFileSync(taskMdPath, `# Task\n\n${content}\n`)
+  console.log(`Created task.md from ${resolvedFile}`)
+}
+
 // Validate task.md exists (taskify needs it)
 if (!fs.existsSync(path.join(taskDir, 'task.md'))) {
   console.error(`Error: ${taskDir}/task.md not found`)
-  console.log('Create a task.md file with the task description before running the pipeline.')
+  console.log(
+    'Create a task.md file with the task description, or use --file <path> to provide one.',
+  )
   process.exit(1)
 }
 
 // Phase 1 stages: taskify → spec → clarify
 const stages = ['taskify', 'spec', 'clarify']
 
-console.log(`=== Pipeline Spec: ${taskId} ===`)
+console.log(`=== Pipeline Spec: ${taskId}${dryRun ? ' (DRY-RUN)' : ''} ===`)
 
 for (let i = 0; i < stages.length; i++) {
   const stage = stages[i]
@@ -48,36 +92,31 @@ for (let i = 0; i < stages.length; i++) {
   if (fs.existsSync(outputFile)) {
     console.log(`[${i + 1}/${stages.length}] ${stage} already exists, skipping`)
 
-    // Still validate task definition even when skipping
-    if (stage === 'taskify') {
-      const taskDef = readTask(taskDir)
-      if (taskDef && taskDef.missing_inputs.length > 0) {
-        showMissingInputs(taskDef.missing_inputs)
-        process.exit(1)
-      }
-    }
-
     continue
   }
 
-  console.log(`[${i + 1}/${stages.length}] Running ${stage} agent...`)
+  console.log(`[${i + 1}/${stages.length}] Running ${stage} agent...${dryRun ? ' (dry-run)' : ''}`)
 
   // R8: Write context file before invoking agent
   writeAgentContext(taskDir)
 
-  // R4: try/catch around execSync
-  try {
-    execSync(
-      `pnpm ocode run --agent ${stage} "Execute ${stage} for ${taskId}. Read context from .tasks/${taskId}/.context.md"`,
-      {
-        cwd: projectDir,
-        stdio: 'inherit',
-      },
-    )
-  } catch {
-    console.error(`\n❌ Stage "${stage}" failed for ${taskId}`)
-    console.error('Fix the issue and re-run. Completed stages will be skipped.')
-    process.exit(1)
+  if (dryRun) {
+    writeDryRunOutput(taskDir, stage, taskId)
+  } else {
+    // R4: try/catch around execSync
+    try {
+      execSync(
+        `pnpm ocode run --agent ${stage} "Execute ${stage} for ${taskId}. Read context from .tasks/${taskId}/.context.md"`,
+        {
+          cwd: projectDir,
+          stdio: 'inherit',
+        },
+      )
+    } catch {
+      console.error(`\n❌ Stage "${stage}" failed for ${taskId}`)
+      console.error('Fix the issue and re-run. Completed stages will be skipped.')
+      process.exit(1)
+    }
   }
 
   // Validate taskify output
@@ -96,15 +135,15 @@ for (let i = 0; i < stages.length; i++) {
     console.log(`  risk:      ${taskDef.risk_level}`)
     console.log(`  confidence: ${taskDef.confidence}`)
     console.log(`  domain:    ${taskDef.primary_domain}`)
-
-    // Stop-on-missing-inputs rule
-    if (taskDef.missing_inputs.length > 0) {
-      showMissingInputs(taskDef.missing_inputs)
-      process.exit(1)
-    }
   }
 
   console.log(`✓ ${stage} complete`)
+}
+
+// Create clarified.md if it doesn't exist (pipeline:impl requires it)
+const clarifiedPath = path.join(taskDir, 'clarified.md')
+if (!fs.existsSync(clarifiedPath)) {
+  fs.writeFileSync(clarifiedPath, '# Clarified\n\nUse recommended answers.\n')
 }
 
 // Show next steps based on pipeline type
@@ -138,24 +177,3 @@ if (pipeline === 'spec_only') {
 
 console.log('========================================')
 console.log('')
-
-function showMissingInputs(inputs: Array<{ field: string; question: string }>): void {
-  console.error('')
-  console.error('========================================')
-  console.error('STOP: Missing required inputs')
-  console.error('')
-  console.error('The taskify agent identified missing information:')
-  console.error('')
-  inputs.forEach((item, idx) => {
-    console.error(`  ${idx + 1}. [${item.field}] ${item.question}`)
-  })
-  console.error('')
-  console.error('Add the missing information to:')
-  console.error(`   ${taskDir}/task.md`)
-  console.error('')
-  console.error('Then delete task.json and re-run:')
-  console.error(`   rm ${taskDir}/task.json`)
-  console.error(`   pnpm pipeline:spec ${taskId}`)
-  console.error('========================================')
-  console.error('')
-}

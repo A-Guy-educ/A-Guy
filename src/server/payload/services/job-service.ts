@@ -83,6 +83,7 @@ export class JobService {
     taskSlug: string,
     ctx: Partial<JobContext>,
     limit = 10,
+    overrideTaskSlug?: string,
   ): Promise<JobWithStatus[]> {
     if (!this.collection) {
       console.warn('[JobService.findByContext] No collection available')
@@ -92,6 +93,11 @@ export class JobService {
     if (ctx.lessonId) query['input.ctx.lessonId'] = ctx.lessonId
     if (ctx.sourceDocId) query['input.ctx.sourceDocId'] = ctx.sourceDocId
     if (ctx.tenantId) query['input.ctx.tenantId'] = ctx.tenantId
+    if (overrideTaskSlug) {
+      // Override the taskSlug filter (used for pipelineVersion filtering)
+      delete query.taskSlug
+      query.taskSlug = overrideTaskSlug
+    }
 
     const docs = await this.collection.find(query).sort({ createdAt: -1 }).limit(limit).toArray()
 

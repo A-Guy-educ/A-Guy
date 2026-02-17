@@ -24,5 +24,6 @@ test-results
 
 # Auto-generated files
 src/app/(payload)/admin/importMap.js
+.tasks/**/.context.md
 docs/ai/indexes/*.json
 public/sitemap*.xml

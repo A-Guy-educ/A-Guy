@@ -10,6 +10,7 @@ export const jobStatusQuerySchema = z.object({
   lessonId: objectIdSchema.optional(),
   mediaId: objectIdSchema.optional(),
   limit: z.coerce.number().int().min(1).max(100).default(10),
+  pipelineVersion: z.coerce.number().int().min(1).max(2).optional(),
 })
 
 export const queueConversionSchema = z.object({
