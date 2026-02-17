@@ -98,11 +98,11 @@ export async function detectExerciseStartsFromText(
 
   // Filter out header/footer lines if we have cross-page data
   const contentLines =
-    allPagesLines && allPagesLines.length > 1
-      ? filterHeaderFooter(lines, allPagesLines)
-      : lines
+    allPagesLines && allPagesLines.length > 1 ? filterHeaderFooter(lines, allPagesLines) : lines
 
-  console.log(`[V2-TextDetect] Page ${pageIndex}: ${contentLines.length} content lines after header/footer filter`)
+  console.log(
+    `[V2-TextDetect] Page ${pageIndex}: ${contentLines.length} content lines after header/footer filter`,
+  )
 
   if (contentLines.length === 0) {
     return {
@@ -122,7 +122,9 @@ export async function detectExerciseStartsFromText(
   for (const line of contentLines) {
     const match = matchExerciseLabel(line.text)
     if (match) {
-      console.log(`[V2-TextDetect] Page ${pageIndex}: MATCHED exercise "${match.label}" at y=${line.y.toFixed(3)} from text "${line.text.substring(0, 60)}"`)
+      console.log(
+        `[V2-TextDetect] Page ${pageIndex}: MATCHED exercise "${match.label}" at y=${line.y.toFixed(3)} from text "${line.text.substring(0, 60)}"`,
+      )
       exercises.push({
         label: match.label,
         startY: line.y,

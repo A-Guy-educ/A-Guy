@@ -128,7 +128,9 @@ export const pdfToExercisesV2Task = {
             detections.push(textDetection)
           } else if (!pageHasText) {
             // Scanned page — fall back to OCR (Tesseract)
-            console.log(`[V2] Page ${i + 1}/${pageDataList.length}: no text found, using OCR detection`)
+            console.log(
+              `[V2] Page ${i + 1}/${pageDataList.length}: no text found, using OCR detection`,
+            )
             const ocrDetection = await detectExerciseStartsFromOCR(
               pageDataList[i].image.buffer,
               i,
@@ -308,7 +310,9 @@ async function buildExerciseStrips(
       // Strip bottom: next exercise's startY (with upward padding to exclude its label),
       // or contentEndY if last on page
       const rawBottom = isLast ? det.contentEndY : det.exercises[exIdx + 1].startY
-      const stripBottom = isLast ? rawBottom : Math.max(stripTop + 0.01, rawBottom - STRIP_BOTTOM_PADDING)
+      const stripBottom = isLast
+        ? rawBottom
+        : Math.max(stripTop + 0.01, rawBottom - STRIP_BOTTOM_PADDING)
 
       let imageBuffer = await extractStrip(page, stripTop, stripBottom)
 
