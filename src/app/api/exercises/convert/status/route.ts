@@ -9,13 +9,24 @@ export const GET = withApiHandler(
   async ({ payload, query, logger }) => {
     try {
       const jobService = JobService.fromPayload(payload)
+
+      // Determine task slug based on pipelineVersion
+      const taskSlug =
+        query.pipelineVersion === 2
+          ? (TASK_SLUGS.PDF_TO_EXERCISES_V2 as string)
+          : TASK_SLUGS.PDF_TO_EXERCISES
+
+      const overrideTaskSlug =
+        query.pipelineVersion === 2 ? (TASK_SLUGS.PDF_TO_EXERCISES_V2 as string) : undefined
+
       const jobs = await jobService.findByContext(
-        TASK_SLUGS.PDF_TO_EXERCISES,
+        taskSlug,
         {
           lessonId: query.lessonId,
           sourceDocId: query.mediaId,
         },
         query.limit,
+        overrideTaskSlug,
       )
 
       return apiSuccess({ docs: jobs })

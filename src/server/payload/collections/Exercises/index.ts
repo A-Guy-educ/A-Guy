@@ -230,6 +230,32 @@ export const Exercises: CollectionConfig = {
             hidden: true,
           },
         },
+        // V2-specific fields for image crop pipeline
+        {
+          name: 'pipelineVersion',
+          type: 'number',
+          index: true,
+          admin: {
+            description: 'Pipeline version (1=text extraction, 2=image crops)',
+            hidden: true,
+          },
+        },
+        {
+          name: 'sourcePageIndex',
+          type: 'number',
+          admin: {
+            description: 'Zero-based page index in source PDF (V2 image crops)',
+            hidden: true,
+          },
+        },
+        {
+          name: 'sourceBboxNormalized',
+          type: 'json',
+          admin: {
+            description: 'Normalized bounding box {x,y,width,height} 0..1 (V2 image crops)',
+            hidden: true,
+          },
+        },
       ],
     },
 

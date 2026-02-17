@@ -29,6 +29,7 @@ import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/im
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
+import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
 import { runBackfillOnInit } from '@/server/payload/migrations/backfillAdminTitle'
 import type { JobDocument } from '@/server/payload/jobs/types'
 import { plugins } from '@/server/payload/plugins'
@@ -180,7 +181,7 @@ export default buildConfig({
         return authHeader === `Bearer ${process.env.CRON_SECRET}`
       },
     },
-    tasks: [pdfToExercisesTask],
+    tasks: [pdfToExercisesTask, pdfToExercisesV2Task],
     // Expose jobs collection in admin panel for monitoring conversion jobs
     jobsCollectionOverrides: ({ defaultJobsCollection }) => ({
       ...defaultJobsCollection,

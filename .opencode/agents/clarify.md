@@ -40,62 +40,45 @@ spec → clarify → plan → build → test → verify → auditor → pr
 
 ### Present Questions to Operator
 
+For each question:
+
+1. Provide concrete options (A, B, C...)
+2. Mark one option as **Recommended** based on codebase conventions, existing patterns, and best practices
+3. Explain briefly why that option is recommended
+
 Format questions clearly:
 
 ```markdown
 # Clarification Needed: <taskId>
 
-I have some questions about the requirements. Please answer each question:
-
 ## Implementation
 
 1. **Question:** Should we use env var or package.json for version?
-   - **Option A:** env var (NEXT_PUBLIC_APP_VERSION)
-   - **Option B:** package.json
-   - **Your answer:** \_\_\_
+   - **Option A (Recommended):** package.json — already used for app metadata, no extra env setup needed
+   - **Option B:** env var (NEXT_PUBLIC_APP_VERSION) — more flexible for CI overrides
+   - **Your answer:** \_\_\_ (leave blank to accept recommended)
 
 ## Location
 
 2. **Question:** Where should the component be placed?
    - **Option A:** Before dashboard
-   - **Option B:** After dashboard
-   - **Your answer:** \_\_\_
-
-## Your Answers
-
-Please reply with your answers, numbered 1, 2, 3...
+   - **Option B (Recommended):** After dashboard — consistent with existing layout order
+   - **Your answer:** \_\_\_ (leave blank to accept recommended)
 ```
 
-### Output Clarified Spec
+## Output
 
-Write the clarified spec to `.tasks/<taskId>/clarified.md`:
+Write questions ONLY to: `.tasks/<taskId>/questions.md`
 
-```markdown
-# Clarified Spec: <taskId>
-
-## Original Questions & Answers
-
-1. **Q:** Should we use env var or package.json?
-   **A:** package.json
-
-2. **Q:** Where should the component be placed?
-   **A:** Before dashboard
-
-## Updated Requirements
-
-- Updated requirement 1
-- Updated requirement 2
-```
-
-## Output Format
-
-Write questions to: `.tasks/<taskId>/questions.md`
-
-Write answers + clarified spec to: `.tasks/<taskId>/clarified.md`
+Do NOT write `clarified.md` — the operator creates it after reviewing questions.
 
 ## Hard Rules
 
 - Collect ALL questions from spec
-- Present options when helpful
-- Wait for operator answers before proceeding
+- Every question MUST have concrete options with one marked **(Recommended)**
+- Base recommendations on codebase patterns, existing conventions, and simplicity
+- Blank answers = accept recommended option (document this in questions.md)
+- Do NOT wait for operator answers — write questions.md and stop. The operator fills in clarified.md separately.
 - Document all Q&A clearly
+
+**STOP CONDITION**: After you write questions.md, you are DONE. Do NOT read or verify the file afterward. Write and stop immediately.
