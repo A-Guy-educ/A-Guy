@@ -229,38 +229,49 @@ async function sendMultimodalToGenkit(
   payload: Payload,
 ): Promise<ExerciseChatResult> {
   // Convert media parts to Genkit-compatible attachments
+  // Fetches the direct blob URL from the media document (no auth required)
+  // since the Payload file-serving endpoint requires authentication
   const attachments: Array<{ data: string; mimeType: string }> = []
 
   for (const mediaPart of mediaPartsWithPath) {
-    if (mediaPart.mediaId) {
-      try {
-        const mediaDoc = await payload.findByID({
-          collection: 'media',
-          id: mediaPart.mediaId,
-          depth: 0,
-        })
+    try {
+      // Get the media doc to access the direct blob URL
+      const mediaDoc = await payload.findByID({
+        collection: 'media',
+        id: mediaPart.mediaId,
+        depth: 0,
+        overrideAccess: true,
+      })
 
-        if (mediaDoc && 'url' in mediaDoc && mediaDoc.url) {
-          // Fetch the image and convert to base64
-          const imageUrl = mediaDoc.url.startsWith('/')
-            ? `${process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'}${mediaDoc.url}`
-            : mediaDoc.url
-
-          const response = await fetch(imageUrl)
-          const arrayBuffer = await response.arrayBuffer()
-          const base64 = Buffer.from(arrayBuffer).toString('base64')
-
-          attachments.push({
-            data: base64,
-            mimeType: mediaDoc.mimeType || 'image/jpeg',
-          })
-        }
-      } catch (fetchError) {
+      const blobUrl = (mediaDoc as { url?: string }).url
+      if (!blobUrl) {
         logger.warn(
-          { err: fetchError, mediaId: mediaPart.mediaId },
-          '[ExerciseChat] Failed to fetch media',
+          { mediaId: mediaPart.mediaId },
+          '[ExerciseChat] Media document has no url field',
         )
+        continue
       }
+
+      const response = await fetch(blobUrl)
+      if (!response.ok) {
+        logger.warn(
+          { mediaId: mediaPart.mediaId, status: response.status, url: blobUrl },
+          '[ExerciseChat] Failed to fetch media from blob - non-OK response',
+        )
+        continue
+      }
+      const arrayBuffer = await response.arrayBuffer()
+      const base64 = Buffer.from(arrayBuffer).toString('base64')
+
+      attachments.push({
+        data: base64,
+        mimeType: mediaPart.mimeType || 'image/jpeg',
+      })
+    } catch (fetchError) {
+      logger.warn(
+        { err: fetchError, mediaId: mediaPart.mediaId },
+        '[ExerciseChat] Failed to fetch media',
+      )
     }
   }
 
