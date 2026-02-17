@@ -228,19 +228,31 @@ export function getIssueComments(issueNumber: number): string[] {
 // ============================================================================
 
 export function parseCliArgs(argv: string[]): OrchestratorInput {
+  // Normalize --key=value into --key value to support both syntaxes
+  const normalized: string[] = []
+  for (const arg of argv) {
+    // Match --flag=value pattern (but not --flag= which is empty value)
+    if (arg.match(/^--[a-z][a-z0-9-]*=.+/i)) {
+      const eqIdx = arg.indexOf('=')
+      normalized.push(arg.slice(0, eqIdx), arg.slice(eqIdx + 1))
+    } else {
+      normalized.push(arg)
+    }
+  }
+
   const input: OrchestratorInput = {
     mode: 'full',
     taskId: '',
     dryRun: false,
   }
 
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i]
+  for (let i = 0; i < normalized.length; i++) {
+    const arg = normalized[i]
 
-    if (arg === '--task-id' && argv[i + 1]) {
-      input.taskId = argv[i + 1]
+    if (arg === '--task-id' && normalized[i + 1]) {
+      input.taskId = normalized[i + 1]
       i++
-    } else if (arg === '--mode' && argv[i + 1]) {
+    } else if (arg === '--mode' && normalized[i + 1]) {
       const mode = argv[i + 1]
       if (!isValidMode(mode)) {
         throw new Error(`Invalid mode: ${mode}. Valid: ${VALID_MODES.join(', ')}`)
@@ -249,27 +261,27 @@ export function parseCliArgs(argv: string[]): OrchestratorInput {
       i++
     } else if (arg === '--dry-run') {
       input.dryRun = true
-    } else if (arg === '--feedback' && argv[i + 1]) {
-      input.feedback = argv[i + 1]
+    } else if (arg === '--feedback' && normalized[i + 1]) {
+      input.feedback = normalized[i + 1]
       i++
-    } else if (arg === '--from' && argv[i + 1]) {
-      const stage = argv[i + 1]
+    } else if (arg === '--from' && normalized[i + 1]) {
+      const stage = normalized[i + 1]
       if (!isValidStage(stage)) {
         throw new Error(`Invalid stage: ${stage}. Valid: ${VALID_STAGES.join(', ')}`)
       }
       input.fromStage = stage
       i++
-    } else if (arg === '--issue-number' && argv[i + 1]) {
-      input.issueNumber = parseInt(argv[i + 1], 10)
+    } else if (arg === '--issue-number' && normalized[i + 1]) {
+      input.issueNumber = parseInt(normalized[i + 1], 10)
       i++
-    } else if (arg === '--trigger-type' && argv[i + 1]) {
-      input.triggerType = argv[i + 1] as 'dispatch' | 'comment'
+    } else if (arg === '--trigger-type' && normalized[i + 1]) {
+      input.triggerType = normalized[i + 1] as 'dispatch' | 'comment'
       i++
-    } else if (arg === '--run-id' && argv[i + 1]) {
-      input.runId = argv[i + 1]
+    } else if (arg === '--run-id' && normalized[i + 1]) {
+      input.runId = normalized[i + 1]
       i++
-    } else if (arg === '--run-url' && argv[i + 1]) {
-      input.runUrl = argv[i + 1]
+    } else if (arg === '--run-url' && normalized[i + 1]) {
+      input.runUrl = normalized[i + 1]
       i++
     }
   }

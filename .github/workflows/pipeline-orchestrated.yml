@@ -39,9 +39,9 @@ concurrency:
   group: pipeline-${{ github.event.inputs.task_id || github.event.issue.number }}
   cancel-in-progress: false
 
-# Permissions: parse job is read-only, orchestrate job needs write
+# Permissions: parse job needs write for error comments, orchestrate job needs more
 permissions:
-  issues: read
+  issues: write
   pull-requests: read
   contents: read
 
@@ -49,6 +49,9 @@ jobs:
   # Job 1: Parse trigger, validate inputs, gate execution
   parse:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
     outputs:
       task_id: ${{ steps.parse.outputs.task_id }}
       mode: ${{ steps.parse.outputs.mode }}
@@ -72,9 +75,12 @@ jobs:
       - name: Validate comment trigger safety
         if: steps.trigger.outputs.type == 'comment'
         id: safety
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          AUTHOR: ${{ github.event.comment.user.login }}
+          ASSOCIATION: ${{ github.event.comment.author_association }}
         run: |
           # Bot filter: ignore comments from known bot accounts
-          AUTHOR="${{ github.event.comment.user.login }}"
           if [[ "$AUTHOR" == "github-actions[bot]" ]] || [[ "$AUTHOR" == "bot" ]]; then
             echo "valid=false" >> $GITHUB_OUTPUT
             echo "reason=bot" >> $GITHUB_OUTPUT
@@ -82,16 +88,14 @@ jobs:
           fi
 
           # Author association: only OWNER, MEMBER, COLLABORATOR
-          ASSOCIATION="${{ github.event.comment.author_association }}"
           if [[ "$ASSOCIATION" != "OWNER" ]] && [[ "$ASSOCIATION" != "MEMBER" ]] && [[ "$ASSOCIATION" != "COLLABORATOR" ]]; then
             echo "valid=false" >> $GITHUB_OUTPUT
             echo "reason=unauthorized" >> $GITHUB_OUTPUT
             exit 0
           fi
 
-          # Pattern: must match ^/oc\s+
-          BODY="${{ github.event.comment.body }}"
-          if ! echo "$BODY" | grep -qE '^/oc\s+'; then
+          # Pattern: must match ^/oc[[:space:]]+ (using POSIX [[:space:]])
+          if ! echo "$COMMENT_BODY" | grep -qE '^/oc[[:space:]]+'; then
             echo "valid=false" >> $GITHUB_OUTPUT
             echo "reason=pattern" >> $GITHUB_OUTPUT
             exit 0
@@ -154,8 +158,8 @@ jobs:
           #          /oc impl 260217-user-metrics --feedback "fix this"
           BODY="$COMMENT_BODY"
 
-          # Remove /oc prefix and normalize whitespace
-          CMD=$(echo "$BODY" | sed 's/^/oc\s*//' | xargs)
+          # Remove /oc prefix and normalize whitespace (using POSIX [[:space:]])
+          CMD=$(echo "$BODY" | sed 's|^/oc[[:space:]]*||' | xargs)
 
           # Extract subcommand (first word)
           SUBCMD=$(echo "$CMD" | cut -d' ' -f1)
@@ -169,7 +173,6 @@ jobs:
             *)
               echo "=== Error: Unknown subcommand: $SUBCMD ==="
               echo "Valid: spec, impl, rerun, status, full"
-              # Post error comment
               gh issue comment $ISSUE_NUMBER --body "❌ Unknown command \`$SUBCMD\`. Valid commands: \`spec\`, \`impl\`, \`rerun\`, \`status\`, \`full\`"
               exit 0
               ;;
@@ -198,25 +201,25 @@ jobs:
           # Parse remaining options (--feedback, --from, --dry-run)
           OPTIONS=$(echo "$REST" | cut -d' ' -f2-)
 
-          if echo "$OPTIONS" | grep -q '\--dry-run'; then
+          if echo "$OPTIONS" | grep -q '\-\-dry-run'; then
             echo "dry_run=true" >> $GITHUB_OUTPUT
           fi
 
-          # Extract --feedback value
-          FEEDBACK=$(echo "$OPTIONS" | sed -n 's/.*--feedback[" ]\s*[" ]*\([^" ]*\).*/\1/p' | xargs)
-          if [[ -n "$FEEDBACK" ]]; then
-            # Handle quoted feedback
-            FEEDBACK=$(echo "$OPTIONS" | sed -n 's/.*--feedback[" ]*\(["]\)\([^"]*\)\1.*/\2/p' | xargs)
-            if [[ -z "$FEEDBACK" ]]; then
-              FEEDBACK=$(echo "$OPTIONS" | sed -n 's/.*--feedback\s\+\(.*\)$/\1/p' | xargs)
+          # Extract --feedback value (simpler, more robust approach)
+          if echo "$OPTIONS" | grep -q '\-\-feedback'; then
+            # Remove everything before --feedback, then extract value (up to next --flag or end)
+            FEEDBACK=$(echo "$OPTIONS" | sed 's/.*--feedback[[:space:]]*//' | sed 's/--[a-z].*//' | xargs)
+            if [[ -n "$FEEDBACK" ]]; then
+              echo "feedback=$FEEDBACK" >> $GITHUB_OUTPUT
             fi
-            echo "feedback=$FEEDBACK" >> $GITHUB_OUTPUT
           fi
 
           # Extract --from value
-          FROM_STAGE=$(echo "$OPTIONS" | sed -n 's/.*--from[" ]\s*\([^" ]*\).*/\1/p' | xargs)
-          if [[ -n "$FROM_STAGE" ]]; then
-            echo "from_stage=$FROM_STAGE" >> $GITHUB_OUTPUT
+          if echo "$OPTIONS" | grep -q '\-\-from'; then
+            FROM_STAGE=$(echo "$OPTIONS" | sed 's/.*--from[[:space:]]*//' | sed 's/--[a-z].*//' | xargs)
+            if [[ -n "$FROM_STAGE" ]]; then
+              echo "from_stage=$FROM_STAGE" >> $GITHUB_OUTPUT
+            fi
           fi
 
           echo "valid=true" >> $GITHUB_OUTPUT
@@ -227,6 +230,7 @@ jobs:
     needs: parse
     if: needs.parse.outputs.valid == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       id-token: write # OpenCode GitHub App OIDC
       contents: write # Branch/commit operations
@@ -234,13 +238,18 @@ jobs:
       issues: write # Post status comments
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
           fetch-depth: 0
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'pnpm'
@@ -261,6 +270,8 @@ jobs:
 
       - name: Run orchestrated pipeline
         env:
+          # GitHub token for gh CLI
+          GH_TOKEN: ${{ github.token }}
           # Auth
           OPENCODE_GITHUB_TOKEN: ${{ steps.auth.outputs.token }}
 
@@ -296,12 +307,17 @@ jobs:
           fi
 
           # Run orchestrator
+          # Use explicit boolean check since DRY_RUN outputs "false" as string (truthy in bash)
+          DRY_RUN_FLAG=""
+          if [[ "$DRY_RUN" == "true" ]]; then
+            DRY_RUN_FLAG="--dry-run"
+          fi
           pnpm pipeline:orchestrate \
             --task-id="$TASK_ID" \
             --mode="$MODE" \
             --issue-number="${ISSUE_NUMBER:-}" \
             --trigger-type="$TRIGGER_TYPE" \
-            ${DRY_RUN:+--dry-run} \
+            $DRY_RUN_FLAG \
             ${FEEDBACK:+--feedback="$FEEDBACK"} \
             ${FROM_STAGE:+--from="$FROM_STAGE"}
 
