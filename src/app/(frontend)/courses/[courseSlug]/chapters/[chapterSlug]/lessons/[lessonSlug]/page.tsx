@@ -1,17 +1,16 @@
-import { queryCourseBySlug } from '@/server/repos/queries/courses'
-import { queryLessonBySlug } from '@/server/repos/queries/lessons'
-import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
-import { queryMediaByIds } from '@/server/repos/queries/media'
-import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
+import { DynamicLesson } from '@/demos/dynamic-lesson'
 import type { Media } from '@/payload-types'
+import { queryCourseBySlug } from '@/server/repos/queries/courses'
+import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
+import { queryLessonBySlug } from '@/server/repos/queries/lessons'
+import { queryMediaByIds } from '@/server/repos/queries/media'
+import { ChatInterface } from '@/ui/web/chat'
+import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
 import { Media as MediaComponent } from '@/ui/web/media'
 import { notFound } from 'next/navigation'
-import { EmptyState } from '../../../../../_components/EmptyState'
-import { LessonAnalytics } from './_components/LessonAnalytics'
-import { ChatInterface } from '@/ui/web/chat'
-import { ExerciseWorkspace } from './exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 import { ExercisesPager } from './_components/ExercisesPager'
-import { BackToChapter } from '../../../../../_components/BackToChapter'
+import { LessonAnalytics } from './_components/LessonAnalytics'
+import { ExerciseWorkspace } from './exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 
 interface LessonPageProps {
   params: Promise<{
@@ -83,13 +82,22 @@ export default async function LessonPage({ params }: LessonPageProps) {
             mediaMap={mediaMap}
           />
         ) : (
-          // Empty state: no document and no exercises
-          <div className="w-full h-full flex flex-col items-center justify-center p-8">
-            <EmptyState type="noPDF" />
-            <div className="mt-8">
-              <BackToChapter href={backUrl} />
-            </div>
-          </div>
+          // Empty lesson: show ExerciseWorkspace with DynamicLesson as primaryContent
+          <>
+            <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
+            <ExerciseWorkspace
+              exerciseTitle={lesson.title}
+              backUrl={backUrl}
+              primaryContent={<DynamicLesson />}
+              chatContent={
+                <ChatInterface
+                  lessonId={chatLessonId}
+                  translationNamespace="courses"
+                  showMathTools={true}
+                />
+              }
+            />
+          </>
         )}
       </>
     )
