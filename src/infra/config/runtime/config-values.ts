@@ -47,8 +47,6 @@ export function setPayloadGetterForLazyLoading(getter: PayloadGetter): void {
   lazyPayloadGetter = getter
 }
 
-
-
 /**
  * Auto-configure lazy loading using Payload config if not already set up
  * This makes the config system self-sufficient without requiring explicit setup
@@ -153,7 +151,7 @@ function assertServerSide(): void {
 
 /**
  * Check if config values have been loaded, or try lazy load
- * 
+ *
  * This function ensures config is always available by:
  * 1. Returning immediately if already loaded
  * 2. Auto-configuring lazy loading if needed
