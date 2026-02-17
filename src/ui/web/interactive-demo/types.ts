@@ -20,13 +20,7 @@ export interface ClientBlock {
   content: ClientRichText
   options?: ClientMcqOption[]
   media?: string
-}
-
-export interface ClientMessage {
-  id: string
-  type: 'client_message'
-  content: ClientRichText
-  role: 'user'
+  role?: 'user' | 'assistant'
 }
 
 export interface SessionState {
@@ -35,7 +29,6 @@ export interface SessionState {
   currentBlockIndex: number
   currentPhase: 'awaiting_input' | 'awaiting_continue' | null
   blocks: ClientBlock[]
-  clientMessages: ClientMessage[]
   skillScore: number
   remediation: string | null
   isSubmitting: boolean

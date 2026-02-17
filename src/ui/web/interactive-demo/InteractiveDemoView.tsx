@@ -32,7 +32,6 @@ export function InteractiveDemoView({
     currentBlockIndex,
     currentPhase,
     blocks,
-    clientMessages,
     skillScore,
     remediation,
     isSubmitting,
@@ -41,7 +40,7 @@ export function InteractiveDemoView({
     submitAnswer,
     next,
     reset,
-    addClientMessage,
+    addClientBlock,
   } = useInteractiveSession(lessonId, lessonTitle)
 
   const [mcqSelectedAnswer, setMcqSelectedAnswer] = useState<string | null>(null)
@@ -84,12 +83,12 @@ export function InteractiveDemoView({
       // Find the selected option text
       const selectedOption = currentBlock.options?.find((opt) => opt.id === mcqSelectedAnswer)
       if (selectedOption) {
-        addClientMessage(selectedOption.content.value)
+        addClientBlock(selectedOption.content.value)
       }
       await submitAnswer({ selected: mcqSelectedAnswer })
       addEvent('answer')
     } else if (currentBlock.type === 'open' && openAnswer.trim()) {
-      addClientMessage(openAnswer.trim())
+      addClientBlock(openAnswer.trim())
       await submitAnswer(openAnswer.trim())
       addEvent('answer')
     }
@@ -110,8 +109,13 @@ export function InteractiveDemoView({
     await reset()
     setMcqSelectedAnswer(null)
     setOpenAnswer('')
-    setEvents([])
-    addEvent('reset')
+    // Set reset event directly (avoiding setEvents([]) which clears then adds)
+    const timestamp = new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+    setEvents([{ action: 'reset', timestamp }])
   }
 
   if (status === 'loading') {
@@ -183,7 +187,6 @@ export function InteractiveDemoView({
           <div className="min-w-0">
             <BlockStream
               blocks={blocks}
-              clientMessages={clientMessages}
               typewriterEnabled={typewriterEnabled}
               currentBlockIndex={currentBlockIndex}
               currentPhase={currentPhase}

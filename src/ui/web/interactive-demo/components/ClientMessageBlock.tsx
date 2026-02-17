@@ -1,10 +1,10 @@
 'use client'
 
-import type { ClientMessage } from '../types'
+import type { ClientBlock } from '../types'
 import { BlockCard } from './BlockCard'
 
 interface ClientMessageBlockProps {
-  message: ClientMessage
+  message: ClientBlock & { type: 'client_message' }
 }
 
 export function ClientMessageBlock({ message }: ClientMessageBlockProps) {

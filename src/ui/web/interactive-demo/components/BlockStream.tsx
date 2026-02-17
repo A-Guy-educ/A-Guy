@@ -1,6 +1,6 @@
 'use client'
 
-import type { ClientBlock, ClientMessage } from '../types'
+import type { ClientBlock } from '../types'
 import { BlockReveal } from './BlockReveal'
 import { ClientMessageBlock } from './ClientMessageBlock'
 import { ContentBlock } from './ContentBlock'
@@ -10,7 +10,6 @@ import { RemediationBubble } from './RemediationBubble'
 
 interface BlockStreamProps {
   blocks: ClientBlock[]
-  clientMessages: ClientMessage[]
   typewriterEnabled: boolean
   currentBlockIndex: number
   currentPhase: 'awaiting_input' | 'awaiting_continue' | null
@@ -29,7 +28,6 @@ interface BlockStreamProps {
 
 export function BlockStream({
   blocks,
-  clientMessages,
   typewriterEnabled,
   currentBlockIndex,
   currentPhase,
@@ -44,12 +42,30 @@ export function BlockStream({
   t,
 }: BlockStreamProps) {
   const renderBlock = (block: ClientBlock, index: number) => {
+    // Client messages are always shown (they're user's own messages)
+    const isClientMessage = block.type === 'client_message'
+
+    // For regular blocks, check if they should be shown
     const isCurrentBlock = index === currentBlockIndex
     const isPastBlock = index < currentBlockIndex
-    const showBlock = isPastBlock || isCurrentBlock
+    const showBlock = isClientMessage || isPastBlock || isCurrentBlock
 
     if (!showBlock) return null
 
+    // Handle client message blocks
+    if (isClientMessage) {
+      return (
+        <div key={`block-${block.id}`} className="mb-4">
+          <BlockReveal typewriterEnabled={false} delay={0}>
+            <ClientMessageBlock
+              message={block as ClientBlock & { type: 'client_message' }}
+            />
+          </BlockReveal>
+        </div>
+      )
+    }
+
+    // Handle regular lesson blocks
     const blockContent = (() => {
       switch (block.type) {
         case 'content':
@@ -93,22 +109,9 @@ export function BlockStream({
     )
   }
 
-  const renderMessage = (message: ClientMessage) => {
-    return (
-      <div key={`message-${message.id}`} className="mb-4">
-        <BlockReveal typewriterEnabled={false} delay={0}>
-          <ClientMessageBlock message={message} />
-        </BlockReveal>
-      </div>
-    )
-  }
-
   return (
     <div className="interactive-demo-block-stream space-y-4">
-      {/* Render blocks in order */}
       {blocks.map((block, index) => renderBlock(block, index))}
-      {/* Render client messages after blocks */}
-      {clientMessages.map((message) => renderMessage(message))}
     </div>
   )
 }
