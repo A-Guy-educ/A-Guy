@@ -1,34 +1,85 @@
 'use client'
 
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { PlusCircle } from 'lucide-react'
-import { useRef, useState } from 'react'
-import type { ExerciseFile } from '../ask-types'
+import { Loader2, PlusCircle } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
+import type { AskMediaAttachEvent, ExerciseFile } from '../ask-types'
+import { ASK_MEDIA_ATTACH_EVENT } from '../ask-types'
 import { AskExerciseCard } from '../AskExerciseCard'
+
+function dispatchMediaAttach(detail: AskMediaAttachEvent) {
+  window.dispatchEvent(new CustomEvent(ASK_MEDIA_ATTACH_EVENT, { detail }))
+}
 
 export function AskPrimaryContent() {
   const t = useTranslations('homepage.ask')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [files, setFiles] = useState<ExerciseFile[]>([])
+  const [isUploading, setIsUploading] = useState(false)
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Revoke blob URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      files.forEach((f) => {
+        if (f.url.startsWith('blob:')) URL.revokeObjectURL(f.url)
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup only on unmount
+  }, [])
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const newFile: ExerciseFile = {
-        id: Date.now(),
-        title: file.name.replace(/\.[^/.]+$/, ''),
-        url: ev.target?.result as string,
-        date: new Date().toLocaleDateString('he-IL'),
-      }
-      setFiles((prev) => [newFile, ...prev])
-    }
-    reader.readAsDataURL(file)
-
-    // Reset input so same file can be re-uploaded
+    // Reset input immediately so same file can be re-uploaded
     e.target.value = ''
+
+    // Show preview immediately via object URL
+    const previewUrl = URL.createObjectURL(file)
+    const title = file.name.replace(/\.[^/.]+$/, '')
+    const fileId = Date.now()
+    const newFile: ExerciseFile = {
+      id: fileId,
+      title,
+      url: previewUrl,
+      date: new Date().toLocaleDateString('he-IL'),
+      isUploading: true,
+    }
+    setFiles((prev) => [newFile, ...prev])
+    setIsUploading(true)
+
+    try {
+      // Upload to /api/media so the AI can access this image
+      const formData = new FormData()
+      formData.append('file', file)
+      const response = await fetch('/api/media', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      })
+
+      if (!response.ok) throw new Error('Upload failed')
+
+      const doc = await response.json()
+      const mediaId = doc.doc?.id || doc.id
+      const filename = doc.doc?.filename || doc.filename || file.name
+
+      // Mark upload complete and store mediaId
+      setFiles((prev) =>
+        prev.map((f) => (f.id === fileId ? { ...f, mediaId, isUploading: false } : f)),
+      )
+
+      // Notify the chat pane so the AI sees this image with the next message
+      dispatchMediaAttach({ mediaId, filename })
+    } catch {
+      toast.error(t('uploadFailed'))
+      // Remove the failed card and revoke its blob URL
+      URL.revokeObjectURL(previewUrl)
+      setFiles((prev) => prev.filter((f) => f.id !== fileId))
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   return (
@@ -42,9 +93,14 @@ export function AskPrimaryContent() {
         <div className="flex justify-center mb-10">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-3 px-8 py-4 rounded-2xl font-black bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-lg hover:-translate-y-0.5 group"
+            disabled={isUploading}
+            className="flex items-center gap-3 px-8 py-4 rounded-2xl font-black bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-lg hover:-translate-y-0.5 group disabled:opacity-50"
           >
-            <PlusCircle className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+            {isUploading ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : (
+              <PlusCircle className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+            )}
             <span>{t('uploadButton')}</span>
           </button>
           <input

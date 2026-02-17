@@ -259,7 +259,8 @@
       "closeNotebook": "Close Notebook",
       "clearCanvas": "Clear",
       "checkSolution": "Check Solution",
-      "checking": "Checking..."
+      "checking": "Checking...",
+      "uploadFailed": "Failed to upload image. Please try again."
     }
   },
   "admin": {

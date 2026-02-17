@@ -688,6 +688,37 @@ export function useNotebookChat({
     setChatError(null)
   }, [])
 
+  /**
+   * Add externally-uploaded media (e.g. from Ask page upload) to pending attachments.
+   * The media will be sent with the user's next chat message.
+   */
+  const addExternalMedia = useCallback(
+    (mediaId: string, filename: string, mimeType = 'image/jpeg') => {
+      setUploadedMedia((prev) => {
+        if (prev.some((m) => m.id === mediaId)) return prev
+        return [...prev, { id: mediaId, filename, mimeType }]
+      })
+    },
+    [],
+  )
+
+  /**
+   * Send a contextual help prompt with an already-uploaded media ID.
+   * Used for hint/solution actions where the exercise image is already on the server.
+   */
+  const sendContextualHelpWithMediaId = async (prompt: string, mediaId: string) => {
+    if (isLoading || isLoadingHistory) return
+    setIsLoading(true)
+    const context = { exerciseId, lessonId, chapterId, courseId, categoryId }
+    try {
+      await sendMessageSync(prompt, acknowledgment, context, [mediaId])
+    } catch (error) {
+      logger.error({ err: error }, 'Failed to send contextual help with media ID')
+      toast.error(errorMessage)
+      setIsLoading(false)
+    }
+  }
+
   return {
     messages,
     inputValue,
@@ -709,6 +740,7 @@ export function useNotebookChat({
     handleFileSelect,
     removeMedia,
     openFilePicker,
+    addExternalMedia,
     // Error handling
     chatError,
     dismissError,
@@ -718,5 +750,6 @@ export function useNotebookChat({
     addAssistantMessage,
     sendContextualHelp,
     sendContextualHelpWithMedia,
+    sendContextualHelpWithMediaId,
   }
 }

@@ -259,7 +259,8 @@
       "closeNotebook": "סגור מחברת",
       "clearCanvas": "נקה",
       "checkSolution": "בדוק פתרון",
-      "checking": "בודק..."
+      "checking": "בודק...",
+      "uploadFailed": "העלאת התמונה נכשלה. נסה שוב."
     }
   },
   "admin": {

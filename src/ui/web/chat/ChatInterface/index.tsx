@@ -114,9 +114,12 @@ export function ChatInterface({
     // Error handling
     chatError,
     dismissError,
+    // External media injection (Ask page uploads)
+    addExternalMedia,
     // Programmatic contextual help
     sendContextualHelp,
     sendContextualHelpWithMedia,
+    sendContextualHelpWithMediaId,
   } = useNotebookChat({
     initialMessage: t('chatWelcome'),
     authRequiredMessage: t('chatAuthRequired'),
@@ -162,23 +165,54 @@ export function ChatInterface({
     return () => window.removeEventListener('exercise-incorrect-answer', handler)
   }, [])
 
+  // Ask page: attach uploaded exercise images to the chat's pending media
+  const askMediaAttachRef = useRef<(e: Event) => void>(() => {})
+  askMediaAttachRef.current = (e: Event) => {
+    const { mediaId, filename } = (e as CustomEvent).detail as {
+      mediaId: string
+      filename: string
+    }
+    addExternalMedia(mediaId, filename)
+  }
+
+  useEffect(() => {
+    const handler = (e: Event) => askMediaAttachRef.current(e)
+    window.addEventListener('ask-media-attach', handler)
+    return () => window.removeEventListener('ask-media-attach', handler)
+  }, [])
+
   // Ask page actions (hint, solution, check solution from canvas)
   const askActionRef = useRef<(e: Event) => void>(() => {})
   askActionRef.current = (e: Event) => {
-    const { type, title, imageData } = (e as CustomEvent).detail as {
+    const { type, title, imageData, mediaId } = (e as CustomEvent).detail as {
       type: 'hint' | 'solution' | 'check'
       title: string
       imageData?: string
+      mediaId?: string
     }
     onChatInteraction?.()
     if (type === 'hint') {
-      sendContextualHelp(
-        `The student is working on "${title}" and needs a hint. Provide a helpful hint without giving away the answer. Be encouraging.`,
-      )
+      if (mediaId) {
+        sendContextualHelpWithMediaId(
+          `The student is working on "${title}" and needs a hint. Look at the uploaded exercise image carefully. Provide a helpful hint without giving away the answer. Be encouraging.`,
+          mediaId,
+        )
+      } else {
+        sendContextualHelp(
+          `The student is working on "${title}" and needs a hint. Provide a helpful hint without giving away the answer. Be encouraging.`,
+        )
+      }
     } else if (type === 'solution') {
-      sendContextualHelp(
-        `The student is working on "${title}" and wants to see the solution approach. Guide them step by step through the solution.`,
-      )
+      if (mediaId) {
+        sendContextualHelpWithMediaId(
+          `The student is working on "${title}" and wants to see the solution approach. Look at the uploaded exercise image carefully. Guide them step by step through the solution.`,
+          mediaId,
+        )
+      } else {
+        sendContextualHelp(
+          `The student is working on "${title}" and wants to see the solution approach. Guide them step by step through the solution.`,
+        )
+      }
     } else if (type === 'check' && imageData) {
       sendContextualHelpWithMedia(
         `The student drew a solution for "${title}" on the canvas. Analyze the image of their work and tell them if their approach looks correct. Be encouraging and supportive.`,

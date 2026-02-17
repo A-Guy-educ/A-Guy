@@ -21,15 +21,15 @@ export function AskExerciseCard({ file }: AskExerciseCardProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleHint = () => {
-    dispatchAskAction({ type: 'hint', title: file.title })
+    dispatchAskAction({ type: 'hint', title: file.title, mediaId: file.mediaId })
   }
 
   const handleSolution = () => {
-    dispatchAskAction({ type: 'solution', title: file.title })
+    dispatchAskAction({ type: 'solution', title: file.title, mediaId: file.mediaId })
   }
 
   const handleCheckSolution = (imageData: string) => {
-    dispatchAskAction({ type: 'check', title: file.title, imageData })
+    dispatchAskAction({ type: 'check', title: file.title, imageData, mediaId: file.mediaId })
   }
 
   return (
@@ -48,8 +48,9 @@ export function AskExerciseCard({ file }: AskExerciseCardProps) {
           <div className="flex gap-2">
             <button
               onClick={handleHint}
+              disabled={file.isUploading}
               className={cn(
-                'p-2 rounded-xl transition-colors',
+                'p-2 rounded-xl transition-colors disabled:opacity-40',
                 'bg-amber-50 text-amber-600 hover:bg-amber-100',
                 'dark:bg-amber-950/30 dark:text-amber-400 dark:hover:bg-amber-950/50',
               )}
@@ -59,8 +60,9 @@ export function AskExerciseCard({ file }: AskExerciseCardProps) {
             </button>
             <button
               onClick={handleSolution}
+              disabled={file.isUploading}
               className={cn(
-                'p-2 rounded-xl transition-colors',
+                'p-2 rounded-xl transition-colors disabled:opacity-40',
                 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100',
                 'dark:bg-indigo-950/30 dark:text-indigo-400 dark:hover:bg-indigo-950/50',
               )}
