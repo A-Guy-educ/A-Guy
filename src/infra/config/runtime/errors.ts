@@ -24,9 +24,13 @@ export class ConfigKeyNotFoundError extends Error {
 }
 
 export class ConfigValueNotFoundError extends Error {
-  constructor(domain: string, tenantId: string, key?: string) {
-    const keyPart = key ? ` for key "${key}"` : ''
-    super(`Missing config values for domain "${domain}"${keyPart} for tenant ${tenantId}`)
+  constructor(domain: string, tenantId: string, key?: string, customMessage?: string) {
+    if (customMessage) {
+      super(customMessage)
+    } else {
+      const keyPart = key ? ` for key "${key}"` : ''
+      super(`Missing config values for domain "${domain}"${keyPart} for tenant ${tenantId}`)
+    }
     this.name = 'ConfigValueNotFoundError'
   }
 }

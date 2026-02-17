@@ -35,6 +35,7 @@ type PayloadGetter = () => Promise<Payload>
 
 let lazyPayloadGetter: PayloadGetter | null = null
 let lazyLoadAttempted = false
+let lazyLoadPromise: Promise<boolean> | null = null
 
 /**
  * Register a Payload getter for lazy config loading
@@ -54,27 +55,82 @@ function hasLazyLoading(): boolean {
 }
 
 /**
- * Attempt lazy loading of config values
- * Returns true if loaded successfully, false otherwise
+ * Auto-configure lazy loading using Payload config if not already set up
+ * This makes the config system self-sufficient without requiring explicit setup
  */
-async function tryLazyLoad(): Promise<boolean> {
-  if (!lazyPayloadGetter || lazyLoadAttempted) {
-    return false
+async function autoConfigureLazyLoading(): Promise<void> {
+  if (lazyPayloadGetter) {
+    return // Already configured
   }
-
-  lazyLoadAttempted = true
 
   try {
-    const payload = await lazyPayloadGetter()
-    await loadConfigValues(payload)
-    return true
-  } catch (error) {
-    // Log error but don't prevent the function from throwing
-    if (typeof console !== 'undefined' && console?.warn) {
-      console.warn('Failed to lazily load config values:', error)
+    // Dynamically import to avoid circular dependencies and enable tree-shaking
+    const [{ getPayload }, config] = await Promise.all([
+      import('payload'),
+      import('@payload-config'),
+    ])
+
+    lazyPayloadGetter = async () => {
+      return await getPayload({ config: config.default })
     }
+  } catch (error) {
+    // Log warning but don't throw - caller will handle missing config
+    if (typeof console !== 'undefined' && console?.warn) {
+      console.warn('Failed to auto-configure lazy loading for config values:', error)
+    }
+  }
+}
+
+/**
+ * Attempt lazy loading of config values with concurrency protection
+ * Returns true if loaded successfully, false otherwise
+ *
+ * Uses a shared promise to prevent duplicate concurrent loads
+ */
+async function tryLazyLoad(): Promise<boolean> {
+  // If already loading, wait for that operation to complete
+  if (lazyLoadPromise) {
+    return await lazyLoadPromise
+  }
+
+  // If already attempted and failed, don't retry
+  if (lazyLoadAttempted && !configValuesCache) {
     return false
   }
+
+  // Auto-configure lazy loading if not set up
+  if (!lazyPayloadGetter) {
+    await autoConfigureLazyLoading()
+  }
+
+  // Still no getter after auto-configure? Give up
+  if (!lazyPayloadGetter) {
+    lazyLoadAttempted = true
+    return false
+  }
+
+  // Mark as attempted before starting to prevent multiple concurrent attempts
+  lazyLoadAttempted = true
+
+  // Create shared promise for concurrent callers
+  lazyLoadPromise = (async () => {
+    try {
+      const payload = await lazyPayloadGetter!()
+      await loadConfigValues(payload)
+      return true
+    } catch (error) {
+      // Log error but don't throw - let caller handle missing config gracefully
+      if (typeof console !== 'undefined' && console?.warn) {
+        console.warn('Failed to lazily load config values:', error)
+      }
+      return false
+    } finally {
+      // Clear promise after completion so subsequent calls can see the result
+      lazyLoadPromise = null
+    }
+  })()
+
+  return await lazyLoadPromise
 }
 
 // ============================================
@@ -102,22 +158,24 @@ function assertServerSide(): void {
 
 /**
  * Check if config values have been loaded, or try lazy load
+ * 
+ * This function ensures config is always available by:
+ * 1. Returning immediately if already loaded
+ * 2. Auto-configuring lazy loading if needed
+ * 3. Attempting to load config
+ * 4. NEVER throwing - callers handle missing config gracefully
  */
 async function assertLoadedOrLazyLoad(): Promise<void> {
   if (configValuesCache) {
     return // Already loaded
   }
 
-  // Try lazy loading if configured
-  if (hasLazyLoading()) {
-    const loaded = await tryLazyLoad()
-    if (loaded) {
-      return // Lazy load succeeded
-    }
-  }
+  // Try lazy loading (will auto-configure if needed)
+  await tryLazyLoad()
 
-  // Still not loaded - throw original error
-  throw new Error('Config values have not been loaded. Call loadConfigValues() first.')
+  // Note: We don't throw here anymore. If loading failed, configValuesCache
+  // will still be null, and callers (getConfigDomain, getConfigValueByKey)
+  // will handle it gracefully by returning defaults or empty objects.
 }
 
 // ============================================
@@ -308,8 +366,7 @@ export interface ConfigDomainOptions {
  * @param options - Options for tenant ID and error handling
  * @returns The configuration object for the domain
  *
- * @throws Error if config not loaded
- * @throws ConfigValueNotFoundError if domain not found and no default
+ * @throws ConfigValueNotFoundError if domain not found and throwIfNotFound is true
  */
 export async function getConfigDomain<T = Record<string, unknown>>(
   domain: ConfigDomain,
@@ -320,12 +377,30 @@ export async function getConfigDomain<T = Record<string, unknown>>(
 
   const { tenantId, throwIfNotFound = true } = options ?? {}
   const resolvedTenantId = tenantId ?? defaultTenantId
+
+  // If config still not loaded after auto-load attempt, return empty object
+  if (!configValuesCache) {
+    if (throwIfNotFound) {
+      throw new ConfigValueNotFoundError(
+        domain,
+        resolvedTenantId ?? 'unknown',
+        undefined,
+        'Config values could not be loaded',
+      )
+    }
+    return {} as T
+  }
+
   if (!resolvedTenantId) {
-    throw new Error('No tenant ID available for config lookup')
+    // No tenant ID and no default tenant
+    if (throwIfNotFound) {
+      throw new Error('No tenant ID available for config lookup')
+    }
+    return {} as T
   }
 
   // Check tenant-specific cache
-  const tenantDomains = configValuesCache!.values.get(resolvedTenantId)
+  const tenantDomains = configValuesCache.values.get(resolvedTenantId)
   if (tenantDomains?.has(domain)) {
     return tenantDomains.get(domain)! as T
   }
@@ -346,7 +421,6 @@ export async function getConfigDomain<T = Record<string, unknown>>(
  * @param options - Options for tenant ID and default value
  * @returns The configuration value
  *
- * @throws Error if config not loaded
  * @throws ConfigValueNotFoundError if key not found and no default
  */
 export async function getConfigValueByKey<T = unknown>(
@@ -359,12 +433,36 @@ export async function getConfigValueByKey<T = unknown>(
 
   const { tenantId, defaultValue, throwIfNotFound = true } = options ?? {}
   const resolvedTenantId = tenantId ?? defaultTenantId
+
+  // If config still not loaded after auto-load attempt, return default or undefined
+  if (!configValuesCache) {
+    if (defaultValue !== undefined) {
+      return defaultValue
+    }
+    if (!throwIfNotFound) {
+      return undefined as T
+    }
+    throw new ConfigValueNotFoundError(
+      domain,
+      resolvedTenantId ?? 'unknown',
+      key,
+      'Config values could not be loaded',
+    )
+  }
+
   if (!resolvedTenantId) {
+    // No tenant ID and no default tenant
+    if (defaultValue !== undefined) {
+      return defaultValue
+    }
+    if (!throwIfNotFound) {
+      return undefined as T
+    }
     throw new Error('No tenant ID available for config lookup')
   }
 
   // Get domain config
-  const tenantDomains = configValuesCache!.values.get(resolvedTenantId)
+  const tenantDomains = configValuesCache.values.get(resolvedTenantId)
   const domainConfig = tenantDomains?.get(domain)
 
   if (!domainConfig) {
@@ -437,12 +535,17 @@ export async function getConfigDomains(tenantId?: string): Promise<ConfigDomain[
   assertServerSide()
   await assertLoadedOrLazyLoad()
 
+  // If config still not loaded, return empty array
+  if (!configValuesCache) {
+    return []
+  }
+
   const resolvedTenantId = tenantId ?? defaultTenantId
   if (!resolvedTenantId) {
     return []
   }
 
-  const tenantDomains = configValuesCache!.values.get(resolvedTenantId)
+  const tenantDomains = configValuesCache.values.get(resolvedTenantId)
   if (!tenantDomains) {
     return []
   }
