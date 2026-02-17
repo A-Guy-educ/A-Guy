@@ -51,6 +51,13 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   const backUrl = `/courses/${courseSlug}/chapters/${chapterSlug}`
 
+  // Debug logging for lesson type
+  console.debug('[LessonPage] Lesson type:', {
+    type: lesson.type,
+    lessonId: lesson.id,
+    lessonTitle: lesson.title,
+  })
+
   // Interactive Demo: additive code path gated by lesson.type === 'interactive_demo'
   if (lesson.type === 'interactive_demo') {
     const { InteractiveDemoGate } = await import('@/ui/web/interactive-demo/InteractiveDemoGate')
