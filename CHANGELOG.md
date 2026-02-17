@@ -1,3 +1,18 @@
+## 0.12.0 (2026-02-17)
+
+* fix: remove broken V2 integration tests ([8733b86](https://github.com/A-Guy-educ/A-Guy/commit/8733b86))
+* fix: remove broken V2StatusPanel test file ([ad7a658](https://github.com/A-Guy-educ/A-Guy/commit/ad7a658))
+* fix: remove missing css import in exercise content editor ([f14dbcf](https://github.com/A-Guy-educ/A-Guy/commit/f14dbcf))
+* fix(260216-ex-gen-pdf): Fix V2 PDF conversion issues ([b9f1d40](https://github.com/A-Guy-educ/A-Guy/commit/b9f1d40))
+* fix(260216-ex-gen-pdf): replace canvas native module with @napi-rs/canvas ([dc50098](https://github.com/A-Guy-educ/A-Guy/commit/dc50098))
+* style: Fix prettier formatting in verify.md ([cb8eebc](https://github.com/A-Guy-educ/A-Guy/commit/cb8eebc))
+* style: Format code with prettier ([2a14d5a](https://github.com/A-Guy-educ/A-Guy/commit/2a14d5a))
+* feat: Add PDF to exercise conversion v2 services and admin UI enhancements ([2279c5a](https://github.com/A-Guy-educ/A-Guy/commit/2279c5a))
+* feat(ex-gen-pdf): implement V2 PDF-to-exercises conversion feature ([7185c45](https://github.com/A-Guy-educ/A-Guy/commit/7185c45))
+* feat(exercise-conversion): implement V2 PDF-to-exercises image crop pipeline ([6b37aab](https://github.com/A-Guy-educ/A-Guy/commit/6b37aab))
+* test(260216-ex-gen-pdf): Add V2 conversion tests for vision detection and error display ([9618f9a](https://github.com/A-Guy-educ/A-Guy/commit/9618f9a))
+* chore: Update task files for rerun ([43f2729](https://github.com/A-Guy-educ/A-Guy/commit/43f2729))
+
 ## 0.11.0 (2026-02-16)
 
 * Add remark-color-syntax plugin and tests (19/25 passing) ([9397563](https://github.com/A-Guy-educ/A-Guy/commit/9397563))
