@@ -32,12 +32,13 @@ export function useInteractiveSession(
       body: JSON.stringify(request),
     })
 
+    const json = await response.json()
+
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || 'Failed to process action')
+      throw new Error(json?.error?.message || json?.message || 'Failed to process action')
     }
 
-    return response.json()
+    return (json?.data ?? json) as StepResponse
   }, [])
 
   const start = useCallback(async () => {
@@ -121,7 +122,7 @@ export function useInteractiveSession(
         // Keep existing blocks, append new block if provided
         blocks: response.block ? [...state.blocks, response.block] : state.blocks,
         currentBlockIndex: response.block ? state.blocks.length : state.currentBlockIndex,
-        status: response.completed ? 'completed' : 'active',
+        status: response.status,
       })
     } catch {
       setState((prev) => ({ ...prev, isSubmitting: false, status: 'error' }))
