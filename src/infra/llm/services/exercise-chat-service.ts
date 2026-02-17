@@ -226,38 +226,31 @@ async function sendMultimodalToGenkit(
   payload: Payload,
 ): Promise<ExerciseChatResult> {
   // Convert media parts to Genkit-compatible attachments
+  // Uses publicUrl from validated MediaPartWithPath (already resolved with correct baseUrl)
   const attachments: Array<{ data: string; mimeType: string }> = []
 
   for (const mediaPart of mediaPartsWithPath) {
-    if (mediaPart.mediaId) {
-      try {
-        const mediaDoc = await payload.findByID({
-          collection: 'media',
-          id: mediaPart.mediaId,
-          depth: 0,
-        })
-
-        if (mediaDoc && 'url' in mediaDoc && mediaDoc.url) {
-          // Fetch the image and convert to base64
-          const imageUrl = mediaDoc.url.startsWith('/')
-            ? `${process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'}${mediaDoc.url}`
-            : mediaDoc.url
-
-          const response = await fetch(imageUrl)
-          const arrayBuffer = await response.arrayBuffer()
-          const base64 = Buffer.from(arrayBuffer).toString('base64')
-
-          attachments.push({
-            data: base64,
-            mimeType: mediaDoc.mimeType || 'image/jpeg',
-          })
-        }
-      } catch (fetchError) {
+    try {
+      const response = await fetch(mediaPart.publicUrl)
+      if (!response.ok) {
         logger.warn(
-          { err: fetchError, mediaId: mediaPart.mediaId },
-          '[ExerciseChat] Failed to fetch media',
+          { mediaId: mediaPart.mediaId, status: response.status, url: mediaPart.publicUrl },
+          '[ExerciseChat] Failed to fetch media - non-OK response',
         )
+        continue
       }
+      const arrayBuffer = await response.arrayBuffer()
+      const base64 = Buffer.from(arrayBuffer).toString('base64')
+
+      attachments.push({
+        data: base64,
+        mimeType: mediaPart.mimeType || 'image/jpeg',
+      })
+    } catch (fetchError) {
+      logger.warn(
+        { err: fetchError, mediaId: mediaPart.mediaId, url: mediaPart.publicUrl },
+        '[ExerciseChat] Failed to fetch media',
+      )
     }
   }
 
