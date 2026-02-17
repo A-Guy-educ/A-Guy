@@ -99,6 +99,9 @@ export function useNotebookChat({
   const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([])
   const [isUploading, setIsUploading] = useState(false)
 
+  // Persistent media for Ask page — sent with every message, not cleared after send
+  const [askMedia, setAskMedia] = useState<UploadedMedia | null>(null)
+
   // Error state
   const [chatError, setChatError] = useState<ChatError | null>(null)
 
@@ -386,11 +389,19 @@ export function useNotebookChat({
   }, [])
 
   const sendMessage = async (message: string) => {
-    if ((!message.trim() && uploadedMedia.length === 0) || isLoading) return
+    if ((!message.trim() && uploadedMedia.length === 0 && !askMedia) || isLoading) return
 
-    // Capture mediaIds and metadata before clearing
+    // Combine regular pending media + persistent ask media
     const mediaIds = uploadedMedia.map((m) => m.id)
-    const mediaMetadata = uploadedMedia.map((m) => ({ mediaId: m.id, filename: m.filename }))
+    if (askMedia && !mediaIds.includes(askMedia.id)) {
+      mediaIds.push(askMedia.id)
+    }
+    const mediaMetadata = [
+      ...uploadedMedia.map((m) => ({ mediaId: m.id, filename: m.filename })),
+      ...(askMedia && !uploadedMedia.some((m) => m.id === askMedia.id)
+        ? [{ mediaId: askMedia.id, filename: askMedia.filename }]
+        : []),
+    ]
 
     const userMessage: ChatMessage = {
       role: ChatRole.User,
@@ -401,6 +412,7 @@ export function useNotebookChat({
     setInputValue('')
     setIsLoading(true)
 
+    // Clear regular pending media but NOT persistent askMedia
     setUploadedMedia([])
 
     // Track chat message submitted (message length only, NOT content)
@@ -699,9 +711,93 @@ export function useNotebookChat({
     await streamMessage(prompt, acknowledgment, context, { hidden: true })
   }
 
+  /**
+   * Send a contextual help prompt with an image (e.g. canvas drawing).
+   * Uploads the image, then sends via sync path (media requires sync).
+   * No user message bubble shown — only the AI response appears.
+   * @param additionalMediaIds - extra media IDs to include (e.g. the exercise image)
+   */
+  const sendContextualHelpWithMedia = async (
+    prompt: string,
+    imageDataUrl: string,
+    additionalMediaIds?: string[],
+  ) => {
+    if (isLoading || isLoadingHistory) return
+    setIsLoading(true)
+    const context = { exerciseId, lessonId, chapterId, courseId, categoryId }
+
+    try {
+      // Convert data URL to Blob then File
+      const [header, data] = imageDataUrl.split(',')
+      const mime = header.match(/:(.*?);/)?.[1] || 'image/png'
+      const binary = atob(data)
+      const bytes = new Uint8Array(binary.length)
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i)
+      }
+      const file = new File([new Blob([bytes], { type: mime })], 'solution.png', { type: mime })
+
+      // Upload to media endpoint
+      const formData = new FormData()
+      formData.append('file', file)
+      const response = await fetch('/api/media', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Media upload failed')
+      }
+
+      const doc = await response.json()
+      const mediaId = doc.doc?.id || doc.id
+
+      // Send canvas drawing + any additional media (e.g. exercise image)
+      const allMediaIds = [mediaId, ...(additionalMediaIds ?? [])]
+      await sendMessageSync(prompt, acknowledgment, context, allMediaIds)
+    } catch (error) {
+      logger.error({ err: error }, 'Failed to send canvas for check')
+      toast.error(errorMessage)
+      setIsLoading(false)
+    }
+  }
+
   const dismissError = useCallback(() => {
     setChatError(null)
   }, [])
+
+  /**
+   * Set persistent Ask-page media (replaces any previous).
+   * This media is sent with EVERY chat message until cleared.
+   */
+  const addExternalMedia = useCallback(
+    (mediaId: string, filename: string, mimeType = 'image/jpeg') => {
+      setAskMedia({ id: mediaId, filename, mimeType })
+    },
+    [],
+  )
+
+  const clearAskMedia = useCallback(() => {
+    setAskMedia(null)
+  }, [])
+
+  /**
+   * Send a contextual help prompt with an already-uploaded media ID.
+   * Used for hint/solution actions where the exercise image is already on the server.
+   */
+  const sendContextualHelpWithMediaId = async (prompt: string, mediaId: string) => {
+    if (isLoading || isLoadingHistory) return
+    setIsLoading(true)
+    const context = { exerciseId, lessonId, chapterId, courseId, categoryId }
+    try {
+      await sendMessageSync(prompt, acknowledgment, context, [mediaId])
+    } catch (error) {
+      logger.error({ err: error }, 'Failed to send contextual help with media ID')
+      toast.error(errorMessage)
+      setIsLoading(false)
+    }
+  }
 
   return {
     messages,
@@ -724,6 +820,10 @@ export function useNotebookChat({
     handleFileSelect,
     removeMedia,
     openFilePicker,
+    addExternalMedia,
+    // Persistent Ask-page media (sent with every message)
+    askMedia,
+    clearAskMedia,
     // Error handling
     chatError,
     dismissError,
@@ -733,5 +833,7 @@ export function useNotebookChat({
     addAssistantMessage,
     injectExerciseContext,
     sendContextualHelp,
+    sendContextualHelpWithMedia,
+    sendContextualHelpWithMediaId,
   }
 }

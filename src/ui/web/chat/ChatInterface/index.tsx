@@ -140,10 +140,16 @@ export function ChatInterface({
     // Error handling
     chatError,
     dismissError,
+    // External media injection (Ask page uploads)
+    addExternalMedia,
+    askMedia,
+    clearAskMedia,
     // Programmatic message injection
     injectExerciseContext,
     // Contextual help for incorrect answers
     sendContextualHelp,
+    sendContextualHelpWithMedia,
+    sendContextualHelpWithMediaId,
   } = useNotebookChat({
     initialMessage: t('chatWelcome'),
     authRequiredMessage: t('chatAuthRequired'),
@@ -187,6 +193,69 @@ export function ChatInterface({
     const handler = (e: Event) => incorrectAnswerRef.current(e)
     window.addEventListener('exercise-incorrect-answer', handler)
     return () => window.removeEventListener('exercise-incorrect-answer', handler)
+  }, [])
+
+  // Ask page: attach uploaded exercise images to the chat's pending media
+  const askMediaAttachRef = useRef<(e: Event) => void>(() => {})
+  askMediaAttachRef.current = (e: Event) => {
+    const { mediaId, filename } = (e as CustomEvent).detail as {
+      mediaId: string
+      filename: string
+    }
+    addExternalMedia(mediaId, filename)
+  }
+
+  useEffect(() => {
+    const handler = (e: Event) => askMediaAttachRef.current(e)
+    window.addEventListener('ask-media-attach', handler)
+    return () => window.removeEventListener('ask-media-attach', handler)
+  }, [])
+
+  // Ask page actions (hint, solution, check solution from canvas)
+  const askActionRef = useRef<(e: Event) => void>(() => {})
+  askActionRef.current = (e: Event) => {
+    const { type, title, imageData, mediaId } = (e as CustomEvent).detail as {
+      type: 'hint' | 'solution' | 'check'
+      title: string
+      imageData?: string
+      mediaId?: string
+    }
+    onChatInteraction?.()
+    if (type === 'hint') {
+      if (mediaId) {
+        sendContextualHelpWithMediaId(
+          `The student is working on "${title}" and needs a hint. Look at the uploaded exercise image carefully. Provide a helpful hint without giving away the answer. Be encouraging.`,
+          mediaId,
+        )
+      } else {
+        sendContextualHelp(
+          `The student is working on "${title}" and needs a hint. Provide a helpful hint without giving away the answer. Be encouraging.`,
+        )
+      }
+    } else if (type === 'solution') {
+      if (mediaId) {
+        sendContextualHelpWithMediaId(
+          `The student is working on "${title}" and wants to see the solution approach. Look at the uploaded exercise image carefully. Guide them step by step through the solution.`,
+          mediaId,
+        )
+      } else {
+        sendContextualHelp(
+          `The student is working on "${title}" and wants to see the solution approach. Guide them step by step through the solution.`,
+        )
+      }
+    } else if (type === 'check' && imageData) {
+      sendContextualHelpWithMedia(
+        `The student drew a solution for "${title}" on the canvas. You are receiving two images: the first is the student's handwritten work from the canvas, and the second is the original exercise/question. Compare the student's work against the original question and tell them if their approach and answer look correct. Be encouraging and supportive.`,
+        imageData,
+        mediaId ? [mediaId] : undefined,
+      )
+    }
+  }
+
+  useEffect(() => {
+    const handler = (e: Event) => askActionRef.current(e)
+    window.addEventListener('ask-action', handler)
+    return () => window.removeEventListener('ask-action', handler)
   }, [])
 
   // Inject exercise context when student navigates to an exercise
@@ -447,9 +516,23 @@ export function ChatInterface({
           </div>
         )}
 
-        {/* Media Preview Chips */}
-        {uploadedMedia.length > 0 && (
+        {/* Media Preview Chips — persistent ask media + regular uploads */}
+        {(askMedia || uploadedMedia.length > 0) && (
           <div className="flex flex-wrap gap-2 mb-2.5 max-w-[850px] mx-auto">
+            {askMedia && (
+              <div className="flex items-center gap-1.5 bg-primary/10 rounded-full px-3 py-1.5 text-sm border border-primary/30">
+                <ImageIcon className="w-4 h-4 text-primary" />
+                <span className="max-w-[120px] truncate text-foreground">{askMedia.filename}</span>
+                <button
+                  type="button"
+                  onClick={clearAskMedia}
+                  className="p-0.5 hover:bg-destructive/20 rounded-full transition-colors"
+                  aria-label={tCourses('chatRemoveFile')}
+                >
+                  <X className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+                </button>
+              </div>
+            )}
             {uploadedMedia.map((media) => (
               <div
                 key={media.id}

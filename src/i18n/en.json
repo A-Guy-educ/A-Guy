@@ -251,7 +251,17 @@
       "chatInputPlaceholder": "Ask a question...",
       "chatAuthRequired": "Please sign in to ask questions",
       "loading": "Loading...",
-      "noCourse": "No course selected. Please select a course from the home page."
+      "noCourse": "No course selected. Please select a course from the home page.",
+      "pageTitle": "My Practice Space",
+      "pageSubtitle": "Personal progress for every goal.",
+      "uploadButton": "Upload New Exercise",
+      "replaceButton": "Replace Exercise",
+      "openNotebook": "Open Notebook",
+      "closeNotebook": "Close Notebook",
+      "clearCanvas": "Clear",
+      "checkSolution": "Check Solution",
+      "checking": "Checking...",
+      "uploadFailed": "Failed to upload image. Please try again."
     }
   },
   "admin": {
