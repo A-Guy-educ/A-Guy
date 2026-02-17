@@ -24,18 +24,30 @@ export async function getInteractiveDemoConfig(tenantId?: string): Promise<Inter
       tenantId,
     })
     const merged = { ...DEFAULTS, ...config }
-    
+
     // Normalize enabled to boolean (handles string "true"/"false" from JSON)
     // Config may come as string from JSON parsing, so we need to handle both cases
     const enabledValue = merged.enabled as unknown
     const normalizedEnabled = Boolean(
-      enabledValue === true || 
-      enabledValue === 'true' || 
-      (typeof enabledValue === 'string' && enabledValue.toLowerCase() === 'true')
+      enabledValue === true ||
+        enabledValue === 'true' ||
+        (typeof enabledValue === 'string' && enabledValue.toLowerCase() === 'true'),
     )
-    
+
+    // TEMPORARY DEBUG LOGGING (per requirement #2)
+    console.log('[getInteractiveDemoConfig] Debug:', {
+      tenantId,
+      rawConfig: config,
+      merged,
+      enabledValue,
+      'typeof enabledValue': typeof enabledValue,
+      normalizedEnabled,
+      'normalizedEnabled === true': normalizedEnabled === true,
+    })
+
     return { ...merged, enabled: normalizedEnabled }
-  } catch {
+  } catch (error) {
+    console.error('[getInteractiveDemoConfig] Error:', error)
     return DEFAULTS
   }
 }

@@ -25,7 +25,7 @@ describe('getInteractiveDemoConfig', () => {
     // Get the mocked function
     const configModule = await import('@/infra/config/runtime/config-values')
     getConfigDomain = configModule.getConfigDomain as ReturnType<typeof vi.fn>
-    
+
     // Import the function under test (after mocks are set up)
     const demoConfigModule = await import('@/server/config/interactive-demo-config')
     getInteractiveDemoConfig = demoConfigModule.getInteractiveDemoConfig
@@ -82,15 +82,15 @@ describe('getInteractiveDemoConfig', () => {
   it('should pass tenantId to getConfigDomain', async () => {
     const testTenantId = 'test-tenant-123'
     getConfigDomain.mockResolvedValue({ enabled: true })
-    
+
     await getInteractiveDemoConfig(testTenantId)
-    
+
     expect(getConfigDomain).toHaveBeenCalledWith(
       ConfigDomain.InteractiveDemo,
       expect.objectContaining({
         tenantId: testTenantId,
         throwIfNotFound: false,
-      })
+      }),
     )
   })
 })

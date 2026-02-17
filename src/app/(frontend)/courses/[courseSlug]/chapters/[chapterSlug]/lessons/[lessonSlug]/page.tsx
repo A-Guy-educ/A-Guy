@@ -51,15 +51,27 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   const backUrl = `/courses/${courseSlug}/chapters/${chapterSlug}`
 
-  // Debug logging for lesson type
-  console.debug('[LessonPage] Lesson type:', {
-    type: lesson.type,
-    lessonId: lesson.id,
-    lessonTitle: lesson.title,
-  })
-
   // Interactive Demo: additive code path gated by lesson.type === 'interactive_demo'
   if (lesson.type === 'interactive_demo') {
+    // Extract tenantId from lesson (same pattern as exercise-conversion-service.ts)
+    const tenantId =
+      typeof lesson.tenant === 'string'
+        ? lesson.tenant
+        : ((lesson.tenant as { id: string } | null)?.id ?? '')
+
+    const { getInteractiveDemoConfig } = await import('@/server/config/interactive-demo-config')
+    // ConfigDomain.InteractiveDemo maps to 'interactive_demo' in ConfigValues collection
+    // (defined in src/infra/config/config-constants.ts:30)
+    const config = await getInteractiveDemoConfig(tenantId)
+
+    // TEMPORARY DEBUG LOGGING (per requirement #1)
+    console.log('[LessonPage] Interactive Demo Debug:', {
+      'lesson.type': lesson.type,
+      tenantId,
+      'isInteractiveDemoEnabled': config.enabled,
+      'lesson.type === interactive_demo': lesson.type === 'interactive_demo',
+    })
+    
     const { InteractiveDemoGate } = await import('@/ui/web/interactive-demo/InteractiveDemoGate')
     return (
       <>
@@ -69,6 +81,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           lessonTitle={lesson.title}
           backUrl={backUrl}
           typewriterEnabled={lesson.typewriterEnabled ?? true}
+          isInteractiveDemoEnabled={config.enabled}
         />
       </>
     )
