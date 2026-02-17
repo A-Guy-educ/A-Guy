@@ -98,8 +98,8 @@ export async function cropExerciseImage(
   if (opts.padding > 0) {
     cropX = Math.max(0, cropX - opts.padding)
     cropY = Math.max(0, cropY - opts.padding)
-    cropWidth = Math.min(pageWidth - cropX, cropWidth + opts.padding * 2)
-    cropHeight = Math.min(pageHeight - cropY, cropHeight + opts.padding * 2)
+    cropWidth = Math.min(Math.floor(pageWidth) - cropX, cropWidth + opts.padding * 2)
+    cropHeight = Math.min(Math.floor(pageHeight) - cropY, cropHeight + opts.padding * 2)
   }
 
   // Validate minimum size
@@ -115,21 +115,23 @@ export async function cropExerciseImage(
     )
   }
 
-  // Ensure crop stays within image bounds
-  cropX = Math.min(cropX, pageWidth - 1)
-  cropY = Math.min(cropY, pageHeight - 1)
-  cropWidth = Math.min(cropWidth, pageWidth - cropX)
-  cropHeight = Math.min(cropHeight, pageHeight - cropY)
+  // Ensure crop stays within image bounds and all values are integers (sharp requires ints)
+  const imgW = Math.floor(pageWidth)
+  const imgH = Math.floor(pageHeight)
+  cropX = Math.min(cropX, imgW - 1)
+  cropY = Math.min(cropY, imgH - 1)
+  cropWidth = Math.min(cropWidth, imgW - cropX)
+  cropHeight = Math.min(cropHeight, imgH - cropY)
 
   // Perform crop using sharp
   const sharp = (await import('sharp')).default
 
   const croppedBuffer = await sharp(pageImageBuffer)
     .extract({
-      left: cropX,
-      top: cropY,
-      width: cropWidth,
-      height: cropHeight,
+      left: Math.round(cropX),
+      top: Math.round(cropY),
+      width: Math.round(cropWidth),
+      height: Math.round(cropHeight),
     })
     .toFormat(opts.format, { quality: opts.quality })
     .toBuffer()

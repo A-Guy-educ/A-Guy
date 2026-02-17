@@ -1,8 +1,9 @@
 /**
- * V2 Vision Bounding Box Detection Service
+ * V2 Vision Exercise Start Detection Service
  *
- * Detects exercise bounding boxes in PDF pages using Vision LLM.
- * Renders PDF pages to images, sends to LLM, and parses bounding box responses.
+ * Detects exercise start positions and content region bounds on PDF pages.
+ * Uses Vision LLM to identify where each exercise begins (Y-coordinate),
+ * and the content region boundaries (excluding headers/footers).
  *
  * @fileType service
  * @domain ai
@@ -17,152 +18,78 @@ import {
 } from '@/infra/llm/providers/factory'
 
 /**
- * Detected exercise bounding box from Vision LLM
+ * A detected exercise start position on a single page.
  */
-export interface DetectedExercise {
-  bbox: {
-    x: number
-    y: number
-    width: number
-    height: number
-  }
-  label?: string
-  confidence?: number
+export interface ExerciseStart {
+  label: string
+  startY: number // normalized 0-1
 }
 
 /**
- * Result of bounding box detection for a page
+ * Detection result for a single page.
  */
-export interface BboxDetectionResult {
-  detections: DetectedExercise[]
-  pageImageBuffer: Buffer
-  pageWidth: number
-  pageHeight: number
+export interface PageDetectionResult {
+  contentStartY: number // normalized 0-1, below header
+  contentEndY: number // normalized 0-1, above footer
+  continuesFromPrevious: boolean
+  exercises: ExerciseStart[]
 }
 
 /**
- * Hardcoded vision prompt for exercise detection
+ * Vision prompt that asks for exercise start positions and content bounds only.
+ * Much simpler than asking for full bounding boxes — the LLM only needs to
+ * identify WHERE each exercise begins, not where it ends.
  */
-const VISION_DETECTION_PROMPT = `Analyze this PDF page image and identify all individual exercises.
+/**
+ * Maximum exercises expected per page. If the LLM returns more,
+ * it's likely over-detecting sub-questions as exercises.
+ */
+const MAX_EXERCISES_PER_PAGE = 4
 
-For each exercise, provide a bounding box in normalized coordinates (0-1 scale) where:
-- x, y: top-left corner
-- width, height: dimensions
+const VISION_PROMPT = `You are analyzing a scanned math exam page. Your task is to find ONLY the top-level exercise numbers.
 
-Return ONLY a JSON array with this schema:
-[
-  {
-    "bbox": { "x": 0.1, "y": 0.2, "width": 0.3, "height": 0.15 },
-    "label": "1"  // optional exercise number/label if visible
-  }
-]
+CRITICAL RULES:
+- A "top-level exercise" has a MAIN exercise number like: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+  Written as: "1.", "2.", ".1", ".2" (in Hebrew RTL), "שאלה 1", "שאלה 2"
+- Sub-parts like א, ב, ג, a, b, c, (1), (2), i, ii are NOT exercises — IGNORE THEM
+- Most exam pages have only 1-3 top-level exercises. If you find more than 4, you are probably counting sub-parts as exercises — re-examine.
+- An answer key / solution page is NOT an exercise page — return empty exercises array
 
-Rules:
-- Each exercise = one bounding box (no merging across pages)
-- Include only visible exercises, not page headers/footers
-- Return empty array [] if no exercises found
-- Coordinates must be normalized 0-1
-- Do not include any markdown formatting, just raw JSON
+Return ONLY a JSON object:
+{
+  "contentStartY": 0.06,
+  "contentEndY": 0.93,
+  "continuesFromPrevious": false,
+  "exercises": [
+    { "label": "1", "startY": 0.08 },
+    { "label": "2", "startY": 0.55 }
+  ]
+}
+
+Y values are normalized 0-1 (0 = top of page, 1 = bottom).
+contentStartY/contentEndY = bounds of actual content (exclude headers, footers, page numbers).
+exercises = ONLY top-level exercise starts. Label must be the exercise NUMBER only (e.g. "1", "2", "3").
+continuesFromPrevious = true if the page starts mid-exercise with no new exercise number at the top.
+If the page is an answer key or has no exercises, return empty exercises array.
+Do not include markdown formatting — raw JSON only.
 `
 
 /**
- * Detect exercise bounding boxes in a PDF page using Vision LLM.
- *
- * @param pdfBuffer - The full PDF file buffer
- * @param pageIndex - 0-based page index to process
- * @param payload - Payload instance for LLM provider access
- * @returns Detection result with bounding boxes and rendered page image
+ * Detect exercise start positions and content bounds on a page image.
  */
-export async function detectExerciseBboxes(
-  pdfBuffer: Buffer,
-  pageIndex: number,
-  payload: Payload,
-): Promise<BboxDetectionResult> {
-  // Render PDF page to image
-  const pageImageResult = await renderPdfPageToImage(pdfBuffer, pageIndex)
-
-  // Call Vision LLM for bounding box detection
-  const detections = await detectBboxesWithVision(pageImageResult.pageImageBuffer, payload)
-
-  return {
-    detections,
-    pageImageBuffer: pageImageResult.pageImageBuffer,
-    pageWidth: pageImageResult.pageWidth,
-    pageHeight: pageImageResult.pageHeight,
-  }
-}
-
-/**
- * Render a single PDF page to a PNG image buffer using pdfjs-dist and canvas.
- */
-async function renderPdfPageToImage(
-  pdfBuffer: Buffer,
-  pageIndex: number,
-): Promise<{ pageImageBuffer: Buffer; pageWidth: number; pageHeight: number }> {
-  // Dynamic imports for pdfjs-dist
-  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const { createCanvas } = await import('@napi-rs/canvas')
-
-  // Load PDF document
-  // pdfjs-dist v4.x requires Uint8Array, not Node.js Buffer
-  const loadingTask = pdfjsLib.getDocument({
-    data: new Uint8Array(pdfBuffer),
-    useSystemFonts: true,
-    enableXfa: false,
-  })
-
-  const pdf = await loadingTask.promise
-
-  // Get the specific page (0-indexed)
-  const page = await pdf.getPage(pageIndex + 1) // pdfjs-dist uses 1-based indexing
-
-  // Get page dimensions with 2x scale for better quality
-  const viewport = page.getViewport({ scale: 2.0 })
-  const { width, height } = viewport
-
-  // Create canvas and render page
-  const canvas = createCanvas(width, height)
-  const ctx = canvas.getContext('2d') as unknown as CanvasRenderingContext2D
-
-  if (!ctx) {
-    throw new Error('Failed to get canvas context')
-  }
-
-  // White background for proper image handling
-  ctx.fillStyle = '#FFFFFF'
-  ctx.fillRect(0, 0, width, height)
-
-  // Render page to canvas
-  await page.render({
-    canvasContext: ctx,
-    viewport,
-  }).promise
-
-  // Convert to PNG buffer using @napi-rs/canvas encode method
-  const pageImageBuffer = Buffer.from(await canvas.encode('png'))
-
-  return { pageImageBuffer, pageWidth: width, pageHeight: height }
-}
-
-/**
- * Send page image to Vision LLM and parse bounding box response.
- */
-async function detectBboxesWithVision(
+export async function detectExerciseStarts(
   pageImageBuffer: Buffer,
   payload: Payload,
-): Promise<DetectedExercise[]> {
-  // Get LLM provider
+): Promise<PageDetectionResult> {
   const provider = await getLLMProvider(payload)
   const providerType = await getProviderTypeFromEnv(payload)
   const modelConfig = getProviderModelConfig(providerType, 'PDF_TO_EXERCISE')
 
-  // Convert image to base64
   const base64Image = pageImageBuffer.toString('base64')
 
-  // Call LLM with image attachment
   const result = await provider.generateMultimodalCompletion(
     {
-      prompt: VISION_DETECTION_PROMPT,
+      prompt: VISION_PROMPT,
       model: modelConfig,
       attachments: [
         {
@@ -174,81 +101,62 @@ async function detectBboxesWithVision(
     payload,
   )
 
-  // Parse response
-  return parseBboxResponse(result.text)
+  return parseDetectionResponse(result.text)
 }
 
 /**
- * Parse LLM response into structured bounding boxes.
- * Handles various response formats and validates coordinates.
+ * Parse LLM response into structured detection result.
  */
-function parseBboxResponse(response: string): DetectedExercise[] {
+function parseDetectionResponse(response: string): PageDetectionResult {
+  const fallback: PageDetectionResult = {
+    contentStartY: 0,
+    contentEndY: 1,
+    continuesFromPrevious: false,
+    exercises: [],
+  }
+
   try {
-    // Clean response - remove markdown code blocks if present
-    const cleanedResponse = response
+    const cleaned = response
       .replace(/```json\s*/gi, '')
       .replace(/```\s*/g, '')
       .trim()
 
-    const parsed = JSON.parse(cleanedResponse)
+    const parsed = JSON.parse(cleaned)
 
-    if (!Array.isArray(parsed)) {
-      console.warn('[V2 Vision] Response is not an array, returning empty')
-      return []
+    const contentStartY = clamp01(parsed.contentStartY ?? 0)
+    const contentEndY = clamp01(parsed.contentEndY ?? 1)
+    const continuesFromPrevious = parsed.continuesFromPrevious === true
+
+    const exercises: ExerciseStart[] = []
+    if (Array.isArray(parsed.exercises)) {
+      for (const item of parsed.exercises) {
+        if (typeof item.startY !== 'number') continue
+        exercises.push({
+          label: typeof item.label === 'string' ? item.label : '',
+          startY: clamp01(item.startY),
+        })
+      }
     }
 
-    // Validate and normalize each detection
-    const validDetections: DetectedExercise[] = []
+    // Sort by startY (top to bottom)
+    exercises.sort((a, b) => a.startY - b.startY)
 
-    for (let i = 0; i < parsed.length; i++) {
-      const item = parsed[i]
-
-      if (!item.bbox || typeof item.bbox !== 'object') {
-        console.warn(`[V2 Vision] Item ${i} missing valid bbox, skipping`)
-        continue
-      }
-
-      const bbox = item.bbox
-
-      // Validate bbox has required properties and values are in valid range
-      if (
-        typeof bbox.x !== 'number' ||
-        typeof bbox.y !== 'number' ||
-        typeof bbox.width !== 'number' ||
-        typeof bbox.height !== 'number'
-      ) {
-        console.warn(`[V2 Vision] Item ${i} has invalid bbox values, skipping`)
-        continue
-      }
-
-      // Clamp values to 0-1 range
-      const normalizedBbox = {
-        x: Math.max(0, Math.min(1, bbox.x)),
-        y: Math.max(0, Math.min(1, bbox.y)),
-        width: Math.max(0, Math.min(1, bbox.width)),
-        height: Math.max(0, Math.min(1, bbox.height)),
-      }
-
-      // Skip zero-area boxes
-      if (normalizedBbox.width === 0 || normalizedBbox.height === 0) {
-        console.warn(`[V2 Vision] Item ${i} has zero area, skipping`)
-        continue
-      }
-
-      validDetections.push({
-        bbox: normalizedBbox,
-        label: typeof item.label === 'string' ? item.label : undefined,
-        confidence: typeof item.confidence === 'number' ? item.confidence : undefined,
-      })
+    // Guard: if LLM over-detected (likely counting sub-questions), keep only the first few
+    if (exercises.length > MAX_EXERCISES_PER_PAGE) {
+      console.warn(
+        `[V2 Vision] LLM returned ${exercises.length} exercises (max ${MAX_EXERCISES_PER_PAGE}), likely over-detecting. Truncating.`,
+      )
+      exercises.length = MAX_EXERCISES_PER_PAGE
     }
 
-    // Sort by vertical position (top to bottom)
-    validDetections.sort((a, b) => a.bbox.y - b.bbox.y)
-
-    return validDetections
+    return { contentStartY, contentEndY, continuesFromPrevious, exercises }
   } catch (error) {
-    console.error('[V2 Vision] Failed to parse response:', error)
+    console.error('[V2 Vision] Failed to parse detection response:', error)
     console.debug('[V2 Vision] Raw response:', response)
-    return []
+    return fallback
   }
+}
+
+function clamp01(v: number): number {
+  return Math.max(0, Math.min(1, v))
 }

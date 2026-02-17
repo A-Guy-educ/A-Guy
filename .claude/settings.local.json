@@ -31,7 +31,11 @@
       "Bash(pnpm tsx:*)",
       "Bash(git add:*)",
       "Bash(kill:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm approve-builds:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(node:*)"
     ]
   },
   "mcpServers": {}
