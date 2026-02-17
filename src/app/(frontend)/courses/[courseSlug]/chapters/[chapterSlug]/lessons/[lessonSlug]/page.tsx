@@ -67,10 +67,10 @@ export default async function LessonPage({ params }: LessonPageProps) {
     console.log('[LessonPage] Interactive Demo Debug:', {
       'lesson.type': lesson.type,
       tenantId,
-      'isInteractiveDemoEnabled': config.enabled,
+      isInteractiveDemoEnabled: config.enabled,
       'lesson.type === interactive_demo': lesson.type === 'interactive_demo',
     })
-    
+
     const { InteractiveDemoGate } = await import('@/ui/web/interactive-demo/InteractiveDemoGate')
     return (
       <>

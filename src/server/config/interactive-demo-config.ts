@@ -30,8 +30,8 @@ export async function getInteractiveDemoConfig(tenantId?: string): Promise<Inter
     const enabledValue = merged.enabled as unknown
     const normalizedEnabled = Boolean(
       enabledValue === true ||
-        enabledValue === 'true' ||
-        (typeof enabledValue === 'string' && enabledValue.toLowerCase() === 'true'),
+      enabledValue === 'true' ||
+      (typeof enabledValue === 'string' && enabledValue.toLowerCase() === 'true'),
     )
 
     // TEMPORARY DEBUG LOGGING (per requirement #2)
