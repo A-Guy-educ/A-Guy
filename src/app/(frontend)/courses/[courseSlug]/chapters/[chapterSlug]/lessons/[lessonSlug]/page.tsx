@@ -1,3 +1,4 @@
+import { DynamicLesson } from '@/demos/dynamic-lesson'
 import type { Media } from '@/payload-types'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
