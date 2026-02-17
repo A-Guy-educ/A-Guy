@@ -47,12 +47,7 @@ export function setPayloadGetterForLazyLoading(getter: PayloadGetter): void {
   lazyPayloadGetter = getter
 }
 
-/**
- * Check if lazy loading is configured
- */
-function hasLazyLoading(): boolean {
-  return lazyPayloadGetter !== null && !lazyLoadAttempted
-}
+
 
 /**
  * Auto-configure lazy loading using Payload config if not already set up
