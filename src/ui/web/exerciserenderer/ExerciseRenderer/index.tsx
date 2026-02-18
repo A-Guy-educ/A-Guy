@@ -231,7 +231,7 @@ export function ExerciseRenderer({
 
               // Question blocks - render with answer UI
               const question = block as QuestionBlock
-              
+
               // Determine section label and direction based on locale
               const sectionLabel = locale === 'he' ? 'א' : 'A'
               const subLabel = `.${questionIndex}`

@@ -56,12 +56,7 @@ export function QuestionCard({
     >
       {/* Question Label with Bubble */}
       {sectionLabel && subLabel && (
-        <div
-          className={cn(
-            'flex items-center gap-2 mb-4',
-            dir === 'rtl' && 'flex-row-reverse',
-          )}
-        >
+        <div className={cn('flex items-center gap-2 mb-4', dir === 'rtl' && 'flex-row-reverse')}>
           {showBubble && (
             <div className="w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm">
               <span className="font-bold text-sm">{sectionLabel}</span>
