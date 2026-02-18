@@ -230,9 +230,11 @@ export function ExerciseRenderer({
               // Question blocks - render with answer UI
               const question = block as QuestionBlock
 
-              // Increment counter only for question_select and question_free_response
+              // Increment counter for all question types
               const shouldNumber =
-                question.type === 'question_select' || question.type === 'question_free_response'
+                question.type === 'question_select' ||
+                question.type === 'question_free_response' ||
+                question.type === 'question_table'
 
               if (shouldNumber) {
                 questionIndex++

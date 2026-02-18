@@ -38,9 +38,9 @@
 ## Key Design Decisions
 
 ### 1. Numbering Logic
-- **Only number**: `question_select` and `question_free_response`
-- **Don't number**: `rich_text`, `latex`, `question_table`
-- **Rationale**: Follows spec requirement to number only interactive questions
+- **Only number**: `question_select`, `question_free_response`, and `question_table`
+- **Don't number**: `rich_text`, `latex`
+- **Rationale**: All rendered question blocks should be numbered for consistency
 
 ### 2. Counter Scope
 - Counter is local to each ExerciseRenderer instance

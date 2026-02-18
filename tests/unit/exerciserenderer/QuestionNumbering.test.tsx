@@ -279,8 +279,8 @@ describe('Exercise Question Numbering', () => {
     })
   })
 
-  describe('Table questions should not be numbered', () => {
-    it('should not show numbering for question_table blocks', () => {
+  describe('Table questions should be numbered', () => {
+    it('should show numbering for question_table blocks', () => {
       const content: ExerciseContentData = {
         blocks: [
           {
@@ -327,12 +327,10 @@ describe('Exercise Question Numbering', () => {
 
       const { container } = renderWithI18n(<ExerciseRenderer content={content} />, 'en')
 
-      // Should have A.1 and A.2 for non-table questions
+      // Should have A.1, A.2, and A.3 for all question types including table
       expect(container.textContent).toContain('A.1')
       expect(container.textContent).toContain('A.2')
-      
-      // Should not have A.3 since table is not numbered
-      expect(container.textContent).not.toContain('A.3')
+      expect(container.textContent).toContain('A.3')
     })
   })
 })

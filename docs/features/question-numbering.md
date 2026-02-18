@@ -28,11 +28,11 @@ Each exercise now displays standardized numbering for questions:
 #### What Gets Numbered
 - `question_select` (all variants: true/false, MCQ)
 - `question_free_response`
+- `question_table`
 
 #### What Doesn't Get Numbered
 - `rich_text` blocks
 - `latex` blocks (if present)
-- `question_table` blocks
 
 ### Visual Design
 
