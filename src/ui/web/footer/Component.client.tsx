@@ -48,14 +48,11 @@ export function FooterClient({ navItems, version }: FooterClientProps) {
             )
           })}
           <span className="text-muted-foreground/30">|</span>
-          <SystemLink href="/privacy" className="text-xs text-muted-foreground whitespace-nowrap">
+          <SystemLink href="/privacy" className="text-xs text-muted-foreground">
             {t('privacy')}
           </SystemLink>
           <span className="text-muted-foreground/30">|</span>
-          <SystemLink
-            href="/accessibility"
-            className="text-xs text-muted-foreground whitespace-nowrap"
-          >
+          <SystemLink href="/accessibility" className="text-xs text-muted-foreground">
             {t('accessibility')}
           </SystemLink>
           <span className="text-muted-foreground/30">|</span>
