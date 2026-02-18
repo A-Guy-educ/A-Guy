@@ -9,6 +9,8 @@
 import React, { useMemo, useRef, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
+import { useLocale } from '@/ui/web/providers/I18n'
+import { getDirection } from '@/i18n/config'
 import { Card } from '@/ui/web/components/card'
 import { XCircle } from 'lucide-react'
 import type {
@@ -69,6 +71,7 @@ export function ExerciseRenderer({
   mediaMap = EMPTY_MEDIA_MAP,
 }: ExerciseRendererProps) {
   const t = useTranslations('courses')
+  const locale = useLocale()
 
   const errorMessages: AnswerErrorMessages = useMemo(
     () => ({
@@ -206,7 +209,7 @@ export function ExerciseRenderer({
     <MediaMapProvider value={mediaMap}>
       <div className={cn('w-full max-w-3xl mx-auto', className)}>
         <div className="flex flex-col gap-6">
-          {content.blocks.map((block) => {
+          {content.blocks.map((block, index) => {
             // Rich text block - just render content
             if (block.type === 'rich_text') {
               return (
@@ -218,6 +221,22 @@ export function ExerciseRenderer({
                 </div>
               )
             }
+
+            // Calculate question index for numbering
+            // Count only question_select and question_free_response blocks before this one
+            const questionIndex =
+              content.blocks
+                .slice(0, index)
+                .filter(
+                  (b) =>
+                    b.type === 'question_select' || b.type === 'question_free_response',
+                ).length + 1
+
+            // Determine section label and direction based on locale
+            const sectionLabel = locale === 'he' ? 'א' : 'A'
+            const subLabel = `.${questionIndex}`
+            const showBubble = questionIndex === 1
+            const dir = getDirection(locale as 'en' | 'he')
 
             // Question blocks - render with answer UI
             const question = block as QuestionBlock
@@ -244,6 +263,10 @@ export function ExerciseRenderer({
                 checkAnswerText={t('checkAnswer')}
                 correctText={t('correct')}
                 incorrectText={t('incorrect')}
+                sectionLabel={sectionLabel}
+                subLabel={subLabel}
+                showBubble={showBubble}
+                dir={dir}
               >
                 {/* Render appropriate question component based on type */}
                 {question.type === 'question_select' && question.variant === 'true_false' && (
