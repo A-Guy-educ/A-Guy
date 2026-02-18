@@ -14,14 +14,7 @@ import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { claimGuestConversations } from '@/server/services/guest-session-upgrade'
 import { clearGuestSessionCookie, GUEST_SESSION_COOKIE_NAME } from '@/server/services/guest-session'
 
-// Set to true to re-enable email/password signup
-const EMAIL_SIGNUP_ENABLED = false
-
 export async function signupAction(formData: FormData): Promise<SignupResult> {
-  if (!EMAIL_SIGNUP_ENABLED) {
-    return { success: false, message: 'Email signup is disabled. Please use Google sign-in.' }
-  }
-
   try {
     // 1. Extract data
     const rawData = {
