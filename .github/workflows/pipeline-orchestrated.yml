@@ -166,6 +166,20 @@ jobs:
           # REST: everything after subcommand (use awk to correctly handle single-word input)
           REST=$(echo "$CMD" | awk '{for(i=2;i<=NF;i++) printf "%s ", $i; print ""}' | xargs)
 
+          # Handle empty command: /oc with no subcommand defaults to full
+          if [[ -z "$SUBCMD" ]]; then
+            echo "No subcommand provided, defaulting to full"
+            SUBCMD="full"
+          fi
+
+          # Handle task-id as subcommand: /oc 260218-task defaults to full with that task
+          if echo "$SUBCMD" | grep -qE '^[0-9]{6}-[a-zA-Z0-9-]+$'; then
+            echo "Task ID provided as subcommand, defaulting to full"
+            # Move task-id to REST position, use full mode
+            REST="$SUBCMD $REST"
+            SUBCMD="full"
+          fi
+
           # Validate subcommand
           case "$SUBCMD" in
             spec|impl|rerun|status|full)
@@ -174,7 +188,7 @@ jobs:
             *)
               echo "=== Error: Unknown subcommand: $SUBCMD ==="
               echo "Valid: spec, impl, rerun, status, full"
-              gh issue comment $ISSUE_NUMBER -R "${{ github.repository }}" --body "❌ Unknown command \`$SUBCMD\`. Valid commands: \`spec\`, \`impl\`, \`rerun\`, \`status\`, \`full\`"
+              gh issue comment $ISSUE_NUMBER -R "${{ github.repository }}" --body "❌ Unknown command \`$SUBCMD\`. Valid commands: \`spec\`, \`impl\`, \`rerun\`, \`status\`, \`full\`, or omit for full pipeline"
               exit 0
               ;;
           esac
