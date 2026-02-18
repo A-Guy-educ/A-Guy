@@ -20,7 +20,7 @@ interface HeaderNavProps {
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({ data, user, isAuthLoading }) => {
   const tCommon = useTranslations('common.header')
-  const navItems = data?.navItems || []
+  const navItems = (data?.navItems || []).filter(({ link }) => link?.url !== '/signup')
 
   // Group navigation items by type
   const primaryLinks = navItems.slice(0, Math.ceil(navItems.length / 2))
