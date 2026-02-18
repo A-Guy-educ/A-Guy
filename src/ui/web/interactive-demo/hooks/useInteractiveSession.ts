@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import type { SessionState, StepRequest, StepResponse } from '../types'
+import type { EventLogEntry, SessionState, StepRequest, StepResponse } from '../types'
 
 interface UseInteractiveSessionReturn extends SessionState {
   start: () => Promise<void>
@@ -25,6 +25,12 @@ export function useInteractiveSession(
     remediation: null,
     isSubmitting: false,
     totalBlocks: 0,
+    eventLog: [],
+  })
+
+  const pushLog = (label: EventLogEntry['label']): EventLogEntry => ({
+    timestamp: new Date().toISOString(),
+    label,
   })
 
   const callApi = useCallback(async (request: StepRequest): Promise<StepResponse> => {
@@ -63,6 +69,7 @@ export function useInteractiveSession(
         remediation: null,
         isSubmitting: false,
         totalBlocks: response.totalBlocks || 0,
+        eventLog: [pushLog('start')],
       })
     } catch {
       setState((prev) => ({ ...prev, status: 'error' }))
@@ -96,6 +103,7 @@ export function useInteractiveSession(
           totalBlocks: response.totalBlocks || prev.totalBlocks,
           // Keep existing blocks, append new block if provided
           blocks: response.block ? [...prev.blocks, response.block] : prev.blocks,
+          eventLog: [...prev.eventLog, pushLog('answer')],
         }))
       } catch {
         setState((prev) => ({ ...prev, isSubmitting: false, status: 'error' }))
@@ -128,6 +136,7 @@ export function useInteractiveSession(
         // Keep existing blocks, append new block if provided
         blocks: response.block ? [...prev.blocks, response.block] : prev.blocks,
         status: response.status,
+        eventLog: [...prev.eventLog, pushLog('next')],
       }))
     } catch {
       setState((prev) => ({ ...prev, isSubmitting: false, status: 'error' }))
@@ -155,6 +164,7 @@ export function useInteractiveSession(
         remediation: null,
         isSubmitting: false,
         totalBlocks: response.totalBlocks || 0,
+        eventLog: [pushLog('reset')],
       })
     } catch {
       setState((prev) => ({ ...prev, status: 'error' }))

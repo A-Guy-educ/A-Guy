@@ -491,3 +491,25 @@ html[data-theme='light'] {
 .aguy-text-highlight-8 {
   color: hsl(var(--text-highlight-8));
 }
+
+/* ===================================================================
+   Interactive Demo Typewriter Effect
+   =================================================================== */
+
+/* Typewriter caret animation for demo */
+.demo-typing-caret::after {
+  content: "▌";
+  margin-inline-start: 2px;
+  animation: demo-blink 1s infinite;
+}
+
+@keyframes demo-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}

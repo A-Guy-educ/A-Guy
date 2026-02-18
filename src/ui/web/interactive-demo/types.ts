@@ -23,6 +23,11 @@ export interface ClientBlock {
   role?: 'user' | 'assistant'
 }
 
+export interface EventLogEntry {
+  timestamp: string
+  label: 'start' | 'answer' | 'next' | 'reset'
+}
+
 export interface SessionState {
   sessionId: string | null
   status: 'idle' | 'loading' | 'active' | 'completed' | 'error'
@@ -34,6 +39,7 @@ export interface SessionState {
   isSubmitting: boolean
   isCorrect?: boolean
   totalBlocks: number
+  eventLog: EventLogEntry[]
 }
 
 export interface StepResponse {

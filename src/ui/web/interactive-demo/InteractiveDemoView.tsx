@@ -7,9 +7,8 @@ import { useEffect, useState } from 'react'
 import { AnswerDock } from './components/AnswerDock'
 import { BlockStream } from './components/BlockStream'
 import { ContinueButton } from './components/ContinueButton'
-import { ProgressBar } from './components/ProgressBar'
+import { DemoSidebar } from './components/DemoSidebar'
 import { SessionControls } from './components/SessionControls'
-import { SessionSidebar } from './components/SessionSidebar'
 import { useInteractiveSession } from './hooks/useInteractiveSession'
 
 interface InteractiveDemoViewProps {
@@ -36,6 +35,7 @@ export function InteractiveDemoView({
     remediation,
     isSubmitting,
     totalBlocks,
+    eventLog,
     start,
     submitAnswer,
     next,
@@ -45,7 +45,6 @@ export function InteractiveDemoView({
 
   const [mcqSelectedAnswer, setMcqSelectedAnswer] = useState<string | null>(null)
   const [openAnswer, setOpenAnswer] = useState('')
-  const [events, setEvents] = useState<Array<{ action: string; timestamp: string }>>([])
   const [isTyping, setIsTyping] = useState(false)
   const [finishTypingFn, setFinishTypingFn] = useState<(() => void) | null>(null)
 
@@ -54,19 +53,9 @@ export function InteractiveDemoView({
     setFinishTypingFn(() => finishFn)
   }
 
-  // Track events for sidebar
-  const addEvent = (action: string) => {
-    const timestamp = new Date().toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-    setEvents((prev) => [{ action, timestamp }, ...prev].slice(0, 5))
-  }
-
   // Start the session on mount
   useEffect(() => {
-    start().then(() => addEvent('start'))
+    start()
   }, [start])
 
   // Reset answer state when moving to a new block
@@ -86,11 +75,9 @@ export function InteractiveDemoView({
         addClientBlock(selectedOption.content.value)
       }
       await submitAnswer({ selected: mcqSelectedAnswer })
-      addEvent('answer')
     } else if (currentBlock.type === 'open' && openAnswer.trim()) {
       addClientBlock(openAnswer.trim())
       await submitAnswer(openAnswer.trim())
-      addEvent('answer')
     }
   }
 
@@ -102,20 +89,12 @@ export function InteractiveDemoView({
     }
 
     await next()
-    addEvent('next')
   }
 
   const handleReset = async () => {
     await reset()
     setMcqSelectedAnswer(null)
     setOpenAnswer('')
-    // Set reset event directly (avoiding setEvents([]) which clears then adds)
-    const timestamp = new Date().toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-    setEvents([{ action: 'reset', timestamp }])
   }
 
   if (status === 'loading') {
@@ -142,11 +121,14 @@ export function InteractiveDemoView({
     resetConfirm: t('resetConfirm'),
   }
 
+  // Calculate progress percentage
+  const progressValue = totalBlocks > 0 ? ((currentBlockIndex + 1) / totalBlocks) * 100 : 0
+
   return (
     <div className="interactive-demo-view min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-background border-b border-border px-4 py-3">
-        <div className="container max-w-7xl mx-auto">
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-2xl border-b border-border px-4 py-3">
+        <div className="container max-w-[1100px] mx-auto">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-4">
               <a href={backUrl} className="text-sm text-muted-foreground hover:text-foreground">
@@ -167,22 +149,24 @@ export function InteractiveDemoView({
               <SessionControls onReset={handleReset} t={translations} />
             </div>
           </div>
-
-          {/* Progress bar */}
-          {totalBlocks > 0 && (
-            <div className="flex items-center gap-3">
-              <ProgressBar current={currentBlockIndex + 1} total={totalBlocks} />
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {currentBlockIndex + 1}/{totalBlocks}
-              </span>
-            </div>
-          )}
         </div>
       </header>
 
+      {/* Progress bar directly under header */}
+      {totalBlocks > 0 && (
+        <div className="sticky top-[73px] z-30 bg-background/50 backdrop-blur-sm">
+          <div className="h-1.5 bg-border/40">
+            <div
+              className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-300 ease-out"
+              style={{ width: `${progressValue}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Main content - two column layout */}
-      <main className="container max-w-7xl mx-auto px-4 py-6 pb-32">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+      <main className="max-w-[1100px] mx-auto px-4 py-4">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_320px]">
           {/* Left: Block stream */}
           <div className="min-w-0">
             <BlockStream
@@ -200,6 +184,23 @@ export function InteractiveDemoView({
               t={translations}
             />
 
+            {/* Answer dock - inline below current block */}
+            {showAnswerDock && currentBlock && (
+              <AnswerDock
+                currentBlock={currentBlock}
+                mcqSelectedAnswer={mcqSelectedAnswer}
+                openAnswer={openAnswer}
+                onMcqSelect={setMcqSelectedAnswer}
+                onOpenChange={setOpenAnswer}
+                onSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+                t={translations}
+              />
+            )}
+
+            {/* Continue button - inline */}
+            {showContinueButton && <ContinueButton onClick={handleNext} t={translations} />}
+
             {/* Completion message */}
             {status === 'completed' && (
               <div className="text-center py-12">
@@ -213,35 +214,18 @@ export function InteractiveDemoView({
             )}
           </div>
 
-          {/* Right: Sidebar */}
+          {/* Right: DemoSidebar */}
           <aside className="hidden lg:block">
-            <SessionSidebar
+            <DemoSidebar
               skillScore={skillScore}
               blocksShown={blocks.length}
               currentPhase={currentPhase}
               sessionId={sessionId}
-              events={events}
+              eventLog={eventLog}
             />
           </aside>
         </div>
       </main>
-
-      {/* Bottom dock */}
-      {showAnswerDock && currentBlock && (
-        <AnswerDock
-          currentBlock={currentBlock}
-          mcqSelectedAnswer={mcqSelectedAnswer}
-          openAnswer={openAnswer}
-          onMcqSelect={setMcqSelectedAnswer}
-          onOpenChange={setOpenAnswer}
-          onSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
-          t={translations}
-        />
-      )}
-
-      {/* Continue button */}
-      {showContinueButton && <ContinueButton onClick={handleNext} t={translations} />}
     </div>
   )
 }

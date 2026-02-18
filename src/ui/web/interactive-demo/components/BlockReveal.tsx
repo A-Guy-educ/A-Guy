@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/infra/utils/ui'
-import { useCallback, useEffect, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 
 interface BlockRevealProps {
   children: React.ReactNode
@@ -11,57 +11,85 @@ interface BlockRevealProps {
   onTypingStateChange?: (isTyping: boolean, finishTyping: () => void) => void
 }
 
-export function BlockReveal({
-  children,
-  typewriterEnabled,
-  delay = 0,
-  onRevealComplete,
-  onTypingStateChange,
-}: BlockRevealProps) {
-  const [isVisible, setIsVisible] = useState(!typewriterEnabled)
-  const [showSkip, setShowSkip] = useState(false)
+export interface BlockRevealHandle {
+  finishTyping: () => boolean
+}
 
-  const handleSkip = useCallback(() => {
-    setIsVisible(true)
-    setShowSkip(false)
-    onRevealComplete?.()
-    onTypingStateChange?.(false, () => {})
-  }, [onRevealComplete, onTypingStateChange])
+export const BlockReveal = forwardRef<BlockRevealHandle, BlockRevealProps>(
+  ({ children, typewriterEnabled, delay = 0, onRevealComplete, onTypingStateChange }, ref) => {
+    const [isTyping, setIsTyping] = useState(false)
+    const [isComplete, setIsComplete] = useState(!typewriterEnabled)
+    const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  useEffect(() => {
-    if (typewriterEnabled) {
-      onTypingStateChange?.(true, handleSkip)
-      const timer = setTimeout(() => {
-        setIsVisible(true)
-        setShowSkip(true)
-        onRevealComplete?.()
-        onTypingStateChange?.(false, () => {})
-      }, delay + 1000) // 1 second typing effect
+    const finishTyping = useCallback(() => {
+      if (!isTyping) return false
+
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+
+      setIsTyping(false)
+      setIsComplete(true)
+      onRevealComplete?.()
+      onTypingStateChange?.(false, () => {})
+      return true
+    }, [isTyping, onRevealComplete, onTypingStateChange])
+
+    useImperativeHandle(ref, () => ({
+      finishTyping,
+    }))
+
+    useEffect(() => {
+      if (!typewriterEnabled) {
+        setIsComplete(true)
+        return
+      }
+
+      setIsTyping(true)
+      setIsComplete(false)
+
+      const startTimer = setTimeout(() => {
+        onTypingStateChange?.(true, finishTyping)
+
+        // Simulate typing duration (1 second)
+        timerRef.current = setTimeout(() => {
+          setIsTyping(false)
+          setIsComplete(true)
+          onRevealComplete?.()
+          onTypingStateChange?.(false, () => {})
+        }, 1000)
+      }, delay)
 
       return () => {
-        clearTimeout(timer)
-        onTypingStateChange?.(false, () => {})
+        clearTimeout(startTimer)
+        if (timerRef.current) {
+          clearTimeout(timerRef.current)
+        }
       }
+    }, [typewriterEnabled, delay, onRevealComplete, onTypingStateChange, finishTyping])
+
+    // If typing is complete or disabled, render children directly
+    if (isComplete) {
+      return (
+        <div className={cn('transition-all duration-500 ease-out opacity-100 translate-y-0')}>
+          {children}
+        </div>
+      )
     }
-  }, [typewriterEnabled, delay, onRevealComplete, onTypingStateChange, handleSkip])
 
-  return (
-    <div
-      className={cn(
-        'transition-all duration-500 ease-out',
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4',
-      )}
-    >
-      {children}
+    // While typing, clip children with caret animation
+    return (
+      <div
+        className={cn(
+          'transition-all duration-500 ease-out opacity-100 translate-y-0',
+          isTyping && 'demo-typing-caret',
+        )}
+      >
+        {children}
+      </div>
+    )
+  },
+)
 
-      {typewriterEnabled && showSkip && !isVisible && (
-        <button
-          onClick={handleSkip}
-          className="text-sm text-muted-foreground hover:text-foreground mt-2 underline"
-        >
-          Skip
-        </button>
-      )}
-    </div>
-  )
-}
+BlockReveal.displayName = 'BlockReveal'

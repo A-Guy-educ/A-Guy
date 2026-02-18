@@ -373,6 +373,16 @@
     "score": "Score",
     "typeAnswer": "Type your answer...",
     "loading": "Loading lesson...",
-    "selectOption": "Select an answer"
+    "selectOption": "Select an answer",
+    "blocksShown": "Blocks shown",
+    "skillScore": "Skill Score",
+    "tone": "Tone",
+    "sessionStats": "Session Stats",
+    "currentPhase": "Current phase",
+    "sessionId": "Session ID",
+    "recentEvents": "Recent Events",
+    "continueNote": "Continue button always available: click during typing = show all, next click = advance.",
+    "teacher": "Teacher",
+    "student": "Student"
   }
 }
