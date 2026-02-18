@@ -84,8 +84,8 @@ export function useInteractiveSession(
           answer,
         })
 
-        setState({
-          ...state,
+        setState((prev) => ({
+          ...prev,
           sessionId: response.sessionId,
           currentBlockIndex: response.currentBlockIndex,
           currentPhase: response.currentPhase,
@@ -93,10 +93,10 @@ export function useInteractiveSession(
           remediation: response.remediation ?? null,
           isCorrect: response.isCorrect,
           isSubmitting: false,
-          totalBlocks: response.totalBlocks || state.totalBlocks,
+          totalBlocks: response.totalBlocks || prev.totalBlocks,
           // Keep existing blocks, append new block if provided
-          blocks: response.block ? [...state.blocks, response.block] : state.blocks,
-        })
+          blocks: response.block ? [...prev.blocks, response.block] : prev.blocks,
+        }))
       } catch {
         setState((prev) => ({ ...prev, isSubmitting: false, status: 'error' }))
       }
@@ -117,18 +117,18 @@ export function useInteractiveSession(
         clientActionId: crypto.randomUUID(),
       })
 
-      setState({
-        ...state,
+      setState((prev) => ({
+        ...prev,
         sessionId: response.sessionId,
         currentBlockIndex: response.currentBlockIndex,
         currentPhase: response.currentPhase,
         skillScore: response.skillScore,
         isSubmitting: false,
-        totalBlocks: response.totalBlocks || state.totalBlocks,
+        totalBlocks: response.totalBlocks || prev.totalBlocks,
         // Keep existing blocks, append new block if provided
-        blocks: response.block ? [...state.blocks, response.block] : state.blocks,
+        blocks: response.block ? [...prev.blocks, response.block] : prev.blocks,
         status: response.status,
-      })
+      }))
     } catch {
       setState((prev) => ({ ...prev, isSubmitting: false, status: 'error' }))
     }
