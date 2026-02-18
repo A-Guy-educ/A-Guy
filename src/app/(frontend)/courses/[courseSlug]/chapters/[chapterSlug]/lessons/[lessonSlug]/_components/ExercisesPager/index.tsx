@@ -72,16 +72,16 @@ export function ExercisesPager({
                   <Progress value={progressPercent} className="h-1.5 rounded-none" />
 
                   <div className="p-5 md:p-6">
+                    <p className="text-start text-base font-semibold text-slate-900 dark:text-slate-100 mb-3">
+                      {exerciseOrdinal !== null
+                        ? `${t('exercise')} ${exerciseOrdinal} ${t('of')} ${totalExercises}`
+                        : ''}
+                    </p>
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
                         <Layers className="w-4 h-4 text-primary" />
                       </div>
                       <div>
-                        <p className="text-start text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">
-                          {exerciseOrdinal !== null
-                            ? `${t('exercise')} ${exerciseOrdinal} ${t('of')} ${totalExercises}`
-                            : ''}
-                        </p>
                         <h2 className="text-lg font-medium text-foreground">
                           {currentExercise.title}
                         </h2>
