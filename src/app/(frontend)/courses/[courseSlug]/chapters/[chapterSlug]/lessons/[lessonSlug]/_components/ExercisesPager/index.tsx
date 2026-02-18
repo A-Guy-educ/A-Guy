@@ -68,8 +68,8 @@ export function ExercisesPager({
           <div className="h-full flex flex-col">
             <div className="flex-1 overflow-y-auto min-h-0">
               <div className="w-full p-4 md:p-6 space-y-4">
-                <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden">
-                  <Progress value={progressPercent} className="h-1 rounded-none" />
+                <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden mt-4">
+                  <Progress value={progressPercent} className="h-1.5 rounded-none" />
 
                   <div className="p-5 md:p-6">
                     <div className="flex items-center gap-3 mb-2">
