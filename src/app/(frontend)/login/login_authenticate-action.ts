@@ -20,7 +20,14 @@ type CookieStore = {
   delete: (name: string, options?: { path: string }) => void
 }
 
+// Set to true to re-enable email/password login
+const EMAIL_LOGIN_ENABLED = false
+
 export async function loginAction(formData: FormData, cookieStore?: CookieStore) {
+  if (!EMAIL_LOGIN_ENABLED) {
+    return { success: false, error: 'invalidCredentials' }
+  }
+
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 

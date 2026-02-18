@@ -65,14 +65,9 @@ export function MobileMenuAuthSection({
 
   return (
     <div className="flex flex-col gap-2">
-      <Button variant="ghost" asChild className="justify-start">
+      <Button asChild className="justify-start">
         <SystemLink href="/login" onClick={onClose}>
           {tCommon('login')}
-        </SystemLink>
-      </Button>
-      <Button asChild className="justify-start">
-        <SystemLink href="/signup" onClick={onClose}>
-          {tCommon('signup')}
         </SystemLink>
       </Button>
     </div>

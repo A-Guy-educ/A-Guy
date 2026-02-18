@@ -96,14 +96,9 @@ export function ExerciseHeader({
           ) : user ? (
             <UserDropdown user={user} />
           ) : (
-            <>
-              <Button variant="ghost" size="sm" asChild>
-                <SystemLink href={`/login${returnToParam}`}>{tCommon('login')}</SystemLink>
-              </Button>
-              <Button size="sm" asChild>
-                <SystemLink href={`/signup${returnToParam}`}>{tCommon('signup')}</SystemLink>
-              </Button>
-            </>
+            <Button size="sm" asChild>
+              <SystemLink href={`/login${returnToParam}`}>{tCommon('login')}</SystemLink>
+            </Button>
           )}
         </div>
       </div>

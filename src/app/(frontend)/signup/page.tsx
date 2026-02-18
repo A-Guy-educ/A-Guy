@@ -1,20 +1,18 @@
-import React from 'react'
-import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { getMeUser } from '@/infra/utils/getMeUser'
-import { SignupPageContent } from './SignupPageContent'
 
-export const metadata: Metadata = {
-  title: 'Sign Up',
-  description: 'Create a new account',
-}
-
-export default async function SignupPage() {
-  const { user } = await getMeUser()
-
-  if (user) {
-    redirect('/')
-  }
-
-  return <SignupPageContent />
+/**
+ * Signup page redirects to login.
+ *
+ * Google OAuth is the only auth method (task 21).
+ * Email/password signup backend code is preserved in this directory
+ * for future re-enablement if needed.
+ */
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string>>
+}) {
+  const params = await searchParams
+  const query = new URLSearchParams(params).toString()
+  redirect(query ? `/login?${query}` : '/login')
 }

@@ -69,8 +69,9 @@
       }
     },
     "login": {
-      "title": "ברוך שובך",
-      "subtitle": "התחבר לחשבון שלך",
+      "title": "ברוכים הבאים ל-A-Guy",
+      "subtitle": "התחבר כדי להמשיך ללמוד",
+      "googleOnlyMessage": "A-Guy תומך כרגע באימות Google לחוויה מהירה ומאובטחת יותר.",
       "email": "אימייל",
       "emailPlaceholder": "you@example.com",
       "password": "סיסמה",

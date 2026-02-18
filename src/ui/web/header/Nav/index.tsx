@@ -83,11 +83,8 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, user, isAuthLoading 
           <UserDropdown user={user} />
         ) : (
           <div data-testid="header-auth-buttons" className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <SystemLink href="/login">{tCommon('login')}</SystemLink>
-            </Button>
             <Button size="sm" asChild>
-              <SystemLink href="/signup">{tCommon('signup')}</SystemLink>
+              <SystemLink href="/login">{tCommon('login')}</SystemLink>
             </Button>
           </div>
         )}
