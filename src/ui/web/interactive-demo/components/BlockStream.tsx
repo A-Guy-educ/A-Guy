@@ -1,12 +1,13 @@
 'use client'
 
 import type { ClientBlock } from '../types'
-import { BlockReveal } from './BlockReveal'
+import { BlockReveal, type BlockRevealHandle } from './BlockReveal'
 import { ClientMessageBlock } from './ClientMessageBlock'
 import { ContentBlock } from './ContentBlock'
 import { McqBlock } from './McqBlock'
 import { OpenBlock } from './OpenBlock'
 import { RemediationBubble } from './RemediationBubble'
+import { useRef } from 'react'
 
 interface BlockStreamProps {
   blocks: ClientBlock[]
@@ -41,6 +42,8 @@ export function BlockStream({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   t,
 }: BlockStreamProps) {
+  const currentBlockRef = useRef<BlockRevealHandle>(null)
+
   // Count server blocks to map currentBlockIndex to actual block position
   let serverBlockCount = 0
   const blockMetadata = blocks.map((block) => {
@@ -70,6 +73,9 @@ export function BlockStream({
 
     // For server blocks, determine if this is the current one
     const isCurrentBlock = isServerBlock && serverIndex === currentBlockIndex
+
+    // Only apply typewriter to content blocks (pure text), not to MCQ/Open (with controls)
+    const shouldTypewrite = typewriterEnabled && isCurrentBlock && block.type === 'content'
 
     // Handle regular lesson blocks
     const blockContent = (() => {
@@ -102,7 +108,8 @@ export function BlockStream({
     return (
       <div key={`block-${block.id}`} className="mb-4">
         <BlockReveal
-          typewriterEnabled={typewriterEnabled && isCurrentBlock}
+          ref={isCurrentBlock ? currentBlockRef : null}
+          typewriterEnabled={shouldTypewrite}
           delay={0}
           onTypingStateChange={isCurrentBlock ? onTypingStateChange : undefined}
         >

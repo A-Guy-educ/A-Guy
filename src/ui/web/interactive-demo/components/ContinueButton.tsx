@@ -12,9 +12,9 @@ interface ContinueButtonProps {
 
 export function ContinueButton({ onClick, disabled, t }: ContinueButtonProps) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 shadow-lg z-50">
-      <div className="container max-w-4xl mx-auto flex justify-end">
-        <Button onClick={onClick} disabled={disabled} size="lg">
+    <div className="mt-4 rounded-[22px] border border-border bg-card/85 backdrop-blur-2xl shadow-[0_18px_40px_rgba(17,24,39,0.06)] p-4">
+      <div className="flex justify-end">
+        <Button onClick={onClick} disabled={disabled} size="lg" className="rounded-full min-w-[140px]">
           {t.continue}
         </Button>
       </div>

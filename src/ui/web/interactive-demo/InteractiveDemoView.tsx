@@ -185,6 +185,23 @@ export function InteractiveDemoView({
               t={translations}
             />
 
+            {/* Answer dock - inline below current block */}
+            {showAnswerDock && currentBlock && (
+              <AnswerDock
+                currentBlock={currentBlock}
+                mcqSelectedAnswer={mcqSelectedAnswer}
+                openAnswer={openAnswer}
+                onMcqSelect={setMcqSelectedAnswer}
+                onOpenChange={setOpenAnswer}
+                onSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+                t={translations}
+              />
+            )}
+
+            {/* Continue button - inline */}
+            {showContinueButton && <ContinueButton onClick={handleNext} t={translations} />}
+
             {/* Completion message */}
             {status === 'completed' && (
               <div className="text-center py-12">
@@ -210,23 +227,6 @@ export function InteractiveDemoView({
           </aside>
         </div>
       </main>
-
-      {/* Bottom dock */}
-      {showAnswerDock && currentBlock && (
-        <AnswerDock
-          currentBlock={currentBlock}
-          mcqSelectedAnswer={mcqSelectedAnswer}
-          openAnswer={openAnswer}
-          onMcqSelect={setMcqSelectedAnswer}
-          onOpenChange={setOpenAnswer}
-          onSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
-          t={translations}
-        />
-      )}
-
-      {/* Continue button */}
-      {showContinueButton && <ContinueButton onClick={handleNext} t={translations} />}
     </div>
   )
 }

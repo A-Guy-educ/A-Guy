@@ -39,8 +39,8 @@ export function AnswerDock({
       : false
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 shadow-lg z-50">
-      <div className="container max-w-4xl mx-auto flex items-center justify-between gap-4">
+    <div className="mt-4 rounded-[22px] border border-border bg-card/85 backdrop-blur-2xl shadow-[0_18px_40px_rgba(17,24,39,0.06)] p-4">
+      <div className="flex items-center justify-between gap-4">
         {isMcq && (
           <div className="text-sm text-muted-foreground">
             {mcqSelectedAnswer === null ? t.selectOption : ''}
@@ -57,7 +57,7 @@ export function AnswerDock({
           onClick={onSubmit}
           disabled={!canSubmit || isSubmitting}
           size="lg"
-          className="min-w-[120px]"
+          className="min-w-[120px] rounded-full"
         >
           {isSubmitting ? t.submit + '...' : t.submit}
         </Button>
