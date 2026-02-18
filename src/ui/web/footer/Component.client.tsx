@@ -38,7 +38,7 @@ export function FooterClient({ navItems, version }: FooterClientProps) {
         </SystemLink>
 
         <div className="flex items-center gap-2 text-xs">
-          {navItems.map(({ link }, i) => {
+          {(navItems || []).map(({ link }, i) => {
             return (
               <CMSLink
                 className="text-card-foreground hover:text-primary transition-colors text-xs whitespace-nowrap"
