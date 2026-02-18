@@ -15,6 +15,15 @@ import {
 } from './pipeline-utils'
 import { preflight } from './preflight'
 
+// Import shared constants from agent-runner module
+import {
+  STAGE_TIMEOUTS,
+  DEFAULT_TIMEOUT,
+  MAX_RETRIES,
+  FILE_POLL_INTERVAL,
+  FILE_SETTLE_DELAY,
+} from './agent-runner'
+
 const implArgs = process.argv.slice(2)
 let taskId: string | undefined
 let dryRun = false
@@ -81,18 +90,6 @@ const SKIP_ON_RERUN = ['auditor']
 const stages = isRerun
   ? SPEC_EXECUTE_VERIFY_STAGES.filter((s) => !SKIP_ON_RERUN.includes(s))
   : SPEC_EXECUTE_VERIFY_STAGES
-
-// Stage timeouts (ms) — kills agent process if exceeded
-const STAGE_TIMEOUTS: Record<string, number> = {
-  architect: 5 * 60_000,
-  build: 30 * 60_000,
-  test: 10 * 60_000,
-  verify: 5 * 60_000,
-  auditor: 5 * 60_000,
-  pr: 5 * 60_000,
-}
-const DEFAULT_TIMEOUT = 10 * 60_000
-const MAX_RETRIES = 2
 
 console.log(`=== Pipeline Impl: ${taskId}${dryRun ? ' (DRY-RUN)' : ''} ===`)
 console.log(`Pipeline: ${taskDef.pipeline} (${taskDef.task_type}, risk: ${taskDef.risk_level})`)
@@ -201,8 +198,6 @@ function showStageErrorContext(stage: string): void {
 
 // Run agent with file watcher — spawns ocode process and kills it once output file appears.
 // This works around the OpenCode post-Write stalling bug where agents hang after writing output.
-const FILE_POLL_INTERVAL = 3_000 // check every 3 seconds
-const FILE_SETTLE_DELAY = 2_000 // wait 2s after file appears to ensure write is complete
 
 function runAgentWithFileWatch(
   stage: string,

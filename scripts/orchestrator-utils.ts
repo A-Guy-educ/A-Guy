@@ -23,6 +23,8 @@ export interface OrchestratorInput {
   triggerType?: 'dispatch' | 'comment'
   runId?: string
   runUrl?: string
+  // For comment triggers: raw body to parse
+  commentBody?: string
 }
 
 export interface PipelineStatus {
@@ -286,8 +288,36 @@ export function parseCliArgs(argv: string[]): OrchestratorInput {
     } else if (arg === '--run-url' && normalized[i + 1]) {
       input.runUrl = normalized[i + 1]
       i++
+    } else if (arg === '--comment-body' && normalized[i + 1]) {
+      // For comment triggers: parse the raw comment body
+      // Note: issueNumber may not be parsed yet, so we pass undefined and merge later
+      const commentBody = normalized[i + 1]
+      const parsed = parseCommentBody(commentBody, undefined)
+
+      if (!parsed.success) {
+        throw new Error(parsed.error || 'Failed to parse comment body')
+      }
+
+      // Merge parsed values into input (issueNumber will be merged after all args processed)
+      if (parsed.input) {
+        input.mode = parsed.input.mode
+        input.taskId = parsed.input.taskId
+        input.dryRun = parsed.input.dryRun
+        input.feedback = parsed.input.feedback
+        input.fromStage = parsed.input.fromStage
+        input.triggerType = 'comment'
+        // Store issueNumber from comment to merge after --issue-number is processed
+        if (parsed.input.issueNumber) {
+          input.issueNumber = parsed.input.issueNumber
+        }
+      }
+      i++
     }
   }
+
+  // If we have a comment-triggered issueNumber and --issue-number was also provided,
+  // --issue-number takes precedence (allows overriding)
+  // This handles the case where --comment-body is processed before --issue-number
 
   if (!input.taskId) {
     throw new Error('--task-id is required')
@@ -298,6 +328,155 @@ export function parseCliArgs(argv: string[]): OrchestratorInput {
   }
 
   return input
+}
+
+// ============================================================================
+// Comment Body Parsing
+// ============================================================================
+
+interface ParseCommentResult {
+  success: boolean
+  input?: OrchestratorInput
+  error?: string
+  errorComment?: string // Error message to post back to the issue
+}
+
+/**
+ * Parse a GitHub issue comment body in the format:
+ *   /oc <subcommand> <task-id> [options]
+ *
+ * Examples:
+ *   /oc 260218-user-metrics           -> full mode, task 260218-user-metrics
+ *   /oc spec 260218-user-metrics      -> spec mode
+ *   /oc impl 260218-user-metrics      -> impl mode
+ *   /oc rerun 260218-user-metrics --feedback "fix this"
+ *   /oc                               -> full mode, auto-generate task-id
+ */
+export function parseCommentBody(body: string, issueNumber?: number): ParseCommentResult {
+  // Decode JSON-encoded body from YAML (jq -Rs . wraps in quotes and escapes)
+  let decoded = body
+  if (decoded.startsWith('"') && decoded.endsWith('"')) {
+    try {
+      decoded = JSON.parse(decoded)
+    } catch {
+      // Use raw value if JSON.parse fails
+    }
+  }
+
+  // Remove /oc prefix and normalize whitespace
+  const cmd = decoded.replace(/^\/oc\s*/, '').trim()
+
+  // Extract subcommand (first word)
+  const spaceIdx = cmd.indexOf(' ')
+  const subCmd = spaceIdx === -1 ? cmd : cmd.slice(0, spaceIdx)
+  const rest = spaceIdx === -1 ? '' : cmd.slice(spaceIdx + 1).trim()
+
+  // Handle empty command: /oc with no subcommand defaults to full
+  let mode: OrchestratorInput['mode'] = 'full'
+  let taskId = rest
+
+  // Handle task-id as subcommand: /oc 260218-task defaults to full with that task
+  const isTaskId = /^[0-9]{6}-[a-zA-Z0-9-]+$/.test(subCmd)
+  if (isTaskId) {
+    mode = 'full'
+    taskId = `${subCmd}${rest ? ' ' + rest : ''}`.trim()
+    // When task-id is the subcommand, we need to track what was "rest" for options parsing
+    // The reconstructed taskId now contains both the ID and options, so use it as original
+  } else if (subCmd) {
+    // Validate subcommand
+    if (!isValidMode(subCmd)) {
+      return {
+        success: false,
+        error: `Unknown subcommand: ${subCmd}`,
+        errorComment: `Unknown command \`${subCmd}\`. Valid commands: \`spec\`, \`impl\`, \`rerun\`, \`status\`, \`full\`, or omit for full pipeline`,
+      }
+    }
+    mode = subCmd as OrchestratorInput['mode']
+  }
+
+  // Extract task-id (first word of remaining)
+  if (taskId) {
+    const taskIdEnd = taskId.indexOf(' ')
+    if (taskIdEnd !== -1) {
+      taskId = taskId.slice(0, taskIdEnd)
+    }
+  }
+
+  // If no task-id provided, generate a new one
+  if (!taskId) {
+    const datePrefix = new Date().toISOString().slice(2, 10).replace(/-/g, '')
+    const counter = Math.floor(Math.random() * 99) + 1
+    taskId = `${datePrefix}-auto-${counter.toString().padStart(2, '0')}`
+    console.log(`No task-id provided, generated: ${taskId}`)
+  }
+
+  // Validate task-id format
+  if (!validateTaskId(taskId)) {
+    return {
+      success: false,
+      error: `Invalid task-id format: ${taskId}`,
+      errorComment: `Invalid task ID format: \`${taskId}\`. Expected: \`YYMMDD-description\` (e.g., \`260217-user-metrics\`)`,
+    }
+  }
+
+  // Parse remaining options (--feedback, --from, --dry-run)
+  // rest contains: for isTaskId case: "options", for explicit mode case: "task-id options"
+  let optionsStr = ''
+  if (isTaskId) {
+    // Task-id as subcommand: rest has only options (after task-id)
+    optionsStr = rest.trim()
+  } else if (taskId) {
+    // Explicit mode: rest = "task-id options...", skip past the task-id to get options
+    const taskIdLen = taskId.length
+    optionsStr = rest.slice(taskIdLen).trim()
+  } else {
+    // Auto-generated task-id: rest is empty (options were lost to auto-gen)
+    optionsStr = ''
+  }
+
+  const options = optionsStr.split(/\s+/)
+  let dryRun = false
+  let feedback: string | undefined
+  let fromStage: string | undefined
+
+  let i = 0
+  while (i < options.length) {
+    const opt = options[i]
+    if (opt === '--dry-run') {
+      dryRun = true
+      i++
+    } else if (opt === '--feedback' && options[i + 1]) {
+      feedback = options[i + 1]
+      i += 2
+    } else if (opt === '--from' && options[i + 1]) {
+      fromStage = options[i + 1]
+      // Validate from stage
+      if (!isValidStage(fromStage)) {
+        return {
+          success: false,
+          error: `Invalid stage: ${fromStage}`,
+          errorComment: `Invalid stage: \`${fromStage}\`. Valid: \`${VALID_STAGES.join(', ')}\``,
+        }
+      }
+      i += 2
+    } else {
+      // Skip unknown options
+      i++
+    }
+  }
+
+  return {
+    success: true,
+    input: {
+      mode,
+      taskId,
+      dryRun,
+      feedback,
+      fromStage,
+      issueNumber,
+      triggerType: 'comment',
+    },
+  }
 }
 
 // ============================================================================
@@ -321,7 +500,13 @@ export function validateAuth(): void {
 // ============================================================================
 
 function escapeShell(str: string): string {
-  return str.replace(/"/g, '\\"').replace(/\n/g, '\\n')
+  // Escape backslashes first, then other shell metacharacters
+  return str
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/`/g, '\\`')
+    .replace(/\$/g, '\\$')
+    .replace(/\n/g, '\\n')
 }
 
 export function formatDuration(ms: number): string {

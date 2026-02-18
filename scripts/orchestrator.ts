@@ -19,7 +19,6 @@
  * We pass MODEL, AGENT, PROMPT as env vars to control each stage execution.
  */
 
-import { spawn, type ChildProcess, execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -38,7 +37,7 @@ import {
   type OrchestratorInput,
 } from './orchestrator-utils'
 
-// Import from existing pipeline-utils (reusing existing logic)
+// Import from pipeline-utils (reusing existing logic)
 import {
   writeAgentContext,
   readTask,
@@ -46,24 +45,10 @@ import {
   SPEC_EXECUTE_VERIFY_STAGES,
 } from './pipeline-utils'
 
-// ============================================================================
-// Configuration
-// ============================================================================
-
-const FILE_POLL_INTERVAL = 3_000 // check every 3 seconds
-const FILE_SETTLE_DELAY = 2_000 // wait 2s after file appears
-const MAX_RETRIES = 2
-
-// Stage timeouts (ms)
-const STAGE_TIMEOUTS: Record<string, number> = {
-  architect: 5 * 60_000,
-  build: 30 * 60_000,
-  test: 10 * 60_000,
-  verify: 5 * 60_000,
-  auditor: 5 * 60_000,
-  pr: 5 * 60_000,
-}
-const DEFAULT_TIMEOUT = 10 * 60_000
+// Import from new modules
+import { runAgentWithFileWatch } from './agent-runner'
+import { STAGE_TIMEOUTS, DEFAULT_TIMEOUT } from './agent-runner'
+import { ensureFeatureBranch } from './git-utils'
 
 // ============================================================================
 // Main Entry
@@ -361,7 +346,7 @@ async function runRerunPipeline(
   const stagesToDelete = SPEC_EXECUTE_VERIFY_STAGES.slice(fromIndex)
 
   for (const stage of stagesToDelete) {
-    const stageFile = path.join(taskDir, `${stage}.md`)
+    const stageFile = stageOutputFile(taskDir, stage)
     if (fs.existsSync(stageFile)) {
       fs.unlinkSync(stageFile)
       console.log(`Deleted: ${stage}.md`)
@@ -392,208 +377,6 @@ async function showStatus(input: OrchestratorInput): Promise<void> {
   if (input.issueNumber) {
     postComment(input.issueNumber, formatStatusComment(input, status))
   }
-}
-
-// ============================================================================
-// Branch Management
-// ============================================================================
-
-// Branch prefix mapping based on task type (matches pipeline-impl.ts)
-const BRANCH_PREFIX_MAP: Record<string, string> = {
-  implement_feature: 'feat',
-  fix_bug: 'fix',
-  refactor: 'refactor',
-  docs: 'docs',
-  ops: 'chore',
-}
-
-/**
- * Creates a feature branch before the build stage if needed.
- * This ensures the branch follows project conventions: fix/260218-description
- */
-function ensureFeatureBranch(taskId: string, taskType: string): void {
-  const currentBranch = execSync('git branch --show-current', { encoding: 'utf-8' }).trim()
-
-  // Already on a feature branch - don't recreate
-  if (currentBranch !== 'dev' && currentBranch !== 'main' && currentBranch !== '') {
-    console.log(`[branch] Already on feature branch: ${currentBranch}`)
-    return
-  }
-
-  const prefix = BRANCH_PREFIX_MAP[taskType] || 'feat'
-  const branchName = `${prefix}/${taskId}`
-
-  console.log(`[branch] Creating feature branch: ${branchName}`)
-
-  // Fetch latest dev, create branch from it
-  execSync('git fetch origin dev', { stdio: 'inherit' })
-  execSync('git checkout dev', { stdio: 'inherit' })
-  execSync('git pull origin dev', { stdio: 'inherit' })
-  execSync(`git checkout -b ${branchName}`, { stdio: 'inherit' })
-
-  console.log(`[branch] Created and switched to: ${branchName}`)
-}
-
-// ============================================================================
-// Agent Execution
-// ============================================================================
-
-// Build prompt for a given stage
-function buildStagePrompt(input: OrchestratorInput, stage: string): string {
-  const contextPath = `.tasks/${input.taskId}/.context.md`
-
-  // Spec stages: read-only, no git operations allowed
-  const specOnlyInstruction = `CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the .tasks/${input.taskId}/ directory.`
-
-  const stageInstructions: Record<string, string> = {
-    taskify: `${specOnlyInstruction}\n\nAnalyze the task description and create a task.json with task_type, pipeline, risk_level, confidence, primary_domain, scope, missing_inputs, and assumptions.`,
-    spec: `${specOnlyInstruction}\n\nRead the task.json and create a detailed spec.md describing the implementation approach.`,
-    clarify: `${specOnlyInstruction}\n\nReview the spec and any questions from previous stages. Answer them or note clarifications needed.`,
-    architect:
-      'Create a detailed plan.md with the implementation approach, file changes, and dependencies.',
-    build: 'Implement the changes as described in the plan. Write code to the repository.',
-    test: 'Run tests and verify the implementation works correctly.',
-    verify: 'Run quality checks (typecheck, lint, format) and verify the build passes.',
-    auditor: 'Review the implementation for security, best practices, and potential issues.',
-    pr: 'Create a pull request with all changes. Include a summary and testing notes.',
-  }
-
-  const instruction = stageInstructions[stage] || `Execute the "${stage}" stage.`
-
-  return `${instruction}
-
-Task ID: ${input.taskId}
-Read the full context from ${contextPath}.
-Write your output to the expected output file in .tasks/${input.taskId}/.`
-}
-
-function runAgentWithFileWatch(
-  input: OrchestratorInput,
-  stage: string,
-  outputFile: string,
-  timeout = DEFAULT_TIMEOUT,
-): Promise<{ succeeded: boolean; timedOut: boolean; retries: number }> {
-  return new Promise((resolve) => {
-    // Use env vars instead of CLI flags for opencode github run
-    // opencode github run reads MODEL, AGENT, PROMPT from env
-    const env = {
-      ...process.env,
-      MODEL: process.env.OPENCODE_MODEL || 'minimax-coding-plan/MiniMax-M2.5',
-      AGENT: stage,
-      PROMPT: buildStagePrompt(input, stage),
-    }
-
-    let retries = 0
-    let currentChild: ChildProcess | null = null
-
-    const attemptWithRetry = (): void => {
-      console.log(`  Attempt ${retries + 1}/${MAX_RETRIES + 1}`)
-
-      // Spawn opencode github run (no CLI flags - env vars control behavior)
-      currentChild = spawn('opencode', ['github', 'run'], {
-        cwd: process.cwd(),
-        stdio: 'inherit',
-        env,
-      })
-
-      let resolved = false
-      let settling = false
-      let pollTimer: NodeJS.Timeout | null = null
-      let timeoutTimer: NodeJS.Timeout | null = null
-
-      const finish = (result: { succeeded: boolean; timedOut: boolean }) => {
-        if (resolved) return
-        resolved = true
-
-        if (pollTimer) clearInterval(pollTimer)
-        if (timeoutTimer) clearTimeout(timeoutTimer)
-
-        // Kill process if still running
-        if (currentChild && !currentChild.killed) {
-          currentChild.kill('SIGTERM')
-          setTimeout(() => {
-            if (currentChild && !currentChild.killed) currentChild.kill('SIGKILL')
-          }, 5000)
-        }
-
-        resolve({ ...result, retries })
-      }
-
-      // Poll for output file
-      const expectedBase = path.basename(outputFile, '.md')
-      const taskDirForPoll = path.dirname(outputFile)
-
-      pollTimer = setInterval(() => {
-        if (settling) return
-
-        try {
-          let detectedFile = outputFile
-
-          // Check exact match first
-          if (!fs.existsSync(outputFile)) {
-            // Check for prefix match (timestamped variant)
-            const files = fs.readdirSync(taskDirForPoll)
-            const prefixMatch = files.find(
-              (f) => f.startsWith(expectedBase + '-') && f.endsWith('.md'),
-            )
-            if (prefixMatch) {
-              detectedFile = path.join(taskDirForPoll, prefixMatch)
-            } else {
-              return
-            }
-          }
-
-          const stat = fs.statSync(detectedFile)
-          if (stat.size > 10) {
-            settling = true
-
-            // Rename if timestamped
-            if (detectedFile !== outputFile) {
-              console.log(
-                `  📄 Output: ${path.basename(detectedFile)} → ${path.basename(outputFile)}`,
-              )
-              fs.renameSync(detectedFile, outputFile)
-            }
-
-            setTimeout(() => finish({ succeeded: true, timedOut: false }), FILE_SETTLE_DELAY)
-          }
-        } catch {
-          // Ignore stat errors
-        }
-      }, FILE_POLL_INTERVAL)
-
-      // Timeout
-      timeoutTimer = setTimeout(() => {
-        finish({ succeeded: false, timedOut: true })
-      }, timeout)
-
-      // Process exit with retry logic
-      currentChild.on('exit', (code) => {
-        if (!resolved) {
-          // Success if file was created
-          if (fs.existsSync(outputFile)) {
-            finish({ succeeded: true, timedOut: false })
-          } else if (code !== 0 && retries < MAX_RETRIES) {
-            // Retry on failure
-            retries++
-            console.log(`  ⚠ Stage failed (exit ${code}), retrying (${retries}/${MAX_RETRIES})...`)
-            if (pollTimer) clearInterval(pollTimer)
-            if (timeoutTimer) clearTimeout(timeoutTimer)
-            if (currentChild && !currentChild.killed) {
-              currentChild.kill('SIGTERM')
-            }
-            // Brief delay before retry
-            setTimeout(attemptWithRetry, 2000)
-          } else {
-            finish({ succeeded: code === 0, timedOut: false })
-          }
-        }
-      })
-    }
-
-    // Start first attempt
-    attemptWithRetry()
-  })
 }
 
 // ============================================================================
