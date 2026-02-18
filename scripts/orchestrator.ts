@@ -19,7 +19,7 @@
  * We pass MODEL, AGENT, PROMPT as env vars to control each stage execution.
  */
 
-import { spawn, type ChildProcess } from 'child_process'
+import { spawn, type ChildProcess, execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -278,6 +278,14 @@ async function runImplPipeline(
     // Write context
     writeAgentContext(taskDir)
 
+    // Set up feature branch before build stage (only in impl pipeline)
+    if (stage === 'build' && !input.dryRun) {
+      const taskDef = readTask(taskDir)
+      if (taskDef) {
+        ensureFeatureBranch(input.taskId, taskDef.task_type)
+      }
+    }
+
     if (input.dryRun) {
       updateStageStatus(input.taskId, stage, 'completed', { retries: 0 })
       continue
@@ -387,6 +395,46 @@ async function showStatus(input: OrchestratorInput): Promise<void> {
 }
 
 // ============================================================================
+// Branch Management
+// ============================================================================
+
+// Branch prefix mapping based on task type (matches pipeline-impl.ts)
+const BRANCH_PREFIX_MAP: Record<string, string> = {
+  implement_feature: 'feat',
+  fix_bug: 'fix',
+  refactor: 'refactor',
+  docs: 'docs',
+  ops: 'chore',
+}
+
+/**
+ * Creates a feature branch before the build stage if needed.
+ * This ensures the branch follows project conventions: fix/260218-description
+ */
+function ensureFeatureBranch(taskId: string, taskType: string): void {
+  const currentBranch = execSync('git branch --show-current', { encoding: 'utf-8' }).trim()
+
+  // Already on a feature branch - don't recreate
+  if (currentBranch !== 'dev' && currentBranch !== 'main' && currentBranch !== '') {
+    console.log(`[branch] Already on feature branch: ${currentBranch}`)
+    return
+  }
+
+  const prefix = BRANCH_PREFIX_MAP[taskType] || 'feat'
+  const branchName = `${prefix}/${taskId}`
+
+  console.log(`[branch] Creating feature branch: ${branchName}`)
+
+  // Fetch latest dev, create branch from it
+  execSync('git fetch origin dev', { stdio: 'inherit' })
+  execSync('git checkout dev', { stdio: 'inherit' })
+  execSync('git pull origin dev', { stdio: 'inherit' })
+  execSync(`git checkout -b ${branchName}`, { stdio: 'inherit' })
+
+  console.log(`[branch] Created and switched to: ${branchName}`)
+}
+
+// ============================================================================
 // Agent Execution
 // ============================================================================
 
@@ -394,12 +442,13 @@ async function showStatus(input: OrchestratorInput): Promise<void> {
 function buildStagePrompt(input: OrchestratorInput, stage: string): string {
   const contextPath = `.tasks/${input.taskId}/.context.md`
 
+  // Spec stages: read-only, no git operations allowed
+  const specOnlyInstruction = `CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the .tasks/${input.taskId}/ directory.`
+
   const stageInstructions: Record<string, string> = {
-    taskify:
-      'Analyze the task description and create a task.json with task_type, pipeline, risk_level, confidence, primary_domain, scope, missing_inputs, and assumptions.',
-    spec: 'Read the task.json and create a detailed spec.md describing the implementation approach.',
-    clarify:
-      'Review the spec and any questions from previous stages. Answer them or note clarifications needed.',
+    taskify: `${specOnlyInstruction}\n\nAnalyze the task description and create a task.json with task_type, pipeline, risk_level, confidence, primary_domain, scope, missing_inputs, and assumptions.`,
+    spec: `${specOnlyInstruction}\n\nRead the task.json and create a detailed spec.md describing the implementation approach.`,
+    clarify: `${specOnlyInstruction}\n\nReview the spec and any questions from previous stages. Answer them or note clarifications needed.`,
     architect:
       'Create a detailed plan.md with the implementation approach, file changes, and dependencies.',
     build: 'Implement the changes as described in the plan. Write code to the repository.',
