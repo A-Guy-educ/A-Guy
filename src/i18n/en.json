@@ -28,6 +28,10 @@
       "myAccount": "My Account",
       "logout": "Logout",
       "loggingOut": "Logging out..."
+    },
+    "footer": {
+      "privacy": "Privacy",
+      "accessibility": "Accessibility"
     }
   },
   "auth": {
@@ -373,11 +377,11 @@
   },
   "legal": {
     "privacy": {
-      "title": "Privacy Policy - Project 0",
+      "title": "Privacy Policy",
       "lastUpdated": "Last updated: February 18, 2026",
       "intro": {
         "title": "General",
-        "description": "The privacy of users of Project 0 is very important to us. This document details what information is collected and how we use it within the platform and working environment (AGuy)."
+        "description": "The privacy of users of the platform is very important to us. This document details what information is collected and how we use it within the platform and working environment (AGuy)."
       },
       "informationWeCollect": {
         "title": "Information We Collect",
@@ -395,7 +399,7 @@
       }
     },
     "accessibility": {
-      "title": "Accessibility Statement - Project 0",
+      "title": "Accessibility Statement",
       "lastUpdated": "Last updated: February 18, 2026",
       "intro": "We strive to provide an equal learning experience for all users. The website has been made accessible in accordance with the Israeli Accessibility Standard (SI 5568) at AA level.",
       "features": {
@@ -406,7 +410,7 @@
       },
       "contact": {
         "title": "Accessibility Contact:",
-        "description": "Encountered a difficulty? We would be happy to hear from you and address it. You may contact us at: [Company Email]."
+        "description": "Encountered a difficulty? We would be happy to hear from you and address it. You may contact us at: office@guykore.co.il."
       }
     }
   }
