@@ -375,47 +375,38 @@
     "privacy": {
       "title": "Privacy Policy - Project 0",
       "lastUpdated": "Last updated: February 18, 2026",
-      "intro": "This document details the information we collect and how we use it.",
+      "intro": {
+        "title": "General",
+        "description": "The privacy of users of Project 0 is very important to us. This document details what information is collected and how we use it within the platform and working environment (AGuy)."
+      },
       "informationWeCollect": {
         "title": "Information We Collect",
-        "account": {
-          "title": "Account Information",
-          "description": "Name, email, and password when creating an account."
-        },
-        "aiInteractions": {
-          "title": "AI Interactions (Practice Page)",
-          "description": "Questions and answers during practice sessions with the AI system."
-        },
-        "usage": {
-          "title": "Usage Data (PDF views and time)",
-          "description": "Tracking of PDF file views and platform usage time."
-        }
+        "account": "Account Information: Name and email address used for identification and system login.",
+        "aiInteractions": "AI Interactions: Chat history with the chatbot on the \"Practice Page.\" This information is stored in order to enable continuity of the learning experience.",
+        "usage": "Usage Data: Technical information regarding how the site is used, PDF pages viewed, and time spent, for the purpose of improving system performance."
       },
       "howWeUseInformation": {
-        "title": "How We Use Information",
-        "description": "We use information to provide service. We do not sell information or display advertisements."
+        "title": "Use of Information",
+        "description": "The information is used to improve our learning tools, adapt AI responses to user needs, and diagnose technical issues on our servers. We do not sell or transfer personal information to third parties for advertising purposes."
       },
       "dataSecurity": {
         "title": "Data Security",
-        "description": "Information is stored in Cluster AGuy in secure systems."
+        "description": "Information is stored on secure servers (Cluster AGuy). We take standard protective measures, but it is important to remember that no system is completely immune."
       }
     },
     "accessibility": {
       "title": "Accessibility Statement - Project 0",
       "lastUpdated": "Last updated: February 18, 2026",
-      "standard": {
-        "title": "Accessibility Standard",
-        "description": "The site meets AA level according to the Israeli standard for web content accessibility."
-      },
+      "intro": "We strive to provide an equal learning experience for all users. The website has been made accessible in accordance with the Israeli Accessibility Standard (SI 5568) at AA level.",
       "features": {
-        "title": "Main Accessibility Features",
-        "item1": "Keyboard navigation",
-        "item2": "Screen reader compatibility",
-        "item3": "Adjusted color contrast"
+        "title": "Main Accessibility Measures:",
+        "learningInterface": "Learning Interface: The Practice Page supports full keyboard navigation, including convenient switching between the chat panel and the PDF view.",
+        "assistiveTech": "Assistive Technologies: The hierarchical structure of the site is adapted for screen readers.",
+        "display": "Display: The site is optimized for viewing across a variety of resolutions and allows text enlargement without harming the user experience."
       },
       "contact": {
-        "title": "Contact",
-        "description": "For accessibility inquiries: [company email]"
+        "title": "Accessibility Contact:",
+        "description": "Encountered a difficulty? We would be happy to hear from you and address it. You may contact us at: [Company Email]."
       }
     }
   }
