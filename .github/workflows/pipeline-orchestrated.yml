@@ -163,7 +163,8 @@ jobs:
 
           # Extract subcommand (first word)
           SUBCMD=$(echo "$CMD" | cut -d' ' -f1)
-          REST=$(echo "$CMD" | cut -d' ' -f2-)
+          # REST: everything after subcommand (use awk to correctly handle single-word input)
+          REST=$(echo "$CMD" | awk '{for(i=2;i<=NF;i++) printf "%s ", $i; print ""}' | xargs)
 
           # Validate subcommand
           case "$SUBCMD" in
@@ -173,7 +174,7 @@ jobs:
             *)
               echo "=== Error: Unknown subcommand: $SUBCMD ==="
               echo "Valid: spec, impl, rerun, status, full"
-              gh issue comment $ISSUE_NUMBER --body "❌ Unknown command \`$SUBCMD\`. Valid commands: \`spec\`, \`impl\`, \`rerun\`, \`status\`, \`full\`"
+              gh issue comment $ISSUE_NUMBER -R "${{ github.repository }}" --body "❌ Unknown command \`$SUBCMD\`. Valid commands: \`spec\`, \`impl\`, \`rerun\`, \`status\`, \`full\`"
               exit 0
               ;;
           esac
@@ -194,7 +195,7 @@ jobs:
           # Validate task-id format (YYMMDD-something or YYMMDD-nn for auto-generated)
           if ! echo "$TASK_ID" | grep -qE '^[0-9]{6}-[a-zA-Z0-9-]+$'; then
             echo "=== Error: Invalid task-id format: $TASK_ID ==="
-            gh issue comment $ISSUE_NUMBER --body "❌ Invalid task ID format: \`$TASK_ID\`. Expected: \`YYMMDD-description\` (e.g., \`260217-user-metrics\`) or \`/oc $SUBCMD\` to auto-generate"
+            gh issue comment $ISSUE_NUMBER -R "${{ github.repository }}" --body "❌ Invalid task ID format: \`$TASK_ID\`. Expected: \`YYMMDD-description\` (e.g., \`260217-user-metrics\`) or \`/oc $SUBCMD\` to auto-generate"
             exit 0
           fi
 
@@ -203,7 +204,8 @@ jobs:
           echo "trigger_type=$TRIGGER_TYPE" >> $GITHUB_OUTPUT
 
           # Parse remaining options (--feedback, --from, --dry-run)
-          OPTIONS=$(echo "$REST" | cut -d' ' -f2-)
+          # Use awk to correctly handle single-word input (no trailing options)
+          OPTIONS=$(echo "$REST" | awk '{for(i=2;i<=NF;i++) printf "%s ", $i; print ""}' | xargs)
 
           if echo "$OPTIONS" | grep -q '\-\-dry-run'; then
             echo "dry_run=true" >> $GITHUB_OUTPUT
