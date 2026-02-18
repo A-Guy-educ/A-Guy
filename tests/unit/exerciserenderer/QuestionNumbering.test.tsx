@@ -25,7 +25,11 @@ const mockMessages = {
 }
 
 function renderWithI18n(ui: React.ReactElement, locale: string = 'en') {
-  return render(<I18nProvider locale={locale} messages={mockMessages}>{ui}</I18nProvider>)
+  return render(
+    <I18nProvider locale={locale} messages={mockMessages}>
+      {ui}
+    </I18nProvider>,
+  )
 }
 
 describe('Exercise Question Numbering', () => {
@@ -67,7 +71,12 @@ describe('Exercise Question Numbering', () => {
             },
             answer: {
               multiSelect: false,
-              options: [{ id: 'opt1', content: { type: 'rich_text', format: 'md-math-v1', value: 'Option 1' } }],
+              options: [
+                {
+                  id: 'opt1',
+                  content: { type: 'rich_text', format: 'md-math-v1', value: 'Option 1' },
+                },
+              ],
               correctOptionIds: ['opt1'],
             },
           },
@@ -114,10 +123,10 @@ describe('Exercise Question Numbering', () => {
 
       // Find all bubbles (circular containers with w-7 h-7 rounded-full)
       const bubbles = container.querySelectorAll('.w-7.h-7.rounded-full')
-      
+
       // Should have exactly one bubble
       expect(bubbles).toHaveLength(1)
-      
+
       // Bubble should contain letter "A"
       expect(bubbles[0].textContent).toBe('A')
     })
@@ -191,10 +200,10 @@ describe('Exercise Question Numbering', () => {
 
       // Find all bubbles
       const bubbles = container.querySelectorAll('.w-7.h-7.rounded-full')
-      
+
       // Should have exactly one bubble
       expect(bubbles).toHaveLength(1)
-      
+
       // Bubble should contain Hebrew letter "א"
       expect(bubbles[0].textContent).toBe('א')
     })
@@ -272,7 +281,7 @@ describe('Exercise Question Numbering', () => {
       // Should have A.1 and A.2 despite rich text blocks
       expect(container.textContent).toContain('A.1')
       expect(container.textContent).toContain('A.2')
-      
+
       // Should only have one bubble (on first question)
       const bubbles = container.querySelectorAll('.w-7.h-7.rounded-full')
       expect(bubbles).toHaveLength(1)
