@@ -1,5 +1,5 @@
 'use client'
-import { useTranslations } from 'next-intl'
+import { useTranslations } from '@/ui/web/providers/I18n'
 
 export default function PrivacyPage() {
   const t = useTranslations('legal.privacy')
