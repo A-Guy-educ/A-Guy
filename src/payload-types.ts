@@ -495,7 +495,7 @@ export interface Course {
    */
   isActive: boolean;
   /**
-   * Controls whether users must sign in to access course content
+   * Controls access to course content. "Gated" shows a sign-in prompt after 5 minutes (client-side nudge, not hard enforcement).
    */
   accessType: 'free' | 'mandatory' | 'gated';
   categories: (string | Category)[];
@@ -1247,7 +1247,7 @@ export interface Lesson {
    */
   isActive: boolean;
   /**
-   * Access control for this lesson. "Inherit" uses the parent course setting.
+   * Access control for this lesson. "Inherit" uses the parent course setting. "Gated" is a client-side nudge, not hard enforcement.
    */
   accessType: 'inherit' | 'free' | 'mandatory' | 'gated';
   /**
