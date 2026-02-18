@@ -201,6 +201,20 @@ export function postComment(issueNumber: number, body: string): void {
   }
 }
 
+export function getIssueBody(issueNumber: number): string | null {
+  if (!issueNumber) return null
+
+  try {
+    const output = execSync(`gh issue view ${issueNumber} --json body --jq '.body'`, {
+      encoding: 'utf-8',
+    })
+    return output.trim() || null
+  } catch (error) {
+    console.error(`Failed to get issue body for #${issueNumber}:`, error)
+    return null
+  }
+}
+
 export function editComment(_commentId: string, _body: string): void {
   // TODO: Implement if needed - gh api required for editing comments
   console.warn('editComment not implemented')
