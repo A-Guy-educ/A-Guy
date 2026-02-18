@@ -11,31 +11,17 @@ export default function PrivacyPage() {
 
       <div className="space-y-8 text-foreground">
         <section>
-          <p className="leading-relaxed">{t('intro')}</p>
+          <h2 className="text-2xl font-semibold mb-4">{t('intro.title')}</h2>
+          <p className="leading-relaxed">{t('intro.description')}</p>
         </section>
 
         <section>
           <h2 className="text-2xl font-semibold mb-4">{t('informationWeCollect.title')}</h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-xl font-medium mb-2">
-                {t('informationWeCollect.account.title')}
-              </h3>
-              <p className="leading-relaxed">{t('informationWeCollect.account.description')}</p>
-            </div>
-            <div>
-              <h3 className="text-xl font-medium mb-2">
-                {t('informationWeCollect.aiInteractions.title')}
-              </h3>
-              <p className="leading-relaxed">
-                {t('informationWeCollect.aiInteractions.description')}
-              </p>
-            </div>
-            <div>
-              <h3 className="text-xl font-medium mb-2">{t('informationWeCollect.usage.title')}</h3>
-              <p className="leading-relaxed">{t('informationWeCollect.usage.description')}</p>
-            </div>
-          </div>
+          <ul className="list-disc list-inside space-y-2 leading-relaxed">
+            <li>{t('informationWeCollect.account')}</li>
+            <li>{t('informationWeCollect.aiInteractions')}</li>
+            <li>{t('informationWeCollect.usage')}</li>
+          </ul>
         </section>
 
         <section>

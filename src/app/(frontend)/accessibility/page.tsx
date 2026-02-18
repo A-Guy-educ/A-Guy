@@ -11,16 +11,15 @@ export default function AccessibilityPage() {
 
       <div className="space-y-8 text-foreground">
         <section>
-          <h2 className="text-2xl font-semibold mb-4">{t('standard.title')}</h2>
-          <p className="leading-relaxed">{t('standard.description')}</p>
+          <p className="leading-relaxed">{t('intro')}</p>
         </section>
 
         <section>
           <h2 className="text-2xl font-semibold mb-4">{t('features.title')}</h2>
           <ul className="list-disc list-inside space-y-2 leading-relaxed">
-            <li>{t('features.item1')}</li>
-            <li>{t('features.item2')}</li>
-            <li>{t('features.item3')}</li>
+            <li>{t('features.learningInterface')}</li>
+            <li>{t('features.assistiveTech')}</li>
+            <li>{t('features.display')}</li>
           </ul>
         </section>
 
