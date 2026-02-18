@@ -1,6 +1,7 @@
 import { getCachedGlobal } from '@/infra/utils/getGlobals'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import React from 'react'
+import { getTranslations } from 'next-intl/server'
 
 import type { Footer } from '@/payload-types'
 
@@ -38,6 +39,7 @@ function VersionDisplay({ version }: { version: string }) {
 export async function Footer() {
   const footerData: Footer = await getCachedGlobal('footer', 1)()
   const version = await getVersion()
+  const t = await getTranslations('common.footer')
 
   const navItems = footerData?.navItems || []
 
@@ -58,6 +60,20 @@ export async function Footer() {
               />
             )
           })}
+          <span className="text-muted-foreground/30">|</span>
+          <SystemLink
+            href="/privacy"
+            className="text-xs text-muted-foreground hover:text-primary transition-colors whitespace-nowrap"
+          >
+            {t('privacy')}
+          </SystemLink>
+          <span className="text-muted-foreground/30">|</span>
+          <SystemLink
+            href="/accessibility"
+            className="text-xs text-muted-foreground hover:text-primary transition-colors whitespace-nowrap"
+          >
+            {t('accessibility')}
+          </SystemLink>
           <span className="text-muted-foreground/30">|</span>
           <VersionDisplay version={version} />
           <ThemeSelector />

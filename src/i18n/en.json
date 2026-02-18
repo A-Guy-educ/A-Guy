@@ -367,7 +367,128 @@
       "platform": "A-Guy Learning Platform",
       "terms": "Terms of Use",
       "privacy": "Privacy Policy",
-      "contact": "Contact Us"
+      "contact": "Contact Us",
+      "accessibility": "Accessibility"
+    }
+  },
+  "legal": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last updated: February 18, 2026",
+      "intro": "A-Guy ('we', 'our', 'us') is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our educational platform.",
+      "informationWeCollect": {
+        "title": "Information We Collect",
+        "account": {
+          "title": "Account Information",
+          "description": "When you create an account, we collect your name, email address, and password. You may optionally provide additional profile information."
+        },
+        "usage": {
+          "title": "Usage Data",
+          "description": "We automatically collect information about your interactions with our platform, including lessons accessed, exercises completed, time spent, and progress data."
+        },
+        "technical": {
+          "title": "Technical Information",
+          "description": "We collect device information, IP address, browser type, operating system, and other technical data to provide and improve our services."
+        }
+      },
+      "howWeUseInformation": {
+        "title": "How We Use Your Information",
+        "provide": "To provide, maintain, and improve our educational services",
+        "personalize": "To personalize your learning experience and track your progress",
+        "communicate": "To communicate with you about your account, updates, and educational content",
+        "analyze": "To analyze usage patterns and improve our platform's functionality",
+        "protect": "To protect against fraud, abuse, and security threats"
+      },
+      "dataSharing": {
+        "title": "Data Sharing and Disclosure",
+        "description": "We do not sell your personal information. We may share your information only in the following circumstances:",
+        "serviceProviders": "With service providers who help us operate our platform (e.g., cloud hosting, analytics)",
+        "legal": "When required by law or to protect our legal rights",
+        "consent": "With your explicit consent or at your direction"
+      },
+      "dataSecurity": {
+        "title": "Data Security",
+        "description": "We implement appropriate technical and organizational measures to protect your information. However, no method of transmission over the internet is 100% secure."
+      },
+      "yourRights": {
+        "title": "Your Rights",
+        "access": "Access and review your personal information",
+        "correct": "Request correction of inaccurate data",
+        "delete": "Request deletion of your account and personal information",
+        "export": "Export your learning data",
+        "optOut": "Opt out of marketing communications"
+      },
+      "dataRetention": {
+        "title": "Data Retention",
+        "description": "We retain your information for as long as your account is active or as needed to provide services. You may request deletion of your account at any time."
+      },
+      "children": {
+        "title": "Children's Privacy",
+        "description": "Our platform is designed for users of all ages. For users under 18, we recommend parental guidance and supervision."
+      },
+      "cookies": {
+        "title": "Cookies and Tracking",
+        "description": "We use cookies and similar technologies to provide functionality, analyze usage, and improve user experience. You can control cookie preferences through your browser settings."
+      },
+      "changes": {
+        "title": "Changes to This Policy",
+        "description": "We may update this Privacy Policy from time to time. We will notify you of significant changes through the platform or via email."
+      },
+      "contact": {
+        "title": "Contact Us",
+        "description": "If you have questions about this Privacy Policy or our data practices, please contact us at: privacy@aguy.co.il"
+      }
+    },
+    "accessibility": {
+      "title": "Accessibility Statement",
+      "lastUpdated": "Last updated: February 18, 2026",
+      "commitment": {
+        "title": "Our Commitment",
+        "description": "A-Guy is committed to ensuring digital accessibility for people of all abilities. We are continually improving the user experience for everyone and applying relevant accessibility standards."
+      },
+      "standards": {
+        "title": "Accessibility Standards",
+        "description": "We strive to conform to the Web Content Accessibility Guidelines (WCAG) 2.1 Level AA. These guidelines explain how to make web content more accessible for people with disabilities."
+      },
+      "features": {
+        "title": "Accessibility Features",
+        "keyboard": "Full keyboard navigation support",
+        "screenReader": "Screen reader compatibility",
+        "contrast": "High contrast color schemes",
+        "text": "Adjustable text sizes",
+        "rtl": "Right-to-left language support (Hebrew)",
+        "captions": "Text alternatives for visual content",
+        "focus": "Clear focus indicators for interactive elements",
+        "responsive": "Mobile-friendly responsive design"
+      },
+      "languages": {
+        "title": "Language Support",
+        "description": "Our platform supports both Hebrew and English, with full right-to-left (RTL) support for Hebrew content."
+      },
+      "testing": {
+        "title": "Ongoing Efforts",
+        "description": "We regularly review our platform for accessibility issues and work to address them. We use both automated tools and manual testing to ensure compliance."
+      },
+      "compatibility": {
+        "title": "Browser Compatibility",
+        "description": "Our platform is designed to work with modern web browsers including Chrome, Firefox, Safari, and Edge with assistive technologies enabled."
+      },
+      "feedback": {
+        "title": "Feedback and Support",
+        "description": "We welcome feedback on the accessibility of our platform. If you encounter any accessibility barriers or have suggestions for improvement, please contact us:",
+        "email": "accessibility@aguy.co.il",
+        "commitment": "We are committed to responding to accessibility feedback and making necessary improvements."
+      },
+      "limitations": {
+        "title": "Known Limitations",
+        "description": "Despite our efforts, some areas may not yet be fully accessible. We are actively working to improve these areas:",
+        "thirdParty": "Some third-party integrations may have accessibility limitations",
+        "legacy": "Certain legacy content may require additional accessibility improvements"
+      },
+      "contact": {
+        "title": "Contact Information",
+        "description": "For accessibility-related questions, concerns, or feedback, please reach out to us at accessibility@aguy.co.il"
+      }
     }
   }
 }
