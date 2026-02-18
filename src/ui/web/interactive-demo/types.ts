@@ -16,10 +16,11 @@ export interface ClientMcqOption {
 
 export interface ClientBlock {
   id: string
-  type: 'content' | 'mcq' | 'open'
+  type: 'content' | 'mcq' | 'open' | 'client_message'
   content: ClientRichText
   options?: ClientMcqOption[]
   media?: string
+  role?: 'user' | 'assistant'
 }
 
 export interface SessionState {
@@ -32,17 +33,20 @@ export interface SessionState {
   remediation: string | null
   isSubmitting: boolean
   isCorrect?: boolean
+  totalBlocks: number
 }
 
 export interface StepResponse {
   sessionId: string
   block: ClientBlock | null
+  currentBlockIndex: number
   currentPhase: 'awaiting_input' | 'awaiting_continue'
   skillScore: number
   remediation: string | null
   isCorrect?: boolean
   status: 'active' | 'completed'
   message?: string
+  totalBlocks?: number
 }
 
 export interface StepRequest {

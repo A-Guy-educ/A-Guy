@@ -3,6 +3,7 @@
 import { cn } from '@/infra/utils/ui'
 import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
 import type { ClientBlock } from '../types'
+import { BlockCard } from './BlockCard'
 
 interface McqBlockProps {
   block: ClientBlock & { type: 'mcq' }
@@ -13,7 +14,7 @@ interface McqBlockProps {
 
 export function McqBlock({ block, selectedAnswer, onSelect, disabled }: McqBlockProps) {
   return (
-    <div className="interactive-demo-mcq">
+    <BlockCard label="A-Guy" role="assistant">
       <div className="mb-4">
         <MathMarkdown
           content={block.content.value}
@@ -49,8 +50,6 @@ export function McqBlock({ block, selectedAnswer, onSelect, disabled }: McqBlock
           </label>
         ))}
       </div>
-
-      {/* Demo v1 MCQ is single-select only; multi-select is future. */}
-    </div>
+    </BlockCard>
   )
 }

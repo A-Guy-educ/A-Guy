@@ -7,7 +7,9 @@ import { useEffect, useState } from 'react'
 import { AnswerDock } from './components/AnswerDock'
 import { BlockStream } from './components/BlockStream'
 import { ContinueButton } from './components/ContinueButton'
+import { ProgressBar } from './components/ProgressBar'
 import { SessionControls } from './components/SessionControls'
+import { SessionSidebar } from './components/SessionSidebar'
 import { useInteractiveSession } from './hooks/useInteractiveSession'
 
 interface InteractiveDemoViewProps {
@@ -26,24 +28,45 @@ export function InteractiveDemoView({
   const t = useTranslations('interactiveDemo')
   const {
     status,
+    sessionId,
     currentBlockIndex,
     currentPhase,
     blocks,
     skillScore,
     remediation,
     isSubmitting,
+    totalBlocks,
     start,
     submitAnswer,
     next,
     reset,
+    addClientBlock,
   } = useInteractiveSession(lessonId, lessonTitle)
 
   const [mcqSelectedAnswer, setMcqSelectedAnswer] = useState<string | null>(null)
   const [openAnswer, setOpenAnswer] = useState('')
+  const [events, setEvents] = useState<Array<{ action: string; timestamp: string }>>([])
+  const [isTyping, setIsTyping] = useState(false)
+  const [finishTypingFn, setFinishTypingFn] = useState<(() => void) | null>(null)
+
+  const handleTypingStateChange = (typing: boolean, finishFn: () => void) => {
+    setIsTyping(typing)
+    setFinishTypingFn(() => finishFn)
+  }
+
+  // Track events for sidebar
+  const addEvent = (action: string) => {
+    const timestamp = new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+    setEvents((prev) => [{ action, timestamp }, ...prev].slice(0, 5))
+  }
 
   // Start the session on mount
   useEffect(() => {
-    start()
+    start().then(() => addEvent('start'))
   }, [start])
 
   // Reset answer state when moving to a new block
@@ -57,20 +80,42 @@ export function InteractiveDemoView({
     if (!currentBlock) return
 
     if (currentBlock.type === 'mcq' && mcqSelectedAnswer) {
+      // Find the selected option text
+      const selectedOption = currentBlock.options?.find((opt) => opt.id === mcqSelectedAnswer)
+      if (selectedOption) {
+        addClientBlock(selectedOption.content.value)
+      }
       await submitAnswer({ selected: mcqSelectedAnswer })
+      addEvent('answer')
     } else if (currentBlock.type === 'open' && openAnswer.trim()) {
+      addClientBlock(openAnswer.trim())
       await submitAnswer(openAnswer.trim())
+      addEvent('answer')
     }
   }
 
   const handleNext = async () => {
+    // If typing is in progress, finish it first
+    if (isTyping && finishTypingFn) {
+      finishTypingFn()
+      return
+    }
+
     await next()
+    addEvent('next')
   }
 
   const handleReset = async () => {
     await reset()
     setMcqSelectedAnswer(null)
     setOpenAnswer('')
+    // Set reset event directly (avoiding setEvents([]) which clears then adds)
+    const timestamp = new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+    setEvents([{ action: 'reset', timestamp }])
   }
 
   if (status === 'loading') {
@@ -101,55 +146,84 @@ export function InteractiveDemoView({
     <div className="interactive-demo-view min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background border-b border-border px-4 py-3">
-        <div className="container max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <a href={backUrl} className="text-sm text-muted-foreground hover:text-foreground">
-              ← Back
-            </a>
-            <Heading level="h2" className="text-lg font-semibold">
-              {lessonTitle}
-            </Heading>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Skill score badge */}
-            <div className="text-sm text-muted-foreground">
-              {t('score')}: {skillScore}
+        <div className="container max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-4">
+              <a href={backUrl} className="text-sm text-muted-foreground hover:text-foreground">
+                ← Back
+              </a>
+              <Heading level="h2" className="text-lg font-semibold">
+                {lessonTitle}
+              </Heading>
             </div>
 
-            {/* Reset button */}
-            <SessionControls onReset={handleReset} t={translations} />
+            <div className="flex items-center gap-4">
+              {/* Skill score badge */}
+              <div className="text-sm text-muted-foreground">
+                {t('score')}: {skillScore}
+              </div>
+
+              {/* Reset button */}
+              <SessionControls onReset={handleReset} t={translations} />
+            </div>
           </div>
+
+          {/* Progress bar */}
+          {totalBlocks > 0 && (
+            <div className="flex items-center gap-3">
+              <ProgressBar current={currentBlockIndex + 1} total={totalBlocks} />
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {currentBlockIndex + 1}/{totalBlocks}
+              </span>
+            </div>
+          )}
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="container max-w-4xl mx-auto px-4 py-6 pb-32">
-        <BlockStream
-          blocks={blocks}
-          typewriterEnabled={typewriterEnabled}
-          currentBlockIndex={currentBlockIndex}
-          currentPhase={currentPhase}
-          mcqSelectedAnswer={mcqSelectedAnswer}
-          openAnswer={openAnswer}
-          onMcqSelect={setMcqSelectedAnswer}
-          onOpenChange={setOpenAnswer}
-          isSubmitting={isSubmitting}
-          remediation={remediation}
-          t={translations}
-        />
+      {/* Main content - two column layout */}
+      <main className="container max-w-7xl mx-auto px-4 py-6 pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+          {/* Left: Block stream */}
+          <div className="min-w-0">
+            <BlockStream
+              blocks={blocks}
+              typewriterEnabled={typewriterEnabled}
+              currentBlockIndex={currentBlockIndex}
+              currentPhase={currentPhase}
+              mcqSelectedAnswer={mcqSelectedAnswer}
+              openAnswer={openAnswer}
+              onMcqSelect={setMcqSelectedAnswer}
+              onOpenChange={setOpenAnswer}
+              isSubmitting={isSubmitting}
+              remediation={remediation}
+              onTypingStateChange={handleTypingStateChange}
+              t={translations}
+            />
 
-        {/* Completion message */}
-        {status === 'completed' && (
-          <div className="text-center py-12">
-            <Heading level="h2" className="text-2xl font-bold mb-4">
-              {t('completed')}
-            </Heading>
-            <p className="text-muted-foreground">
-              {t('score')}: {skillScore}
-            </p>
+            {/* Completion message */}
+            {status === 'completed' && (
+              <div className="text-center py-12">
+                <Heading level="h2" className="text-2xl font-bold mb-4">
+                  {t('completed')}
+                </Heading>
+                <p className="text-muted-foreground">
+                  {t('score')}: {skillScore}
+                </p>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Right: Sidebar */}
+          <aside className="hidden lg:block">
+            <SessionSidebar
+              skillScore={skillScore}
+              blocksShown={blocks.length}
+              currentPhase={currentPhase}
+              sessionId={sessionId}
+              events={events}
+            />
+          </aside>
+        </div>
       </main>
 
       {/* Bottom dock */}

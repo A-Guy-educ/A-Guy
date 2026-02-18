@@ -2,6 +2,7 @@
 
 import type { ClientBlock } from '../types'
 import { BlockReveal } from './BlockReveal'
+import { ClientMessageBlock } from './ClientMessageBlock'
 import { ContentBlock } from './ContentBlock'
 import { McqBlock } from './McqBlock'
 import { OpenBlock } from './OpenBlock'
@@ -18,6 +19,7 @@ interface BlockStreamProps {
   onOpenChange: (value: string) => void
   isSubmitting: boolean
   remediation: string | null
+  onTypingStateChange?: (isTyping: boolean, finishTyping: () => void) => void
   t: {
     selectOption: string
     typeAnswer: string
@@ -35,16 +37,41 @@ export function BlockStream({
   onOpenChange,
   isSubmitting,
   remediation,
+  onTypingStateChange,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   t,
 }: BlockStreamProps) {
+  // Count server blocks to map currentBlockIndex to actual block position
+  let serverBlockCount = 0
+  const blockMetadata = blocks.map((block) => {
+    const isServerBlock = block.type !== 'client_message'
+    const serverIndex = isServerBlock ? serverBlockCount : -1
+    if (isServerBlock) serverBlockCount++
+    return { isServerBlock, serverIndex }
+  })
+
   const renderBlock = (block: ClientBlock, index: number) => {
-    const isCurrentBlock = index === currentBlockIndex
-    const isPastBlock = index < currentBlockIndex
-    const showBlock = isPastBlock || isCurrentBlock
+    const { isServerBlock, serverIndex } = blockMetadata[index]
+    const isClientMessage = block.type === 'client_message'
 
-    if (!showBlock) return null
+    // All blocks that have been added should be shown
+    // (They're added sequentially as they arrive or are created)
 
+    // Handle client message blocks
+    if (isClientMessage) {
+      return (
+        <div key={`block-${block.id}`} className="mb-4">
+          <BlockReveal typewriterEnabled={false} delay={0}>
+            <ClientMessageBlock message={block as ClientBlock & { type: 'client_message' }} />
+          </BlockReveal>
+        </div>
+      )
+    }
+
+    // For server blocks, determine if this is the current one
+    const isCurrentBlock = isServerBlock && serverIndex === currentBlockIndex
+
+    // Handle regular lesson blocks
     const blockContent = (() => {
       switch (block.type) {
         case 'content':
@@ -73,8 +100,12 @@ export function BlockStream({
     })()
 
     return (
-      <div key={block.id} className="mb-6">
-        <BlockReveal typewriterEnabled={typewriterEnabled} delay={index * 200}>
+      <div key={`block-${block.id}`} className="mb-4">
+        <BlockReveal
+          typewriterEnabled={typewriterEnabled && isCurrentBlock}
+          delay={0}
+          onTypingStateChange={isCurrentBlock ? onTypingStateChange : undefined}
+        >
           {blockContent}
         </BlockReveal>
 
@@ -85,7 +116,7 @@ export function BlockStream({
   }
 
   return (
-    <div className="interactive-demo-block-stream space-y-6">
+    <div className="interactive-demo-block-stream space-y-4">
       {blocks.map((block, index) => renderBlock(block, index))}
     </div>
   )

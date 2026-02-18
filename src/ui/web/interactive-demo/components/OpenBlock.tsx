@@ -3,6 +3,7 @@
 import { Textarea } from '@/ui/web/components/textarea'
 import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
 import type { ClientBlock } from '../types'
+import { BlockCard } from './BlockCard'
 
 interface OpenBlockProps {
   block: ClientBlock & { type: 'open' }
@@ -15,7 +16,7 @@ export function OpenBlock({ block, value, onChange, disabled }: OpenBlockProps) 
   const placeholder = block.content?.value || 'Type your answer...'
 
   return (
-    <div className="interactive-demo-open">
+    <BlockCard label="A-Guy" role="assistant">
       <div className="mb-4">
         <MathMarkdown
           content={block.content.value}
@@ -30,6 +31,6 @@ export function OpenBlock({ block, value, onChange, disabled }: OpenBlockProps) 
         disabled={disabled}
         className="min-h-[120px] resize-y"
       />
-    </div>
+    </BlockCard>
   )
 }

@@ -20,4 +20,5 @@ export interface StepResponse {
   feedback?: string
   remediation?: string
   schemaVersion: number
+  totalBlocks?: number
 }

@@ -8,6 +8,7 @@ interface UseInteractiveSessionReturn extends SessionState {
   submitAnswer: (answer: string | { selected: string }) => Promise<void>
   next: () => Promise<void>
   reset: () => Promise<void>
+  addClientBlock: (message: string) => void
 }
 
 export function useInteractiveSession(
@@ -23,6 +24,7 @@ export function useInteractiveSession(
     skillScore: 0,
     remediation: null,
     isSubmitting: false,
+    totalBlocks: 0,
   })
 
   const callApi = useCallback(async (request: StepRequest): Promise<StepResponse> => {
@@ -54,12 +56,13 @@ export function useInteractiveSession(
       setState({
         sessionId: response.sessionId,
         status: 'active',
-        currentBlockIndex: 0,
+        currentBlockIndex: response.currentBlockIndex,
         currentPhase: response.currentPhase,
         blocks: response.block ? [response.block] : [],
         skillScore: response.skillScore,
         remediation: null,
         isSubmitting: false,
+        totalBlocks: response.totalBlocks || 0,
       })
     } catch {
       setState((prev) => ({ ...prev, status: 'error' }))
@@ -81,18 +84,19 @@ export function useInteractiveSession(
           answer,
         })
 
-        setState({
-          ...state,
+        setState((prev) => ({
+          ...prev,
           sessionId: response.sessionId,
+          currentBlockIndex: response.currentBlockIndex,
           currentPhase: response.currentPhase,
           skillScore: response.skillScore,
           remediation: response.remediation ?? null,
           isCorrect: response.isCorrect,
           isSubmitting: false,
+          totalBlocks: response.totalBlocks || prev.totalBlocks,
           // Keep existing blocks, append new block if provided
-          blocks: response.block ? [...state.blocks, response.block] : state.blocks,
-          currentBlockIndex: response.block ? state.blocks.length : state.currentBlockIndex,
-        })
+          blocks: response.block ? [...prev.blocks, response.block] : prev.blocks,
+        }))
       } catch {
         setState((prev) => ({ ...prev, isSubmitting: false, status: 'error' }))
       }
@@ -113,17 +117,18 @@ export function useInteractiveSession(
         clientActionId: crypto.randomUUID(),
       })
 
-      setState({
-        ...state,
+      setState((prev) => ({
+        ...prev,
         sessionId: response.sessionId,
+        currentBlockIndex: response.currentBlockIndex,
         currentPhase: response.currentPhase,
         skillScore: response.skillScore,
         isSubmitting: false,
+        totalBlocks: response.totalBlocks || prev.totalBlocks,
         // Keep existing blocks, append new block if provided
-        blocks: response.block ? [...state.blocks, response.block] : state.blocks,
-        currentBlockIndex: response.block ? state.blocks.length : state.currentBlockIndex,
+        blocks: response.block ? [...prev.blocks, response.block] : prev.blocks,
         status: response.status,
-      })
+      }))
     } catch {
       setState((prev) => ({ ...prev, isSubmitting: false, status: 'error' }))
     }
@@ -143,17 +148,38 @@ export function useInteractiveSession(
       setState({
         sessionId: response.sessionId,
         status: 'active',
-        currentBlockIndex: 0,
+        currentBlockIndex: response.currentBlockIndex,
         currentPhase: response.currentPhase,
         blocks: response.block ? [response.block] : [],
         skillScore: response.skillScore,
         remediation: null,
         isSubmitting: false,
+        totalBlocks: response.totalBlocks || 0,
       })
     } catch {
       setState((prev) => ({ ...prev, status: 'error' }))
     }
   }, [state, lessonId, callApi])
+
+  const addClientBlock = useCallback((message: string) => {
+    setState((prev) => ({
+      ...prev,
+      blocks: [
+        ...prev.blocks,
+        {
+          id: crypto.randomUUID(),
+          type: 'client_message' as const,
+          content: {
+            type: 'rich_text' as const,
+            format: 'md-math-v1' as const,
+            value: message,
+            mediaIds: [],
+          },
+          role: 'user' as const,
+        },
+      ],
+    }))
+  }, [])
 
   return {
     ...state,
@@ -161,5 +187,6 @@ export function useInteractiveSession(
     submitAnswer,
     next,
     reset,
+    addClientBlock,
   }
 }
