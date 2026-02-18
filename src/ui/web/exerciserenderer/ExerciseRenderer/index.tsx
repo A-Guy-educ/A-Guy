@@ -229,87 +229,88 @@ export function ExerciseRenderer({
                 questionIndex++
               }
 
+              // Question blocks - render with answer UI
+              const question = block as QuestionBlock
+              
               // Determine section label and direction based on locale
-            const sectionLabel = locale === 'he' ? 'א' : 'A'
-            const subLabel = `.${questionIndex}`
-            const showBubble = questionIndex === 1
-            const dir = getDirection(locale as 'en' | 'he')
+              const sectionLabel = locale === 'he' ? 'א' : 'A'
+              const subLabel = `.${questionIndex}`
+              const showBubble = questionIndex === 1
+              const dir = getDirection(locale as 'en' | 'he')
 
-            // Question blocks - render with answer UI
-            const question = block as QuestionBlock
-            const answer = answers[question.id] ?? getInitialAnswer(question)
-            const checkResult = checkResults[question.id] || null
-            const checked = hasChecked[question.id] || false
-            const disabled = checked && checkResult?.isCorrect
+              const answer = answers[question.id] ?? getInitialAnswer(question)
+              const checkResult = checkResults[question.id] || null
+              const checked = hasChecked[question.id] || false
+              const disabled = checked && checkResult?.isCorrect
 
-            // True/False and Table questions don't use the generic check button
-            const showCheckButton =
-              showCheckAnswer &&
-              !(question.type === 'question_select' && question.variant === 'true_false') &&
-              question.type !== 'question_table'
+              // True/False and Table questions don't use the generic check button
+              const showCheckButton =
+                showCheckAnswer &&
+                !(question.type === 'question_select' && question.variant === 'true_false') &&
+                question.type !== 'question_table'
 
-            return (
-              <QuestionCard
-                key={question.id}
-                showCheckButton={showCheckButton}
-                onCheckAnswer={() => handleCheckAnswer(question.id)}
-                disabled={!!disabled}
-                loading={!!isChecking[question.id]}
-                checked={checked}
-                checkResult={checkResult}
-                checkAnswerText={t('checkAnswer')}
-                correctText={t('correct')}
-                incorrectText={t('incorrect')}
-                sectionLabel={sectionLabel}
-                subLabel={subLabel}
-                showBubble={showBubble}
-                dir={dir}
-              >
-                {/* Render appropriate question component based on type */}
-                {question.type === 'question_select' && question.variant === 'true_false' && (
-                  <TrueFalseQuestion
-                    question={question as QuestionSelectTrueFalseBlock}
-                    answer={answer}
-                    onChange={(ans) => handleAnswerChange(question.id, ans)}
-                    disabled={!!disabled}
-                    checkResult={checkResult}
-                  />
-                )}
-                {question.type === 'question_select' && question.variant === 'mcq' && (
-                  <McqQuestion
-                    question={question as QuestionSelectMcqBlock}
-                    answer={answer}
-                    onChange={(ans) => handleAnswerChange(question.id, ans)}
-                    disabled={!!disabled}
-                    checkResult={checkResult}
-                    t={t}
-                  />
-                )}
-                {question.type === 'question_free_response' && (
-                  <FreeResponseQuestion
-                    question={question as QuestionFreeResponseBlock}
-                    answer={answer}
-                    onChange={(ans) => handleAnswerChange(question.id, ans)}
-                    disabled={!!disabled}
-                    checkResult={checkResult}
-                    t={t}
-                  />
-                )}
-                {question.type === 'question_table' && (
-                  <TableQuestion
-                    question={question as QuestionTableBlock}
-                    answer={answer}
-                    onChange={(ans) => handleAnswerChange(question.id, ans)}
-                    disabled={!!disabled}
-                    checked={checked}
-                    allCorrect={!!disabled}
-                    onCheckResult={(correct) => handleTableCheckResult(question.id, correct)}
-                    t={t}
-                  />
-                )}
-              </QuestionCard>
-            )
-          })
+              return (
+                <QuestionCard
+                  key={question.id}
+                  showCheckButton={showCheckButton}
+                  onCheckAnswer={() => handleCheckAnswer(question.id)}
+                  disabled={!!disabled}
+                  loading={!!isChecking[question.id]}
+                  checked={checked}
+                  checkResult={checkResult}
+                  checkAnswerText={t('checkAnswer')}
+                  correctText={t('correct')}
+                  incorrectText={t('incorrect')}
+                  sectionLabel={sectionLabel}
+                  subLabel={subLabel}
+                  showBubble={showBubble}
+                  dir={dir}
+                >
+                  {/* Render appropriate question component based on type */}
+                  {question.type === 'question_select' && question.variant === 'true_false' && (
+                    <TrueFalseQuestion
+                      question={question as QuestionSelectTrueFalseBlock}
+                      answer={answer}
+                      onChange={(ans) => handleAnswerChange(question.id, ans)}
+                      disabled={!!disabled}
+                      checkResult={checkResult}
+                    />
+                  )}
+                  {question.type === 'question_select' && question.variant === 'mcq' && (
+                    <McqQuestion
+                      question={question as QuestionSelectMcqBlock}
+                      answer={answer}
+                      onChange={(ans) => handleAnswerChange(question.id, ans)}
+                      disabled={!!disabled}
+                      checkResult={checkResult}
+                      t={t}
+                    />
+                  )}
+                  {question.type === 'question_free_response' && (
+                    <FreeResponseQuestion
+                      question={question as QuestionFreeResponseBlock}
+                      answer={answer}
+                      onChange={(ans) => handleAnswerChange(question.id, ans)}
+                      disabled={!!disabled}
+                      checkResult={checkResult}
+                      t={t}
+                    />
+                  )}
+                  {question.type === 'question_table' && (
+                    <TableQuestion
+                      question={question as QuestionTableBlock}
+                      answer={answer}
+                      onChange={(ans) => handleAnswerChange(question.id, ans)}
+                      disabled={!!disabled}
+                      checked={checked}
+                      allCorrect={!!disabled}
+                      onCheckResult={(correct) => handleTableCheckResult(question.id, correct)}
+                      t={t}
+                    />
+                  )}
+                </QuestionCard>
+              )
+            })
           })()}
         </div>
       </div>
