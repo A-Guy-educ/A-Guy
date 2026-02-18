@@ -56,7 +56,7 @@ export function useInteractiveSession(
       setState({
         sessionId: response.sessionId,
         status: 'active',
-        currentBlockIndex: 0,
+        currentBlockIndex: response.currentBlockIndex,
         currentPhase: response.currentPhase,
         blocks: response.block ? [response.block] : [],
         skillScore: response.skillScore,
@@ -87,6 +87,7 @@ export function useInteractiveSession(
         setState({
           ...state,
           sessionId: response.sessionId,
+          currentBlockIndex: response.currentBlockIndex,
           currentPhase: response.currentPhase,
           skillScore: response.skillScore,
           remediation: response.remediation ?? null,
@@ -95,7 +96,6 @@ export function useInteractiveSession(
           totalBlocks: response.totalBlocks || state.totalBlocks,
           // Keep existing blocks, append new block if provided
           blocks: response.block ? [...state.blocks, response.block] : state.blocks,
-          currentBlockIndex: response.block ? state.blocks.length : state.currentBlockIndex,
         })
       } catch {
         setState((prev) => ({ ...prev, isSubmitting: false, status: 'error' }))
@@ -120,13 +120,13 @@ export function useInteractiveSession(
       setState({
         ...state,
         sessionId: response.sessionId,
+        currentBlockIndex: response.currentBlockIndex,
         currentPhase: response.currentPhase,
         skillScore: response.skillScore,
         isSubmitting: false,
         totalBlocks: response.totalBlocks || state.totalBlocks,
         // Keep existing blocks, append new block if provided
         blocks: response.block ? [...state.blocks, response.block] : state.blocks,
-        currentBlockIndex: response.block ? state.blocks.length : state.currentBlockIndex,
         status: response.status,
       })
     } catch {
@@ -148,7 +148,7 @@ export function useInteractiveSession(
       setState({
         sessionId: response.sessionId,
         status: 'active',
-        currentBlockIndex: 0,
+        currentBlockIndex: response.currentBlockIndex,
         currentPhase: response.currentPhase,
         blocks: response.block ? [response.block] : [],
         skillScore: response.skillScore,

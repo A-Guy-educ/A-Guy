@@ -39,6 +39,7 @@ export interface SessionState {
 export interface StepResponse {
   sessionId: string
   block: ClientBlock | null
+  currentBlockIndex: number
   currentPhase: 'awaiting_input' | 'awaiting_continue'
   skillScore: number
   remediation: string | null

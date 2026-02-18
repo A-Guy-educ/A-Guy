@@ -41,29 +41,35 @@ export function BlockStream({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   t,
 }: BlockStreamProps) {
+  // Count server blocks to map currentBlockIndex to actual block position
+  let serverBlockCount = 0
+  const blockMetadata = blocks.map((block) => {
+    const isServerBlock = block.type !== 'client_message'
+    const serverIndex = isServerBlock ? serverBlockCount : -1
+    if (isServerBlock) serverBlockCount++
+    return { isServerBlock, serverIndex }
+  })
+
   const renderBlock = (block: ClientBlock, index: number) => {
-    // Client messages are always shown (they're user's own messages)
+    const { isServerBlock, serverIndex } = blockMetadata[index]
     const isClientMessage = block.type === 'client_message'
 
-    // For regular blocks, check if they should be shown
-    const isCurrentBlock = index === currentBlockIndex
-    const isPastBlock = index < currentBlockIndex
-    const showBlock = isClientMessage || isPastBlock || isCurrentBlock
-
-    if (!showBlock) return null
+    // All blocks that have been added should be shown
+    // (They're added sequentially as they arrive or are created)
 
     // Handle client message blocks
     if (isClientMessage) {
       return (
         <div key={`block-${block.id}`} className="mb-4">
           <BlockReveal typewriterEnabled={false} delay={0}>
-            <ClientMessageBlock
-              message={block as ClientBlock & { type: 'client_message' }}
-            />
+            <ClientMessageBlock message={block as ClientBlock & { type: 'client_message' }} />
           </BlockReveal>
         </div>
       )
     }
+
+    // For server blocks, determine if this is the current one
+    const isCurrentBlock = isServerBlock && serverIndex === currentBlockIndex
 
     // Handle regular lesson blocks
     const blockContent = (() => {
@@ -97,7 +103,7 @@ export function BlockStream({
       <div key={`block-${block.id}`} className="mb-4">
         <BlockReveal
           typewriterEnabled={typewriterEnabled && isCurrentBlock}
-          delay={index * 200}
+          delay={0}
           onTypingStateChange={isCurrentBlock ? onTypingStateChange : undefined}
         >
           {blockContent}
