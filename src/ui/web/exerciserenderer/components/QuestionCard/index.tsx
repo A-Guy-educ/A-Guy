@@ -24,6 +24,11 @@ interface QuestionCardProps {
   checkAnswerText: string
   correctText: string
   incorrectText: string
+  // Numbering props
+  sectionLabel?: string
+  subLabel?: string
+  showBubble?: boolean
+  dir?: 'ltr' | 'rtl'
 }
 
 export function QuestionCard({
@@ -37,7 +42,13 @@ export function QuestionCard({
   checkAnswerText,
   correctText,
   incorrectText,
+  sectionLabel,
+  subLabel,
+  showBubble = false,
+  dir = 'ltr',
 }: QuestionCardProps) {
+  const shouldShowLabel = sectionLabel && subLabel
+
   return (
     <Card
       className={cn(
@@ -45,6 +56,24 @@ export function QuestionCard({
         checked && checkResult?.isCorrect && 'border-success/30 bg-success/5',
       )}
     >
+      {/* Question Number Label */}
+      {shouldShowLabel && (
+        <div
+          className={cn('flex items-center gap-2 mb-4', dir === 'rtl' && 'flex-row-reverse')}
+          dir={dir}
+        >
+          {showBubble && (
+            <div className="w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm">
+              <span className="text-sm font-bold text-slate-700">{sectionLabel}</span>
+            </div>
+          )}
+          <span className="text-sm font-semibold text-slate-700">
+            {sectionLabel}
+            {subLabel}
+          </span>
+        </div>
+      )}
+
       {/* Question Content */}
       {children}
 
