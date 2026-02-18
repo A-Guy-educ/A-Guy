@@ -76,10 +76,7 @@ export function DemoSidebar({
         <div className="flex justify-between items-center py-2 border-b border-border/60 last:border-0">
           <span className="text-sm text-muted-foreground">{t('currentPhase')}</span>
           <span
-            className={cn(
-              'text-xs font-medium px-2.5 py-1 rounded-full',
-              getPhaseBadgeClass(),
-            )}
+            className={cn('text-xs font-medium px-2.5 py-1 rounded-full', getPhaseBadgeClass())}
           >
             {getPhaseDisplay()}
           </span>

@@ -8,7 +8,6 @@ import { AnswerDock } from './components/AnswerDock'
 import { BlockStream } from './components/BlockStream'
 import { ContinueButton } from './components/ContinueButton'
 import { DemoSidebar } from './components/DemoSidebar'
-import { ProgressBar } from './components/ProgressBar'
 import { SessionControls } from './components/SessionControls'
 import { useInteractiveSession } from './hooks/useInteractiveSession'
 

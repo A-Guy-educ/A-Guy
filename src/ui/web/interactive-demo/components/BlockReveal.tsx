@@ -16,10 +16,7 @@ export interface BlockRevealHandle {
 }
 
 export const BlockReveal = forwardRef<BlockRevealHandle, BlockRevealProps>(
-  (
-    { children, typewriterEnabled, delay = 0, onRevealComplete, onTypingStateChange },
-    ref,
-  ) => {
+  ({ children, typewriterEnabled, delay = 0, onRevealComplete, onTypingStateChange }, ref) => {
     const [displayedText, setDisplayedText] = useState('')
     const [isTyping, setIsTyping] = useState(false)
     const [isComplete, setIsComplete] = useState(!typewriterEnabled)
@@ -95,16 +92,20 @@ export const BlockReveal = forwardRef<BlockRevealHandle, BlockRevealProps>(
           clearTimeout(timerRef.current)
         }
       }
-    }, [typewriterEnabled, children, delay, onRevealComplete, onTypingStateChange, extractText, finishTyping])
+    }, [
+      typewriterEnabled,
+      children,
+      delay,
+      onRevealComplete,
+      onTypingStateChange,
+      extractText,
+      finishTyping,
+    ])
 
     // If typing is complete or disabled, render children directly
     if (isComplete) {
       return (
-        <div
-          className={cn(
-            'transition-all duration-500 ease-out opacity-100 translate-y-0',
-          )}
-        >
+        <div className={cn('transition-all duration-500 ease-out opacity-100 translate-y-0')}>
           {children}
         </div>
       )
@@ -112,14 +113,8 @@ export const BlockReveal = forwardRef<BlockRevealHandle, BlockRevealProps>(
 
     // While typing, show text with caret
     return (
-      <div
-        className={cn(
-          'transition-all duration-500 ease-out opacity-100 translate-y-0',
-        )}
-      >
-        <div className={cn(isTyping && 'demo-typing-caret')}>
-          {displayedText}
-        </div>
+      <div className={cn('transition-all duration-500 ease-out opacity-100 translate-y-0')}>
+        <div className={cn(isTyping && 'demo-typing-caret')}>{displayedText}</div>
       </div>
     )
   },

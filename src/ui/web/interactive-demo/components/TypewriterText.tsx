@@ -79,11 +79,7 @@ export const TypewriterText = forwardRef<TypewriterTextHandle, TypewriterTextPro
       return <div className={className}>{children}</div>
     }
 
-    return (
-      <div className={cn(className, 'demo-typing-caret')}>
-        {displayedText}
-      </div>
-    )
+    return <div className={cn(className, 'demo-typing-caret')}>{displayedText}</div>
   },
 )
 

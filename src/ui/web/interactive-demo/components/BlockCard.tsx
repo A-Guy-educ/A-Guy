@@ -10,12 +10,7 @@ interface BlockCardProps {
   className?: string
 }
 
-export function BlockCard({
-  children,
-  label,
-  role = 'assistant',
-  className,
-}: BlockCardProps) {
+export function BlockCard({ children, label, role = 'assistant', className }: BlockCardProps) {
   const t = useTranslations('interactiveDemo')
 
   // Get translated label
