@@ -228,17 +228,17 @@ describe('validateAuth', () => {
     expect(() => validateAuth()).not.toThrow()
   })
 
-  it('exits when OPENCODE_GITHUB_TOKEN is not set', async () => {
+  it('does not exit - opencode github run handles OIDC auth internally', async () => {
     vi.stubEnv('OPENCODE_GITHUB_TOKEN', '')
 
     const { validateAuth } = await import('../../../scripts/orchestrator-utils')
 
-    // Should call process.exit
+    // Should NOT call process.exit anymore - OIDC auth is handled by opencode github run
     const exitMock = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
 
     validateAuth()
 
-    expect(exitMock).toHaveBeenCalledWith(1)
+    expect(exitMock).not.toHaveBeenCalled()
     exitMock.mockRestore()
   })
 })

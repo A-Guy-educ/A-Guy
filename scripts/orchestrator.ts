@@ -8,13 +8,15 @@
  * Usage:
  *   pnpm pipeline:orchestrate --task-id=<task-id> --mode=<spec|impl|rerun|full|status> [options]
  *
- * This script runs in CI and orchestrates OpenCode agents via `opencode github run --agent <stage>`.
+ * This script runs in CI and orchestrates OpenCode agents via `opencode github run`.
  * It handles:
  * - Input parsing and validation
- * - Auth validation (OPENCODE_GITHUB_TOKEN)
- * - Pipeline stage execution with timeouts and retries
+ * - Pipeline stage execution with timeouts and retries (via OIDC auth to GitHub App)
  * - Status tracking (status.json)
  * - Comment posting to GitHub issues
+ *
+ * Note: opencode github run handles OIDC auth internally via id-token permission.
+ * We pass MODEL, AGENT, PROMPT as env vars to control each stage execution.
  */
 
 import { spawn, type ChildProcess } from 'child_process'
@@ -367,6 +369,34 @@ async function showStatus(input: OrchestratorInput): Promise<void> {
 // Agent Execution
 // ============================================================================
 
+// Build prompt for a given stage
+function buildStagePrompt(input: OrchestratorInput, stage: string): string {
+  const contextPath = `.tasks/${input.taskId}/.context.md`
+
+  const stageInstructions: Record<string, string> = {
+    taskify:
+      'Analyze the task description and create a task.json with task_type, pipeline, risk_level, confidence, primary_domain, scope, missing_inputs, and assumptions.',
+    spec: 'Read the task.json and create a detailed spec.md describing the implementation approach.',
+    clarify:
+      'Review the spec and any questions from previous stages. Answer them or note clarifications needed.',
+    architect:
+      'Create a detailed plan.md with the implementation approach, file changes, and dependencies.',
+    build: 'Implement the changes as described in the plan. Write code to the repository.',
+    test: 'Run tests and verify the implementation works correctly.',
+    verify: 'Run quality checks (typecheck, lint, format) and verify the build passes.',
+    auditor: 'Review the implementation for security, best practices, and potential issues.',
+    pr: 'Create a pull request with all changes. Include a summary and testing notes.',
+  }
+
+  const instruction = stageInstructions[stage] || `Execute the "${stage}" stage.`
+
+  return `${instruction}
+
+Task ID: ${input.taskId}
+Read the full context from ${contextPath}.
+Write your output to the expected output file in .tasks/${input.taskId}/.`
+}
+
 function runAgentWithFileWatch(
   input: OrchestratorInput,
   stage: string,
@@ -374,17 +404,26 @@ function runAgentWithFileWatch(
   timeout = DEFAULT_TIMEOUT,
 ): Promise<{ succeeded: boolean; timedOut: boolean; retries: number }> {
   return new Promise((resolve) => {
-    const cmd = `opencode github run --agent ${stage} "Execute ${stage} for ${input.taskId}. Read context from .tasks/${input.taskId}/.context.md"`
+    // Use env vars instead of CLI flags for opencode github run
+    // opencode github run reads MODEL, AGENT, PROMPT from env
+    const env = {
+      ...process.env,
+      MODEL: process.env.OPENCODE_MODEL || 'minimax-coding-plan/MiniMax-M2.5',
+      AGENT: stage,
+      PROMPT: buildStagePrompt(input, stage),
+    }
 
-    const retries = 0 // TODO: Implement retry logic with increment on failure
+    let retries = 0
+    let currentChild: ChildProcess | null = null
 
-    const attempt = (): void => {
+    const attemptWithRetry = (): void => {
       console.log(`  Attempt ${retries + 1}/${MAX_RETRIES + 1}`)
 
-      const child: ChildProcess = spawn('sh', ['-c', cmd], {
+      // Spawn opencode github run (no CLI flags - env vars control behavior)
+      currentChild = spawn('opencode', ['github', 'run'], {
         cwd: process.cwd(),
         stdio: 'inherit',
-        env: { ...process.env }, // Includes OPENCODE_GITHUB_TOKEN
+        env,
       })
 
       let resolved = false
@@ -400,10 +439,10 @@ function runAgentWithFileWatch(
         if (timeoutTimer) clearTimeout(timeoutTimer)
 
         // Kill process if still running
-        if (!child.killed) {
-          child.kill('SIGTERM')
+        if (currentChild && !currentChild.killed) {
+          currentChild.kill('SIGTERM')
           setTimeout(() => {
-            if (!child.killed) child.kill('SIGKILL')
+            if (currentChild && !currentChild.killed) currentChild.kill('SIGKILL')
           }, 5000)
         }
 
@@ -458,12 +497,23 @@ function runAgentWithFileWatch(
         finish({ succeeded: false, timedOut: true })
       }, timeout)
 
-      // Process exit
-      child.on('exit', (code) => {
+      // Process exit with retry logic
+      currentChild.on('exit', (code) => {
         if (!resolved) {
-          // Success if file was created, otherwise check exit code
+          // Success if file was created
           if (fs.existsSync(outputFile)) {
             finish({ succeeded: true, timedOut: false })
+          } else if (code !== 0 && retries < MAX_RETRIES) {
+            // Retry on failure
+            retries++
+            console.log(`  ⚠ Stage failed (exit ${code}), retrying (${retries}/${MAX_RETRIES})...`)
+            if (pollTimer) clearInterval(pollTimer)
+            if (timeoutTimer) clearTimeout(timeoutTimer)
+            if (currentChild && !currentChild.killed) {
+              currentChild.kill('SIGTERM')
+            }
+            // Brief delay before retry
+            setTimeout(attemptWithRetry, 2000)
           } else {
             finish({ succeeded: code === 0, timedOut: false })
           }
@@ -472,7 +522,7 @@ function runAgentWithFileWatch(
     }
 
     // Start first attempt
-    attempt()
+    attemptWithRetry()
   })
 }
 

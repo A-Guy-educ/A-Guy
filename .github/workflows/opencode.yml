@@ -21,19 +21,25 @@ jobs:
         !contains(github.event.comment.body, '/oc impl') &&
         !contains(github.event.comment.body, '/oc rerun') &&
         !contains(github.event.comment.body, '/oc full') &&
-        !contains(github.event.comment.body, '/oc status')
+        !contains(github.event.comment.body, '/oc status') &&
+        !contains(github.event.comment.body, '/opencode spec') &&
+        !contains(github.event.comment.body, '/opencode impl') &&
+        !contains(github.event.comment.body, '/opencode rerun') &&
+        !contains(github.event.comment.body, '/opencode full') &&
+        !contains(github.event.comment.body, '/opencode status')
       )
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write
+      issues: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Run opencode
         uses: anomalyco/opencode/github@latest

@@ -40,14 +40,29 @@
   - Task validation, comment formatting for all states
   - Pipeline stage definitions, rerun logic
 
+- **`.github/workflows/pipeline.yml`** - Removed invalid `OPENCODE_API_KEY` secret
+
+- **`.github/workflows/openhands.yaml`** - Removed (unused workflow)
+
 ## Quality
 
 - TypeScript: PASS (pnpm tsc --noEmit)
 - Lint: PASS (only pre-existing warnings, no errors)
 - YAML Syntax: PASS (validated with js-yaml)
+- Build: PASS
+- Unit Tests: PASS
+
+## Required Secrets
+
+| Secret            | Required? | Purpose                                              |
+| ----------------- | --------- | ---------------------------------------------------- |
+| `MINIMAX_API_KEY` | **YES**   | Authenticates with OpenCode to generate GitHub token |
+| `GEMINI_API_KEY`  | Optional  | LLM provider for agents                              |
+| `OPENAI_API_KEY`  | Optional  | LLM provider for agents                              |
 
 ## Commits
 
+- `795163f0` fix: Remove invalid OPENCODE_API_KEY secret from workflows
 - `74b4378d` test(orchestrator): Add full test suite for orchestrator.ts
 - `10fde7f4` test(orchestrator): Add mocked integration tests for orchestrator.ts
 - `2ed7f05c` fix(pipeline-orchestrated): Resolve 15 issues blocking workflow execution

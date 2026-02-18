@@ -201,26 +201,15 @@ export function postComment(issueNumber: number, body: string): void {
   }
 }
 
-export function editComment(commentId: string, body: string): void {
-  try {
-    execSync(`gh comment edit ${commentId} --body "${escapeShell(body)}"`, {
-      stdio: 'inherit',
-    })
-  } catch (error) {
-    console.error(`Failed to edit comment ${commentId}:`, error)
-  }
+export function editComment(_commentId: string, _body: string): void {
+  // TODO: Implement if needed - gh api required for editing comments
+  console.warn('editComment not implemented')
 }
 
-export function getIssueComments(issueNumber: number): string[] {
-  try {
-    const output = execSync(`gh issue comments ${issueNumber} --json body --limit 100`, {
-      encoding: 'utf-8',
-    })
-    const comments = JSON.parse(output)
-    return comments.map((c: { body: string }) => c.body)
-  } catch {
-    return []
-  }
+// TODO: Remove or implement - gh issue comments is not a valid command
+export function getIssueComments(_issueNumber: number): string[] {
+  console.warn('getIssueComments not implemented - returns empty array')
+  return []
 }
 
 // ============================================================================
@@ -253,7 +242,7 @@ export function parseCliArgs(argv: string[]): OrchestratorInput {
       input.taskId = normalized[i + 1]
       i++
     } else if (arg === '--mode' && normalized[i + 1]) {
-      const mode = argv[i + 1]
+      const mode = normalized[i + 1]
       if (!isValidMode(mode)) {
         throw new Error(`Invalid mode: ${mode}. Valid: ${VALID_MODES.join(', ')}`)
       }
@@ -301,15 +290,16 @@ export function parseCliArgs(argv: string[]): OrchestratorInput {
 // Auth Validation
 // ============================================================================
 
+// Note: opencode github run handles OIDC auth internally via the id-token permission.
+// We don't need to validate a token ourselves - each invocation handles its own auth.
 export function validateAuth(): void {
-  const token = process.env.OPENCODE_GITHUB_TOKEN
-  if (!token) {
-    console.error('❌ OPENCODE_GITHUB_TOKEN is not set')
-    console.error('This pipeline requires GitHub App authentication.')
-    console.error('Ensure the workflow obtains a token via the OpenCode GitHub action.')
-    process.exit(1)
+  // Check we're in GitHub Actions environment (where OIDC auth is available)
+  if (!process.env.GITHUB_ACTIONS) {
+    console.warn('⚠ Not running in GitHub Actions — OIDC auth may not work')
+    console.warn('  Run locally or in CI with id-token: write permission')
+  } else {
+    console.log('✓ Running in GitHub Actions — OIDC auth available via id-token permission')
   }
-  console.log('✓ GitHub App token validated')
 }
 
 // ============================================================================
