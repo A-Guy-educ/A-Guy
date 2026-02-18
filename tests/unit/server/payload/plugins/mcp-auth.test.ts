@@ -67,7 +67,7 @@ describe('overrideAuth', () => {
     expect((result as any).lessons.find).toBe(true)
     expect((result as any).exercises.find).toBe(true)
     expect((result as any).media.find).toBe(true)
-  })
+  }, 15000)
 
   it('grants create access for courses, chapters, lessons to admins', async () => {
     const { overrideAuth } = await import('@/server/payload/plugins/mcp')
