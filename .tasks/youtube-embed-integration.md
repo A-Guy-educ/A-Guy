@@ -1,0 +1,1688 @@
+# Plan: YouTube Embed Integration via Enhanced Media Collection
+
+**Goal**: Allow editors to paste YouTube URLs when creating "External" media items. The system auto-detects the provider, extracts the video ID, fetches metadata (title, thumbnail), and renders a proper YouTube embed player everywhere media is used — no changes to media consumers.
+
+**Approach**: Enhance the existing `External` media type (already in the Media collection) rather than creating new collections or blocks. This means YouTube embeds work automatically in Lessons, Exercises, Posts, MediaBlock, and anywhere else media is referenced.
+
+---
+
+## Table of Contents
+
+1. [Architecture Overview](#1-architecture-overview)
+2. [Phase 1: Embed Provider Infrastructure](#2-phase-1-embed-provider-infrastructure)
+3. [Phase 2: Media Collection Field Extensions](#3-phase-2-media-collection-field-extensions)
+4. [Phase 3: Server Hooks](#4-phase-3-server-hooks)
+5. [Phase 4: Frontend Rendering](#5-phase-4-frontend-rendering)
+6. [Phase 5: Admin Preview](#6-phase-5-admin-preview)
+7. [Phase 6: Exercise Renderer Support](#7-phase-6-exercise-renderer-support)
+8. [Verification & Testing](#8-verification--testing)
+9. [Files Summary](#9-files-summary)
+10. [Future Provider Extension Guide](#10-future-provider-extension-guide)
+
+---
+
+## 1. Architecture Overview
+
+### How It Works End-to-End
+
+```
+Editor pastes YouTube URL in admin
+        |
+        v
++-----------------------------------+
+| Media Collection (type=external)  |
+| externalUrl = "youtube.com/..."   |
+|                                   |
+| beforeChange hook runs:           |
+|  1. Parse URL -> detect YouTube   |
+|  2. Extract video ID              |
+|  3. Fetch oEmbed metadata         |
+|  4. Populate embed fields         |
++----------------+------------------+
+                 |
+                 v
++-----------------------------------+
+| Stored on Media document:         |
+|  embedProvider: 'youtube'         |
+|  embedVideoId: 'dQw4w9WgXcQ'     |
+|  embedUrl: 'youtube-nocookie...'  |
+|  embedTitle: 'Video Title'        |
+|  embedThumbnailUrl: '...'         |
++----------------+------------------+
+                 |
+                 v
++-----------------------------------+
+| Frontend <ExternalMedia>          |
+|  reads embedProvider field        |
+|  if 'youtube' -> YouTube iframe   |
+|  else -> generic iframe fallback  |
++-----------------------------------+
+```
+
+### Key Design Decisions
+
+- **Privacy-enhanced mode**: YouTube embeds use `youtube-nocookie.com` to avoid tracking cookies
+- **oEmbed for metadata**: Uses YouTube's public oEmbed endpoint (no API key required) to fetch title and thumbnail
+- **Graceful degradation**: If oEmbed fetch fails, the embed still works — just without title/thumbnail
+- **No new collections**: Everything lives on the existing Media document
+- **No consumer changes**: The `<Media>` component already routes `external` type to `<ExternalMedia>` — we just make that component smarter
+
+---
+
+## 2. Phase 1: Embed Provider Infrastructure
+
+**What**: Pure utility functions for URL detection, parsing, and metadata fetching. No Payload dependencies — just input/output functions.
+
+**Why first**: These are the easiest to test in isolation and form the foundation everything else depends on.
+
+### Step 1.1: Create Embed Types
+
+**File**: `src/infra/media/embed/types.ts` (NEW)
+
+```typescript
+/**
+ * @fileType utility
+ * @domain media
+ * @pattern embed-provider
+ * @ai-summary Type definitions for external media embed providers
+ */
+
+/** Supported embed providers. Add new providers here. */
+export type EmbedProvider = 'youtube' | 'generic'
+
+/** Result of resolving an external URL to embed metadata */
+export interface EmbedMetadata {
+  /** Which provider was detected */
+  provider: EmbedProvider
+  /** Provider-specific video/content ID (e.g., YouTube video ID) */
+  videoId: string | null
+  /** The iframe-ready embed URL (e.g., https://www.youtube-nocookie.com/embed/xxx) */
+  embedUrl: string
+  /** Thumbnail image URL fetched from the provider */
+  thumbnailUrl: string | null
+  /** Content title fetched from the provider */
+  title: string | null
+}
+
+/** Response from YouTube's oEmbed API */
+export interface YouTubeOEmbedResponse {
+  title: string
+  author_name: string
+  author_url: string
+  thumbnail_url: string
+  thumbnail_width: number
+  thumbnail_height: number
+  html: string
+}
+```
+
+**What to understand**: These are just TypeScript types — they don't do anything on their own, they define the shape of data that flows through the system. `EmbedProvider` is a union type that lists all supported providers. `EmbedMetadata` is what the resolver returns after analyzing a URL.
+
+### Step 1.2: Create YouTube URL Parser
+
+**File**: `src/infra/media/embed/youtube.ts` (NEW)
+
+```typescript
+/**
+ * @fileType utility
+ * @domain media
+ * @pattern embed-provider
+ * @ai-summary YouTube URL detection, video ID extraction, and oEmbed metadata fetching
+ */
+
+import type { EmbedMetadata, YouTubeOEmbedResponse } from './types'
+
+/**
+ * All the URL patterns YouTube uses.
+ * Each regex has a capture group for the video ID.
+ *
+ * Why so many? YouTube has many URL formats:
+ *   - https://www.youtube.com/watch?v=VIDEO_ID
+ *   - https://youtu.be/VIDEO_ID
+ *   - https://www.youtube.com/embed/VIDEO_ID
+ *   - https://www.youtube.com/shorts/VIDEO_ID
+ *   - https://www.youtube.com/live/VIDEO_ID
+ *   - https://m.youtube.com/watch?v=VIDEO_ID (mobile)
+ */
+const YOUTUBE_PATTERNS: RegExp[] = [
+  /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
+  /(?:https?:\/\/)?youtu\.be\/([a-zA-Z0-9_-]{11})/,
+  /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+  /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+  /(?:https?:\/\/)?(?:www\.)?youtube\.com\/live\/([a-zA-Z0-9_-]{11})/,
+  /(?:https?:\/\/)?m\.youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
+]
+
+/**
+ * Check if a URL is a YouTube URL.
+ *
+ * @param url - The URL to check (e.g., "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+ * @returns true if the URL matches any YouTube pattern
+ */
+export function isYouTubeUrl(url: string): boolean {
+  return YOUTUBE_PATTERNS.some((pattern) => pattern.test(url))
+}
+
+/**
+ * Extract the 11-character video ID from a YouTube URL.
+ *
+ * YouTube video IDs are always exactly 11 characters containing:
+ * letters (a-z, A-Z), numbers (0-9), hyphens (-), and underscores (_).
+ *
+ * @param url - A YouTube URL in any supported format
+ * @returns The 11-character video ID, or null if not found
+ *
+ * @example
+ * extractYouTubeVideoId('https://www.youtube.com/watch?v=dQw4w9WgXcQ') // 'dQw4w9WgXcQ'
+ * extractYouTubeVideoId('https://youtu.be/dQw4w9WgXcQ')                // 'dQw4w9WgXcQ'
+ * extractYouTubeVideoId('https://example.com')                          // null
+ */
+export function extractYouTubeVideoId(url: string): string | null {
+  for (const pattern of YOUTUBE_PATTERNS) {
+    const match = url.match(pattern)
+    if (match?.[1]) {
+      return match[1]
+    }
+  }
+  return null
+}
+
+/**
+ * Convert a YouTube video ID into a privacy-enhanced embed URL.
+ *
+ * Uses youtube-nocookie.com instead of youtube.com to avoid
+ * setting tracking cookies on the user's browser.
+ *
+ * @param videoId - The 11-character YouTube video ID
+ * @returns A full embed URL ready for use in an <iframe> src attribute
+ */
+export function buildYouTubeEmbedUrl(videoId: string): string {
+  return `https://www.youtube-nocookie.com/embed/${videoId}`
+}
+
+/**
+ * Fetch metadata (title, thumbnail) from YouTube's public oEmbed endpoint.
+ *
+ * This does NOT require a YouTube API key. The oEmbed endpoint is public
+ * and rate-limited but sufficient for our use case (called once per media save).
+ *
+ * @param videoId - The YouTube video ID
+ * @returns EmbedMetadata with title and thumbnail, or null fields on failure
+ *
+ * How oEmbed works:
+ * 1. We send a GET request to YouTube's oEmbed URL with the video URL
+ * 2. YouTube responds with JSON containing title, author, thumbnail, etc.
+ * 3. We extract what we need and return it in our EmbedMetadata format
+ */
+export async function fetchYouTubeMetadata(videoId: string): Promise<EmbedMetadata> {
+  const embedUrl = buildYouTubeEmbedUrl(videoId)
+
+  // Base metadata (always available since we have the video ID)
+  const metadata: EmbedMetadata = {
+    provider: 'youtube',
+    videoId,
+    embedUrl,
+    thumbnailUrl: null,
+    title: null,
+  }
+
+  try {
+    // YouTube's public oEmbed endpoint — no API key needed
+    const oEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
+
+    const response = await fetch(oEmbedUrl, {
+      // Timeout after 5 seconds — don't block the save if YouTube is slow
+      signal: AbortSignal.timeout(5000),
+    })
+
+    if (!response.ok) {
+      // Video might be private or deleted — embed will still work, just no metadata
+      return metadata
+    }
+
+    const data = (await response.json()) as YouTubeOEmbedResponse
+
+    metadata.title = data.title || null
+    metadata.thumbnailUrl = data.thumbnail_url || null
+  } catch {
+    // Network error, timeout, or parsing error
+    // This is fine — we still have the embed URL and video ID
+    // The embed will work, just without title/thumbnail
+  }
+
+  return metadata
+}
+
+/**
+ * Full YouTube resolver: detect, extract, fetch metadata.
+ *
+ * This is the main entry point for YouTube URL processing.
+ * Returns null if the URL is not a YouTube URL.
+ *
+ * @param url - Any URL to check
+ * @returns Full EmbedMetadata if YouTube URL, or null if not YouTube
+ */
+export async function resolveYouTube(url: string): Promise<EmbedMetadata | null> {
+  const videoId = extractYouTubeVideoId(url)
+  if (!videoId) return null
+
+  return fetchYouTubeMetadata(videoId)
+}
+```
+
+**What to understand**:
+
+- `isYouTubeUrl` — simple boolean check, useful for quick filtering
+- `extractYouTubeVideoId` — tries each regex pattern, returns the captured video ID
+- `buildYouTubeEmbedUrl` — simple string template, uses `youtube-nocookie.com` for privacy
+- `fetchYouTubeMetadata` — calls YouTube's public oEmbed API (no API key), gracefully handles failures
+- `resolveYouTube` — combines extract + fetch, returns null if URL isn't YouTube
+
+### Step 1.3: Create Main Embed Resolver
+
+**File**: `src/infra/media/embed/resolve.ts` (NEW)
+
+```typescript
+/**
+ * @fileType utility
+ * @domain media
+ * @pattern embed-provider
+ * @ai-summary Main entry point for resolving external URLs to embed metadata.
+ *             Tries each provider in order, falls back to generic.
+ */
+
+import type { EmbedMetadata } from './types'
+import { resolveYouTube } from './youtube'
+
+/**
+ * Resolve an external URL into embed metadata.
+ *
+ * How it works:
+ * 1. Try each supported provider in order (YouTube first)
+ * 2. If a provider matches, return its metadata
+ * 3. If no provider matches, return generic metadata (plain iframe)
+ *
+ * To add a new provider (e.g., Vimeo):
+ * 1. Create src/infra/media/embed/vimeo.ts with resolveVimeo()
+ * 2. Add 'vimeo' to the EmbedProvider type in types.ts
+ * 3. Add resolveVimeo to the providers array below
+ *
+ * @param url - The external URL to resolve
+ * @returns EmbedMetadata with provider info, embed URL, and optional title/thumbnail
+ */
+export async function resolveEmbedUrl(url: string): Promise<EmbedMetadata> {
+  // Try each provider in order. First match wins.
+  // Each resolver returns null if the URL doesn't match its pattern.
+  const providers = [resolveYouTube]
+
+  for (const resolve of providers) {
+    const result = await resolve(url)
+    if (result) return result
+  }
+
+  // No provider matched — return generic metadata.
+  // The URL will be used directly as an iframe src.
+  return {
+    provider: 'generic',
+    videoId: null,
+    embedUrl: url,
+    thumbnailUrl: null,
+    title: null,
+  }
+}
+```
+
+**What to understand**: This is the "router" — it tries each provider, first match wins. Adding Vimeo later is just adding one more entry to the `providers` array.
+
+### Step 1.4: Create Barrel Export
+
+**File**: `src/infra/media/embed/index.ts` (NEW)
+
+```typescript
+export { resolveEmbedUrl } from './resolve'
+export { isYouTubeUrl, extractYouTubeVideoId, buildYouTubeEmbedUrl } from './youtube'
+export type { EmbedProvider, EmbedMetadata } from './types'
+```
+
+### Phase 1 Tests
+
+**File**: `tests/unit/infra/media/embed/youtube.test.ts` (NEW)
+
+```typescript
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import {
+  isYouTubeUrl,
+  extractYouTubeVideoId,
+  buildYouTubeEmbedUrl,
+  fetchYouTubeMetadata,
+  resolveYouTube,
+} from '@/infra/media/embed/youtube'
+
+describe('YouTube embed utilities', () => {
+  // ----------------------------------------------------------
+  // isYouTubeUrl
+  // ----------------------------------------------------------
+  describe('isYouTubeUrl', () => {
+    it('should detect standard youtube.com/watch URL', () => {
+      expect(isYouTubeUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).toBe(true)
+    })
+
+    it('should detect youtu.be short URL', () => {
+      expect(isYouTubeUrl('https://youtu.be/dQw4w9WgXcQ')).toBe(true)
+    })
+
+    it('should detect youtube.com/embed URL', () => {
+      expect(isYouTubeUrl('https://www.youtube.com/embed/dQw4w9WgXcQ')).toBe(true)
+    })
+
+    it('should detect youtube.com/shorts URL', () => {
+      expect(isYouTubeUrl('https://www.youtube.com/shorts/dQw4w9WgXcQ')).toBe(true)
+    })
+
+    it('should detect youtube.com/live URL', () => {
+      expect(isYouTubeUrl('https://www.youtube.com/live/dQw4w9WgXcQ')).toBe(true)
+    })
+
+    it('should detect mobile m.youtube.com URL', () => {
+      expect(isYouTubeUrl('https://m.youtube.com/watch?v=dQw4w9WgXcQ')).toBe(true)
+    })
+
+    it('should detect URL without https://', () => {
+      expect(isYouTubeUrl('youtube.com/watch?v=dQw4w9WgXcQ')).toBe(true)
+    })
+
+    it('should detect URL without www', () => {
+      expect(isYouTubeUrl('https://youtube.com/watch?v=dQw4w9WgXcQ')).toBe(true)
+    })
+
+    it('should reject non-YouTube URLs', () => {
+      expect(isYouTubeUrl('https://vimeo.com/123456')).toBe(false)
+      expect(isYouTubeUrl('https://example.com')).toBe(false)
+      expect(isYouTubeUrl('')).toBe(false)
+    })
+
+    it('should reject YouTube URLs without video ID', () => {
+      expect(isYouTubeUrl('https://www.youtube.com')).toBe(false)
+      expect(isYouTubeUrl('https://www.youtube.com/watch')).toBe(false)
+    })
+
+    it('should handle URL with extra query parameters', () => {
+      expect(isYouTubeUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=42s')).toBe(true)
+      expect(isYouTubeUrl('https://www.youtube.com/watch?list=PLxxx&v=dQw4w9WgXcQ')).toBe(true)
+    })
+  })
+
+  // ----------------------------------------------------------
+  // extractYouTubeVideoId
+  // ----------------------------------------------------------
+  describe('extractYouTubeVideoId', () => {
+    it('should extract ID from standard watch URL', () => {
+      expect(extractYouTubeVideoId('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).toBe(
+        'dQw4w9WgXcQ',
+      )
+    })
+
+    it('should extract ID from short URL', () => {
+      expect(extractYouTubeVideoId('https://youtu.be/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ')
+    })
+
+    it('should extract ID from embed URL', () => {
+      expect(extractYouTubeVideoId('https://www.youtube.com/embed/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ')
+    })
+
+    it('should extract ID from shorts URL', () => {
+      expect(extractYouTubeVideoId('https://www.youtube.com/shorts/dQw4w9WgXcQ')).toBe(
+        'dQw4w9WgXcQ',
+      )
+    })
+
+    it('should extract ID with extra query params', () => {
+      expect(extractYouTubeVideoId('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=120')).toBe(
+        'dQw4w9WgXcQ',
+      )
+    })
+
+    it('should return null for non-YouTube URL', () => {
+      expect(extractYouTubeVideoId('https://vimeo.com/123456')).toBeNull()
+    })
+
+    it('should return null for empty string', () => {
+      expect(extractYouTubeVideoId('')).toBeNull()
+    })
+
+    it('should handle IDs with hyphens and underscores', () => {
+      expect(extractYouTubeVideoId('https://youtu.be/abc-def_123')).toBe('abc-def_123')
+    })
+  })
+
+  // ----------------------------------------------------------
+  // buildYouTubeEmbedUrl
+  // ----------------------------------------------------------
+  describe('buildYouTubeEmbedUrl', () => {
+    it('should build privacy-enhanced embed URL', () => {
+      expect(buildYouTubeEmbedUrl('dQw4w9WgXcQ')).toBe(
+        'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+      )
+    })
+  })
+
+  // ----------------------------------------------------------
+  // fetchYouTubeMetadata (mocked fetch)
+  // ----------------------------------------------------------
+  describe('fetchYouTubeMetadata', () => {
+    beforeEach(() => {
+      vi.stubGlobal('fetch', vi.fn())
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('should return full metadata on successful oEmbed response', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            title: 'Test Video Title',
+            author_name: 'Test Author',
+            author_url: 'https://www.youtube.com/@testauthor',
+            thumbnail_url: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+            thumbnail_width: 480,
+            thumbnail_height: 360,
+            html: '<iframe ...></iframe>',
+          }),
+      }
+      vi.mocked(fetch).mockResolvedValue(mockResponse as Response)
+
+      const result = await fetchYouTubeMetadata('dQw4w9WgXcQ')
+
+      expect(result).toEqual({
+        provider: 'youtube',
+        videoId: 'dQw4w9WgXcQ',
+        embedUrl: 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+        title: 'Test Video Title',
+        thumbnailUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+      })
+
+      // Verify fetch was called with correct oEmbed URL
+      expect(fetch).toHaveBeenCalledWith(
+        'https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ&format=json',
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      )
+    })
+
+    it('should return metadata without title/thumbnail on non-OK response', async () => {
+      vi.mocked(fetch).mockResolvedValue({ ok: false } as Response)
+
+      const result = await fetchYouTubeMetadata('dQw4w9WgXcQ')
+
+      expect(result.provider).toBe('youtube')
+      expect(result.videoId).toBe('dQw4w9WgXcQ')
+      expect(result.embedUrl).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')
+      expect(result.title).toBeNull()
+      expect(result.thumbnailUrl).toBeNull()
+    })
+
+    it('should return metadata without title/thumbnail on network error', async () => {
+      vi.mocked(fetch).mockRejectedValue(new Error('Network error'))
+
+      const result = await fetchYouTubeMetadata('dQw4w9WgXcQ')
+
+      expect(result.provider).toBe('youtube')
+      expect(result.videoId).toBe('dQw4w9WgXcQ')
+      expect(result.embedUrl).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')
+      expect(result.title).toBeNull()
+      expect(result.thumbnailUrl).toBeNull()
+    })
+  })
+
+  // ----------------------------------------------------------
+  // resolveYouTube (integration of the above)
+  // ----------------------------------------------------------
+  describe('resolveYouTube', () => {
+    beforeEach(() => {
+      vi.stubGlobal('fetch', vi.fn())
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('should return null for non-YouTube URLs', async () => {
+      const result = await resolveYouTube('https://vimeo.com/123456')
+      expect(result).toBeNull()
+    })
+
+    it('should resolve a YouTube URL to full metadata', async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ title: 'My Video', thumbnail_url: 'https://thumb.jpg' }),
+      } as Response)
+
+      const result = await resolveYouTube('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+
+      expect(result).not.toBeNull()
+      expect(result!.provider).toBe('youtube')
+      expect(result!.videoId).toBe('dQw4w9WgXcQ')
+      expect(result!.title).toBe('My Video')
+    })
+  })
+})
+```
+
+**File**: `tests/unit/infra/media/embed/resolve.test.ts` (NEW)
+
+```typescript
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { resolveEmbedUrl } from '@/infra/media/embed/resolve'
+
+// Mock the YouTube resolver so we test the routing logic, not YouTube parsing
+vi.mock('@/infra/media/embed/youtube', () => ({
+  resolveYouTube: vi.fn(),
+}))
+
+import { resolveYouTube } from '@/infra/media/embed/youtube'
+
+describe('resolveEmbedUrl', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('should return YouTube metadata when URL is a YouTube URL', async () => {
+    const mockMetadata = {
+      provider: 'youtube' as const,
+      videoId: 'abc123xxxxx',
+      embedUrl: 'https://www.youtube-nocookie.com/embed/abc123xxxxx',
+      title: 'Test',
+      thumbnailUrl: 'https://thumb.jpg',
+    }
+    vi.mocked(resolveYouTube).mockResolvedValue(mockMetadata)
+
+    const result = await resolveEmbedUrl('https://youtube.com/watch?v=abc123xxxxx')
+
+    expect(result).toEqual(mockMetadata)
+  })
+
+  it('should return generic metadata when no provider matches', async () => {
+    vi.mocked(resolveYouTube).mockResolvedValue(null)
+
+    const result = await resolveEmbedUrl('https://example.com/some-page')
+
+    expect(result).toEqual({
+      provider: 'generic',
+      videoId: null,
+      embedUrl: 'https://example.com/some-page',
+      thumbnailUrl: null,
+      title: null,
+    })
+  })
+})
+```
+
+### Phase 1 Verification
+
+```bash
+# Run unit tests for embed utilities
+pnpm test:unit -- tests/unit/infra/media/embed/
+
+# TypeScript check
+pnpm -s tsc --noEmit
+```
+
+**Expected**: All tests pass. No type errors.
+
+---
+
+## 3. Phase 2: Media Collection Field Extensions
+
+**What**: Add new fields to the Media collection to store embed metadata. These fields appear in the admin sidebar when `type === 'external'`.
+
+**Why**: So the embed URL, provider, video ID, thumbnail, and title are stored on the document and available to both the admin preview and the frontend renderer without re-parsing the URL every time.
+
+### Step 2.1: Add Embed Fields to Media Collection
+
+**File**: `src/server/payload/collections/Media/index.ts` (MODIFY)
+
+Add new fields **after** the existing `externalUrl` field (line 69), inside the same `fields` array:
+
+```typescript
+// --- ADD AFTER the externalUrl field (line 69) ---
+
+{
+  name: 'embedProvider',
+  type: 'select',
+  options: [
+    { label: 'YouTube', value: 'youtube' },
+    { label: 'Generic', value: 'generic' },
+  ],
+  admin: {
+    // Only show when type is 'external'
+    condition: (data) => data?.type === MediaType.External,
+    position: 'sidebar',
+    description: 'Auto-detected from URL. Do not change manually.',
+    // Read-only for everyone — set by hook only
+    readOnly: true,
+  },
+  // Not required — will be set by the resolveEmbed hook
+  required: false,
+},
+{
+  name: 'embedVideoId',
+  type: 'text',
+  admin: {
+    condition: (data) => data?.type === MediaType.External,
+    position: 'sidebar',
+    description: 'Provider-specific video/content ID',
+    readOnly: true,
+  },
+  required: false,
+},
+{
+  name: 'embedUrl',
+  type: 'text',
+  admin: {
+    condition: (data) => data?.type === MediaType.External,
+    position: 'sidebar',
+    description: 'Embed-ready URL for iframe (auto-generated)',
+    readOnly: true,
+  },
+  required: false,
+},
+{
+  name: 'embedTitle',
+  type: 'text',
+  admin: {
+    condition: (data) => data?.type === MediaType.External,
+    description: 'Title fetched from provider (auto-populated)',
+    readOnly: true,
+  },
+  required: false,
+},
+{
+  name: 'embedThumbnailUrl',
+  type: 'text',
+  admin: {
+    condition: (data) => data?.type === MediaType.External,
+    description: 'Thumbnail URL fetched from provider (auto-populated)',
+    readOnly: true,
+  },
+  required: false,
+},
+```
+
+**What each field does**:
+
+- `embedProvider` — Which provider was detected (e.g., `'youtube'` or `'generic'`). Used by the frontend component to decide how to render.
+- `embedVideoId` — The provider-specific ID (e.g., `'dQw4w9WgXcQ'` for YouTube). Useful for building URLs and debugging.
+- `embedUrl` — The **iframe-ready** URL (e.g., `https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ`). This is what the frontend actually puts in the `<iframe src="...">`.
+- `embedTitle` — The video title fetched from oEmbed. Used as the `<iframe title="...">` for accessibility and in the admin preview.
+- `embedThumbnailUrl` — The thumbnail URL. Displayed in the admin preview and can be used as a poster/fallback image.
+
+**Important**: All these fields are `readOnly: true` in admin — they're auto-populated by the hook in Phase 3. Editors just paste the `externalUrl` and everything else fills in automatically.
+
+### Step 2.2: Add Import and Register New Hook
+
+Still in `src/server/payload/collections/Media/index.ts`:
+
+1. Add the import at the top (with other hook imports around line 16-18):
+
+```typescript
+import { resolveEmbedHook } from './hooks/resolveEmbed'
+```
+
+2. Add it to the `hooks.beforeChange` array (around line 262):
+
+```typescript
+hooks: {
+  beforeValidate: [validateMediaUploadHook],
+  beforeChange: [resolveEmbedHook, enforceRetentionPolicyHook],
+},
+```
+
+**Why `beforeChange` and not `beforeValidate`?**: Because `beforeValidate` runs before field validation. The `resolveEmbed` hook calls an external API (YouTube oEmbed), which is a side effect — side effects belong in `beforeChange`. Also, the `validateMediaUpload` hook already validates the URL exists in `beforeValidate`, so by `beforeChange` we know we have a valid `externalUrl`.
+
+### Phase 2 Verification
+
+```bash
+# Type generation (creates updated types with new fields)
+pnpm generate:types
+
+# TypeScript check (confirms new fields compile)
+pnpm -s tsc --noEmit
+
+# Import map regeneration (for admin components)
+pnpm generate:importmap
+```
+
+**Expected**: Types regenerate with `embedProvider`, `embedVideoId`, `embedUrl`, `embedTitle`, `embedThumbnailUrl` fields on the `Media` interface. No type errors.
+
+---
+
+## 4. Phase 3: Server Hooks
+
+**What**: A `beforeChange` hook that automatically resolves embed metadata when an external URL is saved.
+
+### Step 3.1: Create resolveEmbed Hook
+
+**File**: `src/server/payload/collections/Media/hooks/resolveEmbed.ts` (NEW)
+
+```typescript
+/**
+ * @fileType hook
+ * @domain media
+ * @pattern embed-provider
+ * @ai-summary beforeChange hook that resolves external URLs to embed metadata.
+ *             Called on create and update when type is 'external'.
+ */
+
+import type { CollectionBeforeChangeHook } from 'payload'
+import { MediaType } from '@/infra/media/types'
+import { resolveEmbedUrl } from '@/infra/media/embed'
+
+/**
+ * Resolves external URLs to embed metadata.
+ *
+ * When this hook runs:
+ * - On CREATE with type === 'external': Always resolve
+ * - On UPDATE with type === 'external' AND externalUrl changed: Re-resolve
+ * - On UPDATE with type !== 'external': Clear embed fields (type was changed away from external)
+ * - Everything else: Skip (no-op)
+ *
+ * What it does:
+ * 1. Calls resolveEmbedUrl() which tries each provider (YouTube first)
+ * 2. Populates embedProvider, embedVideoId, embedUrl, embedTitle, embedThumbnailUrl
+ * 3. If the oEmbed fetch fails, the embed fields still get populated with what we have
+ *    (at minimum: provider and embedUrl)
+ */
+export const resolveEmbedHook: CollectionBeforeChangeHook = async ({
+  data,
+  operation,
+  originalDoc,
+  req,
+}) => {
+  const type = data?.type
+  const externalUrl = data?.externalUrl
+
+  // --- Case 1: Not an external type ---
+  // If the type was changed AWAY from external, clear embed fields
+  if (type !== MediaType.External) {
+    if (originalDoc?.embedProvider) {
+      // Was external before, now it's not — clear embed data
+      data.embedProvider = null
+      data.embedVideoId = null
+      data.embedUrl = null
+      data.embedTitle = null
+      data.embedThumbnailUrl = null
+    }
+    return data
+  }
+
+  // --- Case 2: External type, but no URL ---
+  if (!externalUrl) {
+    return data
+  }
+
+  // --- Case 3: Update, but URL hasn't changed ---
+  if (operation === 'update' && originalDoc?.externalUrl === externalUrl) {
+    // URL didn't change, keep existing embed data
+    return data
+  }
+
+  // --- Case 4: External type with a new/changed URL — resolve it ---
+  try {
+    req.payload.logger.info(`[Media] Resolving embed URL: ${externalUrl}`)
+
+    const metadata = await resolveEmbedUrl(externalUrl)
+
+    data.embedProvider = metadata.provider
+    data.embedVideoId = metadata.videoId
+    data.embedUrl = metadata.embedUrl
+    data.embedTitle = metadata.title
+    data.embedThumbnailUrl = metadata.thumbnailUrl
+
+    req.payload.logger.info(
+      `[Media] Resolved embed: provider=${metadata.provider}, videoId=${metadata.videoId}`,
+    )
+  } catch (error) {
+    // Don't fail the save — just log and leave embed fields empty
+    req.payload.logger.error(`[Media] Failed to resolve embed URL: ${externalUrl}`, error)
+  }
+
+  return data
+}
+```
+
+**What to understand**:
+
+- The hook is smart about when to run — it only calls the external API when the URL actually changed
+- If the oEmbed call fails, the save still succeeds — the embed just won't have title/thumbnail
+- If someone changes the type away from `external`, it clears the embed fields
+
+### Phase 3 Tests
+
+**File**: `tests/unit/hooks/resolveEmbed.test.ts` (NEW)
+
+```typescript
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { resolveEmbedHook } from '@/server/payload/collections/Media/hooks/resolveEmbed'
+import { MediaType } from '@/infra/media/types'
+
+// Mock the embed resolver so we don't make real HTTP requests
+vi.mock('@/infra/media/embed', () => ({
+  resolveEmbedUrl: vi.fn(),
+}))
+
+import { resolveEmbedUrl } from '@/infra/media/embed'
+
+// Helper to create a mock Payload req object
+function createMockReq() {
+  return {
+    payload: {
+      logger: {
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+      },
+    },
+  } as any
+}
+
+describe('resolveEmbedHook', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('should resolve YouTube URL on create', async () => {
+    vi.mocked(resolveEmbedUrl).mockResolvedValue({
+      provider: 'youtube',
+      videoId: 'dQw4w9WgXcQ',
+      embedUrl: 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+      title: 'Rick Astley - Never Gonna Give You Up',
+      thumbnailUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+    })
+
+    const data = {
+      type: MediaType.External,
+      externalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    }
+
+    const result = await resolveEmbedHook({
+      data,
+      operation: 'create',
+      originalDoc: undefined as any,
+      req: createMockReq(),
+      collection: {} as any,
+      context: {},
+    } as any)
+
+    expect(result.embedProvider).toBe('youtube')
+    expect(result.embedVideoId).toBe('dQw4w9WgXcQ')
+    expect(result.embedUrl).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')
+    expect(result.embedTitle).toBe('Rick Astley - Never Gonna Give You Up')
+    expect(result.embedThumbnailUrl).toBe('https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg')
+  })
+
+  it('should skip resolution on update when URL has not changed', async () => {
+    const data = {
+      type: MediaType.External,
+      externalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    }
+
+    const result = await resolveEmbedHook({
+      data,
+      operation: 'update',
+      originalDoc: {
+        externalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        embedProvider: 'youtube',
+      },
+      req: createMockReq(),
+      collection: {} as any,
+      context: {},
+    } as any)
+
+    // Should NOT have called the resolver
+    expect(resolveEmbedUrl).not.toHaveBeenCalled()
+    expect(result).toEqual(data) // data unchanged
+  })
+
+  it('should re-resolve on update when URL has changed', async () => {
+    vi.mocked(resolveEmbedUrl).mockResolvedValue({
+      provider: 'youtube',
+      videoId: 'newVideoIdxx',
+      embedUrl: 'https://www.youtube-nocookie.com/embed/newVideoIdxx',
+      title: 'New Video',
+      thumbnailUrl: 'https://thumb.jpg',
+    })
+
+    const data = {
+      type: MediaType.External,
+      externalUrl: 'https://www.youtube.com/watch?v=newVideoIdxx',
+    }
+
+    const result = await resolveEmbedHook({
+      data,
+      operation: 'update',
+      originalDoc: {
+        externalUrl: 'https://www.youtube.com/watch?v=oldVideoIdxx',
+        embedProvider: 'youtube',
+      },
+      req: createMockReq(),
+      collection: {} as any,
+      context: {},
+    } as any)
+
+    expect(resolveEmbedUrl).toHaveBeenCalledWith('https://www.youtube.com/watch?v=newVideoIdxx')
+    expect(result.embedVideoId).toBe('newVideoIdxx')
+  })
+
+  it('should clear embed fields when type changes away from external', async () => {
+    const data = {
+      type: MediaType.Image,
+    }
+
+    const result = await resolveEmbedHook({
+      data,
+      operation: 'update',
+      originalDoc: {
+        embedProvider: 'youtube',
+        embedVideoId: 'oldId',
+        embedUrl: 'https://old-url',
+        embedTitle: 'Old Title',
+        embedThumbnailUrl: 'https://old-thumb',
+      },
+      req: createMockReq(),
+      collection: {} as any,
+      context: {},
+    } as any)
+
+    expect(result.embedProvider).toBeNull()
+    expect(result.embedVideoId).toBeNull()
+    expect(result.embedUrl).toBeNull()
+    expect(result.embedTitle).toBeNull()
+    expect(result.embedThumbnailUrl).toBeNull()
+  })
+
+  it('should not fail the save if embed resolution throws', async () => {
+    vi.mocked(resolveEmbedUrl).mockRejectedValue(new Error('Network failure'))
+
+    const data = {
+      type: MediaType.External,
+      externalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    }
+
+    // Should NOT throw — the save continues without embed metadata
+    const result = await resolveEmbedHook({
+      data,
+      operation: 'create',
+      originalDoc: undefined as any,
+      req: createMockReq(),
+      collection: {} as any,
+      context: {},
+    } as any)
+
+    // Data should be returned unchanged (no embed fields added)
+    expect(result.embedProvider).toBeUndefined()
+  })
+
+  it('should skip when type is external but no URL provided', async () => {
+    const data = {
+      type: MediaType.External,
+      externalUrl: null,
+    }
+
+    const result = await resolveEmbedHook({
+      data,
+      operation: 'create',
+      originalDoc: undefined as any,
+      req: createMockReq(),
+      collection: {} as any,
+      context: {},
+    } as any)
+
+    expect(resolveEmbedUrl).not.toHaveBeenCalled()
+    expect(result).toEqual(data)
+  })
+
+  it('should handle generic (non-YouTube) URL', async () => {
+    vi.mocked(resolveEmbedUrl).mockResolvedValue({
+      provider: 'generic',
+      videoId: null,
+      embedUrl: 'https://example.com/widget',
+      title: null,
+      thumbnailUrl: null,
+    })
+
+    const data = {
+      type: MediaType.External,
+      externalUrl: 'https://example.com/widget',
+    }
+
+    const result = await resolveEmbedHook({
+      data,
+      operation: 'create',
+      originalDoc: undefined as any,
+      req: createMockReq(),
+      collection: {} as any,
+      context: {},
+    } as any)
+
+    expect(result.embedProvider).toBe('generic')
+    expect(result.embedVideoId).toBeNull()
+    expect(result.embedUrl).toBe('https://example.com/widget')
+  })
+})
+```
+
+### Phase 3 Verification
+
+```bash
+# Run hook tests
+pnpm test:unit -- tests/unit/hooks/resolveEmbed.test.ts
+
+# Run all embed-related tests together
+pnpm test:unit -- tests/unit/infra/media/embed/ tests/unit/hooks/resolveEmbed.test.ts
+
+# TypeScript check
+pnpm -s tsc --noEmit
+```
+
+---
+
+## 5. Phase 4: Frontend Rendering
+
+**What**: Replace the generic iframe in `ExternalMedia` with a provider-aware renderer that shows YouTube videos properly.
+
+### Step 4.1: Update ExternalMedia Component
+
+**File**: `src/ui/web/media/ExternalMedia/index.tsx` (MODIFY — full replacement)
+
+```typescript
+'use client'
+
+import { cn } from '@/infra/utils/ui'
+import React from 'react'
+
+import type { Props as MediaProps } from '../types'
+import type { Media } from '@/payload-types'
+
+/**
+ * Extended Media type with embed fields.
+ * These fields are populated by the resolveEmbed hook when type === 'external'.
+ */
+interface ExternalMediaResource extends Media {
+  externalUrl?: string | null
+  embedProvider?: 'youtube' | 'generic' | null
+  embedVideoId?: string | null
+  embedUrl?: string | null
+  embedTitle?: string | null
+  embedThumbnailUrl?: string | null
+}
+
+/**
+ * Renders a YouTube embed with proper 16:9 aspect ratio.
+ *
+ * Key attributes:
+ * - youtube-nocookie.com: Privacy-enhanced mode (no tracking cookies)
+ * - loading="lazy": Don't load the iframe until it's near the viewport
+ * - allowFullScreen: Users can go fullscreen
+ * - allow="...": Permissions for the iframe (autoplay, clipboard, etc.)
+ */
+function YouTubeEmbed({
+  videoId,
+  embedUrl,
+  title,
+  className,
+}: {
+  videoId: string
+  embedUrl: string
+  title: string | null | undefined
+  className?: string
+}) {
+  return (
+    <div
+      className={cn('relative w-full overflow-hidden rounded-lg', className)}
+      // CSS aspect-ratio: forces 16:9 ratio regardless of container width
+      style={{ aspectRatio: '16 / 9' }}
+    >
+      <iframe
+        src={embedUrl}
+        title={title || `YouTube video ${videoId}`}
+        // Fill the entire aspect-ratio container
+        className="absolute inset-0 h-full w-full"
+        // Don't load until the user scrolls near it
+        loading="lazy"
+        // Allow these features inside the YouTube iframe
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+        // Security: don't send referrer info to YouTube
+        referrerPolicy="strict-origin-when-cross-origin"
+      />
+    </div>
+  )
+}
+
+/**
+ * Generic iframe embed for non-YouTube URLs.
+ * Falls back to the original behavior: a plain iframe with the URL.
+ */
+function GenericEmbed({
+  url,
+  title,
+  className,
+}: {
+  url: string
+  title: string | null | undefined
+  className?: string
+}) {
+  return (
+    <div className={cn('external-media', className)}>
+      <iframe
+        src={url}
+        title={title || 'External content'}
+        className="w-full h-[400px] border border-border rounded"
+        loading="lazy"
+      />
+    </div>
+  )
+}
+
+/**
+ * Main ExternalMedia component.
+ *
+ * Routes to the correct renderer based on embedProvider:
+ * - 'youtube' -> YouTubeEmbed (proper 16:9 responsive player)
+ * - 'generic' or missing -> GenericEmbed (plain iframe, like before)
+ *
+ * This component is used by the main <Media> component (src/ui/web/media/index.tsx)
+ * when the media document has type === 'external'. It receives the full media
+ * document as props.resource, which includes the embed fields set by the hook.
+ */
+export const ExternalMedia: React.FC<MediaProps> = (props) => {
+  const { resource, className } = props
+
+  if (!resource || typeof resource !== 'object') {
+    return null
+  }
+
+  const media = resource as ExternalMediaResource
+
+  // If we have an embed URL from the hook, use the provider-specific renderer
+  if (media.embedProvider === 'youtube' && media.embedVideoId && media.embedUrl) {
+    return (
+      <YouTubeEmbed
+        videoId={media.embedVideoId}
+        embedUrl={media.embedUrl}
+        title={media.embedTitle}
+        className={className}
+      />
+    )
+  }
+
+  // If we have an embedUrl but not YouTube, use generic embed with the resolved URL
+  if (media.embedUrl) {
+    return <GenericEmbed url={media.embedUrl} title={media.embedTitle} className={className} />
+  }
+
+  // Fallback: use the raw externalUrl (for legacy data without embed fields)
+  if (media.externalUrl) {
+    return <GenericEmbed url={media.externalUrl} title={null} className={className} />
+  }
+
+  return <p className={cn('text-muted-foreground', className)}>No external URL provided</p>
+}
+```
+
+**What to understand**:
+
+- The `YouTubeEmbed` sub-component uses CSS `aspect-ratio: 16/9` for responsive sizing — no fixed heights
+- The component has a 3-level fallback: YouTube embed -> generic embed with resolved URL -> raw externalUrl
+- The raw `externalUrl` fallback ensures old media documents (created before this feature) still work
+
+### Phase 4 Verification
+
+```bash
+# TypeScript check (ensures component uses correct types from generated payload-types)
+pnpm -s tsc --noEmit
+
+# Visual check: Start dev server and create an External media with a YouTube URL
+pnpm dev
+# Then go to /admin/collections/media/create
+# Set type to "External", paste a YouTube URL, save
+# The embed should appear on any page that references this media
+```
+
+---
+
+## 6. Phase 5: Admin Preview
+
+**What**: Upgrade the admin sidebar preview for external media to show the detected provider, thumbnail, title, and a proper YouTube preview instead of a broken generic iframe.
+
+### Step 5.1: Update ExternalPreview Component
+
+**File**: `src/ui/admin/MediaPreview/ExternalPreview.tsx` (MODIFY — full replacement)
+
+```typescript
+'use client'
+
+import React from 'react'
+import { useFormFields } from '@payloadcms/ui'
+
+/**
+ * Admin preview for External media type.
+ *
+ * Reads form fields reactively via useFormFields so the preview
+ * updates live as the editor changes values.
+ *
+ * Shows:
+ * - The detected provider (e.g., "YouTube") as a badge
+ * - The original URL with an "Open Link" button
+ * - The fetched title (if available)
+ * - A thumbnail image (if available) OR an iframe preview
+ */
+export const ExternalPreview: React.FC = () => {
+  // Read form field values reactively
+  const externalUrlField = useFormFields(([fields]) => fields.externalUrl)
+  const embedProviderField = useFormFields(([fields]) => fields.embedProvider)
+  const embedUrlField = useFormFields(([fields]) => fields.embedUrl)
+  const embedTitleField = useFormFields(([fields]) => fields.embedTitle)
+  const embedThumbnailUrlField = useFormFields(([fields]) => fields.embedThumbnailUrl)
+  const embedVideoIdField = useFormFields(([fields]) => fields.embedVideoId)
+
+  const externalUrl = externalUrlField?.value as string | undefined
+  const embedProvider = embedProviderField?.value as string | undefined
+  const embedUrl = embedUrlField?.value as string | undefined
+  const embedTitle = embedTitleField?.value as string | undefined
+  const embedThumbnailUrl = embedThumbnailUrlField?.value as string | undefined
+  const embedVideoId = embedVideoIdField?.value as string | undefined
+
+  if (!externalUrl) {
+    return (
+      <div style={{ padding: '16px' }}>
+        <p>Paste an external URL (e.g., YouTube link) and save to see a preview.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ padding: '16px' }}>
+      {/* Provider badge */}
+      {embedProvider && embedProvider !== 'generic' && (
+        <div
+          style={{
+            display: 'inline-block',
+            padding: '2px 8px',
+            marginBottom: '8px',
+            borderRadius: '4px',
+            backgroundColor:
+              embedProvider === 'youtube' ? '#FF0000' : 'var(--theme-elevation-300)',
+            color: embedProvider === 'youtube' ? '#fff' : 'inherit',
+            fontSize: '12px',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+          }}
+        >
+          {embedProvider}
+        </div>
+      )}
+
+      {/* Title */}
+      {embedTitle && (
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>{embedTitle}</h4>
+      )}
+
+      {/* Original URL */}
+      <p
+        style={{
+          margin: '0 0 8px 0',
+          wordBreak: 'break-all',
+          fontSize: '12px',
+          opacity: 0.7,
+        }}
+      >
+        {externalUrl}
+      </p>
+
+      {/* Open Link button */}
+      <div style={{ marginBottom: '12px' }}>
+        <a
+          href={externalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-block',
+            padding: '4px 12px',
+            backgroundColor: 'var(--theme-elevation-300)',
+            borderRadius: '4px',
+            textDecoration: 'none',
+            fontSize: '13px',
+          }}
+        >
+          Open Link
+        </a>
+      </div>
+
+      {/* Preview: thumbnail for YouTube, iframe for others */}
+      {embedProvider === 'youtube' && embedThumbnailUrl ? (
+        <div style={{ position: 'relative' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={embedThumbnailUrl}
+            alt={embedTitle || 'YouTube thumbnail'}
+            style={{
+              width: '100%',
+              borderRadius: '4px',
+              display: 'block',
+            }}
+          />
+          {/* Play button overlay */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'none',
+            }}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(0,0,0,0.7)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {/* CSS triangle play icon */}
+              <div
+                style={{
+                  width: 0,
+                  height: 0,
+                  borderTop: '10px solid transparent',
+                  borderBottom: '10px solid transparent',
+                  borderLeft: '16px solid white',
+                  marginLeft: '3px',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      ) : embedUrl ? (
+        <iframe
+          src={embedUrl}
+          style={{
+            width: '100%',
+            height: '200px',
+            border: '1px solid var(--theme-elevation-300)',
+            borderRadius: '4px',
+          }}
+          title={embedTitle || 'External content preview'}
+        />
+      ) : (
+        <iframe
+          src={externalUrl}
+          style={{
+            width: '100%',
+            height: '200px',
+            border: '1px solid var(--theme-elevation-300)',
+            borderRadius: '4px',
+          }}
+          title="External content preview"
+        />
+      )}
+
+      {/* Video ID (debug info) */}
+      {embedVideoId && (
+        <p style={{ margin: '8px 0 0 0', fontSize: '11px', opacity: 0.5 }}>
+          ID: {embedVideoId}
+        </p>
+      )}
+    </div>
+  )
+}
+```
+
+**What to understand**:
+
+- Uses `useFormFields` to read values reactively — the preview updates as the editor changes values
+- For YouTube: shows a thumbnail image with a play button overlay (lightweight, no iframe in sidebar)
+- For non-YouTube: shows an iframe preview like before
+- The provider badge is color-coded (red for YouTube)
+- Uses inline styles because this is a Payload admin component (admin components use Payload's theme CSS variables, not Tailwind)
+
+### Phase 5 Verification
+
+```bash
+# TypeScript check
+pnpm -s tsc --noEmit
+
+# Generate import map (admin components may need re-registration)
+pnpm generate:importmap
+
+# Visual check in admin:
+# 1. Go to /admin/collections/media/create
+# 2. Set type to "External"
+# 3. Paste: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+# 4. Save
+# 5. Sidebar should show: red "YOUTUBE" badge, title, thumbnail with play button
+```
+
+---
+
+## 7. Phase 6: Exercise Renderer Support
+
+**What**: The `MediaAttachments` component in the exercise renderer currently only handles `video` and `image` types. It needs to also handle `external` type to display YouTube embeds in exercises.
+
+### Step 6.1: Update MediaAttachments Component
+
+**File**: `src/ui/web/exerciserenderer/components/MediaAttachments/index.tsx` (MODIFY)
+
+Changes needed:
+
+1. Add a type check function (after `isVideoType` around line 20):
+
+```typescript
+function isExternalType(media: Media): boolean {
+  return media.type === 'external'
+}
+```
+
+2. Add an external media renderer inside `MediaItem`, **after** the `isVideoType` check (line 37) and **before** the `isImageType` check:
+
+```typescript
+if (isExternalType(media)) {
+  const embedMedia = media as any // embed fields from resolveEmbed hook
+
+  // YouTube embed
+  if (
+    embedMedia.embedProvider === 'youtube' &&
+    embedMedia.embedVideoId &&
+    embedMedia.embedUrl
+  ) {
+    return (
+      <div
+        className="relative w-full overflow-hidden rounded-lg"
+        style={{ aspectRatio: '16 / 9' }}
+      >
+        <iframe
+          src={embedMedia.embedUrl}
+          title={
+            embedMedia.embedTitle || `YouTube video ${embedMedia.embedVideoId}`
+          }
+          className="absolute inset-0 h-full w-full"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      </div>
+    )
+  }
+
+  // Generic external embed
+  const embedUrl = embedMedia.embedUrl || embedMedia.externalUrl
+  if (embedUrl) {
+    return (
+      <iframe
+        src={embedUrl}
+        title={embedMedia.embedTitle || 'External content'}
+        className="w-full h-[400px] border border-border rounded"
+        loading="lazy"
+      />
+    )
+  }
+
+  return null
+}
+```
+
+**What to understand**: The exercise renderer resolves media from a `MediaMapContext` which provides full `Media` objects. Since those objects now have the embed fields (after Phase 2), we just need to read them and render the appropriate embed.
+
+### Phase 6 Verification
+
+```bash
+# TypeScript check
+pnpm -s tsc --noEmit
+
+# Visual check:
+# 1. Create an External media item with a YouTube URL
+# 2. Attach it to an exercise's media (via the exercise content editor)
+# 3. View the exercise — YouTube embed should appear
+```
+
+---
+
+## 8. Verification & Testing
+
+### Full Test Suite
+
+```bash
+# 1. Run all embed unit tests
+pnpm test:unit -- tests/unit/infra/media/embed/
+
+# 2. Run hook tests
+pnpm test:unit -- tests/unit/hooks/resolveEmbed.test.ts
+
+# 3. Run ALL unit tests to ensure nothing broke
+pnpm test:unit
+
+# 4. TypeScript check
+pnpm -s tsc --noEmit
+
+# 5. Lint check
+pnpm -s lint
+
+# 6. Format check
+pnpm -s format
+
+# 7. Generate types (must run after collection schema changes)
+pnpm generate:types
+
+# 8. Generate import map (must run after component changes)
+pnpm generate:importmap
+```
+
+### Manual Testing Checklist
+
+After starting dev server (`pnpm dev`):
+
+| #   | Test                      | Steps                                                                                                    | Expected                                                                     |
+| --- | ------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| 1   | Create YouTube media      | Admin -> Media -> Create -> type=External -> paste `https://www.youtube.com/watch?v=dQw4w9WgXcQ` -> Save | Embed fields auto-populate. Sidebar shows YouTube badge + thumbnail.         |
+| 2   | Create short URL media    | Same as above but paste `https://youtu.be/dQw4w9WgXcQ`                                                   | Same result — short URLs detected correctly.                                 |
+| 3   | Create generic external   | Same but paste `https://example.com/widget`                                                              | Provider = "generic", embedUrl = the URL, no thumbnail.                      |
+| 4   | Update URL                | Edit existing YouTube media -> change to different YouTube URL -> Save                                   | Embed fields update to new video.                                            |
+| 5   | Change type               | Edit YouTube media -> change type to Image -> Save                                                       | Embed fields cleared.                                                        |
+| 6   | Frontend render           | Reference the YouTube media in a Lesson/Post -> view frontend page                                       | YouTube player appears with 16:9 ratio, plays correctly.                     |
+| 7   | Exercise render           | Attach YouTube media to exercise -> view exercise                                                        | YouTube player appears in exercise view.                                     |
+| 8   | Existing media unaffected | View existing image/video/PDF media                                                                      | No changes, everything renders as before.                                    |
+| 9   | oEmbed failure            | Disconnect network -> create External YouTube media -> Save                                              | Save succeeds. Embed fields have provider + embedUrl but no title/thumbnail. |
+
+---
+
+## 9. Files Summary
+
+### New Files (8)
+
+| File                                                         | Description                                  |
+| ------------------------------------------------------------ | -------------------------------------------- |
+| `src/infra/media/embed/types.ts`                             | Type definitions for embed system            |
+| `src/infra/media/embed/youtube.ts`                           | YouTube URL parser + oEmbed fetcher          |
+| `src/infra/media/embed/resolve.ts`                           | Main provider resolver (tries each provider) |
+| `src/infra/media/embed/index.ts`                             | Barrel export                                |
+| `src/server/payload/collections/Media/hooks/resolveEmbed.ts` | beforeChange hook for auto-resolving         |
+| `tests/unit/infra/media/embed/youtube.test.ts`               | YouTube utility tests                        |
+| `tests/unit/infra/media/embed/resolve.test.ts`               | Resolver routing tests                       |
+| `tests/unit/hooks/resolveEmbed.test.ts`                      | Hook behavior tests                          |
+
+### Modified Files (4)
+
+| File                                                                | What Changes                                           |
+| ------------------------------------------------------------------- | ------------------------------------------------------ |
+| `src/server/payload/collections/Media/index.ts`                     | Add 5 embed fields + import/register resolveEmbed hook |
+| `src/ui/web/media/ExternalMedia/index.tsx`                          | Replace generic iframe with YouTube-aware renderer     |
+| `src/ui/admin/MediaPreview/ExternalPreview.tsx`                     | Upgrade preview with provider badge + thumbnail        |
+| `src/ui/web/exerciserenderer/components/MediaAttachments/index.tsx` | Add external type handling                             |
+
+### NOT Modified (the beauty of this approach)
+
+- `src/ui/web/media/index.tsx` — Already routes `external` -> `ExternalMedia`, no change needed
+- `src/server/payload/blocks/MediaBlock/` — Works as-is, editors just pick External media
+- All consumers of media (Lessons, Posts, Courses, Chapters, Conversations) — No changes needed
+- No new collections, no new blocks, no config changes
+
+---
+
+## 10. Future Provider Extension Guide
+
+To add Vimeo (or any other provider) support later:
+
+### Step 1: Create Provider File
+
+```
+src/infra/media/embed/vimeo.ts
+```
+
+Implement `isVimeoUrl()`, `extractVimeoVideoId()`, `fetchVimeoMetadata()`, `resolveVimeo()` — same pattern as `youtube.ts`.
+
+### Step 2: Update Types
+
+In `src/infra/media/embed/types.ts`:
+
+```typescript
+export type EmbedProvider = 'youtube' | 'vimeo' | 'generic'
+```
+
+### Step 3: Register Provider
+
+In `src/infra/media/embed/resolve.ts`:
+
+```typescript
+import { resolveVimeo } from './vimeo'
+const providers = [resolveYouTube, resolveVimeo]
+```
+
+### Step 4: Update Media Collection
+
+In `src/server/payload/collections/Media/index.ts`, add to `embedProvider` options:
+
+```typescript
+{ label: 'Vimeo', value: 'vimeo' },
+```
+
+### Step 5: Update Frontend
+
+In `src/ui/web/media/ExternalMedia/index.tsx`, add a `VimeoEmbed` component and a condition for `embedProvider === 'vimeo'`.
+
+### Step 6: Tests
+
+Copy `youtube.test.ts` pattern, adjust for Vimeo URL formats.
+
+That's it — the architecture is designed for easy provider extension.
