@@ -104,9 +104,13 @@ export async function getPdfConversionMaxPromptSizeBytes(tenantId?: string): Pro
  */
 export async function isPasswordLoginEnabled(): Promise<boolean> {
   try {
-    const value = await getConfigValueByKey<string>(SYSTEM_PARAMS_DOMAIN, 'password_login_enabled', {
-      throwIfNotFound: false,
-    })
+    const value = await getConfigValueByKey<string>(
+      SYSTEM_PARAMS_DOMAIN,
+      'password_login_enabled',
+      {
+        throwIfNotFound: false,
+      },
+    )
     return value === 'true'
   } catch {
     return false
