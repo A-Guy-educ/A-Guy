@@ -1,7 +1,0 @@
-/* ANTI-SPAM: Honeypot field styles (hidden from users, visible to bots) */
-.honeypot-field {
-  position: absolute;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-}
