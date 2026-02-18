@@ -1,13 +1,11 @@
+import { FooterClient } from './Component.client'
 import { getCachedGlobal } from '@/infra/utils/getGlobals'
-import React from 'react'
-import type { Footer as FooterType } from '@/payload-types'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
-import { FooterClient } from './FooterClient'
+import React from 'react'
 
-/**
- * Read version directly from package.json
- */
+import type { Footer as FooterType } from '@/payload-types'
+
 async function getVersion(): Promise<string> {
   try {
     const packageJson = await readFile(join(process.cwd(), 'package.json'), 'utf-8')

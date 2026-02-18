@@ -2,7 +2,9 @@
 
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import React from 'react'
+
 import type { Footer } from '@/payload-types'
+
 import { ThemeSelector } from '@/ui/web/providers/Theme/ThemeSelector'
 import { CMSLink } from '@/ui/web/Link'
 import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
