@@ -24,6 +24,7 @@ describe('Vercel Blob Storage Enforcement', () => {
 
   describe('enforceBlobStorageToken', () => {
     it('should throw error when BLOB_READ_WRITE_TOKEN is not set', async () => {
+      // Dynamic import of plugins module can be slow due to transitive dependencies
       // Ensure token is not set
       delete process.env.BLOB_READ_WRITE_TOKEN
 
@@ -35,7 +36,7 @@ describe('Vercel Blob Storage Enforcement', () => {
           'Vercel Blob storage is mandatory for this application. ' +
           'Please set BLOB_READ_WRITE_TOKEN in your environment configuration.',
       )
-    })
+    }, 15000)
 
     it('should not throw when BLOB_READ_WRITE_TOKEN is set', async () => {
       // Set a mock token

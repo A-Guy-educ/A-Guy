@@ -1,0 +1,2 @@
+Test file to verify push works from Claude Code Bash tool.
+Delete this file after confirming push succeeds.
