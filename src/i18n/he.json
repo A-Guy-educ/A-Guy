@@ -373,6 +373,16 @@
     "score": "ציון",
     "typeAnswer": "הקלד את התשובה שלך...",
     "loading": "טוען שיעור...",
-    "selectOption": "בחר תשובה"
+    "selectOption": "בחר תשובה",
+    "blocksShown": "בלוקים הוצגו",
+    "skillScore": "ציון מיומנות",
+    "tone": "טון",
+    "sessionStats": "נתוני סשן",
+    "currentPhase": "שלב נוכחי",
+    "sessionId": "מזהה סשן",
+    "recentEvents": "אירועים אחרונים",
+    "continueNote": "כפתור המשך תמיד זמין: לחיצה בזמן כתיבה = הצג הכל, לחיצה נוספת = התקדם.",
+    "teacher": "מורה",
+    "student": "תלמיד"
   }
 }
