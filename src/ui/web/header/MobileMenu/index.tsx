@@ -29,7 +29,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 }) => {
   const tCommon = useTranslations('common.header')
   const tMenu = useTranslations('common.mobileMenu')
-  const navItems = data?.navItems || []
+  const navItems = (data?.navItems || []).filter(({ link }) => link?.url !== '/signup')
   const portalContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
