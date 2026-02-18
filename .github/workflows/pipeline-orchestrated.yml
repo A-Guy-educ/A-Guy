@@ -178,19 +178,23 @@ jobs:
               ;;
           esac
 
-          # Extract task-id (next word, must exist for spec/impl/rerun/full)
+          # Extract task-id (next word, or generate new one if not provided)
           TASK_ID=$(echo "$REST" | xargs | cut -d' ' -f1)
 
+          # If no task-id provided, generate a new one
           if [[ -z "$TASK_ID" ]]; then
-            echo "=== Error: task-id is required ==="
-            gh issue comment $ISSUE_NUMBER --body "❌ Task ID is required. Usage: \`/oc $SUBCMD <task-id> [--options]\`"
-            exit 0
+            echo "No task-id provided, generating new one..."
+            # Generate ID: YYMMDD-nn (e.g., 260218-01)
+            DATE_PREFIX=$(date +'%y%m%d')
+            RANDOM_SUFFIX=$(shuf -i 1-99 -n 1 | xargs printf '%02d')
+            TASK_ID="${DATE_PREFIX}-${RANDOM_SUFFIX}"
+            echo "Generated new task-id: $TASK_ID"
           fi
 
-          # Validate task-id format (YYMMDD-something)
+          # Validate task-id format (YYMMDD-something or YYMMDD-nn for auto-generated)
           if ! echo "$TASK_ID" | grep -qE '^[0-9]{6}-[a-zA-Z0-9-]+$'; then
             echo "=== Error: Invalid task-id format: $TASK_ID ==="
-            gh issue comment $ISSUE_NUMBER --body "❌ Invalid task ID format: \`$TASK_ID\`. Expected: \`YYMMDD-description\` (e.g., \`260217-user-metrics\`)"
+            gh issue comment $ISSUE_NUMBER --body "❌ Invalid task ID format: \`$TASK_ID\`. Expected: \`YYMMDD-description\` (e.g., \`260217-user-metrics\`) or \`/oc $SUBCMD\` to auto-generate"
             exit 0
           fi
 

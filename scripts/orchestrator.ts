@@ -34,6 +34,7 @@ import {
   readStatus,
   postComment,
   formatStatusComment,
+  getIssueBody,
   type OrchestratorInput,
 } from './orchestrator-utils'
 
@@ -147,12 +148,32 @@ async function runSpecPipeline(
 ): Promise<void> {
   console.log('Running SPEC pipeline (Phase 1)...\n')
 
-  // Check task.md exists
+  // Ensure task directory exists
   const taskDir = ensureTaskDir(input.taskId)
   const taskMdPath = path.join(taskDir, 'task.md')
 
+  // Create task.md from issue body if it doesn't exist
   if (!fs.existsSync(taskMdPath)) {
-    throw new Error(`task.md not found in .tasks/${input.taskId}/. Create it first.`)
+    if (input.issueNumber) {
+      console.log('task.md not found, fetching issue body to create it...')
+      const issueBody = getIssueBody(input.issueNumber)
+      if (issueBody) {
+        fs.writeFileSync(taskMdPath, `# Task\n\n${issueBody}\n`)
+        console.log(`Created task.md from issue #${input.issueNumber}`)
+
+        // Comment with assigned task ID
+        postComment(
+          input.issueNumber,
+          `🎯 Task created: \`${input.taskId}\`\n\nThe pipeline will now process this task.`,
+        )
+      } else {
+        throw new Error(
+          `task.md not found in .tasks/${input.taskId}/ and issue #${input.issueNumber} has no body. Create it first.`,
+        )
+      }
+    } else {
+      throw new Error(`task.md not found in .tasks/${input.taskId}/. Create it first.`)
+    }
   }
 
   const stages = ['taskify', 'spec', 'clarify']
