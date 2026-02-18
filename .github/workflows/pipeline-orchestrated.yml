@@ -94,8 +94,8 @@ jobs:
             exit 0
           fi
 
-          # Pattern: must match ^/oc[[:space:]]+ (using POSIX [[:space:]])
-          if ! echo "$COMMENT_BODY" | grep -qE '^/oc[[:space:]]+'; then
+          # Pattern: must match ^/oc (with optional trailing space)
+          if ! echo "$COMMENT_BODY" | grep -qE '^/oc([[:space:]]|$)'; then
             echo "valid=false" >> $GITHUB_OUTPUT
             echo "reason=pattern" >> $GITHUB_OUTPUT
             exit 0
