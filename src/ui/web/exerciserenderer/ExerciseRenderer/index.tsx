@@ -209,30 +209,27 @@ export function ExerciseRenderer({
     <MediaMapProvider value={mediaMap}>
       <div className={cn('w-full max-w-3xl mx-auto', className)}>
         <div className="flex flex-col gap-6">
-          {content.blocks.map((block, index) => {
-            // Rich text block - just render content
-            if (block.type === 'rich_text') {
-              return (
-                <div
-                  key={block.id}
-                  className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed"
-                >
-                  <RichTextRenderer block={block} />
-                </div>
-              )
-            }
+          {(() => {
+            let questionIndex = 0
+            return content.blocks.map((block) => {
+              // Rich text block - just render content
+              if (block.type === 'rich_text') {
+                return (
+                  <div
+                    key={block.id}
+                    className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed"
+                  >
+                    <RichTextRenderer block={block} />
+                  </div>
+                )
+              }
 
-            // Calculate question index for numbering
-            // Count only question_select and question_free_response blocks before this one
-            const questionIndex =
-              content.blocks
-                .slice(0, index)
-                .filter(
-                  (b) =>
-                    b.type === 'question_select' || b.type === 'question_free_response',
-                ).length + 1
+              // Increment question index for question_select and question_free_response
+              if (block.type === 'question_select' || block.type === 'question_free_response') {
+                questionIndex++
+              }
 
-            // Determine section label and direction based on locale
+              // Determine section label and direction based on locale
             const sectionLabel = locale === 'he' ? 'א' : 'A'
             const subLabel = `.${questionIndex}`
             const showBubble = questionIndex === 1
@@ -312,7 +309,8 @@ export function ExerciseRenderer({
                 )}
               </QuestionCard>
             )
-          })}
+          })
+          })()}
         </div>
       </div>
     </MediaMapProvider>
