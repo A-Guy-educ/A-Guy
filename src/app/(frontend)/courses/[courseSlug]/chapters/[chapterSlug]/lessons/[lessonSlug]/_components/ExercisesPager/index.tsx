@@ -68,22 +68,24 @@ export function ExercisesPager({
           <div className="h-full flex flex-col">
             <div className="flex-1 overflow-y-auto min-h-0">
               <div className="w-full p-4 md:p-6 space-y-4">
-                <Progress value={progressPercent} className="h-1 rounded-full" />
+                <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden">
+                  <Progress value={progressPercent} className="h-1 rounded-none" />
 
-                <div className="bg-card rounded-2xl p-5 md:p-6 border border-border/60 shadow-sm">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <Layers className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em]">
-                        {exerciseOrdinal !== null
-                          ? `${t('exercise')} ${exerciseOrdinal} ${t('of')} ${totalExercises}`
-                          : ''}
-                      </p>
-                      <h2 className="text-lg font-medium text-foreground">
-                        {currentExercise.title}
-                      </h2>
+                  <div className="p-5 md:p-6">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Layers className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-start text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">
+                          {exerciseOrdinal !== null
+                            ? `${t('exercise')} ${exerciseOrdinal} ${t('of')} ${totalExercises}`
+                            : ''}
+                        </p>
+                        <h2 className="text-lg font-medium text-foreground">
+                          {currentExercise.title}
+                        </h2>
+                      </div>
                     </div>
                   </div>
                 </div>
