@@ -2,34 +2,9 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
-// --- Context aggregation ---
-
-const CONTEXT_FILES = [
-  'task.md',
-  'task.json',
-  'spec.md',
-  'questions.md',
-  'clarified.md',
-  'plan.md',
-  'plan-review.md',
-  'build.md',
-  'commit.md',
-  'test.md',
-  'verify.md',
-  'autofix.md',
-  'rerun-feedback.md',
-]
-
-export function writeAgentContext(taskDir: string): void {
-  const parts: string[] = []
-  for (const file of CONTEXT_FILES) {
-    const p = path.join(taskDir, file)
-    if (fs.existsSync(p)) {
-      parts.push(`# ${file}\n\n${fs.readFileSync(p, 'utf-8')}`)
-    }
-  }
-  fs.writeFileSync(path.join(taskDir, '.context.md'), parts.join('\n\n---\n\n'))
-}
+// --- Context aggregation removed ---
+// Agents now read individual files directly (listed in stage-prompts.ts STAGE_CONTEXT_FILES).
+// The monolithic .context.md file is no longer generated.
 
 // --- Task definition types and validation ---
 

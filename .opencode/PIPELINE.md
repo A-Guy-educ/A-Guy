@@ -6,26 +6,26 @@ Automated development pipeline for A-Guy project using OpenCode CLI agents.
 
 ```
 Spec Phase:    taskify → spec → clarify
-Impl Phase:    architect → plan-review → build → commit → test →
+Impl Phase:    architect → plan-review(gate) → build → commit → test →
                verify (scripted) → [autofix → re-verify]* → [auditor, pr] (parallel)
 ```
 
 \*Auto-fix loop runs up to 2 times if verify detects lint/type/format errors.
 
-| Agent       | Description                        | Input            | Output         | Type     |
-| ----------- | ---------------------------------- | ---------------- | -------------- | -------- |
-| taskify     | Classify task, produce task.json   | task.md          | task.json      | agent    |
-| spec        | Requirements definition            | task.md          | spec.md        | agent    |
-| clarify     | Collect operator Q&A               | task.md, spec.md | questions.md   | agent    |
-| architect   | Implementation plan                | clarified.md     | plan.md        | agent    |
-| plan-review | Review plan against spec           | plan.md, spec.md | plan-review.md | agent    |
-| build       | Write implementation code          | plan.md          | build.md       | agent    |
-| commit      | Commit and push changes            | build output     | commit.md      | agent    |
-| test        | Write E2E/integration tests        | build.md         | test.md        | agent    |
-| verify      | Run quality gates (tsc, lint, fmt) | code             | verify.md      | scripted |
-| autofix     | Fix lint/type/format errors        | verify.md        | autofix.md     | agent    |
-| auditor     | Process improvement analysis       | verify.md        | auditor.md     | agent    |
-| pr          | Create pull request via gh CLI     | all above        | pr.md          | scripted |
+| Agent       | Description                        | Input                        | Output         | Type     |
+| ----------- | ---------------------------------- | ---------------------------- | -------------- | -------- |
+| taskify     | Classify task, produce task.json   | task.md                      | task.json      | agent    |
+| spec        | Requirements definition            | task.md                      | spec.md        | agent    |
+| clarify     | Collect operator Q&A               | task.md, spec.md             | questions.md   | agent    |
+| architect   | Implementation plan                | spec.md, clarified.md        | plan.md        | agent    |
+| plan-review | Review plan against spec (GATE)    | spec.md, plan.md             | plan-review.md | agent    |
+| build       | Write implementation code          | spec.md, plan.md             | build.md       | agent    |
+| commit      | Commit and push changes            | task.json                    | commit.md      | agent    |
+| test        | Write E2E/integration tests        | spec.md, build.md            | test.md        | agent    |
+| verify      | Run quality gates (tsc, lint, fmt) | code                         | verify.md      | scripted |
+| autofix     | Fix lint/type/format errors        | verify.md                    | autofix.md     | agent    |
+| auditor     | Process improvement analysis       | task.md, build.md, verify.md | auditor.md     | agent    |
+| pr          | Create pull request via gh CLI     | task files                   | pr.md          | scripted |
 
 ### Stage Types
 
@@ -34,11 +34,18 @@ Impl Phase:    architect → plan-review → build → commit → test →
 
 ### Parallel Stages
 
-The `auditor` and `pr` stages run **in parallel** since they are independent:
+The `auditor` and `pr` stages run **in parallel** since they are independent.
 
-- `auditor` reviews code quality
-- `pr` creates the pull request
-  Neither depends on the other's output.
+### Model Routing
+
+Not all stages need an expensive model. Lightweight stages use a faster/cheaper model:
+
+| Model            | Used For                              | Cost    |
+| ---------------- | ------------------------------------- | ------- |
+| MiniMax-M2.5     | architect, build, test                | Default |
+| Gemini 2.5 Flash | plan-review, commit, auditor, autofix | Fast    |
+
+Override with `OPENCODE_MODEL` env var to force a specific model for all stages.
 
 ## Key Design Decisions
 
@@ -59,18 +66,11 @@ The `plan-review` agent runs after `architect` and before `build`. It validates:
 - File paths referenced in the plan actually exist
 - Implementation order is logical
 
-If plan-review returns FAIL, the pipeline stops before the expensive build stage.
+**If plan-review returns FAIL**, the pipeline:
 
-### Model Routing
-
-Not all stages need an expensive model. Lightweight stages use a faster/cheaper model:
-
-| Model            | Used For                              | Cost    |
-| ---------------- | ------------------------------------- | ------- |
-| MiniMax-M2.5     | architect, build, test                | Default |
-| Gemini 2.5 Flash | plan-review, commit, auditor, autofix | Fast    |
-
-Override with `OPENCODE_MODEL` env var to force a specific model for all stages.
+1. Deletes `plan.md` and `plan-review.md`
+2. Throws an error, halting before the expensive build stage
+3. On rerun, architect will re-plan from scratch
 
 ### Auto-Fix Loop
 
@@ -81,13 +81,33 @@ When `verify` fails, the pipeline doesn't immediately abort. Instead:
 3. If still failing, retry once more (max 2 attempts)
 4. If all attempts exhausted, pipeline fails
 
-This saves ~30 minutes vs a full rerun from `build` for trivial lint/type errors.
+### Stage-Specific Context (No .context.md)
 
-### Skip Build in Verify
+Each agent receives only the files it needs via `STAGE_CONTEXT_FILES` in `stage-prompts.ts`.
+There is no monolithic `.context.md` file. This means:
 
-The `verify` script (`pnpm verify`) supports `SKIP_BUILD=1` to skip the Next.js
-production build step. The Cody pipeline sets this automatically since the scripted
-verify stage only runs tsc + lint + format (no build needed).
+- Agents don't get confused by irrelevant prior outputs
+- Context window is used efficiently
+- The prompt lists exact file paths to read
+
+### Prompt Architecture
+
+Each agent has **two prompt layers**:
+
+1. **System prompt**: `.opencode/agents/<stage>.md` — behavioral instructions, output format, rules
+2. **User prompt**: `buildStagePrompt()` in `stage-prompts.ts` — runtime context only (task ID, file paths, spec-only guard)
+
+The user prompt is intentionally minimal. Behavioral instructions live exclusively in the `.md` file.
+
+### Content Validation
+
+Stage outputs are validated after completion:
+
+- **taskify**: JSON schema validation + normalization (aliases, types)
+- **plan-review**: Verdict check (PASS/FAIL gate)
+- **spec**: Warning if missing Requirements or Acceptance Criteria sections
+- **build**: Warning if missing Changes section
+- **verify**: Full error parsing + auto-fix loop
 
 ## Task Types & Pipelines
 
@@ -117,8 +137,7 @@ verify stage only runs tsc + lint + format (no build needed).
     ├── autofix.md        # Auto-fix report (autofix agent, if verify fails)
     ├── auditor.md        # Process improvement (auditor agent)
     ├── pr.md             # PR summary (pr — scripted)
-    ├── status.json       # Pipeline status tracking
-    └── .context.md       # Aggregated context for agents (auto-generated)
+    └── status.json       # Pipeline status tracking
 ```
 
 ## Running the Pipeline

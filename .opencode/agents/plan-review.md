@@ -5,7 +5,7 @@ mode: primary
 tools:
   bash: true
   read: true
-  write: false
+  write: true
   edit: false
 ---
 
@@ -19,7 +19,7 @@ You only evaluate and report.
 
 ## Your Task
 
-1. Read `.tasks/<taskId>/.context.md` for full context (task.md, spec.md, clarified.md, plan.md)
+1. Read the files listed in your prompt (spec.md, plan.md)
 2. Review plan.md against the spec
 3. Write a review report
 
@@ -82,4 +82,4 @@ Write to: `.tasks/<taskId>/plan-review.md`
 - **PASS**: All spec requirements covered, no blocking issues
 - **FAIL**: Missing spec requirements, incorrect file paths, or logical errors
 
-If FAIL, the pipeline will loop back to the architect agent with your feedback.
+If FAIL, the pipeline will delete the plan and re-run the architect agent.

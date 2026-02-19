@@ -148,7 +148,6 @@ import {
 
 // Import from pipeline-utils (reusing existing logic)
 import {
-  writeAgentContext,
   readTask,
   stageOutputFile,
   IMPL_PIPELINE,
@@ -325,7 +324,6 @@ async function runSpecPipeline(
     updateStageStatus(input.taskId, stage, 'running')
 
     // Write context
-    writeAgentContext(taskDir)
 
     if (input.dryRun) {
       updateStageStatus(input.taskId, stage, 'completed', { retries: 0 })
@@ -552,8 +550,6 @@ async function runImplPipeline(
 
     console.log(`  Running ${stage}...`)
     updateStageStatus(input.taskId, stage, 'running')
-    writeAgentContext(taskDir)
-
     // Set up feature branch before build stage
     if (stage === 'build' && !input.dryRun) {
       const td = readTask(taskDir)
@@ -616,6 +612,47 @@ async function runImplPipeline(
       console.log(`   Consumed rerun-feedback.md (archived as rerun-feedback.consumed.md)`)
     }
 
+    // Plan-review gate: check verdict and fail pipeline on FAIL
+    if (stage === 'plan-review' && fs.existsSync(outputFile)) {
+      const reviewContent = fs.readFileSync(outputFile, 'utf-8')
+      if (/Verdict:\s*FAIL/i.test(reviewContent)) {
+        console.error(`\n❌ Plan review FAILED for ${input.taskId}`)
+        console.error('  The plan does not meet spec requirements. Looping back to architect.\n')
+
+        // Delete plan.md so architect reruns
+        const planFile = stageOutputFile(taskDir, 'architect')
+        if (fs.existsSync(planFile)) fs.unlinkSync(planFile)
+
+        // Delete plan-review.md so it reruns after new plan
+        fs.unlinkSync(outputFile)
+
+        updateStageStatus(input.taskId, stage, 'failed', { error: 'Plan review verdict: FAIL' })
+        throw new Error('Plan review failed — architect will re-plan on next pipeline iteration')
+      }
+      console.log('  ✅ Plan review: PASS')
+    }
+
+    // Spec content validation: must contain requirements or acceptance criteria
+    if (stage === 'spec' && fs.existsSync(outputFile)) {
+      const specContent = fs.readFileSync(outputFile, 'utf-8')
+      const hasRequirements = /##\s*(Requirements|Functional|FR-|NFR-)/i.test(specContent)
+      const hasAcceptance = /##\s*Acceptance/i.test(specContent)
+      if (!hasRequirements && !hasAcceptance) {
+        console.warn('  ⚠️  Spec missing Requirements or Acceptance Criteria sections')
+      }
+    }
+
+    // Build content validation: must contain a changes section
+    if (stage === 'build' && fs.existsSync(outputFile)) {
+      const buildContent = fs.readFileSync(outputFile, 'utf-8')
+      const hasChanges = /##\s*(Changes|Files)/i.test(buildContent)
+      if (!hasChanges) {
+        console.warn(
+          '  ⚠️  Build report missing Changes section — agent may not have implemented anything',
+        )
+      }
+    }
+
     if (stage === 'verify' && fs.existsSync(outputFile)) {
       const verifyContent = fs.readFileSync(outputFile, 'utf-8')
       if (/FAIL/i.test(verifyContent)) {
@@ -646,7 +683,6 @@ async function runImplPipeline(
           if (fs.existsSync(autofixOutput)) fs.unlinkSync(autofixOutput)
 
           updateStageStatus(input.taskId, 'autofix', 'running')
-          writeAgentContext(taskDir)
 
           if (!input.dryRun) {
             const autofixTimeout = STAGE_TIMEOUTS['autofix'] ?? DEFAULT_TIMEOUT
@@ -785,9 +821,6 @@ async function runRerunPipeline(
       console.log(`Deleted: ${stage}.md`)
     }
   }
-
-  // Update context
-  writeAgentContext(taskDir)
 
   // Run impl pipeline (it will skip completed stages and re-run from the right point)
   await runImplPipeline(input, status, backend)

@@ -2,7 +2,7 @@
  * @fileType utility
  * @domain ci | cody | prompts
  * @pattern stage-prompts
- * @ai-summary Stage prompt templates for OpenCode agents in the Cody pipeline
+ * @ai-summary Stage runtime context for OpenCode agents — behavioral instructions live in .opencode/agents/*.md
  */
 
 import type { CodyInput } from './cody-utils'
@@ -39,98 +39,71 @@ export const ALL_STAGES = [
 export type Stage = (typeof ALL_STAGES)[number]
 
 /**
- * Scripted stages that run directly without an LLM agent
+ * Scripted stages that run directly without an LLM agent.
+ * Their prompts in stageInstructions are unused but kept for documentation.
  */
 export const SCRIPTED_STAGES = ['verify', 'pr'] as const
 
 // ============================================================================
-// Stage Instructions
+// Stage Context — which files each stage needs to read
+// ============================================================================
+
+/**
+ * Maps each stage to the task files it needs. Agents read these individual
+ * files instead of a monolithic .context.md.
+ *
+ * Design principle: each agent gets ONLY what it needs.
+ * Behavioral instructions live in .opencode/agents/<stage>.md (system prompt).
+ * This file provides only runtime context (task ID, file paths).
+ */
+export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
+  taskify: ['task.md'],
+  spec: ['task.md', 'task.json', 'clarified.md'],
+  clarify: ['task.md', 'spec.md'],
+  architect: ['spec.md', 'clarified.md', 'rerun-feedback.md'],
+  'plan-review': ['spec.md', 'plan.md'],
+  build: ['spec.md', 'clarified.md', 'plan.md'],
+  commit: ['task.json'],
+  test: ['spec.md', 'plan.md', 'build.md'],
+  verify: [], // scripted — no LLM prompt needed
+  autofix: ['verify.md'],
+  auditor: ['task.md', 'spec.md', 'build.md', 'verify.md'],
+  pr: [], // scripted — no LLM prompt needed
+}
+
+// ============================================================================
+// Stage Instructions — runtime context ONLY (not behavioral)
+//
+// Behavioral instructions (how to act, output format, rules) live in
+// .opencode/agents/<stage>.md. These instructions provide ONLY:
+// - Spec-only guard (don't modify code)
+// - Stage-specific runtime hints (e.g., "this is a rerun")
 // ============================================================================
 
 const specOnlyInstructionTemplate = `CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the .tasks/{TASK_ID}/ directory.`
 
 export const stageInstructions: Record<Stage, (taskId: string) => string> = {
-  taskify: (taskId) => `${specOnlyInstructionTemplate.replace('{TASK_ID}', taskId)}
+  taskify: (taskId) => `${specOnlyInstructionTemplate.replace('{TASK_ID}', taskId)}`,
 
-Analyze the task description and create a task.json with these exact fields:
+  spec: (taskId) => `${specOnlyInstructionTemplate.replace('{TASK_ID}', taskId)}`,
 
-- task_type: MUST be one of: implement_feature, fix_bug, refactor, docs, ops, research
-  Examples: "Add dark mode" → implement_feature, "Fix login crash" → fix_bug, "Update README" → docs
-  WRONG values (do NOT use): "feature", "bug", "bugfix", "hotfix", "spec_only"
-  NOTE: "spec_only" is reserved for manual use only — NEVER choose it. If the task describes a problem or bug, use "fix_bug". If it asks for a change, use "implement_feature".
-- risk_level: MUST be one of: low, medium, high
-- confidence: MUST be a number between 0.0 and 1.0 (e.g., 0.85)
-- primary_domain: MUST be one of: backend, frontend, infra, data, llm, devops, product
-- scope: MUST be an array of file paths (e.g., ["src/app/page.tsx", "src/components/Login.tsx"])
-- missing_inputs: array of objects with "field" and "question" keys, or empty []
-- assumptions: array of strings
+  clarify: (taskId) => `${specOnlyInstructionTemplate.replace('{TASK_ID}', taskId)}`,
 
-NOTE: Do NOT include a "pipeline" field — it is auto-derived from task_type.
+  architect: () => ``,
 
-Example output:
-{
-  "task_type": "fix_bug",
-  "risk_level": "low",
-  "confidence": 0.9,
-  "primary_domain": "frontend",
-  "scope": ["src/components/Login.tsx"],
-  "missing_inputs": [],
-  "assumptions": ["The bug is in the login form validation"]
-}
+  'plan-review': () => ``,
 
-Write valid JSON only — no explanations, no markdown code fences, no comments.`,
+  build: () => ``,
 
-  spec: (taskId) => `${specOnlyInstructionTemplate.replace('{TASK_ID}', taskId)}
+  commit: () => ``,
 
-Read the task.json and create a detailed spec.md describing the implementation approach.`,
+  test: () => ``,
 
-  clarify: (taskId) => `${specOnlyInstructionTemplate.replace('{TASK_ID}', taskId)}
-
-Review the spec and any questions from previous stages. Answer them or note clarifications needed.`,
-
-  architect: () =>
-    `Create a detailed plan.md with the implementation approach, file changes, and dependencies.`,
-
-  'plan-review': () =>
-    `Review the plan.md against the spec.md. Check that all requirements are covered, file paths exist, and steps are logical. Write a plan-review.md with verdict PASS or FAIL.`,
-
-  build: () =>
-    `Implement the changes as described in the plan. Write code to the repository. Do NOT commit or push — a separate commit agent handles git operations.`,
-
-  commit: () =>
-    `Commit all pending changes and push to the current branch. Use conventional commit format. Do NOT modify any source code files.`,
-
-  test: () => `Run tests and verify the implementation works correctly.`,
-
-  verify: () => `Run these quality gate commands in order and report results:
-
-1. pnpm -s tsc --noEmit (typecheck)
-2. pnpm -s lint (linting)
-3. pnpm -s format (formatting)
-
-Report PASS or FAIL for each. If any fail, include the error output. Do NOT run pnpm build - it is too slow for CI verification.`,
-
-  autofix: () =>
-    `Fix ONLY the specific errors reported in verify.md. Do NOT refactor or expand scope. Run the failing checks after fixing to confirm they pass. Write autofix.md with results.`,
-
-  auditor: () => `Review the implementation for security, best practices, and potential issues.`,
-
-  pr: (taskId) => `Create a pull request for the changes in this branch.
-
-STEP 1: Check if a PR already exists for this branch using "gh pr list --head <branch-name>". If one exists, just write the PR URL to the output file and stop.
-
-STEP 2: Determine the PR title. This is critical:
-- Run "git log --oneline dev..HEAD" to see what commits were made
-- Read .tasks/${taskId}/task.md to understand the original task
-- The title MUST follow conventional commit format: "type: short description"
-  where type is feat/fix/refactor/chore/docs based on the actual changes
-- GOOD examples: "fix: reduce typing speed in GreetingFlow", "feat: add user avatar upload"
-- BAD examples: "Spec valid, ready to implement", "Update code", "Changes for task"
-- The title must describe the USER-VISIBLE change, not internal pipeline status
-
-STEP 3: Create the PR with "gh pr create --title <title> --body <body>"
-- Body should summarize: what changed, why, files affected
-- Reference the task: .tasks/${taskId}/`,
+  // Scripted stages — these prompts are never sent to an LLM
+  verify: () => ``,
+  autofix: () => ``,
+  auditor: () => ``,
+  pr: () => ``,
 }
 
 // ============================================================================
@@ -138,7 +111,11 @@ STEP 3: Create the PR with "gh pr create --title <title> --body <body>"
 // ============================================================================
 
 /**
- * Build the full prompt for a given stage
+ * Build the full prompt for a given stage.
+ *
+ * Instead of pointing to a monolithic .context.md, lists the specific files
+ * the agent needs to read. Behavioral instructions come from the agent's
+ * .opencode/agents/<stage>.md system prompt.
  *
  * @param input - Orchestrator input containing taskId
  * @param stage - The stage to build the prompt for
@@ -146,16 +123,25 @@ STEP 3: Create the PR with "gh pr create --title <title> --body <body>"
  */
 export function buildStagePrompt(input: CodyInput, stage: string): string {
   const { taskId } = input
-  const contextPath = `.tasks/${taskId}/.context.md`
+  const taskDir = `.tasks/${taskId}`
 
   const instructionFn = stageInstructions[stage as Stage]
-  const instruction = instructionFn ? instructionFn(taskId) : `Execute the "${stage}" stage.`
+  const instruction = instructionFn ? instructionFn(taskId) : ''
 
-  return `${instruction}
+  // Build file list for this stage
+  const contextFiles = STAGE_CONTEXT_FILES[stage as Stage] || []
+  const fileList = contextFiles.map((f) => `- ${taskDir}/${f}`).join('\n')
 
-Task ID: ${taskId}
-Read the full context from ${contextPath}.
-Write your output to the expected output file in .tasks/${taskId}/.`
+  const filesSection = contextFiles.length > 0 ? `\nRead these files for context:\n${fileList}` : ''
+
+  const parts = [
+    instruction,
+    `Task ID: ${taskId}`,
+    filesSection,
+    `Write your output to the expected output file in ${taskDir}/.`,
+  ].filter(Boolean)
+
+  return parts.join('\n\n')
 }
 
 /**

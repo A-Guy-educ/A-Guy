@@ -3,6 +3,8 @@ import {
   buildStagePrompt,
   stageInstructions,
   ALL_STAGES,
+  STAGE_CONTEXT_FILES,
+  SCRIPTED_STAGES,
 } from '../../../../scripts/cody/stage-prompts'
 import type { CodyInput } from '../../../../scripts/cody/cody-utils'
 
@@ -13,104 +15,98 @@ const mockInput: CodyInput = {
 }
 
 describe('stage-prompts', () => {
-  describe('taskify prompt', () => {
-    it('should list all valid task_type values', () => {
-      const prompt = buildStagePrompt(mockInput, 'taskify')
-      const validTypes = [
-        'spec_only',
-        'implement_feature',
-        'fix_bug',
-        'refactor',
-        'docs',
-        'ops',
-        'research',
-      ]
-      for (const type of validTypes) {
-        expect(prompt).toContain(type)
+  describe('STAGE_CONTEXT_FILES', () => {
+    it('should have entries for all stages', () => {
+      for (const stage of ALL_STAGES) {
+        expect(STAGE_CONTEXT_FILES[stage]).toBeDefined()
+        expect(Array.isArray(STAGE_CONTEXT_FILES[stage])).toBe(true)
       }
     })
 
-    it('should NOT ask agent to write pipeline field', () => {
-      const prompt = buildStagePrompt(mockInput, 'taskify')
-      expect(prompt).toContain('Do NOT include a "pipeline" field')
+    it('architect should need spec.md and clarified.md', () => {
+      expect(STAGE_CONTEXT_FILES['architect']).toContain('spec.md')
+      expect(STAGE_CONTEXT_FILES['architect']).toContain('clarified.md')
     })
 
-    it('should include a JSON example', () => {
-      const prompt = buildStagePrompt(mockInput, 'taskify')
-      expect(prompt).toContain('"task_type"')
-      expect(prompt).toContain('"fix_bug"')
-      expect(prompt).toContain('"scope"')
+    it('build should need plan.md but NOT verify.md', () => {
+      expect(STAGE_CONTEXT_FILES['build']).toContain('plan.md')
+      expect(STAGE_CONTEXT_FILES['build']).not.toContain('verify.md')
     })
 
-    it('should warn about common WRONG values', () => {
-      const prompt = buildStagePrompt(mockInput, 'taskify')
-      expect(prompt).toContain('WRONG')
-      expect(prompt).toContain('"feature"')
+    it('commit should only need task.json', () => {
+      expect(STAGE_CONTEXT_FILES['commit']).toEqual(['task.json'])
     })
 
-    it('should include the task ID and context path', () => {
-      const prompt = buildStagePrompt(mockInput, 'taskify')
-      expect(prompt).toContain('260219-test')
-      expect(prompt).toContain('.context.md')
+    it('autofix should only need verify.md', () => {
+      expect(STAGE_CONTEXT_FILES['autofix']).toEqual(['verify.md'])
     })
 
-    it('should include spec-only instruction (no code changes)', () => {
-      const prompt = buildStagePrompt(mockInput, 'taskify')
-      expect(prompt).toContain('DO NOT create branches')
-      expect(prompt).toContain('DO NOT modify any code files')
+    it('plan-review should need spec.md and plan.md', () => {
+      expect(STAGE_CONTEXT_FILES['plan-review']).toContain('spec.md')
+      expect(STAGE_CONTEXT_FILES['plan-review']).toContain('plan.md')
     })
 
-    it('should not include pipeline in the example JSON', () => {
-      const instruction = stageInstructions.taskify('260219-test')
-      const exampleMatch = instruction.match(/Example output:\s*\{[\s\S]*?\}/)
-      if (exampleMatch) {
-        expect(exampleMatch[0]).not.toContain('"pipeline"')
-      }
+    it('scripted stages should have empty context', () => {
+      expect(STAGE_CONTEXT_FILES['verify']).toEqual([])
+      expect(STAGE_CONTEXT_FILES['pr']).toEqual([])
     })
   })
 
-  describe('new split stages', () => {
-    it('should have a plan-review stage instruction', () => {
-      const prompt = buildStagePrompt(mockInput, 'plan-review')
-      expect(prompt).toContain('plan-review.md')
-      expect(prompt).toContain('PASS')
-      expect(prompt).toContain('FAIL')
+  describe('buildStagePrompt', () => {
+    it('should include task ID for all stages', () => {
+      for (const stage of ALL_STAGES) {
+        const prompt = buildStagePrompt(mockInput, stage)
+        expect(prompt).toContain('260219-test')
+      }
     })
 
-    it('should have a commit stage instruction', () => {
-      const prompt = buildStagePrompt(mockInput, 'commit')
-      expect(prompt).toContain('conventional commit')
-      expect(prompt).toContain('Do NOT modify')
+    it('should list specific files for architect stage', () => {
+      const prompt = buildStagePrompt(mockInput, 'architect')
+      expect(prompt).toContain('spec.md')
+      expect(prompt).toContain('clarified.md')
+      expect(prompt).toContain('rerun-feedback.md')
+      // Should NOT reference .context.md
+      expect(prompt).not.toContain('.context.md')
     })
 
-    it('build prompt should NOT mention commit or push', () => {
+    it('should NOT reference .context.md for any stage', () => {
+      for (const stage of ALL_STAGES) {
+        const prompt = buildStagePrompt(mockInput, stage)
+        expect(prompt).not.toContain('.context.md')
+      }
+    })
+
+    it('should include spec-only instruction for spec stages', () => {
+      const prompt = buildStagePrompt(mockInput, 'taskify')
+      expect(prompt).toContain('SPEC-ONLY')
+      expect(prompt).toContain('DO NOT create branches')
+    })
+
+    it('should NOT include spec-only instruction for impl stages', () => {
       const prompt = buildStagePrompt(mockInput, 'build')
-      expect(prompt).toContain('Do NOT commit or push')
+      expect(prompt).not.toContain('SPEC-ONLY')
     })
 
-    it('should have an autofix stage instruction', () => {
-      const prompt = buildStagePrompt(mockInput, 'autofix')
-      expect(prompt).toContain('verify.md')
-      expect(prompt).toContain('autofix.md')
+    it('should list specific files for commit stage', () => {
+      const prompt = buildStagePrompt(mockInput, 'commit')
+      expect(prompt).toContain('task.json')
+      expect(prompt).not.toContain('spec.md')
     })
   })
 
   describe('ALL_STAGES', () => {
-    it('should include all new stages', () => {
-      expect(ALL_STAGES).toContain('plan-review')
-      expect(ALL_STAGES).toContain('commit')
-      expect(ALL_STAGES).toContain('autofix')
-    })
-
-    it('should include all original stages', () => {
+    it('should include all stages', () => {
       const expected = [
         'taskify',
         'spec',
         'clarify',
         'architect',
+        'plan-review',
         'build',
+        'commit',
         'test',
         'verify',
+        'autofix',
         'auditor',
         'pr',
       ]
@@ -120,13 +116,33 @@ describe('stage-prompts', () => {
     })
   })
 
-  describe('all stage prompts', () => {
-    it('should build valid prompts for all stages', () => {
-      const stages = [...ALL_STAGES]
-      for (const stage of stages) {
-        const prompt = buildStagePrompt(mockInput, stage)
-        expect(prompt.length).toBeGreaterThan(10)
-        expect(prompt).toContain('260219-test')
+  describe('SCRIPTED_STAGES', () => {
+    it('should include verify and pr', () => {
+      expect(SCRIPTED_STAGES).toContain('verify')
+      expect(SCRIPTED_STAGES).toContain('pr')
+    })
+  })
+
+  describe('stageInstructions', () => {
+    it('should have instructions for all stages', () => {
+      for (const stage of ALL_STAGES) {
+        const fn = stageInstructions[stage]
+        expect(typeof fn).toBe('function')
+      }
+    })
+
+    it('spec-only stages should include guard instruction', () => {
+      for (const stage of ['taskify', 'spec', 'clarify'] as const) {
+        const instruction = stageInstructions[stage]('test-id')
+        expect(instruction).toContain('SPEC-ONLY')
+      }
+    })
+
+    it('impl stages should have minimal or empty instructions', () => {
+      for (const stage of ['architect', 'build', 'commit', 'test'] as const) {
+        const instruction = stageInstructions[stage]('test-id')
+        // Behavioral instructions now live in .opencode/agents/*.md
+        expect(instruction.length).toBeLessThan(50)
       }
     })
   })
