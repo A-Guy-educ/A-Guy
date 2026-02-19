@@ -3,7 +3,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-02-19T17:01:17.906Z",
-  "updatedAt": "2026-02-19T17:03:53.648Z",
+  "updatedAt": "2026-02-19T17:05:09.609Z",
   "state": "running",
   "currentStage": "clarify",
   "stages": {
@@ -22,9 +22,11 @@
       "elapsed": 74089
     },
     "clarify": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-02-19T17:03:53.648Z"
+      "startedAt": "2026-02-19T17:03:53.648Z",
+      "completedAt": "2026-02-19T17:05:09.609Z",
+      "elapsed": 75961
     }
   },
   "triggeredBy": "comment",
