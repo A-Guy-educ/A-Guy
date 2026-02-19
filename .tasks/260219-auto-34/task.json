@@ -1,0 +1,16 @@
+{
+  "task_type": "fix_bug",
+  "pipeline": "spec_only",
+  "risk_level": "low",
+  "confidence": 1.0,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/homepage/GreetingFlow/index.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The speed parameter in TypingAnimation represents milliseconds per character",
+    "Reducing speed by half means increasing the speed value from 100 to 200 (slower typing)",
+    "There are 3 occurrences of speed={100} in the GreetingFlow component that all need to be updated"
+  ]
+}
