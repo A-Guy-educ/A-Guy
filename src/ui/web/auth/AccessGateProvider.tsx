@@ -55,11 +55,6 @@ export function AccessGateProvider({
               {t('warningCountdown').replace('{{seconds}}', String(warningSecondsLeft))}
             </DialogDescription>
           </DialogHeader>
-          {/* TODO: Remove debug info after verifying timing */}
-          <p className="text-xs text-muted-foreground text-center">
-            [DEBUG] delayMs={String(gatedDelayMs ?? 'undefined')} | warningMs=
-            {String(gatedWarningMs ?? 'undefined')} | accessType={String(accessType)}
-          </p>
           <div className="mt-4 flex justify-center">
             <GoogleLoginButton returnTo={pathname} variant="default" className="w-full" />
           </div>
