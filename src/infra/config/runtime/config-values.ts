@@ -48,13 +48,6 @@ export function setPayloadGetterForLazyLoading(getter: PayloadGetter): void {
 }
 
 /**
- * Check if lazy loading is configured
- */
-function hasLazyLoading(): boolean {
-  return lazyPayloadGetter !== null && !lazyLoadAttempted
-}
-
-/**
  * Attempt lazy loading of config values.
  * Uses a shared promise so concurrent callers wait for the same load
  * instead of failing when lazyLoadAttempted is already set.
@@ -138,8 +131,8 @@ async function assertLoadedOrLazyLoad(): Promise<void> {
     return // Already loaded and within TTL
   }
 
-  // Try lazy loading if configured
-  if (hasLazyLoading()) {
+  // Try lazy loading if configured (also waits for in-progress loads)
+  if (lazyPayloadGetter) {
     const loaded = await tryLazyLoad()
     if (loaded) {
       return // Lazy load succeeded
