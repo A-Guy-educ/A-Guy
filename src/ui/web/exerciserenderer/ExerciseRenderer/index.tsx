@@ -275,8 +275,12 @@ export function ExerciseRenderer({
                 )
               }
 
-              // Increment question index for question_select and question_free_response
-              if (block.type === 'question_select' || block.type === 'question_free_response') {
+              // Increment question index for question_select, question_free_response, and question_table
+              if (
+                block.type === 'question_select' ||
+                block.type === 'question_free_response' ||
+                block.type === 'question_table'
+              ) {
                 questionIndex++
               }
 

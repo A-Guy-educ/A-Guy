@@ -54,8 +54,10 @@ export function QuestionCard({
       {questionLabel && (
         <div
           className={cn(
-            'w-full flex items-center gap-2 mb-4',
-            dir === 'rtl' ? 'justify-end text-right' : 'justify-start text-left',
+            'w-full flex items-center mb-4',
+            dir === 'rtl'
+              ? 'justify-end text-right flex-row-reverse gap-2'
+              : 'justify-start text-left gap-2',
           )}
         >
           <span className="font-semibold text-sm text-muted-foreground">{questionLabel}</span>
