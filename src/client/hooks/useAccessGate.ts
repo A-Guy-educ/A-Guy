@@ -19,8 +19,9 @@ interface UseAccessGateParams {
 interface UseAccessGateReturn {
   showMandatoryModal: boolean
   showGatedModal: boolean
-  showWarningBanner: boolean
+  showWarningModal: boolean
   warningSecondsLeft: number
+  dismissWarning: () => void
   user: ReturnType<typeof useCurrentUser>['user']
   isAuthLoading: boolean
 }
@@ -31,6 +32,7 @@ export function useAccessGate({
 }: UseAccessGateParams): UseAccessGateReturn {
   const { user, isLoading: isAuthLoading } = useCurrentUser()
   const [elapsedMs, setElapsedMs] = useState(0)
+  const [warningDismissed, setWarningDismissed] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const isGated = accessType === 'gated'
@@ -93,22 +95,28 @@ export function useAccessGate({
     return () => window.removeEventListener('auth:changed', handleAuthChange)
   }, [handleAuthChange])
 
+  const dismissWarning = useCallback(() => {
+    setWarningDismissed(true)
+  }, [])
+
   // Compute state
   const warningThreshold = GATED_DELAY_MS - GATED_WARNING_MS
-  const showWarningBanner =
+  const inWarningPeriod =
     isGated && isAnonymous && elapsedMs >= warningThreshold && elapsedMs < GATED_DELAY_MS
+  const showWarningModal = inWarningPeriod && !warningDismissed
   const showGatedModal = isGated && isAnonymous && elapsedMs >= GATED_DELAY_MS
   const showMandatoryModal = isMandatory && isAnonymous
 
-  const warningSecondsLeft = showWarningBanner
+  const warningSecondsLeft = inWarningPeriod
     ? Math.max(0, Math.ceil((GATED_DELAY_MS - elapsedMs) / 1000))
     : 0
 
   return {
     showMandatoryModal,
     showGatedModal,
-    showWarningBanner,
+    showWarningModal,
     warningSecondsLeft,
+    dismissWarning,
     user,
     isAuthLoading,
   }
