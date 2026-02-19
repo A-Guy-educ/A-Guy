@@ -251,7 +251,7 @@ export function ExerciseRenderer({
         <div
           className={cn(
             'w-full flex items-center justify-between mb-6',
-            dir === 'rtl' && 'flex-row-reverse',
+            isHebrew && 'flex-row-reverse text-right',
           )}
         >
           <div className="w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm">
