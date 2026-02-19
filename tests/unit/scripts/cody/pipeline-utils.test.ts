@@ -435,3 +435,92 @@ describe('pipeline-utils', () => {
     })
   })
 })
+
+// ==========================================================================
+// Parallel pipeline support
+// ==========================================================================
+import {
+  isParallelStage,
+  flattenStage,
+  flattenPipeline,
+  IMPL_PIPELINE,
+  ALL_IMPL_STAGE_NAMES,
+  type PipelineStage,
+} from '../../../../scripts/cody/pipeline-utils'
+
+describe('parallel pipeline support', () => {
+  describe('isParallelStage', () => {
+    it('should return false for a string stage', () => {
+      expect(isParallelStage('build')).toBe(false)
+    })
+
+    it('should return true for a parallel group', () => {
+      expect(isParallelStage({ parallel: ['auditor', 'pr'] })).toBe(true)
+    })
+  })
+
+  describe('flattenStage', () => {
+    it('should return [stage] for a string', () => {
+      expect(flattenStage('build')).toEqual(['build'])
+    })
+
+    it('should return all stages for a parallel group', () => {
+      expect(flattenStage({ parallel: ['auditor', 'pr'] })).toEqual(['auditor', 'pr'])
+    })
+  })
+
+  describe('flattenPipeline', () => {
+    it('should flatten mixed pipeline to flat list', () => {
+      const pipeline: PipelineStage[] = ['a', 'b', { parallel: ['c', 'd'] }, 'e']
+      expect(flattenPipeline(pipeline)).toEqual(['a', 'b', 'c', 'd', 'e'])
+    })
+  })
+
+  describe('IMPL_PIPELINE', () => {
+    it('should start with architect', () => {
+      expect(IMPL_PIPELINE[0]).toBe('architect')
+    })
+
+    it('should include plan-review after architect', () => {
+      expect(IMPL_PIPELINE[1]).toBe('plan-review')
+    })
+
+    it('should include commit after build', () => {
+      const buildIdx = IMPL_PIPELINE.indexOf('build')
+      expect(IMPL_PIPELINE[buildIdx + 1]).toBe('commit')
+    })
+
+    it('should end with a parallel group containing auditor and pr', () => {
+      const last = IMPL_PIPELINE[IMPL_PIPELINE.length - 1]
+      expect(isParallelStage(last)).toBe(true)
+      if (isParallelStage(last)) {
+        expect(last.parallel).toContain('auditor')
+        expect(last.parallel).toContain('pr')
+      }
+    })
+  })
+
+  describe('ALL_IMPL_STAGE_NAMES', () => {
+    it('should include all stage names from IMPL_PIPELINE', () => {
+      const expected = [
+        'architect',
+        'plan-review',
+        'build',
+        'commit',
+        'test',
+        'verify',
+        'auditor',
+        'pr',
+      ]
+      for (const stage of expected) {
+        expect(ALL_IMPL_STAGE_NAMES).toContain(stage)
+      }
+    })
+
+    it('should be a flat array of strings', () => {
+      for (const item of ALL_IMPL_STAGE_NAMES) {
+        expect(typeof item).toBe('string')
+      }
+    })
+  })
+})

@@ -122,7 +122,10 @@ function buildPrTitle(taskDir: string, defaultBranch: string, cwd: string): stri
   const taskMdPath = path.join(taskDir, 'task.md')
   let taskDescription = ''
   if (fs.existsSync(taskMdPath)) {
-    taskDescription = fs.readFileSync(taskMdPath, 'utf-8').replace(/^#\s*Task\s*/i, '').trim()
+    taskDescription = fs
+      .readFileSync(taskMdPath, 'utf-8')
+      .replace(/^#\s*Task\s*/i, '')
+      .trim()
   }
 
   // Read task.json for type

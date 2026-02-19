@@ -5,144 +5,108 @@ Automated development pipeline for A-Guy project using OpenCode CLI agents.
 ## Pipeline Stages
 
 ```
-spec → clarify → plan → build → test → verify → auditor → pr
+Spec Phase:    taskify → spec → clarify
+Impl Phase:    architect → plan-review → build → commit → test →
+               verify (scripted) → [auditor, pr] (parallel)
 ```
 
-| Agent   | Description                        | Input            | Output       |
-| ------- | ---------------------------------- | ---------------- | ------------ |
-| spec    | Requirements definition            | task.md          | spec.md      |
-| clarify | Collect operator Q&A               | task.md, spec.md | questions.md |
-| plan    | Architecture, implementation steps | clarified.md     | plan.md      |
-| build   | Write implementation code          | plan.md          | build.md     |
-| test    | Write E2E/integration tests        | build.md         | test.md      |
-| verify  | Run tests, validate                | test.md          | verify.md    |
-| auditor | Process improvement analysis       | verify.md        | auditor.md   |
-| pr      | Create branch, commit, open PR     | all above        | pr.md        |
+| Agent       | Description                        | Input            | Output         | Type     |
+| ----------- | ---------------------------------- | ---------------- | -------------- | -------- |
+| taskify     | Classify task, produce task.json   | task.md          | task.json      | agent    |
+| spec        | Requirements definition            | task.md          | spec.md        | agent    |
+| clarify     | Collect operator Q&A               | task.md, spec.md | questions.md   | agent    |
+| architect   | Implementation plan                | clarified.md     | plan.md        | agent    |
+| plan-review | Review plan against spec           | plan.md, spec.md | plan-review.md | agent    |
+| build       | Write implementation code          | plan.md          | build.md       | agent    |
+| commit      | Commit and push changes            | build output     | commit.md      | agent    |
+| test        | Write E2E/integration tests        | build.md         | test.md        | agent    |
+| verify      | Run quality gates (tsc, lint, fmt) | code             | verify.md      | scripted |
+| auditor     | Process improvement analysis       | verify.md        | auditor.md     | agent    |
+| pr          | Create pull request via gh CLI     | all above        | pr.md          | scripted |
+
+### Stage Types
+
+- **agent**: Runs via LLM agent (opencode github run)
+- **scripted**: Runs directly via script (no LLM needed, faster)
+
+### Parallel Stages
+
+The `auditor` and `pr` stages run **in parallel** since they are independent:
+
+- `auditor` reviews code quality
+- `pr` creates the pull request
+  Neither depends on the other's output.
+
+## Key Design Decisions
+
+### Build / Commit Split
+
+The `build` agent writes code but does NOT commit or push. A separate `commit` agent
+handles git operations. This means:
+
+- If commit format fails (commitlint), only the 3-minute commit agent reruns (not the 30-minute build)
+- Build agent focuses solely on code quality
+- Commit agent focuses solely on conventional commit formatting
+
+### Plan Review Gate
+
+The `plan-review` agent runs after `architect` and before `build`. It validates:
+
+- All spec requirements are covered in the plan
+- File paths referenced in the plan actually exist
+- Implementation order is logical
+
+If plan-review returns FAIL, the pipeline stops before the expensive build stage.
 
 ## Task Types & Pipelines
 
-| Task Type        | Pipeline                                                     |
-| ---------------- | ------------------------------------------------------------ |
-| feat             | spec → clarify → plan → build → test → verify → auditor → pr |
-| fix              | clarify → plan → build → test → verify → auditor → pr        |
-| refactor         | clarify → plan → build → test → verify → auditor → pr        |
-| security         | clarify → plan → build → test → verify → auditor → pr        |
-| chore            | build → test → verify → auditor → pr                         |
-| docs             | build → auditor → pr                                         |
-| test             | build → test → verify → auditor → pr                         |
-| auditor-followup | build → verify → pr                                          |
+| Task Type | Pipeline                                                                                  |
+| --------- | ----------------------------------------------------------------------------------------- |
+| feat      | spec → clarify → architect → plan-review → build → commit → test → verify → [auditor, pr] |
+| fix       | clarify → architect → plan-review → build → commit → test → verify → [auditor, pr]        |
+| refactor  | clarify → architect → plan-review → build → commit → test → verify → [auditor, pr]        |
+| docs      | build → commit → auditor → pr                                                             |
+
+## Task Structure
+
+```
+.tasks/
+└── <YYMMDD-task-name>/
+    ├── task.md           # PRD/requirements (YOU write this)
+    ├── task.json         # Task classification (taskify agent)
+    ├── spec.md           # Detailed spec (spec agent)
+    ├── questions.md      # Clarification questions (clarify agent)
+    ├── clarified.md      # Q&A answers (operator provides)
+    ├── plan.md           # Implementation plan (architect agent)
+    ├── plan-review.md    # Plan review verdict (plan-review agent)
+    ├── build.md          # Build report (build agent)
+    ├── commit.md         # Commit report (commit agent)
+    ├── test.md           # Test report (test agent)
+    ├── verify.md         # Verification results (verify — scripted)
+    ├── auditor.md        # Process improvement (auditor agent)
+    ├── pr.md             # PR summary (pr — scripted)
+    ├── status.json       # Pipeline status tracking
+    └── .context.md       # Aggregated context for agents (auto-generated)
+```
 
 ## Running the Pipeline
 
-### Create Task File
+### Via GitHub Issue Comment
 
-Create `.tasks/<YYMMDD-task-name>/task.md` with your requirements:
-
-```markdown
-# Task: <task-id>
-
-## Description
-
-Brief description of what to build
-
-## Requirements
-
-- Requirement 1
-- Requirement 2
-
-## Acceptance Criteria
-
-- [ ] Criterion 1
-- [ ] Criterion 2
+```
+/cody                              # Full pipeline, auto-generate task-id
+/cody spec 260217-user-metrics     # Run spec phase only
+/cody impl 260217-user-metrics     # Run impl phase only
+/cody rerun 260217-user-metrics --feedback "fix TypeScript errors"
+/cody status 260217-user-metrics   # Check pipeline status
 ```
 
-### Run Agents by Task Type
-
-#### feat (new feature)
+### Via Local CLI
 
 ```bash
-ocode run --agent spec "Create spec for YYMMDD-task-name"
-ocode run --agent clarify "Generate questions for YYMMDD-task-name"
-# (operator answers in clarified.md)
-ocode run --agent plan "Create plan for YYMMDD-task-name"
-ocode run --agent build "Implement YYMMDD-task-name"
-ocode run --agent test "Write tests for YYMMDD-task-name"
-ocode run --agent verify "Verify tests for YYMMDD-task-name"
-ocode run --agent auditor "Analyze YYMMDD-task-name"
-ocode run --agent pr "Create PR for YYMMDD-task-name"
-```
-
-#### fix (bug fix)
-
-```bash
-ocode run --agent clarify "Generate questions for YYMMDD-task-name"
-# (operator answers in clarified.md)
-ocode run --agent plan "Create plan for YYMMDD-task-name"
-ocode run --agent build "Fix YYMMDD-task-name"
-ocode run --agent test "Write tests for YYMMDD-task-name"
-ocode run --agent verify "Verify fix for YYMMDD-task-name"
-ocode run --agent auditor "Analyze YYMMDD-task-name"
-ocode run --agent pr "Create PR for YYMMDD-task-name"
-```
-
-#### refactor (restructure code)
-
-```bash
-ocode run --agent clarify "Generate questions for YYMMDD-task-name"
-ocode run --agent plan "Create plan for YYMMDD-task-name"
-ocode run --agent build "Refactor YYMMDD-task-name"
-ocode run --agent test "Write tests for YYMMDD-task-name"
-ocode run --agent verify "Verify refactor for YYMMDD-task-name"
-ocode run --agent auditor "Analyze YYMMDD-task-name"
-ocode run --agent pr "Create PR for YYMMDD-task-name"
-```
-
-#### security (security fix)
-
-```bash
-ocode run --agent clarify "Generate questions for YYMMDD-task-name"
-ocode run --agent plan "Create plan for YYMMDD-task-name"
-ocode run --agent build "Fix security issue YYMMDD-task-name"
-ocode run --agent test "Write tests for YYMMDD-task-name"
-ocode run --agent verify "Verify security fix for YYMMDD-task-name"
-ocode run --agent auditor "Analyze YYMMDD-task-name"
-ocode run --agent pr "Create PR for YYMMDD-task-name"
-```
-
-#### chore (maintenance)
-
-```bash
-ocode run --agent build "Perform chore YYMMDD-task-name"
-ocode run --agent test "Write tests for YYMMDD-task-name"
-ocode run --agent verify "Verify chore YYMMDD-task-name"
-ocode run --agent auditor "Analyze YYMMDD-task-name"
-ocode run --agent pr "Create PR for YYMMDD-task-name"
-```
-
-#### docs (documentation)
-
-```bash
-ocode run --agent build "Write documentation for YYMMDD-task-name"
-ocode run --agent auditor "Analyze YYMMDD-task-name"
-ocode run --agent pr "Create PR for YYMMDD-task-name"
-```
-
-#### test (add tests)
-
-```bash
-ocode run --agent build "Add tests for YYMMDD-task-name"
-ocode run --agent test "Write tests for YYMMDD-task-name"
-ocode run --agent verify "Verify tests for YYMMDD-task-name"
-ocode run --agent auditor "Analyze YYMMDD-task-name"
-ocode run --agent pr "Create PR for YYMMDD-task-name"
-```
-
-#### auditor-followup (follow-up on auditor feedback)
-
-```bash
-ocode run --agent build "Implement auditor feedback for YYMMDD-task-name"
-ocode run --agent verify "Verify changes for YYMMDD-task-name"
-ocode run --agent pr "Create PR for YYMMDD-task-name"
+pnpm cody:run --task-id=260217-user-metrics --mode=full --local
+pnpm cody:run --task-id=260217-user-metrics --mode=impl --local
+pnpm cody:run --task-id=260217-user-metrics --mode=rerun --from=build --feedback="fix this" --local
 ```
 
 ## Commit Format
@@ -150,10 +114,9 @@ ocode run --agent pr "Create PR for YYMMDD-task-name"
 Conventional commits required:
 
 ```
-<type>(<scope>): <subject>
+<type>(<scope>): <Subject in sentence case>
 
-- Bullet 1
-- Bullet 2
+<Body with at least 20 characters>
 ```
 
 ### Valid Types
@@ -168,14 +131,7 @@ Conventional commits required:
 - `build` - Build system
 - `ci` - CI/CD
 - `chore` - Maintenance
-- `revert` - Revert
 - `security` - Security
-
-### Rules
-
-- Type must be lowercase
-- Subject must be sentence-case (first letter capitalized)
-- Body lines under 100 characters
 
 ## Branch Naming
 
@@ -184,50 +140,3 @@ Conventional commits required:
 - `chore/<task-name>` - Maintenance
 - `refactor/<task-name>` - Refactoring
 - `docs/<task-name>` - Documentation
-
-## Task Structure
-
-```
-.tasks/
-└── <YYMMDD-task-name>/
-    ├── task.md           # PRD/requirements (YOU write this)
-    ├── clarified.md      # Q&A answers (operator provides)
-    ├── spec.md           # Detailed spec (spec agent writes)
-    ├── plan.md           # Implementation plan (plan agent writes)
-    ├── build.md          # Build output (build agent writes)
-    ├── test.md           # Test output (test agent writes)
-    ├── verify.md         # Verification results (verify agent writes)
-    ├── auditor.md        # Auditor analysis (auditor agent writes)
-    └── pr.md             # PR summary (pr agent writes)
-```
-
-## Validation
-
-Run commit validation before committing:
-
-```bash
-./scripts/validate-commit.sh .git/COMMIT_EDITMSG
-```
-
-## Troubleshooting
-
-### Pre-commit checks fail
-
-1. Run `pnpm lint:fix` to auto-fix issues
-2. Run `./scripts/validate-commit.sh <commit-msg>` to check format
-
-### Type checking fails
-
-1. Check for TypeScript errors: `pnpm typecheck`
-2. Fix errors before committing
-
-### Push verification fails
-
-1. Run `pnpm verify` locally
-2. Fix any issues before pushing
-
-## Notes
-
-- Always use `git add -A` when committing (not specific files)
-- Skip hooks with `SKIP_HOOKS=1` git commit if needed
-- Use `--no-verify` for pre-push verification bypass (not recommended)

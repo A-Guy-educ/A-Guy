@@ -19,14 +19,16 @@ export const SPEC_STAGES = ['taskify', 'spec', 'clarify'] as const
 export type SpecStage = (typeof SPEC_STAGES)[number]
 
 /**
- * All valid stage names in the pipeline
+ * All valid stage names in the pipeline (including new split stages)
  */
 export const ALL_STAGES = [
   'taskify',
   'spec',
   'clarify',
   'architect',
+  'plan-review',
   'build',
+  'commit',
   'test',
   'verify',
   'auditor',
@@ -34,6 +36,11 @@ export const ALL_STAGES = [
 ] as const
 
 export type Stage = (typeof ALL_STAGES)[number]
+
+/**
+ * Scripted stages that run directly without an LLM agent
+ */
+export const SCRIPTED_STAGES = ['verify', 'pr'] as const
 
 // ============================================================================
 // Stage Instructions
@@ -83,7 +90,14 @@ Review the spec and any questions from previous stages. Answer them or note clar
   architect: () =>
     `Create a detailed plan.md with the implementation approach, file changes, and dependencies.`,
 
-  build: () => `Implement the changes as described in the plan. Write code to the repository.`,
+  'plan-review': () =>
+    `Review the plan.md against the spec.md. Check that all requirements are covered, file paths exist, and steps are logical. Write a plan-review.md with verdict PASS or FAIL.`,
+
+  build: () =>
+    `Implement the changes as described in the plan. Write code to the repository. Do NOT commit or push — a separate commit agent handles git operations.`,
+
+  commit: () =>
+    `Commit all pending changes and push to the current branch. Use conventional commit format. Do NOT modify any source code files.`,
 
   test: () => `Run tests and verify the implementation works correctly.`,
 
@@ -148,8 +162,8 @@ export function getSpecStages(): string[] {
 }
 
 /**
- * Get implementation pipeline stages (architect, build, test, verify, auditor, pr)
+ * Get implementation pipeline stages
  */
 export function getImplStages(): string[] {
-  return ['architect', 'build', 'test', 'verify', 'auditor', 'pr']
+  return ['architect', 'plan-review', 'build', 'commit', 'test', 'verify', 'auditor', 'pr']
 }

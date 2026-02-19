@@ -151,7 +151,10 @@ import {
   writeAgentContext,
   readTask,
   stageOutputFile,
-  SPEC_EXECUTE_VERIFY_STAGES,
+  IMPL_PIPELINE,
+  ALL_IMPL_STAGE_NAMES,
+  isParallelStage,
+  type PipelineStage,
 } from './pipeline-utils'
 
 // Import from new modules
@@ -472,12 +475,20 @@ async function runImplPipeline(
     return
   }
 
-  // Determine stages based on task type
-  let stages = [...SPEC_EXECUTE_VERIFY_STAGES]
+  // Build the pipeline stages (with parallel support)
+  let pipeline: PipelineStage[] = [...IMPL_PIPELINE]
 
-  // Skip auditor on reruns
+  // Skip auditor on reruns (filter from parallel groups too)
   if (fs.existsSync(path.join(taskDir, 'rerun-feedback.md'))) {
-    stages = stages.filter((s) => s !== 'auditor')
+    pipeline = pipeline
+      .map((stage) => {
+        if (isParallelStage(stage)) {
+          const filtered = stage.parallel.filter((s) => s !== 'auditor')
+          return filtered.length === 1 ? filtered[0] : { parallel: filtered }
+        }
+        return stage === 'auditor' ? null : stage
+      })
+      .filter((s): s is PipelineStage => s !== null)
   }
 
   // Helper: Commit task files after verify passes (local mode only)
@@ -528,36 +539,32 @@ async function runImplPipeline(
     return summary
   }
 
-  for (let i = 0; i < stages.length; i++) {
-    const stage = stages[i]
+  // Helper: Run a single stage (agent-based or scripted)
+  const runSingleStage = async (stage: string): Promise<void> => {
     const outputFile = stageOutputFile(taskDir, stage)
 
     // Skip if output exists (not a re-run)
     if (fs.existsSync(outputFile)) {
-      console.log(`[${i + 1}/${stages.length}] ${stage} already exists, skipping`)
+      console.log(`  ${stage} already exists, skipping`)
       updateStageStatus(input.taskId, stage, 'completed', { outputFile: path.basename(outputFile) })
-      continue
+      return
     }
 
-    console.log(`[${i + 1}/${stages.length}] Running ${stage}...`)
-
-    // Update status
+    console.log(`  Running ${stage}...`)
     updateStageStatus(input.taskId, stage, 'running')
-
-    // Write context
     writeAgentContext(taskDir)
 
-    // Set up feature branch before build stage (only in impl pipeline)
+    // Set up feature branch before build stage
     if (stage === 'build' && !input.dryRun) {
-      const taskDef = readTask(taskDir)
-      if (taskDef) {
-        ensureFeatureBranch(input.taskId, taskDef.task_type)
+      const td = readTask(taskDir)
+      if (td) {
+        ensureFeatureBranch(input.taskId, td.task_type)
       }
     }
 
     if (input.dryRun) {
       updateStageStatus(input.taskId, stage, 'completed', { retries: 0 })
-      continue
+      return
     }
 
     // Scripted stages: verify and pr run directly, no LLM needed
@@ -566,7 +573,10 @@ async function runImplPipeline(
       if (!verifyResult.passed) {
         updateStageStatus(input.taskId, stage, 'failed', { retries: 0 })
       } else {
-        updateStageStatus(input.taskId, stage, 'completed', { retries: 0, outputFile: path.basename(outputFile) })
+        updateStageStatus(input.taskId, stage, 'completed', {
+          retries: 0,
+          outputFile: path.basename(outputFile),
+        })
       }
     } else if (stage === 'pr') {
       const prResult = runPrStage(taskDir, outputFile)
@@ -574,9 +584,12 @@ async function runImplPipeline(
         updateStageStatus(input.taskId, stage, 'failed', { retries: 0 })
         throw new Error('PR creation failed')
       }
-      updateStageStatus(input.taskId, stage, 'completed', { retries: 0, outputFile: path.basename(outputFile) })
+      updateStageStatus(input.taskId, stage, 'completed', {
+        retries: 0,
+        outputFile: path.basename(outputFile),
+      })
     } else {
-      // Agent-based stages: architect, build, test, auditor
+      // Agent-based stages
       const timeout = STAGE_TIMEOUTS[stage] ?? DEFAULT_TIMEOUT
       const result = await runAgentWithFileWatch(input, stage, outputFile, timeout, { backend })
 
@@ -596,21 +609,18 @@ async function runImplPipeline(
       })
     }
 
-    // Consume rerun-feedback.md after architect succeeds (prevent re-triggering on retry)
+    // Post-stage hooks
     if (stage === 'architect' && fs.existsSync(path.join(taskDir, 'rerun-feedback.md'))) {
       const consumed = path.join(taskDir, 'rerun-feedback.consumed.md')
       fs.renameSync(path.join(taskDir, 'rerun-feedback.md'), consumed)
       console.log(`   Consumed rerun-feedback.md (archived as rerun-feedback.consumed.md)`)
     }
 
-    // Check verify content for FAIL
     if (stage === 'verify' && fs.existsSync(outputFile)) {
       const content = fs.readFileSync(outputFile, 'utf-8')
       if (/FAIL/i.test(content)) {
         const summary = extractVerifySummary(content)
-
         console.error(`\n❌ Verification FAILED for ${input.taskId}`)
-
         if (summary.typeScriptErrors > 0 || summary.testFailures > 0 || summary.lintErrors > 0) {
           console.error('\n📋 Failure Summary:')
           if (summary.typeScriptErrors > 0)
@@ -622,15 +632,30 @@ async function runImplPipeline(
             summary.errorSamples.forEach((err) => console.error(`    - ${err}`))
           }
         }
-
         console.error(`\n📄 Full report: ${outputFile}`)
         throw new Error('Verification failed')
       }
-      // Commit task files after verify passes
       commitTaskFiles()
     }
 
-    console.log(`✓ ${stage} complete`)
+    console.log(`  ✓ ${stage} complete`)
+  }
+
+  // Execute pipeline stages (sequential with parallel group support)
+  for (let i = 0; i < pipeline.length; i++) {
+    const pipelineStage = pipeline[i]
+
+    if (isParallelStage(pipelineStage)) {
+      // Run parallel stages concurrently
+      const stageNames = pipelineStage.parallel
+      console.log(`[${i + 1}/${pipeline.length}] Running parallel: [${stageNames.join(', ')}]...`)
+      await Promise.all(stageNames.map((s) => runSingleStage(s)))
+      console.log(`✓ parallel group [${stageNames.join(', ')}] complete`)
+    } else {
+      // Run sequential stage
+      console.log(`[${i + 1}/${pipeline.length}] ${pipelineStage}`)
+      await runSingleStage(pipelineStage)
+    }
   }
 
   console.log('\n✅ Cody IMPLEMENTATION pipeline complete')
@@ -687,8 +712,8 @@ async function runRerunPipeline(
   console.log(`From stage: ${input.fromStage}\n`)
 
   // Delete stage files from rerun point onwards
-  const fromIndex = SPEC_EXECUTE_VERIFY_STAGES.indexOf(input.fromStage)
-  const stagesToDelete = SPEC_EXECUTE_VERIFY_STAGES.slice(fromIndex)
+  const fromIndex = ALL_IMPL_STAGE_NAMES.indexOf(input.fromStage)
+  const stagesToDelete = ALL_IMPL_STAGE_NAMES.slice(fromIndex)
 
   for (const stage of stagesToDelete) {
     const stageFile = stageOutputFile(taskDir, stage)

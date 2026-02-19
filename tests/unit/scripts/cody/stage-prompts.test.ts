@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { buildStagePrompt, stageInstructions } from '../../../../scripts/cody/stage-prompts'
+import {
+  buildStagePrompt,
+  stageInstructions,
+  ALL_STAGES,
+} from '../../../../scripts/cody/stage-prompts'
 import type { CodyInput } from '../../../../scripts/cody/cody-utils'
 
 const mockInput: CodyInput = {
@@ -28,13 +32,11 @@ describe('stage-prompts', () => {
 
     it('should NOT ask agent to write pipeline field', () => {
       const prompt = buildStagePrompt(mockInput, 'taskify')
-      // The prompt should tell the agent NOT to include pipeline
       expect(prompt).toContain('Do NOT include a "pipeline" field')
     })
 
     it('should include a JSON example', () => {
       const prompt = buildStagePrompt(mockInput, 'taskify')
-      // Should contain a JSON example with valid task_type
       expect(prompt).toContain('"task_type"')
       expect(prompt).toContain('"fix_bug"')
       expect(prompt).toContain('"scope"')
@@ -59,9 +61,7 @@ describe('stage-prompts', () => {
     })
 
     it('should not include pipeline in the example JSON', () => {
-      // The example JSON should not have a pipeline field
       const instruction = stageInstructions.taskify('260219-test')
-      // Find the JSON example block
       const exampleMatch = instruction.match(/Example output:\s*\{[\s\S]*?\}/)
       if (exampleMatch) {
         expect(exampleMatch[0]).not.toContain('"pipeline"')
@@ -69,9 +69,34 @@ describe('stage-prompts', () => {
     })
   })
 
-  describe('other stage prompts', () => {
-    it('should build valid prompts for all stages', () => {
-      const stages = [
+  describe('new split stages', () => {
+    it('should have a plan-review stage instruction', () => {
+      const prompt = buildStagePrompt(mockInput, 'plan-review')
+      expect(prompt).toContain('plan-review.md')
+      expect(prompt).toContain('PASS')
+      expect(prompt).toContain('FAIL')
+    })
+
+    it('should have a commit stage instruction', () => {
+      const prompt = buildStagePrompt(mockInput, 'commit')
+      expect(prompt).toContain('conventional commit')
+      expect(prompt).toContain('Do NOT modify')
+    })
+
+    it('build prompt should NOT mention commit or push', () => {
+      const prompt = buildStagePrompt(mockInput, 'build')
+      expect(prompt).toContain('Do NOT commit or push')
+    })
+  })
+
+  describe('ALL_STAGES', () => {
+    it('should include all new stages', () => {
+      expect(ALL_STAGES).toContain('plan-review')
+      expect(ALL_STAGES).toContain('commit')
+    })
+
+    it('should include all original stages', () => {
+      const expected = [
         'taskify',
         'spec',
         'clarify',
@@ -82,6 +107,15 @@ describe('stage-prompts', () => {
         'auditor',
         'pr',
       ]
+      for (const stage of expected) {
+        expect(ALL_STAGES).toContain(stage)
+      }
+    })
+  })
+
+  describe('all stage prompts', () => {
+    it('should build valid prompts for all stages', () => {
+      const stages = [...ALL_STAGES]
       for (const stage of stages) {
         const prompt = buildStagePrompt(mockInput, stage)
         expect(prompt.length).toBeGreaterThan(10)

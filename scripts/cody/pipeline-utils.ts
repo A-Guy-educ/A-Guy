@@ -11,7 +11,9 @@ const CONTEXT_FILES = [
   'questions.md',
   'clarified.md',
   'plan.md',
+  'plan-review.md',
   'build.md',
+  'commit.md',
   'test.md',
   'verify.md',
   'rerun-feedback.md',
@@ -282,6 +284,8 @@ const STAGE_OUTPUT_MAP: Record<string, string> = {
   taskify: 'task.json',
   clarify: 'questions.md',
   architect: 'plan.md',
+  'plan-review': 'plan-review.md',
+  commit: 'commit.md',
 }
 
 export function stageOutputFile(taskDir: string, stage: string): string {
@@ -321,6 +325,9 @@ const DRY_RUN_OUTPUTS: Record<string, (taskId: string) => string> = {
   test: (taskId) => `# Test (dry-run)\n\nMock test output for ${taskId}.\n`,
   verify: (taskId) => `# Verify (dry-run)\n\nResult: PASS\n\nMock verification for ${taskId}.\n`,
   auditor: (taskId) => `# Auditor (dry-run)\n\nMock auditor output for ${taskId}.\n`,
+  'plan-review': (taskId) =>
+    `# Plan Review (dry-run)\n\nVerdict: PASS\n\nMock plan review for ${taskId}.\n`,
+  commit: (taskId) => `# Commit (dry-run)\n\nMock commit output for ${taskId}.\n`,
   pr: (taskId) => `# PR (dry-run)\n\nMock PR output for ${taskId}.\n`,
 }
 
@@ -330,3 +337,60 @@ export function writeDryRunOutput(taskDir: string, stage: string, taskId: string
   const content = generator ? generator(taskId) : `# ${stage} (dry-run)\n\nMock output.\n`
   fs.writeFileSync(outputFile, content)
 }
+
+// --- Parallel stage support ---
+
+/**
+ * A pipeline stage is either a single stage name (string) or a parallel group.
+ * Parallel groups run all contained stages concurrently.
+ */
+export type PipelineStage = string | { parallel: string[] }
+
+/**
+ * Check if a pipeline stage is a parallel group
+ */
+export function isParallelStage(stage: PipelineStage): stage is { parallel: string[] } {
+  return typeof stage === 'object' && 'parallel' in stage
+}
+
+/**
+ * Flatten a pipeline stage definition to its constituent stage names.
+ * For a string, returns [stage]. For parallel, returns all contained stages.
+ */
+export function flattenStage(stage: PipelineStage): string[] {
+  if (isParallelStage(stage)) {
+    return stage.parallel
+  }
+  return [stage]
+}
+
+/**
+ * Flatten an entire pipeline definition to a flat list of stage names.
+ */
+export function flattenPipeline(stages: PipelineStage[]): string[] {
+  return stages.flatMap(flattenStage)
+}
+
+// --- New pipeline stage definitions (with parallel support) ---
+
+/**
+ * Implementation pipeline stages with parallel groups.
+ *
+ * Flow:
+ *   architect → plan-review → build → commit → test →
+ *   verify (scripted) → [auditor, pr] (parallel)
+ */
+export const IMPL_PIPELINE: PipelineStage[] = [
+  'architect',
+  'plan-review',
+  'build',
+  'commit',
+  'test',
+  'verify',
+  { parallel: ['auditor', 'pr'] },
+]
+
+/**
+ * Flat list of all impl stage names (for validation, rerun, etc.)
+ */
+export const ALL_IMPL_STAGE_NAMES = flattenPipeline(IMPL_PIPELINE)
