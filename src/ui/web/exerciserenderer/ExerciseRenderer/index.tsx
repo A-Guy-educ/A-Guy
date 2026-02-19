@@ -10,7 +10,6 @@ import React, { useMemo, useRef, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { useLocale } from '@/ui/web/providers/I18n'
-import { getDirection } from '@/i18n/config'
 import { Card } from '@/ui/web/components/card'
 import { XCircle } from 'lucide-react'
 import type {
@@ -205,9 +204,26 @@ export function ExerciseRenderer({
     )
   }
 
+  // Determine section label and direction based on locale
+  const isHebrew = locale?.startsWith('he')
+  const sectionLabel = isHebrew ? 'א' : 'A'
+  const dir: 'ltr' | 'rtl' = isHebrew ? 'rtl' : 'ltr'
+
   return (
     <MediaMapProvider value={mediaMap}>
       <div className={cn('w-full max-w-3xl mx-auto', className)}>
+        {/* Section Bubble - shown once at the top */}
+        <div
+          className={cn(
+            'flex items-center gap-2 mb-6',
+            dir === 'rtl' ? 'justify-end' : 'justify-start',
+          )}
+        >
+          <div className="w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm">
+            <span className="font-bold text-sm">{sectionLabel}</span>
+          </div>
+        </div>
+
         <div className="flex flex-col gap-6">
           {(() => {
             let questionIndex = 0
@@ -232,11 +248,7 @@ export function ExerciseRenderer({
               // Question blocks - render with answer UI
               const question = block as QuestionBlock
 
-              // Determine section label and direction based on locale
-              const sectionLabel = locale === 'he' ? 'א' : 'A'
               const subLabel = `.${questionIndex}`
-              const showBubble = questionIndex === 1
-              const dir = getDirection(locale as 'en' | 'he')
 
               const answer = answers[question.id] ?? getInitialAnswer(question)
               const checkResult = checkResults[question.id] || null
@@ -263,7 +275,6 @@ export function ExerciseRenderer({
                   incorrectText={t('incorrect')}
                   sectionLabel={sectionLabel}
                   subLabel={subLabel}
-                  showBubble={showBubble}
                   dir={dir}
                 >
                   {/* Render appropriate question component based on type */}

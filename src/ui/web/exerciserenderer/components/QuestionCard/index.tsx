@@ -27,7 +27,6 @@ interface QuestionCardProps {
   // Question numbering props
   sectionLabel?: string
   subLabel?: string
-  showBubble?: boolean
   dir?: 'ltr' | 'rtl'
 }
 
@@ -44,7 +43,6 @@ export function QuestionCard({
   incorrectText,
   sectionLabel,
   subLabel,
-  showBubble = false,
   dir = 'ltr',
 }: QuestionCardProps) {
   return (
@@ -54,14 +52,14 @@ export function QuestionCard({
         checked && checkResult?.isCorrect && 'border-success/30 bg-success/5',
       )}
     >
-      {/* Question Label with Bubble */}
+      {/* Question Label */}
       {sectionLabel && subLabel && (
-        <div className={cn('flex items-center gap-2 mb-4', dir === 'rtl' && 'flex-row-reverse')}>
-          {showBubble && (
-            <div className="w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm">
-              <span className="font-bold text-sm">{sectionLabel}</span>
-            </div>
+        <div
+          className={cn(
+            'w-full flex items-center gap-2 mb-4',
+            dir === 'rtl' ? 'justify-end text-right flex-row-reverse' : 'justify-start text-left',
           )}
+        >
           <span className="font-semibold text-sm text-muted-foreground">
             {sectionLabel}
             {subLabel}
