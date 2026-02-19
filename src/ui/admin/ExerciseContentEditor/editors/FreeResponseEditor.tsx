@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import type { QuestionFreeResponseBlock } from '@/shared/exercise-content/types'
+import type { QuestionFreeResponseBlock } from '@/server/payload/collections/Exercises/types'
 import { InlineRichTextEditor } from './InlineRichTextEditor'
 import { HintSolutionPanel } from './HintSolutionPanel'
 import { Plus, Trash2 } from 'lucide-react'

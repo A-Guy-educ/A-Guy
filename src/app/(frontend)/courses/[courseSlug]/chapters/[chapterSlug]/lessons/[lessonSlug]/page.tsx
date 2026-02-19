@@ -1,4 +1,4 @@
-import { DynamicLesson } from '@/demos/dynamic-lesson'
+import { EmptyLessonPlaceholder } from './_components/EmptyLessonPlaceholder'
 import type { Media } from '@/payload-types'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
@@ -88,7 +88,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             <ExerciseWorkspace
               exerciseTitle={lesson.title}
               backUrl={backUrl}
-              primaryContent={<DynamicLesson />}
+              primaryContent={<EmptyLessonPlaceholder />}
               chatContent={
                 <ChatInterface
                   lessonId={chatLessonId}
