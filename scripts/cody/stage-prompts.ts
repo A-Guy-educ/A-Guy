@@ -44,7 +44,18 @@ const specOnlyInstructionTemplate = `CRITICAL: This is a SPEC-ONLY pipeline. DO 
 export const stageInstructions: Record<Stage, (taskId: string) => string> = {
   taskify: (taskId) => `${specOnlyInstructionTemplate.replace('{TASK_ID}', taskId)}
 
-Analyze the task description and create a task.json with task_type, pipeline, risk_level, confidence, primary_domain, scope, missing_inputs, and assumptions.`,
+Analyze the task description and create a task.json with these exact fields:
+
+- task_type: MUST be one of: spec_only, implement_feature, fix_bug, refactor, docs, ops, research
+- pipeline: MUST be one of: spec_only, spec_execute_verify
+- risk_level: MUST be one of: low, medium, high
+- confidence: MUST be a number between 0.0 and 1.0 (e.g., 0.9 for 90%)
+- primary_domain: MUST be one of: backend, frontend, infra, data, llm, devops, product
+- scope: MUST be an array of strings (e.g., ["src/app", "src/components"])
+- missing_inputs: array of objects with "field" and "question" keys
+- assumptions: array of strings
+
+Write valid JSON only - no explanations, no markdown code fences.`,
 
   spec: (taskId) => `${specOnlyInstructionTemplate.replace('{TASK_ID}', taskId)}
 
