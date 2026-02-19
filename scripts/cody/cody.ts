@@ -617,9 +617,9 @@ async function runImplPipeline(
     }
 
     if (stage === 'verify' && fs.existsSync(outputFile)) {
-      const content = fs.readFileSync(outputFile, 'utf-8')
-      if (/FAIL/i.test(content)) {
-        const summary = extractVerifySummary(content)
+      const verifyContent = fs.readFileSync(outputFile, 'utf-8')
+      if (/FAIL/i.test(verifyContent)) {
+        const summary = extractVerifySummary(verifyContent)
         console.error(`\n❌ Verification FAILED for ${input.taskId}`)
         if (summary.typeScriptErrors > 0 || summary.testFailures > 0 || summary.lintErrors > 0) {
           console.error('\n📋 Failure Summary:')
@@ -632,8 +632,71 @@ async function runImplPipeline(
             summary.errorSamples.forEach((err) => console.error(`    - ${err}`))
           }
         }
-        console.error(`\n📄 Full report: ${outputFile}`)
-        throw new Error('Verification failed')
+
+        // Auto-fix loop: attempt to fix lint/type/format errors automatically
+        const MAX_AUTOFIX_ATTEMPTS = 2
+        let fixed = false
+
+        for (let attempt = 1; attempt <= MAX_AUTOFIX_ATTEMPTS; attempt++) {
+          console.log(`\n🔧 Auto-fix attempt ${attempt}/${MAX_AUTOFIX_ATTEMPTS}...`)
+
+          // Run autofix agent
+          const autofixOutput = stageOutputFile(taskDir, 'autofix')
+          // Remove previous autofix output if any
+          if (fs.existsSync(autofixOutput)) fs.unlinkSync(autofixOutput)
+
+          updateStageStatus(input.taskId, 'autofix', 'running')
+          writeAgentContext(taskDir)
+
+          if (!input.dryRun) {
+            const autofixTimeout = STAGE_TIMEOUTS['autofix'] ?? DEFAULT_TIMEOUT
+            const autofixResult = await runAgentWithFileWatch(
+              input,
+              'autofix',
+              autofixOutput,
+              autofixTimeout,
+              { backend },
+            )
+
+            if (!autofixResult.succeeded) {
+              console.error(`  ❌ Autofix agent failed (attempt ${attempt})`)
+              updateStageStatus(input.taskId, 'autofix', 'failed', {
+                retries: autofixResult.retries,
+              })
+              continue
+            }
+            updateStageStatus(input.taskId, 'autofix', 'completed', {
+              retries: autofixResult.retries,
+              outputFile: path.basename(autofixOutput),
+            })
+          }
+
+          // Re-run verify after autofix
+          console.log('  Re-running verification...')
+          if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile)
+
+          const reVerify = runVerifyStage(outputFile)
+          if (reVerify.passed) {
+            console.log(`  ✅ Verification passed after autofix attempt ${attempt}`)
+            updateStageStatus(input.taskId, 'verify', 'completed', {
+              retries: 0,
+              outputFile: path.basename(outputFile),
+            })
+            fixed = true
+            break
+          } else {
+            console.error(`  ❌ Verification still failing after autofix attempt ${attempt}`)
+            updateStageStatus(input.taskId, 'verify', 'failed', { retries: 0 })
+          }
+        }
+
+        if (!fixed) {
+          console.error(
+            `\n❌ Auto-fix exhausted ${MAX_AUTOFIX_ATTEMPTS} attempts. Pipeline failed.`,
+          )
+          console.error(`📄 Full report: ${outputFile}`)
+          throw new Error('Verification failed after auto-fix attempts')
+        }
       }
       commitTaskFiles()
     }

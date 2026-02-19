@@ -7,8 +7,10 @@ Automated development pipeline for A-Guy project using OpenCode CLI agents.
 ```
 Spec Phase:    taskify → spec → clarify
 Impl Phase:    architect → plan-review → build → commit → test →
-               verify (scripted) → [auditor, pr] (parallel)
+               verify (scripted) → [autofix → re-verify]* → [auditor, pr] (parallel)
 ```
+
+\*Auto-fix loop runs up to 2 times if verify detects lint/type/format errors.
 
 | Agent       | Description                        | Input            | Output         | Type     |
 | ----------- | ---------------------------------- | ---------------- | -------------- | -------- |
@@ -21,6 +23,7 @@ Impl Phase:    architect → plan-review → build → commit → test →
 | commit      | Commit and push changes            | build output     | commit.md      | agent    |
 | test        | Write E2E/integration tests        | build.md         | test.md        | agent    |
 | verify      | Run quality gates (tsc, lint, fmt) | code             | verify.md      | scripted |
+| autofix     | Fix lint/type/format errors        | verify.md        | autofix.md     | agent    |
 | auditor     | Process improvement analysis       | verify.md        | auditor.md     | agent    |
 | pr          | Create pull request via gh CLI     | all above        | pr.md          | scripted |
 
@@ -58,6 +61,34 @@ The `plan-review` agent runs after `architect` and before `build`. It validates:
 
 If plan-review returns FAIL, the pipeline stops before the expensive build stage.
 
+### Model Routing
+
+Not all stages need an expensive model. Lightweight stages use a faster/cheaper model:
+
+| Model            | Used For                              | Cost    |
+| ---------------- | ------------------------------------- | ------- |
+| MiniMax-M2.5     | architect, build, test                | Default |
+| Gemini 2.5 Flash | plan-review, commit, auditor, autofix | Fast    |
+
+Override with `OPENCODE_MODEL` env var to force a specific model for all stages.
+
+### Auto-Fix Loop
+
+When `verify` fails, the pipeline doesn't immediately abort. Instead:
+
+1. Run `autofix` agent with the verify error report
+2. Re-run `verify` (scripted)
+3. If still failing, retry once more (max 2 attempts)
+4. If all attempts exhausted, pipeline fails
+
+This saves ~30 minutes vs a full rerun from `build` for trivial lint/type errors.
+
+### Skip Build in Verify
+
+The `verify` script (`pnpm verify`) supports `SKIP_BUILD=1` to skip the Next.js
+production build step. The Cody pipeline sets this automatically since the scripted
+verify stage only runs tsc + lint + format (no build needed).
+
 ## Task Types & Pipelines
 
 | Task Type | Pipeline                                                                                  |
@@ -83,6 +114,7 @@ If plan-review returns FAIL, the pipeline stops before the expensive build stage
     ├── commit.md         # Commit report (commit agent)
     ├── test.md           # Test report (test agent)
     ├── verify.md         # Verification results (verify — scripted)
+    ├── autofix.md        # Auto-fix report (autofix agent, if verify fails)
     ├── auditor.md        # Process improvement (auditor agent)
     ├── pr.md             # PR summary (pr — scripted)
     ├── status.json       # Pipeline status tracking

@@ -31,6 +31,7 @@ export const ALL_STAGES = [
   'commit',
   'test',
   'verify',
+  'autofix',
   'auditor',
   'pr',
 ] as const
@@ -108,6 +109,9 @@ Review the spec and any questions from previous stages. Answer them or note clar
 3. pnpm -s format (formatting)
 
 Report PASS or FAIL for each. If any fail, include the error output. Do NOT run pnpm build - it is too slow for CI verification.`,
+
+  autofix: () =>
+    `Fix ONLY the specific errors reported in verify.md. Do NOT refactor or expand scope. Run the failing checks after fixing to confirm they pass. Write autofix.md with results.`,
 
   auditor: () => `Review the implementation for security, best practices, and potential issues.`,
 

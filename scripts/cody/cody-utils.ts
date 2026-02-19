@@ -69,6 +69,7 @@ const VALID_STAGES = [
   'plan-review',
   'build',
   'commit',
+  'autofix',
   'test',
   'verify',
   'auditor',

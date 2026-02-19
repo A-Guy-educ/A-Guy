@@ -35,10 +35,39 @@ export const STAGE_TIMEOUTS: Record<string, number> = {
   'plan-review': 5 * 60_000,
   build: 30 * 60_000,
   commit: 3 * 60_000,
+  autofix: 10 * 60_000,
   test: 10 * 60_000,
   verify: 10 * 60_000,
   auditor: 5 * 60_000,
   pr: 5 * 60_000,
+}
+
+/** Default model for all stages */
+export const DEFAULT_MODEL = 'minimax-coding-plan/MiniMax-M2.5'
+
+/** Cheaper/faster model for lightweight stages */
+export const FAST_MODEL = 'google/gemini-2.5-flash'
+
+/**
+ * Stage-specific model overrides. Stages not listed here use DEFAULT_MODEL.
+ * Lightweight stages (plan-review, commit, auditor) use the fast model
+ * since they do simple checks/formatting, not complex code generation.
+ */
+export const STAGE_MODELS: Record<string, string> = {
+  'plan-review': FAST_MODEL,
+  commit: FAST_MODEL,
+  autofix: FAST_MODEL,
+  auditor: FAST_MODEL,
+}
+
+/**
+ * Resolve the model for a given stage.
+ * Priority: explicit option > env OPENCODE_MODEL > stage-specific > default
+ */
+export function resolveModel(stage: string, explicitModel?: string): string {
+  if (explicitModel) return explicitModel
+  if (process.env.OPENCODE_MODEL) return process.env.OPENCODE_MODEL
+  return STAGE_MODELS[stage] || DEFAULT_MODEL
 }
 
 // ============================================================================
@@ -98,7 +127,7 @@ export function runAgentWithFileWatch(
 ): Promise<AgentRunResult> {
   const {
     maxRetries = MAX_RETRIES,
-    model = process.env.OPENCODE_MODEL || 'minimax-coding-plan/MiniMax-M2.5',
+    model,
     env: extraEnv = {},
     cwd = process.cwd(),
     backend = createRunner(),
@@ -112,7 +141,9 @@ export function runAgentWithFileWatch(
     const agentEnv = {
       ...process.env,
       ...extraEnv,
-      MODEL: model,
+      MODEL: resolveModel(stage, model),
+      // Skip Next.js build in pre-push hook — CI uses scripted verify (no build)
+      SKIP_BUILD: '1',
       // Skip husky hooks for spec-only stages (they auto-commit but don't produce code)
       // Impl stages (build, test, verify, pr, etc.) should respect commitlint
       ...(SPEC_STAGES.includes(stage as never) && { SKIP_HOOKS: '1' }),

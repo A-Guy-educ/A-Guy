@@ -2,7 +2,8 @@
 /**
  * Pre-push verification script
  * Usage: pnpm verify
- * Runs: generate:types → generate:importmap → prettier → lint → typecheck → build → test:unit
+ * Runs: generate:types → generate:importmap → prettier → lint → typecheck → [build] → test:unit
+ * Set SKIP_BUILD=1 to skip the Next.js build step (used in CI pipelines)
  */
 
 import { execSync } from 'child_process'
@@ -42,11 +43,13 @@ interface VerifyStep {
   command: string
 }
 
+const skipBuild = process.env.SKIP_BUILD === '1' || process.env.SKIP_BUILD === 'true'
+
 const steps: VerifyStep[] = [
   { name: 'Prettier', command: 'pnpm prettier --check .' },
   { name: 'Lint', command: 'pnpm lint' },
   { name: 'Typecheck', command: 'pnpm typecheck' },
-  { name: 'Build', command: 'pnpm build' },
+  ...(skipBuild ? [] : [{ name: 'Build', command: 'pnpm build' }]),
   { name: 'Unit tests', command: 'pnpm test:unit' },
 ]
 
@@ -85,6 +88,10 @@ function main(): void {
   } catch {
     error('Import map generation failed')
     process.exit(1)
+  }
+
+  if (skipBuild) {
+    info('SKIP_BUILD=1 — skipping Next.js build step')
   }
 
   info('running verifications:')

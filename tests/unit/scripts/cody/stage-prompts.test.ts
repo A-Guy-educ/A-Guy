@@ -87,12 +87,19 @@ describe('stage-prompts', () => {
       const prompt = buildStagePrompt(mockInput, 'build')
       expect(prompt).toContain('Do NOT commit or push')
     })
+
+    it('should have an autofix stage instruction', () => {
+      const prompt = buildStagePrompt(mockInput, 'autofix')
+      expect(prompt).toContain('verify.md')
+      expect(prompt).toContain('autofix.md')
+    })
   })
 
   describe('ALL_STAGES', () => {
     it('should include all new stages', () => {
       expect(ALL_STAGES).toContain('plan-review')
       expect(ALL_STAGES).toContain('commit')
+      expect(ALL_STAGES).toContain('autofix')
     })
 
     it('should include all original stages', () => {

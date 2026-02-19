@@ -16,6 +16,7 @@ const CONTEXT_FILES = [
   'commit.md',
   'test.md',
   'verify.md',
+  'autofix.md',
   'rerun-feedback.md',
 ]
 
@@ -286,6 +287,7 @@ const STAGE_OUTPUT_MAP: Record<string, string> = {
   architect: 'plan.md',
   'plan-review': 'plan-review.md',
   commit: 'commit.md',
+  autofix: 'autofix.md',
 }
 
 export function stageOutputFile(taskDir: string, stage: string): string {
@@ -328,6 +330,7 @@ const DRY_RUN_OUTPUTS: Record<string, (taskId: string) => string> = {
   'plan-review': (taskId) =>
     `# Plan Review (dry-run)\n\nVerdict: PASS\n\nMock plan review for ${taskId}.\n`,
   commit: (taskId) => `# Commit (dry-run)\n\nMock commit output for ${taskId}.\n`,
+  autofix: (taskId) => `# Autofix (dry-run)\n\nNo errors to fix for ${taskId}.\n`,
   pr: (taskId) => `# PR (dry-run)\n\nMock PR output for ${taskId}.\n`,
 }
 
