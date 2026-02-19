@@ -1,0 +1,19 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/app/(frontend)/globals.css",
+    "tailwind.config.mjs"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The dark mode color palette in globals.css is the primary target for changes",
+    "The design system uses HSL color format for CSS variables",
+    "Primary and accent colors currently share identical blue values",
+    "Secondary and muted colors are indistinguishable in dark mode",
+    "A revised palette should maintain brand consistency while adding variety"
+  ],
+  "pipeline": "spec_execute_verify"
+}
