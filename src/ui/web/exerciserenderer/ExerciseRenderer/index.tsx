@@ -250,8 +250,8 @@ export function ExerciseRenderer({
         {/* Exercise Number Bubble - shown once at the top */}
         <div
           className={cn(
-            'flex items-center gap-2 mb-6',
-            dir === 'rtl' ? 'justify-end' : 'justify-start',
+            'w-full flex items-center justify-between mb-6',
+            dir === 'rtl' && 'flex-row-reverse',
           )}
         >
           <div className="w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm">

@@ -60,7 +60,9 @@ export function QuestionCard({
               : 'justify-start text-left gap-2',
           )}
         >
-          <span className="font-semibold text-sm text-muted-foreground">{questionLabel}</span>
+          <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm">
+            <span className="font-bold text-xs">{questionLabel}</span>
+          </div>
         </div>
       )}
 
