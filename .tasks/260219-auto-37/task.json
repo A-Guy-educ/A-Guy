@@ -1,0 +1,18 @@
+{
+  "task_type": "spec_only",
+  "risk_level": "low",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/app/(frontend)/globals.css",
+    "tailwind.config.mjs"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The dark mode colors are defined in src/app/(frontend)/globals.css in the [data-theme='dark'] selector",
+    "Current dark mode uses primarily blue shades (Hue 217-222) with similar lightness/saturation",
+    "Primary and accent colors are identical in dark mode (217 91% 60%)",
+    "Secondary and muted colors use the same base blue (222 75% 17%)"
+  ],
+  "pipeline": "spec_only"
+}
