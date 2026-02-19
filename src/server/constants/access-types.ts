@@ -13,8 +13,8 @@ export const DEFAULT_LESSON_ACCESS_TYPE: LessonAccessType = 'inherit'
 /** Total gated delay before lock (1 minute for testing, 5 minutes for production) */
 export const GATED_DELAY_MS = 1 * 60 * 1000
 
-/** Warning banner shown this many ms before lock */
-export const GATED_WARNING_MS = 10 * 1000
+/** Warning banner duration before lock (50s = warning starts at 10s of a 60s delay) */
+export const GATED_WARNING_MS = 50 * 1000
 
 /**
  * Resolve the effective access type for a lesson.
