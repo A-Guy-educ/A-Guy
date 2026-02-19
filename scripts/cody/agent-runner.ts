@@ -34,7 +34,7 @@ export const STAGE_TIMEOUTS: Record<string, number> = {
   architect: 15 * 60_000,
   build: 30 * 60_000,
   test: 10 * 60_000,
-  verify: 5 * 60_000,
+  verify: 10 * 60_000,
   auditor: 5 * 60_000,
   pr: 5 * 60_000,
 }

@@ -86,11 +86,19 @@ Review the spec and any questions from previous stages. Answer them or note clar
 
   test: () => `Run tests and verify the implementation works correctly.`,
 
-  verify: () => `Run quality checks (typecheck, lint, format) and verify the build passes.`,
+  verify: () => `Run these quality gate commands in order and report results:
+
+1. pnpm -s tsc --noEmit (typecheck)
+2. pnpm -s lint (linting)
+3. pnpm -s format (formatting)
+
+Report PASS or FAIL for each. If any fail, include the error output. Do NOT run pnpm build - it is too slow for CI verification.`,
 
   auditor: () => `Review the implementation for security, best practices, and potential issues.`,
 
   pr: (taskId) => `Create a pull request for the changes in this branch.
+
+IMPORTANT: First check if a PR already exists for this branch using "gh pr list --head <branch-name>". If a PR already exists, do NOT create a new one - just write the PR URL to the output file and finish.
 
 REQUIREMENTS:
 - The PR title MUST be a conventional commit format (e.g. "fix: resolve login crash", "feat: add dark mode toggle")
