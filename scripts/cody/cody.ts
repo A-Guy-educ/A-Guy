@@ -109,6 +109,7 @@ import {
   postComment,
   formatStatusComment,
   getIssueBody,
+  getLatestIssueComment,
   type CodyInput,
 } from './cody-utils'
 
@@ -311,20 +312,29 @@ async function runSpecPipeline(
     console.log(`✓ ${stage} complete`)
   }
 
-  // If questions.md exists and user provided a new comment (with answers),
-  // create clarified.md from the comment body
+  // If questions.md exists and user provided answers (either via comment body or latest issue comment),
+  // create clarified.md
   const existingQuestionsPath = path.join(taskDir, 'questions.md')
-  if (
-    fs.existsSync(existingQuestionsPath) &&
-    input.commentBody &&
-    input.triggerType === 'comment'
-  ) {
-    // Extract the answer from the comment (everything after /cody command)
-    const answer = extractAnswerFromComment(input.commentBody)
+  if (fs.existsSync(existingQuestionsPath)) {
+    let answer: string | null = null
+
+    // Try to get answer from:
+    // 1. Comment body (if user wrote "/cody answer text")
+    // 2. Latest comment on the issue (plain text answer)
+    if (input.commentBody && input.triggerType === 'comment') {
+      answer = extractAnswerFromComment(input.commentBody)
+    }
+
+    // If no answer from comment body, check latest issue comment
+    if (!answer && input.issueNumber && input.triggerType === 'comment') {
+      // Get the latest comment (not from bot) as the answer
+      answer = getLatestIssueComment(input.issueNumber, 'github-actions[bot]')
+    }
+
     if (answer) {
       const clarifiedPath = path.join(taskDir, 'clarified.md')
       fs.writeFileSync(clarifiedPath, `# Clarified\n\n${answer}\n`)
-      console.log('📝 Created clarified.md from GitHub comment\n')
+      console.log('📝 Created clarified.md from user answer\n')
     }
   }
 
