@@ -8,6 +8,7 @@ import { CMSLink } from '@/ui/web/Link'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { SearchIcon } from 'lucide-react'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
+import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
 import { UserDropdown } from '@/ui/web/UserDropdown'
@@ -20,7 +21,11 @@ interface HeaderNavProps {
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({ data, user, isAuthLoading }) => {
   const tCommon = useTranslations('common.header')
-  const navItems = (data?.navItems || []).filter(({ link }) => link?.url !== '/signup')
+  const passwordLogin = usePasswordLogin()
+  const allNavItems = data?.navItems || []
+  const navItems = passwordLogin
+    ? allNavItems
+    : allNavItems.filter(({ link }) => link?.url !== '/signup')
 
   // Group navigation items by type
   const primaryLinks = navItems.slice(0, Math.ceil(navItems.length / 2))
@@ -86,6 +91,11 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, user, isAuthLoading 
             <Button size="sm" asChild>
               <SystemLink href="/login">{tCommon('login')}</SystemLink>
             </Button>
+            {passwordLogin && (
+              <Button size="sm" variant="outline" asChild>
+                <SystemLink href="/signup">{tCommon('signup')}</SystemLink>
+              </Button>
+            )}
           </div>
         )}
       </div>

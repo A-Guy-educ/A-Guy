@@ -9,16 +9,14 @@ import { Card, CardContent, CardHeader } from '@/ui/web/components/card'
 import { Input } from '@/ui/web/components/input'
 import { Label } from '@/ui/web/components/label'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { loginAction } from './login_authenticate-action'
 
-interface LoginFormProps {
-  passwordEnabled: boolean
-}
-
-function LoginFormContent({ passwordEnabled }: LoginFormProps) {
+function LoginFormContent() {
   const t = useTranslations('auth.login')
   const tOauth = useTranslations('auth.oauth')
+  const passwordEnabled = usePasswordLogin()
   const searchParams = useSearchParams()
   const returnTo = searchParams?.get('returnTo') || '/'
   const [error, setError] = useState<string | null>(null)
@@ -103,10 +101,10 @@ function LoginFormContent({ passwordEnabled }: LoginFormProps) {
   )
 }
 
-export function LoginForm({ passwordEnabled }: LoginFormProps) {
+export function LoginForm() {
   return (
     <Suspense fallback={<LoginFormSkeleton />}>
-      <LoginFormContent passwordEnabled={passwordEnabled} />
+      <LoginFormContent />
     </Suspense>
   )
 }
