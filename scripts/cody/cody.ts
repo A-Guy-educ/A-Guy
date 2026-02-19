@@ -373,8 +373,11 @@ async function runSpecPipeline(
   }
 
   // Check if there are pending questions from clarify stage
+  // Skip if clarified.md already exists (user already answered or was just created above)
+  const clarifiedExists = fs.existsSync(path.join(taskDir, 'clarified.md'))
   const questionsPath = path.join(taskDir, 'questions.md')
-  const hasQuestions = fs.existsSync(questionsPath) && checkForQuestions(questionsPath)
+  const hasQuestions =
+    !clarifiedExists && fs.existsSync(questionsPath) && checkForQuestions(questionsPath)
 
   if (hasQuestions) {
     // Questions exist - stop and ask for clarification
