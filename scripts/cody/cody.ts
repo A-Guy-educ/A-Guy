@@ -343,6 +343,24 @@ async function runSpecPipeline(
       retries: result.retries,
       outputFile: path.basename(outputFile),
     })
+
+    // Validate task.json immediately after taskify to catch LLM mistakes early
+    if (stage === 'taskify' && fs.existsSync(outputFile)) {
+      try {
+        readTask(taskDir) // normalizes + validates; writes back corrected values
+        console.log('  ✓ task.json validated and normalized')
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error)
+        console.error(`  ❌ task.json invalid after normalization: ${msg}`)
+        // Delete invalid file so retry can recreate it
+        fs.unlinkSync(outputFile)
+        updateStageStatus(input.taskId, stage, 'failed', {
+          error: `Invalid task.json: ${msg}`,
+        })
+        throw new Error(`Taskify produced invalid task.json: ${msg}`)
+      }
+    }
+
     console.log(`✓ ${stage} complete`)
   }
 
@@ -432,10 +450,23 @@ async function runImplPipeline(
     throw new Error(`clarified.md not found. Run spec pipeline first or create it.`)
   }
 
-  // Get task definition
-  const taskDef = readTask(taskDir)
+  // Get task definition (readTask now throws on invalid JSON/schema instead of process.exit)
+  let taskDef
+  try {
+    taskDef = readTask(taskDir)
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error(`\n❌ Failed to read task definition: ${msg}`)
+    throw new Error(`Invalid task.json: ${msg}`)
+  }
   if (!taskDef) {
     throw new Error(`task.json not found. Run spec pipeline first.`)
+  }
+
+  // Skip impl stages for spec-only pipelines
+  if (taskDef.pipeline === 'spec_only') {
+    console.log('Task pipeline is spec_only — skipping implementation stages.')
+    return
   }
 
   // Determine stages based on task type

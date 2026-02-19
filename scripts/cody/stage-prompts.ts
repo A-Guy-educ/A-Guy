@@ -47,15 +47,29 @@ export const stageInstructions: Record<Stage, (taskId: string) => string> = {
 Analyze the task description and create a task.json with these exact fields:
 
 - task_type: MUST be one of: spec_only, implement_feature, fix_bug, refactor, docs, ops, research
-- pipeline: MUST be one of: spec_only, spec_execute_verify
+  Examples: "Add dark mode" → implement_feature, "Fix login crash" → fix_bug, "Update README" → docs
+  WRONG values (do NOT use): "feature", "bug", "bugfix", "hotfix"
 - risk_level: MUST be one of: low, medium, high
-- confidence: MUST be a number between 0.0 and 1.0 (e.g., 0.9 for 90%)
+- confidence: MUST be a number between 0.0 and 1.0 (e.g., 0.85)
 - primary_domain: MUST be one of: backend, frontend, infra, data, llm, devops, product
-- scope: MUST be an array of strings (e.g., ["src/app", "src/components"])
-- missing_inputs: array of objects with "field" and "question" keys
+- scope: MUST be an array of file paths (e.g., ["src/app/page.tsx", "src/components/Login.tsx"])
+- missing_inputs: array of objects with "field" and "question" keys, or empty []
 - assumptions: array of strings
 
-Write valid JSON only - no explanations, no markdown code fences.`,
+NOTE: Do NOT include a "pipeline" field — it is auto-derived from task_type.
+
+Example output:
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": ["src/components/Login.tsx"],
+  "missing_inputs": [],
+  "assumptions": ["The bug is in the login form validation"]
+}
+
+Write valid JSON only — no explanations, no markdown code fences, no comments.`,
 
   spec: (taskId) => `${specOnlyInstructionTemplate.replace('{TASK_ID}', taskId)}
 

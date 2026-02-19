@@ -59,7 +59,7 @@ export interface TaskDefinition {
 }
 
 // Pipeline consistency: task_type → allowed pipeline values
-const PIPELINE_MAP: Record<TaskType, Pipeline> = {
+export const PIPELINE_MAP: Record<TaskType, Pipeline> = {
   spec_only: 'spec_only',
   research: 'spec_only',
   docs: 'spec_only',
@@ -72,6 +72,92 @@ const PIPELINE_MAP: Record<TaskType, Pipeline> = {
 interface ValidationResult {
   valid: boolean
   errors: string[]
+}
+
+// --- Task type alias mapping (common LLM mistakes) ---
+
+const TASK_TYPE_ALIASES: Record<string, TaskType> = {
+  feature: 'implement_feature',
+  new_feature: 'implement_feature',
+  add_feature: 'implement_feature',
+  bug: 'fix_bug',
+  bugfix: 'fix_bug',
+  bug_fix: 'fix_bug',
+  hotfix: 'fix_bug',
+  refactoring: 'refactor',
+  cleanup: 'refactor',
+  documentation: 'docs',
+  doc: 'docs',
+  operations: 'ops',
+  devops: 'ops',
+  infra: 'ops',
+  spec: 'spec_only',
+  research_only: 'research',
+  investigate: 'research',
+}
+
+// --- Confidence string-to-number mapping ---
+
+const CONFIDENCE_MAP: Record<string, number> = {
+  high: 0.9,
+  medium: 0.7,
+  low: 0.5,
+  very_high: 0.95,
+  very_low: 0.3,
+}
+
+/**
+ * Normalize a raw task.json object, fixing common LLM mistakes:
+ * - Maps task_type aliases (e.g., "feature" → "implement_feature")
+ * - Always derives pipeline from task_type (agent should never set this)
+ * - Converts string confidence to number (e.g., "high" → 0.9)
+ * - Wraps scope in array if it's a string
+ * - Defaults missing arrays
+ */
+export function normalizeTask(raw: Record<string, unknown>): Record<string, unknown> {
+  const data = { ...raw }
+
+  // 1. Normalize task_type aliases
+  if (typeof data.task_type === 'string') {
+    const alias = TASK_TYPE_ALIASES[data.task_type.toLowerCase()]
+    if (alias) {
+      data.task_type = alias
+    }
+  }
+
+  // 2. Always derive pipeline from task_type (never trust agent's value)
+  if (VALID_TASK_TYPES.includes(data.task_type as TaskType)) {
+    data.pipeline = PIPELINE_MAP[data.task_type as TaskType]
+  }
+
+  // 3. Convert string confidence to number
+  if (typeof data.confidence === 'string') {
+    const mapped = CONFIDENCE_MAP[data.confidence.toLowerCase()]
+    if (mapped !== undefined) {
+      data.confidence = mapped
+    } else {
+      // Try parsing as number string (e.g., "0.9")
+      const parsed = parseFloat(data.confidence)
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) {
+        data.confidence = parsed
+      }
+    }
+  }
+
+  // 4. Wrap scope in array if string
+  if (typeof data.scope === 'string') {
+    data.scope = [data.scope]
+  }
+
+  // 5. Default missing arrays
+  if (!Array.isArray(data.missing_inputs)) {
+    data.missing_inputs = []
+  }
+  if (!Array.isArray(data.assumptions)) {
+    data.assumptions = []
+  }
+
+  return data
 }
 
 export function validateTask(raw: unknown): ValidationResult {
@@ -158,24 +244,33 @@ export function readTask(taskDir: string): TaskDefinition | null {
     raw = JSON.parse(content)
   } catch {
     const preview = content.slice(0, 200).replace(/\n/g, '\\n')
-    console.error(`\n❌ task.json is not valid JSON`)
-    console.error(`  File: ${taskFile}`)
-    console.error(`  Preview: ${preview}`)
-    console.error(`\n  Common causes:`)
-    console.error(`    • Agent wrapped JSON in markdown code fences`)
-    console.error(`    • Trailing comma in JSON`)
-    console.error(`    • Agent wrote commentary outside the JSON object`)
-    console.error(`\n  Fix task.json and re-run, or delete it to re-classify:`)
-    console.error(`    rm ${taskFile}`)
-    process.exit(1)
+    throw new Error(
+      `task.json is not valid JSON.\n` +
+        `  File: ${taskFile}\n` +
+        `  Preview: ${preview}\n` +
+        `  Common causes:\n` +
+        `    • Agent wrapped JSON in markdown code fences\n` +
+        `    • Trailing comma in JSON\n` +
+        `    • Agent wrote commentary outside the JSON object\n` +
+        `  Fix task.json and re-run, or delete it to re-classify:\n` +
+        `    rm ${taskFile}`,
+    )
+  }
+
+  // Normalize common LLM mistakes before validation
+  if (typeof raw === 'object' && raw !== null) {
+    raw = normalizeTask(raw as Record<string, unknown>)
+
+    // Write back normalized values so subsequent reads are consistent
+    fs.writeFileSync(taskFile, JSON.stringify(raw, null, 2) + '\n')
   }
 
   const result = validateTask(raw)
 
   if (!result.valid) {
-    console.error('\n❌ task.json validation failed:')
-    result.errors.forEach((err) => console.error(`  • ${err}`))
-    process.exit(1)
+    throw new Error(
+      `task.json validation failed:\n${result.errors.map((e) => `  • ${e}`).join('\n')}`,
+    )
   }
 
   return raw as TaskDefinition
@@ -209,7 +304,6 @@ const DRY_RUN_OUTPUTS: Record<string, (taskId: string) => string> = {
     JSON.stringify(
       {
         task_type: 'implement_feature',
-        pipeline: 'spec_execute_verify',
         risk_level: 'medium',
         confidence: 0.9,
         primary_domain: 'backend',

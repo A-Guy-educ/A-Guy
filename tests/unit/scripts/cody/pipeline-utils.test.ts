@@ -1,0 +1,437 @@
+import { describe, it, expect, afterEach } from 'vitest'
+import * as fs from 'fs'
+import * as path from 'path'
+import * as os from 'os'
+import {
+  validateTask,
+  readTask,
+  normalizeTask,
+  PIPELINE_MAP,
+} from '../../../../scripts/cody/pipeline-utils'
+
+// Helper: create a temp task directory with a task.json
+function createTempTaskDir(taskJson?: unknown): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cody-test-'))
+  if (taskJson !== undefined) {
+    const content = typeof taskJson === 'string' ? taskJson : JSON.stringify(taskJson, null, 2)
+    fs.writeFileSync(path.join(dir, 'task.json'), content)
+  }
+  return dir
+}
+
+// A valid task.json fixture
+const VALID_TASK: Record<string, unknown> = {
+  task_type: 'implement_feature',
+  pipeline: 'spec_execute_verify',
+  risk_level: 'medium',
+  confidence: 0.9,
+  primary_domain: 'backend',
+  scope: ['src/app'],
+  missing_inputs: [],
+  assumptions: ['Assumption 1'],
+}
+
+// The exact task.json from the 260219-auto-34 bug report
+const BUG_260219_AUTO_34: Record<string, unknown> = {
+  task_type: 'fix_bug',
+  pipeline: 'spec_only', // WRONG — should be spec_execute_verify
+  risk_level: 'low',
+  confidence: 1.0,
+  primary_domain: 'frontend',
+  scope: ['src/ui/web/homepage/GreetingFlow/index.tsx'],
+  missing_inputs: [],
+  assumptions: [
+    'The speed parameter in TypingAnimation represents milliseconds per character',
+    'Reducing speed by half means increasing the speed value from 100 to 200 (slower typing)',
+    'There are 3 occurrences of speed={100} in the GreetingFlow component that all need to be updated',
+  ],
+}
+
+// The exact task.json from the 260218-55 bug report
+const BUG_260218_55: Record<string, unknown> = {
+  task_type: 'feature',
+  pipeline: 'spec',
+  risk_level: 'low',
+  confidence: 'high',
+  primary_domain: 'frontend',
+  scope: 'Reduce home welcome typing text speed by half (from 50ms to 100ms per character)',
+  missing_inputs: [],
+  assumptions: [
+    'The current typing speed is 50ms per character in GreetingFlow component',
+    'Reducing speed by half means doubling the delay to 100ms per character',
+    'All three TypingAnimation usages in GreetingFlow need to be updated',
+  ],
+}
+
+describe('pipeline-utils', () => {
+  let tempDirs: string[] = []
+
+  afterEach(() => {
+    // Cleanup temp dirs
+    for (const dir of tempDirs) {
+      try {
+        fs.rmSync(dir, { recursive: true, force: true })
+      } catch {
+        // ignore cleanup errors
+      }
+    }
+    tempDirs = []
+  })
+
+  function trackDir(dir: string): string {
+    tempDirs.push(dir)
+    return dir
+  }
+
+  // ==========================================================================
+  // validateTask
+  // ==========================================================================
+  describe('validateTask', () => {
+    it('should accept a fully valid task.json', () => {
+      const result = validateTask(VALID_TASK)
+      expect(result.valid).toBe(true)
+      expect(result.errors).toHaveLength(0)
+    })
+
+    it('should reject non-object input', () => {
+      const result = validateTask('not an object')
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('not a JSON object')
+    })
+
+    it('should reject null input', () => {
+      const result = validateTask(null)
+      expect(result.valid).toBe(false)
+    })
+
+    it('should reject invalid task_type', () => {
+      const result = validateTask({ ...VALID_TASK, task_type: 'banana' })
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('Invalid task_type')
+      expect(result.errors[0]).toContain('banana')
+    })
+
+    it('should reject invalid pipeline', () => {
+      const result = validateTask({ ...VALID_TASK, pipeline: 'banana' })
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('Invalid pipeline')
+    })
+
+    it('should reject pipeline inconsistency (fix_bug + spec_only)', () => {
+      const result = validateTask({
+        ...VALID_TASK,
+        task_type: 'fix_bug',
+        pipeline: 'spec_only',
+      })
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('Pipeline inconsistency')
+    })
+
+    it('should reject string confidence', () => {
+      const result = validateTask({ ...VALID_TASK, confidence: 'high' })
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('Invalid confidence')
+    })
+
+    it('should reject confidence out of range', () => {
+      expect(validateTask({ ...VALID_TASK, confidence: 1.5 }).valid).toBe(false)
+      expect(validateTask({ ...VALID_TASK, confidence: -0.1 }).valid).toBe(false)
+    })
+
+    it('should reject non-array scope', () => {
+      const result = validateTask({ ...VALID_TASK, scope: 'not-array' })
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('scope')
+    })
+
+    it('should reject non-array missing_inputs', () => {
+      const result = validateTask({ ...VALID_TASK, missing_inputs: 'not-array' })
+      expect(result.valid).toBe(false)
+    })
+
+    it('should reject non-array assumptions', () => {
+      const result = validateTask({ ...VALID_TASK, assumptions: 'not-array' })
+      expect(result.valid).toBe(false)
+    })
+
+    it('should collect multiple errors at once', () => {
+      const result = validateTask({
+        task_type: 'banana',
+        pipeline: 'cherry',
+        risk_level: 'extreme',
+        confidence: 'very_high',
+        primary_domain: 'magic',
+        scope: 'not-array',
+        missing_inputs: 'not-array',
+        assumptions: 'not-array',
+      })
+      expect(result.valid).toBe(false)
+      expect(result.errors.length).toBeGreaterThan(3)
+    })
+  })
+
+  // ==========================================================================
+  // normalizeTask
+  // ==========================================================================
+  describe('normalizeTask', () => {
+    it('should derive pipeline from task_type (fix_bug → spec_execute_verify)', () => {
+      const result = normalizeTask({
+        task_type: 'fix_bug',
+        pipeline: 'spec_only', // wrong value
+      })
+      expect(result.pipeline).toBe('spec_execute_verify')
+    })
+
+    it('should derive pipeline from task_type (spec_only → spec_only)', () => {
+      const result = normalizeTask({
+        task_type: 'spec_only',
+        pipeline: 'spec_execute_verify', // wrong value
+      })
+      expect(result.pipeline).toBe('spec_only')
+    })
+
+    it('should derive pipeline from task_type (implement_feature → spec_execute_verify)', () => {
+      const result = normalizeTask({ task_type: 'implement_feature' })
+      expect(result.pipeline).toBe('spec_execute_verify')
+    })
+
+    it('should derive pipeline even when pipeline field is missing', () => {
+      const result = normalizeTask({ task_type: 'fix_bug' })
+      expect(result.pipeline).toBe('spec_execute_verify')
+    })
+
+    it('should map task_type alias "feature" → "implement_feature"', () => {
+      const result = normalizeTask({ task_type: 'feature' })
+      expect(result.task_type).toBe('implement_feature')
+      expect(result.pipeline).toBe('spec_execute_verify')
+    })
+
+    it('should map task_type alias "bug" → "fix_bug"', () => {
+      const result = normalizeTask({ task_type: 'bug' })
+      expect(result.task_type).toBe('fix_bug')
+      expect(result.pipeline).toBe('spec_execute_verify')
+    })
+
+    it('should map task_type alias "bugfix" → "fix_bug"', () => {
+      const result = normalizeTask({ task_type: 'bugfix' })
+      expect(result.task_type).toBe('fix_bug')
+    })
+
+    it('should map task_type alias "hotfix" → "fix_bug"', () => {
+      const result = normalizeTask({ task_type: 'hotfix' })
+      expect(result.task_type).toBe('fix_bug')
+    })
+
+    it('should map task_type alias "doc" → "docs"', () => {
+      const result = normalizeTask({ task_type: 'doc' })
+      expect(result.task_type).toBe('docs')
+      expect(result.pipeline).toBe('spec_only')
+    })
+
+    it('should convert string confidence "high" → 0.9', () => {
+      const result = normalizeTask({ confidence: 'high' })
+      expect(result.confidence).toBe(0.9)
+    })
+
+    it('should convert string confidence "medium" → 0.7', () => {
+      const result = normalizeTask({ confidence: 'medium' })
+      expect(result.confidence).toBe(0.7)
+    })
+
+    it('should convert string confidence "low" → 0.5', () => {
+      const result = normalizeTask({ confidence: 'low' })
+      expect(result.confidence).toBe(0.5)
+    })
+
+    it('should parse numeric string confidence "0.85" → 0.85', () => {
+      const result = normalizeTask({ confidence: '0.85' })
+      expect(result.confidence).toBe(0.85)
+    })
+
+    it('should preserve valid numeric confidence', () => {
+      const result = normalizeTask({ confidence: 0.9 })
+      expect(result.confidence).toBe(0.9)
+    })
+
+    it('should wrap string scope in array', () => {
+      const result = normalizeTask({ scope: 'src/app/page.tsx' })
+      expect(result.scope).toEqual(['src/app/page.tsx'])
+    })
+
+    it('should preserve array scope', () => {
+      const result = normalizeTask({ scope: ['src/a', 'src/b'] })
+      expect(result.scope).toEqual(['src/a', 'src/b'])
+    })
+
+    it('should default missing missing_inputs to empty array', () => {
+      const result = normalizeTask({})
+      expect(result.missing_inputs).toEqual([])
+    })
+
+    it('should default missing assumptions to empty array', () => {
+      const result = normalizeTask({})
+      expect(result.assumptions).toEqual([])
+    })
+
+    it('should preserve already-valid task unchanged (except pipeline re-derived)', () => {
+      const result = normalizeTask({ ...VALID_TASK })
+      expect(result.task_type).toBe('implement_feature')
+      expect(result.pipeline).toBe('spec_execute_verify')
+      expect(result.risk_level).toBe('medium')
+      expect(result.confidence).toBe(0.9)
+      expect(result.primary_domain).toBe('backend')
+      expect(result.scope).toEqual(['src/app'])
+    })
+
+    it('should fix the exact 260219-auto-34 bug (fix_bug + spec_only)', () => {
+      const result = normalizeTask({ ...BUG_260219_AUTO_34 })
+      expect(result.task_type).toBe('fix_bug')
+      expect(result.pipeline).toBe('spec_execute_verify')
+      // After normalization, it should pass validation
+      const validation = validateTask(result)
+      expect(validation.valid).toBe(true)
+    })
+
+    it('should fix the exact 260218-55 bug (feature + spec + high + string scope)', () => {
+      const result = normalizeTask({ ...BUG_260218_55 })
+      expect(result.task_type).toBe('implement_feature')
+      expect(result.pipeline).toBe('spec_execute_verify')
+      expect(result.confidence).toBe(0.9)
+      expect(Array.isArray(result.scope)).toBe(true)
+      // After normalization, it should pass validation
+      const validation = validateTask(result)
+      expect(validation.valid).toBe(true)
+    })
+
+    it('should not mutate the original object', () => {
+      const original = { task_type: 'feature', pipeline: 'spec' }
+      normalizeTask(original)
+      expect(original.task_type).toBe('feature') // unchanged
+    })
+  })
+
+  // ==========================================================================
+  // PIPELINE_MAP
+  // ==========================================================================
+  describe('PIPELINE_MAP', () => {
+    it('should map fix_bug to spec_execute_verify', () => {
+      expect(PIPELINE_MAP.fix_bug).toBe('spec_execute_verify')
+    })
+
+    it('should map implement_feature to spec_execute_verify', () => {
+      expect(PIPELINE_MAP.implement_feature).toBe('spec_execute_verify')
+    })
+
+    it('should map spec_only to spec_only', () => {
+      expect(PIPELINE_MAP.spec_only).toBe('spec_only')
+    })
+
+    it('should map research to spec_only', () => {
+      expect(PIPELINE_MAP.research).toBe('spec_only')
+    })
+
+    it('should map docs to spec_only', () => {
+      expect(PIPELINE_MAP.docs).toBe('spec_only')
+    })
+  })
+
+  // ==========================================================================
+  // readTask
+  // ==========================================================================
+  describe('readTask', () => {
+    it('should return null when task.json does not exist', () => {
+      const dir = trackDir(createTempTaskDir())
+      const result = readTask(dir)
+      expect(result).toBeNull()
+    })
+
+    it('should throw on invalid JSON (not process.exit)', () => {
+      const dir = trackDir(createTempTaskDir('not valid json {{'))
+      expect(() => readTask(dir)).toThrow(/not valid JSON/)
+    })
+
+    it('should throw on empty file', () => {
+      const dir = trackDir(createTempTaskDir(''))
+      // Empty string is not valid JSON
+      expect(() => readTask(dir)).toThrow()
+    })
+
+    it('should throw on JSON wrapped in markdown code fences', () => {
+      const dir = trackDir(createTempTaskDir('```json\n{"task_type": "fix_bug"}\n```'))
+      expect(() => readTask(dir)).toThrow(/not valid JSON/)
+    })
+
+    it('should read and return a fully valid task.json', () => {
+      const dir = trackDir(createTempTaskDir(VALID_TASK))
+      const result = readTask(dir)
+      expect(result).not.toBeNull()
+      expect(result!.task_type).toBe('implement_feature')
+      expect(result!.pipeline).toBe('spec_execute_verify')
+    })
+
+    it('should normalize and succeed for the 260219-auto-34 bug case', () => {
+      const dir = trackDir(createTempTaskDir(BUG_260219_AUTO_34))
+      // This previously would have called process.exit(1)!
+      const result = readTask(dir)
+      expect(result).not.toBeNull()
+      expect(result!.task_type).toBe('fix_bug')
+      expect(result!.pipeline).toBe('spec_execute_verify') // fixed!
+    })
+
+    it('should normalize and succeed for the 260218-55 bug case', () => {
+      const dir = trackDir(createTempTaskDir(BUG_260218_55))
+      // This previously would have called process.exit(1)!
+      const result = readTask(dir)
+      expect(result).not.toBeNull()
+      expect(result!.task_type).toBe('implement_feature') // "feature" → "implement_feature"
+      expect(result!.pipeline).toBe('spec_execute_verify')
+      expect(result!.confidence).toBe(0.9) // "high" → 0.9
+      expect(Array.isArray(result!.scope)).toBe(true)
+    })
+
+    it('should write back normalized task.json to disk', () => {
+      const dir = trackDir(createTempTaskDir(BUG_260219_AUTO_34))
+      readTask(dir)
+
+      // Re-read the file from disk
+      const onDisk = JSON.parse(fs.readFileSync(path.join(dir, 'task.json'), 'utf-8'))
+      expect(onDisk.pipeline).toBe('spec_execute_verify')
+    })
+
+    it('should throw on completely unfixable task.json', () => {
+      const dir = trackDir(
+        createTempTaskDir({
+          task_type: 'banana', // not a valid type and not an alias
+          risk_level: 'extreme',
+          confidence: 'impossible',
+          primary_domain: 'magic',
+          scope: 42,
+        }),
+      )
+      expect(() => readTask(dir)).toThrow(/validation failed/)
+    })
+
+    it('should include specific error details in thrown error', () => {
+      const dir = trackDir(
+        createTempTaskDir({
+          task_type: 'banana',
+          pipeline: 'cherry',
+          risk_level: 'low',
+          confidence: 0.9,
+          primary_domain: 'frontend',
+          scope: ['src'],
+          missing_inputs: [],
+          assumptions: [],
+        }),
+      )
+      try {
+        readTask(dir)
+        expect.fail('Should have thrown')
+      } catch (error) {
+        expect(error).toBeInstanceOf(Error)
+        expect((error as Error).message).toContain('Invalid task_type')
+        expect((error as Error).message).toContain('banana')
+      }
+    })
+  })
+})
