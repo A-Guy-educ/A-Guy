@@ -51,6 +51,7 @@ export function QuestionCard({
       )}
     >
       {/* Question Label */}
+      {/* NOTE: Small bubble for section letter (א/ב/ג or a/b/c). Do not use for exercise number. */}
       {questionLabel && (
         <div
           className={cn(

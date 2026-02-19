@@ -241,20 +241,24 @@ export function ExerciseRenderer({
   }
 
   // Determine direction based on locale
-  const isHebrew = locale?.startsWith('he')
+  // NOTE: Section label language is determined ONLY by locale prefix.
+  // Hebrew: א/ב/ג..., English: a/b/c... (lowercase).
+  const isHebrew = locale?.toLowerCase().startsWith('he')
   const dir: 'ltr' | 'rtl' = isHebrew ? 'rtl' : 'ltr'
 
   return (
     <MediaMapProvider value={mediaMap}>
       <div className={cn('w-full max-w-3xl mx-auto', className)}>
         {/* Exercise Number Bubble - shown once at the top */}
-        <div
-          className={cn(
-            'w-full flex items-center justify-between mb-6',
-            isHebrew && 'flex-row-reverse text-right',
-          )}
-        >
-          <div className="w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm">
+        {/* NOTE: We intentionally avoid flex-row-reverse here because it inverts the bubble
+             position depending on DOM order. Instead we pin the bubble via auto margins. */}
+        <div className="w-full flex items-center justify-between mb-6">
+          <div
+            className={cn(
+              'w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm',
+              isHebrew ? 'ml-auto' : 'mr-auto',
+            )}
+          >
             <span className="font-bold text-sm">{String(exerciseNumber)}</span>
           </div>
         </div>
@@ -275,6 +279,8 @@ export function ExerciseRenderer({
                 )
               }
 
+              // NOTE: We count question_table as a question so it gets its own section letter.
+              // Rich text / latex blocks must NOT increment the counter.
               // Increment question index for question_select, question_free_response, and question_table
               if (
                 block.type === 'question_select' ||
