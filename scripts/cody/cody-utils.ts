@@ -401,8 +401,15 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
     }
   }
 
-  // Remove /cody prefix and normalize whitespace
-  const cmd = decoded.replace(/^\/cody\s*/, '').trim()
+  // Normalize literal \n sequences to real newlines
+  // (double-escaping from the GitHub Actions → shell → pnpm → Node.js pipeline
+  //  can leave literal backslash-n instead of actual newlines)
+  decoded = decoded.replace(/\\n/g, '\n')
+
+  // Only parse the first line — /cody commands live on line 1;
+  // trailing lines are just whitespace or comment noise
+  const firstLine = decoded.split('\n')[0]
+  const cmd = firstLine.replace(/^\/cody\s*/, '').trim()
 
   // Extract subcommand (first word)
   const spaceIdx = cmd.indexOf(' ')
