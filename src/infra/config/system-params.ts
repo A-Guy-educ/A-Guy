@@ -40,6 +40,33 @@ async function getSystemParamValue(
  */
 export const SystemParams = {
   // =========================================
+  // Access Control
+  // =========================================
+
+  /**
+   * Total gated delay before lock-out (milliseconds)
+   *
+   * @default 300000 (5 minutes)
+   * @returns Delay in ms
+   */
+  async getGatedDelayMs(): Promise<number> {
+    const raw = await getSystemParamValue('gated_delay_ms', '300000')
+    return parseInt(raw || '300000', 10)
+  },
+
+  /**
+   * Warning modal duration before lock-out (milliseconds).
+   * The warning appears at (gatedDelay - gatedWarning) ms.
+   *
+   * @default 30000 (30 seconds)
+   * @returns Warning duration in ms
+   */
+  async getGatedWarningMs(): Promise<number> {
+    const raw = await getSystemParamValue('gated_warning_ms', '30000')
+    return parseInt(raw || '30000', 10)
+  },
+
+  // =========================================
   // PDF Conversion
   // =========================================
 

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryChaptersByCourse } from '@/server/repos/queries/chapters'
+import { SystemParams } from '@/infra/config/system-params'
 import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { CourseHeader } from '../_components/CourseHeader'
@@ -25,11 +26,20 @@ export default async function CoursePage({ params }: CoursePageProps) {
   }
 
   const courseAccessType = course.accessType ?? 'free'
+  const [gatedDelayMs, gatedWarningMs] = await Promise.all([
+    SystemParams.getGatedDelayMs(),
+    SystemParams.getGatedWarningMs(),
+  ])
 
   // Server-side block: for mandatory mode, don't render content for unauthenticated users
   if (courseAccessType === 'mandatory' && !(await isAuthenticatedServer())) {
     return (
-      <AccessGateProvider accessType={courseAccessType} courseSlug={courseSlug}>
+      <AccessGateProvider
+        accessType={courseAccessType}
+        courseSlug={courseSlug}
+        gatedDelayMs={gatedDelayMs}
+        gatedWarningMs={gatedWarningMs}
+      >
         <div className="min-h-screen" />
       </AccessGateProvider>
     )
@@ -38,7 +48,12 @@ export default async function CoursePage({ params }: CoursePageProps) {
   const chapters = await queryChaptersByCourse({ courseId: course.id })
 
   return (
-    <AccessGateProvider accessType={courseAccessType} courseSlug={courseSlug}>
+    <AccessGateProvider
+      accessType={courseAccessType}
+      courseSlug={courseSlug}
+      gatedDelayMs={gatedDelayMs}
+      gatedWarningMs={gatedWarningMs}
+    >
       <div className="container mx-auto px-4 py-8">
         <CourseAnalytics courseId={course.id} courseTitle={course.title} />
         <BackToCourses />

@@ -1,5 +1,6 @@
 import { DynamicLesson } from '@/demos/dynamic-lesson'
 import type { Media } from '@/payload-types'
+import { SystemParams } from '@/infra/config/system-params'
 import { resolveAccessType } from '@/server/constants/access-types'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
@@ -49,11 +50,20 @@ export default async function LessonPage({ params }: LessonPageProps) {
   }
 
   const effectiveAccessType = resolveAccessType(lesson.accessType, course.accessType)
+  const [gatedDelayMs, gatedWarningMs] = await Promise.all([
+    SystemParams.getGatedDelayMs(),
+    SystemParams.getGatedWarningMs(),
+  ])
 
   // Server-side block: for mandatory mode, don't render content for unauthenticated users
   if (effectiveAccessType === 'mandatory' && !(await isAuthenticatedServer())) {
     return (
-      <AccessGateProvider accessType={effectiveAccessType} courseSlug={courseSlug}>
+      <AccessGateProvider
+        accessType={effectiveAccessType}
+        courseSlug={courseSlug}
+        gatedDelayMs={gatedDelayMs}
+        gatedWarningMs={gatedWarningMs}
+      >
         <div className="min-h-screen" />
       </AccessGateProvider>
     )
@@ -79,7 +89,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
   // Case 1: No document attached -> Show exercises pager if exercises exist
   if (!hasContent) {
     return (
-      <AccessGateProvider accessType={effectiveAccessType} courseSlug={courseSlug}>
+      <AccessGateProvider
+        accessType={effectiveAccessType}
+        courseSlug={courseSlug}
+        gatedDelayMs={gatedDelayMs}
+        gatedWarningMs={gatedWarningMs}
+      >
         <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
         {hasExercises ? (
           <ExercisesPager

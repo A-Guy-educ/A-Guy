@@ -18,10 +18,20 @@ import { AuthGateModal } from './AuthGateModal'
 interface AccessGateProviderProps {
   accessType: AccessType | string
   courseSlug: string
+  /** Total gated delay before lock-out (ms). Read from admin config server-side. */
+  gatedDelayMs?: number
+  /** Warning duration before lock-out (ms). Read from admin config server-side. */
+  gatedWarningMs?: number
   children: React.ReactNode
 }
 
-export function AccessGateProvider({ accessType, courseSlug, children }: AccessGateProviderProps) {
+export function AccessGateProvider({
+  accessType,
+  courseSlug,
+  gatedDelayMs,
+  gatedWarningMs,
+  children,
+}: AccessGateProviderProps) {
   const t = useTranslations('accessControl')
   const pathname = usePathname()
   const {
@@ -30,7 +40,7 @@ export function AccessGateProvider({ accessType, courseSlug, children }: AccessG
     showWarningModal,
     warningSecondsLeft,
     dismissWarning,
-  } = useAccessGate({ accessType, courseSlug })
+  } = useAccessGate({ accessType, courseSlug, gatedDelayMs, gatedWarningMs })
 
   const isBlocked = showMandatoryModal || showGatedModal
 

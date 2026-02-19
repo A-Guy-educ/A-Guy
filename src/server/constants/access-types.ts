@@ -10,11 +10,11 @@ export const DEFAULT_ACCESS_TYPE: AccessType = 'free'
 
 export const DEFAULT_LESSON_ACCESS_TYPE: LessonAccessType = 'inherit'
 
-/** Total gated delay before lock (1 minute for testing, 5 minutes for production) */
-export const GATED_DELAY_MS = 1 * 60 * 1000
+/** Fallback gated delay before lock (ms). Overridden by admin config `gated_delay_ms`. */
+export const GATED_DELAY_MS = 5 * 60 * 1000
 
-/** Warning banner duration before lock (50s = warning starts at 10s of a 60s delay) */
-export const GATED_WARNING_MS = 50 * 1000
+/** Fallback warning duration before lock (ms). Overridden by admin config `gated_warning_ms`. */
+export const GATED_WARNING_MS = 30 * 1000
 
 /**
  * Resolve the effective access type for a lesson.

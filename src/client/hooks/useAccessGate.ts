@@ -14,6 +14,10 @@ import { GATED_DELAY_MS, GATED_WARNING_MS } from '@/server/constants/access-type
 interface UseAccessGateParams {
   accessType: AccessType | string
   courseSlug: string
+  /** Total gated delay before lock-out (ms). Falls back to GATED_DELAY_MS constant. */
+  gatedDelayMs?: number
+  /** Warning duration before lock-out (ms). Falls back to GATED_WARNING_MS constant. */
+  gatedWarningMs?: number
 }
 
 interface UseAccessGateReturn {
@@ -29,7 +33,11 @@ interface UseAccessGateReturn {
 export function useAccessGate({
   accessType,
   courseSlug,
+  gatedDelayMs: gatedDelayMsProp,
+  gatedWarningMs: gatedWarningMsProp,
 }: UseAccessGateParams): UseAccessGateReturn {
+  const gatedDelayMs = gatedDelayMsProp ?? GATED_DELAY_MS
+  const gatedWarningMs = gatedWarningMsProp ?? GATED_WARNING_MS
   const { user, isLoading: isAuthLoading } = useCurrentUser()
   const [elapsedMs, setElapsedMs] = useState(0)
   const [warningDismissed, setWarningDismissed] = useState(false)
@@ -101,15 +109,15 @@ export function useAccessGate({
   }, [])
 
   // Compute state
-  const warningThreshold = GATED_DELAY_MS - GATED_WARNING_MS
+  const warningThreshold = gatedDelayMs - gatedWarningMs
   const inWarningPeriod =
-    isGated && isAnonymous && elapsedMs >= warningThreshold && elapsedMs < GATED_DELAY_MS
+    isGated && isAnonymous && elapsedMs >= warningThreshold && elapsedMs < gatedDelayMs
   const showWarningModal = inWarningPeriod && !warningDismissed
-  const showGatedModal = isGated && isAnonymous && elapsedMs >= GATED_DELAY_MS
+  const showGatedModal = isGated && isAnonymous && elapsedMs >= gatedDelayMs
   const showMandatoryModal = isMandatory && isAnonymous
 
   const warningSecondsLeft = inWarningPeriod
-    ? Math.max(0, Math.ceil((GATED_DELAY_MS - elapsedMs) / 1000))
+    ? Math.max(0, Math.ceil((gatedDelayMs - elapsedMs) / 1000))
     : 0
 
   // Pause/resume timer when warning modal opens/closes
