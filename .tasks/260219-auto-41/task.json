@@ -1,0 +1,17 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/app/(frontend)/globals.css"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Dark mode is controlled via data-theme attribute in CSS",
+    "Colors are defined as HSL variables in globals.css",
+    "The issue is about improving visual hierarchy in dark mode",
+    "Changes will involve modifying CSS custom properties under [data-theme='dark']"
+  ],
+  "pipeline": "spec_execute_verify"
+}
