@@ -58,6 +58,45 @@ function checkForQuestions(questionsPath: string): boolean {
   return hasQuestionContent && !isApproved && !noClarifications
 }
 
+/**
+ * Extract the answer from a GitHub comment body
+ * The comment format is: /cody [command] [task-id] [optional answer text]
+ */
+function extractAnswerFromComment(commentBody: string): string | null {
+  // Decode JSON-encoded body if needed (from jq -Rs .)
+  let decoded = commentBody
+  if (decoded.startsWith('"') && decoded.endsWith('"')) {
+    try {
+      decoded = JSON.parse(decoded)
+    } catch {
+      // Use raw value if JSON.parse fails
+    }
+  }
+
+  // Normalize literal \n to real newlines
+  decoded = decoded.replace(/\\n/g, '\n')
+
+  // Remove /cody prefix and command
+  const withoutCody = decoded.replace(/^\/cody\s*/, '').trim()
+
+  // If there's content after the command, treat it as the answer
+  if (withoutCody.length > 0) {
+    // Remove task-id if present (format: /cody [task-id] or /cody full [task-id])
+    const taskIdMatch = withoutCody.match(/^([a-z]+\s+)?([0-9]{6}-[a-z0-9-]+\s*)/i)
+    let answer = withoutCody
+    if (taskIdMatch) {
+      answer = withoutCody.slice(taskIdMatch[0].length).trim()
+    }
+
+    // If there's answer content, return it
+    if (answer.length > 0) {
+      return answer
+    }
+  }
+
+  return null
+}
+
 // Import utilities from cody-utils
 import {
   parseCliArgs,
@@ -70,6 +109,7 @@ import {
   postComment,
   formatStatusComment,
   getIssueBody,
+  getLatestIssueComment,
   type CodyInput,
 } from './cody-utils'
 
@@ -270,6 +310,32 @@ async function runSpecPipeline(
       outputFile: path.basename(outputFile),
     })
     console.log(`✓ ${stage} complete`)
+  }
+
+  // If questions.md exists and user provided answers (either via comment body or latest issue comment),
+  // create clarified.md
+  const existingQuestionsPath = path.join(taskDir, 'questions.md')
+  if (fs.existsSync(existingQuestionsPath)) {
+    let answer: string | null = null
+
+    // Try to get answer from:
+    // 1. Comment body (if user wrote "/cody answer text")
+    // 2. Latest comment on the issue (plain text answer)
+    if (input.commentBody && input.triggerType === 'comment') {
+      answer = extractAnswerFromComment(input.commentBody)
+    }
+
+    // If no answer from comment body, check latest issue comment
+    if (!answer && input.issueNumber && input.triggerType === 'comment') {
+      // Get the latest comment (not from bot) as the answer
+      answer = getLatestIssueComment(input.issueNumber, 'github-actions[bot]')
+    }
+
+    if (answer) {
+      const clarifiedPath = path.join(taskDir, 'clarified.md')
+      fs.writeFileSync(clarifiedPath, `# Clarified\n\n${answer}\n`)
+      console.log('📝 Created clarified.md from user answer\n')
+    }
   }
 
   // Check if there are pending questions from clarify stage
