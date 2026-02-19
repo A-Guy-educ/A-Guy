@@ -227,18 +227,39 @@ export function editComment(_commentId: string, _body: string): void {
 }
 
 /**
- * Get the latest comment on an issue (not from the bot)
+ * Get the latest comment on an issue (not from the bot, not a /cody command)
  */
 export function getLatestIssueComment(issueNumber: number, excludeAuthor?: string): string | null {
   if (!issueNumber) return null
 
   try {
-    // Get comments, newest first, exclude bot comments
+    const exclude = excludeAuthor || 'github-actions[bot]'
+    // Get comments, exclude bot and /cody commands, return the latest plain-text answer
     const output = execSync(
-      `gh issue comments ${issueNumber} --limit 10 --json author,body --jq '.[] | select(.author.login != "${excludeAuthor || 'github-actions[bot]'}") | .body' | head -1`,
+      `gh issue view ${issueNumber} --json comments --jq '[.comments[] | select(.author.login != "${exclude}" and (.body | startswith("/cody") | not))] | last | .body'`,
       { encoding: 'utf-8' },
     )
     return output.trim() || null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Discover task-id from a previous Cody run by parsing bot comments on the issue.
+ * Looks for "Task created: `XXXXXX-task-name`" in bot comments.
+ */
+export function discoverTaskIdFromIssue(issueNumber: number): string | null {
+  if (!issueNumber) return null
+
+  try {
+    const output = execSync(
+      `gh issue view ${issueNumber} --json comments --jq '[.comments[] | select(.author.login == "github-actions[bot]")] | .[].body'`,
+      { encoding: 'utf-8' },
+    )
+    // Look for "Task created: `XXXXXX-task-name`"
+    const match = output.match(/Task created: `(\d{6}-[a-zA-Z0-9-]+)`/)
+    return match ? match[1] : null
   } catch {
     return null
   }
@@ -324,6 +345,8 @@ export function parseCliArgs(argv: string[]): CodyInput {
       // For comment triggers: parse the raw comment body
       // Note: issueNumber may not be parsed yet, so we pass undefined and merge later
       const commentBody = normalized[i + 1]
+      // Store raw comment body for answer extraction later
+      input.commentBody = commentBody
       const parsed = parseCommentBody(commentBody, undefined)
 
       if (!parsed.success) {
@@ -359,18 +382,30 @@ export function parseCliArgs(argv: string[]): CodyInput {
 
   // Auto-generate taskId if not provided
   if (!input.taskId) {
-    if (input.file) {
-      // Generate from filename: --file path/to/feature.md -> 260218-feature
-      const stem = path.basename(input.file, path.extname(input.file))
-      const datePrefix = new Date().toISOString().slice(2, 10).replace(/-/g, '')
-      input.taskId = `${datePrefix}-${stem.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase()}`
-    } else {
-      // Fallback: auto-generate from date
-      const datePrefix = new Date().toISOString().slice(2, 10).replace(/-/g, '')
-      const counter = Math.floor(Math.random() * 99) + 1
-      input.taskId = `${datePrefix}-auto-${counter.toString().padStart(2, '0')}`
+    // Try to discover task-id from previous bot comments on the issue
+    if (input.issueNumber && input.triggerType === 'comment') {
+      const discovered = discoverTaskIdFromIssue(input.issueNumber)
+      if (discovered) {
+        input.taskId = discovered
+        console.log(`Discovered task ID from issue: ${input.taskId}`)
+      }
     }
-    console.log(`Auto-generated task ID: ${input.taskId}`)
+
+    // If still no task-id, generate one
+    if (!input.taskId) {
+      if (input.file) {
+        // Generate from filename: --file path/to/feature.md -> 260218-feature
+        const stem = path.basename(input.file, path.extname(input.file))
+        const datePrefix = new Date().toISOString().slice(2, 10).replace(/-/g, '')
+        input.taskId = `${datePrefix}-${stem.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase()}`
+      } else {
+        // Fallback: auto-generate from date
+        const datePrefix = new Date().toISOString().slice(2, 10).replace(/-/g, '')
+        const counter = Math.floor(Math.random() * 99) + 1
+        input.taskId = `${datePrefix}-auto-${counter.toString().padStart(2, '0')}`
+      }
+      console.log(`Auto-generated task ID: ${input.taskId}`)
+    }
   }
 
   if (!validateTaskId(input.taskId)) {

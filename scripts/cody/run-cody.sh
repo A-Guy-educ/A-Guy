@@ -34,6 +34,8 @@ pnpm cody:run \
   --mode="$MODE" \
   --issue-number="${ISSUE_NUMBER:-}" \
   --trigger-type="$TRIGGER_TYPE" \
+  ${RUN_ID:+--run-id="$RUN_ID"} \
+  ${RUN_URL:+--run-url="$RUN_URL"} \
   $DRY_RUN_FLAG \
   ${COMMENT_BODY_FLAG:+"$COMMENT_BODY_FLAG"} \
   ${FEEDBACK:+--feedback="$FEEDBACK"} \

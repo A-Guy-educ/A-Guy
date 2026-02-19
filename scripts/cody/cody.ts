@@ -97,6 +97,38 @@ function extractAnswerFromComment(commentBody: string): string | null {
   return null
 }
 
+/**
+ * Commit and push task files to the feature branch in CI.
+ * This ensures subsequent /cody calls have access to the task state.
+ */
+function commitTaskFilesCI(input: CodyInput, taskDir: string): void {
+  if (input.local || input.dryRun) return
+
+  try {
+    // Get task_type from task.json to determine branch prefix
+    const taskJsonPath = path.join(taskDir, 'task.json')
+    let taskType = 'implement_feature' // default
+    if (fs.existsSync(taskJsonPath)) {
+      const taskData = JSON.parse(fs.readFileSync(taskJsonPath, 'utf-8'))
+      taskType = taskData.task_type || 'implement_feature'
+    }
+
+    // Ensure feature branch exists
+    ensureFeatureBranch(input.taskId, taskType)
+
+    // Commit task files
+    execSync(`git add ${taskDir}`, { cwd: process.cwd(), stdio: 'inherit' })
+    execSync(`git commit --no-gpg-sign -m "cody: save task files for ${input.taskId}"`, {
+      cwd: process.cwd(),
+      stdio: 'inherit',
+    })
+    execSync(`git push -u origin HEAD`, { cwd: process.cwd(), stdio: 'inherit' })
+    console.log('[commit] Task files committed and pushed')
+  } catch {
+    console.log('[commit] No changes to commit (or git error)')
+  }
+}
+
 // Import utilities from cody-utils
 import {
   parseCliArgs,
@@ -197,7 +229,9 @@ async function main() {
     console.log('\n✅ Cody completed successfully')
 
     if (input.issueNumber) {
-      postComment(input.issueNumber, formatStatusComment(input, status))
+      // Read fresh status from disk to include all stage info
+      const latestStatus = readStatus(input.taskId) || status
+      postComment(input.issueNumber, formatStatusComment(input, latestStatus))
     }
   } catch (error) {
     completeStatus(input.taskId, 'failed')
@@ -359,7 +393,11 @@ async function runSpecPipeline(
 
     // Don't create default clarified.md - let user provide clarifications
     // Stop here - impl pipeline will run on subsequent /cody call
-    completeStatus(input.taskId, 'completed')
+    // Note: Don't call completeStatus here - let main() handle it
+
+    // Commit task files in CI (so next run has state)
+    commitTaskFilesCI(input, taskDir)
+
     console.log('✅ Cody SPEC pipeline complete (waiting for clarification)')
     return
   }
@@ -369,6 +407,9 @@ async function runSpecPipeline(
   if (!fs.existsSync(clarifiedPath)) {
     fs.writeFileSync(clarifiedPath, '# Clarified\n\nUse recommended answers.\n')
   }
+
+  // Commit task files in CI (after spec completes successfully)
+  commitTaskFilesCI(input, taskDir)
 
   console.log('\n✅ Cody SPEC pipeline complete')
 }
@@ -550,6 +591,13 @@ async function runFullPipeline(
 
   // Run spec first
   await runSpecPipeline(input, status, backend)
+
+  // Check if spec stopped for questions (clarified.md won't exist)
+  const clarifiedPath = path.join(ensureTaskDir(input.taskId), 'clarified.md')
+  if (!fs.existsSync(clarifiedPath)) {
+    console.log('\n⏸️ Spec pipeline stopped for clarification. Skipping impl.')
+    return
+  }
 
   // Then impl
   await runImplPipeline(input, status, backend)
