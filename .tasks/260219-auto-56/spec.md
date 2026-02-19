@@ -1,0 +1,61 @@
+# Spec: Reduce Home Welcome Typing Text Speed by Half
+
+## Task Overview
+
+- **Task ID**: 260219-auto-56
+- **Type**: Feature
+- **Risk Level**: Low
+- **Confidence**: High
+- **Domain**: Frontend
+
+## Summary
+
+Reduce the typing animation speed in the GreetingFlow component from 100ms to 200ms per character (half the speed).
+
+## Problem Statement
+
+The typing text on the home welcome screen is currently typing too fast. The user requested to reduce the typing speed by half to create a more pleasant user experience.
+
+## Current State
+
+The GreetingFlow component at `src/ui/web/homepage/GreetingFlow/index.tsx` uses the `TypingAnimation` component with `speed={100}` in three locations:
+
+1. **Line 65-70**: Welcome text typing animation
+2. **Line 95-100**: Mood response typing animation
+3. **Line 143**: "Let's start" text typing animation
+
+## Implementation Approach
+
+Modify `src/ui/web/homepage/GreetingFlow/index.tsx` to change the `speed` prop on all `TypingAnimation` components from `100` to `200`.
+
+## Changes Required
+
+Replace all three instances of `speed={100}` with `speed={200}` in the GreetingFlow component.
+
+### File: `src/ui/web/homepage/GreetingFlow/index.tsx`
+
+| Location | Current       | Change To     |
+| -------- | ------------- | ------------- |
+| Line 67  | `speed={100}` | `speed={200}` |
+| Line 97  | `speed={100}` | `speed={200}` |
+| Line 143 | `speed={100}` | `speed={200}` |
+
+## Verification
+
+After the change:
+
+- All three TypingAnimation components should have `speed={200}`
+- The typing animation will appear half as fast (200ms per character instead of 100ms)
+
+## Dependencies
+
+- None - this is a simple prop change with no external dependencies
+
+## Testing Considerations
+
+No automated tests required for this change. Manual verification:
+
+1. Navigate to home page
+2. Observe the typing speed on welcome text
+3. Select a mood and observe the typing speed on response
+4. Select a course and observe the typing speed on "Let's start" text
