@@ -95,58 +95,79 @@
   }
 
   [data-theme='dark'] {
-    /* Deep navy blue background */
+    /* ===== BASE SURFACES ===== */
+
+    /* Deep navy background - kept for brand identity */
     --background: 222 75% 9%;
     --foreground: 210 40% 98%;
 
-    /* Card surfaces - slightly elevated from background */
-    --card: 222 75% 13%;
+    /* Card: slightly elevated from background */
+    --card: 217 33% 17%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 75% 13%;
+    --popover: 217 33% 17%;
     --popover-foreground: 210 40% 98%;
 
-    /* Primary: bright vibrant blue */
+    /* ===== PRIMARY ACTIONS ===== */
+
+    /* Bright blue - clear primary action color */
     --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
+    --primary-soft: 217 91% 95%;
+    --primary-foreground: 222 33% 10%;
 
-    /* Secondary: elevated blue surface */
-    --secondary: 222 75% 17%;
-    --secondary-foreground: 210 40% 98%;
+    /* ===== SECONDARY ELEMENTS ===== */
 
-    /* Muted: dark gray-blue */
-    --muted: 222 75% 17%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Teal - complementary to blue, provides warmth */
+    --secondary: 173 70% 45%;
+    --secondary-foreground: 222 33% 10%;
 
-    /* Accent: vibrant purple (keeping for backward compatibility) */
-    --accent: 217 91% 60%;
+    /* ===== TERTIARY / ACCENT ===== */
+
+    /* Rose - warm accent for variety */
+    --tertiary: 350 85% 65%;
+    --tertiary-foreground: 222 33% 10%;
+
+    /* Purple - accent highlights (DIFFERENT from primary now!) */
+    --accent: 271 91% 65%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    /* ===== MUTED / SUBTLE ===== */
 
-    /* Borders - subtle borders with alpha */
-    --border: 222 75% 20% / 0.7;
-    --input: 222 75% 17%;
+    /* Gray-blue - clearly distinguishable from secondary */
+    --muted: 217 25% 22%;
+    --muted-foreground: 215 20% 65%;
 
-    /* Focus ring follows accent */
-    --ring: 217 91% 60%;
+    /* ===== DESTRUCTIVE ===== */
 
-    /* Shadow system - darker shadows for dark mode */
+    /* Bright red - clearly visible in dark mode */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* ===== BORDERS & INPUTS ===== */
+
+    /* Subtle borders with slight blue tint */
+    --border: 217 25% 25% / 0.7;
+    --input: 217 25% 18%;
+
+    /* Focus ring - uses accent */
+    --ring: 271 91% 65%;
+
+    /* ===== SHADOWS ===== */
     --shadow-card: 0 4px 16px 0 rgb(0 0 0 / 0.3);
     --shadow-card-hover: 0 8px 24px 0 rgb(0 0 0 / 0.4);
     --shadow-modal: 0 20px 40px -10px rgb(0 0 0 / 0.5);
     --shadow-dropdown: 0 8px 12px -2px rgb(0 0 0 / 0.3), 0 4px 8px -2px rgb(0 0 0 / 0.2);
 
+    /* ===== SEMANTIC COLORS ===== */
     --success: 142 71% 45%;
     --warning: 38 92% 50%;
     --error: 0 72% 51%;
 
-    /* Badge colors - for course categories */
-    --badge-orange: 25 95% 53%; /* Orange badge */
-    --badge-orange-bg: 24 95% 97%; /* Light orange background */
+    /* ===== BADGE COLORS ===== */
+    --badge-orange: 25 95% 53%;
+    --badge-orange-bg: 25 60% 15%;
 
-    /* Semantic colors - components use these */
+    /* ===== SEMANTIC / COMPONENT COLORS ===== */
     --header-bg: var(--card);
     --header-fg: var(--card-foreground);
     --footer-bg: var(--card);
@@ -165,15 +186,15 @@
     --surface-elevated: var(--card);
     --surface-elevated-fg: var(--card-foreground);
 
-    /* Text highlight tokens - for markdown ::text-highlight-N{} syntax */
-    --text-highlight-1: 0 72% 51%; /* Red */
-    --text-highlight-2: 25 95% 53%; /* Orange */
-    --text-highlight-3: 45 93% 47%; /* Yellow */
-    --text-highlight-4: 142 71% 45%; /* Green */
-    --text-highlight-5: 217 91% 60%; /* Blue */
-    --text-highlight-6: 271 91% 65%; /* Purple */
-    --text-highlight-7: 330 81% 60%; /* Pink */
-    --text-highlight-8: 220 8% 45%; /* Gray */
+    /* ===== TEXT HIGHLIGHTS ===== */
+    --text-highlight-1: 0 72% 51%;
+    --text-highlight-2: 25 95% 53%;
+    --text-highlight-3: 45 93% 47%;
+    --text-highlight-4: 142 71% 45%;
+    --text-highlight-5: 217 91% 60%;
+    --text-highlight-6: 271 91% 65%;
+    --text-highlight-7: 350 85% 65%;
+    --text-highlight-8: 215 20% 65%;
   }
 }
 
