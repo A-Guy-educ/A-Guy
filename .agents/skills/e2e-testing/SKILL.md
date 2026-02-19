@@ -53,7 +53,7 @@ export class ItemsPage {
 
   async search(query: string) {
     await this.searchInput.fill(query)
-    await this.page.waitForResponse(resp => resp.url().includes('/api/search'))
+    await this.page.waitForResponse((resp) => resp.url().includes('/api/search'))
     await this.page.waitForLoadState('networkidle')
   }
 
@@ -110,7 +110,7 @@ export default defineConfig({
   reporter: [
     ['html', { outputFolder: 'playwright-report' }],
     ['junit', { outputFile: 'playwright-results.xml' }],
-    ['json', { outputFile: 'playwright-results.json' }]
+    ['json', { outputFile: 'playwright-results.json' }],
   ],
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:3000',
@@ -161,6 +161,7 @@ npx playwright test tests/search.spec.ts --retries=3
 ### Common Causes & Fixes
 
 **Race conditions:**
+
 ```typescript
 // Bad: assumes element is ready
 await page.click('[data-testid="button"]')
@@ -170,15 +171,17 @@ await page.locator('[data-testid="button"]').click()
 ```
 
 **Network timing:**
+
 ```typescript
 // Bad: arbitrary timeout
 await page.waitForTimeout(5000)
 
 // Good: wait for specific condition
-await page.waitForResponse(resp => resp.url().includes('/api/data'))
+await page.waitForResponse((resp) => resp.url().includes('/api/data'))
 ```
 
 **Animation timing:**
+
 ```typescript
 // Bad: click during animation
 await page.click('[data-testid="menu-item"]')
@@ -259,21 +262,24 @@ jobs:
 **Status:** PASSING / FAILING
 
 ## Summary
+
 - Total: X | Passed: Y (Z%) | Failed: A | Flaky: B | Skipped: C
 
 ## Failed Tests
 
 ### test-name
+
 **File:** `tests/e2e/feature.spec.ts:45`
 **Error:** Expected element to be visible
 **Screenshot:** artifacts/failed.png
 **Recommended Fix:** [description]
 
 ## Artifacts
+
 - HTML Report: playwright-report/index.html
-- Screenshots: artifacts/*.png
-- Videos: artifacts/videos/*.webm
-- Traces: artifacts/*.zip
+- Screenshots: artifacts/\*.png
+- Videos: artifacts/videos/\*.webm
+- Traces: artifacts/\*.zip
 ```
 
 ## Wallet / Web3 Testing
@@ -285,10 +291,9 @@ test('wallet connection', async ({ page, context }) => {
     window.ethereum = {
       isMetaMask: true,
       request: async ({ method }) => {
-        if (method === 'eth_requestAccounts')
-          return ['0x1234567890123456789012345678901234567890']
+        if (method === 'eth_requestAccounts') return ['0x1234567890123456789012345678901234567890']
         if (method === 'eth_chainId') return '0x1'
-      }
+      },
     }
   })
 
@@ -315,10 +320,9 @@ test('trade execution', async ({ page }) => {
 
   // Confirm and wait for blockchain
   await page.locator('[data-testid="confirm-trade"]').click()
-  await page.waitForResponse(
-    resp => resp.url().includes('/api/trade') && resp.status() === 200,
-    { timeout: 30000 }
-  )
+  await page.waitForResponse((resp) => resp.url().includes('/api/trade') && resp.status() === 200, {
+    timeout: 30000,
+  })
 
   await expect(page.locator('[data-testid="trade-success"]')).toBeVisible()
 })
