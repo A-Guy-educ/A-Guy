@@ -13,7 +13,7 @@ import ReactMarkdown from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
 import remarkMath from 'remark-math'
 import { rehypeMathWrapper } from './rehype-math-wrapper'
-import { remarkColorSyntax } from '@/lib/remark-plugins/remark-color-syntax'
+import { remarkColorSyntax } from './remark-color-syntax'
 
 export interface MathMarkdownProps {
   /** The markdown string to render. Supports $...$ (inline) and $$...$$ (block) math. */

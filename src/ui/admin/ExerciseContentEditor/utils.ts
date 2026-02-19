@@ -2,7 +2,7 @@
  * Utilities for flat block list (no containers, no hierarchy)
  */
 
-import type { ContentBlock } from '@/shared/exercise-content/types'
+import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
 
 export const generateId = () => {
   return typeof crypto !== 'undefined' && crypto.randomUUID
