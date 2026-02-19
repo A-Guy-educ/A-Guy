@@ -140,7 +140,7 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
 
       {step === 'complete' && (
         <div className="text-center">
-          <TypingAnimation text={t('letsStart')} speed={100} className="text-2xl" />
+          <TypingAnimation text={t('letsStart')} speed={200} className="text-2xl" />
         </div>
       )}
     </div>

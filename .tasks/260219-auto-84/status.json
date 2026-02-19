@@ -3,9 +3,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-02-19T17:01:17.906Z",
-  "updatedAt": "2026-02-19T17:05:09.609Z",
+  "updatedAt": "2026-02-19T17:05:32.479Z",
   "state": "running",
-  "currentStage": "clarify",
+  "currentStage": "architect",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -27,6 +27,11 @@
       "startedAt": "2026-02-19T17:03:53.648Z",
       "completedAt": "2026-02-19T17:05:09.609Z",
       "elapsed": 75961
+    },
+    "architect": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-19T17:05:32.479Z"
     }
   },
   "triggeredBy": "comment",
