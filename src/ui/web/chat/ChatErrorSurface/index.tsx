@@ -18,7 +18,6 @@ export function ChatErrorSurface({ type, message, onDismiss, className }: ChatEr
   const pathname = usePathname()
 
   const loginUrl = `/login?returnTo=${encodeURIComponent(pathname)}`
-  const signupUrl = `/signup?returnTo=${encodeURIComponent(pathname)}`
 
   return (
     <div
@@ -36,7 +35,7 @@ export function ChatErrorSurface({ type, message, onDismiss, className }: ChatEr
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium leading-relaxed">{message}</p>
 
-        {/* Auth/Limit Error CTA */}
+        {/* Auth Error CTA */}
         {(type === 'auth' || type === 'limit') && (
           <div className="flex items-center gap-2 mt-2 text-sm">
             <SystemLink
@@ -44,13 +43,6 @@ export function ChatErrorSurface({ type, message, onDismiss, className }: ChatEr
               className="font-semibold underline hover:no-underline transition-all"
             >
               {tCourses('chatAuthRequiredLogin')}
-            </SystemLink>
-            <span className="text-destructive/60">or</span>
-            <SystemLink
-              href={signupUrl}
-              className="font-semibold underline hover:no-underline transition-all"
-            >
-              {tCourses('chatAuthRequiredCTA')}
             </SystemLink>
           </div>
         )}

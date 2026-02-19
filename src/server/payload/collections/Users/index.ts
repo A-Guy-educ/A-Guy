@@ -11,6 +11,7 @@ import type { CollectionConfig } from 'payload'
 
 import { adminOnly } from '../../access/adminOnly'
 import { adminOrSelf } from '../../access/adminOrSelf'
+// anyone import kept for future re-enablement of public signup
 import { anyone } from '../../access/anyone'
 import { ensureRoleOnSignup } from './hooks/ensureRoleOnSignup-hook'
 import { preventLastAdminDemotion } from './hooks/preventLastAdminDemotion-hook'
@@ -22,7 +23,7 @@ export const Users: CollectionConfig = {
   slug: 'users',
   access: {
     admin: adminOnly, // Only admins can access the admin panel
-    create: anyone, // Allow public signup - users can create their own accounts
+    create: anyone, // Anyone can create (signup). OAuth also uses overrideAccess.
     delete: adminOnly, // Only admins can delete users
     read: adminOrSelf, // Admins can read all, users can read their own
     update: adminOrSelf, // Admins can update all, users can update their own

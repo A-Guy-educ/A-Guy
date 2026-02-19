@@ -5,7 +5,7 @@
  */
 import type { PayloadRequest } from 'payload'
 import { z } from 'zod'
-import { matchAnswer } from '@/lib/validation/answer-normalization'
+import { matchAnswer } from './answer-normalization'
 import { validateWithLLM } from '@/infra/llm/services/answer-validation-service'
 import { logger } from '@/infra/utils/logger'
 

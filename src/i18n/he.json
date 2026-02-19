@@ -69,8 +69,9 @@
       }
     },
     "login": {
-      "title": "ברוך שובך",
-      "subtitle": "התחבר לחשבון שלך",
+      "title": "ברוכים הבאים ל-A-Guy",
+      "subtitle": "התחבר כדי להמשיך ללמוד",
+      "googleOnlyMessage": "A-Guy תומך כרגע באימות Google לחוויה מהירה ומאובטחת יותר.",
       "email": "אימייל",
       "emailPlaceholder": "you@example.com",
       "password": "סיסמה",
@@ -190,6 +191,8 @@
     "chatFileTooLarge": "הקובץ גדול מדי (מקסימום 10MB)",
     "chatMaxFiles": "מותר עד 5 קבצים",
     "chatUploadFailed": "העלאת הקובץ נכשלה",
+    "chatReadAloud": "הקראה",
+    "chatStopReading": "עצירת הקראה",
     "mathKeyboard": "מקלדת מתמטית",
     "formulaSheet": "דף נוסחאות",
     "uploadFile": "העלאת קובץ",
@@ -251,7 +254,17 @@
       "chatInputPlaceholder": "שאל שאלה...",
       "chatAuthRequired": "אנא התחבר כדי לשאול שאלות",
       "loading": "טוען...",
-      "noCourse": "לא נבחר קורס. אנא בחר קורס מדף הבית."
+      "noCourse": "לא נבחר קורס. אנא בחר קורס מדף הבית.",
+      "pageTitle": "מרחב התרגול שלי",
+      "pageSubtitle": "התקדמות אישית לכל מטרה.",
+      "uploadButton": "העלאת תרגיל חדש",
+      "replaceButton": "החלפת תרגיל",
+      "openNotebook": "פתח מחברת",
+      "closeNotebook": "סגור מחברת",
+      "clearCanvas": "נקה",
+      "checkSolution": "בדוק פתרון",
+      "checking": "בודק...",
+      "uploadFailed": "העלאת התמונה נכשלה. נסה שוב."
     }
   },
   "admin": {

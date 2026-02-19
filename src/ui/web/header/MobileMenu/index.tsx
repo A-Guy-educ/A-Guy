@@ -7,6 +7,7 @@ import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { SearchIcon } from 'lucide-react'
 import type { Header as HeaderType, User } from '@/payload-types'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
+import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { MobileMenuAuthSection } from './MobileMenuAuthSection'
 
@@ -29,7 +30,11 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 }) => {
   const tCommon = useTranslations('common.header')
   const tMenu = useTranslations('common.mobileMenu')
-  const navItems = data?.navItems || []
+  const passwordLogin = usePasswordLogin()
+  const allNavItems = data?.navItems || []
+  const navItems = passwordLogin
+    ? allNavItems
+    : allNavItems.filter(({ link }) => link?.url !== '/signup')
   const portalContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {

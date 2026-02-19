@@ -1,0 +1,14 @@
+{
+  "task_type": "feature",
+  "pipeline": "spec",
+  "risk_level": "low",
+  "confidence": "high",
+  "primary_domain": "frontend",
+  "scope": "Reduce home welcome typing text speed by half (from 50ms to 100ms per character)",
+  "missing_inputs": [],
+  "assumptions": [
+    "The current typing speed is 50ms per character in GreetingFlow component",
+    "Reducing speed by half means doubling the delay to 100ms per character",
+    "All three TypingAnimation usages in GreetingFlow need to be updated"
+  ]
+}

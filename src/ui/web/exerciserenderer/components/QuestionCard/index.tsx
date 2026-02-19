@@ -24,6 +24,9 @@ interface QuestionCardProps {
   checkAnswerText: string
   correctText: string
   incorrectText: string
+  // Question numbering props
+  questionLabel?: string
+  dir?: 'ltr' | 'rtl'
 }
 
 export function QuestionCard({
@@ -37,6 +40,8 @@ export function QuestionCard({
   checkAnswerText,
   correctText,
   incorrectText,
+  questionLabel,
+  dir = 'ltr',
 }: QuestionCardProps) {
   return (
     <Card
@@ -45,6 +50,23 @@ export function QuestionCard({
         checked && checkResult?.isCorrect && 'border-success/30 bg-success/5',
       )}
     >
+      {/* Question Label */}
+      {/* NOTE: Small bubble for section letter (א/ב/ג or a/b/c). Do not use for exercise number. */}
+      {questionLabel && (
+        <div
+          className={cn(
+            'w-full flex items-center mb-4',
+            dir === 'rtl'
+              ? 'justify-end text-right flex-row-reverse gap-2'
+              : 'justify-start text-left gap-2',
+          )}
+        >
+          <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm">
+            <span className="font-bold text-xs">{questionLabel}</span>
+          </div>
+        </div>
+      )}
+
       {/* Question Content */}
       {children}
 

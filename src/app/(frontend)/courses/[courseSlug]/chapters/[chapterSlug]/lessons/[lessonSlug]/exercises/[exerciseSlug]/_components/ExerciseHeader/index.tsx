@@ -6,6 +6,7 @@ import type { User } from '@/payload-types'
 import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
 import { UserDropdown } from '@/ui/web/UserDropdown'
 import { Button } from '@/ui/web/components/button'
+import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ArrowLeft, ArrowRight, Menu } from 'lucide-react'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
@@ -30,6 +31,7 @@ export function ExerciseHeader({
 }: ExerciseHeaderProps) {
   const t = useTranslations('courses')
   const tCommon = useTranslations('common.header')
+  const passwordLogin = usePasswordLogin()
   const locale = useLocale()
   const rtl = isRTL(locale as 'en' | 'he')
   const router = useRouterWithLoading()
@@ -96,14 +98,16 @@ export function ExerciseHeader({
           ) : user ? (
             <UserDropdown user={user} />
           ) : (
-            <>
-              <Button variant="ghost" size="sm" asChild>
+            <div className="flex items-center gap-2">
+              <Button size="sm" asChild>
                 <SystemLink href={`/login${returnToParam}`}>{tCommon('login')}</SystemLink>
               </Button>
-              <Button size="sm" asChild>
-                <SystemLink href={`/signup${returnToParam}`}>{tCommon('signup')}</SystemLink>
-              </Button>
-            </>
+              {passwordLogin && (
+                <Button size="sm" variant="outline" asChild>
+                  <SystemLink href={`/signup${returnToParam}`}>{tCommon('signup')}</SystemLink>
+                </Button>
+              )}
+            </div>
           )}
         </div>
       </div>

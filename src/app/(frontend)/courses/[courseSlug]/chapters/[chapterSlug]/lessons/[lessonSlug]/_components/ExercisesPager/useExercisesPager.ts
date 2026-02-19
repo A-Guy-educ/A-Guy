@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Exercise } from '@/payload-types'
-import { getExerciseUrlParam } from '@/utilities/getExerciseUrlParam'
+import { getExerciseUrlParam } from './getExerciseUrlParam'
 
 type PageType = 'intro' | 'about' | 'exercise' | 'outro'
 
@@ -150,7 +150,20 @@ export function useExercisesPager({
     syncUrl(pageState)
   }, [pageState, syncUrl])
 
-  const progressPercent = ((pageState.pageNumber + 1) / totalPages) * 100
+  const progressPercent = (() => {
+    if (pageState.type === 'intro') return 0
+    if (pageState.type === 'about') return 0
+    if (pageState.type === 'outro') return 100
+
+    // For exercise pages, calculate based on exercise completion
+    if (pageState.type === 'exercise' && pageState.exerciseIndex !== undefined) {
+      const totalExercises = exercises.length
+      if (totalExercises === 0) return 0
+      return ((pageState.exerciseIndex + 1) / totalExercises) * 100
+    }
+
+    return 0
+  })()
 
   const getExerciseOrdinal = useCallback(() => {
     if (pageState.type !== 'exercise' || pageState.exerciseIndex === undefined) return null

@@ -1,3 +1,5 @@
 export { ChatMessageContent } from './ChatMessageContent'
 export { ChatInterface, type ViewMode } from './ChatInterface'
+export { TTSButton } from './TTSButton'
 export { useNotebookChat } from './hooks/useNotebookChat'
+export { useTTS } from './hooks/useTTS'

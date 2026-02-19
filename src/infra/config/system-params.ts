@@ -97,6 +97,27 @@ export async function getPdfConversionMaxPromptSizeBytes(tenantId?: string): Pro
 }
 
 /**
+ * Check if password (email/password) login is enabled.
+ * When false, only Google OAuth is available.
+ *
+ * @default false
+ */
+export async function isPasswordLoginEnabled(): Promise<boolean> {
+  try {
+    const value = await getConfigValueByKey<string>(
+      SYSTEM_PARAMS_DOMAIN,
+      'password_login_enabled',
+      {
+        throwIfNotFound: false,
+      },
+    )
+    return value === 'true'
+  } catch {
+    return false
+  }
+}
+
+/**
  * @deprecated Kept for backward compatibility
  * System params are now stored in ConfigValues (domain: 'global')
  */

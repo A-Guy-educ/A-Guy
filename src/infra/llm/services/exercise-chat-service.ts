@@ -103,6 +103,7 @@ export async function chatWithExerciseHelper(
         input.mediaPartsWithPath,
         modelConfig,
         payload,
+        input.req,
       )
     }
 
@@ -219,7 +220,7 @@ async function resolveModelConfig(modelKey: AIModelKey): Promise<AIModel> {
 
 /**
  * Send multimodal content (text + media) using Genkit adapter
- * Uses unified adapter for multimodal generation
+ * Fetches media via publicUrl with forwarded auth cookies (serverless compatible)
  */
 async function sendMultimodalToGenkit(
   systemPrompt: string,
@@ -227,40 +228,50 @@ async function sendMultimodalToGenkit(
   mediaPartsWithPath: MediaPartWithPath[],
   model: AIModel,
   payload: Payload,
+  reqContext?: { headers: { authorization?: string; cookie?: string } },
 ): Promise<ExerciseChatResult> {
-  // Convert media parts to Genkit-compatible attachments
+  // Convert media parts to Genkit-compatible base64 attachments
+  // Uses publicUrl (absolute URL built from request origin) with forwarded cookies
   const attachments: Array<{ data: string; mimeType: string }> = []
 
+  // Build fetch headers with forwarded auth cookies for server-to-server calls
+  const fetchHeaders: Record<string, string> = {}
+  if (reqContext?.headers.cookie) {
+    fetchHeaders.cookie = reqContext.headers.cookie
+  }
+  if (reqContext?.headers.authorization) {
+    fetchHeaders.authorization = reqContext.headers.authorization
+  }
+
   for (const mediaPart of mediaPartsWithPath) {
-    if (mediaPart.mediaId) {
-      try {
-        const mediaDoc = await payload.findByID({
-          collection: 'media',
-          id: mediaPart.mediaId,
-          depth: 0,
-        })
-
-        if (mediaDoc && 'url' in mediaDoc && mediaDoc.url) {
-          // Fetch the image and convert to base64
-          const imageUrl = mediaDoc.url.startsWith('/')
-            ? `${process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'}${mediaDoc.url}`
-            : mediaDoc.url
-
-          const response = await fetch(imageUrl)
-          const arrayBuffer = await response.arrayBuffer()
-          const base64 = Buffer.from(arrayBuffer).toString('base64')
-
-          attachments.push({
-            data: base64,
-            mimeType: mediaDoc.mimeType || 'image/jpeg',
-          })
-        }
-      } catch (fetchError) {
-        logger.warn(
-          { err: fetchError, mediaId: mediaPart.mediaId },
-          '[ExerciseChat] Failed to fetch media',
-        )
+    try {
+      if (!mediaPart.publicUrl) {
+        logger.warn({ mediaId: mediaPart.mediaId }, '[ExerciseChat] Media part has no publicUrl')
+        continue
       }
+
+      const response = await fetch(mediaPart.publicUrl, {
+        headers: fetchHeaders,
+      })
+      if (!response.ok) {
+        logger.warn(
+          { mediaId: mediaPart.mediaId, status: response.status, url: mediaPart.publicUrl },
+          '[ExerciseChat] Failed to fetch media - non-OK response',
+        )
+        continue
+      }
+      const arrayBuffer = await response.arrayBuffer()
+      const base64 = Buffer.from(arrayBuffer).toString('base64')
+
+      attachments.push({
+        data: base64,
+        mimeType: mediaPart.mimeType || 'image/jpeg',
+      })
+    } catch (fetchError) {
+      logger.warn(
+        { err: fetchError, mediaId: mediaPart.mediaId },
+        '[ExerciseChat] Failed to fetch media',
+      )
     }
   }
 

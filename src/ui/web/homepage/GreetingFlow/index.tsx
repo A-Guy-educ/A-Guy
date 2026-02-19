@@ -64,7 +64,7 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
         <div className="max-w-2xl text-center">
           <TypingAnimation
             text={t('welcome')}
-            speed={50}
+            speed={200}
             onComplete={() => setTimeout(() => setStep('mood'), 2000)}
             className="text-2xl md:text-4xl mb-8"
           />
@@ -94,7 +94,7 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
         <div className="max-w-2xl text-center">
           <TypingAnimation
             text={t(`moodResponses.${selectedMood}`)}
-            speed={50}
+            speed={200}
             onComplete={() => setTimeout(() => setStep('courses'), 1500)}
             className="text-2xl md:text-4xl mb-8"
           />
@@ -140,7 +140,7 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
 
       {step === 'complete' && (
         <div className="text-center">
-          <TypingAnimation text={t('letsStart')} speed={50} className="text-2xl" />
+          <TypingAnimation text={t('letsStart')} speed={200} className="text-2xl" />
         </div>
       )}
     </div>

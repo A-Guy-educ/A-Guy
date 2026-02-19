@@ -9,6 +9,7 @@
 import React, { useMemo, useRef, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
+import { useLocale } from '@/ui/web/providers/I18n'
 import { Card } from '@/ui/web/components/card'
 import { XCircle } from 'lucide-react'
 import type {
@@ -33,6 +34,41 @@ import {
   type AnswerErrorMessages,
 } from '../utils/answerChecking'
 import { MediaMapProvider } from '../context/MediaMapContext'
+
+/**
+ * Hebrew letters for question numbering
+ */
+const HEBREW_LETTERS = [
+  'א',
+  'ב',
+  'ג',
+  'ד',
+  'ה',
+  'ו',
+  'ז',
+  'ח',
+  'ט',
+  'י',
+  'כ',
+  'ל',
+  'מ',
+  'נ',
+  'ס',
+  'ע',
+  'פ',
+  'צ',
+  'ק',
+  'ר',
+  'ש',
+  'ת',
+]
+
+/**
+ * Get English letter for question index (a, b, c, ...)
+ */
+function getEnglishLetter(index: number): string {
+  return String.fromCharCode('a'.charCodeAt(0) + (index - 1))
+}
 
 /**
  * Format student's answer as readable text for AI context
@@ -67,8 +103,10 @@ export function ExerciseRenderer({
   showCheckAnswer = true,
   className = '',
   mediaMap = EMPTY_MEDIA_MAP,
+  exerciseNumber = 1,
 }: ExerciseRendererProps) {
   const t = useTranslations('courses')
+  const locale = useLocale()
 
   const errorMessages: AnswerErrorMessages = useMemo(
     () => ({
@@ -202,94 +240,136 @@ export function ExerciseRenderer({
     )
   }
 
+  // Determine direction based on locale
+  // NOTE: Section label language is determined ONLY by locale prefix.
+  // Hebrew: א/ב/ג..., English: a/b/c... (lowercase).
+  const isHebrew = locale?.toLowerCase().startsWith('he')
+  const dir: 'ltr' | 'rtl' = isHebrew ? 'rtl' : 'ltr'
+
   return (
     <MediaMapProvider value={mediaMap}>
       <div className={cn('w-full max-w-3xl mx-auto', className)}>
+        {/* Exercise Number Bubble - shown once at the top */}
+        {/* NOTE: We intentionally avoid flex-row-reverse here because it inverts the bubble
+             position depending on DOM order. Instead we pin the bubble via auto margins. */}
+        <div className="w-full flex items-center justify-between mb-6">
+          <div
+            className={cn(
+              'w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm',
+              isHebrew ? 'ml-auto' : 'mr-auto',
+            )}
+          >
+            <span className="font-bold text-sm">{String(exerciseNumber)}</span>
+          </div>
+        </div>
+
         <div className="flex flex-col gap-6">
-          {content.blocks.map((block) => {
-            // Rich text block - just render content
-            if (block.type === 'rich_text') {
+          {(() => {
+            let questionIndex = 0
+            return content.blocks.map((block) => {
+              // Rich text block - just render content
+              if (block.type === 'rich_text') {
+                return (
+                  <div
+                    key={block.id}
+                    className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed"
+                  >
+                    <RichTextRenderer block={block} />
+                  </div>
+                )
+              }
+
+              // NOTE: We count question_table as a question so it gets its own section letter.
+              // Rich text / latex blocks must NOT increment the counter.
+              // Increment question index for question_select, question_free_response, and question_table
+              if (
+                block.type === 'question_select' ||
+                block.type === 'question_free_response' ||
+                block.type === 'question_table'
+              ) {
+                questionIndex++
+              }
+
+              // Question blocks - render with answer UI
+              const question = block as QuestionBlock
+
+              // Compute question letter label
+              const questionLabel = isHebrew
+                ? HEBREW_LETTERS[questionIndex - 1] || String(questionIndex)
+                : getEnglishLetter(questionIndex)
+
+              const answer = answers[question.id] ?? getInitialAnswer(question)
+              const checkResult = checkResults[question.id] || null
+              const checked = hasChecked[question.id] || false
+              const disabled = checked && checkResult?.isCorrect
+
+              // True/False and Table questions don't use the generic check button
+              const showCheckButton =
+                showCheckAnswer &&
+                !(question.type === 'question_select' && question.variant === 'true_false') &&
+                question.type !== 'question_table'
+
               return (
-                <div
-                  key={block.id}
-                  className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed"
+                <QuestionCard
+                  key={question.id}
+                  showCheckButton={showCheckButton}
+                  onCheckAnswer={() => handleCheckAnswer(question.id)}
+                  disabled={!!disabled}
+                  loading={!!isChecking[question.id]}
+                  checked={checked}
+                  checkResult={checkResult}
+                  checkAnswerText={t('checkAnswer')}
+                  correctText={t('correct')}
+                  incorrectText={t('incorrect')}
+                  questionLabel={questionLabel}
+                  dir={dir}
                 >
-                  <RichTextRenderer block={block} />
-                </div>
+                  {/* Render appropriate question component based on type */}
+                  {question.type === 'question_select' && question.variant === 'true_false' && (
+                    <TrueFalseQuestion
+                      question={question as QuestionSelectTrueFalseBlock}
+                      answer={answer}
+                      onChange={(ans) => handleAnswerChange(question.id, ans)}
+                      disabled={!!disabled}
+                      checkResult={checkResult}
+                    />
+                  )}
+                  {question.type === 'question_select' && question.variant === 'mcq' && (
+                    <McqQuestion
+                      question={question as QuestionSelectMcqBlock}
+                      answer={answer}
+                      onChange={(ans) => handleAnswerChange(question.id, ans)}
+                      disabled={!!disabled}
+                      checkResult={checkResult}
+                      t={t}
+                    />
+                  )}
+                  {question.type === 'question_free_response' && (
+                    <FreeResponseQuestion
+                      question={question as QuestionFreeResponseBlock}
+                      answer={answer}
+                      onChange={(ans) => handleAnswerChange(question.id, ans)}
+                      disabled={!!disabled}
+                      checkResult={checkResult}
+                      t={t}
+                    />
+                  )}
+                  {question.type === 'question_table' && (
+                    <TableQuestion
+                      question={question as QuestionTableBlock}
+                      answer={answer}
+                      onChange={(ans) => handleAnswerChange(question.id, ans)}
+                      disabled={!!disabled}
+                      checked={checked}
+                      allCorrect={!!disabled}
+                      onCheckResult={(correct) => handleTableCheckResult(question.id, correct)}
+                      t={t}
+                    />
+                  )}
+                </QuestionCard>
               )
-            }
-
-            // Question blocks - render with answer UI
-            const question = block as QuestionBlock
-            const answer = answers[question.id] ?? getInitialAnswer(question)
-            const checkResult = checkResults[question.id] || null
-            const checked = hasChecked[question.id] || false
-            const disabled = checked && checkResult?.isCorrect
-
-            // True/False and Table questions don't use the generic check button
-            const showCheckButton =
-              showCheckAnswer &&
-              !(question.type === 'question_select' && question.variant === 'true_false') &&
-              question.type !== 'question_table'
-
-            return (
-              <QuestionCard
-                key={question.id}
-                showCheckButton={showCheckButton}
-                onCheckAnswer={() => handleCheckAnswer(question.id)}
-                disabled={!!disabled}
-                loading={!!isChecking[question.id]}
-                checked={checked}
-                checkResult={checkResult}
-                checkAnswerText={t('checkAnswer')}
-                correctText={t('correct')}
-                incorrectText={t('incorrect')}
-              >
-                {/* Render appropriate question component based on type */}
-                {question.type === 'question_select' && question.variant === 'true_false' && (
-                  <TrueFalseQuestion
-                    question={question as QuestionSelectTrueFalseBlock}
-                    answer={answer}
-                    onChange={(ans) => handleAnswerChange(question.id, ans)}
-                    disabled={!!disabled}
-                    checkResult={checkResult}
-                  />
-                )}
-                {question.type === 'question_select' && question.variant === 'mcq' && (
-                  <McqQuestion
-                    question={question as QuestionSelectMcqBlock}
-                    answer={answer}
-                    onChange={(ans) => handleAnswerChange(question.id, ans)}
-                    disabled={!!disabled}
-                    checkResult={checkResult}
-                    t={t}
-                  />
-                )}
-                {question.type === 'question_free_response' && (
-                  <FreeResponseQuestion
-                    question={question as QuestionFreeResponseBlock}
-                    answer={answer}
-                    onChange={(ans) => handleAnswerChange(question.id, ans)}
-                    disabled={!!disabled}
-                    checkResult={checkResult}
-                    t={t}
-                  />
-                )}
-                {question.type === 'question_table' && (
-                  <TableQuestion
-                    question={question as QuestionTableBlock}
-                    answer={answer}
-                    onChange={(ans) => handleAnswerChange(question.id, ans)}
-                    disabled={!!disabled}
-                    checked={checked}
-                    allCorrect={!!disabled}
-                    onCheckResult={(correct) => handleTableCheckResult(question.id, correct)}
-                    t={t}
-                  />
-                )}
-              </QuestionCard>
-            )
-          })}
+            })
+          })()}
         </div>
       </div>
     </MediaMapProvider>

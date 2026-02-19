@@ -1,0 +1,79 @@
+# Spec: Reduce Home Welcome Typing Text Speed
+
+## Summary
+
+Reduce the typing animation speed in the GreetingFlow component by half, decreasing from 100ms per character to 200ms per character.
+
+## Issue
+
+- **Title**: reduce home welcome typing text speed
+- **Body**: reduce typing speed by half
+- **Author**: aguyanharonyair
+- **Created**: 2026-02-19
+
+## Analysis
+
+### Current State
+
+The `TypingAnimation` component is used in `src/ui/web/homepage/GreetingFlow/index.tsx` with a `speed` prop set to `100` (milliseconds per character) in the following locations:
+
+1. **Line 67**: Welcome greeting typing animation
+   ```tsx
+   <TypingAnimation
+     text={t('welcome')}
+     speed={100}
+     onComplete={() => setTimeout(() => setStep('mood'), 2000)}
+     className="text-2xl md:text-4xl mb-8"
+   />
+   ```
+
+2. **Line 97**: Mood response typing animation
+   ```tsx
+   <TypingAnimation
+     text={t(`moodResponses.${selectedMood}`)}
+     speed={100}
+     onComplete={() => setTimeout(() => setStep('courses'), 1500)}
+     className="text-2xl md:text-4xl mb-8"
+   />
+   ```
+
+3. **Line 143**: "Let's start" completion typing animation
+   ```tsx
+   <TypingAnimation text={t('letsStart')} speed={100} className="text-2xl" />
+   ```
+
+### Root Cause
+
+The typing speed is hardcoded to `100` milliseconds per character, which is too fast for comfortable reading. The task requires reducing this speed by half (i.e., increasing the delay per character from 100ms to 200ms).
+
+## Implementation Plan
+
+### Step 1: Update Speed Values
+
+Change the `speed` prop from `100` to `200` in all three locations within `src/ui/web/homepage/GreetingFlow/index.tsx`:
+
+1. Line 67: Change `speed={100}` to `speed={200}`
+2. Line 97: Change `speed={100}` to `speed={200}`
+3. Line 143: Change `speed={100}` to `speed={200}`
+
+### Step 2: Verify Changes
+
+After making the changes, verify:
+- TypeScript compilation passes (`pnpm tsc --noEmit`)
+- Linting passes (`pnpm lint`)
+
+## Affected Files
+
+- `src/ui/web/homepage/GreetingFlow/index.tsx` - Update 3 occurrences of `speed={100}` to `speed={200}`
+
+## Risk Assessment
+
+- **Risk Level**: Low
+- **Confidence**: 1 (high confidence)
+- **Impact**: Visual change only - makes typing animation slower and more readable
+
+## Assumptions
+
+- The `TypingAnimation` component's `speed` prop is in milliseconds per character
+- Doubling the speed value from 100 to 200 will reduce the typing speed by half
+- No other files reference this speed value for the GreetingFlow component
