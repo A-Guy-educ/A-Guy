@@ -1,22 +1,20 @@
 'use client'
 
-import type { Media } from '@/payload-types'
 import { ExerciseBlockDefaults, generateId } from '@/shared/exercise-content/defaults'
 import type { ContentBlock } from '@/shared/exercise-content/types'
-import { useField, useForm } from '@payloadcms/ui'
-import { Code, Copy, Image as ImageIcon, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
-import Image from 'next/image'
+import { useField, useForm, useLocale } from '@payloadcms/ui'
+import { Code, Copy, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
 import React from 'react'
 import { BlockTypeSelector } from './BlockTypeSelector'
-import './index.css'
-import { JSONInspector } from './JSONInspector'
-import { MediaPicker } from './MediaPicker'
-import { RichTextEditor } from './RichTextEditor'
 import { FreeResponseEditor } from './editors/FreeResponseEditor'
+import { HtmlBlockEditor } from './editors/HtmlBlockEditor'
 import { McqEditor } from './editors/McqEditor'
 import { QuestionBlockWrapper } from './editors/QuestionBlockWrapper'
 import { TableEditor } from './editors/TableEditor'
 import { TrueFalseEditor } from './editors/TrueFalseEditor'
+import { JSONInspector } from './JSONInspector'
+import { MediaPicker } from './MediaPicker'
+import { RichTextEditor } from './RichTextEditor'
 import { deepCloneBlock } from './utils'
 
 /**
@@ -43,6 +41,8 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { value: fieldValue, setValue } = useField<any>({ path })
   const form = useForm()
+  const { code: payloadLocale } = useLocale()
+  const locale = payloadLocale === 'he' ? 'he' : 'en'
 
   // Local state to hold unsaved changes
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -371,8 +371,9 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
                 onUpdateBlock={handleUpdateBlock}
                 onMoveBlock={handleMoveBlock}
                 onDuplicateBlock={handleDuplicateBlock}
-                onOpenMediaPicker={handleOpenMediaPicker}
-                onRemoveMedia={handleRemoveMedia}
+                _onOpenMediaPicker={handleOpenMediaPicker}
+                _onRemoveMedia={handleRemoveMedia}
+                locale={locale}
               />
             </div>
           ) : (
@@ -398,8 +399,9 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
               onUpdateBlock={handleUpdateBlock}
               onMoveBlock={handleMoveBlock}
               onDuplicateBlock={handleDuplicateBlock}
-              onOpenMediaPicker={handleOpenMediaPicker}
-              onRemoveMedia={handleRemoveMedia}
+              _onOpenMediaPicker={handleOpenMediaPicker}
+              _onRemoveMedia={handleRemoveMedia}
+              locale={locale}
             />
           </div>
 
@@ -557,8 +559,9 @@ interface BlockListProps {
   onUpdateBlock: (id: string, updates: Partial<ContentBlock>) => void
   onMoveBlock: (id: string, direction: 'up' | 'down') => void
   onDuplicateBlock: (id: string) => void
-  onOpenMediaPicker: (blockId: string) => void
-  onRemoveMedia: (blockId: string, mediaId: string) => void
+  _onOpenMediaPicker: (blockId: string) => void
+  _onRemoveMedia: (blockId: string, mediaId: string) => void
+  locale: 'en' | 'he'
 }
 
 function BlockList({
@@ -570,13 +573,15 @@ function BlockList({
   onUpdateBlock,
   onMoveBlock,
   onDuplicateBlock,
-  onOpenMediaPicker,
-  onRemoveMedia,
+  _onOpenMediaPicker,
+  _onRemoveMedia,
+  locale,
 }: BlockListProps) {
   return (
     <div className="block-list">
       {blocks.map((block, index) => {
         const isRichText = block.type === 'rich_text'
+        const isHtml = block.type === 'html'
 
         return (
           <div
@@ -588,6 +593,22 @@ function BlockList({
                 <div className="block-header">
                   <div className="block-header-left">
                     <span className="block-number">Block {index + 1}</span>
+                  </div>
+                </div>
+                <div className="block-content">
+                  <div onClick={() => onSelect(block.id)} onFocus={() => onSelect(block.id)}>
+                    <RichTextEditor
+                      value={block.value}
+                      onChange={(value) => onUpdateBlock(block.id, { value })}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : isHtml ? (
+              <>
+                <div className="block-header">
+                  <div className="block-header-left">
+                    <span className="block-number">HTML Block</span>
                   </div>
                   <div className="block-actions">
                     <button
@@ -628,35 +649,11 @@ function BlockList({
                   </div>
                 </div>
                 <div className="block-content">
-                  <div onClick={() => onSelect(block.id)} onFocus={() => onSelect(block.id)}>
-                    <RichTextEditor
-                      value={block.value}
-                      onChange={(value) => onUpdateBlock(block.id, { value })}
-                    />
-                  </div>
-                </div>
-                <div className="block-media-section">
-                  <button
-                    type="button"
-                    className="block-media-button"
-                    onClick={() => onOpenMediaPicker(block.id)}
-                    title="Attach media"
-                  >
-                    <ImageIcon size={14} />
-                    <span>
-                      {block.mediaIds && block.mediaIds.length > 0
-                        ? `${block.mediaIds.length} media attached`
-                        : 'Attach media'}
-                    </span>
-                  </button>
-
-                  {block.mediaIds && block.mediaIds.length > 0 && (
-                    <BlockMediaDisplay
-                      blockId={block.id}
-                      mediaIds={block.mediaIds}
-                      onRemoveMedia={onRemoveMedia}
-                    />
-                  )}
+                  <HtmlBlockEditor
+                    block={block}
+                    onChange={(updatedBlock) => onUpdateBlock(block.id, updatedBlock)}
+                    locale={locale}
+                  />
                 </div>
               </>
             ) : (
@@ -690,82 +687,6 @@ function BlockList({
           </button>
         </div>
       )}
-    </div>
-  )
-}
-
-interface BlockMediaDisplayProps {
-  blockId: string
-  mediaIds: string[]
-  onRemoveMedia: (blockId: string, mediaId: string) => void
-}
-
-function BlockMediaDisplay({ blockId, mediaIds, onRemoveMedia }: BlockMediaDisplayProps) {
-  const [mediaItems, setMediaItems] = React.useState<Media[]>([])
-  const [loading, setLoading] = React.useState(true)
-
-  React.useEffect(() => {
-    const fetchMedia = async () => {
-      setLoading(true)
-      try {
-        const fetchPromises = mediaIds.map((id) =>
-          fetch(`/api/media/${id}`).then((res) => (res.ok ? res.json() : null)),
-        )
-        const results = await Promise.all(fetchPromises)
-        setMediaItems(results.filter((item): item is Media => item !== null))
-      } catch (err) {
-        console.error('Failed to fetch media:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (mediaIds.length > 0) {
-      fetchMedia()
-    }
-  }, [mediaIds])
-
-  if (loading) {
-    return <div className="block-media-loading">Loading media...</div>
-  }
-
-  if (mediaItems.length === 0) {
-    return null
-  }
-
-  return (
-    <div className="block-media-preview">
-      {mediaItems.map((media) => {
-        // Cast to any to bypass strict type checking for blob storage sizes
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mediaAny = media as any
-        const thumbnailUrl = mediaAny.sizes?.thumbnail?.url || media.url
-        return (
-          <div key={media.id} className="media-thumbnail-preview">
-            {thumbnailUrl && (
-              <Image
-                src={thumbnailUrl}
-                alt={media.alt || media.filename || 'Media'}
-                width={150}
-                height={150}
-                style={{ objectFit: 'cover' }}
-              />
-            )}
-            <button
-              type="button"
-              className="media-thumbnail-remove"
-              onClick={(e) => {
-                e.stopPropagation()
-                onRemoveMedia(blockId, media.id)
-              }}
-              title="Remove media"
-            >
-              ×
-            </button>
-            <div className="media-thumbnail-name">{media.filename}</div>
-          </div>
-        )
-      })}
     </div>
   )
 }

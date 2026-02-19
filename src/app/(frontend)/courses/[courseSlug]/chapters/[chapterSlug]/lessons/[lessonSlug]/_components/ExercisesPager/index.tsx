@@ -1,17 +1,18 @@
 'use client'
 
-import type { Exercise, Media as MediaType } from '@/payload-types'
-import { Button } from '@/ui/web/components/button'
-import { SystemLink } from '@/infra/loading/components/SystemLink'
-import { ExerciseRenderer } from '@/ui/web/exerciserenderer'
-import { BookOpen, ChevronLeft, ChevronRight, Info, Layers, Sparkles } from 'lucide-react'
-import { useTranslations } from '@/ui/web/providers/I18n'
-import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
-import { Progress } from '@/ui/web/components/progress'
-import { useExercisesPager } from './useExercisesPager'
 import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
-import { ChatInterface } from '@/ui/web/chat'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { getMediaUrl } from '@/infra/utils/getMediaUrl'
+import type { Exercise, Media as MediaType } from '@/payload-types'
+import { ChatInterface } from '@/ui/web/chat'
+import { Button } from '@/ui/web/components/button'
+import { Progress } from '@/ui/web/components/progress'
+import { ExerciseRenderer } from '@/ui/web/exerciserenderer'
+import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
+import { useTranslations } from '@/ui/web/providers/I18n'
+import { HtmlRenderer } from '@/ui/web/shared/HtmlRenderer'
+import { BookOpen, ChevronLeft, ChevronRight, Info, Layers, Sparkles } from 'lucide-react'
+import { useExercisesPager } from './useExercisesPager'
 
 interface ExercisesPagerProps {
   exercises: Exercise[]
@@ -228,9 +229,9 @@ export function ExercisesPager({
                 </div>
 
                 {introDescription && (
-                  <div
-                    className="prose prose-lg dark:prose-invert max-w-md mx-auto mb-8 text-muted-foreground leading-relaxed text-start [&_ul]:list-inside [&_ol]:list-inside"
-                    dangerouslySetInnerHTML={{ __html: introDescription }}
+                  <HtmlRenderer
+                    html={introDescription}
+                    className="max-w-md mx-auto mb-8 text-muted-foreground text-start"
                   />
                 )}
 

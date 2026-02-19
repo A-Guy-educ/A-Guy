@@ -271,6 +271,9 @@ html[data-theme='light'] {
 
 /* Rich Text Content Styles */
 .rich-text-content {
+  overflow-wrap: break-word;
+  word-break: break-word;
+
   p {
     @apply my-2 first:mt-0 last:mb-0;
   }
@@ -343,7 +346,7 @@ html[data-theme='light'] {
   }
 
   table {
-    @apply w-full border-collapse my-4;
+    @apply block overflow-x-auto w-full border-collapse my-4;
 
     th,
     td {

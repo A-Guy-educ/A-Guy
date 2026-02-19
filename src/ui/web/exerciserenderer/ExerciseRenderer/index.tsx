@@ -6,34 +6,34 @@
 
 'use client'
 
-import React, { useMemo, useRef, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
-import { useTranslations } from '@/ui/web/providers/I18n'
-import { useLocale } from '@/ui/web/providers/I18n'
 import { Card } from '@/ui/web/components/card'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
+import { HtmlRenderer } from '@/ui/web/shared/HtmlRenderer'
 import { XCircle } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
+import { RichTextRenderer } from '../blocks/RichTextRenderer'
+import { QuestionCard } from '../components/QuestionCard'
+import { MediaMapProvider } from '../context/MediaMapContext'
+import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
+import { McqQuestion } from '../questions/McqQuestion'
+import { TableQuestion } from '../questions/TableQuestion'
+import { TrueFalseQuestion } from '../questions/TrueFalseQuestion'
 import type {
+  CheckResult,
   ExerciseRendererProps,
   QuestionBlock,
-  QuestionSelectTrueFalseBlock,
-  QuestionSelectMcqBlock,
   QuestionFreeResponseBlock,
+  QuestionSelectMcqBlock,
+  QuestionSelectTrueFalseBlock,
   QuestionTableBlock,
   UserAnswer,
-  CheckResult,
 } from '../types'
-import { RichTextRenderer } from '../blocks/RichTextRenderer'
-import { TrueFalseQuestion } from '../questions/TrueFalseQuestion'
-import { McqQuestion } from '../questions/McqQuestion'
-import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
-import { TableQuestion } from '../questions/TableQuestion'
-import { QuestionCard } from '../components/QuestionCard'
 import {
   checkQuestionAnswer,
   getInitialAnswer,
   type AnswerErrorMessages,
 } from '../utils/answerChecking'
-import { MediaMapProvider } from '../context/MediaMapContext'
 
 /**
  * Hebrew letters for question numbering
@@ -277,6 +277,11 @@ export function ExerciseRenderer({
                     <RichTextRenderer block={block} />
                   </div>
                 )
+              }
+
+              // HTML block - render sanitized HTML content
+              if (block.type === 'html') {
+                return <HtmlRenderer key={block.id} html={block.html} />
               }
 
               // NOTE: We count question_table as a question so it gets its own section letter.

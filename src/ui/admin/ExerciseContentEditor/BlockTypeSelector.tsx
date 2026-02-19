@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckSquare, Edit3, FileText, List, Table as TableIcon, X } from 'lucide-react'
+import { CheckSquare, Code, Edit3, FileText, List, Table as TableIcon, X } from 'lucide-react'
 import React from 'react'
 
 interface BlockTypeSelectorProps {
@@ -51,6 +51,12 @@ export const BlockTypeSelector: React.FC<BlockTypeSelectorProps> = ({
       label: 'Table Question',
       description: 'Table-based question with fillable cells',
       icon: <TableIcon size={20} />,
+    },
+    {
+      type: 'html',
+      label: 'HTML Block',
+      description: 'Rich WYSIWYG content (headings, lists, images, links)',
+      icon: <Code size={20} />,
     },
   ]
 

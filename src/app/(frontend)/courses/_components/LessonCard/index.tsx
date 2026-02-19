@@ -2,14 +2,26 @@
 
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import type { Lesson } from '@/payload-types'
-import { useTranslations } from '@/ui/web/providers/I18n'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/web/components/card'
 import { Button } from '@/ui/web/components/button'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/web/components/card'
+import { useTranslations } from '@/ui/web/providers/I18n'
+import RichText from '@/ui/web/RichText'
+import type { DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
 
 interface LessonCardProps {
   lesson: Lesson
   courseSlug: string
   chapterSlug?: string
+}
+
+function renderDescription(
+  description: string | DefaultTypedEditorState | null | undefined,
+): React.ReactNode {
+  if (!description) return null
+  if (typeof description === 'string') {
+    return <CardDescription>{description}</CardDescription>
+  }
+  return <RichText data={description} enableProse={false} enableGutter={false} />
 }
 
 export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps) {
@@ -38,7 +50,7 @@ export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps)
           </span>
         </div>
         <CardTitle className="text-xl">{lesson.title}</CardTitle>
-        {lesson.description && <CardDescription>{lesson.description}</CardDescription>}
+        {renderDescription(lesson.description)}
       </CardHeader>
       <CardFooter>
         <Button asChild>

@@ -3,6 +3,7 @@
 import { useFormFields } from '@payloadcms/ui'
 import type { UIFieldClientComponent } from 'payload'
 import { useEffect, useState } from 'react'
+import { AdminHtmlPreview } from './AdminHtmlPreview'
 
 export const HtmlBlockField: UIFieldClientComponent = () => {
   const [htmlValue, setHtmlValue] = useState('')
@@ -51,8 +52,9 @@ export const HtmlBlockField: UIFieldClientComponent = () => {
             backgroundColor: 'var(--theme-elevation-0)',
             minHeight: '100px',
           }}
-          dangerouslySetInnerHTML={{ __html: htmlValue }}
-        />
+        >
+          <AdminHtmlPreview html={htmlValue} />
+        </div>
       )}
 
       {isPreviewOpen && !htmlValue && (

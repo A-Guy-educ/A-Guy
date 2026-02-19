@@ -180,6 +180,15 @@ export interface SvgBlock {
 }
 
 // ---------------------------------
+// HTML Block (Quill WYSIWYG)
+// ---------------------------------
+export interface HtmlBlock {
+  id: string
+  type: 'html'
+  html: string // Sanitized HTML string from Quill
+}
+
+// ---------------------------------
 // Question Geometry Block
 // ---------------------------------
 export interface QuestionGeometryBlock {
@@ -217,6 +226,7 @@ export type ContentBlock =
   | LatexBlock
   | QuestionMatchingBlock
   | SvgBlock
+  | HtmlBlock
   | QuestionGeometryBlock
   | QuestionAxisBlock
 

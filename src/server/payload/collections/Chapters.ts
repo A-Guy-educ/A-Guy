@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
+import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
@@ -76,7 +77,8 @@ export const Chapters: CollectionConfig = {
     },
     {
       name: 'description',
-      type: 'textarea',
+      type: 'richText',
+      editor: defaultLexical,
       admin: {
         description: 'Detailed description of the chapter',
       },

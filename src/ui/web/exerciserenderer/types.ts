@@ -141,7 +141,13 @@ export interface QuestionTableBlock {
 
 export type QuestionBlock = QuestionSelectBlock | QuestionFreeResponseBlock | QuestionTableBlock
 
-export type ContentBlock = RichTextBlock | QuestionBlock
+export interface HtmlBlock {
+  id: string
+  type: 'html'
+  html: string
+}
+
+export type ContentBlock = RichTextBlock | HtmlBlock | QuestionBlock
 
 /**
  * Content structure - block-based with questions

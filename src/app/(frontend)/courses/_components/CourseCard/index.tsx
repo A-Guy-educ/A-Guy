@@ -1,15 +1,34 @@
 'use client'
 
+import { getUserProfile, setUserProfile } from '@/client/state/localStorage/userProfile'
+import { useLoadingState } from '@/infra/loading/hooks/useLoadingState'
+import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
+import { LOADING_KEYS } from '@/infra/loading/keys'
+import { cn } from '@/infra/utils/ui'
+import type { Course } from '@/payload-types'
+import { Button } from '@/ui/web/components/button'
+import { useTranslations } from '@/ui/web/providers/I18n'
+import RichText from '@/ui/web/RichText'
+import type { DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
 import { BookOpen, CheckCircle, Loader2 } from 'lucide-react'
 import { useState } from 'react'
-import { cn } from '@/infra/utils/ui'
-import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
-import { useLoadingState } from '@/infra/loading/hooks/useLoadingState'
-import { LOADING_KEYS } from '@/infra/loading/keys'
-import { setUserProfile, getUserProfile } from '@/client/state/localStorage/userProfile'
-import type { Course } from '@/payload-types'
-import { useTranslations } from '@/ui/web/providers/I18n'
-import { Button } from '@/ui/web/components/button'
+
+function renderDescription(
+  description: string | DefaultTypedEditorState | null | undefined,
+): React.ReactNode {
+  if (!description) return null
+  if (typeof description === 'string') {
+    return (
+      <p
+        className="text-muted-foreground mt-1 line-clamp-2 text-right"
+        style={{ fontSize: '12px' }}
+      >
+        {description}
+      </p>
+    )
+  }
+  return <RichText data={description} enableProse={false} enableGutter={false} />
+}
 
 interface CourseCardProps {
   course: Course
@@ -83,14 +102,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
           >
             {course.title}
           </h4>
-          {course.description && (
-            <p
-              className="text-muted-foreground mt-1 line-clamp-2 text-right"
-              style={{ fontSize: '12px' }}
-            >
-              {course.description}
-            </p>
-          )}
+          {renderDescription(course.description)}
         </div>
         <div
           className={cn(

@@ -9,10 +9,11 @@
 
 import type { CollectionConfig } from 'payload'
 
+import { defaultLexical } from '@/server/payload/fields/defaultLexical'
+import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
-import { tenantField } from '@/server/payload/fields/tenant'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
 
 const formatSlug = (val: string): string =>
@@ -76,7 +77,8 @@ export const Courses: CollectionConfig = {
     },
     {
       name: 'description',
-      type: 'textarea',
+      type: 'richText',
+      editor: defaultLexical,
       admin: {
         description: 'Detailed description of the course',
       },

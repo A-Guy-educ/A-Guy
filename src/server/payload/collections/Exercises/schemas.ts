@@ -5,6 +5,9 @@ import { z } from 'zod'
 export type LatexBlock = import('@/shared/exercise-content/types').LatexBlock
 export type ContentData = import('@/shared/exercise-content/types').ContentData
 
+// Sanitization utility for HTML blocks
+import { sanitizeHtml } from '@/infra/utils/sanitize-html'
+
 // Import graphics contracts for Geometry and Axis schemas
 import { AxisSpecV1Schema } from '@/infra/contracts/graphics/axis.v1'
 import { GeometrySpecV1Schema } from '@/infra/contracts/graphics/geometry.v1'
@@ -318,6 +321,20 @@ const SvgBlockSchema = z
   .strict()
 
 // ---------------------------------
+// Zod: HTML Block Schema (Quill WYSIWYG)
+// ---------------------------------
+export const HtmlBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('html'),
+    html: z
+      .string()
+      .min(1, 'HTML content is required')
+      .transform((val) => sanitizeHtml(val)), // server-side defense-in-depth
+  })
+  .strict()
+
+// ---------------------------------
 // Zod: Question Geometry Block Schema
 // ---------------------------------
 export const QuestionGeometryBlockSchema = z
@@ -358,6 +375,7 @@ export const ContentBlockSchema = z.discriminatedUnion('type', [
   QuestionTableBlockSchema,
   QuestionMatchingBlockSchema,
   SvgBlockSchema,
+  HtmlBlockSchema,
   QuestionGeometryBlockSchema,
   QuestionAxisBlockSchema,
 ])
