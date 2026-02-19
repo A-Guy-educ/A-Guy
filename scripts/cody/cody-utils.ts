@@ -199,8 +199,10 @@ export function postComment(issueNumber: number, body: string): void {
   if (!issueNumber) return
 
   try {
-    execSync(`gh issue comment ${issueNumber} --body "${escapeShell(body)}"`, {
-      stdio: 'inherit',
+    // Use --body-file - to pipe body via stdin, preserving newlines and special characters
+    execSync(`gh issue comment ${issueNumber} --body-file -`, {
+      input: body,
+      stdio: ['pipe', 'inherit', 'inherit'],
     })
   } catch (error) {
     console.error(`Failed to post comment to issue ${issueNumber}:`, error)
@@ -585,16 +587,6 @@ export function validateAuth(): void {
 // ============================================================================
 // Formatting Helpers
 // ============================================================================
-
-function escapeShell(str: string): string {
-  // Escape backslashes first, then other shell metacharacters
-  return str
-    .replace(/\\/g, '\\\\')
-    .replace(/"/g, '\\"')
-    .replace(/`/g, '\\`')
-    .replace(/\$/g, '\\$')
-    .replace(/\n/g, '\\n')
-}
 
 export function formatDuration(ms: number): string {
   const seconds = Math.floor(ms / 1000)
