@@ -90,7 +90,14 @@ Review the spec and any questions from previous stages. Answer them or note clar
 
   auditor: () => `Review the implementation for security, best practices, and potential issues.`,
 
-  pr: () => `Create a pull request with all changes. Include a summary and testing notes.`,
+  pr: (taskId) => `Create a pull request for the changes in this branch.
+
+REQUIREMENTS:
+- The PR title MUST be a conventional commit format (e.g. "fix: resolve login crash", "feat: add dark mode toggle")
+- The PR title MUST describe WHAT the code change does, based on the actual code diff (not the spec pipeline status)
+- The PR body should summarize what changed, why, and how it was tested
+- Read .tasks/${taskId}/task.md and .tasks/${taskId}/spec.md for context on the task objective
+- Use git diff to understand the actual code changes`,
 }
 
 // ============================================================================
