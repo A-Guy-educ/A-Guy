@@ -376,7 +376,7 @@ describe('orchestrator integration', () => {
 
       const comment = formatStatusComment(input, status, 'build')
 
-      expect(comment).toContain('Pipeline running')
+      expect(comment).toContain('Cody running')
       expect(comment).toContain(TEST_TASK_ID)
       expect(comment).toContain('mode: full')
       expect(comment).toContain('✅ spec')
@@ -412,7 +412,7 @@ describe('orchestrator integration', () => {
 
       const comment = formatStatusComment(input, status)
 
-      expect(comment).toContain('Pipeline completed')
+      expect(comment).toContain('Cody completed')
       expect(comment).toContain(TEST_TASK_ID)
     })
 
@@ -443,7 +443,7 @@ describe('orchestrator integration', () => {
 
       const comment = formatStatusComment(input, status)
 
-      expect(comment).toContain('Pipeline failed')
+      expect(comment).toContain('Cody failed')
       expect(comment).toContain(TEST_TASK_ID)
     })
   })
