@@ -8,6 +8,8 @@ export type LessonAccessType = (typeof LESSON_ACCESS_TYPES)[number]
 
 export const DEFAULT_ACCESS_TYPE: AccessType = 'free'
 
+export const DEFAULT_PAGE_ACCESS_TYPE: AccessType = 'free'
+
 export const DEFAULT_LESSON_ACCESS_TYPE: LessonAccessType = 'inherit'
 
 /** Fallback gated delay before lock (ms). Overridden by admin config `gated_delay_ms`. */

@@ -56,6 +56,7 @@ describe('Lesson types', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        pageAccessType: 'free',
         accessType: 'free',
       },
     })

@@ -37,7 +37,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
     notFound()
   }
 
-  const courseAccessType = course.accessType ?? 'free'
+  const courseAccessType = course.pageAccessType ?? 'free'
   const [gatedDelayMs, gatedWarningMs] = await Promise.all([
     SystemParams.getGatedDelayMs(),
     SystemParams.getGatedWarningMs(),

@@ -64,6 +64,7 @@ describe('Chapter adminTitle', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        pageAccessType: 'free',
         accessType: 'free',
       },
     })
@@ -81,6 +82,7 @@ describe('Chapter adminTitle', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        pageAccessType: 'free',
         accessType: 'free',
       },
     })
