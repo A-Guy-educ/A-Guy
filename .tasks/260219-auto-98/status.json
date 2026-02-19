@@ -3,9 +3,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-02-19T17:49:58.209Z",
-  "updatedAt": "2026-02-19T18:00:30.654Z",
+  "updatedAt": "2026-02-19T18:06:39.554Z",
   "state": "running",
-  "currentStage": "test",
+  "currentStage": "verify",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -42,9 +42,16 @@
       "completedAt": "2026-02-19T18:00:30.652Z"
     },
     "test": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-19T18:00:30.654Z",
+      "completedAt": "2026-02-19T18:06:39.554Z",
+      "elapsed": 368900
+    },
+    "verify": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-02-19T18:00:30.654Z"
+      "startedAt": "2026-02-19T18:06:39.554Z"
     }
   },
   "triggeredBy": "comment",
