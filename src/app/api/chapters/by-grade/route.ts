@@ -1,3 +1,5 @@
+import '@/infra/config/server-init'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { queryChaptersByGrade } from '@/server/repos/queries/chapters'
 import { getPayload } from 'payload'

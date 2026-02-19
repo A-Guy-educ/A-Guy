@@ -1,3 +1,5 @@
+import '@/infra/config/server-init'
+
 import { DynamicLesson } from '@/demos/dynamic-lesson'
 import type { Media } from '@/payload-types'
 import { SystemParams } from '@/infra/config/system-params'

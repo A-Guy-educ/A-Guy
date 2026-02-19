@@ -1,3 +1,5 @@
+import '@/infra/config/server-init'
+
 import { notFound } from 'next/navigation'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryChaptersByCourse } from '@/server/repos/queries/chapters'
