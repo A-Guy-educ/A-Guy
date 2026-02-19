@@ -8,6 +8,7 @@ const CONTEXT_FILES = [
   'task.md',
   'task.json',
   'spec.md',
+  'questions.md',
   'clarified.md',
   'plan.md',
   'build.md',
