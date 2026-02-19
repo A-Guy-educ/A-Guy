@@ -1,8 +1,8 @@
 /**
  * @fileType utility
- * @domain ci | pipeline | github
- * @pattern orchestrated-pipeline | github-api | status-tracking
- * @ai-summary CI-specific utilities for the orchestrated pipeline: comment parsing, GitHub API helpers, status management
+ * @domain ci | cody | github
+ * @pattern cody-pipeline | github-api | status-tracking
+ * @ai-summary CI-specific utilities for the Cody pipeline: comment parsing, GitHub API helpers, status management
  */
 
 import { execSync } from 'child_process'
@@ -13,7 +13,7 @@ import * as path from 'path'
 // Types
 // ============================================================================
 
-export interface OrchestratorInput {
+export interface CodyInput {
   mode: 'spec' | 'impl' | 'rerun' | 'full' | 'status'
   taskId: string
   dryRun: boolean
@@ -31,7 +31,7 @@ export interface OrchestratorInput {
   file?: string
 }
 
-export interface PipelineStatus {
+export interface CodyPipelineStatus {
   taskId: string
   mode: string
   pipeline: string
@@ -102,7 +102,7 @@ export function ensureTaskDir(taskId: string): string {
   return dir
 }
 
-export function readStatus(taskId: string): PipelineStatus | null {
+export function readStatus(taskId: string): CodyPipelineStatus | null {
   const statusFile = path.join(getTaskDir(taskId), 'status.json')
   if (!fs.existsSync(statusFile)) {
     return null
@@ -114,14 +114,14 @@ export function readStatus(taskId: string): PipelineStatus | null {
   }
 }
 
-export function writeStatus(taskId: string, status: PipelineStatus): void {
+export function writeStatus(taskId: string, status: CodyPipelineStatus): void {
   const statusFile = path.join(getTaskDir(taskId), 'status.json')
   fs.writeFileSync(statusFile, JSON.stringify(status, null, 2))
 }
 
-export function initStatus(input: OrchestratorInput): PipelineStatus {
+export function initStatus(input: CodyInput): CodyPipelineStatus {
   const now = new Date().toISOString()
-  const status: PipelineStatus = {
+  const status: CodyPipelineStatus = {
     taskId: input.taskId,
     mode: input.mode,
     pipeline: 'spec_execute_verify', // will be updated after taskify
@@ -182,7 +182,7 @@ export function updateStageStatus(
   writeStatus(taskId, status)
 }
 
-export function completeStatus(taskId: string, state: PipelineStatus['state']): void {
+export function completeStatus(taskId: string, state: CodyPipelineStatus['state']): void {
   const status = readStatus(taskId)
   if (!status) return
 
@@ -236,7 +236,7 @@ export function getIssueComments(_issueNumber: number): string[] {
 // CLI Argument Parsing
 // ============================================================================
 
-export function parseCliArgs(argv: string[]): OrchestratorInput {
+export function parseCliArgs(argv: string[]): CodyInput {
   // Normalize --key=value into --key value to support both syntaxes
   const normalized: string[] = []
   for (const arg of argv) {
@@ -249,7 +249,7 @@ export function parseCliArgs(argv: string[]): OrchestratorInput {
     }
   }
 
-  const input: OrchestratorInput = {
+  const input: CodyInput = {
     mode: 'full',
     taskId: '',
     dryRun: false,
@@ -374,21 +374,21 @@ export function parseCliArgs(argv: string[]): OrchestratorInput {
 
 interface ParseCommentResult {
   success: boolean
-  input?: OrchestratorInput
+  input?: CodyInput
   error?: string
   errorComment?: string // Error message to post back to the issue
 }
 
 /**
  * Parse a GitHub issue comment body in the format:
- *   /oc <subcommand> <task-id> [options]
+ *   /cody <subcommand> <task-id> [options]
  *
  * Examples:
- *   /oc 260218-user-metrics           -> full mode, task 260218-user-metrics
- *   /oc spec 260218-user-metrics      -> spec mode
- *   /oc impl 260218-user-metrics      -> impl mode
- *   /oc rerun 260218-user-metrics --feedback "fix this"
- *   /oc                               -> full mode, auto-generate task-id
+ *   /cody 260218-user-metrics           -> full mode, task 260218-user-metrics
+ *   /cody spec 260218-user-metrics      -> spec mode
+ *   /cody impl 260218-user-metrics      -> impl mode
+ *   /cody rerun 260218-user-metrics --feedback "fix this"
+ *   /cody                               -> full mode, auto-generate task-id
  */
 export function parseCommentBody(body: string, issueNumber?: number): ParseCommentResult {
   // Decode JSON-encoded body from YAML (jq -Rs . wraps in quotes and escapes)
@@ -401,19 +401,19 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
     }
   }
 
-  // Remove /oc prefix and normalize whitespace
-  const cmd = decoded.replace(/^\/oc\s*/, '').trim()
+  // Remove /cody prefix and normalize whitespace
+  const cmd = decoded.replace(/^\/cody\s*/, '').trim()
 
   // Extract subcommand (first word)
   const spaceIdx = cmd.indexOf(' ')
   const subCmd = spaceIdx === -1 ? cmd : cmd.slice(0, spaceIdx)
   const rest = spaceIdx === -1 ? '' : cmd.slice(spaceIdx + 1).trim()
 
-  // Handle empty command: /oc with no subcommand defaults to full
-  let mode: OrchestratorInput['mode'] = 'full'
+  // Handle empty command: /cody with no subcommand defaults to full
+  let mode: CodyInput['mode'] = 'full'
   let taskId = rest
 
-  // Handle task-id as subcommand: /oc 260218-task defaults to full with that task
+  // Handle task-id as subcommand: /cody 260218-task defaults to full with that task
   const isTaskId = /^[0-9]{6}-[a-zA-Z0-9-]+$/.test(subCmd)
   if (isTaskId) {
     mode = 'full'
@@ -429,7 +429,7 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
         errorComment: `Unknown command \`${subCmd}\`. Valid commands: \`spec\`, \`impl\`, \`rerun\`, \`status\`, \`full\`, or omit for full pipeline`,
       }
     }
-    mode = subCmd as OrchestratorInput['mode']
+    mode = subCmd as CodyInput['mode']
   }
 
   // Extract task-id (first word of remaining)
@@ -559,15 +559,15 @@ export function formatDuration(ms: number): string {
 }
 
 export function formatStatusComment(
-  input: OrchestratorInput,
-  status: PipelineStatus,
+  input: CodyInput,
+  status: CodyPipelineStatus,
   currentStage?: string,
   _currentState?: string, // Reserved for future use
 ): string {
   const lines: string[] = []
 
   if (status.state === 'running') {
-    lines.push(`🔄 Pipeline running for \`${input.taskId}\` (mode: ${input.mode})`)
+    lines.push(`🔄 Cody running for \`${input.taskId}\` (mode: ${input.mode})`)
     if (input.runUrl) {
       lines.push(`Run: ${input.runUrl}`)
     }
@@ -589,12 +589,12 @@ export function formatStatusComment(
       }
     }
   } else if (status.state === 'completed') {
-    lines.push(`✅ Pipeline completed for \`${input.taskId}\`!`)
+    lines.push(`✅ Cody completed for \`${input.taskId}\`!`)
     lines.push(`Mode: ${input.mode}`)
   } else if (status.state === 'failed') {
-    lines.push(`❌ Pipeline failed for \`${input.taskId}\``)
+    lines.push(`❌ Cody failed for \`${input.taskId}\``)
   } else if (status.state === 'timeout') {
-    lines.push(`⏰ Pipeline timed out for \`${input.taskId}\``)
+    lines.push(`⏰ Cody timed out for \`${input.taskId}\``)
   }
 
   return lines.join('\n')

@@ -1,11 +1,11 @@
 /**
  * @fileType utility
- * @domain ci | pipeline | prompts
+ * @domain ci | cody | prompts
  * @pattern stage-prompts
- * @ai-summary Stage prompt templates for OpenCode agents in the orchestrated pipeline
+ * @ai-summary Stage prompt templates for OpenCode agents in the Cody pipeline
  */
 
-import type { OrchestratorInput } from './orchestrator-utils'
+import type { CodyInput } from './cody-utils'
 
 // ============================================================================
 // Constants
@@ -79,7 +79,7 @@ Review the spec and any questions from previous stages. Answer them or note clar
  * @param stage - The stage to build the prompt for
  * @returns The complete prompt string to pass to the agent
  */
-export function buildStagePrompt(input: OrchestratorInput, stage: string): string {
+export function buildStagePrompt(input: CodyInput, stage: string): string {
   const { taskId } = input
   const contextPath = `.tasks/${taskId}/.context.md`
 

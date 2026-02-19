@@ -1,12 +1,12 @@
 #!/usr/bin/env ts-node
 /**
  * @fileType script
- * @domain ci | pipeline
- * @pattern orchestrated-pipeline
- * @ai-summary Central orchestration logic for running multi-agent pipeline in CI via OpenCode GitHub mode
+ * @domain ci | cody
+ * @pattern cody-pipeline
+ * @ai-summary Central Cody pipeline logic for running multi-agent pipeline in CI via OpenCode GitHub mode
  *
  * Usage:
- *   pnpm pipeline:orchestrate --task-id=<task-id> --mode=<spec|impl|rerun|full|status> [options]
+ *   pnpm cody:run --task-id=<task-id> --mode=<spec|impl|rerun|full|status> [options]
  *
  * This script runs in CI and orchestrates OpenCode agents via `opencode github run`.
  * It handles:
@@ -23,7 +23,7 @@ import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
-// Import utilities from orchestrator-utils
+// Import utilities from cody-utils
 import {
   parseCliArgs,
   validateAuth,
@@ -35,8 +35,8 @@ import {
   postComment,
   formatStatusComment,
   getIssueBody,
-  type OrchestratorInput,
-} from './orchestrator-utils'
+  type CodyInput,
+} from './cody-utils'
 
 // Import from pipeline-utils (reusing existing logic)
 import {
@@ -59,10 +59,10 @@ import type { RunnerBackend } from './runner-backend'
 // ============================================================================
 
 async function main() {
-  console.log('=== Orchestrated Pipeline ===\n')
+  console.log('=== Cody ===\n')
 
   // Parse CLI arguments
-  let input: OrchestratorInput
+  let input: CodyInput
   try {
     input = parseCliArgs(process.argv.slice(2))
   } catch (error) {
@@ -119,14 +119,14 @@ async function main() {
     }
 
     completeStatus(input.taskId, 'completed')
-    console.log('\n✅ Pipeline completed successfully')
+    console.log('\n✅ Cody completed successfully')
 
     if (input.issueNumber) {
       postComment(input.issueNumber, formatStatusComment(input, status))
     }
   } catch (error) {
     completeStatus(input.taskId, 'failed')
-    console.error('\n❌ Pipeline failed:', error instanceof Error ? error.message : error)
+    console.error('\n❌ Cody failed:', error instanceof Error ? error.message : error)
 
     if (input.issueNumber) {
       postComment(
@@ -143,11 +143,11 @@ async function main() {
 // ============================================================================
 
 async function runSpecPipeline(
-  input: OrchestratorInput,
+  input: CodyInput,
   _status: ReturnType<typeof initStatus>, // Status is updated via updateStageStatus
   backend: RunnerBackend,
 ): Promise<void> {
-  console.log('Running SPEC pipeline (Phase 1)...\n')
+  console.log('Running Cody SPEC pipeline (Phase 1)...\n')
 
   // Ensure task directory exists
   const taskDir = ensureTaskDir(input.taskId)
@@ -179,7 +179,7 @@ async function runSpecPipeline(
         // Comment with assigned task ID
         postComment(
           input.issueNumber,
-          `🎯 Task created: \`${input.taskId}\`\n\nThe pipeline will now process this task.`,
+          `🎯 Task created: \`${input.taskId}\`\n\nCody will now process this task.`,
         )
       } else {
         throw new Error(
@@ -243,15 +243,15 @@ async function runSpecPipeline(
     fs.writeFileSync(clarifiedPath, '# Clarified\n\nUse recommended answers.\n')
   }
 
-  console.log('\n✅ Spec pipeline complete')
+  console.log('\n✅ Cody SPEC pipeline complete')
 }
 
 async function runImplPipeline(
-  input: OrchestratorInput,
+  input: CodyInput,
   _status: ReturnType<typeof initStatus>, // Status is updated via updateStageStatus
   backend: RunnerBackend,
 ): Promise<void> {
-  console.log('Running IMPLEMENTATION pipeline (Phase 2)...\n')
+  console.log('Running Cody IMPLEMENTATION pipeline (Phase 2)...\n')
 
   const taskDir = ensureTaskDir(input.taskId)
 
@@ -411,15 +411,15 @@ async function runImplPipeline(
     console.log(`✓ ${stage} complete`)
   }
 
-  console.log('\n✅ Implementation pipeline complete')
+  console.log('\n✅ Cody IMPLEMENTATION pipeline complete')
 }
 
 async function runFullPipeline(
-  input: OrchestratorInput,
+  input: CodyInput,
   status: ReturnType<typeof initStatus>,
   backend: RunnerBackend,
 ): Promise<void> {
-  console.log('Running FULL pipeline (spec + impl)...\n')
+  console.log('Running FULL Cody pipeline (spec + impl)...\n')
 
   // Run spec first
   await runSpecPipeline(input, status, backend)
@@ -427,15 +427,15 @@ async function runFullPipeline(
   // Then impl
   await runImplPipeline(input, status, backend)
 
-  console.log('\n✅ Full pipeline complete!')
+  console.log('\n✅ Full Cody pipeline complete!')
 }
 
 async function runRerunPipeline(
-  input: OrchestratorInput,
+  input: CodyInput,
   status: ReturnType<typeof initStatus>,
   backend: RunnerBackend,
 ): Promise<void> {
-  console.log('Running RERUN pipeline...\n')
+  console.log('Running Cody RERUN pipeline...\n')
 
   if (!input.fromStage) {
     input.fromStage = 'build'
@@ -478,12 +478,12 @@ async function runRerunPipeline(
   console.log('\n✅ Rerun complete!')
 }
 
-async function showStatus(input: OrchestratorInput): Promise<void> {
+async function showStatus(input: CodyInput): Promise<void> {
   const status = readStatus(input.taskId)
 
   if (!status) {
     console.log(`No status found for task: ${input.taskId}`)
-    console.log('The pipeline may not have run yet, or status.json was deleted.')
+    console.log(`The Cody may not have run yet, or status.json was deleted.`)
     return
   }
 

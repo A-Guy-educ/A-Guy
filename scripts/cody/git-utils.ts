@@ -1,8 +1,8 @@
 /**
  * @fileType utility
- * @domain ci | pipeline | git
+ * @domain ci | cody | git
  * @pattern branch-management
- * @ai-summary Git utilities for feature branch creation in pipeline scripts
+ * @ai-summary Git utilities for feature branch creation in Cody scripts
  */
 
 import { execSync } from 'child_process'

@@ -1,8 +1,8 @@
 /**
  * @fileType test
- * @domain ci | pipeline
- * @pattern orchestrated-pipeline | mocked-integration
- * @ai-summary Mocked integration tests for orchestrator.ts covering full pipeline execution with deterministic mocks
+ * @domain ci | cody
+ * @pattern cody-pipeline | mocked-integration
+ * @ai-summary Mocked integration tests for cody.ts covering full pipeline execution with deterministic mocks
  */
 
 import { describe, expect, it, beforeEach, afterEach } from 'vitest'
@@ -116,7 +116,7 @@ describe('orchestrator integration', () => {
 
   describe('parseCliArgs integration', () => {
     it('parses all CLI arguments correctly', async () => {
-      const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+      const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
       const args = [
         '--task-id',
@@ -143,7 +143,7 @@ describe('orchestrator integration', () => {
     })
 
     it('handles rerun mode with feedback', async () => {
-      const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+      const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
       const args = [
         '--task-id',
@@ -166,7 +166,7 @@ describe('orchestrator integration', () => {
 
   describe('status file management integration', () => {
     it('initializes status file with correct structure', async () => {
-      const { initStatus } = await import('../../../scripts/orchestrator-utils')
+      const { initStatus } = await import('../../../scripts/cody/cody-utils')
 
       const input = {
         mode: 'full' as const,
@@ -196,7 +196,7 @@ describe('orchestrator integration', () => {
 
     it('updates stage status correctly', async () => {
       const { initStatus, updateStageStatus, readStatus } =
-        await import('../../../scripts/orchestrator-utils')
+        await import('../../../scripts/cody/cody-utils')
 
       const input = {
         mode: 'full' as const,
@@ -220,7 +220,7 @@ describe('orchestrator integration', () => {
 
     it('handles timeout status correctly', async () => {
       const { initStatus, updateStageStatus, readStatus } =
-        await import('../../../scripts/orchestrator-utils')
+        await import('../../../scripts/cody/cody-utils')
 
       const input = {
         mode: 'full' as const,
@@ -242,7 +242,7 @@ describe('orchestrator integration', () => {
 
     it('handles failure status correctly', async () => {
       const { initStatus, updateStageStatus, readStatus, completeStatus } =
-        await import('../../../scripts/orchestrator-utils')
+        await import('../../../scripts/cody/cody-utils')
 
       const input = {
         mode: 'full' as const,
@@ -270,7 +270,7 @@ describe('orchestrator integration', () => {
 
   describe('file system operations integration', () => {
     it('creates task directory if not exists', async () => {
-      const { ensureTaskDir, getTaskDir } = await import('../../../scripts/orchestrator-utils')
+      const { ensureTaskDir, getTaskDir } = await import('../../../scripts/cody/cody-utils')
 
       // Clean up first
       cleanupTestEnvironment()
@@ -282,7 +282,7 @@ describe('orchestrator integration', () => {
     })
 
     it('writes and reads stage output files', async () => {
-      const { stageOutputFile } = await import('../../../scripts/pipeline-utils')
+      const { stageOutputFile } = await import('../../../scripts/cody/pipeline-utils')
 
       // Test different stage outputs
       expect(stageOutputFile(TEST_TASK_DIR, 'taskify')).toBe(path.join(TEST_TASK_DIR, 'task.json'))
@@ -314,7 +314,7 @@ describe('orchestrator integration', () => {
 
   describe('validation integration', () => {
     it('validates task definition correctly', async () => {
-      const { validateTask } = await import('../../../scripts/pipeline-utils')
+      const { validateTask } = await import('../../../scripts/cody/pipeline-utils')
 
       // Valid task
       const validResult = validateTask(mockTaskJson)
@@ -331,7 +331,7 @@ describe('orchestrator integration', () => {
     })
 
     it('validates task ID format correctly', async () => {
-      const { validateTaskId } = await import('../../../scripts/orchestrator-utils')
+      const { validateTaskId } = await import('../../../scripts/cody/cody-utils')
 
       // Valid formats
       expect(validateTaskId('260217-test')).toBe(true)
@@ -348,7 +348,7 @@ describe('orchestrator integration', () => {
 
   describe('comment formatting integration', () => {
     it('formats status comment for running state', async () => {
-      const { formatStatusComment } = await import('../../../scripts/orchestrator-utils')
+      const { formatStatusComment } = await import('../../../scripts/cody/cody-utils')
 
       const input = {
         mode: 'full' as const,
@@ -384,7 +384,7 @@ describe('orchestrator integration', () => {
     })
 
     it('formats status comment for completed state', async () => {
-      const { formatStatusComment } = await import('../../../scripts/orchestrator-utils')
+      const { formatStatusComment } = await import('../../../scripts/cody/cody-utils')
 
       const input = {
         mode: 'full' as const,
@@ -417,7 +417,7 @@ describe('orchestrator integration', () => {
     })
 
     it('formats status comment for failed state', async () => {
-      const { formatStatusComment } = await import('../../../scripts/orchestrator-utils')
+      const { formatStatusComment } = await import('../../../scripts/cody/cody-utils')
 
       const input = {
         mode: 'full' as const,
@@ -451,7 +451,7 @@ describe('orchestrator integration', () => {
   describe('pipeline stage integration', () => {
     it('defines correct stages for spec pipeline', async () => {
       const { SPEC_ONLY_STAGES, SPEC_EXECUTE_VERIFY_STAGES } =
-        await import('../../../scripts/pipeline-utils')
+        await import('../../../scripts/cody/pipeline-utils')
 
       // Spec pipeline should have spec and clarify stages
       expect(SPEC_ONLY_STAGES).toContain('spec')
@@ -484,7 +484,7 @@ describe('orchestrator integration', () => {
 
   describe('error handling integration', () => {
     it('handles invalid task validation gracefully', async () => {
-      const { validateTask } = await import('../../../scripts/pipeline-utils')
+      const { validateTask } = await import('../../../scripts/cody/pipeline-utils')
 
       // Invalid task type
       const result = validateTask({
@@ -505,7 +505,7 @@ describe('orchestrator integration', () => {
 
   describe('context writing integration', () => {
     it('writes agent context correctly', async () => {
-      const { writeAgentContext } = await import('../../../scripts/pipeline-utils')
+      const { writeAgentContext } = await import('../../../scripts/cody/pipeline-utils')
 
       writeAgentContext(TEST_TASK_DIR)
 
@@ -522,7 +522,7 @@ describe('orchestrator integration', () => {
     })
 
     it('handles missing files in context gracefully', async () => {
-      const { writeAgentContext } = await import('../../../scripts/pipeline-utils')
+      const { writeAgentContext } = await import('../../../scripts/cody/pipeline-utils')
 
       // Clean directory
       cleanupTestEnvironment()
@@ -564,7 +564,7 @@ describe('orchestrator retry and timeout scenarios', () => {
   describe('retry exhaustion handling', () => {
     it('tracks retry count across multiple failures', async () => {
       const { initStatus, updateStageStatus, readStatus } =
-        await import('../../../scripts/orchestrator-utils')
+        await import('../../../scripts/cody/cody-utils')
 
       const input = {
         mode: 'full' as const,
@@ -590,7 +590,7 @@ describe('orchestrator retry and timeout scenarios', () => {
 
     it('correctly records final timeout after retries', async () => {
       const { initStatus, updateStageStatus, readStatus, completeStatus } =
-        await import('../../../scripts/orchestrator-utils')
+        await import('../../../scripts/cody/cody-utils')
 
       const input = {
         mode: 'full' as const,
@@ -617,7 +617,7 @@ describe('orchestrator retry and timeout scenarios', () => {
   describe('stage timeout handling', () => {
     it('records elapsed time for timed out stages', async () => {
       const { initStatus, updateStageStatus, readStatus } =
-        await import('../../../scripts/orchestrator-utils')
+        await import('../../../scripts/cody/cody-utils')
 
       const input = {
         mode: 'full' as const,
@@ -717,7 +717,7 @@ describe('orchestrator rerun logic integration', () => {
 
   it('preserves completed stages in status', async () => {
     const { initStatus, updateStageStatus, readStatus } =
-      await import('../../../scripts/orchestrator-utils')
+      await import('../../../scripts/cody/cody-utils')
 
     const input = {
       mode: 'rerun' as const,

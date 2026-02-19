@@ -1,4 +1,4 @@
-// preflight.ts - Pre-flight validation for pipeline
+// preflight.ts - Pre-flight validation for Cody
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 

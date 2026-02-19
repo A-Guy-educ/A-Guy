@@ -1,8 +1,8 @@
 /**
  * @fileType test
- * @domain ci | pipeline
- * @pattern orchestrated-pipeline | test-contract
- * @ai-summary Test suite for orchestrator.ts covering CLI parsing, auth, pipeline execution, timeouts, retries, and rerun logic
+ * @domain ci | cody
+ * @pattern cody-pipeline | test-contract
+ * @ai-summary Test suite for cody.ts covering CLI parsing, auth, pipeline execution, timeouts, retries, and rerun logic
  */
 
 import { describe, expect, it, vi, beforeEach } from 'vitest'
@@ -117,7 +117,7 @@ describe('parseCliArgs', () => {
   })
 
   it('parses required --task-id', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     const result = parseCliArgs(['--task-id', FIXTURE_TASK_ID])
 
@@ -127,7 +127,7 @@ describe('parseCliArgs', () => {
   })
 
   it('parses --mode option', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     const result = parseCliArgs(['--task-id', FIXTURE_TASK_ID, '--mode', 'spec'])
 
@@ -135,7 +135,7 @@ describe('parseCliArgs', () => {
   })
 
   it('parses --dry-run option', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     const result = parseCliArgs(['--task-id', FIXTURE_TASK_ID, '--dry-run'])
 
@@ -143,7 +143,7 @@ describe('parseCliArgs', () => {
   })
 
   it('parses --feedback for rerun mode', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     const result = parseCliArgs([
       '--task-id',
@@ -159,7 +159,7 @@ describe('parseCliArgs', () => {
   })
 
   it('parses --from for rerun stage', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     const result = parseCliArgs([
       '--task-id',
@@ -174,7 +174,7 @@ describe('parseCliArgs', () => {
   })
 
   it('parses --issue-number', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     const result = parseCliArgs(['--task-id', FIXTURE_TASK_ID, '--issue-number', '42'])
 
@@ -182,7 +182,7 @@ describe('parseCliArgs', () => {
   })
 
   it('auto-generates task-id when missing', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     // Should auto-generate a task-id with date-based format
     const result = parseCliArgs([])
@@ -190,7 +190,7 @@ describe('parseCliArgs', () => {
   })
 
   it('generates task-id from --file path', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     const result = parseCliArgs(['--file', 'path/to/add-metrics.md'])
     // Should generate task-id from filename, with or without .md extension
@@ -198,7 +198,7 @@ describe('parseCliArgs', () => {
   })
 
   it('sets local mode when --local is provided', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     const result = parseCliArgs(['--task-id', FIXTURE_TASK_ID, '--local'])
     expect(result.local).toBe(true)
@@ -209,7 +209,7 @@ describe('parseCliArgs', () => {
     const original = process.env.GITHUB_ACTIONS
     delete process.env.GITHUB_ACTIONS
 
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     const result = parseCliArgs(['--task-id', FIXTURE_TASK_ID])
     expect(result.local).toBe(true)
@@ -219,13 +219,13 @@ describe('parseCliArgs', () => {
   })
 
   it('throws for invalid task-id format', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     expect(() => parseCliArgs(['--task-id', 'invalid'])).toThrow('Invalid task-id format')
   })
 
   it('throws for invalid mode', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     expect(() => parseCliArgs(['--task-id', FIXTURE_TASK_ID, '--mode', 'invalid'])).toThrow(
       'Invalid mode',
@@ -233,7 +233,7 @@ describe('parseCliArgs', () => {
   })
 
   it('throws for invalid stage in --from', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     expect(() =>
       parseCliArgs(['--task-id', FIXTURE_TASK_ID, '--mode', 'rerun', '--from', 'invalid-stage']),
@@ -253,7 +253,7 @@ describe('validateAuth', () => {
   it('passes when OPENCODE_GITHUB_TOKEN is set', async () => {
     vi.stubEnv('OPENCODE_GITHUB_TOKEN', 'test-token')
 
-    const { validateAuth } = await import('../../../scripts/orchestrator-utils')
+    const { validateAuth } = await import('../../../scripts/cody/cody-utils')
 
     // Should not throw
     expect(() => validateAuth()).not.toThrow()
@@ -262,7 +262,7 @@ describe('validateAuth', () => {
   it('does not exit - opencode github run handles OIDC auth internally', async () => {
     vi.stubEnv('OPENCODE_GITHUB_TOKEN', '')
 
-    const { validateAuth } = await import('../../../scripts/orchestrator-utils')
+    const { validateAuth } = await import('../../../scripts/cody/cody-utils')
 
     // Should NOT call process.exit anymore - OIDC auth is handled by opencode github run
     const exitMock = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
@@ -285,7 +285,7 @@ describe('status management', () => {
   })
 
   it('initStatus creates status.json', async () => {
-    const { initStatus } = await import('../../../scripts/orchestrator-utils')
+    const { initStatus } = await import('../../../scripts/cody/cody-utils')
 
     const input = {
       mode: 'full' as const,
@@ -302,7 +302,7 @@ describe('status management', () => {
   })
 
   it('updateStageStatus updates stage state', async () => {
-    const { initStatus, updateStageStatus } = await import('../../../scripts/orchestrator-utils')
+    const { initStatus, updateStageStatus } = await import('../../../scripts/cody/cody-utils')
 
     const input = {
       mode: 'full' as const,
@@ -319,7 +319,7 @@ describe('status management', () => {
   })
 
   it('updateStageStatus records timeout state', async () => {
-    const { initStatus, updateStageStatus } = await import('../../../scripts/orchestrator-utils')
+    const { initStatus, updateStageStatus } = await import('../../../scripts/cody/cody-utils')
 
     const input = {
       mode: 'full' as const,
@@ -336,7 +336,7 @@ describe('status management', () => {
   it('readStatus returns null when status.json does not exist', async () => {
     fsMocks.existsSync.mockReturnValue(false)
 
-    const { readStatus } = await import('../../../scripts/orchestrator-utils')
+    const { readStatus } = await import('../../../scripts/cody/cody-utils')
 
     const result = readStatus(FIXTURE_TASK_ID)
 
@@ -358,7 +358,7 @@ describe('runSpecPipeline', () => {
   it('validates task.md requirement', async () => {
     // Test that when task.md doesn't exist, spec pipeline would fail
     // This is validated through the orchestrator-utils ensureTaskDir function
-    const { ensureTaskDir } = await import('../../../scripts/orchestrator-utils')
+    const { ensureTaskDir } = await import('../../../scripts/cody/cody-utils')
 
     // Mock that directory doesn't exist yet
     fsMocks.existsSync.mockImplementation((path: string) => {
@@ -382,7 +382,7 @@ describe('runSpecPipeline', () => {
       return false
     })
 
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
     const input = parseCliArgs(['--task-id', FIXTURE_TASK_ID, '--mode', 'spec'])
 
     // This test verifies the skip logic by checking the mock was called correctly
@@ -469,7 +469,7 @@ describe('retry logic', () => {
     // This test documents the expected behavior
 
     const { parseCliArgs, initStatus, updateStageStatus } =
-      await import('../../../scripts/orchestrator-utils')
+      await import('../../../scripts/cody/cody-utils')
 
     const input = parseCliArgs(['--task-id', FIXTURE_TASK_ID, '--mode', 'impl'])
     initStatus(input)
@@ -506,7 +506,7 @@ describe('runRerunPipeline', () => {
   it('validates feedback requirement for rerun mode', async () => {
     // When rerun mode is used without feedback, the pipeline would fail
     // Test the validation logic through parseCliArgs
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     // This parses successfully but the actual pipeline run would fail without feedback
     const input = parseCliArgs(['--task-id', FIXTURE_TASK_ID, '--mode', 'rerun'])
@@ -518,7 +518,7 @@ describe('runRerunPipeline', () => {
   })
 
   it('does not set fromStage in CLI args (defaults in pipeline)', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     // Mock existsSync to return false for rerun-feedback so we can test default behavior
     fsMocks.existsSync.mockImplementation((path: string) => {
@@ -543,7 +543,7 @@ describe('runRerunPipeline', () => {
   })
 
   it('deletes stage files from rerun point onwards', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     // Setup: build.md, test.md, verify.md all exist
     fsMocks.existsSync.mockImplementation((path: string) => {
@@ -574,7 +574,7 @@ describe('runRerunPipeline', () => {
   })
 
   it('writes rerun-feedback.md with feedback content', async () => {
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     const input = parseCliArgs([
       '--task-id',
@@ -626,7 +626,7 @@ describe('runImplPipeline', () => {
       return false
     })
 
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     const input = parseCliArgs(['--task-id', FIXTURE_TASK_ID, '--mode', 'impl'])
 
@@ -674,7 +674,7 @@ describe('runFullPipeline', () => {
       return false
     })
 
-    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs } = await import('../../../scripts/cody/cody-utils')
 
     const input = parseCliArgs(['--task-id', FIXTURE_TASK_ID, '--mode', 'full'])
 
@@ -696,7 +696,7 @@ describe('showStatus', () => {
   it('returns null when status.json does not exist', async () => {
     fsMocks.existsSync.mockReturnValue(false)
 
-    const { readStatus } = await import('../../../scripts/orchestrator-utils')
+    const { readStatus } = await import('../../../scripts/cody/cody-utils')
 
     const result = readStatus(FIXTURE_TASK_ID)
 
@@ -722,7 +722,7 @@ describe('showStatus', () => {
     fsMocks.existsSync.mockReturnValue(true)
     fsMocks.readFileSync.mockReturnValue(JSON.stringify(mockStatus))
 
-    const { readStatus } = await import('../../../scripts/orchestrator-utils')
+    const { readStatus } = await import('../../../scripts/cody/cody-utils')
 
     const result = readStatus(FIXTURE_TASK_ID)
 
@@ -741,7 +741,7 @@ describe('formatStatusComment', () => {
   })
 
   it('formats running status comment', async () => {
-    const { formatStatusComment } = await import('../../../scripts/orchestrator-utils')
+    const { formatStatusComment } = await import('../../../scripts/cody/cody-utils')
 
     const input = {
       mode: 'full' as const,
@@ -776,7 +776,7 @@ describe('formatStatusComment', () => {
   })
 
   it('formats completed status comment', async () => {
-    const { formatStatusComment } = await import('../../../scripts/orchestrator-utils')
+    const { formatStatusComment } = await import('../../../scripts/cody/cody-utils')
 
     const input = {
       mode: 'full' as const,
@@ -802,7 +802,7 @@ describe('formatStatusComment', () => {
   })
 
   it('formats failed status comment', async () => {
-    const { formatStatusComment } = await import('../../../scripts/orchestrator-utils')
+    const { formatStatusComment } = await import('../../../scripts/cody/cody-utils')
 
     const input = {
       mode: 'full' as const,
@@ -831,7 +831,7 @@ describe('formatStatusComment', () => {
   })
 
   it('formats timeout status comment', async () => {
-    const { formatStatusComment } = await import('../../../scripts/orchestrator-utils')
+    const { formatStatusComment } = await import('../../../scripts/cody/cody-utils')
 
     const input = {
       mode: 'full' as const,
@@ -872,7 +872,7 @@ describe('postComment', () => {
   it('posts comment to GitHub issue via gh CLI', async () => {
     mockExecSync.mockImplementation(() => undefined)
 
-    const { postComment } = await import('../../../scripts/orchestrator-utils')
+    const { postComment } = await import('../../../scripts/cody/cody-utils')
 
     postComment(FIXTURE_ISSUE_NUMBER, 'Test comment')
 
@@ -881,7 +881,7 @@ describe('postComment', () => {
   })
 
   it('does nothing when issueNumber is falsy', async () => {
-    const { postComment } = await import('../../../scripts/orchestrator-utils')
+    const { postComment } = await import('../../../scripts/cody/cody-utils')
 
     postComment(0, 'Test comment')
 
@@ -893,7 +893,7 @@ describe('postComment', () => {
       throw new Error('gh not found')
     })
 
-    const { postComment } = await import('../../../scripts/orchestrator-utils')
+    const { postComment } = await import('../../../scripts/cody/cody-utils')
 
     // Should not throw
     expect(() => postComment(FIXTURE_ISSUE_NUMBER, 'Test comment')).not.toThrow()
@@ -910,7 +910,7 @@ describe('validation helpers', () => {
   })
 
   it('isValidMode returns true for valid modes', async () => {
-    const { isValidMode } = await import('../../../scripts/orchestrator-utils')
+    const { isValidMode } = await import('../../../scripts/cody/cody-utils')
 
     expect(isValidMode('spec')).toBe(true)
     expect(isValidMode('impl')).toBe(true)
@@ -920,14 +920,14 @@ describe('validation helpers', () => {
   })
 
   it('isValidMode returns false for invalid modes', async () => {
-    const { isValidMode } = await import('../../../scripts/orchestrator-utils')
+    const { isValidMode } = await import('../../../scripts/cody/cody-utils')
 
     expect(isValidMode('invalid')).toBe(false)
     expect(isValidMode('')).toBe(false)
   })
 
   it('isValidStage returns true for valid stages', async () => {
-    const { isValidStage } = await import('../../../scripts/orchestrator-utils')
+    const { isValidStage } = await import('../../../scripts/cody/cody-utils')
 
     expect(isValidStage('taskify')).toBe(true)
     expect(isValidStage('spec')).toBe(true)
@@ -938,21 +938,21 @@ describe('validation helpers', () => {
   })
 
   it('isValidStage returns false for invalid stages', async () => {
-    const { isValidStage } = await import('../../../scripts/orchestrator-utils')
+    const { isValidStage } = await import('../../../scripts/cody/cody-utils')
 
     expect(isValidStage('invalid')).toBe(false)
     expect(isValidStage('')).toBe(false)
   })
 
   it('validateTaskId validates correct format', async () => {
-    const { validateTaskId } = await import('../../../scripts/orchestrator-utils')
+    const { validateTaskId } = await import('../../../scripts/cody/cody-utils')
 
     expect(validateTaskId('260217-test-task')).toBe(true)
     expect(validateTaskId('260217-my-feature')).toBe(true)
   })
 
   it('validateTaskId rejects invalid formats', async () => {
-    const { validateTaskId } = await import('../../../scripts/orchestrator-utils')
+    const { validateTaskId } = await import('../../../scripts/cody/cody-utils')
 
     expect(validateTaskId('invalid')).toBe(false)
     expect(validateTaskId('260217')).toBe(false)
@@ -980,7 +980,7 @@ describe('full pipeline flow (mocked)', () => {
       return false
     })
 
-    const { parseCliArgs, initStatus } = await import('../../../scripts/orchestrator-utils')
+    const { parseCliArgs, initStatus } = await import('../../../scripts/cody/cody-utils')
 
     const input = parseCliArgs(['--task-id', FIXTURE_TASK_ID, '--mode', 'full', '--dry-run'])
     const status = initStatus(input)
@@ -1012,7 +1012,7 @@ describe('full pipeline flow (mocked)', () => {
     fsMocks.existsSync.mockReturnValue(true)
     fsMocks.readFileSync.mockReturnValue(JSON.stringify(mockStatus))
 
-    const { readStatus } = await import('../../../scripts/orchestrator-utils')
+    const { readStatus } = await import('../../../scripts/cody/cody-utils')
 
     const status = readStatus(FIXTURE_TASK_ID)
 
@@ -1034,7 +1034,7 @@ describe('edge cases', () => {
   it('handles missing status.json gracefully', async () => {
     fsMocks.existsSync.mockReturnValue(false)
 
-    const { readStatus, completeStatus } = await import('../../../scripts/orchestrator-utils')
+    const { readStatus, completeStatus } = await import('../../../scripts/cody/cody-utils')
 
     // readStatus returns null
     const status = readStatus(FIXTURE_TASK_ID)
@@ -1048,7 +1048,7 @@ describe('edge cases', () => {
     fsMocks.existsSync.mockReturnValue(true)
     fsMocks.readFileSync.mockReturnValue('not valid json')
 
-    const { readStatus } = await import('../../../scripts/orchestrator-utils')
+    const { readStatus } = await import('../../../scripts/cody/cody-utils')
 
     // Should return null on parse error
     const status = readStatus(FIXTURE_TASK_ID)
@@ -1056,7 +1056,7 @@ describe('edge cases', () => {
   })
 
   it('handles stageOutputFile for different stages', async () => {
-    const { stageOutputFile } = await import('../../../scripts/pipeline-utils')
+    const { stageOutputFile } = await import('../../../scripts/cody/pipeline-utils')
 
     expect(stageOutputFile('/tmp', 'taskify')).toBe('/tmp/task.json')
     expect(stageOutputFile('/tmp', 'clarify')).toBe('/tmp/questions.md')

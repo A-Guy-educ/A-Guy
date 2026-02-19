@@ -1,8 +1,8 @@
 /**
  * @fileType utility
- * @domain ci | pipeline | agent-execution
+ * @domain ci | cody | agent-execution
  * @pattern runner-backend
- * @ai-summary Pluggable runner backend for orchestrator: supports both local (ocode) and CI (opencode github run) modes
+ * @ai-summary Pluggable runner backend for Cody: supports both local (ocode) and CI (opencode github run) modes
  */
 
 import { spawn, type ChildProcess } from 'child_process'

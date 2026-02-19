@@ -1,15 +1,15 @@
 /**
  * @fileType utility
- * @domain ci | pipeline | agent-execution
+ * @domain ci | cody | agent-execution
  * @pattern agent-runner
- * @ai-summary Agent execution with file watching, timeouts, and retry logic for pipeline stages
+ * @ai-summary Agent execution with file watching, timeouts, and retry logic for Cody pipeline stages
  */
 
 import type { ChildProcess } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
-import type { OrchestratorInput } from './orchestrator-utils'
+import type { CodyInput } from './cody-utils'
 import { buildStagePrompt, SPEC_STAGES } from './stage-prompts'
 import { createRunner, type RunnerBackend } from './runner-backend'
 
@@ -88,7 +88,7 @@ export interface AgentRunResult {
  * @returns Promise resolving to success/timedOut/retries
  */
 export function runAgentWithFileWatch(
-  input: OrchestratorInput,
+  input: CodyInput,
   stage: string,
   outputFile: string,
   timeout?: number,
@@ -232,7 +232,7 @@ export function runAgentWithFileWatch(
  * Simple agent runner without retries (for use with external retry logic)
  */
 export function runAgentOnce(
-  input: OrchestratorInput,
+  input: CodyInput,
   stage: string,
   outputFile: string,
   timeout?: number,
