@@ -226,10 +226,22 @@ export function editComment(_commentId: string, _body: string): void {
   console.warn('editComment not implemented')
 }
 
-// TODO: Remove or implement - gh issue comments is not a valid command
-export function getIssueComments(_issueNumber: number): string[] {
-  console.warn('getIssueComments not implemented - returns empty array')
-  return []
+/**
+ * Get the latest comment on an issue (not from the bot)
+ */
+export function getLatestIssueComment(issueNumber: number, excludeAuthor?: string): string | null {
+  if (!issueNumber) return null
+
+  try {
+    // Get comments, newest first, exclude bot comments
+    const output = execSync(
+      `gh issue comments ${issueNumber} --limit 10 --json author,body --jq '.[] | select(.author.login != "${excludeAuthor || 'github-actions[bot]'}") | .body' | head -1`,
+      { encoding: 'utf-8' },
+    )
+    return output.trim() || null
+  } catch {
+    return null
+  }
 }
 
 // ============================================================================
