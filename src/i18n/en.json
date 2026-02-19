@@ -190,6 +190,8 @@
     "chatFileTooLarge": "File too large (max 10MB)",
     "chatMaxFiles": "Maximum 5 files allowed",
     "chatUploadFailed": "Failed to upload file",
+    "chatReadAloud": "Read aloud",
+    "chatStopReading": "Stop reading",
     "mathKeyboard": "Math Keyboard",
     "formulaSheet": "Formula Sheet",
     "uploadFile": "Upload File",

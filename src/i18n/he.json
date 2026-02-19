@@ -190,6 +190,8 @@
     "chatFileTooLarge": "הקובץ גדול מדי (מקסימום 10MB)",
     "chatMaxFiles": "מותר עד 5 קבצים",
     "chatUploadFailed": "העלאת הקובץ נכשלה",
+    "chatReadAloud": "הקראה",
+    "chatStopReading": "עצירת הקראה",
     "mathKeyboard": "מקלדת מתמטית",
     "formulaSheet": "דף נוסחאות",
     "uploadFile": "העלאת קובץ",

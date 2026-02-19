@@ -20,7 +20,9 @@ import {
 import React, { useEffect, useRef, useState } from 'react'
 import { ChatErrorSurface } from '../ChatErrorSurface'
 import { ChatMessageContent } from '../ChatMessageContent'
+import { TTSButton } from '../TTSButton'
 import { useNotebookChat } from '../hooks/useNotebookChat'
+import { useTTS } from '../hooks/useTTS'
 
 // Optional components - will be lazy-loaded if needed
 let FormulaPanel: React.ComponentType<{
@@ -175,6 +177,8 @@ export function ChatInterface({
     maxFilesMessage: tCourses('chatMaxFiles'),
     uploadFailedMessage: tCourses('chatUploadFailed'),
   })
+
+  const { speak, playingMessageId } = useTTS()
 
   // Auto-send contextual help on incorrect answer (ref pattern for stable listener)
   const incorrectAnswerRef = useRef<(e: Event) => void>(() => {})
@@ -368,37 +372,54 @@ export function ChatInterface({
           </div>
         )}
         {!isLoadingHistory &&
-          messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={cn(
-                'max-w-[85%] px-[18px] py-3.5 text-base leading-relaxed shadow-sm',
-                msg.role === ChatMessageRole.User
-                  ? 'ml-auto bg-primary text-primary-foreground rounded-[20px] rounded-bl-[4px]'
-                  : 'mr-auto bg-card text-foreground border border-border rounded-[20px] rounded-br-[4px]',
-              )}
-            >
-              {msg.media && msg.media.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {msg.media.map((mediaItem, mediaIdx) => (
-                    <div
-                      key={mediaIdx}
-                      className={cn(
-                        'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
-                        msg.role === ChatMessageRole.User ? 'bg-primary-foreground/20' : 'bg-muted',
-                      )}
-                    >
-                      <ImageIcon className="w-3 h-3" />
-                      <span className="max-w-[120px] truncate">
-                        {mediaItem.filename || `media-${mediaIdx + 1}`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <ChatMessageContent content={msg.content} />
-            </div>
-          ))}
+          messages.map((msg, idx) => {
+            const isAssistant = msg.role !== ChatMessageRole.User
+            const messageId = `msg-${idx}`
+            const isCurrentlyPlaying = playingMessageId === messageId
+
+            return (
+              <div
+                key={idx}
+                className={cn(
+                  'max-w-[85%] px-[18px] py-3.5 text-base leading-relaxed shadow-sm',
+                  msg.role === ChatMessageRole.User
+                    ? 'ml-auto bg-primary text-primary-foreground rounded-[20px] rounded-bl-[4px]'
+                    : 'mr-auto bg-card text-foreground border border-border rounded-[20px] rounded-br-[4px]',
+                  isCurrentlyPlaying && 'ring-2 ring-primary/30',
+                )}
+              >
+                {msg.media && msg.media.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {msg.media.map((mediaItem, mediaIdx) => (
+                      <div
+                        key={mediaIdx}
+                        className={cn(
+                          'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
+                          msg.role === ChatMessageRole.User
+                            ? 'bg-primary-foreground/20'
+                            : 'bg-muted',
+                        )}
+                      >
+                        <ImageIcon className="w-3 h-3" />
+                        <span className="max-w-[120px] truncate">
+                          {mediaItem.filename || `media-${mediaIdx + 1}`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <ChatMessageContent content={msg.content} />
+                {isAssistant && (
+                  <TTSButton
+                    isPlaying={isCurrentlyPlaying}
+                    onToggle={() => speak(messageId, msg.content)}
+                    labelPlay={tCourses('chatReadAloud')}
+                    labelStop={tCourses('chatStopReading')}
+                  />
+                )}
+              </div>
+            )
+          })}
         {isLoading && (
           <div className="mr-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-[20px] rounded-br-[4px] max-w-[85%] flex items-center gap-2 shadow-sm">
             <Loader2 className="w-4 h-4 animate-spin" />
