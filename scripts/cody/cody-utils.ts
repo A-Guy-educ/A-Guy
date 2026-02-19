@@ -267,6 +267,39 @@ export function discoverTaskIdFromIssue(issueNumber: number): string | null {
   }
 }
 
+/**
+ * Ensure the "Task created" marker comment exists on the issue.
+ *
+ * This is critical for task-id discovery: when someone runs `/cody` on an issue,
+ * the pipeline discovers the existing task-id by searching for a bot comment
+ * containing "Task created: `XXXXXX-task-name`". Without this marker,
+ * subsequent runs auto-generate a new task-id instead of reusing the existing one.
+ *
+ * Previously, the marker was only posted when task.md was created from the issue body
+ * (inside runSpecPipeline). This meant dispatch-triggered runs or runs where task.md
+ * already existed never posted the marker, breaking discovery on subsequent issue-based runs.
+ */
+export function ensureTaskMarkerComment(issueNumber: number, taskId: string): void {
+  if (!issueNumber || !taskId) return
+
+  // Check if marker already exists for ANY task-id on this issue
+  const existingTaskId = discoverTaskIdFromIssue(issueNumber)
+  if (existingTaskId) {
+    if (existingTaskId === taskId) {
+      console.log(`Task marker already exists on issue #${issueNumber} for ${taskId}`)
+    } else {
+      console.log(
+        `Task marker exists on issue #${issueNumber} for ${existingTaskId} (current: ${taskId})`,
+      )
+    }
+    return
+  }
+
+  // No marker found — post one
+  console.log(`Posting task marker comment on issue #${issueNumber} for ${taskId}`)
+  postComment(issueNumber, `🎯 Task created: \`${taskId}\`\n\nCody will now process this task.`)
+}
+
 // ============================================================================
 // CLI Argument Parsing
 // ============================================================================

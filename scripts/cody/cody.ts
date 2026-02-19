@@ -142,6 +142,7 @@ import {
   formatStatusComment,
   getIssueBody,
   getLatestIssueComment,
+  ensureTaskMarkerComment,
   type CodyInput,
 } from './cody-utils'
 
@@ -202,6 +203,13 @@ async function main() {
 
   // Initialize status
   const status = initStatus(input)
+
+  // Ensure "Task created" marker comment exists on the issue for future discovery.
+  // This must run early (before any pipeline mode) so that subsequent /cody calls
+  // on the same issue can discover the task-id from the bot comment marker.
+  if (input.issueNumber) {
+    ensureTaskMarkerComment(input.issueNumber, input.taskId)
+  }
 
   // Route based on mode
   try {
@@ -284,12 +292,6 @@ async function runSpecPipeline(
       if (issueBody) {
         fs.writeFileSync(taskMdPath, `# Task\n\n${issueBody}\n`)
         console.log(`Created task.md from issue #${input.issueNumber}`)
-
-        // Comment with assigned task ID
-        postComment(
-          input.issueNumber,
-          `🎯 Task created: \`${input.taskId}\`\n\nCody will now process this task.`,
-        )
       } else {
         throw new Error(
           `task.md not found in .tasks/${input.taskId}/ and issue #${input.issueNumber} has no body. Create it first.`,
