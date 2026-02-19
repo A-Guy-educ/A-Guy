@@ -1,0 +1,33 @@
+{
+  "taskId": "260219-youtube-embed-integration",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-19T13:36:35.296Z",
+  "updatedAt": "2026-02-19T13:40:23.367Z",
+  "state": "failed",
+  "currentStage": "clarify",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-19T13:36:35.298Z",
+      "completedAt": "2026-02-19T13:37:01.311Z",
+      "elapsed": 26013
+    },
+    "spec": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-19T13:37:01.313Z",
+      "completedAt": "2026-02-19T13:38:33.336Z",
+      "elapsed": 92023
+    },
+    "clarify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-19T13:38:33.337Z",
+      "completedAt": "2026-02-19T13:40:23.364Z",
+      "elapsed": 110027
+    }
+  },
+  "triggeredBy": "dispatch"
+}
