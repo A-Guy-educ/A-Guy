@@ -10,11 +10,11 @@ export const DEFAULT_ACCESS_TYPE: AccessType = 'free'
 
 export const DEFAULT_LESSON_ACCESS_TYPE: LessonAccessType = 'inherit'
 
-/** 5 minutes in milliseconds */
-export const GATED_DELAY_MS = 5 * 60 * 1000
+/** Total gated delay before lock (1 minute for testing, 5 minutes for production) */
+export const GATED_DELAY_MS = 1 * 60 * 1000
 
-/** 30-second warning before lock */
-export const GATED_WARNING_MS = 30 * 1000
+/** Warning banner shown this many ms before lock */
+export const GATED_WARNING_MS = 10 * 1000
 
 /**
  * Resolve the effective access type for a lesson.
