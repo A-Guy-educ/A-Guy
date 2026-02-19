@@ -770,7 +770,7 @@ describe('formatStatusComment', () => {
     // Must pass currentStage to get stage list in output
     const comment = formatStatusComment(input, status, 'build')
 
-    expect(comment).toContain('Pipeline running')
+    expect(comment).toContain('Cody running')
     expect(comment).toContain('spec')
     expect(comment).toContain('build')
   })
@@ -798,7 +798,7 @@ describe('formatStatusComment', () => {
 
     const comment = formatStatusComment(input, status)
 
-    expect(comment).toContain('Pipeline completed')
+    expect(comment).toContain('Cody completed')
   })
 
   it('formats failed status comment', async () => {
@@ -827,7 +827,7 @@ describe('formatStatusComment', () => {
 
     const comment = formatStatusComment(input, status)
 
-    expect(comment).toContain('Pipeline failed')
+    expect(comment).toContain('Cody failed')
   })
 
   it('formats timeout status comment', async () => {
