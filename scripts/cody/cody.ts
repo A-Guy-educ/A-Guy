@@ -58,6 +58,45 @@ function checkForQuestions(questionsPath: string): boolean {
   return hasQuestionContent && !isApproved && !noClarifications
 }
 
+/**
+ * Extract the answer from a GitHub comment body
+ * The comment format is: /cody [command] [task-id] [optional answer text]
+ */
+function extractAnswerFromComment(commentBody: string): string | null {
+  // Decode JSON-encoded body if needed (from jq -Rs .)
+  let decoded = commentBody
+  if (decoded.startsWith('"') && decoded.endsWith('"')) {
+    try {
+      decoded = JSON.parse(decoded)
+    } catch {
+      // Use raw value if JSON.parse fails
+    }
+  }
+
+  // Normalize literal \n to real newlines
+  decoded = decoded.replace(/\\n/g, '\n')
+
+  // Remove /cody prefix and command
+  const withoutCody = decoded.replace(/^\/cody\s*/, '').trim()
+
+  // If there's content after the command, treat it as the answer
+  if (withoutCody.length > 0) {
+    // Remove task-id if present (format: /cody [task-id] or /cody full [task-id])
+    const taskIdMatch = withoutCody.match(/^([a-z]+\s+)?([0-9]{6}-[a-z0-9-]+\s*)/i)
+    let answer = withoutCody
+    if (taskIdMatch) {
+      answer = withoutCody.slice(taskIdMatch[0].length).trim()
+    }
+
+    // If there's answer content, return it
+    if (answer.length > 0) {
+      return answer
+    }
+  }
+
+  return null
+}
+
 // Import utilities from cody-utils
 import {
   parseCliArgs,
@@ -270,6 +309,23 @@ async function runSpecPipeline(
       outputFile: path.basename(outputFile),
     })
     console.log(`✓ ${stage} complete`)
+  }
+
+  // If questions.md exists and user provided a new comment (with answers),
+  // create clarified.md from the comment body
+  const existingQuestionsPath = path.join(taskDir, 'questions.md')
+  if (
+    fs.existsSync(existingQuestionsPath) &&
+    input.commentBody &&
+    input.triggerType === 'comment'
+  ) {
+    // Extract the answer from the comment (everything after /cody command)
+    const answer = extractAnswerFromComment(input.commentBody)
+    if (answer) {
+      const clarifiedPath = path.join(taskDir, 'clarified.md')
+      fs.writeFileSync(clarifiedPath, `# Clarified\n\n${answer}\n`)
+      console.log('📝 Created clarified.md from GitHub comment\n')
+    }
   }
 
   // Check if there are pending questions from clarify stage
