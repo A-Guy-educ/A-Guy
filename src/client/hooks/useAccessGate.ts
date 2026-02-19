@@ -34,6 +34,7 @@ export function useAccessGate({
   const [elapsedMs, setElapsedMs] = useState(0)
   const [warningDismissed, setWarningDismissed] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pausedAtRef = useRef<number | null>(null)
 
   const isGated = accessType === 'gated'
   const isMandatory = accessType === 'mandatory'
@@ -110,6 +111,38 @@ export function useAccessGate({
   const warningSecondsLeft = inWarningPeriod
     ? Math.max(0, Math.ceil((GATED_DELAY_MS - elapsedMs) / 1000))
     : 0
+
+  // Pause/resume timer when warning modal opens/closes
+  useEffect(() => {
+    if (showWarningModal) {
+      // Pause: stop advancing the timer while the modal is visible
+      pausedAtRef.current = Date.now()
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    } else if (pausedAtRef.current !== null) {
+      // Resume: shift the stored start time forward by the paused duration
+      // so elapsed time continues from where it was paused
+      const pausedDuration = Date.now() - pausedAtRef.current
+      pausedAtRef.current = null
+
+      const currentStart = getGateTimerStart(courseSlug)
+      if (currentStart) {
+        setGateTimerStart(courseSlug, currentStart + pausedDuration)
+      }
+
+      // Restart the interval
+      const updateElapsed = () => {
+        const stored = getGateTimerStart(courseSlug)
+        if (stored) {
+          setElapsedMs(Date.now() - stored)
+        }
+      }
+      updateElapsed()
+      intervalRef.current = setInterval(updateElapsed, 1000)
+    }
+  }, [showWarningModal, courseSlug])
 
   return {
     showMandatoryModal,
