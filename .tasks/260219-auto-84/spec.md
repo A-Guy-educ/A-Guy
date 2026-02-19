@@ -1,0 +1,74 @@
+# SPEC.md: Reduce Home Welcome Typing Text Speed
+
+## Task Overview
+
+Reduce the typing animation speed in the homepage GreetingFlow component by half, making the text appear more slowly and elegantly.
+
+## Issue Summary
+
+- **Title**: reduce home welcome typing text speed
+- **Body**: reduce typing speed by half
+- **Priority**: Low (cosmetic UX improvement)
+- **Risk Level**: Low
+
+## Analysis
+
+### Current Implementation
+
+The `GreetingFlow` component at `src/ui/web/homepage/GreetingFlow/index.tsx` uses the `TypingAnimation` component with a `speed` parameter of `100` (milliseconds per character) in 3 locations:
+
+1. **Line 67** - Welcome text typing animation
+2. **Line 97** - Mood response text typing animation
+3. **Line 143** - "Let's start" completion text typing animation
+
+### Speed Parameter Interpretation
+
+The `speed` prop in `TypingAnimation` represents milliseconds per character:
+- `speed={100}` = 100ms per character (current)
+- `speed={200}` = 200ms per character (target - half the speed)
+
+### Technical Approach
+
+To reduce typing speed by half (make typing twice as slow), the `speed` value needs to be doubled from `100` to `200`.
+
+## Implementation Plan
+
+### Step 1: Modify GreetingFlow Component
+
+**File**: `src/ui/web/homepage/GreetingFlow/index.tsx`
+
+**Changes Required**:
+1. Change `speed={100}` to `speed={200}` on line 67 (welcome text)
+2. Change `speed={100}` to `speed={200}` on line 97 (mood response)
+3. Change `speed={100}` to `speed={200}` on line 143 (let's start text)
+
+**Rationale**: All three typing animations should have consistent, slower typing speed for better user experience and visual appeal.
+
+### Step 2: Verify Changes
+
+After implementation:
+- Run typecheck: `pnpm typecheck`
+- Run lint: `pnpm lint`
+- Verify the component renders correctly in development mode
+
+## Files to Modify
+
+| File | Lines to Change | Change |
+|------|-----------------|--------|
+| `src/ui/web/homepage/GreetingFlow/index.tsx` | 67, 97, 143 | `speed={100}` → `speed={200}` |
+
+## Quality Gates
+
+- **TypeScript**: Pass (no type changes required)
+- **Lint**: Pass (no lint rule violations)
+- **Tests**: Not required for this cosmetic change (no behavioral logic modification)
+
+## Expected Outcome
+
+The typing animation will now display text at half the original speed (200ms per character instead of 100ms), creating a more relaxed and elegant typing effect for users viewing the homepage welcome message, mood responses, and completion message.
+
+## Assumptions
+
+- The speed parameter represents milliseconds per character in the TypingAnimation component
+- Reducing "by half" means doubling the duration (slower = larger ms value)
+- All three occurrences should be updated for visual consistency
