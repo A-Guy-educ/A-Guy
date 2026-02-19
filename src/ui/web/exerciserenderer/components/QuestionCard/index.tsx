@@ -25,8 +25,7 @@ interface QuestionCardProps {
   correctText: string
   incorrectText: string
   // Question numbering props
-  sectionLabel?: string
-  subLabel?: string
+  questionLabel?: string
   dir?: 'ltr' | 'rtl'
 }
 
@@ -41,8 +40,7 @@ export function QuestionCard({
   checkAnswerText,
   correctText,
   incorrectText,
-  sectionLabel,
-  subLabel,
+  questionLabel,
   dir = 'ltr',
 }: QuestionCardProps) {
   return (
@@ -53,17 +51,14 @@ export function QuestionCard({
       )}
     >
       {/* Question Label */}
-      {sectionLabel && subLabel && (
+      {questionLabel && (
         <div
           className={cn(
             'w-full flex items-center gap-2 mb-4',
-            dir === 'rtl' ? 'justify-end text-right flex-row-reverse' : 'justify-start text-left',
+            dir === 'rtl' ? 'justify-end text-right' : 'justify-start text-left',
           )}
         >
-          <span className="font-semibold text-sm text-muted-foreground">
-            {sectionLabel}
-            {subLabel}
-          </span>
+          <span className="font-semibold text-sm text-muted-foreground">{questionLabel}</span>
         </div>
       )}
 

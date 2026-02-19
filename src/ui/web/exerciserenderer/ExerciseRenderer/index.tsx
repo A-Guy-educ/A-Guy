@@ -36,6 +36,41 @@ import {
 import { MediaMapProvider } from '../context/MediaMapContext'
 
 /**
+ * Hebrew letters for question numbering
+ */
+const HEBREW_LETTERS = [
+  'א',
+  'ב',
+  'ג',
+  'ד',
+  'ה',
+  'ו',
+  'ז',
+  'ח',
+  'ט',
+  'י',
+  'כ',
+  'ל',
+  'מ',
+  'נ',
+  'ס',
+  'ע',
+  'פ',
+  'צ',
+  'ק',
+  'ר',
+  'ש',
+  'ת',
+]
+
+/**
+ * Get English letter for question index (a, b, c, ...)
+ */
+function getEnglishLetter(index: number): string {
+  return String.fromCharCode('a'.charCodeAt(0) + (index - 1))
+}
+
+/**
  * Format student's answer as readable text for AI context
  */
 function formatStudentAnswer(question: QuestionBlock, answer: UserAnswer): string {
@@ -68,6 +103,7 @@ export function ExerciseRenderer({
   showCheckAnswer = true,
   className = '',
   mediaMap = EMPTY_MEDIA_MAP,
+  exerciseNumber = 1,
 }: ExerciseRendererProps) {
   const t = useTranslations('courses')
   const locale = useLocale()
@@ -204,15 +240,14 @@ export function ExerciseRenderer({
     )
   }
 
-  // Determine section label and direction based on locale
+  // Determine direction based on locale
   const isHebrew = locale?.startsWith('he')
-  const sectionLabel = isHebrew ? 'א' : 'A'
   const dir: 'ltr' | 'rtl' = isHebrew ? 'rtl' : 'ltr'
 
   return (
     <MediaMapProvider value={mediaMap}>
       <div className={cn('w-full max-w-3xl mx-auto', className)}>
-        {/* Section Bubble - shown once at the top */}
+        {/* Exercise Number Bubble - shown once at the top */}
         <div
           className={cn(
             'flex items-center gap-2 mb-6',
@@ -220,7 +255,7 @@ export function ExerciseRenderer({
           )}
         >
           <div className="w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm">
-            <span className="font-bold text-sm">{sectionLabel}</span>
+            <span className="font-bold text-sm">{String(exerciseNumber)}</span>
           </div>
         </div>
 
@@ -248,7 +283,10 @@ export function ExerciseRenderer({
               // Question blocks - render with answer UI
               const question = block as QuestionBlock
 
-              const subLabel = `.${questionIndex}`
+              // Compute question letter label
+              const questionLabel = isHebrew
+                ? HEBREW_LETTERS[questionIndex - 1] || String(questionIndex)
+                : getEnglishLetter(questionIndex)
 
               const answer = answers[question.id] ?? getInitialAnswer(question)
               const checkResult = checkResults[question.id] || null
@@ -273,8 +311,7 @@ export function ExerciseRenderer({
                   checkAnswerText={t('checkAnswer')}
                   correctText={t('correct')}
                   incorrectText={t('incorrect')}
-                  sectionLabel={sectionLabel}
-                  subLabel={subLabel}
+                  questionLabel={questionLabel}
                   dir={dir}
                 >
                   {/* Render appropriate question component based on type */}

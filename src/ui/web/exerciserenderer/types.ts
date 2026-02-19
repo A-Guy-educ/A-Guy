@@ -160,4 +160,6 @@ export interface ExerciseRendererProps {
   className?: string
   /** Pre-resolved media objects keyed by ID, for rendering mediaIds in blocks */
   mediaMap?: Record<string, import('@/payload-types').Media>
+  /** Exercise number to display in the bubble (defaults to 1) */
+  exerciseNumber?: number
 }
