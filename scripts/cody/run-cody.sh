@@ -10,8 +10,8 @@ echo "Mode: $MODE"
 echo "Dry run: $DRY_RUN"
 echo "Trigger: $TRIGGER_TYPE"
 
-# Post starting comment
-if [[ -n "${ISSUE_NUMBER:-}" ]]; then
+# Post starting comment (only when task-id is known)
+if [[ -n "${ISSUE_NUMBER:-}" ]] && [[ -n "${TASK_ID:-}" ]]; then
   gh issue comment "$ISSUE_NUMBER" --body "🔄 Cody starting for \`${TASK_ID}\` (mode: $MODE)
 Run: $RUN_URL"
 fi

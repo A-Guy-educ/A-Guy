@@ -65,13 +65,36 @@ export function ensureFeatureBranch(taskId: string, taskType: string, projectDir
   const prefix = BRANCH_PREFIX_MAP[taskType as TaskType] || 'feat'
   const branchName = `${prefix}/${taskId}`
 
-  console.log(`[branch] Creating feature branch: ${branchName}`)
+  console.log(`[branch] Ensuring feature branch: ${branchName}`)
 
-  // Fetch latest dev, create branch from it
-  execSync('git fetch origin dev', { cwd, stdio: 'inherit' })
-  execSync('git checkout dev', { cwd, stdio: 'inherit' })
-  execSync('git pull origin dev', { cwd, stdio: 'inherit' })
-  execSync(`git checkout -b ${branchName}`, { cwd, stdio: 'inherit' })
+  // Fetch latest from origin
+  execSync('git fetch origin', { cwd, stdio: 'inherit' })
 
-  console.log(`[branch] Created and switched to: ${branchName}`)
+  // Check if branch already exists on remote
+  let remoteBranchExists = false
+  try {
+    execSync(`git rev-parse --verify origin/${branchName}`, {
+      cwd,
+      encoding: 'utf-8',
+      stdio: 'pipe',
+    })
+    remoteBranchExists = true
+  } catch {
+    remoteBranchExists = false
+  }
+
+  if (remoteBranchExists) {
+    // Branch exists on remote — checkout and track it
+    console.log(`[branch] Remote branch exists, checking out: ${branchName}`)
+    execSync(`git checkout ${branchName}`, { cwd, stdio: 'inherit' })
+    execSync(`git pull origin ${branchName}`, { cwd, stdio: 'inherit' })
+    console.log(`[branch] Checked out and pulled: ${branchName}`)
+  } else {
+    // Branch doesn't exist — create from dev
+    console.log(`[branch] Creating new branch from dev: ${branchName}`)
+    execSync('git checkout dev', { cwd, stdio: 'inherit' })
+    execSync('git pull origin dev', { cwd, stdio: 'inherit' })
+    execSync(`git checkout -b ${branchName}`, { cwd, stdio: 'inherit' })
+    console.log(`[branch] Created and switched to: ${branchName}`)
+  }
 }

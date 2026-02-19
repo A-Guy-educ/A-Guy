@@ -147,6 +147,17 @@ jobs:
             exit 0
           fi
 
+          # Discover task-id from previous bot comments on the issue
+          # This allows the second /cody call to pick up the same task-id
+          DISCOVERED_TASK_ID=""
+          if [[ -n "$ISSUE_NUMBER" ]]; then
+            DISCOVERED_TASK_ID=$(gh issue view "$ISSUE_NUMBER" --json comments --jq '[.comments[] | select(.author.login == "github-actions[bot]")] | .[].body' 2>/dev/null | grep -oP 'Task created: `\K[0-9]{6}-[a-zA-Z0-9-]+' | head -1 || true)
+            if [[ -n "$DISCOVERED_TASK_ID" ]]; then
+              echo "=== Discovered task-id from issue: $DISCOVERED_TASK_ID ==="
+              echo "task_id=$DISCOVERED_TASK_ID" >> $GITHUB_OUTPUT
+            fi
+          fi
+
           # Pass raw comment body to orchestrator for parsing
           # Escape for JSON/GITHUB_OUTPUT (replace newlines, quotes)
           # Use printf '%s' to avoid echo's trailing newline being captured by jq
@@ -174,6 +185,24 @@ jobs:
         with:
           persist-credentials: true
           fetch-depth: 0
+
+      - name: Checkout feature branch if exists
+        if: needs.parse.outputs.task_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TASK_ID: ${{ needs.parse.outputs.task_id }}
+        run: |
+          # Try common branch prefixes for the task-id
+          for prefix in feat fix refactor docs chore; do
+            BRANCH="${prefix}/${TASK_ID}"
+            if git rev-parse --verify "origin/${BRANCH}" >/dev/null 2>&1; then
+              echo "=== Found feature branch: $BRANCH ==="
+              git checkout "$BRANCH"
+              git pull origin "$BRANCH"
+              exit 0
+            fi
+          done
+          echo "=== No feature branch found for $TASK_ID, staying on default branch ==="
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -250,19 +279,6 @@ jobs:
           path: .tasks/${{ needs.parse.outputs.task_id }}/
           retention-days: 7
 
-      - name: Post completion comment
-        if: always() && needs.parse.outputs.issue_number != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-          STATUS: ${{ job.status }}
-          TASK_ID: ${{ needs.parse.outputs.task_id }}
-          ISSUE_NUMBER: ${{ needs.parse.outputs.issue_number }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          if [[ "$STATUS" == "success" ]]; then
-            gh issue comment $ISSUE_NUMBER --body "✅ Cody completed for \`$TASK_ID\`
-          Run: $RUN_URL"
-          else
-            gh issue comment $ISSUE_NUMBER --body "❌ Cody failed for \`$TASK_ID\`
-          Run: $RUN_URL"
-          fi
+      # Post completion comment removed (BUG-F fix):
+      # cody.ts already posts completion/failure comments via postComment()
+      # Having both caused duplicate comments on issues

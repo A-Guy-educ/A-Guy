@@ -356,7 +356,7 @@ export function parseCliArgs(argv: string[]): CodyInput {
       // Merge parsed values into input (issueNumber will be merged after --issue-number is processed)
       if (parsed.input) {
         input.mode = parsed.input.mode
-        input.taskId = parsed.input.taskId
+        if (parsed.input.taskId) input.taskId = parsed.input.taskId
         input.dryRun = parsed.input.dryRun
         input.feedback = parsed.input.feedback
         input.fromStage = parsed.input.fromStage
@@ -494,16 +494,11 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
     }
   }
 
-  // If no task-id provided, generate a new one
-  if (!taskId) {
-    const datePrefix = new Date().toISOString().slice(2, 10).replace(/-/g, '')
-    const counter = Math.floor(Math.random() * 99) + 1
-    taskId = `${datePrefix}-auto-${counter.toString().padStart(2, '0')}`
-    console.log(`No task-id provided, generated: ${taskId}`)
-  }
+  // Don't auto-generate task-id here — let parseCliArgs handle discovery + fallback generation
+  // This allows discoverTaskIdFromIssue to find the task-id from previous bot comments
 
-  // Validate task-id format
-  if (!validateTaskId(taskId)) {
+  // Validate task-id format (skip if empty — parseCliArgs will handle it)
+  if (taskId && !validateTaskId(taskId)) {
     return {
       success: false,
       error: `Invalid task-id format: ${taskId}`,
@@ -522,8 +517,8 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
     const taskIdLen = taskId.length
     optionsStr = rest.slice(taskIdLen).trim()
   } else {
-    // Auto-generated task-id: rest is empty (options were lost to auto-gen)
-    optionsStr = ''
+    // No task-id provided: rest is all options
+    optionsStr = rest.trim()
   }
 
   const options = optionsStr.split(/\s+/)
