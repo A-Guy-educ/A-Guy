@@ -258,6 +258,22 @@ export function parseCliArgs(argv: string[]): OrchestratorInput {
   for (let i = 0; i < normalized.length; i++) {
     const arg = normalized[i]
 
+    // Handle positional arguments (not starting with --)
+    if (!arg.startsWith('--')) {
+      // Check if it's a valid mode
+      if (isValidMode(arg)) {
+        input.mode = arg
+        continue
+      }
+      // Otherwise treat as file path
+      if (arg.includes('/') || arg.includes('.') || arg.includes('-')) {
+        input.file = arg
+        continue
+      }
+      // Unknown positional arg, skip
+      continue
+    }
+
     if (arg === '--task-id' && normalized[i + 1]) {
       input.taskId = normalized[i + 1]
       i++

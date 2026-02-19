@@ -1,0 +1,33 @@
+{
+  "taskId": "260219-my-task",
+  "mode": "spec",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-19T06:45:03.470Z",
+  "updatedAt": "2026-02-19T06:45:03.481Z",
+  "state": "completed",
+  "currentStage": "clarify",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-19T06:45:03.478Z",
+      "completedAt": "2026-02-19T06:45:03.478Z",
+      "elapsed": 0
+    },
+    "spec": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-19T06:45:03.479Z",
+      "completedAt": "2026-02-19T06:45:03.480Z",
+      "elapsed": 1
+    },
+    "clarify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-19T06:45:03.480Z",
+      "completedAt": "2026-02-19T06:45:03.481Z",
+      "elapsed": 1
+    }
+  },
+  "triggeredBy": "dispatch"
+}
