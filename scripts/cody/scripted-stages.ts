@@ -44,7 +44,8 @@ export function runVerifyStage(outputFile: string, cwd: string = process.cwd()):
   const gates: GateResult[] = [
     runGate('TypeScript', 'pnpm -s tsc --noEmit', cwd),
     runGate('Lint', 'pnpm -s lint', cwd),
-    runGate('Format', 'pnpm -s format', cwd),
+    runGate('Format', 'pnpm -s format:check', cwd),
+    runGate('Unit Tests', 'pnpm -s test:unit', cwd),
   ]
 
   const allPassed = gates.every((g) => g.passed)
@@ -167,13 +168,20 @@ function buildPrTitle(taskDir: string, defaultBranch: string, cwd: string): stri
 function buildPrBody(taskDir: string, defaultBranch: string, cwd: string): string {
   const commits = getCommitSummary(defaultBranch, cwd)
 
-  // Read spec for context
+  // Read spec for context — extract ## Overview section if present
   const specPath = path.join(taskDir, 'spec.md')
   let specSummary = ''
   if (fs.existsSync(specPath)) {
     const spec = fs.readFileSync(specPath, 'utf-8')
-    // Take first 500 chars of spec as summary
-    specSummary = spec.slice(0, 500)
+    // Try to extract the ## Overview section
+    const overviewMatch = spec.match(/##\s*Overview\n([\s\S]*?)(?=\n##\s|$)/)
+    if (overviewMatch) {
+      specSummary = overviewMatch[1].trim()
+    } else {
+      // Fallback: first paragraph (up to first blank line or 500 chars)
+      const firstPara = spec.split(/\n\n/)[0] || ''
+      specSummary = firstPara.slice(0, 500).trim()
+    }
   }
 
   const lines = ['## Summary\n']

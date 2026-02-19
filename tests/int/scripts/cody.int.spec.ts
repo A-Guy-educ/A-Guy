@@ -266,6 +266,28 @@ describe('orchestrator integration', () => {
       const finalStatus = readStatus(TEST_TASK_ID)
       expect(finalStatus?.state).toBe('failed')
     })
+
+    it('records completedAt and totalElapsed on completion', async () => {
+      const { initStatus, completeStatus, readStatus } =
+        await import('../../../scripts/cody/cody-utils')
+
+      const input = {
+        mode: 'full' as const,
+        taskId: TEST_TASK_ID,
+        dryRun: false,
+      }
+
+      initStatus(input)
+
+      // Small delay to ensure measurable elapsed time
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
+      completeStatus(TEST_TASK_ID, 'completed')
+
+      const status = readStatus(TEST_TASK_ID)
+      expect(status?.completedAt).toBeDefined()
+      expect(status?.totalElapsed).toBeGreaterThan(0)
+    })
   })
 
   describe('file system operations integration', () => {

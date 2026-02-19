@@ -86,6 +86,13 @@ export function ensureFeatureBranch(taskId: string, taskType: string, projectDir
   if (remoteBranchExists) {
     // Branch exists on remote — checkout and track it
     console.log(`[branch] Remote branch exists, checking out: ${branchName}`)
+    // Clean dirty state from previous failed runs before switching
+    try {
+      execSync('git checkout -- .', { cwd, stdio: 'pipe' })
+      execSync('git clean -fd', { cwd, stdio: 'pipe' })
+    } catch {
+      // Ignore — working tree may already be clean
+    }
     execSync(`git checkout ${branchName}`, { cwd, stdio: 'inherit' })
     execSync(`git pull origin ${branchName}`, { cwd, stdio: 'inherit' })
     console.log(`[branch] Checked out and pulled: ${branchName}`)

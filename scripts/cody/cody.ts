@@ -24,6 +24,18 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 // ============================================================================
+// Custom Error Types
+// ============================================================================
+
+/** Thrown by plan-review gate to signal architect should retry */
+class PlanReviewFailError extends Error {
+  constructor() {
+    super('Plan review verdict: FAIL')
+    this.name = 'PlanReviewFailError'
+  }
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 
@@ -316,6 +328,20 @@ async function runSpecPipeline(
       console.log(`[${i + 1}/${stages.length}] ${stage} already exists, skipping`)
       updateStageStatus(input.taskId, stage, 'completed', { outputFile: path.basename(outputFile) })
       continue
+    }
+
+    // Skip clarify if spec has no open questions — saves ~60-110s
+    if (stage === 'clarify') {
+      const specFile = path.join(taskDir, 'spec.md')
+      if (fs.existsSync(specFile)) {
+        const specContent = fs.readFileSync(specFile, 'utf-8')
+        const hasOpenQuestions = /##\s*Open Questions/i.test(specContent)
+        if (!hasOpenQuestions) {
+          console.log(`[${i + 1}/${stages.length}] ${stage} skipped — spec has no Open Questions`)
+          updateStageStatus(input.taskId, stage, 'completed', { retries: 0 })
+          continue
+        }
+      }
     }
 
     console.log(`[${i + 1}/${stages.length}] Running ${stage}...`)
@@ -627,7 +653,7 @@ async function runImplPipeline(
         fs.unlinkSync(outputFile)
 
         updateStageStatus(input.taskId, stage, 'failed', { error: 'Plan review verdict: FAIL' })
-        throw new Error('Plan review failed — architect will re-plan on next pipeline iteration')
+        throw new PlanReviewFailError()
       }
       console.log('  ✅ Plan review: PASS')
     }
@@ -638,7 +664,14 @@ async function runImplPipeline(
       const hasRequirements = /##\s*(Requirements|Functional|FR-|NFR-)/i.test(specContent)
       const hasAcceptance = /##\s*Acceptance/i.test(specContent)
       if (!hasRequirements && !hasAcceptance) {
-        console.warn('  ⚠️  Spec missing Requirements or Acceptance Criteria sections')
+        // Delete the bad spec so it can be regenerated
+        fs.unlinkSync(outputFile)
+        updateStageStatus(input.taskId, stage, 'failed', {
+          error: 'Spec missing Requirements or Acceptance Criteria sections',
+        })
+        throw new Error(
+          'Spec is missing ## Requirements or ## Acceptance Criteria — cannot proceed to architect',
+        )
       }
     }
 
@@ -650,6 +683,17 @@ async function runImplPipeline(
         console.warn(
           '  ⚠️  Build report missing Changes section — agent may not have implemented anything',
         )
+      }
+    }
+
+    // Quick tsc gate after build: don't commit code that doesn't compile
+    if (stage === 'build' && !input.dryRun) {
+      try {
+        execSync('pnpm -s tsc --noEmit', { cwd: process.cwd(), stdio: 'pipe' })
+        console.log('  ✅ Post-build tsc check passed')
+      } catch {
+        console.error('  ❌ Post-build tsc check failed — code does not compile')
+        throw new Error('Build produced code that does not compile. Fix and re-run.')
       }
     }
 
@@ -733,6 +777,22 @@ async function runImplPipeline(
           console.error(`📄 Full report: ${outputFile}`)
           throw new Error('Verification failed after auto-fix attempts')
         }
+
+        // Commit autofix changes — the commit agent already ran before verify,
+        // so autofix changes would be lost without this explicit commit
+        if (!input.dryRun) {
+          try {
+            execSync('git add -A', { cwd: process.cwd(), stdio: 'inherit' })
+            execSync(`git commit --no-gpg-sign -m "fix: autofix corrections for ${input.taskId}"`, {
+              cwd: process.cwd(),
+              stdio: 'inherit',
+            })
+            execSync('git push -u origin HEAD', { cwd: process.cwd(), stdio: 'inherit' })
+            console.log('  \u2705 Autofix changes committed and pushed')
+          } catch {
+            console.log('  \u26a0 No autofix changes to commit (or git error)')
+          }
+        }
       }
       commitTaskFiles()
     }
@@ -753,7 +813,45 @@ async function runImplPipeline(
     } else {
       // Run sequential stage
       console.log(`[${i + 1}/${pipeline.length}] ${pipelineStage}`)
-      await runSingleStage(pipelineStage)
+      try {
+        await runSingleStage(pipelineStage)
+      } catch (err) {
+        // Plan-review retry loop: if plan-review fails, re-run architect + plan-review (max 2 retries)
+        if (err instanceof PlanReviewFailError) {
+          const MAX_PLAN_RETRIES = 2
+          let planFixed = false
+
+          for (let planAttempt = 1; planAttempt <= MAX_PLAN_RETRIES; planAttempt++) {
+            console.log(
+              `\n🔄 Plan review retry ${planAttempt}/${MAX_PLAN_RETRIES}: re-running architect...`,
+            )
+            await runSingleStage('architect')
+
+            console.log(`  Re-running plan-review...`)
+            try {
+              await runSingleStage('plan-review')
+              planFixed = true
+              break
+            } catch (retryErr) {
+              if (retryErr instanceof PlanReviewFailError) {
+                console.error(
+                  `  Plan review still failing (attempt ${planAttempt}/${MAX_PLAN_RETRIES})`,
+                )
+                continue
+              }
+              throw retryErr // Non plan-review error, propagate
+            }
+          }
+
+          if (!planFixed) {
+            throw new Error(
+              `Plan review failed after ${MAX_PLAN_RETRIES} retries — pipeline stopped`,
+            )
+          }
+        } else {
+          throw err // Non plan-review error, propagate
+        }
+      }
     }
   }
 

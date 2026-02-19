@@ -37,6 +37,8 @@ export interface CodyPipelineStatus {
   pipeline: string
   startedAt: string
   updatedAt: string
+  completedAt?: string
+  totalElapsed?: number
   state: 'running' | 'completed' | 'failed' | 'timeout'
   currentStage: string | null
   stages: Record<string, StageStatus>
@@ -189,8 +191,13 @@ export function completeStatus(taskId: string, state: CodyPipelineStatus['state'
   const status = readStatus(taskId)
   if (!status) return
 
+  const now = new Date().toISOString()
   status.state = state
-  status.updatedAt = new Date().toISOString()
+  status.updatedAt = now
+  status.completedAt = now
+  if (status.startedAt) {
+    status.totalElapsed = new Date(now).getTime() - new Date(status.startedAt).getTime()
+  }
   writeStatus(taskId, status)
 }
 
