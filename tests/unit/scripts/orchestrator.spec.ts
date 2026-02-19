@@ -181,10 +181,41 @@ describe('parseCliArgs', () => {
     expect(result.issueNumber).toBe(42)
   })
 
-  it('throws when --task-id is missing', async () => {
+  it('auto-generates task-id when missing', async () => {
     const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
 
-    expect(() => parseCliArgs([])).toThrow('--task-id is required')
+    // Should auto-generate a task-id with date-based format
+    const result = parseCliArgs([])
+    expect(result.taskId).toMatch(/^\d{6}-auto-\d{2}$/)
+  })
+
+  it('generates task-id from --file path', async () => {
+    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+
+    const result = parseCliArgs(['--file', 'path/to/add-metrics.md'])
+    // Should generate task-id from filename, with or without .md extension
+    expect(result.taskId).toMatch(/^\d{6}-add-metrics(-md)?$/)
+  })
+
+  it('sets local mode when --local is provided', async () => {
+    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+
+    const result = parseCliArgs(['--task-id', FIXTURE_TASK_ID, '--local'])
+    expect(result.local).toBe(true)
+  })
+
+  it('auto-detects local mode from missing GITHUB_ACTIONS', async () => {
+    // Save original env
+    const original = process.env.GITHUB_ACTIONS
+    delete process.env.GITHUB_ACTIONS
+
+    const { parseCliArgs } = await import('../../../scripts/orchestrator-utils')
+
+    const result = parseCliArgs(['--task-id', FIXTURE_TASK_ID])
+    expect(result.local).toBe(true)
+
+    // Restore
+    if (original) process.env.GITHUB_ACTIONS = original
   })
 
   it('throws for invalid task-id format', async () => {

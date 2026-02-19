@@ -88,9 +88,9 @@
     "verify": "pnpm tsx scripts/verify.ts",
     "ocode": "opencode",
     "setup:opencode": "curl -fsSL https://opencode.ai/install | bash",
-    "pipeline:spec": "pnpm tsx scripts/pipeline-spec.ts",
-    "pipeline:impl": "pnpm tsx scripts/pipeline-impl.ts",
-    "pipeline:rerun": "pnpm tsx scripts/pipeline-rerun.ts",
+    "pipeline:spec": "pnpm tsx scripts/orchestrator.ts --mode=spec",
+    "pipeline:impl": "pnpm tsx scripts/orchestrator.ts --mode=impl",
+    "pipeline:rerun": "pnpm tsx scripts/orchestrator.ts --mode=rerun",
     "pipeline:orchestrate": "pnpm tsx scripts/orchestrator.ts"
   },
   "dependencies": {
