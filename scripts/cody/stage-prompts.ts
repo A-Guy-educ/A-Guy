@@ -5,6 +5,9 @@
  * @ai-summary Stage runtime context for OpenCode agents — behavioral instructions live in .opencode/agents/*.md
  */
 
+import * as fs from 'fs'
+import * as path from 'path'
+
 import type { CodyInput } from './cody-utils'
 
 // ============================================================================
@@ -111,6 +114,26 @@ export const stageInstructions: Record<Stage, (taskId: string) => string> = {
 // ============================================================================
 
 /**
+ * Read task_type from task.json for the given task.
+ * Returns 'implement_feature' as default if task.json doesn't exist or is invalid.
+ */
+function getTaskType(taskId: string): string {
+  const taskJsonPath = path.join(process.cwd(), '.tasks', taskId, 'task.json')
+  try {
+    if (fs.existsSync(taskJsonPath)) {
+      const content = fs.readFileSync(taskJsonPath, 'utf-8')
+      const data = JSON.parse(content)
+      if (data.task_type && typeof data.task_type === 'string') {
+        return data.task_type
+      }
+    }
+  } catch {
+    // Ignore errors, return default
+  }
+  return 'implement_feature'
+}
+
+/**
  * Build the full prompt for a given stage.
  *
  * Instead of pointing to a monolithic .context.md, lists the specific files
@@ -125,6 +148,9 @@ export function buildStagePrompt(input: CodyInput, stage: string): string {
   const { taskId } = input
   const taskDir = `.tasks/${taskId}`
 
+  // Get task_type for stages that need it (architect, build)
+  const taskType = getTaskType(taskId)
+
   const instructionFn = stageInstructions[stage as Stage]
   const instruction = instructionFn ? instructionFn(taskId) : ''
 
@@ -134,9 +160,14 @@ export function buildStagePrompt(input: CodyInput, stage: string): string {
 
   const filesSection = contextFiles.length > 0 ? `\nRead these files for context:\n${fileList}` : ''
 
+  // Add task_type for stages that need it (architect, build)
+  const taskTypeSection =
+    stage === 'architect' || stage === 'build' ? `\nTask Type: ${taskType}` : ''
+
   const parts = [
     instruction,
     `Task ID: ${taskId}`,
+    taskTypeSection,
     filesSection,
     `Write your output to the expected output file in ${taskDir}/.`,
   ].filter(Boolean)

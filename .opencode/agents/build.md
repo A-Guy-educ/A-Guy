@@ -209,3 +209,66 @@ Use the Skill tool to load 'tdd-workflow' skill
 - ALWAYS invoke domain subagents when working in their territory (see above)
 - Use Skills for specialized workflows (new-collection, new-block, add-ui-component)
 - If verify has failed: fix only the reported issues
+
+## Bug Fix Workflow (when Task Type is fix_bug)
+
+When your prompt includes `Task Type: fix_bug`, follow this TDD workflow for EVERY step:
+
+### 1. Write Reproduction Test FIRST
+
+For the plan step, write a test that **demonstrates the bug**. This is NOT a test for new behavior — it's a test that **reproduces the broken behavior**.
+
+```typescript
+// Example: bug reproduction test
+it('should throw NotFoundError when user does not exist', async () => {
+  // This test SHOULD FAIL because the bug returns null instead
+  await expect(getUser('nonexistent-id')).rejects.toThrow(NotFoundError)
+})
+```
+
+### 2. Run Test — MUST FAIL
+
+```bash
+pnpm test:unit
+```
+
+**CRITICAL**: If this test PASSES immediately, your test is wrong — it doesn't actually reproduce the bug. The test must fail to prove the bug exists.
+
+### 3. Apply Minimal Fix
+
+Fix ONLY what's needed to make the reproduction test pass. Do not add features or refactor.
+
+### 4. Run Test Again — MUST PASS
+
+```bash
+pnpm test:unit
+```
+
+The reproduction test now passes, proving the bug is fixed.
+
+### 5. Run Full Test Suite — No Regressions
+
+```bash
+pnpm test:unit
+```
+
+Ensure no existing tests are broken by your fix.
+
+### Key Difference from Feature TDD
+
+| Step           | Feature TDD                          | Bug Fix TDD                  |
+| -------------- | ------------------------------------ | ---------------------------- |
+| Test writes    | Test for NEW expected behavior       | Test that REPRODUCES the bug |
+| First run      | Expects FAIL (feature doesn't exist) | Expects FAIL (bug exists)    |
+| Implementation | Add new feature                      | Fix broken behavior          |
+| Second run     | Expects PASS                         | Expects PASS                 |
+
+### Bug Fix Checklist
+
+For EACH step in the plan:
+
+- [ ] Wrote reproduction test BEFORE fixing code
+- [ ] Verified reproduction test FAILS (proves bug exists)
+- [ ] Applied minimal fix
+- [ ] Verified reproduction test PASSES (proves bug fixed)
+- [ ] Ran full test suite — no regressions
