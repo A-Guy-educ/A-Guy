@@ -1,0 +1,20 @@
+{
+  "taskId": "260220-auto-25",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-20T16:29:33.222Z",
+  "updatedAt": "2026-02-20T16:29:35.843Z",
+  "state": "running",
+  "currentStage": "taskify",
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-20T16:29:35.843Z"
+    }
+  },
+  "triggeredBy": "comment",
+  "issueNumber": 504,
+  "runId": "22232140995",
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/22232140995"
+}
