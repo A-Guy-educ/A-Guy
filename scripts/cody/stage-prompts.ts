@@ -9,6 +9,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 import type { CodyInput } from './cody-utils'
+import { stageOutputFile } from './pipeline-utils'
 
 // ============================================================================
 // Constants
@@ -164,12 +165,14 @@ export function buildStagePrompt(input: CodyInput, stage: string): string {
   const taskTypeSection =
     stage === 'architect' || stage === 'build' ? `\nTask Type: ${taskType}` : ''
 
+  const outputFile = stageOutputFile(taskDir, stage)
+
   const parts = [
     instruction,
     `Task ID: ${taskId}`,
     taskTypeSection,
     filesSection,
-    `Write your output to the expected output file in ${taskDir}/.`,
+    `Write your output to ${outputFile}`,
   ].filter(Boolean)
 
   return parts.join('\n\n')
