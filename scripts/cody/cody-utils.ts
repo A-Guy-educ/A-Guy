@@ -405,6 +405,28 @@ export function parseCliArgs(argv: string[]): CodyInput {
     } else if (arg === '--run-url' && normalized[i + 1]) {
       input.runUrl = normalized[i + 1]
       i++
+    } else if (arg.startsWith('--comment-body-env=')) {
+      // For comment triggers: read the raw comment body from env var
+      // This avoids shell injection when passing comment content through CI
+      const envVarName = arg.slice('--comment-body-env='.length)
+      const commentBodyFromEnv = process.env[envVarName]
+      if (commentBodyFromEnv) {
+        const parsed = parseCommentBody(commentBodyFromEnv, undefined)
+        if (!parsed.success) {
+          throw new Error(parsed.error || 'Failed to parse comment body from env var')
+        }
+        if (parsed.input) {
+          input.mode = parsed.input.mode
+          if (parsed.input.taskId) input.taskId = parsed.input.taskId
+          input.dryRun = parsed.input.dryRun
+          input.feedback = parsed.input.feedback
+          input.fromStage = parsed.input.fromStage
+          input.triggerType = 'comment'
+          if (parsed.input.issueNumber) {
+            input.issueNumber = parsed.input.issueNumber
+          }
+        }
+      }
     } else if (arg === '--comment-body' && normalized[i + 1]) {
       // For comment triggers: parse the raw comment body
       // Note: issueNumber may not be parsed yet, so we pass undefined and merge later

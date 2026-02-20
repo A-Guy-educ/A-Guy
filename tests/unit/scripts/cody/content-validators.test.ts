@@ -249,5 +249,38 @@ describe('content-validators', () => {
     it('returns false for PASS content', () => {
       expect(isVerifyFailed('Result: PASS')).toBe(false)
     })
+
+    it('returns false for "0 failures" (false positive)', () => {
+      expect(isVerifyFailed('Tests: 0 failures found')).toBe(false)
+    })
+
+    it('returns false for "did not fail"', () => {
+      expect(isVerifyFailed('Tests did not fail')).toBe(false)
+    })
+
+    it('returns false for per-gate FAIL when overall PASS', () => {
+      // Gate failed but overall passed - this is the expected scenario
+      expect(isVerifyFailed('## TypeScript: FAIL ❌\n## Result: PASS')).toBe(false)
+    })
+
+    it('returns true for overall FAIL despite gate passes', () => {
+      expect(isVerifyFailed('## TypeScript: PASS ✅\n## Result: FAIL')).toBe(true)
+    })
+
+    it('handles multiline verify output correctly', () => {
+      const fullOutput = `# Verification Report
+
+## TypeScript: PASS ✅
+## Lint: PASS ✅
+## Format: PASS ✅
+## Unit Tests: FAIL ❌
+
+\`\`\`
+Some test failure output
+\`\`\`
+
+## Result: FAIL`
+      expect(isVerifyFailed(fullOutput)).toBe(true)
+    })
   })
 })

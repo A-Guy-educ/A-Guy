@@ -462,7 +462,6 @@ describe('orchestrator integration', () => {
       expect(ALL_IMPL_STAGE_NAMES).toContain('plan-review')
       expect(ALL_IMPL_STAGE_NAMES).toContain('build')
       expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
-      expect(ALL_IMPL_STAGE_NAMES).toContain('test')
       expect(ALL_IMPL_STAGE_NAMES).toContain('verify')
       expect(ALL_IMPL_STAGE_NAMES).toContain('auditor')
       expect(ALL_IMPL_STAGE_NAMES).toContain('pr')

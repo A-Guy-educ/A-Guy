@@ -6,6 +6,9 @@
 
 set -euo pipefail
 
+# BUG-8 fix: Fetch latest remote refs before checking for branches
+git fetch origin
+
 # Try common branch prefixes for the task-id
 for prefix in feat fix refactor docs chore; do
   BRANCH="${prefix}/${TASK_ID}"

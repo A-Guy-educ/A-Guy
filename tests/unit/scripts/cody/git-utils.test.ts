@@ -4,6 +4,7 @@ import * as childProcess from 'child_process'
 // Mock child_process.execSync before importing the module
 vi.mock('child_process', () => ({
   execSync: vi.fn(),
+  execFileSync: vi.fn(),
 }))
 
 import {
@@ -708,6 +709,7 @@ describe('ensureFeatureBranch', () => {
         'git status --porcelain',
         'git checkout fix/260218-existing',
         'git pull origin fix/260218-existing',
+        'git stash list',
       ])
     })
 
@@ -886,10 +888,8 @@ describe('commitPipelineFiles', () => {
   })
 
   it('should handle nothing to commit gracefully', () => {
-    vi.mocked(childProcess.execSync).mockImplementation((cmd: string) => {
-      if (String(cmd).startsWith('git add')) {
-        return ''
-      }
+    vi.mocked(childProcess.execSync).mockReturnValue('')
+    vi.mocked(childProcess.execFileSync).mockImplementation(() => {
       throw new Error('nothing to commit')
     })
 
@@ -904,10 +904,8 @@ describe('commitPipelineFiles', () => {
   })
 
   it('should throw on commit error (except nothing to commit)', () => {
-    vi.mocked(childProcess.execSync).mockImplementation((cmd: string) => {
-      if (String(cmd).startsWith('git add')) {
-        return ''
-      }
+    vi.mocked(childProcess.execSync).mockReturnValue('')
+    vi.mocked(childProcess.execFileSync).mockImplementation(() => {
       throw new Error('some other error')
     })
 
@@ -923,6 +921,7 @@ describe('commitPipelineFiles', () => {
 
   it('should optionally push after commit', () => {
     vi.mocked(childProcess.execSync).mockReturnValue('')
+    vi.mocked(childProcess.execFileSync).mockReturnValue(Buffer.from(''))
 
     commitPipelineFiles({
       taskDir: '.tasks/260218-test',
@@ -931,6 +930,12 @@ describe('commitPipelineFiles', () => {
       push: true,
     })
 
+    // Should have called git commit via execFileSync (BUG-5 fix: no shell injection)
+    expect(childProcess.execFileSync).toHaveBeenCalledWith(
+      'git',
+      ['commit', '--no-gpg-sign', '-m', 'test commit'],
+      expect.objectContaining({ stdio: 'inherit' }),
+    )
     // Should have called git push
     expect(childProcess.execSync).toHaveBeenCalledWith(
       'git push -u origin HEAD',

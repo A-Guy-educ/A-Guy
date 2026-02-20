@@ -25,10 +25,18 @@ interface GateResult {
   output: string
 }
 
-function runGate(name: string, command: string, cwd: string): GateResult {
+/** Default timeout per gate (2 minutes) */
+const DEFAULT_GATE_TIMEOUT = 120_000
+
+function runGate(
+  name: string,
+  command: string,
+  cwd: string,
+  timeout: number = DEFAULT_GATE_TIMEOUT,
+): GateResult {
   console.log(`  Running ${name}...`)
   try {
-    const output = execSync(command, { cwd, encoding: 'utf-8', timeout: 120_000 })
+    const output = execSync(command, { cwd, encoding: 'utf-8', timeout })
     console.log(`  ✅ ${name} passed`)
     return { name, passed: true, output: output.slice(0, 500) }
   } catch (error: unknown) {
@@ -39,14 +47,21 @@ function runGate(name: string, command: string, cwd: string): GateResult {
   }
 }
 
-export function runVerifyStage(outputFile: string, cwd: string = process.cwd()): VerifyResult {
+export function runVerifyStage(
+  outputFile: string,
+  cwd: string = process.cwd(),
+  timeout?: number,
+): VerifyResult {
   console.log('\n🔍 Running verification (scripted)...\n')
 
+  // Use provided timeout or default, distributed across gates
+  const gateTimeout = timeout ?? DEFAULT_GATE_TIMEOUT
+
   const gates: GateResult[] = [
-    runGate('TypeScript', 'pnpm -s tsc --noEmit', cwd),
-    runGate('Lint', 'pnpm -s lint', cwd),
-    runGate('Format', 'pnpm -s format:check', cwd),
-    runGate('Unit Tests', 'pnpm -s test:unit', cwd),
+    runGate('TypeScript', 'pnpm -s tsc --noEmit', cwd, gateTimeout),
+    runGate('Lint', 'pnpm -s lint', cwd, gateTimeout),
+    runGate('Format', 'pnpm -s format:check', cwd, gateTimeout),
+    runGate('Unit Tests', 'pnpm -s test:unit', cwd, gateTimeout),
   ]
 
   const allPassed = gates.every((g) => g.passed)

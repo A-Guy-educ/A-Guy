@@ -106,10 +106,169 @@ Use the Write tool to create this file.
 - Quality checks pass (`pnpm -s tsc --noEmit && pnpm -s lint`)
 - `build.md` output file written
 
+## Domain-Specific Subagent Invocation
+
+Invoke these subagents when working in their specific domains:
+
+### @payload-expert
+
+**When:** Working with Payload CMS collections, hooks, access control, endpoints, jobs
+**What to ask:** "Review my implementation against AGENTS.md patterns. Did I pass req to nested operations? Is overrideAccess set correctly?"
+
+### @web-expert
+
+**When:** Working on frontend components in `src/ui/web/`, `src/app/(frontend)/`, or anything with i18n
+**What to ask:** "Review my component against DESIGN_SYSTEM.md. Did I use Tailwind only? Are translations using useTranslations()? Does it support RTL?"
+
+### @admin-expert
+
+**When:** Working on Payload admin components in `src/ui/admin/` or `src/app/(payload)/`
+**What to ask:** "Review my admin component. Am I using Payload CSS variables correctly? Did I run generate:importmap? Am I using the right hooks?"
+
+### @llm-expert
+
+**When:** Working on LLM providers, prompts, embeddings, vector search, or chat pipeline
+**What to ask:** "Review my LLM code. Am I following Context Policy V1? Did I use the singleton pattern? Is output validated with Zod?"
+
+### @security-auditor
+
+**When:** Any code involving authentication, authorization, secrets, or API endpoints
+**What to ask:** "Audit this code for security issues. Look for access control bypass, hardcoded secrets, missing auth."
+
+### @code-reviewer
+
+**When:** After implementing any code, before quality checks
+**What to ask:** "Review for TypeScript compliance, import aliases, and general code quality."
+
+## Skills (Workflow Automation)
+
+### Install Recommended Skills First
+
+Before implementing, check if the plan includes a "## Recommended Skills" section. If so, install them:
+
+```bash
+npx skills add <owner/repo@skill-name> -y
+```
+
+For example: `npx skills add anthropics/skills@webapp-testing -y`
+
+### Built-in Skills
+
+Use the **Skill tool** to invoke specialized workflows:
+
+**When:** Plan requires creating a new Payload CMS collection
+**How:**
+
+```
+Use the Skill tool to load 'new-collection' skill
+```
+
+### @new-block
+
+**When:** Plan requires adding a new layout builder block
+**How:**
+
+```
+Use the Skill tool to load 'new-block' skill
+```
+
+### @add-ui-component
+
+**When:** Plan requires adding a shadcn/ui component
+**How:**
+
+```
+Use the Skill tool to load 'add-ui-component' skill
+```
+
+### @quality-check
+
+**When:** After implementation, before verify stage
+**How:**
+
+```
+Use the Skill tool to load 'quality-check' skill
+```
+
+Runs: tsc --noEmit, lint, format:check, test:unit
+
+### @tdd-workflow
+
+**When:** Writing tests following TDD principles
+**How:**
+
+```
+Use the Skill tool to load 'tdd-workflow' skill
+```
+
 ## Rules
 
 - Do NOT create branches — the pipeline already did that
 - Do NOT commit or push — the commit stage handles that
 - Do NOT run `git add`, `git commit`, or `git push`
-- You may consult subagents (code-reviewer, security-auditor, payload-expert, test-writer)
+- ALWAYS invoke domain subagents when working in their territory (see above)
+- Use Skills for specialized workflows (new-collection, new-block, add-ui-component)
 - If verify has failed: fix only the reported issues
+
+## Bug Fix Workflow (when Task Type is fix_bug)
+
+When your prompt includes `Task Type: fix_bug`, follow this TDD workflow for EVERY step:
+
+### 1. Write Reproduction Test FIRST
+
+For the plan step, write a test that **demonstrates the bug**. This is NOT a test for new behavior — it's a test that **reproduces the broken behavior**.
+
+```typescript
+// Example: bug reproduction test
+it('should throw NotFoundError when user does not exist', async () => {
+  // This test SHOULD FAIL because the bug returns null instead
+  await expect(getUser('nonexistent-id')).rejects.toThrow(NotFoundError)
+})
+```
+
+### 2. Run Test — MUST FAIL
+
+```bash
+pnpm test:unit
+```
+
+**CRITICAL**: If this test PASSES immediately, your test is wrong — it doesn't actually reproduce the bug. The test must fail to prove the bug exists.
+
+### 3. Apply Minimal Fix
+
+Fix ONLY what's needed to make the reproduction test pass. Do not add features or refactor.
+
+### 4. Run Test Again — MUST PASS
+
+```bash
+pnpm test:unit
+```
+
+The reproduction test now passes, proving the bug is fixed.
+
+### 5. Run Full Test Suite — No Regressions
+
+```bash
+pnpm test:unit
+```
+
+Ensure no existing tests are broken by your fix.
+
+### Key Difference from Feature TDD
+
+| Step           | Feature TDD                          | Bug Fix TDD                  |
+| -------------- | ------------------------------------ | ---------------------------- |
+| Test writes    | Test for NEW expected behavior       | Test that REPRODUCES the bug |
+| First run      | Expects FAIL (feature doesn't exist) | Expects FAIL (bug exists)    |
+| Implementation | Add new feature                      | Fix broken behavior          |
+| Second run     | Expects PASS                         | Expects PASS                 |
+
+### Bug Fix Checklist
+
+For EACH step in the plan:
+
+- [ ] Wrote reproduction test BEFORE fixing code
+- [ ] Verified reproduction test FAILS (proves bug exists)
+- [ ] Applied minimal fix
+- [ ] Verified reproduction test PASSES (proves bug fixed)
+- [ ] Ran full test suite — no regressions

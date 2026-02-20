@@ -174,8 +174,9 @@ export function extractVerifySummary(content: string): VerifySummary {
 }
 
 /**
- * Check if verify content indicates failure
+ * Check if verify content indicates failure.
+ * Matches "Result: FAIL" anywhere in content, not per-gate failures like "TypeScript: FAIL".
  */
 export function isVerifyFailed(verifyContent: string): boolean {
-  return /FAIL/i.test(verifyContent)
+  return /\bResult:\s*FAIL\b/i.test(verifyContent)
 }

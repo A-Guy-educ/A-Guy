@@ -17,7 +17,6 @@ import {
   extractVerifySummary,
   isVerifyFailed,
 } from './content-validators'
-import type { CodyInput } from './cody-utils'
 
 // ============================================================================
 // Error Types
@@ -167,38 +166,4 @@ export function handleVerifyResult(options: StageHookOptions): VerifyFailureInfo
   }
 
   return { failed: true, summary }
-}
-
-// ============================================================================
-// Run All Post-Stage Hooks
-// ============================================================================
-
-/**
- * Run all post-stage hooks for a given stage
- */
-export function runPostStageHooks(stage: string, options: StageHookOptions): void {
-  switch (stage) {
-    case 'architect':
-      handleRerunFeedbackArchive(options)
-      break
-
-    case 'plan-review':
-      handlePlanReviewGate(options)
-      break
-
-    case 'build':
-      handleBuildValidation(options)
-      handlePostBuildTsc(options)
-      break
-
-    case 'verify':
-      // Verify result handling is more complex (includes autofix loop)
-      // For now, just do basic failure detection
-      handleVerifyResult(options)
-      break
-
-    default:
-      // No hooks for other stages
-      break
-  }
 }

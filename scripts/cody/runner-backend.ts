@@ -46,14 +46,16 @@ export class LocalRunner implements RunnerBackend {
   name = 'opencode-local'
 
   spawn(stage: string, prompt: string, env: NodeJS.ProcessEnv, cwd: string): ChildProcess {
-    // Local runner uses pnpm ocode run --agent <stage> "<prompt>"
-    const fullPrompt = `Execute ${stage} for this task. ${prompt}`
-    return spawn('pnpm', ['ocode', 'run', '--agent', stage, fullPrompt], {
+    // Local runner uses pnpm ocode run --agent <stage>
+    // Prompt is passed via PROMPT env var to avoid ARG_MAX limits on large prompts
+    return spawn('pnpm', ['ocode', 'run', '--agent', stage], {
       cwd,
       stdio: 'inherit',
       env: {
         ...env,
-        // Also set the standard env vars for consistency
+        // Pass via env vars to avoid E2BIG on large prompts
+        AGENT: stage,
+        PROMPT: prompt,
         MODEL: env.MODEL,
       },
     })

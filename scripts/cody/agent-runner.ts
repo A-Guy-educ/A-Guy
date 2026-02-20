@@ -61,12 +61,13 @@ export const STAGE_MODELS: Record<string, string> = {
 
 /**
  * Resolve the model for a given stage.
- * Priority: explicit option > env OPENCODE_MODEL > stage-specific > default
+ * Priority: explicit option > stage-specific > env OPENCODE_MODEL > default
  */
 export function resolveModel(stage: string, explicitModel?: string): string {
   if (explicitModel) return explicitModel
+  if (STAGE_MODELS[stage]) return STAGE_MODELS[stage]
   if (process.env.OPENCODE_MODEL) return process.env.OPENCODE_MODEL
-  return STAGE_MODELS[stage] || DEFAULT_MODEL
+  return DEFAULT_MODEL
 }
 
 // ============================================================================
@@ -243,7 +244,7 @@ export function runAgentWithFileWatch(
       // Process exit with retry logic
       currentChild.on('exit', (code) => {
         if (!resolved) {
-          // Success if file was created
+          // Success only if file was created (not just exit code 0)
           if (fs.existsSync(outputFile)) {
             finish({ succeeded: true, timedOut: false })
           } else if (code !== 0 && retries < maxRetries) {
@@ -258,7 +259,9 @@ export function runAgentWithFileWatch(
             // Brief delay before retry
             setTimeout(attemptWithRetry, 2000)
           } else {
-            finish({ succeeded: code === 0, timedOut: false })
+            // Exit code 0 but no output file = failure (agent hallucinated success)
+            console.log(`  ❌ Agent exited ${code} without producing output file`)
+            finish({ succeeded: false, timedOut: false })
           }
         }
       })

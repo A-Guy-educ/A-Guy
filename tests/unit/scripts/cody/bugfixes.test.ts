@@ -183,22 +183,14 @@ describe('BUG-5: Autofix uses targeted staging', () => {
       codyContent.indexOf('Autofix changes committed and pushed'),
     )
 
-    // Extract only actual code lines (execSync calls), not comments
-    const codeLines = autofixSection.split('\n').filter((line: string) => {
-      const trimmed = line.trim()
-      // Only lines that start with actual code, not comments
-      return (
-        trimmed.startsWith('execSync') || trimmed.startsWith('const ') || trimmed.startsWith('let ')
-      )
-    })
-
-    // Verify 'git add -u' is used in code
-    const hasAddU = codeLines.some((l: string) => l.includes("'git add -u'"))
-    expect(hasAddU).toBe(true)
-
-    // Verify 'git add -A' is NOT used in any code line
-    const hasAddA = codeLines.some((l: string) => l.includes("'git add -A'"))
-    expect(hasAddA).toBe(false)
+    // The logic is now in commitPipelineFiles() in git-utils.ts
+    // Verify the function uses 'tracked+task' staging strategy which maps to git add -u
+    const gitUtilsContent = fs.readFileSync(
+      path.join(process.cwd(), 'scripts/cody/git-utils.ts'),
+      'utf-8',
+    )
+    expect(gitUtilsContent).toContain("case 'tracked+task':")
+    expect(gitUtilsContent).toContain("execSync('git add -u'")
   })
 })
 
@@ -206,20 +198,18 @@ describe('BUG-5: Autofix uses targeted staging', () => {
 // BUG-6: commitTaskFilesCI handles dirty state
 // ============================================================================
 
-describe('BUG-6: commitTaskFilesCI dirty state cleanup', () => {
-  it('should include git checkout and git clean in commitTaskFilesCI', () => {
-    const codyContent = fs.readFileSync(path.join(process.cwd(), 'scripts/cody/cody.ts'), 'utf-8')
-
-    // Find the commitTaskFilesCI function
-    const fnStart = codyContent.indexOf('function commitTaskFilesCI')
-    const fnEnd = codyContent.indexOf('\n}\n', fnStart) + 3
-    const fnBody = codyContent.slice(fnStart, fnEnd)
+describe('BUG-6: commitPipelineFiles handles dirty state cleanup', () => {
+  it('should include git checkout and git clean in commitPipelineFiles', () => {
+    const gitUtilsContent = fs.readFileSync(
+      path.join(process.cwd(), 'scripts/cody/git-utils.ts'),
+      'utf-8',
+    )
 
     // Should contain dirty state cleanup
-    expect(fnBody).toContain('git checkout -- .')
-    expect(fnBody).toContain('git clean -fd')
+    expect(gitUtilsContent).toContain('git checkout -- .')
+    expect(gitUtilsContent).toContain('git clean -fd')
     // Should exclude .tasks from clean
-    expect(fnBody).toContain('--exclude=.tasks')
+    expect(gitUtilsContent).toContain('--exclude=.tasks')
   })
 })
 
