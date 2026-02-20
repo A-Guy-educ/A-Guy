@@ -145,8 +145,8 @@ export function ChatInterface({
     dismissError,
     // External media injection (Ask page uploads)
     addExternalMedia,
-    askMedia,
-    clearAskMedia,
+    askMedia: _askMedia,
+    clearAskMedia: _clearAskMedia,
     // Programmatic message injection
     injectExerciseContext,
     // Contextual help for incorrect answers
