@@ -61,6 +61,9 @@ jobs:
       - name: Run unit tests
         run: pnpm test:unit
 
+      - name: Run cody integration tests
+        run: pnpm test:int:cody
+
       - name: Check for TODO/FIXME in production code
         run: |
           if grep -r "TODO\|FIXME" src/ --exclude-dir=node_modules --exclude-dir=.next 2>/dev/null; then

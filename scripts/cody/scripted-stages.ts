@@ -8,6 +8,7 @@
 import { execFileSync, execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
+import { getDefaultBranch } from './git-utils'
 
 // ============================================================================
 // Verify Stage — run quality gates directly
@@ -84,16 +85,6 @@ function getBranchName(cwd: string): string {
   return execSync('git branch --show-current', { cwd, encoding: 'utf-8' }).trim()
 }
 
-function getDefaultBranch(cwd: string): string {
-  try {
-    return execSync("git remote show origin | grep 'HEAD branch' | cut -d' ' -f5", {
-      cwd,
-      encoding: 'utf-8',
-    }).trim()
-  } catch {
-    return 'dev'
-  }
-}
 
 function getExistingPr(branch: string, cwd: string): string | null {
   try {

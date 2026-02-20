@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as childProcess from 'child_process'
 import * as fs from 'fs'
+import { getDefaultBranch } from "../../../../scripts/cody/git-utils"
 
 // Mock child_process and fs before importing the module under test
 vi.mock('child_process', () => ({
@@ -13,6 +14,10 @@ vi.mock('fs', () => ({
   readFileSync: vi.fn(),
   writeFileSync: vi.fn(),
   mkdirSync: vi.fn(),
+}))
+
+vi.mock("../../../../scripts/cody/git-utils", () => ({
+  getDefaultBranch: vi.fn().mockReturnValue("dev"),
 }))
 
 import { runVerifyStage, runPrStage } from '../../../../scripts/cody/scripted-stages'
@@ -30,6 +35,7 @@ const mockExecFileSync = vi.mocked(childProcess.execFileSync)
 const mockWriteFileSync = vi.mocked(fs.writeFileSync)
 const mockExistsSync = vi.mocked(fs.existsSync)
 const mockReadFileSync = vi.mocked(fs.readFileSync)
+const mockGetDefaultBranch = vi.mocked(getDefaultBranch)
 
 /**
  * Configure execSync to succeed for all 4 verify gates.
@@ -350,6 +356,8 @@ describe('runVerifyStage', () => {
 describe('runPrStage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset getDefaultBranch mock to default
+    mockGetDefaultBranch.mockReturnValue('dev')
     // Default mocks for fs
     mockExistsSync.mockReturnValue(false)
     mockReadFileSync.mockReturnValue('')
@@ -357,7 +365,7 @@ describe('runPrStage', () => {
 
   /**
    * Set up execSync and execFileSync responses for the standard PR flow.
-   * execSync handles: git branch, git remote show origin, git log
+   * execSync handles: git branch, git log
    * execFileSync handles: gh pr list, git push, gh pr create
    * Callers can override specific commands.
    */
@@ -380,18 +388,16 @@ describe('runPrStage', () => {
       pushFails = false,
     } = overrides
 
-    // execSync handles string-based commands: git branch, git remote show origin, git log
+
+    // Mock getDefaultBranch (imported from git-utils)
+    mockGetDefaultBranch.mockReturnValue(defaultBranch)
+    // execSync handles string-based commands: git branch, git log
     mockExecSync.mockImplementation((cmd: string) => {
       const cmdStr = typeof cmd === 'string' ? cmd : String(cmd)
 
       // getBranchName
       if (cmdStr.includes('git branch --show-current')) {
         return `${branch}\n`
-      }
-
-      // getDefaultBranch
-      if (cmdStr.includes('git remote show origin')) {
-        return `${defaultBranch}\n`
       }
 
       // getCommitSummary
@@ -547,7 +553,6 @@ describe('runPrStage', () => {
       mockExecSync.mockImplementation((cmd: string) => {
         const cmdStr = String(cmd)
         if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
-        if (cmdStr.includes('git remote show origin')) throw new Error('no remote')
         if (cmdStr.includes('git log --oneline')) return 'abc123 commit\n'
         return ''
       })
@@ -581,7 +586,6 @@ describe('runPrStage', () => {
       mockExecSync.mockImplementation((cmd: string) => {
         const cmdStr = String(cmd)
         if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
-        if (cmdStr.includes('git remote show origin')) return 'dev\n'
         if (cmdStr.includes('git log --oneline')) return ''
         return ''
       })
@@ -605,7 +609,6 @@ describe('runPrStage', () => {
       mockExecSync.mockImplementation((cmd: string) => {
         const cmdStr = String(cmd)
         if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
-        if (cmdStr.includes('git remote show origin')) return 'dev\n'
         if (cmdStr.includes('git log --oneline')) return ''
         return ''
       })
@@ -629,7 +632,6 @@ describe('runPrStage', () => {
       mockExecSync.mockImplementation((cmd: string) => {
         const cmdStr = String(cmd)
         if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
-        if (cmdStr.includes('git remote show origin')) return 'dev\n'
         if (cmdStr.includes('git log --oneline')) return ''
         return ''
       })
@@ -1035,7 +1037,6 @@ describe('runPrStage', () => {
       mockExecSync.mockImplementation((cmd: string) => {
         const cmdStr = String(cmd)
         if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
-        if (cmdStr.includes('git remote show origin')) return 'dev\n'
         if (cmdStr.includes('git log --oneline')) return ''
         return ''
       })
@@ -1060,7 +1061,6 @@ describe('runPrStage', () => {
       mockExecSync.mockImplementation((cmd: string) => {
         const cmdStr = String(cmd)
         if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
-        if (cmdStr.includes('git remote show origin')) return 'dev\n'
         if (cmdStr.includes('git log --oneline')) throw new Error('not a git repo')
         return ''
       })

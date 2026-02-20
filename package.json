@@ -56,6 +56,7 @@
     "test:e2e:debug": "pnpm exec playwright test --debug",
     "test:e2e:headed": "pnpm exec playwright test --headed",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
+    "test:int:cody": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.cody-int.mts",
     "test:int:atlas": "cross-env USE_ATLAS=true NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
     "test:vector": "cross-env USE_ATLAS=true NODE_OPTIONS=--no-deprecation vitest run tests/int/vector-*.int.spec.ts --config ./vitest.config.mts",
     "test:watch": "vitest watch --config ./vitest.config.mts",

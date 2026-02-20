@@ -6,7 +6,7 @@ vi.mock('child_process', () => ({
   execSync: vi.fn(),
 }))
 
-import { ensureFeatureBranch, BRANCH_PREFIX_MAP } from '../../../../scripts/cody/git-utils'
+import { ensureFeatureBranch, getDefaultBranch, BRANCH_PREFIX_MAP } from '../../../../scripts/cody/git-utils'
 
 // ============================================================================
 // BRANCH_PREFIX_MAP
@@ -667,6 +667,8 @@ describe('ensureFeatureBranch', () => {
         'git branch --show-current',
         'git fetch origin',
         'git rev-parse --verify origin/feat/260218-ordered',
+        'git symbolic-ref refs/remotes/origin/HEAD',
+        'git remote show origin',
         'git checkout dev',
         'git pull origin dev',
         'git checkout -b feat/260218-ordered',
@@ -733,5 +735,106 @@ describe('ensureFeatureBranch', () => {
         'git pull origin fix/260218-existing',
       ])
     })
+  })
+})
+
+// ============================================================================
+// getDefaultBranch
+// ============================================================================
+
+describe('getDefaultBranch', () => {
+  const mockExecSync = vi.mocked(childProcess.execSync)
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('should return branch from git symbolic-ref when available', () => {
+    mockExecSync.mockImplementation((cmd: string) => {
+      if (typeof cmd === 'string' && cmd.includes('symbolic-ref')) {
+        return 'refs/remotes/origin/dev\n'
+      }
+      return ''
+    })
+
+    expect(getDefaultBranch('/fake/cwd')).toBe('dev')
+  })
+
+  it('should return "main" when symbolic-ref points to main', () => {
+    mockExecSync.mockImplementation((cmd: string) => {
+      if (typeof cmd === 'string' && cmd.includes('symbolic-ref')) {
+        return 'refs/remotes/origin/main\n'
+      }
+      return ''
+    })
+
+    expect(getDefaultBranch('/fake/cwd')).toBe('main')
+  })
+
+  it('should fall back to git remote show origin when symbolic-ref fails', () => {
+    mockExecSync.mockImplementation((cmd: string) => {
+      if (typeof cmd === 'string' && cmd.includes('symbolic-ref')) {
+        throw new Error('not a symbolic ref')
+      }
+      if (typeof cmd === 'string' && cmd.includes('git remote show origin')) {
+        return '* remote origin\n  HEAD branch: main\n  Remote branches:\n'
+      }
+      return ''
+    })
+
+    expect(getDefaultBranch('/fake/cwd')).toBe('main')
+  })
+
+  it('should return "dev" when both methods fail', () => {
+    mockExecSync.mockImplementation(() => {
+      throw new Error('not a git repo')
+    })
+
+    expect(getDefaultBranch('/fake/cwd')).toBe('dev')
+  })
+
+  it('should use process.cwd() as default when no cwd provided', () => {
+    mockExecSync.mockImplementation((cmd: string) => {
+      if (typeof cmd === 'string' && cmd.includes('symbolic-ref')) {
+        return 'refs/remotes/origin/dev\n'
+      }
+      return ''
+    })
+
+    // Call without cwd argument
+    expect(getDefaultBranch()).toBe('dev')
+    expect(mockExecSync).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ cwd: process.cwd() }),
+    )
+  })
+
+  it('should pass cwd to all git commands', () => {
+    mockExecSync.mockImplementation((cmd: string) => {
+      if (typeof cmd === 'string' && cmd.includes('symbolic-ref')) {
+        return 'refs/remotes/origin/dev\n'
+      }
+      return ''
+    })
+
+    getDefaultBranch('/my/project')
+    expect(mockExecSync).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ cwd: '/my/project' }),
+    )
+  })
+
+  it('should fall back to "dev" when symbolic-ref returns empty and remote show fails', () => {
+    mockExecSync.mockImplementation((cmd: string) => {
+      if (typeof cmd === 'string' && cmd.includes('symbolic-ref')) {
+        return '\n' // empty trimmed
+      }
+      if (typeof cmd === 'string' && cmd.includes('git remote show origin')) {
+        throw new Error('network error')
+      }
+      return ''
+    })
+
+    expect(getDefaultBranch('/fake/cwd')).toBe('dev')
   })
 })

@@ -68,7 +68,7 @@ describe('stage-prompts', () => {
         'rerun-feedback.md',
       ])
       expect(STAGE_CONTEXT_FILES['plan-review']).toEqual(['spec.md', 'plan.md'])
-      expect(STAGE_CONTEXT_FILES.build).toEqual(['spec.md', 'clarified.md', 'plan.md'])
+      expect(STAGE_CONTEXT_FILES.build).toEqual(['spec.md', 'clarified.md', 'plan.md', 'plan-review.md'])
       expect(STAGE_CONTEXT_FILES.commit).toEqual(['task.json'])
       expect(STAGE_CONTEXT_FILES.test).toEqual(['spec.md', 'plan.md', 'build.md'])
       expect(STAGE_CONTEXT_FILES.verify).toEqual([])

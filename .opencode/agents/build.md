@@ -18,7 +18,7 @@ A separate commit agent will handle git operations after you finish.
 
 ## Your Task
 
-1. Read the SPEC and PLAN provided in your context
+1. Read the SPEC, PLAN, and PLAN REVIEW provided in your context
 2. Implement the changes
 3. Run quality checks
 4. Write output file
@@ -28,6 +28,7 @@ A separate commit agent will handle git operations after you finish.
 ### 1. Implementation
 
 - Follow the SPEC and PLAN exactly
+- Address any SUGGESTIONS from plan-review.md (non-blocking, but improve quality)
 - Do NOT change the spec
 - Do NOT expand scope
 - Run quality checks: `pnpm -s tsc --noEmit && pnpm -s lint`

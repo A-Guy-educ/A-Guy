@@ -62,7 +62,7 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   clarify: ['task.md', 'spec.md'],
   architect: ['spec.md', 'clarified.md', 'rerun-feedback.md'],
   'plan-review': ['spec.md', 'plan.md'],
-  build: ['spec.md', 'clarified.md', 'plan.md'],
+  build: ['spec.md', 'clarified.md', 'plan.md', 'plan-review.md'],
   commit: ['task.json'],
   test: ['spec.md', 'plan.md', 'build.md'],
   verify: [], // scripted — no LLM prompt needed

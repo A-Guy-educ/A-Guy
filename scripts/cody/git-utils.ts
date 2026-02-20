@@ -34,11 +34,49 @@ export const BRANCH_PREFIX_MAP: Record<TaskType, string> = {
   research: 'feat',
 }
 
-const BASE_BRANCHES = ['dev', 'main', '']
+/** Well-known base branches — if the current branch is one of these, create a feature branch */
+const BASE_BRANCHES = ['dev', 'main', 'master', '']
 
 // ============================================================================
 // Functions
 // ============================================================================
+
+/**
+ * Detect the default branch of the remote repository.
+ * Uses `git remote show origin` to find the HEAD branch.
+ * Falls back to 'dev' if detection fails (common for this project).
+ */
+export function getDefaultBranch(cwd: string = process.cwd()): string {
+  try {
+    // Use symbolic-ref which is faster and more reliable than parsing `git remote show origin`
+    const ref = execSync('git symbolic-ref refs/remotes/origin/HEAD', {
+      cwd,
+      encoding: 'utf-8',
+      stdio: 'pipe',
+    }).trim()
+    // ref is like "refs/remotes/origin/dev" — extract the branch name
+    const branch = ref.replace('refs/remotes/origin/', '')
+    if (branch) return branch
+  } catch {
+    // symbolic-ref may fail if HEAD ref hasn't been set
+  }
+
+  try {
+    // Fallback: parse `git remote show origin` output
+    const output = execSync('git remote show origin', {
+      cwd,
+      encoding: 'utf-8',
+      stdio: 'pipe',
+      timeout: 10_000,
+    })
+    const match = output.match(/HEAD branch:\s*(\S+)/)
+    if (match?.[1]) return match[1]
+  } catch {
+    // Remote may be unreachable
+  }
+
+  return 'dev'
+}
 
 /**
  * Creates a feature branch before the build stage if needed.
@@ -111,10 +149,11 @@ export function ensureFeatureBranch(taskId: string, taskType: string, projectDir
     execSync(`git pull origin ${branchName}`, { cwd, stdio: 'inherit' })
     console.log(`[branch] Checked out and pulled: ${branchName}`)
   } else {
-    // Branch doesn't exist — create from dev
-    console.log(`[branch] Creating new branch from dev: ${branchName}`)
-    execSync('git checkout dev', { cwd, stdio: 'inherit' })
-    execSync('git pull origin dev', { cwd, stdio: 'inherit' })
+    // Branch doesn't exist — create from the default branch
+    const defaultBranch = getDefaultBranch(cwd)
+    console.log(`[branch] Creating new branch from ${defaultBranch}: ${branchName}`)
+    execSync(`git checkout ${defaultBranch}`, { cwd, stdio: 'inherit' })
+    execSync(`git pull origin ${defaultBranch}`, { cwd, stdio: 'inherit' })
     execSync(`git checkout -b ${branchName}`, { cwd, stdio: 'inherit' })
     console.log(`[branch] Created and switched to: ${branchName}`)
   }
