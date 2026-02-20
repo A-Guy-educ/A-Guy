@@ -302,10 +302,24 @@ const DRY_RUN_OUTPUTS: Record<string, (taskId: string) => string> = {
   verify: (taskId) => `# Verify (dry-run)\n\nResult: PASS\n\nMock verification for ${taskId}.\n`,
   auditor: (taskId) => `# Auditor (dry-run)\n\nMock auditor output for ${taskId}.\n`,
   'plan-review': (taskId) =>
-    `# Plan Review (dry-run)\n\nVerdict: PASS\n\nMock plan review for ${taskId}.\n`,
-  commit: (taskId) => `# Commit (dry-run)\n\nMock commit output for ${taskId}.\n`,
-  autofix: (taskId) => `# Autofix (dry-run)\n\nNo errors to fix for ${taskId}.\n`,
-  pr: (taskId) => `# PR (dry-run)\n\nMock PR output for ${taskId}.\n`,
+    `# Plan Review (dry-run)
+
+Verdict: PASS
+
+Mock plan review for ${taskId}.
+`,
+  commit: (taskId) => `# Commit (dry-run)
+
+Mock commit output for ${taskId}.
+`,
+  autofix: (taskId) => `# Autofix (dry-run)
+
+No errors to fix for ${taskId}.
+`,
+  pr: (taskId) => `# PR (dry-run)
+
+Mock PR output for ${taskId}.
+`,
 }
 
 export function writeDryRunOutput(taskDir: string, stage: string, taskId: string): void {

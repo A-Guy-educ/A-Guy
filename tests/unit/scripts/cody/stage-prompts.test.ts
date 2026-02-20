@@ -29,7 +29,7 @@ describe('stage-prompts', () => {
   })
 
   describe('SCRIPTED_STAGES', () => {
-    it('should contain verify, commit, and pr', () => {
+    it('should contain verify, commit, pr', () => {
       expect([...SCRIPTED_STAGES]).toEqual(['verify', 'commit', 'pr'])
     })
   })

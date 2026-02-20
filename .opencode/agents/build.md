@@ -106,10 +106,106 @@ Use the Write tool to create this file.
 - Quality checks pass (`pnpm -s tsc --noEmit && pnpm -s lint`)
 - `build.md` output file written
 
+## Domain-Specific Subagent Invocation
+
+Invoke these subagents when working in their specific domains:
+
+### @payload-expert
+
+**When:** Working with Payload CMS collections, hooks, access control, endpoints, jobs
+**What to ask:** "Review my implementation against AGENTS.md patterns. Did I pass req to nested operations? Is overrideAccess set correctly?"
+
+### @web-expert
+
+**When:** Working on frontend components in `src/ui/web/`, `src/app/(frontend)/`, or anything with i18n
+**What to ask:** "Review my component against DESIGN_SYSTEM.md. Did I use Tailwind only? Are translations using useTranslations()? Does it support RTL?"
+
+### @admin-expert
+
+**When:** Working on Payload admin components in `src/ui/admin/` or `src/app/(payload)/`
+**What to ask:** "Review my admin component. Am I using Payload CSS variables correctly? Did I run generate:importmap? Am I using the right hooks?"
+
+### @llm-expert
+
+**When:** Working on LLM providers, prompts, embeddings, vector search, or chat pipeline
+**What to ask:** "Review my LLM code. Am I following Context Policy V1? Did I use the singleton pattern? Is output validated with Zod?"
+
+### @security-auditor
+
+**When:** Any code involving authentication, authorization, secrets, or API endpoints
+**What to ask:** "Audit this code for security issues. Look for access control bypass, hardcoded secrets, missing auth."
+
+### @code-reviewer
+
+**When:** After implementing any code, before quality checks
+**What to ask:** "Review for TypeScript compliance, import aliases, and general code quality."
+
+## Skills (Workflow Automation)
+
+### Install Recommended Skills First
+
+Before implementing, check if the plan includes a "## Recommended Skills" section. If so, install them:
+
+```bash
+npx skills add <owner/repo@skill-name> -y
+```
+
+For example: `npx skills add anthropics/skills@webapp-testing -y`
+
+### Built-in Skills
+
+Use the **Skill tool** to invoke specialized workflows:
+
+**When:** Plan requires creating a new Payload CMS collection
+**How:**
+
+```
+Use the Skill tool to load 'new-collection' skill
+```
+
+### @new-block
+
+**When:** Plan requires adding a new layout builder block
+**How:**
+
+```
+Use the Skill tool to load 'new-block' skill
+```
+
+### @add-ui-component
+
+**When:** Plan requires adding a shadcn/ui component
+**How:**
+
+```
+Use the Skill tool to load 'add-ui-component' skill
+```
+
+### @quality-check
+
+**When:** After implementation, before verify stage
+**How:**
+
+```
+Use the Skill tool to load 'quality-check' skill
+```
+
+Runs: tsc --noEmit, lint, format:check, test:unit
+
+### @tdd-workflow
+
+**When:** Writing tests following TDD principles
+**How:**
+
+```
+Use the Skill tool to load 'tdd-workflow' skill
+```
+
 ## Rules
 
 - Do NOT create branches — the pipeline already did that
 - Do NOT commit or push — the commit stage handles that
 - Do NOT run `git add`, `git commit`, or `git push`
-- You may consult subagents (code-reviewer, security-auditor, payload-expert, test-writer)
+- ALWAYS invoke domain subagents when working in their territory (see above)
+- Use Skills for specialized workflows (new-collection, new-block, add-ui-component)
 - If verify has failed: fix only the reported issues

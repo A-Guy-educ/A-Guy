@@ -37,3 +37,31 @@ If spec missing: **STOP**.
 - Acceptance criteria (testable checklist)
 
 **Rules**: Reference spec requirements by ID. Do not write code. Each step: 10-30 minutes, one testable unit. Prefer integration tests over unit tests. Tests are the contract — if all pass, task is done.
+
+## Skill Discovery (Optional)
+
+Before writing the plan, consider if any skills from skills.sh could help. Run a quick search:
+
+```bash
+npx skills find "<relevant query>"
+```
+
+Examples:
+
+- Backend/Payload tasks → `npx skills find "payload cms"`
+- Frontend/React tasks → `npx skills find "react nextjs"`
+- Testing tasks → `npx skills find "testing"`
+- TypeScript tasks → `npx skills find "typescript"`
+
+If useful skills are found (>500 installs), include a "## Recommended Skills" section in your plan:
+
+```markdown
+## Recommended Skills
+
+Install before implementation:
+
+- `owner/repo@skill-name` — <what it helps with>
+  https://skills.sh/owner/repo/skill-name
+```
+
+The build agent will see this and install the skills before implementing.

@@ -23,141 +23,18 @@ import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
-// ============================================================================
-// Custom Error Types
-// ============================================================================
-
-/** Thrown by plan-review gate to signal architect should retry */
-class PlanReviewFailError extends Error {
-  constructor() {
-    super('Plan review verdict: FAIL')
-    this.name = 'PlanReviewFailError'
-  }
-}
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Check if questions.md contains actual questions that need answering
- */
-function checkForQuestions(questionsPath: string): boolean {
-  const content = fs.readFileSync(questionsPath, 'utf-8').trim()
-
-  // If file is empty or just placeholder text, no questions
-  if (!content || content.length < 10) {
-    return false
-  }
-
-  // Check for question patterns:
-  // - Lines starting with numbers followed by period or parenthesis (1. 2. 1) 2))
-  // - Lines containing "?" character
-  // - Sections like "## Questions" or "### Clarifications Needed"
-  const hasNumberedQuestions = /^\d+[.)]\s+/m.test(content)
-  // Match ? at end of a sentence (after a word char), not in URLs or code
-  const hasQuestionMarks = /\w\?\s*$/m.test(content)
-  const hasQuestionHeader = /^#{1,3}\s*(Questions|Clarifications|Needs Clarification)/m.test(
-    content,
-  )
-
-  // Also check for "APPROVED" or "No clarifications needed" as indicators of no questions
-  const isApproved = /^#{1,3}\s*APPROVED/im.test(content)
-  const noClarifications = /no clarifications needed/i.test(content)
-
-  // Has questions if there's question content AND not explicitly approved
-  const hasQuestionContent = hasNumberedQuestions || hasQuestionMarks || hasQuestionHeader
-
-  return hasQuestionContent && !isApproved && !noClarifications
-}
-
-/**
- * Extract the answer from a GitHub comment body
- * The comment format is: /cody [command] [task-id] [optional answer text]
- */
-function extractAnswerFromComment(commentBody: string): string | null {
-  // Decode JSON-encoded body if needed (from jq -Rs .)
-  let decoded = commentBody
-  if (decoded.startsWith('"') && decoded.endsWith('"')) {
-    try {
-      decoded = JSON.parse(decoded)
-    } catch {
-      // Use raw value if JSON.parse fails
-    }
-  }
-
-  // Normalize literal \n to real newlines
-  decoded = decoded.replace(/\\n/g, '\n')
-
-  // Remove /cody prefix and command
-  const withoutCody = decoded.replace(/^\/cody\s*/, '').trim()
-
-  // If there's content after the command, treat it as the answer
-  if (withoutCody.length > 0) {
-    // Remove task-id if present (format: /cody [task-id] or /cody full [task-id])
-    const taskIdMatch = withoutCody.match(/^([a-z]+\s+)?([0-9]{6}-[a-z0-9-]+\s*)/i)
-    let answer = withoutCody
-    if (taskIdMatch) {
-      answer = withoutCody.slice(taskIdMatch[0].length).trim()
-    }
-
-    // If there's answer content, return it
-    if (answer.length > 0) {
-      return answer
-    }
-  }
-
-  return null
-}
-
-/**
- * Commit and push task files to the feature branch in CI.
- * This ensures subsequent /cody calls have access to the task state.
- */
-function commitTaskFilesCI(input: CodyInput, taskDir: string): void {
-  if (input.local || input.dryRun) return
-
-  try {
-    // Get task_type from task.json to determine branch prefix
-    const taskJsonPath = path.join(taskDir, 'task.json')
-    let taskType = 'implement_feature' // default
-    if (fs.existsSync(taskJsonPath)) {
-      const taskData = JSON.parse(fs.readFileSync(taskJsonPath, 'utf-8'))
-      taskType = taskData.task_type || 'implement_feature'
-    }
-
-    // Ensure feature branch exists — may switch branches
-    ensureFeatureBranch(input.taskId, taskType)
-
-    // Clean any dirty state left by agent operations before staging task files.
-    // ensureFeatureBranch may have switched branches, leaving untracked/modified files
-    // from the previous branch context. We only care about task files here.
-    try {
-      execSync('git checkout -- .', { cwd: process.cwd(), stdio: 'pipe' })
-      execSync('git clean -fd --exclude=.tasks', { cwd: process.cwd(), stdio: 'pipe' })
-    } catch {
-      // Ignore — working tree may already be clean
-    }
-
-    // Commit only task files (not unrelated artifacts)
-    execSync(`git add ${taskDir}`, { cwd: process.cwd(), stdio: 'inherit' })
-    execSync(`git commit --no-gpg-sign -m "cody: save task files for ${input.taskId}"`, {
-      cwd: process.cwd(),
-      stdio: 'inherit',
-    })
-    execSync(`git push -u origin HEAD`, { cwd: process.cwd(), stdio: 'inherit' })
-    console.log('[commit] Task files committed and pushed')
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : String(error)
-    // "nothing to commit" is expected (exit code 1 from git commit)
-    if (msg.includes('nothing to commit') || msg.includes('no changes added')) {
-      console.log('[commit] No changes to commit')
-    } else {
-      console.error(`[commit] Git error: ${msg}`)
-      throw new Error(`Failed to commit/push task files: ${msg}`)
-    }
-  }
-}
+// Import from extracted modules
+import { validateSpecContent } from './content-validators'
+import { handleClarification } from './clarify-workflow'
+import { commitPipelineFiles } from './git-utils'
+import {
+  PlanReviewFailError,
+  handleRerunFeedbackArchive,
+  handlePlanReviewGate,
+  handleBuildValidation,
+  handlePostBuildTsc,
+  handleVerifyResult,
+} from './stage-hooks'
 
 // Import utilities from cody-utils
 import {
@@ -414,9 +291,7 @@ async function runSpecPipeline(
     // Spec content validation: must contain requirements or acceptance criteria
     if (stage === 'spec' && fs.existsSync(outputFile)) {
       const specContent = fs.readFileSync(outputFile, 'utf-8')
-      const hasRequirements = /##\s*(Requirements|Functional|FR-|NFR-)/i.test(specContent)
-      const hasAcceptance = /##\s*Acceptance/i.test(specContent)
-      if (!hasRequirements && !hasAcceptance) {
+      if (!validateSpecContent(specContent)) {
         // Delete the bad spec so it can be regenerated
         fs.unlinkSync(outputFile)
         updateStageStatus(input.taskId, stage, 'failed', {
@@ -431,45 +306,20 @@ async function runSpecPipeline(
     console.log(`✓ ${stage} complete`)
   }
 
-  // If questions.md exists and user provided answers (either via comment body or latest issue comment),
-  // create clarified.md
-  const existingQuestionsPath = path.join(taskDir, 'questions.md')
-  if (fs.existsSync(existingQuestionsPath)) {
-    let answer: string | null = null
+  // Handle clarification workflow using extracted module
+  const clarifyResult = handleClarification(input, taskDir)
 
-    // Try to get answer from:
-    // 1. Comment body (if user wrote "/cody answer text")
-    // 2. Latest comment on the issue (plain text answer)
-    if (input.commentBody && input.triggerType === 'comment') {
-      answer = extractAnswerFromComment(input.commentBody)
-    }
-
-    // If no answer from comment body, check latest issue comment
-    if (!answer && input.issueNumber && input.triggerType === 'comment') {
-      // Get the latest comment (not from bot) as the answer
-      answer = getLatestIssueComment(input.issueNumber, 'github-actions[bot]')
-    }
-
-    if (answer) {
-      const clarifiedPath = path.join(taskDir, 'clarified.md')
-      fs.writeFileSync(clarifiedPath, `# Clarified\n\n${answer}\n`)
-      console.log('📝 Created clarified.md from user answer\n')
-    }
+  if (clarifyResult === 'answered') {
+    console.log('📝 Created clarified.md from user answer\n')
   }
 
-  // Check if there are pending questions from clarify stage
-  // Skip if clarified.md already exists (user already answered or was just created above)
-  const clarifiedExists = fs.existsSync(path.join(taskDir, 'clarified.md'))
-  const questionsPath = path.join(taskDir, 'questions.md')
-  const hasQuestions =
-    !clarifiedExists && fs.existsSync(questionsPath) && checkForQuestions(questionsPath)
-
-  if (hasQuestions) {
+  if (clarifyResult === 'waiting') {
     // Questions exist - stop and ask for clarification
     console.log('\n⚠️ Clarify stage has questions that need answering')
     console.log('Stopping pipeline. Answer the questions and call /cody again to proceed.\n')
 
     // Post comment asking for clarification
+    const questionsPath = path.join(taskDir, 'questions.md')
     if (input.issueNumber) {
       const questionsContent = fs.readFileSync(questionsPath, 'utf-8')
       const preview = questionsContent.slice(0, 1500)
@@ -484,20 +334,34 @@ async function runSpecPipeline(
     // Note: Don't call completeStatus here - let main() handle it
 
     // Commit task files in CI (so next run has state)
-    commitTaskFilesCI(input, taskDir)
+    commitPipelineFiles({
+      taskDir,
+      taskId: input.taskId,
+      message: `cody: save task files for ${input.taskId}`,
+      ensureBranch: true,
+      cleanDirtyState: true,
+      stagingStrategy: 'task-only',
+      push: true,
+      isCI: !input.local,
+      dryRun: input.dryRun,
+    })
 
     console.log('✅ Cody SPEC pipeline complete (waiting for clarification)')
     return
   }
 
-  // No questions - create default clarified.md and proceed
-  const clarifiedPath = path.join(taskDir, 'clarified.md')
-  if (!fs.existsSync(clarifiedPath)) {
-    fs.writeFileSync(clarifiedPath, '# Clarified\n\nUse recommended answers.\n')
-  }
-
   // Commit task files in CI (after spec completes successfully)
-  commitTaskFilesCI(input, taskDir)
+  commitPipelineFiles({
+    taskDir,
+    taskId: input.taskId,
+    message: `cody: save task files for ${input.taskId}`,
+    ensureBranch: true,
+    cleanDirtyState: true,
+    stagingStrategy: 'task-only',
+    push: true,
+    isCI: !input.local,
+    dryRun: input.dryRun,
+  })
 
   console.log('\n✅ Cody SPEC pipeline complete')
 }
@@ -555,49 +419,14 @@ async function runImplPipeline(
   // Helper: Commit task files after verify passes (local mode only)
   const commitTaskFiles = (): void => {
     if (!input.local || input.dryRun) return
-    try {
-      execSync(`git add ${taskDir}`, { cwd: process.cwd(), stdio: 'inherit' })
-      execSync(`git commit --no-gpg-sign -m "docs: commit ${input.taskId} task files"`, {
-        cwd: process.cwd(),
-        stdio: 'inherit',
-      })
-      console.log(`[commit] Task files committed`)
-    } catch {
-      console.log(`[commit] No changes to commit (or git error)`)
-    }
-  }
-
-  // Helper: Extract verify summary
-  const extractVerifySummary = (content: string) => {
-    const summary = {
-      typeScriptErrors: 0,
-      testFailures: 0,
-      lintErrors: 0,
-      errorSamples: [] as string[],
-    }
-
-    const tsMatch = content.match(/TypeScript.*?(\d+)\s+error/i)
-    if (tsMatch) summary.typeScriptErrors = parseInt(tsMatch[1])
-
-    const testMatch = content.match(/Tests?.*?(\d+)\s+fail/i)
-    if (testMatch) summary.testFailures = parseInt(testMatch[1])
-
-    const lintMatch = content.match(/Lint.*?(\d+)\s+error/i)
-    if (lintMatch) summary.lintErrors = parseInt(lintMatch[1])
-
-    const lines = content.split('\n')
-    for (const line of lines) {
-      if (
-        (line.trim().startsWith('-') || line.trim().startsWith('•')) &&
-        (line.includes('error') || line.includes('Error') || line.includes('✗'))
-      ) {
-        const cleaned = line.trim().replace(/^[-•]\s*/, '')
-        if (cleaned.length > 10 && summary.errorSamples.length < 5) {
-          summary.errorSamples.push(cleaned)
-        }
-      }
-    }
-    return summary
+    commitPipelineFiles({
+      taskDir,
+      taskId: input.taskId,
+      message: `docs: commit ${input.taskId} task files`,
+      stagingStrategy: 'task-only',
+      push: false,
+      dryRun: input.dryRun,
+    })
   }
 
   // Helper: Run a single stage (agent-based or scripted)
@@ -679,71 +508,28 @@ async function runImplPipeline(
     }
 
     // Post-stage hooks
-    if (stage === 'architect' && fs.existsSync(path.join(taskDir, 'rerun-feedback.md'))) {
-      const consumed = path.join(taskDir, 'rerun-feedback.consumed.md')
-      fs.renameSync(path.join(taskDir, 'rerun-feedback.md'), consumed)
-      console.log(`   Consumed rerun-feedback.md (archived as rerun-feedback.consumed.md)`)
+    const hookOptions = { taskId: input.taskId, taskDir, dryRun: input.dryRun, isCI: !input.local }
+
+    // Rerun feedback archive
+    if (stage === 'architect') {
+      handleRerunFeedbackArchive(hookOptions)
     }
 
     // Plan-review gate: check verdict and fail pipeline on FAIL
-    if (stage === 'plan-review' && fs.existsSync(outputFile)) {
-      const reviewContent = fs.readFileSync(outputFile, 'utf-8')
-      if (/Verdict:\s*FAIL/i.test(reviewContent)) {
-        console.error(`\n❌ Plan review FAILED for ${input.taskId}`)
-        console.error('  The plan does not meet spec requirements. Looping back to architect.\n')
-
-        // Delete plan.md so architect reruns
-        const planFile = stageOutputFile(taskDir, 'architect')
-        if (fs.existsSync(planFile)) fs.unlinkSync(planFile)
-
-        // Delete plan-review.md so it reruns after new plan
-        fs.unlinkSync(outputFile)
-
-        updateStageStatus(input.taskId, stage, 'failed', { error: 'Plan review verdict: FAIL' })
-        throw new PlanReviewFailError()
-      }
-      console.log('  ✅ Plan review: PASS')
+    if (stage === 'plan-review') {
+      handlePlanReviewGate(hookOptions)
     }
 
-    // Build content validation: must contain a changes section
-    if (stage === 'build' && fs.existsSync(outputFile)) {
-      const buildContent = fs.readFileSync(outputFile, 'utf-8')
-      const hasChanges = /##\s*(Changes|Files)/i.test(buildContent)
-      if (!hasChanges) {
-        console.warn(
-          '  ⚠️  Build report missing Changes section — agent may not have implemented anything',
-        )
-      }
+    // Build content validation + tsc check
+    if (stage === 'build') {
+      handleBuildValidation(hookOptions)
+      handlePostBuildTsc(hookOptions)
     }
 
-    // Quick tsc gate after build: don't commit code that doesn't compile
-    if (stage === 'build' && !input.dryRun) {
-      try {
-        execSync('pnpm -s tsc --noEmit', { cwd: process.cwd(), stdio: 'pipe' })
-        console.log('  ✅ Post-build tsc check passed')
-      } catch {
-        console.error('  ❌ Post-build tsc check failed — code does not compile')
-        throw new Error('Build produced code that does not compile. Fix and re-run.')
-      }
-    }
-
+    // Verify failure check (autofix loop kept inline)
     if (stage === 'verify' && fs.existsSync(outputFile)) {
-      const verifyContent = fs.readFileSync(outputFile, 'utf-8')
-      if (/FAIL/i.test(verifyContent)) {
-        const summary = extractVerifySummary(verifyContent)
-        console.error(`\n❌ Verification FAILED for ${input.taskId}`)
-        if (summary.typeScriptErrors > 0 || summary.testFailures > 0 || summary.lintErrors > 0) {
-          console.error('\n📋 Failure Summary:')
-          if (summary.typeScriptErrors > 0)
-            console.error(`  TypeScript: ${summary.typeScriptErrors} error(s)`)
-          if (summary.testFailures > 0) console.error(`  Tests: ${summary.testFailures} failure(s)`)
-          if (summary.lintErrors > 0) console.error(`  Lint: ${summary.lintErrors} error(s)`)
-          if (summary.errorSamples.length > 0) {
-            console.error('\n  Sample errors:')
-            summary.errorSamples.forEach((err) => console.error(`    - ${err}`))
-          }
-        }
-
+      const verifyResult = handleVerifyResult(hookOptions)
+      if (verifyResult.failed) {
         // Auto-fix loop: attempt to fix lint/type/format errors automatically
         const MAX_AUTOFIX_ATTEMPTS = 2
         let fixed = false
@@ -810,29 +596,25 @@ async function runImplPipeline(
 
         // Commit autofix changes — the commit agent already ran before verify,
         // so autofix changes would be lost without this explicit commit
-        if (!input.dryRun) {
-          try {
-            // Stage only source files and config — not .env, secrets, or unrelated files.
-            // Use 'git add -u' (tracked files only) + task dir, instead of 'git add -A' which
-            // would stage ALL untracked files including potential secrets or debug artifacts.
-            execSync('git add -u', { cwd: process.cwd(), stdio: 'inherit' })
-            execSync(`git add ${taskDir}`, { cwd: process.cwd(), stdio: 'inherit' })
-            execSync(`git commit --no-gpg-sign -m "fix: autofix corrections for ${input.taskId}"`, {
-              cwd: process.cwd(),
-              stdio: 'inherit',
-            })
-            execSync('git push -u origin HEAD', { cwd: process.cwd(), stdio: 'inherit' })
-            console.log('  \u2705 Autofix changes committed and pushed')
-          } catch (error: unknown) {
-            const msg = error instanceof Error ? error.message : String(error)
-            if (msg.includes('nothing to commit') || msg.includes('no changes added')) {
-              console.log('  ⚠ No autofix changes to commit')
-            } else {
-              // Push failure means remote won't have the fixes — fail the pipeline
-              console.error(`  ❌ Failed to commit/push autofix changes: ${msg}`)
-              throw new Error('Autofix changes could not be pushed — remote branch is stale')
-            }
+        const autofixResult = commitPipelineFiles({
+          taskDir,
+          taskId: input.taskId,
+          message: `fix: autofix corrections for ${input.taskId}`,
+          stagingStrategy: 'tracked+task',
+          push: true,
+          dryRun: input.dryRun,
+        })
+
+        if (autofixResult.success) {
+          if (autofixResult.committed) {
+            console.log('  ✅ Autofix changes committed and pushed')
+          } else {
+            console.log('  ⚠ No autofix changes to commit')
           }
+        } else if (!autofixResult.message.includes('No changes')) {
+          // Push failure means remote won't have the fixes — fail the pipeline
+          console.error(`  ❌ Failed to commit/push autofix changes: ${autofixResult.message}`)
+          throw new Error('Autofix changes could not be pushed — remote branch is stale')
         }
       }
       commitTaskFiles()
