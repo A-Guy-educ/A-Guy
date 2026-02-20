@@ -554,6 +554,7 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
   // Handle empty command: /cody with no subcommand defaults to full
   let mode: CodyInput['mode'] = 'full'
   let taskId = rest
+  let implicitFeedback: string | undefined
 
   // Handle task-id as subcommand: /cody 260218-task defaults to full with that task
   const isTaskId = /^[0-9]{6}-[a-zA-Z0-9-]+$/.test(subCmd)
@@ -564,21 +565,21 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
     // The reconstructed taskId now contains both the ID and options, so use it as original
   } else if (subCmd) {
     // Validate subcommand
-    if (!isValidMode(subCmd)) {
-      return {
-        success: false,
-        error: `Unknown subcommand: ${subCmd}`,
-        errorComment: `Unknown command \`${subCmd}\`. Valid commands: \`spec\`, \`impl\`, \`rerun\`, \`status\`, \`full\`, or omit for full pipeline`,
-      }
+    if (isValidMode(subCmd)) {
+      mode = subCmd as CodyInput['mode']
+    } else {
+      // Unrecognized subcommand: treat as rerun with implicit feedback
+      // e.g., "/cody fix tests" → rerun mode, feedback = "fix tests"
+      mode = 'rerun'
+      // Capture both the subcommand and rest as implicit feedback
+      implicitFeedback = rest ? `${subCmd} ${rest}`.trim() : subCmd
     }
-    mode = subCmd as CodyInput['mode']
   }
 
   // Extract task-id — ONLY if it matches the task-id pattern (YYMMDD-description)
   // If it doesn't match, for rerun mode treat remaining text as implicit feedback
   // For other modes, leave task-id empty (will be auto-discovered from issue)
   const taskIdPattern = /^[0-9]{6}-[a-zA-Z0-9-]+$/
-  let implicitFeedback: string | undefined
 
   if (taskId) {
     const firstWord = taskId.split(' ')[0]

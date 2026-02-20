@@ -718,6 +718,17 @@ async function runRerunPipeline(
 ): Promise<void> {
   console.log('Running Cody RERUN pipeline...\n')
 
+  const taskDir = ensureTaskDir(input.taskId)
+
+  // Check if spec artifacts exist — if not, fall back to full pipeline
+  const specPath = path.join(taskDir, 'spec.md')
+  if (!fs.existsSync(specPath)) {
+    console.log('No spec.md found — falling back to full pipeline')
+    input.mode = 'full'
+    await runFullPipeline(input, status, backend)
+    return
+  }
+
   if (!input.fromStage) {
     input.fromStage = 'build'
   }
@@ -726,8 +737,6 @@ async function runRerunPipeline(
   if (!input.feedback) {
     input.feedback = 'Rerun requested via /cody rerun'
   }
-
-  const taskDir = ensureTaskDir(input.taskId)
 
   // Write feedback file
   const feedbackFile = path.join(taskDir, 'rerun-feedback.md')

@@ -173,11 +173,19 @@ Stage outputs are validated after completion:
 ```
 /cody                              # Full pipeline, auto-generate task-id
 /cody --clarify                    # Full pipeline with clarify stage enabled
+/cody fix the tests                # Rerun if artifacts exist, else full (auto-discovers task-id)
+/cody update branch and fix lint   # Same as above, feedback = "update branch and fix lint"
 /cody spec 260217-user-metrics     # Run spec phase only
 /cody impl 260217-user-metrics     # Run impl phase only
 /cody rerun 260217-user-metrics --feedback "fix this"
 /cody status 260217-user-metrics   # Check pipeline status
 ```
+
+**Simplified syntax**: When you use an unrecognized subcommand (like `/cody fix the tests`), the pipeline:
+
+1. Auto-discovers the task-id from the issue's marker comment
+2. If spec.md exists → reruns from build with your text as feedback
+3. If no spec.md → runs full pipeline
 
 ### Via GitHub Workflow Dispatch
 
