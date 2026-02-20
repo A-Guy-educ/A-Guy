@@ -118,7 +118,7 @@ async function main() {
   // This must run early (before any pipeline mode) so that subsequent /cody calls
   // on the same issue can discover the task-id from the bot comment marker.
   if (input.issueNumber) {
-    ensureTaskMarkerComment(input.issueNumber, input.taskId)
+    ensureTaskMarkerComment(input.issueNumber, input.taskId, input.mode, input.runUrl)
   }
 
   // Route based on mode

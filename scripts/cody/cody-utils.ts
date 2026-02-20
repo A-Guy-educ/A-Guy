@@ -304,11 +304,17 @@ export function discoverTaskIdFromIssue(issueNumber: number): string | null {
  * containing "Task created: `XXXXXX-task-name`". Without this marker,
  * subsequent runs auto-generate a new task-id instead of reusing the existing one.
  *
- * Previously, the marker was only posted when task.md was created from the issue body
- * (inside runSpecPipeline). This meant dispatch-triggered runs or runs where task.md
- * already existed never posted the marker, breaking discovery on subsequent issue-based runs.
+ * @param issueNumber - The issue number
+ * @param taskId - The task ID
+ * @param mode - The pipeline mode (full, spec, impl, rerun)
+ * @param runUrl - The GitHub Actions run URL for linking
  */
-export function ensureTaskMarkerComment(issueNumber: number, taskId: string): void {
+export function ensureTaskMarkerComment(
+  issueNumber: number,
+  taskId: string,
+  mode?: string,
+  runUrl?: string,
+): void {
   if (!issueNumber || !taskId) return
 
   // Check if marker already exists for ANY task-id on this issue
@@ -324,9 +330,16 @@ export function ensureTaskMarkerComment(issueNumber: number, taskId: string): vo
     return
   }
 
+  // Build comment with mode and run URL
+  const modeLine = mode ? ` (\`${mode}\` mode)` : ''
+  const runLine = runUrl ? `\nRun: ${runUrl}` : ''
+
   // No marker found — post one
   console.log(`Posting task marker comment on issue #${issueNumber} for ${taskId}`)
-  postComment(issueNumber, `🎯 Task created: \`${taskId}\`\n\nCody will now process this task.`)
+  postComment(
+    issueNumber,
+    `🎯 Task created: \`${taskId}\`${modeLine}${runLine}\n\nCody will now process this task.`,
+  )
 }
 
 // ============================================================================

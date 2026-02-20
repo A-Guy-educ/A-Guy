@@ -11,12 +11,6 @@ echo "Clarify: $CLARIFY"
 echo "Dry run: $DRY_RUN"
 echo "Trigger: $TRIGGER_TYPE"
 
-# Post starting comment (only when task-id is known)
-if [[ -n "${ISSUE_NUMBER:-}" ]] && [[ -n "${TASK_ID:-}" ]]; then
-  gh issue comment "$ISSUE_NUMBER" --body "🔄 Cody starting for \`${TASK_ID}\` (mode: $MODE)
-Run: $RUN_URL"
-fi
-
 # Build dry-run flag
 DRY_RUN_FLAG=""
 if [[ "$DRY_RUN" == "true" ]]; then
