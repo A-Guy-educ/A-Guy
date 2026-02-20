@@ -41,6 +41,11 @@ describe('LLM Model Configuration Validation', () => {
   }, 180000)
 
   afterAll(async () => {
+    // Close DB connection before stopping container
+    if (payload?.db?.destroy) {
+      await payload.db.destroy()
+    }
+
     await stopMongoContainer()
   })
 

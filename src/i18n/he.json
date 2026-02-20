@@ -69,8 +69,9 @@
       }
     },
     "login": {
-      "title": "ברוך שובך",
-      "subtitle": "התחבר לחשבון שלך",
+      "title": "ברוכים הבאים ל-A-Guy",
+      "subtitle": "התחבר כדי להמשיך ללמוד",
+      "googleOnlyMessage": "A-Guy תומך כרגע באימות Google לחוויה מהירה ומאובטחת יותר.",
       "email": "אימייל",
       "emailPlaceholder": "you@example.com",
       "password": "סיסמה",
@@ -102,12 +103,16 @@
   "courses": {
     "title": "קורסים",
     "description": "עיין בכל הקורסים הזמינים",
+    "shopTitle": "חנות הקורסים",
+    "shopDescription": "בחר את התוכנית המתאימה לך והתקדם להצלחה במתמטיקה.",
+    "catalogTitle": "קטלוג קורסים",
     "heroTitle": "עתיד הלמידה המקוונת",
     "heroDescription": "שלוט במיומנויות חדשות עם הקורסים המבוססים על פרויקטים, חידונים אינטראקטיביים וקהילת לומדים תומכת.",
     "liveContent": "תוכן חדש מתווסף באופן קבוע",
     "featuredTitle": "קורסים מומלצים",
     "featuredDescription": "קורסים שנבחרו בקפידה כדי לעזור לך במסע הלמידה שלך.",
     "backToCourses": "חזרה לקורסים",
+    "backToChapter": "חזרה לפרק",
     "openCourse": "פתח קורס",
     "viewChapter": "צפה בפרק",
     "viewLesson": "צפה בשיעור",
@@ -140,10 +145,20 @@
     "correct": "נכון!",
     "incorrect": "לא נכון",
     "tryAgain": "נסה שוב",
+    "checkTable": "בדוק טבלה",
     "selectMultiple": "בחר את כל התשובות הנכונות",
     "selectOne": "בחר תשובה אחת",
     "enterNumber": "הזן מספר...",
     "enterAnswer": "הזן את התשובה שלך...",
+    "validationFailed": "לא ניתן לבדוק את התשובה. נסה שוב.",
+    "validationError": "הבדיקה נכשלה",
+    "connectionError": "שגיאת חיבור. בדוק את הרשת שלך.",
+    "invalidAnswerType": "סוג תשובה לא תקין",
+    "selectTrueFalse": "בחר נכון או לא נכון",
+    "noCorrectAnswer": "לא הוגדרה תשובה נכונה",
+    "selectAnAnswer": "בחר תשובה",
+    "enterAnAnswer": "הזן תשובה",
+    "unknownVariant": "סוג שאלה לא ידוע",
     "notebookTitle": "מחברת תרגול",
     "chatTab": "צ'אט",
     "chatTitle": "צ'אט",
@@ -157,6 +172,7 @@
     "chatAuthRequired": "יש להתחבר כדי להשתמש בעוזר הבינה המלאכותית",
     "chatAuthRequiredLogin": "התחבר",
     "chatAuthRequiredCTA": "הירשם כדי להמשיך",
+    "chatGuestLimitMessage": "הגעת למגבלת ההודעות לאורחים. הירשם כדי לקבל גישה בלתי מוגבלת.",
     "chatErrorDismiss": "סגור התראה",
     "chatHintPrompt": "האם תוכל לתת לי רמז שיעזור לי לפתור את התרגיל?",
     "chatSolutionPrompt": "האם תוכל להסביר את גישת הפתרון?",
@@ -175,6 +191,8 @@
     "chatFileTooLarge": "הקובץ גדול מדי (מקסימום 10MB)",
     "chatMaxFiles": "מותר עד 5 קבצים",
     "chatUploadFailed": "העלאת הקובץ נכשלה",
+    "chatReadAloud": "הקראה",
+    "chatStopReading": "עצירת הקראה",
     "mathKeyboard": "מקלדת מתמטית",
     "formulaSheet": "דף נוסחאות",
     "uploadFile": "העלאת קובץ",
@@ -187,7 +205,22 @@
     "trigonometryFormulas": "טריגונומטריה",
     "formulaSubtitle": "נוסחאות עזר",
     "notesSubtitle": "הערות אישיות",
-    "notesPlaceholder": "הוסף הערות כאן..."
+    "notesPlaceholder": "הוסף הערות כאן...",
+    "selectBadge": "בחירה",
+    "of": "מתוך",
+    "exercisesPagerIntroDescriptionPart1": "השיעור מכיל",
+    "exercisesPagerIntroDescriptionPart2": "תרגילים. בואו נתחיל!",
+    "exercisesPagerWelcome": "ברוכים הבאים לשיעור",
+    "exercisesPagerStart": "התחל",
+    "exercisesPagerCompletedTitle": "עבודה מצוינת!",
+    "exercisesPagerCompletedDescription": "השלמת את כל התרגילים בשיעור זה.",
+    "exercisesPagerComplete": "סיים",
+    "exercisesPagerPrev": "הקודם",
+    "exercisesPagerNext": "הבא",
+    "exercisesPagerIntro": "פתיחה",
+    "exercisesPagerCompleted": "הושלם",
+    "exercisesPagerBackToLesson": "חזור לשיעור",
+    "startLesson": "התחל שיעור"
   },
   "homepage": {
     "nav": {
@@ -198,12 +231,16 @@
     },
     "greeting": {
       "welcome": "שלום! אני המורה הדיגיטלי שלך 🤖",
-      "moodQuestion": "איך אתה מרגיש היום?",
+      "moodQuestion": "איך אתה היום?",
       "moods": {
-        "happy": "😊 שמח",
-        "neutral": "😐 רגוע",
-        "sad": "😔 עצוב",
-        "excited": "🤩 נלהב"
+        "excellent": "מצויין 😄",
+        "great": "אחלה 🙂",
+        "tired": "קצת עייף 🥱"
+      },
+      "moodResponses": {
+        "excellent": "יאללה נרים קצב",
+        "great": "קדימה אז נתחיל ללמוד",
+        "tired": "היום נהייה ממוקדים"
       },
       "gradeQuestion": "באיזו כיתה אתה לומד?",
       "selectGrade": "בחר כיתה",
@@ -217,7 +254,17 @@
       "chatInputPlaceholder": "שאל שאלה...",
       "chatAuthRequired": "אנא התחבר כדי לשאול שאלות",
       "loading": "טוען...",
-      "noCourse": "לא נבחר קורס. אנא בחר קורס מדף הבית."
+      "noCourse": "לא נבחר קורס. אנא בחר קורס מדף הבית.",
+      "pageTitle": "מרחב התרגול שלי",
+      "pageSubtitle": "התקדמות אישית לכל מטרה.",
+      "uploadButton": "העלאת תרגיל חדש",
+      "replaceButton": "החלפת תרגיל",
+      "openNotebook": "פתח מחברת",
+      "closeNotebook": "סגור מחברת",
+      "clearCanvas": "נקה",
+      "checkSolution": "בדוק פתרון",
+      "checking": "בודק...",
+      "uploadFailed": "העלאת התמונה נכשלה. נסה שוב."
     }
   },
   "admin": {
@@ -261,5 +308,69 @@
     "draftExercisesLoading": "טוען תרגילים...",
     "noDraftExercises": "לא נמצאו תרגילי טיוטה להמרה זו.",
     "pages": "עמודים {{start}}-{{end}}"
+  },
+  "shop": {
+    "backToLearning": "חזרה ללמידה",
+    "title": "חנות הקורסים",
+    "subtitle": "בחרו את המסלול שמתאים לכם והתקדמו להצלחה במתמטיקה.",
+    "membershipPlans": "מסלולי הצטרפות",
+    "courseCatalog": "קטלוג הקורסים",
+    "middleSchool": "חטיבת ביניים",
+    "highSchool": "תיכון",
+    "perMonth": "חודשי",
+    "perCourse": "קורס",
+    "plans": {
+      "free": {
+        "title": "חינמי",
+        "subtitle": "מסלול בסיסי",
+        "currentPlan": "המסלול הנוכחי",
+        "courseCount": "1 קורס"
+      },
+      "standard": {
+        "title": "סטנדרט",
+        "subtitle": "מסלול מורחב",
+        "selectPlan": "בחר מסלול",
+        "courseCount": "1 קורס"
+      },
+      "premium": {
+        "title": "פרימיום",
+        "subtitle": "מסלול פרימיום",
+        "badge": "הכי משתלם",
+        "joinNow": "הצטרף עכשיו",
+        "courseCount": "3 קורסים לבחירה"
+      }
+    },
+    "features": {
+      "learningSystemNo": "מערכת לימוד - ללא",
+      "learningSystemFull": "מערכת לימוד - מלא",
+      "practiceSystemFull": "מערכת תרגול - מלא",
+      "questionsLimited": "שאלות - מוגבל",
+      "examsNo": "בחינות - ללא",
+      "examsLimited": "בחינות - מוגבל"
+    },
+    "courses": {
+      "mathBasics": "מתמטיקה - בסיס",
+      "purchaseCourse": "רכישת קורס",
+      "purchasedSuccessfully": "רכוש בהצלחה",
+      "activeInSystem": "הקורס הפעיל שלך במערכת",
+      "grade7": "כיתה ז'",
+      "grade8": "כיתה ח'",
+      "grade9": "כיתה ט'",
+      "grade7Description": "יסודות החשבון, אלגברה וגיאומטריה",
+      "grade8Description": "הקורס הפעיל שלך במערכת",
+      "grade9Description": "הכנה למבחני המפמ\"ר והתיכון",
+      "questionnaire172": "שאלון 172",
+      "questionnaire471": "שאלון 471",
+      "questionnaire572": "שאלון 572",
+      "questionnaire172Description": "הכנה מלאה לשאלון הבגרות הראשון",
+      "questionnaire471Description": "אנליזה, גיאומטריה וטריגונומטריה",
+      "questionnaire572Description": "וקטורים, מרוכבים ולוגריתמים"
+    },
+    "footer": {
+      "platform": "A-Guy Learning Platform",
+      "terms": "תנאי שימוש",
+      "privacy": "מדיניות פרטיות",
+      "contact": "צור קשר"
+    }
   }
 }

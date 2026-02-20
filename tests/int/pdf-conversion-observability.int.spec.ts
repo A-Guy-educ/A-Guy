@@ -10,7 +10,7 @@
 
 import config from '@payload-config'
 import { getPayload } from 'payload'
-import { beforeEach, describe, expect, test } from 'vitest'
+import { afterAll, beforeEach, describe, expect, test } from 'vitest'
 
 describe('PDF→Exercises Observability', () => {
   let _payload: any
@@ -106,5 +106,12 @@ describe('PDF→Exercises Observability', () => {
       expect(parts[4]).toBe('1')
       expect(parts[5]).toBe('v1')
     })
+  })
+
+  afterAll(async () => {
+    // Close DB connection to prevent connection leaks
+    if (typeof _payload?.db?.destroy === 'function') {
+      await _payload.db.destroy()
+    }
   })
 })

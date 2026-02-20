@@ -168,6 +168,7 @@ export async function createNewOAuthUser(
     // @ts-expect-error - Payload type inference issue with OAuth fields
     const newUser = await payload.create({
       collection: 'users',
+      overrideAccess: true,
       data: {
         email,
         googleSub: sub,

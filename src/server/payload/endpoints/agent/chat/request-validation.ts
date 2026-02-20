@@ -20,6 +20,8 @@ export const chatRequestSchema = z.object({
   chatAssetIds: z.array(z.string()).max(5).optional(),
   // Admin mode flag (for admin chat without context)
   adminMode: z.boolean().optional(),
+  // Hidden flag — message persisted for LLM context but excluded from client responses
+  hidden: z.boolean().optional(),
 })
 
 export type ChatRequest = z.infer<typeof chatRequestSchema>
@@ -33,14 +35,15 @@ export interface ContextCandidate {
 
 /**
  * Extract context candidate from validated request
- * Returns the most specific context (Exercise > Lesson > Chapter > Course > Category)
+ * Returns the most specific context (Lesson > Exercise > Chapter > Course > Category)
+ * Lessons take priority over exercises so all exercises in a lesson share one conversation.
  */
 export function extractContextCandidate(validated: ChatRequest): ContextCandidate | null {
-  if (validated.exerciseId) {
-    return { relationTo: 'exercises', value: validated.exerciseId }
-  }
   if (validated.lessonId) {
     return { relationTo: 'lessons', value: validated.lessonId }
+  }
+  if (validated.exerciseId) {
+    return { relationTo: 'exercises', value: validated.exerciseId }
   }
   if (validated.chapterId) {
     return { relationTo: 'chapters', value: validated.chapterId }

@@ -90,11 +90,20 @@ export async function resolveContext(
  */
 export async function validateContextAccess(
   conversationService: ConversationService,
-  userId: string,
+  ownerId: string,
   userRole: AccountRole,
   context: ResolvedContext,
+  guestSessionId?: string,
 ): Promise<boolean> {
-  return conversationService.validateContextAccess(userId, userRole, {
+  if (guestSessionId) {
+    // For guests, check access for the guest session
+    return conversationService.validateGuestContextAccess(guestSessionId, {
+      relationTo: context.relationTo as 'courses' | 'chapters' | 'lessons' | 'exercises',
+      value: context.value,
+    })
+  }
+
+  return conversationService.validateContextAccess(ownerId, userRole, {
     relationTo: context.relationTo as 'courses' | 'chapters' | 'lessons' | 'exercises',
     value: context.value,
   })
@@ -105,10 +114,18 @@ export async function validateContextAccess(
  */
 export async function getOrCreateConversation(
   conversationService: ConversationService,
-  userId: string,
+  ownerId: string,
   context: ResolvedContext,
+  guestSessionId?: string,
 ) {
-  return conversationService.getOrCreateActiveConversation(userId, {
+  if (guestSessionId) {
+    return conversationService.getOrCreateGuestConversation(guestSessionId, {
+      relationTo: context.relationTo as 'courses' | 'chapters' | 'lessons' | 'exercises',
+      value: context.value,
+    })
+  }
+
+  return conversationService.getOrCreateActiveConversation(ownerId, {
     relationTo: context.relationTo as 'courses' | 'chapters' | 'lessons' | 'exercises',
     value: context.value,
   })

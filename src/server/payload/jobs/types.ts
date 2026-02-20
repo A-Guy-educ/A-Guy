@@ -6,6 +6,8 @@ export interface JobContext {
   lessonId: string
   sourceDocId: string
   tenantId: string
+  pipelineVersion?: number
+  conversionMode?: string
 }
 
 export interface JobDocument {
@@ -73,3 +75,22 @@ export type TypedJob<TOutput = unknown> = Omit<JobDocument, 'input' | 'output'> 
 }
 
 export type PdfToExercisesJob = TypedJob<PdfToExercisesOutput>
+
+// V2-specific types for image crop pipeline
+export interface PdfToExercisesV2Input {
+  ctx: JobContext & { pipelineVersion: 2; conversionMode: 'v2_crops' }
+}
+
+export interface PdfToExercisesV2Output {
+  pagesTotal: number
+  pagesProcessed: number
+  exercisesCreated: number
+  errors: Array<{
+    pageIndex: number
+    bbox?: { x: number; y: number; width: number; height: number }
+    reason: string
+  }>
+  warnings: string[]
+}
+
+export type PdfToExercisesV2Job = TypedJob<PdfToExercisesV2Output>

@@ -8,6 +8,7 @@ import { createdByField } from '../../fields/createdBy'
 import { AccountRole } from '../Users/roles'
 import { DEFAULT_CONTENT } from './defaults'
 import { ContentSchema } from './schemas'
+import { generateSlug, validateSlugUniqueness } from './hooks'
 
 /**
  * Access control - Exercise-specific
@@ -89,6 +90,19 @@ export const Exercises: CollectionConfig = {
           index: true,
           admin: { description: 'The lesson this exercise belongs to' },
         },
+        {
+          name: 'slug',
+          type: 'text',
+          required: false,
+          index: true,
+          admin: {
+            description:
+              'URL-friendly identifier (auto-generated from title, unique within lesson)',
+          },
+          hooks: {
+            beforeValidate: [generateSlug, validateSlugUniqueness],
+          },
+        },
       ],
     },
 
@@ -106,7 +120,15 @@ export const Exercises: CollectionConfig = {
           validate: (value: unknown) => {
             const result = ContentSchema.safeParse(value)
             if (result.success) return true
-            return 'Invalid content. Expected: { blocks: (rich_text | question_select | question_mcq | question_free_response)[] }.'
+            // Log full error for server-side debugging
+            console.error(
+              '[Exercise content validation]',
+              JSON.stringify(result.error.issues, null, 2),
+            )
+            const issues = result.error.issues
+              .map((i) => `[${i.path.join('.')}] ${i.message}`)
+              .join('; ')
+            return `Invalid content: ${issues}`
           },
           admin: {
             description:
@@ -208,6 +230,32 @@ export const Exercises: CollectionConfig = {
             hidden: true,
           },
         },
+        // V2-specific fields for image crop pipeline
+        {
+          name: 'pipelineVersion',
+          type: 'number',
+          index: true,
+          admin: {
+            description: 'Pipeline version (1=text extraction, 2=image crops)',
+            hidden: true,
+          },
+        },
+        {
+          name: 'sourcePageIndex',
+          type: 'number',
+          admin: {
+            description: 'Zero-based page index in source PDF (V2 image crops)',
+            hidden: true,
+          },
+        },
+        {
+          name: 'sourceBboxNormalized',
+          type: 'json',
+          admin: {
+            description: 'Normalized bounding box {x,y,width,height} 0..1 (V2 image crops)',
+            hidden: true,
+          },
+        },
       ],
     },
 
@@ -226,12 +274,5 @@ export const Exercises: CollectionConfig = {
 }
 
 // Re-export types and utilities for backward compatibility
-export { ExerciseBlockDefaults } from './defaults'
-export {
-  ContentBlockSchema,
-  ContentSchema,
-  LatexBlockSchema,
-  QuestionFreeResponseBlockSchema,
-  type ContentBlock,
-  type LatexBlock,
-} from './schemas'
+export { DEFAULT_CONTENT, ExerciseBlockDefaults, generateId } from './defaults'
+export type { ContentBlock, ContentSchema, ExerciseContent, LatexBlock } from './schemas'

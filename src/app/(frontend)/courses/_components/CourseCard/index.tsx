@@ -1,35 +1,35 @@
 'use client'
 
+import { BookOpen, CheckCircle, Loader2 } from 'lucide-react'
+import { useState } from 'react'
+import { cn } from '@/infra/utils/ui'
 import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
+import { useLoadingState } from '@/infra/loading/hooks/useLoadingState'
+import { LOADING_KEYS } from '@/infra/loading/keys'
+import { setUserProfile, getUserProfile } from '@/client/state/localStorage/userProfile'
 import type { Course } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/web/components/card'
 import { Button } from '@/ui/web/components/button'
-import { Badge } from '@/ui/web/components/badge'
-import { ArrowRight } from 'lucide-react'
-import { setUserProfile, getUserProfile } from '@/client/state/localStorage/userProfile'
 
 interface CourseCardProps {
   course: Course
+  isOwned?: boolean
 }
 
-export function CourseCard({ course }: CourseCardProps) {
+export function CourseCard({ course, isOwned = false }: CourseCardProps) {
   const t = useTranslations('courses')
   const router = useRouterWithLoading()
+  const [wasClicked, setWasClicked] = useState(false)
+  const isRouteLoading = useLoadingState({ key: LOADING_KEYS.ROUTE_TRANSITION })
 
-  // Early return if slug is missing or invalid
-  if (!course.slug || course.slug.trim() === '' || course.slug === '-') {
-    return null
-  }
+  // Show loading state if this button was clicked and route is loading
+  const isLoading = wasClicked && isRouteLoading
 
   const handleCourseSelect = (e: React.MouseEvent) => {
     e.preventDefault()
 
-    // Double-check slug is valid before navigation
-    if (!course.slug || course.slug.trim() === '' || course.slug === '-') {
-      console.error('Cannot navigate: invalid course slug', course)
-      return
-    }
+    // Mark that this button was clicked
+    setWasClicked(true)
 
     // Update localStorage with the selected course
     const gradeLevel = course.courseLabel || '8'
@@ -45,38 +45,88 @@ export function CourseCard({ course }: CourseCardProps) {
     router.push('/')
   }
 
+  const borderClass = isOwned
+    ? 'border-2 border-[hsl(var(--primary))]/20'
+    : 'border border-transparent hover:border-[hsl(var(--primary-soft))]'
+
   return (
-    <div className="group relative">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 via-accent/50 to-primary/50 rounded-xl opacity-0 group-hover:opacity-100 blur transition duration-500" />
-      <Card className="relative overflow-hidden border-border bg-card backdrop-blur-sm hover:bg-card transition-all duration-300 h-full flex flex-col shadow-xl">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-accent/15 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+    <div
+      className={cn(
+        'relative bg-card p-6 rounded-[2rem] flex flex-col',
+        borderClass,
+        'shadow-[0_1px_2px_0_rgba(60,64,67,.3),0_1px_3px_1px_rgba(60,64,67,.15)]',
+        'transition-all hover:-translate-y-0.5',
+      )}
+    >
+      {isOwned && (
+        <span
+          className="absolute -top-3 left-6 bg-[hsl(var(--success))] text-white px-4 py-1 rounded-full shadow-md uppercase tracking-wider"
+          style={{ fontSize: '9px', fontWeight: 900 }}
+        >
+          הקורס שלך
+        </span>
+      )}
 
-        <CardHeader className="relative pb-4">
+      <div className="mb-6 flex justify-between items-start gap-4">
+        <div className="flex-1">
           {course.courseLabel && (
-            <Badge variant="secondary" className="w-fit mb-3 text-xs font-medium">
+            <span
+              className="block mb-1 uppercase tracking-widest text-primary"
+              style={{ fontSize: '10px', fontWeight: 900 }}
+            >
               {course.courseLabel}
-            </Badge>
+            </span>
           )}
-          <CardTitle className="text-2xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">
-            {course.title}
-          </CardTitle>
-          {course.description && (
-            <CardDescription className="line-clamp-3 text-muted-foreground/80 mt-2">
-              {course.description}
-            </CardDescription>
-          )}
-        </CardHeader>
-
-        <CardFooter className="relative mt-auto pt-4">
-          <Button
-            onClick={handleCourseSelect}
-            className="w-full group/btn bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 flex items-center justify-center gap-2"
+          <h4
+            className="text-card-foreground text-right"
+            style={{ fontSize: '20px', fontWeight: 900 }}
           >
-            {t('openCourse')}
-            <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-          </Button>
-        </CardFooter>
-      </Card>
+            {course.title}
+          </h4>
+          {course.description && (
+            <p
+              className="text-muted-foreground mt-1 line-clamp-2 text-right"
+              style={{ fontSize: '12px' }}
+            >
+              {course.description}
+            </p>
+          )}
+        </div>
+        <div
+          className={cn(
+            'w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0',
+            isOwned ? 'bg-[hsl(var(--success))]/10' : 'bg-muted',
+          )}
+        >
+          {isOwned ? (
+            <CheckCircle className="w-6 h-6 text-[hsl(var(--success))]" />
+          ) : (
+            <BookOpen className="w-6 h-6 text-primary" />
+          )}
+        </div>
+      </div>
+
+      <div className="mt-auto pt-6 border-t border-border">
+        <Button
+          onClick={handleCourseSelect}
+          disabled={isLoading}
+          className={cn(
+            'w-full',
+            isOwned
+              ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/20'
+              : 'bg-muted text-primary hover:bg-[hsl(var(--primary-soft))]',
+          )}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              {t('openCourse')}
+            </>
+          ) : (
+            t('openCourse')
+          )}
+        </Button>
+      </div>
     </div>
   )
 }

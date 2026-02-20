@@ -27,10 +27,19 @@ import type { Access, CollectionConfig } from 'payload'
 import { authenticated } from '../access/authenticated'
 import { AccountRole } from './Users/roles'
 
-const isOwner: Access = ({ req }) => {
+const isOwner: Access = ({ req, id }) => {
   const user = req.user as User | null
   if (!user) return false
   if (user.role === AccountRole.Admin) return true
+
+  if (id) {
+    const verifiedGuestSessionId = req.context?.verifiedGuestSessionId as string | undefined
+    if (verifiedGuestSessionId) {
+      return {
+        or: [{ user: { equals: user.id } }, { guestSession: { equals: verifiedGuestSessionId } }],
+      } as any
+    }
+  }
 
   return {
     user: {
@@ -61,10 +70,25 @@ export const Conversations: CollectionConfig = {
       name: 'user',
       type: 'relationship',
       relationTo: 'users',
-      required: true,
+      required: false,
       index: true,
       admin: {
-        description: 'Student who owns this conversation',
+        description: 'Student who owns this conversation (null for guest-owned)',
+      },
+    },
+
+    // ========================================
+    // Guest Session Ownership (for anonymous users)
+    // ========================================
+    {
+      name: 'guestSession',
+      type: 'relationship',
+      relationTo: 'guest-sessions' as any,
+      required: false,
+      index: true,
+      admin: {
+        hidden: true,
+        description: 'Guest session owner (set for anonymous chats)',
       },
     },
 
@@ -151,6 +175,15 @@ export const Conversations: CollectionConfig = {
             date: {
               pickerAppearance: 'dayAndTime',
             },
+          },
+        },
+        {
+          name: 'hidden',
+          type: 'checkbox',
+          defaultValue: false,
+          admin: {
+            description:
+              'Hidden messages are persisted for LLM context but excluded from client responses',
           },
         },
         {
@@ -276,9 +309,22 @@ export const Conversations: CollectionConfig = {
   hooks: {
     beforeChange: [
       async ({ data, req, operation }) => {
-        // Derive contextKey from raw contextRef shape
-        // contextRef.value is ALWAYS a string ID on writes (never populated object)
         if (operation === 'create' || operation === 'update') {
+          const hasUser = Boolean(data.user)
+          const hasGuest = Boolean(data.guestSession)
+
+          if (hasUser && hasGuest) {
+            throw new Error(
+              'Conversation must have exactly one owner: user OR guestSession, not both',
+            )
+          }
+
+          if (!hasUser && !hasGuest) {
+            throw new Error('Conversation must have exactly one owner: user OR guestSession')
+          }
+
+          // Derive contextKey from raw contextRef shape
+          // contextRef.value is ALWAYS a string ID on writes (never populated object)
           if (data.contextRef?.value && data.contextRef?.relationTo) {
             const collectionSlug = data.contextRef.relationTo
             const contextId = data.contextRef.value

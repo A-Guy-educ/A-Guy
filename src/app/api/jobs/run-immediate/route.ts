@@ -122,9 +122,17 @@ export async function POST(request: NextRequest) {
 
     // Dynamic import to avoid ES module initialization order issues
     const { pdfToExercisesTask } = await import('@/server/payload/jobs/pdf-to-exercises-task')
+    const { pdfToExercisesV2Task } = await import('@/server/payload/jobs/pdf-to-exercises-v2-task')
 
-    // Call the handler synchronously
-    await pdfToExercisesTask.handler({ job, req })
+    // Determine which handler to use based on task slug
+    const taskSlug = jobDoc.taskSlug
+    if (taskSlug === 'pdf_to_exercises_v2') {
+      // Call V2 handler synchronously
+      await pdfToExercisesV2Task.handler({ job, req })
+    } else {
+      // Call V1 handler synchronously
+      await pdfToExercisesTask.handler({ job, req })
+    }
 
     // Update job status to completed
     await updateJobStatus(coll, jobId, 'completed', job.output)

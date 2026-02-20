@@ -21,6 +21,15 @@ interface McqQuestionProps {
   t: (key: string) => string
 }
 
+/**
+ * Transform \frac to \dfrac for display-style fractions in MCQ options
+ * This improves readability by rendering fractions larger
+ * Note: \frac does not occur as substring in \dfrac, so simple replacement is safe
+ */
+function transformFractionsToDisplayStyle(content: string): string {
+  return content.replace(/\\frac\b/g, '\\dfrac')
+}
+
 export function McqQuestion({
   question,
   answer,
@@ -65,8 +74,11 @@ export function McqQuestion({
       <div className="flex flex-col gap-3">
         {question.answer.options.map((option) => {
           const isSelected = selectedIds.includes(option.id)
+          // Transform fractions to display style for better readability in MCQ options
+          const transformedValue = transformFractionsToDisplayStyle(option.content.value)
           const optionBlock: RichTextBlock = {
             ...option.content,
+            value: transformedValue,
             id: `${question.id}-option-${option.id}`,
             mediaIds: option.content.mediaIds || [],
           }
@@ -76,11 +88,12 @@ export function McqQuestion({
               className={cn(
                 'flex items-start gap-3 p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer',
                 'border-border bg-card',
-                !disabled && 'hover:border-primary hover:bg-primary/5',
+                !disabled && 'hover:border-muted-foreground hover:bg-muted',
                 'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
                 isSelected && 'border-primary bg-primary/10 shadow-sm',
                 disabled && 'opacity-60 cursor-not-allowed',
               )}
+              onClick={() => !question.answer.multiSelect && handleOptionClick(option.id)}
             >
               {question.answer.multiSelect ? (
                 <Checkbox

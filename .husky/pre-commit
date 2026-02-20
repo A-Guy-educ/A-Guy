@@ -49,36 +49,41 @@ if [ "$branch" = "main" ] || [ "$branch" = "dev" ]; then
   exit 1
 fi
 
-# Validate branch naming convention
-
-# Allowed patterns: feat/, fix/, chore/, docs/, refactor/, test/, security/
-if ! echo "$branch" | grep -qE '^(feat|fix|chore|docs|refactor|test|security)/[a-z0-9-]+$'; then
+# Validate branch naming convention (skip in CI - agents use their own conventions)
+if [ -n "$GITHUB_ACTIONS" ]; then
   echo ""
-  echo "❌ ERROR: Invalid branch name: '$branch'"
+  echo "ℹ️  CI environment detected. Skipping branch naming convention check."
   echo ""
-  echo "Branch names must follow one of these patterns:"
-  echo "  ✅ feat/<description>     - New features"
-  echo "  ✅ fix/<description>      - Bug fixes"
-  echo "  ✅ chore/<description>    - Maintenance tasks"
-  echo "  ✅ docs/<description>     - Documentation changes"
-  echo "  ✅ refactor/<description> - Code refactoring"
-  echo "  ✅ test/<description>     - Test additions/changes"
-  echo "  ✅ security/<description> - Security fixes"
-  echo ""
-  echo "Examples:"
-  echo "  git checkout -b feat/user-authentication"
-  echo "  git checkout -b fix/login-bug"
-  echo "  git checkout -b chore/update-dependencies"
-  echo ""
-  echo "To rename your branch:"
-  echo "  git branch -m <new-branch-name>"
-  echo ""
-  echo "To skip this check once:"
-  echo "  git commit --no-verify"
-  echo ""
-  echo "For detailed help, see: docs/specs/COMMIT_GUIDE.md"
-  echo ""
-  exit 1
+else
+  # Allowed patterns: feat/, fix/, chore/, docs/, refactor/, test/, security/
+  if ! echo "$branch" | grep -qE '^(feat|fix|chore|docs|refactor|test|security)/[a-z0-9-]+$'; then
+    echo ""
+    echo "❌ ERROR: Invalid branch name: '$branch'"
+    echo ""
+    echo "Branch names must follow one of these patterns:"
+    echo "  ✅ feat/<description>     - New features"
+    echo "  ✅ fix/<description>      - Bug fixes"
+    echo "  ✅ chore/<description>    - Maintenance tasks"
+    echo "  ✅ docs/<description>     - Documentation changes"
+    echo "  ✅ refactor/<description> - Code refactoring"
+    echo "  ✅ test/<description>     - Test additions/changes"
+    echo "  ✅ security/<description> - Security fixes"
+    echo ""
+    echo "Examples:"
+    echo "  git checkout -b feat/user-authentication"
+    echo "  git checkout -b fix/login-bug"
+    echo "  git checkout -b chore/update-dependencies"
+    echo ""
+    echo "To rename your branch:"
+    echo "  git branch -m <new-branch-name>"
+    echo ""
+    echo "To skip this check once:"
+    echo "  git commit --no-verify"
+    echo ""
+    echo "For detailed help, see: docs/specs/COMMIT_GUIDE.md"
+    echo ""
+    exit 1
+  fi
 fi
 
 # Run checks in parallel for faster execution

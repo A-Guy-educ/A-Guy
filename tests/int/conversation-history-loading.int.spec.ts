@@ -10,12 +10,11 @@
  * - Access control ensures users only see their own conversations
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Payload } from 'payload'
-import { getPayload } from 'payload'
-import type { PayloadRequest } from 'payload'
-import { agentChat } from '@/server/payload/endpoints/agent/chat'
 import { startMongoContainer, stopMongoContainer } from '@/infra/utils/test/mongodb-container'
+import { agentChat } from '@/server/payload/endpoints/agent/chat'
+import type { Payload, PayloadRequest } from 'payload'
+import { getPayload } from 'payload'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock AI and vector-related services
 
@@ -54,6 +53,48 @@ vi.mock('@/infra/llm/maintenance', () => ({
   })),
 }))
 
+// Mock guest session and rate limit services to prevent interference with auth tests
+vi.mock('@/server/services/guest-session', () => ({
+  getGuestSessionCookie: vi.fn(() => null),
+  getGuestSessionByToken: vi.fn(async () => null),
+  createGuestSession: vi.fn(async () => ({ session: null, token: '' })),
+  buildGuestSessionCookieHeader: vi.fn(async () => ''),
+  checkAndIncrementGuestMessageCount: vi.fn(async () => ({
+    allowed: true,
+    remaining: 5,
+    current: 0,
+    max: 5,
+  })),
+  hashIP: vi.fn(() => ''),
+  hashUserAgent: vi.fn(() => ''),
+  buildClearGuestSessionCookieHeader: vi.fn(() => ''),
+  clearGuestSessionCookie: vi.fn(),
+  setGuestSessionCookie: vi.fn(),
+  generateSessionToken: vi.fn(() => 'mock-token'),
+  hashToken: vi.fn(() => 'mock-hash'),
+  verifyTokenHash: vi.fn(() => false),
+  revokeGuestSession: vi.fn(async () => null),
+  updateGuestSessionActivity: vi.fn(async () => null),
+  GUEST_SESSION_COOKIE_NAME: 'guest_session',
+}))
+
+vi.mock('@/server/services/rate-limit', () => ({
+  checkRateLimit: vi.fn(async () => ({
+    allowed: true,
+    remaining: 10,
+    resetAt: Date.now() + 60000,
+  })),
+  getRateLimitKey: vi.fn(() => 'mock:key'),
+  getRemainingRequests: vi.fn(async () => ({
+    allowed: true,
+    remaining: 10,
+    resetAt: Date.now() + 60000,
+  })),
+  resetRateLimit: vi.fn(),
+  clearAllRateLimits: vi.fn(),
+  getRateLimitStats: vi.fn(async () => ({ size: 0, maxRequests: 10, windowMs: 60000 })),
+}))
+
 let payload: Payload
 let testUserId: string
 let testUserId2: string // Second user for access control test
@@ -61,6 +102,7 @@ let testExerciseId: string
 let testLessonId: string
 let testChapterId: string
 let testCourseId: string
+let testContextKey: string
 let originalDatabaseUrl: string | undefined
 
 beforeAll(async () => {
@@ -221,6 +263,16 @@ beforeAll(async () => {
     testExerciseId = exercise.id
   }
 
+  // Resolve the contextKey that agentChat will actually use
+  // agentChat resolves exerciseId -> parent lesson, so contextKey = "lessons:<lessonId>"
+  const exerciseDoc = await payload.findByID({
+    collection: 'exercises',
+    id: testExerciseId,
+    depth: 0,
+  })
+  const resolvedLessonId =
+    typeof exerciseDoc.lesson === 'string' ? exerciseDoc.lesson : (exerciseDoc.lesson as any)?.id
+  testContextKey = resolvedLessonId ? `lessons:${resolvedLessonId}` : `exercises:${testExerciseId}`
   // Drop test-created indexes from other test files to prevent conflicts
 
   const db = (payload.db as any).connection?.db
@@ -382,6 +434,7 @@ describe('Conversation History Loading', () => {
   it('should store messages when user sends chat messages', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as any,
       json: async () => ({
         message: 'First message',
@@ -417,11 +470,12 @@ describe('Conversation History Loading', () => {
   })
 
   it('should load conversation history via REST API after messages are sent', async () => {
-    const contextKey = `exercises:${testExerciseId}`
+    const contextKey = testContextKey
 
     // Send first message
     const req1 = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as any,
       json: async () => ({
         message: 'Hello, I need help',
@@ -438,6 +492,7 @@ describe('Conversation History Loading', () => {
     // Send second message
     const req2 = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as any,
       json: async () => ({
         message: 'Can you explain this?',
@@ -468,7 +523,7 @@ describe('Conversation History Loading', () => {
   })
 
   it('should load conversation history after multiple messages and "refresh"', async () => {
-    const contextKey = `exercises:${testExerciseId}`
+    const contextKey = testContextKey
 
     // Send multiple messages
     const messages = ['Message 1', 'Message 2', 'Message 3']
@@ -477,6 +532,7 @@ describe('Conversation History Loading', () => {
     for (const msg of messages) {
       const req = {
         payload,
+        headers: new Headers(),
         user: { id: testUserId } as any,
         json: async () => ({
           message: msg,
@@ -518,11 +574,12 @@ describe('Conversation History Loading', () => {
   })
 
   it('should enforce access control - users can only see their own conversations', async () => {
-    const contextKey = `exercises:${testExerciseId}`
+    const contextKey = testContextKey
 
     // User 1 sends a message
     const req1 = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as any,
       json: async () => ({
         message: 'Private message from user 1',
@@ -539,6 +596,7 @@ describe('Conversation History Loading', () => {
     // User 2 sends a message (different conversation for same exercise)
     const req2 = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId2 } as any,
       json: async () => ({
         message: 'Private message from user 2',
@@ -581,11 +639,12 @@ describe('Conversation History Loading', () => {
   })
 
   it('should filter by user ID and return most recent conversation when multiple users have conversations', async () => {
-    const contextKey = `exercises:${testExerciseId}`
+    const contextKey = testContextKey
 
     // User 1 sends a message and gets a conversation
     const req1 = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as any,
       json: async () => ({
         message: 'User 1 first message',
@@ -605,6 +664,7 @@ describe('Conversation History Loading', () => {
     // User 2 sends a message and gets a different conversation
     const req2 = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId2 } as any,
       json: async () => ({
         message: 'User 2 first message',
@@ -624,6 +684,7 @@ describe('Conversation History Loading', () => {
     // User 1 sends another message (updates their conversation's lastMessageAt)
     const req3 = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as any,
       json: async () => ({
         message: 'User 1 second message',
@@ -776,9 +837,9 @@ describe('Conversation History Loading', () => {
     expect(user1Result.docs.length).toBe(1)
     expect(user1Result.docs[0].id).toBe(conv1.id)
     const user1UserId =
-      typeof user1Result.docs[0].user === 'object'
+      user1Result.docs[0]?.user && typeof user1Result.docs[0].user === 'object'
         ? user1Result.docs[0].user.id
-        : user1Result.docs[0].user
+        : user1Result.docs[0]?.user
     expect(user1UserId).toBe(testUserId)
     expect(user1Result.docs[0].messages?.some((m: any) => m.content.includes('User 1'))).toBe(true)
     expect(user1Result.docs[0].messages?.some((m: any) => m.content.includes('User 2'))).toBe(false)
@@ -802,9 +863,9 @@ describe('Conversation History Loading', () => {
     expect(user2Result.docs.length).toBe(1)
     expect(user2Result.docs[0].id).toBe(conv2.id)
     const user2UserId =
-      typeof user2Result.docs[0].user === 'object'
+      user2Result.docs[0]?.user && typeof user2Result.docs[0].user === 'object'
         ? user2Result.docs[0].user.id
-        : user2Result.docs[0].user
+        : user2Result.docs[0]?.user
     expect(user2UserId).toBe(testUserId2)
     expect(user2Result.docs[0].messages?.some((m: any) => m.content.includes('User 2'))).toBe(true)
     expect(user2Result.docs[0].messages?.some((m: any) => m.content.includes('User 1'))).toBe(false)
@@ -884,7 +945,9 @@ describe('Conversation History Loading', () => {
 
     // Verify user ownership
     const conversationUserId =
-      typeof result.docs[0].user === 'object' ? result.docs[0].user.id : result.docs[0].user
+      result.docs[0]?.user && typeof result.docs[0].user === 'object'
+        ? result.docs[0].user.id
+        : result.docs[0]?.user
     expect(conversationUserId).toBe(testUserId)
 
     // Verify messages are included
@@ -974,9 +1037,9 @@ describe('Conversation History Loading', () => {
     expect(user1Result.docs.length).toBe(1)
     expect(user1Result.docs[0].id).toBe(conv1.id)
     const user1UserId =
-      typeof user1Result.docs[0].user === 'object'
+      user1Result.docs[0]?.user && typeof user1Result.docs[0].user === 'object'
         ? user1Result.docs[0].user.id
-        : user1Result.docs[0].user
+        : user1Result.docs[0]?.user
     expect(user1UserId).toBe(testUserId)
 
     // Test User 2 - should only see their own conversation
@@ -999,9 +1062,9 @@ describe('Conversation History Loading', () => {
     expect(user2Result.docs.length).toBe(1)
     expect(user2Result.docs[0].id).toBe(conv2.id)
     const user2UserId =
-      typeof user2Result.docs[0].user === 'object'
+      user2Result.docs[0]?.user && typeof user2Result.docs[0].user === 'object'
         ? user2Result.docs[0].user.id
-        : user2Result.docs[0].user
+        : user2Result.docs[0]?.user
     expect(user2UserId).toBe(testUserId2)
 
     // Verify REST API response format

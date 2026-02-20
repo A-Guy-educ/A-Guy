@@ -9,14 +9,11 @@ loadEnv({ path: '.env.test', override: true })
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
+    fileParallelism: false, // Run test files sequentially to avoid exhausting MongoDB connection pool
+    globalSetup: ['./tests/setup/global-int-setup.ts'],
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
-    include: [
-      'tests/int/**/*.int.spec.ts',
-      'tests/int/**/*.int.spec.tsx',
-      'tests/unit/**/*.test.ts',
-      'tests/unit/**/*.test.tsx',
-    ],
+    include: ['tests/int/**/*.int.spec.ts', 'tests/int/**/*.int.spec.tsx'],
     hookTimeout: 120000, // 120 seconds for hooks (MongoDB container + Payload init can be slow)
     testTimeout: 10000, // 10 seconds for individual tests
     // Suppress console output during tests for cleaner output

@@ -58,12 +58,54 @@ vi.mock('@/infra/llm/maintenance', () => ({
   })),
 }))
 
+// Mock guest session and rate limit services to prevent interference with auth tests
+vi.mock('@/server/services/guest-session', () => ({
+  getGuestSessionCookie: vi.fn(() => null),
+  getGuestSessionByToken: vi.fn(async () => null),
+  createGuestSession: vi.fn(async () => ({ session: null, token: '' })),
+  buildGuestSessionCookieHeader: vi.fn(async () => ''),
+  checkAndIncrementGuestMessageCount: vi.fn(async () => ({
+    allowed: true,
+    remaining: 5,
+    current: 0,
+    max: 5,
+  })),
+  hashIP: vi.fn(() => ''),
+  hashUserAgent: vi.fn(() => ''),
+  buildClearGuestSessionCookieHeader: vi.fn(() => ''),
+  clearGuestSessionCookie: vi.fn(),
+  setGuestSessionCookie: vi.fn(),
+  generateSessionToken: vi.fn(() => 'mock-token'),
+  hashToken: vi.fn(() => 'mock-hash'),
+  verifyTokenHash: vi.fn(() => false),
+  revokeGuestSession: vi.fn(async () => null),
+  updateGuestSessionActivity: vi.fn(async () => null),
+  GUEST_SESSION_COOKIE_NAME: 'guest_session',
+}))
+
+vi.mock('@/server/services/rate-limit', () => ({
+  checkRateLimit: vi.fn(async () => ({
+    allowed: true,
+    remaining: 10,
+    resetAt: Date.now() + 60000,
+  })),
+  getRateLimitKey: vi.fn(() => 'mock:key'),
+  getRemainingRequests: vi.fn(async () => ({
+    allowed: true,
+    remaining: 10,
+    resetAt: Date.now() + 60000,
+  })),
+  resetRateLimit: vi.fn(),
+  clearAllRateLimits: vi.fn(),
+  getRateLimitStats: vi.fn(async () => ({ size: 0, maxRequests: 10, windowMs: 60000 })),
+}))
+
 let payload: Payload
 let testUserId: string
 let testExerciseId: string
 let testChapterId: string
-let testCourseId: string
-let testCategoryId: string
+let _testCourseId: string
+let _testCategoryId: string
 let lessons: { docs: Array<{ id: string }> }
 
 describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
@@ -86,7 +128,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
       data: { title: 'Test Category', slug: `test-category-stream-${Date.now()}` },
       user: { id: testUserId },
     } as any)
-    testCategoryId = category.id
+    _testCategoryId = category.id
 
     // Create test course with all required fields
     const course = await payload.create({
@@ -102,7 +144,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
       },
       draft: true,
     } as any)
-    testCourseId = course.id
+    _testCourseId = course.id
 
     // Create test chapter with all required fields
     const chapter = await payload.create({
@@ -222,11 +264,17 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
     } catch (error) {
       console.error('Cleanup failed:', error)
     }
+
+    // Close DB connection to prevent connection leaks
+    if (payload.db?.destroy) {
+      await payload.db.destroy()
+    }
   }, 60000)
 
   it('returns 401 when user is not authenticated', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: null,
       json: async () => ({
         message: 'Hello',
@@ -241,6 +289,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
   it('returns 400 when message is missing', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as PayloadRequest['user'],
       json: async () => ({
         acknowledgment: 'ack',
@@ -254,6 +303,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
   it('returns 400 when acknowledgment is missing', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello',
@@ -267,6 +317,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
   it('returns 400 when context is missing', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello',
@@ -280,6 +331,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
   it('returns 400 when mediaIds are provided', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello',
@@ -297,6 +349,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
   it('returns 400 when adminMode is true', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello',
@@ -314,6 +367,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
   it('returns SSE stream with correct headers', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as PayloadRequest['user'],
       json: async () => ({ message: 'Hello', acknowledgment: 'ack', exerciseId: testExerciseId }),
     } as unknown as PayloadRequest & { json: () => Promise<unknown> }
@@ -326,6 +380,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
   it('yields chunk events in SSE format', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as PayloadRequest['user'],
       json: async () => ({ message: 'Hello', acknowledgment: 'ack', exerciseId: testExerciseId }),
     } as unknown as PayloadRequest & { json: () => Promise<unknown> }

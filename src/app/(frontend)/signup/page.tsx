@@ -1,19 +1,18 @@
-import React from 'react'
-import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { getMeUser } from '@/infra/utils/getMeUser'
+import { isPasswordLoginEnabled } from '@/infra/config/system-params'
 import { SignupPageContent } from './SignupPageContent'
 
-export const metadata: Metadata = {
-  title: 'Sign Up',
-  description: 'Create a new account',
-}
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string>>
+}) {
+  const passwordEnabled = await isPasswordLoginEnabled()
 
-export default async function SignupPage() {
-  const { user } = await getMeUser()
-
-  if (user) {
-    redirect('/')
+  if (!passwordEnabled) {
+    const params = await searchParams
+    const query = new URLSearchParams(params).toString()
+    redirect(query ? `/login?${query}` : '/login')
   }
 
   return <SignupPageContent />

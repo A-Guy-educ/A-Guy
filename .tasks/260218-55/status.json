@@ -1,0 +1,32 @@
+{
+  "taskId": "260218-55",
+  "mode": "spec",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-18T18:06:23.507Z",
+  "updatedAt": "2026-02-18T18:08:53.394Z",
+  "state": "running",
+  "currentStage": "clarify",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-18T18:06:25.217Z",
+      "completedAt": "2026-02-18T18:07:48.305Z",
+      "elapsed": 83088
+    },
+    "spec": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-18T18:07:48.305Z",
+      "completedAt": "2026-02-18T18:08:53.393Z",
+      "elapsed": 65088
+    },
+    "clarify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-18T18:08:53.394Z"
+    }
+  },
+  "triggeredBy": "comment",
+  "issueNumber": 437
+}

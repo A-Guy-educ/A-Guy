@@ -31,10 +31,13 @@ import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/im
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
+import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
+import { runBackfillOnInit } from '@/server/payload/migrations/backfillAdminTitle'
 import type { JobDocument } from '@/server/payload/jobs/types'
 import { plugins } from '@/server/payload/plugins'
 import { Footer } from '@/ui/web/footer/config'
 import { Header } from '@/ui/web/header/config'
+import { GuestSessions } from '@/server/payload/collections/GuestSessions'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -79,7 +82,11 @@ export default buildConfig({
       beforeLogin: ['@/ui/admin/BeforeLogin'],
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
-      beforeDashboard: ['@/ui/admin/BeforeDashboard', '@/ui/admin/AdminChat/DashboardWidget'],
+      beforeDashboard: [
+        '@/ui/admin/BeforeDashboard',
+        '@/ui/admin/AdminChat/DashboardWidget',
+        '@/ui/admin/VersionInfo',
+      ],
       beforeNavLinks: ['@/ui/admin/AdminChat/SidebarLink', '@/ui/admin/PdfConversion/SidebarLink'],
     },
     importMap: {
@@ -113,6 +120,21 @@ export default buildConfig({
   editor: defaultLexical,
   db: mongooseAdapter({
     url: databaseUrl,
+    connectOptions: {
+      // Hardened connection pool configuration to prevent Atlas connection exhaustion
+      // Tests: maxPoolSize=5 (default)
+      // Production: maxPoolSize=2 (default, configurable via MONGODB_MAX_POOL_SIZE)
+      // Rationale: With 500 connection limit, this allows 250 concurrent serverless instances
+      // vs only 5 instances with the previous maxPoolSize=100 setting
+      maxPoolSize: parseInt(
+        process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '2'),
+        10,
+      ),
+      // Allow pool to fully drain when idle
+      minPoolSize: 0,
+      // Close idle connections after 10 seconds
+      maxIdleTimeMS: 10000,
+    },
   }),
   collections: [
     Pages,
@@ -121,6 +143,7 @@ export default buildConfig({
     ConfigValues,
     ConfigAuditLogs,
     Conversations,
+    GuestSessions,
     MemoryItems,
     Tenants,
     Courses,
@@ -173,7 +196,7 @@ export default buildConfig({
         return authHeader === `Bearer ${process.env.CRON_SECRET}`
       },
     },
-    tasks: [pdfToExercisesTask],
+    tasks: [pdfToExercisesTask, pdfToExercisesV2Task],
     // Expose jobs collection in admin panel for monitoring conversion jobs
     jobsCollectionOverrides: ({ defaultJobsCollection }) => ({
       ...defaultJobsCollection,
@@ -241,5 +264,8 @@ export default buildConfig({
         ],
       },
     }),
+  },
+  onInit: async (payload) => {
+    await runBackfillOnInit(payload)
   },
 })

@@ -14,8 +14,18 @@
  * - Validate enrollment/ownership for access control
  */
 import { logger } from '@/infra/utils/logger'
+import { getGuestChatConfig } from '@/server/config/guest-chat-config'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import type { Payload } from 'payload'
+
+export class GuestConversationLimitError extends Error {
+  constructor(limit: number) {
+    super(
+      `Guest session has reached the maximum of ${limit} conversations. Please sign up to continue.`,
+    )
+    this.name = 'GuestConversationLimitError'
+  }
+}
 
 /**
  * Context reference shape for polymorphic relationships
@@ -32,6 +42,7 @@ export interface ResolvedContext {
   relationTo: ContextRef['relationTo']
   value: string
   contextKey: string
+  guestSessionId?: string
 }
 
 /**
@@ -41,6 +52,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   timestamp: string
+  hidden?: boolean
 }
 
 /**
@@ -49,6 +61,7 @@ export interface ChatMessage {
 export interface ConversationWithHistory {
   id: string
   user: string | { id: string }
+  guestSession?: string
   contextKey: string
   messages: ChatMessage[]
   summary?: string
@@ -184,8 +197,9 @@ export class ConversationService {
 
   /**
    * Resolve context from UI state
-   * Priority: Exercise > Lesson > Chapter > Course > Category
-   * Prefers IDs over slugs to avoid resolver queries
+   * Priority: Lesson > Exercise (resolves to parent lesson) > Chapter > Course > Category
+   * Exercises within the same lesson share a single conversation.
+   * When only exerciseId is provided, the parent lesson is looked up from DB.
    */
   async resolveContext(params: {
     exerciseId?: string
@@ -196,6 +210,22 @@ export class ConversationService {
   }): Promise<ResolvedContext> {
     // Priority order: Exercise > Lesson > Chapter > Course > Category
     if (params.exerciseId) {
+      // Look up the parent lesson so all exercises in the same lesson share one conversation
+      const exercise = await this.payload.findByID({
+        collection: 'exercises',
+        id: params.exerciseId,
+        depth: 0,
+      })
+      const lessonId =
+        typeof exercise.lesson === 'string' ? exercise.lesson : (exercise.lesson as any)?.id
+      if (lessonId) {
+        return {
+          relationTo: 'lessons',
+          value: lessonId,
+          contextKey: `lessons:${lessonId}`,
+        }
+      }
+      // Fallback if lesson relationship is somehow missing
       return {
         relationTo: 'exercises',
         value: params.exerciseId,
@@ -296,6 +326,19 @@ export class ConversationService {
   }
 
   /**
+   * Validate guest session has access to context
+   * Guests have open access to all content (similar to authenticated users)
+   */
+  async validateGuestContextAccess(
+    guestSessionId: string,
+    contextRef: ContextRef,
+  ): Promise<boolean> {
+    // Guests have open access to all content (tracked by session)
+    logger.debug({ guestSessionId, contextRef }, 'Guest context access granted')
+    return true
+  }
+
+  /**
    * Get conversation history with summary
    */
   async getConversationHistory(
@@ -336,6 +379,153 @@ export class ConversationService {
     }
 
     return result.docs[0] as unknown as ConversationWithHistory
+  }
+
+  /**
+   * Get or create active conversation for a GUEST session
+   * Similar to user version but uses guestSession instead of user
+   */
+  async getOrCreateGuestConversation(
+    guestSessionId: string,
+    contextRef: ContextRef,
+  ): Promise<ConversationWithHistory> {
+    const contextKey = `${contextRef.relationTo}:${contextRef.value}`
+
+    const existingConv = await this.payload.find({
+      collection: 'conversations',
+      where: {
+        and: [
+          { guestSession: { equals: guestSessionId } },
+          { contextKey: { equals: contextKey } },
+          { archivedAt: { exists: false } },
+        ],
+      },
+      limit: 1,
+    })
+
+    if (existingConv.docs.length > 0) {
+      logger.info(
+        { guestSessionId, contextKey, conversationId: existingConv.docs[0].id },
+        'Found existing active guest conversation',
+      )
+      return existingConv.docs[0] as unknown as ConversationWithHistory
+    }
+
+    // Check conversation limit before creating new one
+    const countResult = await this.payload.find({
+      collection: 'conversations',
+      where: {
+        and: [{ guestSession: { equals: guestSessionId } }, { archivedAt: { exists: false } }],
+      },
+      limit: 0,
+    })
+
+    const guestConfig = await getGuestChatConfig()
+    if (countResult.totalDocs >= guestConfig.max_conversations) {
+      throw new GuestConversationLimitError(guestConfig.max_conversations)
+    }
+
+    const newConv = await this.payload.create({
+      collection: 'conversations',
+      data: {
+        guestSession: guestSessionId,
+        contextRef: {
+          relationTo: contextRef.relationTo,
+          value: contextRef.value,
+        },
+        contextKey,
+        messages: [],
+        lastMessageAt: new Date(),
+        contextPolicyVersion: 'v1',
+      } as any,
+      draft: false,
+    })
+
+    logger.info(
+      { guestSessionId, contextKey, conversationId: newConv.id },
+      'Created new guest conversation',
+    )
+    return newConv as unknown as ConversationWithHistory
+  }
+
+  /**
+   * Get guest conversation by context key
+   */
+  async getGuestConversation(
+    guestSessionId: string,
+    contextKey: string,
+  ): Promise<ConversationWithHistory | null> {
+    const result = await this.payload.find({
+      collection: 'conversations',
+      where: {
+        and: [
+          { guestSession: { equals: guestSessionId } },
+          { contextKey: { equals: contextKey } },
+          { archivedAt: { exists: false } },
+        ],
+      },
+      limit: 1,
+    })
+
+    if (result.docs.length === 0) return null
+    return result.docs[0] as unknown as ConversationWithHistory
+  }
+
+  /**
+   * Reset guest conversation (archive + create new)
+   */
+  async resetGuestConversation(
+    guestSessionId: string,
+    contextKey: string,
+  ): Promise<ConversationWithHistory> {
+    const existingConv = await this.payload.find({
+      collection: 'conversations',
+      where: {
+        and: [
+          { guestSession: { equals: guestSessionId } },
+          { contextKey: { equals: contextKey } },
+          { archivedAt: { exists: false } },
+        ],
+      },
+      limit: 1,
+    })
+
+    if (existingConv.docs.length > 0) {
+      const currentConv = existingConv.docs[0]
+      await this.payload.update({
+        collection: 'conversations',
+        id: currentConv.id,
+        data: {
+          archivedAt: new Date(),
+        } as any,
+        overrideAccess: true,
+        context: { allowArchive: true },
+      })
+      logger.info(
+        { guestSessionId, contextKey, conversationId: currentConv.id },
+        'Archived guest conversation',
+      )
+    }
+
+    const [relationTo, value] = contextKey.split(':') as [ContextRef['relationTo'], string]
+    const newConv = await this.payload.create({
+      collection: 'conversations',
+      data: {
+        guestSession: guestSessionId,
+        contextRef: { relationTo, value },
+        contextKey,
+        messages: [],
+        lastMessageAt: new Date(),
+        contextPolicyVersion: 'v1',
+      } as any,
+      draft: false,
+    })
+
+    logger.info(
+      { guestSessionId, contextKey, conversationId: newConv.id },
+      'Created new guest conversation after reset',
+    )
+    return newConv as unknown as ConversationWithHistory
   }
 }
 

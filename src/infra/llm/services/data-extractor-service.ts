@@ -3,9 +3,9 @@
  * Extracts structured data from images (questions, options, answers)
  *
  * Migrated to Genkit unified adapter for LLM operations.
+ * Uses dynamic imports to prevent Node.js-only modules from being bundled into client code.
  */
 import type { Payload } from 'payload'
-import { createGenkitUnifiedAdapter } from '../genkit/adapters/unified-adapter'
 import type { AIModel, AIModelKey } from '../models'
 import { getModelRegistryEntry, getProviderModelName } from '../models'
 import { SIMPLE_TEXT_QUESTION_PROMPT } from '../prompts/simple-text-question'
@@ -49,10 +49,10 @@ export async function extractFromImage(
   let modelConfig: AIModel | null = null
 
   try {
-    // Optimize image
     const optimizedImage = await optimizeImageForAI(input.imageBuffer)
 
-    // Get Genkit-backed unified adapter (replaces factory pattern)
+    // Dynamic import to prevent Node.js-only modules from being bundled into client code
+    const { createGenkitUnifiedAdapter } = await import('../genkit/adapters/unified-adapter')
     const adapter = await createGenkitUnifiedAdapter(payload)
     modelConfig = resolveModelConfig('IMAGE_TO_EXERCISE')
 

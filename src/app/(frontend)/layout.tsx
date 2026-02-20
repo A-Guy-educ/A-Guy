@@ -6,18 +6,22 @@ import { GeistSans } from 'geist/font/sans'
 import { Assistant } from 'next/font/google'
 import React from 'react'
 
+import { reloadConfigValues } from '@/infra/config/runtime'
+import { isPasswordLoginEnabled } from '@/infra/config/system-params'
 import { mergeOpenGraph } from '@/infra/utils/mergeOpenGraph'
 import { AdminBar } from '@/ui/web/AdminBar'
 import { Toaster } from '@/ui/web/components/toaster'
 import { Footer } from '@/ui/web/footer/Component'
 import { Header } from '@/ui/web/header/Component'
 import { Providers } from '@/ui/web/providers'
+import { PasswordLoginProvider } from '@/ui/web/providers/PasswordLoginProvider'
 import { InitTheme } from '@/ui/web/providers/Theme/InitTheme'
 import { RouteLoadingIndicator } from '@/infra/loading/components/RouteLoadingIndicator'
 
 import { cookieName, defaultLocale, getDirection, type Locale, locales } from '@/i18n/config'
-import { getServerSideURL } from '@/infra/utils/getURL'
 import { I18nProvider } from '@/ui/web/providers/I18n'
+import { getPayload } from 'payload'
+import config from '@payload-config'
 import { cookies, headers } from 'next/headers'
 import './globals.css'
 import { LayoutClient } from './LayoutClient'
@@ -68,9 +72,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   const locale = await getLocale()
   const messages = await getMessages(locale)
-
-  // Determine text direction based on locale
   const dir = getDirection(locale)
+
+  const payload = await getPayload({ config })
+  await reloadConfigValues(payload)
+  const passwordLoginEnabled = await isPasswordLoginEnabled()
 
   return (
     <html
@@ -87,18 +93,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <I18nProvider locale={locale} messages={messages}>
           <Providers>
-            <RouteLoadingIndicator />
-            <LayoutClient />
-            <AnalyticsProvider />
-            <AdminBar
-              adminBarProps={{
-                preview: isEnabled,
-              }}
-            />
-            <Header />
-            {children}
-            <Footer />
-            <Toaster />
+            <PasswordLoginProvider enabled={passwordLoginEnabled}>
+              <RouteLoadingIndicator />
+              <LayoutClient />
+              <AnalyticsProvider />
+              <AdminBar
+                adminBarProps={{
+                  preview: isEnabled,
+                }}
+              />
+              <Header />
+              {children}
+              <Footer />
+              <Toaster />
+            </PasswordLoginProvider>
           </Providers>
         </I18nProvider>
       </body>
@@ -107,10 +115,51 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL(getServerSideURL()),
+  metadataBase: new URL('https://www.aguy.co.il'),
+  title: {
+    default: 'A-Guy | תרגול מתמטיקה אינטראקטיבי',
+    template: '%s | A-Guy',
+  },
+  description:
+    'פלטפורמה לתרגול מתמטיקה עם שיעורים מסודרים, תרגילים ממוקדים, משוב מיידי והסברים ברורים שלב אחר שלב – בנויה להתקדמות עקבית ואמיתית.',
+  keywords: [],
+  authors: [{ name: 'A-Guy', url: 'https://www.aguy.co.il' }],
+  creator: 'A-Guy',
+  publisher: 'A-Guy',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   openGraph: mergeOpenGraph(),
   twitter: {
     card: 'summary_large_image',
-    creator: '@payloadcms',
+    site: '@aguy',
+    creator: '@aguy',
+    title: 'A-Guy | תרגול מתמטיקה אינטראקטיבי',
+    description:
+      'פלטפורמה לתרגול מתמטיקה עם שיעורים מסודרים, תרגילים ממוקדים, משוב מיידי והסברים ברורים שלב אחר שלב.',
+    images: [
+      {
+        url: 'https://www.aguy.co.il/api/media/file/telescope.4ee60378.svg',
+        width: 1200,
+        height: 630,
+        alt: 'A-Guy - תרגול מתמטיקה אינטראקטיבי',
+      },
+    ],
+  },
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+  other: {
+    'theme-color': '#0f172a',
   },
 }

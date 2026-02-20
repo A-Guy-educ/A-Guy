@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
     const rewrittenCss = rewriteCss(cssResult.css)
 
     // Render final HTML
-    let html = await renderViewerHtml(templateResult.html, rewrittenCss)
+    const html = await renderViewerHtml(templateResult.html, rewrittenCss)
 
     // Validate rewrite was successful
     const validation = await validateRewrittenHtml(html)
@@ -91,33 +91,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'PDF viewer rendering error' }, { status: 500 })
     }
 
-    // Inject file URL via query parameter (PDF.js native mechanism)
-    // The viewer will read the file parameter from its own URL
-    if (validatedFileUrl) {
-      // PDF.js viewer.html reads the file parameter from window.location.search
-      // We pass it through by adding it to the base href or letting the iframe handle it
-      // Since we're serving the HTML directly, we need to inject it via the viewer's
-      // own query handling mechanism
-
-      // Add file parameter to viewer's window.location simulation
-      // The viewer expects to read 'file' from URLSearchParams
-      html = html.replace(
-        '</head>',
-        `<script>
-          // Inject file URL into viewer's URL handling
-          // PDF.js viewer reads 'file' from window.location.search
-          if (typeof window !== 'undefined') {
-            const originalSearch = window.location.search;
-            Object.defineProperty(window.location, 'search', {
-              get: function() {
-                return '?file=${encodeURIComponent(validatedFileUrl).replace(/'/g, "\\'")}';
-              }
-            });
-          }
-        </script>
-        </head>`,
-      )
-    }
+    // Note: The file URL is already passed via the iframe's query string (?file=...)
+    // PDF.js viewer reads the file parameter from window.location.search natively
+    // No need for any script injection - the iframe's src already contains ?file=<url>
+    // This avoids both:
+    // 1. Object.defineProperty crash (not configurable in modern browsers)
+    // 2. Cross-origin PDF.js rejection (URL is same-origin via /api/media/file/ proxy)
 
     reqLogger.info(
       { fileUrl: redactUrl(validatedFileUrl), htmlSize: html.length },

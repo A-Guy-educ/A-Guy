@@ -4,7 +4,9 @@ import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
 import { Suspense, useEffect, useState } from 'react'
 import { ConversionStatusPanel } from '../ConversionStatusPanel'
 import { ConvertForm } from '../ConvertForm'
+import { ConvertV2Button } from '../ConvertV2Button'
 import { DraftExercisesList } from '../DraftExercisesList'
+import { V2StatusPanel } from '../V2StatusPanel'
 
 interface MediaItem {
   id: string
@@ -180,25 +182,30 @@ export const LessonConversionPanel = () => {
             >
               {pdf.filename || pdf.id}
             </span>
-            <button
-              onClick={() => setActiveForm(activeForm === pdf.id ? null : pdf.id)}
-              style={{
-                padding: '4px 12px',
-                fontSize: 11,
-                fontWeight: 500,
-                border: activeForm === pdf.id ? '1px solid var(--theme-elevation-200)' : 'none',
-                borderRadius: 3,
-                backgroundColor:
-                  activeForm === pdf.id
-                    ? 'var(--theme-elevation-100)'
-                    : 'var(--theme-elevation-900)',
-                color:
-                  activeForm === pdf.id ? 'var(--theme-elevation-700)' : 'var(--theme-elevation-0)',
-                cursor: 'pointer',
-              }}
-            >
-              {activeForm === pdf.id ? 'Cancel' : 'Convert'}
-            </button>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button
+                onClick={() => setActiveForm(activeForm === pdf.id ? null : pdf.id)}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: 11,
+                  fontWeight: 500,
+                  border: activeForm === pdf.id ? '1px solid var(--theme-elevation-200)' : 'none',
+                  borderRadius: 3,
+                  backgroundColor:
+                    activeForm === pdf.id
+                      ? 'var(--theme-elevation-100)'
+                      : 'var(--theme-elevation-900)',
+                  color:
+                    activeForm === pdf.id
+                      ? 'var(--theme-elevation-700)'
+                      : 'var(--theme-elevation-0)',
+                  cursor: 'pointer',
+                }}
+              >
+                {activeForm === pdf.id ? 'Cancel' : 'Convert (V1)'}
+              </button>
+              <ConvertV2Button lessonId={String(lessonId)} mediaId={pdf.id} />
+            </div>
           </div>
 
           {/* Status Panel */}
@@ -208,6 +215,11 @@ export const LessonConversionPanel = () => {
               mediaId={pdf.id}
               onViewExercises={() => setExpandedPdf(expandedPdf === pdf.id ? null : pdf.id)}
             />
+          </div>
+
+          {/* V2 Status Panel */}
+          <div style={{ marginTop: 4 }}>
+            <V2StatusPanel lessonId={String(lessonId)} mediaId={pdf.id} />
           </div>
 
           {/* Inline Convert Form */}

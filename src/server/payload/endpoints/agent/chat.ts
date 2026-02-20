@@ -4,12 +4,13 @@
  *
  * @fileType endpoint
  * @domain chat
- * @pattern authenticated-endpoint, validated-endpoint, context-scoped, admin-mode
- * @ai-summary Chat endpoint with context scoping, memory retrieval, MCP tools for admins, and automatic maintenance
+ * @pattern authenticated-endpoint, validated-endpoint, context-scoped, admin-mode, guest-session
+ * @ai-summary Chat endpoint with context scoping, memory retrieval, MCP tools for admins, guest sessions, and automatic maintenance
  *
- * Access: Authenticated users only
+ * Access: Authenticated users OR guest sessions
  *
  * Features:
+ * - Guest sessions for anonymous users (7-day sliding TTL, 30-day hard cap)
  * - Context-scoped conversations (Course/Chapter/Lesson/Exercise)
  * - Admin mode with MCP tools (no context required)
  * - Running summary of conversation history
@@ -28,7 +29,20 @@ import { logger } from '@/infra/utils/logger'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { getMCPClient } from '@/server/repos/mcp/client/mcp-client'
-import { ConversationService } from '@/server/services/conversation-service'
+import {
+  ConversationService,
+  GuestConversationLimitError,
+} from '@/server/services/conversation-service'
+import { checkRateLimit } from '@/server/services/rate-limit'
+import {
+  buildGuestSessionCookieHeader,
+  checkAndIncrementGuestMessageCount,
+  createGuestSession,
+  getGuestSessionByToken,
+  getGuestSessionCookie,
+  hashIP,
+  hashUserAgent,
+} from '@/server/services/guest-session'
 import type { PayloadRequest } from 'payload'
 import { z } from 'zod'
 
@@ -82,12 +96,92 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
   const requestId = crypto.randomUUID()
   const reqLogger = logger.child({ requestId })
 
-  // 1) Auth - endpoints not authenticated by default
-  if (!req.user) {
-    return Response.json({ error: 'Authentication required' }, { status: 401 })
+  let guestSession: Awaited<ReturnType<typeof getGuestSessionByToken>> | null = null
+  let isGuestMode = false
+  let guestCookieHeader: string | undefined
+
+  // 1) Auth - check for authenticated user OR guest session
+  // req.user is set by Payload middleware for real HTTP requests.
+  // Fall back to payload.auth() for cases where middleware hasn't run.
+  let user = req.user
+  if (!user) {
+    const authResult = await req.payload.auth({ headers: req.headers })
+    user = authResult.user
   }
-  if (!isUsersCollectionUser(req.user)) {
-    return Response.json({ error: 'Authentication required' }, { status: 401 })
+
+  if (!user) {
+    // Check for guest session
+    const guestToken = getGuestSessionCookie(req.headers as unknown as Headers)
+    if (guestToken) {
+      guestSession = await getGuestSessionByToken(guestToken)
+    }
+
+    if (!guestSession) {
+      // Create new guest session
+      const ipHash = hashIP(req.headers?.get('x-forwarded-for') || req.headers?.get('x-real-ip'))
+      const userAgentHash = hashUserAgent(req.headers?.get('user-agent'))
+
+      // Check rate limit for new guests
+      const rateLimitResult = await checkRateLimit(ipHash, userAgentHash)
+      if (!rateLimitResult.allowed) {
+        return Response.json(
+          {
+            error: 'Too many requests. Please try again later.',
+            isGuestMode: true,
+            retryAfter: Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000),
+          },
+          {
+            status: 429,
+            headers: {
+              'Retry-After': String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)),
+              'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+              'X-RateLimit-Reset': String(rateLimitResult.resetAt),
+            },
+          },
+        )
+      }
+
+      const { session, token } = await createGuestSession({
+        req: req as unknown as Request,
+        ipHash,
+        userAgentHash,
+      })
+      guestSession = session
+      isGuestMode = true
+
+      guestCookieHeader = await buildGuestSessionCookieHeader(token)
+    } else {
+      isGuestMode = true
+    }
+  }
+
+  // No auth at all - reject
+  if (!user && !guestSession) {
+    return Response.json(
+      { error: 'Authentication or guest session required', isGuestMode: false },
+      { status: 401 },
+    )
+  }
+
+  if (!user && guestSession) {
+    reqLogger.info({ guestSessionId: guestSession.id }, 'Processing guest chat request')
+
+    const messageLimit = await checkAndIncrementGuestMessageCount(guestSession.id)
+    if (!messageLimit.allowed) {
+      return Response.json(
+        {
+          error: 'Guest message limit reached. Sign up for unlimited access.',
+          isGuestMode: true,
+          retryAfter: null,
+        },
+        {
+          status: 429,
+          headers: {
+            'X-Guest-Message-Limit': 'true',
+          },
+        },
+      )
+    }
   }
 
   try {
@@ -106,8 +200,14 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
 
     const validated = parseResult.data
 
-    // 3) Check if admin mode
-    const isAdmin = (req.user.role as AccountRole) === AccountRole.Admin
+    // Safely extract user info (may be null for guests)
+    const userId = user?.id
+    const userRole = isUsersCollectionUser(user)
+      ? ((user as unknown as { role: AccountRole }).role as AccountRole)
+      : AccountRole.Student
+    const isAdmin = userRole === AccountRole.Admin
+
+    // 3) Check if admin mode (guests cannot use admin mode)
     const adminMode = isAdmin && validated.adminMode === true
 
     // For admin mode, check if we have a context or adminMode
@@ -127,7 +227,17 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
     }
 
     // Continue with regular context-scoped chat...
-    return handleContextScopedChat(req, requestId, validated, contextCandidate, reqLogger)
+    return handleContextScopedChat(
+      req,
+      requestId,
+      validated,
+      contextCandidate,
+      reqLogger,
+      userId,
+      guestSession?.id,
+      isGuestMode,
+      guestCookieHeader,
+    )
   } catch (error) {
     // Handle connection reset errors gracefully
     if (
@@ -230,9 +340,9 @@ async function handleAdminModeChat(
   }
 
   // For admin mode, use a system prompt that instructs the AI to use tools
-  const systemPrompt = `You are an AI assistant for the admin panel of an educational platform. You have access to database query tools.
+  const systemPrompt = `You are an AI assistant for the admin panel of an educational platform. You have access to database query and creation tools.
 
-IMPORTANT: You MUST use the provided tools to answer questions about data. Do NOT ask clarifying questions - just use the tools to query the database directly.
+IMPORTANT: You MUST use the provided tools to answer questions about data and create new content. Do NOT ask clarifying questions - just use the tools to interact with the database directly.
 
 When the user asks about courses, chapters, lessons, exercises, or media:
 1. ALWAYS call the appropriate tool immediately
@@ -245,8 +355,12 @@ Available tools:
 - findLessons: Query lessons
 - findExercises: Query exercises
 - findMedia: Query media files
+- createCourses: Create a new course
+- createChapters: Create a new chapter in a course
+- createLessons: Create a new lesson in a chapter
 
-Example: If user asks "how many courses do we have?", call findCourses immediately and count the results.`
+Example: If user asks "how many courses do we have?", call findCourses immediately and count the results.
+Example: If user asks "create a new course about Python programming", call createCourses with appropriate data.`
 
   // Build messages for AI
   const messages = recentMessages.map((m) => ({
@@ -402,33 +516,56 @@ async function handleContextScopedChat(
   validated: z.infer<typeof import('./chat/request-validation').chatRequestSchema>,
   contextCandidate: NonNullable<ReturnType<typeof extractContextCandidate>>,
   reqLogger: typeof logger,
+  userId: string | undefined,
+  guestSessionId: string | undefined,
+  isGuestMode: boolean,
+  guestCookieHeader?: string,
 ) {
-  const userId = req.user?.id
-  if (!userId) {
-    return Response.json({ error: 'User ID not found' }, { status: 401 })
+  // Helper to build response with optional Set-Cookie header
+  const jsonWithCookie = (
+    body: Record<string, unknown>,
+    options?: { status?: number; cookieHeader?: string },
+  ): Response => {
+    const headers: HeadersInit = {}
+    if (options?.cookieHeader) {
+      headers['Set-Cookie'] = options.cookieHeader
+    }
+    return Response.json(body, { status: options?.status, headers })
   }
 
-  // Safely get user role - only Users collection has roles
-  const userRole = isUsersCollectionUser(req.user)
-    ? ((req.user as unknown as { role: AccountRole }).role as AccountRole)
-    : AccountRole.Student
+  // Require either authenticated user or guest session
+  if (!userId && !guestSessionId) {
+    return jsonWithCookie(
+      { error: 'User ID or guest session required', isGuestMode: false },
+      { status: 401 },
+    )
+  }
+
+  const userRole =
+    userId && isUsersCollectionUser(req.user)
+      ? ((req.user as unknown as { role: AccountRole }).role as AccountRole)
+      : AccountRole.Student
+
+  // Determine owner ID (user or guest session)
+  const ownerId = userId ?? guestSessionId!
 
   const contextValidation = await validateContextExists(
     req.payload,
     contextCandidate,
-    { id: userId },
+    { id: ownerId },
     logger as any,
   )
   if (!contextValidation.success) {
-    return Response.json(
-      { error: contextValidation.error },
-      { status: contextValidation.statusCode },
+    return jsonWithCookie(
+      { error: contextValidation.error, isGuestMode },
+      { status: contextValidation.statusCode, cookieHeader: guestCookieHeader },
     )
   }
 
   reqLogger.info(
     {
       userId,
+      guestSessionId,
       exerciseId: validated.exerciseId,
       lessonId: validated.lessonId,
       chapterId: validated.chapterId,
@@ -441,22 +578,54 @@ async function handleContextScopedChat(
   const conversationService = new ConversationService(req.payload)
   const context = await resolveContext(conversationService, validated)
 
+  // Add guestSessionId to context if applicable
+  if (guestSessionId) {
+    ;(context as { guestSessionId?: string }).guestSessionId = guestSessionId
+  }
+
   reqLogger.info(
-    { userId, contextKey: context.contextKey, contextRelation: context.relationTo },
+    { ownerId, contextKey: context.contextKey, contextRelation: context.relationTo, isGuestMode },
     'Resolved context',
   )
 
   // Validate context access
-  const hasAccess = await validateContextAccess(conversationService, userId, userRole, context)
+  const hasAccess = await validateContextAccess(
+    conversationService,
+    ownerId,
+    userRole,
+    context as Parameters<typeof validateContextAccess>[3],
+  )
   if (!hasAccess) {
-    return Response.json({ error: 'Unauthorized to access this context' }, { status: 403 })
+    return jsonWithCookie(
+      { error: 'Unauthorized to access this context', isGuestMode },
+      { status: 403, cookieHeader: guestCookieHeader },
+    )
   }
 
-  // Get or create conversation
-  const conversation = await getOrCreateConversation(conversationService, userId, context)
+  // Get or create conversation (supports guests)
+  let conversation
+  try {
+    conversation = await getOrCreateConversation(
+      conversationService,
+      ownerId,
+      context as Parameters<typeof getOrCreateConversation>[2],
+      guestSessionId,
+    )
+  } catch (error) {
+    if (error instanceof GuestConversationLimitError) {
+      return jsonWithCookie(
+        { error: error.message, code: 'GUEST_LIMIT_REACHED', isGuestMode },
+        { status: 403, cookieHeader: guestCookieHeader },
+      )
+    }
+    throw error
+  }
   const conversationId = conversation.id
 
-  reqLogger.info({ conversationId, contextKey: context.contextKey }, 'Using conversation')
+  reqLogger.info(
+    { conversationId, contextKey: context.contextKey, isGuestMode },
+    'Using conversation',
+  )
 
   // Persist user message
   const userMessage = {
@@ -485,7 +654,7 @@ async function handleContextScopedChat(
 
   const memoryResult = await retrieveMemories(
     req.payload,
-    userId,
+    ownerId,
     conversationId,
     context.contextKey,
     recentMessages,
@@ -496,7 +665,7 @@ async function handleContextScopedChat(
   const lessonContext = await fetchLessonContextForContext(
     req.payload,
     context,
-    { id: userId },
+    { id: ownerId },
     logger as any,
     validated.courseId,
   )
@@ -513,9 +682,9 @@ async function handleContextScopedChat(
     )
   } catch (error) {
     if (error instanceof Error && error.message.includes('exceeds maximum')) {
-      return Response.json(
+      return jsonWithCookie(
         { error: 'Lesson context exceeds maximum allowed size' },
-        { status: 400 },
+        { status: 400, cookieHeader: guestCookieHeader },
       )
     }
     throw error
@@ -525,15 +694,15 @@ async function handleContextScopedChat(
   const mediaResult = await processMediaAttachments(
     req.payload,
     validated.mediaIds || [],
-    userId,
+    ownerId,
     req,
     logger as any,
   )
 
   if (!mediaResult.success) {
-    return Response.json(
+    return jsonWithCookie(
       { error: mediaResult.error, details: mediaResult.errorDetails },
-      { status: 400 },
+      { status: 400, cookieHeader: guestCookieHeader },
     )
   }
 
@@ -575,9 +744,9 @@ async function handleContextScopedChat(
 
   if (!result.success) {
     reqLogger.error({ error: result.error, modelLatencyMs }, 'Chat request failed')
-    return Response.json(
+    return jsonWithCookie(
       { error: result.error || 'Failed to process chat message' },
-      { status: 500 },
+      { status: 500, cookieHeader: guestCookieHeader },
     )
   }
 
@@ -609,7 +778,7 @@ async function handleContextScopedChat(
   logContextUsage(
     createContextLog({
       conversationId,
-      userId,
+      userId: ownerId,
       policyVersion: composedPrompt.metadata.policyVersion,
       summaryPresent: !!conversation?.summary,
       summaryLength: composedPrompt.metadata.summaryLength,
@@ -626,22 +795,27 @@ async function handleContextScopedChat(
 
   // Schedule background tasks
   scheduleSummaryMaintenance(req.payload, conversationId, logger as any)
-  if (req.user) {
+  if (ownerId) {
     scheduleMemoryExtraction(
       req.payload,
       conversationId,
-      userId,
+      ownerId,
       context,
-      { id: userId },
+      { id: ownerId },
       logger as any,
     )
   }
 
   reqLogger.info('Chat request successful')
-  return Response.json({
-    success: true,
-    message: result.message,
-    conversationId,
-    contextKey: context.contextKey,
-  })
+
+  return jsonWithCookie(
+    {
+      success: true,
+      message: result.message,
+      conversationId,
+      contextKey: context.contextKey,
+      isGuestMode,
+    },
+    { cookieHeader: guestCookieHeader },
+  )
 }

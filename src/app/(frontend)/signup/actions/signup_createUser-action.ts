@@ -11,6 +11,8 @@ import {
 } from '../signup_handlers'
 import { SignupSchema, type SignupResult } from '../signup_schemas'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { claimGuestConversations } from '@/server/services/guest-session-upgrade'
+import { clearGuestSessionCookie, GUEST_SESSION_COOKIE_NAME } from '@/server/services/guest-session'
 
 export async function signupAction(formData: FormData): Promise<SignupResult> {
   try {
@@ -92,6 +94,20 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
           maxAge: 7 * 24 * 60 * 60, // 7 days
           path: '/',
         })
+
+        if (user.id) {
+          try {
+            const headers = new Headers()
+            const guestToken = cookieStore.get(GUEST_SESSION_COOKIE_NAME)?.value
+            if (guestToken) {
+              await claimGuestConversations(user.id, guestToken, headers)
+              clearGuestSessionCookie(headers)
+              cookieStore.delete(GUEST_SESSION_COOKIE_NAME)
+            }
+          } catch (claimError) {
+            console.error('Failed to claim guest conversations:', claimError)
+          }
+        }
       }
 
       return { success: true, message: 'Account created successfully', userId: user.id }

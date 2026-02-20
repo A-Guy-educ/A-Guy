@@ -11,7 +11,12 @@ const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
 const nextConfig = {
   // Externalize pdfjs-dist to avoid bundled worker path issues in server contexts
   // This allows pdfjs-dist to load from node_modules at runtime, where worker paths work correctly
-  serverExternalPackages: ['pdfjs-dist', 'require-in-the-middle', 'import-in-the-middle'],
+  serverExternalPackages: [
+    'pdfjs-dist',
+    '@napi-rs/canvas',
+    'require-in-the-middle',
+    'import-in-the-middle',
+  ],
   images: {
     remotePatterns: [
       ...[NEXT_PUBLIC_SERVER_URL /* 'https://example.com' */].map((item) => {
@@ -30,6 +35,11 @@ const nextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
+      },
+      // Allow Vercel Blob storage for media uploads
+      {
+        protocol: 'https',
+        hostname: '*.blob.vercel-storage.com',
       },
     ],
   },

@@ -7,7 +7,6 @@
  */
 import type { Payload } from 'payload'
 
-import { isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
 import { logger } from '@/infra/utils/logger'
 
 import type { ComposedPrompt } from '../context-policy'
@@ -19,6 +18,9 @@ import { LLMProviderType } from '../providers/types'
 export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
+  timestamp?: string
+  hidden?: boolean
+  media?: Array<{ mediaId: string }>
 }
 
 export interface ExerciseChatInput {
@@ -101,6 +103,7 @@ export async function chatWithExerciseHelper(
         input.mediaPartsWithPath,
         modelConfig,
         payload,
+        input.req,
       )
     }
 
@@ -217,7 +220,7 @@ async function resolveModelConfig(modelKey: AIModelKey): Promise<AIModel> {
 
 /**
  * Send multimodal content (text + media) using Genkit adapter
- * Uses unified adapter for multimodal generation
+ * Fetches media via publicUrl with forwarded auth cookies (serverless compatible)
  */
 async function sendMultimodalToGenkit(
   systemPrompt: string,
@@ -225,56 +228,45 @@ async function sendMultimodalToGenkit(
   mediaPartsWithPath: MediaPartWithPath[],
   model: AIModel,
   payload: Payload,
+  reqContext?: { headers: { authorization?: string; cookie?: string } },
 ): Promise<ExerciseChatResult> {
-  // Convert media parts to Genkit-compatible attachments
+  // Convert media parts to Genkit-compatible base64 attachments
+  // Uses publicUrl (absolute URL built from request origin) with forwarded cookies
   const attachments: Array<{ data: string; mimeType: string }> = []
+
+  // Build fetch headers with forwarded auth cookies for server-to-server calls
+  const fetchHeaders: Record<string, string> = {}
+  if (reqContext?.headers.cookie) {
+    fetchHeaders.cookie = reqContext.headers.cookie
+  }
+  if (reqContext?.headers.authorization) {
+    fetchHeaders.authorization = reqContext.headers.authorization
+  }
 
   for (const mediaPart of mediaPartsWithPath) {
     try {
-      // Check if this is a blob-only media part (absoluteFilePath empty, publicUrl is Vercel Blob)
-      const isBlobOnly = !mediaPart.absoluteFilePath && isVercelBlobUrl(mediaPart.publicUrl)
-
-      let mimeType = mediaPart.mimeType || 'image/jpeg'
-      let dataBase64: string | null = null
-
-      if (isBlobOnly) {
-        // Fetch directly from blob URL
-        const response = await fetch(mediaPart.publicUrl)
-        if (response.ok) {
-          const arrayBuffer = await response.arrayBuffer()
-          dataBase64 = Buffer.from(arrayBuffer).toString('base64')
-          const contentType = response.headers.get('content-type')
-          if (contentType) {
-            mimeType = contentType
-          }
-        }
-      } else {
-        // Original behavior: fetch from media doc URL
-        const mediaDoc = await payload.findByID({
-          collection: 'media',
-          id: mediaPart.mediaId,
-          depth: 0,
-        })
-
-        if (mediaDoc && 'url' in mediaDoc && mediaDoc.url) {
-          const imageUrl = mediaDoc.url.startsWith('/')
-            ? `${process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'}${mediaDoc.url}`
-            : mediaDoc.url
-
-          const response = await fetch(imageUrl)
-          if (response.ok) {
-            const arrayBuffer = await response.arrayBuffer()
-            dataBase64 = Buffer.from(arrayBuffer).toString('base64')
-          }
-        }
+      if (!mediaPart.publicUrl) {
+        logger.warn({ mediaId: mediaPart.mediaId }, '[ExerciseChat] Media part has no publicUrl')
+        continue
       }
 
-      if (dataBase64) {
-        attachments.push({
-          data: dataBase64,
-          mimeType,
-        })
+      const response = await fetch(mediaPart.publicUrl, {
+        headers: fetchHeaders,
+      })
+      if (!response.ok) {
+        logger.warn(
+          { mediaId: mediaPart.mediaId, status: response.status, url: mediaPart.publicUrl },
+          '[ExerciseChat] Failed to fetch media - non-OK response',
+        )
+        continue
       }
+      const arrayBuffer = await response.arrayBuffer()
+      const base64 = Buffer.from(arrayBuffer).toString('base64')
+
+      attachments.push({
+        data: base64,
+        mimeType: mediaPart.mimeType || 'image/jpeg',
+      })
     } catch (fetchError) {
       logger.warn(
         { err: fetchError, mediaId: mediaPart.mediaId },

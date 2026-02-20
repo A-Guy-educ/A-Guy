@@ -246,15 +246,22 @@ describe('ConversationService (instance methods)', () => {
 
   describe('resolveContext', () => {
     it('should prioritize exerciseId over lessonId', async () => {
-      const service = new ConversationService(mockPayload)
+      const mockPayloadWithExercise = createMockPayload({
+        findByID: vi.fn().mockResolvedValueOnce({
+          id: 'exercise-123',
+          lesson: 'lesson-456', // Exercise belongs to a lesson
+        }),
+      })
+      const service = new ConversationService(mockPayloadWithExercise)
       const result = await service.resolveContext({
         exerciseId: 'exercise-123',
         lessonId: 'lesson-456',
       })
 
-      expect(result.relationTo).toBe('exercises')
-      expect(result.value).toBe('exercise-123')
-      expect(result.contextKey).toBe('exercises:exercise-123')
+      // Exercise with parent lesson should use lessons context
+      expect(result.relationTo).toBe('lessons')
+      expect(result.value).toBe('lesson-456')
+      expect(result.contextKey).toBe('lessons:lesson-456')
     })
 
     it('should prioritize lessonId over chapterId', async () => {
@@ -505,8 +512,13 @@ describe('ConversationService (instance methods)', () => {
 
 describe('Context Resolution Priority', () => {
   it('should follow priority: Exercise > Lesson > Chapter > Course > Category', async () => {
-    const mockPayload = createMockPayload()
-    const service = new ConversationService(mockPayload)
+    const mockPayloadWithExercise = createMockPayload({
+      findByID: vi.fn().mockResolvedValueOnce({
+        id: 'exercise-id',
+        lesson: 'lesson-id', // Exercise belongs to a lesson
+      }),
+    })
+    const service = new ConversationService(mockPayloadWithExercise)
 
     const result = await service.resolveContext({
       exerciseId: 'exercise-id',
@@ -516,8 +528,9 @@ describe('Context Resolution Priority', () => {
       categoryId: 'category-id',
     })
 
-    expect(result.relationTo).toBe('exercises')
-    expect(result.value).toBe('exercise-id')
+    // Exercise with parent lesson should use lessons context
+    expect(result.relationTo).toBe('lessons')
+    expect(result.value).toBe('lesson-id')
   })
 
   it('should select lesson when only lesson and chapter provided', async () => {

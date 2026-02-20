@@ -12,7 +12,6 @@ import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
-import type { Lesson } from '@/payload-types'
 import { LESSON_CONTEXT_BLOCK_START, LESSON_CONTEXT_MAX_CHARS } from '@/infra/llm/lesson-context'
 
 // Skip tests if DATABASE_URL is not set
@@ -74,6 +73,48 @@ vi.mock('@/infra/llm/maintenance', () => ({
     summaryUpdated: false,
     messagesTrimmed: 0,
   })),
+}))
+
+// Mock guest session and rate limit services to prevent interference with auth tests
+vi.mock('@/server/services/guest-session', () => ({
+  getGuestSessionCookie: vi.fn(() => null),
+  getGuestSessionByToken: vi.fn(async () => null),
+  createGuestSession: vi.fn(async () => ({ session: null, token: '' })),
+  buildGuestSessionCookieHeader: vi.fn(async () => ''),
+  checkAndIncrementGuestMessageCount: vi.fn(async () => ({
+    allowed: true,
+    remaining: 5,
+    current: 0,
+    max: 5,
+  })),
+  hashIP: vi.fn(() => ''),
+  hashUserAgent: vi.fn(() => ''),
+  buildClearGuestSessionCookieHeader: vi.fn(() => ''),
+  clearGuestSessionCookie: vi.fn(),
+  setGuestSessionCookie: vi.fn(),
+  generateSessionToken: vi.fn(() => 'mock-token'),
+  hashToken: vi.fn(() => 'mock-hash'),
+  verifyTokenHash: vi.fn(() => false),
+  revokeGuestSession: vi.fn(async () => null),
+  updateGuestSessionActivity: vi.fn(async () => null),
+  GUEST_SESSION_COOKIE_NAME: 'guest_session',
+}))
+
+vi.mock('@/server/services/rate-limit', () => ({
+  checkRateLimit: vi.fn(async () => ({
+    allowed: true,
+    remaining: 10,
+    resetAt: Date.now() + 60000,
+  })),
+  getRateLimitKey: vi.fn(() => 'mock:key'),
+  getRemainingRequests: vi.fn(async () => ({
+    allowed: true,
+    remaining: 10,
+    resetAt: Date.now() + 60000,
+  })),
+  resetRateLimit: vi.fn(),
+  clearAllRateLimits: vi.fn(),
+  getRateLimitStats: vi.fn(async () => ({ size: 0, maxRequests: 10, windowMs: 60000 })),
 }))
 
 let payload: Payload
@@ -171,6 +212,11 @@ afterAll(async () => {
       id: testLessonIdB,
     })
   }
+
+  // Close DB connection to prevent connection leaks
+  if (payload.db?.destroy) {
+    await payload.db.destroy()
+  }
 }, 30000)
 
 describe.skipIf(!hasDatabaseUrl)('Lesson Context Injection', () => {
@@ -181,6 +227,7 @@ describe.skipIf(!hasDatabaseUrl)('Lesson Context Injection', () => {
   it('should inject lessonContextText into composed prompt', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello, can you help me?',
@@ -210,6 +257,7 @@ describe.skipIf(!hasDatabaseUrl)('Lesson Context Injection', () => {
   it('should NOT persist lessonContextText in messages', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as PayloadRequest['user'],
       json: async () => ({
         message: 'What is algebra?',
@@ -240,6 +288,7 @@ describe.skipIf(!hasDatabaseUrl)('Lesson Context Injection', () => {
     // Send message with Lesson A
     const reqA = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as PayloadRequest['user'],
       json: async () => ({
         message: 'Message for Lesson A',
@@ -255,6 +304,7 @@ describe.skipIf(!hasDatabaseUrl)('Lesson Context Injection', () => {
     const reqB = {
       payload,
       user: { id: testUserId } as PayloadRequest['user'],
+      headers: new Headers(),
       json: async () => ({
         message: 'Message for Lesson B',
         acknowledgment: 'ack-4',
@@ -310,6 +360,7 @@ describe.skipIf(!hasDatabaseUrl)('Lesson Context Injection', () => {
       const req = {
         payload,
         user: { id: testUserId } as PayloadRequest['user'],
+        headers: new Headers(),
         json: async () => ({
           message: msg,
           acknowledgment: `ack-${Date.now()}`,

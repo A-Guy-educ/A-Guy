@@ -7,6 +7,7 @@ import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { SearchIcon } from 'lucide-react'
 import type { Header as HeaderType, User } from '@/payload-types'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
+import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { MobileMenuAuthSection } from './MobileMenuAuthSection'
 
@@ -16,6 +17,7 @@ interface MobileMenuProps {
   data: HeaderType
   user: User | null
   isAuthLoading: boolean
+  version: string
 }
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({
@@ -24,10 +26,15 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   data,
   user,
   isAuthLoading,
+  version,
 }) => {
   const tCommon = useTranslations('common.header')
   const tMenu = useTranslations('common.mobileMenu')
-  const navItems = data?.navItems || []
+  const passwordLogin = usePasswordLogin()
+  const allNavItems = data?.navItems || []
+  const navItems = passwordLogin
+    ? allNavItems
+    : allNavItems.filter(({ link }) => link?.url !== '/signup')
   const portalContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -136,6 +143,11 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 
           <div className="px-6 py-4 border-t border-border mt-auto">
             <MobileMenuAuthSection user={user} isAuthLoading={isAuthLoading} onClose={onClose} />
+          </div>
+
+          {/* Version number - mobile only */}
+          <div className="px-6 py-4 border-t border-border">
+            <p className="text-xs text-muted-foreground/70 font-normal text-center">v{version}</p>
           </div>
         </nav>
       </div>

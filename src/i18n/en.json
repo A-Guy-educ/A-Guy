@@ -46,8 +46,9 @@
       }
     },
     "login": {
-      "title": "Welcome Back",
-      "subtitle": "Log in to your account",
+      "title": "Welcome to A-Guy",
+      "subtitle": "Sign in to continue learning",
+      "googleOnlyMessage": "A-Guy currently supports Google authentication for a faster, more secure experience.",
       "email": "Email",
       "emailPlaceholder": "you@example.com",
       "password": "Password",
@@ -102,12 +103,16 @@
   "courses": {
     "title": "Courses",
     "description": "Browse all available courses",
+    "shopTitle": "Course Shop",
+    "shopDescription": "Choose the right plan for you and progress to success in mathematics.",
+    "catalogTitle": "Course Catalog",
     "heroTitle": "The Future of Online Learning",
     "heroDescription": "Master new skills with our project-based courses, interactive quizzes, and a supportive community of learners.",
     "liveContent": "New content added regularly",
     "featuredTitle": "Featured Courses",
     "featuredDescription": "Hand-picked courses to help you on your learning journey.",
     "backToCourses": "Back to Courses",
+    "backToChapter": "Back to Chapter",
     "openCourse": "Open Course",
     "viewChapter": "View Chapter",
     "viewLesson": "View Lesson",
@@ -140,10 +145,20 @@
     "correct": "Correct!",
     "incorrect": "Incorrect",
     "tryAgain": "Try Again",
+    "checkTable": "Check Table",
     "selectMultiple": "Select all that apply",
     "selectOne": "Select one answer",
     "enterNumber": "Enter a number...",
     "enterAnswer": "Enter your answer...",
+    "validationFailed": "Unable to validate answer. Please try again.",
+    "validationError": "Validation failed",
+    "connectionError": "Connection error. Please check your network.",
+    "invalidAnswerType": "Invalid answer type",
+    "selectTrueFalse": "Please select True or False",
+    "noCorrectAnswer": "No correct answer defined",
+    "selectAnAnswer": "Please select an answer",
+    "enterAnAnswer": "Please enter an answer",
+    "unknownVariant": "Unknown question variant",
     "notebookTitle": "Practice Notebook",
     "chatTab": "Chat",
     "chatTitle": "Chat",
@@ -157,6 +172,7 @@
     "chatAuthRequired": "Please sign in to use the AI helper",
     "chatAuthRequiredLogin": "Log in",
     "chatAuthRequiredCTA": "Sign up to continue",
+    "chatGuestLimitMessage": "Guest message limit reached. Sign up for unlimited access.",
     "chatErrorDismiss": "Dismiss error",
     "chatHintPrompt": "Can you give me a hint to help me solve this?",
     "chatSolutionPrompt": "Can you explain the solution approach?",
@@ -175,6 +191,8 @@
     "chatFileTooLarge": "File too large (max 10MB)",
     "chatMaxFiles": "Maximum 5 files allowed",
     "chatUploadFailed": "Failed to upload file",
+    "chatReadAloud": "Read aloud",
+    "chatStopReading": "Stop reading",
     "mathKeyboard": "Math Keyboard",
     "formulaSheet": "Formula Sheet",
     "uploadFile": "Upload File",
@@ -187,7 +205,22 @@
     "trigonometryFormulas": "Trigonometry",
     "formulaSubtitle": "Helper Formulas",
     "notesSubtitle": "Personal Notes",
-    "notesPlaceholder": "Add your notes here..."
+    "notesPlaceholder": "Add your notes here...",
+    "selectBadge": "Select",
+    "of": "of",
+    "exercisesPagerIntroDescriptionPart1": "This lesson contains",
+    "exercisesPagerIntroDescriptionPart2": "exercises. Let's begin!",
+    "exercisesPagerWelcome": "Welcome to the Lesson",
+    "exercisesPagerStart": "Start",
+    "exercisesPagerCompletedTitle": "Great Work!",
+    "exercisesPagerCompletedDescription": "You've completed all exercises for this lesson.",
+    "exercisesPagerComplete": "Complete",
+    "exercisesPagerPrev": "Previous",
+    "exercisesPagerNext": "Next",
+    "exercisesPagerIntro": "Intro",
+    "exercisesPagerCompleted": "Completed",
+    "exercisesPagerBackToLesson": "Back to Lesson",
+    "startLesson": "Start Lesson"
   },
   "homepage": {
     "nav": {
@@ -198,12 +231,16 @@
     },
     "greeting": {
       "welcome": "Hello! I'm your digital teacher 🤖",
-      "moodQuestion": "How are you feeling today?",
+      "moodQuestion": "How are you today?",
       "moods": {
-        "happy": "😊 Happy",
-        "neutral": "😐 Calm",
-        "sad": "😔 Sad",
-        "excited": "🤩 Excited"
+        "excellent": "Excellent 😄",
+        "great": "Great 🙂",
+        "tired": "A bit tired 🥱"
+      },
+      "moodResponses": {
+        "excellent": "Let's pick up the pace",
+        "great": "Let's start learning then",
+        "tired": "Today we'll be focused"
       },
       "gradeQuestion": "What grade are you in?",
       "selectGrade": "Select grade",
@@ -217,7 +254,17 @@
       "chatInputPlaceholder": "Ask a question...",
       "chatAuthRequired": "Please sign in to ask questions",
       "loading": "Loading...",
-      "noCourse": "No course selected. Please select a course from the home page."
+      "noCourse": "No course selected. Please select a course from the home page.",
+      "pageTitle": "My Practice Space",
+      "pageSubtitle": "Personal progress for every goal.",
+      "uploadButton": "Upload New Exercise",
+      "replaceButton": "Replace Exercise",
+      "openNotebook": "Open Notebook",
+      "closeNotebook": "Close Notebook",
+      "clearCanvas": "Clear",
+      "checkSolution": "Check Solution",
+      "checking": "Checking...",
+      "uploadFailed": "Failed to upload image. Please try again."
     }
   },
   "admin": {
@@ -261,5 +308,69 @@
     "draftExercisesLoading": "Loading exercises...",
     "noDraftExercises": "No draft exercises found for this conversion.",
     "pages": "Pages {{start}}-{{end}}"
+  },
+  "shop": {
+    "backToLearning": "Back to Learning",
+    "title": "Course Store",
+    "subtitle": "Choose the plan that suits you and advance to success in mathematics.",
+    "membershipPlans": "Membership Plans",
+    "courseCatalog": "Course Catalog",
+    "middleSchool": "Middle School",
+    "highSchool": "High School",
+    "perMonth": "monthly",
+    "perCourse": "course",
+    "plans": {
+      "free": {
+        "title": "Free",
+        "subtitle": "Basic Plan",
+        "currentPlan": "Current Plan",
+        "courseCount": "1 course"
+      },
+      "standard": {
+        "title": "Standard",
+        "subtitle": "Extended Plan",
+        "selectPlan": "Select Plan",
+        "courseCount": "1 course"
+      },
+      "premium": {
+        "title": "Premium",
+        "subtitle": "Premium Plan",
+        "badge": "Best Value",
+        "joinNow": "Join Now",
+        "courseCount": "3 courses of your choice"
+      }
+    },
+    "features": {
+      "learningSystemNo": "Learning System - None",
+      "learningSystemFull": "Learning System - Full",
+      "practiceSystemFull": "Practice System - Full",
+      "questionsLimited": "Questions - Limited",
+      "examsNo": "Exams - None",
+      "examsLimited": "Exams - Limited"
+    },
+    "courses": {
+      "mathBasics": "Mathematics - Basics",
+      "purchaseCourse": "Purchase Course",
+      "purchasedSuccessfully": "Purchased Successfully",
+      "activeInSystem": "Your active course in the system",
+      "grade7": "Grade 7",
+      "grade8": "Grade 8",
+      "grade9": "Grade 9",
+      "grade7Description": "Fundamentals of arithmetic, algebra and geometry",
+      "grade8Description": "Your active course in the system",
+      "grade9Description": "Preparation for ministry exams and high school",
+      "questionnaire172": "Questionnaire 172",
+      "questionnaire471": "Questionnaire 471",
+      "questionnaire572": "Questionnaire 572",
+      "questionnaire172Description": "Complete preparation for the first matriculation questionnaire",
+      "questionnaire471Description": "Analysis, geometry and trigonometry",
+      "questionnaire572Description": "Vectors, complex numbers and logarithms"
+    },
+    "footer": {
+      "platform": "A-Guy Learning Platform",
+      "terms": "Terms of Use",
+      "privacy": "Privacy Policy",
+      "contact": "Contact Us"
+    }
   }
 }

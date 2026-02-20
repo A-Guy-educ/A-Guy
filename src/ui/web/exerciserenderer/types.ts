@@ -10,6 +10,12 @@ export type UserAnswer =
   | { type: 'mcq'; selectedIds: string[] }
   | { type: 'true_false'; value: boolean | null }
   | { type: 'free_response'; value: string }
+  | { type: 'table'; cellValues: Record<string, string> }
+
+export interface TableCellResult {
+  key: string
+  isCorrect: boolean
+}
 
 export interface CheckResult {
   isCorrect: boolean
@@ -66,6 +72,19 @@ export interface FreeResponseAnswer {
 }
 
 /**
+ * Table block data - used inside QuestionTableBlock
+ */
+export interface TableBlock {
+  solutionFill: boolean
+  headers: string[]
+  rowsData: string[][]
+  answers: Record<string, string> | undefined
+  showBorders: boolean
+  showHeader: boolean
+  columnAlignment?: ('left' | 'center' | 'right')[]
+}
+
+/**
  * Question block types
  */
 // True/False variant
@@ -110,7 +129,17 @@ export interface QuestionFreeResponseBlock {
   fullSolution?: InlineRichText
 }
 
-export type QuestionBlock = QuestionSelectBlock | QuestionFreeResponseBlock
+export interface QuestionTableBlock {
+  id: string
+  type: 'question_table'
+  prompt: InlineRichText
+  table: TableBlock
+  hint?: InlineRichText
+  solution?: InlineRichText
+  fullSolution?: InlineRichText
+}
+
+export type QuestionBlock = QuestionSelectBlock | QuestionFreeResponseBlock | QuestionTableBlock
 
 export type ContentBlock = RichTextBlock | QuestionBlock
 
@@ -129,4 +158,8 @@ export interface ExerciseRendererProps {
   mode?: PreviewMode
   showCheckAnswer?: boolean
   className?: string
+  /** Pre-resolved media objects keyed by ID, for rendering mediaIds in blocks */
+  mediaMap?: Record<string, import('@/payload-types').Media>
+  /** Exercise number to display in the bubble (defaults to 1) */
+  exerciseNumber?: number
 }

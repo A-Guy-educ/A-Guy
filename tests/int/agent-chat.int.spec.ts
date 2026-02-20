@@ -50,6 +50,48 @@ vi.mock('@/infra/llm/maintenance', () => ({
   })),
 }))
 
+// Mock guest session and rate limit services to prevent interference with auth tests
+vi.mock('@/server/services/guest-session', () => ({
+  getGuestSessionCookie: vi.fn(() => null),
+  getGuestSessionByToken: vi.fn(async () => null),
+  createGuestSession: vi.fn(async () => ({ session: null, token: '' })),
+  buildGuestSessionCookieHeader: vi.fn(async () => ''),
+  checkAndIncrementGuestMessageCount: vi.fn(async () => ({
+    allowed: true,
+    remaining: 5,
+    current: 0,
+    max: 5,
+  })),
+  hashIP: vi.fn(() => ''),
+  hashUserAgent: vi.fn(() => ''),
+  buildClearGuestSessionCookieHeader: vi.fn(() => ''),
+  clearGuestSessionCookie: vi.fn(),
+  setGuestSessionCookie: vi.fn(),
+  generateSessionToken: vi.fn(() => 'mock-token'),
+  hashToken: vi.fn(() => 'mock-hash'),
+  verifyTokenHash: vi.fn(() => false),
+  revokeGuestSession: vi.fn(async () => null),
+  updateGuestSessionActivity: vi.fn(async () => null),
+  GUEST_SESSION_COOKIE_NAME: 'guest_session',
+}))
+
+vi.mock('@/server/services/rate-limit', () => ({
+  checkRateLimit: vi.fn(async () => ({
+    allowed: true,
+    remaining: 10,
+    resetAt: Date.now() + 60000,
+  })),
+  getRateLimitKey: vi.fn(() => 'mock:key'),
+  getRemainingRequests: vi.fn(async () => ({
+    allowed: true,
+    remaining: 10,
+    resetAt: Date.now() + 60000,
+  })),
+  resetRateLimit: vi.fn(),
+  clearAllRateLimits: vi.fn(),
+  getRateLimitStats: vi.fn(async () => ({ size: 0, maxRequests: 10, windowMs: 60000 })),
+}))
+
 let payload: Payload
 let testUserId: string
 let testExerciseId: string | undefined
@@ -204,12 +246,18 @@ afterAll(async () => {
       id: testUserId,
     })
   }
+
+  // Close DB connection to prevent connection leaks
+  if (payload.db?.destroy) {
+    await payload.db.destroy()
+  }
 }, 30000)
 
 describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
   it('returns 401 when user is not authenticated', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       json: async () => ({
         message: 'Hello',
         acknowledgment: 'ack-1',
@@ -228,6 +276,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello, can you help me with this exercise?',
@@ -274,6 +323,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
       const req = {
         payload,
+        headers: new Headers(),
         user: { id: testUserId } as PayloadRequest['user'],
         json: async () => ({
           message: 'Hello',
@@ -316,6 +366,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
       const req = {
         payload,
+        headers: new Headers(),
         user: { id: testUserId } as PayloadRequest['user'],
         json: async () => ({
           message: 'Hello',
@@ -350,6 +401,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
       const req = {
         payload,
+        headers: new Headers(),
         user: { id: testUserId } as PayloadRequest['user'],
         json: async () => ({
           message: 'Hello',
@@ -395,6 +447,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
       const req = {
         payload,
+        headers: new Headers(),
         user: { id: testUserId } as PayloadRequest['user'],
         json: async () => ({
           message: 'Hello',
@@ -492,6 +545,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
       const req = {
         payload,
+        headers: new Headers(),
         user: { id: testUserId } as PayloadRequest['user'],
         json: async () => ({
           message: 'Hello',
@@ -569,6 +623,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
 
       const req = {
         payload,
+        headers: new Headers(),
         user: { id: testUserId } as PayloadRequest['user'],
         json: async () => ({
           message: 'Hello',

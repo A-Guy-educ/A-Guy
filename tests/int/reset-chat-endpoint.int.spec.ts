@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Payload, PayloadRequest } from 'payload'
 import { getPayload } from 'payload'
 import { agentResetChat } from '@/server/payload/endpoints/agent/reset-chat'
@@ -6,6 +6,48 @@ import { startMongoContainer, stopMongoContainer } from '@/infra/utils/test/mong
 import { createContextHierarchy } from '../factories/context.factory'
 import { createConversation } from '../factories/conversation.factory'
 import { createTestUser } from '../factories/user.factory'
+
+// Mock guest session and rate limit services to prevent interference with auth tests
+vi.mock('@/server/services/guest-session', () => ({
+  getGuestSessionCookie: vi.fn(() => null),
+  getGuestSessionByToken: vi.fn(async () => null),
+  createGuestSession: vi.fn(async () => ({ session: null, token: '' })),
+  buildGuestSessionCookieHeader: vi.fn(async () => ''),
+  checkAndIncrementGuestMessageCount: vi.fn(async () => ({
+    allowed: true,
+    remaining: 5,
+    current: 0,
+    max: 5,
+  })),
+  hashIP: vi.fn(() => ''),
+  hashUserAgent: vi.fn(() => ''),
+  buildClearGuestSessionCookieHeader: vi.fn(() => ''),
+  clearGuestSessionCookie: vi.fn(),
+  setGuestSessionCookie: vi.fn(),
+  generateSessionToken: vi.fn(() => 'mock-token'),
+  hashToken: vi.fn(() => 'mock-hash'),
+  verifyTokenHash: vi.fn(() => false),
+  revokeGuestSession: vi.fn(async () => null),
+  updateGuestSessionActivity: vi.fn(async () => null),
+  GUEST_SESSION_COOKIE_NAME: 'guest_session',
+}))
+
+vi.mock('@/server/services/rate-limit', () => ({
+  checkRateLimit: vi.fn(async () => ({
+    allowed: true,
+    remaining: 10,
+    resetAt: Date.now() + 60000,
+  })),
+  getRateLimitKey: vi.fn(() => 'mock:key'),
+  getRemainingRequests: vi.fn(async () => ({
+    allowed: true,
+    remaining: 10,
+    resetAt: Date.now() + 60000,
+  })),
+  resetRateLimit: vi.fn(),
+  clearAllRateLimits: vi.fn(),
+  getRateLimitStats: vi.fn(async () => ({ size: 0, maxRequests: 10, windowMs: 60000 })),
+}))
 
 let payload: Payload
 let originalDatabaseUrl: string | undefined
@@ -65,6 +107,11 @@ afterAll(async () => {
     await payload.delete({ collection: 'users', id: testUserIdTwo, overrideAccess: true })
   }
 
+  // Close DB connection before stopping container
+  if (payload?.db?.destroy) {
+    await payload.db.destroy()
+  }
+
   await stopMongoContainer()
 
   if (originalDatabaseUrl !== undefined) {
@@ -79,6 +126,7 @@ describe('agentResetChat endpoint', () => {
   it('returns 401 when unauthenticated', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       json: async () => ({ contextKey: `exercises:${context.exerciseId}` }),
     } as PayloadRequest & { json: () => Promise<unknown> }
 
@@ -97,6 +145,7 @@ describe('agentResetChat endpoint', () => {
     const req = {
       payload,
       user: { id: testUserId } as any,
+      headers: new Headers(),
       json: async () => ({ contextKey }),
     } as PayloadRequest & { json: () => Promise<unknown> }
 
@@ -136,6 +185,7 @@ describe('agentResetChat endpoint', () => {
     const req = {
       payload,
       user: { id: testUserId } as any,
+      headers: new Headers(),
       json: async () => ({ contextKey }),
     } as PayloadRequest & { json: () => Promise<unknown> }
 
@@ -153,6 +203,7 @@ describe('agentResetChat endpoint', () => {
     const req = {
       payload,
       user: { id: testUserId } as any,
+      headers: new Headers(),
       json: async () => ({ contextKey: 'invalid' }),
     } as PayloadRequest & { json: () => Promise<unknown> }
 
@@ -167,6 +218,7 @@ describe('agentResetChat endpoint', () => {
     const req = {
       payload,
       user: { id: testUserId } as any,
+      headers: new Headers(),
       json: async () => ({ contextKey: '' }),
     } as PayloadRequest & { json: () => Promise<unknown> }
 

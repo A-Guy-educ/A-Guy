@@ -1,13 +1,12 @@
 /**
  * Rich Text Renderer
- * Renders markdown with math support (KaTeX)
+ * Renders markdown with math support (KaTeX) using the shared MathMarkdown component,
+ * plus any attached media.
  */
 
-import React from 'react'
-import ReactMarkdown from 'react-markdown'
-import rehypeKatex from 'rehype-katex'
-import remarkMath from 'remark-math'
-import 'katex/dist/katex.min.css'
+import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
+import { preprocessNewlines } from '@/infra/utils/textPreprocessing'
+import { MediaAttachments } from '../../components/MediaAttachments'
 
 interface RichTextRendererProps {
   block: {
@@ -19,11 +18,15 @@ interface RichTextRendererProps {
 }
 
 export function RichTextRenderer({ block }: RichTextRendererProps) {
+  const processedValue = preprocessNewlines(block.value)
+
   return (
-    <div className="rich-text-content leading-relaxed text-foreground">
-      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-        {block.value}
-      </ReactMarkdown>
-    </div>
+    <>
+      <MathMarkdown
+        content={processedValue}
+        className="rich-text-content leading-relaxed text-foreground"
+      />
+      <MediaAttachments mediaIds={block.mediaIds} />
+    </>
   )
 }

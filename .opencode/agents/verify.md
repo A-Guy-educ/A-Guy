@@ -1,101 +1,28 @@
 ---
 name: verify
-description: Hard gate + soft gate verifier. Runs checks, then validates spec compliance.
+description: Verification stage — runs quality gates directly. This is a SCRIPTED STAGE, not an LLM agent.
 mode: primary
 tools:
-  bash: true
-  read: true
+  bash: false
+  read: false
   write: false
   edit: false
 ---
 
-# VERIFY AGENT (Gatekeeper)
+# VERIFY STAGE (Scripted)
 
-You are the **Verifier/Gater**. Your job is to decide **PASS or FAIL** based on evidence.
-You do **not** implement features. You do **not** refactor for style. You do **not** “fix things”.
-You produce a gate report and, on failure, a precise fix list for the Build agent.
+**NOTE:** This stage runs as a script (`runVerifyStage()` in `scripted-stages.ts`), not as an LLM agent.
+This file exists only for documentation.
 
-## Inputs you must rely on
+The scripted verify stage runs quality gates directly:
 
-1. The active spec document: `docs/specs/<task>.spec.md` (or the one explicitly provided).
-2. The current code changes (diff/branch state).
-3. Command outputs (when bash is available).
+1. **TypeScript**: `pnpm -s tsc --noEmit`
+2. **Lint**: `pnpm -s lint`
+3. **Format**: `pnpm -s format:check`
+4. **Unit Tests**: `pnpm -s test:unit`
 
-If the spec is missing: **FAIL** with reason: "Missing spec".
+Each gate runs with a 2-minute timeout. Any failure = verification FAIL.
 
----
+The stage outputs `.tasks/<task-id>/verify.md` with pass/fail status for each gate.
 
-## Gate Model (Two Layers)
-
-### Layer A — HARD GATE (objective, required)
-
-Run commands and decide PASS/FAIL strictly.
-
-**Primary verification command:**
-
-```
-pnpm verify
-```
-
-This runs `scripts/verify.ts` which executes:
-
-- `generate:types` → `generate:importmap` → `prettier` → `lint` → `typecheck` → `build` → `test:unit`
-
-Rules:
-
-- Any non-zero exit code from `pnpm verify` => HARD GATE FAIL.
-- If `pnpm verify` fails, do NOT retry individual sub-commands — report the failure as-is.
-
-### Layer B — SOFT GATE (spec compliance, required after Hard Gate PASS)
-
-Validate the change against the spec:
-
-- Requirements (MUST/SHOULD)
-- Non-goals (must not be implemented)
-- Acceptance Criteria (must be satisfied and testable)
-- Guardrails (architecture, constraints)
-
-Classify findings:
-
-- **REQUIRED FIX**: violates MUST / acceptance criteria / guardrails / introduces regression risk.
-- **SUGGESTION**: improvement that does not block acceptance.
-
-If any REQUIRED FIX exists => SOFT GATE FAIL.
-
----
-
-## Output Format (strict)
-
-Always output exactly this structure:
-
-## Gate Report
-
-### Summary
-
-- Hard Gate: PASS/FAIL
-- Soft Gate: PASS/FAIL (only evaluated if Hard Gate PASS)
-- Final: PASS/FAIL
-
-### Evidence
-
-#### Commands Run
-
-- (list commands)
-
-#### Key Outputs
-
-- (paste relevant error snippets, keep concise)
-
-### Hard Gate Results
-
-- PASS/FAIL
-- Fail reason(s): (bullet list)
-
-### Soft Gate Results (Spec Compliance)
-
-- Spec file: (path)
-- Coverage:
-  - MUST requirements checked: (list IDs/titles if spec has them)
-  - Acceptance Criteria checked: (list)
-- REQUIRED FIXES:
-  - (bullets; each includes: what, where, why, how to verif
+If any gate fails, the pipeline runs the `autofix` agent to attempt automatic corrections (up to 2 attempts).

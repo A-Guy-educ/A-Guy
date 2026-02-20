@@ -42,6 +42,48 @@ vi.mock('@/infra/llm/maintenance', () => ({
   })),
 }))
 
+// Mock guest session and rate limit services to prevent interference with auth tests
+vi.mock('@/server/services/guest-session', () => ({
+  getGuestSessionCookie: vi.fn(() => null),
+  getGuestSessionByToken: vi.fn(async () => null),
+  createGuestSession: vi.fn(async () => ({ session: null, token: '' })),
+  buildGuestSessionCookieHeader: vi.fn(async () => ''),
+  checkAndIncrementGuestMessageCount: vi.fn(async () => ({
+    allowed: true,
+    remaining: 5,
+    current: 0,
+    max: 5,
+  })),
+  hashIP: vi.fn(() => ''),
+  hashUserAgent: vi.fn(() => ''),
+  buildClearGuestSessionCookieHeader: vi.fn(() => ''),
+  clearGuestSessionCookie: vi.fn(),
+  setGuestSessionCookie: vi.fn(),
+  generateSessionToken: vi.fn(() => 'mock-token'),
+  hashToken: vi.fn(() => 'mock-hash'),
+  verifyTokenHash: vi.fn(() => false),
+  revokeGuestSession: vi.fn(async () => null),
+  updateGuestSessionActivity: vi.fn(async () => null),
+  GUEST_SESSION_COOKIE_NAME: 'guest_session',
+}))
+
+vi.mock('@/server/services/rate-limit', () => ({
+  checkRateLimit: vi.fn(async () => ({
+    allowed: true,
+    remaining: 10,
+    resetAt: Date.now() + 60000,
+  })),
+  getRateLimitKey: vi.fn(() => 'mock:key'),
+  getRemainingRequests: vi.fn(async () => ({
+    allowed: true,
+    remaining: 10,
+    resetAt: Date.now() + 60000,
+  })),
+  resetRateLimit: vi.fn(),
+  clearAllRateLimits: vi.fn(),
+  getRateLimitStats: vi.fn(async () => ({ size: 0, maxRequests: 10, windowMs: 60000 })),
+}))
+
 let payload: Payload
 let originalDatabaseUrl: string | undefined
 let context: Awaited<ReturnType<typeof createContextHierarchy>>
@@ -73,6 +115,11 @@ afterAll(async () => {
     await payload.delete({ collection: 'users', id: testUserId, overrideAccess: true })
   }
 
+  // Close DB connection before stopping container
+  if (payload?.db?.destroy) {
+    await payload.db.destroy()
+  }
+
   await stopMongoContainer()
 
   if (originalDatabaseUrl !== undefined) {
@@ -87,6 +134,7 @@ describe('agentChat validation', () => {
   it('returns 400 for missing message', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId, role: 'student' } as PayloadRequest['user'],
       json: async () => ({
         message: '',
@@ -102,6 +150,7 @@ describe('agentChat validation', () => {
   it('returns 400 for message length over 1000 chars', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId, role: 'student' } as PayloadRequest['user'],
       json: async () => ({
         message: 'a'.repeat(1001),
@@ -117,6 +166,7 @@ describe('agentChat validation', () => {
   it('returns 400 when acknowledgment is missing', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId, role: 'student' } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello',
@@ -131,6 +181,7 @@ describe('agentChat validation', () => {
   it('returns 400 when no context IDs are provided', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId, role: 'student' } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello',
@@ -148,6 +199,7 @@ describe('agentChat validation', () => {
   it('returns 404 for non-existent context IDs', async () => {
     const req = {
       payload,
+      headers: new Headers(),
       user: { id: testUserId, role: 'student' } as PayloadRequest['user'],
       json: async () => ({
         message: 'Hello',

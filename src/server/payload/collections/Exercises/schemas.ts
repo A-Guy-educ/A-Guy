@@ -1,9 +1,18 @@
 import { z } from 'zod'
 
+// Use shared types for API surface (matching client)
+// Zod schemas are used for validation only
+export type LatexBlock = import('./types').LatexBlock
+export type ContentData = import('./types').ContentData
+
+// Import graphics contracts for Geometry and Axis schemas
+import { AxisSpecV1Schema } from '@/infra/contracts/graphics/axis.v1'
+import { GeometrySpecV1Schema } from '@/infra/contracts/graphics/geometry.v1'
+
 // ---------------------------------
 // Zod: Inline Rich Text (NO id)
 // ---------------------------------
-export const InlineRichTextSchema = z
+const InlineRichTextSchema = z
   .object({
     type: z.literal('rich_text'),
     format: z.literal('md-math-v1'),
@@ -145,7 +154,7 @@ export const QuestionFreeResponseBlockSchema = z
 // ---------------------------------
 // Zod: Latex Block
 // ---------------------------------
-export const LatexBlockSchema = z
+const LatexBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('latex'),
@@ -154,7 +163,189 @@ export const LatexBlockSchema = z
   })
   .strict()
 
-export type LatexBlock = z.infer<typeof LatexBlockSchema>
+// ---------------------------------
+// Zod: Table Answer Schema
+// ---------------------------------
+const TableAnswerSchema = z
+  .record(z.string(), z.string())
+  .refine((answers) => {
+    const keyRegex = /^\d+-\d+$/
+    for (const key of Object.keys(answers)) {
+      if (!keyRegex.test(key)) {
+        return false
+      }
+    }
+    return true
+  }, 'Answer keys must be in format "rowIdx-colIdx" (e.g., "0-1")')
+  .optional()
+
+// ---------------------------------
+// Zod: Table Block
+// ---------------------------------
+const TableBlockSchema = z
+  .object({
+    solutionFill: z.boolean().default(false),
+    headers: z.array(z.string()).min(1),
+    rowsData: z.array(z.array(z.string())).min(1),
+    answers: TableAnswerSchema,
+    showBorders: z.boolean().default(true),
+    showHeader: z.boolean().default(true),
+    columnAlignment: z.array(z.enum(['left', 'center', 'right'])).optional(),
+  })
+  .strict()
+  .superRefine((table, ctx) => {
+    const headerCount = table.headers.length
+
+    for (let rowIdx = 0; rowIdx < table.rowsData.length; rowIdx++) {
+      const row = table.rowsData[rowIdx]
+      if (row.length !== headerCount) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Row ${rowIdx} has ${row.length} cells, but headers define ${headerCount} columns`,
+          path: ['rowsData', rowIdx],
+        })
+      }
+    }
+
+    if (table.columnAlignment && table.columnAlignment.length !== headerCount) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `columnAlignment has ${table.columnAlignment.length} items, but headers define ${headerCount} columns`,
+        path: ['columnAlignment'],
+      })
+    }
+
+    // Validate answer keys are within table bounds
+    for (const [key] of Object.entries(table.answers || {})) {
+      const [rowIdx, colIdx] = key.split('-').map(Number)
+
+      if (rowIdx >= table.rowsData.length || colIdx >= headerCount) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Answer key "${key}" references out-of-bounds cell`,
+          path: ['answers', key],
+        })
+      }
+    }
+  })
+
+// ---------------------------------
+// Zod: Question Table Block
+// ---------------------------------
+export const QuestionTableBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('question_table'),
+    prompt: InlineRichTextSchema,
+    table: TableBlockSchema,
+    hint: InlineRichTextSchema.optional(),
+    solution: InlineRichTextSchema.optional(),
+    fullSolution: InlineRichTextSchema.optional(),
+  })
+  .strict()
+
+// ---------------------------------
+// Zod: Matching Option Schema
+// ---------------------------------
+const MatchingOptionSchema = z
+  .object({
+    id: z.string().min(1),
+    content: InlineRichTextSchema,
+  })
+  .strict()
+
+// ---------------------------------
+// Zod: Matching Pair Schema (answer)
+// ---------------------------------
+const MatchingPairSchema = z
+  .object({
+    optionId: z.string().min(1),
+    matchId: z.string().min(1),
+  })
+  .strict()
+
+// ---------------------------------
+// Zod: Question Matching Block Schema
+// ---------------------------------
+export const QuestionMatchingBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('question_matching'),
+    prompt: InlineRichTextSchema,
+    leftColumn: z.array(MatchingOptionSchema).min(2),
+    rightColumn: z.array(MatchingOptionSchema).min(2),
+    correctPairs: z.array(MatchingPairSchema).min(1),
+    shuffleRightColumn: z.boolean().default(true),
+    hint: InlineRichTextSchema.optional(),
+    solution: InlineRichTextSchema.optional(),
+    fullSolution: InlineRichTextSchema.optional(),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    // Validate all option IDs exist in their respective columns
+    const leftIds = new Set(data.leftColumn.map((o) => o.id))
+    const rightIds = new Set(data.rightColumn.map((o) => o.id))
+
+    for (const pair of data.correctPairs) {
+      if (!leftIds.has(pair.optionId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `correctPairs contains unknown optionId: ${pair.optionId}`,
+          path: ['correctPairs'],
+        })
+      }
+      if (!rightIds.has(pair.matchId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `correctPairs contains unknown matchId: ${pair.matchId}`,
+          path: ['correctPairs'],
+        })
+      }
+    }
+  })
+
+// ---------------------------------
+// Zod: SVG Block Schema
+// ---------------------------------
+const SvgBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('svg'),
+    value: z.string().min(1), // SVG content
+    altText: z.string().optional(),
+    caption: InlineRichTextSchema.optional(),
+  })
+  .strict()
+
+// ---------------------------------
+// Zod: Question Geometry Block Schema
+// ---------------------------------
+export const QuestionGeometryBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('question_geometry'),
+    prompt: InlineRichTextSchema,
+    geometry: GeometrySpecV1Schema,
+    hint: InlineRichTextSchema.optional(),
+    solution: InlineRichTextSchema.optional(),
+    fullSolution: InlineRichTextSchema.optional(),
+  })
+  .strict()
+
+// ---------------------------------
+// Zod: Question Axis Block Schema
+// ---------------------------------
+export const QuestionAxisBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('question_axis'),
+    prompt: InlineRichTextSchema,
+    axis: AxisSpecV1Schema,
+    hint: InlineRichTextSchema.optional(),
+    solution: InlineRichTextSchema.optional(),
+    fullSolution: InlineRichTextSchema.optional(),
+  })
+  .strict()
 
 // ---------------------------------
 // Zod: Content union (exported for admin components)
@@ -164,9 +355,16 @@ export const ContentBlockSchema = z.discriminatedUnion('type', [
   QuestionSelectBlockSchema,
   QuestionFreeResponseBlockSchema,
   LatexBlockSchema,
+  QuestionTableBlockSchema,
+  QuestionMatchingBlockSchema,
+  SvgBlockSchema,
+  QuestionGeometryBlockSchema,
+  QuestionAxisBlockSchema,
 ])
 
 export type ContentBlock = z.infer<typeof ContentBlockSchema>
+
+export type QuestionTableBlock = z.infer<typeof QuestionTableBlockSchema>
 
 export const ContentSchema = z
   .object({

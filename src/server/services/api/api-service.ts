@@ -12,8 +12,10 @@ export interface ChatApiResponse {
   message?: string
   error?: string
   authRequired?: boolean
+  guestLimitReached?: boolean
   conversationId?: string
   contextKey?: string
+  isGuestMode?: boolean
 }
 
 export interface ConversationMessage {
@@ -30,6 +32,7 @@ export interface ConversationApiResponse {
   error?: string
   authRequired?: boolean
   contextKey?: string
+  isGuestMode?: boolean
 }
 
 export interface ResetChatApiResponse {
@@ -37,6 +40,7 @@ export interface ResetChatApiResponse {
   conversationId?: string
   contextKey?: string
   error?: string
+  isGuestMode?: boolean
 }
 
 /**
@@ -97,6 +101,14 @@ export const apiService = {
         // Specific handling for auth errors
         if (response.status === 401) {
           return { success: false, authRequired: true }
+        }
+        // Specific handling for guest message limit
+        if (response.status === 429 && data.error?.includes('Guest message limit reached')) {
+          return {
+            success: false,
+            error: data.error || 'Message limit reached',
+            guestLimitReached: true,
+          }
         }
         return { success: false, error: data.error || 'Request failed' }
       }
@@ -247,6 +259,7 @@ export const apiService = {
       courseId?: string
       categoryId?: string
     },
+    options?: { hidden?: boolean },
   ): AsyncGenerator<ChatStreamEvent, void, unknown> {
     const response = await fetch('/api/agent/chat/stream', {
       method: 'POST',
@@ -256,6 +269,7 @@ export const apiService = {
         message,
         acknowledgment,
         ...context,
+        ...(options?.hidden && { hidden: true }),
       }),
     })
 
