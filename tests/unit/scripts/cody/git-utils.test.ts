@@ -10,6 +10,7 @@ import {
   ensureFeatureBranch,
   getDefaultBranch,
   BRANCH_PREFIX_MAP,
+  commitPipelineFiles,
 } from '../../../../scripts/cody/git-utils'
 
 // ============================================================================
@@ -840,5 +841,100 @@ describe('getDefaultBranch', () => {
     })
 
     expect(getDefaultBranch('/fake/cwd')).toBe('dev')
+  })
+})
+
+// ============================================================================
+// commitPipelineFiles
+// ============================================================================
+
+describe('commitPipelineFiles', () => {
+  beforeEach(() => {
+    vi.mocked(childProcess.execSync).mockClear()
+  })
+
+  it('should use task-only staging by default', () => {
+    vi.mocked(childProcess.execSync).mockReturnValue('')
+
+    commitPipelineFiles({
+      taskDir: '.tasks/260218-test',
+      taskId: '260218-test',
+      message: 'test commit',
+    })
+
+    // Should call git add with taskDir
+    expect(childProcess.execSync).toHaveBeenCalledWith(
+      'git add .tasks/260218-test',
+      expect.objectContaining({ stdio: 'inherit' }),
+    )
+  })
+
+  it('should use tracked+task staging when specified', () => {
+    vi.mocked(childProcess.execSync).mockReturnValue('')
+
+    commitPipelineFiles({
+      taskDir: '.tasks/260218-test',
+      taskId: '260218-test',
+      message: 'test commit',
+      stagingStrategy: 'tracked+task',
+    })
+
+    // Should call git add -u then git add taskDir
+    const calls = vi.mocked(childProcess.execSync).mock.calls
+    expect(calls.some((c) => c[0] === 'git add -u')).toBe(true)
+    expect(calls.some((c) => String(c[0]).includes('.tasks/260218-test'))).toBe(true)
+  })
+
+  it('should handle nothing to commit gracefully', () => {
+    vi.mocked(childProcess.execSync).mockImplementation((cmd: string) => {
+      if (String(cmd).startsWith('git add')) {
+        return ''
+      }
+      throw new Error('nothing to commit')
+    })
+
+    const result = commitPipelineFiles({
+      taskDir: '.tasks/260218-test',
+      taskId: '260218-test',
+      message: 'test commit',
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.committed).toBe(false)
+  })
+
+  it('should throw on commit error (except nothing to commit)', () => {
+    vi.mocked(childProcess.execSync).mockImplementation((cmd: string) => {
+      if (String(cmd).startsWith('git add')) {
+        return ''
+      }
+      throw new Error('some other error')
+    })
+
+    const result = commitPipelineFiles({
+      taskDir: '.tasks/260218-test',
+      taskId: '260218-test',
+      message: 'test commit',
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.message).toContain('some other error')
+  })
+
+  it('should optionally push after commit', () => {
+    vi.mocked(childProcess.execSync).mockReturnValue('')
+
+    commitPipelineFiles({
+      taskDir: '.tasks/260218-test',
+      taskId: '260218-test',
+      message: 'test commit',
+      push: true,
+    })
+
+    // Should have called git push
+    expect(childProcess.execSync).toHaveBeenCalledWith(
+      'git push -u origin HEAD',
+      expect.objectContaining({ stdio: 'inherit' }),
+    )
   })
 })

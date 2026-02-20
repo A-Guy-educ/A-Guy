@@ -354,3 +354,142 @@ export function commitAndPush(
     }
   }
 }
+
+// ============================================================================
+// Pipeline Files Commit - Unified commit function
+// ============================================================================
+
+export type StagingStrategy = 'task-only' | 'tracked+task' | 'all'
+
+export interface CommitPipelineFilesOptions {
+  /** Task directory path */
+  taskDir: string
+  /** Task ID for branch/commit messages */
+  taskId: string
+  /** Commit message */
+  message: string
+  /** Whether to ensure feature branch exists first (default: true in CI) */
+  ensureBranch?: boolean
+  /** Whether to clean dirty state before commit (default: true in CI) */
+  cleanDirtyState?: boolean
+  /** Staging strategy: which files to stage */
+  stagingStrategy?: StagingStrategy
+  /** Whether to push after commit (default: true in CI) */
+  push?: boolean
+  /** Working directory (default: process.cwd()) */
+  cwd?: string
+  /** Whether this is CI mode (affects defaults) */
+  isCI?: boolean
+  /** Whether this is a dry run */
+  dryRun?: boolean
+}
+
+export interface CommitPipelineFilesResult {
+  success: boolean
+  message: string
+  committed?: boolean
+  pushed?: boolean
+}
+
+/**
+ * Unified function to commit pipeline files.
+ * Consolidates 3 patterns from cody.ts:
+ * - commitTaskFilesCI (CI mode with branch/cleanup)
+ * - commitTaskFiles (local mode)
+ * - autofix commit (tracked + task files)
+ */
+export function commitPipelineFiles(
+  options: CommitPipelineFilesOptions,
+): CommitPipelineFilesResult {
+  const {
+    taskDir,
+    taskId,
+    message,
+    ensureBranch = false,
+    cleanDirtyState = false,
+    stagingStrategy = 'task-only',
+    push = false,
+    cwd = process.cwd(),
+    isCI = false,
+    dryRun = false,
+  } = options
+
+  // Skip in dry-run mode
+  if (dryRun) {
+    return { success: true, message: 'Dry run - skipped', committed: false, pushed: false }
+  }
+
+  try {
+    // 1. Optionally ensure feature branch exists (CI mode)
+    if (ensureBranch && isCI) {
+      // Read task type from task.json
+      const taskJsonPath = path.join(taskDir, 'task.json')
+      let taskType = 'implement_feature'
+      if (fs.existsSync(taskJsonPath)) {
+        try {
+          const taskData = JSON.parse(fs.readFileSync(taskJsonPath, 'utf-8'))
+          taskType = taskData.task_type || 'implement_feature'
+        } catch {
+          // Use default
+        }
+      }
+      ensureFeatureBranch(taskId, taskType, cwd)
+    }
+
+    // 2. Optionally clean dirty state (CI mode)
+    if (cleanDirtyState && isCI) {
+      try {
+        execSync('git checkout -- .', { cwd, stdio: 'pipe' })
+        execSync('git clean -fd --exclude=.tasks', { cwd, stdio: 'pipe' })
+      } catch {
+        // Working tree may already be clean
+      }
+    }
+
+    // 3. Stage files based on strategy
+    switch (stagingStrategy) {
+      case 'all':
+        execSync('git add -A', { cwd, stdio: 'inherit' })
+        break
+      case 'tracked+task':
+        execSync('git add -u', { cwd, stdio: 'inherit' })
+        execSync(`git add ${taskDir}`, { cwd, stdio: 'inherit' })
+        break
+      case 'task-only':
+      default:
+        execSync(`git add ${taskDir}`, { cwd, stdio: 'inherit' })
+        break
+    }
+
+    // 4. Commit
+    let committed = false
+    try {
+      execSync(`git commit --no-gpg-sign -m "${message.replace(/"/g, '\\"')}"`, {
+        cwd,
+        stdio: 'inherit',
+      })
+      committed = true
+      console.log(`[commit] ${message}`)
+    } catch (commitError: unknown) {
+      const commitMsg = commitError instanceof Error ? commitError.message : String(commitError)
+      if (commitMsg.includes('nothing to commit') || commitMsg.includes('no changes added')) {
+        return { success: true, message: 'No changes to commit', committed: false }
+      }
+      throw commitError
+    }
+
+    // 5. Optionally push
+    let pushed = false
+    if (push) {
+      execSync('git push -u origin HEAD', { cwd, stdio: 'inherit' })
+      pushed = true
+      console.log(`[commit] Pushed to origin`)
+    }
+
+    return { success: true, message: 'Committed successfully', committed, pushed }
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error(`[commit] Error: ${msg}`)
+    return { success: false, message: msg }
+  }
+}
