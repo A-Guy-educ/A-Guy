@@ -5,7 +5,7 @@
  * @ai-summary Git utilities for feature branch creation in Cody scripts
  */
 
-import { execSync } from 'child_process'
+import { execSync, execFileSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -163,6 +163,19 @@ export function ensureFeatureBranch(taskId: string, taskType: string, projectDir
     }
     execSync(`git checkout ${branchName}`, { cwd, stdio: 'inherit' })
     execSync(`git pull origin ${branchName}`, { cwd, stdio: 'inherit' })
+
+    // BUG-16 fix: Restore stashed changes in local mode
+    if (!process.env.GITHUB_ACTIONS) {
+      try {
+        const stashList = execSync('git stash list', { cwd, encoding: 'utf-8' }).trim()
+        if (stashList) {
+          console.log('[branch] Restoring stashed changes...')
+          execSync('git stash pop', { cwd, stdio: 'inherit' })
+        }
+      } catch {
+        console.warn('[branch] ⚠ Could not restore stash — may need manual recovery')
+      }
+    }
     console.log(`[branch] Checked out and pulled: ${branchName}`)
   } else {
     // Branch doesn't exist — create from the default branch
@@ -315,11 +328,11 @@ export function commitAndPush(
       }
     }
 
-    // Stage all changes
-    execSync('git add -A', { cwd: workDir, stdio: 'inherit' })
+    // Stage tracked changes only (BUG-15 fix: avoid staging secrets/env files with -A)
+    execSync('git add -u', { cwd: workDir, stdio: 'inherit' })
 
-    // Commit
-    execSync(`git commit --no-gpg-sign -m "${commitMessage.replace(/"/g, '\\"')}"`, {
+    // Commit using execFileSync to prevent shell injection (BUG-4 fix)
+    execFileSync('git', ['commit', '--no-gpg-sign', '-m', commitMessage], {
       cwd: workDir,
       stdio: 'inherit',
     })
@@ -461,10 +474,10 @@ export function commitPipelineFiles(
         break
     }
 
-    // 4. Commit
+    // 4. Commit using execFileSync to prevent shell injection (BUG-5 fix)
     let committed = false
     try {
-      execSync(`git commit --no-gpg-sign -m "${message.replace(/"/g, '\\"')}"`, {
+      execFileSync('git', ['commit', '--no-gpg-sign', '-m', message], {
         cwd,
         stdio: 'inherit',
       })

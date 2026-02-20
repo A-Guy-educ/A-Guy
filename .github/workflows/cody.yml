@@ -98,6 +98,7 @@ jobs:
           DISPATCH_DRY_RUN: ${{ github.event.inputs.dry_run }}
           DISPATCH_FEEDBACK: ${{ github.event.inputs.feedback }}
           DISPATCH_FROM_STAGE: ${{ github.event.inputs.from_stage }}
+          DISPATCH_CLARIFY: ${{ github.event.inputs.clarify }}
           # Comment inputs (for orchestrator to parse)
           COMMENT_BODY: ${{ github.event.comment.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}

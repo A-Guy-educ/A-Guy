@@ -30,13 +30,15 @@ if [[ "$CLARIFY" == "true" ]]; then
 fi
 
 # Build comment-body flag (only for comment triggers)
+# BUG-11 fix: Pass COMMENT_BODY via environment variable instead of shell interpolation
+# to avoid command injection when COMMENT_BODY contains $(), backticks, etc.
 COMMENT_BODY_FLAG=""
 if [[ -n "${COMMENT_BODY:-}" ]] && [[ "$TRIGGER_TYPE" == "comment" ]]; then
-  COMMENT_BODY_FLAG="--comment-body=$COMMENT_BODY"
+  COMMENT_BODY_FLAG="--comment-body-env=COMMENT_BODY"
 fi
 
 # Run Cody with all flags
-pnpm cody:run \
+pnpm cody \
   --task-id="${TASK_ID:-}" \
   --mode="$MODE" \
   --issue-number="${ISSUE_NUMBER:-}" \
