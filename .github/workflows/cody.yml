@@ -47,7 +47,7 @@ concurrency:
 # Permissions: parse job needs write for error comments, orchestrate job needs more
 permissions:
   issues: write
-  pull-requests: rwrited
+  pull-requests: write
   contents: write
 
 jobs:
