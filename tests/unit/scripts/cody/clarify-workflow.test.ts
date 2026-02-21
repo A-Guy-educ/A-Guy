@@ -12,6 +12,7 @@ import * as os from 'os'
 import {
   extractAnswerFromComment,
   handleClarification,
+  handleGateApproval,
 } from '../../../../scripts/cody/clarify-workflow'
 import * as codyUtils from '../../../../scripts/cody/cody-utils'
 import type { CodyInput } from '../../../../scripts/cody/cody-utils'
@@ -179,6 +180,146 @@ describe('clarify-workflow', () => {
 
       const clarifiedContent = fs.readFileSync(path.join(tempDir, 'clarified.md'), 'utf-8')
       expect(clarifiedContent).toContain('Answer from comment body')
+    })
+  })
+
+  // ========================================================================
+  // handleGateApproval (Autonomous Decision Control Framework)
+  // ========================================================================
+
+  describe('handleGateApproval', () => {
+    const createMockInput = (overrides: Partial<CodyInput> = {}): CodyInput => ({
+      mode: 'full',
+      taskId: '260218-test',
+      dryRun: false,
+      local: false,
+      clarify: false,
+      ...overrides,
+    })
+
+    const taskDef = {
+      risk_level: 'medium',
+      task_type: 'implement_feature',
+      confidence: 0.9,
+      scope: ['src/app'],
+    }
+
+    it('first call with no approval → returns waiting, creates gate file', () => {
+      // Create task.md so the function can read task summary
+      fs.writeFileSync(path.join(tempDir, 'task.md'), '# Test Task\n\nThis is a test task.')
+
+      const result = handleGateApproval(createMockInput(), tempDir, 'architect', taskDef)
+
+      expect(result).toBe('waiting')
+
+      // Gate request file should be created
+      const gatePath = path.join(tempDir, 'gate-architect.md')
+      expect(fs.existsSync(gatePath)).toBe(true)
+      expect(fs.readFileSync(gatePath, 'utf-8')).toContain('Gate Request')
+    })
+
+    it('with approval keyword in comment → returns approved, creates approved file', () => {
+      const input = createMockInput({
+        commentBody: '/cody approve',
+        triggerType: 'comment',
+      })
+
+      const result = handleGateApproval(input, tempDir, 'architect', taskDef)
+
+      expect(result).toBe('approved')
+
+      // Approved file should be created
+      const approvedPath = path.join(tempDir, 'gate-architect-approved.md')
+      expect(fs.existsSync(approvedPath)).toBe(true)
+      expect(fs.readFileSync(approvedPath, 'utf-8')).toContain('Gate Approved')
+    })
+
+    it('with rejection keyword in comment → returns rejected', () => {
+      const input = createMockInput({
+        commentBody: '/cody reject',
+        triggerType: 'comment',
+      })
+
+      const result = handleGateApproval(input, tempDir, 'architect', taskDef)
+
+      expect(result).toBe('rejected')
+
+      // Gate request file should contain rejection
+      const gatePath = path.join(tempDir, 'gate-architect.md')
+      expect(fs.existsSync(gatePath)).toBe(true)
+      expect(fs.readFileSync(gatePath, 'utf-8')).toContain('Gate Rejected')
+    })
+
+    it('already approved (approved file exists) → returns approved', () => {
+      // Create approved file first
+      const approvedPath = path.join(tempDir, 'gate-architect-approved.md')
+      fs.writeFileSync(approvedPath, '# Gate Approved\n\nAlready approved.')
+
+      const result = handleGateApproval(createMockInput(), tempDir, 'architect', taskDef)
+
+      expect(result).toBe('approved')
+    })
+
+    // Approval keywords: approve, approved, yes, go, proceed, y, continue
+    it.each([
+      ['approve', 'approved'],
+      ['approved', 'approved'],
+      ['yes', 'approved'],
+      ['go', 'approved'],
+      ['proceed', 'approved'],
+      ['y', 'approved'],
+      ['continue', 'approved'],
+    ])('approval keyword "%s" → returns approved', (keyword, _expected) => {
+      const input = createMockInput({
+        commentBody: `/cody ${keyword}`,
+        triggerType: 'comment',
+      })
+
+      const result = handleGateApproval(input, tempDir, 'architect', taskDef)
+      expect(result).toBe('approved')
+    })
+
+    // Rejection keywords: reject, rejected, no, cancel, stop, n
+    it.each([
+      ['reject', 'rejected'],
+      ['rejected', 'rejected'],
+      ['no', 'rejected'],
+      ['cancel', 'rejected'],
+      ['stop', 'rejected'],
+      ['n', 'rejected'],
+    ])('rejection keyword "%s" → returns rejected', (keyword, _expected) => {
+      const input = createMockInput({
+        commentBody: `/cody ${keyword}`,
+        triggerType: 'comment',
+      })
+
+      const result = handleGateApproval(input, tempDir, 'architect', taskDef)
+      expect(result).toBe('rejected')
+    })
+
+    it('high risk_level triggers hard-stop mode comment', () => {
+      const highRiskTaskDef = { ...taskDef, risk_level: 'high' }
+      fs.writeFileSync(path.join(tempDir, 'task.md'), '# Test Task\n\nHigh risk task.')
+
+      const result = handleGateApproval(createMockInput(), tempDir, 'architect', highRiskTaskDef)
+
+      expect(result).toBe('waiting')
+
+      const gatePath = path.join(tempDir, 'gate-architect.md')
+      const content = fs.readFileSync(gatePath, 'utf-8')
+      expect(content).toContain('Hard Stop')
+    })
+
+    it('gate request already exists → returns waiting without recreating', () => {
+      // Create gate request file first
+      const gatePath = path.join(tempDir, 'gate-architect.md')
+      fs.writeFileSync(gatePath, '# Gate Request\n\nOriginal content.')
+
+      const result = handleGateApproval(createMockInput(), tempDir, 'architect', taskDef)
+
+      expect(result).toBe('waiting')
+      // Content should not be overwritten
+      expect(fs.readFileSync(gatePath, 'utf-8')).toContain('Original content')
     })
   })
 })

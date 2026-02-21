@@ -25,7 +25,7 @@ import * as path from 'path'
 
 // Import from extracted modules
 import { validateSpecContent } from './content-validators'
-import { handleClarification } from './clarify-workflow'
+import { handleClarification, handleGateApproval } from './clarify-workflow'
 import { commitPipelineFiles } from './git-utils'
 import {
   PlanReviewFailError,
@@ -61,6 +61,8 @@ import {
   ALL_IMPL_STAGE_NAMES,
   isParallelStage,
   type PipelineStage,
+  resolveControlMode,
+  type ControlMode,
 } from './pipeline-utils'
 
 // Import from new modules
@@ -285,6 +287,62 @@ async function runSpecPipeline(
           error: `Invalid task.json: ${msg}`,
         })
         throw new Error(`Taskify produced invalid task.json: ${msg}`)
+      }
+
+      // GATE: Hard-stop check - pause after taskify for high-risk tasks
+      const taskDefAfterTaskify = readTask(taskDir)
+      if (taskDefAfterTaskify) {
+        const controlMode = resolveControlMode(taskDefAfterTaskify, input.controlMode)
+        if (controlMode === 'hard-stop') {
+          console.log('  [STOP] Hard-stop gate: task is high-risk, awaiting approval...')
+          const gateResult = handleGateApproval(input, taskDir, 'taskify', taskDefAfterTaskify)
+          if (gateResult === 'waiting') {
+            // Post gate comment to issue
+            const gateFilePath = path.join(taskDir, 'gate-taskify.md')
+            if (fs.existsSync(gateFilePath)) {
+              const gateContent = fs.readFileSync(gateFilePath, 'utf-8')
+              if (input.issueNumber) {
+                const { postComment } = await import('./cody-utils')
+                // Extract just the comment part after the header
+                const lines = gateContent.split('\n')
+                let inComment = false
+                const commentLines: string[] = []
+                for (const line of lines) {
+                  if (line.startsWith('---')) {
+                    inComment = false
+                    break
+                  }
+                  if (inComment || (!line.startsWith('## ') && !line.startsWith('|'))) {
+                    commentLines.push(line)
+                  }
+                  if (line.startsWith('## ')) {
+                    inComment = true
+                  }
+                }
+                if (commentLines.length > 0) {
+                  postComment(input.issueNumber, commentLines.join('\n').trim())
+                }
+              }
+            }
+            // Commit task files and pause
+            commitPipelineFiles({
+              taskDir,
+              taskId: input.taskId,
+              message: `ci(cody): pause at hard-stop gate for ${input.taskId}`,
+              stagingStrategy: 'task-only',
+              push: true,
+              isCI: !input.local,
+              dryRun: input.dryRun,
+            })
+            console.log('⏸️ Hard-stop: awaiting approval before proceeding')
+            return // Exit spec pipeline
+          }
+          if (gateResult === 'rejected') {
+            throw new Error('Task rejected by user at hard-stop gate')
+          }
+          // 'approved' → continue
+          console.log('  ✅ Hard-stop: approved, proceeding...')
+        }
       }
     }
 
@@ -514,6 +572,58 @@ async function runImplPipeline(
     // Rerun feedback archive
     if (stage === 'architect') {
       handleRerunFeedbackArchive(hookOptions)
+
+      // GATE: Risk-gated or hard-stop check - pause after architect for medium/high risk tasks
+      const taskDefAfterArchitect = readTask(taskDir)
+      if (taskDefAfterArchitect) {
+        const controlMode = resolveControlMode(taskDefAfterArchitect, input.controlMode)
+        if (controlMode === 'risk-gated' || controlMode === 'hard-stop') {
+          console.log(`  [GATE] ${controlMode} gate: pausing for approval after architect...`)
+          // Read plan content for the gate comment
+          const planPath = path.join(taskDir, 'plan.md')
+          const planContent = fs.existsSync(planPath)
+            ? fs.readFileSync(planPath, 'utf-8')
+            : undefined
+          const gateResult = handleGateApproval(
+            input,
+            taskDir,
+            'architect',
+            taskDefAfterArchitect,
+            planContent,
+          )
+          if (gateResult === 'waiting') {
+            // Post gate comment to issue
+            const gateFilePath = path.join(taskDir, 'gate-architect.md')
+            if (fs.existsSync(gateFilePath) && input.issueNumber) {
+              const gateContent = fs.readFileSync(gateFilePath, 'utf-8')
+              const { postComment } = await import('./cody-utils')
+              // Extract comment section before ---
+              const commentBody = gateContent
+                .split('---')[0]
+                .replace(/^## [^]+\n/, '')
+                .trim()
+              postComment(input.issueNumber, commentBody)
+            }
+            // Commit task files and pause
+            commitPipelineFiles({
+              taskDir,
+              taskId: input.taskId,
+              message: `ci(cody): pause at ${controlMode} gate for ${input.taskId}`,
+              stagingStrategy: 'task-only',
+              push: true,
+              isCI: !input.local,
+              dryRun: input.dryRun,
+            })
+            console.log(`⏸️ ${controlMode}: awaiting approval before build`)
+            return // Exit impl pipeline
+          }
+          if (gateResult === 'rejected') {
+            throw new Error(`Task rejected by user at ${controlMode} gate`)
+          }
+          // 'approved' → continue
+          console.log('  ✅ Gate: approved, proceeding to build...')
+        }
+      }
     }
 
     // Plan-review gate: check verdict and fail pipeline on FAIL

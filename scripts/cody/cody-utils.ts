@@ -31,6 +31,8 @@ export interface CodyInput {
   file?: string
   // Opt-in to run clarify stage (default: skip, auto-create clarified.md)
   clarify?: boolean
+  // Control mode override: auto, risk-gated, hard-stop
+  controlMode?: 'auto' | 'risk-gated' | 'hard-stop'
 }
 
 export interface CodyPipelineStatus {
@@ -48,10 +50,12 @@ export interface CodyPipelineStatus {
   issueNumber?: number
   runId?: string
   runUrl?: string
+  controlMode?: 'auto' | 'risk-gated' | 'hard-stop'
+  gatePoint?: string
 }
 
 export interface StageStatus {
-  state: 'pending' | 'running' | 'completed' | 'failed' | 'timeout' | 'skipped'
+  state: 'pending' | 'running' | 'completed' | 'failed' | 'timeout' | 'skipped' | 'gate-waiting'
   startedAt?: string
   completedAt?: string
   elapsed?: number
@@ -406,6 +410,12 @@ export function parseCliArgs(argv: string[]): CodyInput {
       }
       input.fromStage = stage
       i++
+    } else if (arg === '--auto') {
+      input.controlMode = 'auto'
+    } else if (arg === '--gate') {
+      input.controlMode = 'risk-gated'
+    } else if (arg === '--hard-stop') {
+      input.controlMode = 'hard-stop'
     } else if (arg === '--issue-number' && normalized[i + 1]) {
       input.issueNumber = parseInt(normalized[i + 1], 10)
       i++
@@ -435,6 +445,7 @@ export function parseCliArgs(argv: string[]): CodyInput {
           input.feedback = parsed.input.feedback
           input.fromStage = parsed.input.fromStage
           input.triggerType = 'comment'
+          if (parsed.input.controlMode) input.controlMode = parsed.input.controlMode
           if (parsed.input.issueNumber) {
             input.issueNumber = parsed.input.issueNumber
           }
@@ -460,6 +471,7 @@ export function parseCliArgs(argv: string[]): CodyInput {
         input.feedback = parsed.input.feedback
         input.fromStage = parsed.input.fromStage
         input.triggerType = 'comment'
+        if (parsed.input.controlMode) input.controlMode = parsed.input.controlMode
         // Store issueNumber from comment to merge after --issue-number is processed
         if (parsed.input.issueNumber) {
           input.issueNumber = parsed.input.issueNumber
@@ -577,8 +589,22 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
     // When task-id is the subcommand, we need to track what was "rest" for options parsing
     // The reconstructed taskId now contains both the ID and options, so use it as original
   } else if (subCmd) {
-    // Validate subcommand
-    if (isValidMode(subCmd)) {
+    // Handle approve/reject specially - these are for gate approval, not mode selection
+    const lowerSubCmd = subCmd.toLowerCase()
+    if (
+      lowerSubCmd === 'approve' ||
+      lowerSubCmd === 'reject' ||
+      lowerSubCmd === 'yes' ||
+      lowerSubCmd === 'no' ||
+      lowerSubCmd === 'go' ||
+      lowerSubCmd === 'proceed'
+    ) {
+      // Keep existing mode - gate approval logic will detect these keywords
+      // Don't change mode, just pass through. The gate check will handle approval detection.
+      // If no mode is set yet, default to full for resuming gated tasks
+      if (!mode) mode = 'full'
+    } else if (isValidMode(subCmd)) {
+      // Validate subcommand
       mode = subCmd as CodyInput['mode']
     } else {
       // Unrecognized subcommand: treat as rerun with implicit feedback
@@ -631,12 +657,22 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
   let dryRun = false
   let feedback: string | undefined
   let fromStage: string | undefined
+  let controlMode: CodyInput['controlMode'] = undefined
 
   let i = 0
   while (i < options.length) {
     const opt = options[i]
     if (opt === '--dry-run') {
       dryRun = true
+      i++
+    } else if (opt === '--auto') {
+      controlMode = 'auto'
+      i++
+    } else if (opt === '--gate') {
+      controlMode = 'risk-gated'
+      i++
+    } else if (opt === '--hard-stop') {
+      controlMode = 'hard-stop'
       i++
     } else if (opt === '--feedback' && options[i + 1]) {
       // Capture all remaining words until the next --flag as feedback
@@ -678,6 +714,7 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
       fromStage,
       issueNumber,
       triggerType: 'comment',
+      controlMode,
     },
   }
 }

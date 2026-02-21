@@ -22,6 +22,27 @@ const VALID_PIPELINES = ['spec_only', 'spec_execute_verify'] as const
 const VALID_RISK_LEVELS = ['low', 'medium', 'high'] as const
 const VALID_DOMAINS = ['backend', 'frontend', 'infra', 'data', 'llm', 'devops', 'product'] as const
 
+// --- Control mode: determines pipeline autonomy level ---
+export type ControlMode = 'auto' | 'risk-gated' | 'hard-stop'
+
+const CONTROL_MODE_MAP: Record<string, ControlMode> = {
+  low: 'auto',
+  medium: 'risk-gated',
+  high: 'hard-stop',
+}
+
+/**
+ * Resolve the control mode for a task based on its risk level.
+ * User can override with explicit flags (--auto, --gate, --hard-stop).
+ */
+export function resolveControlMode(taskDef: TaskDefinition, override?: ControlMode): ControlMode {
+  // Explicit override always wins (from /cody --auto, --gate, --hard-stop)
+  if (override) return override
+
+  // Derive from risk_level
+  return CONTROL_MODE_MAP[taskDef.risk_level] ?? 'auto'
+}
+
 type TaskType = (typeof VALID_TASK_TYPES)[number]
 type Pipeline = (typeof VALID_PIPELINES)[number]
 

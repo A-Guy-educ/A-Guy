@@ -7,6 +7,8 @@ import {
   readTask,
   normalizeTask,
   PIPELINE_MAP,
+  resolveControlMode,
+  type ControlMode,
 } from '../../../../scripts/cody/pipeline-utils'
 
 // Helper: create a temp task directory with a task.json
@@ -433,6 +435,66 @@ describe('pipeline-utils', () => {
         expect((error as Error).message).toContain('banana')
       }
     })
+  })
+})
+
+// ==========================================================================
+// resolveControlMode (Autonomous Decision Control Framework)
+// ==========================================================================
+describe('resolveControlMode', () => {
+  // Helper to create a minimal TaskDefinition
+  const createTaskDef = (riskLevel: string) =>
+    ({
+      task_type: 'implement_feature',
+      pipeline: 'spec_execute_verify',
+      risk_level: riskLevel as 'low' | 'medium' | 'high',
+      confidence: 0.9,
+      primary_domain: 'backend',
+      scope: ['src/app'],
+      missing_inputs: [],
+      assumptions: [],
+    }) as Parameters<typeof resolveControlMode>[0]
+
+  it('low risk_level → returns auto', () => {
+    const taskDef = createTaskDef('low')
+    expect(resolveControlMode(taskDef)).toBe('auto')
+  })
+
+  it('medium risk_level → returns risk-gated', () => {
+    const taskDef = createTaskDef('medium')
+    expect(resolveControlMode(taskDef)).toBe('risk-gated')
+  })
+
+  it('high risk_level → returns hard-stop', () => {
+    const taskDef = createTaskDef('high')
+    expect(resolveControlMode(taskDef)).toBe('hard-stop')
+  })
+
+  it('explicit override always wins over risk_level', () => {
+    const taskDefLow = createTaskDef('low')
+    const taskDefMedium = createTaskDef('medium')
+    const taskDefHigh = createTaskDef('high')
+
+    // Override with 'auto' wins over 'medium' risk
+    expect(resolveControlMode(taskDefMedium, 'auto')).toBe('auto')
+    // Override with 'auto' wins over 'high' risk
+    expect(resolveControlMode(taskDefHigh, 'auto')).toBe('auto')
+    // Override with 'hard-stop' wins over 'low' risk
+    expect(resolveControlMode(taskDefLow, 'hard-stop')).toBe('hard-stop')
+    // Override with 'risk-gated' wins over 'low' risk
+    expect(resolveControlMode(taskDefLow, 'risk-gated')).toBe('risk-gated')
+  })
+
+  it('invalid risk_level falls back to auto', () => {
+    const taskDef = createTaskDef('unknown')
+    expect(resolveControlMode(taskDef)).toBe('auto')
+  })
+
+  it('undefined risk_level falls back to auto', () => {
+    const taskDef = { ...createTaskDef('low'), risk_level: undefined } as unknown as Parameters<
+      typeof resolveControlMode
+    >[0]
+    expect(resolveControlMode(taskDef)).toBe('auto')
   })
 })
 
