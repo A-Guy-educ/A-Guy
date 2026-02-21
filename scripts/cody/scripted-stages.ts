@@ -63,6 +63,8 @@ export function runVerifyStage(
     { name: 'Lint', command: 'pnpm -s lint' },
     { name: 'Format', command: 'pnpm -s format:check' },
     { name: 'Unit Tests', command: 'pnpm -s test:unit' },
+    // Integration tests run in CI after PR is created
+    // Adding them here would require MongoDB service in verify stage
   ]
 
   const gates: GateResult[] = []

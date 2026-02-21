@@ -34,78 +34,10 @@ vi.mock('../../../../scripts/cody/runner-backend', () => ({
 import * as fs from 'fs'
 import {
   runAgentWithFileWatch,
-  resolveModel,
   MAX_RETRIES,
   FILE_STABLE_CHECKS,
 } from '../../../../scripts/cody/agent-runner'
 import type { CodyInput } from '../../../../scripts/cody/cody-utils'
-
-describe('resolveModel', () => {
-  it('should use FAST_MODEL for plan-review stage', () => {
-    const model = resolveModel('plan-review')
-    expect(model).toBe('google/gemini-2.5-flash')
-  })
-
-  it('should use FAST_MODEL for autofix stage', () => {
-    const model = resolveModel('autofix')
-    expect(model).toBe('google/gemini-2.5-flash')
-  })
-
-  it('should use FAST_MODEL for auditor stage', () => {
-    const model = resolveModel('auditor')
-    expect(model).toBe('google/gemini-2.5-flash')
-  })
-
-  it('should use FAST_MODEL for apply-audit stage', () => {
-    const model = resolveModel('apply-audit')
-    expect(model).toBe('google/gemini-2.5-flash')
-  })
-
-  it('should use DEFAULT_MODEL for build stage', () => {
-    const model = resolveModel('build')
-    expect(model).toBe('minimax-coding-plan/MiniMax-M2.5')
-  })
-
-  it('should use explicit model when provided', () => {
-    const model = resolveModel('plan-review', 'custom/model')
-    expect(model).toBe('custom/model')
-  })
-
-  it('should use env OPENCODE_MODEL when no explicit or stage model', () => {
-    const original = process.env.OPENCODE_MODEL
-    process.env.OPENCODE_MODEL = 'env/model'
-    const model = resolveModel('build')
-    expect(model).toBe('env/model')
-    if (original) process.env.OPENCODE_MODEL = original
-    else delete process.env.OPENCODE_MODEL
-  })
-
-  // Phase 1.1: Model mismatch fixes
-  it('should use Opus for architect stage', () => {
-    const model = resolveModel('architect')
-    expect(model).toBe('anthropic/claude-opus-4-6')
-  })
-
-  it('should use Gemini Pro for spec stage', () => {
-    const model = resolveModel('spec')
-    expect(model).toBe('google/gemini-3-pro-preview')
-  })
-
-  it('should use Gemini Pro for gap stage', () => {
-    const model = resolveModel('gap')
-    expect(model).toBe('google/gemini-3-pro-preview')
-  })
-
-  it('should use Gemini Pro for clarify stage', () => {
-    const model = resolveModel('clarify')
-    expect(model).toBe('google/gemini-3-pro-preview')
-  })
-
-  it('should use DEFAULT_MODEL for taskify stage', () => {
-    const model = resolveModel('taskify')
-    expect(model).toBe('minimax-coding-plan/MiniMax-M2.5')
-  })
-})
 
 describe('MAX_RETRIES', () => {
   it('should be 2', () => {

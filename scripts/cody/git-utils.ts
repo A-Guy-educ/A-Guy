@@ -407,14 +407,15 @@ export function commitAndPush(
     // Stage tracked changes only (BUG-15 fix: avoid staging secrets/env files with -A)
     execSync('git add -u', { cwd: workDir, stdio: 'inherit' })
 
-    // Also stage new files in safe directories (but NOT .env, secrets, etc.)
-    // This ensures new files created by the build agent are committed
-    for (const dir of SAFE_STAGE_DIRS) {
-      try {
-        execFileSync('git', ['add', '--', dir], { cwd: workDir, stdio: 'pipe' })
-      } catch {
-        // Directory may not exist or have no new files - that's fine
+    // Also stage new files in safe directories that are specifically in .tasks/ directory
+    // (only stage task files created by the agent, not all files in src/tests)
+    try {
+      const taskDirPath = path.join(workDir, '.tasks', taskId)
+      if (fs.existsSync(taskDirPath)) {
+        execFileSync('git', ['add', '--', taskDirPath], { cwd: workDir, stdio: 'pipe' })
       }
+    } catch {
+      // Directory may not exist or have no new files - that's fine
     }
 
     // Commit using execFileSync to prevent shell injection (BUG-4 fix)

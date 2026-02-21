@@ -10,7 +10,7 @@ set -euo pipefail
 git fetch origin
 
 # Try common branch prefixes for the task-id
-for prefix in feat fix refactor docs chore; do
+for prefix in feat fix refactor docs chore security test; do
   BRANCH="${prefix}/${TASK_ID}"
   if git rev-parse --verify "origin/${BRANCH}" >/dev/null 2>&1; then
     echo "=== Found feature branch: $BRANCH ==="

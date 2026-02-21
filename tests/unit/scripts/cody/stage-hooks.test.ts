@@ -131,11 +131,13 @@ describe('stage-hooks', () => {
       expect(() => handleBuildValidation(opts)).not.toThrow()
     })
 
-    it('logs warning when build.md missing Changes section', () => {
+    it('throws error when build.md missing Changes section', () => {
       const taskDir = path.join(tempDir, '.tasks', '260218-test')
       const opts = { taskId: '260218-test', taskDir, dryRun: false, isCI: false }
       fs.writeFileSync(path.join(taskDir, 'build.md'), '# Build\n\nNo changes here.')
-      expect(() => handleBuildValidation(opts)).not.toThrow()
+      expect(() => handleBuildValidation(opts)).toThrow(
+        'Build report missing Changes section — agent may not have implemented anything',
+      )
     })
 
     it('does not warn when build.md has Changes section', () => {

@@ -61,6 +61,9 @@ export const SCRIPTED_STAGES = ['verify', 'commit', 'pr'] as const
  * Design principle: each agent gets ONLY what it needs.
  * Behavioral instructions live in .opencode/agents/<stage>.md (system prompt).
  * This file provides only runtime context (task ID, file paths).
+ *
+ * Note: Some files may not exist (e.g., rerun-feedback.md on first runs).
+ * The agent should gracefully handle missing optional files.
  */
 export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   taskify: ['task.md'],
@@ -144,6 +147,10 @@ function getTaskType(taskId: string): string {
  * Instead of pointing to a monolithic .context.md, lists the specific files
  * the agent needs to read. Behavioral instructions come from the agent's
  * .opencode/agents/<stage>.md system prompt.
+ *
+ * Note: Some context files may not exist (e.g., rerun-feedback.md on first runs,
+ * plan-review.rejected.md if the plan passed review). The agent should gracefully
+ * skip reading files that don't exist - do NOT treat missing files as errors.
  *
  * @param input - Orchestrator input containing taskId
  * @param stage - The stage to build the prompt for

@@ -277,8 +277,11 @@ export function editComment(commentId: string, body: string): void {
     const tempFile = `/tmp/cody-comment-${Date.now()}.txt`
     fs.writeFileSync(tempFile, body)
 
+    // Get the repository from environment
+    const repo = process.env.GITHUB_REPOSITORY || 'OWNER/REPO'
+
     execSync(
-      `gh api repos/OWNER/REPO/issues/comments/${commentId} -X PATCH --field body="@${tempFile}"`,
+      `gh api repos/${repo}/issues/comments/${commentId} -X PATCH --field body="@${tempFile}"`,
       {
         stdio: 'inherit',
       },

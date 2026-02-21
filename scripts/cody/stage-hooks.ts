@@ -103,6 +103,7 @@ export function handlePlanReviewGate(options: StageHookOptions): void {
 
 /**
  * Handle build content validation - check for Changes section
+ * Throws an error if build report is missing Changes section
  */
 export function handleBuildValidation(options: StageHookOptions): void {
   const { taskDir } = options
@@ -110,7 +111,8 @@ export function handleBuildValidation(options: StageHookOptions): void {
 
   const warning = validateBuildFile(outputFile)
   if (warning) {
-    console.warn(`  ⚠️  ${warning}`)
+    console.error(`  ❌ ${warning}`)
+    throw new Error(warning)
   }
 }
 

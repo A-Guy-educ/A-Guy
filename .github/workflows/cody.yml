@@ -174,9 +174,6 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
-          # OpenCode model configuration
-          OPENCODE_MODEL: minimax-coding-plan/MiniMax-M2.5
-
           # Parsed inputs from parse job
           TASK_ID: ${{ needs.parse.outputs.task_id }}
           MODE: ${{ needs.parse.outputs.mode }}
