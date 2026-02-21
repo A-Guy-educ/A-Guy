@@ -48,6 +48,8 @@ You only evaluate and report.
 
 Write to: `.tasks/<taskId>/plan-review.md`
 
+**CRITICAL**: You MUST use the `write` tool to create this file. Do NOT output the review as text in your response. The review must be saved to disk, not printed.
+
 ```markdown
 # Plan Review: <taskId>
 
@@ -75,7 +77,7 @@ Write to: `.tasks/<taskId>/plan-review.md`
 [1-2 sentences on overall plan quality]
 ```
 
-**STOP CONDITION**: After you write plan-review.md, you are DONE.
+**STOP CONDITION**: After you write plan-review.md using the `write` tool, you are DONE. Do not output the review as text.
 
 ## Verdict Rules
 

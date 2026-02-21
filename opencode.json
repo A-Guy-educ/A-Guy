@@ -27,7 +27,7 @@
       "description": "Converts free-text tasks into structured task.json for pipeline routing"
     },
     "plan-review": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "google/gemini-2.5-flash",
       "description": "Reviews architect plan for quality and completeness"
     },
     "autofix": {

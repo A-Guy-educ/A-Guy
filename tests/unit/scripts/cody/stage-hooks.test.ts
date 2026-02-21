@@ -5,7 +5,7 @@
  * @ai-summary Tests for stage-hooks.ts - post-stage hook functions
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
@@ -81,10 +81,13 @@ describe('stage-hooks', () => {
       expect(() => handlePlanReviewGate(opts)).toThrow(PlanReviewFailError)
     })
 
-    it('deletes plan.md and plan-review.md on FAIL', () => {
+    it('renames plan-review.md to plan-review.rejected.md and deletes plan.md on FAIL', () => {
       const taskDir = path.join(tempDir, '.tasks', '260218-test')
       const opts = { taskId: '260218-test', taskDir, dryRun: false, isCI: false }
-      fs.writeFileSync(path.join(taskDir, 'plan-review.md'), '# Plan Review\n\nVerdict: FAIL')
+      fs.writeFileSync(
+        path.join(taskDir, 'plan-review.md'),
+        '# Plan Review\n\nVerdict: FAIL\n\nSome blocking issues',
+      )
       fs.writeFileSync(path.join(taskDir, 'plan.md'), '# Plan')
 
       try {
@@ -93,8 +96,27 @@ describe('stage-hooks', () => {
         // Expected
       }
 
+      // plan-review.md should be renamed to plan-review.rejected.md (not deleted)
       expect(fs.existsSync(path.join(taskDir, 'plan-review.md'))).toBe(false)
+      expect(fs.existsSync(path.join(taskDir, 'plan-review.rejected.md'))).toBe(true)
+      // plan.md should be deleted so architect re-runs
       expect(fs.existsSync(path.join(taskDir, 'plan.md'))).toBe(false)
+    })
+
+    it('warns when no verdict line is found', () => {
+      const taskDir = path.join(tempDir, '.tasks', '260218-test')
+      const opts = { taskId: '260218-test', taskDir, dryRun: false, isCI: false }
+      // Write content without Verdict line
+      fs.writeFileSync(path.join(taskDir, 'plan-review.md'), '# Plan Review\n\nSome review content')
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+      handlePlanReviewGate(opts)
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        '  ⚠️  Warning: No Verdict line found in plan-review.md — treating as PASS',
+      )
+      warnSpy.mockRestore()
     })
   })
 

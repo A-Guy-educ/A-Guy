@@ -112,6 +112,14 @@ export function isPlanReviewFail(reviewContent: string): boolean {
 }
 
 /**
+ * Check if plan-review content contains a verdict line (either PASS or FAIL).
+ * Returns true if either Verdict: PASS or Verdict: FAIL is found.
+ */
+export function hasPlanReviewVerdict(reviewContent: string): boolean {
+  return /Verdict:\s*(PASS|FAIL)/i.test(reviewContent)
+}
+
+/**
  * Validate plan-review file verdict.
  * Returns true if PASS, false if FAIL.
  */

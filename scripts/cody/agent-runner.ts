@@ -247,10 +247,11 @@ export function runAgentWithFileWatch(
           // Success only if file was created (not just exit code 0)
           if (fs.existsSync(outputFile)) {
             finish({ succeeded: true, timedOut: false })
-          } else if (code !== 0 && retries < maxRetries) {
-            // Retry on failure
+          } else if (retries < maxRetries) {
+            // Retry on ANY failure — exit non-zero OR exit 0 without output file
             retries++
-            console.log(`  ⚠ Stage failed (exit ${code}), retrying (${retries}/${maxRetries})...`)
+            const reason = code === 0 ? 'no output file' : `exit ${code}`
+            console.log(`  ⚠ Stage failed (${reason}), retrying (${retries}/${maxRetries})...`)
             if (pollTimer) clearInterval(pollTimer)
             if (timeoutTimer) clearTimeout(timeoutTimer)
             if (currentChild && !currentChild.killed) {
@@ -259,7 +260,7 @@ export function runAgentWithFileWatch(
             // Brief delay before retry
             setTimeout(attemptWithRetry, 2000)
           } else {
-            // Exit code 0 but no output file = failure (agent hallucinated success)
+            // Exhausted retries without producing output file
             console.log(`  ❌ Agent exited ${code} without producing output file`)
             finish({ succeeded: false, timedOut: false })
           }

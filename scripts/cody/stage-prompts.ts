@@ -65,7 +65,7 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   taskify: ['task.md'],
   spec: ['task.md', 'task.json'],
   clarify: ['task.md', 'spec.md'],
-  architect: ['spec.md', 'clarified.md', 'rerun-feedback.md'],
+  architect: ['spec.md', 'clarified.md', 'rerun-feedback.md', 'plan-review.rejected.md'],
   'plan-review': ['spec.md', 'plan.md'],
   build: ['spec.md', 'clarified.md', 'plan.md', 'plan-review.md'],
   commit: ['task.json'],

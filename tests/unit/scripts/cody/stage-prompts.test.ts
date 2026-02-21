@@ -66,6 +66,7 @@ describe('stage-prompts', () => {
         'spec.md',
         'clarified.md',
         'rerun-feedback.md',
+        'plan-review.rejected.md',
       ])
       expect(STAGE_CONTEXT_FILES['plan-review']).toEqual(['spec.md', 'plan.md'])
       expect(STAGE_CONTEXT_FILES.build).toEqual([

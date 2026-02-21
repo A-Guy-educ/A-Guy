@@ -16,6 +16,7 @@ import {
   validateBuildReport,
   validateBuildFile,
   isPlanReviewFail,
+  hasPlanReviewVerdict,
   validatePlanReviewVerdict,
   extractVerifySummary,
   isVerifyFailed,
@@ -179,6 +180,24 @@ describe('content-validators', () => {
 
     it('returns false for no verdict', () => {
       expect(isPlanReviewFail('# Plan Review\n\nSome content')).toBe(false)
+    })
+  })
+
+  describe('hasPlanReviewVerdict', () => {
+    it('returns true for PASS verdict', () => {
+      expect(hasPlanReviewVerdict('# Plan Review\n\nVerdict: PASS')).toBe(true)
+    })
+
+    it('returns true for FAIL verdict', () => {
+      expect(hasPlanReviewVerdict('# Plan Review\n\nVerdict: FAIL')).toBe(true)
+    })
+
+    it('returns true for pass (lowercase)', () => {
+      expect(hasPlanReviewVerdict('# Plan Review\n\nVerdict: pass')).toBe(true)
+    })
+
+    it('returns false for no verdict line', () => {
+      expect(hasPlanReviewVerdict('# Plan Review\n\nSome content')).toBe(false)
     })
   })
 

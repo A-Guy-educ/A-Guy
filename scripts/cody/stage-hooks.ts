@@ -13,6 +13,7 @@ import { stageOutputFile } from './pipeline-utils'
 import { updateStageStatus } from './cody-utils'
 import {
   isPlanReviewFail,
+  hasPlanReviewVerdict,
   validateBuildFile,
   extractVerifySummary,
   isVerifyFailed,
@@ -73,16 +74,25 @@ export function handlePlanReviewGate(options: StageHookOptions): void {
 
   const reviewContent = fs.readFileSync(outputFile, 'utf-8')
 
+  // Warn if no verdict line found (permissive: treat as PASS but warn)
+  if (!hasPlanReviewVerdict(reviewContent)) {
+    console.warn(`  ⚠️  Warning: No Verdict line found in plan-review.md — treating as PASS`)
+  }
+
   if (isPlanReviewFail(reviewContent)) {
     console.error(`\n❌ Plan review FAILED for ${taskId}`)
     console.error('  The plan does not meet spec requirements. Looping back to architect.\n')
 
+    // Rename plan-review.md to plan-review.rejected.md so architect can see why it failed
+    const rejectedFile = stageOutputFile(taskDir, 'plan-review.rejected')
+    if (fs.existsSync(outputFile)) {
+      fs.renameSync(outputFile, rejectedFile)
+      console.log(`   Preserved rejection feedback: ${rejectedFile}`)
+    }
+
     // Delete plan.md so architect reruns
     const planFile = stageOutputFile(taskDir, 'architect')
     if (fs.existsSync(planFile)) fs.unlinkSync(planFile)
-
-    // Delete plan-review.md so it reruns after new plan
-    fs.unlinkSync(outputFile)
 
     updateStageStatus(taskId, 'plan-review', 'failed', { error: 'Plan review verdict: FAIL' })
     throw new PlanReviewFailError()
