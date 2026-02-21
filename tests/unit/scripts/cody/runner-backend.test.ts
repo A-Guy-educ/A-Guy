@@ -82,12 +82,12 @@ describe('LocalRunner', () => {
     expect(spawn).toHaveBeenCalledOnce()
     expect(spawn).toHaveBeenCalledWith(
       'pnpm',
-      ['ocode', 'run', '--agent', 'spec'],
+      ['ocode', 'run', '--agent', 'spec', 'Write a spec'],
       expect.objectContaining({ cwd: '/my/project', stdio: 'inherit' }),
     )
   })
 
-  it('should pass prompt via PROMPT env var', () => {
+  it('should pass prompt via positional arg and AGENT env var', () => {
     const runner = new LocalRunner()
     const env = {} as NodeJS.ProcessEnv
 
@@ -95,7 +95,7 @@ describe('LocalRunner', () => {
 
     const calledEnv = vi.mocked(spawn).mock.calls[0][2]?.env
     expect(calledEnv).toMatchObject({
-      PROMPT: 'Implement the feature',
+      AGENT: 'execute',
     })
   })
 
