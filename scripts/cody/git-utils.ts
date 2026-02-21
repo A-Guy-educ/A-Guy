@@ -218,7 +218,12 @@ export function extractCommitSubject(taskMdContent: string): string {
     // First non-empty line after title is the subject
     if (foundTitle || line.match(/^#/)) {
       // Clean up the subject: remove leading -, *, numbers, etc.
-      const subject = line.replace(/^[-*\d.]\s*/, '').trim()
+      const subject = line
+        .replace(/^[-*\d.]\s*/, '')
+        .replace(/^#+\s*/, '') // strip markdown headers
+        .replace(/\*\*(.*?)\*\*/g, '$1') // strip bold markers
+        .replace(/`(.*?)`/g, '$1') // strip inline code
+        .trim()
       // Truncate to 72 chars (conventional commit subject max)
       return subject.length > 72 ? subject.slice(0, 69) + '...' : subject
     }
@@ -246,7 +251,13 @@ export function extractCommitBody(buildMdContent: string): string {
       .split('\n')
       .filter((line) => line.trim().match(/^[-*•]/))
       .slice(0, 5)
-      .map((line) => line.replace(/^[-*•]\s*/, '').trim())
+      .map((line) =>
+        line
+          .replace(/^[-*•]\s*/, '')
+          .replace(/\*\*(.*?)\*\*/g, '$1') // strip bold
+          .replace(/`(.*?)`/g, '$1') // strip inline code
+          .trim(),
+      )
       .join('. ')
 
     if (bullets.length > 20) return bullets
