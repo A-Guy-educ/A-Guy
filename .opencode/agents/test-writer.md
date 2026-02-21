@@ -91,6 +91,36 @@ describe('Collection Integration', () => {
 
 ## Rules
 
+### Critical: Import Style (MUST FOLLOW)
+
+- **Always use ESM `import` syntax** — NEVER use `require()`
+- The test runner uses Vite with `vite-tsconfig-paths`, which resolves `@/` aliases
+- `require()` does NOT work with Vite path resolution and will cause `MODULE_NOT_FOUND` errors
+- Example:
+
+  ```typescript
+  // ✅ CORRECT - ESM import
+  import { useNotebookChat } from '@/ui/web/chat'
+  import { apiService } from '@/server/services/api/api-service'
+
+  // ❌ WRONG - CommonJS require (will fail)
+  const { ConvertForm } = require('@/ui/admin/exercise-conversion/ConvertForm')
+  ```
+
+### Before Writing Tests
+
+1. **Read the source file** you are testing:
+   - Use the `Read` tool to open the actual source file
+   - Check the named exports (e.g., `export function ConvertForm(...)`)
+   - Note the import path used in the codebase — follow the SAME path pattern
+   - If the file is a directory with `index.tsx` (e.g., `ConvertForm/index.tsx`), the import path is still just `@/ui/admin/exercise-conversion/ConvertForm` (Node.js resolves `index` automatically)
+
+2. **Read an existing test** for reference:
+   - Find a similar test in `tests/unit/` (e.g., for hooks, components, services)
+   - Follow the same mock patterns and import structure
+
+3. **Test location**: For React components/hooks in `src/ui/`, place tests in `tests/unit/` following the directory structure
+
 - Write tests that **assert the desired behavior** (will fail now, pass after implementation)
 - Do NOT write implementation code — the build agent handles that
 - Follow existing test patterns in the project
@@ -99,4 +129,4 @@ describe('Collection Integration', () => {
 
 ## Output
 
-After writing tests, run `pnpm test:unit` to verify tests are valid (they should FAIL, proving they're testing the right thing).
+After writing tests, the build agent will run them to verify they are valid. Tests should FAIL initially (TDD red phase), proving they're testing the right behavior.
