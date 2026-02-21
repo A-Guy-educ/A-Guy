@@ -220,9 +220,14 @@ describe('useNotebookChat', () => {
     })
 
     it('logs error to console when streaming fails', async () => {
-      // Mock chatStream to throw an error
+      // Mock chatStream to throw an error - need to use async generator that throws on iteration
       const streamingError = new Error('Stream connection failed')
-      ;(apiService.chatStream as ReturnType<typeof vi.fn>).mockRejectedValueOnce(streamingError)
+
+      // Create a generator function that throws when iterated
+      async function* mockFailingStream(): AsyncGenerator<{ type: string; error?: string }> {
+        throw streamingError
+      }
+      ;(apiService.chatStream as ReturnType<typeof vi.fn>).mockReturnValueOnce(mockFailingStream())
 
       const { result } = renderHook(() => useNotebookChat(defaultProps))
       await waitFor(() => expect(result.current.isLoadingHistory).toBe(false))
