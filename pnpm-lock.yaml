@@ -291,6 +291,9 @@ importers:
       lint-staged:
         specifier: ^16.2.7
         version: 16.2.7
+      opencode-ai:
+        specifier: ^1.2.10
+        version: 1.2.10
       playwright:
         specifier: 1.57.0
         version: 1.57.0
@@ -7257,6 +7260,65 @@ packages:
       zod:
         optional: true
 
+  opencode-ai@1.2.10:
+    resolution: {integrity: sha512-hF93CJSJJE++cw/P2YKNp8YD3pZBYOboaZV/ZkOi9hnifFN8UCyoJDeqJrfBZSHp9k9url/7b5mCRan1sOVEzQ==}
+    hasBin: true
+
+  opencode-darwin-arm64@1.2.10:
+    resolution: {integrity: sha512-r4kxYe1tWc9P2sZ8igUC77JDqQM23fS82C6C1DlIJg6+dbcg1XLqESYsKyByIMIiST4ZDzPOnMQt8u8fGy4S1g==}
+    cpu: [arm64]
+    os: [darwin]
+
+  opencode-darwin-x64-baseline@1.2.10:
+    resolution: {integrity: sha512-9O4I3RQpGAIixIDUz1tT1iJ3l1DGb84xGD+Cvik7QBTcRxYLg/JEP70jx8XGQUVVN6rRvsHQqTw7uPsjtIgvJQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  opencode-darwin-x64@1.2.10:
+    resolution: {integrity: sha512-fpkoTb6e8g1Nwl4KX/Jj7DmT7pXYXSd28oHZ/A3q0dJ7T8lS94V2vaK8O3QfHuD5H5jgDKxFpNh4XP/w1pyAiQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  opencode-linux-arm64-musl@1.2.10:
+    resolution: {integrity: sha512-VHylFyTXjOpgv9gheq8wwnt5gZZPFyUatFuoAffZNNUvNGlk8hQNYZH4+FryDceWYqCrZl1R9H0Gj68jipNQ3A==}
+    cpu: [arm64]
+    os: [linux]
+
+  opencode-linux-arm64@1.2.10:
+    resolution: {integrity: sha512-p/FDTWCoQ4AfGy1ejZWYgYor87J/e3X1H0n5piNI420L4LTB8L9KZWvqpgV95NBVNdAgEvrR5JKHYfUIRzk13Q==}
+    cpu: [arm64]
+    os: [linux]
+
+  opencode-linux-x64-baseline-musl@1.2.10:
+    resolution: {integrity: sha512-+s5kT6mcJPBahgdIgK5Tj6g16bXkQfM2HqNRpuNEpIJnf54GtWkTz5S2mu5OTquKS7botXzXuUdegvhos03qQw==}
+    cpu: [x64]
+    os: [linux]
+
+  opencode-linux-x64-baseline@1.2.10:
+    resolution: {integrity: sha512-L7Lb1M2Op3GE068sb8/clIyUgyUZpEtkoBkpdYU163fMKDX8dhwljUb+nxsywhmS2qZRDk1q8AIUpCpsRUYIIg==}
+    cpu: [x64]
+    os: [linux]
+
+  opencode-linux-x64-musl@1.2.10:
+    resolution: {integrity: sha512-ihSqT1AWCMCsLitd6duLocfeamjq1CWtIehFMpLKIysAdBN5LjZAcPaoJD8aiKtOe8Ehu63IH22Knc8s1UFjTg==}
+    cpu: [x64]
+    os: [linux]
+
+  opencode-linux-x64@1.2.10:
+    resolution: {integrity: sha512-JiRyKYMwpWX7lm8hJ6Qs/P/9bpAJkijL47b2ujauRbt9XVIlV6kVq/kCX2DggiHVWP9oHPrcTXNev3n8739w5Q==}
+    cpu: [x64]
+    os: [linux]
+
+  opencode-windows-x64-baseline@1.2.10:
+    resolution: {integrity: sha512-ImHpnIAyBqPMJ66qab5KNIFteuPp9j+5ZlvybtMN3dnBMDiK+HWz0FttwomODOfz791a5mAZBHrKgznHb3qDbQ==}
+    cpu: [x64]
+    os: [win32]
+
+  opencode-windows-x64@1.2.10:
+    resolution: {integrity: sha512-Apa0LyS0XUKLc7dX8fcwqAxnxQinX3ZzQdyiXO0JM209EM427dxgK4pWxE2xHRoLm6IooWF0crw9NWhZ1DgYkQ==}
+    cpu: [x64]
+    os: [win32]
+
   opencollective-postinstall@2.0.3:
     resolution: {integrity: sha512-8AV/sCtuzUeTo8gQK5qDZzARrulB3egtLzFgteqB2tcT4Mw7B8Kt7JcDHmltjz6FOAHsvTevk70gZEbhM4ZS9Q==}
     hasBin: true
@@ -7569,6 +7631,7 @@ packages:
   prebuild-install@7.1.3:
     resolution: {integrity: sha512-8Mf2cbV7x1cXPUILADGI3wuhfqWvtiLA1iclTDbFRZkgRQS0NqsPZphna9V+HyTEadheuPmjaJMsbzKQFOzLug==}
     engines: {node: '>=10'}
+    deprecated: No longer maintained. Please contact the author of the relevant native addon; alternatives are available.
     hasBin: true
 
   prelude-ls@1.2.1:
@@ -17426,6 +17489,53 @@ snapshots:
       zod: 4.3.6
     transitivePeerDependencies:
       - encoding
+
+  opencode-ai@1.2.10:
+    optionalDependencies:
+      opencode-darwin-arm64: 1.2.10
+      opencode-darwin-x64: 1.2.10
+      opencode-darwin-x64-baseline: 1.2.10
+      opencode-linux-arm64: 1.2.10
+      opencode-linux-arm64-musl: 1.2.10
+      opencode-linux-x64: 1.2.10
+      opencode-linux-x64-baseline: 1.2.10
+      opencode-linux-x64-baseline-musl: 1.2.10
+      opencode-linux-x64-musl: 1.2.10
+      opencode-windows-x64: 1.2.10
+      opencode-windows-x64-baseline: 1.2.10
+
+  opencode-darwin-arm64@1.2.10:
+    optional: true
+
+  opencode-darwin-x64-baseline@1.2.10:
+    optional: true
+
+  opencode-darwin-x64@1.2.10:
+    optional: true
+
+  opencode-linux-arm64-musl@1.2.10:
+    optional: true
+
+  opencode-linux-arm64@1.2.10:
+    optional: true
+
+  opencode-linux-x64-baseline-musl@1.2.10:
+    optional: true
+
+  opencode-linux-x64-baseline@1.2.10:
+    optional: true
+
+  opencode-linux-x64-musl@1.2.10:
+    optional: true
+
+  opencode-linux-x64@1.2.10:
+    optional: true
+
+  opencode-windows-x64-baseline@1.2.10:
+    optional: true
+
+  opencode-windows-x64@1.2.10:
+    optional: true
 
   opencollective-postinstall@2.0.3: {}
 

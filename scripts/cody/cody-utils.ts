@@ -9,6 +9,8 @@ import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
+import { ALL_STAGES } from './stage-prompts'
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -31,6 +33,8 @@ export interface CodyInput {
   file?: string
   // Opt-in to run clarify stage (default: skip, auto-create clarified.md)
   clarify?: boolean
+  // Control mode override: auto, risk-gated, hard-stop
+  controlMode?: 'auto' | 'risk-gated' | 'hard-stop'
 }
 
 export interface CodyPipelineStatus {
@@ -48,16 +52,24 @@ export interface CodyPipelineStatus {
   issueNumber?: number
   runId?: string
   runUrl?: string
+  controlMode?: 'auto' | 'risk-gated' | 'hard-stop'
+  gatePoint?: string
+  botCommentId?: number
 }
 
 export interface StageStatus {
-  state: 'pending' | 'running' | 'completed' | 'failed' | 'timeout' | 'skipped'
+  state: 'pending' | 'running' | 'completed' | 'failed' | 'timeout' | 'skipped' | 'gate-waiting'
   startedAt?: string
   completedAt?: string
   elapsed?: number
   retries: number
   outputFile?: string
   error?: string
+  // Token usage for cost tracking (schema only - not populated)
+  tokenUsage?: {
+    input: number
+    output: number
+  }
 }
 
 // ============================================================================
@@ -65,20 +77,9 @@ export interface StageStatus {
 // ============================================================================
 
 const VALID_MODES = ['spec', 'impl', 'rerun', 'full', 'status'] as const
-const VALID_STAGES = [
-  'taskify',
-  'spec',
-  'clarify',
-  'architect',
-  'plan-review',
-  'build',
-  'commit',
-  'autofix',
-  'verify',
-  'auditor',
-  'apply-audit',
-  'pr',
-]
+
+// VALID_STAGES derived from stage-prompts to avoid duplication
+const VALID_STAGES = [...ALL_STAGES]
 
 export function isValidMode(mode: string): mode is (typeof VALID_MODES)[number] {
   return VALID_MODES.includes(mode as (typeof VALID_MODES)[number])
@@ -119,6 +120,21 @@ export function readStatus(taskId: string): CodyPipelineStatus | null {
   } catch {
     return null
   }
+}
+
+/**
+ * Get the last failed stage from status.json for smart rerun default.
+ * Returns the stage name that most recently failed, or null if none.
+ */
+export function getLastFailedStage(taskId: string): string | null {
+  const status = readStatus(taskId)
+  if (!status?.stages) return null
+
+  const failedStages = Object.entries(status.stages)
+    .filter(([_, s]) => s.state === 'failed' || s.state === 'timeout')
+    .map(([name]) => name)
+
+  return failedStages.length > 0 ? failedStages[failedStages.length - 1] : null
 }
 
 export function writeStatus(taskId: string, status: CodyPipelineStatus): void {
@@ -252,9 +268,30 @@ export function getIssueBody(issueNumber: number): string | null {
   }
 }
 
-export function editComment(_commentId: string, _body: string): void {
-  // TODO: Implement if needed - gh api required for editing comments
-  console.warn('editComment not implemented')
+export function editComment(commentId: string, body: string): void {
+  if (!commentId) return
+
+  try {
+    // Use gh api to patch the comment
+    // Write body to temp file to handle special characters
+    const tempFile = `/tmp/cody-comment-${Date.now()}.txt`
+    fs.writeFileSync(tempFile, body)
+
+    // Get the repository from environment
+    const repo = process.env.GITHUB_REPOSITORY || 'OWNER/REPO'
+
+    execSync(
+      `gh api repos/${repo}/issues/comments/${commentId} -X PATCH --field body="@${tempFile}"`,
+      {
+        stdio: 'inherit',
+      },
+    )
+
+    // Clean up temp file
+    fs.unlinkSync(tempFile)
+  } catch (error) {
+    console.error(`Failed to edit comment ${commentId}:`, error)
+  }
 }
 
 /**
@@ -406,6 +443,12 @@ export function parseCliArgs(argv: string[]): CodyInput {
       }
       input.fromStage = stage
       i++
+    } else if (arg === '--auto') {
+      input.controlMode = 'auto'
+    } else if (arg === '--gate') {
+      input.controlMode = 'risk-gated'
+    } else if (arg === '--hard-stop') {
+      input.controlMode = 'hard-stop'
     } else if (arg === '--issue-number' && normalized[i + 1]) {
       input.issueNumber = parseInt(normalized[i + 1], 10)
       i++
@@ -435,6 +478,7 @@ export function parseCliArgs(argv: string[]): CodyInput {
           input.feedback = parsed.input.feedback
           input.fromStage = parsed.input.fromStage
           input.triggerType = 'comment'
+          if (parsed.input.controlMode) input.controlMode = parsed.input.controlMode
           if (parsed.input.issueNumber) {
             input.issueNumber = parsed.input.issueNumber
           }
@@ -460,6 +504,7 @@ export function parseCliArgs(argv: string[]): CodyInput {
         input.feedback = parsed.input.feedback
         input.fromStage = parsed.input.fromStage
         input.triggerType = 'comment'
+        if (parsed.input.controlMode) input.controlMode = parsed.input.controlMode
         // Store issueNumber from comment to merge after --issue-number is processed
         if (parsed.input.issueNumber) {
           input.issueNumber = parsed.input.issueNumber
@@ -577,8 +622,22 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
     // When task-id is the subcommand, we need to track what was "rest" for options parsing
     // The reconstructed taskId now contains both the ID and options, so use it as original
   } else if (subCmd) {
-    // Validate subcommand
-    if (isValidMode(subCmd)) {
+    // Handle approve/reject specially - these are for gate approval, not mode selection
+    const lowerSubCmd = subCmd.toLowerCase()
+    if (
+      lowerSubCmd === 'approve' ||
+      lowerSubCmd === 'reject' ||
+      lowerSubCmd === 'yes' ||
+      lowerSubCmd === 'no' ||
+      lowerSubCmd === 'go' ||
+      lowerSubCmd === 'proceed'
+    ) {
+      // Keep existing mode - gate approval logic will detect these keywords
+      // Don't change mode, just pass through. The gate check will handle approval detection.
+      // If no mode is set yet, default to full for resuming gated tasks
+      if (!mode) mode = 'full'
+    } else if (isValidMode(subCmd)) {
+      // Validate subcommand
       mode = subCmd as CodyInput['mode']
     } else {
       // Unrecognized subcommand: treat as rerun with implicit feedback
@@ -631,12 +690,22 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
   let dryRun = false
   let feedback: string | undefined
   let fromStage: string | undefined
+  let controlMode: CodyInput['controlMode'] = undefined
 
   let i = 0
   while (i < options.length) {
     const opt = options[i]
     if (opt === '--dry-run') {
       dryRun = true
+      i++
+    } else if (opt === '--auto') {
+      controlMode = 'auto'
+      i++
+    } else if (opt === '--gate') {
+      controlMode = 'risk-gated'
+      i++
+    } else if (opt === '--hard-stop') {
+      controlMode = 'hard-stop'
       i++
     } else if (opt === '--feedback' && options[i + 1]) {
       // Capture all remaining words until the next --flag as feedback
@@ -678,6 +747,7 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
       fromStage,
       issueNumber,
       triggerType: 'comment',
+      controlMode,
     },
   }
 }
@@ -746,6 +816,17 @@ export function formatStatusComment(
   } else if (status.state === 'completed') {
     lines.push(`✅ Cody completed for \`${input.taskId}\`!`)
     lines.push(`Mode: ${input.mode}`)
+
+    // Add per-stage timing for completed pipeline
+    const completedStages = Object.entries(status.stages)
+    if (completedStages.length > 0) {
+      lines.push('')
+      for (const [stage, stageStatus] of completedStages) {
+        const icon = stageStatus.state === 'completed' ? '✅' : '❌'
+        const elapsed = stageStatus.elapsed ? ` (${formatDuration(stageStatus.elapsed)})` : ''
+        lines.push(`  ${icon} ${stage}${elapsed}`)
+      }
+    }
   } else if (status.state === 'failed') {
     lines.push(`❌ Cody failed for \`${input.taskId}\``)
   } else if (status.state === 'timeout') {

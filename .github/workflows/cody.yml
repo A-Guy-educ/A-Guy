@@ -120,7 +120,7 @@ jobs:
     needs: parse
     if: needs.parse.outputs.valid == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     permissions:
       id-token: write # OpenCode GitHub App OIDC
       contents: write # Branch/commit operations
@@ -154,10 +154,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # OpenCode CLI setup via npm (more reliable than curl from opencode.ai)
-      - name: Install opencode
-        run: npm i -g opencode-ai@latest
-
       # Configure git identity for commits in CI
       - name: Configure git identity
         run: |
@@ -177,9 +173,6 @@ jobs:
           GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
-          # OpenCode model configuration
-          OPENCODE_MODEL: minimax-coding-plan/MiniMax-M2.5
 
           # Parsed inputs from parse job
           TASK_ID: ${{ needs.parse.outputs.task_id }}

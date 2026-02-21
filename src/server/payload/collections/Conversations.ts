@@ -37,7 +37,7 @@ const isOwner: Access = ({ req, id }) => {
     if (verifiedGuestSessionId) {
       return {
         or: [{ user: { equals: user.id } }, { guestSession: { equals: verifiedGuestSessionId } }],
-      } as any
+      } as unknown as ReturnType<Access>
     }
   }
 
@@ -83,7 +83,7 @@ export const Conversations: CollectionConfig = {
     {
       name: 'guestSession',
       type: 'relationship',
-      relationTo: 'guest-sessions' as any,
+      relationTo: 'guest-sessions',
       required: false,
       index: true,
       admin: {

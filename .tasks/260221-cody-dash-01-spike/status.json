@@ -1,0 +1,51 @@
+{
+  "taskId": "260221-cody-dash-01-spike",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-21T10:53:37.760Z",
+  "updatedAt": "2026-02-21T10:55:14.946Z",
+  "state": "running",
+  "currentStage": "build",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "outputFile": "task.json",
+      "completedAt": "2026-02-21T10:53:37.765Z"
+    },
+    "spec": {
+      "state": "completed",
+      "retries": 0,
+      "outputFile": "spec.md",
+      "completedAt": "2026-02-21T10:53:37.765Z"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "outputFile": "gap.md",
+      "completedAt": "2026-02-21T10:53:37.765Z"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 1,
+      "startedAt": "2026-02-21T10:53:38.099Z",
+      "outputFile": "plan.md",
+      "completedAt": "2026-02-21T10:54:45.463Z",
+      "elapsed": 67364
+    },
+    "plan-review": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-21T10:54:45.925Z",
+      "outputFile": "plan-review.md",
+      "completedAt": "2026-02-21T10:55:14.945Z",
+      "elapsed": 29020
+    },
+    "build": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-21T10:55:14.946Z"
+    }
+  },
+  "triggeredBy": "dispatch"
+}

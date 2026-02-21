@@ -1,26 +1,35 @@
 import { ENV, HEARTBEAT_INTERVAL_MS, LOCK_TIMEOUT_MS } from '@/server/config/constants'
 import config from '@payload-config'
-import { ObjectId } from 'mongodb'
+import { ObjectId, type Collection, type Document } from 'mongodb'
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
+import { getPayload, type Payload } from 'payload'
 // v2.1 Fix 7: Import shared pure helpers for testability
 import {
   atomicClaimJobQuery,
   atomicClaimJobUpdate,
 } from '@/server/services/exercise-conversion/helpers'
 
-function getJobCollection(payload: any) {
+interface JobDocument extends Document {
+  _id: ObjectId
+  task?: string
+  status?: string
+  processing?: boolean
+  hasError?: boolean
+  lockExpiresAt?: Date
+  completedAt?: Date
+  startedAt?: Date
+}
+
+function getJobCollection(payload: Payload): Collection<JobDocument> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = payload.db as any
   const coll = db.collections?.jobs || db.collection?.('jobs')
   if (!coll) throw new Error(`Cannot access Jobs collection`)
-  return {
-    findOneAndUpdate: coll.findOneAndUpdate.bind(coll),
-    updateOne: coll.updateOne.bind(coll),
-  }
+  return coll as Collection<JobDocument>
 }
 
 // v2.1 Fix 7: Use shared pure helpers for query/update
-async function atomicClaimJob(coll: any): Promise<any> {
+async function atomicClaimJob(coll: Collection<JobDocument>): Promise<JobDocument | null> {
   const now = new Date()
 
   const result = await coll.findOneAndUpdate(
@@ -32,7 +41,7 @@ async function atomicClaimJob(coll: any): Promise<any> {
   return result?.value || null
 }
 
-function heartbeatLoop(coll: any, mongoId: ObjectId): () => void {
+function heartbeatLoop(coll: Collection<JobDocument>, mongoId: ObjectId): () => void {
   const intervalId = setInterval(async () => {
     try {
       const now = new Date()

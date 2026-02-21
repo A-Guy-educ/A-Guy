@@ -54,21 +54,48 @@ export function runVerifyStage(
 ): VerifyResult {
   console.log('\n🔍 Running verification (scripted)...\n')
 
-  // Use provided timeout or default, distributed across gates
-  const gateTimeout = timeout ?? DEFAULT_GATE_TIMEOUT
+  // Aggregate timeout - total time allowed for all gates combined
+  const startTime = Date.now()
+  const aggregateTimeout = timeout ?? Infinity
 
-  const gates: GateResult[] = [
-    runGate('TypeScript', 'pnpm -s tsc --noEmit', cwd, gateTimeout),
-    runGate('Lint', 'pnpm -s lint', cwd, gateTimeout),
-    runGate('Format', 'pnpm -s format:check', cwd, gateTimeout),
-    runGate('Unit Tests', 'pnpm -s test:unit', cwd, gateTimeout),
+  const gateDefinitions = [
+    { name: 'TypeScript', command: 'pnpm -s tsc --noEmit' },
+    { name: 'Lint', command: 'pnpm -s lint' },
+    { name: 'Format', command: 'pnpm -s format:check' },
+    { name: 'Unit Tests', command: 'pnpm -s test:unit' },
+    // Integration tests run in CI after PR is created
+    // Adding them here would require MongoDB service in verify stage
   ]
+
+  const gates: GateResult[] = []
+  for (const gateDef of gateDefinitions) {
+    const elapsed = Date.now() - startTime
+    const remaining = aggregateTimeout - elapsed
+
+    if (remaining <= 0) {
+      // Aggregate timeout exceeded - skip remaining gates
+      gates.push({
+        name: gateDef.name,
+        passed: false,
+        output: 'SKIPPED: aggregate timeout exceeded',
+      })
+      continue
+    }
+
+    // Use smaller of remaining aggregate time or per-gate default
+    const gateTimeout = Math.min(remaining, DEFAULT_GATE_TIMEOUT)
+    gates.push(runGate(gateDef.name, gateDef.command, cwd, gateTimeout))
+  }
 
   const allPassed = gates.every((g) => g.passed)
 
   const lines: string[] = ['# Verification Report\n']
   for (const gate of gates) {
-    const icon = gate.passed ? 'PASS ✅' : 'FAIL ❌'
+    const icon = gate.passed
+      ? 'PASS ✅'
+      : gate.output.includes('SKIPPED')
+        ? 'SKIPPED ❌'
+        : 'FAIL ❌'
     lines.push(`## ${gate.name}: ${icon}\n`)
     if (!gate.passed) {
       lines.push('```')
@@ -118,7 +145,8 @@ function getExistingPr(branch: string, cwd: string): string | null {
 
 function getCommitSummary(defaultBranch: string, cwd: string): string {
   try {
-    return execSync(`git log --oneline ${defaultBranch}..HEAD`, {
+    // Use execFileSync to prevent shell injection via branch names
+    return execFileSync('git', ['log', '--oneline', `${defaultBranch}..HEAD`], {
       cwd,
       encoding: 'utf-8',
     }).trim()

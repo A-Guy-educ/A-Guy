@@ -69,11 +69,21 @@ describe('ensureFeatureBranch', () => {
     savedGithubActions = process.env.GITHUB_ACTIONS
     delete process.env.GITHUB_ACTIONS
 
-    // Default: current branch is 'dev', remote branch does NOT exist
+    // Default: current branch is 'dev', local branch does NOT exist, remote might exist
     mockExecSync.mockImplementation((cmd: string) => {
       if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
         return 'dev\n'
       }
+      // Check for local branch (no origin/ prefix) - by default, doesn't exist (throw)
+      if (
+        typeof cmd === 'string' &&
+        cmd.includes('git rev-parse --verify ') &&
+        !cmd.includes('origin/')
+      ) {
+        throw new Error('fatal: Needed a single revision')
+      }
+      // Check for remote branch - by default, doesn't exist (throw)
+      // Tests that need remote to exist will override this
       if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify origin/')) {
         throw new Error('fatal: Needed a single revision')
       }
@@ -144,9 +154,12 @@ describe('ensureFeatureBranch', () => {
         if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
           return 'dev\n'
         }
-        // rev-parse succeeds → remote branch exists
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
-          return 'abc123\n'
+        // Local branch check: throw (doesn't exist), remote branch check: return (exists)
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+          if (cmd.includes('origin/')) {
+            return 'abc123\n' // Remote exists
+          }
+          throw new Error('fatal: Needed a single revision') // Local doesn't exist
         }
         if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
           return '' // Clean working tree
@@ -647,100 +660,351 @@ describe('ensureFeatureBranch', () => {
   })
 
   // --------------------------------------------------------------------------
-  // Execution order
+  // Behavior tests (resilient to internal refactoring)
   // --------------------------------------------------------------------------
 
-  describe('execution order', () => {
-    it('should call git commands in correct order for new branch creation', () => {
-      const callOrder: string[] = []
-
+  describe('behavior', () => {
+    it('should create new branch when neither local nor remote exists', () => {
       mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string') {
-          callOrder.push(cmd)
-        }
         if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
           return 'dev\n'
         }
+        // Neither local nor remote exists
         if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
           throw new Error('not found')
         }
         return Buffer.from('')
       })
 
-      ensureFeatureBranch('260218-ordered', 'implement_feature')
+      ensureFeatureBranch('260218-new-behavior', 'implement_feature')
 
-      expect(callOrder).toEqual([
-        'git branch --show-current',
-        'git fetch origin',
-        'git rev-parse --verify origin/feat/260218-ordered',
-        'git symbolic-ref refs/remotes/origin/HEAD',
-        'git remote show origin',
-        'git checkout dev',
-        'git pull origin dev',
-        'git checkout -b feat/260218-ordered',
-      ])
+      const calls = mockExecSync.mock.calls.map((c) => c[0])
+
+      // Should create new branch
+      expect(calls).toContain('git checkout -b feat/260218-new-behavior')
+      // Should not try to checkout existing branch
+      expect(calls).not.toContain('git checkout feat/260218-new-behavior')
     })
 
-    it('should call git commands in correct order for existing remote branch (local mode)', () => {
-      const callOrder: string[] = []
-
+    it('should checkout existing remote branch when it exists', () => {
       mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string') {
-          callOrder.push(cmd)
-        }
         if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
-          return 'abc123\n'
+        // Local doesn't exist, remote does
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+          if (cmd.includes('origin/')) {
+            return 'abc123\n' // Remote exists
+          }
+          throw new Error('not found') // Local doesn't exist
+        }
+        return Buffer.from('')
+      })
+
+      ensureFeatureBranch('260218-remote-exists', 'implement_feature')
+
+      const calls = mockExecSync.mock.calls.map((c) => c[0])
+
+      // Should checkout existing branch (not create new)
+      expect(calls).toContain('git checkout feat/260218-remote-exists')
+      expect(calls).not.toContain('git checkout -b')
+      // Should pull from remote
+      expect(calls).toContain('git pull origin feat/260218-remote-exists')
+    })
+
+    it('should checkout existing local branch when only local exists', () => {
+      mockExecSync.mockImplementation((cmd: string) => {
+        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+          return 'dev\n'
+        }
+        // Remote doesn't exist, local does
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+          if (cmd.includes('origin/')) {
+            throw new Error('not found') // Remote doesn't exist
+          }
+          return 'abc123\n' // Local exists
+        }
+        return Buffer.from('')
+      })
+
+      ensureFeatureBranch('260218-local-only', 'implement_feature')
+
+      const calls = mockExecSync.mock.calls.map((c) => c[0])
+
+      // Should checkout existing local branch (not create new)
+      expect(calls).toContain('git checkout feat/260218-local-only')
+      expect(calls).not.toContain('git checkout -b')
+    })
+
+    it('should stash and restore dirty working tree when checking out local branch', () => {
+      mockExecSync.mockImplementation((cmd: string) => {
+        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+          return 'dev\n'
+        }
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+          if (cmd.includes('origin/')) {
+            throw new Error('not found') // Remote doesn't exist
+          }
+          return 'abc123\n' // Local exists
+        }
+        // Dirty working tree triggers stash
+        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+          return ' M status.json\n'
+        }
+        // Stash exists after stash
+        if (typeof cmd === 'string' && cmd.includes('git stash list')) {
+          return 'stash@{0}: ...\n'
+        }
+        return Buffer.from('')
+      })
+
+      ensureFeatureBranch('260218-dirty-local', 'implement_feature')
+
+      const calls = mockExecSync.mock.calls.map((c) => c[0])
+
+      // Should stash before checkout
+      expect(calls).toContain('git stash --include-untracked')
+      // Should restore stash after checkout
+      expect(calls).toContain('git stash pop')
+    })
+
+    it('should not stash in CI mode', () => {
+      process.env.GITHUB_ACTIONS = 'true'
+      mockExecSync.mockImplementation((cmd: string) => {
+        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+          return 'dev\n'
+        }
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+          if (cmd.includes('origin/')) {
+            throw new Error('not found') // Remote doesn't exist
+          }
+          return 'abc123\n' // Local exists
         }
         if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
-          return '' // Clean working tree
+          return ' M status.json\n'
         }
         return Buffer.from('')
       })
 
-      ensureFeatureBranch('260218-existing', 'fix_bug')
+      ensureFeatureBranch('260218-ci-local', 'implement_feature')
 
-      expect(callOrder).toEqual([
-        'git branch --show-current',
-        'git fetch origin',
-        'git rev-parse --verify origin/fix/260218-existing',
-        'git status --porcelain',
-        'git checkout fix/260218-existing',
-        'git pull origin fix/260218-existing',
-        'git stash list',
-      ])
+      const calls = mockExecSync.mock.calls.map((c) => c[0])
+
+      // Should NOT stash in CI mode
+      expect(calls).not.toContain('git stash --include-untracked')
+      expect(calls).not.toContain('git stash pop')
+
+      // Clean instead
+      expect(calls).toContain('git checkout -- .')
+      expect(calls).toContain('git clean -fd')
     })
+  })
 
-    it('should call git commands in correct order for existing remote branch (CI mode)', () => {
-      process.env.GITHUB_ACTIONS = 'true'
-      const callOrder: string[] = []
+  // --------------------------------------------------------------------------
+  // Local branch exists (BUG-17: resume from previous failed run)
+  // --------------------------------------------------------------------------
 
+  describe('local branch exists (resume from previous run)', () => {
+    it('should checkout existing local branch and not create new one', () => {
+      let callCount = 0
       mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string') {
-          callOrder.push(cmd)
-        }
+        callCount++
+        // Current branch is dev
         if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
+        // Local branch exists (no origin/ prefix)
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify feat/')) {
           return 'abc123\n'
+        }
+        // Remote branch does NOT exist (origin/feat/ throws)
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify origin/feat/')) {
+          throw new Error('fatal: needed a single revision')
+        }
+        // Working tree is clean
+        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+          return ''
         }
         return Buffer.from('')
       })
 
-      ensureFeatureBranch('260218-existing', 'fix_bug')
+      ensureFeatureBranch('260218-local-resume', 'implement_feature')
 
-      expect(callOrder).toEqual([
-        'git branch --show-current',
-        'git fetch origin',
-        'git rev-parse --verify origin/fix/260218-existing',
-        'git checkout -- .',
-        'git clean -fd',
-        'git checkout fix/260218-existing',
-        'git pull origin fix/260218-existing',
-      ])
+      const calls = mockExecSync.mock.calls.map((c) => c[0])
+
+      // Should checkout existing local branch, NOT create new one
+      expect(calls).toContain('git checkout feat/260218-local-resume')
+      expect(calls).not.toContain('git checkout -b feat/260218-local-resume')
+    })
+
+    it('should stash dirty working tree before switching to local branch', () => {
+      mockExecSync.mockImplementation((cmd: string) => {
+        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+          return 'dev\n'
+        }
+        // Local branch exists
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify feat/')) {
+          return 'abc123\n'
+        }
+        // Remote branch does NOT exist
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify origin/feat/')) {
+          throw new Error('fatal: needed a single revision')
+        }
+        // Working tree has changes - return non-empty to trigger stash
+        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+          return ' M .tasks/260218-local-resume/status.json\n'
+        }
+        // Stash list has entries after stash (simulate stash was created)
+        if (typeof cmd === 'string' && cmd.includes('git stash list')) {
+          return 'stash@{0}: ...\n'
+        }
+        return Buffer.from('')
+      })
+
+      ensureFeatureBranch('260218-local-resume', 'implement_feature')
+
+      const calls = mockExecSync.mock.calls.map((c) => c[0])
+
+      // Should stash before checkout
+      const stashIdx = calls.indexOf('git stash --include-untracked')
+      const checkoutIdx = calls.indexOf('git checkout feat/260218-local-resume')
+      expect(stashIdx).toBeLessThan(checkoutIdx)
+
+      // Should pop stash after checkout (when stash list was non-empty)
+      const stashPopIdx = calls.indexOf('git stash pop')
+      expect(stashPopIdx).toBeGreaterThan(checkoutIdx)
+    })
+
+    it('should try to push local branch to remote', () => {
+      mockExecSync.mockImplementation((cmd: string) => {
+        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+          return 'dev\n'
+        }
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify feat/')) {
+          return 'abc123\n'
+        }
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify origin/feat/')) {
+          throw new Error('fatal: needed a single revision')
+        }
+        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+          return ''
+        }
+        return Buffer.from('')
+      })
+
+      ensureFeatureBranch('260218-push-test', 'implement_feature')
+
+      const calls = mockExecSync.mock.calls.map((c) => c[0])
+
+      expect(calls).toContain('git push origin feat/260218-push-test')
+    })
+  })
+
+  // --------------------------------------------------------------------------
+  // Merge default branch into feature branch (re-run with updated dev)
+  // --------------------------------------------------------------------------
+
+  describe('merge default branch after pulling remote feature branch', () => {
+    it('should merge default branch after pulling remote feature branch', () => {
+      mockExecSync.mockImplementation((cmd: string) => {
+        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+          return 'dev\n'
+        }
+        // Remote branch exists
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+          if (cmd.includes('origin/')) {
+            return 'abc123\n'
+          }
+          throw new Error('not found')
+        }
+        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+          return ''
+        }
+        // git symbolic-ref for getDefaultBranch - used by the merge step
+        if (typeof cmd === 'string' && cmd.includes('git symbolic-ref')) {
+          return 'refs/remotes/origin/dev\n'
+        }
+        return Buffer.from('')
+      })
+
+      ensureFeatureBranch('260218-merge-test', 'implement_feature')
+
+      const calls = mockExecSync.mock.calls.map((c) => c[0])
+
+      // Should checkout and pull feature branch first
+      expect(calls).toContain('git checkout feat/260218-merge-test')
+      expect(calls).toContain('git pull origin feat/260218-merge-test')
+      // Should merge default branch after pulling feature branch
+      expect(calls).toContain('git merge origin/dev --no-edit')
+    })
+
+    it('should merge default branch after pulling local-only feature branch', () => {
+      mockExecSync.mockImplementation((cmd: string) => {
+        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+          return 'dev\n'
+        }
+        // Remote doesn't exist, local does
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+          if (cmd.includes('origin/')) {
+            throw new Error('not found')
+          }
+          return 'abc123\n' // Local exists
+        }
+        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+          return ''
+        }
+        if (typeof cmd === 'string' && cmd.includes('git symbolic-ref')) {
+          return 'refs/remotes/origin/dev\n'
+        }
+        return Buffer.from('')
+      })
+
+      ensureFeatureBranch('260218-local-merge-test', 'implement_feature')
+
+      const calls = mockExecSync.mock.calls.map((c) => c[0])
+
+      // Should checkout local branch
+      expect(calls).toContain('git checkout feat/260218-local-merge-test')
+      // Should merge default branch
+      expect(calls).toContain('git merge origin/dev --no-edit')
+    })
+
+    it('should abort merge and throw error on conflict', () => {
+      let mergeAttempted = false
+      mockExecSync.mockImplementation((cmd: string) => {
+        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+          return 'dev\n'
+        }
+        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+          if (cmd.includes('origin/')) {
+            return 'abc123\n'
+          }
+          throw new Error('not found')
+        }
+        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+          return ''
+        }
+        if (typeof cmd === 'string' && cmd.includes('git symbolic-ref')) {
+          return 'refs/remotes/origin/dev\n'
+        }
+        // Simulate merge conflict
+        if (typeof cmd === 'string' && cmd.includes('git merge origin/')) {
+          mergeAttempted = true
+          throw new Error('Merge failed: Conflict in file.txt')
+        }
+        return Buffer.from('')
+      })
+
+      expect(() => {
+        ensureFeatureBranch('260218-conflict-test', 'implement_feature')
+      }).toThrow()
+
+      const calls = mockExecSync.mock.calls.map((c) => c[0])
+
+      // Should have attempted merge
+      expect(mergeAttempted).toBe(true)
+      // Should abort merge after conflict
+      expect(calls).toContain('git merge --abort')
     })
   })
 })
@@ -853,10 +1117,12 @@ describe('getDefaultBranch', () => {
 describe('commitPipelineFiles', () => {
   beforeEach(() => {
     vi.mocked(childProcess.execSync).mockClear()
+    vi.mocked(childProcess.execFileSync).mockClear()
   })
 
   it('should use task-only staging by default', () => {
     vi.mocked(childProcess.execSync).mockReturnValue('')
+    vi.mocked(childProcess.execFileSync).mockReturnValue(Buffer.from(''))
 
     commitPipelineFiles({
       taskDir: '.tasks/260218-test',
@@ -864,15 +1130,17 @@ describe('commitPipelineFiles', () => {
       message: 'test commit',
     })
 
-    // Should call git add with taskDir
-    expect(childProcess.execSync).toHaveBeenCalledWith(
-      'git add .tasks/260218-test',
+    // Should call git add with taskDir via execFileSync (shell injection fix)
+    expect(childProcess.execFileSync).toHaveBeenCalledWith(
+      'git',
+      ['add', '--', '.tasks/260218-test'],
       expect.objectContaining({ stdio: 'inherit' }),
     )
   })
 
   it('should use tracked+task staging when specified', () => {
     vi.mocked(childProcess.execSync).mockReturnValue('')
+    vi.mocked(childProcess.execFileSync).mockReturnValue(Buffer.from(''))
 
     commitPipelineFiles({
       taskDir: '.tasks/260218-test',
@@ -882,9 +1150,12 @@ describe('commitPipelineFiles', () => {
     })
 
     // Should call git add -u then git add taskDir
-    const calls = vi.mocked(childProcess.execSync).mock.calls
-    expect(calls.some((c) => c[0] === 'git add -u')).toBe(true)
-    expect(calls.some((c) => String(c[0]).includes('.tasks/260218-test'))).toBe(true)
+    const syncCalls = vi.mocked(childProcess.execSync).mock.calls
+    expect(syncCalls.some((c) => c[0] === 'git add -u')).toBe(true)
+
+    // Task dir should be added via execFileSync
+    const fileSyncCalls = vi.mocked(childProcess.execFileSync).mock.calls
+    expect(fileSyncCalls.some((c) => c[0] === 'git' && c[1]?.[0] === 'add')).toBe(true)
   })
 
   it('should handle nothing to commit gracefully', () => {
@@ -941,5 +1212,48 @@ describe('commitPipelineFiles', () => {
       'git push -u origin HEAD',
       expect.objectContaining({ stdio: 'inherit' }),
     )
+  })
+})
+
+describe('commitAndPush staging behavior', () => {
+  // Note: commitAndPush is tested here instead of the main test suite
+  // because it requires more complex setup (file system mocking)
+
+  it('should export SAFE_STAGE_DIRS constant', async () => {
+    const { SAFE_STAGE_DIRS } = await import('../../../../scripts/cody/git-utils')
+    expect(SAFE_STAGE_DIRS).toContain('src/')
+    expect(SAFE_STAGE_DIRS).toContain('tests/')
+    expect(SAFE_STAGE_DIRS).toContain('.tasks/')
+  })
+})
+
+// Phase 2.2: Shell injection fix verification
+describe('commitPipelineFiles shell safety', () => {
+  it('should use execFileSync for git add to prevent path injection', async () => {
+    const { commitPipelineFiles } = await import('../../../../scripts/cody/git-utils')
+
+    vi.mocked(childProcess.execSync).mockReturnValue('')
+    vi.mocked(childProcess.execFileSync).mockImplementation(
+      (file: string, args?: readonly string[]) => {
+        // Track calls for verification
+        if (file === 'git' && args?.[0] === 'add') {
+          // This is the call we want to verify
+        }
+        return Buffer.from('')
+      },
+    )
+
+    commitPipelineFiles({
+      taskDir: '/path with spaces/.tasks/test',
+      taskId: 'test',
+      message: 'test commit',
+      stagingStrategy: 'task-only',
+    })
+
+    // Verify execFileSync was used for git add (not execSync with string interpolation)
+    const gitAddCalls = vi
+      .mocked(childProcess.execFileSync)
+      .mock.calls.filter((call) => call[0] === 'git' && call[1]?.[0] === 'add')
+    expect(gitAddCalls.length).toBeGreaterThan(0)
   })
 })

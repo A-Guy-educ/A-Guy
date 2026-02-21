@@ -6,6 +6,7 @@ import { hashTextSha256 } from '@/server/utils/hash'
 import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
+import type { Lesson } from '@/payload-types'
 
 type ErrorCode =
   | 'UNAUTHORIZED'
@@ -71,16 +72,16 @@ export async function POST(request: NextRequest) {
       return errorResponse('LESSON_NOT_FOUND', 'Lesson not found', 404)
     }
 
-    const tenant = (lesson as any).tenant
-    const lessonTenantId = tenant?.id || tenant
+    const lessonTyped = lesson as unknown as Lesson
+    const tenant = lessonTyped.tenant
+    const lessonTenantId = typeof tenant === 'object' ? tenant?.id : tenant
     if (!lessonTenantId) {
       return errorResponse('VALIDATION_ERROR', 'Lesson has no tenant', 400)
     }
 
     // Validate media belongs to lesson
-    const mediaIds = ((lesson as any).contentFiles || []).map((m: any) =>
-      typeof m === 'string' ? m : m.id,
-    )
+    const contentFiles = lessonTyped.contentFiles || []
+    const mediaIds = contentFiles.map((m): string => (typeof m === 'string' ? m : m.id))
     if (!mediaIds.includes(mediaId)) {
       return errorResponse('MEDIA_NOT_ATTACHED', 'Media is not attached to this lesson', 400)
     }
@@ -104,11 +105,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate extractor prompt (published, usage, tenant)
-    validatePromptForUsageAndTenant(
-      extractorPrompt as unknown as { status: string; usage: string; tenant: any },
-      'extractor',
-      lessonTenantId,
-    )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validatePromptForUsageAndTenant(extractorPrompt as any, 'extractor', lessonTenantId)
 
     // Fetch verifier prompt once
     const verifierPrompt = await payload.findByID({
@@ -128,11 +126,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate verifier prompt (published, usage, tenant)
-    validatePromptForUsageAndTenant(
-      verifierPrompt as unknown as { status: string; usage: string; tenant: any },
-      'verifier',
-      lessonTenantId,
-    )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validatePromptForUsageAndTenant(verifierPrompt as any, 'verifier', lessonTenantId)
 
     // ========== Prompt Size Validation (after validation passes) ==========
     // Use byteLength for accurate size check (UTF-8 encoding)
@@ -157,7 +152,7 @@ export async function POST(request: NextRequest) {
 
     // ========== Queue the Job ==========
     const job = await payload.jobs.queue({
-      task: 'pdf_to_exercises',
+      task: 'pdf_to_exercises' as const,
       input: {
         ctx: { lessonId, sourceDocId: mediaId, tenantId: lessonTenantId },
         maxSegmentPages: 2,
@@ -181,7 +176,7 @@ export async function POST(request: NextRequest) {
     console.error('[Queue] Error:', error)
     if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
       const typedError = error as { code: string; message: string }
-      return errorResponse(typedError.code as any, typedError.message, 400)
+      return errorResponse(typedError.code as ErrorCode, typedError.message, 400)
     }
     return errorResponse('INTERNAL_ERROR', 'Internal server error', 500)
   }

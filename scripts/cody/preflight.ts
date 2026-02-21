@@ -13,7 +13,7 @@ export function preflight(): void {
     {
       name: 'ocode CLI (via pnpm)',
       test: () => execSync('pnpm ocode --version', { stdio: 'pipe' }),
-      errorMessage: 'Install: curl -fsSL https://opencode.ai/install | bash',
+      errorMessage: 'Run: pnpm install',
     },
     {
       name: 'Git repository',

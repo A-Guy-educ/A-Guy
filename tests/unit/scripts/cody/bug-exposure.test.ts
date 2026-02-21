@@ -145,78 +145,6 @@ describe('BUG-5: commitPipelineFiles must not use shell-interpolated commit mess
 })
 
 // ============================================================================
-// BUG-6: OPENCODE_MODEL env overrides ALL stage-specific models
-// ============================================================================
-
-describe('BUG-6: resolveModel should prefer stage-specific models over env OPENCODE_MODEL', () => {
-  beforeEach(() => {
-    vi.resetModules()
-  })
-
-  afterEach(() => {
-    vi.unstubAllEnvs()
-    vi.restoreAllMocks()
-  })
-
-  it('should use FAST_MODEL for plan-review even when OPENCODE_MODEL is set', async () => {
-    vi.stubEnv('OPENCODE_MODEL', 'minimax-coding-plan/MiniMax-M2.5')
-
-    const { resolveModel, FAST_MODEL } = await import('../../../../scripts/cody/agent-runner')
-
-    // EXPOSES BUG: resolveModel returns OPENCODE_MODEL instead of FAST_MODEL
-    // because env check comes before stage-specific check
-    const model = resolveModel('plan-review')
-    expect(model).toBe(FAST_MODEL)
-  })
-
-  it('should use FAST_MODEL for auditor even when OPENCODE_MODEL is set', async () => {
-    vi.stubEnv('OPENCODE_MODEL', 'minimax-coding-plan/MiniMax-M2.5')
-
-    const { resolveModel, FAST_MODEL } = await import('../../../../scripts/cody/agent-runner')
-
-    const model = resolveModel('auditor')
-    expect(model).toBe(FAST_MODEL)
-  })
-
-  it('should use FAST_MODEL for autofix even when OPENCODE_MODEL is set', async () => {
-    vi.stubEnv('OPENCODE_MODEL', 'minimax-coding-plan/MiniMax-M2.5')
-
-    const { resolveModel, FAST_MODEL } = await import('../../../../scripts/cody/agent-runner')
-
-    const model = resolveModel('autofix')
-    expect(model).toBe(FAST_MODEL)
-  })
-
-  it('should use FAST_MODEL for apply-audit even when OPENCODE_MODEL is set', async () => {
-    vi.stubEnv('OPENCODE_MODEL', 'minimax-coding-plan/MiniMax-M2.5')
-
-    const { resolveModel, FAST_MODEL } = await import('../../../../scripts/cody/agent-runner')
-
-    const model = resolveModel('apply-audit')
-    expect(model).toBe(FAST_MODEL)
-  })
-
-  it('should use OPENCODE_MODEL for non-overridden stages like build', async () => {
-    vi.stubEnv('OPENCODE_MODEL', 'minimax-coding-plan/MiniMax-M2.5')
-
-    const { resolveModel } = await import('../../../../scripts/cody/agent-runner')
-
-    // For stages WITHOUT a STAGE_MODELS entry, OPENCODE_MODEL should apply
-    const model = resolveModel('build')
-    expect(model).toBe('minimax-coding-plan/MiniMax-M2.5')
-  })
-
-  it('should always prefer explicit model parameter over everything', async () => {
-    vi.stubEnv('OPENCODE_MODEL', 'minimax-coding-plan/MiniMax-M2.5')
-
-    const { resolveModel } = await import('../../../../scripts/cody/agent-runner')
-
-    const model = resolveModel('plan-review', 'my-custom/model')
-    expect(model).toBe('my-custom/model')
-  })
-})
-
-// ============================================================================
 // BUG-8: checkout-task-branch.sh must fetch before checking remote branches
 // ============================================================================
 
@@ -235,6 +163,28 @@ describe('BUG-8: checkout-task-branch.sh must fetch before rev-parse', () => {
     expect(fetchPos).toBeGreaterThan(-1) // fetch must exist
     expect(revParsePos).toBeGreaterThan(-1) // rev-parse must exist
     expect(fetchPos).toBeLessThan(revParsePos) // fetch must come first
+  })
+})
+
+// ============================================================================
+// BUG-NEW: checkout-task-branch.sh must merge default branch after pulling feature branch
+// ============================================================================
+
+describe('BUG-NEW: checkout-task-branch.sh must merge default branch after pull', () => {
+  it('should run git merge after git pull in checkout-task-branch.sh', () => {
+    const script = fs.readFileSync(
+      path.join(process.cwd(), 'scripts/cody/checkout-task-branch.sh'),
+      'utf-8',
+    )
+
+    // Find positions of key commands
+    const pullPos = script.indexOf('git pull origin')
+    const mergePos = script.indexOf('git merge origin/')
+
+    // After pulling the feature branch, we must merge the default branch
+    expect(pullPos).toBeGreaterThan(-1) // git pull must exist
+    expect(mergePos).toBeGreaterThan(-1) // git merge must exist
+    expect(mergePos).toBeGreaterThan(pullPos) // merge must come after pull
   })
 })
 
@@ -334,9 +284,9 @@ describe('BUG-19: STAGE_TIMEOUTS values must be consistent', () => {
     expect(STAGE_TIMEOUTS['architect']).toBe(30 * 60_000)
   })
 
-  it('build timeout should be 30 minutes', async () => {
+  it('build timeout should be 45 minutes', async () => {
     const { STAGE_TIMEOUTS } = await import('../../../../scripts/cody/agent-runner')
-    expect(STAGE_TIMEOUTS['build']).toBe(30 * 60_000)
+    expect(STAGE_TIMEOUTS['build']).toBe(45 * 60_000)
   })
 
   it('plan-review timeout should be 10 minutes', async () => {

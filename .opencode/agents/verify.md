@@ -9,6 +9,8 @@ tools:
   edit: false
 ---
 
+# DEPRECATED — this stage is now scripted
+
 # VERIFY STAGE (Scripted)
 
 **NOTE:** This stage runs as a script (`runVerifyStage()` in `scripted-stages.ts`), not as an LLM agent.

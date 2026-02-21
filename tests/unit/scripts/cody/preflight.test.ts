@@ -59,7 +59,7 @@ describe('preflight', () => {
     })
 
     expect(() => preflight()).toThrow('Pre-flight checks failed')
-    expect(() => preflight()).toThrow(/Install.*opencode/)
+    expect(() => preflight()).toThrow(/Run: pnpm install/)
   })
 
   it('should throw Error when git repo is missing', () => {
@@ -121,7 +121,7 @@ describe('preflight', () => {
 
     expect(thrownError).toBeDefined()
     expect(thrownError!.message).toContain('Pre-flight checks failed')
-    expect(thrownError!.message).toContain('Install: curl -fsSL https://opencode.ai/install | bash')
+    expect(thrownError!.message).toContain('Run: pnpm install')
     expect(thrownError!.message).toContain('Initialize git: git init')
     expect(thrownError!.message).toContain('Install: npm install -g pnpm')
     expect(thrownError!.message).toContain('Run from project root with package.json')

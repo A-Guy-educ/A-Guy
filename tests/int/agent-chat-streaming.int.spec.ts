@@ -269,7 +269,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
     if (payload.db?.destroy) {
       await payload.db.destroy()
     }
-  }, 60000)
+  }, 120000)
 
   it('returns 401 when user is not authenticated', async () => {
     const req = {

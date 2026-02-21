@@ -112,6 +112,14 @@ export function isPlanReviewFail(reviewContent: string): boolean {
 }
 
 /**
+ * Check if plan-review content contains a verdict line (either PASS or FAIL).
+ * Returns true if either Verdict: PASS or Verdict: FAIL is found.
+ */
+export function hasPlanReviewVerdict(reviewContent: string): boolean {
+  return /Verdict:\s*(PASS|FAIL)/i.test(reviewContent)
+}
+
+/**
  * Validate plan-review file verdict.
  * Returns true if PASS, false if FAIL.
  */
@@ -179,4 +187,28 @@ export function extractVerifySummary(content: string): VerifySummary {
  */
 export function isVerifyFailed(verifyContent: string): boolean {
   return /\bResult:\s*FAIL\b/i.test(verifyContent)
+}
+
+// ============================================================================
+// Gap Report Validation
+// ============================================================================
+
+/**
+ * Validate that gap report contains required sections.
+ * Returns true if valid, false otherwise.
+ */
+export function validateGapReport(gapContent: string): boolean {
+  const trimmed = gapContent.trim()
+
+  // Empty content is invalid
+  if (!trimmed || trimmed.length < 10) {
+    return false
+  }
+
+  // Check for required sections
+  const hasGapsFound = /##\s*Gaps? Found/i.test(gapContent)
+  const hasChangesMade = /##\s*Changes Made/i.test(gapContent)
+  const hasNoGaps = /no gaps identified/i.test(gapContent.toLowerCase())
+
+  return hasGapsFound || hasChangesMade || hasNoGaps
 }

@@ -15,7 +15,7 @@
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import { logger } from '@/infra/utils/logger'
 import { getGuestSessionByToken, getGuestSessionCookie } from '@/server/services/guest-session'
-import type { PayloadRequest } from 'payload'
+import type { PayloadRequest, Where } from 'payload'
 import { z } from 'zod'
 
 const requestSchema = z.object({
@@ -104,7 +104,7 @@ export async function getConversation(req: PayloadRequest & { json?: () => Promi
 
       const result = await req.payload.find({
         collection: 'conversations',
-        where: whereClause as any,
+        where: whereClause as unknown as Where,
         limit: 1,
         sort: '-lastMessageAt',
         depth: 2,

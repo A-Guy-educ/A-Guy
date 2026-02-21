@@ -9,6 +9,8 @@ tools:
   edit: false
 ---
 
+# DEPRECATED — this stage is now scripted
+
 # COMMIT STAGE (Scripted)
 
 **NOTE:** This stage runs as a script (`runCommitStage()` in `scripted-stages.ts`), not as an LLM agent.

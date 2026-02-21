@@ -9,6 +9,8 @@ tools:
   edit: false
 ---
 
+# DEPRECATED — this stage is now scripted
+
 # PR STAGE (Scripted)
 
 **NOTE:** This stage runs as a script (`scripted-stages.ts`), not as an LLM agent.

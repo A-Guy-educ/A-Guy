@@ -21,6 +21,14 @@ import {
   clearGuestSessionCookie,
 } from './guest-session'
 
+/**
+ * Data type for updating a conversation to claim it for a user
+ */
+interface ClaimConversationData {
+  user: string
+  guestSession: null
+}
+
 export async function claimGuestConversations(
   userId: string,
   sessionToken: string,
@@ -57,7 +65,7 @@ export async function claimGuestConversations(
       data: {
         user: userId,
         guestSession: null,
-      } as any,
+      } as ClaimConversationData,
       overrideAccess: true,
     })
     claimed++

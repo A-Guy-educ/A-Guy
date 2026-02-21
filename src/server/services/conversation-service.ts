@@ -122,7 +122,7 @@ export class ConversationService {
         lastMessageAt: new Date(),
         contextPolicyVersion: 'v1',
         // Do NOT set archivedAt - active conversations must NOT have this field
-      } as any,
+      } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       draft: false,
     })
 
@@ -156,7 +156,7 @@ export class ConversationService {
         id: currentConv.id,
         data: {
           archivedAt: new Date(),
-        } as any,
+        } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         overrideAccess: true, // REQUIRED - field access blocks normal mutations
         context: { allowArchive: true }, // REQUIRED - hook protection requires this flag
       })
@@ -184,7 +184,7 @@ export class ConversationService {
         lastMessageAt: new Date(),
         contextPolicyVersion: 'v1',
         // Do NOT set archivedAt - active conversations must NOT have this field
-      } as any,
+      } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       draft: false,
     })
 
@@ -217,7 +217,9 @@ export class ConversationService {
         depth: 0,
       })
       const lessonId =
-        typeof exercise.lesson === 'string' ? exercise.lesson : (exercise.lesson as any)?.id
+        typeof exercise.lesson === 'string'
+          ? exercise.lesson
+          : (exercise.lesson as { id?: string })?.id
       if (lessonId) {
         return {
           relationTo: 'lessons',
@@ -437,7 +439,7 @@ export class ConversationService {
         messages: [],
         lastMessageAt: new Date(),
         contextPolicyVersion: 'v1',
-      } as any,
+      } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       draft: false,
     })
 
@@ -497,7 +499,7 @@ export class ConversationService {
         id: currentConv.id,
         data: {
           archivedAt: new Date(),
-        } as any,
+        } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         overrideAccess: true,
         context: { allowArchive: true },
       })
@@ -517,7 +519,7 @@ export class ConversationService {
         messages: [],
         lastMessageAt: new Date(),
         contextPolicyVersion: 'v1',
-      } as any,
+      } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       draft: false,
     })
 

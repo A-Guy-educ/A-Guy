@@ -38,6 +38,11 @@ function normalizeForHash(exercise: ExerciseInput): string {
   return canonicalStringify({ title, blocks })
 }
 
+/**
+ * Canonical string representation for any input value.
+ * Used for deterministic hashing across different JS runtimes.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function canonicalStringify(obj: any): string {
   if (obj === null) return 'null'
   if (obj === undefined) return 'undefined' // v2.2 Fix: Handle undefined values

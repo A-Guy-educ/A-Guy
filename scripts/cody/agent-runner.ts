@@ -20,8 +20,8 @@ import { createRunner, type RunnerBackend } from './runner-backend'
 /** Check for output file every 3 seconds */
 export const FILE_POLL_INTERVAL = 3_000
 
-/** Wait 2 seconds after file appears to ensure write is complete */
-export const FILE_SETTLE_DELAY = 2_000
+/** Number of consecutive stable size checks before settling (file detection stabilization) */
+export const FILE_STABLE_CHECKS = 2
 
 /** Maximum retry attempts for failed stages */
 export const MAX_RETRIES = 2
@@ -32,42 +32,13 @@ export const DEFAULT_TIMEOUT = 10 * 60_000
 /** Stage-specific timeouts in milliseconds */
 export const STAGE_TIMEOUTS: Record<string, number> = {
   architect: 30 * 60_000,
-  build: 30 * 60_000,
+  build: 45 * 60_000,
+  gap: 15 * 60_000,
   'plan-review': 10 * 60_000,
   verify: 10 * 60_000,
   auditor: 5 * 60_000,
   'apply-audit': 5 * 60_000,
   pr: 5 * 60_000,
-}
-
-/** Default model for all stages */
-export const DEFAULT_MODEL = 'minimax-coding-plan/MiniMax-M2.5'
-
-/** Cheaper/faster model for lightweight stages */
-export const FAST_MODEL = 'google/gemini-2.5-flash'
-
-/**
- * Stage-specific model overrides. Stages not listed here use DEFAULT_MODEL.
- * Lightweight stages (plan-review, auditor, apply-audit, autofix) use the fast model
- * since they do simple edits/formatting, not complex code generation.
- * Note: commit and verify are scripted stages (no LLM).
- */
-export const STAGE_MODELS: Record<string, string> = {
-  'plan-review': FAST_MODEL,
-  autofix: FAST_MODEL,
-  auditor: FAST_MODEL,
-  'apply-audit': FAST_MODEL,
-}
-
-/**
- * Resolve the model for a given stage.
- * Priority: explicit option > stage-specific > env OPENCODE_MODEL > default
- */
-export function resolveModel(stage: string, explicitModel?: string): string {
-  if (explicitModel) return explicitModel
-  if (STAGE_MODELS[stage]) return STAGE_MODELS[stage]
-  if (process.env.OPENCODE_MODEL) return process.env.OPENCODE_MODEL
-  return DEFAULT_MODEL
 }
 
 // ============================================================================
@@ -81,8 +52,6 @@ export interface AgentRunnerOptions {
   defaultTimeout?: number
   /** Maximum retry attempts (0 = no retries) */
   maxRetries?: number
-  /** Model to use for OpenCode */
-  model?: string
   /** Additional environment variables */
   env?: NodeJS.ProcessEnv
   /** Working directory */
@@ -127,7 +96,6 @@ export function runAgentWithFileWatch(
 ): Promise<AgentRunResult> {
   const {
     maxRetries = MAX_RETRIES,
-    model,
     env: extraEnv = {},
     cwd = process.cwd(),
     backend = createRunner(),
@@ -141,12 +109,11 @@ export function runAgentWithFileWatch(
     const agentEnv = {
       ...process.env,
       ...extraEnv,
-      MODEL: resolveModel(stage, model),
       // Skip Next.js build in pre-push hook — CI uses scripted verify (no build)
       SKIP_BUILD: '1',
-      // Skip husky hooks for spec-only stages (they auto-commit but don't produce code)
-      // Impl stages (build, test, verify, pr, etc.) should respect commitlint
-      ...(SPEC_STAGES.includes(stage as never) && { SKIP_HOOKS: '1' }),
+      // Skip husky hooks for all pipeline stages - the pipeline runs its own quality gates
+      // before committing, so pre-commit hooks would be redundant and could cause issues
+      SKIP_HOOKS: '1',
     }
 
     // Build the prompt for the stage
@@ -196,6 +163,8 @@ export function runAgentWithFileWatch(
       // Poll for output file
       const expectedBase = path.basename(outputFile, '.md')
       const taskDirForPoll = path.dirname(outputFile)
+      let stableCheckCount = 0
+      let lastFileSize = 0
 
       pollTimer = setInterval(() => {
         if (settling) return
@@ -213,26 +182,42 @@ export function runAgentWithFileWatch(
             if (prefixMatch) {
               detectedFile = path.join(taskDirForPoll, prefixMatch)
             } else {
+              // Reset stable checks if file doesn't exist
+              stableCheckCount = 0
+              lastFileSize = 0
               return
             }
           }
 
           const stat = fs.statSync(detectedFile)
-          if (stat.size > 10) {
-            settling = true
 
-            // Rename if timestamped
-            if (detectedFile !== outputFile) {
-              console.log(
-                `  📄 Output: ${path.basename(detectedFile)} → ${path.basename(outputFile)}`,
-              )
-              fs.renameSync(detectedFile, outputFile)
+          // Check if file size is stable (hasn't changed since last check)
+          if (stat.size > 10 && stat.size === lastFileSize) {
+            stableCheckCount++
+            if (stableCheckCount >= FILE_STABLE_CHECKS) {
+              settling = true
+
+              // Rename if timestamped
+              if (detectedFile !== outputFile) {
+                console.log(
+                  `  📄 Output: ${path.basename(detectedFile)} → ${path.basename(outputFile)}`,
+                )
+                fs.renameSync(detectedFile, outputFile)
+              }
+
+              finish({ succeeded: true, timedOut: false })
+              return
             }
-
-            setTimeout(() => finish({ succeeded: true, timedOut: false }), FILE_SETTLE_DELAY)
+          } else {
+            // File is still being written, reset stable count
+            stableCheckCount = 0
           }
+
+          lastFileSize = stat.size
         } catch {
           // Ignore stat errors
+          stableCheckCount = 0
+          lastFileSize = 0
         }
       }, FILE_POLL_INTERVAL)
 
@@ -247,10 +232,11 @@ export function runAgentWithFileWatch(
           // Success only if file was created (not just exit code 0)
           if (fs.existsSync(outputFile)) {
             finish({ succeeded: true, timedOut: false })
-          } else if (code !== 0 && retries < maxRetries) {
-            // Retry on failure
+          } else if (retries < maxRetries) {
+            // Retry on ANY failure — exit non-zero OR exit 0 without output file
             retries++
-            console.log(`  ⚠ Stage failed (exit ${code}), retrying (${retries}/${maxRetries})...`)
+            const reason = code === 0 ? 'no output file' : `exit ${code}`
+            console.log(`  ⚠ Stage failed (${reason}), retrying (${retries}/${maxRetries})...`)
             if (pollTimer) clearInterval(pollTimer)
             if (timeoutTimer) clearTimeout(timeoutTimer)
             if (currentChild && !currentChild.killed) {
@@ -259,7 +245,7 @@ export function runAgentWithFileWatch(
             // Brief delay before retry
             setTimeout(attemptWithRetry, 2000)
           } else {
-            // Exit code 0 but no output file = failure (agent hallucinated success)
+            // Exhausted retries without producing output file
             console.log(`  ❌ Agent exited ${code} without producing output file`)
             finish({ succeeded: false, timedOut: false })
           }

@@ -5,12 +5,14 @@ Automated development pipeline for A-Guy project using OpenCode CLI agents.
 ## Pipeline Stages
 
 ```
-Spec Phase:    taskify → spec → [clarify: opt-in]
-Impl Phase:    architect → plan-review(gate) → build(+TDD) → commit(scripted) →
-               verify(scripted) → auditor → apply-audit → pr(scripted)
+Spec Phase:    taskify → [gate: hard-stop] → spec → [clarify: opt-in]
+Impl Phase:    architect → [gate: risk-gated] → plan-review(gate) → build(+TDD) → commit(scripted) →
+                verify(scripted) → auditor → apply-audit → pr(scripted)
 ```
 
 **Clarify is opt-in** — use `--clarify` flag to enable Q&A loop (default: skip).
+
+**Control modes** — Auto (low risk), Risk-Gated (medium risk), Hard Stop (high risk). See Control Modes section below.
 
 **TDD via @test-writer** — build agent invokes test-writer subagent per plan step.
 
@@ -87,6 +89,39 @@ The `plan-review` agent runs after `architect` and before `build`. It validates:
 1. Deletes `plan.md` and `plan-review.md`
 2. Throws an error, halting before the expensive build stage
 3. On rerun, architect will re-plan from scratch
+
+### Control Modes (Autonomy Levels)
+
+The pipeline supports three autonomy levels based on task risk:
+
+| Mode       | Trigger              | Gate Points                     | Use Case                          |
+| ---------- | -------------------- | ------------------------------- | --------------------------------- |
+| Auto       | `risk_level: low`    | None                            | Bug fixes, docs, low-risk changes |
+| Risk-Gated | `risk_level: medium` | After architect                 | New features, refactors           |
+| Hard Stop  | `risk_level: high`   | After taskify + after architect | DB changes, security, billing     |
+
+**How it works:**
+
+- **Auto mode** — Agent executes fully and opens PR. Used for low-risk, non-breaking changes.
+- **Risk-Gated mode** — Agent pauses after `architect` (shows plan). User must approve before `build` runs.
+- **Hard Stop mode** — Agent pauses immediately after `taskify` (before spec/architect). Mandatory human approval.
+
+**Risk classification** comes from `task.json.risk_level` (produced by taskify agent):
+
+- `low` → Auto
+- `medium` → Risk-Gated
+- `high` → Hard Stop
+
+**Overriding control mode:**
+
+- `/cody --auto` — Force auto mode (skip all gates)
+- `/cody --gate` — Force risk-gated mode
+- `/cody --hard-stop` — Force hard-stop mode
+
+**Approving gated tasks:**
+
+- `/cody approve` — Approve and resume pipeline
+- `/cody reject` — Cancel the task
 
 ### Auto-Fix Loop
 

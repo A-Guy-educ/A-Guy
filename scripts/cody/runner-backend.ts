@@ -28,7 +28,7 @@ export class GitHubRunner implements RunnerBackend {
     // opencode github run does NOT support --agent flag and ignores AGENT env var
     // opencode run supports --agent which loads correct agent from opencode.json
     // OIDC auth still works in CI (reads ACTIONS_ID_TOKEN_REQUEST_TOKEN from env)
-    return spawn('opencode', ['run', '--agent', stage, prompt], {
+    return spawn('pnpm', ['exec', 'opencode', 'run', '--agent', stage, prompt], {
       cwd,
       stdio: 'inherit',
       env,

@@ -92,7 +92,8 @@
     "cody:spec": "pnpm tsx scripts/cody/cody.ts --mode=spec",
     "cody:impl": "pnpm tsx scripts/cody/cody.ts --mode=impl",
     "cody:rerun": "pnpm tsx scripts/cody/cody.ts --mode=rerun",
-    "cody": "pnpm tsx scripts/cody/cody.ts"
+    "cody": "pnpm tsx scripts/cody/cody.ts",
+    "supervisor": "pnpm tsx scripts/supervisor/supervisor.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.28.0",
@@ -190,6 +191,7 @@
     "husky": "^9.1.7",
     "jsdom": "26.1.0",
     "lint-staged": "^16.2.7",
+    "opencode-ai": "^1.2.10",
     "playwright": "1.57.0",
     "playwright-core": "1.57.0",
     "postcss": "^8.4.38",

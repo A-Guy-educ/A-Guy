@@ -18,18 +18,22 @@ describe('GitHubRunner', () => {
     expect(runner.name).toBe('opencode-github')
   })
 
-  it('should call spawn with "opencode" and ["run", "--agent", stage, prompt]', () => {
+  it('should call spawn with "pnpm exec opencode" and ["run", "--agent", stage, prompt]', () => {
     const runner = new GitHubRunner()
     const env = { PATH: '/usr/bin' } as unknown as NodeJS.ProcessEnv
 
     runner.spawn('spec', 'Write tests', env, '/my/project')
 
     expect(spawn).toHaveBeenCalledOnce()
-    expect(spawn).toHaveBeenCalledWith('opencode', ['run', '--agent', 'spec', 'Write tests'], {
-      cwd: '/my/project',
-      stdio: 'inherit',
-      env: { PATH: '/usr/bin' },
-    })
+    expect(spawn).toHaveBeenCalledWith(
+      'pnpm',
+      ['exec', 'opencode', 'run', '--agent', 'spec', 'Write tests'],
+      {
+        cwd: '/my/project',
+        stdio: 'inherit',
+        env: { PATH: '/usr/bin' },
+      },
+    )
   })
 
   it('should pass cwd correctly', () => {
@@ -39,9 +43,9 @@ describe('GitHubRunner', () => {
     runner.spawn('execute', 'Do the thing', env, '/workspace/repo')
 
     expect(spawn).toHaveBeenCalledWith(
-      'opencode',
-      ['run', '--agent', 'execute', 'Do the thing'],
-      expect.objectContaining({ cwd: '/workspace/repo' }),
+      'pnpm',
+      ['exec', 'opencode', 'run', '--agent', 'execute', 'Do the thing'],
+      expect.objectContaining({ cwd: '/workspace/repo', stdio: 'inherit', env: {} }),
     )
   })
 

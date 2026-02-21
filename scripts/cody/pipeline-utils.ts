@@ -22,6 +22,27 @@ const VALID_PIPELINES = ['spec_only', 'spec_execute_verify'] as const
 const VALID_RISK_LEVELS = ['low', 'medium', 'high'] as const
 const VALID_DOMAINS = ['backend', 'frontend', 'infra', 'data', 'llm', 'devops', 'product'] as const
 
+// --- Control mode: determines pipeline autonomy level ---
+export type ControlMode = 'auto' | 'risk-gated' | 'hard-stop'
+
+const CONTROL_MODE_MAP: Record<string, ControlMode> = {
+  low: 'auto',
+  medium: 'risk-gated',
+  high: 'hard-stop',
+}
+
+/**
+ * Resolve the control mode for a task based on its risk level.
+ * User can override with explicit flags (--auto, --gate, --hard-stop).
+ */
+export function resolveControlMode(taskDef: TaskDefinition, override?: ControlMode): ControlMode {
+  // Explicit override always wins (from /cody --auto, --gate, --hard-stop)
+  if (override) return override
+
+  // Derive from risk_level
+  return CONTROL_MODE_MAP[taskDef.risk_level] ?? 'auto'
+}
+
 type TaskType = (typeof VALID_TASK_TYPES)[number]
 type Pipeline = (typeof VALID_PIPELINES)[number]
 
@@ -258,6 +279,7 @@ export function readTask(taskDir: string): TaskDefinition | null {
 
 const STAGE_OUTPUT_MAP: Record<string, string> = {
   taskify: 'task.json',
+  gap: 'gap.md',
   clarify: 'questions.md',
   architect: 'plan.md',
   'plan-review': 'plan-review.md',
@@ -272,7 +294,7 @@ export function stageOutputFile(taskDir: string, stage: string): string {
 
 // --- Pipeline stage definitions ---
 
-export const SPEC_ONLY_STAGES = ['spec', 'clarify']
+export const SPEC_ONLY_STAGES = ['spec', 'gap', 'clarify']
 
 // NOTE: SPEC_EXECUTE_VERIFY_STAGES and ALL_IMPL_STAGES were removed (stale).
 // Use IMPL_PIPELINE and ALL_IMPL_STAGE_NAMES instead (defined below).
@@ -295,6 +317,7 @@ const DRY_RUN_OUTPUTS: Record<string, (taskId: string) => string> = {
       2,
     ),
   spec: (taskId) => `# Spec (dry-run)\n\nMock spec for ${taskId}.\n`,
+  gap: (taskId) => `# Gap Analysis (dry-run)\n\nNo gaps identified for ${taskId}.\n`,
   clarify: (taskId) => `# Questions (dry-run)\n\n1. Mock question for ${taskId}?\n`,
   architect: (taskId) => `# Plan (dry-run)\n\nMock plan for ${taskId}.\n`,
   build: (taskId) => `# Build (dry-run)\n\nMock build output for ${taskId}.\n`,
@@ -377,8 +400,7 @@ export const IMPL_PIPELINE: PipelineStage[] = [
   'plan-review',
   'build',
   'commit',
-  'verify',
-  'auditor',
+  { parallel: ['verify', 'auditor'] },
   'apply-audit',
   'pr',
 ]

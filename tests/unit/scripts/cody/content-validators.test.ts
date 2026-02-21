@@ -16,9 +16,11 @@ import {
   validateBuildReport,
   validateBuildFile,
   isPlanReviewFail,
+  hasPlanReviewVerdict,
   validatePlanReviewVerdict,
   extractVerifySummary,
   isVerifyFailed,
+  validateGapReport,
 } from '../../../../scripts/cody/content-validators'
 
 describe('content-validators', () => {
@@ -182,6 +184,24 @@ describe('content-validators', () => {
     })
   })
 
+  describe('hasPlanReviewVerdict', () => {
+    it('returns true for PASS verdict', () => {
+      expect(hasPlanReviewVerdict('# Plan Review\n\nVerdict: PASS')).toBe(true)
+    })
+
+    it('returns true for FAIL verdict', () => {
+      expect(hasPlanReviewVerdict('# Plan Review\n\nVerdict: FAIL')).toBe(true)
+    })
+
+    it('returns true for pass (lowercase)', () => {
+      expect(hasPlanReviewVerdict('# Plan Review\n\nVerdict: pass')).toBe(true)
+    })
+
+    it('returns false for no verdict line', () => {
+      expect(hasPlanReviewVerdict('# Plan Review\n\nSome content')).toBe(false)
+    })
+  })
+
   describe('validatePlanReviewVerdict', () => {
     it('throws for missing file', () => {
       expect(() => validatePlanReviewVerdict(path.join(tempDir, 'missing.md'))).toThrow('not found')
@@ -281,6 +301,40 @@ Some test failure output
 
 ## Result: FAIL`
       expect(isVerifyFailed(fullOutput)).toBe(true)
+    })
+  })
+
+  // ========================================================================
+  // validateGapReport
+  // ========================================================================
+
+  describe('validateGapReport', () => {
+    it('returns true for gap report with ## Gaps Found section', () => {
+      expect(validateGapReport('# Gap Analysis\n\n## Gaps Found\n\n- Gap 1: Missing field')).toBe(
+        true,
+      )
+    })
+
+    it('returns true for gap report with ## Changes Made section', () => {
+      expect(validateGapReport('# Gap Analysis\n\n## Changes Made\n\n- Added FR-002')).toBe(true)
+    })
+
+    it('returns true for "No gaps identified" (valid empty case)', () => {
+      expect(validateGapReport('# Gap Analysis\n\nNo gaps identified. Spec was complete.')).toBe(
+        true,
+      )
+    })
+
+    it('returns false for empty file', () => {
+      expect(validateGapReport('')).toBe(false)
+    })
+
+    it('returns false for placeholder text', () => {
+      expect(validateGapReport('# Gap Analysis\n\nTBD')).toBe(false)
+    })
+
+    it('returns false for gap report without required sections', () => {
+      expect(validateGapReport('# Gap Analysis\n\nJust some text.')).toBe(false)
     })
   })
 })

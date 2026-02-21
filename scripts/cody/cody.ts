@@ -19,13 +19,12 @@
  * We pass MODEL, AGENT, PROMPT as env vars to control each stage execution.
  */
 
-import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
 // Import from extracted modules
 import { validateSpecContent } from './content-validators'
-import { handleClarification } from './clarify-workflow'
+import { handleClarification, handleGateApproval } from './clarify-workflow'
 import { commitPipelineFiles } from './git-utils'
 import {
   PlanReviewFailError,
@@ -48,8 +47,8 @@ import {
   postComment,
   formatStatusComment,
   getIssueBody,
-  getLatestIssueComment,
   ensureTaskMarkerComment,
+  getLastFailedStage,
   type CodyInput,
 } from './cody-utils'
 
@@ -61,6 +60,7 @@ import {
   ALL_IMPL_STAGE_NAMES,
   isParallelStage,
   type PipelineStage,
+  resolveControlMode,
 } from './pipeline-utils'
 
 // Import from new modules
@@ -214,7 +214,8 @@ async function runSpecPipeline(
 
   // Clarify stage: only run if --clarify flag is set (opt-in)
   // Default: skip, auto-create clarified.md with "Use recommended answers"
-  const stages = input.clarify ? ['taskify', 'spec', 'clarify'] : ['taskify', 'spec']
+  // Gap stage runs between spec and clarify to analyze and revise spec
+  const stages = input.clarify ? ['taskify', 'spec', 'gap', 'clarify'] : ['taskify', 'spec', 'gap']
 
   for (let i = 0; i < stages.length; i++) {
     const stage = stages[i]
@@ -286,6 +287,62 @@ async function runSpecPipeline(
         })
         throw new Error(`Taskify produced invalid task.json: ${msg}`)
       }
+
+      // GATE: Hard-stop check - pause after taskify for high-risk tasks
+      const taskDefAfterTaskify = readTask(taskDir)
+      if (taskDefAfterTaskify) {
+        const controlMode = resolveControlMode(taskDefAfterTaskify, input.controlMode)
+        if (controlMode === 'hard-stop') {
+          console.log('  [STOP] Hard-stop gate: task is high-risk, awaiting approval...')
+          const gateResult = handleGateApproval(input, taskDir, 'taskify', taskDefAfterTaskify)
+          if (gateResult === 'waiting') {
+            // Post gate comment to issue
+            const gateFilePath = path.join(taskDir, 'gate-taskify.md')
+            if (fs.existsSync(gateFilePath)) {
+              const gateContent = fs.readFileSync(gateFilePath, 'utf-8')
+              if (input.issueNumber) {
+                const { postComment } = await import('./cody-utils')
+                // Extract just the comment part after the header
+                const lines = gateContent.split('\n')
+                let inComment = false
+                const commentLines: string[] = []
+                for (const line of lines) {
+                  if (line.startsWith('---')) {
+                    inComment = false
+                    break
+                  }
+                  if (inComment || (!line.startsWith('## ') && !line.startsWith('|'))) {
+                    commentLines.push(line)
+                  }
+                  if (line.startsWith('## ')) {
+                    inComment = true
+                  }
+                }
+                if (commentLines.length > 0) {
+                  postComment(input.issueNumber, commentLines.join('\n').trim())
+                }
+              }
+            }
+            // Commit task files and pause
+            commitPipelineFiles({
+              taskDir,
+              taskId: input.taskId,
+              message: `ci(cody): pause at hard-stop gate for ${input.taskId}`,
+              stagingStrategy: 'task-only',
+              push: true,
+              isCI: !input.local,
+              dryRun: input.dryRun,
+            })
+            console.log('⏸️ Hard-stop: awaiting approval before proceeding')
+            return // Exit spec pipeline
+          }
+          if (gateResult === 'rejected') {
+            throw new Error('Task rejected by user at hard-stop gate')
+          }
+          // 'approved' → continue
+          console.log('  ✅ Hard-stop: approved, proceeding...')
+        }
+      }
     }
 
     // Spec content validation: must contain requirements or acceptance criteria
@@ -300,6 +357,36 @@ async function runSpecPipeline(
         throw new Error(
           'Spec is missing ## Requirements or ## Acceptance Criteria — cannot proceed to architect',
         )
+      }
+    }
+
+    // Gap stage validation: verify gap.md is valid AND re-validate spec.md (gap may have revised it)
+    if (stage === 'gap' && fs.existsSync(outputFile)) {
+      const { validateGapReport } = await import('./content-validators')
+      const gapContent = fs.readFileSync(outputFile, 'utf-8')
+      if (!validateGapReport(gapContent)) {
+        fs.unlinkSync(outputFile)
+        updateStageStatus(input.taskId, stage, 'failed', {
+          error: 'Gap report missing Gaps Found or Changes Made sections',
+        })
+        throw new Error(
+          'Gap report is invalid — cannot proceed. Must contain ## Gaps Found, ## Changes Made, or "No gaps identified"',
+        )
+      }
+
+      // Re-validate spec.md after gap agent may have revised it
+      const specFile = path.join(taskDir, 'spec.md')
+      if (fs.existsSync(specFile)) {
+        const specContent = fs.readFileSync(specFile, 'utf-8')
+        if (!validateSpecContent(specContent)) {
+          updateStageStatus(input.taskId, stage, 'failed', {
+            error: 'Gap agent corrupted spec.md',
+          })
+          throw new Error(
+            'Gap agent removed ## Requirements or ## Acceptance Criteria from spec.md — pipeline failed',
+          )
+        }
+        console.log('  ✓ Spec validated after gap revision')
       }
     }
 
@@ -514,6 +601,58 @@ async function runImplPipeline(
     // Rerun feedback archive
     if (stage === 'architect') {
       handleRerunFeedbackArchive(hookOptions)
+
+      // GATE: Risk-gated or hard-stop check - pause after architect for medium/high risk tasks
+      const taskDefAfterArchitect = readTask(taskDir)
+      if (taskDefAfterArchitect) {
+        const controlMode = resolveControlMode(taskDefAfterArchitect, input.controlMode)
+        if (controlMode === 'risk-gated' || controlMode === 'hard-stop') {
+          console.log(`  [GATE] ${controlMode} gate: pausing for approval after architect...`)
+          // Read plan content for the gate comment
+          const planPath = path.join(taskDir, 'plan.md')
+          const planContent = fs.existsSync(planPath)
+            ? fs.readFileSync(planPath, 'utf-8')
+            : undefined
+          const gateResult = handleGateApproval(
+            input,
+            taskDir,
+            'architect',
+            taskDefAfterArchitect,
+            planContent,
+          )
+          if (gateResult === 'waiting') {
+            // Post gate comment to issue
+            const gateFilePath = path.join(taskDir, 'gate-architect.md')
+            if (fs.existsSync(gateFilePath) && input.issueNumber) {
+              const gateContent = fs.readFileSync(gateFilePath, 'utf-8')
+              const { postComment } = await import('./cody-utils')
+              // Extract comment section before ---
+              const commentBody = gateContent
+                .split('---')[0]
+                .replace(/^## [^]+\n/, '')
+                .trim()
+              postComment(input.issueNumber, commentBody)
+            }
+            // Commit task files and pause
+            commitPipelineFiles({
+              taskDir,
+              taskId: input.taskId,
+              message: `ci(cody): pause at ${controlMode} gate for ${input.taskId}`,
+              stagingStrategy: 'task-only',
+              push: true,
+              isCI: !input.local,
+              dryRun: input.dryRun,
+            })
+            console.log(`⏸️ ${controlMode}: awaiting approval before build`)
+            return // Exit impl pipeline
+          }
+          if (gateResult === 'rejected') {
+            throw new Error(`Task rejected by user at ${controlMode} gate`)
+          }
+          // 'approved' → continue
+          console.log('  ✅ Gate: approved, proceeding to build...')
+        }
+      }
     }
 
     // Plan-review gate: check verdict and fail pipeline on FAIL
@@ -730,7 +869,7 @@ async function runRerunPipeline(
   }
 
   if (!input.fromStage) {
-    input.fromStage = 'build'
+    input.fromStage = getLastFailedStage(input.taskId) || 'build'
   }
 
   // Default feedback if not provided (e.g., from implicit feedback in comment)

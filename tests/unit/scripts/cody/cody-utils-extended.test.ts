@@ -313,7 +313,6 @@ describe('parseCliArgs', () => {
   })
 
   it('should generate task-id from --file path/to/feature.md', () => {
-    const mockDate = new Date('2026-02-18T12:00:00.000Z')
     vi.spyOn(Date.prototype, 'toISOString').mockReturnValue('2026-02-18T12:00:00.000Z')
 
     const result = parseCliArgs(['--file', 'path/to/my-feature.md'])
@@ -917,6 +916,7 @@ describe('isValidStage', () => {
     const stages = [
       'taskify',
       'spec',
+      'gap',
       'clarify',
       'architect',
       'plan-review',

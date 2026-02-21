@@ -2,7 +2,6 @@
 name: taskify
 description: Converts free-text tasks into structured task.json for pipeline routing
 mode: primary
-model: minimax-coding-plan/MiniMax-M2.1
 tools:
   read: true
   write: true

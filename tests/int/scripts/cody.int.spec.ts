@@ -287,6 +287,7 @@ describe('orchestrator integration', () => {
       // Test different stage outputs
       expect(stageOutputFile(TEST_TASK_DIR, 'taskify')).toBe(path.join(TEST_TASK_DIR, 'task.json'))
       expect(stageOutputFile(TEST_TASK_DIR, 'spec')).toBe(path.join(TEST_TASK_DIR, 'spec.md'))
+      expect(stageOutputFile(TEST_TASK_DIR, 'gap')).toBe(path.join(TEST_TASK_DIR, 'gap.md'))
       expect(stageOutputFile(TEST_TASK_DIR, 'clarify')).toBe(
         path.join(TEST_TASK_DIR, 'questions.md'),
       )
@@ -453,8 +454,9 @@ describe('orchestrator integration', () => {
       const { SPEC_ONLY_STAGES, ALL_IMPL_STAGE_NAMES } =
         await import('../../../scripts/cody/pipeline-utils')
 
-      // Spec pipeline should have spec and clarify stages
+      // Spec pipeline should have spec, gap, and clarify stages
       expect(SPEC_ONLY_STAGES).toContain('spec')
+      expect(SPEC_ONLY_STAGES).toContain('gap')
       expect(SPEC_ONLY_STAGES).toContain('clarify')
 
       // Impl pipeline should have all stages including plan-review and commit
@@ -701,6 +703,61 @@ describe('orchestrator rerun logic integration', () => {
     expect(status?.stages.spec?.state).toBe('completed')
     expect(status?.stages.architect?.state).toBe('completed')
     expect(status?.stages.build).toBeUndefined() // Not started yet
+  })
+})
+
+// ============================================================================
+// Integration Tests: Gap Stage
+// ============================================================================
+
+describe('gap stage integration', () => {
+  beforeEach(() => {
+    cleanupTestEnvironment()
+    setupTestEnvironment()
+    Object.entries(testEnv).forEach(([key, value]) => {
+      process.env[key] = value
+    })
+  })
+
+  afterEach(() => {
+    cleanupTestEnvironment()
+    Object.keys(testEnv).forEach((key) => {
+      delete process.env[key]
+    })
+  })
+
+  it('maps stageOutputFile for gap correctly', async () => {
+    const { stageOutputFile } = await import('../../../scripts/cody/pipeline-utils')
+    expect(stageOutputFile(TEST_TASK_DIR, 'gap')).toBe(path.join(TEST_TASK_DIR, 'gap.md'))
+  })
+
+  it('includes gap in SPEC_ONLY_STAGES', async () => {
+    const { SPEC_ONLY_STAGES } = await import('../../../scripts/cody/pipeline-utils')
+    expect(SPEC_ONLY_STAGES).toContain('gap')
+  })
+
+  it('detects gap.md file exists correctly', async () => {
+    // Write gap.md to simulate gap stage completed
+    const gapFile = path.join(TEST_TASK_DIR, 'gap.md')
+    fs.writeFileSync(gapFile, '# Gap Analysis\n\nNo gaps identified.')
+
+    expect(fs.existsSync(gapFile)).toBe(true)
+  })
+
+  it('does not include gap in impl stages', async () => {
+    const { ALL_IMPL_STAGE_NAMES } = await import('../../../scripts/cody/pipeline-utils')
+    // Gap should be a spec stage, not impl
+    expect(ALL_IMPL_STAGE_NAMES).not.toContain('gap')
+  })
+
+  it('has correct stage order in spec pipeline (gap between spec and clarify)', async () => {
+    const { SPEC_ONLY_STAGES } = await import('../../../scripts/cody/pipeline-utils')
+    const specIdx = SPEC_ONLY_STAGES.indexOf('spec')
+    const gapIdx = SPEC_ONLY_STAGES.indexOf('gap')
+    const clarifyIdx = SPEC_ONLY_STAGES.indexOf('clarify')
+
+    expect(specIdx).toBeLessThan(gapIdx)
+    expect(gapIdx).toBeLessThan(clarifyIdx)
   })
 })
 

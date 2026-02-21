@@ -1,0 +1,19 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "CopilotKit integration with Gemini/OpenAI",
+    "New API route at src/app/api/copilotkit/route.ts",
+    "New (cody) route group with layout and page",
+    "Test action for streaming verification"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Gemini adapter may have known issue #3217 ('google/undefined' errors) - may require fallback to OpenAIAdapter",
+    "CopilotKit v1.50+ packages will install without conflicts with existing dependencies",
+    "Environment variables GEMINI_API_KEY and OPENAI_API_KEY are available"
+  ],
+  "pipeline": "spec_execute_verify"
+}

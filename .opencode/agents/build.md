@@ -72,6 +72,12 @@ Run after implementing all steps:
 pnpm -s tsc --noEmit && pnpm -s lint
 ```
 
+After creating or modifying admin components, regenerate the import map:
+
+```bash
+pnpm generate:importmap
+```
+
 ### 3. Write Output File (REQUIRED)
 
 **You MUST write this file or the pipeline will fail.**

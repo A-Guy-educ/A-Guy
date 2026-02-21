@@ -271,8 +271,7 @@ export async function createGenkitUnifiedAdapter(
                 {
                   name: t.name,
                   description: buildToolDescription(t.description || '', t.inputSchema),
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } as any,
+                },
                 async (args) => {
                   const result = await input.toolExecutor(t.name, args as Record<string, unknown>)
                   return result
@@ -288,21 +287,30 @@ export async function createGenkitUnifiedAdapter(
             }))
 
             // Ensure first non-system message is 'user'
-            let messages: any[]
-            if (userAssistantMessages.length > 0 && userAssistantMessages[0].role !== 'user') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let messages: Array<{
+              role: 'system' | 'user' | 'model'
+              content: Array<{ text: string }>
+            }> = []
+            if (
+              userAssistantMessages.length > 0 &&
+              (userAssistantMessages[0] as any).role !== 'user'
+            ) {
               messages = [
                 systemMessage,
-                { role: 'user', content: [{ text: 'Please continue.' }] },
-                ...userAssistantMessages,
+                { role: 'user' as const, content: [{ text: 'Please continue.' }] },
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ...(userAssistantMessages as any),
               ]
             } else {
-              messages = [systemMessage, ...userAssistantMessages]
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              messages = [systemMessage, ...(userAssistantMessages as any)]
             }
 
             const result = await ai.generate({
               model: config.model,
               messages,
-              tools: genkitTools as any,
+              tools: genkitTools as never,
               toolChoice: 'auto',
               maxTurns: 5,
             })
