@@ -191,7 +191,7 @@ jobs:
         run: ./scripts/cody/run-cody.sh
 
       - name: Upload artifacts
-        if: always()
+        if: always() && needs.parse.outputs.task_id != ''
         uses: actions/upload-artifact@v4
         with:
           name: cody-${{ needs.parse.outputs.task_id }}-${{ github.run_id }}

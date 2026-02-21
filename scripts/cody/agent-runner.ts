@@ -10,7 +10,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 import type { CodyInput } from './cody-utils'
-import { buildStagePrompt, SPEC_STAGES } from './stage-prompts'
+import { buildStagePrompt } from './stage-prompts'
 import { createRunner, type RunnerBackend } from './runner-backend'
 
 // ============================================================================
@@ -250,6 +250,19 @@ export function runAgentWithFileWatch(
             finish({ succeeded: false, timedOut: false })
           }
         }
+      })
+
+      // Handle spawn errors (e.g., command not found)
+      currentChild.on('error', (err) => {
+        if (resolved) return
+        const error = err as NodeJS.ErrnoException
+        if (error.code === 'ENOENT') {
+          console.error(`  ❌ Command not found: ${error.path || 'opencode'}. Is it installed?`)
+          console.error('  Install with: npm install -g opencode')
+        } else {
+          console.error(`  ❌ Agent process error: ${err.message}`)
+        }
+        finish({ succeeded: false, timedOut: false })
       })
     }
 

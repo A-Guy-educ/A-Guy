@@ -107,7 +107,7 @@ function mergeDefaultBranch(cwd: string): void {
   console.log(`[branch] Merging latest ${defaultBranch} into current branch`)
   try {
     execSync(`git merge origin/${defaultBranch} --no-edit`, { cwd, stdio: 'inherit' })
-  } catch (error) {
+  } catch (_error) {
     console.error(`[branch] Merge conflict detected while merging ${defaultBranch}`)
     console.log('[branch] Aborting merge')
     execSync('git merge --abort', { cwd, stdio: 'inherit' })
@@ -279,9 +279,10 @@ export function ensureFeatureBranch(taskId: string, taskType: string, projectDir
   }
 }
 
-// ============================================================================
-// Commit Utilities
-// ============================================================================
+// Helper to get environment with hooks disabled for CI
+function getHookSafeEnv(): NodeJS.ProcessEnv {
+  return { ...process.env, HUSKY: '0', SKIP_HOOKS: '1' }
+}
 
 /**
  * Derive conventional commit type from task type.
@@ -448,9 +449,12 @@ export function commitAndPush(
     }
 
     // Commit using execFileSync to prevent shell injection (BUG-4 fix)
+    // Skip husky/commitlint hooks in CI - they run their own quality gates
+    const hookSafeEnv = getHookSafeEnv()
     execFileSync('git', ['commit', '--no-gpg-sign', '-m', commitMessage], {
       cwd: workDir,
       stdio: 'inherit',
+      env: hookSafeEnv,
     })
 
     // Get commit hash
@@ -609,11 +613,14 @@ export function commitPipelineFiles(
     }
 
     // 4. Commit using execFileSync to prevent shell injection (BUG-5 fix)
+    // Skip husky/commitlint hooks in CI - they run their own quality gates
+    const hookSafeEnv = getHookSafeEnv()
     let committed = false
     try {
       execFileSync('git', ['commit', '--no-gpg-sign', '-m', message], {
         cwd,
         stdio: 'inherit',
+        env: hookSafeEnv,
       })
       committed = true
       console.log(`[commit] ${message}`)

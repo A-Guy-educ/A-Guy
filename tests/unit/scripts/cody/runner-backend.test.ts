@@ -80,22 +80,24 @@ describe('LocalRunner', () => {
     runner.spawn('spec', 'Write a spec', env, '/my/project')
 
     expect(spawn).toHaveBeenCalledOnce()
+    // Prompt is passed as positional argument after --agent
     expect(spawn).toHaveBeenCalledWith(
       'pnpm',
-      ['ocode', 'run', '--agent', 'spec'],
+      ['ocode', 'run', '--agent', 'spec', 'Write a spec'],
       expect.objectContaining({ cwd: '/my/project', stdio: 'inherit' }),
     )
   })
 
-  it('should pass prompt via PROMPT env var', () => {
+  it('should pass AGENT and MODEL in env vars', () => {
     const runner = new LocalRunner()
-    const env = {} as NodeJS.ProcessEnv
+    const env = { MODEL: 'gpt-4' } as unknown as NodeJS.ProcessEnv
 
     runner.spawn('execute', 'Implement the feature', env, '/cwd')
 
     const calledEnv = vi.mocked(spawn).mock.calls[0][2]?.env
     expect(calledEnv).toMatchObject({
-      PROMPT: 'Implement the feature',
+      AGENT: 'execute',
+      MODEL: 'gpt-4',
     })
   })
 
