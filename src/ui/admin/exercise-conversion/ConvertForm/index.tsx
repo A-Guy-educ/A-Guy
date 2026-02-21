@@ -44,7 +44,8 @@ export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFor
         const data = await response.json()
         setExtractorPrompts(data.extractors || [])
         setVerifierPrompts(data.verifiers || [])
-      } catch {
+      } catch (error) {
+        console.error('[ConvertForm] Failed to load prompts:', error)
         setError('Failed to load prompts')
       } finally {
         setIsLoading(false)
@@ -81,7 +82,8 @@ export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFor
       setTimeout(() => {
         onClose()
       }, 2000)
-    } catch (_err) {
+    } catch (error) {
+      console.error('[ConvertForm] Queue failed:', error)
       setError('Queue failed')
     } finally {
       setIsSubmitting(false)

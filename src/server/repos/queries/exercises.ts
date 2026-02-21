@@ -32,7 +32,8 @@ export const queryExerciseById = cache(async ({ id }: { id: string }) => {
     })
 
     return exercise
-  } catch (_error) {
+  } catch (error) {
+    console.error('[queryExerciseById] Failed to fetch exercise:', error)
     return null
   }
 })

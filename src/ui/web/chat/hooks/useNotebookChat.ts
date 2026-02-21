@@ -516,7 +516,8 @@ export function useNotebookChat({
             return updated
           })
         }
-      } catch (_error) {
+      } catch (error) {
+        console.error('[useNotebookChat] Stream message error:', error)
         toast.error(errorMessage)
       } finally {
         setIsLoading(false)
@@ -571,7 +572,8 @@ export function useNotebookChat({
         }
         setMessages((prev) => [...prev, assistantMessage])
       }
-    } catch (_error) {
+    } catch (error) {
+      console.error('[useNotebookChat] Send message sync error:', error)
       toast.error(errorMessage)
     } finally {
       setIsLoading(false)
@@ -599,7 +601,8 @@ export function useNotebookChat({
       } else {
         toast.error(result.error || resetErrorMessage)
       }
-    } catch (_error) {
+    } catch (error) {
+      console.error('[useNotebookChat] Reset chat error:', error)
       toast.error(resetErrorMessage)
     }
   }, [
