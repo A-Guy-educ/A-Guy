@@ -81,7 +81,8 @@ export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFor
       setTimeout(() => {
         onClose()
       }, 2000)
-    } catch (_err) {
+    } catch (err) {
+      console.error('Exercise conversion queue failed:', err)
       setError('Queue failed')
     } finally {
       setIsSubmitting(false)
