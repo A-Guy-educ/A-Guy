@@ -1,21 +1,22 @@
-import DOMPurify, { type Config } from 'isomorphic-dompurify'
+import sanitizeHtmlLib from 'sanitize-html'
 
 /**
- * Conservative DOMPurify allowlist — HLS Phase 1 §6 + safe SVG subset.
+ * Conservative sanitize-html allowlist — HLS Phase 1 §6 + safe SVG subset.
  *
- * Blocked regardless of config (DOMPurify always strips):
+ * Blocked by sanitize-html (default behavior):
  *   - all on* event handlers
- *   - javascript: and data: URIs in any attribute
- *   - xlink:href (namespace attr, stripped by default)
- *   - foreignObject (not in ALLOWED_TAGS)
+ *   - javascript: and data: URIs in href/src
+ *   - script tags
+ *   - potentially dangerous tags
  *
- * Additional enforcement via hook (below):
- *   - href is removed from every element except <a> *
- * Link policy: target and rel are not in ALLOWED_ATTR.
+ * Additional enforcement via transformTags (below):
+ *   - href is removed from every element except <a>
+ *
+ * Link policy: target and rel are not in allowedAttributes.
  *   All links open in the same tab in Phase 1.
  */
-const SANITIZE_CONFIG: Config = {
-  ALLOWED_TAGS: [
+const SANITIZE_CONFIG: sanitizeHtmlLib.IOptions = {
+  allowedTags: [
     // Text structure
     'p',
     'br',
@@ -74,77 +75,45 @@ const SANITIZE_CONFIG: Config = {
     'text',
     'tspan',
   ],
-  ALLOWED_ATTR: [
-    'href',
-    'src',
-    'alt',
-    'title',
-    'width',
-    'height',
-    'class',
-    'id',
-    'dir',
-    // SVG presentation
-    'viewBox',
-    'viewbox',
-    'fill',
-    'stroke',
-    'stroke-width',
-    'stroke-linecap',
-    'stroke-linejoin',
-    'stroke-dasharray',
-    'stroke-dashoffset',
-    'd',
-    'cx',
-    'cy',
-    'r',
-    'x',
-    'y',
-    'x1',
-    'y1',
-    'x2',
-    'y2',
-    'points',
-    'offset',
-    'stop-color',
-    'stop-opacity',
-    'opacity',
-    'transform',
-    'aria-hidden',
-    'role',
-    'focusable',
-  ],
-  ALLOW_DATA_ATTR: true,
-  RETURN_DOM: false,
-  RETURN_DOM_FRAGMENT: false,
+  allowedAttributes: {
+    '*': ['class', 'id', 'dir', 'data-*'], // data-* for all elements
+    a: ['href'],
+    img: ['src', 'alt', 'title', 'width', 'height'],
+    // SVG attributes
+    svg: ['viewBox', 'viewbox'],
+    path: ['d', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin'],
+    circle: ['cx', 'cy', 'r', 'fill', 'stroke', 'stroke-width'],
+    rect: ['x', 'y', 'width', 'height', 'fill', 'stroke', 'stroke-width'],
+    line: ['x1', 'y1', 'x2', 'y2', 'stroke', 'stroke-width', 'stroke-linecap'],
+    polyline: ['points', 'fill', 'stroke', 'stroke-width'],
+    polygon: ['points', 'fill', 'stroke', 'stroke-width'],
+    g: ['transform', 'fill', 'stroke', 'opacity'],
+    stop: ['offset', 'stop-color', 'stop-opacity'],
+    text: ['x', 'y', 'fill', 'stroke', 'transform'],
+    tspan: ['x', 'y', 'fill', 'stroke'],
+    linearGradient: ['id', 'x1', 'y1', 'x2', 'y2'],
+    radialGradient: ['id', 'cx', 'cy', 'r', 'fx', 'fy'],
+  },
+  allowedSchemes: ['http', 'https', 'mailto'],
+  allowedSchemesAppliedToAttributes: ['href', 'src'],
+  transformTags: {
+    // Remove href from all non-<a> elements
+    '*': (tagName, attribs) => {
+      if (tagName !== 'a' && attribs.href) {
+        delete attribs.href
+      }
+      return {
+        tagName,
+        attribs,
+      }
+    },
+  },
 }
 
 /**
- * Idempotent hook: remove href from all non-<a> elements.
- *
- * Uses globalThis so the registration flag survives Next.js HMR module
- * re-evaluation. A module-level variable would reset on each HMR reload,
- * causing the hook to be registered multiple times on the same DOMPurify
- * singleton. globalThis persists for the lifetime of the Node.js process
- * (SSR) and the browser tab (client), so addHook runs exactly once.
- */
-declare global {
-  var __aguyDomPurifyHrefHookRegistered: boolean | undefined
-}
-
-if (!globalThis.__aguyDomPurifyHrefHookRegistered) {
-  DOMPurify.addHook('afterSanitizeAttributes', (node: Element) => {
-    if (node.tagName !== 'A' && node.hasAttribute('href')) {
-      node.removeAttribute('href')
-    }
-  })
-  globalThis.__aguyDomPurifyHrefHookRegistered = true
-}
-
-/**
- * Sanitize an HTML string using DOMPurify.
- * Safe in SSR (Node.js via isomorphic-dompurify's jsdom) and browser.
+ * Sanitize an HTML string using sanitize-html.
+ * Safe for server-side rendering (no native dependencies).
  */
 export function sanitizeHtml(html: string): string {
-  return DOMPurify.sanitize(html, SANITIZE_CONFIG) as unknown as string
+  return sanitizeHtmlLib(html, SANITIZE_CONFIG)
 }

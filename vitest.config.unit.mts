@@ -8,6 +8,9 @@ loadEnv({ path: '.env.test', override: true })
 
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
+  ssr: {
+    noExternal: [/@payloadcms\/.*/],
+  },
   test: {
     environment: 'node',
     include: [
@@ -34,5 +37,9 @@ export default defineConfig({
         'src/lib/ai/services/**', // These need more complex mocking
       ],
     },
+    deps: {
+      inline: [/@payloadcms\/.*/],
+    },
+    css: false,
   },
 })
