@@ -96,10 +96,14 @@
     "supervisor": "pnpm tsx scripts/supervisor/supervisor.ts"
   },
   "dependencies": {
+    "@copilotkit/react-core": "^1.51.4",
+    "@copilotkit/react-ui": "^1.51.4",
+    "@copilotkit/runtime": "^1.51.4",
     "@genkit-ai/googleai": "^1.28.0",
     "@google/generative-ai": "^0.24.1",
     "@marsidev/react-turnstile": "^1.4.1",
     "@napi-rs/canvas": "^0.1.89",
+    "@octokit/rest": "^22.0.1",
     "@payloadcms/admin-bar": "3.73.0",
     "@payloadcms/db-mongodb": "3.73.0",
     "@payloadcms/live-preview-react": "3.73.0",
