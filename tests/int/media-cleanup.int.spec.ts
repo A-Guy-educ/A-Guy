@@ -161,6 +161,7 @@ async function createTestMedia(options: {
   expiresAt?: string
 }) {
   const filename = options.filename || `test-${Date.now()}.jpg`
+  const buffer = createTestImageBuffer()
 
   return payload.create(
     {
@@ -171,10 +172,10 @@ async function createTestMedia(options: {
         expiresAt: options.expiresAt,
       },
       file: {
-        data: createTestImageBuffer(),
+        data: new Uint8Array(buffer),
         name: filename,
         mimetype: 'image/jpeg',
-        size: 134,
+        size: buffer.length,
       },
       overrideAccess: true,
       context: { allowRetentionPatch: true },
