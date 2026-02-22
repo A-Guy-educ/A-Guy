@@ -10,6 +10,7 @@ import type {
   HtmlBlock,
   InlineRichText,
   LatexBlock,
+  McqOption,
   QuestionFreeResponseBlock,
   QuestionSelectMcqBlock,
   QuestionSelectTrueFalseBlock,
@@ -17,9 +18,16 @@ import type {
   RichTextBlock,
   TrueFalseAnswer,
 } from './types'
-import { generateId } from './types'
 
-export { generateId }
+// ---------------------------------
+// ID Generator (browser and server compatible)
+// ---------------------------------
+export function generateId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  return 'b-' + Math.random().toString(36).substring(2, 9)
+}
 
 // ---------------------------------
 // Default Content Container
@@ -152,7 +160,7 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
     },
     answer: {
       multiSelect: true,
-      options: DEFAULT_MCQ_ANSWER.options.map((o) => ({
+      options: DEFAULT_MCQ_ANSWER.options.map((o: McqOption) => ({
         id: o.id,
         content: { ...o.content },
       })),
