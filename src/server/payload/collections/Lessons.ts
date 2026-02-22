@@ -6,6 +6,7 @@ import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
+import { createLexicalToHtmlHook } from '../hooks/convertLexicalToHtml'
 
 const formatSlug = (val: string): string =>
   val
@@ -35,6 +36,8 @@ export const Lessons: CollectionConfig = {
         }
         return data
       },
+      createLexicalToHtmlHook('description', 'descriptionHtml'),
+      createLexicalToHtmlHook('introDescription', 'introDescriptionHtml'),
     ],
   },
   admin: {
@@ -103,6 +106,15 @@ export const Lessons: CollectionConfig = {
       editor: defaultLexical,
       admin: {
         description: 'Detailed description of the lesson',
+      },
+    },
+    {
+      name: 'descriptionHtml',
+      type: 'textarea',
+      admin: {
+        hidden: true,
+        readOnly: true,
+        description: 'Auto-generated HTML from description (for frontend rendering)',
       },
     },
     {
@@ -179,10 +191,20 @@ export const Lessons: CollectionConfig = {
     },
     {
       name: 'introDescription',
+      type: 'richText',
+      editor: defaultLexical,
+      admin: {
+        description: 'Rich text content for the intro page. Supports bold, italic, links, etc.',
+        condition: (data) => Boolean(data?.introEnabled),
+      },
+    },
+    {
+      name: 'introDescriptionHtml',
       type: 'textarea',
       admin: {
-        description: 'HTML content for the intro page. Supports raw HTML (bold, lists, etc).',
-        condition: (data) => Boolean(data?.introEnabled),
+        hidden: true,
+        readOnly: true,
+        description: 'Auto-generated HTML from introDescription (for frontend rendering)',
       },
     },
     {
