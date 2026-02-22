@@ -34,10 +34,15 @@ export function SelectedCourseCard() {
       return
     }
 
-    fetchCourse(profile.gradeLevel)
+    const controller = new AbortController()
+    fetchCourse(profile.gradeLevel, controller.signal)
+
+    return () => {
+      controller.abort()
+    }
   }, [])
 
-  const fetchCourse = async (gradeLevel: string) => {
+  const fetchCourse = async (gradeLevel: string, signal?: AbortSignal) => {
     setLoadingState('loading')
     try {
       const baseUrl = getClientSideURL()
@@ -49,7 +54,7 @@ export function SelectedCourseCard() {
         depth: '1',
       })
 
-      const response = await fetch(`${baseUrl}/api/courses?${params.toString()}`)
+      const response = await fetch(`${baseUrl}/api/courses?${params.toString()}`, { signal })
 
       if (!response.ok) {
         throw new Error('Failed to fetch course')
@@ -69,7 +74,11 @@ export function SelectedCourseCard() {
       } else {
         setLoadingState('not-found')
       }
-    } catch {
+    } catch (err) {
+      // Ignore AbortError - component unmounted
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return
+      }
       setLoadingState('error')
     }
   }

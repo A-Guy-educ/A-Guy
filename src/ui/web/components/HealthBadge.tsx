@@ -22,9 +22,11 @@ export function HealthBadge({ showVersion = false }: HealthBadgeProps) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    const controller = new AbortController()
+
     async function checkHealth() {
       try {
-        const response = await fetch('/api/health')
+        const response = await fetch('/api/health', { signal: controller.signal })
         const json = (await response.json()) as HealthResponse
 
         if (response.ok && json.ok) {
@@ -34,13 +36,21 @@ export function HealthBadge({ showVersion = false }: HealthBadgeProps) {
           setError(json.ok === false ? 'API returned unhealthy status' : 'Unexpected response')
           setState('unhealthy')
         }
-      } catch {
+      } catch (err) {
+        // Ignore AbortError - component unmounted
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return
+        }
         setError('Failed to fetch health status')
         setState('error')
       }
     }
 
     checkHealth()
+
+    return () => {
+      controller.abort()
+    }
   }, [])
 
   if (state === 'loading') {
