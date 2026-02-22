@@ -13,6 +13,10 @@ import { JSONInspector } from './JSONInspector'
 import { MediaPicker } from './MediaPicker'
 import { RichTextEditor } from './RichTextEditor'
 import { FreeResponseEditor } from './editors/FreeResponseEditor'
+import { AxisEditor } from './editors/AxisEditor'
+import { GeometryEditor } from './editors/GeometryEditor'
+import { MatchingEditor } from './editors/MatchingEditor'
+import { SvgEditor } from './editors/SvgEditor'
 import { McqEditor } from './editors/McqEditor'
 import { QuestionBlockWrapper } from './editors/QuestionBlockWrapper'
 import { TableEditor } from './editors/TableEditor'
@@ -448,6 +452,10 @@ function getBlockTypeLabel(block: ContentBlock): string {
   if (block.type === 'question_select' && block.variant === 'mcq') return 'Multiple Choice'
   if (block.type === 'question_free_response') return 'Free Response'
   if (block.type === 'question_table') return 'Table Question'
+  if (block.type === 'question_matching') return 'Matching'
+  if (block.type === 'svg') return 'SVG Image'
+  if (block.type === 'question_geometry') return 'Geometry'
+  if (block.type === 'question_axis') return 'Axis Graph'
   return block.type
 }
 
@@ -546,6 +554,94 @@ function renderQuestionEditor(
       >
         <TableEditor
           block={block as import('@/server/payload/collections/Exercises/types').QuestionTableBlock}
+          onChange={onChange}
+        />
+      </QuestionBlockWrapper>
+    )
+  }
+  if (block.type === 'question_matching') {
+    return (
+      <QuestionBlockWrapper
+        blockType={getBlockTypeLabel(block)}
+        block={block}
+        onBlockChange={onChange}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        canMoveUp={blockIndex > 0}
+        canMoveDown={blockIndex < blockCount - 1}
+        canDelete={blockCount > 1}
+      >
+        <MatchingEditor
+          block={
+            block as import('@/server/payload/collections/Exercises/types').QuestionMatchingBlock
+          }
+          onChange={onChange}
+        />
+      </QuestionBlockWrapper>
+    )
+  }
+  if (block.type === 'svg') {
+    return (
+      <QuestionBlockWrapper
+        blockType={getBlockTypeLabel(block)}
+        block={block}
+        onBlockChange={onChange}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        canMoveUp={blockIndex > 0}
+        canMoveDown={blockIndex < blockCount - 1}
+        canDelete={blockCount > 1}
+      >
+        <SvgEditor
+          block={block as import('@/server/payload/collections/Exercises/types').SvgBlock}
+          onChange={onChange}
+        />
+      </QuestionBlockWrapper>
+    )
+  }
+  if (block.type === 'question_geometry') {
+    return (
+      <QuestionBlockWrapper
+        blockType={getBlockTypeLabel(block)}
+        block={block}
+        onBlockChange={onChange}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        canMoveUp={blockIndex > 0}
+        canMoveDown={blockIndex < blockCount - 1}
+        canDelete={blockCount > 1}
+      >
+        <GeometryEditor
+          block={
+            block as import('@/server/payload/collections/Exercises/types').QuestionGeometryBlock
+          }
+          onChange={onChange}
+        />
+      </QuestionBlockWrapper>
+    )
+  }
+  if (block.type === 'question_axis') {
+    return (
+      <QuestionBlockWrapper
+        blockType={getBlockTypeLabel(block)}
+        block={block}
+        onBlockChange={onChange}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        canMoveUp={blockIndex > 0}
+        canMoveDown={blockIndex < blockCount - 1}
+        canDelete={blockCount > 1}
+      >
+        <AxisEditor
+          block={block as import('@/server/payload/collections/Exercises/types').QuestionAxisBlock}
           onChange={onChange}
         />
       </QuestionBlockWrapper>

@@ -9,11 +9,15 @@ import type {
   ContentBlock,
   InlineRichText,
   LatexBlock,
+  QuestionAxisBlock,
   QuestionFreeResponseBlock,
+  QuestionGeometryBlock,
+  QuestionMatchingBlock,
   QuestionSelectMcqBlock,
   QuestionSelectTrueFalseBlock,
   QuestionTableBlock,
   RichTextBlock,
+  SvgBlock,
   TrueFalseAnswer,
 } from './types'
 import { generateId } from './types'
@@ -208,5 +212,83 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
     type: 'latex',
     latex: '',
     renderMode: 'block',
+  }),
+
+  question_matching: (): QuestionMatchingBlock => ({
+    id: generateId(),
+    type: 'question_matching',
+    prompt: DEFAULT_HINT_SOLUTION(),
+    leftColumn: [
+      { id: generateId(), content: DEFAULT_HINT_SOLUTION() },
+      { id: generateId(), content: DEFAULT_HINT_SOLUTION() },
+    ],
+    rightColumn: [
+      { id: generateId(), content: DEFAULT_HINT_SOLUTION() },
+      { id: generateId(), content: DEFAULT_HINT_SOLUTION() },
+    ],
+    correctPairs: [],
+    shuffleRightColumn: false,
+    hint: DEFAULT_HINT_SOLUTION(),
+    solution: DEFAULT_HINT_SOLUTION(),
+    fullSolution: DEFAULT_HINT_SOLUTION(),
+  }),
+
+  svg: (): SvgBlock => ({
+    id: generateId(),
+    type: 'svg',
+    value:
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">\n  <circle cx="100" cy="100" r="50" fill="none" stroke="black" />\n</svg>',
+    altText: '',
+  }),
+
+  question_geometry: (): QuestionGeometryBlock => ({
+    id: generateId(),
+    type: 'question_geometry',
+    prompt: DEFAULT_HINT_SOLUTION(),
+    geometry: {
+      kind: 'euclidean',
+      canvas: { width: 600, height: 400, background: '#ffffff', grid: true },
+      elements: {
+        points: [
+          { name: 'A', x: 150, y: 100, position: 'tl', visible: true },
+          { name: 'B', x: 350, y: 100, position: 'tr', visible: true },
+          { name: 'C', x: 250, y: 300, position: 'b', visible: true },
+        ],
+        lines: [],
+        circles: [],
+        angles: [],
+      },
+      interactionSpec: {
+        enabled: false,
+        toolsAllowed: [],
+        evaluation: { mode: 'none' },
+      },
+    },
+    hint: DEFAULT_HINT_SOLUTION(),
+    solution: DEFAULT_HINT_SOLUTION(),
+    fullSolution: DEFAULT_HINT_SOLUTION(),
+  }),
+
+  question_axis: (): QuestionAxisBlock => ({
+    id: generateId(),
+    type: 'question_axis',
+    prompt: DEFAULT_HINT_SOLUTION(),
+    axis: {
+      kind: 'cartesian',
+      units: 1,
+      grid: { enabled: true, color: '#e0e0e0' },
+      axes: {
+        showNumbers: true,
+        showLabels: true,
+        ticks: 1,
+        labels: { x: 'x', y: 'y' },
+        origin: { x: 0, y: 0 },
+      },
+      viewport: { xMin: -10, xMax: 10, yMin: -10, yMax: 10 },
+      elements: { points: [], graphs: [] },
+    },
+    hint: DEFAULT_HINT_SOLUTION(),
+    solution: DEFAULT_HINT_SOLUTION(),
+    fullSolution: DEFAULT_HINT_SOLUTION(),
   }),
 }
