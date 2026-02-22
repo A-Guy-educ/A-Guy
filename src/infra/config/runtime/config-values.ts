@@ -35,6 +35,7 @@ type PayloadGetter = () => Promise<Payload>
 
 let lazyPayloadGetter: PayloadGetter | null = null
 let lazyLoadAttempted = false
+let lazyLoadingPromise: Promise<boolean> | null = null
 
 /**
  * Register a Payload getter for lazy config loading
@@ -47,44 +48,49 @@ export function setPayloadGetterForLazyLoading(getter: PayloadGetter): void {
 }
 
 /**
- * Check if lazy loading is configured
- */
-function hasLazyLoading(): boolean {
-  return lazyPayloadGetter !== null && !lazyLoadAttempted
-}
-
-/**
- * Attempt lazy loading of config values
- * Returns true if loaded successfully, false otherwise
+ * Attempt lazy loading of config values.
+ * Uses a shared promise so concurrent callers wait for the same load
+ * instead of failing when lazyLoadAttempted is already set.
  */
 async function tryLazyLoad(): Promise<boolean> {
-  if (!lazyPayloadGetter || lazyLoadAttempted) {
-    return false
-  }
+  if (!lazyPayloadGetter) return false
+
+  // If a load is already in progress, wait for it
+  if (lazyLoadingPromise) return lazyLoadingPromise
+
+  if (lazyLoadAttempted) return false
 
   lazyLoadAttempted = true
-
-  try {
-    const payload = await lazyPayloadGetter()
-    await loadConfigValues(payload)
-    return true
-  } catch (error) {
-    // Log error but don't prevent the function from throwing
-    if (typeof console !== 'undefined' && console?.warn) {
-      console.warn('Failed to lazily load config values:', error)
+  lazyLoadingPromise = (async () => {
+    try {
+      const payload = await lazyPayloadGetter!()
+      await loadConfigValues(payload)
+      return true
+    } catch (error) {
+      if (typeof console !== 'undefined' && console?.warn) {
+        console.warn('Failed to lazily load config values:', error)
+      }
+      return false
+    } finally {
+      lazyLoadingPromise = null
     }
-    return false
-  }
+  })()
+
+  return lazyLoadingPromise
 }
 
 // ============================================
 // Module-Level State (Process Singleton)
 // ============================================
 
+/** How often to refresh cached config values from the DB (ms). */
+const CONFIG_CACHE_TTL_MS = 60_000 // 60 seconds
+
 let configValuesCache: ConfigValuesCache | null = null
 let lastLoadConfigValuesResult: LoadConfigValuesResult | null = null
 let defaultTenantId: string | null = null
 let defaultTenantLoaded = false
+let cacheLoadedAtMs: number | null = null
 
 // ============================================
 // Type Guards & Validators
@@ -101,15 +107,32 @@ function assertServerSide(): void {
 }
 
 /**
- * Check if config values have been loaded, or try lazy load
+ * Check if the in-memory cache has exceeded its TTL
+ */
+function isCacheStale(): boolean {
+  if (!cacheLoadedAtMs) return false
+  return Date.now() - cacheLoadedAtMs > CONFIG_CACHE_TTL_MS
+}
+
+/**
+ * Check if config values have been loaded, or try lazy load.
+ * Also triggers a background refresh when the cache exceeds its TTL.
  */
 async function assertLoadedOrLazyLoad(): Promise<void> {
-  if (configValuesCache) {
-    return // Already loaded
+  // If cache exists but is stale, clear it so lazy loading re-fetches
+  if (configValuesCache && isCacheStale() && lazyPayloadGetter) {
+    configValuesCache = null
+    lastLoadConfigValuesResult = null
+    lazyLoadAttempted = false
+    lazyLoadingPromise = null
   }
 
-  // Try lazy loading if configured
-  if (hasLazyLoading()) {
+  if (configValuesCache) {
+    return // Already loaded and within TTL
+  }
+
+  // Try lazy loading if configured (also waits for in-progress loads)
+  if (lazyPayloadGetter) {
     const loaded = await tryLazyLoad()
     if (loaded) {
       return // Lazy load succeeded
@@ -242,6 +265,7 @@ export async function loadConfigValues(
         domainCount: values.size,
       },
     }
+    cacheLoadedAtMs = Date.now()
 
     const duration = Date.now() - startTime
 
@@ -283,6 +307,8 @@ export async function reloadConfigValues(payload: Payload): Promise<LoadConfigVa
   defaultTenantId = null
   defaultTenantLoaded = false
   lazyLoadAttempted = false
+  lazyLoadingPromise = null
+  cacheLoadedAtMs = null
 
   return loadConfigValues(payload)
 }
@@ -468,6 +494,8 @@ export function clearConfigValuesCache(): void {
   defaultTenantId = null
   defaultTenantLoaded = false
   lazyLoadAttempted = false
+  lazyLoadingPromise = null
+  cacheLoadedAtMs = null
 }
 
 /**

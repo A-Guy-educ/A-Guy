@@ -274,6 +274,16 @@
       "chatAuthRequired": "Please log in to access admin chat"
     }
   },
+  "accessControl": {
+    "mandatoryTitle": "Sign in Required",
+    "mandatoryDescription": "Sign in with Google to access this content.",
+    "gatedWarningTitle": "Free preview ending soon",
+    "gatedLockedTitle": "Sign in to Continue",
+    "gatedLockedDescription": "Your free preview has ended. Sign in with Google to keep learning.",
+    "signInPrompt": "Sign in to unlock full access",
+    "warningCountdown": "{{seconds}}s remaining",
+    "browseCourses": "Browse Courses"
+  },
   "study": {
     "loading": "Loading...",
     "chooseCourse": "Choose Course",

@@ -274,6 +274,16 @@
       "chatAuthRequired": "אנא התחבר כדי לגשת לצ'אט המנהלים"
     }
   },
+  "accessControl": {
+    "mandatoryTitle": "נדרשת התחברות",
+    "mandatoryDescription": "התחבר עם Google כדי לגשת לתוכן זה.",
+    "gatedWarningTitle": "התצוגה החינמית עומדת להסתיים",
+    "gatedLockedTitle": "התחבר כדי להמשיך",
+    "gatedLockedDescription": "התצוגה החינמית הסתיימה. התחבר עם Google כדי להמשיך ללמוד.",
+    "signInPrompt": "התחבר כדי לפתוח גישה מלאה",
+    "warningCountdown": "{{seconds}} שניות נותרו",
+    "browseCourses": "עיון בקורסים"
+  },
   "study": {
     "loading": "טוען...",
     "chooseCourse": "בחר קורס",

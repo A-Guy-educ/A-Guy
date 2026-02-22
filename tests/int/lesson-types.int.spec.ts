@@ -56,6 +56,8 @@ describe('Lesson types', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        pageAccessType: 'free',
+        accessType: 'free',
       },
     })
     courseId = course.id
@@ -111,6 +113,7 @@ describe('Lesson types', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        accessType: 'inherit',
       },
     })
     lessonIds.push(lesson.id)
@@ -127,6 +130,7 @@ describe('Lesson types', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentionally omitting 'type' to test default
       } as any,
     })
     lessonIds.push(lesson.id)
@@ -144,6 +148,7 @@ describe('Lesson types', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        accessType: 'inherit',
       },
     })
     lessonIds.push(lesson.id)
@@ -167,6 +172,7 @@ describe('Lesson types', () => {
           status: 'published',
           isActive: true,
           tenant: tenantId,
+          accessType: 'inherit',
         },
       }),
     ).rejects.toThrow()

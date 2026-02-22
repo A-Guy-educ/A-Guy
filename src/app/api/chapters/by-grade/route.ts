@@ -1,8 +1,12 @@
+import '@/infra/config/server-init'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { queryChaptersByGrade } from '@/server/repos/queries/chapters'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import type { Lesson } from '@/payload-types'
+import { DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
+import { SystemParams } from '@/infra/config/system-params'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -17,6 +21,10 @@ export async function GET(request: NextRequest) {
     const course = chapters[0]?.course
     const courseSlug =
       typeof course === 'object' && course !== null && 'slug' in course ? course.slug : ''
+    const coursePageAccessType =
+      typeof course === 'object' && course !== null && 'pageAccessType' in course
+        ? (course.pageAccessType ?? DEFAULT_PAGE_ACCESS_TYPE)
+        : DEFAULT_PAGE_ACCESS_TYPE
 
     // Fetch all lessons for all chapters (batch query for efficiency)
     const chapterIds = chapters.map((chapter) => chapter.id)
@@ -71,9 +79,17 @@ export async function GET(request: NextRequest) {
       lessons: lessonsByChapter[chapter.id] || [],
     }))
 
+    const [gatedDelayMs, gatedWarningMs] = await Promise.all([
+      SystemParams.getGatedDelayMs(),
+      SystemParams.getGatedWarningMs(),
+    ])
+
     return NextResponse.json({
       chapters: chaptersWithLessons,
       courseSlug,
+      coursePageAccessType,
+      gatedDelayMs,
+      gatedWarningMs,
     })
   } catch (error) {
     console.error('Error fetching chapters:', error)
