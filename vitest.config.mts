@@ -24,5 +24,9 @@ export default defineConfig({
     },
     maxConcurrency: 1, // Run tests sequentially to reduce parallel output
     outputFile: undefined, // Don't write to file (reduces I/O noise)
+    deps: {
+      inline: ['@payloadcms/ui'],
+    },
+    css: false,
   },
 })

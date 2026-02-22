@@ -34,5 +34,9 @@ export default defineConfig({
         'src/lib/ai/services/**', // These need more complex mocking
       ],
     },
+    deps: {
+      inline: ['@payloadcms/ui'],
+    },
+    css: false,
   },
 })
