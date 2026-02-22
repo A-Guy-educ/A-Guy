@@ -1,0 +1,14 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/homepage/GreetingFlow/index.tsx",
+    "src/app/(frontend)/account/_components/SelectedCourseCard.tsx",
+    "src/ui/web/components/HealthBadge.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "pipeline": "spec_execute_verify"
+}
