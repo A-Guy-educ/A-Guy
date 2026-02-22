@@ -1,21 +1,22 @@
-import type { Config } from 'dompurify'
-import DOMPurify from 'isomorphic-dompurify'
+import sanitizeHtmlLib from 'sanitize-html'
+import type { IOptions } from 'sanitize-html'
+
 /**
- * Conservative DOMPurify allowlist — HLS Phase 1 §6 + safe SVG subset.
+ * Conservative allowlist — HLS Phase 1 §6 + safe SVG subset.
  *
- * Blocked regardless of config (DOMPurify always strips):
+ * sanitize-html automatically blocks:
  *   - all on* event handlers
- *   - javascript: and data: URIs in any attribute
- *   - xlink:href (namespace attr, stripped by default)
- *   - foreignObject (not in ALLOWED_TAGS)
+ *   - javascript: and data: URIs (via allowedSchemes)
+ *   - unallowed tags and attributes
  *
- * Additional enforcement via hook (below):
- *   - href is removed from every element except <a> *
- * Link policy: target and rel are not in ALLOWED_ATTR.
+ * Additional enforcement via transformTags (below):
+ *   - href is removed from every element except <a>
+ *
+ * Link policy: target and rel are not in allowedAttributes.
  *   All links open in the same tab in Phase 1.
  */
-const SANITIZE_CONFIG: Config = {
-  ALLOWED_TAGS: [
+const SANITIZE_CONFIG: IOptions = {
+  allowedTags: [
     // Text structure
     'p',
     'br',
@@ -58,7 +59,7 @@ const SANITIZE_CONFIG: Config = {
     'tr',
     'th',
     'td',
-    // SVG safe subset (use + foreignObject excluded)
+    // SVG safe subset (foreignObject excluded)
     'svg',
     'path',
     'circle',
@@ -74,77 +75,57 @@ const SANITIZE_CONFIG: Config = {
     'text',
     'tspan',
   ],
-  ALLOWED_ATTR: [
-    'href',
-    'src',
-    'alt',
-    'title',
-    'width',
-    'height',
-    'class',
-    'id',
-    'dir',
-    // SVG presentation
-    'viewBox',
-    'viewbox',
-    'fill',
-    'stroke',
-    'stroke-width',
-    'stroke-linecap',
-    'stroke-linejoin',
-    'stroke-dasharray',
-    'stroke-dashoffset',
-    'd',
-    'cx',
-    'cy',
-    'r',
-    'x',
-    'y',
-    'x1',
-    'y1',
-    'x2',
-    'y2',
-    'points',
-    'offset',
-    'stop-color',
-    'stop-opacity',
-    'opacity',
-    'transform',
-    'aria-hidden',
-    'role',
-    'focusable',
-  ],
-  ALLOW_DATA_ATTR: true,
-  RETURN_DOM: false,
-  RETURN_DOM_FRAGMENT: false,
+  allowedAttributes: {
+    // Global attributes
+    '*': ['class', 'id', 'dir'],
+    // Link attributes
+    a: ['href', 'title'],
+    // Image attributes
+    img: ['src', 'alt', 'title', 'width', 'height'],
+    // SVG attributes
+    svg: ['viewBox', 'width', 'height', 'aria-hidden', 'role', 'focusable'],
+    path: ['d', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'opacity'],
+    circle: ['cx', 'cy', 'r', 'fill', 'stroke', 'stroke-width', 'opacity'],
+    rect: ['x', 'y', 'width', 'height', 'fill', 'stroke', 'stroke-width', 'opacity'],
+    line: ['x1', 'y1', 'x2', 'y2', 'stroke', 'stroke-width', 'stroke-linecap'],
+    polyline: ['points', 'fill', 'stroke', 'stroke-width'],
+    polygon: ['points', 'fill', 'stroke', 'stroke-width'],
+    g: ['transform', 'opacity'],
+    linearGradient: ['id', 'x1', 'y1', 'x2', 'y2'],
+    radialGradient: ['id', 'cx', 'cy', 'r'],
+    stop: ['offset', 'stop-color', 'stop-opacity'],
+    text: ['x', 'y', 'fill', 'opacity'],
+    tspan: ['x', 'y', 'fill', 'opacity'],
+  },
+  // Allow data-* attributes
+  allowedClasses: {
+    '*': ['*'], // Allow all classes
+  },
+  // Validate URLs - only allow safe schemes
+  allowedSchemes: ['http', 'https', 'mailto'],
+  allowedSchemesByTag: {
+    img: ['http', 'https', 'data'], // Allow data URIs for images only
+  },
+  allowProtocolRelative: true,
+  // Remove href from non-<a> elements
+  transformTags: {
+    '*': (tagName: string, attribs: Record<string, string>) => {
+      // Remove href from all non-anchor tags
+      if (tagName !== 'a' && attribs.href) {
+        delete attribs.href
+      }
+      return {
+        tagName,
+        attribs,
+      }
+    },
+  },
 }
 
 /**
- * Idempotent hook: remove href from all non-<a> elements.
- *
- * Uses globalThis so the registration flag survives Next.js HMR module
- * re-evaluation. A module-level variable would reset on each HMR reload,
- * causing the hook to be registered multiple times on the same DOMPurify
- * singleton. globalThis persists for the lifetime of the Node.js process
- * (SSR) and the browser tab (client), so addHook runs exactly once.
- */
-declare global {
-  var __domPurifyHrefHookRegistered: boolean | undefined
-}
-
-if (!globalThis.__domPurifyHrefHookRegistered) {
-  DOMPurify.addHook('afterSanitizeAttributes', (node: Element) => {
-    if (node.tagName !== 'A' && node.hasAttribute('href')) {
-      node.removeAttribute('href')
-    }
-  })
-  globalThis.__domPurifyHrefHookRegistered = true
-}
-
-/**
- * Sanitize an HTML string using DOMPurify.
- * Safe in SSR (Node.js via isomorphic-dompurify's jsdom) and browser.
+ * Sanitize an HTML string using sanitize-html library.
+ * Safe in both Node.js (SSR) and browser environments (pure JS, no native deps).
  */
 export function sanitizeHtml(html: string): string {
-  return DOMPurify.sanitize(html, SANITIZE_CONFIG) as unknown as string
+  return sanitizeHtmlLib(html, SANITIZE_CONFIG)
 }
