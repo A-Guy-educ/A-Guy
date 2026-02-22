@@ -2,8 +2,8 @@ import { z } from 'zod'
 
 // Use shared types for API surface (matching client)
 // Zod schemas are used for validation only
-export type LatexBlock = import('@/shared/exercise-content/types').LatexBlock
-export type ContentData = import('@/shared/exercise-content/types').ContentData
+export type LatexBlock = import('./types').LatexBlock
+export type ContentData = import('./types').ContentData
 
 // Sanitization utility for HTML blocks
 import { sanitizeHtml } from '@/infra/utils/sanitize-html'

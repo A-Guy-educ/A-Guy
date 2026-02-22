@@ -199,8 +199,10 @@ export function postComment(issueNumber: number, body: string): void {
   if (!issueNumber) return
 
   try {
-    execSync(`gh issue comment ${issueNumber} --body "${escapeShell(body)}"`, {
-      stdio: 'inherit',
+    // Use --body-file - to pipe body via stdin, preserving newlines and special characters
+    execSync(`gh issue comment ${issueNumber} --body-file -`, {
+      input: body,
+      stdio: ['pipe', 'inherit', 'inherit'],
     })
   } catch (error) {
     console.error(`Failed to post comment to issue ${issueNumber}:`, error)
@@ -226,10 +228,76 @@ export function editComment(_commentId: string, _body: string): void {
   console.warn('editComment not implemented')
 }
 
-// TODO: Remove or implement - gh issue comments is not a valid command
-export function getIssueComments(_issueNumber: number): string[] {
-  console.warn('getIssueComments not implemented - returns empty array')
-  return []
+/**
+ * Get the latest comment on an issue (not from the bot, not a /cody command)
+ */
+export function getLatestIssueComment(issueNumber: number, excludeAuthor?: string): string | null {
+  if (!issueNumber) return null
+
+  try {
+    const exclude = excludeAuthor || 'github-actions[bot]'
+    // Get comments, exclude bot and /cody commands, return the latest plain-text answer
+    const output = execSync(
+      `gh issue view ${issueNumber} --json comments --jq '[.comments[] | select(.author.login != "${exclude}" and (.body | startswith("/cody") | not))] | last | .body'`,
+      { encoding: 'utf-8' },
+    )
+    return output.trim() || null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Discover task-id from a previous Cody run by parsing bot comments on the issue.
+ * Looks for "Task created: `XXXXXX-task-name`" in bot comments.
+ */
+export function discoverTaskIdFromIssue(issueNumber: number): string | null {
+  if (!issueNumber) return null
+
+  try {
+    const output = execSync(
+      `gh issue view ${issueNumber} --json comments --jq '[.comments[] | select(.author.login == "github-actions[bot]")] | .[].body'`,
+      { encoding: 'utf-8' },
+    )
+    // Look for "Task created: `XXXXXX-task-name`"
+    const match = output.match(/Task created: `(\d{6}-[a-zA-Z0-9-]+)`/)
+    return match ? match[1] : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Ensure the "Task created" marker comment exists on the issue.
+ *
+ * This is critical for task-id discovery: when someone runs `/cody` on an issue,
+ * the pipeline discovers the existing task-id by searching for a bot comment
+ * containing "Task created: `XXXXXX-task-name`". Without this marker,
+ * subsequent runs auto-generate a new task-id instead of reusing the existing one.
+ *
+ * Previously, the marker was only posted when task.md was created from the issue body
+ * (inside runSpecPipeline). This meant dispatch-triggered runs or runs where task.md
+ * already existed never posted the marker, breaking discovery on subsequent issue-based runs.
+ */
+export function ensureTaskMarkerComment(issueNumber: number, taskId: string): void {
+  if (!issueNumber || !taskId) return
+
+  // Check if marker already exists for ANY task-id on this issue
+  const existingTaskId = discoverTaskIdFromIssue(issueNumber)
+  if (existingTaskId) {
+    if (existingTaskId === taskId) {
+      console.log(`Task marker already exists on issue #${issueNumber} for ${taskId}`)
+    } else {
+      console.log(
+        `Task marker exists on issue #${issueNumber} for ${existingTaskId} (current: ${taskId})`,
+      )
+    }
+    return
+  }
+
+  // No marker found — post one
+  console.log(`Posting task marker comment on issue #${issueNumber} for ${taskId}`)
+  postComment(issueNumber, `🎯 Task created: \`${taskId}\`\n\nCody will now process this task.`)
 }
 
 // ============================================================================
@@ -312,6 +380,8 @@ export function parseCliArgs(argv: string[]): CodyInput {
       // For comment triggers: parse the raw comment body
       // Note: issueNumber may not be parsed yet, so we pass undefined and merge later
       const commentBody = normalized[i + 1]
+      // Store raw comment body for answer extraction later
+      input.commentBody = commentBody
       const parsed = parseCommentBody(commentBody, undefined)
 
       if (!parsed.success) {
@@ -321,7 +391,7 @@ export function parseCliArgs(argv: string[]): CodyInput {
       // Merge parsed values into input (issueNumber will be merged after --issue-number is processed)
       if (parsed.input) {
         input.mode = parsed.input.mode
-        input.taskId = parsed.input.taskId
+        if (parsed.input.taskId) input.taskId = parsed.input.taskId
         input.dryRun = parsed.input.dryRun
         input.feedback = parsed.input.feedback
         input.fromStage = parsed.input.fromStage
@@ -347,18 +417,30 @@ export function parseCliArgs(argv: string[]): CodyInput {
 
   // Auto-generate taskId if not provided
   if (!input.taskId) {
-    if (input.file) {
-      // Generate from filename: --file path/to/feature.md -> 260218-feature
-      const stem = path.basename(input.file, path.extname(input.file))
-      const datePrefix = new Date().toISOString().slice(2, 10).replace(/-/g, '')
-      input.taskId = `${datePrefix}-${stem.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase()}`
-    } else {
-      // Fallback: auto-generate from date
-      const datePrefix = new Date().toISOString().slice(2, 10).replace(/-/g, '')
-      const counter = Math.floor(Math.random() * 99) + 1
-      input.taskId = `${datePrefix}-auto-${counter.toString().padStart(2, '0')}`
+    // Try to discover task-id from previous bot comments on the issue
+    if (input.issueNumber && input.triggerType === 'comment') {
+      const discovered = discoverTaskIdFromIssue(input.issueNumber)
+      if (discovered) {
+        input.taskId = discovered
+        console.log(`Discovered task ID from issue: ${input.taskId}`)
+      }
     }
-    console.log(`Auto-generated task ID: ${input.taskId}`)
+
+    // If still no task-id, generate one
+    if (!input.taskId) {
+      if (input.file) {
+        // Generate from filename: --file path/to/feature.md -> 260218-feature
+        const stem = path.basename(input.file, path.extname(input.file))
+        const datePrefix = new Date().toISOString().slice(2, 10).replace(/-/g, '')
+        input.taskId = `${datePrefix}-${stem.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase()}`
+      } else {
+        // Fallback: auto-generate from date
+        const datePrefix = new Date().toISOString().slice(2, 10).replace(/-/g, '')
+        const counter = Math.floor(Math.random() * 99) + 1
+        input.taskId = `${datePrefix}-auto-${counter.toString().padStart(2, '0')}`
+      }
+      console.log(`Auto-generated task ID: ${input.taskId}`)
+    }
   }
 
   if (!validateTaskId(input.taskId)) {
@@ -447,16 +529,11 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
     }
   }
 
-  // If no task-id provided, generate a new one
-  if (!taskId) {
-    const datePrefix = new Date().toISOString().slice(2, 10).replace(/-/g, '')
-    const counter = Math.floor(Math.random() * 99) + 1
-    taskId = `${datePrefix}-auto-${counter.toString().padStart(2, '0')}`
-    console.log(`No task-id provided, generated: ${taskId}`)
-  }
+  // Don't auto-generate task-id here — let parseCliArgs handle discovery + fallback generation
+  // This allows discoverTaskIdFromIssue to find the task-id from previous bot comments
 
-  // Validate task-id format
-  if (!validateTaskId(taskId)) {
+  // Validate task-id format (skip if empty — parseCliArgs will handle it)
+  if (taskId && !validateTaskId(taskId)) {
     return {
       success: false,
       error: `Invalid task-id format: ${taskId}`,
@@ -475,8 +552,8 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
     const taskIdLen = taskId.length
     optionsStr = rest.slice(taskIdLen).trim()
   } else {
-    // Auto-generated task-id: rest is empty (options were lost to auto-gen)
-    optionsStr = ''
+    // No task-id provided: rest is all options
+    optionsStr = rest.trim()
   }
 
   const options = optionsStr.split(/\s+/)
@@ -543,16 +620,6 @@ export function validateAuth(): void {
 // ============================================================================
 // Formatting Helpers
 // ============================================================================
-
-function escapeShell(str: string): string {
-  // Escape backslashes first, then other shell metacharacters
-  return str
-    .replace(/\\/g, '\\\\')
-    .replace(/"/g, '\\"')
-    .replace(/`/g, '\\`')
-    .replace(/\$/g, '\\$')
-    .replace(/\n/g, '\\n')
-}
 
 export function formatDuration(ms: number): string {
   const seconds = Math.floor(ms / 1000)

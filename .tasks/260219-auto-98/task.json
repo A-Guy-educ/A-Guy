@@ -1,0 +1,14 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/homepage/GreetingFlow/index.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The typing speed in GreetingFlow is set to 100ms and needs to be doubled to 200ms to reduce speed by half"
+  ],
+  "pipeline": "spec_execute_verify"
+}

@@ -31,10 +31,10 @@ export const DEFAULT_TIMEOUT = 10 * 60_000
 
 /** Stage-specific timeouts in milliseconds */
 export const STAGE_TIMEOUTS: Record<string, number> = {
-  architect: 5 * 60_000,
+  architect: 15 * 60_000,
   build: 30 * 60_000,
   test: 10 * 60_000,
-  verify: 5 * 60_000,
+  verify: 10 * 60_000,
   auditor: 5 * 60_000,
   pr: 5 * 60_000,
 }

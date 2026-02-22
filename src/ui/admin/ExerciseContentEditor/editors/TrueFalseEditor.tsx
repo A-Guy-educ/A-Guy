@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import type { QuestionSelectTrueFalseBlock } from '@/shared/exercise-content/types'
+import type { QuestionSelectTrueFalseBlock } from '@/server/payload/collections/Exercises/types'
 import { InlineRichTextEditor } from './InlineRichTextEditor'
 import { HintSolutionPanel } from './HintSolutionPanel'
 

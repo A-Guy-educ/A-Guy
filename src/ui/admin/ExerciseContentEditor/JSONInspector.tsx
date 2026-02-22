@@ -1,6 +1,6 @@
 'use client'
 
-import type { ContentBlock } from '@/shared/exercise-content/types'
+import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
 import { AlignLeft, Check, Copy, Edit, RotateCcw, X } from 'lucide-react'
 import { Highlight, themes } from 'prism-react-renderer'
 import React from 'react'

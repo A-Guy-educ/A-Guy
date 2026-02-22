@@ -1,6 +1,6 @@
 import type { FieldHook } from 'payload'
 
-import { formatSlug } from '@/utilities/formatSlug'
+import { formatSlug } from './formatSlug'
 
 async function getPayloadInstance() {
   const { getPayload } = await import('payload')

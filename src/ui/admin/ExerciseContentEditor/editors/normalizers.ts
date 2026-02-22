@@ -3,7 +3,10 @@
  * These functions enforce invariants to prevent invalid states.
  */
 
-import type { QuestionSelectMcqBlock } from '@/shared/exercise-content/types'
+import type {
+  QuestionSelectMcqBlock,
+  QuestionTableBlock,
+} from '@/server/payload/collections/Exercises/types'
 
 /**
  * Normalize MCQ block: sync multiSelect with selectionMode.
@@ -158,8 +161,6 @@ export function toggleCorrectOption(
 /**
  * Table normalizers - Stage 2
  */
-
-import type { QuestionTableBlock } from '@/shared/exercise-content/types'
 
 /**
  * When header count changes, resize each row and update columnAlignment.

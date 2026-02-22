@@ -1,7 +1,7 @@
 'use client'
 
-import { ExerciseBlockDefaults, generateId } from '@/shared/exercise-content/defaults'
-import type { ContentBlock } from '@/shared/exercise-content/types'
+import { ExerciseBlockDefaults, generateId } from '@/server/payload/collections/Exercises/defaults'
+import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
 import { useField, useForm, useLocale } from '@payloadcms/ui'
 import { Code, Copy, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
 import React from 'react'
@@ -478,7 +478,9 @@ function renderQuestionEditor(
         canDelete={blockCount > 1}
       >
         <TrueFalseEditor
-          block={block as import('@/shared/exercise-content/types').QuestionSelectTrueFalseBlock}
+          block={
+            block as import('@/server/payload/collections/Exercises/types').QuestionSelectTrueFalseBlock
+          }
           onChange={onChange}
         />
       </QuestionBlockWrapper>
@@ -499,7 +501,9 @@ function renderQuestionEditor(
         canDelete={blockCount > 1}
       >
         <McqEditor
-          block={block as import('@/shared/exercise-content/types').QuestionSelectMcqBlock}
+          block={
+            block as import('@/server/payload/collections/Exercises/types').QuestionSelectMcqBlock
+          }
           onChange={onChange}
         />
       </QuestionBlockWrapper>
@@ -520,7 +524,9 @@ function renderQuestionEditor(
         canDelete={blockCount > 1}
       >
         <FreeResponseEditor
-          block={block as import('@/shared/exercise-content/types').QuestionFreeResponseBlock}
+          block={
+            block as import('@/server/payload/collections/Exercises/types').QuestionFreeResponseBlock
+          }
           onChange={onChange}
         />
       </QuestionBlockWrapper>
@@ -541,7 +547,7 @@ function renderQuestionEditor(
         canDelete={blockCount > 1}
       >
         <TableEditor
-          block={block as import('@/shared/exercise-content/types').QuestionTableBlock}
+          block={block as import('@/server/payload/collections/Exercises/types').QuestionTableBlock}
           onChange={onChange}
         />
       </QuestionBlockWrapper>

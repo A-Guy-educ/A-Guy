@@ -23,6 +23,112 @@ import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Check if questions.md contains actual questions that need answering
+ */
+function checkForQuestions(questionsPath: string): boolean {
+  const content = fs.readFileSync(questionsPath, 'utf-8').trim()
+
+  // If file is empty or just placeholder text, no questions
+  if (!content || content.length < 10) {
+    return false
+  }
+
+  // Check for question patterns:
+  // - Lines starting with numbers followed by period or parenthesis (1. 2. 1) 2))
+  // - Lines containing "?" character
+  // - Sections like "## Questions" or "### Clarifications Needed"
+  const hasNumberedQuestions = /^\d+[.)]\s+/m.test(content)
+  const hasQuestionMarks = /\?/.test(content)
+  const hasQuestionHeader = /^#{1,3}\s*(Questions|Clarifications|Needs Clarification)/m.test(
+    content,
+  )
+
+  // Also check for "APPROVED" or "No clarifications needed" as indicators of no questions
+  const isApproved = /^#{1,3}\s*APPROVED/im.test(content)
+  const noClarifications = /no clarifications needed/i.test(content)
+
+  // Has questions if there's question content AND not explicitly approved
+  const hasQuestionContent = hasNumberedQuestions || hasQuestionMarks || hasQuestionHeader
+
+  return hasQuestionContent && !isApproved && !noClarifications
+}
+
+/**
+ * Extract the answer from a GitHub comment body
+ * The comment format is: /cody [command] [task-id] [optional answer text]
+ */
+function extractAnswerFromComment(commentBody: string): string | null {
+  // Decode JSON-encoded body if needed (from jq -Rs .)
+  let decoded = commentBody
+  if (decoded.startsWith('"') && decoded.endsWith('"')) {
+    try {
+      decoded = JSON.parse(decoded)
+    } catch {
+      // Use raw value if JSON.parse fails
+    }
+  }
+
+  // Normalize literal \n to real newlines
+  decoded = decoded.replace(/\\n/g, '\n')
+
+  // Remove /cody prefix and command
+  const withoutCody = decoded.replace(/^\/cody\s*/, '').trim()
+
+  // If there's content after the command, treat it as the answer
+  if (withoutCody.length > 0) {
+    // Remove task-id if present (format: /cody [task-id] or /cody full [task-id])
+    const taskIdMatch = withoutCody.match(/^([a-z]+\s+)?([0-9]{6}-[a-z0-9-]+\s*)/i)
+    let answer = withoutCody
+    if (taskIdMatch) {
+      answer = withoutCody.slice(taskIdMatch[0].length).trim()
+    }
+
+    // If there's answer content, return it
+    if (answer.length > 0) {
+      return answer
+    }
+  }
+
+  return null
+}
+
+/**
+ * Commit and push task files to the feature branch in CI.
+ * This ensures subsequent /cody calls have access to the task state.
+ */
+function commitTaskFilesCI(input: CodyInput, taskDir: string): void {
+  if (input.local || input.dryRun) return
+
+  try {
+    // Get task_type from task.json to determine branch prefix
+    const taskJsonPath = path.join(taskDir, 'task.json')
+    let taskType = 'implement_feature' // default
+    if (fs.existsSync(taskJsonPath)) {
+      const taskData = JSON.parse(fs.readFileSync(taskJsonPath, 'utf-8'))
+      taskType = taskData.task_type || 'implement_feature'
+    }
+
+    // Ensure feature branch exists
+    ensureFeatureBranch(input.taskId, taskType)
+
+    // Commit task files
+    execSync(`git add ${taskDir}`, { cwd: process.cwd(), stdio: 'inherit' })
+    execSync(`git commit --no-gpg-sign -m "cody: save task files for ${input.taskId}"`, {
+      cwd: process.cwd(),
+      stdio: 'inherit',
+    })
+    execSync(`git push -u origin HEAD`, { cwd: process.cwd(), stdio: 'inherit' })
+    console.log('[commit] Task files committed and pushed')
+  } catch {
+    console.log('[commit] No changes to commit (or git error)')
+  }
+}
+
 // Import utilities from cody-utils
 import {
   parseCliArgs,
@@ -35,6 +141,8 @@ import {
   postComment,
   formatStatusComment,
   getIssueBody,
+  getLatestIssueComment,
+  ensureTaskMarkerComment,
   type CodyInput,
 } from './cody-utils'
 
@@ -96,6 +204,13 @@ async function main() {
   // Initialize status
   const status = initStatus(input)
 
+  // Ensure "Task created" marker comment exists on the issue for future discovery.
+  // This must run early (before any pipeline mode) so that subsequent /cody calls
+  // on the same issue can discover the task-id from the bot comment marker.
+  if (input.issueNumber) {
+    ensureTaskMarkerComment(input.issueNumber, input.taskId)
+  }
+
   // Route based on mode
   try {
     switch (input.mode) {
@@ -122,7 +237,9 @@ async function main() {
     console.log('\n✅ Cody completed successfully')
 
     if (input.issueNumber) {
-      postComment(input.issueNumber, formatStatusComment(input, status))
+      // Read fresh status from disk to include all stage info
+      const latestStatus = readStatus(input.taskId) || status
+      postComment(input.issueNumber, formatStatusComment(input, latestStatus))
     }
   } catch (error) {
     completeStatus(input.taskId, 'failed')
@@ -175,12 +292,6 @@ async function runSpecPipeline(
       if (issueBody) {
         fs.writeFileSync(taskMdPath, `# Task\n\n${issueBody}\n`)
         console.log(`Created task.md from issue #${input.issueNumber}`)
-
-        // Comment with assigned task ID
-        postComment(
-          input.issueNumber,
-          `🎯 Task created: \`${input.taskId}\`\n\nCody will now process this task.`,
-        )
       } else {
         throw new Error(
           `task.md not found in .tasks/${input.taskId}/ and issue #${input.issueNumber} has no body. Create it first.`,
@@ -234,14 +345,94 @@ async function runSpecPipeline(
       retries: result.retries,
       outputFile: path.basename(outputFile),
     })
+
+    // Validate task.json immediately after taskify to catch LLM mistakes early
+    if (stage === 'taskify' && fs.existsSync(outputFile)) {
+      try {
+        readTask(taskDir) // normalizes + validates; writes back corrected values
+        console.log('  ✓ task.json validated and normalized')
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error)
+        console.error(`  ❌ task.json invalid after normalization: ${msg}`)
+        // Delete invalid file so retry can recreate it
+        fs.unlinkSync(outputFile)
+        updateStageStatus(input.taskId, stage, 'failed', {
+          error: `Invalid task.json: ${msg}`,
+        })
+        throw new Error(`Taskify produced invalid task.json: ${msg}`)
+      }
+    }
+
     console.log(`✓ ${stage} complete`)
   }
 
-  // Create clarified.md if needed (for impl pipeline)
+  // If questions.md exists and user provided answers (either via comment body or latest issue comment),
+  // create clarified.md
+  const existingQuestionsPath = path.join(taskDir, 'questions.md')
+  if (fs.existsSync(existingQuestionsPath)) {
+    let answer: string | null = null
+
+    // Try to get answer from:
+    // 1. Comment body (if user wrote "/cody answer text")
+    // 2. Latest comment on the issue (plain text answer)
+    if (input.commentBody && input.triggerType === 'comment') {
+      answer = extractAnswerFromComment(input.commentBody)
+    }
+
+    // If no answer from comment body, check latest issue comment
+    if (!answer && input.issueNumber && input.triggerType === 'comment') {
+      // Get the latest comment (not from bot) as the answer
+      answer = getLatestIssueComment(input.issueNumber, 'github-actions[bot]')
+    }
+
+    if (answer) {
+      const clarifiedPath = path.join(taskDir, 'clarified.md')
+      fs.writeFileSync(clarifiedPath, `# Clarified\n\n${answer}\n`)
+      console.log('📝 Created clarified.md from user answer\n')
+    }
+  }
+
+  // Check if there are pending questions from clarify stage
+  // Skip if clarified.md already exists (user already answered or was just created above)
+  const clarifiedExists = fs.existsSync(path.join(taskDir, 'clarified.md'))
+  const questionsPath = path.join(taskDir, 'questions.md')
+  const hasQuestions =
+    !clarifiedExists && fs.existsSync(questionsPath) && checkForQuestions(questionsPath)
+
+  if (hasQuestions) {
+    // Questions exist - stop and ask for clarification
+    console.log('\n⚠️ Clarify stage has questions that need answering')
+    console.log('Stopping pipeline. Answer the questions and call /cody again to proceed.\n')
+
+    // Post comment asking for clarification
+    if (input.issueNumber) {
+      const questionsContent = fs.readFileSync(questionsPath, 'utf-8')
+      const preview = questionsContent.slice(0, 1500)
+      postComment(
+        input.issueNumber,
+        `🔄 Cody stopped at clarify stage - questions need answering:\n\n${preview}\n\nPlease answer these questions and call \`/cody\` again to proceed with implementation.`,
+      )
+    }
+
+    // Don't create default clarified.md - let user provide clarifications
+    // Stop here - impl pipeline will run on subsequent /cody call
+    // Note: Don't call completeStatus here - let main() handle it
+
+    // Commit task files in CI (so next run has state)
+    commitTaskFilesCI(input, taskDir)
+
+    console.log('✅ Cody SPEC pipeline complete (waiting for clarification)')
+    return
+  }
+
+  // No questions - create default clarified.md and proceed
   const clarifiedPath = path.join(taskDir, 'clarified.md')
   if (!fs.existsSync(clarifiedPath)) {
     fs.writeFileSync(clarifiedPath, '# Clarified\n\nUse recommended answers.\n')
   }
+
+  // Commit task files in CI (after spec completes successfully)
+  commitTaskFilesCI(input, taskDir)
 
   console.log('\n✅ Cody SPEC pipeline complete')
 }
@@ -261,10 +452,23 @@ async function runImplPipeline(
     throw new Error(`clarified.md not found. Run spec pipeline first or create it.`)
   }
 
-  // Get task definition
-  const taskDef = readTask(taskDir)
+  // Get task definition (readTask now throws on invalid JSON/schema instead of process.exit)
+  let taskDef
+  try {
+    taskDef = readTask(taskDir)
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error(`\n❌ Failed to read task definition: ${msg}`)
+    throw new Error(`Invalid task.json: ${msg}`)
+  }
   if (!taskDef) {
     throw new Error(`task.json not found. Run spec pipeline first.`)
+  }
+
+  // Skip impl stages for spec-only pipelines
+  if (taskDef.pipeline === 'spec_only') {
+    console.log('Task pipeline is spec_only — skipping implementation stages.')
+    return
   }
 
   // Determine stages based on task type
@@ -423,6 +627,13 @@ async function runFullPipeline(
 
   // Run spec first
   await runSpecPipeline(input, status, backend)
+
+  // Check if spec stopped for questions (clarified.md won't exist)
+  const clarifiedPath = path.join(ensureTaskDir(input.taskId), 'clarified.md')
+  if (!fs.existsSync(clarifiedPath)) {
+    console.log('\n⏸️ Spec pipeline stopped for clarification. Skipping impl.')
+    return
+  }
 
   // Then impl
   await runImplPipeline(input, status, backend)

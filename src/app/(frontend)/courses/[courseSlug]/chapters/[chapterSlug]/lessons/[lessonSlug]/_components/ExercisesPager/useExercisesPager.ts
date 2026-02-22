@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Exercise } from '@/payload-types'
-import { getExerciseUrlParam } from '@/utilities/getExerciseUrlParam'
+import { getExerciseUrlParam } from './getExerciseUrlParam'
 
 type PageType = 'intro' | 'about' | 'exercise' | 'outro'
 

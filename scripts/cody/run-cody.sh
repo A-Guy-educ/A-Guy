@@ -10,8 +10,8 @@ echo "Mode: $MODE"
 echo "Dry run: $DRY_RUN"
 echo "Trigger: $TRIGGER_TYPE"
 
-# Post starting comment
-if [[ -n "${ISSUE_NUMBER:-}" ]]; then
+# Post starting comment (only when task-id is known)
+if [[ -n "${ISSUE_NUMBER:-}" ]] && [[ -n "${TASK_ID:-}" ]]; then
   gh issue comment "$ISSUE_NUMBER" --body "🔄 Cody starting for \`${TASK_ID}\` (mode: $MODE)
 Run: $RUN_URL"
 fi
@@ -34,6 +34,8 @@ pnpm cody:run \
   --mode="$MODE" \
   --issue-number="${ISSUE_NUMBER:-}" \
   --trigger-type="$TRIGGER_TYPE" \
+  ${RUN_ID:+--run-id="$RUN_ID"} \
+  ${RUN_URL:+--run-url="$RUN_URL"} \
   $DRY_RUN_FLAG \
   ${COMMENT_BODY_FLAG:+"$COMMENT_BODY_FLAG"} \
   ${FEEDBACK:+--feedback="$FEEDBACK"} \

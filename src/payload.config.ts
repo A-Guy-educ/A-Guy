@@ -119,8 +119,19 @@ export default buildConfig({
   db: mongooseAdapter({
     url: databaseUrl,
     connectOptions: {
-      // Reduce pool size for tests to avoid exhausting Atlas connection limits
-      maxPoolSize: process.env.VITEST ? 5 : 100,
+      // Hardened connection pool configuration to prevent Atlas connection exhaustion
+      // Tests: maxPoolSize=5 (default)
+      // Production: maxPoolSize=2 (default, configurable via MONGODB_MAX_POOL_SIZE)
+      // Rationale: With 500 connection limit, this allows 250 concurrent serverless instances
+      // vs only 5 instances with the previous maxPoolSize=100 setting
+      maxPoolSize: parseInt(
+        process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '2'),
+        10,
+      ),
+      // Allow pool to fully drain when idle
+      minPoolSize: 0,
+      // Close idle connections after 10 seconds
+      maxIdleTimeMS: 10000,
     },
   }),
   collections: [
