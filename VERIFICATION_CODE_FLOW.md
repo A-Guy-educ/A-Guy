@@ -184,3 +184,6 @@ The HtmlRichTextField correctly:
 - Generates real HTML tags when serializing
 - Returns true from paste command handler
 - Uses sanitizer that allows all required tags
+
+---
+*Last updated: 2026-02-22*
