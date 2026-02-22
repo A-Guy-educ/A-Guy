@@ -16,6 +16,7 @@ import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
+import { createLexicalToHtmlHook, createLexicalToHtmlAfterReadHook } from '../hooks/convertLexicalToHtml'
 
 const formatSlug = (val: string): string =>
   val
@@ -39,8 +40,10 @@ export const Courses: CollectionConfig = {
         }
         return data
       },
+      createLexicalToHtmlHook('description', 'descriptionHtml'),
     ],
     afterChange: [cascadeAdminTitle],
+    afterRead: [createLexicalToHtmlAfterReadHook('description', 'descriptionHtml')],
   },
   admin: {
     useAsTitle: 'title',
@@ -82,6 +85,15 @@ export const Courses: CollectionConfig = {
       editor: defaultLexical,
       admin: {
         description: 'Detailed description of the course',
+      },
+    },
+    {
+      name: 'descriptionHtml',
+      type: 'textarea',
+      admin: {
+        hidden: true,
+        readOnly: true,
+        description: 'Auto-generated HTML from description (for frontend rendering)',
       },
     },
     {

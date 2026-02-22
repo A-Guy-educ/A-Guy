@@ -78,7 +78,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
         <ChapterHeader
           chapterLabel={chapter.chapterLabel}
           title={chapter.title}
-          description={chapter.description}
+          descriptionHtml={chapter.descriptionHtml}
         />
 
         <section>

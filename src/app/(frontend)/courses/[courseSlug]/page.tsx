@@ -63,7 +63,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
         <CourseHeader
           courseLabel={course.courseLabel}
           title={course.title}
-          description={course.description}
+          descriptionHtml={course.descriptionHtml}
         />
 
         <section>

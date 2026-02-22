@@ -6,6 +6,7 @@ import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
 import { computeAdminTitle } from '../hooks/chapters/computeAdminTitle'
+import { createLexicalToHtmlHook, createLexicalToHtmlAfterReadHook } from '../hooks/convertLexicalToHtml'
 
 const formatSlug = (val: string): string =>
   val
@@ -31,7 +32,9 @@ export const Chapters: CollectionConfig = {
         return data
       },
       computeAdminTitle,
+      createLexicalToHtmlHook('description', 'descriptionHtml'),
     ],
+    afterRead: [createLexicalToHtmlAfterReadHook('description', 'descriptionHtml')],
   },
   admin: {
     useAsTitle: 'adminTitle',
@@ -81,6 +84,15 @@ export const Chapters: CollectionConfig = {
       editor: defaultLexical,
       admin: {
         description: 'Detailed description of the chapter',
+      },
+    },
+    {
+      name: 'descriptionHtml',
+      type: 'textarea',
+      admin: {
+        hidden: true,
+        readOnly: true,
+        description: 'Auto-generated HTML from description (for frontend rendering)',
       },
     },
     {
