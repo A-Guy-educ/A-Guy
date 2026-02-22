@@ -28,11 +28,7 @@ async function getVersion(): Promise<string> {
  * Matches admin page styling: 12px, subtle color
  */
 function VersionDisplay({ version }: { version: string }) {
-  return (
-    <span className="text-xs text-muted-foreground/70 font-normal" style={{ fontSize: '12px' }}>
-      v{version}
-    </span>
-  )
+  return <span className="text-xs text-muted-foreground/70 font-normal">v{version}</span>
 }
 
 export async function Footer() {
