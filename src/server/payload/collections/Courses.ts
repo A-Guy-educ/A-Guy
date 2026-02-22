@@ -9,11 +9,15 @@
 
 import type { CollectionConfig } from 'payload'
 
-import { DEFAULT_ACCESS_TYPE, DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
+import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
+import {
+  convertLexicalToHtmlAfterRead,
+  convertLexicalToHtmlBeforeChange,
+} from '../hooks/convertLexicalToHtml'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
 
 const formatSlug = (val: string): string =>
@@ -38,8 +42,10 @@ export const Courses: CollectionConfig = {
         }
         return data
       },
+      convertLexicalToHtmlBeforeChange('description', 'descriptionHtml'),
     ],
     afterChange: [cascadeAdminTitle],
+    afterRead: [convertLexicalToHtmlAfterRead('description', 'descriptionHtml')],
   },
   admin: {
     useAsTitle: 'title',
@@ -77,9 +83,18 @@ export const Courses: CollectionConfig = {
     },
     {
       name: 'description',
-      type: 'textarea',
+      type: 'richText',
+      editor: defaultLexical,
       admin: {
         description: 'Detailed description of the course',
+      },
+    },
+    {
+      name: 'descriptionHtml',
+      type: 'textarea',
+      admin: {
+        description: 'Sanitized HTML version of description (auto-generated)',
+        readOnly: true,
       },
     },
     {
@@ -131,38 +146,6 @@ export const Courses: CollectionConfig = {
       defaultValue: true,
       admin: {
         description: 'Whether this course is currently active',
-      },
-    },
-    {
-      name: 'pageAccessType',
-      type: 'select',
-      required: true,
-      defaultValue: DEFAULT_PAGE_ACCESS_TYPE,
-      options: [
-        { label: 'Free Access', value: 'free' },
-        { label: 'Require Registration', value: 'mandatory' },
-        { label: 'Gated (5-Minute Delay)', value: 'gated' },
-      ],
-      admin: {
-        position: 'sidebar',
-        description:
-          'Controls access to the course page itself (study/practice view). "Gated" shows a sign-in prompt after a configurable delay.',
-      },
-    },
-    {
-      name: 'accessType',
-      type: 'select',
-      required: true,
-      defaultValue: DEFAULT_ACCESS_TYPE,
-      options: [
-        { label: 'Free Access', value: 'free' },
-        { label: 'Require Registration', value: 'mandatory' },
-        { label: 'Gated (5-Minute Delay)', value: 'gated' },
-      ],
-      admin: {
-        position: 'sidebar',
-        description:
-          'Default access type for lessons in this course. Lessons can override with their own setting.',
       },
     },
     {

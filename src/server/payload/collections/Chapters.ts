@@ -1,10 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
+import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
 import { computeAdminTitle } from '../hooks/chapters/computeAdminTitle'
+import {
+  convertLexicalToHtmlAfterRead,
+  convertLexicalToHtmlBeforeChange,
+} from '../hooks/convertLexicalToHtml'
 
 const formatSlug = (val: string): string =>
   val
@@ -23,13 +28,16 @@ export const Chapters: CollectionConfig = {
   hooks: {
     beforeChange: [
       ({ data }) => {
+        console.log('data:', data)
         if (data?.title && !data?.slug) {
           data.slug = formatSlug(data.title)
         }
         return data
       },
       computeAdminTitle,
+      convertLexicalToHtmlBeforeChange('description', 'descriptionHtml'),
     ],
+    afterRead: [convertLexicalToHtmlAfterRead('description', 'descriptionHtml')],
   },
   admin: {
     useAsTitle: 'adminTitle',
@@ -75,9 +83,18 @@ export const Chapters: CollectionConfig = {
     },
     {
       name: 'description',
-      type: 'textarea',
+      type: 'richText',
+      editor: defaultLexical,
       admin: {
         description: 'Detailed description of the chapter',
+      },
+    },
+    {
+      name: 'descriptionHtml',
+      type: 'textarea',
+      admin: {
+        description: 'Sanitized HTML version of description (auto-generated)',
+        readOnly: true,
       },
     },
     {
