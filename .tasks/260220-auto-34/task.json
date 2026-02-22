@@ -1,0 +1,28 @@
+{
+  "task_type": "refactor",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "text-detection-service.ts",
+    "vision-text-combo-service.ts",
+    "ocr-detection-service.ts",
+    "pdf-to-exercises-v2-task.ts",
+    "pdf-to-exercises-task.ts",
+    "tracker.ts",
+    "system-events-subscriber.ts",
+    "mixpanel/adapter.ts",
+    "ga4/adapter.ts",
+    "config.ts",
+    "run-immediate/route.ts",
+    "exercises/import/route.ts",
+    "CommandPalette.tsx",
+    "GA4Scripts.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Pino logger is already available in the project (req.payload.logger or imported logger)",
+    "NODE_ENV check is sufficient for client-side development-only logs"
+  ],
+  "pipeline": "spec_execute_verify"
+}
