@@ -8,7 +8,8 @@ import {
   FORMAT_TEXT_COMMAND,
   UNDO_COMMAND,
   REDO_COMMAND,
-} from 'lexical'
+  $createParagraphNode,
+} from '@payloadcms/richtext-lexical/lexical'
 import {
   $createHeadingNode,
   $isHeadingNode,
@@ -23,7 +24,6 @@ import {
 } from '@payloadcms/richtext-lexical/lexical/list'
 import { $setBlocksType } from '@payloadcms/richtext-lexical/lexical/selection'
 import { $getNearestNodeOfType, mergeRegister } from '@payloadcms/richtext-lexical/lexical/utils'
-import { $createParagraphNode } from 'lexical'
 import {
   Bold,
   Italic,

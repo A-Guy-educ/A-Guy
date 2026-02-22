@@ -3,8 +3,18 @@
 import type { TextareaFieldClientComponent } from 'payload'
 import { useField } from '@payloadcms/ui'
 import { useCallback, useEffect, useState } from 'react'
-import type { EditorState, LexicalEditor, Klass, LexicalNode } from 'lexical'
-import { ParagraphNode, TextNode, LineBreakNode, $getRoot } from 'lexical'
+import type {
+  EditorState,
+  LexicalEditor,
+  Klass,
+  LexicalNode,
+} from '@payloadcms/richtext-lexical/lexical'
+import {
+  ParagraphNode,
+  TextNode,
+  LineBreakNode,
+  $getRoot,
+} from '@payloadcms/richtext-lexical/lexical'
 import {
   $generateHtmlFromNodes,
   $generateNodesFromDOM,
