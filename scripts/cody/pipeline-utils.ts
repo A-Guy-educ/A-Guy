@@ -282,7 +282,7 @@ const STAGE_OUTPUT_MAP: Record<string, string> = {
   gap: 'gap.md',
   clarify: 'questions.md',
   architect: 'plan.md',
-  'plan-review': 'plan-review.md',
+  'plan-gap': 'plan-gap.md',
   commit: 'commit.md',
   autofix: 'autofix.md',
 }
@@ -324,13 +324,7 @@ const DRY_RUN_OUTPUTS: Record<string, (taskId: string) => string> = {
   test: (taskId) => `# Test (dry-run)\n\nMock test output for ${taskId}.\n`,
   verify: (taskId) => `# Verify (dry-run)\n\nResult: PASS\n\nMock verification for ${taskId}.\n`,
   auditor: (taskId) => `# Auditor (dry-run)\n\nMock auditor output for ${taskId}.\n`,
-  'plan-review': (taskId) =>
-    `# Plan Review (dry-run)
-
-Verdict: PASS
-
-Mock plan review for ${taskId}.
-`,
+  'plan-gap': (taskId) => `# Plan Gap Analysis (dry-run)\n\nNo gaps identified for ${taskId}.\n`,
   commit: (taskId) => `# Commit (dry-run)
 
 Mock commit output for ${taskId}.
@@ -391,13 +385,13 @@ export function flattenPipeline(stages: PipelineStage[]): string[] {
  * Implementation pipeline stages with parallel groups.
  *
  * Flow:
- *   architect → plan-review → build → commit(scripted) →
+ *   architect → plan-gap → build → commit(scripted) →
  *   verify (scripted) → auditor → apply-audit → pr
  * Note: test-writer subagent is invoked by build agent per plan step (TDD)
  */
 export const IMPL_PIPELINE: PipelineStage[] = [
   'architect',
-  'plan-review',
+  'plan-gap',
   'build',
   'commit',
   { parallel: ['verify', 'auditor'] },

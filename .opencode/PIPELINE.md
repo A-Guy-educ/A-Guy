@@ -6,7 +6,7 @@ Automated development pipeline for A-Guy project using OpenCode CLI agents.
 
 ```
 Spec Phase:    taskify → [gate: hard-stop] → spec → [clarify: opt-in]
-Impl Phase:    architect → [gate: risk-gated] → plan-review(gate) → build(+TDD) → commit(scripted) →
+Impl Phase:    architect → plan-gap → build(+TDD) → commit(scripted) →
                 verify(scripted) → auditor → apply-audit → pr(scripted)
 ```
 
@@ -22,7 +22,7 @@ Impl Phase:    architect → [gate: risk-gated] → plan-review(gate) → build(
 | spec        | Requirements definition            | task.md                      | spec.md        | agent    |
 | clarify     | Collect operator Q&A (opt-in)      | task.md, spec.md             | questions.md   | agent    |
 | architect   | Implementation plan                | spec.md, clarified.md        | plan.md        | agent    |
-| plan-review | Review plan against spec (GATE)    | spec.md, plan.md             | plan-review.md | agent    |
+| plan-gap    | Analyze plan for gaps, auto-revise | spec.md, plan.md, task.json  | plan-gap.md    | agent    |
 | build       | Write implementation code + tests  | spec.md, plan.md             | build.md       | agent    |
 | commit      | Commit and push changes            | task.json                    | commit.md      | scripted |
 | verify      | Run quality gates (tsc, lint, fmt) | code                         | verify.md      | scripted |
@@ -40,10 +40,10 @@ Impl Phase:    architect → [gate: risk-gated] → plan-review(gate) → build(
 
 Not all stages need an expensive model. Lightweight stages use a faster/cheaper model:
 
-| Model            | Used For                              | Cost    |
-| ---------------- | ------------------------------------- | ------- |
-| MiniMax-M2.5     | architect, build                      | Default |
-| Gemini 2.5 Flash | plan-review, commit, auditor, autofix | Fast    |
+| Model            | Used For                           | Cost    |
+| ---------------- | ---------------------------------- | ------- |
+| MiniMax-M2.5     | architect, build                   | Default |
+| Gemini 2.5 Flash | plan-gap, commit, auditor, autofix | Fast    |
 
 Override with `OPENCODE_MODEL` env var to force a specific model for all stages.
 
@@ -76,19 +76,20 @@ The `build` agent writes code but does NOT commit or push. A separate scripted `
 - Build agent focuses solely on code quality
 - Commit stage uses conventional commit format automatically derived from task.json and task.md
 
-### Plan Review Gate
+### Plan Gap Analysis
 
-The `plan-review` agent runs after `architect` and before `build`. It validates:
+The `plan-gap` agent runs after `architect` and before `build`. It analyzes the plan against the spec and codebase to identify:
 
-- All spec requirements are covered in the plan
-- File paths referenced in the plan actually exist
-- Implementation order is logical
+- Missing spec requirements in the plan
+- Wrong file paths or incorrect patterns
+- Overlooked constraints or test gates
 
-**If plan-review returns FAIL**, the pipeline:
+**If gaps are found**, the agent:
 
-1. Deletes `plan.md` and `plan-review.md`
-2. Throws an error, halting before the expensive build stage
-3. On rerun, architect will re-plan from scratch
+1. **Edits plan.md directly** to fix gaps (adds missing steps, corrects paths)
+2. Writes `plan-gap.md` documenting what was found and changed
+
+**No retry loop** — the gap agent fixes the plan in one pass and proceeds to build.
 
 ### Control Modes (Autonomy Levels)
 
@@ -165,19 +166,19 @@ The user prompt is intentionally minimal. Behavioral instructions live exclusive
 Stage outputs are validated after completion:
 
 - **taskify**: JSON schema validation + normalization (aliases, types)
-- **plan-review**: Verdict check (PASS/FAIL gate)
+- **plan-gap**: Gap analysis + auto-revision
 - **spec**: Warning if missing Requirements or Acceptance Criteria sections
 - **build**: Warning if missing Changes section
 - **verify**: Full error parsing + auto-fix loop
 
 ## Task Types & Pipelines
 
-| Task Type | Pipeline                                                                              |
-| --------- | ------------------------------------------------------------------------------------- |
-| feat      | spec → architect → plan-review → build → commit → verify → auditor → apply-audit → pr |
-| fix       | architect → plan-review → build → commit → verify → auditor → apply-audit → pr        |
-| refactor  | architect → plan-review → build → commit → verify → auditor → apply-audit → pr        |
-| docs      | build → commit → auditor → apply-audit → pr                                           |
+| Task Type | Pipeline                                                                           |
+| --------- | ---------------------------------------------------------------------------------- |
+| feat      | spec → architect → plan-gap → build → commit → verify → auditor → apply-audit → pr |
+| fix       | spec → architect → plan-gap → build → commit → verify → auditor → apply-audit → pr |
+| refactor  | spec → architect → plan-gap → build → commit → verify → auditor → apply-audit → pr |
+| docs      | build → commit → auditor → apply-audit → pr                                        |
 
 ## Task Structure
 
@@ -190,7 +191,7 @@ Stage outputs are validated after completion:
     ├── questions.md      # Clarification questions (clarify agent, opt-in)
     ├── clarified.md      # Q&A answers (operator provides) or "Use recommended answers."
     ├── plan.md           # Implementation plan (architect agent)
-    ├── plan-review.md    # Plan review verdict (plan-review agent)
+    ├── plan-gap.md       # Gap analysis report (plan-gap agent)
     ├── build.md          # Build report + test summary (build agent)
     ├── commit.md         # Commit report (commit — scripted)
     ├── verify.md         # Verification results (verify — scripted)

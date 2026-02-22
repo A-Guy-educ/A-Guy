@@ -75,8 +75,8 @@ describe('runAgentWithFileWatch retry logic', () => {
     // in this test since we're just verifying the export works
     const promise = runAgentWithFileWatch(
       mockInput,
-      'plan-review',
-      '/fake/path/plan-review.md',
+      'plan-gap',
+      '/fake/path/plan-gap.md',
       1000,
       { maxRetries: 0 }, // No retries for this test
     )

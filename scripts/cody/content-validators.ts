@@ -101,38 +101,28 @@ export function validateBuildFile(buildFilePath: string): string {
 }
 
 // ============================================================================
-// Plan Review Verdict Validation
+// Plan Gap Report Validation
 // ============================================================================
 
 /**
- * Check if plan-review verdict is FAIL
+ * Validate plan-gap report content.
+ * Reuses same logic as validateGapReport - both follow same format.
+ * Returns true if valid, false otherwise.
  */
-export function isPlanReviewFail(reviewContent: string): boolean {
-  return /Verdict:\s*FAIL/i.test(reviewContent)
-}
+export function validatePlanGapReport(gapContent: string): boolean {
+  const trimmed = gapContent.trim()
 
-/**
- * Check if plan-review content contains a verdict line (either PASS or FAIL).
- * Returns true if either Verdict: PASS or Verdict: FAIL is found.
- */
-export function hasPlanReviewVerdict(reviewContent: string): boolean {
-  return /Verdict:\s*(PASS|FAIL)/i.test(reviewContent)
-}
-
-/**
- * Validate plan-review file verdict.
- * Returns true if PASS, false if FAIL.
- */
-export function validatePlanReviewVerdict(reviewFilePath: string): boolean {
-  if (!fs.existsSync(reviewFilePath)) {
-    throw new Error(`Plan review file not found: ${reviewFilePath}`)
-  }
-
-  const reviewContent = fs.readFileSync(reviewFilePath, 'utf-8')
-  if (isPlanReviewFail(reviewContent)) {
+  // Empty content is invalid
+  if (!trimmed || trimmed.length < 10) {
     return false
   }
-  return true
+
+  // Check for required sections
+  const hasGapsFound = /##\s*Gaps? Found/i.test(gapContent)
+  const hasChangesMade = /##\s*Changes Made/i.test(gapContent)
+  const hasNoGaps = /no gaps identified/i.test(gapContent.toLowerCase())
+
+  return hasGapsFound || hasChangesMade || hasNoGaps
 }
 
 // ============================================================================

@@ -507,9 +507,9 @@ describe('pipeline stage definitions', () => {
     expect(ALL_IMPL_STAGE_NAMES).toEqual(flattenPipeline(IMPL_PIPELINE))
   })
 
-  it('should include plan-review and commit in ALL_IMPL_STAGE_NAMES', async () => {
+  it('should include plan-gap and commit in ALL_IMPL_STAGE_NAMES', async () => {
     const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
-    expect(ALL_IMPL_STAGE_NAMES).toContain('plan-review')
+    expect(ALL_IMPL_STAGE_NAMES).toContain('plan-gap')
     expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
   })
 
@@ -521,14 +521,14 @@ describe('pipeline stage definitions', () => {
   it('should have correct stage order', async () => {
     const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
     const architectIdx = ALL_IMPL_STAGE_NAMES.indexOf('architect')
-    const planReviewIdx = ALL_IMPL_STAGE_NAMES.indexOf('plan-review')
+    const planGapIdx = ALL_IMPL_STAGE_NAMES.indexOf('plan-gap')
     const buildIdx = ALL_IMPL_STAGE_NAMES.indexOf('build')
     const commitIdx = ALL_IMPL_STAGE_NAMES.indexOf('commit')
     const verifyIdx = ALL_IMPL_STAGE_NAMES.indexOf('verify')
 
-    // architect < plan-review < build < commit < verify
-    expect(architectIdx).toBeLessThan(planReviewIdx)
-    expect(planReviewIdx).toBeLessThan(buildIdx)
+    // architect < plan-gap < build < commit < verify
+    expect(architectIdx).toBeLessThan(planGapIdx)
+    expect(planGapIdx).toBeLessThan(buildIdx)
     expect(buildIdx).toBeLessThan(commitIdx)
     expect(commitIdx).toBeLessThan(verifyIdx)
   })

@@ -11,7 +11,7 @@ tools:
 
 You produce a detailed junior-friendly low-level plan with TDD test-gates for every step.
 
-**Inputs**: Read the files listed in your prompt (spec.md, clarified.md, and on reruns: rerun-feedback.md, plan-review.rejected.md).
+**Inputs**: Read the files listed in your prompt (spec.md, clarified.md, and on reruns: rerun-feedback.md).
 
 **Output (REQUIRED)**: `.tasks/<task-id>/plan.md`
 
@@ -28,16 +28,6 @@ If spec missing: **STOP**.
 1. Read feedback + previous plan
 2. Decide: wrong approach → revise plan. Code-level issues → keep plan, add fix guidance for build agent
 3. Write plan.md with a "## Rerun Context" section at top summarizing what changed
-
-**Plan-review rejection** (when `plan-review.rejected.md` is listed in your prompt):
-
-The previous plan was rejected by plan-review. Read plan-review.rejected.md to understand:
-
-- What blocking issues were found
-- Which spec requirements were not covered
-- Any suggestions for improvement
-
-Revise your plan to address these issues. Write plan.md with a "## Plan Review Response" section at top explaining how you addressed each blocking issue.
 
 **Plan format** — each step includes:
 

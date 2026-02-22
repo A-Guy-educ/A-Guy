@@ -30,9 +30,9 @@
       "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Analyzes spec.md for gaps, missing info, and inconsistencies"
     },
-    "plan-review": {
+    "plan-gap": {
       "model": "google/gemini-2.5-flash",
-      "description": "Reviews architect plan for quality and completeness"
+      "description": "Analyzes plan for gaps vs spec and codebase, auto-revises plan"
     },
     "autofix": {
       "model": "minimax-coding-plan/MiniMax-M2.5",

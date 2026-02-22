@@ -287,7 +287,7 @@ export async function createGenkitUnifiedAdapter(
             }))
 
             // Ensure first non-system message is 'user'
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             let messages: Array<{
               role: 'system' | 'user' | 'model'
               content: Array<{ text: string }>

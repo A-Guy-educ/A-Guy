@@ -18,7 +18,7 @@
  *   BUG-19: Test timeout expectations don't match actual STAGE_TIMEOUTS values
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -289,9 +289,9 @@ describe('BUG-19: STAGE_TIMEOUTS values must be consistent', () => {
     expect(STAGE_TIMEOUTS['build']).toBe(45 * 60_000)
   })
 
-  it('plan-review timeout should be 10 minutes', async () => {
+  it('plan-gap timeout should be 15 minutes', async () => {
     const { STAGE_TIMEOUTS } = await import('../../../../scripts/cody/agent-runner')
-    expect(STAGE_TIMEOUTS['plan-review']).toBe(10 * 60_000)
+    expect(STAGE_TIMEOUTS['plan-gap']).toBe(15 * 60_000)
   })
 
   it('verify timeout should be 10 minutes', async () => {

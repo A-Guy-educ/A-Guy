@@ -459,9 +459,9 @@ describe('orchestrator integration', () => {
       expect(SPEC_ONLY_STAGES).toContain('gap')
       expect(SPEC_ONLY_STAGES).toContain('clarify')
 
-      // Impl pipeline should have all stages including plan-review and commit
+      // Impl pipeline should have all stages including plan-gap and commit
       expect(ALL_IMPL_STAGE_NAMES).toContain('architect')
-      expect(ALL_IMPL_STAGE_NAMES).toContain('plan-review')
+      expect(ALL_IMPL_STAGE_NAMES).toContain('plan-gap')
       expect(ALL_IMPL_STAGE_NAMES).toContain('build')
       expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
       expect(ALL_IMPL_STAGE_NAMES).toContain('verify')

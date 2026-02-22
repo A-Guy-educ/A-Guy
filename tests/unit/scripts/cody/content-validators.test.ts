@@ -15,12 +15,10 @@ import {
   validateSpecFile,
   validateBuildReport,
   validateBuildFile,
-  isPlanReviewFail,
-  hasPlanReviewVerdict,
-  validatePlanReviewVerdict,
   extractVerifySummary,
   isVerifyFailed,
   validateGapReport,
+  validatePlanGapReport,
 } from '../../../../scripts/cody/content-validators'
 
 describe('content-validators', () => {
@@ -163,60 +161,36 @@ describe('content-validators', () => {
   })
 
   // ========================================================================
-  // isPlanReviewFail
+  // validatePlanGapReport
   // ========================================================================
 
-  describe('isPlanReviewFail', () => {
-    it('returns true for FAIL verdict', () => {
-      expect(isPlanReviewFail('# Plan Review\n\nVerdict: FAIL')).toBe(true)
+  describe('validatePlanGapReport', () => {
+    it('returns true for report with ## Gaps Found', () => {
+      expect(
+        validatePlanGapReport('# Plan Gap Analysis\n\n## Gaps Found\n\n- Gap 1: Missing field'),
+      ).toBe(true)
     })
 
-    it('returns true for fail (lowercase)', () => {
-      expect(isPlanReviewFail('# Plan Review\n\nVerdict: fail')).toBe(true)
+    it('returns true for report with ## Changes Made', () => {
+      expect(
+        validatePlanGapReport('# Plan Gap Analysis\n\n## Changes Made\n\n- Added Step 1'),
+      ).toBe(true)
     })
 
-    it('returns false for PASS verdict', () => {
-      expect(isPlanReviewFail('# Plan Review\n\nVerdict: PASS')).toBe(false)
+    it('returns true for "No gaps identified"', () => {
+      expect(validatePlanGapReport('# Plan Gap Analysis\n\nNo gaps identified.')).toBe(true)
     })
 
-    it('returns false for no verdict', () => {
-      expect(isPlanReviewFail('# Plan Review\n\nSome content')).toBe(false)
-    })
-  })
-
-  describe('hasPlanReviewVerdict', () => {
-    it('returns true for PASS verdict', () => {
-      expect(hasPlanReviewVerdict('# Plan Review\n\nVerdict: PASS')).toBe(true)
+    it('returns false for empty content', () => {
+      expect(validatePlanGapReport('')).toBe(false)
     })
 
-    it('returns true for FAIL verdict', () => {
-      expect(hasPlanReviewVerdict('# Plan Review\n\nVerdict: FAIL')).toBe(true)
+    it('returns false for placeholder text', () => {
+      expect(validatePlanGapReport('# Plan Gap\n\nTBD')).toBe(false)
     })
 
-    it('returns true for pass (lowercase)', () => {
-      expect(hasPlanReviewVerdict('# Plan Review\n\nVerdict: pass')).toBe(true)
-    })
-
-    it('returns false for no verdict line', () => {
-      expect(hasPlanReviewVerdict('# Plan Review\n\nSome content')).toBe(false)
-    })
-  })
-
-  describe('validatePlanReviewVerdict', () => {
-    it('throws for missing file', () => {
-      expect(() => validatePlanReviewVerdict(path.join(tempDir, 'missing.md'))).toThrow('not found')
-    })
-
-    it('returns false for FAIL verdict', () => {
-      const filePath = path.join(tempDir, 'plan-review.md')
-      fs.writeFileSync(filePath, '# Plan Review\n\nVerdict: FAIL')
-      expect(validatePlanReviewVerdict(filePath)).toBe(false)
-    })
-
-    it('returns true for PASS verdict', () => {
-      const filePath = path.join(tempDir, 'plan-review.md')
-      fs.writeFileSync(filePath, '# Plan Review\n\nVerdict: PASS')
-      expect(validatePlanReviewVerdict(filePath)).toBe(true)
+    it('returns false for report without required sections', () => {
+      expect(validatePlanGapReport('# Plan Gap Analysis\n\nJust some text.')).toBe(false)
     })
   })
 

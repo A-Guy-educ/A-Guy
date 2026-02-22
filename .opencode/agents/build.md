@@ -60,7 +60,7 @@ pnpm test:unit
 ### 1. Implementation
 
 - Follow the SPEC and PLAN exactly
-- Address any SUGGESTIONS from plan-review.md (non-blocking, but improve quality)
+- Address any SUGGESTIONS from plan-gap.md (non-blocking, but improve quality)
 - Do NOT change the spec
 - Do NOT expand scope
 

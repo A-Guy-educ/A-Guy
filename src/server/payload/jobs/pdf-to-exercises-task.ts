@@ -128,7 +128,7 @@ export const pdfToExercisesTask = {
           })
 
           // Perform in-memory dedup using system ordinal (loop index)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           const dedupResult = deduplicateByIdempotencyKey(
             exercises as any,
             (exercise, systemIndex) => computeIdempotencyKeyForExercise(exercise, systemIndex),
@@ -393,7 +393,7 @@ async function segmentPdf(pdfBuffer: Buffer, maxPagesPerSegment: number) {
  * Process segment with REAL multimodal PDF attachment
  * Uses Gemini provider for API calls with retry and timeout handling
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 async function processSegmentWithMultimodal(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any,
@@ -504,7 +504,7 @@ Return JSON: { "valid": boolean, "reason": "..." }`
 /**
  * Helper to call verifier using factory provider
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 async function callVerifier(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any,

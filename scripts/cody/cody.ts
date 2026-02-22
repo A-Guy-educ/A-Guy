@@ -27,9 +27,8 @@ import { validateSpecContent } from './content-validators'
 import { handleClarification, handleGateApproval } from './clarify-workflow'
 import { commitPipelineFiles } from './git-utils'
 import {
-  PlanReviewFailError,
   handleRerunFeedbackArchive,
-  handlePlanReviewGate,
+  handlePlanGapValidation,
   handleBuildValidation,
   handlePostBuildTsc,
   handleVerifyResult,
@@ -655,9 +654,9 @@ async function runImplPipeline(
       }
     }
 
-    // Plan-review gate: check verdict and fail pipeline on FAIL
-    if (stage === 'plan-review') {
-      handlePlanReviewGate(hookOptions)
+    // Plan-gap validation: verify gap report is valid
+    if (stage === 'plan-gap') {
+      handlePlanGapValidation(hookOptions)
     }
 
     // Build content validation + tsc check
@@ -782,45 +781,7 @@ async function runImplPipeline(
     } else {
       // Run sequential stage
       console.log(`[${i + 1}/${pipeline.length}] ${pipelineStage}`)
-      try {
-        await runSingleStage(pipelineStage)
-      } catch (err) {
-        // Plan-review retry loop: if plan-review fails, re-run architect + plan-review (max 2 retries)
-        if (err instanceof PlanReviewFailError) {
-          const MAX_PLAN_RETRIES = 2
-          let planFixed = false
-
-          for (let planAttempt = 1; planAttempt <= MAX_PLAN_RETRIES; planAttempt++) {
-            console.log(
-              `\n🔄 Plan review retry ${planAttempt}/${MAX_PLAN_RETRIES}: re-running architect...`,
-            )
-            await runSingleStage('architect')
-
-            console.log(`  Re-running plan-review...`)
-            try {
-              await runSingleStage('plan-review')
-              planFixed = true
-              break
-            } catch (retryErr) {
-              if (retryErr instanceof PlanReviewFailError) {
-                console.error(
-                  `  Plan review still failing (attempt ${planAttempt}/${MAX_PLAN_RETRIES})`,
-                )
-                continue
-              }
-              throw retryErr // Non plan-review error, propagate
-            }
-          }
-
-          if (!planFixed) {
-            throw new Error(
-              `Plan review failed after ${MAX_PLAN_RETRIES} retries — pipeline stopped`,
-            )
-          }
-        } else {
-          throw err // Non plan-review error, propagate
-        }
-      }
+      await runSingleStage(pipelineStage)
     }
   }
 

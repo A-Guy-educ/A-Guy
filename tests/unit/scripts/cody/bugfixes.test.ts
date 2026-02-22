@@ -30,7 +30,7 @@ describe('BUG-3: Stale pipeline exports removed', () => {
     expect(ALL_IMPL_STAGE_NAMES).toHaveLength(8)
     expect(ALL_IMPL_STAGE_NAMES).toEqual([
       'architect',
-      'plan-review',
+      'plan-gap',
       'build',
       'commit',
       'verify',
@@ -51,7 +51,7 @@ describe('BUG-3: Stale pipeline exports removed', () => {
     // All other stages should be sequential
     const sequentialStages = IMPL_PIPELINE.filter((s) => !isParallelStage(s))
     expect(sequentialStages).toContain('architect')
-    expect(sequentialStages).toContain('plan-review')
+    expect(sequentialStages).toContain('plan-gap')
     expect(sequentialStages).toContain('build')
     expect(sequentialStages).toContain('commit')
     expect(sequentialStages).toContain('apply-audit')

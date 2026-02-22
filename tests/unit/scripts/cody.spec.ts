@@ -1001,7 +1001,7 @@ describe('validation helpers', () => {
     expect(isValidStage('taskify')).toBe(true)
     expect(isValidStage('spec')).toBe(true)
     expect(isValidStage('architect')).toBe(true)
-    expect(isValidStage('plan-review')).toBe(true)
+    expect(isValidStage('plan-gap')).toBe(true)
     expect(isValidStage('build')).toBe(true)
     expect(isValidStage('commit')).toBe(true)
     expect(isValidStage('verify')).toBe(true)

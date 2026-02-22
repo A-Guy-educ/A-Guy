@@ -32,7 +32,7 @@ export const ALL_STAGES = [
   'gap',
   'clarify',
   'architect',
-  'plan-review',
+  'plan-gap',
   'build',
   'commit',
   'verify',
@@ -70,9 +70,9 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   spec: ['task.md', 'task.json'],
   gap: ['spec.md', 'task.json'],
   clarify: ['task.md', 'spec.md'],
-  architect: ['spec.md', 'clarified.md', 'rerun-feedback.md', 'plan-review.rejected.md'],
-  'plan-review': ['spec.md', 'plan.md'],
-  build: ['spec.md', 'clarified.md', 'plan.md', 'plan-review.md'],
+  architect: ['spec.md', 'clarified.md', 'rerun-feedback.md'],
+  'plan-gap': ['spec.md', 'plan.md', 'task.json'],
+  build: ['spec.md', 'clarified.md', 'plan.md', 'plan-gap.md'],
   commit: ['task.json'],
   verify: [], // scripted — no LLM prompt needed
   autofix: ['verify.md'],
@@ -103,7 +103,7 @@ export const stageInstructions: Record<Stage, (taskId: string) => string> = {
 
   architect: () => ``,
 
-  'plan-review': () => ``,
+  'plan-gap': () => ``,
 
   build: () => ``,
 
@@ -148,9 +148,8 @@ function getTaskType(taskId: string): string {
  * the agent needs to read. Behavioral instructions come from the agent's
  * .opencode/agents/<stage>.md system prompt.
  *
- * Note: Some context files may not exist (e.g., rerun-feedback.md on first runs,
- * plan-review.rejected.md if the plan passed review). The agent should gracefully
- * skip reading files that don't exist - do NOT treat missing files as errors.
+ * Note: Some context files may not exist (e.g., rerun-feedback.md on first runs).
+ * The agent should gracefully skip reading files that don't exist - do NOT treat missing files as errors.
  *
  * @param input - Orchestrator input containing taskId
  * @param stage - The stage to build the prompt for
@@ -200,5 +199,5 @@ export function getSpecStages(): string[] {
  * Get implementation pipeline stages
  */
 export function getImplStages(): string[] {
-  return ['architect', 'plan-review', 'build', 'commit', 'verify', 'auditor', 'apply-audit', 'pr']
+  return ['architect', 'plan-gap', 'build', 'commit', 'verify', 'auditor', 'apply-audit', 'pr']
 }

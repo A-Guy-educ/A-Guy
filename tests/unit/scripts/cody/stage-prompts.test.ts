@@ -35,14 +35,14 @@ describe('stage-prompts', () => {
   })
 
   describe('ALL_STAGES', () => {
-    it('should contain all stages including gap, plan-review, commit, autofix, apply-audit', () => {
+    it('should contain all stages including gap, plan-gap, commit, autofix, apply-audit', () => {
       const stages = [...ALL_STAGES]
       expect(stages).toContain('taskify')
       expect(stages).toContain('spec')
       expect(stages).toContain('gap')
       expect(stages).toContain('clarify')
       expect(stages).toContain('architect')
-      expect(stages).toContain('plan-review')
+      expect(stages).toContain('plan-gap')
       expect(stages).toContain('build')
       expect(stages).toContain('commit')
       expect(stages).toContain('verify')
@@ -68,14 +68,13 @@ describe('stage-prompts', () => {
         'spec.md',
         'clarified.md',
         'rerun-feedback.md',
-        'plan-review.rejected.md',
       ])
-      expect(STAGE_CONTEXT_FILES['plan-review']).toEqual(['spec.md', 'plan.md'])
+      expect(STAGE_CONTEXT_FILES['plan-gap']).toEqual(['spec.md', 'plan.md', 'task.json'])
       expect(STAGE_CONTEXT_FILES.build).toEqual([
         'spec.md',
         'clarified.md',
         'plan.md',
-        'plan-review.md',
+        'plan-gap.md',
       ])
       expect(STAGE_CONTEXT_FILES.commit).toEqual(['task.json'])
       expect(STAGE_CONTEXT_FILES.verify).toEqual([])
@@ -107,7 +106,7 @@ describe('stage-prompts', () => {
     it('should return implementation stages in order', () => {
       expect(getImplStages()).toEqual([
         'architect',
-        'plan-review',
+        'plan-gap',
         'build',
         'commit',
         'verify',
