@@ -13,7 +13,7 @@ export function preflight(): void {
     {
       name: 'ocode CLI (via pnpm)',
       test: () => execSync('pnpm ocode --version', { stdio: 'pipe' }),
-      errorMessage: 'Install: curl -fsSL https://opencode.ai/install | bash',
+      errorMessage: 'Run: pnpm install',
     },
     {
       name: 'Git repository',
@@ -65,10 +65,10 @@ export function preflight(): void {
   }
 
   if (failed) {
-    console.error('\n❌ Pre-flight failed:\n')
-    errors.forEach((msg) => console.error(msg))
-    console.error('\nFix issues above before running pipeline.')
-    process.exit(1)
+    const errorDetails = errors.join('\n')
+    throw new Error(
+      `Pre-flight checks failed:\n${errorDetails}\n\nFix issues above before running pipeline.`,
+    )
   }
 
   console.log('✅ Pre-flight complete\n')

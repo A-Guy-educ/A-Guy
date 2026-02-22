@@ -212,7 +212,7 @@ beforeAll(
       testExerciseId = exercise.id
     }
   },
-  60000, // Increased timeout for Payload initialization
+  120000, // Increased timeout for Payload initialization (required for parallel tests)
 )
 
 afterAll(async () => {

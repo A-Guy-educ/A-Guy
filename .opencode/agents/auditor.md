@@ -24,13 +24,13 @@ You do NOT replace verification or testing.
 The auditor runs as the **final stage** in the pipeline:
 
 ```
-spec → plan → build → test → verify → auditor → pr
+spec → architect → build → verify → auditor → pr
 ```
 
 **Exception:** Tasks with `type: auditor-followup` skip auditor:
 
 ```
-build → test → verify → pr
+build → verify → pr
 ```
 
 **When auditor runs:** After verify stage completes (SUCCESS or FAILURE)

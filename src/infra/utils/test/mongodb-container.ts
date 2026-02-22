@@ -8,6 +8,13 @@ import { isProductionDatabase } from './test-db-constraint'
 let mongoContainer: StartedMongoDBContainer | null = null
 
 /**
+ * Get the current container instance (for cleanup)
+ */
+export function getMongoContainer(): StartedMongoDBContainer | null {
+  return mongoContainer
+}
+
+/**
  * Check if we're running in CI with a MongoDB service container
  * In this case, we skip testcontainers and use the service directly
  */
@@ -66,9 +73,33 @@ export async function startMongoContainer(): Promise<string> {
 /**
  * Stop MongoDB test container
  * No-op when using CI service container (USE_MONGO_SERVICE=true)
+ *
+ * Note: This function is now a no-op to enable container reuse across test files.
+ * The container is automatically cleaned up by the global teardown in
+ * tests/setup/global-int-setup.ts
+ *
+ * This dramatically improves test execution time by avoiding repeated container
+ * startup/shutdown cycles.
  */
 export async function stopMongoContainer(): Promise<void> {
+  // Container is now managed globally and cleaned up by global teardown
+  // Individual test files should NOT stop the container to enable reuse
   // Service container is managed by CI, not us
+  if (process.env.USE_MONGO_SERVICE === 'true') {
+    return
+  }
+
+  // No-op: container is cleaned up by global teardown
+  // This enables container reuse across test files for faster tests
+  console.log(
+    '[mongodb-container] stopMongoContainer() called but is no-op (container managed globally)',
+  )
+}
+
+/**
+ * Force stop the container (for use by global teardown)
+ */
+export async function forceStopMongoContainer(): Promise<void> {
   if (process.env.USE_MONGO_SERVICE === 'true') {
     return
   }
@@ -76,6 +107,7 @@ export async function stopMongoContainer(): Promise<void> {
   if (mongoContainer) {
     await mongoContainer.stop()
     mongoContainer = null
+    console.log('[mongodb-container] Container force stopped')
   }
 }
 

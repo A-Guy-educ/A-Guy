@@ -14,8 +14,10 @@ export const chatRequestSchema = z.object({
   courseId: z.string().optional(),
   // Admin context - category for admin chat scope
   categoryId: z.string().optional(),
-  // Media attachments (max 5)
+  // Legacy media attachments (max 5)
   mediaIds: z.array(z.string()).max(5).optional(),
+  // Chat asset IDs (direct-to-Blob uploads, max 5)
+  chatAssetIds: z.array(z.string()).max(5).optional(),
   // Admin mode flag (for admin chat without context)
   adminMode: z.boolean().optional(),
   // Hidden flag — message persisted for LLM context but excluded from client responses

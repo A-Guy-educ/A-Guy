@@ -7,6 +7,7 @@ import {
   readTask,
   normalizeTask,
   PIPELINE_MAP,
+  resolveControlMode,
 } from '../../../../scripts/cody/pipeline-utils'
 
 // Helper: create a temp task directory with a task.json
@@ -433,5 +434,168 @@ describe('pipeline-utils', () => {
         expect((error as Error).message).toContain('banana')
       }
     })
+  })
+})
+
+// ==========================================================================
+// resolveControlMode (Autonomous Decision Control Framework)
+// ==========================================================================
+describe('resolveControlMode', () => {
+  // Helper to create a minimal TaskDefinition
+  const createTaskDef = (riskLevel: string) =>
+    ({
+      task_type: 'implement_feature',
+      pipeline: 'spec_execute_verify',
+      risk_level: riskLevel as 'low' | 'medium' | 'high',
+      confidence: 0.9,
+      primary_domain: 'backend',
+      scope: ['src/app'],
+      missing_inputs: [],
+      assumptions: [],
+    }) as Parameters<typeof resolveControlMode>[0]
+
+  it('low risk_level → returns auto', () => {
+    const taskDef = createTaskDef('low')
+    expect(resolveControlMode(taskDef)).toBe('auto')
+  })
+
+  it('medium risk_level → returns risk-gated', () => {
+    const taskDef = createTaskDef('medium')
+    expect(resolveControlMode(taskDef)).toBe('risk-gated')
+  })
+
+  it('high risk_level → returns hard-stop', () => {
+    const taskDef = createTaskDef('high')
+    expect(resolveControlMode(taskDef)).toBe('hard-stop')
+  })
+
+  it('explicit override always wins over risk_level', () => {
+    const taskDefLow = createTaskDef('low')
+    const taskDefMedium = createTaskDef('medium')
+    const taskDefHigh = createTaskDef('high')
+
+    // Override with 'auto' wins over 'medium' risk
+    expect(resolveControlMode(taskDefMedium, 'auto')).toBe('auto')
+    // Override with 'auto' wins over 'high' risk
+    expect(resolveControlMode(taskDefHigh, 'auto')).toBe('auto')
+    // Override with 'hard-stop' wins over 'low' risk
+    expect(resolveControlMode(taskDefLow, 'hard-stop')).toBe('hard-stop')
+    // Override with 'risk-gated' wins over 'low' risk
+    expect(resolveControlMode(taskDefLow, 'risk-gated')).toBe('risk-gated')
+  })
+
+  it('invalid risk_level falls back to auto', () => {
+    const taskDef = createTaskDef('unknown')
+    expect(resolveControlMode(taskDef)).toBe('auto')
+  })
+
+  it('undefined risk_level falls back to auto', () => {
+    const taskDef = { ...createTaskDef('low'), risk_level: undefined } as unknown as Parameters<
+      typeof resolveControlMode
+    >[0]
+    expect(resolveControlMode(taskDef)).toBe('auto')
+  })
+})
+
+// ==========================================================================
+// Pipeline stage definitions (BUG-3 fix verification)
+// ==========================================================================
+describe('pipeline stage definitions', () => {
+  it('should export ALL_IMPL_STAGE_NAMES matching IMPL_PIPELINE', async () => {
+    const { ALL_IMPL_STAGE_NAMES, IMPL_PIPELINE, flattenPipeline } =
+      await import('../../../../scripts/cody/pipeline-utils')
+    expect(ALL_IMPL_STAGE_NAMES).toEqual(flattenPipeline(IMPL_PIPELINE))
+  })
+
+  it('should include plan-gap and commit in ALL_IMPL_STAGE_NAMES', async () => {
+    const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
+    expect(ALL_IMPL_STAGE_NAMES).toContain('plan-gap')
+    expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
+  })
+
+  it('should have exactly 8 impl stages', async () => {
+    const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
+    expect(ALL_IMPL_STAGE_NAMES).toHaveLength(8)
+  })
+
+  it('should have correct stage order', async () => {
+    const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
+    const architectIdx = ALL_IMPL_STAGE_NAMES.indexOf('architect')
+    const planGapIdx = ALL_IMPL_STAGE_NAMES.indexOf('plan-gap')
+    const buildIdx = ALL_IMPL_STAGE_NAMES.indexOf('build')
+    const commitIdx = ALL_IMPL_STAGE_NAMES.indexOf('commit')
+    const verifyIdx = ALL_IMPL_STAGE_NAMES.indexOf('verify')
+
+    // architect < plan-gap < build < commit < verify
+    expect(architectIdx).toBeLessThan(planGapIdx)
+    expect(planGapIdx).toBeLessThan(buildIdx)
+    expect(buildIdx).toBeLessThan(commitIdx)
+    expect(commitIdx).toBeLessThan(verifyIdx)
+  })
+
+  it('should flatten parallel groups correctly', async () => {
+    const { flattenPipeline, flattenStage, isParallelStage } =
+      await import('../../../../scripts/cody/pipeline-utils')
+
+    // Sequential stage
+    expect(flattenStage('build')).toEqual(['build'])
+
+    // Parallel group (if present in any pipeline)
+    const parallel = { parallel: ['auditor', 'pr'] }
+    expect(isParallelStage(parallel)).toBe(true)
+    expect(flattenStage(parallel)).toEqual(['auditor', 'pr'])
+
+    // Mixed pipeline with parallel group
+    const pipeline = ['architect', { parallel: ['a', 'b'] }, 'verify']
+    expect(flattenPipeline(pipeline)).toEqual(['architect', 'a', 'b', 'verify'])
+  })
+})
+
+// ============================================================================
+// Gap stage registration tests
+// ============================================================================
+describe('gap stage registration', () => {
+  it('should map stageOutputFile for gap correctly', async () => {
+    const { stageOutputFile } = await import('../../../../scripts/cody/pipeline-utils')
+    expect(stageOutputFile('/tmp/tasks/123', 'gap')).toBe('/tmp/tasks/123/gap.md')
+  })
+
+  it('should include gap in SPEC_ONLY_STAGES (spec-only pipeline)', async () => {
+    const { SPEC_ONLY_STAGES } = await import('../../../../scripts/cody/pipeline-utils')
+    expect(SPEC_ONLY_STAGES).toContain('gap')
+  })
+
+  it('should NOT include gap in ALL_IMPL_STAGE_NAMES (gap is spec-only)', async () => {
+    const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
+    // Gap should be in spec stages, not impl stages
+    expect(ALL_IMPL_STAGE_NAMES).not.toContain('gap')
+  })
+
+  it('should have gap in dry-run outputs (via fallback)', async () => {
+    const { stageOutputFile } = await import('../../../../scripts/cody/pipeline-utils')
+    // Dry-run relies on fallback `${stage}.md`, so gap should produce gap.md
+    expect(stageOutputFile('/tmp', 'gap')).toBe('/tmp/gap.md')
+  })
+})
+
+// ============================================================================
+// Stage-prompts.ts gap stage tests
+// ============================================================================
+describe('gap stage in stage-prompts', () => {
+  it('should include gap in SPEC_STAGES from stage-prompts', async () => {
+    const { SPEC_STAGES } = await import('../../../../scripts/cody/stage-prompts')
+    expect(SPEC_STAGES).toContain('gap')
+  })
+
+  it('should include gap in ALL_STAGES from stage-prompts', async () => {
+    const { ALL_STAGES } = await import('../../../../scripts/cody/stage-prompts')
+    expect(ALL_STAGES).toContain('gap')
+  })
+
+  it('should have gap context files in stage-prompts', async () => {
+    const { STAGE_CONTEXT_FILES } = await import('../../../../scripts/cody/stage-prompts')
+    expect(STAGE_CONTEXT_FILES).toHaveProperty('gap')
+    expect(STAGE_CONTEXT_FILES.gap).toContain('spec.md')
+    expect(STAGE_CONTEXT_FILES.gap).toContain('task.json')
   })
 })

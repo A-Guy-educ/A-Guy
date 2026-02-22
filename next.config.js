@@ -36,6 +36,11 @@ const nextConfig = {
         protocol: 'http',
         hostname: 'localhost',
       },
+      // Allow Vercel Blob storage for media uploads
+      {
+        protocol: 'https',
+        hostname: '*.blob.vercel-storage.com',
+      },
     ],
   },
   outputFileTracingExcludes: {

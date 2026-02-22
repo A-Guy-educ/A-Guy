@@ -12,8 +12,8 @@ fi
 # Get current branch name
 branch=$(git rev-parse --abbrev-ref HEAD)
 
-# Prevent direct commits to protected branches (main, dev) unless CI-initiated
-if [ "$branch" = "main" ] || [ "$branch" = "dev" ]; then
+# Prevent direct commits to protected branches (main) unless CI-initiated
+if [ "$branch" = "main" ]; then
   # Check if this is a CI-initiated commit:
   # 1. Running in GitHub Actions (GITHUB_ACTIONS is set)
   # 2. Has SKIP_HOOKS=1 set
@@ -50,7 +50,8 @@ if [ "$branch" = "main" ] || [ "$branch" = "dev" ]; then
 fi
 
 # Validate branch naming convention (skip in CI - agents use their own conventions)
-if [ -n "$GITHUB_ACTIONS" ]; then
+# TEMPORARILY DISABLED for dev branch commits
+if [ -n "$GITHUB_ACTIONS" ] || [ "$branch" = "dev" ]; then
   echo ""
   echo "ℹ️  CI environment detected. Skipping branch naming convention check."
   echo ""

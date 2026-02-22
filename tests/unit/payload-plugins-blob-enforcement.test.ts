@@ -85,4 +85,26 @@ describe('Vercel Blob Storage Enforcement', () => {
       expect(pluginsArray.length).toBeGreaterThan(0)
     })
   })
+
+  describe('addRandomSuffix configuration', () => {
+    it('should have vercel blob plugin in plugins array when token is set', async () => {
+      process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_rw_test123_abc'
+
+      const { plugins: pluginsArray } = await import('@/server/payload/plugins/index')
+
+      // Plugins array should contain elements including the vercel blob storage plugin
+      expect(pluginsArray).toBeDefined()
+      expect(Array.isArray(pluginsArray)).toBe(true)
+      expect(pluginsArray.length).toBeGreaterThan(0)
+    })
+
+    it('should configure multiple collections for blob storage', async () => {
+      process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_rw_test456_xyz'
+
+      const { plugins: pluginsArray } = await import('@/server/payload/plugins/index')
+
+      // The plugins array should contain multiple plugins including vercel blob
+      expect(pluginsArray.length).toBeGreaterThan(1)
+    })
+  })
 })

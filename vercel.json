@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/upload-session-cleanup",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/chat-asset-expiry",
+      "schedule": "0 */6 * * *"
+    }
+  ]
+}

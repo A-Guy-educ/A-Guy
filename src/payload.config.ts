@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 
 import { getServerSideURL } from '@/infra/utils/getURL'
 import { Categories } from '@/server/payload/collections/Categories'
+import { ChatAssets } from '@/server/payload/collections/ChatAssets'
 import { Chapters } from '@/server/payload/collections/Chapters'
 import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
 import { ConfigSecrets } from '@/server/payload/collections/ConfigSecrets'
@@ -24,6 +25,7 @@ import { PricingPlans } from '@/server/payload/collections/PricingPlans'
 import { Prompts } from '@/server/payload/collections/Prompts'
 import { Tenants } from '@/server/payload/collections/Tenants'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
+import { UploadSessions } from '@/server/payload/collections/UploadSessions'
 import { Users } from '@/server/payload/collections/Users'
 import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
@@ -153,6 +155,8 @@ export default buildConfig({
     Users,
     UserProgress,
     Media,
+    ChatAssets,
+    UploadSessions,
     Posts,
     PricingPlans,
     MCPAuditLogs,

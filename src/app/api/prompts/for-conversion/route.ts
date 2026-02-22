@@ -2,6 +2,7 @@ import { ENV } from '@/server/config/constants'
 import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
+import type { Lesson, Prompt } from '@/payload-types'
 
 type ErrorCode =
   | 'UNAUTHORIZED'
@@ -22,6 +23,15 @@ function errorResponse(
 // v2.1 Fix 2: GET returns 405 Method Not Allowed
 export async function GET() {
   return errorResponse('METHOD_NOT_ALLOWED', 'Use POST', 405, { Allow: 'POST' })
+}
+
+interface PromptOption {
+  id: string
+  title: string
+  key: string
+  type: string
+  usage: string
+  status: string
 }
 
 export async function POST(request: NextRequest) {
@@ -66,8 +76,9 @@ export async function POST(request: NextRequest) {
       return errorResponse('LESSON_NOT_FOUND', 'Lesson not found', 404)
     }
 
-    const tenant = (lesson as any).tenant
-    const tenantId = tenant?.id || tenant
+    const lessonTyped = lesson as unknown as Lesson
+    const tenant = lessonTyped.tenant
+    const tenantId = typeof tenant === 'object' ? (tenant?.id ?? null) : tenant
 
     if (!tenantId) {
       return errorResponse('VALIDATION_ERROR', 'Lesson has no tenant', 400)
@@ -105,23 +116,18 @@ export async function POST(request: NextRequest) {
 
     // Return in PromptOption format used by UI
     // v2.1 Fix 1: Include status field in response
+    const mapPromptToOption = (p: Prompt): PromptOption => ({
+      id: p.id,
+      title: p.title ?? '',
+      key: p.key ?? '',
+      type: p.type ?? '',
+      usage: p.usage ?? '',
+      status: p.status ?? 'draft',
+    })
+
     return NextResponse.json({
-      extractors: extractors.docs.map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        key: p.key,
-        type: p.type,
-        usage: p.usage,
-        status: p.status, // v2.1: Required by tests
-      })),
-      verifiers: verifiers.docs.map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        key: p.key,
-        type: p.type,
-        usage: p.usage,
-        status: p.status, // v2.1: Required by tests
-      })),
+      extractors: extractors.docs.map(mapPromptToOption),
+      verifiers: verifiers.docs.map(mapPromptToOption),
     })
   } catch (error) {
     console.error('[PromptsForConversion] Error:', error)

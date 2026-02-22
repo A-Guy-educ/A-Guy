@@ -8,11 +8,13 @@ import { logger } from '@/infra/utils/logger'
 import { apiService } from '@/server/services/api/api-service'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useDirectChatAssetUpload } from './useDirectChatAssetUpload'
 
 export interface ChatMessage {
   role: ChatRole
   content: string
   media?: Array<{ mediaId: string; filename?: string }>
+  chatAssets?: Array<{ chatAssetId: string; filename?: string }>
 }
 
 export interface UploadedMedia {
@@ -25,11 +27,6 @@ export interface ChatError {
   type: 'auth' | 'limit' | 'general'
   message: string
 }
-
-// Media upload constraints
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const MAX_FILES = 5
 
 interface UseNotebookChatProps {
   initialMessage: string
@@ -52,11 +49,6 @@ interface UseNotebookChatProps {
   // Admin mode - uses user-specific context without course/lesson context
   adminMode?: boolean
   userId?: string
-  // Media upload messages
-  unsupportedFileTypeMessage?: string
-  fileTooLargeMessage?: string
-  maxFilesMessage?: string
-  uploadFailedMessage?: string
 }
 
 export function useNotebookChat({
@@ -78,10 +70,6 @@ export function useNotebookChat({
   categoryId,
   adminMode = false,
   userId,
-  unsupportedFileTypeMessage = 'Unsupported file type',
-  fileTooLargeMessage = 'File too large (max 10MB)',
-  maxFilesMessage = 'Maximum 5 files allowed',
-  uploadFailedMessage = 'Failed to upload file',
 }: UseNotebookChatProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -95,9 +83,16 @@ export function useNotebookChat({
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
 
-  // Media upload state
-  const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([])
-  const [isUploading, setIsUploading] = useState(false)
+  // Direct-to-Blob chat asset uploads
+  const {
+    uploadingFiles: directUploads,
+    addFiles: addDirectUploads,
+    cancelFile: cancelDirectUpload,
+    retryFile: retryDirectUpload,
+    removeFile: removeDirectUpload,
+    isUploading: isDirectUploading,
+    completedAssetIds: completedChatAssetIds,
+  } = useDirectChatAssetUpload()
 
   // Persistent media for Ask page — sent with every message, not cleared after send
   const [askMedia, setAskMedia] = useState<UploadedMedia | null>(null)
@@ -305,115 +300,25 @@ export function useNotebookChat({
     loadConversationHistory()
   }, [contextKey])
 
-  // Handle file selection for media upload
-  const handleFileSelect = useCallback(
-    async (files: FileList | null) => {
-      if (!files || files.length === 0) return
-
-      // Check max files limit
-      if (uploadedMedia.length + files.length > MAX_FILES) {
-        toast.error(maxFilesMessage)
-        return
-      }
-
-      setIsUploading(true)
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-
-        // Validate file type
-        if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-          toast.error(`${file.name}: ${unsupportedFileTypeMessage}`)
-          continue
-        }
-
-        // Validate file size
-        if (file.size > MAX_FILE_SIZE) {
-          toast.error(`${file.name}: ${fileTooLargeMessage}`)
-          continue
-        }
-
-        try {
-          const formData = new FormData()
-          formData.append('file', file)
-
-          const response = await fetch('/api/media', {
-            method: 'POST',
-            credentials: 'include',
-            body: formData,
-          })
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            throw new Error(errorData.message || errorData.error || 'Upload failed')
-          }
-
-          const doc = await response.json()
-          setUploadedMedia((prev) => [
-            ...prev,
-            {
-              id: doc.doc?.id || doc.id,
-              filename: doc.doc?.filename || doc.filename || file.name,
-              mimeType: file.type,
-            },
-          ])
-        } catch (error) {
-          logger.error({ err: error, filename: file.name }, 'Media upload failed')
-          toast.error(`${file.name}: ${uploadFailedMessage}`)
-        }
-      }
-
-      setIsUploading(false)
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    },
-    [
-      uploadedMedia.length,
-      maxFilesMessage,
-      unsupportedFileTypeMessage,
-      fileTooLargeMessage,
-      uploadFailedMessage,
-    ],
-  )
-
-  // Remove uploaded media
-  const removeMedia = useCallback((mediaId: string) => {
-    setUploadedMedia((prev) => prev.filter((m) => m.id !== mediaId))
-  }, [])
-
   // Trigger file picker
   const openFilePicker = useCallback(() => {
     fileInputRef.current?.click()
   }, [])
 
   const sendMessage = async (message: string) => {
-    if ((!message.trim() && uploadedMedia.length === 0 && !askMedia) || isLoading) return
+    if ((!message.trim() && completedChatAssetIds.length === 0) || isLoading) return
 
-    // Combine regular pending media + persistent ask media
-    const mediaIds = uploadedMedia.map((m) => m.id)
-    if (askMedia && !mediaIds.includes(askMedia.id)) {
-      mediaIds.push(askMedia.id)
-    }
-    const mediaMetadata = [
-      ...uploadedMedia.map((m) => ({ mediaId: m.id, filename: m.filename })),
-      ...(askMedia && !uploadedMedia.some((m) => m.id === askMedia.id)
-        ? [{ mediaId: askMedia.id, filename: askMedia.filename }]
-        : []),
-    ]
+    // Capture chat asset metadata before clearing
+    const chatAssetMetadata = completedChatAssetIds.map((id) => ({ chatAssetId: id }))
 
     const userMessage: ChatMessage = {
       role: ChatRole.User,
       content: message,
-      media: mediaMetadata.length > 0 ? mediaMetadata : undefined,
+      chatAssets: chatAssetMetadata.length > 0 ? chatAssetMetadata : undefined,
     }
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
     setIsLoading(true)
-
-    // Clear regular pending media but NOT persistent askMedia
-    setUploadedMedia([])
 
     // Track chat message submitted (message length only, NOT content)
     systemEventBus.emit(SYSTEM_EVENTS.CHAT_MESSAGE_SUBMITTED, {
@@ -430,98 +335,103 @@ export function useNotebookChat({
       categoryId,
     }
 
-    // Use streaming when no media attached and not in admin mode
-    const useStreaming = mediaIds.length === 0 && !adminMode
+    // Use streaming when no attachments and not in admin mode
+    const hasAttachments = completedChatAssetIds.length > 0
+    const useStreaming = !hasAttachments && !adminMode
 
     if (useStreaming) {
       await streamMessage(message, acknowledgment, context)
     } else {
-      await sendMessageSync(message, acknowledgment, context, mediaIds)
+      await sendMessageSync(message, acknowledgment, context, [], completedChatAssetIds)
     }
   }
 
   /**
    * Send message using streaming (SSE)
    */
-  const streamMessage = async (
-    message: string,
-    acknowledgment: string,
-    context: {
-      exerciseId?: string
-      lessonId?: string
-      chapterId?: string
-      courseId?: string
-      categoryId?: string
-    },
-    options?: { hidden?: boolean },
-  ) => {
-    try {
-      const stream = apiService.chatStream(message, acknowledgment, context, options)
+  const streamMessage = useCallback(
+    async (
+      message: string,
+      acknowledgment: string,
+      context: {
+        exerciseId?: string
+        lessonId?: string
+        chapterId?: string
+        courseId?: string
+        categoryId?: string
+      },
+      options?: { hidden?: boolean },
+    ) => {
+      try {
+        const stream = apiService.chatStream(message, acknowledgment, context, options)
 
-      // Create placeholder assistant message for streaming
-      const placeholderMessage: ChatMessage = {
-        role: ChatRole.Assistant,
-        content: '',
-      }
-      setMessages((prev) => [...prev, placeholderMessage])
+        // Create placeholder assistant message for streaming
+        const placeholderMessage: ChatMessage = {
+          role: ChatRole.Assistant,
+          content: '',
+        }
+        setMessages((prev) => [...prev, placeholderMessage])
 
-      let fullText = ''
+        let fullText = ''
 
-      let hasAuthError = false
+        let hasAuthError = false
 
-      for await (const event of stream) {
-        if (event.type === 'chunk' && event.text) {
-          fullText += event.text
-          // Update the last message with streaming content
+        for await (const event of stream) {
+          if (event.type === 'chunk' && event.text) {
+            fullText += event.text
+            // Update the last message with streaming content
+            setMessages((prev) => {
+              const updated = [...prev]
+              updated[updated.length - 1] = { ...placeholderMessage, content: fullText }
+              return updated
+            })
+            scrollToBottom()
+          } else if (event.type === 'done') {
+            // done event received, conversation metadata available for future features
+          } else if (event.type === 'error') {
+            const errMsg = event.error || errorMessage
+            // Check if this is an auth error (contains "auth" or "authentication")
+            if (errMsg?.toLowerCase().includes('auth')) {
+              hasAuthError = true
+              setChatError({ type: 'auth' as const, message: authRequiredMessage })
+            } else if (errMsg?.toLowerCase().includes('guest message limit')) {
+              setChatError({
+                type: 'limit' as const,
+                message:
+                  guestLimitMessage || 'Guest message limit reached. Sign up for unlimited access.',
+              })
+            } else {
+              toast.error(errMsg || errorMessage)
+            }
+            // Remove the empty/partial message on error
+            setMessages((prev) => prev.slice(0, -1))
+            break
+          }
+        }
+
+        // If auth error occurred, skip finalizing the message
+        if (hasAuthError) {
+          return
+        }
+
+        // Finalize the message
+        if (fullText) {
           setMessages((prev) => {
             const updated = [...prev]
             updated[updated.length - 1] = { ...placeholderMessage, content: fullText }
             return updated
           })
-          scrollToBottom()
-        } else if (event.type === 'done') {
-          // done event received, conversation metadata available for future features
-        } else if (event.type === 'error') {
-          const errMsg = event.error || errorMessage
-          // Check if this is an auth error (contains "auth" or "authentication")
-          if (errMsg?.toLowerCase().includes('auth')) {
-            hasAuthError = true
-            setChatError({ type: 'auth' as const, message: authRequiredMessage })
-          } else if (errMsg?.toLowerCase().includes('guest message limit')) {
-            setChatError({
-              type: 'limit' as const,
-              message:
-                guestLimitMessage || 'Guest message limit reached. Sign up for unlimited access.',
-            })
-          } else {
-            toast.error(errMsg || errorMessage)
-          }
-          // Remove the empty/partial message on error
-          setMessages((prev) => prev.slice(0, -1))
-          break
         }
+      } catch (error) {
+        console.error('Stream message failed:', error)
+        toast.error(errorMessage)
+      } finally {
+        setIsLoading(false)
+        inputRef.current?.focus()
       }
-
-      // If auth error occurred, skip finalizing the message
-      if (hasAuthError) {
-        return
-      }
-
-      // Finalize the message
-      if (fullText) {
-        setMessages((prev) => {
-          const updated = [...prev]
-          updated[updated.length - 1] = { ...placeholderMessage, content: fullText }
-          return updated
-        })
-      }
-    } catch (_error) {
-      toast.error(errorMessage)
-    } finally {
-      setIsLoading(false)
-      inputRef.current?.focus()
-    }
-  }
+    },
+    [errorMessage, authRequiredMessage, guestLimitMessage, scrollToBottom],
+  )
 
   /**
    * Send message synchronously (with media or admin mode)
@@ -537,9 +447,17 @@ export function useNotebookChat({
       categoryId?: string
     },
     mediaIds?: string[],
+    chatAssetIds?: string[],
   ) => {
     try {
-      const result = await apiService.chat(message, acknowledgment, context, mediaIds, adminMode)
+      const result = await apiService.chat(
+        message,
+        acknowledgment,
+        context,
+        mediaIds,
+        chatAssetIds,
+        adminMode,
+      )
 
       if (!result.success) {
         if (result.authRequired) {
@@ -568,7 +486,8 @@ export function useNotebookChat({
         }
         setMessages((prev) => [...prev, assistantMessage])
       }
-    } catch (_error) {
+    } catch (error) {
+      console.error('Send message sync failed:', error)
       toast.error(errorMessage)
     } finally {
       setIsLoading(false)
@@ -596,7 +515,8 @@ export function useNotebookChat({
       } else {
         toast.error(result.error || resetErrorMessage)
       }
-    } catch (_error) {
+    } catch (error) {
+      console.error('Chat reset failed:', error)
       toast.error(resetErrorMessage)
     }
   }, [
@@ -611,13 +531,6 @@ export function useNotebookChat({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     sendMessage(inputValue)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      sendMessage(inputValue)
-    }
   }
 
   const handleQuickAction = (actionType: 'hint' | 'solution' | 'full') => {
@@ -811,15 +724,17 @@ export function useNotebookChat({
     contextKey,
     setInputValue,
     handleSubmit,
-    handleKeyDown,
     handleQuickAction,
     handleReset,
-    // Media upload
-    uploadedMedia,
-    isUploading,
-    handleFileSelect,
-    removeMedia,
     openFilePicker,
+    // Direct-to-Blob chat asset uploads
+    directUploads,
+    addDirectUploads,
+    cancelDirectUpload,
+    retryDirectUpload,
+    removeDirectUpload,
+    isDirectUploading,
+    completedChatAssetIds,
     addExternalMedia,
     // Persistent Ask-page media (sent with every message)
     askMedia,

@@ -1,85 +1,30 @@
 ---
 name: verify
-description: Hard gate + soft gate verifier. Runs checks, validates spec compliance.
+description: Verification stage — runs quality gates directly. This is a SCRIPTED STAGE, not an LLM agent.
 mode: primary
 tools:
-  bash: true
-  read: true
-  write: true
+  bash: false
+  read: false
+  write: false
   edit: false
 ---
 
-# VERIFY AGENT (Gatekeeper)
+# DEPRECATED — this stage is now scripted
 
-You are the **Verifier**. Your job is to decide **PASS or FAIL** based on evidence.
+# VERIFY STAGE (Scripted)
 
-## Your Task
+**NOTE:** This stage runs as a script (`runVerifyStage()` in `scripted-stages.ts`), not as an LLM agent.
+This file exists only for documentation.
 
-1. Read the SPEC provided in your context
-2. Run hard gate (pnpm verify)
-3. Validate soft gate (spec compliance)
-4. Write a verify report to `.tasks/<task-id>/verify.md`
+The scripted verify stage runs quality gates directly:
 
-## Gate Layers
+1. **TypeScript**: `pnpm -s tsc --noEmit`
+2. **Lint**: `pnpm -s lint`
+3. **Format**: `pnpm -s format:check`
+4. **Unit Tests**: `pnpm -s test:unit`
 
-### Layer A — HARD GATE
+Each gate runs with a 2-minute timeout. Any failure = verification FAIL.
 
-Run the verification command:
+The stage outputs `.tasks/<task-id>/verify.md` with pass/fail status for each gate.
 
-```bash
-pnpm verify
-```
-
-Any non-zero exit = HARD GATE FAIL
-
-### Layer B — SOFT GATE (only if Hard Gate PASS)
-
-Validate against the SPEC:
-
-- Requirements (MUST/SHOULD)
-- Acceptance Criteria
-- Guardrails
-
-Classify findings:
-
-- **REQUIRED FIX**: violates MUST / acceptance criteria
-- **SUGGESTION**: improvement, non-blocking
-
-## Report Format
-
-Write to `.tasks/<task-id>/verify.md`:
-
-```markdown
-# Verification Report
-
-**Task:** <task-id>
-
----
-
-## Hard Gate: pnpm verify
-
-**Status:** ✅ PASSED / ❌ FAILED
-
-## Soft Gate: Spec Compliance
-
-| Requirement | Status | Notes |
-| ----------- | ------ | ----- |
-| ...         | ...    | ...   |
-
-## Summary
-
-| Category  | Result              |
-| --------- | ------------------- |
-| Hard Gate | PASS/FAIL           |
-| Soft Gate | PASS/FAIL/COMPLIANT |
-
-**Overall Assessment:** PASS / FAIL
-```
-
-**STOP CONDITION**: After you write the verify report file, you are DONE. Do NOT read or verify it afterward. The pipeline validates file existence automatically.
-
-## Rules
-
-- Do NOT modify code
-- Do NOT commit
-- Report precisely what needs fixing
+If any gate fails, the pipeline runs the `autofix` agent to attempt automatic corrections (up to 2 attempts).

@@ -5,6 +5,9 @@
  * of media files. Works in both Next.js server context and standalone worker context.
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* Reason: Vercel Blob SDK doesn't export proper types for all responses */
+
 import { del, list, put } from '@vercel/blob'
 
 // Environment variable names
@@ -134,19 +137,19 @@ export class VercelBlobAdapter {
     const pathname = this.buildPathname(filename)
 
     // Note: @vercel/blob requires 'public' access for all blobs
-    const result = (await put(pathname, data as any, {
+    const result = await put(pathname, data as Parameters<typeof put>[1], {
       token: this.token,
       access: 'public',
       contentType: options?.contentType,
       cacheControlMaxAge: this.config.cacheControlSeconds,
-    })) as any
+    })
 
     return {
       url: result.url,
       pathname: result.pathname,
       contentDisposition: result.contentDisposition,
       contentType: result.contentType,
-      size: (result as any).size,
+      size: (result as { size?: number }).size,
     }
   }
 
@@ -214,8 +217,10 @@ export class VercelBlobAdapter {
       blobs: result.blobs.map((blob) => ({
         url: blob.url,
         pathname: blob.pathname,
-        size: (blob as any).size,
+        size: blob.size,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         contentType: (blob as any).contentType,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         uploadedAt: (blob as any).uploadedAt,
       })),
       cursor: result.cursor,
@@ -271,8 +276,10 @@ export class VercelBlobAdapter {
       const blob = result.blobs[0]
       return {
         pathname: blob.pathname,
-        size: (blob as any).size,
+        size: blob.size,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         contentType: (blob as any).contentType,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         uploadedAt: (blob as any).uploadedAt,
       }
     } catch {
@@ -344,7 +351,12 @@ export function getPrivateBlobAdapter(): VercelBlobAdapter {
  * Helper function to check if a URL is a Vercel Blob URL
  */
 export function isVercelBlobUrl(url: string): boolean {
-  return url.includes('.blob.vercel-storage.com') || url.includes('public.blob.vercel-storage.com')
+  try {
+    const parsed = new URL(url)
+    return parsed.hostname.endsWith('.blob.vercel-storage.com')
+  } catch {
+    return false
+  }
 }
 
 /**

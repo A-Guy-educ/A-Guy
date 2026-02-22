@@ -618,6 +618,27 @@ describe.skipIf(!hasDatabaseUrl)('Conversations Collection', () => {
   })
 
   describe('Database-level uniqueness enforcement', () => {
+    beforeEach(async () => {
+      if (!payload) return
+      // Clean up test data before each test to avoid conflicts with parallel tests
+      const db = (payload.db as any).connection.db
+      const collection = db.collection('conversations')
+
+      // Clean up ALL test conversations (not just by contextKey pattern)
+      // The shared DB may have data from other parallel tests
+      await collection.deleteMany({})
+
+      // Drop test-created indexes to avoid leaking constraints
+      const indexesToDrop = ['unique_active_user_exercise', 'unique_active_user_contextKey']
+      for (const indexName of indexesToDrop) {
+        try {
+          await collection.dropIndex(indexName)
+        } catch {
+          // Index may not exist, ignore
+        }
+      }
+    })
+
     afterEach(async () => {
       if (!payload) return
       // Drop test-created indexes to avoid leaking constraints into other tests

@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
+import { DEFAULT_LESSON_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
@@ -144,6 +145,26 @@ export const Lessons: CollectionConfig = {
       defaultValue: true,
       admin: {
         description: 'Whether this lesson is currently active',
+      },
+    },
+    {
+      name: 'accessType',
+      type: 'select',
+      required: true,
+      defaultValue: DEFAULT_LESSON_ACCESS_TYPE,
+      options: [
+        { label: 'Inherit from Course', value: 'inherit' },
+        { label: 'Free Access', value: 'free' },
+        { label: 'Require Registration', value: 'mandatory' },
+        {
+          label: 'Gated (5-Minute Delay)',
+          value: 'gated',
+        },
+      ],
+      admin: {
+        position: 'sidebar',
+        description:
+          'Access control for this lesson. "Inherit" uses the parent course setting. "Gated" is a client-side nudge, not hard enforcement.',
       },
     },
     // --- Intro Page (pre-lesson context screen) ---

@@ -61,7 +61,8 @@ export const apiService = {
    * @param message - The user's message
    * @param acknowledgment - The AI's acknowledgment message (from locale)
    * @param context - Context parameters (prefer IDs over slugs)
-   * @param mediaIds - Optional array of media IDs to attach (max 5)
+   * @param mediaIds - Optional array of legacy media IDs to attach (max 5)
+   * @param chatAssetIds - Optional array of chat-asset IDs (direct-to-Blob uploads, max 5)
    * @param adminMode - Optional admin mode flag (for legacy admin chat)
    * @returns Response with success status and either message or error
    */
@@ -76,6 +77,7 @@ export const apiService = {
       categoryId?: string
     },
     mediaIds?: string[],
+    chatAssetIds?: string[],
     adminMode?: boolean,
   ): Promise<ChatApiResponse> {
     try {
@@ -88,6 +90,7 @@ export const apiService = {
           acknowledgment,
           ...context,
           ...(mediaIds && mediaIds.length > 0 ? { mediaIds } : {}),
+          ...(chatAssetIds && chatAssetIds.length > 0 ? { chatAssetIds } : {}),
           ...(adminMode ? { adminMode: true } : {}),
         }),
       })
@@ -120,8 +123,9 @@ export const apiService = {
       }
 
       return { success: false, error: 'Invalid response format' }
-    } catch (_error) {
+    } catch (error) {
       // Network errors or other exceptions
+      console.error('Chat API request failed:', error)
       return { success: false, error: 'Network error' }
     }
   },
@@ -194,7 +198,8 @@ export const apiService = {
 
       logger.debug({ contextKey }, '[getConversation] No conversation found')
       return { success: true, exists: false, messages: [], contextKey }
-    } catch (_error) {
+    } catch (error) {
+      console.error('Get conversation API request failed:', error)
       return { success: false, exists: false, messages: [], error: 'Network error' }
     }
   },
@@ -232,7 +237,8 @@ export const apiService = {
       }
 
       return { success: false, error: 'Reset failed' }
-    } catch (_error) {
+    } catch (error) {
+      console.error('Reset chat API request failed:', error)
       return { success: false, error: 'Network error' }
     }
   },

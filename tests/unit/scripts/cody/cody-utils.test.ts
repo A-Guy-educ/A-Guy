@@ -184,3 +184,164 @@ describe('validateTaskId', () => {
     expect(validateTaskId('26021-short')).toBe(false)
   })
 })
+
+// ============================================================================
+// getLastFailedStage Tests
+// ============================================================================
+
+vi.mock('fs', () => ({
+  existsSync: vi.fn(),
+  readFileSync: vi.fn(),
+  writeFileSync: vi.fn(),
+  unlinkSync: vi.fn(),
+}))
+
+import * as fs from 'fs'
+import { getLastFailedStage } from '../../../../scripts/cody/cody-utils'
+
+describe('getLastFailedStage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('should return null when status.json does not exist', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false)
+
+    const result = getLastFailedStage('260219-test')
+    expect(result).toBeNull()
+  })
+
+  it('should return null when no stages have failed', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({
+        taskId: '260219-test',
+        stages: {
+          architect: { state: 'completed', retries: 0 },
+          build: { state: 'completed', retries: 0 },
+        },
+      }),
+    )
+
+    const result = getLastFailedStage('260219-test')
+    expect(result).toBeNull()
+  })
+
+  it('should return the last failed stage', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({
+        taskId: '260219-test',
+        stages: {
+          architect: { state: 'completed', retries: 0 },
+          build: { state: 'failed', retries: 1, error: 'Build failed' },
+          verify: { state: 'completed', retries: 0 },
+        },
+      }),
+    )
+
+    const result = getLastFailedStage('260219-test')
+    expect(result).toBe('build')
+  })
+
+  it('should return the last stage when multiple stages failed', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({
+        taskId: '260219-test',
+        stages: {
+          architect: { state: 'failed', retries: 1 },
+          build: { state: 'failed', retries: 1 },
+          verify: { state: 'failed', retries: 1 },
+        },
+      }),
+    )
+
+    const result = getLastFailedStage('260219-test')
+    expect(result).toBe('verify')
+  })
+
+  it('should return stage with timeout state', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({
+        taskId: '260219-test',
+        stages: {
+          build: { state: 'timeout', retries: 1 },
+        },
+      }),
+    )
+
+    const result = getLastFailedStage('260219-test')
+    expect(result).toBe('build')
+  })
+
+  it('should return null when stages object is missing', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({
+        taskId: '260219-test',
+      }),
+    )
+
+    const result = getLastFailedStage('260219-test')
+    expect(result).toBeNull()
+  })
+})
+
+// ============================================================================
+// editComment Tests
+// ============================================================================
+
+import { editComment } from '../../../../scripts/cody/cody-utils'
+
+describe('editComment', () => {
+  let execSyncSpy: ReturnType<typeof vi.spyOn>
+  let writeFileSyncSpy: ReturnType<typeof vi.spyOn>
+  let unlinkSyncSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    execSyncSpy = vi.spyOn(childProcess, 'execSync').mockReturnValue('')
+    writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockReturnValue()
+    unlinkSyncSpy = vi.spyOn(fs, 'unlinkSync').mockReturnValue()
+  })
+
+  it('should call gh api to patch the comment', () => {
+    editComment('42', 'Updated body')
+
+    const calls = execSyncSpy.mock.calls
+    const patchCall = calls.find(
+      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('-X PATCH'),
+    )
+    expect(patchCall).toBeDefined()
+    expect(patchCall![0]).toContain('issues/comments/42')
+  })
+
+  it('should write body to temp file before calling api', () => {
+    editComment('42', 'Updated body')
+
+    expect(writeFileSyncSpy).toHaveBeenCalled()
+  })
+
+  it('should clean up temp file after calling api', () => {
+    editComment('42', 'Updated body')
+
+    expect(unlinkSyncSpy).toHaveBeenCalled()
+  })
+
+  it('should not throw when gh api call fails', () => {
+    execSyncSpy.mockImplementation(() => {
+      throw new Error('gh api failed')
+    })
+
+    // Should not throw
+    expect(() => editComment('42', 'Updated body')).not.toThrow()
+  })
+
+  it('should return early when commentId is empty', () => {
+    editComment('', 'Updated body')
+
+    expect(execSyncSpy).not.toHaveBeenCalled()
+  })
+})

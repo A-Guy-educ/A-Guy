@@ -46,7 +46,10 @@ if (process.env.PAYLOAD_GENERATE_TYPES !== 'true') {
   }
 
   vercelBlobPlugin = vercelBlobStorage({
-    // Enable blob storage for media and exercise-assets collections
+    addRandomSuffix: true,
+    clientUploads: true,
+    // Use proxy mode - URLs are /api/media/file/... and static handler proxies to blob
+    // This ensures PDF viewer works (same-origin URLs) and backward compatibility
     collections: {
       media: true,
       'exercise-assets': true,

@@ -37,7 +37,7 @@ const isOwner: Access = ({ req, id }) => {
     if (verifiedGuestSessionId) {
       return {
         or: [{ user: { equals: user.id } }, { guestSession: { equals: verifiedGuestSessionId } }],
-      } as any
+      } as unknown as ReturnType<Access>
     }
   }
 
@@ -83,7 +83,7 @@ export const Conversations: CollectionConfig = {
     {
       name: 'guestSession',
       type: 'relationship',
-      relationTo: 'guest-sessions' as any,
+      relationTo: 'guest-sessions',
       required: false,
       index: true,
       admin: {
@@ -198,6 +198,22 @@ export const Conversations: CollectionConfig = {
               name: 'mediaId',
               type: 'relationship',
               relationTo: 'media',
+              required: true,
+            },
+          ],
+        },
+        {
+          name: 'chatAssets',
+          type: 'array',
+          maxRows: 5,
+          admin: {
+            description: 'Chat asset attachments (direct-to-Blob uploads, max 5)',
+          },
+          fields: [
+            {
+              name: 'chatAssetId',
+              type: 'relationship',
+              relationTo: 'chat-assets',
               required: true,
             },
           ],

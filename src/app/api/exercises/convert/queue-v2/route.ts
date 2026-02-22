@@ -13,6 +13,7 @@ import { ENV } from '@/server/config/constants'
 import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
+import type { Lesson } from '@/payload-types'
 
 type ErrorCode =
   | 'UNAUTHORIZED'
@@ -76,23 +77,23 @@ export async function POST(request: NextRequest) {
       return errorResponse('LESSON_NOT_FOUND', 'Lesson not found', 404)
     }
 
-    const tenant = (lesson as any).tenant
-    const lessonTenantId = tenant?.id || tenant
+    const lessonTyped = lesson as unknown as Lesson
+    const tenant = lessonTyped.tenant
+    const lessonTenantId = typeof tenant === 'object' ? tenant?.id : tenant
     if (!lessonTenantId) {
       return errorResponse('VALIDATION_ERROR', 'Lesson has no tenant', 400)
     }
 
     // Validate media belongs to lesson
-    const mediaIds = ((lesson as any).contentFiles || []).map((m: any) =>
-      typeof m === 'string' ? m : m.id,
-    )
+    const contentFiles = lessonTyped.contentFiles || []
+    const mediaIds = contentFiles.map((m): string => (typeof m === 'string' ? m : m.id))
     if (!mediaIds.includes(mediaId)) {
       return errorResponse('MEDIA_NOT_ATTACHED', 'Media is not attached to this lesson', 400)
     }
 
     // Queue the V2 job
     const job = await payload.jobs.queue({
-      task: 'pdf_to_exercises_v2' as any,
+      task: 'pdf_to_exercises_v2' as const,
       input: {
         ctx: {
           lessonId,

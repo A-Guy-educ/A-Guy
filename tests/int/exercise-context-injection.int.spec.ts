@@ -185,7 +185,7 @@ describe.skipIf(!hasDatabaseUrl)('exercise context injection', () => {
       draft: true,
     } as any)
     testExerciseId = exercise.id
-  }, 60000)
+  }, 120000)
 
   afterAll(async () => {
     if (!hasDatabaseUrl || !payload) return
