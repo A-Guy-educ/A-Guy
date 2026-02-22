@@ -89,8 +89,13 @@ export function formatAnalysisComment(
   errorMessage: string,
   rootCause: string,
   refinedFeedback: string,
+  canRetry: boolean,
 ): string {
   const retryTag = formatRetryTag(retryAttempt, maxRetries)
+
+  const retrySection = canRetry
+    ? `ℹ️ Auto-triggering rerun with refined feedback...`
+    : `> ℹ️ No retry possible — manual intervention required.`
 
   return `${retryTag}
 
@@ -106,7 +111,8 @@ ${rootCause}
 ${refinedFeedback}
 
 ---
-/cody rerun ${taskId} --feedback "${refinedFeedback.replace(/"/g, '\\\\"')}"
+
+${retrySection}
 `
 }
 

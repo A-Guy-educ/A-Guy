@@ -266,6 +266,7 @@ describe('retry-tracker: formatAnalysisComment', () => {
       'Type error in src/index.ts',
       'Missing type annotation',
       'Add type annotation to variable',
+      true, // canRetry = true
     )
 
     expect(result).toContain('[supervisor-retry: 1/3]')
@@ -276,10 +277,10 @@ describe('retry-tracker: formatAnalysisComment', () => {
     expect(result).toContain('Missing type annotation')
     expect(result).toContain('### Refined Approach')
     expect(result).toContain('Add type annotation to variable')
-    expect(result).toContain(`/cody rerun ${FIXTURE_TASK_ID}`)
+    expect(result).toContain('Auto-triggering rerun with refined feedback')
   })
 
-  it('escapes quotes in refined feedback for CLI', async () => {
+  it('shows manual intervention message when canRetry is false', async () => {
     const { formatAnalysisComment } = await import('../../../scripts/supervisor/retry-tracker')
 
     const result = formatAnalysisComment(
@@ -287,14 +288,14 @@ describe('retry-tracker: formatAnalysisComment', () => {
       1,
       3,
       'build',
-      'Error',
-      'Root cause',
-      'Use "const" instead of "let"',
+      'Type error in src/index.ts',
+      'Missing type annotation',
+      'Add type annotation to variable',
+      false, // canRetry = false
     )
 
-    // Should escape quotes for shell safety - the feedback in the CLI arg should have backslash before quotes
-    // The output looks like: --feedback "Use \"const\" instead of \"let\""
-    expect(result).toContain('--feedback "Use')
+    expect(result).toContain('No retry possible')
+    expect(result).toContain('manual intervention required')
   })
 })
 
@@ -406,6 +407,7 @@ describe('failure-analyzer: analyzeFailureWithFallback', () => {
     const mockResult = {
       rootCause: 'Mock root cause',
       refinedFeedback: 'Mock feedback',
+      canRetry: true,
     }
 
     const { analyzeFailureWithFallback } =
@@ -477,6 +479,7 @@ describe('failure-analyzer: analyzeFailure', () => {
     const mockResult = {
       rootCause: 'Type mismatch in function return type',
       refinedFeedback: 'Add explicit return type annotation',
+      canRetry: true,
     }
 
     const { analyzeFailureWithFallback } =
@@ -561,6 +564,7 @@ describe('failure-analyzer: analyzeFailure', () => {
       {
         rootCause: 'Same approach failed',
         refinedFeedback: 'Try a different solution',
+        canRetry: true,
       },
     )
 
@@ -585,6 +589,7 @@ describe('failure-analyzer: analyzeFailure', () => {
       {
         rootCause: 'Test failed',
         refinedFeedback: 'Fix the test assertion',
+        canRetry: true,
       },
     )
 
