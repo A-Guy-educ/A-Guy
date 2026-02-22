@@ -135,8 +135,17 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
 
   // Handle block type selection
   const handleBlockTypeSelected = (blockType: string) => {
+    // Defensive guard: check if factory exists
+    const defaultsFactory = ExerciseBlockDefaults[blockType]
+    if (typeof defaultsFactory !== 'function') {
+      const availableKeys = Object.keys(ExerciseBlockDefaults).join(', ')
+      const errorMsg = `Block defaults factory for "${blockType}" is not a function. Available keys: ${availableKeys}`
+      console.error(errorMsg)
+      throw new Error(errorMsg)
+    }
+
     // Create block using factory defaults
-    const newBlock = ExerciseBlockDefaults[blockType]() as ContentBlock
+    const newBlock = defaultsFactory() as ContentBlock
 
     const newBlocks = [...blocks]
     if (insertAtIndex !== undefined) {
