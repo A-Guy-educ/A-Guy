@@ -1,0 +1,15 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/repos/queries/exercises.ts",
+    "src/server/services/api/api-service.ts",
+    "src/ui/web/chat/hooks/useNotebookChat.ts",
+    "src/ui/admin/exercise-conversion/ConvertForm/index.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "pipeline": "spec_execute_verify"
+}

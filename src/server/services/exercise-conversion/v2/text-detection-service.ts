@@ -59,13 +59,14 @@ const LINE_Y_TOLERANCE = 0.005
 /**
  * Detect exercise start positions on a page using text extraction.
  *
- * @param pdfPage - pdfjs PDFPageProxy instance
+ * @param pdfPage - pdfjs PDFPageProxy instance (using unknown to avoid complex pdfjs types)
  * @param pageIndex - 0-based page index
  * @param allPagesLines - text lines from all pages, for header/footer detection
  * @returns Detection result compatible with the strip-based pipeline
  */
 export async function detectExerciseStartsFromText(
-  pdfPage: any, // PDFPageProxy — using any to avoid import issues with pdfjs-dist
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  pdfPage: any,
   pageIndex: number,
   allPagesLines?: TextLine[][],
 ): Promise<PageDetectionResult> {
@@ -150,6 +151,7 @@ export async function detectExerciseStartsFromText(
  * Extract text items from a PDF page and group them into lines.
  * Items at the same Y-coordinate (within tolerance) are concatenated.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function extractTextLines(pdfPage: any): Promise<TextLine[]> {
   const textContent = await pdfPage.getTextContent()
   const viewport = pdfPage.getViewport({ scale: 1.0 })
@@ -307,6 +309,7 @@ function filterHeaderFooter(pageLines: TextLine[], allPagesLines: TextLine[][]):
  * Extract text lines from all pages of a PDF document.
  * Used for cross-page header/footer detection.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function extractAllPagesTextLines(pdfPages: any[]): Promise<TextLine[][]> {
   const allLines: TextLine[][] = []
   for (const page of pdfPages) {

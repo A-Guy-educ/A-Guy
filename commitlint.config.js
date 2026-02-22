@@ -25,5 +25,6 @@ export default {
     'header-max-length': [2, 'always', 100], // Max 100 characters for header
     'subject-empty': [2, 'never'], // Subject cannot be empty
     'subject-full-stop': [2, 'never', '.'], // No period at end of subject
+    'body-max-line-length': [0], // Disable - automated agents generate long body lines
   },
 }

@@ -8,6 +8,7 @@
  */
 import { composePrompt, getRecentWindow, type Message } from '@/infra/llm/context-policy'
 import { logger } from '@/infra/utils/logger'
+import type { Logger } from 'pino'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import {
@@ -99,7 +100,7 @@ export async function runChatPipeline(
     req.payload,
     contextCandidate,
     { id: ownerId },
-    reqLogger as any,
+    reqLogger as Logger,
   )
   if (!contextValidation.success) {
     return {
@@ -206,7 +207,7 @@ export async function runChatPipeline(
     conversationId,
     context.contextKey,
     recentMessages,
-    reqLogger as any,
+    reqLogger as Logger,
   )
 
   // Fetch lesson context and compose system instructions
@@ -214,7 +215,7 @@ export async function runChatPipeline(
     req.payload,
     context,
     { id: ownerId },
-    reqLogger as any,
+    reqLogger as Logger,
     validated.courseId,
   )
 
@@ -224,7 +225,7 @@ export async function runChatPipeline(
       req.payload,
       lessonContext.lessonPrompt,
       lessonContext.lessonContextText,
-      reqLogger as any,
+      reqLogger as Logger,
       lessonContext.coursePrompt,
       lessonContext.courseContextText,
     )
@@ -246,7 +247,7 @@ export async function runChatPipeline(
     validated.mediaIds || [],
     ownerId,
     req,
-    reqLogger as any,
+    reqLogger as Logger,
   )
 
   if (!mediaResult.success) {

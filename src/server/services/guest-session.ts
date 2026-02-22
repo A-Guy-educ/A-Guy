@@ -12,6 +12,9 @@
  * - Only tokenHash is stored in DB (S1)
  * - Cookies are HttpOnly, Secure (prod), SameSite=Lax (S2)
  */
+
+/* eslint-disable @typescript-eslint/no-explicit-any -- Payload collection types */
+
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import crypto from 'crypto'
@@ -146,7 +149,7 @@ export async function createGuestSession(options: {
   expiresAt.setDate(expiresAt.getDate() + guestConfig.sliding_ttl_days)
 
   const session = await payload.create({
-    collection: 'guest-sessions' as any,
+    collection: 'guest-sessions' as const,
     data: {
       tokenHash,
       tokenVersion: 1,
@@ -155,14 +158,16 @@ export async function createGuestSession(options: {
       expiresAt: expiresAt.toISOString(),
       hardExpiresAt: hardExpiresAt.toISOString(),
       status: 'active',
+      messageCount: 0,
       ipHash: options.ipHash,
       userAgentHash: options.userAgentHash,
     },
+    draft: false,
   })
 
   logger.info({ sessionId: session.id }, 'Created guest session')
 
-  return { session: session as GuestSessionDoc, token }
+  return { session: session as unknown as GuestSessionDoc, token }
 }
 
 export async function getGuestSessionByToken(token: string): Promise<GuestSessionDoc | null> {

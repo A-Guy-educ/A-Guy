@@ -22,10 +22,14 @@ export interface PageImage {
 /**
  * Full page data including rendered image and pdfjs page proxy.
  * The pdfPage can be used for text extraction via getTextContent().
+ *
+ * Using unknown for PDFPageProxy as pdfjs-dist types are complex to import
+ * and this type is only used internally for method access.
  */
 export interface PageData {
   image: PageImage
-  pdfPage: any // PDFPageProxy from pdfjs-dist
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  pdfPage: any
 }
 
 /**

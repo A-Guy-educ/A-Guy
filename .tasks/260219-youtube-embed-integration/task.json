@@ -1,0 +1,27 @@
+{
+  "task_type": "spec_only",
+  "pipeline": "spec_only",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/infra/media/embed/",
+    "src/server/payload/collections/Media/",
+    "src/server/payload/collections/Media/hooks/",
+    "src/ui/web/media/ExternalMedia/",
+    "src/ui/admin/MediaPreview/",
+    "src/ui/web/exerciserenderer/components/MediaAttachments/",
+    "tests/unit/infra/media/embed/",
+    "tests/unit/hooks/"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Media collection already exists with 'external' type support",
+    "ExternalMedia component exists in src/ui/web/media/ExternalMedia/",
+    "ExternalPreview component exists in src/ui/admin/MediaPreview/",
+    "MediaAttachments component exists in src/ui/web/exerciserenderer/components/MediaAttachments/",
+    "YouTube oEmbed endpoint is public and accessible without API key",
+    "Environment has network access to youtube.com for oEmbed requests",
+    "MediaType enum exists with External value in src/infra/media/types"
+  ]
+}

@@ -26,6 +26,7 @@ import {
 } from '@/infra/llm/providers/factory'
 import { chatWithExerciseHelper } from '@/infra/llm/services/exercise-chat-service'
 import { logger } from '@/infra/utils/logger'
+import type { Logger } from 'pino'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { getMCPClient } from '@/server/repos/mcp/client/mcp-client'
@@ -553,7 +554,7 @@ async function handleContextScopedChat(
     req.payload,
     contextCandidate,
     { id: ownerId },
-    logger as any,
+    logger as Logger,
   )
   if (!contextValidation.success) {
     return jsonWithCookie(
@@ -658,7 +659,7 @@ async function handleContextScopedChat(
     conversationId,
     context.contextKey,
     recentMessages,
-    logger as any,
+    logger as Logger,
   )
 
   // Fetch lesson context and compose system instructions
@@ -666,7 +667,7 @@ async function handleContextScopedChat(
     req.payload,
     context,
     { id: ownerId },
-    logger as any,
+    logger as Logger,
     validated.courseId,
   )
 
@@ -676,7 +677,7 @@ async function handleContextScopedChat(
       req.payload,
       lessonContext.lessonPrompt,
       lessonContext.lessonContextText,
-      logger as any,
+      logger as Logger,
       lessonContext.coursePrompt,
       lessonContext.courseContextText,
     )
@@ -696,7 +697,7 @@ async function handleContextScopedChat(
     validated.mediaIds || [],
     ownerId,
     req,
-    logger as any,
+    logger as Logger,
   )
 
   if (!mediaResult.success) {
@@ -794,7 +795,7 @@ async function handleContextScopedChat(
   )
 
   // Schedule background tasks
-  scheduleSummaryMaintenance(req.payload, conversationId, logger as any)
+  scheduleSummaryMaintenance(req.payload, conversationId, logger as Logger)
   if (ownerId) {
     scheduleMemoryExtraction(
       req.payload,
@@ -802,7 +803,7 @@ async function handleContextScopedChat(
       ownerId,
       context,
       { id: ownerId },
-      logger as any,
+      logger as Logger,
     )
   }
 

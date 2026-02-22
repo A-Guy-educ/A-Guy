@@ -24,16 +24,14 @@ export class GitHubRunner implements RunnerBackend {
   name = 'opencode-github'
 
   spawn(stage: string, prompt: string, env: NodeJS.ProcessEnv, cwd: string): ChildProcess {
-    // Pass stage as AGENT and prompt as PROMPT env vars
-    // The opencode github run command handles OIDC auth internally
-    return spawn('opencode', ['github', 'run'], {
+    // Use opencode run --agent instead of opencode github run
+    // opencode github run does NOT support --agent flag and ignores AGENT env var
+    // opencode run supports --agent which loads correct agent from opencode.json
+    // OIDC auth still works in CI (reads ACTIONS_ID_TOKEN_REQUEST_TOKEN from env)
+    return spawn('pnpm', ['exec', 'opencode', 'run', '--agent', stage, prompt], {
       cwd,
       stdio: 'inherit',
-      env: {
-        ...env,
-        AGENT: stage,
-        PROMPT: prompt,
-      },
+      env,
     })
   }
 }
@@ -46,14 +44,14 @@ export class LocalRunner implements RunnerBackend {
   name = 'opencode-local'
 
   spawn(stage: string, prompt: string, env: NodeJS.ProcessEnv, cwd: string): ChildProcess {
-    // Local runner uses pnpm ocode run --agent <stage> "<prompt>"
-    const fullPrompt = `Execute ${stage} for this task. ${prompt}`
-    return spawn('pnpm', ['ocode', 'run', '--agent', stage, fullPrompt], {
+    // Local runner uses pnpm ocode run --agent <stage> [prompt]
+    // Prompt is passed as positional arg (same as GitHubRunner)
+    return spawn('pnpm', ['ocode', 'run', '--agent', stage, prompt], {
       cwd,
       stdio: 'inherit',
       env: {
         ...env,
-        // Also set the standard env vars for consistency
+        AGENT: stage,
         MODEL: env.MODEL,
       },
     })

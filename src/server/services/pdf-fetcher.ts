@@ -1,3 +1,4 @@
+import type { Payload } from 'payload'
 import { getPdfBufferFromUrl, isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
 import { fetchBuffer } from '@/infra/utils/http'
 import { PDF_MAX_BYTES } from '@/server/config/constants'
@@ -58,7 +59,7 @@ export async function normalizeToAbsoluteUrl(url: string): Promise<string> {
  */
 export async function getPdfBufferFromBlob(
   mediaId: string,
-  payload: any,
+  payload: Payload,
   _req?: { headers?: { authorization?: string; cookie?: string } },
 ): Promise<Buffer> {
   // Fetch media document
@@ -121,7 +122,7 @@ export async function getPdfBufferFromBlob(
  * Get PDF file size (for validation)
  * Uses media document's filesize field or fetches to calculate
  */
-export async function getPdfFileSize(mediaId: string, payload: any): Promise<number> {
+export async function getPdfFileSize(mediaId: string, payload: Payload): Promise<number> {
   const media = await payload.findByID({ collection: 'media', id: mediaId, depth: 0 })
 
   if (!media) {

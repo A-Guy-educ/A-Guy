@@ -1,9 +1,6 @@
-/**
- * Pure helpers for exercise conversion - shared by code and tests
- * All functions are pure (no IO), accept `now` as arg when time-dependent.
- */
-
 import { nanoid } from 'nanoid'
+import type { Tenant } from '@/payload-types'
+import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
 
 /**
  * v2.1 Fix 5: INVARIANT - Block ID Enrichment
@@ -65,9 +62,8 @@ export function buildJobsWhereQuery(lessonId: string, mediaId: string): object {
  * Validate prompt document for expected usage and tenant.
  * Returns void or throws typed error.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validatePromptForUsageAndTenant(
-  promptDoc: { status: string; usage: string; tenant: any },
+  promptDoc: { status: string; usage: string; tenant: Tenant },
   expectedUsage: 'extractor' | 'verifier',
   lessonTenantId: string,
 ): void {
@@ -131,8 +127,7 @@ export function normalizeExerciseForHash(extracted: {
  * Parse extractor response - pure string parsing.
  * v2.2 Fix: Handle malformed JSON with escape sequence issues from LLM.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function parseExtractorResponseText(responseText: string): any[] {
+export function parseExtractorResponseText(responseText: string): unknown[] {
   try {
     const jsonMatch =
       responseText.match(/\[[\s\S]*\]/) || responseText.match(/```json\n([\s\S]*?)\n```/)
@@ -305,7 +300,6 @@ export function normalizeExerciseInput(extracted: {
  * Adapter: Convert ExerciseExtractedEnriched to Payload content format
  * Maps to ContentBlockSchema union (LatexBlockSchema, RichTextBlockSchema, etc.)
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function toPayloadContent(extracted: {
   title: string
   blocks: Array<{
@@ -320,7 +314,7 @@ export function toPayloadContent(extracted: {
     correctAnswer?: number
     sampleAnswer?: string
   }>
-}): { blocks: any[] } {
+}): { blocks: ContentBlock[] } {
   return {
     blocks: extracted.blocks.map((b) => {
       if (b.type === 'latex') {
@@ -342,6 +336,6 @@ export function toPayloadContent(extracted: {
       }
       // For question blocks, return as-is (they should already be in correct format)
       return b
-    }),
+    }) as ContentBlock[],
   }
 }

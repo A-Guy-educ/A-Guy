@@ -95,42 +95,43 @@
   }
 
   [data-theme='dark'] {
-    /* Deep navy blue background */
-    --background: 222 75% 9%;
+    /* Deep navy blue background - slightly darker for depth */
+    --background: 222 47% 7%;
     --foreground: 210 40% 98%;
 
     /* Card surfaces - slightly elevated from background */
-    --card: 222 75% 13%;
+    --card: 222 47% 11%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 75% 13%;
+    --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    /* Primary: bright vibrant blue */
-    --primary: 217 91% 60%;
+    /* Primary: vibrant coral-red (brand-aligned with light mode burgundy) */
+    --primary: 353 73% 56%;
+    --primary-soft: 353 73% 15%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: elevated blue surface */
-    --secondary: 222 75% 17%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary: muted blue-gray (different from muted) */
+    --secondary: 220 25% 16%;
+    --secondary-foreground: 210 40% 90%;
 
     /* Muted: dark gray-blue */
-    --muted: 222 75% 17%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 215 20% 14%;
+    --muted-foreground: 215 15% 60%;
 
-    /* Accent: vibrant purple (keeping for backward compatibility) */
-    --accent: 217 91% 60%;
+    /* Accent: vibrant purple (complementary to coral) */
+    --accent: 261 75% 65%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 35%;
+    --destructive-foreground: 0 0% 95%;
 
     /* Borders - subtle borders with alpha */
-    --border: 222 75% 20% / 0.7;
-    --input: 222 75% 17%;
+    --border: 222 25% 18% / 0.7;
+    --input: 222 20% 14%;
 
-    /* Focus ring follows accent */
-    --ring: 217 91% 60%;
+    /* Focus ring follows primary */
+    --ring: 353 73% 56%;
 
     /* Shadow system - darker shadows for dark mode */
     --shadow-card: 0 4px 16px 0 rgb(0 0 0 / 0.3);
@@ -138,13 +139,17 @@
     --shadow-modal: 0 20px 40px -10px rgb(0 0 0 / 0.5);
     --shadow-dropdown: 0 8px 12px -2px rgb(0 0 0 / 0.3), 0 4px 8px -2px rgb(0 0 0 / 0.2);
 
-    --success: 142 71% 45%;
-    --warning: 38 92% 50%;
-    --error: 0 72% 51%;
+    /* Semantic colors - optimized for dark background visibility */
+    --success: 158 64% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 90% 50%;
+    --warning-foreground: 0 0% 10%;
+    --error: 0 72% 45%;
+    --error-foreground: 0 0% 100%;
 
     /* Badge colors - for course categories */
-    --badge-orange: 25 95% 53%; /* Orange badge */
-    --badge-orange-bg: 24 95% 97%; /* Light orange background */
+    --badge-orange: 25 95% 60%;
+    --badge-orange-bg: 25 90% 15%;
 
     /* Semantic colors - components use these */
     --header-bg: var(--card);
@@ -152,9 +157,9 @@
     --footer-bg: var(--card);
 
     /* Interactive element states */
-    --hover-bg: var(--muted);
-    --selected-bg: var(--muted);
-    --selected-fg: var(--foreground);
+    --hover-bg: 222 25% 16%;
+    --selected-bg: 220 25% 20%;
+    --selected-fg: 210 40% 95%;
 
     /* Form elements - slightly altered background for visual distinction */
     --form-bg: var(--card);

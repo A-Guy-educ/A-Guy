@@ -16,7 +16,7 @@ import { PDF_MAX_BYTES, TASK_SLUGS } from '@/server/config/constants'
 import { getPdfBufferFromBlob } from '@/server/services/pdf-fetcher'
 import config from '@payload-config'
 import { ObjectId } from 'mongodb'
-import { getPayload, type Payload } from 'payload'
+import { getPayload } from 'payload'
 import { nanoid } from 'nanoid'
 
 import { loadAndRenderAllPages } from '@/server/services/exercise-conversion/v2/pdf-render-service'
@@ -44,6 +44,12 @@ interface V2JobInput {
   }
 }
 
+interface HandlerParams {
+  job: { input: V2JobInput; id: string }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  req: { payload?: any }
+}
+
 /**
  * An exercise strip ready for upload. May span one or two pages.
  */
@@ -58,7 +64,7 @@ export const pdfToExercisesV2Task = {
   input: {},
   output: {},
 
-  async handler({ job, req }: { job: any; req: any }) {
+  async handler({ job, req }: HandlerParams) {
     const payload = req.payload ?? (await getPayload({ config }))
     const input = job.input as V2JobInput
     const { lessonId, sourceDocId, tenantId } = input.ctx
@@ -89,7 +95,8 @@ export const pdfToExercisesV2Task = {
       }
 
       // PASS 0: Load PDF, render all pages, get page proxies for text extraction
-      const pdfBuffer = await getPdfBufferFromBlob(sourceDocId, payload, req)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdfBuffer = await getPdfBufferFromBlob(sourceDocId, payload, req as any)
 
       if (pdfBuffer.length > PDF_MAX_BYTES) {
         throw { stage: 'PASS0_EXTRACT', code: 'PDF_TOO_LARGE', message: 'PDF too large' }
@@ -151,7 +158,8 @@ export const pdfToExercisesV2Task = {
               i,
               allPagesTextLines[i],
               allPagesTextLines,
-              payload,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              payload as any,
             )
             console.log(
               `[V2] Page ${i + 1}/${pageDataList.length} [COMBO]: ${comboDetection.exercises.length} exercise(s), continues=${comboDetection.continuesFromPrevious}`,
@@ -160,8 +168,10 @@ export const pdfToExercisesV2Task = {
           }
 
           output.pagesProcessed++
-        } catch (pageError: any) {
-          console.error(`[V2] Failed to detect on page ${i}:`, pageError.message)
+        } catch (pageError: unknown) {
+          const pageErrorMessage =
+            pageError instanceof Error ? pageError.message : 'Detection failed'
+          console.error(`[V2] Failed to detect on page ${i}:`, pageErrorMessage)
           detections.push({
             contentStartY: 0,
             contentEndY: 1,
@@ -170,7 +180,7 @@ export const pdfToExercisesV2Task = {
           })
           output.errors.push({
             pageIndex: i,
-            reason: pageError.message || 'Detection failed',
+            reason: pageErrorMessage,
           })
         }
       }
@@ -201,7 +211,9 @@ export const pdfToExercisesV2Task = {
               size: strip.imageBuffer.length,
             },
             overrideAccess: true,
-            req,
+            draft: true,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            req: req as any,
           })
 
           const title = `Exercise ${strip.label}`
@@ -230,15 +242,19 @@ export const pdfToExercisesV2Task = {
               },
             },
             overrideAccess: true,
-            req,
+            draft: true,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            req: req as any,
           })
 
           output.exercisesCreated++
-        } catch (uploadError: any) {
-          console.warn(`[V2] Failed to create exercise ${strip.label}:`, uploadError.message)
+        } catch (uploadError: unknown) {
+          const uploadErrorMessage =
+            uploadError instanceof Error ? uploadError.message : 'Upload/create failed'
+          console.warn(`[V2] Failed to create exercise ${strip.label}:`, uploadErrorMessage)
           output.errors.push({
             pageIndex: strip.sourcePageIndex,
-            reason: uploadError.message || 'Upload/create failed',
+            reason: uploadErrorMessage,
           })
         }
       }
@@ -253,13 +269,16 @@ export const pdfToExercisesV2Task = {
         }
       }
 
-      await updateJobStatus(payload, job.id, 'completed', output)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await updateJobStatus(payload as any, job.id, 'completed', output)
       return output
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       console.error(`[V2] Job ${job.id} failed:`, error)
-      await updateJobStatus(payload, job.id, 'failed', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await updateJobStatus(payload as any, job.id, 'failed', {
         ...output,
-        error: error.message,
+        error: errorMessage,
       })
       throw error
     }
@@ -356,19 +375,21 @@ async function buildExerciseStrips(
  * Update job status in MongoDB
  */
 async function updateJobStatus(
-  payload: Payload,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload: any,
   jobId: string,
   status: 'completed' | 'failed',
   output?: unknown,
 ): Promise<void> {
-  const db = payload.db as any
-  const coll = db.connection?.collection?.('payload-jobs')
+  const db = payload.db
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const coll = db?.connection?.collection?.('payload-jobs') as any
   if (!coll) {
     console.warn('[V2] Cannot update job status - jobs collection not accessible')
     return
   }
 
-  const update: any = {
+  const update: Record<string, unknown> = {
     processing: false,
     completedAt: new Date(),
     hasError: status === 'failed',

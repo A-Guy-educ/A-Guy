@@ -1,6 +1,6 @@
 {
   "name": "a-guy",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "Website template for Payload",
   "license": "MIT",
   "type": "module",
@@ -56,6 +56,7 @@
     "test:e2e:debug": "pnpm exec playwright test --debug",
     "test:e2e:headed": "pnpm exec playwright test --headed",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
+    "test:int:cody": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.cody-int.mts",
     "test:int:atlas": "cross-env USE_ATLAS=true NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
     "test:vector": "cross-env USE_ATLAS=true NODE_OPTIONS=--no-deprecation vitest run tests/int/vector-*.int.spec.ts --config ./vitest.config.mts",
     "test:watch": "vitest watch --config ./vitest.config.mts",
@@ -91,7 +92,8 @@
     "cody:spec": "pnpm tsx scripts/cody/cody.ts --mode=spec",
     "cody:impl": "pnpm tsx scripts/cody/cody.ts --mode=impl",
     "cody:rerun": "pnpm tsx scripts/cody/cody.ts --mode=rerun",
-    "cody:run": "pnpm tsx scripts/cody/cody.ts"
+    "cody": "pnpm tsx scripts/cody/cody.ts",
+    "supervisor": "pnpm tsx scripts/supervisor/supervisor.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.28.0",
@@ -189,6 +191,7 @@
     "husky": "^9.1.7",
     "jsdom": "26.1.0",
     "lint-staged": "^16.2.7",
+    "opencode-ai": "^1.2.10",
     "playwright": "1.57.0",
     "playwright-core": "1.57.0",
     "postcss": "^8.4.38",

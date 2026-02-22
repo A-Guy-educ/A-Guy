@@ -334,7 +334,7 @@ export async function retrieveMemoriesWithContext(
   if (!db) {
     throw new Error('Database connection not available')
   }
-  // Use 'any' to bypass MongoDB version type mismatch
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- MongoDB driver version mismatch
   return retrieveMemoryItems(db as any, userId, queryText, conversationId, contextKey, payload)
 }
 

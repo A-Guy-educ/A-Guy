@@ -62,6 +62,28 @@ describe('Exercise Queries', () => {
       expect(result).toBeNull()
     })
 
+    it('logs error to console when findByID throws', async () => {
+      // Setup spy on console.error
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const testError = new Error('Database connection failed')
+
+      const { getPayload } = await import('payload')
+      const mockPayload: MockPayload = {
+        findByID: vi.fn().mockRejectedValue(testError),
+      }
+      ;(getPayload as Mock).mockResolvedValue(mockPayload)
+
+      const result = await queryExerciseById({ id: 'exercise-1' })
+
+      // Verify console.error was called with correct message and error
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to query exercise by ID:', testError)
+
+      // Verify function still returns null on error (no behavioral regression)
+      expect(result).toBeNull()
+
+      consoleSpy.mockRestore()
+    })
+
     it('uses correct depth parameter', async () => {
       const mockExercise = {
         id: 'exercise-1',

@@ -1,25 +1,37 @@
 import { loadRuntimeConfig } from '@/infra/config/runtime/runtime-config'
 import { LOCK_TIMEOUT_MS } from '@/server/config/constants'
 import configPromise from '@payload-config'
-import { ObjectId } from 'mongodb'
+import { ObjectId, type Collection, type Document } from 'mongodb'
 import { NextRequest, NextResponse } from 'next/server'
-import type { Payload } from 'payload'
+import type { Payload, User } from 'payload'
 import { getPayload } from 'payload'
 
-async function getJobsCollection(payloadInstance: Payload) {
+interface JobDocument extends Document {
+  _id: ObjectId
+  taskSlug?: string
+  task?: string
+  processing?: boolean
+  hasError?: boolean
+  lockExpiresAt?: Date
+  completedAt?: Date
+  startedAt?: Date
+  output?: unknown
+}
+
+async function getJobsCollection(payloadInstance: Payload): Promise<Collection<JobDocument>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = payloadInstance.db as any
   // Payload 3.x: Use collections.jobs or collection('jobs')
   const coll =
     db.collections?.jobs || db.collection?.('jobs') || db.connection?.collection?.('payload-jobs')
   if (!coll) throw new Error('Cannot access Jobs collection')
-  return coll
+  return coll as Collection<JobDocument>
 }
 
 async function atomicClaimAndRunJob(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  coll: any,
+  coll: Collection<JobDocument>,
   jobId: string,
-) {
+): Promise<JobDocument | null> {
   const now = new Date()
   const expiresAt = new Date(now.getTime() + LOCK_TIMEOUT_MS)
 
@@ -44,15 +56,12 @@ async function atomicClaimAndRunJob(
 }
 
 async function updateJobStatus(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  coll: any,
+  coll: Collection<JobDocument>,
   jobId: string,
   status: 'completed' | 'failed',
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  output?: any,
+  output?: unknown,
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const update: any = {
+  const update: Record<string, unknown> = {
     processing: false,
     completedAt: new Date(),
     hasError: status === 'failed',
@@ -73,8 +82,8 @@ export async function POST(request: NextRequest) {
     const { user } = await payload.auth({ headers: request.headers })
 
     // Admin-only access
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!user || (user as any).role !== 'admin') {
+    const typedUser = user as User | null
+    if (!user || (typedUser && 'role' in typedUser && typedUser.role !== 'admin')) {
       return NextResponse.json({ error: 'Unauthorized - admin access required' }, { status: 401 })
     }
 
@@ -107,6 +116,8 @@ export async function POST(request: NextRequest) {
     const job = {
       ...jobDoc,
       id: jobId, // Add string id for task handler compatibility
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      input: (jobDoc as any).input || {},
     }
 
     // Execute the task synchronously by calling the handler directly
@@ -135,7 +146,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update job status to completed
-    await updateJobStatus(coll, jobId, 'completed', job.output)
+    await updateJobStatus(coll, jobId, 'completed', (job as JobDocument).output)
 
     console.log(`[run-immediately] Job ${jobId} completed successfully`)
 

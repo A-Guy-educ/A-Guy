@@ -443,85 +443,89 @@ export function useNotebookChat({
   /**
    * Send message using streaming (SSE)
    */
-  const streamMessage = async (
-    message: string,
-    acknowledgment: string,
-    context: {
-      exerciseId?: string
-      lessonId?: string
-      chapterId?: string
-      courseId?: string
-      categoryId?: string
-    },
-    options?: { hidden?: boolean },
-  ) => {
-    try {
-      const stream = apiService.chatStream(message, acknowledgment, context, options)
+  const streamMessage = useCallback(
+    async (
+      message: string,
+      acknowledgment: string,
+      context: {
+        exerciseId?: string
+        lessonId?: string
+        chapterId?: string
+        courseId?: string
+        categoryId?: string
+      },
+      options?: { hidden?: boolean },
+    ) => {
+      try {
+        const stream = apiService.chatStream(message, acknowledgment, context, options)
 
-      // Create placeholder assistant message for streaming
-      const placeholderMessage: ChatMessage = {
-        role: ChatRole.Assistant,
-        content: '',
-      }
-      setMessages((prev) => [...prev, placeholderMessage])
+        // Create placeholder assistant message for streaming
+        const placeholderMessage: ChatMessage = {
+          role: ChatRole.Assistant,
+          content: '',
+        }
+        setMessages((prev) => [...prev, placeholderMessage])
 
-      let fullText = ''
+        let fullText = ''
 
-      let hasAuthError = false
+        let hasAuthError = false
 
-      for await (const event of stream) {
-        if (event.type === 'chunk' && event.text) {
-          fullText += event.text
-          // Update the last message with streaming content
+        for await (const event of stream) {
+          if (event.type === 'chunk' && event.text) {
+            fullText += event.text
+            // Update the last message with streaming content
+            setMessages((prev) => {
+              const updated = [...prev]
+              updated[updated.length - 1] = { ...placeholderMessage, content: fullText }
+              return updated
+            })
+            scrollToBottom()
+          } else if (event.type === 'done') {
+            // done event received, conversation metadata available for future features
+          } else if (event.type === 'error') {
+            const errMsg = event.error || errorMessage
+            // Check if this is an auth error (contains "auth" or "authentication")
+            if (errMsg?.toLowerCase().includes('auth')) {
+              hasAuthError = true
+              setChatError({ type: 'auth' as const, message: authRequiredMessage })
+            } else if (errMsg?.toLowerCase().includes('guest message limit')) {
+              setChatError({
+                type: 'limit' as const,
+                message:
+                  guestLimitMessage || 'Guest message limit reached. Sign up for unlimited access.',
+              })
+            } else {
+              toast.error(errMsg || errorMessage)
+            }
+            // Remove the empty/partial message on error
+            setMessages((prev) => prev.slice(0, -1))
+            break
+          }
+        }
+
+        // If auth error occurred, skip finalizing the message
+        if (hasAuthError) {
+          return
+        }
+
+        // Finalize the message
+        if (fullText) {
           setMessages((prev) => {
             const updated = [...prev]
             updated[updated.length - 1] = { ...placeholderMessage, content: fullText }
             return updated
           })
-          scrollToBottom()
-        } else if (event.type === 'done') {
-          // done event received, conversation metadata available for future features
-        } else if (event.type === 'error') {
-          const errMsg = event.error || errorMessage
-          // Check if this is an auth error (contains "auth" or "authentication")
-          if (errMsg?.toLowerCase().includes('auth')) {
-            hasAuthError = true
-            setChatError({ type: 'auth' as const, message: authRequiredMessage })
-          } else if (errMsg?.toLowerCase().includes('guest message limit')) {
-            setChatError({
-              type: 'limit' as const,
-              message:
-                guestLimitMessage || 'Guest message limit reached. Sign up for unlimited access.',
-            })
-          } else {
-            toast.error(errMsg || errorMessage)
-          }
-          // Remove the empty/partial message on error
-          setMessages((prev) => prev.slice(0, -1))
-          break
         }
+      } catch (error) {
+        console.error('Stream message failed:', error)
+        toast.error(errorMessage)
+      } finally {
+        setIsLoading(false)
+        inputRef.current?.focus()
       }
-
-      // If auth error occurred, skip finalizing the message
-      if (hasAuthError) {
-        return
-      }
-
-      // Finalize the message
-      if (fullText) {
-        setMessages((prev) => {
-          const updated = [...prev]
-          updated[updated.length - 1] = { ...placeholderMessage, content: fullText }
-          return updated
-        })
-      }
-    } catch (_error) {
-      toast.error(errorMessage)
-    } finally {
-      setIsLoading(false)
-      inputRef.current?.focus()
-    }
-  }
+    },
+    [errorMessage, authRequiredMessage, guestLimitMessage, scrollToBottom],
+  )
 
   /**
    * Send message synchronously (with media or admin mode)
@@ -568,7 +572,8 @@ export function useNotebookChat({
         }
         setMessages((prev) => [...prev, assistantMessage])
       }
-    } catch (_error) {
+    } catch (error) {
+      console.error('Send message sync failed:', error)
       toast.error(errorMessage)
     } finally {
       setIsLoading(false)
@@ -596,7 +601,8 @@ export function useNotebookChat({
       } else {
         toast.error(result.error || resetErrorMessage)
       }
-    } catch (_error) {
+    } catch (error) {
+      console.error('Chat reset failed:', error)
       toast.error(resetErrorMessage)
     }
   }, [

@@ -8,8 +8,11 @@ export class JobService {
   private constructor(private readonly collection: Collection<Document> | null) {}
 
   static fromPayload(payload: Payload): JobService {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = payload.db as any
+    const db = payload.db as unknown as {
+      connection?: { collection?: (name: string) => unknown }
+      collections?: Record<string, unknown>
+      collection?: (name: string) => unknown
+    }
 
     // Try multiple paths to access jobs collection
     // Priority: direct connection (proven to work in integration tests) > Payload collections
@@ -106,7 +109,7 @@ export class JobService {
       id: doc._id.toString(),
       status: this.computeStatus(doc as unknown as JobDocument),
       // Map jobOutput to output for UI compatibility
-      output: (doc as any).jobOutput || (doc as any).output,
+      output: (doc as { jobOutput?: unknown }).jobOutput ?? (doc as { output?: unknown }).output,
     })) as JobWithStatus[]
   }
 
@@ -119,7 +122,7 @@ export class JobService {
       id: doc._id.toString(),
       status: this.computeStatus(doc as unknown as JobDocument),
       // Map jobOutput to output for UI compatibility
-      output: (doc as any).jobOutput || (doc as any).output,
+      output: (doc as { jobOutput?: unknown }).jobOutput ?? (doc as { output?: unknown }).output,
     } as JobWithStatus
   }
 }

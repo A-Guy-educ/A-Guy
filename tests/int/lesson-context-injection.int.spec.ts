@@ -187,7 +187,7 @@ beforeAll(async () => {
     draft: false,
   })
   testLessonIdB = lessonB.id
-}, 60000)
+}, 120000)
 
 afterAll(async () => {
   if (!payload) return

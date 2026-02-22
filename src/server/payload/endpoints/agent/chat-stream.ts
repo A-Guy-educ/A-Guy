@@ -14,6 +14,7 @@
  */
 import { streamChatWithExerciseHelper } from '@/infra/llm/services/exercise-chat-service'
 import { logger } from '@/infra/utils/logger'
+import type { Logger } from 'pino'
 import type { PayloadRequest } from 'payload'
 import { z } from 'zod'
 import { scheduleMemoryExtraction, scheduleSummaryMaintenance } from './chat/background-tasks'
@@ -264,7 +265,7 @@ export async function agentChatStream(
 
           // Schedule background tasks
           try {
-            scheduleSummaryMaintenance(req.payload, conversationId, reqLogger as any)
+            scheduleSummaryMaintenance(req.payload, conversationId, reqLogger as Logger)
             // Schedule memory extraction for both users and guests
             const memoryOwnerId = req.user?.id ?? guestSession?.id
             if (memoryOwnerId) {
@@ -274,7 +275,7 @@ export async function agentChatStream(
                 memoryOwnerId,
                 context as ResolvedContext,
                 { id: memoryOwnerId },
-                reqLogger as any,
+                reqLogger as Logger,
               )
             }
           } catch (bgError) {

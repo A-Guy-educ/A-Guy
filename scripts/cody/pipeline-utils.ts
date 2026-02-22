@@ -2,31 +2,9 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
-// --- Context aggregation ---
-
-const CONTEXT_FILES = [
-  'task.md',
-  'task.json',
-  'spec.md',
-  'questions.md',
-  'clarified.md',
-  'plan.md',
-  'build.md',
-  'test.md',
-  'verify.md',
-  'rerun-feedback.md',
-]
-
-export function writeAgentContext(taskDir: string): void {
-  const parts: string[] = []
-  for (const file of CONTEXT_FILES) {
-    const p = path.join(taskDir, file)
-    if (fs.existsSync(p)) {
-      parts.push(`# ${file}\n\n${fs.readFileSync(p, 'utf-8')}`)
-    }
-  }
-  fs.writeFileSync(path.join(taskDir, '.context.md'), parts.join('\n\n---\n\n'))
-}
+// --- Context aggregation removed ---
+// Agents now read individual files directly (listed in stage-prompts.ts STAGE_CONTEXT_FILES).
+// The monolithic .context.md file is no longer generated.
 
 // --- Task definition types and validation ---
 
@@ -43,6 +21,27 @@ const VALID_TASK_TYPES = [
 const VALID_PIPELINES = ['spec_only', 'spec_execute_verify'] as const
 const VALID_RISK_LEVELS = ['low', 'medium', 'high'] as const
 const VALID_DOMAINS = ['backend', 'frontend', 'infra', 'data', 'llm', 'devops', 'product'] as const
+
+// --- Control mode: determines pipeline autonomy level ---
+export type ControlMode = 'auto' | 'risk-gated' | 'hard-stop'
+
+const CONTROL_MODE_MAP: Record<string, ControlMode> = {
+  low: 'auto',
+  medium: 'risk-gated',
+  high: 'hard-stop',
+}
+
+/**
+ * Resolve the control mode for a task based on its risk level.
+ * User can override with explicit flags (--auto, --gate, --hard-stop).
+ */
+export function resolveControlMode(taskDef: TaskDefinition, override?: ControlMode): ControlMode {
+  // Explicit override always wins (from /cody --auto, --gate, --hard-stop)
+  if (override) return override
+
+  // Derive from risk_level
+  return CONTROL_MODE_MAP[taskDef.risk_level] ?? 'auto'
+}
 
 type TaskType = (typeof VALID_TASK_TYPES)[number]
 type Pipeline = (typeof VALID_PIPELINES)[number]
@@ -280,8 +279,12 @@ export function readTask(taskDir: string): TaskDefinition | null {
 
 const STAGE_OUTPUT_MAP: Record<string, string> = {
   taskify: 'task.json',
+  gap: 'gap.md',
   clarify: 'questions.md',
   architect: 'plan.md',
+  'plan-gap': 'plan-gap.md',
+  commit: 'commit.md',
+  autofix: 'autofix.md',
 }
 
 export function stageOutputFile(taskDir: string, stage: string): string {
@@ -291,11 +294,10 @@ export function stageOutputFile(taskDir: string, stage: string): string {
 
 // --- Pipeline stage definitions ---
 
-export const SPEC_ONLY_STAGES = ['spec', 'clarify']
-export const SPEC_EXECUTE_VERIFY_STAGES = ['architect', 'build', 'test', 'verify', 'auditor', 'pr']
+export const SPEC_ONLY_STAGES = ['spec', 'gap', 'clarify']
 
-// All valid stages for rerun
-export const ALL_IMPL_STAGES = [...SPEC_EXECUTE_VERIFY_STAGES]
+// NOTE: SPEC_EXECUTE_VERIFY_STAGES and ALL_IMPL_STAGES were removed (stale).
+// Use IMPL_PIPELINE and ALL_IMPL_STAGE_NAMES instead (defined below).
 
 // --- Dry-run support ---
 
@@ -315,13 +317,26 @@ const DRY_RUN_OUTPUTS: Record<string, (taskId: string) => string> = {
       2,
     ),
   spec: (taskId) => `# Spec (dry-run)\n\nMock spec for ${taskId}.\n`,
+  gap: (taskId) => `# Gap Analysis (dry-run)\n\nNo gaps identified for ${taskId}.\n`,
   clarify: (taskId) => `# Questions (dry-run)\n\n1. Mock question for ${taskId}?\n`,
   architect: (taskId) => `# Plan (dry-run)\n\nMock plan for ${taskId}.\n`,
   build: (taskId) => `# Build (dry-run)\n\nMock build output for ${taskId}.\n`,
   test: (taskId) => `# Test (dry-run)\n\nMock test output for ${taskId}.\n`,
   verify: (taskId) => `# Verify (dry-run)\n\nResult: PASS\n\nMock verification for ${taskId}.\n`,
   auditor: (taskId) => `# Auditor (dry-run)\n\nMock auditor output for ${taskId}.\n`,
-  pr: (taskId) => `# PR (dry-run)\n\nMock PR output for ${taskId}.\n`,
+  'plan-gap': (taskId) => `# Plan Gap Analysis (dry-run)\n\nNo gaps identified for ${taskId}.\n`,
+  commit: (taskId) => `# Commit (dry-run)
+
+Mock commit output for ${taskId}.
+`,
+  autofix: (taskId) => `# Autofix (dry-run)
+
+No errors to fix for ${taskId}.
+`,
+  pr: (taskId) => `# PR (dry-run)
+
+Mock PR output for ${taskId}.
+`,
 }
 
 export function writeDryRunOutput(taskDir: string, stage: string, taskId: string): void {
@@ -330,3 +345,61 @@ export function writeDryRunOutput(taskDir: string, stage: string, taskId: string
   const content = generator ? generator(taskId) : `# ${stage} (dry-run)\n\nMock output.\n`
   fs.writeFileSync(outputFile, content)
 }
+
+// --- Parallel stage support ---
+
+/**
+ * A pipeline stage is either a single stage name (string) or a parallel group.
+ * Parallel groups run all contained stages concurrently.
+ */
+export type PipelineStage = string | { parallel: string[] }
+
+/**
+ * Check if a pipeline stage is a parallel group
+ */
+export function isParallelStage(stage: PipelineStage): stage is { parallel: string[] } {
+  return typeof stage === 'object' && 'parallel' in stage
+}
+
+/**
+ * Flatten a pipeline stage definition to its constituent stage names.
+ * For a string, returns [stage]. For parallel, returns all contained stages.
+ */
+export function flattenStage(stage: PipelineStage): string[] {
+  if (isParallelStage(stage)) {
+    return stage.parallel
+  }
+  return [stage]
+}
+
+/**
+ * Flatten an entire pipeline definition to a flat list of stage names.
+ */
+export function flattenPipeline(stages: PipelineStage[]): string[] {
+  return stages.flatMap(flattenStage)
+}
+
+// --- New pipeline stage definitions (with parallel support) ---
+
+/**
+ * Implementation pipeline stages with parallel groups.
+ *
+ * Flow:
+ *   architect → plan-gap → build → commit(scripted) →
+ *   verify (scripted) → auditor → apply-audit → pr
+ * Note: test-writer subagent is invoked by build agent per plan step (TDD)
+ */
+export const IMPL_PIPELINE: PipelineStage[] = [
+  'architect',
+  'plan-gap',
+  'build',
+  'commit',
+  { parallel: ['verify', 'auditor'] },
+  'apply-audit',
+  'pr',
+]
+
+/**
+ * Flat list of all impl stage names (for validation, rerun, etc.)
+ */
+export const ALL_IMPL_STAGE_NAMES = flattenPipeline(IMPL_PIPELINE)
