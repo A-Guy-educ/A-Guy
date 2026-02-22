@@ -1,0 +1,13 @@
+{
+  "task_type": "refactor",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/footer/Component.tsx",
+    "src/ui/web/shared/TypingAnimation/index.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "pipeline": "spec_execute_verify"
+}
