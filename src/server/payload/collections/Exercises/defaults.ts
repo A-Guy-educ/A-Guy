@@ -10,10 +10,12 @@ import type {
   InlineRichText,
   LatexBlock,
   QuestionFreeResponseBlock,
+  QuestionMatchingBlock,
   QuestionSelectMcqBlock,
   QuestionSelectTrueFalseBlock,
   QuestionTableBlock,
   RichTextBlock,
+  SvgBlock,
   TrueFalseAnswer,
 } from './types'
 import { generateId } from './types'
@@ -208,5 +210,72 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
     type: 'latex',
     latex: '',
     renderMode: 'block',
+  }),
+
+  question_matching: (): QuestionMatchingBlock => ({
+    id: generateId(),
+    type: 'question_matching',
+    prompt: {
+      type: 'rich_text',
+      format: 'md-math-v1',
+      value: '',
+      mediaIds: [],
+    },
+    leftColumn: [
+      {
+        id: 'l1',
+        content: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'Item 1',
+          mediaIds: [],
+        },
+      },
+      {
+        id: 'l2',
+        content: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'Item 2',
+          mediaIds: [],
+        },
+      },
+    ],
+    rightColumn: [
+      {
+        id: 'r1',
+        content: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'Match A',
+          mediaIds: [],
+        },
+      },
+      {
+        id: 'r2',
+        content: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'Match B',
+          mediaIds: [],
+        },
+      },
+    ],
+    correctPairs: [
+      { optionId: 'l1', matchId: 'r1' },
+      { optionId: 'l2', matchId: 'r2' },
+    ],
+    shuffleRightColumn: true,
+    hint: DEFAULT_HINT_SOLUTION(),
+    solution: DEFAULT_HINT_SOLUTION(),
+    fullSolution: DEFAULT_HINT_SOLUTION(),
+  }),
+
+  svg: (): SvgBlock => ({
+    id: generateId(),
+    type: 'svg',
+    value:
+      '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#f0f0f0"/></svg>',
+    altText: 'Diagram',
   }),
 }

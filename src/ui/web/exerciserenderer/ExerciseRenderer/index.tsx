@@ -19,18 +19,28 @@ import type {
   QuestionSelectMcqBlock,
   QuestionFreeResponseBlock,
   QuestionTableBlock,
+  QuestionMatchingBlock,
+  QuestionGeometryBlock,
+  QuestionAxisBlock,
+  SvgBlock,
   UserAnswer,
   CheckResult,
 } from '../types'
 import { RichTextRenderer } from '../blocks/RichTextRenderer'
+import { SvgRenderer } from '../blocks/SvgRenderer'
 import { TrueFalseQuestion } from '../questions/TrueFalseQuestion'
 import { McqQuestion } from '../questions/McqQuestion'
 import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
 import { TableQuestion } from '../questions/TableQuestion'
+import { MatchingQuestion } from '../questions/MatchingQuestion'
+import { GeometryQuestion } from '../questions/GeometryQuestion'
+import { AxisQuestion } from '../questions/AxisQuestion'
 import { QuestionCard } from '../components/QuestionCard'
 import {
   checkQuestionAnswer,
   getInitialAnswer,
+  checkSvgAnswer,
+  getInitialSvgAnswer,
   type AnswerErrorMessages,
 } from '../utils/answerChecking'
 import { MediaMapProvider } from '../context/MediaMapContext'
@@ -89,6 +99,17 @@ function formatStudentAnswer(question: QuestionBlock, answer: UserAnswer): strin
       .map(([key, val]) => `[${key}]: ${val}`)
       .join(', ')
   }
+  if (answer.type === 'matching') {
+    return answer.connections.map((c) => `${c.leftId} → ${c.rightId}`).join(', ')
+  }
+  if (answer.type === 'geometry' || answer.type === 'axis') {
+    if (answer.numericValue !== undefined) return String(answer.numericValue)
+    if (answer.selectedOptionIds?.length) return answer.selectedOptionIds.join(', ')
+    if (answer.textValue) return answer.textValue
+    if (answer.point) return `(${answer.point.x}, ${answer.point.y})`
+    if (answer.functionExpression) return answer.functionExpression
+    return ''
+  }
   return ''
 }
 
@@ -124,12 +145,19 @@ export function ExerciseRenderer({
   )
 
   // Track answers and check results for each question block
-  const questionBlocks = content.blocks.filter(
-    (block) =>
+  const questionBlocks = content.blocks.filter((block) => {
+    if (
       block.type === 'question_select' ||
       block.type === 'question_free_response' ||
-      block.type === 'question_table',
-  ) as QuestionBlock[]
+      block.type === 'question_table' ||
+      block.type === 'question_matching'
+    )
+      return true
+    if (block.type === 'question_geometry')
+      return (block as QuestionGeometryBlock).answer !== undefined
+    if (block.type === 'question_axis') return (block as QuestionAxisBlock).answer !== undefined
+    return false
+  }) as QuestionBlock[]
 
   const [answers, setAnswers] = useState<Record<string, UserAnswer>>(() => {
     const initial: Record<string, UserAnswer> = {}
@@ -143,6 +171,28 @@ export function ExerciseRenderer({
   const [hasChecked, setHasChecked] = useState<Record<string, boolean>>({})
   const [isChecking, setIsChecking] = useState<Record<string, boolean>>({})
   const chatTriggeredRef = useRef<Set<string>>(new Set())
+
+  // SVG hotspot state (interactive SVGs are separate from QuestionBlock flow)
+  const [svgAnswers, setSvgAnswers] = useState<Record<string, UserAnswer>>({})
+  const [svgCheckResults, setSvgCheckResults] = useState<Record<string, CheckResult>>({})
+
+  const handleSvgHotspotToggle = (blockId: string, hotspotId: string) => {
+    setSvgAnswers((prev) => {
+      const current = prev[blockId] ?? getInitialSvgAnswer()
+      if (current.type !== 'svg') return prev
+      const ids = current.selectedHotspotIds.includes(hotspotId)
+        ? current.selectedHotspotIds.filter((id) => id !== hotspotId)
+        : [...current.selectedHotspotIds, hotspotId]
+      return { ...prev, [blockId]: { type: 'svg', selectedHotspotIds: ids } }
+    })
+  }
+
+  const handleSvgCheck = (blockId: string, block: SvgBlock) => {
+    const answer = svgAnswers[blockId] ?? getInitialSvgAnswer()
+    if (answer.type !== 'svg') return
+    const result = checkSvgAnswer(block, answer.selectedHotspotIds, errorMessages)
+    setSvgCheckResults((prev) => ({ ...prev, [blockId]: result }))
+  }
 
   const handleAnswerChange = async (questionId: string, answer: UserAnswer) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }))
@@ -279,13 +329,92 @@ export function ExerciseRenderer({
                 )
               }
 
-              // NOTE: We count question_table as a question so it gets its own section letter.
-              // Rich text / latex blocks must NOT increment the counter.
-              // Increment question index for question_select, question_free_response, and question_table
+              // SVG block - static or interactive
+              if (block.type === 'svg') {
+                const svgBlock = block as SvgBlock
+                if (svgBlock.interactive && svgBlock.hotspots?.length) {
+                  const svgAnswer = svgAnswers[svgBlock.id] ?? getInitialSvgAnswer()
+                  const svgResult = svgCheckResults[svgBlock.id] || null
+                  const svgDisabled = svgResult?.isCorrect
+                  return (
+                    <QuestionCard
+                      key={svgBlock.id}
+                      showCheckButton={showCheckAnswer}
+                      onCheckAnswer={() => handleSvgCheck(svgBlock.id, svgBlock)}
+                      disabled={!!svgDisabled}
+                      loading={false}
+                      checked={!!svgResult}
+                      checkResult={svgResult}
+                      checkAnswerText={t('checkAnswer')}
+                      correctText={t('correct')}
+                      incorrectText={t('incorrect')}
+                      hint={svgBlock.hint}
+                      solution={svgBlock.solution}
+                      fullSolution={svgBlock.fullSolution}
+                      t={t}
+                    >
+                      <SvgRenderer
+                        block={svgBlock}
+                        selectedHotspotIds={
+                          svgAnswer.type === 'svg' ? svgAnswer.selectedHotspotIds : []
+                        }
+                        onHotspotToggle={(id) => handleSvgHotspotToggle(svgBlock.id, id)}
+                        disabled={!!svgDisabled}
+                        checkResult={svgResult}
+                        correctHotspotIds={svgBlock.correctHotspotIds}
+                      />
+                    </QuestionCard>
+                  )
+                }
+                return (
+                  <div key={svgBlock.id}>
+                    <SvgRenderer block={svgBlock} />
+                  </div>
+                )
+              }
+
+              // Display-only geometry/axis blocks (no answer field)
+              if (block.type === 'question_geometry' && !(block as QuestionGeometryBlock).answer) {
+                const geoBlock = block as QuestionGeometryBlock
+                return (
+                  <div key={geoBlock.id}>
+                    <GeometryQuestion
+                      question={geoBlock}
+                      answer={{ type: 'geometry', kind: 'numeric' }}
+                      onChange={() => {}}
+                      disabled
+                      checkResult={null}
+                      t={t}
+                      displayOnly
+                    />
+                  </div>
+                )
+              }
+              if (block.type === 'question_axis' && !(block as QuestionAxisBlock).answer) {
+                const axisBlock = block as QuestionAxisBlock
+                return (
+                  <div key={axisBlock.id}>
+                    <AxisQuestion
+                      question={axisBlock}
+                      answer={{ type: 'axis', kind: 'numeric' }}
+                      onChange={() => {}}
+                      disabled
+                      checkResult={null}
+                      t={t}
+                      displayOnly
+                    />
+                  </div>
+                )
+              }
+
+              // Count question blocks for section labeling
               if (
                 block.type === 'question_select' ||
                 block.type === 'question_free_response' ||
-                block.type === 'question_table'
+                block.type === 'question_table' ||
+                block.type === 'question_matching' ||
+                block.type === 'question_geometry' ||
+                block.type === 'question_axis'
               ) {
                 questionIndex++
               }
@@ -309,6 +438,12 @@ export function ExerciseRenderer({
                 !(question.type === 'question_select' && question.variant === 'true_false') &&
                 question.type !== 'question_table'
 
+              // All question block types have optional hint/solution/fullSolution
+              const questionHint = (question as { hint?: typeof question.prompt }).hint
+              const questionSolution = (question as { solution?: typeof question.prompt }).solution
+              const questionFullSolution = (question as { fullSolution?: typeof question.prompt })
+                .fullSolution
+
               return (
                 <QuestionCard
                   key={question.id}
@@ -323,6 +458,10 @@ export function ExerciseRenderer({
                   incorrectText={t('incorrect')}
                   questionLabel={questionLabel}
                   dir={dir}
+                  hint={questionHint}
+                  solution={questionSolution}
+                  fullSolution={questionFullSolution}
+                  t={t}
                 >
                   {/* Render appropriate question component based on type */}
                   {question.type === 'question_select' && question.variant === 'true_false' && (
@@ -363,6 +502,36 @@ export function ExerciseRenderer({
                       checked={checked}
                       allCorrect={!!disabled}
                       onCheckResult={(correct) => handleTableCheckResult(question.id, correct)}
+                      t={t}
+                    />
+                  )}
+                  {question.type === 'question_matching' && (
+                    <MatchingQuestion
+                      question={question as QuestionMatchingBlock}
+                      answer={answer}
+                      onChange={(ans) => handleAnswerChange(question.id, ans)}
+                      disabled={!!disabled}
+                      checkResult={checkResult}
+                      t={t}
+                    />
+                  )}
+                  {question.type === 'question_geometry' && (
+                    <GeometryQuestion
+                      question={question as QuestionGeometryBlock}
+                      answer={answer}
+                      onChange={(ans) => handleAnswerChange(question.id, ans)}
+                      disabled={!!disabled}
+                      checkResult={checkResult}
+                      t={t}
+                    />
+                  )}
+                  {question.type === 'question_axis' && (
+                    <AxisQuestion
+                      question={question as QuestionAxisBlock}
+                      answer={answer}
+                      onChange={(ans) => handleAnswerChange(question.id, ans)}
+                      disabled={!!disabled}
+                      checkResult={checkResult}
                       t={t}
                     />
                   )}

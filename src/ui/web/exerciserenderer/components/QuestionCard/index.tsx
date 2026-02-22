@@ -10,8 +10,9 @@ import { cn } from '@/infra/utils/ui'
 import { Button } from '@/ui/web/components/button'
 import { Card } from '@/ui/web/components/card'
 import { CheckCircle2, Loader2 } from 'lucide-react'
-import type { CheckResult } from '../../types'
+import type { CheckResult, InlineRichText } from '../../types'
 import { FeedbackDisplay } from '../FeedbackDisplay'
+import { HintSolutionPanel } from '../HintSolutionPanel'
 
 interface QuestionCardProps {
   children: React.ReactNode
@@ -27,6 +28,11 @@ interface QuestionCardProps {
   // Question numbering props
   questionLabel?: string
   dir?: 'ltr' | 'rtl'
+  // Hint/Solution props
+  hint?: InlineRichText
+  solution?: InlineRichText
+  fullSolution?: InlineRichText
+  t?: (key: string) => string
 }
 
 export function QuestionCard({
@@ -42,6 +48,10 @@ export function QuestionCard({
   incorrectText,
   questionLabel,
   dir = 'ltr',
+  hint,
+  solution,
+  fullSolution,
+  t: tFunc,
 }: QuestionCardProps) {
   return (
     <Card
@@ -69,6 +79,18 @@ export function QuestionCard({
 
       {/* Question Content */}
       {children}
+
+      {/* Hint/Solution Panel */}
+      {(hint || solution || fullSolution) && tFunc && (
+        <div className="mt-card-padding">
+          <HintSolutionPanel
+            hint={hint}
+            solution={solution}
+            fullSolution={fullSolution}
+            t={tFunc}
+          />
+        </div>
+      )}
 
       {/* Check Answer Button */}
       {showCheckButton && (

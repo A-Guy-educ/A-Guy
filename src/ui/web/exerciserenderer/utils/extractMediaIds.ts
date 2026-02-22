@@ -22,6 +22,9 @@ interface LooseBlock {
   answer?: {
     options?: Array<{ content?: LooseRichText }>
   }
+  leftColumn?: Array<{ content?: LooseRichText }>
+  rightColumn?: Array<{ content?: LooseRichText }>
+  caption?: LooseRichText
 }
 
 export function extractMediaIds(content: { blocks: LooseBlock[] }): string[] {
@@ -52,6 +55,18 @@ export function extractMediaIds(content: { blocks: LooseBlock[] }): string[] {
         collect(opt.content)
       }
     }
+
+    if (block.leftColumn) {
+      for (const opt of block.leftColumn) {
+        collect(opt.content)
+      }
+    }
+    if (block.rightColumn) {
+      for (const opt of block.rightColumn) {
+        collect(opt.content)
+      }
+    }
+    collect(block.caption)
   }
 
   return Array.from(ids)

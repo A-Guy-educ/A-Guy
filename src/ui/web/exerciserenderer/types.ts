@@ -4,6 +4,28 @@
  * Supports block-based structure with multiple question blocks
  */
 
+import type {
+  QuestionMatchingBlock,
+  SvgBlock,
+  QuestionGeometryBlock,
+  QuestionAxisBlock,
+  QuestionAnswer,
+  MatchingOption,
+  MatchingPair,
+  SvgHotspot,
+} from '@/server/payload/collections/Exercises/types'
+
+export type {
+  QuestionMatchingBlock,
+  SvgBlock,
+  QuestionGeometryBlock,
+  QuestionAxisBlock,
+  QuestionAnswer,
+  MatchingOption,
+  MatchingPair,
+  SvgHotspot,
+}
+
 export type PreviewMode = 'student' | 'debug'
 
 export type UserAnswer =
@@ -11,6 +33,26 @@ export type UserAnswer =
   | { type: 'true_false'; value: boolean | null }
   | { type: 'free_response'; value: string }
   | { type: 'table'; cellValues: Record<string, string> }
+  | { type: 'matching'; connections: Array<{ leftId: string; rightId: string }> }
+  | { type: 'svg'; selectedHotspotIds: string[] }
+  | {
+      type: 'geometry'
+      kind: string
+      numericValue?: number
+      selectedOptionIds?: string[]
+      textValue?: string
+      point?: { x: number; y: number }
+      functionExpression?: string
+    }
+  | {
+      type: 'axis'
+      kind: string
+      numericValue?: number
+      selectedOptionIds?: string[]
+      textValue?: string
+      point?: { x: number; y: number }
+      functionExpression?: string
+    }
 
 export interface TableCellResult {
   key: string
@@ -139,9 +181,15 @@ export interface QuestionTableBlock {
   fullSolution?: InlineRichText
 }
 
-export type QuestionBlock = QuestionSelectBlock | QuestionFreeResponseBlock | QuestionTableBlock
+export type QuestionBlock =
+  | QuestionSelectBlock
+  | QuestionFreeResponseBlock
+  | QuestionTableBlock
+  | QuestionMatchingBlock
+  | QuestionGeometryBlock
+  | QuestionAxisBlock
 
-export type ContentBlock = RichTextBlock | QuestionBlock
+export type ContentBlock = RichTextBlock | QuestionBlock | SvgBlock
 
 /**
  * Content structure - block-based with questions

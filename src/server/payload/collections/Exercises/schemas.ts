@@ -305,17 +305,95 @@ export const QuestionMatchingBlockSchema = z
   })
 
 // ---------------------------------
+// Zod: SVG Hotspot Schema
+// ---------------------------------
+const SvgHotspotSchema = z
+  .object({
+    id: z.string().min(1),
+    selector: z.string().min(1),
+    label: z.string().optional(),
+  })
+  .strict()
+
+// ---------------------------------
 // Zod: SVG Block Schema
 // ---------------------------------
 const SvgBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('svg'),
-    value: z.string().min(1), // SVG content
+    value: z.string().min(1),
     altText: z.string().optional(),
     caption: InlineRichTextSchema.optional(),
+    interactive: z.boolean().optional(),
+    hotspots: z.array(SvgHotspotSchema).optional(),
+    correctHotspotIds: z.array(z.string().min(1)).optional(),
+    hint: InlineRichTextSchema.optional(),
+    solution: InlineRichTextSchema.optional(),
+    fullSolution: InlineRichTextSchema.optional(),
   })
   .strict()
+  .superRefine((data, ctx) => {
+    if (data.correctHotspotIds && data.hotspots) {
+      const hotspotIds = new Set(data.hotspots.map((h) => h.id))
+      for (const id of data.correctHotspotIds) {
+        if (!hotspotIds.has(id)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `correctHotspotIds contains unknown hotspot id: ${id}`,
+            path: ['correctHotspotIds'],
+          })
+        }
+      }
+    }
+    if (data.interactive && (!data.hotspots || data.hotspots.length === 0)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Interactive SVG must have at least one hotspot',
+        path: ['hotspots'],
+      })
+    }
+  })
+
+// ---------------------------------
+// Zod: Question Answer Schema (used by Geometry + Axis)
+// ---------------------------------
+const QuestionAnswerSchema = z.discriminatedUnion('kind', [
+  z
+    .object({
+      kind: z.literal('numeric'),
+      value: z.number(),
+      tolerance: z.number().positive().optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('mcq'),
+      options: z.array(McqOptionSchema).min(2),
+      correctOptionIds: z.array(z.string().min(1)).min(1),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('free_response'),
+      acceptedAnswers: z.array(z.string().min(1)).min(1),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('point'),
+      x: z.number(),
+      y: z.number(),
+      tolerance: z.number().positive().optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('function'),
+      acceptedExpressions: z.array(z.string().min(1)).min(1),
+    })
+    .strict(),
+])
 
 // ---------------------------------
 // Zod: Question Geometry Block Schema
@@ -326,6 +404,7 @@ export const QuestionGeometryBlockSchema = z
     type: z.literal('question_geometry'),
     prompt: InlineRichTextSchema,
     geometry: GeometrySpecV1Schema,
+    answer: QuestionAnswerSchema.optional(),
     hint: InlineRichTextSchema.optional(),
     solution: InlineRichTextSchema.optional(),
     fullSolution: InlineRichTextSchema.optional(),
@@ -341,6 +420,7 @@ export const QuestionAxisBlockSchema = z
     type: z.literal('question_axis'),
     prompt: InlineRichTextSchema,
     axis: AxisSpecV1Schema,
+    answer: QuestionAnswerSchema.optional(),
     hint: InlineRichTextSchema.optional(),
     solution: InlineRichTextSchema.optional(),
     fullSolution: InlineRichTextSchema.optional(),
