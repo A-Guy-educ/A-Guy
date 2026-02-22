@@ -8,6 +8,9 @@ loadEnv({ path: '.env.test', override: true })
 
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
+  ssr: {
+    noExternal: [/@payloadcms\/.*/],
+  },
   test: {
     fileParallelism: false, // Run test files sequentially to avoid exhausting MongoDB connection pool
     globalSetup: ['./tests/setup/global-int-setup.ts'],
@@ -25,7 +28,7 @@ export default defineConfig({
     maxConcurrency: 1, // Run tests sequentially to reduce parallel output
     outputFile: undefined, // Don't write to file (reduces I/O noise)
     deps: {
-      inline: ['@payloadcms/ui'],
+      inline: [/@payloadcms\/.*/],
     },
     css: false,
   },

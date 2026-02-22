@@ -8,6 +8,9 @@ loadEnv({ path: '.env.test', override: true })
 
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
+  ssr: {
+    noExternal: [/@payloadcms\/.*/],
+  },
   test: {
     environment: 'node',
     include: [
@@ -35,7 +38,7 @@ export default defineConfig({
       ],
     },
     deps: {
-      inline: ['@payloadcms/ui'],
+      inline: [/@payloadcms\/.*/],
     },
     css: false,
   },
