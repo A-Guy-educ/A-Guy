@@ -24,6 +24,8 @@ import * as path from 'path'
 
 // Import from extracted modules
 import { validateSpecContent } from './content-validators'
+import type { ValidationResult } from './agent-runner'
+import { validateGapReport, validatePlanGapReport, validateBuildReport } from './content-validators'
 import { handleClarification, handleGateApproval } from './clarify-workflow'
 import { commitPipelineFiles } from './git-utils'
 import {
@@ -70,6 +72,92 @@ import { createRunner } from './runner-backend'
 import { runVerifyStage, runCommitStage, runPrStage } from './scripted-stages'
 import { preflight } from './preflight'
 import type { RunnerBackend } from './runner-backend'
+
+/**
+ * Get a content validator for a specific stage.
+ * Returns a function that validates the stage's output file, or undefined if no validation needed.
+ * The validator runs inside the agent retry loop - if validation fails, the agent retries with feedback.
+ */
+function getStageValidator(
+  stage: string,
+  taskDir: string,
+): ((outputFile: string) => ValidationResult) | undefined {
+  switch (stage) {
+    case 'spec':
+      return (outputFile: string) => {
+        const content = fs.readFileSync(outputFile, 'utf-8')
+        if (validateSpecContent(content)) {
+          return { valid: true }
+        }
+        return {
+          valid: false,
+          error: 'spec.md must contain ## Requirements or ## Acceptance Criteria sections',
+        }
+      }
+
+    case 'gap':
+      return (outputFile: string) => {
+        const content = fs.readFileSync(outputFile, 'utf-8')
+        if (!validateGapReport(content)) {
+          return {
+            valid: false,
+            error:
+              'gap.md must contain ## Gaps Found, ## Changes Made, or "No gaps identified" (you wrote something else)',
+          }
+        }
+        // Also validate spec wasn't corrupted by gap agent
+        const specFile = path.join(taskDir, 'spec.md')
+        if (fs.existsSync(specFile)) {
+          const specContent = fs.readFileSync(specFile, 'utf-8')
+          if (!validateSpecContent(specContent)) {
+            return {
+              valid: false,
+              error:
+                'gap agent corrupted spec.md - it must keep ## Requirements or ## Acceptance Criteria sections',
+            }
+          }
+        }
+        return { valid: true }
+      }
+
+    case 'plan-gap':
+      return (outputFile: string) => {
+        const content = fs.readFileSync(outputFile, 'utf-8')
+        if (!validatePlanGapReport(content)) {
+          return {
+            valid: false,
+            error:
+              'plan-gap.md must contain ## Gaps Found, ## Changes Made, or "No gaps identified"',
+          }
+        }
+        // Verify plan.md still exists (gap agent shouldn't delete it)
+        const planFile = path.join(taskDir, 'plan.md')
+        if (!fs.existsSync(planFile)) {
+          return {
+            valid: false,
+            error: 'plan-gap agent deleted plan.md - it must not delete the plan file',
+          }
+        }
+        return { valid: true }
+      }
+
+    case 'build':
+      return (outputFile: string) => {
+        const content = fs.readFileSync(outputFile, 'utf-8')
+        if (!validateBuildReport(content)) {
+          return {
+            valid: false,
+            error:
+              'build.md must contain ## Changes or ## Files section describing what was implemented',
+          }
+        }
+        return { valid: true }
+      }
+
+    default:
+      return undefined
+  }
+}
 
 // ============================================================================
 // Main Entry
@@ -254,7 +342,11 @@ async function runSpecPipeline(
     }
 
     // Run agent
-    const result = await runAgentWithFileWatch(input, stage, outputFile, undefined, { backend })
+    const validator = getStageValidator(stage, taskDir)
+    const result = await runAgentWithFileWatch(input, stage, outputFile, undefined, {
+      backend,
+      validateOutput: validator,
+    })
 
     if (result.timedOut) {
       updateStageStatus(input.taskId, stage, 'timeout', { retries: result.retries })
@@ -341,51 +433,6 @@ async function runSpecPipeline(
           // 'approved' → continue
           console.log('  ✅ Hard-stop: approved, proceeding...')
         }
-      }
-    }
-
-    // Spec content validation: must contain requirements or acceptance criteria
-    if (stage === 'spec' && fs.existsSync(outputFile)) {
-      const specContent = fs.readFileSync(outputFile, 'utf-8')
-      if (!validateSpecContent(specContent)) {
-        // Delete the bad spec so it can be regenerated
-        fs.unlinkSync(outputFile)
-        updateStageStatus(input.taskId, stage, 'failed', {
-          error: 'Spec missing Requirements or Acceptance Criteria sections',
-        })
-        throw new Error(
-          'Spec is missing ## Requirements or ## Acceptance Criteria — cannot proceed to architect',
-        )
-      }
-    }
-
-    // Gap stage validation: verify gap.md is valid AND re-validate spec.md (gap may have revised it)
-    if (stage === 'gap' && fs.existsSync(outputFile)) {
-      const { validateGapReport } = await import('./content-validators')
-      const gapContent = fs.readFileSync(outputFile, 'utf-8')
-      if (!validateGapReport(gapContent)) {
-        fs.unlinkSync(outputFile)
-        updateStageStatus(input.taskId, stage, 'failed', {
-          error: 'Gap report missing Gaps Found or Changes Made sections',
-        })
-        throw new Error(
-          'Gap report is invalid — cannot proceed. Must contain ## Gaps Found, ## Changes Made, or "No gaps identified"',
-        )
-      }
-
-      // Re-validate spec.md after gap agent may have revised it
-      const specFile = path.join(taskDir, 'spec.md')
-      if (fs.existsSync(specFile)) {
-        const specContent = fs.readFileSync(specFile, 'utf-8')
-        if (!validateSpecContent(specContent)) {
-          updateStageStatus(input.taskId, stage, 'failed', {
-            error: 'Gap agent corrupted spec.md',
-          })
-          throw new Error(
-            'Gap agent removed ## Requirements or ## Acceptance Criteria from spec.md — pipeline failed',
-          )
-        }
-        console.log('  ✓ Spec validated after gap revision')
       }
     }
 
@@ -576,7 +623,11 @@ async function runImplPipeline(
     } else {
       // Agent-based stages
       const timeout = STAGE_TIMEOUTS[stage] ?? DEFAULT_TIMEOUT
-      const result = await runAgentWithFileWatch(input, stage, outputFile, timeout, { backend })
+      const validator = getStageValidator(stage, taskDir)
+      const result = await runAgentWithFileWatch(input, stage, outputFile, timeout, {
+        backend,
+        validateOutput: validator,
+      })
 
       if (result.timedOut) {
         updateStageStatus(input.taskId, stage, 'timeout', { retries: result.retries })

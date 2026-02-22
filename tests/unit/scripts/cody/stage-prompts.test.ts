@@ -203,5 +203,31 @@ describe('stage-prompts', () => {
         expect(prompt.length).toBeGreaterThan(10)
       }
     })
+
+    it('should include validation feedback when provided', () => {
+      const feedback = 'gap.md must contain ## Gaps Found'
+      const prompt = buildStagePrompt(mockInput, 'gap', feedback)
+      expect(prompt).toContain('VALIDATION ERROR FROM PREVIOUS ATTEMPT:')
+      expect(prompt).toContain(feedback)
+    })
+
+    it('should NOT include feedback section when no feedback provided', () => {
+      const prompt = buildStagePrompt(mockInput, 'gap')
+      expect(prompt).not.toContain('VALIDATION ERROR FROM PREVIOUS ATTEMPT:')
+    })
+
+    it('should include "Please fix this in your next attempt" when feedback provided', () => {
+      const feedback = 'spec.md must contain ## Requirements'
+      const prompt = buildStagePrompt(mockInput, 'spec', feedback)
+      expect(prompt).toContain('Please fix this in your next attempt')
+    })
+
+    it('should include feedback in correct position (before output instruction)', () => {
+      const feedback = 'test error message'
+      const prompt = buildStagePrompt(mockInput, 'build', feedback)
+      const feedbackIndex = prompt.indexOf('VALIDATION ERROR')
+      const outputIndex = prompt.indexOf('Write your output')
+      expect(feedbackIndex).toBeLessThan(outputIndex)
+    })
   })
 })
