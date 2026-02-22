@@ -18,9 +18,16 @@ import type {
   RichTextBlock,
   TrueFalseAnswer,
 } from './types'
-import { generateId } from './types'
 
-export { generateId }
+// ---------------------------------
+// ID Generator (browser and server compatible)
+// ---------------------------------
+export function generateId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  return 'b-' + Math.random().toString(36).substring(2, 9)
+}
 
 // ---------------------------------
 // Default Content Container

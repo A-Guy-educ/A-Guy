@@ -6,6 +6,9 @@
  * - Admin UI components
  *
  * This allows shared code to import from a consistent location.
+ *
+ * NOTE: This file contains ONLY type exports to prevent server code
+ * from leaking into client bundles.
  */
 
 export type {
@@ -21,5 +24,3 @@ export type {
   RichTextBlock,
   TrueFalseAnswer,
 } from '@/server/payload/collections/Exercises/types'
-
-export { generateId } from '@/server/payload/collections/Exercises/types'
