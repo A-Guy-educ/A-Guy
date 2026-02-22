@@ -3,6 +3,7 @@
 import type { TextareaFieldClientComponent } from 'payload'
 import { useField } from '@payloadcms/ui'
 import { useCallback, useEffect, useState } from 'react'
+import { $getSelection } from '@payloadcms/richtext-lexical/lexical'
 import type {
   EditorState,
   LexicalEditor,
@@ -30,7 +31,53 @@ import { LinkNode, AutoLinkNode } from '@payloadcms/richtext-lexical/lexical/lin
 import { ListNode, ListItemNode } from '@payloadcms/richtext-lexical/lexical/list'
 import { LinkPlugin } from '@payloadcms/richtext-lexical/lexical/react/LexicalLinkPlugin'
 import { ListPlugin } from '@payloadcms/richtext-lexical/lexical/react/LexicalListPlugin'
+import { useLexicalComposerContext } from '@payloadcms/richtext-lexical/lexical/react/LexicalComposerContext'
+import { COMMAND_PRIORITY_LOW, PASTE_COMMAND } from '@payloadcms/richtext-lexical/lexical'
 import { ToolbarPlugin } from './ToolbarPlugin'
+
+/**
+ * Plugin to handle HTML paste events
+ */
+function HtmlPastePlugin(): null {
+  const [editor] = useLexicalComposerContext()
+
+  useEffect(() => {
+    return editor.registerCommand(
+      PASTE_COMMAND,
+      (event: ClipboardEvent) => {
+        const clipboardData = event.clipboardData
+        if (!clipboardData) return false
+
+        const htmlData = clipboardData.getData('text/html')
+        if (!htmlData) return false
+
+        // Prevent default paste behavior
+        event.preventDefault()
+
+        // Parse HTML and insert as nodes
+        editor.update(() => {
+          try {
+            const parser = new DOMParser()
+            const dom = parser.parseFromString(htmlData, 'text/html')
+            const nodes = $generateNodesFromDOM(editor, dom)
+
+            const selection = $getSelection()
+            if (selection) {
+              selection.insertNodes(nodes)
+            }
+          } catch (error) {
+            console.error('Error pasting HTML:', error)
+          }
+        })
+
+        return true
+      },
+      COMMAND_PRIORITY_LOW,
+    )
+  }, [editor])
+
+  return null
+}
 
 /**
  * Custom field component that provides Lexical editor UI with full formatting
@@ -167,6 +214,7 @@ export const HtmlRichTextField: TextareaFieldClientComponent = ({ path, readOnly
           <HistoryPlugin />
           <LinkPlugin />
           <ListPlugin />
+          <HtmlPastePlugin />
         </div>
       </LexicalComposer>
       {value && (
