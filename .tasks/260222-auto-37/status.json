@@ -3,9 +3,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-02-22T16:46:50.434Z",
-  "updatedAt": "2026-02-22T17:00:13.472Z",
+  "updatedAt": "2026-02-22T17:03:53.242Z",
   "state": "running",
-  "currentStage": "commit",
+  "currentStage": "auditor",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -56,9 +56,33 @@
       "elapsed": 279300
     },
     "commit": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-22T17:00:13.472Z",
+      "outputFile": "commit.md",
+      "completedAt": "2026-02-22T17:00:14.143Z",
+      "elapsed": 671
+    },
+    "verify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-22T17:00:14.144Z",
+      "completedAt": "2026-02-22T17:03:53.242Z",
+      "elapsed": 219098,
+      "outputFile": "verify.md"
+    },
+    "autofix": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-22T17:01:13.713Z",
+      "outputFile": "autofix.md",
+      "completedAt": "2026-02-22T17:02:52.804Z",
+      "elapsed": 99091
+    },
+    "auditor": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-02-22T17:00:13.472Z"
+      "startedAt": "2026-02-22T17:01:13.718Z"
     }
   },
   "triggeredBy": "comment",
