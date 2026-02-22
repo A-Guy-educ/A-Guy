@@ -160,6 +160,8 @@
     "enterAnAnswer": "Please enter an answer",
     "unknownVariant": "Unknown question variant",
     "matchingInstruction": "Click an item on the left, then click its match on the right",
+    "matchingColumnA": "Column A",
+    "matchingColumnB": "Column B",
     "matchingClear": "Clear all",
     "matchingPartialCorrect": "{{correct}} of {{total}} pairs correct",
     "matchingRemoveConnection": "Remove connection",

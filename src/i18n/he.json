@@ -160,6 +160,8 @@
     "enterAnAnswer": "הזן תשובה",
     "unknownVariant": "סוג שאלה לא ידוע",
     "matchingInstruction": "לחץ על פריט בצד שמאל, ואז לחץ על ההתאמה בצד ימין",
+    "matchingColumnA": "עמודה א׳",
+    "matchingColumnB": "עמודה ב׳",
     "matchingClear": "נקה הכל",
     "matchingPartialCorrect": "{{correct}} מתוך {{total}} זוגות נכונים",
     "matchingRemoveConnection": "הסר חיבור",
