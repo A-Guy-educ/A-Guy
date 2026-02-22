@@ -1,4 +1,4 @@
-import type { Media } from '@/payload-types'
+import type { Lesson, Media } from '@/payload-types'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
 import { queryLessonBySlug } from '@/server/repos/queries/lessons'
@@ -23,13 +23,12 @@ interface LessonPageProps {
 export default async function LessonPage({ params }: LessonPageProps) {
   const { courseSlug, chapterSlug, lessonSlug } = await params
 
-  const [course, lesson, exercises] = await Promise.all([
+  const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug }),
     queryLessonBySlug({ slug: lessonSlug }),
-    queryLessonBySlug({ slug: lessonSlug }).then((l) =>
-      l ? queryExercisesByLesson({ lessonId: l.id }) : [],
-    ),
   ])
+
+  const exercises = lesson ? await queryExercisesByLesson({ lessonId: lesson.id }) : []
 
   if (!course || !lesson) {
     notFound()
@@ -77,7 +76,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
             chapterSlug={chapterSlug}
             lessonSlug={lessonSlug}
             lessonId={lesson.id}
-            introDescription={lesson.introEnabled ? (lesson as any).descriptionHtml : null}
+            introDescription={
+              lesson.introEnabled
+                ? ((lesson as Lesson & { descriptionHtml?: string }).descriptionHtml ?? null)
+                : null
+            }
             introMedia={lesson.introEnabled ? lesson.introMedia : null}
             mediaMap={mediaMap}
           />
