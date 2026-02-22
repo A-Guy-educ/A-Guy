@@ -23,6 +23,11 @@ export const validateMediaUploadHook: CollectionBeforeValidateHook = async ({
     return data
   }
 
+  // Non-external types require a file (safety net since filesRequiredOnCreate is false)
+  if (!mimeType && !filename) {
+    throw new Error('A file is required for non-external media types')
+  }
+
   // Validate MIME type against allowlist
   if (mimeType && type !== MediaType.Other) {
     if (!validateMimeType(mimeType, type)) {

@@ -22,6 +22,11 @@ export const inferMediaTypeHook: FieldHook = ({ data, operation, value, req }) =
     return value
   }
 
+  // External type is user-selected (no file to infer from) — preserve it
+  if (value === MediaType.External) {
+    return value
+  }
+
   // Auto-infer from MIME type
   const inferredType = inferMediaType(mimeType, filename)
 
