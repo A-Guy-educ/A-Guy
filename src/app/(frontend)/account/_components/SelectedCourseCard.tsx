@@ -27,6 +27,8 @@ export function SelectedCourseCard() {
   const [course, setCourse] = useState<Course | null>(null)
 
   useEffect(() => {
+    const controller = new AbortController()
+
     const profile = getUserProfile()
 
     if (!profile?.gradeLevel) {
@@ -34,10 +36,14 @@ export function SelectedCourseCard() {
       return
     }
 
-    fetchCourse(profile.gradeLevel)
+    fetchCourse(profile.gradeLevel, controller.signal)
+
+    return () => {
+      controller.abort()
+    }
   }, [])
 
-  const fetchCourse = async (gradeLevel: string) => {
+  const fetchCourse = async (gradeLevel: string, signal?: AbortSignal) => {
     setLoadingState('loading')
     try {
       const baseUrl = getClientSideURL()
@@ -49,7 +55,7 @@ export function SelectedCourseCard() {
         depth: '1',
       })
 
-      const response = await fetch(`${baseUrl}/api/courses?${params.toString()}`)
+      const response = await fetch(`${baseUrl}/api/courses?${params.toString()}`, { signal })
 
       if (!response.ok) {
         throw new Error('Failed to fetch course')
@@ -69,7 +75,11 @@ export function SelectedCourseCard() {
       } else {
         setLoadingState('not-found')
       }
-    } catch {
+    } catch (error) {
+      // Silently ignore AbortError - don't set error state for aborted requests
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
       setLoadingState('error')
     }
   }
@@ -80,9 +90,10 @@ export function SelectedCourseCard() {
   }
 
   const handleRetry = () => {
+    const controller = new AbortController()
     const profile = getUserProfile()
     if (profile?.gradeLevel) {
-      fetchCourse(profile.gradeLevel)
+      fetchCourse(profile.gradeLevel, controller.signal)
     }
   }
 
