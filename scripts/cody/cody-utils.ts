@@ -45,7 +45,7 @@ export interface CodyPipelineStatus {
   updatedAt: string
   completedAt?: string
   totalElapsed?: number
-  state: 'running' | 'completed' | 'failed' | 'timeout'
+  state: 'running' | 'completed' | 'failed' | 'timeout' | 'paused'
   currentStage: string | null
   stages: Record<string, StageStatus>
   triggeredBy: string
@@ -64,6 +64,7 @@ export interface StageStatus {
   elapsed?: number
   retries: number
   outputFile?: string
+  skipped?: string // Reason for skip (e.g., 'input_quality')
   error?: string
   // Token usage for cost tracking (schema only - not populated)
   tokenUsage?: {
@@ -827,6 +828,11 @@ export function formatStatusComment(
         lines.push(`  ${icon} ${stage}${elapsed}`)
       }
     }
+  } else if (status.state === 'paused') {
+    lines.push(`⏸️ Cody paused for \`${input.taskId}\``)
+    lines.push(
+      'Awaiting approval — reply with `/cody approve` to proceed or `/cody reject` to cancel.',
+    )
   } else if (status.state === 'failed') {
     lines.push(`❌ Cody failed for \`${input.taskId}\``)
   } else if (status.state === 'timeout') {

@@ -31,7 +31,12 @@ You MUST output **valid JSON only** to the output file. No markdown wrappers, no
   "primary_domain": "backend | frontend | infra | data | llm | devops | product",
   "scope": ["string"],
   "missing_inputs": [{ "field": "string", "question": "string" }],
-  "assumptions": ["string"]
+  "assumptions": ["string"],
+  "input_quality": {
+    "level": "raw_idea | good_spec | detailed_plan | spec_and_plan",
+    "skip_stages": ["spec"] | ["spec", "architect"] | [],
+    "reasoning": "Brief explanation of why this quality level was assigned"
+  }
 }
 ```
 
@@ -71,10 +76,77 @@ Prioritize in this order:
 - **medium**: core feature logic, multi-file changes, API changes, database schema
 - **low**: docs, small UI, isolated scripts, test additions, config changes
 
+## Input Quality Assessment (Smart Stage Skipping)
+
+Analyze the task description to determine its quality level. When the input is already well-formed, the pipeline can skip redundant stages.
+
+### Quality Levels
+
+| Level           | Description                                  | Stages Skipped      | When to Use                              |
+| --------------- | -------------------------------------------- | ------------------- | ---------------------------------------- |
+| `raw_idea`      | Vague task, no structured sections           | None                | Default for most tasks                   |
+| `good_spec`     | Has ## Requirements + ## Acceptance Criteria | `spec`              | Task already has structured requirements |
+| `detailed_plan` | Has step-by-step plan with file paths        | `spec`, `architect` | Task includes implementation steps       |
+| `spec_and_plan` | Has both spec AND plan sections              | `spec`, `architect` | Task is fully detailed                   |
+
+### Detection Criteria
+
+**`good_spec`** - Task contains:
+
+- `## Requirements` or `## FR-` section with feature requirements
+- `## Acceptance Criteria` or checklist items
+- Clear user stories or use cases
+
+**`detailed_plan`** - Task contains:
+
+- Step-by-step sections (e.g., `## Step 1:`, `### Implementation Steps`)
+- File paths to modify (e.g., `src/app/page.ts`, `src/collections/Posts.ts`)
+- Test cases or verification steps
+
+**`spec_and_plan`** - Task contains BOTH:
+
+- Full requirements and acceptance criteria
+- Implementation steps with file changes
+
+### Writing Promoted Files
+
+When you assess the input as `good_spec`, `detailed_plan`, or `spec_and_plan`, you MUST also write the promoted files:
+
+1. **For `good_spec`**: Write `.tasks/<task-id>/spec.md`
+   - Extract the requirements and acceptance criteria from task.md
+   - Format as proper spec (Overview, Requirements, Acceptance Criteria sections)
+
+2. **For `detailed_plan` or `spec_and_plan`**: Write BOTH:
+   - `.tasks/<task-id>/spec.md` (requirements)
+   - `.tasks/<task-id>/plan.md` (implementation plan with steps)
+
+This allows the orchestrator to skip the spec/architect stages and go straight to gap analysis.
+
+### Reasoning Requirements
+
+Always provide a brief `reasoning` string explaining:
+
+- What quality signals you detected in the input
+- Why you chose this level
+- What sections/files you promoted (if any)
+
+Example:
+
+```json
+{
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": ["spec"],
+    "reasoning": "Input contains ## Requirements with 5 FR entries and ## Acceptance Criteria with 8 checkable items. Promoted spec.md."
+  }
+}
+```
+
 ## Guardrails
 
 - NEVER expand scope beyond what the user's text describes
 - NEVER invent file paths, ticket IDs, or external dependencies
 - NEVER guess scope — if unsure about implementation details, add to `assumptions`, NOT `missing_inputs`
-- NEVER write anything other than the task.json file
-- Do NOT modify any other files
+- ALWAYS write task.json (required)
+- When input_quality level is `good_spec` or higher, also write the promoted files (spec.md, plan.md)
+- Do NOT modify any existing code files — only write task.md, spec.md, plan.md in .tasks/<task-id>/

@@ -84,7 +84,7 @@ describe('stage-prompts', () => {
         'spec.md',
         'build.md',
         'verify.md',
-        'audit-history.json',
+        '../audit-history.json',
       ])
       expect(STAGE_CONTEXT_FILES['apply-audit']).toEqual(['auditor.md'])
       expect(STAGE_CONTEXT_FILES.pr).toEqual([])

@@ -22,6 +22,21 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
+// ============================================================================
+// Pipeline Paused Signal
+// ============================================================================
+
+/**
+ * Thrown when the pipeline intentionally pauses (e.g. hard-stop / risk gate).
+ * Caught in main() to post a ⏸️ comment instead of ✅ completed.
+ */
+class PipelinePausedError extends Error {
+  constructor(reason: string) {
+    super(reason)
+    this.name = 'PipelinePausedError'
+  }
+}
+
 // Import from extracted modules
 import { validateSpecContent } from './content-validators'
 import type { ValidationResult } from './agent-runner'
@@ -239,6 +254,13 @@ async function main() {
       postComment(input.issueNumber, formatStatusComment(input, latestStatus))
     }
   } catch (error) {
+    if (error instanceof PipelinePausedError) {
+      completeStatus(input.taskId, 'paused')
+      console.log(`\n⏸️ Cody paused: ${error.message}`)
+      // Gate comment was already posted by the gate handler — no duplicate needed
+      return
+    }
+
     completeStatus(input.taskId, 'failed')
     console.error('\n❌ Cody failed:', error instanceof Error ? error.message : error)
 
@@ -304,9 +326,38 @@ async function runSpecPipeline(
   // Gap stage runs between spec and clarify to analyze and revise spec
   const stages = input.clarify ? ['taskify', 'spec', 'gap', 'clarify'] : ['taskify', 'spec', 'gap']
 
+  // Cache for input_quality skip_stages (populated after taskify runs)
+  let skipStages: string[] = []
+
   for (let i = 0; i < stages.length; i++) {
     const stage = stages[i]
     const outputFile = stageOutputFile(taskDir, stage)
+
+    // After taskify runs, cache skip_stages from task.json for subsequent stages
+    if (stage !== 'taskify' && skipStages.length === 0) {
+      const taskDef = readTask(taskDir)
+      if (taskDef?.input_quality?.skip_stages) {
+        skipStages = taskDef.input_quality.skip_stages
+        console.log(`  ℹ️ Input quality: skipping stages ${JSON.stringify(skipStages)}`)
+      }
+    }
+
+    // Check if stage should be skipped due to input_quality
+    if (stage !== 'taskify' && skipStages.includes(stage)) {
+      // Verify the promoted file exists (taskify should have written it)
+      if (fs.existsSync(outputFile)) {
+        console.log(`[${i + 1}/${stages.length}] ${stage} skipped — promoted via input_quality`)
+        updateStageStatus(input.taskId, stage, 'completed', {
+          outputFile: path.basename(outputFile),
+          skipped: 'input_quality',
+        })
+        continue
+      } else {
+        // Promoted file missing - fall back to running the stage normally
+        console.log(`[${i + 1}/${stages.length}] ${stage}: promoted file missing, running anyway`)
+        skipStages = [] // Clear so we don't keep trying to skip
+      }
+    }
 
     // Skip if output exists (unless this is a re-run)
     if (fs.existsSync(outputFile)) {
@@ -379,6 +430,10 @@ async function runSpecPipeline(
         throw new Error(`Taskify produced invalid task.json: ${msg}`)
       }
 
+      // Input quality skip: read skip_stages for later use in this loop
+
+      const _taskDefForSkip = readTask(taskDir)
+
       // GATE: Hard-stop check - pause after taskify for high-risk tasks
       const taskDefAfterTaskify = readTask(taskDir)
       if (taskDefAfterTaskify) {
@@ -419,13 +474,14 @@ async function runSpecPipeline(
               taskDir,
               taskId: input.taskId,
               message: `ci(cody): pause at hard-stop gate for ${input.taskId}`,
+              ensureBranch: true,
               stagingStrategy: 'task-only',
               push: true,
               isCI: !input.local,
               dryRun: input.dryRun,
             })
             console.log('⏸️ Hard-stop: awaiting approval before proceeding')
-            return // Exit spec pipeline
+            throw new PipelinePausedError(`hard-stop gate: awaiting approval for ${input.taskId}`)
           }
           if (gateResult === 'rejected') {
             throw new Error('Task rejected by user at hard-stop gate')
@@ -480,7 +536,7 @@ async function runSpecPipeline(
     })
 
     console.log('✅ Cody SPEC pipeline complete (waiting for clarification)')
-    return
+    throw new PipelinePausedError(`clarify stage: awaiting answers for ${input.taskId}`)
   }
 
   // Commit task files in CI (after spec completes successfully)
@@ -536,6 +592,21 @@ async function runImplPipeline(
   // Build the pipeline stages (with parallel support)
   const pipeline: PipelineStage[] = [...IMPL_PIPELINE]
 
+  // Cache for input_quality skip_stages (populated on first stage check)
+  let implSkipStages: string[] = []
+
+  // Helper to check and cache skip stages for impl pipeline
+  const checkImplSkipStages = (stage: string): boolean => {
+    if (implSkipStages.length === 0) {
+      const taskDef = readTask(taskDir)
+      if (taskDef?.input_quality?.skip_stages) {
+        implSkipStages = taskDef.input_quality.skip_stages
+        console.log(`  ℹ️ Input quality (impl): skipping stages ${JSON.stringify(implSkipStages)}`)
+      }
+    }
+    return implSkipStages.includes(stage)
+  }
+
   // Note: Auditor now runs on reruns too - failures during retries are valuable for improvement
   // The auditor checks for duplicates via audit-history.json to avoid re-auditing same findings
 
@@ -571,6 +642,22 @@ async function runImplPipeline(
   // Helper: Run a single stage (agent-based or scripted)
   const runSingleStage = async (stage: string): Promise<void> => {
     const outputFile = stageOutputFile(taskDir, stage)
+
+    // Check if stage should be skipped due to input_quality
+    if (checkImplSkipStages(stage)) {
+      if (fs.existsSync(outputFile)) {
+        console.log(`  ${stage} skipped — promoted via input_quality`)
+        updateStageStatus(input.taskId, stage, 'completed', {
+          outputFile: path.basename(outputFile),
+          skipped: 'input_quality',
+        })
+        return
+      } else {
+        // Promoted file missing - fall back to running the stage normally
+        console.log(`  ${stage}: promoted file missing, running anyway`)
+        implSkipStages = [] // Clear so we don't keep trying to skip
+      }
+    }
 
     // Skip if output exists (not a re-run)
     if (fs.existsSync(outputFile)) {
@@ -617,7 +704,7 @@ async function runImplPipeline(
         outputFile: path.basename(outputFile),
       })
     } else if (stage === 'pr') {
-      const prResult = runPrStage(taskDir, outputFile)
+      const prResult = runPrStage(taskDir, outputFile, process.cwd(), input.issueNumber)
       if (!prResult.url) {
         updateStageStatus(input.taskId, stage, 'failed', { retries: 0 })
         throw new Error('PR creation failed')
@@ -694,13 +781,16 @@ async function runImplPipeline(
               taskDir,
               taskId: input.taskId,
               message: `ci(cody): pause at ${controlMode} gate for ${input.taskId}`,
+              ensureBranch: true,
               stagingStrategy: 'task-only',
               push: true,
               isCI: !input.local,
               dryRun: input.dryRun,
             })
             console.log(`⏸️ ${controlMode}: awaiting approval before build`)
-            return // Exit impl pipeline
+            throw new PipelinePausedError(
+              `${controlMode} gate: awaiting approval for ${input.taskId}`,
+            )
           }
           if (gateResult === 'rejected') {
             throw new Error(`Task rejected by user at ${controlMode} gate`)
@@ -816,8 +906,9 @@ async function runImplPipeline(
       commitTaskFiles()
     }
 
-    // Commit audit history after apply-audit stage completes
+    // Commit task files and audit history after apply-audit stage completes
     if (stage === 'apply-audit') {
+      commitTaskFiles()
       commitAuditHistory()
     }
 
@@ -857,15 +948,8 @@ async function runFullPipeline(
 ): Promise<void> {
   console.log('Running FULL Cody pipeline (spec + impl)...\n')
 
-  // Run spec first
+  // Run spec first — throws PipelinePausedError if stopped at a gate or clarify stage
   await runSpecPipeline(input, status, backend)
-
-  // Check if spec stopped for questions (clarified.md won't exist)
-  const clarifiedPath = path.join(ensureTaskDir(input.taskId), 'clarified.md')
-  if (!fs.existsSync(clarifiedPath)) {
-    console.log('\n⏸️ Spec pipeline stopped for clarification. Skipping impl.')
-    return
-  }
 
   // Then impl
   await runImplPipeline(input, status, backend)

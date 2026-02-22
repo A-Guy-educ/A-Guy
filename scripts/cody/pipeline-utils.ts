@@ -22,6 +22,35 @@ const VALID_PIPELINES = ['spec_only', 'spec_execute_verify'] as const
 const VALID_RISK_LEVELS = ['low', 'medium', 'high'] as const
 const VALID_DOMAINS = ['backend', 'frontend', 'infra', 'data', 'llm', 'devops', 'product'] as const
 
+// --- Input quality levels for smart stage skipping ---
+export const VALID_INPUT_QUALITY_LEVELS = [
+  'raw_idea',
+  'good_spec',
+  'detailed_plan',
+  'spec_and_plan',
+] as const
+
+// Stages that cannot be skipped (gap analysis always runs)
+export const NON_SKIPPABLE_STAGES = [
+  'gap',
+  'plan-gap',
+  'build',
+  'commit',
+  'verify',
+  'auditor',
+  'apply-audit',
+  'pr',
+] as const
+
+// Stages that CAN be skipped when input quality is high
+export const SKIPPABLE_STAGES = ['spec', 'architect'] as const
+
+export interface InputQuality {
+  level: (typeof VALID_INPUT_QUALITY_LEVELS)[number]
+  skip_stages: string[]
+  reasoning: string
+}
+
 // --- Control mode: determines pipeline autonomy level ---
 export type ControlMode = 'auto' | 'risk-gated' | 'hard-stop'
 
@@ -55,6 +84,7 @@ export interface TaskDefinition {
   scope: string[]
   missing_inputs: Array<{ field: string; question: string }>
   assumptions: string[]
+  input_quality?: InputQuality
 }
 
 // Pipeline consistency: task_type → allowed pipeline values
@@ -156,6 +186,27 @@ export function normalizeTask(raw: Record<string, unknown>): Record<string, unkn
     data.assumptions = []
   }
 
+  // 6. Default input_quality if missing (for backward compatibility)
+  if (!data.input_quality || typeof data.input_quality !== 'object') {
+    data.input_quality = {
+      level: 'raw_idea',
+      skip_stages: [],
+      reasoning: '',
+    }
+  } else {
+    // Ensure input_quality has required fields
+    const iq = data.input_quality as Record<string, unknown>
+    if (!iq.level) {
+      iq.level = 'raw_idea'
+    }
+    if (!Array.isArray(iq.skip_stages)) {
+      iq.skip_stages = []
+    }
+    if (typeof iq.reasoning !== 'string') {
+      iq.reasoning = ''
+    }
+  }
+
   return data
 }
 
@@ -215,6 +266,50 @@ export function validateTask(raw: unknown): ValidationResult {
 
   if (!Array.isArray(data.assumptions)) {
     errors.push(`Invalid assumptions: must be an array of strings`)
+  }
+
+  // Validate input_quality if present
+  if (data.input_quality !== undefined) {
+    if (typeof data.input_quality !== 'object' || data.input_quality === null) {
+      errors.push(`Invalid input_quality: must be an object`)
+    } else {
+      const iq = data.input_quality as Record<string, unknown>
+      // Validate level
+      if (
+        !VALID_INPUT_QUALITY_LEVELS.includes(
+          iq.level as (typeof VALID_INPUT_QUALITY_LEVELS)[number],
+        )
+      ) {
+        errors.push(
+          `Invalid input_quality.level: "${iq.level}". Must be one of: ${VALID_INPUT_QUALITY_LEVELS.join(', ')}`,
+        )
+      }
+      // Validate skip_stages
+      if (!Array.isArray(iq.skip_stages)) {
+        errors.push(`Invalid input_quality.skip_stages: must be an array`)
+      } else {
+        for (const stage of iq.skip_stages) {
+          if (typeof stage !== 'string') {
+            errors.push(`Invalid input_quality.skip_stages: each stage must be a string`)
+            break
+          }
+          // Check for non-skippable stages
+          if (NON_SKIPPABLE_STAGES.includes(stage as (typeof NON_SKIPPABLE_STAGES)[number])) {
+            errors.push(
+              `Cannot skip stage "${stage}" - gap and plan-gap must always run for quality assurance`,
+            )
+          }
+          // Check for unknown stages (optional warning, but we'll be strict)
+          if (!SKIPPABLE_STAGES.includes(stage as (typeof SKIPPABLE_STAGES)[number])) {
+            // Allow unknown stages but warn - this is informational, not an error
+          }
+        }
+      }
+      // Validate reasoning
+      if (typeof iq.reasoning !== 'string') {
+        errors.push(`Invalid input_quality.reasoning: must be a string`)
+      }
+    }
   }
 
   // Pipeline consistency check

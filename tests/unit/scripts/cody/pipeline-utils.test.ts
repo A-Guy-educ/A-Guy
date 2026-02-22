@@ -599,3 +599,205 @@ describe('gap stage in stage-prompts', () => {
     expect(STAGE_CONTEXT_FILES.gap).toContain('task.json')
   })
 })
+
+// ============================================================================
+// input_quality in task.json (Smart Stage Skipping)
+// ============================================================================
+describe('input_quality in task.json', () => {
+  let tempDirs: string[] = []
+
+  afterEach(() => {
+    for (const dir of tempDirs) {
+      try {
+        fs.rmSync(dir, { recursive: true, force: true })
+      } catch {
+        // ignore cleanup errors
+      }
+    }
+    tempDirs = []
+  })
+
+  function trackDir(dir: string): string {
+    tempDirs.push(dir)
+    return dir
+  }
+
+  // Valid task with input_quality
+  const TASK_WITH_QUALITY: Record<string, unknown> = {
+    ...VALID_TASK,
+    input_quality: {
+      level: 'good_spec',
+      skip_stages: ['spec'],
+      reasoning: 'Input contains ## Requirements with FR entries and ## Acceptance Criteria.',
+    },
+  }
+
+  // Valid task with detailed_plan quality
+  const TASK_WITH_PLAN_QUALITY: Record<string, unknown> = {
+    ...VALID_TASK,
+    input_quality: {
+      level: 'detailed_plan',
+      skip_stages: ['spec', 'architect'],
+      reasoning: 'Input contains step-by-step plan with file paths and test cases.',
+    },
+  }
+
+  describe('validateTask with input_quality', () => {
+    it('should accept task.json with valid input_quality field', () => {
+      const result = validateTask(TASK_WITH_QUALITY)
+      expect(result.valid).toBe(true)
+      expect(result.errors).toHaveLength(0)
+    })
+
+    it('should accept task.json without input_quality (backward compat)', () => {
+      // VALID_TASK has no input_quality field
+      const result = validateTask(VALID_TASK)
+      expect(result.valid).toBe(true)
+    })
+
+    it('should accept all valid input_quality levels', () => {
+      for (const level of ['raw_idea', 'good_spec', 'detailed_plan', 'spec_and_plan']) {
+        const task = {
+          ...VALID_TASK,
+          input_quality: { level, skip_stages: [], reasoning: 'test' },
+        }
+        const result = validateTask(task)
+        expect(result.valid).toBe(true)
+      }
+    })
+
+    it('should reject invalid input_quality.level', () => {
+      const task = {
+        ...VALID_TASK,
+        input_quality: { level: 'amazing', skip_stages: [], reasoning: 'test' },
+      }
+      const result = validateTask(task)
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('input_quality.level')
+    })
+
+    it('should reject non-array input_quality.skip_stages', () => {
+      const task = {
+        ...VALID_TASK,
+        input_quality: { level: 'good_spec', skip_stages: 'spec', reasoning: 'test' },
+      }
+      const result = validateTask(task)
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('skip_stages')
+    })
+
+    it('should accept unknown stage names in skip_stages (not an error, just ignored)', () => {
+      // Unknown stages are allowed but ignored - the code doesn't reject them
+      const task = {
+        ...VALID_TASK,
+        input_quality: { level: 'good_spec', skip_stages: ['banana'], reasoning: 'test' },
+      }
+      const result = validateTask(task)
+      // Unknown stages are not rejected - they're just ignored
+      expect(result.valid).toBe(true)
+      expect(result.errors.length).toBe(0)
+    })
+
+    it('should reject gap in skip_stages (gap must always run)', () => {
+      const task = {
+        ...VALID_TASK,
+        input_quality: { level: 'good_spec', skip_stages: ['gap'], reasoning: 'test' },
+      }
+      const result = validateTask(task)
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('gap')
+    })
+
+    it('should reject plan-gap in skip_stages (plan-gap must always run)', () => {
+      const task = {
+        ...VALID_TASK,
+        input_quality: { level: 'good_spec', skip_stages: ['plan-gap'], reasoning: 'test' },
+      }
+      const result = validateTask(task)
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('plan-gap')
+    })
+
+    it('should accept spec and architect in skip_stages', () => {
+      const task = {
+        ...VALID_TASK,
+        input_quality: {
+          level: 'detailed_plan',
+          skip_stages: ['spec', 'architect'],
+          reasoning: 'test',
+        },
+      }
+      const result = validateTask(task)
+      expect(result.valid).toBe(true)
+    })
+
+    it('should reject non-object input_quality', () => {
+      const task = { ...VALID_TASK, input_quality: 'good' }
+      const result = validateTask(task)
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('input_quality')
+    })
+
+    it('should reject input_quality missing required fields', () => {
+      const task = { ...VALID_TASK, input_quality: { level: 'good_spec' } }
+      const result = validateTask(task)
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('skip_stages')
+    })
+  })
+
+  describe('normalizeTask with input_quality', () => {
+    it('should default missing input_quality to raw_idea with no skips', () => {
+      const result = normalizeTask({ ...VALID_TASK })
+      expect(result.input_quality).toEqual({
+        level: 'raw_idea',
+        skip_stages: [],
+        reasoning: '',
+      })
+    })
+
+    it('should preserve valid input_quality unchanged', () => {
+      const result = normalizeTask({ ...TASK_WITH_QUALITY })
+      expect(result.input_quality).toEqual(TASK_WITH_QUALITY.input_quality)
+    })
+
+    it('should preserve detailed_plan input_quality unchanged', () => {
+      const result = normalizeTask({ ...TASK_WITH_PLAN_QUALITY })
+      expect(result.input_quality).toEqual(TASK_WITH_PLAN_QUALITY.input_quality)
+    })
+  })
+
+  describe('readTask with input_quality', () => {
+    it('should read task.json with input_quality and return it in TaskDefinition', () => {
+      const dir = trackDir(createTempTaskDir(TASK_WITH_QUALITY))
+      const result = readTask(dir)
+      expect(result).not.toBeNull()
+      expect(result!.input_quality).toBeDefined()
+      expect(result!.input_quality!.level).toBe('good_spec')
+      expect(result!.input_quality!.skip_stages).toEqual(['spec'])
+    })
+
+    it('should read task.json without input_quality (backward compat) and get default', () => {
+      const dir = trackDir(createTempTaskDir(VALID_TASK))
+      const result = readTask(dir)
+      expect(result).not.toBeNull()
+      // After normalize, input_quality should have default
+      expect(result!.input_quality).toEqual({
+        level: 'raw_idea',
+        skip_stages: [],
+        reasoning: '',
+      })
+    })
+
+    it('should write back normalized input_quality to disk', () => {
+      const dir = trackDir(createTempTaskDir(VALID_TASK))
+      readTask(dir)
+      const onDisk = JSON.parse(fs.readFileSync(path.join(dir, 'task.json'), 'utf-8'))
+      expect(onDisk.input_quality).toEqual({
+        level: 'raw_idea',
+        skip_stages: [],
+        reasoning: '',
+      })
+    })
+  })
+})

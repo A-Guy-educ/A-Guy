@@ -290,3 +290,19 @@ describe('BUG-2: POSIX-compatible grep in parse-inputs.sh', () => {
     expect(first).toBe('260218-first-task')
   })
 })
+
+// ============================================================================
+// BUG-14: apply-audit stage commits task files including apply-audit.md
+// ============================================================================
+
+describe('BUG-14: apply-audit stage commits task files', () => {
+  it('should call commitTaskFiles after apply-audit stage', () => {
+    const codyContent = fs.readFileSync(path.join(process.cwd(), 'scripts/cody/cody.ts'), 'utf-8')
+
+    // The fix: commitTaskFiles should be called in the apply-audit post-stage hook
+    // Pattern: if (stage === 'apply-audit') { commitTaskFiles(); commitAuditHistory(); }
+    expect(codyContent).toMatch(
+      /if\s*\(\s*stage\s*===\s*['"]apply-audit['"]\s*\)\s*\{[\s\S]*commitTaskFiles\(\)[\s\S]*\}/,
+    )
+  })
+})
