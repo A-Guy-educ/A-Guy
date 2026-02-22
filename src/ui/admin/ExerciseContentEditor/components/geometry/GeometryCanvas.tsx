@@ -8,13 +8,32 @@ import { JSXGraphBoard } from '../shared/JSXGraphBoard'
 interface GeometryCanvasProps {
   id: string
   geometry: GeometrySpecV1
+  displayWidth?: number
+  displayHeight?: number
+  interactionMode?: 'move' | 'addPoint'
   onPointMoved?: (name: string, x: number, y: number) => void
+  onCanvasClick?: (x: number, y: number) => void
 }
 
-export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({ id, geometry, onPointMoved }) => {
+const DISPLAY_WIDTH = 420
+const DISPLAY_HEIGHT = 320
+
+export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
+  id,
+  geometry,
+  displayWidth = DISPLAY_WIDTH,
+  displayHeight = DISPLAY_HEIGHT,
+  interactionMode = 'move',
+  onPointMoved,
+  onCanvasClick,
+}) => {
   const boardRef = useRef<JXGBoard | null>(null)
   const isSyncingRef = useRef(false)
   const elementsRef = useRef<Map<string, JXGElement>>(new Map())
+  const modeRef = useRef(interactionMode)
+  const onCanvasClickRef = useRef(onCanvasClick)
+  modeRef.current = interactionMode
+  onCanvasClickRef.current = onCanvasClick
 
   const syncToBoard = useCallback(() => {
     const board = boardRef.current
@@ -135,6 +154,12 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({ id, geometry, on
       boardRef.current = board
       elementsRef.current.clear()
       syncToBoard()
+      const b = board as unknown as Record<string, (...args: unknown[]) => unknown>
+      b.on('down', (e: unknown) => {
+        if (modeRef.current !== 'addPoint') return
+        const coords = b.getUsrCoordsOfMouse(e) as [number, number]
+        onCanvasClickRef.current?.(Math.round(coords[0]), Math.round(coords[1]))
+      })
     },
     [syncToBoard],
   )
@@ -145,11 +170,12 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({ id, geometry, on
   return (
     <GeometryCanvasInner
       id={id}
-      width={canvas.width}
-      height={canvas.height}
+      width={displayWidth}
+      height={displayHeight}
       boundingBox={bbox}
       showGrid={canvas.grid ?? false}
       onBoardReady={handleBoardReady}
+      interactionMode={interactionMode}
     />
   )
 }
@@ -160,14 +186,17 @@ const GeometryCanvasInner: React.FC<{
   height: number
   boundingBox: [number, number, number, number]
   showGrid: boolean
+  interactionMode: 'move' | 'addPoint'
   onBoardReady: (board: JXGBoard) => void
-}> = ({ id, width, height, boundingBox, showGrid, onBoardReady }) => (
-  <JSXGraphBoard
-    id={id}
-    width={width}
-    height={height}
-    boundingBox={boundingBox}
-    showGrid={showGrid}
-    onBoardReady={onBoardReady}
-  />
+}> = ({ id, width, height, boundingBox, showGrid, interactionMode, onBoardReady }) => (
+  <div className={`geo-canvas-wrap geo-canvas-wrap--${interactionMode}`}>
+    <JSXGraphBoard
+      id={id}
+      width={width}
+      height={height}
+      boundingBox={boundingBox}
+      showGrid={showGrid}
+      onBoardReady={onBoardReady}
+    />
+  </div>
 )
