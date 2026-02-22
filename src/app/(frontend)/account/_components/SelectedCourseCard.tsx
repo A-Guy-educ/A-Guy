@@ -10,6 +10,7 @@ import { Badge } from '@/ui/web/components/badge'
 import { Button } from '@/ui/web/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/web/components/card'
 import { useTranslations } from '@/ui/web/providers/I18n'
+import { HtmlRenderer } from '@/ui/web/shared/HtmlRenderer'
 
 interface Course {
   id: string
@@ -164,7 +165,9 @@ export function SelectedCourseCard() {
                 </Badge>
                 <p className="font-semibold text-lg">{course.title}</p>
                 {course.description && (
-                  <p className="text-muted-foreground text-sm">{course.description}</p>
+                  <div className="text-muted-foreground text-sm">
+                    <HtmlRenderer html={course.description} />
+                  </div>
                 )}
               </div>
             </div>

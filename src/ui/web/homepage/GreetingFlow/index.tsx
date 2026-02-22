@@ -8,6 +8,7 @@ import { Badge } from '@/ui/web/components/badge'
 import { setUserProfile } from '@/client/state/localStorage/userProfile'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import type { Course } from '@/payload-types'
+import { HtmlRenderer } from '@/ui/web/shared/HtmlRenderer'
 
 type FlowStep = 'greeting' | 'mood' | 'moodResponse' | 'courses' | 'complete'
 
@@ -125,7 +126,7 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
                   {course.description && (
                     <CardContent className="flex-1">
                       <CardDescription className="line-clamp-2">
-                        {course.description}
+                        <HtmlRenderer html={course.description} />
                       </CardDescription>
                     </CardContent>
                   )}

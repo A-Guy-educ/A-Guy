@@ -473,7 +473,7 @@ export interface Course {
    */
   title: string;
   /**
-   * Detailed description of the course
+   * Detailed description of the course (uses rich text editor, stores HTML)
    */
   description?: string | null;
   /**
@@ -1150,7 +1150,7 @@ export interface Chapter {
    */
   adminTitle?: string | null;
   /**
-   * Detailed description of the chapter
+   * Detailed description of the chapter (uses rich text editor, stores HTML)
    */
   description?: string | null;
   /**
@@ -1203,7 +1203,7 @@ export interface Lesson {
    */
   title: string;
   /**
-   * Detailed description of the lesson
+   * Detailed description of the lesson (uses rich text editor, stores HTML)
    */
   description?: string | null;
   /**
@@ -1227,7 +1227,7 @@ export interface Lesson {
    */
   introEnabled?: boolean | null;
   /**
-   * HTML content for the intro page. Supports raw HTML (bold, lists, etc).
+   * HTML content for the intro page (uses rich text editor, stores HTML)
    */
   introDescription?: string | null;
   /**

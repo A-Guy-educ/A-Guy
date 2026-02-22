@@ -218,9 +218,9 @@ export class VercelBlobAdapter {
         url: blob.url,
         pathname: blob.pathname,
         size: blob.size,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         contentType: (blob as any).contentType,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         uploadedAt: (blob as any).uploadedAt,
       })),
       cursor: result.cursor,
@@ -277,9 +277,9 @@ export class VercelBlobAdapter {
       return {
         pathname: blob.pathname,
         size: blob.size,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         contentType: (blob as any).contentType,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         uploadedAt: (blob as any).uploadedAt,
       }
     } catch {

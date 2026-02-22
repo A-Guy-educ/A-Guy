@@ -1,11 +1,13 @@
 import type { CollectionConfig } from 'payload'
 
-import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
 import { computeAdminTitle } from '../hooks/chapters/computeAdminTitle'
+import { sanitizeHtml } from '@/infra/utils/sanitize-html'
+import { convertLexicalToHtmlString } from '@/infra/utils/lexical-to-html'
+import type { DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
 
 const formatSlug = (val: string): string =>
   val
@@ -28,9 +30,22 @@ export const Chapters: CollectionConfig = {
         if (data?.title && !data?.slug) {
           data.slug = formatSlug(data.title)
         }
+        // Sanitize HTML description
+        if (data?.description && typeof data.description === 'string') {
+          data.description = sanitizeHtml(data.description)
+        }
         return data
       },
       computeAdminTitle,
+    ],
+    afterRead: [
+      ({ doc }) => {
+        // Backwards compatibility: convert Lexical JSON to HTML for display
+        if (doc?.description && typeof doc.description === 'object') {
+          doc.description = convertLexicalToHtmlString(doc.description as DefaultTypedEditorState)
+        }
+        return doc
+      },
     ],
   },
   admin: {
@@ -77,10 +92,12 @@ export const Chapters: CollectionConfig = {
     },
     {
       name: 'description',
-      type: 'richText',
-      editor: defaultLexical,
+      type: 'textarea',
       admin: {
-        description: 'Detailed description of the chapter',
+        description: 'Detailed description of the chapter (uses rich text editor, stores HTML)',
+        components: {
+          Field: '@/ui/admin/fields/HtmlRichTextField#HtmlRichTextField',
+        },
       },
     },
     {

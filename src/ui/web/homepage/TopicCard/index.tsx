@@ -4,6 +4,7 @@ import { SystemLink } from '@/infra/loading/components/SystemLink'
 import type { Chapter } from '@/payload-types'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/ui/web/components/card'
 import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
+import { HtmlRenderer } from '@/ui/web/shared/HtmlRenderer'
 
 interface TopicCardProps {
   chapter: Chapter
@@ -26,7 +27,7 @@ export function TopicCard({ chapter, progress, courseSlug }: TopicCardProps) {
             <CardTitle className="text-lg truncate">{chapter.title}</CardTitle>
             {chapter.description && (
               <CardDescription className="line-clamp-2 text-sm">
-                {chapter.description}
+                <HtmlRenderer html={chapter.description} />
               </CardDescription>
             )}
           </div>

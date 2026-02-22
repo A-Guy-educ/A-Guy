@@ -5,8 +5,7 @@ import type { Lesson } from '@/payload-types'
 import { Button } from '@/ui/web/components/button'
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/web/components/card'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import RichText from '@/ui/web/RichText'
-import type { DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
+import { HtmlRenderer } from '@/ui/web/shared/HtmlRenderer'
 
 interface LessonCardProps {
   lesson: Lesson
@@ -14,14 +13,16 @@ interface LessonCardProps {
   chapterSlug?: string
 }
 
-function renderDescription(
-  description: string | DefaultTypedEditorState | null | undefined,
-): React.ReactNode {
+function renderDescription(description: string | null | undefined): React.ReactNode {
   if (!description) return null
   if (typeof description === 'string') {
-    return <CardDescription>{description}</CardDescription>
+    return (
+      <CardDescription>
+        <HtmlRenderer html={description} />
+      </CardDescription>
+    )
   }
-  return <RichText data={description} enableProse={false} enableGutter={false} />
+  return null
 }
 
 export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps) {

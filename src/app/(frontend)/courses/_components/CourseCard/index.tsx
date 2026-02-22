@@ -8,26 +8,23 @@ import { cn } from '@/infra/utils/ui'
 import type { Course } from '@/payload-types'
 import { Button } from '@/ui/web/components/button'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import RichText from '@/ui/web/RichText'
-import type { DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
+import { HtmlRenderer } from '@/ui/web/shared/HtmlRenderer'
 import { BookOpen, CheckCircle, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 
-function renderDescription(
-  description: string | DefaultTypedEditorState | null | undefined,
-): React.ReactNode {
+function renderDescription(description: string | null | undefined): React.ReactNode {
   if (!description) return null
   if (typeof description === 'string') {
     return (
-      <p
-        className="text-muted-foreground mt-1 line-clamp-2 text-right"
+      <div
+        className="mt-1 line-clamp-2 text-right text-muted-foreground"
         style={{ fontSize: '12px' }}
       >
-        {description}
-      </p>
+        <HtmlRenderer html={description} />
+      </div>
     )
   }
-  return <RichText data={description} enableProse={false} enableGutter={false} />
+  return null
 }
 
 interface CourseCardProps {

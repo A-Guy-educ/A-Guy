@@ -1,21 +1,14 @@
-/**
- * Courses Collection
- *
- * @fileType collection-config
- * @domain courses
- * @pattern published-content, hierarchical-data
- * @ai-summary Courses collection with chapters relationship and published state
- */
-
 import type { CollectionConfig } from 'payload'
 
-import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { DEFAULT_ACCESS_TYPE, DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
+import { sanitizeHtml } from '@/infra/utils/sanitize-html'
+import { convertLexicalToHtmlString } from '@/infra/utils/lexical-to-html'
+import type { DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
 
 const formatSlug = (val: string): string =>
   val
@@ -37,10 +30,23 @@ export const Courses: CollectionConfig = {
         if (data?.title && !data?.slug) {
           data.slug = formatSlug(data.title)
         }
+        // Sanitize HTML description
+        if (data?.description && typeof data.description === 'string') {
+          data.description = sanitizeHtml(data.description)
+        }
         return data
       },
     ],
     afterChange: [cascadeAdminTitle],
+    afterRead: [
+      ({ doc }) => {
+        // Backwards compatibility: convert Lexical JSON to HTML for display
+        if (doc?.description && typeof doc.description === 'object') {
+          doc.description = convertLexicalToHtmlString(doc.description as DefaultTypedEditorState)
+        }
+        return doc
+      },
+    ],
   },
   admin: {
     useAsTitle: 'title',
@@ -78,10 +84,12 @@ export const Courses: CollectionConfig = {
     },
     {
       name: 'description',
-      type: 'richText',
-      editor: defaultLexical,
+      type: 'textarea',
       admin: {
-        description: 'Detailed description of the course',
+        description: 'Detailed description of the course (uses rich text editor, stores HTML)',
+        components: {
+          Field: '@/ui/admin/fields/HtmlRichTextField#HtmlRichTextField',
+        },
       },
     },
     {

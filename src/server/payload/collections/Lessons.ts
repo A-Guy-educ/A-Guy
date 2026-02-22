@@ -1,11 +1,13 @@
 import type { CollectionConfig } from 'payload'
 
-import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { DEFAULT_LESSON_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
+import { sanitizeHtml } from '@/infra/utils/sanitize-html'
+import { convertLexicalToHtmlString } from '@/infra/utils/lexical-to-html'
+import type { DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
 
 const formatSlug = (val: string): string =>
   val
@@ -33,7 +35,25 @@ export const Lessons: CollectionConfig = {
               : Date.now().toString().slice(-6)
           data.slug = `${formatSlug(data.title)}-${timestamp}`
         }
+        // Sanitize HTML description
+        if (data?.description && typeof data.description === 'string') {
+          data.description = sanitizeHtml(data.description)
+        }
+        // Sanitize HTML introDescription
+        if (data?.introDescription && typeof data.introDescription === 'string') {
+          data.introDescription = sanitizeHtml(data.introDescription)
+        }
         return data
+      },
+    ],
+    afterRead: [
+      ({ doc }) => {
+        // Backwards compatibility: convert Lexical JSON to HTML for display (description only)
+        if (doc?.description && typeof doc.description === 'object') {
+          doc.description = convertLexicalToHtmlString(doc.description as DefaultTypedEditorState)
+        }
+        // Note: introDescription was always textarea/string, no conversion needed
+        return doc
       },
     ],
   },
@@ -99,10 +119,12 @@ export const Lessons: CollectionConfig = {
     },
     {
       name: 'description',
-      type: 'richText',
-      editor: defaultLexical,
+      type: 'textarea',
       admin: {
-        description: 'Detailed description of the lesson',
+        description: 'Detailed description of the lesson (uses rich text editor, stores HTML)',
+        components: {
+          Field: '@/ui/admin/fields/HtmlRichTextField#HtmlRichTextField',
+        },
       },
     },
     {
@@ -181,8 +203,11 @@ export const Lessons: CollectionConfig = {
       name: 'introDescription',
       type: 'textarea',
       admin: {
-        description: 'HTML content for the intro page. Supports raw HTML (bold, lists, etc).',
+        description: 'HTML content for the intro page (uses rich text editor, stores HTML)',
         condition: (data) => Boolean(data?.introEnabled),
+        components: {
+          Field: '@/ui/admin/fields/HtmlRichTextField#HtmlRichTextField',
+        },
       },
     },
     {
