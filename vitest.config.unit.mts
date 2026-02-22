@@ -35,4 +35,14 @@ export default defineConfig({
       ],
     },
   },
+  // Handle @payloadcms packages with SCSS imports
+  ssr: {
+    noExternal: [/@payloadcms\/.*/],
+  },
+  // Mock CSS/SCSS imports to prevent "Unknown file extension" errors
+  css: {
+    modules: {
+      classNameStrategy: 'non-scoped',
+    },
+  },
 })

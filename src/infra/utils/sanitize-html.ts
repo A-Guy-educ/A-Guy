@@ -129,16 +129,16 @@ const SANITIZE_CONFIG: Config = {
  * (SSR) and the browser tab (client), so addHook runs exactly once.
  */
 declare global {
-  var __aguyDomPurifyHrefHookRegistered: boolean | undefined
+  var __domPurifyHrefHookRegistered: boolean | undefined
 }
 
-if (!globalThis.__aguyDomPurifyHrefHookRegistered) {
+if (!globalThis.__domPurifyHrefHookRegistered) {
   DOMPurify.addHook('afterSanitizeAttributes', (node: Element) => {
     if (node.tagName !== 'A' && node.hasAttribute('href')) {
       node.removeAttribute('href')
     }
   })
-  globalThis.__aguyDomPurifyHrefHookRegistered = true
+  globalThis.__domPurifyHrefHookRegistered = true
 }
 
 /**

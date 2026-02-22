@@ -20,7 +20,8 @@ export const convertLexicalToHtmlBeforeChange =
         ...data,
         [htmlFieldName]: sanitizedHtml,
       }
-    } catch (_error) {
+    } catch (error) {
+      console.error(`Failed to convert Lexical to HTML for field ${fieldName}:`, error)
       return data
     }
   }
@@ -42,7 +43,8 @@ export const convertLexicalToHtmlAfterRead =
         ...doc,
         [htmlFieldName]: sanitizedHtml,
       }
-    } catch (_error) {
+    } catch (error) {
+      console.error(`Failed to convert Lexical to HTML for field ${fieldName}:`, error)
       return doc
     }
   }

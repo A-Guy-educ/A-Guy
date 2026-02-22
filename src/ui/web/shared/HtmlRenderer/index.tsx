@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { sanitizeHtml } from '@/infra/utils/sanitize-html'
 import { cn } from '@/infra/utils/ui'
 
@@ -14,16 +15,16 @@ interface HtmlRendererProps {
 
 /**
  * Canonical renderer for user/content HTML on the frontend.
- * - Sanitizes via DOMPurify on every render
+ * - Sanitizes via the shared `sanitizeHtml` utility on every render
  * - Applies site typography via .rich-text-content (globals.css)
  * - Supports RTL/LTR via dir prop (default: "auto")
  * - Layout safety (images, tables, long words) handled by .rich-text-content CSS
  *
- * No 'use client' required — isomorphic-dompurify works in SSR and browser.
+ * No 'use client' required — `sanitizeHtml` is safe for both SSR and browser usage.
  * Never use dangerouslySetInnerHTML for content fields outside this component.
  */
 export function HtmlRenderer({ html, className, dir = 'auto' }: HtmlRendererProps) {
-  const sanitized = sanitizeHtml(html)
+  const sanitized = useMemo(() => sanitizeHtml(html), [html])
   return (
     <div
       dir={dir}

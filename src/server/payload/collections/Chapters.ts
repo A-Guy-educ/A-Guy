@@ -28,7 +28,6 @@ export const Chapters: CollectionConfig = {
   hooks: {
     beforeChange: [
       ({ data }) => {
-        console.log('data:', data)
         if (data?.title && !data?.slug) {
           data.slug = formatSlug(data.title)
         }
