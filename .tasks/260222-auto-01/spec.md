@@ -18,7 +18,11 @@ Additionally, we will modernize the database query to use the `req` object for t
 
 ### FR-003: Transaction Safety
 **Priority**: SHOULD
-**Description**: Instead of instantiating a new payload instance via `getPayloadInstance()`, the hook should destructure `req` from its arguments and use `req.payload.find`. Pass the `req` object and `depth: 0` in the `.find()` query to maintain transaction atomicity and optimize performance.
+**Description**: Instead of instantiating a new payload instance via `getPayloadInstance()`, the hook should destructure `req` from its arguments and use `req.payload.find`. Pass the `req` object and `depth: 0` in the `.find()` query to maintain transaction atomicity and optimize performance. Note: If `req` is undefined (can happen in certain internal operations), fall back to using `getPayloadInstance()`.
+
+### FR-004: Update validateSlugUniqueness for Transaction Safety
+**Priority**: SHOULD
+**Description**: The `validateSlugUniqueness` hook (lines 59-92) also uses `getPayloadInstance()` which should be replaced with `req.payload.find` for consistency and transaction safety, matching the pattern in FR-003.
 
 ### NFR-001: System Stability
 **Priority**: MUST
@@ -27,16 +31,17 @@ Additionally, we will modernize the database query to use the `req` object for t
 ## Acceptance Criteria
 
 - [ ] The `generateSlug` field hook's `while` loop has a maximum iteration limit of 100 (`MAX_SLUG_ATTEMPTS`).
-- [ ] If the loop runs 100 times without finding a unique slug, it throws an `APIError`.
+- [ ] If the loop runs 100 times without finding a unique slug, it throws an `Error` with a descriptive message.
 - [ ] The `generateSlug` hook destructures `req` from the hook arguments.
 - [ ] The database uniqueness check uses `req.payload.find` and passes the `req` object and `depth: 0` for optimization and transaction safety.
+- [ ] The `validateSlugUniqueness` hook also uses `req.payload.find` with `req` and `depth: 0` for consistency.
 - [ ] Existing functionality for generating unique slugs within the normal range of attempts remains unchanged.
 
 ## Guardrails
 
 - Do NOT change the overall slug generation strategy (e.g., it must continue to append `-${counter}` to the base slug).
 - The Local API call inside the hook should inherently run with `overrideAccess: true` (which is the default) to ensure the uniqueness check can see all documents regardless of user permissions.
-- Ensure the `APIError` is imported from `payload`.
+- If `req` is undefined, fall back to using `getPayloadInstance()` for backward compatibility.
 
 ## Out of Scope
 
