@@ -1,0 +1,25 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "high",
+  "confidence": 1,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/guest-session.ts",
+    "src/server/guest-session-upgrade.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "PayloadRequest type is available for typing the req parameter",
+    "Both services are called from contexts where req can be passed",
+    "The fix requires passing req to all Payload operations for transaction safety"
+  ],
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Input contains detailed implementation steps with file paths, line numbers, and code examples showing exactly how to refactor the services. The expected fix is clearly demonstrated with before/after patterns."
+  },
+  "pipeline": "spec_execute_verify"
+}
