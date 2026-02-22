@@ -21,6 +21,9 @@ export const Media: CollectionConfig = {
   slug: 'media',
   // folders: true, // Disabled - conflicts with Vercel Blob plugin
   upload: {
+    // Allow External media type to be saved without a file upload.
+    // Our validateMediaUploadHook enforces file presence for non-External types.
+    filesRequiredOnCreate: false,
     // Vercel Blob storage plugin handles actual file storage
     // Plugin injects disableLocalStorage: true and adapter handlers
     adminThumbnail: 'thumbnail', // Show thumbnail in admin list view
