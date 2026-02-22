@@ -9,7 +9,7 @@ import type {
 import { InlineRichTextEditor } from './InlineRichTextEditor'
 import { HintSolutionPanel } from './HintSolutionPanel'
 import { ColumnEditor } from '../components/matching/ColumnEditor'
-import { MatchingLines } from '../components/matching/MatchingLines'
+import { MatchingPairsList } from '../components/matching/MatchingPairsList'
 import { normalizeMatchingPairs } from './normalizers'
 
 interface MatchingEditorProps {
@@ -62,10 +62,7 @@ export const MatchingEditor: React.FC<MatchingEditorProps> = ({ block, onChange 
 
       <div className="question-editor-section">
         <label className="question-editor-label">Correct Pairs</label>
-        <p className="matching-instruction">
-          Click a left item, then click a right item to create a pair. Click a line to remove it.
-        </p>
-        <MatchingLines
+        <MatchingPairsList
           leftColumn={block.leftColumn}
           rightColumn={block.rightColumn}
           correctPairs={block.correctPairs}

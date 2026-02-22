@@ -18,6 +18,8 @@ interface GeometryCanvasProps {
 const DISPLAY_WIDTH = 420
 const DISPLAY_HEIGHT = 320
 
+const round1 = (n: number) => Math.round(n * 10) / 10
+
 export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   id,
   geometry,
@@ -29,6 +31,7 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
 }) => {
   const boardRef = useRef<JXGBoard | null>(null)
   const isSyncingRef = useRef(false)
+  const isDraggingRef = useRef(false)
   const elementsRef = useRef<Map<string, JXGElement>>(new Map())
   const modeRef = useRef(interactionMode)
   const onCanvasClickRef = useRef(onCanvasClick)
@@ -37,7 +40,7 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
 
   const syncToBoard = useCallback(() => {
     const board = boardRef.current
-    if (!board) return
+    if (!board || isDraggingRef.current) return
 
     isSyncingRef.current = true
     board.suspendUpdate()
@@ -46,90 +49,11 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
       const existingIds = new Set(elementsRef.current.keys())
       const newIds = new Set<string>()
 
-      // Sync points
-      for (const point of geometry.elements.points) {
-        const elemId = `point-${point.name}`
-        newIds.add(elemId)
-        const existing = elementsRef.current.get(elemId)
+      syncPoints(board, geometry, newIds, elementsRef, isSyncingRef, isDraggingRef, onPointMoved)
+      syncSegments(board, geometry, newIds, elementsRef)
+      syncCircles(board, geometry, newIds, elementsRef)
+      syncPolygons(board, geometry, newIds, elementsRef)
 
-        if (existing && existing.moveTo) {
-          existing.moveTo([point.x, point.y])
-          existing.setAttribute({
-            visible: point.visible !== false,
-            name: point.name,
-          })
-        } else {
-          if (existing) {
-            board.removeObject(existing)
-            elementsRef.current.delete(elemId)
-          }
-          const el = board.create('point', [point.x, point.y], {
-            name: point.name,
-            size: 4,
-            visible: point.visible !== false,
-            withLabel: true,
-            label: { fontSize: point.fontSize || 14 },
-          })
-          el.on('drag', () => {
-            if (isSyncingRef.current) return
-            if (el.X && el.Y) {
-              onPointMoved?.(point.name, Math.round(el.X()), Math.round(el.Y()))
-            }
-          })
-          elementsRef.current.set(elemId, el)
-        }
-      }
-
-      // Sync lines
-      for (let i = 0; i < geometry.elements.lines.length; i++) {
-        const line = geometry.elements.lines[i]
-        const elemId = `line-${i}`
-        newIds.add(elemId)
-        const fromEl = elementsRef.current.get(`point-${line.from}`)
-        const toEl = elementsRef.current.get(`point-${line.to}`)
-        if (!fromEl || !toEl) continue
-
-        const existing = elementsRef.current.get(elemId)
-        if (existing) {
-          board.removeObject(existing)
-          elementsRef.current.delete(elemId)
-        }
-        const el = board.create('segment', [fromEl, toEl], {
-          strokeColor: line.color || '#000000',
-          strokeWidth: line.thickness || 2,
-          dash: line.style === 'dashed' ? 2 : 0,
-          fixed: true,
-        })
-        elementsRef.current.set(elemId, el)
-      }
-
-      // Sync circles
-      for (let i = 0; i < geometry.elements.circles.length; i++) {
-        const circle = geometry.elements.circles[i]
-        const elemId = `circle-${i}`
-        newIds.add(elemId)
-        const centerEl = elementsRef.current.get(`point-${circle.center}`)
-        if (!centerEl) continue
-
-        const existing = elementsRef.current.get(elemId)
-        if (existing) {
-          board.removeObject(existing)
-          elementsRef.current.delete(elemId)
-        }
-
-        const parents: unknown[] = circle.through
-          ? [centerEl, elementsRef.current.get(`point-${circle.through}`) || centerEl]
-          : [centerEl, circle.radius || 50]
-
-        const el = board.create('circle', parents, {
-          strokeColor: circle.color || '#000000',
-          dash: circle.style === 'dashed' ? 2 : 0,
-          fixed: true,
-        })
-        elementsRef.current.set(elemId, el)
-      }
-
-      // Remove stale elements
       for (const oldId of existingIds) {
         if (!newIds.has(oldId)) {
           const el = elementsRef.current.get(oldId)
@@ -158,7 +82,7 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
       b.on('down', (e: unknown) => {
         if (modeRef.current !== 'addPoint') return
         const coords = b.getUsrCoordsOfMouse(e) as [number, number]
-        onCanvasClickRef.current?.(Math.round(coords[0]), Math.round(coords[1]))
+        onCanvasClickRef.current?.(round1(coords[0]), round1(coords[1]))
       })
     },
     [syncToBoard],
@@ -168,35 +92,172 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   const bbox: [number, number, number, number] = [0, canvas.height, canvas.width, 0]
 
   return (
-    <GeometryCanvasInner
-      id={id}
-      width={displayWidth}
-      height={displayHeight}
-      boundingBox={bbox}
-      showGrid={canvas.grid ?? false}
-      onBoardReady={handleBoardReady}
-      interactionMode={interactionMode}
-    />
+    <div
+      className={`geo-canvas-wrap geo-canvas-wrap--${interactionMode}`}
+      style={{ background: canvas.background || '#ffffff' }}
+    >
+      <JSXGraphBoard
+        id={id}
+        width={displayWidth}
+        height={displayHeight}
+        boundingBox={bbox}
+        showGrid={canvas.grid ?? false}
+        onBoardReady={handleBoardReady}
+      />
+    </div>
   )
 }
 
-const GeometryCanvasInner: React.FC<{
-  id: string
-  width: number
-  height: number
-  boundingBox: [number, number, number, number]
-  showGrid: boolean
-  interactionMode: 'move' | 'addPoint'
-  onBoardReady: (board: JXGBoard) => void
-}> = ({ id, width, height, boundingBox, showGrid, interactionMode, onBoardReady }) => (
-  <div className={`geo-canvas-wrap geo-canvas-wrap--${interactionMode}`}>
-    <JSXGraphBoard
-      id={id}
-      width={width}
-      height={height}
-      boundingBox={boundingBox}
-      showGrid={showGrid}
-      onBoardReady={onBoardReady}
-    />
-  </div>
-)
+function syncPoints(
+  board: JXGBoard,
+  geometry: GeometrySpecV1,
+  newIds: Set<string>,
+  elementsRef: React.MutableRefObject<Map<string, JXGElement>>,
+  isSyncingRef: React.MutableRefObject<boolean>,
+  isDraggingRef: React.MutableRefObject<boolean>,
+  onPointMoved?: (name: string, x: number, y: number) => void,
+) {
+  for (const point of geometry.elements.points) {
+    const elemId = `point-${point.name}`
+    newIds.add(elemId)
+    const existing = elementsRef.current.get(elemId)
+
+    if (existing && existing.moveTo) {
+      existing.moveTo([point.x, point.y])
+      existing.setAttribute({ visible: point.visible !== false, name: point.name })
+    } else {
+      if (existing) {
+        board.removeObject(existing)
+        elementsRef.current.delete(elemId)
+      }
+      const el = board.create('point', [point.x, point.y], {
+        name: point.name,
+        size: 4,
+        visible: point.visible !== false,
+        withLabel: true,
+        label: { fontSize: point.fontSize || 14 },
+      })
+      el.on('drag', () => {
+        if (isSyncingRef.current) return
+        isDraggingRef.current = true
+        if (el.X && el.Y) onPointMoved?.(point.name, round1(el.X()), round1(el.Y()))
+      })
+      el.on('up', () => {
+        isDraggingRef.current = false
+      })
+      elementsRef.current.set(elemId, el)
+    }
+  }
+}
+
+function syncSegments(
+  board: JXGBoard,
+  geometry: GeometrySpecV1,
+  newIds: Set<string>,
+  elementsRef: React.MutableRefObject<Map<string, JXGElement>>,
+) {
+  for (let i = 0; i < geometry.elements.lines.length; i++) {
+    const line = geometry.elements.lines[i]
+    const elemId = `line-${i}`
+    newIds.add(elemId)
+    const fromEl = elementsRef.current.get(`point-${line.from}`)
+    const toEl = elementsRef.current.get(`point-${line.to}`)
+    if (!fromEl || !toEl) continue
+
+    const existing = elementsRef.current.get(elemId)
+    if (existing) {
+      board.removeObject(existing)
+      elementsRef.current.delete(elemId)
+    }
+    const el = board.create('segment', [fromEl, toEl], {
+      strokeColor: line.color || '#000000',
+      strokeWidth: line.thickness || 2,
+      dash: line.style === 'dashed' ? 2 : 0,
+      fixed: true,
+    })
+    elementsRef.current.set(elemId, el)
+  }
+}
+
+function syncCircles(
+  board: JXGBoard,
+  geometry: GeometrySpecV1,
+  newIds: Set<string>,
+  elementsRef: React.MutableRefObject<Map<string, JXGElement>>,
+) {
+  for (let i = 0; i < geometry.elements.circles.length; i++) {
+    const circle = geometry.elements.circles[i]
+    const elemId = `circle-${i}`
+    newIds.add(elemId)
+    const centerEl = elementsRef.current.get(`point-${circle.center}`)
+    if (!centerEl) continue
+
+    const existing = elementsRef.current.get(elemId)
+    if (existing) {
+      board.removeObject(existing)
+      elementsRef.current.delete(elemId)
+    }
+    const parents: unknown[] = circle.through
+      ? [centerEl, elementsRef.current.get(`point-${circle.through}`) || centerEl]
+      : [centerEl, circle.radius || 50]
+    const el = board.create('circle', parents, {
+      strokeColor: circle.color || '#000000',
+      dash: circle.style === 'dashed' ? 2 : 0,
+      fixed: true,
+    })
+    elementsRef.current.set(elemId, el)
+  }
+}
+
+function syncPolygons(
+  board: JXGBoard,
+  geometry: GeometrySpecV1,
+  newIds: Set<string>,
+  elementsRef: React.MutableRefObject<Map<string, JXGElement>>,
+) {
+  const triangles = geometry.elements.triangles || []
+  for (let i = 0; i < triangles.length; i++) {
+    const tri = triangles[i]
+    const elemId = `triangle-${i}`
+    newIds.add(elemId)
+    const pts = tri.points.map((name) => elementsRef.current.get(`point-${name}`)).filter(Boolean)
+    if (pts.length < 3) continue
+
+    const existing = elementsRef.current.get(elemId)
+    if (existing) {
+      board.removeObject(existing)
+      elementsRef.current.delete(elemId)
+    }
+    const el = board.create('polygon', pts, {
+      borders: { strokeColor: tri.color || '#000000', strokeWidth: tri.thickness || 2 },
+      fillColor: tri.fill || 'transparent',
+      fillOpacity: tri.fill ? 0.3 : 0,
+      fixed: true,
+      hasInnerPoints: false,
+    })
+    elementsRef.current.set(elemId, el)
+  }
+
+  const rectangles = geometry.elements.rectangles || []
+  for (let i = 0; i < rectangles.length; i++) {
+    const rect = rectangles[i]
+    const elemId = `rectangle-${i}`
+    newIds.add(elemId)
+    const pts = rect.points.map((name) => elementsRef.current.get(`point-${name}`)).filter(Boolean)
+    if (pts.length < 4) continue
+
+    const existing = elementsRef.current.get(elemId)
+    if (existing) {
+      board.removeObject(existing)
+      elementsRef.current.delete(elemId)
+    }
+    const el = board.create('polygon', pts, {
+      borders: { strokeColor: rect.color || '#000000', strokeWidth: rect.thickness || 2 },
+      fillColor: rect.fill || 'transparent',
+      fillOpacity: rect.fill ? 0.3 : 0,
+      fixed: true,
+      hasInnerPoints: false,
+    })
+    elementsRef.current.set(elemId, el)
+  }
+}

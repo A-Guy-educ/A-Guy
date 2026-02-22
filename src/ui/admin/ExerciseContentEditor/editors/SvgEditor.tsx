@@ -15,6 +15,7 @@ function validateSvg(value: string): { valid: boolean; error?: string } {
   if (!value.includes('</svg>') && !value.includes('/>')) {
     return { valid: false, error: 'SVG element is not closed' }
   }
+  if (typeof DOMParser === 'undefined') return { valid: true }
   try {
     const parser = new DOMParser()
     const doc = parser.parseFromString(value, 'image/svg+xml')

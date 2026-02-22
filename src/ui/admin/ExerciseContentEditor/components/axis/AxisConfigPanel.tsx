@@ -96,8 +96,9 @@ export const AxisConfigPanel: React.FC<AxisConfigPanelProps> = ({ spec, onChange
           <input
             type="number"
             className="panel-field-input"
-            value={spec.viewport?.xMin ?? -10}
-            onChange={(e) => updateViewport({ xMin: Number(e.target.value) })}
+            key={`xMin-${spec.viewport?.xMin ?? -10}`}
+            defaultValue={spec.viewport?.xMin ?? -10}
+            onBlur={(e) => updateViewport({ xMin: Number(e.target.value) || 0 })}
           />
         </div>
         <div className="panel-field">
@@ -105,8 +106,9 @@ export const AxisConfigPanel: React.FC<AxisConfigPanelProps> = ({ spec, onChange
           <input
             type="number"
             className="panel-field-input"
-            value={spec.viewport?.xMax ?? 10}
-            onChange={(e) => updateViewport({ xMax: Number(e.target.value) })}
+            key={`xMax-${spec.viewport?.xMax ?? 10}`}
+            defaultValue={spec.viewport?.xMax ?? 10}
+            onBlur={(e) => updateViewport({ xMax: Number(e.target.value) || 0 })}
           />
         </div>
         <div className="panel-field">
@@ -114,8 +116,9 @@ export const AxisConfigPanel: React.FC<AxisConfigPanelProps> = ({ spec, onChange
           <input
             type="number"
             className="panel-field-input"
-            value={spec.viewport?.yMin ?? -10}
-            onChange={(e) => updateViewport({ yMin: Number(e.target.value) })}
+            key={`yMin-${spec.viewport?.yMin ?? -10}`}
+            defaultValue={spec.viewport?.yMin ?? -10}
+            onBlur={(e) => updateViewport({ yMin: Number(e.target.value) || 0 })}
           />
         </div>
         <div className="panel-field">
@@ -123,8 +126,9 @@ export const AxisConfigPanel: React.FC<AxisConfigPanelProps> = ({ spec, onChange
           <input
             type="number"
             className="panel-field-input"
-            value={spec.viewport?.yMax ?? 10}
-            onChange={(e) => updateViewport({ yMax: Number(e.target.value) })}
+            key={`yMax-${spec.viewport?.yMax ?? 10}`}
+            defaultValue={spec.viewport?.yMax ?? 10}
+            onBlur={(e) => updateViewport({ yMax: Number(e.target.value) || 0 })}
           />
         </div>
       </div>
