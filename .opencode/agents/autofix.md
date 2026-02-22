@@ -72,3 +72,14 @@ Write to: `.tasks/<taskId>/autofix.md`
 - Do NOT expand scope — fix ONLY what verify reported
 - Do NOT refactor or improve code beyond the specific errors
 - If you cannot fix an error, note it in the report and move on
+
+## CRITICAL: Test File Rules
+
+When fixing test files, follow these rules strictly:
+
+1. **Never change test assertions or test logic** — only fix syntax, types, imports, and formatting
+2. **Never change what a test expects** (e.g., changing `toContain('fallback')` to `toContain('something else')`)
+3. **Never add mocks or change mock behavior** — this changes test semantics, not just fixes errors
+4. **Environment awareness** — tests run in CI without `.env` files. If a test relies on `process.env`, it must use `vi.stubEnv()` to set the value explicitly. Never assume env vars from `.env` will be available
+5. **If a test fails and requires logic changes to fix**, report it in autofix.md as "CANNOT FIX — requires test logic change" and move on. The build agent or human must handle it
+6. **Run tests WITHOUT local .env** to validate: `MINIMAX_API_KEY= OPENAI_API_KEY= pnpm test:unit -- <test-file>` — if it passes locally but could fail in CI due to missing env vars, the fix is wrong

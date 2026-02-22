@@ -4,7 +4,7 @@ import { apiService } from '@/server/services/api/api-service'
 import { useNotebookChat } from '@/ui/web/chat'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { toast } from 'sonner'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/server/services/api/api-service', () => ({
   apiService: {
@@ -207,5 +207,104 @@ describe('useNotebookChat', () => {
     expect(result.current.messages).toEqual([
       { role: ChatRole.Assistant, content: defaultProps.initialMessage },
     ])
+  })
+
+  describe('error logging', () => {
+    let consoleErrorSpy: ReturnType<typeof vi.spyOn>
+
+    beforeEach(() => {
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    })
+
+    afterEach(() => {
+      consoleErrorSpy.mockRestore()
+    })
+
+    it('logs error to console when streaming fails', async () => {
+      // Mock chatStream to throw an error - need to use async generator that throws on iteration
+      const streamingError = new Error('Stream connection failed')
+
+      // Create a generator function that throws when iterated
+      async function* mockFailingStream(): AsyncGenerator<{ type: string; error?: string }> {
+        throw streamingError
+      }
+      ;(apiService.chatStream as ReturnType<typeof vi.fn>).mockReturnValueOnce(mockFailingStream())
+
+      const { result } = renderHook(() => useNotebookChat(defaultProps))
+      await waitFor(() => expect(result.current.isLoadingHistory).toBe(false))
+
+      act(() => {
+        result.current.setInputValue('Hello')
+      })
+
+      await act(async () => {
+        result.current.handleSubmit({ preventDefault: () => undefined } as React.FormEvent)
+      })
+
+      // Wait for the error to be caught
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalled()
+      })
+
+      // Verify console.error was called with the expected message and error
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Stream message failed:', streamingError)
+      // Verify toast is still shown (no regression)
+      expect(toast.error).toHaveBeenCalled()
+    })
+
+    it('logs error to console when sync message fails', async () => {
+      // Mock chat to throw an error
+      const syncError = new Error('Sync request failed')
+      ;(apiService.chat as ReturnType<typeof vi.fn>).mockRejectedValueOnce(syncError)
+
+      const adminProps = {
+        ...defaultProps,
+        adminMode: true, // Force sync path
+      }
+
+      const { result } = renderHook(() => useNotebookChat(adminProps))
+      await waitFor(() => expect(result.current.isLoadingHistory).toBe(false))
+
+      act(() => {
+        result.current.setInputValue('Hello')
+      })
+
+      await act(async () => {
+        result.current.handleSubmit({ preventDefault: () => undefined } as React.FormEvent)
+      })
+
+      // Wait for the error to be caught
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalled()
+      })
+
+      // Verify console.error was called with the expected message and error
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Send message sync failed:', syncError)
+      // Verify toast is still shown (no regression)
+      expect(toast.error).toHaveBeenCalled()
+    })
+
+    it('logs error to console when reset fails', async () => {
+      // Mock resetChat to throw an error
+      const resetError = new Error('Reset failed')
+      ;(apiService.resetChat as ReturnType<typeof vi.fn>).mockRejectedValueOnce(resetError)
+
+      const { result } = renderHook(() => useNotebookChat(defaultProps))
+      await waitFor(() => expect(result.current.isLoadingHistory).toBe(false))
+
+      await act(async () => {
+        await result.current.handleReset()
+      })
+
+      // Wait for the error to be caught
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalled()
+      })
+
+      // Verify console.error was called with the expected message and error
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Chat reset failed:', resetError)
+      // Verify toast is still shown (no regression)
+      expect(toast.error).toHaveBeenCalledWith(defaultProps.resetErrorMessage)
+    })
   })
 })

@@ -46,16 +46,21 @@ vi.mock('path', async () => {
 
 // Mock openai module
 const mockChatCompletionCreate = vi.fn()
-const mockOpenAI = vi.fn(() => ({
-  chat: {
-    completions: {
-      create: mockChatCompletionCreate,
+
+// Create a constructor function that can be used with 'new'
+function MockOpenAI(this: unknown) {
+  return {
+    chat: {
+      completions: {
+        create: mockChatCompletionCreate,
+      },
     },
-  },
-}))
+  }
+}
 
 vi.mock('openai', () => ({
-  default: mockOpenAI,
+  __esModule: true,
+  default: MockOpenAI,
 }))
 
 // ============================================================================
@@ -930,9 +935,23 @@ describe('supervisor: edge cases', () => {
   })
 
   it('handles JSON parse failure in API response', async () => {
+    // Set API key so the function doesn't short-circuit to fallback
+    vi.stubEnv('MINIMAX_API_KEY', 'test-key')
+
     // The function should handle invalid JSON gracefully - use fallback
     const { analyzeFailureWithFallback } =
       await import('../../../scripts/supervisor/failure-analyzer')
+
+    // Mock the API to return invalid JSON content (not a valid JSON object)
+    mockChatCompletionCreate.mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: 'This is not valid JSON', // Invalid JSON - should trigger parse error handling
+          },
+        },
+      ],
+    })
 
     const result = await analyzeFailureWithFallback(
       {
@@ -942,11 +961,11 @@ describe('supervisor: edge cases', () => {
         stageOutput: 'Output',
         retryNumber: 1,
       },
-      undefined, // No mock - will use fallback
+      undefined, // No mock result - will call the API
     )
 
-    // Should return fallback result
-    expect(result.rootCause).toContain('fallback')
+    // Should return fallback result (raw content from invalid JSON)
+    expect(result.rootCause).toContain('This is not valid JSON')
   })
 })
 

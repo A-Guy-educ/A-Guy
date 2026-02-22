@@ -123,8 +123,9 @@ export const apiService = {
       }
 
       return { success: false, error: 'Invalid response format' }
-    } catch (_error) {
+    } catch (error) {
       // Network errors or other exceptions
+      console.error('Chat API request failed:', error)
       return { success: false, error: 'Network error' }
     }
   },
@@ -197,7 +198,8 @@ export const apiService = {
 
       logger.debug({ contextKey }, '[getConversation] No conversation found')
       return { success: true, exists: false, messages: [], contextKey }
-    } catch (_error) {
+    } catch (error) {
+      console.error('Get conversation API request failed:', error)
       return { success: false, exists: false, messages: [], error: 'Network error' }
     }
   },
@@ -235,7 +237,8 @@ export const apiService = {
       }
 
       return { success: false, error: 'Reset failed' }
-    } catch (_error) {
+    } catch (error) {
+      console.error('Reset chat API request failed:', error)
       return { success: false, error: 'Network error' }
     }
   },

@@ -281,30 +281,26 @@ export async function createGenkitUnifiedAdapter(
 
             // Build messages ensuring first non-system message is 'user'
             const systemMessage = { role: 'system' as const, content: [{ text: input.system }] }
-            const userAssistantMessages = input.messages.map((m) => ({
-              role: m.role === 'assistant' ? 'model' : m.role,
+            type MappedMessage = {
+              role: 'system' | 'user' | 'model'
+              content: Array<{ text: string }>
+            }
+            const userAssistantMessages: MappedMessage[] = input.messages.map((m) => ({
+              role: m.role === 'assistant' ? 'model' : m.role === 'system' ? 'system' : 'user',
               content: [{ text: m.content }],
             }))
 
             // Ensure first non-system message is 'user'
 
-            let messages: Array<{
-              role: 'system' | 'user' | 'model'
-              content: Array<{ text: string }>
-            }> = []
-            if (
-              userAssistantMessages.length > 0 &&
-              (userAssistantMessages[0] as any).role !== 'user'
-            ) {
+            let messages: MappedMessage[] = []
+            if (userAssistantMessages.length > 0 && userAssistantMessages[0].role !== 'user') {
               messages = [
                 systemMessage,
                 { role: 'user' as const, content: [{ text: 'Please continue.' }] },
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                ...(userAssistantMessages as any),
+                ...userAssistantMessages,
               ]
             } else {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              messages = [systemMessage, ...(userAssistantMessages as any)]
+              messages = [systemMessage, ...userAssistantMessages]
             }
 
             const result = await ai.generate({

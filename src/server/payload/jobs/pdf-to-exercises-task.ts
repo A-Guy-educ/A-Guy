@@ -35,12 +35,15 @@ export const pdfToExercisesTask = {
   input: {},
   output: {},
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async handler({ job, req }: any) {
     // v2.1 Fix 1: Use req.payload when available (testability), fallback to getPayload
     const payload = req.payload ?? (await getPayload({ config }))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const input = job.input as any
     const { lessonId, sourceDocId, tenantId } = input.ctx
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const output: any = {
       segmentsTotal: 0,
       segmentsDone: 0,
@@ -128,9 +131,9 @@ export const pdfToExercisesTask = {
           })
 
           // Perform in-memory dedup using system ordinal (loop index)
-
+          // exercises is ValidatedExercise[] which is compatible with EnrichedExercise[]
           const dedupResult = deduplicateByIdempotencyKey(
-            exercises as any,
+            exercises as import('@/server/services/exercise-conversion/idempotency').EnrichedExercise[],
             (exercise, systemIndex) => computeIdempotencyKeyForExercise(exercise, systemIndex),
           )
           const deduplicatedExercises = dedupResult.exercises
@@ -555,6 +558,11 @@ const ExerciseExtractedSchema = z.object({
 })
 
 /**
+ * Type for validated exercises returned from the extractor
+ */
+type ValidatedExercise = z.infer<typeof ExerciseExtractedSchema>
+
+/**
  * Validate extractor output against ExerciseExtracted schema
  * Lenient validation: skips invalid exercises and logs errors instead of failing the entire segment
  * This mirrors the verifier pattern where invalid exercises are skipped rather than failing the job
@@ -567,8 +575,8 @@ function validateExtractedExercises(
     errors: unknown[]
     exercisesSkipped?: number
   },
-): Array<{ title: string; blocks: unknown[]; orderInSegment: number }> {
-  const validated: Array<{ title: string; blocks: unknown[]; orderInSegment: number }> = []
+): ValidatedExercise[] {
+  const validated: ValidatedExercise[] = []
   const validationErrors: string[] = []
   let skippedCount = 0
 
