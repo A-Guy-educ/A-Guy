@@ -1,5 +1,5 @@
-import DOMPurify, { type Config } from 'isomorphic-dompurify'
-
+import type { Config } from 'dompurify'
+import DOMPurify from 'isomorphic-dompurify'
 /**
  * Conservative DOMPurify allowlist — HLS Phase 1 §6 + safe SVG subset.
  *

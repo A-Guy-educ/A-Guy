@@ -1,4 +1,3 @@
-// @ts-expect-error - @payloadcms/richtext-lexical/html has no type declarations
 import { convertLexicalToHTML } from '@payloadcms/richtext-lexical/html'
 import type { CollectionAfterReadHook, CollectionBeforeChangeHook } from 'payload'
 
@@ -6,7 +5,7 @@ import { sanitizeHtml } from '@/infra/utils/sanitize-html'
 
 export const convertLexicalToHtmlBeforeChange =
   (fieldName: string, htmlFieldName: string): CollectionBeforeChangeHook =>
-  async ({ data, req: { payload } }) => {
+  async ({ data, req: _req }) => {
     const lexicalData = data[fieldName]
 
     if (!lexicalData) {
@@ -21,14 +20,14 @@ export const convertLexicalToHtmlBeforeChange =
         ...data,
         [htmlFieldName]: sanitizedHtml,
       }
-    } catch (error) {
+    } catch (_error) {
       return data
     }
   }
 
 export const convertLexicalToHtmlAfterRead =
   (fieldName: string, htmlFieldName: string): CollectionAfterReadHook =>
-  async ({ doc, req: { payload } }) => {
+  async ({ doc, req: _req }) => {
     const lexicalData = doc[fieldName as keyof typeof doc]
 
     if (!lexicalData) {
@@ -43,7 +42,7 @@ export const convertLexicalToHtmlAfterRead =
         ...doc,
         [htmlFieldName]: sanitizedHtml,
       }
-    } catch (error) {
+    } catch (_error) {
       return doc
     }
   }
