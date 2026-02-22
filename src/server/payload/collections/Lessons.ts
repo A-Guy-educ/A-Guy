@@ -6,7 +6,7 @@ import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
-import { createLexicalToHtmlHook } from '../hooks/convertLexicalToHtml'
+import { createLexicalToHtmlHook, createLexicalToHtmlAfterReadHook } from '../hooks/convertLexicalToHtml'
 
 const formatSlug = (val: string): string =>
   val
@@ -38,6 +38,10 @@ export const Lessons: CollectionConfig = {
       },
       createLexicalToHtmlHook('description', 'descriptionHtml'),
       createLexicalToHtmlHook('introDescription', 'introDescriptionHtml'),
+    ],
+    afterRead: [
+      createLexicalToHtmlAfterReadHook('description', 'descriptionHtml'),
+      createLexicalToHtmlAfterReadHook('introDescription', 'introDescriptionHtml'),
     ],
   },
   admin: {
