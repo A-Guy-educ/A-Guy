@@ -1,0 +1,95 @@
+{
+  "taskId": "260222-auto-52",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-22T16:47:09.162Z",
+  "updatedAt": "2026-02-22T17:06:44.620Z",
+  "state": "running",
+  "currentStage": "auditor",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-22T16:47:11.431Z",
+      "outputFile": "task.json",
+      "completedAt": "2026-02-22T16:47:59.483Z",
+      "elapsed": 48052
+    },
+    "spec": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-22T16:47:59.484Z",
+      "outputFile": "spec.md",
+      "completedAt": "2026-02-22T16:49:23.578Z",
+      "elapsed": 84094
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-22T16:49:23.578Z",
+      "outputFile": "gap.md",
+      "completedAt": "2026-02-22T16:51:05.690Z",
+      "elapsed": 102112
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-22T16:51:07.364Z",
+      "outputFile": "plan.md",
+      "completedAt": "2026-02-22T16:56:04.679Z",
+      "elapsed": 297315
+    },
+    "plan-gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-22T16:56:04.680Z",
+      "outputFile": "plan-gap.md",
+      "completedAt": "2026-02-22T16:56:31.713Z",
+      "elapsed": 27033
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-22T16:56:31.714Z",
+      "outputFile": "build.md",
+      "completedAt": "2026-02-22T17:02:11.070Z",
+      "elapsed": 339356
+    },
+    "commit": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-22T17:02:19.238Z",
+      "outputFile": "commit.md",
+      "completedAt": "2026-02-22T17:02:20.022Z",
+      "elapsed": 784
+    },
+    "verify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-22T17:02:20.022Z",
+      "completedAt": "2026-02-22T17:06:44.620Z",
+      "elapsed": 264598,
+      "outputFile": "verify.md"
+    },
+    "autofix": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-22T17:03:22.934Z",
+      "outputFile": "autofix.md",
+      "completedAt": "2026-02-22T17:05:41.084Z",
+      "elapsed": 138150
+    },
+    "auditor": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-22T17:03:22.940Z",
+      "outputFile": "auditor.md",
+      "completedAt": "2026-02-22T17:05:29.076Z",
+      "elapsed": 126136
+    }
+  },
+  "triggeredBy": "comment",
+  "issueNumber": 519,
+  "runId": "22281179901",
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/22281179901"
+}

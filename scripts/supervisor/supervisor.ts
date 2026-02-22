@@ -191,7 +191,7 @@ async function runSupervisor(): Promise<void> {
 
   console.log('Analysis result:', analysis)
 
-  // Format and post comment
+  // Format and post comment (for visibility)
   const comment = formatAnalysisComment(
     resolvedTaskId,
     currentAttempt,
@@ -200,9 +200,35 @@ async function runSupervisor(): Promise<void> {
     stageError,
     analysis.rootCause,
     analysis.refinedFeedback,
+    analysis.canRetry,
   )
 
   postComment(issueNumber, comment)
+
+  // If retry is possible, trigger the cody workflow via workflow_dispatch
+  // (not via comment - the bot-comment-triggers-bot chain is broken)
+  if (analysis.canRetry && analysis.refinedFeedback) {
+    console.log(`Triggering cody rerun via workflow_dispatch...`)
+    try {
+      const escapedFeedback = analysis.refinedFeedback.replace(/"/g, '\\"')
+      execSync(
+        `gh workflow run cody.yml -f task_id=${resolvedTaskId} -f mode=rerun -f feedback="${escapedFeedback}" -f from_stage=${failedStage} --repo=${repo}`,
+        {
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'inherit'],
+        },
+      )
+      console.log(`Cody workflow triggered for rerun`)
+    } catch (error) {
+      console.error('Failed to trigger workflow:', error)
+      // Still post the comment with the rerun command as fallback
+      postComment(
+        issueNumber,
+        `\n> ℹ️ Could not auto-trigger workflow. You can manually run:\n> \`/cody rerun ${resolvedTaskId} --feedback "${analysis.refinedFeedback.replace(/"/g, '\\"')}"\``,
+      )
+    }
+  }
+
   console.log('Supervisor completed successfully')
 }
 

@@ -3,8 +3,8 @@
 import { cn } from '@/infra/utils/ui'
 import React from 'react'
 
-import type { Props as MediaProps } from '../types'
 import type { Media } from '@/payload-types'
+import type { Props as MediaProps } from '../types'
 
 /**
  * Extended Media type with embed fields.

@@ -76,7 +76,7 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   commit: ['task.json'],
   verify: [], // scripted — no LLM prompt needed
   autofix: ['verify.md'],
-  auditor: ['task.md', 'spec.md', 'build.md', 'verify.md'],
+  auditor: ['task.md', 'spec.md', 'build.md', 'verify.md', 'audit-history.json'],
   'apply-audit': ['auditor.md'],
   pr: [], // scripted — no LLM prompt needed
 }
@@ -142,20 +142,13 @@ function getTaskType(taskId: string): string {
 }
 
 /**
- * Build the full prompt for a given stage.
- *
- * Instead of pointing to a monolithic .context.md, lists the specific files
- * the agent needs to read. Behavioral instructions come from the agent's
- * .opencode/agents/<stage>.md system prompt.
- *
- * Note: Some context files may not exist (e.g., rerun-feedback.md on first runs).
- * The agent should gracefully skip reading files that don't exist - do NOT treat missing files as errors.
- *
- * @param input - Orchestrator input containing taskId
+ * Build the prompt for a given stage.
+ * @param input - Orchestrator input with taskId
  * @param stage - The stage to build the prompt for
+ * @param feedback - Optional feedback from a previous validation failure to include in the prompt
  * @returns The complete prompt string to pass to the agent
  */
-export function buildStagePrompt(input: CodyInput, stage: string): string {
+export function buildStagePrompt(input: CodyInput, stage: string, feedback?: string): string {
   const { taskId } = input
   const taskDir = `.tasks/${taskId}`
 
@@ -177,11 +170,17 @@ export function buildStagePrompt(input: CodyInput, stage: string): string {
 
   const outputFile = stageOutputFile(taskDir, stage)
 
+  // Add feedback section if provided
+  const feedbackSection = feedback
+    ? `\n⚠️ VALIDATION ERROR FROM PREVIOUS ATTEMPT:\n${feedback}\n\nPlease fix this in your next attempt.`
+    : ''
+
   const parts = [
     instruction,
     `Task ID: ${taskId}`,
     taskTypeSection,
     filesSection,
+    feedbackSection,
     `Write your output to ${outputFile}`,
   ].filter(Boolean)
 

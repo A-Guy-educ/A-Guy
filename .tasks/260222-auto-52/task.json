@@ -1,0 +1,18 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/services/exercise-conversion/helpers.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The ESLint comments are confirmed to be stale by the task description",
+    "Line 68 targets line 69 which has no `any` type",
+    "Line 70 in the same file contains the actual `any` type",
+    "Line 308 targets line 309 which has no `any` type",
+    "Line 323 in the same file contains the actual `any` type"
+  ],
+  "pipeline": "spec_execute_verify"
+}

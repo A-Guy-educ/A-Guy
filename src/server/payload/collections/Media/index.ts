@@ -6,6 +6,7 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
+import { extractYouTubeVideoId, isYouTubeUrl } from '@/infra/media/youtube'
 import { MediaType } from '@/infra/media/types'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
@@ -22,9 +23,34 @@ export const Media: CollectionConfig = {
   slug: 'media',
   // folders: true, // Disabled - conflicts with Vercel Blob plugin
   upload: {
+    // Allow External media type to be saved without a file upload.
+    // Our validateMediaUploadHook enforces file presence for non-External types.
+    filesRequiredOnCreate: false,
     // Vercel Blob storage plugin handles actual file storage
     // Plugin injects disableLocalStorage: true and adapter handlers
-    adminThumbnail: 'thumbnail', // Show thumbnail in admin list view
+    // Show thumbnail in admin list view - uses function to handle External media
+    adminThumbnail: ({ doc }) => {
+      // Cast doc to access typed properties
+      const docData = doc as { type?: string; externalUrl?: string; url?: string }
+      // YouTube External media: return YouTube thumbnail
+      if (
+        docData.type === MediaType.External &&
+        docData.externalUrl &&
+        isYouTubeUrl(docData.externalUrl)
+      ) {
+        const videoId = extractYouTubeVideoId(docData.externalUrl)
+        if (videoId) {
+          return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
+        }
+        return null
+      }
+      // Other External media: no thumbnail
+      if (docData.type === MediaType.External) {
+        return null
+      }
+      // Uploaded files: return the main URL (false to disable if url is undefined)
+      return docData.url || false
+    },
     mimeTypes: [
       'image/*',
       'video/*',

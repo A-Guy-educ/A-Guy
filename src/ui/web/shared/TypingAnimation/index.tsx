@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 
+import { cn } from '@/infra/utils/ui'
+
 interface TypingAnimationProps {
   text: string
   speed?: number // ms per character (default: 50)
@@ -9,12 +11,7 @@ interface TypingAnimationProps {
   className?: string
 }
 
-export function TypingAnimation({
-  text,
-  speed = 50,
-  onComplete,
-  className = '',
-}: TypingAnimationProps) {
+export function TypingAnimation({ text, speed = 50, onComplete, className }: TypingAnimationProps) {
   const [displayedText, setDisplayedText] = useState('')
   const [isComplete, setIsComplete] = useState(false)
 
@@ -31,7 +28,7 @@ export function TypingAnimation({
   }, [displayedText, text, speed, onComplete])
 
   return (
-    <div className={`font-mono ${className}`} style={{ fontFamily: 'Courier New, monospace' }}>
+    <div className={cn('font-mono', className)}>
       {displayedText}
       {!isComplete && <span className="inline-block w-2 h-5 bg-foreground ml-1 animate-pulse" />}
     </div>

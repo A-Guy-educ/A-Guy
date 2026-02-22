@@ -79,7 +79,13 @@ describe('stage-prompts', () => {
       expect(STAGE_CONTEXT_FILES.commit).toEqual(['task.json'])
       expect(STAGE_CONTEXT_FILES.verify).toEqual([])
       expect(STAGE_CONTEXT_FILES.autofix).toEqual(['verify.md'])
-      expect(STAGE_CONTEXT_FILES.auditor).toEqual(['task.md', 'spec.md', 'build.md', 'verify.md'])
+      expect(STAGE_CONTEXT_FILES.auditor).toEqual([
+        'task.md',
+        'spec.md',
+        'build.md',
+        'verify.md',
+        'audit-history.json',
+      ])
       expect(STAGE_CONTEXT_FILES['apply-audit']).toEqual(['auditor.md'])
       expect(STAGE_CONTEXT_FILES.pr).toEqual([])
     })
@@ -202,6 +208,32 @@ describe('stage-prompts', () => {
         const prompt = buildStagePrompt(mockInput, stage)
         expect(prompt.length).toBeGreaterThan(10)
       }
+    })
+
+    it('should include validation feedback when provided', () => {
+      const feedback = 'gap.md must contain ## Gaps Found'
+      const prompt = buildStagePrompt(mockInput, 'gap', feedback)
+      expect(prompt).toContain('VALIDATION ERROR FROM PREVIOUS ATTEMPT:')
+      expect(prompt).toContain(feedback)
+    })
+
+    it('should NOT include feedback section when no feedback provided', () => {
+      const prompt = buildStagePrompt(mockInput, 'gap')
+      expect(prompt).not.toContain('VALIDATION ERROR FROM PREVIOUS ATTEMPT:')
+    })
+
+    it('should include "Please fix this in your next attempt" when feedback provided', () => {
+      const feedback = 'spec.md must contain ## Requirements'
+      const prompt = buildStagePrompt(mockInput, 'spec', feedback)
+      expect(prompt).toContain('Please fix this in your next attempt')
+    })
+
+    it('should include feedback in correct position (before output instruction)', () => {
+      const feedback = 'test error message'
+      const prompt = buildStagePrompt(mockInput, 'build', feedback)
+      const feedbackIndex = prompt.indexOf('VALIDATION ERROR')
+      const outputIndex = prompt.indexOf('Write your output')
+      expect(feedbackIndex).toBeLessThan(outputIndex)
     })
   })
 })

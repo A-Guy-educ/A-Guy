@@ -80,7 +80,7 @@ If gaps are found:
 - Gaps Found: X
 - Spec Revised: Yes/No
 
-## Gaps Identified
+## Gaps Found
 
 ### Gap 1: [Title]
 

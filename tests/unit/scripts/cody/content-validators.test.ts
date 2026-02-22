@@ -192,6 +192,12 @@ describe('content-validators', () => {
     it('returns false for report without required sections', () => {
       expect(validatePlanGapReport('# Plan Gap Analysis\n\nJust some text.')).toBe(false)
     })
+
+    it('returns true for report with ## Gaps Identified', () => {
+      expect(
+        validatePlanGapReport('# Plan Gap Analysis\n\n## Gaps Identified\n\n- Gap 1: Missing step'),
+      ).toBe(true)
+    })
   })
 
   // ========================================================================
@@ -309,6 +315,18 @@ Some test failure output
 
     it('returns false for gap report without required sections', () => {
       expect(validateGapReport('# Gap Analysis\n\nJust some text.')).toBe(false)
+    })
+
+    it('returns true for gap report with ## Gaps Identified section', () => {
+      expect(
+        validateGapReport('# Gap Analysis\n\n## Gaps Identified\n\n### Gap 1: Missing field'),
+      ).toBe(true)
+    })
+
+    it('returns true for gap report with ## Gap Identified section', () => {
+      expect(
+        validateGapReport('# Gap Analysis\n\n## Gap Identified\n\n### Gap 1: Missing field'),
+      ).toBe(true)
     })
   })
 })

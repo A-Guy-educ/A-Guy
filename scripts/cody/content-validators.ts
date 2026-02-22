@@ -118,7 +118,7 @@ export function validatePlanGapReport(gapContent: string): boolean {
   }
 
   // Check for required sections
-  const hasGapsFound = /##\s*Gaps? Found/i.test(gapContent)
+  const hasGapsFound = /##\s*Gaps?\s*(Found|Identified)/i.test(gapContent)
   const hasChangesMade = /##\s*Changes Made/i.test(gapContent)
   const hasNoGaps = /no gaps identified/i.test(gapContent.toLowerCase())
 
@@ -196,7 +196,7 @@ export function validateGapReport(gapContent: string): boolean {
   }
 
   // Check for required sections
-  const hasGapsFound = /##\s*Gaps? Found/i.test(gapContent)
+  const hasGapsFound = /##\s*Gaps?\s*(Found|Identified)/i.test(gapContent)
   const hasChangesMade = /##\s*Changes Made/i.test(gapContent)
   const hasNoGaps = /no gaps identified/i.test(gapContent.toLowerCase())
 
