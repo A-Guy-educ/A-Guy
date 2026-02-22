@@ -73,20 +73,16 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
     syncToBoard()
   }, [syncToBoard])
 
-  const handleBoardReady = useCallback(
-    (board: JXGBoard) => {
-      boardRef.current = board
-      elementsRef.current.clear()
-      syncToBoard()
-      const b = board as unknown as Record<string, (...args: unknown[]) => unknown>
-      b.on('down', (e: unknown) => {
-        if (modeRef.current !== 'addPoint') return
-        const coords = b.getUsrCoordsOfMouse(e) as [number, number]
-        onCanvasClickRef.current?.(round1(coords[0]), round1(coords[1]))
-      })
-    },
-    [syncToBoard],
-  )
+  const handleBoardReady = useCallback((board: JXGBoard) => {
+    boardRef.current = board
+    elementsRef.current.clear()
+    const b = board as unknown as Record<string, (...args: unknown[]) => unknown>
+    b.on('down', (e: unknown) => {
+      if (modeRef.current !== 'addPoint') return
+      const coords = b.getUsrCoordsOfMouse(e) as number[]
+      onCanvasClickRef.current?.(round1(coords[1]), round1(coords[2]))
+    })
+  }, [])
 
   const { canvas } = geometry
   const bbox: [number, number, number, number] = [0, canvas.height, canvas.width, 0]
@@ -220,14 +216,9 @@ function syncPolygons(
     const tri = triangles[i]
     const elemId = `triangle-${i}`
     newIds.add(elemId)
+    if (elementsRef.current.has(elemId)) continue
     const pts = tri.points.map((name) => elementsRef.current.get(`point-${name}`)).filter(Boolean)
     if (pts.length < 3) continue
-
-    const existing = elementsRef.current.get(elemId)
-    if (existing) {
-      board.removeObject(existing)
-      elementsRef.current.delete(elemId)
-    }
     const el = board.create('polygon', pts, {
       borders: { strokeColor: tri.color || '#000000', strokeWidth: tri.thickness || 2 },
       fillColor: tri.fill || 'transparent',
@@ -243,14 +234,9 @@ function syncPolygons(
     const rect = rectangles[i]
     const elemId = `rectangle-${i}`
     newIds.add(elemId)
+    if (elementsRef.current.has(elemId)) continue
     const pts = rect.points.map((name) => elementsRef.current.get(`point-${name}`)).filter(Boolean)
     if (pts.length < 4) continue
-
-    const existing = elementsRef.current.get(elemId)
-    if (existing) {
-      board.removeObject(existing)
-      elementsRef.current.delete(elemId)
-    }
     const el = board.create('polygon', pts, {
       borders: { strokeColor: rect.color || '#000000', strokeWidth: rect.thickness || 2 },
       fillColor: rect.fill || 'transparent',

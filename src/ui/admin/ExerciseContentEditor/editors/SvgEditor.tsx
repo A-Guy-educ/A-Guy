@@ -92,7 +92,12 @@ export const SvgEditor: React.FC<SvgEditorProps> = ({ block, onChange }) => {
         <label className="question-editor-label">Preview</label>
         <div className="svg-editor-preview">
           {validation.valid && sanitized ? (
-            <div dangerouslySetInnerHTML={{ __html: sanitized.sanitized }} />
+            // eslint-disable-next-line @next/next/no-img-element -- data URI, next/image can't optimize
+            <img
+              src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(sanitized.sanitized)}`}
+              alt={block.altText || 'SVG Preview'}
+              className="svg-editor-preview-img"
+            />
           ) : (
             <div className="svg-editor-preview-error">
               {validation.error || 'No valid SVG to preview'}

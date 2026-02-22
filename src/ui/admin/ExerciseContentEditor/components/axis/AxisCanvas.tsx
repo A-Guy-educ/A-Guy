@@ -189,14 +189,10 @@ export const AxisCanvas: React.FC<AxisCanvasProps> = ({ id, axis, onPointMoved }
     syncToBoard()
   }, [syncToBoard])
 
-  const handleBoardReady = useCallback(
-    (board: JXGBoard) => {
-      boardRef.current = board
-      elementsRef.current.clear()
-      syncToBoard()
-    },
-    [syncToBoard],
-  )
+  const handleBoardReady = useCallback((board: JXGBoard) => {
+    boardRef.current = board
+    elementsRef.current.clear()
+  }, [])
 
   const bbox: [number, number, number, number] = [
     axis.viewport?.xMin ?? -10,

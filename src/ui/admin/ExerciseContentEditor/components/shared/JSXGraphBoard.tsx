@@ -28,6 +28,8 @@ export const JSXGraphBoard: React.FC<JSXGraphBoardProps> = ({
   const boardRef = useRef<JXGBoard | null>(null)
   const [loaded, setLoaded] = useState(false)
   const jxgRef = useRef<typeof import('jsxgraph').default | null>(null)
+  const onBoardReadyRef = useRef(onBoardReady)
+  onBoardReadyRef.current = onBoardReady
 
   useEffect(() => {
     let cancelled = false
@@ -61,8 +63,8 @@ export const JSXGraphBoard: React.FC<JSXGraphBoardProps> = ({
 
     const board = jxgRef.current.JSXGraph.initBoard(containerRef.current, options)
     boardRef.current = board
-    onBoardReady?.(board)
-  }, [loaded, boundingBox, showAxis, showGrid, showNavigation, onBoardReady])
+    onBoardReadyRef.current?.(board)
+  }, [loaded, boundingBox, showAxis, showGrid, showNavigation])
 
   useEffect(() => {
     initBoard()
