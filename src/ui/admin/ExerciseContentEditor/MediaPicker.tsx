@@ -239,7 +239,8 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({
                 // Cast to any to bypass strict type checking for blob storage sizes
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const itemAny = item as any
-                const thumbnailUrl = itemAny.sizes?.thumbnail?.url || item.url
+                // Use thumbnailURL (set by adminThumbnail) first, then fall back to sizes.thumbnail.url
+                const thumbnailUrl = item.thumbnailURL || itemAny.sizes?.thumbnail?.url || item.url
 
                 return (
                   <div
@@ -266,7 +267,7 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({
                       />
                     )}
                     <div className="media-grid-info">
-                      <div className="media-grid-filename">{item.filename}</div>
+                      <div className="media-grid-filename">{item.filename || 'External'}</div>
                       {item.alt && <div className="media-grid-alt">{item.alt}</div>}
                     </div>
                   </div>

@@ -47,6 +47,7 @@ describe('validateMediaUploadHook', () => {
       expect(result).toEqual({
         type: MediaType.External,
         externalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        filename: 'www.youtube.com',
       })
     })
 
@@ -69,6 +70,51 @@ describe('validateMediaUploadHook', () => {
           },
         }),
       ).rejects.toThrow('External media requires an external URL')
+    })
+
+    it('should set filename from YouTube URL hostname', async () => {
+      const result = await callHook({
+        data: {
+          type: MediaType.External,
+          externalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        },
+      })
+
+      expect(result.filename).toBe('www.youtube.com')
+    })
+
+    it('should set filename from custom URL hostname', async () => {
+      const result = await callHook({
+        data: {
+          type: MediaType.External,
+          externalUrl: 'https://vimeo.com/123456789',
+        },
+      })
+
+      expect(result.filename).toBe('vimeo.com')
+    })
+
+    it('should set filename to "External" for invalid URL', async () => {
+      const result = await callHook({
+        data: {
+          type: MediaType.External,
+          externalUrl: 'not-a-valid-url',
+        },
+      })
+
+      expect(result.filename).toBe('External')
+    })
+
+    it('should not overwrite pre-existing filename', async () => {
+      const result = await callHook({
+        data: {
+          type: MediaType.External,
+          externalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          filename: 'My Custom Video',
+        },
+      })
+
+      expect(result.filename).toBe('My Custom Video')
     })
   })
 

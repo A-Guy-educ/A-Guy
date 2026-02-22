@@ -20,6 +20,14 @@ export const validateMediaUploadHook: CollectionBeforeValidateHook = async ({
     if (!data?.externalUrl) {
       throw new Error('External media requires an external URL')
     }
+    // Set filename from URL hostname if not provided
+    if (!data.filename) {
+      try {
+        data.filename = new URL(data.externalUrl).hostname
+      } catch {
+        data.filename = 'External'
+      }
+    }
     return data
   }
 
