@@ -1,8 +1,11 @@
+import { logger } from '@/infra/utils/logger'
 import { ENV } from '@/server/config/constants'
 import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import type { Lesson, Prompt } from '@/payload-types'
+
+const log = logger.child({ route: 'prompts-for-conversion' })
 
 type ErrorCode =
   | 'UNAUTHORIZED'
@@ -130,7 +133,7 @@ export async function POST(request: NextRequest) {
       verifiers: verifiers.docs.map(mapPromptToOption),
     })
   } catch (error) {
-    console.error('[PromptsForConversion] Error:', error)
+    log.error({ err: error }, '[PromptsForConversion] Error')
     return errorResponse('INTERNAL_ERROR', 'Internal server error', 500)
   }
 }

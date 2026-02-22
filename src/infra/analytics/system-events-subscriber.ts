@@ -5,6 +5,7 @@
  * This is the ONLY place where analytics.track() is called outside of tests.
  */
 
+import { analyticsConfig } from './config'
 import type { SystemEventEnvelope, SystemEventName, Unsubscribe } from '@/infra/system-events'
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { PRODUCT_EVENTS } from './contracts/events'
@@ -22,7 +23,9 @@ let cleanupFns: Unsubscribe[] = []
 export function initAnalyticsSubscriber(): () => void {
   // Idempotent: only initialize once
   if (initialized) {
-    console.warn('[Analytics] Subscriber already initialized, skipping')
+    if (analyticsConfig.debugMode) {
+      console.warn('[Analytics] Subscriber already initialized, skipping')
+    }
     return () => cleanup()
   }
   initialized = true
@@ -35,15 +38,16 @@ export function initAnalyticsSubscriber(): () => void {
     return systemEventBus.on(event, (envelope) => {
       try {
         handler(envelope)
-      } catch (error) {
-        console.error(`[Analytics] Error handling ${event}:`, error)
-        // Never throw - fail-safe
+      } catch (_error) {
+        // Never throw - fail-safe. console.error removed per spec NFR-001
       }
     })
   }
 
   // Subscribe to all 10 system events
-  console.log('[Analytics] 🔄 Initializing system events subscriber...')
+  if (analyticsConfig.debugMode) {
+    console.log('[Analytics] 🔄 Initializing system events subscriber...')
+  }
   cleanupFns = [
     // Page & Session
     safeSubscribe(SYSTEM_EVENTS.PAGE_VIEWED, (envelope) => {
@@ -162,7 +166,9 @@ export function initAnalyticsSubscriber(): () => void {
         message_length?: number
         user_id?: string
       }
-      console.log(`[Analytics] 📥 RECEIVED: CHAT_MESSAGE_SUBMITTED`, payload)
+      if (analyticsConfig.debugMode) {
+        console.log(`[Analytics] 📥 RECEIVED: CHAT_MESSAGE_SUBMITTED`, payload)
+      }
       analytics.track(PRODUCT_EVENTS.CHAT_MESSAGE_SENT, {
         conversation_id: payload.conversation_id,
         message_type: payload.message_type,
@@ -205,11 +211,13 @@ export function initAnalyticsSubscriber(): () => void {
     }),
   ]
 
-  console.log(
-    '[Analytics] ✅ System events subscriber initialized with',
-    cleanupFns.length,
-    'handlers',
-  )
+  if (analyticsConfig.debugMode) {
+    console.log(
+      '[Analytics] ✅ System events subscriber initialized with',
+      cleanupFns.length,
+      'handlers',
+    )
+  }
 
   return () => cleanup()
 }

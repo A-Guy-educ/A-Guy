@@ -1,10 +1,13 @@
 import { loadRuntimeConfig } from '@/infra/config/runtime/runtime-config'
+import { logger } from '@/infra/utils/logger'
 import { LOCK_TIMEOUT_MS } from '@/server/config/constants'
 import configPromise from '@payload-config'
 import { ObjectId, type Collection, type Document } from 'mongodb'
 import { NextRequest, NextResponse } from 'next/server'
 import type { Payload, User } from 'payload'
 import { getPayload } from 'payload'
+
+const log = logger.child({ route: 'run-immediate' })
 
 interface JobDocument extends Document {
   _id: ObjectId
@@ -105,12 +108,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`[run-immediately] Executing job ${jobId} synchronously`)
+    log.info({ jobId }, '[run-immediately] Executing job synchronously')
 
     // Load runtime config before job execution
-    console.log('[run-immediately] Loading runtime config...')
+    log.info('[run-immediately] Loading runtime config...')
     await loadRuntimeConfig(payload)
-    console.log('[run-immediately] Runtime config loaded')
+    log.info('[run-immediately] Runtime config loaded')
 
     // Normalize job object: MongoDB returns _id (ObjectId), but task handler expects id (string)
     const job = {
@@ -148,7 +151,7 @@ export async function POST(request: NextRequest) {
     // Update job status to completed
     await updateJobStatus(coll, jobId, 'completed', (job as JobDocument).output)
 
-    console.log(`[run-immediately] Job ${jobId} completed successfully`)
+    log.info({ jobId }, '[run-immediately] Job completed successfully')
 
     return NextResponse.json({
       success: true,
@@ -156,7 +159,7 @@ export async function POST(request: NextRequest) {
       message: 'Job executed successfully',
     })
   } catch (error) {
-    console.error('[run-immediately] Error:', error)
+    log.error({ err: error }, '[run-immediately] Error')
 
     // Try to update job status to failed if we can identify the job
     try {
@@ -169,7 +172,7 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (updateError) {
-      console.error('[run-immediately] Failed to update job status:', updateError)
+      log.error({ err: updateError }, '[run-immediately] Failed to update job status')
     }
 
     return NextResponse.json(

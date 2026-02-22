@@ -67,12 +67,22 @@ export function CommandPalette() {
               <CommandSeparator />
 
               <CommandGroup heading="Actions">
-                <CommandItem onSelect={() => handleSelect(() => console.log('Search triggered'))}>
+                <CommandItem
+                  onSelect={() =>
+                    handleSelect(() => {
+                      /* TODO: implement search */
+                    })
+                  }
+                >
                   <Search className="mr-2 h-4 w-4" />
                   <span>Search content</span>
                 </CommandItem>
                 <CommandItem
-                  onSelect={() => handleSelect(() => console.log('New document triggered'))}
+                  onSelect={() =>
+                    handleSelect(() => {
+                      /* TODO: implement new document */
+                    })
+                  }
                 >
                   <FileText className="mr-2 h-4 w-4" />
                   <span>New document</span>

@@ -1,5 +1,6 @@
 import { loadRuntimeConfig } from '@/infra/config/runtime/runtime-config'
 import { getPdfConversionMaxPromptSizeBytes } from '@/infra/config/system-params'
+import { logger } from '@/infra/utils/logger'
 import { ENV } from '@/server/config/constants'
 import { validatePromptForUsageAndTenant } from '@/server/services/exercise-conversion/helpers'
 import { hashTextSha256 } from '@/server/utils/hash'
@@ -7,6 +8,8 @@ import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import type { Lesson } from '@/payload-types'
+
+const log = logger.child({ route: 'convert-queue' })
 
 type ErrorCode =
   | 'UNAUTHORIZED'
@@ -173,7 +176,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, jobId: job.id, message: 'Conversion job queued' })
   } catch (error: unknown) {
-    console.error('[Queue] Error:', error)
+    log.error({ err: error }, '[Queue] Error')
     if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
       const typedError = error as { code: string; message: string }
       return errorResponse(typedError.code as ErrorCode, typedError.message, 400)

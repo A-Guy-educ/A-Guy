@@ -53,8 +53,8 @@ export function sendToGA4(payload: EventPayload): void {
     if (analyticsConfig.debugMode) {
       console.log('[Analytics/GA4] Sent:', ga4Event)
     }
-  } catch (err) {
-    console.error('[Analytics/GA4] Send failed:', err)
+  } catch (_err) {
+    // Silently fail - console.error removed per spec NFR-001
   }
 }
 
@@ -68,14 +68,14 @@ export function initializeGA4(): void {
   const measurementId = analyticsConfig.ga4.measurementId
 
   if (!measurementId) {
-    console.error('[Analytics/GA4] No measurement ID configured')
+    // No measurement ID configured - console.error removed per spec NFR-001
     return
   }
 
   const { gtag } = window
 
   if (!gtag) {
-    console.error('[Analytics/GA4] gtag not available')
+    // gtag not available - console.error removed per spec NFR-001
     return
   }
 
@@ -92,7 +92,7 @@ export function initializeGA4(): void {
     if (analyticsConfig.debugMode) {
       console.log('[Analytics/GA4] Initialized:', measurementId)
     }
-  } catch (err) {
-    console.error('[Analytics/GA4] Initialization failed:', err)
+  } catch (_err) {
+    // Silently fail - console.error removed per spec NFR-001
   }
 }

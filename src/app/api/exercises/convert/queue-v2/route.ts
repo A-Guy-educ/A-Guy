@@ -9,11 +9,14 @@
  * @pattern endpoint, queue
  */
 
+import { logger } from '@/infra/utils/logger'
 import { ENV } from '@/server/config/constants'
 import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import type { Lesson } from '@/payload-types'
+
+const log = logger.child({ route: 'convert-queue-v2' })
 
 type ErrorCode =
   | 'UNAUTHORIZED'
@@ -111,7 +114,7 @@ export async function POST(request: NextRequest) {
       message: 'V2 conversion job queued',
     })
   } catch (error: unknown) {
-    console.error('[Queue V2] Error:', error)
+    log.error({ err: error }, '[Queue V2] Error')
     if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
       const typedError = error as { code: string; message: string }
       return errorResponse(typedError.code as ErrorCode, typedError.message, 400)

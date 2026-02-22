@@ -46,8 +46,10 @@ export function getOrCreateAnonymousId(): string {
       return existingId
     }
   } catch (error) {
-    // Gracefully handle cookie read errors
-    console.warn('[Analytics] Failed to read anonymous ID cookie:', error)
+    // Gracefully handle cookie read errors - gate behind dev mode
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[Analytics] Failed to read anonymous ID cookie:', error)
+    }
   }
 
   // Generate new ID and store in cookie

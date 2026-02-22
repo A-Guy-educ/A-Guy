@@ -66,11 +66,8 @@ export function usePageAbandonment() {
             scroll_depth_percent: maxScroll.current,
           })
         }
-      } catch (error) {
-        // Silently fail - don't break user experience
-        if (process.env.NODE_ENV === 'development') {
-          console.error('[Analytics] Failed to track page abandonment:', error)
-        }
+      } catch (_error) {
+        // Silently fail - don't break user experience. console.error removed per spec NFR-001
       }
     }
 

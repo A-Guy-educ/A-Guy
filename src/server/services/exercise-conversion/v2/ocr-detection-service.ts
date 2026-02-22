@@ -10,8 +10,11 @@
  * @pattern ocr, pattern-matching
  */
 
+import { logger } from '@/infra/utils/logger'
 import type { ExerciseStart, PageDetectionResult } from './vision-detection-service'
 import type { TextLine } from './text-detection-service'
+
+const log = logger.child({ service: 'v2-ocr' })
 
 /**
  * Shared exercise label patterns — same patterns as text-detection-service.
@@ -56,18 +59,21 @@ export async function detectExerciseStartsFromOCR(
 ): Promise<PageDetectionResult> {
   const lines = await ocrExtractLines(pageImageBuffer, imageWidth, imageHeight)
 
-  console.log(`[V2-OCR] Page ${pageIndex}: ${lines.length} OCR lines extracted`)
+  log.debug({ pageIndex, lineCount: lines.length }, '[V2-OCR] OCR lines extracted')
   if (lines.length > 0 && lines.length <= 30) {
     for (const line of lines) {
-      console.log(`[V2-OCR]   y=${line.y.toFixed(3)} "${line.text.substring(0, 80)}"`)
+      log.debug({ y: line.y, text: line.text.substring(0, 80) }, '[V2-OCR] line')
     }
   } else if (lines.length > 30) {
     for (const line of lines.slice(0, 10)) {
-      console.log(`[V2-OCR]   y=${line.y.toFixed(3)} "${line.text.substring(0, 80)}"`)
+      log.debug({ y: line.y, text: line.text.substring(0, 80) }, '[V2-OCR] line')
     }
-    console.log(`[V2-OCR]   ... (${lines.length - 15} more lines) ...`)
+    log.debug(
+      { lineCount: lines.length, omitted: lines.length - 15 },
+      '[V2-OCR] more lines omitted',
+    )
     for (const line of lines.slice(-5)) {
-      console.log(`[V2-OCR]   y=${line.y.toFixed(3)} "${line.text.substring(0, 80)}"`)
+      log.debug({ y: line.y, text: line.text.substring(0, 80) }, '[V2-OCR] line')
     }
   }
 
@@ -89,8 +95,9 @@ export async function detectExerciseStartsFromOCR(
   for (const line of lines) {
     const match = matchExerciseLabel(line.text)
     if (match) {
-      console.log(
-        `[V2-OCR] Page ${pageIndex}: MATCHED exercise "${match.label}" at y=${line.y.toFixed(3)} from text "${line.text.substring(0, 60)}"`,
+      log.debug(
+        { pageIndex, label: match.label, y: line.y, text: line.text.substring(0, 60) },
+        '[V2-OCR] MATCHED exercise',
       )
       exercises.push({
         label: match.label,

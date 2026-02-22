@@ -3,6 +3,7 @@
  * Creates a chat-assets document after successful blob upload
  */
 
+import { logger } from '@/infra/utils/logger'
 import { getPayload } from 'payload'
 import { z } from 'zod'
 
@@ -14,6 +15,8 @@ import {
 } from '@/server/chat-assets/constants'
 import { isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
 import { getMediaBlobAdapter } from '@/infra/blob/vercel-blob-adapter'
+
+const log = logger.child({ route: 'chat-assets-finalize' })
 
 const finalizeSchema = z.object({
   uploadSessionId: z.string().min(1),
@@ -164,7 +167,7 @@ export async function POST(request: Request): Promise<Response> {
       },
     })
   } catch (error) {
-    console.error('[finalize] Error:', error)
+    log.error({ err: error }, '[finalize] Error')
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

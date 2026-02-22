@@ -115,9 +115,8 @@ export function track(event: ProductEvent, properties?: Record<string, unknown>)
         mixpanelAdapter.sendToMixpanel(payload)
       }
     })
-  } catch (err) {
-    // Never break user flows
-    console.error('[Analytics] Track failed:', err)
+  } catch (_err) {
+    // Never break user flows - console.error removed per spec NFR-001
   }
 }
 
@@ -142,8 +141,8 @@ export function identify(userId: string, properties?: Record<string, unknown>): 
         mixpanelAdapter.identifyUser(userId, properties)
       }
     })
-  } catch (err) {
-    console.error('[Analytics] Identify failed:', err)
+  } catch (_err) {
+    // Never break user flows - console.error removed per spec NFR-001
   }
 }
 
@@ -171,8 +170,8 @@ export function alias(userId: string, anonymousId?: string): void {
         mixpanelAdapter.aliasUser(userId, anonymousId)
       }
     })
-  } catch (err) {
-    console.error('[Analytics] Alias failed:', err)
+  } catch (_err) {
+    // Never break user flows - console.error removed per spec NFR-001
   }
 }
 
@@ -200,8 +199,8 @@ export function reset(): void {
         mixpanelAdapter.resetUser()
       }
     })
-  } catch (err) {
-    console.error('[Analytics] Reset failed:', err)
+  } catch (_err) {
+    // Never break user flows - console.error removed per spec NFR-001
   }
 }
 

@@ -40,11 +40,8 @@ export function useSessionDuration() {
           page_views_count: pageViewCount.current,
           last_active_page: lastActivePage.current,
         })
-      } catch (error) {
-        // Silently fail - don't block page unload
-        if (process.env.NODE_ENV === 'development') {
-          console.error('[Analytics] Failed to track session_ended:', error)
-        }
+      } catch (_error) {
+        // Silently fail - don't block page unload. console.error removed per spec NFR-001
       }
     }
 

@@ -1,4 +1,5 @@
 import { ENV, HEARTBEAT_INTERVAL_MS, LOCK_TIMEOUT_MS } from '@/server/config/constants'
+import { logger } from '@/infra/utils/logger'
 import config from '@payload-config'
 import { ObjectId, type Collection, type Document } from 'mongodb'
 import { NextRequest, NextResponse } from 'next/server'
@@ -8,6 +9,8 @@ import {
   atomicClaimJobQuery,
   atomicClaimJobUpdate,
 } from '@/server/services/exercise-conversion/helpers'
+
+const log = logger.child({ route: 'convert-runner' })
 
 interface JobDocument extends Document {
   _id: ObjectId
@@ -49,7 +52,7 @@ function heartbeatLoop(coll: Collection<JobDocument>, mongoId: ObjectId): () => 
       const result = await coll.updateOne({ _id: mongoId }, { $set: { lockExpiresAt: expiresAt } })
       if (result.matchedCount === 0) clearInterval(intervalId)
     } catch (error) {
-      console.error('[Heartbeat] Failed:', error)
+      log.error({ err: error }, '[Heartbeat] Failed')
     }
   }, HEARTBEAT_INTERVAL_MS)
 
@@ -92,7 +95,7 @@ export async function POST(request: NextRequest) {
       stopHeartbeat()
     }
   } catch (error) {
-    console.error('[Runner] Error:', error)
+    log.error({ err: error }, '[Runner] Error')
     return NextResponse.json({ error: 'Job execution failed' }, { status: 500 })
   }
 }

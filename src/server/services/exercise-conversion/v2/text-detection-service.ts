@@ -10,7 +10,10 @@
  * @pattern text-extraction, pattern-matching
  */
 
+import { logger } from '@/infra/utils/logger'
 import type { ExerciseStart, PageDetectionResult } from './vision-detection-service'
+
+const log = logger.child({ service: 'v2-text-detect' })
 
 /**
  * A single line of text on the page, assembled from adjacent TextItems
@@ -72,19 +75,22 @@ export async function detectExerciseStartsFromText(
 ): Promise<PageDetectionResult> {
   const lines = await extractTextLines(pdfPage)
 
-  console.log(`[V2-TextDetect] Page ${pageIndex}: ${lines.length} text lines extracted`)
+  log.debug({ pageIndex, lineCount: lines.length }, '[V2-TextDetect] text lines extracted')
   if (lines.length > 0 && lines.length <= 30) {
     for (const line of lines) {
-      console.log(`[V2-TextDetect]   y=${line.y.toFixed(3)} "${line.text.substring(0, 80)}"`)
+      log.debug({ y: line.y, text: line.text.substring(0, 80) }, '[V2-TextDetect] line')
     }
   } else if (lines.length > 30) {
     // Log first 10 and last 5 lines
     for (const line of lines.slice(0, 10)) {
-      console.log(`[V2-TextDetect]   y=${line.y.toFixed(3)} "${line.text.substring(0, 80)}"`)
+      log.debug({ y: line.y, text: line.text.substring(0, 80) }, '[V2-TextDetect] line')
     }
-    console.log(`[V2-TextDetect]   ... (${lines.length - 15} more lines) ...`)
+    log.debug(
+      { lineCount: lines.length, omitted: lines.length - 15 },
+      '[V2-TextDetect] more lines omitted',
+    )
     for (const line of lines.slice(-5)) {
-      console.log(`[V2-TextDetect]   y=${line.y.toFixed(3)} "${line.text.substring(0, 80)}"`)
+      log.debug({ y: line.y, text: line.text.substring(0, 80) }, '[V2-TextDetect] line')
     }
   }
 
@@ -101,8 +107,9 @@ export async function detectExerciseStartsFromText(
   const contentLines =
     allPagesLines && allPagesLines.length > 1 ? filterHeaderFooter(lines, allPagesLines) : lines
 
-  console.log(
-    `[V2-TextDetect] Page ${pageIndex}: ${contentLines.length} content lines after header/footer filter`,
+  log.debug(
+    { pageIndex, contentLineCount: contentLines.length },
+    '[V2-TextDetect] content lines after header/footer filter',
   )
 
   if (contentLines.length === 0) {
@@ -123,8 +130,9 @@ export async function detectExerciseStartsFromText(
   for (const line of contentLines) {
     const match = matchExerciseLabel(line.text)
     if (match) {
-      console.log(
-        `[V2-TextDetect] Page ${pageIndex}: MATCHED exercise "${match.label}" at y=${line.y.toFixed(3)} from text "${line.text.substring(0, 60)}"`,
+      log.debug(
+        { pageIndex, label: match.label, y: line.y, text: line.text.substring(0, 60) },
+        '[V2-TextDetect] MATCHED exercise',
       )
       exercises.push({
         label: match.label,

@@ -2,6 +2,7 @@ import {
   getPdfConversionMaxExercisesPerSegment,
   getPdfConversionMaxSegmentPages,
 } from '@/infra/config/system-params'
+import { logger } from '@/infra/utils/logger'
 import { PDF_MAX_BYTES } from '@/server/config/constants'
 import { getPdfBufferFromBlob } from '@/server/services/pdf-fetcher'
 import { computeContentHash } from '@/server/utils/hash'
@@ -42,6 +43,8 @@ export const pdfToExercisesTask = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const input = job.input as any
     const { lessonId, sourceDocId, tenantId } = input.ctx
+
+    const log = logger.child({ task: 'pdf-to-exercises', jobId: job.id })
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const output: any = {
@@ -140,8 +143,9 @@ export const pdfToExercisesTask = {
 
           // Log dedup metrics
           if (dedupResult.droppedCount > 0) {
-            console.log(
-              `[PDF→Exercises] Segment ${i}: in-memory dedup dropped ${dedupResult.droppedCount} duplicate exercises`,
+            log.info(
+              { segment: i, droppedCount: dedupResult.droppedCount },
+              '[PDF→Exercises] in-memory dedup dropped duplicate exercises',
             )
           }
 
@@ -159,8 +163,14 @@ export const pdfToExercisesTask = {
             // Log idempotency key with content hash for correlation (observability)
             const normalizedInput = normalizeExerciseInput(exercise)
             const contentHash = computeContentHash(normalizedInput)
-            console.log(
-              `[PDF→Exercises] Exercise idempotencyKey=${idempotencyKey}, contentHash=${contentHash}, title="${exercise.title}", orderInSegment=${exercise.orderInSegment}`,
+            log.debug(
+              {
+                idempotencyKey,
+                contentHash,
+                title: exercise.title,
+                orderInSegment: exercise.orderInSegment,
+              },
+              '[PDF→Exercise] idempotency key computed',
             )
 
             // Stage 4: Upsert by idempotencyKey (Last Wins Semantics)
@@ -327,7 +337,7 @@ export const pdfToExercisesTask = {
       return output
     } catch (error: unknown) {
       const err = error as { message?: string }
-      console.error(`[PDF→Exercises] Job ${job.id} failed:`, error)
+      log.error({ err: error }, '[PDF→Exercises] Job failed')
       await updateJobStatus(payload as unknown as { db: unknown }, job.id, 'failed', {
         ...output,
         error: err.message,
@@ -341,6 +351,8 @@ export const pdfToExercisesTask = {
  * Explicitly update job status in MongoDB to ensure proper status tracking
  * This fixes the issue where jobs get stuck with "processing: true"
  */
+const helperLog = logger.child({ task: 'pdf-to-exercises', function: 'updateJobStatus' })
+
 async function updateJobStatus(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any,
@@ -352,7 +364,7 @@ async function updateJobStatus(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const coll = db?.connection?.collection?.('payload-jobs') as any
   if (!coll) {
-    console.warn('[PDF→Exercises] Cannot update job status - jobs collection not accessible')
+    helperLog.warn('[PDF→Exercises] Cannot update job status - jobs collection not accessible')
     return
   }
 
@@ -369,7 +381,7 @@ async function updateJobStatus(
   try {
     await coll.updateOne({ _id: new ObjectId(jobId) }, { $set: update })
   } catch (err) {
-    console.error(`[PDF→Exercises] Failed to update job status:`, err)
+    helperLog.error({ err }, '[PDF→Exercises] Failed to update job status')
   }
 }
 
@@ -483,8 +495,9 @@ Return JSON: { "valid": boolean, "reason": "..." }`
 
     // Skip invalid exercises instead of failing the job
     if (!verification.valid) {
-      console.warn(
-        `[PDF→Exercises] Skipping exercise "${exercise.title}" after retry: ${verification.reason}`,
+      helperLog.warn(
+        { title: exercise.title, reason: verification.reason },
+        '[PDF→Exercises] Skipping exercise after retry',
       )
       output.errors.push({
         stage: 'PASS2_VERIFY',
@@ -590,7 +603,10 @@ function validateExtractedExercises(
       skippedCount++
 
       // Log the validation error
-      console.warn(`[PDF→Exercises] Skipping invalid exercise ${i + 1}: ${result.error.message}`)
+      helperLog.warn(
+        { index: i + 1, error: result.error.message },
+        '[PDF→Exercises] Skipping invalid exercise',
+      )
 
       // Track in output.errors if output object is provided (mirrors verifier pattern)
       if (output?.errors) {
@@ -612,15 +628,23 @@ function validateExtractedExercises(
 
   // Log summary of validation failures instead of throwing
   if (validationErrors.length > 0) {
-    console.warn(
-      `[PDF→Exercises] Segment ${segment.pageStart}-${segment.pageEnd}: ${validationErrors.length}/${raw.length} exercises failed validation, proceeding with ${validated.length} valid exercises`,
+    helperLog.warn(
+      {
+        segmentStart: segment.pageStart,
+        segmentEnd: segment.pageEnd,
+        failedCount: validationErrors.length,
+        total: raw.length,
+        validCount: validated.length,
+      },
+      '[PDF→Exercises] Some exercises failed validation',
     )
   }
 
   // Enforce max exercises per segment limit
   if (validated.length > maxExercisesPerSegment) {
-    console.warn(
-      `[PDF→Exercises] Truncated exercises from ${validated.length} to ${maxExercisesPerSegment}`,
+    helperLog.warn(
+      { from: validated.length, to: maxExercisesPerSegment },
+      '[PDF→Exercises] Truncated exercises to max per segment',
     )
     validated.length = maxExercisesPerSegment
   }
@@ -664,7 +688,7 @@ async function convertMediaToAttachments(
         })
       }
     } catch (fetchError) {
-      console.warn(
+      helperLog.warn(
         { err: fetchError, mediaId: mediaPart.mediaId },
         '[PDF→Exercises] Failed to fetch media',
       )

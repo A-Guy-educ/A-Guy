@@ -102,8 +102,8 @@ export function sendToMixpanel(payload: EventPayload): void {
     if (analyticsConfig.debugMode) {
       console.log('[Analytics/Mixpanel] Sent:', mixpanelEvent)
     }
-  } catch (err) {
-    console.error('[Analytics/Mixpanel] Send failed:', err)
+  } catch (_err) {
+    // Silently fail - console.error removed per spec NFR-001
   }
 }
 
@@ -155,8 +155,8 @@ function createPeopleProfile(mixpanel: NonNullable<typeof window.mixpanel>): voi
     if (analyticsConfig.debugMode) {
       console.log('[Analytics/Mixpanel] People profile created:', peopleProps)
     }
-  } catch (err) {
-    console.error('[Analytics/Mixpanel] Failed to create People profile:', err)
+  } catch (_err) {
+    // Silently fail - console.error removed per spec NFR-001
   }
 }
 
@@ -173,7 +173,9 @@ export function identifyUser(userId: string, properties?: Record<string, unknown
   const { mixpanel } = window
 
   if (!mixpanel) {
-    console.warn('[Analytics/Mixpanel] SDK not loaded')
+    if (analyticsConfig.debugMode) {
+      console.warn('[Analytics/Mixpanel] SDK not loaded')
+    }
     return
   }
 
@@ -189,8 +191,8 @@ export function identifyUser(userId: string, properties?: Record<string, unknown
     if (analyticsConfig.debugMode) {
       console.log('[Analytics/Mixpanel] Identified:', { userId, properties })
     }
-  } catch (err) {
-    console.error('[Analytics/Mixpanel] Identify failed:', err)
+  } catch (_err) {
+    // Silently fail - console.error removed per spec NFR-001
   }
 }
 
@@ -210,7 +212,9 @@ export function aliasUser(userId: string, anonymousId?: string): void {
   const { mixpanel } = window
 
   if (!mixpanel) {
-    console.warn('[Analytics/Mixpanel] SDK not loaded')
+    if (analyticsConfig.debugMode) {
+      console.warn('[Analytics/Mixpanel] SDK not loaded')
+    }
     return
   }
 
@@ -233,8 +237,8 @@ export function aliasUser(userId: string, anonymousId?: string): void {
     if (analyticsConfig.debugMode) {
       console.log('[Analytics/Mixpanel] Aliased:', { userId, anonymousId })
     }
-  } catch (err) {
-    console.error('[Analytics/Mixpanel] Alias failed:', err)
+  } catch (_err) {
+    // Silently fail - console.error removed per spec NFR-001
   }
 }
 
@@ -271,8 +275,8 @@ export function resetUser(): void {
     if (analyticsConfig.debugMode) {
       console.log('[Analytics/Mixpanel] Reset with new anonymous ID:', newAnonymousId)
     }
-  } catch (err) {
-    console.error('[Analytics/Mixpanel] Reset failed:', err)
+  } catch (_err) {
+    // Silently fail - console.error removed per spec NFR-001
   }
 }
 
@@ -289,8 +293,8 @@ export function getDistinctId(): string | undefined {
 
   try {
     return mixpanel.get_distinct_id()
-  } catch (err) {
-    console.error('[Analytics/Mixpanel] Get distinct ID failed:', err)
+  } catch (_err) {
+    // Silently fail - console.error removed per spec NFR-001
     return undefined
   }
 }

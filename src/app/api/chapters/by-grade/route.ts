@@ -1,5 +1,6 @@
 import '@/infra/config/server-init'
 
+import { logger } from '@/infra/utils/logger'
 import { NextRequest, NextResponse } from 'next/server'
 import { queryChaptersByGrade } from '@/server/repos/queries/chapters'
 import { getPayload } from 'payload'
@@ -7,6 +8,8 @@ import configPromise from '@payload-config'
 import type { Lesson } from '@/payload-types'
 import { DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
 import { SystemParams } from '@/infra/config/system-params'
+
+const log = logger.child({ route: 'chapters-by-grade' })
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -92,7 +95,7 @@ export async function GET(request: NextRequest) {
       gatedWarningMs,
     })
   } catch (error) {
-    console.error('Error fetching chapters:', error)
+    log.error({ err: error }, 'Error fetching chapters')
     return NextResponse.json({ error: 'Failed to fetch chapters' }, { status: 500 })
   }
 }

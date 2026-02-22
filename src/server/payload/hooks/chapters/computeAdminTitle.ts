@@ -1,4 +1,7 @@
+import { logger } from '@/infra/utils/logger'
 import type { CollectionBeforeChangeHook } from 'payload'
+
+const log = logger.child({ hook: 'computeAdminTitle' })
 
 /**
  * Computes the adminTitle field for a chapter.
@@ -45,7 +48,7 @@ export const computeAdminTitle: CollectionBeforeChangeHook = async ({ data, req 
       }
     } catch (error) {
       // If course lookup fails, fall back to chapter title only
-      console.error('Error fetching course for adminTitle:', error)
+      log.error({ err: error }, 'Error fetching course for adminTitle')
       data.adminTitle = chapterTitle
     }
   } else {

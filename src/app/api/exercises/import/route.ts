@@ -6,12 +6,15 @@
  * Payload 3.x custom endpoints in config don't automatically create Next.js routes,
  * so we need this explicit route file.
  */
+import { logger } from '@/infra/utils/logger'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import type { PayloadRequest } from 'payload'
 import config from '@payload-config'
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
+
+const log = logger.child({ route: 'exercises-import' })
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,14 +41,14 @@ export async function POST(request: NextRequest) {
 
     // Route to appropriate handler
     if (lessonId) {
-      console.log('[API Route] Calling importExerciseFromLesson for lessonId:', lessonId)
+      log.info({ lessonId }, '[API Route] Calling importExerciseFromLesson')
       return await importExerciseFromLesson(payloadRequest)
     } else {
-      console.log('[API Route] Calling importExerciseFromImage')
+      log.info('[API Route] Calling importExerciseFromImage')
       return await importExerciseFromImage(payloadRequest)
     }
   } catch (error) {
-    console.error('[API Route] Error in /api/exercises/import:', error)
+    log.error({ err: error }, '[API Route] Error in /api/exercises/import')
 
     return NextResponse.json(
       {

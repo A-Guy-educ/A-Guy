@@ -1,4 +1,7 @@
+import { logger } from '@/infra/utils/logger'
 import type { CollectionAfterChangeHook } from 'payload'
+
+const log = logger.child({ hook: 'revalidateRedirects' })
 
 // Dynamic import to avoid module resolution issues in production
 async function revalidateRedirectsTag(tag: string) {
@@ -7,7 +10,7 @@ async function revalidateRedirectsTag(tag: string) {
     revalidateTag(tag)
   } catch (error) {
     // Silently fail if next/cache is not available (e.g., in non-Next.js contexts)
-    console.warn('Failed to revalidate:', error)
+    log.warn({ err: error }, 'Failed to revalidate')
   }
 }
 

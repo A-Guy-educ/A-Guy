@@ -15,6 +15,7 @@
  * @pattern combo-detection, vision+text
  */
 
+import { logger } from '@/infra/utils/logger'
 import type { Payload } from 'payload'
 import type { TextLine } from './text-detection-service'
 import {
@@ -22,6 +23,8 @@ import {
   type ExerciseStart,
   type PageDetectionResult,
 } from './vision-detection-service'
+
+const log = logger.child({ service: 'v2-combo' })
 
 /**
  * Maximum Y-distance (normalized 0-1) to snap a Vision LLM detection
@@ -50,11 +53,16 @@ export async function detectExercisesVisionCombo(
   // Step 1: Get Vision LLM detections (approximate Y-positions)
   const visionResult = await detectExerciseStarts(pageImageBuffer, payload)
 
-  console.log(
-    `[V2-Combo] Page ${pageIndex}: Vision LLM found ${visionResult.exercises.length} exercise(s), continues=${visionResult.continuesFromPrevious}`,
+  log.debug(
+    {
+      pageIndex,
+      exerciseCount: visionResult.exercises.length,
+      continues: visionResult.continuesFromPrevious,
+    },
+    '[V2-Combo] Vision LLM found exercises',
   )
   for (const ex of visionResult.exercises) {
-    console.log(`[V2-Combo]   Vision: label="${ex.label}" approxY=${ex.startY.toFixed(3)}`)
+    log.debug({ label: ex.label, approxY: ex.startY }, '[V2-Combo] Vision detection')
   }
 
   if (visionResult.exercises.length === 0) {
@@ -72,7 +80,7 @@ export async function detectExercisesVisionCombo(
 
   if (contentLines.length === 0) {
     // No text lines to snap to — use Vision LLM positions as-is
-    console.log(`[V2-Combo] Page ${pageIndex}: no text lines, using Vision positions directly`)
+    log.debug({ pageIndex }, '[V2-Combo] no text lines, using Vision positions directly')
     return visionResult
   }
 
@@ -81,8 +89,14 @@ export async function detectExercisesVisionCombo(
   for (const visionEx of visionResult.exercises) {
     const snapped = snapToNearestLine(visionEx, contentLines)
     if (snapped) {
-      console.log(
-        `[V2-Combo]   Snapped "${visionEx.label}" from y=${visionEx.startY.toFixed(3)} → y=${snapped.startY.toFixed(3)} (line: "${snapped.matchedLineText}")`,
+      log.debug(
+        {
+          label: visionEx.label,
+          fromY: visionEx.startY,
+          toY: snapped.startY,
+          matchedText: snapped.matchedLineText,
+        },
+        '[V2-Combo] Snapped to text line',
       )
       snappedExercises.push({
         label: visionEx.label,
@@ -90,8 +104,9 @@ export async function detectExercisesVisionCombo(
       })
     } else {
       // No nearby text line — use Vision position as fallback
-      console.log(
-        `[V2-Combo]   No snap for "${visionEx.label}" at y=${visionEx.startY.toFixed(3)} (no text line within tolerance), using Vision position`,
+      log.debug(
+        { label: visionEx.label, y: visionEx.startY },
+        '[V2-Combo] No snap, using Vision position',
       )
       snappedExercises.push(visionEx)
     }
