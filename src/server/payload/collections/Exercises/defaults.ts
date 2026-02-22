@@ -7,6 +7,7 @@
 
 import type {
   ContentBlock,
+  HtmlBlock,
   InlineRichText,
   LatexBlock,
   QuestionFreeResponseBlock,
@@ -208,5 +209,11 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
     type: 'latex',
     latex: '',
     renderMode: 'block',
+  }),
+
+  html: (): HtmlBlock => ({
+    id: generateId(),
+    type: 'html',
+    html: '',
   }),
 }
