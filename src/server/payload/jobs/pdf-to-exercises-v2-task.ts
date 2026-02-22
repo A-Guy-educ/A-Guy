@@ -65,7 +65,6 @@ export const pdfToExercisesV2Task = {
   output: {},
 
   async handler({ job, req }: HandlerParams) {
-     
     const payload = req.payload ?? (await getPayload({ config }))
     const input = job.input as V2JobInput
     const { lessonId, sourceDocId, tenantId } = input.ctx
@@ -375,7 +374,7 @@ async function buildExerciseStrips(
 /**
  * Update job status in MongoDB
  */
- 
+
 async function updateJobStatus(
   payload: any,
   jobId: string,
