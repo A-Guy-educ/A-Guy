@@ -745,7 +745,8 @@ function BlockMediaDisplay({ blockId, mediaIds, onRemoveMedia }: BlockMediaDispl
         // Cast to any to bypass strict type checking for blob storage sizes
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mediaAny = media as any
-        const thumbnailUrl = mediaAny.sizes?.thumbnail?.url || media.url
+        // Use thumbnailURL (set by adminThumbnail) first, then fall back to sizes.thumbnail.url
+        const thumbnailUrl = media.thumbnailURL || mediaAny.sizes?.thumbnail?.url || media.url
         return (
           <div key={media.id} className="media-thumbnail-preview">
             {thumbnailUrl && (

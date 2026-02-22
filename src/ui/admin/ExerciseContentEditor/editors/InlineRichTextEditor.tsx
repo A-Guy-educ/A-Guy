@@ -139,13 +139,14 @@ export const InlineRichTextEditor: React.FC<InlineRichTextEditorProps> = ({
             <div className="inline-rich-text-media-list">
               {mediaItems.map((item) => {
                 const isImage = item.type === 'image'
-                const thumbnailUrl =
-                  (item as unknown as { sizes?: { thumbnail?: { url: string } } }).sizes?.thumbnail
-                    ?.url || item.url
-
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const itemAny = item as any
+                // Use thumbnailURL (set by adminThumbnail) first, then fall back to sizes.thumbnail.url
+                const thumbnailUrl = item.thumbnailURL || itemAny.sizes?.thumbnail?.url || item.url
                 return (
                   <div key={item.id} className="inline-rich-text-media-item">
-                    {thumbnailUrl && isImage ? (
+                    {/* Show thumbnail for images OR for external media with thumbnailUrl */}
+                    {thumbnailUrl && (isImage || item.type === 'external') ? (
                       <Image
                         src={thumbnailUrl}
                         alt={item.alt || item.filename || 'Media'}

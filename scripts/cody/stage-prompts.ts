@@ -76,7 +76,7 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   commit: ['task.json'],
   verify: [], // scripted — no LLM prompt needed
   autofix: ['verify.md'],
-  auditor: ['task.md', 'spec.md', 'build.md', 'verify.md'],
+  auditor: ['task.md', 'spec.md', 'build.md', 'verify.md', 'audit-history.json'],
   'apply-audit': ['auditor.md'],
   pr: [], // scripted — no LLM prompt needed
 }

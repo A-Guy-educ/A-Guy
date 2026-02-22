@@ -3,6 +3,8 @@
 import React from 'react'
 import { useFormFields } from '@payloadcms/ui'
 
+import { getYouTubeEmbedUrl, isYouTubeUrl } from '@/infra/media/youtube'
+
 export const ExternalPreview: React.FC = () => {
   const externalUrlField = useFormFields(([fields]) => fields.externalUrl)
 
@@ -16,10 +18,19 @@ export const ExternalPreview: React.FC = () => {
     )
   }
 
+  const youTubeEmbedUrl = getYouTubeEmbedUrl(externalUrl)
+
   return (
     <div className="p-4">
-      <h3 className="mb-2">External Media</h3>
-      <p className="mb-4 break-all">
+      <div className="mb-2 flex items-center gap-2">
+        <h3 className="m-0">External Media</h3>
+        {isYouTubeUrl(externalUrl) && (
+          <span className="inline-block rounded bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
+            YouTube
+          </span>
+        )}
+      </div>
+      <p className="mb-4 break-all text-sm">
         <strong>URL:</strong> {externalUrl}
       </p>
       <div className="mb-4">
@@ -27,16 +38,30 @@ export const ExternalPreview: React.FC = () => {
           href={externalUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block px-4 py-2 bg-[var(--theme-elevation-300)] rounded no-underline"
+          className="inline-block rounded bg-[var(--theme-elevation-300)] px-4 py-2 no-underline"
         >
-          🔗 Open Link
+          Open Link
         </a>
       </div>
-      <iframe
-        src={externalUrl}
-        className="w-full h-[400px] border border-[var(--theme-elevation-300)] rounded"
-        title="External content"
-      />
+      {youTubeEmbedUrl ? (
+        <div className="relative w-full overflow-hidden rounded" style={{ paddingTop: '56.25%' }}>
+          <iframe
+            src={youTubeEmbedUrl}
+            className="absolute inset-0 h-full w-full border-0"
+            title="YouTube video"
+            loading="lazy"
+            allowFullScreen
+            referrerPolicy="strict-origin-when-cross-origin"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          />
+        </div>
+      ) : (
+        <iframe
+          src={externalUrl}
+          className="h-[400px] w-full rounded border border-[var(--theme-elevation-300)]"
+          title="External content"
+        />
+      )}
     </div>
   )
 }

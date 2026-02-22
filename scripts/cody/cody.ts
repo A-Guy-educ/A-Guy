@@ -534,20 +534,10 @@ async function runImplPipeline(
   }
 
   // Build the pipeline stages (with parallel support)
-  let pipeline: PipelineStage[] = [...IMPL_PIPELINE]
+  const pipeline: PipelineStage[] = [...IMPL_PIPELINE]
 
-  // Skip auditor on reruns (filter from parallel groups too)
-  if (fs.existsSync(path.join(taskDir, 'rerun-feedback.md'))) {
-    pipeline = pipeline
-      .map((stage) => {
-        if (isParallelStage(stage)) {
-          const filtered = stage.parallel.filter((s) => s !== 'auditor')
-          return filtered.length === 1 ? filtered[0] : { parallel: filtered }
-        }
-        return stage === 'auditor' ? null : stage
-      })
-      .filter((s): s is PipelineStage => s !== null)
-  }
+  // Note: Auditor now runs on reruns too - failures during retries are valuable for improvement
+  // The auditor checks for duplicates via audit-history.json to avoid re-auditing same findings
 
   // Helper: Commit task files after verify passes (local mode only)
   const commitTaskFiles = (): void => {
@@ -560,6 +550,22 @@ async function runImplPipeline(
       push: false,
       dryRun: input.dryRun,
     })
+  }
+
+  // Helper: Commit audit history changes after apply-audit stage (local mode only)
+  const commitAuditHistory = (): void => {
+    if (!input.local || input.dryRun) return
+    const auditHistoryPath = path.join(process.cwd(), '.tasks', 'audit-history.json')
+    if (fs.existsSync(auditHistoryPath)) {
+      commitPipelineFiles({
+        taskDir: '.tasks',
+        taskId: 'audit-history',
+        message: `audit: update audit history from ${input.taskId}`,
+        stagingStrategy: 'task-only',
+        push: false,
+        dryRun: input.dryRun,
+      })
+    }
   }
 
   // Helper: Run a single stage (agent-based or scripted)
@@ -808,6 +814,11 @@ async function runImplPipeline(
         }
       }
       commitTaskFiles()
+    }
+
+    // Commit audit history after apply-audit stage completes
+    if (stage === 'apply-audit') {
+      commitAuditHistory()
     }
 
     console.log(`  ✓ ${stage} complete`)

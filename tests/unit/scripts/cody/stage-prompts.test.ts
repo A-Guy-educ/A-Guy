@@ -79,7 +79,13 @@ describe('stage-prompts', () => {
       expect(STAGE_CONTEXT_FILES.commit).toEqual(['task.json'])
       expect(STAGE_CONTEXT_FILES.verify).toEqual([])
       expect(STAGE_CONTEXT_FILES.autofix).toEqual(['verify.md'])
-      expect(STAGE_CONTEXT_FILES.auditor).toEqual(['task.md', 'spec.md', 'build.md', 'verify.md'])
+      expect(STAGE_CONTEXT_FILES.auditor).toEqual([
+        'task.md',
+        'spec.md',
+        'build.md',
+        'verify.md',
+        'audit-history.json',
+      ])
       expect(STAGE_CONTEXT_FILES['apply-audit']).toEqual(['auditor.md'])
       expect(STAGE_CONTEXT_FILES.pr).toEqual([])
     })
