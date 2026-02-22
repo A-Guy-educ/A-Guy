@@ -10,6 +10,7 @@ import type {
   HtmlBlock,
   InlineRichText,
   LatexBlock,
+  McqOption,
   QuestionFreeResponseBlock,
   QuestionSelectMcqBlock,
   QuestionSelectTrueFalseBlock,
@@ -152,7 +153,7 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
     },
     answer: {
       multiSelect: true,
-      options: DEFAULT_MCQ_ANSWER.options.map((o) => ({
+      options: DEFAULT_MCQ_ANSWER.options.map((o: McqOption) => ({
         id: o.id,
         content: { ...o.content },
       })),
