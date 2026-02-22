@@ -5,7 +5,7 @@ import type { QuestionGeometryBlock } from '@/server/payload/collections/Exercis
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
 import { InlineRichTextEditor } from './InlineRichTextEditor'
 import { HintSolutionPanel } from './HintSolutionPanel'
-import { GeometryCanvas } from '../components/geometry/GeometryCanvas'
+import { GeometryCanvasWithToolbar } from '../components/geometry/GeometryCanvasWithToolbar'
 import { CanvasConfigPanel } from '../components/geometry/CanvasConfigPanel'
 import { PointsPanel } from '../components/geometry/PointsPanel'
 import { LinesPanel } from '../components/geometry/LinesPanel'
@@ -44,6 +44,22 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
       updateElements({ points: newPoints })
     },
     [geo.elements.points, updateElements],
+  )
+
+  const handlePointAdded = useCallback(
+    (x: number, y: number) => {
+      const nextIndex = geo.elements.points.length + 1
+      const name = String.fromCharCode(64 + nextIndex) // A, B, C, ...
+      updateElements({ points: [...geo.elements.points, { name, x, y }] })
+    },
+    [geo.elements.points, updateElements],
+  )
+
+  const handleGridToggle = useCallback(
+    (showGrid: boolean) => {
+      updateGeo({ canvas: { ...geo.canvas, grid: showGrid } })
+    },
+    [geo.canvas, updateGeo],
   )
 
   return (
@@ -136,13 +152,13 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
             </CollapsibleSection>
           </div>
 
-          <div className="graph-editor-canvas">
-            <GeometryCanvas
-              id={`geo-canvas-${block.id}`}
-              geometry={geo}
-              onPointMoved={handlePointMoved}
-            />
-          </div>
+          <GeometryCanvasWithToolbar
+            id={`geo-canvas-${block.id}`}
+            geometry={geo}
+            onPointMoved={handlePointMoved}
+            onPointAdded={handlePointAdded}
+            onGridToggle={handleGridToggle}
+          />
         </div>
       </div>
 
