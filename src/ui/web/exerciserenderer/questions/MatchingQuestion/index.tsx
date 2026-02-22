@@ -93,10 +93,14 @@ export function MatchingQuestion({
           if (!leftEl || !rightEl) return null
           const lr = leftEl.getBoundingClientRect()
           const rr = rightEl.getBoundingClientRect()
+          const lCenterX = lr.left + lr.width / 2 - rect.left
+          const rCenterX = rr.left + rr.width / 2 - rect.left
+          const x1 = lCenterX < rCenterX ? lr.right - rect.left : lr.left - rect.left
+          const x2 = lCenterX < rCenterX ? rr.left - rect.left : rr.right - rect.left
           return {
-            x1: lr.right - rect.left,
+            x1,
             y1: lr.top + lr.height / 2 - rect.top,
-            x2: rr.left - rect.left,
+            x2,
             y2: rr.top + rr.height / 2 - rect.top,
             leftId: conn.leftId,
             rightId: conn.rightId,

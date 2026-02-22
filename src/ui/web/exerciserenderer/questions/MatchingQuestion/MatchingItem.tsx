@@ -54,7 +54,7 @@ export function MatchingItem({
           !isSelected &&
           !isConnected &&
           'hover:border-primary/60 hover:shadow-md hover:-translate-y-0.5 cursor-pointer',
-        canSelect && !isConnected && 'animate-pulse',
+        canSelect && !isConnected && 'border-primary/40 bg-primary/5 cursor-pointer',
         isSelected &&
           'border-primary bg-primary/10 border-[3px] shadow-[0_0_10px_rgba(59,130,246,0.3)]',
         isConnected &&
