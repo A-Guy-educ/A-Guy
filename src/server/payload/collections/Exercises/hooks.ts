@@ -2,13 +2,21 @@ import type { FieldHook } from 'payload'
 
 import { formatSlug } from './formatSlug'
 
+const MAX_SLUG_ATTEMPTS = 100
+
 async function getPayloadInstance() {
   const { getPayload } = await import('payload')
   const { default: config } = await import('@payload-config')
   return getPayload({ config })
 }
 
-export const generateSlug: FieldHook = async ({ value, operation, originalDoc, siblingData }) => {
+export const generateSlug: FieldHook = async ({
+  value,
+  operation,
+  originalDoc,
+  siblingData,
+  req,
+}) => {
   if (operation === 'delete') {
     return value
   }
@@ -20,7 +28,7 @@ export const generateSlug: FieldHook = async ({ value, operation, originalDoc, s
     return value || undefined
   }
 
-  const payload = await getPayloadInstance()
+  const payload = req?.payload ?? (await getPayloadInstance())
   const lessonId =
     siblingData.lesson || (typeof originalDoc?.lesson === 'string' ? originalDoc.lesson : null)
 
@@ -32,28 +40,30 @@ export const generateSlug: FieldHook = async ({ value, operation, originalDoc, s
   let slug = baseSlug
   let counter = 1
 
-  while (true) {
+  for (let attempt = 0; attempt < MAX_SLUG_ATTEMPTS; attempt++) {
     const existing = await payload.find({
       collection: 'exercises',
       where: {
         and: [{ lesson: { equals: lessonId } }, { slug: { equals: slug } }],
       },
       limit: 1,
+      depth: 0,
+      req,
     })
 
     if (existing.docs.length === 0) {
-      break
+      return slug
     }
 
     if (originalDoc?.id && existing.docs[0]?.id === originalDoc.id) {
-      break
+      return slug
     }
 
     slug = `${baseSlug}-${counter}`
     counter++
   }
 
-  return slug
+  throw new Error(`Unable to generate unique slug after ${MAX_SLUG_ATTEMPTS} attempts`)
 }
 
 export const validateSlugUniqueness: FieldHook = async ({
@@ -61,12 +71,13 @@ export const validateSlugUniqueness: FieldHook = async ({
   operation,
   originalDoc,
   siblingData,
+  req,
 }) => {
   if (operation === 'delete' || !value) {
     return value
   }
 
-  const payload = await getPayloadInstance()
+  const payload = req?.payload ?? (await getPayloadInstance())
   const lessonId =
     siblingData.lesson || (typeof originalDoc?.lesson === 'string' ? originalDoc.lesson : null)
 
@@ -80,6 +91,8 @@ export const validateSlugUniqueness: FieldHook = async ({
       and: [{ lesson: { equals: lessonId } }, { slug: { equals: value } }],
     },
     limit: 2,
+    depth: 0,
+    req,
   })
 
   for (const doc of existing.docs) {
