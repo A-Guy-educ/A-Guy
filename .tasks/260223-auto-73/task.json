@@ -1,0 +1,27 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": [
+    "loading indicator component",
+    "locale/i18n handling",
+    "translation mechanism"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Translation keys for both languages already exist",
+    "A locale resolution mechanism exists in the codebase",
+    "This is a frontend component issue, not backend locale handling",
+    "The fix should integrate with existing i18n system without new locale detection"
+  ],
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Task contains clear step-by-step requirements (6 items), expected behavior definitions, and a Definition of Done. The issue is well-scoped with specific expected outcomes (Hebrew 'טוען...' vs English 'Loading...') and explicit constraints (no new locale detection, no architectural changes)."
+  },
+  "pipeline": "spec_execute_verify"
+}
