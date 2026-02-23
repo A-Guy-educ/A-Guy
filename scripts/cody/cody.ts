@@ -529,7 +529,24 @@ async function runSpecPipeline(
   }
 
   // Handle clarification workflow using extracted module
-  const clarifyResult = handleClarification(input, taskDir)
+  // Only run if clarify mode is enabled - if disabled, ensure clarified.md exists and continue
+  // This prevents residual questions.md from a previous clarify-enabled run from pausing the pipeline
+  let clarifyResult: 'answered' | 'waiting' | 'no-questions' = 'no-questions'
+  if (input.clarify) {
+    clarifyResult = handleClarification(input, taskDir)
+  } else {
+    // Clarify disabled: ensure clarified.md exists (may have been created by taskify or previous run)
+    const clarifiedPath = path.join(taskDir, 'clarified.md')
+    if (!fs.existsSync(clarifiedPath)) {
+      fs.writeFileSync(clarifiedPath, '# Clarified\n\nUse recommended answers.\n')
+    }
+    // Clean up residual questions.md from previous clarify-enabled run to prevent confusion
+    const questionsPath = path.join(taskDir, 'questions.md')
+    if (fs.existsSync(questionsPath)) {
+      fs.unlinkSync(questionsPath)
+      console.log('  ℹ️ Cleaned up residual questions.md from previous clarify-enabled run')
+    }
+  }
 
   if (clarifyResult === 'answered') {
     console.log('📝 Created clarified.md from user answer\n')
@@ -732,6 +749,8 @@ async function runImplPipeline(
       const verifyTimeout = STAGE_TIMEOUTS[stage] ?? DEFAULT_TIMEOUT
       const verifyResult = runVerifyStage(outputFile, undefined, verifyTimeout)
       if (!verifyResult.passed) {
+        // Note: Don't throw here - the post-stage hook (below) runs autofix to recover
+        // The status will be updated to 'failed' now, but may become 'completed' if autofix succeeds
         updateStageStatus(input.taskId, stage, 'failed', { retries: 0 })
       } else {
         updateStageStatus(input.taskId, stage, 'completed', {

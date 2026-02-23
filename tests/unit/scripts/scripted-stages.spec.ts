@@ -103,6 +103,8 @@ describe('buildPrTitle (via runPrStage title output)', () => {
   beforeEach(resetMocks)
 
   it('strips leading ## from task.md first line', async () => {
+    // Note: "description" is a common heading and gets filtered out intentionally
+    // The code skips generic section headers like ## Description and uses the actual content
     // Arrange: task.md whose first line is a markdown heading
     setupFiles({
       [`${TASK_DIR}/task.md`]: '## Description\nRemove redundant inline styles from components.',
@@ -131,8 +133,8 @@ describe('buildPrTitle (via runPrStage title output)', () => {
     expect(createCall).toBeDefined()
     const titleArg: string = createCall![1][createCall![1].indexOf('--title') + 1]
     expect(titleArg).not.toContain('##')
-    // '## Description' is filtered out as a common section heading - falls back to next line
-    expect(titleArg).toContain('remove redundant inline')
+    // "Description" is a common heading that gets filtered out - we use actual content instead
+    expect(titleArg).toContain('remove redundant inline styles')
     expect(result.created).toBe(true)
   })
 
@@ -190,8 +192,10 @@ describe('buildPrTitle (via runPrStage title output)', () => {
   })
 
   it('uses heading text (stripped of #) when task.md starts with a heading', async () => {
+    // Note: "overview" is a common heading and gets filtered out intentionally
+    // The code skips generic section headers like ## Overview and uses the actual content
     // buildPrTitle strips '#' chars and uses the first non-empty result —
-    // so '## Overview' becomes 'Overview', which is the first non-empty line.
+    // so '## Overview' becomes 'Overview', which is filtered as common heading, then falls back to content
     setupFiles({
       [`${TASK_DIR}/task.md`]: '## Overview\n\nActual description text here.\n\nMore detail.',
       [`${TASK_DIR}/task.json`]: JSON.stringify({ task_type: 'feat' }),
@@ -213,9 +217,10 @@ describe('buildPrTitle (via runPrStage title output)', () => {
       (call) => call[1][0] === 'pr' && call[1][1] === 'create',
     )
     const titleArg: string = createCall![1][createCall![1].indexOf('--title') + 1]
-    // '## Overview' is filtered out as a common section heading - falls back to next line
+    // '## Overview' stripped → 'Overview' gets filtered as common heading
+    // Falls back to actual content line
     expect(titleArg).not.toContain('##')
-    expect(titleArg.toLowerCase()).toContain('actual description')
+    expect(titleArg.toLowerCase()).toContain('actual description text here')
   })
 
   it('does NOT duplicate fix: prefix when task.md starts with "fix:"', async () => {
