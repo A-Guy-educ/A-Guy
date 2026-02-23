@@ -2,12 +2,12 @@
  * @fileType layout
  * @domain cody
  * @pattern route-group
- * @ai-summary Root layout for Cody dashboard with CopilotKit provider
+ * @ai-summary Root layout for Cody dashboard - uses frontend styles
  */
 import type { Metadata } from 'next'
 
-import { CopilotKit } from '@copilotkit/react-core'
-import '@copilotkit/react-ui/styles.css'
+import { InitTheme } from '@/ui/web/providers/Theme/InitTheme'
+import '@/app/(frontend)/globals.css'
 
 export const metadata: Metadata = {
   title: 'Cody Operations Dashboard',
@@ -16,13 +16,12 @@ export const metadata: Metadata = {
 
 export default function CodyLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <InitTheme />
         <link href="/favicon.ico" rel="icon" sizes="32x32" />
       </head>
-      <body>
-        <CopilotKit runtimeUrl="/api/copilotkit">{children}</CopilotKit>
-      </body>
+      <body className="min-h-screen bg-background text-foreground">{children}</body>
     </html>
   )
 }

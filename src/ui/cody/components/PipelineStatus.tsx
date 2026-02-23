@@ -30,14 +30,18 @@ export function PipelineStatus({ status, className }: PipelineStatusProps) {
     <div className={cn('space-y-4', className)}>
       {/* Spec Pipeline */}
       <div>
-        <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">Spec Pipeline</h3>
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">
+          Spec Pipeline
+        </h3>
         <div className="flex items-center gap-1 flex-wrap">
           {SPEC_STAGES.map((stage, index) => {
             const stageData = status.stages[stage]
             return (
               <div key={stage} className="flex items-center">
                 <StageIndicator stage={stage} data={stageData} />
-                {index < SPEC_STAGES.length - 1 && <span className="mx-1 text-gray-600">→</span>}
+                {index < SPEC_STAGES.length - 1 && (
+                  <span className="mx-1 text-muted-foreground">→</span>
+                )}
               </div>
             )
           })}
@@ -46,7 +50,7 @@ export function PipelineStatus({ status, className }: PipelineStatusProps) {
 
       {/* Implementation Pipeline */}
       <div>
-        <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">
           Implementation Pipeline
         </h3>
         <div className="flex items-center gap-1 flex-wrap">
@@ -55,7 +59,9 @@ export function PipelineStatus({ status, className }: PipelineStatusProps) {
             return (
               <div key={stage} className="flex items-center">
                 <StageIndicator stage={stage} data={stageData} />
-                {index < IMPL_STAGES.length - 1 && <span className="mx-1 text-gray-600">→</span>}
+                {index < IMPL_STAGES.length - 1 && (
+                  <span className="mx-1 text-muted-foreground">→</span>
+                )}
               </div>
             )
           })}
@@ -65,8 +71,8 @@ export function PipelineStatus({ status, className }: PipelineStatusProps) {
       {/* Current Stage */}
       {status.currentStage && (
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-400">Current:</span>
-          <span className="text-white font-medium">{status.currentStage}</span>
+          <span className="text-muted-foreground">Current:</span>
+          <span className="text-foreground font-medium">{status.currentStage}</span>
         </div>
       )}
     </div>
@@ -94,7 +100,7 @@ function StageIndicator({ stage, data }: StageIndicatorProps) {
       title={`${stage}: ${state}${elapsed ? ` (${formatDuration(elapsed)})` : ''}`}
     >
       <span className="text-lg">{icon}</span>
-      <span className="text-xs text-gray-400">{stage}</span>
+      <span className="text-xs text-muted-foreground">{stage}</span>
     </div>
   )
 }

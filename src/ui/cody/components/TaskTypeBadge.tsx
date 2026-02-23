@@ -15,14 +15,14 @@ const typeConfig: Record<string, { bg: string; text: string; label: string }> = 
   implement_feature: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Feature' },
   fix_bug: { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Bug' },
   refactor: { bg: 'bg-purple-500/20', text: 'text-purple-400', label: 'Refactor' },
-  docs: { bg: 'bg-gray-500/20', text: 'text-gray-400', label: 'Docs' },
+  docs: { bg: 'bg-muted', text: 'text-muted-foreground', label: 'Docs' },
   ops: { bg: 'bg-orange-500/20', text: 'text-orange-400', label: 'Ops' },
   research: { bg: 'bg-pink-500/20', text: 'text-pink-400', label: 'Research' },
-  spec_only: { bg: 'bg-gray-500/20', text: 'text-gray-400', label: 'Spec Only' },
+  spec_only: { bg: 'bg-muted', text: 'text-muted-foreground', label: 'Spec Only' },
 }
 
 export function TaskTypeBadge({ type, className }: TaskTypeBadgeProps) {
-  const config = typeConfig[type] || { bg: 'bg-gray-500/20', text: 'text-gray-400', label: type }
+  const config = typeConfig[type] || { bg: 'bg-muted', text: 'text-muted-foreground', label: type }
 
   return (
     <span

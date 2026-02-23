@@ -32,6 +32,12 @@ importers:
       '@napi-rs/canvas':
         specifier: ^0.1.89
         version: 0.1.89
+      '@octokit/core':
+        specifier: ^7.0.6
+        version: 7.0.6
+      '@octokit/plugin-throttling':
+        specifier: ^11.0.3
+        version: 11.0.3(@octokit/core@7.0.6)
       '@octokit/rest':
         specifier: ^22.0.1
         version: 22.0.1

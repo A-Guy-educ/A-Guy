@@ -1,0 +1,43 @@
+#!/bin/sh
+# Block new top-level directories from being added under src/
+# This enforces the project's src/ folder structure
+
+# Allowed directories under src/ (hardcoded for hook - must match actual structure)
+allowed_dirs="app client i18n infra server ui"
+
+# Get newly added (A) directories under src/
+new_src_dirs=$(git diff --cached --name-only --diff-filter=A | grep '^src/[^/]*/' | sed 's|^src/||' | cut -d'/' -f1 | sort -u || true)
+
+if [ -z "$new_src_dirs" ]; then
+  exit 0
+fi
+
+# Check each new directory against allowed list
+blocked=""
+for dir in $new_src_dirs; do
+  if ! echo "$allowed_dirs" | grep -qw "$dir"; then
+    blocked="$blocked $dir"
+  fi
+done
+
+if [ -n "$blocked" ]; then
+  echo "❌ ERROR: Cannot add new top-level folders under src/"
+  echo ""
+  echo "This project enforces a fixed src/ folder structure."
+  echo ""
+  echo "Blocked directories:$blocked"
+  echo ""
+  echo "Allowed directories under src/:"
+  echo "  - app"
+  echo "  - client"
+  echo "  - i18n"
+  echo "  - infra"
+  echo "  - lib"
+  echo "  - server"
+  echo "  - ui"
+  echo ""
+  echo "If you need a new top-level folder, please discuss with the team first."
+  echo "See: src/FILE_STRUCTURE_GUIDE.md"
+  echo ""
+  exit 1
+fi

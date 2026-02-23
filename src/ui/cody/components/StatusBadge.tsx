@@ -16,7 +16,7 @@ const statusConfig: Record<string, { bg: string; text: string; label: string }> 
   completed: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Completed' },
   failed: { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Failed' },
   timeout: { bg: 'bg-orange-500/20', text: 'text-orange-400', label: 'Timeout' },
-  pending: { bg: 'bg-gray-500/20', text: 'text-gray-400', label: 'Pending' },
+  pending: { bg: 'bg-muted', text: 'text-muted-foreground', label: 'Pending' },
   'gate-waiting': { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: 'Gate Waiting' },
 }
 

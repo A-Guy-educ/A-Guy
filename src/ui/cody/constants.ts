@@ -68,8 +68,8 @@ export const BRANCH_PREFIXES = ['feat', 'fix', 'refactor', 'docs', 'chore'] as c
 
 // ============ GitHub Configuration ============
 
-export const GITHUB_OWNER = 'A-Guy-educ'
-export const GITHUB_REPO = 'A-Guy'
+export const GITHUB_OWNER = process.env.GITHUB_OWNER ?? 'A-Guy-educ'
+export const GITHUB_REPO = process.env.GITHUB_REPO ?? 'A-Guy'
 
 export const WORKFLOW_ID = 'cody.yml'
 
@@ -92,10 +92,10 @@ export const STAGE_ICONS = {
 // ============ Cache TTL ============
 
 export const CACHE_TTL = {
-  tasks: 10000, // 10s
-  pipeline: 5000, // 5s
-  boards: 60000, // 60s
-  prs: 30000, // 30s
+  tasks: 120000, // 2min - reduced API calls while staying fresh
+  pipeline: 30000, // 30s - increased from 5s to reduce calls
+  boards: 300000, // 5min - labels/milestones rarely change
+  prs: 120000, // 2min - increased from 30s
 } as const
 
 // ============ Risk Level Colors ============

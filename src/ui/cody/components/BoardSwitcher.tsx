@@ -2,7 +2,7 @@
  * @fileType component
  * @domain cody
  * @pattern board-switcher
- * @ai-summary Board tab switcher component
+ * @ai-summary Board tab switcher component using design system
  */
 'use client'
 
@@ -17,7 +17,7 @@ interface BoardSwitcherProps {
 
 export function BoardSwitcher({ boards, currentBoard, onBoardChange }: BoardSwitcherProps) {
   return (
-    <div className="flex items-center gap-1 p-1 bg-gray-800 rounded-lg">
+    <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
       {boards.map((board) => (
         <button
           key={board.id}
@@ -25,8 +25,8 @@ export function BoardSwitcher({ boards, currentBoard, onBoardChange }: BoardSwit
           className={cn(
             'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
             currentBoard === board.id
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-400 hover:text-white hover:bg-gray-700',
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent',
           )}
         >
           {board.name}

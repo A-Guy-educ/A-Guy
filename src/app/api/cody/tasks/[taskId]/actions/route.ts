@@ -8,18 +8,38 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { requireAuth } from '@/lib/cody/auth'
+import { requireAuth } from '@/ui/cody/auth'
 import {
   postComment,
   triggerWorkflow,
   cancelWorkflowRun,
   fetchWorkflowRuns,
-} from '@/lib/cody/github-client'
+  updateIssue,
+  addAssignees,
+  removeAssignees,
+  addLabels,
+  removeLabel,
+} from '@/ui/cody/github-client'
 
 const actionSchema = z.object({
-  action: z.enum(['approve', 'reject', 'rerun', 'abort']),
+  action: z.enum([
+    'approve',
+    'reject',
+    'rerun',
+    'abort',
+    'close',
+    'reopen',
+    'add-label',
+    'remove-label',
+    'assign',
+    'unassign',
+    'comment',
+  ]),
   feedback: z.string().optional(),
   fromStage: z.string().optional(),
+  assignees: z.array(z.string()).optional(),
+  label: z.string().optional(),
+  comment: z.string().optional(),
 })
 
 export async function POST(
@@ -27,7 +47,7 @@ export async function POST(
   { params }: { params: Promise<{ taskId: string }> }
 ) {
   // Check auth
-  const authError = requireAuth(req)
+  const authError = await requireAuth(req)
   if (authError) return authError
 
   try {
@@ -40,6 +60,8 @@ export async function POST(
     if (isNaN(issueNumber)) {
       return NextResponse.json({ error: 'Invalid task ID' }, { status: 400 })
     }
+
+    const { assignees, label, comment } = actionSchema.parse(body)
 
     switch (action) {
       case 'approve': {
@@ -70,6 +92,56 @@ export async function POST(
           return NextResponse.json({ success: true, message: 'Workflow cancelled' })
         }
         return NextResponse.json({ error: 'No running workflow found' }, { status: 404 })
+      }
+
+      case 'close': {
+        await updateIssue(issueNumber, { state: 'closed' })
+        return NextResponse.json({ success: true, message: 'Issue closed' })
+      }
+
+      case 'reopen': {
+        await updateIssue(issueNumber, { state: 'open' })
+        return NextResponse.json({ success: true, message: 'Issue reopened' })
+      }
+
+      case 'add-label': {
+        if (!label) {
+          return NextResponse.json({ error: 'Label is required' }, { status: 400 })
+        }
+        await addLabels(issueNumber, [label])
+        return NextResponse.json({ success: true, message: `Label "${label}" added` })
+      }
+
+      case 'remove-label': {
+        if (!label) {
+          return NextResponse.json({ error: 'Label is required' }, { status: 400 })
+        }
+        await removeLabel(issueNumber, label)
+        return NextResponse.json({ success: true, message: `Label "${label}" removed` })
+      }
+
+      case 'assign': {
+        if (!assignees || assignees.length === 0) {
+          return NextResponse.json({ error: 'Assignees are required' }, { status: 400 })
+        }
+        await addAssignees(issueNumber, assignees)
+        return NextResponse.json({ success: true, message: `Assigned to ${assignees.join(', ')}` })
+      }
+
+      case 'unassign': {
+        if (!assignees || assignees.length === 0) {
+          return NextResponse.json({ error: 'Assignees are required' }, { status: 400 })
+        }
+        await removeAssignees(issueNumber, assignees)
+        return NextResponse.json({ success: true, message: `Unassigned ${assignees.join(', ')}` })
+      }
+
+      case 'comment': {
+        if (!comment) {
+          return NextResponse.json({ error: 'Comment is required' }, { status: 400 })
+        }
+        await postComment(issueNumber, comment)
+        return NextResponse.json({ success: true, message: 'Comment posted' })
       }
 
       default:

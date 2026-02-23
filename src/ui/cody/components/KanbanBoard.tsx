@@ -53,7 +53,7 @@ export function KanbanBoard({ tasks, boards, selectedTask, onTaskSelect }: Kanba
   return (
     <div className="flex flex-col h-full">
       {/* Board Switcher */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <BoardSwitcher
           boards={boards}
           currentBoard={currentBoard}

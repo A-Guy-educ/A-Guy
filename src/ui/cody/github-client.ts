@@ -2,10 +2,11 @@
  * @fileType utility
  * @domain cody
  * @pattern github-client
- * @ai-summary GitHub API client with caching and branch discovery
+ * @ai-summary GitHub API client with caching, throttling, and ETag support
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Octokit } from '@octokit/rest'
+import { throttling } from '@octokit/plugin-throttling'
 import {
   GITHUB_OWNER,
   GITHUB_REPO,
@@ -14,13 +15,22 @@ import {
   CACHE_TTL,
   TASK_ID_REGEX,
 } from './constants'
-import type { CodyPipelineStatus, GitHubIssue, GitHubComment, WorkflowRun, GitHubPR } from './types'
+import type {
+  CodyPipelineStatus,
+  GitHubIssue,
+  GitHubComment,
+  WorkflowRun,
+  GitHubPR,
+  GitHubCollaborator,
+} from './types'
 
 // ============ Types ============
 
 interface CacheEntry<T> {
   data: T
   expires: number
+  etag?: string // ETag from GitHub for conditional requests
+  lastModified?: string // Last-Modified header
 }
 
 // ============ Cache ============
@@ -36,18 +46,68 @@ function getCached<T>(key: string): T | null {
   return null
 }
 
-function setCache<T>(key: string, ttl: number, data: T): void {
-  cache.set(key, { data, expires: Date.now() + ttl })
+/**
+ * Get cached data along with its ETag for conditional requests
+ */
+function setCache<T>(
+  key: string,
+  ttl: number,
+  data: T,
+  options?: { etag?: string; lastModified?: string },
+): void {
+  cache.set(key, {
+    data,
+    expires: Date.now() + ttl,
+    etag: options?.etag,
+    lastModified: options?.lastModified,
+  })
 }
 
-// ============ Octokit Instance ============
+// ============ Octokit Singleton with Throttling ============
+
+let octokitInstance: Octokit | null = null
 
 function getOctokit(): Octokit {
+  if (octokitInstance) {
+    return octokitInstance
+  }
+
   const token = process.env.GITHUB_TOKEN
   if (!token) {
     throw new Error('GITHUB_TOKEN not configured')
   }
-  return new Octokit({ auth: token })
+
+  // Create Octokit with throttling plugin to auto-handle rate limits
+  octokitInstance = new Octokit({
+    auth: token,
+    plugins: [
+      // @ts-expect-error - throttling plugin types
+      throttling({
+        // Throttle based on remaining calls in the hourly window
+        throttle: {
+          onRateLimit: (retryAfter: number, options: { request: { retryCount: number } }) => {
+            console.warn(`[Cody] Rate limit hit. Retrying after ${retryAfter}s.`)
+            // Retry twice on rate limit
+            if (options.request.retryCount <= 2) {
+              console.log(`[Cody] Retrying request (retry #${options.request.retryCount + 1})`)
+              return true
+            }
+            return false
+          },
+          // Handle secondary rate limit (abuse detection)
+          onSecondaryRateLimit: (
+            _retryAfter: number,
+            _options: { request: { retryCount: number } },
+          ) => {
+            console.error(`[Cody] Secondary rate limit hit. Not retrying.`)
+            return false // Do not retry, let it fail
+          },
+        },
+      }),
+    ],
+  })
+
+  return octokitInstance
 }
 
 // ============ Branch Discovery ============
@@ -180,6 +240,57 @@ export async function getStatusFromArtifact(
 // ============ Issue & Comment Fetching ============
 
 /**
+ * Fetch a single issue by number (optimized for detail view)
+ */
+export async function fetchIssue(issueNumber: number): Promise<GitHubIssue | null> {
+  const cacheKey = `issue:${issueNumber}`
+  const cached = getCached<GitHubIssue>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+
+  try {
+    const { data } = await octokit.issues.get({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      issue_number: issueNumber,
+    })
+
+    const issue: GitHubIssue = {
+      id: data.id,
+      number: data.number,
+      title: data.title,
+      body: data.body ?? null,
+      state: data.state as 'open' | 'closed',
+      labels: data.labels.map((l: any) =>
+        typeof l === 'string'
+          ? { name: l, color: '000000' }
+          : { name: l.name ?? '', color: l.color ?? '000000' },
+      ),
+      milestone: data.milestone ? { title: data.milestone.title ?? '' } : null,
+      assignees:
+        data.assignees?.map((a: any) => ({
+          login: a.login ?? '',
+          avatar_url: a.avatar_url ?? '',
+        })) ?? [],
+      created_at: data.created_at ?? '',
+      updated_at: data.updated_at ?? '',
+      closed_at: data.closed_at ?? null,
+      html_url: data.html_url ?? '',
+    }
+
+    // Single issue, cache for longer
+    setCache(cacheKey, CACHE_TTL.tasks, issue)
+    return issue
+  } catch (error: any) {
+    if (error.status === 404) {
+      return null
+    }
+    throw error
+  }
+}
+
+/**
  * Fetch issues with optional filters
  */
 export async function fetchIssues(options?: {
@@ -187,6 +298,7 @@ export async function fetchIssues(options?: {
   labels?: string
   milestone?: number
   perPage?: number
+  since?: string // ISO 8601 date string - only returns issues updated after this date
 }): Promise<GitHubIssue[]> {
   const cacheKey = `issues:${JSON.stringify(options)}`
   const cached = getCached<GitHubIssue[]>(cacheKey)
@@ -203,6 +315,7 @@ export async function fetchIssues(options?: {
     per_page: options?.perPage || 50,
     sort: 'updated',
     direction: 'desc',
+    since: options?.since as any, // Octokit accepts ISO string
   })
 
   const issues: GitHubIssue[] = data.map((issue: any) => ({
@@ -217,9 +330,15 @@ export async function fetchIssues(options?: {
         : { name: l.name ?? '', color: l.color ?? '000000' },
     ),
     milestone: issue.milestone ? { title: issue.milestone.title ?? '' } : null,
+    assignees:
+      issue.assignees?.map((a: any) => ({
+        login: a.login ?? '',
+        avatar_url: a.avatar_url ?? '',
+      })) ?? [],
     created_at: issue.created_at ?? '',
     updated_at: issue.updated_at ?? '',
     closed_at: issue.closed_at ?? null,
+    html_url: issue.html_url ?? '',
   }))
 
   setCache(cacheKey, CACHE_TTL.tasks, issues)
@@ -250,6 +369,7 @@ export async function fetchComments(issueNumber: number): Promise<GitHubComment[
     user: {
       login: comment.user?.login ?? 'unknown',
       type: comment.user?.type ?? 'User',
+      avatar_url: comment.user?.avatar_url ?? '',
     },
   }))
 
@@ -466,6 +586,179 @@ export async function cancelWorkflowRun(runId: number): Promise<void> {
     repo: GITHUB_REPO,
     run_id: runId,
   })
+}
+
+// ============ Issue CRUD Operations ============
+
+/**
+ * Create a new GitHub issue
+ */
+export async function createIssue(options: {
+  title: string
+  body?: string
+  labels?: string[]
+  assignees?: string[]
+}): Promise<GitHubIssue> {
+  const octokit = getOctokit()
+
+  const { data } = await octokit.issues.create({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    title: options.title,
+    body: options.body ?? '',
+    labels: options.labels,
+    assignees: options.assignees,
+  })
+
+  // Invalidate issues cache
+  cache.clear()
+
+  return {
+    id: data.id,
+    number: data.number,
+    title: data.title,
+    body: data.body ?? null,
+    state: data.state as 'open' | 'closed',
+    labels:
+      data.labels?.map((l: any) => ({
+        name: l.name ?? '',
+        color: l.color ?? '000000',
+      })) ?? [],
+    milestone: data.milestone ? { title: data.milestone.title ?? '' } : null,
+    assignees:
+      data.assignees?.map((a: any) => ({
+        login: a.login ?? '',
+        avatar_url: a.avatar_url ?? '',
+      })) ?? [],
+    created_at: data.created_at ?? '',
+    updated_at: data.updated_at ?? '',
+    closed_at: data.closed_at ?? null,
+    html_url: data.html_url ?? '',
+  }
+}
+
+/**
+ * Update an issue (close, reopen, change title/body)
+ */
+export async function updateIssue(
+  issueNumber: number,
+  options: {
+    title?: string
+    body?: string
+    state?: 'open' | 'closed'
+    labels?: string[]
+    assignees?: string[]
+  },
+): Promise<void> {
+  const octokit = getOctokit()
+
+  await octokit.issues.update({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    issue_number: issueNumber,
+    title: options.title,
+    body: options.body,
+    state: options.state,
+    labels: options.labels,
+    assignees: options.assignees,
+  })
+
+  // Invalidate cache
+  cache.clear()
+  cache.delete(`comments:${issueNumber}`)
+}
+
+/**
+ * Add assignees to an issue
+ */
+export async function addAssignees(issueNumber: number, assignees: string[]): Promise<void> {
+  const octokit = getOctokit()
+
+  await octokit.issues.addAssignees({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    issue_number: issueNumber,
+    assignees,
+  })
+
+  // Invalidate cache
+  cache.clear()
+}
+
+/**
+ * Remove assignees from an issue
+ */
+export async function removeAssignees(issueNumber: number, assignees: string[]): Promise<void> {
+  const octokit = getOctokit()
+
+  await octokit.issues.removeAssignees({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    issue_number: issueNumber,
+    assignees,
+  })
+
+  // Invalidate cache
+  cache.clear()
+}
+
+/**
+ * Add labels to an issue
+ */
+export async function addLabels(issueNumber: number, labels: string[]): Promise<void> {
+  const octokit = getOctokit()
+
+  await octokit.issues.addLabels({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    issue_number: issueNumber,
+    labels,
+  })
+
+  // Invalidate cache
+  cache.clear()
+}
+
+/**
+ * Remove a label from an issue
+ */
+export async function removeLabel(issueNumber: number, label: string): Promise<void> {
+  const octokit = getOctokit()
+
+  await octokit.issues.removeLabel({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    issue_number: issueNumber,
+    name: label,
+  })
+
+  // Invalidate cache
+  cache.clear()
+}
+
+/**
+ * Fetch repository collaborators (for assignee picker)
+ */
+export async function fetchCollaborators(): Promise<GitHubCollaborator[]> {
+  const cacheKey = 'collaborators'
+  const cached = getCached<GitHubCollaborator[]>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+
+  const { data } = await octokit.repos.listCollaborators({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    per_page: 100,
+  })
+
+  const collaborators: GitHubCollaborator[] = data.map((user) => ({
+    login: user.login ?? '',
+    avatar_url: user.avatar_url ?? '',
+  }))
+
+  setCache(cacheKey, CACHE_TTL.boards, collaborators)
+  return collaborators
 }
 
 // ============ Utility ============
