@@ -92,6 +92,7 @@ import { createRunner } from './runner-backend'
 import { runVerifyStage, runCommitStage, runPrStage } from './scripted-stages'
 import { preflight } from './preflight'
 import type { RunnerBackend } from './runner-backend'
+import { setGlobalContext } from './logger'
 
 /**
  * Get a content validator for a specific stage.
@@ -194,6 +195,9 @@ async function main() {
     console.error('❌ Failed to parse arguments:', error instanceof Error ? error.message : error)
     process.exit(1)
   }
+
+  // Set global logging context for structured logging
+  setGlobalContext({ taskId: input.taskId, runId: input.runId })
 
   // Set up signal handlers for graceful shutdown when CI runner kills the process
   // This ensures status.json is updated to "failed" instead of being left stuck at "running"

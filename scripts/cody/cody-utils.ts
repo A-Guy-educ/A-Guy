@@ -379,6 +379,22 @@ export function getLatestIssueComment(issueNumber: number, excludeAuthor?: strin
  * Looks for "Task created: `XXXXXX-task-name`" in any comment.
  * Note: Does not filter by author to match parse-inputs.sh behavior.
  */
+
+/**
+ * Canonical regex for extracting task-ID from "Task created: `NNNNNN-slug`" marker
+ * Used by both parse-inputs.sh and TypeScript implementations
+ */
+export const TASK_ID_MARKER_REGEX = /Task created: `(\d{6}-[a-zA-Z0-9-]+)`/
+
+/**
+ * Extract task-ID from text using the canonical marker format
+ * Returns null if no valid task-ID found
+ */
+export function extractTaskIdFromMarker(text: string): string | null {
+  const match = text.match(TASK_ID_MARKER_REGEX)
+  return match ? match[1] : null
+}
+
 export function discoverTaskIdFromIssue(issueNumber: number): string | null {
   if (!issueNumber) return null
 
@@ -388,8 +404,8 @@ export function discoverTaskIdFromIssue(issueNumber: number): string | null {
       `gh issue view ${issueNumber} --json comments --jq '.comments[].body'`,
       { encoding: 'utf-8' },
     )
-    // Look for "Task created: `XXXXXX-task-name`"
-    const match = output.match(/Task created: `(\d{6}-[a-zA-Z0-9-]+)`/)
+    // Use canonical task-ID marker regex
+    const match = output.match(TASK_ID_MARKER_REGEX)
     return match ? match[1] : null
   } catch {
     return null

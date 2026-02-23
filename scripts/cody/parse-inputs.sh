@@ -66,9 +66,11 @@ fi
 # Discover task-id from previous bot comments on the issue
 # This allows the second /cody call to pick up the same task-id
 # Note: Don't filter by author - comments can be posted by various bots (github-actions[bot], GitHub Apps, etc.)
+# Uses canonical regex: Task created: `NNNNNN-slug` (slug requires at least 1 char, use + not *)
 DISCOVERED_TASK_ID=""
 if [[ -n "${ISSUE_NUMBER:-}" ]]; then
-  DISCOVERED_TASK_ID=$(gh issue view "$ISSUE_NUMBER" --json comments --jq '.comments[].body' 2>/dev/null | grep -o 'Task created: `[0-9]\{6\}-[a-zA-Z0-9-]*' | sed 's/Task created: `//' | head -1 || true)
+  # Use \+ to require at least one character in slug (matches cody-utils.ts regex)
+  DISCOVERED_TASK_ID=$(gh issue view "$ISSUE_NUMBER" --json comments --jq '.comments[].body' 2>/dev/null | grep -o 'Task created: `[0-9]\{6\}-[a-zA-Z0-9-]\+' | sed 's/Task created: `//' | head -1 || true)
   if [[ -n "$DISCOVERED_TASK_ID" ]]; then
     echo "=== Discovered task-id from issue: $DISCOVERED_TASK_ID ==="
   fi

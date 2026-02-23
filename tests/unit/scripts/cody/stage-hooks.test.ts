@@ -145,12 +145,9 @@ describe('stage-hooks', () => {
 
     it('does not warn when build.md has Changes section and Tests Written (docs type)', () => {
       const taskDir = path.join(tempDir, '.tasks', '260218-test')
-      // Create task.json with docs type (tests optional)
-      fs.mkdirSync(path.join(tempDir, '.tasks'), { recursive: true })
-      fs.writeFileSync(
-        path.join(tempDir, '.tasks', 'task.json'),
-        JSON.stringify({ task_type: 'docs' }),
-      )
+      // Create task.json with docs type (tests optional) - write to correct location
+      fs.mkdirSync(taskDir, { recursive: true })
+      fs.writeFileSync(path.join(taskDir, 'task.json'), JSON.stringify({ task_type: 'docs' }))
       const opts = { taskId: '260218-test', taskDir, dryRun: false, isCI: false }
       fs.writeFileSync(path.join(taskDir, 'build.md'), '# Build\n\n## Changes\n\n- Added file')
       expect(() => handleBuildValidation(opts)).not.toThrow()
@@ -158,10 +155,10 @@ describe('stage-hooks', () => {
 
     it('throws when implement_feature task has no Tests Written section', () => {
       const taskDir = path.join(tempDir, '.tasks', '260218-test')
-      // Create task.json with implement_feature type
-      fs.mkdirSync(path.join(tempDir, '.tasks'), { recursive: true })
+      // Create task.json with implement_feature type - write to correct location
+      fs.mkdirSync(taskDir, { recursive: true })
       fs.writeFileSync(
-        path.join(tempDir, '.tasks', 'task.json'),
+        path.join(taskDir, 'task.json'),
         JSON.stringify({ task_type: 'implement_feature' }),
       )
       const opts = { taskId: '260218-test', taskDir, dryRun: false, isCI: false }
@@ -171,11 +168,9 @@ describe('stage-hooks', () => {
 
     it('throws when fix_bug task has no Tests Written section', () => {
       const taskDir = path.join(tempDir, '.tasks', '260218-test')
-      fs.mkdirSync(path.join(tempDir, '.tasks'), { recursive: true })
-      fs.writeFileSync(
-        path.join(tempDir, '.tasks', 'task.json'),
-        JSON.stringify({ task_type: 'fix_bug' }),
-      )
+      fs.mkdirSync(taskDir, { recursive: true })
+      // Write task.json to the correct location (inside taskDir, not .tasks/)
+      fs.writeFileSync(path.join(taskDir, 'task.json'), JSON.stringify({ task_type: 'fix_bug' }))
       const opts = { taskId: '260218-test', taskDir, dryRun: false, isCI: false }
       fs.writeFileSync(path.join(taskDir, 'build.md'), '# Build\n\n## Changes\n\n- Fixed bug')
       expect(() => handleBuildValidation(opts)).toThrow('missing ## Tests Written section')
@@ -183,11 +178,9 @@ describe('stage-hooks', () => {
 
     it('warns (not throws) when docs task has no Tests Written section', () => {
       const taskDir = path.join(tempDir, '.tasks', '260218-test')
-      fs.mkdirSync(path.join(tempDir, '.tasks'), { recursive: true })
-      fs.writeFileSync(
-        path.join(tempDir, '.tasks', 'task.json'),
-        JSON.stringify({ task_type: 'docs' }),
-      )
+      fs.mkdirSync(taskDir, { recursive: true })
+      // Write task.json to the correct location (inside taskDir, not .tasks/)
+      fs.writeFileSync(path.join(taskDir, 'task.json'), JSON.stringify({ task_type: 'docs' }))
       const opts = { taskId: '260218-test', taskDir, dryRun: false, isCI: false }
       fs.writeFileSync(path.join(taskDir, 'build.md'), '# Build\n\n## Changes\n\n- Updated docs')
       // Should not throw for docs task type

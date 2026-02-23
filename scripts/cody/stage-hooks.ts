@@ -93,7 +93,7 @@ export function handleBuildValidation(options: StageHookOptions): void {
 
   // Also validate Tests Written section
   // Read task.json to get task type
-  const taskJsonPath = path.join(taskDir, '..', 'task.json')
+  const taskJsonPath = path.join(taskDir, 'task.json')
   let taskType = 'implement_feature' // default
   if (fs.existsSync(taskJsonPath)) {
     try {
