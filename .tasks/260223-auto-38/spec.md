@@ -9,7 +9,7 @@ The `VideoMedia` component currently attaches a `suspend` event listener to its 
 ### FR-001: Video Event Listener Cleanup
 
 **Priority**: MUST
-**Description**: The `VideoMedia` component (`src/ui/web/media/VideoMedia/index.tsx`) must properly clean up the `suspend` event listener on unmount. The handler function must be extracted to a named function (e.g. `handleSuspend`) inside the effect, and a cleanup function returning `removeEventListener` with the exact same handler reference must be returned.
+**Description**: The `VideoMedia` component (`src/ui/web/media/VideoMedia/index.tsx`) must properly clean up the `suspend` event listener on unmount. The handler function must be defined INSIDE the useEffect callback (not outside or as a separate function) to ensure the exact same function reference is used for both `addEventListener` and `removeEventListener`. A cleanup function returning `removeEventListener` with the exact same handler reference must be returned.
 
 ### FR-002: Null-Reference Safety
 
@@ -24,7 +24,18 @@ The `VideoMedia` component currently attaches a `suspend` event listener to its 
 ### FR-004: Event Listener Test Coverage
 
 **Priority**: MUST
-**Description**: Add 8 tests in `tests/unit/ui/web/media/VideoMedia.test.tsx` to cover the listener lifecycle, navigation cycles, and edge cases.
+**Description**: Add 8 tests in `tests/unit/ui/web/media/VideoMedia.test.tsx` to cover the listener lifecycle, navigation cycles, and edge cases:
+
+1. Listener is added when component mounts
+2. Listener is removed when component unmounts
+3. No duplicate listeners after re-render
+4. No duplicate listeners after navigation away and back
+5. Safety when videoRef.current is null on mount
+6. Safety when videoRef.current becomes null after mount
+7. Cleanup is called with correct handler reference
+8. Multiple mount/unmount cycles don't accumulate listeners
+
+Note: The test file directory `tests/unit/ui/web/media/` does not currently exist and will need to be created.
 
 ### NFR-001: Code Maintainability
 
