@@ -1,0 +1,17 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "VideoMedia component"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task describes a specific bug (memory leak) with 3 clear issues to fix, but lacks formal requirements/acceptance criteria sections. It provides sufficient context for a bug fix task."
+  },
+  "pipeline": "spec_execute_verify"
+}
