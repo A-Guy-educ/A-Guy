@@ -50,8 +50,7 @@ describe('VideoMedia', () => {
     expect(video).toBeTruthy()
     expect(video?.hasAttribute('autoplay')).toBe(true)
     expect(video?.hasAttribute('loop')).toBe(true)
-    // React sets muted as a DOM property, check both attribute and property
-    expect(video?.muted).toBe(true)
+    expect(video?.hasAttribute('muted')).toBe(true)
     expect(video?.hasAttribute('playsinline')).toBe(true)
     expect(video?.getAttribute('controls')).toBe('false')
 
