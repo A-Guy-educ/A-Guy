@@ -1,0 +1,20 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/media/VideoMedia/index.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The fix has already been implemented as indicated by checkmarks in task.md",
+    "The useEffect cleanup function properly removes the event listener to prevent memory leaks"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains clear issue description with affected file, current buggy code, expected fix code pattern, and test steps. The task is marked as completed with checkmarks indicating all subtasks (fix memory leak, add tests, fix TypeScript errors, fix muted attribute) were addressed."
+  },
+  "pipeline": "spec_execute_verify"
+}
