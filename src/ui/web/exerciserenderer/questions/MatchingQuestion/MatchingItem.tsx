@@ -54,9 +54,7 @@ export function MatchingItem({
           !isSelected &&
           !isConnected &&
           'hover:border-blue-400 hover:shadow-md hover:-translate-y-0.5 cursor-pointer',
-        canSelect &&
-          !isConnected &&
-          'border-blue-300 bg-blue-50 dark:bg-blue-500/10 cursor-pointer',
+        canSelect && !isConnected && 'cursor-pointer',
         isSelected &&
           'border-blue-500 bg-blue-50 dark:bg-blue-500/15 border-[3px] shadow-[0_0_10px_rgba(59,130,246,0.3)]',
         isConnected &&
