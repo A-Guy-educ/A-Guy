@@ -84,6 +84,20 @@ export const LinesPanel: React.FC<LinesPanelProps> = ({ lines, points, onChange 
                 onChange={(e) => handleUpdate(index, { color: e.target.value })}
               />
             </div>
+            <div className="panel-field">
+              <span className="panel-field-label">Label</span>
+              <input
+                type="text"
+                className="panel-field-input panel-field-input--short"
+                value={line.label?.value || ''}
+                placeholder="e.g. 5cm"
+                onChange={(e) =>
+                  handleUpdate(index, {
+                    label: { position: line.label?.position || 't', value: e.target.value },
+                  })
+                }
+              />
+            </div>
             <button
               type="button"
               className="panel-remove-btn"

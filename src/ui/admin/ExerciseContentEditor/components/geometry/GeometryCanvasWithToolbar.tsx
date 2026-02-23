@@ -5,10 +5,17 @@ import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
 import { GeometryCanvas } from './GeometryCanvas'
 import { GeometryToolbar, type GeometryMode } from './GeometryToolbar'
 
+interface PointUpdate {
+  name: string
+  x: number
+  y: number
+}
+
 interface GeometryCanvasWithToolbarProps {
   id: string
   geometry: GeometrySpecV1
   onPointMoved: (name: string, x: number, y: number) => void
+  onMultiPointMoved?: (updates: PointUpdate[]) => void
   onPointAdded: (x: number, y: number) => void
   onGridToggle: (showGrid: boolean) => void
 }
@@ -17,6 +24,7 @@ export const GeometryCanvasWithToolbar: React.FC<GeometryCanvasWithToolbarProps>
   id,
   geometry,
   onPointMoved,
+  onMultiPointMoved,
   onPointAdded,
   onGridToggle,
 }) => {
@@ -48,6 +56,7 @@ export const GeometryCanvasWithToolbar: React.FC<GeometryCanvasWithToolbarProps>
         geometry={geometry}
         interactionMode={mode}
         onPointMoved={onPointMoved}
+        onMultiPointMoved={onMultiPointMoved}
         onCanvasClick={handleCanvasClick}
       />
       {mode === 'addPoint' && (

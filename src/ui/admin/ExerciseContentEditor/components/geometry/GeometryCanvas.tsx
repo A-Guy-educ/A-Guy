@@ -5,6 +5,12 @@ import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
 import type { JXGBoard, JXGElement } from 'jsxgraph'
 import { JSXGraphBoard } from '../shared/JSXGraphBoard'
 
+interface PointUpdate {
+  name: string
+  x: number
+  y: number
+}
+
 interface GeometryCanvasProps {
   id: string
   geometry: GeometrySpecV1
@@ -12,6 +18,7 @@ interface GeometryCanvasProps {
   displayHeight?: number
   interactionMode?: 'move' | 'addPoint'
   onPointMoved?: (name: string, x: number, y: number) => void
+  onMultiPointMoved?: (updates: PointUpdate[]) => void
   onCanvasClick?: (x: number, y: number) => void
 }
 
@@ -27,6 +34,7 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   displayHeight = DISPLAY_HEIGHT,
   interactionMode = 'move',
   onPointMoved,
+  onMultiPointMoved,
   onCanvasClick,
 }) => {
   const boardRef = useRef<JXGBoard | null>(null)
@@ -36,9 +44,11 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   const modeRef = useRef(interactionMode)
   const onCanvasClickRef = useRef(onCanvasClick)
   const onPointMovedRef = useRef(onPointMoved)
+  const onMultiPointMovedRef = useRef(onMultiPointMoved)
   modeRef.current = interactionMode
   onCanvasClickRef.current = onCanvasClick
   onPointMovedRef.current = onPointMoved
+  onMultiPointMovedRef.current = onMultiPointMoved
 
   const syncToBoard = useCallback(() => {
     const board = boardRef.current
@@ -53,8 +63,18 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
 
       syncPoints(board, geometry, newIds, elementsRef, isSyncingRef, isDraggingRef, onPointMovedRef)
       syncSegments(board, geometry, newIds, elementsRef)
+      syncLineLabels(board, geometry, newIds, elementsRef)
       syncCircles(board, geometry, newIds, elementsRef)
-      syncPolygons(board, geometry, newIds, elementsRef)
+      syncAngles(board, geometry, newIds, elementsRef)
+      syncPolygons(
+        board,
+        geometry,
+        newIds,
+        elementsRef,
+        isSyncingRef,
+        isDraggingRef,
+        onMultiPointMovedRef,
+      )
 
       for (const oldId of existingIds) {
         if (!newIds.has(oldId)) {
@@ -192,6 +212,53 @@ function syncSegments(
   }
 }
 
+function syncLineLabels(
+  board: JXGBoard,
+  geometry: GeometrySpecV1,
+  newIds: Set<string>,
+  elementsRef: React.MutableRefObject<Map<string, JXGElement>>,
+) {
+  for (let i = 0; i < geometry.elements.lines.length; i++) {
+    const line = geometry.elements.lines[i]
+    const elemId = `linelabel-${line.from}-${line.to}`
+    if (!line.label?.value) continue
+    newIds.add(elemId)
+    const fromEl = elementsRef.current.get(`point-${line.from}`)
+    const toEl = elementsRef.current.get(`point-${line.to}`)
+    if (!fromEl || !toEl) continue
+
+    const existing = elementsRef.current.get(elemId)
+    if (existing) {
+      board.removeObject(existing)
+      elementsRef.current.delete(elemId)
+    }
+
+    const offset = line.label.position === 'b' ? -1.5 : 1.5
+    const el = board.create(
+      'text',
+      [
+        () =>
+          ((fromEl as unknown as { X: () => number }).X() +
+            (toEl as unknown as { X: () => number }).X()) /
+          2,
+        () =>
+          ((fromEl as unknown as { Y: () => number }).Y() +
+            (toEl as unknown as { Y: () => number }).Y()) /
+            2 +
+          offset,
+        line.label.value,
+      ],
+      {
+        fontSize: line.label.fontSize || 12,
+        anchorX: 'middle',
+        anchorY: 'middle',
+        fixed: true,
+      },
+    )
+    elementsRef.current.set(elemId, el)
+  }
+}
+
 function syncCircles(
   board: JXGBoard,
   geometry: GeometrySpecV1,
@@ -228,45 +295,117 @@ function syncCircles(
   }
 }
 
-function syncPolygons(
+function syncAngles(
   board: JXGBoard,
   geometry: GeometrySpecV1,
   newIds: Set<string>,
   elementsRef: React.MutableRefObject<Map<string, JXGElement>>,
 ) {
+  for (let i = 0; i < geometry.elements.angles.length; i++) {
+    const angle = geometry.elements.angles[i]
+    const elemId = `angle-${angle.ray1}-${angle.center}-${angle.ray2}`
+    newIds.add(elemId)
+
+    const ray1El = elementsRef.current.get(`point-${angle.ray1}`)
+    const centerEl = elementsRef.current.get(`point-${angle.center}`)
+    const ray2El = elementsRef.current.get(`point-${angle.ray2}`)
+    if (!ray1El || !centerEl || !ray2El) continue
+
+    const existing = elementsRef.current.get(elemId)
+    if (existing) {
+      existing.setAttribute({
+        strokeColor: angle.color || '#3366cc',
+        fillColor: angle.color || '#3366cc',
+        radius: angle.arcRadius || 30,
+      })
+      continue
+    }
+
+    const isSquare = angle.style === 'square'
+    const el = board.create('angle', [ray1El, centerEl, ray2El], {
+      radius: angle.arcRadius || 30,
+      orthoType: isSquare ? 'square' : 'sector',
+      strokeColor: angle.color || '#3366cc',
+      fillColor: angle.color || '#3366cc',
+      fillOpacity: 0.15,
+      strokeWidth: 2,
+      fixed: true,
+      withLabel: !!angle.label?.value,
+      name: angle.label?.value || '',
+      label: angle.label ? { fontSize: angle.label.fontSize || 12 } : undefined,
+    })
+    elementsRef.current.set(elemId, el)
+  }
+}
+
+function syncPolygons(
+  board: JXGBoard,
+  geometry: GeometrySpecV1,
+  newIds: Set<string>,
+  elementsRef: React.MutableRefObject<Map<string, JXGElement>>,
+  isSyncingRef: React.MutableRefObject<boolean>,
+  isDraggingRef: React.MutableRefObject<boolean>,
+  onMultiPointMovedRef: React.RefObject<((updates: PointUpdate[]) => void) | undefined>,
+) {
   const triangles = geometry.elements.triangles || []
   for (let i = 0; i < triangles.length; i++) {
     const tri = triangles[i]
-    const elemId = `triangle-${i}`
+    const elemId = `triangle-${tri.points.join('-')}`
     newIds.add(elemId)
     if (elementsRef.current.has(elemId)) continue
-    const pts = tri.points.map((name) => elementsRef.current.get(`point-${name}`)).filter(Boolean)
-    if (pts.length < 3) continue
-    const el = board.create('polygon', pts, {
+    const ptEls = tri.points.map((name) => elementsRef.current.get(`point-${name}`)).filter(Boolean)
+    if (ptEls.length < 3) continue
+    const el = board.create('polygon', ptEls, {
       borders: { strokeColor: tri.color || '#000000', strokeWidth: tri.thickness || 2 },
       fillColor: tri.fill || 'transparent',
       fillOpacity: tri.fill ? 0.3 : 0,
-      fixed: true,
-      hasInnerPoints: false,
+      hasInnerPoints: true,
     })
+    addPolygonDragHandlers(el, tri.points, isSyncingRef, isDraggingRef, onMultiPointMovedRef)
     elementsRef.current.set(elemId, el)
   }
 
   const rectangles = geometry.elements.rectangles || []
   for (let i = 0; i < rectangles.length; i++) {
     const rect = rectangles[i]
-    const elemId = `rectangle-${i}`
+    const elemId = `rectangle-${rect.points.join('-')}`
     newIds.add(elemId)
     if (elementsRef.current.has(elemId)) continue
-    const pts = rect.points.map((name) => elementsRef.current.get(`point-${name}`)).filter(Boolean)
-    if (pts.length < 4) continue
-    const el = board.create('polygon', pts, {
+    const ptEls = rect.points
+      .map((name) => elementsRef.current.get(`point-${name}`))
+      .filter(Boolean)
+    if (ptEls.length < 4) continue
+    const el = board.create('polygon', ptEls, {
       borders: { strokeColor: rect.color || '#000000', strokeWidth: rect.thickness || 2 },
       fillColor: rect.fill || 'transparent',
       fillOpacity: rect.fill ? 0.3 : 0,
-      fixed: true,
-      hasInnerPoints: false,
+      hasInnerPoints: true,
     })
+    addPolygonDragHandlers(el, rect.points, isSyncingRef, isDraggingRef, onMultiPointMovedRef)
     elementsRef.current.set(elemId, el)
   }
+}
+
+function addPolygonDragHandlers(
+  polygon: JXGElement,
+  pointNames: string[],
+  isSyncingRef: React.MutableRefObject<boolean>,
+  isDraggingRef: React.MutableRefObject<boolean>,
+  onMultiPointMovedRef: React.RefObject<((updates: PointUpdate[]) => void) | undefined>,
+) {
+  const poly = polygon as unknown as { vertices: Array<{ X: () => number; Y: () => number }> }
+  polygon.on('drag', () => {
+    if (isSyncingRef.current) return
+    isDraggingRef.current = true
+    if (!poly.vertices) return
+    const updates: PointUpdate[] = pointNames.map((name, idx) => ({
+      name,
+      x: round1(poly.vertices[idx].X()),
+      y: round1(poly.vertices[idx].Y()),
+    }))
+    onMultiPointMovedRef.current?.(updates)
+  })
+  polygon.on('up', () => {
+    isDraggingRef.current = false
+  })
 }
