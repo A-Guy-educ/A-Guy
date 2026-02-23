@@ -1,0 +1,39 @@
+{
+  "taskId": "260223-auto-38",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-23T15:08:11.804Z",
+  "updatedAt": "2026-02-23T15:15:52.190Z",
+  "state": "running",
+  "currentStage": "gap",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-23T15:08:15.710Z",
+      "outputFile": "task.json",
+      "completedAt": "2026-02-23T15:09:42.802Z",
+      "elapsed": 87092
+    },
+    "spec": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-23T15:09:42.804Z",
+      "outputFile": "spec.md",
+      "completedAt": "2026-02-23T15:13:46.050Z",
+      "elapsed": 243246
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-23T15:13:46.052Z",
+      "outputFile": "gap.md",
+      "completedAt": "2026-02-23T15:15:52.190Z",
+      "elapsed": 126138
+    }
+  },
+  "triggeredBy": "dispatch",
+  "issueNumber": 559,
+  "runId": "22311887704",
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/22311887704"
+}

@@ -1,0 +1,20 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/media/VideoMedia/index.tsx",
+    "tests/unit/ui/web/media/VideoMedia.test.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains ## Changes section with specific file paths and detailed before/after code examples. The original issue provides clear acceptance criteria (Steps to Test). Task is focused on a specific bug fix with clear scope."
+  },
+  "pipeline": "spec_execute_verify"
+}
