@@ -35,8 +35,10 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   const elementsRef = useRef<Map<string, JXGElement>>(new Map())
   const modeRef = useRef(interactionMode)
   const onCanvasClickRef = useRef(onCanvasClick)
+  const onPointMovedRef = useRef(onPointMoved)
   modeRef.current = interactionMode
   onCanvasClickRef.current = onCanvasClick
+  onPointMovedRef.current = onPointMoved
 
   const syncToBoard = useCallback(() => {
     const board = boardRef.current
@@ -49,7 +51,7 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
       const existingIds = new Set(elementsRef.current.keys())
       const newIds = new Set<string>()
 
-      syncPoints(board, geometry, newIds, elementsRef, isSyncingRef, isDraggingRef, onPointMoved)
+      syncPoints(board, geometry, newIds, elementsRef, isSyncingRef, isDraggingRef, onPointMovedRef)
       syncSegments(board, geometry, newIds, elementsRef)
       syncCircles(board, geometry, newIds, elementsRef)
       syncPolygons(board, geometry, newIds, elementsRef)
@@ -67,7 +69,7 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
       board.unsuspendUpdate()
       isSyncingRef.current = false
     }
-  }, [geometry, onPointMoved])
+  }, [geometry])
 
   const syncToBoardRef = useRef(syncToBoard)
   syncToBoardRef.current = syncToBoard
@@ -122,7 +124,7 @@ function syncPoints(
   elementsRef: React.MutableRefObject<Map<string, JXGElement>>,
   isSyncingRef: React.MutableRefObject<boolean>,
   isDraggingRef: React.MutableRefObject<boolean>,
-  onPointMoved?: (name: string, x: number, y: number) => void,
+  onPointMovedRef: React.RefObject<((name: string, x: number, y: number) => void) | undefined>,
 ) {
   for (const point of geometry.elements.points) {
     const elemId = `point-${point.name}`
@@ -147,7 +149,7 @@ function syncPoints(
       el.on('drag', () => {
         if (isSyncingRef.current) return
         isDraggingRef.current = true
-        if (el.X && el.Y) onPointMoved?.(point.name, round1(el.X()), round1(el.Y()))
+        if (el.X && el.Y) onPointMovedRef.current?.(point.name, round1(el.X()), round1(el.Y()))
       })
       el.on('up', () => {
         isDraggingRef.current = false
@@ -165,7 +167,7 @@ function syncSegments(
 ) {
   for (let i = 0; i < geometry.elements.lines.length; i++) {
     const line = geometry.elements.lines[i]
-    const elemId = `line-${i}`
+    const elemId = `line-${line.from}-${line.to}`
     newIds.add(elemId)
     const fromEl = elementsRef.current.get(`point-${line.from}`)
     const toEl = elementsRef.current.get(`point-${line.to}`)
@@ -173,8 +175,12 @@ function syncSegments(
 
     const existing = elementsRef.current.get(elemId)
     if (existing) {
-      board.removeObject(existing)
-      elementsRef.current.delete(elemId)
+      existing.setAttribute({
+        strokeColor: line.color || '#000000',
+        strokeWidth: line.thickness || 2,
+        dash: line.style === 'dashed' ? 2 : 0,
+      })
+      continue
     }
     const el = board.create('segment', [fromEl, toEl], {
       strokeColor: line.color || '#000000',
@@ -194,15 +200,21 @@ function syncCircles(
 ) {
   for (let i = 0; i < geometry.elements.circles.length; i++) {
     const circle = geometry.elements.circles[i]
-    const elemId = `circle-${i}`
+    const key = circle.through
+      ? `${circle.center}-${circle.through}`
+      : `${circle.center}-r${circle.radius}`
+    const elemId = `circle-${key}`
     newIds.add(elemId)
     const centerEl = elementsRef.current.get(`point-${circle.center}`)
     if (!centerEl) continue
 
     const existing = elementsRef.current.get(elemId)
     if (existing) {
-      board.removeObject(existing)
-      elementsRef.current.delete(elemId)
+      existing.setAttribute({
+        strokeColor: circle.color || '#000000',
+        dash: circle.style === 'dashed' ? 2 : 0,
+      })
+      continue
     }
     const parents: unknown[] = circle.through
       ? [centerEl, elementsRef.current.get(`point-${circle.through}`) || centerEl]
