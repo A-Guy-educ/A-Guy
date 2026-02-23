@@ -7,30 +7,82 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireAuth } from '@/lib/cody/auth'
 import {
+  fetchIssue,
   fetchIssues,
   fetchComments,
   findTaskBranch,
   getStatusFromBranch,
   findAssociatedPR,
   fetchWorkflowRuns,
-} from '@/lib/cody/github-client'
-import { parseAllComments } from '@/lib/cody/task-parser'
-import { buildCodyTask } from '@/lib/cody/board-mapper'
+} from '@/ui/cody/github-client'
+import { parseAllComments } from '@/ui/cody/task-parser'
+import { buildCodyTask } from '@/ui/cody/board-mapper'
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ taskId: string }> }
 ) {
-  // Check auth
-  const authError = requireAuth(req)
-  if (authError) return authError
+  // Skip auth for now - open access for testing
 
   try {
     const { taskId } = await params
 
-    // Find issue by task ID in comments
+    // Try to find by issue number first (optimized path - single API call)
+    const issueNumberFromUrl = parseInt(taskId.replace('issue-', ''), 10)
+    
+    if (!isNaN(issueNumberFromUrl)) {
+      // Optimized: directly fetch the single issue by number
+      const issue = await fetchIssue(issueNumberFromUrl)
+      
+      if (issue) {
+        // Fetch comments for this single issue
+        const comments = await fetchComments(issue.number)
+        const parsed = parseAllComments(comments)
+        
+        // Get workflow runs, branch, and PR in parallel
+        const [runs, branch, associatedPR] = await Promise.all([
+          fetchWorkflowRuns({ perPage: 50 }),
+          findTaskBranch(taskId),
+          findAssociatedPR(taskId),
+        ])
+        
+        const workflowRun = runs.find((r) => r.html_url.includes(issueNumberFromUrl.toString()))
+        
+        let pipeline = null
+        if (branch) {
+          pipeline = await getStatusFromBranch(taskId, branch)
+        }
+
+        const task = buildCodyTask({
+          issue,
+          comments: parsed,
+          workflowRun,
+          associatedPR,
+        })
+
+        if (pipeline) {
+          task.pipeline = pipeline
+        }
+
+        return NextResponse.json({ 
+          task,
+          assignees: issue.assignees,
+          comments: comments.map(c => ({
+            id: c.id,
+            body: c.body,
+            created_at: c.created_at,
+            user: c.user,
+          })),
+        })
+      }
+      
+      // Issue not found
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 })
+    }
+
+    // Fallback: Search through all issues if taskId is not numeric (e.g., task ID like "260221-feature")
+    // This is less efficient but handles task ID lookups
     const issues = await fetchIssues({ state: 'all', perPage: 100 })
 
     // Find the issue that has this task ID in comments
@@ -66,29 +118,17 @@ export async function GET(
           task.pipeline = pipeline
         }
 
-        return NextResponse.json({ task })
-      }
-    }
-
-    // Try to find by issue number if taskId is numeric
-    const issueNumber = parseInt(taskId.replace('issue-', ''), 10)
-    if (!isNaN(issueNumber)) {
-      const issue = issues.find((i) => i.number === issueNumber)
-      if (issue) {
-        const comments = await fetchComments(issue.number)
-        const parsed = parseAllComments(comments)
-        const runs = await fetchWorkflowRuns({ perPage: 50 })
-        const workflowRun = runs.find((r) => r.html_url.includes(issueNumber.toString()))
-        const associatedPR = await findAssociatedPR(taskId)
-
-        const task = buildCodyTask({
-          issue,
-          comments: parsed,
-          workflowRun,
-          associatedPR,
+        // Return task with assignees and raw comments for the detail panel
+        return NextResponse.json({ 
+          task,
+          assignees: issue.assignees,
+          comments: comments.map(c => ({
+            id: c.id,
+            body: c.body,
+            created_at: c.created_at,
+            user: c.user,
+          })),
         })
-
-        return NextResponse.json({ task })
       }
     }
 

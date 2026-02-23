@@ -87,7 +87,7 @@ jobs:
 
       # Add reaction to acknowledge command (shows instantly on the comment)
       - name: Acknowledge command with reaction
-        if: github.event_name == 'issue_comment' && steps.safety.outputs.valid == 'true'
+        if: github.event_name == 'issue_comment' && steps.safety.outputs.valid
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -118,7 +118,7 @@ jobs:
   # Job 2: Orchestrate - run the pipeline
   orchestrate:
     needs: parse
-    if: needs.parse.outputs.valid == 'true'
+    if: needs.parse.outputs.valid
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:

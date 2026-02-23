@@ -141,23 +141,18 @@ export interface GitHubIssue {
   state: 'open' | 'closed'
   labels: Array<{ name: string; color: string }>
   milestone: { title: string } | null
+  assignees: Array<{ login: string; avatar_url: string }>
   created_at: string
   updated_at: string
   closed_at: string | null
+  html_url: string
 }
 
 export interface GitHubComment {
   id: number
   body: string
   created_at: string
-  user: { login: string; type: string }
-}
-
-export interface GitHubComment {
-  id: number
-  body: string
-  created_at: string
-  user: { login: string; type: string }
+  user: { login: string; type: string; avatar_url?: string }
 }
 
 export interface WorkflowRun {
@@ -215,4 +210,30 @@ export interface ActionResponse {
   success: boolean
   message: string
   data?: unknown
+}
+
+// ============ GitHub Action Types ============
+
+export type GitHubAction =
+  | 'approve'
+  | 'reject'
+  | 'rerun'
+  | 'abort'
+  | 'assign'
+  | 'unassign'
+  | 'close'
+  | 'reopen'
+  | 'add-label'
+  | 'remove-label'
+  | 'comment'
+
+// ============ Collaborator Type ============
+
+export interface GitHubCollaborator {
+  login: string
+  avatar_url: string
+}
+
+export interface CollaboratorsResponse {
+  collaborators: GitHubCollaborator[]
 }

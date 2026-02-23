@@ -7,17 +7,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireAuth } from '@/lib/cody/auth'
+import { requireAuth } from '@/ui/cody/auth'
 import {
   findTaskBranch,
   getStatusFromBranch,
   getStatusFromArtifact,
   fetchWorkflowRuns,
-} from '@/lib/cody/github-client'
+} from '@/ui/cody/github-client'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   // Check auth
-  const authError = requireAuth(req)
+  const authError = await requireAuth(req)
   if (authError) return authError
 
   try {

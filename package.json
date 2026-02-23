@@ -103,6 +103,8 @@
     "@google/generative-ai": "^0.24.1",
     "@marsidev/react-turnstile": "^1.4.1",
     "@napi-rs/canvas": "^0.1.89",
+    "@octokit/core": "^7.0.6",
+    "@octokit/plugin-throttling": "^11.0.3",
     "@octokit/rest": "^22.0.1",
     "@payloadcms/admin-bar": "3.73.0",
     "@payloadcms/db-mongodb": "3.73.0",
