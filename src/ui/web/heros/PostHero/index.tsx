@@ -9,7 +9,7 @@ export const PostHero: React.FC<{ post: Post }> = ({ post }) => {
 
   useEffect(() => {
     setHeaderTheme('dark')
-  })
+  }, [])
 
   return (
     <div className="relative -mt-[10.4rem]" data-theme="dark">
