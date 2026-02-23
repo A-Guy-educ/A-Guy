@@ -376,14 +376,16 @@ export function getLatestIssueComment(issueNumber: number, excludeAuthor?: strin
 
 /**
  * Discover task-id from a previous Cody run by parsing bot comments on the issue.
- * Looks for "Task created: `XXXXXX-task-name`" in bot comments.
+ * Looks for "Task created: `XXXXXX-task-name`" in any comment.
+ * Note: Does not filter by author to match parse-inputs.sh behavior.
  */
 export function discoverTaskIdFromIssue(issueNumber: number): string | null {
   if (!issueNumber) return null
 
   try {
+    // Get all comments (don't filter by author - matches parse-inputs.sh behavior)
     const output = execSync(
-      `gh issue view ${issueNumber} --json comments --jq '[.comments[] | select(.author.login == "github-actions[bot]")] | .[].body'`,
+      `gh issue view ${issueNumber} --json comments --jq '.comments[].body'`,
       { encoding: 'utf-8' },
     )
     // Look for "Task created: `XXXXXX-task-name`"

@@ -92,7 +92,7 @@ jobs:
 
       # Add reaction to acknowledge command (shows instantly on the comment)
       - name: Acknowledge command with reaction
-        if: github.event_name == 'issue_comment' && steps.safety.outputs.valid
+        if: github.event_name == 'issue_comment' && steps.safety.outputs.valid == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -120,12 +120,29 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: ./scripts/cody/parse-inputs.sh
 
+  # Job 1b: Notify on parse errors (invalid commands)
+  notify-parse-error:
+    needs: parse
+    if: >-
+      needs.parse.outputs.valid == 'false' &&
+      needs.parse.outputs.issue_number != '' &&
+      github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Post error comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment ${{ needs.parse.outputs.issue_number }} \
+            --body "⚠️ Invalid \`/cody\` command. Use: \`/cody [spec|impl|rerun|full|status] [task-id] [options]\`"
+
   # Job 2: Orchestrate - run the pipeline
   orchestrate:
     needs: parse
-    if: needs.parse.outputs.valid
+    if: needs.parse.outputs.valid == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     permissions:
       id-token: write # OpenCode GitHub App OIDC
       contents: write # Branch/commit operations

@@ -22,8 +22,10 @@ if [[ "$ASSOCIATION" != "OWNER" ]] && [[ "$ASSOCIATION" != "MEMBER" ]] && [[ "$A
   exit 0
 fi
 
-# Pattern: must match ^/cody (with optional trailing space) OR contain @cody
-if ! echo "$COMMENT_BODY" | grep -qE '(^/cody([[:space:]]|$)|@cody)'; then
+# Pattern: /cody must be on first line, @cody can be anywhere (mentioning is intentional)
+# Extract first line for /cody check
+FIRST_LINE=$(echo "$COMMENT_BODY" | head -1)
+if ! echo "$FIRST_LINE" | grep -qE '^/cody([[:space:]]|$)' && ! echo "$COMMENT_BODY" | grep -qF '@cody'; then
   echo "valid=false" >> "$GITHUB_OUTPUT"
   echo "reason=pattern" >> "$GITHUB_OUTPUT"
   exit 0
