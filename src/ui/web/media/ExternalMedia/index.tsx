@@ -12,7 +12,7 @@ import type { Props as MediaProps } from '../types'
  */
 interface ExternalMediaResource extends Media {
   externalUrl?: string | null
-  embedProvider?: 'youtube' | 'generic' | null
+  embedProvider?: 'youtube' | 'vimeo' | 'generic' | null
   embedVideoId?: string | null
   embedUrl?: string | null
   embedTitle?: string | null
@@ -20,15 +20,14 @@ interface ExternalMediaResource extends Media {
 }
 
 /**
- * Renders a YouTube embed with proper 16:9 aspect ratio.
+ * Renders a video embed (YouTube or Vimeo) with proper 16:9 aspect ratio.
  *
  * Key attributes:
- * - youtube-nocookie.com: Privacy-enhanced mode (no tracking cookies)
  * - loading="lazy": Don't load the iframe until it's near the viewport
  * - allowFullScreen: Users can go fullscreen
  * - allow="...": Permissions for the iframe (autoplay, clipboard, etc.)
  */
-function YouTubeEmbed({
+function VideoEmbed({
   videoId,
   embedUrl,
   title,
@@ -46,7 +45,7 @@ function YouTubeEmbed({
     >
       <iframe
         src={embedUrl}
-        title={title || `YouTube video ${videoId}`}
+        title={title || `Video ${videoId}`}
         className="absolute inset-0 h-full w-full"
         loading="lazy"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -86,7 +85,7 @@ function GenericEmbed({
  * Main ExternalMedia component.
  *
  * Routes to the correct renderer based on embedProvider:
- * - 'youtube' -> YouTubeEmbed (proper 16:9 responsive player)
+ * - 'youtube' | 'vimeo' -> VideoEmbed (proper 16:9 responsive player)
  * - 'generic' or missing -> GenericEmbed (plain iframe, like before)
  *
  * This component is used by the main <Media> component (src/ui/web/media/index.tsx)
@@ -103,9 +102,13 @@ export const ExternalMedia: React.FC<MediaProps> = (props) => {
   const media = resource as ExternalMediaResource
 
   // If we have an embed URL from the hook, use the provider-specific renderer
-  if (media.embedProvider === 'youtube' && media.embedVideoId && media.embedUrl) {
+  if (
+    (media.embedProvider === 'youtube' || media.embedProvider === 'vimeo') &&
+    media.embedVideoId &&
+    media.embedUrl
+  ) {
     return (
-      <YouTubeEmbed
+      <VideoEmbed
         videoId={media.embedVideoId}
         embedUrl={media.embedUrl}
         title={media.embedTitle}

@@ -49,8 +49,13 @@ export const ExternalPreview: React.FC = () => {
             padding: '2px 8px',
             marginBottom: '8px',
             borderRadius: '4px',
-            backgroundColor: embedProvider === 'youtube' ? '#FF0000' : 'var(--theme-elevation-300)',
-            color: embedProvider === 'youtube' ? '#fff' : 'inherit',
+            backgroundColor:
+              embedProvider === 'youtube'
+                ? '#FF0000'
+                : embedProvider === 'vimeo'
+                  ? '#1ab7ea'
+                  : 'var(--theme-elevation-300)',
+            color: embedProvider === 'youtube' || embedProvider === 'vimeo' ? '#fff' : 'inherit',
             fontSize: '12px',
             fontWeight: 600,
             textTransform: 'uppercase',
@@ -94,13 +99,13 @@ export const ExternalPreview: React.FC = () => {
         </a>
       </div>
 
-      {/* Preview: thumbnail for YouTube, iframe for others */}
-      {embedProvider === 'youtube' && embedThumbnailUrl ? (
+      {/* Preview: thumbnail (with play overlay) for YouTube/Vimeo, iframe for others */}
+      {(embedProvider === 'youtube' || embedProvider === 'vimeo') && embedThumbnailUrl ? (
         <div style={{ position: 'relative' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={embedThumbnailUrl}
-            alt={embedTitle || 'YouTube thumbnail'}
+            alt={embedTitle || `${embedProvider} thumbnail`}
             style={{
               width: '100%',
               borderRadius: '4px',

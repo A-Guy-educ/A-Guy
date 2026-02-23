@@ -31,29 +31,44 @@ export const Media: CollectionConfig = {
     // Show thumbnail in admin list view - uses function to handle External media
     adminThumbnail: ({ doc }) => {
       // Cast doc to access typed properties
-      const docData = doc as { type?: string; externalUrl?: string; url?: string }
-      // YouTube External media: return YouTube thumbnail
-      if (
-        docData.type === MediaType.External &&
-        docData.externalUrl &&
-        isYouTubeUrl(docData.externalUrl)
-      ) {
-        const videoId = extractYouTubeVideoId(docData.externalUrl)
-        if (videoId) {
-          return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
-        }
-        return null
+      const docData = doc as {
+        type?: string
+        externalUrl?: string
+        url?: string
+        embedThumbnailUrl?: string | null
       }
-      // Other External media: no thumbnail
       if (docData.type === MediaType.External) {
+        // YouTube: use YouTube's CDN thumbnail directly (no API needed)
+        if (docData.externalUrl && isYouTubeUrl(docData.externalUrl)) {
+          const videoId = extractYouTubeVideoId(docData.externalUrl)
+          if (videoId) {
+            return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
+          }
+        }
+        // Vimeo (and other providers): use the thumbnail fetched by resolveEmbedHook
+        if (docData.embedThumbnailUrl) {
+          return docData.embedThumbnailUrl
+        }
         return null
       }
       // Uploaded files: return the main URL (false to disable if url is undefined)
       return docData.url || false
     },
+    // Skip Payload's buffer-based checkFileRestrictions.
+    // With clientUploads=true, Payload re-fetches the entire file from Vercel Blob into
+    // server memory before running restrictions — causing OOM/timeouts for large video files.
+    // Our validateMediaUploadHook already handles MIME type and size validation server-side.
+    allowRestrictedFileTypes: true,
     mimeTypes: [
       'image/*',
+      // Explicit video MIME types + extensions for browser file-picker compatibility.
+      // macOS Safari requires 'video/quicktime' or '.mov' explicitly — 'video/*' alone
+      // does not show .mov files in the file picker on all browsers.
       'video/*',
+      'video/mp4',
+      'video/quicktime',
+      '.mp4',
+      '.mov',
       'audio/*',
       'application/pdf',
       'application/msword',

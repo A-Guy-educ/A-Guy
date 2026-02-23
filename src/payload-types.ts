@@ -566,7 +566,7 @@ export interface Media {
   /**
    * Auto-detected from URL. Do not change manually.
    */
-  embedProvider?: ('youtube' | 'generic') | null;
+  embedProvider?: ('youtube' | 'vimeo' | 'generic') | null;
   /**
    * Provider-specific video/content ID
    */

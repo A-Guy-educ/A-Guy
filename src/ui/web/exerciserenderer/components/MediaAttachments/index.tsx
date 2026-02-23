@@ -38,8 +38,12 @@ function MediaItem({ media }: { media: Media }) {
       externalUrl?: string | null
     }
 
-    // YouTube embed
-    if (embedMedia.embedProvider === 'youtube' && embedMedia.embedVideoId && embedMedia.embedUrl) {
+    // YouTube / Vimeo embed — 16:9 responsive iframe
+    if (
+      (embedMedia.embedProvider === 'youtube' || embedMedia.embedProvider === 'vimeo') &&
+      embedMedia.embedVideoId &&
+      embedMedia.embedUrl
+    ) {
       return (
         <div
           className="relative w-full overflow-hidden rounded-lg"
@@ -47,7 +51,7 @@ function MediaItem({ media }: { media: Media }) {
         >
           <iframe
             src={embedMedia.embedUrl}
-            title={embedMedia.embedTitle || `YouTube video ${embedMedia.embedVideoId}`}
+            title={embedMedia.embedTitle || `Video ${embedMedia.embedVideoId}`}
             className="absolute inset-0 h-full w-full"
             loading="lazy"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

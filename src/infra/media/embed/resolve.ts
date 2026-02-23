@@ -8,6 +8,7 @@
 
 import type { EmbedMetadata } from './types'
 import { resolveYouTube } from './youtube'
+import { resolveVimeo } from './vimeo'
 
 /**
  * Resolve an external URL into embed metadata.
@@ -17,10 +18,10 @@ import { resolveYouTube } from './youtube'
  * 2. If a provider matches, return its metadata
  * 3. If no provider matches, return generic metadata (plain iframe)
  *
- * To add a new provider (e.g., Vimeo):
- * 1. Create src/infra/media/embed/vimeo.ts with resolveVimeo()
- * 2. Add 'vimeo' to the EmbedProvider type in types.ts
- * 3. Add resolveVimeo to the providers array below
+ * To add a new provider:
+ * 1. Create src/infra/media/embed/<provider>.ts with resolve<Provider>()
+ * 2. Add the provider name to the EmbedProvider type in types.ts
+ * 3. Add resolve<Provider> to the providers array below
  *
  * @param url - The external URL to resolve
  * @returns EmbedMetadata with provider info, embed URL, and optional title/thumbnail
@@ -28,7 +29,7 @@ import { resolveYouTube } from './youtube'
 export async function resolveEmbedUrl(url: string): Promise<EmbedMetadata> {
   // Try each provider in order. First match wins.
   // Each resolver returns null if the URL doesn't match its pattern.
-  const providers = [resolveYouTube]
+  const providers = [resolveYouTube, resolveVimeo]
 
   for (const resolve of providers) {
     const result = await resolve(url)

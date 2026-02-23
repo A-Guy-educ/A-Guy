@@ -6,7 +6,7 @@
  */
 
 /** Supported embed providers. Add new providers here. */
-export type EmbedProvider = 'youtube' | 'generic'
+export type EmbedProvider = 'youtube' | 'vimeo' | 'generic'
 
 /** Result of resolving an external URL to embed metadata */
 export interface EmbedMetadata {
