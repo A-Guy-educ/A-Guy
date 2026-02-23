@@ -345,15 +345,15 @@ export async function POST(req: NextRequest) {
 
     logger.info({ requestId, messageCount: messages.length }, 'Chat request received')
 
-    // Get MCP tools (with caching)
-    // Note: MCP server may not be available - gracefully handle if it fails
-    let mcpTools = {}
-    try {
-      const mcp = await getMCPClient()
-      mcpTools = await mcp.tools()
-    } catch (mcpError) {
-      logger.warn({ err: mcpError }, 'MCP server unavailable - using custom tools only')
-    }
+    // Get MCP tools (with caching) - disabled due to connection issues
+    // let mcpTools = {}
+    // try {
+    //   const mcp = await getMCPClient()
+    //   mcpTools = await mcp.tools()
+    // } catch (mcpError) {
+    //   logger.warn({ err: mcpError }, 'MCP server unavailable - using custom tools only')
+    // }
+    const mcpTools = {}
 
     // Combine MCP tools with custom Cody tools
     const allTools = {
