@@ -4,7 +4,6 @@ import React, { useCallback } from 'react'
 import type { QuestionAxisBlock } from '@/server/payload/collections/Exercises/types'
 import type { AxisSpecV1 } from '@/infra/contracts/graphics/axis.v1'
 import { InlineRichTextEditor } from './InlineRichTextEditor'
-import { HintSolutionPanel } from './HintSolutionPanel'
 import { AxisCanvas } from '../components/axis/AxisCanvas'
 import { AxisConfigPanel } from '../components/axis/AxisConfigPanel'
 import { AxisPointsPanel } from '../components/axis/AxisPointsPanel'
@@ -121,15 +120,6 @@ export const AxisEditor: React.FC<AxisEditorProps> = ({ block, onChange }) => {
             />
           </div>
         </div>
-      </div>
-
-      <div className="question-editor-section">
-        <HintSolutionPanel
-          hint={block.hint}
-          solution={block.solution}
-          fullSolution={block.fullSolution}
-          onChange={(field, value) => onChange({ ...block, [field]: value })}
-        />
       </div>
     </div>
   )

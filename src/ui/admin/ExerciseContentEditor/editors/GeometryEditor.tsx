@@ -4,7 +4,6 @@ import React, { useCallback } from 'react'
 import type { QuestionGeometryBlock } from '@/server/payload/collections/Exercises/types'
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
 import { InlineRichTextEditor } from './InlineRichTextEditor'
-import { HintSolutionPanel } from './HintSolutionPanel'
 import { GeometryCanvasWithToolbar } from '../components/geometry/GeometryCanvasWithToolbar'
 import { CanvasConfigPanel } from '../components/geometry/CanvasConfigPanel'
 import { PointsPanel } from '../components/geometry/PointsPanel'
@@ -173,15 +172,6 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
             onGridToggle={handleGridToggle}
           />
         </div>
-      </div>
-
-      <div className="question-editor-section">
-        <HintSolutionPanel
-          hint={block.hint}
-          solution={block.solution}
-          fullSolution={block.fullSolution}
-          onChange={(field, value) => onChange({ ...block, [field]: value })}
-        />
       </div>
     </div>
   )

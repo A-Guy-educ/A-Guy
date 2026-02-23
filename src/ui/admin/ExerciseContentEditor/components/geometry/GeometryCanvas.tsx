@@ -233,25 +233,24 @@ function syncLineLabels(
       elementsRef.current.delete(elemId)
     }
 
+    const f = fromEl as unknown as { X: () => number; Y: () => number }
+    const t = toEl as unknown as { X: () => number; Y: () => number }
     const offset = line.label.position === 'b' ? -1.5 : 1.5
     const el = board.create(
       'text',
-      [
-        () =>
-          ((fromEl as unknown as { X: () => number }).X() +
-            (toEl as unknown as { X: () => number }).X()) /
-          2,
-        () =>
-          ((fromEl as unknown as { Y: () => number }).Y() +
-            (toEl as unknown as { Y: () => number }).Y()) /
-            2 +
-          offset,
-        line.label.value,
-      ],
+      [() => (f.X() + t.X()) / 2, () => (f.Y() + t.Y()) / 2 + offset, line.label.value],
       {
         fontSize: line.label.fontSize || 12,
         anchorX: 'middle',
         anchorY: 'middle',
+        rotate: () => {
+          const dx = t.X() - f.X()
+          const dy = t.Y() - f.Y()
+          let deg = (Math.atan2(dy, dx) * 180) / Math.PI
+          if (deg > 90) deg -= 180
+          if (deg < -90) deg += 180
+          return deg
+        },
         fixed: true,
       },
     )

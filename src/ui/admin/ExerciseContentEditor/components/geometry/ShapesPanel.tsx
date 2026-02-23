@@ -37,6 +37,10 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
     onRectanglesChange([...rectangles, rect])
   }
 
+  const updateTri = (tIdx: number, updates: Partial<GeoTriangle>) => {
+    onTrianglesChange(triangles.map((t, i) => (i === tIdx ? { ...t, ...updates } : t)))
+  }
+
   const updateTriPoint = (tIdx: number, pIdx: number, value: string) => {
     onTrianglesChange(
       triangles.map((t, i) => {
@@ -46,6 +50,10 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
         return { ...t, points: newPts }
       }),
     )
+  }
+
+  const updateRect = (rIdx: number, updates: Partial<GeoRectangle>) => {
+    onRectanglesChange(rectangles.map((r, i) => (i === rIdx ? { ...r, ...updates } : r)))
   }
 
   const updateRectPoint = (rIdx: number, pIdx: number, value: string) => {
@@ -66,7 +74,7 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
       </label>
       <div className="panel-items-list">
         {triangles.map((tri, tIdx) => (
-          <div key={tIdx} className="panel-item-row">
+          <div key={tIdx} className="panel-item-row panel-item-row--wrap">
             {tri.points.map((pt, pIdx) => (
               <select
                 key={pIdx}
@@ -81,6 +89,27 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
                 ))}
               </select>
             ))}
+            <div className="panel-field">
+              <span className="panel-field-label">Fill</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <input
+                  type="color"
+                  className="panel-color-input"
+                  value={tri.fill || '#cccccc'}
+                  onChange={(e) => updateTri(tIdx, { fill: e.target.value })}
+                />
+                {tri.fill && (
+                  <button
+                    type="button"
+                    className="panel-remove-btn"
+                    title="Remove fill"
+                    onClick={() => updateTri(tIdx, { fill: undefined })}
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+            </div>
             <button
               type="button"
               className="panel-remove-btn"
@@ -106,7 +135,7 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
       </label>
       <div className="panel-items-list">
         {rectangles.map((rect, rIdx) => (
-          <div key={rIdx} className="panel-item-row">
+          <div key={rIdx} className="panel-item-row panel-item-row--wrap">
             {rect.points.map((pt, pIdx) => (
               <select
                 key={pIdx}
@@ -121,6 +150,27 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
                 ))}
               </select>
             ))}
+            <div className="panel-field">
+              <span className="panel-field-label">Fill</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <input
+                  type="color"
+                  className="panel-color-input"
+                  value={rect.fill || '#cccccc'}
+                  onChange={(e) => updateRect(rIdx, { fill: e.target.value })}
+                />
+                {rect.fill && (
+                  <button
+                    type="button"
+                    className="panel-remove-btn"
+                    title="Remove fill"
+                    onClick={() => updateRect(rIdx, { fill: undefined })}
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+            </div>
             <button
               type="button"
               className="panel-remove-btn"
