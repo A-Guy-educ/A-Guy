@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { AxisSpecV1 } from '@/infra/contracts/graphics/axis.v1'
 import type { JXGBoard, JXGElement } from 'jsxgraph'
 import { JSXGraphBoard } from '../shared/JSXGraphBoard'
@@ -185,6 +185,9 @@ export const AxisCanvas: React.FC<AxisCanvasProps> = ({ id, axis, onPointMoved }
     }
   }, [axis, onPointMoved])
 
+  const syncToBoardRef = useRef(syncToBoard)
+  syncToBoardRef.current = syncToBoard
+
   useEffect(() => {
     syncToBoard()
   }, [syncToBoard])
@@ -192,14 +195,18 @@ export const AxisCanvas: React.FC<AxisCanvasProps> = ({ id, axis, onPointMoved }
   const handleBoardReady = useCallback((board: JXGBoard) => {
     boardRef.current = board
     elementsRef.current.clear()
+    syncToBoardRef.current()
   }, [])
 
-  const bbox: [number, number, number, number] = [
-    axis.viewport?.xMin ?? -10,
-    axis.viewport?.yMax ?? 10,
-    axis.viewport?.xMax ?? 10,
-    axis.viewport?.yMin ?? -10,
-  ]
+  const bbox = useMemo<[number, number, number, number]>(
+    () => [
+      axis.viewport?.xMin ?? -10,
+      axis.viewport?.yMax ?? 10,
+      axis.viewport?.xMax ?? 10,
+      axis.viewport?.yMin ?? -10,
+    ],
+    [axis.viewport?.xMin, axis.viewport?.yMax, axis.viewport?.xMax, axis.viewport?.yMin],
+  )
 
   return (
     <JSXGraphBoard

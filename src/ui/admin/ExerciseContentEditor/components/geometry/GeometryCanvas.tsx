@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
 import type { JXGBoard, JXGElement } from 'jsxgraph'
 import { JSXGraphBoard } from '../shared/JSXGraphBoard'
@@ -69,6 +69,9 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
     }
   }, [geometry, onPointMoved])
 
+  const syncToBoardRef = useRef(syncToBoard)
+  syncToBoardRef.current = syncToBoard
+
   useEffect(() => {
     syncToBoard()
   }, [syncToBoard])
@@ -76,16 +79,24 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   const handleBoardReady = useCallback((board: JXGBoard) => {
     boardRef.current = board
     elementsRef.current.clear()
+    syncToBoardRef.current()
     const b = board as unknown as Record<string, (...args: unknown[]) => unknown>
     b.on('down', (e: unknown) => {
       if (modeRef.current !== 'addPoint') return
       const coords = b.getUsrCoordsOfMouse(e) as number[]
-      onCanvasClickRef.current?.(round1(coords[1]), round1(coords[2]))
+      const x = coords.length > 2 ? coords[1] : coords[0]
+      const y = coords.length > 2 ? coords[2] : coords[1]
+      if (typeof x === 'number' && typeof y === 'number' && !isNaN(x) && !isNaN(y)) {
+        onCanvasClickRef.current?.(round1(x), round1(y))
+      }
     })
   }, [])
 
   const { canvas } = geometry
-  const bbox: [number, number, number, number] = [0, canvas.height, canvas.width, 0]
+  const bbox = useMemo<[number, number, number, number]>(
+    () => [0, canvas.height, canvas.width, 0],
+    [canvas.width, canvas.height],
+  )
 
   return (
     <div
