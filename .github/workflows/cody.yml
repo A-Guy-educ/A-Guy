@@ -32,7 +32,7 @@ on:
         default: ''
       from_stage:
         description: 'Stage to restart from (for rerun)'
-        required: false
+        required: falsevalidate
         type: string
         default: ''
 
