@@ -36,7 +36,7 @@ export const VideoMedia: React.FC<MediaProps> = (props) => {
       <video
         autoPlay
         className={cn(videoClassName)}
-        controls="false"
+        {...({ controls: 'false' } as any)}
         loop
         muted
         onClick={onClick}
