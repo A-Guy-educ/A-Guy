@@ -11,6 +11,7 @@ import type { CodyTask, Board } from '../types'
 import { KanbanBoard } from './KanbanBoard'
 import { TaskDetail } from './TaskDetail'
 import { CreateTaskDialog } from './CreateTaskDialog'
+import { CodyChat } from './CodyChat'
 import { Button } from '@/ui/web/components/button'
 import {
   Select,
@@ -19,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/ui/web/components/select'
+import { MessageSquare, X } from 'lucide-react'
 import { POLLING_INTERVALS } from '../constants'
 
 const API_BASE = '/api/cody'
@@ -72,6 +74,7 @@ export function CodyDashboard() {
   const [retryAfter, setRetryAfter] = useState<string | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [dateFilter, setDateFilter] = useState<string>('30d')
+  const [showChat, setShowChat] = useState(false)
 
   // Fetch boards
   const fetchBoards = useCallback(async () => {
@@ -233,7 +236,17 @@ export function CodyDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h1 className="text-xl font-semibold text-foreground">Cody Operations</h1>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Chat toggle */}
+            <Button
+              variant={showChat ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setShowChat(!showChat)}
+              className="gap-2"
+            >
+              {showChat ? <X className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+              {showChat ? 'Close Chat' : 'Chat'}
+            </Button>
             {/* Date filter */}
             <Select value={dateFilter} onValueChange={setDateFilter}>
               <SelectTrigger className="w-40">
@@ -268,13 +281,19 @@ export function CodyDashboard() {
         </div>
       </div>
 
-      {/* Detail Panel */}
-      <div className="w-96 border-l border-border">
-        <TaskDetail
-          task={selectedTask}
-          onClose={() => setSelectedTask(null)}
-          onRefresh={fetchTasks}
-        />
+      {/* Right Panel: Chat or Task Detail */}
+      <div
+        className={`${showChat ? 'w-[400px]' : 'w-96'} border-l border-border transition-all duration-200`}
+      >
+        {showChat ? (
+          <CodyChat />
+        ) : (
+          <TaskDetail
+            task={selectedTask}
+            onClose={() => setSelectedTask(null)}
+            onRefresh={fetchTasks}
+          />
+        )}
       </div>
 
       {/* Create Dialog */}
