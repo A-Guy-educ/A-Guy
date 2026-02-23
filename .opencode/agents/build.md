@@ -35,14 +35,54 @@ For each step in the plan:
 
 ### How to Invoke Test Writer
 
-In your message to the agent, use:
+**CRITICAL: You MUST provide source file context when invoking test-writer.** The test-writer cannot read source files during its execution, so you must provide the context.
+
+In your message to the agent, use this template:
 
 ```
 @test-writer
 
+## Source File Exports
+// COPY AND PASTE the actual function/component signatures from the source file
+// This is REQUIRED so the test-writer knows the correct API to test
+export function myFunction(param: string): Promise<Result> {
+  // ... (actual code)
+}
+
+## Existing Similar Test (for mock patterns)
+// COPY relevant mock patterns from an existing test file in tests/unit/
+// This shows the test-writer how mocking is done in this project
+
 Write tests for this plan step:
 
-<copy the plan step details here>
+// PASTE the plan step details
+```
+
+**Example:**
+
+```
+@test-writer
+
+## Source File Exports
+export function generateSlug({ value, operation, siblingData }: FieldHookArgs): Promise<string> {
+  const title = siblingData?.title
+  if (!title) return value || undefined
+  // ...
+}
+
+## Existing Similar Test (for mock patterns)
+// From tests/unit/collections/exercises-hooks.test.ts
+vi.mock('@/server/payload/collections/Exercises/hooks', () => {
+  const generateSlug = vi.fn()
+  generateSlug.mockImplementation(async ({ value, operation, siblingData }) => {
+    // mock implementation
+  })
+  return { generateSlug }
+})
+
+Write tests for this plan step:
+- Add MAX_SLUG_ATTEMPTS = 100 constant to bound the slug generation loop
+- Change while (true) to for loop with max iterations
 ```
 
 The test-writer will create tests in `tests/unit/` or `tests/int/`.

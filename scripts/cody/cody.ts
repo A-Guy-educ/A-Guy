@@ -48,6 +48,7 @@ import {
   handlePlanGapValidation,
   handleBuildValidation,
   handlePostBuildTsc,
+  handlePostBuildTests,
   handleVerifyResult,
 } from './stage-hooks'
 
@@ -784,10 +785,20 @@ async function runImplPipeline(
       handlePlanGapValidation(hookOptions)
     }
 
-    // Build content validation + tsc check
+    // Build content validation + tsc check + unit tests gate
     if (stage === 'build') {
       handleBuildValidation(hookOptions)
       handlePostBuildTsc(hookOptions)
+
+      // Pre-commit test gate: catch test failures BEFORE committing code
+      // This is critical for catching test logic errors (like vi.mock hoisting issues)
+      // that the autofix agent cannot fix
+      const testResult = handlePostBuildTests(hookOptions)
+      if (!testResult.passed) {
+        // Tests failed - throw error to fail the pipeline
+        // This will trigger supervisor retry with test error feedback
+        throw new Error(`Unit tests failed after build. Fix and re-run.\n\n${testResult.output}`)
+      }
     }
 
     // Verify failure check (autofix loop kept inline)

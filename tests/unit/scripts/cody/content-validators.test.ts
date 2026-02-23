@@ -15,6 +15,7 @@ import {
   validateSpecFile,
   validateBuildReport,
   validateBuildFile,
+  validateBuildTests,
   extractVerifySummary,
   isVerifyFailed,
   validateGapReport,
@@ -281,6 +282,112 @@ Some test failure output
 
 ## Result: FAIL`
       expect(isVerifyFailed(fullOutput)).toBe(true)
+    })
+  })
+
+  // ========================================================================
+  // validateBuildTests
+  // ========================================================================
+
+  describe('validateBuildTests', () => {
+    it('returns hasTests: true when Tests Written section has content', () => {
+      const buildContent = `# Build
+
+## Changes
+- Added feature
+
+## Tests Written
+- tests/unit/foo.test.ts`
+      const result = validateBuildTests(buildContent)
+      expect(result.hasTests).toBe(true)
+      expect(result.warning).toBe('')
+    })
+
+    it('returns hasTests: true for multiple tests listed', () => {
+      const buildContent = `# Build
+
+## Tests Written
+- tests/unit/foo.test.ts
+- tests/unit/bar.test.ts
+- tests/int/baz.int.spec.ts`
+      const result = validateBuildTests(buildContent)
+      expect(result.hasTests).toBe(true)
+    })
+
+    it('returns hasTests: false when Tests Written section is missing', () => {
+      const buildContent = `# Build
+
+## Changes
+- Added feature`
+      const result = validateBuildTests(buildContent)
+      expect(result.hasTests).toBe(false)
+      expect(result.warning).toContain('missing')
+    })
+
+    it('returns hasTests: false when Tests Written says "no tests"', () => {
+      const buildContent = `# Build
+
+## Tests Written
+No tests written - CSS-only change`
+      const result = validateBuildTests(buildContent)
+      expect(result.hasTests).toBe(false)
+      expect(result.warning).toContain('no tests')
+    })
+
+    it('returns hasTests: false when Tests Written says "None"', () => {
+      const buildContent = `# Build
+
+## Tests Written
+None - this is a documentation update`
+      const result = validateBuildTests(buildContent)
+      expect(result.hasTests).toBe(false)
+    })
+
+    it('returns hasTests: false when Tests Written says "N/A"', () => {
+      const buildContent = `# Build
+
+## Tests Written
+N/A - config change only`
+      const result = validateBuildTests(buildContent)
+      expect(result.hasTests).toBe(false)
+    })
+
+    it('returns hasTests: false when Tests Written says "not applicable"', () => {
+      const buildContent = `# Build
+
+## Tests Written
+Not applicable for this task type`
+      const result = validateBuildTests(buildContent)
+      expect(result.hasTests).toBe(false)
+    })
+
+    it('returns hasTests: false when Tests Written says "skipped"', () => {
+      const buildContent = `# Build
+
+## Tests Written
+Skipped - no testable logic`
+      const result = validateBuildTests(buildContent)
+      expect(result.hasTests).toBe(false)
+    })
+
+    it('is case insensitive for section header', () => {
+      const buildContent = `# Build
+
+## tests written
+- tests/unit/foo.test.ts`
+      const result = validateBuildTests(buildContent)
+      expect(result.hasTests).toBe(true)
+    })
+
+    it('handles empty Tests Written section', () => {
+      const buildContent = `# Build
+
+## Tests Written
+
+## Quality`
+      const result = validateBuildTests(buildContent)
+      // Empty section after the header but before next ## - counts as no tests
+      expect(result.hasTests).toBe(false)
     })
   })
 
