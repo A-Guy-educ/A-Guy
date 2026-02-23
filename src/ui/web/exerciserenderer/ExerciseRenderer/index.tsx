@@ -13,6 +13,7 @@ import { Card } from '@/ui/web/components/card'
 import { XCircle } from 'lucide-react'
 import type {
   ExerciseRendererProps,
+  ContentBlock,
   QuestionBlock,
   QuestionSelectTrueFalseBlock,
   QuestionSelectMcqBlock,
@@ -23,8 +24,11 @@ import type {
   UserAnswer,
   CheckResult,
 } from '../types'
+import type { GeometrySpecV1, AxisSpecV1 } from '@/infra/contracts'
 import { RichTextRenderer } from '../blocks/RichTextRenderer'
 import { SvgRenderer } from '../blocks/SvgRenderer'
+import { GeometryRenderer } from '../blocks/GeometryRenderer'
+import { AxisRenderer } from '../blocks/AxisRenderer'
 import { TrueFalseQuestion } from '../questions/TrueFalseQuestion'
 import { McqQuestion } from '../questions/McqQuestion'
 import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
@@ -298,6 +302,23 @@ export function ExerciseRenderer({
           {(() => {
             let questionIndex = 0
             return content.blocks.map((block) => {
+              // Geometry/Axis — media-only display blocks (type not in ContentBlock union)
+              const b = block as ContentBlock & { geometry?: unknown; axis?: unknown }
+              if (b.type === ('question_geometry' as string)) {
+                return (
+                  <div key={b.id}>
+                    <GeometryRenderer blockId={b.id} spec={b.geometry as GeometrySpecV1} />
+                  </div>
+                )
+              }
+              if (b.type === ('question_axis' as string)) {
+                return (
+                  <div key={b.id}>
+                    <AxisRenderer blockId={b.id} spec={b.axis as AxisSpecV1} />
+                  </div>
+                )
+              }
+
               // Rich text block - just render content
               if (block.type === 'rich_text') {
                 return (
@@ -329,10 +350,6 @@ export function ExerciseRenderer({
                       checkAnswerText={t('checkAnswer')}
                       correctText={t('correct')}
                       incorrectText={t('incorrect')}
-                      hint={svgBlock.hint}
-                      solution={svgBlock.solution}
-                      fullSolution={svgBlock.fullSolution}
-                      t={t}
                     >
                       <SvgRenderer
                         block={svgBlock}
@@ -383,12 +400,6 @@ export function ExerciseRenderer({
                 !(question.type === 'question_select' && question.variant === 'true_false') &&
                 question.type !== 'question_table'
 
-              // All question block types have optional hint/solution/fullSolution
-              const questionHint = (question as { hint?: typeof question.prompt }).hint
-              const questionSolution = (question as { solution?: typeof question.prompt }).solution
-              const questionFullSolution = (question as { fullSolution?: typeof question.prompt })
-                .fullSolution
-
               return (
                 <QuestionCard
                   key={question.id}
@@ -403,10 +414,6 @@ export function ExerciseRenderer({
                   incorrectText={t('incorrect')}
                   questionLabel={questionLabel}
                   dir={dir}
-                  hint={questionHint}
-                  solution={questionSolution}
-                  fullSolution={questionFullSolution}
-                  t={t}
                 >
                   {/* Render appropriate question component based on type */}
                   {question.type === 'question_select' && question.variant === 'true_false' && (
