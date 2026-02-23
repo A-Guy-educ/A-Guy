@@ -2,11 +2,10 @@
  * @fileType utility
  * @domain cody
  * @pattern github-client
- * @ai-summary GitHub API client with caching, throttling, and ETag support
+ * @ai-summary GitHub API client with caching and manual rate limit handling
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Octokit } from '@octokit/rest'
-import { throttling } from '@octokit/plugin-throttling'
 import {
   GITHUB_OWNER,
   GITHUB_REPO,
@@ -63,7 +62,7 @@ function setCache<T>(
   })
 }
 
-// ============ Octokit Singleton with Throttling ============
+// ============ Octokit Singleton ============
 
 let octokitInstance: Octokit | null = null
 
@@ -77,34 +76,9 @@ function getOctokit(): Octokit {
     throw new Error('GITHUB_TOKEN not configured')
   }
 
-  // Create Octokit with throttling plugin to auto-handle rate limits
+  // Create Octokit instance - rate limiting handled manually in API routes
   octokitInstance = new Octokit({
     auth: token,
-    plugins: [
-      // @ts-expect-error - throttling plugin types
-      throttling({
-        // Throttle based on remaining calls in the hourly window
-        throttle: {
-          onRateLimit: (retryAfter: number, options: { request: { retryCount: number } }) => {
-            console.warn(`[Cody] Rate limit hit. Retrying after ${retryAfter}s.`)
-            // Retry twice on rate limit
-            if (options.request.retryCount <= 2) {
-              console.log(`[Cody] Retrying request (retry #${options.request.retryCount + 1})`)
-              return true
-            }
-            return false
-          },
-          // Handle secondary rate limit (abuse detection)
-          onSecondaryRateLimit: (
-            _retryAfter: number,
-            _options: { request: { retryCount: number } },
-          ) => {
-            console.error(`[Cody] Secondary rate limit hit. Not retrying.`)
-            return false // Do not retry, let it fail
-          },
-        },
-      }),
-    ],
   })
 
   return octokitInstance
