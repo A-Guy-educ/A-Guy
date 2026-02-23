@@ -324,16 +324,19 @@ export async function POST(req: NextRequest) {
   try {
     // Skip auth check for now - open access for testing
 
-    // Validate environment
+    // Validate environment - AI SDK uses GOOGLE_GENERATIVE_AI_API_KEY
     const githubToken = process.env.GITHUB_TOKEN
-    const geminiApiKey = process.env.GEMINI_API_KEY
+    const geminiApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
 
     if (!githubToken) {
       return NextResponse.json({ error: 'GITHUB_TOKEN is not configured' }, { status: 503 })
     }
 
     if (!geminiApiKey) {
-      return NextResponse.json({ error: 'GEMINI_API_KEY is not configured' }, { status: 503 })
+      return NextResponse.json(
+        { error: 'GOOGLE_GENERATIVE_AI_API_KEY is not configured' },
+        { status: 503 },
+      )
     }
 
     const body = await req.json()
@@ -345,15 +348,11 @@ export async function POST(req: NextRequest) {
 
     logger.info({ requestId, messageCount: messages.length }, 'Chat request received')
 
-    // Get MCP tools (with caching)
-    const mcp = await getMCPClient()
-    const mcpTools = await mcp.tools()
-
-    // Combine MCP tools with custom Cody tools
-    const allTools = {
-      ...mcpTools,
-      ...customTools,
-    }
+    // Skip AI for now - just return a test response
+    // const testResponse = '0:"Hello! I can help you with Cody tasks. How can I assist you?"'
+    // return new NextResponse(testResponse, {
+    //   headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    // })
 
     // Convert messages to AI SDK format
     const aiMessages = messages.map((msg: { role: string; content: string }) => ({
@@ -361,25 +360,31 @@ export async function POST(req: NextRequest) {
       content: msg.content,
     }))
 
-    // Stream the response
+    logger.info({ requestId, messageCount: aiMessages.length }, 'Calling AI with messages')
+
+    // Use custom tools only (skip MCP which may be causing issues)
+    const allTools = customTools
+
+    // Use gemini-3.1-pro-preview as specified
     const result = streamText({
-      model: google('gemini-2.5-flash'),
+      model: google('gemini-3.1-pro-preview'),
       tools: allTools,
       system: SYSTEM_PROMPT,
       messages: aiMessages,
-      maxSteps: 15, // Allow multi-step tool calling
+      maxSteps: 10,
     })
 
     // Return streaming response
     return result.toDataStreamResponse()
   } catch (error) {
     logger.error({ err: error, requestId }, 'Chat route error')
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        requestId,
-      },
-      { status: 500 },
-    )
+
+    // Return error as AI data stream
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStream = `0:${JSON.stringify(errorMessage)}\n`
+    return new NextResponse(errorStream, {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    })
   }
 }
