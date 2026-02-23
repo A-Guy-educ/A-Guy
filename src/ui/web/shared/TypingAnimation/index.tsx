@@ -30,7 +30,7 @@ export function TypingAnimation({ text, speed = 50, onComplete, className }: Typ
   return (
     <div className={cn('font-mono', className)}>
       {displayedText}
-      {!isComplete && <span className="inline-block w-2 h-5 bg-foreground ml-1 animate-pulse" />}
+      {!isComplete && <span className="inline-block w-2 h-5 bg-foreground ms-1 animate-pulse" />}
     </div>
   )
 }

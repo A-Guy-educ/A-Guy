@@ -1,7 +1,7 @@
 {
   "task_type": "refactor",
   "risk_level": "low",
-  "confidence": 1.0,
+  "confidence": 1,
   "primary_domain": "frontend",
   "scope": [
     "src/ui/web/chat/ChatInterface/index.tsx",
@@ -17,7 +17,11 @@
   "assumptions": [],
   "input_quality": {
     "level": "detailed_plan",
-    "skip_stages": ["spec", "architect"],
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
     "reasoning": "Task provides exact file paths, line numbers, and specific CSS class replacements. Has Step to Test section with verification steps. Promoted spec.md and plan.md will document the requirements and implementation plan."
-  }
+  },
+  "pipeline": "spec_execute_verify"
 }

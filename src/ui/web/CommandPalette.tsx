@@ -46,7 +46,7 @@ export function CommandPalette() {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50" onClick={() => setOpen(false)}>
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl">
+      <div className="fixed start-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl">
         <div onClick={(e) => e.stopPropagation()}>
           <Command className="rounded-lg border shadow-md">
             <CommandInput placeholder="Type a command or search..." />
@@ -55,11 +55,11 @@ export function CommandPalette() {
 
               <CommandGroup heading="Navigation">
                 <CommandItem onSelect={() => handleSelect(() => router.push('/'))}>
-                  <Home className="mr-2 h-4 w-4" />
+                  <Home className="me-2 h-4 w-4" />
                   <span>Home</span>
                 </CommandItem>
                 <CommandItem onSelect={() => handleSelect(() => router.push('/admin'))}>
-                  <Settings className="mr-2 h-4 w-4" />
+                  <Settings className="me-2 h-4 w-4" />
                   <span>Admin</span>
                 </CommandItem>
               </CommandGroup>
@@ -68,13 +68,13 @@ export function CommandPalette() {
 
               <CommandGroup heading="Actions">
                 <CommandItem onSelect={() => handleSelect(() => console.log('Search triggered'))}>
-                  <Search className="mr-2 h-4 w-4" />
+                  <Search className="me-2 h-4 w-4" />
                   <span>Search content</span>
                 </CommandItem>
                 <CommandItem
                   onSelect={() => handleSelect(() => console.log('New document triggered'))}
                 >
-                  <FileText className="mr-2 h-4 w-4" />
+                  <FileText className="me-2 h-4 w-4" />
                   <span>New document</span>
                 </CommandItem>
               </CommandGroup>
