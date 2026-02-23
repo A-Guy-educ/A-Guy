@@ -8,7 +8,6 @@ import type { Metadata } from 'next'
 
 import { InitTheme } from '@/ui/web/providers/Theme/InitTheme'
 import '@/app/(frontend)/globals.css'
-import '@copilotkit/react-ui/styles.css'
 
 export const metadata: Metadata = {
   title: 'Cody Operations Dashboard',

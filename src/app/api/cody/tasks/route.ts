@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
 
     // Generate task ID prefix if mode is provided
     const taskIdPrefix = mode ? `[${new Date().toISOString().slice(2, 8).replace('-', '')}-auto-XX] ` : ''
-    const fullTitle = title.startsWith['['] ? title : `${taskIdPrefix}${title}`
+    const fullTitle = title.startsWith('[') ? title : `${taskIdPrefix}${title}`
 
     // Create the issue in GitHub
     const issue = await createIssue({
