@@ -2,81 +2,67 @@
  * @fileType api-endpoint
  * @domain cody
  * @pattern copilotkit-runtime
- * @ai-summary CopilotKit runtime endpoint for AI chat in Cody dashboard
+ * @ai-summary Simple AI chat endpoint for Cody dashboard
  */
-import '@/infra/config/server-init'
-
-import OpenAI from 'openai'
-import { GoogleGenerativeAIAdapter, OpenAIAdapter } from '@copilotkit/runtime'
-import { CopilotRuntime } from '@copilotkit/runtime/v2'
-import { InMemoryAgentRunner } from '@copilotkit/runtime/v2'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import { logger } from '@/infra/utils/logger/logger'
 import { NextRequest, NextResponse } from 'next/server'
 
-export const runtime = 'edge'
+// Use Node.js runtime because we use GoogleGenerativeAI
+export const runtime = 'nodejs'
 
-// Create the CopilotRuntime instance with proper configuration
-const copilotKit = new CopilotRuntime({
-  runner: new InMemoryAgentRunner(),
-  agents: {},
-})
-
-// Determine which adapter to use based on available API keys
-const geminiApiKey = process.env.GEMINI_API_KEY
-const openaiApiKey = process.env.OPENAI_API_KEY
-
-let serviceAdapter: GoogleGenerativeAIAdapter | OpenAIAdapter | null = null
-
-if (geminiApiKey) {
-  // Use GoogleGenerativeAIAdapter with GEMINI_API_KEY
-  logger.info({ adapter: 'GoogleGenerativeAIAdapter' }, 'Using Gemini adapter')
-  serviceAdapter = new GoogleGenerativeAIAdapter({ apiKey: geminiApiKey })
-} else if (openaiApiKey) {
-  // Use OpenAIAdapter with OPENAI_API_KEY
-  logger.info({ adapter: 'OpenAIAdapter' }, 'Using OpenAI adapter')
-  const openai = new OpenAI({ apiKey: openaiApiKey })
-  serviceAdapter = new OpenAIAdapter({ openai })
-}
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 export async function GET() {
-  return NextResponse.json({ status: 'CopilotKit endpoint ready' })
+  return NextResponse.json({ status: 'Chat endpoint ready' })
 }
 
 export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID()
 
   try {
-    logger.info({ requestId }, 'CopilotKit request received')
-
-    // Env validation: Check that at least one of GEMINI_API_KEY or OPENAI_API_KEY is set
-    if (!geminiApiKey && !openaiApiKey) {
-      logger.warn({ requestId }, 'No LLM API key configured for CopilotKit')
-      return NextResponse.json(
-        {
-          error: 'No LLM API key configured. Please set GEMINI_API_KEY or OPENAI_API_KEY.',
-          requestId,
-        },
-        { status: 503 },
-      )
+    const geminiApiKey = process.env.GEMINI_API_KEY
+    if (!geminiApiKey) {
+      return NextResponse.json({ error: 'GEMINI_API_KEY is not configured' }, { status: 503 })
     }
 
-    if (!serviceAdapter) {
-      return NextResponse.json(
-        {
-          error: 'No LLM adapter available',
-          requestId,
-        },
-        { status: 500 },
-      )
+    const body = await request.json()
+    const { message, history = [] } = body
+
+    if (!message) {
+      return NextResponse.json({ error: 'Message is required' }, { status: 400 })
     }
 
-    // Handle the request through CopilotRuntime with the adapter
-    // @ts-expect-error - handleServiceAdapter exists at runtime but types are incomplete
-    const response = await copilotKit.handleServiceAdapter(request, serviceAdapter)
+    logger.info({ requestId, message: message.slice(0, 100) }, 'Chat request received')
 
-    return response
+    // Build system prompt
+    const systemPrompt = `You are a helpful assistant for the Cody Operations Dashboard. Help users understand the dashboard, manage issues, and answer questions.`
+
+    // Create chat with history
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      systemInstruction: systemPrompt,
+    })
+
+    // Create chat with history
+    const chat = model.startChat({
+      history: history.map((msg: { role: string; content: string }) => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }],
+      })),
+    })
+
+    // Send message
+    const result = await chat.sendMessage(message)
+    const response = result.response
+    const text = response.text()
+
+    return NextResponse.json({
+      response: text,
+      requestId,
+    })
   } catch (error) {
-    logger.error({ err: error, requestId }, 'CopilotKit route error')
+    logger.error({ err: error, requestId }, 'Chat route error')
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Internal server error',
