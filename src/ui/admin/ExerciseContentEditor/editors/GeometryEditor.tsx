@@ -46,6 +46,18 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
     [geo.elements.points, updateElements],
   )
 
+  const handleMultiPointMoved = useCallback(
+    (updates: Array<{ name: string; x: number; y: number }>) => {
+      const map = new Map(updates.map((u) => [u.name, u]))
+      const newPoints = geo.elements.points.map((p) => {
+        const u = map.get(p.name)
+        return u ? { ...p, x: u.x, y: u.y } : p
+      })
+      updateElements({ points: newPoints })
+    },
+    [geo.elements.points, updateElements],
+  )
+
   const handlePointAdded = useCallback(
     (x: number, y: number) => {
       const nextIndex = geo.elements.points.length + 1
@@ -156,6 +168,7 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
             id={`geo-canvas-${block.id}`}
             geometry={geo}
             onPointMoved={handlePointMoved}
+            onMultiPointMoved={handleMultiPointMoved}
             onPointAdded={handlePointAdded}
             onGridToggle={handleGridToggle}
           />

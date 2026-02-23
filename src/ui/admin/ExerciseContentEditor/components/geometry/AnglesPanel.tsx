@@ -90,6 +90,26 @@ export const AnglesPanel: React.FC<AnglesPanelProps> = ({ angles, points, onChan
                 <option value="square">Square</option>
               </select>
             </div>
+            <div className="panel-field">
+              <span className="panel-field-label">Color</span>
+              <input
+                type="color"
+                className="panel-color-input"
+                value={angle.color || '#3366cc'}
+                onChange={(e) => handleUpdate(index, { color: e.target.value })}
+              />
+            </div>
+            <div className="panel-field">
+              <span className="panel-field-label">Size</span>
+              <input
+                type="number"
+                className="panel-field-input panel-field-input--short"
+                value={angle.arcRadius || 30}
+                min={10}
+                max={100}
+                onChange={(e) => handleUpdate(index, { arcRadius: Number(e.target.value) || 30 })}
+              />
+            </div>
             <button type="button" className="panel-remove-btn" onClick={() => handleRemove(index)}>
               <Trash2 size={14} />
             </button>
