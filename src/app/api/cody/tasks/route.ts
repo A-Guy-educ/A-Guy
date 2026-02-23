@@ -114,6 +114,9 @@ export async function GET(req: NextRequest) {
             merged_at: pr.merged_at,
             html_url: pr.html_url,
           } : null,
+          // Include assignees for Execute button logic
+          assignees: issue.assignees,
+          isCodyAssigned: issue.isCodyAssigned,
         }
       })
     )

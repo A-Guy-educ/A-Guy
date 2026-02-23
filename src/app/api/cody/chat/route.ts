@@ -365,9 +365,10 @@ export async function POST(req: NextRequest) {
     // Use custom tools only (skip MCP which may be causing issues)
     const allTools = customTools
 
-    // Use gemini-3.1-pro-preview as specified
+    // Use gemini-2.0-flash-exp - gemini-3.1-pro-preview requires thought_signature for tools
+    // which is not supported by AI SDK
     const result = streamText({
-      model: google('gemini-3.1-pro-preview'),
+      model: google('gemini-2.0-flash-exp'),
       tools: allTools,
       system: SYSTEM_PROMPT,
       messages: aiMessages,

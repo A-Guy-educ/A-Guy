@@ -9,14 +9,25 @@
 import { cn, formatRelativeTime } from '../utils'
 import type { CodyTask } from '../types'
 import { Badge } from '@/ui/web/components/badge'
+import { Button } from '@/ui/web/components/button'
 
 interface KanbanCardProps {
   task: CodyTask
   onClick?: () => void
   selected?: boolean
+  onExecute?: (taskId: string) => void
 }
 
-export function KanbanCard({ task, onClick, selected }: KanbanCardProps) {
+export function KanbanCard({ task, onClick, selected, onExecute }: KanbanCardProps) {
+  const isUnassigned = !task.assignees || task.assignees.length === 0
+  const isOpen = task.state === 'open'
+  const canExecute = isUnassigned && isOpen && onExecute
+
+  const handleExecute = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onExecute?.(task.id)
+  }
+
   return (
     <div
       onClick={onClick}
@@ -27,7 +38,14 @@ export function KanbanCard({ task, onClick, selected }: KanbanCardProps) {
       )}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="text-xs text-muted-foreground font-mono">{task.id}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground font-mono">{task.id}</span>
+          {task.isCodyAssigned && (
+            <Badge variant="default" className="text-xs bg-blue-600">
+              🤖 Cody
+            </Badge>
+          )}
+        </div>
         {task.pipeline && (
           <Badge
             variant={
@@ -47,7 +65,21 @@ export function KanbanCard({ task, onClick, selected }: KanbanCardProps) {
 
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground">#{task.issueNumber}</span>
-        <span className="text-xs text-muted-foreground">{formatRelativeTime(task.updatedAt)}</span>
+        <div className="flex items-center gap-2">
+          {canExecute && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleExecute}
+              className="h-7 text-xs px-3"
+            >
+              Execute
+            </Button>
+          )}
+          <span className="text-xs text-muted-foreground">
+            {formatRelativeTime(task.updatedAt)}
+          </span>
+        </div>
       </div>
 
       {task.labels.length > 0 && (

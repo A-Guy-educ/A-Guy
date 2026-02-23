@@ -266,6 +266,31 @@ export function TaskDetail({ task, onClose, onRefresh }: TaskDetailProps) {
 
       {/* Actions */}
       <div className="p-4 border-t border-border space-y-2">
+        {/* Execute Button - show only for unassigned OPEN issues */}
+        {task.state === 'open' &&
+          (!fullDetails?.assignees || fullDetails.assignees.length === 0) && (
+            <Button
+              variant="default"
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              onClick={async () => {
+                try {
+                  const res = await fetch(`/api/cody/tasks/issue-${task.issueNumber}/actions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'execute' }),
+                  })
+                  if (res.ok) {
+                    onRefresh?.()
+                    fetchDetails()
+                  }
+                } catch (err) {
+                  console.error('Failed to execute:', err)
+                }
+              }}
+            >
+              🤖 Execute with Cody
+            </Button>
+          )}
         <Button className="w-full" asChild>
           <Link
             href={`https://github.com/A-Guy-educ/A-Guy/issues/${task.issueNumber}`}

@@ -52,7 +52,7 @@ export async function POST(
   try {
     const { taskId } = await params
     const body = await req.json()
-    const { action, feedback, fromStage, mode } = actionSchema.parse(body)
+    const { action, feedback, fromStage, mode: _mode } = actionSchema.parse(body)
 
     // Get issue number from taskId
     const issueNumber = parseInt(taskId.replace('issue-', ''), 10)
@@ -84,11 +84,9 @@ export async function POST(
       }
 
       case 'execute': {
-        await triggerWorkflow({
-          taskId,
-          mode: mode || 'full',
-        })
-        return NextResponse.json({ success: true, message: 'Pipeline executed' })
+        // Post /cody command to assign issue to Cody
+        await postComment(issueNumber, '/cody')
+        return NextResponse.json({ success: true, message: 'Cody execution triggered' })
       }
 
       case 'abort': {

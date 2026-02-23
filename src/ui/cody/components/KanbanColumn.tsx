@@ -16,6 +16,7 @@ interface KanbanColumnProps {
   tasks: CodyTask[]
   onTaskClick?: (task: CodyTask) => void
   selectedTaskId?: string
+  onExecuteTask?: (taskId: string) => void
 }
 
 const columnColors: Record<ColumnId, string> = {
@@ -28,7 +29,14 @@ const columnColors: Record<ColumnId, string> = {
   retrying: 'border-orange-500',
 }
 
-export function KanbanColumn({ id, title, tasks, onTaskClick, selectedTaskId }: KanbanColumnProps) {
+export function KanbanColumn({
+  id,
+  title,
+  tasks,
+  onTaskClick,
+  selectedTaskId,
+  onExecuteTask,
+}: KanbanColumnProps) {
   return (
     <div className="flex flex-col min-w-[280px] max-w-[320px]">
       <div
@@ -50,6 +58,7 @@ export function KanbanColumn({ id, title, tasks, onTaskClick, selectedTaskId }: 
               task={task}
               onClick={() => onTaskClick?.(task)}
               selected={task.id === selectedTaskId}
+              onExecute={onExecuteTask}
             />
           ))
         )}
