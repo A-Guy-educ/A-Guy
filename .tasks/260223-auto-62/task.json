@@ -1,0 +1,19 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "backend",
+  "scope": [
+    "Exercises collection slug generation hook"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The Exercises collection exists and has a slug generation hook with unbounded while loop"
+  ],
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task describes the bug (unbounded while loop for slug uniqueness) and the fix (add MAX_SLUG_ATTEMPTS limit), but lacks structured ## Requirements or ## Acceptance Criteria sections. Basic context provided for fix_bug classification."
+  },
+  "pipeline": "spec_execute_verify"
+}
