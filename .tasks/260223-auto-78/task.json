@@ -1,0 +1,21 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": [
+    "VideoMedia React component"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The VideoMedia component exists in the codebase",
+    "The fix involves adding proper useEffect cleanup for the suspend event listener",
+    "The fix involves changing implicit muted to explicit muted={true}"
+  ],
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task describes a specific bug (memory leak from event listener) with component name and problem details, but lacks structured requirements/acceptance criteria sections and implementation steps with file paths"
+  },
+  "pipeline": "spec_execute_verify"
+}
