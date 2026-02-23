@@ -31,6 +31,26 @@ export const SYSTEM_EVENTS = {
   REGISTRATION_PROMPT_SHOWN: 'system.registration_prompt_shown',
   /** User completed registration */
   REGISTRATION_COMPLETED: 'system.registration_completed',
+
+  // Exercise Help System Events
+  /** User clicked hint button on a question */
+  HINT_CLICKED: 'system.hint_clicked',
+  /** User clicked guiding question button */
+  GUIDING_QUESTION_CLICKED: 'system.guiding_question_clicked',
+  /** Solution became available (hint + guiding both used) */
+  SOLUTION_UNLOCKED: 'system.solution_unlocked',
+  /** User clicked solution button */
+  SOLUTION_CLICKED: 'system.solution_clicked',
+  /** Student submitted an answer for checking */
+  STUDENT_ANSWER_SUBMITTED: 'system.student_answer_submitted',
+  /** Student selected an answer option (MCQ/TF) */
+  ANSWER_SELECTED: 'system.answer_selected',
+  /** Chat was auto-triggered (e.g. on incorrect answer) */
+  CHAT_AUTO_TRIGGERED: 'system.chat_auto_triggered',
+  /** User viewed an exercise */
+  EXERCISE_VIEWED: 'system.exercise_viewed',
+  /** User completed an exercise (all questions correct) */
+  EXERCISE_COMPLETED: 'system.exercise_completed',
 } as const
 
 /**
