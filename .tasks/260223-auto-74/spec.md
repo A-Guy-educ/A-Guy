@@ -2,7 +2,7 @@
 
 ## Overview
 
-Fix a memory leak in the `VideoMedia` component where a `suspend` event listener is attached to the `<video>` element inside a `useEffect` but never removed on cleanup. This causes duplicate listeners to accumulate when navigating away and back. Additionally, fix TypeScript errors related to the `controls` attribute while maintaining test compatibility.
+Fix a memory leak in the `VideoMedia` component where a `suspend` event listener is attached to the `<video>` element inside a `useEffect` but never removed on cleanup. This causes duplicate listeners to accumulate when navigating away and back.
 
 ## Requirements
 
@@ -14,9 +14,12 @@ Fix a memory leak in the `VideoMedia` component where a `suspend` event listener
 - A proper cleanup function must be returned that removes the exact same handler reference using `removeEventListener`.
 - No duplicate listeners should be added on re-mount.
 
-### FR-002: TypeScript and Attribute Fixes
-**Priority**: MUST
-**Description**: Fix TypeScript type errors related to the `controls` attribute. Use a spread operator with a type assertion (`{...({ controls: 'false' } as any)}`) or a similar robust method to bypass TS checking while satisfying the test expectation that `getAttribute('controls') === 'false'`.
+### FR-002: Controls Attribute (Verify Need)
+**Priority**: VERIFY
+**Description**: The current code uses `controls={false}` which is valid React/TypeScript syntax. Verify if any changes are needed:
+- No TypeScript errors exist in the current codebase (verified by `pnpm tsc --noEmit`)
+- No specific test exists for VideoMedia's controls attribute
+- If changes needed, keep minimal - either retain `controls={false}` or use approach that satisfies test expectations if any exist
 
 ### NFR-001: Code Safety and Idiomatic React
 **Priority**: MUST
@@ -29,14 +32,13 @@ Fix a memory leak in the `VideoMedia` component where a `suspend` event listener
 ## Acceptance Criteria
 
 - [ ] Navigating to a page with a video component, then navigating away and back several times, only results in one active `suspend` listener at a time.
-- [ ] No TypeScript errors are thrown (specifically TS2322 related to the `controls` attribute).
-- [ ] The `controls` attribute correctly evaluates to `'false'` as a string, satisfying existing test expectations (`getAttribute('controls') === 'false'`).
-- [ ] The `muted` boolean attribute and event listener cleanup remain properly implemented.
+- [ ] The `controls` attribute behavior is verified - retain `controls={false}` or adjust only if a specific test requirement exists
+- [ ] The `muted` boolean attribute remains properly implemented.
 
 ## Guardrails
 
 - MUST NOT change unrelated logic in `VideoMedia` component.
-- MUST keep the fix minimal and focused solely on the event listener cleanup and the specific `controls` attribute type error.
+- MUST keep the fix minimal and focused solely on the event listener cleanup.
 - MUST NOT change any other event listeners if they are already handled properly or unrelated.
 
 ## Out of Scope
@@ -49,3 +51,4 @@ Fix a memory leak in the `VideoMedia` component where a `suspend` event listener
 - Does the proposed UI match our design system patterns? (The change is purely logical and does not affect the visual UI).
 - Are translations properly accounted for? (N/A - No user-facing text is modified).
 - Does the routing approach work with Next.js? (N/A - No routing changes).
+- Is there a specific test requirement for VideoMedia's controls attribute? (Current search shows no VideoMedia-specific tests exist)
