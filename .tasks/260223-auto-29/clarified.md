@@ -1,3 +1,0 @@
-# Clarified
-
-Use recommended answers.
