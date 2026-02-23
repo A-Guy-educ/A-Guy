@@ -1,0 +1,23 @@
+{
+  "task_type": "refactor",
+  "risk_level": "low",
+  "confidence": 1.0,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/chat/ChatInterface/index.tsx",
+    "src/ui/web/header/MobileMenu/index.tsx",
+    "src/ui/web/CommandPalette.tsx",
+    "src/ui/web/components/HealthBadge.tsx",
+    "src/ui/web/shared/TypingAnimation/index.tsx",
+    "src/ui/web/UserDropdown/index.tsx",
+    "src/ui/web/exerciserenderer/components/QuestionCard/index.tsx",
+    "src/ui/web/components/pagination.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": ["spec", "architect"],
+    "reasoning": "Task provides exact file paths, line numbers, and specific CSS class replacements. Has Step to Test section with verification steps. Promoted spec.md and plan.md will document the requirements and implementation plan."
+  }
+}
