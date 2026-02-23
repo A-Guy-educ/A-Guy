@@ -70,7 +70,9 @@ describe('VideoMedia', () => {
     const { unmount } = render(<VideoMedia resource={media} />)
 
     // Get the handler function that was added
-    const addListenerCalls = addEventListenerSpy.mock.calls.filter((call) => call[0] === 'suspend')
+    const addListenerCalls = addEventListenerSpy.mock.calls.filter(
+      (call: any[]) => call[0] === 'suspend',
+    )
     expect(addListenerCalls.length).toBeGreaterThan(0)
     const handler = addListenerCalls[0][1]
 
@@ -95,27 +97,28 @@ describe('VideoMedia', () => {
     // First render
     const { unmount: unmount1 } = render(<VideoMedia resource={media} />)
     const firstAddCount = addEventListenerSpy.mock.calls.filter(
-      (call) => call[0] === 'suspend',
+      (call: any[]) => call[0] === 'suspend',
     ).length
     unmount1()
     const firstRemoveCount = removeEventListenerSpy.mock.calls.filter(
-      (call) => call[0] === 'suspend',
+      (call: any[]) => call[0] === 'suspend',
     ).length
 
     // Second render (simulating navigation)
     const { unmount: unmount2 } = render(<VideoMedia resource={media} />)
     const secondAddCount =
-      addEventListenerSpy.mock.calls.filter((call) => call[0] === 'suspend').length - firstAddCount
+      addEventListenerSpy.mock.calls.filter((call: any[]) => call[0] === 'suspend').length -
+      firstAddCount
     unmount2()
     const secondRemoveCount =
-      removeEventListenerSpy.mock.calls.filter((call) => call[0] === 'suspend').length -
+      removeEventListenerSpy.mock.calls.filter((call: any[]) => call[0] === 'suspend').length -
       firstRemoveCount
 
     // Should have equal adds and removes to prevent memory leaks
     expect(firstAddCount).toBe(firstRemoveCount)
     expect(secondAddCount).toBeGreaterThanOrEqual(1)
     expect(
-      removeEventListenerSpy.mock.calls.filter((call) => call[0] === 'suspend').length,
+      removeEventListenerSpy.mock.calls.filter((call: any[]) => call[0] === 'suspend').length,
     ).toBeGreaterThanOrEqual(2)
   })
 
