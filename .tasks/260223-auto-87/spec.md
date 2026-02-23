@@ -2,7 +2,12 @@
 
 ## Overview
 
-Fix a memory leak in the `VideoMedia` component caused by an un-removed `suspend` event listener on the `<video>` element. The fix ensures the listener is properly removed in the `useEffect` cleanup function. Additionally, the component's test coverage, TypeScript types, and explicit `muted` attribute setting have been addressed.
+Fix a memory leak in the `VideoMedia` component caused by:
+1. An un-removed `suspend` event listener on the `<video>` element (no cleanup function)
+2. Using an anonymous inline function instead of a stable handler reference
+3. Using implicit `muted` attribute instead of explicit `muted={true}`
+
+**Status**: The fixes described below have NOT yet been implemented in the codebase. This spec defines what needs to be done.
 
 ## Requirements
 
@@ -28,12 +33,13 @@ Fix a memory leak in the `VideoMedia` component caused by an un-removed `suspend
 
 ## Acceptance Criteria
 
-- [ ] A stable handler function is defined inside the `useEffect`.
+- [ ] A stable named handler function is defined inside the `useEffect` (not inline anonymous).
 - [ ] The `suspend` event listener is only added when `videoRef.current` is truthy.
 - [ ] A cleanup function is returned that calls `removeEventListener` with the same handler.
-- [ ] The `<video>` element explicitly sets `muted={true}`.
+- [ ] The `<video>` element explicitly sets `muted={true}` (not shorthand `muted`).
+- [ ] An inline comment explains why cleanup is required to avoid listener accumulation.
 - [ ] Navigating away and back to the component multiple times does not accumulate duplicate event listeners in memory.
-- [ ] Tests pass correctly, particularly the "renders a video element with correct attributes" test for the `muted` attribute.
+- [ ] Tests exist for the VideoMedia component, particularly testing the `muted` attribute.
 - [ ] No TypeScript type errors exist in the modified file.
 
 ## Guardrails

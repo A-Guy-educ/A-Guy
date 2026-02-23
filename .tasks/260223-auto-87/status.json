@@ -3,9 +3,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-02-23T15:19:43.987Z",
-  "updatedAt": "2026-02-23T15:26:58.385Z",
+  "updatedAt": "2026-02-23T15:44:02.870Z",
   "state": "running",
-  "currentStage": "gap",
+  "currentStage": "commit",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -30,6 +30,35 @@
       "outputFile": "gap.md",
       "completedAt": "2026-02-23T15:26:58.385Z",
       "elapsed": 203936
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-23T15:26:59.835Z",
+      "outputFile": "plan.md",
+      "completedAt": "2026-02-23T15:28:35.938Z",
+      "elapsed": 96103
+    },
+    "plan-gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-23T15:28:35.939Z",
+      "outputFile": "plan-gap.md",
+      "completedAt": "2026-02-23T15:29:26.991Z",
+      "elapsed": 51052
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-23T15:29:26.991Z",
+      "outputFile": "build.md",
+      "completedAt": "2026-02-23T15:43:15.850Z",
+      "elapsed": 828859
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-23T15:44:02.870Z"
     }
   },
   "triggeredBy": "dispatch",
