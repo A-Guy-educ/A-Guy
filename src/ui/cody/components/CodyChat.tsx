@@ -87,14 +87,20 @@ export function CodyChat() {
       const parseChunk = (text: string) => {
         const lines = text.split('\n')
         for (const line of lines) {
-          if (!line.trim() || !line.startsWith('{"')) continue
+          if (!line.trim()) continue
+
+          // Handle Vercel AI SDK data stream format
+          // 0: = text, a: = tool call, b: = tool result, d: = done, e: = error
+          const prefix = line[0]
+          const data = line.slice(2) // Skip prefix and colon (e.g., "0:")
 
           try {
-            const data = JSON.parse(line)
+            const parsed = JSON.parse(data)
 
             // Handle different message types from AI SDK
-            if (data.type === 'text_delta') {
-              accumulatedContent += data.textDelta
+            if (prefix === '0') {
+              // Text delta
+              accumulatedContent += parsed
               setMessages((prev) => {
                 const newMessages = [...prev]
                 const lastMsg = newMessages[newMessages.length - 1]
@@ -103,14 +109,13 @@ export function CodyChat() {
                 }
                 return newMessages
               })
-            } else if (data.type === 'tool_call') {
-              // Handle tool call start
-              setToolCalls((prev) => [...prev, { name: data.toolName, arguments: {} }])
-            } else if (data.type === 'tool_call_arguments_delta') {
-              // Handle tool call arguments
-              // Note: We'd need more complex parsing here for full tool support
-            } else if (data.type === 'error') {
-              console.error('Stream error:', data.error)
+            } else if (prefix === 'a') {
+              // Tool call start
+              setToolCalls((prev) => [...prev, { name: parsed.toolName, arguments: {} }])
+            } else if (prefix === 'e') {
+              console.error('Stream error:', parsed)
+            } else if (prefix === 'd' || prefix === 'd') {
+              // Done message - handled by stream end
             }
           } catch {
             // Skip malformed JSON
