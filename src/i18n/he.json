@@ -308,6 +308,45 @@
     "studyTopics": "נושאי לימוד",
     "noTopicsAvailable": "אין נושאים זמינים בקורס זה"
   },
+  "coursePage": {
+    "tabs": {
+      "learn": "ללמוד",
+      "practice": "לתרגל",
+      "ask": "לשאול",
+      "exams": "בחינות"
+    },
+    "grade": "כיתה",
+    "sectionTitle": {
+      "ask": "שאלות ותשובות",
+      "practice": "תרגול ומשימות",
+      "exams": "בחינות וסיכומים"
+    },
+    "examReminder": "היי! מזכיר לך שיש בחינה בעוד {days} ימים",
+    "newQuestion": "שאלה חדשה",
+    "newQuestionSub": "שאל את הצ'ט וקבל עזרה מיידית",
+    "quickAction": "פעולה מהירה",
+    "question": "שאלה",
+    "showMore": "הצג עוד",
+    "noExams": "מתי הבחינה הבאה שלך?",
+    "noExamsSub": "הוסף את תאריך הבחינה הקרובה כדי לעקוב אחר ההתקדמות שלך.",
+    "addExam": "הוסף תאריך בחינה",
+    "daysLeft": "{days} ימים נותרו",
+    "examDate": "תאריך בחינה",
+    "examLabel": "תיאור (לא חובה)",
+    "examLabelPlaceholder": "למשל מבחן אמצע, בגרות...",
+    "pastExams": "בחינות שעברו",
+    "deleteExam": "מחק",
+    "viewStats": "צפה בסטטיסטיקה המלאה",
+    "continueLastPoint": "המשך מהנקודה האחרונה",
+    "lessonCompleted": "השלמת את כל המשימות",
+    "lessonsRemaining": "נשארו לך {count} תרגילים",
+    "notStarted": "עדיין לא התחלת",
+    "moreCourses": "קורסים נוספים",
+    "platformName": "Aguy Learning Platform",
+    "loading": "טוען...",
+    "deleteConversation": "מחק שיחה",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק שיחה זו?"
+  },
   "exerciseConversion": {
     "convertButton": "המר → תרגילים",
     "modalTitle": "המרת PDF לתרגילים",

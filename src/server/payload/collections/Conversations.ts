@@ -122,6 +122,18 @@ export const Conversations: CollectionConfig = {
     },
 
     // ========================================
+    // Conversation Title
+    // ========================================
+    {
+      name: 'title',
+      type: 'text',
+      maxLength: 100,
+      admin: {
+        description: 'Display title for conversation list (derived from first user message)',
+      },
+    },
+
+    // ========================================
     // Legacy Exercise Field (Deprecated)
     // Kept for migration compatibility only
     // ========================================
