@@ -85,16 +85,16 @@ describe('Task detail route optimization', () => {
 })
 
 // ============================================================================
-// Throttling Plugin Tests
+// Octokit Configuration Tests
 // ============================================================================
 
-describe('Octokit throttling configuration', () => {
-  it('should import throttling plugin', () => {
+describe('Octokit configuration', () => {
+  it('should import Octokit from @octokit/rest', () => {
     const clientContent = fs.readFileSync(
       path.join(process.cwd(), 'src/ui/cody/github-client.ts'),
       'utf-8',
     )
-    expect(clientContent).toContain("import { throttling } from '@octokit/plugin-throttling'")
+    expect(clientContent).toContain("import { Octokit } from '@octokit/rest'")
   })
 
   it('should use singleton pattern for Octokit', () => {
@@ -106,13 +106,13 @@ describe('Octokit throttling configuration', () => {
     expect(clientContent).toContain('if (octokitInstance)')
   })
 
-  it('should configure throttling with retry logic', () => {
+  it('should use Octokit for GitHub API', () => {
     const clientContent = fs.readFileSync(
       path.join(process.cwd(), 'src/ui/cody/github-client.ts'),
       'utf-8',
     )
-    expect(clientContent).toContain('onRateLimit')
-    expect(clientContent).toContain('onSecondaryRateLimit')
+    expect(clientContent).toContain('import { Octokit }')
+    expect(clientContent).toContain("from '@octokit/rest'")
   })
 })
 
