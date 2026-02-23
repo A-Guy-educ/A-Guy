@@ -41,6 +41,7 @@ const t = useTranslations('homepage.greeting')
 
 - [ ] In Development, when the UI is rendered in Hebrew, the loading text displays as "טוען...".
 - [ ] In Development, when the UI is rendered in English, the loading text displays as "Loading...".
+- [ ] The HomePage component (`src/app/(frontend)/_components/HomePage/index.tsx` line 26) no longer contains hardcoded "טוען..." text.
 - [ ] No hardcoded loading strings remain in the loading indicator component.
 - [ ] The loading text is derived using the existing translation mechanism (e.g., `useTranslations` hook).
 - [ ] No regression occurs in other translated content on the page.
