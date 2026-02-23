@@ -19,8 +19,6 @@ import type {
   QuestionFreeResponseBlock,
   QuestionTableBlock,
   QuestionMatchingBlock,
-  QuestionGeometryBlock,
-  QuestionAxisBlock,
   SvgBlock,
   UserAnswer,
   CheckResult,
@@ -32,8 +30,6 @@ import { McqQuestion } from '../questions/McqQuestion'
 import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
 import { TableQuestion } from '../questions/TableQuestion'
 import { MatchingQuestion } from '../questions/MatchingQuestion'
-import { GeometryQuestion } from '../questions/GeometryQuestion'
-import { AxisQuestion } from '../questions/AxisQuestion'
 import { QuestionCard } from '../components/QuestionCard'
 import {
   checkQuestionAnswer,
@@ -101,14 +97,6 @@ function formatStudentAnswer(question: QuestionBlock, answer: UserAnswer): strin
   if (answer.type === 'matching') {
     return answer.connections.map((c) => `${c.leftId} → ${c.rightId}`).join(', ')
   }
-  if (answer.type === 'geometry' || answer.type === 'axis') {
-    if (answer.numericValue !== undefined) return String(answer.numericValue)
-    if (answer.selectedOptionIds?.length) return answer.selectedOptionIds.join(', ')
-    if (answer.textValue) return answer.textValue
-    if (answer.point) return `(${answer.point.x}, ${answer.point.y})`
-    if (answer.functionExpression) return answer.functionExpression
-    return ''
-  }
   return ''
 }
 
@@ -144,19 +132,13 @@ export function ExerciseRenderer({
   )
 
   // Track answers and check results for each question block
-  const questionBlocks = content.blocks.filter((block) => {
-    if (
+  const questionBlocks = content.blocks.filter(
+    (block) =>
       block.type === 'question_select' ||
       block.type === 'question_free_response' ||
       block.type === 'question_table' ||
-      block.type === 'question_matching'
-    )
-      return true
-    if (block.type === 'question_geometry')
-      return (block as QuestionGeometryBlock).answer !== undefined
-    if (block.type === 'question_axis') return (block as QuestionAxisBlock).answer !== undefined
-    return false
-  }) as QuestionBlock[]
+      block.type === 'question_matching',
+  ) as QuestionBlock[]
 
   const [answers, setAnswers] = useState<Record<string, UserAnswer>>(() => {
     const initial: Record<string, UserAnswer> = {}
@@ -372,48 +354,12 @@ export function ExerciseRenderer({
                 )
               }
 
-              // Display-only geometry/axis blocks (no answer field)
-              if (block.type === 'question_geometry' && !(block as QuestionGeometryBlock).answer) {
-                const geoBlock = block as QuestionGeometryBlock
-                return (
-                  <div key={geoBlock.id}>
-                    <GeometryQuestion
-                      question={geoBlock}
-                      answer={{ type: 'geometry', kind: 'numeric' }}
-                      onChange={() => {}}
-                      disabled
-                      checkResult={null}
-                      t={t}
-                      displayOnly
-                    />
-                  </div>
-                )
-              }
-              if (block.type === 'question_axis' && !(block as QuestionAxisBlock).answer) {
-                const axisBlock = block as QuestionAxisBlock
-                return (
-                  <div key={axisBlock.id}>
-                    <AxisQuestion
-                      question={axisBlock}
-                      answer={{ type: 'axis', kind: 'numeric' }}
-                      onChange={() => {}}
-                      disabled
-                      checkResult={null}
-                      t={t}
-                      displayOnly
-                    />
-                  </div>
-                )
-              }
-
               // Count question blocks for section labeling
               if (
                 block.type === 'question_select' ||
                 block.type === 'question_free_response' ||
                 block.type === 'question_table' ||
-                block.type === 'question_matching' ||
-                block.type === 'question_geometry' ||
-                block.type === 'question_axis'
+                block.type === 'question_matching'
               ) {
                 questionIndex++
               }
@@ -507,26 +453,6 @@ export function ExerciseRenderer({
                   {question.type === 'question_matching' && (
                     <MatchingQuestion
                       question={question as QuestionMatchingBlock}
-                      answer={answer}
-                      onChange={(ans) => handleAnswerChange(question.id, ans)}
-                      disabled={!!disabled}
-                      checkResult={checkResult}
-                      t={t}
-                    />
-                  )}
-                  {question.type === 'question_geometry' && (
-                    <GeometryQuestion
-                      question={question as QuestionGeometryBlock}
-                      answer={answer}
-                      onChange={(ans) => handleAnswerChange(question.id, ans)}
-                      disabled={!!disabled}
-                      checkResult={checkResult}
-                      t={t}
-                    />
-                  )}
-                  {question.type === 'question_axis' && (
-                    <AxisQuestion
-                      question={question as QuestionAxisBlock}
                       answer={answer}
                       onChange={(ans) => handleAnswerChange(question.id, ans)}
                       disabled={!!disabled}

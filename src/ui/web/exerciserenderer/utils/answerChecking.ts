@@ -7,9 +7,6 @@ import type {
   QuestionBlock,
   QuestionFreeResponseBlock,
   QuestionMatchingBlock,
-  QuestionGeometryBlock,
-  QuestionAxisBlock,
-  QuestionAnswer,
   SvgBlock,
   UserAnswer,
   CheckResult,
@@ -92,22 +89,6 @@ export async function checkQuestionAnswer(
       }
       return validateMatchingAnswer(question as QuestionMatchingBlock, answer.connections)
     }
-
-    case 'question_geometry': {
-      const geoQuestion = question as QuestionGeometryBlock
-      if (!geoQuestion.answer) {
-        return { isCorrect: false, message: messages.noCorrectAnswer }
-      }
-      return validateGenericAnswer(geoQuestion.answer, answer, 'geometry', messages)
-    }
-
-    case 'question_axis': {
-      const axisQuestion = question as QuestionAxisBlock
-      if (!axisQuestion.answer) {
-        return { isCorrect: false, message: messages.noCorrectAnswer }
-      }
-      return validateGenericAnswer(axisQuestion.answer, answer, 'axis', messages)
-    }
   }
 }
 
@@ -182,71 +163,6 @@ async function validateFreeResponseOnServer(
 }
 
 /**
- * Validate generic answer for geometry/axis questions
- */
-function validateGenericAnswer(
-  expected: QuestionAnswer,
-  userAnswer: UserAnswer,
-  answerType: 'geometry' | 'axis',
-  messages: AnswerErrorMessages,
-): CheckResult {
-  if (userAnswer.type !== answerType) {
-    return { isCorrect: false, message: messages.invalidAnswerType }
-  }
-
-  switch (expected.kind) {
-    case 'numeric': {
-      const value = userAnswer.numericValue
-      if (value === undefined || isNaN(value))
-        return { isCorrect: false, message: messages.enterAnAnswer }
-      const tolerance = expected.tolerance ?? 0.01
-      return { isCorrect: Math.abs(value - expected.value) <= tolerance }
-    }
-    case 'mcq': {
-      const selected = userAnswer.selectedOptionIds ?? []
-      if (selected.length === 0) return { isCorrect: false, message: messages.selectAnAnswer }
-      const userSorted = [...selected].sort()
-      const correctSorted = [...expected.correctOptionIds].sort()
-      return {
-        isCorrect:
-          userSorted.length === correctSorted.length &&
-          userSorted.every((id, i) => id === correctSorted[i]),
-      }
-    }
-    case 'free_response': {
-      const text = userAnswer.textValue?.trim()
-      if (!text) return { isCorrect: false, message: messages.enterAnAnswer }
-      const normalized = text.toLowerCase().replace(/\s+/g, ' ')
-      return {
-        isCorrect: expected.acceptedAnswers.some(
-          (a) => a.toLowerCase().replace(/\s+/g, ' ') === normalized,
-        ),
-      }
-    }
-    case 'point': {
-      const point = userAnswer.point
-      if (!point) return { isCorrect: false, message: messages.enterAnAnswer }
-      const tolerance = expected.tolerance ?? 0.01
-      return {
-        isCorrect:
-          Math.abs(point.x - expected.x) <= tolerance &&
-          Math.abs(point.y - expected.y) <= tolerance,
-      }
-    }
-    case 'function': {
-      const expr = userAnswer.functionExpression?.trim()
-      if (!expr) return { isCorrect: false, message: messages.enterAnAnswer }
-      const normalized = expr.toLowerCase().replace(/\s+/g, '')
-      return {
-        isCorrect: expected.acceptedExpressions.some(
-          (e) => e.toLowerCase().replace(/\s+/g, '') === normalized,
-        ),
-      }
-    }
-  }
-}
-
-/**
  * Check SVG hotspot answer (standalone — not part of QuestionBlock flow)
  */
 export function checkSvgAnswer(
@@ -296,12 +212,5 @@ export function getInitialAnswer(question: QuestionBlock): UserAnswer {
       return { type: 'table', cellValues: {} }
     case 'question_matching':
       return { type: 'matching', connections: [] }
-    case 'question_geometry':
-      return {
-        type: 'geometry',
-        kind: (question as QuestionGeometryBlock).answer?.kind ?? 'numeric',
-      }
-    case 'question_axis':
-      return { type: 'axis', kind: (question as QuestionAxisBlock).answer?.kind ?? 'numeric' }
   }
 }
