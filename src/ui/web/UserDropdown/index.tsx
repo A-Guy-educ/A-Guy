@@ -53,7 +53,7 @@ export function UserDropdown({ user }: { user: User }) {
           disabled={isLoggingOut}
           className="text-destructive focus:text-destructive"
         >
-          <LogOut className="w-4 h-4 mr-2" />
+          <LogOut className="w-4 h-4 me-2" />
           {isLoggingOut ? t('loggingOut') : t('logout')}
         </DropdownMenuItem>
       </DropdownMenuContent>
