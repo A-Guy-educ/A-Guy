@@ -133,6 +133,31 @@ export function CodyDashboard() {
     }
   }, [dateFilter])
 
+  // Execute task - trigger Cody by posting /cody comment
+  const handleExecuteTask = useCallback(
+    async (taskId: string) => {
+      try {
+        const res = await fetch(`${API_BASE}/tasks/${taskId}/actions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'execute' }),
+        })
+
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Failed to execute task')
+        }
+
+        // Refresh tasks to show updated state
+        fetchTasks()
+      } catch (err) {
+        console.error('Error executing task:', err)
+        setError(err instanceof Error ? err.message : 'Failed to execute task')
+      }
+    },
+    [fetchTasks],
+  )
+
   // Initial fetch
   useEffect(() => {
     fetchBoards()
@@ -276,6 +301,7 @@ export function CodyDashboard() {
               boards={boards}
               selectedTask={selectedTask}
               onTaskSelect={setSelectedTask}
+              onExecuteTask={handleExecuteTask}
             />
           )}
         </div>

@@ -17,9 +17,16 @@ interface KanbanBoardProps {
   boards: Board[]
   selectedTask?: CodyTask | null
   onTaskSelect?: (task: CodyTask | null) => void
+  onExecuteTask?: (taskId: string) => void
 }
 
-export function KanbanBoard({ tasks, boards, selectedTask, onTaskSelect }: KanbanBoardProps) {
+export function KanbanBoard({
+  tasks,
+  boards,
+  selectedTask,
+  onTaskSelect,
+  onExecuteTask,
+}: KanbanBoardProps) {
   const [currentBoard, setCurrentBoard] = useState('all')
 
   // Group tasks by column
@@ -71,6 +78,7 @@ export function KanbanBoard({ tasks, boards, selectedTask, onTaskSelect }: Kanba
             tasks={tasksByColumn[columnId] || []}
             onTaskClick={handleTaskClick}
             selectedTaskId={selectedTask?.id}
+            onExecuteTask={onExecuteTask}
           />
         ))}
       </div>

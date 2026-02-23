@@ -146,6 +146,8 @@ export interface GitHubIssue {
   updated_at: string
   closed_at: string | null
   html_url: string
+  // Cody-specific fields
+  isCodyAssigned?: boolean
 }
 
 export interface GitHubComment {
@@ -188,6 +190,9 @@ export interface CodyTask {
   workflowRun?: WorkflowRun
   associatedPR?: GitHubPR | null
   taskDefinition?: TaskDefinition
+  // Additional fields for UI
+  assignees?: Array<{ login: string; avatar_url: string }>
+  isCodyAssigned?: boolean
 }
 
 // ============ API Response Types ============
