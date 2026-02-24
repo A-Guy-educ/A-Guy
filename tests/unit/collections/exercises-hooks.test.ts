@@ -46,7 +46,7 @@ describe('Exercises Hooks - generateSlug', () => {
       operation: 'create',
       originalDoc: undefined as any,
       siblingData: {},
-      req: undefined as any,
+      req: { payload: mockPayloadInstance } as any,
       collection: { config: { slug: 'exercises' } } as any,
       context: {},
       field: { name: 'slug', type: 'text' } as any,
@@ -261,40 +261,46 @@ describe('Exercises Hooks - generateSlug', () => {
     })
   })
 
-  describe('fallback to getPayloadInstance (FR-003 guardrail)', () => {
-    it('uses getPayloadInstance when req is undefined', async () => {
-      const mockPayloadForFallback = {
-        find: vi.fn().mockResolvedValue({ docs: [] }),
-      }
-      mockGetPayload.mockResolvedValue(mockPayloadForFallback)
-
-      // Call without req - should fall back to getPayloadInstance
-      await generateSlug(
-        createHookArgs({
-          siblingData: { title: 'Test Exercise', lesson: 'lesson-1' },
-        }),
-      )
-
-      // Should have called getPayload (getPayloadInstance)
-      expect(mockGetPayload).toHaveBeenCalled()
+  describe('transaction safety - req.payload required (FR-003 fix)', () => {
+    it('generateSlug throws when req is undefined', async () => {
+      // When req is undefined, should throw instead of falling back to getPayloadInstance
+      await expect(
+        generateSlug(
+          createHookArgs({
+            siblingData: { title: 'Test Exercise', lesson: 'lesson-1' },
+            req: undefined,
+          }),
+        ),
+      ).rejects.toThrow(/req\.payload is required for transaction safety/)
     })
 
-    it('uses getPayloadInstance when req.payload is undefined', async () => {
-      const mockPayloadForFallback = {
-        find: vi.fn().mockResolvedValue({ docs: [] }),
-      }
-      mockGetPayload.mockResolvedValue(mockPayloadForFallback)
+    it('generateSlug throws when req.payload is missing', async () => {
+      // When req exists but req.payload is undefined, should throw
+      await expect(
+        generateSlug(
+          createHookArgs({
+            siblingData: { title: 'Test Exercise', lesson: 'lesson-1' },
+            req: {} as any,
+          }),
+        ),
+      ).rejects.toThrow(/req\.payload is required for transaction safety/)
+    })
 
-      // Call with req but no payload property
+    it('generateSlug never calls getPayload when req.payload is available', async () => {
+      const mockFind = vi.fn().mockResolvedValue({ docs: [] })
+      const mockReq = {
+        payload: { find: mockFind },
+      }
+
       await generateSlug(
         createHookArgs({
           siblingData: { title: 'Test Exercise', lesson: 'lesson-1' },
-          req: {} as any,
+          req: mockReq as any,
         }),
       )
 
-      // Should fall back to getPayloadInstance
-      expect(mockGetPayload).toHaveBeenCalled()
+      // getPayload (getPayloadInstance) should NOT be called when req.payload is available
+      expect(mockGetPayload).not.toHaveBeenCalled()
     })
   })
 
@@ -333,7 +339,7 @@ describe('Exercises Hooks - validateSlugUniqueness', () => {
       operation: 'create',
       originalDoc: undefined as any,
       siblingData: {},
-      req: undefined as any,
+      req: { payload: mockPayloadInstance } as any,
       collection: { config: { slug: 'exercises' } } as any,
       context: {},
       field: { name: 'slug', type: 'text' } as any,
@@ -423,5 +429,51 @@ describe('Exercises Hooks - validateSlugUniqueness', () => {
     )
 
     expect(result).toBe('')
+  })
+
+  describe('transaction safety - req.payload required (FR-003 fix)', () => {
+    it('validateSlugUniqueness throws when req is undefined', async () => {
+      // When req is undefined, should throw instead of falling back to getPayloadInstance
+      await expect(
+        validateSlugUniqueness(
+          createHookArgs({
+            value: 'test-slug',
+            siblingData: { lesson: 'lesson-1' },
+            req: undefined,
+          }),
+        ),
+      ).rejects.toThrow(/req\.payload is required for transaction safety/)
+    })
+
+    it('validateSlugUniqueness throws when req.payload is missing', async () => {
+      // When req exists but req.payload is undefined, should throw
+      await expect(
+        validateSlugUniqueness(
+          createHookArgs({
+            value: 'test-slug',
+            siblingData: { lesson: 'lesson-1' },
+            req: {} as any,
+          }),
+        ),
+      ).rejects.toThrow(/req\.payload is required for transaction safety/)
+    })
+
+    it('validateSlugUniqueness never calls getPayload when req.payload is available', async () => {
+      const mockFind = vi.fn().mockResolvedValue({ docs: [] })
+      const mockReq = {
+        payload: { find: mockFind },
+      }
+
+      await validateSlugUniqueness(
+        createHookArgs({
+          value: 'test-slug',
+          siblingData: { lesson: 'lesson-1' },
+          req: mockReq as any,
+        }),
+      )
+
+      // getPayload (getPayloadInstance) should NOT be called when req.payload is available
+      expect(mockGetPayload).not.toHaveBeenCalled()
+    })
   })
 })
