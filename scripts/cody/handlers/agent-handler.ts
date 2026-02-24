@@ -7,6 +7,7 @@
 
 import type { PipelineContext, StageDefinition, StageResult } from '../engine/types'
 import { runAgentWithFileWatch } from '../agent-runner'
+import { stageOutputFile } from '../pipeline-utils'
 import type { StageHandler } from './handler'
 
 /**
@@ -14,7 +15,8 @@ import type { StageHandler } from './handler'
  */
 export class AgentHandler implements StageHandler {
   async execute(ctx: PipelineContext, def: StageDefinition): Promise<StageResult> {
-    const outputFile = `${ctx.taskDir}/${def.name}.md`
+    // Use stageOutputFile to get the correct output file (respects STAGE_OUTPUT_MAP)
+    const outputFile = stageOutputFile(ctx.taskDir, def.name)
 
     // Run agent
     const result = await runAgentWithFileWatch(ctx.input, def.name, outputFile, def.timeout, {

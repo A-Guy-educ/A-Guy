@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import * as path from 'path'
 import {
   buildStagePrompt,
   stageInstructions,
@@ -15,6 +16,16 @@ const mockInput: CodyInput = {
   mode: 'full',
   taskId: '260219-test',
   dryRun: false,
+}
+
+// Helper to get expected absolute path for task files
+function getExpectedPath(file: string): string {
+  const base = path.join(process.cwd(), '.tasks', '260219-test')
+  // Handle relative paths like ../audit-history.json - use string concatenation to preserve ..
+  if (file.startsWith('../')) {
+    return `${base}/../${file.replace('../', '')}`
+  }
+  return path.join(base, file)
 }
 
 describe('stage-prompts', () => {
@@ -159,7 +170,8 @@ describe('stage-prompts', () => {
         expect(instruction).toContain('SPEC-ONLY')
         expect(instruction).toContain('DO NOT create branches')
         expect(instruction).toContain('DO NOT modify any code files')
-        expect(instruction).toContain('.tasks/260219-test/')
+        // Now uses absolute path
+        expect(instruction).toContain(path.join(process.cwd(), '.tasks', '260219-test'))
       }
     })
 
@@ -191,7 +203,8 @@ describe('stage-prompts', () => {
         const prompt = buildStagePrompt(mockInput, stage)
         const files = STAGE_CONTEXT_FILES[stage]
         for (const file of files) {
-          expect(prompt).toContain(`.tasks/260219-test/${file}`)
+          // Now uses absolute paths
+          expect(prompt).toContain(getExpectedPath(file))
         }
       }
     })

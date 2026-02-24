@@ -87,19 +87,33 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
 // Behavioral instructions (how to act, output format, rules) live in
 // .opencode/agents/<stage>.md. These instructions provide ONLY:
 // - Spec-only guard (don't modify code)
-// - Stage-specific runtime hints (e.g., "this is a rerun")
+// - Stage-specific runtime context hints (e.g., "this is a rerun")
 // ============================================================================
 
-const specOnlyInstructionTemplate = `CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the .tasks/{TASK_ID}/ directory.`
+// Use absolute path to avoid OpenCode path interpretation issues with task IDs containing hyphens
+const specOnlyInstructionTemplate = (taskDir: string) =>
+  `CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the ${taskDir}/ directory.`
 
 export const stageInstructions: Record<Stage, (taskId: string) => string> = {
-  taskify: (taskId) => `${specOnlyInstructionTemplate.replace('{TASK_ID}', taskId)}`,
+  taskify: (taskId) => {
+    const taskDir = path.join(process.cwd(), '.tasks', taskId)
+    return specOnlyInstructionTemplate(taskDir)
+  },
 
-  spec: (taskId) => `${specOnlyInstructionTemplate.replace('{TASK_ID}', taskId)}`,
+  spec: (taskId) => {
+    const taskDir = path.join(process.cwd(), '.tasks', taskId)
+    return specOnlyInstructionTemplate(taskDir)
+  },
 
-  gap: (taskId) => `${specOnlyInstructionTemplate.replace('{TASK_ID}', taskId)}`,
+  gap: (taskId) => {
+    const taskDir = path.join(process.cwd(), '.tasks', taskId)
+    return specOnlyInstructionTemplate(taskDir)
+  },
 
-  clarify: (taskId) => `${specOnlyInstructionTemplate.replace('{TASK_ID}', taskId)}`,
+  clarify: (taskId) => {
+    const taskDir = path.join(process.cwd(), '.tasks', taskId)
+    return specOnlyInstructionTemplate(taskDir)
+  },
 
   architect: () => ``,
 
@@ -150,7 +164,8 @@ function getTaskType(taskId: string): string {
  */
 export function buildStagePrompt(input: CodyInput, stage: string, feedback?: string): string {
   const { taskId } = input
-  const taskDir = `.tasks/${taskId}`
+  // Use absolute path to avoid OpenCode path interpretation issues with task IDs containing hyphens
+  const taskDir = path.join(process.cwd(), '.tasks', taskId)
 
   // Get task_type for stages that need it (architect, build)
   const taskType = getTaskType(taskId)
