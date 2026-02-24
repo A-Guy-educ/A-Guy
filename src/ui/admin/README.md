@@ -16,10 +16,13 @@ ui/admin/
 ├── ExerciseContentEditor/    # Exercise content editor
 │   ├── BlockTypeSelector.tsx  # Block type dropdown
 │   ├── JSONInspector.tsx      # JSON preview panel
-│   ├── MediaPicker.tsx        # Media selection
-│   ├── RichTextEditor.tsx     # Lexical rich text editor
+│   ├── RichTextEditor.tsx     # Simple rich text editor
 │   ├── utils.ts               # Editor utilities
-│   └── index.css              # Editor styles
+│   ├── index.css              # Editor styles
+│   └── editors/               # Block editors
+│       ├── InlineRichTextEditor.tsx  # Rich text with media attachments
+│       ├── MediaBlockEditor.tsx      # Media reference block
+│       └── ...                       # Other block editors
 ├── Footer/                    # Admin footer
 │   └── index.tsx
 ├── Header/                    # Admin header
@@ -81,12 +84,13 @@ interface ExerciseContent {
 
 ### Editor Components
 
-| Component         | File                    | Purpose                   |
-| ----------------- | ----------------------- | ------------------------- |
-| RichTextEditor    | `RichTextEditor.tsx`    | Lexical editor instance   |
-| JSONInspector     | `JSONInspector.tsx`     | View raw JSON             |
-| MediaPicker       | `MediaPicker.tsx`       | Select media from library |
-| BlockTypeSelector | `BlockTypeSelector.tsx` | Add new block             |
+| Component            | File                               | Purpose              |
+| -------------------- | ---------------------------------- | -------------------- |
+| RichTextEditor       | `RichTextEditor.tsx`               | Simple text editor   |
+| JSONInspector        | `JSONInspector.tsx`                | View raw JSON        |
+| BlockTypeSelector    | `BlockTypeSelector.tsx`            | Add new block        |
+| InlineRichTextEditor | `editors/InlineRichTextEditor.tsx` | Rich text with media |
+| MediaBlockEditor     | `editors/MediaBlockEditor.tsx`     | Media reference      |
 
 ## Media Preview System
 
