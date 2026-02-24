@@ -305,17 +305,95 @@ export const QuestionMatchingBlockSchema = z
   })
 
 // ---------------------------------
+// Zod: SVG Hotspot Schema
+// ---------------------------------
+const SvgHotspotSchema = z
+  .object({
+    id: z.string().min(1),
+    selector: z.string().min(1),
+    label: z.string().optional(),
+  })
+  .strict()
+
+// ---------------------------------
 // Zod: SVG Block Schema
 // ---------------------------------
 const SvgBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('svg'),
-    value: z.string().min(1), // SVG content
+    value: z.string().min(1),
     altText: z.string().optional(),
     caption: InlineRichTextSchema.optional(),
+    interactive: z.boolean().optional(),
+    hotspots: z.array(SvgHotspotSchema).optional(),
+    correctHotspotIds: z.array(z.string().min(1)).optional(),
+    hint: InlineRichTextSchema.optional(),
+    solution: InlineRichTextSchema.optional(),
+    fullSolution: InlineRichTextSchema.optional(),
   })
   .strict()
+  .superRefine((data, ctx) => {
+    if (data.correctHotspotIds && data.hotspots) {
+      const hotspotIds = new Set(data.hotspots.map((h) => h.id))
+      for (const id of data.correctHotspotIds) {
+        if (!hotspotIds.has(id)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `correctHotspotIds contains unknown hotspot id: ${id}`,
+            path: ['correctHotspotIds'],
+          })
+        }
+      }
+    }
+    if (data.interactive && (!data.hotspots || data.hotspots.length === 0)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Interactive SVG must have at least one hotspot',
+        path: ['hotspots'],
+      })
+    }
+  })
+
+// ---------------------------------
+// Zod: Question Answer Schema (used by Geometry + Axis)
+// ---------------------------------
+const QuestionAnswerSchema = z.discriminatedUnion('kind', [
+  z
+    .object({
+      kind: z.literal('numeric'),
+      value: z.number(),
+      tolerance: z.number().positive().optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('mcq'),
+      options: z.array(McqOptionSchema).min(2),
+      correctOptionIds: z.array(z.string().min(1)).min(1),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('free_response'),
+      acceptedAnswers: z.array(z.string().min(1)).min(1),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('point'),
+      x: z.number(),
+      y: z.number(),
+      tolerance: z.number().positive().optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('function'),
+      acceptedExpressions: z.array(z.string().min(1)).min(1),
+    })
+    .strict(),
+])
 
 // ---------------------------------
 // Zod: Question Geometry Block Schema
@@ -326,6 +404,7 @@ export const QuestionGeometryBlockSchema = z
     type: z.literal('question_geometry'),
     prompt: InlineRichTextSchema,
     geometry: GeometrySpecV1Schema,
+    answer: QuestionAnswerSchema.optional(),
     hint: InlineRichTextSchema.optional(),
     solution: InlineRichTextSchema.optional(),
     fullSolution: InlineRichTextSchema.optional(),
@@ -341,9 +420,91 @@ export const QuestionAxisBlockSchema = z
     type: z.literal('question_axis'),
     prompt: InlineRichTextSchema,
     axis: AxisSpecV1Schema,
+    answer: QuestionAnswerSchema.optional(),
     hint: InlineRichTextSchema.optional(),
     solution: InlineRichTextSchema.optional(),
     fullSolution: InlineRichTextSchema.optional(),
+  })
+  .strict()
+
+// ---------------------------------
+// Zod: HTML Block (WYSIWYG content stored as sanitized HTML string)
+// ---------------------------------
+
+// Allowlist of tags Quill can produce + safe formatting tags
+const HTML_ALLOWED_TAGS = new Set([
+  'p',
+  'br',
+  'hr',
+  'span',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'strong',
+  'b',
+  'em',
+  'i',
+  'u',
+  's',
+  'del',
+  'ins',
+  'mark',
+  'sub',
+  'sup',
+  'ul',
+  'ol',
+  'li',
+  'blockquote',
+  'pre',
+  'code',
+  'a',
+  'img',
+  'div',
+  'section',
+  'table',
+  'thead',
+  'tbody',
+  'tr',
+  'th',
+  'td',
+])
+
+// Patterns that are dangerous regardless of tag allowlist
+const DANGEROUS_HTML_PATTERNS = [
+  /\bon\w+\s*=/i, // inline event handlers (onclick, onload, etc.)
+  /javascript\s*:/i, // javascript: URLs
+  /vbscript\s*:/i, // vbscript: URLs
+  /data\s*:[^,]*;base64/i, // data: URIs with base64 (in href/src context)
+]
+
+function validateHtmlTags(html: string): boolean {
+  const tagPattern = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi
+  let match
+  while ((match = tagPattern.exec(html)) !== null) {
+    if (!HTML_ALLOWED_TAGS.has(match[1].toLowerCase())) {
+      return false
+    }
+  }
+  return true
+}
+
+export const HtmlBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('html'),
+    html: z
+      .string()
+      .refine(
+        (html) => validateHtmlTags(html),
+        'HTML contains disallowed tags. Only safe formatting tags are permitted.',
+      )
+      .refine(
+        (html) => !DANGEROUS_HTML_PATTERNS.some((pattern) => pattern.test(html)),
+        'HTML contains blocked content (event handlers, javascript:, vbscript:, or data: URLs)',
+      ),
   })
   .strict()
 
@@ -360,6 +521,7 @@ export const ContentBlockSchema = z.discriminatedUnion('type', [
   SvgBlockSchema,
   QuestionGeometryBlockSchema,
   QuestionAxisBlockSchema,
+  HtmlBlockSchema,
 ])
 
 export type ContentBlock = z.infer<typeof ContentBlockSchema>

@@ -7,6 +7,7 @@ import { queryLessonsByChapter } from '@/server/repos/queries/lessons'
 import { SystemParams } from '@/infra/config/system-params'
 import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
+import { stripHtml } from '@/lib/utils/strip-html'
 import { ChapterPageBreadcrumb } from '../../../_components/ChapterPageBreadcrumb'
 import { ChapterHeader } from '../../../_components/ChapterHeader'
 import { LessonsSectionTitle } from '../../../_components/LessonsSectionTitle'
@@ -128,6 +129,6 @@ export async function generateMetadata({ params }: ChapterPageProps) {
 
   return {
     title: `${chapter.title} - ${course.title}`,
-    description: chapter.description || `Chapter: ${chapter.title}`,
+    description: chapter.description ? stripHtml(chapter.description) : `Chapter: ${chapter.title}`,
   }
 }

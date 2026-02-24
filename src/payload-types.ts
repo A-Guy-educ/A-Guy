@@ -564,6 +564,26 @@ export interface Media {
    */
   externalUrl?: string | null;
   /**
+   * Auto-detected from URL. Do not change manually.
+   */
+  embedProvider?: ('youtube' | 'vimeo' | 'generic') | null;
+  /**
+   * Provider-specific video/content ID
+   */
+  embedVideoId?: string | null;
+  /**
+   * Embed-ready URL for iframe (auto-generated)
+   */
+  embedUrl?: string | null;
+  /**
+   * Title fetched from provider (auto-populated)
+   */
+  embedTitle?: string | null;
+  /**
+   * Thumbnail URL fetched from provider (auto-populated)
+   */
+  embedThumbnailUrl?: string | null;
+  /**
    * Alternative text for images and SVGs (required for accessibility)
    */
   alt?: string | null;
@@ -2694,6 +2714,11 @@ export interface MediaSelect<T extends boolean = true> {
   tenant?: T;
   type?: T;
   externalUrl?: T;
+  embedProvider?: T;
+  embedVideoId?: T;
+  embedUrl?: T;
+  embedTitle?: T;
+  embedThumbnailUrl?: T;
   alt?: T;
   caption?: T;
   createdBy?: T;

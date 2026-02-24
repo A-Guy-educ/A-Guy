@@ -209,17 +209,16 @@ describe('BUG-5: Autofix uses targeted staging', () => {
 // ============================================================================
 
 describe('BUG-6: commitPipelineFiles handles dirty state cleanup', () => {
-  it('should include git checkout and git clean in commitPipelineFiles', () => {
+  it('should include git checkout (but NOT git clean) in commitPipelineFiles', () => {
     const gitUtilsContent = fs.readFileSync(
       path.join(process.cwd(), 'scripts/cody/git-utils.ts'),
       'utf-8',
     )
 
-    // Should contain dirty state cleanup
+    // Should contain dirty state cleanup (revert tracked files only)
     expect(gitUtilsContent).toContain('git checkout -- .')
-    expect(gitUtilsContent).toContain('git clean -fd')
-    // Should exclude .tasks from clean
-    expect(gitUtilsContent).toContain('--exclude=.tasks')
+    // Should NOT contain git clean -fd (deleting untracked files could remove agent-created files)
+    expect(gitUtilsContent).not.toContain('git clean -fd')
   })
 })
 

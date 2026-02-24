@@ -80,6 +80,9 @@ export const Courses: CollectionConfig = {
       type: 'textarea',
       admin: {
         description: 'Detailed description of the course',
+        components: {
+          Field: '@/ui/admin/QuillField#QuillField',
+        },
       },
     },
     {

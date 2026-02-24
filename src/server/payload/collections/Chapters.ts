@@ -78,6 +78,9 @@ export const Chapters: CollectionConfig = {
       type: 'textarea',
       admin: {
         description: 'Detailed description of the chapter',
+        components: {
+          Field: '@/ui/admin/QuillField#QuillField',
+        },
       },
     },
     {

@@ -98,8 +98,11 @@ fi
   .husky/check-archivedAt-invariant &
   PID3=$!
 
+  .husky/check-no-new-src-folders &
+  PID4=$!
+
   # Wait for all to complete
-  wait $PID1 $PID2 $PID3
+  wait $PID1 $PID2 $PID3 $PID4
 }
 
 # If any check failed, exit

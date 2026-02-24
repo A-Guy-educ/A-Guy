@@ -12,6 +12,7 @@ import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { ChatInterface } from '@/ui/web/chat'
 import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
+import { stripHtml } from '@/lib/utils/strip-html'
 import { Media as MediaComponent } from '@/ui/web/media'
 import { notFound } from 'next/navigation'
 import { ExercisesPager } from './_components/ExercisesPager'
@@ -205,6 +206,8 @@ export async function generateMetadata({ params }: LessonPageProps) {
 
   return {
     title: `${lesson.title} - ${lessonChapter.title} - ${course.title}`,
-    description: lesson.description || `Lesson ${lesson.order}: ${lesson.title}`,
+    description: lesson.description
+      ? stripHtml(lesson.description)
+      : `Lesson ${lesson.order}: ${lesson.title}`,
   }
 }

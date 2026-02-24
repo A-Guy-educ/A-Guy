@@ -2,8 +2,9 @@
 # Block CSS/SCSS files from being committed
 # This project uses Tailwind CSS only - no CSS/SCSS files allowed
 # Exception: src/app/(frontend)/globals.css is allowed (design system file)
+# Exception: ExerciseContentEditor/index.css is a pre-existing vanilla CSS file
 
-staged_css=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(css|scss|sass)$' | grep -v 'src/app/(frontend)/globals.css' || true)
+staged_css=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(css|scss|sass)$' | grep -v 'src/app/(frontend)/globals.css' | grep -v 'src/ui/admin/ExerciseContentEditor/index.css' || true)
 
 if [ -n "$staged_css" ]; then
   echo "❌ ERROR: CSS/SCSS files are not allowed in this project"

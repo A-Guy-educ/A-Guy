@@ -12,6 +12,7 @@ import { execSync } from 'child_process'
 import { stageOutputFile } from './pipeline-utils'
 import {
   validateBuildFile,
+  validateBuildTests,
   extractVerifySummary,
   isVerifyFailed,
   validateGapReport,
@@ -75,17 +76,49 @@ export function handlePlanGapValidation(options: StageHookOptions): void {
 }
 
 /**
- * Handle build content validation - check for Changes section
+ * Handle build content validation - check for Changes section and Tests Written
  * Throws an error if build report is missing Changes section
+ * For implement_feature/fix_bug task types, also validates Tests Written section exists
  */
 export function handleBuildValidation(options: StageHookOptions): void {
   const { taskDir } = options
   const outputFile = stageOutputFile(taskDir, 'build')
 
+  // First validate Changes section (existing check)
   const warning = validateBuildFile(outputFile)
   if (warning) {
     console.error(`  ❌ ${warning}`)
     throw new Error(warning)
+  }
+
+  // Also validate Tests Written section
+  // Read task.json to get task type
+  const taskJsonPath = path.join(taskDir, 'task.json')
+  let taskType = 'implement_feature' // default
+  if (fs.existsSync(taskJsonPath)) {
+    try {
+      const taskJson = JSON.parse(fs.readFileSync(taskJsonPath, 'utf-8'))
+      taskType = taskJson.task_type || 'implement_feature'
+    } catch {
+      // ignore - use default
+    }
+  }
+
+  // For implement_feature and fix_bug, tests are required
+  const requiresTests = taskType === 'implement_feature' || taskType === 'fix_bug'
+
+  if (fs.existsSync(outputFile)) {
+    const buildContent = fs.readFileSync(outputFile, 'utf-8')
+    const testsResult = validateBuildTests(buildContent)
+
+    if (requiresTests && !testsResult.hasTests) {
+      // For required test types, this is a hard failure
+      console.error(`  ❌ ${testsResult.warning} (required for ${taskType})`)
+      throw new Error(`Build validation failed: ${testsResult.warning}`)
+    } else if (!testsResult.hasTests) {
+      // For non-required types (docs, ops, refactor), just warn
+      console.log(`  ⚠️  ${testsResult.warning} (optional for ${taskType})`)
+    }
   }
 }
 
@@ -105,6 +138,42 @@ export function handlePostBuildTsc(options: StageHookOptions): void {
   } catch {
     console.error('  ❌ Post-build tsc check failed — code does not compile')
     throw new Error('Build produced code that does not compile. Fix and re-run.')
+  }
+}
+
+/**
+ * Result from handlePostBuildTests - indicates test execution result
+ */
+export interface PostBuildTestsResult {
+  passed: boolean
+  output: string
+}
+
+/**
+ * Handle post-build unit tests check
+ * Runs unit tests to catch failures BEFORE code is committed
+ */
+export function handlePostBuildTests(options: StageHookOptions): PostBuildTestsResult {
+  const { dryRun } = options
+
+  if (dryRun) {
+    console.log('  ⏭️  Post-build tests skipped (dry run)')
+    return { passed: true, output: '' }
+  }
+
+  try {
+    execSync('pnpm -s test:unit', {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+      timeout: 180_000, // 3 minute timeout for tests
+    })
+    console.log('  ✅ Post-build unit tests passed')
+    return { passed: true, output: '' }
+  } catch (error: unknown) {
+    const err = error as { stdout?: string; stderr?: string; message?: string }
+    const output = ((err.stdout || '') + (err.stderr || '') + (err.message || '')).slice(0, 3000)
+    console.error('  ❌ Post-build unit tests failed')
+    return { passed: false, output }
   }
 }
 

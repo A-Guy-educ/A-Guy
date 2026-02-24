@@ -36,7 +36,8 @@ You MUST output **valid JSON only** to the output file. No markdown wrappers, no
     "level": "raw_idea | good_spec | detailed_plan | spec_and_plan",
     "skip_stages": ["spec"] | ["spec", "architect"] | [],
     "reasoning": "Brief explanation of why this quality level was assigned"
-  }
+  },
+  "pipeline_profile": "lightweight | standard"
 }
 ```
 
@@ -138,6 +139,48 @@ Example:
     "level": "good_spec",
     "skip_stages": ["spec"],
     "reasoning": "Input contains ## Requirements with 5 FR entries and ## Acceptance Criteria with 8 checkable items. Promoted spec.md."
+  }
+}
+```
+
+## Pipeline Profile (Lightweight vs Standard)
+
+Determine whether the task should use the lightweight or standard pipeline. The lightweight profile skips: `spec`, `gap`, `plan-gap`, `auditor`, `apply-audit` — saving 5-6 LLM calls for simple fixes.
+
+### Decision Criteria
+
+Set `pipeline_profile: "lightweight"` when ALL of these are true:
+
+- `task_type` is one of: `fix_bug`, `refactor`, `ops`
+- `risk_level` is `low`
+- The change is isolated and straightforward (no complex architecture changes)
+
+Set `pipeline_profile: "standard"` for:
+
+- All `implement_feature` tasks (features always need full pipeline)
+- All `docs` and `research` tasks (spec-only pipeline)
+- Any task with `risk_level: "medium"` or `"high"`
+- Any task where you're unsure — default to standard (safe fallback)
+
+### Lightweight Task Promotion
+
+For lightweight tasks, you MUST also promote the task.md content to spec.md:
+
+- Write `.tasks/<task-id>/spec.md` with the task description as a spec
+- This allows the pipeline to skip the spec stage entirely
+- The pipeline will run: taskify → architect → build → commit → verify → pr
+
+Example lightweight task.json:
+
+```json
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "pipeline_profile": "lightweight",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": ["spec"],
+    "reasoning": "Task describes a simple bug fix with clear scope"
   }
 }
 ```

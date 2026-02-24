@@ -3,7 +3,6 @@
 import React from 'react'
 import { cn } from '@/infra/utils/ui'
 import { getMediaUrl } from '@/infra/utils/getMediaUrl'
-import { getYouTubeEmbedUrl } from '@/infra/media/youtube'
 import type { Media } from '@/payload-types'
 import { useMediaMap } from '../../context/MediaMapContext'
 
@@ -29,36 +28,57 @@ function isExternalType(media: Media): boolean {
  * Uses plain <img> / <video> to avoid Next.js Image optimization domain issues.
  */
 function MediaItem({ media }: { media: Media }) {
-  // External media has no uploaded file — handle before getMediaUrl
+  // External media has no file URL — handle before the src check
   if (isExternalType(media)) {
-    const externalUrl = media.externalUrl
-    if (!externalUrl) return null
+    const embedMedia = media as Media & {
+      embedProvider?: string | null
+      embedVideoId?: string | null
+      embedUrl?: string | null
+      embedTitle?: string | null
+      externalUrl?: string | null
+    }
 
-    const youTubeEmbedUrl = getYouTubeEmbedUrl(externalUrl)
-
-    if (youTubeEmbedUrl) {
+    // YouTube / Vimeo embed — 16:9 responsive iframe
+    if (
+      (embedMedia.embedProvider === 'youtube' || embedMedia.embedProvider === 'vimeo') &&
+      embedMedia.embedVideoId &&
+      embedMedia.embedUrl
+    ) {
       return (
-        <div className="relative w-full overflow-hidden" style={{ paddingTop: '56.25%' }}>
+        <div
+          className="relative w-full overflow-hidden rounded-lg"
+          style={{ aspectRatio: '16 / 9' }}
+        >
           <iframe
-            src={youTubeEmbedUrl}
-            className="absolute inset-0 h-full w-full border-0"
-            title="YouTube video"
+            src={embedMedia.embedUrl}
+            title={embedMedia.embedTitle || `Video ${embedMedia.embedVideoId}`}
+            className="absolute inset-0 h-full w-full"
             loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           />
         </div>
       )
     }
 
-    return (
-      <iframe src={externalUrl} className="h-[400px] w-full border-0" title="External content" />
-    )
+    // Generic external embed
+    const embedUrl = embedMedia.embedUrl || embedMedia.externalUrl
+    if (embedUrl) {
+      return (
+        <iframe
+          src={embedUrl}
+          title={embedMedia.embedTitle || 'External content'}
+          className="w-full h-[400px] border border-border rounded"
+          loading="lazy"
+        />
+      )
+    }
+
+    return null
   }
 
   const src = getMediaUrl(media.url, media.updatedAt)
-
   if (!src) return null
 
   if (isVideoType(media)) {

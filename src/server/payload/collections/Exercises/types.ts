@@ -169,6 +169,15 @@ export interface QuestionMatchingBlock {
 }
 
 // ---------------------------------
+// SVG Hotspot (clickable region within an SVG)
+// ---------------------------------
+export interface SvgHotspot {
+  id: string
+  selector: string // CSS selector or element ID to match in SVG DOM
+  label?: string // Accessible label for the hotspot
+}
+
+// ---------------------------------
 // SVG Block (raw SVG markup)
 // ---------------------------------
 export interface SvgBlock {
@@ -177,7 +186,23 @@ export interface SvgBlock {
   value: string // Raw SVG markup
   altText?: string // Accessibility description
   caption?: InlineRichText
+  interactive?: boolean // If true, hotspots are clickable
+  hotspots?: SvgHotspot[] // Clickable regions (only when interactive=true)
+  correctHotspotIds?: string[] // Answer key: which hotspot IDs are correct
+  hint?: InlineRichText
+  solution?: InlineRichText
+  fullSolution?: InlineRichText
 }
+
+// ---------------------------------
+// Generic Question Answer (used by Geometry + Axis)
+// ---------------------------------
+export type QuestionAnswer =
+  | { kind: 'numeric'; value: number; tolerance?: number }
+  | { kind: 'mcq'; options: McqOption[]; correctOptionIds: string[] }
+  | { kind: 'free_response'; acceptedAnswers: string[] }
+  | { kind: 'point'; x: number; y: number; tolerance?: number }
+  | { kind: 'function'; acceptedExpressions: string[] }
 
 // ---------------------------------
 // Question Geometry Block
@@ -187,6 +212,7 @@ export interface QuestionGeometryBlock {
   type: 'question_geometry'
   prompt: InlineRichText
   geometry: GeometrySpecV1
+  answer?: QuestionAnswer
   hint?: InlineRichText
   solution?: InlineRichText
   fullSolution?: InlineRichText
@@ -200,9 +226,19 @@ export interface QuestionAxisBlock {
   type: 'question_axis'
   prompt: InlineRichText
   axis: AxisSpecV1
+  answer?: QuestionAnswer
   hint?: InlineRichText
   solution?: InlineRichText
   fullSolution?: InlineRichText
+}
+
+// ---------------------------------
+// HTML Block (WYSIWYG rich content)
+// ---------------------------------
+export interface HtmlBlock {
+  id: string
+  type: 'html'
+  html: string
 }
 
 // ---------------------------------
@@ -219,6 +255,7 @@ export type ContentBlock =
   | SvgBlock
   | QuestionGeometryBlock
   | QuestionAxisBlock
+  | HtmlBlock
 
 // ---------------------------------
 // Content Container

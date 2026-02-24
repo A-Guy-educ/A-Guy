@@ -24,7 +24,6 @@ interface QuestionCardProps {
   checkAnswerText: string
   correctText: string
   incorrectText: string
-  // Question numbering props
   questionLabel?: string
   dir?: 'ltr' | 'rtl'
 }
@@ -51,7 +50,6 @@ export function QuestionCard({
       )}
     >
       {/* Question Label */}
-      {/* NOTE: Small bubble for section letter (א/ב/ג or a/b/c). Do not use for exercise number. */}
       {questionLabel && (
         <div
           className={cn(

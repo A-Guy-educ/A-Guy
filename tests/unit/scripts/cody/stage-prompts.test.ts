@@ -103,14 +103,39 @@ describe('stage-prompts', () => {
   // ===========================================================================
 
   describe('getSpecStages', () => {
-    it('should return taskify, spec, gap, clarify', () => {
-      expect(getSpecStages()).toEqual(['taskify', 'spec', 'gap', 'clarify'])
+    it('should return taskify, spec, gap for default standard profile (clarify not included)', () => {
+      expect(getSpecStages()).toEqual(['taskify', 'spec', 'gap'])
+    })
+
+    it('should return only taskify for lightweight profile', () => {
+      expect(getSpecStages('lightweight')).toEqual(['taskify'])
+    })
+
+    it('should return taskify, spec, gap for standard profile (no clarify)', () => {
+      expect(getSpecStages('standard')).toEqual(['taskify', 'spec', 'gap'])
     })
   })
 
   describe('getImplStages', () => {
-    it('should return implementation stages in order', () => {
+    it('should return full implementation stage list (default standard profile)', () => {
       expect(getImplStages()).toEqual([
+        'architect',
+        'plan-gap',
+        'build',
+        'commit',
+        'verify',
+        'auditor',
+        'apply-audit',
+        'pr',
+      ])
+    })
+
+    it('should return reduced stage list for lightweight profile', () => {
+      expect(getImplStages('lightweight')).toEqual(['architect', 'build', 'commit', 'verify', 'pr'])
+    })
+
+    it('should return full stage list for standard profile', () => {
+      expect(getImplStages('standard')).toEqual([
         'architect',
         'plan-gap',
         'build',

@@ -8,6 +8,7 @@ import {
   normalizeTask,
   PIPELINE_MAP,
   resolveControlMode,
+  resolvePipelineProfile,
 } from '../../../../scripts/cody/pipeline-utils'
 
 // Helper: create a temp task directory with a task.json
@@ -799,5 +800,274 @@ describe('input_quality in task.json', () => {
         reasoning: '',
       })
     })
+  })
+})
+
+// ============================================================================
+// pipeline_profile resolution (Lightweight vs Standard)
+// ============================================================================
+describe('resolvePipelineProfile', () => {
+  // Helper to create a full TaskDefinition for testing resolvePipelineProfile
+  const createTaskDef = (
+    taskType: string,
+    riskLevel: string,
+    pipelineProfile?: string,
+  ): Parameters<typeof resolvePipelineProfile>[0] => ({
+    task_type: taskType as Parameters<typeof resolvePipelineProfile>[0]['task_type'],
+    pipeline:
+      taskType === 'spec_only' || taskType === 'research' || taskType === 'docs'
+        ? 'spec_only'
+        : 'spec_execute_verify',
+    risk_level: riskLevel as Parameters<typeof resolvePipelineProfile>[0]['risk_level'],
+    confidence: 0.9,
+    primary_domain: 'backend',
+    scope: ['test'],
+    missing_inputs: [],
+    assumptions: [],
+    ...(pipelineProfile && { pipeline_profile: pipelineProfile as 'lightweight' | 'standard' }),
+  })
+
+  it('returns lightweight for low-risk bug fixes', () => {
+    const taskDef = createTaskDef('fix_bug', 'low')
+    expect(resolvePipelineProfile(taskDef)).toBe('lightweight')
+  })
+
+  it('returns standard for medium-risk features', () => {
+    const taskDef = createTaskDef('implement_feature', 'medium')
+    expect(resolvePipelineProfile(taskDef)).toBe('standard')
+  })
+
+  it('returns standard for high-risk bug fixes', () => {
+    const taskDef = createTaskDef('fix_bug', 'high')
+    expect(resolvePipelineProfile(taskDef)).toBe('standard')
+  })
+
+  it('returns lightweight for low-risk refactor', () => {
+    const taskDef = createTaskDef('refactor', 'low')
+    expect(resolvePipelineProfile(taskDef)).toBe('lightweight')
+  })
+
+  it('returns standard for low-risk implement_feature (features always get full treatment)', () => {
+    const taskDef = createTaskDef('implement_feature', 'low')
+    expect(resolvePipelineProfile(taskDef)).toBe('standard')
+  })
+
+  it('respects explicit agent override', () => {
+    const taskDef = createTaskDef('fix_bug', 'low', 'standard')
+    expect(resolvePipelineProfile(taskDef)).toBe('standard')
+  })
+
+  it('explicit override wins over heuristics (high-risk with lightweight override)', () => {
+    const taskDef = createTaskDef('fix_bug', 'high', 'lightweight')
+    expect(resolvePipelineProfile(taskDef)).toBe('lightweight')
+  })
+
+  it('returns standard for docs task regardless of risk', () => {
+    const taskDef = createTaskDef('docs', 'low')
+    expect(resolvePipelineProfile(taskDef)).toBe('standard')
+  })
+
+  it('returns standard for research task regardless of risk', () => {
+    const taskDef = createTaskDef('research', 'low')
+    expect(resolvePipelineProfile(taskDef)).toBe('standard')
+  })
+
+  it('returns standard for spec_only task regardless of risk', () => {
+    const taskDef = createTaskDef('spec_only', 'low')
+    expect(resolvePipelineProfile(taskDef)).toBe('standard')
+  })
+
+  it('returns lightweight for low-risk ops', () => {
+    const taskDef = createTaskDef('ops', 'low')
+    expect(resolvePipelineProfile(taskDef)).toBe('lightweight')
+  })
+
+  it('returns standard for medium-risk ops', () => {
+    const taskDef = createTaskDef('ops', 'medium')
+    expect(resolvePipelineProfile(taskDef)).toBe('standard')
+  })
+})
+
+// ============================================================================
+// pipeline_profile validation in task.json
+// ============================================================================
+// pipeline_profile validation in task.json
+// ============================================================================
+describe('pipeline_profile validation', () => {
+  // Valid task without pipeline_profile (should still pass)
+  const VALID_TASK_NO_PROFILE: Record<string, unknown> = {
+    task_type: 'implement_feature',
+    pipeline: 'spec_execute_verify',
+    risk_level: 'medium',
+    confidence: 0.9,
+    primary_domain: 'backend',
+    scope: ['src/app'],
+    missing_inputs: [],
+    assumptions: [],
+  }
+
+  // Valid task with lightweight profile
+  const VALID_TASK_LIGHTWEIGHT: Record<string, unknown> = {
+    ...VALID_TASK_NO_PROFILE,
+    pipeline_profile: 'lightweight',
+  }
+
+  // Valid task with standard profile
+  const VALID_TASK_STANDARD: Record<string, unknown> = {
+    ...VALID_TASK_NO_PROFILE,
+    pipeline_profile: 'standard',
+  }
+
+  describe('validateTask with pipeline_profile', () => {
+    it('accepts valid pipeline_profile: lightweight', () => {
+      const result = validateTask(VALID_TASK_LIGHTWEIGHT)
+      expect(result.valid).toBe(true)
+      expect(result.errors).toHaveLength(0)
+    })
+
+    it('accepts valid pipeline_profile: standard', () => {
+      const result = validateTask(VALID_TASK_STANDARD)
+      expect(result.valid).toBe(true)
+      expect(result.errors).toHaveLength(0)
+    })
+
+    it('accepts task without pipeline_profile (backward compatibility)', () => {
+      const result = validateTask(VALID_TASK_NO_PROFILE)
+      expect(result.valid).toBe(true)
+    })
+
+    it('rejects invalid pipeline_profile: turbo', () => {
+      const task = {
+        ...VALID_TASK_NO_PROFILE,
+        pipeline_profile: 'turbo',
+      }
+      const result = validateTask(task)
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('pipeline_profile')
+    })
+
+    it('rejects invalid pipeline_profile: fast', () => {
+      const task = {
+        ...VALID_TASK_NO_PROFILE,
+        pipeline_profile: 'fast',
+      }
+      const result = validateTask(task)
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('pipeline_profile')
+    })
+
+    it('rejects invalid pipeline_profile: minimal', () => {
+      const task = {
+        ...VALID_TASK_NO_PROFILE,
+        pipeline_profile: 'minimal',
+      }
+      const result = validateTask(task)
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('pipeline_profile')
+    })
+
+    it('rejects invalid pipeline_profile as number', () => {
+      const task = {
+        ...VALID_TASK_NO_PROFILE,
+        pipeline_profile: 1,
+      }
+      const result = validateTask(task)
+      expect(result.valid).toBe(false)
+      expect(result.errors[0]).toContain('pipeline_profile')
+    })
+  })
+
+  describe('normalizeTask with pipeline_profile', () => {
+    it('preserves valid pipeline_profile: lightweight', () => {
+      const result = normalizeTask(VALID_TASK_LIGHTWEIGHT)
+      expect(result.pipeline_profile).toBe('lightweight')
+    })
+
+    it('preserves valid pipeline_profile: standard', () => {
+      const result = normalizeTask(VALID_TASK_STANDARD)
+      expect(result.pipeline_profile).toBe('standard')
+    })
+
+    it('preserves task without pipeline_profile (backward compat)', () => {
+      const result = normalizeTask(VALID_TASK_NO_PROFILE)
+      // normalizeTask should not add pipeline_profile if not present
+      expect(result.pipeline_profile).toBeUndefined()
+    })
+  })
+})
+
+// ============================================================================
+// Lightweight pipeline profile functions (Step 2: Build lightweight pipeline variants)
+// ============================================================================
+describe('getImplPipeline', () => {
+  it('returns full pipeline for standard profile', async () => {
+    const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
+    const pipeline = getImplPipeline('standard')
+    // Standard pipeline should have 7 entries including parallel group
+    expect(pipeline).toHaveLength(7)
+    // Should contain the parallel group
+    const hasParallel = pipeline.some(
+      (stage): stage is { parallel: string[] } => typeof stage === 'object' && 'parallel' in stage,
+    )
+    expect(hasParallel).toBe(true)
+  })
+
+  it('returns reduced pipeline for lightweight profile', async () => {
+    const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
+    const pipeline = getImplPipeline('lightweight')
+    // Lightweight should have 5 entries, no parallel group
+    expect(pipeline).toHaveLength(5)
+    expect(pipeline).toEqual(['architect', 'build', 'commit', 'verify', 'pr'])
+  })
+
+  it('lightweight does not include plan-gap, auditor, or apply-audit', async () => {
+    const { getImplPipeline, flattenPipeline } =
+      await import('../../../../scripts/cody/pipeline-utils')
+    const pipeline = getImplPipeline('lightweight')
+    const flatNames = flattenPipeline(pipeline)
+    expect(flatNames).not.toContain('plan-gap')
+    expect(flatNames).not.toContain('auditor')
+    expect(flatNames).not.toContain('apply-audit')
+  })
+})
+
+describe('getAllImplStageNames', () => {
+  it('standard profile returns full flattened list', async () => {
+    const { getAllImplStageNames } = await import('../../../../scripts/cody/pipeline-utils')
+    const names = getAllImplStageNames('standard')
+    expect(names).toContain('architect')
+    expect(names).toContain('plan-gap')
+    expect(names).toContain('build')
+    expect(names).toContain('commit')
+    expect(names).toContain('verify')
+    expect(names).toContain('auditor')
+    expect(names).toContain('apply-audit')
+    expect(names).toContain('pr')
+  })
+
+  it('lightweight profile returns flat list without audit stages', async () => {
+    const { getAllImplStageNames } = await import('../../../../scripts/cody/pipeline-utils')
+    const names = getAllImplStageNames('lightweight')
+    expect(names).toEqual(['architect', 'build', 'commit', 'verify', 'pr'])
+  })
+})
+
+describe('getSpecStagesForProfile', () => {
+  it('lightweight without clarify returns only taskify', async () => {
+    const { getSpecStagesForProfile } = await import('../../../../scripts/cody/pipeline-utils')
+    const stages = getSpecStagesForProfile('lightweight', false)
+    expect(stages).toEqual(['taskify'])
+  })
+
+  it('standard without clarify returns taskify, spec, gap', async () => {
+    const { getSpecStagesForProfile } = await import('../../../../scripts/cody/pipeline-utils')
+    const stages = getSpecStagesForProfile('standard', false)
+    expect(stages).toEqual(['taskify', 'spec', 'gap'])
+  })
+
+  it('lightweight with clarify returns taskify + clarify', async () => {
+    const { getSpecStagesForProfile } = await import('../../../../scripts/cody/pipeline-utils')
+    const stages = getSpecStagesForProfile('lightweight', true)
+    expect(stages).toEqual(['taskify', 'clarify'])
   })
 })

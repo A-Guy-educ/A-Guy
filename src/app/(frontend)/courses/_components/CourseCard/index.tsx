@@ -10,6 +10,7 @@ import { setUserProfile, getUserProfile } from '@/client/state/localStorage/user
 import type { Course } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
+import { SafeHtml } from '@/ui/web/SafeHtml'
 
 interface CourseCardProps {
   course: Course
@@ -84,12 +85,11 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
             {course.title}
           </h4>
           {course.description && (
-            <p
-              className="text-muted-foreground mt-1 line-clamp-2 text-right"
+            <SafeHtml
+              html={course.description}
+              className="text-muted-foreground mt-1 line-clamp-2 text-right [&_p]:m-0"
               style={{ fontSize: '12px' }}
-            >
-              {course.description}
-            </p>
+            />
           )}
         </div>
         <div

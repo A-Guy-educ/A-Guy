@@ -1,20 +1,61 @@
-/**
- * Geometry Renderer
- * Renders geometric shapes and diagrams
- */
+'use client'
 
-import { GeometrySpecV1 } from '@/infra/contracts'
+import React, { useCallback } from 'react'
+import dynamic from 'next/dynamic'
+import type { GeometrySpecV1 } from '@/infra/contracts'
+import { renderGeometrySpec } from '../../graphics/geometryElements'
 
-// Placeholder for GeometrySystem since we are not supporting graphs workflows in this task.
-export const GeometryRenderer: React.FC<{
+const JSXGraphBoard = dynamic(
+  () => import('../../graphics/JSXGraphBoard').then((m) => ({ default: m.JSXGraphBoard })),
+  {
+    ssr: false,
+    loading: () => <div className="w-full h-64 bg-muted animate-pulse rounded-lg" />,
+  },
+)
+
+interface GeometryRendererProps {
   blockId: string
   spec: GeometrySpecV1
-}> = ({ blockId: _blockId, spec: _spec }) => {
+}
+
+function calculateBoundingBox(spec: GeometrySpecV1): [number, number, number, number] {
+  const points = spec.elements.points
+  if (points.length === 0) {
+    return [-10, 10, 10, -10]
+  }
+  const xs = points.map((p) => p.x)
+  const ys = points.map((p) => p.y)
+  const padding = 2
+  return [
+    Math.min(...xs) - padding,
+    Math.max(...ys) + padding,
+    Math.max(...xs) + padding,
+    Math.min(...ys) - padding,
+  ]
+}
+
+export function GeometryRenderer({ blockId, spec }: GeometryRendererProps) {
+  const handleBoardReady = useCallback(
+    (board: JXG.Board) => {
+      renderGeometrySpec(board, spec)
+    },
+    [spec],
+  )
+
+  const boundingBox = calculateBoundingBox(spec)
+
   return (
-    <div className="mb-4 flex justify-center">
-      <div className="my-8 border rounded-lg overflow-hidden border-border bg-card p-4 text-center text-muted-foreground">
-        Geometry System (Not Supported)
-      </div>
+    <div className="my-4 flex justify-center">
+      <JSXGraphBoard
+        id={blockId}
+        width={spec.canvas.width}
+        height={spec.canvas.height}
+        boundingBox={boundingBox}
+        showGrid={spec.canvas.grid ?? false}
+        showAxis={false}
+        onBoardReady={handleBoardReady}
+        className="border-border"
+      />
     </div>
   )
 }

@@ -1,15 +1,15 @@
 # Cody Operations Dashboard — Implementation Plan
 
 **Created**: 2026-02-21
-**Updated**: 2026-02-21 (v4 — gap analysis applied, task breakdown ready)
-**Status**: Ready for Implementation (task breakdown below)
+**Updated**: 2026-02-22 (v5 — gap analysis applied, task breakdown ready)
+**Status**: Ready for Implementation
 **Author**: Claude Code + aguy
 
 ---
 
-## Gap Analysis (v3 → v4)
+## Gap Analysis (v4 → v5)
 
-Cross-referencing PLAN v3 with the actual codebase revealed these 12 gaps. All are now fixed in this version.
+Cross-referencing PLAN v4 with the actual codebase revealed these additional gaps.
 
 | # | Gap | Impact | Fix |
 |---|-----|--------|-----|
@@ -21,10 +21,14 @@ Cross-referencing PLAN v3 with the actual codebase revealed these 12 gaps. All a
 | 6 | **Supervisor uses MiniMax M2.5, not Gemini**: `failure-analyzer.ts` uses OpenAI-compatible client pointed at `api.minimax.io`. Needs `MINIMAX_API_KEY`. | Info — no action needed for dashboard (just display) | N/A |
 | 7 | **PR association**: Issues don't have `pull_request` field unless the issue IS a PR. Need to find PRs by branch name pattern instead. | High — column derivation for "Review" column broken | Fixed: Query PRs separately using `pulls.list` and match by branch name `{prefix}/{taskId}`. |
 | 8 | **Branch prefix discovery**: 5 possible prefixes (`feat/`, `fix/`, `refactor/`, `docs/`, `chore/`). Must try all to find status.json on branch. | Medium — API route must handle multi-prefix lookup | Fixed: `github-client.ts` exports `findTaskBranch()` that tries all 5. |
-| 9 | **`GH_TOKEN` not in `.env.example`**: Dashboard needs `GH_TOKEN` for server-side API routes. | Low — easy to add | Fixed: Add to `.env.example` in Phase 1. |
+| 9 | **`GITHUB_TOKEN` not in `.env.example`**: Dashboard needs `GITHUB_TOKEN` for server-side API routes. | Low — easy to add | Fixed: Add `GITHUB_TOKEN` and `CODY_DASHBOARD_SECRET` to `.env.example` in Phase 1.
 | 10 | **Workflow dispatch requires `workflow_id`**: `octokit.actions.createWorkflowDispatch()` needs the workflow file name, not just inputs. Must pass `workflow_id: 'cody.yml'`. | Low — but would break "create task" action | Fixed: Hardcode `workflow_id: 'cody.yml'` in actions route. |
 | 11 | **CopilotKit Gemini adapter regression**: Issues #3217 (google/undefined), #2929 (message ID "0"). | High — Phase 0 spike must validate | Fixed: Phase 0 includes explicit fallback path to OpenAI. Budget 2 hours max. |
 | 12 | **Auth check pattern**: Plan said `requireAdmin(user)` but actual auth is via Payload's `/api/users/me` endpoint. Server-side API routes need to call `getPayload()` then `payload.auth({ headers })`. | Medium — auth code would be wrong | Fixed: Decoupled — API routes use own `requireDashboardAuth()` with CODY_DASHBOARD_SECRET (no Payload dependency). |
+| 13 | **Route group path**: `(cody)` is a route group, actual URL depends on folder structure. Plan implies `/cody` but Next.js may render differently. | Low — clarify URL path | Fixed: Use folder `src/app/(cody)/cody/page.tsx` → URL `/cody`. |
+| 14 | **Tailwind CSS**: `(cody)` layout needs its own globals import since it has separate `<html>/<body>`. | Medium — styling breaks | Fixed: Import `'./globals.css'` in `(cody)/layout.tsx`. |
+| 15 | **CopilotKit CSS conflicts**: No existing CopilotKit usage to verify styling isolation. | Low — test in Phase 0 | Tested in TASK-01 spike. |
+| 16 | **No rate limiting strategy**: Plan has cache but no exponential backoff for GitHub API rate limits. | Low — add to github-client | Added retry logic with backoff to TASK-03. |
 
 ---
 
@@ -476,7 +480,7 @@ No Payload CMS dependency. No `@payload-config`. No `useCurrentUser()`.
 Every `/api/cody/*` route (decoupled from Payload):
 1. Checks auth: `requireDashboardAuth(req)` from `@/lib/cody/auth`
 2. If unauthorized: returns 401
-3. Uses Octokit with `process.env.GH_TOKEN`
+3. Uses Octokit with `process.env.GITHUB_TOKEN`
 4. Returns JSON
 
 ### Error Handling Strategy
@@ -1054,13 +1058,13 @@ interface ParsedComment {
 
 **Goal**: Ensure all quality gates pass.
 **Dependencies**: All previous tasks
-**Files**: `.env.example` (MODIFIED — add GH_TOKEN)
+**Files**: `.env.example` (MODIFIED — add GITHUB_TOKEN, CODY_DASHBOARD_SECRET)
 
 **Steps**:
 1. `pnpm tsc --noEmit` — fix all type errors
 2. `pnpm lint` — fix all lint errors
 3. `pnpm format:fix` — format all new files
-4. Add `GH_TOKEN=` to `.env.example`
+4. Verify `GITHUB_TOKEN=` and `CODY_DASHBOARD_SECRET=` in `.env.example`
 5. Run existing tests to verify no regressions
 6. Manual smoke test: load /cody, verify board loads
 

@@ -3,8 +3,9 @@
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import type { Chapter } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/ui/web/components/card'
+import { Card, CardFooter, CardHeader, CardTitle } from '@/ui/web/components/card'
 import { Button } from '@/ui/web/components/button'
+import { SafeHtml } from '@/ui/web/SafeHtml'
 
 interface ChapterCardProps {
   chapter: Chapter
@@ -29,7 +30,12 @@ export function ChapterCard({ chapter, courseSlug }: ChapterCardProps) {
           </div>
         )}
         <CardTitle className="text-xl">{chapter.title}</CardTitle>
-        {chapter.description && <CardDescription>{chapter.description}</CardDescription>}
+        {chapter.description && (
+          <SafeHtml
+            html={chapter.description}
+            className="text-sm text-muted-foreground [&_p]:m-0"
+          />
+        )}
       </CardHeader>
       <CardFooter>
         <Button asChild>

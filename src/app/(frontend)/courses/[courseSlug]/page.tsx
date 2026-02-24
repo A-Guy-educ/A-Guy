@@ -6,6 +6,7 @@ import { queryChaptersByCourse } from '@/server/repos/queries/chapters'
 import { SystemParams } from '@/infra/config/system-params'
 import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
+import { stripHtml } from '@/lib/utils/strip-html'
 import { CourseHeader } from '../_components/CourseHeader'
 import { ChapterCard } from '../_components/ChapterCard'
 import { EmptyState } from '../_components/EmptyState'
@@ -96,6 +97,7 @@ export async function generateMetadata({ params }: CoursePageProps) {
 
   return {
     title: course.meta?.title || course.title,
-    description: course.meta?.description || course.description || undefined,
+    description:
+      course.meta?.description || (course.description ? stripHtml(course.description) : undefined),
   }
 }
