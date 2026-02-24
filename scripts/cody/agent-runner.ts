@@ -179,7 +179,8 @@ export function runAgentWithFileWatch(
       }
 
       // Poll for output file
-      const expectedBase = path.basename(outputFile, '.md')
+      const outputExt = path.extname(outputFile)
+      const expectedBase = path.basename(outputFile, outputExt)
       const taskDirForPoll = path.dirname(outputFile)
       let stableCheckCount = 0
       let lastFileSize = 0
@@ -195,7 +196,7 @@ export function runAgentWithFileWatch(
             // Check for prefix match (timestamped variant)
             const files = fs.readdirSync(taskDirForPoll)
             const prefixMatch = files.find(
-              (f) => f.startsWith(expectedBase + '-') && f.endsWith('.md'),
+              (f) => f.startsWith(expectedBase + '-') && f.endsWith(outputExt),
             )
             if (prefixMatch) {
               detectedFile = path.join(taskDirForPoll, prefixMatch)
