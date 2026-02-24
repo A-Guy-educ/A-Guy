@@ -45,6 +45,8 @@ export function useHelpSystem({
 
   // Track which questions have had solution_unlocked emitted (fire-once)
   const unlockEmittedRef = useRef<Set<string>>(new Set())
+  // Track which questions have had solution sent to chat (fire-once)
+  const solutionSentRef = useRef<Set<string>>(new Set())
 
   const questionIds = useMemo(() => questionBlocks.map((q) => q.id), [questionBlocks])
 
@@ -94,6 +96,21 @@ export function useHelpSystem({
           hint_used: true,
         })
 
+        // If no backend hint content, dispatch to chat for AI generation
+        const question = questionBlocks.find((q) => q.id === questionId)
+        if (question && !question.hint?.value) {
+          window.dispatchEvent(
+            new CustomEvent('exercise-help-action', {
+              detail: {
+                type: 'hint',
+                questionContent: question.prompt?.value,
+                exerciseId,
+                lessonId,
+              },
+            }),
+          )
+        }
+
         // Check if solution just became unlocked
         if (next.solutionUnlocked && !unlockEmittedRef.current.has(questionId)) {
           unlockEmittedRef.current.add(questionId)
@@ -105,7 +122,7 @@ export function useHelpSystem({
         }
       }
     },
-    [questionIds, getHelpState, activeHelp, basePayload],
+    [questionIds, getHelpState, activeHelp, basePayload, questionBlocks, exerciseId, lessonId],
   )
 
   const handleGuidingClick = useCallback(
@@ -189,20 +206,23 @@ export function useHelpSystem({
         guiding_used: current.guidingUsed,
       })
 
-      // Dispatch CustomEvent for chat integration
-      const question = questionBlocks.find((q) => q.id === questionId)
-      if (question) {
-        window.dispatchEvent(
-          new CustomEvent('exercise-help-action', {
-            detail: {
-              type: 'solution',
-              questionContent: question.prompt?.value,
-              backendContent: question.fullSolution?.value,
-              exerciseId,
-              lessonId,
-            },
-          }),
-        )
+      // Dispatch CustomEvent for chat integration (fire-once per question)
+      if (!solutionSentRef.current.has(questionId)) {
+        solutionSentRef.current.add(questionId)
+        const question = questionBlocks.find((q) => q.id === questionId)
+        if (question) {
+          window.dispatchEvent(
+            new CustomEvent('exercise-help-action', {
+              detail: {
+                type: 'solution',
+                questionContent: question.prompt?.value,
+                backendContent: question.fullSolution?.value,
+                exerciseId,
+                lessonId,
+              },
+            }),
+          )
+        }
       }
     },
     [questionIds, getHelpState, activeHelp, basePayload, questionBlocks, exerciseId, lessonId],

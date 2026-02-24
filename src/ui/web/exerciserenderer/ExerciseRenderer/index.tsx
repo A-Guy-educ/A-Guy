@@ -428,10 +428,8 @@ export function ExerciseRenderer({
                 !(question.type === 'question_select' && question.variant === 'true_false') &&
                 question.type !== 'question_table'
 
-              // Help system for this question (only if it has help content)
-              const hasHelpContent =
-                question.hint?.value || question.solution?.value || question.fullSolution?.value
-              const helpSystemNode = hasHelpContent ? (
+              // Help system for this question (always shown — AI fallback when no backend content)
+              const helpSystemNode = (
                 <HelpSystem
                   question={question}
                   helpUsage={
@@ -449,7 +447,7 @@ export function ExerciseRenderer({
                   guidingLabel={t('helpGuidingQuestion')}
                   solutionLabel={t('helpSolution')}
                 />
-              ) : undefined
+              )
 
               return (
                 <QuestionCard
