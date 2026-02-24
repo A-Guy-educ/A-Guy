@@ -9,8 +9,9 @@ import { describe, it, expect } from 'vitest'
 import * as fs from 'fs'
 import * as path from 'path'
 
-const codyUtilsSource = fs.readFileSync(
-  path.resolve(__dirname, '../../../../scripts/cody/cody-utils.ts'),
+// Read from github-api.ts where the implementations now live
+const githubApiSource = fs.readFileSync(
+  path.resolve(__dirname, '../../../../scripts/cody/github-api.ts'),
   'utf-8',
 )
 
@@ -20,9 +21,9 @@ const codyUtilsSource = fs.readFileSync(
 
 describe('Bug 6: editComment should not use execSync with string interpolation', () => {
   // Extract the editComment function body
-  const fnStart = codyUtilsSource.indexOf('export function editComment(')
-  const fnEnd = codyUtilsSource.indexOf('\nexport ', fnStart + 1)
-  const fnBody = codyUtilsSource.slice(fnStart, fnEnd > -1 ? fnEnd : fnStart + 2000)
+  const fnStart = githubApiSource.indexOf('export function editComment(')
+  const fnEnd = githubApiSource.indexOf('\nexport ', fnStart + 1)
+  const fnBody = githubApiSource.slice(fnStart, fnEnd > -1 ? fnEnd : fnStart + 2000)
 
   it('should NOT use execSync with template literal containing commentId or repo', () => {
     // execSync with interpolated variables is a shell injection vector
@@ -44,9 +45,9 @@ describe('Bug 6: editComment should not use execSync with string interpolation',
 // ============================================================================
 
 describe('Bug 7: getLatestIssueComment should not use execSync with string interpolation', () => {
-  const fnStart = codyUtilsSource.indexOf('export function getLatestIssueComment(')
-  const fnEnd = codyUtilsSource.indexOf('\nexport ', fnStart + 1)
-  const fnBody = codyUtilsSource.slice(fnStart, fnEnd > -1 ? fnEnd : fnStart + 2000)
+  const fnStart = githubApiSource.indexOf('export function getLatestIssueComment(')
+  const fnEnd = githubApiSource.indexOf('\nexport ', fnStart + 1)
+  const fnBody = githubApiSource.slice(fnStart, fnEnd > -1 ? fnEnd : fnStart + 2000)
 
   it('should NOT use execSync with template literal containing issueNumber or exclude', () => {
     const hasExecSyncInterpolation = /execSync\s*\(\s*`[^`]*\$\{(issueNumber|exclude)\}/.test(
@@ -69,9 +70,9 @@ describe('Bug 7: getLatestIssueComment should not use execSync with string inter
 // General: execFileSync import
 // ============================================================================
 
-describe('cody-utils should import execFileSync', () => {
+describe('github-api should import execFileSync', () => {
   it('should import execFileSync from child_process', () => {
-    const importBlock = codyUtilsSource.slice(0, 500)
+    const importBlock = githubApiSource.slice(0, 500)
     expect(importBlock).toContain('execFileSync')
   })
 })

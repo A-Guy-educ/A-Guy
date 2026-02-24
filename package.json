@@ -89,10 +89,10 @@
     "verify": "pnpm tsx scripts/verify.ts",
     "ocode": "opencode",
     "setup:opencode": "curl -fsSL https://opencode.ai/install | bash",
-    "cody:spec": "pnpm tsx scripts/cody/cody.ts --mode=spec",
-    "cody:impl": "pnpm tsx scripts/cody/cody.ts --mode=impl",
-    "cody:rerun": "pnpm tsx scripts/cody/cody.ts --mode=rerun",
-    "cody": "pnpm tsx scripts/cody/cody.ts",
+    "cody:spec": "pnpm tsx scripts/cody/entry.ts --mode=spec",
+    "cody:impl": "pnpm tsx scripts/cody/entry.ts --mode=impl",
+    "cody:rerun": "pnpm tsx scripts/cody/entry.ts --mode=rerun",
+    "cody": "pnpm tsx scripts/cody/entry.ts",
     "supervisor": "pnpm tsx scripts/supervisor/supervisor.ts"
   },
   "dependencies": {
