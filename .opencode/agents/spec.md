@@ -97,3 +97,11 @@ After writing the spec, validate it with relevant domain experts:
 **What to ask:** "Review my spec. Are there any security gaps? Is access control properly defined? Are there any hardcoded secrets or data exposure risks?"
 
 Invoke these subagents as needed based on your spec's scope. Include their feedback in the spec or note open items in "## Open Questions".
+
+## Using the Edit Tool
+
+When using the Edit tool to modify spec.md:
+
+1. **Read the file FIRST** - Always read spec.md immediately before editing it
+2. **Copy the EXACT string** - Include ALL whitespace, indentation, and line endings exactly as they appear
+3. **If edit fails** - Re-read the file and try again with the exact current content

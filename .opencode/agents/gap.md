@@ -121,6 +121,14 @@ No gaps identified. The spec is complete and aligned with codebase patterns.
 - **Use domain subagents** (@payload-expert, @web-expert, etc.) for validation
 - Write to `.tasks/<task-id>/gap.md` - the spec agent already wrote spec.md
 
+### Using the Edit Tool
+
+When using the Edit tool to modify spec.md:
+
+1. **Read the file FIRST** - Always read spec.md immediately before editing it
+2. **Copy the EXACT string** - Include ALL whitespace, indentation, and line endings exactly as they appear
+3. **If edit fails** - Re-read the file and try again with the exact current content
+
 **STOP CONDITION**: After you write gap.md, you are DONE. Do NOT implement anything.
 
 ## Domain-Specific Validation

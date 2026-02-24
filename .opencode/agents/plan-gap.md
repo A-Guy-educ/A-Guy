@@ -84,3 +84,11 @@ No gaps identified. The plan covers all spec requirements.
 - **Edit plan.md directly** — fix gaps yourself instead of rejecting
 - **No retry loop** — you fix the plan in one pass
 - **Writes plan-gap.md** — documents what was found and changed
+
+## Using the Edit Tool
+
+When using the Edit tool to modify plan.md:
+
+1. **Read the file FIRST** - Always read plan.md immediately before editing it
+2. **Copy the EXACT string** - Include ALL whitespace, indentation, and line endings exactly as they appear
+3. **If edit fails** - Re-read the file and try again with the exact current content

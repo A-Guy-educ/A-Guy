@@ -83,3 +83,11 @@ When fixing test files, follow these rules strictly:
 4. **Environment awareness** — tests run in CI without `.env` files. If a test relies on `process.env`, it must use `vi.stubEnv()` to set the value explicitly. Never assume env vars from `.env` will be available
 5. **If a test fails and requires logic changes to fix**, report it in autofix.md as "CANNOT FIX — requires test logic change" and move on. The build agent or human must handle it
 6. **Run tests WITHOUT local .env** to validate: `MINIMAX_API_KEY= OPENAI_API_KEY= pnpm test:unit -- <test-file>` — if it passes locally but could fail in CI due to missing env vars, the fix is wrong
+
+## Using the Edit Tool
+
+When using the Edit tool to modify files:
+
+1. **Read the file FIRST** - Always read the file immediately before editing it
+2. **Copy the EXACT string** - Include ALL whitespace, indentation, and line endings exactly as they appear
+3. **If edit fails** - Re-read the file and try again with the exact current content
