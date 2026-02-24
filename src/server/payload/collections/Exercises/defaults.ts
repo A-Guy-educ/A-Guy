@@ -224,17 +224,57 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
   question_matching: (): QuestionMatchingBlock => ({
     id: generateId(),
     type: 'question_matching',
-    prompt: DEFAULT_HINT_SOLUTION(),
+    prompt: {
+      type: 'rich_text',
+      format: 'md-math-v1',
+      value: '',
+      mediaIds: [],
+    },
     leftColumn: [
-      { id: generateId(), content: DEFAULT_HINT_SOLUTION() },
-      { id: generateId(), content: DEFAULT_HINT_SOLUTION() },
+      {
+        id: 'l1',
+        content: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'Item 1',
+          mediaIds: [],
+        },
+      },
+      {
+        id: 'l2',
+        content: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'Item 2',
+          mediaIds: [],
+        },
+      },
     ],
     rightColumn: [
-      { id: generateId(), content: DEFAULT_HINT_SOLUTION() },
-      { id: generateId(), content: DEFAULT_HINT_SOLUTION() },
+      {
+        id: 'r1',
+        content: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'Match A',
+          mediaIds: [],
+        },
+      },
+      {
+        id: 'r2',
+        content: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: 'Match B',
+          mediaIds: [],
+        },
+      },
     ],
-    correctPairs: [],
-    shuffleRightColumn: false,
+    correctPairs: [
+      { optionId: 'l1', matchId: 'r1' },
+      { optionId: 'l2', matchId: 'r2' },
+    ],
+    shuffleRightColumn: true,
     hint: DEFAULT_HINT_SOLUTION(),
     solution: DEFAULT_HINT_SOLUTION(),
     fullSolution: DEFAULT_HINT_SOLUTION(),
