@@ -80,7 +80,7 @@ export async function loginAction(formData: FormData, cookieStore?: CookieStore)
           const currentCookies = await cookies()
           const guestToken = currentCookies.get(GUEST_SESSION_COOKIE_NAME)?.value
           if (guestToken) {
-            await claimGuestConversations(result.user.id, guestToken, headers)
+            await claimGuestConversations(payload, result.user.id, guestToken, headers)
             clearGuestSessionCookie(headers)
             resolvedCookieStore.delete(GUEST_SESSION_COOKIE_NAME)
           }

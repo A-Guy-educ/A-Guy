@@ -42,7 +42,7 @@ export async function getConversation(req: PayloadRequest & { json?: () => Promi
     // Check for guest session
     const guestToken = getGuestSessionCookie(req.headers as unknown as Headers)
     if (guestToken) {
-      const guestSession = await getGuestSessionByToken(guestToken)
+      const guestSession = await getGuestSessionByToken(req.payload, guestToken)
       if (guestSession) {
         guestSessionId = guestSession.id
         isGuestMode = true
