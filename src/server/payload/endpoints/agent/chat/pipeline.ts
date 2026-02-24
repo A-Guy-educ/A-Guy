@@ -292,10 +292,12 @@ export async function persistAssistantMessage(
   allMessages: ChatMessage[],
   assistantContent: string,
   reqUser: PayloadRequest['user'],
+  options?: { hidePromptOnly?: boolean },
 ): Promise<void> {
   // Check if the last user message was hidden - if so, hide the assistant response too
+  // UNLESS hidePromptOnly is set — then only the user prompt is hidden, response stays visible
   const lastMessage = allMessages[allMessages.length - 1]
-  const isHidden = lastMessage?.hidden === true
+  const isHidden = options?.hidePromptOnly ? false : lastMessage?.hidden === true
 
   const assistantMessage = {
     role: 'assistant' as const,

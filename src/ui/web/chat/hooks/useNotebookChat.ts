@@ -360,7 +360,7 @@ export function useNotebookChat({
         courseId?: string
         categoryId?: string
       },
-      options?: { hidden?: boolean },
+      options?: { hidden?: boolean; hidePromptOnly?: boolean },
     ) => {
       try {
         const stream = apiService.chatStream(message, acknowledgment, context, options)
@@ -551,9 +551,19 @@ export function useNotebookChat({
     sendMessageSync(prompt, acknowledgment, context)
   }
 
-  const addAssistantMessage = useCallback((content: string) => {
-    setMessages((prev) => [...prev, { role: ChatRole.Assistant, content }])
-  }, [])
+  const addAssistantMessage = useCallback(
+    (content: string) => {
+      setMessages((prev) => [...prev, { role: ChatRole.Assistant, content }])
+
+      // Persist to DB so the message survives page refresh
+      if (contextKey) {
+        apiService.persistMessage(contextKey, content).catch((error) => {
+          logger.error({ err: error }, 'Failed to persist assistant message')
+        })
+      }
+    },
+    [contextKey],
+  )
 
   /**
    * Inject exercise context as a hidden message when student navigates to an exercise.
@@ -622,6 +632,19 @@ export function useNotebookChat({
     setIsLoading(true)
     const context = { exerciseId, lessonId, chapterId, courseId, categoryId }
     await streamMessage(prompt, acknowledgment, context, { hidden: true })
+  }
+
+  /**
+   * Send a contextual help prompt whose AI response stays visible after refresh.
+   * The user prompt is hidden (not shown to the student), but the assistant response
+   * is persisted as visible so it survives page reload.
+   * Used for help-system actions (hint, guiding question, solution).
+   */
+  const sendVisibleHelp = async (prompt: string) => {
+    if (isLoading || isLoadingHistory) return
+    setIsLoading(true)
+    const context = { exerciseId, lessonId, chapterId, courseId, categoryId }
+    await streamMessage(prompt, acknowledgment, context, { hidden: true, hidePromptOnly: true })
   }
 
   /**
@@ -748,6 +771,7 @@ export function useNotebookChat({
     addAssistantMessage,
     injectExerciseContext,
     sendContextualHelp,
+    sendVisibleHelp,
     sendContextualHelpWithMedia,
     sendContextualHelpWithMediaId,
   }

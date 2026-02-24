@@ -253,6 +253,7 @@ export async function agentChatStream(
               allMessages,
               fullText,
               req.user,
+              { hidePromptOnly: validated.hidePromptOnly === true },
             )
             reqLogger.info({ conversationId }, 'Assistant message persisted')
           } catch (persistError) {
@@ -298,6 +299,7 @@ export async function agentChatStream(
                 allMessages,
                 fullText,
                 req.user,
+                { hidePromptOnly: validated.hidePromptOnly === true },
               )
               reqLogger.info(
                 { conversationId, textLength: fullText.length },

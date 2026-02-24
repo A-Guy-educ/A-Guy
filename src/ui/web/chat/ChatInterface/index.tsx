@@ -152,6 +152,7 @@ export function ChatInterface({
     addAssistantMessage,
     // Contextual help for incorrect answers
     sendContextualHelp,
+    sendVisibleHelp,
     sendContextualHelpWithMedia,
     sendContextualHelpWithMediaId,
   } = useNotebookChat({
@@ -272,18 +273,18 @@ export function ChatInterface({
     onChatInteraction?.()
 
     if (backendContent) {
-      // Backend has content — show it directly without AI call
+      // Backend has content — show it directly without AI call (persisted for refresh)
       addAssistantMessage(backendContent)
     } else if (type === 'hint') {
-      sendContextualHelp(
+      sendVisibleHelp(
         `The student needs a hint for this exercise question: "${questionContent}". Provide a short, helpful hint that nudges them in the right direction without giving away the answer.`,
       )
     } else if (type === 'guiding') {
-      sendContextualHelp(
+      sendVisibleHelp(
         `The student needs a guiding question for this exercise question: "${questionContent}". Ask them a thought-provoking guiding question that helps them think about the problem without giving the answer.`,
       )
     } else if (type === 'solution') {
-      sendContextualHelp(
+      sendVisibleHelp(
         `The student is requesting the full solution for this exercise question: "${questionContent}". Provide a clear, step-by-step solution.`,
       )
     }
