@@ -1,5 +1,5 @@
 # Cody - Runs multi-agent pipeline in CI via OpenCode GitHub mode
-# Triggers: workflow_dispatch, issue_comment (/cody <subcommand>)
+# Triggers: workflow_dispatch, issue_comment (@cody <subcommand>)
 
 name: cody
 
@@ -52,14 +52,14 @@ permissions:
 
 jobs:
   # Job 1: Parse trigger, validate inputs, gate execution
-  # Only run for workflow_dispatch or comments containing /cody or @cody
+  # Only run for workflow_dispatch or comments containing @cody
   parse:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issue_comment' &&
-       (contains(github.event.comment.body, '/cody') || contains(github.event.comment.body, '@cody')))
+       contains(github.event.comment.body, '@cody'))
     env:
       GH_TOKEN: ${{ github.token }}
     outputs:
