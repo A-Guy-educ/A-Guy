@@ -294,6 +294,8 @@ async function executeParallelStep(
       // R7: Use dynamic advisory lookup from pipeline definition
       const isAdvisory = pipeline.stages.get(name)?.advisory === true
       if (isAdvisory) {
+        // R2: Mark advisory rejected stage as failed in state
+        state = updateStage(state, name, { state: 'failed', error: message })
         advisoryFailures.push({ name, reason: message })
       } else {
         // R1: Mark stage as failed in state before throwing
@@ -325,8 +327,25 @@ async function executeParallelStep(
       // R8: Run post-actions for completed parallel stages
       const def = pipeline.stages.get(stageName)
       if (def?.postActions) {
-        for (const action of def.postActions) {
-          await executePostAction(ctx, action, state)
+        try {
+          for (const action of def.postActions) {
+            await executePostAction(ctx, action, state)
+          }
+        } catch (postError) {
+          // Handle post-action errors - mirroring executeSingleStep pattern
+          if (postError instanceof PipelinePausedError) {
+            state = updateStage(state, stageName, { state: 'paused' })
+            return completeState(state, 'paused')
+          }
+          console.error(`  Post-action failed for parallel stage ${stageName}:`, postError)
+          state = updateStage(state, stageName, {
+            state: 'failed',
+            error: postError instanceof Error ? postError.message : String(postError),
+          })
+          const isAdvisory = pipeline.stages.get(stageName)?.advisory === true
+          if (!isAdvisory) {
+            return completeState(state, 'failed')
+          }
         }
       }
     } else if (stageResult.outcome === 'skipped') {
