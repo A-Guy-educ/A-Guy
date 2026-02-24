@@ -351,8 +351,14 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   console.log(`Feedback: ${input.feedback}`)
   console.log(`From stage: ${input.fromStage}\n`)
 
-  // G37: Delete output files from rerun point onwards
-  const taskDef = readTask(taskDir)
+  // G37: Read task definition for profile resolution
+  // Fix 4: Wrap in try/catch to handle missing/invalid task.json gracefully
+  let taskDef = null
+  try {
+    taskDef = readTask(taskDir)
+  } catch {
+    console.warn('Could not read task.json for profile resolution, using default')
+  }
   ctx.taskDef = taskDef
   if (taskDef) {
     const { resolvePipelineProfile } = await import('./pipeline-utils')
@@ -365,11 +371,19 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   const pipeline = resolvePipelineForMode('rerun', ctx.profile, false, ctx)
   const stageOrder = flattenPipelineOrder(pipeline.order)
 
+  // Fix 5: Validate fromStage exists in the resolved pipeline order
+  const fromStage = input.fromStage || 'build'
+  if (!stageOrder.includes(fromStage)) {
+    throw new Error(
+      `Stage "${fromStage}" not found in rerun pipeline. Valid stages: ${stageOrder.join(', ')}`,
+    )
+  }
+
   const { loadState, resetFromStage, writeState } = await import('./engine/status')
   const state = loadState(input.taskId)
   if (state) {
     // Get stages to delete from
-    const fromIndex = stageOrder.indexOf(input.fromStage || 'build')
+    const fromIndex = stageOrder.indexOf(fromStage)
     if (fromIndex >= 0) {
       const stagesToDelete = stageOrder.slice(fromIndex)
       for (const stage of stagesToDelete) {
@@ -382,7 +396,7 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
     }
 
     // Reset stages in status
-    const newState = resetFromStage(state, input.fromStage || 'build', stageOrder, taskDir)
+    const newState = resetFromStage(state, fromStage, stageOrder, taskDir)
     writeState(input.taskId, newState)
   }
 
