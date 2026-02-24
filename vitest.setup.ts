@@ -18,6 +18,12 @@ if (!process.env.DEFAULT_TENANT_SLUG) {
   process.env.DEFAULT_TENANT_SLUG = 'default'
 }
 
+// Set BLOB token for tests (required by payload config for Vercel Blob storage)
+// Must use valid format: vercel_blob_rw_<store_id>_<random_string>
+if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_rw_test_1234567890abcdef'
+}
+
 if (process.env.USE_ATLAS === 'true') {
   const databaseUrl = getTestDatabaseUrl()
   if (databaseUrl) {

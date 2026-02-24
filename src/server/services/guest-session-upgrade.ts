@@ -12,7 +12,7 @@
  * - Session revoked after transfer (prevents reuse)
  * - Cookie cleared to prevent ambiguity
  */
-import { getPayload } from 'payload'
+import { getPayload, type PayloadRequest } from 'payload'
 import config from '@payload-config'
 import { logger } from '@/infra/utils/logger'
 import {
@@ -33,10 +33,11 @@ export async function claimGuestConversations(
   userId: string,
   sessionToken: string,
   headers: Headers = new Headers(),
+  payloadReq?: PayloadRequest,
 ): Promise<{ claimed: number; headers: Headers }> {
-  const payload = await getPayload({ config })
+  const payload = payloadReq?.payload ?? (await getPayload({ config }))
 
-  const session = await getGuestSessionByToken(sessionToken)
+  const session = await getGuestSessionByToken(sessionToken, payloadReq)
   if (!session) {
     logger.warn({ userId }, 'Guest session not found or expired during claim')
     clearGuestSessionCookie(headers)
@@ -50,6 +51,7 @@ export async function claimGuestConversations(
     },
     limit: 100,
     depth: 0,
+    ...(payloadReq ? { req: payloadReq } : {}),
   })
 
   logger.info(
@@ -67,11 +69,12 @@ export async function claimGuestConversations(
         guestSession: null,
       } as ClaimConversationData,
       overrideAccess: true,
+      ...(payloadReq ? { req: payloadReq } : {}),
     })
     claimed++
   }
 
-  await revokeGuestSession(session.id, userId)
+  await revokeGuestSession(session.id, userId, payloadReq)
 
   clearGuestSessionCookie(headers)
 
@@ -80,17 +83,21 @@ export async function claimGuestConversations(
   return { claimed, headers }
 }
 
-export async function hasPendingGuestConversations(sessionToken: string): Promise<boolean> {
-  const session = await getGuestSessionByToken(sessionToken)
+export async function hasPendingGuestConversations(
+  sessionToken: string,
+  payloadReq?: PayloadRequest,
+): Promise<boolean> {
+  const session = await getGuestSessionByToken(sessionToken, payloadReq)
   if (!session) return false
 
-  const payload = await getPayload({ config })
+  const payload = payloadReq?.payload ?? (await getPayload({ config }))
 
   const conversations = await payload.count({
     collection: 'conversations',
     where: {
       and: [{ guestSession: { equals: session.id } }, { archivedAt: { exists: false } }],
     },
+    ...(payloadReq ? { req: payloadReq } : {}),
   })
 
   return conversations.totalDocs > 0

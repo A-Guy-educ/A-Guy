@@ -15,7 +15,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- Payload collection types */
 
-import { getPayload } from 'payload'
+import { getPayload, type PayloadRequest } from 'payload'
 import config from '@payload-config'
 import crypto from 'crypto'
 import { logger } from '@/infra/utils/logger'
@@ -133,10 +133,11 @@ export function clearGuestSessionCookie(headers: Headers = new Headers()): void 
 
 export async function createGuestSession(options: {
   req?: Request
+  payloadReq?: PayloadRequest
   ipHash?: string
   userAgentHash?: string
 }): Promise<{ session: GuestSessionDoc; token: string }> {
-  const payload = await getPayload({ config })
+  const payload = options.payloadReq?.payload ?? (await getPayload({ config }))
   const token = generateSessionToken()
   const tokenHash = hashToken(token)
   const now = new Date()
@@ -163,6 +164,7 @@ export async function createGuestSession(options: {
       userAgentHash: options.userAgentHash,
     },
     draft: false,
+    ...(options.payloadReq ? { req: options.payloadReq } : {}),
   })
 
   logger.info({ sessionId: session.id }, 'Created guest session')
@@ -170,8 +172,11 @@ export async function createGuestSession(options: {
   return { session: session as unknown as GuestSessionDoc, token }
 }
 
-export async function getGuestSessionByToken(token: string): Promise<GuestSessionDoc | null> {
-  const payload = await getPayload({ config })
+export async function getGuestSessionByToken(
+  token: string,
+  payloadReq?: PayloadRequest,
+): Promise<GuestSessionDoc | null> {
+  const payload = payloadReq?.payload ?? (await getPayload({ config }))
   const tokenHash = hashToken(token)
 
   const sessions = await payload.find({
@@ -180,6 +185,7 @@ export async function getGuestSessionByToken(token: string): Promise<GuestSessio
       and: [{ tokenHash: { equals: tokenHash } }, { status: { equals: 'active' } }],
     },
     limit: 1,
+    ...(payloadReq ? { req: payloadReq } : {}),
   })
 
   if (sessions.docs.length === 0) return null
@@ -195,12 +201,14 @@ export async function getGuestSessionByToken(token: string): Promise<GuestSessio
 
 export async function updateGuestSessionActivity(
   sessionId: string,
+  payloadReq?: PayloadRequest,
 ): Promise<GuestSessionDoc | null> {
-  const payload = await getPayload({ config })
+  const payload = payloadReq?.payload ?? (await getPayload({ config }))
 
   const session = await payload.findByID({
     collection: 'guest-sessions' as any,
     id: sessionId,
+    ...(payloadReq ? { req: payloadReq } : {}),
   })
 
   if (!session || (session as GuestSessionDoc).status !== 'active') {
@@ -226,6 +234,7 @@ export async function updateGuestSessionActivity(
       lastActiveAt: now.toISOString(),
       expiresAt: newExpiresAt.toISOString(),
     },
+    ...(payloadReq ? { req: payloadReq } : {}),
   })
 
   return updated as GuestSessionDoc
@@ -234,8 +243,9 @@ export async function updateGuestSessionActivity(
 export async function revokeGuestSession(
   sessionId: string,
   claimedByUser: string,
+  payloadReq?: PayloadRequest,
 ): Promise<GuestSessionDoc | null> {
-  const payload = await getPayload({ config })
+  const payload = payloadReq?.payload ?? (await getPayload({ config }))
 
   const updated = await payload.update({
     collection: 'guest-sessions' as any,
@@ -245,6 +255,7 @@ export async function revokeGuestSession(
       claimedByUser,
       claimedAt: new Date().toISOString(),
     },
+    ...(payloadReq ? { req: payloadReq } : {}),
   })
 
   return updated as GuestSessionDoc
@@ -259,13 +270,15 @@ export interface GuestMessageLimitResult {
 
 export async function checkAndIncrementGuestMessageCount(
   guestSessionId: string,
+  payloadReq?: PayloadRequest,
 ): Promise<GuestMessageLimitResult> {
-  const payload = await getPayload({ config })
+  const payload = payloadReq?.payload ?? (await getPayload({ config }))
   const guestConfig = await getGuestChatConfig()
 
   const session = await payload.findByID({
     collection: 'guest-sessions' as any,
     id: guestSessionId,
+    ...(payloadReq ? { req: payloadReq } : {}),
   })
 
   if (!session) {
@@ -290,6 +303,7 @@ export async function checkAndIncrementGuestMessageCount(
     data: {
       messageCount: currentCount + 1,
     },
+    ...(payloadReq ? { req: payloadReq } : {}),
   })
 
   return {
