@@ -1,0 +1,20 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "high",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/payload/collections/Exercises/hooks.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task provides clear bug description with current broken code (lines 5-9, 36, 77), expected fix pattern, affected file, and risk explanation. Contains requirements and acceptance criteria for the fix."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
