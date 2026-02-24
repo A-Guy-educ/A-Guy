@@ -5,111 +5,395 @@
  * @ai-summary Integration tests for the Cody pipeline state machine
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import * as fs from 'fs'
+import * as path from 'path'
+import * as os from 'os'
 import {
   PipelinePausedError,
   type StageType,
   type StageOutcome,
   type PipelineStateV2,
+  type PipelineContext,
+  type PipelineDefinition,
 } from '../../../../../scripts/cody/engine/types'
+import { runPipeline } from '../../../../../scripts/cody/engine/state-machine'
+import { loadState, initState, completeState } from '../../../../../scripts/cody/engine/status'
+
+// ============================================================================
+// Test Fixtures
+// ============================================================================
+
+const TEST_TASK_ID = 'test-pipeline-failure'
+let testDir: string
+
+// Create a minimal pipeline context for testing
+function createMockContext(taskId: string): PipelineContext {
+  return {
+    taskId,
+    taskDir: path.join(testDir, taskId),
+    input: {
+      taskId,
+      mode: 'full',
+      dryRun: false,
+      local: true,
+      issueNumber: undefined,
+      runId: undefined,
+      runUrl: undefined,
+      clarify: false,
+      fromStage: undefined,
+      feedback: undefined,
+      file: undefined,
+    },
+    taskDef: null,
+    profile: 'standard',
+    backend: {
+      name: 'test-runner',
+      spawn: vi.fn(),
+    },
+  }
+}
+
+// Create a simple pipeline definition with mock handler
+function createMockPipeline(
+  stages: Array<{
+    name: string
+    outcome: StageOutcome
+    error?: string
+  }>,
+): PipelineDefinition {
+  const stagesMap = new Map<
+    string,
+    {
+      name: string
+      type: StageType
+      timeout: number
+      maxRetries: number
+      advisory?: boolean
+    }
+  >()
+
+  const order: (string | { parallel: string[] })[] = []
+
+  for (const stage of stages) {
+    stagesMap.set(stage.name, {
+      name: stage.name,
+      type: 'agent',
+      timeout: 60000,
+      maxRetries: 2,
+    })
+    order.push(stage.name)
+  }
+
+  return { stages: stagesMap, order }
+}
+
+// ============================================================================
+// Mock Setup - use a shared ref that can be updated
+// ============================================================================
+
+// Shared mock implementation that can be changed per test
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockExecuteImpl: { fn: any; reset: () => void; setImplementation: (fn: any) => void } = {
+  fn: vi.fn(),
+  reset() {
+    this.fn.mockReset()
+    this.fn.mockResolvedValue({
+      outcome: 'completed' as StageOutcome,
+      retries: 0,
+    })
+  },
+  setImplementation(fn: unknown) {
+    this.fn = fn
+  },
+}
+
+// Default implementation
+mockExecuteImpl.reset()
+
+vi.mock('../../../../../scripts/cody/handlers/handler', () => ({
+  getHandler: vi.fn(() => ({
+    execute: (...args: unknown[]) => mockExecuteImpl.fn(...args),
+  })),
+}))
+
+// ============================================================================
+// Tests
+// ============================================================================
 
 describe('Cody Pipeline State Machine Integration', () => {
-  // Test 1: Full standard pipeline completes all stages in order
-  it('should complete all stages in correct order', async () => {
-    // This test would require full mocking of all dependencies
-    // Placeholder for full integration test
-    expect(true).toBe(true)
+  beforeEach(() => {
+    // Create temp directory for test state files
+    testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cody-test-'))
+    const taskDir = path.join(testDir, TEST_TASK_ID)
+    fs.mkdirSync(taskDir, { recursive: true })
+
+    // Point the status module to use our test directory
+    vi.spyOn(process, 'cwd').mockReturnValue(testDir)
+
+    // Reset the mock before each test
+    mockExecuteImpl.reset()
   })
 
-  // Test 2: Pipeline resumes from failed stage
-  it('should resume from failed stage', async () => {
-    expect(true).toBe(true)
-  })
-
-  // Test 3: Rerun resets and re-executes from specified stage
-  it('should reset stages and re-execute from given stage', async () => {
-    expect(true).toBe(true)
-  })
-
-  // Test 4: Gate handler pauses pipeline
-  it('should pause pipeline at gate', async () => {
-    expect(true).toBe(true)
-  })
-
-  // Test 5: Lightweight pipeline skips heavyweight stages
-  it('should skip heavyweight stages in lightweight mode', async () => {
-    expect(true).toBe(true)
-  })
-
-  // Test 6: Dry-run marks completed without calling handlers
-  it('should skip handlers in dry-run mode', async () => {
-    expect(true).toBe(true)
-  })
-
-  // Test 7: Two-phase pipeline construction
-  it('should extend pipeline after taskify', async () => {
-    expect(true).toBe(true)
-  })
-
-  // Test 8: Parallel stages handle PipelinePausedError
-  it('should handle PipelinePausedError in parallel stages', async () => {
-    expect(true).toBe(true)
-  })
-
-  // Test 9: preExecute hook runs before handler
-  it('should run preExecute before handler', async () => {
-    expect(true).toBe(true)
-  })
-})
-
-describe('PipelineStateV2 Schema', () => {
-  it('should have correct type structure', () => {
-    // Verify PipelineStateV2 type exists and has expected properties
-    const mockState: PipelineStateV2 = {
-      version: 2,
-      taskId: '260223-test',
-      mode: 'full',
-      pipeline: 'full',
-      startedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      state: 'running',
-      cursor: null,
-      stages: {},
+  afterEach(() => {
+    // Clean up temp directory
+    if (testDir && fs.existsSync(testDir)) {
+      fs.rmSync(testDir, { recursive: true, force: true })
     }
-    expect(mockState.taskId).toBeDefined()
-    expect(mockState.mode).toBeDefined()
-    expect(mockState.state).toBeDefined()
-    expect(mockState.cursor).toBeDefined()
-    expect(mockState.stages).toBeDefined()
+    vi.restoreAllMocks()
   })
 
-  it('should export PipelinePausedError', () => {
-    expect(PipelinePausedError).toBeDefined()
-    expect(PipelinePausedError.name).toBe('PipelinePausedError')
-  })
-})
+  describe('Pipeline Failure Handling', () => {
+    it('should mark state as failed when a stage fails', async () => {
+      const ctx = createMockContext(TEST_TASK_ID)
 
-describe('PostAction Types', () => {
-  it('should have all action types defined', () => {
-    // Verify post-action types are defined - check they can be imported
-    // The actual validation happens at compile time
-    expect(true).toBe(true)
-  })
-})
+      // Set up mock to return failed result
+      mockExecuteImpl.setImplementation(
+        vi.fn().mockResolvedValue({
+          outcome: 'failed' as StageOutcome,
+          reason: 'Test failure',
+          retries: 0,
+        }),
+      )
 
-describe('Stage Types', () => {
-  it('should have valid StageType values', () => {
-    const validStageTypes: StageType[] = ['agent', 'scripted', 'git', 'gate']
-    expect(validStageTypes).toContain('agent')
-    expect(validStageTypes).toContain('scripted')
-    expect(validStageTypes).toContain('git')
-    expect(validStageTypes).toContain('gate')
+      // Create pipeline with failing stage
+      const pipeline = createMockPipeline([
+        { name: 'build', outcome: 'failed', error: 'Test failure' },
+      ])
+
+      // Run pipeline - should throw when stage fails
+      await expect(runPipeline(ctx, pipeline)).rejects.toThrow('Pipeline failed at stage: build')
+
+      // Verify state was marked as failed
+      const state = loadState(TEST_TASK_ID)
+      expect(state).not.toBeNull()
+      expect(state?.state).toBe('failed')
+      expect(state?.stages['build']?.state).toBe('failed')
+      expect(state?.stages['build']?.error).toBe('Test failure')
+    })
+
+    it('should mark pipeline as completed when all stages pass', async () => {
+      const ctx = createMockContext(TEST_TASK_ID)
+
+      // Set up mock to return success
+      mockExecuteImpl.setImplementation(
+        vi.fn().mockResolvedValue({
+          outcome: 'completed' as StageOutcome,
+          retries: 0,
+          outputFile: 'build.md',
+        }),
+      )
+
+      const pipeline = createMockPipeline([
+        { name: 'taskify', outcome: 'completed' },
+        { name: 'build', outcome: 'completed' },
+      ])
+
+      // Run pipeline - should complete successfully
+      const result = await runPipeline(ctx, pipeline)
+
+      expect(result.state).toBe('completed')
+      expect(result.stages['taskify']?.state).toBe('completed')
+      expect(result.stages['build']?.state).toBe('completed')
+    })
+
+    it('should stop execution after first failure', async () => {
+      const ctx = createMockContext(TEST_TASK_ID)
+
+      const executions: string[] = []
+
+      // First handler succeeds, second fails
+      mockExecuteImpl.setImplementation(
+        vi.fn().mockImplementation((_ctx: PipelineContext, def: { name: string }) => {
+          executions.push(def.name)
+          if (def.name === 'build') {
+            return {
+              outcome: 'failed' as StageOutcome,
+              reason: 'Build failed',
+              retries: 0,
+            }
+          }
+          return {
+            outcome: 'completed' as StageOutcome,
+            retries: 0,
+          }
+        }),
+      )
+
+      const pipeline = createMockPipeline([
+        { name: 'taskify', outcome: 'completed' },
+        { name: 'build', outcome: 'failed' },
+        { name: 'verify', outcome: 'completed' }, // Should never run
+      ])
+
+      // Should throw on failure
+      await expect(runPipeline(ctx, pipeline)).rejects.toThrow()
+
+      // Verify that verify stage never ran (pipeline stopped at build failure)
+      expect(executions).toContain('taskify')
+      expect(executions).toContain('build')
+      expect(executions).not.toContain('verify')
+    })
+
+    it('should handle PipelinePausedError and pause pipeline', async () => {
+      const ctx = createMockContext(TEST_TASK_ID)
+
+      mockExecuteImpl.setImplementation(
+        vi.fn().mockRejectedValue(new PipelinePausedError('Gate check requires input')),
+      )
+
+      const pipeline = createMockPipeline([{ name: 'gate', outcome: 'failed' }])
+
+      // PipelinePausedError is caught internally and returns paused state
+      // (it doesn't propagate as a rejection)
+      const result = await runPipeline(ctx, pipeline)
+
+      expect(result.state).toBe('paused')
+      expect(result.stages['gate']?.state).toBe('paused')
+    })
+
+    it('should skip stages that are already completed (resume behavior)', async () => {
+      const ctx = createMockContext(TEST_TASK_ID)
+
+      // Track which stages were executed
+      const executedStages: string[] = []
+      mockExecuteImpl.setImplementation(
+        vi.fn().mockImplementation((_ctx: PipelineContext, def: { name: string }) => {
+          executedStages.push(def.name)
+          return {
+            outcome: 'completed' as StageOutcome,
+            retries: 0,
+          }
+        }),
+      )
+
+      // First, initialize state with taskify completed
+      const initialState = initState(ctx, 'full')
+      const { updateStage, writeState: ws } =
+        await import('../../../../../scripts/cody/engine/status')
+      const stateWithTaskifyDone = updateStage(initialState, 'taskify', {
+        state: 'completed',
+        completedAt: new Date().toISOString(),
+        retries: 0,
+      })
+      ws(TEST_TASK_ID, stateWithTaskifyDone)
+
+      const pipeline = createMockPipeline([
+        { name: 'taskify', outcome: 'completed' },
+        { name: 'build', outcome: 'completed' },
+      ])
+
+      // Run pipeline again - taskify should be skipped, but build should run
+      await runPipeline(ctx, pipeline)
+
+      // taskify should not have been executed again (it was already completed)
+      expect(executedStages).not.toContain('taskify')
+      // build should have been executed (it wasn't completed yet)
+      expect(executedStages).toContain('build')
+    })
   })
 
-  it('should have valid StageOutcome values', () => {
-    const validOutcomes: StageOutcome[] = ['completed', 'failed', 'paused', 'timed_out', 'skipped']
-    expect(validOutcomes).toContain('completed')
-    expect(validOutcomes).toContain('failed')
-    expect(validOutcomes).toContain('paused')
+  describe('completeState function', () => {
+    it('should mark state as failed', () => {
+      const state = initState(createMockContext(TEST_TASK_ID), 'full')
+
+      const failedState = completeState(state, 'failed')
+
+      expect(failedState.state).toBe('failed')
+      expect(failedState.completedAt).toBeDefined()
+    })
+
+    it('should mark state as completed', () => {
+      const state = initState(createMockContext(TEST_TASK_ID), 'full')
+
+      const completedState = completeState(state, 'completed')
+
+      expect(completedState.state).toBe('completed')
+      expect(completedState.completedAt).toBeDefined()
+    })
+
+    it('should preserve existing stage states', () => {
+      const state = initState(createMockContext(TEST_TASK_ID), 'full')
+
+      // Add some stage states
+      const withStages = {
+        ...state,
+        stages: {
+          taskify: {
+            state: 'completed' as const,
+            completedAt: new Date().toISOString(),
+            retries: 0,
+          },
+          build: {
+            state: 'running' as const,
+            startedAt: new Date().toISOString(),
+            retries: 0,
+          },
+        },
+      }
+
+      const completedState = completeState(withStages, 'completed')
+
+      expect(completedState.stages['taskify'].state).toBe('completed')
+      expect(completedState.stages['build'].state).toBe('running')
+    })
+  })
+
+  describe('PipelineStateV2 Schema', () => {
+    it('should have correct type structure', () => {
+      // Verify PipelineStateV2 type exists and has expected properties
+      const mockState: PipelineStateV2 = {
+        version: 2,
+        taskId: '260223-test',
+        mode: 'full',
+        pipeline: 'full',
+        startedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        state: 'running',
+        cursor: null,
+        stages: {},
+      }
+      expect(mockState.taskId).toBeDefined()
+      expect(mockState.mode).toBeDefined()
+      expect(mockState.state).toBeDefined()
+      expect(mockState.cursor).toBeDefined()
+      expect(mockState.stages).toBeDefined()
+    })
+
+    it('should export PipelinePausedError', () => {
+      expect(PipelinePausedError).toBeDefined()
+      expect(PipelinePausedError.name).toBe('PipelinePausedError')
+    })
+  })
+
+  describe('PostAction Types', () => {
+    it('should have all action types defined', () => {
+      // Verify post-action types are defined - check they can be imported
+      // The actual validation happens at compile time
+      expect(true).toBe(true)
+    })
+  })
+
+  describe('Stage Types', () => {
+    it('should have valid StageType values', () => {
+      const validStageTypes: StageType[] = ['agent', 'scripted', 'git', 'gate']
+      expect(validStageTypes).toContain('agent')
+      expect(validStageTypes).toContain('scripted')
+      expect(validStageTypes).toContain('git')
+      expect(validStageTypes).toContain('gate')
+    })
+
+    it('should have valid StageOutcome values', () => {
+      const validOutcomes: StageOutcome[] = [
+        'completed',
+        'failed',
+        'paused',
+        'timed_out',
+        'skipped',
+      ]
+      expect(validOutcomes).toContain('completed')
+      expect(validOutcomes).toContain('failed')
+      expect(validOutcomes).toContain('paused')
+    })
   })
 })

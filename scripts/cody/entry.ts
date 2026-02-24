@@ -173,10 +173,11 @@ async function main(): Promise<void> {
     }
 
     // G6: process.exit(1) on failure
-    // Only update status if state exists (not if failure happened before initState)
+    // Only update status if state exists and isn't already marked as failed
+    // (runPipeline already marks and writes state before throwing)
     const { writeState, loadState: loadSt, completeState } = await import('./engine/status')
     const existingState = loadSt(input.taskId)
-    if (existingState) {
+    if (existingState && existingState.state !== 'failed') {
       const failedState = completeState(existingState, 'failed')
       writeState(input.taskId, failedState)
     }
