@@ -1,0 +1,24 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "backend",
+  "scope": [
+    "exercise hooks",
+    "transaction safety",
+    "payload cms hooks"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The bug is in exercise-related hooks that don't properly use transaction-safe patterns",
+    "The fix involves ensuring req.payload is used instead of standalone getPayload() calls",
+    "File: src/server/payload/collections/Exercises/hooks.ts contains the problematic code"
+  ],
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task provides issue title and summary but lacks detailed requirements or implementation steps. Only indicates it's about fixing transaction safety in exercise hooks. Need to discover the exact code location and fix from codebase."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
