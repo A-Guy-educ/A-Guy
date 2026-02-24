@@ -78,6 +78,12 @@ export async function runPipeline(
     }
   }
 
+  // Throw if pipeline failed so caller can handle the failure properly
+  if (state.state === 'failed') {
+    const failedStage = Object.entries(state.stages).find(([, s]) => s.state === 'failed')
+    throw new Error(`Pipeline failed at stage: ${failedStage?.[0] || 'unknown'}`)
+  }
+
   return state
 }
 
