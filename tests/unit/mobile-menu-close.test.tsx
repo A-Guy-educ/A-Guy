@@ -141,7 +141,7 @@ describe('MobileMenu', () => {
 
       const button = screen.getByLabelText('Open menu')
       expect(button.getAttribute('type')).toBe('button')
-      
+
       fireEvent.click(button)
 
       expect(onClick).toHaveBeenCalledTimes(1)
