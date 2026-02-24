@@ -19,11 +19,15 @@ test.describe('Mobile Menu', () => {
     await hamburger.click()
     
     // Wait for menu to be visible with proper class
-    await page.waitForSelector('[class*="translate-x-0"]', { state: 'visible', timeout: 1000 })
+    await page.waitForSelector('[data-testid="mobile-menu-panel"]:not([class*="pointer-events-none"])', { 
+      state: 'visible', 
+      timeout: 1000 
+    })
     
     // Verify menu is open
-    const menuPanel = page.locator('nav').filter({ hasText: /navigation|resources/i })
+    const menuPanel = page.getByTestId('mobile-menu-panel')
     await expect(menuPanel).toBeVisible()
+    await expect(menuPanel).toHaveClass(/translate-x-0/)
     
     // Verify close button is visible
     const closeButton = page.getByRole('button', { name: /close menu/i })
@@ -61,11 +65,15 @@ test.describe('Mobile Menu', () => {
     await hamburger.click()
     
     // Wait for menu to be visible
-    await page.waitForSelector('[class*="translate-x-0"]', { state: 'visible', timeout: 1000 })
+    await page.waitForSelector('[data-testid="mobile-menu-panel"]:not([class*="pointer-events-none"])', { 
+      state: 'visible', 
+      timeout: 1000 
+    })
     
     // Verify menu is open
-    const menuPanel = page.locator('nav').filter({ hasText: /navigation|resources/i })
+    const menuPanel = page.getByTestId('mobile-menu-panel')
     await expect(menuPanel).toBeVisible()
+    await expect(menuPanel).toHaveClass(/translate-x-0/)
     
     // Click overlay (outside the menu)
     const overlay = page.getByTestId('mobile-menu-overlay')
@@ -96,7 +104,10 @@ test.describe('Mobile Menu', () => {
     await hamburger.click()
     
     // Wait for menu to be visible
-    await page.waitForSelector('[class*="translate-x-0"]', { state: 'visible', timeout: 1000 })
+    await page.waitForSelector('[data-testid="mobile-menu-panel"]:not([class*="pointer-events-none"])', { 
+      state: 'visible', 
+      timeout: 1000 
+    })
     
     // Check close button attributes
     const closeButton = page.getByRole('button', { name: /close menu/i })

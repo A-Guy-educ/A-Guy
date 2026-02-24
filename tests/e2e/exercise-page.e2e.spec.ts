@@ -324,11 +324,15 @@ test.describe('Exercise Page', () => {
       await hamburger.click()
 
       // Wait for menu to be visible
-      await page.waitForSelector('[class*="translate-x-0"]', { state: 'visible', timeout: 1000 })
+      await page.waitForSelector('[data-testid="mobile-menu-panel"]:not([class*="pointer-events-none"])', { 
+        state: 'visible', 
+        timeout: 1000 
+      })
 
       // Verify menu is open
-      const mobileMenu = page.locator('[class*="translate-x-0"]').filter({ hasText: /menu/i })
+      const mobileMenu = page.getByTestId('mobile-menu-panel')
       await expect(mobileMenu).toBeVisible()
+      await expect(mobileMenu).toHaveClass(/translate-x-0/)
 
       // Click close button
       const closeButton = page.getByRole('button', { name: /close menu/i })
