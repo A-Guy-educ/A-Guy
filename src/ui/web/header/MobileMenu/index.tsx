@@ -63,15 +63,20 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       <div
         ref={portalContainerRef}
         className={`fixed top-0 end-0 h-full w-[280px] sm:w-[320px] bg-background border-s border-border z-[70] transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+          isOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
         }`}
       >
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="text-lg font-semibold">{tMenu('title')}</h2>
           <button
-            onClick={onClose}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onClose()
+            }}
             className="p-2 rounded-lg hover:bg-muted transition-colors"
             aria-label="Close menu"
+            type="button"
           >
             <X className="w-5 h-5" />
           </button>
