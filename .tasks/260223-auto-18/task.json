@@ -1,0 +1,23 @@
+{
+  "task_type": "refactor",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "Replace physical directional Tailwind CSS classes (ml-, mr-, pl-, pr-, left-, right-, border-l, border-r) with logical RTL-aware equivalents across ~10 frontend components",
+    "Fix spacing and alignment issues in RTL mode for Hebrew locale"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Approximately 10 frontend components need CSS refactoring",
+    "Physical classes to replace: ml-*, mr-*, pl-*, pr-*, left-*, right-*, border-l, border-r",
+    "Logical equivalents should be: ms-*, me-*, ps-*, pe-*, start-*, end-*, border-s, border-e"
+  ],
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task provides clear summary of refactoring RTL CSS classes, but lacks specific file paths or implementation steps. The scope (~10 components) is mentioned but target files are not enumerated."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
