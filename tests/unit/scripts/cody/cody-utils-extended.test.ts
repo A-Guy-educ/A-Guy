@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 // Mock child_process and fs before importing the module
 vi.mock('child_process', () => ({
   execSync: vi.fn(),
+  execFileSync: vi.fn(),
 }))
 
 vi.mock('fs', () => ({
@@ -229,8 +230,8 @@ describe('parseCliArgs', () => {
     process.env = { ...originalEnv }
     // Default: pretend we're NOT in GH Actions so local defaults to true
     delete process.env.GITHUB_ACTIONS
-    // Mock discoverTaskIdFromIssue's execSync calls to return no result
-    vi.mocked(childProcess.execSync).mockReturnValue('')
+    // Mock discoverTaskIdFromIssue's execFileSync calls to return no result
+    vi.mocked(childProcess.execFileSync).mockReturnValue('')
   })
 
   afterEach(() => {
@@ -345,7 +346,7 @@ describe('parseCliArgs', () => {
 
   it('should discover task-id from issue when triggerType is comment', () => {
     // Mock discoverTaskIdFromIssue to find a task
-    vi.mocked(childProcess.execSync).mockReturnValue(
+    vi.mocked(childProcess.execFileSync).mockReturnValue(
       '🎯 Task created: `260218-discovered-task`\n\nCody will now process this task.',
     )
 

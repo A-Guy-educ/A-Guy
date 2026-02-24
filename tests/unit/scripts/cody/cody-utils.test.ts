@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import * as childProcess from 'child_process'
 
-// Mock child_process.execSync before importing the module
+// Mock child_process.execFileSync before importing the module
 vi.mock('child_process', () => ({
   execSync: vi.fn(),
   execFileSync: vi.fn(),
@@ -19,7 +19,7 @@ describe('discoverTaskIdFromIssue', () => {
   })
 
   it('should return task-id when bot comment contains Task created marker', () => {
-    vi.mocked(childProcess.execSync).mockReturnValue(
+    vi.mocked(childProcess.execFileSync).mockReturnValue(
       '🎯 Task created: `260219-youtube-embed-integration`\n\nCody will now process this task.',
     )
 
@@ -28,7 +28,7 @@ describe('discoverTaskIdFromIssue', () => {
   })
 
   it('should return null when no bot comments contain the marker', () => {
-    vi.mocked(childProcess.execSync).mockReturnValue(
+    vi.mocked(childProcess.execFileSync).mockReturnValue(
       '🔄 Cody starting for `260219-foo` (mode: full)\nRun: https://...',
     )
 
@@ -37,7 +37,7 @@ describe('discoverTaskIdFromIssue', () => {
   })
 
   it('should return null when gh command fails', () => {
-    vi.mocked(childProcess.execSync).mockImplementation(() => {
+    vi.mocked(childProcess.execFileSync).mockImplementation(() => {
       throw new Error('gh: command not found')
     })
 
@@ -48,11 +48,11 @@ describe('discoverTaskIdFromIssue', () => {
   it('should return null when issueNumber is 0', () => {
     const result = discoverTaskIdFromIssue(0)
     expect(result).toBeNull()
-    expect(childProcess.execSync).not.toHaveBeenCalled()
+    expect(childProcess.execFileSync).not.toHaveBeenCalled()
   })
 
   it('should return the first task-id when multiple markers exist', () => {
-    vi.mocked(childProcess.execSync).mockReturnValue(
+    vi.mocked(childProcess.execFileSync).mockReturnValue(
       '🎯 Task created: `260218-first-task`\n\nCody will now process this task.\n' +
         '🎯 Task created: `260219-second-task`\n\nCody will now process this task.',
     )
@@ -63,31 +63,34 @@ describe('discoverTaskIdFromIssue', () => {
 })
 
 describe('ensureTaskMarkerComment', () => {
-  let execSyncCalls: Array<{ cmd: string; opts?: unknown }>
+  let execFileSyncCalls: Array<{ file: string; args: string[]; opts?: unknown }>
 
   beforeEach(() => {
     vi.clearAllMocks()
-    execSyncCalls = []
+    execFileSyncCalls = []
 
-    // Track all execSync calls to distinguish discover vs postComment calls
-    vi.mocked(childProcess.execSync).mockImplementation((cmd: string, opts?: unknown) => {
-      execSyncCalls.push({ cmd: cmd as string, opts })
+    // Track all execFileSync calls to distinguish discover vs postComment calls
+    vi.mocked(childProcess.execFileSync).mockImplementation(
+      (...args: Parameters<typeof childProcess.execFileSync>) => {
+        const [file, execArgs, opts] = args
+        execFileSyncCalls.push({ file, args: [...(execArgs || [])], opts })
 
-      // For discoverTaskIdFromIssue: gh issue view ... --json comments
-      if (
-        typeof cmd === 'string' &&
-        cmd.includes('gh issue view') &&
-        cmd.includes('--json comments')
-      ) {
-        // Default: no marker found
+        // For discoverTaskIdFromIssue: gh issue view ... --json comments
+        if (
+          execArgs?.includes('issue') &&
+          execArgs?.includes('view') &&
+          execArgs?.includes('--json')
+        ) {
+          // Default: no marker found
+          return ''
+        }
+        // For postComment: gh issue comment ... --body-file -
+        if (execArgs?.includes('issue') && execArgs?.includes('comment')) {
+          return ''
+        }
         return ''
-      }
-      // For postComment: gh issue comment ... --body-file -
-      if (typeof cmd === 'string' && cmd.includes('gh issue comment')) {
-        return ''
-      }
-      return ''
-    })
+      },
+    )
   })
 
   afterEach(() => {
@@ -97,74 +100,83 @@ describe('ensureTaskMarkerComment', () => {
   it('should post marker comment when no existing marker found on issue', () => {
     ensureTaskMarkerComment(42, '260219-my-task')
 
-    // Should have called execSync twice:
+    // Should have called execFileSync twice:
     // 1. discoverTaskIdFromIssue (gh issue view)
     // 2. postComment (gh issue comment)
-    const postCalls = execSyncCalls.filter((c) => c.cmd.includes('gh issue comment'))
+    const postCalls = execFileSyncCalls.filter((c) => c.args.includes('comment') && c.file === 'gh')
     expect(postCalls).toHaveLength(1)
-    expect(postCalls[0].cmd).toContain('gh issue comment 42')
+    expect(postCalls[0].args).toContain('42')
   })
 
   it('should NOT post marker when marker already exists for same task-id', () => {
-    vi.mocked(childProcess.execSync).mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('--json comments')) {
-        return '🎯 Task created: `260219-my-task`\n\nCody will now process this task.'
-      }
-      return ''
-    })
+    vi.mocked(childProcess.execFileSync).mockImplementation(
+      (...args: Parameters<typeof childProcess.execFileSync>) => {
+        const [, execArgs] = args
+        if (execArgs?.includes('--json')) {
+          return '🎯 Task created: `260219-my-task`\n\nCody will now process this task.'
+        }
+        return ''
+      },
+    )
 
     ensureTaskMarkerComment(42, '260219-my-task')
 
     // Should NOT have posted a comment
-    const postCalls = execSyncCalls.filter(
-      (c) => typeof c.cmd === 'string' && c.cmd.includes('gh issue comment'),
+    const postCalls = execFileSyncCalls.filter(
+      (c) => c.args.includes('issue') && c.args.includes('comment'),
     )
     expect(postCalls).toHaveLength(0)
   })
 
   it('should NOT post marker when marker exists for a different task-id', () => {
-    vi.mocked(childProcess.execSync).mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('--json comments')) {
-        return '🎯 Task created: `260218-other-task`\n\nCody will now process this task.'
-      }
-      return ''
-    })
+    vi.mocked(childProcess.execFileSync).mockImplementation(
+      (...args: Parameters<typeof childProcess.execFileSync>) => {
+        const [, execArgs] = args
+        if (execArgs?.includes('--json')) {
+          return '🎯 Task created: `260218-other-task`\n\nCody will now process this task.'
+        }
+        return ''
+      },
+    )
 
     ensureTaskMarkerComment(42, '260219-my-task')
 
     // Should NOT post — an existing marker means the issue already has a task
-    const postCalls = execSyncCalls.filter(
-      (c) => typeof c.cmd === 'string' && c.cmd.includes('gh issue comment'),
+    const postCalls = execFileSyncCalls.filter(
+      (c) => c.args.includes('issue') && c.args.includes('comment'),
     )
     expect(postCalls).toHaveLength(0)
   })
 
   it('should do nothing when issueNumber is 0', () => {
     ensureTaskMarkerComment(0, '260219-my-task')
-    expect(childProcess.execSync).not.toHaveBeenCalled()
+    expect(childProcess.execFileSync).not.toHaveBeenCalled()
   })
 
   it('should do nothing when taskId is empty', () => {
     ensureTaskMarkerComment(42, '')
-    expect(childProcess.execSync).not.toHaveBeenCalled()
+    expect(childProcess.execFileSync).not.toHaveBeenCalled()
   })
 
   it('should handle gh command failure gracefully in discovery', () => {
-    const localCalls: string[] = []
-    vi.mocked(childProcess.execSync).mockImplementation((cmd: string) => {
-      localCalls.push(cmd as string)
-      if (typeof cmd === 'string' && cmd.includes('--json comments')) {
-        throw new Error('gh: Not Found (HTTP 404)')
-      }
-      // postComment should still be called
-      return ''
-    })
+    const localCalls: Array<{ file: string; args: string[] }> = []
+    vi.mocked(childProcess.execFileSync).mockImplementation(
+      (...args: Parameters<typeof childProcess.execFileSync>) => {
+        const [file, execArgs] = args
+        localCalls.push({ file, args: [...(execArgs || [])] })
+        if (execArgs?.includes('--json')) {
+          throw new Error('gh: Not Found (HTTP 404)')
+        }
+        // postComment should still be called
+        return ''
+      },
+    )
 
     // Should not throw
     ensureTaskMarkerComment(42, '260219-my-task')
 
     // Discovery failed (returns null), so it should try to post
-    const postCalls = localCalls.filter((c) => c.includes('gh issue comment'))
+    const postCalls = localCalls.filter((c) => c.args.includes('comment'))
     expect(postCalls).toHaveLength(1)
   })
 })
