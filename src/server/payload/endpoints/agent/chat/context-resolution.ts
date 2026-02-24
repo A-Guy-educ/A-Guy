@@ -134,8 +134,12 @@ export async function getOrCreateConversation(
     })
   }
 
-  return conversationService.getOrCreateActiveConversation(ownerId, {
-    relationTo: context.relationTo as 'courses' | 'chapters' | 'lessons' | 'exercises',
-    value: context.value,
-  })
+  return conversationService.getOrCreateActiveConversation(
+    ownerId,
+    {
+      relationTo: context.relationTo as 'courses' | 'chapters' | 'lessons' | 'exercises',
+      value: context.value,
+    },
+    context.contextKey,
+  )
 }

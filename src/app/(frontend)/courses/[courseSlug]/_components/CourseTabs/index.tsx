@@ -16,7 +16,7 @@ export function CourseTabs({ activeTab, onTabChange }: CourseTabsProps) {
   const t = useTranslations('coursePage.tabs')
 
   return (
-    <div className="bg-background pb-3 pt-2 border-b border-border sticky top-0 z-sticky">
+    <div className="bg-background pb-3 pt-2 border-b border-border sticky top-0 z-base">
       <div className="max-w-2xl mx-auto px-4">
         <div className="bg-muted p-1 rounded-xl flex items-center justify-between">
           {TABS.map((tab) => {
