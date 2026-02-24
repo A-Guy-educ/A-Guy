@@ -1,10 +1,12 @@
 import { getCachedGlobal } from '@/infra/utils/getGlobals'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import React from 'react'
 
 import type { Footer } from '@/payload-types'
 
 import { ThemeSelector } from '@/ui/web/providers/Theme/ThemeSelector'
 import { CMSLink } from '@/ui/web/Link'
+import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 
@@ -38,9 +40,12 @@ export async function Footer() {
   return (
     <footer className="mt-auto border-t border-border bg-footer text-card-foreground relative z-0">
       <div className="container py-3 flex flex-col items-center gap-2">
-        <span className="text-xs font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
-          Aguy Learning Platform
-        </span>
+        <SystemLink className="flex items-center gap-2" href="/">
+          <TelescopeLogo className="h-5 w-auto" />
+          <span className="text-xs font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
+            Aguy Learning Platform
+          </span>
+        </SystemLink>
 
         <div className="flex items-center gap-2 text-xs">
           {navItems.map(({ link }, i) => {

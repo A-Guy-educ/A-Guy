@@ -13,13 +13,8 @@ function AskPageInner() {
   const ctxParam = searchParams.get('ctx')
 
   if (chatParam) {
-    // ctx param carries the contextKey for existing conversations
-    // For "new", no contextKey → AskContent generates a fresh one
-    return (
-      <AskContent
-        conversationContextKey={chatParam === 'new' ? undefined : (ctxParam ?? undefined)}
-      />
-    )
+    // ctx param carries the contextKey — for both new and existing conversations
+    return <AskContent conversationContextKey={ctxParam ?? undefined} />
   }
 
   return (

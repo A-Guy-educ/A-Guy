@@ -134,9 +134,6 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
 
         {/* Footer */}
         <div className="mt-16 pt-8 border-t border-border text-center">
-          <p className="text-xs font-bold text-muted-foreground/40 uppercase tracking-[0.4em] mb-6">
-            {t('platformName')}
-          </p>
           <div className="flex flex-wrap justify-center gap-4">
             <button className="text-sm font-bold text-muted-foreground bg-card shadow-card px-8 py-3 rounded-full hover:bg-muted transition-all text-nowrap">
               {t('viewStats')}

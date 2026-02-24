@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { MessageSquare, Sparkles } from 'lucide-react'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { useExamCountdown } from '@/client/hooks/useExamCountdown'
@@ -27,6 +28,7 @@ interface CourseInfo {
 export function AskConversationGrid() {
   const t = useTranslations('coursePage')
   const ts = useTranslations('study')
+  const router = useRouter()
   const [conversations, setConversations] = useState<ConversationItem[]>([])
   const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -98,13 +100,17 @@ export function AskConversationGrid() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* New Question Card */}
-          <SystemLink
-            href="/ask?chat=new"
+          <button
+            onClick={() => {
+              const ctx = `ask:${courseInfo?.courseId ?? ''}:${Date.now()}`
+              router.push(`/ask?chat=new&ctx=${encodeURIComponent(ctx)}`)
+            }}
             className={cn(
               'bg-primary text-primary-foreground rounded-3xl p-6 shadow-card',
               'flex items-center justify-between',
               'border border-transparent hover:opacity-95',
               'transition-all cursor-pointer active:scale-[0.98]',
+              'text-right',
             )}
           >
             <div className="flex flex-col">
@@ -117,7 +123,7 @@ export function AskConversationGrid() {
             <div className="w-14 h-14 bg-primary-foreground/20 rounded-full flex items-center justify-center">
               <Sparkles className="w-6 h-6 text-primary-foreground fill-current" />
             </div>
-          </SystemLink>
+          </button>
 
           {/* Past Conversation Cards */}
           {conversations.map((conv, idx) => (
