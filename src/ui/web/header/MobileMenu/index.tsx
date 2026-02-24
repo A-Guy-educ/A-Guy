@@ -69,6 +69,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="text-lg font-semibold">{tMenu('title')}</h2>
           <button
+            type="button"
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-muted transition-colors"
             aria-label="Close menu"
@@ -158,6 +159,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 export const MobileMenuButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
   return (
     <button
+      type="button"
       onClick={onClick}
       className="p-2 rounded-lg hover:bg-muted transition-colors lg:hidden text-foreground"
       aria-label="Open menu"
