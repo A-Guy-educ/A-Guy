@@ -19,20 +19,26 @@ The exercise collection's hooks (`generateSlug` and `validateSlugUniqueness`) cu
 ### FR-003: Maintain Transaction Safety in Queries
 
 **Priority**: MUST
-**Description**: Ensure that when executing queries within these hooks (`req.payload.find(...)`), the `req` object is explicitly passed in the query options. This guarantees that the queries run within the active transaction context. 
+**Description**: Verify that both hooks (`generateSlug` and `validateSlugUniqueness`) pass the `req` object to `req.payload.find()` calls. This already exists in the current code (lines 51 and 95) and ensures queries run within the active transaction context.
 
 ### NFR-001: Remove Anti-Pattern Fallback Tests
 
 **Priority**: MUST
 **Description**: Update `tests/unit/collections/exercises-hooks.test.ts` to remove any tests that explicitly test the `getPayloadInstance` fallback behavior (e.g., tests asserting the fallback when `req` or `req.payload` is undefined). Since the fallback is being removed and is considered an anti-pattern, these tests are no longer valid.
 
+### NFR-002: Update Test Setup for req.payload
+
+**Priority**: MUST
+**Description**: Update the default `createHookArgs` helper function in the test file to provide a mock `req` object with `payload.find` pre-configured. This ensures all existing tests continue to work after removing the fallback. The mock should use the same configuration as the current `mockPayloadInstance.find` setup. Without this change, tests that don't explicitly provide `req` in their test arguments will fail when trying to access `req.payload`.
+
 ## Acceptance Criteria
 
 - [ ] `getPayloadInstance()` function is deleted from `src/server/payload/collections/Exercises/hooks.ts`.
 - [ ] `generateSlug` uses `req.payload` unconditionally (no fallback logic).
 - [ ] `validateSlugUniqueness` uses `req.payload` unconditionally.
-- [ ] Both hooks pass the `req` object to `req.payload.find()`.
+- [ ] Both hooks pass the `req` object to `req.payload.find()` (already implemented in current code).
 - [ ] Tests asserting `getPayloadInstance` fallback behavior are removed from `tests/unit/collections/exercises-hooks.test.ts`.
+- [ ] The default `createHookArgs` helper is updated to provide mock `req.payload.find` so all tests pass without the fallback.
 - [ ] All remaining unit tests in `tests/unit/collections/exercises-hooks.test.ts` pass successfully.
 
 ## Guardrails
