@@ -19,11 +19,15 @@ export async function GET(request: NextRequest) {
   try {
     const chapters = await queryChaptersByGrade({ gradeLevel: grade })
     const course = chapters[0]?.course
-    const courseSlug =
-      typeof course === 'object' && course !== null && 'slug' in course ? course.slug : ''
+    const courseObj = typeof course === 'object' && course !== null ? course : null
+    const courseSlug = courseObj && 'slug' in courseObj ? (courseObj.slug as string) : ''
+    const courseId = courseObj && 'id' in courseObj ? (courseObj.id as string) : ''
+    const courseTitle = courseObj && 'title' in courseObj ? (courseObj.title as string) : ''
+    const courseLabel =
+      courseObj && 'courseLabel' in courseObj ? (courseObj.courseLabel as string) : ''
     const coursePageAccessType =
-      typeof course === 'object' && course !== null && 'pageAccessType' in course
-        ? (course.pageAccessType ?? DEFAULT_PAGE_ACCESS_TYPE)
+      courseObj && 'pageAccessType' in courseObj
+        ? (courseObj.pageAccessType ?? DEFAULT_PAGE_ACCESS_TYPE)
         : DEFAULT_PAGE_ACCESS_TYPE
 
     // Fetch all lessons for all chapters (batch query for efficiency)
@@ -87,6 +91,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       chapters: chaptersWithLessons,
       courseSlug,
+      courseId,
+      courseTitle,
+      courseLabel,
       coursePageAccessType,
       gatedDelayMs,
       gatedWarningMs,

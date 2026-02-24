@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Play, Sparkles } from 'lucide-react'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
+import { useExamCountdown } from '@/client/hooks/useExamCountdown'
 import {
   DEFAULT_LESSON_TYPE,
   getEffectiveLessonType,
@@ -9,14 +11,24 @@ import {
 } from '@/server/constants/lesson-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import type { Chapter, Lesson } from '@/payload-types'
-import { ChapterHeader } from '@/app/(frontend)/courses/_components/ChapterHeader'
-import { LessonCard } from '@/app/(frontend)/courses/_components/LessonCard'
-import { EmptyState } from '@/app/(frontend)/courses/_components/EmptyState'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
+import { cn } from '@/infra/utils/ui'
 import { logger } from '@/infra/utils/logger'
 
 interface ChapterWithLessons extends Chapter {
   lessons: Lesson[]
+}
+
+interface CourseInfo {
+  courseSlug: string
+  courseId: string
+  courseTitle: string
+  courseLabel: string
+  coursePageAccessType: string
+  gatedDelayMs?: number
+  gatedWarningMs?: number
 }
 
 interface StudyContentProps {
@@ -24,12 +36,10 @@ interface StudyContentProps {
 }
 
 export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentProps) {
-  const t = useTranslations('study')
+  const t = useTranslations('coursePage')
+  const ts = useTranslations('study')
   const [chapters, setChapters] = useState<ChapterWithLessons[]>([])
-  const [courseSlug, setCourseSlug] = useState<string>('')
-  const [coursePageAccessType, setCoursePageAccessType] = useState<string>('free')
-  const [gatedDelayMs, setGatedDelayMs] = useState<number | undefined>(undefined)
-  const [gatedWarningMs, setGatedWarningMs] = useState<number | undefined>(undefined)
+  const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -41,15 +51,19 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
       }
 
       try {
-        // Load chapters with lessons for the selected course (by grade level)
-        const chaptersResponse = await fetch(`/api/chapters/by-grade?grade=${profile.gradeLevel}`)
-        if (chaptersResponse.ok) {
-          const data = await chaptersResponse.json()
+        const res = await fetch(`/api/chapters/by-grade?grade=${profile.gradeLevel}`)
+        if (res.ok) {
+          const data = await res.json()
           setChapters(data.chapters || [])
-          setCourseSlug(data.courseSlug || '')
-          setCoursePageAccessType(data.coursePageAccessType || 'free')
-          setGatedDelayMs(data.gatedDelayMs)
-          setGatedWarningMs(data.gatedWarningMs)
+          setCourseInfo({
+            courseSlug: data.courseSlug || '',
+            courseId: data.courseId || '',
+            courseTitle: data.courseTitle || '',
+            courseLabel: data.courseLabel || '',
+            coursePageAccessType: data.coursePageAccessType || 'free',
+            gatedDelayMs: data.gatedDelayMs,
+            gatedWarningMs: data.gatedWarningMs,
+          })
         }
       } catch (error) {
         const err = error instanceof Error ? error : new Error('Unknown error')
@@ -65,59 +79,168 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center text-muted-foreground">{t('loading')}</div>
+        <div className="text-center text-muted-foreground">{ts('loading')}</div>
       </div>
     )
   }
 
-  const filteredChapters = chapters
-    .map((chapter) => {
-      const filteredLessons = (chapter.lessons ?? []).filter(
-        (lesson) => getEffectiveLessonType(lesson.type) === lessonType,
-      )
-      return { ...chapter, lessons: filteredLessons }
-    })
-    .filter((chapter) => chapter.lessons.length > 0)
+  const filteredLessons = chapters.flatMap((chapter) => {
+    const chapterSlug = chapter.slug || ''
+    return (chapter.lessons ?? [])
+      .filter((lesson) => getEffectiveLessonType(lesson.type) === lessonType)
+      .map((lesson) => ({ ...lesson, _chapterSlug: chapterSlug }))
+  })
+
+  const sectionTitle = courseInfo?.courseTitle || ts('studyTopics')
 
   return (
     <AccessGateProvider
-      accessType={coursePageAccessType}
-      courseSlug={courseSlug}
-      gatedDelayMs={gatedDelayMs}
-      gatedWarningMs={gatedWarningMs}
+      accessType={courseInfo?.coursePageAccessType ?? 'free'}
+      courseSlug={courseInfo?.courseSlug ?? ''}
+      gatedDelayMs={courseInfo?.gatedDelayMs}
+      gatedWarningMs={courseInfo?.gatedWarningMs}
     >
-      <div className="container mx-auto px-4 py-8">
-        {filteredChapters.length > 0 ? (
-          <div className="space-y-12">
-            {filteredChapters.map((chapter) => {
-              const chapterSlug = chapter.slug
-              if (!chapterSlug) return null
+      {/* Grade + Exam Reminder */}
+      <GradeSection
+        courseId={courseInfo?.courseId ?? ''}
+        courseLabel={courseInfo?.courseLabel ?? ''}
+      />
 
-              return (
-                <section key={chapter.id}>
-                  <ChapterHeader
-                    chapterLabel={chapter.chapterLabel}
-                    title={chapter.title}
-                    description={chapter.description}
-                  />
-                  <div className="space-y-3">
-                    {chapter.lessons.map((lesson) => (
-                      <LessonCard
-                        key={lesson.id}
-                        lesson={lesson}
-                        courseSlug={courseSlug}
-                        chapterSlug={chapterSlug}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )
-            })}
+      {/* Main Content */}
+      <main className="container mx-auto px-6 py-10 max-w-5xl">
+        <section className="mb-8 text-right px-2">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground leading-tight">
+            {sectionTitle}
+          </h2>
+        </section>
+
+        {filteredLessons.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredLessons.map((lesson, idx) => (
+              <LessonGridCard
+                key={lesson.id}
+                lesson={lesson}
+                index={idx + 1}
+                courseSlug={courseInfo?.courseSlug ?? ''}
+                chapterSlug={lesson._chapterSlug}
+              />
+            ))}
           </div>
         ) : (
-          <EmptyState type="noLessons" />
+          <div className="text-center py-20 text-muted-foreground italic">
+            <p className="text-lg">{ts('noTopicsAvailable')}</p>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="mt-16 pt-8 border-t border-border text-center">
+          <p className="text-xs font-bold text-muted-foreground/40 uppercase tracking-[0.4em] mb-6">
+            {t('platformName')}
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <button className="text-sm font-bold text-muted-foreground bg-card shadow-card px-8 py-3 rounded-full hover:bg-muted transition-all text-nowrap">
+              {t('viewStats')}
+            </button>
+            <button className="text-sm font-bold text-primary-foreground bg-primary px-8 py-3 rounded-full shadow-lg hover:opacity-90 transition-all text-nowrap">
+              {t('continueLastPoint')}
+            </button>
+          </div>
+        </div>
+      </main>
+    </AccessGateProvider>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Grade section with exam reminder                                    */
+/* ------------------------------------------------------------------ */
+
+function GradeSection({ courseId, courseLabel }: { courseId: string; courseLabel: string }) {
+  const t = useTranslations('coursePage')
+  const { hasUpcomingExam, daysUntil } = useExamCountdown(courseId)
+
+  return (
+    <div className="w-full bg-card/50 py-4 border-b border-border">
+      <div className="max-w-5xl mx-auto px-6 flex flex-col">
+        <div className="text-center">
+          <span className="text-sm md:text-base font-extrabold text-primary uppercase tracking-[0.3em]">
+            {t('grade')} {courseLabel}
+          </span>
+        </div>
+        {hasUpcomingExam && daysUntil !== null && (
+          <div className="flex items-center justify-end gap-3 mt-3 animate-in fade-in">
+            <div className="bg-card shadow-card border border-primary/10 rounded-2xl rounded-tr-none px-4 py-2">
+              <p className="text-xs md:text-sm font-bold text-primary">
+                {t('examReminder').replace('{days}', String(daysUntil))}
+              </p>
+            </div>
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-md shrink-0">
+              <Sparkles className="w-4 h-4 text-primary-foreground fill-current" />
+            </div>
+          </div>
         )}
       </div>
-    </AccessGateProvider>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Lesson grid card matching the HTML design                           */
+/* ------------------------------------------------------------------ */
+
+function LessonGridCard({
+  lesson,
+  index,
+  courseSlug,
+  chapterSlug,
+}: {
+  lesson: Lesson
+  index: number
+  courseSlug: string
+  chapterSlug: string
+}) {
+  const t = useTranslations('coursePage')
+  const tc = useTranslations('courses')
+
+  if (!lesson.slug) return null
+
+  const href = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lesson.slug}`
+  // Placeholder progress — will be wired to UserProgress later
+  const progress = 0
+  const progressText =
+    progress >= 100
+      ? t('lessonCompleted')
+      : progress > 0
+        ? t('lessonsRemaining').replace('{count}', String(3))
+        : t('notStarted')
+
+  return (
+    <SystemLink
+      href={href}
+      className={cn(
+        'bg-card rounded-3xl p-6 shadow-card',
+        'flex items-center justify-between',
+        'border border-transparent hover:border-primary/20',
+        'transition-all cursor-pointer active:scale-[0.98]',
+      )}
+    >
+      <div className="flex flex-col">
+        <span className="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-wide">
+          {tc('lesson')} {index}
+        </span>
+        <h3 className="text-lg font-bold text-card-foreground">{lesson.title}</h3>
+        <p className="text-xs text-muted-foreground mt-1">{progressText}</p>
+      </div>
+
+      <ProgressCircle percentage={progress} size={56} strokeWidth={3} className="shrink-0">
+        {progress === 0 && (
+          <foreignObject x="0" y="0" width="56" height="56">
+            <div className="w-full h-full flex items-center justify-center">
+              <Play className="w-4 h-4 text-muted-foreground fill-current" />
+            </div>
+          </foreignObject>
+        )}
+      </ProgressCircle>
+    </SystemLink>
   )
 }
