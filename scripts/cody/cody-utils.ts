@@ -126,16 +126,41 @@ export function readStatus(taskId: string): CodyPipelineStatus | null {
 /**
  * Get the last failed stage from status.json for smart rerun default.
  * Returns the stage name that most recently failed, or null if none.
+ * Updated to use v2 schema (G(utils-1/2)).
  */
 export function getLastFailedStage(taskId: string): string | null {
-  const status = readStatus(taskId)
-  if (!status?.stages) return null
+  const statusFile = path.join(getTaskDir(taskId), 'status.json')
+  if (!fs.existsSync(statusFile)) {
+    return null
+  }
 
-  const failedStages = Object.entries(status.stages)
-    .filter(([_, s]) => s.state === 'failed' || s.state === 'timeout')
-    .map(([name]) => name)
+  try {
+    const content = fs.readFileSync(statusFile, 'utf-8')
+    const status = JSON.parse(content) as {
+      version?: number
+      stages?: Record<string, { state: string }>
+    }
 
-  return failedStages.length > 0 ? failedStages[failedStages.length - 1] : null
+    // Check if it's v2 format (has version: 2)
+    if (status.version === 2 && status.stages) {
+      const failedStages = Object.entries(status.stages)
+        .filter(([, s]) => s.state === 'failed' || s.state === 'timeout')
+        .map(([name]) => name)
+      return failedStages.length > 0 ? failedStages[failedStages.length - 1] : null
+    }
+
+    // Fallback to v1 format
+    if (status?.stages) {
+      const failedStages = Object.entries(status.stages)
+        .filter(([, s]) => s.state === 'failed' || s.state === 'timeout')
+        .map(([name]) => name)
+      return failedStages.length > 0 ? failedStages[failedStages.length - 1] : null
+    }
+
+    return null
+  } catch {
+    return null
+  }
 }
 
 export function writeStatus(taskId: string, status: CodyPipelineStatus): void {
@@ -918,4 +943,10 @@ export function formatStatusComment(
   }
 
   return lines.join('\n')
+}
+
+export async function formatStatusCommentV2(input: CodyInput, stateV2: unknown): Promise<string> {
+  const { stateToV1 } = await import('./engine/status')
+  const v1Status = stateV2 as Parameters<typeof stateToV1>[0]
+  return formatStatusComment(input, stateToV1(v1Status))
 }

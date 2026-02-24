@@ -1,0 +1,111 @@
+/**
+ * @fileType utility
+ * @domain cody | pipeline
+ * @pattern validators
+ * @ai-summary Pipeline validators moved from cody.ts for testability
+ */
+
+import * as fs from 'fs'
+import * as path from 'path'
+
+import type { PipelineContext, ValidationResult } from '../engine/types'
+import {
+  validateGapReport,
+  validatePlanGapReport,
+  validateBuildReport,
+  validateSpecContent,
+} from '../content-validators'
+
+/**
+ * Create a validator for the spec stage
+ */
+export function createSpecValidator(
+  _ctx: PipelineContext,
+): (outputFile: string) => ValidationResult {
+  return (outputFile: string) => {
+    const content = fs.readFileSync(outputFile, 'utf-8')
+    if (validateSpecContent(content)) {
+      return { valid: true }
+    }
+    return {
+      valid: false,
+      error: 'spec.md must contain ## Requirements or ## Acceptance Criteria sections',
+    }
+  }
+}
+
+/**
+ * Create a validator for the gap stage.
+ * Validates gap.md format AND checks spec.md wasn't corrupted.
+ */
+export function createGapValidator(ctx: PipelineContext): (outputFile: string) => ValidationResult {
+  return (outputFile: string) => {
+    const content = fs.readFileSync(outputFile, 'utf-8')
+    if (!validateGapReport(content)) {
+      return {
+        valid: false,
+        error:
+          'gap.md must contain ## Gaps Found, ## Changes Made, or "No gaps identified" (you wrote something else)',
+      }
+    }
+
+    // Also validate spec wasn't corrupted by gap agent
+    const specFile = path.join(ctx.taskDir, 'spec.md')
+    if (fs.existsSync(specFile)) {
+      const specContent = fs.readFileSync(specFile, 'utf-8')
+      if (!validateSpecContent(specContent)) {
+        return {
+          valid: false,
+          error:
+            'gap agent corrupted spec.md - it must keep ## Requirements or ## Acceptance Criteria sections',
+        }
+      }
+    }
+    return { valid: true }
+  }
+}
+
+/**
+ * Create a validator for the plan-gap stage.
+ * Validates plan-gap format AND checks plan.md still exists.
+ */
+export function createPlanGapValidator(
+  ctx: PipelineContext,
+): (outputFile: string) => ValidationResult {
+  return (outputFile: string) => {
+    const content = fs.readFileSync(outputFile, 'utf-8')
+    if (!validatePlanGapReport(content)) {
+      return {
+        valid: false,
+        error: 'plan-gap.md must contain ## Gaps Found, ## Changes Made, or "No gaps identified"',
+      }
+    }
+
+    // Verify plan.md still exists (gap agent shouldn't delete it)
+    const planFile = path.join(ctx.taskDir, 'plan.md')
+    if (!fs.existsSync(planFile)) {
+      return {
+        valid: false,
+        error: 'plan-gap agent deleted plan.md - it must not delete the plan file',
+      }
+    }
+    return { valid: true }
+  }
+}
+
+/**
+ * Create a validator for the build stage.
+ */
+export function createBuildValidator(): (outputFile: string) => ValidationResult {
+  return (outputFile: string) => {
+    const content = fs.readFileSync(outputFile, 'utf-8')
+    if (!validateBuildReport(content)) {
+      return {
+        valid: false,
+        error:
+          'build.md must contain ## Changes or ## Files section describing what was implemented',
+      }
+    }
+    return { valid: true }
+  }
+}
