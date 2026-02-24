@@ -241,6 +241,20 @@ async function executeParallelStep(
         }
       }
 
+      // R10: Run preExecute hook if defined
+      if (def.preExecute) {
+        try {
+          await def.preExecute(ctx)
+        } catch (preError) {
+          // Tag error with stageName for rejection handler
+          if (preError instanceof Error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(preError as any).stageName = stageName
+          }
+          throw preError
+        }
+      }
+
       // Execute - wrap to tag errors with stageName
       try {
         const handler = getHandler(def.name, def.type)
@@ -257,8 +271,7 @@ async function executeParallelStep(
     }),
   )
 
-  // Process results - distinguish critical vs advisory failures
-  const ADVISORY_STAGES = new Set(['auditor'])
+  // Process results - distinguish critical vs advisory failures (R7)
   const criticalFailures: { name: string; reason: string }[] = []
   const advisoryFailures: { name: string; reason: string }[] = []
 
@@ -278,9 +291,13 @@ async function executeParallelStep(
         | undefined
       const name = reason?.stageName || 'unknown'
       const message = reason?.message || String(result.reason)
-      if (ADVISORY_STAGES.has(name)) {
+      // R7: Use dynamic advisory lookup from pipeline definition
+      const isAdvisory = pipeline.stages.get(name)?.advisory === true
+      if (isAdvisory) {
         advisoryFailures.push({ name, reason: message })
       } else {
+        // R1: Mark stage as failed in state before throwing
+        state = updateStage(state, name, { state: 'failed', error: message })
         criticalFailures.push({ name, reason: message })
       }
       continue
@@ -304,25 +321,46 @@ async function executeParallelStep(
         retries: stageResult.retries,
         outputFile: stageResult.outputFile,
       })
+
+      // R8: Run post-actions for completed parallel stages
+      const def = pipeline.stages.get(stageName)
+      if (def?.postActions) {
+        for (const action of def.postActions) {
+          await executePostAction(ctx, action, state)
+        }
+      }
     } else if (stageResult.outcome === 'skipped') {
       state = updateStage(state, stageName, {
         state: 'skipped',
         skipped: stageResult.reason,
       })
     } else if (stageResult.outcome === 'failed') {
-      if (ADVISORY_STAGES.has(stageName)) {
+      // R7: Use dynamic advisory lookup from pipeline definition
+      const isAdvisory = pipeline.stages.get(stageName)?.advisory === true
+      if (isAdvisory) {
+        // R1: Mark stage as failed in state
+        state = updateStage(state, stageName, {
+          state: 'failed',
+          error: stageResult.reason || 'failed',
+        })
         advisoryFailures.push({ name: stageName, reason: stageResult.reason || 'failed' })
       } else {
+        // R1: Mark stage as failed in state before returning failed state
+        state = updateStage(state, stageName, {
+          state: 'failed',
+          error: stageResult.reason || 'failed',
+        })
         criticalFailures.push({ name: stageName, reason: stageResult.reason || 'failed' })
       }
     }
   }
 
-  // Only throw if critical failures
+  // R2: Return failed state instead of throwing (main loop sees failed state and breaks cleanly)
   if (criticalFailures.length > 0) {
     const errors = criticalFailures.map((f) => f.reason).join('; ')
     const names = criticalFailures.map((f) => f.name)
-    throw new Error(`Parallel stages [${names.join(', ')}] failed: ${errors}`)
+    console.error(`  ❌ Parallel stages [${names.join(', ')}] failed: ${errors}`)
+    return completeState(state, 'failed')
   }
 
   return state

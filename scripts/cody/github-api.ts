@@ -6,7 +6,6 @@
  */
 
 import { execFileSync } from 'child_process'
-import * as fs from 'fs'
 
 // ============================================================================
 // GitHub API Functions
@@ -101,33 +100,25 @@ export function getIssueTitle(issueNumber: number): string | null {
 
 /**
  * Edit an existing comment
+ * R6: Rewrote to use stdin instead of temp files for atomicity
  */
 export function editComment(commentId: string, body: string): void {
   if (!commentId) return
 
+  // R6: Replace 'OWNER/REPO' fallback with early return
+  const repo = process.env.GITHUB_REPOSITORY
+  if (!repo) {
+    console.error('editComment: GITHUB_REPOSITORY not set, skipping')
+    return
+  }
+
   try {
-    // Write body to temp file to handle special characters
-    const tempFile = `/tmp/cody-comment-${Date.now()}.txt`
-    fs.writeFileSync(tempFile, body)
-
-    // Get the repository from environment
-    const repo = process.env.GITHUB_REPOSITORY || 'OWNER/REPO'
-
+    // Use --input - to pipe body via stdin (atomic, no temp file)
     execFileSync(
       'gh',
-      [
-        'api',
-        `repos/${repo}/issues/comments/${commentId}`,
-        '-X',
-        'PATCH',
-        '--field',
-        `body=@${tempFile}`,
-      ],
-      { stdio: 'inherit' },
+      ['api', `repos/${repo}/issues/comments/${commentId}`, '-X', 'PATCH', '--input', '-'],
+      { input: JSON.stringify({ body }), stdio: ['pipe', 'inherit', 'inherit'] },
     )
-
-    // Clean up temp file
-    fs.unlinkSync(tempFile)
   } catch (error) {
     console.error(`Failed to edit comment ${commentId}:`, error)
   }

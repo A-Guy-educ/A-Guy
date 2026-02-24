@@ -19,10 +19,59 @@ import { stageOutputFile, readTask } from './pipeline-utils'
 import type { PipelineContext } from './engine/types'
 import { runPipeline } from './engine/state-machine'
 import { resolvePipelineForMode, createRebuildCallback } from './engine/pipeline-resolver'
+import { flattenPipelineOrder } from './pipeline/definitions'
 import { stateToV1 } from './engine/status'
 import { PipelinePausedError } from './engine/types'
 import { ensureTaskMarkerComment, postComment } from './github-api'
 import { formatStatusComment } from './cody-utils'
+
+// ============================================================================
+// Shared Helpers
+// ============================================================================
+
+/**
+ * R4: Extract task.md preparation logic into a shared helper.
+ * Ensures task.md exists before pipeline runs (needed for taskify agent).
+ */
+async function ensureTaskMd(ctx: PipelineContext): Promise<void> {
+  const { input, taskDir } = ctx
+  const taskMdPath = path.join(taskDir, 'task.md')
+
+  // --file flag has priority
+  if (input.file) {
+    const resolvedFile = path.resolve(input.file)
+    if (!fs.existsSync(resolvedFile)) {
+      throw new Error(`File not found: ${resolvedFile}`)
+    }
+    const content = fs.readFileSync(resolvedFile, 'utf-8').trim()
+    if (!content) {
+      throw new Error(`File is empty: ${resolvedFile}`)
+    }
+    fs.writeFileSync(taskMdPath, `# Task\n\n${content}\n`)
+    console.log(`Created task.md from ${resolvedFile}`)
+    return
+  }
+
+  // Create task.md from issue body if it doesn't exist
+  if (!fs.existsSync(taskMdPath)) {
+    if (input.issueNumber) {
+      const { getIssue } = await import('./github-api')
+      console.log('task.md not found, fetching issue body to create it...')
+      const { body: issueBody, title: issueTitle } = getIssue(input.issueNumber)
+      if (issueBody) {
+        const titleSection = issueTitle ? `## Issue Title\n\n${issueTitle}\n` : ''
+        fs.writeFileSync(taskMdPath, `# Task\n\n${titleSection}${issueBody}\n`)
+        console.log(`Created task.md from issue #${input.issueNumber}`)
+      } else {
+        throw new Error(
+          `task.md not found in .tasks/${input.taskId}/ and issue #${input.issueNumber} has no body. Create it first.`,
+        )
+      }
+    } else {
+      throw new Error(`task.md not found in .tasks/${input.taskId}/. Create it first.`)
+    }
+  }
+}
 
 /**
  * Main entry point
@@ -34,8 +83,13 @@ async function main(): Promise<void> {
   // Set global logging context
   setGlobalContext({ taskId: input.taskId, runId: input.runId })
 
+  // R9: Shutdown guard to prevent double-execution on SIGTERM/SIGINT
+  let shuttingDown = false
   // G2: Signal handlers with null guard
   const cleanupOnSignal = async (signal: string) => {
+    // Prevent double execution
+    if (shuttingDown) return
+    shuttingDown = true
     console.error(`\n⚠ Received ${signal} — CI runner shutting down`)
     try {
       const { loadState, completeState, writeState } = await import('./engine/status')
@@ -144,44 +198,9 @@ async function main(): Promise<void> {
  */
 async function runSpecMode(ctx: PipelineContext): Promise<void> {
   const { input, taskDir } = ctx
-  const taskMdPath = path.join(taskDir, 'task.md')
 
-  // G8: --file flag has priority
-  if (input.file) {
-    const resolvedFile = path.resolve(input.file)
-    if (!fs.existsSync(resolvedFile)) {
-      throw new Error(`File not found: ${resolvedFile}`)
-    }
-    const content = fs.readFileSync(resolvedFile, 'utf-8').trim()
-    if (!content) {
-      throw new Error(`File is empty: ${resolvedFile}`)
-    }
-    fs.writeFileSync(taskMdPath, `# Task\n\n${content}\n`)
-    console.log(`Created task.md from ${resolvedFile}`)
-  }
-
-  // Create task.md from issue body if it doesn't exist
-  if (!fs.existsSync(taskMdPath)) {
-    if (input.issueNumber) {
-      const { getIssue } = await import('./github-api')
-      console.log('task.md not found, fetching issue body to create it...')
-      const { body: issueBody, title: issueTitle } = getIssue(input.issueNumber)
-      if (issueBody) {
-        // G9: Issue title included via ## Issue Title section
-        const titleSection = issueTitle ? `## Issue Title\n\n${issueTitle}\n` : ''
-        fs.writeFileSync(taskMdPath, `# Task\n\n${titleSection}${issueBody}\n`)
-        console.log(
-          `Created task.md from issue #${input.issueNumber}${issueTitle ? ` (title: "${issueTitle}")` : ''}`,
-        )
-      } else {
-        throw new Error(
-          `task.md not found in .tasks/${input.taskId}/ and issue #${input.issueNumber} has no body. Create it first.`,
-        )
-      }
-    } else {
-      throw new Error(`task.md not found in .tasks/${input.taskId}/. Create it first.`)
-    }
-  }
+  // R4: Ensure task.md exists before running pipeline
+  await ensureTaskMd(ctx)
 
   // Run spec pipeline
   const pipeline = resolvePipelineForMode('spec', 'standard', input.clarify ?? false, ctx)
@@ -284,6 +303,9 @@ async function runImplMode(ctx: PipelineContext): Promise<void> {
 async function runFullMode(ctx: PipelineContext): Promise<void> {
   console.log('Running FULL Cody pipeline (spec + impl)...\n')
 
+  // R4: Ensure task.md exists before running pipeline
+  await ensureTaskMd(ctx)
+
   // Run full pipeline with rebuild callback for two-phase construction
   // This uses buildPipeline('full') which includes both spec and impl stages
   const pipeline = resolvePipelineForMode('full', 'standard', ctx.input.clarify ?? false, ctx)
@@ -339,20 +361,14 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
 
   // For rerun, we need to delete the files manually since the engine won't do it
   // The status.ts resetFromStage handles this but we need to call it
+  // R3: Use dynamic stage order from pipeline definition instead of hardcoded array
+  const pipeline = resolvePipelineForMode('rerun', ctx.profile, false, ctx)
+  const stageOrder = flattenPipelineOrder(pipeline.order)
+
   const { loadState, resetFromStage, writeState } = await import('./engine/status')
   const state = loadState(input.taskId)
   if (state) {
     // Get stages to delete from
-    const stageOrder = [
-      'architect',
-      'plan-gap',
-      'build',
-      'commit',
-      'verify',
-      'auditor',
-      'apply-audit',
-      'pr',
-    ]
     const fromIndex = stageOrder.indexOf(input.fromStage || 'build')
     if (fromIndex >= 0) {
       const stagesToDelete = stageOrder.slice(fromIndex)
@@ -371,7 +387,6 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   }
 
   // Run impl pipeline
-  const pipeline = resolvePipelineForMode('rerun', ctx.profile, false, ctx)
   await runPipeline(ctx, pipeline)
 
   console.log('\n✅ Rerun complete!')

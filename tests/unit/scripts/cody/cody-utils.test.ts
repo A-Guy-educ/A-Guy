@@ -303,43 +303,43 @@ describe('getLastFailedStage', () => {
 })
 
 // ============================================================================
-// editComment Tests
+// editComment Tests (R6: stdin-based implementation)
 // ============================================================================
 
 import { editComment } from '../../../../scripts/cody/cody-utils'
 
 describe('editComment', () => {
   let execFileSyncSpy: ReturnType<typeof vi.spyOn>
-  let writeFileSyncSpy: ReturnType<typeof vi.spyOn>
-  let unlinkSyncSpy: ReturnType<typeof vi.spyOn>
+  const originalEnv = process.env
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.stubEnv('GITHUB_REPOSITORY', 'owner/repo')
     execFileSyncSpy = vi.spyOn(childProcess, 'execFileSync').mockReturnValue('')
-    writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockReturnValue()
-    unlinkSyncSpy = vi.spyOn(fs, 'unlinkSync').mockReturnValue()
   })
 
-  it('should call gh api to patch the comment using execFileSync', () => {
+  afterEach(() => {
+    process.env = originalEnv
+  })
+
+  it('should call gh api to patch the comment using execFileSync with stdin', () => {
     editComment('42', 'Updated body')
 
     expect(execFileSyncSpy).toHaveBeenCalledWith(
       'gh',
-      expect.arrayContaining(['api', expect.stringContaining('issues/comments/42'), '-X', 'PATCH']),
-      expect.any(Object),
+      expect.arrayContaining([
+        'api',
+        expect.stringContaining('issues/comments/42'),
+        '-X',
+        'PATCH',
+        '--input',
+        '-',
+      ]),
+      expect.objectContaining({
+        input: JSON.stringify({ body: 'Updated body' }),
+        stdio: expect.any(Array),
+      }),
     )
-  })
-
-  it('should write body to temp file before calling api', () => {
-    editComment('42', 'Updated body')
-
-    expect(writeFileSyncSpy).toHaveBeenCalled()
-  })
-
-  it('should clean up temp file after calling api', () => {
-    editComment('42', 'Updated body')
-
-    expect(unlinkSyncSpy).toHaveBeenCalled()
   })
 
   it('should not throw when gh api call fails', () => {
@@ -354,6 +354,14 @@ describe('editComment', () => {
   it('should return early when commentId is empty', () => {
     editComment('', 'Updated body')
 
+    expect(execFileSyncSpy).not.toHaveBeenCalled()
+  })
+
+  it('should return early when GITHUB_REPOSITORY is not set', () => {
+    vi.stubEnv('GITHUB_REPOSITORY', '')
+
+    // Should not throw and should not call execFileSync
+    expect(() => editComment('42', 'Updated body')).not.toThrow()
     expect(execFileSyncSpy).not.toHaveBeenCalled()
   })
 })

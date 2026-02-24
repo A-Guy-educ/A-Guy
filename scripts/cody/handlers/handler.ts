@@ -49,7 +49,8 @@ export function getHandler(stageName: string, stageType: StageType): StageHandle
       // Default git handler - shouldn't reach here normally
       return new GitCommitHandler()
     default:
-      // Fallback to agent handler
-      return new AgentHandler()
+      // R12: Exhaustiveness check - fail at compile time if new StageType is added
+      const _exhaustive: never = stageType
+      throw new Error(`Unknown stage type: ${stageType}`)
   }
 }

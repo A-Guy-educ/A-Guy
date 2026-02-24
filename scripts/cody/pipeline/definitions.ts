@@ -196,12 +196,12 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
   })
 
   // auditor stage - advisory (non-blocking)
+  // R11: Removed shouldSkip - auditor creates auditor.md, so skipIfNoAuditorOutput would always skip
   stages.set('auditor', {
     name: 'auditor',
     type: 'agent',
     timeout: STAGE_TIMEOUTS.auditor ?? DEFAULT_TIMEOUT,
     maxRetries: 0,
-    shouldSkip: (ctx) => skipIfNoAuditorOutput(ctx),
     advisory: true,
   })
 
@@ -240,6 +240,22 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
 // ============================================================================
 // Pipeline Builder
 // ============================================================================
+
+/**
+ * Flatten a mixed sequential/parallel pipeline order into a flat array of stage names.
+ * Used by rerun mode to get dynamic stage order from pipeline definitions.
+ */
+export function flattenPipelineOrder(order: PipelineStep[]): string[] {
+  const result: string[] = []
+  for (const step of order) {
+    if (typeof step === 'string') {
+      result.push(step)
+    } else if ('parallel' in step) {
+      result.push(...step.parallel)
+    }
+  }
+  return result
+}
 
 /**
  * Build pipeline definition based on mode, profile, and clarify flag

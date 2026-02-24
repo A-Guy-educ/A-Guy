@@ -37,10 +37,11 @@ export class GitCommitHandler implements StageHandler {
  * Git PR handler
  */
 export class GitPrHandler implements StageHandler {
-  async execute(_ctx: PipelineContext, _def: StageDefinition): Promise<StageResult> {
-    const outputFile = `${_ctx.taskDir}/pr.md`
+  async execute(ctx: PipelineContext, _def: StageDefinition): Promise<StageResult> {
+    const outputFile = `${ctx.taskDir}/pr.md`
 
-    const result = runPrStage(_ctx.taskDir, outputFile)
+    // R5: Pass issueNumber to link PR to the issue
+    const result = runPrStage(ctx.taskDir, outputFile, undefined, ctx.input.issueNumber)
 
     if (!result.created && !result.url) {
       return {
