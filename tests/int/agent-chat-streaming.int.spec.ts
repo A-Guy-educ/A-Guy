@@ -33,6 +33,48 @@ vi.mock('@/infra/llm/services/exercise-chat-service', () => ({
   }),
 }))
 
+// Mock student-tool-calling to prevent RuntimeConfig access in new code path
+vi.mock('@/infra/llm/services/student-tool-calling', () => ({
+  STUDENT_CHAT_TOOLS: [],
+  buildStudentToolExecutor: vi.fn(() => async () => '{}'),
+  streamingChatWithStudentTools: vi.fn(async () => {
+    const stream = createMockStream()
+    const response = Promise.resolve({ text: mockStreamChunks.join(''), toolCalls: [] })
+    return { stream, response }
+  }),
+}))
+
+// Mock isUsersCollectionUser to return false so student mode is not triggered
+vi.mock('@/server/payload/access/isUsersCollectionUser', () => ({
+  isUsersCollectionUser: vi.fn(() => false),
+}))
+
+// Mock AccountRole to return Admin - must keep the enum structure for collection config
+vi.mock('@/server/payload/collections/Users/roles', () => ({
+  AccountRole: {
+    Admin: 'admin',
+    Student: 'student',
+  },
+  ACCOUNT_ROLE_LABEL: {
+    admin: 'Admin',
+    student: 'Student',
+  },
+}))
+
+// Mock getLLMProvider to prevent RuntimeConfig access
+vi.mock('@/infra/llm/providers/factory', () => ({
+  getLLMProvider: vi.fn(async () => ({})),
+  getProviderTypeFromEnv: vi.fn(async () => 'gemini'),
+}))
+
+// Mock MCP client for student tool-calling path
+vi.mock('@/server/repos/mcp/client/mcp-client', () => ({
+  getMCPClient: vi.fn(() => ({
+    listTools: vi.fn(async () => []),
+    callTool: vi.fn(async () => ({ content: [] })),
+  })),
+}))
+
 vi.mock('@/infra/llm/vector-index-check', () => ({
   isVectorIndexAvailable: vi.fn(async () => false),
 }))
