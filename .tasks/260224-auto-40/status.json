@@ -1,0 +1,23 @@
+{
+  "taskId": "260224-auto-40",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-24T12:32:26.594Z",
+  "updatedAt": "2026-02-24T12:34:14.048Z",
+  "state": "running",
+  "currentStage": "taskify",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-24T12:32:28.936Z",
+      "outputFile": "task.json",
+      "completedAt": "2026-02-24T12:34:14.048Z",
+      "elapsed": 105112
+    }
+  },
+  "triggeredBy": "comment",
+  "issueNumber": 567,
+  "runId": "22350936251",
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/22350936251"
+}
