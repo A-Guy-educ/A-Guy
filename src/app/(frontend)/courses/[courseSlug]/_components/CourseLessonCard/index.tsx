@@ -52,15 +52,14 @@ export function CourseLessonCard({
         <p className="text-xs text-muted-foreground mt-1">{progressText}</p>
       </div>
 
-      <ProgressCircle percentage={progress} size={56} strokeWidth={3} className="shrink-0">
+      <div className="relative shrink-0 w-14 h-14">
+        <ProgressCircle percentage={progress} size={56} strokeWidth={3} />
         {progress === 0 && (
-          <foreignObject x="0" y="0" width="56" height="56">
-            <div className="w-full h-full flex items-center justify-center">
-              <Play className="w-4 h-4 text-muted-foreground fill-current" />
-            </div>
-          </foreignObject>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Play className="w-4 h-4 text-muted-foreground fill-current" />
+          </div>
         )}
-      </ProgressCircle>
+      </div>
     </SystemLink>
   )
 }
