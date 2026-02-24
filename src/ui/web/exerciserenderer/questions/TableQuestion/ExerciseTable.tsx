@@ -44,7 +44,7 @@ export function ExerciseTable({
   disabled,
 }: ExerciseTableProps) {
   const resultMap = getCellResultMap(cellResults)
-  const alignClass = { left: 'text-left', center: 'text-center', right: 'text-right' }
+  const alignClass = { left: 'text-start', center: 'text-center', right: 'text-end' }
   const borderCls = table.showBorders ? 'border border-border' : 'border-0'
 
   return (
@@ -129,9 +129,9 @@ function FillableInput({ cellKey, value, onChange, result, disabled, align }: Fi
       className={cn(
         'w-full min-w-[120px] px-2 py-1.5 rounded-md border-2 text-sm',
         'bg-background transition-colors duration-200',
-        align === 'left' && 'text-left',
+        align === 'left' && 'text-start',
         align === 'center' && 'text-center',
-        align === 'right' && 'text-right',
+        align === 'right' && 'text-end',
         result === true && 'border-success bg-success/10 text-success-foreground',
         result === false && 'border-destructive bg-destructive/10 text-destructive',
         result === undefined && 'border-input focus:border-ring focus:outline-none',

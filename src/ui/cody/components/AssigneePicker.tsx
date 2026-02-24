@@ -120,7 +120,7 @@ export function AssigneePicker({ issueNumber, currentAssignees, onChange }: Assi
                     <AvatarFallback>{user.login[0]?.toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <span>{user.login}</span>
-                  {isAssigned && <span className="ml-auto text-xs">✓</span>}
+                  {isAssigned && <span className="ms-auto text-xs">✓</span>}
                 </DropdownMenuItem>
               )
             })}

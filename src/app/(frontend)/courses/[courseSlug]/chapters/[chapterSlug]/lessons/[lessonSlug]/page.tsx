@@ -140,7 +140,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
       {validFiles.map((file, index) => (
         <div key={file.id} className="w-full h-full flex-shrink-0">
           {index > 0 && (
-            <div className="h-0.5 my-8 flex-shrink-0 bg-gradient-to-r from-transparent via-border to-transparent" />
+            <div className="h-0.5 my-8 flex-shrink-0 ltr:bg-gradient-to-r rtl:bg-gradient-to-l from-transparent via-border to-transparent" />
           )}
           <div className="border rounded-lg overflow-hidden bg-card shadow-lg h-full">
             <MediaComponent resource={file} className="w-full h-full" htmlElement={null} />

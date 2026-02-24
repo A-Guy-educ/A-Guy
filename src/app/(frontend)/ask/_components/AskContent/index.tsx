@@ -51,7 +51,7 @@ export function AskContent() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-6 h-6 animate-spin mr-2 text-muted-foreground" />
+        <Loader2 className="w-6 h-6 animate-spin me-2 text-muted-foreground" />
         <span className="text-muted-foreground">{t('loading')}</span>
       </div>
     )

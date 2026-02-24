@@ -363,7 +363,7 @@ export function ChatInterface({
       >
         {isLoadingHistory && (
           <div className="flex items-center justify-center p-4 text-muted-foreground text-sm">
-            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            <Loader2 className="w-4 h-4 animate-spin me-2" />
             {tCourses('chatLoadingHistory')}
           </div>
         )}
@@ -379,8 +379,8 @@ export function ChatInterface({
                 className={cn(
                   'max-w-[85%] px-[18px] py-3.5 text-base leading-relaxed shadow-sm',
                   msg.role === ChatMessageRole.User
-                    ? 'ml-auto bg-primary text-primary-foreground rounded-[20px] rounded-bl-[4px]'
-                    : 'mr-auto bg-card text-foreground border border-border rounded-[20px] rounded-br-[4px]',
+                    ? 'ms-auto bg-primary text-primary-foreground rounded-[20px] rounded-es-[4px]'
+                    : 'me-auto bg-card text-foreground border border-border rounded-[20px] rounded-ee-[4px]',
                   isCurrentlyPlaying && 'ring-2 ring-primary/30',
                 )}
               >
@@ -437,7 +437,7 @@ export function ChatInterface({
             )
           })}
         {isLoading && (
-          <div className="mr-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-[20px] rounded-br-[4px] max-w-[85%] flex items-center gap-2 shadow-sm">
+          <div className="me-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-[20px] rounded-ee-[4px] max-w-[85%] flex items-center gap-2 shadow-sm">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span>{tCourses('chatThinking')}</span>
           </div>
@@ -490,7 +490,7 @@ export function ChatInterface({
       <div className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative">
         {/* Math Preview Popup */}
         {showMathTools && mathPreview && (
-          <div className="absolute bottom-full left-5 right-5 mb-2.5 bg-card border border-primary-soft rounded-xl p-2.5 text-center shadow-panel z-20">
+          <div className="absolute bottom-full start-5 end-5 mb-2.5 bg-card border border-primary-soft rounded-xl p-2.5 text-center shadow-panel z-20">
             <span className="text-sm font-mono">{mathPreview}</span>
           </div>
         )}

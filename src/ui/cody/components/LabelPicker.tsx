@@ -133,7 +133,7 @@ export function LabelPicker({ issueNumber, currentLabels, onChange }: LabelPicke
                     }}
                   />
                   <span>{label.name}</span>
-                  {isApplied && <span className="ml-auto text-xs">✓</span>}
+                  {isApplied && <span className="ms-auto text-xs">✓</span>}
                 </DropdownMenuItem>
               )
             })}

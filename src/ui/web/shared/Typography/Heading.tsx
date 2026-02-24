@@ -30,9 +30,9 @@ const headingVariants = cva('font-sans', {
       'heading-sm': 'text-heading-sm',
     },
     align: {
-      left: 'text-left',
+      left: 'text-start',
       center: 'text-center',
-      right: 'text-right',
+      right: 'text-end',
     },
     weight: {
       normal: 'font-normal',

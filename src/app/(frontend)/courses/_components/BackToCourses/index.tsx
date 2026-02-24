@@ -8,7 +8,7 @@ export function BackToCourses() {
   const t = useTranslations('courses')
   return (
     <nav className="mb-6">
-      <Button variant="link" asChild className="pl-0">
+      <Button variant="link" asChild className="ps-0">
         <SystemLink href="/courses">← {t('backToCourses')}</SystemLink>
       </Button>
     </nav>

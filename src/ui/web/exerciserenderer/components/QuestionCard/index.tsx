@@ -55,8 +55,8 @@ export function QuestionCard({
           className={cn(
             'w-full flex items-center mb-4',
             dir === 'rtl'
-              ? 'justify-end text-right flex-row-reverse gap-2'
-              : 'justify-start text-left gap-2',
+              ? 'justify-end text-end flex-row-reverse gap-2'
+              : 'justify-start text-start gap-2',
           )}
         >
           <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm">
@@ -79,12 +79,12 @@ export function QuestionCard({
           >
             {loading ? (
               <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                <Loader2 className="w-5 h-5 me-2 animate-spin" />
                 {checkAnswerText}
               </>
             ) : disabled ? (
               <>
-                <CheckCircle2 className="w-5 h-5 mr-2" />
+                <CheckCircle2 className="w-5 h-5 me-2" />
                 {correctText}
               </>
             ) : (

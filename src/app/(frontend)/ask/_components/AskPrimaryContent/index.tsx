@@ -87,7 +87,7 @@ export function AskPrimaryContent() {
   return (
     <div className="h-full overflow-y-auto p-6 md:p-10">
       <div className="max-w-2xl mx-auto">
-        <header className="mb-10 text-center md:text-right">
+        <header className="mb-10 text-center md:text-end">
           <h1 className="text-4xl font-black mb-2">{t('pageTitle')}</h1>
           <p className="text-muted-foreground">{t('pageSubtitle')}</p>
         </header>

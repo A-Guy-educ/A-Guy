@@ -61,7 +61,7 @@ export function CommentBox({ issueNumber, onCommentPosted }: CommentBoxProps) {
       />
       <div className="flex justify-between items-center">
         {error && <span className="text-destructive text-sm">{error}</span>}
-        <div className="ml-auto">
+        <div className="ms-auto">
           <Button onClick={handleSubmit} disabled={loading || !comment.trim()} size="sm">
             {loading ? 'Posting...' : 'Comment'}
           </Button>

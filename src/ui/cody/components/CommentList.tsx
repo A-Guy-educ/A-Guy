@@ -73,7 +73,7 @@ function CommentItem({ comment }: { comment: GitHubComment }) {
             )}
           >
             {comment.user.login}
-            {isBot && <span className="ml-1 text-xs bg-muted px-1.5 py-0.5 rounded">BOT</span>}
+            {isBot && <span className="ms-1 text-xs bg-muted px-1.5 py-0.5 rounded">BOT</span>}
           </span>
         </div>
         <span className="text-xs text-muted-foreground">

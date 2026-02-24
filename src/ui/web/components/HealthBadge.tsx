@@ -86,7 +86,7 @@ export function HealthBadge({ showVersion = false }: HealthBadgeProps) {
       <span>●</span>
       <span>API OK</span>
       {showVersion && data && (
-        <span className="text-xs opacity-75 ml-2">
+        <span className="text-xs opacity-75 ms-2">
           {data.projectVersion} ({data.gitSha.slice(0, 7)})
         </span>
       )}

@@ -438,7 +438,7 @@ export function CommentEditor({
                     type="button"
                     onClick={() => selectMention(mention)}
                     className={cn(
-                      'w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-accent',
+                      'w-full flex items-center gap-2 px-3 py-2 text-start hover:bg-accent',
                       index === selectedMentionIndex && 'bg-accent',
                     )}
                   >
@@ -460,7 +460,7 @@ export function CommentEditor({
       {/* Error and submit */}
       <div className="flex justify-between items-center">
         {error && <span className="text-destructive text-sm">{error}</span>}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-2">
           <span className="text-xs text-muted-foreground">Markdown • @mention • 😊 • 🖼️</span>
           <Button onClick={handleSubmit} disabled={loading || !comment.trim()} size="sm">
             {loading ? 'Posting...' : 'Comment'}

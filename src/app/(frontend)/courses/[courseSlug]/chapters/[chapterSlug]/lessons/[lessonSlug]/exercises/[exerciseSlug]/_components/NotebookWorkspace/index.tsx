@@ -66,8 +66,8 @@ export function NotebookWorkspace({
       </button>
 
       {/* Main content area */}
-      <main className="flex-1 overflow-y-auto p-8 flex justify-center items-start bg-background min-h-0 lg:mr-[360px]">
-        <div className="w-full max-w-[920px] max-h-full bg-card border border-border rounded-[10px] p-12 text-foreground shadow-[0_10px_30px_hsl(var(--border))] overflow-auto flex flex-col lg:p-8 md:max-w-full md:w-full md:min-w-0 md:rounded-none md:border-l-0 md:border-r-0 md:border-t-0 md:shadow-none sm:p-6">
+      <main className="flex-1 overflow-y-auto p-8 flex justify-center items-start bg-background min-h-0 ltr:lg:me-[360px] rtl:lg:ms-[360px]">
+        <div className="w-full max-w-[920px] max-h-full bg-card border border-border rounded-[10px] p-12 text-foreground shadow-[0_10px_30px_hsl(var(--border))] overflow-auto flex flex-col lg:p-8 md:max-w-full md:w-full md:min-w-0 md:rounded-none md:border-s-0 md:border-e-0 md:border-t-0 md:shadow-none sm:p-6">
           {content}
         </div>
       </main>
@@ -75,10 +75,10 @@ export function NotebookWorkspace({
       {/* Sidebar */}
       <aside
         className={cn(
-          'w-[360px] bg-card border-l border-border flex flex-col min-h-0 overflow-hidden fixed top-0 right-0 h-screen z-50 transition-transform duration-300 md:w-80 lg:translate-x-0',
+          'w-[360px] bg-card border-s border-border flex flex-col min-h-0 overflow-hidden fixed top-0 end-0 h-screen z-50 transition-transform duration-300 md:w-80 ltr:lg:translate-x-0 rtl:lg:-translate-x-0',
           isSidebarOpen
-            ? 'translate-x-0 z-[60] shadow-[-4px_0_16px_hsl(var(--black)_/_0.1)]'
-            : 'translate-x-full lg:translate-x-0',
+            ? 'ltr:translate-x-0 rtl:-translate-x-0 z-[60] shadow-[-4px_0_16px_hsl(var(--black)_/_0.1)]'
+            : 'ltr:translate-x-full rtl:-translate-x-full ltr:lg:translate-x-0 rtl:lg:-translate-x-0',
         )}
       >
         <header className="flex-col p-6 pb-0 bg-card border-b border-border gap-4 flex-shrink-0 overflow-visible flex">
@@ -113,7 +113,7 @@ export function NotebookWorkspace({
               type="button"
               onClick={() => setActiveTab('formulas')}
               className={cn(
-                'flex items-center gap-2 py-1.5 px-0 ml-6 bg-transparent border-none border-b-[3px] text-[0.95rem] font-semibold transition-all cursor-pointer',
+                'flex items-center gap-2 py-1.5 px-0 ms-6 bg-transparent border-none border-b-[3px] text-[0.95rem] font-semibold transition-all cursor-pointer',
                 activeTab === 'formulas'
                   ? 'text-primary border-primary'
                   : 'text-muted-foreground border-transparent hover:text-foreground',
@@ -126,7 +126,7 @@ export function NotebookWorkspace({
               type="button"
               onClick={() => setActiveTab('notes')}
               className={cn(
-                'flex items-center gap-2 py-1.5 px-0 ml-6 bg-transparent border-none border-b-[3px] text-[0.95rem] font-semibold transition-all cursor-pointer',
+                'flex items-center gap-2 py-1.5 px-0 ms-6 bg-transparent border-none border-b-[3px] text-[0.95rem] font-semibold transition-all cursor-pointer',
                 activeTab === 'notes'
                   ? 'text-primary border-primary'
                   : 'text-muted-foreground border-transparent hover:text-foreground',

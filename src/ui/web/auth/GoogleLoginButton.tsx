@@ -37,7 +37,7 @@ export function GoogleLoginButton({
       onClick={handleGoogleLogin}
     >
       <svg
-        className="mr-2 h-4 w-4"
+        className="me-2 h-4 w-4"
         aria-hidden="true"
         focusable="false"
         data-prefix="fab"

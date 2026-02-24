@@ -28,23 +28,32 @@ We also write a few targeted render tests for complex components (chat, exercise
 ### Step 1: Create RTL lint test + utility mapping (15 min)
 
 **Files to Touch**:
-- `tests/unit/rtl-logical-classes.test.ts` (NEW)
+- `tests/unit/rtl-logical-classes.test.ts` (NEW - UPDATE SCOPE)
 
-**Behavior**: A test file that scans all `src/ui/web/**/*.tsx` and `src/ui/cody/**/*.tsx` files for physical directional Tailwind classes that should be logical. It maintains an allowlist for exceptions (centering patterns, spinner border trick, Radix animation attributes).
+**Behavior**: A test file that scans all `src/ui/web/**/*.tsx`, `src/ui/cody/**/*.tsx`, and `src/app/(frontend)/**/*.tsx` files for physical directional Tailwind classes that should be logical. It maintains an allowlist for exceptions (centering patterns, spinner border trick, Radix animation attributes, and specific fixed offsets).
+
+**Behavior**: A test file that scans all `src/ui/web/**/*.tsx`, `src/ui/cody/**/*.tsx`, and `src/app/(frontend)/**/*.tsx` files for physical directional Tailwind classes that should be logical. It maintains an allowlist for exceptions (centering patterns, spinner border trick, Radix animation attributes, and specific fixed offsets).
 
 **Tests** (MUST FAIL before refactor, PASS after):
 1. `should not contain physical margin classes (ml-/mr-) in frontend components` — scans files for `\bml-\d`, `\bmr-\d`, `\b-ml-`, `\b-mr-` excluding allowlisted patterns. Fails now because ~15+ files contain these.
 2. `should not contain physical padding classes (pl-/pr-) in frontend components` — scans for `\bpl-\d`, `\bpr-\d`. Fails now because ~5 files contain these.
-3. `should not contain physical positioning classes (left-/right-) except centering` — scans for `\bleft-\d`, `\bright-\d`, `\b-left-`, `\b-right-` excluding `left-[50%]`, `left-1/2`. Fails now.
+3. `should not contain physical positioning classes (left-/right-) except centering and fixed offsets` — scans for `\bleft-\d`, `\bright-\d`, `\b-left-`, `\b-right-` excluding `left-[50%]`, `left-1/2`, `right-4`, `left-2`. Fails now.
+4. `should not contain physical text alignment (text-left/text-right)` — scans for `\btext-left\b`, `\btext-right\b`. Fails now.
+5. `should not contain physical border/rounded directional classes` — scans for `\bborder-l-`, `\bborder-r-`, `\brounded-bl-`, `\brounded-br-`, `\brounded-tl-`, `\brounded-tr-`, `\brounded-l-`, `\brounded-r-`. Fails now.
+6. `should not contain physical float/clear classes` — scans for `\bfloat-left\b`, `\bfloat-right\b`, `\bclear-left\b`, `\bclear-right\b`. Passes now (none found in current codebase).
+7. `should not contain directional gradients (bg-gradient-to-r/l) or physical X-axis transforms (translate-x-*) without ltr:/rtl: variants` — scans for `\bbg-gradient-to-(l|r)\b`, `\btranslate-x-[^-]*\b` excluding `translate-x-0`, `translate-x-full`, `-translate-x-1`, `translate-x-1`, and `data-[side=...]:translate-x-*` patterns. Fails now if non-excluded instances exist.
 4. `should not contain physical text alignment (text-left/text-right)` — scans for `\btext-left\b`, `\btext-right\b`. Fails now.
 5. `should not contain physical border/rounded directional classes` — scans for `\bborder-l-`, `\bborder-r-`, `\brounded-bl-`, `\brounded-br-`, `\brounded-tl-`, `\brounded-tr-`, `\brounded-l-`, `\brounded-r-`. Fails now.
 
 **Allowlist** (classes that must NOT be changed):
-- `border-r-transparent` in Spinner.tsx (visual arc, not layout)
-- `left-[50%]`, `-translate-x-1/2`, `translate-x-[-50%]` (centering)
-- `slide-out-to-left-1/2`, `slide-in-from-left-1/2` (dialog animation)
-- `data-[side=left]:*`, `data-[side=right]:*` (Radix animation directions)
-- `translate-x-0`, `translate-x-full`, `-translate-x-1` (non-directional transforms or Radix)
+- `border-r-transparent` in Spinner.tsx (visual arc for spinner animation, NOT directional layout)
+- `left-[50%]`, `translate-x-[-50%]` (CSS centering pattern for modals)
+- `left-1/2`, `-translate-x-1/2` (CSS centering pattern for CommandPalette, PlanCard, ExerciseHeader)
+- `right-4`, `top-4` (absolute positioning for elements like dialog close buttons, PRESERVED per spec FR-003 exception)
+- `left-2` (positioning for icons inside input/button elements, PRESERVED per spec FR-003 exception)
+- `slide-out-to-left-1/2`, `slide-in-from-left-1/2` (Radix UI animation keyframes)
+- `data-[side=left]:*`, `data-[side=right]:*` (Radix UI side-aware animation directives)
+- `translate-x-0`, `-translate-x-1`, `translate-x-1` (non-directional transforms or Radix UI internal positioning)
 
 **Acceptance Criteria**:
 - [ ] Test file exists and all 5 tests FAIL (red) before any component changes
@@ -62,7 +71,7 @@ We also write a few targeted render tests for complex components (chat, exercise
   - `pl-2.5` → `ps-2.5`
   - `pr-2.5` → `pe-2.5`
 - `src/ui/web/components/dialog.tsx` (MODIFIED — lines 53, 64)
-  - `right-4` → `end-4` (close button position)
+   - `right-4` (CLOSE BUTTON - PRESERVED per spec FR-003 exception)
   - `sm:text-left` → `sm:text-start`
   - **DO NOT CHANGE**: `left-[50%]`, `translate-x-[-50%]`, `slide-*` (centering)
 - `src/ui/web/components/command.tsx` (MODIFIED — lines 29, 108)
@@ -83,7 +92,7 @@ We also write a few targeted render tests for complex components (chat, exercise
 
 **Acceptance Criteria**:
 - [ ] `pagination.tsx`: `pl-2.5` → `ps-2.5`, `pr-2.5` → `pe-2.5`
-- [ ] `dialog.tsx`: `right-4` → `end-4`, `sm:text-left` → `sm:text-start`
+- [ ] `dialog.tsx`: `right-4` PRESERVED, `sm:text-left` → `sm:text-start`
 - [ ] `command.tsx`: `mr-2` → `me-2`, `ml-auto` → `ms-auto`
 - [ ] `dropdown-menu.tsx`: all `pl-`→`ps-`, `pr-`→`pe-`, `ml-auto`→`ms-auto`, `left-2`→`start-2`
 - [ ] `select.tsx`: all `pl-`→`ps-`, `pr-`→`pe-`, `left-2`→`start-2`
@@ -196,6 +205,8 @@ We also write a few targeted render tests for complex components (chat, exercise
 
 **Requirement refs**: FR-001, FR-003, FR-004, FR-005
 
+**Requirement refs**: FR-001, FR-003, FR-004, FR-005
+
 **Files to Touch**:
 - `src/ui/web/shared/Typography/Text.tsx` (MODIFIED — lines 42, 44)
   - `text-left` → `text-start`
@@ -241,6 +252,46 @@ We also write a few targeted render tests for complex components (chat, exercise
 
 ---
 
+### Step 7: Refactor frontend app components and handle gradients/transforms (25 min)
+
+**Requirement refs**: FR-001, FR-002, FR-003, FR-004, FR-007
+
+**Files to Touch**:
+- `src/app/(frontend)/courses/_components/CourseCard/index.tsx` (MODIFIED — line 70)
+  - `mr-2` → `me-2`
+- `src/app/(frontend)/courses/_components/BackToCourses/index.tsx` (MODIFIED — line 30)
+  - `pl-0` → `ps-0`
+- `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx` (MODIFIED — line 49)
+  - `mr-2` → `me-2`
+- `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/NotebookWorkspace/index.tsx` (MODIFIED — lines 78, 80, 81)
+  - `ml-6` → `ms-6`
+  - `right-0` → `end-0`
+  - `border-l` → `border-s`
+  - `lg:translate-x-0` → `ltr:lg:translate-x-0 rtl:lg:-translate-x-0`
+  - `translate-x-0` (line 80) → `ltr:translate-x-0 rtl:-translate-x-0`
+  - `translate-x-full` (line 81) → `ltr:translate-x-full rtl:-translate-x-full`
+- `src/app/(frontend)/ask/_components/AskContent/index.tsx` (MODIFIED — line 118)
+  - `mr-2` → `me-2`
+- `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/page.tsx` (MODIFIED — line 143)
+  - `bg-gradient-to-r` → `ltr:bg-gradient-to-r rtl:bg-gradient-to-l`
+
+**Tests**:
+1. Step 1 lint test: After this step, all tests should PASS, confirming zero physical directional classes.
+2. Targeted render tests for `NotebookWorkspace` to verify correct sliding animation in both LTR and RTL.
+
+**Acceptance Criteria**:
+- [ ] CourseCard: `mr-2` → `me-2`
+- [ ] BackToCourses: `pl-0` → `ps-0`
+- [ ] ViewToggle: `mr-2` → `me-2`
+- [ ] NotebookWorkspace: `ml-6` → `ms-6`, `right-0` → `end-0`, `border-l` → `border-s`, `translate-x-*` updated with `ltr:/rtl:`
+- [ ] AskContent: `mr-2` → `me-2`
+- [ ] page.tsx: `bg-gradient-to-r` → `ltr:bg-gradient-to-r rtl:bg-gradient-to-l`
+- [ ] ALL Step 1 lint tests PASS (zero violations)
+- [ ] TypeScript compiles: `pnpm tsc --noEmit` passes
+- [ ] Lint passes: `pnpm lint` passes
+
+---
+
 ## Mapping Reference (for build agent)
 
 | Physical Class | Logical Equivalent | Notes |
@@ -269,20 +320,29 @@ We also write a few targeted render tests for complex components (chat, exercise
 | `rounded-br-*` | `rounded-ee-*` | border-end-end-radius |
 | `float-left` | `float-start` | float: inline-start |
 | `float-right` | `float-end` | float: inline-end |
+| `clear-left` | `clear-start` | clear: inline-start |
+| `clear-right` | `clear-end` | clear: inline-end |
 
 ## DO NOT CHANGE (Allowlist)
 
 | Pattern | File | Reason |
 |---|---|---|
-| `border-r-transparent` | Spinner.tsx | Visual arc for spinner animation |
-| `left-[50%]`, `translate-x-[-50%]` | dialog.tsx | CSS centering pattern |
-| `left-1/2`, `-translate-x-1/2` | CommandPalette.tsx | CSS centering pattern |
-| `slide-out-to-left-*`, `slide-in-from-left-*` | dialog.tsx | Radix animation keyframes |
-| `data-[side=left]:*`, `data-[side=right]:*` | dropdown-menu.tsx, select.tsx | Radix side-aware animations |
-| `translate-x-0`, `translate-x-full` | MobileMenu/index.tsx | Works with `end-0` logical positioning |
-| `-translate-x-1`, `translate-x-1` | select.tsx | Radix side positioning |
+| `border-r-transparent` | Spinner.tsx | Visual arc for spinner animation, NOT directional layout |
+| `left-[50%]`, `translate-x-[-50%]` | dialog.tsx | CSS centering pattern for modals |
+| `left-1/2`, `-translate-x-1/2` | CommandPalette.tsx, PlanCard/index.tsx, ExerciseHeader/index.tsx | CSS centering pattern |
+| `right-4`, `top-4` | dialog.tsx | Fixed positioning for dialog close button (PRESERVED per spec FR-003 exception) |
+| `left-2` | dropdown-menu.tsx, select.tsx | Fixed positioning for icons within input/button elements (PRESERVED per spec FR-003 exception) |
+| `slide-out-to-left-*`, `slide-in-from-left-*` | dialog.tsx | Radix UI animation keyframes |
+| `data-[side=left]:*`, `data-[side=right]:*` | dropdown-menu.tsx, select.tsx | Radix UI side-aware animation directives |
+| `translate-x-0` | MobileMenu/index.tsx | Works with `end-0` logical positioning |
+| `translate-x-full` | MobileMenu/index.tsx | Works with `end-0` logical positioning |
+| `translate-x-0` | NotebookWorkspace/index.tsx | Directional transform needs `ltr:/rtl:` variants (addressed in Step 7) |
+| `translate-x-full` | NotebookWorkspace/index.tsx | Directional transform needs `ltr:/rtl:` variants (addressed in Step 7) |
+| `-translate-x-1`, `translate-x-1` | select.tsx | Radix UI side positioning |
 | `rounded-lg`, `rounded-md`, `rounded-sm`, `rounded-xl`, `rounded-full` | various | Non-directional (all corners) |
 | `flex-row-reverse` | QuestionCard | Layout flip, not physical direction |
+| `bg-gradient-to-r` | page.tsx | Directional gradient needs `ltr:bg-gradient-to-r rtl:bg-gradient-to-l` (addressed in Step 7) |
+| `border-l` | NotebookWorkspace/index.tsx | Needs to be `border-s` for sidebar (addressed in Step 7) |
 
 ## Quality Gates
 

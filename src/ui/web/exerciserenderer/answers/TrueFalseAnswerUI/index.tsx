@@ -63,7 +63,7 @@ export function TrueFalseAnswerUI({
         )}
       >
         <span>{label}</span>
-        {showAsCorrect && <span className="ml-2">✓</span>}
+        {showAsCorrect && <span className="ms-2">✓</span>}
       </button>
     )
   }

@@ -205,7 +205,7 @@ export function CodyChat() {
   }
 
   return (
-    <div className="flex flex-col h-full border-l bg-background">
+    <div className="flex flex-col h-full border-s bg-background">
       {/* Header */}
       <div className="px-4 py-2 border-b bg-muted/50">
         <h2 className="font-semibold text-sm">Cody Assistant</h2>
@@ -217,7 +217,7 @@ export function CodyChat() {
         {messages.length === 0 && (
           <div className="text-center text-muted-foreground text-sm py-8">
             <p className="font-medium">Hi! I can help you with:</p>
-            <ul className="mt-3 text-left text-xs space-y-2">
+            <ul className="mt-3 text-start text-xs space-y-2">
               <li className="flex items-start gap-2">
                 <span className="text-primary">•</span>
                 <span>Browse repository files and code</span>
@@ -258,7 +258,7 @@ export function CodyChat() {
                 msg.content
               )}
               {msg.isLoading && msg.role === 'assistant' && (
-                <span className="inline-block ml-2 animate-pulse text-primary">●</span>
+                <span className="inline-block ms-2 animate-pulse text-primary">●</span>
               )}
             </div>
           </div>

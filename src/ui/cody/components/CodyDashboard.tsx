@@ -309,7 +309,7 @@ export function CodyDashboard() {
 
       {/* Right Panel: Chat or Task Detail */}
       <div
-        className={`${showChat ? 'w-[400px]' : 'w-96'} border-l border-border transition-all duration-200`}
+        className={`${showChat ? 'w-[400px]' : 'w-96'} border-s border-border transition-all duration-200`}
       >
         {showChat ? (
           <CodyChat />

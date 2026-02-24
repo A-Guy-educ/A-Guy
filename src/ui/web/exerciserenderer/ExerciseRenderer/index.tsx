@@ -291,8 +291,7 @@ export function ExerciseRenderer({
         <div className="w-full flex items-center justify-between mb-6">
           <div
             className={cn(
-              'w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm',
-              isHebrew ? 'ml-auto' : 'mr-auto',
+              'w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm ms-auto',
             )}
           >
             <span className="font-bold text-sm">{String(exerciseNumber)}</span>

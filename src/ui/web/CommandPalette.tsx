@@ -55,11 +55,11 @@ export function CommandPalette() {
 
               <CommandGroup heading="Navigation">
                 <CommandItem onSelect={() => handleSelect(() => router.push('/'))}>
-                  <Home className="mr-2 h-4 w-4" />
+                  <Home className="me-2 h-4 w-4" />
                   <span>Home</span>
                 </CommandItem>
                 <CommandItem onSelect={() => handleSelect(() => router.push('/admin'))}>
-                  <Settings className="mr-2 h-4 w-4" />
+                  <Settings className="me-2 h-4 w-4" />
                   <span>Admin</span>
                 </CommandItem>
               </CommandGroup>
@@ -68,13 +68,13 @@ export function CommandPalette() {
 
               <CommandGroup heading="Actions">
                 <CommandItem onSelect={() => handleSelect(() => console.log('Search triggered'))}>
-                  <Search className="mr-2 h-4 w-4" />
+                  <Search className="me-2 h-4 w-4" />
                   <span>Search content</span>
                 </CommandItem>
                 <CommandItem
                   onSelect={() => handleSelect(() => console.log('New document triggered'))}
                 >
-                  <FileText className="mr-2 h-4 w-4" />
+                  <FileText className="me-2 h-4 w-4" />
                   <span>New document</span>
                 </CommandItem>
               </CommandGroup>

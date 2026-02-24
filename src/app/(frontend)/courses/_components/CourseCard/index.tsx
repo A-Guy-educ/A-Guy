@@ -79,7 +79,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
             </span>
           )}
           <h4
-            className="text-card-foreground text-right"
+            className="text-card-foreground text-end"
             style={{ fontSize: '20px', fontWeight: 900 }}
           >
             {course.title}
@@ -87,7 +87,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
           {course.description && (
             <SafeHtml
               html={course.description}
-              className="text-muted-foreground mt-1 line-clamp-2 text-right [&_p]:m-0"
+              className="text-muted-foreground mt-1 line-clamp-2 text-end [&_p]:m-0"
               style={{ fontSize: '12px' }}
             />
           )}
@@ -119,7 +119,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
         >
           {isLoading ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              <Loader2 className="w-4 h-4 animate-spin me-2" />
               {t('openCourse')}
             </>
           ) : (
