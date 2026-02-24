@@ -39,8 +39,7 @@ test.describe('Mobile Menu', () => {
     await page.waitForSelector('[data-testid="mobile-menu-panel"][class*="pointer-events-none"]')
     
     // Verify menu is closed - the panel should not be visible anymore
-    const closedPanel = page.getByTestId('mobile-menu-panel')
-    await expect(closedPanel).toHaveClass(/translate-x-full/)
+    await expect(menuPanel).toHaveClass(/translate-x-full/)
     
     // Verify overlay is not blocking clicks
     const overlay = page.getByTestId('mobile-menu-overlay')
@@ -79,8 +78,7 @@ test.describe('Mobile Menu', () => {
     await page.waitForSelector('[data-testid="mobile-menu-panel"][class*="pointer-events-none"]')
     
     // Verify menu is closed
-    const closedPanel = page.getByTestId('mobile-menu-panel')
-    await expect(closedPanel).toHaveClass(/translate-x-full/)
+    await expect(menuPanel).toHaveClass(/translate-x-full/)
   })
   
   test('mobile menu close button has correct attributes', async ({ page }) => {
