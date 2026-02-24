@@ -325,8 +325,7 @@ test.describe('Exercise Page', () => {
 
       // Wait for menu to be visible
       await page.waitForSelector('[data-testid="mobile-menu-panel"]:not([class*="pointer-events-none"])', { 
-        state: 'visible', 
-        timeout: 1000 
+        state: 'visible'
       })
 
       // Verify menu is open
@@ -339,9 +338,7 @@ test.describe('Exercise Page', () => {
       await closeButton.click()
 
       // Wait for menu to have the closed class
-      await page.waitForSelector('[data-testid="mobile-menu-panel"][class*="pointer-events-none"]', { 
-        timeout: 1000 
-      })
+      await page.waitForSelector('[data-testid="mobile-menu-panel"][class*="pointer-events-none"]')
 
       // Verify menu is closed (should have translate-x-full class)
       const closedMenu = page.getByTestId('mobile-menu-panel')

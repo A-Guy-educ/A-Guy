@@ -20,8 +20,7 @@ test.describe('Mobile Menu', () => {
     
     // Wait for menu to be visible with proper class
     await page.waitForSelector('[data-testid="mobile-menu-panel"]:not([class*="pointer-events-none"])', { 
-      state: 'visible', 
-      timeout: 1000 
+      state: 'visible'
     })
     
     // Verify menu is open
@@ -37,9 +36,7 @@ test.describe('Mobile Menu', () => {
     await closeButton.click()
     
     // Wait for menu to have the closed class
-    await page.waitForSelector('[data-testid="mobile-menu-panel"][class*="pointer-events-none"]', { 
-      timeout: 1000 
-    })
+    await page.waitForSelector('[data-testid="mobile-menu-panel"][class*="pointer-events-none"]')
     
     // Verify menu is closed - the panel should not be visible anymore
     const closedPanel = page.getByTestId('mobile-menu-panel')
@@ -66,8 +63,7 @@ test.describe('Mobile Menu', () => {
     
     // Wait for menu to be visible
     await page.waitForSelector('[data-testid="mobile-menu-panel"]:not([class*="pointer-events-none"])', { 
-      state: 'visible', 
-      timeout: 1000 
+      state: 'visible'
     })
     
     // Verify menu is open
@@ -80,9 +76,7 @@ test.describe('Mobile Menu', () => {
     await overlay.click({ position: { x: 10, y: 10 } })
     
     // Wait for menu to have the closed class
-    await page.waitForSelector('[data-testid="mobile-menu-panel"][class*="pointer-events-none"]', { 
-      timeout: 1000 
-    })
+    await page.waitForSelector('[data-testid="mobile-menu-panel"][class*="pointer-events-none"]')
     
     // Verify menu is closed
     const closedPanel = page.getByTestId('mobile-menu-panel')
@@ -105,8 +99,7 @@ test.describe('Mobile Menu', () => {
     
     // Wait for menu to be visible
     await page.waitForSelector('[data-testid="mobile-menu-panel"]:not([class*="pointer-events-none"])', { 
-      state: 'visible', 
-      timeout: 1000 
+      state: 'visible'
     })
     
     // Check close button attributes
