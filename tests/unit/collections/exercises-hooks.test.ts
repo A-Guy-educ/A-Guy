@@ -6,47 +6,30 @@
  */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-// Create mock functions at module level
-const mockGetPayload = vi.fn()
+// Create mock function at module level
 const mockFind = vi.fn()
-
-// Mock Payload and config
-vi.mock('payload', () => ({
-  getPayload: mockGetPayload,
-}))
-
-vi.mock('@payload-config', () => ({
-  default: {},
-}))
 
 // Import after mocks are set up
 import { generateSlug, validateSlugUniqueness } from '@/server/payload/collections/Exercises/hooks'
 
-// Type for mocked payload find function
-type MockFindFn = ReturnType<typeof vi.fn>
-
 describe('Exercises Hooks - generateSlug', () => {
-  let mockPayloadInstance: { find: MockFindFn }
-
   beforeEach(() => {
     vi.clearAllMocks()
-    // Reset the module to clear any cached getPayloadInstance calls
+    // Reset the module to clear any cached calls
     vi.resetModules()
 
-    mockPayloadInstance = {
-      find: mockFind.mockResolvedValue({ docs: [] }),
-    }
-    mockGetPayload.mockResolvedValue(mockPayloadInstance)
+    mockFind.mockResolvedValue({ docs: [] })
   })
 
   // Helper to create minimal FieldHookArgs
   const createHookArgs = (overrides: Record<string, unknown> = {}): any => {
+    const defaultReq = { payload: { find: mockFind } }
     return {
       value: undefined as any,
       operation: 'create',
       originalDoc: undefined as any,
       siblingData: {},
-      req: undefined as any,
+      req: defaultReq as any,
       collection: { config: { slug: 'exercises' } } as any,
       context: {},
       field: { name: 'slug', type: 'text' } as any,
@@ -59,7 +42,7 @@ describe('Exercises Hooks - generateSlug', () => {
 
   describe('normal slug generation', () => {
     it('returns formatted slug when no conflict exists', async () => {
-      mockPayloadInstance.find.mockResolvedValue({ docs: [] })
+      mockFind.mockResolvedValue({ docs: [] })
 
       const result = await generateSlug(
         createHookArgs({
@@ -69,7 +52,7 @@ describe('Exercises Hooks - generateSlug', () => {
 
       expect(result).toBe('test-exercise')
       // find is called once to check for conflicts
-      expect(mockPayloadInstance.find).toHaveBeenCalledTimes(1)
+      expect(mockFind).toHaveBeenCalledTimes(1)
     })
 
     it('returns provided value if already a valid slug', async () => {
@@ -97,7 +80,7 @@ describe('Exercises Hooks - generateSlug', () => {
   describe('incremented slug generation', () => {
     it('appends -1 when base slug conflicts', async () => {
       // First call returns a conflict, second call returns no conflict
-      mockPayloadInstance.find
+      mockFind
         .mockResolvedValueOnce({ docs: [{ id: 'existing-1', slug: 'test-exercise' }] })
         .mockResolvedValueOnce({ docs: [] })
 
@@ -112,7 +95,7 @@ describe('Exercises Hooks - generateSlug', () => {
 
     it('appends -2 when first increment also conflicts', async () => {
       // First two calls return conflicts, third returns no conflict
-      mockPayloadInstance.find
+      mockFind
         .mockResolvedValueOnce({ docs: [{ id: 'existing-1', slug: 'test-exercise' }] })
         .mockResolvedValueOnce({ docs: [{ id: 'existing-2', slug: 'test-exercise-1' }] })
         .mockResolvedValueOnce({ docs: [] })
@@ -127,7 +110,7 @@ describe('Exercises Hooks - generateSlug', () => {
     })
 
     it('does not increment when conflicting doc is the same as originalDoc', async () => {
-      mockPayloadInstance.find.mockResolvedValue({ docs: [] })
+      mockFind.mockResolvedValue({ docs: [] })
 
       const result = await generateSlug(
         createHookArgs({
@@ -261,43 +244,6 @@ describe('Exercises Hooks - generateSlug', () => {
     })
   })
 
-  describe('fallback to getPayloadInstance (FR-003 guardrail)', () => {
-    it('uses getPayloadInstance when req is undefined', async () => {
-      const mockPayloadForFallback = {
-        find: vi.fn().mockResolvedValue({ docs: [] }),
-      }
-      mockGetPayload.mockResolvedValue(mockPayloadForFallback)
-
-      // Call without req - should fall back to getPayloadInstance
-      await generateSlug(
-        createHookArgs({
-          siblingData: { title: 'Test Exercise', lesson: 'lesson-1' },
-        }),
-      )
-
-      // Should have called getPayload (getPayloadInstance)
-      expect(mockGetPayload).toHaveBeenCalled()
-    })
-
-    it('uses getPayloadInstance when req.payload is undefined', async () => {
-      const mockPayloadForFallback = {
-        find: vi.fn().mockResolvedValue({ docs: [] }),
-      }
-      mockGetPayload.mockResolvedValue(mockPayloadForFallback)
-
-      // Call with req but no payload property
-      await generateSlug(
-        createHookArgs({
-          siblingData: { title: 'Test Exercise', lesson: 'lesson-1' },
-          req: {} as any,
-        }),
-      )
-
-      // Should fall back to getPayloadInstance
-      expect(mockGetPayload).toHaveBeenCalled()
-    })
-  })
-
   describe('delete operation', () => {
     it('returns value unchanged for delete operation', async () => {
       const result = await generateSlug(
@@ -314,26 +260,22 @@ describe('Exercises Hooks - generateSlug', () => {
 })
 
 describe('Exercises Hooks - validateSlugUniqueness', () => {
-  let mockPayloadInstance: { find: MockFindFn }
-
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
 
-    mockPayloadInstance = {
-      find: mockFind.mockResolvedValue({ docs: [] }),
-    }
-    mockGetPayload.mockResolvedValue(mockPayloadInstance)
+    mockFind.mockResolvedValue({ docs: [] })
   })
 
   // Helper to create minimal FieldHookArgs
   const createHookArgs = (overrides: Record<string, unknown> = {}): any => {
+    const defaultReq = { payload: { find: mockFind } }
     return {
       value: undefined as any,
       operation: 'create',
       originalDoc: undefined as any,
       siblingData: {},
-      req: undefined as any,
+      req: defaultReq as any,
       collection: { config: { slug: 'exercises' } } as any,
       context: {},
       field: { name: 'slug', type: 'text' } as any,
@@ -345,7 +287,7 @@ describe('Exercises Hooks - validateSlugUniqueness', () => {
   }
 
   it('returns value when no conflict exists', async () => {
-    mockPayloadInstance.find.mockResolvedValue({ docs: [] })
+    mockFind.mockResolvedValue({ docs: [] })
 
     const result = await validateSlugUniqueness(
       createHookArgs({
@@ -358,7 +300,7 @@ describe('Exercises Hooks - validateSlugUniqueness', () => {
   })
 
   it('throws error when slug conflicts with another exercise', async () => {
-    mockPayloadInstance.find.mockResolvedValue({
+    mockFind.mockResolvedValue({
       docs: [{ id: 'other-exercise', slug: 'test-slug' }],
     })
 
@@ -374,7 +316,7 @@ describe('Exercises Hooks - validateSlugUniqueness', () => {
   })
 
   it('allows same slug when updating own document', async () => {
-    mockPayloadInstance.find.mockResolvedValue({
+    mockFind.mockResolvedValue({
       docs: [{ id: 'my-exercise', slug: 'test-slug' }],
     })
 
@@ -411,7 +353,7 @@ describe('Exercises Hooks - validateSlugUniqueness', () => {
     )
 
     expect(result).toBe('test-slug')
-    expect(mockPayloadInstance.find).not.toHaveBeenCalled()
+    expect(mockFind).not.toHaveBeenCalled()
   })
 
   it('returns value when value is empty', async () => {

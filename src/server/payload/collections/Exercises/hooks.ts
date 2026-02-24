@@ -4,12 +4,6 @@ import { formatSlug } from './formatSlug'
 
 const MAX_SLUG_ATTEMPTS = 100
 
-async function getPayloadInstance() {
-  const { getPayload } = await import('payload')
-  const { default: config } = await import('@payload-config')
-  return getPayload({ config })
-}
-
 export const generateSlug: FieldHook = async ({
   value,
   operation,
@@ -28,7 +22,7 @@ export const generateSlug: FieldHook = async ({
     return value || undefined
   }
 
-  const payload = req?.payload ?? (await getPayloadInstance())
+  const payload = req.payload
   const lessonId =
     siblingData.lesson || (typeof originalDoc?.lesson === 'string' ? originalDoc.lesson : null)
 
@@ -77,7 +71,7 @@ export const validateSlugUniqueness: FieldHook = async ({
     return value
   }
 
-  const payload = req?.payload ?? (await getPayloadInstance())
+  const payload = req.payload
   const lessonId =
     siblingData.lesson || (typeof originalDoc?.lesson === 'string' ? originalDoc.lesson : null)
 
