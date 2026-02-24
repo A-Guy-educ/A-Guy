@@ -54,6 +54,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   return (
     <>
       <div
+        data-testid="mobile-menu-overlay"
         className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
@@ -62,6 +63,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 
       <div
         ref={portalContainerRef}
+        data-testid="mobile-menu-panel"
         className={`fixed top-0 end-0 h-full w-[280px] sm:w-[320px] bg-background border-s border-border z-[70] transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
         }`}

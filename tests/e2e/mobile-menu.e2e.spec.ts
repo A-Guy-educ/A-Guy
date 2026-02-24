@@ -33,18 +33,16 @@ test.describe('Mobile Menu', () => {
     await closeButton.click()
     
     // Wait for menu to have the closed class
-    await page.waitForSelector('[class*="translate-x-full"][class*="pointer-events-none"]', { 
+    await page.waitForSelector('[data-testid="mobile-menu-panel"][class*="pointer-events-none"]', { 
       timeout: 1000 
     })
     
     // Verify menu is closed - the panel should not be visible anymore
-    // We check that it has the translate-x-full class which moves it off-screen
-    const closedPanel = page.locator('[class*="translate-x-full"]').filter({ hasText: /navigation|resources/i })
-    // The element exists but should be off-screen
+    const closedPanel = page.getByTestId('mobile-menu-panel')
     await expect(closedPanel).toHaveClass(/translate-x-full/)
     
     // Verify overlay is not blocking clicks
-    const overlay = page.locator('.fixed.inset-0').first()
+    const overlay = page.getByTestId('mobile-menu-overlay')
     await expect(overlay).toHaveClass(/pointer-events-none/)
   })
   
@@ -70,16 +68,16 @@ test.describe('Mobile Menu', () => {
     await expect(menuPanel).toBeVisible()
     
     // Click overlay (outside the menu)
-    const overlay = page.locator('.fixed.inset-0.bg-black\\/50').first()
+    const overlay = page.getByTestId('mobile-menu-overlay')
     await overlay.click({ position: { x: 10, y: 10 } })
     
     // Wait for menu to have the closed class
-    await page.waitForSelector('[class*="translate-x-full"][class*="pointer-events-none"]', { 
+    await page.waitForSelector('[data-testid="mobile-menu-panel"][class*="pointer-events-none"]', { 
       timeout: 1000 
     })
     
     // Verify menu is closed
-    const closedPanel = page.locator('[class*="translate-x-full"]').filter({ hasText: /navigation|resources/i })
+    const closedPanel = page.getByTestId('mobile-menu-panel')
     await expect(closedPanel).toHaveClass(/translate-x-full/)
   })
   

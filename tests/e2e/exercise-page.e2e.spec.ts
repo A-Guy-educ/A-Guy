@@ -335,16 +335,16 @@ test.describe('Exercise Page', () => {
       await closeButton.click()
 
       // Wait for menu to have the closed class
-      await page.waitForSelector('[class*="translate-x-full"][class*="pointer-events-none"]', { 
+      await page.waitForSelector('[data-testid="mobile-menu-panel"][class*="pointer-events-none"]', { 
         timeout: 1000 
       })
 
       // Verify menu is closed (should have translate-x-full class)
-      const closedMenu = page.locator('[class*="translate-x-full"]').filter({ hasText: /menu/i })
+      const closedMenu = page.getByTestId('mobile-menu-panel')
       await expect(closedMenu).not.toBeInViewport() // Not visible in viewport
 
       // Verify overlay is not visible
-      const overlay = page.locator('.fixed.inset-0.bg-black\\/50')
+      const overlay = page.getByTestId('mobile-menu-overlay')
       await expect(overlay).toHaveClass(/pointer-events-none/)
     })
 
