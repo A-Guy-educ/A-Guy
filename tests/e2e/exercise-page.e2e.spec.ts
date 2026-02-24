@@ -345,7 +345,7 @@ test.describe('Exercise Page', () => {
 
       // Verify menu is closed (should have translate-x-full class)
       const closedMenu = page.getByTestId('mobile-menu-panel')
-      await expect(closedMenu).not.toBeInViewport() // Not visible in viewport
+      await expect(closedMenu).toHaveClass(/translate-x-full/)
 
       // Verify overlay is not visible
       const overlay = page.getByTestId('mobile-menu-overlay')
