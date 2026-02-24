@@ -5,11 +5,11 @@
  * @ai-summary CI-specific utilities for the Cody pipeline: comment parsing, GitHub API helpers, status management
  */
 
-import { execSync, execFileSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
 import { ALL_STAGES } from './stage-prompts'
+import { discoverTaskIdFromIssue } from './github-api'
 
 // ============================================================================
 // Types
@@ -111,6 +111,10 @@ export function ensureTaskDir(taskId: string): string {
   return dir
 }
 
+/**
+ * @deprecated Use engine/status.ts loadState/writeState/completeState instead.
+ * This function is kept for backward compatibility with existing tests.
+ */
 export function readStatus(taskId: string): CodyPipelineStatus | null {
   const statusFile = path.join(getTaskDir(taskId), 'status.json')
   if (!fs.existsSync(statusFile)) {
@@ -163,6 +167,9 @@ export function getLastFailedStage(taskId: string): string | null {
   }
 }
 
+/**
+ * @deprecated Use engine/status.ts loadState/writeState/completeState instead.
+ */
 export function writeStatus(taskId: string, status: CodyPipelineStatus): void {
   const statusFile = path.join(getTaskDir(taskId), 'status.json')
   // Atomic write: write to temp file then rename to prevent corruption
@@ -172,6 +179,9 @@ export function writeStatus(taskId: string, status: CodyPipelineStatus): void {
   fs.renameSync(tmpFile, statusFile)
 }
 
+/**
+ * @deprecated Use engine/status.ts loadState/writeState/completeState instead.
+ */
 export function initStatus(input: CodyInput): CodyPipelineStatus {
   const now = new Date().toISOString()
   const status: CodyPipelineStatus = {
@@ -200,6 +210,10 @@ export function initStatus(input: CodyInput): CodyPipelineStatus {
  * callback runs at a time, so read-modify-write is atomic on the event loop.
  * The atomic writeStatus (write-to-tmp + rename) guards against corruption
  * from process kills (SIGTERM/SIGKILL during write).
+ */
+
+/**
+ * @deprecated Use engine/status.ts loadState/writeState/completeState instead.
  */
 export function updateStageStatus(
   taskId: string,
@@ -248,6 +262,9 @@ export function updateStageStatus(
   writeStatus(taskId, status)
 }
 
+/**
+ * @deprecated Use engine/status.ts loadState/writeState/completeState instead.
+ */
 export function completeStatus(taskId: string, state: CodyPipelineStatus['state']): void {
   const status = readStatus(taskId)
   if (!status) return
@@ -263,225 +280,23 @@ export function completeStatus(taskId: string, state: CodyPipelineStatus['state'
 }
 
 // ============================================================================
-// GitHub API Helpers
+// GitHub API Helpers (re-exported from github-api.ts)
 // ============================================================================
 
-export function postComment(issueNumber: number, body: string): void {
-  if (!issueNumber) return
-
-  try {
-    // Use --body-file - to pipe body via stdin, preserving newlines and special characters
-    execSync(`gh issue comment ${issueNumber} --body-file -`, {
-      input: body,
-      stdio: ['pipe', 'inherit', 'inherit'],
-    })
-  } catch (error) {
-    console.error(`Failed to post comment to issue ${issueNumber}:`, error)
-  }
-}
-
-export function getIssueBody(issueNumber: number): string | null {
-  if (!issueNumber) return null
-
-  try {
-    const output = execSync(`gh issue view ${issueNumber} --json body --jq '.body'`, {
-      encoding: 'utf-8',
-    })
-    return output.trim() || null
-  } catch (error) {
-    console.error(`Failed to get issue body for #${issueNumber}:`, error)
-    return null
-  }
-}
-
-export function getIssue(issueNumber: number): { body: string | null; title: string | null } {
-  if (!issueNumber) return { body: null, title: null }
-
-  try {
-    const output = execSync(
-      `gh issue view ${issueNumber} --json body,title --jq '{body: .body, title: .title}'`,
-      {
-        encoding: 'utf-8',
-      },
-    )
-    const data = JSON.parse(output)
-    return {
-      body: data.body?.trim() || null,
-      title: data.title?.trim() || null,
-    }
-  } catch (error) {
-    console.error(`Failed to get issue #${issueNumber}:`, error)
-    return { body: null, title: null }
-  }
-}
-
-export function getIssueTitle(issueNumber: number): string | null {
-  if (!issueNumber) return null
-
-  try {
-    const output = execSync(`gh issue view ${issueNumber} --json title --jq '.title'`, {
-      encoding: 'utf-8',
-    })
-    return output.trim() || null
-  } catch (error) {
-    console.error(`Failed to get issue title for #${issueNumber}:`, error)
-    return null
-  }
-}
-
-/**
- * Extract the gate comment body from a gate-*.md file.
- * The file is written as: `# Gate Request\n\n${formatGateComment(...)}\n`
- * This function strips the `# Gate Request\n\n` prefix and trims trailing whitespace,
- * returning the full comment body ready to post to GitHub.
- */
-export function extractGateCommentBody(fileContent: string): string {
-  return fileContent.replace(/^# Gate Request\n\n/, '').trim()
-}
-
-export function editComment(commentId: string, body: string): void {
-  if (!commentId) return
-
-  try {
-    // Use gh api to patch the comment
-    // Write body to temp file to handle special characters
-    const tempFile = `/tmp/cody-comment-${Date.now()}.txt`
-    fs.writeFileSync(tempFile, body)
-
-    // Get the repository from environment
-    const repo = process.env.GITHUB_REPOSITORY || 'OWNER/REPO'
-
-    execFileSync(
-      'gh',
-      [
-        'api',
-        `repos/${repo}/issues/comments/${commentId}`,
-        '-X',
-        'PATCH',
-        '--field',
-        `body=@${tempFile}`,
-      ],
-      { stdio: 'inherit' },
-    )
-
-    // Clean up temp file
-    fs.unlinkSync(tempFile)
-  } catch (error) {
-    console.error(`Failed to edit comment ${commentId}:`, error)
-  }
-}
-
-/**
- * Get the latest comment on an issue (not from the bot, not a /cody command)
- */
-export function getLatestIssueComment(issueNumber: number, excludeAuthor?: string): string | null {
-  if (!issueNumber) return null
-
-  try {
-    const exclude = (excludeAuthor || 'github-actions[bot]').replace(/[^a-zA-Z0-9\[\]_\-]/g, '')
-    // Get comments, exclude bot and /cody commands, return the latest plain-text answer
-    const output = execFileSync(
-      'gh',
-      [
-        'issue',
-        'view',
-        String(issueNumber),
-        '--json',
-        'comments',
-        '--jq',
-        `[.comments[] | select(.author.login != "${exclude}" and (.body | startswith("/cody") | not))] | last | .body`,
-      ],
-      { encoding: 'utf-8' },
-    )
-    return output.trim() || null
-  } catch {
-    return null
-  }
-}
-
-/**
- * Discover task-id from a previous Cody run by parsing bot comments on the issue.
- * Looks for "Task created: `XXXXXX-task-name`" in any comment.
- * Note: Does not filter by author to match parse-inputs.sh behavior.
- */
-
-/**
- * Canonical regex for extracting task-ID from "Task created: `NNNNNN-slug`" marker
- * Used by both parse-inputs.sh and TypeScript implementations
- */
-export const TASK_ID_MARKER_REGEX = /Task created: `(\d{6}-[a-zA-Z0-9-]+)`/
-
-/**
- * Extract task-ID from text using the canonical marker format
- * Returns null if no valid task-ID found
- */
-export function extractTaskIdFromMarker(text: string): string | null {
-  const match = text.match(TASK_ID_MARKER_REGEX)
-  return match ? match[1] : null
-}
-
-export function discoverTaskIdFromIssue(issueNumber: number): string | null {
-  if (!issueNumber) return null
-
-  try {
-    // Get all comments (don't filter by author - matches parse-inputs.sh behavior)
-    const output = execSync(
-      `gh issue view ${issueNumber} --json comments --jq '.comments[].body'`,
-      { encoding: 'utf-8' },
-    )
-    // Use canonical task-ID marker regex
-    const match = output.match(TASK_ID_MARKER_REGEX)
-    return match ? match[1] : null
-  } catch {
-    return null
-  }
-}
-
-/**
- * Ensure the "Task created" marker comment exists on the issue.
- *
- * This is critical for task-id discovery: when someone runs `/cody` on an issue,
- * the pipeline discovers the existing task-id by searching for a bot comment
- * containing "Task created: `XXXXXX-task-name`". Without this marker,
- * subsequent runs auto-generate a new task-id instead of reusing the existing one.
- *
- * @param issueNumber - The issue number
- * @param taskId - The task ID
- * @param mode - The pipeline mode (full, spec, impl, rerun)
- * @param runUrl - The GitHub Actions run URL for linking
- */
-export function ensureTaskMarkerComment(
-  issueNumber: number,
-  taskId: string,
-  mode?: string,
-  runUrl?: string,
-): void {
-  if (!issueNumber || !taskId) return
-
-  // Check if marker already exists for ANY task-id on this issue
-  const existingTaskId = discoverTaskIdFromIssue(issueNumber)
-  if (existingTaskId) {
-    if (existingTaskId === taskId) {
-      console.log(`Task marker already exists on issue #${issueNumber} for ${taskId}`)
-    } else {
-      console.log(
-        `Task marker exists on issue #${issueNumber} for ${existingTaskId} (current: ${taskId})`,
-      )
-    }
-    return
-  }
-
-  // Build comment with mode and run URL
-  const modeLine = mode ? ` (\`${mode}\` mode)` : ''
-  const runLine = runUrl ? `\nRun: ${runUrl}` : ''
-
-  // No marker found — post one
-  console.log(`Posting task marker comment on issue #${issueNumber} for ${taskId}`)
-  postComment(
-    issueNumber,
-    `🎯 Task created: \`${taskId}\`${modeLine}${runLine}\n\nCody will now process this task.`,
-  )
-}
+// Re-export all GitHub API functions from github-api.ts
+export {
+  postComment,
+  getIssueBody,
+  getIssue,
+  getIssueTitle,
+  editComment,
+  getLatestIssueComment,
+  TASK_ID_MARKER_REGEX,
+  extractTaskIdFromMarker,
+  discoverTaskIdFromIssue,
+  extractGateCommentBody,
+  ensureTaskMarkerComment,
+} from './github-api'
 
 // ============================================================================
 // CLI Argument Parsing
