@@ -69,7 +69,7 @@ export async function agentChatStream(
     // Check for guest session
     const guestToken = getGuestSessionCookie(req.headers as unknown as Headers)
     if (guestToken) {
-      guestSession = await getGuestSessionByToken(guestToken)
+      guestSession = await getGuestSessionByToken(req.payload, guestToken)
     }
 
     if (!guestSession) {
@@ -97,8 +97,7 @@ export async function agentChatStream(
         )
       }
 
-      const { session, token } = await createGuestSession({
-        req: req as unknown as Request,
+      const { session, token } = await createGuestSession(req.payload, {
         ipHash,
         userAgentHash,
       })
@@ -109,7 +108,7 @@ export async function agentChatStream(
     } else {
       isGuestMode = true
 
-      const messageLimit = await checkAndIncrementGuestMessageCount(guestSession.id)
+      const messageLimit = await checkAndIncrementGuestMessageCount(req.payload, guestSession.id)
       if (!messageLimit.allowed) {
         return Response.json(
           {

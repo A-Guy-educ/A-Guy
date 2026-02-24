@@ -12,8 +12,7 @@
  * - Session revoked after transfer (prevents reuse)
  * - Cookie cleared to prevent ambiguity
  */
-import { getPayload } from 'payload'
-import config from '@payload-config'
+import type { Payload } from 'payload'
 import { logger } from '@/infra/utils/logger'
 import {
   getGuestSessionByToken,
@@ -30,13 +29,12 @@ interface ClaimConversationData {
 }
 
 export async function claimGuestConversations(
+  payload: Payload,
   userId: string,
   sessionToken: string,
   headers: Headers = new Headers(),
 ): Promise<{ claimed: number; headers: Headers }> {
-  const payload = await getPayload({ config })
-
-  const session = await getGuestSessionByToken(sessionToken)
+  const session = await getGuestSessionByToken(payload, sessionToken)
   if (!session) {
     logger.warn({ userId }, 'Guest session not found or expired during claim')
     clearGuestSessionCookie(headers)
@@ -71,7 +69,7 @@ export async function claimGuestConversations(
     claimed++
   }
 
-  await revokeGuestSession(session.id, userId)
+  await revokeGuestSession(payload, session.id, userId)
 
   clearGuestSessionCookie(headers)
 
@@ -80,11 +78,12 @@ export async function claimGuestConversations(
   return { claimed, headers }
 }
 
-export async function hasPendingGuestConversations(sessionToken: string): Promise<boolean> {
-  const session = await getGuestSessionByToken(sessionToken)
+export async function hasPendingGuestConversations(
+  payload: Payload,
+  sessionToken: string,
+): Promise<boolean> {
+  const session = await getGuestSessionByToken(payload, sessionToken)
   if (!session) return false
-
-  const payload = await getPayload({ config })
 
   const conversations = await payload.count({
     collection: 'conversations',

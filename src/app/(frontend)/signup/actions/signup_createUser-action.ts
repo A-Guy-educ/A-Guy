@@ -100,7 +100,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
             const headers = new Headers()
             const guestToken = cookieStore.get(GUEST_SESSION_COOKIE_NAME)?.value
             if (guestToken) {
-              await claimGuestConversations(user.id, guestToken, headers)
+              await claimGuestConversations(payload, user.id, guestToken, headers)
               clearGuestSessionCookie(headers)
               cookieStore.delete(GUEST_SESSION_COOKIE_NAME)
             }

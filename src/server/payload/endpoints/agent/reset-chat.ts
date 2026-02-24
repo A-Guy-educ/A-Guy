@@ -59,15 +59,14 @@ export async function agentResetChat(req: PayloadRequest & { json?: () => Promis
     // Check for guest session
     const guestToken = getGuestSessionCookie(req.headers as unknown as Headers)
     if (guestToken) {
-      guestSession = await getGuestSessionByToken(guestToken)
+      guestSession = await getGuestSessionByToken(req.payload, guestToken)
     }
 
     if (!guestSession) {
       // Create new guest session
       const ipHash = hashIP(req.headers?.get('x-forwarded-for') || req.headers?.get('x-real-ip'))
       const userAgentHash = hashUserAgent(req.headers?.get('user-agent'))
-      const { session, token } = await createGuestSession({
-        req: req as unknown as Request,
+      const { session, token } = await createGuestSession(req.payload, {
         ipHash,
         userAgentHash,
       })
