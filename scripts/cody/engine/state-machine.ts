@@ -48,7 +48,9 @@ export async function runPipeline(
 
     const nextStep = resolveNextStep(state, pipeline)
     if (!nextStep) {
-      // All done
+      // All stages completed - mark pipeline as completed
+      state = completeState(state, 'completed')
+      writeState(ctx.taskId, state)
       break
     }
 
@@ -90,14 +92,16 @@ function resolveNextStep(
     if (typeof step === 'string') {
       // Single stage
       const stageState = state.stages[step]
-      if (!stageState || stageState.state === 'pending' || stageState.state === 'failed') {
+      // Only run pending stages - failed stages should not auto-retry
+      // User can use --from to restart from a specific stage
+      if (!stageState || stageState.state === 'pending') {
         return step
       }
     } else if ('parallel' in step) {
       // Parallel stages - check if any need to run
       const needsRun = step.parallel.some((s) => {
         const stageState = state.stages[s]
-        return !stageState || stageState.state === 'pending' || stageState.state === 'failed'
+        return !stageState || stageState.state === 'pending'
       })
       if (needsRun) {
         return step
@@ -175,12 +179,17 @@ async function executeSingleStep(
       state = updateStage(state, stageName, { state: 'paused' })
       return completeState(state, 'paused')
     }
-    // Handle failure
+    // Handle failure - mark stage as failed
     console.error(`  ❌ ${stageName} failed:`, error)
-    return updateStage(state, stageName, {
+    state = updateStage(state, stageName, {
       state: 'failed',
       error: error instanceof Error ? error.message : String(error),
     })
+    // For non-advisory stages, mark pipeline as failed to stop the loop
+    if (!def.advisory) {
+      return completeState(state, 'failed')
+    }
+    return state
   }
 }
 
@@ -195,8 +204,23 @@ async function executeParallelStep(
 ): Promise<PipelineStateV2> {
   console.log(`  Running parallel: [${stageNames.join(', ')}]...`)
 
+  // Filter out already completed stages (for resume)
+  const stagesToRun = stageNames.filter((stageName) => {
+    const stageState = state.stages[stageName]
+    if (stageState?.state === 'completed' || stageState?.state === 'skipped') {
+      console.log(`  ${stageName} already completed/skipped, skipping`)
+      return false
+    }
+    return true
+  })
+
+  // If all stages already completed, return current state
+  if (stagesToRun.length === 0) {
+    return state
+  }
+
   const results = await Promise.allSettled(
-    stageNames.map(async (stageName) => {
+    stagesToRun.map(async (stageName) => {
       const def = pipeline.stages.get(stageName)
       if (!def) {
         return { stageName, result: null as unknown as StageResult }

@@ -5,7 +5,7 @@
  * @ai-summary GitHub API helpers extracted from cody-utils for better modularity
  */
 
-import { execSync, execFileSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 
 // ============================================================================
@@ -20,7 +20,8 @@ export function postComment(issueNumber: number, body: string): void {
 
   try {
     // Use --body-file - to pipe body via stdin, preserving newlines and special characters
-    execSync(`gh issue comment ${issueNumber} --body-file -`, {
+    // Use execFileSync for defense against shell injection
+    execFileSync('gh', ['issue', 'comment', String(issueNumber), '--body-file', '-'], {
       input: body,
       stdio: ['pipe', 'inherit', 'inherit'],
     })
@@ -36,9 +37,11 @@ export function getIssueBody(issueNumber: number): string | null {
   if (!issueNumber) return null
 
   try {
-    const output = execSync(`gh issue view ${issueNumber} --json body --jq '.body'`, {
-      encoding: 'utf-8',
-    })
+    const output = execFileSync(
+      'gh',
+      ['issue', 'view', String(issueNumber), '--json', 'body', '--jq', '.body'],
+      { encoding: 'utf-8' },
+    )
     return output.trim() || null
   } catch (error) {
     console.error(`Failed to get issue body for #${issueNumber}:`, error)
@@ -53,11 +56,18 @@ export function getIssue(issueNumber: number): { body: string | null; title: str
   if (!issueNumber) return { body: null, title: null }
 
   try {
-    const output = execSync(
-      `gh issue view ${issueNumber} --json body,title --jq '{body: .body, title: .title}'`,
-      {
-        encoding: 'utf-8',
-      },
+    const output = execFileSync(
+      'gh',
+      [
+        'issue',
+        'view',
+        String(issueNumber),
+        '--json',
+        'body,title',
+        '--jq',
+        '{body: .body, title: .title}',
+      ],
+      { encoding: 'utf-8' },
     )
     const data = JSON.parse(output)
     return {
@@ -77,9 +87,11 @@ export function getIssueTitle(issueNumber: number): string | null {
   if (!issueNumber) return null
 
   try {
-    const output = execSync(`gh issue view ${issueNumber} --json title --jq '.title'`, {
-      encoding: 'utf-8',
-    })
+    const output = execFileSync(
+      'gh',
+      ['issue', 'view', String(issueNumber), '--json', 'title', '--jq', '.title'],
+      { encoding: 'utf-8' },
+    )
     return output.trim() || null
   } catch (error) {
     console.error(`Failed to get issue title for #${issueNumber}:`, error)
@@ -173,8 +185,10 @@ export function discoverTaskIdFromIssue(issueNumber: number): string | null {
 
   try {
     // Get all comments (don't filter by author - matches parse-inputs.sh behavior)
-    const output = execSync(
-      `gh issue view ${issueNumber} --json comments --jq '.comments[].body'`,
+    // Use execFileSync for defense against shell injection
+    const output = execFileSync(
+      'gh',
+      ['issue', 'view', String(issueNumber), '--json', 'comments', '--jq', '.comments[].body'],
       { encoding: 'utf-8' },
     )
     // Use canonical task-ID marker regex

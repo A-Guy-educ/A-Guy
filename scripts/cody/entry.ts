@@ -19,7 +19,7 @@ import { stageOutputFile, readTask } from './pipeline-utils'
 import type { PipelineContext } from './engine/types'
 import { runPipeline } from './engine/state-machine'
 import { resolvePipelineForMode, createRebuildCallback } from './engine/pipeline-resolver'
-import { completeState, stateToV1 } from './engine/status'
+import { stateToV1 } from './engine/status'
 import { PipelinePausedError } from './engine/types'
 import { ensureTaskMarkerComment, postComment } from './github-api'
 import { formatStatusComment } from './cody-utils'
@@ -119,9 +119,13 @@ async function main(): Promise<void> {
     }
 
     // G6: process.exit(1) on failure
-    const { writeState, loadState: loadSt } = await import('./engine/status')
-    const failedState = completeState(loadSt(input.taskId)!, 'failed')
-    writeState(input.taskId, failedState)
+    // Only update status if state exists (not if failure happened before initState)
+    const { writeState, loadState: loadSt, completeState } = await import('./engine/status')
+    const existingState = loadSt(input.taskId)
+    if (existingState) {
+      const failedState = completeState(existingState, 'failed')
+      writeState(input.taskId, failedState)
+    }
 
     console.error('\n❌ Cody failed:', error instanceof Error ? error.message : error)
 
@@ -280,11 +284,11 @@ async function runImplMode(ctx: PipelineContext): Promise<void> {
 async function runFullMode(ctx: PipelineContext): Promise<void> {
   console.log('Running FULL Cody pipeline (spec + impl)...\n')
 
-  // Run spec first
-  await runSpecMode(ctx)
-
-  // Then impl
-  await runImplMode(ctx)
+  // Run full pipeline with rebuild callback for two-phase construction
+  // This uses buildPipeline('full') which includes both spec and impl stages
+  const pipeline = resolvePipelineForMode('full', 'standard', ctx.input.clarify ?? false, ctx)
+  const rebuild = createRebuildCallback('full', ctx.input.clarify ?? false)
+  await runPipeline(ctx, pipeline, undefined, rebuild)
 
   console.log('\n✅ Full Cody pipeline complete!')
 }

@@ -15,14 +15,23 @@ import type { StageHandler } from './handler'
  */
 export class GateHandler implements StageHandler {
   async execute(ctx: PipelineContext, def: StageDefinition): Promise<StageResult> {
+    // Guard: taskDef must be loaded before gate can run
+    if (!ctx.taskDef) {
+      return {
+        outcome: 'failed',
+        reason: 'task.json not loaded - gate stage requires task definition',
+        retries: 0,
+      }
+    }
+
     // Resolve controlMode dynamically (G42)
-    const controlMode = resolveControlMode(ctx.taskDef!, ctx.input.controlMode)
+    const controlMode = resolveControlMode(ctx.taskDef, ctx.input.controlMode)
 
     // Determine gate name from stage name (architect or taskify)
     const gate = def.name === 'architect' ? 'architect' : 'taskify'
 
     // Call gate approval handler
-    const gateResult = handleGateApproval(ctx.input, ctx.taskDir, gate, ctx.taskDef!)
+    const gateResult = handleGateApproval(ctx.input, ctx.taskDir, gate, ctx.taskDef)
 
     if (gateResult === 'waiting') {
       return {
