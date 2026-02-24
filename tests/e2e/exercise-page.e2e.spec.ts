@@ -302,6 +302,50 @@ test.describe('Exercise Page', () => {
       await expect(closeButton).toBeVisible()
     })
 
+    test.skip('close button closes mobile menu', async ({ page }) => {
+      // SKIPPED: Requires test data seeding
+      // TODO: Implement test data seeding in beforeAll hook
+      const testUrl =
+        '/courses/test-course/chapters/test-chapter/lessons/test-lesson/exercises/test-exercise-id'
+
+      // Set mobile viewport
+      await page.setViewportSize({ width: 375, height: 667 })
+      await page.goto(testUrl)
+
+      // Check that page loaded (not 404)
+      const notFound = await page.locator('body').textContent()
+      if (notFound?.includes('not found') || notFound?.includes('404')) {
+        test.skip()
+        return
+      }
+
+      // Click hamburger menu to open
+      const hamburger = page.getByRole('button', { name: /open menu/i })
+      await hamburger.click()
+
+      // Wait for mobile menu to appear
+      await page.waitForTimeout(500) // Wait for animation
+
+      // Verify menu is open
+      const mobileMenu = page.locator('[class*="translate-x-0"]').filter({ hasText: /menu/i })
+      await expect(mobileMenu).toBeVisible()
+
+      // Click close button
+      const closeButton = page.getByRole('button', { name: /close menu/i })
+      await closeButton.click()
+
+      // Wait for animation to complete
+      await page.waitForTimeout(500)
+
+      // Verify menu is closed (should have translate-x-full class)
+      const closedMenu = page.locator('[class*="translate-x-full"]').filter({ hasText: /menu/i })
+      await expect(closedMenu).toBeInViewport({ ratio: 0 }) // Not visible in viewport
+
+      // Verify overlay is not visible
+      const overlay = page.locator('.fixed.inset-0.bg-black\\/50')
+      await expect(overlay).toHaveClass(/pointer-events-none/)
+    })
+
     test.skip('shows logo on desktop viewport', async ({ page }) => {
       // SKIPPED: Requires test data seeding
       // TODO: Implement test data seeding in beforeAll hook

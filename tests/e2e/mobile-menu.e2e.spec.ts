@@ -1,0 +1,101 @@
+import { test, expect } from '@playwright/test'
+
+test.describe('Mobile Menu', () => {
+  test('opens and closes mobile menu on homepage', async ({ page }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 })
+    
+    // Navigate to homepage
+    await page.goto('/')
+    
+    // Wait for page to load
+    await page.waitForLoadState('networkidle')
+    
+    // Verify hamburger menu is visible
+    const hamburger = page.getByRole('button', { name: /open menu/i })
+    await expect(hamburger).toBeVisible()
+    
+    // Click hamburger to open menu
+    await hamburger.click()
+    
+    // Wait for animation
+    await page.waitForTimeout(500)
+    
+    // Verify menu is open
+    const menuPanel = page.locator('nav').filter({ hasText: /navigation|resources/i })
+    await expect(menuPanel).toBeVisible()
+    
+    // Verify close button is visible
+    const closeButton = page.getByRole('button', { name: /close menu/i })
+    await expect(closeButton).toBeVisible()
+    
+    // Click close button
+    await closeButton.click()
+    
+    // Wait for animation
+    await page.waitForTimeout(500)
+    
+    // Verify menu is closed - the panel should not be visible anymore
+    // We check that it has the translate-x-full class which moves it off-screen
+    const closedPanel = page.locator('[class*="translate-x-full"]').filter({ hasText: /navigation|resources/i })
+    // The element exists but should be off-screen
+    await expect(closedPanel).toHaveClass(/translate-x-full/)
+    
+    // Verify overlay is not blocking clicks
+    const overlay = page.locator('.fixed.inset-0').first()
+    await expect(overlay).toHaveClass(/pointer-events-none/)
+  })
+  
+  test('closes mobile menu when clicking overlay', async ({ page }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 })
+    
+    // Navigate to homepage
+    await page.goto('/')
+    
+    // Wait for page to load
+    await page.waitForLoadState('networkidle')
+    
+    // Open menu
+    const hamburger = page.getByRole('button', { name: /open menu/i })
+    await hamburger.click()
+    await page.waitForTimeout(500)
+    
+    // Verify menu is open
+    const menuPanel = page.locator('nav').filter({ hasText: /navigation|resources/i })
+    await expect(menuPanel).toBeVisible()
+    
+    // Click overlay (outside the menu)
+    const overlay = page.locator('.fixed.inset-0.bg-black\\/50').first()
+    await overlay.click({ position: { x: 10, y: 10 } })
+    
+    // Wait for animation
+    await page.waitForTimeout(500)
+    
+    // Verify menu is closed
+    const closedPanel = page.locator('[class*="translate-x-full"]').filter({ hasText: /navigation|resources/i })
+    await expect(closedPanel).toHaveClass(/translate-x-full/)
+  })
+  
+  test('mobile menu close button has correct attributes', async ({ page }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 })
+    
+    // Navigate to homepage
+    await page.goto('/')
+    
+    // Wait for page to load
+    await page.waitForLoadState('networkidle')
+    
+    // Open menu
+    const hamburger = page.getByRole('button', { name: /open menu/i })
+    await hamburger.click()
+    await page.waitForTimeout(500)
+    
+    // Check close button attributes
+    const closeButton = page.getByRole('button', { name: /close menu/i })
+    await expect(closeButton).toBeVisible()
+    await expect(closeButton).toHaveAttribute('type', 'button')
+    await expect(closeButton).toHaveAttribute('aria-label', 'Close menu')
+  })
+})
