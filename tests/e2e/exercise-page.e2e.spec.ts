@@ -323,8 +323,8 @@ test.describe('Exercise Page', () => {
       const hamburger = page.getByRole('button', { name: /open menu/i })
       await hamburger.click()
 
-      // Wait for mobile menu to appear
-      await page.waitForTimeout(500) // Wait for animation
+      // Wait for menu to be visible
+      await page.waitForSelector('[class*="translate-x-0"]', { state: 'visible', timeout: 1000 })
 
       // Verify menu is open
       const mobileMenu = page.locator('[class*="translate-x-0"]').filter({ hasText: /menu/i })
@@ -334,8 +334,11 @@ test.describe('Exercise Page', () => {
       const closeButton = page.getByRole('button', { name: /close menu/i })
       await closeButton.click()
 
-      // Wait for animation to complete
-      await page.waitForTimeout(500)
+      // Wait for menu to close
+      await page.waitForFunction(() => {
+        const panel = document.querySelector('[class*="translate-x-full"]')
+        return panel && window.getComputedStyle(panel).transform !== 'none'
+      }, { timeout: 1000 })
 
       // Verify menu is closed (should have translate-x-full class)
       const closedMenu = page.locator('[class*="translate-x-full"]').filter({ hasText: /menu/i })

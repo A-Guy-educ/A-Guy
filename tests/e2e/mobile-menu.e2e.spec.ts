@@ -18,8 +18,8 @@ test.describe('Mobile Menu', () => {
     // Click hamburger to open menu
     await hamburger.click()
     
-    // Wait for animation
-    await page.waitForTimeout(500)
+    // Wait for menu to be visible with proper class
+    await page.waitForSelector('[class*="translate-x-0"]', { state: 'visible', timeout: 1000 })
     
     // Verify menu is open
     const menuPanel = page.locator('nav').filter({ hasText: /navigation|resources/i })
@@ -32,8 +32,11 @@ test.describe('Mobile Menu', () => {
     // Click close button
     await closeButton.click()
     
-    // Wait for animation
-    await page.waitForTimeout(500)
+    // Wait for menu to have translate-x-full class (closed state)
+    await page.waitForFunction(() => {
+      const panel = document.querySelector('[class*="translate-x-full"]')
+      return panel && window.getComputedStyle(panel).transform !== 'none'
+    }, { timeout: 1000 })
     
     // Verify menu is closed - the panel should not be visible anymore
     // We check that it has the translate-x-full class which moves it off-screen
@@ -59,7 +62,9 @@ test.describe('Mobile Menu', () => {
     // Open menu
     const hamburger = page.getByRole('button', { name: /open menu/i })
     await hamburger.click()
-    await page.waitForTimeout(500)
+    
+    // Wait for menu to be visible
+    await page.waitForSelector('[class*="translate-x-0"]', { state: 'visible', timeout: 1000 })
     
     // Verify menu is open
     const menuPanel = page.locator('nav').filter({ hasText: /navigation|resources/i })
@@ -69,8 +74,11 @@ test.describe('Mobile Menu', () => {
     const overlay = page.locator('.fixed.inset-0.bg-black\\/50').first()
     await overlay.click({ position: { x: 10, y: 10 } })
     
-    // Wait for animation
-    await page.waitForTimeout(500)
+    // Wait for menu to close
+    await page.waitForFunction(() => {
+      const panel = document.querySelector('[class*="translate-x-full"]')
+      return panel && window.getComputedStyle(panel).transform !== 'none'
+    }, { timeout: 1000 })
     
     // Verify menu is closed
     const closedPanel = page.locator('[class*="translate-x-full"]').filter({ hasText: /navigation|resources/i })
@@ -90,7 +98,9 @@ test.describe('Mobile Menu', () => {
     // Open menu
     const hamburger = page.getByRole('button', { name: /open menu/i })
     await hamburger.click()
-    await page.waitForTimeout(500)
+    
+    // Wait for menu to be visible
+    await page.waitForSelector('[class*="translate-x-0"]', { state: 'visible', timeout: 1000 })
     
     // Check close button attributes
     const closeButton = page.getByRole('button', { name: /close menu/i })
