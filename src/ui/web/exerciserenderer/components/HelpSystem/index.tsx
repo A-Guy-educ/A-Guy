@@ -35,14 +35,7 @@ export function HelpSystem({
   guidingLabel,
   solutionLabel,
 }: HelpSystemProps) {
-  const hasHint = Boolean(question.hint?.value)
-  const hasGuiding = Boolean(question.solution?.value)
-  const hasSolution = Boolean(question.fullSolution?.value)
-
-  // Don't render if no help content available
-  if (!hasHint && !hasGuiding && !hasSolution) return null
-
-  // Determine which content to show inline (hint only; guiding + solution go to chat)
+  // Determine which content to show inline (hint only when backend content exists)
   const inlineContent = activeHelp === 'hint' && question.hint?.value ? question.hint.value : null
 
   return (
@@ -56,9 +49,6 @@ export function HelpSystem({
         hintLabel={hintLabel}
         guidingLabel={guidingLabel}
         solutionLabel={solutionLabel}
-        hasHint={hasHint}
-        hasGuiding={hasGuiding}
-        hasSolution={hasSolution}
       />
 
       {inlineContent && (

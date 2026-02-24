@@ -263,7 +263,7 @@ export function ChatInterface({
   const exerciseHelpRef = useRef<(e: Event) => void>(() => {})
   exerciseHelpRef.current = (e: Event) => {
     const { type, questionContent, backendContent } = (e as CustomEvent).detail as {
-      type: 'guiding' | 'solution'
+      type: 'hint' | 'guiding' | 'solution'
       questionContent?: string
       backendContent?: string
       exerciseId?: string
@@ -274,6 +274,10 @@ export function ChatInterface({
     if (backendContent) {
       // Backend has content — show it directly without AI call
       addAssistantMessage(backendContent)
+    } else if (type === 'hint') {
+      sendContextualHelp(
+        `The student needs a hint for this exercise question: "${questionContent}". Provide a short, helpful hint that nudges them in the right direction without giving away the answer.`,
+      )
     } else if (type === 'guiding') {
       sendContextualHelp(
         `The student needs a guiding question for this exercise question: "${questionContent}". Ask them a thought-provoking guiding question that helps them think about the problem without giving the answer.`,
