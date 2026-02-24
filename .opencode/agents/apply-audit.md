@@ -108,3 +108,11 @@ Show files edited and their status in the report.
 - Apply improvements only to whitelisted paths
 - Log suggestions for non-whitelisted paths
 - If the improvement cannot be applied, note it in the report and move on
+
+## Using the Edit Tool
+
+When using the Edit tool to modify files:
+
+1. **Read the file FIRST** - Always read the file immediately before editing it
+2. **Copy the EXACT string** - Include ALL whitespace, indentation, and line endings exactly as they appear
+3. **If edit fails** - Re-read the file and try again with the exact current content

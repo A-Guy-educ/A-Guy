@@ -199,6 +199,21 @@ pnpm -s tsc --noEmit
 # Then re-run tsc until it passes
 ```
 
+### Critical: Using the Edit Tool
+
+When using the Edit tool to modify existing files:
+
+1. **Read the file FIRST** - Always read the file immediately before editing it
+2. **Copy the EXACT string** - Include ALL whitespace, indentation, and line endings exactly as they appear
+3. **Use unique context** - Include enough surrounding context to make the match unique
+4. **If edit fails** - Re-read the file and try again with the exact current content
+5. **Prefer Write for large changes** - If editing multiple non-adjacent sections, Write the entire file instead
+
+Common edit failures:
+
+- "Could not find oldString" → You copied wrong whitespace or the file changed
+- Edit fails on first try → Re-read the file and retry
+
 ### Before Writing Tests
 
 1. **Read the source file** you are testing:
