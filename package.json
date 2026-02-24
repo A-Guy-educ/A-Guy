@@ -11,6 +11,7 @@
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
     "dev:fast": "cross-env NEXT_TURBOPACK_DEV=0 NODE_OPTIONS=--no-deprecation next dev",
     "dev:clean": "rm -rf .next && pnpm dev",
+    "dev:full": "rm -rf .next && pnpm generate:types && pnpm generate:importmap && pnpm dev",
     "dev:test": "cross-env NODE_ENV=test pnpm dev",
     "dev:prod": "cross-env NODE_OPTIONS=--no-deprecation rm -rf .next && pnpm build && pnpm start",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
