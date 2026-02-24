@@ -9,7 +9,11 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 import { AskPrimaryContent } from '../AskPrimaryContent'
 
-export function AskContent() {
+interface AskContentProps {
+  conversationId?: string
+}
+
+export function AskContent({ conversationId }: AskContentProps) {
   const t = useTranslations('homepage.ask')
   const [courseId, setCourseId] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
@@ -68,7 +72,7 @@ export function AskContent() {
   return (
     <ExerciseWorkspace
       exerciseTitle={t('pageTitle')}
-      backUrl="/"
+      backUrl="/ask"
       primaryContent={<AskPrimaryContent />}
       chatContent={<ChatInterface courseId={courseId} translationNamespace="homepage.ask" />}
     />

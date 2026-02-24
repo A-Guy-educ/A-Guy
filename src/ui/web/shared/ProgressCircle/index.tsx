@@ -49,17 +49,18 @@ export function ProgressCircle({
         className="transition-all duration-500 ease-out"
         style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
       />
-      {children ?? (
-        <text
-          x="50%"
-          y="50%"
-          textAnchor="middle"
-          dy=".3em"
-          className="text-sm font-semibold fill-foreground"
-        >
-          {Math.round(percentage)}%
-        </text>
-      )}
+      {children ??
+        (percentage > 0 ? (
+          <text
+            x="50%"
+            y="50%"
+            textAnchor="middle"
+            dy=".3em"
+            className="text-sm font-semibold fill-foreground"
+          >
+            {Math.round(percentage)}%
+          </text>
+        ) : null)}
     </svg>
   )
 }
