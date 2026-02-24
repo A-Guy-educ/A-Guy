@@ -1,28 +1,29 @@
 'use client'
 
 import type { MediaBlock } from '@/server/payload/collections/Exercises/types'
-import { useTranslation } from '@payloadcms/ui'
+import { useListDrawer } from '@payloadcms/ui'
 import Image from 'next/image'
 import React from 'react'
-import { Film, Trash2, Upload } from 'lucide-react'
+import { Film, Trash2 } from 'lucide-react'
 
 interface MediaBlockEditorProps {
   block: MediaBlock
   onChange: (block: MediaBlock) => void
-  onOpenMediaPicker: () => void
 }
 
-export const MediaBlockEditor: React.FC<MediaBlockEditorProps> = ({
-  block,
-  onChange,
-  onOpenMediaPicker,
-}) => {
-  const { t: _t } = useTranslation()
+export const MediaBlockEditor: React.FC<MediaBlockEditorProps> = ({ block, onChange }) => {
+  const [ListDrawer, ListDrawerToggler, { openDrawer, closeDrawer }] = useListDrawer({
+    selectedCollection: 'media',
+  })
+
   const [media, setMedia] = React.useState<{
     id: string
     url: string
     alt: string
     filename: string
+    type: string
+    mimeType?: string
+    thumbnailURL?: string
   } | null>(null)
   const [loading, setLoading] = React.useState(false)
 
@@ -39,11 +40,16 @@ export const MediaBlockEditor: React.FC<MediaBlockEditorProps> = ({
         const response = await fetch(`/api/media/${block.mediaId}`)
         if (response.ok) {
           const data = await response.json()
+          // API returns flat object (not wrapped in .doc)
+          const doc = data.doc || data
           setMedia({
-            id: data.doc.id,
-            url: data.doc.url,
-            alt: data.doc.alt || '',
-            filename: data.doc.filename,
+            id: doc.id,
+            url: doc.url,
+            alt: doc.alt || '',
+            filename: doc.filename,
+            type: doc.type || 'image',
+            mimeType: doc.mimeType,
+            thumbnailURL: doc.thumbnailURL,
           })
         } else {
           setMedia(null)
@@ -59,17 +65,32 @@ export const MediaBlockEditor: React.FC<MediaBlockEditorProps> = ({
   }, [block.mediaId])
 
   const handleSelectMedia = () => {
-    onOpenMediaPicker()
+    openDrawer()
   }
 
   const handleRemoveMedia = () => {
     onChange({ ...block, mediaId: '' })
   }
 
+  const handleDrawerSelect = React.useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (args: any) => {
+      const mediaId = args.docID || args.doc?.id
+      onChange({ ...block, mediaId })
+      // Close drawer after state update to avoid race condition
+      setTimeout(() => closeDrawer(), 0)
+    },
+    [block, onChange, closeDrawer],
+  )
+
   return (
     <div className="media-block-editor">
+      <ListDrawer onSelect={handleDrawerSelect} />
       <div className="media-block-editor-header">
         <span className="media-block-editor-label">Media</span>
+        <ListDrawerToggler onClick={handleSelectMedia} className="media-block-editor-change-btn">
+          Change
+        </ListDrawerToggler>
       </div>
 
       {loading ? (
@@ -77,14 +98,25 @@ export const MediaBlockEditor: React.FC<MediaBlockEditorProps> = ({
       ) : media ? (
         <div className="media-block-editor-preview">
           <div className="media-block-editor-image-container">
-            <Image
-              src={media.url}
-              alt={media.alt || media.filename}
-              width={200}
-              height={200}
-              className="media-block-editor-image"
-              style={{ objectFit: 'contain' }}
-            />
+            {media.type === 'video' ? (
+              <video
+                src={media.url}
+                controls
+                className="media-block-editor-video"
+                style={{ maxWidth: '100%', maxHeight: 200 }}
+              >
+                Your browser does not support video playback.
+              </video>
+            ) : (
+              <Image
+                src={media.url}
+                alt={media.alt || media.filename}
+                width={200}
+                height={200}
+                className="media-block-editor-image"
+                style={{ objectFit: 'contain' }}
+              />
+            )}
           </div>
           <div className="media-block-editor-info">
             <span className="media-block-editor-filename">{media.filename}</span>
@@ -95,8 +127,7 @@ export const MediaBlockEditor: React.FC<MediaBlockEditorProps> = ({
               className="media-block-editor-action-btn"
               onClick={handleSelectMedia}
             >
-              <Upload size={14} />
-              <span>Change</span>
+              Change
             </button>
             <button
               type="button"
@@ -117,8 +148,7 @@ export const MediaBlockEditor: React.FC<MediaBlockEditorProps> = ({
             className="media-block-editor-select-btn"
             onClick={handleSelectMedia}
           >
-            <Upload size={16} />
-            <span>Select Media</span>
+            Select Media
           </button>
         </div>
       )}

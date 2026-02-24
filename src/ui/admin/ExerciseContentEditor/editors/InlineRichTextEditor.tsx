@@ -3,6 +3,7 @@
 import React from 'react'
 import type { InlineRichText } from '@/server/payload/collections/Exercises/types'
 import type { Media } from '@/payload-types'
+import { useListDrawer } from '@payloadcms/ui'
 import {
   Bold,
   Italic,
@@ -14,7 +15,6 @@ import {
   X,
 } from 'lucide-react'
 import Image from 'next/image'
-import { MediaPicker } from '../MediaPicker'
 
 interface InlineRichTextEditorProps {
   value: InlineRichText
@@ -30,9 +30,12 @@ export const InlineRichTextEditor: React.FC<InlineRichTextEditorProps> = ({
   minHeight = '80px',
 }) => {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
-  const [mediaPickerOpen, setMediaPickerOpen] = React.useState(false)
   const [mediaItems, setMediaItems] = React.useState<Media[]>([])
   const [loadingMedia, setLoadingMedia] = React.useState(false)
+
+  const [ListDrawer, ListDrawerToggler, { openDrawer, closeDrawer }] = useListDrawer({
+    selectedCollection: 'media',
+  })
 
   const insertText = (before: string, after: string = '') => {
     const textarea = textareaRef.current
@@ -77,9 +80,12 @@ export const InlineRichTextEditor: React.FC<InlineRichTextEditorProps> = ({
     fetchMedia()
   }, [value.mediaIds])
 
-  const handleMediaSave = (mediaIds: string[]) => {
-    onChange({ ...value, mediaIds })
-    setMediaPickerOpen(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleDrawerSelect = (args: any) => {
+    const newMediaId = args.docID
+    const newMediaIds = [...(value.mediaIds || []), newMediaId]
+    onChange({ ...value, mediaIds: newMediaIds })
+    closeDrawer()
   }
 
   const handleRemoveMedia = (mediaId: string) => {
@@ -114,13 +120,13 @@ export const InlineRichTextEditor: React.FC<InlineRichTextEditorProps> = ({
         <button className="toolbar-button" onClick={() => insertText('[', '](url)')} title="Link">
           <LinkIcon size={14} />
         </button>
-        <button
+        <ListDrawerToggler
+          onClick={openDrawer}
           className="toolbar-button toolbar-button--media"
-          onClick={() => setMediaPickerOpen(true)}
           title="Attach media"
         >
           <ImageIcon size={14} />
-        </button>
+        </ListDrawerToggler>
       </div>
 
       <textarea
@@ -178,12 +184,7 @@ export const InlineRichTextEditor: React.FC<InlineRichTextEditorProps> = ({
 
       <div className="inline-rich-text-footer">{value.value.length} characters</div>
 
-      <MediaPicker
-        isOpen={mediaPickerOpen}
-        onClose={() => setMediaPickerOpen(false)}
-        selectedMediaIds={value.mediaIds || []}
-        onSave={handleMediaSave}
-      />
+      <ListDrawer onSelect={handleDrawerSelect} />
     </div>
   )
 }

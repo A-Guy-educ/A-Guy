@@ -1,17 +1,14 @@
 'use client'
 
-import type { Media } from '@/payload-types'
 import { ExerciseBlockDefaults, generateId } from '@/server/payload/collections/Exercises/defaults'
-import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
+import type { ContentBlock, InlineRichText } from '@/server/payload/collections/Exercises/types'
 import { useField, useForm } from '@payloadcms/ui'
-import { Code, Copy, Image as ImageIcon, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
-import Image from 'next/image'
+import { Code, Copy, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
 import React from 'react'
 import { BlockTypeSelector } from './BlockTypeSelector'
 import './index.css'
 import { JSONInspector } from './JSONInspector'
-import { MediaPicker } from './MediaPicker'
-import { RichTextEditor } from './RichTextEditor'
+import { InlineRichTextEditor } from './editors/InlineRichTextEditor'
 import { FreeResponseEditor } from './editors/FreeResponseEditor'
 import { AxisEditor } from './editors/AxisEditor'
 import { GeometryEditor } from './editors/GeometryEditor'
@@ -60,8 +57,6 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
 
   const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null)
   const [isJsonPanelOpen, setIsJsonPanelOpen] = React.useState(false)
-  const [mediaPickerOpen, setMediaPickerOpen] = React.useState(false)
-  const [currentBlockForMedia, setCurrentBlockForMedia] = React.useState<string | null>(null)
   const [blockTypeSelectorOpen, setBlockTypeSelectorOpen] = React.useState(false)
   const [insertAtIndex, setInsertAtIndex] = React.useState<number | undefined>(undefined)
   const [jsonPanelWidth, setJsonPanelWidth] = React.useState(() => {
@@ -220,34 +215,6 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
     handleUpdateBlock(selectedBlockId, updatedBlock)
   }
 
-  // Open media picker for a block
-  const handleOpenMediaPicker = (blockId: string) => {
-    setCurrentBlockForMedia(blockId)
-    setMediaPickerOpen(true)
-  }
-
-  // Save media selection
-  const handleMediaSave = (mediaIds: string[]) => {
-    if (currentBlockForMedia) {
-      const block = blocks.find((b) => b.id === currentBlockForMedia)
-      if (block?.type === 'media') {
-        // Media block: single mediaId
-        handleUpdateBlock(currentBlockForMedia, { mediaId: mediaIds[0] || '' })
-      } else {
-        // Rich text block: array of mediaIds
-        handleUpdateBlock(currentBlockForMedia, { mediaIds })
-      }
-    }
-  }
-
-  // Remove single media from block
-  const handleRemoveMedia = (blockId: string, mediaId: string) => {
-    const block = blocks.find((b) => b.id === blockId)
-    if (!block || block.type !== 'rich_text') return
-    const newMediaIds = (block.mediaIds || []).filter((id: string) => id !== mediaId)
-    handleUpdateBlock(blockId, { mediaIds: newMediaIds })
-  }
-
   // Save changes
   const handleSave = async () => {
     if (modifyTimeoutRef.current) {
@@ -384,8 +351,6 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
                 onUpdateBlock={handleUpdateBlock}
                 onMoveBlock={handleMoveBlock}
                 onDuplicateBlock={handleDuplicateBlock}
-                onOpenMediaPicker={handleOpenMediaPicker}
-                onRemoveMedia={handleRemoveMedia}
               />
             </div>
           ) : (
@@ -411,8 +376,6 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
               onUpdateBlock={handleUpdateBlock}
               onMoveBlock={handleMoveBlock}
               onDuplicateBlock={handleDuplicateBlock}
-              onOpenMediaPicker={handleOpenMediaPicker}
-              onRemoveMedia={handleRemoveMedia}
             />
           </div>
 
@@ -432,20 +395,6 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
           )}
         </div>
       )}
-
-      <MediaPicker
-        isOpen={mediaPickerOpen}
-        onClose={() => setMediaPickerOpen(false)}
-        selectedMediaIds={
-          currentBlockForMedia
-            ? (() => {
-                const block = blocks.find((b) => b.id === currentBlockForMedia)
-                return block?.type === 'rich_text' ? block.mediaIds || [] : []
-              })()
-            : []
-        }
-        onSave={handleMediaSave}
-      />
 
       <BlockTypeSelector
         isOpen={blockTypeSelectorOpen}
@@ -670,8 +619,6 @@ interface BlockListProps {
   onUpdateBlock: (id: string, updates: Partial<ContentBlock>) => void
   onMoveBlock: (id: string, direction: 'up' | 'down') => void
   onDuplicateBlock: (id: string) => void
-  onOpenMediaPicker: (blockId: string) => void
-  onRemoveMedia: (blockId: string, mediaId: string) => void
 }
 
 function ContentBlockHeader({
@@ -744,8 +691,6 @@ function BlockList({
   onUpdateBlock,
   onMoveBlock,
   onDuplicateBlock,
-  onOpenMediaPicker,
-  onRemoveMedia,
 }: BlockListProps) {
   return (
     <div className="block-list">
@@ -771,34 +716,21 @@ function BlockList({
                 />
                 <div className="block-content">
                   <div onClick={() => onSelect(block.id)} onFocus={() => onSelect(block.id)}>
-                    <RichTextEditor
-                      value={block.value}
-                      onChange={(value) => onUpdateBlock(block.id, { value })}
+                    <InlineRichTextEditor
+                      value={{
+                        value: block.value,
+                        mediaIds: block.mediaIds || [],
+                        type: 'rich_text',
+                        format: 'md-math-v1',
+                      }}
+                      onChange={(newValue: InlineRichText) =>
+                        onUpdateBlock(block.id, {
+                          value: newValue.value,
+                          mediaIds: newValue.mediaIds,
+                        })
+                      }
                     />
                   </div>
-                </div>
-                <div className="block-media-section">
-                  <button
-                    type="button"
-                    className="block-media-button"
-                    onClick={() => onOpenMediaPicker(block.id)}
-                    title="Attach media"
-                  >
-                    <ImageIcon size={14} />
-                    <span>
-                      {block.mediaIds && block.mediaIds.length > 0
-                        ? `${block.mediaIds.length} media attached`
-                        : 'Attach media'}
-                    </span>
-                  </button>
-
-                  {block.mediaIds && block.mediaIds.length > 0 && (
-                    <BlockMediaDisplay
-                      blockId={block.id}
-                      mediaIds={block.mediaIds}
-                      onRemoveMedia={onRemoveMedia}
-                    />
-                  )}
                 </div>
               </>
             ) : isMedia ? (
@@ -816,8 +748,9 @@ function BlockList({
                     block={
                       block as import('@/server/payload/collections/Exercises/types').MediaBlock
                     }
-                    onChange={(updatedBlock) => onUpdateBlock(block.id, updatedBlock)}
-                    onOpenMediaPicker={() => onOpenMediaPicker(block.id)}
+                    onChange={(updatedBlock) => {
+                      onUpdateBlock(block.id, updatedBlock)
+                    }}
                   />
                 </div>
               </>
@@ -871,83 +804,6 @@ function BlockList({
           </button>
         </div>
       )}
-    </div>
-  )
-}
-
-interface BlockMediaDisplayProps {
-  blockId: string
-  mediaIds: string[]
-  onRemoveMedia: (blockId: string, mediaId: string) => void
-}
-
-function BlockMediaDisplay({ blockId, mediaIds, onRemoveMedia }: BlockMediaDisplayProps) {
-  const [mediaItems, setMediaItems] = React.useState<Media[]>([])
-  const [loading, setLoading] = React.useState(true)
-
-  React.useEffect(() => {
-    const fetchMedia = async () => {
-      setLoading(true)
-      try {
-        const fetchPromises = mediaIds.map((id) =>
-          fetch(`/api/media/${id}`).then((res) => (res.ok ? res.json() : null)),
-        )
-        const results = await Promise.all(fetchPromises)
-        setMediaItems(results.filter((item): item is Media => item !== null))
-      } catch (err) {
-        console.error('Failed to fetch media:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (mediaIds.length > 0) {
-      fetchMedia()
-    }
-  }, [mediaIds])
-
-  if (loading) {
-    return <div className="block-media-loading">Loading media...</div>
-  }
-
-  if (mediaItems.length === 0) {
-    return null
-  }
-
-  return (
-    <div className="block-media-preview">
-      {mediaItems.map((media) => {
-        // Cast to any to bypass strict type checking for blob storage sizes
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mediaAny = media as any
-        // Use thumbnailURL (set by adminThumbnail) first, then fall back to sizes.thumbnail.url
-        const thumbnailUrl = media.thumbnailURL || mediaAny.sizes?.thumbnail?.url || media.url
-        return (
-          <div key={media.id} className="media-thumbnail-preview">
-            {thumbnailUrl && (
-              <Image
-                src={thumbnailUrl}
-                alt={media.alt || media.filename || 'Media'}
-                width={150}
-                height={150}
-                style={{ objectFit: 'cover' }}
-              />
-            )}
-            <button
-              type="button"
-              className="media-thumbnail-remove"
-              onClick={(e) => {
-                e.stopPropagation()
-                onRemoveMedia(blockId, media.id)
-              }}
-              title="Remove media"
-            >
-              ×
-            </button>
-            <div className="media-thumbnail-name">{media.filename}</div>
-          </div>
-        )
-      })}
     </div>
   )
 }
