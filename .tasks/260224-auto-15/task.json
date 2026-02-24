@@ -1,0 +1,29 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "high",
+  "confidence": 1,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/payload/collections/Courses.ts",
+    "src/server/payload/collections/Chapters.ts",
+    "src/server/payload/collections/Lessons.ts",
+    "src/server/payload/collections/Categories.ts",
+    "src/server/payload/collections/PricingPlans.ts",
+    "src/server/payload/collections/Media/index.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "adminOnly access function exists at src/server/payload/access/adminOnly.ts",
+    "admin role exists in Users collection (verified in src/server/payload/collections/Users/roles.ts)",
+    "All affected collections use the same adminOnly import path pattern"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains clear requirements with specific code changes, file paths with line numbers, current vs expected code comparison, and testing steps. The fix is straightforward - replace authenticated with adminOnly for create/update/delete operations."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
