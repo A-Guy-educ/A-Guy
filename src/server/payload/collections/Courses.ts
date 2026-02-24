@@ -12,7 +12,7 @@ import type { CollectionConfig } from 'payload'
 import { DEFAULT_ACCESS_TYPE, DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
-import { authenticated } from '../access/authenticated'
+import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
 
@@ -25,10 +25,10 @@ const formatSlug = (val: string): string =>
 export const Courses: CollectionConfig = {
   slug: 'courses',
   access: {
-    create: authenticated,
-    delete: authenticated,
+    create: adminOnly,
+    delete: adminOnly,
     read: anyone,
-    update: authenticated,
+    update: adminOnly,
   },
   hooks: {
     beforeChange: [

@@ -3,7 +3,7 @@ import type { CollectionConfig } from 'payload'
 import { DEFAULT_LESSON_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
-import { authenticated } from '../access/authenticated'
+import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
 
 const formatSlug = (val: string): string =>
@@ -15,10 +15,10 @@ const formatSlug = (val: string): string =>
 export const Lessons: CollectionConfig = {
   slug: 'lessons',
   access: {
-    create: authenticated,
-    delete: authenticated,
+    create: adminOnly,
+    delete: adminOnly,
     read: anyone,
-    update: authenticated,
+    update: adminOnly,
   },
   hooks: {
     beforeChange: [

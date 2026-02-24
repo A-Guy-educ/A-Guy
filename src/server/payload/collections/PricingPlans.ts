@@ -1,16 +1,16 @@
 import type { CollectionConfig } from 'payload'
 
 import { anyone } from '../access/anyone'
-import { authenticated } from '../access/authenticated'
+import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
 
 export const PricingPlans: CollectionConfig = {
   slug: 'pricing-plans',
   access: {
-    create: authenticated,
-    delete: authenticated,
+    create: adminOnly,
+    delete: adminOnly,
     read: anyone,
-    update: authenticated,
+    update: adminOnly,
   },
   admin: {
     defaultColumns: [

@@ -12,7 +12,7 @@ import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollection
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../../access/anyone'
-import { authenticated } from '../../access/authenticated'
+import { adminOnly } from '../../access/adminOnly'
 import { createdByField } from '../../fields/createdBy'
 import { enforceRetentionPolicyHook } from './hooks/enforceRetentionPolicy'
 import { inferMediaTypeHook } from './hooks/inferMediaType'
@@ -89,10 +89,10 @@ export const Media: CollectionConfig = {
     // ],
   },
   access: {
-    create: authenticated,
-    delete: authenticated,
+    create: adminOnly,
+    delete: adminOnly,
     read: anyone,
-    update: authenticated,
+    update: adminOnly,
   },
   fields: [
     // Tenant
