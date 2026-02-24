@@ -14,20 +14,24 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const contextKey = searchParams.get('contextKey')
+    const contextKeyPrefix = searchParams.get('contextKeyPrefix')
     const limit = Math.min(Number(searchParams.get('limit') ?? 100), 100)
 
-    if (!contextKey) {
-      return NextResponse.json({ error: 'contextKey is required' }, { status: 400 })
+    if (!contextKey && !contextKeyPrefix) {
+      return NextResponse.json(
+        { error: 'contextKey or contextKeyPrefix is required' },
+        { status: 400 },
+      )
     }
+
+    const contextFilter = contextKey
+      ? { contextKey: { equals: contextKey } }
+      : { contextKey: { like: `${contextKeyPrefix}%` } }
 
     const result = await payload.find({
       collection: 'conversations',
       where: {
-        and: [
-          { user: { equals: user.id } },
-          { contextKey: { equals: contextKey } },
-          { archivedAt: { exists: false } },
-        ],
+        and: [{ user: { equals: user.id } }, contextFilter, { archivedAt: { exists: false } }],
       },
       sort: '-lastMessageAt',
       limit,
@@ -36,10 +40,10 @@ export async function GET(request: NextRequest) {
     })
 
     const conversations = result.docs.map((doc) => {
-      // title field was added after types were generated — access via unknown cast
       const docTitle = (doc as unknown as { title?: string }).title
       return {
         id: doc.id,
+        contextKey: doc.contextKey,
         title: docTitle ?? getPreviewTitle(doc.messages ?? undefined),
         lastMessageAt: doc.lastMessageAt,
         messageCount: doc.messages?.filter((m) => !m.hidden).length ?? 0,

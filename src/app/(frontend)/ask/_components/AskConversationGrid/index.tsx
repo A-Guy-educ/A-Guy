@@ -11,6 +11,7 @@ import { logger } from '@/infra/utils/logger'
 
 interface ConversationItem {
   id: string
+  contextKey?: string
   title: string
   lastMessageAt: string
   messageCount: number
@@ -52,7 +53,7 @@ export function AskConversationGrid() {
 
           if (courseId) {
             const convRes = await fetch(
-              `/api/conversations/by-context?contextKey=courses:${courseId}&limit=20`,
+              `/api/conversations/by-context?contextKeyPrefix=ask:${courseId}&limit=20`,
             )
             if (convRes.ok) {
               const convData = await convRes.json()
@@ -122,7 +123,7 @@ export function AskConversationGrid() {
           {conversations.map((conv, idx) => (
             <SystemLink
               key={conv.id}
-              href={`/ask?chat=${conv.id}`}
+              href={`/ask?chat=${conv.id}&ctx=${encodeURIComponent(conv.contextKey ?? '')}`}
               className={cn(
                 'bg-card rounded-3xl p-6 shadow-card',
                 'flex items-center justify-between',

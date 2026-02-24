@@ -49,6 +49,8 @@ interface UseNotebookChatProps {
   // Admin mode - uses user-specific context without course/lesson context
   adminMode?: boolean
   userId?: string
+  // Override computed contextKey (e.g. for Ask page with per-session conversations)
+  contextKeyOverride?: string
 }
 
 export function useNotebookChat({
@@ -70,6 +72,7 @@ export function useNotebookChat({
   categoryId,
   adminMode = false,
   userId,
+  contextKeyOverride,
 }: UseNotebookChatProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -111,6 +114,7 @@ export function useNotebookChat({
   // Priority for regular mode: Lesson > Exercise (fallback) > Chapter > Course > Category
   // Exercises within the same lesson share a single conversation
   const contextKey = useMemo(() => {
+    if (contextKeyOverride) return contextKeyOverride
     if (lessonId) return `lessons:${lessonId}`
     if (exerciseId) return `exercises:${exerciseId}`
     if (chapterId) return `chapters:${chapterId}`
@@ -118,7 +122,7 @@ export function useNotebookChat({
     if (categoryId) return `categories:${categoryId}`
     if (adminMode && userId) return `users:${userId}`
     return null
-  }, [exerciseId, lessonId, chapterId, courseId, categoryId, adminMode, userId])
+  }, [contextKeyOverride, exerciseId, lessonId, chapterId, courseId, categoryId, adminMode, userId])
 
   // Simple scroll to bottom using scrollTop instead of scrollIntoView
   // scrollIntoView can cause layout issues in nested flex containers
@@ -340,9 +344,16 @@ export function useNotebookChat({
     const useStreaming = !hasAttachments && !adminMode
 
     if (useStreaming) {
-      await streamMessage(message, acknowledgment, context)
+      await streamMessage(message, acknowledgment, context, { contextKeyOverride })
     } else {
-      await sendMessageSync(message, acknowledgment, context, [], completedChatAssetIds)
+      await sendMessageSync(
+        message,
+        acknowledgment,
+        context,
+        [],
+        completedChatAssetIds,
+        contextKeyOverride,
+      )
     }
   }
 
@@ -360,7 +371,7 @@ export function useNotebookChat({
         courseId?: string
         categoryId?: string
       },
-      options?: { hidden?: boolean; hidePromptOnly?: boolean },
+      options?: { hidden?: boolean; contextKeyOverride?: string; hidePromptOnly?: boolean },
     ) => {
       try {
         const stream = apiService.chatStream(message, acknowledgment, context, options)
@@ -448,6 +459,7 @@ export function useNotebookChat({
     },
     mediaIds?: string[],
     chatAssetIds?: string[],
+    contextKeyOverrideParam?: string,
   ) => {
     try {
       const result = await apiService.chat(
@@ -457,6 +469,7 @@ export function useNotebookChat({
         mediaIds,
         chatAssetIds,
         adminMode,
+        contextKeyOverrideParam,
       )
 
       if (!result.success) {

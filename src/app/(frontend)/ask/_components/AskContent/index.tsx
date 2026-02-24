@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { ChatInterface } from '@/ui/web/chat'
 import { logger } from '@/infra/utils/logger'
@@ -10,10 +10,11 @@ import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapter
 import { AskPrimaryContent } from '../AskPrimaryContent'
 
 interface AskContentProps {
-  conversationId?: string
+  /** Pass undefined for new conversation, or an existing conversation's contextKey */
+  conversationContextKey?: string
 }
 
-export function AskContent({ conversationId }: AskContentProps) {
+export function AskContent({ conversationContextKey }: AskContentProps) {
   const t = useTranslations('homepage.ask')
   const [courseId, setCourseId] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
@@ -30,14 +31,15 @@ export function AskContent({ conversationId }: AskContentProps) {
         const response = await fetch(`/api/chapters/by-grade?grade=${profile.gradeLevel}`)
         if (response.ok) {
           const data = await response.json()
-          const chapters = data.chapters || []
-          if (chapters.length > 0) {
-            const course = chapters[0].course
-            const id = typeof course === 'string' ? course : course?.id
-            if (id) {
-              setCourseId(id)
-            } else {
-              logger.error('Course ID not found in response')
+          const courseIdFromData = data.courseId || ''
+          if (courseIdFromData) {
+            setCourseId(courseIdFromData)
+          } else {
+            const chapters = data.chapters || []
+            if (chapters.length > 0) {
+              const course = chapters[0].course
+              const id = typeof course === 'string' ? course : course?.id
+              if (id) setCourseId(id)
             }
           }
         }
@@ -51,6 +53,13 @@ export function AskContent({ conversationId }: AskContentProps) {
 
     loadCourse()
   }, [])
+
+  // Generate a stable contextKey for new conversations, or use the provided one
+  const contextKey = useMemo(() => {
+    if (conversationContextKey) return conversationContextKey
+    if (!courseId) return undefined
+    return `ask:${courseId}:${Date.now()}`
+  }, [conversationContextKey, courseId])
 
   if (isLoading) {
     return (
@@ -74,7 +83,13 @@ export function AskContent({ conversationId }: AskContentProps) {
       exerciseTitle={t('pageTitle')}
       backUrl="/ask"
       primaryContent={<AskPrimaryContent />}
-      chatContent={<ChatInterface courseId={courseId} translationNamespace="homepage.ask" />}
+      chatContent={
+        <ChatInterface
+          courseId={courseId}
+          contextKeyOverride={contextKey}
+          translationNamespace="homepage.ask"
+        />
+      }
     />
   )
 }

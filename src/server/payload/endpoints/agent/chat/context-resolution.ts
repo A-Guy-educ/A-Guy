@@ -72,17 +72,26 @@ export async function validateContextExists(
 
 /**
  * Resolve full context using ConversationService
+ * When contextKeyOverride is provided, it takes precedence over the derived key.
+ * The override is used by the Ask page to create per-session conversations.
  */
 export async function resolveContext(
   conversationService: ConversationService,
   validated: ChatRequest,
 ): Promise<ResolvedContext> {
-  return conversationService.resolveContext({
+  const resolved = (await conversationService.resolveContext({
     exerciseId: validated.exerciseId,
     lessonId: validated.lessonId,
     chapterId: validated.chapterId,
     courseId: validated.courseId,
-  }) as Promise<ResolvedContext>
+  })) as ResolvedContext
+
+  // Override the derived contextKey if the client provided one
+  if (validated.contextKeyOverride) {
+    return { ...resolved, contextKey: validated.contextKeyOverride }
+  }
+
+  return resolved
 }
 
 /**

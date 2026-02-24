@@ -10,9 +10,16 @@ import { AskContent } from '../AskContent'
 function AskPageInner() {
   const searchParams = useSearchParams()
   const chatParam = searchParams.get('chat')
+  const ctxParam = searchParams.get('ctx')
 
   if (chatParam) {
-    return <AskContent conversationId={chatParam === 'new' ? undefined : chatParam} />
+    // ctx param carries the contextKey for existing conversations
+    // For "new", no contextKey → AskContent generates a fresh one
+    return (
+      <AskContent
+        conversationContextKey={chatParam === 'new' ? undefined : (ctxParam ?? undefined)}
+      />
+    )
   }
 
   return (

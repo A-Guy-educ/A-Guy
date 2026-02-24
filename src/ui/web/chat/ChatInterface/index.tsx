@@ -85,6 +85,9 @@ interface ChatInterfaceProps {
   showResetButton?: boolean
   showMathTools?: boolean
 
+  // Override computed contextKey (e.g. for Ask page per-session conversations)
+  contextKeyOverride?: string
+
   // Display
   displayMode?: 'full' | 'input-only'
 
@@ -110,6 +113,7 @@ export function ChatInterface({
   showQuickActions = false,
   showResetButton = false,
   showMathTools = false,
+  contextKeyOverride,
   displayMode = 'full',
   isMobile,
   viewMode,
@@ -174,6 +178,7 @@ export function ChatInterface({
     categoryId,
     adminMode,
     userId,
+    contextKeyOverride,
   })
 
   const { speak, playingMessageId } = useTTS()
