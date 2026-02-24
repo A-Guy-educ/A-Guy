@@ -423,7 +423,7 @@ describe.skipIf(!hasDatabaseUrl)('agentChatStream', () => {
     const req = {
       payload,
       headers: new Headers(),
-      user: { id: testUserId } as PayloadRequest['user'],
+      user: { id: testUserId, role: 'admin' } as unknown as PayloadRequest['user'],
       json: async () => ({ message: 'Hello', acknowledgment: 'ack', exerciseId: testExerciseId }),
     } as unknown as PayloadRequest & { json: () => Promise<unknown> }
     const response = await agentChatStream(req)
