@@ -6,6 +6,7 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
+import { extractYouTubeVideoId, isYouTubeUrl } from '@/infra/media/youtube'
 import { MediaType } from '@/infra/media/types'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
@@ -15,18 +16,59 @@ import { authenticated } from '../../access/authenticated'
 import { createdByField } from '../../fields/createdBy'
 import { enforceRetentionPolicyHook } from './hooks/enforceRetentionPolicy'
 import { inferMediaTypeHook } from './hooks/inferMediaType'
+import { resolveEmbedHook } from './hooks/resolveEmbed'
 import { validateMediaUploadHook } from './hooks/validateMediaUpload'
 
 export const Media: CollectionConfig = {
   slug: 'media',
   // folders: true, // Disabled - conflicts with Vercel Blob plugin
   upload: {
+    // Allow External media type to be saved without a file upload.
+    // Our validateMediaUploadHook enforces file presence for non-External types.
+    filesRequiredOnCreate: false,
     // Vercel Blob storage plugin handles actual file storage
     // Plugin injects disableLocalStorage: true and adapter handlers
-    adminThumbnail: 'thumbnail', // Show thumbnail in admin list view
+    // Show thumbnail in admin list view - uses function to handle External media
+    adminThumbnail: ({ doc }) => {
+      // Cast doc to access typed properties
+      const docData = doc as {
+        type?: string
+        externalUrl?: string
+        url?: string
+        embedThumbnailUrl?: string | null
+      }
+      if (docData.type === MediaType.External) {
+        // YouTube: use YouTube's CDN thumbnail directly (no API needed)
+        if (docData.externalUrl && isYouTubeUrl(docData.externalUrl)) {
+          const videoId = extractYouTubeVideoId(docData.externalUrl)
+          if (videoId) {
+            return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
+          }
+        }
+        // Vimeo (and other providers): use the thumbnail fetched by resolveEmbedHook
+        if (docData.embedThumbnailUrl) {
+          return docData.embedThumbnailUrl
+        }
+        return null
+      }
+      // Uploaded files: return the main URL (false to disable if url is undefined)
+      return docData.url || false
+    },
+    // Skip Payload's buffer-based checkFileRestrictions.
+    // With clientUploads=true, Payload re-fetches the entire file from Vercel Blob into
+    // server memory before running restrictions — causing OOM/timeouts for large video files.
+    // Our validateMediaUploadHook already handles MIME type and size validation server-side.
+    allowRestrictedFileTypes: true,
     mimeTypes: [
       'image/*',
+      // Explicit video MIME types + extensions for browser file-picker compatibility.
+      // macOS Safari requires 'video/quicktime' or '.mov' explicitly — 'video/*' alone
+      // does not show .mov files in the file picker on all browsers.
       'video/*',
+      'video/mp4',
+      'video/quicktime',
+      '.mp4',
+      '.mov',
       'audio/*',
       'application/pdf',
       'application/msword',
@@ -90,6 +132,64 @@ export const Media: CollectionConfig = {
       admin: {
         condition: (data) => data?.type === MediaType.External,
         description: 'URL for external embed or link',
+      },
+      required: false,
+    },
+    {
+      name: 'embedProvider',
+      type: 'select',
+      options: [
+        { label: 'YouTube', value: 'youtube' },
+        { label: 'Vimeo', value: 'vimeo' },
+        { label: 'Generic', value: 'generic' },
+      ],
+      admin: {
+        condition: (data) => data?.type === MediaType.External,
+        position: 'sidebar',
+        description: 'Auto-detected from URL. Do not change manually.',
+        readOnly: true,
+      },
+      required: false,
+    },
+    {
+      name: 'embedVideoId',
+      type: 'text',
+      admin: {
+        condition: (data) => data?.type === MediaType.External,
+        position: 'sidebar',
+        description: 'Provider-specific video/content ID',
+        readOnly: true,
+      },
+      required: false,
+    },
+    {
+      name: 'embedUrl',
+      type: 'text',
+      admin: {
+        condition: (data) => data?.type === MediaType.External,
+        position: 'sidebar',
+        description: 'Embed-ready URL for iframe (auto-generated)',
+        readOnly: true,
+      },
+      required: false,
+    },
+    {
+      name: 'embedTitle',
+      type: 'text',
+      admin: {
+        condition: (data) => data?.type === MediaType.External,
+        description: 'Title fetched from provider (auto-populated)',
+        readOnly: true,
+      },
+      required: false,
+    },
+    {
+      name: 'embedThumbnailUrl',
+      type: 'text',
+      admin: {
+        condition: (data) => data?.type === MediaType.External,
+        description: 'Thumbnail URL fetched from provider (auto-populated)',
+        readOnly: true,
       },
       required: false,
     },
@@ -171,7 +271,7 @@ export const Media: CollectionConfig = {
   ],
   hooks: {
     beforeValidate: [validateMediaUploadHook],
-    beforeChange: [enforceRetentionPolicyHook],
+    beforeChange: [resolveEmbedHook, enforceRetentionPolicyHook],
   },
   // File storage is handled by @payloadcms/storage-vercel-blob plugin
   // The plugin adds disableLocalStorage: true and adapter handlers to this collection

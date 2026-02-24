@@ -4,6 +4,7 @@
  */
 
 import type {
+  QuestionMatchingBlock,
   QuestionSelectMcqBlock,
   QuestionTableBlock,
 } from '@/server/payload/collections/Exercises/types'
@@ -292,4 +293,22 @@ export function addTableRow(block: QuestionTableBlock): QuestionTableBlock {
 export function removeTableRow(block: QuestionTableBlock, rowIndex: number): QuestionTableBlock {
   const newRowsData = block.table.rowsData.filter((_, i) => i !== rowIndex)
   return normalizeTableAnswers(block, newRowsData)
+}
+
+// ---- Matching normalizers ----
+
+/**
+ * Remove correctPairs that reference non-existent option IDs.
+ * Called whenever left or right column options change (add/remove).
+ */
+export function normalizeMatchingPairs(block: QuestionMatchingBlock): QuestionMatchingBlock {
+  const leftIds = new Set(block.leftColumn.map((o) => o.id))
+  const rightIds = new Set(block.rightColumn.map((o) => o.id))
+
+  const validPairs = block.correctPairs.filter(
+    (pair) => leftIds.has(pair.optionId) && rightIds.has(pair.matchId),
+  )
+
+  if (validPairs.length === block.correctPairs.length) return block
+  return { ...block, correctPairs: validPairs }
 }

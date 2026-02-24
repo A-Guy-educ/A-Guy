@@ -19,13 +19,66 @@ function isVideoType(media: Media): boolean {
   return media.type === 'video'
 }
 
+function isExternalType(media: Media): boolean {
+  return media.type === 'external'
+}
+
 /**
  * Renders a single media item.
  * Uses plain <img> / <video> to avoid Next.js Image optimization domain issues.
  */
 function MediaItem({ media }: { media: Media }) {
-  const src = getMediaUrl(media.url, media.updatedAt)
+  // External media has no file URL — handle before the src check
+  if (isExternalType(media)) {
+    const embedMedia = media as Media & {
+      embedProvider?: string | null
+      embedVideoId?: string | null
+      embedUrl?: string | null
+      embedTitle?: string | null
+      externalUrl?: string | null
+    }
 
+    // YouTube / Vimeo embed — 16:9 responsive iframe
+    if (
+      (embedMedia.embedProvider === 'youtube' || embedMedia.embedProvider === 'vimeo') &&
+      embedMedia.embedVideoId &&
+      embedMedia.embedUrl
+    ) {
+      return (
+        <div
+          className="relative w-full overflow-hidden rounded-lg"
+          style={{ aspectRatio: '16 / 9' }}
+        >
+          <iframe
+            src={embedMedia.embedUrl}
+            title={embedMedia.embedTitle || `Video ${embedMedia.embedVideoId}`}
+            className="absolute inset-0 h-full w-full"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
+        </div>
+      )
+    }
+
+    // Generic external embed
+    const embedUrl = embedMedia.embedUrl || embedMedia.externalUrl
+    if (embedUrl) {
+      return (
+        <iframe
+          src={embedUrl}
+          title={embedMedia.embedTitle || 'External content'}
+          className="w-full h-[400px] border border-border rounded"
+          loading="lazy"
+        />
+      )
+    }
+
+    return null
+  }
+
+  const src = getMediaUrl(media.url, media.updatedAt)
   if (!src) return null
 
   if (isVideoType(media)) {

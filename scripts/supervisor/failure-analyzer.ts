@@ -29,6 +29,8 @@ export interface AnalysisResult {
   rootCause: string
   /** Actionable instructions for the next attempt */
   refinedFeedback: string
+  /** Whether retry is possible (false for infrastructure/timeouts) */
+  canRetry: boolean
 }
 
 // Lazy initialization
@@ -139,6 +141,7 @@ This is attempt #${input.retryNumber} of 3.`
         rootCause: 'Failed to analyze: empty response from LLM',
         refinedFeedback:
           input.previousFeedback || 'Review the error message and try a different approach.',
+        canRetry: true,
       }
     }
 
@@ -148,12 +151,14 @@ This is attempt #${input.retryNumber} of 3.`
       return {
         rootCause: parsed.rootCause || 'Unknown root cause',
         refinedFeedback: parsed.refinedFeedback || 'Review the error and try again.',
+        canRetry: true,
       }
     } catch {
       // JSON parse failed, try to extract from text
       return {
         rootCause: content.slice(0, 200),
         refinedFeedback: content.slice(0, 500),
+        canRetry: true,
       }
     }
   } catch (error) {
@@ -166,6 +171,7 @@ This is attempt #${input.retryNumber} of 3.`
       refinedFeedback:
         input.previousFeedback ||
         'The supervisor failed to analyze this error. Please run `/cody rerun <task-id> --feedback "fix the issue manually"` with specific guidance.',
+      canRetry: true,
     }
   }
 }
@@ -188,6 +194,7 @@ export async function analyzeFailureWithFallback(
       refinedFeedback:
         input.previousFeedback ||
         'No API key available for analysis. Please manually review the error.',
+      canRetry: true,
     }
   }
 

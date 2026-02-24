@@ -41,6 +41,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: '*.blob.vercel-storage.com',
       },
+      // Allow YouTube thumbnails for External media
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+      },
     ],
   },
   outputFileTracingExcludes: {

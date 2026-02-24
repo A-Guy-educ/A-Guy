@@ -428,6 +428,87 @@ export const QuestionAxisBlockSchema = z
   .strict()
 
 // ---------------------------------
+// Zod: HTML Block (WYSIWYG content stored as sanitized HTML string)
+// ---------------------------------
+
+// Allowlist of tags Quill can produce + safe formatting tags
+const HTML_ALLOWED_TAGS = new Set([
+  'p',
+  'br',
+  'hr',
+  'span',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'strong',
+  'b',
+  'em',
+  'i',
+  'u',
+  's',
+  'del',
+  'ins',
+  'mark',
+  'sub',
+  'sup',
+  'ul',
+  'ol',
+  'li',
+  'blockquote',
+  'pre',
+  'code',
+  'a',
+  'img',
+  'div',
+  'section',
+  'table',
+  'thead',
+  'tbody',
+  'tr',
+  'th',
+  'td',
+])
+
+// Patterns that are dangerous regardless of tag allowlist
+const DANGEROUS_HTML_PATTERNS = [
+  /\bon\w+\s*=/i, // inline event handlers (onclick, onload, etc.)
+  /javascript\s*:/i, // javascript: URLs
+  /vbscript\s*:/i, // vbscript: URLs
+  /data\s*:[^,]*;base64/i, // data: URIs with base64 (in href/src context)
+]
+
+function validateHtmlTags(html: string): boolean {
+  const tagPattern = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi
+  let match
+  while ((match = tagPattern.exec(html)) !== null) {
+    if (!HTML_ALLOWED_TAGS.has(match[1].toLowerCase())) {
+      return false
+    }
+  }
+  return true
+}
+
+export const HtmlBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('html'),
+    html: z
+      .string()
+      .refine(
+        (html) => validateHtmlTags(html),
+        'HTML contains disallowed tags. Only safe formatting tags are permitted.',
+      )
+      .refine(
+        (html) => !DANGEROUS_HTML_PATTERNS.some((pattern) => pattern.test(html)),
+        'HTML contains blocked content (event handlers, javascript:, vbscript:, or data: URLs)',
+      ),
+  })
+  .strict()
+
+// ---------------------------------
 // Zod: Content union (exported for admin components)
 // ---------------------------------
 export const ContentBlockSchema = z.discriminatedUnion('type', [
@@ -440,6 +521,7 @@ export const ContentBlockSchema = z.discriminatedUnion('type', [
   SvgBlockSchema,
   QuestionGeometryBlockSchema,
   QuestionAxisBlockSchema,
+  HtmlBlockSchema,
 ])
 
 export type ContentBlock = z.infer<typeof ContentBlockSchema>

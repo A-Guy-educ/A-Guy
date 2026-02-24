@@ -1,11 +1,15 @@
 /**
  * Unit tests for exercise-conversion helpers
  */
+import fs from 'fs'
 import {
   buildJobsWhereQuery,
   validatePromptForUsageAndTenant,
 } from '@/server/services/exercise-conversion/helpers'
 import { describe, expect, it } from 'vitest'
+
+// Path to the source file for regression testing
+const SOURCE_FILE_PATH = 'src/server/services/exercise-conversion/helpers.ts'
 
 describe('exercise-conversion helpers', () => {
   describe('buildJobsWhereQuery', () => {
@@ -80,6 +84,23 @@ describe('exercise-conversion helpers', () => {
       expect(() =>
         validatePromptForUsageAndTenant(prompt as any, 'extractor', 'tenant-123'),
       ).toThrow('Prompt tenant mismatch')
+    })
+  })
+
+  describe('code quality', () => {
+    it('should not contain eslint-disable-next-line comments', () => {
+      const sourceCode = fs.readFileSync(SOURCE_FILE_PATH, 'utf-8')
+      const eslintDisableNextLineRegex = /eslint-disable-next-line/g
+      const matches = sourceCode.match(eslintDisableNextLineRegex)
+      expect(matches).toBeNull()
+    })
+
+    it('should not contain any type assertions', () => {
+      const sourceCode = fs.readFileSync(SOURCE_FILE_PATH, 'utf-8')
+      // Match patterns like "as any", "as unknown", "as SomeType" but not "any[]" or "AsyncAny"
+      const anyTypeAssertionRegex = /\bas\s+any\b(?!\w)/g
+      const matches = sourceCode.match(anyTypeAssertionRegex)
+      expect(matches).toBeNull()
     })
   })
 })

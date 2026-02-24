@@ -23,7 +23,6 @@ export const Chapters: CollectionConfig = {
   hooks: {
     beforeChange: [
       ({ data }) => {
-        console.log('data:', data)
         if (data?.title && !data?.slug) {
           data.slug = formatSlug(data.title)
         }
@@ -79,6 +78,9 @@ export const Chapters: CollectionConfig = {
       type: 'textarea',
       admin: {
         description: 'Detailed description of the chapter',
+        components: {
+          Field: '@/ui/admin/QuillField#QuillField',
+        },
       },
     },
     {

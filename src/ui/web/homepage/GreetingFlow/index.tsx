@@ -26,21 +26,30 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
   }
 
   useEffect(() => {
+    const controller = new AbortController()
+
     if (step === 'courses') {
       setIsLoadingCourses(true)
       fetch(
         '/api/courses?where[status][equals]=published&where[isActive][equals]=true&sort=order&depth=2&limit=1000&pagination=false',
+        { signal: controller.signal },
       )
         .then((res) => res.json())
         .then((data) => {
           setCourses(data.docs || [])
         })
         .catch((error) => {
-          console.error('Failed to load courses:', error)
+          if (error.name !== 'AbortError') {
+            console.error('Failed to load courses:', error)
+          }
         })
         .finally(() => {
           setIsLoadingCourses(false)
         })
+    }
+
+    return () => {
+      controller.abort()
     }
   }, [step])
 

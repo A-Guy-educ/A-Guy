@@ -45,6 +45,16 @@ export const STAGE_TIMEOUTS: Record<string, number> = {
 // Types
 // ============================================================================
 
+/**
+ * Result of content validation after agent produces output
+ */
+export interface ValidationResult {
+  /** Whether the output is valid */
+  valid: boolean
+  /** Error message if validation failed (for feedback to agent on retry) */
+  error?: string
+}
+
 export interface AgentRunnerOptions {
   /** Custom stage timeouts (merges with defaults) */
   stageTimeouts?: Record<string, number>
@@ -58,12 +68,17 @@ export interface AgentRunnerOptions {
   cwd?: string
   /** Runner backend (defaults to auto-detect from GITHUB_ACTIONS env) */
   backend?: RunnerBackend
+  /** Content validation function to run after output file is detected.
+   *  On validation failure, the output file is deleted and the agent is retried with the error in the prompt. */
+  validateOutput?: (outputFile: string) => ValidationResult
 }
 
 export interface AgentRunResult {
   succeeded: boolean
   timedOut: boolean
   retries: number
+  /** Validation errors from failed content validation attempts */
+  validationErrors?: string[]
 }
 
 // ============================================================================
@@ -79,6 +94,7 @@ export interface AgentRunResult {
  * - Timeout enforcement
  * - Retry on failure (configurable)
  * - Process cleanup on completion
+ * - Content validation with retry on failure
  *
  * @param input - Orchestrator input with taskId
  * @param stage - The stage to run (e.g., 'build', 'test')
@@ -99,6 +115,7 @@ export function runAgentWithFileWatch(
     env: extraEnv = {},
     cwd = process.cwd(),
     backend = createRunner(),
+    validateOutput,
   } = options
 
   // Resolve timeout
@@ -116,23 +133,24 @@ export function runAgentWithFileWatch(
       SKIP_HOOKS: '1',
     }
 
-    // Build the prompt for the stage
-    const prompt = buildStagePrompt(input, stage)
-
     let retries = 0
+    const validationErrors: string[] = []
     let currentChild: ChildProcess | null = null
     const startTime = Date.now()
 
-    const attemptWithRetry = (): void => {
+    const attemptWithRetry = (feedback?: string): void => {
       console.log(`  Attempt ${retries + 1}/${maxRetries + 1}`)
 
       // Calculate remaining timeout (subtract elapsed time from previous attempts)
       const elapsed = Date.now() - startTime
       const remainingTimeout = effectiveTimeout - elapsed
       if (remainingTimeout <= 0) {
-        resolve({ succeeded: false, timedOut: true, retries })
+        resolve({ succeeded: false, timedOut: true, retries, validationErrors })
         return
       }
+
+      // Build the prompt for the stage (rebuilt each attempt to include feedback)
+      const prompt = buildStagePrompt(input, stage, feedback)
 
       // Spawn using the configured backend (local or GitHub)
       currentChild = backend.spawn(stage, prompt, agentEnv, cwd)
@@ -157,7 +175,7 @@ export function runAgentWithFileWatch(
           }, 5000)
         }
 
-        resolve({ ...result, retries })
+        resolve({ ...result, retries, validationErrors })
       }
 
       // Poll for output file
@@ -205,6 +223,44 @@ export function runAgentWithFileWatch(
                 fs.renameSync(detectedFile, outputFile)
               }
 
+              // VALIDATION: Check content if validator provided
+              if (validateOutput) {
+                const validationResult = validateOutput(outputFile)
+                if (!validationResult.valid) {
+                  const errorMsg = validationResult.error || 'Content validation failed'
+                  console.log(`  ⚠️ Validation failed: ${errorMsg}`)
+
+                  // Delete the invalid output file
+                  try {
+                    fs.unlinkSync(outputFile)
+                    console.log(`  🗑️ Deleted invalid output file`)
+                  } catch {
+                    // File might not exist, continue
+                  }
+
+                  // Store validation error for feedback
+                  validationErrors.push(errorMsg)
+
+                  // Retry with feedback if we have retries left
+                  if (retries < maxRetries) {
+                    retries++
+                    const feedbackMsg = `VALIDATION ERROR from previous attempt:\n${errorMsg}\n\nFix this issue in your output. Ensure your output follows the exact required format.`
+                    console.log(
+                      `  🔄 Retrying with validation feedback (${retries}/${maxRetries})...`,
+                    )
+                    // Brief delay before retry
+                    setTimeout(() => attemptWithRetry(feedbackMsg), 2000)
+                    return
+                  } else {
+                    // Exhausted retries after validation failures
+                    console.log(`  ❌ Validation failed and retries exhausted`)
+                    finish({ succeeded: false, timedOut: false })
+                    return
+                  }
+                }
+              }
+
+              // Validation passed (or no validator) - success
               finish({ succeeded: true, timedOut: false })
               return
             }
@@ -231,7 +287,8 @@ export function runAgentWithFileWatch(
         if (!resolved) {
           // Success only if file was created (not just exit code 0)
           if (fs.existsSync(outputFile)) {
-            finish({ succeeded: true, timedOut: false })
+            // Don't finish here - let the poll loop continue to handle validation
+            // The finish() will be called after validation completes
           } else if (retries < maxRetries) {
             // Retry on ANY failure — exit non-zero OR exit 0 without output file
             retries++
@@ -242,8 +299,8 @@ export function runAgentWithFileWatch(
             if (currentChild && !currentChild.killed) {
               currentChild.kill('SIGTERM')
             }
-            // Brief delay before retry
-            setTimeout(attemptWithRetry, 2000)
+            // Brief delay before retry (no feedback since this was a content-missing failure)
+            setTimeout(() => attemptWithRetry(undefined), 2000)
           } else {
             // Exhausted retries without producing output file
             console.log(`  ❌ Agent exited ${code} without producing output file`)
@@ -266,8 +323,8 @@ export function runAgentWithFileWatch(
       })
     }
 
-    // Start first attempt
-    attemptWithRetry()
+    // Start first attempt (no feedback)
+    attemptWithRetry(undefined)
   })
 }
 

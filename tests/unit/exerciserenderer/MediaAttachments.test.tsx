@@ -115,4 +115,46 @@ describe('MediaAttachments', () => {
     const wrapper = container.firstElementChild
     expect(wrapper?.className).toContain('custom-class')
   })
+
+  it('renders a YouTube iframe for external media with embed fields', () => {
+    const media = createMedia({
+      id: 'yt1',
+      type: 'external',
+      url: undefined as unknown as string,
+      embedProvider: 'youtube',
+      embedVideoId: 'dQw4w9WgXcQ',
+      embedUrl: 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+      embedTitle: 'Test Video',
+      externalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    } as Partial<Media> & { id: string })
+
+    const { container } = renderWithMediaMap(<MediaAttachments mediaIds={['yt1']} />, {
+      yt1: media,
+    })
+
+    const iframe = container.querySelector('iframe')
+    expect(iframe).toBeTruthy()
+    expect(iframe?.getAttribute('src')).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')
+    expect(iframe?.getAttribute('title')).toBe('Test Video')
+    expect(iframe?.getAttribute('allowfullscreen')).not.toBeNull()
+  })
+
+  it('renders a generic iframe for external media without YouTube', () => {
+    const media = createMedia({
+      id: 'ext1',
+      type: 'external',
+      url: undefined as unknown as string,
+      embedProvider: 'generic',
+      embedUrl: 'https://example.com/widget',
+      externalUrl: 'https://example.com/widget',
+    } as Partial<Media> & { id: string })
+
+    const { container } = renderWithMediaMap(<MediaAttachments mediaIds={['ext1']} />, {
+      ext1: media,
+    })
+
+    const iframe = container.querySelector('iframe')
+    expect(iframe).toBeTruthy()
+    expect(iframe?.getAttribute('src')).toBe('https://example.com/widget')
+  })
 })

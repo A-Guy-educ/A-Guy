@@ -17,6 +17,40 @@ export interface LogContext {
 }
 
 /**
+ * Global context that gets merged with per-call context
+ */
+let globalContext: LogContext = {}
+
+/**
+ * Set global context (e.g., at pipeline start)
+ * Per-call context values override global values
+ */
+export function setGlobalContext(context: LogContext): void {
+  globalContext = { ...context }
+}
+
+/**
+ * Get current global context
+ */
+export function getGlobalContext(): LogContext {
+  return { ...globalContext }
+}
+
+/**
+ * Clear global context (useful for testing)
+ */
+export function clearGlobalContext(): void {
+  globalContext = {}
+}
+
+/**
+ * Merge global and per-call context (per-call takes precedence)
+ */
+function mergeContext(context?: LogContext): LogContext {
+  return { ...globalContext, ...context }
+}
+
+/**
  * Format a timestamp for log output
  */
 function formatTimestamp(): string {
@@ -27,18 +61,19 @@ function formatTimestamp(): string {
  * Format the log prefix with stage context
  */
 function formatPrefix(context?: LogContext): string {
+  const merged = mergeContext(context)
   const parts: string[] = []
 
-  if (context?.stage) {
-    parts.push(`[stage:${context.stage}]`)
+  if (merged.stage) {
+    parts.push(`[stage:${merged.stage}]`)
   }
 
-  if (context?.taskId) {
-    parts.push(`[task:${context.taskId}]`)
+  if (merged.taskId) {
+    parts.push(`[task:${merged.taskId}]`)
   }
 
-  if (context?.runId) {
-    parts.push(`[run:${context.runId}]`)
+  if (merged.runId) {
+    parts.push(`[run:${merged.runId}]`)
   }
 
   parts.push(`[${formatTimestamp()}]`)
@@ -55,17 +90,30 @@ export function logWithContext(message: string, context?: LogContext): void {
 }
 
 /**
- * Log an error with structured context
+ * Log a warning with structured context
  */
-export function errorWithContext(message: string, error?: Error, context?: LogContext): void {
+export function warnWithContext(message: string, context?: LogContext): void {
+  const prefix = formatPrefix(context)
+  console.log(`${prefix} ⚠️ ${message}`)
+}
+
+/**
+ * Log an error with structured context
+ * Accepts Error, unknown, or string
+ */
+export function errorWithContext(message: string, error?: unknown, context?: LogContext): void {
   const prefix = formatPrefix(context)
   console.error(`${prefix} ${message}`)
 
   if (error) {
-    console.error(`${prefix} Error: ${error.message}`)
-    if (error.stack) {
+    const errorMessage =
+      typeof error === 'string' ? error : error instanceof Error ? error.message : String(error)
+    console.error(`${prefix} Error: ${errorMessage}`)
+
+    const errorStack = error instanceof Error ? error.stack : null
+    if (errorStack) {
       // Skip the first line of stack (the error message line)
-      const stackLines = error.stack.split('\n').slice(1)
+      const stackLines = errorStack.split('\n').slice(1)
       for (const line of stackLines) {
         console.error(`${prefix}   ${line.trim()}`)
       }
@@ -74,7 +122,7 @@ export function errorWithContext(message: string, error?: Error, context?: LogCo
 }
 
 /**
- * Log a debug message (only in development)
+ * Log a debug message (only in development or when DEBUG is set)
  */
 export function debugWithContext(message: string, context?: LogContext): void {
   if (process.env.NODE_ENV === 'development' || process.env.DEBUG) {

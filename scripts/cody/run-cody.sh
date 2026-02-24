@@ -39,8 +39,8 @@ pnpm cody \
   --trigger-type="$TRIGGER_TYPE" \
   ${RUN_ID:+--run-id="$RUN_ID"} \
   ${RUN_URL:+--run-url="$RUN_URL"} \
-  $CLARIFY_FLAG \
-  $DRY_RUN_FLAG \
+  ${CLARIFY_FLAG:+"$CLARIFY_FLAG"} \
+  ${DRY_RUN_FLAG:+"$DRY_RUN_FLAG"} \
   ${COMMENT_BODY_FLAG:+"$COMMENT_BODY_FLAG"} \
   ${FEEDBACK:+--feedback="$FEEDBACK"} \
   ${FROM_STAGE:+--from="$FROM_STAGE"}

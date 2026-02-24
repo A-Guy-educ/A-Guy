@@ -35,25 +35,76 @@ For each step in the plan:
 
 ### How to Invoke Test Writer
 
-In your message to the agent, use:
+**CRITICAL: You MUST provide source file context when invoking test-writer.** The test-writer cannot read source files during its execution, so you must provide the context.
+
+In your message to the agent, use this template:
 
 ```
 @test-writer
 
+## Source File Exports
+// COPY AND PASTE the actual function/component signatures from the source file
+// This is REQUIRED so the test-writer knows the correct API to test
+export function myFunction(param: string): Promise<Result> {
+  // ... (actual code)
+}
+
+## Existing Similar Test (for mock patterns)
+// COPY relevant mock patterns from an existing test file in tests/unit/
+// This shows the test-writer how mocking is done in this project
+
 Write tests for this plan step:
 
-<copy the plan step details here>
+// PASTE the plan step details
+```
+
+**Example:**
+
+```
+@test-writer
+
+## Source File Exports
+export function generateSlug({ value, operation, siblingData }: FieldHookArgs): Promise<string> {
+  const title = siblingData?.title
+  if (!title) return value || undefined
+  // ...
+}
+
+## Existing Similar Test (for mock patterns)
+// From tests/unit/collections/exercises-hooks.test.ts
+vi.mock('@/server/payload/collections/Exercises/hooks', () => {
+  const generateSlug = vi.fn()
+  generateSlug.mockImplementation(async ({ value, operation, siblingData }) => {
+    // mock implementation
+  })
+  return { generateSlug }
+})
+
+Write tests for this plan step:
+- Add MAX_SLUG_ATTEMPTS = 100 constant to bound the slug generation loop
+- Change while (true) to for loop with max iterations
 ```
 
 The test-writer will create tests in `tests/unit/` or `tests/int/`.
 
 ### Running Tests
 
-After implementing each step:
+After implementing each step, you MUST run tests and fix failures:
 
 ```bash
+# Run tests after each implementation step
 pnpm test:unit
+
+# If tests fail, fix them BEFORE moving to the next step
+# Do NOT proceed until tests pass
 ```
+
+**CRITICAL**: Tests MUST pass before you can finish the build. If tests fail:
+
+1. Read the test error carefully
+2. Check if you're using correct imports and existing patterns
+3. Look at similar test files in the project for reference
+4. Fix the issue and re-run tests
 
 ## Workflow
 
@@ -63,6 +114,25 @@ pnpm test:unit
 - Address any SUGGESTIONS from plan-gap.md (non-blocking, but improve quality)
 - Do NOT change the spec
 - Do NOT expand scope
+
+### 1.1 CRITICAL: Understand Existing Patterns First
+
+Before writing ANY code or tests, you MUST read existing files to understand the codebase:
+
+1. **For imports**: Check if the function/class exists in the module
+   - Example: If using `logger.child()`, check if `src/infra/utils/logger/logger.ts` exports it
+   - If it doesn't exist, find the correct export or use what's available
+
+2. **For tests**: Look at similar test files in `tests/unit/` or `tests/int/`
+   - Check existing mock patterns
+   - Verify function names and signatures
+   - Make sure you're testing against actual exports
+
+3. **For components**: Read existing components in the same directory
+   - Check how similar components are structured
+   - Verify prop types and interfaces
+
+**NEVER assume** an export exists without checking. Always verify first.
 
 ### 2. Quality Checks
 
@@ -109,6 +179,7 @@ Use the Write tool to create this file.
 
 - All code changes implemented according to plan
 - Tests written via @test-writer for each plan step
+- All tests pass (`pnpm test:unit` passes)
 - Quality checks pass (`pnpm -s tsc --noEmit && pnpm -s lint`)
 - `build.md` output file written
 

@@ -21,6 +21,36 @@ const VALID_TASK_TYPES = [
 const VALID_PIPELINES = ['spec_only', 'spec_execute_verify'] as const
 const VALID_RISK_LEVELS = ['low', 'medium', 'high'] as const
 const VALID_DOMAINS = ['backend', 'frontend', 'infra', 'data', 'llm', 'devops', 'product'] as const
+const VALID_PIPELINE_PROFILES = ['lightweight', 'standard'] as const
+
+// --- Input quality levels for smart stage skipping ---
+export const VALID_INPUT_QUALITY_LEVELS = [
+  'raw_idea',
+  'good_spec',
+  'detailed_plan',
+  'spec_and_plan',
+] as const
+
+// Stages that cannot be skipped (gap analysis always runs)
+export const NON_SKIPPABLE_STAGES = [
+  'gap',
+  'plan-gap',
+  'build',
+  'commit',
+  'verify',
+  'auditor',
+  'apply-audit',
+  'pr',
+] as const
+
+// Stages that CAN be skipped when input quality is high
+export const SKIPPABLE_STAGES = ['spec', 'architect'] as const
+
+export interface InputQuality {
+  level: (typeof VALID_INPUT_QUALITY_LEVELS)[number]
+  skip_stages: string[]
+  reasoning: string
+}
 
 // --- Control mode: determines pipeline autonomy level ---
 export type ControlMode = 'auto' | 'risk-gated' | 'hard-stop'
@@ -43,8 +73,31 @@ export function resolveControlMode(taskDef: TaskDefinition, override?: ControlMo
   return CONTROL_MODE_MAP[taskDef.risk_level] ?? 'auto'
 }
 
+/**
+ * Lightweight tasks: simple fixes that skip heavyweight stages (spec, gap, plan-gap, auditor, apply-audit)
+ */
+export function resolvePipelineProfile(taskDef: TaskDefinition): PipelineProfile {
+  // Agent explicit override always wins
+  if (taskDef.pipeline_profile && VALID_PIPELINE_PROFILES.includes(taskDef.pipeline_profile)) {
+    return taskDef.pipeline_profile
+  }
+
+  // Lightweight: low-risk bug fixes, refactors, and ops tasks
+  // These are simple changes that don't need the full pipeline
+  if (taskDef.risk_level === 'low' && LIGHTWEIGHT_TASK_TYPES.includes(taskDef.task_type)) {
+    return 'lightweight'
+  }
+
+  // Everything else gets the full standard pipeline
+  return 'standard'
+}
+
 type TaskType = (typeof VALID_TASK_TYPES)[number]
 type Pipeline = (typeof VALID_PIPELINES)[number]
+type PipelineProfile = (typeof VALID_PIPELINE_PROFILES)[number]
+
+// Lightweight tasks: simple fixes that skip heavyweight stages
+const LIGHTWEIGHT_TASK_TYPES: TaskType[] = ['fix_bug', 'refactor', 'ops']
 
 export interface TaskDefinition {
   task_type: TaskType
@@ -55,6 +108,8 @@ export interface TaskDefinition {
   scope: string[]
   missing_inputs: Array<{ field: string; question: string }>
   assumptions: string[]
+  input_quality?: InputQuality
+  pipeline_profile?: (typeof VALID_PIPELINE_PROFILES)[number]
 }
 
 // Pipeline consistency: task_type → allowed pipeline values
@@ -156,6 +211,27 @@ export function normalizeTask(raw: Record<string, unknown>): Record<string, unkn
     data.assumptions = []
   }
 
+  // 6. Default input_quality if missing (for backward compatibility)
+  if (!data.input_quality || typeof data.input_quality !== 'object') {
+    data.input_quality = {
+      level: 'raw_idea',
+      skip_stages: [],
+      reasoning: '',
+    }
+  } else {
+    // Ensure input_quality has required fields
+    const iq = data.input_quality as Record<string, unknown>
+    if (!iq.level) {
+      iq.level = 'raw_idea'
+    }
+    if (!Array.isArray(iq.skip_stages)) {
+      iq.skip_stages = []
+    }
+    if (typeof iq.reasoning !== 'string') {
+      iq.reasoning = ''
+    }
+  }
+
   return data
 }
 
@@ -179,6 +255,15 @@ export function validateTask(raw: unknown): ValidationResult {
     errors.push(
       `Invalid pipeline: "${data.pipeline}". Must be one of: ${VALID_PIPELINES.join(', ')}`,
     )
+  }
+
+  // Validate optional pipeline_profile
+  if (data.pipeline_profile !== undefined) {
+    if (!VALID_PIPELINE_PROFILES.includes(data.pipeline_profile as PipelineProfile)) {
+      errors.push(
+        `Invalid pipeline_profile: "${data.pipeline_profile}". Must be one of: ${VALID_PIPELINE_PROFILES.join(', ')}`,
+      )
+    }
   }
 
   if (!VALID_RISK_LEVELS.includes(data.risk_level as (typeof VALID_RISK_LEVELS)[number])) {
@@ -215,6 +300,50 @@ export function validateTask(raw: unknown): ValidationResult {
 
   if (!Array.isArray(data.assumptions)) {
     errors.push(`Invalid assumptions: must be an array of strings`)
+  }
+
+  // Validate input_quality if present
+  if (data.input_quality !== undefined) {
+    if (typeof data.input_quality !== 'object' || data.input_quality === null) {
+      errors.push(`Invalid input_quality: must be an object`)
+    } else {
+      const iq = data.input_quality as Record<string, unknown>
+      // Validate level
+      if (
+        !VALID_INPUT_QUALITY_LEVELS.includes(
+          iq.level as (typeof VALID_INPUT_QUALITY_LEVELS)[number],
+        )
+      ) {
+        errors.push(
+          `Invalid input_quality.level: "${iq.level}". Must be one of: ${VALID_INPUT_QUALITY_LEVELS.join(', ')}`,
+        )
+      }
+      // Validate skip_stages
+      if (!Array.isArray(iq.skip_stages)) {
+        errors.push(`Invalid input_quality.skip_stages: must be an array`)
+      } else {
+        for (const stage of iq.skip_stages) {
+          if (typeof stage !== 'string') {
+            errors.push(`Invalid input_quality.skip_stages: each stage must be a string`)
+            break
+          }
+          // Check for non-skippable stages
+          if (NON_SKIPPABLE_STAGES.includes(stage as (typeof NON_SKIPPABLE_STAGES)[number])) {
+            errors.push(
+              `Cannot skip stage "${stage}" - gap and plan-gap must always run for quality assurance`,
+            )
+          }
+          // Check for unknown stages (optional warning, but we'll be strict)
+          if (!SKIPPABLE_STAGES.includes(stage as (typeof SKIPPABLE_STAGES)[number])) {
+            // Allow unknown stages but warn - this is informational, not an error
+          }
+        }
+      }
+      // Validate reasoning
+      if (typeof iq.reasoning !== 'string') {
+        errors.push(`Invalid input_quality.reasoning: must be a string`)
+      }
+    }
   }
 
   // Pipeline consistency check
@@ -403,3 +532,61 @@ export const IMPL_PIPELINE: PipelineStage[] = [
  * Flat list of all impl stage names (for validation, rerun, etc.)
  */
 export const ALL_IMPL_STAGE_NAMES = flattenPipeline(IMPL_PIPELINE)
+
+// --- Lightweight pipeline variants ---
+
+/**
+ * Lightweight implementation pipeline stages (no heavyweight stages).
+ *
+ * Flow:
+ *   architect → build → commit → verify → pr
+ *
+ * Skipped: plan-gap, auditor, apply-audit (saves 5-6 LLM calls)
+ */
+export const LIGHTWEIGHT_IMPL_PIPELINE: PipelineStage[] = [
+  'architect',
+  'build',
+  'commit',
+  'verify',
+  'pr',
+]
+
+/**
+ * Flat list of lightweight impl stage names (for validation, rerun, etc.)
+ */
+export const ALL_LIGHTWEIGHT_IMPL_STAGE_NAMES = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
+
+/**
+ * Get the implementation pipeline for the given profile.
+ */
+export function getImplPipeline(profile: 'lightweight' | 'standard'): PipelineStage[] {
+  return profile === 'lightweight' ? LIGHTWEIGHT_IMPL_PIPELINE : IMPL_PIPELINE
+}
+
+/**
+ * Get all flattened stage names for the given profile.
+ */
+export function getAllImplStageNames(profile: 'lightweight' | 'standard'): string[] {
+  return profile === 'lightweight' ? ALL_LIGHTWEIGHT_IMPL_STAGE_NAMES : ALL_IMPL_STAGE_NAMES
+}
+
+/**
+ * Get spec pipeline stages for the given profile.
+ *
+ * Standard: taskify → spec → gap [+ clarify]
+ * Lightweight: taskify (spec skipped via input_quality, gap dropped)
+ */
+export function getSpecStagesForProfile(
+  profile: 'lightweight' | 'standard',
+  clarify: boolean,
+): string[] {
+  if (profile === 'lightweight') {
+    // Lightweight: only taskify runs in spec phase
+    // spec is skipped via input_quality (taskify promotes spec.md)
+    // gap is dropped entirely
+    return clarify ? ['taskify', 'clarify'] : ['taskify']
+  }
+
+  // Standard: taskify → spec → gap [+ clarify]
+  return clarify ? ['taskify', 'spec', 'gap', 'clarify'] : ['taskify', 'spec', 'gap']
+}

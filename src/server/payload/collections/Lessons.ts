@@ -101,6 +101,9 @@ export const Lessons: CollectionConfig = {
       type: 'textarea',
       admin: {
         description: 'Detailed description of the lesson',
+        components: {
+          Field: '@/ui/admin/QuillField#QuillField',
+        },
       },
     },
     {
@@ -181,6 +184,9 @@ export const Lessons: CollectionConfig = {
       admin: {
         description: 'HTML content for the intro page. Supports raw HTML (bold, lists, etc).',
         condition: (data) => Boolean(data?.introEnabled),
+        components: {
+          Field: '@/ui/admin/QuillField#QuillField',
+        },
       },
     },
     {

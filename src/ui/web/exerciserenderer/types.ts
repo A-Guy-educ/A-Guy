@@ -157,7 +157,13 @@ export type QuestionBlock =
   | QuestionTableBlock
   | QuestionMatchingBlock
 
-export type ContentBlock = RichTextBlock | QuestionBlock | SvgBlock
+export interface HtmlBlock {
+  id: string
+  type: 'html'
+  html: string
+}
+
+export type ContentBlock = RichTextBlock | HtmlBlock | QuestionBlock | SvgBlock
 
 /**
  * Content structure - block-based with questions

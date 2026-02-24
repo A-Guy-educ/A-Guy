@@ -7,6 +7,8 @@
 set -euo pipefail
 
 # Configure git identity for CI (required for merge commits in GitHub Actions)
+# NOTE: This duplicates the config in cody.yml because this script runs before
+# that step, and `git merge` requires a configured identity.
 git config --global user.email "242132053+aguyaharonyair@users.noreply.github.com"
 git config --global user.name "aguyaharonyair"
 

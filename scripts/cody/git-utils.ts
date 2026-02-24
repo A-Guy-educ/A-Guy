@@ -164,42 +164,42 @@ export function ensureFeatureBranch(taskId: string, taskType: string, projectDir
     // Branch exists on remote — checkout and track it
     console.log(`[branch] Remote branch exists, checking out: ${branchName}`)
     // Clean dirty state from previous failed runs before switching
-    // Only run destructive clean in CI — in local mode, abort if working tree is dirty
+    // Only revert tracked file modifications - don't delete untracked files
+    // (Deleting untracked files could remove agent-created source files before they're committed)
     if (process.env.GITHUB_ACTIONS) {
       try {
         execSync('git checkout -- .', { cwd, stdio: 'pipe' })
-        execSync('git clean -fd', { cwd, stdio: 'pipe' })
       } catch {
         // Ignore — working tree may already be clean
       }
     } else {
-      // Local mode: check for uncommitted changes and warn
+      // Local mode: check for uncommitted changes and stash before checkout
+      // Track whether we actually stashed to avoid popping unrelated stashes
+      let didStash = false
       try {
         const status = execSync('git status --porcelain', { cwd, encoding: 'utf-8' }).trim()
         if (status) {
           console.warn('[branch] ⚠ Working tree has uncommitted changes — stashing before checkout')
           execSync('git stash --include-untracked', { cwd, stdio: 'pipe' })
+          didStash = true
         }
       } catch {
         // Ignore status check errors
       }
-    }
-    execSync(`git checkout ${branchName}`, { cwd, stdio: 'inherit' })
-    execSync(`git pull origin ${branchName}`, { cwd, stdio: 'inherit' })
+      execSync(`git checkout ${branchName}`, { cwd, stdio: 'inherit' })
+      execSync(`git pull origin ${branchName}`, { cwd, stdio: 'inherit' })
 
-    // Merge default branch after pulling feature branch to keep it up-to-date
-    mergeDefaultBranch(cwd)
+      // Merge default branch after pulling feature branch to keep it up-to-date
+      mergeDefaultBranch(cwd)
 
-    // BUG-16 fix: Restore stashed changes in local mode
-    if (!process.env.GITHUB_ACTIONS) {
-      try {
-        const stashList = execSync('git stash list', { cwd, encoding: 'utf-8' }).trim()
-        if (stashList) {
+      // Restore stashed changes only if we actually stashed something
+      if (didStash) {
+        try {
           console.log('[branch] Restoring stashed changes...')
           execSync('git stash pop', { cwd, stdio: 'inherit' })
+        } catch {
+          console.warn('[branch] ⚠ Could not restore stash — may need manual recovery')
         }
-      } catch {
-        console.warn('[branch] ⚠ Could not restore stash — may need manual recovery')
       }
     }
     console.log(`[branch] Checked out and pulled: ${branchName}`)
@@ -221,21 +221,23 @@ export function ensureFeatureBranch(taskId: string, taskType: string, projectDir
     if (localBranchExists) {
       console.log(`[branch] Local branch exists, resuming: ${branchName}`)
       // Stash dirty state before switching (only in local mode, not CI)
+      // Track whether we actually stashed to avoid popping unrelated stashes
+      let didStash = false
       if (!process.env.GITHUB_ACTIONS) {
         try {
           const status = execSync('git status --porcelain', { cwd, encoding: 'utf-8' }).trim()
           if (status) {
             console.log('[branch] Stashing uncommitted changes before checkout...')
             execSync('git stash --include-untracked', { cwd, stdio: 'pipe' })
+            didStash = true
           }
         } catch {
           /* ignore */
         }
       } else {
-        // CI mode: clean instead of stash
+        // CI mode: revert tracked files only - don't delete untracked files
         try {
           execSync('git checkout -- .', { cwd, stdio: 'pipe' })
-          execSync('git clean -fd', { cwd, stdio: 'pipe' })
         } catch {
           // Ignore — working tree may already be clean
         }
@@ -246,14 +248,11 @@ export function ensureFeatureBranch(taskId: string, taskType: string, projectDir
       // Merge default branch after checking out local branch to keep it up-to-date
       mergeDefaultBranch(cwd)
 
-      // Restore stash (only in local mode)
-      if (!process.env.GITHUB_ACTIONS) {
+      // Restore stashed changes only if we actually stashed something
+      if (didStash) {
         try {
-          const stashList = execSync('git stash list', { cwd, encoding: 'utf-8' }).trim()
-          if (stashList) {
-            console.log('[branch] Restoring stashed changes...')
-            execSync('git stash pop', { cwd, stdio: 'inherit' })
-          }
+          console.log('[branch] Restoring stashed changes...')
+          execSync('git stash pop', { cwd, stdio: 'inherit' })
         } catch {
           console.warn('[branch] Could not restore stash — may need manual recovery')
         }
@@ -570,10 +569,11 @@ export function commitPipelineFiles(
     }
 
     // 2. Optionally clean dirty state (CI mode)
+    // Only revert tracked file modifications - don't delete untracked files
+    // (Deleting untracked files could remove agent-created source files before they're committed)
     if (cleanDirtyState && isCI) {
       try {
         execSync('git checkout -- .', { cwd, stdio: 'pipe' })
-        execSync('git clean -fd --exclude=.tasks', { cwd, stdio: 'pipe' })
       } catch {
         // Working tree may already be clean
       }

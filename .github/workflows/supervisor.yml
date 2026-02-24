@@ -11,28 +11,33 @@ concurrency:
   group: supervisor-${{ github.event.issue.number }}
   cancel-in-progress: false
 
-# Permissions: needs to read issues and check out branches
+# Permissions: needs to read issues, check out branches, and trigger workflows
 permissions:
   issues: write
   contents: read
+  actions: write
 
 jobs:
   # Job 1: Validate comment trigger safety
+  # Only run for failure comments from github-actions[bot]
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    if: >-
+      github.event_name == 'issue_comment' &&
+      github.event.comment.user.login == 'github-actions[bot]' &&
+      contains(github.event.comment.body, 'Pipeline failed')
     outputs:
       valid: ${{ steps.safety.outputs.valid }}
       task_id: ${{ steps.extract.outputs.task_id }}
     steps:
-      # Safety validation: same as main cody workflow
+      # Safety validation: different rules for supervisor (accepts bot failure comments)
       - name: Validate comment trigger safety
         id: safety
         env:
           COMMENT_BODY: ${{ github.event.comment.body }}
           AUTHOR: ${{ github.event.comment.user.login }}
-          ASSOCIATION: ${{ github.event.comment.author_association }}
-        run: ./scripts/cody/parse-safety.sh
+        run: ./scripts/cody/parse-safety-supervisor.sh
 
       - name: Extract task ID
         id: extract
@@ -40,7 +45,11 @@ jobs:
         env:
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
+          # Handle both "/cody rerun task-id" format and "❌ Pipeline failed for `task-id`:" format
           TASK_ID=$(echo "$COMMENT_BODY" | grep -oP '`\K[0-9]{6}-[\w-]+(?=`)' | head -1)
+          if [ -z "$TASK_ID" ]; then
+            TASK_ID=$(echo "$COMMENT_BODY" | grep -oP 'for \K[0-9]{6}-[\w-]+(?=:' | head -1)
+          fi
           echo "task_id=$TASK_ID" >> "$GITHUB_OUTPUT"
           if [ -n "$TASK_ID" ]; then
             echo "Task ID found: $TASK_ID"

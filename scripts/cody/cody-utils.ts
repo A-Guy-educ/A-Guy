@@ -5,7 +5,7 @@
  * @ai-summary CI-specific utilities for the Cody pipeline: comment parsing, GitHub API helpers, status management
  */
 
-import { execSync } from 'child_process'
+import { execSync, execFileSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -45,7 +45,7 @@ export interface CodyPipelineStatus {
   updatedAt: string
   completedAt?: string
   totalElapsed?: number
-  state: 'running' | 'completed' | 'failed' | 'timeout'
+  state: 'running' | 'completed' | 'failed' | 'timeout' | 'paused'
   currentStage: string | null
   stages: Record<string, StageStatus>
   triggeredBy: string
@@ -64,6 +64,7 @@ export interface StageStatus {
   elapsed?: number
   retries: number
   outputFile?: string
+  skipped?: string // Reason for skip (e.g., 'input_quality')
   error?: string
   // Token usage for cost tracking (schema only - not populated)
   tokenUsage?: {
@@ -268,6 +269,51 @@ export function getIssueBody(issueNumber: number): string | null {
   }
 }
 
+export function getIssue(issueNumber: number): { body: string | null; title: string | null } {
+  if (!issueNumber) return { body: null, title: null }
+
+  try {
+    const output = execSync(
+      `gh issue view ${issueNumber} --json body,title --jq '{body: .body, title: .title}'`,
+      {
+        encoding: 'utf-8',
+      },
+    )
+    const data = JSON.parse(output)
+    return {
+      body: data.body?.trim() || null,
+      title: data.title?.trim() || null,
+    }
+  } catch (error) {
+    console.error(`Failed to get issue #${issueNumber}:`, error)
+    return { body: null, title: null }
+  }
+}
+
+export function getIssueTitle(issueNumber: number): string | null {
+  if (!issueNumber) return null
+
+  try {
+    const output = execSync(`gh issue view ${issueNumber} --json title --jq '.title'`, {
+      encoding: 'utf-8',
+    })
+    return output.trim() || null
+  } catch (error) {
+    console.error(`Failed to get issue title for #${issueNumber}:`, error)
+    return null
+  }
+}
+
+/**
+ * Extract the gate comment body from a gate-*.md file.
+ * The file is written as: `# Gate Request\n\n${formatGateComment(...)}\n`
+ * This function strips the `# Gate Request\n\n` prefix and trims trailing whitespace,
+ * returning the full comment body ready to post to GitHub.
+ */
+export function extractGateCommentBody(fileContent: string): string {
+  return fileContent.replace(/^# Gate Request\n\n/, '').trim()
+}
+
 export function editComment(commentId: string, body: string): void {
   if (!commentId) return
 
@@ -280,11 +326,17 @@ export function editComment(commentId: string, body: string): void {
     // Get the repository from environment
     const repo = process.env.GITHUB_REPOSITORY || 'OWNER/REPO'
 
-    execSync(
-      `gh api repos/${repo}/issues/comments/${commentId} -X PATCH --field body="@${tempFile}"`,
-      {
-        stdio: 'inherit',
-      },
+    execFileSync(
+      'gh',
+      [
+        'api',
+        `repos/${repo}/issues/comments/${commentId}`,
+        '-X',
+        'PATCH',
+        '--field',
+        `body=@${tempFile}`,
+      ],
+      { stdio: 'inherit' },
     )
 
     // Clean up temp file
@@ -301,10 +353,19 @@ export function getLatestIssueComment(issueNumber: number, excludeAuthor?: strin
   if (!issueNumber) return null
 
   try {
-    const exclude = excludeAuthor || 'github-actions[bot]'
+    const exclude = (excludeAuthor || 'github-actions[bot]').replace(/[^a-zA-Z0-9\[\]_\-]/g, '')
     // Get comments, exclude bot and /cody commands, return the latest plain-text answer
-    const output = execSync(
-      `gh issue view ${issueNumber} --json comments --jq '[.comments[] | select(.author.login != "${exclude}" and (.body | startswith("/cody") | not))] | last | .body'`,
+    const output = execFileSync(
+      'gh',
+      [
+        'issue',
+        'view',
+        String(issueNumber),
+        '--json',
+        'comments',
+        '--jq',
+        `[.comments[] | select(.author.login != "${exclude}" and (.body | startswith("/cody") | not))] | last | .body`,
+      ],
       { encoding: 'utf-8' },
     )
     return output.trim() || null
@@ -315,18 +376,36 @@ export function getLatestIssueComment(issueNumber: number, excludeAuthor?: strin
 
 /**
  * Discover task-id from a previous Cody run by parsing bot comments on the issue.
- * Looks for "Task created: `XXXXXX-task-name`" in bot comments.
+ * Looks for "Task created: `XXXXXX-task-name`" in any comment.
+ * Note: Does not filter by author to match parse-inputs.sh behavior.
  */
+
+/**
+ * Canonical regex for extracting task-ID from "Task created: `NNNNNN-slug`" marker
+ * Used by both parse-inputs.sh and TypeScript implementations
+ */
+export const TASK_ID_MARKER_REGEX = /Task created: `(\d{6}-[a-zA-Z0-9-]+)`/
+
+/**
+ * Extract task-ID from text using the canonical marker format
+ * Returns null if no valid task-ID found
+ */
+export function extractTaskIdFromMarker(text: string): string | null {
+  const match = text.match(TASK_ID_MARKER_REGEX)
+  return match ? match[1] : null
+}
+
 export function discoverTaskIdFromIssue(issueNumber: number): string | null {
   if (!issueNumber) return null
 
   try {
+    // Get all comments (don't filter by author - matches parse-inputs.sh behavior)
     const output = execSync(
-      `gh issue view ${issueNumber} --json comments --jq '[.comments[] | select(.author.login == "github-actions[bot]")] | .[].body'`,
+      `gh issue view ${issueNumber} --json comments --jq '.comments[].body'`,
       { encoding: 'utf-8' },
     )
-    // Look for "Task created: `XXXXXX-task-name`"
-    const match = output.match(/Task created: `(\d{6}-[a-zA-Z0-9-]+)`/)
+    // Use canonical task-ID marker regex
+    const match = output.match(TASK_ID_MARKER_REGEX)
     return match ? match[1] : null
   } catch {
     return null
@@ -827,6 +906,11 @@ export function formatStatusComment(
         lines.push(`  ${icon} ${stage}${elapsed}`)
       }
     }
+  } else if (status.state === 'paused') {
+    lines.push(`⏸️ Cody paused for \`${input.taskId}\``)
+    lines.push(
+      'Awaiting approval — reply with `/cody approve` to proceed or `/cody reject` to cancel.',
+    )
   } else if (status.state === 'failed') {
     lines.push(`❌ Cody failed for \`${input.taskId}\``)
   } else if (status.state === 'timeout') {

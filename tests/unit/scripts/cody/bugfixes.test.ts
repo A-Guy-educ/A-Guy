@@ -209,17 +209,16 @@ describe('BUG-5: Autofix uses targeted staging', () => {
 // ============================================================================
 
 describe('BUG-6: commitPipelineFiles handles dirty state cleanup', () => {
-  it('should include git checkout and git clean in commitPipelineFiles', () => {
+  it('should include git checkout (but NOT git clean) in commitPipelineFiles', () => {
     const gitUtilsContent = fs.readFileSync(
       path.join(process.cwd(), 'scripts/cody/git-utils.ts'),
       'utf-8',
     )
 
-    // Should contain dirty state cleanup
+    // Should contain dirty state cleanup (revert tracked files only)
     expect(gitUtilsContent).toContain('git checkout -- .')
-    expect(gitUtilsContent).toContain('git clean -fd')
-    // Should exclude .tasks from clean
-    expect(gitUtilsContent).toContain('--exclude=.tasks')
+    // Should NOT contain git clean -fd (deleting untracked files could remove agent-created files)
+    expect(gitUtilsContent).not.toContain('git clean -fd')
   })
 })
 
@@ -288,5 +287,21 @@ describe('BUG-2: POSIX-compatible grep in parse-inputs.sh', () => {
     // head -1 equivalent: take first match
     const first = matches![0].replace('Task created: `', '')
     expect(first).toBe('260218-first-task')
+  })
+})
+
+// ============================================================================
+// BUG-14: apply-audit stage commits task files including apply-audit.md
+// ============================================================================
+
+describe('BUG-14: apply-audit stage commits task files', () => {
+  it('should call commitTaskFiles after apply-audit stage', () => {
+    const codyContent = fs.readFileSync(path.join(process.cwd(), 'scripts/cody/cody.ts'), 'utf-8')
+
+    // The fix: commitTaskFiles should be called in the apply-audit post-stage hook
+    // Pattern: if (stage === 'apply-audit') { commitTaskFiles(); commitAuditHistory(); }
+    expect(codyContent).toMatch(
+      /if\s*\(\s*stage\s*===\s*['"]apply-audit['"]\s*\)\s*\{[\s\S]*commitTaskFiles\(\)[\s\S]*\}/,
+    )
   })
 })

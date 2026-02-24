@@ -52,9 +52,14 @@ permissions:
 
 jobs:
   # Job 1: Parse trigger, validate inputs, gate execution
+  # Only run for workflow_dispatch or comments containing /cody or @cody
   parse:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' &&
+       (contains(github.event.comment.body, '/cody') || contains(github.event.comment.body, '@cody')))
     env:
       GH_TOKEN: ${{ github.token }}
     outputs:
@@ -115,12 +120,29 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: ./scripts/cody/parse-inputs.sh
 
+  # Job 1b: Notify on parse errors (invalid commands)
+  notify-parse-error:
+    needs: parse
+    if: >-
+      needs.parse.outputs.valid == 'false' &&
+      needs.parse.outputs.issue_number != '' &&
+      github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Post error comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment ${{ needs.parse.outputs.issue_number }} \
+            --body "⚠️ Invalid \`/cody\` command. Use: \`/cody [spec|impl|rerun|full|status] [task-id] [options]\`"
+
   # Job 2: Orchestrate - run the pipeline
   orchestrate:
     needs: parse
     if: needs.parse.outputs.valid == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     permissions:
       id-token: write # OpenCode GitHub App OIDC
       contents: write # Branch/commit operations
@@ -162,8 +184,9 @@ jobs:
 
       - name: Run Cody
         env:
-          # GitHub token for gh CLI
+          # GitHub token for gh CLI (GH_PAT takes precedence for PR creation)
           GH_TOKEN: ${{ github.token }}
+          GH_PAT: ${{ secrets.GH_PAT }}
 
           # LLM provider keys (all available)
           # Note: GOOGLE_GENERATIVE_AI_API_KEY is for Vercel AI SDK (@ai-sdk/google),

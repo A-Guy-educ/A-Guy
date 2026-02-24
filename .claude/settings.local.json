@@ -35,7 +35,15 @@
       "Bash(pnpm add:*)",
       "Bash(pnpm approve-builds:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh branch list:*)",
+      "Bash(pnpm -s tsc:*)"
     ]
   },
   "mcpServers": {}

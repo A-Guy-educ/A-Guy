@@ -118,7 +118,7 @@ export function validatePlanGapReport(gapContent: string): boolean {
   }
 
   // Check for required sections
-  const hasGapsFound = /##\s*Gaps? Found/i.test(gapContent)
+  const hasGapsFound = /##\s*Gaps?\s*(Found|Identified)/i.test(gapContent)
   const hasChangesMade = /##\s*Changes Made/i.test(gapContent)
   const hasNoGaps = /no gaps identified/i.test(gapContent.toLowerCase())
 
@@ -180,6 +180,63 @@ export function isVerifyFailed(verifyContent: string): boolean {
 }
 
 // ============================================================================
+// Build Tests Validation
+// ============================================================================
+
+/**
+ * Validate that build report has tests written.
+ * For implement_feature and fix_bug task types, tests are required.
+ * For other types (refactor, docs, ops), tests are optional (warning only).
+ */
+export function validateBuildTests(buildContent: string): { hasTests: boolean; warning: string } {
+  // Look for "Tests Written" section (case insensitive)
+  // Split content by ## to find the section
+  const sections = buildContent.split(/\n## /i)
+
+  // Find the Tests Written section
+  const testsSection = sections.find((section) => /^Tests?\s*Written/i.test(section))
+
+  // If no Tests Written section at all
+  if (!testsSection) {
+    return {
+      hasTests: false,
+      warning: 'Build report missing ## Tests Written section',
+    }
+  }
+
+  // Get content after the header (first line is "Tests Written\n")
+  const lines = testsSection.split('\n')
+  // Skip the first line (header) and get remaining content
+  const contentAfterHeader = lines.slice(1).join('\n').trim()
+
+  // Check for empty content (just whitespace or empty string)
+  if (!contentAfterHeader) {
+    return {
+      hasTests: false,
+      warning: 'Build report indicates no tests were written',
+    }
+  }
+
+  const testsContent = contentAfterHeader.toLowerCase()
+
+  // Check for indicators that no tests were written
+  const noTestsIndicators = ['no tests', 'none', 'n/a', 'not applicable', 'skipped', 'skip']
+  const hasNoTestsIndicator = noTestsIndicators.some((indicator) =>
+    testsContent.includes(indicator),
+  )
+
+  if (hasNoTestsIndicator) {
+    return {
+      hasTests: false,
+      warning: 'Build report indicates no tests were written',
+    }
+  }
+
+  // Tests were written (section exists and has content)
+  return { hasTests: true, warning: '' }
+}
+
+// ============================================================================
 // Gap Report Validation
 // ============================================================================
 
@@ -196,7 +253,7 @@ export function validateGapReport(gapContent: string): boolean {
   }
 
   // Check for required sections
-  const hasGapsFound = /##\s*Gaps? Found/i.test(gapContent)
+  const hasGapsFound = /##\s*Gaps?\s*(Found|Identified)/i.test(gapContent)
   const hasChangesMade = /##\s*Changes Made/i.test(gapContent)
   const hasNoGaps = /no gaps identified/i.test(gapContent.toLowerCase())
 

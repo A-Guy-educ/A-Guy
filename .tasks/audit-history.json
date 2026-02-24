@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "improvements": [],
+  "stats": {
+    "totalImprovements": 0,
+    "appliedCount": 0,
+    "suggestedCount": 0,
+    "effectivenessScores": {
+      "effective": 0,
+      "neutral": 0,
+      "ineffective": 0,
+      "unknown": 0
+    },
+    "topCategories": {}
+  },
+  "lastUpdated": "2026-02-22T00:00:00.000Z"
+}

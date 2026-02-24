@@ -25,6 +25,7 @@ import type {
   CheckResult,
 } from '../types'
 import type { GeometrySpecV1, AxisSpecV1 } from '@/infra/contracts'
+import { HtmlBlockRenderer } from '../blocks/HtmlBlockRenderer'
 import { RichTextRenderer } from '../blocks/RichTextRenderer'
 import { SvgRenderer } from '../blocks/SvgRenderer'
 import { GeometryRenderer } from '../blocks/GeometryRenderer'
@@ -371,7 +372,21 @@ export function ExerciseRenderer({
                 )
               }
 
-              // Count question blocks for section labeling
+              // HTML block - render sanitized HTML
+              if (block.type === 'html') {
+                return (
+                  <div
+                    key={block.id}
+                    className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed"
+                  >
+                    <HtmlBlockRenderer block={block} />
+                  </div>
+                )
+              }
+
+              // NOTE: We count question_table as a question so it gets its own section letter.
+              // Rich text / latex blocks must NOT increment the counter.
+              // Increment question index for question_select, question_free_response, and question_table
               if (
                 block.type === 'question_select' ||
                 block.type === 'question_free_response' ||

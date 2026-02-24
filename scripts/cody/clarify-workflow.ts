@@ -209,6 +209,7 @@ function formatGateComment(
   taskSummary: string,
   gatePoint: string,
   planContent?: string,
+  assumptions?: string[],
 ): string {
   const lines: string[] = []
 
@@ -224,18 +225,29 @@ function formatGateComment(
     )
   }
 
+  const scopeDisplay =
+    scope.length <= 5 ? scope.map((f) => `\`${f}\``).join(', ') : `${scope.length} files`
+
   lines.push('| Field | Value |')
   lines.push('|-------|-------|')
   lines.push(`| **Control Mode** | ${controlMode} |`)
   lines.push(`| **Risk Level** | ${riskLevel} |`)
   lines.push(`| **Task Type** | ${taskType} |`)
   lines.push(`| **Confidence** | ${confidence} |`)
-  lines.push(`| **Scope** | ${scope.length} files |`)
+  lines.push(`| **Scope** | ${scopeDisplay} |`)
   lines.push('')
 
   lines.push('### Task Summary')
   lines.push(`> ${taskSummary.split('\n')[0]}`)
   lines.push('')
+
+  if (assumptions && assumptions.length > 0) {
+    lines.push('### Assumptions')
+    for (const assumption of assumptions) {
+      lines.push(`- ${assumption}`)
+    }
+    lines.push('')
+  }
 
   if (planContent && gatePoint === 'architect') {
     lines.push('### Plan')
@@ -314,13 +326,29 @@ export function handleGateApproval(
   }
 
   // First time hitting the gate - create request and return waiting
-  // Read task summary from task.md
+  // Read task summary from task.md (skip markdown headers and blank lines)
   const taskMdPath = path.join(taskDir, 'task.md')
   let taskSummary = 'See task.md for details'
   if (fs.existsSync(taskMdPath)) {
     const taskContent = fs.readFileSync(taskMdPath, 'utf-8')
-    const firstLines = taskContent.split('\n').slice(0, 3).join(' ')
-    taskSummary = firstLines || taskSummary
+    const contentLine = taskContent
+      .split('\n')
+      .find((line) => line.trim().length > 0 && !line.trim().startsWith('#'))
+    taskSummary = contentLine?.trim() || taskSummary
+  }
+
+  // Read task.json for assumptions
+  const taskJsonPath = path.join(taskDir, 'task.json')
+  let assumptions: string[] = []
+  if (fs.existsSync(taskJsonPath)) {
+    try {
+      const taskJson = JSON.parse(fs.readFileSync(taskJsonPath, 'utf-8'))
+      if (Array.isArray(taskJson.assumptions)) {
+        assumptions = taskJson.assumptions
+      }
+    } catch {
+      // Ignore parse errors
+    }
   }
 
   const comment = formatGateComment(
@@ -332,6 +360,7 @@ export function handleGateApproval(
     taskSummary,
     gatePoint,
     planContent,
+    assumptions,
   )
 
   // Write gate request file

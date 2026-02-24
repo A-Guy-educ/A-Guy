@@ -321,5 +321,103 @@ describe('clarify-workflow', () => {
       // Content should not be overwritten
       expect(fs.readFileSync(gatePath, 'utf-8')).toContain('Original content')
     })
+
+    it('extracts task summary skipping markdown headers and empty lines', () => {
+      fs.writeFileSync(
+        path.join(tempDir, 'task.md'),
+        '# Task\n\n## Task Description\n\nImplement the new feature for users.',
+      )
+
+      const result = handleGateApproval(createMockInput(), tempDir, 'taskify', taskDef)
+
+      expect(result).toBe('waiting')
+      const gatePath = path.join(tempDir, 'gate-taskify.md')
+      const content = fs.readFileSync(gatePath, 'utf-8')
+      expect(content).toContain('Implement the new feature for users')
+      expect(content).not.toContain('> # Task')
+      expect(content).not.toContain('> ## Task Description')
+    })
+
+    it('falls back to default summary when task.md has only headers', () => {
+      fs.writeFileSync(path.join(tempDir, 'task.md'), '# Task\n\n## Description\n\n')
+
+      const result = handleGateApproval(createMockInput(), tempDir, 'taskify', taskDef)
+
+      expect(result).toBe('waiting')
+      const gatePath = path.join(tempDir, 'gate-taskify.md')
+      const content = fs.readFileSync(gatePath, 'utf-8')
+      expect(content).toContain('See task.md for details')
+    })
+
+    it('shows file paths in scope when 5 or fewer files', () => {
+      const smallScopeTaskDef = {
+        ...taskDef,
+        scope: ['src/foo.ts', 'src/bar.ts'],
+      }
+      fs.writeFileSync(path.join(tempDir, 'task.md'), '# Task\n\nSome task.')
+
+      handleGateApproval(createMockInput(), tempDir, 'taskify', smallScopeTaskDef)
+
+      const gatePath = path.join(tempDir, 'gate-taskify.md')
+      const content = fs.readFileSync(gatePath, 'utf-8')
+      expect(content).toContain('`src/foo.ts`')
+      expect(content).toContain('`src/bar.ts`')
+    })
+
+    it('shows file count in scope when more than 5 files', () => {
+      const largeScopeTaskDef = {
+        ...taskDef,
+        scope: ['a.ts', 'b.ts', 'c.ts', 'd.ts', 'e.ts', 'f.ts'],
+      }
+      fs.writeFileSync(path.join(tempDir, 'task.md'), '# Task\n\nSome task.')
+
+      handleGateApproval(createMockInput(), tempDir, 'taskify', largeScopeTaskDef)
+
+      const gatePath = path.join(tempDir, 'gate-taskify.md')
+      const content = fs.readFileSync(gatePath, 'utf-8')
+      expect(content).toContain('6 files')
+      expect(content).not.toContain('`a.ts`')
+    })
+
+    it('includes assumptions from task.json when present', () => {
+      fs.writeFileSync(path.join(tempDir, 'task.md'), '# Task\n\nSome task.')
+      fs.writeFileSync(
+        path.join(tempDir, 'task.json'),
+        JSON.stringify({
+          assumptions: ['Users have Node 18+', 'Database is MongoDB'],
+        }),
+      )
+
+      handleGateApproval(createMockInput(), tempDir, 'taskify', taskDef)
+
+      const gatePath = path.join(tempDir, 'gate-taskify.md')
+      const content = fs.readFileSync(gatePath, 'utf-8')
+      expect(content).toContain('### Assumptions')
+      expect(content).toContain('- Users have Node 18+')
+      expect(content).toContain('- Database is MongoDB')
+    })
+
+    it('omits assumptions section when task.json has no assumptions', () => {
+      fs.writeFileSync(path.join(tempDir, 'task.md'), '# Task\n\nSome task.')
+      fs.writeFileSync(path.join(tempDir, 'task.json'), JSON.stringify({ task_type: 'fix' }))
+
+      handleGateApproval(createMockInput(), tempDir, 'taskify', taskDef)
+
+      const gatePath = path.join(tempDir, 'gate-taskify.md')
+      const content = fs.readFileSync(gatePath, 'utf-8')
+      expect(content).not.toContain('### Assumptions')
+    })
+
+    it('handles missing task.json gracefully', () => {
+      fs.writeFileSync(path.join(tempDir, 'task.md'), '# Task\n\nSome task.')
+      // No task.json
+
+      handleGateApproval(createMockInput(), tempDir, 'taskify', taskDef)
+
+      const gatePath = path.join(tempDir, 'gate-taskify.md')
+      const content = fs.readFileSync(gatePath, 'utf-8')
+      expect(content).toContain('Gate Request')
+      expect(content).not.toContain('### Assumptions')
+    })
   })
 })

@@ -4,6 +4,7 @@ import * as childProcess from 'child_process'
 // Mock child_process.execSync before importing the module
 vi.mock('child_process', () => ({
   execSync: vi.fn(),
+  execFileSync: vi.fn(),
 }))
 
 import {
@@ -296,26 +297,25 @@ describe('getLastFailedStage', () => {
 import { editComment } from '../../../../scripts/cody/cody-utils'
 
 describe('editComment', () => {
-  let execSyncSpy: ReturnType<typeof vi.spyOn>
+  let execFileSyncSpy: ReturnType<typeof vi.spyOn>
   let writeFileSyncSpy: ReturnType<typeof vi.spyOn>
   let unlinkSyncSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
     vi.clearAllMocks()
-    execSyncSpy = vi.spyOn(childProcess, 'execSync').mockReturnValue('')
+    execFileSyncSpy = vi.spyOn(childProcess, 'execFileSync').mockReturnValue('')
     writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockReturnValue()
     unlinkSyncSpy = vi.spyOn(fs, 'unlinkSync').mockReturnValue()
   })
 
-  it('should call gh api to patch the comment', () => {
+  it('should call gh api to patch the comment using execFileSync', () => {
     editComment('42', 'Updated body')
 
-    const calls = execSyncSpy.mock.calls
-    const patchCall = calls.find(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('-X PATCH'),
+    expect(execFileSyncSpy).toHaveBeenCalledWith(
+      'gh',
+      expect.arrayContaining(['api', expect.stringContaining('issues/comments/42'), '-X', 'PATCH']),
+      expect.any(Object),
     )
-    expect(patchCall).toBeDefined()
-    expect(patchCall![0]).toContain('issues/comments/42')
   })
 
   it('should write body to temp file before calling api', () => {
@@ -331,7 +331,7 @@ describe('editComment', () => {
   })
 
   it('should not throw when gh api call fails', () => {
-    execSyncSpy.mockImplementation(() => {
+    execFileSyncSpy.mockImplementation(() => {
       throw new Error('gh api failed')
     })
 
@@ -342,6 +342,6 @@ describe('editComment', () => {
   it('should return early when commentId is empty', () => {
     editComment('', 'Updated body')
 
-    expect(execSyncSpy).not.toHaveBeenCalled()
+    expect(execFileSyncSpy).not.toHaveBeenCalled()
   })
 })

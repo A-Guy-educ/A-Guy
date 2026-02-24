@@ -1,87 +1,69 @@
-# Plan: Plan Decomposition — Pipeline-Integrated Multi-Task Orchestration for Cody
+# Plan: Unified Graph Architecture — Pipeline-Integrated Multi-Task Orchestration for Cody
 
-## Gap Analysis & Security Audit Response (Round 3)
+## Rerun Context
 
-Third revision incorporating findings from code review (4 blocking + 14 significant gaps) and security audit (5 critical + 6 high findings). All addressed below.
+**COMPLETE REWRITE** of the previous 14-step plan. The architecture changed fundamentally:
 
-### Blocking Gaps Resolved
+| Previous Architecture | New Unified Architecture |
+|---|---|
+| `taskify` detects decomposition → sets `decomposition` field in `task.json` | No decomposition field. Architect decides. |
+| Separate `decompose` stage after `clarify` | No `decompose` stage. Architect is the decision-maker. |
+| Separate `decompose.md` agent | No decompose agent. `architect.md` updated to always produce `graph.json`. |
+| Routing in spec pipeline based on `task.json.decomposition` | Routing in impl pipeline AFTER architect, based on `graph.levels.length` |
+| `STAGE_OUTPUT_MAP` for `decompose` → `graph.json` | `STAGE_OUTPUT_MAP` for `architect` → `graph.json` (replaces `plan.md`) |
 
-| ID | Gap | Resolution |
-|----|-----|------------|
-| B1 | Status function internal call sites missed — 8 internal `getTaskDir(taskId)` calls within cody-utils.ts | **Counted correctly now: 29 external (cody.ts) + 1 (stage-hooks.ts) + 8 internal (cody-utils.ts) = 38 total.** Internal calls in `readStatus`, `writeStatus`, `completeStatus`, `getLastFailedStage`, `initStatus` all route through `getTaskDir(taskId)` which now accepts optional `planId`. Status functions pass `loc.planId` through to `getTaskDir`. |
-| B2 | `stageInstructions` Record type requires ALL 13 entries to have same signature | **All 13 entries updated** to `(taskId: string, planId?: string) => string`. Even entries returning `''` get the new signature. Record type: `Record<Stage, (taskId: string, planId?: string) => string>`. |
-| B3 | `buildStagePrompt()` doesn't pass `planId` to `stageInstructions` call | **Fixed:** `instructionFn(taskId, input.planId)` — explicit in Step 4 changes. |
-| B4 | `ensureFeatureBranch()` `BASE_BRANCHES` check skips branch creation for `plan/` branches | **Fixed:** Add `plan/` prefix match: `if (!BASE_BRANCHES.includes(currentBranch) && !currentBranch.startsWith('plan/'))`. Explicit in Step 7. |
+**What was removed:**
+- `decomposition`, `decomposition_reason`, `estimated_nodes` from `TaskDefinition`
+- `decompose` from `ALL_STAGES`, `SPEC_STAGES`, `STAGE_CONTEXT_FILES`, `stageInstructions`
+- `.opencode/agents/decompose.md` agent definition
+- All branching/routing conditionals around decomposition detection in taskify
 
-### Significant Gaps Resolved
+**What was preserved from round 3:**
+- All 5 critical security findings (C1-C5) — execSync migration, shell input validation
+- All 6 high findings (H1-H6) — worktree symlinks, actor validation, graph integrity
+- All blocking gaps (B1-B4) — status function call sites, stageInstructions signatures, BASE_BRANCHES fix
+- All significant gaps (S1-S14) — except S4/S5/S6/S8/S14 which were decompose-specific
 
-| ID | Gap | Resolution |
-|----|-----|------------|
-| S1 | `TaskLocation` defined in graph.ts but imported from cody-utils in Step 8 | **Canonical location: `cody-utils.ts`**. `graph.ts` imports `TaskLocation` from `cody-utils`. No circular dependency — graph.ts only uses the type, not status functions. |
-| S2 | `CodyInput.mode` literal union not derived from VALID_MODES | **Refactored**: `mode: (typeof VALID_MODES)[number]` so adding `'plan'` to `VALID_MODES` auto-updates the type. |
-| S3 | `parseCommentBody()` doesn't support `plan` subcommand | **Added**: `plan` recognized in `parseCommentBody()` — `/cody plan <planId>` sets `mode:'plan', planId`. |
-| S4 | `decompose` not in `SPEC_STAGES` | **Added** `'decompose'` to `SPEC_STAGES` in stage-prompts.ts — it's a spec-only stage (no code changes). |
-| S5/S7 | `STAGE_OUTPUT_MAP` missing `decompose: 'graph.json'` — file watcher would watch wrong file | **Added** `decompose: 'graph.json'` to `STAGE_OUTPUT_MAP` in pipeline-utils.ts. |
-| S6 | `DRY_RUN_OUTPUTS` missing `decompose` entry — dry-run breaks | **Added** `decompose: (taskId) => JSON.stringify(mockGraph)` to `DRY_RUN_OUTPUTS`. |
-| S8 | `main()` calls `completeStatus('completed')` after spec pipeline returns, but plan may still be dispatching | **Fixed:** When `executePlan()` dispatches CI workflows and returns, set status to `'running'` not `'completed'`. `completeStatus` in `main()` guarded: `if (taskDef?.decomposition !== 'parallel')`. |
-| S9 | `execSync` migration scope underestimated (37 total, not ~10) | **Expanded**: Step 0 covers ALL `execSync` template-literal calls across entire `git-utils.ts` AND `cody-utils.ts` (37+ calls total). |
-| S10 | `runPrStage` 4th positional param awkward | **Refactored** to options object: `runPrStage(taskDir, outputFile, options?: { cwd?, loc? })`. Same for `runCommitStage`. |
-| S11 | `commitAndPush` calls `ensureFeatureBranch` without baseBranch for plan nodes | **Fixed:** Thread `baseBranch` through `commitPipelineFiles` → `commitAndPush` → `ensureFeatureBranch`. |
-| S12 | `commitPipelineFiles` in decompose routing doesn't pass `baseBranch` | **Fixed:** Pass `baseBranch: getPlanBranch(input.taskId)` in decompose routing commit call. |
-| S13 | Agent prompt cleanup overscoped (12 agents listed, only 5 have hardcoded paths) | **Narrowed** to 5 agents with actual hardcoded paths: `taskify.md`, `gap.md`, `verify.md`, `architect.md`, `spec.md`. |
-| S14 | No `STAGE_TIMEOUTS` for `decompose` — default 10min too short | **Added** `decompose: 20 * 60_000` (20 min) to `STAGE_TIMEOUTS` in `agent-runner.ts`. |
-
-### Security Findings Resolved
-
-| ID | Finding | Resolution |
-|----|---------|------------|
-| C1-C3 | `execSync` template-literal injection in git-utils.ts AND cody-utils.ts | **New Step 0 (prerequisite):** Migrate ALL `execSync` template-literal calls to `execFileSync` across both files. Hard prerequisite for all other steps. |
-| C4 | `parse-inputs.sh` writes TASK_ID without validation — shell scripts use before TS validates | **Added:** bash regex validation `[[ "$DISPATCH_TASK_ID" =~ ^[0-9]{6}-[a-zA-Z0-9-]+$ ]]` in `parse-inputs.sh` BEFORE writing to `$GITHUB_OUTPUT`. |
-| C5 | `plan.yml` actor check uses wrong actor source + no username sanitization | **Fixed:** Use `github.event.sender.login` (merger, not PR author). Validate username `[a-zA-Z0-9-]+` before use. Use `--jq` with `gh api` rather than string interpolation. |
-| H1 | `runGate()` uses `execSync(command)` with string commands | **Converted** to `execFileSync` with array-based args in gate definitions. |
-| H2 | Worktree path escape: need component-by-component symlink check | **Specified**: Check `.worktrees/` dir, then `.worktrees/<planId>/` for symlinks at each level. `path.resolve()` must start with `path.resolve(process.cwd())`. |
-| H3 | `plan.yml` workflow_dispatch should also validate actor permissions | **Added**: dispatch trigger validates `github.actor` has write+ permission too. |
-| H4 | Tampered graph.json could dispatch attacker-controlled task_ids | **Added**: Integrity check (checksum) verified BEFORE any dispatch. Dispatched task_ids validated against verified graph nodes. |
-| H5 | No runtime enforcement that `graph.planBranch` is never used for git ops | **Added**: Runtime assertion in `readGraph()`: `if (graph.planBranch !== getPlanBranch(graph.planId)) throw PlanIntegrityError`. |
-| H6 | `sanitizeForGitHub()` missing GitHub Actions command syntax stripping | **Added**: Strip `::set-output`, `::add-mask`, and other `::command::` patterns. Escape `%0A`/`%0D`. |
-| M1 | No max node count in `buildGraph()` | **Added**: `MAX_PLAN_NODES = 15`, `MIN_PLAN_NODES = 2` enforced in `validateGraph()`. |
-| M2 | Polling loop could exhaust API rate limits | **Added**: `MAX_POLLS_PER_LEVEL = 500`, `--poll-interval >= 15` minimum. |
-| M5 | JSON key order non-deterministic for checksums | **Use `json-stable-stringify`** (or sorted-key `JSON.stringify`) for canonical serialization. |
-
-### Minor Gaps Resolved
-
-| ID | Resolution |
-|----|------------|
-| M1-plan | `estimated_nodes` example changed from `0` to omitted when `decomposition: 'single'` |
-| M2-plan | `getImplStages()` deprecated (unused, add TODO to remove) |
-| M3-plan | `SPEC_ONLY_STAGES` in pipeline-utils.ts gets `'decompose'` added |
-| M4-plan | Decompose agent `bash: false` (only needs read+write) |
-| M6-plan | Removed `pnpm generate:importmap` — irrelevant for OpenCode agents |
-| M7-plan | `validatePlanNodeTaskType(taskDef: { task_type: string })` — explicit type |
-| M8-plan | `advancePlan` uses `throw` for errors and `return` for graceful exit (no `process.exit()`) |
+**New flow:**
+```
+taskify → spec → gap → [clarify] → architect (ALWAYS produces graph.json) → ROUTE
+                                                    │
+                                      ┌─────────────┴─────────────┐
+                                 1 level (single node)      N levels (multi-node)
+                                      │                           │
+                                plan-gap → build →          plan orchestrator
+                                verify → commit → pr        dispatches nodes
+                                (existing pipeline)         level-by-level
+```
 
 ---
 
 ## Summary
 
-Add a plan decomposition and orchestrated execution layer **as a native Cody pipeline stage**. The `taskify` agent detects multi-task complexity and sets `decomposition: 'parallel'` in `task.json`. When parallel, a new `decompose` stage runs after `clarify`, producing `graph.json` with node descriptions. Then the `architect` agent (reused) generates specs per node in parallel. Nodes are dispatched level-by-level. All intermediate PRs merge to a plan feature branch. The head node verifies integration and creates a summary PR to `dev`.
+The architect agent (Opus, the most capable model) ALWAYS produces `graph.json` as its output. For simple tasks, this is a trivial 1-node graph containing the plan. For complex tasks, this is a multi-node graph with dependency edges. After architect runs in the impl pipeline, routing checks `graph.levels.length`:
+- **1 level** (single node): Extract `plan.md` from the graph node, continue existing impl pipeline unchanged (plan-gap → build → commit → verify → auditor → apply-audit → pr)
+- **>1 level** (multi-node): Launch plan orchestrator for parallel execution across runners
+
+All intermediate PRs merge to a `plan/<planId>` feature branch. The head node verifies integration and creates a summary PR to `dev`.
 
 ## Architecture
 
 ```
-Pipeline Flow:
-  taskify → spec → gap → [clarify] → ROUTE based on task.json.decomposition
+Pipeline Flow (Unified):
+  taskify → spec → gap → [clarify] → architect
                                         │
-                          ┌──────────────┴──────────────┐
-                    SINGLE (as today)              PARALLEL (new)
-                          │                              │
-                    architect → plan-review →       decompose stage runs
-                    build → commit →               graph.json created
-                    verify → auditor →             plan branch created
-                    apply-audit → pr               architect runs per node
-                                                   nodes dispatched level-by-level
-                                                   each: build → verify → commit → pr
-                                                   head node → summary PR to dev
+                                   graph.json produced
+                                        │
+                              ┌─────────┴──────────┐
+                        1 level                  N levels
+                        (trivial graph)          (multi-node graph)
+                              │                       │
+                        Extract plan.md          Create plan branch
+                        from single node         Plan orchestrator:
+                              │                  • dispatch level-by-level
+                        plan-gap → build →       • each node: build → verify →
+                        commit → verify →          commit → pr → merge
+                        auditor → pr             • head node: integration PR to dev
 ```
 
 ```
@@ -115,54 +97,58 @@ Pipeline Flow:
 
 ### Key Design Decisions
 
-1. **Decomposition is a pipeline stage**, not just a manual skill — `taskify` detects complexity, `decompose` agent produces graph
-2. **Each graph node = a Cody task** — reuses the entire existing pipeline (build → verify → commit → PR)
-3. **Pre-computed specs** — decompose + architect produce `spec.md` + `plan.md` per node upfront, so Cody starts at `build` stage
-4. **Bottom-up execution** — Level 0 (leaves, no deps) first → Level N (head) last
-5. **Plan feature branch** — all intermediate PRs merge to `plan/<planId>`, isolating work from `dev`
-6. **Explicit merge after checks** — orchestrator waits for CI checks to pass (`gh pr checks --watch`), then merges via `gh pr merge --squash` (NOT `--auto`)
-7. **Completion signal** — PR merged to plan branch = node done
-8. **Failure handling** — retry via Cody rerun (max 2), then halt dependent nodes, continue independent ones
-9. **Dual execution** — CI via `gh workflow run plan.yml` (parallel on separate runners) or local via `git worktree`
-10. **Deterministic branch derivation** — `planBranch` always computed as `plan/<planId>`, never read from mutable files
-11. **Branch protection required** — `plan/**` branches must have status check requirements
-12. **Security-first** — Step 0 migrates ALL `execSync` template-literal calls before any new code
+1. **Architect is the sole decision-maker** — Opus has full context (spec.md, clarified.md, task.json) and produces the graph. No separate decomposition detection.
+2. **graph.json is the universal output** — 1-node for simple tasks, N-node for complex. Routing is just `graph.levels.length`.
+3. **Each graph node = a Cody task** — reuses the entire existing pipeline (build → verify → commit → PR)
+4. **Pre-computed specs** — architect produces `spec.md` + `plan.md` per node upfront for multi-node graphs, so Cody starts at `build` stage per node
+5. **Bottom-up execution** — Level 0 (leaves, no deps) first → Level N (head) last
+6. **Plan feature branch** — all intermediate PRs merge to `plan/<planId>`, isolating work from `dev`
+7. **Explicit merge after checks** — orchestrator waits for CI checks to pass, then merges via `gh pr merge --squash`
+8. **Dual execution** — CI via `gh workflow run plan.yml` (parallel on separate runners) or local via `git worktree`
+9. **Deterministic branch derivation** — `planBranch` always computed as `plan/<planId>`, never read from mutable files
+10. **Security-first** — Step 0 migrates ALL `execSync` template-literal calls before any new code
 
 ### Invariants
 
 - **INVARIANT: One orchestrator per plan at a time.** Concurrency group `plan-<planId>` with `cancel-in-progress: false`.
 - **INVARIANT: Monotonic state transitions.** Node states only move forward: `pending → dispatched → running → completed|failed`.
 - **INVARIANT: `planId` validated before any use.** `validatePlanId()` called at every entry point.
-- **INVARIANT: `planBranch` is deterministic.** Always `plan/<planId>`. Never derived from mutable state. Runtime assertion enforces on every `readGraph()`.
+- **INVARIANT: `planBranch` is deterministic.** Always `plan/<planId>`. Never derived from mutable state.
 - **INVARIANT: Plan nodes use impl-only task types.** `task_type` must be `implement_feature`, `fix_bug`, `refactor`, or `ops`.
-- **INVARIANT: Graph integrity verified before dispatch.** Checksum checked before any node dispatch. Dispatched task_ids validated against verified graph.
-- **INVARIANT: No shell injection.** ALL git/gh commands use `execFileSync` (array-based, no shell). Branch names validated via `isValidBranchName()`.
-
-### task.json Extension
-
-`TaskDefinition` in `pipeline-utils.ts` gains new fields:
-
-```typescript
-decomposition: 'single' | 'parallel'
-decomposition_reason: string
-estimated_nodes?: number
-```
+- **INVARIANT: Graph integrity verified before dispatch.** Checksum checked before any node dispatch.
+- **INVARIANT: No shell injection.** ALL git/gh commands use `execFileSync` (array-based, no shell).
 
 ### Directory Structure
 
 ```
+# Single-node (simple task) — architect writes graph.json, pipeline extracts plan.md:
+.tasks/<task-id>/
+├── task.md
+├── task.json
+├── spec.md
+├── clarified.md
+├── graph.json          # Trivial 1-node graph (architect output)
+├── plan.md             # Extracted from graph node's plan field
+├── plan-gap.md → build.md → verify.md → ...
+└── status.json
+
+# Multi-node (complex task) — architect writes graph.json + per-node files:
 .tasks/<plan-id>/
-├── graph.json                     # DAG: nodes, edges, levels, state, checksum
-├── <task-id>/                     # One per graph node
-│   ├── task.md                    # Generated by decompose agent
-│   ├── task.json                  # Pre-computed (skip taskify)
-│   ├── spec.md                    # Pre-computed by architect (skip spec stage)
-│   ├── clarified.md               # Pre-filled "Use recommended answers"
-│   ├── plan.md                    # Pre-computed (skip architect)
-│   ├── plan-review.md             # Pre-filled PASS
-│   ├── build.md → verify.md → ... # Generated by Cody at runtime
+├── task.md             # Original task
+├── task.json           # Original classification
+├── spec.md             # Original spec
+├── clarified.md        # Original clarifications
+├── graph.json          # Multi-node DAG with levels, state, checksum
+├── <node-task-id>/     # One per graph node
+│   ├── task.md         # Node-specific task description
+│   ├── task.json       # Pre-computed (skip taskify)
+│   ├── spec.md         # Pre-computed by architect (skip spec stage)
+│   ├── clarified.md    # Pre-filled "Use recommended answers"
+│   ├── plan.md         # Pre-computed (skip architect)
+│   ├── plan-review.md  # Pre-filled PASS
+│   ├── build.md → verify.md → ...  # Generated by Cody at runtime
 │   └── status.json
-└── <head-task-id>/                # Head node (integration verification)
+└── <head-node-id>/     # Head node (integration verification)
     └── ...
 ```
 
@@ -209,13 +195,12 @@ execFileSync('git', ['checkout', branchName], { cwd, stdio: 'inherit' })
 
 | Function | Current | Migration |
 |----------|---------|-----------|
-| `postComment(issueNumber, body)` | `execSync(\`gh issue comment ${issueNumber} ...\`)` | `execFileSync('gh', ['issue', 'comment', String(issueNumber), '--body-file', '-'], {input: body})` |
-| `getIssueBody(issueNumber)` | `execSync(\`gh issue view ${issueNumber} --json body --jq .body\`)` | `execFileSync('gh', ['issue', 'view', String(issueNumber), '--json', 'body', '--jq', '.body'])` |
-| `editComment(commentId, body)` | `execSync(\`gh api repos/${repo}/issues/comments/${commentId}\`)` | `execFileSync('gh', ['api', \`repos/\${repo}/issues/comments/\${commentId}\`, '-X', 'PATCH', '--input', '-'], {input: JSON.stringify({body})})` |
-| `getLatestIssueComment(issueNumber, excludeAuthor?)` | `execSync(\`gh issue view ... --jq '[...select(.authorAssociation != "${exclude}")]'\`)` | Parse JSON in TypeScript instead of inline `--jq` with interpolated values |
+| `postComment(issueNumber, body)` | `` execSync(`gh issue comment ${issueNumber} ...`) `` | `execFileSync('gh', ['issue', 'comment', String(issueNumber), '--body-file', '-'], {input: body})` |
+| `getIssueBody(issueNumber)` | `` execSync(`gh issue view ${issueNumber} --json body --jq .body`) `` | `execFileSync('gh', ['issue', 'view', String(issueNumber), '--json', 'body', '--jq', '.body'])` |
+| `editComment(commentId, body)` | `` execSync(`gh api repos/${repo}/issues/comments/${commentId}`) `` | `execFileSync('gh', ['api', ...], {input: JSON.stringify({body})})` — use stdin piping, no temp file |
+| `getLatestIssueComment(issueNumber, excludeAuthor?)` | `` execSync(`gh issue view ... --jq '[...select(.authorAssociation != "${exclude}")]'`) `` | Parse JSON in TypeScript instead of inline `--jq` with interpolated values |
 | `discoverTaskIdFromIssue(issueNumber)` | Same `--jq` interpolation pattern | Same fix — parse JSON in TypeScript |
 | `validateAuth()` | `execSync('gh auth status')` | `execFileSync('gh', ['auth', 'status'])` |
-| `ensureTaskMarkerComment(...)` | Uses `postComment`/`editComment` internally | Fixed by fixing those functions |
 
 ### scripted-stages.ts (`runGate()`)
 
@@ -223,14 +208,12 @@ execFileSync('git', ['checkout', branchName], { cwd, stdio: 'inherit' })
 // Before:
 const gateDefinitions = [
   { name: 'TypeScript', command: 'pnpm -s tsc --noEmit' },
-  // ...
 ]
 execSync(gate.command, { timeout, ... })
 
 // After:
 const gateDefinitions = [
   { name: 'TypeScript', cmd: 'pnpm', args: ['-s', 'tsc', '--noEmit'] },
-  // ...
 ]
 execFileSync(gate.cmd, gate.args, { timeout, ... })
 ```
@@ -260,7 +243,7 @@ execFileSync(gate.cmd, gate.args, { timeout, ... })
 **Time estimate: 20-30 minutes**
 
 **Files to touch:**
-- `scripts/cody/graph.ts` (NEW, ~350 lines)
+- `scripts/cody/graph.ts` (NEW, ~400 lines)
 
 **Behavior:**
 Core graph module with types, topological sort, cycle detection, level computation, integrity checksums, deterministic branch derivation, and I/O. This is a pure data module with zero side effects — no git, no GitHub, no file system beyond graph.json read/write. Imports `TaskLocation` from `cody-utils.ts` (canonical location) and re-exports it.
@@ -287,6 +270,20 @@ export interface PlanGraph {
   currentLevel: number
   issueLabel: string
   checksum: string                      // SHA-256 of canonical JSON (sorted keys)
+}
+
+// SingleNodeGraph: trivial graph for simple tasks (1 node, 1 level)
+export interface SingleNodeGraph {
+  planId: string
+  title: string
+  description: string
+  createdAt: string
+  state: 'completed'                    // Always completed (no orchestration needed)
+  nodes: Record<string, GraphNode>      // Single entry
+  levels: [string[]]                    // Single level with one node
+  headNode: string
+  plan: string                          // The full plan.md content for the single node
+  checksum: string
 }
 
 export interface GraphNode {
@@ -332,25 +329,28 @@ const MAX_TOTAL_DISPATCHES = 5
 **Functions:**
 
 - `getPlanBranch(planId)` — deterministic `plan/<planId>`, validates planId first
-- `buildGraph(planId, title, description, nodes)` — validate deps, detect cycles, compute levels, enforce min/max node count, set checksum
+- `isSingleNodeGraph(graph)` — type guard: returns true if `graph.levels.length === 1` (single-node trivial graph)
+- `buildSingleNodeGraph(planId, title, description, plan)` — create trivial 1-node graph with embedded plan content
+- `buildGraph(planId, title, description, nodes, baseBranch)` — validate deps, detect cycles, compute levels, enforce min/max node count, set checksum
 - `computeLevels(nodes)` — reverse topological sort: level 0 = no deps, level N = max(dep levels) + 1
 - `getNodesAtLevel(graph, level)`, `isLevelComplete(graph, level)`, `getNextLevel(graph)`, `getLevelCount(graph)`
-- `readGraph(planDir)` — parse JSON, verify checksum, **assert `graph.planBranch === getPlanBranch(graph.planId)` (runtime enforcement of H5)**, throw `PlanIntegrityError` on mismatch
+- `readGraph(planDir)` — parse JSON, verify checksum, **assert `graph.planBranch === getPlanBranch(graph.planId)` when planBranch is present (runtime enforcement of H5)**, throw `PlanIntegrityError` on mismatch
 - `writeGraph(planDir, graph)` — recompute checksum using **sorted-key canonical JSON** (via `json-stable-stringify` or `JSON.stringify(graph, Object.keys(graph).sort())`), atomic write via `.tmp` rename
 - `updateNodeState(graph, taskId, newState)` — validate against `VALID_TRANSITIONS`
 - `computeChecksum(graph)` — SHA-256 of canonical JSON with checksum=''
 - `verifyChecksum(graph)` — compare stored vs computed
-- `validateGraph(graph)` — no cycles, all deps exist, head node exists, levels correct, task_types valid, **node count between MIN_PLAN_NODES and MAX_PLAN_NODES**
+- `validateGraph(graph)` — no cycles, all deps exist, head node exists, levels correct, task_types valid, **node count between MIN_PLAN_NODES and MAX_PLAN_NODES for multi-node graphs**
 - `detectCycles(nodes)` — DFS with visited/inStack sets, returns cycle path or null
 - `validatePlanNodeTaskType(taskDef: { task_type: string })` — throws if task_type not in `VALID_PLAN_TASK_TYPES`
 - `resetFromLevel(graph, level, force)` — reset all nodes at level+ to pending; level 0 requires `--force`
 - `renderGraphAscii(graph)`, `renderGraphTable(graph)` — visualization
+- `extractPlanFromSingleNode(graph)` — extract the `plan` field from a single-node graph and return as string (for writing to plan.md)
 
 **Error classes:** `PlanNotFoundError`, `PlanIntegrityError`, `PlanCycleError`, `PlanNodeFailedError`, `PlanTimeoutError`, `InvalidStateTransitionError`
 
 **Tests (FAIL before, PASS after):**
 
-1. `tests/unit/scripts/cody/graph.test.ts` — **Cycle detection, level computation, state transitions, limits**
+1. `tests/unit/scripts/cody/graph.test.ts` — **Cycle detection, level computation, state transitions, limits, single-node**
    - Linear chain A→B→C: expect levels `[[A], [B], [C]]`
    - Diamond A→C, B→C: expect levels `[[A, B], [C]]`
    - Cycle A→B→A: expect `detectCycles()` returns cycle path
@@ -364,8 +364,12 @@ const MAX_TOTAL_DISPATCHES = 5
    - `validatePlanNodeTaskType({ task_type: 'docs' })`: throws
    - `validatePlanNodeTaskType({ task_type: 'implement_feature' })`: passes
    - `buildGraph()` with 16 nodes: throws (exceeds MAX_PLAN_NODES)
-   - `buildGraph()` with 1 node: throws (below MIN_PLAN_NODES)
+   - `buildGraph()` with 1 node: throws (below MIN_PLAN_NODES) — multi-node graphs require ≥2
    - `readGraph()` with `planBranch !== getPlanBranch(planId)`: throws PlanIntegrityError
+   - `buildSingleNodeGraph('260221-test', 'title', 'desc', '# Plan\n...')` — creates valid 1-node graph
+   - `isSingleNodeGraph(singleNodeGraph)` → true
+   - `isSingleNodeGraph(multiNodeGraph)` → false
+   - `extractPlanFromSingleNode(singleNodeGraph)` → returns plan string
 
 2. `tests/unit/scripts/cody/graph.test.ts` — **Graph I/O, checksums, integrity**
    - `writeGraph()` then `readGraph()` round-trips correctly
@@ -382,138 +386,25 @@ const MAX_TOTAL_DISPATCHES = 5
 - [ ] `validateGraph()` catches: missing dep refs, empty graph, no head node, invalid task types, node count out of range
 - [ ] `getPlanBranch()` validates planId and returns deterministic branch name
 - [ ] Checksum verified on every `readGraph()`, recomputed on every `writeGraph()`
-- [ ] `readGraph()` asserts `planBranch === getPlanBranch(planId)` (runtime enforcement)
+- [ ] `readGraph()` asserts `planBranch === getPlanBranch(planId)` when present (runtime enforcement)
 - [ ] State transitions enforced via VALID_TRANSITIONS
 - [ ] `resetFromLevel(0)` requires `--force`
 - [ ] Atomic write: `.tmp` then rename
 - [ ] Canonical JSON serialization (sorted keys) for checksums
-- [ ] `MAX_PLAN_NODES = 15`, `MIN_PLAN_NODES = 2` enforced
+- [ ] `MAX_PLAN_NODES = 15`, `MIN_PLAN_NODES = 2` enforced (multi-node only)
 - [ ] `totalDispatches` counter per node, `MAX_TOTAL_DISPATCHES = 5`
+- [ ] `buildSingleNodeGraph()` creates valid trivial graph
+- [ ] `isSingleNodeGraph()` correctly distinguishes single from multi-node
+- [ ] `extractPlanFromSingleNode()` returns plan content string
 
 ---
 
-## Step 2: Extend TaskDefinition + taskify Agent for Decomposition Detection
-
-**Time estimate: 15-25 minutes**
-
-**Files to touch:**
-- `scripts/cody/pipeline-utils.ts` (MODIFIED, lines 49-58 `TaskDefinition`, lines 116-160 `normalizeTask()`, lines 162-231 `validateTask()`, line 280 `STAGE_OUTPUT_MAP`, line 297 `SPEC_ONLY_STAGES`, line 304 `DRY_RUN_OUTPUTS`)
-- `.opencode/agents/taskify.md` (MODIFIED, add decomposition assessment)
-
-**Behavior:**
-Add `decomposition`, `decomposition_reason`, `estimated_nodes` fields to `TaskDefinition`. Update `normalizeTask()` to default `decomposition: 'single'` when missing. Update `validateTask()` to validate the new fields. Add `decompose: 'graph.json'` to `STAGE_OUTPUT_MAP`. Add `'decompose'` to `SPEC_ONLY_STAGES`. Add `decompose` to `DRY_RUN_OUTPUTS`. Update `taskify.md` agent prompt.
-
-**Changes to `pipeline-utils.ts`:**
-
-```typescript
-// TaskDefinition — add 3 new fields:
-export interface TaskDefinition {
-  // ... existing fields ...
-  decomposition: 'single' | 'parallel'
-  decomposition_reason: string
-  estimated_nodes?: number
-}
-
-// normalizeTask() — add defaults:
-if (!data.decomposition) {
-  data.decomposition = 'single'
-}
-if (!data.decomposition_reason) {
-  data.decomposition_reason = data.decomposition === 'single'
-    ? 'Single coherent task'
-    : 'Multi-component task requiring parallel decomposition'
-}
-
-// validateTask() — add validation:
-const VALID_DECOMPOSITIONS = ['single', 'parallel'] as const
-if (!VALID_DECOMPOSITIONS.includes(data.decomposition as any)) {
-  errors.push(`Invalid decomposition: "${data.decomposition}". Must be: single, parallel`)
-}
-if (typeof data.decomposition_reason !== 'string' || !data.decomposition_reason) {
-  errors.push(`decomposition_reason must be a non-empty string`)
-}
-if (data.estimated_nodes !== undefined && (typeof data.estimated_nodes !== 'number' || data.estimated_nodes < 2)) {
-  errors.push(`estimated_nodes must be a number >= 2`)
-}
-
-// STAGE_OUTPUT_MAP — add decompose:
-decompose: 'graph.json',
-
-// SPEC_ONLY_STAGES — add decompose:
-export const SPEC_ONLY_STAGES = ['spec', 'gap', 'clarify', 'decompose']
-
-// DRY_RUN_OUTPUTS — add decompose (mock graph):
-decompose: (taskId) => JSON.stringify({
-  planId: taskId,
-  title: `[dry-run] Plan for ${taskId}`,
-  description: 'Mock plan',
-  createdAt: new Date().toISOString(),
-  state: 'pending',
-  planBranch: `plan/${taskId}`,
-  baseBranch: 'dev',
-  nodes: {
-    '01-mock': {
-      taskId: '01-mock', title: 'Mock task', description: 'Mock',
-      acceptanceCriteria: [], dependsOn: [], level: 0,
-      state: 'pending', retries: 0, totalDispatches: 0,
-    },
-    '02-head': {
-      taskId: '02-head', title: 'Head node', description: 'Integration',
-      acceptanceCriteria: [], dependsOn: ['01-mock'], level: 1,
-      state: 'pending', retries: 0, totalDispatches: 0,
-    },
-  },
-  levels: [['01-mock'], ['02-head']],
-  headNode: '02-head',
-  currentLevel: 0,
-  issueLabel: `plan:${taskId}`,
-  checksum: '',
-}, null, 2),
-```
-
-**Changes to `taskify.md`:**
-
-Add to the output contract (omit `estimated_nodes` when `decomposition: 'single'`):
-```json
-{
-  "decomposition": "single | parallel",
-  "decomposition_reason": "string",
-  "estimated_nodes": 4
-}
-```
-
-Add decomposition assessment rules (same as before — see previous plan Step 2).
-
-**Tests (FAIL before, PASS after):**
-
-1. `tests/unit/scripts/cody/pipeline-utils.test.ts` — **TaskDefinition decomposition fields + output map**
-   - `normalizeTask({task_type:'implement_feature', ...})` without decomposition → defaults to `{decomposition:'single', decomposition_reason:'Single coherent task'}`
-   - `normalizeTask({..., decomposition:'parallel', decomposition_reason:'Multi-component'})` → preserved
-   - `validateTask({..., decomposition:'invalid'})` → validation error
-   - `validateTask({..., decomposition:'parallel', estimated_nodes:1})` → validation error (must be >= 2)
-   - `validateTask({..., decomposition:'single', decomposition_reason:'Simple task'})` → valid
-   - `stageOutputFile(taskDir, 'decompose')` returns `<taskDir>/graph.json`
-   - `SPEC_ONLY_STAGES` includes `'decompose'`
-   - Existing tests still pass (no regression)
-
-**Acceptance criteria:**
-- [ ] `TaskDefinition` has `decomposition`, `decomposition_reason`, `estimated_nodes` fields
-- [ ] `normalizeTask()` defaults `decomposition: 'single'` when missing
-- [ ] `validateTask()` validates new fields correctly
-- [ ] `STAGE_OUTPUT_MAP` has `decompose: 'graph.json'`
-- [ ] `SPEC_ONLY_STAGES` includes `'decompose'`
-- [ ] `DRY_RUN_OUTPUTS` has `decompose` entry producing valid mock graph JSON
-- [ ] `taskify.md` agent prompt includes decomposition assessment
-- [ ] Backward compatible: existing task.json without decomposition fields normalizes correctly
-
----
-
-## Step 3: Add `planId` to CodyInput and Task Directory Resolution
+## Step 2: Add `planId` to CodyInput and Task Directory Resolution
 
 **Time estimate: 20-30 minutes**
 
 **Files to touch:**
-- `scripts/cody/cody-utils.ts` (MODIFIED, lines 18-38 `CodyInput`, line 79 `VALID_MODES`, lines 92-94 `validateTaskId`, lines 101-111 `getTaskDir`/`ensureTaskDir`, lines 113-236 ALL status functions, lines 386-585 `parseCliArgs`, lines 586+ `parseCommentBody`)
+- `scripts/cody/cody-utils.ts` (MODIFIED, lines 18-38 `CodyInput`, line 79 `VALID_MODES`, lines 92-94 `validateTaskId`, lines 101-111 `getTaskDir`/`ensureTaskDir`, lines 113-236 ALL status functions, lines 386-562 `parseCliArgs`, lines 586+ `parseCommentBody`)
 
 **Behavior:**
 Extend `CodyInput` with `planId`. Add `TaskLocation` type. Add `validatePlanId()`. Modify `getTaskDir()`, `ensureTaskDir()`. Add `'plan'` to `VALID_MODES`. Derive `CodyInput.mode` from `VALID_MODES`. All status functions that take bare `taskId` change to `TaskLocation`. Update `parseCommentBody()` to support `plan` subcommand.
@@ -530,7 +421,7 @@ export interface TaskLocation {
 // CodyInput — derive mode from VALID_MODES + add planId:
 const VALID_MODES = ['spec', 'impl', 'rerun', 'full', 'status', 'plan'] as const
 export interface CodyInput {
-  mode: (typeof VALID_MODES)[number]  // Derived, not manual union (fixes S2)
+  mode: (typeof VALID_MODES)[number]  // Derived, not manual union
   // ... existing fields ...
   planId?: string  // NEW
 }
@@ -553,18 +444,16 @@ export function getTaskDir(taskId: string, planId?: string): string {
 export function ensureTaskDir(taskId: string, planId?: string): string
 
 // parseCliArgs — parse --plan-id:
-// (in the if/else if chain)
 else if (arg === '--plan-id' || arg.startsWith('--plan-id=')) {
   const value = arg.includes('=') ? arg.split('=')[1] : args[++i]
   if (!validatePlanId(value)) throw new Error(`Invalid --plan-id format: ${value}`)
   input.planId = value
 }
 
-// parseCommentBody — support /cody plan <planId> (fixes S3):
-// In the subcommand parsing:
+// parseCommentBody — support /cody plan <planId>:
 case 'plan':
   result.mode = 'plan'
-  result.planId = args[0] // First arg after 'plan' is the planId
+  result.planId = args[0]
   break
 ```
 
@@ -622,40 +511,64 @@ External: define `const loc: TaskLocation = { taskId: input.taskId, planId: inpu
 
 ---
 
-## Step 4: Fix Hardcoded Paths in Stage Prompts + Add `decompose` Stage
+## Step 3: Fix Hardcoded Paths in Stage Prompts + Update architect output mapping
 
 **Time estimate: 15-20 minutes**
 
 **Files to touch:**
-- `scripts/cody/stage-prompts.ts` (MODIFIED, lines 21-22 `SPEC_STAGES`, lines 29-43 `ALL_STAGES`, lines 68-82 `STAGE_CONTEXT_FILES`, lines 93-118 `stageInstructions`, lines 128-142 `getTaskType()`, lines 159-190 `buildStagePrompt()`)
+- `scripts/cody/stage-prompts.ts` (MODIFIED, lines 21-22 `SPEC_STAGES`, lines 29-43 `ALL_STAGES`, lines 68-82 `STAGE_CONTEXT_FILES`, lines 93-118 `stageInstructions`, lines 128-142 `getTaskType()`, lines 158-189 `buildStagePrompt()`)
+- `scripts/cody/pipeline-utils.ts` (MODIFIED, line 280 `STAGE_OUTPUT_MAP`, line 297 `SPEC_ONLY_STAGES`, line 304 `DRY_RUN_OUTPUTS`)
 - `scripts/cody/agent-runner.ts` (MODIFIED, `STAGE_TIMEOUTS`)
 
 **Behavior:**
-1. Replace hardcoded `.tasks/{TASK_ID}/` paths with dynamic paths
-2. Add `decompose` to `ALL_STAGES`, `SPEC_STAGES`, `STAGE_CONTEXT_FILES`, `stageInstructions`
+1. Replace hardcoded `.tasks/{TASK_ID}/` paths with dynamic paths using `getTaskDir()`
+2. Change `STAGE_OUTPUT_MAP` for architect from `plan.md` to `graph.json`
 3. Fix `getTaskType()` to use `getTaskDir()` instead of duplicate path construction
 4. Pass `planId` to `getTaskType()` AND `stageInstructions` from `buildStagePrompt()`
 5. **ALL 13 `stageInstructions` entries get signature `(taskId: string, planId?: string) => string`** (fixes B2)
 6. `buildStagePrompt()` calls `instructionFn(taskId, input.planId)` (fixes B3)
-7. Add `decompose: 20 * 60_000` to `STAGE_TIMEOUTS` in agent-runner.ts (fixes S14)
+7. Extend `STAGE_TIMEOUTS` for architect (may need more time to produce graph — 20 min)
+8. Add `architect` to `DRY_RUN_OUTPUTS` with a mock single-node graph JSON
+9. **NO changes to ALL_STAGES or SPEC_STAGES** — no decompose stage exists
 
-**Changes:**
+**Changes to `pipeline-utils.ts`:**
 
 ```typescript
-// SPEC_STAGES — add 'decompose' (fixes S4):
-export const SPEC_STAGES = ['taskify', 'spec', 'gap', 'clarify', 'decompose'] as const
+// STAGE_OUTPUT_MAP — architect output is now graph.json:
+const STAGE_OUTPUT_MAP: Record<string, string> = {
+  taskify: 'task.json',
+  gap: 'gap.md',
+  clarify: 'questions.md',
+  architect: 'graph.json',       // CHANGED from 'plan.md'
+  'plan-gap': 'plan-gap.md',
+  commit: 'commit.md',
+  autofix: 'autofix.md',
+}
 
-// ALL_STAGES — add 'decompose' after 'clarify':
-export const ALL_STAGES = [
-  'taskify', 'spec', 'gap', 'clarify',
-  'decompose',  // NEW
-  'architect', 'plan-review', 'build', 'commit',
-  'verify', 'autofix', 'auditor', 'apply-audit', 'pr',
-] as const
+// DRY_RUN_OUTPUTS — architect now produces graph.json (single-node mock):
+architect: (taskId) => JSON.stringify({
+  planId: taskId,
+  title: `[dry-run] Plan for ${taskId}`,
+  description: 'Mock single-node graph',
+  createdAt: new Date().toISOString(),
+  state: 'completed',
+  nodes: {
+    [taskId]: {
+      taskId, title: `Implement ${taskId}`, description: 'Mock',
+      acceptanceCriteria: ['Mock AC'], dependsOn: [], level: 0,
+      state: 'completed', retries: 0, totalDispatches: 0,
+    },
+  },
+  levels: [[taskId]],
+  headNode: taskId,
+  plan: `# Plan (dry-run)\n\nMock plan for ${taskId}.\n`,
+  checksum: '',
+}, null, 2),
+```
 
-// STAGE_CONTEXT_FILES — add decompose:
-decompose: ['task.md', 'spec.md', 'clarified.md', 'task.json'],
+**Changes to `stage-prompts.ts`:**
 
+```typescript
 // stageInstructions type — ALL 13 entries updated (fixes B2):
 export const stageInstructions: Record<Stage, (taskId: string, planId?: string) => string> = {
   taskify: (taskId, planId?) => {
@@ -665,13 +578,9 @@ export const stageInstructions: Record<Stage, (taskId: string, planId?: string) 
   spec: (taskId, planId?) => { /* same pattern */ },
   gap: (taskId, planId?) => { /* same pattern */ },
   clarify: (taskId, planId?) => { /* same pattern */ },
-  decompose: (taskId, planId?) => {
-    const taskDir = planId ? `.tasks/${planId}/${taskId}` : `.tasks/${taskId}`
-    return specOnlyInstructionTemplate.replace('{TASK_DIR}', taskDir)
-  },
   // Non-spec stages: signature updated but body unchanged
   architect: (_taskId, _planId?) => ``,
-  'plan-review': (_taskId, _planId?) => ``,
+  'plan-gap': (_taskId, _planId?) => ``,
   build: (_taskId, _planId?) => ``,
   commit: (_taskId, _planId?) => ``,
   verify: (_taskId, _planId?) => ``,
@@ -693,88 +602,139 @@ const taskDir = input.planId
   : `.tasks/${input.taskId}`
 const taskType = getTaskType(input.taskId, input.planId)
 const instruction = instructionFn ? instructionFn(input.taskId, input.planId) : ''
-
-// agent-runner.ts — add decompose timeout (fixes S14):
-export const STAGE_TIMEOUTS: Record<string, number> = {
-  // ... existing entries ...
-  decompose: 20 * 60_000,  // 20 minutes — writes multiple files
-}
 ```
 
 **Tests (FAIL before, PASS after):**
 
-1. `tests/unit/scripts/cody/stage-prompts.test.ts` — **Dynamic path in prompts + decompose stage**
+1. `tests/unit/scripts/cody/stage-prompts.test.ts` — **Dynamic paths + architect output mapping**
    - `buildStagePrompt({taskId:'t1', planId:'260221-x'} as CodyInput, 'build')` includes `.tasks/260221-x/t1` in prompt
    - `buildStagePrompt({taskId:'t1'} as CodyInput, 'build')` includes `.tasks/t1` (backward compat)
-   - `buildStagePrompt({taskId:'t1', planId:'260221-x'} as CodyInput, 'decompose')` includes SPEC-ONLY guard with `.tasks/260221-x/t1`
    - `getTaskType('t1', '260221-x')` reads from nested directory
-   - `ALL_STAGES` includes `'decompose'`
-   - `SPEC_STAGES` includes `'decompose'`
-   - `STAGE_CONTEXT_FILES.decompose` is `['task.md', 'spec.md', 'clarified.md', 'task.json']`
+   - `stageOutputFile(taskDir, 'architect')` returns `<taskDir>/graph.json`
+   - `STAGE_OUTPUT_MAP.architect` === `'graph.json'`
+   - Existing tests still pass (no regression)
 
 **Acceptance criteria:**
 - [ ] No duplicate path construction (uses `getTaskDir()`)
 - [ ] Agent prompts contain correct nested path when `planId` set
-- [ ] `decompose` is in `ALL_STAGES`, `SPEC_STAGES`, `STAGE_CONTEXT_FILES`
 - [ ] ALL 13 `stageInstructions` entries accept `(taskId, planId?)`
 - [ ] `buildStagePrompt()` passes `planId` to BOTH `getTaskType()` AND `stageInstructions`
-- [ ] `STAGE_TIMEOUTS` has `decompose: 20 * 60_000`
+- [ ] `STAGE_OUTPUT_MAP.architect` is `'graph.json'`
+- [ ] `DRY_RUN_OUTPUTS.architect` produces valid single-node graph JSON
+- [ ] `STAGE_TIMEOUTS` has `architect: 20 * 60_000`
 - [ ] Backward compatible when `planId` undefined
 
 ---
 
-## Step 5: Create Decompose Agent Definition
+## Step 4: Update Architect Agent to Always Produce graph.json
 
 **Time estimate: 15-20 minutes**
 
 **Files to touch:**
-- `.opencode/agents/decompose.md` (NEW, ~120 lines)
+- `.opencode/agents/architect.md` (MODIFIED, lines 12-24 — output contract, lines 30-40 — rerun handling)
 
 **Behavior:**
-OpenCode agent prompt for the `decompose` stage. Agent reads spec.md and task.json, produces `graph.json` + per-node task files.
+Update the architect agent prompt to ALWAYS produce `graph.json` instead of `plan.md`. The agent decides based on task complexity:
 
-**Agent prompt:**
+- **Simple task** → produce a single-node graph with the plan embedded in the `plan` field
+- **Complex task** → produce a multi-node graph with per-node task files, specs, and plans
 
+The file watcher watches for `graph.json` (per updated `STAGE_OUTPUT_MAP`).
+
+**Changes to `architect.md`:**
+
+Replace the output contract:
 ```markdown
----
-name: decompose
-description: Decomposes a complex task into a dependency graph of parallel sub-tasks
-mode: primary
-tools:
-  read: true
-  write: true
-  edit: false
-  bash: false
----
+**Output (REQUIRED)**: `.tasks/<task-id>/graph.json`
+
+You ALWAYS produce a graph.json file. Your decision:
+
+### Simple Task (single implementation unit)
+Write a single-node graph.json:
+```json
+{
+  "planId": "<task-id>",
+  "title": "<task title>",
+  "description": "<1-line summary>",
+  "createdAt": "<ISO timestamp>",
+  "state": "completed",
+  "nodes": {
+    "<task-id>": {
+      "taskId": "<task-id>",
+      "title": "<task title>",
+      "description": "<summary>",
+      "acceptanceCriteria": ["..."],
+      "dependsOn": [],
+      "level": 0,
+      "state": "completed",
+      "retries": 0,
+      "totalDispatches": 0
+    }
+  },
+  "levels": [["<task-id>"]],
+  "headNode": "<task-id>",
+  "plan": "<THE FULL PLAN CONTENT AS A STRING>",
+  "checksum": ""
+}
 ```
 
-**NOTE:** `bash: false` — the agent only needs read and write. Minimizes attack surface (L-6 fix).
+The `plan` field contains the FULL detailed plan (same format as the previous plan.md output — steps, files, tests, acceptance criteria). The pipeline will extract this to plan.md automatically.
 
-Prompt content same as previous plan Step 5, with these additions:
-- Node count: "3-10 discrete tasks (minimum 2, maximum 15)"
-- `totalDispatches: 0` included in GraphNode schema
-- Explicit: "Write graph.json to the task directory root — the file watcher watches for this file."
+### Complex Task (multiple independent units, 3+ developers)
+Write a multi-node graph.json AND per-node directories.
+
+Decision criteria for multi-node:
+- Task requires 3+ independent implementation units
+- Units have clear dependency relationships
+- Total effort > 4 hours
+- Different domains/skills needed per unit
+
+For multi-node, also create per-node directories under the task directory:
+- `<node-id>/task.md` — node-specific task description
+- `<node-id>/task.json` — pre-classified (task_type must be implement_feature, fix_bug, refactor, or ops)
+- `<node-id>/spec.md` — node-specific spec
+- `<node-id>/clarified.md` — pre-filled "Use recommended answers for all questions"
+- `<node-id>/plan.md` — node-specific implementation plan
+- `<node-id>/plan-review.md` — pre-filled "PASS"
+
+Multi-node graph.json includes:
+- `planBranch`: `plan/<planId>`
+- `baseBranch`: `dev`
+- `nodes`: 2-15 nodes with dependency edges
+- `levels`: computed from dependencies
+- `headNode`: the final integration verification node
+
+Node count: minimum 2, maximum 15. Head node should verify integration.
+```
+
+**Keep the existing plan format instructions** for the `plan` field content (steps, files, tests, acceptance criteria).
+
+**Rerun mode**: When `rerun-feedback.md` is present, read previous graph.json + feedback. If the graph structure was wrong, rewrite graph.json. If code-level issues, keep graph structure but update the plan in the affected node.
 
 **Tests (FAIL before, PASS after):**
 
-1. `tests/unit/scripts/cody/decompose-agent.test.ts` — **Agent output validation**
-   - Given a mock graph.json output, validate it with `validateGraph()`
-   - graph.json with valid nodes → passes validation
-   - graph.json with cycle → `validateGraph()` returns errors
-   - graph.json with `task_type: 'docs'` node → `validatePlanNodeTaskType()` throws
-   - graph.json with 16 nodes → `validateGraph()` returns node count error
-   - Per-node directories contain required files
+1. `tests/unit/scripts/cody/architect-output.test.ts` — **Validate architect output schema**
+   - Parse a valid single-node graph.json → passes schema validation
+   - Parse a valid multi-node graph.json → passes schema validation + `validateGraph()`
+   - Single-node graph has `plan` field with non-empty string
+   - Single-node graph has exactly 1 node and 1 level
+   - Multi-node graph has 2+ nodes and 2+ levels
+   - Multi-node graph per-node directories contain required files (task.md, task.json, spec.md, clarified.md, plan.md, plan-review.md)
+   - Node task_type in `['implement_feature', 'fix_bug', 'refactor', 'ops']`
 
 **Acceptance criteria:**
-- [ ] `.opencode/agents/decompose.md` exists with `bash: false`
-- [ ] Prompt specifies output contract (graph.json + per-node files)
+- [ ] `architect.md` documents graph.json as output (not plan.md)
+- [ ] Single-node graph contract defined with `plan` field
+- [ ] Multi-node graph contract defined with per-node directories
+- [ ] Decision criteria for single vs multi-node documented
 - [ ] Node count limits documented (2-15)
-- [ ] task_type restrictions documented
-- [ ] STOP CONDITION present
+- [ ] Task type restrictions documented
+- [ ] STOP CONDITION present ("after writing graph.json, you are DONE")
+- [ ] Rerun mode instructions updated for graph.json
 
 ---
 
-## Step 6: Update cody.ts — Call Sites, Plan Mode, Decompose Routing, Guards
+## Step 5: Update cody.ts — Routing After Architect, Call Sites, Plan Mode
 
 **Time estimate: 25-35 minutes**
 
@@ -788,101 +748,83 @@ Prompt content same as previous plan Step 5, with these additions:
 3. All ~29 status calls in cody.ts use `loc`
 4. Error messages use dynamic `taskPath`
 5. Add `plan` mode to routing switch
-6. **Add decompose routing in spec pipeline** — after gap/clarify, check `task.json.decomposition`
+6. **KEY CHANGE: After architect stage completes in impl pipeline, check graph.json:**
+   - If `isSingleNodeGraph(graph)` → extract `plan.md` from graph's `plan` field, continue existing impl pipeline
+   - If multi-node graph → commit task files, launch plan orchestrator, return `'plan-dispatched'`
 7. When `planId` set: pass plan branch to `ensureFeatureBranch()`
 8. **Guard: reject `mode=full` or `mode=spec` when `planId` is set**
 9. Add `planId?` to `StageHookOptions`
-10. When `planId` set, validate `task_type`
-11. **Guard `completeStatus` in `main()`** — don't mark completed if decomposition dispatched CI workflows (fixes S8)
+10. **Guard `completeStatus` in `main()`** — don't mark completed if plan was dispatched
 
-**Key routing change in `runSpecPipeline()` (after line ~453):**
+**Key routing change in `runImplPipeline()` (after architect stage completes, ~line 590):**
 
 ```typescript
-// After spec pipeline completes (before committing files):
-const taskDef = readTask(taskDir)
-if (taskDef?.decomposition === 'parallel') {
-  console.log('\n🔀 Task requires decomposition — running decompose stage...')
+// After architect stage produces graph.json:
+const { readGraph, isSingleNodeGraph, extractPlanFromSingleNode, validateGraph, validatePlanNodeTaskType } = await import('./graph')
+const graphPath = stageOutputFile(taskDir, 'architect')  // → graph.json
 
-  // Run decompose agent — output file is graph.json via STAGE_OUTPUT_MAP
-  const decomposeOutput = stageOutputFile(taskDir, 'decompose')  // → graph.json
-  updateStageStatus(loc, 'decompose', 'running')
-
-  if (input.dryRun) {
-    writeDryRunOutput(taskDir, 'decompose', input.taskId)
-    updateStageStatus(loc, 'decompose', 'completed', { retries: 0 })
-  } else {
-    const decomposeResult = await runAgentWithFileWatch(
-      input, 'decompose', decomposeOutput, undefined, { backend }
-    )
-
-    if (!decomposeResult.succeeded) {
-      updateStageStatus(loc, 'decompose', 'failed', { retries: decomposeResult.retries })
-      throw new Error('Decompose stage failed')
-    }
-    updateStageStatus(loc, 'decompose', 'completed', {
-      retries: decomposeResult.retries,
-      outputFile: path.basename(decomposeOutput),
-    })
-  }
-
-  // Validate graph.json
-  if (!fs.existsSync(decomposeOutput)) {
-    throw new Error('Decompose agent did not produce graph.json')
-  }
-  const { readGraph, validateGraph, validatePlanNodeTaskType } = await import('./graph')
+if (fs.existsSync(graphPath)) {
   const graph = readGraph(taskDir)
-  const validation = validateGraph(graph)
-  if (!validation.valid) {
-    throw new Error(`Invalid graph: ${validation.errors.join(', ')}`)
+
+  if (isSingleNodeGraph(graph)) {
+    // SIMPLE TASK: Extract plan.md from graph and continue existing pipeline
+    const planContent = extractPlanFromSingleNode(graph)
+    const planMdPath = path.join(taskDir, 'plan.md')
+    fs.writeFileSync(planMdPath, planContent)
+    console.log('  ✓ Single-node graph — extracted plan.md, continuing pipeline')
+    // Continue to plan-gap → build → ... (existing flow)
+  } else {
+    // COMPLEX TASK: Multi-node graph — launch plan orchestrator
+    console.log(`\n🔀 Multi-node graph (${Object.keys(graph.nodes).length} nodes, ${graph.levels.length} levels)`)
+
+    // Validate graph
+    const validation = validateGraph(graph)
+    if (!validation.valid) {
+      throw new Error(`Invalid graph: ${validation.errors.join(', ')}`)
+    }
+
+    // Validate all node task_types
+    for (const node of Object.values(graph.nodes)) {
+      const nodeDir = path.join(taskDir, node.taskId)
+      const nodeTaskDef = readTask(nodeDir)
+      if (nodeTaskDef) validatePlanNodeTaskType(nodeTaskDef)
+    }
+
+    // Commit task files (including graph.json and per-node files)
+    const { getPlanBranch } = await import('./graph')
+    commitPipelineFiles({
+      taskDir,
+      taskId: input.taskId,
+      message: `ci(cody): plan ${input.taskId} — ${Object.keys(graph.nodes).length} nodes across ${graph.levels.length} levels`,
+      ensureBranch: true,
+      cleanDirtyState: true,
+      stagingStrategy: 'task-only',
+      push: true,
+      isCI: !input.local,
+      dryRun: input.dryRun,
+      baseBranch: getPlanBranch(input.taskId),
+    })
+
+    console.log('\n🚀 Launching plan orchestrator...')
+    const { executePlan } = await import('./plan-orchestrator')
+    await executePlan(input.taskId, {
+      local: input.local ?? false,
+      dryRun: input.dryRun,
+      pollInterval: 30,
+      levelTimeout: 120,
+      maxRetries: 2,
+    })
+
+    return 'plan-dispatched'
   }
-
-  // Validate all node task_types
-  for (const node of Object.values(graph.nodes)) {
-    const nodeDir = path.join(taskDir, node.taskId)
-    const nodeTaskDef = readTask(nodeDir)
-    if (nodeTaskDef) validatePlanNodeTaskType(nodeTaskDef)
-  }
-
-  // Commit task files (including graph.json and per-node files)
-  // NOTE: pass baseBranch for plan branch (fixes S12)
-  const { getPlanBranch } = await import('./graph')
-  commitPipelineFiles({
-    taskDir,
-    taskId: input.taskId,
-    message: `ci(cody): decompose ${input.taskId} into ${Object.keys(graph.nodes).length} nodes`,
-    ensureBranch: true,
-    cleanDirtyState: true,
-    stagingStrategy: 'task-only',
-    push: true,
-    isCI: !input.local,
-    dryRun: input.dryRun,
-    baseBranch: getPlanBranch(input.taskId),  // Branch from plan branch
-  })
-
-  console.log('\n🚀 Decomposition complete. Launching plan orchestrator...')
-
-  // Launch plan orchestrator (planId = taskId for root task)
-  const { executePlan } = await import('./plan-orchestrator')
-  await executePlan(input.taskId, {
-    local: input.local ?? false,
-    dryRun: input.dryRun,
-    pollInterval: 30,
-    levelTimeout: 120,
-    maxRetries: 2,
-  })
-
-  // Mark status as 'running' not 'completed' — plan nodes still executing (fixes S8)
-  // main() will skip completeStatus for decomposed tasks
-  return 'decomposed'  // Signal to caller
 }
 ```
 
-**`main()` guard (fixes S8):**
+**`main()` guard:**
 
 ```typescript
-// In main(), after pipeline returns:
-const result = await runSpecPipeline(input, status, backend)
-if (result === 'decomposed') {
+const result = await runImplPipeline(input, status, backend)
+if (result === 'plan-dispatched') {
   // Don't mark completed — plan orchestrator is still running
   console.log('\n🔀 Plan dispatched — monitoring via plan orchestrator')
   return
@@ -890,33 +832,17 @@ if (result === 'decomposed') {
 completeStatus(loc, 'completed')
 ```
 
-**`ensureFeatureBranch` with plan branch + BASE_BRANCHES fix (cody.ts, in runSingleStage):**
-
-```typescript
-if (stage === 'build' && !input.dryRun) {
-  const td = readTask(taskDir)
-  if (td) {
-    if (input.planId) {
-      const { getPlanBranch } = await import('./graph')
-      ensureFeatureBranch(input.taskId, td.task_type, undefined, getPlanBranch(input.planId))
-    } else {
-      ensureFeatureBranch(input.taskId, td.task_type)
-    }
-  }
-}
-```
-
 **Tests (FAIL before, PASS after):**
 
-1. `tests/unit/scripts/cody/cody-plan-mode.test.ts` — **Plan mode routing + guards + decompose routing**
-   - `parseCliArgs(['--mode', 'plan', '--plan-id', '260221-test'])` → mode === 'plan', planId set
+1. `tests/unit/scripts/cody/cody-routing.test.ts` — **Graph-based routing + guards**
+   - When architect produces single-node graph → `plan.md` extracted, pipeline continues to plan-gap
+   - When architect produces multi-node graph → plan orchestrator launched, returns `'plan-dispatched'`
+   - `main()` does NOT call `completeStatus('completed')` when `'plan-dispatched'`
    - Plan mode with `--mode=full --plan-id=X` throws guard error
    - Plan mode with `--mode=spec --plan-id=X` throws guard error
    - Plan mode with `--mode=impl --plan-id=X` allowed
-   - When task.json has `decomposition: 'parallel'`, spec pipeline runs decompose stage (mock agent), returns `'decomposed'`
-   - When task.json has `decomposition: 'single'`, spec pipeline does NOT run decompose
-   - `main()` does NOT call `completeStatus('completed')` when pipeline returns `'decomposed'`
-   - `commitPipelineFiles` called with `baseBranch: getPlanBranch(taskId)` in decompose routing
+   - `commitPipelineFiles` called with `baseBranch: getPlanBranch(taskId)` in multi-node routing
+   - Existing single-task pipeline works unchanged (backward compat)
 
 **Acceptance criteria:**
 - [ ] All 5 `ensureTaskDir` call sites pass `input.planId`
@@ -924,19 +850,20 @@ if (stage === 'build' && !input.dryRun) {
 - [ ] `StageHookOptions` has `planId?` field
 - [ ] `plan` mode routable
 - [ ] Guard rejects `mode=full/spec` when `planId` set
-- [ ] Decompose routing: `decomposition === 'parallel'` → run decompose → validate graph → commit with plan baseBranch → launch orchestrator → return `'decomposed'`
-- [ ] `main()` skips `completeStatus('completed')` when decomposed
+- [ ] After architect: single-node → extract plan.md, continue pipeline
+- [ ] After architect: multi-node → validate graph → commit with plan baseBranch → launch orchestrator → return `'plan-dispatched'`
+- [ ] `main()` skips `completeStatus('completed')` when plan-dispatched
 - [ ] Feature branches for plan tasks branch from `getPlanBranch(planId)`
-- [ ] `commitPipelineFiles` in decompose routing passes `baseBranch`
+- [ ] `commitPipelineFiles` passes `baseBranch`
 
 ---
 
-## Step 7: Support Branching from Plan Branch in git-utils
+## Step 6: Support Branching from Plan Branch in git-utils
 
 **Time estimate: 20-25 minutes**
 
 **Files to touch:**
-- `scripts/cody/git-utils.ts` (MODIFIED, lines 57 `BASE_BRANCHES` check, lines 105-280, lines 366+ `commitAndPush`, lines 534+ `commitPipelineFiles`)
+- `scripts/cody/git-utils.ts` (MODIFIED, line 57 `BASE_BRANCHES` check, lines 105-180 `ensureFeatureBranch`, lines 366+ `commitAndPush`, lines 534+ `commitPipelineFiles`)
 
 **Behavior:**
 Add `baseBranch` parameter to `ensureFeatureBranch()`, `mergeDefaultBranch()`, `commitAndPush()`, and `CommitPipelineFilesOptions`. Add branch name validation. **Fix `BASE_BRANCHES` check to also allow `plan/` branches as valid base branches (fixes B4).** Thread `baseBranch` through `commitPipelineFiles → commitAndPush → ensureFeatureBranch` (fixes S11).
@@ -958,7 +885,6 @@ export function ensureFeatureBranch(
   projectDir?: string,
   baseBranch?: string  // NEW
 ): void {
-  // ...
   // CHANGED: Also allow plan/ branches as valid bases (fixes B4)
   if (!BASE_BRANCHES.includes(currentBranch) && !currentBranch.startsWith('plan/')) {
     console.log(`Already on feature branch: ${currentBranch}`)
@@ -985,11 +911,6 @@ interface CommitPipelineFilesOptions {
   // ... existing fields ...
   baseBranch?: string  // NEW — forwarded to commitAndPush → ensureFeatureBranch
 }
-
-// commitPipelineFiles — forward baseBranch:
-export function commitPipelineFiles(options: CommitPipelineFilesOptions): ... {
-  return commitAndPush({ ..., baseBranch: options.baseBranch })
-}
 ```
 
 **Tests (FAIL before, PASS after):**
@@ -1013,7 +934,7 @@ export function commitPipelineFiles(options: CommitPipelineFilesOptions): ... {
 
 ---
 
-## Step 8: PR Target Branch for Plan Tasks
+## Step 7: PR Target Branch for Plan Tasks
 
 **Time estimate: 15-20 minutes**
 
@@ -1029,16 +950,15 @@ Refactor scripted stage signatures to use options object (fixes S10). PR targets
 import type { TaskLocation } from './cody-utils'
 import { getPlanBranch } from './graph'
 
-// runPrStage — refactored to options object (fixes S10):
+// runPrStage — refactored to options object:
 export function runPrStage(
   taskDir: string,
   outputFile: string,
   options?: { cwd?: string; loc?: TaskLocation }
 ): { url: string | null } {
-  const projectDir = options?.cwd || process.cwd()
   let baseBranch = getDefaultBranch(projectDir)
   if (options?.loc?.planId) {
-    baseBranch = getPlanBranch(options.loc.planId)  // Deterministic
+    baseBranch = getPlanBranch(options.loc.planId)
   }
   const existingPr = getExistingPr(featureBranch, projectDir, baseBranch)
   // gh pr create --base ${baseBranch} ...
@@ -1048,7 +968,6 @@ export function runPrStage(
 function getExistingPr(branch: string, cwd: string, baseBranch?: string): string | null {
   const args = ['pr', 'list', '--head', branch, '--json', 'number,state,url']
   if (baseBranch) args.push('--base', baseBranch)
-  // ...
 }
 
 // runCommitStage — refactored to options object:
@@ -1056,11 +975,7 @@ export function runCommitStage(
   taskDir: string,
   outputFile: string,
   options?: { cwd?: string; loc?: TaskLocation }
-): { success: boolean; message: string; committed?: boolean } {
-  const taskId = options?.loc?.taskId || path.basename(taskDir)
-  if (!taskId) throw new Error('Cannot derive taskId from taskDir')  // L-5 fix
-  // ...
-}
+): { success: boolean; message: string; committed?: boolean }
 ```
 
 **Call sites in cody.ts:**
@@ -1087,7 +1002,7 @@ runCommitStage(taskDir, outputFile, { loc })
 
 ---
 
-## Step 9: Plan Orchestrator — Core Execution Logic
+## Step 8: Plan Orchestrator — Core Execution Logic
 
 **Time estimate: 30-40 minutes**
 
@@ -1098,48 +1013,40 @@ runCommitStage(taskDir, outputFile, { loc })
 **Behavior:**
 Main orchestration with two entry points: `executePlan()` (full run) and `advancePlan()` (single-level advancement from CI). Uses deterministic branch derivation, explicit PR merge after checks, git worktrees for local mode, symlink protection.
 
-Same as previous plan Step 9 with these additions from audit findings:
+**Key functions:**
 
-- **Graph integrity verified BEFORE any dispatch** (H4 fix) — `readGraph()` verifies checksum, then `dispatchLevel()` validates task_ids against verified graph before calling `gh workflow run`
-- **`sanitizeForGitHub()` strips GitHub Actions commands** (H6 fix) — `::set-output`, `::add-mask`, etc. Also escapes `%0A`/`%0D`
+- `executePlan(planId, options)` — full run: read graph, create plan branch from `dev`, dispatch levels bottom-up
+- `advancePlan(planId, completedNodeId)` — CI callback: mark node complete, check if level done, dispatch next level
+- `dispatchLevel(graph, level, planId, options)` — dispatch all nodes at a level (CI: `gh workflow run`, local: worktree)
+- `waitForLevelCompletion(graph, level, planId, options)` — poll PRs for merge status
+- `mergeNodePR(graph, node, planId)` — `gh pr merge --squash` after checks pass
+- `createPlanBranch(planId, baseBranch)` — create `plan/<planId>` from `dev`
+- `createSummaryPR(planId, graph)` — final PR from `plan/<planId>` → `dev`
+- `sanitizeForGitHub(text)` — strip GH Actions commands, @mentions, URLs (H6 fix)
+- `setupWorktree(planId, nodeId)` / `cleanupWorktree(planId, nodeId)` — local mode with symlink protection (H2 fix)
+
+**Security invariants:**
+- **Graph integrity verified BEFORE any dispatch** (H4 fix) — `readGraph()` verifies checksum, then `dispatchLevel()` validates task_ids against verified graph
+- **`sanitizeForGitHub()` strips GitHub Actions commands** (H6 fix) — `::set-output`, `::add-mask`, etc.
 - **`MAX_POLLS_PER_LEVEL = 500`** and **`--poll-interval >= 15` minimum** enforced (M2 fix)
-- **`totalDispatches` counter** per node, enforced `MAX_TOTAL_DISPATCHES = 5` across plan restarts (M3 fix)
-- **`advancePlan()` uses `throw` for errors, `return` for graceful exit** — no `process.exit()` (M8 fix)
+- **`totalDispatches` counter** per node, enforced `MAX_TOTAL_DISPATCHES = 5` across plan restarts
+- **`advancePlan()` uses `throw` for errors, `return` for graceful exit** — no `process.exit()`
 - **Worktree security**: check `.worktrees/`, `.worktrees/<planId>/` for symlinks at each path component (H2 fix)
-- **`advancePlan()` also validates actor permissions** for dispatch trigger (H3 — implemented in plan.yml, not in TypeScript)
 
 ```typescript
-// sanitizeForGitHub — expanded (H6 fix):
-function sanitizeForGitHub(text: string): string {
-  return text
-    .replace(/<[^>]*>/g, '')                                    // Strip HTML tags
-    .replace(/@(\w)/g, '`@`$1')                                 // Prevent @mentions
-    .replace(/#(\d+)/g, '`#$1`')                                // Prevent false issue refs
-    .replace(/!\[/g, '\\![')                                    // Prevent image injection
-    .replace(/\[([^\]]*)\]\(https?:\/\/[^)]*\)/g, '$1')        // Strip markdown links
-    .replace(/^::[a-zA-Z-]+.*$/gm, '')                          // Strip GH Actions commands
-    .replace(/%0[aAdD]/g, '')                                   // Escape URL-encoded newlines
-}
-
 // dispatchLevel — verify graph integrity + validate task_ids (H4 fix):
 async function dispatchLevel(graph, level, planId, options): Promise<void> {
-  // Verify integrity BEFORE dispatch
   if (!verifyChecksum(graph)) throw new PlanIntegrityError('Graph tampered before dispatch')
-
   const nodes = getNodesAtLevel(graph, level)
   for (const node of nodes) {
-    // Validate task_id is in verified graph (H4)
     if (!graph.nodes[node.taskId]) throw new Error(`Unknown task_id: ${node.taskId}`)
-
-    // Check totalDispatches limit (M3)
     if (node.totalDispatches >= MAX_TOTAL_DISPATCHES) {
       updateNodeState(graph, node.taskId, 'failed')
       node.error = `Exceeded max total dispatches (${MAX_TOTAL_DISPATCHES})`
       continue
     }
     node.totalDispatches++
-
-    // ... dispatch logic
+    // ... dispatch logic (gh workflow run or worktree)
   }
 }
 
@@ -1148,7 +1055,6 @@ async function waitForLevelCompletion(graph, level, planId, options): Promise<vo
   if (options.pollInterval < 15) throw new Error('Poll interval must be >= 15 seconds')
   let pollCount = 0
   const MAX_POLLS_PER_LEVEL = 500
-
   while (true) {
     pollCount++
     if (pollCount > MAX_POLLS_PER_LEVEL) {
@@ -1157,12 +1063,24 @@ async function waitForLevelCompletion(graph, level, planId, options): Promise<vo
     // ... rest of polling logic
   }
 }
+
+// sanitizeForGitHub — expanded (H6 fix):
+function sanitizeForGitHub(text: string): string {
+  return text
+    .replace(/<[^>]*>/g, '')
+    .replace(/@(\w)/g, '`@`$1')
+    .replace(/#(\d+)/g, '`#$1`')
+    .replace(/!\[/g, '\\![')
+    .replace(/\[([^\]]*)\]\(https?:\/\/[^)]*\)/g, '$1')
+    .replace(/^::[a-zA-Z-]+.*$/gm, '')          // Strip GH Actions commands
+    .replace(/%0[aAdD]/g, '')                     // Escape URL-encoded newlines
+}
 ```
 
 **Tests (FAIL before, PASS after):**
 
 1. `tests/unit/scripts/cody/plan-orchestrator.test.ts` — **Level dispatch, completion, merge, security**
-   - All previous tests plus:
+   - `executePlan()` creates plan branch, dispatches level 0, waits, dispatches level 1, creates summary PR
    - `dispatchLevel()` verifies checksum before dispatching any nodes
    - `dispatchLevel()` rejects task_id not in verified graph
    - `dispatchLevel()` skips node when `totalDispatches >= MAX_TOTAL_DISPATCHES`
@@ -1170,10 +1088,13 @@ async function waitForLevelCompletion(graph, level, planId, options): Promise<vo
    - `waitForLevelCompletion()` fails after `MAX_POLLS_PER_LEVEL = 500` polls
    - `sanitizeForGitHub('::set-output name=foo::bar')` → empty string
    - `sanitizeForGitHub('test%0Ainjection')` → `'testinjection'`
-   - Worktree symlink check at each path component (`.worktrees/`, `.worktrees/<planId>/`)
+   - Worktree symlink check at each path component
+   - `advancePlan()` uses `throw` (not `process.exit()`)
+   - Local mode uses git worktrees; CI mode uses `gh workflow run`
 
 **Acceptance criteria:**
-- All previous acceptance criteria plus:
+- [ ] `executePlan()` creates plan branch and dispatches nodes level-by-level
+- [ ] `advancePlan()` marks node complete and advances to next level
 - [ ] Graph integrity verified BEFORE any dispatch
 - [ ] Dispatched task_ids validated against verified graph
 - [ ] `totalDispatches` per node enforced (max 5)
@@ -1181,10 +1102,12 @@ async function waitForLevelCompletion(graph, level, planId, options): Promise<vo
 - [ ] `MAX_POLLS_PER_LEVEL = 500` enforced
 - [ ] `sanitizeForGitHub()` strips GH Actions commands and URL-encoded newlines
 - [ ] Worktree symlink check at each path component
+- [ ] `.gitignore` includes `.worktrees/`
+- [ ] Retry: max 2 per cycle, block dependents on failure, continue independent nodes
 
 ---
 
-## Step 10: GitHub Actions Workflows
+## Step 9: GitHub Actions Workflows
 
 **Time estimate: 20-30 minutes**
 
@@ -1197,15 +1120,47 @@ async function waitForLevelCompletion(graph, level, planId, options): Promise<vo
 - `scripts/cody/checkout-task-branch.sh` (MODIFIED)
 
 **Behavior:**
-Same as previous plan Step 10, with security fixes:
+
+### plan.yml (NEW)
+GitHub Actions workflow for plan orchestration. Two triggers:
+1. `workflow_dispatch` — dispatched by plan-orchestrator to run a single node
+2. `pull_request` (closed + merged) — callback when a node PR merges to plan branch
+
+Concurrency group: `plan-<planId>` with `cancel-in-progress: false`.
+
+```yaml
+name: Plan Orchestrator
+on:
+  workflow_dispatch:
+    inputs:
+      plan_id: { required: true, type: string }
+      task_id: { required: true, type: string }
+      node_id: { required: true, type: string }
+  pull_request:
+    types: [closed]
+    branches: ['plan/**']
+
+concurrency:
+  group: plan-${{ github.event.inputs.plan_id || 'pr-merge' }}
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate actor permissions
+        id: safety
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.event_name == 'pull_request' && github.event.sender.login || github.actor }}
+        run: ./scripts/cody/parse-plan-safety.sh
+  # ... rest of workflow
+```
 
 ### parse-inputs.sh — Add TASK_ID validation (C4 fix)
-
 ```bash
-# BEFORE writing to GITHUB_OUTPUT, validate format:
 if [ -n "$DISPATCH_TASK_ID" ]; then
   if ! [[ "$DISPATCH_TASK_ID" =~ ^[0-9]{6}-[a-zA-Z0-9-]+$ ]]; then
-    echo "=== Error: invalid task_id format: $DISPATCH_TASK_ID ==="
     echo "valid=false" >> "$GITHUB_OUTPUT"
     exit 0
   fi
@@ -1213,88 +1168,110 @@ fi
 ```
 
 ### parse-plan-safety.sh — Fix actor source + validate username (C5 fix)
-
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-
-# Validate username format (defense against injection)
 if ! [[ "$ACTOR" =~ ^[a-zA-Z0-9-]+$ ]]; then
-  echo "=== Safety: invalid actor username format ==="
   echo "valid=false" >> "$GITHUB_OUTPUT"
   exit 0
 fi
-
-# Use gh api with proper argument separation (no string interpolation)
-PERMISSION=$(gh api \
-  "repos/${GITHUB_REPOSITORY}/collaborators/${ACTOR}/permission" \
-  --jq '.permission' 2>/dev/null || echo "none")
-
+PERMISSION=$(gh api "repos/${GITHUB_REPOSITORY}/collaborators/${ACTOR}/permission" --jq '.permission' 2>/dev/null || echo "none")
 if [[ "$PERMISSION" == "admin" || "$PERMISSION" == "maintain" || "$PERMISSION" == "write" ]]; then
   echo "valid=true" >> "$GITHUB_OUTPUT"
 else
-  echo "=== Safety: actor $ACTOR has permission '$PERMISSION', need write or above ==="
   echo "valid=false" >> "$GITHUB_OUTPUT"
 fi
 ```
 
-### plan.yml — Validate actor for BOTH triggers (H3 fix)
-
+### cody.yml — Add `plan_id` input
 ```yaml
-# Resolve job validates actor for BOTH dispatch and PR-close:
-- name: Validate actor permissions
-  # Runs for ALL event types (not just pull_request)
-  id: safety
-  env:
-    GH_TOKEN: ${{ github.token }}
-    ACTOR: ${{ github.event_name == 'pull_request' && github.event.sender.login || github.actor }}
-    GITHUB_REPOSITORY: ${{ github.repository }}
-  run: ./scripts/cody/parse-plan-safety.sh
+inputs:
+  plan_id:
+    description: 'Plan ID (for plan node execution)'
+    required: false
+```
+Forward as `--plan-id` to `run-cody.sh`.
+
+### run-cody.sh — Forward `--plan-id`
+```bash
+if [ -n "${PLAN_ID:-}" ]; then
+  EXTRA_ARGS+=" --plan-id=$PLAN_ID"
+fi
 ```
 
-### checkout-task-branch.sh — Add TASK_ID validation + quote all (L-2, M-4 fixes)
-
+### checkout-task-branch.sh — Add TASK_ID validation + support plan branch merge base
 ```bash
-# Add at top:
 if ! [[ "$TASK_ID" =~ ^[0-9]{6}-[a-zA-Z0-9-]+$ ]]; then
   echo "=== Error: invalid TASK_ID format ==="
   exit 1
 fi
-
-# Quote all variable expansions:
-git merge "origin/${MERGE_BASE}" --no-edit
+# Support plan branch as merge base
+if [ -n "${PLAN_ID:-}" ]; then
+  MERGE_BASE="plan/${PLAN_ID}"
+fi
 ```
 
-**Tests and acceptance criteria:** Same as previous plan Step 10, plus:
-- [ ] `parse-inputs.sh` validates TASK_ID format with bash regex BEFORE writing to GITHUB_OUTPUT
-- [ ] `parse-plan-safety.sh` validates actor username format
-- [ ] `plan.yml` validates actor permissions for BOTH dispatch and PR-close triggers
-- [ ] `checkout-task-branch.sh` validates TASK_ID at top of script
+**Tests (FAIL before, PASS after):**
+
+1. `tests/unit/scripts/cody/workflows.test.ts` — **Workflow input validation**
+   - `parse-inputs.sh` with valid TASK_ID → `valid=true`
+   - `parse-inputs.sh` with `../../evil` TASK_ID → `valid=false`
+   - `parse-plan-safety.sh` with invalid actor format → `valid=false`
+   - `plan.yml` validates actor for both dispatch and PR-close triggers
+
+**Acceptance criteria:**
+- [ ] `plan.yml` exists with dispatch + PR-close triggers
+- [ ] Concurrency group prevents parallel runs for same planId
+- [ ] `parse-inputs.sh` validates TASK_ID format with bash regex
+- [ ] `parse-plan-safety.sh` validates actor username format + permissions
+- [ ] `cody.yml` has `plan_id` input
+- [ ] `run-cody.sh` forwards `--plan-id`
+- [ ] `checkout-task-branch.sh` supports plan branch merge base
 
 ---
 
-## Step 11: Plan Decomposition Skill + Slash Command (Manual Override)
+## Step 10: Plan Decomposition Skill + Slash Command (Manual Override)
 
 **Time estimate: 10-15 minutes**
-
-Same as previous plan Step 11. No changes from gap/security analysis.
 
 **Files to touch:**
 - `.agents/skills/plan-decomposition/SKILL.md` (NEW)
 - `.claude/commands/plan-decomposition.md` (NEW)
 
+**Behavior:**
+Optional manual override for when a user wants to force plan decomposition on a task that the architect might not have decomposed. The skill reads the current task spec and produces a multi-node graph.
+
+The skill is a lightweight wrapper that:
+1. Reads `.tasks/<task-id>/spec.md` and `.tasks/<task-id>/clarified.md`
+2. Calls the architect agent with explicit "multi-node" instruction
+3. Writes `graph.json` + per-node files
+
+**Slash command** (`/plan-decomposition <task-id>`) triggers the skill.
+
+**Tests (FAIL before, PASS after):**
+
+1. `tests/unit/scripts/cody/skill-files.test.ts` — **Skill file existence**
+   - `.agents/skills/plan-decomposition/SKILL.md` exists and contains expected sections
+   - `.claude/commands/plan-decomposition.md` exists
+
+**Acceptance criteria:**
+- [ ] SKILL.md documents the manual decomposition override
+- [ ] Slash command exists and references the skill
+- [ ] Instructions reference `graph.json` output contract
+
 ---
 
-## Step 12: Update OpenCode Agent Prompts
+## Step 11: Update OpenCode Agent Prompts (Hardcoded Paths)
 
 **Time estimate: 10-15 minutes**
 
-**Files to touch (narrowed to agents with actual hardcoded paths — fixes S13):**
+**Files to touch (narrowed to agents with actual hardcoded paths):**
 - `.opencode/agents/taskify.md` (MODIFIED — line 20)
 - `.opencode/agents/gap.md` (MODIFIED — line 122)
 - `.opencode/agents/verify.md` (MODIFIED — line 28)
-- `.opencode/agents/architect.md` (MODIFIED — line 16)
 - `.opencode/agents/spec.md` (MODIFIED — lines 17, 57)
+
+**NOTE:** `architect.md` is already updated in Step 4.
 
 **Change pattern:**
 ```
@@ -1302,13 +1279,19 @@ Before: Only read from and write to the .tasks/{TASK_ID}/ directory.
 After:  Only read from and write to the task directory specified in the prompt below.
 ```
 
+**Tests (FAIL before, PASS after):**
+
+1. `tests/unit/scripts/cody/agent-paths.test.ts` — **No hardcoded .tasks/ paths in agents**
+   - Grep `taskify.md`, `gap.md`, `verify.md`, `spec.md` for `.tasks/{TASK_ID}` — expect zero matches
+   - Each agent contains "task directory specified in the prompt" or similar dynamic reference
+
 **Acceptance criteria:**
-- [ ] Zero hardcoded `.tasks/` path references in the 5 agents above
+- [ ] Zero hardcoded `.tasks/{TASK_ID}` references in the 4 agents above
 - [ ] Other agents verified to have no hardcoded paths (no changes needed)
 
 ---
 
-## Step 13: Package.json Scripts
+## Step 12: Package.json Scripts
 
 **Time estimate: 5-10 minutes**
 
@@ -1324,8 +1307,6 @@ After:  Only read from and write to the task directory specified in the prompt b
 }
 ```
 
-**NOTE:** No `pnpm generate:importmap` needed — OpenCode agents don't use Payload import maps (M6 fix).
-
 **Acceptance criteria:**
 - [ ] `pnpm plan:execute --plan-id=<id>` runs orchestrator
 - [ ] `pnpm plan:status --plan-id=<id>` shows state
@@ -1338,31 +1319,30 @@ After:  Only read from and write to the task directory specified in the prompt b
 Step 0 (execSync migration) ←── PREREQUISITE FOR ALL
                                     │
 Step 1 (graph.ts) ──────────────────┤
-Step 2 (TaskDefinition + taskify) ──┤
-Step 7 (git-utils baseBranch) ──────┤
+Step 6 (git-utils baseBranch) ──────┤
                                     │
-Step 3 (cody-utils planId) ←── Step 0 (clean execFileSync base)
-Step 4 (stage-prompts+decompose) ←── Step 3
-Step 5 (decompose agent) ←── Step 1 (graph schema knowledge)
+Step 2 (cody-utils planId) ←── Step 0 (clean execFileSync base)
+Step 3 (stage-prompts+output map) ←── Step 2
+Step 4 (architect.md) ←── Step 1 (graph schema knowledge)
                                     │
-Step 6 (cody.ts routing) ←── Steps 2,3,4,5
-Step 8 (PR target) ←── Steps 1,3,7
+Step 5 (cody.ts routing) ←── Steps 1,2,3,4
+Step 7 (PR target) ←── Steps 1,2,6
                                     │
-Step 9 (plan-orchestrator) ←── Steps 1,3,6,7,8
-Step 10 (GH Actions+shell) ←── Step 9
-Step 11 (Skill+slash cmd) ←── Step 9
-Step 12 (Agent prompts) ←── Step 4
-Step 13 (package.json) ←── Step 9
+Step 8 (plan-orchestrator) ←── Steps 1,2,5,6,7
+Step 9 (GH Actions+shell) ←── Step 8
+Step 10 (Skill+slash cmd) ←── Step 8
+Step 11 (Agent prompts) ←── Step 3
+Step 12 (package.json) ←── Step 8
 ```
 
 **Parallelizable groups:**
 - **Step 0** FIRST (prerequisite)
-- **Group A** (after Step 0, no mutual deps): Steps 1, 2, 7
-- **Group B** (dep on Step 0 + Step 1): Steps 3, 5
-- **Group C** (dep on Steps 2,3): Steps 4, 12
-- **Group D** (dep on all above): Steps 6, 8
-- **Group E** (dep on D): Step 9
-- **Group F** (dep on Step 9): Steps 10, 11, 13
+- **Group A** (after Step 0, no mutual deps): Steps 1, 6
+- **Group B** (dep on Step 0): Step 2
+- **Group C** (dep on Steps 1,2): Steps 3, 4
+- **Group D** (dep on all above): Steps 5, 7
+- **Group E** (dep on D): Step 8
+- **Group F** (dep on Step 8): Steps 9, 10, 11, 12
 
 ---
 
@@ -1370,8 +1350,9 @@ Step 13 (package.json) ←── Step 9
 
 | Case | Handling |
 |------|----------|
-| Task with `decomposition: 'single'` | Existing pipeline, zero change |
-| Task with `decomposition: 'parallel'` but only 2 nodes | Valid (MIN_PLAN_NODES=2) |
+| Architect produces single-node graph | Extract plan.md from `plan` field, continue existing pipeline unchanged |
+| Architect produces multi-node graph | Validate graph, launch plan orchestrator |
+| Existing task.json without plan fields | No change needed — no decomposition fields exist in TaskDefinition |
 | Task with 16+ nodes | `validateGraph()` rejects (MAX_PLAN_NODES=15) |
 | Merge conflicts between parallel PRs | Orchestrator detects merge failure, retries node |
 | Agent failure mid-plan | Retry (max 2 per cycle, max 5 total dispatches), mark failed, block dependents |
@@ -1385,14 +1366,14 @@ Step 13 (package.json) ←── Step 9
 | Symlink at worktree path | Component-by-component check |
 | `mode=full` for plan node | Guard throws error |
 | `task_type=docs` for plan node | `validatePlanNodeTaskType()` throws |
-| Missing graph.json | `PlanNotFoundError` with hint |
+| Missing graph.json after architect | Pipeline fails with clear error |
+| Architect rerun with existing graph.json | Architect reads previous graph, decides whether to keep structure or rewrite |
 | GitHub rate limit | Catch error, double poll interval, retry |
 | Excessive polling | `MAX_POLLS_PER_LEVEL = 500`, `pollInterval >= 15` |
 | Node dispatched too many times | `totalDispatches >= MAX_TOTAL_DISPATCHES (5)` → mark failed |
 | GH Actions command injection in issue body | `sanitizeForGitHub()` strips `::command::` patterns |
 | `/cody plan 260221-auth` via issue comment | `parseCommentBody()` supports `plan` subcommand |
-| Decompose output file mismatch | `STAGE_OUTPUT_MAP` has `decompose: 'graph.json'` |
-| Dry-run with decomposition | `DRY_RUN_OUTPUTS` has mock graph JSON |
+| Dry-run with architect | `DRY_RUN_OUTPUTS.architect` produces valid single-node graph JSON |
 
 ---
 
@@ -1400,12 +1381,14 @@ Step 13 (package.json) ←── Step 9
 
 1. `dev` is the default branch
 2. `gh` CLI authenticated in both local and CI
-3. OpenCode runs in GitHub Actions
+3. OpenCode runs in GitHub Actions (not Claude Code)
 4. All plan nodes use `impl` mode (spec pre-computed), starting from `build` stage
 5. PR merge to plan branch = completion signal
 6. Max plan size: 15 nodes, ~5 levels
 7. Each Cody node: ~30-45 minutes
 8. Branch protection on `plan/**` is configured (REQUIRED prerequisite)
 9. "Automatically delete head branches" enabled in repo settings
-10. `opencode` is the default agent (not Claude Code)
+10. `opencode` is the default agent
 11. `json-stable-stringify` or equivalent available (or use sorted-key JSON.stringify)
+12. The architect agent (Opus) is capable enough to decide single vs multi-node and produce valid graph.json
+13. Single-node graphs have a `plan` field containing the full plan text (backward compatible with plan.md content)

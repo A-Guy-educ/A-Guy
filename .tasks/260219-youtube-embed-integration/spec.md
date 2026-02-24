@@ -11,6 +11,36 @@ High-level flow:
 3. Embed metadata is stored on the Media doc (`embedProvider`, `embedVideoId`, `embedUrl`, `embedTitle`, `embedThumbnailUrl`).
 4. Frontend renderers read stored embed fields and choose the appropriate embed UI (YouTube vs generic iframe), with a legacy fallback to `externalUrl`.
 
+## Gap Analysis
+
+### Current State (Observed In Repo)
+
+- `src/server/payload/collections/Media/index.ts` defines `type` (includes `external`) and `externalUrl`, but has no embed metadata fields (`embedProvider`, `embedVideoId`, `embedUrl`, `embedTitle`, `embedThumbnailUrl`).
+- Media collection hooks run `validateMediaUploadHook` in `beforeValidate` (requires `externalUrl` when `type === external`) and `enforceRetentionPolicyHook` in `beforeChange`; there is no hook that parses `externalUrl` or populates derived embed fields.
+- `src/ui/web/media/ExternalMedia/index.tsx` renders a generic iframe using `externalUrl` only; it does not detect YouTube, does not use `youtube-nocookie.com`, and does not use a responsive 16:9 player.
+- `src/ui/admin/MediaPreview/ExternalPreview.tsx` previews `externalUrl` only and renders a generic iframe; it does not show provider, title, thumbnail, or resolved embed URL.
+- `src/ui/web/exerciserenderer/components/MediaAttachments/index.tsx` only supports `video` and `image/svg`. External media attachments are effectively not rendered because they do not have a file `url` and `getMediaUrl(media.url, ...)` yields no `src`.
+- No embed/provider utilities or tests exist under `src/infra/media/embed/` or `tests/unit/infra/media/embed/`.
+
+### Target State (Per Task)
+
+- Persist resolved embed metadata on Media documents for `type === external` so all consumers can render embeds without re-parsing URLs.
+- Resolve YouTube URLs into `youtube-nocookie.com` embed URLs, video IDs, and best-effort title/thumbnail via the public oEmbed endpoint.
+- Render a first-class responsive YouTube embed everywhere external media is used, plus a generic iframe fallback for non-YouTube URLs and legacy data.
+- Upgrade admin preview for external media to show provider + title + thumbnail (YouTube) and use embedUrl where available.
+- Ensure exercise renderer attachments also support external media (YouTube + generic).
+- Add unit tests for URL parsing/resolution and the Media hook behavior (with mocked `fetch`).
+
+### Primary Gaps (Work Items)
+
+- **Schema gap**: Add 5 read-only, external-only embed fields to `src/server/payload/collections/Media/index.ts` and regenerate Payload types.
+- **Hook gap**: Create and register a Media `beforeChange` hook to resolve `externalUrl` on create/update and clear embed fields when leaving `external`.
+- **Infra gap**: Implement provider resolution utilities under `src/infra/media/embed/` (types, YouTube resolver, resolver router, barrel export).
+- **Web UI gap**: Update `src/ui/web/media/ExternalMedia/index.tsx` to render YouTube embeds responsively (16:9) when embed fields exist.
+- **Admin UI gap**: Update `src/ui/admin/MediaPreview/ExternalPreview.tsx` to preview provider metadata (YouTube thumbnail preferred over iframe).
+- **Exercise gap**: Update `src/ui/web/exerciserenderer/components/MediaAttachments/index.tsx` to render external media attachments.
+- **Test gap**: Add unit tests for embed utilities, resolver routing, and the Media hook.
+
 ## Requirements
 
 ### FR-001: Embed Provider Resolution Utilities
@@ -220,3 +250,177 @@ Expected locations (new):
 - Rich provider-specific UI beyond a standard responsive iframe and thumbnail preview.
 - Migration/backfill job for existing external media documents (legacy fallback is sufficient).
 - E2E tests and production monitoring/metrics for embed resolution (unit + manual verification only).
+
+## Implementation Plan (TDD)
+
+This plan maps directly to the requirements above (FR-001..FR-007, NFR-001..NFR-004). Each step is intended to be done in a tight TDD loop (write failing test(s) → implement → pass → run typecheck).
+
+### Step 1: Embed Types + YouTube URL Parsing (FR-001)
+
+**Create**:
+
+- `src/infra/media/embed/types.ts`
+- `src/infra/media/embed/youtube.ts` (sync parsing/build helpers only)
+- `tests/unit/infra/media/embed/youtube.test.ts`
+
+**Implement**:
+
+- `EmbedProvider = 'youtube' | 'generic'`
+- `EmbedMetadata` + `YouTubeOEmbedResponse` types
+- `isYouTubeUrl(url)`
+- `extractYouTubeVideoId(url)`
+- `buildYouTubeEmbedUrl(videoId)` (must use `youtube-nocookie.com`)
+
+**Run**:
+
+```bash
+pnpm test:unit -- tests/unit/infra/media/embed/youtube.test.ts
+pnpm -s tsc --noEmit
+```
+
+### Step 2: oEmbed Fetch + Provider Router (FR-001, NFR-002)
+
+**Create**:
+
+- `src/infra/media/embed/resolve.ts`
+- `src/infra/media/embed/index.ts`
+- `tests/unit/infra/media/embed/resolve.test.ts`
+
+**Modify**:
+
+- `src/infra/media/embed/youtube.ts` (add async metadata resolver)
+- `tests/unit/infra/media/embed/youtube.test.ts` (mock `fetch`)
+
+**Implement**:
+
+- `fetchYouTubeMetadata(videoId)` using `AbortSignal.timeout(5000)` and graceful failure (no throw)
+- `resolveYouTube(url)` → returns `null` if non-YouTube; otherwise returns `EmbedMetadata`
+- `resolveEmbedUrl(url)` → tries YouTube first, otherwise returns `generic` metadata
+
+**Run**:
+
+```bash
+pnpm test:unit -- tests/unit/infra/media/embed/
+pnpm -s tsc --noEmit
+```
+
+### Step 3: Media Schema Extensions (FR-002)
+
+**Modify**:
+
+- `src/server/payload/collections/Media/index.ts`
+
+**Add fields (after `externalUrl`)**:
+
+- `embedProvider` (select: youtube|generic, readOnly, sidebar, condition external)
+- `embedVideoId` (text, readOnly, sidebar, condition external)
+- `embedUrl` (text, readOnly, sidebar, condition external)
+- `embedTitle` (text, readOnly, condition external)
+- `embedThumbnailUrl` (text, readOnly, condition external)
+
+**Run**:
+
+```bash
+pnpm generate:types
+pnpm -s tsc --noEmit
+pnpm generate:importmap
+```
+
+### Step 4: Media `resolveEmbed` Hook (FR-003, NFR-002, NFR-004)
+
+**Create**:
+
+- `src/server/payload/collections/Media/hooks/resolveEmbed.ts`
+- `tests/unit/hooks/resolveEmbed.test.ts`
+
+**Modify**:
+
+- `src/server/payload/collections/Media/index.ts` (import + register hook)
+
+**Hook behavior**:
+
+- Create + external + URL present → resolve
+- Update + external + URL changed → resolve
+- Update + external + URL unchanged → no-op (performance)
+- Update + type changed away from external → clear embed fields (set to `null`)
+- Any resolver failure → log error, do not fail save
+
+**Run**:
+
+```bash
+pnpm test:unit -- tests/unit/hooks/resolveEmbed.test.ts
+pnpm -s tsc --noEmit
+```
+
+### Step 5: Web External Rendering (FR-004, NFR-001, NFR-003)
+
+**Modify (full update)**:
+
+- `src/ui/web/media/ExternalMedia/index.tsx`
+
+**Implement**:
+
+- If `embedProvider === 'youtube'` and `embedVideoId` + `embedUrl` exist → responsive 16:9 iframe with:
+  - `loading="lazy"`
+  - `allowFullScreen`
+  - `referrerPolicy="strict-origin-when-cross-origin"`
+  - explicit `allow` list
+- Else if `embedUrl` exists → generic iframe
+- Else if `externalUrl` exists → legacy iframe fallback (backward compatibility)
+
+**Run**:
+
+```bash
+pnpm -s tsc --noEmit
+```
+
+### Step 6: Admin External Preview (FR-005)
+
+**Modify (full update)**:
+
+- `src/ui/admin/MediaPreview/ExternalPreview.tsx`
+
+**Implement**:
+
+- Read form fields via `useFormFields`: `externalUrl`, `embedProvider`, `embedUrl`, `embedTitle`, `embedThumbnailUrl`, `embedVideoId`
+- Show provider badge + title + URL + open link
+- Prefer thumbnail (YouTube) over iframe in sidebar
+- Use inline styles (Payload admin)
+
+**Run**:
+
+```bash
+pnpm -s tsc --noEmit
+pnpm generate:importmap
+```
+
+### Step 7: Exercise Renderer Support + Test Updates (FR-006, FR-007)
+
+**Modify**:
+
+- `src/ui/web/exerciserenderer/components/MediaAttachments/index.tsx`
+- `tests/unit/exerciserenderer/MediaAttachments.test.tsx`
+
+**Implement**:
+
+- Add `external` media branch:
+  - YouTube (embed fields present) → responsive 16:9 iframe with same key attrs as web renderer
+  - Generic → iframe using `embedUrl` or fallback `externalUrl`
+
+**Run**:
+
+```bash
+pnpm test:unit -- tests/unit/exerciserenderer/MediaAttachments.test.tsx
+pnpm -s tsc --noEmit
+```
+
+### Final Verification
+
+```bash
+pnpm test:unit
+pnpm -s tsc --noEmit
+pnpm -s lint
+pnpm -s format
+pnpm generate:types
+pnpm generate:importmap
+```

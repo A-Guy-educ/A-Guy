@@ -12,6 +12,7 @@ import { useExercisesPager } from './useExercisesPager'
 import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 import { ChatInterface } from '@/ui/web/chat'
 import { getMediaUrl } from '@/infra/utils/getMediaUrl'
+import { SafeHtml } from '@/ui/web/SafeHtml'
 
 interface ExercisesPagerProps {
   exercises: Exercise[]
@@ -228,9 +229,9 @@ export function ExercisesPager({
                 </div>
 
                 {introDescription && (
-                  <div
+                  <SafeHtml
+                    html={introDescription}
                     className="prose prose-lg dark:prose-invert max-w-md mx-auto mb-8 text-muted-foreground leading-relaxed text-start [&_ul]:list-inside [&_ol]:list-inside"
-                    dangerouslySetInnerHTML={{ __html: introDescription }}
                   />
                 )}
 

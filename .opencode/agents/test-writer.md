@@ -6,7 +6,7 @@ tools:
   read: true
   write: true
   edit: true
-  bash: false
+  bash: true
 ---
 
 # TEST WRITER SUBAGENT (TDD)
@@ -20,6 +20,8 @@ The build agent invokes you for each step in the plan. You'll receive:
 - The plan step details (files to modify, expected behavior)
 - The spec requirement for this step
 - Context from spec.md and task.md
+- **Source file exports** (the actual function/component signatures to test)
+- **Existing similar test** (for reference patterns)
 
 ## Your Task
 
@@ -107,6 +109,96 @@ describe('Collection Integration', () => {
   const { ConvertForm } = require('@/ui/admin/exercise-conversion/ConvertForm')
   ```
 
+### Critical: Vitest Mock Patterns (MUST FOLLOW)
+
+Vitest has specific behaviors that cause tests to fail if not handled correctly. Follow these rules:
+
+#### 1. vi.mock() Hoisting - NEVER Reference Module-Level Variables
+
+```typescript
+// ❌ WRONG - This will fail with "mockGetPayload is not a function"
+// Because vi.mock() is hoisted, mockGetPayload is undefined when the factory runs
+const mockGetPayload = vi.fn()
+vi.mock('payload', () => ({
+  getPayload: mockGetPayload,
+}))
+mockGetPayload.mockResolvedValue(mockPayloadInstance)
+
+// ✅ CORRECT - Define mocks inside the factory
+vi.mock('payload', () => ({
+  getPayload: vi.fn(() =>
+    Promise.resolve({
+      find: vi.fn(() => Promise.resolve({ docs: [] })),
+    }),
+  ),
+}))
+
+// ✅ ALSO CORRECT - Use vi.mocked() after import
+import { getPayload } from 'payload'
+// ... later in test ...
+vi.mocked(getPayload).mockResolvedValue(mockPayload)
+```
+
+#### 2. Async Generators - Don't Use mockRejectedValueOnce
+
+```typescript
+// ❌ WRONG - mockRejectedValueOnce doesn't work correctly with async generators
+const mockStream = vi.fn()
+mockStream.mockRejectedValueOnce(new Error('Async error'))
+
+// ✅ CORRECT - Use an async generator that throws
+const mockAsyncGenerator = vi.fn(async function* () {
+  throw new Error('Async error')
+})
+```
+
+#### 3. Class Constructors - Use Proper Constructor Functions
+
+```typescript
+// ❌ WRONG - vi.fn(() => {...}) can't be used with "new"
+const MockClass = vi.fn(() => ({ prop: 'value' }))
+
+// ✅ CORRECT - Use a proper constructor function
+const MockClass = vi.fn(function (this: any) {
+  this.prop = 'value'
+})
+```
+
+#### 4. Environment Variables - Always Use vi.stubEnv()
+
+Tests run in CI without `.env` files. Never rely on process.env values being present.
+
+```typescript
+// ❌ WRONG - Relies on .env file which doesn't exist in CI
+const apiKey = process.env.MINIMAX_API_KEY
+
+// ✅ CORRECT - Stub the env var explicitly
+vi.stubEnv('MINIMAX_API_KEY', 'test-key-123')
+// ... test runs ...
+vi.unstubAllEnvs()
+```
+
+### Critical: Self-Validation (REQUIRED)
+
+After writing your test file, you MUST verify it compiles:
+
+1. Run `pnpm -s tsc --noEmit` to check for TypeScript errors
+2. If there are import errors, type errors, or syntax errors — FIX THEM before returning
+3. Do NOT rely on the build agent to fix your test errors
+
+Example workflow:
+
+```bash
+# After writing tests/test-file.test.ts
+pnpm -s tsc --noEmit
+
+# If errors found, fix them:
+# - Missing imports? Add them
+# - Wrong types? Fix the types
+# - Syntax errors? Fix them
+# Then re-run tsc until it passes
+```
+
 ### Before Writing Tests
 
 1. **Read the source file** you are testing:
@@ -129,4 +221,4 @@ describe('Collection Integration', () => {
 
 ## Output
 
-After writing tests, the build agent will run them to verify they are valid. Tests should FAIL initially (TDD red phase), proving they're testing the right behavior.
+After writing tests and validating they compile, the build agent will run them to verify they are valid. Tests should FAIL initially (TDD red phase), proving they're testing the right behavior.
