@@ -83,8 +83,9 @@ export class ConversationService {
   async getOrCreateActiveConversation(
     userId: string,
     contextRef: ContextRef,
+    contextKeyOverride?: string,
   ): Promise<ConversationWithHistory> {
-    const contextKey = `${contextRef.relationTo}:${contextRef.value}`
+    const contextKey = contextKeyOverride || `${contextRef.relationTo}:${contextRef.value}`
 
     // Try to find existing active conversation
     const existingConv = await this.payload.find({
