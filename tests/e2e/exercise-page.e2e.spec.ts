@@ -334,15 +334,14 @@ test.describe('Exercise Page', () => {
       const closeButton = page.getByRole('button', { name: /close menu/i })
       await closeButton.click()
 
-      // Wait for menu to close
-      await page.waitForFunction(() => {
-        const panel = document.querySelector('[class*="translate-x-full"]')
-        return panel && window.getComputedStyle(panel).transform !== 'none'
-      }, { timeout: 1000 })
+      // Wait for menu to have the closed class
+      await page.waitForSelector('[class*="translate-x-full"][class*="pointer-events-none"]', { 
+        timeout: 1000 
+      })
 
       // Verify menu is closed (should have translate-x-full class)
       const closedMenu = page.locator('[class*="translate-x-full"]').filter({ hasText: /menu/i })
-      await expect(closedMenu).toBeInViewport({ ratio: 0 }) // Not visible in viewport
+      await expect(closedMenu).not.toBeInViewport() // Not visible in viewport
 
       // Verify overlay is not visible
       const overlay = page.locator('.fixed.inset-0.bg-black\\/50')

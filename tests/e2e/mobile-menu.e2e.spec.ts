@@ -32,11 +32,10 @@ test.describe('Mobile Menu', () => {
     // Click close button
     await closeButton.click()
     
-    // Wait for menu to have translate-x-full class (closed state)
-    await page.waitForFunction(() => {
-      const panel = document.querySelector('[class*="translate-x-full"]')
-      return panel && window.getComputedStyle(panel).transform !== 'none'
-    }, { timeout: 1000 })
+    // Wait for menu to have the closed class
+    await page.waitForSelector('[class*="translate-x-full"][class*="pointer-events-none"]', { 
+      timeout: 1000 
+    })
     
     // Verify menu is closed - the panel should not be visible anymore
     // We check that it has the translate-x-full class which moves it off-screen
@@ -74,11 +73,10 @@ test.describe('Mobile Menu', () => {
     const overlay = page.locator('.fixed.inset-0.bg-black\\/50').first()
     await overlay.click({ position: { x: 10, y: 10 } })
     
-    // Wait for menu to close
-    await page.waitForFunction(() => {
-      const panel = document.querySelector('[class*="translate-x-full"]')
-      return panel && window.getComputedStyle(panel).transform !== 'none'
-    }, { timeout: 1000 })
+    // Wait for menu to have the closed class
+    await page.waitForSelector('[class*="translate-x-full"][class*="pointer-events-none"]', { 
+      timeout: 1000 
+    })
     
     // Verify menu is closed
     const closedPanel = page.locator('[class*="translate-x-full"]').filter({ hasText: /navigation|resources/i })
