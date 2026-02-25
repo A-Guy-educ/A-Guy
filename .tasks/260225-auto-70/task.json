@@ -1,0 +1,23 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "New UserPreferences collection with teacherPersona relationship",
+    "Update Prompts collection with type:persona and unique slug",
+    "Registration flow with persona selection UI",
+    "Cookie-based anonymous persona storage",
+    "Profile settings for persona change",
+    "Chat orchestrator integration with prompt injection",
+    "UI for persona label display in chat"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": ["spec", "architect"],
+    "reasoning": "Input contains detailed requirements, acceptance criteria (11 items), data model specs, implementation steps (registration, anonymous support, profile, orchestrator), and UI requirements. Promoted spec.md and plan.md."
+  },
+  "pipeline_profile": "standard"
+}
