@@ -104,7 +104,8 @@
       "teachersProfilePlaceholder": "תכונות פרופיל המורה בקרוב.",
       "failedToLoadCourse": "טעינת הקורס נכשלה",
       "tryAgain": "נסה שוב"
-    },
+    }
+  },
   "roles": {
     "admin": "מנהל",
     "student": "תלמיד"
