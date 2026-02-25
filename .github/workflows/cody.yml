@@ -149,22 +149,16 @@ jobs:
           gh issue comment ${{ needs.parse.outputs.issue_number }} \
             --body "⚠️ Invalid \`@cody\` command. Use: \`@cody [spec|impl|rerun|full|status] [task-id] [options]\`"
 
-  # Smoke test: runs on push to dev/main to validate cody scripts work
+  # Smoke test: runs on push to dev/main to validate cody pipeline works
   smoke-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     if: >-
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            scripts/cody
-            package.json
-            pnpm-lock.yaml
-          sparse-checkout-cone-mode: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -198,6 +192,34 @@ jobs:
 
       - name: Validate cody entry can be loaded
         run: pnpm tsx scripts/cody/entry.ts --help
+
+      - name: Run actual pipeline (spec mode - runs taskify)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Create simple test task
+          mkdir -p .tasks/260225-smoke-test
+          echo "# Task" > .tasks/260225-smoke-test/task.md
+          echo "" >> .tasks/260225-smoke-test/task.md
+          echo "Smoke test task" >> .tasks/260225-smoke-test/task.md
+
+          # Run spec mode (will run taskify stage)
+          pnpm cody --mode=spec --task-id=260225-smoke-test || true
+
+          # Don't fail on stage errors, just verify files were created
+
+      - name: Verify taskify produced valid output
+        run: |
+          # Verify task.json was created
+          if [ ! -f ".tasks/260225-smoke-test/task.json" ]; then
+            echo "ERROR: task.json was not created"
+            exit 1
+          fi
+
+          # Verify it's valid JSON
+          cat .tasks/260225-smoke-test/task.json | pnpm tsx -e "JSON.parse(require('fs').readFileSync(0, 'utf-8')); console.log('Valid JSON')"
+
+          echo "SUCCESS: Pipeline smoke test passed"
 
   # Job 2: Orchestrate - run the pipeline
   orchestrate:
