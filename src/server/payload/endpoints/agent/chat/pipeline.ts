@@ -221,6 +221,8 @@ export async function runChatPipeline(
 
   let composedInstructions
   try {
+    // Pass user for persona injection (only if authenticated user)
+    const chatUser = userId && isUsersCollectionUser(req.user) ? req.user : null
     composedInstructions = await composeFullSystemInstructions(
       req.payload,
       lessonContext.lessonPrompt,
@@ -228,6 +230,7 @@ export async function runChatPipeline(
       reqLogger as Logger,
       lessonContext.coursePrompt,
       lessonContext.courseContextText,
+      chatUser,
     )
   } catch (error) {
     if (error instanceof Error && error.message.includes('exceeds maximum')) {

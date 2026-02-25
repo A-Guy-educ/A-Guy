@@ -27,6 +27,7 @@ import { Tenants } from '@/server/payload/collections/Tenants'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
 import { UploadSessions } from '@/server/payload/collections/UploadSessions'
 import { Users } from '@/server/payload/collections/Users'
+import { UserPreferences } from '@/server/payload/collections/UserPreferences'
 import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
@@ -151,6 +152,7 @@ export default buildConfig({
     Lessons,
     Exercises,
     Prompts,
+    UserPreferences,
     ExerciseAssets,
     Users,
     UserProgress,

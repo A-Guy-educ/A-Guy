@@ -13,7 +13,7 @@ export const Prompts: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'key', 'type', 'status', 'usage', 'tenant', 'updatedAt'],
+    defaultColumns: ['title', 'key', 'type', 'slug', 'status', 'usage', 'tenant', 'updatedAt'],
     group: 'AI',
   },
   fields: [
@@ -42,10 +42,22 @@ export const Prompts: CollectionConfig = {
       options: [
         { label: 'System', value: 'system' },
         { label: 'Context', value: 'context' },
+        { label: 'Persona', value: 'persona' },
       ],
       index: true,
       admin: {
-        description: 'System prompts are always included. Context prompts are lesson-specific.',
+        description:
+          'System prompts are always included. Context prompts are lesson-specific. Persona defines teacher personas.',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'slug',
+      type: 'text',
+      unique: true,
+      index: true,
+      admin: {
+        description: 'Machine-readable slug for persona lookup (e.g., "persona_focused")',
         position: 'sidebar',
       },
     },

@@ -16,8 +16,12 @@
   "assumptions": [],
   "input_quality": {
     "level": "detailed_plan",
-    "skip_stages": ["spec", "architect"],
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
     "reasoning": "Input contains detailed requirements, acceptance criteria (11 items), data model specs, implementation steps (registration, anonymous support, profile, orchestrator), and UI requirements. Promoted spec.md and plan.md."
   },
-  "pipeline_profile": "standard"
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
 }

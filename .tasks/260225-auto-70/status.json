@@ -3,9 +3,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-02-25T09:05:08.697Z",
-  "updatedAt": "2026-02-25T09:12:14.705Z",
+  "updatedAt": "2026-02-25T10:58:37.419Z",
   "state": "running",
-  "currentStage": "gap",
+  "currentStage": "commit",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -30,6 +30,34 @@
       "outputFile": "gap.md",
       "completedAt": "2026-02-25T09:12:14.705Z",
       "elapsed": 333302
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "outputFile": "plan.md",
+      "skipped": "input_quality",
+      "completedAt": "2026-02-25T10:32:17.854Z"
+    },
+    "plan-gap": {
+      "state": "completed",
+      "retries": 2,
+      "startedAt": "2026-02-25T10:32:17.855Z",
+      "outputFile": "plan-gap.md",
+      "completedAt": "2026-02-25T10:35:27.005Z",
+      "elapsed": 189150
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-25T10:35:27.006Z",
+      "outputFile": "build.md",
+      "completedAt": "2026-02-25T10:57:46.378Z",
+      "elapsed": 1339372
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-25T10:58:37.419Z"
     }
   },
   "triggeredBy": "comment",

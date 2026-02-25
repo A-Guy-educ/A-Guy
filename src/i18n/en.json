@@ -28,7 +28,9 @@
       "myAccount": "My Account",
       "logout": "Logout",
       "loggingOut": "Logging out..."
-    }
+    },
+    "cancel": "Cancel",
+    "saving": "Saving..."
   },
   "auth": {
     "oauth": {
@@ -385,6 +387,46 @@
       "terms": "Terms of Use",
       "privacy": "Privacy Policy",
       "contact": "Contact Us"
+    }
+  },
+  "personas": {
+    "title": "Choose Your Teaching Style",
+    "subtitle": "Select how you'd like your AI tutor to help you learn",
+    "skip": "Skip for now",
+    "continue": "Continue",
+    "continuing": "Setting up...",
+    "save": "Save Changes",
+    "saved": "Teaching style saved successfully!",
+    "saveFailed": "Failed to save teaching style",
+    "settingsTitle": "Teaching Style",
+    "settingsDescription": "Choose how your AI tutor teaches you",
+    "strict": {
+      "title": "Strict",
+      "description": "High standards, direct corrections, pushes you to explain reasoning"
+    },
+    "thorough": {
+      "title": "Thorough",
+      "description": "In-depth explanations, builds on previous knowledge, detailed steps"
+    },
+    "patient": {
+      "title": "Patient",
+      "description": "Takes time, breaks down problems, celebrates progress, supportive"
+    },
+    "focused": {
+      "title": "Focused",
+      "description": "Stays on topic, efficient explanations, core principles first"
+    },
+    "challenging": {
+      "title": "Challenging",
+      "description": "Pushes beyond comfort zone, thought-provoking questions"
+    },
+    "labels": {
+      "default": "Default",
+      "strict": "Strict",
+      "thorough": "Thorough",
+      "patient": "Patient",
+      "focused": "Focused",
+      "challenging": "Challenging"
     }
   }
 }

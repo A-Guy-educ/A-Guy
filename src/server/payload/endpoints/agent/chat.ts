@@ -672,6 +672,8 @@ async function handleContextScopedChat(
 
   let composedInstructions
   try {
+    // Pass user for persona injection (only if authenticated user)
+    const chatUser = userId && isUsersCollectionUser(req.user) ? req.user : null
     composedInstructions = await composeFullSystemInstructions(
       req.payload,
       lessonContext.lessonPrompt,
@@ -679,6 +681,7 @@ async function handleContextScopedChat(
       logger as Logger,
       lessonContext.coursePrompt,
       lessonContext.courseContextText,
+      chatUser,
     )
   } catch (error) {
     if (error instanceof Error && error.message.includes('exceeds maximum')) {

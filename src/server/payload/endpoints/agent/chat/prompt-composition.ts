@@ -8,6 +8,7 @@ import type { Logger } from 'pino'
 import { composeSystemInstructions } from '@/infra/llm/prompt-composer.server'
 import { resolveAgentSystemPrompt } from '@/infra/llm/prompt-resolver.server'
 import { fetchPublishedSystemPrompts } from '@/infra/llm/system-prompts.server'
+import { resolveTeacherPersona, getPersonaXmlBlock } from '@/infra/utils/teacher-persona'
 import type { Prompt } from '@/payload-types'
 
 import type { ResolvedContext } from './context-resolution'
@@ -250,6 +251,7 @@ export interface ComposedSystemInstructions {
 /**
  * Compose full system instructions from all sources
  * Priority: lesson prompt > course prompt > default prompt
+ * Includes teacher persona injection
  */
 export async function composeFullSystemInstructions(
   payload: Payload,
@@ -258,6 +260,8 @@ export async function composeFullSystemInstructions(
   reqLogger: Logger,
   coursePrompt?: Prompt | null,
   courseContextText?: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  user?: any,
 ): Promise<ComposedSystemInstructions> {
   // Fetch published system prompts (always included)
   const systemPromptsResult = await fetchPublishedSystemPrompts(payload)
@@ -293,11 +297,35 @@ export async function composeFullSystemInstructions(
 
   // Compose final system instructions: system prompts + lesson/course prompt + lesson/course context
   // Priority: lesson context > course context
-  const instructions = composeSystemInstructions(
+  let instructions = composeSystemInstructions(
     systemPromptsResult.templates,
     promptResolution.template,
     lessonContextText || courseContextText,
   )
+
+  // Inject teacher persona (if user provided)
+  // This is added to the system prompt but NOT to memory/vector context
+  if (user) {
+    try {
+      const personaResult = await resolveTeacherPersona(payload, user)
+      const personaXml = getPersonaXmlBlock(personaResult.persona)
+
+      if (personaXml) {
+        reqLogger.info(
+          {
+            personaSlug: personaResult.personaSlug,
+            resolvedFrom: personaResult.resolvedFrom,
+          },
+          'Injecting teacher persona',
+        )
+
+        // Append persona to the end of system instructions
+        instructions = instructions + '\n\n' + personaXml
+      }
+    } catch (error) {
+      reqLogger.warn({ err: error }, 'Failed to inject teacher persona, continuing without it')
+    }
+  }
 
   return {
     instructions,

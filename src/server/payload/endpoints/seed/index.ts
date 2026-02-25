@@ -6,6 +6,7 @@ import { seedGuestChatConfig } from './guest-chat-config'
 import { contactForm as contactFormData } from './contact-form'
 import { contact as contactPageData } from './contact-page'
 import { seedSystemParams } from './system-params'
+import { seedPersonas } from './personas'
 
 const collections: CollectionSlug[] = ['categories', 'pages', 'forms', 'form-submissions', 'search']
 
@@ -147,6 +148,9 @@ export const seed = async ({
     await seedChatConfig(payload, defaultTenantId)
     await seedGuestChatConfig(payload, defaultTenantId)
   }
+
+  // Seed teacher personas
+  await seedPersonas(payload)
 
   payload.logger.info('Seeded database successfully!')
 }
