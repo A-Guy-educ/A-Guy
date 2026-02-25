@@ -39,27 +39,29 @@ export async function Footer() {
 
   return (
     <footer className="mt-auto border-t border-border bg-footer text-card-foreground relative z-0">
-      <div className="container py-3 flex flex-col items-center gap-2">
-        <SystemLink className="flex items-center gap-2" href="/">
-          <TelescopeLogo className="h-5 w-auto" />
-          <span className="text-xs font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
-            Aguy Learning Platform
-          </span>
-        </SystemLink>
+      <div className="container py-3 flex flex-col gap-2">
+        <p className="text-xs font-bold text-muted-foreground/40 uppercase tracking-[0.2em] text-center">
+          Aguy Learning Platform
+        </p>
+        <div className="flex flex-row justify-between items-center">
+          <SystemLink className="flex items-center gap-2" href="/">
+            <TelescopeLogo className="h-5 w-auto" />
+          </SystemLink>
 
-        <div className="flex items-center gap-2 text-xs">
-          {navItems.map(({ link }, i) => {
-            return (
-              <CMSLink
-                className="text-card-foreground hover:text-primary transition-colors text-xs whitespace-nowrap"
-                key={i}
-                {...link}
-              />
-            )
-          })}
-          <span className="text-muted-foreground/30">|</span>
-          <VersionDisplay version={version} />
-          <ThemeSelector />
+          <div className="flex items-center gap-2 text-xs">
+            {navItems.map(({ link }, i) => {
+              return (
+                <CMSLink
+                  className="text-card-foreground hover:text-primary transition-colors text-xs whitespace-nowrap"
+                  key={i}
+                  {...link}
+                />
+              )
+            })}
+            <span className="text-muted-foreground/30">|</span>
+            <VersionDisplay version={version} />
+            <ThemeSelector />
+          </div>
         </div>
       </div>
     </footer>

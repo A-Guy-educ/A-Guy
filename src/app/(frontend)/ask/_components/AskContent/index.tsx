@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { ChatInterface } from '@/ui/web/chat'
 import { logger } from '@/infra/utils/logger'
@@ -16,8 +17,17 @@ interface AskContentProps {
 
 export function AskContent({ conversationContextKey }: AskContentProps) {
   const t = useTranslations('homepage.ask')
+  const router = useRouter()
   const [courseId, setCourseId] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
+
+  // Update URL with conversation ID after first message so refresh/back works
+  const handleConversationCreated = useCallback(
+    (conversationId: string, ctxKey: string) => {
+      router.replace(`/ask?chat=${conversationId}&ctx=${encodeURIComponent(ctxKey)}`)
+    },
+    [router],
+  )
 
   useEffect(() => {
     async function loadCourse() {
@@ -87,6 +97,7 @@ export function AskContent({ conversationContextKey }: AskContentProps) {
         <ChatInterface
           courseId={courseId}
           contextKeyOverride={contextKey}
+          onConversationCreated={handleConversationCreated}
           translationNamespace="homepage.ask"
         />
       }

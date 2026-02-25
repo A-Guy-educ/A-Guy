@@ -51,6 +51,8 @@ interface UseNotebookChatProps {
   userId?: string
   // Override computed contextKey (e.g. for Ask page with per-session conversations)
   contextKeyOverride?: string
+  // Called when the server creates/returns a conversationId (e.g. after first message)
+  onConversationCreated?: (conversationId: string, contextKey: string) => void
 }
 
 export function useNotebookChat({
@@ -73,6 +75,7 @@ export function useNotebookChat({
   adminMode = false,
   userId,
   contextKeyOverride,
+  onConversationCreated,
 }: UseNotebookChatProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -398,7 +401,9 @@ export function useNotebookChat({
             })
             scrollToBottom()
           } else if (event.type === 'done') {
-            // done event received, conversation metadata available for future features
+            if (event.conversationId && event.contextKey) {
+              onConversationCreated?.(event.conversationId, event.contextKey)
+            }
           } else if (event.type === 'error') {
             const errMsg = event.error || errorMessage
             // Check if this is an auth error (contains "auth" or "authentication")
@@ -441,7 +446,7 @@ export function useNotebookChat({
         inputRef.current?.focus()
       }
     },
-    [errorMessage, authRequiredMessage, guestLimitMessage, scrollToBottom],
+    [errorMessage, authRequiredMessage, guestLimitMessage, scrollToBottom, onConversationCreated],
   )
 
   /**
@@ -485,6 +490,11 @@ export function useNotebookChat({
           toast.error(result.error || errorMessage)
         }
         return
+      }
+
+      // Notify caller of conversation creation
+      if (result.conversationId && result.contextKey) {
+        onConversationCreated?.(result.conversationId, result.contextKey)
       }
 
       // Track guest mode

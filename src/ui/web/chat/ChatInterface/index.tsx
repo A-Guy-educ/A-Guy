@@ -88,6 +88,9 @@ interface ChatInterfaceProps {
   // Override computed contextKey (e.g. for Ask page per-session conversations)
   contextKeyOverride?: string
 
+  // Called when the server creates/returns a conversationId (e.g. after first message)
+  onConversationCreated?: (conversationId: string, contextKey: string) => void
+
   // Display
   displayMode?: 'full' | 'input-only'
 
@@ -114,6 +117,7 @@ export function ChatInterface({
   showResetButton = false,
   showMathTools = false,
   contextKeyOverride,
+  onConversationCreated,
   displayMode = 'full',
   isMobile,
   viewMode,
@@ -179,6 +183,7 @@ export function ChatInterface({
     adminMode,
     userId,
     contextKeyOverride,
+    onConversationCreated,
   })
 
   const { speak, playingMessageId } = useTTS()
