@@ -44,6 +44,8 @@ export async function executePostAction(
     case 'resolve-profile': {
       const taskDef = readTask(ctx.taskDir)
       if (taskDef) {
+        // Update ctx.taskDef so subsequent post-actions can access it
+        ctx.taskDef = taskDef
         const { resolvePipelineProfile } = await import('../pipeline-utils')
         ctx.profile = resolvePipelineProfile(taskDef)
         // Signal engine to rebuild pipeline with new profile (two-phase construction)
