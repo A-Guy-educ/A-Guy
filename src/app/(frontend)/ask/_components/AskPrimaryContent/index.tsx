@@ -4,8 +4,8 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { Loader2, PlusCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import type { AskMediaAttachEvent, ExerciseFile } from '../ask-types'
-import { ASK_MEDIA_ATTACH_EVENT } from '../ask-types'
+import type { AskMediaAttachEvent, AskMediaRestoreEvent, ExerciseFile } from '../ask-types'
+import { ASK_MEDIA_ATTACH_EVENT, ASK_MEDIA_RESTORE_EVENT } from '../ask-types'
 import { AskExerciseCard } from '../AskExerciseCard'
 
 function dispatchMediaAttach(detail: AskMediaAttachEvent) {
@@ -24,6 +24,25 @@ export function AskPrimaryContent() {
       if (currentFile?.url.startsWith('blob:')) URL.revokeObjectURL(currentFile.url)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup only on unmount
+  }, [])
+
+  // Restore image from conversation history when re-entering
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { mediaId, filename, url } = (e as CustomEvent<AskMediaRestoreEvent>).detail
+      setCurrentFile({
+        id: Date.now(),
+        title: filename.replace(/\.[^/.]+$/, '') || 'Uploaded image',
+        url,
+        date: '',
+        mediaId,
+        isUploading: false,
+      })
+      // Also notify chat pane so askMedia is set for future messages
+      dispatchMediaAttach({ mediaId, filename })
+    }
+    window.addEventListener(ASK_MEDIA_RESTORE_EVENT, handler)
+    return () => window.removeEventListener(ASK_MEDIA_RESTORE_EVENT, handler)
   }, [])
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

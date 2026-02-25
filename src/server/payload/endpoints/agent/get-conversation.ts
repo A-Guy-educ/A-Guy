@@ -201,14 +201,25 @@ export async function getConversation(req: PayloadRequest & { json?: () => Promi
             if (typeof m === 'object' && m !== null && 'mediaId' in m) {
               const mediaId = typeof m.mediaId === 'object' ? m.mediaId.id : m.mediaId
               const filename = typeof m.mediaId === 'object' ? m.mediaId.filename : undefined
+              const url = typeof m.mediaId === 'object' ? m.mediaId.url : undefined
               reqLogger.info({ mediaId, filename }, '[DEBUG] Mapped media item')
               return {
                 mediaId: String(mediaId),
                 filename,
+                url,
               }
             }
             reqLogger.warn({ rawM: m }, '[DEBUG] Unexpected media structure')
-            return { mediaId: String(m), filename: undefined }
+            return { mediaId: String(m), filename: undefined, url: undefined }
+          }),
+          chatAssets: msg.chatAssets?.map((a) => {
+            if (typeof a === 'object' && a !== null && 'chatAssetId' in a) {
+              const assetId = typeof a.chatAssetId === 'object' ? a.chatAssetId.id : a.chatAssetId
+              const filename =
+                typeof a.chatAssetId === 'object' ? a.chatAssetId.originalFilename : undefined
+              return { chatAssetId: String(assetId), filename }
+            }
+            return { chatAssetId: String(a), filename: undefined }
           }),
         }
       })

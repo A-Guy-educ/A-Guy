@@ -13,7 +13,7 @@ import { useDirectChatAssetUpload } from './useDirectChatAssetUpload'
 export interface ChatMessage {
   role: ChatRole
   content: string
-  media?: Array<{ mediaId: string; filename?: string }>
+  media?: Array<{ mediaId: string; filename?: string; url?: string }>
   chatAssets?: Array<{ chatAssetId: string; filename?: string }>
 }
 
@@ -202,14 +202,36 @@ export function useNotebookChat({
 
             if (validMessages.length > 0) {
               // Map API messages to chat messages
-              const loadedMessages: ChatMessage[] = validMessages.map((msg) => ({
-                role:
-                  msg.role === ChatRole.User || msg.role === 'user'
-                    ? ChatRole.User
-                    : ChatRole.Assistant,
-                content: String(msg.content),
-                media: (msg as { media?: Array<{ mediaId: string; filename?: string }> }).media,
-              }))
+              const loadedMessages: ChatMessage[] = validMessages.map((msg) => {
+                const raw = msg as {
+                  media?: Array<{ mediaId: string; filename?: string; url?: string }>
+                  chatAssets?: Array<{ chatAssetId: string; filename?: string }>
+                }
+                return {
+                  role:
+                    msg.role === ChatRole.User || msg.role === 'user'
+                      ? ChatRole.User
+                      : ChatRole.Assistant,
+                  content: String(msg.content),
+                  media: raw.media,
+                  chatAssets: raw.chatAssets,
+                }
+              })
+
+              // Restore Ask-page media panel from first user message with media
+              const firstMediaMsg = loadedMessages.find(
+                (m) => m.role === ChatRole.User && m.media && m.media.length > 0,
+              )
+              if (firstMediaMsg?.media?.[0]) {
+                const m = firstMediaMsg.media[0]
+                if (m.mediaId && m.url) {
+                  window.dispatchEvent(
+                    new CustomEvent('ask-media-restore', {
+                      detail: { mediaId: m.mediaId, filename: m.filename || '', url: m.url },
+                    }),
+                  )
+                }
+              }
 
               logger.debug(
                 {
@@ -317,11 +339,16 @@ export function useNotebookChat({
 
     // Capture chat asset metadata before clearing
     const chatAssetMetadata = completedChatAssetIds.map((id) => ({ chatAssetId: id }))
+    const askMediaIds = askMedia ? [askMedia.id] : []
+    const askMediaMeta = askMedia
+      ? [{ mediaId: askMedia.id, filename: askMedia.filename }]
+      : undefined
 
     const userMessage: ChatMessage = {
       role: ChatRole.User,
       content: message,
       chatAssets: chatAssetMetadata.length > 0 ? chatAssetMetadata : undefined,
+      media: askMediaMeta,
     }
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
@@ -343,7 +370,7 @@ export function useNotebookChat({
     }
 
     // Use streaming when no attachments and not in admin mode
-    const hasAttachments = completedChatAssetIds.length > 0
+    const hasAttachments = completedChatAssetIds.length > 0 || askMediaIds.length > 0
     const useStreaming = !hasAttachments && !adminMode
 
     if (useStreaming) {
@@ -353,7 +380,7 @@ export function useNotebookChat({
         message,
         acknowledgment,
         context,
-        [],
+        askMediaIds,
         completedChatAssetIds,
         contextKeyOverride,
       )
