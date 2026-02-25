@@ -1,0 +1,30 @@
+{
+  "task_type": "spec_only",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "TeacherProfiles collection with systemPrompt relationship to Prompts",
+    "UserSettings.teacherProfile field modification",
+    "Chat orchestrator integration for profile injection",
+    "UserSettings auto-creation on signup",
+    "Frontend UI for profile selection and display"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Prompts collection already exists in the codebase",
+    "UserSettings collection exists and can be modified",
+    "Chat orchestrator exists and can be extended",
+    "Default Teacher Profile can be configured at system level"
+  ],
+  "input_quality": {
+    "level": "spec_and_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Input contains complete Data Model section with collection fields, Chat Orchestrator Integration with detailed Step 1/Step 2 instructions, Runtime Behavior, Default Strategy, UI Behavior, and 9 explicit Acceptance Criteria. Implementation steps are specified including system prompt order, relationship requirements, and exclusion rules for memory/vector pipelines."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_only"
+}
