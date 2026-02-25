@@ -242,19 +242,15 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
 // ============================================================================
 
 /**
- * Flatten a mixed sequential/parallel pipeline order into a flat array of stage names.
- * Used by rerun mode to get dynamic stage order from pipeline definitions.
+ * Rebuild pipeline after taskify completes
+ * Extends the pipeline with remaining stages based on profile
  */
-export function flattenPipelineOrder(order: PipelineStep[]): string[] {
-  const result: string[] = []
-  for (const step of order) {
-    if (typeof step === 'string') {
-      result.push(step)
-    } else if ('parallel' in step) {
-      result.push(...step.parallel)
-    }
-  }
-  return result
+export function rebuildPipelineAfterTaskify(
+  _currentPipeline: PipelineDefinition,
+  ctx: PipelineContext,
+): PipelineDefinition {
+  // Re-build with the resolved profile - use 'impl' mode to get BOTH spec + impl stages
+  return buildPipeline('impl', ctx.profile, ctx.input.clarify ?? false, ctx)
 }
 
 /**
@@ -293,4 +289,19 @@ export function buildPipeline(
   }
 
   return { stages, order }
+}
+
+/**
+ * Flatten pipeline order (including parallel stages) into a flat array of stage names
+ */
+export function flattenPipelineOrder(order: PipelineStep[]): string[] {
+  const result: string[] = []
+  for (const step of order) {
+    if (typeof step === 'string') {
+      result.push(step)
+    } else if ('parallel' in step) {
+      result.push(...step.parallel)
+    }
+  }
+  return result
 }
