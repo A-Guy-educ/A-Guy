@@ -38,7 +38,9 @@ OUTPUT_FEEDBACK=""
 OUTPUT_ISSUE_NUMBER=""
 OUTPUT_TRIGGER_TYPE=""
 OUTPUT_COMMENT_BODY=""
-OUTPUT_VALID="false"
+# FIX: Use empty string instead of "false" - we'll set it to "true" in the comment branch
+# This was a bug: checking != "false" when default was "false" meant it never became true!
+OUTPUT_VALID=""
 
 # Handle workflow_dispatch
 if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
