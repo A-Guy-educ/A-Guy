@@ -79,7 +79,8 @@ Add new translation keys under `auth.account`:
       "sectionCourses": "Courses",
       "sectionPreferences": "Preferences",
       "sectionTeachersProfile": "Teachers Profile",
-      "profilePicture": "Profile Picture",
+      "expand": "Expand",
+      "collapse": "Collapse",
       "preferencesPlaceholder": "Preferences settings will be available soon.",
       "teachersProfilePlaceholder": "Teachers profile features coming soon.",
       "failedToLoadCourse": "Failed to load course",
@@ -98,7 +99,8 @@ Hebrew translations:
       "sectionCourses": "קורסים",
       "sectionPreferences": "העדפות",
       "sectionTeachersProfile": "פרופיל מורה",
-      "profilePicture": "תמונת פרופיל",
+      "expand": "הרחב",
+      "collapse": "כווץ",
       "preferencesPlaceholder": "הגדרות ההעדפות יהיו זמינות בקרוב.",
       "teachersProfilePlaceholder": "תכונות פרופיל המורה בקרוב.",
       "failedToLoadCourse": "טעינת הקורס נכשלה",
@@ -159,7 +161,11 @@ Hebrew translations:
 - Shows placeholder text from i18n: `t('teachersProfilePlaceholder')`
 
 ### Chevron + RTL
-- The Shadcn AccordionTrigger already includes a `ChevronDown` that rotates via `data-[state=open]:rotate-180`. This is direction-agnostic (vertical rotation).
+- The Shadcn AccordionTrigger includes a `ChevronDown` icon. To meet NFR-004, a custom approach is needed for chevron rotation:
+  - The `ChevronDown` icon will need to be wrapped in a component that applies conditional rotation based on the current locale (LTR/RTL).
+  - For LTR, on expand, the chevron should rotate to point right.
+  - For RTL, on expand, the chevron should rotate to point left.
+  - This will involve using `document.dir` or `useLocale()` to determine the direction and applying appropriate CSS transforms.
 - All layout uses logical properties: `ps-4`, `pe-4`, `me-2`, `ms-2`, `justify-between` etc. per NFR-001.
 
 **Tests (4)** — `tests/unit/components/AccountHub.test.tsx`:

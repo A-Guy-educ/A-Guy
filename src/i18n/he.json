@@ -93,9 +93,18 @@
       "noCourseSelected": "לא נבחר קורס",
       "selectCourse": "בחר קורס",
       "removeCourseSelection": "הסר בחירה",
-      "loadingCourse": "טוען..."
-    }
-  },
+      "loadingCourse": "טוען...",
+      "sectionDetails": "פרטים",
+      "sectionCourses": "קורסים",
+      "sectionPreferences": "העדפות",
+      "sectionTeachersProfile": "פרופיל מורה",
+      "expand": "הרחב",
+      "collapse": "כווץ",
+      "preferencesPlaceholder": "הגדרות ההעדפות יהיו זמינות בקרוב.",
+      "teachersProfilePlaceholder": "תכונות פרופיל המורה בקרוב.",
+      "failedToLoadCourse": "טעינת הקורס נכשלה",
+      "tryAgain": "נסה שוב"
+    },
   "roles": {
     "admin": "מנהל",
     "student": "תלמיד"
