@@ -93,6 +93,7 @@
     "cody:spec": "pnpm tsx scripts/cody/entry.ts --mode=spec",
     "cody:impl": "pnpm tsx scripts/cody/entry.ts --mode=impl",
     "cody:rerun": "pnpm tsx scripts/cody/entry.ts --mode=rerun",
+    "cody:test": "gh workflow run cody.yml -R A-Guy-educ/A-Guy -f task_id=TEST -f mode=status -f dry_run=true",
     "cody": "pnpm tsx scripts/cody/entry.ts",
     "supervisor": "pnpm tsx scripts/supervisor/supervisor.ts"
   },
@@ -123,6 +124,7 @@
     "@payloadcms/richtext-lexical": "3.73.0",
     "@payloadcms/storage-vercel-blob": "^3.73.0",
     "@payloadcms/ui": "3.73.0",
+    "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-checkbox": "^1.0.4",
     "@radix-ui/react-dialog": "^1.1.15",

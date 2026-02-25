@@ -8,6 +8,17 @@
 import { z } from 'zod'
 
 import { SYSTEM_EVENTS } from './events'
+import {
+  AnswerSelectedSchema,
+  ChatAutoTriggeredSchema,
+  ExerciseCompletedSchema,
+  ExerciseViewedSchema,
+  GuidingQuestionClickedSchema,
+  HintClickedSchema,
+  SolutionClickedSchema,
+  SolutionUnlockedSchema,
+  StudentAnswerSubmittedSchema,
+} from './exercise-schemas'
 
 // ============================================================================
 // Site Init Event
@@ -220,6 +231,17 @@ export const eventSchemas = {
   [SYSTEM_EVENTS.CHAT_MESSAGE_SUBMITTED]: ChatMessageSubmittedSchema,
   [SYSTEM_EVENTS.REGISTRATION_PROMPT_SHOWN]: RegistrationPromptShownSchema,
   [SYSTEM_EVENTS.REGISTRATION_COMPLETED]: RegistrationCompletedSchema,
+
+  // Exercise Help System
+  [SYSTEM_EVENTS.HINT_CLICKED]: HintClickedSchema,
+  [SYSTEM_EVENTS.GUIDING_QUESTION_CLICKED]: GuidingQuestionClickedSchema,
+  [SYSTEM_EVENTS.SOLUTION_UNLOCKED]: SolutionUnlockedSchema,
+  [SYSTEM_EVENTS.SOLUTION_CLICKED]: SolutionClickedSchema,
+  [SYSTEM_EVENTS.STUDENT_ANSWER_SUBMITTED]: StudentAnswerSubmittedSchema,
+  [SYSTEM_EVENTS.ANSWER_SELECTED]: AnswerSelectedSchema,
+  [SYSTEM_EVENTS.CHAT_AUTO_TRIGGERED]: ChatAutoTriggeredSchema,
+  [SYSTEM_EVENTS.EXERCISE_VIEWED]: ExerciseViewedSchema,
+  [SYSTEM_EVENTS.EXERCISE_COMPLETED]: ExerciseCompletedSchema,
 } as const
 
 /**

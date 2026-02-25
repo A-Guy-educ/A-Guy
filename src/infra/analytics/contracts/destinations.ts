@@ -42,6 +42,17 @@ export const eventDestinations: Record<ProductEvent, AnalyticsDestination[]> = {
   // Registration Events
   [PRODUCT_EVENTS.REGISTRATION_PROMPT_SHOWN]: ['mixpanel'], // Product funnel
   [PRODUCT_EVENTS.REGISTRATION_COMPLETED]: ['ga4', 'mixpanel'], // Conversion event (both)
+
+  // Exercise Help System (Mixpanel only - detailed product analytics)
+  [PRODUCT_EVENTS.HINT_CLICKED]: ['mixpanel'],
+  [PRODUCT_EVENTS.GUIDING_QUESTION_CLICKED]: ['mixpanel'],
+  [PRODUCT_EVENTS.SOLUTION_UNLOCKED]: ['mixpanel'],
+  [PRODUCT_EVENTS.SOLUTION_CLICKED]: ['mixpanel'],
+  [PRODUCT_EVENTS.STUDENT_ANSWER_SUBMITTED]: ['mixpanel'],
+  [PRODUCT_EVENTS.ANSWER_SELECTED]: ['mixpanel'],
+  [PRODUCT_EVENTS.CHAT_AUTO_TRIGGERED]: ['mixpanel'],
+  [PRODUCT_EVENTS.EXERCISE_VIEWED]: ['mixpanel'],
+  [PRODUCT_EVENTS.EXERCISE_COMPLETED]: ['mixpanel'],
 }
 
 /**

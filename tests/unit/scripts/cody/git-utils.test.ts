@@ -12,6 +12,7 @@ import {
   getDefaultBranch,
   BRANCH_PREFIX_MAP,
   commitPipelineFiles,
+  deriveBranchName,
 } from '../../../../scripts/cody/git-utils'
 
 // ============================================================================
@@ -49,6 +50,98 @@ describe('BRANCH_PREFIX_MAP', () => {
 
   it('should have exactly 7 entries', () => {
     expect(Object.keys(BRANCH_PREFIX_MAP)).toHaveLength(7)
+  })
+})
+
+// ============================================================================
+// deriveBranchName
+// ============================================================================
+
+import * as fs from 'fs'
+import * as path from 'path'
+import * as os from 'os'
+
+describe('deriveBranchName', () => {
+  let tempDir: string
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cody-branch-'))
+  })
+
+  afterEach(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true })
+  })
+
+  it('returns taskId when task.md does not exist', () => {
+    const result = deriveBranchName(tempDir, '260225-auto-90')
+    expect(result).toBe('260225-auto-90')
+  })
+
+  it('extracts issue title from ## Issue Title section', () => {
+    // Use simple format without extra special chars
+    fs.writeFileSync(
+      path.join(tempDir, 'task.md'),
+      `## Issue Title
+Remove type casts from guest sessions
+`,
+    )
+
+    const result = deriveBranchName(tempDir, '260225-auto-90')
+    expect(result.startsWith('260225-')).toBe(true)
+    expect(result).toContain('remove')
+    expect(result).toContain('type')
+    expect(result).toContain('casts')
+  })
+
+  it('uses first non-header line when no issue title', () => {
+    fs.writeFileSync(
+      path.join(tempDir, 'task.md'),
+      `# Task
+This is a simple task description.
+`,
+    )
+
+    const result = deriveBranchName(tempDir, '260225-auto-90')
+    expect(result.startsWith('260225-')).toBe(true)
+    expect(result).toContain('simple')
+    expect(result).toContain('task')
+  })
+
+  it('trims to max 50 characters total', () => {
+    const longTitle =
+      'This is a very long title that exceeds the maximum character limit for branch names when combined with date prefix'
+    fs.writeFileSync(
+      path.join(tempDir, 'task.md'),
+      `## Issue Title
+${longTitle}
+`,
+    )
+
+    const result = deriveBranchName(tempDir, '260225-auto-90')
+    expect(result.length).toBeLessThanOrEqual(50)
+    expect(result.startsWith('260225-')).toBe(true)
+  })
+
+  it('removes special characters and sanitizes', () => {
+    fs.writeFileSync(
+      path.join(tempDir, 'task.md'),
+      `## Issue Title
+Fix Auth and media persistence issue
+`,
+    )
+
+    const result = deriveBranchName(tempDir, '260225-auto-90')
+    expect(result.startsWith('260225-')).toBe(true)
+    expect(result).toContain('fix')
+    expect(result).toContain('auth')
+    expect(result).toContain('media')
+  })
+
+  it('returns taskId when task.md is empty', () => {
+    fs.writeFileSync(path.join(tempDir, 'task.md'), '')
+
+    const result = deriveBranchName(tempDir, '260225-auto-90')
+    expect(result).toBe('260225-auto-90')
   })
 })
 

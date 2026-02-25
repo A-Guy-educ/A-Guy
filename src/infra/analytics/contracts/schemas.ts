@@ -175,6 +175,128 @@ export const RegistrationCompletedSchema = z.object({
 })
 
 /**
+ * hint_clicked - Track hint button usage
+ * Destination: Mixpanel
+ * Priority: P1
+ */
+export const HintClickedSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  exercise_id: z.string().describe('Exercise identifier'),
+  question_id: z.string().optional().describe('Question identifier'),
+  hint_used: z.literal(true).describe('Hint was used'),
+  locale: z.string().optional().describe('User locale'),
+})
+
+/**
+ * guiding_question_clicked - Track guiding question usage
+ * Destination: Mixpanel
+ * Priority: P1
+ */
+export const GuidingQuestionClickedSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  exercise_id: z.string().describe('Exercise identifier'),
+  question_id: z.string().optional().describe('Question identifier'),
+  guiding_used: z.literal(true).describe('Guiding question was used'),
+  locale: z.string().optional().describe('User locale'),
+})
+
+/**
+ * solution_unlocked - Track solution unlock (after hint + guiding)
+ * Destination: Mixpanel
+ * Priority: P1
+ */
+export const SolutionUnlockedSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  exercise_id: z.string().describe('Exercise identifier'),
+  question_id: z.string().optional().describe('Question identifier'),
+  hint_used: z.boolean().describe('Whether hint was used before unlock'),
+  guiding_used: z.boolean().describe('Whether guiding was used before unlock'),
+  locale: z.string().optional().describe('User locale'),
+})
+
+/**
+ * solution_clicked - Track solution view
+ * Destination: Mixpanel
+ * Priority: P1
+ */
+export const SolutionClickedSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  exercise_id: z.string().describe('Exercise identifier'),
+  question_id: z.string().optional().describe('Question identifier'),
+  hint_used: z.boolean().describe('Whether hint was used'),
+  guiding_used: z.boolean().describe('Whether guiding was used'),
+  locale: z.string().optional().describe('User locale'),
+})
+
+/**
+ * student_answer_submitted - Track answer submission
+ * Destination: Mixpanel
+ * Priority: P0
+ *
+ * NO answer text - only metadata
+ */
+export const StudentAnswerSubmittedSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  exercise_id: z.string().describe('Exercise identifier'),
+  question_id: z.string().optional().describe('Question identifier'),
+  correctness: z.boolean().optional().describe('Whether answer was correct'),
+  attempt_number: z.number().int().positive().describe('Attempt number'),
+  locale: z.string().optional().describe('User locale'),
+})
+
+/**
+ * answer_selected - Track answer selection (MCQ/TF)
+ * Destination: Mixpanel
+ * Priority: P1
+ */
+export const AnswerSelectedSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  exercise_id: z.string().describe('Exercise identifier'),
+  question_id: z.string().optional().describe('Question identifier'),
+  selection_type: z.enum(['mcq', 'true_false']).describe('Answer type'),
+  locale: z.string().optional().describe('User locale'),
+})
+
+/**
+ * chat_auto_triggered - Track automatic chat triggers
+ * Destination: Mixpanel
+ * Priority: P1
+ */
+export const ChatAutoTriggeredSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  exercise_id: z.string().describe('Exercise identifier'),
+  question_id: z.string().optional().describe('Question identifier'),
+  trigger_reason: z.string().describe('Reason for auto-trigger'),
+  locale: z.string().optional().describe('User locale'),
+})
+
+/**
+ * exercise_viewed - Track exercise view
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const ExerciseViewedSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  exercise_id: z.string().describe('Exercise identifier'),
+  exercise_title: z.string().optional().describe('Exercise title'),
+  locale: z.string().optional().describe('User locale'),
+})
+
+/**
+ * exercise_completed - Track exercise completion
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const ExerciseCompletedSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  exercise_id: z.string().describe('Exercise identifier'),
+  duration_seconds: z.number().int().nonnegative().describe('Time to complete'),
+  total_questions: z.number().int().nonnegative().describe('Total questions'),
+  correct_count: z.number().int().nonnegative().describe('Correct answers'),
+  locale: z.string().optional().describe('User locale'),
+})
+
+/**
  * Master schema mapping
  */
 export const eventSchemas = {
@@ -191,6 +313,17 @@ export const eventSchemas = {
   [PRODUCT_EVENTS.CHAT_MESSAGE_SENT]: ChatMessageSentSchema,
   [PRODUCT_EVENTS.REGISTRATION_PROMPT_SHOWN]: RegistrationPromptShownSchema,
   [PRODUCT_EVENTS.REGISTRATION_COMPLETED]: RegistrationCompletedSchema,
+
+  // Exercise Help System Events
+  [PRODUCT_EVENTS.HINT_CLICKED]: HintClickedSchema,
+  [PRODUCT_EVENTS.GUIDING_QUESTION_CLICKED]: GuidingQuestionClickedSchema,
+  [PRODUCT_EVENTS.SOLUTION_UNLOCKED]: SolutionUnlockedSchema,
+  [PRODUCT_EVENTS.SOLUTION_CLICKED]: SolutionClickedSchema,
+  [PRODUCT_EVENTS.STUDENT_ANSWER_SUBMITTED]: StudentAnswerSubmittedSchema,
+  [PRODUCT_EVENTS.ANSWER_SELECTED]: AnswerSelectedSchema,
+  [PRODUCT_EVENTS.CHAT_AUTO_TRIGGERED]: ChatAutoTriggeredSchema,
+  [PRODUCT_EVENTS.EXERCISE_VIEWED]: ExerciseViewedSchema,
+  [PRODUCT_EVENTS.EXERCISE_COMPLETED]: ExerciseCompletedSchema,
 } as const
 
 /**
@@ -210,6 +343,17 @@ export type ChatMessageSentProperties = z.infer<typeof ChatMessageSentSchema>
 export type RegistrationPromptShownProperties = z.infer<typeof RegistrationPromptShownSchema>
 export type RegistrationCompletedProperties = z.infer<typeof RegistrationCompletedSchema>
 
+// Exercise Help System
+export type HintClickedProperties = z.infer<typeof HintClickedSchema>
+export type GuidingQuestionClickedProperties = z.infer<typeof GuidingQuestionClickedSchema>
+export type SolutionUnlockedProperties = z.infer<typeof SolutionUnlockedSchema>
+export type SolutionClickedProperties = z.infer<typeof SolutionClickedSchema>
+export type StudentAnswerSubmittedProperties = z.infer<typeof StudentAnswerSubmittedSchema>
+export type AnswerSelectedProperties = z.infer<typeof AnswerSelectedSchema>
+export type ChatAutoTriggeredProperties = z.infer<typeof ChatAutoTriggeredSchema>
+export type ExerciseViewedProperties = z.infer<typeof ExerciseViewedSchema>
+export type ExerciseCompletedProperties = z.infer<typeof ExerciseCompletedSchema>
+
 /**
  * Union type of all event properties
  */
@@ -227,3 +371,12 @@ export type EventProperties =
   | ChatMessageSentProperties
   | RegistrationPromptShownProperties
   | RegistrationCompletedProperties
+  | HintClickedProperties
+  | GuidingQuestionClickedProperties
+  | SolutionUnlockedProperties
+  | SolutionClickedProperties
+  | StudentAnswerSubmittedProperties
+  | AnswerSelectedProperties
+  | ChatAutoTriggeredProperties
+  | ExerciseViewedProperties
+  | ExerciseCompletedProperties

@@ -166,6 +166,15 @@ export interface HtmlBlock {
 export type ContentBlock = RichTextBlock | HtmlBlock | QuestionBlock | SvgBlock
 
 /**
+ * Help system state per question
+ */
+export interface HelpUsageState {
+  hintShown: boolean
+  guidingUsed: boolean
+  solutionUnlocked: boolean
+}
+
+/**
  * Content structure - block-based with questions
  */
 export interface ExerciseContentData {
@@ -184,4 +193,8 @@ export interface ExerciseRendererProps {
   mediaMap?: Record<string, import('@/payload-types').Media>
   /** Exercise number to display in the bubble (defaults to 1) */
   exerciseNumber?: number
+  /** Lesson ID for analytics and help system */
+  lessonId?: string
+  /** Exercise ID for analytics and help system */
+  exerciseId?: string
 }

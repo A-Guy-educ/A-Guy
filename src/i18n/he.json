@@ -93,7 +93,17 @@
       "noCourseSelected": "לא נבחר קורס",
       "selectCourse": "בחר קורס",
       "removeCourseSelection": "הסר בחירה",
-      "loadingCourse": "טוען..."
+      "loadingCourse": "טוען...",
+      "sectionDetails": "פרטים",
+      "sectionCourses": "קורסים",
+      "sectionPreferences": "העדפות",
+      "sectionTeachersProfile": "פרופיל מורה",
+      "expand": "הרחב",
+      "collapse": "כווץ",
+      "preferencesPlaceholder": "הגדרות ההעדפות יהיו זמינות בקרוב.",
+      "teachersProfilePlaceholder": "תכונות פרופיל המורה בקרוב.",
+      "failedToLoadCourse": "טעינת הקורס נכשלה",
+      "tryAgain": "נסה שוב"
     }
   },
   "roles": {
@@ -163,6 +173,9 @@
     "matchingColumnB": "עמודה ב׳",
     "matchingClear": "נקה הכל",
     "svgSelectHotspot": "לחץ על האזור הנכון",
+    "helpHint": "רמז",
+    "helpGuidingQuestion": "שאלה מנחה",
+    "helpSolution": "פתרון",
     "notebookTitle": "מחברת תרגול",
     "chatTab": "צ'אט",
     "chatTitle": "צ'אט",

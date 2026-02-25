@@ -56,7 +56,12 @@ export async function executePostAction(
     }
 
     case 'check-gate': {
-      const gateResult = handleGateApproval(ctx.input, ctx.taskDir, action.gate, ctx.taskDef!)
+      // BUG-F fix: taskDef might be null if resolve-profile hasn't run yet
+      const taskDef = ctx.taskDef ?? readTask(ctx.taskDir)
+      if (!taskDef) {
+        throw new Error(`Cannot check gate "${action.gate}": task.json not found or invalid`)
+      }
+      const gateResult = handleGateApproval(ctx.input, ctx.taskDir, action.gate, taskDef)
       if (gateResult === 'waiting') {
         // Read gate file and extract comment body
         const gateFilePath = path.join(ctx.taskDir, `gate-${action.gate}.md`)

@@ -4,12 +4,17 @@ import { AccountPageContent } from './AccountPageContent'
 
 export const metadata = { title: 'Account' }
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ section?: string }>
+}) {
   const { user } = await getMeUser()
 
   if (!user) {
     redirect('/login')
   }
 
-  return <AccountPageContent user={user} />
+  const params = await searchParams
+  return <AccountPageContent user={user} initialSection={params.section} />
 }

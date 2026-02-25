@@ -262,7 +262,7 @@ export const apiService = {
       courseId?: string
       categoryId?: string
     },
-    options?: { hidden?: boolean },
+    options?: { hidden?: boolean; hidePromptOnly?: boolean },
   ): AsyncGenerator<ChatStreamEvent, void, unknown> {
     const response = await fetch('/api/agent/chat/stream', {
       method: 'POST',
@@ -273,6 +273,7 @@ export const apiService = {
         acknowledgment,
         ...context,
         ...(options?.hidden && { hidden: true }),
+        ...(options?.hidePromptOnly && { hidePromptOnly: true }),
       }),
     })
 
@@ -331,6 +332,34 @@ export const apiService = {
       }
     } finally {
       reader.releaseLock()
+    }
+  },
+
+  /**
+   * Persist an assistant message directly to a conversation (no AI call).
+   * Used for CMS-authored help content that should survive page refresh.
+   */
+  async persistMessage(
+    contextKey: string,
+    content: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await fetch('/api/agent/message/persist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ contextKey, content }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        return { success: false, error: data.error || 'Failed to persist message' }
+      }
+
+      return { success: true }
+    } catch (error) {
+      logger.error({ err: error }, 'Failed to persist assistant message')
+      return { success: false, error: 'Network error' }
     }
   },
 }

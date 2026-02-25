@@ -6,6 +6,17 @@
 
 import type { SystemEventName } from './events'
 import type {
+  AnswerSelectedPayload,
+  ChatAutoTriggeredPayload,
+  ExerciseCompletedPayload,
+  ExerciseViewedPayload,
+  GuidingQuestionClickedPayload,
+  HintClickedPayload,
+  SolutionClickedPayload,
+  SolutionUnlockedPayload,
+  StudentAnswerSubmittedPayload,
+} from './exercise-schemas'
+import type {
   ChatMessageSubmittedPayload,
   CourseEnteredPayload,
   LessonEndedPayload,
@@ -56,6 +67,17 @@ export type SystemEventPayloads = {
   'system.chat_message_submitted': ChatMessageSubmittedPayload
   'system.registration_prompt_shown': RegistrationPromptShownPayload
   'system.registration_completed': RegistrationCompletedPayload
+
+  // Exercise Help System
+  'system.hint_clicked': HintClickedPayload
+  'system.guiding_question_clicked': GuidingQuestionClickedPayload
+  'system.solution_unlocked': SolutionUnlockedPayload
+  'system.solution_clicked': SolutionClickedPayload
+  'system.student_answer_submitted': StudentAnswerSubmittedPayload
+  'system.answer_selected': AnswerSelectedPayload
+  'system.chat_auto_triggered': ChatAutoTriggeredPayload
+  'system.exercise_viewed': ExerciseViewedPayload
+  'system.exercise_completed': ExerciseCompletedPayload
 }
 
 /**

@@ -70,7 +70,17 @@
       "noCourseSelected": "No course selected",
       "selectCourse": "Select a Course",
       "removeCourseSelection": "Remove Selection",
-      "loadingCourse": "Loading..."
+      "loadingCourse": "Loading...",
+      "sectionDetails": "Details",
+      "sectionCourses": "Courses",
+      "sectionPreferences": "Preferences",
+      "sectionTeachersProfile": "Teachers Profile",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "preferencesPlaceholder": "Preferences settings will be available soon.",
+      "teachersProfilePlaceholder": "Teachers profile features coming soon.",
+      "failedToLoadCourse": "Failed to load course",
+      "tryAgain": "Try Again"
     },
     "signup": {
       "title": "Create Account",
@@ -163,6 +173,9 @@
     "matchingColumnB": "Column B",
     "matchingClear": "Clear all",
     "svgSelectHotspot": "Click on the correct region",
+    "helpHint": "Hint",
+    "helpGuidingQuestion": "Guiding Question",
+    "helpSolution": "Solution",
     "notebookTitle": "Practice Notebook",
     "chatTab": "Chat",
     "chatTitle": "Chat",

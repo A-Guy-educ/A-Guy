@@ -149,8 +149,10 @@ export function ChatInterface({
     clearAskMedia: _clearAskMedia,
     // Programmatic message injection
     injectExerciseContext,
+    addAssistantMessage,
     // Contextual help for incorrect answers
     sendContextualHelp,
+    sendVisibleHelp,
     sendContextualHelpWithMedia,
     sendContextualHelpWithMediaId,
   } = useNotebookChat({
@@ -256,6 +258,42 @@ export function ChatInterface({
     const handler = (e: Event) => askActionRef.current(e)
     window.addEventListener('ask-action', handler)
     return () => window.removeEventListener('ask-action', handler)
+  }, [])
+
+  // Exercise help system actions (hint/guiding/solution from HelpSystem component)
+  const exerciseHelpRef = useRef<(e: Event) => void>(() => {})
+  exerciseHelpRef.current = (e: Event) => {
+    const { type, questionContent, backendContent } = (e as CustomEvent).detail as {
+      type: 'hint' | 'guiding' | 'solution'
+      questionContent?: string
+      backendContent?: string
+      exerciseId?: string
+      lessonId?: string
+    }
+    onChatInteraction?.()
+
+    if (backendContent) {
+      // Backend has content — show it directly without AI call (persisted for refresh)
+      addAssistantMessage(backendContent)
+    } else if (type === 'hint') {
+      sendVisibleHelp(
+        `The student needs a hint for this exercise question: "${questionContent}". Provide a short, helpful hint that nudges them in the right direction without giving away the answer.`,
+      )
+    } else if (type === 'guiding') {
+      sendVisibleHelp(
+        `The student needs a guiding question for this exercise question: "${questionContent}". Ask them a thought-provoking guiding question that helps them think about the problem without giving the answer.`,
+      )
+    } else if (type === 'solution') {
+      sendVisibleHelp(
+        `The student is requesting the full solution for this exercise question: "${questionContent}". Provide a clear, step-by-step solution.`,
+      )
+    }
+  }
+
+  useEffect(() => {
+    const handler = (e: Event) => exerciseHelpRef.current(e)
+    window.addEventListener('exercise-help-action', handler)
+    return () => window.removeEventListener('exercise-help-action', handler)
   }, [])
 
   // Inject exercise context when student navigates to an exercise

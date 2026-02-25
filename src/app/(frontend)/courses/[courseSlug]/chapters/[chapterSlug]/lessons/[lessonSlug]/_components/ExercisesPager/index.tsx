@@ -97,6 +97,8 @@ export function ExercisesPager({
                     mode="student"
                     showCheckAnswer={true}
                     mediaMap={mediaMap}
+                    lessonId={lessonId}
+                    exerciseId={currentExercise.id}
                   />
                 </div>
               </div>
