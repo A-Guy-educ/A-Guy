@@ -1,47 +1,17 @@
 {
+  "version": 2,
   "taskId": "260225-auto-93",
   "mode": "full",
   "pipeline": "spec_execute_verify",
-  "startedAt": "2026-02-25T14:03:51.241Z",
-  "updatedAt": "2026-02-25T14:13:03.938Z",
+  "startedAt": "2026-02-25T14:40:46.459Z",
+  "updatedAt": "2026-02-25T14:40:46.460Z",
   "state": "running",
-  "currentStage": "architect",
+  "cursor": null,
   "stages": {
     "taskify": {
-      "state": "completed",
+      "state": "running",
       "retries": 0,
-      "startedAt": "2026-02-25T14:03:52.575Z",
-      "outputFile": "task.json",
-      "completedAt": "2026-02-25T14:04:43.632Z",
-      "elapsed": 51057
-    },
-    "spec": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-02-25T14:04:43.634Z",
-      "outputFile": "spec.md",
-      "completedAt": "2026-02-25T14:05:13.662Z",
-      "elapsed": 30028
-    },
-    "gap": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-02-25T14:05:13.663Z",
-      "outputFile": "gap.md",
-      "completedAt": "2026-02-25T14:09:13.912Z",
-      "elapsed": 240249
-    },
-    "architect": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-02-25T14:09:15.702Z",
-      "outputFile": "plan.md",
-      "completedAt": "2026-02-25T14:13:03.938Z",
-      "elapsed": 228236
+      "startedAt": "2026-02-25T14:40:46.460Z"
     }
-  },
-  "triggeredBy": "comment",
-  "issueNumber": 589,
-  "runId": "22400211857",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/22400211857"
+  }
 }
