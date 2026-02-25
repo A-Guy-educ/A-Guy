@@ -17,7 +17,7 @@ export function NavigationBar() {
   const pathname = usePathname()
 
   return (
-    <nav className="bg-card pb-3 pt-2 border-b border-border/60 sticky top-0 z-sticky">
+    <nav className="bg-card pb-3 pt-2 border-b border-border/60">
       <div className="max-w-2xl mx-auto px-4">
         <div className="bg-muted p-1 rounded-xl flex items-center justify-between">
           {NAV_ITEMS.map((item) => {

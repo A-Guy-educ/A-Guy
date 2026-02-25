@@ -32,6 +32,28 @@ export function AskConversationGrid() {
   const [conversations, setConversations] = useState<ConversationItem[]>([])
   const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isCreating, setIsCreating] = useState(false)
+
+  async function handleNewQuestion() {
+    if (isCreating || !courseInfo?.courseId) return
+    setIsCreating(true)
+    try {
+      const res = await fetch('/api/conversations/by-context', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId: courseInfo.courseId }),
+      })
+      if (res.ok) {
+        const { id, contextKey } = await res.json()
+        router.push(`/ask?chat=${id}&ctx=${encodeURIComponent(contextKey)}`)
+      }
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Unknown error')
+      logger.error({ err }, 'Failed to create conversation')
+    } finally {
+      setIsCreating(false)
+    }
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -101,10 +123,8 @@ export function AskConversationGrid() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* New Question Card */}
           <button
-            onClick={() => {
-              const ctx = `ask:${courseInfo?.courseId ?? ''}:${Date.now()}`
-              router.push(`/ask?chat=new&ctx=${encodeURIComponent(ctx)}`)
-            }}
+            disabled={isCreating}
+            onClick={handleNewQuestion}
             className={cn(
               'bg-primary text-primary-foreground rounded-3xl p-6 shadow-card',
               'flex items-center justify-between',

@@ -57,6 +57,44 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  try {
+    const payload = await getPayload({ config })
+    const { user } = await payload.auth({ headers: request.headers })
+
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const courseId = body.courseId as string | undefined
+
+    if (!courseId) {
+      return NextResponse.json({ error: 'courseId is required' }, { status: 400 })
+    }
+
+    const contextKey = `ask:${courseId}:${Date.now()}`
+
+    const conversation = await payload.create({
+      collection: 'conversations',
+      data: {
+        user: user.id,
+        contextRef: { relationTo: 'courses', value: courseId },
+        contextKey,
+        messages: [],
+        lastMessageAt: new Date(),
+        contextPolicyVersion: 'v1',
+      } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+      draft: false,
+    })
+
+    return NextResponse.json({ id: conversation.id, contextKey })
+  } catch (error) {
+    logger.error({ err: error }, 'Failed to create conversation')
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   try {
     const payload = await getPayload({ config })
