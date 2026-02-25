@@ -749,7 +749,8 @@ export function formatStatusComment(
   } else if (status.state === 'paused') {
     lines.push(`⏸️ Cody paused for \`${input.taskId}\``)
     lines.push(
-      'Awaiting approval — reply with `/cody approve` to proceed or `/cody reject` to cancel.',
+      'Awaiting approval — reply with `@cody approve` or `/cody approve` to proceed. ' +
+        'Reply with `@cody reject` or `/cody reject` to cancel.',
     )
   } else if (status.state === 'failed') {
     lines.push(`❌ Cody failed for \`${input.taskId}\``)
