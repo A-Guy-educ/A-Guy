@@ -12,7 +12,7 @@ export const queryExercisesByLesson = cache(async ({ lessonId }: { lessonId: str
         equals: lessonId,
       },
     },
-    sort: 'order',
+    sort: 'createdAt',
     limit: 1000,
     pagination: false,
     depth: 1,

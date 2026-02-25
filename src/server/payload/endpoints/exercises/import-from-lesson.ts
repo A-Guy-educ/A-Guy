@@ -203,7 +203,6 @@ export async function importExerciseFromLesson(req: PayloadRequest) {
         collection: 'exercises',
         data: {
           title: 'AI Generated Exercise',
-          order: 0,
           lesson: lessonId,
           tenant: tenantId,
           content: {

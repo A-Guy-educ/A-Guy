@@ -6,6 +6,7 @@ import { SystemParams } from '@/infra/config/system-params'
 import { resolveAccessType } from '@/server/constants/access-types'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
+import { queryLessonBlocks } from '@/server/repos/queries/lessonBlocks'
 import { queryLessonBySlug } from '@/server/repos/queries/lessons'
 import { queryMediaByIds } from '@/server/repos/queries/media'
 import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
@@ -16,6 +17,7 @@ import { stripHtml } from '@/lib/utils/strip-html'
 import { Media as MediaComponent } from '@/ui/web/media'
 import { notFound } from 'next/navigation'
 import { ExercisesPager } from './_components/ExercisesPager'
+import { LessonPager } from './_components/LessonPager'
 import { LessonAnalytics } from './_components/LessonAnalytics'
 import { ExerciseWorkspace } from './exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 
@@ -72,11 +74,29 @@ export default async function LessonPage({ params }: LessonPageProps) {
     )
   }
 
-  const exercises = await queryExercisesByLesson({ lessonId: lesson.id })
-
-  // Use lesson-scoped chat context to keep history stable across refreshes
-  const chatLessonId = lesson.id
   const backUrl = `/courses/${courseSlug}/chapters/${chapterSlug}`
+  const chatLessonId = lesson.id
+
+  // Resolve lesson blocks (new ordered playlist system)
+  const lessonBlocks = await queryLessonBlocks({ lessonId: lesson.id })
+  const hasBlocks = lessonBlocks.length > 0
+
+  // Legacy: fetch exercises directly for lessons not yet migrated to blocks
+  const exercises = hasBlocks ? [] : await queryExercisesByLesson({ lessonId: lesson.id })
+  const hasExercises = exercises.length > 0
+
+  // Collect exercises from blocks or legacy for media fetching
+  const allExercises = hasBlocks
+    ? lessonBlocks
+        .filter(
+          (b): b is { blockType: 'exerciseRef'; exercise: (typeof exercises)[0] } =>
+            b.blockType === 'exerciseRef',
+        )
+        .map((b) => b.exercise)
+    : exercises
+
+  const mediaMap =
+    allExercises.length > 0 ? await queryMediaByIds(extractAllMediaIds(allExercises)) : {}
 
   const validFiles =
     lesson.contentFiles
@@ -84,13 +104,35 @@ export default async function LessonPage({ params }: LessonPageProps) {
       .filter((file): file is Media => file !== null && Boolean(file.url)) || []
 
   const hasContent = validFiles.length > 0
-  const hasExercises = exercises.length > 0
 
-  // Batch-fetch all media referenced inside exercise content blocks
-  const mediaMap = hasExercises ? await queryMediaByIds(extractAllMediaIds(exercises)) : {}
+  // Case 0: Lesson has blocks → use LessonPager (new system)
+  if (hasBlocks && !hasContent) {
+    return (
+      <AccessGateProvider
+        accessType={effectiveAccessType}
+        courseSlug={courseSlug}
+        gatedDelayMs={gatedDelayMs}
+        gatedWarningMs={gatedWarningMs}
+      >
+        <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
+        <LessonPager
+          blocks={lessonBlocks}
+          lessonTitle={lesson.title}
+          backUrl={backUrl}
+          courseSlug={courseSlug}
+          chapterSlug={chapterSlug}
+          lessonSlug={lessonSlug}
+          lessonId={lesson.id}
+          introDescription={lesson.introEnabled ? lesson.introDescription : null}
+          introMedia={lesson.introEnabled ? lesson.introMedia : null}
+          mediaMap={mediaMap}
+        />
+      </AccessGateProvider>
+    )
+  }
 
-  // Case 1: No document attached -> Show exercises pager if exercises exist
-  if (!hasContent) {
+  // Case 1: No blocks, no document → legacy ExercisesPager or empty
+  if (!hasContent && !hasBlocks) {
     return (
       <AccessGateProvider
         accessType={effectiveAccessType}
@@ -113,7 +155,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
             mediaMap={mediaMap}
           />
         ) : (
-          // Empty lesson: show ExerciseWorkspace with DynamicLesson as primaryContent
           <>
             <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
             <ExerciseWorkspace
@@ -206,8 +247,6 @@ export async function generateMetadata({ params }: LessonPageProps) {
 
   return {
     title: `${lesson.title} - ${lessonChapter.title} - ${course.title}`,
-    description: lesson.description
-      ? stripHtml(lesson.description)
-      : `Lesson ${lesson.order}: ${lesson.title}`,
+    description: lesson.description ? stripHtml(lesson.description) : lesson.title,
   }
 }

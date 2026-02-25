@@ -17,7 +17,7 @@ const COLLECTION_ALLOWLISTS: Record<string, { where: Set<string>; sort: Set<stri
   },
   exercises: {
     where: new Set(['*']), // Allow any field
-    sort: new Set(['order', 'title', 'createdAt', 'updatedAt']),
+    sort: new Set(['title', 'createdAt', 'updatedAt']),
   },
   media: {
     where: new Set(['*']), // Allow any field

@@ -70,6 +70,7 @@ export interface Config {
   collections: {
     pages: Page;
     categories: Category;
+    'content-pages': ContentPage;
     config_secrets: ConfigSecret;
     config_values: ConfigValue;
     config_audit_logs: ConfigAuditLog;
@@ -106,6 +107,7 @@ export interface Config {
   collectionsSelect: {
     pages: PagesSelect<false> | PagesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    'content-pages': ContentPagesSelect<false> | ContentPagesSelect<true>;
     config_secrets: ConfigSecretsSelect<false> | ConfigSecretsSelect<true>;
     config_values: ConfigValuesSelect<false> | ConfigValuesSelect<true>;
     config_audit_logs: ConfigAuditLogsSelect<false> | ConfigAuditLogsSelect<true>;
@@ -878,6 +880,43 @@ export interface HtmlBlock {
   blockType: 'html';
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-pages".
+ */
+export interface ContentPage {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Content page title
+   */
+  title: string;
+  /**
+   * URL-friendly identifier (auto-generated from title)
+   */
+  slug?: string | null;
+  /**
+   * HTML content for this page. Use the editor for rich formatting.
+   */
+  htmlContent: string;
+  /**
+   * Publication status
+   */
+  status: 'draft' | 'published';
+  /**
+   * Whether this content page is currently active
+   */
+  isActive: boolean;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Tenant-scoped encrypted secrets. All values are always encrypted.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1255,6 +1294,10 @@ export interface Lesson {
    */
   introMedia?: (string | null) | Media;
   /**
+   * Ordered playlist of exercises and content pages. This is the sole source of truth for lesson content and ordering.
+   */
+  blocks?: (ExerciseRefBlock | ContentPageRefBlock)[] | null;
+  /**
    * Upload lesson content files (PDFs, videos, images, etc.)
    */
   contentFiles?: (string | Media)[] | null;
@@ -1279,6 +1322,19 @@ export interface Lesson {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ExerciseRefBlock".
+ */
+export interface ExerciseRefBlock {
+  /**
+   * Reference to an exercise
+   */
+  exercise: string | Exercise;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'exerciseRef';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exercises".
  */
 export interface Exercise {
@@ -1291,10 +1347,6 @@ export interface Exercise {
    * Exercise title (for admin reference)
    */
   title: string;
-  /**
-   * Order of exercise within the lesson (lower numbers appear first)
-   */
-  order: number;
   /**
    * The lesson this exercise belongs to
    */
@@ -1386,6 +1438,19 @@ export interface Exercise {
     | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContentPageRefBlock".
+ */
+export interface ContentPageRefBlock {
+  /**
+   * Reference to a content page
+   */
+  contentPage: string | ContentPage;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'contentPageRef';
 }
 /**
  * Chat attachments uploaded directly to Vercel Blob
@@ -2068,6 +2133,10 @@ export interface PayloadLockedDocument {
         value: string | Category;
       } | null)
     | ({
+        relationTo: 'content-pages';
+        value: string | ContentPage;
+      } | null)
+    | ({
         relationTo: 'config_secrets';
         value: string | ConfigSecret;
       } | null)
@@ -2380,6 +2449,21 @@ export interface CategoriesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-pages_select".
+ */
+export interface ContentPagesSelect<T extends boolean = true> {
+  tenant?: T;
+  title?: T;
+  slug?: T;
+  htmlContent?: T;
+  status?: T;
+  isActive?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "config_secrets_select".
  */
 export interface ConfigSecretsSelect<T extends boolean = true> {
@@ -2578,6 +2662,12 @@ export interface LessonsSelect<T extends boolean = true> {
   introEnabled?: T;
   introDescription?: T;
   introMedia?: T;
+  blocks?:
+    | T
+    | {
+        exerciseRef?: T | ExerciseRefBlockSelect<T>;
+        contentPageRef?: T | ContentPageRefBlockSelect<T>;
+      };
   contentFiles?: T;
   lessonContextText?: T;
   prompt?: T;
@@ -2588,12 +2678,29 @@ export interface LessonsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ExerciseRefBlock_select".
+ */
+export interface ExerciseRefBlockSelect<T extends boolean = true> {
+  exercise?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContentPageRefBlock_select".
+ */
+export interface ContentPageRefBlockSelect<T extends boolean = true> {
+  contentPage?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exercises_select".
  */
 export interface ExercisesSelect<T extends boolean = true> {
   tenant?: T;
   title?: T;
-  order?: T;
   lesson?: T;
   slug?: T;
   content?: T;

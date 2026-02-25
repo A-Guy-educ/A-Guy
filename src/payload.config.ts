@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 
 import { getServerSideURL } from '@/infra/utils/getURL'
 import { Categories } from '@/server/payload/collections/Categories'
+import { ContentPages } from '@/server/payload/collections/ContentPages'
 import { ChatAssets } from '@/server/payload/collections/ChatAssets'
 import { Chapters } from '@/server/payload/collections/Chapters'
 import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
@@ -139,6 +140,7 @@ export default buildConfig({
   collections: [
     Pages,
     Categories,
+    ContentPages,
     ConfigSecrets,
     ConfigValues,
     ConfigAuditLogs,

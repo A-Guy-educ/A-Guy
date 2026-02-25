@@ -63,7 +63,6 @@ const COLLECTION_TRANSFORMS: Record<string, (doc: Record<string, unknown>) => un
     id: doc.id,
     title: doc.title,
     status: doc.status,
-    order: doc.order,
     lesson: normalizeRelation(doc.lesson as RelationValue),
     updatedAt: doc.updatedAt,
   }),
