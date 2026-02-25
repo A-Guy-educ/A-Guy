@@ -259,6 +259,6 @@ function main(): void {
 }
 
 // Run if called directly (not imported)
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main()
 }
