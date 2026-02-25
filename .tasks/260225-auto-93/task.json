@@ -1,0 +1,30 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "TeacherProfiles collection with slug, label, description, systemPrompt (relationship), isEnabled fields",
+    "UserSettings.teacherProfile field (1:1 with User)",
+    "UserSettings auto-creation hook on signup",
+    "Chat orchestrator integration (resolve profile, build system context)",
+    "Data seeding: 5 Prompts entries and 5 TeacherProfiles entries",
+    "UI: Account settings Teacher Profile selector and chat header display"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Prompts collection already exists and can be used for systemPrompt relationship",
+    "Existing UserSettings collection can be extended with teacherProfile field",
+    "Chat orchestrator has existing infrastructure to inject system prompts",
+    "UI components exist for account settings and chat header"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains detailed data model specifications with field definitions, clear acceptance criteria checklist, seeding requirements with exact prompt texts, and implementation instructions. The spec is comprehensive enough to skip the spec generation stage."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
