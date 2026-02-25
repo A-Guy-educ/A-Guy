@@ -130,6 +130,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Post error comment
         env:
           GH_TOKEN: ${{ github.token }}
