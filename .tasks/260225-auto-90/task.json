@@ -1,0 +1,22 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/services/guest-session.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "GuestSessions collection exists and is properly exported in payload.config.ts"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input has clear issue title with priority, affected file with line numbers (149, 173, 197, 218, 236, 262, 283), and 3-step fix approach (generate types, check exports, remove casts)"
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
