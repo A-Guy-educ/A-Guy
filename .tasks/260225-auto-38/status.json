@@ -1,39 +1,17 @@
 {
+  "version": 2,
   "taskId": "260225-auto-38",
   "mode": "full",
   "pipeline": "spec_execute_verify",
-  "startedAt": "2026-02-25T11:49:54.616Z",
-  "updatedAt": "2026-02-25T11:56:17.692Z",
+  "startedAt": "2026-02-25T12:24:57.407Z",
+  "updatedAt": "2026-02-25T12:24:57.408Z",
   "state": "running",
-  "currentStage": "gap",
+  "cursor": null,
   "stages": {
     "taskify": {
-      "state": "completed",
+      "state": "running",
       "retries": 0,
-      "startedAt": "2026-02-25T11:49:56.315Z",
-      "outputFile": "task.json",
-      "completedAt": "2026-02-25T11:50:50.372Z",
-      "elapsed": 54057
-    },
-    "spec": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-02-25T11:50:50.376Z",
-      "outputFile": "spec.md",
-      "completedAt": "2026-02-25T11:51:02.388Z",
-      "elapsed": 12012
-    },
-    "gap": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-02-25T11:51:02.389Z",
-      "outputFile": "gap.md",
-      "completedAt": "2026-02-25T11:56:17.692Z",
-      "elapsed": 315303
+      "startedAt": "2026-02-25T12:24:57.408Z"
     }
-  },
-  "triggeredBy": "comment",
-  "issueNumber": 584,
-  "runId": "22395534810",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/22395534810"
+  }
 }
