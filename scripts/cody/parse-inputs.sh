@@ -95,23 +95,23 @@ else
     fi
   fi
 
-  # Detect approval commands - @cody, @cody approve, /cody, /cody approve, etc.
-  # These should trigger gate approval check, not a full pipeline run
+  # Detect commands - @cody, @cody approve, /cody, /cody full, etc.
+  # Determine the mode based on the command
   NORMALIZED_COMMENT=$(echo "${COMMENT_BODY:-}" | tr '[:upper:]' '[:lower:]' | xargs || true)
   if [[ -n "$NORMALIZED_COMMENT" ]]; then
-    # Remove /cody or @cody prefix
+    # Remove /cody or @cody prefix to get the command/arguments
     CMD_AFTER_CODY=$(echo "$NORMALIZED_COMMENT" | sed 's/^[\/]@*cody[[:space:]]*//' | xargs || true)
     
-    # Check if it's just @cody alone or followed by approval keywords
+    # Check if it's an approval command (approve, approved, yes, go, proceed, y, continue)
     APPROVAL_KEYWORDS="approve approved yes go proceed y continue"
     IS_APPROVAL=false
     
     if [[ -z "$CMD_AFTER_CODY" ]]; then
-      # @cody alone - treat as approval (user wants to proceed)
-      IS_APPROVAL=true
-      echo "=== Detected @cody alone - treating as approval command ==="
+      # @cody alone - default to full mode (fresh pipeline run)
+      OUTPUT_MODE="full"
+      echo "=== @cody alone - defaulting to full mode ==="
     else
-      # Check if the command after @cody is an approval keyword
+      # Check if it's an approval keyword (exact match only)
       for keyword in $APPROVAL_KEYWORDS; do
         if [[ "$CMD_AFTER_CODY" == "$keyword" ]]; then
           IS_APPROVAL=true
@@ -119,13 +119,29 @@ else
           break
         fi
       done
-    fi
-    
-    if [[ "$IS_APPROVAL" == "true" ]]; then
-      # For approval commands, use rerun mode
-      # This will check for approval and proceed if approved
-      # The pipeline will resume from the last failed stage (or build by default)
-      OUTPUT_MODE="rerun"
+      
+      if [[ "$IS_APPROVAL" == "true" ]]; then
+        # Approval commands use rerun mode to check for approval
+        OUTPUT_MODE="rerun"
+      else
+        # Check if it's a valid mode (spec, impl, rerun, full, status)
+        VALID_MODES="spec impl rerun full status"
+        IS_VALID_MODE=false
+        for mode in $VALID_MODES; do
+          if [[ "$CMD_AFTER_CODY" == "$mode" ]]; then
+            OUTPUT_MODE="$mode"
+            IS_VALID_MODE=true
+            echo "=== Detected explicit mode: $mode ==="
+            break
+          fi
+        done
+        
+        # If not a valid mode, treat as full (might be a task-id or description)
+        if [[ "$IS_VALID_MODE" == "false" ]]; then
+          OUTPUT_MODE="full"
+          echo "=== Not a known command - defaulting to full mode ==="
+        fi
+      fi
     fi
   fi
 
