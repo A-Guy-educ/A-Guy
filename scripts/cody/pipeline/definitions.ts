@@ -66,7 +66,7 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
     name: 'taskify',
     type: 'agent',
     timeout: STAGE_TIMEOUTS.taskify ?? DEFAULT_TIMEOUT,
-    maxRetries: 1,
+    maxRetries: 2, // BUG-F fix: increased from 1 to 2 for better resilience
     postActions: [
       { type: 'validate-task-json' },
       { type: 'resolve-profile' },
