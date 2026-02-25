@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     const contextFilter = contextKey
       ? { contextKey: { equals: contextKey } }
-      : { contextKey: { like: `${contextKeyPrefix}%` } }
+      : { contextKey: { like: contextKeyPrefix } }
 
     const result = await payload.find({
       collection: 'conversations',
