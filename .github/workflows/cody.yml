@@ -88,7 +88,7 @@ jobs:
           COMMENT_BODY: ${{ github.event.comment.body }}
           AUTHOR: ${{ github.event.comment.user.login }}
           ASSOCIATION: ${{ github.event.comment.author_association }}
-        run: ./scripts/cody/parse-safety.sh
+        run: pnpm tsx scripts/cody/parse-safety.ts
 
       # Add reaction to acknowledge command (shows instantly on the comment)
       - name: Acknowledge command with reaction
@@ -118,7 +118,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           # GitHub context (needed by script to detect trigger type)
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-        run: ./scripts/cody/parse-inputs.sh
+        run: pnpm tsx scripts/cody/parse-inputs.ts
 
   # Job 1b: Notify on parse errors (invalid commands)
   notify-parse-error:
@@ -163,7 +163,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TASK_ID: ${{ needs.parse.outputs.task_id }}
-        run: ./scripts/cody/checkout-task-branch.sh
+        run: pnpm tsx scripts/cody/checkout-task-branch.ts
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -214,7 +214,7 @@ jobs:
           # GitHub context
           RUN_ID: ${{ github.run_id }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: ./scripts/cody/run-cody.sh
+        run: pnpm cody
 
       - name: Upload artifacts
         if: always() && needs.parse.outputs.task_id != ''
