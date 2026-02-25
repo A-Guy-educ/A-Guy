@@ -1,0 +1,26 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "TeacherProfiles collection (new)",
+    "UserSettings.teacherProfile field (modify)",
+    "Chat orchestrator integration",
+    "UI for profile selection",
+    "Data seeding (5 profiles)"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Prompts collection already exists for systemPrompt relationship",
+    "UserSettings collection exists and can be extended",
+    "Existing chat/orchestrator system exists for integration",
+    "Base system prompt infrastructure exists"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": ["spec"],
+    "reasoning": "Task contains detailed ## Data Model section with field specifications, ## Acceptance Criteria with 10 checkable items, and clear ## Agent Execution Instruction. Promoted spec.md with extracted requirements."
+  },
+  "pipeline_profile": "standard"
+}
