@@ -41,6 +41,7 @@ export function AskConversationGrid() {
       const res = await fetch('/api/conversations/by-context', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ courseId: courseInfo.courseId }),
       })
       if (res.ok) {
@@ -78,6 +79,7 @@ export function AskConversationGrid() {
           if (courseId) {
             const convRes = await fetch(
               `/api/conversations/by-context?contextKeyPrefix=ask:${courseId}&limit=20`,
+              { credentials: 'include' },
             )
             if (convRes.ok) {
               const convData = await convRes.json()
