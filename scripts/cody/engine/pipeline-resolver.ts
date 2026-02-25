@@ -41,7 +41,9 @@ export function rebuildPipelineAfterTaskify(
   ctx: PipelineContext,
 ): PipelineDefinition {
   // Re-build with the resolved profile
-  return buildPipeline('full', ctx.profile, ctx.input.clarify ?? false, ctx)
+  // Use 'rerun' mode to include both spec and impl stages since we're
+  // continuing from where the first phase left off
+  return buildPipeline('rerun', ctx.profile, ctx.input.clarify ?? false, ctx)
 }
 
 /**
