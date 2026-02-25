@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       const guestToken = getGuestSessionCookie(request.headers)
       if (guestToken) {
-        const guestSession = await getGuestSessionByToken(guestToken)
+        const guestSession = await getGuestSessionByToken(payload, guestToken)
         if (guestSession) {
           guestSessionId = guestSession.id
         }
