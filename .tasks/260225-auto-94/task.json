@@ -1,0 +1,27 @@
+{
+  "task_type": "spec_only",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "product",
+  "scope": [
+    "study-planner",
+    "adaptive-schedule",
+    "7-day-planner",
+    "user-progress"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Will integrate with existing UserProgress collection for snapshot storage",
+    "Will be implemented as a feature in the A-Guy platform",
+    "Will use existing topic/lesson infrastructure"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains comprehensive Product Definition, Core Rules, Adaptive Logic, Update Rules, Edge Cases, Analytics Events, and 8 detailed Acceptance Criteria. Also includes a full HTML template with embedded JavaScript logic. Promoted spec.md from requirements and acceptance criteria."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_only"
+}
