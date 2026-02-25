@@ -19,8 +19,11 @@
   ],
   "input_quality": {
     "level": "good_spec",
-    "skip_stages": ["spec"],
+    "skip_stages": [
+      "spec"
+    ],
     "reasoning": "Task contains detailed ## Data Model section with field specifications, ## Acceptance Criteria with 10 checkable items, and clear ## Agent Execution Instruction. Promoted spec.md with extracted requirements."
   },
-  "pipeline_profile": "standard"
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
 }
