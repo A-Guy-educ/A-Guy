@@ -135,7 +135,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh issue comment ${{ needs.parse.outputs.issue_number }} \
-            --body "⚠️ Invalid \`/cody\` command. Use: \`/cody [spec|impl|rerun|full|status] [task-id] [options]\`"
+            --body "⚠️ Invalid \`@cody\` command. Use: \`@cody [spec|impl|rerun|full|status] [task-id] [options]\`"
 
   # Job 2: Orchestrate - run the pipeline
   orchestrate:
