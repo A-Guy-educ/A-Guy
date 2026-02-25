@@ -93,6 +93,7 @@
     "cody:spec": "pnpm tsx scripts/cody/entry.ts --mode=spec",
     "cody:impl": "pnpm tsx scripts/cody/entry.ts --mode=impl",
     "cody:rerun": "pnpm tsx scripts/cody/entry.ts --mode=rerun",
+    "cody:test": "gh workflow run cody.yml -R A-Guy-educ/A-Guy -f task_id=TEST -f mode=status -f dry_run=true",
     "cody": "pnpm tsx scripts/cody/entry.ts",
     "supervisor": "pnpm tsx scripts/supervisor/supervisor.ts"
   },

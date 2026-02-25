@@ -1,10 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as pipelineUtils from '../../../../scripts/cody/pipeline-utils'
+import * as clarifyWorkflow from '../../../../scripts/cody/clarify-workflow'
 
 vi.mock('../../../../scripts/cody/pipeline-utils', () => ({
   readTask: vi.fn(),
   resolvePipelineProfile: vi.fn(() => 'lightweight'),
   stageOutputFile: vi.fn((taskDir: string, stage: string) => `${taskDir}/${stage}.json`),
+}))
+
+vi.mock('../../../../scripts/cody/clarify-workflow', () => ({
+  handleGateApproval: vi.fn(() => 'waiting'),
+  extractGateCommentBody: vi.fn(),
+}))
+
+vi.mock('../../../../scripts/cody/github-api', () => ({
+  extractGateCommentBody: vi.fn(),
+  postComment: vi.fn(),
+}))
+
+vi.mock('../../../../scripts/cody/git-utils', () => ({
+  commitPipelineFiles: vi.fn(),
 }))
 
 import { executePostAction } from '../../../../scripts/cody/pipeline/post-actions'
@@ -76,6 +91,34 @@ describe('Post-Actions', () => {
 
       expect(ctx.taskDef).toBeNull()
       expect(ctx.profile).toBe('standard') // unchanged
+    })
+  })
+
+  describe('check-gate', () => {
+    it('should read taskDef from file when ctx.taskDef is null (BUG-F fix)', async () => {
+      // ctx.taskDef is null
+      vi.mocked(pipelineUtils.readTask).mockReturnValue(mockTaskDef)
+      vi.mocked(clarifyWorkflow.handleGateApproval).mockReturnValue('waiting')
+
+      const action: PostAction = { type: 'check-gate', gate: 'taskify' }
+
+      // Should not throw - should read taskDef from file
+      await expect(executePostAction(ctx, action, null)).rejects.toThrow()
+
+      // Verify it tried to read from file when ctx.taskDef was null
+      expect(pipelineUtils.readTask).toHaveBeenCalledWith(ctx.taskDir)
+    })
+
+    it('should use ctx.taskDef when available instead of reading from file', async () => {
+      ctx.taskDef = mockTaskDef
+      vi.mocked(clarifyWorkflow.handleGateApproval).mockReturnValue('approved')
+
+      const action: PostAction = { type: 'check-gate', gate: 'taskify' }
+
+      await executePostAction(ctx, action, null)
+
+      // Should not have read from file since ctx.taskDef was already set
+      expect(pipelineUtils.readTask).not.toHaveBeenCalled()
     })
   })
 })

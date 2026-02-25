@@ -341,6 +341,12 @@ export function runAgentWithFileWatch(
             retries++
             const reason = code === 0 ? 'no output file' : `exit ${code}`
 
+            // BUG-F fix: Add feedback message to help agent understand why it failed
+            const feedbackMsg =
+              code === 0
+                ? `CRITICAL FAILURE: You exited with code 0 but did NOT produce the required output file. You MUST write the output file before exiting. Check that your tool calls are actually writing to the correct path.`
+                : `CRITICAL FAILURE: You exited with code ${code}. Fix the error and ensure you write the output file before exiting.`
+
             // Debug: List files in task directory on failure
             try {
               const files = fs.readdirSync(taskDirForPoll)
@@ -351,14 +357,16 @@ export function runAgentWithFileWatch(
               // Ignore errors
             }
 
-            console.log(`  ⚠ Stage failed (${reason}), retrying (${retries}/${maxRetries})...`)
+            console.log(
+              `  ⚠ Stage failed (${reason}), retrying with feedback (${retries}/${maxRetries})...`,
+            )
             if (pollTimer) clearInterval(pollTimer)
             if (timeoutTimer) clearTimeout(timeoutTimer)
             if (currentChild && !currentChild.killed) {
               currentChild.kill('SIGTERM')
             }
-            // Brief delay before retry (no feedback since this was a content-missing failure)
-            setTimeout(() => attemptWithRetry(undefined), 2000)
+            // Retry with feedback about what went wrong
+            setTimeout(() => attemptWithRetry(feedbackMsg), 2000)
           } else {
             // Exhausted retries without producing output file
             // Debug: List files in task directory on final failure
