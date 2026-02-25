@@ -156,7 +156,7 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
       if (!ctx.input.dryRun) {
         const td = readTask(ctx.taskDir)
         if (td) {
-          ensureFeatureBranch(ctx.taskId, td.task_type)
+          ensureFeatureBranch(ctx.taskId, td.task_type, undefined, ctx.taskDir)
         }
       }
     },

@@ -279,6 +279,20 @@ describe('clarify-workflow', () => {
       expect(result).toBe('approved')
     })
 
+    // BUG-F fix: @cody prefix should also work for approval
+    it.each([['@cody approve'], ['@cody yes'], ['@cody proceed']])(
+      '@cody prefix with approval keyword "%s" → returns approved',
+      (commentBody) => {
+        const input = createMockInput({
+          commentBody,
+          triggerType: 'comment',
+        })
+
+        const result = handleGateApproval(input, tempDir, 'architect', taskDef)
+        expect(result).toBe('approved')
+      },
+    )
+
     // Rejection keywords: reject, rejected, no, cancel, stop, n
     it.each([
       ['reject', 'rejected'],
@@ -296,6 +310,20 @@ describe('clarify-workflow', () => {
       const result = handleGateApproval(input, tempDir, 'architect', taskDef)
       expect(result).toBe('rejected')
     })
+
+    // BUG-F fix: @cody prefix should also work for rejection
+    it.each([['@cody reject'], ['@cody no'], ['@cody cancel']])(
+      '@cody prefix with rejection keyword "%s" → returns rejected',
+      (commentBody) => {
+        const input = createMockInput({
+          commentBody,
+          triggerType: 'comment',
+        })
+
+        const result = handleGateApproval(input, tempDir, 'architect', taskDef)
+        expect(result).toBe('rejected')
+      },
+    )
 
     it('high risk_level triggers hard-stop mode comment', () => {
       const highRiskTaskDef = { ...taskDef, risk_level: 'high' }

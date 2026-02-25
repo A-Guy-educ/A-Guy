@@ -169,8 +169,8 @@ function detectApprovalFromComment(commentBody: string | null): 'approved' | 're
   // Normalize
   decoded = decoded.toLowerCase().replace(/\\n/g, ' ').replace(/\s+/g, ' ').trim()
 
-  // Remove /cody prefix
-  decoded = decoded.replace(/^\/cody\s*/, '').trim()
+  // Remove /cody or @cody prefix (BUG-F fix: also handle @cody for approval)
+  decoded = decoded.replace(/^[\/]?@?cody\s*/, '').trim()
 
   // Check for rejection keywords first (more specific)
   for (const keyword of REJECTION_KEYWORDS) {
