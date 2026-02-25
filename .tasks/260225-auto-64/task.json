@@ -1,0 +1,30 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "TeacherProfiles collection (new)",
+    "UserSettings modification (add teacherProfile field)",
+    "Prompts entries (5 teacher profiles)",
+    "Chat orchestrator integration",
+    "UI components for profile selection"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Prompts collection already exists for relationship",
+    "UserSettings collection exists",
+    "Chat orchestrator exists and can be modified",
+    "UnifiedLLMProvider and AI_MODELS exist"
+  ],
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Input contains full requirements with data model specs, acceptance criteria, and implementation steps including specific slugs (teacher_strict, teacher_thorough, teacher_patient, teacher_focused, teacher_challenging) and prompt texts. Promoted spec.md and plan.md."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
