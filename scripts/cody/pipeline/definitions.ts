@@ -293,10 +293,17 @@ export function buildPipeline(
       // The engine's rebuildPipeline callback handles this
       return { stages, order }
     }
-  } else if (mode === 'impl' || mode === 'rerun') {
-    // Implementation stages
+  } else if (mode === 'impl') {
+    // Implementation stages only
     const implOrder = profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
     order = [...implOrder]
+  } else if (mode === 'rerun') {
+    // Rerun mode: include both spec and impl stages to support resuming from any stage
+    // The engine will skip completed stages and start from the specified fromStage
+    const specOrder = profile === 'standard' ? SPEC_ORDER_STANDARD : SPEC_ORDER_LIGHTWEIGHT
+    const implOrder = profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
+    const filteredSpecOrder = clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
+    order = [...filteredSpecOrder, ...implOrder]
   }
 
   return { stages, order }
