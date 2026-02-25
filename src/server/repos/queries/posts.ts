@@ -112,8 +112,8 @@ export const queryAllPostSlugs = cache(async () => {
   const result = await payload.find({
     collection: 'posts',
     draft: false,
-    limit: 1000,
-    pagination: false,
+    limit: 25,
+    depth: 0,
     select: {
       slug: true,
     },
