@@ -1,31 +1,21 @@
-# Guest Session Type Safety Fix
+# Type Safety Fix: Guest Sessions Collection
 
 ## Overview
-Fix type safety issue in `guest-session.ts` service where `'guest-sessions' as any` is used on 7 Payload operations, indicating the collection is not properly registered in the generated types.
+
+Fix type safety issues in the guest-session.ts service where `'guest-sessions' as any` is used on 7 Payload operations, indicating the collection slug is not properly registered in generated types.
+
+## Files Affected
+
+- `src/server/services/guest-session.ts` — lines 149, 173, 197, 218, 236, 262, 283
 
 ## Requirements
 
-### FR-1: Regenerate Payload Types
-- Run `pnpm generate:types` to regenerate Payload types from the collection schema
-- Verify that `guest-sessions` collection is now in the type registry
-
-### FR-2: Verify Collection Export
-- If collection is still not in registry after type generation, verify that `GuestSessions` collection is properly exported from collections index
-- Check that `GuestSessions` is included in the collections.config.ts`
-
-### FR-3: array in `payload Remove Type Casts
-- Remove all `as any` casts from the following lines in `src/server/services/guest-session.ts`:
-  - Line 149
-  - Line 173
-  - Line 197
-  - Line 218
-  - Line 236
-  - Line 262
-  - Line 283
+1. Run `pnpm generate:types` to regenerate Payload types
+2. If the collection is still not in the registry, verify that `GuestSessions` is properly exported and included in `payload.config.ts`
+3. Remove all `as any` casts once types are correct
 
 ## Acceptance Criteria
 
-- [ ] `pnpm generate:types` runs without errors
-- [ ] All 7 `as any` casts are removed from guest-session.ts
-- [ ] TypeScript compilation succeeds without type errors
-- [ ] GuestSessions collection is properly typed in Payload operations
+- [ ] No `'guest-sessions' as any` casts remain in guest-session.ts
+- [ ] TypeScript compilation passes without errors
+- [ ] All Payload operations use properly typed collection slugs

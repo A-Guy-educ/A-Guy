@@ -8,16 +8,13 @@
   ],
   "missing_inputs": [],
   "assumptions": [
-    "GuestSessions collection exists in codebase",
-    "pnpm generate:types command is available",
-    "Collection is intended to be in type registry"
+    "The GuestSessions collection exists and is properly defined in the codebase",
+    "Running pnpm generate:types will add the collection to the type registry"
   ],
   "input_quality": {
-    "level": "good_spec",
-    "skip_stages": [
-      "spec"
-    ],
-    "reasoning": "Task contains ## Files Affected with specific line numbers, ## Expected Fix with 3 clear steps, and ## Priority. Has structured requirements suitable for direct implementation. Spec.md was already promoted from this input."
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task provides specific file paths and line numbers with clear expected fix. While not containing formal ## Requirements sections, the task is specific enough about what needs to be done (run generate:types, check exports, remove as any casts)."
   },
   "pipeline_profile": "lightweight",
   "pipeline": "spec_execute_verify"
