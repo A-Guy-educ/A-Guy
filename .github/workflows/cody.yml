@@ -35,6 +35,14 @@ on:
         required: false
         type: string
         default: ''
+      runner:
+        description: 'Where to run: github-hosted (default) or self-hosted (--local)'
+        required: false
+        type: choice
+        options:
+          - github-hosted
+          - self-hosted
+        default: 'github-hosted'
 
   push:
     branches:
@@ -83,6 +91,7 @@ jobs:
       valid: ${{ steps.parse.outputs.valid }}
       trigger_type: ${{ steps.parse.outputs.trigger_type }}
       comment_body: ${{ steps.parse.outputs.comment_body }}
+      runner: ${{ steps.parse.outputs.runner }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -137,6 +146,7 @@ jobs:
           DISPATCH_FEEDBACK: ${{ github.event.inputs.feedback }}
           DISPATCH_FROM_STAGE: ${{ github.event.inputs.from_stage }}
           DISPATCH_CLARIFY: ${{ github.event.inputs.clarify }}
+          DISPATCH_RUNNER: ${{ github.event.inputs.runner }}
           # Comment inputs (for orchestrator to parse)
           COMMENT_BODY: ${{ github.event.comment.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -240,7 +250,7 @@ jobs:
   orchestrate:
     needs: parse
     if: needs.parse.outputs.valid == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ needs.parse.outputs.runner == 'self-hosted' && fromJSON('["self-hosted","local"]') || 'ubuntu-latest' }}
     timeout-minutes: 120
     permissions:
       id-token: write # OpenCode GitHub App OIDC
@@ -325,6 +335,16 @@ jobs:
           name: cody-${{ needs.parse.outputs.task_id }}-${{ github.run_id }}
           path: .tasks/${{ needs.parse.outputs.task_id }}/
           retention-days: 7
+
+      # Clean workspace for self-hosted runners (no-op on GitHub-hosted since VM is discarded)
+      - name: Cleanup workspace (self-hosted)
+        if: always() && needs.parse.outputs.runner == 'self-hosted'
+        run: |
+          echo "=== Cleaning workspace for self-hosted runner ==="
+          git reset --hard HEAD 2>/dev/null || true
+          git clean -ffdx 2>/dev/null || true
+          rm -rf .next dist coverage .turbo .cache .eslintcache .vercel .output
+          echo "✅ Workspace cleaned"
 
       # Post completion comment removed (BUG-F fix):
       # cody.ts already posts completion/failure comments via postComment()

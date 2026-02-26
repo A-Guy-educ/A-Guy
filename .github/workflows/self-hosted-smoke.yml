@@ -3,6 +3,14 @@ name: Self-Hosted Runner Smoke Test
 on:
   workflow_dispatch:
     inputs:
+      runner_label:
+        description: 'Runner label to target (local = macOS native, docker = Linux container)'
+        required: false
+        default: 'local'
+        type: choice
+        options:
+          - local
+          - docker
       cleanup_node_modules:
         description: 'Also remove node_modules for strict purity'
         required: false
@@ -12,7 +20,7 @@ on:
 jobs:
   smoke-test:
     name: Smoke Test (self-hosted)
-    runs-on: [self-hosted, local]
+    runs-on: [self-hosted, '${{ github.event.inputs.runner_label }}']
     timeout-minutes: 15
 
     steps:

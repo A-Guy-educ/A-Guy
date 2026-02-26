@@ -19,6 +19,7 @@ interface ParseOutputs {
   trigger_type: string
   comment_body: string
   valid: string
+  runner: string
 }
 
 // Task ID format: YYMMDD-description (e.g., 260225-auto-90)
@@ -113,10 +114,11 @@ export function parseDispatchInputs(): ParseOutputs {
     trigger_type: 'dispatch',
     comment_body: '',
     valid: 'true',
+    runner: process.env.DISPATCH_RUNNER || 'github-hosted',
   }
 
   console.log(
-    `=== Parsed dispatch: task_id=${outputs.task_id}, mode=${outputs.mode}, clarify=${outputs.clarify} ===`,
+    `=== Parsed dispatch: task_id=${outputs.task_id}, mode=${outputs.mode}, clarify=${outputs.clarify}, runner=${outputs.runner} ===`,
   )
 
   return outputs
@@ -158,22 +160,32 @@ export function parseCommentInputs(): ParseOutputs {
     }
   }
 
-  // Parse command to determine mode
+  // Parse command to determine mode and flags
   if (commentBody) {
     const cmdAfterCody = extractCommandAfterCody(commentBody)
 
-    if (!cmdAfterCody) {
-      // @cody alone - default to full mode (fresh pipeline run)
+    // Detect --local flag anywhere in the command
+    const hasLocalFlag = /--local\b/.test(cmdAfterCody)
+    if (hasLocalFlag) {
+      outputs.runner = 'self-hosted'
+      console.log('=== Detected --local flag: will use self-hosted runner ===')
+    }
+
+    // Strip --local from command before mode parsing
+    const cmdWithoutFlags = cmdAfterCody.replace(/--local\b/, '').trim()
+
+    if (!cmdWithoutFlags) {
+      // @cody alone (or @cody --local) - default to full mode
       outputs.mode = 'full'
       console.log('=== @cody alone - defaulting to full mode ===')
-    } else if (APPROVAL_KEYWORDS.includes(cmdAfterCody)) {
+    } else if (APPROVAL_KEYWORDS.includes(cmdWithoutFlags)) {
       // Approval command - use rerun mode
       outputs.mode = 'rerun'
-      console.log(`=== Detected approval keyword: ${cmdAfterCody} ===`)
-    } else if (VALID_MODES.includes(cmdAfterCody)) {
+      console.log(`=== Detected approval keyword: ${cmdWithoutFlags} ===`)
+    } else if (VALID_MODES.includes(cmdWithoutFlags)) {
       // Explicit mode specified
-      outputs.mode = cmdAfterCody
-      console.log(`=== Detected explicit mode: ${cmdAfterCody} ===`)
+      outputs.mode = cmdWithoutFlags
+      console.log(`=== Detected explicit mode: ${cmdWithoutFlags} ===`)
     } else {
       // Not a known command - default to full (might be task-id or description)
       outputs.mode = 'full'
@@ -211,6 +223,7 @@ export function getDefaultOutputs(): ParseOutputs {
     trigger_type: '',
     comment_body: '',
     valid: 'false',
+    runner: 'github-hosted',
   }
 }
 
@@ -236,6 +249,7 @@ function writeOutputs(outputs: ParseOutputs): void {
     `trigger_type=${outputs.trigger_type}`,
     `comment_body=${outputs.comment_body}`,
     `valid=${outputs.valid}`,
+    `runner=${outputs.runner}`,
   ]
 
   writeFileSync(githubOutput, lines.join('\n') + '\n')
