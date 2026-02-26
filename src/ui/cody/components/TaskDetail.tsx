@@ -2,11 +2,10 @@
  * @fileType component
  * @domain cody
  * @pattern task-detail
- * @ai-summary Task detail panel with pipeline, actions, comments, assignees, and labels
+ * @ai-summary Task detail panel with TanStack Query hooks
  */
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { formatRelativeTime } from '../utils'
 import type { CodyTask, GitHubComment } from '../types'
@@ -18,6 +17,7 @@ import { LabelPicker } from './LabelPicker'
 import { Button } from '@/ui/web/components/button'
 import { Badge } from '@/ui/web/components/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
+import { useTaskActions, useTaskDetails } from '../hooks'
 
 interface TaskDetailProps {
   task: CodyTask | null
@@ -31,27 +31,25 @@ interface FullTaskDetails extends CodyTask {
 }
 
 export function TaskDetail({ task, onClose, onRefresh }: TaskDetailProps) {
-  const [fullDetails, setFullDetails] = useState<FullTaskDetails | null>(null)
+  const { data: details, refetch } = useTaskDetails(task?.issueNumber ?? null)
 
-  const fetchDetails = async () => {
-    if (!task) return
-    try {
-      const res = await fetch(`/api/cody/tasks/issue-${task.issueNumber}`)
-      const data = await res.json()
-      setFullDetails({
-        ...task,
-        assignees: data.task?.assignees || [],
-        comments: data.comments || [],
-      })
-    } catch (err) {
-      console.error('Failed to fetch task details:', err)
+  const taskActions = useTaskActions({
+    issueNumber: task?.issueNumber ?? 0,
+    onSuccess: () => {
+      onRefresh?.()
+      refetch()
+    },
+  })
+
+  // Build full details only if we have task data
+  const fullDetails: FullTaskDetails | null = (() => {
+    if (!details?.task || !task) return null
+    return {
+      ...task,
+      assignees: details.task.assignees || [],
+      comments: (details.comments as GitHubComment[]) || [],
     }
-  }
-
-  useEffect(() => {
-    fetchDetails()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [task])
+  })()
 
   if (!task) {
     return (
@@ -61,37 +59,11 @@ export function TaskDetail({ task, onClose, onRefresh }: TaskDetailProps) {
     )
   }
 
-  const handleStateChange = async (newState: 'open' | 'closed') => {
-    try {
-      const res = await fetch(`/api/cody/tasks/issue-${task.issueNumber}/actions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: newState === 'closed' ? 'close' : 'reopen',
-        }),
-      })
-
-      if (res.ok) {
-        onRefresh?.()
-      }
-    } catch (err) {
-      console.error('Failed to change state:', err)
-    }
-  }
-
-  const handleAbort = async () => {
-    try {
-      const res = await fetch(`/api/cody/tasks/issue-${task.issueNumber}/actions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'abort' }),
-      })
-
-      if (res.ok) {
-        onRefresh?.()
-      }
-    } catch (err) {
-      console.error('Failed to abort:', err)
+  const handleStateChange = () => {
+    if (task.state === 'open') {
+      taskActions.close()
+    } else {
+      taskActions.reopen()
     }
   }
 
@@ -148,11 +120,7 @@ export function TaskDetail({ task, onClose, onRefresh }: TaskDetailProps) {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">State:</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleStateChange(task.state === 'open' ? 'closed' : 'open')}
-              >
+              <Button variant="outline" size="sm" onClick={handleStateChange}>
                 {task.state === 'open' ? 'Close' : 'Reopen'}
               </Button>
             </div>
@@ -251,13 +219,7 @@ export function TaskDetail({ task, onClose, onRefresh }: TaskDetailProps) {
         {/* Comments Section */}
         <div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Comments</h3>
-          <CommentEditor
-            issueNumber={task.issueNumber}
-            onCommentPosted={() => {
-              // Refresh the task details to get new comments
-              fetchDetails()
-            }}
-          />
+          <CommentEditor issueNumber={task.issueNumber} onCommentPosted={() => refetch()} />
           <div className="mt-4">
             <CommentList comments={fullDetails?.comments || []} />
           </div>
@@ -272,21 +234,8 @@ export function TaskDetail({ task, onClose, onRefresh }: TaskDetailProps) {
             <Button
               variant="default"
               className="w-full bg-blue-600 hover:bg-blue-700"
-              onClick={async () => {
-                try {
-                  const res = await fetch(`/api/cody/tasks/issue-${task.issueNumber}/actions`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'execute' }),
-                  })
-                  if (res.ok) {
-                    onRefresh?.()
-                    fetchDetails()
-                  }
-                } catch (err) {
-                  console.error('Failed to execute:', err)
-                }
-              }}
+              onClick={() => taskActions.execute()}
+              disabled={taskActions.isPending}
             >
               🤖 Execute with Cody
             </Button>
@@ -300,7 +249,12 @@ export function TaskDetail({ task, onClose, onRefresh }: TaskDetailProps) {
           </Link>
         </Button>
         {task.pipeline?.state === 'running' && (
-          <Button variant="destructive" className="w-full" onClick={handleAbort}>
+          <Button
+            variant="destructive"
+            className="w-full"
+            onClick={() => taskActions.abort()}
+            disabled={taskActions.isPending}
+          >
             Abort Run
           </Button>
         )}
