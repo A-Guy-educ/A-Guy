@@ -4,6 +4,10 @@
     "description": "Your digital teacher - learning, practice, questions and exams"
   },
   "common": {
+    "error": {
+      "title": "Something went wrong",
+      "retryButton": "Try again"
+    },
     "languageSwitcher": {
       "label": "Language",
       "english": "English",

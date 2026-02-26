@@ -4,6 +4,10 @@
     "description": "המורה הדיגיטלי שלך - לימוד, תרגול, שאלות ומבחנים"
   },
   "common": {
+    "error": {
+      "title": "משהו השתבש",
+      "retryButton": "נסה שוב"
+    },
     "languageSwitcher": {
       "label": "שפה",
       "english": "אנגלית",
