@@ -83,8 +83,43 @@ async function ensureTaskMd(ctx: PipelineContext): Promise<void> {
  * Main entry point
  */
 async function main(): Promise<void> {
+  const args = process.argv.slice(2)
+
+  // Handle --help early
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`
+Cody Pipeline CLI
+
+Usage: pnpm tsx scripts/cody/entry.ts [options]
+
+Options:
+  --task-id <id>         Task ID (format: YYMMDD-description)
+  --mode <mode>          Pipeline mode: full, spec, impl, rerun, clarify, status
+  --file <path>          Path to task file (auto-generates task-id from filename)
+  --dry-run              Dry run mode
+  --issue-number <n>     GitHub issue number
+  --trigger-type         Trigger type: dispatch, comment
+  --run-id <id>          CI run ID
+  --run-url <url>        CI run URL
+  --comment-body <text>  Comment body (for comment triggers)
+  --from <stage>         Stage to restart from (for rerun mode)
+  --feedback <text>      Feedback for rerun mode
+  --auto                 Auto mode (non-interactive)
+  --gate                 Risk-gated mode (require approval)
+  --hard-stop            Hard stop on failure
+  --local                Run in local mode (skip GitHub API)
+  --clarify              Run clarify stage
+
+Examples:
+  pnpm tsx scripts/cody/entry.ts --task-id 260225-my-task --mode full
+  pnpm tsx scripts/cody/entry.ts --file docs/feature.md
+  pnpm tsx scripts/cody/entry.ts --mode rerun --from verify --feedback "Tests failed"
+`)
+    return
+  }
+
   // Parse CLI args
-  const input = parseCliArgs(process.argv.slice(2))
+  const input = parseCliArgs(args)
 
   // Set global logging context
   setGlobalContext({ taskId: input.taskId, runId: input.runId })
