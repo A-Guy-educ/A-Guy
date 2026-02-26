@@ -42,10 +42,12 @@ export const Prompts: CollectionConfig = {
       options: [
         { label: 'System', value: 'system' },
         { label: 'Context', value: 'context' },
+        { label: 'Persona', value: 'persona' },
       ],
       index: true,
       admin: {
-        description: 'System prompts are always included. Context prompts are lesson-specific.',
+        description:
+          'System prompts are always included. Context prompts are lesson-specific. Persona prompts define teacher identity.',
         position: 'sidebar',
       },
     },
