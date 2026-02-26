@@ -25,8 +25,10 @@ export function resolvePipelineForMode(
     case 'full':
       return buildPipeline(mode, profile, clarify, ctx)
     case 'impl':
-    case 'rerun':
       return buildPipeline('impl', profile, clarify, ctx)
+    case 'rerun':
+      // Rerun needs BOTH spec and impl stages to support resuming from any stage
+      return buildPipeline('rerun', profile, clarify, ctx)
     case 'status':
       // No pipeline for status mode
       return { stages: new Map(), order: [] }
