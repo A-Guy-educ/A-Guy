@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useTransition } from 'react'
 import type { Exercise } from '@/payload-types'
 import { getExerciseUrlParam } from './getExerciseUrlParam'
 
@@ -110,21 +110,27 @@ export function useExercisesPager({
     [hasAboutPage, totalPages, firstExercisePage],
   )
 
+  const [isNavigating, startTransition] = useTransition()
+
   const handleNext = useCallback(() => {
-    setPageState((prev) => {
-      const nextPage = prev.pageNumber + 1
-      if (nextPage >= totalPages) return prev
-      return pageToState(nextPage)
+    startTransition(() => {
+      setPageState((prev) => {
+        const nextPage = prev.pageNumber + 1
+        if (nextPage >= totalPages) return prev
+        return pageToState(nextPage)
+      })
     })
-  }, [totalPages, pageToState])
+  }, [totalPages, pageToState, startTransition])
 
   const handlePrev = useCallback(() => {
-    setPageState((prev) => {
-      const prevPage = prev.pageNumber - 1
-      if (prevPage < 0) return prev
-      return pageToState(prevPage)
+    startTransition(() => {
+      setPageState((prev) => {
+        const prevPage = prev.pageNumber - 1
+        if (prevPage < 0) return prev
+        return pageToState(prevPage)
+      })
     })
-  }, [pageToState])
+  }, [pageToState, startTransition])
 
   const handleStart = useCallback(() => {
     if (hasAboutPage) {
@@ -174,6 +180,7 @@ export function useExercisesPager({
     pageState,
     totalPages,
     progressPercent,
+    isNavigating,
     canGoNext: pageState.pageNumber < totalPages - 1,
     canGoPrev: pageState.pageNumber > 0,
     handleNext,
