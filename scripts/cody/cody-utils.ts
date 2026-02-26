@@ -567,8 +567,8 @@ export function parseCliArgs(argv: string[]): CodyInput {
   if (!cliSet.has('runUrl') && process.env.RUN_URL) {
     input.runUrl = process.env.RUN_URL
   }
-  // Store raw comment body for gate approval detection
-  if (!input.commentBody && process.env.COMMENT_BODY) {
+  // Store raw comment body for gate approval detection (only for comment triggers)
+  if (!input.commentBody && process.env.COMMENT_BODY && input.triggerType === 'comment') {
     input.commentBody = process.env.COMMENT_BODY
   }
 
