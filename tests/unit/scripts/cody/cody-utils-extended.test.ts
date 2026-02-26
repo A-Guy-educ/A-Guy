@@ -390,15 +390,15 @@ describe('parseCliArgs', () => {
       '--run-url',
       'https://github.com/runs/12345',
     ])
-    // Use env var in CI, otherwise use test default
-    expect(result.runId).toBe(process.env.RUN_ID || '12345')
-    expect(result.runUrl).toBe(process.env.RUN_URL || 'https://github.com/runs/12345')
+    // CLI args take precedence over env vars
+    expect(result.runId).toBe('12345')
+    expect(result.runUrl).toBe('https://github.com/runs/12345')
   })
 
   it('should parse --trigger-type', () => {
     const result = parseCliArgs(['--task-id', '260218-task', '--trigger-type', 'dispatch'])
-    // Use env var in CI, otherwise use test default
-    expect(result.triggerType).toBe(process.env.TRIGGER_TYPE || 'dispatch')
+    // CLI args take precedence over env vars
+    expect(result.triggerType).toBe('dispatch')
   })
 
   it('should handle positional mode argument', () => {

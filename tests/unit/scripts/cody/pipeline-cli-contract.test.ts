@@ -106,8 +106,8 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
 
       expect(result.taskId).toBe('260218-user-metrics')
       expect(result.mode).toBe('full')
-      // Use env var in CI, otherwise use test default
-      expect(result.triggerType).toBe(process.env.TRIGGER_TYPE || 'dispatch')
+      // CLI args take precedence over env vars
+      expect(result.triggerType).toBe('dispatch')
       expect(result.dryRun).toBe(false)
       expect(result.local).toBe(false)
     })
@@ -131,11 +131,9 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
       expect(result.dryRun).toBe(true)
       expect(result.feedback).toBe('TypeScript errors in src/api.ts')
       expect(result.fromStage).toBe('build')
-      // Use env var in CI, otherwise use test default
-      expect(result.runId).toBe(process.env.RUN_ID || '9876543')
-      expect(result.runUrl).toBe(
-        process.env.RUN_URL || 'https://github.com/org/repo/actions/runs/9876543',
-      )
+      // CLI args take precedence over env vars
+      expect(result.runId).toBe('9876543')
+      expect(result.runUrl).toBe('https://github.com/org/repo/actions/runs/9876543')
     })
 
     it('should parse spec mode dispatch', () => {
@@ -304,10 +302,8 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
 
       const result = parseCliArgs(args)
 
-      // Use env var in CI, otherwise use test default
-      expect(result.issueNumber).toBe(
-        process.env.ISSUE_NUMBER ? parseInt(process.env.ISSUE_NUMBER, 10) : 99,
-      )
+      // CLI args take precedence over env vars
+      expect(result.issueNumber).toBe(99)
     })
 
     it('should store raw commentBody for answer extraction', () => {
