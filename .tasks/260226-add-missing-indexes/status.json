@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "taskId": "260226-add-missing-indexes",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-26T16:16:12.671Z",
+  "updatedAt": "2026-02-26T16:16:12.672Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-26T16:16:12.672Z"
+    }
+  }
+}
