@@ -2,7 +2,7 @@
 
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Calendar, Plus, Trash2, Zap } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { MasteryLevel, TopicInput } from '@/lib/study-plan'
 import { DayCard } from './DayCard'
@@ -60,6 +60,7 @@ export function StudyPlanPage() {
   const t = useTranslations('studyPlan')
   const { plan, isLoading, generatePlan, markDayComplete } = useStudyPlan()
 
+  const userEdited = useRef(false)
   const [examDate, setExamDate] = useState('')
   const [topics, setTopics] = useState<TopicInput[]>([])
   const [newTopic, setNewTopic] = useState('')
@@ -74,6 +75,7 @@ export function StudyPlanPage() {
 
   const handleAddTopic = useCallback(() => {
     if (!newTopic.trim()) return
+    userEdited.current = true
 
     const topic: TopicInput = {
       topicId: `topic-${Date.now()}`,
@@ -86,10 +88,12 @@ export function StudyPlanPage() {
   }, [newTopic])
 
   const handleRemoveTopic = useCallback((topicId: string) => {
+    userEdited.current = true
     setTopics((prev) => prev.filter((t) => t.topicId !== topicId))
   }, [])
 
   const handleMasteryChange = useCallback((topicId: string, mastery: MasteryLevel) => {
+    userEdited.current = true
     setTopics((prev) => prev.map((t) => (t.topicId === topicId ? { ...t, mastery } : t)))
   }, [])
 
@@ -100,10 +104,12 @@ export function StudyPlanPage() {
     [markDayComplete],
   )
 
-  // Auto-generate plan when exam date or topics change
+  // Auto-generate plan when user edits exam date or topics
   useEffect(() => {
+    if (!userEdited.current) return
     if (examDate && topics.length > 0) {
       const timer = setTimeout(() => {
+        userEdited.current = false
         generatePlan(examDate, topics, 'default-course')
       }, 500)
       return () => clearTimeout(timer)
@@ -148,7 +154,10 @@ export function StudyPlanPage() {
               <input
                 type="date"
                 value={examDate}
-                onChange={(e) => setExamDate(e.target.value)}
+                onChange={(e) => {
+                userEdited.current = true
+                setExamDate(e.target.value)
+              }}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
               />
             </div>

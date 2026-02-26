@@ -92,6 +92,10 @@ export function useStudyPlan(): UseStudyPlanReturn {
     async (dayId: string) => {
       if (!plan) return
 
+      // Prevent un-completing: skip if already completed
+      const targetDay = plan.days.find((d) => d.dayId === dayId)
+      if (!targetDay || targetDay.status === 'completed') return
+
       // Optimistic update
       const previousPlan = plan
       setPlan({
