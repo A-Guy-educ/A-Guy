@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useTransition } from 'react'
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import type { Exercise } from '@/payload-types'
 import { getExerciseUrlParam } from './getExerciseUrlParam'
 
@@ -110,7 +110,23 @@ export function useExercisesPager({
     [hasAboutPage, totalPages, firstExercisePage],
   )
 
-  const [isNavigating, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
+
+  // Only show loading UI if transition takes longer than 300ms (avoid flash on instant nav)
+  const [isNavigating, setIsNavigating] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (isPending) {
+      timerRef.current = setTimeout(() => setIsNavigating(true), 300)
+    } else {
+      if (timerRef.current) clearTimeout(timerRef.current)
+      setIsNavigating(false)
+    }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [isPending])
 
   const handleNext = useCallback(() => {
     startTransition(() => {
