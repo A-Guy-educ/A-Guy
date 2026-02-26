@@ -96,7 +96,7 @@ describe('useNotebookChat', () => {
         courseId: undefined,
         categoryId: undefined,
       },
-      undefined,
+      { contextKeyOverride: undefined },
     )
   })
 
@@ -154,6 +154,7 @@ describe('useNotebookChat', () => {
       undefined,
       undefined, // chatAssetIds
       false, // adminMode
+      undefined, // contextKeyOverride
     )
   })
 

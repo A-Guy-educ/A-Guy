@@ -304,7 +304,10 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
 
       const result = parseCliArgs(args)
 
-      expect(result.issueNumber).toBe(99)
+      // Use env var in CI, otherwise use test default
+      expect(result.issueNumber).toBe(
+        process.env.ISSUE_NUMBER ? parseInt(process.env.ISSUE_NUMBER, 10) : 99,
+      )
     })
 
     it('should store raw commentBody for answer extraction', () => {
@@ -378,8 +381,9 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
       expect(result.feedback).toBeUndefined()
       expect(result.fromStage).toBeUndefined()
       expect(result.commentBody).toBeUndefined()
-      expect(result.runId).toBeUndefined()
-      expect(result.runUrl).toBeUndefined()
+      // In CI, RUN_ID is set; locally it should be undefined
+      expect(result.runId).toBe(process.env.RUN_ID || undefined)
+      expect(result.runUrl).toBe(process.env.RUN_URL || undefined)
     })
 
     it('should handle DRY_RUN=false (not passing --dry-run flag)', () => {

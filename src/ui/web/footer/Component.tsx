@@ -39,10 +39,14 @@ export async function Footer() {
 
   return (
     <footer className="mt-auto border-t border-border bg-footer text-card-foreground relative z-0">
-      <div className="container py-3 flex flex-row justify-between items-center gap-2">
+      <div className="container py-3 flex flex-row items-center gap-2">
         <SystemLink className="flex items-center" href="/">
           <TelescopeLogo className="h-5 w-auto" />
         </SystemLink>
+
+        <span className="flex-1 text-center text-xs font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
+          Aguy Learning Platform
+        </span>
 
         <div className="flex items-center gap-2 text-xs">
           {navItems.map(({ link }, i) => {

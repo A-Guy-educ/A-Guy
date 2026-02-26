@@ -1,12 +1,7 @@
-import { RequireCourseSelection } from '@/ui/web/guards/RequireCourseSelection'
-import { AskContent } from './_components/AskContent'
+import { AskPageClient } from './_components/AskPageClient'
 
 export default function AskPage() {
-  return (
-    <RequireCourseSelection>
-      <AskContent />
-    </RequireCourseSelection>
-  )
+  return <AskPageClient />
 }
 
 export async function generateMetadata() {
