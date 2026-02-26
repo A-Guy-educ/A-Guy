@@ -73,14 +73,6 @@ function getDefaultBranch(): string {
 }
 
 /**
- * Check if branch exists on origin
- */
-function branchExistsOnOrigin(branch: string): boolean {
-  const output = gitExecSilent(['rev-parse', '--verify', `origin/${branch}`])
-  return !!output.trim()
-}
-
-/**
  * Checkout and pull branch
  */
 function checkoutAndPull(branch: string): void {
@@ -100,6 +92,44 @@ function mergeDefaultBranch(defaultBranch: string): boolean {
     gitExec(['merge', '--abort'])
     return false
   }
+}
+
+/**
+ * Find remote branches matching a task ID pattern.
+ * Branch names use descriptive suffixes derived from the issue title,
+ * so we search by the date prefix from the task ID (e.g., "260226-auto")
+ * combined with the git branch prefix (fix/, feat/, etc.).
+ */
+function findRemoteBranch(taskId: string): string | null {
+  // Extract date prefix: "260226-auto-18" → "260226-auto"
+  // For manual tasks like "260226-my-task" → "260226-my"
+  const parts = taskId.split('-')
+  // Use first two parts as the search pattern (date + descriptor)
+  const datePrefix = parts.slice(0, 2).join('-')
+
+  const remoteBranches = gitExecSilent(['branch', '-r', '--list'])
+  if (!remoteBranches) return null
+
+  const branches = remoteBranches
+    .split('\n')
+    .map((b) => b.trim())
+    .filter((b) => b && !b.includes('->'))
+    .map((b) => b.replace('origin/', ''))
+
+  // Search for branches matching {prefix}/{datePrefix}-*
+  for (const prefix of BRANCH_PREFIXES) {
+    const pattern = `${prefix}/${datePrefix}-`
+    const match = branches.find((b) => b.startsWith(pattern))
+    if (match) return match
+  }
+
+  // Also try exact match (legacy/simple branch names)
+  for (const prefix of BRANCH_PREFIXES) {
+    const exact = `${prefix}/${taskId}`
+    if (branches.includes(exact)) return exact
+  }
+
+  return null
 }
 
 /**
@@ -123,24 +153,22 @@ function main(): void {
   const defaultBranch = getDefaultBranch()
   console.log(`=== Default branch: ${defaultBranch} ===`)
 
-  // Try each prefix
-  for (const prefix of BRANCH_PREFIXES) {
-    const branch = `${prefix}/${taskId}`
+  // Find feature branch by pattern matching
+  const branch = findRemoteBranch(taskId)
 
-    if (branchExistsOnOrigin(branch)) {
-      console.log(`=== Found feature branch: ${branch} ===`)
+  if (branch) {
+    console.log(`=== Found feature branch: ${branch} ===`)
 
-      checkoutAndPull(branch)
+    checkoutAndPull(branch)
 
-      console.log(`=== Merging latest ${defaultBranch} into ${branch} ===`)
+    console.log(`=== Merging latest ${defaultBranch} into ${branch} ===`)
 
-      if (!mergeDefaultBranch(defaultBranch)) {
-        console.log('=== Aborting merge ===')
-        process.exit(1)
-      }
-
-      process.exit(0)
+    if (!mergeDefaultBranch(defaultBranch)) {
+      console.log('=== Aborting merge ===')
+      process.exit(1)
     }
+
+    process.exit(0)
   }
 
   console.log(`=== No feature branch found for ${taskId}, staying on default branch ===`)
