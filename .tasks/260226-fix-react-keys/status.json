@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "taskId": "260226-fix-react-keys",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-26T15:53:38.226Z",
+  "updatedAt": "2026-02-26T15:53:38.228Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-26T15:53:38.228Z"
+    }
+  }
+}
