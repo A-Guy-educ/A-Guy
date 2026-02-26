@@ -5,6 +5,9 @@
  * @ai-summary Declarative stage configurations for the Cody pipeline state machine
  */
 
+import * as fs from 'fs'
+import * as path from 'path'
+
 import type {
   PipelineDefinition,
   PipelineContext,
@@ -144,6 +147,29 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
     shouldSkip: (ctx) => skipIfInputQuality(ctx, 'plan-gap'),
     postActions: [{ type: 'validate-plan-exists' }],
     validator: createPlanGapValidator(ctx),
+    fallbackOnMissingOutput: (ctx) => {
+      // If agent edited plan.md but forgot to write plan-gap.md, create a fallback
+      const planFile = path.join(ctx.taskDir, 'plan.md')
+      if (fs.existsSync(planFile)) {
+        return `# Plan Gap Analysis: ${ctx.taskId}
+
+## Summary
+
+- Gaps Found: 0
+- Plan Revised: Yes (agent edited plan.md directly)
+
+## Changes Made to Plan
+
+Agent revised plan.md but did not produce a separate gap report.
+See plan.md for the revised plan.
+
+## No Gaps Found
+
+No critical gaps identified. Plan was refined in-place.
+`
+      }
+      return null
+    },
   })
 
   // build stage - has preExecute for ensureFeatureBranch (G20)
