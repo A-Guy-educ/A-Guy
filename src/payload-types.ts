@@ -642,9 +642,9 @@ export interface Prompt {
    */
   key?: string | null;
   /**
-   * System prompts are always included. Context prompts are lesson-specific.
+   * System prompts are always included. Context prompts are lesson-specific. Persona prompts define teacher identity.
    */
-  type: 'system' | 'context';
+  type: 'system' | 'context' | 'persona';
   /**
    * System prompt template for AI tutor
    */
