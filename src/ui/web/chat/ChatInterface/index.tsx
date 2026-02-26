@@ -1,6 +1,7 @@
 'use client'
 
 import { ChatMessageRole } from '@/infra/llm/chat-message-role'
+import { useCurrentUser } from '@/client/hooks/useCurrentUser'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import {
@@ -22,6 +23,7 @@ import { ChatErrorSurface } from '../ChatErrorSurface'
 import { ChatMessageContent } from '../ChatMessageContent'
 import { TTSButton } from '../TTSButton'
 import { useNotebookChat } from '../hooks/useNotebookChat'
+import { useTeacherProfileLabel } from '../hooks/useTeacherProfileLabel'
 import { useTTS } from '../hooks/useTTS'
 
 // Optional components - will be lazy-loaded if needed
@@ -187,6 +189,10 @@ export function ChatInterface({
   })
 
   const { speak, playingMessageId } = useTTS()
+
+  // Teacher profile badge (authenticated users only)
+  const { user: currentUser } = useCurrentUser()
+  const { label: teacherProfileLabel } = useTeacherProfileLabel(!!currentUser)
 
   // Auto-send contextual help on incorrect answer (ref pattern for stable listener)
   const incorrectAnswerRef = useRef<(e: Event) => void>(() => {})
@@ -383,10 +389,17 @@ export function ChatInterface({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Header with optional reset button */}
+      {/* Header with optional reset button and teacher profile badge */}
       {showResetButton && (
         <div className="flex items-center justify-between p-3 border-b border-border">
-          <h3 className="font-medium text-sm text-foreground">{tCourses('chatTitle')}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-medium text-sm text-foreground">{tCourses('chatTitle')}</h3>
+            {teacherProfileLabel && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                {teacherProfileLabel}
+              </span>
+            )}
+          </div>
           {contextKey && (
             <button
               onClick={handleReset}

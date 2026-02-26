@@ -262,12 +262,22 @@ export async function runChatPipeline(
   }
 
   // Compose prompt using Context Policy V1
-  const composedPrompt = composePrompt(composedInstructions.instructions, {
+  const basePrompt = composePrompt(composedInstructions.instructions, {
     systemMessage: composedInstructions.instructions,
     summary: conversation?.summary || undefined,
     memoryItems: memoryResult.items,
     recentMessages: recentMessages,
   })
+
+  // Thread teacher profile metadata for downstream debug logging (immutable)
+  const composedPrompt = {
+    ...basePrompt,
+    metadata: {
+      ...basePrompt.metadata,
+      teacherProfileSlug: composedInstructions.teacherProfileSlug,
+      teacherProfileResolvedFrom: composedInstructions.teacherProfileResolvedFrom,
+    },
+  }
 
   return {
     result: {

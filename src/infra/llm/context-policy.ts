@@ -50,6 +50,8 @@ export interface ComposedPrompt {
     summaryLength: number
     memoryCount: number
     messageCount: number
+    teacherProfileSlug?: string
+    teacherProfileResolvedFrom?: string
   }
 }
 

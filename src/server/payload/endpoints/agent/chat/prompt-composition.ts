@@ -247,6 +247,8 @@ export interface ComposedSystemInstructions {
     fallbackReason?: string
   }
   systemPromptCount: number
+  teacherProfileSlug: string
+  teacherProfileResolvedFrom: string
 }
 
 /**
@@ -321,5 +323,7 @@ export async function composeFullSystemInstructions(
     instructions,
     promptResolution,
     systemPromptCount: systemPromptsResult.count,
+    teacherProfileSlug: teacherProfile.profileSlug,
+    teacherProfileResolvedFrom: teacherProfile.resolvedFrom,
   }
 }
