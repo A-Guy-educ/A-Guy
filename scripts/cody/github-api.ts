@@ -153,6 +153,38 @@ export function getLatestIssueComment(issueNumber: number, excludeAuthor?: strin
 }
 
 /**
+ * Get the latest approval/rejection command on an issue
+ * Used by gate approval to detect /cody approve or /cody reject
+ */
+export function getLatestApprovalComment(
+  issueNumber: number,
+  excludeAuthor?: string,
+): string | null {
+  if (!issueNumber) return null
+
+  try {
+    const exclude = (excludeAuthor || 'github-actions[bot]').replace(/[^a-zA-Z0-9\[\]_\-]/g, '')
+    // Get comments from users (not bot) that contain approve/reject
+    const output = execFileSync(
+      'gh',
+      [
+        'issue',
+        'view',
+        String(issueNumber),
+        '--json',
+        'comments',
+        '--jq',
+        `[.comments[] | select(.author.login != "${exclude}" and (.body | test("^/cody (approve|reject)")))] | last | .body`,
+      ],
+      { encoding: 'utf-8' },
+    )
+    return output.trim() || null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Canonical regex for extracting task-ID from "Task created: `NNNNNN-slug`" marker
  * Used by both parse-inputs.sh and TypeScript implementations
  */
