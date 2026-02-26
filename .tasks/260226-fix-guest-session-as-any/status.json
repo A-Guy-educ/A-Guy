@@ -4,14 +4,42 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-02-26T12:58:29.294Z",
-  "updatedAt": "2026-02-26T12:58:29.295Z",
-  "state": "running",
+  "updatedAt": "2026-02-26T13:12:18.867Z",
+  "state": "failed",
   "cursor": null,
   "stages": {
     "taskify": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-02-26T12:58:29.295Z"
+      "startedAt": "2026-02-26T12:58:29.295Z",
+      "completedAt": "2026-02-26T12:59:28.335Z",
+      "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Promoted via input_quality (file exists)"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T12:59:31.257Z",
+      "completedAt": "2026-02-26T13:02:42.953Z",
+      "outputFile": "gap.md"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T13:02:42.954Z",
+      "completedAt": "2026-02-26T13:04:26.095Z",
+      "outputFile": "architect.md"
+    },
+    "build": {
+      "state": "failed",
+      "retries": 0,
+      "startedAt": "2026-02-26T13:04:26.096Z",
+      "error": "Unit tests failed after build. Fix and re-run.\n\nCommand failed: pnpm -s test:unit"
     }
-  }
+  },
+  "completedAt": "2026-02-26T13:12:18.867Z"
 }

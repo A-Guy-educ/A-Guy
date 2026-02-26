@@ -14,25 +14,12 @@
  */
 
 import type { Payload } from 'payload'
+import type { GuestSession } from '@/payload-types'
 import crypto from 'crypto'
 import { logger } from '@/infra/utils/logger'
 import { getGuestChatConfig } from '@/server/config/guest-chat-config'
 
 export const GUEST_SESSION_COOKIE_NAME = 'guest_session'
-
-export interface GuestSessionDoc {
-  id: string
-  tokenHash: string
-  tokenVersion: number
-  createdAt: string
-  lastActiveAt: string
-  expiresAt: string
-  hardExpiresAt: string
-  status: 'active' | 'expired' | 'revoked'
-  claimedByUser?: string
-  claimedAt?: string
-  messageCount: number
-}
 
 export function generateSessionToken(): string {
   return crypto.randomBytes(32).toString('hex')
@@ -134,7 +121,7 @@ export async function createGuestSession(
     ipHash?: string
     userAgentHash?: string
   },
-): Promise<{ session: GuestSessionDoc; token: string }> {
+): Promise<{ session: GuestSession; token: string }> {
   const token = generateSessionToken()
   const tokenHash = hashToken(token)
   const now = new Date()
@@ -165,13 +152,13 @@ export async function createGuestSession(
 
   logger.info({ sessionId: session.id }, 'Created guest session')
 
-  return { session: session as unknown as GuestSessionDoc, token }
+  return { session, token }
 }
 
 export async function getGuestSessionByToken(
   payload: Payload,
   token: string,
-): Promise<GuestSessionDoc | null> {
+): Promise<GuestSession | null> {
   const tokenHash = hashToken(token)
 
   const sessions = await payload.find({
@@ -184,7 +171,7 @@ export async function getGuestSessionByToken(
 
   if (sessions.docs.length === 0) return null
 
-  const session = sessions.docs[0] as GuestSessionDoc
+  const session = sessions.docs[0]
 
   if (new Date(session.expiresAt) < new Date()) {
     return null
@@ -196,18 +183,17 @@ export async function getGuestSessionByToken(
 export async function updateGuestSessionActivity(
   payload: Payload,
   sessionId: string,
-): Promise<GuestSessionDoc | null> {
+): Promise<GuestSession | null> {
   const session = await payload.findByID({
     collection: 'guest-sessions' as const,
     id: sessionId,
   })
 
-  if (!session || (session as GuestSessionDoc).status !== 'active') {
+  if (!session || session.status !== 'active') {
     return null
   }
 
-  const doc = session as GuestSessionDoc
-  const hardExpiresAt = new Date(doc.hardExpiresAt)
+  const hardExpiresAt = new Date(session.hardExpiresAt)
   const now = new Date()
 
   const guestConfig = await getGuestChatConfig()
@@ -227,14 +213,14 @@ export async function updateGuestSessionActivity(
     },
   })
 
-  return updated as GuestSessionDoc
+  return updated
 }
 
 export async function revokeGuestSession(
   payload: Payload,
   sessionId: string,
   claimedByUser: string,
-): Promise<GuestSessionDoc | null> {
+): Promise<GuestSession | null> {
   const updated = await payload.update({
     collection: 'guest-sessions' as const,
     id: sessionId,
@@ -245,7 +231,7 @@ export async function revokeGuestSession(
     },
   })
 
-  return updated as GuestSessionDoc
+  return updated
 }
 
 export interface GuestMessageLimitResult {
@@ -270,8 +256,7 @@ export async function checkAndIncrementGuestMessageCount(
     return { allowed: false, remaining: 0, current: 0, max: guestConfig.max_messages }
   }
 
-  const doc = session as GuestSessionDoc
-  const currentCount = doc.messageCount ?? 0
+  const currentCount = session.messageCount ?? 0
 
   if (currentCount >= guestConfig.max_messages) {
     return {

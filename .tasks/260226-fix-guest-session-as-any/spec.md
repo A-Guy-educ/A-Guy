@@ -1,18 +1,22 @@
 # Specification: Fix Type Safety in guest-session.ts
 
 ## Overview
-Remove `'as any'` type casts from guest-session.ts service file, as they bypass TypeScript type checking. The collection should be properly registered in Payload's generated types.
+The guest-session.ts service file uses a custom `GuestSessionDoc` interface instead of the generated `GuestSession` type from Payload, requiring type casts. Fix by importing and using the generated type.
 
 ## Requirements
-- FR-1: Generate Payload types using `pnpm generate:types`
-- FR-2: Verify GuestSessions collection is properly exported and included in payload.config.ts
-- FR-3: Remove all 7 instances of `'as any'` cast from guest-session.ts
+- FR-1: Verify GuestSessions collection is properly exported and included in payload.config.ts (already done)
+- FR-2: Import `GuestSession` type from `payload-types.ts` in guest-session.ts
+- FR-3: Replace custom `GuestSessionDoc` interface with the generated `GuestSession` type
+- FR-4: Remove unnecessary type casts that bridge custom interface to Payload types
+- FR-5: Keep `'guest-sessions' as const` casts (these are type-safe literal type assertions)
 
 ## Files Affected
-- `src/server/services/guest-session.ts` — lines 149, 173, 197, 218, 236, 262, 283
+- `src/server/services/guest-session.ts` — import GuestSession, remove custom interface, update casts
 
 ## Acceptance Criteria
-1. Running `pnpm generate:types` completes without errors
-2. GuestSessions collection appears in the generated payload-types.ts
-3. All `'as any'` casts are removed from guest-session.ts
-4. TypeScript compilation passes (`pnpm tsc --noEmit`)
+1. GuestSessions collection is properly exported and included in payload.config.ts (VERIFIED)
+2. `GuestSession` type from `payload-types.ts` is imported in guest-session.ts
+3. Custom `GuestSessionDoc` interface is replaced with generated `GuestSession` type
+4. Type casts to custom interface are removed or updated
+5. `'guest-sessions' as const` casts remain (type-safe)
+6. TypeScript compilation passes (`pnpm tsc --noEmit`)
