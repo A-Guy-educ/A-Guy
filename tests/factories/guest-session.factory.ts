@@ -54,6 +54,7 @@ export function buildGuestSessionData(input: GuestSessionFactoryInput = {}) {
       hardExpiresAt: (input.hardExpiresAt ?? new Date(now.getTime() + 30 * 86400000)).toISOString(), // 30 days default
       status: input.status ?? 'active',
       claimedByUser: input.claimedByUser,
+      messageCount: 0,
       ipHash: input.ipHash,
       userAgentHash: input.userAgentHash,
     },
@@ -70,9 +71,10 @@ export async function createGuestSession(
   const { token, tokenHash, data } = buildGuestSessionData(input)
 
   const session = await payload.create({
-    collection: 'guest-sessions' as any,
+    collection: 'guest-sessions',
     data,
     overrideAccess: true,
+    draft: false,
   })
 
   return {

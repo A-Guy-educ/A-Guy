@@ -2,7 +2,7 @@
  * @fileType component
  * @domain cody
  * @pattern create-task-dialog
- * @ai-summary Dialog to create new tasks with labels and assignees
+ * @ai-summary Dialog to create new tasks with useCreateTask hook
  */
 'use client'
 
@@ -26,7 +26,7 @@ import {
 } from '@/ui/web/components/select'
 import { Textarea } from '@/ui/web/components/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
-import type { GitHubCollaborator } from '../types'
+import { useCreateTask, useCodyBoards, useCollaborators } from '../hooks'
 
 interface CreateTaskDialogProps {
   open: boolean
@@ -40,74 +40,42 @@ export function CreateTaskDialog({ open, onClose, onCreated }: CreateTaskDialogP
   const [mode, setMode] = useState('full')
   const [labels, setLabels] = useState<string[]>([])
   const [assignees, setAssignees] = useState<string[]>([])
-  const [collaborators, setCollaborators] = useState<GitHubCollaborator[]>([])
-  const [availableLabels, setAvailableLabels] = useState<Array<{ name: string; color: string }>>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
+  // Use hooks for data fetching
+  const { data: collaborators = [] } = useCollaborators()
+  const { data: boards = [] } = useCodyBoards()
+
+  // Extract labels from boards
+  const availableLabels = boards
+    .filter((b) => b.type === 'label')
+    .flatMap((b) => (b as { labels?: Array<{ name: string; color: string }> }).labels || [])
+    .slice(0, 20)
+
+  const createTask = useCreateTask()
+
+  // Reset form when dialog closes
   useEffect(() => {
-    async function fetchData() {
-      if (!open) return
-      try {
-        const [colsRes, boardsRes] = await Promise.all([
-          fetch('/api/cody/collaborators'),
-          fetch('/api/cody/boards'),
-        ])
-        const colsData = await colsRes.json()
-        const boardsData = await boardsRes.json()
-        setCollaborators(colsData.collaborators || [])
-        // Extract labels from boards
-        const allLabels: Array<{ name: string; color: string }> = []
-        boardsData.boards?.forEach(
-          (board: { type: string; labels?: Array<{ name: string; color: string }> }) => {
-            if (board.type === 'label' && board.labels) {
-              allLabels.push(...board.labels)
-            }
-          },
-        )
-        setAvailableLabels(allLabels)
-      } catch (err) {
-        console.error('Failed to fetch data:', err)
-      }
-    }
-    fetchData()
-  }, [open])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
-      const res = await fetch('/api/cody/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          body,
-          mode,
-          labels,
-          assignees,
-        }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to create task')
-      }
-
+    if (!open) {
       setTitle('')
       setBody('')
       setMode('full')
       setLabels([])
       setAssignees([])
-      onCreated?.()
-      onClose()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create task')
-    } finally {
-      setLoading(false)
     }
+  }, [open])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    createTask.mutate(
+      { title, body, mode, labels, assignees },
+      {
+        onSuccess: () => {
+          onCreated?.()
+          onClose()
+        },
+      },
+    )
   }
 
   const toggleLabel = (label: string) => {
@@ -129,8 +97,10 @@ export function CreateTaskDialog({ open, onClose, onCreated }: CreateTaskDialogP
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          {error && (
-            <div className="p-2 bg-destructive/10 text-destructive text-sm rounded">{error}</div>
+          {createTask.error && (
+            <div className="p-2 bg-destructive/10 text-destructive text-sm rounded">
+              {createTask.error.message}
+            </div>
           )}
 
           <div className="grid gap-2">
@@ -223,8 +193,8 @@ export function CreateTaskDialog({ open, onClose, onCreated }: CreateTaskDialogP
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? 'Creating...' : 'Create'}
+            <Button type="submit" className="flex-1" disabled={createTask.isPending}>
+              {createTask.isPending ? 'Creating...' : 'Create'}
             </Button>
           </div>
         </form>

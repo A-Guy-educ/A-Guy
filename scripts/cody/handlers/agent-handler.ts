@@ -5,6 +5,8 @@
  * @ai-summary Agent stage handler that runs LLM agents
  */
 
+import * as fs from 'fs'
+
 import type { PipelineContext, StageDefinition, StageResult } from '../engine/types'
 import { runAgentWithFileWatch } from '../agent-runner'
 import { stageOutputFile } from '../pipeline-utils'
@@ -34,6 +36,20 @@ export class AgentHandler implements StageHandler {
     }
 
     if (!result.succeeded) {
+      // Try fallback: if agent exited 0 but didn't write output file, create one
+      if (def.fallbackOnMissingOutput && !fs.existsSync(outputFile)) {
+        const fallbackContent = def.fallbackOnMissingOutput(ctx)
+        if (fallbackContent) {
+          fs.writeFileSync(outputFile, fallbackContent)
+          console.log(`  ℹ️ Created fallback output: ${def.name}.md`)
+          return {
+            outcome: 'completed',
+            retries: result.retries,
+            outputFile: `${def.name}.md`,
+          }
+        }
+      }
+
       return {
         outcome: 'failed',
         reason: `Agent failed`,

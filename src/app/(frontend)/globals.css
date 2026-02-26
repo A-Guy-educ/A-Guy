@@ -460,6 +460,16 @@ html[data-theme='light'] {
   @apply bg-inherit text-inherit;
 }
 
+/* Chat table: reset KaTeX math padding inside table cells */
+.chat-message-content .chat-table .katex {
+  @apply bg-transparent p-0 m-0 rounded-none text-primary;
+  font-size: 1em;
+}
+
+[data-theme='dark'] .chat-message-content .chat-table .katex {
+  @apply bg-transparent text-primary;
+}
+
 /* ===================================================================
    Color Syntax Support
    =================================================================== */

@@ -500,6 +500,69 @@ Common issues and solutions:
    - Check for typos in field names
    - Ensure relationship `relationTo` references exist
 
+## Automated Scaffolding
+
+This skill includes an automated script that generates a new collection file.
+
+### Usage
+
+```bash
+# CLI mode - all options
+npx tsx .agents/skills/new-collection/scripts/scaffold-collection.ts \
+  --name Products \
+  --slug products \
+  --access public \
+  --fields "name:text:required,price:number:required,category:relationship" \
+  --with-tenant
+
+# Interactive mode - prompts for missing inputs
+npx tsx .agents/skills/new-collection/scripts/scaffold-collection.ts
+
+# Dry run - preview without writing
+npx tsx .agents/skills/new-collection/scripts/scaffold-collection.ts --name Posts --dry-run
+```
+
+### Options
+
+| Option              | Description                                       | Default                |
+| ------------------- | ------------------------------------------------- | ---------------------- |
+| `--name <Name>`     | PascalCase collection name (required in CLI mode) | -                      |
+| `--slug <slug>`     | kebab-case slug                                   | auto-derived from name |
+| `--access <level>`  | Access: public, authenticated, admin, custom      | admin                  |
+| `--fields <spec>`   | Field spec: "name:type:required"                  | title:text:required    |
+| `--with-tenant`     | Include tenantField                               | false                  |
+| `--with-created-by` | Include createdByField                            | false                  |
+| `--primary-field`   | Field for admin title                             | title                  |
+| `--description`     | Admin description                                 | auto-generated         |
+| `--path <dir>`      | Custom collections directory                      | auto-detect            |
+| `--dry-run`         | Preview without writing                           | false                  |
+
+### Supported Field Types
+
+`text`, `textarea`, `richText`, `number`, `select`, `checkbox`, `date`, `email`, `relationship`, `upload`
+
+### Path Auto-Discovery
+
+The script automatically detects the collections directory from:
+
+1. `--path` CLI argument
+2. `src/server/payload/collections`
+3. `src/collections`
+4. `collections`
+
+### Examples
+
+```bash
+# Simple collection
+npx tsx .../scaffold-collection.ts --name Posts --access public
+
+# With multiple fields
+npx tsx .../scaffold-collection.ts --name Products --fields "name:text:required,price:number:required,status:select"
+
+# Custom path
+npx tsx .../scaffold-collection.ts --name Custom --path src/my-collections
+```
+
 ## Success Criteria
 
 - [ ] Collection file created at `src/collections/<Name>.ts`

@@ -1,0 +1,25 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/services/guest-session.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The guest-sessions collection exists and works at runtime",
+    "Running generate:types will register the collection properly",
+    "No changes to collection configuration needed beyond type regeneration"
+  ],
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Task contains clear expected fix with 3 numbered steps, specific file path with line numbers (149, 173, 197, 218, 236, 262, 283), and clear acceptance criteria. Promoted spec.md for lightweight pipeline."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}

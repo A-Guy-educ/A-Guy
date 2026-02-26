@@ -181,6 +181,7 @@ export async function runChatPipeline(
     content: validated.message,
     timestamp: new Date().toISOString(),
     media: validated.mediaIds?.map((id: string) => ({ mediaId: id })) || [],
+    chatAssets: validated.chatAssetIds?.map((id: string) => ({ chatAssetId: id })) || [],
     hidden: validated.hidden === true,
   }
 

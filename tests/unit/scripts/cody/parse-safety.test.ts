@@ -15,9 +15,10 @@ import { execSync } from 'child_process'
 // parse-safety.sh Tests
 // ============================================================================
 
-describe('parse-safety.ts', () => {
+describe('parse-safety.ts', { timeout: 15_000 }, () => {
   // TypeScript files are run via tsx, not executed directly
-  // Skipping "should exist and be executable" test - not applicable for .ts files
+  // Each test spawns a child process (npx tsx) which has cold-start overhead,
+  // especially on CI runners. Default 5s timeout is too tight.
 
   it('should reject bot comments (github-actions[bot])', () => {
     const output = runScript({

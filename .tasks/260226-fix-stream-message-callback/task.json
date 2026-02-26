@@ -1,0 +1,23 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/chat/hooks/useNotebookChat.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The dependencies listed in the expected fix (apiService, setMessages, scrollToBottom) are the correct stable dependencies for memoization"
+  ],
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Task provides exact file path (line 446, line 689), current code snippet, expected fix pattern, and ESLint warning context. This is a step-by-step implementation guide."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}

@@ -22,5 +22,12 @@ export interface AskMediaAttachEvent {
   filename: string
 }
 
+export interface AskMediaRestoreEvent {
+  mediaId: string
+  filename: string
+  url: string
+}
+
 export const ASK_ACTION_EVENT = 'ask-action' as const
 export const ASK_MEDIA_ATTACH_EVENT = 'ask-media-attach' as const
+export const ASK_MEDIA_RESTORE_EVENT = 'ask-media-restore' as const

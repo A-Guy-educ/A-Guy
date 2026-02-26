@@ -21,12 +21,7 @@ import type { Logger } from 'pino'
 import { withCronMiddleware, type CronResult } from './cron-middleware'
 
 import { getGuestChatConfig } from '@/server/config/guest-chat-config'
-
-interface GuestSessionDocument {
-  id: string
-  tokenHash: string
-  status: 'active' | 'claimed' | 'expired'
-}
+import type { GuestSession } from '@/payload-types'
 
 interface ConversationDocument {
   id: string
@@ -44,12 +39,12 @@ interface CleanupStats {
 /**
  * Find guest sessions to clean up
  * - Hard expired: hardExpiresAt < now
- * - Claimed: status = 'claimed' (user logged in, conversations transferred)
+ * - Revoked: status = 'revoked' (user logged in, conversations transferred)
  */
 async function findGuestSessionsToCleanup(
   payload: Payload,
   now: Date,
-): Promise<{ docs: GuestSessionDocument[]; totalDocs: number }> {
+): Promise<{ docs: GuestSession[]; totalDocs: number }> {
   const guestConfig = await getGuestChatConfig()
   const hardCapDate = new Date(now.getTime() - guestConfig.hard_cap_days * 24 * 60 * 60 * 1000)
   const hardCapDateISO = hardCapDate.toISOString()
@@ -58,7 +53,7 @@ async function findGuestSessionsToCleanup(
     collection: 'guest-sessions',
     where: {
       or: [
-        { status: { equals: 'claimed' } },
+        { status: { equals: 'revoked' } },
         { hardExpiresAt: { less_than_equal: hardCapDateISO } },
       ],
     },
@@ -68,7 +63,7 @@ async function findGuestSessionsToCleanup(
   })
 
   return {
-    docs: result.docs as GuestSessionDocument[],
+    docs: result.docs,
     totalDocs: result.totalDocs,
   }
 }
@@ -136,7 +131,7 @@ async function deleteOrphanedConversation(
  */
 async function processSessionCleanup(
   payload: Payload,
-  session: GuestSessionDocument,
+  session: GuestSession,
   stats: CleanupStats,
   reqLogger: Logger,
 ): Promise<void> {
@@ -155,7 +150,7 @@ async function processSessionCleanup(
     // Delete the guest session
     const sessionDeleted = await deleteGuestSession(payload, session.id)
     if (sessionDeleted) {
-      if (session.status === 'claimed') {
+      if (session.status === 'revoked') {
         stats.claimedSessionsDeleted++
       } else {
         stats.expiredSessionsDeleted++

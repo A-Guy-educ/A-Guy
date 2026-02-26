@@ -467,6 +467,49 @@ git commit -m "feat: add feature"
 # Reproduces same checks as CI
 ```
 
+## Automated Script
+
+This skill includes an automated script that runs all quality gates and generates a structured report.
+
+### Usage
+
+```bash
+# Run all checks
+npx tsx .agents/skills/quality-check/scripts/quality-check.ts
+
+# Run with auto-fix
+npx tsx .agents/skills/quality-check/scripts/quality-check.ts --fix
+
+# Skip tests for faster check
+npx tsx .agents/skills/quality-check/scripts/quality-check.ts --skip-tests
+
+# Output to file
+npx tsx .agents/skills/quality-check/scripts/quality-check.ts --output report.md
+
+# JSON output (for programmatic use)
+npx tsx .agents/skills/quality-check/scripts/quality-check.ts --json
+```
+
+### Options
+
+| Option            | Description                                 | Default     |
+| ----------------- | ------------------------------------------- | ----------- |
+| `--fix`           | Run lint:fix and format:fix before checking | false       |
+| `--skip-tests`    | Skip test suite                             | false       |
+| `--output <file>` | Write report to file                        | stdout      |
+| `--json`          | Output JSON instead of markdown             | false       |
+| `--tsc <cmd>`     | Override tsc command                        | auto-detect |
+| `--lint <cmd>`    | Override lint command                       | auto-detect |
+| `--format <cmd>`  | Override format command                     | auto-detect |
+| `--test <cmd>`    | Override test command                       | auto-detect |
+
+The script auto-detects commands from `package.json` scripts. Use `--tsc`, `--lint`, etc. to override.
+
+### Exit Codes
+
+- `0` - All checks passed
+- `1` - One or more checks failed
+
 ## Success Criteria
 
 - [ ] All quality gates executed

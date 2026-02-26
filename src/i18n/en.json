@@ -308,6 +308,45 @@
     "studyTopics": "Study Topics",
     "noTopicsAvailable": "No topics available in this course"
   },
+  "coursePage": {
+    "tabs": {
+      "learn": "Learn",
+      "practice": "Practice",
+      "ask": "Ask",
+      "exams": "Exams"
+    },
+    "grade": "Grade",
+    "sectionTitle": {
+      "ask": "Questions & Answers",
+      "practice": "Practice & Tasks",
+      "exams": "Exams & Summaries"
+    },
+    "examReminder": "Reminder: You have an exam in {days} days",
+    "newQuestion": "New Question",
+    "newQuestionSub": "Ask the chat and get instant help",
+    "quickAction": "Quick Action",
+    "question": "Question",
+    "showMore": "Show More",
+    "noExams": "When is your next exam?",
+    "noExamsSub": "Add your upcoming exam date to track your progress.",
+    "addExam": "Add Exam Date",
+    "daysLeft": "{days} days left",
+    "examDate": "Exam Date",
+    "examLabel": "Label (optional)",
+    "examLabelPlaceholder": "e.g. Midterm, Final...",
+    "pastExams": "Past Exams",
+    "deleteExam": "Delete",
+    "viewStats": "View Full Statistics",
+    "continueLastPoint": "Continue from Last Point",
+    "lessonCompleted": "Completed all tasks",
+    "lessonsRemaining": "{count} exercises remaining",
+    "notStarted": "Not started yet",
+    "moreCourses": "More courses",
+    "platformName": "Aguy Learning Platform",
+    "loading": "Loading...",
+    "deleteConversation": "Delete conversation",
+    "deleteConfirm": "Are you sure you want to delete this conversation?"
+  },
   "exerciseConversion": {
     "convertButton": "Convert → Exercises",
     "modalTitle": "Convert PDF to Exercises",

@@ -68,7 +68,8 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issue_comment' &&
-       contains(github.event.comment.body, '@cody'))
+       (contains(github.event.comment.body, '@cody') ||
+        contains(github.event.comment.body, '/cody')))
     env:
       GH_TOKEN: ${{ github.token }}
     outputs:

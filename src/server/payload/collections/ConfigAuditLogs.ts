@@ -50,6 +50,7 @@ export const ConfigAuditLogs: CollectionConfig = {
       type: 'relationship',
       relationTo: 'tenants',
       required: true,
+      index: true,
       admin: {
         description: 'Tenant of the mutated config entry',
       },

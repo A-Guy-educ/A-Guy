@@ -22,6 +22,8 @@ export const chatRequestSchema = z.object({
   adminMode: z.boolean().optional(),
   // Hidden flag — message persisted for LLM context but excluded from client responses
   hidden: z.boolean().optional(),
+  // Override the computed contextKey (e.g. for Ask page per-session conversations)
+  contextKeyOverride: z.string().optional(),
   // When true, user message is hidden but assistant response stays visible (for help system)
   hidePromptOnly: z.boolean().optional(),
 })

@@ -24,7 +24,7 @@ export const preventLastAdminDemotion: CollectionBeforeChangeHook = async ({
     where: {
       role: { equals: AccountRole.Admin },
     },
-    overrideAccess: false,
+    overrideAccess: true,
     req,
   })
 

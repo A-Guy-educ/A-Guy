@@ -4,8 +4,8 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { Loader2, PlusCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import type { AskMediaAttachEvent, ExerciseFile } from '../ask-types'
-import { ASK_MEDIA_ATTACH_EVENT } from '../ask-types'
+import type { AskMediaAttachEvent, AskMediaRestoreEvent, ExerciseFile } from '../ask-types'
+import { ASK_MEDIA_ATTACH_EVENT, ASK_MEDIA_RESTORE_EVENT } from '../ask-types'
 import { AskExerciseCard } from '../AskExerciseCard'
 
 function dispatchMediaAttach(detail: AskMediaAttachEvent) {
@@ -24,6 +24,25 @@ export function AskPrimaryContent() {
       if (currentFile?.url.startsWith('blob:')) URL.revokeObjectURL(currentFile.url)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup only on unmount
+  }, [])
+
+  // Restore image from conversation history when re-entering
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { mediaId, filename, url } = (e as CustomEvent<AskMediaRestoreEvent>).detail
+      setCurrentFile({
+        id: Date.now(),
+        title: filename.replace(/\.[^/.]+$/, '') || 'Uploaded image',
+        url,
+        date: '',
+        mediaId,
+        isUploading: false,
+      })
+      // Also notify chat pane so askMedia is set for future messages
+      dispatchMediaAttach({ mediaId, filename })
+    }
+    window.addEventListener(ASK_MEDIA_RESTORE_EVENT, handler)
+    return () => window.removeEventListener(ASK_MEDIA_RESTORE_EVENT, handler)
   }, [])
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,27 +111,30 @@ export function AskPrimaryContent() {
           <p className="text-muted-foreground">{t('pageSubtitle')}</p>
         </header>
 
-        <div className="flex justify-center mb-10">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="flex items-center gap-3 px-8 py-4 rounded-2xl font-black bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-lg hover:-translate-y-0.5 group disabled:opacity-50"
-          >
-            {isUploading ? (
-              <Loader2 className="w-6 h-6 animate-spin" />
-            ) : (
-              <PlusCircle className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
-            )}
-            <span>{currentFile ? t('replaceButton') : t('uploadButton')}</span>
-          </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            accept="image/*"
-            className="hidden"
-          />
-        </div>
+        {/* Show upload button only if no media has been attached yet */}
+        {!currentFile?.mediaId && (
+          <div className="flex justify-center mb-10">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="flex items-center gap-3 px-8 py-4 rounded-2xl font-black bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-lg hover:-translate-y-0.5 group disabled:opacity-50"
+            >
+              {isUploading ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <PlusCircle className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+              )}
+              <span>{t('uploadButton')}</span>
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept="image/*"
+              className="hidden"
+            />
+          </div>
+        )}
 
         {currentFile && <AskExerciseCard file={currentFile} />}
       </div>

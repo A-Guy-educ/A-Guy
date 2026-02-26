@@ -148,6 +148,7 @@ export const GuestSessions: CollectionConfig = {
       name: 'claimedByUser',
       type: 'relationship',
       relationTo: 'users',
+      index: true,
       admin: {
         hidden: true,
         description: 'User who claimed this session on upgrade',

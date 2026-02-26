@@ -2,15 +2,18 @@
  * @fileType component
  * @domain cody
  * @pattern comment-editor
- * @ai-summary Enhanced comment editor with markdown preview and @mention support
+ * @ai-summary Simplified comment editor with markdown preview and @mention support
  */
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
+import Image from 'next/image'
 import { Button } from '@/ui/web/components/button'
 import { Textarea } from '@/ui/web/components/textarea'
 import { cn } from '@/infra/utils/ui'
+import { usePostComment } from '../hooks'
+import { EMOJI_LIST } from '../constants'
 
 interface CommentEditorProps {
   issueNumber: number
@@ -23,143 +26,30 @@ interface Mention {
   avatar_url: string
 }
 
-// Common emojis for the picker
-const EMOJI_LIST = [
-  '😀',
-  '😃',
-  '😄',
-  '😁',
-  '😆',
-  '😅',
-  '🤣',
-  '😂',
-  '🙂',
-  '🙃',
-  '😉',
-  '😊',
-  '😇',
-  '🥰',
-  '😍',
-  '🤩',
-  '😘',
-  '😗',
-  '😚',
-  '😙',
-  '🥲',
-  '😋',
-  '😛',
-  '😜',
-  '🤪',
-  '😝',
-  '🤑',
-  '🤗',
-  '🤭',
-  '🤫',
-  '🤔',
-  '🤐',
-  '🤨',
-  '😐',
-  '😑',
-  '😶',
-  '😏',
-  '😒',
-  '🙄',
-  '😬',
-  '😮‍💨',
-  '🤥',
-  '😌',
-  '😔',
-  '😪',
-  '🤤',
-  '😴',
-  '😷',
-  '👍',
-  '👎',
-  '👌',
-  '✌️',
-  '🤞',
-  '🤟',
-  '🤘',
-  '🤙',
-  '👈',
-  '👉',
-  '👆',
-  '👇',
-  '☝️',
-  '👋',
-  '🤚',
-  '🖐️',
-  '✋',
-  '🖖',
-  '👏',
-  '🙌',
-  '🤲',
-  '🤝',
-  '🙏',
-  '✍️',
-  '❤️',
-  '🧡',
-  '💛',
-  '💚',
-  '💙',
-  '💜',
-  '🖤',
-  '🤍',
-  '💔',
-  '❣️',
-  '💕',
-  '💞',
-  '💓',
-  '💗',
-  '💖',
-  '💘',
-  '🚀',
-  '⭐',
-  '🌟',
-  '✨',
-  '💫',
-  '🔥',
-  '💥',
-  '💯',
-  '✅',
-  '❌',
-  '⚠️',
-  '❓',
-  '❗',
-  '💡',
-  '🔔',
-  '🎉',
-]
-
 export function CommentEditor({
   issueNumber,
   onCommentPosted,
   placeholder = 'Write a comment...',
 }: CommentEditorProps) {
   const [comment, setComment] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
   const [mentionQuery, setMentionQuery] = useState('')
   const [showMentions, setShowMentions] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [mentions, setMentions] = useState<Mention[]>([])
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0)
+
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const mentionsRef = useRef<HTMLDivElement>(null)
 
+  const { mutate: postComment, isPending: isPosting, error } = usePostComment(issueNumber)
+
   // Fetch collaborators for @mentions
   useEffect(() => {
-    async function fetchCollaborators() {
-      try {
-        const res = await fetch('/api/cody/collaborators')
-        const data = await res.json()
-        setMentions(data.collaborators || [])
-      } catch (err) {
-        console.error('Failed to fetch collaborators:', err)
-      }
-    }
-    fetchCollaborators()
+    fetch('/api/cody/collaborators')
+      .then((res) => res.json())
+      .then((data) => setMentions(data.collaborators || []))
+      .catch(console.error)
   }, [])
 
   // Filter mentions based on input
@@ -172,7 +62,6 @@ export function CommentEditor({
     const value = e.target.value
     setComment(value)
 
-    // Check for @ trigger
     const cursorPos = e.target.selectionStart
     const textBeforeCursor = value.slice(0, cursorPos)
     const mentionMatch = textBeforeCursor.match(/@(\w*)$/)
@@ -192,14 +81,10 @@ export function CommentEditor({
     const cursorPos = textareaRef.current?.selectionStart || comment.length
     const textBeforeCursor = comment.slice(0, cursorPos)
     const textAfterCursor = comment.slice(cursorPos)
-
-    // Replace @query with @login
     const newTextBefore = textBeforeCursor.replace(/@\w*$/, `@${mention.login} `)
     setComment(newTextBefore + textAfterCursor)
     setShowMentions(false)
     setMentionQuery('')
-
-    // Focus back on textarea
     textareaRef.current?.focus()
   }
 
@@ -228,35 +113,16 @@ export function CommentEditor({
     }
   }
 
-  const handleSubmit = async () => {
-    if (!comment.trim()) return
+  const handleSubmit = () => {
+    if (!comment.trim() || isPosting) return
 
-    setLoading(true)
-    setError(null)
-
-    try {
-      const res = await fetch(`/api/cody/tasks/issue-${issueNumber}/actions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'comment',
-          comment: comment.trim(),
-        }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to post comment')
-      }
-
-      setComment('')
-      setShowPreview(false)
-      onCommentPosted?.()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to post comment')
-    } finally {
-      setLoading(false)
-    }
+    postComment(comment.trim(), {
+      onSuccess: () => {
+        setComment('')
+        setShowPreview(false)
+        onCommentPosted?.()
+      },
+    })
   }
 
   // Common markdown helpers
@@ -267,15 +133,24 @@ export function CommentEditor({
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
     const selectedText = comment.slice(start, end)
-
     const newComment = comment.slice(0, start) + before + selectedText + after + comment.slice(end)
     setComment(newComment)
 
-    // Set cursor position after the inserted text
     setTimeout(() => {
       textarea.focus()
       textarea.setSelectionRange(start + before.length, start + before.length + selectedText.length)
     }, 0)
+  }
+
+  const insertEmoji = (emoji: string) => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const newComment = comment.slice(0, start) + emoji + comment.slice(start)
+    setComment(newComment)
+    setShowEmojiPicker(false)
+    textarea.focus()
   }
 
   return (
@@ -292,7 +167,6 @@ export function CommentEditor({
         >
           B
         </Button>
-
         <Button
           type="button"
           variant="ghost"
@@ -303,7 +177,6 @@ export function CommentEditor({
         >
           I
         </Button>
-
         <Button
           type="button"
           variant="ghost"
@@ -314,7 +187,6 @@ export function CommentEditor({
         >
           {'</>'}
         </Button>
-
         <Button
           type="button"
           variant="ghost"
@@ -325,7 +197,6 @@ export function CommentEditor({
         >
           🔗
         </Button>
-
         <Button
           type="button"
           variant="ghost"
@@ -337,31 +208,7 @@ export function CommentEditor({
           •
         </Button>
 
-        {/* Image URL button */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            const url = window.prompt('Enter image URL:')
-            if (url) {
-              insertMarkdown('![image](', ')')
-              // Insert URL after the opening parenthesis
-              const textarea = textareaRef.current
-              if (textarea) {
-                const pos = textarea.selectionStart
-                const newComment = comment.slice(0, pos) + url + comment.slice(pos)
-                setComment(newComment)
-              }
-            }
-          }}
-          className="h-7 w-7 p-0 text-sm"
-          title="Image"
-        >
-          🖼️
-        </Button>
-
-        {/* Emoji picker button */}
+        {/* Emoji picker dropdown */}
         <div className="relative">
           <Button
             type="button"
@@ -373,18 +220,13 @@ export function CommentEditor({
           >
             😊
           </Button>
-
-          {/* Emoji picker dropdown */}
           {showEmojiPicker && (
-            <div className="absolute z-20 top-full left-0 mt-1 w-64 max-h-48 overflow-y-auto border border-border rounded-md shadow-lg bg-popover p-2 grid grid-cols-8 gap-1">
-              {EMOJI_LIST.map((emoji, index) => (
+            <div className="absolute z-20 top-full left-0 mt-1 w-48 max-h-40 overflow-y-auto border border-border rounded-md shadow-lg bg-popover p-2 grid grid-cols-6 gap-1">
+              {EMOJI_LIST.slice(0, 60).map((emoji, index) => (
                 <button
                   key={index}
                   type="button"
-                  onClick={() => {
-                    insertMarkdown(emoji, '')
-                    setShowEmojiPicker(false)
-                  }}
+                  onClick={() => insertEmoji(emoji)}
                   className="p-1 hover:bg-accent rounded text-lg"
                 >
                   {emoji}
@@ -422,7 +264,7 @@ export function CommentEditor({
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               rows={4}
-              disabled={loading}
+              disabled={isPosting}
               className="resize-none"
             />
 
@@ -442,11 +284,12 @@ export function CommentEditor({
                       index === selectedMentionIndex && 'bg-accent',
                     )}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={mention.avatar_url}
                       alt={mention.login}
-                      className="h-6 w-6 rounded-full"
+                      width={24}
+                      height={24}
+                      className="rounded-full"
                     />
                     <span className="text-sm">{mention.login}</span>
                   </button>
@@ -459,11 +302,11 @@ export function CommentEditor({
 
       {/* Error and submit */}
       <div className="flex justify-between items-center">
-        {error && <span className="text-destructive text-sm">{error}</span>}
+        {error && <span className="text-destructive text-sm">{error.message}</span>}
         <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Markdown • @mention • 😊 • 🖼️</span>
-          <Button onClick={handleSubmit} disabled={loading || !comment.trim()} size="sm">
-            {loading ? 'Posting...' : 'Comment'}
+          <span className="text-xs text-muted-foreground">Markdown • @mention</span>
+          <Button onClick={handleSubmit} disabled={isPosting || !comment.trim()} size="sm">
+            {isPosting ? 'Posting...' : 'Comment'}
           </Button>
         </div>
       </div>

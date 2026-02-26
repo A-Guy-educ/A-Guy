@@ -536,18 +536,20 @@ export const ALL_IMPL_STAGE_NAMES = flattenPipeline(IMPL_PIPELINE)
 // --- Lightweight pipeline variants ---
 
 /**
- * Lightweight implementation pipeline stages (no heavyweight stages).
+ * Lightweight implementation pipeline stages.
  *
  * Flow:
- *   architect → build → commit → verify → pr
+ *   architect → build → commit → [verify ‖ auditor] → apply-audit → pr
  *
- * Skipped: plan-gap, auditor, apply-audit (saves 5-6 LLM calls)
+ * Skipped: plan-gap (saves 1-2 LLM calls)
+ * Kept: auditor + apply-audit (quality gate always runs)
  */
 export const LIGHTWEIGHT_IMPL_PIPELINE: PipelineStage[] = [
   'architect',
   'build',
   'commit',
-  'verify',
+  { parallel: ['verify', 'auditor'] },
+  'apply-audit',
   'pr',
 ]
 

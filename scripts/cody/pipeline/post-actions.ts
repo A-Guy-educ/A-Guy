@@ -15,6 +15,7 @@ import { readTask } from '../pipeline-utils'
 import { commitPipelineFiles } from '../git-utils'
 import { handleGateApproval } from '../clarify-workflow'
 import { extractGateCommentBody, postComment } from '../github-api'
+import { loadState, updateStage, completeState, writeState } from '../engine/status'
 
 /**
  * Execute a post-action
@@ -51,6 +52,19 @@ export async function executePostAction(
         // Signal engine to rebuild pipeline with new profile (two-phase construction)
         ctx.pipelineNeedsRebuild = true
         console.log(`  ℹ️ Resolved profile: ${ctx.profile}`)
+
+        // Create stub promoted files for stages in skip_stages
+        // The skip condition checks file existence, so we must ensure the file exists
+        // Stubs must include sections that downstream validators expect
+        const skipStages = taskDef.input_quality?.skip_stages ?? []
+        for (const stage of skipStages) {
+          const outputFile = path.join(ctx.taskDir, `${stage}.md`)
+          if (!fs.existsSync(outputFile)) {
+            const stub = buildPromotedStub(stage, ctx.taskDir)
+            fs.writeFileSync(outputFile, stub)
+            console.log(`  ℹ️ Created promoted stub: ${stage}.md`)
+          }
+        }
       }
       break
     }
@@ -60,6 +74,13 @@ export async function executePostAction(
       const taskDef = ctx.taskDef ?? readTask(ctx.taskDir)
       if (!taskDef) {
         throw new Error(`Cannot check gate "${action.gate}": task.json not found or invalid`)
+      }
+      // Skip gate when controlMode is 'auto' (low risk tasks don't need approval)
+      const { resolveControlMode } = await import('../pipeline-utils')
+      const controlMode = resolveControlMode(taskDef, ctx.input.controlMode)
+      if (controlMode === 'auto') {
+        console.log(`  ✓ gate ${action.gate} skipped (controlMode: auto)`)
+        break
       }
       const gateResult = handleGateApproval(ctx.input, ctx.taskDir, action.gate, taskDef)
       if (gateResult === 'waiting') {
@@ -72,6 +93,17 @@ export async function executePostAction(
             postComment(ctx.input.issueNumber, commentBody)
           }
         }
+        // Pre-write paused state to status.json BEFORE commit+push,
+        // so the persisted status.json on the branch reflects 'paused' (not 'running').
+        // The state machine will also set paused after PipelinePausedError, but that
+        // only writes locally — the commit here is what the next CI run reads.
+        const currentState = loadState(ctx.taskId)
+        if (currentState) {
+          let pausedState = updateStage(currentState, action.gate, { state: 'paused' })
+          pausedState = completeState(pausedState, 'paused')
+          writeState(ctx.taskId, pausedState)
+        }
+
         // Commit and pause
         commitPipelineFiles({
           taskDir: ctx.taskDir,
@@ -214,4 +246,56 @@ export async function executePostAction(
     default:
       console.warn(`Unknown post-action type: ${(action as PostAction).type}`)
   }
+}
+
+/**
+ * Build a promoted stub file for a skipped stage.
+ * Includes sections that downstream validators expect.
+ */
+function buildPromotedStub(stage: string, taskDir: string): string {
+  const title = stage.charAt(0).toUpperCase() + stage.slice(1)
+
+  if (stage === 'spec') {
+    // Gap validator checks for ## Requirements or ## Acceptance Criteria
+    // Pull description from task.md if available
+    const taskMdPath = path.join(taskDir, 'task.md')
+    let description = 'See task.md and task.json for full details.'
+    if (fs.existsSync(taskMdPath)) {
+      description = fs.readFileSync(taskMdPath, 'utf-8')
+    }
+    return `# Specification (promoted)
+
+Skipped via input_quality — taskify determined spec is unnecessary.
+
+## Requirements
+
+${description}
+
+## Acceptance Criteria
+
+- [ ] Fix applied as described in task.md
+- [ ] TypeScript compilation passes
+- [ ] Unit tests pass
+`
+  }
+
+  if (stage === 'architect' || stage === 'plan-gap') {
+    // Build stage reads plan.md; plan-gap validator checks plan.md exists
+    return `# ${title} (promoted)
+
+Skipped via input_quality — taskify determined this stage is unnecessary.
+See task.json input_quality.reasoning for details.
+
+## Changes
+
+See task.md for implementation details.
+`
+  }
+
+  // Generic stub for other stages
+  return `# ${title} (promoted)
+
+Skipped via input_quality — taskify determined this stage is unnecessary.
+See task.json input_quality.reasoning for details.
+`
 }

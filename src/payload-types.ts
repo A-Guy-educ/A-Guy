@@ -1019,6 +1019,10 @@ export interface Conversation {
    */
   contextKey?: string | null;
   /**
+   * Display title for conversation list (derived from first user message)
+   */
+  title?: string | null;
+  /**
    * Legacy field - use contextRef instead. Will be removed in future version.
    */
   exercise?: (string | null) | Exercise;
@@ -2463,6 +2467,7 @@ export interface ConversationsSelect<T extends boolean = true> {
   guestSession?: T;
   contextRef?: T;
   contextKey?: T;
+  title?: T;
   exercise?: T;
   messages?:
     | T

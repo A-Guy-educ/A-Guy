@@ -17,9 +17,9 @@ export function NavigationBar() {
   const pathname = usePathname()
 
   return (
-    <nav className="sticky top-0 bg-card/95 backdrop-blur-sm border-b border-border">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-around h-14">
+    <nav className="bg-card pb-3 pt-2 border-b border-border/60">
+      <div className="max-w-2xl mx-auto px-4">
+        <div className="bg-muted p-1 rounded-xl flex items-center justify-between">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href
 
@@ -28,11 +28,10 @@ export function NavigationBar() {
                 key={item.key}
                 href={item.href}
                 className={cn(
-                  'flex-1 text-center py-3 text-sm font-medium transition-colors',
-                  'hover:text-primary hover:bg-muted/50',
+                  'flex-1 py-1.5 text-xs md:text-sm rounded-lg transition-all text-center',
                   isActive
-                    ? 'text-primary bg-muted border-b-2 border-primary'
-                    : 'text-muted-foreground',
+                    ? 'bg-card text-primary shadow-sm font-bold'
+                    : 'text-muted-foreground font-medium hover:text-foreground',
                 )}
               >
                 {t(item.key)}
