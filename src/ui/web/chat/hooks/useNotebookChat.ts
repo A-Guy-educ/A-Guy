@@ -89,6 +89,14 @@ export function useNotebookChat({
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
 
+  // Refs to mirror state for stable callback access
+  const isLoadingRef = useRef(false)
+  const isLoadingHistoryRef = useRef(true)
+
+  // Sync refs with state during render for stable callback access
+  isLoadingRef.current = isLoading
+  isLoadingHistoryRef.current = isLoadingHistory
+
   // Direct-to-Blob chat asset uploads
   const {
     uploadingFiles: directUploads,
@@ -644,7 +652,7 @@ export function useNotebookChat({
         }
       >,
     ) => {
-      if (isLoading || isLoadingHistory) return
+      if (isLoadingRef.current || isLoadingHistoryRef.current) return
       if (lastInjectedExerciseId.current === exercise.id) return
 
       lastInjectedExerciseId.current = exercise.id
@@ -659,17 +667,7 @@ export function useNotebookChat({
       const context = { exerciseId, lessonId, chapterId, courseId, categoryId }
       await streamMessage(prompt, acknowledgment, context, { hidden: true })
     },
-    [
-      isLoading,
-      isLoadingHistory,
-      streamMessage,
-      acknowledgment,
-      exerciseId,
-      lessonId,
-      chapterId,
-      courseId,
-      categoryId,
-    ],
+    [streamMessage, acknowledgment, exerciseId, lessonId, chapterId, courseId, categoryId],
   )
 
   /**
