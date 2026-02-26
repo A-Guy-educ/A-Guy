@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-02-26T15:36:00.721Z",
-  "updatedAt": "2026-02-26T15:46:53.235Z",
+  "updatedAt": "2026-02-26T15:46:54.768Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -30,9 +30,10 @@
       "outputFile": "build.md"
     },
     "commit": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-02-26T15:46:53.235Z"
+      "startedAt": "2026-02-26T15:46:53.235Z",
+      "completedAt": "2026-02-26T15:46:54.768Z"
     }
   }
 }
