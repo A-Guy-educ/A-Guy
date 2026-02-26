@@ -8,16 +8,16 @@
   ],
   "missing_inputs": [],
   "assumptions": [
-    "The guest-sessions collection slug is valid but not in generated types",
-    "Running generate:types will register the collection properly",
-    "No runtime behavior changes - only type fixes"
+    "GuestSessions collection exists in codebase",
+    "pnpm generate:types command is available",
+    "Collection is intended to be in type registry"
   ],
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Task has clear file paths with line numbers, clear expected fix with steps (generate:types, check export, remove casts), and acceptance criteria (remove all as any casts). Promoted spec.md."
+    "reasoning": "Task contains ## Files Affected with specific line numbers, ## Expected Fix with 3 clear steps, and ## Priority. Has structured requirements suitable for direct implementation."
   },
   "pipeline_profile": "lightweight",
   "pipeline": "spec_execute_verify"
