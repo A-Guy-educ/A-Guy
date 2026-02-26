@@ -6,225 +6,256 @@
 
 ## Rerun Context
 
-This is a rerun. The previous run converted `'guest-sessions' as any` → `'guest-sessions' as const` on all 7 Payload operations, which fixed the original FR-3 `as any` issue. However, the previous build agent did **not** complete the cleanup of the redundant `GuestSessionDoc` interface and its 6 associated `as GuestSessionDoc` / `as unknown as GuestSessionDoc` type casts. These casts are unnecessary because `guest-sessions` IS already in `payload-types.ts` (line 77) and TypeScript currently compiles cleanly.
+This is a second rerun (feedback: "Rerun requested via /cody rerun" — no specific issues cited).
 
-**What changed in this plan**:
-- Kept the same overall approach as the previous plan
-- Added much more explicit, line-by-line implementation details so the build agent can't miss any changes
-- Combined Steps 2 and 3 from previous plan into Step 1 since they are trivially dependent
-- Added a dedicated Step 2 for the `as const` removal (since `guest-sessions` is a known literal type in Config, `as const` is also unnecessary)
+**Previous run analysis**: The first run successfully converted `'guest-sessions' as any` → `'guest-sessions' as const` across all 7 Payload operations, satisfying the original FR-3. However, the plan also called for removing the redundant `GuestSessionDoc` interface and its associated type casts, which was NOT completed. The current file still has:
+- 7× `'guest-sessions' as const` (unnecessary — Payload knows the literal type)
+- 1× `export interface GuestSessionDoc` (redundant — duplicates generated `GuestSession`)
+- 1× `as unknown as GuestSessionDoc` (line 168)
+- 5× `as GuestSessionDoc` (lines 187, 205, 209, 230, 248, 273)
+- TypeScript already compiles cleanly
 
-**Current state of the file**: `src/server/services/guest-session.ts` has:
-- 7x `'guest-sessions' as const` (unnecessary since Payload types recognize the literal)
-- 1x `export interface GuestSessionDoc` (redundant, duplicates generated `GuestSession`)
-- 1x `as unknown as GuestSessionDoc` (line 168)
-- 5x `as GuestSessionDoc` (lines 187, 205, 209, 230, 248, 273)
-- TypeScript compiles cleanly already (`tsc --noEmit` passes)
+**What changed in this plan revision**:
+- Simplified to a single concrete step with extremely explicit line-by-line instructions
+- Removed ambiguity about when to keep/remove casts — **all casts are removed** since `GuestSessionDoc = GuestSession`
+- Made the test simpler and more robust
+- Added a critical note about the `GuestSession` type having `claimedByUser?: (string | null) | User` while old `GuestSessionDoc` had `claimedByUser?: string` — the type alias approach handles this seamlessly
+- Emphasized that `as const` removal is also needed (7 occurrences)
+
+**Key insight**: The generated `GuestSession` type (from `src/payload-types.ts:1094`) is a strict superset of the manually defined `GuestSessionDoc`. Fields match perfectly. The generated type additionally includes `ipHash`, `userAgentHash`, and `updatedAt` which the manual interface omitted. Replacing the interface with `export type GuestSessionDoc = GuestSession` gives callers MORE type information, not less.
 
 ---
 
 ## Assumptions
 
-1. `guest-sessions` is registered in `Config['collections']` in `payload-types.ts` (confirmed at line 77).
-2. The generated `GuestSession` type from `payload-types.ts` has all fields that `GuestSessionDoc` defines (confirmed — verified field-by-field match).
-3. The `GuestSessionDoc` export is used by callers — we'll keep it as a type alias for backward compatibility.
-4. Removing `as const` is safe because Payload's `.create()/.find()/.findByID()/.update()` generics already constrain the `collection` parameter to `keyof Config['collections']`, so the string literal `'guest-sessions'` is inferred correctly without `as const`.
+1. `guest-sessions` is registered in `Config['collections']` in `payload-types.ts` (confirmed at line 77)
+2. Generated `GuestSession` type has all fields that `GuestSessionDoc` defines (confirmed field-by-field)
+3. No external files import `GuestSessionDoc` (confirmed via grep — zero importers)
+4. `as const` is unnecessary because Payload generics constrain `collection` to `keyof Config['collections']`
+5. `GuestSessionDoc` will be kept as a type alias (`export type GuestSessionDoc = GuestSession`) for backward compatibility even though no external callers exist — it's good practice and zero-cost
 
 ---
 
-### Step 1: Replace `GuestSessionDoc` interface with type alias and remove all casts
+### Step 1: Replace GuestSessionDoc interface with type alias, remove all casts and `as const`
 
-**Root Cause**: The service defines its own `GuestSessionDoc` interface (lines 23-35) that duplicates the auto-generated `GuestSession` from `payload-types.ts`. This causes the need for `as GuestSessionDoc` casts on every Payload return value, because the developer didn't trust Payload's return types.
+**Root Cause**: The service manually defines `GuestSessionDoc` interface (lines 23-35) that duplicates the auto-generated `GuestSession` from `payload-types.ts`. This required `as GuestSessionDoc` casts on every Payload return value. Additionally, `'guest-sessions' as const` is used on every Payload operation, which is unnecessary since the literal string type is already inferred correctly by Payload's generics.
 
 **Files to Touch**:
 
-- `src/server/services/guest-session.ts` (MODIFIED)
+- `src/server/services/guest-session.ts` (MODIFIED — lines 16-17, 23-35, 150, 168, 178, 187, 201, 205, 209-210, 222, 230, 239, 248, 265, 273-274, 286)
 
 **Reproduction Test** (MUST FAIL before fix, PASS after):
 
 - Test location: `tests/unit/server/services/guest-session.test.ts`
-- Add this test inside the `'Module does not import getPayload'` describe block (after the existing test):
+- Add this test at the END of the top-level `describe` block (after the "Cookie functions" describe block, around line 325):
 
 ```typescript
-it('should not have manual GuestSessionDoc interface definition (uses generated type)', async () => {
-  const fs = await import('fs')
-  const sourceCode = fs.readFileSync('./src/server/services/guest-session.ts', 'utf-8')
-  // After fix: no hand-written GuestSessionDoc interface
-  expect(sourceCode).not.toMatch(/^export interface GuestSessionDoc/m)
-  // After fix: no type assertion casts involving GuestSessionDoc
-  expect(sourceCode).not.toMatch(/as GuestSessionDoc/)
-  expect(sourceCode).not.toMatch(/as unknown as GuestSessionDoc/)
-  // After fix: imports GuestSession from payload-types
-  expect(sourceCode).toMatch(/import.*GuestSession.*from ['"]@\/payload-types['"]/)
+describe('Type safety - no manual type casts', () => {
+  it('should not have manual GuestSessionDoc interface or type casts', async () => {
+    const fs = await import('fs')
+    const sourceCode = fs.readFileSync('./src/server/services/guest-session.ts', 'utf-8')
+
+    // After fix: no hand-written GuestSessionDoc interface (should be a type alias instead)
+    expect(sourceCode).not.toMatch(/^export interface GuestSessionDoc/m)
+
+    // After fix: no type assertion casts involving GuestSessionDoc
+    expect(sourceCode).not.toMatch(/as GuestSessionDoc/)
+    expect(sourceCode).not.toMatch(/as unknown as GuestSessionDoc/)
+
+    // After fix: no 'as any' casts on collection names
+    expect(sourceCode).not.toMatch(/'guest-sessions' as any/)
+
+    // After fix: no unnecessary 'as const' on collection names
+    expect(sourceCode).not.toMatch(/'guest-sessions' as const/)
+
+    // After fix: imports GuestSession from payload-types
+    expect(sourceCode).toMatch(/import.*GuestSession.*from ['"]@\/payload-types['"]/)
+
+    // After fix: uses type alias
+    expect(sourceCode).toMatch(/export type GuestSessionDoc\s*=\s*GuestSession/)
+  })
 })
 ```
 
-- **Why it fails before**: The file contains `export interface GuestSessionDoc` and 6 `as GuestSessionDoc` casts
-- **Why it passes after**: Interface is replaced with import alias; all casts are removed
+- **Why it fails before**: The file has `export interface GuestSessionDoc`, 6 `as GuestSessionDoc` casts, 7 `as const`, and no import from `@/payload-types`
+- **Why it passes after**: All casts removed, interface replaced with type alias, import added
 
-**Fix — exact changes**:
+**Fix — exact changes to `src/server/services/guest-session.ts`**:
 
-1. **Line 16** — Add import after existing `import type { Payload } from 'payload'`:
-   ```typescript
-   import type { GuestSession } from '@/payload-types'
-   ```
+#### Change 1: Add import (after line 16)
 
-2. **Lines 23-35** — Replace the entire `export interface GuestSessionDoc { ... }` block with:
-   ```typescript
-   export type GuestSessionDoc = GuestSession
-   ```
-   This preserves backward compatibility for any external callers importing `GuestSessionDoc`.
+**Current line 16:**
+```typescript
+import type { Payload } from 'payload'
+```
 
-3. **Line 150** — Remove `as const`:
-   ```
-   Before: collection: 'guest-sessions' as const,
-   After:  collection: 'guest-sessions',
-   ```
+**Add new line 17:**
+```typescript
+import type { GuestSession } from '@/payload-types'
+```
 
-4. **Line 168** — Remove cast:
-   ```
-   Before: return { session: session as unknown as GuestSessionDoc, token }
-   After:  return { session: session as GuestSessionDoc, token }
-   ```
-   Note: We keep `as GuestSessionDoc` here because `payload.create()` returns `GuestSession` and our return type is `GuestSessionDoc` (the alias). Actually since `GuestSessionDoc = GuestSession`, we can just do:
-   ```
-   After:  return { session, token }
-   ```
-   Wait — the function signature returns `Promise<{ session: GuestSessionDoc; token: string }>`. Since `GuestSessionDoc` is now just `GuestSession`, and `payload.create()` returns `GuestSession`, no cast needed:
-   ```
-   After:  return { session, token }
-   ```
+#### Change 2: Replace interface with type alias (lines 23-35)
 
-5. **Line 178** — Remove `as const`:
-   ```
-   Before: collection: 'guest-sessions' as const,
-   After:  collection: 'guest-sessions',
-   ```
+**Current (lines 23-35):**
+```typescript
+export interface GuestSessionDoc {
+  id: string
+  tokenHash: string
+  tokenVersion: number
+  createdAt: string
+  lastActiveAt: string
+  expiresAt: string
+  hardExpiresAt: string
+  status: 'active' | 'expired' | 'revoked'
+  claimedByUser?: string
+  claimedAt?: string
+  messageCount: number
+}
+```
 
-6. **Line 187** — Remove cast:
-   ```
-   Before: const session = sessions.docs[0] as GuestSessionDoc
-   After:  const session = sessions.docs[0]
-   ```
+**Replace with:**
+```typescript
+export type GuestSessionDoc = GuestSession
+```
 
-7. **Line 201** — Remove `as const`:
-   ```
-   Before: collection: 'guest-sessions' as const,
-   After:  collection: 'guest-sessions',
-   ```
+#### Change 3: Remove `as const` on line 150
 
-8. **Line 205** — Remove cast:
-   ```
-   Before: if (!session || (session as GuestSessionDoc).status !== 'active') {
-   After:  if (!session || session.status !== 'active') {
-   ```
+```
+Before: collection: 'guest-sessions' as const,
+After:  collection: 'guest-sessions',
+```
 
-9. **Lines 209-210** — Remove intermediate variable:
-   ```
-   Before:
-     const doc = session as GuestSessionDoc
-     const hardExpiresAt = new Date(doc.hardExpiresAt)
-   After:
-     const hardExpiresAt = new Date(session.hardExpiresAt)
-   ```
-   (Delete line 209 entirely, change `doc.` to `session.` on line 210)
+#### Change 4: Remove cast on line 168
 
-10. **Line 222** — Remove `as const`:
-    ```
-    Before: collection: 'guest-sessions' as const,
-    After:  collection: 'guest-sessions',
-    ```
+```
+Before: return { session: session as unknown as GuestSessionDoc, token }
+After:  return { session, token }
+```
 
-11. **Line 230** — Remove cast:
-    ```
-    Before: return updated as GuestSessionDoc
-    After:  return updated
-    ```
+(This works because `payload.create({ collection: 'guest-sessions', ... })` returns `GuestSession`, and `GuestSessionDoc = GuestSession`, so the return type `Promise<{ session: GuestSessionDoc; token: string }>` is satisfied directly.)
 
-12. **Line 239** — Remove `as const`:
-    ```
-    Before: collection: 'guest-sessions' as const,
-    After:  collection: 'guest-sessions',
-    ```
+#### Change 5: Remove `as const` on line 178
 
-13. **Line 248** — Remove cast:
-    ```
-    Before: return updated as GuestSessionDoc
-    After:  return updated
-    ```
+```
+Before: collection: 'guest-sessions' as const,
+After:  collection: 'guest-sessions',
+```
 
-14. **Line 265** — Remove `as const`:
-    ```
-    Before: collection: 'guest-sessions' as const,
-    After:  collection: 'guest-sessions',
-    ```
+#### Change 6: Remove cast on line 187
 
-15. **Lines 273-274** — Remove intermediate variable:
-    ```
-    Before:
-      const doc = session as GuestSessionDoc
-      const currentCount = doc.messageCount ?? 0
-    After:
-      const currentCount = session.messageCount ?? 0
-    ```
-    (Delete line 273 entirely, change `doc.` to `session.` on line 274)
+```
+Before: const session = sessions.docs[0] as GuestSessionDoc
+After:  const session = sessions.docs[0]
+```
 
-16. **Line 286** — Remove `as const`:
-    ```
-    Before: collection: 'guest-sessions' as const,
-    After:  collection: 'guest-sessions',
-    ```
+#### Change 7: Remove `as const` on line 201
 
-**Important note for build agent**: After making these changes, if `tsc --noEmit` shows type errors on the return types (e.g., function returns `GuestSessionDoc | null` but Payload returns a different shape), add the `GuestSessionDoc` return type annotation back and use `as GuestSessionDoc` only where truly needed. The goal is to minimize casts, not break compilation.
+```
+Before: collection: 'guest-sessions' as const,
+After:  collection: 'guest-sessions',
+```
+
+#### Change 8: Remove cast on line 205
+
+```
+Before: if (!session || (session as GuestSessionDoc).status !== 'active') {
+After:  if (!session || session.status !== 'active') {
+```
+
+#### Change 9: Remove intermediate variable on lines 209-210
+
+```
+Before:
+  const doc = session as GuestSessionDoc
+  const hardExpiresAt = new Date(doc.hardExpiresAt)
+After:
+  const hardExpiresAt = new Date(session.hardExpiresAt)
+```
+
+(Delete line 209 entirely. Change `doc.hardExpiresAt` to `session.hardExpiresAt` on line 210.)
+
+#### Change 10: Remove `as const` on line 222
+
+```
+Before: collection: 'guest-sessions' as const,
+After:  collection: 'guest-sessions',
+```
+
+#### Change 11: Remove cast on line 230
+
+```
+Before: return updated as GuestSessionDoc
+After:  return updated
+```
+
+#### Change 12: Remove `as const` on line 239
+
+```
+Before: collection: 'guest-sessions' as const,
+After:  collection: 'guest-sessions',
+```
+
+#### Change 13: Remove cast on line 248
+
+```
+Before: return updated as GuestSessionDoc
+After:  return updated
+```
+
+#### Change 14: Remove `as const` on line 265
+
+```
+Before: collection: 'guest-sessions' as const,
+After:  collection: 'guest-sessions',
+```
+
+#### Change 15: Remove intermediate variable on lines 273-274
+
+```
+Before:
+  const doc = session as GuestSessionDoc
+  const currentCount = doc.messageCount ?? 0
+After:
+  const currentCount = session.messageCount ?? 0
+```
+
+(Delete line 273 entirely. Change `doc.messageCount` to `session.messageCount` on line 274.)
+
+#### Change 16: Remove `as const` on line 286
+
+```
+Before: collection: 'guest-sessions' as const,
+After:  collection: 'guest-sessions',
+```
+
+**CRITICAL NOTE for build agent**: If `tsc --noEmit` fails after these changes with type incompatibility errors (e.g., `GuestSession` doesn't satisfy some return type constraint), the likely cause is Payload's `update`/`findByID` return types being slightly different from `GuestSession`. In that case, keep the `as GuestSessionDoc` cast ONLY on the specific line that fails and document why. But based on analysis, all removals should work cleanly.
 
 **Verification**:
 
-- [ ] `pnpm test:unit -- tests/unit/server/services/guest-session.test.ts` — new source-check test passes
-- [ ] `pnpm -s tsc --noEmit` — zero type errors
+- [ ] Run `pnpm test:unit -- tests/unit/server/services/guest-session.test.ts` → new "Type safety" test FAILS before fix (file still has interface/casts)
+- [ ] Apply all 16 changes above
+- [ ] Run `pnpm test:unit -- tests/unit/server/services/guest-session.test.ts` → all tests pass including new one
+- [ ] Run `pnpm -s tsc --noEmit` → zero type errors
 - [ ] `grep -c 'as any' src/server/services/guest-session.ts` returns 0
 - [ ] `grep -c 'as unknown' src/server/services/guest-session.ts` returns 0
 - [ ] `grep -c 'as GuestSessionDoc' src/server/services/guest-session.ts` returns 0
 - [ ] `grep -c 'export interface GuestSessionDoc' src/server/services/guest-session.ts` returns 0
 - [ ] `grep -c 'as const' src/server/services/guest-session.ts` returns 0
+- [ ] `grep 'GuestSession.*payload-types' src/server/services/guest-session.ts` returns 1 match
 
-**Estimated time**: 15 minutes
-
----
-
-### Step 2: Verify callers and run full quality gates
-
-**Files to Touch**:
-
-- Potentially `src/server/payload/endpoints/cron/guest-sessions-cleanup.ts` (this file has its own `GuestSessionDocument` interface — unrelated, do NOT change it)
-- No other files import `GuestSessionDoc` from `guest-session.ts` (verified via grep)
-
-**Test**:
-
-- Test location: Existing tests
-- Run: `pnpm test:unit -- tests/unit/server/services/guest-session.test.ts`
-- Run: `pnpm test:unit -- tests/unit/server/services/guest-session-upgrade.test.ts`
-- These should all pass with no changes (the `GuestSessionDoc` type alias export preserves backward compatibility)
-
-**Verification**:
-
-- [ ] `pnpm -s tsc --noEmit` — zero errors across entire project
-- [ ] `pnpm test:unit -- tests/unit/server/services/guest-session.test.ts` — all tests pass
-- [ ] `pnpm test:unit -- tests/unit/server/services/guest-session-upgrade.test.ts` — all tests pass
-- [ ] No `as any` or `as const` (for collection names) or `as GuestSessionDoc` casts remain
-
-**Estimated time**: 5 minutes
+**Estimated time**: 15-20 minutes
 
 ---
 
 ## Acceptance Criteria (from spec)
 
-| Requirement | Status | Notes |
-|-------------|--------|-------|
-| FR-1: `pnpm generate:types` runs without errors | ✅ Already done | `guest-sessions` is in type registry (line 77 of `payload-types.ts`) |
-| FR-2: GuestSessions collection properly exported | ✅ Already done | Verified by its presence in generated types |
-| FR-3: All `as any` casts removed | ✅ Done in previous run | Changed to `as const`; this plan also removes `as const` |
-| TypeScript compilation succeeds | ✅ Currently passes | Must continue to pass after changes |
-| GuestSessions collection properly typed | 🔧 This plan | Remove redundant interface + all unnecessary casts |
+| Requirement | Status | Verification |
+|-------------|--------|--------------|
+| FR-1: `pnpm generate:types` runs without errors | ✅ Already done | `guest-sessions` is at line 77 of `payload-types.ts` |
+| FR-2: GuestSessions collection properly exported | ✅ Already done | Imported at line 40 of `payload.config.ts` |
+| FR-3: All 7 `as any` casts removed from guest-session.ts | ✅ Done in previous run | Changed to `as const`; this plan removes `as const` too |
+| TypeScript compilation succeeds without type errors | 🔧 This plan | Must verify after removing all casts |
+| GuestSessions collection properly typed in Payload ops | 🔧 This plan | Remove redundant interface + all unnecessary casts |
 
 ## Test Commands
 
@@ -232,17 +263,18 @@ it('should not have manual GuestSessionDoc interface definition (uses generated 
 # Run guest-session unit tests (includes new source-check test)
 pnpm test:unit -- tests/unit/server/services/guest-session.test.ts
 
-# Run guest-session-upgrade unit tests
-pnpm test:unit -- tests/unit/server/services/guest-session-upgrade.test.ts
-
 # Full type check
 pnpm -s tsc --noEmit
 
 # Verify no casts remain
-grep -c 'as any\|as GuestSessionDoc\|as unknown\|as const' src/server/services/guest-session.ts
+grep -cE 'as any|as GuestSessionDoc|as unknown|as const' src/server/services/guest-session.ts
 # Expected: 0
 
 # Verify import exists
 grep 'GuestSession.*payload-types' src/server/services/guest-session.ts
+# Expected: 1 match
+
+# Verify type alias exists
+grep 'export type GuestSessionDoc' src/server/services/guest-session.ts
 # Expected: 1 match
 ```
