@@ -66,7 +66,7 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
     name: 'taskify',
     type: 'agent',
     timeout: STAGE_TIMEOUTS.taskify ?? DEFAULT_TIMEOUT,
-    maxRetries: 1,
+    maxRetries: 2, // BUG-F fix: increased from 1 to 2 for better resilience
     postActions: [
       { type: 'validate-task-json' },
       { type: 'resolve-profile' },
@@ -156,7 +156,7 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
       if (!ctx.input.dryRun) {
         const td = readTask(ctx.taskDir)
         if (td) {
-          ensureFeatureBranch(ctx.taskId, td.task_type)
+          ensureFeatureBranch(ctx.taskId, td.task_type, undefined, ctx.taskDir)
         }
       }
     },
@@ -242,19 +242,26 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
 // ============================================================================
 
 /**
- * Flatten a mixed sequential/parallel pipeline order into a flat array of stage names.
- * Used by rerun mode to get dynamic stage order from pipeline definitions.
+ * Rebuild pipeline after taskify completes
+ * Extends the pipeline with remaining stages based on profile
  */
-export function flattenPipelineOrder(order: PipelineStep[]): string[] {
-  const result: string[] = []
-  for (const step of order) {
-    if (typeof step === 'string') {
-      result.push(step)
-    } else if ('parallel' in step) {
-      result.push(...step.parallel)
-    }
+export function rebuildPipelineAfterTaskify(
+  _currentPipeline: PipelineDefinition,
+  ctx: PipelineContext,
+): PipelineDefinition {
+  // For full mode, we need BOTH spec stages (completed) AND impl stages (to run)
+  // Build spec stages based on profile
+  const specOrder = ctx.profile === 'standard' ? SPEC_ORDER_STANDARD : SPEC_ORDER_LIGHTWEIGHT
+  const filteredSpecOrder = ctx.input.clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
+
+  // Build impl stages based on profile
+  const implOrder = ctx.profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
+
+  // Combine: spec stages first (already completed), then impl stages (to run)
+  return {
+    stages: createStageDefinitions(ctx),
+    order: [...filteredSpecOrder, ...implOrder],
   }
-  return result
 }
 
 /**
@@ -286,11 +293,34 @@ export function buildPipeline(
       // The engine's rebuildPipeline callback handles this
       return { stages, order }
     }
-  } else if (mode === 'impl' || mode === 'rerun') {
-    // Implementation stages
+  } else if (mode === 'impl') {
+    // Implementation stages only
     const implOrder = profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
     order = [...implOrder]
+  } else if (mode === 'rerun') {
+    // Rerun mode: include both spec and impl stages to support resuming from any stage
+    // The engine will skip completed stages and start from the specified fromStage
+    // Always use standard spec order to ensure spec/gap stages are included in rebuild
+    const specOrder = SPEC_ORDER_STANDARD
+    const implOrder = profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
+    const filteredSpecOrder = clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
+    order = [...filteredSpecOrder, ...implOrder]
   }
 
   return { stages, order }
+}
+
+/**
+ * Flatten pipeline order (including parallel stages) into a flat array of stage names
+ */
+export function flattenPipelineOrder(order: PipelineStep[]): string[] {
+  const result: string[] = []
+  for (const step of order) {
+    if (typeof step === 'string') {
+      result.push(step)
+    } else if ('parallel' in step) {
+      result.push(...step.parallel)
+    }
+  }
+  return result
 }

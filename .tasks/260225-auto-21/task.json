@@ -1,0 +1,22 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "/account page",
+    "accordion-based layout",
+    "collapsible sections"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains detailed sections with layout pattern, sections (Details, Courses, Preferences, Teachers Profile), interaction rules, default state, deep linking with query params, UI consistency requirements, and Definition of Done with 7 checkable items. Promoted spec.md."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

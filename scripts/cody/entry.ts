@@ -8,7 +8,13 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
-import { parseCliArgs, validateAuth, ensureTaskDir, getLastFailedStage } from './cody-utils'
+import {
+  parseCliArgs,
+  validateAuth,
+  ensureTaskDir,
+  getLastFailedStage,
+  getLastPausedStage,
+} from './cody-utils'
 import { preflight } from './preflight'
 import { createRunner } from './runner-backend'
 import { setGlobalContext } from './logger'
@@ -332,9 +338,41 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
     return
   }
 
-  // Determine fromStage
+  // FIX #5: Check for paused stage first (gate approval scenario)
+  // This handles the case where @cody approve was used to resume a paused pipeline
+  const pausedStage = !input.fromStage ? getLastPausedStage(input.taskId) : null
+  if (pausedStage) {
+    console.log(`Detected paused stage: ${pausedStage}`)
+
+    // Try to approve the gate directly
+    try {
+      const taskDef = readTask(taskDir)
+      if (taskDef) {
+        const { handleGateApproval } = await import('./clarify-workflow')
+        const gateResult = handleGateApproval(input, taskDir, pausedStage, taskDef)
+
+        if (gateResult === 'approved') {
+          console.log(`Gate ${pausedStage} approved — resuming pipeline`)
+
+          // Mark the paused stage as completed in status
+          const { loadState, writeState } = await import('./engine/status')
+          const state = loadState(input.taskId)
+          if (state?.stages?.[pausedStage]) {
+            state.stages[pausedStage].state = 'completed'
+            writeState(input.taskId, state)
+          }
+        } else if (gateResult === 'waiting') {
+          console.log(`Gate ${pausedStage} still waiting for approval`)
+        }
+      }
+    } catch (err) {
+      console.warn('Could not handle gate approval:', err)
+    }
+  }
+
+  // Determine fromStage (use paused stage if detected, otherwise failed stage, otherwise build)
   if (!input.fromStage) {
-    input.fromStage = getLastFailedStage(input.taskId) || 'build'
+    input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
   }
 
   // Default feedback

@@ -36,6 +36,17 @@ export const PRODUCT_EVENTS = {
   // Registration Events
   REGISTRATION_PROMPT_SHOWN: 'registration_prompt_shown',
   REGISTRATION_COMPLETED: 'registration_completed', // GA4 + Mixpanel
+
+  // Exercise Help System Events (Mixpanel only)
+  HINT_CLICKED: 'hint_clicked',
+  GUIDING_QUESTION_CLICKED: 'guiding_question_clicked',
+  SOLUTION_UNLOCKED: 'solution_unlocked',
+  SOLUTION_CLICKED: 'solution_clicked',
+  STUDENT_ANSWER_SUBMITTED: 'student_answer_submitted',
+  ANSWER_SELECTED: 'answer_selected',
+  CHAT_AUTO_TRIGGERED: 'chat_auto_triggered',
+  EXERCISE_VIEWED: 'exercise_viewed',
+  EXERCISE_COMPLETED: 'exercise_completed',
 } as const
 
 /**

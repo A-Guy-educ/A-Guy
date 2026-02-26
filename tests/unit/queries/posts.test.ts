@@ -229,9 +229,9 @@ describe('Post Queries', () => {
       expect(result).toEqual([{ slug: 'post-1' }, { slug: 'post-2' }, { slug: 'post-3' }])
       expect(mockPayload.find).toHaveBeenCalledWith({
         collection: 'posts',
+        depth: 0,
         draft: false,
-        limit: 1000,
-        pagination: false,
+        limit: 25,
         select: { slug: true },
       })
     })

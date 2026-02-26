@@ -169,8 +169,8 @@ function detectApprovalFromComment(commentBody: string | null): 'approved' | 're
   // Normalize
   decoded = decoded.toLowerCase().replace(/\\n/g, ' ').replace(/\s+/g, ' ').trim()
 
-  // Remove /cody prefix
-  decoded = decoded.replace(/^\/cody\s*/, '').trim()
+  // Remove /cody or @cody prefix (BUG-F fix: also handle @cody for approval)
+  decoded = decoded.replace(/^[\/]?@?cody\s*/, '').trim()
 
   // Check for rejection keywords first (more specific)
   for (const keyword of REJECTION_KEYWORDS) {
@@ -261,7 +261,8 @@ function formatGateComment(
 
   lines.push('---')
   lines.push('')
-  lines.push('Reply with `/cody approve` to proceed or `/cody reject` to cancel.')
+  lines.push('Reply with `@cody approve` or `/cody approve` to proceed.')
+  lines.push('Reply with `@cody reject` or `/cody reject` to cancel.')
 
   return lines.join('\n')
 }

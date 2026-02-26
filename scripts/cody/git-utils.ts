@@ -57,6 +57,68 @@ export const SAFE_STAGE_DIRS = ['src/', 'tests/', '.tasks/']
 const BASE_BRANCHES = ['dev', 'main', 'master', '']
 
 // ============================================================================
+// Branch Name Derivation
+// ============================================================================
+
+/**
+ * Derive a descriptive branch name from task.md
+ * Returns: prefix/260225-description-from-title
+ * Falls back to taskId if derivation fails
+ */
+export function deriveBranchName(taskDir: string, taskId: string): string {
+  const taskMdPath = path.join(taskDir, 'task.md')
+
+  if (!fs.existsSync(taskMdPath)) {
+    return taskId
+  }
+
+  try {
+    const content = fs.readFileSync(taskMdPath, 'utf-8')
+
+    // Try to extract ## Issue Title first (highest priority)
+    let title = ''
+    const issueTitleMatch = content.match(/^##\s*Issue\s*Title\s*\n+([^\n]+)/im)
+    if (issueTitleMatch) {
+      title = issueTitleMatch[1].trim()
+    }
+
+    // Fallback: get first meaningful line (skip # Task, headers)
+    if (!title) {
+      const lines = content.split('\n')
+      for (const line of lines) {
+        const trimmed = line.trim()
+        // Skip headers, empty lines
+        if (trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('##')) {
+          title = trimmed
+          break
+        }
+      }
+    }
+
+    if (!title) {
+      return taskId
+    }
+
+    // Prepend date prefix from taskId for uniqueness
+    const datePrefix = taskId.split('-').slice(0, 2).join('-') // e.g., "260225"
+    const maxTitleLength = 50 - datePrefix.length - 1 // minus 1 for the hyphen
+
+    // Sanitize: lowercase, replace spaces/special chars with hyphens, remove non-alphanumeric
+    const sanitized = title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // keep only alphanumeric, spaces, hyphens
+      .replace(/\s+/g, '-') // spaces to hyphens
+      .replace(/-+/g, '-') // multiple hyphens to one
+      .replace(/^-|-$/g, '') // trim leading/trailing hyphens
+      .slice(0, maxTitleLength) // max 50 chars total (including date prefix)
+
+    return `${datePrefix}-${sanitized}`
+  } catch {
+    return taskId
+  }
+}
+
+// ============================================================================
 // Functions
 // ============================================================================
 
@@ -119,13 +181,19 @@ function mergeDefaultBranch(cwd: string): void {
 
 /**
  * Creates a feature branch before the build stage if needed.
- * This ensures the branch follows project conventions: fix/260218-description
+ * This ensures the branch follows project conventions: fix/260225-description
  *
  * @param taskId - The task ID (e.g., "260218-user-metrics")
  * @param taskType - The task type (e.g., "fix_bug", "implement_feature")
  * @param projectDir - Optional project directory (defaults to cwd)
+ * @param taskDir - Optional task directory for deriving descriptive branch name
  */
-export function ensureFeatureBranch(taskId: string, taskType: string, projectDir?: string): void {
+export function ensureFeatureBranch(
+  taskId: string,
+  taskType: string,
+  projectDir?: string,
+  taskDir?: string,
+): void {
   const cwd = projectDir || process.cwd()
 
   const currentBranch = execSync('git branch --show-current', {
@@ -140,7 +208,10 @@ export function ensureFeatureBranch(taskId: string, taskType: string, projectDir
   }
 
   const prefix = BRANCH_PREFIX_MAP[taskType as TaskType] || 'feat'
-  const branchName = `${prefix}/${taskId}`
+
+  // Derive descriptive name from task.md if available, otherwise use taskId
+  const branchDescription = taskDir ? deriveBranchName(taskDir, taskId) : taskId
+  const branchName = `${prefix}/${branchDescription}`
 
   console.log(`[branch] Ensuring feature branch: ${branchName}`)
 
@@ -565,7 +636,7 @@ export function commitPipelineFiles(
           // Use default
         }
       }
-      ensureFeatureBranch(taskId, taskType, cwd)
+      ensureFeatureBranch(taskId, taskType, cwd, taskDir)
     }
 
     // 2. Optionally clean dirty state (CI mode)

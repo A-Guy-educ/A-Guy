@@ -6,6 +6,10 @@ vi.mock('fs', () => ({
   readdirSync: vi.fn(),
   statSync: vi.fn(),
   renameSync: vi.fn(),
+  writeFileSync: vi.fn(),
+  unlinkSync: vi.fn(),
+  rmSync: vi.fn(),
+  mkdtempSync: vi.fn(),
 }))
 
 // Mock child_process
@@ -35,7 +39,9 @@ import * as fs from 'fs'
 import {
   runAgentWithFileWatch,
   MAX_RETRIES,
-  FILE_STABLE_CHECKS,
+  STABILITY_CHECK_INTERVAL,
+  STABILITY_CHECK_COUNT,
+  POST_EXIT_DELAY,
 } from '../../../../scripts/cody/agent-runner'
 import type { CodyInput } from '../../../../scripts/cody/cody-utils'
 
@@ -45,9 +51,21 @@ describe('MAX_RETRIES', () => {
   })
 })
 
-describe('FILE_STABLE_CHECKS', () => {
-  it('should export FILE_STABLE_CHECKS constant equal to 2', () => {
-    expect(FILE_STABLE_CHECKS).toBe(2)
+describe('STABILITY_CHECK_INTERVAL', () => {
+  it('should be 1000ms (1 second)', () => {
+    expect(STABILITY_CHECK_INTERVAL).toBe(1000)
+  })
+})
+
+describe('STABILITY_CHECK_COUNT', () => {
+  it('should be 3 consecutive stable checks', () => {
+    expect(STABILITY_CHECK_COUNT).toBe(3)
+  })
+})
+
+describe('POST_EXIT_DELAY', () => {
+  it('should be 1000ms (1 second)', () => {
+    expect(POST_EXIT_DELAY).toBe(1000)
   })
 })
 

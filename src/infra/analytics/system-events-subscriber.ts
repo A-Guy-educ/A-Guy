@@ -42,7 +42,7 @@ export function initAnalyticsSubscriber(): () => void {
     })
   }
 
-  // Subscribe to all 10 system events
+  // Subscribe to all system events (10 core + 9 exercise)
   console.log('[Analytics] 🔄 Initializing system events subscriber...')
   cleanupFns = [
     // Page & Session
@@ -202,6 +202,166 @@ export function initAnalyticsSubscriber(): () => void {
           registration_method: payload.registration_method,
         })
       }
+    }),
+
+    // Exercise Help System Events
+    safeSubscribe(SYSTEM_EVENTS.HINT_CLICKED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        exercise_id?: string
+        question_id?: string
+        hint_used?: boolean
+        locale?: string
+      }
+      analytics.track(PRODUCT_EVENTS.HINT_CLICKED, {
+        lesson_id: payload.lesson_id,
+        exercise_id: payload.exercise_id,
+        question_id: payload.question_id,
+        hint_used: payload.hint_used,
+        locale: payload.locale,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.GUIDING_QUESTION_CLICKED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        exercise_id?: string
+        question_id?: string
+        guiding_used?: boolean
+        locale?: string
+      }
+      analytics.track(PRODUCT_EVENTS.GUIDING_QUESTION_CLICKED, {
+        lesson_id: payload.lesson_id,
+        exercise_id: payload.exercise_id,
+        question_id: payload.question_id,
+        guiding_used: payload.guiding_used,
+        locale: payload.locale,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.SOLUTION_UNLOCKED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        exercise_id?: string
+        question_id?: string
+        hint_used?: boolean
+        guiding_used?: boolean
+        locale?: string
+      }
+      analytics.track(PRODUCT_EVENTS.SOLUTION_UNLOCKED, {
+        lesson_id: payload.lesson_id,
+        exercise_id: payload.exercise_id,
+        question_id: payload.question_id,
+        hint_used: payload.hint_used,
+        guiding_used: payload.guiding_used,
+        locale: payload.locale,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.SOLUTION_CLICKED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        exercise_id?: string
+        question_id?: string
+        hint_used?: boolean
+        guiding_used?: boolean
+        locale?: string
+      }
+      analytics.track(PRODUCT_EVENTS.SOLUTION_CLICKED, {
+        lesson_id: payload.lesson_id,
+        exercise_id: payload.exercise_id,
+        question_id: payload.question_id,
+        hint_used: payload.hint_used,
+        guiding_used: payload.guiding_used,
+        locale: payload.locale,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.STUDENT_ANSWER_SUBMITTED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        exercise_id?: string
+        question_id?: string
+        correctness?: boolean
+        attempt_number?: number
+        locale?: string
+      }
+      analytics.track(PRODUCT_EVENTS.STUDENT_ANSWER_SUBMITTED, {
+        lesson_id: payload.lesson_id,
+        exercise_id: payload.exercise_id,
+        question_id: payload.question_id,
+        correctness: payload.correctness,
+        attempt_number: payload.attempt_number,
+        locale: payload.locale,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.ANSWER_SELECTED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        exercise_id?: string
+        question_id?: string
+        selection_type?: string
+        locale?: string
+      }
+      analytics.track(PRODUCT_EVENTS.ANSWER_SELECTED, {
+        lesson_id: payload.lesson_id,
+        exercise_id: payload.exercise_id,
+        question_id: payload.question_id,
+        selection_type: payload.selection_type,
+        locale: payload.locale,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.CHAT_AUTO_TRIGGERED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        exercise_id?: string
+        question_id?: string
+        trigger_reason?: string
+        locale?: string
+      }
+      analytics.track(PRODUCT_EVENTS.CHAT_AUTO_TRIGGERED, {
+        lesson_id: payload.lesson_id,
+        exercise_id: payload.exercise_id,
+        question_id: payload.question_id,
+        trigger_reason: payload.trigger_reason,
+        locale: payload.locale,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.EXERCISE_VIEWED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        exercise_id?: string
+        exercise_title?: string
+        locale?: string
+      }
+      analytics.track(PRODUCT_EVENTS.EXERCISE_VIEWED, {
+        lesson_id: payload.lesson_id,
+        exercise_id: payload.exercise_id,
+        exercise_title: payload.exercise_title,
+        locale: payload.locale,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.EXERCISE_COMPLETED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        exercise_id?: string
+        duration_seconds?: number
+        total_questions?: number
+        correct_count?: number
+        locale?: string
+      }
+      analytics.track(PRODUCT_EVENTS.EXERCISE_COMPLETED, {
+        lesson_id: payload.lesson_id,
+        exercise_id: payload.exercise_id,
+        duration_seconds: payload.duration_seconds,
+        total_questions: payload.total_questions,
+        correct_count: payload.correct_count,
+        locale: payload.locale,
+      })
     }),
   ]
 

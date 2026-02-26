@@ -387,3 +387,122 @@ describe('end-to-end pipeline selection', () => {
     expect(standardImplStages).toContain('apply-audit')
   })
 })
+
+describe('rebuildPipelineAfterTaskify', () => {
+  it('should return full pipeline with both spec and impl stages', async () => {
+    const { rebuildPipelineAfterTaskify } =
+      await import('../../../../scripts/cody/pipeline/definitions')
+    const { flattenPipelineOrder } = await import('../../../../scripts/cody/pipeline/definitions')
+
+    // Create mock context with required fields
+    const mockCtx = {
+      taskId: 'test-task',
+      taskDir: '/tmp/test',
+      taskDef: createTaskDef('implement_feature', 'medium'),
+      profile: 'standard' as const,
+      backend: {
+        name: 'test',
+        spawn: () => {
+          throw new Error('not implemented')
+        },
+      } as unknown as import('../../../../scripts/cody/runner-backend').RunnerBackend,
+      input: {
+        clarify: false,
+        dryRun: false,
+        local: false,
+        taskId: 'test-task',
+        mode: 'full' as const,
+        triggerType: 'comment' as const,
+      },
+    }
+
+    const result = rebuildPipelineAfterTaskify({ stages: new Map(), order: [] }, mockCtx)
+    const flatOrder = flattenPipelineOrder(result.order)
+
+    // Should contain spec stages (completed from first phase)
+    expect(flatOrder).toContain('taskify')
+    expect(flatOrder).toContain('spec')
+    expect(flatOrder).toContain('gap')
+
+    // Should also contain impl stages (to run after taskify)
+    expect(flatOrder).toContain('architect')
+    expect(flatOrder).toContain('build')
+    expect(flatOrder).toContain('commit')
+    expect(flatOrder).toContain('pr')
+  })
+
+  it('should use standard profile for medium-risk implement_feature', async () => {
+    const { rebuildPipelineAfterTaskify } =
+      await import('../../../../scripts/cody/pipeline/definitions')
+    const { flattenPipelineOrder } = await import('../../../../scripts/cody/pipeline/definitions')
+
+    const mockCtx = {
+      taskId: 'test-task',
+      taskDir: '/tmp/test',
+      taskDef: createTaskDef('implement_feature', 'medium'),
+      profile: 'standard' as const,
+      backend: {
+        name: 'test',
+        spawn: () => {
+          throw new Error('not implemented')
+        },
+      } as unknown as import('../../../../scripts/cody/runner-backend').RunnerBackend,
+      input: {
+        clarify: false,
+        dryRun: false,
+        local: false,
+        taskId: 'test-task',
+        mode: 'full' as const,
+        triggerType: 'comment' as const,
+      },
+    }
+
+    const result = rebuildPipelineAfterTaskify({ stages: new Map(), order: [] }, mockCtx)
+    const flatOrder = flattenPipelineOrder(result.order)
+
+    // Standard profile should include heavyweight stages
+    expect(flatOrder).toContain('plan-gap')
+    expect(flatOrder).toContain('auditor')
+    expect(flatOrder).toContain('apply-audit')
+  })
+
+  it('should use lightweight profile when specified', async () => {
+    const { rebuildPipelineAfterTaskify } =
+      await import('../../../../scripts/cody/pipeline/definitions')
+    const { flattenPipelineOrder } = await import('../../../../scripts/cody/pipeline/definitions')
+
+    const mockCtx = {
+      taskId: 'test-task',
+      taskDir: '/tmp/test',
+      taskDef: createTaskDef('fix_bug', 'low'),
+      profile: 'lightweight' as const,
+      backend: {
+        name: 'test',
+        spawn: () => {
+          throw new Error('not implemented')
+        },
+      } as unknown as import('../../../../scripts/cody/runner-backend').RunnerBackend,
+      input: {
+        clarify: false,
+        dryRun: false,
+        local: false,
+        taskId: 'test-task',
+        mode: 'full' as const,
+        triggerType: 'comment' as const,
+      },
+    }
+
+    const result = rebuildPipelineAfterTaskify({ stages: new Map(), order: [] }, mockCtx)
+    const flatOrder = flattenPipelineOrder(result.order)
+
+    // Lightweight should NOT include heavyweight stages
+    expect(flatOrder).not.toContain('plan-gap')
+    expect(flatOrder).not.toContain('auditor')
+    expect(flatOrder).not.toContain('apply-audit')
+
+    // But should still include both spec and impl stages
+    expect(flatOrder).toContain('taskify')
+    expect(flatOrder).toContain('build')
+    expect(flatOrder).toContain('pr')
+  })
+})

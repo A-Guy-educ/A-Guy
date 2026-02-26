@@ -303,6 +303,92 @@ describe('getLastFailedStage', () => {
 })
 
 // ============================================================================
+// getLastPausedStage Tests (FIX #5)
+// ============================================================================
+
+import { getLastPausedStage } from '../../../../scripts/cody/cody-utils'
+
+describe('getLastPausedStage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('should return null when status.json does not exist', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false)
+
+    const result = getLastPausedStage('260219-test')
+    expect(result).toBeNull()
+  })
+
+  it('should return null when no stages are paused', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({
+        taskId: '260219-test',
+        stages: {
+          architect: { state: 'completed', retries: 0 },
+          build: { state: 'completed', retries: 0 },
+        },
+      }),
+    )
+
+    const result = getLastPausedStage('260219-test')
+    expect(result).toBeNull()
+  })
+
+  it('should return the paused stage', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({
+        taskId: '260219-test',
+        stages: {
+          taskify: { state: 'completed', retries: 0 },
+          architect: { state: 'paused', retries: 0 },
+          build: { state: 'pending', retries: 0 },
+        },
+      }),
+    )
+
+    const result = getLastPausedStage('260219-test')
+    expect(result).toBe('architect')
+  })
+
+  it('should return the last paused stage when multiple are paused', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({
+        taskId: '260219-test',
+        stages: {
+          taskify: { state: 'paused', retries: 0 },
+          architect: { state: 'paused', retries: 0 },
+          build: { state: 'pending', retries: 0 },
+        },
+      }),
+    )
+
+    const result = getLastPausedStage('260219-test')
+    expect(result).toBe('architect') // last one
+  })
+
+  it('should handle v2 format with version field', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({
+        version: 2,
+        taskId: '260219-test',
+        stages: {
+          taskify: { state: 'completed', retries: 0 },
+          architect: { state: 'paused', retries: 0 },
+        },
+      }),
+    )
+
+    const result = getLastPausedStage('260219-test')
+    expect(result).toBe('architect')
+  })
+})
+
+// ============================================================================
 // editComment Tests (R6: stdin-based implementation)
 // ============================================================================
 

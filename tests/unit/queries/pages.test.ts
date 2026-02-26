@@ -150,9 +150,9 @@ describe('Page Queries', () => {
       expect(result).toEqual([{ slug: 'page-1' }, { slug: 'page-3' }])
       expect(mockPayload.find).toHaveBeenCalledWith({
         collection: 'pages',
+        depth: 0,
         draft: false,
-        limit: 1000,
-        pagination: false,
+        limit: 25,
         select: { slug: true },
       })
     })

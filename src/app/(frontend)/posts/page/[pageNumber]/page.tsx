@@ -81,7 +81,10 @@ export async function generateStaticParams() {
 
     const pages: { pageNumber: string }[] = []
 
-    for (let i = 1; i <= totalPages; i++) {
+    // Limit static generation to the first 5 pages to save build time
+    const pagesToBuild = Math.min(totalPages, 5)
+
+    for (let i = 1; i <= pagesToBuild; i++) {
       pages.push({ pageNumber: String(i) })
     }
 

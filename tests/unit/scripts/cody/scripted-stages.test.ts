@@ -1171,6 +1171,43 @@ describe('runPrStage', () => {
   // Edge cases
   // ---------------------------------------------------------------------------
   describe('edge cases', () => {
+    // BUG-F fix: Test that empty GH_PAT is handled correctly
+    it('should handle empty GH_PAT env var (BUG-F fix)', () => {
+      // Set GH_PAT to empty string (simulating missing secret)
+      const originalGH_PAT = process.env.GH_PAT
+      process.env.GH_PAT = ''
+      delete process.env.GH_TOKEN
+
+      mockExecSync.mockImplementation((cmd: string) => {
+        const cmdStr = String(cmd)
+        if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
+        if (cmdStr.includes('git log --oneline')) return ''
+        return ''
+      })
+      mockExecFileSync.mockImplementation((file: string, args?: readonly string[]) => {
+        const argsArr = args || []
+        // gh pr list returns empty
+        if (file === 'gh' && argsArr[0] === 'pr' && argsArr[1] === 'list') return '\n'
+        // gh pr create fails with "not authenticated" when no valid token
+        if (file === 'gh' && argsArr[0] === 'pr' && argsArr[1] === 'create')
+          throw new Error('gh: not authenticated')
+        if (file === 'git' && argsArr[0] === 'push') return ''
+        return ''
+      })
+      mockExistsSync.mockReturnValue(false)
+
+      const result = runPrStage('/fake/task-dir', '/tmp/pr.md', '/fake/cwd')
+      expect(result.created).toBe(false)
+      expect(result.report).toContain('not authenticated')
+
+      // Restore
+      if (originalGH_PAT !== undefined) {
+        process.env.GH_PAT = originalGH_PAT
+      } else {
+        delete process.env.GH_PAT
+      }
+    })
+
     it('should handle getExistingPr returning null on error', () => {
       mockExecSync.mockImplementation((cmd: string) => {
         const cmdStr = String(cmd)

@@ -168,6 +168,47 @@ export function getLastFailedStage(taskId: string): string | null {
 }
 
 /**
+ * Get the last paused stage from status.json.
+ * Used by rerun mode to detect gates that are waiting for approval.
+ * Returns the stage name that has state 'paused', or null if none.
+ */
+export function getLastPausedStage(taskId: string): string | null {
+  const statusFile = path.join(getTaskDir(taskId), 'status.json')
+  if (!fs.existsSync(statusFile)) {
+    return null
+  }
+
+  try {
+    const content = fs.readFileSync(statusFile, 'utf-8')
+    const status = JSON.parse(content) as {
+      version?: number
+      stages?: Record<string, { state: string }>
+    }
+
+    // Check for paused stages in v2 format
+    if (status.version === 2 && status.stages) {
+      const pausedStages = Object.entries(status.stages)
+        .filter(([, s]) => s.state === 'paused')
+        .map(([name]) => name)
+      // Return the last paused stage (most recent)
+      return pausedStages.length > 0 ? pausedStages[pausedStages.length - 1] : null
+    }
+
+    // Fallback to v1 format
+    if (status?.stages) {
+      const pausedStages = Object.entries(status.stages)
+        .filter(([, s]) => s.state === 'paused')
+        .map(([name]) => name)
+      return pausedStages.length > 0 ? pausedStages[pausedStages.length - 1] : null
+    }
+
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
  * @deprecated Use engine/status.ts loadState/writeState/completeState instead.
  */
 export function writeStatus(taskId: string, status: CodyPipelineStatus): void {
@@ -438,6 +479,39 @@ export function parseCliArgs(argv: string[]): CodyInput {
     } else if (arg === '--clarify') {
       input.clarify = true
     }
+  }
+
+  // Read from environment variables (for CI workflow)
+  // CLI args take precedence over env vars
+  if (!input.taskId && process.env.TASK_ID) {
+    input.taskId = process.env.TASK_ID
+  }
+  if (process.env.MODE && isValidMode(process.env.MODE)) {
+    input.mode = process.env.MODE
+  }
+  if (process.env.DRY_RUN === 'true') {
+    input.dryRun = true
+  }
+  if (process.env.FEEDBACK) {
+    input.feedback = process.env.FEEDBACK
+  }
+  if (process.env.FROM_STAGE) {
+    input.fromStage = process.env.FROM_STAGE
+  }
+  if (process.env.CLARIFY === 'true') {
+    input.clarify = true
+  }
+  if (process.env.ISSUE_NUMBER) {
+    input.issueNumber = parseInt(process.env.ISSUE_NUMBER, 10)
+  }
+  if (process.env.TRIGGER_TYPE) {
+    input.triggerType = process.env.TRIGGER_TYPE as 'dispatch' | 'comment'
+  }
+  if (process.env.RUN_ID) {
+    input.runId = process.env.RUN_ID
+  }
+  if (process.env.RUN_URL) {
+    input.runUrl = process.env.RUN_URL
   }
 
   // Determine local mode: explicitly set or auto-detect from GITHUB_ACTIONS
@@ -749,7 +823,8 @@ export function formatStatusComment(
   } else if (status.state === 'paused') {
     lines.push(`⏸️ Cody paused for \`${input.taskId}\``)
     lines.push(
-      'Awaiting approval — reply with `/cody approve` to proceed or `/cody reject` to cancel.',
+      'Awaiting approval — reply with `@cody approve` or `/cody approve` to proceed. ' +
+        'Reply with `@cody reject` or `/cody reject` to cancel.',
     )
   } else if (status.state === 'failed') {
     lines.push(`❌ Cody failed for \`${input.taskId}\``)

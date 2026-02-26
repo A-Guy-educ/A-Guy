@@ -36,6 +36,8 @@ import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
 import { TableQuestion } from '../questions/TableQuestion'
 import { MatchingQuestion } from '../questions/MatchingQuestion'
 import { QuestionCard } from '../components/QuestionCard'
+import { HelpSystem } from '../components/HelpSystem'
+import { useHelpSystem } from '../hooks/useHelpSystem'
 import {
   checkQuestionAnswer,
   getInitialAnswer,
@@ -117,6 +119,8 @@ export function ExerciseRenderer({
   className = '',
   mediaMap = EMPTY_MEDIA_MAP,
   exerciseNumber = 1,
+  lessonId = '',
+  exerciseId = '',
 }: ExerciseRendererProps) {
   const t = useTranslations('courses')
   const locale = useLocale()
@@ -144,6 +148,15 @@ export function ExerciseRenderer({
       block.type === 'question_table' ||
       block.type === 'question_matching',
   ) as QuestionBlock[]
+
+  // Help system state (hint/guiding/solution per question)
+  const { helpUsage, activeHelp, handleHintClick, handleGuidingClick, handleSolutionClick } =
+    useHelpSystem({
+      questionBlocks,
+      lessonId,
+      exerciseId,
+      locale: locale ?? undefined,
+    })
 
   const [answers, setAnswers] = useState<Record<string, UserAnswer>>(() => {
     const initial: Record<string, UserAnswer> = {}
@@ -415,6 +428,27 @@ export function ExerciseRenderer({
                 !(question.type === 'question_select' && question.variant === 'true_false') &&
                 question.type !== 'question_table'
 
+              // Help system for this question (always shown — AI fallback when no backend content)
+              const helpSystemNode = (
+                <HelpSystem
+                  question={question}
+                  helpUsage={
+                    helpUsage[question.id] ?? {
+                      hintShown: false,
+                      guidingUsed: false,
+                      solutionUnlocked: false,
+                    }
+                  }
+                  activeHelp={activeHelp[question.id] ?? null}
+                  onHintClick={() => handleHintClick(question.id)}
+                  onGuidingClick={() => handleGuidingClick(question.id)}
+                  onSolutionClick={() => handleSolutionClick(question.id)}
+                  hintLabel={t('helpHint')}
+                  guidingLabel={t('helpGuidingQuestion')}
+                  solutionLabel={t('helpSolution')}
+                />
+              )
+
               return (
                 <QuestionCard
                   key={question.id}
@@ -429,6 +463,7 @@ export function ExerciseRenderer({
                   incorrectText={t('incorrect')}
                   questionLabel={questionLabel}
                   dir={dir}
+                  helpSystem={helpSystemNode}
                 >
                   {/* Render appropriate question component based on type */}
                   {question.type === 'question_select' && question.variant === 'true_false' && (

@@ -26,6 +26,8 @@ interface QuestionCardProps {
   incorrectText: string
   questionLabel?: string
   dir?: 'ltr' | 'rtl'
+  /** Optional help system UI (hint/guiding/solution buttons) */
+  helpSystem?: React.ReactNode
 }
 
 export function QuestionCard({
@@ -41,6 +43,7 @@ export function QuestionCard({
   incorrectText,
   questionLabel,
   dir = 'ltr',
+  helpSystem,
 }: QuestionCardProps) {
   return (
     <Card
@@ -67,6 +70,9 @@ export function QuestionCard({
 
       {/* Question Content */}
       {children}
+
+      {/* Help System (hint/guiding/solution) */}
+      {helpSystem}
 
       {/* Check Answer Button */}
       {showCheckButton && (

@@ -46,8 +46,8 @@ export const queryAllPageSlugs = cache(async () => {
     const result = await payload.find({
       collection: 'pages',
       draft: false,
-      limit: 1000,
-      pagination: false,
+      limit: 25,
+      depth: 0,
       select: {
         slug: true,
       },

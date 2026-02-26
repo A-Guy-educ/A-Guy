@@ -67,8 +67,8 @@ export async function backfillChapterAdminTitles(
               courseTitle = (course as { title?: string })?.title || null
             } catch {
               // If course lookup fails, we'll use just the chapter title
-              payload.logger?.error(
-                `Error fetching course ${chapter.course} for chapter ${chapter.id}`,
+              payload.logger?.warn(
+                `Could not fetch course ${chapter.course} for chapter ${chapter.id}`,
               )
             }
           }
@@ -88,7 +88,7 @@ export async function backfillChapterAdminTitles(
           updated++
         } catch {
           errors++
-          payload.logger?.error(`Error backfilling adminTitle for chapter ${chapter.id}`)
+          payload.logger?.warn(`Could not backfill adminTitle for chapter ${chapter.id}`)
         }
       }
 
