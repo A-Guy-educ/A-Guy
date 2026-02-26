@@ -6,18 +6,18 @@
 
 ## Rerun Context
 
-This is a rerun (feedback: "Rerun requested via /cody rerun" — no specific code issues cited).
+This is the second rerun. Previous feedback was a bare `/cody rerun` with no specific code issues cited.
 
-**Previous run analysis**: The prior run produced a plan but never completed the build/implementation phase — it was stuck at the architect gate. The source file `src/server/services/guest-session.ts` still has:
+**What happened before**: The prior plan was correct and comprehensive. The source file `src/server/services/guest-session.ts` was partially fixed in the first run — `as any` casts were changed to `as const`, but the build agent did not complete all changes. The file still has:
 - 7× `'guest-sessions' as const` (unnecessary — Payload infers the literal type from generics)
 - 1× `export interface GuestSessionDoc` (redundant — duplicates auto-generated `GuestSession` from `payload-types.ts`)
 - 1× `as unknown as GuestSessionDoc` (line 168)
 - 5× `as GuestSessionDoc` (lines 187, 205, 209, 230, 248, 273)
 - TypeScript currently compiles cleanly (`tsc --noEmit` passes)
 
-**What changed in this plan revision**: Minor wording refinements. The prior plan was comprehensive and correct — implementation just needs to run.
+**What changed in this revision**: Added explicit build agent guidance to prevent incomplete execution. The plan is a single step with 16 mechanical edits — all must be applied in one pass.
 
-**Key insight**: The generated `GuestSession` type (from `src/payload-types.ts:1094`) is a strict superset of the manually defined `GuestSessionDoc`. All fields match. The generated type additionally includes `ipHash`, `userAgentHash`, and `updatedAt` which the manual interface omitted. Replacing the interface with `export type GuestSessionDoc = GuestSession` gives callers MORE type information, not less, and maintains backward compatibility.
+**Key insight**: The generated `GuestSession` type (from `src/payload-types.ts:1098`) is a strict superset of the manually defined `GuestSessionDoc`. All fields match. The generated type additionally includes `ipHash`, `userAgentHash`, and `updatedAt` which the manual interface omitted. Replacing the interface with `export type GuestSessionDoc = GuestSession` gives callers MORE type information, not less, and maintains backward compatibility.
 
 ---
 
@@ -25,9 +25,9 @@ This is a rerun (feedback: "Rerun requested via /cody rerun" — no specific cod
 
 1. `guest-sessions` is registered in `Config['collections']` in `payload-types.ts` (confirmed at line 77)
 2. Generated `GuestSession` type has all fields that `GuestSessionDoc` defines (confirmed field-by-field)
-3. No external files import `GuestSessionDoc` from `guest-session.ts` (confirmed via grep — zero external importers)
+3. No external files import `GuestSessionDoc` from `guest-session.ts` besides the test files — backward compatibility maintained via type alias
 4. `as const` is unnecessary because Payload generics constrain `collection` to `keyof Config['collections']`
-5. `GuestSessionDoc` will be kept as a type alias (`export type GuestSessionDoc = GuestSession`) for backward compatibility even though no external callers exist — it's good practice and zero-cost
+5. `GuestSessionDoc` will be kept as a type alias (`export type GuestSessionDoc = GuestSession`) for backward compatibility
 
 ---
 
@@ -38,11 +38,12 @@ This is a rerun (feedback: "Rerun requested via /cody rerun" — no specific cod
 **Files to Touch**:
 
 - `src/server/services/guest-session.ts` (MODIFIED — lines 16-17, 23-35, 150, 168, 178, 187, 201, 205, 209-210, 222, 230, 239, 248, 265, 273-274, 286)
+- `tests/unit/server/services/guest-session.test.ts` (MODIFIED — append new test at end, before final `})`)
 
 **Reproduction Test** (MUST FAIL before fix, PASS after):
 
 - Test location: `tests/unit/server/services/guest-session.test.ts`
-- Add this test at the END of the top-level `describe` block (before the closing `})` on line 326):
+- Add this test BEFORE the final `})` at line 326:
 
 ```typescript
 describe('Type safety - no manual type casts', () => {
@@ -72,10 +73,12 @@ describe('Type safety - no manual type casts', () => {
 })
 ```
 
-- **Why it fails before**: The file has `export interface GuestSessionDoc`, 6 `as GuestSessionDoc` casts, 7 `as const`, and no import from `@/payload-types`
+- **Why it fails before**: The file has `export interface GuestSessionDoc`, 5× `as GuestSessionDoc`, 1× `as unknown as GuestSessionDoc`, 7× `as const`, and no import from `@/payload-types`
 - **Why it passes after**: All casts removed, interface replaced with type alias, import added
 
 **Fix — exact changes to `src/server/services/guest-session.ts`**:
+
+> **BUILD AGENT**: Apply ALL 16 changes below in a single pass. Do NOT stop partway. Use the Edit tool for each change sequentially.
 
 #### Change 1: Add import (after line 16)
 
@@ -223,13 +226,15 @@ Before: collection: 'guest-sessions' as const,
 After:  collection: 'guest-sessions',
 ```
 
-**CRITICAL NOTE for build agent**: If `tsc --noEmit` fails after these changes with type incompatibility errors (e.g., `GuestSession` doesn't satisfy some return type constraint), the likely cause is Payload's `update`/`findByID` return types being slightly different from `GuestSession`. In that case, keep the `as GuestSessionDoc` cast ONLY on the specific line that fails and document why. But based on analysis, all removals should work cleanly.
+**CRITICAL NOTE for build agent**: If `tsc --noEmit` fails after these changes with type incompatibility errors (e.g., `GuestSession` doesn't satisfy some return type constraint), the likely cause is Payload's `update`/`findByID` return types being slightly different from `GuestSession`. In that case, keep the `as GuestSessionDoc` cast ONLY on the specific line that fails and update the test regex accordingly. But based on analysis, all removals should work cleanly.
+
+**IMPORTANT**: After applying Change 2 (replacing the 13-line interface with a 1-line type alias), all subsequent line numbers will shift by -12. The build agent should apply changes in order from top to bottom, tracking the line offset as it goes, OR apply all changes using string-match patterns rather than exact line numbers.
 
 **Verification**:
 
-- [ ] Run `pnpm test:unit -- tests/unit/server/services/guest-session.test.ts` → new "Type safety" test FAILS before fix (file still has interface/casts)
-- [ ] Apply all 16 changes above
-- [ ] Run `pnpm test:unit -- tests/unit/server/services/guest-session.test.ts` → all tests pass including new one
+- [ ] Write the reproduction test first → run `pnpm test:unit -- tests/unit/server/services/guest-session.test.ts` → new "Type safety" test FAILS
+- [ ] Apply all 16 changes to `src/server/services/guest-session.ts`
+- [ ] Run `pnpm test:unit -- tests/unit/server/services/guest-session.test.ts` → ALL tests pass including new one
 - [ ] Run `pnpm -s tsc --noEmit` → zero type errors
 - [ ] `grep -c 'as any' src/server/services/guest-session.ts` returns 0
 - [ ] `grep -c 'as unknown' src/server/services/guest-session.ts` returns 0
