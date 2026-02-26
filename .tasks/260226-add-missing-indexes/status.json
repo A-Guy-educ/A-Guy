@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-02-26T17:03:29.690Z",
-  "updatedAt": "2026-02-26T17:21:18.497Z",
+  "updatedAt": "2026-02-26T17:23:16.536Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -53,6 +53,23 @@
       "retries": 0,
       "startedAt": "2026-02-26T17:21:16.939Z",
       "completedAt": "2026-02-26T17:21:18.497Z"
+    },
+    "verify": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-02-26T17:23:16.344Z",
+      "outputFile": "verify.md"
+    },
+    "auditor": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-02-26T17:23:16.535Z",
+      "outputFile": "auditor.md"
+    },
+    "apply-audit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-26T17:23:16.536Z"
     }
   }
 }
