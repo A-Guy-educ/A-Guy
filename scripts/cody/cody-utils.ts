@@ -332,6 +332,7 @@ export {
   getIssueTitle,
   editComment,
   getLatestIssueComment,
+  getLatestApprovalComment,
   TASK_ID_MARKER_REGEX,
   extractTaskIdFromMarker,
   discoverTaskIdFromIssue,
