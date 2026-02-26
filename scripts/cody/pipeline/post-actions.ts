@@ -61,6 +61,13 @@ export async function executePostAction(
       if (!taskDef) {
         throw new Error(`Cannot check gate "${action.gate}": task.json not found or invalid`)
       }
+      // Skip gate when controlMode is 'auto' (low risk tasks don't need approval)
+      const { resolveControlMode } = await import('../pipeline-utils')
+      const controlMode = resolveControlMode(taskDef, ctx.input.controlMode)
+      if (controlMode === 'auto') {
+        console.log(`  ✓ gate ${action.gate} skipped (controlMode: auto)`)
+        break
+      }
       const gateResult = handleGateApproval(ctx.input, ctx.taskDir, action.gate, taskDef)
       if (gateResult === 'waiting') {
         // Read gate file and extract comment body

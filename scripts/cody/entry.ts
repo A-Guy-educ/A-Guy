@@ -360,7 +360,12 @@ async function runFullMode(ctx: PipelineContext): Promise<void> {
   // This uses buildPipeline('full') which includes both spec and impl stages
   const pipeline = resolvePipelineForMode('full', 'standard', ctx.input.clarify ?? false, ctx)
   const rebuild = createRebuildCallback('full', ctx.input.clarify ?? false)
-  await runPipeline(ctx, pipeline, undefined, rebuild)
+  const finalState = await runPipeline(ctx, pipeline, undefined, rebuild)
+
+  // Handle paused state (gate approval required)
+  if (finalState.state === 'paused') {
+    throw new PipelinePausedError(`Pipeline paused — awaiting gate approval for ${ctx.taskId}`)
+  }
 
   console.log('\n✅ Full Cody pipeline complete!')
 }
