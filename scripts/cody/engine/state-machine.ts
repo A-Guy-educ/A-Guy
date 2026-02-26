@@ -100,14 +100,15 @@ function resolveNextStep(
       const stageState = state.stages[step]
       // Only run pending stages - failed stages should not auto-retry
       // User can use --from to restart from a specific stage
-      if (!stageState || stageState.state === 'pending') {
+      // Also run stages that were interrupted (running state from previous run)
+      if (!stageState || stageState.state === 'pending' || stageState.state === 'running') {
         return step
       }
     } else if ('parallel' in step) {
       // Parallel stages - check if any need to run
       const needsRun = step.parallel.some((s) => {
         const stageState = state.stages[s]
-        return !stageState || stageState.state === 'pending'
+        return !stageState || stageState.state === 'pending' || stageState.state === 'running'
       })
       if (needsRun) {
         return step
