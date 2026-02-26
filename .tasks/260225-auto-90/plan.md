@@ -6,23 +6,18 @@
 
 ## Rerun Context
 
-This is a second rerun (feedback: "Rerun requested via /cody rerun" — no specific issues cited).
+This is a rerun (feedback: "Rerun requested via /cody rerun" — no specific code issues cited).
 
-**Previous run analysis**: The first run successfully converted `'guest-sessions' as any` → `'guest-sessions' as const` across all 7 Payload operations, satisfying the original FR-3. However, the plan also called for removing the redundant `GuestSessionDoc` interface and its associated type casts, which was NOT completed. The current file still has:
-- 7× `'guest-sessions' as const` (unnecessary — Payload knows the literal type)
-- 1× `export interface GuestSessionDoc` (redundant — duplicates generated `GuestSession`)
+**Previous run analysis**: The prior run produced a plan but never completed the build/implementation phase — it was stuck at the architect gate. The source file `src/server/services/guest-session.ts` still has:
+- 7× `'guest-sessions' as const` (unnecessary — Payload infers the literal type from generics)
+- 1× `export interface GuestSessionDoc` (redundant — duplicates auto-generated `GuestSession` from `payload-types.ts`)
 - 1× `as unknown as GuestSessionDoc` (line 168)
 - 5× `as GuestSessionDoc` (lines 187, 205, 209, 230, 248, 273)
-- TypeScript already compiles cleanly
+- TypeScript currently compiles cleanly (`tsc --noEmit` passes)
 
-**What changed in this plan revision**:
-- Simplified to a single concrete step with extremely explicit line-by-line instructions
-- Removed ambiguity about when to keep/remove casts — **all casts are removed** since `GuestSessionDoc = GuestSession`
-- Made the test simpler and more robust
-- Added a critical note about the `GuestSession` type having `claimedByUser?: (string | null) | User` while old `GuestSessionDoc` had `claimedByUser?: string` — the type alias approach handles this seamlessly
-- Emphasized that `as const` removal is also needed (7 occurrences)
+**What changed in this plan revision**: Minor wording refinements. The prior plan was comprehensive and correct — implementation just needs to run.
 
-**Key insight**: The generated `GuestSession` type (from `src/payload-types.ts:1094`) is a strict superset of the manually defined `GuestSessionDoc`. Fields match perfectly. The generated type additionally includes `ipHash`, `userAgentHash`, and `updatedAt` which the manual interface omitted. Replacing the interface with `export type GuestSessionDoc = GuestSession` gives callers MORE type information, not less.
+**Key insight**: The generated `GuestSession` type (from `src/payload-types.ts:1094`) is a strict superset of the manually defined `GuestSessionDoc`. All fields match. The generated type additionally includes `ipHash`, `userAgentHash`, and `updatedAt` which the manual interface omitted. Replacing the interface with `export type GuestSessionDoc = GuestSession` gives callers MORE type information, not less, and maintains backward compatibility.
 
 ---
 
@@ -30,7 +25,7 @@ This is a second rerun (feedback: "Rerun requested via /cody rerun" — no speci
 
 1. `guest-sessions` is registered in `Config['collections']` in `payload-types.ts` (confirmed at line 77)
 2. Generated `GuestSession` type has all fields that `GuestSessionDoc` defines (confirmed field-by-field)
-3. No external files import `GuestSessionDoc` (confirmed via grep — zero importers)
+3. No external files import `GuestSessionDoc` from `guest-session.ts` (confirmed via grep — zero external importers)
 4. `as const` is unnecessary because Payload generics constrain `collection` to `keyof Config['collections']`
 5. `GuestSessionDoc` will be kept as a type alias (`export type GuestSessionDoc = GuestSession`) for backward compatibility even though no external callers exist — it's good practice and zero-cost
 
@@ -47,7 +42,7 @@ This is a second rerun (feedback: "Rerun requested via /cody rerun" — no speci
 **Reproduction Test** (MUST FAIL before fix, PASS after):
 
 - Test location: `tests/unit/server/services/guest-session.test.ts`
-- Add this test at the END of the top-level `describe` block (after the "Cookie functions" describe block, around line 325):
+- Add this test at the END of the top-level `describe` block (before the closing `})` on line 326):
 
 ```typescript
 describe('Type safety - no manual type casts', () => {
@@ -253,7 +248,7 @@ After:  collection: 'guest-sessions',
 |-------------|--------|--------------|
 | FR-1: `pnpm generate:types` runs without errors | ✅ Already done | `guest-sessions` is at line 77 of `payload-types.ts` |
 | FR-2: GuestSessions collection properly exported | ✅ Already done | Imported at line 40 of `payload.config.ts` |
-| FR-3: All 7 `as any` casts removed from guest-session.ts | ✅ Done in previous run | Changed to `as const`; this plan removes `as const` too |
+| FR-3: All 7 `as any` casts removed from guest-session.ts | 🔧 This plan | Changed to `as const` in prior attempt; this plan removes `as const` too |
 | TypeScript compilation succeeds without type errors | 🔧 This plan | Must verify after removing all casts |
 | GuestSessions collection properly typed in Payload ops | 🔧 This plan | Remove redundant interface + all unnecessary casts |
 
