@@ -6,8 +6,8 @@ import { fileURLToPath } from 'url'
 
 import { getServerSideURL } from '@/infra/utils/getURL'
 import { Categories } from '@/server/payload/collections/Categories'
-import { ChatAssets } from '@/server/payload/collections/ChatAssets'
 import { Chapters } from '@/server/payload/collections/Chapters'
+import { ChatAssets } from '@/server/payload/collections/ChatAssets'
 import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
 import { ConfigSecrets } from '@/server/payload/collections/ConfigSecrets'
 import { ConfigValues } from '@/server/payload/collections/ConfigValues'
@@ -15,6 +15,7 @@ import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
 import { Exercises } from '@/server/payload/collections/Exercises'
+import { GuestSessions } from '@/server/payload/collections/GuestSessions'
 import { Lessons } from '@/server/payload/collections/Lessons'
 import { MCPAuditLogs } from '@/server/payload/collections/MCPAuditLogs'
 import { Media } from '@/server/payload/collections/Media'
@@ -23,21 +24,23 @@ import { Pages } from '@/server/payload/collections/Pages'
 import { Posts } from '@/server/payload/collections/Posts'
 import { PricingPlans } from '@/server/payload/collections/PricingPlans'
 import { Prompts } from '@/server/payload/collections/Prompts'
+import { TeacherProfiles } from '@/server/payload/collections/TeacherProfiles'
 import { Tenants } from '@/server/payload/collections/Tenants'
-import { UserProgress } from '@/server/payload/collections/UserProgress'
 import { UploadSessions } from '@/server/payload/collections/UploadSessions'
+import { UserProgress } from '@/server/payload/collections/UserProgress'
 import { Users } from '@/server/payload/collections/Users'
+import { UserSettings } from '@/server/payload/collections/UserSettings'
 import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
 import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
-import { runBackfillOnInit } from '@/server/payload/migrations/backfillAdminTitle'
 import type { JobDocument } from '@/server/payload/jobs/types'
+import { runBackfillOnInit } from '@/server/payload/migrations/backfillAdminTitle'
 import { plugins } from '@/server/payload/plugins'
+import { seedTeacherProfiles } from '@/server/payload/seed/teacher-profiles-seed'
 import { Footer } from '@/ui/web/footer/config'
 import { Header } from '@/ui/web/header/config'
-import { GuestSessions } from '@/server/payload/collections/GuestSessions'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -151,6 +154,8 @@ export default buildConfig({
     Lessons,
     Exercises,
     Prompts,
+    TeacherProfiles,
+    UserSettings,
     ExerciseAssets,
     Users,
     UserProgress,
@@ -267,5 +272,6 @@ export default buildConfig({
   },
   onInit: async (payload) => {
     await runBackfillOnInit(payload)
+    await seedTeacherProfiles(payload)
   },
 })

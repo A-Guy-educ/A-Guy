@@ -8,7 +8,9 @@ import type { Logger } from 'pino'
 import { composeSystemInstructions } from '@/infra/llm/prompt-composer.server'
 import { resolveAgentSystemPrompt } from '@/infra/llm/prompt-resolver.server'
 import { fetchPublishedSystemPrompts } from '@/infra/llm/system-prompts.server'
+import { buildTeacherProfileBlock } from '@/infra/llm/teacher-profile-block'
 import type { Prompt } from '@/payload-types'
+import { resolveTeacherProfile } from '@/server/services/teacher-profile-resolver'
 
 import type { ResolvedContext } from './context-resolution'
 
@@ -258,6 +260,7 @@ export async function composeFullSystemInstructions(
   reqLogger: Logger,
   coursePrompt?: Prompt | null,
   courseContextText?: string,
+  userId?: string,
 ): Promise<ComposedSystemInstructions> {
   // Fetch published system prompts (always included)
   const systemPromptsResult = await fetchPublishedSystemPrompts(payload)
@@ -291,12 +294,27 @@ export async function composeFullSystemInstructions(
     'Resolved system prompt',
   )
 
-  // Compose final system instructions: system prompts + lesson/course prompt + lesson/course context
+  // Resolve teacher profile (per-request, no caching)
+  const teacherProfile = await resolveTeacherProfile(payload, userId)
+
+  // Build teacher profile block
+  const teacherProfileBlock = buildTeacherProfileBlock(teacherProfile)
+
+  reqLogger.info(
+    {
+      teacherProfileSlug: teacherProfile.profileSlug,
+      resolvedFrom: teacherProfile.resolvedFrom,
+    },
+    'Resolved teacher profile',
+  )
+
+  // Compose final system instructions: system prompts + teacher profile + lesson/course prompt + lesson/course context
   // Priority: lesson context > course context
   const instructions = composeSystemInstructions(
     systemPromptsResult.templates,
     promptResolution.template,
     lessonContextText || courseContextText,
+    teacherProfileBlock,
   )
 
   return {

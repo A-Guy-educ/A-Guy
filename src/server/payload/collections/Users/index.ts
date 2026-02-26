@@ -12,12 +12,13 @@ import type { CollectionConfig } from 'payload'
 import { adminOnly } from '../../access/adminOnly'
 import { adminOrSelf } from '../../access/adminOrSelf'
 // anyone import kept for future re-enablement of public signup
+import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { anyone } from '../../access/anyone'
+import { auditRoleChange } from './hooks/auditRoleChange-hook'
+import { createUserSettings } from './hooks/createUserSettings-hook'
 import { ensureRoleOnSignup } from './hooks/ensureRoleOnSignup-hook'
 import { preventLastAdminDemotion } from './hooks/preventLastAdminDemotion-hook'
-import { auditRoleChange } from './hooks/auditRoleChange-hook'
-import { AccountRole, ACCOUNT_ROLE_LABEL } from './roles'
-import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
+import { ACCOUNT_ROLE_LABEL, AccountRole } from './roles'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -130,7 +131,7 @@ export const Users: CollectionConfig = {
     // Prevent demoting the last admin
     beforeChange: [preventLastAdminDemotion],
     // Audit trail for role changes
-    afterChange: [auditRoleChange],
+    afterChange: [auditRoleChange, createUserSettings],
   },
   timestamps: true,
 }

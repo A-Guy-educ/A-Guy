@@ -102,6 +102,14 @@
       "collapse": "כווץ",
       "preferencesPlaceholder": "הגדרות ההעדפות יהיו זמינות בקרוב.",
       "teachersProfilePlaceholder": "תכונות פרופיל המורה בקרוב.",
+      "teacherProfile": {
+        "description": "בחר כיצד המורה הבינה מלאכותית שלך יתקשר איתך. זה משפיע על חוויית הצ'אט שלך.",
+        "loading": "טוען פרופילי מורה...",
+        "selected": "נבחר",
+        "changeSuccess": "פרופיל המורה עודכן בהצלחה",
+        "changeFailed": "עדכון פרופיל המורה נכשל",
+        "noProfiles": "אין פרופילי מורה זמינים"
+      },
       "failedToLoadCourse": "טעינת הקורס נכשלה",
       "tryAgain": "נסה שוב"
     }

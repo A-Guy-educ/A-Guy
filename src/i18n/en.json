@@ -79,6 +79,14 @@
       "collapse": "Collapse",
       "preferencesPlaceholder": "Preferences settings will be available soon.",
       "teachersProfilePlaceholder": "Teachers profile features coming soon.",
+      "teacherProfile": {
+        "description": "Choose how your AI teacher interacts with you. This affects your chat experience.",
+        "loading": "Loading teacher profiles...",
+        "selected": "Selected",
+        "changeSuccess": "Teacher profile updated successfully",
+        "changeFailed": "Failed to update teacher profile",
+        "noProfiles": "No teacher profiles available"
+      },
       "failedToLoadCourse": "Failed to load course",
       "tryAgain": "Try Again"
     },

@@ -26,7 +26,6 @@ import {
 } from '@/infra/llm/providers/factory'
 import { chatWithExerciseHelper } from '@/infra/llm/services/exercise-chat-service'
 import { logger } from '@/infra/utils/logger'
-import type { Logger } from 'pino'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { getMCPClient } from '@/server/repos/mcp/client/mcp-client'
@@ -34,7 +33,6 @@ import {
   ConversationService,
   GuestConversationLimitError,
 } from '@/server/services/conversation-service'
-import { checkRateLimit } from '@/server/services/rate-limit'
 import {
   buildGuestSessionCookieHeader,
   checkAndIncrementGuestMessageCount,
@@ -44,7 +42,9 @@ import {
   hashIP,
   hashUserAgent,
 } from '@/server/services/guest-session'
+import { checkRateLimit } from '@/server/services/rate-limit'
 import type { PayloadRequest } from 'payload'
+import type { Logger } from 'pino'
 import { z } from 'zod'
 
 import {
@@ -681,6 +681,7 @@ async function handleContextScopedChat(
       logger as Logger,
       lessonContext.coursePrompt,
       lessonContext.courseContextText,
+      userId,
     )
   } catch (error) {
     if (error instanceof Error && error.message.includes('exceeds maximum')) {
