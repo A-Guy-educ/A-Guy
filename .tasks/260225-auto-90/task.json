@@ -17,7 +17,7 @@
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Task contains ## Files Affected with specific line numbers, ## Expected Fix with 3 clear steps, and ## Priority. Has structured requirements suitable for direct implementation."
+    "reasoning": "Task contains ## Files Affected with specific line numbers, ## Expected Fix with 3 clear steps, and ## Priority. Has structured requirements suitable for direct implementation. Spec.md was already promoted from this input."
   },
   "pipeline_profile": "lightweight",
   "pipeline": "spec_execute_verify"
