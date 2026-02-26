@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "taskId": "260226-fix-guest-session-as-any",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-26T14:12:44.701Z",
+  "updatedAt": "2026-02-26T14:12:44.703Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-26T14:12:44.703Z"
+    }
+  }
+}
