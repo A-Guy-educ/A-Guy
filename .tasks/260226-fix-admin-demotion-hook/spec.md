@@ -17,18 +17,23 @@ The `preventLastAdminDemotion` hook counts existing admins with `overrideAccess:
 
 ## Current Code
 ```typescript
-const adminCount = await req.payload.count({
+const { totalDocs: adminCount } = await req.payload.count({
   collection: 'users',
-  where: { roles: { contains: 'admin' } },
+  where: {
+    role: { equals: AccountRole.Admin },
+  },
   overrideAccess: false, // ❌ Filtered by current user's access
+  req,
 })
 ```
 
 ## Expected Fix
 ```typescript
-const adminCount = await req.payload.count({
+const { totalDocs: adminCount } = await req.payload.count({
   collection: 'users',
-  where: { roles: { contains: 'admin' } },
+  where: {
+    role: { equals: AccountRole.Admin },
+  },
   overrideAccess: true, // ✅ System-level check needs full visibility
   req,
 })
@@ -40,6 +45,6 @@ HIGH — Security bug, could allow last admin demotion
 
 ## Acceptance Criteria
 
-- [ ] Fix applied as described in task.md
+- [ ] Fix applied: change `overrideAccess: false` to `overrideAccess: true` on line 27
 - [ ] TypeScript compilation passes
-- [ ] Unit tests pass
+- [ ] Note: No unit tests exist for this hook - test criterion not applicable
