@@ -318,6 +318,7 @@ async function executeParallelStep(
     // Handle PipelinePausedError specially (G30)
     if (stageResult.outcome === 'paused') {
       state = updateStage(state, stageName, { state: 'paused' })
+      writeState(ctx.taskId, state) // Persist paused state to disk
       // Return early with paused state
       return completeState(state, 'paused')
     }
@@ -342,6 +343,7 @@ async function executeParallelStep(
           // Handle post-action errors - mirroring executeSingleStep pattern
           if (postError instanceof PipelinePausedError) {
             state = updateStage(state, stageName, { state: 'paused' })
+            writeState(ctx.taskId, state) // Persist paused state to disk
             return completeState(state, 'paused')
           }
           console.error(`  Post-action failed for parallel stage ${stageName}:`, postError)

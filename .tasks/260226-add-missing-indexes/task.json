@@ -1,0 +1,31 @@
+{
+  "task_type": "refactor",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "infra",
+  "scope": [
+    "src/server/payload/collections/Courses.ts",
+    "src/server/payload/collections/Chapters.ts",
+    "src/server/payload/collections/Lessons.ts",
+    "src/server/payload/collections/Tenants.ts",
+    "src/server/payload/collections/Posts/index.ts",
+    "src/server/payload/collections/Exercises/index.ts",
+    "src/server/payload/collections/ConfigAuditLogs.ts",
+    "src/server/payload/collections/GuestSessions.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "All specified collection files exist at the provided paths",
+    "Fields already exist at the specified line numbers and only need index: true added",
+    "No breaking changes - adding index is a non-destructive operation"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains detailed table with exact file paths, line numbers, and field names for 10 fields across 8 collections. Has clear requirements with code example. Promoted spec.md."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

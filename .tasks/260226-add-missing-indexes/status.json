@@ -1,0 +1,75 @@
+{
+  "version": 2,
+  "taskId": "260226-add-missing-indexes",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-26T17:03:29.690Z",
+  "updatedAt": "2026-02-26T17:23:16.536Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T17:03:29.692Z",
+      "completedAt": "2026-02-26T17:04:40.202Z",
+      "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Promoted via input_quality (file exists)"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 1,
+      "startedAt": "2026-02-26T17:04:43.518Z",
+      "completedAt": "2026-02-26T17:12:07.560Z",
+      "outputFile": "gap.md"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T17:12:07.560Z",
+      "completedAt": "2026-02-26T17:13:50.036Z",
+      "outputFile": "architect.md"
+    },
+    "plan-gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T17:13:50.037Z",
+      "completedAt": "2026-02-26T17:14:18.843Z",
+      "outputFile": "plan-gap.md"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T17:14:18.844Z",
+      "completedAt": "2026-02-26T17:20:56.656Z",
+      "outputFile": "build.md"
+    },
+    "commit": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T17:21:16.939Z",
+      "completedAt": "2026-02-26T17:21:18.497Z"
+    },
+    "verify": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-02-26T17:23:16.344Z",
+      "outputFile": "verify.md"
+    },
+    "auditor": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-02-26T17:23:16.535Z",
+      "outputFile": "auditor.md"
+    },
+    "apply-audit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-26T17:23:16.536Z"
+    }
+  }
+}

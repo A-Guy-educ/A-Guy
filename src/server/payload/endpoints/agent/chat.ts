@@ -297,6 +297,7 @@ async function handleAdminModeChat(
     content: validated.message,
     timestamp: new Date().toISOString(),
     media: validated.mediaIds?.map((id) => ({ mediaId: id })) || [],
+    chatAssets: validated.chatAssetIds?.map((id) => ({ chatAssetId: id })) || [],
   }
 
   const conversationHistory = conversation.messages || []
@@ -633,6 +634,7 @@ async function handleContextScopedChat(
     content: validated.message,
     timestamp: new Date().toISOString(),
     media: validated.mediaIds?.map((id) => ({ mediaId: id })) || [],
+    chatAssets: validated.chatAssetIds?.map((id) => ({ chatAssetId: id })) || [],
   }
 
   const conversationHistory = conversation.messages || []

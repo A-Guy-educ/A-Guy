@@ -8,7 +8,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
-import { getLatestIssueComment, type CodyInput } from './cody-utils'
+import { getLatestIssueComment, getLatestApprovalComment, type CodyInput } from './cody-utils'
 import { checkForQuestions } from './content-validators'
 
 // ============================================================================
@@ -297,7 +297,8 @@ export function handleGateApproval(
 
   // Also check latest issue comment if not found in current trigger
   if (!approval && input.issueNumber && input.triggerType === 'comment') {
-    const latestComment = getLatestIssueComment(input.issueNumber, 'github-actions[bot]')
+    // Use getLatestApprovalComment to find /cody approve or /cody reject commands
+    const latestComment = getLatestApprovalComment(input.issueNumber, 'github-actions[bot]')
     const latestApproval = detectApprovalFromComment(latestComment)
     if (latestApproval) {
       // User replied with approve/reject - write the approved file

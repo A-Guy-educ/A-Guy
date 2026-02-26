@@ -83,8 +83,51 @@ async function ensureTaskMd(ctx: PipelineContext): Promise<void> {
  * Main entry point
  */
 async function main(): Promise<void> {
+  const args = process.argv.slice(2)
+
+  // Handle --help early
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`
+Cody Pipeline CLI
+
+Usage: pnpm tsx scripts/cody/entry.ts [options]
+
+Options:
+  --task-id <id>         Task ID (format: YYMMDD-description)
+  --mode <mode>          Pipeline mode: full, spec, impl, rerun, clarify, status
+  --file <path>          Path to task file (auto-generates task-id from filename)
+  --dry-run              Dry run mode
+  --issue-number <n>     GitHub issue number
+  --trigger-type         Trigger type: dispatch, comment
+  --run-id <id>          CI run ID
+  --run-url <url>        CI run URL
+  --comment-body <text>  Comment body (for comment triggers)
+  --from <stage>         Stage to restart from (for rerun mode)
+  --feedback <text>      Feedback for rerun mode
+  --auto                 Auto mode (non-interactive)
+  --gate                 Risk-gated mode (require approval)
+  --hard-stop            Hard stop on failure
+  --local                Run in local mode (skip GitHub API)
+  --clarify              Run clarify stage
+
+Examples:
+  pnpm tsx scripts/cody/entry.ts --task-id 260225-my-task --mode full
+  pnpm tsx scripts/cody/entry.ts --file docs/feature.md
+  pnpm tsx scripts/cody/entry.ts --mode rerun --from verify --feedback "Tests failed"
+`)
+    return
+  }
+
   // Parse CLI args
-  const input = parseCliArgs(process.argv.slice(2))
+  const input = parseCliArgs(args)
+
+  // Post "started" comment with run URL at the beginning of the pipeline
+  if (input.issueNumber && input.runUrl) {
+    postComment(
+      input.issueNumber,
+      `🚀 Cody started for \`${input.taskId}\` (mode: ${input.mode})\n\nRun: ${input.runUrl}`,
+    )
+  }
 
   // Set global logging context
   setGlobalContext({ taskId: input.taskId, runId: input.runId })
@@ -317,7 +360,12 @@ async function runFullMode(ctx: PipelineContext): Promise<void> {
   // This uses buildPipeline('full') which includes both spec and impl stages
   const pipeline = resolvePipelineForMode('full', 'standard', ctx.input.clarify ?? false, ctx)
   const rebuild = createRebuildCallback('full', ctx.input.clarify ?? false)
-  await runPipeline(ctx, pipeline, undefined, rebuild)
+  const finalState = await runPipeline(ctx, pipeline, undefined, rebuild)
+
+  // Handle paused state (gate approval required)
+  if (finalState.state === 'paused') {
+    throw new PipelinePausedError(`Pipeline paused — awaiting gate approval for ${ctx.taskId}`)
+  }
 
   console.log('\n✅ Full Cody pipeline complete!')
 }
@@ -354,13 +402,40 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
         if (gateResult === 'approved') {
           console.log(`Gate ${pausedStage} approved — resuming pipeline`)
 
+          // Write approved file to cache approval for future runs
+          const approvedPath = path.join(taskDir, `gate-${pausedStage}-approved.md`)
+          fs.writeFileSync(
+            approvedPath,
+            `# Gate Approved\n\nApproved at ${pausedStage} gate.\nApproved via @cody approve command.\n`,
+          )
+
+          // Commit and push the approval file so subsequent runs can find it
+          const { commitPipelineFiles } = await import('./git-utils')
+          await commitPipelineFiles({
+            taskDir,
+            taskId: input.taskId,
+            message: `ci(cody): gate ${pausedStage} approved for ${input.taskId}`,
+            ensureBranch: true,
+            stagingStrategy: 'task-only',
+            push: true,
+            isCI: !input.local,
+            dryRun: input.dryRun,
+          })
+
           // Mark the paused stage as completed in status
           const { loadState, writeState } = await import('./engine/status')
           const state = loadState(input.taskId)
           if (state?.stages?.[pausedStage]) {
             state.stages[pausedStage].state = 'completed'
+            // Also reset pipeline state from 'paused' to 'running' so state machine continues
+            state.state = 'running'
+            delete state.completedAt
             writeState(input.taskId, state)
           }
+
+          // After approving a spec-phase gate, continue with the rerun pipeline
+          // The rerun pipeline already includes both spec and impl stages
+          // No mode switch needed - just continue running
         } else if (gateResult === 'waiting') {
           console.log(`Gate ${pausedStage} still waiting for approval`)
         }

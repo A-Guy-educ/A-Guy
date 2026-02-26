@@ -26,7 +26,7 @@ AI agent pipeline for automated feature implementation and bug fixes.
 ## Profiles
 
 - `standard`: Full pipeline (includes gap, plan-gap, auditor, apply-audit)
-- `lightweight`: Skips spec, gap, plan-gap, auditor, apply-audit
+- `lightweight`: Skips spec, gap, plan-gap (auditor + apply-audit always run)
 
 Profile resolved in `resolve-profile` post-action based on:
 

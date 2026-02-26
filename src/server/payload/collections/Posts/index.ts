@@ -124,6 +124,7 @@ export const Posts: CollectionConfig<'posts'> = {
             {
               name: 'categories',
               type: 'relationship',
+              index: true,
               admin: {
                 position: 'sidebar',
               },
@@ -185,6 +186,7 @@ export const Posts: CollectionConfig<'posts'> = {
     {
       name: 'authors',
       type: 'relationship',
+      index: true,
       admin: {
         position: 'sidebar',
       },

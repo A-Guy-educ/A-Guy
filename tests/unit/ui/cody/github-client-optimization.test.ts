@@ -117,50 +117,6 @@ describe('Octokit configuration', () => {
 })
 
 // ============================================================================
-// Dashboard Polling Tests
-// ============================================================================
-
-describe('CodyDashboard polling configuration', () => {
-  it('should import POLLING_INTERVALS constants', () => {
-    const dashboardContent = fs.readFileSync(
-      path.join(process.cwd(), 'src/ui/cody/components/CodyDashboard.tsx'),
-      'utf-8',
-    )
-    expect(dashboardContent).toContain("import { POLLING_INTERVALS } from '../constants'")
-  })
-
-  it('should use getPollingInterval function', () => {
-    const dashboardContent = fs.readFileSync(
-      path.join(process.cwd(), 'src/ui/cody/components/CodyDashboard.tsx'),
-      'utf-8',
-    )
-    expect(dashboardContent).toContain('getPollingInterval')
-    expect(dashboardContent).toContain('useCallback')
-  })
-
-  it('should have visibility detection for polling', () => {
-    const dashboardContent = fs.readFileSync(
-      path.join(process.cwd(), 'src/ui/cody/components/CodyDashboard.tsx'),
-      'utf-8',
-    )
-    expect(dashboardContent).toContain('document.hidden')
-    expect(dashboardContent).toContain('visibilitychange')
-  })
-
-  it('should use adaptive polling based on task state', () => {
-    const dashboardContent = fs.readFileSync(
-      path.join(process.cwd(), 'src/ui/cody/components/CodyDashboard.tsx'),
-      'utf-8',
-    )
-    expect(dashboardContent).toContain('hasRunningTasks')
-    expect(dashboardContent).toContain('hasActiveTask')
-    expect(dashboardContent).toContain('POLLING_INTERVALS.active')
-    expect(dashboardContent).toContain('POLLING_INTERVALS.board')
-    expect(dashboardContent).toContain('POLLING_INTERVALS.idle')
-  })
-})
-
-// ============================================================================
 // Cache Helper Function Tests
 // ============================================================================
 

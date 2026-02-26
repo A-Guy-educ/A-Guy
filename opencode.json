@@ -63,7 +63,7 @@
       "description": "Creates branch, commits changes, opens pull request"
     },
     "cody-expert": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "anthropic/claude-opus-4-6",
       "description": "Cody pipeline expert - understands pipeline execution, debugging, adding new stages"
     }
   },

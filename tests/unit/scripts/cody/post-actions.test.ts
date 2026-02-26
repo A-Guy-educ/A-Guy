@@ -5,6 +5,7 @@ import * as clarifyWorkflow from '../../../../scripts/cody/clarify-workflow'
 vi.mock('../../../../scripts/cody/pipeline-utils', () => ({
   readTask: vi.fn(),
   resolvePipelineProfile: vi.fn(() => 'lightweight'),
+  resolveControlMode: vi.fn(() => 'risk-gated'),
   stageOutputFile: vi.fn((taskDir: string, stage: string) => `${taskDir}/${stage}.json`),
 }))
 
@@ -96,8 +97,10 @@ describe('Post-Actions', () => {
 
   describe('check-gate', () => {
     it('should read taskDef from file when ctx.taskDef is null (BUG-F fix)', async () => {
-      // ctx.taskDef is null
-      vi.mocked(pipelineUtils.readTask).mockReturnValue(mockTaskDef)
+      // ctx.taskDef is null, risk_level medium → risk-gated → gate enforced
+      const mediumRiskTask = { ...mockTaskDef, risk_level: 'medium' as const }
+      vi.mocked(pipelineUtils.readTask).mockReturnValue(mediumRiskTask)
+      vi.mocked(pipelineUtils.resolveControlMode).mockReturnValue('risk-gated')
       vi.mocked(clarifyWorkflow.handleGateApproval).mockReturnValue('waiting')
 
       const action: PostAction = { type: 'check-gate', gate: 'taskify' }
@@ -110,7 +113,9 @@ describe('Post-Actions', () => {
     })
 
     it('should use ctx.taskDef when available instead of reading from file', async () => {
-      ctx.taskDef = mockTaskDef
+      const mediumRiskTask = { ...mockTaskDef, risk_level: 'medium' as const }
+      ctx.taskDef = mediumRiskTask
+      vi.mocked(pipelineUtils.resolveControlMode).mockReturnValue('risk-gated')
       vi.mocked(clarifyWorkflow.handleGateApproval).mockReturnValue('approved')
 
       const action: PostAction = { type: 'check-gate', gate: 'taskify' }
@@ -119,6 +124,18 @@ describe('Post-Actions', () => {
 
       // Should not have read from file since ctx.taskDef was already set
       expect(pipelineUtils.readTask).not.toHaveBeenCalled()
+    })
+
+    it('should skip gate when controlMode is auto (low risk)', async () => {
+      ctx.taskDef = mockTaskDef // low risk
+      vi.mocked(pipelineUtils.resolveControlMode).mockReturnValue('auto')
+
+      const action: PostAction = { type: 'check-gate', gate: 'taskify' }
+
+      await executePostAction(ctx, action, null)
+
+      // Gate should be skipped — handleGateApproval should NOT be called
+      expect(clarifyWorkflow.handleGateApproval).not.toHaveBeenCalled()
     })
   })
 })

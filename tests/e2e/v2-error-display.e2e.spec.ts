@@ -11,11 +11,28 @@
  */
 
 import { test, expect } from '@playwright/test'
+import { cleanupTestUsers, generateTestUserEmail, setupAuthenticatedUser } from './helpers/auth'
 
 test.describe('V2 Error Display in Status Panel', () => {
+  // Create admin user and authenticate before tests
   test.beforeEach(async ({ page }) => {
-    // Navigate to admin area - assume we're logged in
+    // Authenticate as admin user
+    await setupAuthenticatedUser(
+      page,
+      {
+        email: generateTestUserEmail('admin-test'),
+        password: 'TestPassword123!',
+      },
+      'admin',
+    )
+
+    // Navigate to admin area
     await page.goto('http://localhost:3000/admin')
+  })
+
+  // Clean up test users after all tests complete
+  test.afterAll(async () => {
+    await cleanupTestUsers()
   })
 
   test.describe('Error Details Rendering', () => {
