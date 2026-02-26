@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { useDirectChatAssetUpload } from './useDirectChatAssetUpload'
 
 export interface ChatMessage {
+  id: string
   role: ChatRole
   content: string
   media?: Array<{ mediaId: string; filename?: string; url?: string }>
@@ -83,7 +84,7 @@ export function useNotebookChat({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: ChatRole.Assistant, content: initialMessage },
+    { id: crypto.randomUUID(), role: ChatRole.Assistant, content: initialMessage },
   ])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -204,10 +205,12 @@ export function useNotebookChat({
               // Map API messages to chat messages
               const loadedMessages: ChatMessage[] = validMessages.map((msg) => {
                 const raw = msg as {
+                  id?: string
                   media?: Array<{ mediaId: string; filename?: string; url?: string }>
                   chatAssets?: Array<{ chatAssetId: string; filename?: string }>
                 }
                 return {
+                  id: raw.id || crypto.randomUUID(),
                   role:
                     msg.role === ChatRole.User || msg.role === 'user'
                       ? ChatRole.User
@@ -345,6 +348,7 @@ export function useNotebookChat({
       : undefined
 
     const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
       role: ChatRole.User,
       content: message,
       chatAssets: chatAssetMetadata.length > 0 ? chatAssetMetadata : undefined,
@@ -408,6 +412,7 @@ export function useNotebookChat({
 
         // Create placeholder assistant message for streaming
         const placeholderMessage: ChatMessage = {
+          id: crypto.randomUUID(),
           role: ChatRole.Assistant,
           content: '',
         }
@@ -420,7 +425,7 @@ export function useNotebookChat({
         for await (const event of stream) {
           if (event.type === 'chunk' && event.text) {
             fullText += event.text
-            // Update the last message with streaming content
+            // Update the last message with streaming content (preserves placeholderMessage.id)
             setMessages((prev) => {
               const updated = [...prev]
               updated[updated.length - 1] = { ...placeholderMessage, content: fullText }
@@ -531,6 +536,7 @@ export function useNotebookChat({
 
       if (result.message) {
         const assistantMessage: ChatMessage = {
+          id: crypto.randomUUID(),
           role: ChatRole.Assistant,
           content: result.message,
         }
@@ -556,7 +562,9 @@ export function useNotebookChat({
 
       if (result.success) {
         // Clear messages and show welcome
-        setMessages([{ role: ChatRole.Assistant, content: initialMessage }])
+        setMessages([
+          { id: crypto.randomUUID(), role: ChatRole.Assistant, content: initialMessage },
+        ])
         toast.success(resetSuccessMessage)
         // Track guest mode
         if (result.isGuestMode) {
@@ -603,7 +611,10 @@ export function useNotebookChat({
 
   const addAssistantMessage = useCallback(
     (content: string) => {
-      setMessages((prev) => [...prev, { role: ChatRole.Assistant, content }])
+      setMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), role: ChatRole.Assistant, content },
+      ])
 
       // Persist to DB so the message survives page refresh
       if (contextKey) {

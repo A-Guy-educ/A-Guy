@@ -65,7 +65,7 @@ describe('useNotebookChat', () => {
     const { result } = renderHook(() => useNotebookChat(defaultProps))
 
     expect(result.current.messages).toEqual([
-      { role: ChatRole.Assistant, content: defaultProps.initialMessage },
+      expect.objectContaining({ role: ChatRole.Assistant, content: defaultProps.initialMessage }),
     ])
 
     await waitFor(() => expect(result.current.isLoadingHistory).toBe(false))
@@ -206,7 +206,7 @@ describe('useNotebookChat', () => {
     expect(apiService.resetChat).toHaveBeenCalledWith('lessons:lesson-1')
     expect(toast.success).toHaveBeenCalledWith(defaultProps.resetSuccessMessage)
     expect(result.current.messages).toEqual([
-      { role: ChatRole.Assistant, content: defaultProps.initialMessage },
+      expect.objectContaining({ role: ChatRole.Assistant, content: defaultProps.initialMessage }),
     ])
   })
 
