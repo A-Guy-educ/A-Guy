@@ -567,6 +567,10 @@ export function parseCliArgs(argv: string[]): CodyInput {
   if (!cliSet.has('runUrl') && process.env.RUN_URL) {
     input.runUrl = process.env.RUN_URL
   }
+  // Store raw comment body for gate approval detection
+  if (!input.commentBody && process.env.COMMENT_BODY) {
+    input.commentBody = process.env.COMMENT_BODY
+  }
 
   // Determine local mode: explicitly set or auto-detect from GITHUB_ACTIONS
   if (input.local === undefined) {
