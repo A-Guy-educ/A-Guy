@@ -354,6 +354,26 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
         if (gateResult === 'approved') {
           console.log(`Gate ${pausedStage} approved — resuming pipeline`)
 
+          // Write approved file to cache approval for future runs
+          const approvedPath = path.join(taskDir, `gate-${pausedStage}-approved.md`)
+          fs.writeFileSync(
+            approvedPath,
+            `# Gate Approved\n\nApproved at ${pausedStage} gate.\nApproved via @cody approve command.\n`,
+          )
+
+          // Commit and push the approval file so subsequent runs can find it
+          const { commitPipelineFiles } = await import('./git-utils')
+          await commitPipelineFiles({
+            taskDir,
+            taskId: input.taskId,
+            message: `ci(cody): gate ${pausedStage} approved for ${input.taskId}`,
+            ensureBranch: true,
+            stagingStrategy: 'task-only',
+            push: true,
+            isCI: !input.local,
+            dryRun: input.dryRun,
+          })
+
           // Mark the paused stage as completed in status
           const { loadState, writeState } = await import('./engine/status')
           const state = loadState(input.taskId)
