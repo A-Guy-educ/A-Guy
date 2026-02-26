@@ -285,10 +285,8 @@ describe('parseCliArgs', () => {
 
   it('should parse --issue-number 42', () => {
     const result = parseCliArgs(['--task-id', '260218-task', '--issue-number', '42'])
-    // Use env var in CI, otherwise use test default
-    expect(result.issueNumber).toBe(
-      process.env.ISSUE_NUMBER ? parseInt(process.env.ISSUE_NUMBER, 10) : 42,
-    )
+    // CLI args take precedence over env vars
+    expect(result.issueNumber).toBe(42)
   })
 
   it('should parse --comment-body "/cody spec 260218-task" and merge parsed values', () => {
