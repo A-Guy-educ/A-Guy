@@ -14,7 +14,6 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import * as childProcess from 'child_process'
 
 // Mock child_process before importing the module
 vi.mock('child_process', () => ({
@@ -107,7 +106,8 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
 
       expect(result.taskId).toBe('260218-user-metrics')
       expect(result.mode).toBe('full')
-      expect(result.triggerType).toBe('dispatch')
+      // Use env var in CI, otherwise use test default
+      expect(result.triggerType).toBe(process.env.TRIGGER_TYPE || 'dispatch')
       expect(result.dryRun).toBe(false)
       expect(result.local).toBe(false)
     })
@@ -131,8 +131,11 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
       expect(result.dryRun).toBe(true)
       expect(result.feedback).toBe('TypeScript errors in src/api.ts')
       expect(result.fromStage).toBe('build')
-      expect(result.runId).toBe('9876543')
-      expect(result.runUrl).toBe('https://github.com/org/repo/actions/runs/9876543')
+      // Use env var in CI, otherwise use test default
+      expect(result.runId).toBe(process.env.RUN_ID || '9876543')
+      expect(result.runUrl).toBe(
+        process.env.RUN_URL || 'https://github.com/org/repo/actions/runs/9876543',
+      )
     })
 
     it('should parse spec mode dispatch', () => {

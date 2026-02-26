@@ -24,8 +24,13 @@ export function generateTestUserEmail(prefix = 'e2e-test'): string {
 /**
  * Create a test user via Payload Local API
  * Automatically registers the user for cleanup
+ * @param user - User data including email and password
+ * @param role - User role (defaults to 'student')
  */
-export async function createTestUser(user: TestUser): Promise<TestUser> {
+export async function createTestUser(
+  user: TestUser,
+  role: 'admin' | 'student' = 'student',
+): Promise<TestUser> {
   const payload = await getPayload({ config })
 
   // Check if user already exists
@@ -60,7 +65,7 @@ export async function createTestUser(user: TestUser): Promise<TestUser> {
       name: user.email.split('@')[0] || 'Test User', // Extract name from email
       email: user.email,
       password: user.password, // Payload will hash this automatically
-      role: 'student',
+      role,
     },
   })
 
@@ -243,10 +248,17 @@ export async function cleanupTestUsers(): Promise<void> {
 
 /**
  * Get or create a test user and authenticate them via browser
+ * @param page - Playwright page
+ * @param user - User data
+ * @param role - User role (defaults to 'student')
  */
-export async function setupAuthenticatedUser(page: Page, user: TestUser): Promise<TestUser> {
+export async function setupAuthenticatedUser(
+  page: Page,
+  user: TestUser,
+  role: 'admin' | 'student' = 'student',
+): Promise<TestUser> {
   // Create user if needed (via Local API) - this ensures user exists
-  const testUser = await createTestUser(user)
+  const testUser = await createTestUser(user, role)
 
   // Use API-based authentication (most reliable)
   try {
