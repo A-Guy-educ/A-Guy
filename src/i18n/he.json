@@ -399,5 +399,45 @@
       "privacy": "מדיניות פרטיות",
       "contact": "צור קשר"
     }
+  },
+  "studyPlan": {
+    "pageTitle": "תוכנית 7 ימי המיקוד",
+    "pageSubtitle": "השבוע הקריטי ביותר להצלחה בבחינה",
+    "examDate": "מתי הבחינה?",
+    "topicsTitle": "נושאים למיקוד",
+    "addTopicPlaceholder": "הוסף נושא...",
+    "mastery": {
+      "weak": "חלש",
+      "medium": "בינוני",
+      "strong": "שולט"
+    },
+    "scheduleTitle": "לו\"ז 7 ימי המיקוד",
+    "scheduleSubtitle": "(הספירה לאחור)",
+    "markComplete": "סיימתי",
+    "completed": "הושלם",
+    "minutesShort": "דק'",
+    "activity": {
+      "practice": "אימון ממוקד",
+      "hybrid": "היברידי",
+      "full_simulation": "סימולציה מלאה",
+      "reinforcement": "חיזוק",
+      "warmup": "חימום"
+    },
+    "cta": {
+      "practice": "התחל אימון",
+      "hybrid": "התחל סימולציה",
+      "full_simulation": "התחל סימולציה",
+      "reinforcement": "תעד טעויות",
+      "warmup": "התחל סקירה"
+    },
+    "empty": {
+      "title": "מוכנים לצאת לדרך?",
+      "description": "הזן את תאריך הבחינה והוסף נושאים כדי ליצור את תוכנית המיקוד שלך ל-7 ימים."
+    },
+    "error": {
+      "noTopics": "הוסף לפחות נושא אחד",
+      "noExamDate": "בחר תאריך בחינה"
+    },
+    "loading": "טוען..."
   }
 }

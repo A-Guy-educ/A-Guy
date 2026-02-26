@@ -1594,6 +1594,44 @@ export interface UserProgress {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Active 7-day study plan snapshots (one per course)
+   */
+  studyPlans?:
+    | {
+        courseId: string;
+        examDate: string;
+        generatedAt: string;
+        topics?:
+          | {
+              topicId: string;
+              topicLabel: string;
+              mastery: 'weak' | 'medium' | 'strong';
+              id?: string | null;
+            }[]
+          | null;
+        days?:
+          | {
+              dayId: string;
+              date: string;
+              activityType: 'practice' | 'hybrid' | 'full_simulation' | 'reinforcement' | 'warmup';
+              topicIds?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | unknown[]
+                | string
+                | number
+                | boolean
+                | null;
+              status?: ('planned' | 'completed') | null;
+              estimatedDurationMinutes?: number | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2701,6 +2739,33 @@ export interface UserProgressSelect<T extends boolean = true> {
         status?: T;
         score?: T;
         lastAccessedAt?: T;
+        id?: T;
+      };
+  studyPlans?:
+    | T
+    | {
+        courseId?: T;
+        examDate?: T;
+        generatedAt?: T;
+        topics?:
+          | T
+          | {
+              topicId?: T;
+              topicLabel?: T;
+              mastery?: T;
+              id?: T;
+            };
+        days?:
+          | T
+          | {
+              dayId?: T;
+              date?: T;
+              activityType?: T;
+              topicIds?: T;
+              status?: T;
+              estimatedDurationMinutes?: T;
+              id?: T;
+            };
         id?: T;
       };
   updatedAt?: T;

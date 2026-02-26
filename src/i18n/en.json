@@ -399,5 +399,45 @@
       "privacy": "Privacy Policy",
       "contact": "Contact Us"
     }
+  },
+  "studyPlan": {
+    "pageTitle": "7-Day Focus Plan",
+    "pageSubtitle": "The most critical week for exam success",
+    "examDate": "When is the exam?",
+    "topicsTitle": "Topics to Focus On",
+    "addTopicPlaceholder": "Add a topic...",
+    "mastery": {
+      "weak": "Weak",
+      "medium": "Medium",
+      "strong": "Strong"
+    },
+    "scheduleTitle": "7-Day Focus Schedule",
+    "scheduleSubtitle": "(The countdown)",
+    "markComplete": "Mark Complete",
+    "completed": "Completed",
+    "minutesShort": "min",
+    "activity": {
+      "practice": "Focused Practice",
+      "hybrid": "Hybrid",
+      "full_simulation": "Full Simulation",
+      "reinforcement": "Reinforcement",
+      "warmup": "Warmup"
+    },
+    "cta": {
+      "practice": "Start Practice",
+      "hybrid": "Start Simulation",
+      "full_simulation": "Start Simulation",
+      "reinforcement": "Log Mistakes",
+      "warmup": "Start Review"
+    },
+    "empty": {
+      "title": "Ready to start?",
+      "description": "Enter your exam date and add topics to generate your 7-day focus plan."
+    },
+    "error": {
+      "noTopics": "Add at least one topic",
+      "noExamDate": "Select an exam date"
+    },
+    "loading": "Loading..."
   }
 }
