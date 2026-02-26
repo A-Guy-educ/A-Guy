@@ -1,0 +1,24 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/services/guest-session.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "guest-sessions collection exists in the codebase",
+    "GuestSessions collection is exported and included in payload.config.ts",
+    "Running generate:types will add the collection to the type registry"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains clear 3-step fix plan with specific file locations and line numbers. Has clear requirements (remove as any casts) and acceptance criteria (types are correct)."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
