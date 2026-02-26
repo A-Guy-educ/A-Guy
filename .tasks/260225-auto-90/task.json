@@ -1,21 +1,23 @@
 {
   "task_type": "fix_bug",
   "risk_level": "low",
-  "confidence": 0.95,
+  "confidence": 1,
   "primary_domain": "backend",
   "scope": [
     "src/server/services/guest-session.ts"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "GuestSessions collection exists and is properly exported in payload.config.ts"
+    "The guest-sessions collection slug is valid but not in generated types",
+    "Running generate:types will register the collection properly",
+    "No runtime behavior changes - only type fixes"
   ],
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Input has clear issue title with priority, affected file with line numbers (149, 173, 197, 218, 236, 262, 283), and 3-step fix approach (generate types, check exports, remove casts)"
+    "reasoning": "Task has clear file paths with line numbers, clear expected fix with steps (generate:types, check export, remove casts), and acceptance criteria (remove all as any casts). Promoted spec.md."
   },
   "pipeline_profile": "lightweight",
   "pipeline": "spec_execute_verify"
