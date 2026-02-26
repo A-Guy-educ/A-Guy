@@ -177,6 +177,7 @@ export const Exercises: CollectionConfig = {
           name: 'sourceDoc',
           type: 'relationship',
           relationTo: 'media',
+          index: true,
           admin: { description: 'Original PDF media for conversion exercises' },
         },
         {
