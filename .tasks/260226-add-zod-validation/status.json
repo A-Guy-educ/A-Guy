@@ -4,14 +4,35 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-02-26T16:28:47.757Z",
-  "updatedAt": "2026-02-26T16:28:47.759Z",
+  "updatedAt": "2026-02-26T16:42:58.369Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T16:28:47.759Z",
+      "completedAt": "2026-02-26T16:29:52.355Z",
+      "outputFile": "taskify.md"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T16:29:55.392Z",
+      "completedAt": "2026-02-26T16:31:54.141Z",
+      "outputFile": "architect.md"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T16:31:54.142Z",
+      "completedAt": "2026-02-26T16:42:37.763Z",
+      "outputFile": "build.md"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-02-26T16:28:47.759Z"
+      "startedAt": "2026-02-26T16:42:58.369Z"
     }
   }
 }

@@ -14,6 +14,7 @@ import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import type { Lesson } from '@/payload-types'
+import { z } from 'zod'
 
 type ErrorCode =
   | 'UNAUTHORIZED'
@@ -30,6 +31,12 @@ function errorResponse(
 ): NextResponse {
   return NextResponse.json({ error: { code, message }, ...extra }, { status })
 }
+
+// Zod schema for request validation
+export const queueV2RequestSchema = z.object({
+  lessonId: z.string().min(1),
+  mediaId: z.string().min(1),
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,12 +66,16 @@ export async function POST(request: NextRequest) {
       return errorResponse('UNAUTHORIZED', 'Admin access required', 401)
     }
 
-    const { lessonId, mediaId } = await request.json()
-
-    // Validate required fields
-    if (!lessonId || !mediaId) {
-      return errorResponse('VALIDATION_ERROR', 'Both lessonId and mediaId are required', 400)
+    const body = await request.json()
+    const parsed = queueV2RequestSchema.safeParse(body)
+    if (!parsed.success) {
+      return errorResponse(
+        'VALIDATION_ERROR',
+        `Invalid request body: ${parsed.error.issues.map((i) => i.message).join(', ')}`,
+        400,
+      )
     }
+    const { lessonId, mediaId } = parsed.data
 
     // Fetch lesson to get tenant
     const lesson = await payload.findByID({
