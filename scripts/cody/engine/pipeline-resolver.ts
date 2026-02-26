@@ -6,7 +6,10 @@
  */
 
 import type { PipelineDefinition, PipelineContext } from '../engine/types'
-import { buildPipeline } from '../pipeline/definitions'
+import {
+  buildPipeline,
+  rebuildPipelineAfterTaskify as rebuildFromDefinitions,
+} from '../pipeline/definitions'
 
 /**
  * Resolve pipeline for a given mode
@@ -34,16 +37,17 @@ export function resolvePipelineForMode(
 
 /**
  * Rebuild pipeline after taskify completes
- * Extends the pipeline with remaining stages based on profile
+ * Extends the pipeline with remaining stages based on profile.
+ *
+ * Uses the dedicated rebuildPipelineAfterTaskify from definitions.ts
+ * which correctly respects the resolved profile for spec stage order,
+ * unlike buildPipeline('rerun') which always uses SPEC_ORDER_STANDARD.
  */
 export function rebuildPipelineAfterTaskify(
-  _currentPipeline: PipelineDefinition,
+  currentPipeline: PipelineDefinition,
   ctx: PipelineContext,
 ): PipelineDefinition {
-  // Re-build with the resolved profile
-  // Use 'rerun' mode to include both spec and impl stages since we're
-  // continuing from where the first phase left off
-  return buildPipeline('rerun', ctx.profile, ctx.input.clarify ?? false, ctx)
+  return rebuildFromDefinitions(currentPipeline, ctx)
 }
 
 /**
