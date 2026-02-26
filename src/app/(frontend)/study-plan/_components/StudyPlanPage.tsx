@@ -155,9 +155,9 @@ export function StudyPlanPage() {
                 type="date"
                 value={examDate}
                 onChange={(e) => {
-                userEdited.current = true
-                setExamDate(e.target.value)
-              }}
+                  userEdited.current = true
+                  setExamDate(e.target.value)
+                }}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
               />
             </div>
