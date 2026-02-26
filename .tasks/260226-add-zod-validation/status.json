@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "taskId": "260226-add-zod-validation",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-26T16:28:47.757Z",
+  "updatedAt": "2026-02-26T16:28:47.759Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-26T16:28:47.759Z"
+    }
+  }
+}
