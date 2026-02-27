@@ -1,0 +1,29 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/SafeHtml/index.tsx",
+    "src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx",
+    "src/ui/web/exerciserenderer/utils/svgSanitize.ts",
+    "src/ui/web/exerciserenderer/blocks/HtmlBlockRenderer/index.tsx",
+    "src/server/payload/blocks/HtmlBlock/config.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The HTML sanitizer is stripping <style> tags and inline CSS needed for CSS animations",
+    "The SVG sanitizer is too restrictive and removing animation elements like <animate> and gradients",
+    "The HtmlBlockRenderer may not properly handle or preserve CSS from the HTML content",
+    "The SvgRenderer may not support advanced SVG features like gradients and animations"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains structured sections including Environment, Preconditions, Steps to Reproduce, Expected Result, Actual Result, Suspected Areas, and Scope & Impact. Has clear requirements (expected behavior) and acceptance criteria (expected vs actual results). Promoted spec.md with extracted requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
