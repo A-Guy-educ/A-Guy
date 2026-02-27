@@ -3,74 +3,34 @@
   "taskId": "260227-frontend-loading-error",
   "mode": "full",
   "pipeline": "spec_execute_verify",
-  "startedAt": "2026-02-27T16:02:05.892Z",
-  "updatedAt": "2026-02-27T16:42:05.128Z",
+  "startedAt": "2026-02-27T17:05:08.082Z",
+  "updatedAt": "2026-02-27T17:09:41.201Z",
   "state": "running",
-  "cursor": "apply-audit",
+  "cursor": null,
   "stages": {
     "taskify": {
       "state": "completed",
       "retries": 0,
-      "startedAt": "2026-02-27T16:02:05.895Z",
-      "completedAt": "2026-02-27T16:03:15.657Z",
+      "startedAt": "2026-02-27T17:05:08.084Z",
+      "completedAt": "2026-02-27T17:06:12.736Z",
       "outputFile": "taskify.md"
     },
-    "spec": {
+    "architect": {
       "state": "skipped",
       "retries": 0,
-      "skipped": "Promoted via input_quality (file exists)"
-    },
-    "gap": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-02-27T16:03:20.843Z",
-      "completedAt": "2026-02-27T16:07:09.092Z",
-      "outputFile": "gap.md"
-    },
-    "architect": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-02-27T16:07:09.093Z",
-      "completedAt": "2026-02-27T16:09:11.334Z",
-      "outputFile": "architect.md"
-    },
-    "plan-gap": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-02-27T16:09:11.338Z",
-      "completedAt": "2026-02-27T16:11:24.810Z",
-      "outputFile": "plan-gap.md"
+      "skipped": "Pipeline is spec_only"
     },
     "build": {
       "state": "completed",
       "retries": 0,
-      "startedAt": "2026-02-27T16:34:16.704Z",
-      "completedAt": "2026-02-27T16:36:54.037Z",
+      "startedAt": "2026-02-27T17:06:14.960Z",
+      "completedAt": "2026-02-27T17:09:18.835Z",
       "outputFile": "build.md"
     },
     "commit": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-02-27T16:37:13.221Z",
-      "completedAt": "2026-02-27T16:37:15.422Z"
-    },
-    "verify": {
-      "state": "completed",
-      "retries": 0,
-      "completedAt": "2026-02-27T16:38:48.585Z",
-      "outputFile": "verify.md"
-    },
-    "auditor": {
-      "state": "completed",
-      "retries": 0,
-      "completedAt": "2026-02-27T16:38:49.077Z",
-      "outputFile": "auditor.md"
-    },
-    "apply-audit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-02-27T16:42:05.128Z"
+      "startedAt": "2026-02-27T17:09:41.201Z"
     }
-  },
-  "completedAt": "2026-02-27T16:41:34.049Z"
+  }
 }
