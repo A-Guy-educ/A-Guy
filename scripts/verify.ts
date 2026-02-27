@@ -2,10 +2,11 @@
 /**
  * Pre-push verification script
  * Usage: pnpm verify
- * Runs: generate:types → generate:importmap → prettier → lint → typecheck → build → test:unit
+ * Runs: generate:types → generate:importmap → [parallel: prettier, lint, typecheck, build, test:unit]
  */
 
 import { execSync } from 'child_process'
+import { cpus } from 'os'
 
 // ANSI colors (same pattern as setup.ts)
 const colors = {
@@ -13,7 +14,6 @@ const colors = {
   bright: '\x1b[1m',
   green: '\x1b[32m',
   red: '\x1b[31m',
-  cyan: '\x1b[36m',
   yellow: '\x1b[33m',
 }
 
@@ -33,10 +33,6 @@ function info(message: string) {
   log(`${message}`, colors.yellow)
 }
 
-function section(message: string) {
-  log(`\n${message}`, colors.cyan)
-}
-
 interface VerifyStep {
   name: string
   command: string
@@ -50,19 +46,20 @@ const steps: VerifyStep[] = [
   { name: 'Unit tests', command: 'pnpm test:unit' },
 ]
 
-function runStep(stepInfo: VerifyStep, index: number, total: number): boolean {
-  section(`[${index}/${total}] Running ${stepInfo.name}...`)
-  try {
-    execSync(stepInfo.command, { stdio: 'inherit' })
-    success(`${stepInfo.name} passed`)
-    return true
-  } catch {
-    error(`${stepInfo.name} failed`)
-    return false
-  }
+async function runStepAsync(
+  stepInfo: VerifyStep,
+): Promise<{ name: string; success: boolean; error?: Error }> {
+  return new Promise((resolve) => {
+    try {
+      execSync(stepInfo.command, { stdio: 'inherit' })
+      resolve({ name: stepInfo.name, success: true })
+    } catch (err) {
+      resolve({ name: stepInfo.name, success: false, error: err as Error })
+    }
+  })
 }
 
-function main(): void {
+async function main(): Promise<void> {
   log('\n=== Verification Gate ===\n', colors.bright)
 
   // Pre-commit verifications
@@ -87,14 +84,52 @@ function main(): void {
     process.exit(1)
   }
 
-  info('running verifications:')
+  info('running verifications in parallel:')
 
-  // Run verification steps
-  for (let i = 0; i < steps.length; i++) {
-    if (!runStep(steps[i], i, steps.length - 1)) {
-      error('\nVerification failed!')
-      process.exit(1)
+  // Run verification steps in parallel
+  const maxConcurrency = Math.min(cpus().length, steps.length)
+  info(`(max concurrency: ${maxConcurrency})\n`)
+
+  // Process steps in batches for better output readability
+  let stepIndex = 0
+  const results: { name: string; success: boolean }[] = []
+
+  async function runBatch(): Promise<void> {
+    const batch: VerifyStep[] = []
+    const batchStart = stepIndex
+
+    // Take up to maxConcurrency steps for this batch
+    while (stepIndex < steps.length && stepIndex < batchStart + maxConcurrency) {
+      batch.push(steps[stepIndex])
+      stepIndex++
     }
+
+    if (batch.length === 0) return
+
+    // Run batch in parallel
+    const batchResults = await Promise.all(batch.map((step) => runStepAsync(step)))
+    results.push(...batchResults)
+
+    // Log results for this batch
+    for (const result of batchResults) {
+      if (result.success) {
+        success(`${result.name} passed`)
+      } else {
+        error(`${result.name} failed`)
+      }
+    }
+  }
+
+  // Run all batches
+  while (stepIndex < steps.length) {
+    await runBatch()
+  }
+
+  // Check for failures
+  const failedSteps = results.filter((r) => !r.success)
+  if (failedSteps.length > 0) {
+    error(`\nVerification failed! Failed steps: ${failedSteps.map((f) => f.name).join(', ')}`)
+    process.exit(1)
   }
 
   success('\n=== All verification checks passed ===\n')
