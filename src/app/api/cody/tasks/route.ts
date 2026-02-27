@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
         const column = getColumnForIssue(issue, workflowRun?.status)
 
         return {
-          id: taskId || issue.number.toString(),
+          id: taskId ? `${taskId}-${issue.number}` : issue.number.toString(),
           issueNumber: issue.number,
           title: issue.title,
           body: issue.body || '',

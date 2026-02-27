@@ -8,7 +8,6 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-import { InitTheme } from '@/ui/web/providers/Theme/InitTheme'
 import '@/app/(frontend)/globals.css'
 
 function MakeQueryClient() {
@@ -38,13 +37,7 @@ export default function CodyLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <QueryClientProvider client={queryClient}>
-      <html lang="en" suppressHydrationWarning>
-        <head>
-          <InitTheme />
-          <link href="/favicon.ico" rel="icon" sizes="32x32" />
-        </head>
-        <body className="min-h-screen bg-background text-foreground">{children}</body>
-      </html>
+      <div className="min-h-screen bg-background text-foreground">{children}</div>
     </QueryClientProvider>
   )
 }
