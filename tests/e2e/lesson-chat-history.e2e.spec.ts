@@ -13,7 +13,12 @@ import { expect, test } from '@playwright/test'
 import { cleanupTestUsers, generateTestUserEmail, setupAuthenticatedUser } from './helpers/auth'
 import { buildLessonUrl, getTestCourseData, seedTestCourseData } from './helpers/courses'
 
+// Skip all tests if OPENAI_API_KEY is not set - these tests require real AI service
+const hasOpenAIKey = !!process.env.OPENAI_API_KEY
+
 test.describe('Lesson Chat History Loading', () => {
+  test.skip(!hasOpenAIKey, 'Skipping Chat History tests: OPENAI_API_KEY is not set in environment')
+
   let testCourseData: Awaited<ReturnType<typeof getTestCourseData>>
 
   test.beforeAll(async () => {

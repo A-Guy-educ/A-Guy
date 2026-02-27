@@ -15,10 +15,11 @@ import { SignupFormFields } from './SignupFormFields'
 import { signupAction } from './actions/signup_createUser-action'
 import { validateSignupForm } from './actions/signup_validation-action'
 import { useAsyncAction } from '@/infra/loading/hooks/useAsyncAction'
+import { Spinner } from '@/infra/loading/components/Spinner'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
 import { LOADING_KEYS } from '@/infra/loading/keys'
-import { SystemLink } from '@/infra/loading/components/SystemLink'
-import { Spinner } from '@/infra/loading/components/Spinner'
+import { getOnboardingRedirect } from '@/infra/onboarding/redirect'
 
 function SignupFormContent() {
   const t = useTranslations('auth.signup')
@@ -100,8 +101,8 @@ function SignupFormContent() {
         identify(result.data.userId, userProperties)
       }
 
-      // Auto-login successful - redirect to returnTo
-      router.push(returnTo)
+      // Redirect to persona selection (onboarding step) for new users
+      router.push(getOnboardingRedirect(returnTo))
       router.refresh()
     }
   }

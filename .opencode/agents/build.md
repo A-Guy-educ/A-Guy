@@ -232,6 +232,11 @@ Invoke these subagents when working in their specific domains:
 **When:** After implementing any code, before quality checks
 **What to ask:** "Review for TypeScript compliance, import aliases, and general code quality."
 
+### @cody-expert
+
+**When:** Working on the Cody pipeline itself (`scripts/cody/**`, `.opencode/agents/**`, `.github/workflows/cody.yml`)
+**What to ask:** "Explain the pipeline architecture. How does the state machine work? What's the version system? Debug this pipeline issue."
+
 ## Skills (Workflow Automation)
 
 ### Install Recommended Skills First

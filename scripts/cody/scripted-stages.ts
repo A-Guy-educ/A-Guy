@@ -296,12 +296,12 @@ function buildPrBody(
   return lines.join('\n')
 }
 
-export function runPrStage(
+export async function runPrStage(
   taskDir: string,
   outputFile: string,
   cwd: string = process.cwd(),
   issueNumber?: number,
-): PrResult {
+): Promise<PrResult> {
   console.log('\n📝 Creating PR (scripted)...\n')
 
   const branch = getBranchName(cwd)
@@ -334,22 +334,55 @@ export function runPrStage(
 
   console.log(`  Title: ${title}`)
 
-  // Step 4: Create PR via gh CLI — use execFileSync with arg array to prevent injection
+  // Step 4: Create PR via GitHub REST API (more reliable than gh CLI in CI)
   // BUG-F fix: Use GH_PAT if non-empty, fall back to GH_TOKEN (don't use empty string)
   const ghToken = process.env.GH_PAT?.trim() || process.env.GH_TOKEN
+
+  // Extract owner and repo from git remote
+  let owner = ''
+  let repo = ''
+  try {
+    const remoteUrl = execFileSync('git', ['remote', 'get-url', 'origin'], {
+      cwd,
+      encoding: 'utf-8',
+    }).trim()
+    // Parse from: https://github.com/owner/repo.git or git@github.com:owner/repo.git
+    const match = remoteUrl.match(/github\.com[/:]([^/]+)\/([^/.]+)/)
+    if (match) {
+      owner = match[1]
+      repo = match[2]
+    }
+  } catch {
+    console.error('  ❌ Could not determine repo from git remote')
+    const report = `# PR Stage\n\nFailed to determine repository from git remote\n`
+    fs.writeFileSync(outputFile, report)
+    return { created: false, url: '', report }
+  }
+
   let prUrl = ''
   try {
-    prUrl = execFileSync(
-      'gh',
-      ['pr', 'create', '--title', title, '--base', defaultBranch, '--body-file', '-'],
-      {
-        cwd,
-        encoding: 'utf-8',
-        input: body,
-        stdio: ['pipe', 'pipe', 'inherit'],
-        env: { ...process.env, GH_TOKEN: ghToken },
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${ghToken}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
       },
-    ).trim()
+      body: JSON.stringify({
+        title,
+        body,
+        head: branch,
+        base: defaultBranch,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`GitHub API error: ${response.status} - ${errorText}`)
+    }
+
+    const prData = (await response.json()) as { html_url: string }
+    prUrl = prData.html_url
     console.log(`  ✅ PR created: ${prUrl}`)
   } catch (error: unknown) {
     const err = error as { message?: string }

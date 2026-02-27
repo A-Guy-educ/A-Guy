@@ -43,6 +43,11 @@ on:
           - github-hosted
           - self-hosted
         default: 'github-hosted'
+      version:
+        description: 'Pipeline version (branch, tag, or commit). Overrides CODY_DEFAULT_VERSION'
+        required: false
+        type: string
+        default: ''
 
   push:
     branches:
@@ -80,6 +85,7 @@ jobs:
         contains(github.event.comment.body, '/cody')))
     env:
       GH_TOKEN: ${{ github.token }}
+      CODY_DEFAULT_VERSION: cody-v1
     outputs:
       task_id: ${{ steps.parse.outputs.task_id }}
       mode: ${{ steps.parse.outputs.mode }}
@@ -92,6 +98,7 @@ jobs:
       trigger_type: ${{ steps.parse.outputs.trigger_type }}
       comment_body: ${{ steps.parse.outputs.comment_body }}
       runner: ${{ steps.parse.outputs.runner }}
+      version: ${{ steps.parse.outputs.version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -147,11 +154,14 @@ jobs:
           DISPATCH_FROM_STAGE: ${{ github.event.inputs.from_stage }}
           DISPATCH_CLARIFY: ${{ github.event.inputs.clarify }}
           DISPATCH_RUNNER: ${{ github.event.inputs.runner }}
+          DISPATCH_VERSION: ${{ github.event.inputs.version }}
           # Comment inputs (for orchestrator to parse)
           COMMENT_BODY: ${{ github.event.comment.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           # GitHub context (needed by script to detect trigger type)
           GITHUB_EVENT_NAME: ${{ github.event_name }}
+          # Default version (can be overridden by explicit --version in command)
+          CODY_DEFAULT_VERSION: ${{ env.CODY_DEFAULT_VERSION }}
         run: pnpm tsx scripts/cody/parse-inputs.ts
 
   # Job 1b: Notify on parse errors (invalid commands)
@@ -221,6 +231,7 @@ jobs:
       - name: Run actual pipeline (spec mode - runs taskify)
         env:
           GH_TOKEN: ${{ github.token }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
         run: |
           # Create simple test task
           mkdir -p .tasks/260225-smoke-test
@@ -292,6 +303,24 @@ jobs:
           git config --global user.email "242132053+aguyaharonyair@users.noreply.github.com"
           git config --global user.name "aguyaharonyair"
 
+      # Overlay pipeline version (if specified)
+      - name: Overlay pipeline version
+        if: needs.parse.outputs.version != ''
+        run: |
+          VERSION_REF="${{ needs.parse.outputs.version }}"
+          echo "Overlaying pipeline from: $VERSION_REF"
+
+          # Fetch the ref (could be branch, tag, or commit)
+          git fetch origin "$VERSION_REF" --depth=1 || true
+
+          # Checkout only pipeline files from that ref (not the whole repo)
+          # This preserves the feature branch and task files
+          git checkout "origin/$VERSION_REF" -- scripts/cody/ .opencode/agents/ opencode.json 2>/dev/null || \
+            git checkout "$VERSION_REF" -- scripts/cody/ .opencode/agents/ opencode.json 2>/dev/null || \
+            echo "Warning: Could not overlay from $VERSION_REF, using current code"
+
+          echo "Pipeline version: $VERSION_REF"
+
       - name: Run Cody
         env:
           # GitHub token for gh CLI (GH_PAT takes precedence for PR creation)
@@ -323,6 +352,7 @@ jobs:
           ISSUE_NUMBER: ${{ needs.parse.outputs.issue_number }}
           TRIGGER_TYPE: ${{ needs.parse.outputs.trigger_type }}
           COMMENT_BODY: ${{ needs.parse.outputs.comment_body }}
+          VERSION: ${{ needs.parse.outputs.version }}
 
           # GitHub context
           RUN_ID: ${{ github.run_id }}

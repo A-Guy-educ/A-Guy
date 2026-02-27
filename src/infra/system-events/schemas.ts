@@ -19,6 +19,11 @@ import {
   SolutionUnlockedSchema,
   StudentAnswerSubmittedSchema,
 } from './exercise-schemas'
+import {
+  StudyPlanDayCompletedSchema,
+  StudyPlanGeneratedSchema,
+  StudyPlanViewedSchema,
+} from './study-plan-schemas'
 
 // ============================================================================
 // Site Init Event
@@ -242,6 +247,11 @@ export const eventSchemas = {
   [SYSTEM_EVENTS.CHAT_AUTO_TRIGGERED]: ChatAutoTriggeredSchema,
   [SYSTEM_EVENTS.EXERCISE_VIEWED]: ExerciseViewedSchema,
   [SYSTEM_EVENTS.EXERCISE_COMPLETED]: ExerciseCompletedSchema,
+
+  // Study Plan System
+  [SYSTEM_EVENTS.STUDY_PLAN_VIEWED]: StudyPlanViewedSchema,
+  [SYSTEM_EVENTS.STUDY_PLAN_GENERATED]: StudyPlanGeneratedSchema,
+  [SYSTEM_EVENTS.STUDY_PLAN_DAY_COMPLETED]: StudyPlanDayCompletedSchema,
 } as const
 
 /**

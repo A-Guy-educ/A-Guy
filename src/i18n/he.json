@@ -101,6 +101,7 @@
       "expand": "הרחב",
       "collapse": "כווץ",
       "preferencesPlaceholder": "הגדרות ההעדפות יהיו זמינות בקרוב.",
+      "buildExamStudyPlan": "הכנת תוכנית לימודים לקראת מבחן",
       "teachersProfilePlaceholder": "תכונות פרופיל המורה בקרוב.",
       "teacherProfile": {
         "description": "בחר כיצד המורה הבינה מלאכותית שלך יתקשר איתך. זה משפיע על חוויית הצ'אט שלך.",
@@ -383,6 +384,19 @@
     "noDraftExercises": "לא נמצאו תרגילי טיוטה להמרה זו.",
     "pages": "עמודים {{start}}-{{end}}"
   },
+  "onboarding": {
+    "persona": {
+      "title": "בחר את סגנון המורה שלך",
+      "subtitle": "בחר כיצד המורה שלך יתקשר איתך. תוכל לשנות זאת בכל עת בהגדרות.",
+      "loading": "טוען סגנונות מורה...",
+      "selected": "נבחר",
+      "skip": "דלג לעת עתה",
+      "continue": "המשך",
+      "saving": "שומר...",
+      "saveFailed": "שמירת הבחירה נכשלה. נסה שוב.",
+      "noProfiles": "סגנונות מורה אינם זמינים כרגע. תוכל להגדיר זאת מאוחר יותר בהגדרות."
+    }
+  },
   "shop": {
     "backToLearning": "חזרה ללמידה",
     "title": "חנות הקורסים",
@@ -446,5 +460,53 @@
       "privacy": "מדיניות פרטיות",
       "contact": "צור קשר"
     }
+  },
+  "studyPlan": {
+    "pageTitle": "תוכנית 7 ימי המיקוד",
+    "pageSubtitle": "השבוע הקריטי ביותר להצלחה בבחינה",
+    "examDate": "מתי הבחינה?",
+    "topicsTitle": "נושאים למיקוד",
+    "addTopicPlaceholder": "הוסף נושא...",
+    "mastery": {
+      "weak": "חלש",
+      "medium": "בינוני",
+      "strong": "שולט"
+    },
+    "scheduleTitle": "לו\"ז 7 ימי המיקוד",
+    "scheduleSubtitle": "(הספירה לאחור)",
+    "markComplete": "סיימתי",
+    "undoComplete": "סמן כמתוכנן",
+    "completed": "הושלם",
+    "planned": "מתוכנן",
+    "editDay": "ערוך",
+    "saveEdit": "שמור",
+    "cancelEdit": "בטל",
+    "durationLabel": "משך (דקות)",
+    "startTimeLabel": "שעת התחלה",
+    "minutesShort": "דק'",
+    "activity": {
+      "practice": "אימון ממוקד",
+      "hybrid": "היברידי",
+      "full_simulation": "סימולציה מלאה",
+      "reinforcement": "חיזוק",
+      "warmup": "חימום"
+    },
+    "cta": {
+      "practice": "התחל אימון",
+      "hybrid": "התחל סימולציה",
+      "full_simulation": "התחל סימולציה",
+      "reinforcement": "תעד טעויות",
+      "warmup": "התחל סקירה"
+    },
+    "empty": {
+      "title": "מוכנים לצאת לדרך?",
+      "description": "הזן את תאריך הבחינה והוסף נושאים כדי ליצור את תוכנית המיקוד שלך ל-7 ימים."
+    },
+    "error": {
+      "noTopics": "הוסף לפחות נושא אחד",
+      "noExamDate": "בחר תאריך בחינה"
+    },
+    "loading": "טוען...",
+    "generateButton": "בנה תכנית מיקוד"
   }
 }
