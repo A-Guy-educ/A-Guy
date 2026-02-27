@@ -1,0 +1,23 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/app/(frontend)/loading.tsx",
+    "src/app/(frontend)/error.tsx",
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/loading.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Task includes specific file paths, code implementation examples, and step-by-step test instructions. Promoted spec.md and plan.md with the provided code samples and testing steps."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
