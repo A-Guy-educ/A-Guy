@@ -311,29 +311,20 @@ export function buildPipeline(
   // Determine stage order based on mode and profile
   let order: PipelineStep[] = []
 
-  if (mode === 'spec' || mode === 'full') {
-    // Spec stages
+  if (mode === 'spec') {
+    // Spec stages only
     const specOrder = profile === 'standard' ? SPEC_ORDER_STANDARD : SPEC_ORDER_LIGHTWEIGHT
-
     // If clarify is disabled, remove it from the spec order
     const filteredSpecOrder = clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
-
     order = [...filteredSpecOrder]
-
-    // For full mode, we'll rebuild after taskify to add impl stages
-    if (mode === 'full') {
-      // Full mode starts with just spec stages; impl stages added after taskify
-      // The engine's rebuildPipeline callback handles this
-      return { stages, order }
-    }
   } else if (mode === 'impl') {
     // Implementation stages only
     const implOrder = profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
     order = [...implOrder]
-  } else if (mode === 'rerun') {
-    // Rerun mode: include both spec and impl stages to support resuming from any stage
-    // The engine will skip completed stages and start from the specified fromStage
-    // Always use standard spec order to ensure spec/gap stages are included in rebuild
+  } else if (mode === 'full' || mode === 'rerun') {
+    // Full/rerun mode: include both spec and impl stages
+    // This ensures the pipeline survives restarts — all stages are present
+    // and the state machine efficiently skips completed ones
     const specOrder = SPEC_ORDER_STANDARD
     const implOrder = profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
     const filteredSpecOrder = clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
