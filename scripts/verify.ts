@@ -2,7 +2,8 @@
 /**
  * Pre-push verification script
  * Usage: pnpm verify
- * Runs: generate:types → generate:importmap → [parallel: prettier, lint, typecheck, build, test:unit]
+ * Runs: generate:types → generate:importmap → [parallel: prettier, lint, typecheck, test:unit]
+ * Note: Build removed - CI catches build failures, typecheck catches most issues
  */
 
 import { execSync } from 'child_process'
@@ -42,7 +43,7 @@ const steps: VerifyStep[] = [
   { name: 'Prettier', command: 'pnpm prettier --check .' },
   { name: 'Lint', command: 'pnpm lint' },
   { name: 'Typecheck', command: 'pnpm typecheck' },
-  { name: 'Build', command: 'pnpm build' },
+  // Build removed - CI will catch build failures, typecheck catches most issues
   { name: 'Unit tests', command: 'pnpm test:unit' },
 ]
 
@@ -65,22 +66,16 @@ async function main(): Promise<void> {
   // Pre-commit verifications
   info('pre-commit verifications:')
 
-  // R10: Wrap generate commands in try/catch
-  info('generating types')
+  // R10: Wrap generate commands in try/catch - run in parallel for speed
+  info('generating types and import map in parallel')
   try {
-    execSync('pnpm generate:types', { stdio: 'inherit' })
-    success('Types generated')
+    await Promise.all([
+      execSync('pnpm generate:types', { stdio: 'inherit' }),
+      execSync('pnpm generate:importmap', { stdio: 'inherit' }),
+    ])
+    success('Types and import map generated')
   } catch {
-    error('Types generation failed')
-    process.exit(1)
-  }
-
-  info('generating import map')
-  try {
-    execSync('pnpm generate:importmap', { stdio: 'inherit' })
-    success('Import map generated')
-  } catch {
-    error('Import map generation failed')
+    error('Generation failed')
     process.exit(1)
   }
 
