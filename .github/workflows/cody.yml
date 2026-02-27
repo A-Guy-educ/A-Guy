@@ -221,6 +221,7 @@ jobs:
       - name: Run actual pipeline (spec mode - runs taskify)
         env:
           GH_TOKEN: ${{ github.token }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
         run: |
           # Create simple test task
           mkdir -p .tasks/260225-smoke-test
