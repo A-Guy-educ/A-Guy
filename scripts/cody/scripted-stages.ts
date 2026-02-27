@@ -397,7 +397,7 @@ export async function runPrStage(
 
     // Post comment to issue linking to PR
     if (issueNumber) {
-      postComment(issueNumber, `🎉 PR created: ${prUrl}`)
+      postComment(issueNumber, `🎉 PR created: ${prUrl.trim()}`)
       console.log(`  ✅ Commented on issue #${issueNumber}`)
     }
   } catch (error: unknown) {
