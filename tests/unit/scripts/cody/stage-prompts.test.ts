@@ -86,10 +86,11 @@ describe('stage-prompts', () => {
         'clarified.md',
         'plan.md',
         'plan-gap.md',
+        'rerun-feedback.md',
       ])
       expect(STAGE_CONTEXT_FILES.commit).toEqual(['task.json'])
       expect(STAGE_CONTEXT_FILES.verify).toEqual([])
-      expect(STAGE_CONTEXT_FILES.autofix).toEqual(['verify.md'])
+      expect(STAGE_CONTEXT_FILES.autofix).toEqual(['verify.md', 'build-errors.md'])
       expect(STAGE_CONTEXT_FILES.auditor).toEqual([
         'task.md',
         'spec.md',
@@ -99,6 +100,14 @@ describe('stage-prompts', () => {
       ])
       expect(STAGE_CONTEXT_FILES['apply-audit']).toEqual(['auditor.md'])
       expect(STAGE_CONTEXT_FILES.pr).toEqual([])
+    })
+
+    it('should include build-errors.md in autofix context for build stage feedback', () => {
+      expect(STAGE_CONTEXT_FILES.autofix).toContain('build-errors.md')
+    })
+
+    it('should include rerun-feedback.md in build context for supervisor feedback', () => {
+      expect(STAGE_CONTEXT_FILES.build).toContain('rerun-feedback.md')
     })
 
     it('should have an entry for every stage in ALL_STAGES', () => {

@@ -16,6 +16,8 @@ import { commitPipelineFiles } from '../git-utils'
 import { handleGateApproval } from '../clarify-workflow'
 import { extractGateCommentBody, postComment } from '../github-api'
 import { loadState, updateStage, completeState, writeState } from '../engine/status'
+import { classifyError, formatErrorsAsMarkdown } from './error-classifier'
+import { runAgentWithFileWatch, STAGE_TIMEOUTS, DEFAULT_TIMEOUT } from '../agent-runner'
 
 /**
  * Execute a post-action
@@ -239,6 +241,111 @@ export async function executePostAction(
           push: false,
           dryRun: ctx.input.dryRun,
         })
+      }
+      break
+    }
+
+    case 'run-quality-with-autofix': {
+      if (ctx.input.dryRun) return
+
+      type GateResult = {
+        name: string
+        command: string
+        source: 'tsc' | 'lint' | 'format' | 'test'
+        passed: boolean
+        error?: string
+      }
+
+      const runGates = (gates: typeof action.gates): GateResult[] => {
+        return gates.map((gate) => {
+          try {
+            console.log(`   Running ${gate.name}...`)
+            execSync(gate.command, { stdio: 'pipe' })
+            console.log(`   ✓ ${gate.name} passed`)
+            return { ...gate, passed: true }
+          } catch (error) {
+            const err = error as {
+              stdout?: Buffer | string
+              stderr?: Buffer | string
+              message?: string
+            }
+            const stdout = err.stdout
+              ? Buffer.isBuffer(err.stdout)
+                ? err.stdout.toString()
+                : err.stdout
+              : ''
+            const stderr = err.stderr
+              ? Buffer.isBuffer(err.stderr)
+                ? err.stderr.toString()
+                : err.stderr
+              : ''
+            const output = stdout + stderr + (err.message || '')
+            console.log(`   ✗ ${gate.name} failed`)
+            return { ...gate, passed: false, error: output }
+          }
+        })
+      }
+
+      // Initial run — all gates
+      let results = runGates(action.gates)
+      let failures = results.filter((r) => !r.passed)
+
+      if (failures.length === 0) break // All passed on first try
+
+      // Autofix feedback loop
+      for (let attempt = 1; attempt <= action.maxFeedbackLoops; attempt++) {
+        console.log(`
+🔧 Build autofix attempt ${attempt}/${action.maxFeedbackLoops}...`)
+
+        // Classify errors and write build-errors.md
+        const errors = failures.map((f) => classifyError(f.error || '', f.source))
+        const markdown = formatErrorsAsMarkdown(errors, attempt, action.maxFeedbackLoops)
+        const errorsFile = path.join(ctx.taskDir, 'build-errors.md')
+        fs.writeFileSync(errorsFile, markdown)
+
+        // Run autofix agent
+        const autofixOutput = path.join(ctx.taskDir, 'autofix.md')
+        if (fs.existsSync(autofixOutput)) {
+          fs.unlinkSync(autofixOutput)
+        }
+        const autofixTimeout = STAGE_TIMEOUTS.autofix ?? DEFAULT_TIMEOUT
+        const autofixResult = await runAgentWithFileWatch(
+          ctx.input,
+          'autofix',
+          autofixOutput,
+          autofixTimeout,
+          { backend: ctx.backend },
+        )
+
+        if (!autofixResult.succeeded) {
+          console.error(`  ❌ Autofix agent failed (attempt ${attempt})`)
+          continue
+        }
+
+        // Re-run ONLY failed gates
+        const failedGateSpecs = failures.map((f) => ({
+          name: f.name,
+          command: f.command,
+          source: f.source,
+        }))
+        results = runGates(failedGateSpecs)
+        failures = results.filter((r) => !r.passed)
+
+        if (failures.length === 0) {
+          console.log(`  ✅ All quality gates passed after autofix attempt ${attempt}`)
+          // Clean up build-errors.md since everything passed
+          if (fs.existsSync(errorsFile)) {
+            fs.unlinkSync(errorsFile)
+          }
+          break
+        }
+      }
+
+      if (failures.length > 0) {
+        const failedNames = failures.map((f) => f.name).join(', ')
+        throw new Error(
+          `Quality gates failed after ${action.maxFeedbackLoops} autofix attempts: ${failedNames}`,
+        )
       }
       break
     }

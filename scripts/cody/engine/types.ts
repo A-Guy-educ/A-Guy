@@ -104,6 +104,8 @@ export interface StageStateV2 {
   outputFile?: string
   skipped?: string
   error?: string
+  feedbackLoops?: number
+  feedbackErrors?: string[]
 }
 
 export interface PipelineStateV2 {
@@ -134,16 +136,28 @@ export const PipelineStateV2Schema: z.ZodType<PipelineStateV2> = z.object({
   cursor: z.string().nullable(),
   stages: z.record(
     z.string(),
-    z.object({
-      state: z.enum(['pending', 'running', 'completed', 'failed', 'timeout', 'skipped', 'paused']),
-      startedAt: z.string().optional(),
-      completedAt: z.string().optional(),
-      elapsed: z.number().optional(),
-      retries: z.number(),
-      outputFile: z.string().optional(),
-      skipped: z.string().optional(),
-      error: z.string().optional(),
-    }),
+    z
+      .object({
+        state: z.enum([
+          'pending',
+          'running',
+          'completed',
+          'failed',
+          'timeout',
+          'skipped',
+          'paused',
+        ]),
+        startedAt: z.string().optional(),
+        completedAt: z.string().optional(),
+        elapsed: z.number().optional(),
+        retries: z.number(),
+        outputFile: z.string().optional(),
+        skipped: z.string().optional(),
+        error: z.string().optional(),
+        feedbackLoops: z.number().optional(),
+        feedbackErrors: z.array(z.string()).optional(),
+      })
+      .strict(),
   ),
 })
 
@@ -213,6 +227,13 @@ export type RunUnitTestsAction = {
   type: 'run-unit-tests'
 }
 
+// Run-quality-with-autofix action — feedback loop that retries with autofix agent
+export type RunQualityWithAutofixAction = {
+  type: 'run-quality-with-autofix'
+  gates: Array<{ name: string; command: string; source: 'tsc' | 'lint' | 'format' | 'test' }>
+  maxFeedbackLoops: number
+}
+
 // Commit-audit-history action
 export type CommitAuditHistoryAction = {
   type: 'commit-audit-history'
@@ -235,6 +256,7 @@ export type PostAction =
   | ValidateBuildContentAction
   | RunTscAction
   | RunUnitTestsAction
+  | RunQualityWithAutofixAction
   | CommitAuditHistoryAction
   | ParallelPostAction
 
