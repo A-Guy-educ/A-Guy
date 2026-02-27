@@ -383,6 +383,19 @@
     "noDraftExercises": "No draft exercises found for this conversion.",
     "pages": "Pages {{start}}-{{end}}"
   },
+  "onboarding": {
+    "persona": {
+      "title": "Choose Your Teacher Style",
+      "subtitle": "Select how your AI teacher interacts with you. You can change this anytime in settings.",
+      "loading": "Loading teacher styles...",
+      "selected": "Selected",
+      "skip": "Skip for now",
+      "continue": "Continue",
+      "saving": "Saving...",
+      "saveFailed": "Failed to save your selection. Please try again.",
+      "noProfiles": "Teacher styles are currently unavailable. You can set this later in settings."
+    }
+  },
   "shop": {
     "backToLearning": "Back to Learning",
     "title": "Course Store",

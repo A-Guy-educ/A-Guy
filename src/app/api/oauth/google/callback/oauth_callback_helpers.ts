@@ -18,6 +18,7 @@ import {
 import { setAuthCookie } from '@/infra/auth/oauth_cookies'
 import { logOAuthEvent, logOAuthError } from '@/infra/auth/oauth_logger'
 import { generateSecret, encrypt } from '@/infra/auth/oauth_crypto'
+import { getOnboardingRedirect } from '@/infra/onboarding/redirect'
 
 export async function handleExistingUser(
   payload: Payload,
@@ -190,7 +191,8 @@ export async function createNewOAuthUser(
   // Issue session using the plain secret we just set
   try {
     const { token } = await issueSessionWithPlainSecret(email, plainSecret)
-    res.headers.set('Location', new URL(returnTo, req.url).toString())
+    // Redirect new OAuth users to persona selection (onboarding step)
+    res.headers.set('Location', new URL(getOnboardingRedirect(returnTo), req.url).toString())
     setAuthCookie(res, payload, token)
     return res
   } catch (error) {
