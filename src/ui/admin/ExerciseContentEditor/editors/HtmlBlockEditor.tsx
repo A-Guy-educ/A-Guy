@@ -1,6 +1,7 @@
 'use client'
 
 import type { HtmlBlock } from '@/server/payload/collections/Exercises/types'
+import { HTML_BLOCK_PURIFY_CONFIG } from '@/lib/sanitize/config'
 import DOMPurify from 'dompurify'
 import dynamic from 'next/dynamic'
 import React, { useMemo, useState } from 'react'
@@ -35,62 +36,6 @@ const QUILL_FORMATS = [
   'direction',
 ]
 
-const SANITIZE_CONFIG = {
-  ALLOWED_TAGS: [
-    'p',
-    'br',
-    'hr',
-    'span',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'strong',
-    'b',
-    'em',
-    'i',
-    'u',
-    's',
-    'del',
-    'ins',
-    'mark',
-    'sub',
-    'sup',
-    'ul',
-    'ol',
-    'li',
-    'blockquote',
-    'pre',
-    'code',
-    'a',
-    'img',
-    'div',
-    'section',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-  ],
-  ALLOWED_ATTR: [
-    'href',
-    'src',
-    'alt',
-    'title',
-    'class',
-    'id',
-    'rel',
-    'width',
-    'height',
-    'colspan',
-    'rowspan',
-    'dir',
-  ],
-}
-
 interface HtmlBlockEditorProps {
   block: HtmlBlock
   onChange: (block: HtmlBlock) => void
@@ -114,9 +59,9 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
   const handleToggleSource = () => {
     // Sanitize when leaving source view to strip any dangerous content pasted as raw HTML
     if (showSource && block.html) {
-      const sanitized = DOMPurify.sanitize(block.html, SANITIZE_CONFIG)
+      const sanitized = DOMPurify.sanitize(block.html, HTML_BLOCK_PURIFY_CONFIG)
       if (sanitized !== block.html) {
-        onChange({ ...block, html: sanitized })
+        onChange({ ...block, html: sanitized as string })
       }
     }
     setShowSource(!showSource)

@@ -53,6 +53,17 @@ export const HtmlBlock: Block = {
           }
         }
 
+        // Block @import in style tags - prevents external CSS loading (security)
+        const styleTagPattern = /<style[^>]*>([\s\S]*?)<\/style>/gi
+        let styleMatch
+        while ((styleMatch = styleTagPattern.exec(trimmed)) !== null) {
+          const styleContent = styleMatch[1]
+          // Check for @import (both double and single quote variants)
+          if (/@import\s+url/i.test(styleContent)) {
+            return '@import is not allowed in <style> tags. Use internal CSS only.'
+          }
+        }
+
         // Check for foreignObject in SVG
         const foreignObjectPattern =
           /<svg[^>]*>[\s\S]*?<foreignObject[\s\S]*?<\/foreignObject[\s\S]*?<\/svg>/gi
@@ -183,6 +194,12 @@ export const HtmlBlock: Block = {
           'radialgradient',
           'stop',
           'use',
+          // SVG animation tags - FR-2.3
+          'animate',
+          'animatetransform',
+          'animatemotion',
+          'set',
+          'mpath',
         ]
 
         const tagCheckPattern = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi
@@ -208,6 +225,12 @@ export const HtmlBlock: Block = {
           'radialgradient',
           'stop',
           'use',
+          // SVG animation tags - FR-2.3
+          'animate',
+          'animatetransform',
+          'animatemotion',
+          'set',
+          'mpath',
         ]
 
         // Safe SVG attributes (case-insensitive check)
@@ -251,6 +274,26 @@ export const HtmlBlock: Block = {
           'clip-rule',
           'fill-rule',
           'stroke-opacity',
+          // SVG animation attributes - FR-2.3
+          'attributename',
+          'attributetype',
+          'from',
+          'to',
+          'dur',
+          'begin',
+          'end',
+          'repeatcount',
+          'repeatdur',
+          'values',
+          'keytimes',
+          'keysplines',
+          'calcmode',
+          'type',
+          'additive',
+          'accumulate',
+          'path',
+          'keypoints',
+          'rotate',
         ]
 
         // Attribute validation function
@@ -329,6 +372,17 @@ export const HtmlBlock: Block = {
             }
           }
 
+          // SVG mpath element - allow href but validate it must start with # (FR-2.3)
+          if (tagName === 'mpath') {
+            if (lowerAttr === 'href' || lowerAttr === 'xlink:href') {
+              // The href value validation is done separately in the general tag validation
+              return { allowed: true }
+            }
+            if (svgAttrs.includes(lowerAttr)) {
+              return { allowed: true }
+            }
+          }
+
           // SVG geometry attributes on SVG child elements
           if (svgGeometryTags.includes(tagName)) {
             if (svgAttrs.includes(lowerAttr)) {
@@ -383,6 +437,21 @@ export const HtmlBlock: Block = {
             const result = isAllowedAttribute(attrName, 'a')
             if (!result.allowed) {
               return result.message ?? `attribute "${attrName}" is not allowed on <a>`
+            }
+          }
+        }
+
+        // Validate mpath href values (must start with # for internal references)
+        const mpathPattern = /<mpath\b([^>]*)>/gi
+        let mpathMatch
+        while ((mpathMatch = mpathPattern.exec(trimmed)) !== null) {
+          const mpathAttrs = mpathMatch[1]
+          const hrefAttrPattern = /(?:href|xlink:href)\s*=\s*["']?([^"'\s>]+)["']?/gi
+          const hrefAttrMatch = hrefAttrPattern.exec(mpathAttrs)
+          if (hrefAttrMatch) {
+            const hrefValue = hrefAttrMatch[1]
+            if (!hrefValue.startsWith('#')) {
+              return `mpath href must start with #: href="${hrefValue}". Only internal references are allowed.`
             }
           }
         }

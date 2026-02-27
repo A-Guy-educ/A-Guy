@@ -1,8 +1,10 @@
 'use client'
 
 import { useFormFields } from '@payloadcms/ui'
+import { HTML_BLOCK_PURIFY_CONFIG } from '@/lib/sanitize/config'
 import type { UIFieldClientComponent } from 'payload'
-import { useEffect, useState } from 'react'
+import DOMPurify from 'dompurify'
+import { useEffect, useMemo, useState } from 'react'
 
 export const HtmlBlockField: UIFieldClientComponent = () => {
   const [htmlValue, setHtmlValue] = useState('')
@@ -16,6 +18,12 @@ export const HtmlBlockField: UIFieldClientComponent = () => {
       setHtmlValue(String(field.value))
     }
   }, [field?.value])
+
+  // Sanitize the HTML before rendering for preview
+  const sanitizedHtml = useMemo(() => {
+    if (!htmlValue) return ''
+    return DOMPurify.sanitize(htmlValue, HTML_BLOCK_PURIFY_CONFIG)
+  }, [htmlValue])
 
   const togglePreview = () => {
     setIsPreviewOpen(!isPreviewOpen)
@@ -51,7 +59,7 @@ export const HtmlBlockField: UIFieldClientComponent = () => {
             backgroundColor: 'var(--theme-elevation-0)',
             minHeight: '100px',
           }}
-          dangerouslySetInnerHTML={{ __html: htmlValue }}
+          dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />
       )}
 
