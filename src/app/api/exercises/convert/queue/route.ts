@@ -38,6 +38,8 @@ export const queueRequestSchema = z.object({
   verifierPromptId: z.string().min(1),
 })
 
+export type QueueRequestSchema = z.input<typeof queueRequestSchema>
+
 export async function POST(request: NextRequest) {
   try {
     const payload = await getPayload({ config })

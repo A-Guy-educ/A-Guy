@@ -38,6 +38,8 @@ export const queueV2RequestSchema = z.object({
   mediaId: z.string().min(1),
 })
 
+export type QueueV2RequestSchema = z.input<typeof queueV2RequestSchema>
+
 export async function POST(request: NextRequest) {
   try {
     const payload = await getPayload({ config })
