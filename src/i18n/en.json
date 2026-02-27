@@ -508,5 +508,14 @@
     },
     "loading": "Loading...",
     "generateButton": "Build Focus Plan"
+  },
+  "loading": {
+    "title": "Loading...",
+    "description": "Please wait while the page loads"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "description": "An error occurred while loading this page",
+    "retry": "Try again"
   }
 }
