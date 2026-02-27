@@ -78,6 +78,7 @@
       "expand": "Expand",
       "collapse": "Collapse",
       "preferencesPlaceholder": "Preferences settings will be available soon.",
+      "buildExamStudyPlan": "Build exam study plan",
       "teachersProfilePlaceholder": "Teachers profile features coming soon.",
       "teacherProfile": {
         "description": "Choose how your AI teacher interacts with you. This affects your chat experience.",
