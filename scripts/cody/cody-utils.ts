@@ -35,6 +35,8 @@ export interface CodyInput {
   clarify?: boolean
   // Control mode override: auto, risk-gated, hard-stop
   controlMode?: 'auto' | 'risk-gated' | 'hard-stop'
+  // Pipeline version: branch, tag, or commit to overlay (overrides CODY_DEFAULT_VERSION)
+  version?: string
 }
 
 export interface CodyPipelineStatus {
@@ -438,6 +440,10 @@ export function parseCliArgs(argv: string[]): CodyInput {
       input.runUrl = normalized[i + 1]
       cliSet.add('runUrl')
       i++
+    } else if (arg === '--version' && normalized[i + 1]) {
+      input.version = normalized[i + 1]
+      cliSet.add('version')
+      i++
     } else if (arg.startsWith('--comment-body-env=')) {
       // For comment triggers: read the raw comment body from env var
       // This avoids shell injection when passing comment content through CI
@@ -566,6 +572,9 @@ export function parseCliArgs(argv: string[]): CodyInput {
   }
   if (!cliSet.has('runUrl') && process.env.RUN_URL) {
     input.runUrl = process.env.RUN_URL
+  }
+  if (!cliSet.has('version') && process.env.VERSION) {
+    input.version = process.env.VERSION
   }
   // Store raw comment body for gate approval detection (only for comment triggers)
   if (!input.commentBody && process.env.COMMENT_BODY && input.triggerType === 'comment') {

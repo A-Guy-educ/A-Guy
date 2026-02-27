@@ -95,6 +95,7 @@
     "cody:rerun": "pnpm tsx scripts/cody/entry.ts --mode=rerun",
     "cody:test": "gh workflow run cody.yml -R A-Guy-educ/A-Guy -f task_id=TEST -f mode=status -f dry_run=true",
     "cody": "pnpm tsx scripts/cody/entry.ts",
+    "cody:tag": "pnpm tsx scripts/cody/tag-version.ts",
     "supervisor": "pnpm tsx scripts/supervisor/supervisor.ts"
   },
   "dependencies": {

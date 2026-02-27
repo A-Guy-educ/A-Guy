@@ -95,6 +95,11 @@ After writing the plan, validate it with relevant domain experts:
 **When:** Plan involves authentication, authorization, secrets, API endpoints, or sensitive data
 **What to ask:** "Review my plan. Are there any access control gaps? Did I handle auth correctly? Any hardcoded secrets or data exposure risks?"
 
+### @cody-expert
+
+**When:** Plan involves the Cody pipeline itself (`scripts/cody/**`, `.opencode/agents/**`, `.github/workflows/cody.yml`)
+**What to ask:** "Review my plan. How does this pipeline change work with the version system? What's the state machine flow?"
+
 Invoke these subagents as needed based on your plan's scope. Address their feedback by updating the plan.
 
 ## Bug Fix Plans (when Task Type is fix_bug)
