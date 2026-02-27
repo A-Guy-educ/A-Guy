@@ -1,0 +1,22 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "high",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/payload/collections/Courses.ts",
+    "src/server/payload/collections/Chapters.ts",
+    "src/server/payload/collections/Lessons.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains clear issue description, exact file paths with line numbers, expected fix with code example, and acceptance criteria (steps to test). The spec.md can be promoted from the task.md requirements and acceptance criteria."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
