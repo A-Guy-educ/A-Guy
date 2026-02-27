@@ -41,7 +41,7 @@ export class GitPrHandler implements StageHandler {
     const outputFile = `${ctx.taskDir}/pr.md`
 
     // R5: Pass issueNumber to link PR to the issue
-    const result = runPrStage(ctx.taskDir, outputFile, undefined, ctx.input.issueNumber)
+    const result = await runPrStage(ctx.taskDir, outputFile, undefined, ctx.input.issueNumber)
 
     if (!result.created && !result.url) {
       return {
