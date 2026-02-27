@@ -11,11 +11,12 @@
   "missing_inputs": [],
   "assumptions": [],
   "input_quality": {
-    "level": "good_spec",
+    "level": "detailed_plan",
     "skip_stages": [
-      "spec"
+      "spec",
+      "architect"
     ],
-    "reasoning": "Task contains clear ## Files to Create section with implementation suggestions and test steps. Promoted spec.md."
+    "reasoning": "Task contains ## Files to Create section with specific file paths, ## Suggested Implementation with code snippets, and ## Steps to Test with verification steps. Promoted spec.md and plan.md."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
