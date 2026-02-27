@@ -1,0 +1,22 @@
+{
+  "task_type": "ops",
+  "risk_level": "low",
+  "confidence": 0.3,
+  "primary_domain": "devops",
+  "scope": [
+    "smoke testing"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Smoke test task refers to running verification tests",
+    "No specific system or component is specified for testing",
+    "Task scope and target systems are not defined"
+  ],
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task description is minimal ('Smoke test task') with no requirements, acceptance criteria, or implementation details. Cannot determine specific scope without more context."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
