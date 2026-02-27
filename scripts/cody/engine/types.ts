@@ -218,6 +218,12 @@ export type CommitAuditHistoryAction = {
   type: 'commit-audit-history'
 }
 
+// Parallel-post-action - runs multiple actions concurrently
+export type ParallelPostAction = {
+  type: 'parallel'
+  actions: PostAction[]
+}
+
 // Post-action discriminated union
 export type PostAction =
   | ValidateTaskJsonAction
@@ -230,6 +236,7 @@ export type PostAction =
   | RunTscAction
   | RunUnitTestsAction
   | CommitAuditHistoryAction
+  | ParallelPostAction
 
 // ============================================================================
 // Lifecycle Hooks
