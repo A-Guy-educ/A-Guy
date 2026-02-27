@@ -364,3 +364,31 @@ For EACH step in the plan:
 - [ ] Applied minimal fix
 - [ ] Verified reproduction test PASSES (proves bug fixed)
 - [ ] Ran full test suite — no regressions
+
+### CRITICAL: Update Existing Tests That Verify Buggy Behavior
+
+Before running the final test suite, you MUST find and update any EXISTING tests that assert the buggy behavior:
+
+1. **Search for tests that might be testing the bug**:
+   ```bash
+   grep -r "anyone" tests/unit/access/ --include="*.ts"
+   grep -r "bug" tests/ --include="*.ts" -l
+   ```
+
+2. **Check test assertions** - Look for tests that explicitly assert the buggy behavior:
+   - Tests that assert `access.read === anyone` (when the fix changes it)
+   - Tests that assert `should return error` when the fix makes it return success
+   - Tests that assert `null` when the fix makes it return data
+
+3. **Update these tests** - Change assertions from expecting buggy behavior to expecting fixed behavior:
+   ```typescript
+   // BEFORE (buggy):
+   expect(readAccess).toBe(anyone)
+   
+   // AFTER (fixed):
+   expect(readAccess).toBe(publishedOrAuthenticated)
+   ```
+
+4. **Run tests again** - Ensure the updated tests now pass with the fix in place
+
+**This is the #1 reason verify fails** — the build agent implements the fix but forgets to update existing tests that were verifying the buggy behavior.
