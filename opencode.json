@@ -7,19 +7,19 @@
       "description": "Building features, refactoring, implementing changes"
     },
     "plan": {
-      "model": "anthropic/claude-opus-4-6",
+      "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Planning tasks, architecture design, complex problem solving"
     },
     "architect": {
-      "model": "anthropic/claude-opus-4-6",
+      "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Planning tasks, architecture design, complex problem solving"
     },
     "spec": {
-      "model": "openai/gpt-5.2",
+      "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Spec writing, API design, documentation"
     },
     "clarify": {
-      "model": "openai/gpt-5.2",
+      "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Collects operator questions and answers"
     },
     "taskify": {
@@ -31,7 +31,7 @@
       "description": "Analyzes spec.md for gaps, missing info, and inconsistencies"
     },
     "plan-gap": {
-      "model": "openai/gpt-5.3-codex",
+      "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Analyzes plan for gaps vs spec and codebase, auto-revises plan"
     },
     "autofix": {
@@ -51,7 +51,7 @@
       "description": "Writes E2E and integration tests using Playwright"
     },
     "advisor": {
-      "model": "openai/gpt-5.2",
+      "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Code review, suggestions, best practices"
     },
     "auditor": {

@@ -26,6 +26,7 @@ const columnColors: Record<ColumnId, string> = {
   failed: 'border-destructive',
   'gate-waiting': 'border-yellow-500',
   retrying: 'border-orange-500',
+  done: 'border-emerald-500',
 }
 
 export function KanbanColumn({

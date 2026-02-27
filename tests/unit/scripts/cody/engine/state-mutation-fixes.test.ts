@@ -6,7 +6,11 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import type { PipelineStateV2, StageStateV2 } from '../../../../../scripts/cody/engine/types'
+import type {
+  PipelineStateV2,
+  StageStateV2,
+  PipelineContext,
+} from '../../../../../scripts/cody/engine/types'
 import { resumeFromGate, updateStage } from '../../../../../scripts/cody/engine/status'
 
 // ============================================================================
@@ -212,5 +216,66 @@ describe('signal handler git ops', () => {
 
     // Should NOT use execSync with template literals (shell injection risk)
     expect(signalHandler).not.toMatch(/execSync\(`[^`]*\$\{/)
+  })
+})
+
+// ============================================================================
+// Fix for Pipeline Rebuild Bug: Full mode should include all stages
+// ============================================================================
+
+describe('full pipeline mode', () => {
+  it('should include both spec and impl stages in full mode', async () => {
+    // Import buildPipeline - it requires a ctx with minimal properties
+    const { buildPipeline } = await import('../../../../../scripts/cody/pipeline/definitions')
+
+    const ctx = {
+      taskId: 'test-123',
+      taskDir: './.tasks/test-123',
+      input: { mode: 'full' },
+      taskDef: null,
+      profile: 'standard',
+      pipelineNeedsRebuild: false,
+    } as unknown as PipelineContext
+
+    const pipeline = buildPipeline('full', 'standard', false, ctx)
+
+    // Full mode should include ALL stages, not just spec
+    const stageNames = Array.from(pipeline.stages.keys())
+
+    // Should have spec stages
+    expect(stageNames).toContain('taskify')
+    expect(stageNames).toContain('spec')
+    expect(stageNames).toContain('gap')
+
+    // Should ALSO have impl stages (THIS IS THE FIX)
+    expect(stageNames).toContain('architect')
+    expect(stageNames).toContain('plan-gap')
+    expect(stageNames).toContain('build')
+    expect(stageNames).toContain('commit')
+    expect(stageNames).toContain('verify')
+    expect(stageNames).toContain('auditor')
+    expect(stageNames).toContain('apply-audit')
+    expect(stageNames).toContain('pr')
+  })
+
+  it('should include pr stage in full pipeline order', async () => {
+    const { buildPipeline, flattenPipelineOrder } =
+      await import('../../../../../scripts/cody/pipeline/definitions')
+
+    const ctx = {
+      taskId: 'test-123',
+      taskDir: './.tasks/test-123',
+      input: { mode: 'full' },
+      taskDef: null,
+      profile: 'standard',
+      pipelineNeedsRebuild: false,
+    } as unknown as PipelineContext
+
+    const pipeline = buildPipeline('full', 'standard', false, ctx)
+    const order = flattenPipelineOrder(pipeline.order)
+
+    // pr should be in the order (last stage)
+    expect(order).toContain('pr')
+    expect(order[order.length - 1]).toBe('pr')
   })
 })

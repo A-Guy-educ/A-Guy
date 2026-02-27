@@ -85,6 +85,7 @@ export function organizeBoard(tasks: CodyTask[]): Record<ColumnId, CodyTask[]> {
     failed: [],
     'gate-waiting': [],
     retrying: [],
+    done: [],
   }
 
   for (const task of tasks) {

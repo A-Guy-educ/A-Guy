@@ -6,15 +6,13 @@
  */
 'use client'
 
-import { useState, useCallback } from 'react'
-import type { CodyTask, Board, ColumnId } from '../types'
+import { useCallback } from 'react'
+import type { CodyTask, ColumnId } from '../types'
 import { COLUMN_DEFS } from '../constants'
 import { KanbanColumn } from './KanbanColumn'
-import { BoardSwitcher } from './BoardSwitcher'
 
 interface KanbanBoardProps {
   tasks: CodyTask[]
-  boards: Board[]
   selectedTask?: CodyTask | null
   onTaskSelect?: (task: CodyTask | null) => void
   onExecuteTask?: (taskId: string) => void
@@ -22,13 +20,10 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({
   tasks,
-  boards,
   selectedTask,
   onTaskSelect,
   onExecuteTask,
 }: KanbanBoardProps) {
-  const [currentBoard, setCurrentBoard] = useState('all')
-
   // Group tasks by column
   const tasksByColumn = tasks.reduce(
     (acc, task) => {
@@ -56,15 +51,6 @@ export function KanbanBoard({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Board Switcher */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <BoardSwitcher
-          boards={boards}
-          currentBoard={currentBoard}
-          onBoardChange={setCurrentBoard}
-        />
-      </div>
-
       {/* Kanban Columns */}
       <div className="flex-1 flex gap-2 p-4 overflow-x-auto">
         {visibleColumns.map((columnId) => (

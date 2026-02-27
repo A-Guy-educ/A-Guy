@@ -1,0 +1,210 @@
+/**
+ * @fileType component
+ * @domain cody
+ * @pattern cody-status-banner
+ * @ai-summary Banner showing Cody's current state: idle, working, failed, or gate-waiting
+ */
+'use client'
+
+import { cn, formatRelativeTime } from '../utils'
+import type { CodyTask } from '../types'
+import { ALL_STAGES } from '../constants'
+import { Badge } from '@/ui/web/components/badge'
+import { Button } from '@/ui/web/components/button'
+
+interface CodyStatusBannerProps {
+  tasks: CodyTask[]
+  onTaskSelect?: (task: CodyTask) => void
+  onAbort?: (taskId: string) => void
+}
+
+type CodyState =
+  | { status: 'idle'; taskCount: number }
+  | { status: 'working'; task: CodyTask; stage: string | null; elapsed: string }
+  | { status: 'failed'; task: CodyTask; failedAgo: string }
+  | { status: 'gate-waiting'; task: CodyTask }
+
+function deriveCodyState(tasks: CodyTask[]): CodyState {
+  // Priority: working > gate-waiting > failed > idle
+
+  const working = tasks.find((t) => t.column === 'building' || t.column === 'retrying')
+  if (working) {
+    const pipeline = working.pipeline
+    const elapsed = pipeline?.startedAt
+      ? formatElapsed(new Date(pipeline.startedAt))
+      : formatRelativeTime(working.updatedAt)
+    return {
+      status: 'working',
+      task: working,
+      stage: pipeline?.currentStage ?? null,
+      elapsed,
+    }
+  }
+
+  const gateWaiting = tasks.find((t) => t.column === 'gate-waiting')
+  if (gateWaiting) {
+    return { status: 'gate-waiting', task: gateWaiting }
+  }
+
+  const failed = tasks.find((t) => t.column === 'failed')
+  if (failed) {
+    return { status: 'failed', task: failed, failedAgo: formatRelativeTime(failed.updatedAt) }
+  }
+
+  return { status: 'idle', taskCount: tasks.length }
+}
+
+function formatElapsed(since: Date): string {
+  const ms = Date.now() - since.getTime()
+  const seconds = Math.floor(ms / 1000)
+  if (seconds < 60) return `${seconds}s`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ${seconds % 60}s`
+  const hours = Math.floor(minutes / 60)
+  return `${hours}h ${minutes % 60}m`
+}
+
+const stageLabels: Record<string, string> = {
+  taskify: 'Analyzing',
+  spec: 'Writing Spec',
+  clarify: 'Clarifying',
+  architect: 'Architecting',
+  'plan-review': 'Reviewing Plan',
+  build: 'Building',
+  commit: 'Committing',
+  verify: 'Verifying',
+  auditor: 'Auditing',
+  'apply-audit': 'Applying Audit',
+  pr: 'Creating PR',
+  autofix: 'Auto-fixing',
+}
+
+export function CodyStatusBanner({ tasks, onTaskSelect, onAbort }: CodyStatusBannerProps) {
+  const state = deriveCodyState(tasks)
+
+  if (state.status === 'idle') {
+    return (
+      <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-muted/30">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+        </span>
+        <span className="text-sm text-muted-foreground">
+          Cody is <span className="text-foreground font-medium">idle</span> — {state.taskCount} open
+          issues in backlog
+        </span>
+      </div>
+    )
+  }
+
+  if (state.status === 'working') {
+    const currentStageIdx = state.stage
+      ? ALL_STAGES.indexOf(state.stage as (typeof ALL_STAGES)[number])
+      : -1
+
+    return (
+      <div className="px-6 py-4 border-b border-border bg-blue-500/5">
+        {/* Top row: status + issue info */}
+        <div className="flex items-center gap-3 mb-3">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" />
+          </span>
+          <span className="text-sm">
+            <span className="text-foreground font-medium">Working on</span>{' '}
+            <button
+              onClick={() => onTaskSelect?.(state.task)}
+              className="text-blue-400 hover:underline font-mono"
+            >
+              #{state.task.issueNumber}
+            </button>{' '}
+            <span className="text-muted-foreground truncate">— {state.task.title}</span>
+          </span>
+          <span className="ml-auto text-xs text-muted-foreground font-mono">{state.elapsed}</span>
+          {onAbort && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onAbort(state.task.id)}
+              className="h-6 text-xs text-muted-foreground hover:text-destructive"
+            >
+              Abort
+            </Button>
+          )}
+        </div>
+
+        {/* Pipeline stages */}
+        <div className="flex items-center gap-1">
+          {ALL_STAGES.map((stage, i) => {
+            const isCompleted = currentStageIdx > i
+            const isCurrent = currentStageIdx === i
+            const isPending = currentStageIdx < i
+
+            return (
+              <div key={stage} className="flex items-center gap-1 flex-1">
+                <div
+                  className={cn(
+                    'h-1.5 flex-1 rounded-full transition-all',
+                    isCompleted && 'bg-blue-500',
+                    isCurrent && 'bg-blue-500 animate-pulse',
+                    isPending && 'bg-muted',
+                  )}
+                  title={stageLabels[stage] || stage}
+                />
+              </div>
+            )
+          })}
+        </div>
+        {state.stage && (
+          <div className="mt-1.5 text-xs text-muted-foreground">
+            Stage:{' '}
+            <span className="text-foreground">{stageLabels[state.stage] || state.stage}</span>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (state.status === 'gate-waiting') {
+    return (
+      <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-yellow-500/5">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500" />
+        </span>
+        <span className="text-sm">
+          <span className="text-yellow-400 font-medium">Waiting for approval</span> on{' '}
+          <button
+            onClick={() => onTaskSelect?.(state.task)}
+            className="text-yellow-400 hover:underline font-mono"
+          >
+            #{state.task.issueNumber}
+          </button>{' '}
+          <span className="text-muted-foreground">— {state.task.title}</span>
+        </span>
+        <Badge variant="outline" className="ml-auto text-yellow-400 border-yellow-500/30">
+          Gate
+        </Badge>
+      </div>
+    )
+  }
+
+  // failed
+  return (
+    <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-destructive/5">
+      <span className="relative flex h-2.5 w-2.5">
+        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+      </span>
+      <span className="text-sm">
+        <span className="text-red-400 font-medium">Failed</span> on{' '}
+        <button
+          onClick={() => onTaskSelect?.(state.task)}
+          className="text-red-400 hover:underline font-mono"
+        >
+          #{state.task.issueNumber}
+        </button>{' '}
+        <span className="text-muted-foreground">— {state.task.title}</span>
+      </span>
+      <span className="ml-auto text-xs text-muted-foreground">{state.failedAgo}</span>
+    </div>
+  )
+}

@@ -251,6 +251,11 @@ export async function fetchIssue(issueNumber: number): Promise<GitHubIssue | nul
       updated_at: data.updated_at ?? '',
       closed_at: data.closed_at ?? null,
       html_url: data.html_url ?? '',
+      isCodyAssigned:
+        data.assignees?.some(
+          (a: any) =>
+            a.login === 'github-actions[bot]' || a.login === 'Copilot' || (a as any).type === 'Bot',
+        ) ?? false,
     }
 
     // Single issue, cache for longer
@@ -313,6 +318,10 @@ export async function fetchIssues(options?: {
     updated_at: issue.updated_at ?? '',
     closed_at: issue.closed_at ?? null,
     html_url: issue.html_url ?? '',
+    isCodyAssigned:
+      issue.assignees?.some(
+        (a: any) => a.login === 'github-actions[bot]' || a.login === 'Copilot' || a.type === 'Bot',
+      ) ?? false,
   }))
 
   setCache(cacheKey, CACHE_TTL.tasks, issues)
@@ -382,6 +391,7 @@ export async function fetchWorkflowRuns(options?: {
     created_at: run.created_at,
     updated_at: run.updated_at,
     html_url: run.html_url,
+    display_title: (run as any).display_title ?? '',
   }))
 
   setCache(cacheKey, CACHE_TTL.pipeline, runs)
@@ -397,6 +407,45 @@ export async function getWorkflowRunForTask(taskId: string): Promise<WorkflowRun
   return (
     runs.find((run) => run.html_url.includes(taskId) || taskId.includes(run.id.toString())) || null
   )
+}
+
+// ============ Bulk PR Fetch ============
+
+/**
+ * Fetch all open PRs in one call (cheap: single API request).
+ * Used by the dashboard to match PRs to issues without N per-issue calls.
+ */
+export async function fetchOpenPRs(): Promise<GitHubPR[]> {
+  const cacheKey = 'open-prs'
+  const cached = getCached<GitHubPR[]>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+
+  const { data } = await octokit.pulls.list({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    state: 'open',
+    per_page: 50,
+    sort: 'updated',
+    direction: 'desc',
+  })
+
+  const prs: GitHubPR[] = data.map((pr) => ({
+    id: pr.id,
+    number: pr.number,
+    title: pr.title,
+    state: pr.state,
+    head: {
+      ref: pr.head.ref,
+      sha: pr.head.sha,
+    },
+    merged_at: pr.merged_at,
+    html_url: pr.html_url,
+  }))
+
+  setCache(cacheKey, CACHE_TTL.prs, prs)
+  return prs
 }
 
 // ============ PR Discovery ============

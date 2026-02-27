@@ -393,11 +393,9 @@ async function runFullMode(ctx: PipelineContext): Promise<void> {
   // R4: Ensure task.md exists before running pipeline
   await ensureTaskMd(ctx)
 
-  // Run full pipeline with rebuild callback for two-phase construction
-  // This uses buildPipeline('full') which includes both spec and impl stages
+  // Run full pipeline - all stages are now included upfront (no rebuild needed)
   const pipeline = resolvePipelineForMode('full', 'standard', ctx.input.clarify ?? false, ctx)
-  const rebuild = createRebuildCallback('full', ctx.input.clarify ?? false)
-  const finalState = await runPipeline(ctx, pipeline, undefined, rebuild)
+  const finalState = await runPipeline(ctx, pipeline)
 
   // Handle paused state (gate approval required)
   if (finalState.state === 'paused') {
