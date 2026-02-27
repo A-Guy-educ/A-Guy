@@ -17,14 +17,14 @@ import { createRunner, type RunnerBackend } from './runner-backend'
 // Configuration
 // ============================================================================
 
-/** Check for output file every 3 seconds */
-export const FILE_POLL_INTERVAL = 3_000
+/** Delay between stability checks after process exit (milliseconds) */
+export const STABILITY_CHECK_INTERVAL = 1_000
 
-/** Max polls before giving up (20 minutes = 400 polls * 3s = 20min) */
-export const MAX_POLL_COUNT = 400
+/** Number of consecutive stable size checks before settling */
+export const STABILITY_CHECK_COUNT = 3
 
-/** Number of consecutive stable size checks before settling (file detection stabilization) */
-export const FILE_STABLE_CHECKS = 2
+/** Additional delay to wait after process exit before checking (filesystem flush) */
+export const POST_EXIT_DELAY = 1_000
 
 /** Maximum retry attempts for failed stages */
 export const MAX_RETRIES = 2
@@ -92,11 +92,97 @@ export interface AgentRunResult {
 // ============================================================================
 
 /**
+ * Wait for a file to become stable (size doesn't change for N consecutive checks).
+ * This handles filesystem flush delays after the agent process exits.
+ *
+ * @param filePath - Path to the file to check
+ * @param options - Stability check configuration
+ * @returns Promise that resolves when file is stable, or rejects on timeout/error
+ */
+export async function waitForFileStable(
+  filePath: string,
+  options: {
+    interval?: number
+    stableCount?: number
+    timeout?: number
+    onCheck?: (size: number, checkNumber: number) => void
+  } = {},
+): Promise<{ stable: boolean; finalSize: number }> {
+  const {
+    interval = STABILITY_CHECK_INTERVAL,
+    stableCount = STABILITY_CHECK_COUNT,
+    timeout = 30_000,
+    onCheck,
+  } = options
+
+  const startTime = Date.now()
+  let lastSize = 0
+  let stableCheckCount = 0
+
+  while (true) {
+    // Check timeout
+    if (Date.now() - startTime > timeout) {
+      return { stable: false, finalSize: lastSize }
+    }
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      stableCheckCount = 0
+      lastSize = 0
+      await sleep(interval)
+      continue
+    }
+
+    // Get current file size
+    const stat = fs.statSync(filePath)
+    const currentSize = stat.size
+
+    if (onCheck) {
+      onCheck(currentSize, stableCheckCount)
+    }
+
+    // Check if size is stable (skip first check - we need 2 consecutive stable checks)
+    if (currentSize > 0 && currentSize === lastSize) {
+      stableCheckCount++
+      if (stableCheckCount >= stableCount) {
+        return { stable: true, finalSize: currentSize }
+      }
+    } else {
+      stableCheckCount = 0
+    }
+
+    lastSize = currentSize
+    await sleep(interval)
+  }
+}
+
+/**
+ * Simple sleep utility
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/**
+ * Find output file in directory (supports timestamped variants like spec-123456.md)
+ */
+function findOutputFile(taskDir: string, expectedBase: string, outputExt: string): string | null {
+  if (fs.existsSync(path.join(taskDir, expectedBase + outputExt))) {
+    return path.join(taskDir, expectedBase + outputExt)
+  }
+
+  // Check for timestamped variants
+  const files = fs.readdirSync(taskDir)
+  const prefixMatch = files.find((f) => f.startsWith(expectedBase + '-') && f.endsWith(outputExt))
+  return prefixMatch ? path.join(taskDir, prefixMatch) : null
+}
+
+/**
  * Run an OpenCode agent with file watching, timeouts, and optional retry logic.
  *
  * This function spawns the `opencode github run` command and monitors for the
  * output file. It handles:
- * - Polling for output file existence
+ * - Wait for process exit, then check for stable output file (no continuous polling)
  * - Timeout enforcement
  * - Retry on failure (configurable)
  * - Process cleanup on completion
@@ -147,6 +233,13 @@ export function runAgentWithFileWatch(
     const attemptWithRetry = (feedback?: string): void => {
       console.log(`  Attempt ${retries + 1}/${maxRetries + 1}`)
 
+      // FIX #2: Delete stale output files before retry to prevent agent confusion
+      // The agent might see old output and think work is already done
+      if (retries > 0 && fs.existsSync(outputFile)) {
+        fs.unlinkSync(outputFile)
+        console.log(`  🗑️ Deleted stale output file before retry`)
+      }
+
       // Calculate remaining timeout (subtract elapsed time from previous attempts)
       const elapsed = Date.now() - startTime
       const remainingTimeout = effectiveTimeout - elapsed
@@ -162,15 +255,12 @@ export function runAgentWithFileWatch(
       currentChild = backend.spawn(stage, prompt, agentEnv, cwd)
 
       let resolved = false
-      let settling = false
-      let pollTimer: NodeJS.Timeout | null = null
       let timeoutTimer: NodeJS.Timeout | null = null
 
       const finish = (result: { succeeded: boolean; timedOut: boolean }) => {
         if (resolved) return
         resolved = true
 
-        if (pollTimer) clearInterval(pollTimer)
         if (timeoutTimer) clearTimeout(timeoutTimer)
 
         // Kill process if still running
@@ -184,164 +274,35 @@ export function runAgentWithFileWatch(
         resolve({ ...result, retries, validationErrors })
       }
 
-      // Poll for output file
+      // Parse output file path
       const outputExt = path.extname(outputFile)
       const expectedBase = path.basename(outputFile, outputExt)
       const taskDirForPoll = path.dirname(outputFile)
-      let stableCheckCount = 0
-      let lastFileSize = 0
-      let pollCount = 0
-
-      pollTimer = setInterval(() => {
-        if (settling) return
-
-        pollCount++
-
-        // Fail if we've polled too many times without output (stuck agent)
-        if (pollCount >= MAX_POLL_COUNT) {
-          console.log(
-            `  ❌ Agent stuck: no output after ${pollCount} polls (${(pollCount * FILE_POLL_INTERVAL) / 1000 / 60} minutes)`,
-          )
-          // Try to kill the process
-          if (currentChild && !currentChild.killed) {
-            currentChild.kill('SIGTERM')
-            setTimeout(() => {
-              if (currentChild && !currentChild.killed) currentChild.kill('SIGKILL')
-            }, 5000)
-          }
-          finish({ succeeded: false, timedOut: true })
-          return
-        }
-
-        // Log warning at half-max polls
-        if (pollCount === Math.floor(MAX_POLL_COUNT / 2)) {
-          console.log(`  ⚠️ Agent still running after ${pollCount} polls, no output yet...`)
-        }
-
-        try {
-          let detectedFile = outputFile
-
-          // Check exact match first
-          if (!fs.existsSync(outputFile)) {
-            // Check for prefix match (timestamped variant)
-            const files = fs.readdirSync(taskDirForPoll)
-            const prefixMatch = files.find(
-              (f) => f.startsWith(expectedBase + '-') && f.endsWith(outputExt),
-            )
-            if (prefixMatch) {
-              detectedFile = path.join(taskDirForPoll, prefixMatch)
-            } else {
-              // Debug: Log file detection status
-              if (stableCheckCount === 0) {
-                console.log(
-                  `  🔍 Polling: no output file yet (expected: ${expectedBase}${outputExt})`,
-                )
-              }
-              // Reset stable checks if file doesn't exist
-              stableCheckCount = 0
-              lastFileSize = 0
-              return
-            }
-          } else {
-            // Debug: File found
-            const stat = fs.statSync(outputFile)
-            if (stableCheckCount === 0) {
-              console.log(
-                `  🔍 Output file detected: ${expectedBase}${outputExt} (${stat.size} bytes)`,
-              )
-            }
-          }
-
-          const stat = fs.statSync(detectedFile)
-
-          // Check if file size is stable (hasn't changed since last check)
-          if (stat.size > 10 && stat.size === lastFileSize) {
-            stableCheckCount++
-            if (stableCheckCount >= FILE_STABLE_CHECKS) {
-              settling = true
-
-              // Rename if timestamped
-              if (detectedFile !== outputFile) {
-                console.log(
-                  `  📄 Output: ${path.basename(detectedFile)} → ${path.basename(outputFile)}`,
-                )
-                fs.renameSync(detectedFile, outputFile)
-              }
-
-              // VALIDATION: Check content if validator provided
-              if (validateOutput) {
-                const validationResult = validateOutput(outputFile)
-                if (!validationResult.valid) {
-                  const errorMsg = validationResult.error || 'Content validation failed'
-                  console.log(`  ⚠️ Validation failed: ${errorMsg}`)
-
-                  // Delete the invalid output file
-                  try {
-                    fs.unlinkSync(outputFile)
-                    console.log(`  🗑️ Deleted invalid output file`)
-                  } catch {
-                    // File might not exist, continue
-                  }
-
-                  // Store validation error for feedback
-                  validationErrors.push(errorMsg)
-
-                  // Retry with feedback if we have retries left
-                  if (retries < maxRetries) {
-                    retries++
-                    const feedbackMsg = `VALIDATION ERROR from previous attempt:\n${errorMsg}\n\nFix this issue in your output. Ensure your output follows the exact required format.`
-                    console.log(
-                      `  🔄 Retrying with validation feedback (${retries}/${maxRetries})...`,
-                    )
-                    // Brief delay before retry
-                    setTimeout(() => attemptWithRetry(feedbackMsg), 2000)
-                    return
-                  } else {
-                    // Exhausted retries after validation failures
-                    console.log(`  ❌ Validation failed and retries exhausted`)
-                    finish({ succeeded: false, timedOut: false })
-                    return
-                  }
-                }
-              }
-
-              // Validation passed (or no validator) - success
-              finish({ succeeded: true, timedOut: false })
-              return
-            }
-          } else {
-            // File is still being written, reset stable count
-            stableCheckCount = 0
-          }
-
-          lastFileSize = stat.size
-        } catch {
-          // Ignore stat errors
-          stableCheckCount = 0
-          lastFileSize = 0
-        }
-      }, FILE_POLL_INTERVAL)
 
       // Timeout (uses remaining time to prevent accumulation across retries)
       timeoutTimer = setTimeout(() => {
+        console.log(`  ⏱️ Timeout reached (${remainingTimeout / 1000 / 60} minutes)`)
         finish({ succeeded: false, timedOut: true })
       }, remainingTimeout)
 
-      // Process exit with retry logic
-      currentChild.on('exit', (code) => {
+      // Process exit handler - wait for file stability after exit
+      currentChild.on('exit', async (code) => {
         console.log(`  📡 Process exited with code: ${code}`)
-        if (!resolved) {
-          // Success only if file was created (not just exit code 0)
-          if (fs.existsSync(outputFile)) {
-            console.log(`  📄 Output file exists after exit, waiting for poll to settle...`)
-            // Don't finish here - let the poll loop continue to handle validation
-            // The finish() will be called after validation completes
-          } else if (retries < maxRetries) {
-            // Retry on ANY failure — exit non-zero OR exit 0 without output file
+
+        if (resolved) return
+
+        // Brief delay to allow filesystem to flush
+        console.log(`  ⏳ Waiting for filesystem to flush...`)
+        await sleep(POST_EXIT_DELAY)
+
+        // Find the output file (exact match or timestamped variant)
+        const detectedFile = findOutputFile(taskDirForPoll, expectedBase, outputExt)
+
+        if (!detectedFile) {
+          // File not found - retry or fail
+          if (retries < maxRetries) {
             retries++
             const reason = code === 0 ? 'no output file' : `exit ${code}`
-
-            // BUG-F fix: Add feedback message to help agent understand why it failed
             const feedbackMsg =
               code === 0
                 ? `CRITICAL FAILURE: You exited with code 0 but did NOT produce the required output file. You MUST write the output file before exiting. Check that your tool calls are actually writing to the correct path.`
@@ -357,19 +318,11 @@ export function runAgentWithFileWatch(
               // Ignore errors
             }
 
-            console.log(
-              `  ⚠ Stage failed (${reason}), retrying with feedback (${retries}/${maxRetries})...`,
-            )
-            if (pollTimer) clearInterval(pollTimer)
-            if (timeoutTimer) clearTimeout(timeoutTimer)
-            if (currentChild && !currentChild.killed) {
-              currentChild.kill('SIGTERM')
-            }
-            // Retry with feedback about what went wrong
+            console.log(`  ⚠️ Stage failed (${reason}), retrying (${retries}/${maxRetries})...`)
             setTimeout(() => attemptWithRetry(feedbackMsg), 2000)
+            return
           } else {
-            // Exhausted retries without producing output file
-            // Debug: List files in task directory on final failure
+            // Exhausted retries
             try {
               const files = fs.readdirSync(taskDirForPoll)
               console.log(
@@ -380,7 +333,91 @@ export function runAgentWithFileWatch(
             }
             console.log(`  ❌ Agent exited ${code} without producing output file`)
             finish({ succeeded: false, timedOut: false })
+            return
           }
+        }
+
+        // File found - wait for it to stabilize
+        console.log(
+          `  📄 Output file detected: ${path.basename(detectedFile)}, checking stability...`,
+        )
+
+        try {
+          const { stable, finalSize } = await waitForFileStable(detectedFile, {
+            interval: STABILITY_CHECK_INTERVAL,
+            stableCount: STABILITY_CHECK_COUNT,
+            timeout: remainingTimeout,
+            onCheck: (size, checkNum) => {
+              if (checkNum === 0) {
+                console.log(`  🔍 File size: ${size} bytes, waiting for stability...`)
+              }
+            },
+          })
+
+          if (!stable) {
+            console.log(`  ⚠️ File did not stabilize within timeout`)
+            if (retries < maxRetries) {
+              retries++
+              const feedbackMsg = `CRITICAL FAILURE: Output file was not fully written. The file size changed during stability check. Please ensure you write the complete file before exiting.`
+              console.log(`  ⚠️ Retrying with feedback (${retries}/${maxRetries})...`)
+              setTimeout(() => attemptWithRetry(feedbackMsg), 2000)
+              return
+            } else {
+              console.log(`  ❌ File stability check failed, retries exhausted`)
+              finish({ succeeded: false, timedOut: false })
+              return
+            }
+          }
+
+          console.log(`  ✅ File stable (${finalSize} bytes)`)
+
+          // Rename if timestamped variant
+          if (detectedFile !== outputFile) {
+            console.log(
+              `  📄 Renaming: ${path.basename(detectedFile)} → ${path.basename(outputFile)}`,
+            )
+            fs.renameSync(detectedFile, outputFile)
+          }
+
+          // VALIDATION: Check content if validator provided
+          if (validateOutput) {
+            const validationResult = validateOutput(outputFile)
+            if (!validationResult.valid) {
+              const errorMsg = validationResult.error || 'Content validation failed'
+              console.log(`  ⚠️ Validation failed: ${errorMsg}`)
+
+              // Delete the invalid output file
+              try {
+                fs.unlinkSync(outputFile)
+                console.log(`  🗑️ Deleted invalid output file`)
+              } catch {
+                // File might not exist, continue
+              }
+
+              // Store validation error for feedback
+              validationErrors.push(errorMsg)
+
+              // Retry with feedback if we have retries left
+              if (retries < maxRetries) {
+                retries++
+                const feedbackMsg = `VALIDATION ERROR from previous attempt:\n${errorMsg}\n\nFix this issue in your output. Ensure your output follows the exact required format.`
+                console.log(`  🔄 Retrying with validation feedback (${retries}/${maxRetries})...`)
+                setTimeout(() => attemptWithRetry(feedbackMsg), 2000)
+                return
+              } else {
+                console.log(`  ❌ Validation failed and retries exhausted`)
+                finish({ succeeded: false, timedOut: false })
+                return
+              }
+            }
+          }
+
+          // Success!
+          console.log(`  ✅ Stage completed successfully`)
+          finish({ succeeded: true, timedOut: false })
+        } catch (error) {
+          console.log(`  ❌ Error waiting for file stability: ${error}`)
+          finish({ succeeded: false, timedOut: false })
         }
       })
 

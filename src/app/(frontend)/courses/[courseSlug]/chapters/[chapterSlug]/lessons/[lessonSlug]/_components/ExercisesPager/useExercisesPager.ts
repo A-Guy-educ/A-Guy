@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import type { Exercise } from '@/payload-types'
 import { getExerciseUrlParam } from './getExerciseUrlParam'
 
@@ -110,21 +110,43 @@ export function useExercisesPager({
     [hasAboutPage, totalPages, firstExercisePage],
   )
 
+  const [isPending, startTransition] = useTransition()
+
+  // Only show loading UI if transition takes longer than 300ms (avoid flash on instant nav)
+  const [isNavigating, setIsNavigating] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (isPending) {
+      timerRef.current = setTimeout(() => setIsNavigating(true), 300)
+    } else {
+      if (timerRef.current) clearTimeout(timerRef.current)
+      setIsNavigating(false)
+    }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [isPending])
+
   const handleNext = useCallback(() => {
-    setPageState((prev) => {
-      const nextPage = prev.pageNumber + 1
-      if (nextPage >= totalPages) return prev
-      return pageToState(nextPage)
+    startTransition(() => {
+      setPageState((prev) => {
+        const nextPage = prev.pageNumber + 1
+        if (nextPage >= totalPages) return prev
+        return pageToState(nextPage)
+      })
     })
-  }, [totalPages, pageToState])
+  }, [totalPages, pageToState, startTransition])
 
   const handlePrev = useCallback(() => {
-    setPageState((prev) => {
-      const prevPage = prev.pageNumber - 1
-      if (prevPage < 0) return prev
-      return pageToState(prevPage)
+    startTransition(() => {
+      setPageState((prev) => {
+        const prevPage = prev.pageNumber - 1
+        if (prevPage < 0) return prev
+        return pageToState(prevPage)
+      })
     })
-  }, [pageToState])
+  }, [pageToState, startTransition])
 
   const handleStart = useCallback(() => {
     if (hasAboutPage) {
@@ -174,6 +196,7 @@ export function useExercisesPager({
     pageState,
     totalPages,
     progressPercent,
+    isNavigating,
     canGoNext: pageState.pageNumber < totalPages - 1,
     canGoPrev: pageState.pageNumber > 0,
     handleNext,

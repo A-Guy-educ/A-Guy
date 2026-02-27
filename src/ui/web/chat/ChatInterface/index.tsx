@@ -1,6 +1,7 @@
 'use client'
 
 import { ChatMessageRole } from '@/infra/llm/chat-message-role'
+import { useCurrentUser } from '@/client/hooks/useCurrentUser'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import {
@@ -22,6 +23,7 @@ import { ChatErrorSurface } from '../ChatErrorSurface'
 import { ChatMessageContent } from '../ChatMessageContent'
 import { TTSButton } from '../TTSButton'
 import { useNotebookChat } from '../hooks/useNotebookChat'
+import { useTeacherProfileLabel } from '../hooks/useTeacherProfileLabel'
 import { useTTS } from '../hooks/useTTS'
 
 // Optional components - will be lazy-loaded if needed
@@ -85,6 +87,12 @@ interface ChatInterfaceProps {
   showResetButton?: boolean
   showMathTools?: boolean
 
+  // Override computed contextKey (e.g. for Ask page per-session conversations)
+  contextKeyOverride?: string
+
+  // Called when the server creates/returns a conversationId (e.g. after first message)
+  onConversationCreated?: (conversationId: string, contextKey: string) => void
+
   // Display
   displayMode?: 'full' | 'input-only'
 
@@ -110,6 +118,8 @@ export function ChatInterface({
   showQuickActions = false,
   showResetButton = false,
   showMathTools = false,
+  contextKeyOverride,
+  onConversationCreated,
   displayMode = 'full',
   isMobile,
   viewMode,
@@ -174,9 +184,15 @@ export function ChatInterface({
     categoryId,
     adminMode,
     userId,
+    contextKeyOverride,
+    onConversationCreated,
   })
 
   const { speak, playingMessageId } = useTTS()
+
+  // Teacher profile badge (authenticated users only)
+  const { user: currentUser } = useCurrentUser()
+  const { label: teacherProfileLabel } = useTeacherProfileLabel(!!currentUser)
 
   // Auto-send contextual help on incorrect answer (ref pattern for stable listener)
   const incorrectAnswerRef = useRef<(e: Event) => void>(() => {})
@@ -373,10 +389,17 @@ export function ChatInterface({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Header with optional reset button */}
+      {/* Header with optional reset button and teacher profile badge */}
       {showResetButton && (
         <div className="flex items-center justify-between p-3 border-b border-border">
-          <h3 className="font-medium text-sm text-foreground">{tCourses('chatTitle')}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-medium text-sm text-foreground">{tCourses('chatTitle')}</h3>
+            {teacherProfileLabel && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                {teacherProfileLabel}
+              </span>
+            )}
+          </div>
           {contextKey && (
             <button
               onClick={handleReset}
@@ -406,14 +429,14 @@ export function ChatInterface({
           </div>
         )}
         {!isLoadingHistory &&
-          messages.map((msg, idx) => {
+          messages.map((msg) => {
             const isAssistant = msg.role !== ChatMessageRole.User
-            const messageId = `msg-${idx}`
+            const messageId = msg.id
             const isCurrentlyPlaying = playingMessageId === messageId
 
             return (
               <div
-                key={idx}
+                key={msg.id}
                 className={cn(
                   'max-w-[85%] px-[18px] py-3.5 text-base leading-relaxed shadow-sm',
                   msg.role === ChatMessageRole.User
@@ -424,9 +447,9 @@ export function ChatInterface({
               >
                 {msg.media && msg.media.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-2">
-                    {msg.media.map((mediaItem, mediaIdx) => (
+                    {msg.media.map((mediaItem) => (
                       <div
-                        key={mediaIdx}
+                        key={mediaItem.mediaId}
                         className={cn(
                           'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
                           msg.role === ChatMessageRole.User
@@ -436,7 +459,7 @@ export function ChatInterface({
                       >
                         <ImageIcon className="w-3 h-3" />
                         <span className="max-w-[120px] truncate">
-                          {mediaItem.filename || `media-${mediaIdx + 1}`}
+                          {mediaItem.filename || mediaItem.mediaId}
                         </span>
                       </div>
                     ))}
@@ -444,9 +467,9 @@ export function ChatInterface({
                 )}
                 {msg.chatAssets && msg.chatAssets.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-2">
-                    {msg.chatAssets.map((asset, assetIdx) => (
+                    {msg.chatAssets.map((asset) => (
                       <div
-                        key={assetIdx}
+                        key={asset.chatAssetId}
                         className={cn(
                           'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
                           msg.role === ChatMessageRole.User
@@ -456,7 +479,7 @@ export function ChatInterface({
                       >
                         <FileUp className="w-3 h-3" />
                         <span className="max-w-[120px] truncate">
-                          {asset.filename || `attachment-${assetIdx + 1}`}
+                          {asset.filename || asset.chatAssetId}
                         </span>
                       </div>
                     ))}

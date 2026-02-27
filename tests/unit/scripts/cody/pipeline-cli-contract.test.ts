@@ -14,7 +14,6 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import * as childProcess from 'child_process'
 
 // Mock child_process before importing the module
 vi.mock('child_process', () => ({
@@ -107,6 +106,7 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
 
       expect(result.taskId).toBe('260218-user-metrics')
       expect(result.mode).toBe('full')
+      // CLI args take precedence over env vars
       expect(result.triggerType).toBe('dispatch')
       expect(result.dryRun).toBe(false)
       expect(result.local).toBe(false)
@@ -131,6 +131,7 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
       expect(result.dryRun).toBe(true)
       expect(result.feedback).toBe('TypeScript errors in src/api.ts')
       expect(result.fromStage).toBe('build')
+      // CLI args take precedence over env vars
       expect(result.runId).toBe('9876543')
       expect(result.runUrl).toBe('https://github.com/org/repo/actions/runs/9876543')
     })
@@ -301,6 +302,7 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
 
       const result = parseCliArgs(args)
 
+      // CLI args take precedence over env vars
       expect(result.issueNumber).toBe(99)
     })
 
@@ -375,8 +377,9 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
       expect(result.feedback).toBeUndefined()
       expect(result.fromStage).toBeUndefined()
       expect(result.commentBody).toBeUndefined()
-      expect(result.runId).toBeUndefined()
-      expect(result.runUrl).toBeUndefined()
+      // In CI, RUN_ID is set; locally it should be undefined
+      expect(result.runId).toBe(process.env.RUN_ID || undefined)
+      expect(result.runUrl).toBe(process.env.RUN_URL || undefined)
     })
 
     it('should handle DRY_RUN=false (not passing --dry-run flag)', () => {

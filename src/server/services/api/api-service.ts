@@ -79,6 +79,7 @@ export const apiService = {
     mediaIds?: string[],
     chatAssetIds?: string[],
     adminMode?: boolean,
+    contextKeyOverride?: string,
   ): Promise<ChatApiResponse> {
     try {
       const response = await fetch('/api/agent/chat', {
@@ -92,6 +93,7 @@ export const apiService = {
           ...(mediaIds && mediaIds.length > 0 ? { mediaIds } : {}),
           ...(chatAssetIds && chatAssetIds.length > 0 ? { chatAssetIds } : {}),
           ...(adminMode ? { adminMode: true } : {}),
+          ...(contextKeyOverride ? { contextKeyOverride } : {}),
         }),
       })
 
@@ -262,7 +264,7 @@ export const apiService = {
       courseId?: string
       categoryId?: string
     },
-    options?: { hidden?: boolean; hidePromptOnly?: boolean },
+    options?: { hidden?: boolean; contextKeyOverride?: string; hidePromptOnly?: boolean },
   ): AsyncGenerator<ChatStreamEvent, void, unknown> {
     const response = await fetch('/api/agent/chat/stream', {
       method: 'POST',
@@ -273,6 +275,7 @@ export const apiService = {
         acknowledgment,
         ...context,
         ...(options?.hidden && { hidden: true }),
+        ...(options?.contextKeyOverride ? { contextKeyOverride: options.contextKeyOverride } : {}),
         ...(options?.hidePromptOnly && { hidePromptOnly: true }),
       }),
     })

@@ -141,8 +141,16 @@ describe('stage-prompts', () => {
       ])
     })
 
-    it('should return reduced stage list for lightweight profile', () => {
-      expect(getImplStages('lightweight')).toEqual(['architect', 'build', 'commit', 'verify', 'pr'])
+    it('should return reduced stage list for lightweight profile (no plan-gap)', () => {
+      expect(getImplStages('lightweight')).toEqual([
+        'architect',
+        'build',
+        'commit',
+        'verify',
+        'auditor',
+        'apply-audit',
+        'pr',
+      ])
     })
 
     it('should return full stage list for standard profile', () => {

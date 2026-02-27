@@ -1,5 +1,5 @@
 # Cody - Runs multi-agent pipeline in CI via OpenCode GitHub mode
-# Triggers: workflow_dispatch, issue_comment (@cody <subcommand>)
+# Triggers: workflow_dispatch, issue_comment (@cody <subcommand>), push to dev/main (smoke test)
 
 name: cody
 
@@ -35,6 +35,23 @@ on:
         required: false
         type: string
         default: ''
+      runner:
+        description: 'Where to run: github-hosted (default) or self-hosted (--local)'
+        required: false
+        type: choice
+        options:
+          - github-hosted
+          - self-hosted
+        default: 'github-hosted'
+
+  push:
+    branches:
+      - dev
+      - main
+    paths:
+      - 'scripts/cody/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
 
   issue_comment:
     types: [created]
@@ -59,7 +76,8 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issue_comment' &&
-       contains(github.event.comment.body, '@cody'))
+       (contains(github.event.comment.body, '@cody') ||
+        contains(github.event.comment.body, '/cody')))
     env:
       GH_TOKEN: ${{ github.token }}
     outputs:
@@ -73,12 +91,27 @@ jobs:
       valid: ${{ steps.parse.outputs.valid }}
       trigger_type: ${{ steps.parse.outputs.trigger_type }}
       comment_body: ${{ steps.parse.outputs.comment_body }}
+      runner: ${{ steps.parse.outputs.runner }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           sparse-checkout: scripts/cody
           sparse-checkout-cone-mode: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       # For comments: validate safety filters before parsing
       - name: Validate comment trigger safety
@@ -88,7 +121,7 @@ jobs:
           COMMENT_BODY: ${{ github.event.comment.body }}
           AUTHOR: ${{ github.event.comment.user.login }}
           ASSOCIATION: ${{ github.event.comment.author_association }}
-        run: ./scripts/cody/parse-safety.sh
+        run: pnpm tsx scripts/cody/parse-safety.ts
 
       # Add reaction to acknowledge command (shows instantly on the comment)
       - name: Acknowledge command with reaction
@@ -113,12 +146,13 @@ jobs:
           DISPATCH_FEEDBACK: ${{ github.event.inputs.feedback }}
           DISPATCH_FROM_STAGE: ${{ github.event.inputs.from_stage }}
           DISPATCH_CLARIFY: ${{ github.event.inputs.clarify }}
+          DISPATCH_RUNNER: ${{ github.event.inputs.runner }}
           # Comment inputs (for orchestrator to parse)
           COMMENT_BODY: ${{ github.event.comment.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           # GitHub context (needed by script to detect trigger type)
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-        run: ./scripts/cody/parse-inputs.sh
+        run: pnpm tsx scripts/cody/parse-inputs.ts
 
   # Job 1b: Notify on parse errors (invalid commands)
   notify-parse-error:
@@ -140,30 +174,16 @@ jobs:
           gh issue comment ${{ needs.parse.outputs.issue_number }} \
             --body "⚠️ Invalid \`@cody\` command. Use: \`@cody [spec|impl|rerun|full|status] [task-id] [options]\`"
 
-  # Job 2: Orchestrate - run the pipeline
-  orchestrate:
-    needs: parse
-    if: needs.parse.outputs.valid == 'true'
+  # Smoke test: runs on push to dev/main to validate cody pipeline works
+  smoke-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
-    permissions:
-      id-token: write # OpenCode GitHub App OIDC
-      contents: write # Branch/commit operations
-      pull-requests: write # Create PRs, post comments
-      issues: write # Post status comments
+    timeout-minutes: 15
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true
-          fetch-depth: 0
-
-      - name: Checkout feature branch if exists
-        if: needs.parse.outputs.task_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TASK_ID: ${{ needs.parse.outputs.task_id }}
-        run: ./scripts/cody/checkout-task-branch.sh
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -179,6 +199,94 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Run parse-inputs validation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DISPATCH_TASK_ID: ''
+          DISPATCH_MODE: ''
+          DISPATCH_DRY_RUN: 'false'
+          DISPATCH_FEEDBACK: ''
+          DISPATCH_FROM_STAGE: ''
+          DISPATCH_CLARIFY: 'false'
+          COMMENT_BODY: ''
+          ISSUE_NUMBER: ''
+          GITHUB_EVENT_NAME: 'push'
+          SAFETY_VALID: 'true'
+          SAFETY_REASON: ''
+        run: pnpm tsx scripts/cody/parse-inputs.ts
+
+      - name: Validate cody entry can be loaded
+        run: pnpm tsx scripts/cody/entry.ts --help
+
+      - name: Run actual pipeline (spec mode - runs taskify)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+        run: |
+          # Create simple test task
+          mkdir -p .tasks/260225-smoke-test
+          echo "# Task" > .tasks/260225-smoke-test/task.md
+          echo "" >> .tasks/260225-smoke-test/task.md
+          echo "Smoke test task" >> .tasks/260225-smoke-test/task.md
+
+          # Run spec mode (will run taskify stage)
+          pnpm cody --mode=spec --task-id=260225-smoke-test || true
+
+          # Don't fail on stage errors, just verify files were created
+
+      - name: Verify taskify produced valid output
+        run: |
+          # Verify task.json was created
+          if [ ! -f ".tasks/260225-smoke-test/task.json" ]; then
+            echo "ERROR: task.json was not created"
+            exit 1
+          fi
+
+          # Verify it's valid JSON
+          cat .tasks/260225-smoke-test/task.json | pnpm tsx -e "JSON.parse(require('fs').readFileSync(0, 'utf-8')); console.log('Valid JSON')"
+
+          echo "SUCCESS: Pipeline smoke test passed"
+
+  # Job 2: Orchestrate - run the pipeline
+  orchestrate:
+    needs: parse
+    if: needs.parse.outputs.valid == 'true'
+    runs-on: ${{ needs.parse.outputs.runner == 'self-hosted' && fromJSON('["self-hosted"]') || 'ubuntu-latest' }}
+    timeout-minutes: 120
+    permissions:
+      id-token: write # OpenCode GitHub App OIDC
+      contents: write # Branch/commit operations
+      pull-requests: write # Create PRs, post comments
+      issues: write # Post status comments
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Checkout feature branch if exists
+        if: needs.parse.outputs.task_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TASK_ID: ${{ needs.parse.outputs.task_id }}
+          ISSUE_NUMBER: ${{ needs.parse.outputs.issue_number }}
+        run: pnpm tsx scripts/cody/checkout-task-branch.ts
+
       # Configure git identity for commits in CI
       - name: Configure git identity
         run: |
@@ -190,6 +298,12 @@ jobs:
           # GitHub token for gh CLI (GH_PAT takes precedence for PR creation)
           GH_TOKEN: ${{ github.token }}
           GH_PAT: ${{ secrets.GH_PAT }}
+
+          # Blob storage token for verify stage (unit tests need it)
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+
+          # Database URL for verify stage (unit tests need it)
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'mongodb://localhost:27017/test' }}
 
           # LLM provider keys (all available)
           # Note: GOOGLE_GENERATIVE_AI_API_KEY is for Vercel AI SDK (@ai-sdk/google),
@@ -214,7 +328,7 @@ jobs:
           # GitHub context
           RUN_ID: ${{ github.run_id }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: ./scripts/cody/run-cody.sh
+        run: pnpm cody
 
       - name: Upload artifacts
         if: always() && needs.parse.outputs.task_id != ''
@@ -223,6 +337,16 @@ jobs:
           name: cody-${{ needs.parse.outputs.task_id }}-${{ github.run_id }}
           path: .tasks/${{ needs.parse.outputs.task_id }}/
           retention-days: 7
+
+      # Clean workspace for self-hosted runners (no-op on GitHub-hosted since VM is discarded)
+      - name: Cleanup workspace (self-hosted)
+        if: always() && needs.parse.outputs.runner == 'self-hosted'
+        run: |
+          echo "=== Cleaning workspace for self-hosted runner ==="
+          git reset --hard HEAD 2>/dev/null || true
+          git clean -ffdx 2>/dev/null || true
+          rm -rf .next dist coverage .turbo .cache .eslintcache .vercel .output
+          echo "✅ Workspace cleaned"
 
       # Post completion comment removed (BUG-F fix):
       # cody.ts already posts completion/failure comments via postComment()

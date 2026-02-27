@@ -100,14 +100,15 @@ function resolveNextStep(
       const stageState = state.stages[step]
       // Only run pending stages - failed stages should not auto-retry
       // User can use --from to restart from a specific stage
-      if (!stageState || stageState.state === 'pending') {
+      // Also run stages that were interrupted (running state from previous run)
+      if (!stageState || stageState.state === 'pending' || stageState.state === 'running') {
         return step
       }
     } else if ('parallel' in step) {
       // Parallel stages - check if any need to run
       const needsRun = step.parallel.some((s) => {
         const stageState = state.stages[s]
-        return !stageState || stageState.state === 'pending'
+        return !stageState || stageState.state === 'pending' || stageState.state === 'running'
       })
       if (needsRun) {
         return step
@@ -317,6 +318,7 @@ async function executeParallelStep(
     // Handle PipelinePausedError specially (G30)
     if (stageResult.outcome === 'paused') {
       state = updateStage(state, stageName, { state: 'paused' })
+      writeState(ctx.taskId, state) // Persist paused state to disk
       // Return early with paused state
       return completeState(state, 'paused')
     }
@@ -341,6 +343,7 @@ async function executeParallelStep(
           // Handle post-action errors - mirroring executeSingleStep pattern
           if (postError instanceof PipelinePausedError) {
             state = updateStage(state, stageName, { state: 'paused' })
+            writeState(ctx.taskId, state) // Persist paused state to disk
             return completeState(state, 'paused')
           }
           console.error(`  Post-action failed for parallel stage ${stageName}:`, postError)

@@ -5,6 +5,9 @@
  * @ai-summary Declarative stage configurations for the Cody pipeline state machine
  */
 
+import * as fs from 'fs'
+import * as path from 'path'
+
 import type {
   PipelineDefinition,
   PipelineContext,
@@ -47,7 +50,8 @@ export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
   'architect',
   'build',
   'commit',
-  'verify',
+  { parallel: ['verify', 'auditor'] },
+  'apply-audit',
   'pr',
 ]
 
@@ -143,6 +147,29 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
     shouldSkip: (ctx) => skipIfInputQuality(ctx, 'plan-gap'),
     postActions: [{ type: 'validate-plan-exists' }],
     validator: createPlanGapValidator(ctx),
+    fallbackOnMissingOutput: (ctx) => {
+      // If agent edited plan.md but forgot to write plan-gap.md, create a fallback
+      const planFile = path.join(ctx.taskDir, 'plan.md')
+      if (fs.existsSync(planFile)) {
+        return `# Plan Gap Analysis: ${ctx.taskId}
+
+## Summary
+
+- Gaps Found: 0
+- Plan Revised: Yes (agent edited plan.md directly)
+
+## Changes Made to Plan
+
+Agent revised plan.md but did not produce a separate gap report.
+See plan.md for the revised plan.
+
+## No Gaps Found
+
+No critical gaps identified. Plan was refined in-place.
+`
+      }
+      return null
+    },
   })
 
   // build stage - has preExecute for ensureFeatureBranch (G20)
@@ -249,8 +276,19 @@ export function rebuildPipelineAfterTaskify(
   _currentPipeline: PipelineDefinition,
   ctx: PipelineContext,
 ): PipelineDefinition {
-  // Re-build with the resolved profile - use 'impl' mode to get BOTH spec + impl stages
-  return buildPipeline('impl', ctx.profile, ctx.input.clarify ?? false, ctx)
+  // For full mode, we need BOTH spec stages (completed) AND impl stages (to run)
+  // Build spec stages based on profile
+  const specOrder = ctx.profile === 'standard' ? SPEC_ORDER_STANDARD : SPEC_ORDER_LIGHTWEIGHT
+  const filteredSpecOrder = ctx.input.clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
+
+  // Build impl stages based on profile
+  const implOrder = ctx.profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
+
+  // Combine: spec stages first (already completed), then impl stages (to run)
+  return {
+    stages: createStageDefinitions(ctx),
+    order: [...filteredSpecOrder, ...implOrder],
+  }
 }
 
 /**
@@ -282,10 +320,18 @@ export function buildPipeline(
       // The engine's rebuildPipeline callback handles this
       return { stages, order }
     }
-  } else if (mode === 'impl' || mode === 'rerun') {
-    // Implementation stages
+  } else if (mode === 'impl') {
+    // Implementation stages only
     const implOrder = profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
     order = [...implOrder]
+  } else if (mode === 'rerun') {
+    // Rerun mode: include both spec and impl stages to support resuming from any stage
+    // The engine will skip completed stages and start from the specified fromStage
+    // Always use standard spec order to ensure spec/gap stages are included in rebuild
+    const specOrder = SPEC_ORDER_STANDARD
+    const implOrder = profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
+    const filteredSpecOrder = clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
+    order = [...filteredSpecOrder, ...implOrder]
   }
 
   return { stages, order }

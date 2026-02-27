@@ -40,12 +40,12 @@ export const HintSolutionPanel: React.FC<HintSolutionPanelProps> = ({
       <div className="hint-solution-panel">
         <HintSolutionField label="Hint" value={hint} onChange={(val) => onChange('hint', val)} />
         <HintSolutionField
-          label="Guiding Question"
+          label="Solution"
           value={solution}
           onChange={(val) => onChange('solution', val)}
         />
         <HintSolutionField
-          label="Solution"
+          label="Full Solution"
           value={fullSolution}
           onChange={(val) => onChange('fullSolution', val)}
         />

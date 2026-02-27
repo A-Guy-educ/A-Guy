@@ -62,6 +62,18 @@ const chatMarkdownComponents: Components = {
     </blockquote>
   ),
   hr: () => <hr className="border-0 border-t border-border my-5" />,
+  table: ({ children }) => (
+    <div className="chat-table my-4 overflow-x-auto rounded-lg border border-border shadow-sm">
+      <table className="w-full border-collapse text-sm">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-muted">{children}</thead>,
+  tbody: ({ children }) => <tbody>{children}</tbody>,
+  tr: ({ children }) => (
+    <tr className="border-b border-border last:border-b-0 even:bg-muted/30">{children}</tr>
+  ),
+  th: ({ children }) => <th className="px-4 py-3 text-start font-bold text-primary">{children}</th>,
+  td: ({ children }) => <td className="px-4 py-3 text-start">{children}</td>,
 }
 
 /**

@@ -8,7 +8,6 @@
  */
 import { composePrompt, getRecentWindow, type Message } from '@/infra/llm/context-policy'
 import { logger } from '@/infra/utils/logger'
-import type { Logger } from 'pino'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import {
@@ -16,6 +15,7 @@ import {
   GuestConversationLimitError,
 } from '@/server/services/conversation-service'
 import type { PayloadRequest } from 'payload'
+import type { Logger } from 'pino'
 import { z } from 'zod'
 import {
   composeFullSystemInstructions,
@@ -181,6 +181,7 @@ export async function runChatPipeline(
     content: validated.message,
     timestamp: new Date().toISOString(),
     media: validated.mediaIds?.map((id: string) => ({ mediaId: id })) || [],
+    chatAssets: validated.chatAssetIds?.map((id: string) => ({ chatAssetId: id })) || [],
     hidden: validated.hidden === true,
   }
 
@@ -228,6 +229,7 @@ export async function runChatPipeline(
       reqLogger as Logger,
       lessonContext.coursePrompt,
       lessonContext.courseContextText,
+      req.user?.id,
     )
   } catch (error) {
     if (error instanceof Error && error.message.includes('exceeds maximum')) {
@@ -260,12 +262,22 @@ export async function runChatPipeline(
   }
 
   // Compose prompt using Context Policy V1
-  const composedPrompt = composePrompt(composedInstructions.instructions, {
+  const basePrompt = composePrompt(composedInstructions.instructions, {
     systemMessage: composedInstructions.instructions,
     summary: conversation?.summary || undefined,
     memoryItems: memoryResult.items,
     recentMessages: recentMessages,
   })
+
+  // Thread teacher profile metadata for downstream debug logging (immutable)
+  const composedPrompt = {
+    ...basePrompt,
+    metadata: {
+      ...basePrompt.metadata,
+      teacherProfileSlug: composedInstructions.teacherProfileSlug,
+      teacherProfileResolvedFrom: composedInstructions.teacherProfileResolvedFrom,
+    },
+  }
 
   return {
     result: {

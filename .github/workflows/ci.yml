@@ -17,6 +17,7 @@ jobs:
     timeout-minutes: 10
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL || 'mongodb://localhost:27017/test' }}
+      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
 
     steps:
       - name: Checkout code

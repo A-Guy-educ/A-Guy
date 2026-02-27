@@ -4,7 +4,7 @@ import type { Exercise, Media as MediaType } from '@/payload-types'
 import { Button } from '@/ui/web/components/button'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { ExerciseRenderer } from '@/ui/web/exerciserenderer'
-import { BookOpen, ChevronLeft, ChevronRight, Info, Layers, Sparkles } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, Info, Layers, Loader2, Sparkles } from 'lucide-react'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
 import { Progress } from '@/ui/web/components/progress'
@@ -44,6 +44,7 @@ export function ExercisesPager({
   const {
     pageState,
     progressPercent,
+    isNavigating,
     canGoNext,
     canGoPrev,
     handleNext,
@@ -109,18 +110,25 @@ export function ExercisesPager({
                 <Button
                   variant="ghost"
                   onClick={handlePrev}
-                  disabled={!canGoPrev}
-                  className="text-muted-foreground text-sm hover:text-foreground gap-1.5"
+                  disabled={!canGoPrev || isNavigating}
+                  className="text-muted-foreground text-sm hover:text-foreground gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />{' '}
                   {t('exercisesPagerPrev')}
                 </Button>
                 <Button
                   onClick={handleNext}
-                  disabled={!canGoNext}
-                  className="px-6 py-2 rounded-xl text-sm"
+                  disabled={!canGoNext || isNavigating}
+                  className="px-6 py-2 rounded-xl text-sm cursor-pointer"
                 >
-                  {t('exercisesPagerNext')}
+                  {isNavigating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 me-2 animate-spin" />
+                      {t('exercisesPagerNext')}
+                    </>
+                  ) : (
+                    t('exercisesPagerNext')
+                  )}
                 </Button>
               </div>
             </div>
@@ -204,7 +212,7 @@ export function ExercisesPager({
                 <Button
                   onClick={handleStart}
                   size="lg"
-                  className="w-full py-6 rounded-2xl text-lg shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
+                  className="w-full py-6 rounded-2xl text-lg shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 cursor-pointer"
                 >
                   {t('exercisesPagerStart')}{' '}
                   <ChevronLeft className="w-5 h-5 ms-2 rtl:rotate-0 ltr:rotate-180" />
@@ -251,7 +259,7 @@ export function ExercisesPager({
                 <Button
                   onClick={handleStartExercises}
                   size="lg"
-                  className="w-full py-6 rounded-2xl text-lg shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
+                  className="w-full py-6 rounded-2xl text-lg shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 cursor-pointer"
                 >
                   {t('startLesson')}{' '}
                   <ChevronLeft className="w-5 h-5 ms-2 rtl:rotate-0 ltr:rotate-180" />
@@ -301,7 +309,8 @@ export function ExercisesPager({
                 <Button
                   variant="ghost"
                   onClick={handlePrev}
-                  className="text-muted-foreground text-sm hover:text-foreground transition-colors duration-300 gap-1.5"
+                  disabled={isNavigating}
+                  className="text-muted-foreground text-sm hover:text-foreground transition-colors duration-300 gap-1.5 cursor-pointer"
                 >
                   <ChevronRight className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />{' '}
                   {t('exercisesPagerPrev')}

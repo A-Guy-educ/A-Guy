@@ -498,6 +498,61 @@ Before ANY production deployment:
 - [ ] **File Uploads**: Validated (size, type)
 - [ ] **Wallet Signatures**: Verified (if blockchain)
 
+## Automated Scanner
+
+This skill includes an automated script that scans for common security issues.
+
+### Usage
+
+```bash
+# Full scan with npm audit
+npx tsx .agents/skills/security-review/scripts/security-scan.ts
+
+# Skip npm audit (faster)
+npx tsx .agents/skills/security-review/scripts/security-scan.ts --skip-audit
+
+# Custom scan path
+npx tsx .agents/skills/security-review/scripts/security-scan.ts --path src/server
+
+# Output to file
+npx tsx .agents/skills/security-review/scripts/security-scan.ts --output security-report.md
+
+# JSON output (for programmatic use)
+npx tsx .agents/skills/security-review/scripts/security-scan.ts --json
+```
+
+### Options
+
+- `--path <dir>` - Directory to scan (default: src/)
+- `--collections <dir>` - Collections directory (auto-detected)
+- `--skip-audit` - Skip npm audit (faster)
+- `--output <file>` - Write report to file
+- `--json` - Output JSON instead of markdown
+
+### What It Scans
+
+- **Hardcoded secrets** - API keys, tokens, passwords in code
+- **Console.log statements** - May leak in production
+- **localStorage for tokens** - Vulnerable to XSS
+- **SQL injection risks** - Template literals with variables
+- **eval() usage** - Code injection risk
+- **Missing access control** - Collections without access defined
+- **npm audit** - Dependency vulnerabilities
+
+### Path Auto-Discovery
+
+The script auto-detects the collections directory from:
+
+1. `--collections` CLI argument
+2. `src/server/payload/collections`
+3. `src/collections`
+4. `collections`
+
+### Exit Codes
+
+- `0` - No critical issues found
+- `1` - One or more critical issues found
+
 ## Resources
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)

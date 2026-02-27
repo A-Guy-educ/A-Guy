@@ -78,7 +78,7 @@ jobs:
         if: needs.validate.outputs.task_id != ''
         run: |
           echo "Checking out branch for task: $TASK_ID"
-          TASK_ID="$TASK_ID" bash scripts/cody/checkout-task-branch.sh
+          TASK_ID="$TASK_ID" pnpm tsx scripts/cody/checkout-task-branch.ts
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4

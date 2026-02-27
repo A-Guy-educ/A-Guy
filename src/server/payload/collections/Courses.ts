@@ -108,6 +108,7 @@ export const Courses: CollectionConfig = {
       name: 'status',
       type: 'select',
       required: true,
+      index: true,
       defaultValue: 'draft',
       options: [
         {
@@ -174,6 +175,7 @@ export const Courses: CollectionConfig = {
       relationTo: 'categories',
       required: true,
       hasMany: true,
+      index: true,
       admin: {
         position: 'sidebar',
       },

@@ -1,0 +1,75 @@
+{
+  "version": 2,
+  "taskId": "260226-fix-admin-demotion-hook",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-26T15:18:06.431Z",
+  "updatedAt": "2026-02-26T15:33:13.593Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T15:18:06.433Z",
+      "completedAt": "2026-02-26T15:19:08.530Z",
+      "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Promoted via input_quality (file exists)"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T15:19:11.671Z",
+      "completedAt": "2026-02-26T15:21:31.326Z",
+      "outputFile": "gap.md"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T15:21:31.327Z",
+      "completedAt": "2026-02-26T15:23:05.734Z",
+      "outputFile": "architect.md"
+    },
+    "plan-gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T15:23:05.735Z",
+      "completedAt": "2026-02-26T15:23:48.669Z",
+      "outputFile": "plan-gap.md"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T15:23:48.670Z",
+      "completedAt": "2026-02-26T15:31:01.747Z",
+      "outputFile": "build.md"
+    },
+    "commit": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-26T15:31:21.783Z",
+      "completedAt": "2026-02-26T15:31:24.376Z"
+    },
+    "verify": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-02-26T15:33:13.404Z",
+      "outputFile": "verify.md"
+    },
+    "auditor": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-02-26T15:33:13.593Z",
+      "outputFile": "auditor.md"
+    },
+    "apply-audit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-26T15:33:13.593Z"
+    }
+  }
+}

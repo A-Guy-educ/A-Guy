@@ -14,25 +14,14 @@
  */
 
 import type { Payload } from 'payload'
+import type { GuestSession } from '@/payload-types'
 import crypto from 'crypto'
 import { logger } from '@/infra/utils/logger'
 import { getGuestChatConfig } from '@/server/config/guest-chat-config'
 
 export const GUEST_SESSION_COOKIE_NAME = 'guest_session'
 
-export interface GuestSessionDoc {
-  id: string
-  tokenHash: string
-  tokenVersion: number
-  createdAt: string
-  lastActiveAt: string
-  expiresAt: string
-  hardExpiresAt: string
-  status: 'active' | 'expired' | 'revoked'
-  claimedByUser?: string
-  claimedAt?: string
-  messageCount: number
-}
+export type GuestSessionDoc = GuestSession
 
 export function generateSessionToken(): string {
   return crypto.randomBytes(32).toString('hex')
@@ -147,7 +136,7 @@ export async function createGuestSession(
   expiresAt.setDate(expiresAt.getDate() + guestConfig.sliding_ttl_days)
 
   const session = await payload.create({
-    collection: 'guest-sessions' as const,
+    collection: 'guest-sessions',
     data: {
       tokenHash,
       tokenVersion: 1,
@@ -165,7 +154,7 @@ export async function createGuestSession(
 
   logger.info({ sessionId: session.id }, 'Created guest session')
 
-  return { session: session as unknown as GuestSessionDoc, token }
+  return { session, token }
 }
 
 export async function getGuestSessionByToken(
@@ -175,7 +164,7 @@ export async function getGuestSessionByToken(
   const tokenHash = hashToken(token)
 
   const sessions = await payload.find({
-    collection: 'guest-sessions' as const,
+    collection: 'guest-sessions',
     where: {
       and: [{ tokenHash: { equals: tokenHash } }, { status: { equals: 'active' } }],
     },
@@ -184,7 +173,7 @@ export async function getGuestSessionByToken(
 
   if (sessions.docs.length === 0) return null
 
-  const session = sessions.docs[0] as GuestSessionDoc
+  const session = sessions.docs[0]
 
   if (new Date(session.expiresAt) < new Date()) {
     return null
@@ -198,16 +187,15 @@ export async function updateGuestSessionActivity(
   sessionId: string,
 ): Promise<GuestSessionDoc | null> {
   const session = await payload.findByID({
-    collection: 'guest-sessions' as const,
+    collection: 'guest-sessions',
     id: sessionId,
   })
 
-  if (!session || (session as GuestSessionDoc).status !== 'active') {
+  if (!session || session.status !== 'active') {
     return null
   }
 
-  const doc = session as GuestSessionDoc
-  const hardExpiresAt = new Date(doc.hardExpiresAt)
+  const hardExpiresAt = new Date(session.hardExpiresAt)
   const now = new Date()
 
   const guestConfig = await getGuestChatConfig()
@@ -219,7 +207,7 @@ export async function updateGuestSessionActivity(
   }
 
   const updated = await payload.update({
-    collection: 'guest-sessions' as const,
+    collection: 'guest-sessions',
     id: sessionId,
     data: {
       lastActiveAt: now.toISOString(),
@@ -227,7 +215,7 @@ export async function updateGuestSessionActivity(
     },
   })
 
-  return updated as GuestSessionDoc
+  return updated
 }
 
 export async function revokeGuestSession(
@@ -236,7 +224,7 @@ export async function revokeGuestSession(
   claimedByUser: string,
 ): Promise<GuestSessionDoc | null> {
   const updated = await payload.update({
-    collection: 'guest-sessions' as const,
+    collection: 'guest-sessions',
     id: sessionId,
     data: {
       status: 'revoked',
@@ -245,7 +233,7 @@ export async function revokeGuestSession(
     },
   })
 
-  return updated as GuestSessionDoc
+  return updated
 }
 
 export interface GuestMessageLimitResult {
@@ -262,7 +250,7 @@ export async function checkAndIncrementGuestMessageCount(
   const guestConfig = await getGuestChatConfig()
 
   const session = await payload.findByID({
-    collection: 'guest-sessions' as const,
+    collection: 'guest-sessions',
     id: guestSessionId,
   })
 
@@ -270,8 +258,7 @@ export async function checkAndIncrementGuestMessageCount(
     return { allowed: false, remaining: 0, current: 0, max: guestConfig.max_messages }
   }
 
-  const doc = session as GuestSessionDoc
-  const currentCount = doc.messageCount ?? 0
+  const currentCount = session.messageCount ?? 0
 
   if (currentCount >= guestConfig.max_messages) {
     return {
@@ -283,7 +270,7 @@ export async function checkAndIncrementGuestMessageCount(
   }
 
   await payload.update({
-    collection: 'guest-sessions' as const,
+    collection: 'guest-sessions',
     id: guestSessionId,
     data: {
       messageCount: currentCount + 1,

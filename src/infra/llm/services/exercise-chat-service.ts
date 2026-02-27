@@ -44,6 +44,31 @@ export interface ExerciseChatResult {
 const LEGACY_FALLBACK = 'You are a helpful assistant.'
 
 /**
+ * Log teacher profile debug info right before the LLM provider call.
+ * Gated behind DEBUG_TEACHER_PROFILE=true env flag.
+ */
+function logTeacherProfileDebug(
+  systemPrompt: string,
+  metadata?: { teacherProfileSlug?: string; teacherProfileResolvedFrom?: string },
+  mode: 'sync' | 'stream' = 'sync',
+): void {
+  if (process.env.DEBUG_TEACHER_PROFILE !== 'true') return
+
+  const tpIndex = systemPrompt.indexOf('<teacher_profile>')
+  logger.info(
+    {
+      mode,
+      teacherProfileSlug: metadata?.teacherProfileSlug ?? '(unknown)',
+      resolvedFrom: metadata?.teacherProfileResolvedFrom ?? '(unknown)',
+      teacherProfileIndex: tpIndex,
+      hasTeacherProfileBlock: tpIndex !== -1,
+      systemPromptLength: systemPrompt.length,
+    },
+    '[TeacherProfile] Provider call debug — final system message inspection',
+  )
+}
+
+/**
  * @deprecated Use resolveAgentSystemPrompt from prompt-resolver.server instead.
  */
 export function getSystemPrompt(): string {
@@ -106,6 +131,9 @@ export async function chatWithExerciseHelper(
         input.req,
       )
     }
+
+    // Debug: log teacher profile presence in final system message
+    logTeacherProfileDebug(systemPrompt, input.composedPrompt?.metadata, 'sync')
 
     // Text-only path using unified Genkit adapter
     const result = await adapter.generateChatCompletion(
@@ -193,6 +221,9 @@ export async function streamChatWithExerciseHelper(
     // Add current message
     messages.push({ role: 'user', content: input.message })
   }
+
+  // Debug: log teacher profile presence in final system message
+  logTeacherProfileDebug(systemPrompt, input.composedPrompt?.metadata, 'stream')
 
   // Call streaming API
   return adapter.generateStreamingChatCompletion(

@@ -15,14 +15,10 @@ import { execSync } from 'child_process'
 // parse-safety.sh Tests
 // ============================================================================
 
-describe('parse-safety.sh', () => {
-  const scriptPath = path.join(process.cwd(), 'scripts/cody/parse-safety.sh')
-
-  it('should exist and be executable', () => {
-    expect(fs.existsSync(scriptPath)).toBe(true)
-    const stats = fs.statSync(scriptPath)
-    expect(stats.mode & 0o111).not.toBe(0) // at least one execute bit
-  })
+describe('parse-safety.ts', { timeout: 15_000 }, () => {
+  // TypeScript files are run via tsx, not executed directly
+  // Each test spawns a child process (npx tsx) which has cold-start overhead,
+  // especially on CI runners. Default 5s timeout is too tight.
 
   it('should reject bot comments (github-actions[bot])', () => {
     const output = runScript({
@@ -189,7 +185,7 @@ function runScript(envVars: Record<string, string>): Record<string, string> {
   }
 
   try {
-    execSync(`bash ${path.join(process.cwd(), 'scripts/cody/parse-safety.sh')}`, {
+    execSync(`npx tsx ${path.join(process.cwd(), 'scripts/cody/parse-safety.ts')}`, {
       env,
       encoding: 'utf-8',
     })

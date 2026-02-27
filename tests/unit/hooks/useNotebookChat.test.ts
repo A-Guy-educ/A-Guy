@@ -65,7 +65,7 @@ describe('useNotebookChat', () => {
     const { result } = renderHook(() => useNotebookChat(defaultProps))
 
     expect(result.current.messages).toEqual([
-      { role: ChatRole.Assistant, content: defaultProps.initialMessage },
+      expect.objectContaining({ role: ChatRole.Assistant, content: defaultProps.initialMessage }),
     ])
 
     await waitFor(() => expect(result.current.isLoadingHistory).toBe(false))
@@ -96,7 +96,7 @@ describe('useNotebookChat', () => {
         courseId: undefined,
         categoryId: undefined,
       },
-      undefined,
+      { contextKeyOverride: undefined },
     )
   })
 
@@ -154,6 +154,7 @@ describe('useNotebookChat', () => {
       undefined,
       undefined, // chatAssetIds
       false, // adminMode
+      undefined, // contextKeyOverride
     )
   })
 
@@ -205,8 +206,34 @@ describe('useNotebookChat', () => {
     expect(apiService.resetChat).toHaveBeenCalledWith('lessons:lesson-1')
     expect(toast.success).toHaveBeenCalledWith(defaultProps.resetSuccessMessage)
     expect(result.current.messages).toEqual([
-      { role: ChatRole.Assistant, content: defaultProps.initialMessage },
+      expect.objectContaining({ role: ChatRole.Assistant, content: defaultProps.initialMessage }),
     ])
+  })
+
+  it('injectExerciseContext should maintain stable reference across loading state changes', async () => {
+    const { result } = renderHook(() => useNotebookChat(defaultProps))
+
+    // Wait for initial load to complete
+    await waitFor(() => expect(result.current.isLoadingHistory).toBe(false))
+
+    // Capture the initial injectExerciseContext reference
+    const initialInjectExerciseContext = result.current.injectExerciseContext
+
+    // Set input and trigger a loading state change by submitting
+    act(() => {
+      result.current.setInputValue('Test message')
+    })
+
+    // Submit the message - this will change isLoading from false to true, then back to false
+    await act(async () => {
+      result.current.handleSubmit({ preventDefault: () => undefined } as React.FormEvent)
+    })
+
+    // Wait for loading to complete
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    // Verify that injectExerciseContext has the SAME reference (not recreated)
+    expect(result.current.injectExerciseContext).toBe(initialInjectExerciseContext)
   })
 
   describe('error logging', () => {

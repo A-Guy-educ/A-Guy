@@ -11,9 +11,10 @@ import { toast } from 'sonner'
 import { useDirectChatAssetUpload } from './useDirectChatAssetUpload'
 
 export interface ChatMessage {
+  id: string
   role: ChatRole
   content: string
-  media?: Array<{ mediaId: string; filename?: string }>
+  media?: Array<{ mediaId: string; filename?: string; url?: string }>
   chatAssets?: Array<{ chatAssetId: string; filename?: string }>
 }
 
@@ -49,6 +50,10 @@ interface UseNotebookChatProps {
   // Admin mode - uses user-specific context without course/lesson context
   adminMode?: boolean
   userId?: string
+  // Override computed contextKey (e.g. for Ask page with per-session conversations)
+  contextKeyOverride?: string
+  // Called when the server creates/returns a conversationId (e.g. after first message)
+  onConversationCreated?: (conversationId: string, contextKey: string) => void
 }
 
 export function useNotebookChat({
@@ -70,6 +75,8 @@ export function useNotebookChat({
   categoryId,
   adminMode = false,
   userId,
+  contextKeyOverride,
+  onConversationCreated,
 }: UseNotebookChatProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -77,11 +84,19 @@ export function useNotebookChat({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: ChatRole.Assistant, content: initialMessage },
+    { id: crypto.randomUUID(), role: ChatRole.Assistant, content: initialMessage },
   ])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+
+  // Refs to mirror state for stable callback access
+  const isLoadingRef = useRef(false)
+  const isLoadingHistoryRef = useRef(true)
+
+  // Sync refs with state during render for stable callback access
+  isLoadingRef.current = isLoading
+  isLoadingHistoryRef.current = isLoadingHistory
 
   // Direct-to-Blob chat asset uploads
   const {
@@ -111,6 +126,7 @@ export function useNotebookChat({
   // Priority for regular mode: Lesson > Exercise (fallback) > Chapter > Course > Category
   // Exercises within the same lesson share a single conversation
   const contextKey = useMemo(() => {
+    if (contextKeyOverride) return contextKeyOverride
     if (lessonId) return `lessons:${lessonId}`
     if (exerciseId) return `exercises:${exerciseId}`
     if (chapterId) return `chapters:${chapterId}`
@@ -118,7 +134,7 @@ export function useNotebookChat({
     if (categoryId) return `categories:${categoryId}`
     if (adminMode && userId) return `users:${userId}`
     return null
-  }, [exerciseId, lessonId, chapterId, courseId, categoryId, adminMode, userId])
+  }, [contextKeyOverride, exerciseId, lessonId, chapterId, courseId, categoryId, adminMode, userId])
 
   // Simple scroll to bottom using scrollTop instead of scrollIntoView
   // scrollIntoView can cause layout issues in nested flex containers
@@ -195,14 +211,38 @@ export function useNotebookChat({
 
             if (validMessages.length > 0) {
               // Map API messages to chat messages
-              const loadedMessages: ChatMessage[] = validMessages.map((msg) => ({
-                role:
-                  msg.role === ChatRole.User || msg.role === 'user'
-                    ? ChatRole.User
-                    : ChatRole.Assistant,
-                content: String(msg.content),
-                media: (msg as { media?: Array<{ mediaId: string; filename?: string }> }).media,
-              }))
+              const loadedMessages: ChatMessage[] = validMessages.map((msg) => {
+                const raw = msg as {
+                  id?: string
+                  media?: Array<{ mediaId: string; filename?: string; url?: string }>
+                  chatAssets?: Array<{ chatAssetId: string; filename?: string }>
+                }
+                return {
+                  id: raw.id || crypto.randomUUID(),
+                  role:
+                    msg.role === ChatRole.User || msg.role === 'user'
+                      ? ChatRole.User
+                      : ChatRole.Assistant,
+                  content: String(msg.content),
+                  media: raw.media,
+                  chatAssets: raw.chatAssets,
+                }
+              })
+
+              // Restore Ask-page media panel from first user message with media
+              const firstMediaMsg = loadedMessages.find(
+                (m) => m.role === ChatRole.User && m.media && m.media.length > 0,
+              )
+              if (firstMediaMsg?.media?.[0]) {
+                const m = firstMediaMsg.media[0]
+                if (m.mediaId && m.url) {
+                  window.dispatchEvent(
+                    new CustomEvent('ask-media-restore', {
+                      detail: { mediaId: m.mediaId, filename: m.filename || '', url: m.url },
+                    }),
+                  )
+                }
+              }
 
               logger.debug(
                 {
@@ -310,11 +350,17 @@ export function useNotebookChat({
 
     // Capture chat asset metadata before clearing
     const chatAssetMetadata = completedChatAssetIds.map((id) => ({ chatAssetId: id }))
+    const askMediaIds = askMedia ? [askMedia.id] : []
+    const askMediaMeta = askMedia
+      ? [{ mediaId: askMedia.id, filename: askMedia.filename }]
+      : undefined
 
     const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
       role: ChatRole.User,
       content: message,
       chatAssets: chatAssetMetadata.length > 0 ? chatAssetMetadata : undefined,
+      media: askMediaMeta,
     }
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
@@ -336,13 +382,20 @@ export function useNotebookChat({
     }
 
     // Use streaming when no attachments and not in admin mode
-    const hasAttachments = completedChatAssetIds.length > 0
+    const hasAttachments = completedChatAssetIds.length > 0 || askMediaIds.length > 0
     const useStreaming = !hasAttachments && !adminMode
 
     if (useStreaming) {
-      await streamMessage(message, acknowledgment, context)
+      await streamMessage(message, acknowledgment, context, { contextKeyOverride })
     } else {
-      await sendMessageSync(message, acknowledgment, context, [], completedChatAssetIds)
+      await sendMessageSync(
+        message,
+        acknowledgment,
+        context,
+        askMediaIds,
+        completedChatAssetIds,
+        contextKeyOverride,
+      )
     }
   }
 
@@ -360,13 +413,14 @@ export function useNotebookChat({
         courseId?: string
         categoryId?: string
       },
-      options?: { hidden?: boolean; hidePromptOnly?: boolean },
+      options?: { hidden?: boolean; contextKeyOverride?: string; hidePromptOnly?: boolean },
     ) => {
       try {
         const stream = apiService.chatStream(message, acknowledgment, context, options)
 
         // Create placeholder assistant message for streaming
         const placeholderMessage: ChatMessage = {
+          id: crypto.randomUUID(),
           role: ChatRole.Assistant,
           content: '',
         }
@@ -379,7 +433,7 @@ export function useNotebookChat({
         for await (const event of stream) {
           if (event.type === 'chunk' && event.text) {
             fullText += event.text
-            // Update the last message with streaming content
+            // Update the last message with streaming content (preserves placeholderMessage.id)
             setMessages((prev) => {
               const updated = [...prev]
               updated[updated.length - 1] = { ...placeholderMessage, content: fullText }
@@ -387,7 +441,9 @@ export function useNotebookChat({
             })
             scrollToBottom()
           } else if (event.type === 'done') {
-            // done event received, conversation metadata available for future features
+            if (event.conversationId && event.contextKey) {
+              onConversationCreated?.(event.conversationId, event.contextKey)
+            }
           } else if (event.type === 'error') {
             const errMsg = event.error || errorMessage
             // Check if this is an auth error (contains "auth" or "authentication")
@@ -430,7 +486,7 @@ export function useNotebookChat({
         inputRef.current?.focus()
       }
     },
-    [errorMessage, authRequiredMessage, guestLimitMessage, scrollToBottom],
+    [errorMessage, authRequiredMessage, guestLimitMessage, scrollToBottom, onConversationCreated],
   )
 
   /**
@@ -448,6 +504,7 @@ export function useNotebookChat({
     },
     mediaIds?: string[],
     chatAssetIds?: string[],
+    contextKeyOverrideParam?: string,
   ) => {
     try {
       const result = await apiService.chat(
@@ -457,6 +514,7 @@ export function useNotebookChat({
         mediaIds,
         chatAssetIds,
         adminMode,
+        contextKeyOverrideParam,
       )
 
       if (!result.success) {
@@ -474,6 +532,11 @@ export function useNotebookChat({
         return
       }
 
+      // Notify caller of conversation creation
+      if (result.conversationId && result.contextKey) {
+        onConversationCreated?.(result.conversationId, result.contextKey)
+      }
+
       // Track guest mode
       if (result.isGuestMode) {
         setIsGuestMode(true)
@@ -481,6 +544,7 @@ export function useNotebookChat({
 
       if (result.message) {
         const assistantMessage: ChatMessage = {
+          id: crypto.randomUUID(),
           role: ChatRole.Assistant,
           content: result.message,
         }
@@ -506,7 +570,9 @@ export function useNotebookChat({
 
       if (result.success) {
         // Clear messages and show welcome
-        setMessages([{ role: ChatRole.Assistant, content: initialMessage }])
+        setMessages([
+          { id: crypto.randomUUID(), role: ChatRole.Assistant, content: initialMessage },
+        ])
         toast.success(resetSuccessMessage)
         // Track guest mode
         if (result.isGuestMode) {
@@ -553,7 +619,10 @@ export function useNotebookChat({
 
   const addAssistantMessage = useCallback(
     (content: string) => {
-      setMessages((prev) => [...prev, { role: ChatRole.Assistant, content }])
+      setMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), role: ChatRole.Assistant, content },
+      ])
 
       // Persist to DB so the message survives page refresh
       if (contextKey) {
@@ -594,7 +663,7 @@ export function useNotebookChat({
         }
       >,
     ) => {
-      if (isLoading || isLoadingHistory) return
+      if (isLoadingRef.current || isLoadingHistoryRef.current) return
       if (lastInjectedExerciseId.current === exercise.id) return
 
       lastInjectedExerciseId.current = exercise.id
@@ -609,17 +678,7 @@ export function useNotebookChat({
       const context = { exerciseId, lessonId, chapterId, courseId, categoryId }
       await streamMessage(prompt, acknowledgment, context, { hidden: true })
     },
-    [
-      isLoading,
-      isLoadingHistory,
-      streamMessage,
-      acknowledgment,
-      exerciseId,
-      lessonId,
-      chapterId,
-      courseId,
-      categoryId,
-    ],
+    [streamMessage, acknowledgment, exerciseId, lessonId, chapterId, courseId, categoryId],
   )
 
   /**

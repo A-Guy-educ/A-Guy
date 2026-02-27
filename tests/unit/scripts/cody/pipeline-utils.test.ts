@@ -1012,22 +1012,33 @@ describe('getImplPipeline', () => {
     expect(hasParallel).toBe(true)
   })
 
-  it('returns reduced pipeline for lightweight profile', async () => {
-    const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
+  it('returns reduced pipeline for lightweight profile (no plan-gap)', async () => {
+    const { getImplPipeline, flattenPipeline } =
+      await import('../../../../scripts/cody/pipeline-utils')
     const pipeline = getImplPipeline('lightweight')
-    // Lightweight should have 5 entries, no parallel group
-    expect(pipeline).toHaveLength(5)
-    expect(pipeline).toEqual(['architect', 'build', 'commit', 'verify', 'pr'])
+    // Lightweight should have 6 entries including parallel group
+    expect(pipeline).toHaveLength(6)
+    const flatNames = flattenPipeline(pipeline)
+    expect(flatNames).toEqual([
+      'architect',
+      'build',
+      'commit',
+      'verify',
+      'auditor',
+      'apply-audit',
+      'pr',
+    ])
   })
 
-  it('lightweight does not include plan-gap, auditor, or apply-audit', async () => {
+  it('lightweight does not include plan-gap', async () => {
     const { getImplPipeline, flattenPipeline } =
       await import('../../../../scripts/cody/pipeline-utils')
     const pipeline = getImplPipeline('lightweight')
     const flatNames = flattenPipeline(pipeline)
     expect(flatNames).not.toContain('plan-gap')
-    expect(flatNames).not.toContain('auditor')
-    expect(flatNames).not.toContain('apply-audit')
+    // But auditor and apply-audit should be present
+    expect(flatNames).toContain('auditor')
+    expect(flatNames).toContain('apply-audit')
   })
 })
 
@@ -1045,10 +1056,18 @@ describe('getAllImplStageNames', () => {
     expect(names).toContain('pr')
   })
 
-  it('lightweight profile returns flat list without audit stages', async () => {
+  it('lightweight profile returns flat list with audit stages but no plan-gap', async () => {
     const { getAllImplStageNames } = await import('../../../../scripts/cody/pipeline-utils')
     const names = getAllImplStageNames('lightweight')
-    expect(names).toEqual(['architect', 'build', 'commit', 'verify', 'pr'])
+    expect(names).toEqual([
+      'architect',
+      'build',
+      'commit',
+      'verify',
+      'auditor',
+      'apply-audit',
+      'pr',
+    ])
   })
 })
 

@@ -122,6 +122,18 @@ export const Conversations: CollectionConfig = {
     },
 
     // ========================================
+    // Conversation Title
+    // ========================================
+    {
+      name: 'title',
+      type: 'text',
+      maxLength: 100,
+      admin: {
+        description: 'Display title for conversation list (derived from first user message)',
+      },
+    },
+
+    // ========================================
     // Legacy Exercise Field (Deprecated)
     // Kept for migration compatibility only
     // ========================================
@@ -323,9 +335,9 @@ export const Conversations: CollectionConfig = {
             throw new Error('Conversation must have exactly one owner: user OR guestSession')
           }
 
-          // Derive contextKey from raw contextRef shape
-          // contextRef.value is ALWAYS a string ID on writes (never populated object)
-          if (data.contextRef?.value && data.contextRef?.relationTo) {
+          // Derive contextKey from raw contextRef shape when not explicitly provided.
+          // Custom keys (e.g., "ask:courseId:timestamp") are preserved for per-session conversations.
+          if (data.contextRef?.value && data.contextRef?.relationTo && !data.contextKey) {
             const collectionSlug = data.contextRef.relationTo
             const contextId = data.contextRef.value
             data.contextKey = `${collectionSlug}:${contextId}`

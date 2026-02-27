@@ -1,0 +1,26 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "ChatInterface component - React keys for messages",
+    "ChatInterface component - React keys for nested media",
+    "CollectionArchive component - React keys for archive posts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Message objects in ChatInterface have stable 'id' field available",
+    "Archive posts in CollectionArchive have 'slug' or 'id' field available"
+  ],
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Task provides specific file paths with line numbers, clear code examples showing current wrong usage (key={idx}) and expected fix (key={msg.id}), and testing steps. Three files identified across two components with straightforward key changes."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}

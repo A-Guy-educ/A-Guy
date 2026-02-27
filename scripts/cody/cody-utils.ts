@@ -168,6 +168,47 @@ export function getLastFailedStage(taskId: string): string | null {
 }
 
 /**
+ * Get the last paused stage from status.json.
+ * Used by rerun mode to detect gates that are waiting for approval.
+ * Returns the stage name that has state 'paused', or null if none.
+ */
+export function getLastPausedStage(taskId: string): string | null {
+  const statusFile = path.join(getTaskDir(taskId), 'status.json')
+  if (!fs.existsSync(statusFile)) {
+    return null
+  }
+
+  try {
+    const content = fs.readFileSync(statusFile, 'utf-8')
+    const status = JSON.parse(content) as {
+      version?: number
+      stages?: Record<string, { state: string }>
+    }
+
+    // Check for paused stages in v2 format
+    if (status.version === 2 && status.stages) {
+      const pausedStages = Object.entries(status.stages)
+        .filter(([, s]) => s.state === 'paused')
+        .map(([name]) => name)
+      // Return the last paused stage (most recent)
+      return pausedStages.length > 0 ? pausedStages[pausedStages.length - 1] : null
+    }
+
+    // Fallback to v1 format
+    if (status?.stages) {
+      const pausedStages = Object.entries(status.stages)
+        .filter(([, s]) => s.state === 'paused')
+        .map(([name]) => name)
+      return pausedStages.length > 0 ? pausedStages[pausedStages.length - 1] : null
+    }
+
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
  * @deprecated Use engine/status.ts loadState/writeState/completeState instead.
  */
 export function writeStatus(taskId: string, status: CodyPipelineStatus): void {
@@ -291,6 +332,7 @@ export {
   getIssueTitle,
   editComment,
   getLatestIssueComment,
+  getLatestApprovalComment,
   TASK_ID_MARKER_REGEX,
   extractTaskIdFromMarker,
   discoverTaskIdFromIssue,
@@ -321,6 +363,10 @@ export function parseCliArgs(argv: string[]): CodyInput {
     dryRun: false,
   }
 
+  // Track which fields were explicitly set via CLI args
+  // Env vars should only be used as fallback when CLI arg wasn't provided
+  const cliSet = new Set<string>()
+
   for (let i = 0; i < normalized.length; i++) {
     const arg = normalized[i]
 
@@ -342,6 +388,7 @@ export function parseCliArgs(argv: string[]): CodyInput {
 
     if (arg === '--task-id' && normalized[i + 1]) {
       input.taskId = normalized[i + 1]
+      cliSet.add('taskId')
       i++
     } else if (arg === '--mode' && normalized[i + 1]) {
       const mode = normalized[i + 1]
@@ -349,11 +396,14 @@ export function parseCliArgs(argv: string[]): CodyInput {
         throw new Error(`Invalid mode: ${mode}. Valid: ${VALID_MODES.join(', ')}`)
       }
       input.mode = mode
+      cliSet.add('mode')
       i++
     } else if (arg === '--dry-run') {
       input.dryRun = true
+      cliSet.add('dryRun')
     } else if (arg === '--feedback' && normalized[i + 1]) {
       input.feedback = normalized[i + 1]
+      cliSet.add('feedback')
       i++
     } else if (arg === '--from' && normalized[i + 1]) {
       const stage = normalized[i + 1]
@@ -361,24 +411,32 @@ export function parseCliArgs(argv: string[]): CodyInput {
         throw new Error(`Invalid stage: ${stage}. Valid: ${VALID_STAGES.join(', ')}`)
       }
       input.fromStage = stage
+      cliSet.add('fromStage')
       i++
     } else if (arg === '--auto') {
       input.controlMode = 'auto'
+      cliSet.add('controlMode')
     } else if (arg === '--gate') {
       input.controlMode = 'risk-gated'
+      cliSet.add('controlMode')
     } else if (arg === '--hard-stop') {
       input.controlMode = 'hard-stop'
+      cliSet.add('controlMode')
     } else if (arg === '--issue-number' && normalized[i + 1]) {
       input.issueNumber = parseInt(normalized[i + 1], 10)
+      cliSet.add('issueNumber')
       i++
     } else if (arg === '--trigger-type' && normalized[i + 1]) {
       input.triggerType = normalized[i + 1] as 'dispatch' | 'comment'
+      cliSet.add('triggerType')
       i++
     } else if (arg === '--run-id' && normalized[i + 1]) {
       input.runId = normalized[i + 1]
+      cliSet.add('runId')
       i++
     } else if (arg === '--run-url' && normalized[i + 1]) {
       input.runUrl = normalized[i + 1]
+      cliSet.add('runUrl')
       i++
     } else if (arg.startsWith('--comment-body-env=')) {
       // For comment triggers: read the raw comment body from env var
@@ -392,14 +450,30 @@ export function parseCliArgs(argv: string[]): CodyInput {
         }
         if (parsed.input) {
           input.mode = parsed.input.mode
-          if (parsed.input.taskId) input.taskId = parsed.input.taskId
+          cliSet.add('mode')
+          if (parsed.input.taskId) {
+            input.taskId = parsed.input.taskId
+            cliSet.add('taskId')
+          }
           input.dryRun = parsed.input.dryRun
-          input.feedback = parsed.input.feedback
-          input.fromStage = parsed.input.fromStage
+          cliSet.add('dryRun')
+          if (parsed.input.feedback) {
+            input.feedback = parsed.input.feedback
+            cliSet.add('feedback')
+          }
+          if (parsed.input.fromStage) {
+            input.fromStage = parsed.input.fromStage
+            cliSet.add('fromStage')
+          }
           input.triggerType = 'comment'
-          if (parsed.input.controlMode) input.controlMode = parsed.input.controlMode
+          cliSet.add('triggerType')
+          if (parsed.input.controlMode) {
+            input.controlMode = parsed.input.controlMode
+            cliSet.add('controlMode')
+          }
           if (parsed.input.issueNumber) {
             input.issueNumber = parsed.input.issueNumber
+            cliSet.add('issueNumber')
           }
         }
       }
@@ -418,26 +492,84 @@ export function parseCliArgs(argv: string[]): CodyInput {
       // Merge parsed values into input (issueNumber will be merged after --issue-number is processed)
       if (parsed.input) {
         input.mode = parsed.input.mode
-        if (parsed.input.taskId) input.taskId = parsed.input.taskId
+        cliSet.add('mode')
+        if (parsed.input.taskId) {
+          input.taskId = parsed.input.taskId
+          cliSet.add('taskId')
+        }
         input.dryRun = parsed.input.dryRun
-        input.feedback = parsed.input.feedback
-        input.fromStage = parsed.input.fromStage
+        cliSet.add('dryRun')
+        if (parsed.input.feedback) {
+          input.feedback = parsed.input.feedback
+          cliSet.add('feedback')
+        }
+        if (parsed.input.fromStage) {
+          input.fromStage = parsed.input.fromStage
+          cliSet.add('fromStage')
+        }
         input.triggerType = 'comment'
-        if (parsed.input.controlMode) input.controlMode = parsed.input.controlMode
+        cliSet.add('triggerType')
+        if (parsed.input.controlMode) {
+          input.controlMode = parsed.input.controlMode
+          cliSet.add('controlMode')
+        }
         // Store issueNumber from comment to merge after --issue-number is processed
         if (parsed.input.issueNumber) {
           input.issueNumber = parsed.input.issueNumber
+          cliSet.add('issueNumber')
         }
       }
       i++
     } else if (arg === '--file' && normalized[i + 1]) {
       input.file = normalized[i + 1]
+      cliSet.add('file')
+      // --file triggers taskId auto-generation, so don't let env var override
+      cliSet.add('taskId')
       i++
     } else if (arg === '--local') {
       input.local = true
+      cliSet.add('local')
     } else if (arg === '--clarify') {
       input.clarify = true
+      cliSet.add('clarify')
     }
+  }
+
+  // Read from environment variables (for CI workflow)
+  // CLI args take precedence over env vars - only use env var if field wasn't CLI-set
+  if (!cliSet.has('taskId') && process.env.TASK_ID) {
+    input.taskId = process.env.TASK_ID
+  }
+  if (!cliSet.has('mode') && process.env.MODE && isValidMode(process.env.MODE)) {
+    input.mode = process.env.MODE
+  }
+  if (!cliSet.has('dryRun') && process.env.DRY_RUN === 'true') {
+    input.dryRun = true
+  }
+  if (!cliSet.has('feedback') && process.env.FEEDBACK) {
+    input.feedback = process.env.FEEDBACK
+  }
+  if (!cliSet.has('fromStage') && process.env.FROM_STAGE) {
+    input.fromStage = process.env.FROM_STAGE
+  }
+  if (!cliSet.has('clarify') && process.env.CLARIFY === 'true') {
+    input.clarify = true
+  }
+  if (!cliSet.has('issueNumber') && process.env.ISSUE_NUMBER) {
+    input.issueNumber = parseInt(process.env.ISSUE_NUMBER, 10)
+  }
+  if (!cliSet.has('triggerType') && process.env.TRIGGER_TYPE) {
+    input.triggerType = process.env.TRIGGER_TYPE as 'dispatch' | 'comment'
+  }
+  if (!cliSet.has('runId') && process.env.RUN_ID) {
+    input.runId = process.env.RUN_ID
+  }
+  if (!cliSet.has('runUrl') && process.env.RUN_URL) {
+    input.runUrl = process.env.RUN_URL
+  }
+  // Store raw comment body for gate approval detection (only for comment triggers)
+  if (!input.commentBody && process.env.COMMENT_BODY && input.triggerType === 'comment') {
+    input.commentBody = process.env.COMMENT_BODY
   }
 
   // Determine local mode: explicitly set or auto-detect from GITHUB_ACTIONS

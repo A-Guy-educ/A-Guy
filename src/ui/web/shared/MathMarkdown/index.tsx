@@ -11,6 +11,7 @@ import { cn } from '@/infra/utils/ui'
 import type { Components } from 'react-markdown'
 import ReactMarkdown from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
+import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import { rehypeMathWrapper } from './rehype-math-wrapper'
 import { remarkColorSyntax } from './remark-color-syntax'
@@ -72,7 +73,7 @@ export function MathMarkdown({ content, className, components }: MathMarkdownPro
   return (
     <div className={cn(className)}>
       <ReactMarkdown
-        remarkPlugins={[remarkMath, remarkColorSyntax]}
+        remarkPlugins={[remarkMath, remarkGfm, remarkColorSyntax]}
         rehypePlugins={[rehypeKatex, rehypeMathWrapper]}
         components={components}
       >

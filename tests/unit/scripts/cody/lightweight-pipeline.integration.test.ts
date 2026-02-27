@@ -104,21 +104,31 @@ describe('lightweight pipeline integration', () => {
   })
 
   describe('getImplPipeline for lightweight', () => {
-    it('returns exactly 5 stages', async () => {
+    it('returns exactly 6 stages (including parallel group)', async () => {
       const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
 
       const pipeline = getImplPipeline('lightweight')
 
-      // Should be: architect, build, commit, verify, pr (5 stages)
-      expect(pipeline).toHaveLength(5)
+      // Should be: architect, build, commit, {verify,auditor}, apply-audit, pr (6 entries)
+      expect(pipeline).toHaveLength(6)
     })
 
     it('returns stages in correct order', async () => {
-      const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
+      const { getImplPipeline, flattenPipeline } =
+        await import('../../../../scripts/cody/pipeline-utils')
 
       const pipeline = getImplPipeline('lightweight')
+      const flatNames = flattenPipeline(pipeline)
 
-      expect(pipeline).toEqual(['architect', 'build', 'commit', 'verify', 'pr'])
+      expect(flatNames).toEqual([
+        'architect',
+        'build',
+        'commit',
+        'verify',
+        'auditor',
+        'apply-audit',
+        'pr',
+      ])
     })
 
     it('does not include plan-gap', async () => {
@@ -131,38 +141,29 @@ describe('lightweight pipeline integration', () => {
       expect(flatNames).not.toContain('plan-gap')
     })
 
-    it('does not include auditor', async () => {
+    it('includes auditor and apply-audit', async () => {
       const { getImplPipeline, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const pipeline = getImplPipeline('lightweight')
       const flatNames = flattenPipeline(pipeline)
 
-      expect(flatNames).not.toContain('auditor')
-    })
-
-    it('does not include apply-audit', async () => {
-      const { getImplPipeline, flattenPipeline } =
-        await import('../../../../scripts/cody/pipeline-utils')
-
-      const pipeline = getImplPipeline('lightweight')
-      const flatNames = flattenPipeline(pipeline)
-
-      expect(flatNames).not.toContain('apply-audit')
+      expect(flatNames).toContain('auditor')
+      expect(flatNames).toContain('apply-audit')
     })
   })
 
   describe('LIGHTWEIGHT_IMPL_PIPELINE constant', () => {
-    it('flattens to 5 stage names', async () => {
+    it('flattens to 7 stage names', async () => {
       const { LIGHTWEIGHT_IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const flatNames = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
 
-      expect(flatNames).toHaveLength(5)
+      expect(flatNames).toHaveLength(7)
     })
 
-    it('contains architect, build, commit, verify, pr', async () => {
+    it('contains architect, build, commit, verify, auditor, apply-audit, pr', async () => {
       const { LIGHTWEIGHT_IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
@@ -172,18 +173,18 @@ describe('lightweight pipeline integration', () => {
       expect(flatNames).toContain('build')
       expect(flatNames).toContain('commit')
       expect(flatNames).toContain('verify')
+      expect(flatNames).toContain('auditor')
+      expect(flatNames).toContain('apply-audit')
       expect(flatNames).toContain('pr')
     })
 
-    it('does not contain plan-gap, auditor, or apply-audit', async () => {
+    it('does not contain plan-gap', async () => {
       const { LIGHTWEIGHT_IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const flatNames = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
 
       expect(flatNames).not.toContain('plan-gap')
-      expect(flatNames).not.toContain('auditor')
-      expect(flatNames).not.toContain('apply-audit')
     })
   })
 })
@@ -321,13 +322,19 @@ describe('end-to-end pipeline selection', () => {
     const implPipeline = getImplPipeline(profile)
     const implStages = flattenPipeline(implPipeline)
 
-    // Should be: architect, build, commit, verify, pr
-    expect(implStages).toEqual(['architect', 'build', 'commit', 'verify', 'pr'])
+    // Should be: architect, build, commit, verify, auditor, apply-audit, pr
+    expect(implStages).toEqual([
+      'architect',
+      'build',
+      'commit',
+      'verify',
+      'auditor',
+      'apply-audit',
+      'pr',
+    ])
 
-    // Verify heavyweight stages are NOT included
+    // Only plan-gap is skipped in lightweight
     expect(implStages).not.toContain('plan-gap')
-    expect(implStages).not.toContain('auditor')
-    expect(implStages).not.toContain('apply-audit')
   })
 
   it('implement_feature gets standard pipeline with all stages', async () => {
@@ -369,21 +376,144 @@ describe('end-to-end pipeline selection', () => {
     expect(standardSpecStages).toContain('gap')
   })
 
-  it('lightweight skips heavyweight impl stages', async () => {
+  it('lightweight skips heavyweight spec/planning stages but keeps auditor', async () => {
     const { getImplPipeline, flattenPipeline } =
       await import('../../../../scripts/cody/pipeline-utils')
 
     const lightweightImplStages = flattenPipeline(getImplPipeline('lightweight'))
     const standardImplStages = flattenPipeline(getImplPipeline('standard'))
 
-    // Lightweight should NOT have plan-gap, auditor, apply-audit
+    // Lightweight should NOT have plan-gap (planning overhead)
     expect(lightweightImplStages).not.toContain('plan-gap')
-    expect(lightweightImplStages).not.toContain('auditor')
-    expect(lightweightImplStages).not.toContain('apply-audit')
 
-    // Standard should have all heavyweight stages
+    // Lightweight SHOULD have auditor and apply-audit (quality gate always runs)
+    expect(lightweightImplStages).toContain('auditor')
+    expect(lightweightImplStages).toContain('apply-audit')
+
+    // Standard should have all stages including plan-gap
     expect(standardImplStages).toContain('plan-gap')
     expect(standardImplStages).toContain('auditor')
     expect(standardImplStages).toContain('apply-audit')
+  })
+})
+
+describe('rebuildPipelineAfterTaskify', () => {
+  it('should return full pipeline with both spec and impl stages', async () => {
+    const { rebuildPipelineAfterTaskify } =
+      await import('../../../../scripts/cody/pipeline/definitions')
+    const { flattenPipelineOrder } = await import('../../../../scripts/cody/pipeline/definitions')
+
+    // Create mock context with required fields
+    const mockCtx = {
+      taskId: 'test-task',
+      taskDir: '/tmp/test',
+      taskDef: createTaskDef('implement_feature', 'medium'),
+      profile: 'standard' as const,
+      backend: {
+        name: 'test',
+        spawn: () => {
+          throw new Error('not implemented')
+        },
+      } as unknown as import('../../../../scripts/cody/runner-backend').RunnerBackend,
+      input: {
+        clarify: false,
+        dryRun: false,
+        local: false,
+        taskId: 'test-task',
+        mode: 'full' as const,
+        triggerType: 'comment' as const,
+      },
+    }
+
+    const result = rebuildPipelineAfterTaskify({ stages: new Map(), order: [] }, mockCtx)
+    const flatOrder = flattenPipelineOrder(result.order)
+
+    // Should contain spec stages (completed from first phase)
+    expect(flatOrder).toContain('taskify')
+    expect(flatOrder).toContain('spec')
+    expect(flatOrder).toContain('gap')
+
+    // Should also contain impl stages (to run after taskify)
+    expect(flatOrder).toContain('architect')
+    expect(flatOrder).toContain('build')
+    expect(flatOrder).toContain('commit')
+    expect(flatOrder).toContain('pr')
+  })
+
+  it('should use standard profile for medium-risk implement_feature', async () => {
+    const { rebuildPipelineAfterTaskify } =
+      await import('../../../../scripts/cody/pipeline/definitions')
+    const { flattenPipelineOrder } = await import('../../../../scripts/cody/pipeline/definitions')
+
+    const mockCtx = {
+      taskId: 'test-task',
+      taskDir: '/tmp/test',
+      taskDef: createTaskDef('implement_feature', 'medium'),
+      profile: 'standard' as const,
+      backend: {
+        name: 'test',
+        spawn: () => {
+          throw new Error('not implemented')
+        },
+      } as unknown as import('../../../../scripts/cody/runner-backend').RunnerBackend,
+      input: {
+        clarify: false,
+        dryRun: false,
+        local: false,
+        taskId: 'test-task',
+        mode: 'full' as const,
+        triggerType: 'comment' as const,
+      },
+    }
+
+    const result = rebuildPipelineAfterTaskify({ stages: new Map(), order: [] }, mockCtx)
+    const flatOrder = flattenPipelineOrder(result.order)
+
+    // Standard profile should include heavyweight stages
+    expect(flatOrder).toContain('plan-gap')
+    expect(flatOrder).toContain('auditor')
+    expect(flatOrder).toContain('apply-audit')
+  })
+
+  it('should use lightweight profile when specified', async () => {
+    const { rebuildPipelineAfterTaskify } =
+      await import('../../../../scripts/cody/pipeline/definitions')
+    const { flattenPipelineOrder } = await import('../../../../scripts/cody/pipeline/definitions')
+
+    const mockCtx = {
+      taskId: 'test-task',
+      taskDir: '/tmp/test',
+      taskDef: createTaskDef('fix_bug', 'low'),
+      profile: 'lightweight' as const,
+      backend: {
+        name: 'test',
+        spawn: () => {
+          throw new Error('not implemented')
+        },
+      } as unknown as import('../../../../scripts/cody/runner-backend').RunnerBackend,
+      input: {
+        clarify: false,
+        dryRun: false,
+        local: false,
+        taskId: 'test-task',
+        mode: 'full' as const,
+        triggerType: 'comment' as const,
+      },
+    }
+
+    const result = rebuildPipelineAfterTaskify({ stages: new Map(), order: [] }, mockCtx)
+    const flatOrder = flattenPipelineOrder(result.order)
+
+    // Lightweight should NOT include plan-gap
+    expect(flatOrder).not.toContain('plan-gap')
+
+    // But SHOULD include auditor and apply-audit (always run)
+    expect(flatOrder).toContain('auditor')
+    expect(flatOrder).toContain('apply-audit')
+
+    // And should still include both spec and impl stages
+    expect(flatOrder).toContain('taskify')
+    expect(flatOrder).toContain('build')
+    expect(flatOrder).toContain('pr')
   })
 })

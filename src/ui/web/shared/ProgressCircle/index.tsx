@@ -1,25 +1,33 @@
 'use client'
 
+import type { ReactNode } from 'react'
+
 interface ProgressCircleProps {
-  percentage: number // 0-100
-  size?: number // Default: 60
-  strokeWidth?: number // Default: 4
+  percentage: number
+  size?: number
+  strokeWidth?: number
+  strokeColor?: string
   className?: string
+  children?: ReactNode
 }
 
 export function ProgressCircle({
   percentage,
   size = 60,
   strokeWidth = 4,
+  strokeColor,
   className = '',
+  children,
 }: ProgressCircleProps) {
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (percentage / 100) * circumference
 
+  const resolvedColor =
+    strokeColor ?? (percentage >= 100 ? 'hsl(var(--success))' : 'hsl(var(--primary))')
+
   return (
     <svg width={size} height={size} className={className}>
-      {/* Background circle */}
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -28,12 +36,11 @@ export function ProgressCircle({
         strokeWidth={strokeWidth}
         fill="none"
       />
-      {/* Progress circle */}
       <circle
         cx={size / 2}
         cy={size / 2}
         r={radius}
-        stroke="hsl(var(--primary))"
+        stroke={resolvedColor}
         strokeWidth={strokeWidth}
         fill="none"
         strokeDasharray={circumference}
@@ -42,16 +49,18 @@ export function ProgressCircle({
         className="transition-all duration-500 ease-out"
         style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
       />
-      {/* Center text */}
-      <text
-        x="50%"
-        y="50%"
-        textAnchor="middle"
-        dy=".3em"
-        className="text-sm font-semibold fill-foreground"
-      >
-        {Math.round(percentage)}%
-      </text>
+      {children ??
+        (percentage > 0 ? (
+          <text
+            x="50%"
+            y="50%"
+            textAnchor="middle"
+            dy=".3em"
+            className="text-sm font-semibold fill-foreground"
+          >
+            {Math.round(percentage)}%
+          </text>
+        ) : null)}
     </svg>
   )
 }

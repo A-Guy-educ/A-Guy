@@ -25,5 +25,6 @@ test-results
 # Auto-generated files
 src/app/(payload)/admin/importMap.js
 .tasks/**
+.opencode/**
 docs/ai/indexes/*.json
 public/sitemap*.xml

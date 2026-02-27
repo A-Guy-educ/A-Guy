@@ -606,9 +606,67 @@ Common issues and solutions:
    - Check for console errors in browser
 
 4. **Styles not applying**
-   - Ensure Tailwind classes are valid
-   - Check className prop is on correct element
-   - Verify no conflicting styles
+
+- Ensure Tailwind classes are valid
+- Check className prop is on correct element
+- Verify no conflicting styles
+
+## Automated Scaffolding
+
+This skill includes an automated script that generates a new block with config and component.
+
+### Usage
+
+```bash
+# CLI mode - all options
+npx tsx .agents/skills/new-block/scripts/scaffold-block.ts \
+  --name Hero \
+  --slug hero \
+  --fields "heading:text:required,subheading:text,image:upload"
+
+# Interactive mode
+npx tsx .agents/skills/new-block/scripts/scaffold-block.ts
+
+# Dry run - preview without writing
+npx tsx .agents/skills/new-block/scripts/scaffold-block.ts --name Testimonials --dry-run
+```
+
+### Options
+
+| Option            | Description                                  | Default                |
+| ----------------- | -------------------------------------------- | ---------------------- |
+| `--name <Name>`   | PascalCase block name (required in CLI mode) | -                      |
+| `--slug <slug>`   | kebab-case slug                              | auto-derived from name |
+| `--fields <spec>` | Field spec: "name:type:required"             | heading:text:required  |
+| `--description`   | Block description for admin                  | -                      |
+| `--path <dir>`    | Custom blocks directory                      | auto-detect            |
+| `--dry-run`       | Preview without writing                      | false                  |
+
+### Supported Field Types
+
+`text`, `textarea`, `richText`, `number`, `select`, `checkbox`, `upload`, `group`, `array`
+
+### Path Auto-Discovery
+
+The script automatically detects the blocks directory from:
+
+1. `--path` CLI argument
+2. `src/server/payload/blocks`
+3. `src/blocks`
+4. `blocks`
+
+### Examples
+
+```bash
+# Simple block
+npx tsx .../scaffold-block.ts --name Banner
+
+# With multiple fields
+npx tsx .../scaffold-block.ts --name Hero --fields "heading:text:required,subheading:text,ctaText:text"
+
+# Custom path
+npx tsx .../scaffold-block.ts --name Custom --path src/my-blocks
+```
 
 ## Success Criteria
 

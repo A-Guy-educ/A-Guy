@@ -26,7 +26,6 @@ import {
 } from '@/infra/llm/providers/factory'
 import { chatWithExerciseHelper } from '@/infra/llm/services/exercise-chat-service'
 import { logger } from '@/infra/utils/logger'
-import type { Logger } from 'pino'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { getMCPClient } from '@/server/repos/mcp/client/mcp-client'
@@ -34,7 +33,6 @@ import {
   ConversationService,
   GuestConversationLimitError,
 } from '@/server/services/conversation-service'
-import { checkRateLimit } from '@/server/services/rate-limit'
 import {
   buildGuestSessionCookieHeader,
   checkAndIncrementGuestMessageCount,
@@ -44,7 +42,9 @@ import {
   hashIP,
   hashUserAgent,
 } from '@/server/services/guest-session'
+import { checkRateLimit } from '@/server/services/rate-limit'
 import type { PayloadRequest } from 'payload'
+import type { Logger } from 'pino'
 import { z } from 'zod'
 
 import {
@@ -297,6 +297,7 @@ async function handleAdminModeChat(
     content: validated.message,
     timestamp: new Date().toISOString(),
     media: validated.mediaIds?.map((id) => ({ mediaId: id })) || [],
+    chatAssets: validated.chatAssetIds?.map((id) => ({ chatAssetId: id })) || [],
   }
 
   const conversationHistory = conversation.messages || []
@@ -633,6 +634,7 @@ async function handleContextScopedChat(
     content: validated.message,
     timestamp: new Date().toISOString(),
     media: validated.mediaIds?.map((id) => ({ mediaId: id })) || [],
+    chatAssets: validated.chatAssetIds?.map((id) => ({ chatAssetId: id })) || [],
   }
 
   const conversationHistory = conversation.messages || []
@@ -679,6 +681,7 @@ async function handleContextScopedChat(
       logger as Logger,
       lessonContext.coursePrompt,
       lessonContext.courseContextText,
+      userId,
     )
   } catch (error) {
     if (error instanceof Error && error.message.includes('exceeds maximum')) {
@@ -707,12 +710,22 @@ async function handleContextScopedChat(
   }
 
   // Compose prompt using Context Policy V1
-  const composedPrompt = composePrompt(composedInstructions.instructions, {
+  const basePrompt = composePrompt(composedInstructions.instructions, {
     systemMessage: composedInstructions.instructions,
     summary: conversation?.summary || undefined,
     memoryItems: memoryResult.items,
     recentMessages: recentMessages,
   })
+
+  // Thread teacher profile metadata for downstream debug logging (immutable)
+  const composedPrompt = {
+    ...basePrompt,
+    metadata: {
+      ...basePrompt.metadata,
+      teacherProfileSlug: composedInstructions.teacherProfileSlug,
+      teacherProfileResolvedFrom: composedInstructions.teacherProfileResolvedFrom,
+    },
+  }
 
   logPromptSnapshot(conversationId, composedPrompt)
 

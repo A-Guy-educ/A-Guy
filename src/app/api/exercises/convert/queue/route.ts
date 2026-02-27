@@ -7,6 +7,7 @@ import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import type { Lesson } from '@/payload-types'
+import { z } from 'zod'
 
 type ErrorCode =
   | 'UNAUTHORIZED'
@@ -28,6 +29,14 @@ function errorResponse(
 ): NextResponse {
   return NextResponse.json({ error: { code, message }, ...extra }, { status })
 }
+
+// Zod schema for request validation
+export const queueRequestSchema = z.object({
+  lessonId: z.string().min(1),
+  mediaId: z.string().min(1),
+  extractorPromptId: z.string().min(1),
+  verifierPromptId: z.string().min(1),
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -60,9 +69,16 @@ export async function POST(request: NextRequest) {
       return errorResponse('UNAUTHORIZED', 'Admin access required', 401)
     }
 
-    const { lessonId, mediaId, extractorPromptId, verifierPromptId } = await request.json()
-
-    // lessonId, mediaId, extractorPromptId, and verifierPromptId are required
+    const body = await request.json()
+    const parsed = queueRequestSchema.safeParse(body)
+    if (!parsed.success) {
+      return errorResponse(
+        'VALIDATION_ERROR',
+        `Invalid request body: ${parsed.error.issues.map((i) => i.message).join(', ')}`,
+        400,
+      )
+    }
+    const { lessonId, mediaId, extractorPromptId, verifierPromptId } = parsed.data
 
     // ========== Server-side Tenant Resolution (BEFORE prompt validation) ==========
     // Tenant is directly on the lesson, not through course

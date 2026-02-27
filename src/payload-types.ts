@@ -82,6 +82,8 @@ export interface Config {
     lessons: Lesson;
     exercises: Exercise;
     prompts: Prompt;
+    teacher_profiles: TeacherProfile;
+    user_settings: UserSetting;
     'exercise-assets': ExerciseAsset;
     users: User;
     'user-progress': UserProgress;
@@ -118,6 +120,8 @@ export interface Config {
     lessons: LessonsSelect<false> | LessonsSelect<true>;
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
     prompts: PromptsSelect<false> | PromptsSelect<true>;
+    teacher_profiles: TeacherProfilesSelect<false> | TeacherProfilesSelect<true>;
+    user_settings: UserSettingsSelect<false> | UserSettingsSelect<true>;
     'exercise-assets': ExerciseAssetsSelect<false> | ExerciseAssetsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
@@ -638,9 +642,9 @@ export interface Prompt {
    */
   key?: string | null;
   /**
-   * System prompts are always included. Context prompts are lesson-specific.
+   * System prompts are always included. Context prompts are lesson-specific. Persona prompts define teacher identity.
    */
-  type: 'system' | 'context';
+  type: 'system' | 'context' | 'persona';
   /**
    * System prompt template for AI tutor
    */
@@ -1018,6 +1022,10 @@ export interface Conversation {
    * Derived key for indexing (e.g., "exercises:abc123")
    */
   contextKey?: string | null;
+  /**
+   * Display title for conversation list (derived from first user message)
+   */
+  title?: string | null;
   /**
    * Legacy field - use contextRef instead. Will be removed in future version.
    */
@@ -1506,6 +1514,52 @@ export interface MemoryItem {
    * Convenience field for admin UI - DO NOT use for filtering
    */
   conversation?: (string | null) | Conversation;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "teacher_profiles".
+ */
+export interface TeacherProfile {
+  id: string;
+  /**
+   * Machine-readable identifier (e.g., "teacher_strict")
+   */
+  slug: string;
+  /**
+   * Human-readable name displayed in UI
+   */
+  label: string;
+  /**
+   * Short explanation shown in profile selection UI (1-2 sentences)
+   */
+  description?: string | null;
+  /**
+   * The prompt template that defines this teacher's behavior
+   */
+  systemPrompt: string | Prompt;
+  /**
+   * Disabled profiles are not available for selection
+   */
+  isEnabled?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user_settings".
+ */
+export interface UserSetting {
+  id: string;
+  /**
+   * The user this settings record belongs to
+   */
+  user: string | User;
+  /**
+   * Selected teacher profile - leave empty to use default
+   */
+  teacherProfile?: (string | null) | TeacherProfile;
   updatedAt: string;
   createdAt: string;
 }
@@ -2116,6 +2170,14 @@ export interface PayloadLockedDocument {
         value: string | Prompt;
       } | null)
     | ({
+        relationTo: 'teacher_profiles';
+        value: string | TeacherProfile;
+      } | null)
+    | ({
+        relationTo: 'user_settings';
+        value: string | UserSetting;
+      } | null)
+    | ({
         relationTo: 'exercise-assets';
         value: string | ExerciseAsset;
       } | null)
@@ -2425,6 +2487,7 @@ export interface ConversationsSelect<T extends boolean = true> {
   guestSession?: T;
   contextRef?: T;
   contextKey?: T;
+  title?: T;
   exercise?: T;
   messages?:
     | T
@@ -2627,6 +2690,29 @@ export interface PromptsSelect<T extends boolean = true> {
   isDefaultForAgentChat?: T;
   tenant?: T;
   usage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "teacher_profiles_select".
+ */
+export interface TeacherProfilesSelect<T extends boolean = true> {
+  slug?: T;
+  label?: T;
+  description?: T;
+  systemPrompt?: T;
+  isEnabled?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user_settings_select".
+ */
+export interface UserSettingsSelect<T extends boolean = true> {
+  user?: T;
+  teacherProfile?: T;
   updatedAt?: T;
   createdAt?: T;
 }

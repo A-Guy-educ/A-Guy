@@ -51,6 +51,11 @@ export interface StageDefinition {
   postActions?: PostAction[]
   advisory?: boolean
   preExecute?: StagePreExecute
+  /**
+   * Called when agent exits 0 but doesn't produce the expected output file.
+   * Returns the fallback content to write, or null to proceed with normal retry/fail.
+   */
+  fallbackOnMissingOutput?: (ctx: PipelineContext) => string | null
 }
 
 // ============================================================================

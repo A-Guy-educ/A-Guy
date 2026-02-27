@@ -1,0 +1,166 @@
+name: Self-Hosted Runner Smoke Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner_label:
+        description: 'Runner label to target (local = macOS native, docker = Linux container)'
+        required: false
+        default: 'local'
+        type: choice
+        options:
+          - local
+          - docker
+      cleanup_node_modules:
+        description: 'Also remove node_modules for strict purity'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  smoke-test:
+    name: Smoke Test (self-hosted)
+    runs-on: [self-hosted, '${{ github.event.inputs.runner_label }}']
+    timeout-minutes: 15
+
+    steps:
+      # ── Step 1: Prove we're on the self-hosted runner ──
+      - name: Print environment info
+        run: |
+          echo "=== Runner Info ==="
+          echo "Runner name: $RUNNER_NAME"
+          echo "Runner OS:   $RUNNER_OS"
+          echo "Workspace:   $GITHUB_WORKSPACE"
+          echo "Work dir:    $RUNNER_WORKSPACE"
+          echo ""
+          echo "=== System Info ==="
+          uname -a
+          sw_vers 2>/dev/null || true
+          echo ""
+          echo "=== Tool Versions ==="
+          node --version  || echo "node not found"
+          npm --version   || echo "npm not found"
+          pnpm --version  || echo "pnpm not found"
+          git --version
+          echo ""
+          echo "=== Disk Space ==="
+          df -h / | tail -1
+
+      # ── Step 2: Pre-checkout workspace audit ──
+      - name: Pre-checkout workspace audit
+        run: |
+          echo "=== Files BEFORE checkout ==="
+          echo "Working directory: $(pwd)"
+          ls -la "$GITHUB_WORKSPACE" 2>/dev/null || echo "(workspace dir does not exist yet)"
+          echo ""
+          echo "Untracked files check:"
+          if [ -d "$GITHUB_WORKSPACE/.git" ]; then
+            cd "$GITHUB_WORKSPACE"
+            git status --porcelain || true
+          else
+            echo "(no git repo in workspace yet — clean state)"
+          fi
+
+      # ── Step 3: Clean checkout ──
+      - name: Checkout code (clean)
+        uses: actions/checkout@v4
+        with:
+          clean: true
+          fetch-depth: 1
+
+      # ── Step 4: Post-checkout verification ──
+      - name: Post-checkout verification
+        run: |
+          echo "=== Files AFTER checkout ==="
+          echo "Git status (should be clean):"
+          git status --porcelain
+          UNTRACKED=$(git status --porcelain | wc -l | tr -d ' ')
+          echo "Untracked/modified files: $UNTRACKED"
+          if [ "$UNTRACKED" -gt 0 ]; then
+            echo "⚠️  WARNING: Workspace has unexpected changes after clean checkout!"
+            git status --porcelain
+          else
+            echo "✅ Workspace is clean after checkout"
+          fi
+          echo ""
+          echo "=== Repo info ==="
+          git log --oneline -3
+          echo ""
+          echo "=== Directory structure (top level) ==="
+          ls -la
+
+      # ── Step 5: Create synthetic build artifacts (to test cleanup) ──
+      - name: Create synthetic build artifacts
+        run: |
+          echo "Creating test artifacts to verify cleanup..."
+          mkdir -p .next dist coverage .turbo .cache
+          echo "fake-build-output" > .next/build-manifest.json
+          echo "fake-dist" > dist/index.js
+          echo "fake-coverage" > coverage/lcov.info
+          echo "fake-turbo" > .turbo/cache.json
+          echo "fake-cache" > .cache/data.json
+          echo "leftover-file" > leftover-test-file.txt
+          echo ""
+          echo "=== Artifacts created ==="
+          ls -la .next/ dist/ coverage/ .turbo/ .cache/ leftover-test-file.txt
+
+      # ── Step 6: Minimal repo commands ──
+      - name: Run minimal repo validation
+        run: |
+          echo "=== Checking package.json exists ==="
+          test -f package.json && echo "✅ package.json found" || echo "❌ package.json missing"
+          echo ""
+          echo "=== Node version ==="
+          node --version || echo "Node not available"
+          echo ""
+          echo "=== TypeScript config check ==="
+          test -f tsconfig.json && echo "✅ tsconfig.json found" || echo "❌ tsconfig.json missing"
+          echo ""
+          echo "Job completed successfully on self-hosted runner!"
+
+      # ── Step 7: ALWAYS-RUN CLEANUP (critical for reproducibility) ──
+      - name: Cleanup workspace (always runs)
+        if: always()
+        run: |
+          echo "=== CLEANUP: Enforcing clean workspace ==="
+          echo ""
+
+          # Hard reset any git changes
+          echo "1. Git hard reset..."
+          git reset --hard HEAD 2>/dev/null || true
+
+          # Remove ALL untracked files and directories (including ignored ones)
+          echo "2. Git clean (remove untracked + ignored files)..."
+          git clean -ffdx 2>/dev/null || true
+
+          # Remove known build artifact directories explicitly
+          echo "3. Removing known build artifact directories..."
+          rm -rf .next dist coverage .turbo .cache .eslintcache
+          rm -rf .vercel .output
+
+          # Optionally remove node_modules for strict purity
+          if [ "${{ inputs.cleanup_node_modules }}" = "true" ]; then
+            echo "4. Removing node_modules (strict purity mode)..."
+            rm -rf node_modules
+          else
+            echo "4. Skipping node_modules removal (set cleanup_node_modules=true for strict purity)"
+          fi
+
+          echo ""
+          echo "=== POST-CLEANUP VERIFICATION ==="
+          echo "Git status:"
+          git status --porcelain 2>/dev/null || echo "(git not available)"
+          REMAINING=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+          echo "Remaining untracked/modified files: $REMAINING"
+
+          if [ "$REMAINING" -eq 0 ] 2>/dev/null; then
+            echo "✅ CLEANUP VERIFIED: Workspace is completely clean"
+          else
+            echo "⚠️  Some files remain after cleanup:"
+            git status --porcelain 2>/dev/null
+          fi
+
+          echo ""
+          echo "=== Disk usage after cleanup ==="
+          du -sh . 2>/dev/null || true
+          df -h / | tail -1
