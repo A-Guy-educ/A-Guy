@@ -14,7 +14,7 @@ import config from '@payload-config'
  */
 export async function requireDashboardAuth(
   req: NextRequest,
-): Promise<{ authenticated: boolean; user?: { id: string; email: string } }> {
+): Promise<{ authenticated: boolean; user?: { id: string; email: string; role?: string } }> {
   try {
     const payload = await getPayload({ config })
 
@@ -24,7 +24,11 @@ export async function requireDashboardAuth(
     if (user && typeof user === 'object' && 'email' in user) {
       return {
         authenticated: true,
-        user: { id: user.id as string, email: user.email as string },
+        user: {
+          id: user.id as string,
+          email: user.email as string,
+          role: (user.role as string) || undefined,
+        },
       }
     }
 
@@ -36,10 +40,31 @@ export async function requireDashboardAuth(
 }
 
 /**
- * Require auth or return 401
+ * Require admin role for dashboard access
+ * Returns the authenticated admin user or null if not authorized
+ */
+export async function requireAdminAuth(
+  req: NextRequest,
+): Promise<{ authenticated: boolean; user?: { id: string; email: string; role?: string } }> {
+  const auth = await requireDashboardAuth(req)
+
+  if (!auth.authenticated || !auth.user) {
+    return { authenticated: false }
+  }
+
+  // Check if user has admin role
+  if (auth.user.role !== 'admin') {
+    return { authenticated: false }
+  }
+
+  return auth
+}
+
+/**
+ * Require admin auth or return 401/403
  */
 export async function requireAuth(req: NextRequest): Promise<NextResponse | null> {
-  const auth = await requireDashboardAuth(req)
+  const auth = await requireAdminAuth(req)
   if (!auth.authenticated) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
