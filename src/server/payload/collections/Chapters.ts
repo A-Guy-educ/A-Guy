@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { tenantField } from '@/server/payload/fields/tenant'
-import { anyone } from '../access/anyone'
+import { publishedOrAuthenticated } from '../access/publishedOrAuthenticated'
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
 import { computeAdminTitle } from '../hooks/chapters/computeAdminTitle'
@@ -17,7 +17,7 @@ export const Chapters: CollectionConfig = {
   access: {
     create: adminOnly,
     delete: adminOnly,
-    read: anyone,
+    read: publishedOrAuthenticated,
     update: adminOnly,
   },
   hooks: {

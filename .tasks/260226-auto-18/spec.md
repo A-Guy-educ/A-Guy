@@ -17,7 +17,9 @@ The `courses`, `chapters`, and `lessons` collections have a security bug where d
 All three collections have a `status` field with options `draft | published | archived` but the read access doesn't filter by it.
 
 ## Expected Implementation
-Replace `read: anyone` with a status-aware access function:
+
+Replace `read: anyone` with an inline status-aware access function (note: use `status`, NOT `_status` - this is different from Pages/Posts which use Payload's built-in draft system):
+
 ```typescript
 read: ({ req: { user } }) => {
   if (user) return true // Authenticated users see all
@@ -25,7 +27,7 @@ read: ({ req: { user } }) => {
 }
 ```
 
-Or use the existing `authenticatedOrPublished` pattern from Pages/Posts collections.
+**Note:** The existing `authenticatedOrPublished` pattern in `src/server/payload/access/authenticatedOrPublished.ts` uses `_status` (for collections with `versions: { drafts: true }`). This fix requires a custom implementation using the custom `status` field.
 
 ## Acceptance Criteria
 

@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { DEFAULT_LESSON_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
-import { anyone } from '../access/anyone'
+import { publishedOrAuthenticated } from '../access/publishedOrAuthenticated'
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
 
@@ -17,7 +17,7 @@ export const Lessons: CollectionConfig = {
   access: {
     create: adminOnly,
     delete: adminOnly,
-    read: anyone,
+    read: publishedOrAuthenticated,
     update: adminOnly,
   },
   hooks: {

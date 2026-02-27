@@ -11,7 +11,7 @@ import type { CollectionConfig } from 'payload'
 
 import { DEFAULT_ACCESS_TYPE, DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
-import { anyone } from '../access/anyone'
+import { publishedOrAuthenticated } from '../access/publishedOrAuthenticated'
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
@@ -27,7 +27,7 @@ export const Courses: CollectionConfig = {
   access: {
     create: adminOnly,
     delete: adminOnly,
-    read: anyone,
+    read: publishedOrAuthenticated,
     update: adminOnly,
   },
   hooks: {
