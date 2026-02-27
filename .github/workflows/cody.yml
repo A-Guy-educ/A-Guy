@@ -283,6 +283,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TASK_ID: ${{ needs.parse.outputs.task_id }}
+          ISSUE_NUMBER: ${{ needs.parse.outputs.issue_number }}
         run: pnpm tsx scripts/cody/checkout-task-branch.ts
 
       # Configure git identity for commits in CI
