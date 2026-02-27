@@ -158,7 +158,12 @@ function getCommitSummary(defaultBranch: string, cwd: string): string {
   }
 }
 
-function buildPrTitle(taskDir: string, defaultBranch: string, cwd: string): string {
+function buildPrTitle(
+  taskDir: string,
+  defaultBranch: string,
+  cwd: string,
+  issueNumber?: number,
+): string {
   // Read task.md for context
   const taskMdPath = path.join(taskDir, 'task.md')
   let taskDescription = ''
@@ -246,7 +251,11 @@ function buildPrTitle(taskDir: string, defaultBranch: string, cwd: string): stri
 
   // Truncate to reasonable length
   const summary = titleSource.length > 72 ? titleSource.slice(0, 69) + '...' : titleSource
-  return `${taskType}: ${summary.toLowerCase()}`
+
+  // Add issue reference to title for GitHub auto-linking
+  const issueRef = issueNumber ? ` - Closes #${issueNumber}` : ''
+
+  return `${taskType}: ${summary.toLowerCase()}${issueRef}`
 }
 
 function buildPrBody(
@@ -329,7 +338,7 @@ export async function runPrStage(
   }
 
   // Step 3: Build title and body
-  const title = buildPrTitle(taskDir, defaultBranch, cwd)
+  const title = buildPrTitle(taskDir, defaultBranch, cwd, issueNumber)
   const body = buildPrBody(taskDir, defaultBranch, cwd, issueNumber)
 
   console.log(`  Title: ${title}`)
