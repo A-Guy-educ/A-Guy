@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-02-27T16:02:05.892Z",
-  "updatedAt": "2026-02-27T16:37:15.422Z",
+  "updatedAt": "2026-02-27T16:42:05.128Z",
   "state": "running",
-  "cursor": "build",
+  "cursor": "apply-audit",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -53,7 +53,24 @@
       "retries": 0,
       "startedAt": "2026-02-27T16:37:13.221Z",
       "completedAt": "2026-02-27T16:37:15.422Z"
+    },
+    "verify": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-02-27T16:38:48.585Z",
+      "outputFile": "verify.md"
+    },
+    "auditor": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-02-27T16:38:49.077Z",
+      "outputFile": "auditor.md"
+    },
+    "apply-audit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-27T16:42:05.128Z"
     }
   },
-  "completedAt": "2026-02-27T16:32:20.796Z"
+  "completedAt": "2026-02-27T16:41:34.049Z"
 }
