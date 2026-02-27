@@ -134,12 +134,42 @@ Examples:
     shuttingDown = true
     console.error(`\n⚠ Received ${signal} — CI runner shutting down`)
     try {
-      const { loadState, completeState, writeState } = await import('./engine/status')
+      const { loadState, writeState, updateStage, completeState } = await import('./engine/status')
       const state = loadState(input.taskId)
       if (state) {
-        const failedState = completeState(state, 'failed')
+        // Mark all running stages as failed
+        let updatedState = state
+        for (const [name, stage] of Object.entries(state.stages)) {
+          if (stage.state === 'running') {
+            updatedState = updateStage(updatedState, name, {
+              state: 'failed',
+              error: `Process interrupted by ${signal}`,
+            })
+            console.error(`  Marked stage "${name}" as failed`)
+          }
+        }
+        // Mark pipeline as failed
+        const failedState = completeState(updatedState, 'failed')
         writeState(input.taskId, failedState)
         console.error(`  Updated status.json to "failed" for task ${input.taskId}`)
+
+        // In CI mode: attempt to commit and push the updated status
+        if (process.env.GITHUB_ACTIONS === 'true' && !input.local) {
+          console.error(`  Attempting to commit status.json in CI...`)
+          try {
+            const { execSync } = await import('child_process')
+            // Get the directory where status.json is
+            const taskDir = `./.tasks/${input.taskId}`
+            execSync(`git add ${taskDir}/status.json`, { stdio: 'inherit' })
+            execSync(`git commit -m "ci(cody): save interrupted state for ${input.taskId}"`, {
+              stdio: 'inherit',
+            })
+            execSync(`git push`, { stdio: 'inherit' })
+            console.error(`  ✅ Committed and pushed status.json`)
+          } catch (commitErr) {
+            console.error(`  ⚠️ Failed to commit/push status.json:`, commitErr)
+          }
+        }
       }
     } catch (err) {
       console.error(`  Failed to update status:`, err)
