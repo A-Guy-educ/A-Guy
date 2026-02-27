@@ -21,6 +21,15 @@
       "message": "This page could not be found.",
       "goHome": "Go home"
     },
+    "loading": {
+      "label": "Loading..."
+    },
+    "error": {
+      "title": "Something went wrong",
+      "message": "An unexpected error occurred. Please try again.",
+      "retry": "Try again",
+      "goHome": "Go home"
+    },
     "header": {
       "welcome": "Welcome,",
       "login": "Log in",
