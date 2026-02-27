@@ -4,14 +4,14 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-02-27T10:28:45.930Z",
-  "updatedAt": "2026-02-27T12:42:10.535Z",
+  "updatedAt": "2026-02-27T12:57:33.484Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-02-27T12:42:10.535Z"
+      "startedAt": "2026-02-27T12:57:33.484Z"
     }
   }
 }

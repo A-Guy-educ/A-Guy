@@ -1,21 +1,17 @@
-# Loading and Error States Specification
+# Loading and Error UI Enhancement
 
 ## Overview
-Add Next.js special files (`loading.tsx` and `error.tsx`) to the frontend route tree to improve UX during navigation and error handling.
+Add Next.js loading.tsx and error.tsx files to the frontend route tree to improve UX during navigation and error states.
 
 ## Requirements
-
-### Loading States (FR-1)
-- Root `loading.tsx` at `src/app/(frontend)/loading.tsx` must show a spinner/skeleton during server component rendering
-- Optional: Lesson page `loading.tsx` for the heaviest route
-
-### Error Handling (FR-2)
-- Root `error.tsx` at `src/app/(frontend)/error.tsx` must display graceful error fallback with retry functionality
+- FR-1: Create `src/app/(frontend)/loading.tsx` with a loading spinner/skeleton
+- FR-2: Create `src/app/(frontend)/error.tsx` with error boundary and retry functionality
+- FR-3: Optionally create nested loading.tsx for the heaviest route (lesson page)
 
 ## Acceptance Criteria
-
-1. Navigation between pages shows loading spinner instead of blank screen
-2. Unhandled errors display user-friendly error UI instead of raw Next.js error page
-3. Error boundary includes a retry button that calls the `reset` function
-4. Loading component uses Tailwind CSS classes matching design system
-5. Error component is a client component ('use client')
+- [ ] Root loading.tsx renders a spinner during server component navigation
+- [ ] Root error.tsx displays graceful error message with retry button
+- [ ] Error boundary catches errors and allows recovery via reset()
+- [ ] Loading states visible during course → lesson → exercise navigation
+- [ ] No blank screens during page transitions
+- [ ] Errors display user-friendly message instead of raw Next.js error page
