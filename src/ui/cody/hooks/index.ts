@@ -8,6 +8,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { codyApi, RateLimitError, NoTokenError } from '../api'
+import type { CodyTask } from '../types'
 import { POLLING_INTERVALS } from '../constants'
 
 // Query keys
@@ -34,17 +35,39 @@ export interface UseCodyTasksOptions {
   refetchInterval?: 'auto' | 'idle' | 'board' | 'active' | false
 }
 
+/**
+ * Determine polling interval based on current task data.
+ * - Active tasks (building/retrying/gate-waiting): poll every 10s
+ * - All idle: poll every 30s
+ */
+function getSmartInterval(tasks: CodyTask[] | undefined): number {
+  if (!tasks || tasks.length === 0) return POLLING_INTERVALS.idle
+
+  const hasActive = tasks.some(
+    (t) => t.column === 'building' || t.column === 'retrying' || t.column === 'gate-waiting',
+  )
+
+  return hasActive ? POLLING_INTERVALS.board : POLLING_INTERVALS.idle
+}
+
 export function useCodyTasks(options: UseCodyTasksOptions = {}) {
   const { days, includeDetails = false, refetchInterval = 'auto' } = options
 
   return useQuery({
     queryKey: queryKeys.tasks(days, includeDetails),
     queryFn: () => codyApi.tasks.list({ days, includeDetails }),
-    refetchInterval: (): number | false => {
-      if (refetchInterval === false || refetchInterval === 'auto') return false
+    refetchInterval: (query): number | false => {
+      if (refetchInterval === false) return false
+
+      // Smart auto mode: inspect data to decide interval
+      if (refetchInterval === 'auto') {
+        return getSmartInterval(query.state.data)
+      }
 
       return POLLING_INTERVALS[refetchInterval]
     },
+    refetchIntervalInBackground: false, // Don't poll when tab is hidden
+    refetchOnWindowFocus: true, // Refresh immediately when user tabs back
     retry: (failureCount, error) => {
       if (error instanceof RateLimitError) return false
       if (error instanceof NoTokenError) return false

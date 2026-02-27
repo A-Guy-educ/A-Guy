@@ -6,9 +6,11 @@
  */
 'use client'
 
+import { useState, useEffect } from 'react'
 import { cn, formatRelativeTime } from '../utils'
 import type { CodyTask } from '../types'
 import { ALL_STAGES } from '../constants'
+import { Loader2 } from 'lucide-react'
 import { Badge } from '@/ui/web/components/badge'
 import { Button } from '@/ui/web/components/button'
 
@@ -16,6 +18,10 @@ interface CodyStatusBannerProps {
   tasks: CodyTask[]
   onTaskSelect?: (task: CodyTask) => void
   onAbort?: (taskId: string) => void
+  /** Whether a background refetch is in progress */
+  isFetching?: boolean
+  /** Timestamp (ms) of last successful data update */
+  dataUpdatedAt?: number
 }
 
 type CodyState =
@@ -79,7 +85,41 @@ const stageLabels: Record<string, string> = {
   autofix: 'Auto-fixing',
 }
 
-export function CodyStatusBanner({ tasks, onTaskSelect, onAbort }: CodyStatusBannerProps) {
+/** Subtle refresh indicator — shows spinner when fetching, "Updated Xs ago" otherwise */
+function RefreshIndicator({
+  isFetching,
+  dataUpdatedAt,
+}: {
+  isFetching?: boolean
+  dataUpdatedAt?: number
+}) {
+  const [, setTick] = useState(0)
+
+  // Tick every 15s to keep "Updated X ago" fresh
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 15_000)
+    return () => clearInterval(interval)
+  }, [])
+
+  if (!dataUpdatedAt) return null
+
+  const ago = formatElapsed(new Date(dataUpdatedAt))
+
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/60 ml-auto shrink-0">
+      {isFetching ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+      <span className="hidden sm:inline">{ago} ago</span>
+    </span>
+  )
+}
+
+export function CodyStatusBanner({
+  tasks,
+  onTaskSelect,
+  onAbort,
+  isFetching,
+  dataUpdatedAt,
+}: CodyStatusBannerProps) {
   const state = deriveCodyState(tasks)
 
   if (state.status === 'idle') {
@@ -92,6 +132,7 @@ export function CodyStatusBanner({ tasks, onTaskSelect, onAbort }: CodyStatusBan
           Cody is <span className="text-foreground font-medium">idle</span> — {state.taskCount} open
           issues in backlog
         </span>
+        <RefreshIndicator isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
       </div>
     )
   }
@@ -119,7 +160,8 @@ export function CodyStatusBanner({ tasks, onTaskSelect, onAbort }: CodyStatusBan
             </button>{' '}
             <span className="text-muted-foreground truncate">— {state.task.title}</span>
           </span>
-          <span className="ml-auto text-xs text-muted-foreground font-mono">{state.elapsed}</span>
+          <RefreshIndicator isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
+          <span className="text-xs text-muted-foreground font-mono">{state.elapsed}</span>
           {onAbort && (
             <Button
               variant="ghost"
@@ -181,7 +223,8 @@ export function CodyStatusBanner({ tasks, onTaskSelect, onAbort }: CodyStatusBan
           </button>{' '}
           <span className="text-muted-foreground">— {state.task.title}</span>
         </span>
-        <Badge variant="outline" className="ml-auto text-yellow-400 border-yellow-500/30">
+        <RefreshIndicator isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
+        <Badge variant="outline" className="text-yellow-400 border-yellow-500/30">
           Gate
         </Badge>
       </div>
@@ -204,7 +247,8 @@ export function CodyStatusBanner({ tasks, onTaskSelect, onAbort }: CodyStatusBan
         </button>{' '}
         <span className="text-muted-foreground">— {state.task.title}</span>
       </span>
-      <span className="ml-auto text-xs text-muted-foreground">{state.failedAgo}</span>
+      <RefreshIndicator isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
+      <span className="text-xs text-muted-foreground">{state.failedAgo}</span>
     </div>
   )
 }

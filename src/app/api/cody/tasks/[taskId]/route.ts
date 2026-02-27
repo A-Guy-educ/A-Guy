@@ -17,7 +17,63 @@ import {
   fetchWorkflowRuns,
 } from '@/ui/cody/github-client'
 import { parseAllComments } from '@/ui/cody/task-parser'
-import { buildCodyTask } from '@/ui/cody/board-mapper'
+import type { CodyTask, GitHubIssue, GitHubPR, ParsedComment, WorkflowRun, ColumnId } from '@/ui/cody/types'
+
+/**
+ * Derive column from issue state + parsed comments + workflow run + PR.
+ * Inlined from the deleted board-mapper.ts.
+ */
+function deriveColumn(
+  issue: GitHubIssue,
+  comments: ParsedComment[],
+  workflowRun?: WorkflowRun,
+  associatedPR?: GitHubPR | null,
+): ColumnId {
+  const sorted = [...comments].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  )
+
+  const taskMarker = sorted.find((c) => c.type === 'task-marker')
+  const failure = [...sorted].reverse().find((c) => c.type === 'failure' || c.type === 'cody-failed')
+  const gate = [...sorted].reverse().find((c) => c.type === 'gate-request')
+  const gateApproval = [...sorted].reverse().find((c) => c.type === 'gate-approval')
+  const retries = sorted.filter((c) => c.type === 'supervisor-retry')
+  const exhausted = [...sorted].reverse().find((c) => c.type === 'supervisor-exhausted')
+
+  if (failure && exhausted) return 'failed'
+  if (gate && (!gateApproval || gate.createdAt > gateApproval.createdAt)) return 'gate-waiting'
+  if (retries.length > 0 && !exhausted && failure) return 'retrying'
+  if (taskMarker && workflowRun?.status === 'in_progress') return 'building'
+  if (associatedPR && !associatedPR.merged_at) return 'review'
+  if (taskMarker) return 'building'
+  return 'open'
+}
+
+function buildCodyTask(options: {
+  issue: GitHubIssue
+  comments: ParsedComment[]
+  workflowRun?: WorkflowRun
+  associatedPR?: GitHubPR | null
+}): CodyTask {
+  const { issue, comments, workflowRun, associatedPR } = options
+  const taskMarker = comments.find((c) => c.type === 'task-marker')
+  const taskId = taskMarker?.taskId || `issue-${issue.number}`
+  const column = deriveColumn(issue, comments, workflowRun, associatedPR)
+
+  return {
+    id: taskId,
+    issueNumber: issue.number,
+    title: issue.title,
+    body: issue.body || '',
+    state: issue.state,
+    labels: issue.labels.map((l) => l.name),
+    column,
+    createdAt: issue.created_at,
+    updatedAt: issue.updated_at,
+    workflowRun,
+    associatedPR,
+  }
+}
 
 export async function GET(
   req: NextRequest,

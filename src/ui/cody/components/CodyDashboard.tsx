@@ -59,12 +59,14 @@ export function CodyDashboard() {
   const filter = DATE_FILTERS.find((f) => f.value === dateFilter)
   const days = filter?.days
 
-  // Data fetching with TanStack Query
+  // Data fetching with TanStack Query (auto-refreshes: 10s when active, 30s when idle)
   const {
     data: tasks = [],
     isLoading,
+    isFetching,
     error,
     refetch,
+    dataUpdatedAt,
   } = useCodyTasks({ days, includeDetails: false })
 
   // Get unique labels from tasks (excluding internal/system labels)
@@ -246,7 +248,12 @@ export function CodyDashboard() {
         </div>
 
         {/* Cody Status Banner */}
-        <CodyStatusBanner tasks={tasks} onTaskSelect={handleTaskSelect} />
+        <CodyStatusBanner
+          tasks={tasks}
+          onTaskSelect={handleTaskSelect}
+          isFetching={isFetching}
+          dataUpdatedAt={dataUpdatedAt}
+        />
 
         {/* Task List */}
         <div className="flex-1 min-h-0 overflow-y-auto">
