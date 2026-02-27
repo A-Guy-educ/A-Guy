@@ -1,0 +1,29 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/SafeHtml/index.tsx",
+    "src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx",
+    "src/ui/web/exerciserenderer/utils/svgSanitize.ts",
+    "src/ui/web/exerciserenderer/blocks/HtmlBlockRenderer/index.tsx",
+    "src/server/payload/blocks/HtmlBlock/config.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The sanitization logic in SafeHtml is stripping <style>, <animate> tags and related attributes",
+    "The SVG sanitizer in svgSanitize.ts is too restrictive for advanced SVG features (gradients, animations)",
+    "All suspected files exist in the codebase at the specified paths",
+    "This affects content viewing for students but does not impact data integrity"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains detailed bug report with environment info, 8-step reproduction procedure, expected vs actual results, and clearly identified suspected areas. Has structured sections suitable for spec promotion."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
