@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "taskId": "260227-frontend-loading-error",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-27T16:02:05.892Z",
+  "updatedAt": "2026-02-27T16:02:05.895Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-02-27T16:02:05.895Z"
+    }
+  }
+}

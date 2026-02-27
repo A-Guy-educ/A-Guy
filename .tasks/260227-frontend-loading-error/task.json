@@ -1,0 +1,23 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/app/(frontend)/loading.tsx",
+    "src/app/(frontend)/error.tsx",
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/loading.tsx (optional)"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Task provides explicit file paths, code examples, and test steps. Contains ## Files to Create section with full paths and implementation code for both loading.tsx and error.tsx."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
