@@ -100,8 +100,14 @@ export function deriveBranchName(taskDir: string, taskId: string): string {
     }
 
     // Prepend date prefix from taskId for uniqueness
-    const datePrefix = taskId.split('-').slice(0, 2).join('-') // e.g., "260225"
-    const maxTitleLength = 50 - datePrefix.length - 1 // minus 1 for the hyphen
+    const datePrefix = taskId.split('-').slice(0, 2).join('-') // e.g., "260225-auto"
+
+    // Include issue number in branch name for disambiguation
+    // Without this, findRemoteBranch() cannot distinguish branches created on the same day
+    // for different issues (e.g., feat/260227-auto-... vs fix/260227-auto-...)
+    const issueNum = process.env.ISSUE_NUMBER
+    const issuePart = issueNum ? `-${issueNum}` : ''
+    const maxTitleLength = 50 - datePrefix.length - issuePart.length - 1 // minus 1 for the hyphen
 
     // Sanitize: lowercase, replace spaces/special chars with hyphens, remove non-alphanumeric
     const sanitized = title
@@ -110,9 +116,9 @@ export function deriveBranchName(taskDir: string, taskId: string): string {
       .replace(/\s+/g, '-') // spaces to hyphens
       .replace(/-+/g, '-') // multiple hyphens to one
       .replace(/^-|-$/g, '') // trim leading/trailing hyphens
-      .slice(0, maxTitleLength) // max 50 chars total (including date prefix)
+      .slice(0, maxTitleLength) // max chars for title portion
 
-    return `${datePrefix}-${sanitized}`
+    return `${datePrefix}${issuePart}-${sanitized}`
   } catch {
     return taskId
   }
