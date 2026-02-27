@@ -18,13 +18,13 @@ import { createRunner, type RunnerBackend } from './runner-backend'
 // ============================================================================
 
 /** Delay between stability checks after process exit (milliseconds) */
-export const STABILITY_CHECK_INTERVAL = 1_000
+export const STABILITY_CHECK_INTERVAL = 500
 
 /** Number of consecutive stable size checks before settling */
-export const STABILITY_CHECK_COUNT = 3
+export const STABILITY_CHECK_COUNT = 2
 
 /** Additional delay to wait after process exit before checking (filesystem flush) */
-export const POST_EXIT_DELAY = 1_000
+export const POST_EXIT_DELAY = 500
 
 /** Maximum retry attempts for failed stages */
 export const MAX_RETRIES = 2

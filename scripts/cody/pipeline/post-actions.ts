@@ -243,6 +243,31 @@ export async function executePostAction(
       break
     }
 
+    case 'parallel': {
+      const parallelActions = (action as unknown as { actions: PostAction[] }).actions
+      console.log(`   Running ${parallelActions.length} actions in parallel...`)
+
+      const results = await Promise.allSettled(
+        parallelActions.map(async (a) => {
+          // Recursively execute each action
+          await executePostAction(ctx, a, null as unknown as never)
+        }),
+      )
+
+      const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      if (failures.length > 0) {
+        const errors = failures
+          .map((f) => {
+            const err = f.reason as Error
+            return err?.message || String(f.reason)
+          })
+          .join('; ')
+        throw new Error(`Parallel post-actions failed: ${errors}`)
+      }
+      console.log(`   ✅ All ${parallelActions.length} parallel actions completed`)
+      break
+    }
+
     default:
       console.warn(`Unknown post-action type: ${(action as PostAction).type}`)
   }

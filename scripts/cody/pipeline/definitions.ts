@@ -189,8 +189,7 @@ No critical gaps identified. Plan was refined in-place.
     },
     postActions: [
       { type: 'validate-build-content' },
-      { type: 'run-tsc' },
-      { type: 'run-unit-tests' },
+      { type: 'parallel', actions: [{ type: 'run-tsc' }, { type: 'run-unit-tests' }] },
     ],
     validator: createBuildValidator(),
   })

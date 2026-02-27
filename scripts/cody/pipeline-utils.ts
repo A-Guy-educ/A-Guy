@@ -97,7 +97,9 @@ type Pipeline = (typeof VALID_PIPELINES)[number]
 type PipelineProfile = (typeof VALID_PIPELINE_PROFILES)[number]
 
 // Lightweight tasks: simple fixes that skip heavyweight stages
-const LIGHTWEIGHT_TASK_TYPES: TaskType[] = ['fix_bug', 'refactor', 'ops']
+// Note: implement_feature added for low-risk features (e.g., adding loading/error files)
+// that don't need full spec/gap/plan-gap review
+const LIGHTWEIGHT_TASK_TYPES: TaskType[] = ['fix_bug', 'refactor', 'ops', 'implement_feature']
 
 export interface TaskDefinition {
   task_type: TaskType

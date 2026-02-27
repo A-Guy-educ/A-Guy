@@ -11,7 +11,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import { z } from 'zod'
 
-import type { StudyPlanSnapshot, TopicInput } from '@/lib/study-plan'
+import type { StudyPlanSnapshot, StudyPlanDay, TopicInput } from '@/lib/study-plan'
+import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import { generateStudyPlan } from '@/lib/study-plan'
 import { queryUserProgressByGrade } from '@/server/repos/queries/userProgress'
 
@@ -183,7 +184,7 @@ async function handleGenerate(
   const days = generateStudyPlan(generateInput)
 
   // Validate all topicIds are string[]
-  const validatedDays = days.map((day: any) => ({
+  const validatedDays = days.map((day: StudyPlanDay) => ({
     ...day,
     topicIds: z.array(z.string()).parse(day.topicIds),
   }))
@@ -213,24 +214,26 @@ async function handleGenerate(
 
   // Create or update UserProgress
   if (userProgress) {
-    // Update existing
     await payload.update({
       collection: 'user-progress',
       id: userProgress.id,
       data: { studyPlans },
       overrideAccess: false,
       user,
-    } as any)
+    })
   } else {
-    // Create new
+    // Get default tenant (required field, auto-populated by hook but needed for TypeScript)
+    const tenantId = await getDefaultTenantId(payload)
     await payload.create({
       collection: 'user-progress',
       data: {
+        tenant: tenantId,
         user: user.id,
         gradeLevel,
         studyPlans,
       },
-    } as any)
+      draft: false,
+    })
   }
 
   return NextResponse.json({ success: true, data: newPlan })
@@ -281,7 +284,7 @@ async function handleToggleStatus(
     data: { studyPlans },
     overrideAccess: false,
     user,
-  } as any)
+  })
 
   return NextResponse.json({ success: true, data: updatedPlan })
 }
@@ -326,7 +329,7 @@ async function handleEditDay(
     data: { studyPlans },
     overrideAccess: false,
     user,
-  } as any)
+  })
 
   return NextResponse.json({ success: true, data: updatedPlan })
 }

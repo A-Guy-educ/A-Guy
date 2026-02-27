@@ -886,10 +886,24 @@ describe('resolvePipelineProfile', () => {
     const taskDef = createTaskDef('ops', 'medium')
     expect(resolvePipelineProfile(taskDef)).toBe('standard')
   })
+
+  // Test for implement_feature being lightweight when low risk
+  it('returns lightweight for low-risk implement_feature', () => {
+    const taskDef = createTaskDef('implement_feature', 'low')
+    expect(resolvePipelineProfile(taskDef)).toBe('lightweight')
+  })
+
+  it('returns standard for medium-risk implement_feature', () => {
+    const taskDef = createTaskDef('implement_feature', 'medium')
+    expect(resolvePipelineProfile(taskDef)).toBe('standard')
+  })
+
+  it('returns standard for high-risk implement_feature', () => {
+    const taskDef = createTaskDef('implement_feature', 'high')
+    expect(resolvePipelineProfile(taskDef)).toBe('standard')
+  })
 })
 
-// ============================================================================
-// pipeline_profile validation in task.json
 // ============================================================================
 // pipeline_profile validation in task.json
 // ============================================================================
