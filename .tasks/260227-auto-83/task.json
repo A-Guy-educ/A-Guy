@@ -1,0 +1,21 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "frontend",
+  "scope": [
+    "Account page → Preferences section",
+    "Add CTA button linking to /study-plan"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains ## Scope, ## Button Label, ## Visibility, ## Behavior, ## Styling sections with detailed requirements and ## Acceptance Criteria with 6 checkable items. Promoted spec.md with extracted requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

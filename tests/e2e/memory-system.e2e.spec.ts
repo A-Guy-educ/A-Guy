@@ -12,8 +12,8 @@ import { cleanupTestUsers, generateTestUserEmail, setupAuthenticatedUser } from 
 import { buildLessonUrl, getTestCourseData, seedTestCourseData } from './helpers/courses'
 
 // Skip all tests if required API keys are not set
-const hasOpenAIKey = !!process.env.OPENAI_API_KEY
-const hasGeminiKey = !!process.env.GEMINI_API_KEY
+const hasOpenAIKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.length > 0
+const hasGeminiKey = process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.length > 0
 const hasRequiredKeys = hasOpenAIKey && hasGeminiKey
 
 test.describe('Memory System E2E Tests', () => {
