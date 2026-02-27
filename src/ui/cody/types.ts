@@ -116,7 +116,14 @@ export interface ParsedComment {
 
 // ============ Kanban Types ============
 
-export type ColumnId = 'open' | 'building' | 'review' | 'failed' | 'gate-waiting' | 'retrying'
+export type ColumnId =
+  | 'open'
+  | 'building'
+  | 'review'
+  | 'failed'
+  | 'gate-waiting'
+  | 'retrying'
+  | 'done'
 
 export interface Board {
   id: string
@@ -157,6 +164,7 @@ export interface WorkflowRun {
   created_at: string
   updated_at: string
   html_url: string
+  display_title?: string
 }
 
 export interface GitHubPR {
