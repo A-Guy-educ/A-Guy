@@ -1,0 +1,23 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "frontend",
+  "scope": [
+    "Add loading.tsx to src/app/(frontend)/",
+    "Add error.tsx to src/app/(frontend)/",
+    "Optional: Add lesson-specific loading.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Input contains suggested implementation with code snippets, file paths to create, and test verification steps. Promoted spec.md and plan.md."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
