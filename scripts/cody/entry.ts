@@ -377,9 +377,14 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   const { input, taskDir } = ctx
   console.log('Running Cody RERUN pipeline...\n')
 
-  // G33: Fallback to full if spec.md missing
+  // G33: Check for paused stage FIRST - if we're resuming from a gate approval,
+  // we should continue even if spec.md doesn't exist (it may not have been created yet
+  // because the gate paused before resolve-profile post-action ran)
+  const pausedStage = !input.fromStage ? getLastPausedStage(input.taskId) : null
+
+  // G33: Fallback to full only if spec.md missing AND no paused stage to resume
   const specPath = path.join(taskDir, 'spec.md')
-  if (!fs.existsSync(specPath)) {
+  if (!fs.existsSync(specPath) && !pausedStage) {
     console.log('No spec.md found — falling back to full pipeline')
     input.mode = 'full'
     await runFullMode(ctx)
@@ -388,7 +393,6 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
 
   // FIX #5: Check for paused stage first (gate approval scenario)
   // This handles the case where @cody approve was used to resume a paused pipeline
-  const pausedStage = !input.fromStage ? getLastPausedStage(input.taskId) : null
   if (pausedStage) {
     console.log(`Detected paused stage: ${pausedStage}`)
 
