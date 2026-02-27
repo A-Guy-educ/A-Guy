@@ -847,9 +847,9 @@ describe('resolvePipelineProfile', () => {
     expect(resolvePipelineProfile(taskDef)).toBe('lightweight')
   })
 
-  it('returns standard for low-risk implement_feature (features always get full treatment)', () => {
+  it('returns lightweight for low-risk implement_feature (simple features skip full pipeline)', () => {
     const taskDef = createTaskDef('implement_feature', 'low')
-    expect(resolvePipelineProfile(taskDef)).toBe('standard')
+    expect(resolvePipelineProfile(taskDef)).toBe('lightweight')
   })
 
   it('respects explicit agent override', () => {

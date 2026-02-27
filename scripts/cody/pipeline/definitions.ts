@@ -189,7 +189,14 @@ No critical gaps identified. Plan was refined in-place.
     },
     postActions: [
       { type: 'validate-build-content' },
-      { type: 'parallel', actions: [{ type: 'run-tsc' }, { type: 'run-unit-tests' }] },
+      {
+        type: 'run-quality-with-autofix',
+        gates: [
+          { name: 'TypeScript', command: 'pnpm -s tsc --noEmit', source: 'tsc' as const },
+          { name: 'Unit Tests', command: 'pnpm -s test:unit', source: 'test' as const },
+        ],
+        maxFeedbackLoops: 2,
+      },
     ],
     validator: createBuildValidator(),
   })

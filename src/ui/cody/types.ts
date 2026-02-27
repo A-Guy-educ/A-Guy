@@ -116,14 +116,7 @@ export interface ParsedComment {
 
 // ============ Kanban Types ============
 
-export type ColumnId =
-  | 'open'
-  | 'building'
-  | 'review'
-  | 'done'
-  | 'failed'
-  | 'gate-waiting'
-  | 'retrying'
+export type ColumnId = 'open' | 'building' | 'review' | 'failed' | 'gate-waiting' | 'retrying'
 
 export interface Board {
   id: string

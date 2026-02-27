@@ -11,9 +11,8 @@ import { fetchIssues, fetchWorkflowRuns, findAssociatedPR, findTaskBranch, getSt
 import type { CodyTask, ColumnId } from '@/ui/cody/types'
 
 // Map GitHub issue state to column
+// Note: We now only fetch open issues, so 'closed' case should not occur
 function getColumnForIssue(issue: { state: 'open' | 'closed'; labels: Array<{ name: string }> }, workflowStatus?: string): ColumnId {
-  if (issue.state === 'closed') return 'done'
-  
   // Check for labels that indicate state
   const labelNames = issue.labels.map(l => l.name.toLowerCase())
   
@@ -44,9 +43,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Fetch issues (optimized: skip expensive PR/branch lookups in list view)
+    // Fetch only open issues to reduce API calls and skip done/closed tasks
     const issues = await fetchIssues({ 
-      state: 'all', 
+      state: 'open', 
       perPage: 100,
       since: sinceDate,
     })

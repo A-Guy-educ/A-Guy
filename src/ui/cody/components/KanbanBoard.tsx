@@ -42,11 +42,8 @@ export function KanbanBoard({
 
   // Get visible columns (columns that have tasks + always visible ones)
   const visibleColumns: ColumnId[] = (
-    ['open', 'building', 'review', 'done', 'failed', 'gate-waiting', 'retrying'] as ColumnId[]
-  ).filter(
-    (col) =>
-      tasksByColumn[col]?.length > 0 || col === 'open' || col === 'building' || col === 'done',
-  )
+    ['open', 'building', 'review', 'failed', 'gate-waiting', 'retrying'] as ColumnId[]
+  ).filter((col) => tasksByColumn[col]?.length > 0 || col === 'open' || col === 'building')
 
   const handleTaskClick = useCallback(
     (task: CodyTask) => {

@@ -23,7 +23,6 @@ const columnColors: Record<ColumnId, string> = {
   open: 'border-muted-foreground',
   building: 'border-blue-500',
   review: 'border-purple-500',
-  done: 'border-green-500',
   failed: 'border-destructive',
   'gate-waiting': 'border-yellow-500',
   retrying: 'border-orange-500',

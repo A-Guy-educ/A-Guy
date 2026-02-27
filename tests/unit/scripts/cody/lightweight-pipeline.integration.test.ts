@@ -191,12 +191,12 @@ describe('lightweight pipeline integration', () => {
 
 describe('standard pipeline integration', () => {
   describe('resolvePipelineProfile for standard tasks', () => {
-    it('returns standard for implement_feature', async () => {
+    it('returns lightweight for low-risk implement_feature', async () => {
       const { resolvePipelineProfile } = await import('../../../../scripts/cody/pipeline-utils')
 
       const taskDef = createTaskDef('implement_feature', 'low')
 
-      expect(resolvePipelineProfile(taskDef)).toBe('standard')
+      expect(resolvePipelineProfile(taskDef)).toBe('lightweight')
     })
 
     it('returns standard for medium-risk tasks', async () => {

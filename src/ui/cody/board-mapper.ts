@@ -25,7 +25,6 @@ export function deriveColumn(
 
   // Find latest comments of each type (use reverse + find instead of findLast)
   const taskMarker = sorted.find((c: ParsedComment) => c.type === 'task-marker')
-  const completion = [...sorted].reverse().find((c: ParsedComment) => c.type === 'success')
   const failure = [...sorted]
     .reverse()
     .find((c: ParsedComment) => c.type === 'failure' || c.type === 'cody-failed')
@@ -36,13 +35,8 @@ export function deriveColumn(
     .reverse()
     .find((c: ParsedComment) => c.type === 'supervisor-exhausted')
 
-  // Done: completed (newest completion after newest failure = recovered)
-  if (completion && (!failure || completion.createdAt > failure.createdAt)) {
-    return 'done'
-  }
-  if (associatedPR?.merged_at) {
-    return 'done'
-  }
+  // Note: 'done' column removed - we only fetch open issues now
+  // Completed tasks are not shown to reduce API polling
 
   // Failed: failure + max retries exhausted
   if (failure && exhausted) {
@@ -88,7 +82,6 @@ export function organizeBoard(tasks: CodyTask[]): Record<ColumnId, CodyTask[]> {
     open: [],
     building: [],
     review: [],
-    done: [],
     failed: [],
     'gate-waiting': [],
     retrying: [],
@@ -115,7 +108,7 @@ export function organizeBoard(tasks: CodyTask[]): Record<ColumnId, CodyTask[]> {
  * Get visible columns (columns that have tasks, plus always-visible ones)
  */
 export function getVisibleColumns(tasks: CodyTask[]): ColumnId[] {
-  const alwaysVisible: ColumnId[] = ['open', 'building', 'done']
+  const alwaysVisible: ColumnId[] = ['open', 'building']
   const columnCounts = new Map<ColumnId, number>()
 
   // Count tasks per column

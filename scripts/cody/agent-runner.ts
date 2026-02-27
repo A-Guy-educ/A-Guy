@@ -45,6 +45,7 @@ export const STAGE_TIMEOUTS: Record<string, number> = {
   auditor: 5 * 60_000,
   'apply-audit': 5 * 60_000,
   pr: 5 * 60_000,
+  autofix: 5 * 60_000,
 }
 
 // ============================================================================

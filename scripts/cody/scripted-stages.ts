@@ -388,12 +388,26 @@ export async function runPrStage(
     const err = error as { message?: string }
     const msg = err.message || 'Unknown error'
     console.error(`  ❌ PR creation failed: ${msg}`)
-    const report = `# PR Stage\n\nFailed to create PR: ${msg}\n`
+    const report = `# PR Stage
+
+Failed to create PR: ${msg}
+
+Title: ${title}
+
+${body}
+`
     fs.writeFileSync(outputFile, report)
     return { created: false, url: '', report }
   }
 
-  const report = `# PR Stage\n\nPR created: ${prUrl}\n\nTitle: ${title}\n`
+  const report = `# PR Stage
+
+PR created: ${prUrl}
+
+Title: ${title}
+
+${body}
+`
   fs.writeFileSync(outputFile, report)
   return { created: true, url: prUrl, report }
 }

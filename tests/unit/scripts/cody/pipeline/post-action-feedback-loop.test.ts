@@ -1,0 +1,185 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import * as fs from 'fs'
+import type { PipelineContext, PostAction } from '../../../../../scripts/cody/engine/types'
+
+// Mock child_process
+const mockExecSync = vi.fn()
+vi.mock('child_process', () => ({
+  execSync: (...args: unknown[]) => mockExecSync(...args),
+  execFileSync: vi.fn(),
+}))
+
+// Mock agent-runner
+const mockRunAgent = vi.fn()
+vi.mock('../../../../../scripts/cody/agent-runner', () => ({
+  runAgentWithFileWatch: (...args: unknown[]) => mockRunAgent(...args),
+  STAGE_TIMEOUTS: { autofix: 300000 },
+  DEFAULT_TIMEOUT: 600000,
+}))
+
+// Mock fs partially
+vi.mock('fs', async () => {
+  const actual = await vi.importActual<typeof fs>('fs')
+  return {
+    ...actual,
+    writeFileSync: vi.fn(),
+    unlinkSync: vi.fn(),
+    existsSync: vi.fn(() => false),
+    readFileSync: actual.readFileSync,
+    renameSync: vi.fn(),
+  }
+})
+
+// Mock other deps
+vi.mock('../../../../../scripts/cody/pipeline-utils', () => ({
+  readTask: vi.fn(),
+  resolvePipelineProfile: vi.fn(),
+  resolveControlMode: vi.fn(),
+  stageOutputFile: vi.fn(),
+}))
+vi.mock('../../../../../scripts/cody/clarify-workflow', () => ({
+  handleGateApproval: vi.fn(),
+}))
+vi.mock('../../../../../scripts/cody/github-api', () => ({
+  extractGateCommentBody: vi.fn(),
+  postComment: vi.fn(),
+}))
+vi.mock('../../../../../scripts/cody/git-utils', () => ({
+  commitPipelineFiles: vi.fn(),
+}))
+vi.mock('../../../../../scripts/cody/engine/status', () => ({
+  loadState: vi.fn(() => null),
+  updateStage: vi.fn((s: unknown) => s),
+  completeState: vi.fn((s: unknown) => s),
+  writeState: vi.fn(),
+}))
+
+import { executePostAction } from '../../../../../scripts/cody/pipeline/post-actions'
+
+function makeCtx(overrides: Partial<PipelineContext> = {}): PipelineContext {
+  return {
+    taskId: 'test-123',
+    taskDir: '/tmp/test-123',
+    input: { taskId: 'test-123', mode: 'full' as const, dryRun: false },
+    taskDef: null,
+    profile: 'standard',
+    backend: { name: 'test', spawn: vi.fn() } as unknown as PipelineContext['backend'],
+    ...overrides,
+  } as PipelineContext
+}
+
+describe('run-quality-with-autofix post-action', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const action: PostAction = {
+    type: 'run-quality-with-autofix',
+    gates: [
+      { name: 'TypeScript', command: 'pnpm -s tsc --noEmit', source: 'tsc' as const },
+      { name: 'Unit Tests', command: 'pnpm -s test:unit', source: 'test' as const },
+    ],
+    maxFeedbackLoops: 2,
+  }
+
+  it('completes immediately when all gates pass on first try', async () => {
+    mockExecSync.mockReturnValue('')
+    const ctx = makeCtx()
+
+    await executePostAction(ctx, action, null)
+
+    expect(mockRunAgent).not.toHaveBeenCalled()
+  })
+
+  it('runs autofix when tsc fails, then retries and passes', async () => {
+    let tscCallCount = 0
+    mockExecSync.mockImplementation((cmd: string) => {
+      if (typeof cmd === 'string' && cmd.includes('tsc')) {
+        tscCallCount++
+        if (tscCallCount === 1) {
+          const err = new Error('tsc failed') as Error & { stdout: Buffer; stderr: Buffer }
+          err.stdout = Buffer.from('src/foo.ts(10,5): error TS2345: Argument...')
+          err.stderr = Buffer.from('')
+          throw err
+        }
+        return '' // passes on second call
+      }
+      return '' // unit tests pass
+    })
+    mockRunAgent.mockResolvedValue({ succeeded: true, timedOut: false, retries: 0 })
+    const ctx = makeCtx()
+
+    await executePostAction(ctx, action, null)
+
+    // Autofix was called once
+    expect(mockRunAgent).toHaveBeenCalledTimes(1)
+    // build-errors.md was written
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('build-errors.md'),
+      expect.stringContaining('type_error'),
+    )
+  })
+
+  it('throws after exhausting maxFeedbackLoops', async () => {
+    // tsc always fails
+    mockExecSync.mockImplementation((cmd: string) => {
+      if (typeof cmd === 'string' && cmd.includes('tsc')) {
+        const err = new Error('tsc failed') as Error & { stdout: Buffer; stderr: Buffer }
+        err.stdout = Buffer.from('src/foo.ts(10,5): error TS2345: Argument...')
+        err.stderr = Buffer.from('')
+        throw err
+      }
+      return '' // unit tests pass
+    })
+    mockRunAgent.mockResolvedValue({ succeeded: true, timedOut: false, retries: 0 })
+    const ctx = makeCtx()
+
+    await expect(executePostAction(ctx, action, null)).rejects.toThrow(
+      /Quality gates failed after 2 autofix attempts/,
+    )
+    expect(mockRunAgent).toHaveBeenCalledTimes(2)
+  })
+
+  it('skips execution in dryRun mode', async () => {
+    const ctx = makeCtx({
+      input: { taskId: 'test-123', mode: 'full' as const, dryRun: true },
+    })
+
+    await executePostAction(ctx, action, null)
+
+    expect(mockExecSync).not.toHaveBeenCalled()
+    expect(mockRunAgent).not.toHaveBeenCalled()
+  })
+
+  it('only re-runs failed gates, not passing ones', async () => {
+    const commandCalls: string[] = []
+    let tscCallCount = 0
+    mockExecSync.mockImplementation((cmd: string) => {
+      if (typeof cmd === 'string') {
+        commandCalls.push(cmd)
+        if (cmd.includes('tsc')) {
+          tscCallCount++
+          if (tscCallCount === 1) {
+            const err = new Error('tsc failed') as Error & { stdout: Buffer; stderr: Buffer }
+            err.stdout = Buffer.from('src/foo.ts(10,5): error TS2345: Argument...')
+            err.stderr = Buffer.from('')
+            throw err
+          }
+          return ''
+        }
+      }
+      return '' // tests always pass
+    })
+    mockRunAgent.mockResolvedValue({ succeeded: true, timedOut: false, retries: 0 })
+    const ctx = makeCtx()
+
+    await executePostAction(ctx, action, null)
+
+    // First run: both gates called (tsc fails, tests pass)
+    // Re-run: only tsc called (it was the only failure)
+    const tscCalls = commandCalls.filter((c) => c.includes('tsc'))
+    const testCalls = commandCalls.filter((c) => c.includes('test:unit'))
+    expect(tscCalls).toHaveLength(2) // initial + retry
+    expect(testCalls).toHaveLength(1) // initial only, not retried
+  })
+})

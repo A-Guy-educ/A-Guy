@@ -24,8 +24,19 @@ You are the **Autofix Agent**. Your ONLY job is to fix specific errors reported 
 
 ### 1. Read Errors
 
-Read `verify.md` and identify:
+Check for error reports in this priority order:
+1. `.tasks/<taskId>/build-errors.md` (from build stage feedback loop — higher priority)
+2. `.tasks/<taskId>/verify.md` (from verify stage)
 
+Read whichever exists and identify the errors to fix.
+
+If `build-errors.md` exists, each error section includes:
+- **Error Category**: type_error, lint_error, test_failure, format_error
+- **Fix Instructions**: Follow these EXACTLY
+- **Affected Files**: Focus on these files only
+- **Error Output**: The raw error messages
+
+If only `verify.md` exists, identify:
 - TypeScript errors (`pnpm -s tsc --noEmit`)
 - Lint errors (`pnpm -s lint`)
 - Format errors (`pnpm -s format`)

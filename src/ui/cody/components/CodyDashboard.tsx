@@ -11,6 +11,7 @@ import type { CodyTask } from '../types'
 import { KanbanBoard } from './KanbanBoard'
 import { TaskDetail } from './TaskDetail'
 import { CreateTaskDialog } from './CreateTaskDialog'
+import { BugReportDialog } from './BugReportDialog'
 import { CodyChat } from './CodyChat'
 import { Button } from '@/ui/web/components/button'
 import {
@@ -20,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/ui/web/components/select'
-import { MessageSquare, X } from 'lucide-react'
+import { MessageSquare, X, Bug } from 'lucide-react'
 import { useCodyTasks, useCodyBoards } from '../hooks'
 import { RateLimitError, NoTokenError, tasksApi } from '../api'
 
@@ -34,6 +35,7 @@ const DATE_FILTERS = [
 export function CodyDashboard() {
   const [selectedTask, setSelectedTask] = useState<CodyTask | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showBugDialog, setShowBugDialog] = useState(false)
   const [dateFilter, setDateFilter] = useState<string>('30d')
   const [showChat, setShowChat] = useState(false)
 
@@ -151,6 +153,10 @@ export function CodyDashboard() {
                 ))}
               </SelectContent>
             </Select>
+            <Button variant="outline" onClick={() => setShowBugDialog(true)}>
+              <Bug className="w-4 h-4 mr-2" />
+              Report Bug
+            </Button>
             <Button onClick={() => setShowCreateDialog(true)}>+ New Task</Button>
           </div>
         </div>
@@ -192,6 +198,13 @@ export function CodyDashboard() {
       <CreateTaskDialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
+        onCreated={refetch}
+      />
+
+      {/* Bug Report Dialog */}
+      <BugReportDialog
+        open={showBugDialog}
+        onClose={() => setShowBugDialog(false)}
         onCreated={refetch}
       />
     </div>

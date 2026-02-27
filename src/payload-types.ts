@@ -1680,6 +1680,17 @@ export interface UserProgress {
                 | null;
               status?: ('planned' | 'completed') | null;
               estimatedDurationMinutes?: number | null;
+              userTopicIds?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | unknown[]
+                | string
+                | number
+                | boolean
+                | null;
+              userDurationMinutes?: number | null;
+              userStartTime?: string | null;
               id?: string | null;
             }[]
           | null;
@@ -2850,6 +2861,9 @@ export interface UserProgressSelect<T extends boolean = true> {
               topicIds?: T;
               status?: T;
               estimatedDurationMinutes?: T;
+              userTopicIds?: T;
+              userDurationMinutes?: T;
+              userStartTime?: T;
               id?: T;
             };
         id?: T;

@@ -25,9 +25,10 @@ import { stageOutputFile, readTask } from './pipeline-utils'
 import type { PipelineContext } from './engine/types'
 import { runPipeline } from './engine/state-machine'
 import { resolvePipelineForMode, createRebuildCallback } from './engine/pipeline-resolver'
-import { flattenPipelineOrder } from './pipeline/definitions'
+import { flattenPipelineOrder, IMPL_ORDER_STANDARD } from './pipeline/definitions'
 import { stateToV1 } from './engine/status'
 import { PipelinePausedError } from './engine/types'
+import { resolveRerunFromStage } from './rerun-utils'
 import { ensureTaskMarkerComment, postComment } from './github-api'
 import { formatStatusComment } from './cody-utils'
 
@@ -452,6 +453,20 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   // Determine fromStage (use paused stage if detected, otherwise failed stage, otherwise build)
   if (!input.fromStage) {
     input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
+  }
+
+  // P3 fix: Back up to architect when feedback provided so plan can be revised
+  const implStageOrder = flattenPipelineOrder(IMPL_ORDER_STANDARD)
+  const resolvedFrom = resolveRerunFromStage(
+    input.fromStage || 'build',
+    input.feedback,
+    implStageOrder,
+  )
+  if (resolvedFrom !== input.fromStage) {
+    console.log(
+      `  ℹ️ Feedback provided — backing up from ${input.fromStage} to ${resolvedFrom} for plan revision`,
+    )
+    input.fromStage = resolvedFrom
   }
 
   // Default feedback

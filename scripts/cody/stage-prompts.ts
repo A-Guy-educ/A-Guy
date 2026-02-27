@@ -72,10 +72,10 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   clarify: ['task.md', 'spec.md'],
   architect: ['spec.md', 'clarified.md', 'rerun-feedback.md'],
   'plan-gap': ['spec.md', 'plan.md', 'task.json'],
-  build: ['spec.md', 'clarified.md', 'plan.md', 'plan-gap.md'],
+  build: ['spec.md', 'clarified.md', 'plan.md', 'plan-gap.md', 'rerun-feedback.md'],
   commit: ['task.json'],
   verify: [], // scripted — no LLM prompt needed
-  autofix: ['verify.md'],
+  autofix: ['verify.md', 'build-errors.md'],
   auditor: ['task.md', 'spec.md', 'build.md', 'verify.md', '../audit-history.json'],
   'apply-audit': ['auditor.md'],
   pr: [], // scripted — no LLM prompt needed
