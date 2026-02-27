@@ -1,7 +1,7 @@
 {
   "task_type": "fix_bug",
   "risk_level": "high",
-  "confidence": 0.95,
+  "confidence": 1,
   "primary_domain": "backend",
   "scope": [
     "src/server/payload/collections/Courses.ts",
@@ -15,7 +15,7 @@
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Task contains ## Description with clear requirements, ## Files Affected with exact file paths and line numbers, ## Expected Fix with code snippet, and ## Steps to Test with acceptance criteria. Promoted to spec.md for orchestrator."
+    "reasoning": "Input contains clear requirements (status-aware access), acceptance criteria (test steps), and implementation details (code example). Promoted spec.md with requirements and acceptance criteria."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
