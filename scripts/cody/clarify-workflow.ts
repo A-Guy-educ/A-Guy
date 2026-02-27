@@ -18,6 +18,7 @@ import { checkForQuestions } from './content-validators'
 /**
  * Extract the answer from a GitHub comment body
  * The comment format is: /cody [command] [task-id] [optional answer text]
+ * Also handles: @cody approve [answer], @cody reject [answer]
  */
 export function extractAnswerFromComment(commentBody: string): string | null {
   // Decode JSON-encoded body if needed (from jq -Rs .)
@@ -33,8 +34,8 @@ export function extractAnswerFromComment(commentBody: string): string | null {
   // Normalize literal \n to real newlines
   decoded = decoded.replace(/\\n/g, '\n')
 
-  // Remove /cody prefix and command
-  const withoutCody = decoded.replace(/^\/cody\s*/, '').trim()
+  // Remove /cody or @cody prefix
+  const withoutCody = decoded.replace(/^[\/]?@?cody\s*/, '').trim()
 
   // If there's content after the command, treat it as the answer
   if (withoutCody.length > 0) {
@@ -43,6 +44,15 @@ export function extractAnswerFromComment(commentBody: string): string | null {
     let answer = withoutCody
     if (taskIdMatch) {
       answer = withoutCody.slice(taskIdMatch[0].length).trim()
+    }
+
+    // Also remove approval/rejection keywords (user wrote "@cody approve" + answers)
+    const lowerAnswer = answer.toLowerCase()
+    for (const keyword of [...APPROVAL_KEYWORDS, ...REJECTION_KEYWORDS]) {
+      if (lowerAnswer.startsWith(keyword)) {
+        answer = answer.slice(keyword.length).trim()
+        break
+      }
     }
 
     // If there's answer content, return it
@@ -151,10 +161,20 @@ function getGateFiles(
 }
 
 /**
- * Check if a comment contains approval or rejection keywords
+ * Result of detecting approval from comment - includes optional answer content
  */
-function detectApprovalFromComment(commentBody: string | null): 'approved' | 'rejected' | null {
-  if (!commentBody) return null
+export interface ApprovalDetection {
+  status: 'approved' | 'rejected' | null
+  /** Answer content after the approve/reject keyword (preserves newlines for multi-line answers) */
+  answerContent?: string | null
+}
+
+/**
+ * Check if a comment contains approval or rejection keywords
+ * Also extracts any answer content provided after the keyword (preserves newlines!)
+ */
+function detectApprovalFromComment(commentBody: string | null): ApprovalDetection {
+  if (!commentBody) return { status: null }
 
   // Decode if JSON-encoded
   let decoded = commentBody
@@ -166,32 +186,64 @@ function detectApprovalFromComment(commentBody: string | null): 'approved' | 're
     }
   }
 
-  // Normalize
-  decoded = decoded.toLowerCase().replace(/\\n/g, ' ').replace(/\s+/g, ' ').trim()
+  // Normalize literal \n to real newlines (preserving them for answer extraction)
+  decoded = decoded.replace(/\\n/g, '\n')
 
-  // Remove /cody or @cody prefix (BUG-F fix: also handle @cody for approval)
-  decoded = decoded.replace(/^[\/]?@?cody\s*/, '').trim()
+  // Get original for answer extraction (before lowercasing)
+  const originalWithNewlines = decoded
+
+  // Lowercase for keyword matching (but we still check original position)
+  const lowerDecoded = decoded.toLowerCase()
+
+  // Remove /cody or @cody prefix
+  const withoutPrefix = lowerDecoded.replace(/^[\/]?@?cody\s*/, '').trim()
+  // Also get the original (with case preserved) after prefix removal (use regex with limit)
+  const originalWithoutPrefix = originalWithNewlines.replace(/^[\/]?@?cody\s*/i, '').trim()
 
   // Check for rejection keywords first (more specific)
   for (const keyword of REJECTION_KEYWORDS) {
     if (
-      decoded === keyword ||
-      decoded.startsWith(keyword + ' ') ||
-      decoded.startsWith(keyword + '\n')
+      withoutPrefix === keyword ||
+      withoutPrefix.startsWith(keyword + ' ') ||
+      withoutPrefix.startsWith(keyword + '\n')
     ) {
-      return 'rejected'
+      // Extract any content after the rejection keyword
+      const answerContent = extractContentAfterKeyword(originalWithoutPrefix, keyword)
+      return { status: 'rejected', answerContent }
     }
   }
 
   // Check for approval keywords
   for (const keyword of APPROVAL_KEYWORDS) {
     if (
-      decoded === keyword ||
-      decoded.startsWith(keyword + ' ') ||
-      decoded.startsWith(keyword + '\n')
+      withoutPrefix === keyword ||
+      withoutPrefix.startsWith(keyword + ' ') ||
+      withoutPrefix.startsWith(keyword + '\n')
     ) {
-      return 'approved'
+      // Extract any content after the approval keyword (this preserves newlines!)
+      const answerContent = extractContentAfterKeyword(originalWithoutPrefix, keyword)
+      return { status: 'approved', answerContent: answerContent }
     }
+  }
+
+  return { status: null }
+}
+
+/**
+ * Extract content after a keyword (approve/reject) while preserving newlines
+ */
+function extractContentAfterKeyword(text: string, keyword: string): string | null {
+  const lowerText = text.toLowerCase()
+  const keywordIndex = lowerText.indexOf(keyword)
+
+  if (keywordIndex === -1) return null
+
+  // Get everything after the keyword
+  const afterKeyword = text.slice(keywordIndex + keyword.length).trim()
+
+  // If there's content after the keyword, return it (preserves newlines!)
+  if (afterKeyword.length > 0) {
+    return afterKeyword
   }
 
   return null
@@ -296,14 +348,19 @@ export function handleGateApproval(
   const approval = detectApprovalFromComment(input.commentBody || null)
 
   // Also check latest issue comment if not found in current trigger
-  if (!approval && input.issueNumber && input.triggerType === 'comment') {
+  if (!approval.status && input.issueNumber && input.triggerType === 'comment') {
     // Use getLatestApprovalComment to find /cody approve or /cody reject commands
     const latestComment = getLatestApprovalComment(input.issueNumber, 'github-actions[bot]')
     const latestApproval = detectApprovalFromComment(latestComment)
-    if (latestApproval) {
+    if (latestApproval.status) {
       // User replied with approve/reject - write the approved file
-      if (latestApproval === 'approved') {
+      if (latestApproval.status === 'approved') {
         fs.writeFileSync(approvedPath, `# Gate Approved\n\nApproved at ${gatePoint} gate.\n`)
+        // If there's also answer content in the comment, create clarified.md
+        if (latestApproval.answerContent) {
+          const clarifiedPath = path.join(taskDir, 'clarified.md')
+          fs.writeFileSync(clarifiedPath, `# Clarified\n\n${latestApproval.answerContent}\n`)
+        }
         return 'approved'
       } else {
         // Write rejection marker
@@ -314,10 +371,15 @@ export function handleGateApproval(
   }
 
   // If we have approval in current trigger
-  if (approval === 'approved') {
+  if (approval.status === 'approved') {
     fs.writeFileSync(approvedPath, `# Gate Approved\n\nApproved at ${gatePoint} gate.\n`)
+    // If there's also answer content in the comment, create clarified.md
+    if (approval.answerContent) {
+      const clarifiedPath = path.join(taskDir, 'clarified.md')
+      fs.writeFileSync(clarifiedPath, `# Clarified\n\n${approval.answerContent}\n`)
+    }
     return 'approved'
-  } else if (approval === 'rejected') {
+  } else if (approval.status === 'rejected') {
     fs.writeFileSync(requestPath, `# Gate Rejected\n\nRejected at ${gatePoint} gate.\n`)
     return 'rejected'
   }
