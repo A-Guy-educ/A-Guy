@@ -74,6 +74,7 @@ const SANITIZE_CONFIG = {
     'tr',
     'th',
     'td',
+    'style', // Allow style tags for internal CSS
   ],
   ALLOWED_ATTR: [
     'href',

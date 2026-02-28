@@ -49,6 +49,7 @@ const PURIFY_CONFIG = {
     'tr',
     'th',
     'td',
+    'style', // Allow style tags for internal CSS
   ],
   ALLOWED_ATTR: [
     'href',
@@ -63,6 +64,7 @@ const PURIFY_CONFIG = {
     'colspan',
     'rowspan',
     'dir',
+    'id', // Allow id attribute for CSS styling hooks
   ],
 }
 

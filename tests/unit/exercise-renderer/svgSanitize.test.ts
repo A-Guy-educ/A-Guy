@@ -62,4 +62,71 @@ describe('sanitizeSvg', () => {
     const result = sanitizeSvg('<svg><unclosed><circle cx="5"')
     expect(typeof result).toBe('string')
   })
+
+  // NEW TESTS FOR SMIL ANIMATIONS - Bug reproduction tests
+  describe('SMIL Animation Elements', () => {
+    it('should preserve <animate> elements', () => {
+      const svg =
+        '<svg><circle r="50"><animate attributeName="fill" from="red" to="blue" dur="1s"/></circle></svg>'
+      const result = sanitizeSvg(svg)
+      // After fix, animate element should be preserved
+      expect(result).toContain('<animate')
+      expect(result).toContain('attributeName="fill"')
+    })
+
+    it('should preserve <animateTransform> elements', () => {
+      const svg =
+        '<svg><circle r="50"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="3s"/></circle></svg>'
+      const result = sanitizeSvg(svg)
+      // After fix, animateTransform element should be preserved
+      expect(result).toContain('<animateTransform')
+      expect(result).toContain('attributeName="transform"')
+    })
+
+    it('should preserve <set> elements', () => {
+      const svg =
+        '<svg><circle r="50"><set attributeName="visibility" to="visible" begin="0s" dur="3s"/></circle></svg>'
+      const result = sanitizeSvg(svg)
+      // After fix, set element should be preserved
+      expect(result).toContain('<set')
+      expect(result).toContain('attributeName="visibility"')
+    })
+
+    it('should preserve animation attributes (from, to, dur, begin, end, repeatCount)', () => {
+      const svg =
+        '<svg><circle r="50"><animate attributeName="cx" from="0" to="100" dur="2s" begin="0s" end="5s" repeatCount="indefinite"/></circle></svg>'
+      const result = sanitizeSvg(svg)
+      // After fix, animation attributes should be preserved
+      expect(result).toContain('from="0"')
+      expect(result).toContain('to="100"')
+      expect(result).toContain('dur="2s"')
+      expect(result).toContain('begin="0s"')
+      expect(result).toContain('end="5s"')
+      expect(result).toContain('repeatCount="indefinite"')
+    })
+
+    it('should preserve href attributes on <use> elements', () => {
+      const svg = '<svg><defs><circle id="c" r="50"/></defs><use href="#c"/></svg>'
+      const result = sanitizeSvg(svg)
+      // After fix, href attribute should be preserved
+      expect(result).toContain('<use')
+      expect(result).toContain('href="#c"')
+    })
+
+    it('should preserve xlink:href attributes on <use> elements', () => {
+      const svg = '<svg><defs><circle id="c" r="50"/></defs><use xlink:href="#c"/></svg>'
+      const result = sanitizeSvg(svg)
+      // After fix, xlink:href attribute should be preserved
+      expect(result).toContain('<use')
+      expect(result).toContain('xlink:href="#c"')
+    })
+
+    it('should preserve linearGradient and radialGradient', () => {
+      const svg =
+        '<svg><defs><linearGradient id="g1"><stop offset="0%" stop-color="red"/></linearGradient></defs><rect fill="url(#g1)"/></svg>'
+      const result = sanitizeSvg(svg)
+      expect(result).toContain('<linearGradient')
+      expect(result).toContain('stop-color="red"')
+    })
+  })
 })
