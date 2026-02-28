@@ -289,72 +289,270 @@ export class ConversationService {
    * Validate context access for a user
    * Checks enrollment/ownership for the target context
    *
-   * NOTE: This implementation assumes open access for now.
-   * In production, this should check actual enrollment data.
-   *
-   * TODO: Implement based on your enrollment model
-   * - Check Enrollments collection
-   * - Or check User.enrolledCourses field
-   * - Or check Course.students relationship
+   * Access rules:
+   * - Admin users have full access
+   * - Non-admin users must have an active enrollment in the course
+   * - Context hierarchy is traversed to find the root course
    */
   async validateContextAccess(
     userId: string,
     userRole: AccountRole,
     contextRef: ContextRef,
-    _req?: PayloadRequest,
+    req?: PayloadRequest,
   ): Promise<boolean> {
     // Admin always has access
     if (userRole === AccountRole.Admin) {
       return true
     }
 
-    // TODO: Implement actual enrollment check
-    // For now, return true (all authenticated users can access)
-    // Replace with real logic when enrollment system is implemented
-    //
-    // Example implementation:
-    // const { relationTo, value: contextId } = contextRef
-    // switch (relationTo) {
-    //   case 'exercises':
-    //     const exercise = await this.payload.findByID({
-    //       collection: 'exercises',
-    //       id: contextId,
-    //     })
-    //     return this.isEnrolledInCourse(userId, exercise.lesson)
-    //   case 'lessons':
-    //     const lesson = await this.payload.findByID({
-    //       collection: 'lessons',
-    //       id: contextId,
-    //     })
-    //     return this.isEnrolledInCourse(userId, lesson.chapter)
-    //   case 'chapters':
-    //     const chapter = await this.payload.findByID({
-    //       collection: 'chapters',
-    //       id: contextId,
-    //     })
-    //     return this.isEnrolledInCourse(userId, chapter.course)
-    //   case 'courses':
-    //     return this.isEnrolledInCourse(userId, contextId)
-    //   default:
-    //     return false
-    // }
+    // Traverse context hierarchy to find the course
+    const courseId = await this.findCourseIdFromContext(contextRef, req)
 
-    logger.debug({ userId, contextRef }, 'Context access granted (open access mode)')
+    if (!courseId) {
+      // Cannot determine course - deny access
+      logger.warn({ userId, contextRef }, 'Could not determine course from context')
+      return false
+    }
+
+    // Check if user is enrolled in the course
+    const isEnrolled = await this.isEnrolledInCourse(userId, courseId, req)
+
+    if (!isEnrolled) {
+      logger.info({ userId, courseId, contextRef }, 'Access denied: user not enrolled in course')
+      return false
+    }
+
+    logger.debug({ userId, courseId, contextRef }, 'Context access granted via enrollment')
     return true
   }
 
   /**
+   * Check if a user is enrolled in a course with active status
+   * Uses select to limit returned fields (security best practice)
+   */
+  private async isEnrolledInCourse(
+    userId: string,
+    courseId: string,
+    req?: PayloadRequest,
+  ): Promise<boolean> {
+    const result = await this.payload.find({
+      collection: 'enrollments',
+      where: {
+        and: [
+          { user: { equals: userId } },
+          { course: { equals: courseId } },
+          { status: { equals: 'active' } },
+        ],
+      },
+      limit: 1,
+      select: {
+        id: true,
+        accessType: true,
+      },
+      ...(req && { req }),
+      overrideAccess: false, // Enforce access control
+    })
+
+    return result.docs.length > 0
+  }
+
+  /**
+   * Traverse context hierarchy to find the root course ID
+   * Returns null if course cannot be determined
+   */
+  private async findCourseIdFromContext(
+    contextRef: ContextRef,
+    req?: PayloadRequest,
+  ): Promise<string | null> {
+    const { relationTo, value: contextId } = contextRef
+
+    switch (relationTo) {
+      case 'exercises': {
+        // Exercise -> Lesson -> Chapter -> Course
+        const exercise = await this.payload.findByID({
+          collection: 'exercises',
+          id: contextId,
+          depth: 0,
+          ...(req && { req }),
+        })
+        const lessonId =
+          typeof exercise.lesson === 'string'
+            ? exercise.lesson
+            : (exercise.lesson as { id?: string })?.id
+
+        if (!lessonId) return null
+
+        const lesson = await this.payload.findByID({
+          collection: 'lessons',
+          id: lessonId,
+          depth: 0,
+          ...(req && { req }),
+        })
+        const chapterId =
+          typeof lesson.chapter === 'string'
+            ? lesson.chapter
+            : (lesson.chapter as { id?: string })?.id
+
+        if (!chapterId) return null
+
+        const chapter = await this.payload.findByID({
+          collection: 'chapters',
+          id: chapterId,
+          depth: 0,
+          ...(req && { req }),
+        })
+        const courseId =
+          typeof chapter.course === 'string'
+            ? chapter.course
+            : (chapter.course as { id?: string })?.id
+
+        return courseId || null
+      }
+
+      case 'lessons': {
+        // Lesson -> Chapter -> Course
+        const lesson = await this.payload.findByID({
+          collection: 'lessons',
+          id: contextId,
+          depth: 0,
+          ...(req && { req }),
+        })
+        const chapterId =
+          typeof lesson.chapter === 'string'
+            ? lesson.chapter
+            : (lesson.chapter as { id?: string })?.id
+
+        if (!chapterId) return null
+
+        const chapter = await this.payload.findByID({
+          collection: 'chapters',
+          id: chapterId,
+          depth: 0,
+          ...(req && { req }),
+        })
+        const courseId =
+          typeof chapter.course === 'string'
+            ? chapter.course
+            : (chapter.course as { id?: string })?.id
+
+        return courseId || null
+      }
+
+      case 'chapters': {
+        // Chapter -> Course
+        const chapter = await this.payload.findByID({
+          collection: 'chapters',
+          id: contextId,
+          depth: 0,
+          ...(req && { req }),
+        })
+        const courseId =
+          typeof chapter.course === 'string'
+            ? chapter.course
+            : (chapter.course as { id?: string })?.id
+
+        return courseId || null
+      }
+
+      case 'courses': {
+        // Direct course context
+        return contextId
+      }
+
+      case 'categories':
+      case 'users':
+      default:
+        // Categories and users don't have course hierarchy
+        // For now, deny access - can be extended later
+        return null
+    }
+  }
+
+  /**
    * Validate guest session has access to context
-   * Guests have open access to all content (similar to authenticated users)
+   * Guests can only access free content
    */
   async validateGuestContextAccess(
     guestSessionId: string,
     contextRef: ContextRef,
-    _req?: PayloadRequest,
+    req?: PayloadRequest,
   ): Promise<boolean> {
-    // Guests have open access to all content (tracked by session)
-    logger.debug({ guestSessionId, contextRef }, 'Guest context access granted')
+    // Traverse context hierarchy to find the course
+    const courseId = await this.findCourseIdFromContext(contextRef, req)
+
+    if (!courseId) {
+      // Cannot determine course - deny access
+      logger.warn(
+        { guestSessionId, contextRef },
+        'Could not determine course from context for guest',
+      )
+      return false
+    }
+
+    // Check if course has free content
+    // First check for any active enrollment (for future upgrade path)
+    // Then check course's default access settings
+    const isFree = await this.isCourseFreeContent(courseId, req)
+
+    if (!isFree) {
+      logger.info(
+        { guestSessionId, courseId, contextRef },
+        'Guest access denied: content is not free',
+      )
+      return false
+    }
+
+    logger.debug(
+      { guestSessionId, courseId, contextRef },
+      'Guest context access granted for free content',
+    )
     return true
+  }
+
+  /**
+   * Check if a course has free content access
+   * Looks for any enrollment with accessType='free' for this course
+   * (for future guest upgrade path) or checks course default access
+   */
+  private async isCourseFreeContent(courseId: string, req?: PayloadRequest): Promise<boolean> {
+    // Check for free enrollment (future: when guest upgrades to registered user)
+    const enrollmentResult = await this.payload.find({
+      collection: 'enrollments',
+      where: {
+        and: [
+          { course: { equals: courseId } },
+          { accessType: { equals: 'free' } },
+          { status: { equals: 'active' } },
+        ],
+      },
+      limit: 1,
+      select: {
+        id: true,
+        accessType: true,
+      },
+      ...(req && { req }),
+      overrideAccess: false,
+    })
+
+    if (enrollmentResult.docs.length > 0) {
+      return true
+    }
+
+    // Fall back to checking course's default access settings
+    const course = await this.payload.findByID({
+      collection: 'courses',
+      id: courseId,
+      depth: 0,
+      select: {
+        accessType: true,
+      },
+      ...(req && { req }),
+    })
+
+    // Check if course has free access
+    // Default to false (paid) if field doesn't exist
+    const courseAccessType = (course as { accessType?: string }).accessType
+    return courseAccessType === 'free'
   }
 
   /**

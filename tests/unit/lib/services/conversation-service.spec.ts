@@ -327,15 +327,326 @@ describe('ConversationService (instance methods)', () => {
       expect(result).toBe(true)
     })
 
-    it('should allow student access (placeholder implementation)', async () => {
-      const service = new ConversationService(mockPayload)
+    it('should allow student access when enrolled', async () => {
+      // Setup: Student is enrolled in the course
+      const mockPayloadWithEnrollment = createMockPayload({
+        find: vi.fn().mockResolvedValue({
+          docs: [{ id: 'enrollment-1', user: 'user-123', course: 'course-123', status: 'active' }],
+          totalDocs: 1,
+        }),
+      })
+      const service = new ConversationService(mockPayloadWithEnrollment)
       const result = await service.validateContextAccess('user-123', AccountRole.Student, {
         relationTo: 'courses',
         value: 'course-123',
       })
 
-      // Currently returns true (placeholder for enrollment check)
+      // Student should have access when enrolled
       expect(result).toBe(true)
+    })
+
+    describe('enrollment-based access control', () => {
+      beforeEach(() => {
+        vi.clearAllMocks()
+      })
+
+      it('should grant access to enrolled student for course context', async () => {
+        // Setup: Student is enrolled in the course
+        const mockPayloadWithEnrollment = createMockPayload({
+          find: vi.fn().mockResolvedValue({
+            docs: [
+              { id: 'enrollment-1', user: 'student-123', course: 'course-123', status: 'active' },
+            ],
+            totalDocs: 1,
+          }),
+        })
+
+        const service = new ConversationService(mockPayloadWithEnrollment)
+        const result = await service.validateContextAccess(
+          'student-123',
+          AccountRole.Student,
+          { relationTo: 'courses', value: 'course-123' },
+          undefined,
+        )
+
+        // Student should have access when enrolled
+        expect(result).toBe(true)
+        // Verify the enrollments collection was queried
+        expect(mockPayloadWithEnrollment.find).toHaveBeenCalledWith(
+          expect.objectContaining({
+            collection: 'enrollments',
+          }),
+        )
+      })
+
+      it('should deny access to non-enrolled student for course context', async () => {
+        // Setup: Student is NOT enrolled in the course
+        const mockPayloadNoEnrollment = createMockPayload({
+          find: vi.fn().mockResolvedValue({
+            docs: [],
+            totalDocs: 0,
+          }),
+        })
+
+        const service = new ConversationService(mockPayloadNoEnrollment)
+        const result = await service.validateContextAccess(
+          'student-456',
+          AccountRole.Student,
+          { relationTo: 'courses', value: 'course-123' },
+          undefined,
+        )
+
+        // Student should be denied when not enrolled
+        expect(result).toBe(false)
+        // Verify the enrollments collection was queried
+        expect(mockPayloadNoEnrollment.find).toHaveBeenCalledWith(
+          expect.objectContaining({
+            collection: 'enrollments',
+          }),
+        )
+      })
+
+      it('should traverse hierarchy: exercise → lesson → chapter → course for enrollment check', async () => {
+        // Setup: Exercise belongs to lesson → chapter → course
+        // Student is enrolled in the course
+        const mockPayloadHierarchy = createMockPayload({
+          findByID: vi
+            .fn()
+            .mockResolvedValueOnce({ lesson: 'lesson-456' }) // exercise lookup
+            .mockResolvedValueOnce({ chapter: 'chapter-789' }) // lesson lookup
+            .mockResolvedValueOnce({ course: 'course-123' }), // chapter lookup
+          find: vi.fn().mockResolvedValue({
+            docs: [
+              { id: 'enrollment-1', user: 'student-123', course: 'course-123', status: 'active' },
+            ],
+            totalDocs: 1,
+          }),
+        })
+
+        const service = new ConversationService(mockPayloadHierarchy)
+        const result = await service.validateContextAccess(
+          'student-123',
+          AccountRole.Student,
+          { relationTo: 'exercises', value: 'exercise-111' },
+          undefined,
+        )
+
+        // Student should have access through hierarchy traversal
+        expect(result).toBe(true)
+        // Verify hierarchy traversal happened
+        expect(mockPayloadHierarchy.findByID).toHaveBeenCalledTimes(3)
+        expect(mockPayloadHierarchy.findByID).toHaveBeenNthCalledWith(
+          1,
+          expect.objectContaining({ collection: 'exercises', id: 'exercise-111' }),
+        )
+        expect(mockPayloadHierarchy.findByID).toHaveBeenNthCalledWith(
+          2,
+          expect.objectContaining({ collection: 'lessons', id: 'lesson-456' }),
+        )
+        expect(mockPayloadHierarchy.findByID).toHaveBeenNthCalledWith(
+          3,
+          expect.objectContaining({ collection: 'chapters', id: 'chapter-789' }),
+        )
+      })
+
+      it('should traverse hierarchy: lesson → chapter → course for enrollment check', async () => {
+        // Setup: Lesson belongs to chapter → course
+        // Student is enrolled in the course
+        const mockPayloadLessonHierarchy = createMockPayload({
+          findByID: vi
+            .fn()
+            .mockResolvedValueOnce({ chapter: 'chapter-789' }) // lesson lookup
+            .mockResolvedValueOnce({ course: 'course-123' }), // chapter lookup
+          find: vi.fn().mockResolvedValue({
+            docs: [
+              { id: 'enrollment-1', user: 'student-123', course: 'course-123', status: 'active' },
+            ],
+            totalDocs: 1,
+          }),
+        })
+
+        const service = new ConversationService(mockPayloadLessonHierarchy)
+        const result = await service.validateContextAccess(
+          'student-123',
+          AccountRole.Student,
+          { relationTo: 'lessons', value: 'lesson-456' },
+          undefined,
+        )
+
+        // Student should have access through hierarchy traversal
+        expect(result).toBe(true)
+        // Verify hierarchy traversal (2 lookups: lesson, chapter)
+        expect(mockPayloadLessonHierarchy.findByID).toHaveBeenCalledTimes(2)
+      })
+
+      it('should traverse hierarchy: chapter → course for enrollment check', async () => {
+        // Setup: Chapter belongs to course
+        // Student is enrolled in the course
+        const mockPayloadChapterHierarchy = createMockPayload({
+          findByID: vi.fn().mockResolvedValueOnce({ course: 'course-123' }), // chapter lookup
+          find: vi.fn().mockResolvedValue({
+            docs: [
+              { id: 'enrollment-1', user: 'student-123', course: 'course-123', status: 'active' },
+            ],
+            totalDocs: 1,
+          }),
+        })
+
+        const service = new ConversationService(mockPayloadChapterHierarchy)
+        const result = await service.validateContextAccess(
+          'student-123',
+          AccountRole.Student,
+          { relationTo: 'chapters', value: 'chapter-789' },
+          undefined,
+        )
+
+        // Student should have access through hierarchy traversal
+        expect(result).toBe(true)
+        // Verify hierarchy traversal (1 lookup: chapter → course)
+        expect(mockPayloadChapterHierarchy.findByID).toHaveBeenCalledTimes(1)
+      })
+
+      it('should deny non-enrolled student even with valid hierarchy', async () => {
+        // Setup: Hierarchy is valid but student is not enrolled
+        const mockPayloadNotEnrolled = createMockPayload({
+          findByID: vi.fn().mockResolvedValueOnce({ course: 'course-123' }), // chapter lookup
+          find: vi.fn().mockResolvedValue({
+            docs: [], // No enrollment found
+            totalDocs: 0,
+          }),
+        })
+
+        const service = new ConversationService(mockPayloadNotEnrolled)
+        const result = await service.validateContextAccess(
+          'student-456',
+          AccountRole.Student,
+          { relationTo: 'chapters', value: 'chapter-789' },
+          undefined,
+        )
+
+        // Student should be denied - no enrollment
+        expect(result).toBe(false)
+      })
+    })
+  })
+
+  describe('validateGuestContextAccess', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should allow guest access to free content', async () => {
+      // First checks enrollments (returns empty), then checks course
+      const mockPayloadFreeContent = createMockPayload({
+        find: vi.fn().mockResolvedValue({
+          docs: [], // No free enrollment found
+          totalDocs: 0,
+        }),
+        findByID: vi.fn().mockResolvedValue({
+          id: 'course-123',
+          accessType: 'free', // Course is free
+        }),
+      })
+
+      const service = new ConversationService(mockPayloadFreeContent)
+      const result = await service.validateGuestContextAccess('guest-session-123', {
+        relationTo: 'courses',
+        value: 'course-123',
+      })
+
+      // Guest should have access to free content
+      expect(result).toBe(true)
+      // Verify the course was checked for free status
+      expect(mockPayloadFreeContent.findByID).toHaveBeenCalledWith(
+        expect.objectContaining({
+          collection: 'courses',
+          id: 'course-123',
+        }),
+      )
+    })
+
+    it('should deny guest access to paid content', async () => {
+      // First checks enrollments (returns empty), then checks course
+      const mockPayloadPaidContent = createMockPayload({
+        find: vi.fn().mockResolvedValue({
+          docs: [], // No free enrollment found
+          totalDocs: 0,
+        }),
+        findByID: vi.fn().mockResolvedValue({
+          id: 'course-123',
+          accessType: 'paid', // Course is paid
+        }),
+      })
+
+      const service = new ConversationService(mockPayloadPaidContent)
+      const result = await service.validateGuestContextAccess('guest-session-123', {
+        relationTo: 'courses',
+        value: 'course-123',
+      })
+
+      // Guest should be denied for paid content
+      expect(result).toBe(false)
+    })
+
+    it('should traverse hierarchy for guest access check on lessons', async () => {
+      // Guest accessing a lesson - should check if parent course is free
+      const mockPayloadLessonGuest = createMockPayload({
+        find: vi.fn().mockResolvedValue({
+          docs: [], // No free enrollment
+          totalDocs: 0,
+        }),
+        findByID: vi
+          .fn()
+          .mockResolvedValueOnce({ chapter: 'chapter-789' }) // lesson lookup
+          .mockResolvedValueOnce({ course: 'course-123' }) // chapter lookup
+          .mockResolvedValueOnce({ accessType: 'free' }), // course lookup
+      })
+
+      const service = new ConversationService(mockPayloadLessonGuest)
+      const result = await service.validateGuestContextAccess('guest-session-123', {
+        relationTo: 'lessons',
+        value: 'lesson-456',
+      })
+
+      // Guest should have access because course is free
+      expect(result).toBe(true)
+      // Verify hierarchy traversal happened
+      expect(mockPayloadLessonGuest.findByID).toHaveBeenCalledTimes(3)
+      expect(mockPayloadLessonGuest.findByID).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ collection: 'lessons', id: 'lesson-456' }),
+      )
+      expect(mockPayloadLessonGuest.findByID).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ collection: 'chapters', id: 'chapter-789' }),
+      )
+    })
+
+    it('should traverse hierarchy for guest access check on exercises', async () => {
+      // Guest accessing an exercise - should check if parent course is free
+      const mockPayloadExerciseGuest = createMockPayload({
+        find: vi.fn().mockResolvedValue({
+          docs: [], // No free enrollment
+          totalDocs: 0,
+        }),
+        findByID: vi
+          .fn()
+          .mockResolvedValueOnce({ lesson: 'lesson-456' }) // exercise lookup
+          .mockResolvedValueOnce({ chapter: 'chapter-789' }) // lesson lookup
+          .mockResolvedValueOnce({ course: 'course-123' }) // chapter lookup
+          .mockResolvedValueOnce({ accessType: 'paid' }), // course lookup - paid
+      })
+
+      const service = new ConversationService(mockPayloadExerciseGuest)
+      const result = await service.validateGuestContextAccess('guest-session-123', {
+        relationTo: 'exercises',
+        value: 'exercise-111',
+      })
+
+      // Guest should be denied because course is paid
+      expect(result).toBe(false)
+      // Verify full hierarchy traversal plus course check
+      expect(mockPayloadExerciseGuest.findByID).toHaveBeenCalledTimes(4)
     })
   })
 

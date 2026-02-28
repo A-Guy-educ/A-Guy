@@ -74,6 +74,7 @@ export interface Config {
     config_values: ConfigValue;
     config_audit_logs: ConfigAuditLog;
     conversations: Conversation;
+    enrollments: Enrollment;
     'guest-sessions': GuestSession;
     memory_items: MemoryItem;
     tenants: Tenant;
@@ -112,6 +113,7 @@ export interface Config {
     config_values: ConfigValuesSelect<false> | ConfigValuesSelect<true>;
     config_audit_logs: ConfigAuditLogsSelect<false> | ConfigAuditLogsSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
+    enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
     'guest-sessions': GuestSessionsSelect<false> | GuestSessionsSelect<true>;
     memory_items: MemoryItemsSelect<false> | MemoryItemsSelect<true>;
     tenants: TenantsSelect<false> | TenantsSelect<true>;
@@ -1438,6 +1440,35 @@ export interface ChatAsset {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments".
+ */
+export interface Enrollment {
+  id: string;
+  /**
+   * The user who is enrolled
+   */
+  user: string | User;
+  /**
+   * The course the user is enrolled in
+   */
+  course: string | Course;
+  /**
+   * When the user enrolled in the course
+   */
+  enrolledAt?: string | null;
+  /**
+   * Current enrollment status
+   */
+  status: 'active' | 'suspended' | 'completed';
+  /**
+   * Access type - overrides course default access settings
+   */
+  accessType: 'free' | 'paid';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Long-term memory items for AI chat context
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2187,6 +2218,10 @@ export interface PayloadLockedDocument {
         value: string | Conversation;
       } | null)
     | ({
+        relationTo: 'enrollments';
+        value: string | Enrollment;
+      } | null)
+    | ({
         relationTo: 'guest-sessions';
         value: string | GuestSession;
       } | null)
@@ -2565,6 +2600,19 @@ export interface ConversationsSelect<T extends boolean = true> {
   contextPolicyVersion?: T;
   lastMessageAt?: T;
   archivedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments_select".
+ */
+export interface EnrollmentsSelect<T extends boolean = true> {
+  user?: T;
+  course?: T;
+  enrolledAt?: T;
+  status?: T;
+  accessType?: T;
   updatedAt?: T;
   createdAt?: T;
 }

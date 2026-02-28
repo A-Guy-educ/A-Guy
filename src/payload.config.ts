@@ -13,6 +13,7 @@ import { ConfigSecrets } from '@/server/payload/collections/ConfigSecrets'
 import { ConfigValues } from '@/server/payload/collections/ConfigValues'
 import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
+import { Enrollments } from '@/server/payload/collections/Enrollments'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
 import { Exercises } from '@/server/payload/collections/Exercises'
 import { GuestSessions } from '@/server/payload/collections/GuestSessions'
@@ -146,6 +147,7 @@ export default buildConfig({
     ConfigValues,
     ConfigAuditLogs,
     Conversations,
+    Enrollments,
     GuestSessions,
     MemoryItems,
     Tenants,
