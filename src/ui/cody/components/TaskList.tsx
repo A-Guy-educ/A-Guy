@@ -141,7 +141,7 @@ export function TaskList({
               />
 
               {/* Top row: Status icon + Title */}
-              <div className="flex items-center gap-2 ml-5">
+              <div className="flex items-center gap-2 pl-2 sm:pl-5">
                 <div className="shrink-0">{indicator.icon}</div>
                 <h3 className="text-base font-medium text-zinc-100 truncate flex-1">
                   {task.title}
@@ -149,7 +149,7 @@ export function TaskList({
               </div>
 
               {/* Bottom row */}
-              <div className="flex items-center gap-2 ml-9">
+              <div className="flex items-center gap-2 pl-2 sm:pl-9">
                 {/* Left side: Issue#, CODY, Status, Labels, Time */}
                 <div className="flex items-center gap-2 flex-wrap flex-1">
                   <span className="text-sm font-mono font-medium text-zinc-500 shrink-0 w-10">
