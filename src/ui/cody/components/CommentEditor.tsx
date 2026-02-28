@@ -7,6 +7,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { MessageSquarePlus } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import Image from 'next/image'
 import { Button } from '@/ui/web/components/button'
@@ -14,6 +15,7 @@ import { Textarea } from '@/ui/web/components/textarea'
 import { cn } from '@/infra/utils/ui'
 import { usePostComment } from '../hooks'
 import { EMOJI_LIST } from '../constants'
+import { Bold, Italic, Code, Link2, List, Eye, Send, Play, ExternalLink } from 'lucide-react'
 
 interface CommentEditorProps {
   issueNumber: number
@@ -33,6 +35,7 @@ export function CommentEditor({
 }: CommentEditorProps) {
   const [comment, setComment] = useState('')
   const [showPreview, setShowPreview] = useState(false)
+  const [showEditor, setShowEditor] = useState(false)
   const [mentionQuery, setMentionQuery] = useState('')
   const [showMentions, setShowMentions] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -153,59 +156,74 @@ export function CommentEditor({
     textarea.focus()
   }
 
+  // If editor is not shown, show a button to open it
+  if (!showEditor) {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full justify-start text-muted-foreground"
+        onClick={() => setShowEditor(true)}
+      >
+        <MessageSquarePlus className="w-4 h-4 mr-2" />
+        Add comment...
+      </Button>
+    )
+  }
+
   return (
     <div className="space-y-2">
       {/* Toolbar */}
-      <div className="flex items-center gap-1 border border-border rounded-md p-1.5 bg-muted/30">
+      <div className="flex items-center gap-0.5 border border-border rounded-md p-1 bg-muted/30">
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => insertMarkdown('**', '**')}
-          className="h-7 w-7 p-0 font-bold text-sm"
+          className="h-6 w-6 p-0"
           title="Bold"
         >
-          B
+          <Bold className="w-3 h-3" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => insertMarkdown('*', '*')}
-          className="h-7 w-7 p-0 italic text-sm"
+          className="h-6 w-6 p-0"
           title="Italic"
         >
-          I
+          <Italic className="w-3 h-3" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => insertMarkdown('`', '`')}
-          className="h-7 w-7 p-0 font-mono text-xs"
+          className="h-6 w-6 p-0"
           title="Code"
         >
-          {'</>'}
+          <Code className="w-3 h-3" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => insertMarkdown('[', '](url)')}
-          className="h-7 w-7 p-0 text-sm"
+          className="h-6 w-6 p-0"
           title="Link"
         >
-          🔗
+          <Link2 className="w-3 h-3" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => insertMarkdown('- ')}
-          className="h-7 w-7 p-0 text-sm"
+          className="h-6 w-6 p-0"
           title="List"
         >
-          •
+          <List className="w-3 h-3" />
         </Button>
 
         {/* Emoji picker dropdown */}
@@ -215,7 +233,7 @@ export function CommentEditor({
             variant="ghost"
             size="sm"
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            className="h-7 w-7 p-0 text-sm"
+            className="h-6 w-6 p-0 text-xs"
             title="Emoji"
           >
             😊
@@ -236,23 +254,41 @@ export function CommentEditor({
           )}
         </div>
 
-        <div className="w-px h-4 bg-border mx-1" />
+        <div className="w-px h-3 bg-border mx-0.5" />
 
         <Button
           type="button"
           variant={showPreview ? 'secondary' : 'ghost'}
           size="sm"
           onClick={() => setShowPreview(!showPreview)}
-          className="h-7 text-xs"
+          className="h-6 px-1.5 text-xs"
+          title={showPreview ? 'Edit' : 'Preview'}
         >
-          {showPreview ? 'Edit' : 'Preview'}
+          <Eye className="w-3 h-3" />
+        </Button>
+
+        <div className="w-px h-3 bg-border mx-0.5" />
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setShowEditor(false)
+            setComment('')
+            setShowPreview(false)
+          }}
+          className="h-6 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+          title="Close"
+        >
+          ✕
         </Button>
       </div>
 
       {/* Editor / Preview */}
       <div className="relative">
         {showPreview ? (
-          <div className="min-h-[100px] p-3 border border-border rounded-md bg-background text-sm prose prose-sm dark:prose-invert max-w-none">
+          <div className="min-h-[60px] p-2 border border-border rounded-md bg-background text-xs prose prose-sm dark:prose-invert max-w-none">
             <ReactMarkdown>{comment || '*Nothing to preview*'}</ReactMarkdown>
           </div>
         ) : (
@@ -263,9 +299,9 @@ export function CommentEditor({
               onChange={handleChange}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
-              rows={4}
+              rows={3}
               disabled={isPosting}
-              className="resize-none"
+              className="resize-none text-sm"
             />
 
             {/* @mentions dropdown */}
@@ -301,14 +337,49 @@ export function CommentEditor({
       </div>
 
       {/* Error and submit */}
-      <div className="flex justify-between items-center">
-        {error && <span className="text-destructive text-sm">{error.message}</span>}
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Markdown • @mention</span>
-          <Button onClick={handleSubmit} disabled={isPosting || !comment.trim()} size="sm">
-            {isPosting ? 'Posting...' : 'Comment'}
-          </Button>
-        </div>
+      <div className="flex justify-end items-center gap-1">
+        {error && <span className="text-destructive text-xs mr-auto">{error.message}</span>}
+        <Button
+          onClick={() => {
+            // Execute /cody command - post and trigger
+            const cmdComment = comment.trim() || '/cody'
+            postComment(cmdComment, {
+              onSuccess: () => {
+                setComment('')
+                setShowPreview(false)
+                onCommentPosted?.()
+              },
+            })
+          }}
+          disabled={isPosting}
+          size="sm"
+          variant="outline"
+          className="h-6 px-1.5 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
+          title="Execute with Cody"
+        >
+          <Play className="w-3 h-3" />
+        </Button>
+        <Button
+          onClick={() =>
+            window.open(`https://github.com/A-Guy-educ/A-Guy/issues/${issueNumber}`, '_blank')
+          }
+          size="sm"
+          variant="outline"
+          className="h-6 px-1.5 text-zinc-400 hover:text-zinc-300 hover:bg-zinc-800"
+          title="View on GitHub"
+        >
+          <ExternalLink className="w-3 h-3" />
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={isPosting || !comment.trim()}
+          size="sm"
+          variant="default"
+          className="h-6 px-1.5 bg-emerald-600 hover:bg-emerald-700"
+          title="Post comment"
+        >
+          <Send className="w-3 h-3" />
+        </Button>
       </div>
     </div>
   )

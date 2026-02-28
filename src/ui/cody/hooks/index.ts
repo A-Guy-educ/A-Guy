@@ -186,6 +186,36 @@ export function usePostComment(issueNumber: number) {
   })
 }
 
+// ============ useRetryWithContext ============
+
+export interface UseRetryWithContextOptions {
+  issueNumber: number
+  onSuccess?: () => void
+  onError?: (error: Error) => void
+}
+
+export function useRetryWithContext({
+  issueNumber,
+  onSuccess,
+  onError,
+}: UseRetryWithContextOptions) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (context: string) => {
+      // First post the comment with @cody retry and context
+      await codyApi.tasks.retryWithContext(issueNumber, context)
+      // Then trigger execution
+      await codyApi.tasks.execute(issueNumber)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
+      onSuccess?.()
+    },
+    onError,
+  })
+}
+
 // ============ useTaskActions ============
 
 export interface UseTaskActionsOptions {

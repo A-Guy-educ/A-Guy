@@ -6,7 +6,7 @@
  */
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { CodyTask } from '../types'
 import { TaskList } from './TaskList'
 import { TaskDetail } from './TaskDetail'
@@ -29,8 +29,9 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/ui/web/components/sheet'
-import { MessageSquare, X, Bug, Menu, RefreshCw } from 'lucide-react'
+import { MessageSquare, X, Bug, Menu, RefreshCw, Bell } from 'lucide-react'
 import { useCodyTasks } from '../hooks'
+import { useBrowserNotifications } from '../hooks/useBrowserNotifications'
 import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
 import { RateLimitError, NoTokenError, tasksApi } from '../api'
 
@@ -71,6 +72,20 @@ export function CodyDashboard() {
     refetch,
     dataUpdatedAt,
   } = useCodyTasks({ days, includeDetails: false })
+
+  // Browser notifications
+  const {
+    checkTaskChanges,
+    permission: notificationPermission,
+    isSupported: notificationsSupported,
+  } = useBrowserNotifications()
+
+  // Check for task changes when tasks update
+  useEffect(() => {
+    if (tasks.length > 0) {
+      checkTaskChanges(tasks)
+    }
+  }, [tasks, dataUpdatedAt, checkTaskChanges])
 
   // Get unique labels from tasks (excluding internal/system labels)
   const availableLabels = Array.from(new Set(tasks.flatMap((task) => task.labels)))
@@ -275,6 +290,24 @@ export function CodyDashboard() {
 
           {/* Desktop controls */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Notification status */}
+            {notificationsSupported && (
+              <Button
+                variant="ghost"
+                size="sm"
+                title={
+                  notificationPermission === 'granted'
+                    ? 'Notifications enabled'
+                    : 'Enable notifications'
+                }
+                onClick={() => Notification.requestPermission()}
+                className={
+                  notificationPermission === 'granted' ? 'text-green-500' : 'text-muted-foreground'
+                }
+              >
+                <Bell className="w-4 h-4" />
+              </Button>
+            )}
             {/* Chat toggle */}
             <Button
               variant={showChat ? 'default' : 'outline'}

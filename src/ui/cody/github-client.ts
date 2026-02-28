@@ -21,6 +21,10 @@ import type {
   WorkflowRun,
   GitHubPR,
   GitHubCollaborator,
+  CheckRunResult,
+  PRComment,
+  FileChange,
+  TaskDocument,
 } from './types'
 
 // ============ Types ============
@@ -409,6 +413,52 @@ export async function getWorkflowRunForTask(taskId: string): Promise<WorkflowRun
   )
 }
 
+/**
+ * Fetch check runs (lint, test, typecheck, etc.) for a workflow run
+ */
+export async function fetchCheckRunsForRun(runId: number): Promise<CheckRunResult[]> {
+  const cacheKey = `check-runs:${runId}`
+  const cached = getCached<CheckRunResult[]>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+
+  try {
+    // Get jobs for the workflow run - these contain lint, test, typecheck results
+    const { data } = await octokit.actions.listJobsForWorkflowRun({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      run_id: runId,
+      per_page: 50,
+    })
+
+    const checkRuns: CheckRunResult[] = (data.jobs as any[]).map((job) => ({
+      name: job.name,
+      status: job.status as 'queued' | 'in_progress' | 'completed',
+      conclusion: job.conclusion as CheckRunResult['conclusion'],
+      output: job.steps
+        ? {
+            summary: `${job.steps.length} steps`,
+            text: JSON.stringify(
+              job.steps.map((s: any) => ({
+                name: s.name,
+                status: s.status,
+                conclusion: s.conclusion,
+              })),
+            ),
+          }
+        : undefined,
+      html_url: job.html_url || undefined,
+    }))
+
+    setCache(cacheKey, CACHE_TTL.pipeline, checkRuns)
+    return checkRuns
+  } catch (error) {
+    console.error('[Cody] Error fetching check runs:', error)
+    return []
+  }
+}
+
 // ============ Bulk PR Fetch ============
 
 /**
@@ -553,6 +603,128 @@ export async function findAssociatedPR(taskId: string): Promise<GitHubPR | null>
   // Cache null as well
   setCache(cacheKey, CACHE_TTL.prs, null)
   return null
+}
+
+/**
+ * Fetch comments for a PR
+ */
+export async function fetchPRComments(prNumber: number): Promise<PRComment[]> {
+  const cacheKey = `pr-comments:${prNumber}`
+  const cached = getCached<PRComment[]>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+
+  try {
+    const { data } = await octokit.issues.listComments({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      issue_number: prNumber,
+      per_page: 50,
+    })
+
+    const comments: PRComment[] = data.map((comment) => ({
+      id: comment.id,
+      body: comment.body || '',
+      created_at: comment.created_at,
+      user: {
+        login: comment.user?.login || '',
+        avatar_url: comment.user?.avatar_url || '',
+      },
+    }))
+
+    setCache(cacheKey, CACHE_TTL.tasks, comments)
+    return comments
+  } catch (error) {
+    console.error('[Cody] Error fetching PR comments:', error)
+    return []
+  }
+}
+
+/**
+ * Fetch file changes for a PR
+ */
+export async function fetchPRFileChanges(prNumber: number): Promise<FileChange[]> {
+  const cacheKey = `pr-files:${prNumber}`
+  const cached = getCached<FileChange[]>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+
+  try {
+    const { data } = await octokit.pulls.listFiles({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      pull_number: prNumber,
+      per_page: 100,
+    })
+
+    const changes: FileChange[] = data.map((file) => ({
+      filename: file.filename,
+      status: file.status as FileChange['status'],
+      additions: file.additions,
+      deletions: file.deletions,
+      patch: file.patch || undefined,
+      changes_url: file.contents_url || '',
+    }))
+
+    setCache(cacheKey, CACHE_TTL.tasks, changes)
+    return changes
+  } catch (error) {
+    console.error('[Cody] Error fetching PR files:', error)
+    return []
+  }
+}
+
+/**
+ * Fetch task documents from branch (spec.md, plan.md, gap.md, etc.)
+ */
+export async function fetchTaskDocuments(taskId: string, branch: string): Promise<TaskDocument[]> {
+  const octokit = getOctokit()
+
+  const documentNames: TaskDocument['name'][] = [
+    'spec.md',
+    'plan.md',
+    'gap.md',
+    'clarified.md',
+    'task.md',
+  ]
+
+  const documents: TaskDocument[] = []
+
+  // Fetch each document in parallel
+  const results = await Promise.allSettled(
+    documentNames.map(async (name) => {
+      try {
+        const { data } = await octokit.repos.getContent({
+          owner: GITHUB_OWNER,
+          repo: GITHUB_REPO,
+          path: `.tasks/${taskId}/${name}`,
+          ref: branch,
+        })
+
+        if ('content' in data && data.content) {
+          const content = Buffer.from(data.content, 'base64').toString('utf-8')
+          return {
+            name,
+            content,
+            path: `.tasks/${taskId}/${name}`,
+          }
+        }
+      } catch {
+        // Document doesn't exist
+      }
+      return null
+    }),
+  )
+
+  for (const result of results) {
+    if (result.status === 'fulfilled' && result.value) {
+      documents.push(result.value)
+    }
+  }
+
+  return documents
 }
 
 // ============ Labels & Milestones ============

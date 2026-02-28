@@ -9,6 +9,8 @@ import type {
   CodyTask,
   Board,
   GitHubCollaborator,
+  FileChange,
+  TaskDocument,
   TasksResponse,
   BoardsResponse,
   CollaboratorsResponse,
@@ -153,6 +155,19 @@ export const tasksApi = {
     return handleResponse(res)
   },
 
+  // Retry with context: posts comment with @cody retry then triggers execution
+  retryWithContext: async (issueNumber: number, context: string): Promise<ActionResponse> => {
+    // First post comment with retry command and context
+    const comment = context.trim() ? `@cody retry\n\n${context.trim()}` : '@cody retry'
+
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'comment', comment }),
+    })
+    return handleResponse(res)
+  },
+
   approve: async (task: CodyTask): Promise<ActionResponse> => {
     if (!task.associatedPR) {
       throw new Error('No PR associated with this task')
@@ -184,6 +199,26 @@ export const tasksApi = {
   },
 }
 
+// ============ PRs API ============
+
+export const prsApi = {
+  files: async (prNumber: number): Promise<FileChange[]> => {
+    const res = await fetch(`${API_BASE}/prs/files?prNumber=${prNumber}`)
+    const data = await handleResponse<{ files: FileChange[] }>(res)
+    return data.files
+  },
+}
+
+// ============ Task Documents API ============
+
+export const taskDocsApi = {
+  list: async (taskId: string): Promise<TaskDocument[]> => {
+    const res = await fetch(`${API_BASE}/tasks/${taskId}/docs`)
+    const data = await handleResponse<{ documents: TaskDocument[] }>(res)
+    return data.documents
+  },
+}
+
 // ============ Boards API ============
 
 export const boardsApi = {
@@ -208,6 +243,8 @@ export const collaboratorsApi = {
 
 export const codyApi = {
   tasks: tasksApi,
+  prs: prsApi,
+  taskDocs: taskDocsApi,
   boards: boardsApi,
   collaborators: collaboratorsApi,
 }
