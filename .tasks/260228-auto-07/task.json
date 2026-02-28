@@ -1,0 +1,29 @@
+{
+  "task_type": "refactor",
+  "risk_level": "medium",
+  "confidence": 1,
+  "primary_domain": "backend",
+  "scope": [
+    "src/app/api/exercises/convert/queue/route.ts",
+    "src/app/api/exercises/convert/queue-v2/route.ts",
+    "src/app/api/prompts/for-conversion/route.ts",
+    "src/server/api/auth.ts (existing utility to use)"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The existing requireAdminOrTestSecret utility in src/server/api/auth.ts correctly handles all auth cases",
+    "The utility accepts the same parameters (user, authHeader) as the current duplicated logic"
+  ],
+  "complexity": 34,
+  "complexity_reasoning": "Scope: 10 (3-4 files in API routes module), Risk: 12 (auth logic changes), Novelty: 5 (using existing utility), Cross-Domain: 3 (backend only), Ambiguity: 1 (very clear with file paths and line numbers), Dependency Depth: 3 (depends on existing utility). Total: 34",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Input contains exact file paths, line numbers, and code snippets showing what to replace. Has clear step-by-step instructions for each of the 3 files. Promoted spec.md with task description as refactoring spec."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
