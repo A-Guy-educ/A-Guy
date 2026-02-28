@@ -287,7 +287,7 @@ export interface FileChange {
 }
 
 export interface TaskDocument {
-  name: 'spec.md' | 'plan.md' | 'gap.md' | 'clarified.md' | 'task.md' | 'status.json'
+  name: string
   content: string
   path: string
 }

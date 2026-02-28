@@ -127,6 +127,57 @@ export async function findTaskBranch(taskId: string): Promise<string | null> {
   return null
 }
 
+/**
+ * Find a branch by issue number.
+ * The pipeline convention includes the issue number in the branch name:
+ *   {prefix}/{YYMMDD}-auto-{issueNumber}-{sanitized-title}
+ * We search across all known prefixes using the matching-refs API.
+ */
+export async function findBranchByIssueNumber(
+  issueNumber: string | number,
+): Promise<string | null> {
+  const cacheKey = `branch:issue:${issueNumber}`
+  const cached = getCached<string>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+  const issueStr = String(issueNumber)
+
+  // Search each prefix in parallel using the matching-refs API
+  const results = await Promise.allSettled(
+    BRANCH_PREFIXES.map(async (prefix) => {
+      try {
+        const { data } = await octokit.git.listMatchingRefs({
+          owner: GITHUB_OWNER,
+          repo: GITHUB_REPO,
+          ref: `heads/${prefix}/`,
+        })
+
+        // Find branches containing -<issueNumber>- in their name
+        // e.g., fix/260228-auto-635-fix-conversation-delete-endpoint-b
+        const pattern = new RegExp(`-${issueStr}-`)
+        const match = data.find((ref: any) => {
+          const branchName = ref.ref.replace('refs/heads/', '')
+          return pattern.test(branchName)
+        })
+
+        return match ? match.ref.replace('refs/heads/', '') : null
+      } catch {
+        return null
+      }
+    }),
+  )
+
+  for (const result of results) {
+    if (result.status === 'fulfilled' && result.value) {
+      setCache(cacheKey, CACHE_TTL.pipeline, result.value)
+      return result.value
+    }
+  }
+
+  return null
+}
+
 // ============ Status JSON Access ============
 
 /**
@@ -679,54 +730,64 @@ export async function fetchPRFileChanges(prNumber: number): Promise<FileChange[]
 }
 
 /**
- * Fetch task documents from branch (spec.md, plan.md, gap.md, etc.)
+ * Fetch all task documents from branch by listing the task directory.
+ * Discovers files dynamically instead of using a hardcoded list.
  */
 export async function fetchTaskDocuments(taskId: string, branch: string): Promise<TaskDocument[]> {
   const octokit = getOctokit()
+  const taskPath = `.tasks/${taskId}`
 
-  const documentNames: TaskDocument['name'][] = [
-    'spec.md',
-    'plan.md',
-    'gap.md',
-    'clarified.md',
-    'task.md',
-  ]
+  try {
+    // List all files in the task directory
+    const { data } = await octokit.repos.getContent({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      path: taskPath,
+      ref: branch,
+    })
 
-  const documents: TaskDocument[] = []
+    if (!Array.isArray(data)) return []
 
-  // Fetch each document in parallel
-  const results = await Promise.allSettled(
-    documentNames.map(async (name) => {
-      try {
-        const { data } = await octokit.repos.getContent({
-          owner: GITHUB_OWNER,
-          repo: GITHUB_REPO,
-          path: `.tasks/${taskId}/${name}`,
-          ref: branch,
-        })
+    // Filter to files only (skip subdirectories), fetch content in parallel
+    const files = data.filter((item: any) => item.type === 'file')
 
-        if ('content' in data && data.content) {
-          const content = Buffer.from(data.content, 'base64').toString('utf-8')
-          return {
-            name,
-            content,
-            path: `.tasks/${taskId}/${name}`,
+    const results = await Promise.allSettled(
+      files.map(async (file: any) => {
+        try {
+          const { data: fileData } = await octokit.repos.getContent({
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
+            path: file.path,
+            ref: branch,
+          })
+
+          if ('content' in fileData && fileData.content) {
+            const content = Buffer.from(fileData.content, 'base64').toString('utf-8')
+            return {
+              name: file.name as string,
+              content,
+              path: file.path as string,
+            }
           }
+        } catch {
+          // File content couldn't be fetched
         }
-      } catch {
-        // Document doesn't exist
+        return null
+      }),
+    )
+
+    const documents: TaskDocument[] = []
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value) {
+        documents.push(result.value)
       }
-      return null
-    }),
-  )
-
-  for (const result of results) {
-    if (result.status === 'fulfilled' && result.value) {
-      documents.push(result.value)
     }
-  }
 
-  return documents
+    return documents
+  } catch {
+    // Task directory doesn't exist on this branch
+    return []
+  }
 }
 
 /**
