@@ -1,28 +1,28 @@
 {
   "task_type": "refactor",
   "risk_level": "medium",
-  "confidence": 1,
+  "confidence": 0.95,
   "primary_domain": "backend",
   "scope": [
     "src/app/api/exercises/convert/queue/route.ts",
     "src/app/api/exercises/convert/queue-v2/route.ts",
     "src/app/api/prompts/for-conversion/route.ts",
-    "src/server/api/auth.ts (existing utility to use)"
+    "src/server/api/auth.ts"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "The existing requireAdminOrTestSecret utility in src/server/api/auth.ts correctly handles all auth cases",
-    "The utility accepts the same parameters (user, authHeader) as the current duplicated logic"
+    "The requireAdminOrTestSecret utility from src/server/api/auth.ts exists and handles auth correctly",
+    "The refactoring maintains the same security behavior",
+    "AccountRole.Admin enum exists and should be used instead of raw 'admin' string"
   ],
-  "complexity": 34,
-  "complexity_reasoning": "Scope: 10 (3-4 files in API routes module), Risk: 12 (auth logic changes), Novelty: 5 (using existing utility), Cross-Domain: 3 (backend only), Ambiguity: 1 (very clear with file paths and line numbers), Dependency Depth: 3 (depends on existing utility). Total: 34",
+  "complexity": 24,
+  "complexity_reasoning": "Scope: 4 files in same module (4 pts). Risk: Auth logic changes but uses existing utility (12 pts). Novelty: Following existing pattern exactly (2 pts). Cross-domain: Single domain - backend only (1 pt). Ambiguity: Clear file paths and line numbers (1 pt). Dependency: Uses existing internal utility (4 pts). Total: 24",
   "input_quality": {
-    "level": "detailed_plan",
+    "level": "good_spec",
     "skip_stages": [
-      "spec",
-      "architect"
+      "spec"
     ],
-    "reasoning": "Input contains exact file paths, line numbers, and code snippets showing what to replace. Has clear step-by-step instructions for each of the 3 files. Promoted spec.md with task description as refactoring spec."
+    "reasoning": "Task has clear ## Issue Title, ## Bug with file paths and line numbers, ## Expected behavior, and ## Fix section with specific files to modify. Contains duplicated code example showing exact pattern to replace."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
