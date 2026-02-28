@@ -2,57 +2,47 @@
 
 ## Rerun Context
 
-This is a rerun after initial feedback. The original issue identified that `courses`, `chapters`, and `lessons` collections expose draft content to anonymous users via `read: anyone`. This plan implements the fix as specified in the spec.
-
-## Bug Summary
-
-**Root Cause**: The `courses`, `chapters`, and `lessons` collections use `read: anyone` (which returns `true` for everyone) without filtering by the `status` field. This allows anonymous API consumers to see draft and archived content.
-
-**Security Impact**: HIGH — Data leak exposing unpublished content to the public.
+This is a rerun of a previous attempt. Feedback: "Rerun requested via /cody rerun" — no specific issues provided. The plan follows the bug fix TDD pattern as required.
 
 ---
 
-## Step 1: Fix Courses Collection Read Access
+## Bug Summary
+
+**Root Cause**: The `courses`, `chapters`, and `lessons` collections use `read: anyone` without filtering by the custom `status` field. This allows anonymous users to access draft and archived content via the API.
+
+**Security Impact**: HIGH — Data leak, unpublished content visible to public
+
+---
+
+## Step 1: Fix Courses Collection Access Control
 
 **Files to Touch**:
 
 - `src/server/payload/collections/Courses.ts` (MODIFIED - line 30)
+- `tests/unit/access/content-collections-admin-only.test.ts` (MODIFIED - remove old read:anyone tests)
 
-**Reproduction Test**: Write an integration test that demonstrates the bug:
+**Reproduction Test**:
 
-- Test location: `tests/int/courses-access.spec.ts`
-- What it tests: Anonymous user queries courses API and should NOT receive draft/archived courses
-- Why it fails currently: `read: anyone` allows all users (including anonymous) to read all content
+- Test location: `tests/unit/access/content-collections-admin-only.test.ts` (EXISTING - update)
+- What it tests: Anonymous user (no `req.user`) should only see published courses
+- Why it fails now: `read: anyone` allows access to all courses regardless of status
 
-```typescript
-it('should NOT return draft courses to anonymous users', async () => {
-  // Create a draft course
-  await payload.create({ collection: 'courses', data: { title: 'Draft Course', status: 'draft' } })
-  
-  // Query as anonymous (no user)
-  const result = await payload.find({ collection: 'courses', overrideAccess: false })
-  
-  // Should NOT include draft courses
-  expect(result.docs.some(c => c.status === 'draft')).toBe(false)
-})
-```
-
-**Fix**: Replace `read: anyone` with inline status-aware function:
+**Fix**: Replace `read: anyone` with status-aware access function:
 
 ```typescript
 read: ({ req: { user } }) => {
   if (user) return true // Authenticated users see all
   return { status: { equals: 'published' } } // Anonymous see only published
-},
+}
 ```
 
 **Verification**:
-- Run reproduction test → FAILS before fix (drafts visible)
-- After fix applied → PASSES (drafts hidden from anonymous)
+- Run test → FAILS (currently returns all courses)
+- After fix → PASSES (returns only published courses for anonymous users)
 
 ---
 
-## Step 2: Fix Chapters Collection Read Access
+## Step 2: Fix Chapters Collection Access Control
 
 **Files to Touch**:
 
@@ -60,25 +50,18 @@ read: ({ req: { user } }) => {
 
 **Reproduction Test**:
 
-- Test location: `tests/int/chapters-access.spec.ts`
-- What it tests: Anonymous user queries chapters API and should NOT receive draft/archived chapters
+- Test location: `tests/unit/access/content-collections-admin-only.test.ts` (EXISTING - update)
+- What it tests: Anonymous user should only see published chapters
 
-**Fix**: Same pattern as Step 1 - replace `read: anyone` with:
-
-```typescript
-read: ({ req: { user } }) => {
-  if (user) return true
-  return { status: { equals: 'published' } }
-},
-```
+**Fix**: Replace `read: anyone` with same status-aware access function
 
 **Verification**:
-- Run reproduction test → FAILS before fix
-- After fix applied → PASSES
+- Run test → FAILS
+- After fix → PASSES
 
 ---
 
-## Step 3: Fix Lessons Collection Read Access
+## Step 3: Fix Lessons Collection Access Control
 
 **Files to Touch**:
 
@@ -86,52 +69,32 @@ read: ({ req: { user } }) => {
 
 **Reproduction Test**:
 
-- Test location: `tests/int/lessons-access.spec.ts`
-- What it tests: Anonymous user queries lessons API and should NOT receive draft/archived lessons
+- Test location: `tests/unit/access/content-collections-admin-only.test.ts` (EXISTING - update)
+- What it tests: Anonymous user should only see published lessons
 
-**Fix**: Same pattern as Step 1 - replace `read: anyone` with:
-
-```typescript
-read: ({ req: { user } }) => {
-  if (user) return true
-  return { status: { equals: 'published' } }
-},
-```
+**Fix**: Replace `read: anyone` with same status-aware access function
 
 **Verification**:
-- Run reproduction test → FAILS before fix
-- After fix applied → PASSES
+- Run test → FAILS
+- After fix → PASSES
 
 ---
 
 ## Step 4: TypeScript Validation
 
-**Files to Touch**: None (validation only)
+**Command**: `pnpm tsc --noEmit`
 
-**Command**: Run TypeScript compilation to verify no type errors
-
-```bash
-pnpm tsc --noEmit
-```
-
-**Verification**:
-- All three collection files should compile without errors
-- No type errors related to the access function changes
+**Purpose**: Ensure all TypeScript types compile correctly after the access control changes.
 
 ---
 
 ## Acceptance Criteria Checklist
 
-- [ ] Courses collection: `read` access fixed to filter by status for anonymous users
-- [ ] Chapters collection: `read` access fixed to filter by status for anonymous users
-- [ ] Lessons collection: `read` access fixed to filter by status for anonymous users
+- [ ] Fix applied to Courses.ts (line 30)
+- [ ] Fix applied to Chapters.ts (line 20)
+- [ ] Fix applied to Lessons.ts (line 20)
+- [ ] Updated existing test file to verify new read access behavior (not anyone)
+- [ ] Anonymous users can only see published content via API
+- [ ] Authenticated users can still see all content (draft/published/archived)
 - [ ] TypeScript compilation passes
-- [ ] Integration tests pass (anonymous users cannot see draft content)
-
----
-
-## Notes
-
-- This fix follows the inline function approach explicitly required in the spec (not using `authenticatedOrPublished` from Pages/Posts collections, which uses `_status` field)
-- The `status` field in these collections is a custom select field (`draft | published | archived`), not Payload's built-in `_status`
-- Authenticated users (with valid JWT) will still see all content - this is intentional for admin/editor workflow
+- [ ] Unit tests pass

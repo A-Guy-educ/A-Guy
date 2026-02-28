@@ -1,10 +1,18 @@
-import type { CollectionConfig } from 'payload'
+import type { Access, CollectionConfig } from 'payload'
 
 import { tenantField } from '@/server/payload/fields/tenant'
-import { anyone } from '../access/anyone'
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
 import { computeAdminTitle } from '../hooks/chapters/computeAdminTitle'
+
+/**
+ * Status-aware read access: anonymous users see only published content,
+ * authenticated users see all content (draft/published/archived)
+ */
+const publishedOrAuthenticated: Access = ({ req: { user } }) => {
+  if (user) return true // Authenticated users see all
+  return { status: { equals: 'published' } } // Anonymous see only published
+}
 
 const formatSlug = (val: string): string =>
   val
@@ -17,7 +25,7 @@ export const Chapters: CollectionConfig = {
   access: {
     create: adminOnly,
     delete: adminOnly,
-    read: anyone,
+    read: publishedOrAuthenticated,
     update: adminOnly,
   },
   hooks: {

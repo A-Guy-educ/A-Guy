@@ -2,7 +2,7 @@
  * @fileType unit-test
  * @domain access-control
  * @pattern security-fix
- * @ai-summary Reproduction test to verify content collections use adminOnly for write operations
+ * @ai-summary Reproduction test to verify content collections use status-aware read access
  */
 
 import { describe, it, expect } from 'vitest'
@@ -21,10 +21,12 @@ describe('Content Collections Access Control - Bug Reproduction', () => {
   /**
    * This test verifies that content-management collections use adminOnly for CUD operations.
    *
-   * BUG: Currently these collections use `authenticated` which allows ANY logged-in user
-   * (including students) to create, update, and delete administrative content.
+   * BUG: Previously these collections used `read: anyone` which allowed anonymous users
+   * to access draft and archived content via the API.
    *
-   * FIX: Replace `authenticated` with `adminOnly` for create, update, delete operations.
+   * FIX: Replace `read: anyone` with status-aware access function that:
+   * - Returns true for authenticated users (they see all content)
+   * - Returns status filter for anonymous users (they see only published)
    */
 
   describe('Courses collection', () => {
@@ -34,8 +36,20 @@ describe('Content Collections Access Control - Bug Reproduction', () => {
       expect(Courses.access?.delete).toBe(adminOnly)
     })
 
-    it('should use anyone for read operation (unchanged)', () => {
-      expect(Courses.access?.read).toBe(anyone)
+    it('should NOT use anyone for read operation (fixed)', () => {
+      expect(Courses.access?.read).not.toBe(anyone)
+    })
+
+    it('should return true for authenticated users', () => {
+      const mockReq = { user: { id: 'user-1', role: 'student' } } as any
+      const result = Courses.access?.read?.({ req: mockReq })
+      expect(result).toBe(true)
+    })
+
+    it('should return status filter for anonymous users', () => {
+      const mockReq = { user: null } as any
+      const result = Courses.access?.read?.({ req: mockReq })
+      expect(result).toEqual({ status: { equals: 'published' } })
     })
 
     // This test documents the current (buggy) state - it will fail before the fix
@@ -53,8 +67,20 @@ describe('Content Collections Access Control - Bug Reproduction', () => {
       expect(Chapters.access?.delete).toBe(adminOnly)
     })
 
-    it('should use anyone for read operation (unchanged)', () => {
-      expect(Chapters.access?.read).toBe(anyone)
+    it('should NOT use anyone for read operation (fixed)', () => {
+      expect(Chapters.access?.read).not.toBe(anyone)
+    })
+
+    it('should return true for authenticated users', () => {
+      const mockReq = { user: { id: 'user-1', role: 'student' } } as any
+      const result = Chapters.access?.read?.({ req: mockReq })
+      expect(result).toBe(true)
+    })
+
+    it('should return status filter for anonymous users', () => {
+      const mockReq = { user: null } as any
+      const result = Chapters.access?.read?.({ req: mockReq })
+      expect(result).toEqual({ status: { equals: 'published' } })
     })
 
     it('should NOT use authenticated for write operations', () => {
@@ -71,8 +97,20 @@ describe('Content Collections Access Control - Bug Reproduction', () => {
       expect(Lessons.access?.delete).toBe(adminOnly)
     })
 
-    it('should use anyone for read operation (unchanged)', () => {
-      expect(Lessons.access?.read).toBe(anyone)
+    it('should NOT use anyone for read operation (fixed)', () => {
+      expect(Lessons.access?.read).not.toBe(anyone)
+    })
+
+    it('should return true for authenticated users', () => {
+      const mockReq = { user: { id: 'user-1', role: 'student' } } as any
+      const result = Lessons.access?.read?.({ req: mockReq })
+      expect(result).toBe(true)
+    })
+
+    it('should return status filter for anonymous users', () => {
+      const mockReq = { user: null } as any
+      const result = Lessons.access?.read?.({ req: mockReq })
+      expect(result).toEqual({ status: { equals: 'published' } })
     })
 
     it('should NOT use authenticated for write operations', () => {
