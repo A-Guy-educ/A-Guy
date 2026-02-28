@@ -138,9 +138,9 @@ export function TaskList({
               onClick={() => handleTaskClick(task)}
               className={cn(
                 'relative flex flex-col gap-2 px-4 py-3 cursor-pointer transition-all duration-150',
-                'hover:bg-zinc-800/50',
+                'dark:hover:bg-zinc-800/50 hover:bg-zinc-100',
                 rowTint[task.column],
-                isSelected && 'bg-zinc-800',
+                isSelected && 'dark:bg-zinc-800 bg-white',
                 isHardStop && 'ring-2 ring-red-500/40 ring-inset',
               )}
             >
@@ -155,7 +155,7 @@ export function TaskList({
               {/* Top row: Status icon + Title */}
               <div className="flex items-center gap-2 pl-2 sm:pl-5">
                 <div className="shrink-0">{indicator.icon}</div>
-                <h3 className="text-base font-medium text-zinc-100 truncate flex-1">
+                <h3 className="text-base font-medium dark:text-zinc-100 text-zinc-900 truncate flex-1">
                   {task.title}
                 </h3>
               </div>
@@ -166,7 +166,7 @@ export function TaskList({
                 <div className="flex items-center gap-2 flex-wrap flex-1">
                   <span
                     title="Issue number"
-                    className="text-sm font-mono font-medium text-zinc-500 shrink-0 w-10"
+                    className="text-sm font-mono font-medium dark:text-zinc-500 text-zinc-600 shrink-0 w-10"
                   >
                     #{task.issueNumber}
                   </span>
@@ -196,7 +196,8 @@ export function TaskList({
                     <span
                       className={cn(
                         'text-sm font-medium px-2 py-1 rounded shrink-0 inline-flex items-center gap-1',
-                        task.column === 'open' && 'text-zinc-400 bg-zinc-800',
+                        task.column === 'open' &&
+                          'dark:text-zinc-400 dark:bg-zinc-800 text-zinc-600 bg-zinc-100',
                         task.column === 'building' && 'text-blue-400 bg-blue-500/20',
                         task.column === 'review' && 'text-purple-400 bg-purple-500/20',
                         task.column === 'failed' && 'text-red-400 bg-red-500/20',
@@ -237,12 +238,12 @@ export function TaskList({
                   )}
 
                   {task.labels.length > 0 && (
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-700 text-zinc-300 truncate max-w-24">
+                    <span className="text-xs px-1.5 py-0.5 rounded dark:bg-zinc-700 dark:text-zinc-300 bg-zinc-200 text-zinc-700 truncate max-w-24">
                       {task.labels[0]}
                     </span>
                   )}
 
-                  <span className="text-xs text-zinc-500 shrink-0">
+                  <span className="text-xs text-zinc-500 dark:text-zinc-500 text-zinc-400 shrink-0">
                     {formatRelativeTime(task.updatedAt)}
                   </span>
                 </div>
@@ -256,7 +257,7 @@ export function TaskList({
                       rel="noopener noreferrer"
                       title="Open PR in GitHub"
                       onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 text-sm text-purple-400 hover:text-purple-300"
+                      className="inline-flex items-center gap-1 text-sm dark:text-purple-400 dark:hover:text-purple-300 text-purple-700 hover:text-purple-800"
                     >
                       <GitPullRequest className="w-4 h-4" />
                     </a>
