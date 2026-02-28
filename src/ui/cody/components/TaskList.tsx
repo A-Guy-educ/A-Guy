@@ -9,18 +9,16 @@
 import { useCallback } from 'react'
 import { cn, formatRelativeTime } from '../utils'
 import type { CodyTask, ColumnId } from '../types'
-import { ALL_STAGES } from '../constants'
 import { Button } from '@/ui/web/components/button'
 import {
   GitPullRequest,
   ExternalLink,
   Play,
+  Square,
   Bot,
-  User,
   Loader2,
   CheckCircle2,
   XCircle,
-  Clock,
   AlertTriangle,
   RotateCcw,
   CircleDot,
@@ -30,8 +28,11 @@ import {
 interface TaskListProps {
   tasks: CodyTask[]
   selectedTask?: CodyTask | null
+  executingTaskId?: string | null
+  mergingTaskId?: string | null
   onTaskSelect?: (task: CodyTask | null) => void
   onExecuteTask?: (taskId: string) => void
+  onStopTask?: (task: CodyTask) => void
   onApproveReview?: (task: CodyTask) => void
 }
 
@@ -52,63 +53,50 @@ const statusIndicator: Record<
   { icon: React.ReactNode; barColor: string; label: string }
 > = {
   open: {
-    icon: <CircleDot className="w-3.5 h-3.5 text-muted-foreground" />,
-    barColor: 'bg-muted-foreground/30',
+    icon: <CircleDot className="w-5 h-5 text-zinc-400" />,
+    barColor: 'bg-zinc-400',
     label: 'Backlog',
   },
   building: {
-    icon: <Loader2 className="w-3.5 h-3.5 text-blue-400 animate-spin" />,
+    icon: <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />,
     barColor: 'bg-blue-500',
     label: 'Building',
   },
   review: {
-    icon: <GitPullRequest className="w-3.5 h-3.5 text-purple-400" />,
+    icon: <GitPullRequest className="w-5 h-5 text-purple-500" />,
     barColor: 'bg-purple-500',
     label: 'In Review',
   },
   failed: {
-    icon: <XCircle className="w-3.5 h-3.5 text-red-400" />,
+    icon: <XCircle className="w-5 h-5 text-red-500" />,
     barColor: 'bg-red-500',
     label: 'Failed',
   },
   'gate-waiting': {
-    icon: <AlertTriangle className="w-3.5 h-3.5 text-yellow-400" />,
+    icon: <AlertTriangle className="w-5 h-5 text-yellow-500" />,
     barColor: 'bg-yellow-500',
     label: 'Gate',
   },
   retrying: {
-    icon: <RotateCcw className="w-3.5 h-3.5 text-orange-400" />,
+    icon: <RotateCcw className="w-5 h-5 text-orange-500" />,
     barColor: 'bg-orange-500',
     label: 'Retrying',
   },
   done: {
-    icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />,
+    icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" />,
     barColor: 'bg-emerald-500',
     label: 'Done',
   },
 }
 
-// Pipeline stage labels for tooltip
-const stageLabels: Record<string, string> = {
-  taskify: 'Analyze',
-  spec: 'Spec',
-  clarify: 'Clarify',
-  architect: 'Architect',
-  'plan-review': 'Plan',
-  build: 'Build',
-  commit: 'Commit',
-  verify: 'Verify',
-  auditor: 'Audit',
-  'apply-audit': 'Fix',
-  pr: 'PR',
-  autofix: 'Autofix',
-}
-
 export function TaskList({
   tasks,
   selectedTask,
+  executingTaskId,
+  mergingTaskId,
   onTaskSelect,
   onExecuteTask,
+  onStopTask,
   onApproveReview,
 }: TaskListProps) {
   const handleTaskClick = useCallback(
@@ -130,20 +118,15 @@ export function TaskList({
 
   return (
     <div>
-      <div className="divide-y divide-border">
+      <div className="divide-y divide-border/50">
         {tasks.map((task) => {
           const indicator = statusIndicator[task.column]
           const isSelected = task.id === selectedTask?.id
           const isUnassigned = !task.assignees || task.assignees.length === 0
           const canExecute = isUnassigned && task.state === 'open' && onExecuteTask
+          const isExecuting = executingTaskId === task.id
+          const isMerging = mergingTaskId === task.id
           const hasPR = !!task.associatedPR
-          const isActive = task.column === 'building' || task.column === 'retrying'
-          const pipelineStage = task.pipeline?.currentStage
-          const pipelineStageIdx = pipelineStage
-            ? ALL_STAGES.indexOf(pipelineStage as (typeof ALL_STAGES)[number])
-            : -1
-
-          // Determine if this is a hard-stop gate (always show prominently)
           const isHardStop = task.column === 'gate-waiting' && task.gateType === 'hard-stop'
 
           return (
@@ -151,12 +134,11 @@ export function TaskList({
               key={task.id}
               onClick={() => handleTaskClick(task)}
               className={cn(
-                'relative flex items-start gap-2 md:gap-3 px-4 md:px-6 py-3 cursor-pointer transition-colors',
-                'hover:bg-accent/50',
+                'relative flex flex-col gap-2 px-4 py-3 cursor-pointer transition-all duration-150',
+                'hover:bg-zinc-800/50',
                 rowTint[task.column],
-                isSelected && 'bg-accent',
-                // Hard stop gets a pulsing red border
-                isHardStop && 'ring-2 ring-red-500/50 ring-inset',
+                isSelected && 'bg-zinc-800',
+                isHardStop && 'ring-2 ring-red-500/40 ring-inset',
               )}
             >
               {/* Left color bar */}
@@ -167,249 +149,153 @@ export function TaskList({
                 )}
               />
 
-              {/* Status icon */}
-              <div className="shrink-0 mt-0.5">{indicator.icon}</div>
+              {/* Top row: Status icon + Title */}
+              <div className="flex items-center gap-2 pl-2 sm:pl-5">
+                <div className="shrink-0">{indicator.icon}</div>
+                <h3 className="text-base font-medium text-zinc-100 truncate flex-1">
+                  {task.title}
+                </h3>
+              </div>
 
-              {/* Main content */}
-              <div className="flex-1 min-w-0">
-                {/* Row 1: Title line - show CODY badge prominently right after status icon */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground font-mono shrink-0">
+              {/* Bottom row */}
+              <div className="flex items-center gap-2 pl-2 sm:pl-9">
+                {/* Left side: Issue#, CODY, Status, Labels, Time */}
+                <div className="flex items-center gap-2 flex-wrap flex-1">
+                  <span
+                    title="Issue number"
+                    className="text-sm font-mono font-medium text-zinc-500 shrink-0 w-10"
+                  >
                     #{task.issueNumber}
                   </span>
 
-                  {/* CODY badge - VERY PROMINENT - right after issue number */}
                   {task.isCodyAssigned && (
-                    <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[11px] font-bold shadow-sm">
+                    <span
+                      title="Assigned to Cody AI"
+                      className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-600 text-white text-xs font-bold"
+                    >
                       <Bot className="w-3 h-3" />
                       CODY
                     </span>
                   )}
 
-                  <h3 className="text-sm font-medium text-foreground truncate">{task.title}</h3>
-                </div>
-
-                {/* Row 2: Meta indicators - HARD STOP gets special treatment */}
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-                  {/* HARD STOP indicator - EXTRA PROMINENT */}
                   {task.column === 'gate-waiting' && task.gateType === 'hard-stop' ? (
-                    <span className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-600 text-white text-[12px] font-bold shadow-sm animate-pulse">
-                      <Siren className="w-4 h-4" />
-                      🚫 HARD STOP - APPROVAL NEEDED
+                    <span className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-red-600 text-white text-xs font-bold">
+                      <Siren className="w-3.5 h-3.5" />
+                      HARD STOP
                     </span>
                   ) : (
-                    /* Normal status label */
                     <span
                       className={cn(
-                        'text-[11px] font-medium px-1.5 py-0.5 rounded inline-flex items-center gap-1',
-                        // Default column styling
-                        task.column === 'open' && 'text-muted-foreground bg-muted/50',
-                        task.column === 'building' && 'text-blue-400 bg-blue-500/10',
-                        task.column === 'review' && 'text-purple-400 bg-purple-500/10',
-                        // Gate substatus overrides
-                        task.column === 'gate-waiting' &&
-                          task.gateType === 'risk-gated' &&
-                          'text-yellow-400 bg-yellow-500/20 border border-yellow-500/30',
-                        task.column === 'gate-waiting' &&
-                          !task.gateType &&
-                          'text-yellow-400 bg-yellow-500/20 border border-yellow-500/30',
-                        // Failed substatus overrides
-                        task.column === 'failed' &&
-                          task.isTimeout &&
-                          'text-orange-400 bg-orange-500/10',
-                        task.column === 'failed' &&
-                          task.isExhausted &&
-                          'text-red-500 bg-red-600/10',
-                        task.column === 'failed' &&
-                          task.isSupervisorError &&
-                          'text-red-400 bg-red-500/10',
-                        task.column === 'failed' &&
-                          !task.isTimeout &&
-                          !task.isExhausted &&
-                          !task.isSupervisorError &&
-                          'text-red-400 bg-red-500/10',
-                        // Other columns
-                        task.column === 'retrying' && 'text-orange-400 bg-orange-500/10',
-                        task.column === 'done' && 'text-emerald-400 bg-emerald-500/10',
+                        'text-sm font-medium px-2 py-1 rounded shrink-0 inline-flex items-center gap-1',
+                        task.column === 'open' && 'text-zinc-400 bg-zinc-800',
+                        task.column === 'building' && 'text-blue-400 bg-blue-500/20',
+                        task.column === 'review' && 'text-purple-400 bg-purple-500/20',
+                        task.column === 'failed' && 'text-red-400 bg-red-500/20',
+                        task.column === 'gate-waiting' && 'text-yellow-400 bg-yellow-500/20',
+                        task.column === 'retrying' && 'text-orange-400 bg-orange-500/20',
+                        task.column === 'done' && 'text-emerald-400 bg-emerald-500/20',
                       )}
                     >
-                      {task.column === 'gate-waiting' && <AlertTriangle className="w-3 h-3" />}
-                      {task.column === 'gate-waiting' && task.gateType === 'risk-gated'
-                        ? `🚦 Review${task.gateStage ? ` · ${task.gateStage}` : ''}`
-                        : task.column === 'gate-waiting'
-                          ? `⚠️ Gate`
-                          : task.column === 'failed' && task.isTimeout
-                            ? '⏰ Timeout'
-                            : task.column === 'failed' && task.isExhausted
-                              ? 'Exhausted'
-                              : task.column === 'failed' && task.isSupervisorError
-                                ? 'System Error'
-                                : indicator.label}
+                      {task.column === 'gate-waiting' && <AlertTriangle className="w-3.5 h-3.5" />}
+                      {indicator.label}
                     </span>
                   )}
 
-                  {/* Clarify-waiting indicator */}
-                  {task.clarifyWaiting && (
-                    <span className="text-[11px] font-medium px-1.5 py-0.5 rounded text-amber-400 bg-amber-500/10">
-                      💬 Needs Answer
+                  {task.labels.length > 0 && (
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-700 text-zinc-300 truncate max-w-24">
+                      {task.labels[0]}
                     </span>
                   )}
 
-                  {/* Assignee indicator - only for human assignees */}
-                  {task.assignees && task.assignees.length > 0 && !task.isCodyAssigned ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                      <User className="w-3 h-3" />
-                      <span className="hidden sm:inline">
-                        {task.assignees.map((a) => a.login).join(', ')}
-                      </span>
-                    </span>
-                  ) : null}
+                  <span className="text-xs text-zinc-500 shrink-0">
+                    {formatRelativeTime(task.updatedAt)}
+                  </span>
+                </div>
 
-                  {/* PR link */}
+                {/* Right side: PR, Preview, Buttons */}
+                <div className="flex items-center gap-2 shrink-0">
                   {hasPR && (
                     <a
                       href={task.associatedPR!.html_url}
                       target="_blank"
                       rel="noopener noreferrer"
+                      title="Open PR in GitHub"
                       onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 text-[11px] text-purple-400 hover:text-purple-300 hover:underline"
+                      className="inline-flex items-center gap-1 text-sm text-purple-400 hover:text-purple-300"
                     >
-                      <GitPullRequest className="w-3 h-3" />
-                      <span className="hidden sm:inline">PR</span> #{task.associatedPR!.number}
+                      <GitPullRequest className="w-4 h-4" />
                     </a>
                   )}
 
-                  {/* Vercel preview link */}
                   {task.previewUrl && (
                     <a
                       href={task.previewUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 text-[11px] text-emerald-400 hover:text-emerald-300 hover:underline"
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 hover:underline shrink-0"
                     >
-                      <ExternalLink className="w-3 h-3" />
-                      <span className="hidden sm:inline">Preview</span>
+                      <ExternalLink className="w-4 h-4" />
                     </a>
                   )}
 
-                  {/* Workflow run indicator */}
-                  {task.workflowRun && (
-                    <span
+                  {task.column === 'review' && hasPR && onApproveReview && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={isMerging}
+                      title="Approve and merge PR"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onApproveReview(task)
+                      }}
+                      className="h-7 text-sm px-2 gap-1 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/30 hover:border-emerald-500/50 hover:shadow-lg cursor-pointer disabled:opacity-50"
+                    >
+                      {isMerging ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <GitPullRequest className="w-4 h-4" />
+                      )}
+                    </Button>
+                  )}
+
+                  {/* Run/Stop toggle - only show stop if there's a running workflow */}
+                  {(task.column === 'building' &&
+                    task.workflowRun?.status === 'in_progress' &&
+                    onStopTask) ||
+                  (canExecute && onExecuteTask) ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={isExecuting}
+                      title={
+                        task.column === 'building' ? 'Stop running task' : 'Start running this task'
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (task.column === 'building') {
+                          onStopTask?.(task)
+                        } else if (canExecute) {
+                          onExecuteTask?.(task.id)
+                        }
+                      }}
                       className={cn(
-                        'inline-flex items-center gap-1 text-[11px]',
-                        task.workflowRun.status === 'in_progress' && 'text-blue-400',
-                        task.workflowRun.status === 'completed' &&
-                          task.workflowRun.conclusion === 'success' &&
-                          'text-emerald-400',
-                        task.workflowRun.status === 'completed' &&
-                          task.workflowRun.conclusion === 'failure' &&
-                          'text-red-400',
-                        task.workflowRun.status === 'completed' &&
-                          task.workflowRun.conclusion === 'timed_out' &&
-                          'text-orange-400',
-                        task.workflowRun.status === 'completed' &&
-                          task.workflowRun.conclusion === 'cancelled' &&
-                          'text-muted-foreground',
+                        'h-7 text-sm px-2 gap-1 cursor-pointer disabled:opacity-50',
+                        task.column === 'building'
+                          ? 'text-red-400 bg-red-500/10 hover:bg-red-500/30 hover:border-red-500/50 hover:shadow-lg'
+                          : 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/30 hover:border-blue-500/50 hover:shadow-lg',
                       )}
                     >
-                      {task.workflowRun.status === 'in_progress' ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : task.workflowRun.conclusion === 'success' ? (
-                        <CheckCircle2 className="w-3 h-3" />
+                      {isExecuting ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : task.column === 'building' ? (
+                        <Square className="w-4 h-4" />
                       ) : (
-                        <XCircle className="w-3 h-3" />
+                        <Play className="w-4 h-4" />
                       )}
-                      <span className="hidden sm:inline">Run</span>
-                    </span>
-                  )}
-
-                  {/* Labels - hidden on mobile */}
-                  {task.labels.length > 0 && (
-                    <span className="hidden sm:contents">
-                      <span className="text-border">·</span>
-                      {task.labels.slice(0, 2).map((label) => (
-                        <span
-                          key={label}
-                          className="text-[11px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded"
-                        >
-                          {label}
-                        </span>
-                      ))}
-                      {task.labels.length > 2 && (
-                        <span className="text-[11px] text-muted-foreground">
-                          +{task.labels.length - 2}
-                        </span>
-                      )}
-                    </span>
-                  )}
-
-                  {/* Mobile timestamp */}
-                  <span className="inline-flex sm:hidden items-center gap-1 text-[11px] text-muted-foreground ml-auto">
-                    <Clock className="w-3 h-3" />
-                    {formatRelativeTime(task.updatedAt)}
-                  </span>
+                    </Button>
+                  ) : null}
                 </div>
-
-                {/* Row 3: Pipeline progress bar */}
-                {isActive && pipelineStageIdx >= 0 && (
-                  <div className="flex items-center gap-0.5 mt-1.5">
-                    {ALL_STAGES.map((stage, i) => (
-                      <div
-                        key={stage}
-                        className={cn(
-                          'h-1 flex-1 rounded-full transition-all',
-                          i < pipelineStageIdx && 'bg-blue-500',
-                          i === pipelineStageIdx && 'bg-blue-500 animate-pulse',
-                          i > pipelineStageIdx && 'bg-muted',
-                        )}
-                        title={stageLabels[stage] || stage}
-                      />
-                    ))}
-                    <span className="ml-1.5 text-[10px] text-blue-400 shrink-0">
-                      {stageLabels[pipelineStage!] || pipelineStage}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Right side: time + action - desktop only */}
-              <div className="hidden sm:flex items-center gap-2 shrink-0 mt-0.5">
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {formatRelativeTime(task.updatedAt)}
-                </span>
-
-                {/* Merge button - for In Review items with PR */}
-                {task.column === 'review' && hasPR && onApproveReview && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onApproveReview(task)
-                    }}
-                    className="h-6 text-xs px-2 gap-1 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 hover:text-emerald-300"
-                  >
-                    <GitPullRequest className="w-3 h-3" />
-                    Merge
-                  </Button>
-                )}
-
-                {canExecute && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onExecuteTask(task.id)
-                    }}
-                    className="h-6 text-xs px-2 gap-1 text-blue-400 border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-300"
-                  >
-                    <Play className="w-3 h-3" />
-                    Run
-                  </Button>
-                )}
               </div>
             </div>
           )

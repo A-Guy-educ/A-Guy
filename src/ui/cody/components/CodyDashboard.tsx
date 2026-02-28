@@ -29,7 +29,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/ui/web/components/sheet'
-import { MessageSquare, X, Bug, Menu } from 'lucide-react'
+import { MessageSquare, X, Bug, Menu, RefreshCw } from 'lucide-react'
 import { useCodyTasks } from '../hooks'
 import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
 import { RateLimitError, NoTokenError, tasksApi } from '../api'
@@ -43,6 +43,9 @@ const DATE_FILTERS = [
 
 export function CodyDashboard() {
   const [selectedTask, setSelectedTask] = useState<CodyTask | null>(null)
+  const [executingTaskId, setExecutingTaskId] = useState<string | null>(null)
+  const [mergingTaskId, setMergingTaskId] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showBugDialog, setShowBugDialog] = useState(false)
   const [dateFilter, setDateFilter] = useState<string>('30d')
@@ -88,6 +91,18 @@ export function CodyDashboard() {
     )
     .sort()
 
+  // Calculate label counts
+  const labelCounts = tasks.reduce(
+    (acc, task) => {
+      task.labels.forEach((label) => {
+        acc[label] = (acc[label] || 0) + 1
+      })
+      return acc
+    },
+    {} as Record<string, number>,
+  )
+  const totalCount = tasks.length
+
   // Filter tasks by label
   const filteredTasks =
     labelFilter === 'all' ? tasks : tasks.filter((task) => task.labels.includes(labelFilter))
@@ -100,15 +115,40 @@ export function CodyDashboard() {
   const retryAfter = isRateLimited ? (error as RateLimitError).retryAfter : null
 
   // Execute task handler
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
   const handleExecuteTask = async (taskId: string) => {
     const task = tasks.find((t) => t.id === taskId)
     if (!task) return
 
+    setExecutingTaskId(taskId)
     try {
       await tasksApi.execute(task.issueNumber)
       refetch()
+      showToast('Task started', 'success')
     } catch (err) {
       console.error('Failed to execute task:', err)
+      showToast('Failed to start task', 'error')
+    } finally {
+      setExecutingTaskId(null)
+    }
+  }
+
+  // Stop task handler
+  const handleStopTask = async (task: CodyTask) => {
+    setExecutingTaskId(task.id)
+    try {
+      await tasksApi.abort(task.issueNumber)
+      refetch()
+      showToast('Task stopped', 'success')
+    } catch (err) {
+      console.error('Failed to stop task:', err)
+      showToast('Failed to stop task', 'error')
+    } finally {
+      setExecutingTaskId(null)
     }
   }
 
@@ -116,11 +156,16 @@ export function CodyDashboard() {
   const handleMerge = async (task: CodyTask) => {
     if (!task.associatedPR) return
 
+    setMergingTaskId(task.id)
     try {
       await tasksApi.approveReview(task)
       refetch()
+      showToast('PR merged', 'success')
     } catch (err) {
       console.error('Failed to merge PR:', err)
+      showToast('Failed to merge PR', 'error')
+    } finally {
+      setMergingTaskId(null)
     }
   }
 
@@ -160,10 +205,10 @@ export function CodyDashboard() {
           <SelectValue placeholder="Filter by label" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Labels</SelectItem>
+          <SelectItem value="all">All ({totalCount})</SelectItem>
           {availableLabels.map((label) => (
             <SelectItem key={label} value={label}>
-              {label}
+              {label} ({labelCounts[label] || 0})
             </SelectItem>
           ))}
         </SelectContent>
@@ -234,6 +279,7 @@ export function CodyDashboard() {
             <Button
               variant={showChat ? 'default' : 'outline'}
               size="sm"
+              title={showChat ? 'Close chat' : 'Open chat with Cody'}
               onClick={() => setShowChat(!showChat)}
               className="gap-2"
             >
@@ -241,11 +287,23 @@ export function CodyDashboard() {
               {showChat ? 'Close Chat' : 'Chat'}
             </Button>
             {filterControls}
-            <Button variant="outline" onClick={() => setShowBugDialog(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              title="Refresh tasks"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="gap-1"
+            >
+              <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button variant="outline" title="Report a bug" onClick={() => setShowBugDialog(true)}>
               <Bug className="w-4 h-4 mr-2" />
               Report Bug
             </Button>
-            <Button onClick={() => setShowCreateDialog(true)}>+ New Task</Button>
+            <Button title="Create new task" onClick={() => setShowCreateDialog(true)}>
+              + New Task
+            </Button>
           </div>
 
           {/* Mobile hamburger */}
@@ -258,6 +316,17 @@ export function CodyDashboard() {
             <Menu className="w-5 h-5" />
           </Button>
         </div>
+
+        {/* Toast notification */}
+        {toast && (
+          <div
+            className={`fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 animate-in fade-in slide-in-from-bottom-2 ${
+              toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
+            }`}
+          >
+            {toast.message}
+          </div>
+        )}
 
         {/* Cody Status Banner */}
         <CodyStatusBanner
@@ -277,8 +346,11 @@ export function CodyDashboard() {
             <TaskList
               tasks={filteredTasks}
               selectedTask={selectedTask}
+              executingTaskId={executingTaskId}
+              mergingTaskId={mergingTaskId}
               onTaskSelect={handleTaskSelect}
               onExecuteTask={handleExecuteTask}
+              onStopTask={handleStopTask}
               onApproveReview={handleMerge}
             />
           )}

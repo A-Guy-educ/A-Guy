@@ -166,6 +166,7 @@ export interface WorkflowRun {
   updated_at: string
   html_url: string
   display_title?: string
+  head_branch?: string
 }
 
 export interface GitHubPR {

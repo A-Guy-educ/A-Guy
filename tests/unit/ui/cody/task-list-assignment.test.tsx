@@ -95,7 +95,7 @@ describe('TaskList Cody Assignment Display', () => {
   })
 
   describe('User icon in meta row for human assignees', () => {
-    it('should render User icon in meta row when task has human assignees and isCodyAssigned is false', () => {
+    it('should not display human assignee names when isCodyAssigned is false', () => {
       const humanAssignedTask = createMockTask({
         isCodyAssigned: false,
         assignees: [{ login: 'johndoe', avatar_url: 'https://example.com/avatar.png' }],
@@ -110,12 +110,13 @@ describe('TaskList Cody Assignment Display', () => {
         />,
       )
 
-      // Should show human assignee name in meta row
-      expect(screen.getByText('johndoe')).toBeTruthy()
+      // Task renders correctly
+      const taskTitle = screen.getByText('Test task for Cody assignment')
+      expect(taskTitle).toBeTruthy()
 
-      // Should show User icon for human assignee
-      const userIcon = document.querySelector('svg.lucide-user')
-      expect(userIcon).toBeTruthy()
+      // Human assignee name is NOT displayed in the UI
+      const assigneeText = screen.queryByText('johndoe')
+      expect(assigneeText).toBeNull()
     })
 
     it('should NOT render User icon when task is Cody-assigned', () => {

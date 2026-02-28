@@ -90,13 +90,23 @@ export async function POST(
       }
 
       case 'abort': {
-        const runs = await fetchWorkflowRuns({ perPage: 10 })
-        const run = runs.find((r) => r.html_url.includes(taskId))
+        // Try to find and cancel in-progress workflow runs for this task
+        const runs = await fetchWorkflowRuns({ perPage: 30 })
+        const run = runs.find((r) => 
+          r.status === 'in_progress' && 
+          (r.display_title?.includes(taskId) || r.html_url.includes(taskId) || r.html_url.includes(issueNumber.toString()))
+        )
+        
+        // Post comment regardless of whether we found a running workflow
+        // This ensures the issue is marked as stopped even if workflow already finished
+        await postComment(issueNumber, '## 🛑 Operation stopped - Run aborted by user.')
+        
         if (run) {
           await cancelWorkflowRun(run.id)
           return NextResponse.json({ success: true, message: 'Workflow cancelled' })
         }
-        return NextResponse.json({ error: 'No running workflow found' }, { status: 404 })
+        // Return success anyway - the comment was posted
+        return NextResponse.json({ success: true, message: 'Marked as stopped (no running workflow)' })
       }
 
       case 'close': {
