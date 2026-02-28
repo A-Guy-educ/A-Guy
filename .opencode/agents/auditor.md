@@ -89,7 +89,7 @@ The auditor produces:
    - Highest impact, safe to implement
    - One improvement that will be applied automatically
 
-2. **Additional Findings** (logged for review):
+2. **Additional Findings** ( logged for review):
    - Up to 4 more potential improvements
    - Not auto-applied, logged for human review or future application
    - Prevents leaving value on the table
@@ -97,6 +97,16 @@ The auditor produces:
 ## Output Format
 
 Write to: `.tasks/<taskId>/auditor.md`
+
+⚠️ **CRITICAL: You MUST use the Write tool to create the file. Do NOT print the content to stdout or chat. The pipeline detects the file, not chat output.**
+
+Example of correct approach:
+```bash
+cat > /path/to/.tasks/<taskId>/auditor.md << 'EOF'
+# Auditor Report: <taskId>
+...
+EOF
+```
 
 ```markdown
 # Auditor Report: <taskId>
@@ -163,6 +173,8 @@ _This section is kept for backward compatibility. Use Primary Improvement instea
 ```
 
 **STOP CONDITION**: After you write auditor.md, you are DONE. Do NOT read or verify the file afterward. The pipeline validates file existence automatically.
+
+⚠️ **CRITICAL: Your response in chat does NOT count. You MUST use the Write tool to create the file before exiting.**
 
 ## Hard Rules
 
