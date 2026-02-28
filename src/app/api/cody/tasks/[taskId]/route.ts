@@ -60,6 +60,35 @@ function buildCodyTask(options: {
   const taskId = taskMarker?.taskId || `issue-${issue.number}`
   const column = deriveColumn(issue, comments, workflowRun, associatedPR)
 
+  // Derive substatus fields from parsed comments
+  // Gate type and stage from gate-request comments
+  const lastGateRequest = [...comments].reverse().find((c) => c.type === 'gate-request')
+  const lastGateApproval = [...comments].reverse().find((c) => c.type === 'gate-approval')
+  let gateType: 'hard-stop' | 'risk-gated' | undefined
+  let gateStage: string | undefined
+
+  if (
+    lastGateRequest &&
+    (!lastGateApproval || lastGateRequest.createdAt > lastGateApproval.createdAt)
+  ) {
+    // Determine gate type from comment body: 🚫 Hard Stop vs 🚦 Risk Gate
+    gateType = lastGateRequest.body.includes('🚫 Hard Stop')
+      ? 'hard-stop'
+      : 'risk-gated'
+    // Extract gate stage from body (e.g., "paused at architect gate")
+    const stageMatch = lastGateRequest.body.match(/at (\w+) gate/)
+    gateStage = stageMatch?.[1]
+  }
+
+  // Check for other comment-based substates
+  const hasClarifyStop = comments.some((c) => c.type === 'clarify-stop')
+  const hasExhausted = comments.some((c) => c.type === 'supervisor-exhausted')
+  const hasSupervisorError = comments.some((c) => c.type === 'supervisor-error')
+  const hasTimeout = comments.some((c) => c.type === 'timeout')
+
+  // Also check workflow run for timeout (GitHub Actions conclusion)
+  const isTimeoutFromWorkflow = workflowRun?.conclusion === 'timed_out'
+
   return {
     id: taskId,
     issueNumber: issue.number,
@@ -72,6 +101,13 @@ function buildCodyTask(options: {
     updatedAt: issue.updated_at,
     workflowRun,
     associatedPR,
+    // Substatus fields
+    gateType,
+    gateStage,
+    clarifyWaiting: hasClarifyStop && column !== 'done',
+    isTimeout: hasTimeout || isTimeoutFromWorkflow,
+    isExhausted: hasExhausted,
+    isSupervisorError: hasSupervisorError,
   }
 }
 

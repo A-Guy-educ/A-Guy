@@ -112,6 +112,18 @@ export function CodyDashboard() {
     }
   }
 
+  // Merge PR handler - approves review and merges
+  const handleMerge = async (task: CodyTask) => {
+    if (!task.associatedPR) return
+
+    try {
+      await tasksApi.approveReview(task)
+      refetch()
+    } catch (err) {
+      console.error('Failed to merge PR:', err)
+    }
+  }
+
   // Task selection — on mobile, open Sheet; on desktop, select in right panel
   const handleTaskSelect = (task: CodyTask | null) => {
     if (task) {
@@ -267,6 +279,7 @@ export function CodyDashboard() {
               selectedTask={selectedTask}
               onTaskSelect={handleTaskSelect}
               onExecuteTask={handleExecuteTask}
+              onApproveReview={handleMerge}
             />
           )}
         </div>

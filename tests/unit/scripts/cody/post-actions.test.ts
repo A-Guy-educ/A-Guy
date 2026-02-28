@@ -17,6 +17,12 @@ vi.mock('../../../../scripts/cody/clarify-workflow', () => ({
 vi.mock('../../../../scripts/cody/github-api', () => ({
   extractGateCommentBody: vi.fn(),
   postComment: vi.fn(),
+  addIssueLabel: vi.fn(),
+  removeIssueLabel: vi.fn(),
+  GATE_LABELS: {
+    HARD_STOP: 'hard-stop',
+    RISK_GATED: 'risk-gated',
+  },
 }))
 
 vi.mock('../../../../scripts/cody/git-utils', () => ({
