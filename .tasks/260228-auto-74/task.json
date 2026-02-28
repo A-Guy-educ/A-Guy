@@ -1,0 +1,22 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "high",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/payload/collections/ExerciseAssets.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Migration to Vercel Blob follows the pattern used by the Media collection"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains clear issue title with HIGH priority, description explaining the bug (local staticDir vs Vercel Blob), specific file location (line 15), current code snippet, and expected fix. The spec stage can be skipped as requirements are clear."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
