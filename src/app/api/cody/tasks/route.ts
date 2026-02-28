@@ -119,7 +119,12 @@ export async function GET(req: NextRequest) {
     const previewByPrNumber = new Map<number, string>()
     for (const pr of openPRs) {
       const url = previewUrls.get(pr.head.sha)
-      if (url) previewByPrNumber.set(pr.number, url)
+      if (url) {
+        previewByPrNumber.set(pr.number, url)
+      } else {
+        // Fallback: generate Vercel preview URL from PR number
+        previewByPrNumber.set(pr.number, `https://a-m0beir6hv-aguy.vercel.app/pr/${pr.number}`)
+      }
     }
 
     // Parse issues into tasks with additional metadata
