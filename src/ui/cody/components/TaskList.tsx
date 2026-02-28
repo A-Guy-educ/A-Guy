@@ -8,6 +8,7 @@
 
 import { useCallback } from 'react'
 import { cn, formatRelativeTime } from '../utils'
+import { getGitHubIssueUrl } from '../constants'
 import type { CodyTask, ColumnId } from '../types'
 import { Button } from '@/ui/web/components/button'
 import {
@@ -164,12 +165,16 @@ export function TaskList({
               <div className="flex items-center gap-2 pl-2 sm:pl-9">
                 {/* Left side: Issue#, CODY, Status, Labels, Time */}
                 <div className="flex items-center gap-2 flex-wrap flex-1">
-                  <span
-                    title="Issue number"
-                    className="text-sm font-mono font-medium dark:text-zinc-500 text-zinc-600 shrink-0 w-10"
+                  <a
+                    href={getGitHubIssueUrl(task.issueNumber)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="View issue on GitHub"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-sm font-mono font-medium dark:text-zinc-500 text-zinc-600 dark:hover:text-blue-400 hover:text-blue-600 shrink-0 w-10 hover:underline"
                   >
                     #{task.issueNumber}
-                  </span>
+                  </a>
 
                   {task.isCodyAssigned && (
                     <span

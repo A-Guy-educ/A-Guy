@@ -8,6 +8,7 @@
 
 import { useState } from 'react'
 import { formatRelativeTime } from '../utils'
+import { getGitHubIssueUrl } from '../constants'
 import type { CodyTask, GitHubComment } from '../types'
 import { PipelineStatus } from './PipelineStatus'
 import { CommentEditor } from './CommentEditor'
@@ -136,7 +137,15 @@ export function TaskDetail({ task, onClose, onRefresh }: TaskDetailProps) {
 
           <span className="text-muted-foreground">•</span>
 
-          <span className="text-sm font-mono text-muted-foreground">#{task.issueNumber}</span>
+          <a
+            href={getGitHubIssueUrl(task.issueNumber)}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="View issue on GitHub"
+            className="text-sm font-mono text-muted-foreground hover:text-blue-400 hover:underline"
+          >
+            #{task.issueNumber}
+          </a>
 
           <span className="text-muted-foreground">•</span>
 

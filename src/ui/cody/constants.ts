@@ -71,6 +71,20 @@ export const BRANCH_PREFIXES = ['feat', 'fix', 'refactor', 'docs', 'chore'] as c
 export const GITHUB_OWNER = process.env.GITHUB_OWNER ?? 'A-Guy-educ'
 export const GITHUB_REPO = process.env.GITHUB_REPO ?? 'A-Guy'
 
+/**
+ * Generate a GitHub issue URL from an issue number
+ */
+export function getGitHubIssueUrl(issueNumber: number): string {
+  return `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${issueNumber}`
+}
+
+/**
+ * Generate a GitHub PR URL from a PR number
+ */
+export function getGitHubPrUrl(prNumber: number): string {
+  return `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/pull/${prNumber}`
+}
+
 export const WORKFLOW_ID = 'cody.yml'
 
 // ============ Task ID ============
