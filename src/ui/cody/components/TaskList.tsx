@@ -150,8 +150,8 @@ export function TaskList({
 
               {/* Bottom row */}
               <div className="flex items-center gap-2 ml-9">
-                {/* Left side: Issue number, CODY, Status, Labels */}
-                <div className="flex items-center gap-2 flex-wrap">
+                {/* Left side: Issue#, CODY, Status, Labels, Time */}
+                <div className="flex items-center gap-2 flex-wrap flex-1">
                   <span className="text-sm font-mono font-medium text-zinc-500 shrink-0 w-10">
                     #{task.issueNumber}
                   </span>
@@ -187,16 +187,17 @@ export function TaskList({
                   )}
 
                   {task.labels.length > 0 && (
-                    <span className="text-xs text-zinc-500 truncate max-w-24">
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-700 text-zinc-300 truncate max-w-24">
                       {task.labels[0]}
                     </span>
                   )}
+
+                  <span className="text-xs text-zinc-500 shrink-0">
+                    {formatRelativeTime(task.updatedAt)}
+                  </span>
                 </div>
 
-                {/* Spacer pushes right side to the right */}
-                <div className="flex-1" />
-
-                {/* Right side: PR, Preview, Time, Buttons */}
+                {/* Right side: PR, Preview, Buttons */}
                 <div className="flex items-center gap-2 shrink-0">
                   {hasPR && (
                     <a
@@ -218,14 +219,9 @@ export function TaskList({
                       onClick={(e) => e.stopPropagation()}
                       className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 hover:underline shrink-0"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Preview</span>
+                      <ExternalLink className="w-4 h-4" />
                     </a>
                   )}
-
-                  <span className="text-xs text-zinc-500 shrink-0">
-                    {formatRelativeTime(task.updatedAt)}
-                  </span>
 
                   {task.column === 'review' && hasPR && onApproveReview && (
                     <Button
@@ -235,10 +231,9 @@ export function TaskList({
                         e.stopPropagation()
                         onApproveReview(task)
                       }}
-                      className="h-7 text-sm px-3 gap-1.5 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                      className="h-7 text-sm px-2 gap-1 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/30 hover:border-emerald-500/50 hover:shadow-lg cursor-pointer"
                     >
                       <GitPullRequest className="w-4 h-4" />
-                      <span className="hidden sm:inline">Merge</span>
                     </Button>
                   )}
 
@@ -250,7 +245,7 @@ export function TaskList({
                         e.stopPropagation()
                         onExecuteTask(task.id)
                       }}
-                      className="h-7 text-sm px-3 gap-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                      className="h-7 text-sm px-2 gap-1 text-blue-400 bg-blue-500/10 hover:bg-blue-500/30 hover:border-blue-500/50 hover:shadow-lg cursor-pointer"
                     >
                       <Play className="w-4 h-4" />
                     </Button>
