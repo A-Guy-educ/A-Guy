@@ -1,36 +1,50 @@
-# Bug Fix Specification: HTML & SVG Content Rendering Failure
+# Specification: HTML & SVG Content Rendering Fix
 
 ## Overview
-
-Fix the rendering issue where HTML content with CSS styles/animations and SVG content with paths/gradients/animations display as plain text or fail to render properly.
+Fix the bug where HTML and SVG content in exercises/lessons displays plain text only or fails to render styles/animations.
 
 ## Requirements
 
-1. **HTML Rendering**: Content should render as a complete "HTML Compiler" with full CSS support
-   - Internal CSS (`<style>` tags) must be preserved
-   - Inline styles must be preserved
-   - CSS animations (keyframes) must work
+### FR-1: HTML Content Rendering
+- HTML content with internal CSS (<style> tags) must render properly
+- Inline styles on HTML elements must be preserved
+- CSS animations (keyframes) must work correctly
+- All CSS rules, layouts, and visual styling must be reflected in the rendered output
 
-2. **SVG Rendering**: Graphics should be fully visible
-   - Vector paths must be preserved
-   - Colors must be preserved
-   - Internal animations must work
-   - Gradients must render correctly
+### FR-2: SVG Content Rendering
+- SVG graphics must be fully visible on the page
+- Vector paths must be preserved
+- Colors and gradients must display correctly
+- SVG animations must work (including <animate> elements and CSS animations within SVG)
 
-## Suspected Root Causes
-
-- **Sanitization Logic**: `src/ui/web/SafeHtml/index.tsx` — Likely stripping `<style>`, `<animate>`, and specific attributes
-- **SVG Components**: 
-  - `src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx`
-  - `src/ui/web/exerciserenderer/utils/svgSanitize.ts` — Custom sanitizer may be too restrictive
-- **Renderers**: `src/ui/web/exerciserenderer/blocks/HtmlBlockRenderer/index.tsx`
-- **Server Config**: `src/server/payload/blocks/HtmlBlock/config.ts`
+### FR-3: Sanitization Compatibility
+- Security sanitization must remain in place
+- Sanitization should not strip legitimate CSS and SVG features needed for educational content
 
 ## Acceptance Criteria
 
-1. HTML blocks with internal CSS render with all styles applied
-2. HTML blocks with CSS animations animate correctly
-3. SVG files display with all vector paths visible
-4. SVG animations play correctly
-5. SVG gradients render properly
-6. No security vulnerabilities introduced (XSS prevention still works)
+### AC-1: HTML Rendering
+- [ ] Internal <style> tags are not stripped from HTML content
+- [ ] Inline style attributes are preserved
+- [ ] CSS keyframe animations execute properly
+- [ ] Complex CSS layouts (flexbox, grid) render correctly
+
+### AC-2: SVG Rendering
+- [ ] SVG files display without errors
+- [ ] SVG gradients (linearGradient, radialGradient) render correctly
+- [ ] SVG paths and shapes are visible
+- [ ] SVG animations work (SMIL animations, CSS animations within SVG)
+
+### AC-3: Verification Steps
+- Add HtmlBlock with internal CSS and animations → renders correctly
+- Add SvgBlock with gradients/animations → renders correctly
+- View lesson with HTML source → styles and animations work
+- View exercise with SVG content → vector graphics and animations display
+
+## Suspected Files to Investigate
+
+1. `src/ui/web/SafeHtml/index.tsx` - Sanitization logic
+2. `src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx` - SVG rendering
+3. `src/ui/web/exerciserenderer/utils/svgSanitize.ts` - SVG sanitization
+4. `src/ui/web/exerciserenderer/blocks/HtmlBlockRenderer/index.tsx` - HTML block rendering
+5. `src/server/payload/blocks/HtmlBlock/config.ts` - Server configuration

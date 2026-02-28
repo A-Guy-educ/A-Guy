@@ -1,7 +1,7 @@
 {
   "task_type": "fix_bug",
   "risk_level": "medium",
-  "confidence": 0.9,
+  "confidence": 0.85,
   "primary_domain": "frontend",
   "scope": [
     "src/ui/web/SafeHtml/index.tsx",
@@ -12,16 +12,16 @@
   ],
   "missing_inputs": [],
   "assumptions": [
-    "The sanitization logic is likely stripping style tags and SVG animations",
-    "The custom SVG sanitizer may be too restrictive for advanced features",
-    "HTML content rendering is affected by sanitization removing CSS and animations"
+    "The sanitization logic is stripping style tags, animations, and SVG-specific elements",
+    "The current sanitizer configuration may be too restrictive for advanced HTML/CSS/SVG features",
+    "Need to identify which specific sanitization rules are causing the issue"
   ],
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Task contains detailed bug report with ## Steps to Reproduce, ## Expected Result, ## Actual Result, and ## Suspected Area with file paths. This provides clear requirements for fixing the rendering issue."
+    "reasoning": "Input contains detailed bug report with steps to reproduce, expected vs actual results, and suspected file paths. Has clear acceptance criteria: HTML should render CSS rules/layouts/animations, SVG should preserve vector paths/colors/animations. Promoted spec.md with requirements extracted from bug report."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
