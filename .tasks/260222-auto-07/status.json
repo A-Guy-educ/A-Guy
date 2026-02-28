@@ -4,14 +4,34 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-02-28T00:00:25.324Z",
-  "updatedAt": "2026-02-28T00:20:32.731Z",
-  "state": "running",
+  "updatedAt": "2026-02-28T00:26:55.105Z",
+  "state": "paused",
   "cursor": "taskify",
   "stages": {
     "taskify": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-02-28T00:20:32.731Z"
+      "startedAt": "2026-02-28T00:20:32.731Z",
+      "completedAt": "2026-02-28T00:21:46.870Z",
+      "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Promoted via input_quality (file exists)"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-02-28T00:21:47.406Z",
+      "completedAt": "2026-02-28T00:24:31.151Z",
+      "outputFile": "gap.md"
+    },
+    "architect": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-02-28T00:24:31.152Z"
     }
-  }
+  },
+  "completedAt": "2026-02-28T00:26:55.105Z"
 }
