@@ -321,10 +321,9 @@ jobs:
 
           echo "Pipeline version: $VERSION_REF"
 
-      # Only inject LLM keys from secrets on GitHub-hosted runners.
-      # On self-hosted runners, OpenCode uses its own locally configured keys.
-      - name: Set LLM keys (GitHub-hosted only)
-        if: needs.parse.outputs.runner != 'self-hosted'
+      # Inject LLM API keys from GitHub secrets for all runners.
+      # Self-hosted runners also need secrets since OpenCode reads env vars.
+      - name: Set LLM keys
         run: |
           echo "MINIMAX_API_KEY=${{ secrets.MINIMAX_API_KEY }}" >> $GITHUB_ENV
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV

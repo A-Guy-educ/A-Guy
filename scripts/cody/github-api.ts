@@ -258,6 +258,14 @@ export function ensureTaskMarkerComment(
         `Task marker exists on issue #${issueNumber} for ${existingTaskId} (current: ${taskId})`,
       )
     }
+    // Post a lightweight "run started" comment so every invocation has a visible run link
+    if (runUrl) {
+      const modeLine = mode ? ` (\`${mode}\` mode)` : ''
+      postComment(
+        issueNumber,
+        `🔄 Cody re-run for \`${existingTaskId}\`${modeLine}\nRun: ${runUrl}`,
+      )
+    }
     return
   }
 

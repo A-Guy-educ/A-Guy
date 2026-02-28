@@ -870,9 +870,6 @@ export function formatStatusComment(
 
   if (status.state === 'running') {
     lines.push(`🔄 Cody running for \`${input.taskId}\` (mode: ${input.mode})`)
-    if (input.runUrl) {
-      lines.push(`Run: ${input.runUrl}`)
-    }
     lines.push('')
 
     if (currentStage) {
@@ -914,6 +911,11 @@ export function formatStatusComment(
     lines.push(`❌ Cody failed for \`${input.taskId}\``)
   } else if (status.state === 'timeout') {
     lines.push(`⏰ Cody timed out for \`${input.taskId}\``)
+  }
+
+  // Always append run URL regardless of state
+  if (input.runUrl) {
+    lines.push(`Run: ${input.runUrl}`)
   }
 
   return lines.join('\n')
