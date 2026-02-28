@@ -1,0 +1,28 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/SafeHtml/index.tsx",
+    "src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx",
+    "src/ui/web/exerciserenderer/utils/svgSanitize.ts",
+    "src/ui/web/exerciserenderer/blocks/HtmlBlockRenderer/index.tsx",
+    "src/server/payload/blocks/HtmlBlock/config.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The sanitization logic is likely stripping style tags and SVG animations",
+    "The custom SVG sanitizer may be too restrictive for advanced features",
+    "HTML content rendering is affected by sanitization removing CSS and animations"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains detailed bug report with ## Steps to Reproduce, ## Expected Result, ## Actual Result, and ## Suspected Area with file paths. This provides clear requirements for fixing the rendering issue."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

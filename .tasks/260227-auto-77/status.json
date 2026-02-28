@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "taskId": "260227-auto-77",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-28T08:57:45.883Z",
+  "updatedAt": "2026-02-28T08:59:08.350Z",
+  "state": "paused",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-02-28T08:57:45.883Z"
+    }
+  },
+  "completedAt": "2026-02-28T08:59:08.350Z"
+}
