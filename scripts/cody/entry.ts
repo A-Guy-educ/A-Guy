@@ -274,7 +274,8 @@ Examples:
     if (input.issueNumber) {
       postComment(
         input.issueNumber,
-        `❌ Pipeline failed for \`${input.taskId}\`: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `❌ Pipeline failed for \`${input.taskId}\`: ${error instanceof Error ? error.message : 'Unknown error'}` +
+          (input.runUrl ? `\nRun: ${input.runUrl}` : ''),
       )
     }
     process.exit(1)
