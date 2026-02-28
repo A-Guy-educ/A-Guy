@@ -362,12 +362,7 @@ export function CodyDashboard() {
         )}
 
         {/* Cody Status Banner */}
-        <CodyStatusBanner
-          tasks={tasks}
-          onTaskSelect={handleTaskSelect}
-          isFetching={isFetching}
-          dataUpdatedAt={dataUpdatedAt}
-        />
+        <CodyStatusBanner tasks={tasks} isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
 
         {/* Task List */}
         <div className="flex-1 min-h-0 overflow-y-auto">

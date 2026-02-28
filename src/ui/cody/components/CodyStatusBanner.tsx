@@ -9,14 +9,13 @@
 import { useState, useEffect } from 'react'
 import { cn, formatRelativeTime } from '../utils'
 import type { CodyTask } from '../types'
-import { ALL_STAGES } from '../constants'
+import { ALL_STAGES, getGitHubIssueUrl } from '../constants'
 import { Loader2 } from 'lucide-react'
 import { Badge } from '@/ui/web/components/badge'
 import { Button } from '@/ui/web/components/button'
 
 interface CodyStatusBannerProps {
   tasks: CodyTask[]
-  onTaskSelect?: (task: CodyTask) => void
   onAbort?: (taskId: string) => void
   /** Whether a background refetch is in progress */
   isFetching?: boolean
@@ -115,7 +114,6 @@ function RefreshIndicator({
 
 export function CodyStatusBanner({
   tasks,
-  onTaskSelect,
   onAbort,
   isFetching,
   dataUpdatedAt,
@@ -152,12 +150,15 @@ export function CodyStatusBanner({
           </span>
           <span className="text-sm">
             <span className="text-foreground font-medium">Working on</span>{' '}
-            <button
-              onClick={() => onTaskSelect?.(state.task)}
+            <a
+              href={getGitHubIssueUrl(state.task.issueNumber)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="text-blue-400 hover:underline font-mono"
             >
               #{state.task.issueNumber}
-            </button>{' '}
+            </a>{' '}
             <span className="text-muted-foreground truncate">— {state.task.title}</span>
           </span>
           <RefreshIndicator isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
@@ -215,12 +216,15 @@ export function CodyStatusBanner({
         </span>
         <span className="text-sm">
           <span className="text-yellow-400 font-medium">Waiting for approval</span> on{' '}
-          <button
-            onClick={() => onTaskSelect?.(state.task)}
+          <a
+            href={getGitHubIssueUrl(state.task.issueNumber)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
             className="text-yellow-400 hover:underline font-mono"
           >
             #{state.task.issueNumber}
-          </button>{' '}
+          </a>{' '}
           <span className="text-muted-foreground">— {state.task.title}</span>
         </span>
         <RefreshIndicator isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
@@ -239,12 +243,15 @@ export function CodyStatusBanner({
       </span>
       <span className="text-sm">
         <span className="text-red-400 font-medium">Failed</span> on{' '}
-        <button
-          onClick={() => onTaskSelect?.(state.task)}
+        <a
+          href={getGitHubIssueUrl(state.task.issueNumber)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
           className="text-red-400 hover:underline font-mono"
         >
           #{state.task.issueNumber}
-        </button>{' '}
+        </a>{' '}
         <span className="text-muted-foreground">— {state.task.title}</span>
       </span>
       <RefreshIndicator isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
