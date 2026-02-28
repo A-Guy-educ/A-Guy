@@ -311,9 +311,10 @@ export const Conversations: CollectionConfig = {
         },
       },
       access: {
-        // Server-only mutation - requires overrideAccess: true to set
+        // Allow updates when allowArchive context flag is set AND collection-level access (isOwner) passes
+        // This enables the DELETE endpoint to archive conversations while enforcing ownership
         create: () => false,
-        update: () => false,
+        update: ({ req }) => req.context?.allowArchive === true,
       },
       // NO defaultValue - active docs must NOT have this field
     },

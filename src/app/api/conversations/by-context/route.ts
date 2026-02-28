@@ -82,9 +82,9 @@ export async function POST(request: NextRequest) {
         contextRef: { relationTo: 'courses', value: courseId },
         contextKey,
         messages: [],
-        lastMessageAt: new Date(),
+        lastMessageAt: new Date().toISOString(),
         contextPolicyVersion: 'v1',
-      } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+      },
       draft: false,
     })
 
@@ -113,7 +113,8 @@ export async function DELETE(request: NextRequest) {
       collection: 'conversations',
       id,
       data: { archivedAt: new Date().toISOString() } as Record<string, unknown>,
-      overrideAccess: true,
+      user,
+      overrideAccess: false,
       context: { allowArchive: true },
     })
 
