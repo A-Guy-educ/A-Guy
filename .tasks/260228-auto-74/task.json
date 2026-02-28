@@ -1,6 +1,6 @@
 {
   "task_type": "fix_bug",
-  "risk_level": "high",
+  "risk_level": "medium",
   "confidence": 0.95,
   "primary_domain": "backend",
   "scope": [
@@ -8,15 +8,16 @@
   ],
   "missing_inputs": [],
   "assumptions": [
-    "Vercel Blob is properly configured in the project",
-    "Media collection uses Vercel Blob and can serve as a reference pattern"
+    "Vercel Blob is already configured in the project",
+    "The Media collection has the correct Vercel Blob pattern to follow",
+    "The migration is straightforward config change"
   ],
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Input has clear issue description with file/line reference, requirements to migrate to Vercel Blob, and acceptance criteria. Promoted spec.md."
+    "reasoning": "Task has clear requirements (migrate to Vercel Blob), files affected, current code snippet, and expected fix. The acceptance criteria is 'follow pattern used by Media collection'."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
