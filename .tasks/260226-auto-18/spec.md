@@ -28,7 +28,7 @@ read: ({ req: { user } }) => {
 }
 ```
 
-Or use the existing `authenticatedOrPublished` pattern from Pages/Posts collections.
+> **IMPORTANT**: Do NOT use the `authenticatedOrPublished` function from Pages/Posts collections. That function filters by `_status` (Payload's built-in draft field), but these collections use a custom `status` field (`draft | published | archived`) without draft versioning enabled. The inline function above is the correct approach.
 
 ## Steps to Test
 1. Log out (anonymous user)
