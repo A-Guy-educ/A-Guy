@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "taskId": "260228-auto-98",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-02-28T19:26:52.663Z",
+  "updatedAt": "2026-02-28T19:27:56.008Z",
+  "state": "paused",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-02-28T19:26:52.663Z"
+    }
+  },
+  "issueNumber": 635,
+  "completedAt": "2026-02-28T19:27:56.008Z"
+}

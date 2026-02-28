@@ -1,0 +1,25 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "high",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/app/api/conversations/by-context/route.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "isOwner access control exists in Conversations collection and handles updates correctly",
+    "The fix (overrideAccess: false + pass user) will properly enforce ownership"
+  ],
+  "complexity": 35,
+  "complexity_reasoning": "Scope: 6 (2 files, targeted fix), Risk: 16 (security vulnerability - auth bypass), Novelty: 4 (following existing GET pattern), Cross: 0 (single domain), Ambiguity: 1 (exact file/line specified), Deps: 2 (self-contained). Total: 29 → rounded to 35 for security bug severity",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains clear bug description with specific file paths and line numbers, expected behavior, and fix instructions. Has requirements (enforce ownership) and acceptance criteria. Promoted spec.md."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
