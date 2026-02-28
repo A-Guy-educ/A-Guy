@@ -1,0 +1,18 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "high",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/services/conversation-service.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Task provides clear bug description with code examples showing current broken pattern and expected fix, specifies affected file and line numbers, and explicitly labels priority as HIGH. Equivalent to requirements/acceptance criteria but lacks formal sections."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

@@ -152,6 +152,36 @@ export const tasksApi = {
     })
     return handleResponse(res)
   },
+
+  approve: async (task: CodyTask): Promise<ActionResponse> => {
+    if (!task.associatedPR) {
+      throw new Error('No PR associated with this task')
+    }
+    const res = await fetch(`${API_BASE}/tasks/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        issueNumber: task.issueNumber,
+        prNumber: task.associatedPR.number,
+        branchName: task.associatedPR.head.ref,
+      }),
+    })
+    return handleResponse(res)
+  },
+
+  approveReview: async (task: CodyTask): Promise<ActionResponse> => {
+    if (!task.associatedPR) {
+      throw new Error('No PR associated with this task')
+    }
+    const res = await fetch(`${API_BASE}/tasks/approve-review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prNumber: task.associatedPR.number,
+      }),
+    })
+    return handleResponse(res)
+  },
 }
 
 // ============ Boards API ============

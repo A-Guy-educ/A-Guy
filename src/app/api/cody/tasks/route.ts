@@ -29,10 +29,19 @@ function getColumnForIssue(
   if (labelNames.includes('gate-waiting')) return 'gate-waiting'
   if (labelNames.includes('retrying')) return 'retrying'
   
+  // 2b. Pipeline gate labels (set by pipeline when hitting gates)
+  if (labelNames.includes('hard-stop') || labelNames.includes('risk-gated')) return 'gate-waiting'
+
   // 3. Workflow run status (always fetched)
   if (workflowRun?.status === 'in_progress') return 'building'
   if (workflowRun?.status === 'completed') {
-    if (workflowRun.conclusion === 'failure') return 'failed'
+    // BUG FIX: also handle timed_out and cancelled as failures
+    if (
+      workflowRun.conclusion === 'failure' ||
+      workflowRun.conclusion === 'timed_out' ||
+      workflowRun.conclusion === 'cancelled'
+    )
+      return 'failed'
   }
   
   // 4. Associated PR (always fetched via bulk)
@@ -144,6 +153,14 @@ export async function GET(req: NextRequest) {
 
         const column = getColumnForIssue(issue, workflowRun ?? undefined, pr ?? null)
 
+        // Derive gate type from labels (set by pipeline)
+        const labelNames = issue.labels.map(l => l.name.toLowerCase())
+        const gateType = labelNames.includes('hard-stop') 
+          ? 'hard-stop' 
+          : labelNames.includes('risk-gated')
+            ? 'risk-gated'
+            : undefined
+
         return {
           id: taskId ? `${taskId}-${issue.number}` : issue.number.toString(),
           issueNumber: issue.number,
@@ -175,6 +192,9 @@ export async function GET(req: NextRequest) {
           assignees: issue.assignees,
           isCodyAssigned: issue.isCodyAssigned,
           previewUrl: pr ? previewByPrNumber.get(pr.number) : undefined,
+          // Substatus from labels and workflow run data
+          isTimeout: workflowRun?.conclusion === 'timed_out',
+          gateType,
         }
       })
     )

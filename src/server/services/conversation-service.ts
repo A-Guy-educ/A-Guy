@@ -16,7 +16,7 @@
 import { logger } from '@/infra/utils/logger'
 import { getGuestChatConfig } from '@/server/config/guest-chat-config'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
-import type { Payload } from 'payload'
+import type { Payload, PayloadRequest } from 'payload'
 
 export class GuestConversationLimitError extends Error {
   constructor(limit: number) {
@@ -84,6 +84,7 @@ export class ConversationService {
     userId: string,
     contextRef: ContextRef,
     contextKeyOverride?: string,
+    req?: PayloadRequest,
   ): Promise<ConversationWithHistory> {
     const contextKey = contextKeyOverride || `${contextRef.relationTo}:${contextRef.value}`
 
@@ -98,6 +99,7 @@ export class ConversationService {
         ],
       },
       limit: 1,
+      ...(req && { req }),
     })
 
     if (existingConv.docs.length > 0) {
@@ -125,6 +127,7 @@ export class ConversationService {
         // Do NOT set archivedAt - active conversations must NOT have this field
       } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       draft: false,
+      ...(req && { req }),
     })
 
     logger.info({ userId, contextKey, conversationId: newConv.id }, 'Created new conversation')
@@ -135,7 +138,11 @@ export class ConversationService {
    * Archive current conversation and create new one
    * Preserves contextKey for continuity
    */
-  async resetConversation(userId: string, contextKey: string): Promise<ConversationWithHistory> {
+  async resetConversation(
+    userId: string,
+    contextKey: string,
+    req?: PayloadRequest,
+  ): Promise<ConversationWithHistory> {
     // Find and archive the current active conversation
     const existingConv = await this.payload.find({
       collection: 'conversations',
@@ -147,6 +154,7 @@ export class ConversationService {
         ],
       },
       limit: 1,
+      ...(req && { req }),
     })
 
     if (existingConv.docs.length > 0) {
@@ -160,6 +168,7 @@ export class ConversationService {
         } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         overrideAccess: true, // REQUIRED - field access blocks normal mutations
         context: { allowArchive: true }, // REQUIRED - hook protection requires this flag
+        ...(req && { req }),
       })
       logger.info(
         { userId, contextKey, conversationId: currentConv.id },
@@ -187,6 +196,7 @@ export class ConversationService {
         // Do NOT set archivedAt - active conversations must NOT have this field
       } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       draft: false,
+      ...(req && { req }),
     })
 
     logger.info(
@@ -202,13 +212,16 @@ export class ConversationService {
    * Exercises within the same lesson share a single conversation.
    * When only exerciseId is provided, the parent lesson is looked up from DB.
    */
-  async resolveContext(params: {
-    exerciseId?: string
-    lessonId?: string
-    chapterId?: string
-    courseId?: string
-    categoryId?: string
-  }): Promise<ResolvedContext> {
+  async resolveContext(
+    params: {
+      exerciseId?: string
+      lessonId?: string
+      chapterId?: string
+      courseId?: string
+      categoryId?: string
+    },
+    req?: PayloadRequest,
+  ): Promise<ResolvedContext> {
     // Priority order: Exercise > Lesson > Chapter > Course > Category
     if (params.exerciseId) {
       // Look up the parent lesson so all exercises in the same lesson share one conversation
@@ -216,6 +229,7 @@ export class ConversationService {
         collection: 'exercises',
         id: params.exerciseId,
         depth: 0,
+        ...(req && { req }),
       })
       const lessonId =
         typeof exercise.lesson === 'string'
@@ -287,6 +301,7 @@ export class ConversationService {
     userId: string,
     userRole: AccountRole,
     contextRef: ContextRef,
+    _req?: PayloadRequest,
   ): Promise<boolean> {
     // Admin always has access
     if (userRole === AccountRole.Admin) {
@@ -335,6 +350,7 @@ export class ConversationService {
   async validateGuestContextAccess(
     guestSessionId: string,
     contextRef: ContextRef,
+    _req?: PayloadRequest,
   ): Promise<boolean> {
     // Guests have open access to all content (tracked by session)
     logger.debug({ guestSessionId, contextRef }, 'Guest context access granted')
@@ -346,10 +362,12 @@ export class ConversationService {
    */
   async getConversationHistory(
     conversationId: string,
+    req?: PayloadRequest,
   ): Promise<{ messages: ChatMessage[]; summary?: string }> {
     const conversation = await this.payload.findByID({
       collection: 'conversations',
       id: conversationId,
+      ...(req && { req }),
     })
 
     return {
@@ -364,6 +382,7 @@ export class ConversationService {
   async getActiveConversation(
     userId: string,
     contextKey: string,
+    req?: PayloadRequest,
   ): Promise<ConversationWithHistory | null> {
     const result = await this.payload.find({
       collection: 'conversations',
@@ -375,6 +394,7 @@ export class ConversationService {
         ],
       },
       limit: 1,
+      ...(req && { req }),
     })
 
     if (result.docs.length === 0) {
@@ -391,6 +411,7 @@ export class ConversationService {
   async getOrCreateGuestConversation(
     guestSessionId: string,
     contextRef: ContextRef,
+    req?: PayloadRequest,
   ): Promise<ConversationWithHistory> {
     const contextKey = `${contextRef.relationTo}:${contextRef.value}`
 
@@ -404,6 +425,7 @@ export class ConversationService {
         ],
       },
       limit: 1,
+      ...(req && { req }),
     })
 
     if (existingConv.docs.length > 0) {
@@ -421,6 +443,7 @@ export class ConversationService {
         and: [{ guestSession: { equals: guestSessionId } }, { archivedAt: { exists: false } }],
       },
       limit: 0,
+      ...(req && { req }),
     })
 
     const guestConfig = await getGuestChatConfig()
@@ -442,6 +465,7 @@ export class ConversationService {
         contextPolicyVersion: 'v1',
       } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       draft: false,
+      ...(req && { req }),
     })
 
     logger.info(
@@ -457,6 +481,7 @@ export class ConversationService {
   async getGuestConversation(
     guestSessionId: string,
     contextKey: string,
+    req?: PayloadRequest,
   ): Promise<ConversationWithHistory | null> {
     const result = await this.payload.find({
       collection: 'conversations',
@@ -468,6 +493,7 @@ export class ConversationService {
         ],
       },
       limit: 1,
+      ...(req && { req }),
     })
 
     if (result.docs.length === 0) return null
@@ -480,6 +506,7 @@ export class ConversationService {
   async resetGuestConversation(
     guestSessionId: string,
     contextKey: string,
+    req?: PayloadRequest,
   ): Promise<ConversationWithHistory> {
     const existingConv = await this.payload.find({
       collection: 'conversations',
@@ -491,6 +518,7 @@ export class ConversationService {
         ],
       },
       limit: 1,
+      ...(req && { req }),
     })
 
     if (existingConv.docs.length > 0) {
@@ -503,6 +531,7 @@ export class ConversationService {
         } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         overrideAccess: true,
         context: { allowArchive: true },
+        ...(req && { req }),
       })
       logger.info(
         { guestSessionId, contextKey, conversationId: currentConv.id },
@@ -522,6 +551,7 @@ export class ConversationService {
         contextPolicyVersion: 'v1',
       } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       draft: false,
+      ...(req && { req }),
     })
 
     logger.info(
@@ -539,6 +569,7 @@ export class ConversationService {
 export async function buildContextHierarchy(
   contextKey: string,
   payload: Payload,
+  req?: PayloadRequest,
 ): Promise<string[]> {
   const [collection, id] = contextKey.split(':')
   const keys: string[] = [contextKey]
@@ -549,6 +580,7 @@ export async function buildContextHierarchy(
       collection: 'exercises',
       id,
       depth: 0,
+      ...(req && { req }),
     })
     const lessonKey = `lessons:${exercise.lesson}`
     keys.push(lessonKey)
@@ -557,6 +589,7 @@ export async function buildContextHierarchy(
       collection: 'lessons',
       id: exercise.lesson as string,
       depth: 0,
+      ...(req && { req }),
     })
     const chapterKey = `chapters:${lesson.chapter}`
     keys.push(chapterKey)
@@ -565,6 +598,7 @@ export async function buildContextHierarchy(
       collection: 'chapters',
       id: lesson.chapter as string,
       depth: 0,
+      ...(req && { req }),
     })
     const courseKey = `courses:${chapter.course}`
     keys.push(courseKey)
@@ -573,6 +607,7 @@ export async function buildContextHierarchy(
       collection: 'lessons',
       id,
       depth: 0,
+      ...(req && { req }),
     })
     keys.push(`chapters:${lesson.chapter}`)
 
@@ -580,6 +615,7 @@ export async function buildContextHierarchy(
       collection: 'chapters',
       id: lesson.chapter as string,
       depth: 0,
+      ...(req && { req }),
     })
     keys.push(`courses:${chapter.course}`)
   } else if (collection === 'chapters') {
@@ -587,6 +623,7 @@ export async function buildContextHierarchy(
       collection: 'chapters',
       id,
       depth: 0,
+      ...(req && { req }),
     })
     keys.push(`courses:${chapter.course}`)
   } else if (collection === 'categories') {
