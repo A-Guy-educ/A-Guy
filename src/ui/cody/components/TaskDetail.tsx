@@ -6,15 +6,17 @@
  */
 'use client'
 
+import { useState } from 'react'
 import { formatRelativeTime } from '../utils'
 import type { CodyTask, GitHubComment } from '../types'
 import { PipelineStatus } from './PipelineStatus'
 import { CommentEditor } from './CommentEditor'
 import { CommentList } from './CommentList'
+import { TaskPreviewTab } from './TaskPreviewTab'
 import { Button } from '@/ui/web/components/button'
 import { Badge } from '@/ui/web/components/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
-import { useTaskActions, useTaskDetails } from '../hooks'
+import { useTaskActions, useTaskDetails, useRetryWithContext } from '../hooks'
 import {
   GitPullRequest,
   ExternalLink,
@@ -31,6 +33,9 @@ import {
   ShieldX,
   RotateCcw,
   Ban,
+  Send,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 
 interface TaskDetailProps {
@@ -50,6 +55,20 @@ export function TaskDetail({ task, onClose, onRefresh }: TaskDetailProps) {
     refetch,
     isLoading: isDetailsLoading,
   } = useTaskDetails(task?.issueNumber ?? null)
+
+  const [activeTab, setActiveTab] = useState<'comments' | 'changes' | 'docs'>('comments')
+  const [retryContext, setRetryContext] = useState('')
+  const [showRetryContext, setShowRetryContext] = useState(false)
+
+  const retryWithContext = useRetryWithContext({
+    issueNumber: task?.issueNumber ?? 0,
+    onSuccess: () => {
+      setRetryContext('')
+      setShowRetryContext(false)
+      onRefresh?.()
+      refetch()
+    },
+  })
 
   const taskActions = useTaskActions({
     issueNumber: task?.issueNumber ?? 0,
@@ -248,18 +267,109 @@ export function TaskDetail({ task, onClose, onRefresh }: TaskDetailProps) {
           </div>
         )}
 
-        {/* Comments Section - chat-like */}
-        <div className="flex-1 flex flex-col min-h-[400px] mt-4">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2 shrink-0">
+        {/* Tab Navigation */}
+        <div className="flex border-b border-border mb-4 gap-4">
+          <button
+            onClick={() => setActiveTab('comments')}
+            className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'comments'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
             Comments
-          </h3>
-          <div className="flex-1 overflow-y-auto min-h-0">
-            <CommentList comments={fullDetails?.comments || []} loading={isDetailsLoading} />
-          </div>
-          <div className="shrink-0 mt-2">
-            <CommentEditor issueNumber={task.issueNumber} onCommentPosted={() => refetch()} />
-          </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('changes')}
+            className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'changes'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Changes
+          </button>
+          <button
+            onClick={() => setActiveTab('docs')}
+            className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'docs'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Docs
+          </button>
         </div>
+
+        {activeTab === 'comments' && (
+          <div className="flex-1 flex flex-col min-h-[400px] mt-4">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2 shrink-0">
+              Comments
+            </h3>
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <CommentList comments={fullDetails?.comments || []} loading={isDetailsLoading} />
+            </div>
+            <div className="shrink-0 mt-2">
+              <CommentEditor issueNumber={task.issueNumber} onCommentPosted={() => refetch()} />
+            </div>
+
+            {/* Retry with Context — visible for failed tasks */}
+            {task.column === 'failed' && (
+              <div className="shrink-0 mt-3 border border-orange-500/30 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setShowRetryContext(!showRetryContext)}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-orange-500/10 hover:bg-orange-500/15 transition-colors"
+                >
+                  <span className="text-sm font-medium text-orange-400 flex items-center gap-2">
+                    <RotateCcw className="w-4 h-4" />
+                    Retry with Context
+                  </span>
+                  {showRetryContext ? (
+                    <ChevronUp className="w-4 h-4 text-orange-400" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-orange-400" />
+                  )}
+                </button>
+                {showRetryContext && (
+                  <div className="p-3 space-y-2">
+                    <textarea
+                      value={retryContext}
+                      onChange={(e) => setRetryContext(e.target.value)}
+                      placeholder="Add context for the retry (e.g., hints about the fix, error details, instructions)..."
+                      className="w-full h-24 px-3 py-2 text-sm bg-background border border-border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 placeholder:text-muted-foreground"
+                    />
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        Posts <code className="text-orange-400">@cody retry</code> + your context,
+                        then triggers execution
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-orange-500 border-orange-500/30 hover:bg-orange-500/10"
+                        onClick={() => retryWithContext.mutate(retryContext)}
+                        disabled={retryWithContext.isPending}
+                      >
+                        {retryWithContext.isPending ? (
+                          <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4 mr-1" />
+                        )}
+                        {retryWithContext.isPending ? 'Retrying...' : 'Retry'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {(activeTab === 'changes' || activeTab === 'docs') && (
+          <div className="flex-1 min-h-0">
+            <TaskPreviewTab task={task} activeTab={activeTab as 'changes' | 'docs'} />
+          </div>
+        )}
 
         {/* Action Panel */}
         <div className="p-3 border-t border-border bg-muted/20">

@@ -26,6 +26,17 @@ export interface StageStatus {
   error?: string
 }
 
+export interface CheckRunResult {
+  name: string
+  status: 'queued' | 'in_progress' | 'completed'
+  conclusion: 'success' | 'failure' | 'cancelled' | 'skipped' | 'neutral' | 'timed_out' | null
+  output?: {
+    summary: string
+    text?: string
+  }
+  html_url?: string
+}
+
 export interface CodyPipelineStatus {
   taskId: string
   mode: string
@@ -254,4 +265,29 @@ export interface GitHubCollaborator {
 
 export interface CollaboratorsResponse {
   collaborators: GitHubCollaborator[]
+}
+
+// ============ Preview Tab Types ============
+
+export interface PRComment {
+  id: number
+  body: string
+  created_at: string
+  user: { login: string; avatar_url: string }
+  path?: string // File comment
+  line?: number // Line comment
+  side?: string // 'LEFT' or 'RIGHT' for diff comments
+}
+
+export interface FileChange {
+  filename: string
+  status: 'added' | 'removed' | 'modified' | 'renamed'
+  additions: number
+  deletions: number
+}
+
+export interface TaskDocument {
+  name: 'spec.md' | 'plan.md' | 'gap.md' | 'clarified.md' | 'task.md' | 'status.json'
+  content: string
+  path: string
 }
