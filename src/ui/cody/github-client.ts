@@ -301,32 +301,36 @@ export async function fetchIssues(options?: {
     since: options?.since as any, // Octokit accepts ISO string
   })
 
-  const issues: GitHubIssue[] = data.map((issue: any) => ({
-    id: issue.id,
-    number: issue.number,
-    title: issue.title,
-    body: issue.body ?? null,
-    state: issue.state as 'open' | 'closed',
-    labels: issue.labels.map((l: any) =>
-      typeof l === 'string'
-        ? { name: l, color: '000000' }
-        : { name: l.name ?? '', color: l.color ?? '000000' },
-    ),
-    milestone: issue.milestone ? { title: issue.milestone.title ?? '' } : null,
-    assignees:
-      issue.assignees?.map((a: any) => ({
-        login: a.login ?? '',
-        avatar_url: a.avatar_url ?? '',
-      })) ?? [],
-    created_at: issue.created_at ?? '',
-    updated_at: issue.updated_at ?? '',
-    closed_at: issue.closed_at ?? null,
-    html_url: issue.html_url ?? '',
-    isCodyAssigned:
-      issue.assignees?.some(
-        (a: any) => a.login === 'github-actions[bot]' || a.login === 'Copilot' || a.type === 'Bot',
-      ) ?? false,
-  }))
+  // Filter out pull requests — GitHub issues API returns both issues and PRs
+  const issues: GitHubIssue[] = data
+    .filter((issue: any) => !issue.pull_request)
+    .map((issue: any) => ({
+      id: issue.id,
+      number: issue.number,
+      title: issue.title,
+      body: issue.body ?? null,
+      state: issue.state as 'open' | 'closed',
+      labels: issue.labels.map((l: any) =>
+        typeof l === 'string'
+          ? { name: l, color: '000000' }
+          : { name: l.name ?? '', color: l.color ?? '000000' },
+      ),
+      milestone: issue.milestone ? { title: issue.milestone.title ?? '' } : null,
+      assignees:
+        issue.assignees?.map((a: any) => ({
+          login: a.login ?? '',
+          avatar_url: a.avatar_url ?? '',
+        })) ?? [],
+      created_at: issue.created_at ?? '',
+      updated_at: issue.updated_at ?? '',
+      closed_at: issue.closed_at ?? null,
+      html_url: issue.html_url ?? '',
+      isCodyAssigned:
+        issue.assignees?.some(
+          (a: any) =>
+            a.login === 'github-actions[bot]' || a.login === 'Copilot' || a.type === 'Bot',
+        ) ?? false,
+    }))
 
   setCache(cacheKey, CACHE_TTL.tasks, issues)
   return issues
