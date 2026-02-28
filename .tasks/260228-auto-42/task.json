@@ -1,0 +1,22 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/CommandPalette.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "complexity": 8,
+  "complexity_reasoning": "Scope: 3 (single file, ~2 lines change). Risk: 1 (UI text only, no business logic). Novelty: 1 (simple replace). Cross-domain: 1 (frontend only). Ambiguity: 1 (clear file path and line numbers). Dependencies: 1 (self-contained). Total: 8 (Trivial)",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains clear file path (src/ui/web/CommandPalette.tsx), specific line numbers (70 and 75), exact code to replace, and expected outcome. No implementation details needed beyond the replace."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
