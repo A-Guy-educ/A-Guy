@@ -1,15 +1,16 @@
-# Plan: ExerciseAssets Vercel Blob Migration
+# ExerciseAssets Vercel Blob Migration Plan
 
 ## Rerun Context
 
-This is a rerun. Previous plan likely had implementation issues. The spec requires:
-1. Remove `staticDir: 'exercise-assets'` (local filesystem - breaks in serverless)
-2. Fix `adminThumbnail: 'thumbnail'` (references non-existent image size)
-3. Follow Media collection pattern for Vercel Blob configuration
+This is a rerun of a previous fix attempt. The task is to migrate the ExerciseAssets collection from local filesystem storage to Vercel Blob storage. Key issues to address:
+- Remove deprecated `staticDir` configuration
+- Fix broken `adminThumbnail` that references non-existent 'thumbnail' size
+
+---
 
 ## Bug Summary
 
-**Root Cause**: ExerciseAssets collection uses local filesystem storage (`staticDir`) which doesn't persist in serverless environments, and `adminThumbnail` references a non-existent 'thumbnail' size (imageSizes are commented out).
+**Root Cause**: The ExerciseAssets collection uses local filesystem storage (`staticDir: 'exercise-assets'`) which doesn't persist in serverless environments. Additionally, `adminThumbnail: 'thumbnail'` references an image size that is commented out, causing the thumbnail to not display in the admin panel.
 
 **Files Affected**:
 - `src/server/payload/collections/ExerciseAssets.ts`
@@ -18,94 +19,61 @@ This is a rerun. Previous plan likely had implementation issues. The spec requir
 
 ## Step 1: Migrate ExerciseAssets to Vercel Blob Storage
 
-**Files to Touch**:
+**Root Cause**: Using local filesystem storage (`staticDir`) fails in serverless environments because files are not persisted across function invocations.
 
+**Files to Touch**:
 - `src/server/payload/collections/ExerciseAssets.ts` (MODIFIED - lines 14-39)
 
-**Reproduction Test**:
+**Reproduction Test**: 
+- Verify ExerciseAssets.ts contains `staticDir: 'exercise-assets'` (will be removed in fix)
 
-- Test location: `tests/int/exercise-assets-upload.int.spec.ts` (NEW)
-- Test: `should store files in Vercel Blob, not local filesystem`
-- Why it fails: Currently uses `staticDir: 'exercise-assets'` - local storage
+**Fix**: 
+1. Remove `staticDir: 'exercise-assets'` from upload config - the Vercel Blob plugin handles storage automatically
+2. Change `adminThumbnail: 'thumbnail'` to a function that returns `doc.url || false` (similar to Media collection pattern)
+3. Keep `mimeTypes: ['image/svg+xml', 'image/png']` restriction
 
-**Fix**: Remove `staticDir` from upload config, add Vercel Blob configuration following Media pattern:
+**Verification**:
+1. Run `pnpm tsc --noEmit` to validate TypeScript compiles
+2. Verify ExerciseAssets.ts no longer contains `staticDir`
+3. Verify adminThumbnail is now a function returning `doc.url || false`
+4. Run `pnpm generate:types` to regenerate Payload types (required after collection changes)
+
+---
+
+## Implementation Details
+
+### Changes to ExerciseAssets.ts
 
 ```typescript
+// BEFORE (lines 14-39):
+upload: {
+  staticDir: 'exercise-assets',
+  // imageSizes commented out...
+  adminThumbnail: 'thumbnail',
+  mimeTypes: ['image/svg+xml', 'image/png'],
+}
+
+// AFTER:
 upload: {
   // Vercel Blob storage plugin handles actual file storage
-  // Remove staticDir - the plugin handles storage automatically
+  // Plugin injects disableLocalStorage: true and adapter handlers
+  // Show thumbnail in admin list view - returns URL or false
   adminThumbnail: ({ doc }) => {
-    // Return the URL directly since imageSizes are disabled
     const docData = doc as { url?: string }
     return docData.url || false
   },
   mimeTypes: ['image/svg+xml', 'image/png'],
-  // Allow restricted file types (SVG can have issues with sharp)
-  allowRestrictedFileTypes: true,
-},
+}
 ```
-
-**Verification**:
-
-- Run reproduction test → Should pass (files stored in blob)
-- Verify upload config doesn't include `staticDir`
-
----
-
-## Step 2: Fix adminThumbnail Configuration
-
-**Root Cause**: `adminThumbnail: 'thumbnail'` references an imageSize that doesn't exist (imageSizes are commented out).
-
-**Files to Touch**:
-
-- `src/server/payload/collections/ExerciseAssets.ts` (MODIFIED - line 37)
-
-**Reproduction Test**:
-
-- Test location: `tests/int/exercise-assets-upload.int.spec.ts` (NEW)
-- Test: `should return valid thumbnail URL for uploaded file`
-- Why it fails: Current config returns false/undefined because 'thumbnail' size doesn't exist
-
-**Fix**: Change `adminThumbnail` from string `'thumbnail'` to function that returns URL directly:
-
-```typescript
-adminThumbnail: ({ doc }) => {
-  const docData = doc as { url?: string }
-  return docData.url || false
-},
-```
-
-**Verification**:
-
-- Run reproduction test → Should pass (returns valid URL)
-- Check admin panel shows thumbnails correctly
-
----
-
-## Step 3: Generate Types and Verify Build
-
-**Files to Touch**:
-
-- Run `pnpm generate:types`
-
-**Reproduction Test**:
-
-- Test: `TypeScript compilation passes`
-- Why it fails: Types may be stale after config changes
-
-**Fix**: Run type generation
-
-**Verification**:
-
-- `pnpm tsc --noEmit` → Must pass
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] ExerciseAssets collection uses Vercel Blob adapter (no `staticDir`)
-- [ ] Configuration follows Media collection pattern
-- [ ] Files are stored in Vercel Blob storage
-- [ ] `adminThumbnail` returns valid URL or false
-- [ ] TypeScript compiles without errors
-- [ ] Existing mimeTypes restriction preserved (`image/svg+xml`, `image/png`)
+- [ ] ExerciseAssets collection uses Vercel Blob adapter (no staticDir)
+- [ ] Configuration follows the same pattern as Media collection
+- [ ] adminThumbnail works correctly (returns URL or false)
+- [ ] Files will be stored in Vercel Blob storage
+- [ ] No data loss during deployment
+- [ ] TypeScript compiles without errors (`pnpm tsc --noEmit`)
+- [ ] Payload types generated (`pnpm generate:types`)
