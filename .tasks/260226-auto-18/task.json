@@ -1,7 +1,7 @@
 {
   "task_type": "fix_bug",
   "risk_level": "high",
-  "confidence": 0.95,
+  "confidence": 1,
   "primary_domain": "backend",
   "scope": [
     "src/server/payload/collections/Courses.ts",
@@ -15,7 +15,7 @@
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Task contains clear issue description, exact file paths with line numbers, expected fix with code example, and acceptance criteria (steps to test). The spec.md can be promoted from the task.md requirements and acceptance criteria."
+    "reasoning": "Task contains clear requirements with ## Steps to Test, affected files with line numbers, and the expected fix is provided. The test steps serve as acceptance criteria."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
