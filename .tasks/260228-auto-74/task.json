@@ -8,14 +8,15 @@
   ],
   "missing_inputs": [],
   "assumptions": [
-    "Migration to Vercel Blob follows the pattern used by the Media collection"
+    "Vercel Blob is properly configured in the project",
+    "Media collection uses Vercel Blob and can serve as a reference pattern"
   ],
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Task contains clear issue title with HIGH priority, description explaining the bug (local staticDir vs Vercel Blob), specific file location (line 15), current code snippet, and expected fix. The spec stage can be skipped as requirements are clear."
+    "reasoning": "Input has clear issue description with file/line reference, requirements to migrate to Vercel Blob, and acceptance criteria. Promoted spec.md."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"

@@ -1,36 +1,24 @@
-# Specification (promoted)
+# ExerciseAssets Vercel Blob Migration Spec
 
-Skipped via input_quality — taskify determined spec is unnecessary.
+## Overview
+Migrate the `ExerciseAssets` collection from local filesystem storage to Vercel Blob storage to ensure file persistence across serverless deployments.
+
+## Problem
+The `ExerciseAssets` collection currently uses `upload: { staticDir: 'exercise-assets' }` which stores files on the local filesystem. This approach fails in serverless environments because files are not persisted across function invocations.
 
 ## Requirements
-
-# Task
-
-## Issue Title
-
-[HIGH] Bug: ExerciseAssets uses local staticDir instead of Vercel Blob
-## Description
-The `ExerciseAssets` collection uses `upload: { staticDir: 'exercise-assets' }` for file storage. Per project rules (AGENTS.md): *"Do NOT use upload: { staticDir: ... } - use Vercel Blob instead"*. Files stored on the local filesystem won't persist across serverless deployments.
-
-## Files Affected
-- `src/server/payload/collections/ExerciseAssets.ts` — line 15
-
-## Current Code
-```typescript
-upload: {
-  staticDir: 'exercise-assets',  // ❌ Local filesystem
-}
-```
-
-## Expected Fix
-Migrate to Vercel Blob adapter (follow the pattern used by other upload collections like Media).
-
-## Priority
-HIGH — Files lost on deployment in serverless environment
-
+- FR-1: Migrate ExerciseAssets collection to use Vercel Blob adapter
+- FR-2: Follow the same pattern as the Media collection
+- FR-3: Ensure existing files are handled (migration strategy if needed)
+- FR-4: Verify the configuration works with serverless deployment
 
 ## Acceptance Criteria
+- [ ] ExerciseAssets collection uses Vercel Blob adapter instead of staticDir
+- [ ] Configuration follows the same pattern as Media collection
+- [ ] Files are stored in Vercel Blob storage
+- [ ] No data loss during deployment
 
-- [ ] Fix applied as described in task.md
-- [ ] TypeScript compilation passes
-- [ ] Unit tests pass
+## Implementation Notes
+- Reference `src/server/payload/collections/Media.ts` for Vercel Blob configuration pattern
+- The upload configuration should use `vercelBlob` adapter
+- Bucket name should be consistent with project conventions
