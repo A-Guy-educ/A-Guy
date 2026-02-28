@@ -28,7 +28,14 @@ export const ALL_STAGES = [...SPEC_STAGES, ...IMPL_STAGES, AUTOFIX_STAGE] as con
 
 // ============ Kanban Columns ============
 
-export type ColumnId = 'open' | 'building' | 'review' | 'failed' | 'gate-waiting' | 'retrying'
+export type ColumnId =
+  | 'open'
+  | 'building'
+  | 'review'
+  | 'failed'
+  | 'gate-waiting'
+  | 'retrying'
+  | 'done'
 
 export interface ColumnDef {
   id: ColumnId
@@ -44,6 +51,7 @@ export const COLUMN_DEFS: Record<ColumnId, ColumnDef> = {
   failed: { id: 'failed', label: 'Failed', color: 'red', order: 3 },
   'gate-waiting': { id: 'gate-waiting', label: 'Gate Waiting', color: 'yellow', order: 4 },
   retrying: { id: 'retrying', label: 'Retrying', color: 'orange', order: 5 },
+  done: { id: 'done', label: 'Done', color: 'green', order: 6 },
 }
 
 // ============ Polling Intervals ============

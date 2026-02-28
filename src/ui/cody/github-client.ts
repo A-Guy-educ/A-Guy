@@ -251,6 +251,11 @@ export async function fetchIssue(issueNumber: number): Promise<GitHubIssue | nul
       updated_at: data.updated_at ?? '',
       closed_at: data.closed_at ?? null,
       html_url: data.html_url ?? '',
+      isCodyAssigned:
+        data.assignees?.some(
+          (a: any) =>
+            a.login === 'github-actions[bot]' || a.login === 'Copilot' || (a as any).type === 'Bot',
+        ) ?? false,
     }
 
     // Single issue, cache for longer
@@ -313,6 +318,10 @@ export async function fetchIssues(options?: {
     updated_at: issue.updated_at ?? '',
     closed_at: issue.closed_at ?? null,
     html_url: issue.html_url ?? '',
+    isCodyAssigned:
+      issue.assignees?.some(
+        (a: any) => a.login === 'github-actions[bot]' || a.login === 'Copilot' || a.type === 'Bot',
+      ) ?? false,
   }))
 
   setCache(cacheKey, CACHE_TTL.tasks, issues)
@@ -382,6 +391,7 @@ export async function fetchWorkflowRuns(options?: {
     created_at: run.created_at,
     updated_at: run.updated_at,
     html_url: run.html_url,
+    display_title: (run as any).display_title ?? '',
   }))
 
   setCache(cacheKey, CACHE_TTL.pipeline, runs)
@@ -397,6 +407,102 @@ export async function getWorkflowRunForTask(taskId: string): Promise<WorkflowRun
   return (
     runs.find((run) => run.html_url.includes(taskId) || taskId.includes(run.id.toString())) || null
   )
+}
+
+// ============ Bulk PR Fetch ============
+
+/**
+ * Fetch all open PRs in one call (cheap: single API request).
+ * Used by the dashboard to match PRs to issues without N per-issue calls.
+ */
+export async function fetchOpenPRs(): Promise<GitHubPR[]> {
+  const cacheKey = 'open-prs'
+  const cached = getCached<GitHubPR[]>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+
+  const { data } = await octokit.pulls.list({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    state: 'open',
+    per_page: 50,
+    sort: 'updated',
+    direction: 'desc',
+  })
+
+  const prs: GitHubPR[] = data.map((pr) => ({
+    id: pr.id,
+    number: pr.number,
+    title: pr.title,
+    state: pr.state,
+    head: {
+      ref: pr.head.ref,
+      sha: pr.head.sha,
+    },
+    merged_at: pr.merged_at,
+    html_url: pr.html_url,
+  }))
+
+  setCache(cacheKey, CACHE_TTL.prs, prs)
+  return prs
+}
+
+// ============ Vercel Preview URLs ============
+
+/**
+ * Fetch Vercel preview URLs for a set of PR head SHAs.
+ * Strategy: 1 bulk call for recent deployments, then 1 status call per matched deployment.
+ * Returns a Map of SHA -> preview URL.
+ */
+export async function fetchDeploymentPreviews(prShas: string[]): Promise<Map<string, string>> {
+  if (prShas.length === 0) return new Map()
+
+  const cacheKey = `previews:${prShas.sort().join(',')}`
+  const cached = getCached<Map<string, string>>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+  const result = new Map<string, string>()
+
+  try {
+    // 1. Bulk fetch recent Preview deployments (1 API call)
+    const { data: deployments } = await octokit.repos.listDeployments({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      environment: 'Preview',
+      per_page: 30,
+    })
+
+    // 2. Match deployments to our PR SHAs
+    const shaSet = new Set(prShas)
+    const matched = deployments.filter((d) => shaSet.has(d.sha))
+
+    // 3. Fetch status for each matched deployment (1 call per match, typically 1-3)
+    await Promise.all(
+      matched.map(async (deployment) => {
+        try {
+          const { data: statuses } = await octokit.repos.listDeploymentStatuses({
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
+            deployment_id: deployment.id,
+            per_page: 1,
+          })
+          if (statuses.length > 0 && statuses[0].environment_url) {
+            result.set(deployment.sha, statuses[0].environment_url)
+          }
+        } catch {
+          // Skip individual failures
+        }
+      }),
+    )
+  } catch (error) {
+    console.error('[Cody] Error fetching deployment previews:', error)
+  }
+
+  // Cache for 2 minutes (deployments don't change often)
+  setCache(cacheKey, CACHE_TTL.prs, result)
+  return result
 }
 
 // ============ PR Discovery ============

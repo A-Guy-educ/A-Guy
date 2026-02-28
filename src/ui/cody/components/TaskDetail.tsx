@@ -216,6 +216,21 @@ export function TaskDetail({ task, onClose, onRefresh }: TaskDetailProps) {
           </div>
         )}
 
+        {/* Vercel Preview */}
+        {task.previewUrl && (
+          <div>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Preview</h3>
+            <a
+              href={task.previewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-emerald-400 hover:text-emerald-300"
+            >
+              Open Vercel Preview →
+            </a>
+          </div>
+        )}
+
         {/* Comments Section */}
         <div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Comments</h3>

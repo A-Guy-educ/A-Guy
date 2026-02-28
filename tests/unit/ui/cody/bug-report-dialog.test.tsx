@@ -105,12 +105,8 @@ describe('BugReportDialog component', () => {
       expect(screen.getByLabelText('Browser / Device')).toBeTruthy()
     })
 
-    it('should have branch/commit input field', () => {
-      render(<BugReportDialog open={true} onClose={mockOnClose} onCreated={mockOnCreated} />)
-
-      expect(screen.getByLabelText('Branch / Commit')).toBeTruthy()
-    })
-
+    // Note: Branch/Commit field was removed from the simplified component
+    // Remaining fields match current implementation
     it('should have user role/tenant input field', () => {
       render(<BugReportDialog open={true} onClose={mockOnClose} onCreated={mockOnCreated} />)
 
@@ -143,41 +139,8 @@ describe('BugReportDialog component', () => {
       expect(screen.getByLabelText('Actual Result')).toBeTruthy()
     })
 
-    it('should have affects select field', () => {
-      render(<BugReportDialog open={true} onClose={mockOnClose} onCreated={mockOnCreated} />)
-
-      // The label is "Affects" but doesn't have htmlFor, check for the text
-      expect(screen.getByText('Affects')).toBeTruthy()
-      // Check for the select item - use getAll because it appears multiple times
-      expect(screen.getAllByText('Single').length).toBeGreaterThan(0)
-    })
-
-    it('should have blocking select field', () => {
-      render(<BugReportDialog open={true} onClose={mockOnClose} onCreated={mockOnCreated} />)
-
-      expect(screen.getByText('Blocking')).toBeTruthy()
-      expect(screen.getAllByText('No').length).toBeGreaterThan(0) // Default value display
-    })
-
-    it('should have regression select field', () => {
-      render(<BugReportDialog open={true} onClose={mockOnClose} onCreated={mockOnCreated} />)
-
-      expect(screen.getByText('Regression')).toBeTruthy()
-      expect(screen.getAllByText('No').length).toBeGreaterThan(0) // Default value display
-    })
-
-    it('should have since version input field', () => {
-      render(<BugReportDialog open={true} onClose={mockOnClose} onCreated={mockOnCreated} />)
-
-      expect(screen.getByPlaceholderText('v1.0.0')).toBeTruthy()
-    })
-
-    it('should have suspected area input field', () => {
-      render(<BugReportDialog open={true} onClose={mockOnClose} onCreated={mockOnCreated} />)
-
-      expect(screen.getByLabelText('Suspected Area (Optional)')).toBeTruthy()
-    })
-
+    // Note: Affects, Blocking, Regression, Since Version, Suspected Area fields
+    // were removed from the simplified component
     it('should have reproducibility select field', () => {
       render(<BugReportDialog open={true} onClose={mockOnClose} onCreated={mockOnCreated} />)
 
@@ -194,15 +157,7 @@ describe('BugReportDialog component', () => {
       expect(environmentSelect).toBeTruthy()
     })
 
-    it('should render with default affects value', () => {
-      render(<BugReportDialog open={true} onClose={mockOnClose} onCreated={mockOnCreated} />)
-
-      // The label is "Affects" but doesn't have htmlFor, check for the text
-      expect(screen.getByText('Affects')).toBeTruthy()
-      // Check for the select item - use getAll because it appears multiple times
-      expect(screen.getAllByText('Single').length).toBeGreaterThan(0)
-    })
-
+    // Note: Affects field was removed from the simplified component
     it('should render with default reproducibility value', () => {
       render(<BugReportDialog open={true} onClose={mockOnClose} onCreated={mockOnCreated} />)
 

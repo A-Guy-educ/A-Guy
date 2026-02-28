@@ -106,6 +106,29 @@ pnpm test:unit
 3. Look at similar test files in the project for reference
 4. Fix the issue and re-run tests
 
+### CRITICAL: Never Weaken Tests
+
+When tests YOU wrote (or @test-writer wrote) fail, you have exactly **two options**:
+
+1. **Fix the implementation** — change the source code so the test passes
+2. **Fix the test environment** — wrong mock, missing jsdom setup, wrong import
+
+You must **NEVER**:
+
+- Replace behavioral assertions with config-checking assertions
+  - ❌ `expect(functionOutput).toContain('<style')` → `expect(CONFIG.ALLOWED_TAGS).toContain('style')`
+- Comment out, skip, or delete failing tests you just wrote
+- Lower the bar so tests pass without proving the behavior works
+- Replace an integration test with a unit test that tests less
+
+If a test fails due to an **environment limitation** (e.g., DOMPurify strips `<style>` tags in jsdom but not in real browsers):
+
+1. Document it as a known limitation in `build.md`
+2. Mark the test with `it.skip('reason: jsdom limitation — works in browser')` 
+3. Do NOT rewrite it to test something weaker
+
+**Why**: The pipeline's quality gates only check that tests pass. If you weaken assertions, the gates pass but the bug is not actually verified as fixed. This defeats the purpose of TDD.
+
 ## Workflow
 
 ### 1. Implementation

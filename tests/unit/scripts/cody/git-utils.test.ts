@@ -143,6 +143,88 @@ Fix Auth and media persistence issue
     const result = deriveBranchName(tempDir, '260225-auto-90')
     expect(result).toBe('260225-auto-90')
   })
+
+  describe('issue number embedding', () => {
+    let savedIssueNumber: string | undefined
+
+    beforeEach(() => {
+      savedIssueNumber = process.env.ISSUE_NUMBER
+    })
+
+    afterEach(() => {
+      if (savedIssueNumber !== undefined) {
+        process.env.ISSUE_NUMBER = savedIssueNumber
+      } else {
+        delete process.env.ISSUE_NUMBER
+      }
+    })
+
+    it('embeds issue number in branch name when ISSUE_NUMBER is set', () => {
+      process.env.ISSUE_NUMBER = '621'
+      fs.writeFileSync(
+        path.join(tempDir, 'task.md'),
+        `## Issue Title
+Bug Report HTML SVG Content Rendering Failure
+`,
+      )
+
+      const result = deriveBranchName(tempDir, '260227-auto-77')
+      expect(result).toContain('-621-')
+      expect(result.startsWith('260227-auto-')).toBe(true)
+      expect(result).toContain('bug')
+    })
+
+    it('does not embed issue number when ISSUE_NUMBER is not set', () => {
+      delete process.env.ISSUE_NUMBER
+      fs.writeFileSync(
+        path.join(tempDir, 'task.md'),
+        `## Issue Title
+Some feature title
+`,
+      )
+
+      const result = deriveBranchName(tempDir, '260227-auto-77')
+      expect(result).not.toMatch(/-\d{3,}-/)
+      expect(result.startsWith('260227-auto-')).toBe(true)
+    })
+
+    it('still respects 50 char limit with issue number', () => {
+      process.env.ISSUE_NUMBER = '12345'
+      const longTitle =
+        'This is a very long title that exceeds the maximum character limit for branch names'
+      fs.writeFileSync(
+        path.join(tempDir, 'task.md'),
+        `## Issue Title
+${longTitle}
+`,
+      )
+
+      const result = deriveBranchName(tempDir, '260225-auto-90')
+      expect(result.length).toBeLessThanOrEqual(50)
+      expect(result).toContain('-12345-')
+      expect(result.startsWith('260225-')).toBe(true)
+    })
+
+    it('produces different branch names for different issues on same day', () => {
+      fs.writeFileSync(
+        path.join(tempDir, 'task.md'),
+        `## Issue Title
+Some task title
+`,
+      )
+
+      process.env.ISSUE_NUMBER = '501'
+      const branch1 = deriveBranchName(tempDir, '260227-auto-50')
+
+      process.env.ISSUE_NUMBER = '621'
+      const branch2 = deriveBranchName(tempDir, '260227-auto-77')
+
+      // Different issue numbers → different branch names
+      expect(branch1).not.toBe(branch2)
+      expect(branch1).toContain('-501-')
+      expect(branch2).toContain('-621-')
+    })
+  })
 })
 
 // ============================================================================

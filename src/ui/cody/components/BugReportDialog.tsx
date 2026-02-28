@@ -40,7 +40,6 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
 
   // Environment fields
   const [environment, setEnvironment] = useState('dev')
-  const [branch, setBranch] = useState('')
   const [browser, setBrowser] = useState('')
   const [userRole, setUserRole] = useState('')
 
@@ -55,15 +54,6 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
 
   // Actual result
   const [actualResult, setActualResult] = useState('')
-
-  // Scope & Impact
-  const [affects, setAffects] = useState('single')
-  const [isBlocking, setIsBlocking] = useState(false)
-  const [isRegression, setIsRegression] = useState(false)
-  const [sinceVersion, setSinceVersion] = useState('')
-
-  // Suspected area
-  const [suspectedArea, setSuspectedArea] = useState('')
 
   // Reproducibility
   const [reproducibility, setReproducibility] = useState('always')
@@ -83,18 +73,12 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
     if (!open) {
       setTitle('')
       setEnvironment('dev')
-      setBranch('')
       setBrowser('')
       setUserRole('')
       setPreconditions('')
       setSteps('')
       setExpectedResult('')
       setActualResult('')
-      setAffects('single')
-      setIsBlocking(false)
-      setIsRegression(false)
-      setSinceVersion('')
-      setSuspectedArea('')
       setReproducibility('always')
     }
   }, [open])
@@ -124,7 +108,6 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
 
     report += '## 2. Environment\n'
     report += `- Environment: ${environment}\n`
-    if (branch) report += `- Branch / Commit: ${branch}\n`
     if (browser) report += `- Browser / Device: ${browser}\n`
     if (userRole) report += `- User Role / Tenant: ${userRole}\n`
     report += '\n'
@@ -161,22 +144,7 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
     }
     report += '\n'
 
-    report += '## 7. Scope & Impact\n'
-    report += `- Affects: ${affects === 'single' ? 'single user' : 'all users'}\n`
-    report += `- Blocking: ${isBlocking ? 'yes' : 'no'}\n`
-    report += `- Regression: ${isRegression ? 'yes' : 'no'}\n`
-    if (sinceVersion) report += `- Since version: ${sinceVersion}\n`
-    report += '\n'
-
-    report += '## 8. Suspected Area\n'
-    if (suspectedArea) {
-      report += `${suspectedArea}\n`
-    } else {
-      report += '_Unknown_\n'
-    }
-    report += '\n'
-
-    report += '## 9. Reproducibility\n'
+    report += '## 7. Reproducibility\n'
     report += `${reproducibility}\n`
 
     return report
@@ -241,16 +209,6 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
 
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="branch">Branch / Commit</Label>
-              <Input
-                id="branch"
-                value={branch}
-                onChange={(e) => setBranch(e.target.value)}
-                placeholder="dev, main, commit hash"
-              />
-            </div>
-
-            <div className="grid gap-2">
               <Label htmlFor="userRole">User Role / Tenant</Label>
               <Input
                 id="userRole"
@@ -313,74 +271,6 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
                 rows={2}
               />
             </div>
-          </div>
-
-          {/* Scope & Impact */}
-          <div className="grid grid-cols-4 gap-2">
-            <div className="grid gap-2">
-              <Label>Affects</Label>
-              <Select value={affects} onValueChange={setAffects}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="single">Single</SelectItem>
-                  <SelectItem value="all">All</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Blocking</Label>
-              <Select
-                value={isBlocking ? 'yes' : 'no'}
-                onValueChange={(v) => setIsBlocking(v === 'yes')}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Regression</Label>
-              <Select
-                value={isRegression ? 'yes' : 'no'}
-                onValueChange={(v) => setIsRegression(v === 'yes')}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Since</Label>
-              <Input
-                value={sinceVersion}
-                onChange={(e) => setSinceVersion(e.target.value)}
-                placeholder="v1.0.0"
-              />
-            </div>
-          </div>
-
-          {/* Suspected Area */}
-          <div className="grid gap-2">
-            <Label htmlFor="suspected">Suspected Area (Optional)</Label>
-            <Input
-              id="suspected"
-              value={suspectedArea}
-              onChange={(e) => setSuspectedArea(e.target.value)}
-              placeholder="Related component, file, collection, or API"
-            />
           </div>
 
           {/* Reproducibility */}

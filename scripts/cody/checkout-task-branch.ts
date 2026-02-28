@@ -129,16 +129,21 @@ function findRemoteBranch(taskId: string): string | null {
     }
   }
 
-  // Search for branches matching {prefix}/{datePrefix}-*
-  // Only return if there's exactly ONE match to avoid picking wrong branch
+  // Collect ALL matches across ALL prefixes before deciding
+  // Previously this returned on the first prefix with a single match,
+  // which could pick feat/ when the correct branch was fix/
+  const allMatches: string[] = []
   for (const prefix of BRANCH_PREFIXES) {
     const pattern = `${prefix}/${datePrefix}-`
     const matches = branches.filter((b) => b.startsWith(pattern))
-    if (matches.length === 1) {
-      return matches[0]
-    }
-    // If multiple matches, skip - let it create a new branch instead
+    allMatches.push(...matches)
   }
+
+  // Only return if there's exactly ONE match across all prefixes
+  if (allMatches.length === 1) {
+    return allMatches[0]
+  }
+  // If multiple matches across different prefixes, don't guess — create new branch
 
   // Also try exact match (legacy/simple branch names)
   for (const prefix of BRANCH_PREFIXES) {

@@ -14,7 +14,13 @@ import { PipelinePausedError } from '../engine/types'
 import { readTask } from '../pipeline-utils'
 import { commitPipelineFiles } from '../git-utils'
 import { handleGateApproval } from '../clarify-workflow'
-import { extractGateCommentBody, postComment } from '../github-api'
+import {
+  extractGateCommentBody,
+  postComment,
+  addIssueLabel,
+  removeIssueLabel,
+  GATE_LABELS,
+} from '../github-api'
 import { loadState, updateStage, completeState, writeState } from '../engine/status'
 import { classifyError, formatErrorsAsMarkdown } from './error-classifier'
 import { runAgentWithFileWatch, STAGE_TIMEOUTS, DEFAULT_TIMEOUT } from '../agent-runner'
@@ -85,7 +91,16 @@ export async function executePostAction(
         break
       }
       const gateResult = handleGateApproval(ctx.input, ctx.taskDir, action.gate, taskDef)
+
+      // Determine gate label based on risk level
+      const gateLabel =
+        taskDef.risk_level === 'high' ? GATE_LABELS.HARD_STOP : GATE_LABELS.RISK_GATED
+
       if (gateResult === 'waiting') {
+        // Add gate label for dashboard visibility
+        if (ctx.input.issueNumber) {
+          addIssueLabel(ctx.input.issueNumber, gateLabel)
+        }
         // Read gate file and extract comment body
         const gateFilePath = path.join(ctx.taskDir, `gate-${action.gate}.md`)
         if (fs.existsSync(gateFilePath)) {
@@ -120,7 +135,17 @@ export async function executePostAction(
         throw new PipelinePausedError(`${action.gate} gate: awaiting approval for ${ctx.taskId}`)
       }
       if (gateResult === 'rejected') {
+        // Remove gate label when rejected
+        if (ctx.input.issueNumber) {
+          removeIssueLabel(ctx.input.issueNumber, GATE_LABELS.HARD_STOP)
+          removeIssueLabel(ctx.input.issueNumber, GATE_LABELS.RISK_GATED)
+        }
         throw new Error(`Task rejected at ${action.gate} gate`)
+      }
+      // Approved - remove gate label so dashboard shows it's no longer waiting
+      if (ctx.input.issueNumber) {
+        removeIssueLabel(ctx.input.issueNumber, GATE_LABELS.HARD_STOP)
+        removeIssueLabel(ctx.input.issueNumber, GATE_LABELS.RISK_GATED)
       }
       break
     }
@@ -351,13 +376,15 @@ export async function executePostAction(
         }
       }
 
-      // Record feedback loop metrics in status.json for observability
+      // Record feedback loop metrics in status.json for observability (immutable update)
       if (completedLoops > 0) {
         const currentState = loadState(ctx.taskId)
         if (currentState && currentState.stages?.build) {
-          currentState.stages.build.feedbackLoops = completedLoops
-          currentState.stages.build.feedbackErrors = Array.from(encounteredErrors)
-          writeState(ctx.taskId, currentState)
+          const updatedState = updateStage(currentState, 'build', {
+            feedbackLoops: completedLoops,
+            feedbackErrors: Array.from(encounteredErrors),
+          })
+          writeState(ctx.taskId, updatedState)
         }
       }
 

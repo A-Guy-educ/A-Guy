@@ -234,6 +234,18 @@ Common edit failures:
 - Use meaningful test names
 - Add assertions for every expected outcome
 
+### Critical: Test Integrity — Write Behavioral Tests
+
+Your tests are the **contract**. They prove the behavior works. The build agent should make your tests PASS by implementing the feature — not by weakening your assertions.
+
+Write tests that are:
+
+- **Behavioral**: test actual function output, not config objects
+  - ✅ `expect(sanitize(html)).toContain('<style')` — tests real behavior
+  - ❌ `expect(CONFIG.ALLOWED_TAGS).toContain('style')` — only tests config, not behavior
+- **Specific**: assert on the actual output of the function under test
+- **Resistant to weakening**: if someone changes your assertion to test a config array instead of actual behavior, that's a regression
+
 ## Output
 
 After writing tests and validating they compile, the build agent will run them to verify they are valid. Tests should FAIL initially (TDD red phase), proving they're testing the right behavior.

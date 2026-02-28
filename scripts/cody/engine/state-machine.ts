@@ -15,9 +15,18 @@ import type {
   PipelineStep,
 } from './types'
 import { PipelinePausedError } from './types'
-import { loadState, writeState, initState, updateStage, completeState } from './status'
+import {
+  loadState,
+  writeState,
+  initState,
+  updateStage,
+  completeState,
+  recoverStaleStages,
+  recoverPipelineState,
+} from './status'
 import { getHandler } from '../handlers/handler'
 import { executePostAction } from '../pipeline/post-actions'
+import { flattenPipelineOrder } from '../pipeline/definitions'
 
 // ============================================================================
 // Engine
@@ -36,6 +45,26 @@ export async function runPipeline(
   let state = loadState(ctx.taskId)
   if (!state) {
     state = initState(ctx, ctx.input.mode)
+  } else {
+    // Recovery: handle stale state from previous interrupted runs
+    // Step 1: Reset any stages stuck in "running" to "pending"
+    state = recoverStaleStages(state)
+
+    // Step 2: Build advisory stages set from pipeline definitions
+    const advisoryStages = new Set<string>()
+    for (const [name, def] of pipeline.stages) {
+      if (def.advisory) advisoryStages.add(name)
+    }
+
+    // Step 3: Auto-complete/fail pipeline if all stages are done
+    const flatOrder = flattenPipelineOrder(pipeline.order)
+    state = recoverPipelineState(state, flatOrder, advisoryStages)
+    writeState(ctx.taskId, state)
+
+    // If recovery determined pipeline is already done, return immediately
+    if (state.state === 'completed' || state.state === 'failed') {
+      return state
+    }
   }
 
   // Main execution loop

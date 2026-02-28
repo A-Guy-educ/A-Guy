@@ -153,6 +153,131 @@ export function completeState(
   }
 }
 
+// ============================================================================
+// Recovery Functions - handle stale state from interrupted runs
+// ============================================================================
+
+/**
+ * Recover stale stages: reset any stage stuck in "running" state to "pending".
+ * This handles cases where the pipeline was killed mid-execution.
+ *
+ * Returns a new state object (immutable). If no stale stages found, returns
+ * the input state unchanged.
+ */
+export function recoverStaleStages(state: PipelineStateV2): PipelineStateV2 {
+  let hasChanges = false
+  const newStages: Record<string, StageStateV2> = {}
+
+  for (const [name, stage] of Object.entries(state.stages)) {
+    if (stage.state === 'running') {
+      // Reset stale running stage to pending
+      newStages[name] = {
+        ...stage,
+        state: 'pending',
+        startedAt: undefined,
+      }
+      console.log(`⚠️ Recovered stale stage ${name}: running → pending`)
+      hasChanges = true
+    } else {
+      newStages[name] = stage
+    }
+  }
+
+  if (!hasChanges) {
+    // No changes, return original state
+    return state
+  }
+
+  return {
+    ...state,
+    stages: newStages,
+    updatedAt: new Date().toISOString(),
+  }
+}
+
+/**
+ * Recover pipeline state: if all stages in the pipeline order are completed/skipped,
+ * mark the pipeline as completed. If any non-advisory stage failed, mark as failed.
+ *
+ * Only acts when pipeline state is "running" - leaves completed/failed/paused states unchanged.
+ *
+ * @param state - The current pipeline state
+ * @param pipelineOrder - Flat list of stage names in execution order
+ * @param advisoryStages - Set of stage names that are advisory (failures don't fail pipeline)
+ */
+export function recoverPipelineState(
+  state: PipelineStateV2,
+  pipelineOrder: string[],
+  advisoryStages: Set<string>,
+): PipelineStateV2 {
+  // Only recover if pipeline is stuck in "running" state
+  if (state.state !== 'running') {
+    return state
+  }
+
+  // Check stages that are in the pipeline order
+  let allCompletedOrSkipped = true
+  let hasNonAdvisoryFailure = false
+
+  for (const stageName of pipelineOrder) {
+    const stage = state.stages[stageName]
+
+    if (!stage) {
+      // Stage not in state - still needs to run
+      allCompletedOrSkipped = false
+      continue
+    }
+
+    if (stage.state === 'pending' || stage.state === 'running') {
+      // Stage hasn't completed yet
+      allCompletedOrSkipped = false
+    } else if (stage.state === 'failed') {
+      // Check if this is an advisory failure
+      if (!advisoryStages.has(stageName)) {
+        hasNonAdvisoryFailure = true
+      }
+      // Advisory failures are OK - continue checking
+    }
+    // 'completed' and 'skipped' are fine - continue checking
+  }
+
+  // Determine new pipeline state
+  if (hasNonAdvisoryFailure) {
+    console.log(`⚠️ Recovered pipeline state: running → failed (non-advisory stage failed)`)
+    return completeState(state, 'failed')
+  }
+
+  if (allCompletedOrSkipped) {
+    console.log(`⚠️ Recovered pipeline state: running → completed (all stages done)`)
+    return completeState(state, 'completed')
+  }
+
+  // Pipeline still has pending/running stages - leave as running
+  return state
+}
+
+/**
+ * Resume pipeline from a gate pause. Immutably marks the gate stage as completed
+ * and resets the pipeline state to 'running' (removing completedAt).
+ *
+ * This replaces direct state mutation that was previously in entry.ts:454-461.
+ */
+export function resumeFromGate(state: PipelineStateV2, gateStageName: string): PipelineStateV2 {
+  // Use updateStage for immutable stage update
+  const updatedState = updateStage(state, gateStageName, {
+    state: 'completed',
+    completedAt: new Date().toISOString(),
+  })
+
+  // Reset pipeline from paused to running, remove completedAt
+  const { completedAt: _, ...rest } = updatedState
+  return {
+    ...rest,
+    state: 'running',
+    updatedAt: new Date().toISOString(),
+  }
+}
+
 /**
  * Reset stages from a given point onwards to pending.
  * Also deletes output files for reset stages (G37).

@@ -116,7 +116,14 @@ export interface ParsedComment {
 
 // ============ Kanban Types ============
 
-export type ColumnId = 'open' | 'building' | 'review' | 'failed' | 'gate-waiting' | 'retrying'
+export type ColumnId =
+  | 'open'
+  | 'building'
+  | 'review'
+  | 'failed'
+  | 'gate-waiting'
+  | 'retrying'
+  | 'done'
 
 export interface Board {
   id: string
@@ -141,6 +148,7 @@ export interface GitHubIssue {
   html_url: string
   // Cody-specific fields
   isCodyAssigned?: boolean
+  previewUrl?: string
 }
 
 export interface GitHubComment {
@@ -157,6 +165,7 @@ export interface WorkflowRun {
   created_at: string
   updated_at: string
   html_url: string
+  display_title?: string
 }
 
 export interface GitHubPR {
@@ -186,6 +195,16 @@ export interface CodyTask {
   // Additional fields for UI
   assignees?: Array<{ login: string; avatar_url: string }>
   isCodyAssigned?: boolean
+  previewUrl?: string
+  // Substatus fields — progressively populated from list/detail API
+  // List view: only isTimeout available from workflow run conclusion
+  // Detail view: all fields populated from parsed comments
+  gateType?: 'hard-stop' | 'risk-gated' // which gate type (only when column === 'gate-waiting')
+  gateStage?: string // which stage gate paused at ('taskify' | 'architect')
+  clarifyWaiting?: boolean // waiting for user to answer questions
+  isTimeout?: boolean // pipeline timed out (vs regular failure)
+  isExhausted?: boolean // retries exhausted (terminal failure)
+  isSupervisorError?: boolean // infrastructure/supervisor error
 }
 
 // ============ API Response Types ============

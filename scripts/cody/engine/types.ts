@@ -136,27 +136,18 @@ export const PipelineStateV2Schema: z.ZodType<PipelineStateV2> = z.object({
   cursor: z.string().nullable(),
   stages: z.record(
     z.string(),
-    z
-      .object({
-        state: z.enum([
-          'pending',
-          'running',
-          'completed',
-          'failed',
-          'timeout',
-          'skipped',
-          'paused',
-        ]),
-        startedAt: z.string().optional(),
-        completedAt: z.string().optional(),
-        elapsed: z.number().optional(),
-        retries: z.number(),
-        outputFile: z.string().optional(),
-        skipped: z.string().optional(),
-        error: z.string().optional(),
-        feedbackLoops: z.number().optional(),
-        feedbackErrors: z.array(z.string()).optional(),
-      }),
+    z.object({
+      state: z.enum(['pending', 'running', 'completed', 'failed', 'timeout', 'skipped', 'paused']),
+      startedAt: z.string().optional(),
+      completedAt: z.string().optional(),
+      elapsed: z.number().optional(),
+      retries: z.number(),
+      outputFile: z.string().optional(),
+      skipped: z.string().optional(),
+      error: z.string().optional(),
+      feedbackLoops: z.number().optional(),
+      feedbackErrors: z.array(z.string()).optional(),
+    }),
   ),
 })
 
