@@ -63,7 +63,7 @@ export function buildJobsWhereQuery(lessonId: string, mediaId: string): object {
  * Returns void or throws typed error.
  */
 export function validatePromptForUsageAndTenant(
-  promptDoc: { status: string; usage: string; tenant: Tenant },
+  promptDoc: { status: string; usage?: string | null; tenant: Tenant | string },
   expectedUsage: 'extractor' | 'verifier',
   lessonTenantId: string,
 ): void {
