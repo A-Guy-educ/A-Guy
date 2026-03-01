@@ -1,0 +1,33 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/lib/study-plan/engine.ts",
+    "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
+    "src/app/(frontend)/study-plan/_components/DayCard.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Existing study plan infrastructure exists in the codebase",
+    "UserProgress collection or similar exists for persistence",
+    "Tailwind, Assistant font, Lucide icons are available in the project",
+    "date-fns is available for date calculations"
+  ],
+  "review_questions": [
+    "Should completion state use existing UserProgress collection or a new dedicated collection?",
+    "Are there existing patterns in the codebase for study plan persistence that should be followed?"
+  ],
+  "complexity": 50,
+  "complexity_reasoning": "Scope: 3 files across engine + 2 components. Risk: medium (persistence, user progress data). Novelty: new adaptive feature with complex logic. Cross-domain: frontend UI + backend logic + data persistence. Ambiguity: low (detailed requirements with acceptance criteria). Dependencies: moderate (needs existing study plan structure, UserProgress). Total: ~50",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains ## UX/UI Requirements, ## Core Engine Requirements with detailed tables, ## Technical Implementation Notes with specific files, and ## Acceptance Criteria with 8 checkable items. Promoted spec.md from requirements section."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
