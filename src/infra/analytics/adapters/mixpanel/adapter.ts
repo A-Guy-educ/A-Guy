@@ -10,7 +10,7 @@
 import { analyticsConfig } from '../../config'
 import type { EventPayload } from '../../types'
 import { transformToMixpanel } from './transform'
-import { clearAnonymousIdCookie, getOrCreateAnonymousId } from '../../utils/anonymous-id'
+import { clearAnonymousIdCookie } from '../../utils/anonymous-id'
 
 /**
  * Declare Mixpanel global for TypeScript
@@ -252,24 +252,20 @@ export function resetUser(): void {
   }
 
   try {
-    // Reset Mixpanel SDK state
+    // Reset Mixpanel SDK state (generates new $device_id automatically)
     mixpanel.reset()
 
     // Clear aliased flag
     localStorage.removeItem('mixpanel_aliased')
 
-    // Clear anonymous ID cookie so a new one is generated
+    // Clear anonymous ID cookie
     clearAnonymousIdCookie()
 
     // Reset People profile flag
     hasCreatedPeopleProfile = false
 
-    // Generate new anonymous ID and identify with it
-    const newAnonymousId = getOrCreateAnonymousId()
-    mixpanel.identify(newAnonymousId)
-
     if (analyticsConfig.debugMode) {
-      console.log('[Analytics/Mixpanel] Reset with new anonymous ID:', newAnonymousId)
+      console.log('[Analytics/Mixpanel] Reset (new anonymous session via $device_id)')
     }
   } catch (err) {
     console.error('[Analytics/Mixpanel] Reset failed:', err)

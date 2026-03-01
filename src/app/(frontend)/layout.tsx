@@ -25,7 +25,6 @@ import config from '@payload-config'
 import { cookies, headers } from 'next/headers'
 import './globals.css'
 import { LayoutClient } from './LayoutClient'
-import { AnalyticsProvider } from '@/infra/analytics'
 
 const assistant = Assistant({
   subsets: ['latin', 'hebrew'],
@@ -96,7 +95,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <PasswordLoginProvider enabled={passwordLoginEnabled}>
               <RouteLoadingIndicator />
               <LayoutClient />
-              <AnalyticsProvider />
               <AdminBar
                 adminBarProps={{
                   preview: isEnabled,

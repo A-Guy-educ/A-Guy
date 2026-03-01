@@ -129,11 +129,18 @@ export function MixpanelScripts() {
             debug: ${analyticsConfig.debugMode},
           });
 
-          // Identify with the anonymous ID immediately
-          mixpanel.identify(anonymousId);
+          // Identify with Mixpanel's auto-generated $device_id to enable People profiles
+          // for anonymous users. This lets us analyze pre-signup behavior in the Users tab.
+          // Tradeoff: when identify(realUserId) is called on login, the anonymous profile
+          // won't auto-merge (errAnonDistinctIdAssignedAlready) — but the user gets
+          // re-identified correctly going forward.
+          var deviceId = mixpanel.get_distinct_id();
+          if (deviceId) {
+            mixpanel.identify(deviceId);
+          }
 
           if (${analyticsConfig.debugMode}) {
-            console.log('[Analytics/Mixpanel] Initialized with anonymous ID:', anonymousId);
+            console.log('[Analytics/Mixpanel] Initialized with device ID:', deviceId);
           }
         `}
       </Script>

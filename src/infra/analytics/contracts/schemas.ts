@@ -45,24 +45,24 @@ export const SessionEndedSchema = z.object({
 })
 
 /**
- * page_abandoned - Track when user leaves a page
+ * tab_away - User switched away from tab
  * Destination: Mixpanel
  * Priority: P1
  */
-export const PageAbandonedSchema = z.object({
-  page_url: z.string().describe('Page URL that was abandoned'),
+export const TabAwaySchema = z.object({
+  page_url: z.string().describe('Page URL when user left'),
   time_on_page_seconds: z.number().describe('Time spent on page before leaving'),
   scroll_depth_percent: z.number().optional().describe('Max scroll percentage reached'),
 })
 
 /**
- * visibility_changed - Track tab/window visibility changes
+ * tab_back - User returned to tab
  * Destination: Mixpanel
  * Priority: P1
  */
-export const VisibilityChangedSchema = z.object({
-  visibility_state: z.enum(['visible', 'hidden']).describe('Tab visibility state'),
-  time_on_page_seconds: z.number().describe('Time spent on current page'),
+export const TabBackSchema = z.object({
+  page_url: z.string().describe('Page URL when user returned'),
+  time_on_page_seconds: z.number().describe('Time spent away'),
 })
 
 /**
@@ -303,8 +303,8 @@ export const eventSchemas = {
   [PRODUCT_EVENTS.PAGE_VIEW]: PageViewSchema,
   [PRODUCT_EVENTS.SESSION_STARTED]: SessionStartedSchema,
   [PRODUCT_EVENTS.SESSION_ENDED]: SessionEndedSchema,
-  [PRODUCT_EVENTS.PAGE_ABANDONED]: PageAbandonedSchema,
-  [PRODUCT_EVENTS.VISIBILITY_CHANGED]: VisibilityChangedSchema,
+  [PRODUCT_EVENTS.TAB_AWAY]: TabAwaySchema,
+  [PRODUCT_EVENTS.TAB_BACK]: TabBackSchema,
   [PRODUCT_EVENTS.USER_IDENTIFIED]: UserIdentifiedSchema,
   [PRODUCT_EVENTS.COURSE_ENTERED]: CourseEnteredSchema,
   [PRODUCT_EVENTS.LESSON_STARTED]: LessonStartedSchema,
@@ -332,8 +332,8 @@ export const eventSchemas = {
 export type PageViewProperties = z.infer<typeof PageViewSchema>
 export type SessionStartedProperties = z.infer<typeof SessionStartedSchema>
 export type SessionEndedProperties = z.infer<typeof SessionEndedSchema>
-export type PageAbandonedProperties = z.infer<typeof PageAbandonedSchema>
-export type VisibilityChangedProperties = z.infer<typeof VisibilityChangedSchema>
+export type TabAwayProperties = z.infer<typeof TabAwaySchema>
+export type TabBackProperties = z.infer<typeof TabBackSchema>
 export type UserIdentifiedProperties = z.infer<typeof UserIdentifiedSchema>
 export type CourseEnteredProperties = z.infer<typeof CourseEnteredSchema>
 export type LessonStartedProperties = z.infer<typeof LessonStartedSchema>
@@ -361,8 +361,8 @@ export type EventProperties =
   | PageViewProperties
   | SessionStartedProperties
   | SessionEndedProperties
-  | PageAbandonedProperties
-  | VisibilityChangedProperties
+  | TabAwayProperties
+  | TabBackProperties
   | UserIdentifiedProperties
   | CourseEnteredProperties
   | LessonStartedProperties

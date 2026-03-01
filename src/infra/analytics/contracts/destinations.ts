@@ -24,8 +24,8 @@ export const eventDestinations: Record<ProductEvent, AnalyticsDestination[]> = {
   [PRODUCT_EVENTS.PAGE_VIEW]: ['ga4', 'mixpanel'],
   [PRODUCT_EVENTS.SESSION_STARTED]: ['ga4', 'mixpanel'],
   [PRODUCT_EVENTS.SESSION_ENDED]: ['ga4', 'mixpanel'], // Session duration for both
-  [PRODUCT_EVENTS.PAGE_ABANDONED]: ['mixpanel'], // Product analytics - abandonment tracking
-  [PRODUCT_EVENTS.VISIBILITY_CHANGED]: ['mixpanel'], // Product analytics - engagement tracking
+  [PRODUCT_EVENTS.TAB_AWAY]: ['mixpanel'], // Product analytics - user left tab
+  [PRODUCT_EVENTS.TAB_BACK]: ['mixpanel'], // Product analytics - user returned to tab
 
   // User Identity (Mixpanel only - for user journey stitching)
   [PRODUCT_EVENTS.USER_IDENTIFIED]: ['mixpanel'],

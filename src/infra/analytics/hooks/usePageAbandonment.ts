@@ -1,12 +1,12 @@
 /**
- * Page Abandonment Tracker
+ * Tab Visibility Tracker
  *
- * Tracks when users leave a page and measures:
- * - Time spent on page
- * - Scroll depth (how far they scrolled)
- * - Tab visibility changes (switching tabs)
+ * Tracks when users switch away from and back to the tab.
+ * Measures time on page and scroll depth.
  *
- * Uses Page Visibility API to detect when user switches tabs or minimizes window.
+ * Events:
+ * - tab_away: User switched to another tab/minimized (includes scroll depth)
+ * - tab_back: User returned to the tab
  */
 
 'use client'
@@ -31,7 +31,6 @@ export function usePageAbandonment() {
     // Track scroll depth (throttled to avoid excessive events)
     const handleScroll = () => {
       const now = Date.now()
-      // Throttle to max 1 update per second
       if (now - lastScrollUpdate.current < 1000) return
 
       lastScrollUpdate.current = now
@@ -40,36 +39,29 @@ export function usePageAbandonment() {
       const documentHeight = document.documentElement.scrollHeight
       const scrollTop = window.scrollY
 
-      // Calculate scroll percentage
       const scrollPercent = Math.round((scrollTop / (documentHeight - windowHeight)) * 100)
-
-      // Track max scroll reached (never goes down)
       maxScroll.current = Math.max(maxScroll.current, scrollPercent || 0)
     }
 
-    // Track visibility changes (tab switching)
     const handleVisibilityChange = () => {
       const timeOnPage = Math.floor((Date.now() - pageStartTime.current) / 1000)
 
       try {
-        // Track visibility state change
-        analytics.track(PRODUCT_EVENTS.VISIBILITY_CHANGED, {
-          visibility_state: document.visibilityState as 'visible' | 'hidden',
-          time_on_page_seconds: timeOnPage,
-        })
-
-        // If user is leaving the tab, track as potential abandonment
         if (document.visibilityState === 'hidden') {
-          analytics.track(PRODUCT_EVENTS.PAGE_ABANDONED, {
+          analytics.track(PRODUCT_EVENTS.TAB_AWAY, {
             page_url: pathname,
             time_on_page_seconds: timeOnPage,
             scroll_depth_percent: maxScroll.current,
           })
+        } else {
+          analytics.track(PRODUCT_EVENTS.TAB_BACK, {
+            page_url: pathname,
+            time_on_page_seconds: timeOnPage,
+          })
         }
       } catch (error) {
-        // Silently fail - don't break user experience
         if (process.env.NODE_ENV === 'development') {
-          console.error('[Analytics] Failed to track page abandonment:', error)
+          console.error('[Analytics] Failed to track tab visibility:', error)
         }
       }
     }

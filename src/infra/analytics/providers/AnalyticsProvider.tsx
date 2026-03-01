@@ -14,6 +14,9 @@ import { MixpanelScripts } from '../adapters/mixpanel/scripts'
 import { UserIdentificationTracker } from '../components/UserIdentificationTracker'
 import { analyticsConfig } from '../config'
 import { analytics, getSessionId, initializeAnalytics } from '../index'
+import { usePageView } from '../hooks/usePageView'
+import { useSessionDuration } from '../hooks/useSessionDuration'
+import { usePageAbandonment } from '../hooks/usePageAbandonment'
 import { initAnalyticsSubscriber } from '../system-events-subscriber'
 import type { Analytics } from '../types'
 
@@ -77,6 +80,9 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
       {/* Track user identification */}
       <UserIdentificationTracker />
 
+      {/* Track page views, session duration, and page abandonment */}
+      <AnalyticsHooks />
+
       {/* Render children */}
       {children}
     </AnalyticsContext.Provider>
@@ -92,6 +98,18 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
 function SubscriberInitializer() {
   // Register handlers synchronously - this must happen before any usePageView effects
   initAnalyticsSubscriber()
+  return null
+}
+
+/**
+ * Analytics Hooks
+ * Runs page view, session duration, and page abandonment tracking hooks.
+ * Rendered inside the provider so hooks activate after scripts and subscriber are ready.
+ */
+function AnalyticsHooks() {
+  usePageView()
+  useSessionDuration()
+  usePageAbandonment()
   return null
 }
 
