@@ -19,12 +19,15 @@ Create a Proof of Concept (POC) that converts a single uploaded document (PDF pa
 ### FR-2: Extraction Requirements
 - System must perform a single LLM-based extraction using Vision + text understanding
 - Extractor must return exactly one JSON object representing the exercise
+- **FR-2-1**: Use existing `IMAGE_TO_EXERCISE` model from `src/infra/llm/models.ts` via the LLM provider factory. Store extraction prompt in existing Prompts collection with `usage='extractor'`
 
 ### FR-3: Output Exercise Format
 The extracted JSON must support at minimum:
 - `question_free_response`
 - `question_select` (single correct option)
 - Optional: MCQ (treated as question_select with multiple options)
+
+**FR-3-1**: Output must map to `ContentBlockSchema` from `src/server/payload/collections/Exercises/schemas.ts`. Supported block types include: rich_text, question_select (mcq/true_false variants), question_free_response, question_table, question_matching, question_geometry, question_axis, latex, html, media, svg.
 
 The Exercise must include:
 - Prompt text
@@ -33,7 +36,9 @@ The Exercise must include:
 - Rule: If correct answer is not detectable, set `correctAnswer: null`. Creation must NOT be blocked.
 
 ### FR-4: UI Flow & Payload CMS Integration
-Implementation Location: Custom React component within Payload CMS Admin UI, injected into Lesson edit view.
+Implementation Location: Custom React component within Payload CMS Admin UI, injected into Lesson edit view via existing LessonConversionPanel.
+
+**FR-4-1**: Integrate "Convert V3" button into existing `LessonConversionPanel` at `src/ui/admin/exercise-conversion/LessonConversionPanel/index.tsx` alongside existing V1/V2 buttons.
 
 The Flow (Admin Only):
 1. Admin uploads a PDF/Image to a Lesson
@@ -46,18 +51,27 @@ The Flow (Admin Only):
 8. Exercise renders inside the standard lesson UI
 9. Exercise is solvable and validated on the frontend
 
+**FR-4-2**: Preview/Edit component should leverage existing `ExercisePreview` component referenced in Exercises collection schema, with additional inline editing capabilities for prompt, options, and correctAnswer fields.
+
 Rule: No exercise creation is allowed without passing through the preview/edit step.
 
 ### FR-5: Data Model & Raw Extraction Storage
 To support debugging, model improvement, and auditability, the system must store the extraction attempt.
 
-Implementation Requirement: Create a new Payload Collection (e.g., `ExtractionLogs`) to store:
-- Raw LLM response string
-- Parsed JSON payload
-- Extraction status (Success/Failed)
-- Lesson ID (relation)
-- Media ID (relation to the uploaded document)
-- Prompt ID / Version used
+Implementation Requirement: Create a new Payload Collection (e.g., `ExtractionLogs`) following patterns from `src/server/payload/collections/ConfigAuditLogs.ts`.
+
+**FR-5-1**: ExtractionLogs collection must include these fields:
+- `rawLLMResponse`: text (raw LLM response string)
+- `parsedJSON`: json (parsed JSON payload)
+- `status`: select ['success', 'failed'] (extraction status)
+- `lesson`: relationship to 'lessons' (Lesson ID)
+- `media`: relationship to 'media' (uploaded document)
+- `prompt`: relationship to 'prompts' (Prompt ID / Version used)
+- `errorMessage`: text (optional, for failed extractions)
+- `tenant`: tenant relationship (for multi-tenant support)
+- `createdAt`: timestamp
+
+Index: status, lesson, media, tenant for efficient queries
 
 ### FR-6: Product Decisions
 - **Accuracy Standard**:
@@ -87,14 +101,17 @@ A conversion is considered successful only if ALL of the following occur:
 - [ ] User can interact with and submit an answer for the generated exercise
 - [ ] Validation logic evaluates the submitted answer correctly
 - [ ] Basic logging exists for extraction attempts (saved to ExtractionLogs)
+- [ ] ExtractionLogs record is created with: rawLLMResponse, parsedJSON, status='success', lesson, media, prompt references
 
 If any step above fails, the conversion is considered FAILED. No partial success is acceptable.
 
 ## Technical Context
 
 - **Stack**: Next.js 15 + Payload CMS
-- **LLM Integration**: Vision-capable LLM (OpenAI GPT-4o or Anthropic Claude 3.5 Sonnet)
-- **Target Schema**: Existing Exercises collection schema (see `/src/server/payload/collections/Exercises/index.ts`)
+- **LLM Integration**: Use existing `IMAGE_TO_EXERCISE` model from `src/infra/llm/models.ts` via provider factory (supports Gemini and MiniMax). Configure via `LLM_MODEL_OVERRIDE_IMAGE_TO_EXERCISE` env var if needed.
+- **Target Schema**: Existing Exercises collection schema (see `/src/server/payload/collections/Exercises/index.ts` and `/src/server/payload/collections/Exercises/schemas.ts`)
+- **Prompt Storage**: Use existing Prompts collection with `usage='extractor'`
+- **Admin UI**: Extend existing `src/ui/admin/exercise-conversion/LessonConversionPanel/`
 
 ## Exercise Schema Reference
 
