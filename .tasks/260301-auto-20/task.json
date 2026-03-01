@@ -1,0 +1,38 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "backend",
+  "scope": [
+    "Create ExtractionLogs collection in Payload CMS",
+    "Build custom React component for document upload and conversion in Admin UI",
+    "Integrate vision-capable LLM for exercise extraction",
+    "Implement preview/edit UI before exercise creation",
+    "Ensure extracted exercise maps to existing Exercises collection schema",
+    "Add extraction logging for debugging and auditability"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The existing Exercises collection schema is accessible and can be inspected during architect stage",
+    "A vision-capable LLM API key is available in environment variables",
+    "The Payload CMS admin can be extended with custom React components",
+    "File upload to Payload Media collection works for PDF and images"
+  ],
+  "review_questions": [
+    "Should the vision LLM be OpenAI GPT-4o or Anthropic Claude 3.5 Sonnet (or configurable)?",
+    "Does the existing Exercises collection support all required fields (question_free_response, question_select, prompt, options, correctAnswer)?",
+    "Should the ExtractionLogs collection be created in this task or is there an existing one?"
+  ],
+  "complexity": 72,
+  "complexity_reasoning": "Scope: 20 (new collection, admin component, LLM integration, preview flow, extraction storage). Risk: 12 (LLM integration, file handling, database changes). Novelty: 18 (new feature with vision AI). Cross-domain: 12 (backend collections + frontend React + AI integration). Ambiguity: 4 (mostly clear, needs schema inspection). Dependency: 6 (needs Exercises schema, LLM provider). Total: 72",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Input contains detailed requirements with specific UI flows, data model specs, acceptance criteria, and out-of-scope items. Though it lacks specific file paths, the implementation scope is well-defined. The architect stage should inspect Exercises collection schema during gap analysis."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
