@@ -1,72 +1,51 @@
-# Specification (promoted)
+# Bug Report: Media Upload Failure in Course/Lesson/Exercise
 
-Skipped via input_quality — taskify determined spec is unnecessary.
+## Overview
+Media uploads are failing with a 400 Bad Request error when trying to upload media through Courses, Lessons, or Exercises collections in the Payload CMS admin panel.
 
-## Requirements
+## Environment
+- **Environment**: dev
+- **User Role**: Admin or Editor
+- **Storage**: Configured storage backend (e.g., Vercel Blob or local storage)
 
-# Task
+## Preconditions
+1. User logged in with Admin or Editor privileges
+2. Application running with configured storage backend
+3. User has permission to create/edit documents in Courses, Lessons, or Exercises
 
-## Issue Title
+## Steps to Reproduce
+1. Log in to the Admin Dashboard (/admin)
+2. Navigate to Courses, Lessons, or Exercises collection
+3. Open an existing item or click "Create New"
+4. Locate a media upload field or MediaBlock
+5. Click upload area or drag-and-drop a file (.jpg, .png, .mp4, etc.)
+6. Observe network request and UI behavior
 
-Bug Report: Media Upload Failure in Course/Lesson/Exercise
-# 🐞 Bug Report
+## Expected Result
+- File uploads successfully to server/cloud storage
+- New document created in Media collection
+- Media correctly linked within parent document (Course/Lesson/Exercise)
+- Document saves without errors
 
-## 1. Title
-Bug Report: Media Upload Failure in Course/Lesson/Exercise
+## Actual Result
+- 400 Bad Request error in browser network console
+- Upload fails immediately or hangs at 0%
+- No media document created in database
+- Error message appears or field remains empty
+- Parent document cannot be saved with intended media
 
-## 2. Environment
-- Environment: dev
-- User Role / Tenant: Admin 
+## Reproducibility
+- Always (100%)
 
-## 3. Preconditions
-Pre-conditions (What must exist for the bug to occur)
-
-User Role: User must be logged in with Admin or Editor privileges to access the Payload CMS admin panel.
-
-Environment: The application must be running (local dev or production) with a configured storage backend (e.g., Vercel Blob or local storage).
-
-Collection Access: The user must have permission to create or edit documents in the 
-
-## 4. Steps to Reproduce
-Steps to Reproduce
-
-Log in to the Admin Dashboard (e.g., /admin).
-
-Navigate to either Courses, Lessons, or Exercises collection.
-
-Open an existing item or click "Create New".
-
-Locate a media upload field or a block that accepts media (e.g., a MediaBlock or an exercise attachment field).
-
-Click the upload area or drag-and-drop a file (any type: .jpg, .png, .mp4, etc.).
-
-Observe the network request and the UI behavior.
-
-## 5. Expected Result
-The file should upload successfully to the server/cloud storage.
-
-A new document should be created in the Media collection.
-
-The media should be previewed or correctly linked within the parent document (Course/Lesson/Exercise).
-
-The document should save without errors.
-
-## 6. Actual Result
-The system returns a 400 Bad Request error in the browser network console.
-
-The upload fails immediately or hangs at 0%.
-
-No media document is created in the database.
-
-An error message appears (or the field remains empty), and the parent document cannot be saved with the intended media.
-
-
-## 7. Reproducibility
-always
-
+## Affected Collections
+- Courses
+- Lessons
+- Exercises
 
 ## Acceptance Criteria
-
-- [ ] Fix applied as described in task.md
-- [ ] TypeScript compilation passes
-- [ ] Unit tests pass
+- [ ] Media uploads successfully through Courses collection
+- [ ] Media uploads successfully through Lessons collection  
+- [ ] Media uploads successfully through Exercises collection
+- [ ] Uploaded media is previewed correctly in admin panel
+- [ ] Parent documents save successfully with media attachments
+- [ ] No 400 Bad Request errors during upload process

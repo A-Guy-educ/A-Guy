@@ -1,33 +1,34 @@
 {
   "task_type": "fix_bug",
   "risk_level": "medium",
-  "confidence": 0.8,
+  "confidence": 0.85,
   "primary_domain": "backend",
   "scope": [
-    "media uploads",
-    "Courses collection",
-    "Lessons collection",
-    "Exercises collection"
+    "Courses collection media fields",
+    "Lessons collection media fields",
+    "Exercises collection media fields",
+    "Media collection",
+    "Upload endpoint"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "The media collection exists and is properly configured in Payload",
-    "Storage backend (Vercel Blob or local) is configured",
-    "The issue is in the upload endpoint or collection config for media fields"
+    "Media collection exists and is properly configured",
+    "Storage backend (Vercel Blob or local) is configured in payload.config.ts",
+    "The 400 error originates from either the upload endpoint or storage service"
   ],
   "review_questions": [
-    "What is the exact error message returned in the 400 Bad Request?",
-    "Is this issue specific to certain file types or all media?",
-    "Which specific collection (Course/Lesson/Exercise) and field is failing?"
+    "What is the root cause of the 400 Bad Request error during media upload?",
+    "Is this a storage backend configuration issue or an API endpoint issue?",
+    "Which specific media fields in Courses/Lessons/Exercises are failing?"
   ],
-  "complexity": 28,
-  "complexity_reasoning": "Scope: 8 (2-3 files in same module), Risk: 8 (non-critical business logic), Novelty: 3 (existing pattern), Cross: 2 (single domain), Ambiguity: 4 (clear intent), Deps: 3 (depends on storage config). Total: 28",
+  "complexity": 38,
+  "complexity_reasoning": "Scope: 10 (3 collections with media fields, multiple files). Risk: 10 (API/storage issues). Novelty: 5 (root cause unknown). Cross-Domain: 4 (backend + possibly frontend upload UI). Ambiguity: 4 (clear 400 error, but root cause unknown). Dependency: 5 (storage backend). Total: 38 - Moderate complexity requiring full pipeline.",
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Input contains clear steps to reproduce (Steps 1-7), expected results (5 bullet points), and actual results (5 bullet points). Has implicit acceptance criteria in the 'Expected Result' section. Missing explicit implementation plan but has sufficient detail for a bug fix."
+    "reasoning": "Task contains detailed bug report with ## Steps to Reproduce, ## Expected Result, ## Actual Result sections. Clear issue description with 400 Bad Request error and reproducibility. Promoted spec.md with bug details."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
