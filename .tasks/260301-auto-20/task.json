@@ -1,36 +1,35 @@
 {
   "task_type": "implement_feature",
   "risk_level": "medium",
-  "confidence": 0.85,
-  "primary_domain": "llm",
+  "confidence": 0.9,
+  "primary_domain": "backend",
   "scope": [
-    "Create ExtractionLogs collection for audit/debugging",
-    "Build custom React component in Payload Admin (Lesson edit view)",
-    "Implement LLM vision extraction service",
-    "Create API endpoint for document-to-exercise conversion",
-    "Implement preview/edit UI before exercise creation",
-    "Wire up exercise creation with proper schema mapping"
+    "Create ExtractionLogs collection in Payload CMS",
+    "Build LLM integration for document-to-exercise extraction",
+    "Create custom React component for Payload Admin UI (Lesson edit view)",
+    "Implement preview/edit flow before exercise creation",
+    "Add exercise creation with proper validation"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "Vision LLM (GPT-4o or Claude 3.5 Sonnet) API keys are available",
-    "Media collection already supports PDF/image uploads",
-    "Admin will have access to Lesson edit view for component injection",
-    "The LLM can accurately extract exercise content from documents with ~90% accuracy for math formulas"
+    "Existing Exercises collection schema is the target format (validated: supports question_free_response, question_select with MCQ/True-False variants)",
+    "Admin UI injection will use Payload's component override pattern for Lesson edit view",
+    "LLM will use existing AI provider infrastructure (Gemini or OpenAI with vision capabilities)",
+    "ExtractionLogs collection will store raw LLM response, parsed JSON, status, lesson ID, media ID, and prompt version"
   ],
   "review_questions": [
-    "Which vision-capable LLM should be used - OpenAI GPT-4o or Anthropic Claude 3.5 Sonnet?",
-    "Should the ExtractionLogs collection be created now or as part of implementation?",
-    "Is there an existing Lesson edit view component where the conversion UI should be injected?"
+    "Which LLM provider should be used - OpenAI GPT-4o or Anthropic Claude 3.5 Sonnet?",
+    "Should ExtractionLogs be a new collection or extend an existing logging pattern?",
+    "What is the preferred approach for the admin component - custom field component or view override?"
   ],
-  "complexity": 70,
-  "complexity_reasoning": "Scope: 18 (new collection + admin component + LLM service + API endpoint, 4+ files). Risk: 14 (LLM integration, new data collection, file handling). Novelty: 15 (new vision extraction pipeline). Cross-domain: 12 (backend + frontend + AI + data). Ambiguity: 4 (clear requirements, some implementation details TBD). Dependencies: 7 (LLM API, Exercises schema, Media collection, admin patterns). Total: 70 - Very Complex",
+  "complexity": 62,
+  "complexity_reasoning": "Scope: 18 (new collection + admin component + LLM service + API endpoints, 5+ files across modules). Risk: 12 (LLM integration, database operations, new collection). Novelty: 12 (new feature but uses existing patterns). Cross-Domain: 10 (backend + frontend + AI). Ambiguity: 4 (mostly clear requirements). Dependency: 6 (LLM APIs, existing Exercises schema). Total: 62 (Very Complex)",
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Input contains detailed ## Objective, clear acceptance criteria in sections 1-8, and well-defined requirements. The task specifies technical constraints, UI flow, data model requirements, and success criteria. However, it lacks step-by-step implementation plan with specific file paths. Promoted requirements to spec.md for architect stage."
+    "reasoning": "Task contains detailed ## Objective, ## Technical Context, ## Extraction Requirements, ## Output Exercise Format, ## UI Flow, ## Data Model sections with clear acceptance criteria. References Exercises collection schema for target format. Does not include step-by-step implementation plan with file paths, so spec stage should be skipped."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
