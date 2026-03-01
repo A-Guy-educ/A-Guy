@@ -9,12 +9,13 @@
  * @pattern endpoint, queue
  */
 
-import { ENV } from '@/server/config/constants'
+import type { User } from 'payload'
 import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import type { Lesson } from '@/payload-types'
 import { z } from 'zod'
+import { requireAdminOrTestSecret } from '@/server/api/auth'
 
 type ErrorCode =
   | 'UNAUTHORIZED'
@@ -44,25 +45,11 @@ export async function POST(request: NextRequest) {
 
     // Auth: Admin Session OR Test-Only Secret
     const { user } = await payload.auth({ headers: request.headers })
-
-    let isAdmin = false
-    // Check if user is from 'users' collection (has 'role' property)
-    // PayloadMcpApiKey doesn't have 'role', so we need to check collection
-    if (user && 'collection' in user && user.collection === 'users' && user.role === 'admin') {
-      isAdmin = true
-    }
-
-    const testSecret = process.env[ENV.TEST_ADMIN_SECRET]
     const authHeader = request.headers.get('authorization')
-    if (
-      process.env[ENV.NODE_ENV] === 'test' &&
-      testSecret &&
-      authHeader === `Bearer ${testSecret}`
-    ) {
-      isAdmin = true
-    }
 
-    if (!isAdmin) {
+    try {
+      requireAdminOrTestSecret(user as User | null, authHeader)
+    } catch {
       return errorResponse('UNAUTHORIZED', 'Admin access required', 401)
     }
 

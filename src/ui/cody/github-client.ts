@@ -1200,7 +1200,7 @@ export async function fetchPRCIStatus(
     const result = { ciStatus, mergeable: mergeable && ciStatus === 'success' }
 
     // Short cache — CI status changes frequently
-    setCache(cacheKey, 15_000, result) // 15 seconds
+    setCache(cacheKey, 30_000, result) // 30 seconds
     return result
   } catch (error) {
     console.error('[Cody] Error fetching PR CI status:', error)

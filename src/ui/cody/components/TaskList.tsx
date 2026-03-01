@@ -38,7 +38,7 @@ interface TaskListProps {
   onTaskSelect?: (task: CodyTask | null) => void
   onExecuteTask?: (taskId: string) => void
   onStopTask?: (task: CodyTask) => void
-  onApproveReview?: (task: CodyTask) => void
+  onApproveReview?: (task: CodyTask) => Promise<void>
 }
 
 // Row background tint by status
