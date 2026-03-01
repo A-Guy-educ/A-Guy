@@ -6,15 +6,21 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { Octokit } from '@octokit/rest'
+import { z } from 'zod'
 import { requireAuth } from '@/ui/cody/auth'
+import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
 
 const GATE_LABELS = {
   HARD_STOP: 'hard-stop',
   RISK_GATED: 'risk-gated',
 } as const
 
-const OWNER = 'A-Guy-educ'
-const REPO = 'A-Guy'
+// Zod schema for request validation
+const ApproveRequestSchema = z.object({
+  issueNumber: z.number().int().positive(),
+  prNumber: z.number().int().positive(),
+  branchName: z.string().optional(),
+})
 
 function getOctokit(): Octokit {
   const token = process.env.GITHUB_TOKEN
@@ -30,11 +36,16 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { issueNumber, prNumber, branchName } = body
+    const parsed = ApproveRequestSchema.safeParse(body)
 
-    if (!issueNumber || !prNumber) {
-      return NextResponse.json({ error: 'Missing issueNumber or prNumber' }, { status: 400 })
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: parsed.error.flatten() },
+        { status: 400 }
+      )
     }
+
+    const { issueNumber, prNumber, branchName } = parsed.data
 
     const octokit = getOctokit()
     const results: string[] = []
@@ -43,9 +54,9 @@ export async function POST(req: NextRequest) {
     try {
       // Approve first
       await octokit.pulls.createReview({
-        owner: OWNER,
-        repo: REPO,
-        pull_number: Number(prNumber),
+        owner: GITHUB_OWNER,
+        repo: GITHUB_REPO,
+        pull_number: prNumber,
         event: 'APPROVE',
         body: '✅ Gate approved via Cody dashboard.',
       })
@@ -55,9 +66,9 @@ export async function POST(req: NextRequest) {
 
     try {
       await octokit.pulls.merge({
-        owner: OWNER,
-        repo: REPO,
-        pull_number: Number(prNumber),
+        owner: GITHUB_OWNER,
+        repo: GITHUB_REPO,
+        pull_number: prNumber,
         merge_method: 'squash',
       })
       results.push(`Merged PR #${prNumber}`)
@@ -75,8 +86,8 @@ export async function POST(req: NextRequest) {
     if (branchName && branchName !== 'dev' && branchName !== 'main') {
       try {
         await octokit.git.deleteRef({
-          owner: OWNER,
-          repo: REPO,
+          owner: GITHUB_OWNER,
+          repo: GITHUB_REPO,
           ref: `heads/${branchName}`,
         })
         results.push(`Deleted branch ${branchName}`)
@@ -89,9 +100,9 @@ export async function POST(req: NextRequest) {
     // 3. Close the issue
     try {
       await octokit.issues.update({
-        owner: OWNER,
-        repo: REPO,
-        issue_number: Number(issueNumber),
+        owner: GITHUB_OWNER,
+        repo: GITHUB_REPO,
+        issue_number: issueNumber,
         state: 'closed',
       })
       results.push(`Closed issue #${issueNumber}`)
@@ -104,9 +115,9 @@ export async function POST(req: NextRequest) {
     for (const label of [GATE_LABELS.HARD_STOP, GATE_LABELS.RISK_GATED]) {
       try {
         await octokit.issues.removeLabel({
-          owner: OWNER,
-          repo: REPO,
-          issue_number: Number(issueNumber),
+          owner: GITHUB_OWNER,
+          repo: GITHUB_REPO,
+          issue_number: issueNumber,
           name: label,
         })
       } catch {

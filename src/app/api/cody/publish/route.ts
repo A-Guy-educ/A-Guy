@@ -7,11 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Octokit } from '@octokit/rest'
 import { requireAuth } from '@/ui/cody/auth'
+import { GITHUB_OWNER, GITHUB_REPO, DEV_BRANCH, PROD_BRANCH } from '@/ui/cody/constants'
 
-const OWNER = 'A-Guy-educ'
-const REPO = 'A-Guy'
-const DEV_BRANCH = 'dev'
-const PROD_BRANCH = 'main'
 const PUBLISH_LABEL = 'publish'
 
 function getOctokit(): Octokit {
@@ -31,8 +28,8 @@ export async function POST(req: NextRequest) {
 
     // 1. Check if dev is ahead of main
     const { data: comparison } = await octokit.repos.compareCommits({
-      owner: OWNER,
-      repo: REPO,
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
       base: PROD_BRANCH,
       head: DEV_BRANCH,
     })
@@ -46,8 +43,8 @@ export async function POST(req: NextRequest) {
 
     // 2. Check for existing open publish issue
     const { data: existingIssues } = await octokit.issues.listForRepo({
-      owner: OWNER,
-      repo: REPO,
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
       labels: PUBLISH_LABEL,
       state: 'open',
     })
@@ -67,8 +64,8 @@ export async function POST(req: NextRequest) {
 
     // 3. Create the publish issue
     const { data: issue } = await octokit.issues.create({
-      owner: OWNER,
-      repo: REPO,
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
       title: `Publish dev → production (${comparison.ahead_by} commits)`,
       body: [
         '## Publish to Production',

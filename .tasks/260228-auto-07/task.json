@@ -1,0 +1,29 @@
+{
+  "task_type": "refactor",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/app/api/exercises/convert/queue/route.ts",
+    "src/app/api/exercises/convert/queue-v2/route.ts",
+    "src/app/api/prompts/for-conversion/route.ts",
+    "src/server/api/auth.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The requireAdminOrTestSecret utility from src/server/api/auth.ts exists and handles auth correctly",
+    "The refactoring maintains the same security behavior",
+    "AccountRole.Admin enum exists and should be used instead of raw 'admin' string"
+  ],
+  "complexity": 24,
+  "complexity_reasoning": "Scope: 4 files in same module (4 pts). Risk: Auth logic changes but uses existing utility (12 pts). Novelty: Following existing pattern exactly (2 pts). Cross-domain: Single domain - backend only (1 pt). Ambiguity: Clear file paths and line numbers (1 pt). Dependency: Uses existing internal utility (4 pts). Total: 24",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task has clear ## Issue Title, ## Bug with file paths and line numbers, ## Expected behavior, and ## Fix section with specific files to modify. Contains duplicated code example showing exact pattern to replace."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
