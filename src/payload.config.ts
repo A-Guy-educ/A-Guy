@@ -15,6 +15,7 @@ import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
 import { Exercises } from '@/server/payload/collections/Exercises'
+import { ExtractionLogs } from '@/server/payload/collections/ExtractionLogs'
 import { GuestSessions } from '@/server/payload/collections/GuestSessions'
 import { Lessons } from '@/server/payload/collections/Lessons'
 import { MCPAuditLogs } from '@/server/payload/collections/MCPAuditLogs'
@@ -153,6 +154,7 @@ export default buildConfig({
     Chapters,
     Lessons,
     Exercises,
+    ExtractionLogs,
     Prompts,
     TeacherProfiles,
     UserSettings,
