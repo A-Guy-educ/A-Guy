@@ -285,6 +285,13 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Configure pnpm to use local store
+        run: |
+          # Use the local pnpm store on the runner (avoid GitHub cache download)
+          echo "PNPM_HOME=/Users/bot/Library/pnpm" >> $GITHUB_ENV
+          echo "STORE_DIR=/Users/bot/Library/pnpm/store/v10" >> $GITHUB_ENV
+          echo "/Users/bot/Library/pnpm" >> $GITHUB_PATH
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
