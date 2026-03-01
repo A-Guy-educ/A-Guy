@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "taskId": "260301-auto-21",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-01T17:23:46.328Z",
+  "updatedAt": "2026-03-01T17:25:41.716Z",
+  "state": "paused",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-03-01T17:23:46.329Z"
+    }
+  },
+  "issueNumber": 646,
+  "completedAt": "2026-03-01T17:25:41.716Z"
+}

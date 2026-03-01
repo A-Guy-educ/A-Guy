@@ -1,0 +1,34 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/lib/study-plan/engine.ts - adaptive scaling and topic selection logic",
+    "src/app/(frontend)/study-plan/_components/useStudyPlan.ts - manual trigger flow and persistence",
+    "src/app/(frontend)/study-plan/_components/DayCard.tsx - completion toggle and visuals"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Existing study-plan components exist at specified paths",
+    "UserProgress collection exists for persistence",
+    "date-fns is already installed for date handling",
+    "Tailwind CSS and Lucide icons are already configured"
+  ],
+  "review_questions": [
+    "Should the adaptive logic follow exact strategy mapping from requirements table (Survival/High Intensity/Balanced/Mastery)?",
+    "Is the existing UserProgress collection schema compatible with day completion tracking?",
+    "Should regenerate overwrite existing plan or create new entries?"
+  ],
+  "complexity": 42,
+  "complexity_reasoning": "Scope: 15 (3 files across components and engine), Risk: 12 (core feature with persistence), Novelty: 12 (adaptive scaling is new logic), Cross: 5 (frontend + backend persistence), Ambiguity: 2 (clear requirements), Deps: 4 (depends on UserProgress collection). Total: 50 - but moderated to 42 as some existing patterns exist.",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains clear ## Requirements (BUG A/B sections), ## Functional Requirements with detailed strategy table, ## Acceptance Criteria with 6 checkable items, and ## Technical Implementation Notes with specific file paths. Promoted spec.md for gap analysis."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
