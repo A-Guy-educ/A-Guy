@@ -1,131 +1,78 @@
-# Study Plan - Adaptive Practice Schedule Specification
+# Study Plan Feature Specification
 
 ## Overview
 
-Implement an adaptive study plan system that generates personalized 7-day practice schedules based on:
-- Days until exam
-- Topic mastery levels (Weak/Medium/Strong)
-- Activity mix based on proximity to exam date
-
-The system must be manually triggered (not automatic), support completion tracking with persistence, and follow the design mandate: mirror `test plan.html` (Tailwind, Assistant font, RTL, Lucide icons).
-
----
+Implement an adaptive practice schedule feature for the Study Plan that:
+1. Does NOT generate automatically - only on explicit button click
+2. Generates a dynamic plan based on days until exam and topic mastery
+3. Shows specific topics per day and what to practice (activity mix)
+4. Supports marking day as complete with persistence
 
 ## Requirements
 
 ### A) Manual Trigger (Critical)
-
-- **Empty State**: Before generating, show "מוכנים לצאת לדרך?" (Hebrew) / "Generate Example Plan" (English)
-- **CTA Button**: 
-  - HE: `צור תוכנית לימודים`
-  - EN: `Generate Example Plan`
-- **Behavior**: 
-  - Must NOT compute or persist on mount or field changes
-  - Only after clicking: compute → persist → render 7-day schedule
+- Before generating: show Empty State: "מוכנים לצאת לדרך?"
+- Add CTA button:
+  - HE: "צור תוכנית לימודים"
+  - EN: "Generate Example Plan"
+- Must NOT compute or persist the schedule on mount or on field changes
+- Only after clicking the button: compute plan, persist plan, render 7-day schedule view
 
 ### B) Topics Manager (Hard Limit = 10)
-
-- Student can add up to **10 topics** maximum
-- Hard limit: 11th topic blocked with error message
-- Mastery levels with colors:
-  - Weak: `red-500`
-  - Medium: `orange-400`
-  - Strong: `emerald-500`
+- Student can add up to 10 topics
+- Hard limit: attempting to add 11th topic is blocked with error message
+- Each topic has mastery level: Weak / Medium / Strong with colors:
+  - Weak: red-500
+  - Medium: orange-400
+  - Strong: emerald-500
 
 ### C) Schedule Layout
-
 - Vertical timeline of day cards
 - Each day card includes:
-  - Weekday + date UI
-  - Mode badge (Standard / High Intensity / Simulation / Warm-up)
-  - Task list (what to do)
-  - Completion toggle (checkmark)
+  - weekday + date UI
+  - mode badge (Standard / High Intensity / Simulation / Warm-up)
+  - task list (what to do)
+  - completion toggle (checkmark)
 
 ### D) Completion Tracking
+- Add checkmark button per day
+- Completed day visual: opacity-50 and/or "בוצע" badge
+- Persist completion state to UserProgress (or existing progress collection)
+- Must survive refresh
 
-- Checkmark button per day
-- Completed day: `opacity-50` and/or "בוצע" badge
-- Persist to UserProgress collection
-- Must survive page refresh
-
----
-
-## Core Engine Logic
+## Core Engine Requirements
 
 ### Scope: Always Show Last 7 Days
-
-```
-planDaysCount = min(7, daysAvailable)
-```
-- If exam is 12 days away → show only last 7 days
+- Show up to 7 days before exam: `planDaysCount = min(7, daysAvailable)`
+- If exam is 12 days away → still show only last 7 days
 
 ### Topics Per Day (Locked)
-
-```
-topicsPerDay = ceil(totalTopics / planDaysCount)
-```
+- `topicsPerDay = ceil(totalTopics / planDaysCount)`
 
 ### Rotation (Locked)
-
-Round-robin with category fallback:
-1. Weak topics first
-2. If empty → Medium topics
-3. If empty → Strong topics
-- Within category: do not repeat until others covered
+- Round-robin with category fallback:
+  1. Weak
+  2. If empty → Medium
+  3. If empty → Strong
+- Within category: do not repeat a topic until others in that category were covered
 
 ### Activity Mix by Days Until Exam (Locked)
 
-| daysUntilExam | Mode           | Tasks                                                                 |
-|---------------|----------------|-----------------------------------------------------------------------|
+| daysUntilExam | Mode           | Tasks                                                                |
+| ------------- | -------------- | -------------------------------------------------------------------- |
 | 1             | Warm-up        | 1 Weak topic + formulas/key notes (no full simulation)             |
-| 2             | Simulation     | Full simulation + mistake analysis (+ optional quick Weak drill)  |
-| 3–5           | High Intensity | Weak focus + targeted drills + optional mini simulation/question set|
-| 6–7           | Standard       | topicsPerDay topics: Learning + Drills per topic                    |
+| 2             | Simulation     | Full simulation + mistake analysis (+ optional quick Weak drill)    |
+| 3–5           | High Intensity | Weak focus + targeted drills + optional mini simulation/question set |
+| 6–7           | Standard       | topicsPerDay topics: Learning + Drills per topic                   |
 
 ### Edge Cases
-
 - `daysAvailable <= 0` → show error card: "תאריך הבחינה חייב להיות בעתיד"
-- No topics → remain in empty/CTA state
+- No topics → remain in empty/CTA state prompting to add topics
 - Only 1 topic → still generate; rotation degenerates to same topic
 
 ### Regenerate Behavior (Locked)
-
-- Clicking Generate again overwrites plan (recompute + persist)
-- Completion retention: keep by Topic ID when same topic appears again
-
----
-
-## Technical Implementation
-
-### Files to Modify
-
-1. **src/lib/study-plan/engine.ts**
-   - Implement adaptive scaling + rotation + topicsPerDay + daily modes
-
-2. **src/app/(frontend)/study-plan/_components/useStudyPlan.ts**
-   - Manage `hasGenerated` state
-   - Handle Generate click → compute + persist
-   - Handle regenerate semantics
-   - Load persisted plan + completion states
-
-3. **src/app/(frontend)/study-plan/_components/DayCard.tsx**
-   - Completion toggle UI + dim/badge
-   - Render tasks per mode as returned by engine
-
-### Date Handling
-
-- Use `date-fns` only for day-diff calculations
-- Avoid timezone/DST issues
-
-### Styling
-
-- Tailwind only
-- Assistant font (300–800)
-- Full RTL support
-- Lucide icons
-- Slate/Indigo palette like demo
-
----
+- Clicking Generate again: Overwrite the plan (recompute + persist)
+- Completion retention rule: keep completion by Topic ID when same topic appears again
 
 ## Acceptance Criteria
 
@@ -135,13 +82,3 @@ Round-robin with category fallback:
 - [ ] Mark-as-complete persists after refresh
 - [ ] UI is fully RTL and visually aligned with demo
 - [ ] `daysUntilExam = 1` produces Warm-up (no full study day)
-
----
-
-## Definition of Done
-
-PR includes:
-- Working adaptive engine implementation
-- Explicit generate trigger + correct empty state
-- Completion persistence
-- Minimal unit tests for engine (2-day, 5-day, 7-day scenarios with varying topic mixes)
