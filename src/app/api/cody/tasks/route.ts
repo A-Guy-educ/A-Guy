@@ -11,7 +11,7 @@ import { fetchIssues, fetchWorkflowRuns, fetchOpenPRs, fetchDeploymentPreviews, 
 import type { CodyTask, ColumnId, GitHubIssue, GitHubPR, WorkflowRun } from '@/ui/cody/types'
 
 // Map GitHub issue state to column using agent labels, workflow runs, and PR status
-// Priority: agent:* labels (set by Cody pipeline) > workflow runs > PR status > other labels
+// Priority: agent:* labels (set by Cody pipeline) > active workflow runs > gate labels > completed runs > PR status > other labels
 function getColumnForIssue(
   issue: GitHubIssue,
   workflowRun?: WorkflowRun,
@@ -24,18 +24,24 @@ function getColumnForIssue(
   if (labelNames.includes('agent:error')) return 'failed'
   if (labelNames.includes('agent:done')) return 'done'
   
-  // 2. Explicit state labels
+  // 2. Active workflow run takes priority over gate labels
+  // This ensures the dashboard shows "Building" even if risk-gated/hard-stop labels
+  // are still present (they are removed mid-run after approval)
+  if (workflowRun?.status === 'in_progress') return 'building'
+  
+  // 3. Explicit state labels (only checked when no active workflow run)
   if (labelNames.includes('failed')) return 'failed'
   if (labelNames.includes('gate-waiting')) return 'gate-waiting'
   if (labelNames.includes('retrying')) return 'retrying'
   
-  // 2b. Pipeline gate labels (set by pipeline when hitting gates)
+  // 3b. Pipeline gate labels (set by pipeline when hitting gates)
+  // These are now checked AFTER active workflow runs to prevent stale gate labels
+  // from hiding active pipeline progress
   if (labelNames.includes('hard-stop') || labelNames.includes('risk-gated')) return 'gate-waiting'
 
-  // 3. Workflow run status (always fetched)
-  if (workflowRun?.status === 'in_progress') return 'building'
+  // 4. Workflow run completed status
   if (workflowRun?.status === 'completed') {
-    // BUG FIX: also handle timed_out and cancelled as failures
+    // Also handle timed_out and cancelled as failures
     if (
       workflowRun.conclusion === 'failure' ||
       workflowRun.conclusion === 'timed_out' ||
@@ -44,15 +50,15 @@ function getColumnForIssue(
       return 'failed'
   }
   
-  // 4. Associated PR (always fetched via bulk)
+  // 5. Associated PR (always fetched via bulk)
   if (associatedPR && !associatedPR.merged_at) return 'review'
   
-  // 5. Other labels
+  // 6. Other labels
   if (labelNames.includes('released')) return 'done'
   if (labelNames.includes('in-progress') || labelNames.includes('building')) return 'building'
   if (labelNames.includes('review') || labelNames.includes('pr')) return 'review'
   
-  // 6. Default to open
+  // 7. Default to open
   return 'open'
 }
 
