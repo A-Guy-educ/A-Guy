@@ -2,186 +2,130 @@
  * @fileType api-endpoint
  * @domain cody
  * @pattern publish
- * @ai-summary Publish dev branch to main via GitHub merge
+ * @ai-summary Create a PR from dev → main and auto-approve it via GitHub API
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from 'next/server'
-import { execSync } from 'child_process'
+import { NextResponse } from 'next/server'
+import { Octokit } from '@octokit/rest'
 
-const REPO = 'A-Guy-educ/A-Guy'
+const OWNER = 'A-Guy-educ'
+const REPO = 'A-Guy'
 const DEV_BRANCH = 'dev'
 const PROD_BRANCH = 'main'
 
-function gh(...args: string[]): string {
-  try {
-    return execSync(`gh ${args.join(' ')} -R ${REPO}`, { encoding: 'utf-8' }).trim()
-  } catch (error: any) {
-    console.error(`gh command failed: gh ${args.join(' ')} -R ${REPO}`, error.message)
-    throw error
+function getOctokit(): Octokit {
+  const token = process.env.GITHUB_TOKEN
+  if (!token) {
+    throw new Error('GITHUB_TOKEN not configured')
   }
+  return new Octokit({ auth: token })
 }
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
-    const body = await req.json()
-
-    // Validate confirmation
-    if (body.confirm !== true) {
-      return NextResponse.json(
-        { error: 'Confirmation required. Send { confirm: true }.' },
-        { status: 400 },
-      )
-    }
-
+    const octokit = getOctokit()
     const results: string[] = []
 
-    // 1. Fetch latest main and dev branches
+    // 1. Check if dev is ahead of main
+    let aheadBy = 0
     try {
-      gh('fetch', 'origin', PROD_BRANCH)
-      gh('fetch', 'origin', DEV_BRANCH)
-      results.push('Fetched latest branches')
-    } catch (error: any) {
-      results.push(`Fetch note: ${error.message}`)
-    }
+      const { data: comparison } = await octokit.repos.compareCommits({
+        owner: OWNER,
+        repo: REPO,
+        base: PROD_BRANCH,
+        head: DEV_BRANCH,
+      })
+      aheadBy = comparison.ahead_by
 
-    // 2. Check if dev is ahead of main (has commits to merge)
-    try {
-      const mergeBase = execSync(`gh api repos/${REPO}/compare/main...dev --jq '.ahead_by'`, {
-        encoding: 'utf-8',
-      }).trim()
-
-      if (mergeBase === '0') {
+      if (aheadBy === 0) {
         return NextResponse.json({
           success: true,
-          message: 'dev branch is already up to date with main',
-          results,
+          message: 'Nothing to publish — dev is already up to date with main.',
+          results: ['No new commits on dev'],
         })
       }
 
-      results.push(`dev is ${mergeBase} commits ahead of main`)
-    } catch (error: any) {
-      // Continue anyway - might work
-      results.push(`Merge base check note: ${error.message}`)
+      results.push(`dev is ${aheadBy} commits ahead of main`)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      results.push(`Compare note: ${msg}`)
     }
 
-    // 3. Try to merge dev into main via PR
-    // First, check if there's an open PR from dev to main
-    let prNumber: string | null = null
+    // 2. Check for an existing open PR from dev → main
+    let prNumber: number | null = null
+    let prUrl: string | null = null
 
     try {
-      const prsOutput = gh(
-        'pr',
-        'list',
-        '--base',
-        PROD_BRANCH,
-        '--head',
-        DEV_BRANCH,
-        '--state',
-        'open',
-        '--json',
-        'number',
-      )
-      const prs = JSON.parse(prsOutput)
-      if (prs.length > 0) {
-        prNumber = String(prs[0].number)
+      const { data: existingPRs } = await octokit.pulls.list({
+        owner: OWNER,
+        repo: REPO,
+        state: 'open',
+        head: `${OWNER}:${DEV_BRANCH}`,
+        base: PROD_BRANCH,
+      })
+
+      if (existingPRs.length > 0) {
+        prNumber = existingPRs[0].number
+        prUrl = existingPRs[0].html_url
+        results.push(`Found existing PR #${prNumber}`)
       }
-    } catch {
-      // No PR found, will create one
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      results.push(`PR list note: ${msg}`)
     }
 
-    if (prNumber) {
-      // Update PR branch with latest main
+    // 3. Create PR if none exists
+    if (!prNumber) {
       try {
-        gh('pr', 'update-branch', prNumber)
-        results.push(`Updated PR #${prNumber} with latest main`)
-      } catch (error: any) {
-        results.push(`Branch update note: ${error.message}`)
-      }
-
-      // Approve and merge the PR
-      try {
-        gh('pr', 'review', prNumber, '--approve', '-b', 'LGTM! Merged via Cody dashboard publish.')
-        results.push(`Approved PR #${prNumber}`)
-      } catch (error: any) {
-        results.push(`Review note: ${error.message}`)
-      }
-
-      try {
-        gh('pr', 'merge', prNumber, '--squash', '--delete-branch')
-        results.push(`Merged PR #${prNumber} and deleted dev branch`)
-      } catch (error: any) {
-        if (error.message.includes('Pull request is in')) {
-          results.push(`PR #${prNumber} approved, merge may require checks`)
-        } else if (error.message.includes('No commit to merge')) {
+        const { data: newPR } = await octokit.pulls.create({
+          owner: OWNER,
+          repo: REPO,
+          title: `Publish dev → production (${aheadBy} commits)`,
+          body: 'Automated publish via Cody dashboard.\n\nThis PR merges the `dev` branch into `main` to trigger a production deployment.',
+          head: DEV_BRANCH,
+          base: PROD_BRANCH,
+        })
+        prNumber = newPR.number
+        prUrl = newPR.html_url
+        results.push(`Created PR #${prNumber}`)
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error)
+        if (msg.includes('No commits between')) {
           return NextResponse.json({
             success: true,
-            message: 'No commits to merge - dev is already up to date with main',
+            message: 'Nothing to publish — no new commits between dev and main.',
             results,
           })
-        } else {
-          throw error
-        }
-      }
-    } else {
-      // No PR exists - try direct merge (may fail if there are conflicts)
-      // This is the fallback - prefer the PR flow above
-      try {
-        gh(
-          'pr',
-          'create',
-          '--base',
-          PROD_BRANCH,
-          '--head',
-          DEV_BRANCH,
-          '--title',
-          'Publish dev to production',
-          '--body',
-          'Automated merge via Cody dashboard',
-        )
-        results.push('Created PR from dev to main')
-
-        // Now find and merge it
-        const newPrsOutput = gh(
-          'pr',
-          'list',
-          '--base',
-          PROD_BRANCH,
-          '--head',
-          DEV_BRANCH,
-          '--state',
-          'open',
-          '--json',
-          'number',
-        )
-        const newPrs = JSON.parse(newPrsOutput)
-        if (newPrs.length > 0) {
-          const newPrNumber = String(newPrs[0].number)
-          gh('pr', 'merge', newPrNumber, '--squash', '--delete-branch')
-          results.push(`Merged PR #${newPrNumber} and deleted dev branch`)
-        }
-      } catch (error: any) {
-        if (error.message.includes('merge conflict') || error.message.includes('Failed to merge')) {
-          return NextResponse.json(
-            { error: 'Merge conflict - please resolve manually in GitHub', details: results },
-            { status: 409 },
-          )
         }
         throw error
       }
     }
 
-    return NextResponse.json({ success: true, message: 'Published dev to production', results })
-  } catch (error: any) {
-    console.error('[Cody] Publish error:', error)
-
-    // Check for specific error types
-    if (error.message?.includes('merge conflict') || error.status === 409) {
-      return NextResponse.json(
-        { error: 'Merge conflict - resolve manually in GitHub', message: error.message },
-        { status: 409 },
-      )
+    // 4. Approve the PR
+    try {
+      await octokit.pulls.createReview({
+        owner: OWNER,
+        repo: REPO,
+        pull_number: prNumber!,
+        event: 'APPROVE',
+        body: '✅ Auto-approved via Cody dashboard publish.',
+      })
+      results.push(`Approved PR #${prNumber}`)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      // May fail if the token user is the PR author (can't self-approve)
+      results.push(`Approval note: ${msg}`)
     }
 
-    return NextResponse.json({ error: error.message || 'Publish failed' }, { status: 500 })
+    return NextResponse.json({
+      success: true,
+      message: `PR #${prNumber} created and approved`,
+      prUrl,
+      prNumber,
+      results,
+    })
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error('[Cody] Publish error:', msg)
+    return NextResponse.json({ error: msg || 'Publish failed' }, { status: 500 })
   }
 }

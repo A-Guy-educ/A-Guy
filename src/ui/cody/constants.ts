@@ -244,8 +244,8 @@ export const TASK_TYPE_PREFIX: Record<string, string> = {
 // ============ Site URLs ============
 
 export const SITE_URLS = {
-  dev: process.env.NEXT_PUBLIC_DEV_SITE_URL ?? 'https://dev.a-guy.co.il',
-  prod: process.env.NEXT_PUBLIC_PROD_SITE_URL ?? 'https://a-guy.co.il',
+  dev: process.env.NEXT_PUBLIC_DEV_SITE_URL ?? 'https://dev.aguy.co.il',
+  prod: process.env.NEXT_PUBLIC_PROD_SITE_URL ?? 'https://aguy.co.il',
 }
 
 // ============ Branch Names ============

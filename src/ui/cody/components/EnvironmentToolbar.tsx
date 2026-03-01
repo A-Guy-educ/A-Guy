@@ -77,8 +77,8 @@ export function EnvironmentToolbar() {
             <DialogHeader>
               <DialogTitle>Publish to Production?</DialogTitle>
               <DialogDescription>
-                This will merge the dev branch into main, triggering a production deployment. This
-                action cannot be undone.
+                This will create a PR from dev → main and auto-approve it. Once CI passes, it will
+                be merged and deployed to production.
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-2 mt-4">
