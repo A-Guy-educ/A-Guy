@@ -1,0 +1,27 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/app/api/user-settings/route.ts",
+    "src/app/api/teacher-profiles/route.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Logger is available at @/infra/utils/logger/logger",
+    "Other API routes in the codebase follow the same error handling pattern that should be replicated"
+  ],
+  "review_questions": [],
+  "complexity": 18,
+  "complexity_reasoning": "Scope: 5 (2 files in API routes). Risk: 8 (API error responses affect user experience). Novelty: 3 (follows existing pattern from conversations/by-context). Cross-Domain: 0 (backend only). Ambiguity: 1 (clear files, clear fix). Dependency: 1 (uses existing logger). Total: 18 (Simple)",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains clear bug description with specific file paths and line numbers, has expected behavior (structured JSON errors + logging), and references existing patterns to follow. Promoted spec.md from requirements."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
