@@ -1,0 +1,31 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/lib/study-plan/engine.ts - adaptive timeline scaling, fallback selection, round-robin rotation, per-day activity generation",
+    "src/app/(frontend)/study-plan/_components/useStudyPlan.ts - manual trigger flow, generate+persist, load persisted plan",
+    "src/app/(frontend)/study-plan/_components/DayCard.tsx - completion toggle UI, completed state, render tasks"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "UserProgress collection exists and can be extended for day completion tracking",
+    "date-fns is already available in the project",
+    "The existing study plan page structure is compatible with these changes",
+    "Tailwind CSS and Lucide icons are already configured in the project"
+  ],
+  "review_questions": [],
+  "complexity": 42,
+  "complexity_reasoning": "Scope: 12 (3 files across frontend/logic modules), Risk: 12 (core feature logic + data persistence), Novelty: 8 (adaptive logic extension), Cross-Domain: 6 (frontend + backend logic), Ambiguity: 2 (clear requirements with reference design), Dependencies: 4 (UserProgress, date-fns). Total: 42 - Moderate complexity with clear implementation path",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Input contains step-by-step requirements (BUG A, BUG B, Functional Requirements), explicit file paths to modify, acceptance criteria with checkboxes, and reference HTML design. Promoted spec.md with requirements extraction."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
