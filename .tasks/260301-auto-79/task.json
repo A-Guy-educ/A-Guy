@@ -1,0 +1,37 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "backend",
+  "scope": [
+    "Create ExtractionLogs collection for storing LLM extraction attempts",
+    "Build custom React component in Payload Admin UI for document upload and preview",
+    "Integrate vision-capable LLM (OpenAI GPT-4o or Anthropic Claude) for extraction",
+    "Implement preview/edit flow before exercise creation",
+    "Ensure frontend validation works for generated exercises",
+    "Store extraction logs with raw response, parsed JSON, status, lesson ID, media ID"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Exercises collection schema exists and can be inspected during architect stage",
+    "LLM API credentials (OpenAI or Anthropic) are available in environment",
+    "Payload Admin UI can be extended with custom components in Lesson edit view",
+    "Frontend exercise validation logic exists and can be reused"
+  ],
+  "review_questions": [
+    "Which LLM provider should be used - OpenAI GPT-4o or Anthropic Claude 3.5 Sonnet?",
+    "Is the Exercises collection schema stable and documented for mapping?",
+    "What is the existing pattern for custom admin components in this codebase?"
+  ],
+  "complexity": 58,
+  "complexity_reasoning": "Scope: 16 points (new collection + admin component + LLM integration + frontend validation across 3+ modules). Risk: 12 points (API integration, database schema, admin UI). Novelty: 12 points (new feature with some existing patterns). Cross-Domain: 10 points (backend + frontend + admin UI). Ambiguity: 3 points (clear intent with some implementation details to figure out). Dependency: 5 points (depends on LLM APIs, existing Exercises collection). Total: 58 - Very Complex tier.",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains detailed ## Objective, Technical Context, Implementation Requirements, and Definition of Done sections. Has clear acceptance criteria and out-of-scope items. Promoted spec.md with extracted requirements and acceptance criteria."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
