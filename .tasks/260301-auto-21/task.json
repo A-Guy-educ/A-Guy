@@ -1,0 +1,33 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "llm",
+  "scope": [
+    "document-upload",
+    "pdf-processing",
+    "ai-conversion",
+    "exercise-creation"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "This POC will use existing AI services (Gemini) for document understanding",
+    "This will integrate with the existing exercises collection",
+    "The POC will be synchronous (single document, not batch processing)",
+    "Supported input formats will include PDF pages and images"
+  ],
+  "review_questions": [
+    "What file types should be supported (PDF, PNG, JPG)?",
+    "What exercise types should be generated (MCQ, fill-blank, etc.)?",
+    "How should errors be handled when AI conversion fails?"
+  ],
+  "complexity": 53,
+  "complexity_reasoning": "Scope: 12 (multiple files across backend+AI modules). Risk: 10 (AI integration + file processing). Novelty: 12 (new feature pattern). Cross-domain: 8 (backend+AI services). Ambiguity: 6 (POC scope is vague). Dependencies: 5 (depends on existing exercise collection and AI services). Total: 53",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task describes a POC concept with basic summary but lacks detailed requirements, acceptance criteria, or implementation steps. No file paths or specific implementation details provided."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
