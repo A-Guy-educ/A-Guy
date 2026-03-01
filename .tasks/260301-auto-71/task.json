@@ -1,0 +1,34 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.8,
+  "primary_domain": "backend",
+  "scope": [
+    "media uploads",
+    "Courses collection",
+    "Lessons collection",
+    "Exercises collection"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The media collection exists and is properly configured in Payload",
+    "Storage backend (Vercel Blob or local) is configured",
+    "The issue is in the upload endpoint or collection config for media fields"
+  ],
+  "review_questions": [
+    "What is the exact error message returned in the 400 Bad Request?",
+    "Is this issue specific to certain file types or all media?",
+    "Which specific collection (Course/Lesson/Exercise) and field is failing?"
+  ],
+  "complexity": 28,
+  "complexity_reasoning": "Scope: 8 (2-3 files in same module), Risk: 8 (non-critical business logic), Novelty: 3 (existing pattern), Cross: 2 (single domain), Ambiguity: 4 (clear intent), Deps: 3 (depends on storage config). Total: 28",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains clear steps to reproduce (Steps 1-7), expected results (5 bullet points), and actual results (5 bullet points). Has implicit acceptance criteria in the 'Expected Result' section. Missing explicit implementation plan but has sufficient detail for a bug fix."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
