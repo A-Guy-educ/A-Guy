@@ -61,6 +61,22 @@ export async function runPipeline(
     state = recoverPipelineState(state, flatOrder, advisoryStages)
     writeState(ctx.taskId, state)
 
+    // Step 4: Handle paused pipeline with no paused stages (gate was approved)
+    // This handles the case where resumeFromGate() was called to mark the gate stage
+    // as completed, but the pipeline-level state is still "paused"
+    if (state.state === 'paused') {
+      const anyPausedStage = Object.values(state.stages).some((s) => s.state === 'paused')
+      if (!anyPausedStage) {
+        // Gate was approved - no stages are actually paused, so resume the pipeline
+        state = {
+          ...state,
+          state: 'running',
+          updatedAt: new Date().toISOString(),
+        }
+        writeState(ctx.taskId, state)
+      }
+    }
+
     // If recovery determined pipeline is already done, return immediately
     if (state.state === 'completed' || state.state === 'failed') {
       return state
