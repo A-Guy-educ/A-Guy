@@ -5,14 +5,72 @@ Create a Proof of Concept (POC) that converts a single uploaded document (PDF pa
 
 **Core Demo Promise**: Take existing material and turn it into an interactive, solvable exercise inside aguy.
 
+**V3 Differentiation**: V3 is a simplified synchronous POC for single-exercise conversion, in contrast to:
+- V1: Original pdfToExercisesTask (batch async)
+- V2: pdfToExercisesV2Task (image crop pipeline)
+
 ## Technical Context
 - **Stack**: Next.js 15 + Payload CMS
-- **LLM Integration**: Vision-capable LLM (OpenAI GPT-4o or Anthropic Claude 3.5 Sonnet)
-- **Target Schema**: Must map to existing Exercises collection schema
+- **LLM Integration**: Uses existing AI provider infrastructure (Gemini via Genkit adapter) - see `src/infra/llm/services/data-extractor-service.ts`
+- **Target Schema**: Must map to existing Exercises collection schema (`src/server/payload/collections/Exercises/`)
 
-## Requirements
+## Functional Requirements
 
-### 1. Input Scope (POC Version)
+### FR-EX-001: Extraction Output Transformation
+The LLM extraction returns simple format (`question`, `options`, `correctAnswer`, `explanation`). 
+**Must transform** this to Exercises collection's complex block format:
+- `content.blocks` array with proper block types
+- Block types: `question_free_response` (FreeResponseAnswerSchema) or `question_select` with variants `mcq` or `true_false`
+- All blocks require valid IDs and InlineRichTextSchema format
+
+### FR-EX-002: Document Upload
+Use existing Lesson `contentFiles` field for document upload (already exists in Lessons collection at `src/server/payload/collections/Lessons.ts`)
+
+### FR-EX-003: Single Exercise Extraction
+- Extract exactly one exercise from the document
+- If multiple questions exist → take the first one silently
+
+### FR-EX-004: Preview & Edit Flow
+1. Admin selects uploaded file from Lesson.contentFiles
+2. Clicks "Convert V3" 
+3. System extracts exercise via LLM + transformation
+4. Shows Preview of extracted Exercise (JSON)
+5. Admin can manually edit prompt, options, correct answer
+6. Admin clicks "Create Exercise"
+7. Exercise is created as Published
+
+**Rule**: No exercise creation without preview/edit step.
+
+### FR-EX-005: Exercise Creation
+- Create exercise with `origin: 'conversion'` 
+- Link to source media via `sourceDoc` field
+- Set `pipelineVersion: 3`
+
+### FR-EX-006: Admin UI Component
+The component should integrate with or extend existing `LessonConversionPanel` component at `src/ui/admin/exercise-conversion/LessonConversionPanel`
+
+### FR-EX-007: ExtractionLogs Collection
+Create ExtractionLogs collection that:
+- Links to Exercises via relationship (not standalone data duplication)
+- Stores: raw LLM response, parsed JSON, status, lesson ID, media ID, prompt version
+- Must include `tenantField` for multi-tenancy
+
+## Non-Functional Requirements
+
+### NFR-011: Prompt Versioning
+Use existing Prompts collection with `usage: 'extractor'` for prompt management (see `src/server/payload/collections/Prompts.ts`)
+
+### NFR-012: Access Control
+ExtractionLogs access:
+- create: via hooks only (not UI)
+- read: admin-only
+- update: disabled (append-only)
+- delete: disabled
+
+### NFR-013: Tenant Isolation
+All data operations must include tenant scoping using existing `tenantField`
+
+## Input Scope (POC Version)
 - Upload PDF or Image containing one specific exercise
 - Assumptions:
   - Document contains exactly one exercise
@@ -20,29 +78,28 @@ Create a Proof of Concept (POC) that converts a single uploaded document (PDF pa
   - If multiple questions exist → take the first one silently
   - No OCR-only fallback required
 
-### 2. Extraction Requirements
+## Extraction Requirements
 - Single LLM-based extraction using Vision + text understanding
 - Return exactly one JSON object representing the exercise
 
-### 3. Output Exercise Format
+## Output Exercise Format
 Must support:
 - `question_free_response`
 - `question_select` (single correct option)
 - Optional: MCQ (treated as question_select with multiple options)
 
 The Exercise must include:
-- Prompt text
+- Prompt text (InlineRichTextSchema format)
 - Answer options (if question_select)
 - Correct answer (if detectable)
 - Rule: If correct answer not detectable, set `correctAnswer: null`. Don't block creation.
 
-### 4. UI Flow & Payload CMS Integration
-**Implementation Location**: Custom React component in Payload CMS Admin UI, injected into Lesson edit view
+## UI Flow & Payload CMS Integration
 
 **Admin Flow**:
-1. Admin uploads PDF/Image to a Lesson
+1. Admin selects PDF/Image from Lesson.contentFiles
 2. Admin clicks "Convert V3"
-3. System extracts exercise via LLM
+3. System extracts exercise via LLM + transformation
 4. System shows Preview of extracted JSON/Exercise
 5. Admin can manually edit prompt, options, correct answer
 6. Admin clicks "Create Exercise"
@@ -52,8 +109,9 @@ The Exercise must include:
 
 **Rule**: No exercise creation without preview/edit step.
 
-### 5. Data Model & Raw Extraction Storage
-Create new Payload Collection: `ExtractionLogs` to store:
+## Data Model & Raw Extraction Storage
+
+ExtractionLogs collection stores:
 - Raw LLM response string
 - Parsed JSON payload
 - Extraction status (Success/Failed)
@@ -61,14 +119,14 @@ Create new Payload Collection: `ExtractionLogs` to store:
 - Media ID (relation to uploaded document)
 - Prompt ID / Version used
 
-### 6. Product Decisions
+## Product Decisions
 - **Accuracy Standard**: Prompt text must be readable and faithful. Math formulas ~90% accurate acceptable.
 - **Multiple Exercises**: Assume single exercise. If multiple exist, take first silently.
 
-### 7. Out of Scope
+## Out of Scope
 - Multi-exercise splitting or detection UI
 - Batch conversion of multiple files
-- Idempotency/deduplication
+- Idempotency/deduplication (use existing exercise fields)
 - Async job queues (synchronous OK for POC)
 - Perfect layout/formatting preservation
 - Enterprise-grade robustness
@@ -76,7 +134,7 @@ Create new Payload Collection: `ExtractionLogs` to store:
 ## Acceptance Criteria
 
 A conversion is successful ONLY if ALL of occur:
-1. Exercise JSON is valid and maps to Payload schema
+1. Exercise JSON is valid and maps to Payload schema (ContentBlockSchema)
 2. Exercise is successfully saved to database
 3. Exercise renders correctly in frontend lesson UI
 4. User can interact with and submit an answer

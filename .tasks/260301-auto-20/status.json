@@ -4,15 +4,35 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-01T13:31:46.187Z",
-  "updatedAt": "2026-03-01T17:28:11.439Z",
-  "state": "running",
+  "updatedAt": "2026-03-01T17:40:12.677Z",
+  "state": "paused",
   "cursor": "taskify",
   "stages": {
     "taskify": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-01T17:28:11.439Z"
+      "startedAt": "2026-03-01T17:28:11.439Z",
+      "completedAt": "2026-03-01T17:30:02.385Z",
+      "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Promoted via input_quality (file exists)"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-01T17:30:07.910Z",
+      "completedAt": "2026-03-01T17:35:12.286Z",
+      "outputFile": "gap.md"
+    },
+    "architect": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-03-01T17:35:12.287Z"
     }
   },
-  "issueNumber": 643
+  "issueNumber": 643,
+  "completedAt": "2026-03-01T17:40:12.677Z"
 }
