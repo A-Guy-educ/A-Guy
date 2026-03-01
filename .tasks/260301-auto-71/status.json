@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-01T12:33:28.695Z",
-  "updatedAt": "2026-03-01T14:23:28.271Z",
+  "updatedAt": "2026-03-01T14:52:38.069Z",
   "state": "running",
   "cursor": "taskify",
   "stages": {
@@ -47,7 +47,7 @@
     "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-01T14:23:28.271Z"
+      "startedAt": "2026-03-01T14:52:38.069Z"
     }
   },
   "issueNumber": 642
