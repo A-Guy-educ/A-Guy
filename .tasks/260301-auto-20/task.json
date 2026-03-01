@@ -1,37 +1,36 @@
 {
   "task_type": "implement_feature",
   "risk_level": "medium",
-  "confidence": 0.9,
-  "primary_domain": "backend",
+  "confidence": 0.85,
+  "primary_domain": "llm",
   "scope": [
-    "Create ExtractionLogs collection in Payload CMS",
-    "Build custom React component for document upload and conversion in Admin UI",
-    "Integrate vision-capable LLM for exercise extraction",
+    "Create ExtractionLogs collection for audit/debugging",
+    "Build custom React component in Payload Admin (Lesson edit view)",
+    "Implement LLM vision extraction service",
+    "Create API endpoint for document-to-exercise conversion",
     "Implement preview/edit UI before exercise creation",
-    "Ensure extracted exercise maps to existing Exercises collection schema",
-    "Add extraction logging for debugging and auditability"
+    "Wire up exercise creation with proper schema mapping"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "The existing Exercises collection schema is accessible and can be inspected during architect stage",
-    "A vision-capable LLM API key is available in environment variables",
-    "The Payload CMS admin can be extended with custom React components",
-    "File upload to Payload Media collection works for PDF and images"
+    "Vision LLM (GPT-4o or Claude 3.5 Sonnet) API keys are available",
+    "Media collection already supports PDF/image uploads",
+    "Admin will have access to Lesson edit view for component injection",
+    "The LLM can accurately extract exercise content from documents with ~90% accuracy for math formulas"
   ],
   "review_questions": [
-    "Should the vision LLM be OpenAI GPT-4o or Anthropic Claude 3.5 Sonnet (or configurable)?",
-    "Does the existing Exercises collection support all required fields (question_free_response, question_select, prompt, options, correctAnswer)?",
-    "Should the ExtractionLogs collection be created in this task or is there an existing one?"
+    "Which vision-capable LLM should be used - OpenAI GPT-4o or Anthropic Claude 3.5 Sonnet?",
+    "Should the ExtractionLogs collection be created now or as part of implementation?",
+    "Is there an existing Lesson edit view component where the conversion UI should be injected?"
   ],
-  "complexity": 72,
-  "complexity_reasoning": "Scope: 20 (new collection, admin component, LLM integration, preview flow, extraction storage). Risk: 12 (LLM integration, file handling, database changes). Novelty: 18 (new feature with vision AI). Cross-domain: 12 (backend collections + frontend React + AI integration). Ambiguity: 4 (mostly clear, needs schema inspection). Dependency: 6 (needs Exercises schema, LLM provider). Total: 72",
+  "complexity": 70,
+  "complexity_reasoning": "Scope: 18 (new collection + admin component + LLM service + API endpoint, 4+ files). Risk: 14 (LLM integration, new data collection, file handling). Novelty: 15 (new vision extraction pipeline). Cross-domain: 12 (backend + frontend + AI + data). Ambiguity: 4 (clear requirements, some implementation details TBD). Dependencies: 7 (LLM API, Exercises schema, Media collection, admin patterns). Total: 70 - Very Complex",
   "input_quality": {
-    "level": "detailed_plan",
+    "level": "good_spec",
     "skip_stages": [
-      "spec",
-      "architect"
+      "spec"
     ],
-    "reasoning": "Input contains detailed requirements with specific UI flows, data model specs, acceptance criteria, and out-of-scope items. Though it lacks specific file paths, the implementation scope is well-defined. The architect stage should inspect Exercises collection schema during gap analysis."
+    "reasoning": "Input contains detailed ## Objective, clear acceptance criteria in sections 1-8, and well-defined requirements. The task specifies technical constraints, UI flow, data model requirements, and success criteria. However, it lacks step-by-step implementation plan with specific file paths. Promoted requirements to spec.md for architect stage."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
