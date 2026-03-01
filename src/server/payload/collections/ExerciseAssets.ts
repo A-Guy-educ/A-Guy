@@ -34,7 +34,10 @@ export const ExerciseAssets: CollectionConfig = {
     //     position: 'centre',
     //   },
     // ],
-    adminThumbnail: 'thumbnail',
+    adminThumbnail: ({ doc }) => {
+      const docData = doc as { url?: string }
+      return docData.url || false
+    },
     mimeTypes: ['image/svg+xml', 'image/png'],
   },
   fields: [
