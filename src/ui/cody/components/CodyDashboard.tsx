@@ -29,12 +29,14 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/ui/web/components/sheet'
-import { MessageSquare, X, Bug, Menu, RefreshCw, Bell } from 'lucide-react'
+import { MessageSquare, X, Bug, Menu, RefreshCw, Bell, Globe } from 'lucide-react'
 import { useCodyTasks } from '../hooks'
 import { useBrowserNotifications } from '../hooks/useBrowserNotifications'
 import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
 import { RateLimitError, NoTokenError, tasksApi } from '../api'
 import { toast } from 'sonner'
+import { EnvironmentToolbar } from './EnvironmentToolbar'
+import { SITE_URLS } from '../constants'
 
 const DATE_FILTERS = [
   { label: 'All time', value: 'all', days: undefined },
@@ -346,6 +348,9 @@ export function CodyDashboard() {
           </Button>
         </div>
 
+        {/* Environment Toolbar */}
+        <EnvironmentToolbar />
+
         {/* Cody Status Banner */}
         <CodyStatusBanner tasks={tasks} isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
 
@@ -410,6 +415,25 @@ export function CodyDashboard() {
             <div className="space-y-2">
               <span className="text-xs font-medium text-muted-foreground uppercase">Filters</span>
               {filterControls}
+            </div>
+
+            {/* Environment Links */}
+            <div className="space-y-2 pt-2 border-t border-border">
+              <span className="text-xs font-medium text-muted-foreground uppercase">
+                Environment
+              </span>
+              <a href={SITE_URLS.dev} target="_blank" rel="noopener noreferrer" className="block">
+                <Button variant="outline" className="w-full justify-start gap-2">
+                  <Globe className="w-4 h-4" />
+                  Dev Site
+                </Button>
+              </a>
+              <a href={SITE_URLS.prod} target="_blank" rel="noopener noreferrer" className="block">
+                <Button variant="outline" className="w-full justify-start gap-2">
+                  <Globe className="w-4 h-4" />
+                  Prod Site
+                </Button>
+              </a>
             </div>
 
             {/* Actions */}

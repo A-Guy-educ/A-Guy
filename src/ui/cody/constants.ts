@@ -240,3 +240,15 @@ export const TASK_TYPE_PREFIX: Record<string, string> = {
   research: 'chore',
   spec_only: 'feat',
 }
+
+// ============ Site URLs ============
+
+export const SITE_URLS = {
+  dev: process.env.NEXT_PUBLIC_DEV_SITE_URL ?? 'https://dev.a-guy.co.il',
+  prod: process.env.NEXT_PUBLIC_PROD_SITE_URL ?? 'https://a-guy.co.il',
+}
+
+// ============ Branch Names ============
+
+export const DEV_BRANCH = 'dev'
+export const PROD_BRANCH = 'main'

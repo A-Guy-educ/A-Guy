@@ -258,6 +258,19 @@ export const collaboratorsApi = {
   },
 }
 
+// ============ Publish API ============
+
+export const publishApi = {
+  publish: async (): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm: true }),
+    })
+    return handleResponse(res)
+  },
+}
+
 // ============ Combined API ============
 
 export const codyApi = {
@@ -266,4 +279,5 @@ export const codyApi = {
   taskDocs: taskDocsApi,
   boards: boardsApi,
   collaborators: collaboratorsApi,
+  publish: publishApi.publish,
 }
