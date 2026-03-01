@@ -1,4 +1,5 @@
 import type { CollectionBeforeValidateHook } from 'payload'
+import { APIError } from 'payload'
 
 import { inferMediaType, validateMimeType } from '@/infra/media/inferMediaType'
 import { MediaType, SIZE_LIMITS } from '@/infra/media/types'
@@ -15,10 +16,20 @@ export const validateMediaUploadHook: CollectionBeforeValidateHook = async ({
   const filesize = data?.filesize
   const type = data?.type || inferMediaType(mimeType, filename)
 
+  // Guard: if req.file exists but data lacks metadata, log warning and skip validation
+  // This handles edge case where generateFileData processed the file but race condition left data incomplete
+  if (req.file && (!mimeType || !filename)) {
+    req.payload.logger.warn(
+      '[Media] File present on request but metadata not in data — skipping validation (client upload edge case)',
+    )
+    return data
+  }
+
   // External type should not have file upload
   if (type === MediaType.External) {
     if (!data?.externalUrl) {
-      throw new Error('External media requires an external URL')
+      req.payload.logger.warn('[Media] External media requires an external URL')
+      throw new APIError('External media requires an external URL', 400)
     }
     // Set filename from URL hostname if not provided
     if (!data.filename) {
@@ -33,7 +44,11 @@ export const validateMediaUploadHook: CollectionBeforeValidateHook = async ({
 
   // Non-external types require a file (safety net since filesRequiredOnCreate is false)
   if (!mimeType && !filename) {
-    throw new Error('A file is required for non-external media types')
+    req.payload.logger.warn('[Media] Upload attempted without file or metadata')
+    throw new APIError(
+      'A file is required for non-external media types. Please select a file to upload.',
+      400,
+    )
   }
 
   // Validate MIME type against allowlist
@@ -50,8 +65,14 @@ export const validateMediaUploadHook: CollectionBeforeValidateHook = async ({
   if (filesize && type && type in SIZE_LIMITS) {
     const maxSize = SIZE_LIMITS[type as MediaType]
     if (maxSize && filesize > maxSize) {
-      throw new Error(
-        `File size (${Math.round(filesize / 1024 / 1024)}MB) exceeds maximum for ${type} (${Math.round(maxSize / 1024 / 1024)}MB)`,
+      const sizeMB = Math.round(filesize / 1024 / 1024)
+      const maxSizeMB = Math.round(maxSize / 1024 / 1024)
+      req.payload.logger.warn(
+        `[Media] File size (${sizeMB}MB) exceeds maximum for ${type} (${maxSizeMB}MB)`,
+      )
+      throw new APIError(
+        `File size (${sizeMB}MB) exceeds maximum for ${type} (${maxSizeMB}MB)`,
+        400,
       )
     }
   }
