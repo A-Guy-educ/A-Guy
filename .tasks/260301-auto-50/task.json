@@ -1,30 +1,33 @@
 {
   "task_type": "implement_feature",
   "risk_level": "medium",
-  "confidence": 0.95,
+  "confidence": 0.9,
   "primary_domain": "frontend",
   "scope": [
-    "src/lib/study-plan/engine.ts - adaptive timeline scaling, fallback selection, round-robin rotation, per-day activity generation",
-    "src/app/(frontend)/study-plan/_components/useStudyPlan.ts - manual trigger flow, generate+persist, load persisted plan",
-    "src/app/(frontend)/study-plan/_components/DayCard.tsx - completion toggle UI, completed state, render tasks"
+    "src/lib/study-plan/engine.ts - adaptive timeline scaling, fallback selection, round-robin rotation",
+    "src/app/(frontend)/study-plan/_components/useStudyPlan.ts - manual trigger flow, persistence",
+    "src/app/(frontend)/study-plan/_components/DayCard.tsx - completion toggle UI, state visuals"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "UserProgress collection exists and can be extended for day completion tracking",
-    "date-fns is already available in the project",
-    "The existing study plan page structure is compatible with these changes",
-    "Tailwind CSS and Lucide icons are already configured in the project"
+    "UserProgress collection exists and can store completion state",
+    "date-fns is available for day calculations",
+    "Tailwind CSS and Lucide icons are available in the project",
+    "RTL support is already configured in the project"
   ],
-  "review_questions": [],
-  "complexity": 42,
-  "complexity_reasoning": "Scope: 12 (3 files across frontend/logic modules), Risk: 12 (core feature logic + data persistence), Novelty: 8 (adaptive logic extension), Cross-Domain: 6 (frontend + backend logic), Ambiguity: 2 (clear requirements with reference design), Dependencies: 4 (UserProgress, date-fns). Total: 42 - Moderate complexity with clear implementation path",
+  "review_questions": [
+    "Should exam date be persisted or only the generated study plan?",
+    "Are there existing tests for UserProgress collection that should be extended?"
+  ],
+  "complexity": 48,
+  "complexity_reasoning": "Scope: 12 (multiple files across frontend + engine logic), Risk: 10 (UI + data persistence), Novelty: 12 (new adaptive scheduling logic), Cross-domain: 8 (frontend + backend logic), Ambiguity: 2 (clear requirements), Dependencies: 4 (uses existing UserProgress). Total: 48",
   "input_quality": {
     "level": "detailed_plan",
     "skip_stages": [
       "spec",
       "architect"
     ],
-    "reasoning": "Input contains step-by-step requirements (BUG A, BUG B, Functional Requirements), explicit file paths to modify, acceptance criteria with checkboxes, and reference HTML design. Promoted spec.md with requirements extraction."
+    "reasoning": "Task contains detailed functional requirements, acceptance criteria, file paths to modify, and a reference HTML design. Has clear steps for implementation with explicit bug descriptions and required fixes."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
