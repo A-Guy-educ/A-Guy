@@ -1,33 +1,44 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { ACTIVITY_TEMPLATES } from '@/lib/study-plan/constants'
-import { generateStudyPlan, getTimeframeMode } from '@/lib/study-plan/engine'
+import { generateStudyPlan, getActivityForDaysUntilExam } from '@/lib/study-plan/engine'
 import type { TopicInput } from '@/lib/study-plan/types'
 
 describe('study-plan engine', () => {
-  describe('getTimeframeMode', () => {
-    it('0 days → survival', () => {
-      expect(getTimeframeMode(0)).toBe('survival')
+  describe('getActivityForDaysUntilExam', () => {
+    it('0 days → warmup', () => {
+      expect(getActivityForDaysUntilExam(0)).toBe('warmup')
     })
 
-    it('1 day → survival', () => {
-      expect(getTimeframeMode(1)).toBe('survival')
+    it('1 day → warmup', () => {
+      expect(getActivityForDaysUntilExam(1)).toBe('warmup')
     })
 
-    it('2 days → high_intensity', () => {
-      expect(getTimeframeMode(2)).toBe('high_intensity')
+    it('2 days → full_simulation', () => {
+      expect(getActivityForDaysUntilExam(2)).toBe('full_simulation')
     })
 
-    it('5 days → high_intensity', () => {
-      expect(getTimeframeMode(5)).toBe('high_intensity')
+    it('3 days → hybrid', () => {
+      expect(getActivityForDaysUntilExam(3)).toBe('hybrid')
     })
 
-    it('6 days → balanced', () => {
-      expect(getTimeframeMode(6)).toBe('balanced')
+    it('4 days → hybrid', () => {
+      expect(getActivityForDaysUntilExam(4)).toBe('hybrid')
     })
 
-    it('30 days → balanced', () => {
-      expect(getTimeframeMode(30)).toBe('balanced')
+    it('5 days → hybrid', () => {
+      expect(getActivityForDaysUntilExam(5)).toBe('hybrid')
+    })
+
+    it('6 days → practice', () => {
+      expect(getActivityForDaysUntilExam(6)).toBe('practice')
+    })
+
+    it('7 days → practice', () => {
+      expect(getActivityForDaysUntilExam(7)).toBe('practice')
+    })
+
+    it('30 days → practice', () => {
+      expect(getActivityForDaysUntilExam(30)).toBe('practice')
     })
   })
 
@@ -128,36 +139,6 @@ describe('study-plan engine', () => {
       const result = generateStudyPlan(input)
       result.forEach((day) => {
         expect(day.activityType).toBe('warmup')
-      })
-    })
-
-    it('Timeframe mode: high_intensity — 3 days left', () => {
-      const input = {
-        today: '2026-03-01',
-        examDate: '2026-03-04', // 3 days left
-        topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
-        idGenerator,
-      }
-
-      const result = generateStudyPlan(input)
-      const expected = ACTIVITY_TEMPLATES.high_intensity
-      result.forEach((day, idx) => {
-        expect(day.activityType).toBe(expected[idx])
-      })
-    })
-
-    it('Timeframe mode: balanced — 19 days left', () => {
-      const input = {
-        today: '2026-03-01',
-        examDate: '2026-03-20', // 19 days left
-        topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
-        idGenerator,
-      }
-
-      const result = generateStudyPlan(input)
-      const expected = ACTIVITY_TEMPLATES.balanced
-      result.forEach((day, idx) => {
-        expect(day.activityType).toBe(expected[idx])
       })
     })
 
@@ -263,23 +244,146 @@ describe('study-plan engine', () => {
       }
     })
 
-    it('Consecutive dates — starting from today', () => {
-      const input = {
-        today: '2026-03-15',
-        examDate: '2026-03-25',
-        topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
-        idGenerator,
-      }
+    // Per-Day Activity Type Tests (based on daysUntilExam for each day)
+    describe('per-day activity type based on daysUntilExam', () => {
+      let idCounter = 0
+      const idGenerator = () => `id-${idCounter++}`
 
-      const result = generateStudyPlan(input)
+      beforeEach(() => {
+        idCounter = 0
+      })
 
-      for (let i = 0; i < 7; i++) {
-        const expectedDate = new Date('2026-03-15')
-        expectedDate.setDate(expectedDate.getDate() + i)
-        const expectedDateStr = expectedDate.toISOString().split('T')[0]
+      it('daysUntilExam=1 → all days get warmup activity (1 day plan)', () => {
+        const input = {
+          today: '2026-03-01',
+          examDate: '2026-03-02', // 1 day until exam
+          topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
+          idGenerator,
+        }
 
-        expect(result[i].date).toBe(expectedDateStr)
-      }
+        const result = generateStudyPlan(input)
+
+        // When exam is 1 day away, all days should be warmup
+        result.forEach((day) => {
+          expect(day.activityType).toBe('warmup')
+        })
+      })
+
+      it('daysUntilExam=2 → day 1 is full_simulation (2 days from exam), day 2 is warmup (1 day from exam)', () => {
+        const input = {
+          today: '2026-03-01',
+          examDate: '2026-03-03', // 2 days until exam
+          topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
+          idGenerator,
+        }
+
+        const result = generateStudyPlan(input)
+
+        // Day 1 (2026-03-01): 2 days from exam → full_simulation
+        expect(result[0].activityType).toBe('full_simulation')
+        expect(result[0].date).toBe('2026-03-01')
+
+        // Day 2 (2026-03-02): 1 day from exam → warmup
+        expect(result[1].activityType).toBe('warmup')
+        expect(result[1].date).toBe('2026-03-02')
+      })
+
+      it('daysUntilExam=7 → practice(6), practice(7), hybrid(5), hybrid(4), hybrid(3), full_simulation(2), warmup(1)', () => {
+        const input = {
+          today: '2026-03-01',
+          examDate: '2026-03-08', // 7 days until exam
+          topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
+          idGenerator,
+        }
+
+        const result = generateStudyPlan(input)
+
+        // Day 1: 2026-03-01, 7 days from exam → practice (Standard)
+        expect(result[0].activityType).toBe('practice')
+        expect(result[0].date).toBe('2026-03-01')
+
+        // Day 2: 2026-03-02, 6 days from exam → practice (Standard)
+        expect(result[1].activityType).toBe('practice')
+        expect(result[1].date).toBe('2026-03-02')
+
+        // Day 3: 2026-03-03, 5 days from exam → hybrid (High Intensity)
+        expect(result[2].activityType).toBe('hybrid')
+        expect(result[2].date).toBe('2026-03-03')
+
+        // Day 4: 2026-03-04, 4 days from exam → hybrid (High Intensity)
+        expect(result[3].activityType).toBe('hybrid')
+        expect(result[3].date).toBe('2026-03-04')
+
+        // Day 5: 2026-03-05, 3 days from exam → hybrid (High Intensity)
+        expect(result[4].activityType).toBe('hybrid')
+        expect(result[4].date).toBe('2026-03-05')
+
+        // Day 6: 2026-03-06, 2 days from exam → full_simulation
+        expect(result[5].activityType).toBe('full_simulation')
+        expect(result[5].date).toBe('2026-03-06')
+
+        // Day 7: 2026-03-07, 1 day from exam → warmup
+        expect(result[6].activityType).toBe('warmup')
+        expect(result[6].date).toBe('2026-03-07')
+      })
+
+      it('daysUntilExam=12 → only last 7 days shown, starting 5 days before exam (examDate - 7)', () => {
+        const input = {
+          today: '2026-03-01',
+          examDate: '2026-03-13', // 12 days until exam
+          topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
+          idGenerator,
+        }
+
+        const result = generateStudyPlan(input)
+
+        // With 12 days until exam, we should only show 7 days
+        // The plan should start from examDate - 7 (5 days before exam)
+        // Day 1: 2026-03-06 (7 days before exam)
+        // Day 7: 2026-03-12 (1 day before exam)
+
+        expect(result).toHaveLength(7)
+
+        // First day should be examDate - 7 = 2026-03-06
+        expect(result[0].date).toBe('2026-03-06')
+
+        // Last day should be examDate - 1 = 2026-03-12
+        expect(result[6].date).toBe('2026-03-12')
+      })
+
+      it('daysAvailable=0 → returns empty array', () => {
+        const input = {
+          today: '2026-03-01',
+          examDate: '2026-03-01', // 0 days until exam (same day)
+          topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
+          idGenerator,
+        }
+
+        const result = generateStudyPlan(input)
+
+        // When exam is today or passed, return empty array
+        expect(result).toHaveLength(0)
+      })
+
+      it('each day has topicIds array with at least 1 string', () => {
+        const input = {
+          today: '2026-03-01',
+          examDate: '2026-03-20', // 19 days until exam
+          topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
+          idGenerator,
+        }
+
+        const result = generateStudyPlan(input)
+
+        result.forEach((day) => {
+          expect(Array.isArray(day.topicIds)).toBe(true)
+          expect(day.topicIds.length).toBeGreaterThan(0)
+          day.topicIds.forEach((topicId) => {
+            expect(typeof topicId).toBe('string')
+            expect(topicId.length).toBeGreaterThan(0)
+          })
+        })
+      })
     })
   })
 })

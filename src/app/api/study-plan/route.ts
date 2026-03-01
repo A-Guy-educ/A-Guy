@@ -11,9 +11,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import { z } from 'zod'
 
-import type { StudyPlanSnapshot, StudyPlanDay, TopicInput } from '@/lib/study-plan'
+import type { StudyPlanDay, TopicInput } from '@/lib/study-plan'
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
-import { generateStudyPlan } from '@/lib/study-plan'
+import { generateStudyPlan, mergeCompletionByTopic } from '@/lib/study-plan'
 import { queryUserProgressByGrade } from '@/server/repos/queries/userProgress'
 
 // Zod validation schemas
@@ -27,7 +27,7 @@ const GenerateRequestSchema = z.object({
   action: z.literal('generate'),
   courseId: z.string().min(1),
   examDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  topics: z.array(TopicInputSchema).min(1),
+  topics: z.array(TopicInputSchema).min(1).max(10),
   gradeLevel: z.string().min(1),
 })
 
@@ -96,13 +96,16 @@ export async function GET(request: NextRequest) {
     // Find matching plan in studyPlans array
     const plan = userProgress.studyPlans?.find((p) => p.courseId === courseId) || null
 
-    // Validate topicIds as defensive parse
+    // Validate topicIds as defensive parse, and add tasks field if missing
     if (plan && plan.days) {
-      const validatedPlan = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const validatedPlan: any = {
         ...plan,
-        days: plan.days.map((day) => ({
+        days: plan.days.map((day: any) => ({
           ...day,
-          topicIds: z.array(z.string()).parse(day.topicIds),
+          topicIds: z.array(z.string()).parse(day.topicIds || []),
+          // Provide default empty tasks array for legacy plans
+          tasks: day.tasks || [],
         })),
       }
 
@@ -180,18 +183,27 @@ async function handleGenerate(
     idGenerator: () => nanoid(),
   }
 
-  // Regeneration always produces a fresh plan (clears completion + overrides)
+  // Generate new days
   const days = generateStudyPlan(generateInput)
 
+  // Get existing plan for completion retention
+  const existingPlan = userProgress?.studyPlans?.find((p: any) => p.courseId === courseId)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const existingDays: any[] = existingPlan?.days || []
+
+  // Merge completion status from old plan to new plan based on topic IDs
+  const mergedDays = mergeCompletionByTopic(existingDays, days)
+
   // Validate all topicIds are string[]
-  const validatedDays = days.map((day: StudyPlanDay) => ({
+  const validatedDays = mergedDays.map((day: StudyPlanDay) => ({
     ...day,
     topicIds: z.array(z.string()).parse(day.topicIds),
   }))
 
   // Build the plan snapshot
   const generatedAt = format(startOfDay(new Date()), 'yyyy-MM-dd')
-  const newPlan: StudyPlanSnapshot = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const newPlan: any = {
     courseId,
     examDate,
     generatedAt,
@@ -200,9 +212,8 @@ async function handleGenerate(
   }
 
   // Upsert the plan in the studyPlans array
-  const studyPlans: StudyPlanSnapshot[] = userProgress?.studyPlans
-    ? [...userProgress.studyPlans]
-    : []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const studyPlans: any[] = userProgress?.studyPlans ? [...userProgress.studyPlans] : []
 
   // Find existing index
   const existingIndex = studyPlans.findIndex((p) => p.courseId === courseId)
@@ -274,7 +285,8 @@ async function handleToggleStatus(
     return day
   })
 
-  const updatedPlan: StudyPlanSnapshot = { ...plan, days }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updatedPlan: any = { ...plan, days }
   const studyPlans = [...userProgress.studyPlans]
   studyPlans[planIndex] = updatedPlan
 
@@ -319,7 +331,8 @@ async function handleEditDay(
     return day
   })
 
-  const updatedPlan: StudyPlanSnapshot = { ...plan, days }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updatedPlan: any = { ...plan, days }
   const studyPlans = [...userProgress.studyPlans]
   studyPlans[planIndex] = updatedPlan
 

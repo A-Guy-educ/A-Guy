@@ -1,30 +1,82 @@
 import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns'
 
-import {
-  ACTIVITY_DURATIONS,
-  ACTIVITY_TEMPLATES,
-  MASTERY_WEIGHTS,
-  MAX_TOPICS_PER_DAY,
-} from './constants'
+import { ACTIVITY_DURATIONS, MASTERY_WEIGHTS, MAX_TOPICS_PER_DAY } from './constants'
 import type {
   ActivityType,
   GeneratePlanInput,
   MasteryLevel,
   StudyPlanDay,
-  TimeframeMode,
   TopicInput,
 } from './types'
 
 /**
- * Determine timeframe mode based on days until exam.
- * - <= 1 day: survival
- * - 2-5 days: high_intensity
- * - >= 6 days: balanced
+ * Get activity type based on days until exam.
+ * - 1 → warmup
+ * - 2 → full_simulation
+ * - 3-5 → hybrid (High Intensity)
+ * - 6-7 → practice (Standard)
  */
-export function getTimeframeMode(daysUntilExam: number): TimeframeMode {
-  if (daysUntilExam <= 1) return 'survival'
-  if (daysUntilExam <= 5) return 'high_intensity'
-  return 'balanced'
+export function getActivityForDaysUntilExam(daysUntilExam: number): ActivityType {
+  if (daysUntilExam <= 1) return 'warmup'
+  if (daysUntilExam === 2) return 'full_simulation'
+  if (daysUntilExam <= 5) return 'hybrid'
+  return 'practice'
+}
+
+/**
+ * Generate task descriptions for a day based on activity type and topics.
+ */
+export function generateTaskDescriptions(
+  activityType: ActivityType,
+  topicLabels: string[],
+): string[] {
+  const tasks: string[] = []
+
+  switch (activityType) {
+    case 'warmup':
+      // Warm-up: 1 Weak topic + formulas/key notes (no full simulation)
+      if (topicLabels.length > 0) {
+        tasks.push(`Learning: ${topicLabels[0]}`)
+      }
+      tasks.push('Review formulas and key notes')
+      break
+
+    case 'full_simulation':
+      // Full simulation: Full simulation + mistake analysis (+ optional quick Weak drill)
+      tasks.push('Full simulation practice')
+      tasks.push('Mistake analysis')
+      if (topicLabels.length > 0) {
+        tasks.push(`Quick drill: ${topicLabels[0]}`)
+      }
+      break
+
+    case 'hybrid':
+      // High Intensity: Weak focus + targeted drills + optional mini simulation/question set
+      topicLabels.forEach((label) => {
+        tasks.push(`Drills: ${label}`)
+      })
+      // Add some variety
+      tasks.push('Targeted practice on weak areas')
+      break
+
+    case 'practice':
+      // Standard: Learning + Drills per topic
+      topicLabels.forEach((label) => {
+        tasks.push(`Learning: ${label}`)
+        tasks.push(`Drills: ${label}`)
+      })
+      break
+
+    case 'reinforcement':
+      // Reinforcement: Focus on mistakes
+      topicLabels.forEach((label) => {
+        tasks.push(`Review: ${label}`)
+      })
+      tasks.push('Mistake log review')
+      break
+  }
+
+  return tasks
 }
 
 /**
@@ -214,31 +266,65 @@ export function pickTopicsForDay(
 }
 
 /**
- * Generate a 7-day study plan anchored to today.
- * The daysLeft value is used only to select the activity template.
+ * Get topic labels from topic IDs
+ */
+function getTopicLabels(topicIds: string[], topics: TopicInput[]): string[] {
+  return topicIds
+    .map((id) => topics.find((t) => t.topicId === id)?.topicLabel)
+    .filter((label): label is string => !!label)
+}
+
+/**
+ * Generate study plan based on days until exam.
+ * - Shows last 7 days before exam (not more)
+ * - Each day has activity type based on its specific daysUntilExam value
+ * - Returns empty array if exam date is in the past or today
  */
 export function generateStudyPlan(input: GeneratePlanInput): StudyPlanDay[] {
   const { today, examDate, topics, idGenerator } = input
 
-  // Calculate days until exam (used only for template selection)
+  // Parse dates
   const todayDate = parseISO(today)
   const examDateObj = parseISO(examDate)
-  const daysLeft = differenceInCalendarDays(examDateObj, todayDate)
 
-  // Determine timeframe mode (only affects activity template)
-  const mode = getTimeframeMode(daysLeft)
-  const template = ACTIVITY_TEMPLATES[mode]
+  // Calculate days available until exam
+  const daysAvailable = differenceInCalendarDays(examDateObj, todayDate)
+
+  // If exam is today or in the past, return empty array
+  if (daysAvailable <= 0) {
+    return []
+  }
+
+  // Determine how many days to show (max 7)
+  const planDaysCount = Math.min(7, daysAvailable)
+
+  // Start from the last N days before exam
+  const startDate = addDays(examDateObj, -planDaysCount)
 
   // Build topic cycle
   const cycle = buildTopicCycle(topics)
   const allTopicIds = topics.map((t) => t.topicId)
 
-  // Generate 7 days anchored to today
+  // Generate days
   const days: StudyPlanDay[] = []
-  for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-    const date = format(addDays(todayDate, dayIndex), 'yyyy-MM-dd')
-    const activityType = template[dayIndex]
+  for (let dayIndex = 0; dayIndex < planDaysCount; dayIndex++) {
+    const dayDate = addDays(startDate, dayIndex)
+    const date = format(dayDate, 'yyyy-MM-dd')
+
+    // Calculate days until exam for THIS specific day
+    const daysUntilExam = differenceInCalendarDays(examDateObj, dayDate)
+
+    // Get activity type based on days until exam
+    const activityType = getActivityForDaysUntilExam(daysUntilExam)
+
+    // Pick topics for this day
     const topicIds = pickTopicsForDay(cycle, dayIndex, activityType, allTopicIds, topics)
+
+    // Get topic labels for task descriptions
+    const topicLabels = getTopicLabels(topicIds, topics)
+
+    // Generate task descriptions
+    const tasks = generateTaskDescriptions(activityType, topicLabels)
 
     days.push({
       dayId: idGenerator(),
@@ -247,6 +333,7 @@ export function generateStudyPlan(input: GeneratePlanInput): StudyPlanDay[] {
       topicIds,
       status: 'planned',
       estimatedDurationMinutes: ACTIVITY_DURATIONS[activityType],
+      tasks,
     })
   }
 

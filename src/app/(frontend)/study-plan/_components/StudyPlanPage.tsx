@@ -5,9 +5,11 @@ import { Calendar, Plus, Trash2, Zap } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { MasteryLevel, TopicInput } from '@/lib/study-plan'
+import { addTopicWithLimit, MAX_TOPICS } from '@/lib/study-plan'
 import { Button } from '@/ui/web/components/button'
 import { DayCard } from './DayCard'
 import { EmptyPlanState } from './EmptyPlanState'
+import { ErrorCard } from './ErrorCard'
 import { useStudyPlan } from './useStudyPlan'
 
 const MASTERY_COLORS = {
@@ -63,9 +65,11 @@ export function StudyPlanPage() {
 
   const pendingRegeneration = useRef(false)
   const [examDate, setExamDate] = useState('')
+  const [examDateError, setExamDateError] = useState<string | null>(null)
   const [topics, setTopics] = useState<TopicInput[]>([])
   const [newTopic, setNewTopic] = useState('')
   const [hasGenerated, setHasGenerated] = useState(false)
+  const [topicError, setTopicError] = useState<string | null>(null)
 
   // Load initial state from plan
   useEffect(() => {
@@ -86,13 +90,22 @@ export function StudyPlanPage() {
       mastery: 'weak',
     }
 
-    setTopics((prev) => [...prev, topic])
+    const result = addTopicWithLimit(topics, topic)
+    setTopics(result.topics)
+    setTopicError(result.error)
     setNewTopic('')
-  }, [newTopic])
+  }, [newTopic, topics])
 
   const handleRemoveTopic = useCallback((topicId: string) => {
     pendingRegeneration.current = true
-    setTopics((prev) => prev.filter((t) => t.topicId !== topicId))
+    setTopics((prev) => {
+      const newTopics = prev.filter((t) => t.topicId !== topicId)
+      // Clear error when topic count drops below limit
+      if (newTopics.length < MAX_TOPICS) {
+        setTopicError(null)
+      }
+      return newTopics
+    })
   }, [])
 
   const handleMasteryChange = useCallback((topicId: string, mastery: MasteryLevel) => {
@@ -109,9 +122,22 @@ export function StudyPlanPage() {
 
   const handleGeneratePlan = useCallback(async () => {
     if (!examDate || topics.length === 0) return
+
+    // Check if exam date is in the past
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const examDateObj = new Date(examDate)
+    examDateObj.setHours(0, 0, 0, 0)
+
+    if (examDateObj <= today) {
+      setExamDateError(t('error.pastExamDate'))
+      return
+    }
+
+    setExamDateError(null)
     await generatePlan(examDate, topics, 'default-course')
     setHasGenerated(true)
-  }, [examDate, topics, generatePlan])
+  }, [examDate, topics, generatePlan, t])
 
   // Auto-regenerate plan only after initial explicit generation
   useEffect(() => {
@@ -165,9 +191,11 @@ export function StudyPlanPage() {
                 onChange={(e) => {
                   pendingRegeneration.current = true
                   setExamDate(e.target.value)
+                  setExamDateError(null)
                 }}
                 className="w-full px-4 py-2.5 border border-border rounded-lg text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               />
+              {examDateError && <p className="text-red-500 text-sm mt-2">{examDateError}</p>}
             </div>
 
             {/* Topics Card */}
@@ -192,15 +220,24 @@ export function StudyPlanPage() {
                   onChange={(e) => setNewTopic(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddTopic()}
                   placeholder={t('addTopicPlaceholder')}
-                  className="flex-1 px-3 py-2 border border-border rounded-lg text-foreground bg-card text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                  disabled={topics.length >= MAX_TOPICS}
+                  className="flex-1 px-3 py-2 border border-border rounded-lg text-foreground bg-card text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50"
                 />
                 <button
                   onClick={handleAddTopic}
-                  className="p-2 bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors"
+                  disabled={topics.length >= MAX_TOPICS}
+                  className="p-2 bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors disabled:opacity-50"
                 >
                   <Plus className="w-5 h-5" />
                 </button>
               </div>
+              {topicError && (
+                <p className="text-red-500 text-sm mt-2">
+                  {t(
+                    `error.${topicError === 'Topic limit reached (max 10)' ? 'maxTopics' : topicError}`,
+                  )}
+                </p>
+              )}
             </div>
 
             {/* Generate Plan Button */}
@@ -224,6 +261,8 @@ export function StudyPlanPage() {
                 <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin mb-4" />
                 <p className="text-muted-foreground">{t('loading')}</p>
               </div>
+            ) : plan && plan.days.length === 0 ? (
+              <ErrorCard message={t('error.pastExamDate')} />
             ) : plan ? (
               <div>
                 <div className="mb-4">

@@ -14,6 +14,15 @@ const ACTIVITY_COLORS = {
   warmup: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
 } as const
 
+// Map activity type to mode badge label
+const ACTIVITY_TO_MODE_KEY: Record<string, string> = {
+  practice: 'mode.standard',
+  hybrid: 'mode.highIntensity',
+  full_simulation: 'mode.simulation',
+  reinforcement: 'mode.standard', // Fallback to standard
+  warmup: 'mode.warmup',
+}
+
 interface DayCardProps {
   day: StudyPlanDay
   topics: TopicInput[]
@@ -194,11 +203,12 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
               ACTIVITY_COLORS[day.activityType]
             }`}
           >
-            {t(`activity.${day.activityType}`)}
+            {t(ACTIVITY_TO_MODE_KEY[day.activityType] || `activity.${day.activityType}`)}
           </span>
         </div>
       </div>
 
+      {/* Topics */}
       <div className="mb-4">
         <div className="flex flex-wrap gap-1.5">
           {(day.userTopicIds || day.topicIds).map((id, idx) => {
@@ -215,6 +225,20 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
           })}
         </div>
       </div>
+
+      {/* Tasks */}
+      {day.tasks && day.tasks.length > 0 && (
+        <div className="mb-4">
+          <ul className="space-y-1">
+            {day.tasks.map((task, idx) => (
+              <li key={idx} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                <span className="text-emerald-500 mt-0.5">•</span>
+                {task}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-muted-foreground">

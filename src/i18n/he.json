@@ -504,9 +504,17 @@
     },
     "error": {
       "noTopics": "הוסף לפחות נושא אחד",
-      "noExamDate": "בחר תאריך בחינה"
+      "noExamDate": "בחר תאריך בחינה",
+      "maxTopics": "ניתן להוסיף עד 10 נושאים בלבד",
+      "pastExamDate": "תאריך הבחינה חייב להיות בעתיד"
+    },
+    "mode": {
+      "standard": "רגיל",
+      "highIntensity": "עצימות גבוהה",
+      "simulation": "סימולציה",
+      "warmup": "חימום"
     },
     "loading": "טוען...",
-    "generateButton": "בנה תכנית מיקוד"
+    "generateButton": "צור תוכנית לימודים"
   }
 }

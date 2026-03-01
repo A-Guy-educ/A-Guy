@@ -504,9 +504,17 @@
     },
     "error": {
       "noTopics": "Add at least one topic",
-      "noExamDate": "Select an exam date"
+      "noExamDate": "Select an exam date",
+      "maxTopics": "You can add up to 10 topics",
+      "pastExamDate": "Exam date must be in the future"
+    },
+    "mode": {
+      "standard": "Standard",
+      "highIntensity": "High Intensity",
+      "simulation": "Simulation",
+      "warmup": "Warm-up"
     },
     "loading": "Loading...",
-    "generateButton": "Build Focus Plan"
+    "generateButton": "Generate Example Plan"
   }
 }

@@ -16,6 +16,7 @@ export interface StudyPlanDay {
   topicIds: string[]
   status: DayStatus
   estimatedDurationMinutes: number
+  tasks: string[] // Human-readable task descriptions for this day
   userTopicIds?: string[] // User override: custom topic selection
   userDurationMinutes?: number // User override: custom duration
   userStartTime?: string // User override: HH:MM
