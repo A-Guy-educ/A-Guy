@@ -5,13 +5,37 @@ import { Suspense, useEffect, useState } from 'react'
 import { ConversionStatusPanel } from '../ConversionStatusPanel'
 import { ConvertForm } from '../ConvertForm'
 import { ConvertV2Button } from '../ConvertV2Button'
+import { ConvertV3Button } from '../ConvertV3Button'
 import { DraftExercisesList } from '../DraftExercisesList'
 import { V2StatusPanel } from '../V2StatusPanel'
+import { V3PreviewPanel } from '../V3PreviewPanel'
 
 interface MediaItem {
   id: string
   filename?: string
   mimeType?: string
+}
+
+interface PreviewData {
+  title: string
+  draft: {
+    title: string
+    question: string
+    options: string[]
+    correctAnswer: number | null
+    explanation?: string
+    questionType: 'free_response' | 'true_false' | 'mcq'
+  }
+  content: {
+    blocks: unknown[]
+  }
+  metadata: {
+    model: string
+    processingTimeMs: number
+    promptId?: string
+    promptVersion?: string
+  }
+  extractionLogId: string
 }
 
 export const LessonConversionPanel = () => {
@@ -24,6 +48,8 @@ export const LessonConversionPanel = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [activeForm, setActiveForm] = useState<string | null>(null)
   const [expandedPdf, setExpandedPdf] = useState<string | null>(null)
+  const [v3Preview, setV3Preview] = useState<PreviewData | null>(null)
+  const [v3MediaId, setV3MediaId] = useState<string | null>(null)
 
   // Resolve media IDs to full objects
   useEffect(() => {
@@ -65,8 +91,10 @@ export const LessonConversionPanel = () => {
     resolveMedia()
   }, [contentFilesValue])
 
-  // Filter for PDFs only
-  const pdfFiles = mediaItems.filter((m) => m.mimeType === 'application/pdf')
+  // Filter for PDFs and images (V3 supports both)
+  const supportedFiles = mediaItems.filter(
+    (m) => m.mimeType === 'application/pdf' || m.mimeType?.startsWith('image/'),
+  )
 
   if (!lessonId) {
     return null // Don't show on create form
@@ -97,7 +125,7 @@ export const LessonConversionPanel = () => {
     )
   }
 
-  if (pdfFiles.length === 0) {
+  if (supportedFiles.length === 0) {
     return (
       <div
         style={{
@@ -117,7 +145,9 @@ export const LessonConversionPanel = () => {
         >
           Exercise Conversion
         </h3>
-        <p style={{ fontSize: 12, color: 'var(--theme-elevation-500)' }}>No PDFs attached.</p>
+        <p style={{ fontSize: 12, color: 'var(--theme-elevation-500)' }}>
+          No PDFs or images attached.
+        </p>
       </div>
     )
   }
@@ -142,9 +172,9 @@ export const LessonConversionPanel = () => {
         Exercise Conversion
       </h3>
 
-      {pdfFiles.map((pdf) => (
+      {supportedFiles.map((file) => (
         <div
-          key={pdf.id}
+          key={file.id}
           style={{
             marginBottom: 8,
             padding: 8,
@@ -167,7 +197,7 @@ export const LessonConversionPanel = () => {
                 color: 'var(--theme-elevation-600)',
               }}
             >
-              PDF
+              {file.mimeType?.startsWith('image/') ? 'IMG' : 'PDF'}
             </span>
             <span
               style={{
@@ -180,31 +210,39 @@ export const LessonConversionPanel = () => {
                 whiteSpace: 'nowrap',
               }}
             >
-              {pdf.filename || pdf.id}
+              {file.filename || file.id}
             </span>
             <div style={{ display: 'flex', gap: 4 }}>
               <button
-                onClick={() => setActiveForm(activeForm === pdf.id ? null : pdf.id)}
+                onClick={() => setActiveForm(activeForm === file.id ? null : file.id)}
                 style={{
                   padding: '4px 12px',
                   fontSize: 11,
                   fontWeight: 500,
-                  border: activeForm === pdf.id ? '1px solid var(--theme-elevation-200)' : 'none',
+                  border: activeForm === file.id ? '1px solid var(--theme-elevation-200)' : 'none',
                   borderRadius: 3,
                   backgroundColor:
-                    activeForm === pdf.id
+                    activeForm === file.id
                       ? 'var(--theme-elevation-100)'
                       : 'var(--theme-elevation-900)',
                   color:
-                    activeForm === pdf.id
+                    activeForm === file.id
                       ? 'var(--theme-elevation-700)'
                       : 'var(--theme-elevation-0)',
                   cursor: 'pointer',
                 }}
               >
-                {activeForm === pdf.id ? 'Cancel' : 'Convert (V1)'}
+                {activeForm === file.id ? 'Cancel' : 'Convert (V1)'}
               </button>
-              <ConvertV2Button lessonId={String(lessonId)} mediaId={pdf.id} />
+              <ConvertV2Button lessonId={String(lessonId)} mediaId={file.id} />
+              <ConvertV3Button
+                lessonId={String(lessonId)}
+                mediaId={file.id}
+                onPreview={(preview) => {
+                  setV3Preview(preview)
+                  setV3MediaId(file.id)
+                }}
+              />
             </div>
           </div>
 
@@ -212,18 +250,18 @@ export const LessonConversionPanel = () => {
           <div style={{ marginTop: 4 }}>
             <ConversionStatusPanel
               lessonId={String(lessonId)}
-              mediaId={pdf.id}
-              onViewExercises={() => setExpandedPdf(expandedPdf === pdf.id ? null : pdf.id)}
+              mediaId={file.id}
+              onViewExercises={() => setExpandedPdf(expandedPdf === file.id ? null : file.id)}
             />
           </div>
 
           {/* V2 Status Panel */}
           <div style={{ marginTop: 4 }}>
-            <V2StatusPanel lessonId={String(lessonId)} mediaId={pdf.id} />
+            <V2StatusPanel lessonId={String(lessonId)} mediaId={file.id} />
           </div>
 
           {/* Inline Convert Form */}
-          {activeForm === pdf.id && (
+          {activeForm === file.id && (
             <Suspense
               fallback={
                 <div style={{ marginTop: 8, fontSize: 11, color: 'var(--theme-elevation-500)' }}>
@@ -233,17 +271,34 @@ export const LessonConversionPanel = () => {
             >
               <ConvertForm
                 lessonId={String(lessonId)}
-                mediaId={pdf.id}
-                filename={String(pdf.filename || pdf.id)}
+                mediaId={file.id}
+                filename={String(file.filename || file.id)}
                 onClose={() => setActiveForm(null)}
               />
             </Suspense>
           )}
 
+          {/* V3 Preview Panel */}
+          {v3Preview && v3MediaId === file.id && (
+            <V3PreviewPanel
+              preview={v3Preview}
+              lessonId={String(lessonId)}
+              mediaId={file.id}
+              onClose={() => {
+                setV3Preview(null)
+                setV3MediaId(null)
+              }}
+              onCreated={() => {
+                setV3Preview(null)
+                setV3MediaId(null)
+              }}
+            />
+          )}
+
           {/* Draft Exercises */}
-          {expandedPdf === pdf.id && (
+          {expandedPdf === file.id && (
             <div style={{ marginTop: 4 }}>
-              <DraftExercisesList lessonId={String(lessonId)} sourceDocId={pdf.id} />
+              <DraftExercisesList lessonId={String(lessonId)} sourceDocId={file.id} />
             </div>
           )}
         </div>
