@@ -14,8 +14,12 @@ describe('study-plan engine', () => {
       expect(getTimeframeMode(1)).toBe('survival')
     })
 
-    it('2 days → high_intensity', () => {
-      expect(getTimeframeMode(2)).toBe('high_intensity')
+    it('2 days → survival', () => {
+      expect(getTimeframeMode(2)).toBe('survival')
+    })
+
+    it('3 days → high_intensity', () => {
+      expect(getTimeframeMode(3)).toBe('high_intensity')
     })
 
     it('5 days → high_intensity', () => {
@@ -26,8 +30,16 @@ describe('study-plan engine', () => {
       expect(getTimeframeMode(6)).toBe('balanced')
     })
 
-    it('30 days → balanced', () => {
-      expect(getTimeframeMode(30)).toBe('balanced')
+    it('7 days → balanced', () => {
+      expect(getTimeframeMode(7)).toBe('balanced')
+    })
+
+    it('8 days → mastery_cycle', () => {
+      expect(getTimeframeMode(8)).toBe('mastery_cycle')
+    })
+
+    it('30 days → mastery_cycle', () => {
+      expect(getTimeframeMode(30)).toBe('mastery_cycle')
     })
   })
 
@@ -42,7 +54,7 @@ describe('study-plan engine', () => {
     it('Determinism — identical inputs produce identical outputs', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-20',
+        examDate: '2026-03-07', // 6 days left → balanced mode
         topics: [
           { topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const },
           { topicId: 't2', topicLabel: 'Topic 2', mastery: 'medium' as const },
@@ -57,10 +69,10 @@ describe('study-plan engine', () => {
       expect(result1).toEqual(result2)
     })
 
-    it('Always 7 days — 1 topic', () => {
+    it('7 days — 1 topic (7+ days)', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-20',
+        examDate: '2026-03-08', // 7 days left → balanced mode, generates 7 days
         topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
         idGenerator,
       }
@@ -69,10 +81,10 @@ describe('study-plan engine', () => {
       expect(result).toHaveLength(7)
     })
 
-    it('Always 7 days — 3 topics', () => {
+    it('7 days — 3 topics (7+ days)', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-20',
+        examDate: '2026-03-08', // 7 days left → balanced mode
         topics: [
           { topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const },
           { topicId: 't2', topicLabel: 'Topic 2', mastery: 'medium' as const },
@@ -85,17 +97,15 @@ describe('study-plan engine', () => {
       expect(result).toHaveLength(7)
     })
 
-    it('Always 7 days — 10 topics', () => {
-      const topics: TopicInput[] = Array.from({ length: 10 }, (_, i) => ({
-        topicId: `t${i}`,
-        topicLabel: `Topic ${i}`,
-        mastery: (['weak', 'medium', 'strong'] as const)[i % 3],
-      }))
-
+    it('Adaptive days — 10+ days left → 7 days', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-20',
-        topics,
+        examDate: '2026-03-20', // 19 days left, capped at 7
+        topics: [
+          { topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const },
+          { topicId: 't2', topicLabel: 'Topic 2', mastery: 'medium' as const },
+          { topicId: 't3', topicLabel: 'Topic 3', mastery: 'strong' as const },
+        ],
         idGenerator,
       }
 
@@ -103,21 +113,19 @@ describe('study-plan engine', () => {
       expect(result).toHaveLength(7)
     })
 
-    it('Timeframe mode: survival — 0 days left', () => {
+    it('Adaptive days — 3 days left → 3 days', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-01', // 0 days left
+        examDate: '2026-03-04', // 3 days left
         topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
         idGenerator,
       }
 
       const result = generateStudyPlan(input)
-      result.forEach((day) => {
-        expect(day.activityType).toBe('warmup')
-      })
+      expect(result).toHaveLength(3)
     })
 
-    it('Timeframe mode: survival — 1 day left', () => {
+    it('Adaptive days — 1 day left → 1 day', () => {
       const input = {
         today: '2026-03-01',
         examDate: '2026-03-02', // 1 day left
@@ -126,8 +134,66 @@ describe('study-plan engine', () => {
       }
 
       const result = generateStudyPlan(input)
+      expect(result).toHaveLength(1)
+    })
+
+    it('Adaptive days — 0 days left (exam today) → 1 day', () => {
+      const input = {
+        today: '2026-03-01',
+        examDate: '2026-03-01', // 0 days left
+        topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
+        idGenerator,
+      }
+
+      const result = generateStudyPlan(input)
+      expect(result).toHaveLength(1)
+    })
+
+    it('Timeframe mode: survival — 0 days left → 1 warmup day', () => {
+      const input = {
+        today: '2026-03-01',
+        examDate: '2026-03-01', // 0 days left
+        topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
+        idGenerator,
+      }
+
+      const result = generateStudyPlan(input)
+      expect(result).toHaveLength(1)
       result.forEach((day) => {
         expect(day.activityType).toBe('warmup')
+        expect(day.timeframeMode).toBe('survival')
+      })
+    })
+
+    it('Timeframe mode: survival — 1 day left → 1 warmup day', () => {
+      const input = {
+        today: '2026-03-01',
+        examDate: '2026-03-02', // 1 day left
+        topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
+        idGenerator,
+      }
+
+      const result = generateStudyPlan(input)
+      expect(result).toHaveLength(1)
+      result.forEach((day) => {
+        expect(day.activityType).toBe('warmup')
+        expect(day.timeframeMode).toBe('survival')
+      })
+    })
+
+    it('Timeframe mode: survival — 2 days left → 2 warmup days', () => {
+      const input = {
+        today: '2026-03-01',
+        examDate: '2026-03-03', // 2 days left
+        topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
+        idGenerator,
+      }
+
+      const result = generateStudyPlan(input)
+      expect(result).toHaveLength(2)
+      result.forEach((day) => {
+        expect(day.activityType).toBe('warmup')
+        expect(day.timeframeMode).toBe('survival')
       })
     })
 
@@ -146,10 +212,10 @@ describe('study-plan engine', () => {
       })
     })
 
-    it('Timeframe mode: balanced — 19 days left', () => {
+    it('Timeframe mode: balanced — 6 days left', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-20', // 19 days left
+        examDate: '2026-03-07', // 6 days left → balanced mode
         topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
         idGenerator,
       }
@@ -161,10 +227,32 @@ describe('study-plan engine', () => {
       })
     })
 
+    it('Each day has timeframeMode and tasks fields', () => {
+      const input = {
+        today: '2026-03-01',
+        examDate: '2026-03-08', // 7 days left → balanced mode
+        topics: [
+          { topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const },
+          { topicId: 't2', topicLabel: 'Topic 2', mastery: 'medium' as const },
+        ],
+        idGenerator,
+      }
+
+      const result = generateStudyPlan(input)
+
+      result.forEach((day) => {
+        expect(day.timeframeMode).toBeDefined()
+        expect(day.timeframeMode).toBe('balanced')
+        expect(day.tasks).toBeDefined()
+        expect(Array.isArray(day.tasks)).toBe(true)
+        expect(day.tasks!.length).toBeGreaterThan(0)
+      })
+    })
+
     it('Fallback: no weak topics — all medium or strong', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-20',
+        examDate: '2026-03-08', // 7 days left → balanced mode
         topics: [
           { topicId: 't1', topicLabel: 'Topic 1', mastery: 'medium' as const },
           { topicId: 't2', topicLabel: 'Topic 2', mastery: 'strong' as const },
@@ -188,7 +276,7 @@ describe('study-plan engine', () => {
     it('Fallback: all strong topics', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-20',
+        examDate: '2026-03-08', // 7 days left → balanced mode
         topics: [
           { topicId: 't1', topicLabel: 'Topic 1', mastery: 'strong' as const },
           { topicId: 't2', topicLabel: 'Topic 2', mastery: 'strong' as const },
@@ -205,7 +293,7 @@ describe('study-plan engine', () => {
     it('Hybrid 70/30 split — weak bucket gets more topics', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-20', // balanced mode
+        examDate: '2026-03-07', // 6 days left → balanced mode
         topics: [
           { topicId: 'weak1', topicLabel: 'Weak 1', mastery: 'weak' as const },
           { topicId: 'weak2', topicLabel: 'Weak 2', mastery: 'weak' as const },
@@ -242,7 +330,7 @@ describe('study-plan engine', () => {
     it('Full simulation gets all topics', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-20', // balanced mode has full_simulation on day 5
+        examDate: '2026-03-07', // 6 days left → balanced mode has full_simulation on day 5
         topics: [
           { topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const },
           { topicId: 't2', topicLabel: 'Topic 2', mastery: 'medium' as const },
@@ -266,7 +354,7 @@ describe('study-plan engine', () => {
     it('Consecutive dates — starting from today', () => {
       const input = {
         today: '2026-03-15',
-        examDate: '2026-03-25',
+        examDate: '2026-03-22', // 7 days left → balanced mode = 7 days
         topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
         idGenerator,
       }

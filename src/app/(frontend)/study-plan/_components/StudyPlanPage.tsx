@@ -12,8 +12,8 @@ import { useStudyPlan } from './useStudyPlan'
 
 const MASTERY_COLORS = {
   weak: 'bg-red-500/10 text-red-500 border-red-500/20',
-  medium: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-  strong: 'bg-green-500/10 text-green-500 border-green-500/20',
+  medium: 'bg-orange-400/10 text-orange-400 border-orange-400/20',
+  strong: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
 }
 
 interface TopicRowProps {
@@ -203,18 +203,16 @@ export function StudyPlanPage() {
               </div>
             </div>
 
-            {/* Generate Plan Button */}
-            {!hasGenerated && (
-              <Button
-                onClick={handleGeneratePlan}
-                disabled={!examDate || topics.length === 0 || isLoading}
-                size="lg"
-                className="w-full"
-              >
-                <Zap className="w-5 h-5 me-2" />
-                {t('generateButton')}
-              </Button>
-            )}
+            {/* Generate Plan Button - always visible */}
+            <Button
+              onClick={handleGeneratePlan}
+              disabled={!examDate || topics.length === 0 || isLoading}
+              size="lg"
+              className="w-full"
+            >
+              <Zap className="w-5 h-5 me-2" />
+              {t('generateButton')}
+            </Button>
           </div>
 
           {/* Main Content */}
@@ -231,7 +229,7 @@ export function StudyPlanPage() {
                   <p className="text-sm text-muted-foreground">{t('scheduleSubtitle')}</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   {plan.days.map((day) => (
                     <DayCard
                       key={day.dayId}

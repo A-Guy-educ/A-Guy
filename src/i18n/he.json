@@ -476,7 +476,8 @@
     "scheduleSubtitle": "(הספירה לאחור)",
     "markComplete": "סיימתי",
     "undoComplete": "סמן כמתוכנן",
-    "completed": "הושלם",
+    "completed": "בוצע",
+    "completedBadge": "בוצע",
     "planned": "מתוכנן",
     "editDay": "ערוך",
     "saveEdit": "שמור",
@@ -507,6 +508,12 @@
       "noExamDate": "בחר תאריך בחינה"
     },
     "loading": "טוען...",
-    "generateButton": "בנה תכנית מיקוד"
+    "generateButton": "בנה תכנית מיקוד",
+    "strategy": {
+      "survival": "מצב הישרדות",
+      "high_intensity": "עצימות גבוהה",
+      "balanced": "מאוזן",
+      "mastery_cycle": "מחזור שליטה"
+    }
   }
 }

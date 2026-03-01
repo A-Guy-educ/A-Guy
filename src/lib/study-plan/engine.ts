@@ -5,6 +5,7 @@ import {
   ACTIVITY_TEMPLATES,
   MASTERY_WEIGHTS,
   MAX_TOPICS_PER_DAY,
+  TASK_TEMPLATES,
 } from './constants'
 import type {
   ActivityType,
@@ -17,14 +18,16 @@ import type {
 
 /**
  * Determine timeframe mode based on days until exam.
- * - <= 1 day: survival
- * - 2-5 days: high_intensity
- * - >= 6 days: balanced
+ * - <= 2 days: survival
+ * - 3-5 days: high_intensity
+ * - 6-7 days: balanced
+ * - >= 8 days: mastery_cycle
  */
 export function getTimeframeMode(daysUntilExam: number): TimeframeMode {
-  if (daysUntilExam <= 1) return 'survival'
+  if (daysUntilExam <= 2) return 'survival'
   if (daysUntilExam <= 5) return 'high_intensity'
-  return 'balanced'
+  if (daysUntilExam <= 7) return 'balanced'
+  return 'mastery_cycle'
 }
 
 /**
@@ -214,16 +217,21 @@ export function pickTopicsForDay(
 }
 
 /**
- * Generate a 7-day study plan anchored to today.
- * The daysLeft value is used only to select the activity template.
+ * Generate an adaptive study plan anchored to today.
+ * The number of days generated is min(7, max(1, daysLeft)).
+ * If exam is today (daysLeft <= 0), generates 1 warmup day.
  */
 export function generateStudyPlan(input: GeneratePlanInput): StudyPlanDay[] {
   const { today, examDate, topics, idGenerator } = input
 
-  // Calculate days until exam (used only for template selection)
+  // Calculate days until exam
   const todayDate = parseISO(today)
   const examDateObj = parseISO(examDate)
   const daysLeft = differenceInCalendarDays(examDateObj, todayDate)
+
+  // Adaptive day count: min(7, max(1, daysLeft))
+  // Special case: if exam is today or passed (daysLeft <= 0), generate 1 warmup day
+  const dayCount = daysLeft <= 0 ? 1 : Math.min(7, Math.max(1, daysLeft))
 
   // Determine timeframe mode (only affects activity template)
   const mode = getTimeframeMode(daysLeft)
@@ -233,12 +241,15 @@ export function generateStudyPlan(input: GeneratePlanInput): StudyPlanDay[] {
   const cycle = buildTopicCycle(topics)
   const allTopicIds = topics.map((t) => t.topicId)
 
-  // Generate 7 days anchored to today
+  // Generate adaptive number of days anchored to today
   const days: StudyPlanDay[] = []
-  for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+  for (let dayIndex = 0; dayIndex < dayCount; dayIndex++) {
     const date = format(addDays(todayDate, dayIndex), 'yyyy-MM-dd')
     const activityType = template[dayIndex]
     const topicIds = pickTopicsForDay(cycle, dayIndex, activityType, allTopicIds, topics)
+
+    // Get concrete tasks for this activity type
+    const tasks = TASK_TEMPLATES[activityType] || []
 
     days.push({
       dayId: idGenerator(),
@@ -247,6 +258,8 @@ export function generateStudyPlan(input: GeneratePlanInput): StudyPlanDay[] {
       topicIds,
       status: 'planned',
       estimatedDurationMinutes: ACTIVITY_DURATIONS[activityType],
+      tasks,
+      timeframeMode: mode,
     })
   }
 

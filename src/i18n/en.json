@@ -507,6 +507,12 @@
       "noExamDate": "Select an exam date"
     },
     "loading": "Loading...",
-    "generateButton": "Build Focus Plan"
+    "generateButton": "Build Focus Plan",
+    "strategy": {
+      "survival": "Survival Mode",
+      "high_intensity": "High Intensity",
+      "balanced": "Balanced",
+      "mastery_cycle": "Mastery Cycle"
+    }
   }
 }

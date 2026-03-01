@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-import type { StudyPlanDay, TopicInput } from '@/lib/study-plan'
+import type { MasteryLevel, StudyPlanDay, TopicInput } from '@/lib/study-plan'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { CheckCircle2, Clock, Edit2 } from 'lucide-react'
 
@@ -13,6 +13,12 @@ const ACTIVITY_COLORS = {
   reinforcement: 'bg-green-500/10 text-green-500 border-green-500/20',
   warmup: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
 } as const
+
+const MASTERY_COLORS: Record<MasteryLevel, string> = {
+  weak: 'bg-red-500/10 text-red-500 border-red-500/20',
+  medium: 'bg-orange-400/10 text-orange-400 border-orange-400/20',
+  strong: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+}
 
 interface DayCardProps {
   day: StudyPlanDay
@@ -153,7 +159,7 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
     <div
       className={`relative bg-card rounded-2xl border-2 p-5 transition-all ${
         isCompleted
-          ? 'border-emerald-500/30 opacity-60'
+          ? 'border-emerald-500/30 opacity-50'
           : 'border-border hover:border-border shadow-sm'
       }`}
     >
@@ -202,19 +208,33 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
       <div className="mb-4">
         <div className="flex flex-wrap gap-1.5">
           {(day.userTopicIds || day.topicIds).map((id, idx) => {
-            const label = topics.find((t) => t.topicId === id)?.topicLabel
-            if (!label) return null
+            const topic = topics.find((t) => t.topicId === id)
+            if (!topic) return null
             return (
               <span
                 key={idx}
-                className="px-2 py-0.5 text-xs font-medium bg-muted text-foreground rounded-md"
+                className={`px-2 py-0.5 text-xs font-medium rounded-md border ${MASTERY_COLORS[topic.mastery]}`}
               >
-                {label}
+                {topic.topicLabel}
               </span>
             )
           })}
         </div>
       </div>
+
+      {/* Tasks */}
+      {day.tasks && day.tasks.length > 0 && (
+        <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+          <ul className="space-y-1">
+            {day.tasks.map((task, idx) => (
+              <li key={idx} className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">{task.label}:</span>{' '}
+                {task.description}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-muted-foreground">

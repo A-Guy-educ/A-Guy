@@ -26,13 +26,22 @@ Scheduler assigns daily strategy by `daysUntilExam`:
 | 6–7 days | Balanced | Mastery & Polish | Mix of drills, hybrid simulations, targeted reinforcement |
 | 8+ days | Mastery Cycle | Foundation Building | Intensive weak-topic drills |
 
+**Implementation Logic:**
+- `daysUntilExam <= 2` → Survival Mode (warmup activities)
+- `daysUntilExam >= 3 && daysUntilExam <= 5` → High Intensity
+- `daysUntilExam >= 6 && daysUntilExam <= 7` → Balanced  
+- `daysUntilExam >= 8` → Mastery Cycle
+
 ### B) Fallback + Topic Selection
 - Assign specific topics each day from user topics inventory
 - Weak-focus fallback priority: Weak → Medium → Strong
 - Round-robin rotation: Do not repeat a topic until peers in same category are covered
 
 ### C) Scope & Timeline
-- Show up to last 7 days before exam
+- Generate `min(7, max(1, daysUntilExam))` days - adaptive based on exam proximity
+- If exam is in 3 days, generate 3 days (not 7)
+- If exam is in 10 days, generate 7 days
+- If exam is today (daysUntilExam = 0 or 1), show single warm-up day
 - `daysUntilExam = 1` must be warm-up oriented (not full study day)
 
 ## UI Requirements
@@ -44,12 +53,15 @@ Scheduler assigns daily strategy by `daysUntilExam`:
 ## Progress Tracking
 - Completion toggle per day card
 - Persist to existing `UserProgress` collection
-- Completed day visual: `opacity-50` and/or `בוצע` badge
+- Completed day visual: `opacity-50` AND Hebrew `בוצע` badge (not "הושלם")
 
 ## Acceptance Criteria
 - [ ] Plan generation happens only on Generate button click
 - [ ] Clear behavioral difference between 2-day and 10-day scenarios
+- [ ] 2-day scenario: 2 days shown, Survival Mode (warmup)
+- [ ] 10-day scenario: 7 days shown, Mastery Cycle mode
 - [ ] Each day shows specific topics + concrete activity tasks
 - [ ] Completion state persists after refresh
 - [ ] UI is RTL and matches visual style
-- [ ] `daysUntilExam = 1` yields warm-up style day
+- [ ] `daysUntilExam = 1` yields exactly 1 warm-up style day
+- [ ] Completed days show `opacity-50` and `בוצע` badge (Hebrew)
