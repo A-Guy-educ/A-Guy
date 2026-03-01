@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-01T13:31:46.187Z",
-  "updatedAt": "2026-03-01T17:40:12.677Z",
-  "state": "paused",
-  "cursor": "taskify",
+  "updatedAt": "2026-03-01T18:24:22.876Z",
+  "state": "running",
+  "cursor": "architect",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -28,11 +28,31 @@
       "outputFile": "gap.md"
     },
     "architect": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-01T17:35:12.287Z"
+      "startedAt": "2026-03-01T17:51:03.890Z",
+      "completedAt": "2026-03-01T17:57:56.864Z",
+      "outputFile": "architect.md"
+    },
+    "plan-gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-01T17:57:59.508Z",
+      "completedAt": "2026-03-01T18:06:36.325Z",
+      "outputFile": "plan-gap.md"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-01T18:06:36.325Z",
+      "completedAt": "2026-03-01T18:23:50.891Z",
+      "outputFile": "build.md"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-01T18:24:22.876Z"
     }
   },
-  "issueNumber": 643,
-  "completedAt": "2026-03-01T17:40:12.677Z"
+  "issueNumber": 643
 }

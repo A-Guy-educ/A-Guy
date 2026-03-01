@@ -6,545 +6,638 @@
 
 ## Rerun Context
 
-This is a rerun with minimal feedback (`/cody rerun`). The previous plan was not found (fresh start). This plan addresses all spec requirements from scratch with a properly sequenced, TDD-gated approach.
+Previous run was a generic rerun request with no specific issues noted. This plan is a fresh, detailed breakdown covering all spec requirements with TDD test gates. The plan follows existing codebase patterns (V1/V2 pipelines, `withApiHandler`, `ContentBlockSchema`, etc.) and reuses infrastructure already in place.
 
-## Assumptions
-
-1. **No clarified.md exists** — working from spec.md alone.
-2. **Synchronous API** — V3 is NOT a job queue pipeline. It uses synchronous HTTP request/response for LLM extraction (POC acceptable latency).
-3. **Images AND PDFs** — The spec says "PDF page or image". We support image mimeTypes (jpeg/png/webp) and PDF (first page rendered as image). For POC, we focus on images first; PDF-to-image rendering is out of scope (admin uploads the relevant page as an image).
-4. **Existing `extractFromImage`** — We reuse `src/infra/llm/services/data-extractor-service.ts` for LLM extraction, which already returns `{question, options, correctAnswer, explanation}`.
-5. **Tenant auto-resolution** — The existing `tenantField` hook auto-assigns tenant on create. We pass it explicitly where needed.
-6. **LessonConversionPanel** already renders per-PDF. We add a V3 button alongside existing V1/V2 buttons.
-7. **The `content.blocks` format** uses the existing Zod schemas in `src/server/payload/collections/Exercises/schemas.ts`.
+---
 
 ## Architecture Overview
 
-```
-[Admin UI: LessonConversionPanel]
-    │
-    ├── "Convert V3" button (per PDF/image)
-    │
-    ▼
-[POST /api/exercises/convert/extract-v3]  ← Step 3
-    │  Input: { lessonId, mediaId }
-    │  1. Fetch media file buffer
-    │  2. Call extractFromImage()
-    │  3. Transform result → Exercise content blocks
-    │  4. Return preview JSON (NOT saved yet)
-    │
-    ▼
-[Admin UI: V3PreviewPanel]  ← Step 5
-    │  Shows extracted exercise preview
-    │  Admin edits question/options/answer
-    │  Clicks "Create Exercise"
-    │
-    ▼
-[POST /api/exercises/convert/create-v3]  ← Step 4
-    │  Input: { lessonId, mediaId, content, title }
-    │  1. Validate content against ContentSchema
-    │  2. Create Exercise doc (origin: 'conversion', pipelineVersion: 3)
-    │  3. Create ExtractionLog entry
-    │  4. Return created exercise
-    │
-    ▼
-[ExtractionLogs collection]  ← Step 1
-```
+**V3 is a synchronous, single-exercise conversion POC** with two API endpoints:
+1. **Extract**: `POST /api/exercises/convert/single` — takes a media ID, calls LLM, returns preview JSON
+2. **Create**: `POST /api/exercises/convert/single/create` — takes edited exercise data, persists to DB
+
+**Key files to create (NEW)**:
+- `src/server/payload/collections/ExtractionLogs.ts` — FR-EX-007
+- `src/server/services/exercise-conversion/v3/prompt-resolver.ts` — NFR-011 (prompt selection + tenant/usage validation)
+- `src/server/services/exercise-conversion/v3/transform.ts` — FR-EX-001 (LLM output → ContentBlock)
+- `src/server/services/exercise-conversion/v3/extract-single.ts` — FR-EX-003 (orchestrator)
+- `src/app/api/exercises/convert/single/route.ts` — FR-EX-004 (extract endpoint)
+- `src/app/api/exercises/convert/single/create/route.ts` — FR-EX-005 (create endpoint)
+- `src/ui/admin/exercise-conversion/ConvertV3Button/index.tsx` — FR-EX-006 (UI button)
+- `src/ui/admin/exercise-conversion/V3PreviewPanel/index.tsx` — FR-EX-004 (preview/edit UI)
+
+**Key files to modify (MODIFIED)**:
+- `src/payload.config.ts` — register ExtractionLogs collection
+- `src/infra/llm/services/data-extractor-service.ts` — accept prompt override + expose raw response text for logging
+- `src/ui/admin/exercise-conversion/LessonConversionPanel/index.tsx` — add V3 button + panel
 
 ---
 
-## Step 1: Create ExtractionLogs Collection
+## Assumptions
 
-**Time estimate**: 15-20 minutes
-**Spec refs**: FR-EX-007, NFR-012, NFR-013
+1. The existing `extractFromImage()` in `src/infra/llm/services/data-extractor-service.ts` is reused for LLM extraction, with a small extension to support prompt override (from Prompts collection) and raw response logging.
+2. Images for content files are fetched via Payload's Media collection (URL from `media.url`).
+3. For PDF files, we convert the first page to an image using the existing image extraction infrastructure before calling `extractFromImage`.
+4. The `LessonConversionPanel` already filters for PDFs only; V3 will also support image mime types (`image/png`, `image/jpeg`, `image/webp`).
+5. `tenantField` auto-fills on create via its `beforeValidate` hook, but V3 endpoints still explicitly enforce lesson-tenant scoping for media + prompt resolution.
+6. The admin preview/edit UI is a simple JSON form with editable fields — not a full WYSIWYG editor. This is acceptable for a POC.
 
-### Files to Touch
+---
 
+## Step 1: Create ExtractionLogs Collection (FR-EX-007, NFR-012, NFR-013)
+
+**Time estimate**: 15 minutes
+
+**Files to touch**:
 - `src/server/payload/collections/ExtractionLogs.ts` (NEW)
-- `src/payload.config.ts` (MODIFIED — line ~142, add to collections array)
+- `src/payload.config.ts` (MODIFIED — lines ~32-60 imports, ~88 collections array)
 
-### Exact Behavior
+**Exact behavior**:
+- Collection slug: `extraction-logs`
+- Fields:
+  - `tenant` (tenantField — required, auto-filled)
+  - `lesson` (relationship → lessons, required, index)
+  - `media` (relationship → media, required, index) — source document
+  - `exercise` (relationship → exercises, optional) — populated only on creation-stage success logs
+  - `prompt` (relationship → prompts, optional) — which prompt was used
+  - `promptVersion` (text, optional) — immutable version marker (e.g., `${prompt.key}:${prompt.updatedAt}`)
+  - `status` (select: `success` | `failed`, required)
+  - `stage` (select: `extract` | `create`, required) — keeps append-only lifecycle events
+  - `rawResponse` (textarea) — raw LLM response string
+  - `parsedPayload` (json) — parsed JSON from LLM
+  - `errorMessage` (text, optional) — error details if failed
+  - `pipelineVersion` (number, default 3)
+  - `processingTimeMs` (number) — extraction duration
+  - `model` (text) — LLM model name used
+- Access control (NFR-012):
+  - `create`: `() => false` (not creatable from admin UI; server-side creation uses controlled `overrideAccess: true`)
+  - `read`: `adminOnly`
+  - `update`: `() => false`
+  - `delete`: `() => false`
+- Admin group: `AI`
+- Timestamps: true
 
-Create a new Payload CMS collection `extraction-logs` with these fields:
+**Tests** (test file: `tests/unit/collections/extraction-logs.test.ts`):
 
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| tenant | relationship→tenants | yes | Via `tenantField` |
-| lesson | relationship→lessons | yes | Source lesson |
-| media | relationship→media | yes | Source document |
-| exercise | relationship→exercises | no | Created exercise (linked after creation) |
-| prompt | relationship→prompts | no | Prompt used for extraction |
-| pipelineVersion | number | yes | Always `3` for V3 |
-| status | select | yes | `success` / `failed` |
-| rawResponse | textarea | no | Raw LLM response string |
-| parsedJson | json | no | Parsed extraction result |
-| errorMessage | text | no | Error message if failed |
-| processingTimeMs | number | no | Time taken |
-
-**Access Control** (NFR-012):
-- `create`: Server-only — use a custom function that always returns `false` (creation via hooks/Local API with `overrideAccess: true`)
-- `read`: `adminOnly`
-- `update`: Always `false` (append-only)
-- `delete`: Always `false` (immutable)
-
-### Tests (FAIL before, PASS after)
-
-**Test file**: `tests/unit/collections/extraction-logs-schema.spec.ts` (NEW)
-
-1. **Test: ExtractionLogs collection config has correct access control**
+1. **Test: ExtractionLogs collection has correct access control**
    - Import the collection config
    - Assert `access.create` returns `false` for any user
-   - Assert `access.read` returns `true` for admin user, `false` for non-admin
-   - Assert `access.update` returns `false` for any user
-   - Assert `access.delete` returns `false` for any user
+   - Assert `access.read` returns `true` only for admin users
+   - Assert `access.update` returns `false`
+   - Assert `access.delete` returns `false`
+   - FAILS before: collection doesn't exist
+   - PASSES after: collection created with correct access
 
-2. **Test: ExtractionLogs collection has required fields**
-   - Import the collection config
-   - Assert fields include: `tenant`, `lesson`, `media`, `exercise`, `prompt`, `pipelineVersion`, `status`, `rawResponse`, `parsedJson`, `errorMessage`, `processingTimeMs`
-   - Assert `status` options are `['success', 'failed']`
+2. **Test: ExtractionLogs registered in payload config**
+   - Import payload config
+   - Assert `collections` array includes a collection with slug `extraction-logs`
+   - FAILS before: not registered
+   - PASSES after: added to config
 
-### Acceptance Criteria
+3. **Test: ExtractionLogs schema includes append-only lifecycle fields**
+   - Assert fields contain `stage` and `promptVersion`
+   - Assert `exercise` is optional (for extract failures / pre-create previews)
+   - FAILS before: collection doesn't exist
+   - PASSES after: schema supports extract + create lifecycle without updates
 
-- [ ] Collection registered in `payload.config.ts`
-- [ ] `tenantField` included for multi-tenancy (NFR-013)
+**Acceptance criteria**:
+- [ ] Collection file exists at `src/server/payload/collections/ExtractionLogs.ts`
+- [ ] All fields match spec + lifecycle needs (tenant, lesson, media, exercise, prompt, promptVersion, status, stage, rawResponse, parsedPayload, errorMessage, pipelineVersion, processingTimeMs, model)
 - [ ] Access control: create=false, read=adminOnly, update=false, delete=false
-- [ ] All fields from spec present with correct types
-- [ ] Unit tests pass
+- [ ] Registered in `src/payload.config.ts` collections array
+- [ ] `pnpm generate:types` run after collection schema addition
+- [ ] `pnpm tsc --noEmit` passes
 
 ---
 
-## Step 2: Create LLM Result → Exercise Content Transformer
+## Step 2: LLM Output → ContentBlock Transform Service (FR-EX-001)
 
-**Time estimate**: 20-30 minutes
-**Spec refs**: FR-EX-001
+**Time estimate**: 25 minutes
 
-### Files to Touch
+**Files to touch**:
+- `src/server/services/exercise-conversion/v3/transform.ts` (NEW)
 
-- `src/infra/llm/services/exercise-transformer.ts` (NEW)
+**Exact behavior**:
 
-### Exact Behavior
+The transform layer is split into two explicit outputs:
 
-Pure function that transforms `ImageToExerciseResult` → `ExerciseContent` (Zod-validated):
+1. `toPreviewDraft()` — preserves editable semantics for admin preview (including `correctAnswer: null`)
+2. `toExerciseContent()` — produces strict `ContentSchema` payload for persistence
 
 ```typescript
-interface TransformInput {
+// Input (from extractFromImage):
+interface SimpleExtraction {
+  question: string
+  options: string[]    // empty array → free_response
+  correctAnswer: number | null  // index into options, or null
+  explanation?: string
+}
+
+// Output A: Preview draft (editable, allows unknown answer)
+interface PreviewDraft {
+  title: string
   question: string
   options: string[]
   correctAnswer: number | null
   explanation?: string
+  questionType: 'free_response' | 'true_false' | 'mcq'
 }
 
-interface TransformOutput {
+// Output B: ExerciseContent (validated against ContentSchema)
+interface TransformResult {
+  title: string        // derived from question (first 80 chars)
   content: { blocks: ContentBlock[] }
-  title: string // First 80 chars of question
 }
 ```
 
-**Logic**:
-1. If `options` array has ≥2 items → generate `question_select` block (variant: `mcq`)
-   - Each option gets a unique ID (`opt-0`, `opt-1`, etc.)
-   - Options wrapped in McqOption format with InlineRichText
-   - `correctOptionIds`: `[options[correctAnswer].id]` if correctAnswer is not null, else `[options[0].id]` (fallback)
-   - `selectionMode`: `'single'`
-2. If `options` is empty/missing → generate `question_free_response` block
-   - `acceptedAnswers`: `[String(correctAnswer)]` if correctAnswer exists, else `['']`
-3. Prompt text → `InlineRichText` with `format: 'md-math-v1'`, `value: question`
-4. If explanation exists → add as `hint` InlineRichText on the question block
-5. Generate title: first 80 chars of question text (strip markdown)
-6. All blocks get unique IDs via `generateId()`
-7. Validate output against `ContentSchema` — throw if invalid
+**Transform logic**:
+- If `options.length === 0` → `question_free_response` block:
+  - `id`: nanoid()
+  - `type`: `question_free_response`
+  - `prompt`: `{ type: 'rich_text', format: 'md-math-v1', value: question, mediaIds: [] }`
+  - `answer`: `{ acceptedAnswers: ['(answer not detected)'] }` — placeholder
+- If `options.length === 2` and options match true/false pattern → `question_select` with `variant: 'true_false'`:
+  - Standard true/false block structure per schema
+  - `answer.correctOptionId`: map `correctAnswer` index to `'true'`/`'false'`, or `undefined` if null
+- If `options.length >= 2` → `question_select` with `variant: 'mcq'`:
+  - `id`: nanoid()
+  - `selectionMode`: `'single'`
+  - `prompt`: InlineRichText from question
+  - `answer.multiSelect`: false
+  - `answer.options`: map each option to `{ id: nanoid(), content: InlineRichText }`
+  - `answer.correctOptionIds`:
+    - if `correctAnswer !== null`: map detected index
+    - if `correctAnswer === null`: use deterministic fallback first option for schema validity, but preserve `correctAnswer: null` in PreviewDraft + ExtractionLog parsed payload
+- If `explanation` exists → append a `rich_text` block after the question block with the explanation text
+- `title`: first 80 characters of `question`, trimmed, ellipsis if truncated
 
-### Tests (FAIL before, PASS after)
+**Validation**: `toExerciseContent()` output MUST pass `ContentSchema.parse()` or throw.
 
-**Test file**: `tests/unit/services/exercise-transformer.spec.ts` (NEW)
+**Tests** (test file: `tests/unit/server/services/exercise-conversion/v3-transform.test.ts`):
 
-1. **Test: transforms MCQ extraction to question_select block**
+1. **Test: transforms MCQ extraction to question_select mcq block**
    - Input: `{ question: "What is 2+2?", options: ["3", "4", "5", "6"], correctAnswer: 1 }`
-   - Assert: output has `content.blocks[0].type === 'question_select'`
-   - Assert: `blocks[0].variant === 'mcq'`
-   - Assert: `blocks[0].answer.options` has 4 items with correct InlineRichText
-   - Assert: `blocks[0].answer.correctOptionIds` contains the ID of option at index 1
-   - Assert: output validates against `ContentSchema`
+   - Assert output has 1 block of type `question_select` with variant `mcq`
+   - Assert `answer.correctOptionIds` contains the ID of the option with content value "4"
+   - Assert `answer.options` has 4 items
+   - Assert `ContentSchema.parse(output.content)` succeeds
+   - FAILS before: transform function doesn't exist
+   - PASSES after: transform correctly builds MCQ block
 
-2. **Test: transforms free response extraction to question_free_response block**
-   - Input: `{ question: "Solve for x: 2x = 10", options: [], correctAnswer: 5 }`
-   - Assert: output has `content.blocks[0].type === 'question_free_response'`
-   - Assert: `blocks[0].answer.acceptedAnswers` includes `"5"`
-   - Assert: output validates against `ContentSchema`
+2. **Test: transforms extraction with no options to question_free_response block**
+   - Input: `{ question: "Solve: x + 3 = 7", options: [], correctAnswer: null }`
+   - Assert output has 1 block of type `question_free_response`
+   - Assert `answer.acceptedAnswers` is `['(answer not detected)']`
+   - Assert `ContentSchema.parse(output.content)` succeeds
+   - FAILS before: transform function doesn't exist
+   - PASSES after: correctly builds free response block
 
-3. **Test: handles null correctAnswer gracefully**
-   - Input: `{ question: "What color is the sky?", options: ["Blue", "Red"], correctAnswer: null }`
-   - Assert: output still validates against `ContentSchema`
-   - Assert: `blocks[0].answer.correctOptionIds` defaults to first option ID
+3. **Test: transforms extraction with explanation to include rich_text block**
+   - Input: `{ question: "Q?", options: ["A", "B"], correctAnswer: 0, explanation: "Because..." }`
+   - Assert output has 2 blocks: first `question_select`, second `rich_text` with value containing "Because..."
+   - FAILS before: no transform function
+   - PASSES after: explanation appended as rich_text block
 
-4. **Test: includes explanation as hint when present**
-   - Input: `{ question: "Q?", options: ["A", "B"], correctAnswer: 0, explanation: "Because A is correct" }`
-   - Assert: `blocks[0].hint.value === "Because A is correct"`
+4. **Test: transforms true/false pattern to question_select true_false variant**
+   - Input: `{ question: "The sky is blue", options: ["True", "False"], correctAnswer: 0 }`
+   - Assert output block has `variant: 'true_false'`
+   - Assert `answer.correctOptionId` is `'true'`
+   - FAILS before: no transform
+   - PASSES after: correct true/false detection
 
-5. **Test: generates valid title from question text**
-   - Input: question with 200 characters
-   - Assert: title is ≤80 characters
+5. **Test: handles null correctAnswer gracefully**
+   - Input: `{ question: "Q?", options: ["A", "B", "C"], correctAnswer: null }`
+   - Assert preview draft keeps `correctAnswer: null`
+   - Assert content output is valid (doesn't throw) using deterministic fallback for `correctOptionIds`
+   - Assert `ContentSchema.parse(output.content)` succeeds
+   - FAILS before: no transform
+   - PASSES after: graceful fallback
 
-### Acceptance Criteria
-
-- [ ] MCQ input produces valid `question_select` (variant `mcq`) block
-- [ ] Free-response input produces valid `question_free_response` block
-- [ ] `null` correctAnswer doesn't crash — falls back gracefully
-- [ ] Explanation maps to `hint` field
-- [ ] All outputs validate against `ContentSchema.safeParse()`
-- [ ] Unit tests pass
+**Acceptance criteria**:
+- [ ] `toPreviewDraft(input)` preserves editable extracted data including `correctAnswer: null`
+- [ ] `toExerciseContent(input)` returns `{ title, content }` that passes `ContentSchema.parse()`
+- [ ] MCQ, free response, and true/false variants all produce valid blocks
+- [ ] Null correctAnswer doesn't block creation
+- [ ] All 5 tests pass
+- [ ] `pnpm tsc --noEmit` passes
 
 ---
 
-## Step 3: Create Extract V3 API Endpoint
+## Step 3: Single Exercise Extraction Orchestrator (FR-EX-003, FR-EX-005, NFR-011)
 
-**Time estimate**: 20-30 minutes
-**Spec refs**: FR-EX-002, FR-EX-003, FR-EX-004 (extraction part)
+**Time estimate**: 25 minutes
 
-### Files to Touch
+**Files to touch**:
+- `src/server/services/exercise-conversion/v3/extract-single.ts` (NEW)
+- `src/server/services/exercise-conversion/v3/prompt-resolver.ts` (NEW)
+- `src/infra/llm/services/data-extractor-service.ts` (MODIFIED)
 
-- `src/app/api/exercises/convert/extract-v3/route.ts` (NEW)
+**Exact behavior**:
 
-### Exact Behavior
-
-**`POST /api/exercises/convert/extract-v3`**
-
-**Request body** (Zod validated):
-```json
-{
-  "lessonId": "string",
-  "mediaId": "string"
+```typescript
+interface ExtractSingleInput {
+  lessonId: string
+  mediaId: string
+  promptId?: string  // optional override, defaults to tenant-scoped published extractor prompt
 }
-```
 
-**Auth**: Admin session OR test secret (reuse `requireAdminOrTestSecret`)
-
-**Flow**:
-1. Validate request body with Zod
-2. Auth check → 401 if fails
-3. Fetch lesson → 404 if not found
-4. Verify `mediaId` is in `lesson.contentFiles` → 400 if not
-5. Fetch media document to get URL/buffer
-6. Download the image/file buffer (from media URL)
-7. Call `extractFromImage({ imageBuffer, mimeType }, payload)`
-8. If extraction fails → return `{ success: false, error: "..." }` with 422
-9. Transform result using `transformExtractionToContent()` from Step 2
-10. Return preview JSON:
-```json
-{
-  "success": true,
-  "preview": {
-    "title": "Generated title",
-    "content": { "blocks": [...] },
-    "rawExtraction": { "question": "...", "options": [...], "correctAnswer": 0 }
-  },
-  "metadata": {
-    "model": "...",
-    "processingTimeMs": 123
+interface ExtractSingleResult {
+  success: boolean
+  preview?: {
+    title: string
+    draft: PreviewDraft
+    content: { blocks: ContentBlock[] }
+    metadata: { model: string; processingTimeMs: number; promptId?: string; promptVersion?: string }
   }
+  extractionLogId: string
+  error?: string
 }
 ```
 
-**Status codes**: 200 (success), 400 (validation), 401 (auth), 404 (lesson not found), 422 (extraction failed), 500 (internal)
+**Orchestration steps**:
+1. Fetch lesson (`lessons`) and resolve `lessonTenantId`.
+2. Fetch media document from Payload and validate media ID is attached to lesson `contentFiles` (FR-EX-002 + tenant-safe association).
+3. Resolve extractor prompt via `prompt-resolver.ts`:
+   - If `promptId` provided: enforce `usage='extractor'`, `status='published'`, tenant match.
+   - Else: find latest published extractor prompt for lesson tenant.
+4. Download media buffer (via `media.url`).
+5. If PDF: render first page using existing V2 PDF renderer (`loadAndRenderAllPages` / first page image). If image mime type (`image/png|jpeg|webp`): use directly.
+6. Call `extractFromImage({ imageBuffer, mimeType, promptOverride }, payload)`.
+7. If extractor returns multiple candidate questions (array), silently take first (FR-EX-003).
+8. Build preview draft + content via Step 2 transforms.
+9. Create ExtractionLog (stage=`extract`) with status success/failed, raw response text, parsed payload, prompt reference/version, tenant/lesson/media.
+10. Return preview payload with `extractionLogId`.
 
-### Tests (FAIL before, PASS after)
+**The orchestrator does NOT create the exercise** — it only extracts and returns a preview.
 
-**Test file**: `tests/int/v3-extract-api.int.spec.ts` (NEW)
+**Tests** (test file: `tests/unit/server/services/exercise-conversion/v3-extract-single.test.ts`):
 
-1. **Test: returns 401 when no auth provided**
-   - POST to `/api/exercises/convert/extract-v3` with no auth header
-   - Assert: response status 401
+1. **Test: extractSingle returns preview with valid content blocks**
+   - Mock `extractFromImage` to return `{ success: true, data: { question: "Q?", options: ["A","B"], correctAnswer: 0 }, metadata: {...} }`
+   - Mock `payload.findByID` for media doc
+   - Mock `payload.create` for extraction log
+   - Mock fetch for media URL (return image buffer)
+   - Assert result has `success: true`, `preview.content` passes `ContentSchema.parse()`
+   - Assert result includes prompt metadata (`promptId`, `promptVersion`)
+   - Assert `payload.create` was called for `extraction-logs` collection with `overrideAccess: true`
+   - FAILS before: service doesn't exist
+   - PASSES after: orchestrator works
 
-2. **Test: returns 400 for invalid request body**
-   - POST with auth but empty body
-   - Assert: response status 400, error code `VALIDATION_ERROR`
+2. **Test: extractSingle creates ExtractionLog on failure**
+   - Mock `extractFromImage` to return `{ success: false, error: "LLM timeout" }`
+   - Assert result has `success: false`, `error` message
+   - Assert ExtractionLog created with `status: 'failed'`, `errorMessage: "LLM timeout"`
+   - FAILS before: service doesn't exist
+   - PASSES after: failure path logs correctly
 
-3. **Test: returns 404 for non-existent lesson**
-   - POST with auth, `{ lessonId: "nonexistent", mediaId: "some-id" }`
-   - Assert: response status 404
+3. **Test: extractSingle enforces prompt tenant + usage**
+   - Provide prompt with wrong usage or tenant mismatch
+   - Assert extraction fails with validation-style error
+   - Assert failed ExtractionLog recorded with `stage: 'extract'`
 
-**Note**: Full extraction test requires mocked LLM — covered in unit test for transformer (Step 2). Integration test focuses on HTTP contract.
-
-### Acceptance Criteria
-
-- [ ] Endpoint exists at `/api/exercises/convert/extract-v3`
-- [ ] Returns 401 for unauthenticated requests
-- [ ] Returns 400 for invalid input
-- [ ] Returns 404 for missing lesson
-- [ ] Returns 400 if media not attached to lesson
-- [ ] Returns preview JSON on success (not saved to DB yet)
-- [ ] Integration tests pass
+**Acceptance criteria**:
+- [ ] `extractSingle()` orchestrates: fetch media → extract → transform → log → return preview
+- [ ] ExtractionLog created with `overrideAccess: true` (bypasses `create: () => false`)
+- [ ] Prompt selection is tenant-scoped and uses `usage='extractor'` published prompts
+- [ ] Both success and failure paths create ExtractionLogs
+- [ ] `pnpm tsc --noEmit` passes
 
 ---
 
-## Step 4: Create Exercise V3 API Endpoint (Create + Log)
+## Step 4: Extract API Endpoint (FR-EX-004)
 
-**Time estimate**: 20-30 minutes
-**Spec refs**: FR-EX-004 (creation part), FR-EX-005, FR-EX-007
+**Time estimate**: 20 minutes
 
-### Files to Touch
+**Files to touch**:
+- `src/app/api/exercises/convert/single/route.ts` (NEW)
 
-- `src/app/api/exercises/convert/create-v3/route.ts` (NEW)
+**Exact behavior**:
+- **Method**: POST
+- **Auth**: `admin` (uses `withApiHandler`)
+- **Body schema** (Zod):
+  ```typescript
+  z.object({
+    lessonId: z.string().min(1),
+    mediaId: z.string().min(1),
+    promptId: z.string().optional(),
+  })
+  ```
+- **Response (200)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "title": "Exercise title",
+      "content": { "blocks": [...] },
+      "metadata": { "model": "...", "processingTimeMs": 1234 },
+      "extractionLogId": "abc123"
+    }
+  }
+  ```
+- **Response (400)**: Validation errors
+- **Response (401)**: Unauthorized
+- **Response (404)**: Media or lesson not found
+- **Response (500)**: LLM extraction failure (returns error details)
 
-### Exact Behavior
+**Implementation**: Calls `extractSingle()` from Step 3, wraps with `withApiHandler`.
 
-**`POST /api/exercises/convert/create-v3`**
+**Tests** (test file: `tests/unit/server/services/exercise-conversion/v3-extract-api.test.ts`):
 
-**Request body** (Zod validated):
-```json
-{
-  "lessonId": "string",
-  "mediaId": "string",
-  "title": "string",
-  "content": { "blocks": [...] },
-  "rawExtraction": { ... },
-  "metadata": { "model": "...", "processingTimeMs": 123 }
-}
-```
+1. **Test: POST /api/exercises/convert/single returns preview on success**
+   - Mock the `extractSingle` service
+   - Assert response shape matches `{ success: true, data: { title, content, metadata, extractionLogId } }`
+   - Assert response status is 200
+   - FAILS before: route doesn't exist
+   - PASSES after: endpoint wired correctly
 
-**Auth**: Admin session OR test secret
+2. **Test: POST /api/exercises/convert/single returns 400 for missing lessonId**
+   - Send body without `lessonId`
+   - Assert 400 response with validation error
+   - FAILS before: route doesn't exist
+   - PASSES after: Zod validation rejects
 
-**Flow**:
-1. Validate request body (content validated against `ContentSchema`)
-2. Auth check → 401
-3. Fetch lesson → get tenant ID
-4. Create Exercise via `payload.create`:
-   - `collection: 'exercises'`
-   - `data.title`: from request
-   - `data.lesson`: lessonId
-   - `data.content`: from request (already validated)
-   - `data.origin`: `'conversion'`
-   - `data.pipelineVersion`: `3`
-   - `data.sourceDoc`: mediaId
-   - `data.tenant`: lesson's tenant ID
-5. Create ExtractionLog via `payload.create`:
-   - `collection: 'extraction-logs'`
-   - `data.lesson`: lessonId
-   - `data.media`: mediaId
-   - `data.exercise`: created exercise ID
-   - `data.pipelineVersion`: `3`
-   - `data.status`: `'success'`
-   - `data.rawResponse`: JSON.stringify(rawExtraction)
-   - `data.parsedJson`: content
-   - `data.processingTimeMs`: from metadata
-   - `data.tenant`: lesson's tenant ID
-   - Uses `overrideAccess: true` (since access.create = false)
-6. Return:
-```json
-{
-  "success": true,
-  "exerciseId": "...",
-  "exerciseSlug": "...",
-  "logId": "..."
-}
-```
-
-**Status codes**: 200, 400, 401, 404, 500
-
-### Tests (FAIL before, PASS after)
-
-**Test file**: `tests/int/v3-create-api.int.spec.ts` (NEW)
-
-1. **Test: returns 401 when no auth provided**
-   - POST to `/api/exercises/convert/create-v3` with no auth
-   - Assert: status 401
-
-2. **Test: returns 400 for invalid content schema**
-   - POST with auth but `content: { blocks: [] }` (empty blocks array fails Zod min(1))
-   - Assert: status 400
-
-3. **Test: creates exercise with correct metadata fields**
-   - (Requires running Payload instance with DB)
-   - POST with valid content, lessonId, mediaId
-   - Assert: created exercise has `origin: 'conversion'`, `pipelineVersion: 3`, `sourceDoc: mediaId`
-   - Assert: ExtractionLog created with `status: 'success'`
-
-### Acceptance Criteria
-
-- [ ] Endpoint exists at `/api/exercises/convert/create-v3`
-- [ ] Exercise created with `origin: 'conversion'`, `pipelineVersion: 3`
-- [ ] Exercise linked to source media via `sourceDoc`
-- [ ] ExtractionLog created with raw response and parsed content
-- [ ] ExtractionLog links to created exercise
-- [ ] Tenant ID propagated from lesson to exercise and log
-- [ ] Integration tests pass
+**Acceptance criteria**:
+- [ ] Route exists at `src/app/api/exercises/convert/single/route.ts`
+- [ ] Uses `withApiHandler` with `auth: 'admin'`
+- [ ] Validates body with Zod schema
+- [ ] Returns standardized API response format
+- [ ] `pnpm tsc --noEmit` passes
 
 ---
 
-## Step 5: Create V3 Admin UI Components
+## Step 5: Create Exercise API Endpoint (FR-EX-005)
 
-**Time estimate**: 25-30 minutes
-**Spec refs**: FR-EX-004, FR-EX-006
+**Time estimate**: 20 minutes
 
-### Files to Touch
+**Files to touch**:
+- `src/app/api/exercises/convert/single/create/route.ts` (NEW)
 
+**Exact behavior**:
+- **Method**: POST
+- **Auth**: `admin`
+- **Body schema**:
+  ```typescript
+  z.object({
+    lessonId: z.string().min(1),
+    mediaId: z.string().min(1),
+    title: z.string().min(1),
+    content: z.object({ blocks: z.array(z.unknown()).min(1) }),  // validated more deeply server-side
+    extractionLogId: z.string().min(1),
+  })
+  ```
+- **Logic**:
+  1. Validate `content` against `ContentSchema.parse()` — reject if invalid
+  2. Fetch lesson to get tenant ID (for tenant scoping)
+  3. Fetch ExtractionLog by `extractionLogId` and enforce preview gate:
+     - must exist
+     - must be `stage: 'extract'` and `status: 'success'`
+     - must match same `lesson` + `media`
+     - if already consumed (creation log already exists for this extraction log) reject duplicate create
+  4. Create exercise via `payload.create({ collection: 'exercises', data: { ... } })`:
+      - `title`: from body
+      - `content`: from body (admin-edited)
+      - `lesson`: lessonId
+      - `origin`: `'conversion'`
+      - `sourceDoc`: mediaId
+      - `pipelineVersion`: 3
+      - `order`: 0 (default, admin can reorder later)
+      - `tenant`: from lesson's tenant
+  5. Create a **new** ExtractionLog (append-only) with `stage: 'create'`, `status: 'success'`, `exercise: newExercise.id`, and `parsedPayload` snapshot of final content
+  6. Return created exercise
+
+- **Published behavior note (FR-EX-005)**:
+  - Exercises collection currently has no drafts/status field.
+  - Creating an exercise document makes it immediately available under existing read access (treated as "published" in this project).
+
+- **Response (201)**:
+  ```json
+  {
+    "success": true,
+    "data": { "exerciseId": "...", "adminUrl": "/admin/collections/exercises/..." }
+  }
+  ```
+- **Response (400)**: Content validation failure
+- **Response (401)**: Unauthorized
+
+**Tests** (test file: `tests/unit/server/services/exercise-conversion/v3-create-api.test.ts`):
+
+1. **Test: POST .../single/create creates exercise with conversion metadata**
+   - Mock `payload.create` and `payload.findByID/find`
+   - Send valid body with title, content, lessonId, mediaId, extractionLogId
+   - Assert `payload.create` called with `origin: 'conversion'`, `pipelineVersion: 3`, `sourceDoc: mediaId`
+   - Assert a new create-stage ExtractionLog is written with exercise relationship (no updates)
+   - Assert response status 201
+   - FAILS before: route doesn't exist
+   - PASSES after: exercise created correctly
+
+2. **Test: POST .../single/create rejects invalid content blocks**
+   - Send body with `content: { blocks: [{ type: "invalid_type" }] }`
+   - Assert 400 response with validation error about content
+   - FAILS before: route doesn't exist
+   - PASSES after: ContentSchema validation rejects
+
+3. **Test: POST .../single/create rejects calls without valid extraction preview**
+   - Use missing/failed/mismatched extractionLogId
+   - Assert 400/404 error and no exercise created
+   - FAILS before: route doesn't exist
+   - PASSES after: preview/edit gate enforced server-side
+
+**Acceptance criteria**:
+- [ ] Exercise created with `origin: 'conversion'`, `pipelineVersion: 3`, `sourceDoc` linked
+- [ ] Content validated against `ContentSchema` before creation
+- [ ] No ExtractionLog updates (append-only); create-stage log links exercise
+- [ ] Create endpoint enforces prior successful extraction preview (`extractionLogId` gate)
+- [ ] Tenant scoped via lesson's tenant
+- [ ] `pnpm tsc --noEmit` passes
+
+---
+
+## Step 6: Admin UI — ConvertV3Button + V3PreviewPanel (FR-EX-004, FR-EX-006)
+
+**Time estimate**: 30 minutes
+
+**Files to touch**:
 - `src/ui/admin/exercise-conversion/ConvertV3Button/index.tsx` (NEW)
 - `src/ui/admin/exercise-conversion/V3PreviewPanel/index.tsx` (NEW)
-- `src/ui/admin/exercise-conversion/LessonConversionPanel/index.tsx` (MODIFIED — add V3 button ~line 207)
+- `src/ui/admin/exercise-conversion/LessonConversionPanel/index.tsx` (MODIFIED — lines 1-9 imports, ~69 filter logic, ~185-208 button area)
 
-### Exact Behavior
+**Exact behavior**:
 
-#### ConvertV3Button
-- Client component (`'use client'`)
-- Props: `{ lessonId: string, mediaId: string }`
-- On click: calls `POST /api/exercises/convert/extract-v3` with `{ lessonId, mediaId }`
-- Shows loading spinner while waiting
-- On success: renders `V3PreviewPanel` with the returned preview data
-- On error: shows error message
+### ConvertV3Button
+- Props: `{ lessonId: string; mediaId: string; onPreview: (data: PreviewData) => void }`
+- Renders a button labeled "Convert V3"
+- On click: `POST /api/exercises/convert/single` with `{ lessonId, mediaId }`
+- Shows loading state during extraction
+- On success: calls `onPreview()` with the preview data
+- On error: shows error message inline
 
-#### V3PreviewPanel
-- Client component (`'use client'`)
-- Props: `{ preview, metadata, lessonId, mediaId, onClose, onSuccess }`
+### V3PreviewPanel
+- Props: `{ preview: PreviewData; lessonId: string; mediaId: string; onClose: () => void; onCreated: (exerciseId: string) => void }`
 - Displays:
-  - Question text (editable textarea)
-  - Options list (editable, add/remove)
-  - Correct answer selector (radio/checkbox)
-  - Explanation/hint (editable textarea)
-  - Raw JSON accordion (collapsed by default)
-- "Create Exercise" button → calls `POST /api/exercises/convert/create-v3`
-- On success: shows success message, calls `onSuccess`
-- Validates content locally before sending (ContentSchema)
+  - Editable title (text input)
+  - Question prompt text (textarea, editable)
+  - Answer options (if MCQ — list of editable text inputs)
+  - Correct answer selector (dropdown for MCQ, text input for free response)
+  - Raw JSON view (collapsible, read-only)
+- "Create Exercise" button:
+  - Rebuilds content blocks from edited values
+  - `POST /api/exercises/convert/single/create` with edited data
+  - On success: shows success message with link to exercise admin page
+- "Cancel" button: closes panel
 
-#### LessonConversionPanel Modification
-- Add `<ConvertV3Button>` alongside existing V1/V2 buttons (~line 207)
-- Also support **image** files (not just PDFs) — filter for `application/pdf`, `image/jpeg`, `image/png`, `image/webp`
+### LessonConversionPanel changes
+- Expand file filter to include image files (`image/png`, `image/jpeg`, `image/webp`) in addition to PDFs
+- Add `ConvertV3Button` next to existing V1/V2 buttons (line ~185-208)
+- Add state for V3 preview (`v3Preview`, `v3MediaId`)
+- Render `V3PreviewPanel` when preview is active (below the media item)
 
-### Tests (FAIL before, PASS after)
+**Tests** (test file: `tests/unit/ui/convert-v3-button.test.tsx`):
 
-**Test file**: `tests/unit/ui/convert-v3-button.spec.ts` (NEW) — basic render test
+1. **Test: ConvertV3Button calls API and returns preview on click**
+   - Render `ConvertV3Button` with mock props
+   - Mock `fetch` to return success response with preview data
+   - Simulate button click
+   - Assert `fetch` called with correct URL and body
+   - Assert `onPreview` callback called with the response data
+   - FAILS before: component doesn't exist
+   - PASSES after: button wired correctly
 
-1. **Test: ConvertV3Button renders without crashing**
-   - Render component with valid props
-   - Assert: button with text "Convert (V3)" exists
+2. **Test: LessonConversionPanel shows V3 button for PDF and image files**
+   - Render `LessonConversionPanel` with mock `useDocumentInfo` and `useFormFields`
+   - Provide media items with both PDF and image mimeTypes
+   - Assert "Convert V3" button appears for each media item
+   - Assert non-PDF/image files don't get V3 button
+   - FAILS before: V3 button not in panel
+   - PASSES after: button added to panel
 
-2. **Test: LessonConversionPanel includes V3 button for image files**
-   - (This is harder to test without full Payload context — verify at integration level)
-   - Alternatively: verify the component file imports `ConvertV3Button`
-
-### Acceptance Criteria
-
-- [ ] "Convert (V3)" button appears in LessonConversionPanel for each PDF/image
+**Acceptance criteria**:
+- [ ] "Convert V3" button visible next to V1/V2 buttons in LessonConversionPanel
 - [ ] Clicking button triggers extraction API call
-- [ ] Preview panel shows extracted exercise data
-- [ ] Admin can edit question, options, correct answer in preview
-- [ ] "Create Exercise" button creates the exercise via API
-- [ ] No exercise created without preview/edit step (FR-EX-004 rule)
-- [ ] Success/error states displayed correctly
+- [ ] Preview panel shows with editable fields for title, question, options, correct answer
+- [ ] "Create Exercise" button submits to creation endpoint
+- [ ] Both PDF and image files supported
+- [ ] `pnpm tsc --noEmit` passes
+- [ ] `pnpm generate:importmap` runs without errors
 
 ---
 
-## Step 6: Generate Types and Import Map
+## Step 7: Integration Test — End-to-End V3 Flow + Solvability Smoke
 
-**Time estimate**: 5-10 minutes
-**Spec refs**: General
+**Time estimate**: 20 minutes
 
-### Files to Touch
+**Files to touch**:
+- `tests/int/v3-single-exercise-conversion.int.spec.ts` (NEW)
 
-- `src/payload-types.ts` (MODIFIED — auto-generated)
-- `src/app/(payload)/admin/importMap.js` (MODIFIED — auto-generated)
+**Exact behavior**:
 
-### Exact Behavior
+Integration tests that validate the full V3 flow through the API layer (without real LLM calls), plus acceptance-criteria smoke checks for rendering/solvability compatibility.
 
-1. Run `pnpm generate:types` to update `payload-types.ts` with ExtractionLogs types
-2. Run `pnpm generate:importmap` to update admin import map with new components
-3. Run `pnpm tsc --noEmit` to verify no type errors
+**Tests**:
 
-### Tests (FAIL before, PASS after)
+1. **Test: Full V3 extraction + creation flow**
+   - Setup: Create test tenant, lesson, media document
+   - Mock `extractFromImage` at the service level to return a known MCQ result
+   - Call `POST /api/exercises/convert/single` with `{ lessonId, mediaId }`
+   - Assert response contains valid preview with `content.blocks` passing `ContentSchema`
+   - Take response data, call `POST /api/exercises/convert/single/create` with the preview data
+   - Assert exercise created in DB with `origin: 'conversion'`, `pipelineVersion: 3`
+   - Assert ExtractionLogs exist for both stages (`extract` and `create`) and create-stage log links exercise
+   - FAILS before: endpoints don't exist
+   - PASSES after: full flow works
 
-1. **Test: TypeScript compilation succeeds**
-   - Run `pnpm tsc --noEmit`
-   - Assert: exit code 0
+2. **Test: V3 extraction creates failed ExtractionLog on LLM error**
+   - Mock `extractFromImage` to return `{ success: false, error: "timeout" }`
+   - Call `POST /api/exercises/convert/single`
+   - Assert response indicates failure
+   - Assert ExtractionLog created with `status: 'failed'`
+   - FAILS before: endpoints don't exist
+   - PASSES after: failure logging works
 
-2. **Test: ExtractionLog type exists in payload-types.ts**
-   - Grep for `ExtractionLog` in `src/payload-types.ts`
-   - Assert: type definition found
+3. **Test: V3 create endpoint rejects unauthorized users**
+   - Call without admin auth
+   - Assert 401 response
+   - FAILS before: endpoint doesn't exist
+   - PASSES after: auth enforced
 
-### Acceptance Criteria
+4. **Test: created V3 content is compatible with lesson exercise query + renderer contract**
+   - After create, call `queryExercisesByLesson({ lessonId })`
+   - Assert created exercise is returned and content validates against `ContentSchema`
+   - Optionally render the block payload with ExerciseRenderer test harness to ensure no runtime type mismatch
+   - FAILS before: V3 content path missing
+   - PASSES after: created exercises flow into standard lesson path
 
-- [ ] `pnpm tsc --noEmit` passes
-- [ ] `pnpm lint` passes
-- [ ] ExtractionLog types generated
-- [ ] Import map updated with new admin components
+5. **Test: answer validation contract works for V3 generated question blocks**
+   - Build validation payload from created question block (`acceptedAnswers` for free-response OR selected correct option text for mcq)
+   - Call validation layer (endpoint handler or helper with authenticated mock user)
+   - Assert correct submission evaluates true
+   - FAILS before: V3 flow absent
+   - PASSES after: V3 output remains solvable/gradable
+
+**Acceptance criteria**:
+- [ ] Full flow: extract → preview → edit → create → exercise in DB
+- [ ] ExtractionLogs created for both success and failure cases
+- [ ] Exercise has correct conversion metadata
+- [ ] Auth enforced on both endpoints
+- [ ] Created exercise content passes ContentSchema validation
+- [ ] Lesson-query/render compatibility smoke passes
+- [ ] Validation logic smoke passes for V3-generated question
+- [ ] `pnpm test:int -- --grep "v3"` passes
 
 ---
 
 ## Dependency Graph
 
 ```
-Step 1 (ExtractionLogs collection)
-    │
-    ├── Step 2 (Transformer) — independent of Step 1
-    │       │
-    │       ├── Step 3 (Extract API) — depends on Step 2
-    │       │
-    │       └── Step 4 (Create API) — depends on Steps 1 + 2
-    │               │
-    │               └── Step 5 (UI) — depends on Steps 3 + 4
-    │
-    └── Step 6 (Types/Import Map) — depends on Steps 1 + 5
+Step 1 (ExtractionLogs collection) ──┐
+                                     │
+Step 2 (Transform service) ──────────┤
+                                     ├──→ Step 3 (Extract orchestrator)
+                                     │           │
+                                     │           ├──→ Step 4 (Extract API)
+                                     │           │
+                                     │           └──→ Step 5 (Create API)
+                                     │                       │
+                                     └───────────────────────┼──→ Step 6 (Admin UI)
+                                                             │
+                                                             └──→ Step 7 (Integration test)
 ```
 
-**Recommended execution order**: 1 → 2 → 3 → 4 → 5 → 6
+Steps 1 and 2 can be done in parallel. Steps 4 and 5 depend on Step 3. Step 6 depends on Steps 4+5. Step 7 validates everything.
 
 ---
 
-## Quality Gates (run after each step)
+## Quality Gates
 
-```bash
-# After Step 1:
-pnpm vitest run tests/unit/collections/extraction-logs-schema.spec.ts
-pnpm tsc --noEmit
-
-# After Step 2:
-pnpm vitest run tests/unit/services/exercise-transformer.spec.ts
-
-# After Step 3:
-pnpm vitest run tests/int/v3-extract-api.int.spec.ts
-
-# After Step 4:
-pnpm vitest run tests/int/v3-create-api.int.spec.ts
-
-# After Step 5:
-pnpm vitest run tests/unit/ui/convert-v3-button.spec.ts
-
-# After Step 6 (final):
-pnpm tsc --noEmit
-pnpm lint
-```
+After all steps:
+1. `pnpm generate:types` — required after adding `ExtractionLogs` collection
+2. `pnpm tsc --noEmit` — zero TypeScript errors
+3. `pnpm lint` — zero lint errors
+4. `pnpm generate:importmap` — succeeds (required after adding admin UI components)
+5. All unit tests pass: `pnpm test -- --grep "v3"`
+6. All integration tests pass: `pnpm test:int -- --grep "v3"`
+7. ContentSchema validation passes for all generated exercise formats
 
 ---
 
-## Risk Mitigation
+## Files Summary
 
-1. **LLM flakiness**: The extract endpoint may fail due to LLM issues. The UI shows clear error states. ExtractionLogs records failures.
-2. **ContentSchema validation**: The transformer is the riskiest piece — must produce valid blocks. Extensive unit tests in Step 2 mitigate this.
-3. **Media file access**: Need to fetch file buffer from Vercel Blob URL. If media is a Payload upload, we can use `media.url` to fetch it.
-4. **PDF support**: For POC, we support images directly. PDF → image conversion is out of scope; admin should upload relevant page as image or use existing V1/V2 for PDFs.
-
----
-
-## Expert Review Feedback (Applied)
-
-### Payload Expert Review
-
-1. **Access control pattern confirmed**: `create: () => false` + `overrideAccess: true` is proven in `ConfigAuditLogs.ts` and `MCPAuditLogs.ts`. No issues.
-2. **Non-atomic creates in Step 4**: The two `payload.create` calls (Exercise + ExtractionLog) in the API route are NOT transactional. **Accepted for POC** — if ExtractionLog fails, log the error but still return the created exercise. Wrap the log creation in try/catch.
-3. **tenantField works correctly**: When tenant is passed explicitly, the hook returns early without interfering. Collection should import `tenantField` for field definition/index, AND the API route should pass tenant explicitly.
-4. **Use `adminOnly` from `@/server/payload/access/adminOnly`** (not `configAdminOnly`) — matches MCPAuditLogs pattern.
-5. **Add `timestamps: true`** to ExtractionLogs collection explicitly.
-6. **`type: 'json'` for `parsedJson`** is correct — used throughout codebase (Exercises `content`, MCPAuditLogs `args`).
-
-### Admin Expert Review
-
-1. **No importmap needed for V3 UI components** — they're runtime imports within `LessonConversionPanel`, just like `ConvertV2Button`. Step 6's importmap regen is for the new ExtractionLogs collection.
-2. **V3PreviewPanel must use Payload CSS variables** (e.g., `var(--theme-primary)`, `var(--theme-elevation-*)`) and inline `React.CSSProperties`. **NO Tailwind, NO shadcn/ui** in admin panel components.
-3. **Image support strategy**: Use **option (b)** — add a SEPARATE "Image Files" section below the existing PDF section in `LessonConversionPanel`. Do NOT modify the existing PDF filter/loop. This prevents breaking V1/V2 flows.
-
-### Build Agent Guidance (Key Implementation Notes)
-
-- **Step 1**: Import `adminOnly` from `'@/server/payload/access/adminOnly'`. Add `timestamps: true` to collection config. Use `never` function pattern: `() => false` for create/update/delete access.
-- **Step 4**: Wrap ExtractionLog creation in try/catch — don't let log failure prevent returning the created exercise.
-- **Step 5**: 
-  - In `LessonConversionPanel`, add a NEW section after the PDF loop (after line 250) for image files: `const imageFiles = mediaItems.filter((m) => m.mimeType?.startsWith('image/'))`. Only show the V3 button for images (V1/V2 remain PDF-only).
-  - For PDFs in the existing loop, ADD the V3 button alongside V1/V2 buttons.
-  - Style all new components with inline `React.CSSProperties` using `var(--theme-*)` CSS variables. NO Tailwind utilities.
+| File | Status | Step |
+|------|--------|------|
+| `src/server/payload/collections/ExtractionLogs.ts` | NEW | 1 |
+| `src/payload.config.ts` | MODIFIED | 1 |
+| `src/server/services/exercise-conversion/v3/prompt-resolver.ts` | NEW | 3 |
+| `src/server/services/exercise-conversion/v3/transform.ts` | NEW | 2 |
+| `src/server/services/exercise-conversion/v3/extract-single.ts` | NEW | 3 |
+| `src/infra/llm/services/data-extractor-service.ts` | MODIFIED | 3 |
+| `src/app/api/exercises/convert/single/route.ts` | NEW | 4 |
+| `src/app/api/exercises/convert/single/create/route.ts` | NEW | 5 |
+| `src/ui/admin/exercise-conversion/ConvertV3Button/index.tsx` | NEW | 6 |
+| `src/ui/admin/exercise-conversion/V3PreviewPanel/index.tsx` | NEW | 6 |
+| `src/ui/admin/exercise-conversion/LessonConversionPanel/index.tsx` | MODIFIED | 6 |
+| `tests/unit/collections/extraction-logs.test.ts` | NEW | 1 |
+| `tests/unit/server/services/exercise-conversion/v3-transform.test.ts` | NEW | 2 |
+| `tests/unit/server/services/exercise-conversion/v3-extract-single.test.ts` | NEW | 3 |
+| `tests/unit/server/services/exercise-conversion/v3-extract-api.test.ts` | NEW | 4 |
+| `tests/unit/server/services/exercise-conversion/v3-create-api.test.ts` | NEW | 5 |
+| `tests/unit/ui/convert-v3-button.test.tsx` | NEW | 6 |
+| `tests/int/v3-single-exercise-conversion.int.spec.ts` | NEW | 7 |

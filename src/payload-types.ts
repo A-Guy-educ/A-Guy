@@ -81,6 +81,7 @@ export interface Config {
     chapters: Chapter;
     lessons: Lesson;
     exercises: Exercise;
+    'extraction-logs': ExtractionLog;
     prompts: Prompt;
     teacher_profiles: TeacherProfile;
     user_settings: UserSetting;
@@ -119,6 +120,7 @@ export interface Config {
     chapters: ChaptersSelect<false> | ChaptersSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
+    'extraction-logs': ExtractionLogsSelect<false> | ExtractionLogsSelect<true>;
     prompts: PromptsSelect<false> | PromptsSelect<true>;
     teacher_profiles: TeacherProfilesSelect<false> | TeacherProfilesSelect<true>;
     user_settings: UserSettingsSelect<false> | UserSettingsSelect<true>;
@@ -1519,6 +1521,79 @@ export interface MemoryItem {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "extraction-logs".
+ */
+export interface ExtractionLog {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Lesson from which this extraction was triggered
+   */
+  lesson: string | Lesson;
+  /**
+   * Source document (PDF or image) that was extracted
+   */
+  media: string | Media;
+  /**
+   * Exercise created from this extraction (populate on create-stage success)
+   */
+  exercise?: (string | null) | Exercise;
+  /**
+   * Prompt used for extraction
+   */
+  prompt?: (string | null) | Prompt;
+  /**
+   * Immutable version marker (e.g., prompt.key:prompt.updatedAt)
+   */
+  promptVersion?: string | null;
+  /**
+   * Extraction result status
+   */
+  status: 'success' | 'failed';
+  /**
+   * Lifecycle stage - extract or create
+   */
+  stage: 'extract' | 'create';
+  /**
+   * Raw LLM response string
+   */
+  rawResponse?: string | null;
+  /**
+   * Parsed JSON from LLM
+   */
+  parsedPayload?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Error details if extraction failed
+   */
+  errorMessage?: string | null;
+  /**
+   * Pipeline version used (V3 = 3)
+   */
+  pipelineVersion: number;
+  /**
+   * Extraction duration in milliseconds
+   */
+  processingTimeMs?: number | null;
+  /**
+   * LLM model name used
+   */
+  model?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "teacher_profiles".
  */
 export interface TeacherProfile {
@@ -2215,6 +2290,10 @@ export interface PayloadLockedDocument {
         value: string | Exercise;
       } | null)
     | ({
+        relationTo: 'extraction-logs';
+        value: string | ExtractionLog;
+      } | null)
+    | ({
         relationTo: 'prompts';
         value: string | Prompt;
       } | null)
@@ -2723,6 +2802,28 @@ export interface ExercisesSelect<T extends boolean = true> {
   pipelineVersion?: T;
   sourcePageIndex?: T;
   sourceBboxNormalized?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "extraction-logs_select".
+ */
+export interface ExtractionLogsSelect<T extends boolean = true> {
+  tenant?: T;
+  lesson?: T;
+  media?: T;
+  exercise?: T;
+  prompt?: T;
+  promptVersion?: T;
+  status?: T;
+  stage?: T;
+  rawResponse?: T;
+  parsedPayload?: T;
+  errorMessage?: T;
+  pipelineVersion?: T;
+  processingTimeMs?: T;
+  model?: T;
   updatedAt?: T;
   createdAt?: T;
 }
