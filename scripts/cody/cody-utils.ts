@@ -537,6 +537,10 @@ export function parseCliArgs(argv: string[]): CodyInput {
     } else if (arg === '--local') {
       input.local = true
       cliSet.add('local')
+    } else if (arg === '--github' || arg === '--ci') {
+      // Explicitly use GitHub-hosted runner (instead of local self-hosted)
+      input.local = false
+      cliSet.add('local')
     } else if (arg === '--clarify') {
       input.clarify = true
       cliSet.add('clarify')

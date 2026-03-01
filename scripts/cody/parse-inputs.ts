@@ -183,6 +183,7 @@ export function parseCommentInputs(): ParseOutputs {
     // Strip flags from command before mode parsing
     const cmdWithoutFlags = cmdAfterCody
       .replace(/--local\b/g, '')
+      .replace(/--github\b/g, '')
       .replace(/--version\s+\S+/g, '')
       .trim()
 
