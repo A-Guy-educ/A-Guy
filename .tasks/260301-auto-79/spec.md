@@ -1,80 +1,122 @@
-# Specification: P5 Exercise Generation from Document (POC)
+# P5 Exercise Generation from Document (V3 POC)
 
 ## Overview
 
-Create a Proof of Concept (POC) that converts a single uploaded document (PDF page or image) into one interactive exercise in the system. The core demo promise is taking existing material and turning it into an interactive, solvable exercise inside aguy.
+Create a Proof of Concept (POC) that converts a single uploaded document (PDF page or image) into one interactive exercise in the system.
+
+**Core Demo Promise**: Take existing material and turn it into an interactive, solvable exercise inside aguy.
+
+## Requirements
+
+### FR-1: Input Scope (POC Version)
+- Supported input: Upload a PDF or Image that contains one specific exercise
+- Assumptions:
+  - Uploaded document contains exactly one exercise
+  - Multi-exercise detection is strictly out of scope
+  - If multiple questions exist → the LLM must silently take the first one
+  - No OCR-only fallback is required for this POC
+
+### FR-2: Extraction Requirements
+- System must perform a single LLM-based extraction using Vision + text understanding
+- Extractor must return exactly one JSON object representing the exercise
+
+### FR-3: Output Exercise Format
+The extracted JSON must support at minimum:
+- `question_free_response`
+- `question_select` (single correct option)
+- Optional: MCQ (treated as question_select with multiple options)
+
+The Exercise must include:
+- Prompt text
+- Answer options (if question_select)
+- Correct answer (if detectable)
+- Rule: If correct answer is not detectable, set `correctAnswer: null`. Creation must NOT be blocked.
+
+### FR-4: UI Flow & Payload CMS Integration
+Implementation Location: Custom React component within Payload CMS Admin UI, injected into Lesson edit view.
+
+The Flow (Admin Only):
+1. Admin uploads a PDF/Image to a Lesson
+2. Admin clicks "Convert V3"
+3. System extracts the exercise via LLM
+4. System shows a Preview of the extracted JSON/Exercise
+5. Admin is allowed to manually edit the prompt, options, and correct answer before creation
+6. Admin clicks "Create Exercise"
+7. Exercise is created in Payload as Published
+8. Exercise renders inside the standard lesson UI
+9. Exercise is solvable and validated on the frontend
+
+Rule: No exercise creation is allowed without passing through the preview/edit step.
+
+### FR-5: Data Model & Raw Extraction Storage
+To support debugging, model improvement, and auditability, the system must store the extraction attempt.
+
+Implementation Requirement: Create a new Payload Collection (e.g., `ExtractionLogs`) to store:
+- Raw LLM response string
+- Parsed JSON payload
+- Extraction status (Success/Failed)
+- Lesson ID (relation)
+- Media ID (relation to the uploaded document)
+- Prompt ID / Version used
+
+### FR-6: Product Decisions
+- **Accuracy Standard**:
+  - Prompt text must be readable and faithful
+  - Structure must match the exercise type
+  - Math formulas may be up to ~90% accurate
+  - Acceptance: If a complex formula is 90% correct but the exercise remains solvable, it is a SUCCESS
+- **Multiple Exercises in Document**:
+  - Assume single exercise. If multiple exist, take the first silently. No detection UI required.
+
+### FR-7: Out of Scope
+Do NOT implement:
+- Multi-exercise splitting or detection UI
+- Batch conversion of multiple files
+- Idempotency / deduplication of uploads
+- Async job queues (synchronous API wait is fine for POC)
+- Perfect layout/formatting preservation
+- Enterprise-grade robustness or advanced error recovery
+
+## Acceptance Criteria
+
+A conversion is considered successful only if ALL of the following occur:
+
+- [ ] Exercise JSON is valid and maps to the Payload schema
+- [ ] Exercise is successfully saved to the database
+- [ ] Exercise renders correctly in the frontend lesson UI
+- [ ] User can interact with and submit an answer for the generated exercise
+- [ ] Validation logic evaluates the submitted answer correctly
+- [ ] Basic logging exists for extraction attempts (saved to ExtractionLogs)
+
+If any step above fails, the conversion is considered FAILED. No partial success is acceptable.
 
 ## Technical Context
 
 - **Stack**: Next.js 15 + Payload CMS
 - **LLM Integration**: Vision-capable LLM (OpenAI GPT-4o or Anthropic Claude 3.5 Sonnet)
-- **Target Schema**: Must map to existing Exercises collection schema
+- **Target Schema**: Existing Exercises collection schema (see `/src/server/payload/collections/Exercises/index.ts`)
 
-## Requirements
+## Exercise Schema Reference
 
-### FR-1: Document Upload Support
-- Support PDF or Image upload containing one specific exercise
-- Assume uploaded document contains exactly one exercise
-- If multiple questions exist, LLM must silently take the first one
+The Exercises collection uses a block-based content model:
 
-### FR-2: LLM-Based Extraction
-- Perform single LLM-based extraction using Vision + text understanding
-- Return exactly one JSON object representing the exercise
-- Support question_free_response and question_select (single correct option)
+```typescript
+// ContentSchema contains: { blocks: ContentBlock[] }
 
-### FR-3: Exercise Output Format
-- Include prompt text
-- Include answer options (if question_select)
-- Include correct answer (if detectable)
-- If correct answer not detectable, set correctAnswer: null (do not block creation)
+// Supported block types:
+// - rich_text: Instructions/notes between questions
+// - question_select: MCQ or True/False questions
+// - question_free_response: Free text answer questions
+// - question_table: Table questions
+// - question_matching: Matching questions
+// - question_geometry: Geometry questions
+// - question_axis: Axis/graph questions
+// - latex: Math formulas
+// - html: HTML content
+// - media: Media references
+// - svg: SVG with hotspots
+```
 
-### FR-4: Admin UI Flow (Payload CMS)
-- Admin uploads PDF/Image to a Lesson
-- Admin clicks "Convert V3"
-- System extracts exercise via LLM
-- System shows Preview of extracted JSON/Exercise
-- Admin can manually edit prompt, options, and correct answer
-- Admin clicks "Create Exercise"
-- Exercise is created as Published
-- Exercise renders inside standard lesson UI
-- Exercise is solvable and validated on frontend
+## Final Acceptance Statement
 
-### FR-5: Data Model - ExtractionLogs Collection
-Create new Payload Collection to store:
-- Raw LLM response string
-- Parsed JSON payload
-- Extraction status (Success/Failed)
-- Lesson ID (relation)
-- Media ID (relation to uploaded document)
-- Prompt ID / Version used
-
-### FR-6: Preview/Edit Requirement
-- No exercise creation allowed without passing through preview/edit step
-- Admin must review and optionally modify before creation
-
-## Acceptance Criteria
-
-1. Exercise JSON is valid and maps to Payload schema
-2. Exercise is successfully saved to database
-3. Exercise renders correctly in frontend lesson UI
-4. User can interact with and submit an answer for generated exercise
-5. Validation logic evaluates submitted answer correctly
-6. Basic logging exists for extraction attempts (saved to ExtractionLogs)
-
-## Out of Scope
-
-- Multi-exercise splitting or detection UI
-- Batch conversion of multiple files
-- Idempotency/deduplication of uploads
-- Async job queues
-- Perfect layout/formatting preservation
-- Enterprise-grade robustness
-
-## Success Criteria
-
-End-to-end flow must work where:
-1. PDF containing one exercise is uploaded
-2. System extracts the exercise
-3. Admin reviews/edits it
-4. Resulting published exercise renders and is fully solvable inside lesson UI
-5. At least 5 sample uploads tested successfully in staging
+V3 is complete when a PDF containing one exercise is uploaded, the system extracts it, the Admin reviews/edits it, and the resulting published exercise renders and is fully solvable inside the lesson UI. End-to-end flow must work in staging with at least 5 sample uploads tested successfully.
