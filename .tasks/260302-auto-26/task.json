@@ -1,0 +1,35 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/lib/study-plan/engine.ts",
+    "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
+    "tests/unit/lib/study-plan/engine.spec.ts",
+    "relevant integration/unit tests for persistence"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The study plan engine existing code is accessible and testable",
+    "Adaptive mode proximity logic exists in engine.ts and can be validated",
+    "Completion persistence is handled via existing storage mechanisms"
+  ],
+  "review_questions": [
+    "Should the 2-day vs 10-day behavior differences be implemented as new logic or validated as existing behavior?",
+    "Is there an existing test framework setup for the study-plan module?",
+    "What is the current state of completion persistence - is it working or broken?"
+  ],
+  "complexity": 36,
+  "complexity_reasoning": "Scope: 3-4 files across study-plan module (8pts). Risk: Core business logic affecting user progress, not critical infra (10pts). Novelty: Regression validation of existing patterns, not new features (5pts). Cross-Domain: Backend engine + frontend component (6pts). Ambiguity: Clear acceptance criteria with specific behaviors defined (3pts). Dependency Depth: Depends on existing study plan system (4pts). Total: 36",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Task contains specific acceptance criteria (4 checkboxes), explicit file paths (engine.ts, useStudyPlan.ts, engine.spec.ts), and detailed required behaviors for adaptive mode proximity, fallback/rotation, and completion persistence. This is sufficient for gap analysis and implementation."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
