@@ -96,7 +96,7 @@ if (result.success) {
 
 ### Gemini AI Provider (Singleton)
 
-**File**: [`src/lib/ai/gemini-ai-provider.server.ts`](../../src/lib/ai/gemini-ai-provider.server.ts)
+**File**: [`src/infra/llm/providers/factory.ts`](../../src/infra/llm/providers/factory.ts)
 
 **Purpose**: Centralized Gemini client initialization with singleton pattern.
 
@@ -132,7 +132,7 @@ try {
 
 ### Model Configuration
 
-**File**: [`src/lib/ai/models.ts`](../../src/lib/ai/models.ts)
+**File**: [`src/infra/llm/models.ts`](../../src/infra/llm/models.ts)
 
 **Purpose**: Centralized model selection and parameters for different AI tasks.
 
@@ -186,7 +186,7 @@ export const AI_MODELS = {
 
 ### Data Extractor Service
 
-**File**: [`src/lib/ai/services/data-extractor-service.ts`](../../src/lib/ai/services/data-extractor-service.ts)
+**File**: [`src/infra/llm/services/data-extractor-service.ts`](../../src/infra/llm/services/data-extractor-service.ts)
 
 **Purpose**: Extract structured exercise data from uploaded images.
 
@@ -308,7 +308,7 @@ if (!result.success) {
 
 ### Exercise Chat Service
 
-**File**: [`src/lib/ai/services/exercise-chat-service.ts`](../../src/lib/ai/services/exercise-chat-service.ts)
+**File**: [`src/infra/llm/services/exercise-chat-service.ts`](../../src/infra/llm/services/exercise-chat-service.ts)
 
 **Purpose**: Provide conversational assistance for students working on exercises.
 
@@ -386,7 +386,7 @@ const result = await chat.sendMessage(input.message)
 
 ### Image Optimizer Service
 
-**File**: [`src/lib/ai/services/image-optimizer-service.ts`](../../src/lib/ai/services/image-optimizer-service.ts)
+**File**: [`src/infra/llm/services/image-optimizer-service.ts`](../../src/infra/llm/services/image-optimizer-service.ts)
 
 **Purpose**: Optimize images for AI processing to reduce latency and API costs.
 
@@ -714,7 +714,7 @@ describe('Data Extractor Service', () => {
 ## 🔗 Related Documentation
 
 - **[Exercise Import Pipeline](../exercise-import/README.md)** - How image import works end-to-end
-- **[AGENTS.md]('../../AGENTS.md')** - Payload CMS patterns for AI agents
+- **[AGENTS.md](../../AGENTS.md)** - Payload CMS patterns for AI agents
 - **[Contracts Documentation](../contracts/README.md)** - Data validation contracts
 
 ---

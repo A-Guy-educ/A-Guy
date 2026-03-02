@@ -32,6 +32,9 @@ You MUST output **valid JSON only** to the output file. No markdown wrappers, no
   "scope": ["string"],
   "missing_inputs": [{ "field": "string", "question": "string" }],
   "assumptions": ["string"],
+  "review_questions": ["string"],
+  "complexity": 1-100,
+  "complexity_reasoning": "Scope: X. Risk: X. Novelty: X. Cross-domain: X. Ambiguity: X. Dependencies: X. Total: N",
   "input_quality": {
     "level": "raw_idea | good_spec | detailed_plan | spec_and_plan",
     "skip_stages": ["spec"] | ["spec", "architect"] | [],
@@ -50,6 +53,33 @@ NOTE: Do NOT include a "pipeline" field — it is auto-derived from task_type.
 - `confidence` MUST be between **0.0 and 1.0**
 - `missing_inputs` MUST almost always be an empty array `[]`. It halts the entire pipeline.
 - ONLY populate `missing_inputs` if the task description is so vague that you cannot even determine the task_type (e.g., "fix the thing" with no context). Implementation details, codebase questions, and technical unknowns are NOT missing inputs — later pipeline stages (spec, architect, build) will discover those from the codebase.
+
+## Review Questions (Gate Guidance)
+
+Generate 1-5 clear questions that the reviewer should answer before approving. These appear in the gate comment to help the reviewer make an informed decision.
+
+**Purpose**: Guide the reviewer to spot potential issues or validate key assumptions.
+
+**When to include questions**:
+- If you're unsure about implementation details and made assumptions
+- If there are multiple valid approaches and the task didn't specify
+- If the task touches sensitive areas (auth, data, etc.) where validation is important
+- If the task scope or impact is unclear
+
+**Good examples**:
+- "Should this feature support SSO in addition to email/password?"
+- "Is it correct that no database schema changes are needed?"
+- "Are there any existing patterns in the codebase we should follow?"
+- "Should this change be applied to all environments or specific ones?"
+
+**When NOT to include**:
+- If the task is crystal clear with no ambiguity
+- If it's a trivial change (docs, config, small fix)
+- For questions the build/architect stage would naturally answer
+
+**Format**: Always phrase as questions the reviewer can answer with yes/no or a specific choice. NOT as open-ended research questions.
+
+**Recommended**: Usually 0-2 questions is enough. Default to an empty array if the task is clear.
 
 ## Task Type Definitions
 
@@ -184,6 +214,74 @@ Example lightweight task.json:
   }
 }
 ```
+
+## Complexity Score (1-100)
+
+**REQUIRED**. Score the task's complexity on a 1-100 scale. This score determines which pipeline stages run:
+
+| Score | Tier | Stages That Run |
+|-------|------|-----------------|
+| 1-9 | Trivial | taskify → build → commit → verify → pr |
+| 10-19 | Simple | + architect |
+| 20-34 | Moderate | + auditor, apply-audit |
+| 35-49 | Complex | + spec, gap |
+| 50-100 | Very Complex | + plan-gap, clarify |
+
+### Scoring Dimensions (6 weighted factors)
+
+Calculate the score as a weighted sum across these dimensions:
+
+**Scope Breadth (0-25 points)**:
+- 0-5: Single file, <20 lines changed
+- 6-10: 2-3 files in same module
+- 11-15: 4-6 files across 2 modules
+- 16-20: 7-10 files across 3+ modules
+- 21-25: 10+ files, new collection/endpoint/component
+
+**Risk Level (0-20 points)**:
+- 0-5: Config, docs, test-only, UI text
+- 6-10: Non-critical business logic, UI components
+- 11-15: API changes, database queries, access control
+- 16-20: Auth, payments, data migrations, security
+
+**Novelty (0-20 points)**:
+- 0-5: Following an existing pattern exactly (copy-paste with rename)
+- 6-10: Extending existing pattern with minor variation
+- 11-15: New pattern but with clear examples in codebase
+- 16-20: Entirely new architecture, no existing pattern
+
+**Cross-Domain (0-15 points)**:
+- 0-3: Single domain (just backend OR just frontend)
+- 4-8: Two domains (backend + frontend)
+- 9-12: Three domains
+- 13-15: Four+ domains (backend + frontend + infra + AI)
+
+**Ambiguity (0-10 points)**:
+- 0-2: Crystal clear, has file paths, line numbers, exact fix
+- 3-5: Clear intent, some implementation details to figure out
+- 6-8: Vague intent, multiple valid interpretations
+- 9-10: Very vague, unclear scope and outcome
+
+**Dependency Depth (0-10 points)**:
+- 0-2: Self-contained, no external services
+- 3-5: Depends on 1-2 internal systems (DB, cache)
+- 6-8: Depends on external APIs or complex internal chains
+- 9-10: Multi-service orchestration, distributed transactions
+
+### Scoring Examples
+
+| Task | Score | Breakdown |
+|------|-------|-----------|
+| Fix React key warning (3 files, copy-paste fix) | 8 | Scope:5, Risk:0, Novelty:0, Cross:0, Ambiguity:1, Deps:2 |
+| Add CTA button to settings page | 25 | Scope:8, Risk:3, Novelty:5, Cross:4, Ambiguity:3, Deps:2 |
+| Add Zod validation to 2 API routes (security fix) | 38 | Scope:10, Risk:12, Novelty:5, Cross:3, Ambiguity:3, Deps:5 |
+| YouTube embed integration (new feature, 8+ files) | 72 | Scope:22, Risk:12, Novelty:15, Cross:13, Ambiguity:5, Deps:5 |
+
+### Guardrails for Complexity
+
+- **Floor**: If `task_type` is `fix_bug` AND `risk_level: "high"` → complexity MUST be ≥ 35
+- **Ceiling**: If `task_type` is `docs` or `research` → complexity MUST be ≤ 49 (no build stages anyway)
+- Always provide `complexity_reasoning` with per-dimension breakdown
 
 ## Guardrails
 

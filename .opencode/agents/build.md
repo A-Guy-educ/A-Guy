@@ -1,7 +1,7 @@
 ---
 name: build
-description: Implements code changes according to plan. Does NOT commit or push — a separate commit stage handles that.
-mode: primary
+description: Pure executor - implements code changes from plan. Does NOT commit or push — a separate commit stage handles that.
+mode: subagent
 tools:
   bash: true
   read: true
@@ -18,74 +18,19 @@ The pipeline has already created a feature branch for you. A separate commit sta
 ## Your Task
 
 1. Read the SPEC, PLAN, and PLAN REVIEW provided in your context
-2. Implement the changes using TDD per plan step
+2. Implement the changes per plan step
 3. Run quality checks
 4. Write output file
 
-## TDD Workflow
+## Implementation Workflow
 
 For each step in the plan:
 
 1. **Read the plan step** — understand what to implement
-2. **Invoke @test-writer subagent** to write failing tests first
-3. **Run tests** — verify they fail (TDD red phase)
-4. **Implement the code** — make the tests pass
-5. **Run tests again** — verify they pass (TDD green phase)
-6. **Move to next step**
-
-### How to Invoke Test Writer
-
-**CRITICAL: You MUST provide source file context when invoking test-writer.** The test-writer cannot read source files during its execution, so you must provide the context.
-
-In your message to the agent, use this template:
-
-```
-@test-writer
-
-## Source File Exports
-// COPY AND PASTE the actual function/component signatures from the source file
-// This is REQUIRED so the test-writer knows the correct API to test
-export function myFunction(param: string): Promise<Result> {
-  // ... (actual code)
-}
-
-## Existing Similar Test (for mock patterns)
-// COPY relevant mock patterns from an existing test file in tests/unit/
-// This shows the test-writer how mocking is done in this project
-
-Write tests for this plan step:
-
-// PASTE the plan step details
-```
-
-**Example:**
-
-```
-@test-writer
-
-## Source File Exports
-export function generateSlug({ value, operation, siblingData }: FieldHookArgs): Promise<string> {
-  const title = siblingData?.title
-  if (!title) return value || undefined
-  // ...
-}
-
-## Existing Similar Test (for mock patterns)
-// From tests/unit/collections/exercises-hooks.test.ts
-vi.mock('@/server/payload/collections/Exercises/hooks', () => {
-  const generateSlug = vi.fn()
-  generateSlug.mockImplementation(async ({ value, operation, siblingData }) => {
-    // mock implementation
-  })
-  return { generateSlug }
-})
-
-Write tests for this plan step:
-- Add MAX_SLUG_ATTEMPTS = 100 constant to bound the slug generation loop
-- Change while (true) to for loop with max iterations
-```
-
-The test-writer will create tests in `tests/unit/` or `tests/int/`.
+2. **Read existing source files** — understand current code patterns
+3. **Implement the code changes** — modify source files as needed
+4. **Run tests** — verify the implementation works
+5. **Move to next step**
 
 ### Running Tests
 
@@ -105,6 +50,29 @@ pnpm test:unit
 2. Check if you're using correct imports and existing patterns
 3. Look at similar test files in the project for reference
 4. Fix the issue and re-run tests
+
+### CRITICAL: Never Weaken Tests
+
+When tests fail, you have exactly **two options**:
+
+1. **Fix the implementation** — change the source code so the test passes
+2. **Fix the test environment** — wrong mock, missing jsdom setup, wrong import
+
+You must **NEVER**:
+
+- Replace behavioral assertions with config-checking assertions
+  - ❌ `expect(functionOutput).toContain('<style')` → `expect(CONFIG.ALLOWED_TAGS).toContain('style')`
+- Comment out, skip, or delete failing tests
+- Lower the bar so tests pass without proving the behavior works
+- Replace an integration test with a unit test that tests less
+
+If a test fails due to an **environment limitation** (e.g., DOMPurify strips `<style>` tags in jsdom but not in real browsers):
+
+1. Document it as a known limitation in `build.md`
+2. Mark the test with `it.skip('reason: jsdom limitation — works in browser')` 
+3. Do NOT rewrite it to test something weaker
+
+**Why**: The pipeline's quality gates only check that tests pass. If you weaken assertions, the gates pass but the bug is not actually verified as fixed.
 
 ## Workflow
 
@@ -178,7 +146,7 @@ Write to: `.tasks/<taskId>/build.md`
 
 ## Tests Written
 
-- <list of test files created with @test-writer>
+- <list of test files expected to exist>
 
 ## Quality
 
@@ -193,7 +161,6 @@ Use the Write tool to create this file.
 ## Exit Criteria
 
 - All code changes implemented according to plan
-- Tests written via @test-writer for each plan step
 - All tests pass (`pnpm test:unit` passes)
 - Quality checks pass (`pnpm -s tsc --noEmit && pnpm -s lint`)
 - `build.md` output file written
@@ -231,6 +198,11 @@ Invoke these subagents when working in their specific domains:
 
 **When:** After implementing any code, before quality checks
 **What to ask:** "Review for TypeScript compliance, import aliases, and general code quality."
+
+### @cody-expert
+
+**When:** Working on the Cody pipeline itself (`scripts/cody/**`, `.opencode/agents/**`, `.github/workflows/cody.yml`)
+**What to ask:** "Explain the pipeline architecture. How does the state machine work? What's the version system? Debug this pipeline issue."
 
 ## Skills (Workflow Automation)
 

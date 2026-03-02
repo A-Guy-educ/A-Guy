@@ -32,10 +32,10 @@ export type ColumnId =
   | 'open'
   | 'building'
   | 'review'
-  | 'done'
   | 'failed'
   | 'gate-waiting'
   | 'retrying'
+  | 'done'
 
 export interface ColumnDef {
   id: ColumnId
@@ -48,10 +48,10 @@ export const COLUMN_DEFS: Record<ColumnId, ColumnDef> = {
   open: { id: 'open', label: 'Open', color: 'gray', order: 0 },
   building: { id: 'building', label: 'Building', color: 'blue', order: 1 },
   review: { id: 'review', label: 'Review', color: 'purple', order: 2 },
-  done: { id: 'done', label: 'Done', color: 'green', order: 3 },
-  failed: { id: 'failed', label: 'Failed', color: 'red', order: 4 },
-  'gate-waiting': { id: 'gate-waiting', label: 'Gate Waiting', color: 'yellow', order: 5 },
-  retrying: { id: 'retrying', label: 'Retrying', color: 'orange', order: 6 },
+  failed: { id: 'failed', label: 'Failed', color: 'red', order: 3 },
+  'gate-waiting': { id: 'gate-waiting', label: 'Gate Waiting', color: 'yellow', order: 4 },
+  retrying: { id: 'retrying', label: 'Retrying', color: 'orange', order: 5 },
+  done: { id: 'done', label: 'Done', color: 'green', order: 6 },
 }
 
 // ============ Polling Intervals ============
@@ -70,6 +70,20 @@ export const BRANCH_PREFIXES = ['feat', 'fix', 'refactor', 'docs', 'chore'] as c
 
 export const GITHUB_OWNER = process.env.GITHUB_OWNER ?? 'A-Guy-educ'
 export const GITHUB_REPO = process.env.GITHUB_REPO ?? 'A-Guy'
+
+/**
+ * Generate a GitHub issue URL from an issue number
+ */
+export function getGitHubIssueUrl(issueNumber: number): string {
+  return `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${issueNumber}`
+}
+
+/**
+ * Generate a GitHub PR URL from a PR number
+ */
+export function getGitHubPrUrl(prNumber: number): string {
+  return `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/pull/${prNumber}`
+}
 
 export const WORKFLOW_ID = 'cody.yml'
 
@@ -226,3 +240,15 @@ export const TASK_TYPE_PREFIX: Record<string, string> = {
   research: 'chore',
   spec_only: 'feat',
 }
+
+// ============ Site URLs ============
+
+export const SITE_URLS = {
+  dev: process.env.NEXT_PUBLIC_DEV_SITE_URL ?? 'https://dev.aguy.co.il',
+  prod: process.env.NEXT_PUBLIC_PROD_SITE_URL ?? 'https://aguy.co.il',
+}
+
+// ============ Branch Names ============
+
+export const DEV_BRANCH = 'dev'
+export const PROD_BRANCH = 'main'

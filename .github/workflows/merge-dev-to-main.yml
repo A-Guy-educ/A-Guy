@@ -1,76 +1,83 @@
-name: Merge Dev to Main
+name: Publish Dev to Main
 
 on:
-  workflow_dispatch: # Manual trigger
-  schedule:
-    # Run weekly on Sunday at midnight UTC (optional - remove if you want manual only)
-    - cron: '0 0 * * 0'
+  issues:
+    types: [labeled]
 
 jobs:
-  merge:
+  create-pr:
+    if: github.event.label.name == 'publish'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
+      issues: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0 # Fetch all history for proper merge
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Configure Git
+      - name: Check if dev is ahead of main
+        id: check
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Merge dev into main
-        run: |
-          # Checkout main branch
-          git checkout main
-          git pull origin main
-
-          # Merge dev with strategy to prefer dev's changes
-          git merge origin/dev --no-ff -m "chore: merge dev into main [skip ci]" || true
-
-          # Check if there are conflicts
-          if git diff --name-only --diff-filter=U | grep -q .; then
-            echo "Conflicts detected, resolving..."
-
-            # For package-lock.json conflicts, use the version from dev
-            if git diff --name-only --diff-filter=U | grep -q "package-lock.json"; then
-              echo "Resolving package-lock.json conflict by using dev version"
-              git checkout --theirs package-lock.json
-              git add package-lock.json
-            fi
-
-            # For pnpm-lock.yaml conflicts, use the version from dev
-            if git diff --name-only --diff-filter=U | grep -q "pnpm-lock.yaml"; then
-              echo "Resolving pnpm-lock.yaml conflict by using dev version"
-              git checkout --theirs pnpm-lock.yaml
-              git add pnpm-lock.yaml
-            fi
-
-            # Check if there are still unresolved conflicts
-            if git diff --name-only --diff-filter=U | grep -v "package-lock.json" | grep -v "pnpm-lock.yaml" | grep -q .; then
-              echo "Error: There are unresolved conflicts beyond package lock files"
-              git diff --name-only --diff-filter=U
-              exit 1
-            fi
-
-            # Complete the merge
-            git commit --no-edit
+          AHEAD=$(git rev-list --count origin/main..origin/dev)
+          echo "ahead=$AHEAD" >> "$GITHUB_OUTPUT"
+          if [ "$AHEAD" -eq 0 ]; then
+            echo "Nothing to publish — dev is up to date with main"
           fi
 
-          # Push to main
-          git push origin main
-
-      - name: Create summary
-        if: always()
+      - name: Check for existing publish PR
+        if: steps.check.outputs.ahead != '0'
+        id: existing
         run: |
-          if [ $? -eq 0 ]; then
-            echo "✅ Successfully merged dev into main" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Merge failed - manual intervention required" >> $GITHUB_STEP_SUMMARY
+          PR_NUMBER=$(gh pr list --base main --head dev --state open --json number --jq '.[0].number // empty')
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create PR from dev to main
+        if: steps.check.outputs.ahead != '0' && steps.existing.outputs.pr_number == ''
+        id: create
+        run: |
+          PR_URL=$(gh pr create \
+            --base main \
+            --head dev \
+            --title "Publish dev → production (${{ steps.check.outputs.ahead }} commits)" \
+            --body "$(cat <<'EOF'
+          ## Publish to Production
+
+          Automated PR created via Cody dashboard publish.
+
+          Triggered by issue #${{ github.event.issue.number }}.
+
+          Once CI passes, merge via the dashboard or GitHub.
+          EOF
+          )")
+          echo "pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
+          PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on issue with PR link
+        if: steps.check.outputs.ahead != '0'
+        run: |
+          PR_NUMBER="${{ steps.create.outputs.pr_number || steps.existing.outputs.pr_number }}"
+          if [ -n "$PR_NUMBER" ]; then
+            gh issue comment ${{ github.event.issue.number }} \
+              --body "🚀 PR #${PR_NUMBER} created from \`dev\` → \`main\`. Waiting for CI to pass before merge."
           fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Close issue if nothing to publish
+        if: steps.check.outputs.ahead == '0'
+        run: |
+          gh issue comment ${{ github.event.issue.number }} \
+            --body "✅ Nothing to publish — dev is already up to date with main."
+          gh issue close ${{ github.event.issue.number }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

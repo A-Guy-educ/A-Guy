@@ -447,5 +447,65 @@ describe('clarify-workflow', () => {
       expect(content).toContain('Gate Request')
       expect(content).not.toContain('### Assumptions')
     })
+
+    it('includes review_questions from task.json when present', () => {
+      fs.writeFileSync(path.join(tempDir, 'task.md'), '# Task\n\nSome task.')
+      fs.writeFileSync(
+        path.join(tempDir, 'task.json'),
+        JSON.stringify({
+          assumptions: ['Users have Node 18+'],
+          review_questions: [
+            'Should this support Node 20+ only?',
+            'Is the database choice correct?',
+          ],
+        }),
+      )
+
+      handleGateApproval(createMockInput(), tempDir, 'taskify', taskDef)
+
+      const gatePath = path.join(tempDir, 'gate-taskify.md')
+      const content = fs.readFileSync(gatePath, 'utf-8')
+      expect(content).toContain('### Review Questions')
+      expect(content).toContain('1. Should this support Node 20+ only?')
+      expect(content).toContain('2. Is the database choice correct?')
+    })
+
+    it('omits review questions section when task.json has no review_questions', () => {
+      fs.writeFileSync(path.join(tempDir, 'task.md'), '# Task\n\nSome task.')
+      fs.writeFileSync(
+        path.join(tempDir, 'task.json'),
+        JSON.stringify({
+          assumptions: ['Some assumption'],
+        }),
+      )
+
+      handleGateApproval(createMockInput(), tempDir, 'taskify', taskDef)
+
+      const gatePath = path.join(tempDir, 'gate-taskify.md')
+      const content = fs.readFileSync(gatePath, 'utf-8')
+      expect(content).not.toContain('### Review Questions')
+      // But assumptions should still be there
+      expect(content).toContain('### Assumptions')
+    })
+
+    it('shows both assumptions and review_questions when both present', () => {
+      fs.writeFileSync(path.join(tempDir, 'task.md'), '# Task\n\nSome task.')
+      fs.writeFileSync(
+        path.join(tempDir, 'task.json'),
+        JSON.stringify({
+          assumptions: ['Assume this is true'],
+          review_questions: ['Is this assumption correct?'],
+        }),
+      )
+
+      handleGateApproval(createMockInput(), tempDir, 'taskify', taskDef)
+
+      const gatePath = path.join(tempDir, 'gate-taskify.md')
+      const content = fs.readFileSync(gatePath, 'utf-8')
+      expect(content).toContain('### Assumptions')
+      expect(content).toContain('- Assume this is true')
+      expect(content).toContain('### Review Questions')
+      expect(content).toContain('1. Is this assumption correct?')
+    })
   })
 })

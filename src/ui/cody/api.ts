@@ -9,6 +9,8 @@ import type {
   CodyTask,
   Board,
   GitHubCollaborator,
+  FileChange,
+  TaskDocument,
   TasksResponse,
   BoardsResponse,
   CollaboratorsResponse,
@@ -126,6 +128,24 @@ export const tasksApi = {
     return handleResponse(res)
   },
 
+  closePR: async (issueNumber: number): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'close-pr' }),
+    })
+    return handleResponse(res)
+  },
+
+  reset: async (issueNumber: number): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reset' }),
+    })
+    return handleResponse(res)
+  },
+
   reopen: async (issueNumber: number): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',
@@ -144,6 +164,24 @@ export const tasksApi = {
     return handleResponse(res)
   },
 
+  approveGate: async (issueNumber: number): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve' }),
+    })
+    return handleResponse(res)
+  },
+
+  rejectGate: async (issueNumber: number): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reject' }),
+    })
+    return handleResponse(res)
+  },
+
   comment: async (issueNumber: number, comment: string): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',
@@ -151,6 +189,75 @@ export const tasksApi = {
       body: JSON.stringify({ action: 'comment', comment }),
     })
     return handleResponse(res)
+  },
+
+  // Retry with context: posts comment with @cody retry then triggers execution
+  retryWithContext: async (issueNumber: number, context: string): Promise<ActionResponse> => {
+    // First post comment with retry command and context
+    const comment = context.trim() ? `@cody retry\n\n${context.trim()}` : '@cody retry'
+
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'comment', comment }),
+    })
+    return handleResponse(res)
+  },
+
+  approve: async (task: CodyTask): Promise<ActionResponse> => {
+    if (!task.associatedPR) {
+      throw new Error('No PR associated with this task')
+    }
+    const res = await fetch(`${API_BASE}/tasks/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        issueNumber: task.issueNumber,
+        prNumber: task.associatedPR.number,
+        branchName: task.associatedPR.head.ref,
+      }),
+    })
+    return handleResponse(res)
+  },
+
+  approveReview: async (task: CodyTask): Promise<ActionResponse> => {
+    if (!task.associatedPR) {
+      throw new Error('No PR associated with this task')
+    }
+    const res = await fetch(`${API_BASE}/tasks/approve-review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prNumber: task.associatedPR.number,
+      }),
+    })
+    return handleResponse(res)
+  },
+}
+
+// ============ PRs API ============
+
+export const prsApi = {
+  files: async (prNumber: number): Promise<FileChange[]> => {
+    const res = await fetch(`${API_BASE}/prs/files?prNumber=${prNumber}`)
+    const data = await handleResponse<{ files: FileChange[] }>(res)
+    return data.files
+  },
+  ciStatus: async (
+    prNumber: number,
+  ): Promise<{ ciStatus: 'pending' | 'success' | 'failure' | 'running'; mergeable: boolean }> => {
+    const res = await fetch(`${API_BASE}/prs/status?prNumber=${prNumber}`)
+    return handleResponse(res)
+  },
+}
+// ============ Task Documents API ============
+
+export const taskDocsApi = {
+  list: async (taskId: string, branch?: string): Promise<TaskDocument[]> => {
+    const params = branch ? `?branch=${encodeURIComponent(branch)}` : ''
+    const res = await fetch(`${API_BASE}/tasks/${taskId}/docs${params}`)
+    const data = await handleResponse<{ documents: TaskDocument[] }>(res)
+    return data.documents
   },
 }
 
@@ -174,10 +281,24 @@ export const collaboratorsApi = {
   },
 }
 
+// ============ Publish API ============
+
+export const publishApi = {
+  publish: async (): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    return handleResponse(res)
+  },
+}
 // ============ Combined API ============
 
 export const codyApi = {
   tasks: tasksApi,
+  prs: prsApi,
+  taskDocs: taskDocsApi,
   boards: boardsApi,
   collaborators: collaboratorsApi,
+  publish: publishApi.publish,
 }

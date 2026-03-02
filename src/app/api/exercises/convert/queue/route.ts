@@ -1,6 +1,7 @@
 import { loadRuntimeConfig } from '@/infra/config/runtime/runtime-config'
 import { getPdfConversionMaxPromptSizeBytes } from '@/infra/config/system-params'
-import { ENV } from '@/server/config/constants'
+import type { User } from 'payload'
+import { requireAdminOrTestSecret } from '@/server/api/auth'
 import { validatePromptForUsageAndTenant } from '@/server/services/exercise-conversion/helpers'
 import { hashTextSha256 } from '@/server/utils/hash'
 import config from '@payload-config'
@@ -47,25 +48,11 @@ export async function POST(request: NextRequest) {
 
     // Auth: Admin Session OR Test-Only Secret
     const { user } = await payload.auth({ headers: request.headers })
-
-    let isAdmin = false
-    // Check if user is from 'users' collection (has 'role' property)
-    // PayloadMcpApiKey doesn't have 'role', so we need to check collection
-    if (user && 'collection' in user && user.collection === 'users' && user.role === 'admin') {
-      isAdmin = true
-    }
-
-    const testSecret = process.env[ENV.TEST_ADMIN_SECRET]
     const authHeader = request.headers.get('authorization')
-    if (
-      process.env[ENV.NODE_ENV] === 'test' &&
-      testSecret &&
-      authHeader === `Bearer ${testSecret}`
-    ) {
-      isAdmin = true
-    }
 
-    if (!isAdmin) {
+    try {
+      requireAdminOrTestSecret(user as User | null, authHeader)
+    } catch {
       return errorResponse('UNAUTHORIZED', 'Admin access required', 401)
     }
 
@@ -121,8 +108,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate extractor prompt (published, usage, tenant)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    validatePromptForUsageAndTenant(extractorPrompt as any, 'extractor', lessonTenantId)
+    validatePromptForUsageAndTenant(extractorPrompt, 'extractor', lessonTenantId)
 
     // Fetch verifier prompt once
     const verifierPrompt = await payload.findByID({
@@ -142,8 +128,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate verifier prompt (published, usage, tenant)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    validatePromptForUsageAndTenant(verifierPrompt as any, 'verifier', lessonTenantId)
+    validatePromptForUsageAndTenant(verifierPrompt, 'verifier', lessonTenantId)
 
     // ========== Prompt Size Validation (after validation passes) ==========
     // Use byteLength for accurate size check (UTF-8 encoding)

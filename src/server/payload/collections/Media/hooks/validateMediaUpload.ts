@@ -15,6 +15,11 @@ export const validateMediaUploadHook: CollectionBeforeValidateHook = async ({
   const filesize = data?.filesize
   const type = data?.type || inferMediaType(mimeType, filename)
 
+  // Guard: skip validation if file exists but data lacks metadata (client upload edge case)
+  if (req.file && (!mimeType || !filename)) {
+    return data
+  }
+
   // External type should not have file upload
   if (type === MediaType.External) {
     if (!data?.externalUrl) {
@@ -31,17 +36,16 @@ export const validateMediaUploadHook: CollectionBeforeValidateHook = async ({
     return data
   }
 
-  // Non-external types require a file (safety net since filesRequiredOnCreate is false)
+  // Non-external types require a file
   if (!mimeType && !filename) {
-    throw new Error('A file is required for non-external media types')
+    throw new Error(
+      'A file is required for non-external media types. Please select a file to upload.',
+    )
   }
 
   // Validate MIME type against allowlist
   if (mimeType && type !== MediaType.Other) {
     if (!validateMimeType(mimeType, type)) {
-      req.payload.logger.warn(
-        `[Media] MIME '${mimeType}' doesn't match type '${type}' - downgrading to 'other'`,
-      )
       data.type = MediaType.Other
     }
   }
@@ -50,9 +54,9 @@ export const validateMediaUploadHook: CollectionBeforeValidateHook = async ({
   if (filesize && type && type in SIZE_LIMITS) {
     const maxSize = SIZE_LIMITS[type as MediaType]
     if (maxSize && filesize > maxSize) {
-      throw new Error(
-        `File size (${Math.round(filesize / 1024 / 1024)}MB) exceeds maximum for ${type} (${Math.round(maxSize / 1024 / 1024)}MB)`,
-      )
+      const sizeMB = Math.round(filesize / 1024 / 1024)
+      const maxSizeMB = Math.round(maxSize / 1024 / 1024)
+      throw new Error(`File size (${sizeMB}MB) exceeds maximum for ${type} (${maxSizeMB}MB)`)
     }
   }
 

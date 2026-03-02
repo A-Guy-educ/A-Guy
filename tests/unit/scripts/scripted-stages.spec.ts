@@ -15,9 +15,18 @@ import * as path from 'path'
 const mockExecFileSync = vi.fn()
 const mockExecSync = vi.fn()
 
+// Need to use hoisted mock for fetch to work properly
+const { mockFetch } = vi.hoisted(() => ({
+  mockFetch: vi.fn(),
+}))
+
 vi.mock('child_process', () => ({
   execFileSync: mockExecFileSync,
   execSync: mockExecSync,
+}))
+
+vi.mock('fetch', () => ({
+  fetch: mockFetch,
 }))
 
 const fsMocks = {
@@ -58,6 +67,17 @@ const _DEFAULT_BRANCH = 'dev' // reserved for future use
 function resetMocks() {
   mockExecFileSync.mockReset()
   mockExecSync.mockReset()
+  mockFetch.mockReset()
+  // Default fetch mock - returns success
+  mockFetch.mockResolvedValue({
+    ok: true,
+    json: async () => ({ html_url: 'https://github.com/owner/repo/pull/42' }),
+  })
+  // Also mock global fetch
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+    ok: true,
+    json: async () => ({ html_url: 'https://github.com/owner/repo/pull/42' }),
+  } as unknown as Response)
   Object.values(fsMocks).forEach((m) => m.mockReset())
 }
 
@@ -119,22 +139,21 @@ describe('buildPrTitle (via runPrStage title output)', () => {
       if (args[0] === 'pr' && args[1] === 'list') return '' // no existing PR
       if (args[0] === 'log') return 'abc123 refactor(260222-auto-37): Description' // commit log
       if (args[0] === 'push') return '' // push
-      if (args[0] === 'pr' && args[1] === 'create') return 'https://github.com/org/repo/pull/1'
       return ''
+    })
+    // Mock fetch for GitHub API PR creation
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/1' }),
     })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    const result = runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
 
-    // Title passed to gh pr create should NOT contain '##'
-    const createCall = mockExecFileSync.mock.calls.find(
-      (call) => call[1][0] === 'pr' && call[1][1] === 'create',
-    )
-    expect(createCall).toBeDefined()
-    const titleArg: string = createCall![1][createCall![1].indexOf('--title') + 1]
-    expect(titleArg).not.toContain('##')
-    // "Description" is a common heading that gets filtered out - we use actual content instead
-    expect(titleArg).toContain('remove redundant inline styles')
+    // Title in the report should NOT contain '##' (check title line specifically)
+    const titleLine = result.report.match(/Title: (.*)/)?.[1] || ''
+    expect(titleLine).not.toContain('##')
+    expect(result.report.toLowerCase()).toContain('remove redundant inline styles')
     expect(result.created).toBe(true)
   })
 
@@ -149,19 +168,18 @@ describe('buildPrTitle (via runPrStage title output)', () => {
       if (args[0] === 'pr' && args[1] === 'list') return ''
       if (args[0] === 'log') return ''
       if (args[0] === 'push') return ''
-      if (args[0] === 'pr' && args[1] === 'create') return 'https://github.com/org/repo/pull/2'
       return ''
+    })
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/2' }),
     })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
 
-    const createCall = mockExecFileSync.mock.calls.find(
-      (call) => call[1][0] === 'pr' && call[1][1] === 'create',
-    )
-    const titleArg: string = createCall![1][createCall![1].indexOf('--title') + 1]
-    expect(titleArg).not.toMatch(/^[a-z]+:\s*#/)
-    expect(titleArg.toLowerCase()).toContain('my task title')
+    expect(result.report).not.toMatch(/^[a-z]+:\s*#/)
+    expect(result.report.toLowerCase()).toContain('my task title')
   })
 
   it('falls back to commit message when task.md has only headings with no content', async () => {
@@ -175,20 +193,21 @@ describe('buildPrTitle (via runPrStage title output)', () => {
       if (args[0] === 'pr' && args[1] === 'list') return ''
       if (args[0] === 'log') return 'abc123 refactor: my commit message'
       if (args[0] === 'push') return ''
-      if (args[0] === 'pr' && args[1] === 'create') return 'https://github.com/org/repo/pull/3'
       return ''
+    })
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/3' }),
     })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
 
-    const createCall = mockExecFileSync.mock.calls.find(
-      (call) => call[1][0] === 'pr' && call[1][1] === 'create',
-    )
-    const titleArg: string = createCall![1][createCall![1].indexOf('--title') + 1]
     // Should fall back to commit message since no real text content
-    expect(titleArg).toBeTruthy()
-    expect(titleArg).not.toContain('##')
+    expect(result.report).toBeTruthy()
+    // Title should not contain ## markers (check title line specifically)
+    const titleLine = result.report.match(/Title: (.*)/)?.[1] || ''
+    expect(titleLine).not.toContain('##')
   })
 
   it('uses heading text (stripped of #) when task.md starts with a heading', async () => {
@@ -206,21 +225,22 @@ describe('buildPrTitle (via runPrStage title output)', () => {
       if (args[0] === 'pr' && args[1] === 'list') return ''
       if (args[0] === 'log') return ''
       if (args[0] === 'push') return ''
-      if (args[0] === 'pr' && args[1] === 'create') return 'https://github.com/org/repo/pull/4'
       return ''
+    })
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/4' }),
     })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
 
-    const createCall = mockExecFileSync.mock.calls.find(
-      (call) => call[1][0] === 'pr' && call[1][1] === 'create',
-    )
-    const titleArg: string = createCall![1][createCall![1].indexOf('--title') + 1]
     // '## Overview' stripped → 'Overview' gets filtered as common heading
     // Falls back to actual content line
-    expect(titleArg).not.toContain('##')
-    expect(titleArg.toLowerCase()).toContain('actual description text here')
+    // Title should not contain ## markers (check title line specifically)
+    const titleLine = result.report.match(/Title: (.*)/)?.[1] || ''
+    expect(titleLine).not.toContain('##')
+    expect(result.report.toLowerCase()).toContain('actual description text here')
   })
 
   it('does NOT duplicate fix: prefix when task.md starts with "fix:"', async () => {
@@ -238,22 +258,23 @@ describe('buildPrTitle (via runPrStage title output)', () => {
       if (args[0] === 'pr' && args[1] === 'list') return ''
       if (args[0] === 'log') return ''
       if (args[0] === 'push') return ''
-      if (args[0] === 'pr' && args[1] === 'create') return 'https://github.com/org/repo/pull/5'
       return ''
+    })
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/5' }),
     })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
 
-    const createCall = mockExecFileSync.mock.calls.find(
-      (call) => call[1][0] === 'pr' && call[1][1] === 'create',
-    )
-    const titleArg: string = createCall![1][createCall![1].indexOf('--title') + 1]
     // Should be "fix: remove redundant inline styles." (falls back to next line after "fix:" + "##" are stripped)
     // NOT "fix: fix: ## description"
-    expect(titleArg).not.toContain('fix: fix:')
-    expect(titleArg).toContain('fix:')
-    expect(titleArg).not.toContain('##')
+    expect(result.report).not.toContain('fix: fix:')
+    expect(result.report).toContain('fix:')
+    // Title should not contain ## markers (check title line specifically)
+    const titleLine = result.report.match(/Title: (.*)/)?.[1] || ''
+    expect(titleLine).not.toContain('##')
   })
 
   it('strips conventional commit prefix from task.md regardless of case', async () => {
@@ -269,21 +290,20 @@ describe('buildPrTitle (via runPrStage title output)', () => {
       if (args[0] === 'pr' && args[1] === 'list') return ''
       if (args[0] === 'log') return ''
       if (args[0] === 'push') return ''
-      if (args[0] === 'pr' && args[1] === 'create') return 'https://github.com/org/repo/pull/6'
       return ''
+    })
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/6' }),
     })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
 
-    const createCall = mockExecFileSync.mock.calls.find(
-      (call) => call[1][0] === 'pr' && call[1][1] === 'create',
-    )
-    const titleArg: string = createCall![1][createCall![1].indexOf('--title') + 1]
     // Should be "feat: add new feature" (prefix stripped, remaining text used)
-    expect(titleArg).toBe('feat: add new feature')
-    expect(titleArg).not.toContain('FIX:')
-    expect(titleArg).not.toContain('feat: FIX:')
+    expect(result.report).toContain('feat: add new feature')
+    expect(result.report).not.toContain('FIX:')
+    expect(result.report).not.toContain('feat: FIX:')
   })
 
   it('strips conventional commit prefix with scope', async () => {
@@ -298,20 +318,19 @@ describe('buildPrTitle (via runPrStage title output)', () => {
       if (args[0] === 'pr' && args[1] === 'list') return ''
       if (args[0] === 'log') return ''
       if (args[0] === 'push') return ''
-      if (args[0] === 'pr' && args[1] === 'create') return 'https://github.com/org/repo/pull/7'
       return ''
+    })
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/7' }),
     })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
 
-    const createCall = mockExecFileSync.mock.calls.find(
-      (call) => call[1][0] === 'pr' && call[1][1] === 'create',
-    )
-    const titleArg: string = createCall![1][createCall![1].indexOf('--title') + 1]
     // Should be "fix: login redirect not working" (scope stripped)
-    expect(titleArg).toBe('fix: login redirect not working')
-    expect(titleArg).not.toContain('fix(auth):')
+    expect(result.report).toContain('fix: login redirect not working')
+    expect(result.report).not.toContain('fix(auth):')
   })
 
   it('preserves non-conventional-description text unchanged', async () => {
@@ -326,18 +345,17 @@ describe('buildPrTitle (via runPrStage title output)', () => {
       if (args[0] === 'pr' && args[1] === 'list') return ''
       if (args[0] === 'log') return ''
       if (args[0] === 'push') return ''
-      if (args[0] === 'pr' && args[1] === 'create') return 'https://github.com/org/repo/pull/8'
       return ''
+    })
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/8' }),
     })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
 
-    const createCall = mockExecFileSync.mock.calls.find(
-      (call) => call[1][0] === 'pr' && call[1][1] === 'create',
-    )
-    const titleArg: string = createCall![1][createCall![1].indexOf('--title') + 1]
-    expect(titleArg).toBe('refactor: remove redundant inline styles from components.')
+    expect(result.report).toContain('refactor: remove redundant inline styles from components.')
   })
 })
 
@@ -347,15 +365,6 @@ describe('buildPrTitle (via runPrStage title output)', () => {
 
 describe('buildPrBody Closes # linking', () => {
   beforeEach(resetMocks)
-
-  function captureBody(): string {
-    const createCall = mockExecFileSync.mock.calls.find(
-      (call) => call[1][0] === 'pr' && call[1][1] === 'create',
-    )
-    // body is passed as stdin via `input` option — accessible in options arg
-    const options = createCall![2] as { input?: string }
-    return options.input ?? ''
-  }
 
   function setupDefaultFs() {
     setupFiles({
@@ -368,81 +377,103 @@ describe('buildPrBody Closes # linking', () => {
       if (args[0] === 'pr' && args[1] === 'list') return ''
       if (args[0] === 'log') return 'abc123 refactor: description'
       if (args[0] === 'push') return ''
-      if (args[0] === 'pr' && args[1] === 'create') return 'https://github.com/org/repo/pull/546'
+      if (args[0] === 'remote' && args[1] === 'get-url' && args[2] === 'origin')
+        return 'https://github.com/owner/repo.git'
       return ''
     })
   }
 
   it('appends Closes #N when issueNumber is provided', async () => {
     setupDefaultFs()
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/546' }),
+    })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 518)
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 518)
 
-    const body = captureBody()
-    expect(body).toContain('Closes #518')
+    expect(result.report).toContain('Closes #518')
   })
 
   it('does NOT append Closes # when issueNumber is omitted', async () => {
     setupDefaultFs()
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/546' }),
+    })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd())
 
-    const body = captureBody()
-    expect(body).not.toContain('Closes #')
+    expect(result.report).not.toContain('Closes #')
   })
 
   it('does NOT append Closes # when issueNumber is 0', async () => {
     setupDefaultFs()
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/546' }),
+    })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 0)
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 0)
 
-    const body = captureBody()
-    expect(body).not.toContain('Closes #')
+    expect(result.report).not.toContain('Closes #')
   })
 
   it('includes spec overview in body', async () => {
     setupDefaultFs()
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/546' }),
+    })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 518)
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 518)
 
-    const body = captureBody()
-    expect(body).toContain('Remove inline styles that duplicate Tailwind classes.')
+    expect(result.report).toContain('Remove inline styles that duplicate Tailwind classes.')
   })
 
   it('includes commit log in body', async () => {
     setupDefaultFs()
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/546' }),
+    })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 518)
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 518)
 
-    const body = captureBody()
-    expect(body).toContain('abc123 refactor: description')
+    expect(result.report).toContain('abc123 refactor: description')
   })
 
   it('Closes # appears before the footer', async () => {
     setupDefaultFs()
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/546' }),
+    })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 518)
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 518)
 
-    const body = captureBody()
-    const closesIdx = body.indexOf('Closes #518')
-    const footerIdx = body.indexOf('🤖 Generated by Cody pipeline')
+    const closesIdx = result.report.indexOf('Closes #518')
+    const footerIdx = result.report.indexOf('🤖 Generated by Cody pipeline')
     expect(closesIdx).toBeLessThan(footerIdx)
   })
 
   it('works with large issue numbers', async () => {
     setupDefaultFs()
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ html_url: 'https://github.com/org/repo/pull/546' }),
+    })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 9999)
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 9999)
 
-    const body = captureBody()
-    expect(body).toContain('Closes #9999')
+    expect(result.report).toContain('Closes #9999')
   })
 })
 
@@ -465,15 +496,12 @@ describe('runPrStage existing PR', () => {
     })
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    const result = runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 518)
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 518)
 
     expect(result.created).toBe(false)
     expect(result.url).toBe('https://github.com/org/repo/pull/546')
-    // gh pr create should NOT have been called
-    const createCall = mockExecFileSync.mock.calls.find(
-      (call) => call[1][0] === 'pr' && call[1][1] === 'create',
-    )
-    expect(createCall).toBeUndefined()
+    // fetch should NOT have been called
+    expect(mockFetch).not.toHaveBeenCalled()
   })
 })
 
@@ -484,7 +512,7 @@ describe('runPrStage existing PR', () => {
 describe('runPrStage failure handling', () => {
   beforeEach(resetMocks)
 
-  it('returns empty url and created=false when gh pr create throws', async () => {
+  it('returns empty url and created=false when GitHub API fails', async () => {
     setupFiles({
       [`${TASK_DIR}/task.md`]: 'Some task',
       [`${TASK_DIR}/task.json`]: JSON.stringify({ task_type: 'refactor' }),
@@ -494,12 +522,13 @@ describe('runPrStage failure handling', () => {
       if (args[0] === 'pr' && args[1] === 'list') return ''
       if (args[0] === 'log') return ''
       if (args[0] === 'push') return ''
-      if (args[0] === 'pr' && args[1] === 'create') throw new Error('gh: not authenticated')
       return ''
     })
+    // Mock global fetch to throw an error
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('GitHub API error: 404'))
 
     const { runPrStage } = await import('../../../scripts/cody/scripted-stages')
-    const result = runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 518)
+    const result = await runPrStage(TASK_DIR, `${TASK_DIR}/pr.md`, process.cwd(), 518)
 
     expect(result.created).toBe(false)
     expect(result.url).toBe('')

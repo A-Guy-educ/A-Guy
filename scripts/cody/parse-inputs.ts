@@ -20,6 +20,7 @@ interface ParseOutputs {
   comment_body: string
   valid: string
   runner: string
+  version: string
 }
 
 // Task ID format: YYMMDD-description (e.g., 260225-auto-90)
@@ -114,7 +115,8 @@ export function parseDispatchInputs(): ParseOutputs {
     trigger_type: 'dispatch',
     comment_body: '',
     valid: 'true',
-    runner: process.env.DISPATCH_RUNNER || 'github-hosted',
+    runner: process.env.DISPATCH_RUNNER || 'self-hosted',
+    version: process.env.DISPATCH_VERSION || process.env.CODY_DEFAULT_VERSION || '',
   }
 
   console.log(
@@ -171,8 +173,19 @@ export function parseCommentInputs(): ParseOutputs {
       console.log('=== Detected --local flag: will use self-hosted runner ===')
     }
 
-    // Strip --local from command before mode parsing
-    const cmdWithoutFlags = cmdAfterCody.replace(/--local\b/, '').trim()
+    // Detect --version flag anywhere in the command
+    const versionMatch = cmdAfterCody.match(/--version\s+(\S+)/)
+    if (versionMatch) {
+      outputs.version = versionMatch[1]
+      console.log(`=== Detected --version flag: ${outputs.version} ===`)
+    }
+
+    // Strip flags from command before mode parsing
+    const cmdWithoutFlags = cmdAfterCody
+      .replace(/--local\b/g, '')
+      .replace(/--github\b/g, '')
+      .replace(/--version\s+\S+/g, '')
+      .trim()
 
     if (!cmdWithoutFlags) {
       // @cody alone (or @cody --local) - default to full mode
@@ -223,7 +236,8 @@ export function getDefaultOutputs(): ParseOutputs {
     trigger_type: '',
     comment_body: '',
     valid: 'false',
-    runner: 'github-hosted',
+    runner: 'self-hosted',
+    version: process.env.CODY_DEFAULT_VERSION || '',
   }
 }
 
@@ -250,6 +264,7 @@ function writeOutputs(outputs: ParseOutputs): void {
     `comment_body=${outputs.comment_body}`,
     `valid=${outputs.valid}`,
     `runner=${outputs.runner}`,
+    `version=${outputs.version}`,
   ]
 
   writeFileSync(githubOutput, lines.join('\n') + '\n')

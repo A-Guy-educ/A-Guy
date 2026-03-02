@@ -51,6 +51,14 @@ export const SYSTEM_EVENTS = {
   EXERCISE_VIEWED: 'system.exercise_viewed',
   /** User completed an exercise (all questions correct) */
   EXERCISE_COMPLETED: 'system.exercise_completed',
+
+  // Study Plan Events
+  /** User viewed the study plan page */
+  STUDY_PLAN_VIEWED: 'system.study_plan_viewed',
+  /** User generated a new study plan */
+  STUDY_PLAN_GENERATED: 'system.study_plan_generated',
+  /** User completed a study plan day */
+  STUDY_PLAN_DAY_COMPLETED: 'system.study_plan_day_completed',
 } as const
 
 /**

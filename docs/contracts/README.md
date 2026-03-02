@@ -335,7 +335,7 @@ pnpm exec vitest run tests/int/contracts.int.spec.ts
 
 ## Examples
 
-See [`examples/`](src/contracts/examples/) directory for complete JSON examples of each contract type.
+See [`src/infra/contracts/examples/`](../../src/infra/contracts/examples/) directory for complete JSON examples of each contract type.
 
 ## Future Enhancements
 
@@ -350,7 +350,7 @@ When adding new block types or modifying schemas:
 
 1. Update the appropriate schema file
 2. Add TypeScript type exports
-3. Update [`index.ts`](index.ts) exports
+3. Update [`src/infra/contracts/index.ts`](../../src/infra/contracts/index.ts) exports
 4. Add tests in `tests/int/contracts.int.spec.ts`
 5. Add example JSON in `examples/`
 6. Run `pnpm tsc --noEmit` to verify types

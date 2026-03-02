@@ -2,49 +2,68 @@
  * @fileType layout
  * @domain cody
  * @pattern route-group
- * @ai-summary Root layout for Cody dashboard - uses frontend styles with CopilotKit
+ * @ai-summary Root layout for Cody dashboard — reuses frontend fonts, theme, and CSS without Header/Footer/i18n
  */
-'use client'
+import React from 'react'
+import { cn } from '@/infra/utils/ui'
+import { GeistMono } from 'geist/font/mono'
+import { GeistSans } from 'geist/font/sans'
+import { Assistant } from 'next/font/google'
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-
-import { InitTheme } from '@/ui/web/providers/Theme/InitTheme'
+import { CodyProviders } from './CodyProviders'
+import { Toaster } from '@/ui/web/components/toaster'
+import { defaultTheme, themeLocalStorageKey } from '@/ui/web/providers/Theme/ThemeSelector/types'
 import '@/app/(frontend)/globals.css'
 
-function MakeQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 60 * 1000, // 1 minute
-        refetchOnWindowFocus: false,
-      },
-    },
-  })
-}
-
-let browserQueryClient: QueryClient | undefined = undefined
-
-function getQueryClient() {
-  if (typeof window === 'undefined') {
-    return MakeQueryClient()
-  } else {
-    if (!browserQueryClient) browserQueryClient = MakeQueryClient()
-    return browserQueryClient
-  }
-}
+const assistant = Assistant({
+  subsets: ['latin', 'hebrew'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-assistant',
+})
 
 export default function CodyLayout({ children }: { children: React.ReactNode }) {
-  const queryClient = getQueryClient()
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <html lang="en" suppressHydrationWarning>
-        <head>
-          <InitTheme />
-          <link href="/favicon.ico" rel="icon" sizes="32x32" />
-        </head>
-        <body className="min-h-screen bg-background text-foreground">{children}</body>
-      </html>
-    </QueryClientProvider>
+    <html
+      className={cn(GeistSans.variable, GeistMono.variable, assistant.variable)}
+      lang="en"
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Reuse the same theme init logic as the frontend layout */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                function getImplicitPreference() {
+                  var mql = window.matchMedia('(prefers-color-scheme: dark)');
+                  if (typeof mql.matches === 'boolean') {
+                    return mql.matches ? 'dark' : 'light';
+                  }
+                  return null;
+                }
+                var themeToSet = '${defaultTheme}';
+                var preference = window.localStorage.getItem('${themeLocalStorageKey}');
+                if (preference === 'light' || preference === 'dark') {
+                  themeToSet = preference;
+                } else {
+                  var implicit = getImplicitPreference();
+                  if (implicit) themeToSet = implicit;
+                }
+                document.documentElement.setAttribute('data-theme', themeToSet);
+              })();
+            `,
+          }}
+        />
+        <link href="/favicon.ico" rel="icon" sizes="32x32" />
+        <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+      </head>
+      <body>
+        <CodyProviders>
+          <div className="min-h-screen bg-background text-foreground">{children}</div>
+          <Toaster />
+        </CodyProviders>
+      </body>
+    </html>
   )
 }

@@ -15,7 +15,9 @@ test.describe('Version Footer', () => {
 
     // The version is displayed with subtle styling - look for vX.Y.Z pattern
     // The version span has classes: text-xs text-muted-foreground/70
-    const versionElement = page.locator('footer span.text-xs:has-text(/^v\d+\.\d+\.\d+$/)')
+    const versionElement = page
+      .locator('footer span.text-xs')
+      .filter({ hasText: /^v\d+\.\d+\.\d+$/ })
     await expect(versionElement).toBeVisible()
 
     // Get the text content and verify it matches semantic versioning
@@ -32,7 +34,9 @@ test.describe('Version Footer', () => {
     await expect(footer).toBeVisible()
 
     // Check that the version element has subtle styling classes
-    const versionElement = page.locator('footer span.text-xs:has-text(/^v\d+\.\d+\.\d+$/)')
+    const versionElement = page
+      .locator('footer span.text-xs')
+      .filter({ hasText: /^v\d+\.\d+\.\d+$/ })
     await expect(versionElement).toBeVisible()
 
     // Verify the subtle styling classes are present
@@ -50,7 +54,9 @@ test.describe('Version Footer', () => {
 
   test('version is consistent across pages', async ({ page }) => {
     // Get version from homepage footer - find span with vX.Y.Z pattern
-    const versionElement = page.locator('footer span.text-xs:has-text(/^v\d+\.\d+\.\d+$/)')
+    const versionElement = page
+      .locator('footer span.text-xs')
+      .filter({ hasText: /^v\d+\.\d+\.\d+$/ })
     const versionText = await versionElement.textContent()
     expect(versionText).toMatch(/^v\d+\.\d+\.\d+$/)
 
@@ -68,7 +74,9 @@ test.describe('Version Footer', () => {
     await page.waitForLoadState('networkidle')
 
     // Version should still be visible in the footer
-    const versionElement = page.locator('footer span.text-xs:has-text(/^v\d+\.\d+\.\d+$/)')
+    const versionElement = page
+      .locator('footer span.text-xs')
+      .filter({ hasText: /^v\d+\.\d+\.\d+$/ })
     await expect(versionElement).toBeVisible()
 
     const versionText = await versionElement.textContent()
@@ -78,7 +86,9 @@ test.describe('Version Footer', () => {
   test('version format matches package.json semantic versioning', async ({ page }) => {
     // The version should be in semantic versioning format (X.Y.Z)
     // This ensures it matches the version in package.json
-    const versionElement = page.locator('footer span.text-xs:has-text(/^v\d+\.\d+\.\d+$/)')
+    const versionElement = page
+      .locator('footer span.text-xs')
+      .filter({ hasText: /^v\d+\.\d+\.\d+$/ })
     await expect(versionElement).toBeVisible()
 
     const versionText = await versionElement.textContent()

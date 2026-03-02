@@ -18,6 +18,10 @@ import {
   removeAssignees,
   addLabels,
   removeLabel,
+  closePR,
+  findAssociatedPR,
+  findTaskBranch,
+  deleteBranch,
 } from '@/ui/cody/github-client'
 
 const actionSchema = z.object({
@@ -28,6 +32,8 @@ const actionSchema = z.object({
     'execute',
     'abort',
     'close',
+    'close-pr',
+    'reset',
     'reopen',
     'add-label',
     'remove-label',
@@ -90,18 +96,72 @@ export async function POST(
       }
 
       case 'abort': {
-        const runs = await fetchWorkflowRuns({ perPage: 10 })
-        const run = runs.find((r) => r.html_url.includes(taskId))
+        // Try to find and cancel in-progress workflow runs for this task
+        const runs = await fetchWorkflowRuns({ perPage: 30 })
+        const run = runs.find((r) => 
+          r.status === 'in_progress' && 
+          (r.display_title?.includes(taskId) || r.html_url.includes(taskId) || r.html_url.includes(issueNumber.toString()))
+        )
+        
+        // Post comment regardless of whether we found a running workflow
+        // This ensures the issue is marked as stopped even if workflow already finished
+        await postComment(issueNumber, '## 🛑 Operation stopped - Run aborted by user.')
+        
         if (run) {
           await cancelWorkflowRun(run.id)
           return NextResponse.json({ success: true, message: 'Workflow cancelled' })
         }
-        return NextResponse.json({ error: 'No running workflow found' }, { status: 404 })
+        // Return success anyway - the comment was posted
+        return NextResponse.json({ success: true, message: 'Marked as stopped (no running workflow)' })
       }
 
       case 'close': {
         await updateIssue(issueNumber, { state: 'closed' })
         return NextResponse.json({ success: true, message: 'Issue closed' })
+      }
+
+      case 'close-pr': {
+        // Find the associated PR for this task
+        const pr = await findAssociatedPR(taskId)
+        if (!pr) {
+          return NextResponse.json({ error: 'No associated PR found' }, { status: 404 })
+        }
+        await closePR(pr.number)
+        return NextResponse.json({ success: true, message: `PR #${pr.number} closed` })
+      }
+
+      case 'reset': {
+        // Full reset: delete branch, close PR, remove agent labels, re-trigger pipeline
+        const branchName = await findTaskBranch(taskId)
+
+        // Close PR if exists
+        const pr = await findAssociatedPR(taskId)
+        if (pr) {
+          await closePR(pr.number)
+        }
+
+        // Delete branch if exists
+        if (branchName && branchName !== 'dev' && branchName !== 'main' && branchName !== 'master') {
+          await deleteBranch(branchName)
+        }
+
+        // Remove agent labels
+        const labelsToRemove = ['agent:done', 'agent:error', 'agent:running', 'hard-stop', 'risk-gated']
+        for (const lbl of labelsToRemove) {
+          try {
+            await removeLabel(issueNumber, lbl)
+          } catch {
+            // Ignore if label doesn't exist
+          }
+        }
+
+        // Re-trigger pipeline
+        await postComment(issueNumber, '/cody')
+
+        return NextResponse.json({
+          success: true,
+          message: `Task reset: branch deleted, PR closed, labels removed, pipeline triggered`,
+        })
       }
 
       case 'reopen': {

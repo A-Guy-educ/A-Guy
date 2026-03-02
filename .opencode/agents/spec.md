@@ -96,6 +96,11 @@ After writing the spec, validate it with relevant domain experts:
 **When:** Spec involves authentication, authorization, secrets, API endpoints, or sensitive data
 **What to ask:** "Review my spec. Are there any security gaps? Is access control properly defined? Are there any hardcoded secrets or data exposure risks?"
 
+### @cody-expert
+
+**When:** Spec involves the Cody pipeline itself (`scripts/cody/**`, `.opencode/agents/**`, `.github/workflows/cody.yml`)
+**What to ask:** "Review my spec. Does this change affect the pipeline architecture? How does it interact with the version system?"
+
 Invoke these subagents as needed based on your spec's scope. Include their feedback in the spec or note open items in "## Open Questions".
 
 ## Using the Edit Tool

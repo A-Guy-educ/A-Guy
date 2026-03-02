@@ -396,4 +396,179 @@ describe('Cody Pipeline State Machine Integration', () => {
       expect(validOutcomes).toContain('paused')
     })
   })
+
+  describe('Complexity-Based Stage Skipping', () => {
+    // Integration test: validates that complexity score flows through
+    // buildPipeline → shouldSkip → state machine → stage skipped/executed
+    // Uses dryRun=true to avoid post-action side effects (validators, gates, git)
+    // while still exercising the shouldSkip logic which runs BEFORE dryRun shortcut
+
+    it('should skip optional stages for trivial complexity (score 5)', async () => {
+      const ctx = createMockContext(TEST_TASK_ID)
+      ctx.input.dryRun = true
+      ctx.taskDef = {
+        task_type: 'fix_bug',
+        pipeline: 'spec_execute_verify',
+        risk_level: 'low',
+        confidence: 0.9,
+        primary_domain: 'backend',
+        scope: ['src/app'],
+        missing_inputs: [],
+        assumptions: [],
+        complexity: 5,
+        complexity_reasoning: 'Trivial one-line fix',
+      }
+      ctx.profile = 'standard'
+
+      const { buildPipeline } = await import('../../../../../scripts/cody/pipeline/definitions')
+      const pipeline = buildPipeline('impl', 'standard', false, ctx)
+
+      const result = await runPipeline(ctx, pipeline)
+
+      expect(result.state).toBe('completed')
+
+      // Always-run stages SHOULD complete (dryRun marks them completed)
+      expect(result.stages['build']?.state).toBe('completed')
+      expect(result.stages['commit']?.state).toBe('completed')
+      expect(result.stages['verify']?.state).toBe('completed')
+      expect(result.stages['pr']?.state).toBe('completed')
+
+      // architect (threshold 10) should be skipped at score 5
+      expect(result.stages['architect']?.state).toBe('skipped')
+      expect(result.stages['architect']?.skipped).toContain('Complexity 5')
+
+      // auditor (threshold 20) should be skipped at score 5
+      expect(result.stages['auditor']?.state).toBe('skipped')
+      expect(result.stages['auditor']?.skipped).toContain('Complexity 5')
+
+      // plan-gap (threshold 50) should be skipped
+      expect(result.stages['plan-gap']?.state).toBe('skipped')
+      expect(result.stages['plan-gap']?.skipped).toContain('Complexity 5')
+
+      // apply-audit (threshold 20) should be skipped
+      expect(result.stages['apply-audit']?.state).toBe('skipped')
+      expect(result.stages['apply-audit']?.skipped).toContain('Complexity 5')
+    })
+
+    it('should run architect but skip auditor for simple complexity (score 15)', async () => {
+      const ctx = createMockContext(TEST_TASK_ID)
+      ctx.input.dryRun = true
+      ctx.taskDef = {
+        task_type: 'fix_bug',
+        pipeline: 'spec_execute_verify',
+        risk_level: 'medium',
+        confidence: 0.9,
+        primary_domain: 'backend',
+        scope: ['src/app'],
+        missing_inputs: [],
+        assumptions: [],
+        complexity: 15,
+        complexity_reasoning: 'Simple fix with some scope',
+      }
+      ctx.profile = 'standard'
+
+      const { buildPipeline } = await import('../../../../../scripts/cody/pipeline/definitions')
+      const pipeline = buildPipeline('impl', 'standard', false, ctx)
+
+      const result = await runPipeline(ctx, pipeline)
+
+      expect(result.state).toBe('completed')
+
+      // architect (threshold 10) SHOULD run at score 15
+      expect(result.stages['architect']?.state).toBe('completed')
+
+      // auditor (threshold 20) should be skipped at score 15
+      expect(result.stages['auditor']?.state).toBe('skipped')
+      expect(result.stages['auditor']?.skipped).toContain('Complexity 15')
+
+      // plan-gap (threshold 50) should be skipped
+      expect(result.stages['plan-gap']?.state).toBe('skipped')
+      expect(result.stages['plan-gap']?.skipped).toContain('Complexity 15')
+
+      // build, commit, verify, pr should all complete
+      expect(result.stages['build']?.state).toBe('completed')
+      expect(result.stages['commit']?.state).toBe('completed')
+      expect(result.stages['verify']?.state).toBe('completed')
+      expect(result.stages['pr']?.state).toBe('completed')
+    })
+
+    it('should run all stages for very complex task (score 60)', async () => {
+      const ctx = createMockContext(TEST_TASK_ID)
+      ctx.input.dryRun = true
+      ctx.taskDef = {
+        task_type: 'implement_feature',
+        pipeline: 'spec_execute_verify',
+        risk_level: 'high',
+        confidence: 0.9,
+        primary_domain: 'backend',
+        scope: ['src/app'],
+        missing_inputs: [],
+        assumptions: [],
+        complexity: 60,
+        complexity_reasoning: 'Complex cross-domain feature',
+      }
+      ctx.profile = 'standard'
+
+      const { buildPipeline } = await import('../../../../../scripts/cody/pipeline/definitions')
+      const pipeline = buildPipeline('impl', 'standard', false, ctx)
+
+      const result = await runPipeline(ctx, pipeline)
+
+      expect(result.state).toBe('completed')
+
+      // At score 60, ALL stages should complete (all thresholds met)
+      expect(result.stages['architect']?.state).toBe('completed')
+      expect(result.stages['plan-gap']?.state).toBe('completed')
+      expect(result.stages['build']?.state).toBe('completed')
+      expect(result.stages['commit']?.state).toBe('completed')
+      expect(result.stages['verify']?.state).toBe('completed')
+      expect(result.stages['auditor']?.state).toBe('completed')
+      // apply-audit may skip due to missing auditor.md (that's a different skip condition, not complexity)
+      // Just verify no complexity-based skips
+      for (const [, stageState] of Object.entries(result.stages)) {
+        if (stageState.state === 'skipped' && stageState.skipped) {
+          expect(stageState.skipped).not.toContain('Complexity')
+        }
+      }
+    })
+
+    it('should not skip any stages for complexity when score is undefined (backward compat)', async () => {
+      const ctx = createMockContext(TEST_TASK_ID)
+      ctx.input.dryRun = true
+      ctx.taskDef = {
+        task_type: 'implement_feature',
+        pipeline: 'spec_execute_verify',
+        risk_level: 'medium',
+        confidence: 0.9,
+        primary_domain: 'backend',
+        scope: ['src/app'],
+        missing_inputs: [],
+        assumptions: [],
+        // No complexity field — legacy behavior
+      }
+      ctx.profile = 'standard'
+
+      const { buildPipeline } = await import('../../../../../scripts/cody/pipeline/definitions')
+      const pipeline = buildPipeline('impl', 'standard', false, ctx)
+
+      const result = await runPipeline(ctx, pipeline)
+
+      expect(result.state).toBe('completed')
+
+      // All stages should complete — no complexity-based skipping
+      expect(result.stages['architect']?.state).toBe('completed')
+      expect(result.stages['plan-gap']?.state).toBe('completed')
+      expect(result.stages['build']?.state).toBe('completed')
+      expect(result.stages['commit']?.state).toBe('completed')
+      expect(result.stages['verify']?.state).toBe('completed')
+      expect(result.stages['auditor']?.state).toBe('completed')
+
+      // No complexity-based skips anywhere
+      for (const [, stageState] of Object.entries(result.stages)) {
+        if (stageState.skipped) {
+          expect(stageState.skipped).not.toContain('Complexity')
+        }
+      }
+    })
+  })
 })

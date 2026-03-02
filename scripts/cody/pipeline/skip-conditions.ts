@@ -9,6 +9,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 import type { PipelineContext, SkipResult } from '../engine/types'
+import { STAGE_COMPLEXITY_THRESHOLDS, getComplexityTier } from '../pipeline-utils'
 
 /**
  * Check if stage should be skipped due to input_quality skip_stages
@@ -110,5 +111,39 @@ export function skipIfSpecOnly(ctx: PipelineContext): SkipResult {
   if (taskDef?.pipeline === 'spec_only') {
     return { shouldSkip: true, reason: 'Pipeline is spec_only' }
   }
+  return { shouldSkip: false }
+}
+
+/**
+ * Check if a stage should be skipped based on the task's complexity score.
+ * Each stage has a minimum complexity threshold defined in STAGE_COMPLEXITY_THRESHOLDS.
+ * If the task's complexity is below the threshold, the stage is skipped.
+ *
+ * Returns { shouldSkip: false } when:
+ *  - No complexity score is set (backward compat — fall through to other skip logic)
+ *  - The stage has no threshold (always runs)
+ *  - The task's complexity meets or exceeds the threshold
+ */
+export function skipIfBelowComplexity(ctx: PipelineContext, stageName: string): SkipResult {
+  const complexity = ctx.taskDef?.complexity
+  // No complexity score → don't skip (backward compatibility)
+  if (complexity === undefined) {
+    return { shouldSkip: false }
+  }
+
+  const threshold = STAGE_COMPLEXITY_THRESHOLDS[stageName]
+  // No threshold defined for this stage → don't skip
+  if (threshold === undefined || threshold === 0) {
+    return { shouldSkip: false }
+  }
+
+  if (complexity < threshold) {
+    const tier = getComplexityTier(complexity)
+    return {
+      shouldSkip: true,
+      reason: `Complexity ${complexity} (${tier}) below threshold ${threshold} for ${stageName}`,
+    }
+  }
+
   return { shouldSkip: false }
 }

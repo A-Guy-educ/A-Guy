@@ -1,6 +1,6 @@
 ---
 name: test-writer
-description: TDD test writer. Writes failing tests before implementation. Invoked by build agent per plan step.
+description: TDD test writer. Writes failing tests before implementation. Invoked by build-manager per plan step.
 mode: subagent
 tools:
   read: true
@@ -233,6 +233,18 @@ Common edit failures:
 - Follow existing test patterns in the project
 - Use meaningful test names
 - Add assertions for every expected outcome
+
+### Critical: Test Integrity — Write Behavioral Tests
+
+Your tests are the **contract**. They prove the behavior works. The build agent should make your tests PASS by implementing the feature — not by weakening your assertions.
+
+Write tests that are:
+
+- **Behavioral**: test actual function output, not config objects
+  - ✅ `expect(sanitize(html)).toContain('<style')` — tests real behavior
+  - ❌ `expect(CONFIG.ALLOWED_TAGS).toContain('style')` — only tests config, not behavior
+- **Specific**: assert on the actual output of the function under test
+- **Resistant to weakening**: if someone changes your assertion to test a config array instead of actual behavior, that's a regression
 
 ## Output
 

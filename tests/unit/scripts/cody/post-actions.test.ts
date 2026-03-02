@@ -7,6 +7,27 @@ vi.mock('../../../../scripts/cody/pipeline-utils', () => ({
   resolvePipelineProfile: vi.fn(() => 'lightweight'),
   resolveControlMode: vi.fn(() => 'risk-gated'),
   stageOutputFile: vi.fn((taskDir: string, stage: string) => `${taskDir}/${stage}.json`),
+  getComplexityTier: vi.fn((score: number) => {
+    if (score < 10) return 'trivial'
+    if (score < 20) return 'simple'
+    if (score < 35) return 'moderate'
+    if (score < 50) return 'complex'
+    return 'very_complex'
+  }),
+  STAGE_COMPLEXITY_THRESHOLDS: {
+    taskify: 0,
+    spec: 35,
+    gap: 40,
+    clarify: 60,
+    architect: 10,
+    'plan-gap': 50,
+    build: 0,
+    commit: 0,
+    verify: 0,
+    auditor: 20,
+    'apply-audit': 20,
+    pr: 0,
+  },
 }))
 
 vi.mock('../../../../scripts/cody/clarify-workflow', () => ({
@@ -17,6 +38,12 @@ vi.mock('../../../../scripts/cody/clarify-workflow', () => ({
 vi.mock('../../../../scripts/cody/github-api', () => ({
   extractGateCommentBody: vi.fn(),
   postComment: vi.fn(),
+  addIssueLabel: vi.fn(),
+  removeIssueLabel: vi.fn(),
+  GATE_LABELS: {
+    HARD_STOP: 'hard-stop',
+    RISK_GATED: 'risk-gated',
+  },
 }))
 
 vi.mock('../../../../scripts/cody/git-utils', () => ({
@@ -92,6 +119,82 @@ describe('Post-Actions', () => {
 
       expect(ctx.taskDef).toBeNull()
       expect(ctx.profile).toBe('standard') // unchanged
+    })
+
+    it('should apply --complexity override when taskDef has no complexity', async () => {
+      // Task without complexity + complexityOverride set
+      const taskWithoutComplexity = { ...mockTaskDef }
+      delete (taskWithoutComplexity as Record<string, unknown>).complexity
+      vi.mocked(pipelineUtils.readTask).mockReturnValue(taskWithoutComplexity)
+      vi.mocked(pipelineUtils.resolvePipelineProfile).mockReturnValue('lightweight')
+
+      ctx.input.complexityOverride = 42
+
+      const action: PostAction = { type: 'resolve-profile' }
+      await executePostAction(ctx, action, null)
+
+      expect(ctx.taskDef!.complexity).toBe(42)
+      expect(ctx.taskDef!.complexity_reasoning).toContain('Override via --complexity=42')
+    })
+
+    it('should NOT apply --complexity override when taskDef already has complexity', async () => {
+      // Task WITH complexity + complexityOverride set → override should NOT replace it
+      const taskWithComplexity = {
+        ...mockTaskDef,
+        complexity: 75,
+        complexity_reasoning: 'LLM scored',
+      }
+      vi.mocked(pipelineUtils.readTask).mockReturnValue(taskWithComplexity)
+      vi.mocked(pipelineUtils.resolvePipelineProfile).mockReturnValue('standard')
+
+      ctx.input.complexityOverride = 10
+
+      const action: PostAction = { type: 'resolve-profile' }
+      await executePostAction(ctx, action, null)
+
+      // Original complexity preserved — override only applies when complexity is undefined
+      expect(ctx.taskDef!.complexity).toBe(75)
+      expect(ctx.taskDef!.complexity_reasoning).toBe('LLM scored')
+    })
+
+    it('should log tier info when task has complexity', async () => {
+      const taskWithComplexity = { ...mockTaskDef, complexity: 42 }
+      vi.mocked(pipelineUtils.readTask).mockReturnValue(taskWithComplexity)
+      vi.mocked(pipelineUtils.resolvePipelineProfile).mockReturnValue('standard')
+
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+      const action: PostAction = { type: 'resolve-profile' }
+      await executePostAction(ctx, action, null)
+
+      // Should log complexity tier info
+      const tierLog = consoleSpy.mock.calls.find(
+        (call) => typeof call[0] === 'string' && call[0].includes('Complexity:'),
+      )
+      expect(tierLog).toBeDefined()
+      expect(tierLog![0]).toContain('42')
+      expect(tierLog![0]).toContain('complex')
+
+      consoleSpy.mockRestore()
+    })
+
+    it('should log legacy heuristic message when task has no complexity', async () => {
+      const taskNoComplexity = { ...mockTaskDef }
+      delete (taskNoComplexity as Record<string, unknown>).complexity
+      vi.mocked(pipelineUtils.readTask).mockReturnValue(taskNoComplexity)
+      vi.mocked(pipelineUtils.resolvePipelineProfile).mockReturnValue('lightweight')
+
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+      const action: PostAction = { type: 'resolve-profile' }
+      await executePostAction(ctx, action, null)
+
+      const legacyLog = consoleSpy.mock.calls.find(
+        (call) => typeof call[0] === 'string' && call[0].includes('legacy heuristic'),
+      )
+      expect(legacyLog).toBeDefined()
+
+      consoleSpy.mockRestore()
     })
   })
 

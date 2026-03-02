@@ -262,6 +262,7 @@ function formatGateComment(
   gatePoint: string,
   planContent?: string,
   assumptions?: string[],
+  reviewQuestions?: string[],
 ): string {
   const lines: string[] = []
 
@@ -298,6 +299,14 @@ function formatGateComment(
     for (const assumption of assumptions) {
       lines.push(`- ${assumption}`)
     }
+    lines.push('')
+  }
+
+  if (reviewQuestions && reviewQuestions.length > 0) {
+    lines.push('### Review Questions')
+    reviewQuestions.forEach((question, index) => {
+      lines.push(`${index + 1}. ${question}`)
+    })
     lines.push('')
   }
 
@@ -401,14 +410,18 @@ export function handleGateApproval(
     taskSummary = contentLine?.trim() || taskSummary
   }
 
-  // Read task.json for assumptions
+  // Read task.json for assumptions and review_questions
   const taskJsonPath = path.join(taskDir, 'task.json')
   let assumptions: string[] = []
+  let reviewQuestions: string[] = []
   if (fs.existsSync(taskJsonPath)) {
     try {
       const taskJson = JSON.parse(fs.readFileSync(taskJsonPath, 'utf-8'))
       if (Array.isArray(taskJson.assumptions)) {
         assumptions = taskJson.assumptions
+      }
+      if (Array.isArray(taskJson.review_questions)) {
+        reviewQuestions = taskJson.review_questions
       }
     } catch {
       // Ignore parse errors
@@ -425,6 +438,7 @@ export function handleGateApproval(
     gatePoint,
     planContent,
     assumptions,
+    reviewQuestions,
   )
 
   // Write gate request file

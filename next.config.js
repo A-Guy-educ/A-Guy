@@ -46,6 +46,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'img.youtube.com',
       },
+      // Allow GitHub avatars for Cody dashboard
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
     ],
   },
   eslint: { ignoreDuringBuilds: true },

@@ -273,15 +273,28 @@ The dashboard manages software development tasks using an AI-powered pipeline (t
 4. **Pull Requests**: Show PRs associated with tasks
 5. **Repository Code**: Browse files, search code, view branches and commits
 
-You have access to tools that let you:
-- Read repository files and search code (GitHub MCP tools)
-- List and search issues/tasks (custom Cody tools)
-- Get pipeline status and workflow runs (custom Cody tools)
-- View PRs and their details
+You have two sets of tools:
 
-When users ask about tasks or operations, use the custom Cody tools (listCodyTasks, getCodyTask, getPipelineStatus, getWorkflowRuns, getTaskPR).
+**GitHub MCP Tools** (for repository and GitHub API operations):
+- get_file_contents: Read file content from the repository
+- search_code: Search code across the codebase
+- list_commits: View commit history
+- list_pull_requests / get_pull_request: View PR details
+- list_issues / issue_read: View issue details
+- actions_list / actions_get: View GitHub Actions workflows and runs
+- get_me: Get authenticated user info
 
-When users ask about code, files, or repository structure, use the GitHub MCP tools.
+**Custom Cody Tools** (for pipeline-specific operations):
+- listCodyTasks: List Cody pipeline tasks from the dashboard
+- getCodyTask: Get detailed task info with pipeline status
+- getPipelineStatus: Get stage-by-stage pipeline progress
+- getWorkflowRuns: Get GitHub Actions workflow runs
+- getTaskPR: Get PR associated with a task
+
+**Tool Selection Rules**:
+- For pipeline/task queries → use Custom Cody Tools (listCodyTasks, getCodyTask, etc.)
+- For repository browsing, code search, general GitHub API → use GitHub MCP Tools
+- If GitHub MCP tools are unavailable, explain that and use Custom Cody Tools as fallback
 
 Be helpful, concise, and technical when appropriate. Use markdown for formatting.
 
@@ -301,13 +314,20 @@ export async function GET(req: NextRequest) {
     }
 
     // Test MCP connection
-    const mcp = await getMCPClient()
-    const tools = await mcp.tools()
+    let mcpToolCount = 0
+    try {
+      const mcp = await getMCPClient()
+      const tools = await mcp.tools()
+      mcpToolCount = Object.keys(tools).length
+    } catch (mcpError) {
+      logger.warn({ err: mcpError }, 'GitHub MCP unavailable for health check')
+    }
 
     return NextResponse.json({
       status: 'Chat endpoint ready',
-      toolsets: ['github-mcp', 'custom-cody'],
-      toolCount: Object.keys(tools).length + Object.keys(customTools).length,
+      toolsets: mcpToolCount > 0 ? ['github-mcp', 'custom-cody'] : ['custom-cody'],
+      toolCount: mcpToolCount + Object.keys(customTools).length,
+      mcpEnabled: mcpToolCount > 0,
     })
   } catch (error) {
     logger.error({ err: error }, 'Chat GET error')
@@ -345,15 +365,18 @@ export async function POST(req: NextRequest) {
 
     logger.info({ requestId, messageCount: messages.length }, 'Chat request received')
 
-    // Get MCP tools (with caching) - disabled due to connection issues
-    // let mcpTools = {}
-    // try {
-    //   const mcp = await getMCPClient()
-    //   mcpTools = await mcp.tools()
-    // } catch (mcpError) {
-    //   logger.warn({ err: mcpError }, 'MCP server unavailable - using custom tools only')
-    // }
-    const mcpTools = {}
+    // Get GitHub MCP tools (with caching)
+    let mcpTools = {}
+    try {
+      const mcp = await getMCPClient()
+      mcpTools = await mcp.tools()
+      logger.info(
+        { requestId, mcpToolCount: Object.keys(mcpTools).length },
+        'GitHub MCP tools loaded',
+      )
+    } catch (mcpError) {
+      logger.warn({ err: mcpError, requestId }, 'GitHub MCP unavailable — using custom tools only')
+    }
 
     // Combine MCP tools with custom Cody tools
     const allTools = {

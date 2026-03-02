@@ -1,6 +1,6 @@
-import { cache } from 'react'
-import { getPayload } from 'payload'
 import configPromise from '@payload-config'
+import { getPayload } from 'payload'
+import { cache } from 'react'
 
 interface UserProgressRecord {
   recordType: string
@@ -11,11 +11,36 @@ interface UserProgressRecord {
   lastAccessedAt?: string | null
 }
 
+// Study plan types (mirrored from lib/study-plan/types.ts to avoid import issues)
+interface StudyPlanTopicInput {
+  topicId: string
+  topicLabel: string
+  mastery: 'weak' | 'medium' | 'strong'
+}
+
+interface StudyPlanDay {
+  dayId: string
+  date: string
+  activityType: 'practice' | 'hybrid' | 'full_simulation' | 'reinforcement' | 'warmup'
+  topicIds: string[]
+  status: 'planned' | 'completed'
+  estimatedDurationMinutes: number
+}
+
+interface StudyPlanSnapshot {
+  courseId: string
+  examDate: string
+  generatedAt: string
+  topics: StudyPlanTopicInput[]
+  days: StudyPlanDay[]
+}
+
 interface UserProgressDoc {
   id: string
   user: string
   gradeLevel: string
   progressRecords?: UserProgressRecord[]
+  studyPlans?: StudyPlanSnapshot[]
 }
 
 /**
@@ -63,5 +88,26 @@ export const queryChapterProgress = cache(
     })
 
     return progressMap
+  },
+)
+
+/**
+ * Get study plan for a specific course
+ */
+export const queryStudyPlan = cache(
+  async ({
+    userId,
+    gradeLevel,
+    courseId,
+  }: {
+    userId: string
+    gradeLevel: string
+    courseId: string
+  }) => {
+    const doc = await queryUserProgressByGrade({ userId, gradeLevel })
+    return (
+      (doc?.studyPlans?.find((p) => p.courseId === courseId) as StudyPlanSnapshot | undefined) ||
+      null
+    )
   },
 )

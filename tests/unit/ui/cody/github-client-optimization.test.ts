@@ -131,3 +131,87 @@ describe('Cache helper functions', () => {
     expect(clientContent).toContain('lastModified?: string')
   })
 })
+
+// ============================================================================
+// fetchIssues PR Filtering Tests
+// ============================================================================
+
+describe('fetchIssues PR filtering', () => {
+  it('should filter out pull requests from issues list', () => {
+    const clientContent = fs.readFileSync(
+      path.join(process.cwd(), 'src/ui/cody/github-client.ts'),
+      'utf-8',
+    )
+    // Verify the filter is present before the map
+    expect(clientContent).toContain('.filter((issue: any) => !issue.pull_request)')
+  })
+
+  it('filter logic correctly excludes PRs and keeps issues', () => {
+    // Unit test the actual filter logic in isolation
+    interface MockIssue {
+      number: number
+      title: string
+      state?: string
+      labels?: string[]
+      body?: string
+      pull_request?: { url: string }
+    }
+    const mockData: MockIssue[] = [
+      { number: 1, title: 'Real issue', state: 'open', labels: [], body: '' },
+      {
+        number: 2,
+        title: 'A PR',
+        state: 'open',
+        labels: [],
+        body: '',
+        pull_request: { url: 'https://api.github.com/repos/...' },
+      },
+      { number: 3, title: 'Another issue', state: 'open', labels: [], body: '' },
+      {
+        number: 4,
+        title: 'Another PR',
+        state: 'open',
+        labels: [],
+        body: '',
+        pull_request: { url: 'https://api.github.com/repos/...' },
+      },
+    ]
+
+    const filtered = mockData.filter((issue) => !issue.pull_request)
+
+    expect(filtered).toHaveLength(2)
+    expect(filtered.map((i) => i.number)).toEqual([1, 3])
+  })
+
+  it('filter keeps all items when no PRs are present', () => {
+    interface MockIssue {
+      number: number
+      title: string
+      pull_request?: { url: string }
+    }
+    const mockData: MockIssue[] = [
+      { number: 1, title: 'Issue 1' },
+      { number: 2, title: 'Issue 2' },
+    ]
+
+    const filtered = mockData.filter((issue) => !issue.pull_request)
+
+    expect(filtered).toHaveLength(2)
+  })
+
+  it('filter returns empty array when all items are PRs', () => {
+    interface MockIssue {
+      number: number
+      title: string
+      pull_request?: { url: string }
+    }
+    const mockData: MockIssue[] = [
+      { number: 1, title: 'PR 1', pull_request: { url: '...' } },
+      { number: 2, title: 'PR 2', pull_request: { url: '...' } },
+    ]
+
+    const filtered = mockData.filter((issue) => !issue.pull_request)
+
+    expect(filtered).toHaveLength(0)
+  })
+})

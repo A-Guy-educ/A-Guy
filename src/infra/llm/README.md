@@ -63,20 +63,20 @@ const bestProvider = await detectBestProvider(payload)
 
 ### Gemini Provider
 
-**Files:** [`providers/gemini/`](providers/gemini/)
+**Files:** `providers/factory.ts` - Google Gemini provider implementation (unified in factory)
 
 ```typescript
-import { generateChatCompletion, isGeminiApiKeyConfigured } from './providers/gemini'
+import { generateChatCompletion, isGeminiApiKeyConfigured } from './providers/factory'
 
 const configured = await isGeminiApiKeyConfigured(payload)
 ```
 
 ### OpenAI-Compatible Provider
 
-**Files:** [`providers/openai/`](providers/openai/)
+**Files:** `providers/factory.ts` - OpenAI-compatible provider implementation (unified in factory)
 
 ```typescript
-import { generateChatCompletion, isOpenAIApiKeyConfigured } from './providers/openai'
+import { generateChatCompletion, isOpenAIApiKeyConfigured } from './providers/factory'
 
 const configured = await isOpenAIApiKeyConfigured(payload)
 ```

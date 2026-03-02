@@ -38,3 +38,7 @@ coverage/
 
 # Auditor run bundles (ephemeral, only auditor.json is durable)
 .tasks/*/runs/*/bundle.json
+
+# Browser Agent
+scripts/browser-agent/.auth/
+scripts/browser-agent/.env

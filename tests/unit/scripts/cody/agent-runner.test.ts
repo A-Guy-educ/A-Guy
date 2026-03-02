@@ -52,20 +52,20 @@ describe('MAX_RETRIES', () => {
 })
 
 describe('STABILITY_CHECK_INTERVAL', () => {
-  it('should be 1000ms (1 second)', () => {
-    expect(STABILITY_CHECK_INTERVAL).toBe(1000)
+  it('should be 500ms', () => {
+    expect(STABILITY_CHECK_INTERVAL).toBe(500)
   })
 })
 
 describe('STABILITY_CHECK_COUNT', () => {
-  it('should be 3 consecutive stable checks', () => {
-    expect(STABILITY_CHECK_COUNT).toBe(3)
+  it('should be 2 consecutive stable checks', () => {
+    expect(STABILITY_CHECK_COUNT).toBe(2)
   })
 })
 
 describe('POST_EXIT_DELAY', () => {
-  it('should be 1000ms (1 second)', () => {
-    expect(POST_EXIT_DELAY).toBe(1000)
+  it('should be 500ms', () => {
+    expect(POST_EXIT_DELAY).toBe(500)
   })
 })
 

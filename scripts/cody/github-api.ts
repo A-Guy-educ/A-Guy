@@ -258,6 +258,14 @@ export function ensureTaskMarkerComment(
         `Task marker exists on issue #${issueNumber} for ${existingTaskId} (current: ${taskId})`,
       )
     }
+    // Post a lightweight "run started" comment so every invocation has a visible run link
+    if (runUrl) {
+      const modeLine = mode ? ` (\`${mode}\` mode)` : ''
+      postComment(
+        issueNumber,
+        `🔄 Cody re-run for \`${existingTaskId}\`${modeLine}\nRun: ${runUrl}`,
+      )
+    }
     return
   }
 
@@ -272,3 +280,47 @@ export function ensureTaskMarkerComment(
     `🎯 Task created: \`${taskId}\`${modeLine}${runLine}\n\nCody will now process this task.`,
   )
 }
+
+// ============================================================================
+// Label Functions
+// ============================================================================
+
+/**
+ * Add a label to an issue
+ */
+export function addIssueLabel(issueNumber: number, label: string): void {
+  if (!issueNumber || !label) return
+
+  try {
+    execFileSync('gh', ['issue', 'edit', String(issueNumber), '--add-label', label], {
+      stdio: ['inherit', 'inherit', 'inherit'],
+    })
+    console.log(`  Added label "${label}" to issue #${issueNumber}`)
+  } catch (error) {
+    console.error(`Failed to add label "${label}" to issue ${issueNumber}:`, error)
+  }
+}
+
+/**
+ * Remove a label from an issue
+ */
+export function removeIssueLabel(issueNumber: number, label: string): void {
+  if (!issueNumber || !label) return
+
+  try {
+    execFileSync('gh', ['issue', 'edit', String(issueNumber), '--remove-label', label], {
+      stdio: ['inherit', 'inherit', 'inherit'],
+    })
+    console.log(`  Removed label "${label}" from issue #${issueNumber}`)
+  } catch (error) {
+    console.error(`Failed to remove label "${label}" from issue ${issueNumber}:`, error)
+  }
+}
+
+/**
+ * Gate labels for visibility in dashboard
+ */
+export const GATE_LABELS = {
+  HARD_STOP: 'hard-stop',
+  RISK_GATED: 'risk-gated',
+} as const

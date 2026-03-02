@@ -14,8 +14,16 @@ import { PipelinePausedError } from '../engine/types'
 import { readTask } from '../pipeline-utils'
 import { commitPipelineFiles } from '../git-utils'
 import { handleGateApproval } from '../clarify-workflow'
-import { extractGateCommentBody, postComment } from '../github-api'
+import {
+  extractGateCommentBody,
+  postComment,
+  addIssueLabel,
+  removeIssueLabel,
+  GATE_LABELS,
+} from '../github-api'
 import { loadState, updateStage, completeState, writeState } from '../engine/status'
+import { classifyError, formatErrorsAsMarkdown } from './error-classifier'
+import { runAgentWithFileWatch, STAGE_TIMEOUTS, DEFAULT_TIMEOUT } from '../agent-runner'
 
 /**
  * Execute a post-action
@@ -45,13 +53,26 @@ export async function executePostAction(
     case 'resolve-profile': {
       const taskDef = readTask(ctx.taskDir)
       if (taskDef) {
+        // Apply --complexity override if provided (for testing/debugging)
+        if (ctx.input.complexityOverride !== undefined && taskDef.complexity === undefined) {
+          taskDef.complexity = ctx.input.complexityOverride
+          taskDef.complexity_reasoning = `Override via --complexity=${ctx.input.complexityOverride}`
+          console.log(`  ℹ️ Applied complexity override: ${ctx.input.complexityOverride}`)
+        }
         // Update ctx.taskDef so subsequent post-actions can access it
         ctx.taskDef = taskDef
-        const { resolvePipelineProfile } = await import('../pipeline-utils')
+        const { resolvePipelineProfile, getComplexityTier } = await import('../pipeline-utils')
         ctx.profile = resolvePipelineProfile(taskDef)
         // Signal engine to rebuild pipeline with new profile (two-phase construction)
         ctx.pipelineNeedsRebuild = true
-        console.log(`  ℹ️ Resolved profile: ${ctx.profile}`)
+        if (taskDef.complexity !== undefined) {
+          const tier = getComplexityTier(taskDef.complexity)
+          console.log(`  ℹ️ Complexity: ${taskDef.complexity} (${tier}) → profile: ${ctx.profile}`)
+        } else {
+          console.log(
+            `  ℹ️ Resolved profile: ${ctx.profile} (no complexity score, using legacy heuristic)`,
+          )
+        }
 
         // Create stub promoted files for stages in skip_stages
         // The skip condition checks file existence, so we must ensure the file exists
@@ -83,7 +104,16 @@ export async function executePostAction(
         break
       }
       const gateResult = handleGateApproval(ctx.input, ctx.taskDir, action.gate, taskDef)
+
+      // Determine gate label based on risk level
+      const gateLabel =
+        taskDef.risk_level === 'high' ? GATE_LABELS.HARD_STOP : GATE_LABELS.RISK_GATED
+
       if (gateResult === 'waiting') {
+        // Add gate label for dashboard visibility
+        if (ctx.input.issueNumber) {
+          addIssueLabel(ctx.input.issueNumber, gateLabel)
+        }
         // Read gate file and extract comment body
         const gateFilePath = path.join(ctx.taskDir, `gate-${action.gate}.md`)
         if (fs.existsSync(gateFilePath)) {
@@ -118,7 +148,17 @@ export async function executePostAction(
         throw new PipelinePausedError(`${action.gate} gate: awaiting approval for ${ctx.taskId}`)
       }
       if (gateResult === 'rejected') {
+        // Remove gate label when rejected
+        if (ctx.input.issueNumber) {
+          removeIssueLabel(ctx.input.issueNumber, GATE_LABELS.HARD_STOP)
+          removeIssueLabel(ctx.input.issueNumber, GATE_LABELS.RISK_GATED)
+        }
         throw new Error(`Task rejected at ${action.gate} gate`)
+      }
+      // Approved - remove gate label so dashboard shows it's no longer waiting
+      if (ctx.input.issueNumber) {
+        removeIssueLabel(ctx.input.issueNumber, GATE_LABELS.HARD_STOP)
+        removeIssueLabel(ctx.input.issueNumber, GATE_LABELS.RISK_GATED)
       }
       break
     }
@@ -240,6 +280,158 @@ export async function executePostAction(
           dryRun: ctx.input.dryRun,
         })
       }
+      break
+    }
+
+    case 'run-quality-with-autofix': {
+      if (ctx.input.dryRun) return
+
+      type GateResult = {
+        name: string
+        command: string
+        source: 'tsc' | 'lint' | 'format' | 'test'
+        passed: boolean
+        error?: string
+      }
+
+      const runGates = (gates: typeof action.gates): GateResult[] => {
+        return gates.map((gate) => {
+          try {
+            console.log(`   Running ${gate.name}...`)
+            execSync(gate.command, { stdio: 'pipe' })
+            console.log(`   ✓ ${gate.name} passed`)
+            return { ...gate, passed: true }
+          } catch (error) {
+            const err = error as {
+              stdout?: Buffer | string
+              stderr?: Buffer | string
+              message?: string
+            }
+            const stdout = err.stdout
+              ? Buffer.isBuffer(err.stdout)
+                ? err.stdout.toString()
+                : err.stdout
+              : ''
+            const stderr = err.stderr
+              ? Buffer.isBuffer(err.stderr)
+                ? err.stderr.toString()
+                : err.stderr
+              : ''
+            const output = stdout + stderr + (err.message || '')
+            console.log(`   ✗ ${gate.name} failed`)
+            return { ...gate, passed: false, error: output }
+          }
+        })
+      }
+
+      // Initial run — all gates
+      let results = runGates(action.gates)
+      let failures = results.filter((r) => !r.passed)
+
+      if (failures.length === 0) break // All passed on first try
+
+      // Track feedback loop metrics for status.json observability
+      let completedLoops = 0
+      const encounteredErrors = new Set<string>()
+
+      // Autofix feedback loop
+      // Note: No commit/push after autofix here — the pipeline's 'commit' stage
+      // immediately follows 'build' and handles committing all working tree changes.
+      // This differs from scripted-handler.ts (verify autofix) which commits because
+      // it runs after the commit stage.
+      for (let attempt = 1; attempt <= action.maxFeedbackLoops; attempt++) {
+        console.log(`
+🔧 Build autofix attempt ${attempt}/${action.maxFeedbackLoops}...`)
+
+        // Classify errors and write build-errors.md
+        const errors = failures.map((f) => classifyError(f.error || '', f.source))
+        errors.forEach((e) => encounteredErrors.add(e.category))
+        completedLoops = attempt
+        const markdown = formatErrorsAsMarkdown(errors, attempt, action.maxFeedbackLoops)
+        const errorsFile = path.join(ctx.taskDir, 'build-errors.md')
+        fs.writeFileSync(errorsFile, markdown)
+
+        // Run autofix agent
+        const autofixOutput = path.join(ctx.taskDir, 'autofix.md')
+        if (fs.existsSync(autofixOutput)) {
+          fs.unlinkSync(autofixOutput)
+        }
+        const autofixTimeout = STAGE_TIMEOUTS.autofix ?? DEFAULT_TIMEOUT
+        const autofixResult = await runAgentWithFileWatch(
+          ctx.input,
+          'autofix',
+          autofixOutput,
+          autofixTimeout,
+          { backend: ctx.backend },
+        )
+
+        if (!autofixResult.succeeded) {
+          console.error(`  ❌ Autofix agent failed (attempt ${attempt})`)
+          continue
+        }
+
+        // Re-run ONLY failed gates
+        const failedGateSpecs = failures.map((f) => ({
+          name: f.name,
+          command: f.command,
+          source: f.source,
+        }))
+        results = runGates(failedGateSpecs)
+        failures = results.filter((r) => !r.passed)
+
+        if (failures.length === 0) {
+          console.log(`  ✅ All quality gates passed after autofix attempt ${attempt}`)
+          // Clean up build-errors.md since everything passed
+          if (fs.existsSync(errorsFile)) {
+            fs.unlinkSync(errorsFile)
+          }
+          break
+        }
+      }
+
+      // Record feedback loop metrics in status.json for observability (immutable update)
+      if (completedLoops > 0) {
+        const currentState = loadState(ctx.taskId)
+        if (currentState && currentState.stages?.build) {
+          const updatedState = updateStage(currentState, 'build', {
+            feedbackLoops: completedLoops,
+            feedbackErrors: Array.from(encounteredErrors),
+          })
+          writeState(ctx.taskId, updatedState)
+        }
+      }
+
+      if (failures.length > 0) {
+        const failedNames = failures.map((f) => f.name).join(', ')
+        throw new Error(
+          `Quality gates failed after ${action.maxFeedbackLoops} autofix attempts: ${failedNames}`,
+        )
+      }
+      break
+    }
+
+    case 'parallel': {
+      const parallelActions = (action as unknown as { actions: PostAction[] }).actions
+      console.log(`   Running ${parallelActions.length} actions in parallel...`)
+
+      const results = await Promise.allSettled(
+        parallelActions.map(async (a) => {
+          // Recursively execute each action
+          await executePostAction(ctx, a, null as unknown as never)
+        }),
+      )
+
+      const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      if (failures.length > 0) {
+        const errors = failures
+          .map((f) => {
+            const err = f.reason as Error
+            return err?.message || String(f.reason)
+          })
+          .join('; ')
+        throw new Error(`Parallel post-actions failed: ${errors}`)
+      }
+      console.log(`   ✅ All ${parallelActions.length} parallel actions completed`)
       break
     }
 

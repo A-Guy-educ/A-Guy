@@ -5,9 +5,6 @@
  * of media files. Works in both Next.js server context and standalone worker context.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* Reason: Vercel Blob SDK doesn't export proper types for all responses */
-
 import { del, list, put } from '@vercel/blob'
 
 // Environment variable names
@@ -218,10 +215,8 @@ export class VercelBlobAdapter {
         url: blob.url,
         pathname: blob.pathname,
         size: blob.size,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        contentType: (blob as any).contentType,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        uploadedAt: (blob as any).uploadedAt,
+        contentType: (blob as { contentType?: string }).contentType,
+        uploadedAt: (blob as { uploadedAt?: Date }).uploadedAt,
       })),
       cursor: result.cursor,
       hasMore: !!result.cursor,
@@ -277,10 +272,8 @@ export class VercelBlobAdapter {
       return {
         pathname: blob.pathname,
         size: blob.size,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        contentType: (blob as any).contentType,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        uploadedAt: (blob as any).uploadedAt,
+        contentType: (blob as { contentType?: string }).contentType,
+        uploadedAt: (blob as { uploadedAt?: Date }).uploadedAt,
       }
     } catch {
       return null

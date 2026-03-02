@@ -7,22 +7,58 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 
-import { fetchIssues, fetchWorkflowRuns, findAssociatedPR, findTaskBranch, getStatusFromBranch, createIssue } from '@/ui/cody/github-client'
-import type { CodyTask, ColumnId } from '@/ui/cody/types'
+import { fetchIssues, fetchWorkflowRuns, fetchOpenPRs, fetchDeploymentPreviews, findTaskBranch, getStatusFromBranch, createIssue, updateIssue } from '@/ui/cody/github-client'
+import type { CodyTask, ColumnId, GitHubIssue, GitHubPR, WorkflowRun } from '@/ui/cody/types'
 
-// Map GitHub issue state to column
-function getColumnForIssue(issue: { state: 'open' | 'closed'; labels: Array<{ name: string }> }, workflowStatus?: string): ColumnId {
-  if (issue.state === 'closed') return 'done'
-  
-  // Check for labels that indicate state
+// Map GitHub issue state to column using agent labels, workflow runs, and PR status
+// Priority: agent:* labels (set by Cody pipeline) > active workflow runs > gate labels > completed runs > PR status > other labels
+function getColumnForIssue(
+  issue: GitHubIssue,
+  workflowRun?: WorkflowRun,
+  associatedPR?: GitHubPR | null,
+): ColumnId {
   const labelNames = issue.labels.map(l => l.name.toLowerCase())
   
-  if (labelNames.includes('failed') || workflowStatus === 'failed') return 'failed'
+  // 1. Cody agent labels (highest priority — set by the pipeline itself)
+  if (labelNames.includes('agent:running')) return 'building'
+  if (labelNames.includes('agent:error')) return 'failed'
+  if (labelNames.includes('agent:done')) return 'done'
+  
+  // 2. Active workflow run takes priority over gate labels
+  // This ensures the dashboard shows "Building" even if risk-gated/hard-stop labels
+  // are still present (they are removed mid-run after approval)
+  if (workflowRun?.status === 'in_progress') return 'building'
+  
+  // 3. Explicit state labels (only checked when no active workflow run)
+  if (labelNames.includes('failed')) return 'failed'
   if (labelNames.includes('gate-waiting')) return 'gate-waiting'
   if (labelNames.includes('retrying')) return 'retrying'
+  
+  // 3b. Pipeline gate labels (set by pipeline when hitting gates)
+  // These are now checked AFTER active workflow runs to prevent stale gate labels
+  // from hiding active pipeline progress
+  if (labelNames.includes('hard-stop') || labelNames.includes('risk-gated')) return 'gate-waiting'
+
+  // 4. Workflow run completed status
+  if (workflowRun?.status === 'completed') {
+    // Also handle timed_out and cancelled as failures
+    if (
+      workflowRun.conclusion === 'failure' ||
+      workflowRun.conclusion === 'timed_out' ||
+      workflowRun.conclusion === 'cancelled'
+    )
+      return 'failed'
+  }
+  
+  // 5. Associated PR (always fetched via bulk)
+  if (associatedPR && !associatedPR.merged_at) return 'review'
+  
+  // 6. Other labels
+  if (labelNames.includes('released')) return 'done'
   if (labelNames.includes('in-progress') || labelNames.includes('building')) return 'building'
   if (labelNames.includes('review') || labelNames.includes('pr')) return 'review'
   
+  // 7. Default to open
   return 'open'
 }
 
@@ -44,39 +80,81 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Fetch issues (optimized: skip expensive PR/branch lookups in list view)
-    const issues = await fetchIssues({ 
-      state: 'all', 
-      perPage: 100,
-      since: sinceDate,
-    })
+    // Fetch issues, workflow runs, and open PRs in parallel (3 API calls, all cached)
+    const [issues, workflowRuns, openPRs] = await Promise.all([
+      fetchIssues({ 
+        state: 'open', 
+        perPage: 100,
+        since: sinceDate,
+      }),
+      fetchWorkflowRuns({ perPage: 30 }),
+      fetchOpenPRs(),
+    ])
 
-    // Only fetch workflow runs if we need details
-    const workflowRuns = includeDetails 
-      ? await fetchWorkflowRuns({ perPage: 50 })
-      : []
+    // Build a map of most recent workflow run per issue title for fast lookup
+    const runsByTitle = new Map<string, typeof workflowRuns[number]>()
+    for (const run of workflowRuns) {
+      const title = run.display_title || ''
+      // Keep only the most recent run per title (runs are sorted by date desc)
+      if (title && !runsByTitle.has(title)) {
+        runsByTitle.set(title, run)
+      }
+    }
+
+    // Build PR lookup: match by title or by issue number in branch name
+    const prsByIssueTitle = new Map<string, typeof openPRs[number]>()
+    const prsByIssueNumber = new Map<number, typeof openPRs[number]>()
+    for (const pr of openPRs) {
+      prsByIssueTitle.set(pr.title, pr)
+      // Extract issue number from branch name (e.g., "feat/501-add-loading" -> 501)
+      // or from PR title "Closes #501"
+      const branchMatch = pr.head.ref.match(/\/(\d{3,})-/)
+      if (branchMatch) {
+        prsByIssueNumber.set(parseInt(branchMatch[1], 10), pr)
+      }
+      const closesMatch = pr.title.match(/(?:closes|fixes|resolves)\s+#(\d+)/i)
+      if (closesMatch) {
+        prsByIssueNumber.set(parseInt(closesMatch[1], 10), pr)
+      }
+    }
+
+    // Fetch Vercel preview URLs for PRs that have them (1 bulk + N status calls, cached)
+    const prShas = openPRs.map(pr => pr.head.sha)
+    const previewUrls = await fetchDeploymentPreviews(prShas)
+    // Build SHA -> preview URL lookup keyed by PR number for easy access
+    const previewByPrNumber = new Map<number, string>()
+    for (const pr of openPRs) {
+      const url = previewUrls.get(pr.head.sha)
+      if (url) {
+        previewByPrNumber.set(pr.number, url)
+      } else {
+        // Fallback: generate Vercel preview URL from PR number
+        previewByPrNumber.set(pr.number, `https://a-m0beir6hv-aguy.vercel.app/pr/${pr.number}`)
+      }
+    }
 
     // Parse issues into tasks with additional metadata
     const tasks: CodyTask[] = await Promise.all(
       issues.map(async (issue) => {
-        // Find workflow run for this task
+        // Extract task ID from title (e.g., "[HIGH-507]" or "[260224-auto-38]")
         const taskIdMatch = issue.title.match(/\[[^\]]+\]/)
         const taskId = taskIdMatch ? taskIdMatch[0].replace(/[\[\]]/g, '') : ''
         
-        const workflowRun = workflowRuns.find(run => 
-          run.html_url.includes(taskId) || 
-          (issue.body && issue.body.includes(run.id.toString()))
-        )
+        // Match workflow run by issue title (most reliable) or taskId
+        const workflowRun = runsByTitle.get(issue.title) ?? 
+          workflowRuns.find(run => taskId && (
+            run.html_url.includes(taskId) || 
+            run.display_title?.includes(taskId)
+          ))
 
-        // Only fetch PR and branch details if requested (expensive API calls)
-        let pr = null
+        // Match PR from pre-fetched bulk data (cheap, no extra API calls)
+        const pr = prsByIssueTitle.get(issue.title) ??
+          prsByIssueNumber.get(issue.number) ??
+          null
+
+        // Only fetch branch/pipeline details if requested (expensive: N API calls per issue)
         let pipelineStatus = undefined
-        
         if (includeDetails && taskId) {
-          // Find associated PR
-          pr = await findAssociatedPR(taskId)
-
-          // Get pipeline status from branch
           const branch = await findTaskBranch(taskId)
           if (branch) {
             const status = await getStatusFromBranch(taskId, branch)
@@ -84,10 +162,18 @@ export async function GET(req: NextRequest) {
           }
         }
 
-        const column = getColumnForIssue(issue, workflowRun?.status)
+        const column = getColumnForIssue(issue, workflowRun ?? undefined, pr ?? null)
+
+        // Derive gate type from labels (set by pipeline)
+        const labelNames = issue.labels.map(l => l.name.toLowerCase())
+        const gateType = labelNames.includes('hard-stop') 
+          ? 'hard-stop' 
+          : labelNames.includes('risk-gated')
+            ? 'risk-gated'
+            : undefined
 
         return {
-          id: taskId || issue.number.toString(),
+          id: taskId ? `${taskId}-${issue.number}` : issue.number.toString(),
           issueNumber: issue.number,
           title: issue.title,
           body: issue.body || '',
@@ -114,9 +200,12 @@ export async function GET(req: NextRequest) {
             merged_at: pr.merged_at,
             html_url: pr.html_url,
           } : null,
-          // Include assignees for Execute button logic
           assignees: issue.assignees,
           isCodyAssigned: issue.isCodyAssigned,
+          previewUrl: pr ? previewByPrNumber.get(pr.number) : undefined,
+          // Substatus from labels and workflow run data
+          isTimeout: workflowRun?.conclusion === 'timed_out',
+          gateType,
         }
       })
     )
@@ -190,8 +279,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
-    // Generate task ID prefix if mode is provided
-    const taskIdPrefix = mode ? `[${new Date().toISOString().slice(2, 8).replace('-', '')}-auto-XX] ` : ''
+    // Generate task ID prefix only for pipeline modes (not for bug reports)
+    // Bug reports should keep their original title format
+    const isBugReport = mode === 'bug'
+    const datePrefix = new Date().toISOString().slice(2, 8).replace('-', '')
+    const taskIdPrefix = !isBugReport && mode ? `[${datePrefix}-auto-XX] ` : ''
     const fullTitle = title.startsWith('[') ? title : `${taskIdPrefix}${title}`
 
     // Create the issue in GitHub
@@ -203,6 +295,15 @@ export async function POST(req: NextRequest) {
     })
 
     console.log('[Cody] Created issue:', issue.number, issue.title)
+
+    // Fix the title: replace auto-XX with the real issue number
+    if (!isBugReport && mode && fullTitle.includes('auto-XX')) {
+      const correctedTitle = fullTitle.replace('auto-XX', `auto-${issue.number}`)
+      await updateIssue(issue.number, { title: correctedTitle })
+      console.log('[Cody] Fixed issue title:', issue.number, correctedTitle)
+      // Update the issue object with the corrected title for the response
+      issue.title = correctedTitle
+    }
 
     return NextResponse.json({
       success: true,

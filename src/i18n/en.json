@@ -78,6 +78,7 @@
       "expand": "Expand",
       "collapse": "Collapse",
       "preferencesPlaceholder": "Preferences settings will be available soon.",
+      "buildExamStudyPlan": "Build exam study plan",
       "teachersProfilePlaceholder": "Teachers profile features coming soon.",
       "teacherProfile": {
         "description": "Choose how your AI teacher interacts with you. This affects your chat experience.",
@@ -383,6 +384,19 @@
     "noDraftExercises": "No draft exercises found for this conversion.",
     "pages": "Pages {{start}}-{{end}}"
   },
+  "onboarding": {
+    "persona": {
+      "title": "Choose Your Teacher Style",
+      "subtitle": "Select how your AI teacher interacts with you. You can change this anytime in settings.",
+      "loading": "Loading teacher styles...",
+      "selected": "Selected",
+      "skip": "Skip for now",
+      "continue": "Continue",
+      "saving": "Saving...",
+      "saveFailed": "Failed to save your selection. Please try again.",
+      "noProfiles": "Teacher styles are currently unavailable. You can set this later in settings."
+    }
+  },
   "shop": {
     "backToLearning": "Back to Learning",
     "title": "Course Store",
@@ -446,5 +460,53 @@
       "privacy": "Privacy Policy",
       "contact": "Contact Us"
     }
+  },
+  "studyPlan": {
+    "pageTitle": "7-Day Focus Plan",
+    "pageSubtitle": "The most critical week for exam success",
+    "examDate": "When is the exam?",
+    "topicsTitle": "Topics to Focus On",
+    "addTopicPlaceholder": "Add a topic...",
+    "mastery": {
+      "weak": "Weak",
+      "medium": "Medium",
+      "strong": "Strong"
+    },
+    "scheduleTitle": "7-Day Focus Schedule",
+    "scheduleSubtitle": "(The countdown)",
+    "markComplete": "Mark Complete",
+    "undoComplete": "Mark as Planned",
+    "completed": "Completed",
+    "planned": "Planned",
+    "editDay": "Edit",
+    "saveEdit": "Save",
+    "cancelEdit": "Cancel",
+    "durationLabel": "Duration (min)",
+    "startTimeLabel": "Start time",
+    "minutesShort": "min",
+    "activity": {
+      "practice": "Focused Practice",
+      "hybrid": "Hybrid",
+      "full_simulation": "Full Simulation",
+      "reinforcement": "Reinforcement",
+      "warmup": "Warmup"
+    },
+    "cta": {
+      "practice": "Start Practice",
+      "hybrid": "Start Simulation",
+      "full_simulation": "Start Simulation",
+      "reinforcement": "Log Mistakes",
+      "warmup": "Start Review"
+    },
+    "empty": {
+      "title": "Ready to start?",
+      "description": "Enter your exam date and add topics to generate your 7-day focus plan."
+    },
+    "error": {
+      "noTopics": "Add at least one topic",
+      "noExamDate": "Select an exam date"
+    },
+    "loading": "Loading...",
+    "generateButton": "Build Focus Plan"
   }
 }

@@ -9,6 +9,7 @@ import { execFileSync, execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import { getDefaultBranch, commitAndPush } from './git-utils'
+import { postComment } from './github-api'
 
 // ============================================================================
 // Verify Stage — run quality gates directly
@@ -158,7 +159,12 @@ function getCommitSummary(defaultBranch: string, cwd: string): string {
   }
 }
 
-function buildPrTitle(taskDir: string, defaultBranch: string, cwd: string): string {
+function buildPrTitle(
+  taskDir: string,
+  defaultBranch: string,
+  cwd: string,
+  issueNumber?: number,
+): string {
   // Read task.md for context
   const taskMdPath = path.join(taskDir, 'task.md')
   let taskDescription = ''
@@ -246,7 +252,11 @@ function buildPrTitle(taskDir: string, defaultBranch: string, cwd: string): stri
 
   // Truncate to reasonable length
   const summary = titleSource.length > 72 ? titleSource.slice(0, 69) + '...' : titleSource
-  return `${taskType}: ${summary.toLowerCase()}`
+
+  // Add issue reference to title for GitHub auto-linking
+  const issueRef = issueNumber ? ` - Closes #${issueNumber}` : ''
+
+  return `${taskType}: ${summary.toLowerCase()}${issueRef}`
 }
 
 function buildPrBody(
@@ -296,12 +306,12 @@ function buildPrBody(
   return lines.join('\n')
 }
 
-export function runPrStage(
+export async function runPrStage(
   taskDir: string,
   outputFile: string,
   cwd: string = process.cwd(),
   issueNumber?: number,
-): PrResult {
+): Promise<PrResult> {
   console.log('\n📝 Creating PR (scripted)...\n')
 
   const branch = getBranchName(cwd)
@@ -329,38 +339,92 @@ export function runPrStage(
   }
 
   // Step 3: Build title and body
-  const title = buildPrTitle(taskDir, defaultBranch, cwd)
+  const title = buildPrTitle(taskDir, defaultBranch, cwd, issueNumber)
   const body = buildPrBody(taskDir, defaultBranch, cwd, issueNumber)
 
   console.log(`  Title: ${title}`)
 
-  // Step 4: Create PR via gh CLI — use execFileSync with arg array to prevent injection
+  // Step 4: Create PR via GitHub REST API (more reliable than gh CLI in CI)
   // BUG-F fix: Use GH_PAT if non-empty, fall back to GH_TOKEN (don't use empty string)
   const ghToken = process.env.GH_PAT?.trim() || process.env.GH_TOKEN
-  let prUrl = ''
+
+  // Extract owner and repo from git remote
+  let owner = ''
+  let repo = ''
   try {
-    prUrl = execFileSync(
-      'gh',
-      ['pr', 'create', '--title', title, '--base', defaultBranch, '--body-file', '-'],
-      {
-        cwd,
-        encoding: 'utf-8',
-        input: body,
-        stdio: ['pipe', 'pipe', 'inherit'],
-        env: { ...process.env, GH_TOKEN: ghToken },
-      },
-    ).trim()
-    console.log(`  ✅ PR created: ${prUrl}`)
-  } catch (error: unknown) {
-    const err = error as { message?: string }
-    const msg = err.message || 'Unknown error'
-    console.error(`  ❌ PR creation failed: ${msg}`)
-    const report = `# PR Stage\n\nFailed to create PR: ${msg}\n`
+    const remoteUrl = execFileSync('git', ['remote', 'get-url', 'origin'], {
+      cwd,
+      encoding: 'utf-8',
+    }).trim()
+    // Parse from: https://github.com/owner/repo.git or git@github.com:owner/repo.git
+    const match = remoteUrl.match(/github\.com[/:]([^/]+)\/([^/.]+)/)
+    if (match) {
+      owner = match[1]
+      repo = match[2]
+    }
+  } catch {
+    console.error('  ❌ Could not determine repo from git remote')
+    const report = `# PR Stage\n\nFailed to determine repository from git remote\n`
     fs.writeFileSync(outputFile, report)
     return { created: false, url: '', report }
   }
 
-  const report = `# PR Stage\n\nPR created: ${prUrl}\n\nTitle: ${title}\n`
+  let prUrl = ''
+  try {
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${ghToken}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title,
+        body,
+        head: branch,
+        base: defaultBranch,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`GitHub API error: ${response.status} - ${errorText}`)
+    }
+
+    const prData = (await response.json()) as { html_url: string }
+    prUrl = prData.html_url
+    console.log(`  ✅ PR created: ${prUrl}`)
+
+    // Post comment to issue linking to PR
+    if (issueNumber) {
+      const cleanUrl = prUrl.replace(/\n/g, '').trim()
+      postComment(issueNumber, `🎉 PR created: ${cleanUrl}`)
+      console.log(`  ✅ Commented on issue #${issueNumber}`)
+    }
+  } catch (error: unknown) {
+    const err = error as { message?: string }
+    const msg = err.message || 'Unknown error'
+    console.error(`  ❌ PR creation failed: ${msg}`)
+    const report = `# PR Stage
+
+Failed to create PR: ${msg}
+
+Title: ${title}
+
+${body}
+`
+    fs.writeFileSync(outputFile, report)
+    return { created: false, url: '', report }
+  }
+
+  const report = `# PR Stage
+
+PR created: ${prUrl}
+
+Title: ${title}
+
+${body}
+`
   fs.writeFileSync(outputFile, report)
   return { created: true, url: prUrl, report }
 }

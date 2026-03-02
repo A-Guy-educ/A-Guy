@@ -21,6 +21,10 @@ import type {
   WorkflowRun,
   GitHubPR,
   GitHubCollaborator,
+  CheckRunResult,
+  PRComment,
+  FileChange,
+  TaskDocument,
 } from './types'
 
 // ============ Types ============
@@ -71,9 +75,10 @@ function getOctokit(): Octokit {
     return octokitInstance
   }
 
-  const token = process.env.GITHUB_TOKEN
+  // Prefer CODY_BOT_TOKEN if set (for bot attribution), otherwise fall back to GITHUB_TOKEN
+  const token = process.env.CODY_BOT_TOKEN || process.env.GITHUB_TOKEN
   if (!token) {
-    throw new Error('GITHUB_TOKEN not configured')
+    throw new Error('Neither CODY_BOT_TOKEN nor GITHUB_TOKEN is configured')
   }
 
   // Create Octokit instance - rate limiting handled manually in API routes
@@ -116,6 +121,57 @@ export async function findTaskBranch(taskId: string): Promise<string | null> {
   // Return first successful result
   for (const result of results) {
     if (result.status === 'fulfilled' && result.value) {
+      return result.value
+    }
+  }
+
+  return null
+}
+
+/**
+ * Find a branch by issue number.
+ * The pipeline convention includes the issue number in the branch name:
+ *   {prefix}/{YYMMDD}-auto-{issueNumber}-{sanitized-title}
+ * We search across all known prefixes using the matching-refs API.
+ */
+export async function findBranchByIssueNumber(
+  issueNumber: string | number,
+): Promise<string | null> {
+  const cacheKey = `branch:issue:${issueNumber}`
+  const cached = getCached<string>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+  const issueStr = String(issueNumber)
+
+  // Search each prefix in parallel using the matching-refs API
+  const results = await Promise.allSettled(
+    BRANCH_PREFIXES.map(async (prefix) => {
+      try {
+        const { data } = await octokit.git.listMatchingRefs({
+          owner: GITHUB_OWNER,
+          repo: GITHUB_REPO,
+          ref: `heads/${prefix}/`,
+        })
+
+        // Find branches containing -<issueNumber>- in their name
+        // e.g., fix/260228-auto-635-fix-conversation-delete-endpoint-b
+        const pattern = new RegExp(`-${issueStr}-`)
+        const match = data.find((ref: any) => {
+          const branchName = ref.ref.replace('refs/heads/', '')
+          return pattern.test(branchName)
+        })
+
+        return match ? match.ref.replace('refs/heads/', '') : null
+      } catch {
+        return null
+      }
+    }),
+  )
+
+  for (const result of results) {
+    if (result.status === 'fulfilled' && result.value) {
+      setCache(cacheKey, CACHE_TTL.pipeline, result.value)
       return result.value
     }
   }
@@ -251,6 +307,11 @@ export async function fetchIssue(issueNumber: number): Promise<GitHubIssue | nul
       updated_at: data.updated_at ?? '',
       closed_at: data.closed_at ?? null,
       html_url: data.html_url ?? '',
+      isCodyAssigned:
+        data.assignees?.some(
+          (a: any) =>
+            a.login === 'github-actions[bot]' || a.login === 'Copilot' || (a as any).type === 'Bot',
+        ) ?? false,
     }
 
     // Single issue, cache for longer
@@ -292,28 +353,36 @@ export async function fetchIssues(options?: {
     since: options?.since as any, // Octokit accepts ISO string
   })
 
-  const issues: GitHubIssue[] = data.map((issue: any) => ({
-    id: issue.id,
-    number: issue.number,
-    title: issue.title,
-    body: issue.body ?? null,
-    state: issue.state as 'open' | 'closed',
-    labels: issue.labels.map((l: any) =>
-      typeof l === 'string'
-        ? { name: l, color: '000000' }
-        : { name: l.name ?? '', color: l.color ?? '000000' },
-    ),
-    milestone: issue.milestone ? { title: issue.milestone.title ?? '' } : null,
-    assignees:
-      issue.assignees?.map((a: any) => ({
-        login: a.login ?? '',
-        avatar_url: a.avatar_url ?? '',
-      })) ?? [],
-    created_at: issue.created_at ?? '',
-    updated_at: issue.updated_at ?? '',
-    closed_at: issue.closed_at ?? null,
-    html_url: issue.html_url ?? '',
-  }))
+  // Filter out pull requests — GitHub issues API returns both issues and PRs
+  const issues: GitHubIssue[] = data
+    .filter((issue: any) => !issue.pull_request)
+    .map((issue: any) => ({
+      id: issue.id,
+      number: issue.number,
+      title: issue.title,
+      body: issue.body ?? null,
+      state: issue.state as 'open' | 'closed',
+      labels: issue.labels.map((l: any) =>
+        typeof l === 'string'
+          ? { name: l, color: '000000' }
+          : { name: l.name ?? '', color: l.color ?? '000000' },
+      ),
+      milestone: issue.milestone ? { title: issue.milestone.title ?? '' } : null,
+      assignees:
+        issue.assignees?.map((a: any) => ({
+          login: a.login ?? '',
+          avatar_url: a.avatar_url ?? '',
+        })) ?? [],
+      created_at: issue.created_at ?? '',
+      updated_at: issue.updated_at ?? '',
+      closed_at: issue.closed_at ?? null,
+      html_url: issue.html_url ?? '',
+      isCodyAssigned:
+        issue.assignees?.some(
+          (a: any) =>
+            a.login === 'github-actions[bot]' || a.login === 'Copilot' || a.type === 'Bot',
+        ) ?? false,
+    }))
 
   setCache(cacheKey, CACHE_TTL.tasks, issues)
   return issues
@@ -382,6 +451,7 @@ export async function fetchWorkflowRuns(options?: {
     created_at: run.created_at,
     updated_at: run.updated_at,
     html_url: run.html_url,
+    display_title: (run as any).display_title ?? '',
   }))
 
   setCache(cacheKey, CACHE_TTL.pipeline, runs)
@@ -397,6 +467,148 @@ export async function getWorkflowRunForTask(taskId: string): Promise<WorkflowRun
   return (
     runs.find((run) => run.html_url.includes(taskId) || taskId.includes(run.id.toString())) || null
   )
+}
+
+/**
+ * Fetch check runs (lint, test, typecheck, etc.) for a workflow run
+ */
+export async function fetchCheckRunsForRun(runId: number): Promise<CheckRunResult[]> {
+  const cacheKey = `check-runs:${runId}`
+  const cached = getCached<CheckRunResult[]>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+
+  try {
+    // Get jobs for the workflow run - these contain lint, test, typecheck results
+    const { data } = await octokit.actions.listJobsForWorkflowRun({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      run_id: runId,
+      per_page: 50,
+    })
+
+    const checkRuns: CheckRunResult[] = (data.jobs as any[]).map((job) => ({
+      name: job.name,
+      status: job.status as 'queued' | 'in_progress' | 'completed',
+      conclusion: job.conclusion as CheckRunResult['conclusion'],
+      output: job.steps
+        ? {
+            summary: `${job.steps.length} steps`,
+            text: JSON.stringify(
+              job.steps.map((s: any) => ({
+                name: s.name,
+                status: s.status,
+                conclusion: s.conclusion,
+              })),
+            ),
+          }
+        : undefined,
+      html_url: job.html_url || undefined,
+    }))
+
+    setCache(cacheKey, CACHE_TTL.pipeline, checkRuns)
+    return checkRuns
+  } catch (error) {
+    console.error('[Cody] Error fetching check runs:', error)
+    return []
+  }
+}
+
+// ============ Bulk PR Fetch ============
+
+/**
+ * Fetch all open PRs in one call (cheap: single API request).
+ * Used by the dashboard to match PRs to issues without N per-issue calls.
+ */
+export async function fetchOpenPRs(): Promise<GitHubPR[]> {
+  const cacheKey = 'open-prs'
+  const cached = getCached<GitHubPR[]>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+
+  const { data } = await octokit.pulls.list({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    state: 'open',
+    per_page: 50,
+    sort: 'updated',
+    direction: 'desc',
+  })
+
+  const prs: GitHubPR[] = data.map((pr) => ({
+    id: pr.id,
+    number: pr.number,
+    title: pr.title,
+    state: pr.state,
+    head: {
+      ref: pr.head.ref,
+      sha: pr.head.sha,
+    },
+    merged_at: pr.merged_at,
+    html_url: pr.html_url,
+  }))
+
+  setCache(cacheKey, CACHE_TTL.prs, prs)
+  return prs
+}
+
+// ============ Vercel Preview URLs ============
+
+/**
+ * Fetch Vercel preview URLs for a set of PR head SHAs.
+ * Strategy: 1 bulk call for recent deployments, then 1 status call per matched deployment.
+ * Returns a Map of SHA -> preview URL.
+ */
+export async function fetchDeploymentPreviews(prShas: string[]): Promise<Map<string, string>> {
+  if (prShas.length === 0) return new Map()
+
+  const cacheKey = `previews:${prShas.sort().join(',')}`
+  const cached = getCached<Map<string, string>>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+  const result = new Map<string, string>()
+
+  try {
+    // 1. Bulk fetch recent Preview deployments (1 API call)
+    const { data: deployments } = await octokit.repos.listDeployments({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      environment: 'Preview',
+      per_page: 30,
+    })
+
+    // 2. Match deployments to our PR SHAs
+    const shaSet = new Set(prShas)
+    const matched = deployments.filter((d) => shaSet.has(d.sha))
+
+    // 3. Fetch status for each matched deployment (1 call per match, typically 1-3)
+    await Promise.all(
+      matched.map(async (deployment) => {
+        try {
+          const { data: statuses } = await octokit.repos.listDeploymentStatuses({
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
+            deployment_id: deployment.id,
+            per_page: 1,
+          })
+          if (statuses.length > 0 && statuses[0].environment_url) {
+            result.set(deployment.sha, statuses[0].environment_url)
+          }
+        } catch {
+          // Skip individual failures
+        }
+      }),
+    )
+  } catch (error) {
+    console.error('[Cody] Error fetching deployment previews:', error)
+  }
+
+  // Cache for 2 minutes (deployments don't change often)
+  setCache(cacheKey, CACHE_TTL.prs, result)
+  return result
 }
 
 // ============ PR Discovery ============
@@ -447,6 +659,226 @@ export async function findAssociatedPR(taskId: string): Promise<GitHubPR | null>
   // Cache null as well
   setCache(cacheKey, CACHE_TTL.prs, null)
   return null
+}
+
+/**
+ * Fetch comments for a PR
+ */
+export async function fetchPRComments(prNumber: number): Promise<PRComment[]> {
+  const cacheKey = `pr-comments:${prNumber}`
+  const cached = getCached<PRComment[]>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+
+  try {
+    const { data } = await octokit.issues.listComments({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      issue_number: prNumber,
+      per_page: 50,
+    })
+
+    const comments: PRComment[] = data.map((comment) => ({
+      id: comment.id,
+      body: comment.body || '',
+      created_at: comment.created_at,
+      user: {
+        login: comment.user?.login || '',
+        avatar_url: comment.user?.avatar_url || '',
+      },
+    }))
+
+    setCache(cacheKey, CACHE_TTL.tasks, comments)
+    return comments
+  } catch (error) {
+    console.error('[Cody] Error fetching PR comments:', error)
+    return []
+  }
+}
+
+/**
+ * Fetch file changes for a PR
+ */
+export async function fetchPRFileChanges(prNumber: number): Promise<FileChange[]> {
+  const cacheKey = `pr-files:${prNumber}`
+  const cached = getCached<FileChange[]>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+
+  try {
+    const { data } = await octokit.pulls.listFiles({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      pull_number: prNumber,
+      per_page: 100,
+    })
+
+    const changes: FileChange[] = data.map((file) => ({
+      filename: file.filename,
+      status: file.status as FileChange['status'],
+      additions: file.additions,
+      deletions: file.deletions,
+    }))
+
+    setCache(cacheKey, CACHE_TTL.tasks, changes)
+    return changes
+  } catch (error) {
+    console.error('[Cody] Error fetching PR files:', error)
+    return []
+  }
+}
+
+/**
+ * Close a PR (without merging)
+ */
+export async function closePR(prNumber: number): Promise<void> {
+  const octokit = getOctokit()
+
+  await octokit.pulls.update({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    pull_number: prNumber,
+    state: 'closed',
+  })
+
+  // Invalidate PR cache
+  cache.clear()
+}
+
+/**
+ * Delete a branch
+ */
+export async function deleteBranch(branchName: string): Promise<void> {
+  // Don't delete protected branches
+  if (branchName === 'dev' || branchName === 'main' || branchName === 'master') {
+    console.log(`[Cody] Skipping deletion of protected branch: ${branchName}`)
+    return
+  }
+
+  const octokit = getOctokit()
+
+  try {
+    await octokit.git.deleteRef({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      ref: `heads/${branchName}`,
+    })
+    console.log(`[Cody] Deleted branch: ${branchName}`)
+  } catch (error: any) {
+    // Ignore if branch doesn't exist
+    if (error.status === 422 && error.message?.includes('Reference does not exist')) {
+      console.log(`[Cody] Branch already deleted: ${branchName}`)
+      return
+    }
+    throw error
+  }
+
+  // Invalidate cache
+  cache.clear()
+}
+
+/**
+ * Fetch all task documents from branch by listing the task directory.
+ * Discovers files dynamically instead of using a hardcoded list.
+ */
+export async function fetchTaskDocuments(taskId: string, branch: string): Promise<TaskDocument[]> {
+  const octokit = getOctokit()
+  const taskPath = `.tasks/${taskId}`
+
+  try {
+    // List all files in the task directory
+    const { data } = await octokit.repos.getContent({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      path: taskPath,
+      ref: branch,
+    })
+
+    if (!Array.isArray(data)) return []
+
+    // Filter to files only (skip subdirectories), fetch content in parallel
+    const files = data.filter((item: any) => item.type === 'file')
+
+    const results = await Promise.allSettled(
+      files.map(async (file: any) => {
+        try {
+          const { data: fileData } = await octokit.repos.getContent({
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
+            path: file.path,
+            ref: branch,
+          })
+
+          if ('content' in fileData && fileData.content) {
+            const content = Buffer.from(fileData.content, 'base64').toString('utf-8')
+            return {
+              name: file.name as string,
+              content,
+              path: file.path as string,
+            }
+          }
+        } catch {
+          // File content couldn't be fetched
+        }
+        return null
+      }),
+    )
+
+    const documents: TaskDocument[] = []
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value) {
+        documents.push(result.value)
+      }
+    }
+
+    return documents
+  } catch {
+    // Task directory doesn't exist on this branch
+    return []
+  }
+}
+
+/**
+ * Fetch task documents by discovering the task directory on a branch.
+ * Lists .tasks/ dir, finds dirs matching YYMMDD- pattern, picks the newest,
+ * then fetches known doc files from it.
+ */
+export async function fetchBranchDocuments(branch: string): Promise<TaskDocument[]> {
+  const octokit = getOctokit()
+
+  try {
+    // 1. List .tasks/ directory on the branch
+    const { data } = await octokit.repos.getContent({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      path: '.tasks',
+      ref: branch,
+    })
+
+    if (!Array.isArray(data)) return []
+
+    // 2. Find directories matching YYMMDD- pattern (e.g., 260228-auto-74)
+    const taskDirs = data
+      .filter((item: any) => item.type === 'dir' && /^\d{6}-/.test(item.name))
+      .map((item: any) => item.name)
+      .sort()
+      .reverse() // newest first by date prefix
+
+    if (taskDirs.length === 0) return []
+
+    // 3. Use the newest task dir
+    const taskId = taskDirs[0]
+
+    // 4. Fetch known doc files from it
+    return fetchTaskDocuments(taskId, branch)
+  } catch (error: any) {
+    if (error.status !== 404) {
+      console.error('[Cody] Error listing branch task dirs:', error)
+    }
+    return []
+  }
 }
 
 // ============ Labels & Milestones ============
@@ -751,5 +1183,77 @@ export function getCacheStats(): { size: number; keys: string[] } {
   return {
     size: cache.size,
     keys: Array.from(cache.keys()),
+  }
+}
+
+// ============ PR CI Status ============
+
+/**
+ * Fetch the combined CI status for a PR's head commit.
+ * Uses the combined status API + check runs to determine overall state.
+ */
+export async function fetchPRCIStatus(
+  prNumber: number,
+): Promise<{ ciStatus: 'pending' | 'success' | 'failure' | 'running'; mergeable: boolean }> {
+  const cacheKey = `pr-ci-status:${prNumber}`
+  const cached = getCached<{
+    ciStatus: 'pending' | 'success' | 'failure' | 'running'
+    mergeable: boolean
+  }>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+
+  try {
+    // 1. Get the PR to find head SHA and mergeable state
+    const { data: pr } = await octokit.pulls.get({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      pull_number: prNumber,
+    })
+
+    const sha = pr.head.sha
+    const mergeable = pr.mergeable ?? false
+
+    // 2. Get check runs for the head SHA
+    const { data: checkRuns } = await octokit.checks.listForRef({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      ref: sha,
+    })
+
+    // 3. Determine overall CI status
+    let ciStatus: 'pending' | 'success' | 'failure' | 'running' = 'pending'
+
+    if (checkRuns.total_count === 0) {
+      ciStatus = 'pending'
+    } else {
+      const hasFailure = checkRuns.check_runs.some(
+        (run) => run.conclusion === 'failure' || run.conclusion === 'timed_out',
+      )
+      const hasRunning = checkRuns.check_runs.some(
+        (run) => run.status === 'in_progress' || run.status === 'queued',
+      )
+      const allSuccess = checkRuns.check_runs.every(
+        (run) => run.conclusion === 'success' || run.conclusion === 'skipped',
+      )
+
+      if (hasFailure) {
+        ciStatus = 'failure'
+      } else if (hasRunning) {
+        ciStatus = 'running'
+      } else if (allSuccess) {
+        ciStatus = 'success'
+      }
+    }
+
+    const result = { ciStatus, mergeable: mergeable && ciStatus === 'success' }
+
+    // Short cache — CI status changes frequently
+    setCache(cacheKey, 30_000, result) // 30 seconds
+    return result
+  } catch (error) {
+    console.error('[Cody] Error fetching PR CI status:', error)
+    return { ciStatus: 'pending', mergeable: false }
   }
 }

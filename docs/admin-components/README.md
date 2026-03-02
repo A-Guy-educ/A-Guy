@@ -47,8 +47,8 @@ This guide explains how to create and register custom components for the Payload
 
 | Component | Type | Purpose | Location |
 |-----------|------|---------|----------|
-| **ExerciseContentEditor** | Field | Block-based exercise content editor | [`src/components/admin/ExerciseContentEditor/index.tsx`](../../src/components/admin/ExerciseContentEditor/index.tsx) |
-| **AnswerSpecJsonField** | Field | JSON editor with syntax highlighting | [`src/components/admin/AnswerSpecJsonField/index.tsx`](../../src/components/admin/AnswerSpecJsonField/index.tsx) |
+| **ExerciseContentEditor** | Field | Block-based exercise content editor | [`src/ui/admin/ExerciseContentEditor/index.tsx`](../../src/ui/admin/ExerciseContentEditor/index.tsx) |
+| **AnswerSpecJsonField** | Field | JSON editor with syntax highlighting | *File removed* |
 | **ChapterBreadcrumbField** | Field | Breadcrumb navigation for chapters | `src/components/admin/ChapterBreadcrumbField/` |
 | **LessonBreadcrumbField** | Field | Breadcrumb navigation for lessons | `src/components/admin/LessonBreadcrumbField/` |
 

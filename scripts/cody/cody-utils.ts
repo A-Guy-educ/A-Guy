@@ -35,6 +35,10 @@ export interface CodyInput {
   clarify?: boolean
   // Control mode override: auto, risk-gated, hard-stop
   controlMode?: 'auto' | 'risk-gated' | 'hard-stop'
+  // Pipeline version: branch, tag, or commit to overlay (overrides CODY_DEFAULT_VERSION)
+  version?: string
+  // Complexity score override (1-100) for testing/debugging
+  complexityOverride?: number
 }
 
 export interface CodyPipelineStatus {
@@ -438,6 +442,10 @@ export function parseCliArgs(argv: string[]): CodyInput {
       input.runUrl = normalized[i + 1]
       cliSet.add('runUrl')
       i++
+    } else if (arg === '--version' && normalized[i + 1]) {
+      input.version = normalized[i + 1]
+      cliSet.add('version')
+      i++
     } else if (arg.startsWith('--comment-body-env=')) {
       // For comment triggers: read the raw comment body from env var
       // This avoids shell injection when passing comment content through CI
@@ -529,9 +537,22 @@ export function parseCliArgs(argv: string[]): CodyInput {
     } else if (arg === '--local') {
       input.local = true
       cliSet.add('local')
+    } else if (arg === '--github' || arg === '--ci') {
+      // Explicitly use GitHub-hosted runner (instead of local self-hosted)
+      input.local = false
+      cliSet.add('local')
     } else if (arg === '--clarify') {
       input.clarify = true
       cliSet.add('clarify')
+    } else if (arg === '--complexity' && normalized[i + 1]) {
+      const val = parseInt(normalized[i + 1], 10)
+      if (!isNaN(val) && val >= 1 && val <= 100) {
+        input.complexityOverride = val
+        cliSet.add('complexityOverride')
+      } else {
+        throw new Error(`Invalid --complexity value: ${normalized[i + 1]}. Must be 1-100`)
+      }
+      i++
     }
   }
 
@@ -566,6 +587,15 @@ export function parseCliArgs(argv: string[]): CodyInput {
   }
   if (!cliSet.has('runUrl') && process.env.RUN_URL) {
     input.runUrl = process.env.RUN_URL
+  }
+  if (!cliSet.has('version') && process.env.VERSION) {
+    input.version = process.env.VERSION
+  }
+  if (!cliSet.has('complexityOverride') && process.env.COMPLEXITY) {
+    const val = parseInt(process.env.COMPLEXITY, 10)
+    if (!isNaN(val) && val >= 1 && val <= 100) {
+      input.complexityOverride = val
+    }
   }
   // Store raw comment body for gate approval detection (only for comment triggers)
   if (!input.commentBody && process.env.COMMENT_BODY && input.triggerType === 'comment') {
@@ -844,9 +874,6 @@ export function formatStatusComment(
 
   if (status.state === 'running') {
     lines.push(`🔄 Cody running for \`${input.taskId}\` (mode: ${input.mode})`)
-    if (input.runUrl) {
-      lines.push(`Run: ${input.runUrl}`)
-    }
     lines.push('')
 
     if (currentStage) {
@@ -888,6 +915,11 @@ export function formatStatusComment(
     lines.push(`❌ Cody failed for \`${input.taskId}\``)
   } else if (status.state === 'timeout') {
     lines.push(`⏰ Cody timed out for \`${input.taskId}\``)
+  }
+
+  // Always append run URL regardless of state
+  if (input.runUrl) {
+    lines.push(`Run: ${input.runUrl}`)
   }
 
   return lines.join('\n')

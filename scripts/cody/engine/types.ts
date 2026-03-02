@@ -52,6 +52,12 @@ export interface StageDefinition {
   advisory?: boolean
   preExecute?: StagePreExecute
   /**
+   * Minimum complexity score (1-100) for this stage to run.
+   * Informational only — actual routing uses STAGE_COMPLEXITY_THRESHOLDS
+   * in skip-conditions.ts. Keep in sync with STAGE_COMPLEXITY_THRESHOLDS.
+   */
+  minComplexity?: number
+  /**
    * Called when agent exits 0 but doesn't produce the expected output file.
    * Returns the fallback content to write, or null to proceed with normal retry/fail.
    */
@@ -104,6 +110,8 @@ export interface StageStateV2 {
   outputFile?: string
   skipped?: string
   error?: string
+  feedbackLoops?: number
+  feedbackErrors?: string[]
 }
 
 export interface PipelineStateV2 {
@@ -118,6 +126,10 @@ export interface PipelineStateV2 {
   state: 'running' | 'completed' | 'failed' | 'timeout' | 'paused'
   cursor: string | null
   stages: Record<string, StageStateV2>
+  /** GitHub issue number that triggered this pipeline run */
+  issueNumber?: number
+  /** Git branch name created for this task (set after ensureFeatureBranch) */
+  branchName?: string
 }
 
 // Zod schema for PipelineStateV2
@@ -132,6 +144,8 @@ export const PipelineStateV2Schema: z.ZodType<PipelineStateV2> = z.object({
   totalElapsed: z.number().optional(),
   state: z.enum(['running', 'completed', 'failed', 'timeout', 'paused']),
   cursor: z.string().nullable(),
+  issueNumber: z.number().optional(),
+  branchName: z.string().optional(),
   stages: z.record(
     z.string(),
     z.object({
@@ -143,6 +157,8 @@ export const PipelineStateV2Schema: z.ZodType<PipelineStateV2> = z.object({
       outputFile: z.string().optional(),
       skipped: z.string().optional(),
       error: z.string().optional(),
+      feedbackLoops: z.number().optional(),
+      feedbackErrors: z.array(z.string()).optional(),
     }),
   ),
 })
@@ -213,9 +229,22 @@ export type RunUnitTestsAction = {
   type: 'run-unit-tests'
 }
 
+// Run-quality-with-autofix action — feedback loop that retries with autofix agent
+export type RunQualityWithAutofixAction = {
+  type: 'run-quality-with-autofix'
+  gates: Array<{ name: string; command: string; source: 'tsc' | 'lint' | 'format' | 'test' }>
+  maxFeedbackLoops: number
+}
+
 // Commit-audit-history action
 export type CommitAuditHistoryAction = {
   type: 'commit-audit-history'
+}
+
+// Parallel-post-action - runs multiple actions concurrently
+export type ParallelPostAction = {
+  type: 'parallel'
+  actions: PostAction[]
 }
 
 // Post-action discriminated union
@@ -229,7 +258,9 @@ export type PostAction =
   | ValidateBuildContentAction
   | RunTscAction
   | RunUnitTestsAction
+  | RunQualityWithAutofixAction
   | CommitAuditHistoryAction
+  | ParallelPostAction
 
 // ============================================================================
 // Lifecycle Hooks

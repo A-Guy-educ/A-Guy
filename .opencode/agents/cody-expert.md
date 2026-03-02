@@ -1,12 +1,12 @@
 ---
 name: cody-expert
 description: Cody pipeline expert - understands pipeline execution, debugging, adding new stages
-mode: primary
+mode: all
 tools:
   bash: true
   read: true
-  write: true
-  edit: true
+  write: false
+  edit: false
 ---
 
 # CODY EXPERT AGENT

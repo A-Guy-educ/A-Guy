@@ -7,7 +7,9 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { codyApi, RateLimitError, NoTokenError } from '../api'
+import type { CodyTask } from '../types'
 import { POLLING_INTERVALS } from '../constants'
 
 // Query keys
@@ -34,17 +36,39 @@ export interface UseCodyTasksOptions {
   refetchInterval?: 'auto' | 'idle' | 'board' | 'active' | false
 }
 
+/**
+ * Determine polling interval based on current task data.
+ * - Active tasks (building/retrying/gate-waiting): poll every 10s
+ * - All idle: poll every 30s
+ */
+function getSmartInterval(tasks: CodyTask[] | undefined): number {
+  if (!tasks || tasks.length === 0) return POLLING_INTERVALS.idle
+
+  const hasActive = tasks.some(
+    (t) => t.column === 'building' || t.column === 'retrying' || t.column === 'gate-waiting',
+  )
+
+  return hasActive ? POLLING_INTERVALS.board : POLLING_INTERVALS.idle
+}
+
 export function useCodyTasks(options: UseCodyTasksOptions = {}) {
   const { days, includeDetails = false, refetchInterval = 'auto' } = options
 
   return useQuery({
     queryKey: queryKeys.tasks(days, includeDetails),
     queryFn: () => codyApi.tasks.list({ days, includeDetails }),
-    refetchInterval: (): number | false => {
-      if (refetchInterval === false || refetchInterval === 'auto') return false
+    refetchInterval: (query): number | false => {
+      if (refetchInterval === false) return false
+
+      // Smart auto mode: inspect data to decide interval
+      if (refetchInterval === 'auto') {
+        return getSmartInterval(query.state.data)
+      }
 
       return POLLING_INTERVALS[refetchInterval]
     },
+    refetchIntervalInBackground: false, // Don't poll when tab is hidden
+    refetchOnWindowFocus: true, // Refresh immediately when user tabs back
     retry: (failureCount, error) => {
       if (error instanceof RateLimitError) return false
       if (error instanceof NoTokenError) return false
@@ -163,6 +187,36 @@ export function usePostComment(issueNumber: number) {
   })
 }
 
+// ============ useRetryWithContext ============
+
+export interface UseRetryWithContextOptions {
+  issueNumber: number
+  onSuccess?: () => void
+  onError?: (error: Error) => void
+}
+
+export function useRetryWithContext({
+  issueNumber,
+  onSuccess,
+  onError,
+}: UseRetryWithContextOptions) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (context: string) => {
+      // First post the comment with @cody retry and context
+      await codyApi.tasks.retryWithContext(issueNumber, context)
+      // Then trigger execution
+      await codyApi.tasks.execute(issueNumber)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
+      onSuccess?.()
+    },
+    onError,
+  })
+}
+
 // ============ useTaskActions ============
 
 export interface UseTaskActionsOptions {
@@ -171,50 +225,108 @@ export interface UseTaskActionsOptions {
   onError?: (error: Error) => void
 }
 
+/**
+ * Hook providing all task action mutations with per-action pending states
+ * and toast notifications for user feedback.
+ */
 export function useTaskActions({ issueNumber, onSuccess, onError }: UseTaskActionsOptions) {
   const queryClient = useQueryClient()
 
+  const handleError = (label: string) => (error: Error) => {
+    toast.error(`Failed to ${label}`, { description: error.message })
+    onError?.(error)
+  }
+
+  const handleSuccess = (label: string) => () => {
+    queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
+    toast.success(label)
+    onSuccess?.()
+  }
+
   const execute = useMutation({
     mutationFn: () => codyApi.tasks.execute(issueNumber),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
-      onSuccess?.()
-    },
-    onError,
+    onSuccess: handleSuccess('Task started'),
+    onError: handleError('start task'),
   })
 
   const close = useMutation({
     mutationFn: () => codyApi.tasks.close(issueNumber),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
-      onSuccess?.()
-    },
-    onError,
+    onSuccess: handleSuccess('Issue closed'),
+    onError: handleError('close issue'),
   })
 
   const reopen = useMutation({
     mutationFn: () => codyApi.tasks.reopen(issueNumber),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
-      onSuccess?.()
-    },
-    onError,
+    onSuccess: handleSuccess('Issue reopened'),
+    onError: handleError('reopen issue'),
   })
 
   const abort = useMutation({
     mutationFn: () => codyApi.tasks.abort(issueNumber),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
-      onSuccess?.()
-    },
-    onError,
+    onSuccess: handleSuccess('Task stopped'),
+    onError: handleError('stop task'),
   })
+
+  const closePR = useMutation({
+    mutationFn: () => codyApi.tasks.closePR(issueNumber),
+    onSuccess: handleSuccess('PR closed'),
+    onError: handleError('close PR'),
+  })
+
+  const reset = useMutation({
+    mutationFn: () => codyApi.tasks.reset(issueNumber),
+    onSuccess: handleSuccess('Task reset successfully'),
+    onError: handleError('reset task'),
+  })
+
+  const approveGate = useMutation({
+    mutationFn: () => codyApi.tasks.approveGate(issueNumber),
+    onSuccess: handleSuccess('Gate approved'),
+    onError: handleError('approve gate'),
+  })
+
+  const rejectGate = useMutation({
+    mutationFn: () => codyApi.tasks.rejectGate(issueNumber),
+    onSuccess: handleSuccess('Gate rejected'),
+    onError: handleError('reject gate'),
+  })
+
+  const isPending =
+    execute.isPending ||
+    close.isPending ||
+    closePR.isPending ||
+    reset.isPending ||
+    reopen.isPending ||
+    abort.isPending ||
+    approveGate.isPending ||
+    rejectGate.isPending
 
   return {
     execute: execute.mutate,
     close: close.mutate,
+    closePR: closePR.mutate,
+    reset: reset.mutate,
     reopen: reopen.mutate,
     abort: abort.mutate,
-    isPending: execute.isPending || close.isPending || reopen.isPending || abort.isPending,
+    approveGate: approveGate.mutate,
+    rejectGate: rejectGate.mutate,
+    isPending,
+    pendingAction: execute.isPending
+      ? 'execute'
+      : abort.isPending
+        ? 'abort'
+        : approveGate.isPending
+          ? 'approve'
+          : rejectGate.isPending
+            ? 'reject'
+            : close.isPending
+              ? 'close'
+              : closePR.isPending
+                ? 'close-pr'
+                : reset.isPending
+                  ? 'reset'
+                  : reopen.isPending
+                    ? 'reopen'
+                    : null,
   }
 }

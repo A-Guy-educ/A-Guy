@@ -451,3 +451,41 @@ describe('editComment', () => {
     expect(execFileSyncSpy).not.toHaveBeenCalled()
   })
 })
+
+// ============================================================================
+// Issue #501: Duplicate comment fix tests
+// Verify that the "Cody started" comment was removed to prevent duplicate
+// comments on GitHub issues (both "Cody started" and "Task created" were posted)
+// ============================================================================
+
+import * as path from 'path'
+import { createRequire } from 'module'
+
+// Get the real fs module (bypass the mock)
+const require = createRequire(import.meta.url)
+const realFs: typeof import('fs') = require('fs')
+
+describe('Issue #501: Duplicate comment fix', () => {
+  const entryTsPath = path.resolve(__dirname, '../../../../scripts/cody/entry.ts')
+
+  it('should NOT contain "Cody started" comment pattern that causes duplicates', () => {
+    // Read the entry.ts file using real fs (bypass mock)
+    const entryTsContent = realFs.readFileSync(entryTsPath, 'utf-8')
+
+    // Verify the duplicate comment pattern is removed
+    // The old code posted "🚀 Cody started for..." unconditionally
+    // Now only "Task created" marker is posted (via ensureTaskMarkerComment)
+    expect(entryTsContent).not.toContain('Cody started for')
+    expect(entryTsContent).not.toContain('🚀 Cody started')
+  })
+
+  it('should still call ensureTaskMarkerComment for task tracking', () => {
+    // Read the entry.ts file using real fs (bypass mock)
+    const entryTsContent = realFs.readFileSync(entryTsPath, 'utf-8')
+
+    // ensureTaskMarkerComment should still be called - this handles both:
+    // - Posting "Task created" marker on fresh issues
+    // - Skipping duplicate posts on reruns
+    expect(entryTsContent).toContain('ensureTaskMarkerComment')
+  })
+})

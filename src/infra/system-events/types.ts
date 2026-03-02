@@ -29,6 +29,11 @@ import type {
   SiteInitPayload,
   UserResolvedPayload,
 } from './schemas'
+import type {
+  StudyPlanDayCompleted,
+  StudyPlanGenerated,
+  StudyPlanViewed,
+} from './study-plan-schemas'
 
 // Re-export for convenience
 export type { SystemEventName } from './events'
@@ -78,6 +83,11 @@ export type SystemEventPayloads = {
   'system.chat_auto_triggered': ChatAutoTriggeredPayload
   'system.exercise_viewed': ExerciseViewedPayload
   'system.exercise_completed': ExerciseCompletedPayload
+
+  // Study Plan System
+  'system.study_plan_viewed': StudyPlanViewed
+  'system.study_plan_generated': StudyPlanGenerated
+  'system.study_plan_day_completed': StudyPlanDayCompleted
 }
 
 /**
