@@ -1,0 +1,29 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
+    "src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx",
+    "src/app/(frontend)/study-plan/_components/DayCard.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The hook useStudyPlan.ts already has plan generation logic that can be triggered explicitly",
+    "The StudyPlanPage.tsx already has the date/topics/mastery input components",
+    "The existing engine algorithm does not need changes, only wiring for explicit trigger behavior"
+  ],
+  "review_questions": [],
+  "complexity": 28,
+  "complexity_reasoning": "Scope: 3 files in same module (8 pts). Risk: UI component changes, non-critical (8 pts). Novelty: Extending existing pattern with new behavior (8 pts). Cross-domain: Frontend only (0 pts). Ambiguity: Clear requirements with file paths and acceptance criteria (2 pts). Dependencies: Self-contained, no external services (2 pts). Total: 28",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains ## Required Behavior with 4 behavioral requirements, ## Acceptance Criteria with 4 checkable items, ## Files with specific paths, and ## Visual Direction with HTML reference. Promoted spec.md with extracted requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
