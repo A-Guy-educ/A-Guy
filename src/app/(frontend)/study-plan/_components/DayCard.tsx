@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 import type { StudyPlanDay, TopicInput } from '@/lib/study-plan'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { CheckCircle2, Clock, Edit2 } from 'lucide-react'
+import { CheckCircle2, Edit2 } from 'lucide-react'
 
 const ACTIVITY_COLORS = {
   practice: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
@@ -18,19 +18,13 @@ interface DayCardProps {
   day: StudyPlanDay
   topics: TopicInput[]
   onToggleStatus: () => void
-  onEdit?: (edits: {
-    userTopicIds?: string[]
-    userDurationMinutes?: number
-    userStartTime?: string
-  }) => void
+  onEdit?: (edits: { userTopicIds?: string[] }) => void
 }
 
 export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
   const t = useTranslations('studyPlan')
   const [isEditing, setIsEditing] = useState(false)
   const [selectedTopics, setSelectedTopics] = useState<string[]>(day.userTopicIds || day.topicIds)
-  const [duration, setDuration] = useState(day.userDurationMinutes || day.estimatedDurationMinutes)
-  const [startTime, setStartTime] = useState(day.userStartTime || '')
 
   const isCompleted = day.status === 'completed'
 
@@ -38,18 +32,13 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
     if (onEdit) {
       onEdit({
         userTopicIds: selectedTopics,
-        userDurationMinutes: duration,
-        userStartTime: startTime || undefined,
       })
     }
     setIsEditing(false)
   }
 
   const handleCancelEdit = () => {
-    // Reset to current values
     setSelectedTopics(day.userTopicIds || day.topicIds)
-    setDuration(day.userDurationMinutes || day.estimatedDurationMinutes)
-    setStartTime(day.userStartTime || '')
     setIsEditing(false)
   }
 
@@ -102,33 +91,6 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
           </div>
         </div>
 
-        {/* Duration input */}
-        <div className="mb-4">
-          <label className="block text-xs font-medium text-muted-foreground mb-2">
-            {t('durationLabel')}
-          </label>
-          <input
-            type="number"
-            min="0"
-            value={duration}
-            onChange={(e) => setDuration(Number(e.target.value))}
-            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-
-        {/* Start time input */}
-        <div className="mb-4">
-          <label className="block text-xs font-medium text-muted-foreground mb-2">
-            {t('startTimeLabel')}
-          </label>
-          <input
-            type="time"
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-
         {/* Action buttons */}
         <div className="flex gap-2">
           <button
@@ -177,10 +139,6 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
               month: 'short',
             })}
           </span>
-          {/* Show user override start time if set */}
-          {day.userStartTime && (
-            <span className="text-xs text-muted-foreground ms-2">{day.userStartTime}</span>
-          )}
         </div>
         <div className="flex items-center gap-1.5">
           {isCompleted && (
@@ -216,14 +174,7 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Clock className="w-4 h-4" />
-          <span className="text-sm">
-            {day.userDurationMinutes || day.estimatedDurationMinutes} {t('minutesShort')}
-          </span>
-        </div>
-
+      <div className="flex items-center justify-end">
         <button
           onClick={onToggleStatus}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
