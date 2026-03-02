@@ -1,0 +1,28 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "GreetingFlow component",
+    "typing animation speed"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The GreetingFlow component exists in the codebase",
+    "Typing animation speed is configurable via a prop or constant",
+    "No backend changes needed"
+  ],
+  "review_questions": [],
+  "complexity": 15,
+  "complexity_reasoning": "Scope: 5 (single component, 1-2 files). Risk: 3 (UI animation timing, no security/data impact). Novelty: 3 (fixing existing behavior). Cross-domain: 0 (frontend only). Ambiguity: 2 (clear issue - typing too slow). Dependency: 2 (self-contained component). Total: 15",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains clear bug description with steps to reproduce, expected result (natural human-like pace), and actual result (too slow). The fix is straightforward - adjust typing animation speed parameter."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
