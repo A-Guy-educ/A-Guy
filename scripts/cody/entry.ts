@@ -401,8 +401,25 @@ async function runFullMode(ctx: PipelineContext): Promise<void> {
   // R4: Ensure task.md exists before running pipeline
   await ensureTaskMd(ctx)
 
+  // FIX #5: Resolve profile from task.json instead of hardcoding 'standard'
+  // This ensures the correct profile (lightweight vs standard) is used
+  let profile: 'standard' | 'lightweight' = 'standard'
+  try {
+    const taskDef = readTask(ctx.taskDir)
+    if (taskDef) {
+      ctx.taskDef = taskDef
+      const { resolvePipelineProfile } = await import('./pipeline-utils')
+      profile = resolvePipelineProfile(taskDef)
+      console.log(`ℹ️ Resolved profile from task.json: ${profile}`)
+    }
+  } catch {
+    // If task.json doesn't exist yet, taskify will create it and resolve profile
+    console.log('ℹ️ task.json not found yet, will resolve profile after taskify')
+  }
+  ctx.profile = profile
+
   // Run full pipeline - all stages are now included upfront (no rebuild needed)
-  const pipeline = resolvePipelineForMode('full', 'standard', ctx.input.clarify ?? false, ctx)
+  const pipeline = resolvePipelineForMode('full', profile, ctx.input.clarify ?? false, ctx)
   const finalState = await runPipeline(ctx, pipeline)
 
   // Handle paused state (gate approval required)

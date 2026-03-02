@@ -29,15 +29,30 @@ export function skipIfInputQuality(ctx: PipelineContext, stageName: string): Ski
     return { shouldSkip: false }
   }
 
-  // Check if promoted file exists
+  // Check if promoted file exists AND has valid content
+  // FIX #4: Don't just check existence - validate content is meaningful
+  // A stub file from an interrupted run should not cause skip
   const outputFile = path.join(ctx.taskDir, `${stageName}.md`)
   if (!fs.existsSync(outputFile)) {
     return { shouldSkip: false }
   }
 
+  // Validate the file has meaningful content (not just a stub)
+  const fileContent = fs.readFileSync(outputFile, 'utf-8').trim()
+  const minContentLength = 50 // Minimum meaningful content length
+
+  if (
+    fileContent.length < minContentLength ||
+    (fileContent.includes('(promoted)') && fileContent.length < 200)
+  ) {
+    // File is too short or appears to be an incomplete stub
+    // Don't skip - let the stage run to regenerate proper content
+    return { shouldSkip: false }
+  }
+
   return {
     shouldSkip: true,
-    reason: `Promoted via input_quality (file exists)`,
+    reason: `Promoted via input_quality (valid file exists)`,
   }
 }
 

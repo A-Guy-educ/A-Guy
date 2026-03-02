@@ -77,7 +77,8 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
     maxRetries: 2, // BUG-F fix: increased from 1 to 2 for better resilience
     postActions: [
       { type: 'validate-task-json' },
-      { type: 'resolve-profile' },
+      // NOTE: resolve-profile MUST be last to ensure profile is resolved before check-gate runs
+      // see issue #1 in pipeline analysis - profile race condition fix
       { type: 'check-gate', gate: 'taskify' },
       {
         type: 'commit-task-files',
@@ -85,6 +86,7 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
         push: true,
         ensureBranch: true,
       },
+      { type: 'resolve-profile' }, // Must be last - triggers pipeline rebuild for next stages
     ],
   })
 

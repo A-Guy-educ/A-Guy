@@ -84,7 +84,25 @@ export async function runPipeline(
   }
 
   // Main execution loop
+  let loopCount = 0
   while (true) {
+    loopCount++
+
+    // FIX #9: Periodic recovery check every 10 iterations
+    // This handles mid-run corruption of status.json
+    if (loopCount % 10 === 0) {
+      const currentState = loadState(ctx.taskId)
+      if (currentState) {
+        // Check for stale running stages
+        const recoveredState = recoverStaleStages(currentState)
+        if (recoveredState !== currentState) {
+          console.log('⚠️ Periodic recovery: reset stale running stages')
+          state = recoveredState
+          writeState(ctx.taskId, state)
+        }
+      }
+    }
+
     // Check if pipeline needs rebuilding (two-phase construction)
     if (ctx.pipelineNeedsRebuild && rebuildPipeline) {
       pipeline = rebuildPipeline(ctx)
@@ -391,14 +409,19 @@ async function executeParallelStep(
             writeState(ctx.taskId, state) // Persist paused state to disk
             return completeState(state, 'paused')
           }
+          // FIX #3: Don't immediately fail - collect failures and process at end
+          // This allows other successful parallel stages to complete
           console.error(`  Post-action failed for parallel stage ${stageName}:`, postError)
+          const postErrorMsg = postError instanceof Error ? postError.message : String(postError)
           state = updateStage(state, stageName, {
             state: 'failed',
-            error: postError instanceof Error ? postError.message : String(postError),
+            error: postErrorMsg,
           })
           const isAdvisory = pipeline.stages.get(stageName)?.advisory === true
-          if (!isAdvisory) {
-            return completeState(state, 'failed')
+          if (isAdvisory) {
+            advisoryFailures.push({ name: stageName, reason: postErrorMsg })
+          } else {
+            criticalFailures.push({ name: stageName, reason: postErrorMsg })
           }
         }
       }
