@@ -9,7 +9,7 @@ import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { SearchIcon } from 'lucide-react'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
 import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
-import { useTranslations } from '@/ui/web/providers/I18n'
+import { useTranslations, useLocale } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
 import { UserDropdown } from '@/ui/web/UserDropdown'
 
@@ -22,7 +22,12 @@ interface HeaderNavProps {
 export const HeaderNav: React.FC<HeaderNavProps> = ({ data, user, isAuthLoading }) => {
   const tCommon = useTranslations('common.header')
   const passwordLogin = usePasswordLogin()
-  const allNavItems = data?.navItems || []
+  const systemLocale = useLocale()
+
+  // Select nav items from the variant matching the system language
+  const variants = data?.variants || []
+  const matchedVariant = variants.find((v) => v.locale === systemLocale) || variants[0]
+  const allNavItems = matchedVariant?.navItems || []
   const navItems = passwordLogin
     ? allNavItems
     : allNavItems.filter(({ link }) => link?.url !== '/signup')

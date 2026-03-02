@@ -90,6 +90,7 @@ describe.skipIf(!hasBlobToken)('V2 Task Handler', () => {
       data: {
         title: 'Test Category',
         slug: `test-category-${Date.now()}`,
+        locale: 'he',
       },
     })
 
@@ -228,6 +229,7 @@ describe.skipIf(!hasBlobToken)('V2 Task Handler', () => {
       data: {
         title: 'Test Category Output',
         slug: `test-category-output-${Date.now()}`,
+        locale: 'he',
       },
     })
 
@@ -318,6 +320,7 @@ describe.skipIf(!hasBlobToken)('V2 Task Handler', () => {
       data: {
         title: 'Test Category Diff',
         slug: `test-category-diff-${Date.now()}`,
+        locale: 'he',
       },
     })
 

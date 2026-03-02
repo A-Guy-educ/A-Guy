@@ -120,6 +120,7 @@ describe.skipIf(!hasOpenAIKey || !hasAtlasUrl)('Vector Search Validation Integra
             relationTo: 'exercises',
             value: exercises.docs[0].id,
           },
+          preferredLocale: 'he',
           messages: [],
           lastMessageAt: new Date().toISOString(),
           contextPolicyVersion: 'v1',

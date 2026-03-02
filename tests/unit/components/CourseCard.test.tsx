@@ -51,6 +51,7 @@ const mockCourse: Course = {
   isActive: true,
   order: 0,
   tenant: 'test-tenant-id',
+  locale: 'he',
   categories: [],
   pageAccessType: 'free' as const,
   accessType: 'free' as const,

@@ -8,7 +8,8 @@
  */
 import type { Prompt } from '@/payload-types'
 import { logger } from '@/infra/utils/logger'
-import type { Payload } from 'payload'
+import type { ContentLocale } from '@/server/payload/fields/contentLocale'
+import type { Payload, Where } from 'payload'
 
 // Local constant - no cross-module imports to avoid circular deps
 export const BUILTIN_FALLBACK_PROMPT = `You are a helpful math and science tutor for students working on exercises.
@@ -36,6 +37,7 @@ export type PromptResolutionResult = {
 export async function resolveAgentSystemPrompt(
   payload: Payload,
   lessonPrompt?: Prompt | null,
+  locale?: ContentLocale,
 ): Promise<PromptResolutionResult> {
   // 1) Check if lesson has a populated prompt object
   if (lessonPrompt && typeof lessonPrompt === 'object') {
@@ -60,15 +62,51 @@ export async function resolveAgentSystemPrompt(
 
   // 2) Query for default prompt (with overrideAccess since prompts are admin-only)
   try {
+    const baseConditions: Where[] = [
+      { isDefaultForAgentChat: { equals: true } },
+      { status: { equals: 'published' } },
+    ]
+    if (locale) {
+      baseConditions.push({ locale: { equals: locale } })
+    }
+
     const defaultPrompts = await payload.find({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       collection: 'prompts' as any,
-      where: {
-        and: [{ isDefaultForAgentChat: { equals: true } }, { status: { equals: 'published' } }],
-      },
+      where: { and: baseConditions },
       limit: 1,
       overrideAccess: true,
     })
+
+    // If locale was specified but no match, fall back to locale-unaware query
+    if (defaultPrompts.docs.length === 0 && locale) {
+      logger.warn(
+        { locale },
+        'No prompt found for requested locale, falling back to locale-unaware query',
+      )
+      const fallbackPrompts = await payload.find({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        collection: 'prompts' as any,
+        where: {
+          and: [{ isDefaultForAgentChat: { equals: true } }, { status: { equals: 'published' } }],
+        },
+        limit: 1,
+        overrideAccess: true,
+      })
+
+      if (fallbackPrompts.docs.length > 0) {
+        const fallbackPrompt = fallbackPrompts.docs[0] as unknown as Prompt
+        if (fallbackPrompt.template?.trim()) {
+          return {
+            template: fallbackPrompt.template,
+            resolvedFrom: 'default-prompt',
+            promptId: fallbackPrompt.id,
+            promptTitle: fallbackPrompt.title ?? undefined,
+            fallbackReason: `No prompt for locale '${locale}', used locale-unaware fallback`,
+          }
+        }
+      }
+    }
 
     // Warn if multiple defaults exist (query totalDocs)
     if (defaultPrompts.totalDocs > 1) {

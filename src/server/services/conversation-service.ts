@@ -16,6 +16,8 @@
 import { logger } from '@/infra/utils/logger'
 import { getGuestChatConfig } from '@/server/config/guest-chat-config'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { DEFAULT_CONTENT_LOCALE } from '@/server/payload/fields/contentLocale'
+import type { ContentLocale } from '@/server/payload/fields/contentLocale'
 import type { Payload, PayloadRequest } from 'payload'
 
 export class GuestConversationLimitError extends Error {
@@ -85,6 +87,7 @@ export class ConversationService {
     contextRef: ContextRef,
     contextKeyOverride?: string,
     req?: PayloadRequest,
+    preferredLocale?: ContentLocale,
   ): Promise<ConversationWithHistory> {
     const contextKey = contextKeyOverride || `${contextRef.relationTo}:${contextRef.value}`
 
@@ -121,6 +124,7 @@ export class ConversationService {
           value: contextRef.value,
         },
         contextKey,
+        preferredLocale: preferredLocale ?? DEFAULT_CONTENT_LOCALE,
         messages: [],
         lastMessageAt: new Date(),
         contextPolicyVersion: 'v1',
@@ -157,8 +161,11 @@ export class ConversationService {
       ...(req && { req }),
     })
 
+    // Carry forward preferredLocale from the archived conversation
+    let carryLocale: ContentLocale = DEFAULT_CONTENT_LOCALE
     if (existingConv.docs.length > 0) {
       const currentConv = existingConv.docs[0]
+      carryLocale = (currentConv.preferredLocale as ContentLocale) ?? DEFAULT_CONTENT_LOCALE
       // INVARIANT: Archive by setting archivedAt. Requires overrideAccess: true and allowArchive context flag.
       await this.payload.update({
         collection: 'conversations',
@@ -190,6 +197,7 @@ export class ConversationService {
           value,
         },
         contextKey,
+        preferredLocale: carryLocale,
         messages: [],
         lastMessageAt: new Date(),
         contextPolicyVersion: 'v1',
