@@ -50,37 +50,77 @@ export const LessonConversionPanel = () => {
   const [expandedPdf, setExpandedPdf] = useState<string | null>(null)
   const [v3Preview, setV3Preview] = useState<PreviewData | null>(null)
   const [v3MediaId, setV3MediaId] = useState<string | null>(null)
+  const [needsSaveNotice, setNeedsSaveNotice] = useState(false)
 
-  // Resolve media IDs to full objects
+  // Resolve media from persisted lesson data so conversion options always
+  // match server-side validation (which checks lesson.contentFiles in the database).
   useEffect(() => {
     async function resolveMedia() {
-      const value = contentFilesValue
-      if (!value || !Array.isArray(value) || value.length === 0) {
+      if (!lessonId) {
         setMediaItems([])
+        setNeedsSaveNotice(false)
         setIsLoading(false)
         return
       }
 
-      // Check if we have full objects or just IDs
-      const firstItem = value[0]
-      if (typeof firstItem === 'object' && firstItem !== null && 'mimeType' in firstItem) {
-        // Already have full objects
-        setMediaItems(value as MediaItem[])
-        setIsLoading(false)
-        return
-      }
-
-      // Need to fetch media details
       try {
-        const ids = value.map((v) => (typeof v === 'string' ? v : v.id)).join(',')
-        const response = await fetch(
-          `/api/media?where[id][in]=${encodeURIComponent(ids)}&limit=100`,
-          { credentials: 'include' },
-        )
-        if (response.ok) {
-          const data = await response.json()
-          setMediaItems(data.docs || [])
+        const lessonResponse = await fetch(`/api/lessons/${lessonId}?depth=1`, {
+          credentials: 'include',
+        })
+
+        if (!lessonResponse.ok) {
+          setMediaItems([])
+          setNeedsSaveNotice(false)
+          return
         }
+
+        const lessonData = await lessonResponse.json()
+        const persistedContentFiles = Array.isArray(lessonData?.contentFiles)
+          ? lessonData.contentFiles
+          : []
+
+        const persistedIds = persistedContentFiles.map((item: string | { id: string }) =>
+          typeof item === 'string' ? item : item.id,
+        )
+
+        const draftIds = Array.isArray(contentFilesValue)
+          ? contentFilesValue.map((item: string | { id: string }) =>
+              typeof item === 'string' ? item : item.id,
+            )
+          : []
+
+        const hasUnsavedAttachmentChanges =
+          draftIds.length !== persistedIds.length ||
+          draftIds.some((id) => !persistedIds.includes(id))
+
+        setNeedsSaveNotice(hasUnsavedAttachmentChanges)
+
+        if (persistedContentFiles.length === 0) {
+          setMediaItems([])
+          return
+        }
+
+        const firstItem = persistedContentFiles[0]
+        if (typeof firstItem === 'object' && firstItem !== null && 'mimeType' in firstItem) {
+          setMediaItems(persistedContentFiles as MediaItem[])
+          return
+        }
+
+        const ids = persistedIds.join(',')
+        const mediaResponse = await fetch(
+          `/api/media?where[id][in]=${encodeURIComponent(ids)}&limit=100`,
+          {
+            credentials: 'include',
+          },
+        )
+
+        if (!mediaResponse.ok) {
+          setMediaItems([])
+          return
+        }
+
+        const mediaData = await mediaResponse.json()
+        setMediaItems(mediaData.docs || [])
       } catch (err) {
         console.error('Failed to fetch media:', err)
       } finally {
@@ -89,7 +129,7 @@ export const LessonConversionPanel = () => {
     }
 
     resolveMedia()
-  }, [contentFilesValue])
+  }, [contentFilesValue, lessonId])
 
   // Filter for PDFs and images (V3 supports both)
   const supportedFiles = mediaItems.filter(
@@ -171,6 +211,12 @@ export const LessonConversionPanel = () => {
       >
         Exercise Conversion
       </h3>
+
+      {needsSaveNotice && (
+        <p style={{ marginBottom: 8, fontSize: 11, color: 'var(--theme-warning-700)' }}>
+          Save lesson changes to include newly attached files in conversion.
+        </p>
+      )}
 
       {supportedFiles.map((file) => (
         <div
