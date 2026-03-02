@@ -287,18 +287,17 @@ This is valid promoted content from a previous successful run.
   // ========================================================================
 
   describe('parallel stage error handling (Fix #3)', () => {
-    it('should collect post-action failures instead of immediate return', async () => {
+    it('should NOT have parallel stages (auditor now runs sequentially after verify)', async () => {
       // This test verifies the logic exists - actual parallel execution tested via integration
       const { IMPL_ORDER_STANDARD } = await import('../../scripts/cody/pipeline/definitions')
 
-      // Verify verify and auditor run in parallel
+      // Verify no parallel stages (auditor now runs sequentially after verify)
       const parallelStep = IMPL_ORDER_STANDARD.find(
         (step) => typeof step === 'object' && 'parallel' in step,
       )
 
-      expect(parallelStep).toBeDefined()
-      expect((parallelStep as { parallel: string[] }).parallel).toContain('verify')
-      expect((parallelStep as { parallel: string[] }).parallel).toContain('auditor')
+      // No parallel stages - auditor runs after verify
+      expect(parallelStep).toBeUndefined()
     })
   })
 
