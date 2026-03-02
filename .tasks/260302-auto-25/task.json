@@ -1,0 +1,32 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.8,
+  "primary_domain": "backend",
+  "scope": [
+    "study-plan",
+    "exam-anchored-dates",
+    "manual-trigger"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Study plan feature exists in the codebase",
+    "Current date calculations use today-based logic that needs to change to exam-anchored",
+    "Manual trigger will require UI changes for user action",
+    "Exam collection exists with date fields"
+  ],
+  "review_questions": [
+    "Where is the current study plan generation logic located?",
+    "What exam fields are used for the 7-day window calculation?",
+    "Should the manual trigger be a button in the UI, an API endpoint, or both?"
+  ],
+  "complexity": 46,
+  "complexity_reasoning": "Scope: 12 (4-6 files across modules), Risk: 12 (business logic changes), Novelty: 8 (modifying existing pattern), Cross: 8 (backend + frontend for trigger), Ambiguity: 4 (clear intent), Deps: 4 (depends on exam). Total: 46",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Only provides issue title and summary. No requirements, acceptance criteria, or implementation steps provided. Task describes feature intent but lacks structured requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
