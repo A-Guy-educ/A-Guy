@@ -1,31 +1,31 @@
-# Study Plan UI: Manual Generate/Regenerate only (no auto plan on input changes)
+# Study Plan UI: Manual Generate/Regenerate Specification
 
 ## Overview
-
-Change the Study Plan UI behavior from automatic plan computation/rendering/persistence to manual-only generation via explicit user click.
+Change the Study Plan UI to require explicit user action (Generate/Regenerate button clicks) instead of auto-generating the plan on every input change.
 
 ## Requirements
 
 ### FR-1: Empty State Before Generation
-- Before explicit Generate click:
-  - Show empty state with message: `מוכנים לצאת לדרך?`
-  - Show CTA button: `צור תוכנית לימודים` / `Generate Example Plan`
-  - Do NOT compute, render, or persist plan
+- Before the user clicks "Generate", display an empty state with:
+  - Hebrew text: `מוכנים לצאת לדרך?`
+  - CTA button: `צור תוכנית לימודים` (Create Study Plan) or `Generate Example Plan`
+- Do NOT compute, render, or persist any plan before explicit Generate click
 
-### FR-2: No Auto-Computation
-- Before explicit Generate click:
-  - Changing date/topics/mastery inputs must NOT trigger plan computation
-  - Changing date/topics/mastery inputs must NOT render or persist any plan
+### FR-2: No Auto-Regeneration on Input Edits
+- After initial generation, changing date/topics/mastery inputs should NOT:
+  - Recompute the plan
+  - Re-render the plan
+  - Persist any changes to the plan
+- The existing plan stays unchanged until user explicitly triggers regeneration
 
-### FR-3: Dirty State After Generation
-- After plan exists:
-  - Changing date/topics/mastery marks draft as dirty only
-  - Existing rendered plan stays unchanged
-  - Recompute/persist only on explicit Regenerate click
+### FR-3: Dirty State Tracking
+- When inputs change AFTER a plan exists, mark the draft as "dirty"
+- Display an explicit "Regenerate" button when the draft is dirty
 
-### FR-4: Regenerate Button
-- Show explicit Regenerate button when draft changes after generation
-- Generate/Regenerate is the only path to compute + persist
+### FR-4: Explicit Generate/Regenerate Only
+- Generate/Regenerate button is the ONLY path to:
+  - Compute a new plan
+  - Persist the plan to storage
 
 ## Acceptance Criteria
 
@@ -35,20 +35,12 @@ Change the Study Plan UI behavior from automatic plan computation/rendering/pers
 - [ ] Generate/Regenerate is the only path to compute + persist
 
 ## Visual Direction
+- Follow `test plan.html` for layout/style vibe
+- RTL (right-to-left) layout
+- Assistant font family
+- Tailwind CSS cards/timeline components
+- Lucide icons
 
-Follow `test plan.html` for layout/style vibe:
-- RTL layout
-- Assistant font
-- Tailwind cards/timeline design
-- Empty state with icon and CTA
-
-## Files
-
-- `src/app/(frontend)/study-plan/_components/useStudyPlan.ts` - Hook for plan generation logic
-- `src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx` - Main page component
-- `src/app/(frontend)/study-plan/_components/DayCard.tsx` - Day card component (if needed)
-
-## Notes
-
-- UI/hook flow only; no engine algorithm changes except wiring needed for explicit trigger behavior
-- Logic requirements in this issue override demo JS behavior if they conflict
+## Scope
+- UI/hook flow only
+- No engine algorithm changes except wiring for explicit trigger behavior

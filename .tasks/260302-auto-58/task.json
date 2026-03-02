@@ -1,7 +1,7 @@
 {
   "task_type": "implement_feature",
   "risk_level": "medium",
-  "confidence": 0.9,
+  "confidence": 0.95,
   "primary_domain": "frontend",
   "scope": [
     "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
@@ -10,19 +10,20 @@
   ],
   "missing_inputs": [],
   "assumptions": [
-    "The hook useStudyPlan.ts already has plan generation logic that can be triggered explicitly",
-    "The StudyPlanPage.tsx already has the date/topics/mastery input components",
-    "The existing engine algorithm does not need changes, only wiring for explicit trigger behavior"
+    "Existing study plan logic/engine will work with explicit trigger",
+    "RTL/Tailwind patterns already exist in the codebase",
+    "The useStudyPlan hook already has state management that can be extended for dirty tracking"
   ],
   "review_questions": [],
-  "complexity": 28,
-  "complexity_reasoning": "Scope: 3 files in same module (8 pts). Risk: UI component changes, non-critical (8 pts). Novelty: Extending existing pattern with new behavior (8 pts). Cross-domain: Frontend only (0 pts). Ambiguity: Clear requirements with file paths and acceptance criteria (2 pts). Dependencies: Self-contained, no external services (2 pts). Total: 28",
+  "complexity": 29,
+  "complexity_reasoning": "Scope: 8 (2-3 files in same module). Risk: 6 (non-critical UI behavior change). Novelty: 7 (extends existing pattern with behavior modification). Cross-Domain: 5 (frontend only). Ambiguity: 1 (clear requirements with acceptance criteria). Dependencies: 2 (self-contained). Total: 29",
   "input_quality": {
-    "level": "good_spec",
+    "level": "detailed_plan",
     "skip_stages": [
-      "spec"
+      "spec",
+      "architect"
     ],
-    "reasoning": "Input contains ## Required Behavior with 4 behavioral requirements, ## Acceptance Criteria with 4 checkable items, ## Files with specific paths, and ## Visual Direction with HTML reference. Promoted spec.md with extracted requirements."
+    "reasoning": "Input contains step-by-step requirements, specific file paths, acceptance criteria checklist, and HTML reference. Promoted spec.md and plan.md for gap analysis."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
