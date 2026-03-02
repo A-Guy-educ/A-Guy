@@ -1,0 +1,34 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "backend",
+  "scope": [
+    "src/lib/study-plan/engine.ts",
+    "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
+    "tests/unit/lib/study-plan/engine.spec.ts",
+    "integration/unit tests for persistence"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The files mentioned exist in the codebase",
+    "Adaptive mode logic has existing tests that can be extended",
+    "Completion persistence mechanism exists and needs regression fixes"
+  ],
+  "review_questions": [
+    "What specific adaptive mode regressions need to be addressed in the engine?",
+    "Is the completion persistence using localStorage or database storage?",
+    "Are there existing test patterns in the study-plan test files to follow?"
+  ],
+  "complexity": 44,
+  "complexity_reasoning": "Scope: 4 files across frontend/backend modules. Risk: Medium - data persistence for study progress. Novelty: Low - fixing existing functionality. Cross-Domain: Frontend + Backend + Tests. Ambiguity: Clear intent but need to identify specific regressions in code. Dependencies: Internal only, no external services. Total: 44 (Complex tier)",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains clear acceptance criteria with 4 checkable items and specific file paths to modify. Has explicit scope definition (regression fixes only) and deliverable type (code + tests). No redesign mentioned unless required."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
