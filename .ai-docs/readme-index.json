@@ -1,6 +1,22 @@
 {
   "readmes": [
     {
+      "path": ".claude/rules/README.md",
+      "title": "Rules",
+      "sections": ["Structure", "Installation", "Rules vs Skills", "Adding a New Language"],
+      "relativeUrl": ".claude/rules/README.md",
+      "category": ".claude",
+      "wordCount": 184
+    },
+    {
+      "path": "docs/a-guy/README.md",
+      "title": "A-Guy Documentation",
+      "sections": ["Files"],
+      "relativeUrl": "a-guy/README.md",
+      "category": "a-guy",
+      "wordCount": 35
+    },
+    {
       "path": "docs/access-control/README.md",
       "title": "Payload Access Control Deep Dive",
       "sections": [
@@ -40,7 +56,7 @@
       ],
       "relativeUrl": "admin-components/README.md",
       "category": "admin-components",
-      "wordCount": 727
+      "wordCount": 728
     },
     {
       "path": "docs/ai/README.md",
@@ -96,7 +112,7 @@
       ],
       "relativeUrl": "block-rendering/README.md",
       "category": "block-rendering",
-      "wordCount": 905
+      "wordCount": 899
     },
     {
       "path": "docs/contracts/README.md",
@@ -133,7 +149,7 @@
       ],
       "relativeUrl": "course-hierarchy/README.md",
       "category": "course-hierarchy",
-      "wordCount": 797
+      "wordCount": 790
     },
     {
       "path": "eslint-plugin-aguy/README.md",
@@ -243,6 +259,38 @@
       "wordCount": 1986
     },
     {
+      "path": "scripts/browser-agent/README.md",
+      "title": "A-Guy Browser Agent",
+      "sections": ["Architecture", "Setup", "Usage", "Files", "Capabilities", "Troubleshooting"],
+      "relativeUrl": "scripts/browser-agent/README.md",
+      "category": "scripts",
+      "wordCount": 365
+    },
+    {
+      "path": "scripts/cody/README.md",
+      "title": "Cody Pipeline",
+      "sections": [
+        "Trigger",
+        "Pipeline Modes",
+        "Two-Phase Execution",
+        "Profiles",
+        "Stage Inputs/Outputs",
+        "Key Files",
+        "Task Files",
+        "State Machine",
+        "Post-Actions",
+        "Gates",
+        "Error Handling",
+        "Add New Stage",
+        "Important Context",
+        "Key Functions",
+        "Debug"
+      ],
+      "relativeUrl": "scripts/cody/README.md",
+      "category": "scripts",
+      "wordCount": 553
+    },
+    {
       "path": "scripts/README.md",
       "title": "PDF.js Vercel Blob CDN Setup",
       "sections": [
@@ -274,20 +322,6 @@
       "relativeUrl": "src/client/README.md",
       "category": "src/client",
       "wordCount": 169
-    },
-    {
-      "path": "src/components/README.md",
-      "title": "Payload Admin Components",
-      "sections": [
-        "Component Registry",
-        "Structure",
-        "Usage in Payload Config",
-        "Agent Guardrails",
-        "Related Documentation"
-      ],
-      "relativeUrl": "src/components/README.md",
-      "category": "src/components",
-      "wordCount": 431
     },
     {
       "path": "src/infra/analytics/README.md",
@@ -332,7 +366,7 @@
       ],
       "relativeUrl": "src/infra/llm/README.md",
       "category": "src/infra",
-      "wordCount": 406
+      "wordCount": 421
     },
     {
       "path": "src/infra/README.md",
@@ -461,21 +495,7 @@
       ],
       "relativeUrl": "src/ui/admin/README.md",
       "category": "src/ui",
-      "wordCount": 339
-    },
-    {
-      "path": "src/ui/shared/README.md",
-      "title": "Shared UI Components",
-      "sections": [
-        "Component Registry",
-        "Structure",
-        "Usage",
-        "Agent Guardrails",
-        "Related Documentation"
-      ],
-      "relativeUrl": "src/ui/shared/README.md",
-      "category": "src/ui",
-      "wordCount": 197
+      "wordCount": 347
     },
     {
       "path": "src/ui/web/README.md",
@@ -529,10 +549,12 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-02-03T12:30:12.235Z",
-    "totalReadmes": 30,
+    "generatedAt": "2026-03-01T21:02:41.131Z",
+    "totalReadmes": 32,
     "categories": {
+      ".claude": 1,
       "root": 1,
+      "a-guy": 1,
       "access-control": 1,
       "admin-components": 1,
       "ai": 1,
@@ -544,13 +566,12 @@
       "exercises": 1,
       "features": 1,
       "eslint-plugin-aguy": 1,
-      "scripts": 1,
+      "scripts": 3,
       "src/app": 1,
       "src/client": 1,
-      "src/components": 1,
       "src/infra": 3,
       "src/server": 5,
-      "src/ui": 5,
+      "src/ui": 4,
       "tests": 1
     }
   }

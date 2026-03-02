@@ -128,6 +128,24 @@ export const tasksApi = {
     return handleResponse(res)
   },
 
+  closePR: async (issueNumber: number): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'close-pr' }),
+    })
+    return handleResponse(res)
+  },
+
+  reset: async (issueNumber: number): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reset' }),
+    })
+    return handleResponse(res)
+  },
+
   reopen: async (issueNumber: number): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',

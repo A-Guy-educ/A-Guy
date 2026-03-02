@@ -73,6 +73,11 @@
     "test-writer": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "TDD test writer - writes failing tests before implementation"
+    },
+    "browser": {
+      "model": "anthropic/claude-opus-4-6",
+      "description": "Browser agent - navigates A-Guy platform, inspects pages, answers UI questions. Uses Chrome DevTools MCP locally, Playwright MCP in CI.",
+      "instructions": ["scripts/browser-agent/AGENT.md"]
     }
   },
   "mcp": {
@@ -84,6 +89,19 @@
         "chrome-devtools-mcp@latest",
         "--isolated=true",
         "--no-usage-statistics"
+      ]
+    },
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "@playwright/mcp@latest",
+        "--headless",
+        "--caps=vision,devtools,pdf",
+        "--storage-state=scripts/browser-agent/.auth/storage-state.json",
+        "--test-id-attribute=data-testid",
+        "--console-level=info",
+        "--viewport-size=1280x720"
       ]
     }
   }

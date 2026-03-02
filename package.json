@@ -31,6 +31,7 @@
     "deps:security:report": "pnpm tsx scripts/deps-security-report.ts",
     "repo:hygiene:report": "pnpm tsx scripts/repo-hygiene-report.ts",
     "mcp:discover-tools": "pnpm tsx scripts/admin-chat-mcp_discover-tools.ts",
+    "browser-agent:auth": "tsx scripts/browser-agent/save-auth.ts",
     "validate:readme-links": "pnpm tsx scripts/validate-readme-links.ts",
     "validate:env": "pnpm tsx scripts/validate-env.ts",
     "check:branch": "pnpm tsx scripts/check-branch.ts",

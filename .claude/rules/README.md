@@ -56,8 +56,4 @@ To add support for a new language (e.g., `rust/`):
    - `patterns.md` — language-specific design patterns
    - `hooks.md` — PostToolUse hooks for formatters, linters, type checkers
    - `security.md` — secret management, security scanning tools
-3. Each file should start with:
-   ```
-   > This file extends [common/xxx.md](../common/xxx.md) with <Language> specific content.
-   ```
-4. Reference existing skills if available, or create new ones under `skills/`.
+3. Reference existing skills if available, or create new ones under `skills/`.

@@ -12,9 +12,9 @@ const BRANCH_PREFIXES = ['feat', 'fix', 'refactor', 'docs', 'chore', 'security',
 // Default branch fallback
 const DEFAULT_BRANCH_FALLBACK = 'dev'
 
-// Git identity for CI
-const GIT_EMAIL = '242132053+aguyaharonyair@users.noreply.github.com'
-const GIT_NAME = 'aguyaharonyair'
+// Git identity for CI (can be overridden via env vars)
+const GIT_EMAIL = process.env.GIT_USER_EMAIL || '242132053+aguyaharonyair@users.noreply.github.com'
+const GIT_NAME = process.env.GIT_USER_NAME || 'aguyaharonyair'
 
 /**
  * Execute git command and return output

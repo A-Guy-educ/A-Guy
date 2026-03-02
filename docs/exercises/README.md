@@ -75,8 +75,8 @@ The Exercises collection provides a minimal foundation for creating and managing
 
 ### Validation Rules
 
-1. **Content Validation**: `contentJson` must pass [`ExerciseContentSchema`](../../src/contracts/exercise/content.ts)
-2. **Answer Spec Validation**: `answerSpecJson` must pass [`AnswerSpecSchema`](../../src/contracts/exercise/answers.ts)
+1. **Content Validation**: `contentJson` must pass [`ExerciseContentSchema`](../../src/infra/contracts/exercise/content.ts)
+2. **Answer Spec Validation**: `answerSpecJson` must pass [`AnswerSpecSchema`](../../src/infra/contracts/exercise/answers.ts)
 3. **Type Consistency**: `questionType` field MUST equal `answerSpecJson.questionType`
 
 **Example Rejection**:
@@ -433,7 +433,7 @@ Follow [MANUAL_VERIFICATION.md](./MANUAL_VERIFICATION.md) to test:
 - [📚 Contracts README](../contracts/README.md) - Contract usage guide
 - [🔧 Contracts Implementation](../contracts/IMPLEMENTATION.md) - Implementation details
 - [📋 Manual Verification Guide](./MANUAL_VERIFICATION.md) - Step-by-step testing
-- [📁 Contract Examples](../../src/contracts/examples/) - JSON examples
+- [📁 Contract Examples](../../src/infra/contracts/) - JSON examples
 
 ---
 

@@ -9,11 +9,13 @@
 import { useState, useEffect } from 'react'
 import type { CodyTask } from '../types'
 import { TaskList } from './TaskList'
-import { TaskDetail } from './TaskDetail'
+import { TaskDetailDialog } from './TaskDetailDialog'
 import { CreateTaskDialog } from './CreateTaskDialog'
 import { BugReportDialog } from './BugReportDialog'
 import { CodyChat } from './CodyChat'
 import { CodyStatusBanner } from './CodyStatusBanner'
+import { FilterBar, DATE_FILTERS, STATUS_FILTERS } from './FilterBar'
+import { TaskDetail } from './TaskDetail'
 import { Button } from '@/ui/web/components/button'
 import {
   Select,
@@ -29,7 +31,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/ui/web/components/sheet'
-import { MessageSquare, X, Bug, Menu, RefreshCw, Bell, Globe } from 'lucide-react'
+import { MessageSquare, Bug, Menu, RefreshCw, Bell, Globe } from 'lucide-react'
 import { useCodyTasks } from '../hooks'
 import { useBrowserNotifications } from '../hooks/useBrowserNotifications'
 import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
@@ -37,13 +39,6 @@ import { RateLimitError, NoTokenError, tasksApi } from '../api'
 import { toast } from 'sonner'
 import { EnvironmentToolbar } from './EnvironmentToolbar'
 import { SITE_URLS } from '../constants'
-
-const DATE_FILTERS = [
-  { label: 'All time', value: 'all', days: undefined },
-  { label: 'Last 7 days', value: '7d', days: 7 },
-  { label: 'Last 30 days', value: '30d', days: 30 },
-  { label: 'Last 90 days', value: '90d', days: 90 },
-] as const
 
 export function CodyDashboard() {
   const [selectedTask, setSelectedTask] = useState<CodyTask | null>(null)
@@ -53,7 +48,7 @@ export function CodyDashboard() {
   const [showBugDialog, setShowBugDialog] = useState(false)
   const [dateFilter, setDateFilter] = useState<string>('30d')
   const [labelFilter, setLabelFilter] = useState<string>('all')
-  const [showChat, setShowChat] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showMobileDetail, setShowMobileDetail] = useState(false)
   const [showMobileChat, setShowMobileChat] = useState(false)
@@ -118,11 +113,26 @@ export function CodyDashboard() {
     },
     {} as Record<string, number>,
   )
+
+  // Calculate status counts
+  const statusCounts = tasks.reduce(
+    (acc, task) => {
+      acc[task.column] = (acc[task.column] || 0) + 1
+      return acc
+    },
+    {} as Record<string, number>,
+  )
+
   const totalCount = tasks.length
 
-  // Filter tasks by label
-  const filteredTasks =
-    labelFilter === 'all' ? tasks : tasks.filter((task) => task.labels.includes(labelFilter))
+  // Filter tasks by label, status, and date (combined with AND logic)
+  const filteredTasks = tasks.filter((task) => {
+    // Status filter
+    if (statusFilter !== 'all' && task.column !== statusFilter) return false
+    // Label filter
+    if (labelFilter !== 'all' && !task.labels.includes(labelFilter)) return false
+    return true
+  })
 
   // Check for specific errors
   const isRateLimited = error instanceof RateLimitError
@@ -196,12 +206,12 @@ export function CodyDashboard() {
     }
   }
 
-  // Filter controls — shared between desktop header and mobile menu
-  const filterControls = (
+  // Mobile filter controls — rendered inside the mobile menu Sheet
+  const mobileFilterControls = (
     <>
       {/* Date filter */}
       <Select value={dateFilter} onValueChange={setDateFilter}>
-        <SelectTrigger className="w-full md:w-40">
+        <SelectTrigger className="w-full">
           <SelectValue placeholder="Filter by date" />
         </SelectTrigger>
         <SelectContent>
@@ -212,9 +222,22 @@ export function CodyDashboard() {
           ))}
         </SelectContent>
       </Select>
+      {/* Status filter */}
+      <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Filter by status" />
+        </SelectTrigger>
+        <SelectContent>
+          {STATUS_FILTERS.map((f) => (
+            <SelectItem key={f.value} value={f.value}>
+              {f.label} ({f.value === 'all' ? totalCount : statusCounts[f.value] || 0})
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       {/* Label filter */}
       <Select value={labelFilter} onValueChange={setLabelFilter}>
-        <SelectTrigger className="w-full md:w-36">
+        <SelectTrigger className="w-full">
           <SelectValue placeholder="Filter by label" />
         </SelectTrigger>
         <SelectContent>
@@ -282,7 +305,7 @@ export function CodyDashboard() {
     <div className="flex h-screen bg-background">
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
+        {/* Header — action buttons only, no filters */}
         <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-border">
           <h1 className="text-lg md:text-xl font-semibold text-foreground">Cody Operations</h1>
 
@@ -306,18 +329,6 @@ export function CodyDashboard() {
                 <Bell className="w-4 h-4" />
               </Button>
             )}
-            {/* Chat toggle */}
-            <Button
-              variant={showChat ? 'default' : 'outline'}
-              size="sm"
-              title={showChat ? 'Close chat' : 'Open chat with Cody'}
-              onClick={() => setShowChat(!showChat)}
-              className="gap-2"
-            >
-              {showChat ? <X className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
-              {showChat ? 'Close Chat' : 'Chat'}
-            </Button>
-            {filterControls}
             <Button
               variant="outline"
               size="sm"
@@ -348,6 +359,23 @@ export function CodyDashboard() {
           </Button>
         </div>
 
+        {/* Filter Sub-header — desktop only, separate component */}
+        <div className="hidden md:block">
+          <FilterBar
+            dateFilter={dateFilter}
+            onDateFilterChange={setDateFilter}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            labelFilter={labelFilter}
+            onLabelFilterChange={setLabelFilter}
+            availableLabels={availableLabels}
+            labelCounts={labelCounts}
+            statusCounts={statusCounts}
+            totalCount={totalCount}
+            filteredCount={filteredTasks.length}
+          />
+        </div>
+
         {/* Environment Toolbar */}
         <EnvironmentToolbar />
 
@@ -375,19 +403,17 @@ export function CodyDashboard() {
         </div>
       </div>
 
-      {/* Desktop Right Panel: Chat or Task Detail */}
-      <div
-        className={`hidden md:block ${showChat ? 'w-[400px]' : 'w-96'} border-l border-border transition-all duration-200`}
-      >
-        {showChat ? (
-          <CodyChat />
-        ) : (
-          <TaskDetail
-            task={selectedTask}
-            onClose={() => setSelectedTask(null)}
-            onRefresh={refetch}
-          />
-        )}
+      {/* Desktop: Task Detail Dialog — separate component */}
+      <TaskDetailDialog
+        task={selectedTask}
+        open={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onRefresh={refetch}
+      />
+
+      {/* Desktop: Chat Panel (right side, always visible) */}
+      <div className="hidden md:block w-[400px] border-l border-border">
+        <CodyChat />
       </div>
 
       {/* Mobile Menu Sheet */}
@@ -414,7 +440,7 @@ export function CodyDashboard() {
             {/* Filters */}
             <div className="space-y-2">
               <span className="text-xs font-medium text-muted-foreground uppercase">Filters</span>
-              {filterControls}
+              {mobileFilterControls}
             </div>
 
             {/* Environment Links */}

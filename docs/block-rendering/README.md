@@ -51,10 +51,10 @@ This document describes the block-based exercise rendering architecture and prov
 
 | Block Type | Purpose | Renderer | Interactive |
 |------------|---------|----------|-------------|
-| **`rich_text`** | Content, instructions, explanations | [`RichTextRenderer`](../../../src/components/exercise/RichTextRenderer/index.tsx) | ❌ No |
-| **`question_select`** (variant: `true_false`) | True/False questions | [`TrueFalseQuestion`](../../../src/components/exercise/questions/TrueFalseQuestion/index.tsx) | ✅ Yes |
-| **`question_select`** (variant: `mcq`) | Multiple choice questions | [`McqQuestion`](../../../src/components/exercise/questions/McqQuestion/index.tsx) | ✅ Yes |
-| **`question_free_response`** | Open-ended text answers | [`FreeResponseQuestion`](../../../src/components/exercise/questions/FreeResponseQuestion/index.tsx) | ✅ Yes |
+| **`rich_text`** | Content, instructions, explanations | [`RichTextRenderer`](../../src/ui/web/exerciserenderer/blocks/RichTextRenderer/index.tsx) | ❌ No |
+| **`question_select`** (variant: `true_false`) | True/False questions | [`TrueFalseQuestion`](../../src/ui/web/exerciserenderer/questions/TrueFalseQuestion/index.tsx) | ✅ Yes |
+| **`question_select`** (variant: `mcq`) | Multiple choice questions | [`McqQuestion`](../../src/ui/web/exerciserenderer/questions/McqQuestion/index.tsx) | ✅ Yes |
+| **`question_free_response`** | Open-ended text answers | [`FreeResponseQuestion`](../../src/ui/web/exerciserenderer/questions/FreeResponseQuestion/index.tsx) | ✅ Yes |
 
 ---
 
@@ -150,7 +150,7 @@ Let's add support for syntax-highlighted code blocks.
 
 ### Step 1: Define Zod Contract
 
-**File**: [`src/collections/Exercises/schemas.ts`](../../../src/collections/Exercises/schemas.ts)
+**File**: [`src/infra/contracts/exercise/content.ts`](../../src/infra/contracts/exercise/content.ts)
 
 ```typescript
 // Add new block schema
@@ -171,7 +171,7 @@ export type CodeBlock = z.infer<typeof CodeBlockSchema>
 
 ### Step 2: Update ContentBlockSchema Union
 
-**File**: [`src/collections/Exercises/schemas.ts`](../../../src/collections/Exercises/schemas.ts)
+**File**: [`src/infra/contracts/exercise/content.ts`](../../src/infra/contracts/exercise/content.ts)
 
 ```typescript
 // Update the discriminated union to include new block type
@@ -237,7 +237,7 @@ export function CodeRenderer({ block }: CodeRendererProps) {
 
 ### Step 4: Update ExerciseRenderer Switch
 
-**File**: [`src/components/ExerciseRenderer/ExerciseRenderer/index.tsx`](../../../src/components/exercise/ExerciseRenderer/index.tsx)
+**File**: [`src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx`](../../src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx)
 
 ```typescript
 import { CodeRenderer } from '../blocks/CodeRenderer'
@@ -664,7 +664,6 @@ When adding a new block type, ensure:
 
 - **[Exercise Collection](../exercises/README.md)** - Exercise data model
 - **[Contracts Documentation](../contracts/README.md)** - Validation schemas
-- **[Component Guidelines](../../src/components/exercise/README.md)** - Component patterns
 - **[Design System](../../DESIGN_SYSTEM.md)** - Tailwind styling guide
 
 ---

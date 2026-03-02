@@ -267,6 +267,18 @@ export function useTaskActions({ issueNumber, onSuccess, onError }: UseTaskActio
     onError: handleError('stop task'),
   })
 
+  const closePR = useMutation({
+    mutationFn: () => codyApi.tasks.closePR(issueNumber),
+    onSuccess: handleSuccess('PR closed'),
+    onError: handleError('close PR'),
+  })
+
+  const reset = useMutation({
+    mutationFn: () => codyApi.tasks.reset(issueNumber),
+    onSuccess: handleSuccess('Task reset successfully'),
+    onError: handleError('reset task'),
+  })
+
   const approveGate = useMutation({
     mutationFn: () => codyApi.tasks.approveGate(issueNumber),
     onSuccess: handleSuccess('Gate approved'),
@@ -282,6 +294,8 @@ export function useTaskActions({ issueNumber, onSuccess, onError }: UseTaskActio
   const isPending =
     execute.isPending ||
     close.isPending ||
+    closePR.isPending ||
+    reset.isPending ||
     reopen.isPending ||
     abort.isPending ||
     approveGate.isPending ||
@@ -290,6 +304,8 @@ export function useTaskActions({ issueNumber, onSuccess, onError }: UseTaskActio
   return {
     execute: execute.mutate,
     close: close.mutate,
+    closePR: closePR.mutate,
+    reset: reset.mutate,
     reopen: reopen.mutate,
     abort: abort.mutate,
     approveGate: approveGate.mutate,
@@ -305,8 +321,12 @@ export function useTaskActions({ issueNumber, onSuccess, onError }: UseTaskActio
             ? 'reject'
             : close.isPending
               ? 'close'
-              : reopen.isPending
-                ? 'reopen'
-                : null,
+              : closePR.isPending
+                ? 'close-pr'
+                : reset.isPending
+                  ? 'reset'
+                  : reopen.isPending
+                    ? 'reopen'
+                    : null,
   }
 }

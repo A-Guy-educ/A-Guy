@@ -18,6 +18,10 @@ import {
   removeAssignees,
   addLabels,
   removeLabel,
+  closePR,
+  findAssociatedPR,
+  findTaskBranch,
+  deleteBranch,
 } from '@/ui/cody/github-client'
 
 const actionSchema = z.object({
@@ -28,6 +32,8 @@ const actionSchema = z.object({
     'execute',
     'abort',
     'close',
+    'close-pr',
+    'reset',
     'reopen',
     'add-label',
     'remove-label',
@@ -112,6 +118,50 @@ export async function POST(
       case 'close': {
         await updateIssue(issueNumber, { state: 'closed' })
         return NextResponse.json({ success: true, message: 'Issue closed' })
+      }
+
+      case 'close-pr': {
+        // Find the associated PR for this task
+        const pr = await findAssociatedPR(taskId)
+        if (!pr) {
+          return NextResponse.json({ error: 'No associated PR found' }, { status: 404 })
+        }
+        await closePR(pr.number)
+        return NextResponse.json({ success: true, message: `PR #${pr.number} closed` })
+      }
+
+      case 'reset': {
+        // Full reset: delete branch, close PR, remove agent labels, re-trigger pipeline
+        const branchName = await findTaskBranch(taskId)
+
+        // Close PR if exists
+        const pr = await findAssociatedPR(taskId)
+        if (pr) {
+          await closePR(pr.number)
+        }
+
+        // Delete branch if exists
+        if (branchName && branchName !== 'dev' && branchName !== 'main' && branchName !== 'master') {
+          await deleteBranch(branchName)
+        }
+
+        // Remove agent labels
+        const labelsToRemove = ['agent:done', 'agent:error', 'agent:running', 'hard-stop', 'risk-gated']
+        for (const lbl of labelsToRemove) {
+          try {
+            await removeLabel(issueNumber, lbl)
+          } catch {
+            // Ignore if label doesn't exist
+          }
+        }
+
+        // Re-trigger pipeline
+        await postComment(issueNumber, '/cody')
+
+        return NextResponse.json({
+          success: true,
+          message: `Task reset: branch deleted, PR closed, labels removed, pipeline triggered`,
+        })
       }
 
       case 'reopen': {

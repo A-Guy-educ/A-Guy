@@ -8,6 +8,7 @@
 
 import { useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { formatRelativeTime } from '../utils'
 import type { GitHubComment } from '../types'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
@@ -172,6 +173,7 @@ function CommentItem({ comment }: { comment: GitHubComment }) {
       {/* Body - Rendered markdown */}
       <div className="prose prose-sm dark:prose-invert max-w-none text-sm">
         <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
           components={{
             // Custom code block rendering
             code({ className, children, ...props }) {

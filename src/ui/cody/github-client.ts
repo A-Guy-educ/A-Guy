@@ -75,9 +75,10 @@ function getOctokit(): Octokit {
     return octokitInstance
   }
 
-  const token = process.env.GITHUB_TOKEN
+  // Prefer CODY_BOT_TOKEN if set (for bot attribution), otherwise fall back to GITHUB_TOKEN
+  const token = process.env.CODY_BOT_TOKEN || process.env.GITHUB_TOKEN
   if (!token) {
-    throw new Error('GITHUB_TOKEN not configured')
+    throw new Error('Neither CODY_BOT_TOKEN nor GITHUB_TOKEN is configured')
   }
 
   // Create Octokit instance - rate limiting handled manually in API routes
@@ -727,6 +728,55 @@ export async function fetchPRFileChanges(prNumber: number): Promise<FileChange[]
     console.error('[Cody] Error fetching PR files:', error)
     return []
   }
+}
+
+/**
+ * Close a PR (without merging)
+ */
+export async function closePR(prNumber: number): Promise<void> {
+  const octokit = getOctokit()
+
+  await octokit.pulls.update({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    pull_number: prNumber,
+    state: 'closed',
+  })
+
+  // Invalidate PR cache
+  cache.clear()
+}
+
+/**
+ * Delete a branch
+ */
+export async function deleteBranch(branchName: string): Promise<void> {
+  // Don't delete protected branches
+  if (branchName === 'dev' || branchName === 'main' || branchName === 'master') {
+    console.log(`[Cody] Skipping deletion of protected branch: ${branchName}`)
+    return
+  }
+
+  const octokit = getOctokit()
+
+  try {
+    await octokit.git.deleteRef({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      ref: `heads/${branchName}`,
+    })
+    console.log(`[Cody] Deleted branch: ${branchName}`)
+  } catch (error: any) {
+    // Ignore if branch doesn't exist
+    if (error.status === 422 && error.message?.includes('Reference does not exist')) {
+      console.log(`[Cody] Branch already deleted: ${branchName}`)
+      return
+    }
+    throw error
+  }
+
+  // Invalidate cache
+  cache.clear()
 }
 
 /**

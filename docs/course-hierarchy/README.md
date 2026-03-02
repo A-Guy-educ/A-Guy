@@ -637,7 +637,6 @@ if (isCoursePopulated(chapter.course)) {
 ## 🔗 Related Documentation
 
 - **[Collections](../../src/server/payload/collections/README.md)** - Collection configurations
-- **[Query Utilities](../src/lib/queries/)** - Reusable query functions
 - **[Access Control](../access-control/README.md)** - Permission patterns
 - **[AGENTS.md](../../AGENTS.md)** - Payload CMS query patterns
 

@@ -150,7 +150,7 @@ Status: 400
 
 ### Stage 2: Image Optimization
 
-**Location**: [`image-optimizer-service.ts`](../../src/lib/ai/services/image-optimizer-service.ts)
+**Location**: [`image-optimizer-service.ts`](../../src/infra/llm/services/image-optimizer-service.ts)
 
 **Process**:
 1. Analyze image dimensions
@@ -169,7 +169,7 @@ const optimized = await optimizeImageForAI(buffer)
 
 ### Stage 3: AI Extraction & Parsing
 
-**Location**: [`data-extractor-service.ts`](../../src/lib/ai/services/data-extractor-service.ts)
+**Location**: [`data-extractor-service.ts`](../../src/infra/llm/services/data-extractor-service.ts)
 
 **Process**:
 1. Send optimized image to Gemini AI
@@ -201,7 +201,7 @@ const optimized = await optimizeImageForAI(buffer)
 
 ### Stage 4: Schema Validation & Creation
 
-**Location**: [`import-from-lesson.ts`](../../src/endpoints/exercises/import-from-lesson.ts) (lines 131-226)
+**Location**: [`import-from-lesson.ts`](../../src/server/payload/endpoints/exercises/import-from-lesson.ts) (lines 131-226)
 
 **Process**:
 1. Detect question type (MCQ vs Free Response)
@@ -244,7 +244,7 @@ const questionBlock = QuestionSelectBlockSchema.parse({
 
 ### Direct Upload Endpoint
 
-**File**: [`src/endpoints/exercises/import-from-image.ts`](../../src/endpoints/exercises/import-from-image.ts)
+**File**: [`src/app/api/exercises/import/route.ts`](../../src/app/api/exercises/import/route.ts)
 
 **Flow**:
 ```typescript
@@ -281,7 +281,7 @@ export async function importExerciseFromImage(req: PayloadRequest) {
 
 ### Lesson Import Endpoint
 
-**File**: [`src/endpoints/exercises/import-from-lesson.ts`](../../src/endpoints/exercises/import-from-lesson.ts)
+**File**: [`src/app/api/exercises/import/route.ts`](../../src/app/api/exercises/import/route.ts)
 
 **Flow**:
 ```typescript

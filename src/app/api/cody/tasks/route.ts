@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 
-import { fetchIssues, fetchWorkflowRuns, fetchOpenPRs, fetchDeploymentPreviews, findTaskBranch, getStatusFromBranch, createIssue } from '@/ui/cody/github-client'
+import { fetchIssues, fetchWorkflowRuns, fetchOpenPRs, fetchDeploymentPreviews, findTaskBranch, getStatusFromBranch, createIssue, updateIssue } from '@/ui/cody/github-client'
 import type { CodyTask, ColumnId, GitHubIssue, GitHubPR, WorkflowRun } from '@/ui/cody/types'
 
 // Map GitHub issue state to column using agent labels, workflow runs, and PR status
@@ -282,9 +282,8 @@ export async function POST(req: NextRequest) {
     // Generate task ID prefix only for pipeline modes (not for bug reports)
     // Bug reports should keep their original title format
     const isBugReport = mode === 'bug'
-    const taskIdPrefix = !isBugReport && mode
-      ? `[${new Date().toISOString().slice(2, 8).replace('-', '')}-auto-XX] `
-      : ''
+    const datePrefix = new Date().toISOString().slice(2, 8).replace('-', '')
+    const taskIdPrefix = !isBugReport && mode ? `[${datePrefix}-auto-XX] ` : ''
     const fullTitle = title.startsWith('[') ? title : `${taskIdPrefix}${title}`
 
     // Create the issue in GitHub
@@ -296,6 +295,15 @@ export async function POST(req: NextRequest) {
     })
 
     console.log('[Cody] Created issue:', issue.number, issue.title)
+
+    // Fix the title: replace auto-XX with the real issue number
+    if (!isBugReport && mode && fullTitle.includes('auto-XX')) {
+      const correctedTitle = fullTitle.replace('auto-XX', `auto-${issue.number}`)
+      await updateIssue(issue.number, { title: correctedTitle })
+      console.log('[Cody] Fixed issue title:', issue.number, correctedTitle)
+      // Update the issue object with the corrected title for the response
+      issue.title = correctedTitle
+    }
 
     return NextResponse.json({
       success: true,

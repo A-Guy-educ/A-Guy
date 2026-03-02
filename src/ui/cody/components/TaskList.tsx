@@ -284,6 +284,8 @@ export function TaskList({
                   {task.column === 'review' && hasPR && onApproveReview && (
                     <MergeButton
                       prNumber={task.associatedPR!.number}
+                      prTitle={task.associatedPR!.title}
+                      branchName={task.associatedPR!.head.ref}
                       isMerging={isMerging}
                       onMerge={() => onApproveReview(task)}
                     />
