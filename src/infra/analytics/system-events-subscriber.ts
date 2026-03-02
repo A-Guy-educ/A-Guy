@@ -171,6 +171,20 @@ export function initAnalyticsSubscriber(): () => void {
       })
     }),
 
+    // Auth Gate
+    safeSubscribe(SYSTEM_EVENTS.LOGIN_MODAL_SHOWN, (envelope) => {
+      const payload = envelope.payload as {
+        trigger_type?: string
+        course_slug?: string
+        current_page?: string
+      }
+      analytics.track(PRODUCT_EVENTS.LOGIN_MODAL_SHOWN, {
+        trigger_type: payload.trigger_type,
+        course_slug: payload.course_slug,
+        current_page: payload.current_page,
+      })
+    }),
+
     // Registration Funnel
     safeSubscribe(SYSTEM_EVENTS.REGISTRATION_PROMPT_SHOWN, (envelope) => {
       const payload = envelope.payload as {

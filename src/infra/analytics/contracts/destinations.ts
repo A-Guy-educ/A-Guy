@@ -39,6 +39,9 @@ export const eventDestinations: Record<ProductEvent, AnalyticsDestination[]> = {
   [PRODUCT_EVENTS.PDF_VIEWED]: ['mixpanel'],
   [PRODUCT_EVENTS.CHAT_MESSAGE_SENT]: ['mixpanel'],
 
+  // Auth Gate Events
+  [PRODUCT_EVENTS.LOGIN_MODAL_SHOWN]: ['mixpanel'], // Product funnel - modal shown to anon user
+
   // Registration Events
   [PRODUCT_EVENTS.REGISTRATION_PROMPT_SHOWN]: ['mixpanel'], // Product funnel
   [PRODUCT_EVENTS.REGISTRATION_COMPLETED]: ['ga4', 'mixpanel'], // Conversion event (both)

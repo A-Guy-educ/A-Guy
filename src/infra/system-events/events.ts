@@ -27,6 +27,8 @@ export const SYSTEM_EVENTS = {
   PDF_VIEWED: 'system.pdf_viewed',
   /** User submitted a chat message */
   CHAT_MESSAGE_SUBMITTED: 'system.chat_message_submitted',
+  /** Login modal shown to anonymous user (auth gate) */
+  LOGIN_MODAL_SHOWN: 'system.login_modal_shown',
   /** Registration prompt shown to user */
   REGISTRATION_PROMPT_SHOWN: 'system.registration_prompt_shown',
   /** User completed registration */

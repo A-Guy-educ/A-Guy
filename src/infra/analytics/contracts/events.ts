@@ -33,6 +33,9 @@ export const PRODUCT_EVENTS = {
   PDF_VIEWED: 'pdf_viewed',
   CHAT_MESSAGE_SENT: 'chat_message_sent',
 
+  // Auth Gate Events
+  LOGIN_MODAL_SHOWN: 'login_modal_shown', // Mixpanel only - auth gate modal appeared
+
   // Registration Events
   REGISTRATION_PROMPT_SHOWN: 'registration_prompt_shown',
   REGISTRATION_COMPLETED: 'registration_completed', // GA4 + Mixpanel

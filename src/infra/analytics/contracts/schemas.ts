@@ -152,6 +152,19 @@ export const ChatMessageSentSchema = z.object({
 })
 
 /**
+ * login_modal_shown - Auth gate modal appeared for anonymous user
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const LoginModalShownSchema = z.object({
+  trigger_type: z
+    .enum(['mandatory', 'gated', 'warning'])
+    .describe('Which access gate triggered the modal'),
+  course_slug: z.string().describe('Course where modal appeared'),
+  current_page: z.string().optional().describe('Page URL when modal shown'),
+})
+
+/**
  * registration_prompt_shown - Track registration modal display
  * Destination: Mixpanel
  * Priority: P0
@@ -311,6 +324,7 @@ export const eventSchemas = {
   [PRODUCT_EVENTS.LESSON_COMPLETED]: LessonCompletedSchema,
   [PRODUCT_EVENTS.PDF_VIEWED]: PdfViewedSchema,
   [PRODUCT_EVENTS.CHAT_MESSAGE_SENT]: ChatMessageSentSchema,
+  [PRODUCT_EVENTS.LOGIN_MODAL_SHOWN]: LoginModalShownSchema,
   [PRODUCT_EVENTS.REGISTRATION_PROMPT_SHOWN]: RegistrationPromptShownSchema,
   [PRODUCT_EVENTS.REGISTRATION_COMPLETED]: RegistrationCompletedSchema,
 
@@ -340,6 +354,7 @@ export type LessonStartedProperties = z.infer<typeof LessonStartedSchema>
 export type LessonCompletedProperties = z.infer<typeof LessonCompletedSchema>
 export type PdfViewedProperties = z.infer<typeof PdfViewedSchema>
 export type ChatMessageSentProperties = z.infer<typeof ChatMessageSentSchema>
+export type LoginModalShownProperties = z.infer<typeof LoginModalShownSchema>
 export type RegistrationPromptShownProperties = z.infer<typeof RegistrationPromptShownSchema>
 export type RegistrationCompletedProperties = z.infer<typeof RegistrationCompletedSchema>
 
@@ -369,6 +384,7 @@ export type EventProperties =
   | LessonCompletedProperties
   | PdfViewedProperties
   | ChatMessageSentProperties
+  | LoginModalShownProperties
   | RegistrationPromptShownProperties
   | RegistrationCompletedProperties
   | HintClickedProperties
