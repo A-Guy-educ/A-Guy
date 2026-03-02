@@ -16,6 +16,7 @@ import { PipelineStatus } from './PipelineStatus'
 import { CommentEditor } from './CommentEditor'
 import { CommentList } from './CommentList'
 import { TaskPreviewTab } from './TaskPreviewTab'
+import { MergeButton } from './MergeButton'
 import { Button } from '@/ui/web/components/button'
 import { Badge } from '@/ui/web/components/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
@@ -43,6 +44,9 @@ import {
 } from 'lucide-react'
 
 interface TaskDetailProps {
+  onApproveReview?: (task: CodyTask) => Promise<void>
+  isMerging?: boolean
+
   task: CodyTask | null
   onClose?: () => void
   onRefresh?: () => void
@@ -73,7 +77,13 @@ const columnLabels: Record<ColumnId, string> = {
   done: 'Done',
 }
 
-export function TaskDetail({ task, onClose, onRefresh }: TaskDetailProps) {
+export function TaskDetail({
+  task,
+  onClose,
+  onRefresh,
+  onApproveReview,
+  isMerging: externalIsMerging,
+}: TaskDetailProps) {
   const {
     data: details,
     refetch,
@@ -258,15 +268,26 @@ export function TaskDetail({ task, onClose, onRefresh }: TaskDetailProps) {
         Issue
       </a>
       {task.associatedPR && (
-        <a
-          href={task.associatedPR.html_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
-        >
-          <GitPullRequest className="w-3 h-3" />
-          PR #{task.associatedPR.number}
-        </a>
+        <>
+          <a
+            href={task.associatedPR.html_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
+          >
+            <GitPullRequest className="w-3 h-3" />
+            PR #{task.associatedPR.number}
+          </a>
+          {task.column === 'review' && onApproveReview && (
+            <MergeButton
+              prNumber={task.associatedPR.number}
+              prTitle={task.associatedPR.title}
+              branchName={task.associatedPR.head.ref}
+              isMerging={externalIsMerging ?? false}
+              onMerge={() => onApproveReview(task)}
+            />
+          )}
+        </>
       )}
       {task.previewUrl && (
         <a

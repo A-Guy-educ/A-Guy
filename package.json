@@ -98,9 +98,7 @@
     "cody": "pnpm tsx scripts/cody/entry.ts",
     "cody:tag": "pnpm tsx scripts/cody/tag-version.ts",
     "supervisor": "pnpm tsx scripts/supervisor/supervisor.ts",
-    "tunnel:ngrok": "bash scripts/tunnel-ngrok.sh",
-    "tunnel:cf": "bash scripts/tunnel-cf.sh",
-    "tunnel:ocode": "bash scripts/tunnel-opencode.sh"
+    "tunnel:ocode": "opencode web --port 3001 & ngrok http 3001; kill %1"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.30",

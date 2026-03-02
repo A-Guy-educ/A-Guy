@@ -513,6 +513,8 @@ export function CodyDashboard() {
                 setSelectedTask(null)
               }}
               onRefresh={refetch}
+              onApproveReview={handleMerge}
+              isMerging={!!(selectedTask && mergingTaskId === selectedTask.id)}
             />
           </SheetContent>
         </Sheet>

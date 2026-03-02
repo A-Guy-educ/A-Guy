@@ -1213,7 +1213,7 @@ export async function fetchPRCIStatus(
     })
 
     const sha = pr.head.sha
-    const mergeable = pr.mergeable ?? false
+    // mergeable state no longer checked - just CI status determines mergeability
 
     // 2. Get check runs for the head SHA
     const { data: checkRuns } = await octokit.checks.listForRef({
@@ -1247,7 +1247,7 @@ export async function fetchPRCIStatus(
       }
     }
 
-    const result = { ciStatus, mergeable: mergeable && ciStatus === 'success' }
+    const result = { ciStatus, mergeable: ciStatus === 'success' }
 
     // Short cache — CI status changes frequently
     setCache(cacheKey, 30_000, result) // 30 seconds
