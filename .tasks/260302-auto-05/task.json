@@ -1,32 +1,36 @@
 {
   "task_type": "implement_feature",
   "risk_level": "medium",
-  "confidence": 0.95,
+  "confidence": 0.85,
   "primary_domain": "frontend",
   "scope": [
-    "useStudyPlan.ts - Add hasGenerated guard for manual trigger",
-    "engine.ts - Remove today-based logic, implement exam-anchored 7-day window",
-    "StudyPlanPage.tsx - Conditional empty state vs generated plan rendering"
+    "src/hooks/useStudyPlan.ts",
+    "src/lib/study-plan/engine.ts",
+    "src/app/(frontend)/study-plan/StudyPlanPage.tsx",
+    "tests for above files"
   ],
   "missing_inputs": [],
   "assumptions": [
     "date-fns library is already available in the project",
-    "The files useStudyPlan.ts, engine.ts, and StudyPlanPage.tsx exist in the codebase",
-    "Study plan already has persistence mechanism that can be leveraged"
+    "useStudyPlan.ts hook exists and manages study plan state",
+    "engine.ts exists and handles date calculations",
+    "StudyPlanPage.tsx exists as the main UI component",
+    "Existing persistence mechanism works correctly"
   ],
   "review_questions": [
-    "Are there existing unit tests for the engine that need to be updated?",
-    "Is there a preference for how hasGenerated state should be derived (persisted flag vs local state)?"
+    "Is the 7-day window calculation correct for the 07/03/2026 exam case (28/02 - 06/03)?",
+    "Does the page correctly show empty state before button click?",
+    "Does changing exam date after generation NOT auto-regenerate?",
+    "Is there any timezone edge case that could cause off-by-one errors?"
   ],
-  "complexity": 38,
-  "complexity_reasoning": "Scope: 3 files in same module (10pts). Risk: Business logic with date calculations (12pts). Novelty: Modifying existing logic pattern (8pts). Cross-domain: Frontend only (3pts). Ambiguity: Very clear spec with exact file paths (2pts). Dependency: Self-contained using existing date-fns (3pts). Total: 38",
+  "complexity": 43,
+  "complexity_reasoning": "Scope: 12 (3-4 files across hook/engine/page), Risk: 10 (core learning feature modification), Novelty: 8 (new behavior patterns), Cross-domain: 6 (frontend + hook logic), Ambiguity: 4 (clear requirements, some impl details), Dependency: 5 (depends on existing files). Total: 45",
   "input_quality": {
-    "level": "detailed_plan",
+    "level": "good_spec",
     "skip_stages": [
-      "spec",
-      "architect"
+      "spec"
     ],
-    "reasoning": "Task contains detailed requirements with exact file paths (useStudyPlan.ts, engine.ts, StudyPlanPage.tsx), implementation rules for date-fns usage, specific UI states, and 6 acceptance criteria. Promoted plan.md with implementation steps."
+    "reasoning": "Input contains clear ## Required Logic, ## UI Behavior, ## Technical Touchpoints, and ## Acceptance Criteria sections. Requirements are well-specified with exact file names and method signatures."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
