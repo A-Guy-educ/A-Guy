@@ -1,37 +1,30 @@
 {
   "task_type": "implement_feature",
   "risk_level": "medium",
-  "confidence": 0.9,
+  "confidence": 0.85,
   "primary_domain": "backend",
   "scope": [
-    "Admin UI: Convert V3 button and preview modal in Lesson edit view",
-    "API endpoint: Document extraction with LLM vision",
-    "New collection: ExtractionLogs for logging extraction attempts",
-    "Integration: Map extracted data to existing Exercises schema",
-    "Frontend: Exercise rendering and answer validation",
-    "PDF processing: Vercel-compatible PDF to image conversion"
+    "document-to-exercise conversion",
+    "PDF/image processing",
+    "LLM integration",
+    "admin UI flow",
+    "extraction logging"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "Existing LLM provider (Gemini) has vision capabilities that can be reused",
-    "Existing Exercises schema supports question_free_response, question_select types",
-    "PDF conversion can work in Vercel serverless runtime using existing services",
-    "Admin UI patterns from V2 conversion can be extended for V3"
+    "Existing LLM provider in project can handle vision tasks",
+    "Existing Exercises schema can accommodate the extracted exercise types",
+    "PDF processing library works in Vercel runtime"
   ],
-  "review_questions": [
-    "Should ExtractionLogs be a new Payload collection or a new field on an existing collection?",
-    "What is the exact UI implementation for the preview/edit step - modal, side panel, or separate page?",
-    "Should the V3 conversion be a separate endpoint or integrated with existing conversion flows?",
-    "What PDF processing library should be used for Vercel compatibility?"
-  ],
-  "complexity": 58,
-  "complexity_reasoning": "Scope: 20 (multi-module feature spanning admin UI, API, LLM, database, frontend). Risk: 14 (LLM API, new collection, PDF runtime, schema integration). Novelty: 16 (new V3 feature with vision, new extraction flow). Cross-Domain: 12 (backend + admin UI + frontend + database). Ambiguity: 4 (detailed spec with some implementation flexibility). Deps: 8 (depends on Exercises schema, LLM service, PDF processing). Total: 58",
+  "review_questions": [],
+  "complexity": 65,
+  "complexity_reasoning": "Scope: V3 POC with admin UI, backend extraction, logging, exercise creation (18). Risk: LLM integration, PDF processing, data storage (13). Novelty: New feature building on V2 patterns (12). Cross: Backend + Frontend + LLM + database (10). Ambiguity: Clear requirements, some impl details to figure out (4). Dependencies: LLM provider, PDF library, database (8). Total: 65",
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Task contains detailed ## Objective, ## Scope, ## Acceptance Criteria with 8 checkable items, and ## Verification Checklist. This is a comprehensive feature specification suitable for skipping the spec generation stage."
+    "reasoning": "Task has clear Scope section with Requirements, Acceptance Criteria checklist (11 items), and Admin Flow steps (1-7). Promoted spec.md from task.md requirements."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
