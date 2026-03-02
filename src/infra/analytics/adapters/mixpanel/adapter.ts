@@ -33,11 +33,6 @@ declare global {
 }
 
 /**
- * Track if we've created a People profile for the current user
- */
-let hasCreatedPeopleProfile = false
-
-/**
  * Send event to Mixpanel
  *
  * @param payload - Event payload from tracker
@@ -61,12 +56,6 @@ export function sendToMixpanel(payload: EventPayload): void {
 
     // Send to Mixpanel
     mixpanel.track(mixpanelEvent.name, mixpanelEvent.properties)
-
-    // Create People profile on first event (for both anonymous and authenticated users)
-    if (!hasCreatedPeopleProfile && mixpanel.people) {
-      createPeopleProfile(mixpanel)
-      hasCreatedPeopleProfile = true
-    }
 
     // Special handling for user_identified event
     // Also set user properties in Mixpanel People
@@ -104,59 +93,6 @@ export function sendToMixpanel(payload: EventPayload): void {
     }
   } catch (err) {
     console.error('[Analytics/Mixpanel] Send failed:', err)
-  }
-}
-
-/**
- * Create Mixpanel People profile for anonymous users
- *
- * @param mixpanel - Mixpanel instance
- */
-function createPeopleProfile(mixpanel: NonNullable<typeof window.mixpanel>): void {
-  if (!mixpanel.people) return
-
-  try {
-    const now = new Date().toISOString()
-
-    // Set initial People properties
-    const peopleProps: Record<string, unknown> = {
-      $created: now,
-      last_seen: now,
-    }
-
-    // Add browser/OS info if available from user agent
-    if (navigator.userAgent) {
-      // Simple browser detection
-      const ua = navigator.userAgent
-      if (ua.includes('Chrome')) peopleProps.$browser = 'Chrome'
-      else if (ua.includes('Firefox')) peopleProps.$browser = 'Firefox'
-      else if (ua.includes('Safari')) peopleProps.$browser = 'Safari'
-      else if (ua.includes('Edge')) peopleProps.$browser = 'Edge'
-
-      // Simple OS detection
-      if (ua.includes('Windows')) peopleProps.$os = 'Windows'
-      else if (ua.includes('Mac')) peopleProps.$os = 'macOS'
-      else if (ua.includes('Linux')) peopleProps.$os = 'Linux'
-      else if (ua.includes('Android')) peopleProps.$os = 'Android'
-      else if (ua.includes('iOS')) peopleProps.$os = 'iOS'
-    }
-
-    // Add referrer info
-    if (document.referrer) {
-      peopleProps.initial_referrer = document.referrer
-    }
-
-    // Add landing page
-    peopleProps.initial_landing_page = window.location.href
-
-    // Set People properties (use set_once so we don't overwrite on subsequent visits)
-    mixpanel.people.set_once(peopleProps)
-
-    if (analyticsConfig.debugMode) {
-      console.log('[Analytics/Mixpanel] People profile created:', peopleProps)
-    }
-  } catch (err) {
-    console.error('[Analytics/Mixpanel] Failed to create People profile:', err)
   }
 }
 
@@ -260,9 +196,6 @@ export function resetUser(): void {
 
     // Clear anonymous ID cookie
     clearAnonymousIdCookie()
-
-    // Reset People profile flag
-    hasCreatedPeopleProfile = false
 
     if (analyticsConfig.debugMode) {
       console.log('[Analytics/Mixpanel] Reset (new anonymous session via $device_id)')
