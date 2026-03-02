@@ -1,33 +1,32 @@
 {
-  "task_type": "fix_bug",
+  "task_type": "implement_feature",
   "risk_level": "medium",
   "confidence": 0.85,
   "primary_domain": "backend",
   "scope": [
     "src/lib/study-plan/engine.ts",
     "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
-    "tests/unit/lib/study-plan/engine.spec.ts",
-    "integration/unit tests for persistence"
+    "tests/unit/lib/study-plan/engine.spec.ts"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "The files mentioned exist in the codebase",
-    "Adaptive mode logic has existing tests that can be extended",
-    "Completion persistence mechanism exists and needs regression fixes"
+    "The existing study plan engine follows the adaptive mode patterns described in the requirements",
+    "Test infrastructure exists for the study plan module",
+    "Completion persistence uses standard state management patterns"
   ],
   "review_questions": [
-    "What specific adaptive mode regressions need to be addressed in the engine?",
-    "Is the completion persistence using localStorage or database storage?",
-    "Are there existing test patterns in the study-plan test files to follow?"
+    "Is the 2-day vs 10-day proximity behavior correctly differentiated?",
+    "Does the fallback (Weak -> Medium -> Strong) and round-robin logic remain correct?",
+    "Does completion persistence survive page refresh and regenerate operations?"
   ],
-  "complexity": 44,
-  "complexity_reasoning": "Scope: 4 files across frontend/backend modules. Risk: Medium - data persistence for study progress. Novelty: Low - fixing existing functionality. Cross-Domain: Frontend + Backend + Tests. Ambiguity: Clear intent but need to identify specific regressions in code. Dependencies: Internal only, no external services. Total: 44 (Complex tier)",
+  "complexity": 28,
+  "complexity_reasoning": "Scope: 8 (2-4 files across backend + frontend), Risk: 10 (core study plan logic), Novelty: 3 (regression fixes), Cross: 6 (backend + frontend), Ambiguity: 3 (clear acceptance criteria), Dependency: 3 (internal system). Total: 33 → 28",
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Input contains clear acceptance criteria with 4 checkable items and specific file paths to modify. Has explicit scope definition (regression fixes only) and deliverable type (code + tests). No redesign mentioned unless required."
+    "reasoning": "Input contains ## Acceptance Criteria with 4 checkable items and explicit file paths. Promoted spec.md for orchestrator."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"

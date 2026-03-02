@@ -1,47 +1,44 @@
-# Specification (promoted)
+# Study Plan: Adaptive Mode Behavior + Completion Persistence
 
-Skipped via input_quality — taskify determined spec is unnecessary.
+## Overview
+
+This task validates and stabilizes the adaptive mode logic and completion persistence in the Study Plan feature after UI/engine changes. Regression fixes and tests are required to ensure stability.
 
 ## Requirements
 
-# Task
+### Adaptive Mode Behavior
 
-## Issue Title
+The adaptive mode must differentiate study intervals by proximity:
 
-[2603--auto-656] Title: Study Plan: Adaptive mode behavior + completion persistence regression coverage
-Execution Contract (Routing Guard)
-- Intent: IMPLEMENTATION (not spec-only)
-- task_type: implement_feature
-- pipeline: spec_execute_verify
-- Deliverable: code + tests (no planning-only output)
- Problem
-After UI/engine changes, adaptive mode logic and completion persistence must be validated and stabilized.
- Required Behavior
-- Adaptive mode differences must be clear by proximity:
-  - 1–2 days, 3–5 days, 6–7 days, 8+ days
-- Topic fallback and round-robin remain correct:
-  - Weak -> Medium -> Strong
-  - no repeat before peers in category are covered
-- Completion persistence remains intact:
-  - mark complete survives refresh
-  - regenerate follows existing completion retention rule without data loss
- Scope
-- Regression fixes + tests only.
-- No redesign unless required to satisfy behavior.
- Files
-- `src/lib/study-plan/engine.ts` (only if regression found)
-- `src/app/(frontend)/study-plan/_components/useStudyPlan.ts`
-- `tests/unit/lib/study-plan/engine.spec.ts`
-- relevant integration/unit tests for persistence
- Acceptance Criteria
-- [ ] 2-day vs 10-day behavior differences validated.
-- [ ] Fallback + rotation validated by tests.
-- [ ] Completion persistence validated after refresh and regenerate.
-- [ ] Test suite updated to prevent recurrence.
+- **1–2 days**: Near-term review
+- **3–5 days**: Medium-term review  
+- **6–7 days**: Week-long review
+- **8+ days**: Extended review
 
+### Topic Fallback and Round-Robin
+
+The topic selection logic must remain correct:
+
+- **Fallback pattern**: Weak → Medium → Strong (progressive difficulty)
+- **Round-robin**: No repeat before peers in category are covered
+
+### Completion Persistence
+
+Completion state must persist across operations:
+
+- **Refresh survival**: Mark complete survives page refresh
+- **Regenerate retention**: Regenerate follows existing completion retention rule without data loss
 
 ## Acceptance Criteria
 
-- [ ] Fix applied as described in task.md
-- [ ] TypeScript compilation passes
-- [ ] Unit tests pass
+- [ ] 2-day vs 10-day behavior differences validated
+- [ ] Fallback + rotation validated by tests
+- [ ] Completion persistence validated after refresh and regenerate
+- [ ] Test suite updated to prevent recurrence
+
+## Files in Scope
+
+- `src/lib/study-plan/engine.ts` (only if regression found)
+- `src/app/(frontend)/study-plan/_components/useStudyPlan.ts`
+- `tests/unit/lib/study-plan/engine.spec.ts`
+- Relevant integration/unit tests for persistence
