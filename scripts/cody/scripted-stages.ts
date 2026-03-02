@@ -171,7 +171,7 @@ export function createFreshBranch(currentBranch: string, cwd: string = process.c
   // List remote branches matching the pattern
   let maxVersion = 1
   try {
-    const output = execFileSync('git', ['branch', '-r', '--list', `"${baseBranch}-v*"`], {
+    const output = execFileSync('git', ['branch', '-r', '--list', `${baseBranch}-v*`], {
       cwd,
       encoding: 'utf-8',
     }).trim()
