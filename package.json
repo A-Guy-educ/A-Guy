@@ -98,7 +98,7 @@
     "cody": "pnpm tsx scripts/cody/entry.ts",
     "cody:tag": "pnpm tsx scripts/cody/tag-version.ts",
     "supervisor": "pnpm tsx scripts/supervisor/supervisor.ts",
-    "tunnel:ocode": "opencode web --port 3001 & ngrok http 3001; kill %1"
+    "tunnel:ocode": "export $(grep OPENCODE_SERVER_PASSWORD .env | xargs) && opencode web --port 3001 & ngrok http 3001; kill %1"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.30",
@@ -213,7 +213,7 @@
     "husky": "^9.1.7",
     "jsdom": "26.1.0",
     "lint-staged": "^16.2.7",
-    "opencode-ai": "^1.2.10",
+    "opencode-ai": "0.0.0-dev-202603021929",
     "playwright": "1.57.0",
     "playwright-core": "1.57.0",
     "postcss": "^8.4.38",
