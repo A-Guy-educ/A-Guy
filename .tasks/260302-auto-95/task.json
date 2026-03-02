@@ -1,0 +1,31 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "backend",
+  "scope": [
+    "src/lib/study-plan/engine.ts",
+    "tests/unit/lib/study-plan/engine.spec.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Implementation will follow existing engine date patterns",
+    "Test coverage for 2, 5, 7, 10 day scenarios will be added",
+    "Warm-up mode behavior for daysUntilExam=1 is already partially implemented and needs extension"
+  ],
+  "review_questions": [
+    "Should the engine handle exam dates in the past differently?",
+    "Is there existing test data for the 2, 5, 7, 10 day scenarios that we should verify against?"
+  ],
+  "complexity": 33,
+  "complexity_reasoning": "Scope: 8 (2 files in same module), Risk: 8 (non-critical business logic), Novelty: 10 (extending existing pattern), Cross-domain: 3 (single domain), Ambiguity: 2 (clear intent), Dependencies: 2 (self-contained). Total: 33",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains clear ## Required Behavior with 5 bullet points and ## Acceptance Criteria with 3 checkable items. Task is implementation-focused but already has structured requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

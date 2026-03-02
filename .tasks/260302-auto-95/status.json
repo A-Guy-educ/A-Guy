@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "taskId": "260302-auto-95",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-02T10:25:55.303Z",
+  "updatedAt": "2026-03-02T10:27:07.268Z",
+  "state": "paused",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-03-02T10:25:55.304Z"
+    }
+  },
+  "issueNumber": 654,
+  "completedAt": "2026-03-02T10:27:07.268Z"
+}
