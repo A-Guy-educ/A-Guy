@@ -41,17 +41,15 @@ export interface PageData {
 export async function loadAndRenderAllPages(pdfBuffer: Buffer): Promise<PageData[]> {
   const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
   const { createCanvas } = await import('@napi-rs/canvas')
-
-  // In serverless runtimes (e.g. Vercel), the bundled pdf.worker module path may be unavailable.
-  // Force in-process parsing to avoid fake-worker resolution errors.
-  pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+  // Use a package specifier so fake-worker dynamic import resolves in both local tests
+  // and serverless bundles, instead of relying on fragile node_modules absolute paths.
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs-dist/legacy/build/pdf.worker.mjs'
 
   const loadingTask = pdfjsLib.getDocument({
     data: new Uint8Array(pdfBuffer),
     useSystemFonts: true,
     enableXfa: false,
-    disableWorker: true,
-  } as unknown as Parameters<typeof pdfjsLib.getDocument>[0])
+  })
 
   const pdf = await loadingTask.promise
   const pageCount = pdf.numPages
