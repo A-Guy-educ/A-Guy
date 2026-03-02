@@ -130,7 +130,8 @@ export async function extractSingle(
     return {
       success: false,
       extractionLogId: '',
-      error: 'Media is not attached to this lesson',
+      error:
+        'Media is not attached to this lesson. Save the lesson after attaching media and try again.',
     }
   }
 
