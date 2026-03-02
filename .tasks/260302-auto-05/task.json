@@ -1,0 +1,34 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
+    "src/lib/study-plan/engine.ts",
+    "src/app/(frontend)/study-plan/page.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Files useStudyPlan.ts, engine.ts, and StudyPlanPage.tsx exist in the codebase",
+    "date-fns library is already installed and available",
+    "Existing study plan persistence mechanism works correctly"
+  ],
+  "review_questions": [
+    "Are the exact file paths correct for useStudyPlan.ts, engine.ts, and StudyPlanPage.tsx?",
+    "Is date-fns properly installed in the project dependencies?",
+    "What is the existing study plan persistence mechanism (localStorage/database)?"
+  ],
+  "complexity": 34,
+  "complexity_reasoning": "Scope: 3 files across frontend (10 pts). Risk: medium, core logic changes but no auth/data migration (8 pts). Novelty: modifying existing pattern with new date calculation (8 pts). Cross-domain: frontend only (3 pts). Ambiguity: clear intent with specific file paths (2 pts). Dependency: date-fns already available (3 pts). Total: 34",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec",
+      "architect"
+    ],
+    "reasoning": "Input contains detailed requirements with ## Required Logic, ## UI Behavior, ## Technical Touchpoints sections, and ## Acceptance Criteria with 7 checkable items. Also includes ## Test Requirements with 6 test cases. File paths specified for useStudyPlan.ts, engine.ts, and StudyPlanPage.tsx."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
