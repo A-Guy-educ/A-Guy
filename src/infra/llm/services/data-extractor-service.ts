@@ -49,8 +49,6 @@ export async function extractFromImage(
   let modelConfig: AIModel | null = null
 
   try {
-    const optimizedImage = await optimizeImageForAI(input.imageBuffer)
-
     // Dynamic import to prevent Node.js-only modules from being bundled into client code
     const { createGenkitUnifiedAdapter } = await import('../genkit/adapters/unified-adapter')
     const adapter = await createGenkitUnifiedAdapter(payload)
@@ -59,6 +57,20 @@ export async function extractFromImage(
     // Prepare multimodal input
     const prompt = `${SIMPLE_TEXT_QUESTION_PROMPT}\n\nExtract the question, options (A, B, C, D), correct answer, and explanation from this image. Return JSON with: question, options[], correctAnswer (index), explanation(optional).`
 
+    // For PDFs, pass directly to Gemini (it handles PDF natively)
+    // For images, optimize before sending to reduce API latency/costs
+    let attachmentData: string
+    let sizeBytes: number
+
+    if (input.mimeType === 'application/pdf') {
+      attachmentData = input.imageBuffer.toString('base64')
+      sizeBytes = input.imageBuffer.length
+    } else {
+      const optimizedImage = await optimizeImageForAI(input.imageBuffer)
+      attachmentData = optimizedImage.buffer.toString('base64')
+      sizeBytes = optimizedImage.sizeBytes
+    }
+
     // Generate content using Genkit adapter
     const result = await adapter.generateMultimodalCompletion(
       {
@@ -66,7 +78,7 @@ export async function extractFromImage(
         model: modelConfig,
         attachments: [
           {
-            data: optimizedImage.buffer.toString('base64'),
+            data: attachmentData,
             mimeType: input.mimeType,
           },
         ],
@@ -94,7 +106,7 @@ export async function extractFromImage(
         metadata: {
           model: modelConfig.name,
           processingTimeMs: Date.now() - startTime,
-          imageSizeBytes: optimizedImage.sizeBytes,
+          imageSizeBytes: sizeBytes,
         },
       }
     }
@@ -111,7 +123,7 @@ export async function extractFromImage(
       metadata: {
         model: modelConfig.name,
         processingTimeMs: Date.now() - startTime,
-        imageSizeBytes: optimizedImage.sizeBytes,
+        imageSizeBytes: sizeBytes,
       },
     }
   } catch (error) {

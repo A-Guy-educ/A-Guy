@@ -17,19 +17,17 @@
 
 import type { Payload } from 'payload'
 
-import type { Lesson } from '@/payload-types'
-import type { Media } from '@/payload-types'
 import {
   extractFromImage,
   type ImageToExerciseResponse,
 } from '@/infra/llm/services/data-extractor-service'
-import { normalizeToAbsoluteUrl, getPdfBufferFromBlob } from '@/server/services/pdf-fetcher'
-import { loadAndRenderAllPages } from '@/server/services/exercise-conversion/v2/pdf-render-service'
 import { fetchBuffer } from '@/infra/utils/http'
+import type { Lesson, Media } from '@/payload-types'
+import { getPdfBufferFromBlob, normalizeToAbsoluteUrl } from '@/server/services/pdf-fetcher'
 import { resolveExtractorPrompt } from './prompt-resolver'
 import {
-  toPreviewDraft,
   toExerciseContent,
+  toPreviewDraft,
   type PreviewDraft,
   type TransformResult,
 } from './transform'
@@ -158,23 +156,14 @@ export async function extractSingle(
 
   // Step 4: Download media buffer
   let imageBuffer: Buffer
-  let mimeType = typedMedia.mimeType || 'application/pdf'
+  const mimeType = typedMedia.mimeType || 'application/pdf'
 
   try {
     if (mimeType === 'application/pdf') {
-      // PDF: render first page to image
+      // PDF: pass directly to Gemini - it handles PDF natively
       const pdfBuffer = await getPdfBufferFromBlob(mediaId, payload)
-      const pages = await loadAndRenderAllPages(pdfBuffer)
-      if (pages.length === 0) {
-        return {
-          success: false,
-          extractionLogId: '',
-          error: 'PDF has no pages',
-        }
-      }
-      // Use first page
-      imageBuffer = pages[0].image.buffer
-      mimeType = 'image/png'
+      imageBuffer = pdfBuffer
+      // Keep mimeType as 'application/pdf' — Gemini handles PDF natively
     } else if (SUPPORTED_IMAGE_MIMES.includes(mimeType)) {
       // Image: fetch directly
       if (!typedMedia.url) {
