@@ -1,34 +1,35 @@
 {
   "task_type": "implement_feature",
   "risk_level": "medium",
-  "confidence": 0.6,
-  "primary_domain": "product",
+  "confidence": 0.7,
+  "primary_domain": "backend",
   "scope": [
-    "study plan generator button",
-    "adaptive practice schedule",
-    "exam proximity logic",
-    "topic mastery integration",
-    "personalized planning algorithm"
+    "study-plan-generator",
+    "adaptive-practice-schedule",
+    "exam-proximity",
+    "topic-mastery"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "Study plan generation will use existing exam and topic mastery data from the adaptive practice system",
-    "Will require a UI button component for triggering plan generation",
-    "Planning logic will need an algorithm to personalize based on exam dates and mastery levels",
-    "May integrate with existing progress tracking features"
+    "The Adaptive Practice Schedule feature already exists and needs extension",
+    "Study plans should be generated based on exam date and topic mastery levels",
+    "A new UI button will be needed to trigger the study plan generation",
+    "The planning logic will need to query existing data about exams and topic mastery",
+    "This feature affects both frontend (button) and backend (planning service)"
   ],
   "review_questions": [
-    "What are the specific requirements for the study plan generator button placement and behavior?",
-    "What data sources should be used for calculating exam proximity and topic mastery levels?",
-    "Should study plans be generated as one-time recommendations or as recurring/refreshable plans?",
-    "How should study plans be persisted - as user documents or generated on-demand?"
+    "What are the specific 'critical fixes' needed for the Adaptive Practice Schedule?",
+    "What is the algorithm for generating personalized or criteria study plans?",
+    "Should study plans be one-time generation or recurring/adaptive?",
+    "What data model changes are needed (if any) to store generated study plans?",
+    "Should the study plan generator be available to all users or only those with certain roles?"
   ],
-  "complexity": 55,
-  "complexity_reasoning": "Scope: 12 points (4-6 files across UI and backend modules for button + planning logic). Risk: 12 points (core feature logic with user data). Novelty: 8 points (extends existing adaptive practice with new generator). Cross-Domain: 8 points (frontend button + backend planning). Ambiguity: 8 points (vague requirements, multiple valid implementations). Dependencies: 7 points (depends on existing exam and practice systems). Total: 55 - Very Complex",
+  "complexity": 59,
+  "complexity_reasoning": "Scope: 18 (multiple files across frontend+backend), Risk: 10 (business logic, no auth/payments), Novelty: 10 (extending existing feature with new functionality), Cross-domain: 8 (frontend+backend), Ambiguity: 8 (vague about fixes needed), Dependencies: 5 (depends on existing Adaptive Practice Schedule). Total: 59",
   "input_quality": {
     "level": "raw_idea",
     "skip_stages": [],
-    "reasoning": "Task contains only issue title and summary. No requirements section, no acceptance criteria, no implementation plan or file paths. This is a raw feature idea requiring full spec development."
+    "reasoning": "Task has a clear feature name (study plan generator) but lacks specific requirements, acceptance criteria, and implementation details. Mentions 'critical fixes' without specifying what needs fixing."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
