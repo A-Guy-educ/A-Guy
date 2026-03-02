@@ -76,6 +76,94 @@ PDF conversion must work in Vercel preview/server runtime.
 - Perfect visual fidelity
 - Enterprise-grade fault tolerance
 
+## Functional Requirements
+
+### FR-LOG-001: ExtractionLogs Collection
+Create a new Payload collection `ExtractionLogs` with the following fields:
+- `rawLLMResponse` (text): Raw response string from LLM
+- `parsedPayload` (json): Parsed exercise data
+- `status` (select): `success` or `failed`
+- `lesson` (relationship): Relation to lessons collection
+- `media` (relationship): Relation to media collection
+- `promptId` (relationship): Relation to prompts collection (nullable)
+- `promptVersion` (number): Version of prompt used (nullable)
+- `stage` (text): Current stage (e.g., "fetch", "extract", "parse", "create")
+- `errorMessage` (text): Error details if failed (nullable)
+
+### FR-LOG-002: Stage-Based Logging
+Log extraction attempts at each stage:
+- Before fetching media: stage = "init"
+- After successful fetch: stage = "fetched"
+- After LLM extraction: stage = "extracted"
+- After parsing: stage = "parsed"
+- After exercise creation: stage = "created"
+- On any failure: stage = "failed" with errorMessage
+
+### FR-UI-001: Convert V3 Button
+Add a new "Convert V3" button component that:
+- Is synchronous (not queued)
+- Calls the V3 extraction endpoint
+- Shows loading state during extraction
+- Returns preview data for editing
+
+### FR-UI-002: Preview/Edit Modal
+Add a PreviewEditModal component that:
+- Displays extracted exercise data for review
+- Allows editing prompt text
+- Allows editing options (for MCQ)
+- Allows editing correct answer
+- Has "Create Exercise" button to finalize
+- Has "Cancel" button to discard
+
+### FR-API-001: V3 Extraction Endpoint
+Create a new API endpoint `/api/exercises/convert/v3` (POST) that:
+- Accepts `{ lessonId, mediaId }` in request body
+- Fetches the media file
+- Converts PDF to image if needed (Vercel-compatible)
+- Calls LLM extraction
+- Returns preview data (not creates exercise)
+
+### FR-API-002: Create Exercise Endpoint
+Create `/api/exercises/create-from-preview` (POST) that:
+- Accepts preview data with edits
+- Validates against Exercise schema
+- Creates exercise as published
+- Returns created exercise ID
+
+### FR-API-003: PDF Support
+Handle PDF input by:
+- Converting PDF pages to images
+- Using first page for extraction
+- Using Vercel-compatible PDF processing (no native modules)
+
+### FR-PDF-001: Vercel-Compatible PDF Processing
+Use serverless-compatible PDF processing:
+- Option A: Use pdf-lib or similar pure JS library
+- Option B: Use external API (e.g., CloudConvert)
+- Option C: Use canvas element in Edge runtime
+
+**CRITICAL**: `@napi-rs/canvas` from V2 does NOT work in Vercel serverless
+
+### FR-DATA-001: Preview Data Format
+Extraction endpoint returns:
+- question (string)
+- options (string[] or null)
+- correctAnswer (number or null)
+- explanation (string or null)
+- blockType (question_free_response | question_select)
+- formatted for ExerciseBlockDefaults
+
+## Guardrails
+
+### GR-001: Serverless PDF Processing
+PDF processing must work in Vercel serverless environment. Do NOT use `@napi-rs/canvas` or other native Node.js modules.
+
+### GR-002: Preview Required
+V3 flow must ALWAYS go through preview/edit step. No direct auto-creation of exercises.
+
+### GR-003: Complete Logging
+All extraction attempts must be logged, including failures, with sufficient detail for debugging.
+
 ## Acceptance Criteria
 
 - [ ] Convert V3 works for **PDF** in Vercel preview
