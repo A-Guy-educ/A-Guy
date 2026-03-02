@@ -26,6 +26,7 @@ import type { User } from '@/payload-types'
 import type { Access, CollectionConfig } from 'payload'
 import { authenticated } from '../access/authenticated'
 import { AccountRole } from './Users/roles'
+import { CONTENT_LOCALES, DEFAULT_CONTENT_LOCALE } from '../fields/contentLocale'
 
 const isOwner: Access = ({ req, id }) => {
   const user = req.user as User | null
@@ -52,7 +53,7 @@ export const Conversations: CollectionConfig = {
   slug: 'conversations',
   admin: {
     useAsTitle: 'id',
-    defaultColumns: ['user', 'contextKey', 'lastMessageAt', 'createdAt'],
+    defaultColumns: ['user', 'contextKey', 'preferredLocale', 'lastMessageAt', 'createdAt'],
     description: 'Context-scoped chat conversations with AI tutor',
   },
   access: {
@@ -145,6 +146,22 @@ export const Conversations: CollectionConfig = {
       index: true,
       admin: {
         description: 'Legacy field - use contextRef instead. Will be removed in future version.',
+      },
+    },
+
+    // ========================================
+    // Preferred Locale (derived from Course locale)
+    // ========================================
+    {
+      name: 'preferredLocale',
+      type: 'select',
+      required: true,
+      options: CONTENT_LOCALES.map((l) => ({ label: l.toUpperCase(), value: l })),
+      index: true,
+      defaultValue: DEFAULT_CONTENT_LOCALE,
+      admin: {
+        position: 'sidebar',
+        description: 'Primary language for AI responses (derived from Course locale)',
       },
     },
 

@@ -159,6 +159,7 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
         data: {
           title: 'Test Category',
           slug: 'test-category',
+          locale: 'he',
         },
         draft: false,
       })
@@ -174,6 +175,7 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
         title: 'Test Course for E2E',
         slug: courseSlug,
         description: 'A test course created for E2E testing',
+        locale: 'he',
         status: 'published',
         isActive: true,
         order: 0,

@@ -89,6 +89,7 @@ describe('Jobs Run Now', () => {
       data: {
         title: 'Test Category',
         slug: `test-category-${Date.now()}`,
+        locale: 'he',
       },
     })
 

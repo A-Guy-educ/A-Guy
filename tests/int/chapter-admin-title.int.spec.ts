@@ -48,6 +48,7 @@ describe('Chapter adminTitle', () => {
       data: {
         title: `AdminTitle Category ${timestamp}`,
         slug: `admin-title-category-${timestamp}`,
+        locale: 'he',
       },
     })
     categoryId = category.id
@@ -59,6 +60,7 @@ describe('Chapter adminTitle', () => {
       data: {
         courseLabel: `ATC1-${timestamp}`,
         title: `Math Course ${timestamp}`,
+        locale: 'he',
         categories: [categoryId],
         order: 0,
         status: 'published',
@@ -77,6 +79,7 @@ describe('Chapter adminTitle', () => {
       data: {
         courseLabel: `ATC2-${timestamp}`,
         title: `Science Course ${timestamp}`,
+        locale: 'he',
         categories: [categoryId],
         order: 1,
         status: 'published',
