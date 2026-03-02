@@ -5,7 +5,7 @@ import { adminOnly } from '../access/adminOnly'
 import { slugField } from 'payload'
 import { createdByField } from '../fields/createdBy'
 import { contentLocaleField } from '../fields/contentLocale'
-import { enforceSlugLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
+import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 
 export const Categories: CollectionConfig = {
   slug: 'categories',
@@ -20,7 +20,7 @@ export const Categories: CollectionConfig = {
     defaultColumns: ['title', 'locale', 'slug', 'updatedAt'],
   },
   hooks: {
-    beforeChange: [enforceSlugLocaleUniqueness('categories')],
+    beforeChange: [enforceFieldLocaleUniqueness('categories')],
   },
   fields: [
     {

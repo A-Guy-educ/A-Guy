@@ -9,6 +9,7 @@ import type { Header as HeaderType, User } from '@/payload-types'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
 import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations, useLocale } from '@/ui/web/providers/I18n'
+import { getNavItemsForLocale } from '@/ui/web/nav-variants'
 import { MobileMenuAuthSection } from './MobileMenuAuthSection'
 
 interface MobileMenuProps {
@@ -33,10 +34,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   const passwordLogin = usePasswordLogin()
   const systemLocale = useLocale()
 
-  // Select nav items from the variant matching the system language
-  const variants = data?.variants || []
-  const matchedVariant = variants.find((v) => v.locale === systemLocale) || variants[0]
-  const allNavItems = matchedVariant?.navItems || []
+  const allNavItems = getNavItemsForLocale(data, systemLocale)
   const navItems = passwordLogin
     ? allNavItems
     : allNavItems.filter(({ link }) => link?.url !== '/signup')

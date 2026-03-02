@@ -9,9 +9,8 @@ import { CMSLink } from '@/ui/web/Link'
 import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
-import { headers, cookies } from 'next/headers'
-import { defaultLocale, cookieName, locales } from '@/i18n/config'
-import type { Locale } from '@/i18n/config'
+import { getSystemLocale } from '@/i18n/server-locale'
+import { getNavItemsForLocale } from '@/ui/web/nav-variants'
 
 /**
  * Read version directly from package.json
@@ -34,27 +33,11 @@ function VersionDisplay({ version }: { version: string }) {
   return <span className="text-xs text-muted-foreground/70 font-normal">v{version}</span>
 }
 
-async function getSystemLocale(): Promise<Locale> {
-  const headersList = await headers()
-  const headerLocale = headersList.get('x-locale') as Locale | null
-  if (headerLocale && locales.includes(headerLocale)) return headerLocale
-
-  const cookieStore = await cookies()
-  const cookieLocale = cookieStore.get(cookieName)?.value as Locale | undefined
-  if (cookieLocale && locales.includes(cookieLocale)) return cookieLocale
-
-  return defaultLocale
-}
-
 export async function Footer() {
   const footerData: Footer = await getCachedGlobal('footer', 1)()
   const version = await getVersion()
   const systemLocale = await getSystemLocale()
-
-  // Select nav items from the variant matching the system language
-  const variants = footerData?.variants || []
-  const matchedVariant = variants.find((v) => v.locale === systemLocale) || variants[0]
-  const navItems = matchedVariant?.navItems || []
+  const navItems = getNavItemsForLocale(footerData, systemLocale)
 
   return (
     <footer className="mt-auto border-t border-border bg-footer text-card-foreground relative z-0">

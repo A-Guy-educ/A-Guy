@@ -28,7 +28,7 @@ import {
 import { slugField } from 'payload'
 import { createdByField } from '../../fields/createdBy'
 import { contentLocaleField } from '../../fields/contentLocale'
-import { enforceSlugLocaleUniqueness } from '../../hooks/validateLocaleUniqueness'
+import { enforceFieldLocaleUniqueness } from '../../hooks/validateLocaleUniqueness'
 
 export const Posts: CollectionConfig<'posts'> = {
   slug: 'posts',
@@ -227,7 +227,7 @@ export const Posts: CollectionConfig<'posts'> = {
     createdByField,
   ],
   hooks: {
-    beforeChange: [enforceSlugLocaleUniqueness('posts')],
+    beforeChange: [enforceFieldLocaleUniqueness('posts')],
     afterChange: [revalidatePost],
     afterRead: [populateAuthors],
     afterDelete: [revalidateDelete],

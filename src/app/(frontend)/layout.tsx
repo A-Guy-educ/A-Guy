@@ -18,11 +18,11 @@ import { PasswordLoginProvider } from '@/ui/web/providers/PasswordLoginProvider'
 import { InitTheme } from '@/ui/web/providers/Theme/InitTheme'
 import { RouteLoadingIndicator } from '@/infra/loading/components/RouteLoadingIndicator'
 
-import { cookieName, defaultLocale, getDirection, type Locale, locales } from '@/i18n/config'
+import { defaultLocale, getDirection } from '@/i18n/config'
+import { getSystemLocale } from '@/i18n/server-locale'
 import { I18nProvider } from '@/ui/web/providers/I18n'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { cookies, headers } from 'next/headers'
 import './globals.css'
 import { LayoutClient } from './LayoutClient'
 import { AnalyticsProvider } from '@/infra/analytics'
@@ -33,28 +33,6 @@ const assistant = Assistant({
   display: 'swap',
   variable: '--font-assistant',
 })
-
-// Read locale from middleware header or cookie
-// Middleware sets x-locale header after detecting locale from cookie/subdomain
-async function getLocale(): Promise<Locale> {
-  const headersList = await headers()
-  const cookieStore = await cookies()
-
-  // First, try to read from middleware header
-  const headerLocale = headersList.get('x-locale') as Locale | null
-  if (headerLocale && locales.includes(headerLocale)) {
-    return headerLocale
-  }
-
-  // Fallback to cookie (in case header is not set)
-  const cookieLocale = cookieStore.get(cookieName)?.value as Locale | undefined
-  if (cookieLocale && locales.includes(cookieLocale)) {
-    return cookieLocale
-  }
-
-  // Default fallback
-  return defaultLocale
-}
 
 async function getMessages(locale: string) {
   try {
@@ -70,7 +48,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // This avoids static-to-dynamic conversion errors
   const isEnabled = false
 
-  const locale = await getLocale()
+  const locale = await getSystemLocale()
   const messages = await getMessages(locale)
   const dir = getDirection(locale)
 

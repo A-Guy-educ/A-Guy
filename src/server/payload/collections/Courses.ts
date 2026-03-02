@@ -16,7 +16,7 @@ import { anyone } from '../access/anyone'
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
-import { enforceSlugLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
+import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 import { validateTreeIsolationOnPublish } from '../hooks/courses/validateTreeIsolation'
 
 const formatSlug = (val: string): string =>
@@ -41,7 +41,7 @@ export const Courses: CollectionConfig = {
         }
         return data
       },
-      enforceSlugLocaleUniqueness('courses'),
+      enforceFieldLocaleUniqueness('courses'),
       validateTreeIsolationOnPublish,
     ],
     afterChange: [cascadeAdminTitle],

@@ -2,9 +2,7 @@
  * Course tree isolation validation
  *
  * Ensures all children (chapters) of a course reference that course.
- * Prevents mixed-locale LMS trees.
  */
-import type { ContentLocale } from '@/server/payload/fields/contentLocale'
 import type { Payload } from 'payload'
 
 interface IsolationResult {
@@ -38,14 +36,4 @@ export async function validateCourseTreeIsolation(
   }
 
   return { valid: errors.length === 0, errors }
-}
-
-export async function getCourseLocale(payload: Payload, courseId: string): Promise<ContentLocale> {
-  const course = await payload.findByID({
-    collection: 'courses',
-    id: courseId,
-    depth: 0,
-    overrideAccess: true,
-  })
-  return course.locale ?? 'he'
 }

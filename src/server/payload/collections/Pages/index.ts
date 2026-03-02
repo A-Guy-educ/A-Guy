@@ -21,7 +21,7 @@ import {
 } from '@payloadcms/plugin-seo/fields'
 import { createdByField } from '../../fields/createdBy'
 import { contentLocaleField } from '../../fields/contentLocale'
-import { enforceSlugLocaleUniqueness } from '../../hooks/validateLocaleUniqueness'
+import { enforceFieldLocaleUniqueness } from '../../hooks/validateLocaleUniqueness'
 
 export const Pages: CollectionConfig<'pages'> = {
   slug: 'pages',
@@ -124,7 +124,7 @@ export const Pages: CollectionConfig<'pages'> = {
   ],
   hooks: {
     afterChange: [revalidatePage],
-    beforeChange: [populatePublishedAt, enforceSlugLocaleUniqueness('pages')],
+    beforeChange: [populatePublishedAt, enforceFieldLocaleUniqueness('pages')],
     afterDelete: [revalidateDelete],
   },
   versions: {

@@ -3,7 +3,7 @@ import type { CollectionConfig } from 'payload'
 import { adminOnly } from '../access/adminOnly'
 import { tenantField } from '../fields/tenant'
 import { contentLocaleField } from '../fields/contentLocale'
-import { enforcePromptKeyLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
+import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 
 export const Prompts: CollectionConfig = {
   slug: 'prompts',
@@ -28,7 +28,7 @@ export const Prompts: CollectionConfig = {
     group: 'AI',
   },
   hooks: {
-    beforeChange: [enforcePromptKeyLocaleUniqueness],
+    beforeChange: [enforceFieldLocaleUniqueness('prompts', 'promptKey')],
   },
   fields: [
     {

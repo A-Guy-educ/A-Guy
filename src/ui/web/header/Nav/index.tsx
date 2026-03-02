@@ -12,6 +12,7 @@ import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations, useLocale } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
 import { UserDropdown } from '@/ui/web/UserDropdown'
+import { getNavItemsForLocale } from '@/ui/web/nav-variants'
 
 interface HeaderNavProps {
   data: HeaderType
@@ -24,10 +25,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, user, isAuthLoading 
   const passwordLogin = usePasswordLogin()
   const systemLocale = useLocale()
 
-  // Select nav items from the variant matching the system language
-  const variants = data?.variants || []
-  const matchedVariant = variants.find((v) => v.locale === systemLocale) || variants[0]
-  const allNavItems = matchedVariant?.navItems || []
+  const allNavItems = getNavItemsForLocale(data, systemLocale)
   const navItems = passwordLogin
     ? allNavItems
     : allNavItems.filter(({ link }) => link?.url !== '/signup')
