@@ -4,30 +4,29 @@
   "confidence": 0.95,
   "primary_domain": "frontend",
   "scope": [
-    "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
-    "src/lib/study-plan/engine.ts",
-    "src/app/(frontend)/study-plan/page.tsx"
+    "useStudyPlan.ts - Add hasGenerated guard for manual trigger",
+    "engine.ts - Remove today-based logic, implement exam-anchored 7-day window",
+    "StudyPlanPage.tsx - Conditional empty state vs generated plan rendering"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "Files useStudyPlan.ts, engine.ts, and StudyPlanPage.tsx exist in the codebase",
-    "date-fns library is already installed and available",
-    "Existing study plan persistence mechanism works correctly"
+    "date-fns library is already available in the project",
+    "The files useStudyPlan.ts, engine.ts, and StudyPlanPage.tsx exist in the codebase",
+    "Study plan already has persistence mechanism that can be leveraged"
   ],
   "review_questions": [
-    "Are the exact file paths correct for useStudyPlan.ts, engine.ts, and StudyPlanPage.tsx?",
-    "Is date-fns properly installed in the project dependencies?",
-    "What is the existing study plan persistence mechanism (localStorage/database)?"
+    "Are there existing unit tests for the engine that need to be updated?",
+    "Is there a preference for how hasGenerated state should be derived (persisted flag vs local state)?"
   ],
-  "complexity": 34,
-  "complexity_reasoning": "Scope: 3 files across frontend (10 pts). Risk: medium, core logic changes but no auth/data migration (8 pts). Novelty: modifying existing pattern with new date calculation (8 pts). Cross-domain: frontend only (3 pts). Ambiguity: clear intent with specific file paths (2 pts). Dependency: date-fns already available (3 pts). Total: 34",
+  "complexity": 38,
+  "complexity_reasoning": "Scope: 3 files in same module (10pts). Risk: Business logic with date calculations (12pts). Novelty: Modifying existing logic pattern (8pts). Cross-domain: Frontend only (3pts). Ambiguity: Very clear spec with exact file paths (2pts). Dependency: Self-contained using existing date-fns (3pts). Total: 38",
   "input_quality": {
     "level": "detailed_plan",
     "skip_stages": [
       "spec",
       "architect"
     ],
-    "reasoning": "Input contains detailed requirements with ## Required Logic, ## UI Behavior, ## Technical Touchpoints sections, and ## Acceptance Criteria with 7 checkable items. Also includes ## Test Requirements with 6 test cases. File paths specified for useStudyPlan.ts, engine.ts, and StudyPlanPage.tsx."
+    "reasoning": "Task contains detailed requirements with exact file paths (useStudyPlan.ts, engine.ts, StudyPlanPage.tsx), implementation rules for date-fns usage, specific UI states, and 6 acceptance criteria. Promoted plan.md with implementation steps."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"

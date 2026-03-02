@@ -1,47 +1,30 @@
-# Implementation Plan: Study Plan Manual Generation + Exam-Anchored 7-Day Window
+# Implementation Plan
 
 ## Step 1: Modify engine.ts
-**File:** `src/lib/study-plan/engine.ts`
-
-1. Remove all today-based date calculation logic
-2. Update the engine to accept exam date as input parameter
-3. Implement exam-anchored 7-day window using date-fns:
-   - Use `startOfDay(examDate)` to normalize
-   - Use `addDays(normalizedExamDate, -7)` for start date
-   - Use `addDays(normalizedExamDate, -1)` for end date
-   - Generate exactly 7 consecutive calendar days (inclusive)
-4. Ensure no timezone off-by-one errors
-5. Export updated engine function
+- Remove all today-based date calculation logic
+- Add function to compute 7-day window from exam date:
+  - Normalize exam date: `startOfDay(examDate)`
+  - Calculate start: `addDays(normalizedExamDate, -7)`
+  - Calculate end: `addDays(normalizedExamDate, -1)`
+- Return exactly 7 consecutive calendar days (inclusive)
+- Export date window calculation for testing
 
 ## Step 2: Modify useStudyPlan.ts
-**File:** `src/app/(frontend)/study-plan/_components/useStudyPlan.ts`
-
-1. Add `hasGenerated` state or derive from persisted plan presence
-2. Guard generation behind explicit handler (not on mount)
-3. Ensure refresh correctly restores persisted plan
-4. Keep existing completion toggle persistence behavior
-5. Remove any auto-generation logic on exam date/topics/mastery changes
+- Add `hasGenerated` state or derive from persisted plan presence
+- Guard generation behind explicit handler function
+- Ensure refresh correctly restores persisted plan
+- Prevent auto-regeneration on exam date/topics/mastery changes
 
 ## Step 3: Modify StudyPlanPage.tsx
-**File:** `src/app/(frontend)/study-plan/page.tsx`
-
-1. Implement conditional rendering:
-   - Show empty state `מוכנים לצאת לדרך?` when no plan generated
-   - Show 7-day cards when plan is generated
-2. Wire CTA button (`צור תוכנית לימודים`) to explicit generate handler
-3. Ensure changing exam date/topics/mastery does NOT auto-regenerate
+- Add conditional rendering: empty state vs generated plan
+- Wire "צור תוכנית לימודים" button to explicit generate handler
+- Display empty state "מוכנים לצאת לדרך?" before generation
+- Render 7 day cards after generation
+- Maintain existing completion toggle behavior
 
 ## Step 4: Write Tests
-**Files:** `tests/unit/lib/study-plan/engine.spec.ts` and integration tests
-
-1. Unit test for engine date window:
-   - Input: exam date `07/03/2026`
-   - Expected: first day `28/02/2026`, last day `06/03/2026`
-2. Hook/page test: no generation on mount
-3. Hook/page test: generation only on explicit click
-4. Test: changing exam date after generation does not auto-regenerate
-5. Test: persisted plan survives refresh
-
-## Verification
-- Run `pnpm tsc --noEmit` to validate TypeScript
-- Run test suite to verify all acceptance criteria
+- Unit test: engine date window for 07/03/2026 → 28/02/2026 to 06/03/2026
+- Integration test: no generation on page mount
+- Integration test: generation only on explicit button click
+- Integration test: changing exam date after generation does not auto-regenerate
+- Integration test: persisted plan survives page refresh
