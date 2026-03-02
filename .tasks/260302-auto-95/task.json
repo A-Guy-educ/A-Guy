@@ -9,22 +9,21 @@
   ],
   "missing_inputs": [],
   "assumptions": [
-    "Implementation will follow existing engine date patterns",
-    "Test coverage for 2, 5, 7, 10 day scenarios will be added",
-    "Warm-up mode behavior for daysUntilExam=1 is already partially implemented and needs extension"
+    "Engine has existing date generation logic to modify",
+    "Exam date is available in the data model"
   ],
   "review_questions": [
-    "Should the engine handle exam dates in the past differently?",
-    "Is there existing test data for the 2, 5, 7, 10 day scenarios that we should verify against?"
+    "What should happen if the exam date is in the past?",
+    "Should timezone be considered when calculating dates?"
   ],
-  "complexity": 33,
-  "complexity_reasoning": "Scope: 8 (2 files in same module), Risk: 8 (non-critical business logic), Novelty: 10 (extending existing pattern), Cross-domain: 3 (single domain), Ambiguity: 2 (clear intent), Dependencies: 2 (self-contained). Total: 33",
+  "complexity": 28,
+  "complexity_reasoning": "Scope: 6 (2 files in same module). Risk: 8 (core business logic for scheduling). Novelty: 8 (extending existing date generation pattern). Cross-domain: 2 (single backend domain). Ambiguity: 2 (clear requirements with acceptance criteria). Dependency: 2 (self-contained engine). Total: 28 (Simple to Moderate)",
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Input contains clear ## Required Behavior with 5 bullet points and ## Acceptance Criteria with 3 checkable items. Task is implementation-focused but already has structured requirements."
+    "reasoning": "Task contains ## Required Behavior with 5 clear requirements and ## Acceptance Criteria with 3 checkable items. Promoted spec.md."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"

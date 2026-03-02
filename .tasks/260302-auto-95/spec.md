@@ -1,40 +1,29 @@
-# Specification (promoted)
+# Study Plan Engine: Anchor Schedule to Exam Countdown
 
-Skipped via input_quality — taskify determined spec is unnecessary.
+## Overview
+
+Modify the study plan engine to consistently anchor generated day dates to the final exam countdown window (exam-6 through exam day).
 
 ## Requirements
 
-# Task
+### FR-1: Exam Countdown Anchoring
+Generated day dates must always be anchored to the final exam countdown window, not to "today".
 
-## Issue Title
+### FR-2: Target Window Definition
+- Target window: `examDate - 6` through `examDate` (inclusive)
+- Maximum of 7 days in the countdown window
 
-[2603--auto-654] Title: Study Plan Engine: Anchor schedule to exam countdown (exam-6..exam day)
-Execution Contract (Routing Guard)
-- Intent: IMPLEMENTATION (not spec-only)
-- task_type: implement_feature
-- pipeline: spec_execute_verify
-- Deliverable: code + tests (no planning-only output)
- Problem
-Generated day dates are not consistently anchored to the final exam countdown window.
- Required Behavior
-- Always generate plan dates as the last countdown window ending on exam date.
-- Target window: `examDate - 6` through `examDate` (inclusive), up to 7 days.
-- If fewer than 7 days available, generate only available days ending on exam day.
-- Do not anchor output to “today” when full countdown window exists.
-- `daysUntilExam = 1` must produce warm-up mode behavior.
- Scope
-- Engine/date math only (no UI redesign in this issue).
- Files
-- `src/lib/study-plan/engine.ts`
-- `tests/unit/lib/study-plan/engine.spec.ts`
- Acceptance Criteria
-- [ ] Date sequence matches exam-6..exam day (or shorter when needed).
-- [ ] 2-day, 5-day, 7-day, 10-day scenarios pass deterministic tests.
-- [ ] No regressions in existing engine topic assignment outputs.
+### FR-3: Partial Window Handling
+If fewer than 7 days are available before the exam, generate only the available days ending on exam day.
 
+### FR-4: Warm-up Mode for daysUntilExam = 1
+When `daysUntilExam = 1`, the system must produce warm-up mode behavior.
+
+### FR-5: No Regression
+Existing engine topic assignment outputs must not regress.
 
 ## Acceptance Criteria
 
-- [ ] Fix applied as described in task.md
-- [ ] TypeScript compilation passes
-- [ ] Unit tests pass
+- [ ] Date sequence matches exam-6..exam day (or shorter when needed)
+- [ ] 2-day, 5-day, 7-day, 10-day scenarios pass deterministic tests
+- [ ] No regressions in existing engine topic assignment outputs
