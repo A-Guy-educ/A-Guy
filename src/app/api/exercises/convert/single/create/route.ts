@@ -14,9 +14,9 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { withApiHandler } from '@/server/api/with-api-handler'
-import { ContentSchema } from '@/server/payload/collections/Exercises/schemas'
 import type { Lesson } from '@/payload-types'
+import { withApiHandler } from '@/server/api/with-api-handler'
+import { rebuildFromPreview } from '@/server/services/exercise-conversion/v3/transform'
 
 // Minimal type for extraction log (will be generated after types are created)
 interface ExtractionLogMinimal {
@@ -34,7 +34,11 @@ const createRequestSchema = z.object({
   lessonId: z.string().min(1),
   mediaId: z.string().min(1),
   title: z.string().min(1),
-  content: z.object({ blocks: z.array(z.unknown()).min(1) }),
+  question: z.string().min(1),
+  options: z.array(z.string()).default([]),
+  correctAnswer: z.number().nullable().default(null),
+  explanation: z.string().optional(),
+  acceptedAnswer: z.string().optional(),
   extractionLogId: z.string().min(1),
 })
 
@@ -47,19 +51,21 @@ export const POST = withApiHandler<CreateRequest, unknown>(
     bodySchema: createRequestSchema,
   },
   async ({ body, payload }) => {
-    const { lessonId, mediaId, title, content, extractionLogId } = body
+    const { lessonId, mediaId, title, question, options, correctAnswer, explanation, acceptedAnswer, extractionLogId } = body
 
-    // Step 1: Validate content against ContentSchema
-    const contentValidation = ContentSchema.safeParse(content)
-    if (!contentValidation.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Invalid content: ${contentValidation.error.message}`,
-        },
-        { status: 400 },
-      )
-    }
+    // Step 1: Rebuild content from edited preview fields
+    // rebuildFromPreview → toExerciseContent already validates internally
+    const { title: derivedTitle, content } = rebuildFromPreview({
+      title,
+      question,
+      options,
+      correctAnswer,
+      explanation,
+      acceptedAnswer,
+    })
+
+    // Use derived title if none provided
+    const exerciseTitle = title || derivedTitle
 
     // Step 2: Fetch lesson to get tenant
     const lesson = await payload.findByID({
@@ -153,7 +159,7 @@ export const POST = withApiHandler<CreateRequest, unknown>(
     const exercise = await (payload as any).create({
       collection: 'exercises',
       data: {
-        title,
+        title: exerciseTitle,
         content,
         lesson: lessonId,
         origin: 'conversion',

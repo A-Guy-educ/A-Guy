@@ -11,7 +11,6 @@
  * @pattern transform
  */
 
-import { nanoid } from 'nanoid'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'
 import {
   ContentSchema,
@@ -20,6 +19,7 @@ import {
   QuestionSelectBlockSchema,
   RichTextBlockSchema,
 } from '@/server/payload/collections/Exercises/schemas'
+import { nanoid } from 'nanoid'
 
 // ---------------------------------
 // Input: Simple LLM extraction format
@@ -30,6 +30,7 @@ export interface SimpleExtraction {
   options: string[] // empty array → free_response
   correctAnswer: number | null // index into options, or null
   explanation?: string
+  acceptedAnswer?: string // for free_response questions
 }
 
 // ---------------------------------
@@ -125,19 +126,23 @@ export function toPreviewDraft(extraction: SimpleExtraction): PreviewDraft {
  * Throws if content is invalid.
  */
 export function toExerciseContent(extraction: SimpleExtraction): TransformResult {
-  const { question, options, correctAnswer, explanation } = extraction
+  const { question, options, correctAnswer, explanation, acceptedAnswer } = extraction
 
   const blocks: ContentBlock[] = []
 
   // Determine question type and build appropriate block
   if (options.length === 0) {
     // Free response question
+    const acceptedAnswers = acceptedAnswer?.trim()
+      ? [acceptedAnswer.trim()]
+      : ['(answer not detected)']
+
     const block = QuestionFreeResponseBlockSchema.parse({
       id: nanoid(),
       type: 'question_free_response',
       prompt: createInlineRichText(question),
       answer: {
-        acceptedAnswers: ['(answer not detected)'],
+        acceptedAnswers,
       },
     })
     blocks.push(block)
@@ -236,12 +241,13 @@ function isTrueFalsePattern(options: string[]): boolean {
  * Rebuild exercise content from edited preview data.
  * Used when admin edits the preview before creating the exercise.
  */
-export function rebuildFromPreview(edited: Omit<PreviewDraft, 'questionType'>): TransformResult {
+export function rebuildFromPreview(edited: Omit<PreviewDraft, 'questionType'> & { acceptedAnswer?: string }): TransformResult {
   const extraction: SimpleExtraction = {
     question: edited.question,
     options: edited.options,
     correctAnswer: edited.correctAnswer,
     explanation: edited.explanation,
+    acceptedAnswer: edited.acceptedAnswer,
   }
 
   return toExerciseContent(extraction)

@@ -52,6 +52,7 @@ export function V3PreviewPanel({
   const [options, setOptions] = useState<string[]>(preview.draft.options)
   const [correctAnswer, setCorrectAnswer] = useState<number | null>(preview.draft.correctAnswer)
   const [explanation, setExplanation] = useState<string>(preview.draft.explanation || '')
+  const [acceptedAnswer, setAcceptedAnswer] = useState<string>('')
   const [showJson, setShowJson] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -64,8 +65,6 @@ export function V3PreviewPanel({
     setError(null)
 
     try {
-      // For now, we'll pass the original content
-      // In a full implementation, we'd rebuild the content from edited fields
       const response = await fetch('/api/exercises/convert/single/create', {
         method: 'POST',
         headers: {
@@ -75,7 +74,11 @@ export function V3PreviewPanel({
           lessonId,
           mediaId,
           title,
-          content: preview.content,
+          question,
+          options,
+          correctAnswer,
+          explanation,
+          acceptedAnswer: acceptedAnswer || undefined,
           extractionLogId: preview.extractionLogId,
         }),
       })
@@ -239,6 +242,8 @@ export function V3PreviewPanel({
           </label>
           <input
             type="text"
+            value={acceptedAnswer}
+            onChange={(e) => setAcceptedAnswer(e.target.value)}
             placeholder="Enter accepted answer(s)"
             style={{
               width: '100%',
