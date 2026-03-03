@@ -93,6 +93,7 @@ beforeAll(async () => {
         data: {
           title: 'Test Category',
           slug: `test-category-${Date.now()}`,
+          locale: 'he',
         },
       })
       exerciseCategoryId = category.id

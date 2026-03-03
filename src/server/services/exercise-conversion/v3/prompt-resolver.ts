@@ -14,7 +14,7 @@ import type { Prompt } from '@/payload-types'
 
 export interface ResolvedPrompt {
   prompt: Prompt
-  version: string // `${prompt.key}:${prompt.updatedAt}`
+  version: string // `${prompt.promptKey}:${prompt.updatedAt}`
 }
 
 /**
@@ -66,7 +66,7 @@ export async function resolveExtractorPrompt(
     const updatedAt = typedPrompt.updatedAt
       ? new Date(typedPrompt.updatedAt).toISOString()
       : 'unknown'
-    const version = `${typedPrompt.key}:${updatedAt}`
+    const version = `${typedPrompt.promptKey}:${updatedAt}`
 
     return { prompt: typedPrompt, version }
   }
@@ -94,7 +94,7 @@ export async function resolveExtractorPrompt(
 
   // Build version string
   const updatedAt = prompt.updatedAt ? new Date(prompt.updatedAt).toISOString() : 'unknown'
-  const version = `${prompt.key}:${updatedAt}`
+  const version = `${prompt.promptKey}:${updatedAt}`
 
   return { prompt, version }
 }
