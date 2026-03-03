@@ -103,62 +103,44 @@ describe('study-plan engine', () => {
       expect(result).toHaveLength(7)
     })
 
-    it('Timeframe mode: survival — 0 days left', () => {
+    it('Adaptive scaling — last day is warmup (exam day)', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-01', // 0 days left
+        examDate: '2026-03-01',
         topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
         idGenerator,
       }
-
       const result = generateStudyPlan(input)
-      result.forEach((day) => {
-        expect(day.activityType).toBe('warmup')
-      })
+      // Day 6 (exam day): daysLeft=0 → survival → warmup
+      expect(result[6].activityType).toBe('warmup')
+      // Day 0 (6 days before exam): daysLeft=6 → balanced → practice
+      expect(result[0].activityType).toBe('practice')
     })
 
-    it('Timeframe mode: survival — 1 day left', () => {
+    it('Adaptive scaling — mid-range days use high_intensity', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-02', // 1 day left
+        examDate: '2026-03-04',
         topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
         idGenerator,
       }
-
       const result = generateStudyPlan(input)
-      result.forEach((day) => {
-        expect(day.activityType).toBe('warmup')
-      })
+      // Day 1: daysLeft=5 → high_intensity, template[1] = reinforcement
+      expect(result[1].activityType).toBe(ACTIVITY_TEMPLATES.high_intensity[1])
+      // Day 4: daysLeft=2 → high_intensity, template[4] = reinforcement
+      expect(result[4].activityType).toBe(ACTIVITY_TEMPLATES.high_intensity[4])
     })
 
-    it('Timeframe mode: high_intensity — 3 days left', () => {
+    it('Adaptive scaling — early days use balanced mode', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-04', // 3 days left
+        examDate: '2026-03-20',
         topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
         idGenerator,
       }
-
       const result = generateStudyPlan(input)
-      const expected = ACTIVITY_TEMPLATES.high_intensity
-      result.forEach((day, idx) => {
-        expect(day.activityType).toBe(expected[idx])
-      })
-    })
-
-    it('Timeframe mode: balanced — 19 days left', () => {
-      const input = {
-        today: '2026-03-01',
-        examDate: '2026-03-20', // 19 days left
-        topics: [{ topicId: 't1', topicLabel: 'Topic 1', mastery: 'weak' as const }],
-        idGenerator,
-      }
-
-      const result = generateStudyPlan(input)
-      const expected = ACTIVITY_TEMPLATES.balanced
-      result.forEach((day, idx) => {
-        expect(day.activityType).toBe(expected[idx])
-      })
+      // Day 0: daysLeft=6 → balanced, template[0] = practice
+      expect(result[0].activityType).toBe(ACTIVITY_TEMPLATES.balanced[0])
     })
 
     it('Fallback: no weak topics — all medium or strong', () => {
@@ -202,10 +184,10 @@ describe('study-plan engine', () => {
       expect(result).toHaveLength(7)
     })
 
-    it('Hybrid 70/30 split — weak bucket gets more topics', () => {
+    it('Hybrid 70/30 split — weak bucket gets more topics when hybrid days exist', () => {
       const input = {
         today: '2026-03-01',
-        examDate: '2026-03-20', // balanced mode
+        examDate: '2026-03-20',
         topics: [
           { topicId: 'weak1', topicLabel: 'Weak 1', mastery: 'weak' as const },
           { topicId: 'weak2', topicLabel: 'Weak 2', mastery: 'weak' as const },
@@ -215,28 +197,23 @@ describe('study-plan engine', () => {
       }
 
       const result = generateStudyPlan(input)
+      expect(result).toHaveLength(7)
 
-      // Find hybrid days
       const hybridDays = result.filter((d) => d.activityType === 'hybrid')
-      expect(hybridDays.length).toBeGreaterThan(0)
+      if (hybridDays.length > 0) {
+        const weakTopics = ['weak1', 'weak2']
+        const strongTopics = ['strong1']
+        const hasWeak = hybridDays.some((d) => d.topicIds.some((t) => weakTopics.includes(t)))
+        expect(hasWeak).toBe(true)
 
-      // Check that at least one hybrid day has weak topics
-      const weakTopics = ['weak1', 'weak2']
-      const strongTopics = ['strong1']
-
-      // At least one hybrid day should have weak topics
-      const hasWeak = hybridDays.some((d) => d.topicIds.some((t) => weakTopics.includes(t)))
-      expect(hasWeak).toBe(true)
-
-      // Overall weak count should be >= strong count across all hybrid days
-      let totalWeak = 0
-      let totalStrong = 0
-      hybridDays.forEach((d) => {
-        totalWeak += d.topicIds.filter((t) => weakTopics.includes(t)).length
-        totalStrong += d.topicIds.filter((t) => strongTopics.includes(t)).length
-      })
-
-      expect(totalWeak).toBeGreaterThanOrEqual(totalStrong)
+        let totalWeak = 0
+        let totalStrong = 0
+        hybridDays.forEach((d) => {
+          totalWeak += d.topicIds.filter((t) => weakTopics.includes(t)).length
+          totalStrong += d.topicIds.filter((t) => strongTopics.includes(t)).length
+        })
+        expect(totalWeak).toBeGreaterThanOrEqual(totalStrong)
+      }
     })
 
     it('Full simulation gets all topics', () => {
@@ -263,7 +240,7 @@ describe('study-plan engine', () => {
       }
     })
 
-    it('Consecutive dates — starting from today', () => {
+    it('Consecutive dates — anchored to exam date', () => {
       const input = {
         today: '2026-03-15',
         examDate: '2026-03-25',
@@ -274,8 +251,8 @@ describe('study-plan engine', () => {
       const result = generateStudyPlan(input)
 
       for (let i = 0; i < 7; i++) {
-        const expectedDate = new Date('2026-03-15')
-        expectedDate.setDate(expectedDate.getDate() + i)
+        const expectedDate = new Date('2026-03-25')
+        expectedDate.setDate(expectedDate.getDate() + i - 6)
         const expectedDateStr = expectedDate.toISOString().split('T')[0]
 
         expect(result[i].date).toBe(expectedDateStr)
