@@ -263,7 +263,7 @@ jobs:
   orchestrate:
     needs: parse
     if: needs.parse.outputs.valid == 'true'
-    runs-on: ${{ needs.parse.outputs.runner == 'self-hosted' && 'self-hosted' || 'ubuntu-latest' }}
+    runs-on: ${{ needs.parse.outputs.runner == 'self-hosted' && 'self-hosted' || (needs.parse.outputs.runner == 'github-hosted' && 'ubuntu-latest' || 'self-hosted') }}
     timeout-minutes: 120
     permissions:
       id-token: write # OpenCode GitHub App OIDC
