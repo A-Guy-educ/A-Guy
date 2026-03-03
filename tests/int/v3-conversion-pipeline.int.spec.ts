@@ -506,11 +506,21 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
                   options: [
                     {
                       id: 'opt1',
-                      content: { type: 'rich_text', format: 'md-math-v1', value: 'A', mediaIds: [] },
+                      content: {
+                        type: 'rich_text',
+                        format: 'md-math-v1',
+                        value: 'A',
+                        mediaIds: [],
+                      },
                     },
                     {
                       id: 'opt2',
-                      content: { type: 'rich_text', format: 'md-math-v1', value: 'B', mediaIds: [] },
+                      content: {
+                        type: 'rich_text',
+                        format: 'md-math-v1',
+                        value: 'B',
+                        mediaIds: [],
+                      },
                     },
                   ],
                   correctOptionIds: ['opt1'],
