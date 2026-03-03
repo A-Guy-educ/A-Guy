@@ -10,8 +10,6 @@
  * Run: pnpm exec vitest run tests/int/v3-conversion-pipeline.int.spec.ts --config ./vitest.config.mts
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { readFileSync } from 'fs'
-import { resolve } from 'path'
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
@@ -21,9 +19,6 @@ import { resolveExtractorPrompt } from '@/server/services/exercise-conversion/v3
 import { rebuildFromPreview } from '@/server/services/exercise-conversion/v3/transform'
 import type { Payload } from 'payload'
 import { getSharedPayload } from '../setup/shared-payload'
-
-// PDF fixture path
-const PDF_FIXTURE_PATH = resolve(__dirname, '../fixtures/check-1-exe.pdf')
 
 // Skip tests if DATABASE_URL is not set
 const hasDatabaseUrl = !!process.env.DATABASE_URL
@@ -62,6 +57,11 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
 
   vi.mock('@/infra/llm/services/data-extractor-service', () => ({
     extractFromImage: vi.fn().mockResolvedValue(mockExtractionResponse),
+  }))
+
+  vi.mock('@/server/services/pdf-fetcher', () => ({
+    getPdfBufferFromBlob: vi.fn().mockResolvedValue(Buffer.from('%PDF-1.0 test content', 'ascii')),
+    normalizeToAbsoluteUrl: vi.fn().mockImplementation((url: string) => Promise.resolve(`http://localhost:3000${url}`)),
   }))
 
   beforeAll(async () => {
@@ -146,21 +146,13 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
     })
     promptId = prompt.id
 
-    // Step 4: Upload PDF fixture to media collection
-    const pdfBuffer = readFileSync(PDF_FIXTURE_PATH)
+    // Step 4: Create media document (metadata only - file fetching is mocked)
     const media = await payload.create({
       collection: 'media',
       data: {
         filename: 'check-1-exe.pdf',
         mimeType: 'application/pdf',
-        fileSize: pdfBuffer.length,
         tenant: tenantId,
-      } as any,
-      file: {
-        data: pdfBuffer,
-        filename: 'check-1-exe.pdf',
-        mimeType: 'application/pdf',
-        size: pdfBuffer.length,
       } as any,
     })
     mediaId = media.id
