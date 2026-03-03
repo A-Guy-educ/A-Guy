@@ -1,7 +1,7 @@
 ---
 name: build
 description: Pure executor - implements code changes from plan. Does NOT commit or push — a separate commit stage handles that.
-mode: subagent
+mode: primary
 tools:
   bash: true
   read: true
