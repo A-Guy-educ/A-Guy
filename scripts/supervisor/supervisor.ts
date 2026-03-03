@@ -16,6 +16,7 @@ import {
   extractErrorMessage,
 } from './retry-tracker'
 import { analyzeFailure } from './failure-analyzer'
+import { classifyRetryability, formatNonRetryableComment } from './retry-classifier'
 
 // Reuse getTaskDir from Cody utils
 import { getTaskDir } from '../cody/cody-utils'
@@ -30,6 +31,46 @@ interface StatusJson {
 interface StageStatus {
   state: 'pending' | 'running' | 'completed' | 'failed'
   error?: string
+}
+
+/**
+ * Resolve the from_stage for rerun based on failure analysis.
+ * This provides deterministic routing before entry.ts applies its own backup logic.
+ *
+ * Two-layer approach:
+ * 1. Supervisor picks root-cause stage (this function)
+ * 2. entry.ts may further back up to architect if feedback warrants
+ */
+function resolveFromStage(failedStage: string): string {
+  // Commit failures → rerun commit only (don't back up to architect)
+  // Backing up to architect for a commit format error is wasteful
+  if (failedStage === 'commit') {
+    return 'commit'
+  }
+
+  // PR failures → rerun PR only
+  if (failedStage === 'pr') {
+    return 'pr'
+  }
+
+  // Verify failures → the code is bad, rerun from build
+  // (entry.ts may further back up to architect if feedback warrants)
+  if (failedStage === 'verify') {
+    return 'build'
+  }
+
+  // Apply-audit failures → rerun from auditor
+  if (failedStage === 'apply-audit') {
+    return 'auditor'
+  }
+
+  // Autofix failures → rerun from build
+  if (failedStage === 'autofix') {
+    return 'build'
+  }
+
+  // Everything else → pass through (entry.ts may further back up)
+  return failedStage
 }
 
 /**
@@ -169,6 +210,22 @@ async function runSupervisor(): Promise<void> {
     stageError = extractErrorMessage(commentBody)
   }
 
+  // Pre-classify retryability BEFORE calling the LLM
+  // This saves MiniMax tokens for clearly non-retryable failures
+  const classification = classifyRetryability(failedStage, stageError)
+  console.log(`Retry classification:`, classification)
+
+  if (!classification.canRetry) {
+    console.log(`Failure is non-retryable: ${classification.reason}`)
+    const comment = formatNonRetryableComment(
+      resolvedTaskId,
+      failedStage,
+      classification.reason || 'Unknown reason',
+    )
+    postComment(issueNumber, comment)
+    return
+  }
+
   // Read relevant stage output files
   const stageOutput = readTaskFile(taskDir, `${failedStage}.md`) || ''
   const verifyOutput = readTaskFile(taskDir, 'verify.md') || ''
@@ -209,10 +266,15 @@ async function runSupervisor(): Promise<void> {
   // (not via comment - the bot-comment-triggers-bot chain is broken)
   if (analysis.canRetry && analysis.refinedFeedback) {
     console.log(`Triggering cody rerun via workflow_dispatch...`)
+
+    // Use deterministic from_stage routing
+    const fromStage = resolveFromStage(failedStage)
+    console.log(`Resolved from_stage: ${failedStage} -> ${fromStage}`)
+
     try {
       const escapedFeedback = analysis.refinedFeedback.replace(/"/g, '\\"')
       execSync(
-        `gh workflow run cody.yml -f task_id=${resolvedTaskId} -f mode=rerun -f feedback="${escapedFeedback}" -f from_stage=${failedStage} --repo=${repo}`,
+        `gh workflow run cody.yml -f task_id=${resolvedTaskId} -f mode=rerun -f feedback="${escapedFeedback}" -f from_stage=${fromStage} --repo=${repo}`,
         {
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'inherit'],

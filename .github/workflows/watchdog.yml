@@ -1,0 +1,54 @@
+# Watchdog - Proactive pipeline monitoring
+
+name: watchdog
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Every 30 minutes
+  workflow_dispatch:
+    inputs:
+      checks:
+        description: 'Checks to run (comma-separated or "all")'
+        default: 'all'
+
+# Only one watchdog at a time
+concurrency:
+  group: watchdog
+  cancel-in-progress: true
+
+permissions:
+  issues: write
+  contents: read
+  actions: read
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need full history for git operations
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run watchdog
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
+          # Set this to your watchdog issue number after creation
+          WATCHDOG_ISSUE: ${{ github.event.inputs.watchdog_issue || '0' }}
+          RUN_CHECKS: ${{ github.event.inputs.checks || 'all' }}
+        run: pnpm tsx scripts/watchdog/watchdog.ts
