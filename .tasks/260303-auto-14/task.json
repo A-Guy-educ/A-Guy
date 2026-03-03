@@ -1,0 +1,25 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "GreetingFlow typing animation speed"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "TypingAnimation component accepts speed prop in milliseconds"
+  ],
+  "review_questions": [],
+  "complexity": 16,
+  "complexity_reasoning": "Scope: 4 (single component, parameter change), Risk: 3 (UI timing only), Novelty: 3 (following existing pattern), Cross-domain: 3 (frontend only), Ambiguity: 1 (clear intent), Dependency: 2 (self-contained). Total: 16 - Simple",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input specifies exact timing values (current 60-100ms, expected 20-25ms) with clear acceptance criteria. Has Steps to Reproduce and Expected Result sections."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
