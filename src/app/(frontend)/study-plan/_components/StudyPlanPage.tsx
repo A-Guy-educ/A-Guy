@@ -67,12 +67,11 @@ export function StudyPlanPage() {
   const [newTopic, setNewTopic] = useState('')
   const [hasGenerated, setHasGenerated] = useState(false)
 
-  // Load initial state from plan
+  // Load sidebar fields from saved plan (but don't show schedule until user clicks generate)
   useEffect(() => {
     if (plan) {
       setExamDate(plan.examDate)
       setTopics(plan.topics)
-      setHasGenerated(true)
     }
   }, [plan])
 
@@ -222,7 +221,7 @@ export function StudyPlanPage() {
                 <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin mb-4" />
                 <p className="text-muted-foreground">{t('loading')}</p>
               </div>
-            ) : plan ? (
+            ) : hasGenerated && plan ? (
               <div>
                 <div className="mb-4">
                   <h2 className="text-lg font-semibold text-foreground">{t('scheduleTitle')}</h2>
