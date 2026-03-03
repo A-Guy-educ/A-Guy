@@ -394,16 +394,39 @@ export async function runPrStage(
 
   // Step 2: Push branch (skip pre-push hooks to avoid blocking on unrelated checks)
   logger.info(`  Pushing branch ${branch}...`)
+  let pushSuccess = false
   try {
     execFileSync('git', ['push', '-u', 'origin', branch], {
       cwd,
       stdio: 'inherit',
       env: { ...process.env, HUSKY: '0', SKIP_HOOKS: '1' },
     })
-  } catch {
-    logger.info('  Push failed (may already be up to date)')
+    pushSuccess = true
+  } catch (_error) {
+    // Push was rejected - remote has changes, try pull --rebase and retry
+    logger.info('  Push rejected, pulling and rebasing...')
+    try {
+      execFileSync('git', ['pull', '--rebase', 'origin', branch], {
+        cwd,
+        stdio: 'inherit',
+        env: { ...process.env, HUSKY: '0', SKIP_HOOKS: '1' },
+      })
+      // Retry push after rebase
+      execFileSync('git', ['push', '-u', 'origin', branch], {
+        cwd,
+        stdio: 'inherit',
+        env: { ...process.env, HUSKY: '0', SKIP_HOOKS: '1' },
+      })
+      pushSuccess = true
+      logger.info('  Push succeeded after rebase')
+    } catch (_rebaseError) {
+      logger.info('  Push failed even after rebase')
+    }
   }
 
+  if (!pushSuccess) {
+    logger.info('  Push failed - may already be up to date or branch exists')
+  }
   // Step 3: Build title and body
   const title = buildPrTitle(taskDir, defaultBranch, cwd, issueNumber)
   const body = buildPrBody(taskDir, defaultBranch, cwd, issueNumber)
