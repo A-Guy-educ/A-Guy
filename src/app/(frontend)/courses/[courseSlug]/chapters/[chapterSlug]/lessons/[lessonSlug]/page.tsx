@@ -89,8 +89,13 @@ export default async function LessonPage({ params }: LessonPageProps) {
   // Batch-fetch all media referenced inside exercise content blocks
   const mediaMap = hasExercises ? await queryMediaByIds(extractAllMediaIds(exercises)) : {}
 
-  // Case 1: No document attached -> Show exercises pager if exercises exist
-  if (!hasContent) {
+  // V3-converted exercises: if any exercise was generated from the attached document,
+  // show the interactive exercises instead of the PDF viewer.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hasV3Exercises = exercises.some((ex: any) => ex.pipelineVersion === 3)
+
+  // Case 1: No document attached, OR V3 exercises exist -> Show exercises pager
+  if (!hasContent || hasV3Exercises) {
     return (
       <AccessGateProvider
         accessType={effectiveAccessType}
