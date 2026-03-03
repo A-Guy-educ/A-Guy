@@ -1,32 +1,31 @@
 {
   "task_type": "fix_bug",
   "risk_level": "medium",
-  "confidence": 0.7,
-  "primary_domain": "backend",
+  "confidence": 0.8,
+  "primary_domain": "frontend",
   "scope": [
-    "image-upload",
-    "ai-integration",
-    "api-endpoints"
+    "image upload",
+    "AI tutor",
+    "צט feature",
+    "file upload handling"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "Image upload is handled by a backend API endpoint",
-    "The AI service (likely Gemini) processes uploaded images for the Chetz tutoring feature",
-    "The error 'Capture.JPG Failed' originates from either the upload endpoint or the AI image processing service",
-    "Need to investigate the image upload flow and error handling"
+    "The issue is in the image upload flow to the AI tutor",
+    "The 'Failed' message is returned from an error handler",
+    "This affects the image-to-exercise feature or similar AI image analysis"
   ],
   "review_questions": [
-    "Is this a frontend issue (upload button not working) or backend (upload succeeds but AI processing fails)?",
-    "Does the image upload work for other file types or just .JPG?",
-    "Is there a file size or format restriction that might be causing the failure?",
-    "Is the AI service (Gemini) properly configured for image processing?"
+    "Is the image upload issue in the frontend or backend?",
+    "What causes the 'Failed' error message to appear?",
+    "Is this related to the image-to-exercise extraction flow?"
   ],
-  "complexity": 43,
-  "complexity_reasoning": "Scope: 12 (4-6 files across upload and AI modules). Risk: 10 (production bug, core feature). Novelty: 5 (existing feature). Cross-domain: 5 (backend + AI services). Ambiguity: 5 (clear bug, unknown root cause). Dependencies: 6 (AI image processing service). Total: 43",
+  "complexity": 39,
+  "complexity_reasoning": "Scope:8 (unknown extent, likely involves upload flow), Risk:10 (user-facing feature), Novelty:4 (bug fix, not new), Cross:8 (likely frontend + backend), Ambiguity:5 (clear symptom, unclear implementation), Deps:4 (depends on upload service). Total:39",
   "input_quality": {
     "level": "raw_idea",
     "skip_stages": [],
-    "reasoning": "Bug report with symptom description but no structured requirements or implementation details. Standard pipeline will investigate the codebase to find the image upload flow and identify the failure point."
+    "reasoning": "Bug report describes symptom (image upload fails with 'Failed' error) but lacks technical details, file paths, or error stack traces. Need to investigate codebase to find the issue."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
