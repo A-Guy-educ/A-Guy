@@ -29,7 +29,7 @@ import { resolvePipelineForMode, createRebuildCallback } from './engine/pipeline
 import { flattenPipelineOrder, IMPL_ORDER_STANDARD } from './pipeline/definitions'
 import { stateToV1 } from './engine/status'
 import { PipelinePausedError } from './engine/types'
-import { resolveRerunFromStage } from './rerun-utils'
+import { resolveRerunFromStage, resolveFromStageAfterGateApproval } from './rerun-utils'
 import { ensureTaskMarkerComment, postComment } from './github-api'
 import { formatStatusComment } from './cody-utils'
 
@@ -445,6 +445,7 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   // we should continue even if spec.md doesn't exist (it may not have been created yet
   // because the gate paused before resolve-profile post-action ran)
   const pausedStage = !input.fromStage ? getLastPausedStage(input.taskId) : null
+  let gateApprovedStage: string | null = null
 
   // G33: Fallback to full only if spec.md missing AND no paused stage to resume
   const specPath = path.join(taskDir, 'spec.md')
@@ -469,6 +470,7 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
 
         if (gateResult === 'approved') {
           logger.info(`Gate ${pausedStage} approved — resuming pipeline`)
+          gateApprovedStage = pausedStage
 
           // Write approved file to cache approval for future runs
           const approvedPath = path.join(taskDir, `gate-${pausedStage}-approved.md`)
@@ -510,9 +512,19 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
     }
   }
 
-  // Determine fromStage (use paused stage if detected, otherwise failed stage, otherwise build)
+  // Determine fromStage
+  // FIX #673: After gate approval, use the NEXT stage (not the approved one)
+  // to prevent resetFromStage from overwriting the gate approval
   if (!input.fromStage) {
-    input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
+    if (gateApprovedStage) {
+      // Gate was just approved — resolve pipeline order to find the next stage
+      const tempPipeline = resolvePipelineForMode('rerun', ctx.profile, false, ctx)
+      const tempOrder = flattenPipelineOrder(tempPipeline.order)
+      input.fromStage = resolveFromStageAfterGateApproval(gateApprovedStage, tempOrder)
+      logger.info(`  ℹ️ Gate approved at ${gateApprovedStage} — resuming from ${input.fromStage}`)
+    } else {
+      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
+    }
   }
 
   // P3 fix: Back up to architect when feedback provided so plan can be revised
