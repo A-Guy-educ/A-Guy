@@ -51,7 +51,17 @@ export const POST = withApiHandler<CreateRequest, unknown>(
     bodySchema: createRequestSchema,
   },
   async ({ body, payload }) => {
-    const { lessonId, mediaId, title, question, options, correctAnswer, explanation, acceptedAnswer, extractionLogId } = body
+    const {
+      lessonId,
+      mediaId,
+      title,
+      question,
+      options,
+      correctAnswer,
+      explanation,
+      acceptedAnswer,
+      extractionLogId,
+    } = body
 
     // Step 1: Rebuild content from edited preview fields
     // rebuildFromPreview → toExerciseContent already validates internally

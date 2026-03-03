@@ -241,7 +241,9 @@ function isTrueFalsePattern(options: string[]): boolean {
  * Rebuild exercise content from edited preview data.
  * Used when admin edits the preview before creating the exercise.
  */
-export function rebuildFromPreview(edited: Omit<PreviewDraft, 'questionType'> & { acceptedAnswer?: string }): TransformResult {
+export function rebuildFromPreview(
+  edited: Omit<PreviewDraft, 'questionType'> & { acceptedAnswer?: string },
+): TransformResult {
   const extraction: SimpleExtraction = {
     question: edited.question,
     options: edited.options,
