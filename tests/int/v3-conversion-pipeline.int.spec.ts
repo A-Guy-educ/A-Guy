@@ -13,7 +13,7 @@
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { ContentSchema } from '@/server/payload/collections/Exercises/schemas'
 import { extractSingle } from '@/server/services/exercise-conversion/v3/extract-single'
@@ -23,7 +23,7 @@ import type { Payload } from 'payload'
 import { getSharedPayload } from '../setup/shared-payload'
 
 // PDF fixture path
-const PDF_FIXTURE_PATH = resolve(__dirname, '../../fixtures/check-1-exe.pdf')
+const PDF_FIXTURE_PATH = resolve(__dirname, '../fixtures/check-1-exe.pdf')
 
 // Skip tests if DATABASE_URL is not set
 const hasDatabaseUrl = !!process.env.DATABASE_URL
@@ -45,7 +45,7 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
   const createdLogIds: string[] = []
 
   // Mock LLM response for extractSingle
-  const mockExtractionResponse = {
+  const mockExtractionResponse = vi.hoisted(() => ({
     success: true,
     data: {
       question: 'What is 2+2?',
@@ -58,7 +58,11 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
       processingTimeMs: 100,
       imageSizeBytes: 1024,
     },
-  }
+  }))
+
+  vi.mock('@/infra/llm/services/data-extractor-service', () => ({
+    extractFromImage: vi.fn().mockResolvedValue(mockExtractionResponse),
+  }))
 
   beforeAll(async () => {
     payload = await getSharedPayload()
@@ -133,7 +137,7 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
       collection: 'prompts',
       data: {
         key: `extractor-v3-${timestamp}`,
-        name: `Test Extractor Prompt ${timestamp}`,
+        title: `Test Extractor Prompt ${timestamp}`,
         usage: 'extractor',
         status: 'published',
         tenant: tenantId,
@@ -237,13 +241,6 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
     }
   })
 
-  // Mock the LLM extraction before each test
-  beforeEach(() => {
-    vi.mock('@/infra/llm/services/data-extractor-service', () => ({
-      extractFromImage: vi.fn().mockResolvedValue(mockExtractionResponse),
-    }))
-  })
-
   describe('extractSingle orchestrator', () => {
     it('should extract exercise from attached media successfully', async () => {
       const result = await extractSingle(payload, {
@@ -324,7 +321,7 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
 
     it('should fail when lesson not found', async () => {
       const result = await extractSingle(payload, {
-        lessonId: 'nonexistent-lesson-id',
+        lessonId: '000000000000000000000000',
         mediaId,
       })
 
@@ -425,7 +422,7 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
 
     it('should throw when prompt ID does not exist', async () => {
       await expect(
-        resolveExtractorPrompt(payload, tenantId, 'nonexistent-prompt-id'),
+        resolveExtractorPrompt(payload, tenantId, '000000000000000000000000'),
       ).rejects.toThrow('Prompt not found')
     })
 
@@ -435,7 +432,7 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
         collection: 'prompts',
         data: {
           key: 'unpublished-test',
-          name: 'Unpublished Test',
+          title: 'Unpublished Test',
           usage: 'extractor',
           status: 'draft',
           tenant: tenantId,
@@ -466,7 +463,7 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
         collection: 'prompts',
         data: {
           key: 'other-prompt',
-          name: 'Other Prompt',
+          title: 'Other Prompt',
           usage: 'extractor',
           status: 'published',
           tenant: otherTenant.id,
@@ -509,12 +506,11 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
                   options: [
                     {
                       id: 'opt1',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: 'A',
-                        mediaIds: [],
-                      },
+                      content: { type: 'rich_text', format: 'md-math-v1', value: 'A', mediaIds: [] },
+                    },
+                    {
+                      id: 'opt2',
+                      content: { type: 'rich_text', format: 'md-math-v1', value: 'B', mediaIds: [] },
                     },
                   ],
                   correctOptionIds: ['opt1'],
