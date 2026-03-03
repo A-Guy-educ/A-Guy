@@ -38,7 +38,7 @@ export const seed = async ({
       payload.updateGlobal({
         slug: global,
         data: {
-          navItems: [],
+          variants: [],
         },
         depth: 0,
         context: {
@@ -67,6 +67,7 @@ export const seed = async ({
         data: {
           title: category,
           slug: category,
+          locale: 'he',
         },
       }),
     ),
@@ -94,16 +95,21 @@ export const seed = async ({
     payload.updateGlobal({
       slug: 'header',
       data: {
-        navItems: [
+        variants: [
           {
-            link: {
-              type: 'reference',
-              label: 'Contact',
-              reference: {
-                relationTo: 'pages',
-                value: contactPage.id,
+            locale: 'he',
+            navItems: [
+              {
+                link: {
+                  type: 'reference',
+                  label: 'Contact',
+                  reference: {
+                    relationTo: 'pages',
+                    value: contactPage.id,
+                  },
+                },
               },
-            },
+            ],
           },
         ],
       },
@@ -111,29 +117,34 @@ export const seed = async ({
     payload.updateGlobal({
       slug: 'footer',
       data: {
-        navItems: [
+        variants: [
           {
-            link: {
-              type: 'custom',
-              label: 'Admin',
-              url: '/admin',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Source Code',
-              newTab: true,
-              url: 'https://github.com/payloadcms/payload/tree/main/templates/website',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Payload',
-              newTab: true,
-              url: 'https://payloadcms.com/',
-            },
+            locale: 'he',
+            navItems: [
+              {
+                link: {
+                  type: 'custom',
+                  label: 'Admin',
+                  url: '/admin',
+                },
+              },
+              {
+                link: {
+                  type: 'custom',
+                  label: 'Source Code',
+                  newTab: true,
+                  url: 'https://github.com/payloadcms/payload/tree/main/templates/website',
+                },
+              },
+              {
+                link: {
+                  type: 'custom',
+                  label: 'Payload',
+                  newTab: true,
+                  url: 'https://payloadcms.com/',
+                },
+              },
+            ],
           },
         ],
       },

@@ -4,16 +4,16 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { Calendar, Plus, Trash2, Zap } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { MasteryLevel, TopicInput } from '@/lib/study-plan'
+import type { MasteryLevel, TopicInput } from '@/server/services/study-plan'
 import { Button } from '@/ui/web/components/button'
 import { DayCard } from './DayCard'
 import { EmptyPlanState } from './EmptyPlanState'
 import { useStudyPlan } from './useStudyPlan'
 
 const MASTERY_COLORS = {
-  weak: 'bg-red-500/10 text-red-500 border-red-500/20',
-  medium: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-  strong: 'bg-green-500/10 text-green-500 border-green-500/20',
+  weak: 'bg-error/10 text-error border-error/20',
+  medium: 'bg-warning/10 text-warning border-warning/20',
+  strong: 'bg-success/10 text-success border-success/20',
 }
 
 interface TopicRowProps {
@@ -67,12 +67,11 @@ export function StudyPlanPage() {
   const [newTopic, setNewTopic] = useState('')
   const [hasGenerated, setHasGenerated] = useState(false)
 
-  // Load initial state from plan
+  // Load sidebar fields from saved plan (but don't show schedule until user clicks generate)
   useEffect(() => {
     if (plan) {
       setExamDate(plan.examDate)
       setTopics(plan.topics)
-      setHasGenerated(true)
     }
   }, [plan])
 
@@ -142,8 +141,8 @@ export function StudyPlanPage() {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-500/10 rounded-xl mb-4">
-            <Zap className="w-6 h-6 text-amber-500" />
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-warning/10 rounded-xl mb-4">
+            <Zap className="w-6 h-6 text-warning" />
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">{t('pageTitle')}</h1>
           <p className="text-muted-foreground">{t('pageSubtitle')}</p>
@@ -204,17 +203,15 @@ export function StudyPlanPage() {
             </div>
 
             {/* Generate Plan Button */}
-            {!hasGenerated && (
-              <Button
-                onClick={handleGeneratePlan}
-                disabled={!examDate || topics.length === 0 || isLoading}
-                size="lg"
-                className="w-full"
-              >
-                <Zap className="w-5 h-5 me-2" />
-                {t('generateButton')}
-              </Button>
-            )}
+            <Button
+              onClick={handleGeneratePlan}
+              disabled={!examDate || topics.length === 0 || isLoading}
+              size="lg"
+              className="w-full"
+            >
+              <Zap className="w-5 h-5 me-2" />
+              {t('generateButton')}
+            </Button>
           </div>
 
           {/* Main Content */}
@@ -224,7 +221,7 @@ export function StudyPlanPage() {
                 <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin mb-4" />
                 <p className="text-muted-foreground">{t('loading')}</p>
               </div>
-            ) : plan ? (
+            ) : hasGenerated && plan ? (
               <div>
                 <div className="mb-4">
                   <h2 className="text-lg font-semibold text-foreground">{t('scheduleTitle')}</h2>

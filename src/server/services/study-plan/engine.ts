@@ -1,4 +1,4 @@
-import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns'
+import { addDays, format, parseISO } from 'date-fns'
 
 import {
   ACTIVITY_DURATIONS,
@@ -214,29 +214,31 @@ export function pickTopicsForDay(
 }
 
 /**
- * Generate a 7-day study plan anchored to today.
- * The daysLeft value is used only to select the activity template.
+ * Generate a 7-day study plan anchored to exam date.
+ * Day 0 = 6 days before exam, Day 6 = exam date.
+ * The daysLeft value is used to select the activity template for each day.
  */
 export function generateStudyPlan(input: GeneratePlanInput): StudyPlanDay[] {
-  const { today, examDate, topics, idGenerator } = input
+  const { examDate, topics, idGenerator } = input
 
-  // Calculate days until exam (used only for template selection)
-  const todayDate = parseISO(today)
+  // Parse exam date once
   const examDateObj = parseISO(examDate)
-  const daysLeft = differenceInCalendarDays(examDateObj, todayDate)
-
-  // Determine timeframe mode (only affects activity template)
-  const mode = getTimeframeMode(daysLeft)
-  const template = ACTIVITY_TEMPLATES[mode]
 
   // Build topic cycle
   const cycle = buildTopicCycle(topics)
   const allTopicIds = topics.map((t) => t.topicId)
 
-  // Generate 7 days anchored to today
+  // Generate 7 days anchored to exam date (Day 0 = examDate - 6, Day 6 = examDate)
   const days: StudyPlanDay[] = []
   for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-    const date = format(addDays(todayDate, dayIndex), 'yyyy-MM-dd')
+    // Days remaining until exam from this day's perspective
+    const daysLeft = 6 - dayIndex
+
+    // Determine timeframe mode based on days left for this specific day
+    const mode = getTimeframeMode(daysLeft)
+    const template = ACTIVITY_TEMPLATES[mode]
+
+    const date = format(addDays(examDateObj, dayIndex - 6), 'yyyy-MM-dd')
     const activityType = template[dayIndex]
     const topicIds = pickTopicsForDay(cycle, dayIndex, activityType, allTopicIds, topics)
 

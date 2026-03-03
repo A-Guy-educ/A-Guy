@@ -104,6 +104,7 @@ describe.skipIf(!hasDatabaseUrl)('V2 Queue API', () => {
         data: {
           title: `Test Category ${timestamp}`,
           slug: `test-category-${timestamp}`,
+          locale: 'he',
         },
       })
 
@@ -301,6 +302,7 @@ describe.skipIf(!hasDatabaseUrl)('V2 Queue API', () => {
         data: {
           title: `Test Category ${timestamp}`,
           slug: `test-category-detach-${timestamp}`,
+          locale: 'he',
         },
       })
 

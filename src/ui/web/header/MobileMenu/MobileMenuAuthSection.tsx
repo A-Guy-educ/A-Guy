@@ -9,6 +9,7 @@ import type { User } from '@/payload-types'
 
 import { Button } from '@/ui/web/components/button'
 import { logoutAction } from '@/app/(frontend)/actions/auth-action'
+import { analytics } from '@/infra/analytics'
 import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations } from '@/ui/web/providers/I18n'
 
@@ -47,6 +48,7 @@ export function MobileMenuAuthSection({
           onClick={async () => {
             setIsLoggingOut(true)
             try {
+              analytics.reset()
               await logoutAction()
               window.dispatchEvent(new Event('auth:changed'))
               onClose()

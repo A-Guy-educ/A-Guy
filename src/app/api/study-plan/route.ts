@@ -11,9 +11,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import { z } from 'zod'
 
-import type { StudyPlanSnapshot, StudyPlanDay, TopicInput } from '@/lib/study-plan'
+import type { StudyPlanSnapshot, StudyPlanDay, TopicInput } from '@/server/services/study-plan'
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
-import { generateStudyPlan } from '@/lib/study-plan'
+import { generateStudyPlan } from '@/server/services/study-plan'
 import { queryUserProgressByGrade } from '@/server/repos/queries/userProgress'
 
 // Zod validation schemas

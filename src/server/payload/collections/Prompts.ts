@@ -2,6 +2,8 @@ import type { CollectionConfig } from 'payload'
 
 import { adminOnly } from '../access/adminOnly'
 import { tenantField } from '../fields/tenant'
+import { contentLocaleField } from '../fields/contentLocale'
+import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 
 export const Prompts: CollectionConfig = {
   slug: 'prompts',
@@ -13,8 +15,20 @@ export const Prompts: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'key', 'type', 'status', 'usage', 'tenant', 'updatedAt'],
+    defaultColumns: [
+      'title',
+      'promptKey',
+      'locale',
+      'type',
+      'status',
+      'usage',
+      'tenant',
+      'updatedAt',
+    ],
     group: 'AI',
+  },
+  hooks: {
+    beforeChange: [enforceFieldLocaleUniqueness('prompts', 'promptKey')],
   },
   fields: [
     {
@@ -25,15 +39,16 @@ export const Prompts: CollectionConfig = {
       admin: { description: 'Human-readable prompt name' },
     },
     {
-      name: 'key',
+      name: 'promptKey',
       type: 'text',
-      unique: true,
       index: true,
       admin: {
         description: 'Machine-readable key (e.g., "default-tutor-v1")',
         position: 'sidebar',
       },
     },
+    // Content locale — uniqueness is per (promptKey, locale), enforced by hook
+    contentLocaleField,
     {
       name: 'type',
       type: 'select',

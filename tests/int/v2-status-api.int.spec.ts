@@ -78,6 +78,7 @@ describe.skipIf(!hasDatabaseUrl)('V2 Status API', () => {
         data: {
           title: `Test Category ${timestamp}`,
           slug: `test-category-status-${timestamp}`,
+          locale: 'he',
         },
       })
 
@@ -241,6 +242,7 @@ describe.skipIf(!hasDatabaseUrl)('V2 Status API', () => {
         data: {
           title: `Test Category ${timestamp}`,
           slug: `test-category-backward-${timestamp}`,
+          locale: 'he',
         },
       })
 
@@ -370,6 +372,7 @@ describe.skipIf(!hasDatabaseUrl)('V2 Status API', () => {
         data: {
           title: `Test Category ${timestamp}`,
           slug: `test-category-empty-${timestamp}`,
+          locale: 'he',
         },
       })
 

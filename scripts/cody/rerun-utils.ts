@@ -40,3 +40,30 @@ export function resolveRerunFromStage(
 
   return fromStage
 }
+
+/**
+ * After a gate is approved in rerun mode, determine which stage to reset FROM.
+ * We must NOT reset the approved stage itself (that would overwrite the approval).
+ * Instead, return the next stage in the pipeline after the approved gate.
+ *
+ * Fix for issue #673: gate approval overwritten by resetFromStage.
+ *
+ * @param approvedStage - The stage that was just approved (e.g., 'taskify')
+ * @param pipelineOrder - Flat list of all stages in execution order
+ * @returns The next stage after the approved one, or the approved stage itself as fallback
+ */
+export function resolveFromStageAfterGateApproval(
+  approvedStage: string,
+  pipelineOrder: string[],
+): string {
+  const approvedIdx = pipelineOrder.indexOf(approvedStage)
+  if (approvedIdx === -1) return approvedStage
+
+  const nextIdx = approvedIdx + 1
+  if (nextIdx < pipelineOrder.length) {
+    return pipelineOrder[nextIdx]
+  }
+
+  // Edge case: approved stage is the last stage — return itself
+  return approvedStage
+}

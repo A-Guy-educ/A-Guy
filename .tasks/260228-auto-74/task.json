@@ -1,0 +1,24 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/payload/collections/ExerciseAssets.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Vercel Blob is already configured in the project",
+    "The Media collection has the correct Vercel Blob pattern to follow",
+    "The migration is straightforward config change"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task has clear requirements (migrate to Vercel Blob), files affected, current code snippet, and expected fix. The acceptance criteria is 'follow pattern used by Media collection'."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

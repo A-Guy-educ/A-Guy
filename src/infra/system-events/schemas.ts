@@ -166,6 +166,20 @@ export const ChatMessageSubmittedSchema = z
 export type ChatMessageSubmittedPayload = z.infer<typeof ChatMessageSubmittedSchema>
 
 // ============================================================================
+// Login Modal Shown Event
+// ============================================================================
+
+export const LoginModalShownSchema = z
+  .object({
+    trigger_type: z.enum(['mandatory', 'gated', 'warning']),
+    course_slug: z.string().min(1, 'course_slug is required'),
+    current_page: z.string().optional(),
+  })
+  .strict()
+
+export type LoginModalShownPayload = z.infer<typeof LoginModalShownSchema>
+
+// ============================================================================
 // Registration Prompt Shown Event
 // ============================================================================
 
@@ -234,6 +248,7 @@ export const eventSchemas = {
   [SYSTEM_EVENTS.LESSON_ENDED]: LessonEndedSchema,
   [SYSTEM_EVENTS.PDF_VIEWED]: PdfViewedSchema,
   [SYSTEM_EVENTS.CHAT_MESSAGE_SUBMITTED]: ChatMessageSubmittedSchema,
+  [SYSTEM_EVENTS.LOGIN_MODAL_SHOWN]: LoginModalShownSchema,
   [SYSTEM_EVENTS.REGISTRATION_PROMPT_SHOWN]: RegistrationPromptShownSchema,
   [SYSTEM_EVENTS.REGISTRATION_COMPLETED]: RegistrationCompletedSchema,
 

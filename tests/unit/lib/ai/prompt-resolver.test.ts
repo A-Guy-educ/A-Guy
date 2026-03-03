@@ -31,6 +31,7 @@ describe('resolveAgentSystemPrompt', () => {
       const lessonPrompt = {
         id: 'prompt-1',
         title: 'Math Tutor',
+        locale: 'he' as const,
         template: 'You are a math tutor.',
         status: 'published' as const,
         type: 'context' as const,
@@ -57,6 +58,7 @@ describe('resolveAgentSystemPrompt', () => {
       const draftPrompt = {
         id: 'p-2',
         title: 'Draft',
+        locale: 'he' as const,
         template: 'Draft.',
         status: 'draft' as const,
         type: 'context' as const,
@@ -94,6 +96,7 @@ describe('resolveAgentSystemPrompt', () => {
       const archivedPrompt = {
         id: 'p-3',
         title: 'Archived',
+        locale: 'he' as const,
         template: 'Archived.',
         status: 'archived' as const,
         type: 'context' as const,
