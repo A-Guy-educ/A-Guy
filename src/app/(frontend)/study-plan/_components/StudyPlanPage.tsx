@@ -5,7 +5,6 @@ import { Calendar, Plus, Trash2, Zap } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { MasteryLevel, TopicInput } from '@/lib/study-plan'
-import { Button } from '@/ui/web/components/button'
 import { DayCard } from './DayCard'
 import { EmptyPlanState } from './EmptyPlanState'
 import { useStudyPlan } from './useStudyPlan'
@@ -202,19 +201,6 @@ export function StudyPlanPage() {
                 </button>
               </div>
             </div>
-
-            {/* Generate Plan Button */}
-            {!hasGenerated && (
-              <Button
-                onClick={handleGeneratePlan}
-                disabled={!examDate || topics.length === 0 || isLoading}
-                size="lg"
-                className="w-full"
-              >
-                <Zap className="w-5 h-5 me-2" />
-                {t('generateButton')}
-              </Button>
-            )}
           </div>
 
           {/* Main Content */}
@@ -244,7 +230,11 @@ export function StudyPlanPage() {
                 </div>
               </div>
             ) : (
-              <EmptyPlanState />
+              <EmptyPlanState
+                onGenerate={handleGeneratePlan}
+                canGenerate={!!examDate && topics.length > 0}
+                isLoading={isLoading}
+              />
             )}
           </div>
         </div>
