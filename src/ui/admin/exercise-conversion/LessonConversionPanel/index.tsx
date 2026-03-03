@@ -39,7 +39,7 @@ interface PreviewData {
 }
 
 export const LessonConversionPanel = () => {
-  const { id: lessonId } = useDocumentInfo()
+  const { id: lessonId, lastUpdateTime } = useDocumentInfo()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const contentFilesField = useFormFields(([fields]: any[]) => fields?.contentFiles)
   const contentFilesValue = contentFilesField?.value
@@ -66,6 +66,7 @@ export const LessonConversionPanel = () => {
       try {
         const lessonResponse = await fetch(`/api/lessons/${lessonId}?depth=1`, {
           credentials: 'include',
+          cache: 'no-store',
         })
 
         if (!lessonResponse.ok) {
@@ -129,7 +130,7 @@ export const LessonConversionPanel = () => {
     }
 
     resolveMedia()
-  }, [contentFilesValue, lessonId])
+  }, [contentFilesValue, lessonId, lastUpdateTime])
 
   // Filter for PDFs and images (V3 supports both)
   const supportedFiles = mediaItems.filter(

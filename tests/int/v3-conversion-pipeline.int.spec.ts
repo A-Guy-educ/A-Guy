@@ -61,7 +61,9 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
 
   vi.mock('@/server/services/pdf-fetcher', () => ({
     getPdfBufferFromBlob: vi.fn().mockResolvedValue(Buffer.from('%PDF-1.0 test content', 'ascii')),
-    normalizeToAbsoluteUrl: vi.fn().mockImplementation((url: string) => Promise.resolve(`http://localhost:3000${url}`)),
+    normalizeToAbsoluteUrl: vi
+      .fn()
+      .mockImplementation((url: string) => Promise.resolve(`http://localhost:3000${url}`)),
   }))
 
   beforeAll(async () => {
