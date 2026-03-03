@@ -1,7 +1,7 @@
 ---
 name: build
 description: Pure executor - implements code changes from plan. Does NOT commit or push — a separate commit stage handles that.
-mode: agent
+mode: primary
 tools:
   bash: true
   read: true
@@ -79,7 +79,7 @@ You must **NEVER**:
 If a test fails due to an **environment limitation** (e.g., DOMPurify strips `<style>` tags in jsdom but not in real browsers):
 
 1. Document it as a known limitation in `build.md`
-2. Mark the test with `it.skip('reason: jsdom limitation — works in browser')` 
+2. Mark the test with `it.skip('reason: jsdom limitation — works in browser')`
 3. Do NOT rewrite it to test something weaker
 
 **Why**: The pipeline's quality gates only check that tests pass. If you weaken assertions, the gates pass but the bug is not actually verified as fixed.
@@ -366,7 +366,7 @@ Before running the final test suite, you MUST find and update any EXISTING tests
    ```typescript
    // BEFORE (buggy):
    expect(readAccess).toBe(anyone)
-   
+
    // AFTER (fixed):
    expect(readAccess).toBe(publishedOrAuthenticated)
    ```
