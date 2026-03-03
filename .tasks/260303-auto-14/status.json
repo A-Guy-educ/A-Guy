@@ -4,14 +4,14 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-03T09:55:58.931Z",
-  "updatedAt": "2026-03-03T09:56:00.515Z",
+  "updatedAt": "2026-03-03T16:13:24.742Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-03T09:56:00.515Z"
+      "startedAt": "2026-03-03T16:13:24.742Z"
     }
   },
   "issueNumber": 671
