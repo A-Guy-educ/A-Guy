@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
         messages: [],
         lastMessageAt: new Date().toISOString(),
         contextPolicyVersion: 'v1',
+        preferredLocale: 'he',
       },
       draft: false,
     })
