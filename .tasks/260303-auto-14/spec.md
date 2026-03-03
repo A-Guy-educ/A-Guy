@@ -1,19 +1,18 @@
-# GreetingFlow Typing Animation Speed Fix
+# Typing Animation Speed Fix - Specification
 
 ## Overview
-Fix the sluggish typing animation in the GreetingFlow component (EduGuide AI bot welcome message). The current animation is too slow, causing a poor user experience for first-time users.
+
+Fix the sluggish typing animation in the GreetingFlow component to make it twice as fast, improving user experience for first-time visitors.
 
 ## Requirements
 
-1. **FR-1**: Typing animation character delay must be reduced from current ~60-100ms to approximately 20-25ms
-2. **FR-2**: Animation should maintain a subtle "human" dialogue feel while being noticeably faster
-3. **FR-3**: Users should not feel the urge to skip the text due to slow animation
+- FR-1: The typing animation speed must be increased from current ~60-100ms to ~20-25ms per character
+- FR-2: The animation should feel "snappy" and nearly instant while maintaining a subtle "human" dialogue feel
+- FR-3: Users should not feel the urge to skip the text because it is taking too long
 
 ## Acceptance Criteria
 
-- [ ] Character delay is approximately 20-25ms per character
-- [ ] Animation feels "snappy" and nearly instant
-- [ ] Still maintains subtle human-like quality (not instant)
-- [ ] No regression in other GreetingFlow behaviors
-- [ ] Works for both student and admin first-time users
-- [ ] Works in incognito/clean environment sessions
+- [ ] Base character delay is approximately 20ms to 25ms
+- [ ] The animation feels responsive and not sluggish
+- [ ] First-time users can read along without frustration
+- [ ] The bot message "EduGuide AI" types at the new faster speed

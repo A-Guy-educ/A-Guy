@@ -1,29 +1,26 @@
 {
   "task_type": "fix_bug",
   "risk_level": "low",
-  "confidence": 1,
+  "confidence": 0.95,
   "primary_domain": "frontend",
   "scope": [
-    "src/ui/web/homepage/GreetingFlow/index.tsx"
+    "GreetingFlow typing animation speed"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "The fix is changing speed={200} to speed={20-25} in all 3 TypingAnimation usages in GreetingFlow",
-    "The TypingAnimation component itself (default 50ms) is not the issue - the explicit 200ms override is",
-    "This is purely a UI timing change with no security or data implications"
+    "The TypingAnimation component exists and has a speed/delay prop",
+    "Current speed is set to approximately 60-100ms per character",
+    "The fix involves changing the speed to 20-25ms per character"
   ],
-  "review_questions": [
-    "Should the speed be exactly 20ms, 25ms, or a value in between (e.g., 22ms)?",
-    "Is there any reason to keep any of the 200ms delays for specific messages?"
-  ],
-  "complexity": 8,
-  "complexity_reasoning": "Scope: Single file with 3 numeric changes (5 pts). Risk: No security/data impact (0 pts). Novelty: Trivial numeric change (0 pts). Cross-Domain: Single frontend component (0 pts). Ambiguity: Very clear fix (1 pt). Dependencies: Self-contained component (2 pts). Total: 8 (Trivial)",
+  "review_questions": [],
+  "complexity": 15,
+  "complexity_reasoning": "Scope: 5 (single component, 1-2 files). Risk: 3 (UI animation only, no data/sensitive changes). Novelty: 3 (straightforward value change). Cross-domain: 0 (single frontend domain). Ambiguity: 2 (clear intent - change delay from 60-100ms to 20-25ms). Dependencies: 2 (self-contained component). Total: 15 (Simple tier)",
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Task has clear expected result with specific numeric values (20-25ms vs current 200ms). Contains acceptance criteria in Expected Result section. No need for additional spec generation."
+    "reasoning": "Input contains clear title, environment, preconditions, steps to reproduce, expected result (20-25ms), actual result (60-100ms), and reproducibility. Promoted spec.md with extracted requirements."
   },
   "pipeline_profile": "lightweight",
   "pipeline": "spec_execute_verify"
