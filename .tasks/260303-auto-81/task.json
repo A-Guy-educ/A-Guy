@@ -1,0 +1,25 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/Logo/Logo.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "TelescopeLogo component exists and can be imported from @/ui/web/TelescopeLogo"
+  ],
+  "review_questions": [],
+  "complexity": 13,
+  "complexity_reasoning": "Scope: 5 (single file change), Risk: 2 (UI asset change), Novelty: 2 (following existing pattern - TelescopeLogo exists), Cross-Domain: 2 (frontend only), Ambiguity: 1 (crystal clear - file path and exact fix specified), Dependency: 1 (self-contained). Total: 13",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains clear current behavior (Payload logo with alt text), expected behavior (A-Guy branding using TelescopeLogo), and specific file to change. Has clear scope and acceptance criteria."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
