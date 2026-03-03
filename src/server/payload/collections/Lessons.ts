@@ -5,12 +5,7 @@ import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
-
-const formatSlug = (val: string): string =>
-  val
-    .replace(/ /g, '-')
-    .replace(/[^\w-]+/g, '')
-    .toLowerCase()
+import { formatSlug } from '../fields/formatSlug'
 
 export const Lessons: CollectionConfig = {
   slug: 'lessons',

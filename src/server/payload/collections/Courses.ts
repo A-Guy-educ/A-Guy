@@ -15,15 +15,10 @@ import { contentLocaleField } from '@/server/payload/fields/contentLocale'
 import { anyone } from '../access/anyone'
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
+import { formatSlug } from '../fields/formatSlug'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
 import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 import { validateTreeIsolationOnPublish } from '../hooks/courses/validateTreeIsolation'
-
-const formatSlug = (val: string): string =>
-  val
-    .replace(/ /g, '-')
-    .replace(/[^\w-]+/g, '')
-    .toLowerCase()
 
 export const Courses: CollectionConfig = {
   slug: 'courses',

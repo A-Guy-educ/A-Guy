@@ -4,13 +4,8 @@ import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../access/anyone'
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
+import { formatSlug } from '../fields/formatSlug'
 import { computeAdminTitle } from '../hooks/chapters/computeAdminTitle'
-
-const formatSlug = (val: string): string =>
-  val
-    .replace(/ /g, '-')
-    .replace(/[^\w-]+/g, '')
-    .toLowerCase()
 
 export const Chapters: CollectionConfig = {
   slug: 'chapters',
