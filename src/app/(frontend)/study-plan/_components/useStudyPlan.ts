@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
-import type { StudyPlanSnapshot, TopicInput } from '@/lib/study-plan'
+import type { StudyPlanSnapshot, TopicInput } from '@/server/services/study-plan'
 
 interface UseStudyPlanReturn {
   plan: StudyPlanSnapshot | null

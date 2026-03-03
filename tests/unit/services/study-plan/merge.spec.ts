@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { generateStudyPlan } from '@/lib/study-plan/engine'
-import type { MasteryLevel, StudyPlanDay, TopicInput } from '@/lib/study-plan/types'
+import { generateStudyPlan } from '@/server/services/study-plan/engine'
+import type { MasteryLevel, StudyPlanDay, TopicInput } from '@/server/services/study-plan/types'
 
 /**
  * Tests for study plan regeneration behavior.
