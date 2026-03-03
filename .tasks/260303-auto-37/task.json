@@ -1,0 +1,26 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/Logo/Logo.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The TelescopeLogo component exists and is importable from the project",
+    "The fix only requires changing the image source and alt text"
+  ],
+  "review_questions": [],
+  "complexity": 8,
+  "complexity_reasoning": "Scope: 5 (single file change), Risk: 3 (frontend display only), Novelty: 3 (simple copy-paste pattern), Cross-domain: 0 (frontend only), Ambiguity: 1 (very clear), Dependency: 1 (self-contained). Total: 13 → Simple (10-19)",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains clear current behavior, expected behavior sections, specific files to change, and complexity assessment. Has all required spec elements."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
