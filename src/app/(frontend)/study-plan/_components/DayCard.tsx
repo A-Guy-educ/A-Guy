@@ -2,16 +2,16 @@
 
 import { useState } from 'react'
 
-import type { StudyPlanDay, TopicInput } from '@/lib/study-plan'
+import type { StudyPlanDay, TopicInput } from '@/server/services/study-plan'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { CheckCircle2, Edit2 } from 'lucide-react'
 
 const ACTIVITY_COLORS = {
-  practice: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  hybrid: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-  full_simulation: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-  reinforcement: 'bg-green-500/10 text-green-500 border-green-500/20',
-  warmup: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+  practice: 'bg-primary/10 text-primary border-primary/20',
+  hybrid: 'bg-accent/10 text-accent border-accent/20',
+  full_simulation: 'bg-error/10 text-error border-error/20',
+  reinforcement: 'bg-success/10 text-success border-success/20',
+  warmup: 'bg-warning/10 text-warning border-warning/20',
 } as const
 
 interface DayCardProps {
@@ -114,9 +114,7 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
   return (
     <div
       className={`relative bg-card rounded-2xl border-2 p-5 transition-all ${
-        isCompleted
-          ? 'border-emerald-500/30 opacity-60'
-          : 'border-border hover:border-border shadow-sm'
+        isCompleted ? 'border-success/30 opacity-60' : 'border-border hover:border-border shadow-sm'
       }`}
     >
       {/* Edit button - only show when not completed */}
@@ -142,7 +140,7 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
         </div>
         <div className="flex items-center gap-1.5">
           {isCompleted && (
-            <span className="flex items-center gap-1 text-emerald-500 text-xs font-medium">
+            <span className="flex items-center gap-1 text-success text-xs font-medium">
               <CheckCircle2 className="w-4 h-4" />
               {t('completed')}
             </span>

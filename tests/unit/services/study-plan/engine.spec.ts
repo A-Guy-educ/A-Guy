@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { ACTIVITY_TEMPLATES } from '@/lib/study-plan/constants'
-import { generateStudyPlan, getTimeframeMode } from '@/lib/study-plan/engine'
-import type { TopicInput } from '@/lib/study-plan/types'
+import { ACTIVITY_TEMPLATES } from '@/server/services/study-plan/constants'
+import { generateStudyPlan, getTimeframeMode } from '@/server/services/study-plan/engine'
+import type { TopicInput } from '@/server/services/study-plan/types'
 
 describe('study-plan engine', () => {
   describe('getTimeframeMode', () => {
