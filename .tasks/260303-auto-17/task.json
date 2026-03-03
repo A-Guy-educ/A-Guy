@@ -4,31 +4,30 @@
   "confidence": 0.85,
   "primary_domain": "frontend",
   "scope": [
-    "Chat component image upload",
-    "Image file upload handling",
-    "AI image recognition integration"
+    "image upload in chat feature",
+    "צט chat component - image upload UI",
+    "file upload handling in AI chat"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "The issue is in the chat component's image upload functionality",
-    "The AI recognition failure is a consequence of the upload failure",
-    "This affects the student role in production environment"
+    "The 'צט' feature is a chat/AI assistant where users can upload images for analysis",
+    "Image upload UI exists but is currently failing with 'Failed' error",
+    "The bug may be in frontend upload handling or backend API endpoint",
+    "File size or type validation may be causing the failure"
   ],
   "review_questions": [
-    "What is the exact error code/message during image upload?",
-    "Which component handles chat image uploads?",
-    "Is there a file size or type restriction causing the failure?",
-    "Is this a regression or a new feature issue?"
+    "Where exactly does image upload happen in the chat interface?",
+    "What API endpoint handles the image upload?",
+    "Are there file size or type restrictions that might be causing the failure?",
+    "Is the AI service (e.g., Gemini) properly integrated for image analysis?"
   ],
-  "complexity": 42,
-  "complexity_reasoning": "Scope: 12 (need to find and fix chat upload component), Risk: 11 (production bug, core feature), Novelty: 5 (bug fix following existing patterns), Cross-domain: 8 (frontend + backend upload service + AI), Ambiguity: 2 (clear reproduction steps), Dependency: 6 (upload service + AI recognition). Total: 44 → rounded to 42",
+  "complexity": 30,
+  "complexity_reasoning": "Scope: 10 (investigate UI component + API endpoint, 2-3 files). Risk: 10 (core feature issue in production). Novelty: 5 (investigating existing functionality). Cross-domain: 4 (frontend + backend API). Ambiguity: 3 (clear reproduction steps but unknown root cause). Dependency: 3 (may depend on upload services). Total: 35 → rounded to 30 for moderate complexity.",
   "input_quality": {
-    "level": "good_spec",
-    "skip_stages": [
-      "spec"
-    ],
-    "reasoning": "Task has clear reproduction steps, expected vs actual results, environment details, and reproducible bug (always). Contains all required spec elements: preconditions, steps to reproduce, expected result, actual result."
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Bug report with clear reproduction steps but no implementation details. Contains environment, preconditions, steps to reproduce, expected vs actual result. No structured requirements or implementation plan - standard bug report format."
   },
-  "pipeline_profile": "standard",
+  "pipeline_profile": "lightweight",
   "pipeline": "spec_execute_verify"
 }
