@@ -178,6 +178,13 @@ export function parseCommentInputs(): ParseOutputs {
       logger.info('=== Detected --local flag: will use self-hosted runner ===')
     }
 
+    // Detect --github-hosted flag anywhere in the command
+    const hasGithubHostedFlag = /--github-hosted\b/.test(cmdAfterCody)
+    if (hasGithubHostedFlag) {
+      outputs.runner = 'github-hosted'
+      logger.info('=== Detected --github-hosted flag: will use GitHub-hosted runner ===')
+    }
+
     // Detect --version flag anywhere in the command
     const versionMatch = cmdAfterCody.match(/--version\s+(\S+)/)
     if (versionMatch) {
@@ -189,6 +196,7 @@ export function parseCommentInputs(): ParseOutputs {
     const cmdWithoutFlags = cmdAfterCody
       .replace(/--local\b/g, '')
       .replace(/--github\b/g, '')
+      .replace(/--github-hosted\b/g, '')
       .replace(/--version\s+\S+/g, '')
       .trim()
 

@@ -7,7 +7,7 @@ name: Exercise Conversion Runner
 # - CRON_SECRET: Secret token for authenticating cron requests (must match CRON_SECRET env var)
 #
 # Required GitHub Variables (set in repo Settings > Variables > Actions):
-# - PAYLOAD_PUBLIC_SERVER_URL: Base URL of the deployed application (e.g., https://your-app.vercel.app)
+# - NEXT_PUBLIC_SERVER_URL: Base URL of the deployed application (e.g., https://your-app.vercel.app)
 
 on:
   schedule:
@@ -26,14 +26,14 @@ jobs:
     timeout-minutes: 15
 
     env:
-      PAYLOAD_PUBLIC_SERVER_URL: ${{ vars.PAYLOAD_PUBLIC_SERVER_URL }}
+      NEXT_PUBLIC_SERVER_URL: ${{ vars.NEXT_PUBLIC_SERVER_URL }}
       CRON_SECRET: ${{ secrets.CRON_SECRET }}
 
     steps:
       - name: Call runner endpoint
         id: runner
         run: |
-          RESPONSE=$(curl -s -X POST "$PAYLOAD_PUBLIC_SERVER_URL/api/exercises/convert/runner" \
+          RESPONSE=$(curl -s -X POST "$NEXT_PUBLIC_SERVER_URL/api/exercises/convert/runner" \
             -H "Authorization: Bearer $CRON_SECRET" \
             -H "Content-Type: application/json" \
             -w "\n%{http_code}")
