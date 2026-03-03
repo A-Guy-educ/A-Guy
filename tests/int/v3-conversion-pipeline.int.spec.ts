@@ -301,6 +301,13 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
         } as any,
       })
 
+      // Attach to lesson so it passes the attachment check (checked before mime type)
+      await payload.update({
+        collection: 'lessons',
+        id: lessonId,
+        data: { contentFiles: [mediaId, textMedia.id] },
+      })
+
       const result = await extractSingle(payload, {
         lessonId,
         mediaId: textMedia.id,
@@ -309,18 +316,23 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
       expect(result.success).toBe(false)
       expect(result.error).toContain('Unsupported mime type')
 
-      // Cleanup
+      // Restore original contentFiles and cleanup
+      await payload.update({
+        collection: 'lessons',
+        id: lessonId,
+        data: { contentFiles: [mediaId] },
+      })
       await payload.delete({ collection: 'media', id: textMedia.id })
     })
 
-    it('should fail when lesson not found', async () => {
-      const result = await extractSingle(payload, {
-        lessonId: '000000000000000000000000',
-        mediaId,
-      })
-
-      expect(result.success).toBe(false)
-      expect(result.error).toBe('Lesson not found')
+    it('should throw when lesson not found', async () => {
+      // Payload's findByID throws NotFound (404) for non-existent IDs
+      await expect(
+        extractSingle(payload, {
+          lessonId: '000000000000000000000000',
+          mediaId,
+        }),
+      ).rejects.toThrow('Not Found')
     })
   })
 
@@ -415,9 +427,10 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
     })
 
     it('should throw when prompt ID does not exist', async () => {
+      // Payload's findByID throws NotFound (404) for non-existent IDs
       await expect(
         resolveExtractorPrompt(payload, tenantId, '000000000000000000000000'),
-      ).rejects.toThrow('Prompt not found')
+      ).rejects.toThrow('Not Found')
     })
 
     it('should throw when prompt is not published', async () => {
