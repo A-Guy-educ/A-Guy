@@ -6,6 +6,7 @@
  */
 
 import * as fs from 'fs'
+import ms from 'ms'
 import * as path from 'path'
 
 import {
@@ -17,10 +18,10 @@ import {
 } from './cody-utils'
 import { preflight } from './preflight'
 import { createRunner } from './runner-backend'
-import { setGlobalContext } from './logger'
+import { logger, createStageLogger } from './logger'
 import { handleClarification } from './clarify-workflow'
 import { commitPipelineFiles } from './git-utils'
-import { stageOutputFile, readTask } from './pipeline-utils'
+import { readTask } from './pipeline-utils'
 
 import type { PipelineContext } from './engine/types'
 import { runPipeline } from './engine/state-machine'
@@ -55,7 +56,7 @@ async function ensureTaskMd(ctx: PipelineContext): Promise<void> {
       throw new Error(`File is empty: ${resolvedFile}`)
     }
     fs.writeFileSync(taskMdPath, `# Task\n\n${content}\n`)
-    console.log(`Created task.md from ${resolvedFile}`)
+    logger.info(`Created task.md from ${resolvedFile}`)
     return
   }
 
@@ -63,12 +64,12 @@ async function ensureTaskMd(ctx: PipelineContext): Promise<void> {
   if (!fs.existsSync(taskMdPath)) {
     if (input.issueNumber) {
       const { getIssue } = await import('./github-api')
-      console.log('task.md not found, fetching issue body to create it...')
+      logger.info('task.md not found, fetching issue body to create it...')
       const { body: issueBody, title: issueTitle } = getIssue(input.issueNumber)
       if (issueBody) {
         const titleSection = issueTitle ? `## Issue Title\n\n${issueTitle}\n` : ''
         fs.writeFileSync(taskMdPath, `# Task\n\n${titleSection}${issueBody}\n`)
-        console.log(`Created task.md from issue #${input.issueNumber}`)
+        logger.info(`Created task.md from issue #${input.issueNumber}`)
       } else {
         throw new Error(
           `task.md not found in .tasks/${input.taskId}/ and issue #${input.issueNumber} has no body. Create it first.`,
@@ -111,6 +112,8 @@ Options:
   --local                Run in local mode (skip GitHub API)
   --clarify              Run clarify stage
   --complexity <1-100>   Override complexity score (for testing)
+  --is-pull-request      Comment was on a PR (not issue)
+  --fresh                Force create new PR (new branch)
 
 Examples:
   pnpm tsx scripts/cody/entry.ts --task-id 260225-my-task --mode full
@@ -123,8 +126,8 @@ Examples:
   // Parse CLI args
   const input = parseCliArgs(args)
 
-  // Set global logging context
-  setGlobalContext({ taskId: input.taskId, runId: input.runId })
+  // Create a child logger with task context
+  const _stageLogger = createStageLogger('main', input.taskId)
 
   // R9: Shutdown guard to prevent double-execution on SIGTERM/SIGINT
   let shuttingDown = false
@@ -133,7 +136,7 @@ Examples:
     // Prevent double execution
     if (shuttingDown) return
     shuttingDown = true
-    console.error(`\n⚠ Received ${signal} — CI runner shutting down`)
+    logger.error(`\n⚠ Received ${signal} — CI runner shutting down`)
     try {
       const { loadState, writeState, updateStage, completeState } = await import('./engine/status')
       const state = loadState(input.taskId)
@@ -146,20 +149,20 @@ Examples:
               state: 'failed',
               error: `Process interrupted by ${signal}`,
             })
-            console.error(`  Marked stage "${name}" as failed`)
+            logger.error(`  Marked stage "${name}" as failed`)
           }
         }
         // Mark pipeline as failed
         const failedState = completeState(updatedState, 'failed')
         writeState(input.taskId, failedState)
-        console.error(`  Updated status.json to "failed" for task ${input.taskId}`)
+        logger.error(`  Updated status.json to "failed" for task ${input.taskId}`)
 
         // In CI mode: attempt to commit and push the updated status
         if (process.env.GITHUB_ACTIONS === 'true' && !input.local) {
-          console.error(`  Attempting to commit status.json in CI...`)
+          logger.error(`  Attempting to commit status.json in CI...`)
           try {
             const { execFileSync } = await import('child_process')
-            const SIGNAL_TIMEOUT = 10_000 // 10s max per git op during shutdown
+            const SIGNAL_TIMEOUT = ms('10s') // 10s max per git op during shutdown
             // Get the directory where status.json is
             const statusPath = `./.tasks/${input.taskId}/status.json`
             execFileSync('git', ['add', statusPath], {
@@ -180,14 +183,14 @@ Examples:
               stdio: 'inherit',
               timeout: SIGNAL_TIMEOUT,
             })
-            console.error(`  ✅ Committed and pushed status.json`)
+            logger.error(`  ✅ Committed and pushed status.json`)
           } catch (commitErr) {
-            console.error(`  ⚠️ Failed to commit/push status.json:`, commitErr)
+            logger.error({ err: commitErr }, `  ⚠️ Failed to commit/push status.json`)
           }
         }
       }
     } catch (err) {
-      console.error(`  Failed to update status:`, err)
+      logger.error({ err }, `  Failed to update status`)
     }
     process.exit(128 + (signal === 'SIGTERM' ? 15 : 2))
   }
@@ -195,12 +198,12 @@ Examples:
   process.on('SIGTERM', () => cleanupOnSignal('SIGTERM'))
   process.on('SIGINT', () => cleanupOnSignal('SIGINT'))
 
-  console.log(`Task: ${input.taskId}`)
-  console.log(`Mode: ${input.mode}`)
-  console.log(`Dry run: ${input.dryRun}`)
-  console.log(`Local: ${input.local}`)
-  if (input.issueNumber) console.log(`Issue: #${input.issueNumber}`)
-  console.log('')
+  logger.info(`Task: ${input.taskId}`)
+  logger.info(`Mode: ${input.mode}`)
+  logger.info(`Dry run: ${input.dryRun}`)
+  logger.info(`Local: ${input.local}`)
+  if (input.issueNumber) logger.info(`Issue: #${input.issueNumber}`)
+  logger.info('')
 
   // Run preflight checks in local mode
   if (input.local) {
@@ -269,7 +272,8 @@ Examples:
       writeState(input.taskId, failedState)
     }
 
-    console.error('\n❌ Cody failed:', error instanceof Error ? error.message : error)
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    logger.error({ err: error }, `\n❌ Cody failed: ${errorMsg}`)
 
     if (input.issueNumber) {
       postComment(
@@ -299,7 +303,7 @@ async function runSpecMode(ctx: PipelineContext): Promise<void> {
   if (input.clarify) {
     const clarifyResult = handleClarification(input, taskDir)
     if (clarifyResult === 'waiting') {
-      console.log('\n⚠️ Clarify stage has questions that need answering')
+      logger.info('\n⚠️ Clarify stage has questions that need answering')
       const questionsPath = path.join(taskDir, 'questions.md')
       if (input.issueNumber) {
         const questionsContent = fs.readFileSync(questionsPath, 'utf-8')
@@ -338,7 +342,7 @@ async function runSpecMode(ctx: PipelineContext): Promise<void> {
     dryRun: input.dryRun,
   })
 
-  console.log('\n✅ Cody SPEC pipeline complete')
+  logger.info('\n✅ Cody SPEC pipeline complete')
 }
 
 /**
@@ -360,7 +364,7 @@ async function runImplMode(ctx: PipelineContext): Promise<void> {
     ctx.taskDef = taskDef
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
-    console.error(`\n❌ Failed to read task definition: ${msg}`)
+    logger.error(`\n❌ Failed to read task definition: ${msg}`)
     throw new Error(`Invalid task.json: ${msg}`)
   }
   if (!taskDef) {
@@ -375,34 +379,51 @@ async function runImplMode(ctx: PipelineContext): Promise<void> {
 
   // Check spec_only pipeline
   if (taskDef.pipeline === 'spec_only') {
-    console.log('Task pipeline is spec_only — skipping implementation stages.')
+    logger.info('Task pipeline is spec_only — skipping implementation stages.')
     return
   }
 
   // Resolve profile
   const { resolvePipelineProfile } = await import('./pipeline-utils')
   ctx.profile = resolvePipelineProfile(taskDef)
-  console.log(`ℹ️ Pipeline profile: ${ctx.profile}`)
+  logger.info(`ℹ️ Pipeline profile: ${ctx.profile}`)
 
   // Run impl pipeline (pass rebuild callback for two-phase construction)
   const pipeline = resolvePipelineForMode('impl', ctx.profile, false, ctx)
   const rebuild = createRebuildCallback('full', ctx.input.clarify ?? false)
   await runPipeline(ctx, pipeline, undefined, rebuild)
 
-  console.log('\n✅ Cody IMPLEMENTATION pipeline complete')
+  logger.info('\n✅ Cody IMPLEMENTATION pipeline complete')
 }
 
 /**
  * Full mode setup
  */
 async function runFullMode(ctx: PipelineContext): Promise<void> {
-  console.log('Running FULL Cody pipeline (spec + impl)...\n')
+  logger.info('Running FULL Cody pipeline (spec + impl)...\n')
 
   // R4: Ensure task.md exists before running pipeline
   await ensureTaskMd(ctx)
 
+  // FIX #5: Resolve profile from task.json instead of hardcoding 'standard'
+  // This ensures the correct profile (lightweight vs standard) is used
+  let profile: 'standard' | 'lightweight' = 'standard'
+  try {
+    const taskDef = readTask(ctx.taskDir)
+    if (taskDef) {
+      ctx.taskDef = taskDef
+      const { resolvePipelineProfile } = await import('./pipeline-utils')
+      profile = resolvePipelineProfile(taskDef)
+      logger.info(`ℹ️ Resolved profile from task.json: ${profile}`)
+    }
+  } catch {
+    // If task.json doesn't exist yet, taskify will create it and resolve profile
+    logger.info('ℹ️ task.json not found yet, will resolve profile after taskify')
+  }
+  ctx.profile = profile
+
   // Run full pipeline - all stages are now included upfront (no rebuild needed)
-  const pipeline = resolvePipelineForMode('full', 'standard', ctx.input.clarify ?? false, ctx)
+  const pipeline = resolvePipelineForMode('full', profile, ctx.input.clarify ?? false, ctx)
   const finalState = await runPipeline(ctx, pipeline)
 
   // Handle paused state (gate approval required)
@@ -410,7 +431,7 @@ async function runFullMode(ctx: PipelineContext): Promise<void> {
     throw new PipelinePausedError(`Pipeline paused — awaiting gate approval for ${ctx.taskId}`)
   }
 
-  console.log('\n✅ Full Cody pipeline complete!')
+  logger.info('\n✅ Full Cody pipeline complete!')
 }
 
 /**
@@ -418,7 +439,7 @@ async function runFullMode(ctx: PipelineContext): Promise<void> {
  */
 async function runRerunMode(ctx: PipelineContext): Promise<void> {
   const { input, taskDir } = ctx
-  console.log('Running Cody RERUN pipeline...\n')
+  logger.info('Running Cody RERUN pipeline...\n')
 
   // G33: Check for paused stage FIRST - if we're resuming from a gate approval,
   // we should continue even if spec.md doesn't exist (it may not have been created yet
@@ -428,7 +449,7 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   // G33: Fallback to full only if spec.md missing AND no paused stage to resume
   const specPath = path.join(taskDir, 'spec.md')
   if (!fs.existsSync(specPath) && !pausedStage) {
-    console.log('No spec.md found — falling back to full pipeline')
+    logger.info('No spec.md found — falling back to full pipeline')
     input.mode = 'full'
     await runFullMode(ctx)
     return
@@ -437,7 +458,7 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   // FIX #5: Check for paused stage first (gate approval scenario)
   // This handles the case where @cody approve was used to resume a paused pipeline
   if (pausedStage) {
-    console.log(`Detected paused stage: ${pausedStage}`)
+    logger.info(`Detected paused stage: ${pausedStage}`)
 
     // Try to approve the gate directly
     try {
@@ -447,7 +468,7 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
         const gateResult = handleGateApproval(input, taskDir, pausedStage, taskDef)
 
         if (gateResult === 'approved') {
-          console.log(`Gate ${pausedStage} approved — resuming pipeline`)
+          logger.info(`Gate ${pausedStage} approved — resuming pipeline`)
 
           // Write approved file to cache approval for future runs
           const approvedPath = path.join(taskDir, `gate-${pausedStage}-approved.md`)
@@ -481,11 +502,11 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
           // The rerun pipeline already includes both spec and impl stages
           // No mode switch needed - just continue running
         } else if (gateResult === 'waiting') {
-          console.log(`Gate ${pausedStage} still waiting for approval`)
+          logger.info(`Gate ${pausedStage} still waiting for approval`)
         }
       }
     } catch (err) {
-      console.warn('Could not handle gate approval:', err)
+      logger.warn({ err }, 'Could not handle gate approval')
     }
   }
 
@@ -502,7 +523,7 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
     implStageOrder,
   )
   if (resolvedFrom !== input.fromStage) {
-    console.log(
+    logger.info(
       `  ℹ️ Feedback provided — backing up from ${input.fromStage} to ${resolvedFrom} for plan revision`,
     )
     input.fromStage = resolvedFrom
@@ -520,8 +541,8 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
     `# Rerun Feedback - ${new Date().toISOString()}\n\n## Issues Found\n\n${input.feedback}\n`,
   )
 
-  console.log(`Feedback: ${input.feedback}`)
-  console.log(`From stage: ${input.fromStage}\n`)
+  logger.info(`Feedback: ${input.feedback}`)
+  logger.info(`From stage: ${input.fromStage}\n`)
 
   // G37: Read task definition for profile resolution
   // Fix 4: Wrap in try/catch to handle missing/invalid task.json gracefully
@@ -529,7 +550,7 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   try {
     taskDef = readTask(taskDir)
   } catch {
-    console.warn('Could not read task.json for profile resolution, using default')
+    logger.warn('Could not read task.json for profile resolution, using default')
   }
   ctx.taskDef = taskDef
   if (taskDef) {
@@ -554,20 +575,8 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   const { loadState, resetFromStage, writeState } = await import('./engine/status')
   const state = loadState(input.taskId)
   if (state) {
-    // Get stages to delete from
-    const fromIndex = stageOrder.indexOf(fromStage)
-    if (fromIndex >= 0) {
-      const stagesToDelete = stageOrder.slice(fromIndex)
-      for (const stage of stagesToDelete) {
-        const outputFile = stageOutputFile(taskDir, stage)
-        if (fs.existsSync(outputFile)) {
-          fs.unlinkSync(outputFile)
-          console.log(`Deleted: ${stage}.md`)
-        }
-      }
-    }
-
-    // Reset stages in status
+    // H4 FIX: resetFromStage now handles both state reset AND output file deletion
+    // No need to manually delete files here - that was causing double-delete
     const newState = resetFromStage(state, fromStage, stageOrder, taskDir)
     writeState(input.taskId, newState)
   }
@@ -575,7 +584,7 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   // Run impl pipeline
   await runPipeline(ctx, pipeline)
 
-  console.log('\n✅ Rerun complete!')
+  logger.info('\n✅ Rerun complete!')
 }
 
 /**
@@ -588,13 +597,13 @@ async function runStatusMode(ctx: PipelineContext): Promise<void> {
   const state = loadState(input.taskId)
 
   if (!state) {
-    console.log(`No status found for task: ${input.taskId}`)
-    console.log(`The Cody may not have run yet, or status.json was deleted.`)
+    logger.info(`No status found for task: ${input.taskId}`)
+    logger.info(`The Cody may not have run yet, or status.json was deleted.`)
     return
   }
 
-  console.log(`Status for ${input.taskId}:`)
-  console.log(JSON.stringify(state, null, 2))
+  logger.info(`Status for ${input.taskId}:`)
+  logger.info(state)
 
   if (input.issueNumber) {
     const v1Status = stateToV1(state)
@@ -604,6 +613,7 @@ async function runStatusMode(ctx: PipelineContext): Promise<void> {
 
 // Run main
 main().catch((err) => {
-  console.error('Fatal error:', err)
+  const fatalErr = err instanceof Error ? err.message : String(err)
+  logger.error({ err }, `Fatal error: ${fatalErr}`)
   process.exit(1)
 })

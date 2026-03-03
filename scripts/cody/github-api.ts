@@ -5,6 +5,7 @@
  * @ai-summary GitHub API helpers extracted from cody-utils for better modularity
  */
 
+import { logger } from './logger'
 import { execFileSync } from 'child_process'
 
 // ============================================================================
@@ -25,7 +26,7 @@ export function postComment(issueNumber: number, body: string): void {
       stdio: ['pipe', 'inherit', 'inherit'],
     })
   } catch (error) {
-    console.error(`Failed to post comment to issue ${issueNumber}:`, error)
+    logger.error({ err: error }, `Failed to post comment to issue ${issueNumber}:`)
   }
 }
 
@@ -43,7 +44,7 @@ export function getIssueBody(issueNumber: number): string | null {
     )
     return output.trim() || null
   } catch (error) {
-    console.error(`Failed to get issue body for #${issueNumber}:`, error)
+    logger.error({ err: error }, `Failed to get issue body for #${issueNumber}:`)
     return null
   }
 }
@@ -74,7 +75,7 @@ export function getIssue(issueNumber: number): { body: string | null; title: str
       title: data.title?.trim() || null,
     }
   } catch (error) {
-    console.error(`Failed to get issue #${issueNumber}:`, error)
+    logger.error({ err: error }, `Failed to get issue #${issueNumber}:`)
     return { body: null, title: null }
   }
 }
@@ -93,7 +94,7 @@ export function getIssueTitle(issueNumber: number): string | null {
     )
     return output.trim() || null
   } catch (error) {
-    console.error(`Failed to get issue title for #${issueNumber}:`, error)
+    logger.error({ err: error }, `Failed to get issue title for #${issueNumber}:`)
     return null
   }
 }
@@ -108,7 +109,7 @@ export function editComment(commentId: string, body: string): void {
   // R6: Replace 'OWNER/REPO' fallback with early return
   const repo = process.env.GITHUB_REPOSITORY
   if (!repo) {
-    console.error('editComment: GITHUB_REPOSITORY not set, skipping')
+    logger.error('editComment: GITHUB_REPOSITORY not set, skipping')
     return
   }
 
@@ -120,7 +121,7 @@ export function editComment(commentId: string, body: string): void {
       { input: JSON.stringify({ body }), stdio: ['pipe', 'inherit', 'inherit'] },
     )
   } catch (error) {
-    console.error(`Failed to edit comment ${commentId}:`, error)
+    logger.error({ err: error }, `Failed to edit comment ${commentId}:`)
   }
 }
 
@@ -174,7 +175,7 @@ export function getLatestApprovalComment(
         '--json',
         'comments',
         '--jq',
-        `[.comments[] | select(.author.login != "${exclude}" and (.body | test("^/cody (approve|reject)")))] | last | .body`,
+        `[.comments[] | select(.author.login != "${exclude}" and (.body | test("^[/@]cody (approve|reject)")))] | last | .body`,
       ],
       { encoding: 'utf-8' },
     )
@@ -252,9 +253,9 @@ export function ensureTaskMarkerComment(
   const existingTaskId = discoverTaskIdFromIssue(issueNumber)
   if (existingTaskId) {
     if (existingTaskId === taskId) {
-      console.log(`Task marker already exists on issue #${issueNumber} for ${taskId}`)
+      logger.info(`Task marker already exists on issue #${issueNumber} for ${taskId}`)
     } else {
-      console.log(
+      logger.info(
         `Task marker exists on issue #${issueNumber} for ${existingTaskId} (current: ${taskId})`,
       )
     }
@@ -274,7 +275,7 @@ export function ensureTaskMarkerComment(
   const runLine = runUrl ? `\nRun: ${runUrl}` : ''
 
   // No marker found — post one
-  console.log(`Posting task marker comment on issue #${issueNumber} for ${taskId}`)
+  logger.info(`Posting task marker comment on issue #${issueNumber} for ${taskId}`)
   postComment(
     issueNumber,
     `🎯 Task created: \`${taskId}\`${modeLine}${runLine}\n\nCody will now process this task.`,
@@ -295,9 +296,9 @@ export function addIssueLabel(issueNumber: number, label: string): void {
     execFileSync('gh', ['issue', 'edit', String(issueNumber), '--add-label', label], {
       stdio: ['inherit', 'inherit', 'inherit'],
     })
-    console.log(`  Added label "${label}" to issue #${issueNumber}`)
+    logger.info(`  Added label "${label}" to issue #${issueNumber}`)
   } catch (error) {
-    console.error(`Failed to add label "${label}" to issue ${issueNumber}:`, error)
+    logger.error({ err: error }, `Failed to add label "${label}" to issue ${issueNumber}:`)
   }
 }
 
@@ -311,9 +312,9 @@ export function removeIssueLabel(issueNumber: number, label: string): void {
     execFileSync('gh', ['issue', 'edit', String(issueNumber), '--remove-label', label], {
       stdio: ['inherit', 'inherit', 'inherit'],
     })
-    console.log(`  Removed label "${label}" from issue #${issueNumber}`)
+    logger.info(`  Removed label "${label}" from issue #${issueNumber}`)
   } catch (error) {
-    console.error(`Failed to remove label "${label}" from issue ${issueNumber}:`, error)
+    logger.error({ err: error }, `Failed to remove label "${label}" from issue ${issueNumber}:`)
   }
 }
 
@@ -324,3 +325,224 @@ export const GATE_LABELS = {
   HARD_STOP: 'hard-stop',
   RISK_GATED: 'risk-gated',
 } as const
+
+// ============================================================================
+// Lifecycle and Classification Label Management
+// ============================================================================
+
+/**
+ * Lifecycle labels - mutually exclusive, set by pipeline state machine
+ */
+export const LIFECYCLE_LABELS = [
+  'cody:planning',
+  'cody:building',
+  'cody:review',
+  'cody:done',
+  'cody:failed',
+] as const
+
+/**
+ * Task type labels - set by taskify based on task_type field
+ */
+export const TASK_TYPE_LABELS = [
+  'type:bug',
+  'type:feature',
+  'type:refactor',
+  'type:docs',
+  'type:ops',
+] as const
+
+/**
+ * Risk level labels - set by taskify based on risk_level field
+ */
+export const RISK_LABELS = ['risk:high', 'risk:medium', 'risk:low'] as const
+
+/**
+ * Complexity labels - set by taskify based on complexity score
+ * 1-30 = simple, 31-60 = moderate, 61-100 = complex
+ */
+export const COMPLEXITY_LABELS = [
+  'complexity:simple',
+  'complexity:moderate',
+  'complexity:complex',
+] as const
+
+/**
+ * Domain labels - set by taskify based on primary_domain field
+ */
+export const DOMAIN_LABELS = [
+  'domain:backend',
+  'domain:frontend',
+  'domain:infra',
+  'domain:llm',
+  'domain:data',
+  'domain:devops',
+  'domain:product',
+] as const
+
+/**
+ * Profile labels - set by resolve-profile post-action
+ */
+export const PROFILE_LABELS = ['profile:lightweight', 'profile:standard'] as const
+
+/**
+ * Set a lifecycle label - adds new label and removes all other lifecycle labels
+ * Fire-and-forget: errors are logged but never thrown
+ */
+export function setLifecycleLabel(issueNumber: number, label: string): void {
+  if (!issueNumber || !label) return
+
+  // Validate the label is a lifecycle label
+  if (!LIFECYCLE_LABELS.includes(label as (typeof LIFECYCLE_LABELS)[number])) {
+    logger.error(`Invalid lifecycle label: ${label}`)
+    return
+  }
+
+  // Get all OTHER lifecycle labels to remove (mutual exclusion)
+  const labelsToRemove = LIFECYCLE_LABELS.filter((l) => l !== label)
+
+  try {
+    // Remove all other lifecycle labels, add the new one
+    const args = [
+      'issue',
+      'edit',
+      String(issueNumber),
+      '--remove-label',
+      labelsToRemove.join(','),
+      '--add-label',
+      label,
+    ]
+    execFileSync('gh', args, { stdio: ['inherit', 'inherit', 'inherit'] })
+    logger.info(`  Set lifecycle label "${label}" on issue #${issueNumber}`)
+  } catch (error) {
+    logger.error(
+      { err: error },
+      `Failed to set lifecycle label "${label}" on issue ${issueNumber}:`,
+    )
+  }
+}
+
+/**
+ * Set classification labels from task.json fields
+ * Maps: task_type, risk_level, complexity, primary_domain
+ * Fire-and-forget: errors are logged but never thrown
+ */
+export function setClassificationLabels(
+  issueNumber: number,
+  taskDef: {
+    task_type?: string
+    risk_level?: string
+    complexity?: number
+    primary_domain?: string
+  },
+): void {
+  if (!issueNumber) return
+  if (!taskDef) {
+    logger.error(`No task definition provided for issue #${issueNumber}`)
+    return
+  }
+
+  const labels: string[] = []
+
+  // Map task_type to type:* label
+  if (taskDef.task_type) {
+    const typeMap: Record<string, string> = {
+      fix_bug: 'type:bug',
+      implement_feature: 'type:feature',
+      refactor: 'type:refactor',
+      docs: 'type:docs',
+      ops: 'type:ops',
+      spec_only: 'type:feature', // treat spec as feature
+      research: 'type:ops',
+    }
+    const label = typeMap[taskDef.task_type]
+    if (label && TASK_TYPE_LABELS.includes(label as (typeof TASK_TYPE_LABELS)[number])) {
+      labels.push(label)
+    }
+  }
+
+  // Map risk_level to risk:* label
+  if (taskDef.risk_level) {
+    const riskLabel = `risk:${taskDef.risk_level}`
+    if (RISK_LABELS.includes(riskLabel as (typeof RISK_LABELS)[number])) {
+      labels.push(riskLabel)
+    }
+  }
+
+  // Map complexity to complexity:* label
+  if (taskDef.complexity !== undefined) {
+    let label: string
+    if (taskDef.complexity <= 30) {
+      label = 'complexity:simple'
+    } else if (taskDef.complexity <= 60) {
+      label = 'complexity:moderate'
+    } else {
+      label = 'complexity:complex'
+    }
+    labels.push(label)
+  }
+
+  // Map primary_domain to domain:* label
+  if (taskDef.primary_domain) {
+    const domainLabel = `domain:${taskDef.primary_domain}`
+    if (DOMAIN_LABELS.includes(domainLabel as (typeof DOMAIN_LABELS)[number])) {
+      labels.push(domainLabel)
+    }
+  }
+
+  if (labels.length === 0) {
+    logger.info(`No classification labels to set for issue #${issueNumber}`)
+    return
+  }
+
+  try {
+    execFileSync('gh', ['issue', 'edit', String(issueNumber), '--add-label', labels.join(',')], {
+      stdio: ['inherit', 'inherit', 'inherit'],
+    })
+    logger.info(`  Set classification labels [${labels.join(', ')}] on issue #${issueNumber}`)
+  } catch (error) {
+    logger.error({ err: error }, `Failed to set classification labels on issue ${issueNumber}:`)
+  }
+}
+
+/**
+ * Set profile label - adds new profile and removes the other
+ * Fire-and-forget: errors are logged but never thrown
+ */
+export function setProfileLabel(issueNumber: number, profile: 'lightweight' | 'standard'): void {
+  if (!issueNumber || !profile) return
+
+  const label = `profile:${profile}`
+  const otherLabel = profile === 'lightweight' ? 'profile:standard' : 'profile:lightweight'
+
+  try {
+    execFileSync(
+      'gh',
+      ['issue', 'edit', String(issueNumber), '--remove-label', otherLabel, '--add-label', label],
+      { stdio: ['inherit', 'inherit', 'inherit'] },
+    )
+    logger.info(`  Set profile label "${label}" on issue #${issueNumber}`)
+  } catch (error) {
+    logger.error({ err: error }, `Failed to set profile label on issue ${issueNumber}:`)
+  }
+}
+
+/**
+ * Close an issue with a reason
+ * Fire-and-forget: errors are logged but never thrown
+ */
+export function closeIssue(
+  issueNumber: number,
+  reason: 'completed' | 'not planned' = 'completed',
+): void {
+  if (!issueNumber) return
+
+  try {
+    execFileSync('gh', ['issue', 'close', String(issueNumber), '--reason', reason], {
+      stdio: ['inherit', 'inherit', 'inherit'],
+    })
+    logger.info(`  Closed issue #${issueNumber} (${reason})`)
+  } catch (error) {
+    logger.error({ err: error }, `Failed to close issue ${issueNumber}:`)
+  }
+}

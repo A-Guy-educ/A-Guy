@@ -5,11 +5,13 @@
  * @ai-summary Direct script execution for verify and PR stages — no LLM needed for mechanical tasks
  */
 
+import { logger } from './logger'
 import { execFileSync, execSync } from 'child_process'
 import * as fs from 'fs'
+import ms from 'ms'
 import * as path from 'path'
 import { getDefaultBranch, commitAndPush } from './git-utils'
-import { postComment } from './github-api'
+import { postComment, setLifecycleLabel } from './github-api'
 
 // ============================================================================
 // Verify Stage — run quality gates directly
@@ -27,7 +29,7 @@ interface GateResult {
 }
 
 /** Default timeout per gate (2 minutes) */
-const DEFAULT_GATE_TIMEOUT = 120_000
+const DEFAULT_GATE_TIMEOUT = ms('2m')
 
 function runGate(
   name: string,
@@ -35,15 +37,15 @@ function runGate(
   cwd: string,
   timeout: number = DEFAULT_GATE_TIMEOUT,
 ): GateResult {
-  console.log(`  Running ${name}...`)
+  logger.info(`  Running ${name}...`)
   try {
     const output = execSync(command, { cwd, encoding: 'utf-8', timeout })
-    console.log(`  ✅ ${name} passed`)
+    logger.info(`  ✅ ${name} passed`)
     return { name, passed: true, output: output.slice(0, 500) }
   } catch (error: unknown) {
     const err = error as { stdout?: string; stderr?: string; message?: string }
     const output = (err.stdout || '') + (err.stderr || '') || err.message || 'Unknown error'
-    console.log(`  ❌ ${name} failed`)
+    logger.info(`  ❌ ${name} failed`)
     return { name, passed: false, output: output.slice(0, 2000) }
   }
 }
@@ -53,7 +55,7 @@ export function runVerifyStage(
   cwd: string = process.cwd(),
   timeout?: number,
 ): VerifyResult {
-  console.log('\n🔍 Running verification (scripted)...\n')
+  logger.info('\n🔍 Running verification (scripted)...\n')
 
   // Aggregate timeout - total time allowed for all gates combined
   const startTime = Date.now()
@@ -109,7 +111,7 @@ export function runVerifyStage(
 
   const report = lines.join('\n')
   fs.writeFileSync(outputFile, report)
-  console.log(`\n${allPassed ? '✅' : '❌'} Verification ${allPassed ? 'passed' : 'failed'}`)
+  logger.info(`\n${allPassed ? '✅' : '❌'} Verification ${allPassed ? 'passed' : 'failed'}`)
 
   return { passed: allPassed, report }
 }
@@ -157,6 +159,58 @@ function getCommitSummary(defaultBranch: string, cwd: string): string {
   } catch {
     return ''
   }
+}
+
+/**
+ * Create a fresh branch with incremented version suffix for --fresh flag.
+ * Lists remote branches matching pattern, finds highest -vN suffix, creates -v(N+1).
+ * Strips existing -vN suffix to prevent chains like branch-v2-v3.
+ */
+export function createFreshBranch(currentBranch: string, cwd: string = process.cwd()): string {
+  // Strip existing -vN suffix to prevent chains (e.g., feat/260225-task-v2 -> feat/260225-task)
+  const baseBranch = currentBranch.replace(/-v\d+$/, '')
+
+  // List remote branches matching the pattern
+  let maxVersion = 1
+  try {
+    const output = execFileSync('git', ['branch', '-r', '--list', `${baseBranch}-v*`], {
+      cwd,
+      encoding: 'utf-8',
+    }).trim()
+
+    if (output) {
+      // Extract version numbers from branch names
+      const versions = output.split('\n').map((b) => {
+        const match = b.trim().match(/-v(\d+)$/)
+        return match ? parseInt(match[1], 10) : 0
+      })
+      maxVersion = Math.max(...versions, 1)
+    }
+  } catch {
+    // No matching branches, start at v2
+    maxVersion = 1
+  }
+
+  const newBranch = `${baseBranch}-v${maxVersion + 1}`
+
+  // Create the new branch locally from current HEAD (carries all commits)
+  try {
+    execFileSync('git', ['checkout', '-b', newBranch], {
+      cwd,
+      encoding: 'utf-8',
+    })
+    logger.info(`  Created fresh branch: ${newBranch}`)
+  } catch (error) {
+    // If branch already exists locally, checkout to it
+    if (String(error).includes('already exists')) {
+      execFileSync('git', ['checkout', newBranch], { cwd, encoding: 'utf-8' })
+      logger.info(`  Checked out existing fresh branch: ${newBranch}`)
+    } else {
+      throw error
+    }
+  }
+
+  return newBranch
 }
 
 function buildPrTitle(
@@ -311,23 +365,35 @@ export async function runPrStage(
   outputFile: string,
   cwd: string = process.cwd(),
   issueNumber?: number,
+  options?: {
+    fresh?: boolean // Force create new PR (new branch)
+  },
 ): Promise<PrResult> {
-  console.log('\n📝 Creating PR (scripted)...\n')
+  logger.info('\n📝 Creating PR (scripted)...\n')
 
-  const branch = getBranchName(cwd)
+  let branch = getBranchName(cwd)
   const defaultBranch = getDefaultBranch(cwd)
 
-  // Step 1: Check for existing PR
-  const existingUrl = getExistingPr(branch, cwd)
-  if (existingUrl) {
-    console.log(`  PR already exists: ${existingUrl}`)
+  // Step 1: Check for existing PR (unless --fresh is set)
+  const existingUrl = !options?.fresh ? getExistingPr(branch, cwd) : null
+  if (existingUrl && !options?.fresh) {
+    logger.info(`  PR already exists: ${existingUrl}`)
     const report = `# PR Stage\n\nExisting PR found: ${existingUrl}\n`
     fs.writeFileSync(outputFile, report)
     return { created: false, url: existingUrl, report }
   }
 
+  if (options?.fresh && existingUrl) {
+    logger.info(`  --fresh flag: creating new PR (ignoring existing: ${existingUrl})`)
+  }
+
+  // Step 1.5: Create fresh branch if --fresh is set
+  if (options?.fresh) {
+    branch = createFreshBranch(branch, cwd)
+  }
+
   // Step 2: Push branch (skip pre-push hooks to avoid blocking on unrelated checks)
-  console.log(`  Pushing branch ${branch}...`)
+  logger.info(`  Pushing branch ${branch}...`)
   try {
     execFileSync('git', ['push', '-u', 'origin', branch], {
       cwd,
@@ -335,14 +401,14 @@ export async function runPrStage(
       env: { ...process.env, HUSKY: '0', SKIP_HOOKS: '1' },
     })
   } catch {
-    console.log('  Push failed (may already be up to date)')
+    logger.info('  Push failed (may already be up to date)')
   }
 
   // Step 3: Build title and body
   const title = buildPrTitle(taskDir, defaultBranch, cwd, issueNumber)
   const body = buildPrBody(taskDir, defaultBranch, cwd, issueNumber)
 
-  console.log(`  Title: ${title}`)
+  logger.info(`  Title: ${title}`)
 
   // Step 4: Create PR via GitHub REST API (more reliable than gh CLI in CI)
   // BUG-F fix: Use GH_PAT if non-empty, fall back to GH_TOKEN (don't use empty string)
@@ -363,7 +429,7 @@ export async function runPrStage(
       repo = match[2]
     }
   } catch {
-    console.error('  ❌ Could not determine repo from git remote')
+    logger.error('  ❌ Could not determine repo from git remote')
     const report = `# PR Stage\n\nFailed to determine repository from git remote\n`
     fs.writeFileSync(outputFile, report)
     return { created: false, url: '', report }
@@ -383,6 +449,7 @@ export async function runPrStage(
         body,
         head: branch,
         base: defaultBranch,
+        draft: true,
       }),
     })
 
@@ -393,18 +460,28 @@ export async function runPrStage(
 
     const prData = (await response.json()) as { html_url: string }
     prUrl = prData.html_url
-    console.log(`  ✅ PR created: ${prUrl}`)
+    logger.info(`  ✅ PR created: ${prUrl}`)
 
     // Post comment to issue linking to PR
     if (issueNumber) {
       const cleanUrl = prUrl.replace(/\n/g, '').trim()
       postComment(issueNumber, `🎉 PR created: ${cleanUrl}`)
-      console.log(`  ✅ Commented on issue #${issueNumber}`)
+      logger.info(`  ✅ Commented on issue #${issueNumber}`)
+    }
+
+    // Set lifecycle label to review
+    if (issueNumber) {
+      setLifecycleLabel(issueNumber, 'cody:review')
+    }
+
+    // Set lifecycle label to review
+    if (issueNumber) {
+      setLifecycleLabel(issueNumber, 'cody:review')
     }
   } catch (error: unknown) {
     const err = error as { message?: string }
     const msg = err.message || 'Unknown error'
-    console.error(`  ❌ PR creation failed: ${msg}`)
+    logger.error(`  ❌ PR creation failed: ${msg}`)
     const report = `# PR Stage
 
 Failed to create PR: ${msg}
@@ -446,7 +523,7 @@ export function runCommitStage(
   outputFile: string,
   cwd: string = process.cwd(),
 ): CommitResult {
-  console.log('\n📦 Committing changes (scripted)...\n')
+  logger.info('\n📦 Committing changes (scripted)...\n')
 
   // Extract task ID from taskDir path
   const taskId = path.basename(taskDir)
@@ -459,13 +536,13 @@ export function runCommitStage(
     lines.push(`✅ **Committed and pushed**\n`)
     lines.push(`- **Branch:** ${result.branch}`)
     lines.push(`- **Hash:** ${result.hash}`)
-    console.log(`  ✅ ${result.message}`)
+    logger.info(`  ✅ ${result.message}`)
   } else {
     lines.push(`⚠️ **Commit status:** ${result.message}\n`)
     if (result.message.includes('No changes')) {
-      console.log(`  ℹ️ ${result.message}`)
+      logger.info(`  ℹ️ ${result.message}`)
     } else {
-      console.error(`  ❌ ${result.message}`)
+      logger.error(`  ❌ ${result.message}`)
     }
   }
 

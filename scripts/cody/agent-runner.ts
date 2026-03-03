@@ -7,11 +7,13 @@
 
 import type { ChildProcess } from 'child_process'
 import * as fs from 'fs'
+import ms from 'ms'
 import * as path from 'path'
 
 import type { CodyInput } from './cody-utils'
 import { buildStagePrompt } from './stage-prompts'
 import { createRunner, type RunnerBackend } from './runner-backend'
+import { logger } from './logger'
 
 // ============================================================================
 // Configuration
@@ -30,22 +32,22 @@ export const POST_EXIT_DELAY = 500
 export const MAX_RETRIES = 2
 
 /** Default timeout for stages (10 minutes) */
-export const DEFAULT_TIMEOUT = 10 * 60_000
+export const DEFAULT_TIMEOUT = ms('10m')
 
 /** Stage-specific timeouts in milliseconds */
 export const STAGE_TIMEOUTS: Record<string, number> = {
-  taskify: 10 * 60_000,
-  spec: 15 * 60_000,
-  gap: 15 * 60_000,
-  clarify: 10 * 60_000,
-  architect: 30 * 60_000,
-  build: 45 * 60_000,
-  'plan-gap': 15 * 60_000,
-  verify: 10 * 60_000,
-  auditor: 5 * 60_000,
-  'apply-audit': 5 * 60_000,
-  pr: 5 * 60_000,
-  autofix: 5 * 60_000,
+  taskify: ms('10m'),
+  spec: ms('15m'),
+  gap: ms('15m'),
+  clarify: ms('10m'),
+  architect: ms('30m'),
+  build: ms('45m'),
+  'plan-gap': ms('15m'),
+  verify: ms('10m'),
+  auditor: ms('5m'),
+  'apply-audit': ms('5m'),
+  pr: ms('5m'),
+  autofix: ms('5m'),
 }
 
 // ============================================================================
@@ -112,7 +114,7 @@ export async function waitForFileStable(
   const {
     interval = STABILITY_CHECK_INTERVAL,
     stableCount = STABILITY_CHECK_COUNT,
-    timeout = 30_000,
+    timeout = ms('30s'),
     onCheck,
   } = options
 
@@ -232,13 +234,13 @@ export function runAgentWithFileWatch(
     const startTime = Date.now()
 
     const attemptWithRetry = (feedback?: string): void => {
-      console.log(`  Attempt ${retries + 1}/${maxRetries + 1}`)
+      logger.info(`  Attempt ${retries + 1}/${maxRetries + 1}`)
 
       // FIX #2: Delete stale output files before retry to prevent agent confusion
       // The agent might see old output and think work is already done
       if (retries > 0 && fs.existsSync(outputFile)) {
         fs.unlinkSync(outputFile)
-        console.log(`  🗑️ Deleted stale output file before retry`)
+        logger.info(`  🗑️ Deleted stale output file before retry`)
       }
 
       // Calculate remaining timeout (subtract elapsed time from previous attempts)
@@ -269,7 +271,7 @@ export function runAgentWithFileWatch(
           currentChild.kill('SIGTERM')
           setTimeout(() => {
             if (currentChild && !currentChild.killed) currentChild.kill('SIGKILL')
-          }, 5000)
+          }, ms('5s'))
         }
 
         resolve({ ...result, retries, validationErrors })
@@ -282,18 +284,18 @@ export function runAgentWithFileWatch(
 
       // Timeout (uses remaining time to prevent accumulation across retries)
       timeoutTimer = setTimeout(() => {
-        console.log(`  ⏱️ Timeout reached (${remainingTimeout / 1000 / 60} minutes)`)
+        logger.info(`  ⏱️ Timeout reached (${remainingTimeout / 1000 / 60} minutes)`)
         finish({ succeeded: false, timedOut: true })
       }, remainingTimeout)
 
       // Process exit handler - wait for file stability after exit
       currentChild.on('exit', async (code) => {
-        console.log(`  📡 Process exited with code: ${code}`)
+        logger.info(`  📡 Process exited with code: ${code}`)
 
         if (resolved) return
 
         // Brief delay to allow filesystem to flush
-        console.log(`  ⏳ Waiting for filesystem to flush...`)
+        logger.info(`  ⏳ Waiting for filesystem to flush...`)
         await sleep(POST_EXIT_DELAY)
 
         // Find the output file (exact match or timestamped variant)
@@ -312,34 +314,34 @@ export function runAgentWithFileWatch(
             // Debug: List files in task directory on failure
             try {
               const files = fs.readdirSync(taskDirForPoll)
-              console.log(
+              logger.info(
                 `  🔍 Debug: Files in ${path.basename(taskDirForPoll)}: ${files.join(', ')}`,
               )
             } catch {
               // Ignore errors
             }
 
-            console.log(`  ⚠️ Stage failed (${reason}), retrying (${retries}/${maxRetries})...`)
-            setTimeout(() => attemptWithRetry(feedbackMsg), 2000)
+            logger.info(`  ⚠️ Stage failed (${reason}), retrying (${retries}/${maxRetries})...`)
+            setTimeout(() => attemptWithRetry(feedbackMsg), ms('2s'))
             return
           } else {
             // Exhausted retries
             try {
               const files = fs.readdirSync(taskDirForPoll)
-              console.log(
+              logger.info(
                 `  🔍 Debug: Files in ${path.basename(taskDirForPoll)}: ${files.join(', ')}`,
               )
             } catch {
               // Ignore errors
             }
-            console.log(`  ❌ Agent exited ${code} without producing output file`)
+            logger.info(`  ❌ Agent exited ${code} without producing output file`)
             finish({ succeeded: false, timedOut: false })
             return
           }
         }
 
         // File found - wait for it to stabilize
-        console.log(
+        logger.info(
           `  📄 Output file detected: ${path.basename(detectedFile)}, checking stability...`,
         )
 
@@ -350,31 +352,31 @@ export function runAgentWithFileWatch(
             timeout: remainingTimeout,
             onCheck: (size, checkNum) => {
               if (checkNum === 0) {
-                console.log(`  🔍 File size: ${size} bytes, waiting for stability...`)
+                logger.info(`  🔍 File size: ${size} bytes, waiting for stability...`)
               }
             },
           })
 
           if (!stable) {
-            console.log(`  ⚠️ File did not stabilize within timeout`)
+            logger.info(`  ⚠️ File did not stabilize within timeout`)
             if (retries < maxRetries) {
               retries++
               const feedbackMsg = `CRITICAL FAILURE: Output file was not fully written. The file size changed during stability check. Please ensure you write the complete file before exiting.`
-              console.log(`  ⚠️ Retrying with feedback (${retries}/${maxRetries})...`)
-              setTimeout(() => attemptWithRetry(feedbackMsg), 2000)
+              logger.info(`  ⚠️ Retrying with feedback (${retries}/${maxRetries})...`)
+              setTimeout(() => attemptWithRetry(feedbackMsg), ms('2s'))
               return
             } else {
-              console.log(`  ❌ File stability check failed, retries exhausted`)
+              logger.info(`  ❌ File stability check failed, retries exhausted`)
               finish({ succeeded: false, timedOut: false })
               return
             }
           }
 
-          console.log(`  ✅ File stable (${finalSize} bytes)`)
+          logger.info(`  ✅ File stable (${finalSize} bytes)`)
 
           // Rename if timestamped variant
           if (detectedFile !== outputFile) {
-            console.log(
+            logger.info(
               `  📄 Renaming: ${path.basename(detectedFile)} → ${path.basename(outputFile)}`,
             )
             fs.renameSync(detectedFile, outputFile)
@@ -385,12 +387,12 @@ export function runAgentWithFileWatch(
             const validationResult = validateOutput(outputFile)
             if (!validationResult.valid) {
               const errorMsg = validationResult.error || 'Content validation failed'
-              console.log(`  ⚠️ Validation failed: ${errorMsg}`)
+              logger.info(`  ⚠️ Validation failed: ${errorMsg}`)
 
               // Delete the invalid output file
               try {
                 fs.unlinkSync(outputFile)
-                console.log(`  🗑️ Deleted invalid output file`)
+                logger.info(`  🗑️ Deleted invalid output file`)
               } catch {
                 // File might not exist, continue
               }
@@ -402,11 +404,11 @@ export function runAgentWithFileWatch(
               if (retries < maxRetries) {
                 retries++
                 const feedbackMsg = `VALIDATION ERROR from previous attempt:\n${errorMsg}\n\nFix this issue in your output. Ensure your output follows the exact required format.`
-                console.log(`  🔄 Retrying with validation feedback (${retries}/${maxRetries})...`)
-                setTimeout(() => attemptWithRetry(feedbackMsg), 2000)
+                logger.info(`  🔄 Retrying with validation feedback (${retries}/${maxRetries})...`)
+                setTimeout(() => attemptWithRetry(feedbackMsg), ms('2s'))
                 return
               } else {
-                console.log(`  ❌ Validation failed and retries exhausted`)
+                logger.info(`  ❌ Validation failed and retries exhausted`)
                 finish({ succeeded: false, timedOut: false })
                 return
               }
@@ -414,10 +416,10 @@ export function runAgentWithFileWatch(
           }
 
           // Success!
-          console.log(`  ✅ Stage completed successfully`)
+          logger.info(`  ✅ Stage completed successfully`)
           finish({ succeeded: true, timedOut: false })
         } catch (error) {
-          console.log(`  ❌ Error waiting for file stability: ${error}`)
+          logger.info(`  ❌ Error waiting for file stability: ${error}`)
           finish({ succeeded: false, timedOut: false })
         }
       })
@@ -427,10 +429,10 @@ export function runAgentWithFileWatch(
         if (resolved) return
         const error = err as NodeJS.ErrnoException
         if (error.code === 'ENOENT') {
-          console.error(`  ❌ Command not found: ${error.path || 'opencode'}. Is it installed?`)
-          console.error('  Install with: npm install -g opencode')
+          logger.error(`  ❌ Command not found: ${error.path || 'opencode'}. Is it installed?`)
+          logger.error('  Install with: npm install -g opencode')
         } else {
-          console.error(`  ❌ Agent process error: ${err.message}`)
+          logger.error(`  ❌ Agent process error: ${err.message}`)
         }
         finish({ succeeded: false, timedOut: false })
       })

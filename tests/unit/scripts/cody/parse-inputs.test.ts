@@ -260,3 +260,35 @@ describe('parse-inputs', () => {
     })
   })
 })
+
+describe('is_pull_request in getDefaultOutputs', () => {
+  it('should default to empty when IS_PULL_REQUEST is not set', () => {
+    // Save original env
+    const original = process.env.IS_PULL_REQUEST
+
+    // Clear the env var
+    delete process.env.IS_PULL_REQUEST
+
+    const outputs = getDefaultOutputs()
+    expect(outputs.is_pull_request).toBe('')
+
+    // Restore
+    if (original !== undefined) {
+      process.env.IS_PULL_REQUEST = original
+    }
+  })
+
+  it('should be true when IS_PULL_REQUEST is "true"', () => {
+    const original = process.env.IS_PULL_REQUEST
+    process.env.IS_PULL_REQUEST = 'true'
+
+    const outputs = getDefaultOutputs()
+    expect(outputs.is_pull_request).toBe('true')
+
+    if (original !== undefined) {
+      process.env.IS_PULL_REQUEST = original
+    } else {
+      delete process.env.IS_PULL_REQUEST
+    }
+  })
+})

@@ -119,7 +119,18 @@ export const stageInstructions: Record<Stage, (taskId: string) => string> = {
 
   'plan-gap': () => ``,
 
-  build: () => ``,
+  build: () => `CRITICAL: IMPLEMENTATION STAGE - NOT DOCUMENTATION
+
+You must ACTUALLY IMPLEMENT the code changes, not just document them.
+
+Your job is to:
+1. Use Edit/Write tools to modify source files in src/
+2. Create new files as needed
+3. Run tests to verify
+
+The build.md file should be a SUMMARY of what you implemented, not the implementation plan.
+
+DO NOT just write build.md - that will fail the pipeline! The pipeline validates that you modified actual source files.`,
 
   commit: () => ``,
 

@@ -14,6 +14,24 @@ vi.mock('fs', () => ({
   renameSync: vi.fn(),
 }))
 
+// Mock pino logger
+const mockLogger = vi.hoisted(() => ({
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  debug: vi.fn(),
+  fatal: vi.fn(),
+  child: vi.fn().mockReturnThis(),
+  trace: vi.fn(),
+  silent: vi.fn(),
+  level: 'info',
+}))
+
+vi.mock('../../../../scripts/cody/logger', () => ({
+  logger: mockLogger,
+  createStageLogger: vi.fn().mockReturnValue(mockLogger),
+}))
+
 import * as fs from 'fs'
 import * as childProcess from 'child_process'
 
@@ -34,6 +52,7 @@ import {
   type CodyInput,
   type CodyPipelineStatus,
 } from '../../../../scripts/cody/cody-utils'
+import { resetEnv } from '../../../../scripts/cody/env'
 
 // ---------------------------------------------------------------------------
 // parseCommentBody
@@ -230,6 +249,8 @@ describe('parseCliArgs', () => {
     process.env = { ...originalEnv }
     // Default: pretend we're NOT in GH Actions so local defaults to true
     delete process.env.GITHUB_ACTIONS
+    // Reset env cache so the above process.env changes are picked up
+    resetEnv()
     // Mock discoverTaskIdFromIssue's execFileSync calls to return no result
     vi.mocked(childProcess.execFileSync).mockReturnValue('')
   })
@@ -237,6 +258,7 @@ describe('parseCliArgs', () => {
   afterEach(() => {
     process.env = originalEnv
     vi.restoreAllMocks()
+    resetEnv()
   })
 
   it('should parse --task-id=260218-task --mode=impl (equals syntax)', () => {
@@ -338,11 +360,13 @@ describe('parseCliArgs', () => {
   it('should auto-detect local mode based on GITHUB_ACTIONS env var', () => {
     // Not in GitHub Actions → local = true
     delete process.env.GITHUB_ACTIONS
+    resetEnv()
     const result1 = parseCliArgs(['--task-id', '260218-task'])
     expect(result1.local).toBe(true)
 
     // In GitHub Actions → local = false
     process.env.GITHUB_ACTIONS = 'true'
+    resetEnv()
     const result2 = parseCliArgs(['--task-id', '260218-task'])
     expect(result2.local).toBe(false)
   })
@@ -733,11 +757,11 @@ describe('status management', () => {
 
     it('should warn and return when no status file exists', () => {
       vi.mocked(fs.existsSync).mockReturnValue(false)
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      mockLogger.warn.mockClear()
 
       updateStageStatus('260218-task', 'build', 'running')
 
-      expect(warnSpy).toHaveBeenCalledWith('No status file found for task: 260218-task')
+      expect(mockLogger.warn).toHaveBeenCalledWith('No status file found for task: 260218-task')
       expect(fs.writeFileSync).not.toHaveBeenCalled()
     })
 
@@ -957,5 +981,62 @@ describe('isValidStage', () => {
     expect(isValidStage('banana')).toBe(false)
     expect(isValidStage('')).toBe(false)
     expect(isValidStage('BUILD')).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// --fresh and --is-pull-request flags
+// ---------------------------------------------------------------------------
+
+describe('--fresh and --is-pull-request CLI flags', () => {
+  it('should parse --fresh flag', () => {
+    const result = parseCliArgs(['--task-id', '260218-test', '--fresh'])
+    expect(result.fresh).toBe(true)
+  })
+
+  it('should parse --is-pull-request flag', () => {
+    const result = parseCliArgs(['--task-id', '260218-test', '--is-pull-request'])
+    expect(result.isPullRequest).toBe(true)
+  })
+
+  it('should combine --fresh with --from', () => {
+    const result = parseCliArgs(['--task-id', '260218-test', '--fresh', '--from', 'build'])
+    expect(result.fresh).toBe(true)
+    expect(result.fromStage).toBe('build')
+  })
+
+  it('should default fresh to undefined', () => {
+    const result = parseCliArgs(['--task-id', '260218-test'])
+    expect(result.fresh).toBeUndefined()
+  })
+
+  it('should default isPullRequest to undefined', () => {
+    const result = parseCliArgs(['--task-id', '260218-test'])
+    expect(result.isPullRequest).toBeUndefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// parseCommentBody --fresh flag
+// ---------------------------------------------------------------------------
+
+describe('parseCommentBody --fresh flag', () => {
+  it('should parse --fresh flag in rerun mode', () => {
+    const result = parseCommentBody('/cody rerun 260218-task --fresh')
+    expect(result.success).toBe(true)
+    expect(result.input?.fresh).toBe(true)
+  })
+
+  it('should parse --fresh flag with --from', () => {
+    const result = parseCommentBody('/cody rerun 260218-task --fresh --from build')
+    expect(result.success).toBe(true)
+    expect(result.input?.fresh).toBe(true)
+    expect(result.input?.fromStage).toBe('build')
+  })
+
+  it('should not set fresh when not provided', () => {
+    const result = parseCommentBody('/cody rerun 260218-task')
+    expect(result.success).toBe(true)
+    expect(result.input?.fresh).toBe(false)
   })
 })

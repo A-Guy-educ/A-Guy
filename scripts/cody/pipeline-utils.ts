@@ -1,6 +1,7 @@
 // pipeline-utils.ts - Shared utilities for pipeline scripts
 import * as fs from 'fs'
 import * as path from 'path'
+import { z } from 'zod'
 
 // --- Context aggregation removed ---
 // Agents now read individual files directly (listed in stage-prompts.ts STAGE_CONTEXT_FILES).
@@ -231,6 +232,245 @@ const CONFIDENCE_MAP: Record<string, number> = {
   low: 0.5,
   very_high: 0.95,
   very_low: 0.3,
+}
+
+// --- Zod Schema for TaskDefinition ---
+
+/**
+ * Zod schema that validates and normalizes a raw task definition.
+ * Uses .superRefine() for validation and .transform() for normalization.
+ */
+export const TaskDefinitionSchema = z
+  .object({
+    task_type: z.string().optional(),
+    pipeline: z.string().optional(),
+    risk_level: z.string().optional(),
+    confidence: z.union([z.string(), z.number()]).optional(),
+    primary_domain: z.string().optional(),
+    scope: z.union([z.string(), z.array(z.string())]).optional(),
+    missing_inputs: z.any().optional(),
+    assumptions: z.any().optional(),
+    review_questions: z.any().optional(),
+    input_quality: z.any().optional(),
+    pipeline_profile: z.string().optional(),
+    complexity: z.union([z.string(), z.number()]).optional(),
+    complexity_reasoning: z.any().optional(),
+  })
+  .superRefine((raw, ctx) => {
+    const data = raw as Record<string, unknown>
+
+    // Validate pipeline_profile - add issue on invalid values
+    if (data.pipeline_profile !== undefined) {
+      if (
+        typeof data.pipeline_profile !== 'string' ||
+        !VALID_PIPELINE_PROFILES.includes(data.pipeline_profile as PipelineProfile)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid pipeline_profile: "${data.pipeline_profile}". Must be one of: ${VALID_PIPELINE_PROFILES.join(', ')}`,
+        })
+      }
+    }
+
+    // Validate input_quality.skip_stages - add issue for non-skippable stages
+    if (
+      data.input_quality !== undefined &&
+      typeof data.input_quality === 'object' &&
+      data.input_quality !== null
+    ) {
+      const iq = data.input_quality as Record<string, unknown>
+
+      if (Array.isArray(iq.skip_stages)) {
+        for (const stage of iq.skip_stages) {
+          if (typeof stage !== 'string') {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Invalid input_quality.skip_stages: each stage must be a string`,
+            })
+            break
+          }
+          if (NON_SKIPPABLE_STAGES.includes(stage as (typeof NON_SKIPPABLE_STAGES)[number])) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Cannot skip stage "${stage}" - gap and plan-gap must always run for quality assurance`,
+            })
+          }
+        }
+      }
+    }
+  })
+  .transform((raw): TaskDefinition => {
+    const data = raw as Record<string, unknown>
+
+    // 1. Normalize task_type aliases
+    let normalizedTaskType: TaskType | undefined
+    if (typeof data.task_type === 'string') {
+      const alias = TASK_TYPE_ALIASES[data.task_type.toLowerCase()]
+      if (alias) {
+        normalizedTaskType = alias
+      } else if (VALID_TASK_TYPES.includes(data.task_type as TaskType)) {
+        normalizedTaskType = data.task_type as TaskType
+      } else {
+        // Invalid task_type that's not an alias - will be caught in validation
+        normalizedTaskType = data.task_type as TaskType
+      }
+    }
+
+    // 2. Always derive pipeline from task_type
+    let normalizedPipeline: Pipeline | undefined
+    if (normalizedTaskType && PIPELINE_MAP[normalizedTaskType]) {
+      normalizedPipeline = PIPELINE_MAP[normalizedTaskType]
+    }
+
+    // 3. Convert string confidence to number
+    let normalizedConfidence: number | undefined
+    if (typeof data.confidence === 'string') {
+      const mapped = CONFIDENCE_MAP[data.confidence.toLowerCase()]
+      if (mapped !== undefined) {
+        normalizedConfidence = mapped
+      } else {
+        // Try parsing as number string (e.g., "0.9")
+        const parsed = parseFloat(data.confidence)
+        if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) {
+          normalizedConfidence = parsed
+        }
+      }
+    } else if (typeof data.confidence === 'number') {
+      normalizedConfidence = data.confidence
+    }
+
+    // 4. Normalize scope (wrap string in array)
+    let normalizedScope: string[] = []
+    if (typeof data.scope === 'string') {
+      normalizedScope = [data.scope]
+    } else if (Array.isArray(data.scope)) {
+      normalizedScope = data.scope
+    }
+
+    // 5. Default missing arrays
+    const missingInputs = Array.isArray(data.missing_inputs)
+      ? data.missing_inputs
+      : ([] as Array<{ field: string; question: string }>)
+    const assumptions = Array.isArray(data.assumptions) ? data.assumptions : []
+    const reviewQuestions = Array.isArray(data.review_questions) ? data.review_questions : []
+
+    // 6. Normalize complexity
+    let normalizedComplexity: number | undefined
+    if (data.complexity !== undefined) {
+      if (typeof data.complexity === 'string') {
+        const parsed = parseInt(data.complexity, 10)
+        if (!isNaN(parsed)) {
+          normalizedComplexity = Math.max(
+            COMPLEXITY_MIN,
+            Math.min(COMPLEXITY_MAX, Math.round(parsed)),
+          )
+        }
+      } else if (typeof data.complexity === 'number') {
+        normalizedComplexity = Math.max(
+          COMPLEXITY_MIN,
+          Math.min(COMPLEXITY_MAX, Math.round(data.complexity)),
+        )
+      }
+    }
+
+    const complexityReasoning =
+      typeof data.complexity_reasoning === 'string'
+        ? data.complexity_reasoning
+        : typeof data.complexity_reasoning !== 'undefined'
+          ? String(data.complexity_reasoning)
+          : undefined
+
+    // 7. Normalize pipeline_profile (only if valid - validation already done in superRefine)
+    let normalizedPipelineProfile: PipelineProfile | undefined
+    if (
+      data.pipeline_profile !== undefined &&
+      typeof data.pipeline_profile === 'string' &&
+      VALID_PIPELINE_PROFILES.includes(data.pipeline_profile as PipelineProfile)
+    ) {
+      normalizedPipelineProfile = data.pipeline_profile as PipelineProfile
+    }
+
+    // 8. Normalize input_quality
+    let normalizedInputQuality: InputQuality | undefined
+    if (
+      data.input_quality !== undefined &&
+      typeof data.input_quality === 'object' &&
+      data.input_quality !== null
+    ) {
+      const iq = data.input_quality as Record<string, unknown>
+
+      // Validate level
+      let level: InputQuality['level'] = 'raw_idea'
+      if (
+        typeof iq.level === 'string' &&
+        VALID_INPUT_QUALITY_LEVELS.includes(iq.level as InputQuality['level'])
+      ) {
+        level = iq.level as InputQuality['level']
+      }
+
+      // Normalize skip_stages (filter out non-skippable - validation done in superRefine)
+      const skipStages: string[] = []
+      if (Array.isArray(iq.skip_stages)) {
+        for (const stage of iq.skip_stages) {
+          if (
+            typeof stage === 'string' &&
+            !NON_SKIPPABLE_STAGES.includes(stage as (typeof NON_SKIPPABLE_STAGES)[number])
+          ) {
+            skipStages.push(stage)
+          }
+        }
+      }
+
+      const reasoning = typeof iq.reasoning === 'string' ? iq.reasoning : ''
+
+      normalizedInputQuality = { level, skip_stages: skipStages, reasoning }
+    } else {
+      // Default input_quality
+      normalizedInputQuality = {
+        level: 'raw_idea',
+        skip_stages: [],
+        reasoning: '',
+      }
+    }
+
+    // Build the result object (required fields with defaults for missing)
+    const result: TaskDefinition = {
+      task_type: normalizedTaskType || 'implement_feature',
+      pipeline: normalizedPipeline || 'spec_execute_verify',
+      risk_level: (data.risk_level as TaskDefinition['risk_level']) || 'medium',
+      confidence: normalizedConfidence ?? 0.7,
+      primary_domain: (data.primary_domain as TaskDefinition['primary_domain']) || 'backend',
+      scope: normalizedScope,
+      missing_inputs: missingInputs as Array<{ field: string; question: string }>,
+      assumptions: assumptions as string[],
+      review_questions: reviewQuestions as string[] | undefined,
+      input_quality: normalizedInputQuality,
+      pipeline_profile: normalizedPipelineProfile,
+      complexity: normalizedComplexity,
+      complexity_reasoning: complexityReasoning,
+    }
+
+    return result
+  })
+
+/**
+ * Parse a raw task definition using Zod schema.
+ * Throws descriptive errors on validation failure.
+ */
+export function parseTaskDefinition(raw: unknown): TaskDefinition {
+  const result = TaskDefinitionSchema.safeParse(raw)
+
+  if (!result.success) {
+    const errors = result.error.issues.map((issue) => {
+      const path = issue.path.join('.')
+      return path ? `${path}: ${issue.message}` : issue.message
+    })
+    throw new Error(
+      `TaskDefinition validation failed:\n${errors.map((e) => `  • ${e}`).join('\n')}`,
+    )
+  }
+
+  return result.data
 }
 
 /**

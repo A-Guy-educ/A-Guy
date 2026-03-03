@@ -1,4 +1,5 @@
 // preflight.ts - Pre-flight validation for Cody
+import { logger } from './logger'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 
@@ -47,16 +48,16 @@ export function preflight(): void {
     },
   ]
 
-  console.log('🔍 Pre-flight checks...')
+  logger.info('🔍 Pre-flight checks...')
   let failed = false
   const errors: string[] = []
 
   for (const check of checks) {
     try {
       check.test()
-      console.log(`  ✅ ${check.name}`)
+      logger.info(`  ✅ ${check.name}`)
     } catch {
-      console.log(`  ❌ ${check.name}`)
+      logger.info(`  ❌ ${check.name}`)
       if (check.errorMessage) {
         errors.push(`     ${check.errorMessage}`)
       }
@@ -71,5 +72,5 @@ export function preflight(): void {
     )
   }
 
-  console.log('✅ Pre-flight complete\n')
+  logger.info('✅ Pre-flight complete\n')
 }

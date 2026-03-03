@@ -7,6 +7,8 @@
 
 import { spawn, type ChildProcess } from 'child_process'
 
+import { getEnv } from './env'
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -69,7 +71,8 @@ export class LocalRunner implements RunnerBackend {
  *                If undefined, auto-detects: local when GITHUB_ACTIONS is not set.
  */
 export function createRunner(local?: boolean): RunnerBackend {
-  const useLocal = local ?? !process.env.GITHUB_ACTIONS
+  const env = getEnv()
+  const useLocal = local ?? !env.GITHUB_ACTIONS
 
   if (useLocal) {
     return new LocalRunner()

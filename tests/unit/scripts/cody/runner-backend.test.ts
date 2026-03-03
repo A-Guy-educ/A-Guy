@@ -7,6 +7,7 @@ vi.mock('child_process', () => ({
 
 import { spawn } from 'child_process'
 import { GitHubRunner, LocalRunner, createRunner } from '../../../../scripts/cody/runner-backend'
+import { resetEnv } from '../../../../scripts/cody/env'
 
 describe('GitHubRunner', () => {
   beforeEach(() => {
@@ -131,10 +132,13 @@ describe('createRunner', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env = { ...originalEnv }
+    // Reset env cache so tests can set environment variables
+    resetEnv()
   })
 
   afterEach(() => {
     process.env = originalEnv
+    resetEnv()
   })
 
   it('should return LocalRunner when local=true', () => {

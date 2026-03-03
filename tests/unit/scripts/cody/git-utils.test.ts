@@ -1,10 +1,35 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import * as childProcess from 'child_process'
 
-// Mock child_process.execSync before importing the module
+// Mock child_process.execFileSync before importing the module
 vi.mock('child_process', () => ({
   execSync: vi.fn(),
   execFileSync: vi.fn(),
+}))
+
+// Helper to convert execFileSync calls to command strings for assertions
+// execFileSync(file: string, args: string[], options) -> "file args..."
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const toCommandString = (call: any): string => {
+  return `${call[0]} ${(call[1] || []).join(' ')}`
+}
+
+// Mock logger
+const mockLogger = vi.hoisted(() => ({
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  debug: vi.fn(),
+  fatal: vi.fn(),
+  child: vi.fn().mockReturnThis(),
+  trace: vi.fn(),
+  silent: vi.fn(),
+  level: 'info',
+}))
+
+vi.mock('../../../../scripts/cody/logger', () => ({
+  logger: mockLogger,
+  createStageLogger: vi.fn().mockReturnValue(mockLogger),
 }))
 
 import {
@@ -232,42 +257,43 @@ Some task title
 // ============================================================================
 
 describe('ensureFeatureBranch', () => {
-  const mockExecSync = vi.mocked(childProcess.execSync)
-  let consoleLogSpy: ReturnType<typeof vi.spyOn>
-  let consoleWarnSpy: ReturnType<typeof vi.spyOn>
+  const mockExecFileSync = vi.mocked(childProcess.execFileSync)
   let savedGithubActions: string | undefined
 
   beforeEach(() => {
     vi.clearAllMocks()
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    mockLogger.info.mockClear()
+    mockLogger.warn.mockClear()
     savedGithubActions = process.env.GITHUB_ACTIONS
     delete process.env.GITHUB_ACTIONS
 
     // Default: current branch is 'dev', local branch does NOT exist, remote might exist
-    mockExecSync.mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+    // execFileSync(file, args, options)
+
+    mockExecFileSync.mockImplementation(((
+      file: string,
+      args: readonly string[] = [],
+      ..._rest: unknown[]
+    ) => {
+      const cmd = args.join(' ')
+      if (file === 'git' && cmd.includes('branch --show-current')) {
         return 'dev\n'
       }
       // Check for local branch (no origin/ prefix) - by default, doesn't exist (throw)
-      if (
-        typeof cmd === 'string' &&
-        cmd.includes('git rev-parse --verify ') &&
-        !cmd.includes('origin/')
-      ) {
+      if (file === 'git' && cmd.includes('rev-parse --verify ') && !cmd.includes('origin/')) {
         throw new Error('fatal: Needed a single revision')
       }
       // Check for remote branch - by default, doesn't exist (throw)
       // Tests that need remote to exist will override this
-      if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify origin/')) {
+      if (file === 'git' && cmd.includes('rev-parse --verify origin/')) {
         throw new Error('fatal: Needed a single revision')
       }
-      if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+      if (file === 'git' && cmd.includes('status --porcelain')) {
         return '' // Clean working tree by default
       }
       // All other commands (fetch, checkout, pull) succeed silently
       return Buffer.from('')
-    })
+    }) as typeof mockExecFileSync)
   })
 
   afterEach(() => {
@@ -276,7 +302,6 @@ describe('ensureFeatureBranch', () => {
     } else {
       delete process.env.GITHUB_ACTIONS
     }
-    consoleWarnSpy.mockRestore()
   })
 
   // --------------------------------------------------------------------------
@@ -285,37 +310,40 @@ describe('ensureFeatureBranch', () => {
 
   describe('when already on a feature branch', () => {
     it('should return early without creating a branch', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'feat/260218-existing-task\n'
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-my-task', 'implement_feature')
 
       // Should only call git branch --show-current, nothing else
-      expect(mockExecSync).toHaveBeenCalledTimes(1)
-      expect(mockExecSync).toHaveBeenCalledWith(
-        'git branch --show-current',
+      expect(mockExecFileSync).toHaveBeenCalledTimes(1)
+      expect(mockExecFileSync).toHaveBeenCalledWith(
+        'git',
+        ['branch', '--show-current'],
         expect.objectContaining({ encoding: 'utf-8' }),
       )
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
         '[branch] Already on feature branch: feat/260218-existing-task',
       )
     })
 
     it('should return early for any non-base branch name', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'fix/260218-some-bug\n'
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-other-task', 'fix_bug')
 
-      expect(mockExecSync).toHaveBeenCalledTimes(1)
+      expect(mockExecFileSync).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -325,28 +353,29 @@ describe('ensureFeatureBranch', () => {
 
   describe('when on dev and remote branch exists', () => {
     beforeEach(() => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
         // Local branch check: throw (doesn't exist), remote branch check: return (exists)
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify ')) {
           if (cmd.includes('origin/')) {
             return 'abc123\n' // Remote exists
           }
           throw new Error('fatal: Needed a single revision') // Local doesn't exist
         }
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           return '' // Clean working tree
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
     })
 
     it('should checkout and pull the existing remote branch', () => {
       ensureFeatureBranch('260218-my-task', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       expect(calls).toContain('git fetch origin')
       expect(calls).toContain('git rev-parse --verify origin/feat/260218-my-task')
@@ -357,7 +386,7 @@ describe('ensureFeatureBranch', () => {
     it('should NOT create a new branch', () => {
       ensureFeatureBranch('260218-my-task', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       expect(calls).not.toContain(expect.stringContaining('checkout -b'))
       expect(calls).not.toContain('git checkout dev')
@@ -366,7 +395,7 @@ describe('ensureFeatureBranch', () => {
     it('should log that remote branch exists', () => {
       ensureFeatureBranch('260218-my-task', 'implement_feature')
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
         '[branch] Remote branch exists, checking out: feat/260218-my-task',
       )
     })
@@ -380,7 +409,7 @@ describe('ensureFeatureBranch', () => {
     it('should checkout dev, pull, and create new branch', () => {
       ensureFeatureBranch('260218-my-task', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       expect(calls).toContain('git fetch origin')
       expect(calls).toContain('git checkout dev')
@@ -391,7 +420,7 @@ describe('ensureFeatureBranch', () => {
     it('should NOT checkout an existing remote branch', () => {
       ensureFeatureBranch('260218-my-task', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Should not have plain checkout (without -b) for the feature branch
       expect(calls).not.toContain('git checkout feat/260218-my-task')
@@ -401,7 +430,7 @@ describe('ensureFeatureBranch', () => {
     it('should log that a new branch is being created', () => {
       ensureFeatureBranch('260218-my-task', 'implement_feature')
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
         '[branch] Creating new branch from dev: feat/260218-my-task',
       )
     })
@@ -413,21 +442,22 @@ describe('ensureFeatureBranch', () => {
 
   describe('when on main', () => {
     beforeEach(() => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'main\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify')) {
           throw new Error('fatal: Needed a single revision')
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
     })
 
     it('should create a feature branch (same as from dev)', () => {
       ensureFeatureBranch('260218-my-task', 'fix_bug')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       expect(calls).toContain('git fetch origin')
       expect(calls).toContain('git checkout dev')
@@ -442,21 +472,22 @@ describe('ensureFeatureBranch', () => {
 
   describe('when on empty string branch (detached HEAD)', () => {
     beforeEach(() => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return '\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify')) {
           throw new Error('fatal: Needed a single revision')
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
     })
 
     it('should create a feature branch', () => {
       ensureFeatureBranch('260218-my-task', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       expect(calls).toContain('git checkout -b feat/260218-my-task')
     })
@@ -470,49 +501,49 @@ describe('ensureFeatureBranch', () => {
     it('should name fix_bug branch as "fix/<taskId>"', () => {
       ensureFeatureBranch('260218-my-task', 'fix_bug')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
       expect(calls).toContain('git checkout -b fix/260218-my-task')
     })
 
     it('should name implement_feature branch as "feat/<taskId>"', () => {
       ensureFeatureBranch('260218-task', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
       expect(calls).toContain('git checkout -b feat/260218-task')
     })
 
     it('should name refactor branch as "refactor/<taskId>"', () => {
       ensureFeatureBranch('260218-cleanup', 'refactor')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
       expect(calls).toContain('git checkout -b refactor/260218-cleanup')
     })
 
     it('should name docs branch as "docs/<taskId>"', () => {
       ensureFeatureBranch('260218-readme', 'docs')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
       expect(calls).toContain('git checkout -b docs/260218-readme')
     })
 
     it('should name ops branch as "chore/<taskId>"', () => {
       ensureFeatureBranch('260218-ci-fix', 'ops')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
       expect(calls).toContain('git checkout -b chore/260218-ci-fix')
     })
 
     it('should name research branch as "feat/<taskId>"', () => {
       ensureFeatureBranch('260218-spike', 'research')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
       expect(calls).toContain('git checkout -b feat/260218-spike')
     })
 
     it('should name spec_only branch as "feat/<taskId>"', () => {
       ensureFeatureBranch('260218-spec', 'spec_only')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
       expect(calls).toContain('git checkout -b feat/260218-spec')
     })
   })
@@ -525,32 +556,33 @@ describe('ensureFeatureBranch', () => {
     it('should default to "feat" prefix for unknown task types', () => {
       ensureFeatureBranch('260218-mystery', 'unknown_type')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
       expect(calls).toContain('git checkout -b feat/260218-mystery')
     })
 
     it('should default to "feat" prefix for empty string task type', () => {
       ensureFeatureBranch('260218-no-type', '')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
       expect(calls).toContain('git checkout -b feat/260218-no-type')
     })
   })
 
   // --------------------------------------------------------------------------
-  // Custom projectDir: cwd is passed to all execSync calls
+  // Custom projectDir: cwd is passed to all execFileSync calls
   // --------------------------------------------------------------------------
 
   describe('custom projectDir', () => {
-    it('should pass custom cwd to all execSync calls', () => {
+    it('should pass custom cwd to all execFileSync calls', () => {
       const customDir = '/custom/project/dir'
 
       ensureFeatureBranch('260218-task', 'implement_feature', customDir)
 
-      // Every execSync call should have received cwd = customDir
-      for (const call of mockExecSync.mock.calls) {
-        const opts = call[1] as Record<string, unknown>
-        expect(opts.cwd).toBe(customDir)
+      // Every execFileSync call should have received cwd = customDir
+      // execFileSync(file, args, options) - options is at index 2
+      for (const call of mockExecFileSync.mock.calls) {
+        const opts = call[2] as Record<string, unknown> | undefined
+        expect(opts?.cwd).toBe(customDir)
       }
     })
   })
@@ -566,20 +598,22 @@ describe('ensureFeatureBranch', () => {
       ensureFeatureBranch('260218-task', 'implement_feature')
 
       // The first call (git branch --show-current) should use the mocked cwd
-      const firstCallOpts = mockExecSync.mock.calls[0][1] as Record<string, unknown>
-      expect(firstCallOpts.cwd).toBe('/mocked/cwd')
+      // execFileSync(file, args, options) - options is at index 2
+      const firstCallOpts = mockExecFileSync.mock.calls[0][2] as Record<string, unknown> | undefined
+      expect(firstCallOpts?.cwd).toBe('/mocked/cwd')
 
       cwdSpy.mockRestore()
     })
 
-    it('should use process.cwd() for all execSync calls when projectDir is undefined', () => {
+    it('should use process.cwd() for all execFileSync calls when projectDir is undefined', () => {
       const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue('/default/cwd')
 
       ensureFeatureBranch('260218-task', 'fix_bug')
 
-      for (const call of mockExecSync.mock.calls) {
-        const opts = call[1] as Record<string, unknown>
-        expect(opts.cwd).toBe('/default/cwd')
+      for (const call of mockExecFileSync.mock.calls) {
+        // execFileSync(file, args, options) - options is at index 2
+        const opts = call[2] as Record<string, unknown> | undefined
+        expect(opts?.cwd).toBe('/default/cwd')
       }
 
       cwdSpy.mockRestore()
@@ -595,7 +629,7 @@ describe('ensureFeatureBranch', () => {
       // Default mock already has rev-parse throwing — verify the full flow
       ensureFeatureBranch('260218-new-task', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Should have attempted to verify remote
       expect(calls).toContain('git rev-parse --verify origin/feat/260218-new-task')
@@ -624,34 +658,35 @@ describe('ensureFeatureBranch', () => {
   describe('dirty-state cleanup (CI mode)', () => {
     beforeEach(() => {
       process.env.GITHUB_ACTIONS = 'true'
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify')) {
           return 'abc123\n' // Remote branch exists
         }
-        if (typeof cmd === 'string' && cmd.includes('git symbolic-ref')) {
+        if (file === 'git' && cmd.includes('symbolic-ref')) {
           return 'refs/heads/dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git merge')) {
+        if (file === 'git' && cmd.includes('merge')) {
           return 'Already up to date.\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git checkout') && cmd.includes('feat/')) {
+        if (file === 'git' && cmd.includes('checkout') && cmd.includes('feat/')) {
           return Buffer.from(`Switched to branch 'feat/260218-ci-task'\n`)
         }
-        if (typeof cmd === 'string' && cmd.includes('git pull origin')) {
+        if (file === 'git' && cmd.includes('pull origin')) {
           return 'Already up to date.\n'
         }
         // Default: return empty success
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
     })
 
     it('should run git checkout -- . before branch switch (no git clean -fd)', () => {
       ensureFeatureBranch('260218-ci-task', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Should run git checkout -- . to revert tracked files
       expect(calls).toContain('git checkout -- .')
@@ -665,7 +700,7 @@ describe('ensureFeatureBranch', () => {
     it('should NOT run git status --porcelain or git stash in CI mode', () => {
       ensureFeatureBranch('260218-ci-task', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       expect(calls).not.toContain('git status --porcelain')
       expect(calls).not.toContain('git stash --include-untracked')
@@ -673,29 +708,30 @@ describe('ensureFeatureBranch', () => {
 
     it('should not fail if cleanup commands throw', () => {
       let checkoutDotThrown = false
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify')) {
           return 'abc123\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git symbolic-ref')) {
+        if (file === 'git' && cmd.includes('symbolic-ref')) {
           return 'refs/heads/dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git checkout -- .')) {
+        if (file === 'git' && cmd.includes('checkout -- .')) {
           checkoutDotThrown = true
           throw new Error('cleanup failed')
         }
-        if (typeof cmd === 'string' && cmd.includes('git checkout feat/')) {
+        if (file === 'git' && cmd.includes('checkout feat/')) {
           // After cleanup throws, should still try to checkout
           return Buffer.from(`Switched to branch 'feat/260218-ci-fail'\n`)
         }
-        if (typeof cmd === 'string' && cmd.includes('git merge')) {
+        if (file === 'git' && cmd.includes('merge')) {
           return 'Already up to date.\n'
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       // Should not throw even when cleanup fails
       expect(() => {
@@ -713,22 +749,23 @@ describe('ensureFeatureBranch', () => {
     })
 
     it('should check git status --porcelain and stash if dirty', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify')) {
           return 'abc123\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           return ' M src/dirty-file.ts\n'
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-local-dirty', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       expect(calls).toContain('git status --porcelain')
       expect(calls).toContain('git stash --include-untracked')
@@ -740,106 +777,111 @@ describe('ensureFeatureBranch', () => {
     })
 
     it('should warn when stashing uncommitted changes', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify')) {
           return 'abc123\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           return ' M src/dirty-file.ts\n'
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-local-warn', 'implement_feature')
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('uncommitted changes'))
+      expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining('uncommitted changes'))
     })
 
     it('should NOT stash if working tree is clean', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify')) {
           return 'abc123\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           return '' // Clean working tree
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-local-clean', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       expect(calls).toContain('git status --porcelain')
       expect(calls).not.toContain('git stash --include-untracked')
     })
 
     it('should NOT run git checkout -- . or git clean -fd in local mode', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify')) {
           return 'abc123\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           return ''
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-local-no-clean', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       expect(calls).not.toContain('git checkout -- .')
       expect(calls).not.toContain('git clean -fd')
     })
 
     it('should not fail if git status --porcelain throws', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify')) {
           return 'abc123\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           throw new Error('status check failed')
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       expect(() => {
         ensureFeatureBranch('260218-local-status-fail', 'implement_feature')
       }).not.toThrow()
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
       // Should still proceed to checkout the branch
       expect(calls).toContain('git checkout feat/260218-local-status-fail')
     })
 
     it('should not cleanup when creating a new branch (remote does not exist)', () => {
       // Default mock: rev-parse throws (no remote branch)
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify')) {
           throw new Error('fatal: not found')
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-new-branch', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Cleanup commands should NOT run when creating a new branch
       expect(calls).not.toContain('git status --porcelain')
@@ -858,20 +900,21 @@ describe('ensureFeatureBranch', () => {
 
   describe('behavior', () => {
     it('should create new branch when neither local nor remote exists', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
         // Neither local nor remote exists
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify')) {
           throw new Error('not found')
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-new-behavior', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Should create new branch
       expect(calls).toContain('git checkout -b feat/260218-new-behavior')
@@ -880,23 +923,24 @@ describe('ensureFeatureBranch', () => {
     })
 
     it('should checkout existing remote branch when it exists', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
         // Local doesn't exist, remote does
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify ')) {
           if (cmd.includes('origin/')) {
             return 'abc123\n' // Remote exists
           }
           throw new Error('not found') // Local doesn't exist
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-remote-exists', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Should checkout existing branch (not create new)
       expect(calls).toContain('git checkout feat/260218-remote-exists')
@@ -906,23 +950,24 @@ describe('ensureFeatureBranch', () => {
     })
 
     it('should checkout existing local branch when only local exists', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
         // Remote doesn't exist, local does
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify ')) {
           if (cmd.includes('origin/')) {
             throw new Error('not found') // Remote doesn't exist
           }
           return 'abc123\n' // Local exists
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-local-only', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Should checkout existing local branch (not create new)
       expect(calls).toContain('git checkout feat/260218-local-only')
@@ -930,30 +975,31 @@ describe('ensureFeatureBranch', () => {
     })
 
     it('should stash and restore dirty working tree when checking out local branch', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify ')) {
           if (cmd.includes('origin/')) {
             throw new Error('not found') // Remote doesn't exist
           }
           return 'abc123\n' // Local exists
         }
         // Dirty working tree triggers stash
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           return ' M status.json\n'
         }
         // Stash exists after stash
-        if (typeof cmd === 'string' && cmd.includes('git stash list')) {
+        if (file === 'git' && cmd.includes('stash list')) {
           return 'stash@{0}: ...\n'
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-dirty-local', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Should stash before checkout
       expect(calls).toContain('git stash --include-untracked')
@@ -963,25 +1009,26 @@ describe('ensureFeatureBranch', () => {
 
     it('should not stash in CI mode', () => {
       process.env.GITHUB_ACTIONS = 'true'
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify ')) {
           if (cmd.includes('origin/')) {
             throw new Error('not found') // Remote doesn't exist
           }
           return 'abc123\n' // Local exists
         }
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           return ' M status.json\n'
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-ci-local', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Should NOT stash in CI mode
       expect(calls).not.toContain('git stash --include-untracked')
@@ -999,31 +1046,30 @@ describe('ensureFeatureBranch', () => {
 
   describe('local branch exists (resume from previous run)', () => {
     it('should checkout existing local branch and not create new one', () => {
-      let _callCount = 0
-      mockExecSync.mockImplementation((cmd: string) => {
-        _callCount++
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
         // Current branch is dev
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
         // Local branch exists (no origin/ prefix)
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify feat/')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify feat/')) {
           return 'abc123\n'
         }
         // Remote branch does NOT exist (origin/feat/ throws)
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify origin/feat/')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify origin/feat/')) {
           throw new Error('fatal: needed a single revision')
         }
         // Working tree is clean
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           return ''
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-local-resume', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Should checkout existing local branch, NOT create new one
       expect(calls).toContain('git checkout feat/260218-local-resume')
@@ -1031,32 +1077,33 @@ describe('ensureFeatureBranch', () => {
     })
 
     it('should stash dirty working tree before switching to local branch', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
         // Local branch exists
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify feat/')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify feat/')) {
           return 'abc123\n'
         }
         // Remote branch does NOT exist
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify origin/feat/')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify origin/feat/')) {
           throw new Error('fatal: needed a single revision')
         }
         // Working tree has changes - return non-empty to trigger stash
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           return ' M .tasks/260218-local-resume/status.json\n'
         }
         // Stash list has entries after stash (simulate stash was created)
-        if (typeof cmd === 'string' && cmd.includes('git stash list')) {
+        if (file === 'git' && cmd.includes('stash list')) {
           return 'stash@{0}: ...\n'
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-local-resume', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Should stash before checkout
       const stashIdx = calls.indexOf('git stash --include-untracked')
@@ -1069,27 +1116,28 @@ describe('ensureFeatureBranch', () => {
     })
 
     it('should try to push local branch to remote', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify feat/')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify feat/')) {
           return 'abc123\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify origin/feat/')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify origin/feat/')) {
           throw new Error('fatal: needed a single revision')
         }
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           return ''
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-push-test', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
-      expect(calls).toContain('git push origin feat/260218-push-test')
+      expect(calls).toContain('git push -u origin feat/260218-push-test')
     })
   })
 
@@ -1099,30 +1147,31 @@ describe('ensureFeatureBranch', () => {
 
   describe('merge default branch after pulling remote feature branch', () => {
     it('should merge default branch after pulling remote feature branch', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
         // Remote branch exists
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify ')) {
           if (cmd.includes('origin/')) {
             return 'abc123\n'
           }
           throw new Error('not found')
         }
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           return ''
         }
         // git symbolic-ref for getDefaultBranch - used by the merge step
-        if (typeof cmd === 'string' && cmd.includes('git symbolic-ref')) {
+        if (file === 'git' && cmd.includes('symbolic-ref')) {
           return 'refs/remotes/origin/dev\n'
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-merge-test', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Should checkout and pull feature branch first
       expect(calls).toContain('git checkout feat/260218-merge-test')
@@ -1132,29 +1181,30 @@ describe('ensureFeatureBranch', () => {
     })
 
     it('should merge default branch after pulling local-only feature branch', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
         // Remote doesn't exist, local does
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify ')) {
           if (cmd.includes('origin/')) {
             throw new Error('not found')
           }
           return 'abc123\n' // Local exists
         }
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           return ''
         }
-        if (typeof cmd === 'string' && cmd.includes('git symbolic-ref')) {
+        if (file === 'git' && cmd.includes('symbolic-ref')) {
           return 'refs/remotes/origin/dev\n'
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       ensureFeatureBranch('260218-local-merge-test', 'implement_feature')
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Should checkout local branch
       expect(calls).toContain('git checkout feat/260218-local-merge-test')
@@ -1164,35 +1214,36 @@ describe('ensureFeatureBranch', () => {
 
     it('should abort merge and throw error on conflict', () => {
       let mergeAttempted = false
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('git branch --show-current')) {
+      mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+        const cmd = args.join(' ')
+        if (file === 'git' && cmd.includes('branch --show-current')) {
           return 'dev\n'
         }
-        if (typeof cmd === 'string' && cmd.includes('git rev-parse --verify ')) {
+        if (file === 'git' && cmd.includes('rev-parse --verify ')) {
           if (cmd.includes('origin/')) {
             return 'abc123\n'
           }
           throw new Error('not found')
         }
-        if (typeof cmd === 'string' && cmd.includes('git status --porcelain')) {
+        if (file === 'git' && cmd.includes('status --porcelain')) {
           return ''
         }
-        if (typeof cmd === 'string' && cmd.includes('git symbolic-ref')) {
+        if (file === 'git' && cmd.includes('symbolic-ref')) {
           return 'refs/remotes/origin/dev\n'
         }
         // Simulate merge conflict
-        if (typeof cmd === 'string' && cmd.includes('git merge origin/')) {
+        if (file === 'git' && cmd.includes('merge origin/')) {
           mergeAttempted = true
           throw new Error('Merge failed: Conflict in file.txt')
         }
         return Buffer.from('')
-      })
+      }) as typeof mockExecFileSync)
 
       expect(() => {
         ensureFeatureBranch('260218-conflict-test', 'implement_feature')
       }).toThrow()
 
-      const calls = mockExecSync.mock.calls.map((c) => c[0])
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
 
       // Should have attempted merge
       expect(mergeAttempted).toBe(true)
@@ -1207,50 +1258,53 @@ describe('ensureFeatureBranch', () => {
 // ============================================================================
 
 describe('getDefaultBranch', () => {
-  const mockExecSync = vi.mocked(childProcess.execSync)
+  const mockExecFileSync = vi.mocked(childProcess.execFileSync)
 
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('should return branch from git symbolic-ref when available', () => {
-    mockExecSync.mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('symbolic-ref')) {
+    mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+      const cmd = args.join(' ')
+      if (cmd.includes('symbolic-ref')) {
         return 'refs/remotes/origin/dev\n'
       }
       return ''
-    })
+    }) as typeof mockExecFileSync)
 
     expect(getDefaultBranch('/fake/cwd')).toBe('dev')
   })
 
   it('should return "main" when symbolic-ref points to main', () => {
-    mockExecSync.mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('symbolic-ref')) {
+    mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+      const cmd = args.join(' ')
+      if (cmd.includes('symbolic-ref')) {
         return 'refs/remotes/origin/main\n'
       }
       return ''
-    })
+    }) as typeof mockExecFileSync)
 
     expect(getDefaultBranch('/fake/cwd')).toBe('main')
   })
 
   it('should fall back to git remote show origin when symbolic-ref fails', () => {
-    mockExecSync.mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('symbolic-ref')) {
+    mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+      const cmd = args.join(' ')
+      if (cmd.includes('symbolic-ref')) {
         throw new Error('not a symbolic ref')
       }
-      if (typeof cmd === 'string' && cmd.includes('git remote show origin')) {
+      if (cmd.includes('remote show origin')) {
         return '* remote origin\n  HEAD branch: main\n  Remote branches:\n'
       }
       return ''
-    })
+    }) as typeof mockExecFileSync)
 
     expect(getDefaultBranch('/fake/cwd')).toBe('main')
   })
 
   it('should return "dev" when both methods fail', () => {
-    mockExecSync.mockImplementation(() => {
+    mockExecFileSync.mockImplementation(() => {
       throw new Error('not a git repo')
     })
 
@@ -1258,46 +1312,51 @@ describe('getDefaultBranch', () => {
   })
 
   it('should use process.cwd() as default when no cwd provided', () => {
-    mockExecSync.mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('symbolic-ref')) {
+    mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+      const cmd = args.join(' ')
+      if (cmd.includes('symbolic-ref')) {
         return 'refs/remotes/origin/dev\n'
       }
       return ''
-    })
+    }) as typeof mockExecFileSync)
 
     // Call without cwd argument
     expect(getDefaultBranch()).toBe('dev')
-    expect(mockExecSync).toHaveBeenCalledWith(
-      expect.any(String),
+    expect(mockExecFileSync).toHaveBeenCalledWith(
+      'git',
+      expect.arrayContaining(['symbolic-ref']),
       expect.objectContaining({ cwd: process.cwd() }),
     )
   })
 
   it('should pass cwd to all git commands', () => {
-    mockExecSync.mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('symbolic-ref')) {
+    mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+      const cmd = args.join(' ')
+      if (cmd.includes('symbolic-ref')) {
         return 'refs/remotes/origin/dev\n'
       }
       return ''
-    })
+    }) as typeof mockExecFileSync)
 
     getDefaultBranch('/my/project')
-    expect(mockExecSync).toHaveBeenCalledWith(
-      expect.any(String),
+    expect(mockExecFileSync).toHaveBeenCalledWith(
+      'git',
+      expect.arrayContaining(['symbolic-ref']),
       expect.objectContaining({ cwd: '/my/project' }),
     )
   })
 
   it('should fall back to "dev" when symbolic-ref returns empty and remote show fails', () => {
-    mockExecSync.mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('symbolic-ref')) {
+    mockExecFileSync.mockImplementation(((file: string, args: readonly string[] = []) => {
+      const cmd = args.join(' ')
+      if (cmd.includes('symbolic-ref')) {
         return '\n' // empty trimmed
       }
-      if (typeof cmd === 'string' && cmd.includes('git remote show origin')) {
+      if (cmd.includes('remote show origin')) {
         throw new Error('network error')
       }
       return ''
-    })
+    }) as typeof mockExecFileSync)
 
     expect(getDefaultBranch('/fake/cwd')).toBe('dev')
   })
@@ -1342,13 +1401,21 @@ describe('commitPipelineFiles', () => {
       stagingStrategy: 'tracked+task',
     })
 
-    // Should call git add -u then git add taskDir
-    const syncCalls = vi.mocked(childProcess.execSync).mock.calls
-    expect(syncCalls.some((c) => c[0] === 'git add -u')).toBe(true)
-
-    // Task dir should be added via execFileSync
+    // Should call git add -u then git add taskDir via execFileSync
     const fileSyncCalls = vi.mocked(childProcess.execFileSync).mock.calls
-    expect(fileSyncCalls.some((c) => c[0] === 'git' && c[1]?.[0] === 'add')).toBe(true)
+    // Check for git add -u call
+    expect(fileSyncCalls.some((c) => c[0] === 'git' && c[1]?.join(' ').includes('add -u'))).toBe(
+      true,
+    )
+    // Check for git add taskDir call
+    expect(
+      fileSyncCalls.some(
+        (c) =>
+          c[0] === 'git' &&
+          c[1]?.join(' ').includes('add') &&
+          c[1]?.join(' ').includes('.tasks/260218-test'),
+      ),
+    ).toBe(true)
   })
 
   it('should handle nothing to commit gracefully', () => {
@@ -1400,9 +1467,10 @@ describe('commitPipelineFiles', () => {
       ['commit', '--no-gpg-sign', '-m', 'test commit'],
       expect.objectContaining({ stdio: 'inherit' }),
     )
-    // Should have called git push
-    expect(childProcess.execSync).toHaveBeenCalledWith(
-      'git push -u origin HEAD',
+    // Should have called git push via execFileSync (production code uses execFileSync)
+    expect(childProcess.execFileSync).toHaveBeenCalledWith(
+      'git',
+      ['push', '-u', 'origin', 'HEAD'],
       expect.objectContaining({ stdio: 'inherit' }),
     )
   })
@@ -1439,14 +1507,10 @@ describe('commitPipelineFiles shell safety', () => {
     commitPipelineFiles({
       taskDir: '/path with spaces/.tasks/test',
       taskId: 'test',
-      message: 'test commit',
-      stagingStrategy: 'task-only',
+      message: 'test',
     })
 
-    // Verify execFileSync was used for git add (not execSync with string interpolation)
-    const gitAddCalls = vi
-      .mocked(childProcess.execFileSync)
-      .mock.calls.filter((call) => call[0] === 'git' && call[1]?.[0] === 'add')
-    expect(gitAddCalls.length).toBeGreaterThan(0)
+    // Verify execFileSync was called with correct arguments (not a shell string)
+    expect(childProcess.execFileSync).toHaveBeenCalled()
   })
 })

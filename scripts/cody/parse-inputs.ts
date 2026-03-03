@@ -4,6 +4,7 @@
  * @ai-summary Parse command inputs from dispatch or comment triggers
  */
 
+import { logger } from './logger'
 import { execSync } from 'child_process'
 import { writeFileSync } from 'fs'
 
@@ -16,6 +17,7 @@ interface ParseOutputs {
   from_stage: string
   feedback: string
   issue_number: string
+  is_pull_request: string
   trigger_type: string
   comment_body: string
   valid: string
@@ -89,17 +91,19 @@ export function parseDispatchInputs(): ParseOutputs {
     return {
       ...getDefaultOutputs(),
       issue_number: '',
+      is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
       valid: 'false',
     }
   }
 
   // Validate task-id format
   if (!isValidTaskId(taskId)) {
-    console.log(`=== Error: Invalid task-id format: ${taskId} ===`)
-    console.log('Expected format: YYMMDD-description (e.g., 260225-auto-90)')
+    logger.info(`=== Error: Invalid task-id format: ${taskId} ===`)
+    logger.info('Expected format: YYMMDD-description (e.g., 260225-auto-90)')
     return {
       ...getDefaultOutputs(),
       issue_number: '',
+      is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
       valid: 'false',
     }
   }
@@ -112,6 +116,7 @@ export function parseDispatchInputs(): ParseOutputs {
     from_stage: process.env.DISPATCH_FROM_STAGE || '',
     feedback: process.env.DISPATCH_FEEDBACK || '',
     issue_number: '',
+    is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
     trigger_type: 'dispatch',
     comment_body: '',
     valid: 'true',
@@ -119,7 +124,7 @@ export function parseDispatchInputs(): ParseOutputs {
     version: process.env.DISPATCH_VERSION || process.env.CODY_DEFAULT_VERSION || '',
   }
 
-  console.log(
+  logger.info(
     `=== Parsed dispatch: task_id=${outputs.task_id}, mode=${outputs.mode}, clarify=${outputs.clarify}, runner=${outputs.runner} ===`,
   )
 
@@ -137,7 +142,7 @@ export function parseCommentInputs(): ParseOutputs {
 
   // Safety check first
   if (safetyValid !== 'true') {
-    console.log(`=== Safety check failed: ${safetyReason} ===`)
+    logger.info(`=== Safety check failed: ${safetyReason} ===`)
     return {
       ...getDefaultOutputs(),
       issue_number: issueNumber,
@@ -157,7 +162,7 @@ export function parseCommentInputs(): ParseOutputs {
   if (issueNumber) {
     const discoveredTaskId = discoverTaskIdFromIssue(issueNumber)
     if (discoveredTaskId) {
-      console.log(`=== Discovered task-id from issue: ${discoveredTaskId} ===`)
+      logger.info(`=== Discovered task-id from issue: ${discoveredTaskId} ===`)
       outputs.task_id = discoveredTaskId
     }
   }
@@ -170,14 +175,14 @@ export function parseCommentInputs(): ParseOutputs {
     const hasLocalFlag = /--local\b/.test(cmdAfterCody)
     if (hasLocalFlag) {
       outputs.runner = 'self-hosted'
-      console.log('=== Detected --local flag: will use self-hosted runner ===')
+      logger.info('=== Detected --local flag: will use self-hosted runner ===')
     }
 
     // Detect --version flag anywhere in the command
     const versionMatch = cmdAfterCody.match(/--version\s+(\S+)/)
     if (versionMatch) {
       outputs.version = versionMatch[1]
-      console.log(`=== Detected --version flag: ${outputs.version} ===`)
+      logger.info(`=== Detected --version flag: ${outputs.version} ===`)
     }
 
     // Strip flags from command before mode parsing
@@ -190,33 +195,33 @@ export function parseCommentInputs(): ParseOutputs {
     if (!cmdWithoutFlags) {
       // @cody alone (or @cody --local) - default to full mode
       outputs.mode = 'full'
-      console.log('=== @cody alone - defaulting to full mode ===')
+      logger.info('=== @cody alone - defaulting to full mode ===')
     } else if (APPROVAL_KEYWORDS.includes(cmdWithoutFlags)) {
       // Approval command - use rerun mode
       outputs.mode = 'rerun'
-      console.log(`=== Detected approval keyword: ${cmdWithoutFlags} ===`)
+      logger.info(`=== Detected approval keyword: ${cmdWithoutFlags} ===`)
     } else if (VALID_MODES.includes(cmdWithoutFlags)) {
       // Explicit mode specified
       outputs.mode = cmdWithoutFlags
-      console.log(`=== Detected explicit mode: ${cmdWithoutFlags} ===`)
+      logger.info(`=== Detected explicit mode: ${cmdWithoutFlags} ===`)
     } else {
       // Not a known command - default to full (might be task-id or description)
       outputs.mode = 'full'
-      console.log('=== Not a known command - defaulting to full mode ===')
+      logger.info('=== Not a known command - defaulting to full mode ===')
     }
   }
 
   // Validate task-id format if set
   if (outputs.task_id && !isValidTaskId(outputs.task_id)) {
-    console.log(`=== Error: Invalid task-id format: ${outputs.task_id} ===`)
-    console.log('Expected format: YYMMDD-description (e.g., 260225-auto-90)')
+    logger.info(`=== Error: Invalid task-id format: ${outputs.task_id} ===`)
+    logger.info('Expected format: YYMMDD-description (e.g., 260225-auto-90)')
     outputs.task_id = ''
     outputs.valid = 'false'
   } else {
     outputs.valid = 'true'
   }
 
-  console.log('=== Passing comment to orchestrator for parsing ===')
+  logger.info('=== Passing comment to orchestrator for parsing ===')
 
   return outputs
 }
@@ -233,6 +238,7 @@ export function getDefaultOutputs(): ParseOutputs {
     from_stage: '',
     feedback: '',
     issue_number: '',
+    is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
     trigger_type: '',
     comment_body: '',
     valid: 'false',
@@ -248,7 +254,7 @@ function writeOutputs(outputs: ParseOutputs): void {
   const githubOutput = process.env.GITHUB_OUTPUT || ''
 
   if (!githubOutput) {
-    console.error('GITHUB_OUTPUT not set!')
+    logger.error('GITHUB_OUTPUT not set!')
     process.exit(1)
   }
 
@@ -260,6 +266,7 @@ function writeOutputs(outputs: ParseOutputs): void {
     `from_stage=${outputs.from_stage}`,
     `feedback=${outputs.feedback}`,
     `issue_number=${outputs.issue_number}`,
+    `is_pull_request=${outputs.is_pull_request}`,
     `trigger_type=${outputs.trigger_type}`,
     `comment_body=${outputs.comment_body}`,
     `valid=${outputs.valid}`,

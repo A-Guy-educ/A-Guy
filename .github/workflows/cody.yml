@@ -63,7 +63,7 @@ on:
 
 # Concurrency: task_id for dispatch, issue.number for comments
 concurrency:
-  group: cody-${{ github.event.inputs.task_id || github.event.issue.number }}
+  group: cody-${{ github.event.inputs.task_id || github.event.issue.number || github.sha }}
   cancel-in-progress: false
 
 # Permissions: parse job needs write for error comments, orchestrate job needs more
@@ -94,6 +94,7 @@ jobs:
       from_stage: ${{ steps.parse.outputs.from_stage }}
       feedback: ${{ steps.parse.outputs.feedback }}
       issue_number: ${{ steps.parse.outputs.issue_number }}
+      is_pull_request: ${{ steps.parse.outputs.is_pull_request }}
       valid: ${{ steps.parse.outputs.valid }}
       trigger_type: ${{ steps.parse.outputs.trigger_type }}
       comment_body: ${{ steps.parse.outputs.comment_body }}
@@ -158,6 +159,7 @@ jobs:
           # Comment inputs (for orchestrator to parse)
           COMMENT_BODY: ${{ github.event.comment.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
+          IS_PULL_REQUEST: ${{ github.event.issue.pull_request != null }}
           # GitHub context (needed by script to detect trigger type)
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           # Default version (can be overridden by explicit --version in command)
@@ -366,6 +368,24 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: pnpm cody
 
+      # Pipeline summary in Actions UI
+      - name: Pipeline summary
+        if: always() && needs.parse.outputs.task_id != ''
+        run: |
+          TASK_ID="${{ needs.parse.outputs.task_id }}"
+          STATUS_FILE=".tasks/${TASK_ID}/status.json"
+          echo "## 🤖 Cody Pipeline: `${TASK_ID}`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f "$STATUS_FILE" ]; then
+            STATE=$(jq -r '.state // "unknown"' "$STATUS_FILE")
+            echo "**Status**: ${STATE}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Stage | State | Duration |" >> $GITHUB_STEP_SUMMARY
+            echo "|-------|-------|----------|" >> $GITHUB_STEP_SUMMARY
+            jq -r '.stages | to_entries[] | "| \(.key) | \(.value.state) | \(.value.elapsed // "-")ms |"' "$STATUS_FILE" >> $GITHUB_STEP_SUMMARY || true
+          else
+            echo "No status file found." >> $GITHUB_STEP_SUMMARY
+          fi
       - name: Upload artifacts
         if: always() && needs.parse.outputs.task_id != ''
         uses: actions/upload-artifact@v4

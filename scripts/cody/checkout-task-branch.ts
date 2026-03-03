@@ -4,6 +4,7 @@
  * @ai-summary Checkout existing feature branch for a task
  */
 
+import { logger } from './logger'
 import { execSync } from 'child_process'
 
 // Git branch prefixes to try
@@ -88,7 +89,7 @@ function mergeDefaultBranch(defaultBranch: string): boolean {
     gitExec(['merge', `origin/${defaultBranch}`, '--no-edit'])
     return true
   } catch {
-    console.log('=== CONFLICT: Merge failed ===')
+    logger.info('=== CONFLICT: Merge failed ===')
     gitExec(['merge', '--abort'])
     return false
   }
@@ -161,7 +162,7 @@ function main(): void {
   const taskId = process.env.TASK_ID
 
   if (!taskId) {
-    console.error('TASK_ID not set!')
+    logger.error('TASK_ID not set!')
     process.exit(1)
   }
 
@@ -173,27 +174,27 @@ function main(): void {
 
   // Get default branch
   const defaultBranch = getDefaultBranch()
-  console.log(`=== Default branch: ${defaultBranch} ===`)
+  logger.info(`=== Default branch: ${defaultBranch} ===`)
 
   // Find feature branch by pattern matching
   const branch = findRemoteBranch(taskId)
 
   if (branch) {
-    console.log(`=== Found feature branch: ${branch} ===`)
+    logger.info(`=== Found feature branch: ${branch} ===`)
 
     checkoutAndPull(branch)
 
-    console.log(`=== Merging latest ${defaultBranch} into ${branch} ===`)
+    logger.info(`=== Merging latest ${defaultBranch} into ${branch} ===`)
 
     if (!mergeDefaultBranch(defaultBranch)) {
-      console.log('=== Aborting merge ===')
+      logger.info('=== Aborting merge ===')
       process.exit(1)
     }
 
     process.exit(0)
   }
 
-  console.log(`=== No feature branch found for ${taskId}, staying on default branch ===`)
+  logger.info(`=== No feature branch found for ${taskId}, staying on default branch ===`)
 }
 
 // Run if called directly

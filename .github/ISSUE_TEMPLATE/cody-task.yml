@@ -1,0 +1,51 @@
+name: '🤖 Cody Task'
+description: 'Create a task for the Cody AI pipeline'
+labels: []
+body:
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Pipeline Mode
+      description: 'Which pipeline mode to run'
+      options:
+        - 'full (spec + implement)'
+        - 'spec (planning only)'
+        - 'impl (implement existing spec)'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: 'Task priority'
+      options:
+        - 'P1 - Critical'
+        - 'P2 - High'
+        - 'P3 - Medium'
+        - 'P4 - Low'
+        - 'P5 - Nice to have'
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Task Description
+      description: 'Describe what needs to be done. Be specific.'
+      placeholder: 'As a user, I want...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: 'How do we know this is done?'
+      placeholder: '- [ ] ...'
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: 'Links, screenshots, error logs, etc.'

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock child_process.execSync and fs before importing the module
 vi.mock('child_process', () => ({
@@ -9,21 +9,36 @@ vi.mock('fs', () => ({
   existsSync: vi.fn(),
 }))
 
+// Mock logger to capture log output - use vi.hoisted to avoid hoisting issues
+const { mockLogger } = vi.hoisted(() => ({
+  mockLogger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+    fatal: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+    trace: vi.fn(),
+    silent: vi.fn(),
+    level: 'info',
+  },
+}))
+
+vi.mock('../../../../scripts/cody/logger', () => ({
+  logger: mockLogger,
+  createStageLogger: vi.fn().mockReturnValue(mockLogger),
+}))
+
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import { preflight } from '../../../../scripts/cody/preflight'
 
 describe('preflight', () => {
-  let consoleSpy: { log: ReturnType<typeof vi.spyOn>; error: ReturnType<typeof vi.spyOn> }
-
   beforeEach(() => {
     vi.clearAllMocks()
-
-    // Suppress console output during tests
-    consoleSpy = {
-      log: vi.spyOn(console, 'log').mockImplementation(() => {}),
-      error: vi.spyOn(console, 'error').mockImplementation(() => {}),
-    }
+    mockLogger.info.mockClear()
+    mockLogger.warn.mockClear()
+    mockLogger.error.mockClear()
 
     // Default: all checks pass
     vi.mocked(execSync).mockImplementation((cmd: string) => {
@@ -35,16 +50,11 @@ describe('preflight', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
   })
 
-  afterEach(() => {
-    consoleSpy.log.mockRestore()
-    consoleSpy.error.mockRestore()
-  })
-
   it('should pass all checks without throwing', () => {
     preflight()
 
     // Should print the success message
-    expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining('Pre-flight complete'))
+    expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining('Pre-flight complete'))
   })
 
   it('should throw Error (not process.exit) when ocode CLI is missing', () => {
@@ -127,7 +137,7 @@ describe('preflight', () => {
     expect(thrownError!.message).toContain('Run from project root with package.json')
 
     // Should have logged multiple failure lines (❌)
-    const failureLogs = consoleSpy.log.mock.calls.filter(
+    const failureLogs = mockLogger.info.mock.calls.filter(
       (args: unknown[]) => typeof args[0] === 'string' && args[0].includes('❌'),
     )
     expect(failureLogs.length).toBeGreaterThanOrEqual(4)
@@ -136,7 +146,7 @@ describe('preflight', () => {
   it('should log ✅ for each passing check', () => {
     preflight()
 
-    const passLogs = consoleSpy.log.mock.calls.filter(
+    const passLogs = mockLogger.info.mock.calls.filter(
       (args: unknown[]) => typeof args[0] === 'string' && args[0].includes('✅'),
     )
     // 5 checks pass + the final "Pre-flight complete" line

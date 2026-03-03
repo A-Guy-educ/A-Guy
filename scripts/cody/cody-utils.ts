@@ -5,8 +5,10 @@
  * @ai-summary CI-specific utilities for the Cody pipeline: comment parsing, GitHub API helpers, status management
  */
 
+import { logger } from './logger'
 import * as fs from 'fs'
 import * as path from 'path'
+import { Command } from 'commander'
 
 import { ALL_STAGES } from './stage-prompts'
 import { discoverTaskIdFromIssue } from './github-api'
@@ -39,6 +41,10 @@ export interface CodyInput {
   version?: string
   // Complexity score override (1-100) for testing/debugging
   complexityOverride?: number
+  // Whether the trigger was from a PR comment (vs issue comment)
+  isPullRequest?: boolean
+  // Force create new PR (new branch) - ignores existing PR
+  fresh?: boolean
 }
 
 export interface CodyPipelineStatus {
@@ -85,6 +91,9 @@ const VALID_MODES = ['spec', 'impl', 'rerun', 'full', 'status'] as const
 
 // VALID_STAGES derived from stage-prompts to avoid duplication
 const VALID_STAGES = [...ALL_STAGES]
+
+// Pipeline-ordered stage list for sorting (avoids `as any` cast on readonly tuple)
+const STAGE_ORDER: readonly string[] = ALL_STAGES
 
 export function isValidMode(mode: string): mode is (typeof VALID_MODES)[number] {
   return VALID_MODES.includes(mode as (typeof VALID_MODES)[number])
@@ -154,6 +163,12 @@ export function getLastFailedStage(taskId: string): string | null {
       const failedStages = Object.entries(status.stages)
         .filter(([, s]) => s.state === 'failed' || s.state === 'timeout')
         .map(([name]) => name)
+      // Sort by pipeline order (ALL_STAGES index) to get truly last failed stage
+      failedStages.sort((a, b) => {
+        const idxA = STAGE_ORDER.indexOf(a)
+        const idxB = STAGE_ORDER.indexOf(b)
+        return idxA - idxB
+      })
       return failedStages.length > 0 ? failedStages[failedStages.length - 1] : null
     }
 
@@ -162,6 +177,12 @@ export function getLastFailedStage(taskId: string): string | null {
       const failedStages = Object.entries(status.stages)
         .filter(([, s]) => s.state === 'failed' || s.state === 'timeout')
         .map(([name]) => name)
+      // Sort by pipeline order (ALL_STAGES index) to get truly last failed stage
+      failedStages.sort((a, b) => {
+        const idxA = STAGE_ORDER.indexOf(a)
+        const idxB = STAGE_ORDER.indexOf(b)
+        return idxA - idxB
+      })
       return failedStages.length > 0 ? failedStages[failedStages.length - 1] : null
     }
 
@@ -194,7 +215,13 @@ export function getLastPausedStage(taskId: string): string | null {
       const pausedStages = Object.entries(status.stages)
         .filter(([, s]) => s.state === 'paused')
         .map(([name]) => name)
-      // Return the last paused stage (most recent)
+      // Sort by pipeline order (ALL_STAGES index) to get truly last paused stage
+      pausedStages.sort((a, b) => {
+        const idxA = STAGE_ORDER.indexOf(a)
+        const idxB = STAGE_ORDER.indexOf(b)
+        return idxA - idxB
+      })
+      // Return the last paused stage (most recent in pipeline order)
       return pausedStages.length > 0 ? pausedStages[pausedStages.length - 1] : null
     }
 
@@ -203,6 +230,12 @@ export function getLastPausedStage(taskId: string): string | null {
       const pausedStages = Object.entries(status.stages)
         .filter(([, s]) => s.state === 'paused')
         .map(([name]) => name)
+      // Sort by pipeline order (ALL_STAGES index) to get truly last paused stage
+      pausedStages.sort((a, b) => {
+        const idxA = STAGE_ORDER.indexOf(a)
+        const idxB = STAGE_ORDER.indexOf(b)
+        return idxA - idxB
+      })
       return pausedStages.length > 0 ? pausedStages[pausedStages.length - 1] : null
     }
 
@@ -268,7 +301,7 @@ export function updateStageStatus(
 ): void {
   const status = readStatus(taskId)
   if (!status) {
-    console.warn(`No status file found for task: ${taskId}`)
+    logger.warn(`No status file found for task: ${taskId}`)
     return
   }
 
@@ -349,16 +382,47 @@ export {
 // ============================================================================
 
 export function parseCliArgs(argv: string[]): CodyInput {
-  // Normalize --key=value into --key value to support both syntaxes
-  const normalized: string[] = []
-  for (const arg of argv) {
-    // Match --flag=value pattern (but not --flag= which is empty value)
-    if (arg.match(/^--[a-z][a-z0-9-]*=.+/i)) {
-      const eqIdx = arg.indexOf('=')
-      normalized.push(arg.slice(0, eqIdx), arg.slice(eqIdx + 1))
-    } else {
-      normalized.push(arg)
-    }
+  // Create Commander program with all CLI options
+  const program = new Command()
+    .allowUnknownOption()
+    .allowExcessArguments()
+    .option('--task-id <id>', 'Task ID')
+    .option('--mode <mode>', 'Pipeline mode (spec, impl, rerun, full, status)')
+    .option('--file <path>', 'Task file path')
+    .option('--dry-run', 'Dry run mode')
+    .option('--issue-number <n>', 'GitHub issue number')
+    .option('--from <stage>', 'Resume from stage')
+    .option('--feedback <text>', 'Rerun feedback')
+    .option('--auto', 'Autonomous mode')
+    .option('--gate', 'Risk-gated mode')
+    .option('--hard-stop', 'Hard stop mode')
+    .option('--local', 'Local mode')
+    .option('--github', 'Use GitHub-hosted runner')
+    .option('--ci', 'Use GitHub-hosted runner (alias for --github)')
+    .option('--clarify', 'Run clarify stage')
+    .option('--complexity <n>', 'Complexity score (1-100)')
+    .option('--is-pull-request', 'Comment was on a PR')
+    .option('--fresh', 'Force new PR')
+    .option('--comment-body <text>', 'Comment body')
+    .option('--comment-body-env <var>', 'Env var for comment body')
+    .option('--version <ver>', 'Pipeline version')
+    .option('--trigger-type <type>', 'Trigger type')
+    .option('--run-id <id>', 'CI run ID')
+    .option('--run-url <url>', 'CI run URL')
+    .exitOverride() // Don't exit on --help, throw instead
+    .configureOutput({
+      writeOut: () => {}, // Suppress output during parsing
+      writeErr: () => {},
+    })
+
+  let commanderOpts: Record<string, unknown> = {}
+  try {
+    // Commander handles both --key value and --key=value formats
+    program.parse(['node', 'entry.ts', ...argv])
+    commanderOpts = program.opts()
+  } catch {
+    // Commander throws on --help, --version, or unknown options
+    // We suppress the error and continue with defaults
   }
 
   const input: CodyInput = {
@@ -371,133 +435,101 @@ export function parseCliArgs(argv: string[]): CodyInput {
   // Env vars should only be used as fallback when CLI arg wasn't provided
   const cliSet = new Set<string>()
 
-  for (let i = 0; i < normalized.length; i++) {
-    const arg = normalized[i]
+  // Map Commander options to CodyInput
+  // NOTE: --mode is processed LAST to preserve original behavior where
+  // later args override earlier ones (e.g., --mode after --comment-body)
+  // Commander returns undefined for options that weren't provided
 
-    // Handle positional arguments (not starting with --)
-    if (!arg.startsWith('--')) {
-      // Check if it's a valid mode
-      if (isValidMode(arg)) {
-        input.mode = arg
-        continue
-      }
-      // Otherwise treat as file path
-      if (arg.includes('/') || arg.includes('.') || arg.includes('-')) {
-        input.file = arg
-        continue
-      }
-      // Unknown positional arg, skip
-      continue
+  if (commanderOpts.taskId !== undefined) {
+    input.taskId = commanderOpts.taskId as string
+    cliSet.add('taskId')
+  }
+
+  // Process --mode initially (always) so comment-body can override it when appropriate
+  // If --mode comes AFTER --comment-body in argv, we'll process it again at the end
+  if (commanderOpts.mode !== undefined) {
+    const mode = commanderOpts.mode as string
+    if (!isValidMode(mode)) {
+      throw new Error(`Invalid mode: ${mode}. Valid: ${VALID_MODES.join(', ')}`)
     }
+    input.mode = mode
+    cliSet.add('mode')
+  }
 
-    if (arg === '--task-id' && normalized[i + 1]) {
-      input.taskId = normalized[i + 1]
-      cliSet.add('taskId')
-      i++
-    } else if (arg === '--mode' && normalized[i + 1]) {
-      const mode = normalized[i + 1]
-      if (!isValidMode(mode)) {
-        throw new Error(`Invalid mode: ${mode}. Valid: ${VALID_MODES.join(', ')}`)
-      }
-      input.mode = mode
-      cliSet.add('mode')
-      i++
-    } else if (arg === '--dry-run') {
-      input.dryRun = true
-      cliSet.add('dryRun')
-    } else if (arg === '--feedback' && normalized[i + 1]) {
-      input.feedback = normalized[i + 1]
-      cliSet.add('feedback')
-      i++
-    } else if (arg === '--from' && normalized[i + 1]) {
-      const stage = normalized[i + 1]
-      if (!isValidStage(stage)) {
-        throw new Error(`Invalid stage: ${stage}. Valid: ${VALID_STAGES.join(', ')}`)
-      }
-      input.fromStage = stage
-      cliSet.add('fromStage')
-      i++
-    } else if (arg === '--auto') {
-      input.controlMode = 'auto'
-      cliSet.add('controlMode')
-    } else if (arg === '--gate') {
-      input.controlMode = 'risk-gated'
-      cliSet.add('controlMode')
-    } else if (arg === '--hard-stop') {
-      input.controlMode = 'hard-stop'
-      cliSet.add('controlMode')
-    } else if (arg === '--issue-number' && normalized[i + 1]) {
-      input.issueNumber = parseInt(normalized[i + 1], 10)
-      cliSet.add('issueNumber')
-      i++
-    } else if (arg === '--trigger-type' && normalized[i + 1]) {
-      input.triggerType = normalized[i + 1] as 'dispatch' | 'comment'
-      cliSet.add('triggerType')
-      i++
-    } else if (arg === '--run-id' && normalized[i + 1]) {
-      input.runId = normalized[i + 1]
-      cliSet.add('runId')
-      i++
-    } else if (arg === '--run-url' && normalized[i + 1]) {
-      input.runUrl = normalized[i + 1]
-      cliSet.add('runUrl')
-      i++
-    } else if (arg === '--version' && normalized[i + 1]) {
-      input.version = normalized[i + 1]
-      cliSet.add('version')
-      i++
-    } else if (arg.startsWith('--comment-body-env=')) {
-      // For comment triggers: read the raw comment body from env var
-      // This avoids shell injection when passing comment content through CI
-      const envVarName = arg.slice('--comment-body-env='.length)
-      const commentBodyFromEnv = process.env[envVarName]
-      if (commentBodyFromEnv) {
-        const parsed = parseCommentBody(commentBodyFromEnv, undefined)
-        if (!parsed.success) {
-          throw new Error(parsed.error || 'Failed to parse comment body from env var')
-        }
-        if (parsed.input) {
-          input.mode = parsed.input.mode
-          cliSet.add('mode')
-          if (parsed.input.taskId) {
-            input.taskId = parsed.input.taskId
-            cliSet.add('taskId')
-          }
-          input.dryRun = parsed.input.dryRun
-          cliSet.add('dryRun')
-          if (parsed.input.feedback) {
-            input.feedback = parsed.input.feedback
-            cliSet.add('feedback')
-          }
-          if (parsed.input.fromStage) {
-            input.fromStage = parsed.input.fromStage
-            cliSet.add('fromStage')
-          }
-          input.triggerType = 'comment'
-          cliSet.add('triggerType')
-          if (parsed.input.controlMode) {
-            input.controlMode = parsed.input.controlMode
-            cliSet.add('controlMode')
-          }
-          if (parsed.input.issueNumber) {
-            input.issueNumber = parsed.input.issueNumber
-            cliSet.add('issueNumber')
-          }
-        }
-      }
-    } else if (arg === '--comment-body' && normalized[i + 1]) {
-      // For comment triggers: parse the raw comment body
-      // Note: issueNumber may not be parsed yet, so we pass undefined and merge later
-      const commentBody = normalized[i + 1]
-      // Store raw comment body for answer extraction later
-      input.commentBody = commentBody
-      const parsed = parseCommentBody(commentBody, undefined)
+  if (commanderOpts.dryRun !== undefined) {
+    input.dryRun = true
+    cliSet.add('dryRun')
+  }
 
+  if (commanderOpts.feedback !== undefined) {
+    input.feedback = commanderOpts.feedback as string
+    cliSet.add('feedback')
+  }
+
+  if (commanderOpts.from !== undefined) {
+    const stage = commanderOpts.from as string
+    if (!isValidStage(stage)) {
+      throw new Error(`Invalid stage: ${stage}. Valid: ${VALID_STAGES.join(', ')}`)
+    }
+    input.fromStage = stage
+    cliSet.add('fromStage')
+  }
+
+  // Control mode flags
+  if (commanderOpts.auto !== undefined) {
+    input.controlMode = 'auto'
+    cliSet.add('controlMode')
+  } else if (commanderOpts.gate !== undefined) {
+    input.controlMode = 'risk-gated'
+    cliSet.add('controlMode')
+  } else if (commanderOpts.hardStop !== undefined) {
+    input.controlMode = 'hard-stop'
+    cliSet.add('controlMode')
+  }
+
+  if (commanderOpts.issueNumber !== undefined) {
+    input.issueNumber = parseInt(commanderOpts.issueNumber as string, 10)
+    cliSet.add('issueNumber')
+  }
+
+  if (commanderOpts.triggerType !== undefined) {
+    input.triggerType = commanderOpts.triggerType as 'dispatch' | 'comment'
+    cliSet.add('triggerType')
+  }
+
+  if (commanderOpts.runId !== undefined) {
+    input.runId = commanderOpts.runId as string
+    cliSet.add('runId')
+  }
+
+  if (commanderOpts.runUrl !== undefined) {
+    input.runUrl = commanderOpts.runUrl as string
+    cliSet.add('runUrl')
+  }
+
+  if (commanderOpts.version !== undefined) {
+    input.version = commanderOpts.version as string
+    cliSet.add('version')
+  }
+
+  if (commanderOpts.isPullRequest !== undefined) {
+    input.isPullRequest = true
+  }
+
+  if (commanderOpts.fresh !== undefined) {
+    input.fresh = true
+  }
+
+  // Handle --comment-body-env=<var> (Commander may not parse this with --key=value pattern)
+  const commentBodyEnvArg = argv.find((arg) => arg.startsWith('--comment-body-env='))
+  if (commentBodyEnvArg) {
+    const envVarName = commentBodyEnvArg.slice('--comment-body-env='.length)
+    const commentBodyFromEnv = process.env[envVarName]
+    if (commentBodyFromEnv) {
+      const parsed = parseCommentBody(commentBodyFromEnv, undefined)
       if (!parsed.success) {
-        throw new Error(parsed.error || 'Failed to parse comment body')
+        throw new Error(parsed.error || 'Failed to parse comment body from env var')
       }
-
-      // Merge parsed values into input (issueNumber will be merged after --issue-number is processed)
       if (parsed.input) {
         input.mode = parsed.input.mode
         cliSet.add('mode')
@@ -521,43 +553,127 @@ export function parseCliArgs(argv: string[]): CodyInput {
           input.controlMode = parsed.input.controlMode
           cliSet.add('controlMode')
         }
-        // Store issueNumber from comment to merge after --issue-number is processed
         if (parsed.input.issueNumber) {
           input.issueNumber = parsed.input.issueNumber
           cliSet.add('issueNumber')
         }
       }
-      i++
-    } else if (arg === '--file' && normalized[i + 1]) {
-      input.file = normalized[i + 1]
-      cliSet.add('file')
-      // --file triggers taskId auto-generation, so don't let env var override
-      cliSet.add('taskId')
-      i++
-    } else if (arg === '--local') {
-      input.local = true
-      cliSet.add('local')
-    } else if (arg === '--github' || arg === '--ci') {
-      // Explicitly use GitHub-hosted runner (instead of local self-hosted)
-      input.local = false
-      cliSet.add('local')
-    } else if (arg === '--clarify') {
-      input.clarify = true
-      cliSet.add('clarify')
-    } else if (arg === '--complexity' && normalized[i + 1]) {
-      const val = parseInt(normalized[i + 1], 10)
-      if (!isNaN(val) && val >= 1 && val <= 100) {
-        input.complexityOverride = val
-        cliSet.add('complexityOverride')
-      } else {
-        throw new Error(`Invalid --complexity value: ${normalized[i + 1]}. Must be 1-100`)
+    }
+  }
+
+  if (commanderOpts.commentBody !== undefined) {
+    const commentBody = commanderOpts.commentBody as string
+    input.commentBody = commentBody
+    const parsed = parseCommentBody(commentBody, undefined)
+
+    if (!parsed.success) {
+      throw new Error(parsed.error || 'Failed to parse comment body')
+    }
+
+    if (parsed.input) {
+      input.mode = parsed.input.mode
+      cliSet.add('mode')
+      if (parsed.input.taskId) {
+        input.taskId = parsed.input.taskId
+        cliSet.add('taskId')
       }
-      i++
+      input.dryRun = parsed.input.dryRun
+      cliSet.add('dryRun')
+      if (parsed.input.feedback) {
+        input.feedback = parsed.input.feedback
+        cliSet.add('feedback')
+      }
+      if (parsed.input.fromStage) {
+        input.fromStage = parsed.input.fromStage
+        cliSet.add('fromStage')
+      }
+      input.triggerType = 'comment'
+      cliSet.add('triggerType')
+      if (parsed.input.controlMode) {
+        input.controlMode = parsed.input.controlMode
+        cliSet.add('controlMode')
+      }
+      if (parsed.input.issueNumber) {
+        input.issueNumber = parsed.input.issueNumber
+        cliSet.add('issueNumber')
+      }
+    }
+  }
+
+  if (commanderOpts.file !== undefined) {
+    input.file = commanderOpts.file as string
+    cliSet.add('file')
+    // --file triggers taskId auto-generation, so don't let env var override
+    cliSet.add('taskId')
+  }
+
+  if (commanderOpts.local !== undefined) {
+    input.local = true
+    cliSet.add('local')
+  } else if (commanderOpts.github !== undefined || commanderOpts.ci !== undefined) {
+    // --github or --ci explicitly sets local = false
+    input.local = false
+    cliSet.add('local')
+  }
+
+  if (commanderOpts.clarify !== undefined) {
+    input.clarify = true
+    cliSet.add('clarify')
+  }
+
+  if (commanderOpts.complexity !== undefined) {
+    const val = parseInt(commanderOpts.complexity as string, 10)
+    if (!isNaN(val) && val >= 1 && val <= 100) {
+      input.complexityOverride = val
+      cliSet.add('complexityOverride')
+    } else {
+      throw new Error(`Invalid --complexity value: ${commanderOpts.complexity}. Must be 1-100`)
+    }
+  }
+
+  // Also handle positional arguments (non -- options) and determine arg processing order
+  // We need to process --mode AFTER --comment-body ONLY when --mode actually comes AFTER --comment-body in argv
+  // to preserve original CLI behavior where later args override earlier ones
+  // (run-cody.sh puts --mode BEFORE --comment-body, so comment-body should win)
+  const modeArgIndex = argv.findIndex((a) => a.startsWith('--mode'))
+  const commentBodyArgIndex = argv.findIndex((a) => a.startsWith('--comment-body'))
+  // Only process --mode at the end when it comes AFTER --comment-body
+  const processModeLast = modeArgIndex > commentBodyArgIndex && commentBodyArgIndex >= 0
+
+  for (const arg of argv) {
+    if (!arg.startsWith('-')) {
+      // Check if it's a valid mode
+      if (isValidMode(arg)) {
+        input.mode = arg
+        cliSet.add('mode')
+        continue
+      }
+      // Otherwise treat as file path (if it looks like a path)
+      if (arg.includes('/') || arg.includes('.') || arg.includes('-')) {
+        input.file = arg
+        cliSet.add('file')
+        cliSet.add('taskId') // --file triggers taskId auto-generation
+        continue
+      }
+    }
+  }
+
+  // Process --mode AFTER --comment-body only when it appears later in argv
+  // This preserves the original CLI behavior where later args override earlier ones
+  if (processModeLast) {
+    if (commanderOpts.mode !== undefined) {
+      const mode = commanderOpts.mode as string
+      if (!isValidMode(mode)) {
+        throw new Error(`Invalid mode: ${mode}. Valid: ${VALID_MODES.join(', ')}`)
+      }
+      input.mode = mode
+      cliSet.add('mode')
     }
   }
 
   // Read from environment variables (for CI workflow)
   // CLI args take precedence over env vars - only use env var if field wasn't CLI-set
+  // Use process.env directly (not getEnv()) for test compatibility
   if (!cliSet.has('taskId') && process.env.TASK_ID) {
     input.taskId = process.env.TASK_ID
   }
@@ -603,6 +719,7 @@ export function parseCliArgs(argv: string[]): CodyInput {
   }
 
   // Determine local mode: explicitly set or auto-detect from GITHUB_ACTIONS
+  // Use process.env directly (not getEnv()) for test compatibility
   if (input.local === undefined) {
     input.local = !process.env.GITHUB_ACTIONS
   }
@@ -614,7 +731,7 @@ export function parseCliArgs(argv: string[]): CodyInput {
       const discovered = discoverTaskIdFromIssue(input.issueNumber)
       if (discovered) {
         input.taskId = discovered
-        console.log(`Discovered task ID from issue: ${input.taskId}`)
+        logger.info(`Discovered task ID from issue: ${input.taskId}`)
       }
     }
 
@@ -631,7 +748,7 @@ export function parseCliArgs(argv: string[]): CodyInput {
         const counter = Math.floor(Math.random() * 99) + 1
         input.taskId = `${datePrefix}-auto-${counter.toString().padStart(2, '0')}`
       }
-      console.log(`Auto-generated task ID: ${input.taskId}`)
+      logger.info(`Auto-generated task ID: ${input.taskId}`)
     }
   }
 
@@ -772,6 +889,7 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
   let feedback: string | undefined
   let fromStage: string | undefined
   let controlMode: CodyInput['controlMode'] = undefined
+  let fresh = false
 
   let i = 0
   while (i < options.length) {
@@ -798,6 +916,9 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
       }
       feedback = feedbackParts.join(' ')
       i = j
+    } else if (opt === '--fresh') {
+      fresh = true
+      i++
     } else if (opt === '--from' && options[i + 1]) {
       fromStage = options[i + 1]
       // Validate from stage
@@ -828,6 +949,7 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
       fromStage,
       issueNumber,
       triggerType: 'comment',
+      fresh,
       controlMode,
     },
   }
@@ -842,10 +964,10 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
 export function validateAuth(): void {
   // Check we're in GitHub Actions environment (where OIDC auth is available)
   if (!process.env.GITHUB_ACTIONS) {
-    console.warn('⚠ Not running in GitHub Actions — OIDC auth may not work')
-    console.warn('  Run locally or in CI with id-token: write permission')
+    logger.warn('⚠ Not running in GitHub Actions — OIDC auth may not work')
+    logger.warn('  Run locally or in CI with id-token: write permission')
   } else {
-    console.log('✓ Running in GitHub Actions — OIDC auth available via id-token permission')
+    logger.info('✓ Running in GitHub Actions — OIDC auth available via id-token permission')
   }
 }
 
