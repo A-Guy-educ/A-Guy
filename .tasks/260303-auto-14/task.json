@@ -4,23 +4,27 @@
   "confidence": 0.95,
   "primary_domain": "frontend",
   "scope": [
-    "GreetingFlow typing animation speed"
+    "GreetingFlow component typing animation speed"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "The TypingAnimation component exists and has a speed/delay prop",
-    "Current speed is set to approximately 60-100ms per character",
-    "The fix involves changing the speed to 20-25ms per character"
+    "GreetingFlow component exists in src/ui/web/ directory",
+    "TypingAnimation component has a speed/delay prop that controls character typing speed",
+    "Current speed is around 60-100ms per character",
+    "Need to change to approximately 20-25ms per character"
   ],
-  "review_questions": [],
-  "complexity": 15,
-  "complexity_reasoning": "Scope: 5 (single component, 1-2 files). Risk: 3 (UI animation only, no data/sensitive changes). Novelty: 3 (straightforward value change). Cross-domain: 0 (single frontend domain). Ambiguity: 2 (clear intent - change delay from 60-100ms to 20-25ms). Dependencies: 2 (self-contained component). Total: 15 (Simple tier)",
+  "review_questions": [
+    "Is the typing animation speed controlled by a single prop or multiple locations?",
+    "Should this speed change apply globally to all TypingAnimation usages or only to the GreetingFlow?"
+  ],
+  "complexity": 8,
+  "complexity_reasoning": "Scope: 3 (single component), Risk: 3 (UI-only), Novelty: 2 (following existing pattern), Cross-domain: 0 (single frontend), Ambiguity: 0 (clear fix), Dependencies: 0 (self-contained). Total: 8",
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [
       "spec"
     ],
-    "reasoning": "Input contains clear title, environment, preconditions, steps to reproduce, expected result (20-25ms), actual result (60-100ms), and reproducibility. Promoted spec.md with extracted requirements."
+    "reasoning": "Input has clear bug description with preconditions, steps to reproduce, expected result (~20-25ms), and actual result (60-100ms). Contains acceptance criteria for 'snappy' feel. Promoted spec.md with extracted requirements."
   },
   "pipeline_profile": "lightweight",
   "pipeline": "spec_execute_verify"
