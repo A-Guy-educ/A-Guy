@@ -4,14 +4,43 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-03T09:55:58.931Z",
-  "updatedAt": "2026-03-03T19:44:02.326Z",
+  "updatedAt": "2026-03-03T19:49:04.263Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-03T19:44:02.326Z",
+      "completedAt": "2026-03-03T19:45:20.377Z",
+      "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 8 (trivial) below threshold 35 for spec"
+    },
+    "gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 8 (trivial) below threshold 40 for gap"
+    },
+    "architect": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 8 (trivial) below threshold 10 for architect"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-03T19:45:24.896Z",
+      "completedAt": "2026-03-03T19:48:36.783Z",
+      "outputFile": "build.md"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-03T19:44:02.326Z"
+      "startedAt": "2026-03-03T19:49:04.263Z"
     }
   },
   "issueNumber": 671

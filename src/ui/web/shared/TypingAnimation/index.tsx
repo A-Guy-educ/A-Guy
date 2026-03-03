@@ -6,12 +6,12 @@ import { cn } from '@/infra/utils/ui'
 
 interface TypingAnimationProps {
   text: string
-  speed?: number // ms per character (default: 50)
+  speed?: number // ms per character (default: 25)
   onComplete?: () => void
   className?: string
 }
 
-export function TypingAnimation({ text, speed = 50, onComplete, className }: TypingAnimationProps) {
+export function TypingAnimation({ text, speed = 25, onComplete, className }: TypingAnimationProps) {
   const [displayedText, setDisplayedText] = useState('')
   const [isComplete, setIsComplete] = useState(false)
 
