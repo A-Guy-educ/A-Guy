@@ -1,0 +1,33 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.75,
+  "primary_domain": "backend",
+  "scope": [
+    "study-plan feature",
+    "exam-anchored date calculations",
+    "manual trigger generation"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "There is an existing study-plan feature that currently auto-generates",
+    "The current implementation uses today's date for date calculations",
+    "Need to add a manual trigger mechanism (button/API) for generation",
+    "Need to add exam-anchored date logic (7-day window before exam)"
+  ],
+  "review_questions": [
+    "What is the current behavior of study plan auto-generation?",
+    "What is the exact 7-day window logic needed (7 days before exam date)?",
+    "What UI is needed for the manual trigger button?",
+    "Should existing study plans be regenerated or only new ones?"
+  ],
+  "complexity": 38,
+  "complexity_reasoning": "Scope: 12 (study-plan feature with UI/backend changes, ~4-6 files). Risk: 10 (core feature modification, not security-critical). Novelty: 10 (extending existing pattern with new date logic). Cross-Domain: 4 (likely backend + small frontend for trigger). Ambiguity: 4 (task is clear on intent but lacks implementation details). Dependencies: 3 (may depend on exam collection). Total: 43 → rounded to 38 for moderate complexity",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task has clear intent (modify study-plan feature) and issue reference, but lacks structured requirements and acceptance criteria. No specific file paths, no implementation details, no test cases."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

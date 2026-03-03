@@ -220,6 +220,10 @@ export interface PayloadMcpApiKeyAuthOperations {
 export interface Page {
   id: string;
   title: string;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
   hero: {
     type: 'none' | 'highImpact' | 'mediumImpact' | 'lowImpact';
     richText?: {
@@ -406,6 +410,10 @@ export interface Category {
   id: string;
   title: string;
   /**
+   * Content language
+   */
+  locale: 'en' | 'he';
+  /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
   generateSlug?: boolean | null;
@@ -470,6 +478,10 @@ export interface Course {
    * Tenant scope for this document
    */
   tenant: string | Tenant;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
   /**
    * Course identifier (e.g., "ח" or "8")
    */
@@ -642,7 +654,11 @@ export interface Prompt {
   /**
    * Machine-readable key (e.g., "default-tutor-v1")
    */
-  key?: string | null;
+  promptKey?: string | null;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
   /**
    * System prompts are always included. Context prompts are lesson-specific. Persona prompts define teacher identity.
    */
@@ -1032,6 +1048,10 @@ export interface Conversation {
    * Legacy field - use contextRef instead. Will be removed in future version.
    */
   exercise?: (string | null) | Exercise;
+  /**
+   * Primary language for AI responses (derived from Course locale)
+   */
+  preferredLocale: 'en' | 'he';
   /**
    * Conversation message history
    */
@@ -1837,6 +1857,10 @@ export interface UploadSession {
 export interface Post {
   id: string;
   title: string;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
   heroImage?: (string | null) | Media;
   content: {
     root: {
@@ -2419,6 +2443,7 @@ export interface PayloadMigration {
  */
 export interface PagesSelect<T extends boolean = true> {
   title?: T;
+  locale?: T;
   hero?:
     | T
     | {
@@ -2553,6 +2578,7 @@ export interface HtmlBlockSelect<T extends boolean = true> {
  */
 export interface CategoriesSelect<T extends boolean = true> {
   title?: T;
+  locale?: T;
   generateSlug?: T;
   slug?: T;
   createdBy?: T;
@@ -2617,6 +2643,7 @@ export interface ConversationsSelect<T extends boolean = true> {
   contextKey?: T;
   title?: T;
   exercise?: T;
+  preferredLocale?: T;
   messages?:
     | T
     | {
@@ -2709,6 +2736,7 @@ export interface TenantsSelect<T extends boolean = true> {
  */
 export interface CoursesSelect<T extends boolean = true> {
   tenant?: T;
+  locale?: T;
   courseLabel?: T;
   title?: T;
   description?: T;
@@ -2833,7 +2861,8 @@ export interface ExtractionLogsSelect<T extends boolean = true> {
  */
 export interface PromptsSelect<T extends boolean = true> {
   title?: T;
-  key?: T;
+  promptKey?: T;
+  locale?: T;
   type?: T;
   template?: T;
   status?: T;
@@ -3045,6 +3074,7 @@ export interface UploadSessionsSelect<T extends boolean = true> {
  */
 export interface PostsSelect<T extends boolean = true> {
   title?: T;
+  locale?: T;
   heroImage?: T;
   content?: T;
   relatedPosts?: T;
@@ -3413,18 +3443,30 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  */
 export interface Header {
   id: string;
-  navItems?:
+  /**
+   * Navigation items per system language
+   */
+  variants?:
     | {
-        link: {
-          type?: ('reference' | 'custom') | null;
-          newTab?: boolean | null;
-          reference?: {
-            relationTo: 'pages';
-            value: string | Page;
-          } | null;
-          url?: string | null;
-          label: string;
-        };
+        /**
+         * System language this variant is for
+         */
+        locale: 'en' | 'he';
+        navItems?:
+          | {
+              link: {
+                type?: ('reference' | 'custom') | null;
+                newTab?: boolean | null;
+                reference?: {
+                  relationTo: 'pages';
+                  value: string | Page;
+                } | null;
+                url?: string | null;
+                label: string;
+              };
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -3437,18 +3479,30 @@ export interface Header {
  */
 export interface Footer {
   id: string;
-  navItems?:
+  /**
+   * Navigation items per system language
+   */
+  variants?:
     | {
-        link: {
-          type?: ('reference' | 'custom') | null;
-          newTab?: boolean | null;
-          reference?: {
-            relationTo: 'pages';
-            value: string | Page;
-          } | null;
-          url?: string | null;
-          label: string;
-        };
+        /**
+         * System language this variant is for
+         */
+        locale: 'en' | 'he';
+        navItems?:
+          | {
+              link: {
+                type?: ('reference' | 'custom') | null;
+                newTab?: boolean | null;
+                reference?: {
+                  relationTo: 'pages';
+                  value: string | Page;
+                } | null;
+                url?: string | null;
+                label: string;
+              };
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -3460,17 +3514,23 @@ export interface Footer {
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
-  navItems?:
+  variants?:
     | T
     | {
-        link?:
+        locale?: T;
+        navItems?:
           | T
           | {
-              type?: T;
-              newTab?: T;
-              reference?: T;
-              url?: T;
-              label?: T;
+              link?:
+                | T
+                | {
+                    type?: T;
+                    newTab?: T;
+                    reference?: T;
+                    url?: T;
+                    label?: T;
+                  };
+              id?: T;
             };
         id?: T;
       };
@@ -3483,17 +3543,23 @@ export interface HeaderSelect<T extends boolean = true> {
  * via the `definition` "footer_select".
  */
 export interface FooterSelect<T extends boolean = true> {
-  navItems?:
+  variants?:
     | T
     | {
-        link?:
+        locale?: T;
+        navItems?:
           | T
           | {
-              type?: T;
-              newTab?: T;
-              reference?: T;
-              url?: T;
-              label?: T;
+              link?:
+                | T
+                | {
+                    type?: T;
+                    newTab?: T;
+                    reference?: T;
+                    url?: T;
+                    label?: T;
+                  };
+              id?: T;
             };
         id?: T;
       };

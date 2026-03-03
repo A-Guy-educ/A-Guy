@@ -21,6 +21,7 @@ import type {
   CourseEnteredPayload,
   LessonEndedPayload,
   LessonStartedPayload,
+  LoginModalShownPayload,
   PageViewedPayload,
   PdfViewedPayload,
   RegistrationCompletedPayload,
@@ -70,6 +71,7 @@ export type SystemEventPayloads = {
   'system.lesson_ended': LessonEndedPayload
   'system.pdf_viewed': PdfViewedPayload
   'system.chat_message_submitted': ChatMessageSubmittedPayload
+  'system.login_modal_shown': LoginModalShownPayload
   'system.registration_prompt_shown': RegistrationPromptShownPayload
   'system.registration_completed': RegistrationCompletedPayload
 

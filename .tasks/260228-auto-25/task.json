@@ -1,0 +1,24 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "bug-reporting",
+    "cody-feature"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "This appears to be a test bug report - the actual result indicates the feature works as expected",
+    "The bug reporting feature at /cody is functioning correctly based on the test description"
+  ],
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains structured bug report format with Title, Environment, Preconditions, Steps to Reproduce, Expected Result, Actual Result, and Reproducibility sections. This is a well-formed bug report specification."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}

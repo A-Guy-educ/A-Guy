@@ -2,16 +2,13 @@
 /**
  * AnalyticsProvider Tests
  *
- * Tests that AnalyticsProvider subscribes to SITE_INIT and initializes analytics hooks.
+ * Tests that the consolidated AnalyticsProvider loads scripts,
+ * initializes the subscriber, and runs analytics hooks.
  */
 
-import { AnalyticsProvider } from '@/infra/analytics/AnalyticsProvider'
-import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
+import { AnalyticsProvider } from '@/infra/analytics/providers/AnalyticsProvider'
 import { render, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { usePageView } from '@/infra/analytics/hooks/usePageView'
-import { useSessionDuration } from '@/infra/analytics/hooks/useSessionDuration'
-import { usePageAbandonment } from '@/infra/analytics/hooks/usePageAbandonment'
 
 // Mock Next.js router hooks
 vi.mock('next/navigation', () => ({
@@ -22,55 +19,86 @@ vi.mock('next/navigation', () => ({
 }))
 
 // Mock analytics hooks
+const mockUsePageView = vi.fn()
+const mockUseSessionDuration = vi.fn()
+const mockUsePageAbandonment = vi.fn()
+
 vi.mock('@/infra/analytics/hooks/usePageView', () => ({
-  usePageView: vi.fn(),
+  usePageView: (...args: unknown[]) => mockUsePageView(...args),
 }))
 
 vi.mock('@/infra/analytics/hooks/useSessionDuration', () => ({
-  useSessionDuration: vi.fn(),
+  useSessionDuration: (...args: unknown[]) => mockUseSessionDuration(...args),
 }))
 
 vi.mock('@/infra/analytics/hooks/usePageAbandonment', () => ({
-  usePageAbandonment: vi.fn(),
+  usePageAbandonment: (...args: unknown[]) => mockUsePageAbandonment(...args),
+}))
+
+// Mock adapters and scripts to avoid side effects
+vi.mock('@/infra/analytics/adapters/ga4/scripts', () => ({
+  GA4Scripts: () => null,
+}))
+
+vi.mock('@/infra/analytics/adapters/mixpanel/scripts', () => ({
+  MixpanelScripts: () => null,
+}))
+
+vi.mock('@/infra/analytics/components/UserIdentificationTracker', () => ({
+  UserIdentificationTracker: () => null,
+}))
+
+vi.mock('@/infra/analytics/system-events-subscriber', () => ({
+  initAnalyticsSubscriber: vi.fn(() => vi.fn()),
+}))
+
+vi.mock('@/infra/analytics/config', () => ({
+  analyticsConfig: {
+    enabled: true,
+    debugMode: false,
+    ga4: { enabled: false },
+    mixpanel: { enabled: false },
+  },
+  validateConfig: vi.fn(),
 }))
 
 describe('AnalyticsProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    systemEventBus.reset()
+    // Mock sessionStorage
+    vi.stubGlobal('sessionStorage', {
+      getItem: vi.fn(() => null),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    })
   })
 
   afterEach(() => {
     vi.clearAllMocks()
+    vi.unstubAllGlobals()
   })
 
-  it('does not initialize analytics before SITE_INIT', () => {
-    render(<AnalyticsProvider />)
+  it('calls analytics hooks on render', async () => {
+    render(
+      <AnalyticsProvider>
+        <div>child</div>
+      </AnalyticsProvider>,
+    )
 
-    expect(usePageView).not.toHaveBeenCalled()
-    expect(useSessionDuration).not.toHaveBeenCalled()
-    expect(usePageAbandonment).not.toHaveBeenCalled()
-  })
-
-  it('initializes analytics after SITE_INIT event', async () => {
-    render(<AnalyticsProvider />)
-
-    // Emit SITE_INIT event
-    systemEventBus.emit(SYSTEM_EVENTS.SITE_INIT, {})
-
-    // Wait for the component to re-render
     await waitFor(() => {
-      expect(usePageView).toHaveBeenCalled()
-      expect(useSessionDuration).toHaveBeenCalled()
-      expect(usePageAbandonment).toHaveBeenCalled()
+      expect(mockUsePageView).toHaveBeenCalled()
+      expect(mockUseSessionDuration).toHaveBeenCalled()
+      expect(mockUsePageAbandonment).toHaveBeenCalled()
     })
   })
 
-  it('subscribes to SITE_INIT event on mount', () => {
-    const onSpy = vi.spyOn(systemEventBus, 'on')
+  it('renders children', () => {
+    const { getByText } = render(
+      <AnalyticsProvider>
+        <div>test child</div>
+      </AnalyticsProvider>,
+    )
 
-    render(<AnalyticsProvider />)
-
-    expect(onSpy).toHaveBeenCalledWith(SYSTEM_EVENTS.SITE_INIT, expect.any(Function))
+    expect(getByText('test child')).toBeTruthy()
   })
 })

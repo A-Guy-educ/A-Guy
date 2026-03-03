@@ -11,10 +11,13 @@ import type { CollectionConfig } from 'payload'
 
 import { DEFAULT_ACCESS_TYPE, DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
+import { contentLocaleField } from '@/server/payload/fields/contentLocale'
 import { anyone } from '../access/anyone'
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
+import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
+import { validateTreeIsolationOnPublish } from '../hooks/courses/validateTreeIsolation'
 
 const formatSlug = (val: string): string =>
   val
@@ -38,6 +41,8 @@ export const Courses: CollectionConfig = {
         }
         return data
       },
+      enforceFieldLocaleUniqueness('courses'),
+      validateTreeIsolationOnPublish,
     ],
     afterChange: [cascadeAdminTitle],
   },
@@ -46,6 +51,7 @@ export const Courses: CollectionConfig = {
     defaultColumns: [
       'courseLabel',
       'title',
+      'locale',
       'categories',
       'slug',
       'order',
@@ -57,6 +63,8 @@ export const Courses: CollectionConfig = {
   fields: [
     // Tenant
     tenantField,
+    // Content locale
+    contentLocaleField,
     {
       name: 'courseLabel',
       type: 'text',
@@ -204,7 +212,7 @@ export const Courses: CollectionConfig = {
       type: 'text',
       required: false,
       index: true,
-      unique: true,
+      // unique: false — uniqueness is now per (slug, locale), enforced by hook
       admin: {
         position: 'sidebar',
         description: 'URL-friendly identifier (auto-generated from title if empty)',

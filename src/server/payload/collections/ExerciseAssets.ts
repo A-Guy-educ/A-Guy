@@ -12,29 +12,13 @@ export const ExerciseAssets: CollectionConfig = {
     update: authenticated,
   },
   upload: {
-    staticDir: 'exercise-assets',
-    // Commented out imageSizes to ensure SVGs are not processed/rasterized or broken by sharp.
-    // imageSizes: [
-    //   {
-    //     name: 'thumbnail',
-    //     width: 400,
-    //     height: 300,
-    //     position: 'centre',
-    //   },
-    //   {
-    //     name: 'card',
-    //     width: 768,
-    //     height: 1024,
-    //     position: 'centre',
-    //   },
-    //   {
-    //     name: 'tablet',
-    //     width: 1024,
-    //     height: undefined,
-    //     position: 'centre',
-    //   },
-    // ],
-    adminThumbnail: 'thumbnail',
+    // Vercel Blob storage plugin handles actual file storage
+    // Plugin injects disableLocalStorage: true and adapter handlers
+    // Show thumbnail in admin list view - returns URL or false
+    adminThumbnail: ({ doc }) => {
+      const docData = doc as { url?: string }
+      return docData.url || false
+    },
     mimeTypes: ['image/svg+xml', 'image/png'],
   },
   fields: [

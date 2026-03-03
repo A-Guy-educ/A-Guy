@@ -29,7 +29,7 @@ export async function GET() {
 interface PromptOption {
   id: string
   title: string
-  key: string
+  promptKey: string
   type: string
   usage: string
   status: string
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     const mapPromptToOption = (p: Prompt): PromptOption => ({
       id: p.id,
       title: p.title ?? '',
-      key: p.key ?? '',
+      promptKey: p.promptKey ?? '',
       type: p.type ?? '',
       usage: p.usage ?? '',
       status: p.status ?? 'draft',

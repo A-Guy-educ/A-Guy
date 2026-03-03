@@ -7,7 +7,7 @@ import { queryLessonsByCourse } from '@/server/repos/queries/lessons'
 import { SystemParams } from '@/infra/config/system-params'
 import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
-import { stripHtml } from '@/lib/utils/strip-html'
+import { stripHtml } from '@/utils/strip-html'
 import { CoursePageContent } from './_components/CoursePageContent'
 
 interface CoursePageProps {

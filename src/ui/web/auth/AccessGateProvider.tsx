@@ -1,6 +1,8 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { useAccessGate } from '@/client/hooks/useAccessGate'
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import type { AccessType } from '@/server/constants/access-types'
 import {
   Dialog,
@@ -43,6 +45,33 @@ export function AccessGateProvider({
   } = useAccessGate({ accessType, courseSlug, gatedDelayMs, gatedWarningMs })
 
   const isBlocked = showMandatoryModal || showGatedModal
+
+  // Track which modal type is currently shown (fire once per modal appearance)
+  const hasFiredRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    const triggerType = showMandatoryModal
+      ? 'mandatory'
+      : showGatedModal
+        ? 'gated'
+        : showWarningModal
+          ? 'warning'
+          : null
+
+    if (triggerType && hasFiredRef.current !== triggerType) {
+      hasFiredRef.current = triggerType
+      systemEventBus.emit(SYSTEM_EVENTS.LOGIN_MODAL_SHOWN, {
+        trigger_type: triggerType,
+        course_slug: courseSlug,
+        current_page: pathname,
+      })
+    }
+
+    // Reset when all modals close so it fires again on next appearance
+    if (!triggerType) {
+      hasFiredRef.current = null
+    }
+  }, [showMandatoryModal, showGatedModal, showWarningModal, courseSlug, pathname])
 
   return (
     <>

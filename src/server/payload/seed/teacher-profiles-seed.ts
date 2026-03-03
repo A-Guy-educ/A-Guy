@@ -112,7 +112,7 @@ export async function seedTeacherProfiles(payload: Payload): Promise<void> {
     // Check if prompt already exists
     const existingPrompt = await payload.find({
       collection: 'prompts',
-      where: { key: { equals: profile.promptKey } },
+      where: { promptKey: { equals: profile.promptKey } },
       limit: 1,
       overrideAccess: true,
     })
@@ -130,7 +130,8 @@ export async function seedTeacherProfiles(payload: Payload): Promise<void> {
         collection: 'prompts',
         data: {
           title: profile.promptTitle,
-          key: profile.promptKey,
+          promptKey: profile.promptKey,
+          locale: 'he',
           type: 'context',
           template: profile.promptTemplate,
           status: 'published',

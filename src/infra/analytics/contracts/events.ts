@@ -18,8 +18,8 @@ export const PRODUCT_EVENTS = {
   PAGE_VIEW: 'page_view',
   SESSION_STARTED: 'session_started',
   SESSION_ENDED: 'session_ended', // GA4 + Mixpanel - tracks session duration
-  PAGE_ABANDONED: 'page_abandoned', // Mixpanel only - tracks when user leaves page
-  VISIBILITY_CHANGED: 'visibility_changed', // Mixpanel only - tracks tab/window visibility
+  TAB_AWAY: 'tab_away', // Mixpanel only - user switched away from tab
+  TAB_BACK: 'tab_back', // Mixpanel only - user returned to tab
 
   // User Identity (Mixpanel only)
   USER_IDENTIFIED: 'user_identified',
@@ -32,6 +32,9 @@ export const PRODUCT_EVENTS = {
   // Content Events (Mixpanel only)
   PDF_VIEWED: 'pdf_viewed',
   CHAT_MESSAGE_SENT: 'chat_message_sent',
+
+  // Auth Gate Events
+  LOGIN_MODAL_SHOWN: 'login_modal_shown', // Mixpanel only - auth gate modal appeared
 
   // Registration Events
   REGISTRATION_PROMPT_SHOWN: 'registration_prompt_shown',

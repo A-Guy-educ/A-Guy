@@ -109,6 +109,7 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Conversion API', () => {
         data: {
           title: `Test Category ${timestamp}`,
           slug: `test-category-${timestamp}`,
+          locale: 'he',
         },
       })
 
@@ -119,6 +120,7 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Conversion API', () => {
           courseLabel: 'Test',
           title: `Test Course ${timestamp}`,
           slug: `test-course-${timestamp}`,
+          locale: 'he',
           order: 0,
           status: 'published',
           isActive: true,
@@ -243,6 +245,7 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Conversion API', () => {
         data: {
           title: `Test Category ${timestamp}`,
           slug: `test-category-${timestamp}`,
+          locale: 'he',
         },
       })
 
