@@ -1,0 +1,31 @@
+{
+  "task_type": "refactor",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/services/exercise-conversion/v2/vision-text-combo-service.ts",
+    "src/server/services/exercise-conversion/v2/text-detection-service.ts",
+    "src/server/services/exercise-conversion/v2/ocr-detection-service.ts",
+    "src/app/api/jobs/run-immediate/route.ts",
+    "src/app/api/exercises/import/route.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The @/infra/utils/logger (Pino-based) is already configured and importable",
+    "All console.log statements in these files are for debugging/development purposes",
+    "No conditional logging logic needs to be preserved"
+  ],
+  "review_questions": [],
+  "complexity": 17,
+  "complexity_reasoning": "Scope: 5 files in same module (12 pts). Risk: Low logging changes only (2 pts). Novelty: Using existing logger pattern (2 pts). Cross-domain: Single backend domain (0 pts). Ambiguity: Clear file paths and specific changes (1 pt). Dependencies: Self-contained refactor (0 pts). Total: 17 → Simple",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task provides specific file paths (5 files), exact console.log counts, and clear replacement pattern with structured logger. Promoted spec.md for lightweight pipeline."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
