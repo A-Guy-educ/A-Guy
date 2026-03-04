@@ -31,6 +31,8 @@ export interface SimpleExtraction {
   correctAnswer: number | null // index into options, or null
   explanation?: string
   acceptedAnswer?: string // for free_response questions
+  diagramDescription?: string // NEW: markdown+LaTeX description of diagram
+  diagramPosition?: 'before_question' | 'after_question' // NEW: position of diagram block
 }
 
 // ---------------------------------
@@ -44,6 +46,8 @@ export interface PreviewDraft {
   correctAnswer: number | null
   explanation?: string
   questionType: 'free_response' | 'true_false' | 'mcq'
+  diagramDescription?: string // NEW: markdown+LaTeX description of diagram
+  diagramPosition?: string // NEW: position of diagram block
 }
 
 // ---------------------------------
@@ -91,7 +95,8 @@ function createRichTextBlock(value: string): ContentBlock {
  * Preserves null correctAnswer for admin editing.
  */
 export function toPreviewDraft(extraction: SimpleExtraction): PreviewDraft {
-  const { question, options, correctAnswer, explanation } = extraction
+  const { question, options, correctAnswer, explanation, diagramDescription, diagramPosition } =
+    extraction
 
   // Determine question type
   let questionType: PreviewDraft['questionType']
@@ -113,6 +118,8 @@ export function toPreviewDraft(extraction: SimpleExtraction): PreviewDraft {
     correctAnswer,
     explanation,
     questionType,
+    diagramDescription,
+    diagramPosition,
   }
 }
 
@@ -126,9 +133,30 @@ export function toPreviewDraft(extraction: SimpleExtraction): PreviewDraft {
  * Throws if content is invalid.
  */
 export function toExerciseContent(extraction: SimpleExtraction): TransformResult {
-  const { question, options, correctAnswer, explanation, acceptedAnswer } = extraction
+  const {
+    question,
+    options,
+    correctAnswer,
+    explanation,
+    acceptedAnswer,
+    diagramDescription,
+    diagramPosition,
+  } = extraction
 
   const blocks: ContentBlock[] = []
+
+  // Build diagram block if present (will be inserted based on position after question block is added)
+  let diagramBlock: ContentBlock | null = null
+  if (diagramDescription?.trim()) {
+    diagramBlock = createRichTextBlock(diagramDescription)
+    const position = diagramPosition ?? 'before_question'
+    if (position === 'before_question') {
+      // Will be added before question block
+    } else {
+      // Will be added after question block - mark for later insertion
+      diagramBlock = diagramBlock
+    }
+  }
 
   // Determine question type and build appropriate block
   if (options.length === 0) {
@@ -203,6 +231,16 @@ export function toExerciseContent(extraction: SimpleExtraction): TransformResult
     blocks.push(block)
   }
 
+  // Insert diagram block based on position
+  const position = diagramPosition ?? 'before_question'
+  if (diagramBlock && position === 'before_question') {
+    // Insert at start (before question)
+    blocks.unshift(diagramBlock)
+  } else if (diagramBlock && position === 'after_question') {
+    // Insert after question (at index 1)
+    blocks.splice(1, 0, diagramBlock)
+  }
+
   // Add explanation as rich_text block if present
   if (explanation && explanation.trim()) {
     blocks.push(createRichTextBlock(explanation))
@@ -250,6 +288,8 @@ export function rebuildFromPreview(
     correctAnswer: edited.correctAnswer,
     explanation: edited.explanation,
     acceptedAnswer: edited.acceptedAnswer,
+    diagramDescription: edited.diagramDescription || undefined,
+    diagramPosition: (edited.diagramPosition as 'before_question' | 'after_question') || undefined,
   }
 
   return toExerciseContent(extraction)

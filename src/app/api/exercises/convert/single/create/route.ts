@@ -40,6 +40,8 @@ const createRequestSchema = z.object({
   explanation: z.string().optional(),
   acceptedAnswer: z.string().optional(),
   extractionLogId: z.string().min(1),
+  diagramDescription: z.string().optional(),
+  diagramPosition: z.enum(['before_question', 'after_question']).optional(),
 })
 
 type CreateRequest = z.infer<typeof createRequestSchema>
@@ -61,6 +63,8 @@ export const POST = withApiHandler<CreateRequest, unknown>(
       explanation,
       acceptedAnswer,
       extractionLogId,
+      diagramDescription,
+      diagramPosition,
     } = body
 
     // Step 1: Rebuild content from edited preview fields
@@ -72,6 +76,8 @@ export const POST = withApiHandler<CreateRequest, unknown>(
       correctAnswer,
       explanation,
       acceptedAnswer,
+      diagramDescription,
+      diagramPosition,
     })
 
     // Use derived title if none provided

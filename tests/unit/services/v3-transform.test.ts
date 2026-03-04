@@ -157,6 +157,18 @@ describe('V3 Transform Service', () => {
 
       expect(result.questionType).toBe('mcq')
     })
+
+    it('toPreviewDraft with undefined diagramDescription has no diagramDescription property', () => {
+      const extraction: SimpleExtraction = {
+        question: 'What is 2+2?',
+        options: ['3', '4', '5', '6'],
+        correctAnswer: 1,
+      }
+
+      const result = toPreviewDraft(extraction)
+
+      expect(result.diagramDescription).toBeUndefined()
+    })
   })
 
   // ============================================
@@ -354,6 +366,20 @@ describe('V3 Transform Service', () => {
       const result = toExerciseContent(extraction)
 
       expect(result.title).toBe('A'.repeat(77) + '...')
+    })
+
+    it('produces same block count with undefined diagramDescription', () => {
+      const extraction: SimpleExtraction = {
+        question: 'What is 2+2?',
+        options: ['3', '4', '5', '6'],
+        correctAnswer: 1,
+      }
+
+      const result = toExerciseContent(extraction)
+
+      // Only question block, no diagram block added
+      expect(result.content.blocks).toHaveLength(1)
+      expect((result.content.blocks[0] as any).type).toBe('question_select')
     })
   })
 

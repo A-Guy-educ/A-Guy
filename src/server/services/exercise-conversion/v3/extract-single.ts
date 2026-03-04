@@ -18,8 +18,8 @@
 import type { Payload } from 'payload'
 
 import {
-  extractFromImage,
-  type ImageToExerciseResponse,
+  extractFromImageV3,
+  type ImageToExerciseV3Response,
 } from '@/infra/llm/services/data-extractor-service'
 import { fetchBuffer } from '@/infra/utils/http'
 import type { Lesson, Media } from '@/payload-types'
@@ -193,9 +193,9 @@ export async function extractSingle(
   }
 
   // Step 5: Extract with LLM
-  let llmResult: ImageToExerciseResponse
+  let llmResult: ImageToExerciseV3Response
   try {
-    llmResult = await extractFromImage(
+    llmResult = await extractFromImageV3(
       {
         imageBuffer,
         mimeType,

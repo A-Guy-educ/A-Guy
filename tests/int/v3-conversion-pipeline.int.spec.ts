@@ -57,6 +57,14 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
 
   vi.mock('@/infra/llm/services/data-extractor-service', () => ({
     extractFromImage: vi.fn().mockResolvedValue(mockExtractionResponse),
+    extractFromImageV3: vi.fn().mockResolvedValue({
+      ...mockExtractionResponse,
+      data: {
+        ...mockExtractionResponse.data,
+        diagramDescription: '**Diagram:** Right triangle $ABC$ where $AB = 5$ cm',
+        diagramPosition: 'before_question',
+      },
+    }),
   }))
 
   vi.mock('@/server/services/pdf-fetcher', () => ({
