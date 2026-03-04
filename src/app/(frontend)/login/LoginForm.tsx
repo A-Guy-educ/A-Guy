@@ -40,24 +40,24 @@ function LoginFormContent() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <p className="text-sm text-muted-foreground text-center">{t('subtitle')}</p>
+    <Card className="p-card-padding">
+      <CardHeader className="pb-card-padding-sm">
+        <p className="text-body-sm text-muted-foreground text-center">{t('subtitle')}</p>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col items-center space-y-4">
+        <div className="flex flex-col items-center gap-content-gap">
           <GoogleLoginButton returnTo={returnTo} className="w-full" />
 
           {passwordEnabled && (
             <>
               <div className="flex items-center w-full gap-3">
                 <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground">{tOauth('orDivider')}</span>
+                <span className="text-body-xs text-muted-foreground">{tOauth('orDivider')}</span>
                 <div className="flex-1 h-px bg-border" />
               </div>
 
-              <form onSubmit={handleSubmit} className="w-full space-y-3">
-                <div className="space-y-1">
+              <form onSubmit={handleSubmit} className="w-full gap-content-gap-sm">
+                <div className="flex flex-col gap-1">
                   <Label htmlFor="email">{t('email')}</Label>
                   <Input
                     id="email"
@@ -67,7 +67,7 @@ function LoginFormContent() {
                     required
                   />
                 </div>
-                <div className="space-y-1">
+                <div className="flex flex-col gap-1">
                   <Label htmlFor="password">{t('password')}</Label>
                   <Input
                     id="password"
@@ -77,13 +77,13 @@ function LoginFormContent() {
                     required
                   />
                 </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
+                {error && <p className="text-body-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? t('loggingIn') : t('loginButton')}
                 </Button>
               </form>
 
-              <p className="text-sm text-muted-foreground">
+              <p className="text-body-sm text-muted-foreground">
                 {t('noAccount')}{' '}
                 <SystemLink href="/signup" className="underline hover:no-underline">
                   {t('signupLink')}
@@ -93,7 +93,9 @@ function LoginFormContent() {
           )}
 
           {!passwordEnabled && (
-            <p className="text-xs text-muted-foreground text-center">{t('googleOnlyMessage')}</p>
+            <p className="text-body-xs text-muted-foreground text-center">
+              {t('googleOnlyMessage')}
+            </p>
           )}
         </div>
       </CardContent>
@@ -111,12 +113,12 @@ export function LoginForm() {
 
 function LoginFormSkeleton() {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="p-card-padding">
+      <CardHeader className="pb-card-padding-sm">
         <div className="h-4 w-48 mx-auto bg-muted animate-pulse rounded" />
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col items-center space-y-4">
+        <div className="flex flex-col items-center gap-content-gap">
           <div className="w-full h-10 bg-muted animate-pulse rounded" />
           <div className="h-3 w-64 bg-muted animate-pulse rounded" />
         </div>
