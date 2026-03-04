@@ -6,7 +6,7 @@
  */
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/ui/web/components/button'
 import {
   Dialog,
@@ -28,11 +28,20 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { codyApi } from '../api'
 import { useCollaborators } from '../hooks'
+import { X, Upload } from 'lucide-react'
+import { cn } from '@/infra/utils/ui'
 
 interface BugReportDialogProps {
   open: boolean
   onClose: () => void
   onCreated?: () => void
+}
+
+interface AttachmentFile {
+  name: string
+  content: string
+  preview: string
+  type: string
 }
 
 export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogProps) {
@@ -62,6 +71,11 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
   // Assignees
   const [assignees, setAssignees] = useState<string[]>([])
 
+  // Attachments
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([])
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   // Fetch collaborators
   const { data: collaborators = [] } = useCollaborators()
 
@@ -81,6 +95,7 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
       mode: string
       labels?: string[]
       assignees?: string[]
+      attachments?: Array<{ name: string; content: string }>
     }) => codyApi.tasks.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
@@ -100,8 +115,74 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
       setActualResult('')
       setReproducibility('always')
       setAssignees([])
+      setAttachments([])
     }
   }, [open])
+
+  // Convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = reader.result as string
+        const base64 = result.split(',')[1]
+        resolve(base64)
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
+  // Handle file selection
+  const handleFiles = async (files: FileList | null) => {
+    if (!files) return
+
+    const newAttachments: AttachmentFile[] = []
+    const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+
+    for (const file of Array.from(files)) {
+      if (!imageTypes.includes(file.type)) continue
+      if (file.size > 10 * 1024 * 1024) continue
+
+      const base64 = await fileToBase64(file)
+      const reader = new FileReader()
+      const preview = await new Promise<string>((resolve) => {
+        reader.onload = () => resolve(reader.result as string)
+        reader.readAsDataURL(file)
+      })
+
+      newAttachments.push({
+        name: file.name,
+        content: base64,
+        preview,
+        type: file.type,
+      })
+    }
+
+    setAttachments((prev) => [...prev, ...newAttachments].slice(0, 5))
+  }
+
+  // Handle drag and drop
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    handleFiles(e.dataTransfer.files)
+  }
+
+  // Remove attachment
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -110,7 +191,14 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
     const body = formatBugReport()
 
     createBug.mutate(
-      { title, body, mode: 'bug', labels: ['bug'], assignees },
+      {
+        title,
+        body,
+        mode: 'bug',
+        labels: ['bug'],
+        assignees,
+        attachments: attachments.map((a) => ({ name: a.name, content: a.content })),
+      },
       {
         onSuccess: () => {
           onCreated?.()
@@ -200,6 +288,59 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
             <p className="text-xs text-muted-foreground">Format: [Component] Short description</p>
           </div>
 
+          {/* Attachments */}
+          <div className="grid gap-2">
+            <Label>Attachments (screenshots)</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              multiple
+              className="hidden"
+              onChange={(e) => handleFiles(e.target.files)}
+            />
+
+            {attachments.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {attachments.map((attachment, index) => (
+                  <div key={index} className="relative group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={attachment.preview}
+                      alt={attachment.name}
+                      className="w-16 h-16 object-cover rounded-md border"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(index)}
+                      className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {attachments.length < 5 && (
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={cn(
+                  'border-2 border-dashed rounded-lg p-3 text-center cursor-pointer transition-colors',
+                  isDragging
+                    ? 'border-primary bg-primary/5'
+                    : 'border-muted-foreground/25 hover:border-muted-foreground/50',
+                )}
+              >
+                <Upload className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">Drop screenshots here</p>
+              </div>
+            )}
+          </div>
+
           {/* Assignees */}
           <div className="grid gap-2">
             <Label>Assignees</Label>
@@ -222,7 +363,7 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
             )}
           </div>
 
-          {/* Environment */}
+          {/* environment */}
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="environment">Environment</Label>
