@@ -26,7 +26,12 @@ export class GitHubRunner implements RunnerBackend {
   name = 'opencode-github'
 
   spawn(stage: string, prompt: string, env: NodeJS.ProcessEnv, cwd: string): ChildProcess {
-    console.error('[DEBUG] GitHubRunner spawn called, stage:', stage, 'prompt length:', prompt.length)
+    console.error(
+      '[DEBUG] GitHubRunner spawn called, stage:',
+      stage,
+      'prompt length:',
+      prompt.length,
+    )
     // Use opencode run --agent instead of opencode github run
     // opencode github run does NOT support --agent flag and ignores AGENT env var
     // opencode run supports --agent which loads correct agent from opencode.json
