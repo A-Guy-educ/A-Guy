@@ -37,3 +37,12 @@ export type { ErrorStateProps } from './EmptyState/ErrorState'
 // Markdown
 export { MathMarkdown } from './MathMarkdown'
 export type { MathMarkdownProps } from './MathMarkdown'
+
+// Math Input
+export { MathField, MathFieldToolbar, FormulaComposer } from './MathInput'
+export type {
+  MathFieldProps,
+  MathFieldRef,
+  MathFieldToolbarProps,
+  FormulaComposerProps,
+} from './MathInput'
