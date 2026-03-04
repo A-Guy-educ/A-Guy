@@ -11,6 +11,7 @@ interface SubQuestionDraft {
   options: string[]
   correctAnswer: number | null
   acceptedAnswer?: string
+  diagramDescription?: string // NEW: diagram specific to this sub-question
 }
 
 interface MultiPartPreviewDraft {
@@ -350,6 +351,39 @@ export function V3PreviewPanel({
                 marginBottom: 8,
               }}
             />
+
+            {/* Per-sub-question diagram (if present) */}
+            {(sq.diagramDescription || '') && (
+              <div style={{ marginBottom: 8 }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 10,
+                    fontWeight: 500,
+                    marginBottom: 4,
+                    color: 'var(--theme-elevation-600)',
+                  }}
+                >
+                  Diagram for this sub-question
+                </label>
+                <textarea
+                  value={sq.diagramDescription || ''}
+                  onChange={(e) => updateSubQuestion(idx, { diagramDescription: e.target.value })}
+                  rows={2}
+                  placeholder="Diagram description (optional)..."
+                  style={{
+                    width: '100%',
+                    padding: '6px 8px',
+                    fontSize: 11,
+                    border: '1px solid var(--theme-elevation-200)',
+                    borderRadius: 3,
+                    backgroundColor: 'var(--theme-elevation-0)',
+                    color: 'var(--theme-elevation-1000)',
+                    resize: 'vertical',
+                  }}
+                />
+              </div>
+            )}
 
             {/* Options for MCQ */}
             {sq.type === 'mcq' && (

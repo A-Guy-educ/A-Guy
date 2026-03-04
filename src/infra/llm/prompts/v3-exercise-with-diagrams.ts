@@ -22,17 +22,22 @@ Return ONLY valid JSON (no markdown code blocks, no explanations):
     {
       "prompt": "Sub-question text (may include grouped sub-parts like (1), (2), (3))",
       "type": "free_response",
-      "acceptedAnswers": ["expected answer"]
+      "acceptedAnswers": ["expected answer"],
+      "diagramDescription": null
     },
     {
-      "prompt": "Another sub-question text",
+      "prompt": "Another sub-question text that references a specific diagram",
+      "type": "free_response",
+      "diagramDescription": "**Diagram for ב:** A separate triangle $DEF$ with ..."
+    },
+    {
+      "prompt": "Third sub-question text",
       "type": "mcq",
       "options": ["A", "B", "C", "D"],
       "correctAnswer": 2
     }
   ],
-  "diagramDescription": "**Diagram:** Right triangle $ABC$ where ...",
-  "diagramPosition": "before_question"
+  "diagramDescription": "**Diagram:** Right triangle $ABC$ where ...\n\n**For א:** Given $AB = CB$.\n**For ב:** Given $AC$ bisects $\\angle ECD$, $\\frac{CD}{CF} = \\frac{8}{5}$."
 }
 
 ## Multi-Part Exercise Rules
@@ -48,17 +53,28 @@ Return ONLY valid JSON (no markdown code blocks, no explanations):
 - For "free_response": provide "acceptedAnswers" array with expected answer(s)
 
 ## Diagram Description Rules
-- If NO diagram/figure/graph is present: omit diagramDescription and diagramPosition entirely
-- If a diagram IS present:
-  - Begin the description with "**Diagram:**"
-  - Describe all visible geometric elements: shapes, vertices, labeled points, sides, angles
-  - Use LaTeX for all mathematical notation: lengths ($AB = 5$ cm), angles ($\\angle B = 90^\\circ$), expressions ($f(x) = x^2$)
-  - ONLY describe labels and values that are EXPLICITLY VISIBLE in the image
-  - If an element is present but unlabeled, describe it without inventing values (e.g., "a line segment from $A$ to $D$" not "a line segment $AD = 3$ cm")
-  - For coordinate graphs: describe axes, labeled points, function curves, shaded regions
-  - For geometric figures: describe shapes, labeled vertices, marked angles, tick marks indicating equal sides
-  - Keep the description concise but complete — one paragraph
-  - Set diagramPosition to "before_question" if the diagram appears above/before the question text, "after_question" if it appears below/after
+
+### Global vs Per-Sub-Question Diagrams
+- Global diagram (top-level diagramDescription): If a diagram applies to the whole exercise OR multiple sub-questions, put it in the top-level diagramDescription field
+  - Enrich with per-sub-question details: if a sub-question adds information about the diagram (e.g., 'given: AB = CB'), append it as '**For א:** Given $AB = CB$' to the global description
+- Per-sub-question diagram: If a diagram is specific to ONLY ONE sub-question (e.g., 'see diagram' appears only in ג), put the description in that sub-question's diagramDescription field
+  - Prefix with '**Diagram for [letter]:**' (e.g., '**Diagram for ג:**')
+- Multiple diagrams: An exercise may have a global diagram AND per-sub-question diagrams. Use both fields when appropriate.
+- No diagram: Omit both fields entirely (or set to null/undefined)
+
+### Diagram Content Guidelines
+- Begin the description with "**Diagram:**" (for global) or "**Diagram for X:**" (for per-sub-question)
+- Describe all visible geometric elements: shapes, vertices, labeled points, sides, angles
+- Use LaTeX for all mathematical notation: lengths ($AB = 5$ cm), angles ($\\angle B = 90^\\circ$), expressions ($f(x) = x^2$)
+- ONLY describe labels and values that are EXPLICITLY VISIBLE in the image
+- If an element is present but unlabeled, describe it without inventing values (e.g., "a line segment from $A$ to $D$" not "a line segment $AD = 3$ cm")
+- For coordinate graphs: describe axes, labeled points, function curves, shaded regions
+- For geometric figures: describe shapes, labeled vertices, marked angles, tick marks indicating equal sides
+- Keep the description concise but complete — one paragraph
+
+### Note on diagramPosition
+- The top-level diagramPosition field is deprecated — global diagrams always go before the stem.
+- Omit diagramPosition from your response (it's kept for backward compatibility but will be ignored).
 
 ## Text Extraction Rules
 1. Extract the exact text from the image (preserve Hebrew/RTL text if present)
