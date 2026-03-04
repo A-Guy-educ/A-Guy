@@ -191,6 +191,11 @@ function normalizeToMultiPart(
           acceptedAnswers: Array.isArray(sqObj.acceptedAnswers)
             ? sqObj.acceptedAnswers.map((a) => String(a))
             : undefined,
+          // NEW: pass through per-sub-question diagram
+          diagramDescription:
+            typeof sqObj.diagramDescription === 'string' && sqObj.diagramDescription.trim()
+              ? sqObj.diagramDescription
+              : undefined,
         }
       }),
       diagramDescription,
@@ -238,6 +243,7 @@ export interface MultiPartExtractionResult {
     options?: string[]
     correctAnswer?: number | null
     acceptedAnswers?: string[]
+    diagramDescription?: string // NEW: diagram specific to this sub-question
   }>
   diagramDescription?: string
   diagramPosition?: 'before_question' | 'after_question'

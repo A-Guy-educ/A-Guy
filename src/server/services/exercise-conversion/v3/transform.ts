@@ -31,6 +31,7 @@ export interface SubQuestionExtraction {
   options?: string[]
   correctAnswer?: number | null
   acceptedAnswers?: string[]
+  diagramDescription?: string // NEW: diagram specific to this sub-question
 }
 
 export interface MultiPartExtraction {
@@ -46,6 +47,7 @@ export interface SubQuestionDraft {
   options: string[]
   correctAnswer: number | null
   acceptedAnswer?: string
+  diagramDescription?: string // NEW: diagram specific to this sub-question
 }
 
 export interface MultiPartPreviewDraft {
@@ -373,6 +375,7 @@ export function multiPartToPreviewDraft(extraction: MultiPartExtraction): MultiP
       options: sq.options || [],
       correctAnswer: sq.correctAnswer ?? null,
       acceptedAnswer: sq.acceptedAnswers?.[0] || '',
+      diagramDescription: sq.diagramDescription, // NEW: pass through per-sub-question diagram
     }
   })
 
@@ -511,9 +514,13 @@ export function multiPartToExerciseContent(extraction: MultiPartExtraction): Tra
     blocks.push(diagramBlock)
   }
 
-  // Add each sub-question as a separate block
+  // Add each sub-question, preceded by its diagram if it has one
   for (const sq of subQuestions) {
     if (sq.prompt?.trim()) {
+      // Insert per-sub-question diagram BEFORE the question block
+      if (sq.diagramDescription?.trim()) {
+        blocks.push(createRichTextBlock(sq.diagramDescription))
+      }
       blocks.push(createQuestionBlock(sq))
     }
   }
@@ -553,6 +560,7 @@ export function rebuildFromMultiPartPreview(edited: MultiPartPreviewDraft): Tran
       options: sq.options,
       correctAnswer: sq.correctAnswer,
       acceptedAnswers: sq.acceptedAnswer ? [sq.acceptedAnswer] : undefined,
+      diagramDescription: sq.diagramDescription, // NEW: pass through per-sub-question diagram
     })),
     diagramDescription: edited.diagramDescription,
     diagramPosition: (edited.diagramPosition as 'before_question' | 'after_question') || undefined,
