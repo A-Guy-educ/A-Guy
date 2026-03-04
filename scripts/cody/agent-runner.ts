@@ -94,6 +94,8 @@ export interface AgentRunResult {
   retries: number
   /** Validation errors from failed content validation attempts */
   validationErrors?: string[]
+  /** Session ID from opencode for chat history capture */
+  sessionId?: string
 }
 
 // ============================================================================
