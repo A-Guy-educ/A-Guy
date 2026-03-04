@@ -707,6 +707,9 @@ export function parseCliArgs(argv: string[]): CodyInput {
   if (!cliSet.has('version') && process.env.VERSION) {
     input.version = process.env.VERSION
   }
+  if (!cliSet.has('fresh') && process.env.FRESH === 'true') {
+    input.fresh = true
+  }
   if (!cliSet.has('complexityOverride') && process.env.COMPLEXITY) {
     const val = parseInt(process.env.COMPLEXITY, 10)
     if (!isNaN(val) && val >= 1 && val <= 100) {

@@ -362,6 +362,7 @@ jobs:
           TRIGGER_TYPE: ${{ needs.parse.outputs.trigger_type }}
           COMMENT_BODY: ${{ needs.parse.outputs.comment_body }}
           VERSION: ${{ needs.parse.outputs.version }}
+          FRESH: ${{ needs.parse.outputs.fresh }}
 
           # GitHub context
           RUN_ID: ${{ github.run_id }}

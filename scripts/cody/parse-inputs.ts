@@ -23,6 +23,7 @@ interface ParseOutputs {
   valid: string
   runner: string
   version: string
+  fresh: string
 }
 
 // Task ID format: YYMMDD-description (e.g., 260225-auto-90)
@@ -158,8 +159,15 @@ export function parseCommentInputs(): ParseOutputs {
     comment_body: JSON.stringify(commentBody),
   }
 
-  // Discover task-id from previous bot comments on the issue
-  if (issueNumber) {
+  // Detect --fresh flag - skip taskId discovery if fresh
+  const hasFreshFlag = /--fresh\b/.test(cmdAfterCody)
+  if (hasFreshFlag) {
+    outputs.fresh = 'true'
+    logger.info('=== Detected --fresh flag: will create new task ===')
+  }
+
+  // Discover task-id from previous bot comments on the issue (skip if fresh)
+  if (issueNumber && !hasFreshFlag) {
     const discoveredTaskId = discoverTaskIdFromIssue(issueNumber)
     if (discoveredTaskId) {
       logger.info(`=== Discovered task-id from issue: ${discoveredTaskId} ===`)
@@ -252,6 +260,7 @@ export function getDefaultOutputs(): ParseOutputs {
     valid: 'false',
     runner: 'self-hosted',
     version: process.env.CODY_DEFAULT_VERSION || '',
+    fresh: '',
   }
 }
 
@@ -280,6 +289,7 @@ function writeOutputs(outputs: ParseOutputs): void {
     `valid=${outputs.valid}`,
     `runner=${outputs.runner}`,
     `version=${outputs.version}`,
+    `fresh=${outputs.fresh}`,
   ]
 
   writeFileSync(githubOutput, lines.join('\n') + '\n')
