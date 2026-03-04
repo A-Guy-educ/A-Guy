@@ -160,7 +160,7 @@ For **trivial fixes** (complexity 1-9) with **good_spec** or higher quality, you
 **When**: complexity <= 9 AND (input_quality is `good_spec` OR `detailed_plan` OR `spec_and_plan`)
 
 **What to do**:
-1. Add `"build"` to the `skip_stages` array in task.json
+1. Add only `"spec"` to the `skip_stages` array in task.json (NOT "build" - build cannot be skipped)
 2. Write `.tasks/<task-id>/build.md` with:
    - ## Changes section describing what was implemented
    - List of files modified with specific changes
@@ -169,7 +169,7 @@ This allows the pipeline to skip the build agent (which is slow) and go straight
 
 **Example skip_stages for trivial fix**:
 ```json
-"skip_stages": ["spec", "build"]
+"skip_stages": ["spec"]
 ```
 
 **Example build.md for trivial fix**:
