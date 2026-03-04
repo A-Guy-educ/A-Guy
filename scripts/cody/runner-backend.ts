@@ -37,7 +37,7 @@ export class GitHubRunner implements RunnerBackend {
       {
         cwd,
         // Pipe stdout for JSON parsing (sessionID extraction), inherit stderr
-        stdio: ['pipe', 'pipe', 'inherit'],
+        stdio: ['ignore', 'pipe', 'inherit'], // stdin=ignore prevents opencode blocking on stdin read
         env,
       },
     )
@@ -58,7 +58,7 @@ export class LocalRunner implements RunnerBackend {
     return spawn('pnpm', ['ocode', 'run', '--agent', stage, '--format', 'json', prompt], {
       cwd,
       // Pipe stdout for JSON parsing (sessionID extraction), inherit stderr
-      stdio: ['pipe', 'pipe', 'inherit'],
+      stdio: ['ignore', 'pipe', 'inherit'], // stdin=ignore prevents opencode blocking on stdin read
       env: {
         ...env,
         AGENT: stage,
