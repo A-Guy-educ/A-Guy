@@ -268,7 +268,7 @@ export function runAgentWithFileWatch(
       let stdoutBuffer = ''
       let heartbeatTimer: NodeJS.Timeout | null = null
 
-      // Handle stdout - parse for sessionID and tee to process.stdout
+      // Handle stdout - tee to process.stdout for CI log visibility
       if (currentChild.stdout) {
         currentChild.stdout.on('data', (data: Buffer) => {
           const chunk = data.toString()
@@ -280,15 +280,6 @@ export function runAgentWithFileWatch(
 
           for (const line of lines) {
             if (!line.trim()) continue
-
-            // Try to extract sessionID from JSON line
-            if (!capturedSessionId) {
-              const sessionId = extractSessionId(line)
-              if (sessionId) {
-                capturedSessionId = sessionId
-                logger.info(`  🔗 Captured session ID: ${sessionId}`)
-              }
-            }
 
             // Tee output to process.stdout for CI log visibility
             process.stdout.write(line + '\n')
