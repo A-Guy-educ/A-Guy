@@ -95,7 +95,12 @@ function formatFileSize(bytes: number): string {
 
 export function CodyChat({ selectedTask }: CodyChatProps) {
   // Global (non-task) chat history
-  const [globalHistory, setGlobalHistory] = useState<HistoryMap>(loadGlobalHistory)
+  const [globalHistory, setGlobalHistory] = useState<HistoryMap>(emptyHistory)
+
+  // Load from localStorage after hydration (client-only)
+  useEffect(() => {
+    setGlobalHistory(loadGlobalHistory())
+  }, [])
 
   // Task-scoped messages (loaded from / saved to API)
   const [taskMessages, setTaskMessages] = useState<Message[]>([])
