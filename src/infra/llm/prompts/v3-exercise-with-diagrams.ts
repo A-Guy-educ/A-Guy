@@ -16,28 +16,25 @@ Analyze the provided image and extract:
 ## Output Format
 Return ONLY valid JSON (no markdown code blocks, no explanations):
 
+// Example 1: Global diagram (multiple sub-questions reference it)
 {
-  "stem": "Shared context text (the given information, if any). For example: 'Given: triangle ABC where AB = 5, BC = 12'",
+  "stem": "Given: triangle ABC where AB = 5, BC = 12",
   "subQuestions": [
-    {
-      "prompt": "Sub-question text (may include grouped sub-parts like (1), (2), (3))",
-      "type": "free_response",
-      "acceptedAnswers": ["expected answer"],
-      "diagramDescription": null
-    },
-    {
-      "prompt": "Another sub-question text that references a specific diagram",
-      "type": "free_response",
-      "diagramDescription": "**Diagram for ב:** A separate triangle $DEF$ with ..."
-    },
-    {
-      "prompt": "Third sub-question text",
-      "type": "mcq",
-      "options": ["A", "B", "C", "D"],
-      "correctAnswer": 2
-    }
+    { "prompt": "Find the area of triangle ABC", "type": "free_response", "diagramDescription": null },
+    { "prompt": "Find angle B", "type": "free_response", "diagramDescription": null }
   ],
-  "diagramDescription": "**Diagram:** Right triangle $ABC$ where ...\n\n**For א:** Given $AB = CB$.\n**For ב:** Given $AC$ bisects $\\angle ECD$, $\\frac{CD}{CF} = \\frac{8}{5}$."
+  "diagramDescription": "**Diagram:** Right triangle $ABC$ with $AB = 5$, $BC = 12$, right angle at $B$."
+}
+
+// Example 2: Per-sub-question diagram (only one sub-question needs it)
+{
+  "stem": null,
+  "subQuestions": [
+    { "prompt": "Solve for x: $2x + 3 = 7$", "type": "free_response", "diagramDescription": null },
+    { "prompt": "Simplify: $\\frac{x^2 - 4}{x - 2}$", "type": "free_response", "diagramDescription": null },
+    { "prompt": "Based on the graph, find $f(3)$", "type": "free_response", "diagramDescription": "**Diagram for ג:** A coordinate plane showing function $f(x)$ passing through points $(0, 1)$, $(2, 5)$, $(3, 8)$." }
+  ],
+  "diagramDescription": null
 }
 
 ## Multi-Part Exercise Rules
@@ -55,12 +52,21 @@ Return ONLY valid JSON (no markdown code blocks, no explanations):
 ## Diagram Description Rules
 
 ### Global vs Per-Sub-Question Diagrams
-- Global diagram (top-level diagramDescription): If a diagram applies to the whole exercise OR multiple sub-questions, put it in the top-level diagramDescription field
-  - Enrich with per-sub-question details: if a sub-question adds information about the diagram (e.g., 'given: AB = CB'), append it as '**For א:** Given $AB = CB$' to the global description
-- Per-sub-question diagram: If a diagram is specific to ONLY ONE sub-question (e.g., 'see diagram' appears only in ג), put the description in that sub-question's diagramDescription field
-  - Prefix with '**Diagram for [letter]:**' (e.g., '**Diagram for ג:**')
+- **Key rule**: Count how many sub-questions REFERENCE or NEED the diagram:
+  - If ALL or MOST sub-questions reference it → global (top-level diagramDescription)
+  - If only ONE sub-question references or needs it → per-sub-question (that sub-question's diagramDescription)
+  - If 2+ but NOT all sub-questions reference it → global, with **For [letter]:** annotations
+- Global diagram (top-level diagramDescription): A diagram that applies to the whole exercise or multiple sub-questions
+  - Enrich with per-sub-question details: append '**For א:** Given $AB = CB$' for sub-question-specific annotations
+- Per-sub-question diagram: A diagram that is specific to ONLY ONE sub-question
+  - Put it in THAT sub-question's diagramDescription field ONLY — NOT in the top-level field
+  - Prefix with '**Diagram for [letter]:**' (e.g., '**Diagram for ד:**')
 - Multiple diagrams: An exercise may have a global diagram AND per-sub-question diagrams. Use both fields when appropriate.
 - No diagram: Omit both fields entirely (or set to null/undefined)
+
+### Common Misclassification to Avoid
+- If a diagram appears in the image but only the LAST sub-question (or any single sub-question) asks about it, do NOT put it as a global diagram. Put it as that sub-question's diagramDescription.
+- Example: An exercise has sub-questions א, ב, ג, ד. Only ד says "based on the graph below, determine...". The graph description goes in ד's diagramDescription, NOT in the top-level diagramDescription.
 
 ### Diagram Content Guidelines
 - Begin the description with "**Diagram:**" (for global) or "**Diagram for X:**" (for per-sub-question)
