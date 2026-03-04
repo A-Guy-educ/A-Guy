@@ -209,48 +209,78 @@ export function V3PreviewPanel({
         </span>
       </div>
 
-      {/* Diagram Description */}
-      {(diagramDescription || preview.draft.diagramDescription) && (
-        <div style={{ marginBottom: 12 }}>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 11,
-              fontWeight: 500,
-              marginBottom: 4,
-              color: 'var(--theme-elevation-600)',
-            }}
-          >
-            Diagram Description
-          </label>
-          <textarea
-            value={diagramDescription}
-            onChange={(e) => setDiagramDescription(e.target.value)}
-            rows={4}
-            placeholder="Markdown+LaTeX description of the diagram..."
-            style={{
-              width: '100%',
-              padding: '6px 8px',
-              fontSize: 12,
-              border: '1px solid var(--theme-elevation-200)',
-              borderRadius: 3,
-              backgroundColor: 'var(--theme-elevation-0)',
-              color: 'var(--theme-elevation-1000)',
-              resize: 'vertical',
-            }}
-          />
-          <span
-            style={{
-              fontSize: 10,
-              color: 'var(--theme-elevation-500)',
-              marginTop: 4,
-              display: 'block',
-            }}
-          >
-            This will be inserted as a separate rich text block in the exercise.
-          </span>
-        </div>
-      )}
+      {/* Diagram Description - always visible for admins to add/edit */}
+      <div style={{ marginBottom: 12 }}>
+        <label
+          style={{
+            display: 'block',
+            fontSize: 11,
+            fontWeight: 500,
+            marginBottom: 4,
+            color: 'var(--theme-elevation-600)',
+          }}
+        >
+          Diagram Description
+        </label>
+        <textarea
+          value={diagramDescription}
+          onChange={(e) => setDiagramDescription(e.target.value)}
+          rows={4}
+          placeholder="Markdown+LaTeX description of the diagram..."
+          style={{
+            width: '100%',
+            padding: '6px 8px',
+            fontSize: 12,
+            border: '1px solid var(--theme-elevation-200)',
+            borderRadius: 3,
+            backgroundColor: 'var(--theme-elevation-0)',
+            color: 'var(--theme-elevation-1000)',
+            resize: 'vertical',
+          }}
+        />
+        <span
+          style={{
+            fontSize: 10,
+            color: 'var(--theme-elevation-500)',
+            marginTop: 4,
+            display: 'block',
+          }}
+        >
+          This will be inserted as a separate rich text block in the exercise.
+        </span>
+
+        {/* Move global diagram to a specific sub-question */}
+        {diagramDescription && subQuestions.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+            <span style={{ fontSize: 10, color: 'var(--theme-elevation-500)' }}>Move to:</span>
+            {subQuestions.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  // Move global diagram to this sub-question
+                  updateSubQuestion(idx, {
+                    diagramDescription:
+                      (subQuestions[idx].diagramDescription
+                        ? subQuestions[idx].diagramDescription + '\n\n'
+                        : '') + diagramDescription,
+                  })
+                  setDiagramDescription('')
+                }}
+                style={{
+                  padding: '2px 6px',
+                  fontSize: 10,
+                  border: '1px solid var(--theme-elevation-200)',
+                  borderRadius: 3,
+                  backgroundColor: 'var(--theme-elevation-0)',
+                  cursor: 'pointer',
+                }}
+              >
+                {HEBREW_LETTERS[idx] || idx + 1}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Sub-Questions */}
       <div style={{ marginBottom: 12 }}>
@@ -352,25 +382,42 @@ export function V3PreviewPanel({
               }}
             />
 
-            {/* Per-sub-question diagram (if present) */}
-            {(sq.diagramDescription || '') && (
+            {/* Per-sub-question diagram */}
+            {sq.diagramDescription ? (
               <div style={{ marginBottom: 8 }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: 10,
-                    fontWeight: 500,
-                    marginBottom: 4,
-                    color: 'var(--theme-elevation-600)',
-                  }}
-                >
-                  Diagram for this sub-question
-                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+                  <label
+                    style={{ fontSize: 10, fontWeight: 500, color: 'var(--theme-elevation-600)' }}
+                  >
+                    Diagram for this sub-question
+                  </label>
+                  <button
+                    onClick={() => {
+                      // Move per-sq diagram to global
+                      setDiagramDescription(
+                        (prev) => (prev ? prev + '\n\n' : '') + (sq.diagramDescription || ''),
+                      )
+                      updateSubQuestion(idx, { diagramDescription: '' })
+                    }}
+                    style={{
+                      marginLeft: 'auto',
+                      fontSize: 9,
+                      padding: '1px 4px',
+                      border: '1px solid var(--theme-elevation-200)',
+                      borderRadius: 2,
+                      backgroundColor: 'var(--theme-elevation-0)',
+                      cursor: 'pointer',
+                      color: 'var(--theme-elevation-500)',
+                    }}
+                    title="Move this diagram to the global (top-level) diagram field"
+                  >
+                    Move to global
+                  </button>
+                </div>
                 <textarea
                   value={sq.diagramDescription || ''}
                   onChange={(e) => updateSubQuestion(idx, { diagramDescription: e.target.value })}
                   rows={2}
-                  placeholder="Diagram description (optional)..."
                   style={{
                     width: '100%',
                     padding: '6px 8px',
@@ -383,6 +430,21 @@ export function V3PreviewPanel({
                   }}
                 />
               </div>
+            ) : (
+              <button
+                onClick={() => updateSubQuestion(idx, { diagramDescription: ' ' })}
+                style={{
+                  fontSize: 10,
+                  color: 'var(--theme-primary)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  marginBottom: 8,
+                }}
+              >
+                + Add diagram for this sub-question
+              </button>
             )}
 
             {/* Options for MCQ */}
