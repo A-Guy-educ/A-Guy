@@ -22,6 +22,7 @@ interface SubQuestionDraft {
   options: string[]
   correctAnswer: number | null
   acceptedAnswer?: string
+  diagramDescription?: string // NEW: diagram specific to this sub-question
 }
 
 interface PreviewData {

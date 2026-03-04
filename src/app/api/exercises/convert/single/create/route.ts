@@ -36,6 +36,7 @@ const subQuestionSchema = z.object({
   options: z.array(z.string()).default([]),
   correctAnswer: z.number().nullable().default(null),
   acceptedAnswer: z.string().optional(),
+  diagramDescription: z.string().optional(), // NEW: diagram specific to this sub-question
 })
 
 // Request schema for multi-part exercises
