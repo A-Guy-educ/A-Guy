@@ -9,6 +9,8 @@ interface PreviewDraft {
   correctAnswer: number | null
   explanation?: string
   questionType: 'free_response' | 'true_false' | 'mcq'
+  diagramDescription?: string
+  diagramPosition?: string
 }
 
 interface PreviewData {
@@ -53,6 +55,10 @@ export function V3PreviewPanel({
   const [correctAnswer, setCorrectAnswer] = useState<number | null>(preview.draft.correctAnswer)
   const [explanation, setExplanation] = useState<string>(preview.draft.explanation || '')
   const [acceptedAnswer, setAcceptedAnswer] = useState<string>('')
+  const [diagramDescription, setDiagramDescription] = useState<string>(
+    preview.draft.diagramDescription || '',
+  )
+  const [diagramPosition] = useState<string>(preview.draft.diagramPosition || 'before_question')
   const [showJson, setShowJson] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -80,6 +86,8 @@ export function V3PreviewPanel({
           explanation,
           acceptedAnswer: acceptedAnswer || undefined,
           extractionLogId: preview.extractionLogId,
+          diagramDescription: diagramDescription || undefined,
+          diagramPosition: diagramPosition || undefined,
         }),
       })
 
@@ -177,6 +185,49 @@ export function V3PreviewPanel({
           }}
         />
       </div>
+
+      {/* Diagram Description */}
+      {(diagramDescription || preview.draft.diagramDescription) && (
+        <div style={{ marginBottom: 12 }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 11,
+              fontWeight: 500,
+              marginBottom: 4,
+              color: 'var(--theme-elevation-600)',
+            }}
+          >
+            Diagram Description
+          </label>
+          <textarea
+            value={diagramDescription}
+            onChange={(e) => setDiagramDescription(e.target.value)}
+            rows={4}
+            placeholder="Markdown+LaTeX description of the diagram..."
+            style={{
+              width: '100%',
+              padding: '6px 8px',
+              fontSize: 12,
+              border: '1px solid var(--theme-elevation-200)',
+              borderRadius: 3,
+              backgroundColor: 'var(--theme-elevation-0)',
+              color: 'var(--theme-elevation-1000)',
+              resize: 'vertical',
+            }}
+          />
+          <span
+            style={{
+              fontSize: 10,
+              color: 'var(--theme-elevation-500)',
+              marginTop: 4,
+              display: 'block',
+            }}
+          >
+            This will be inserted as a separate rich text block in the exercise.
+          </span>
+        </div>
+      )}
 
       {/* Options (for MCQ and True/False) */}
       {questionType !== 'free_response' && (
