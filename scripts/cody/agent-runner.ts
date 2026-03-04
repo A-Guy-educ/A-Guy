@@ -265,6 +265,11 @@ export function runAgentWithFileWatch(
       // Spawn using the configured backend (local or GitHub)
       currentChild = backend.spawn(stage, prompt, agentEnv, cwd)
 
+      // Explicitly close stdin to prevent opencode from waiting for input
+      if (currentChild.stdin) {
+        currentChild.stdin.end()
+      }
+
       let resolved = false
       let timeoutTimer: NodeJS.Timeout | null = null
       let stdoutBuffer = ''
