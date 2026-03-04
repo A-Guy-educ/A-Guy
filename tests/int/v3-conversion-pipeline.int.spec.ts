@@ -16,7 +16,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { ContentSchema } from '@/server/payload/collections/Exercises/schemas'
 import { extractSingle } from '@/server/services/exercise-conversion/v3/extract-single'
 import { resolveExtractorPrompt } from '@/server/services/exercise-conversion/v3/prompt-resolver'
-import { rebuildFromPreview } from '@/server/services/exercise-conversion/v3/transform'
+import { rebuildFromMultiPartPreview } from '@/server/services/exercise-conversion/v3/transform'
 import type { Payload } from 'payload'
 import { getSharedPayload } from '../setup/shared-payload'
 
@@ -253,10 +253,12 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
       expect(result.success).toBe(true)
       expect(result.preview).toBeDefined()
       expect(result.preview?.draft).toBeDefined()
-      expect(result.preview?.draft.question).toBe('What is 2+2?')
-      expect(result.preview?.draft.options).toEqual(['3', '4', '5', '6'])
-      expect(result.preview?.draft.correctAnswer).toBe(1)
-      expect(result.preview?.draft.explanation).toBe('Basic addition: 2+2=4')
+      // New multi-part format: stem + subQuestions
+      expect(result.preview?.draft.subQuestions).toBeDefined()
+      expect(result.preview?.draft.subQuestions.length).toBeGreaterThan(0)
+      expect(result.preview?.draft.subQuestions[0].prompt).toBe('What is 2+2?')
+      expect(result.preview?.draft.subQuestions[0].options).toEqual(['3', '4', '5', '6'])
+      expect(result.preview?.draft.subQuestions[0].correctAnswer).toBe(1)
       expect(result.extractionLogId).toBeDefined()
 
       // Store log ID for cleanup
@@ -356,14 +358,14 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
       expect(extractResult.preview).toBeDefined()
       createdLogIds.push(extractResult.extractionLogId)
 
-      // Rebuild content from preview
+      // Rebuild content from preview (new multi-part format)
       const preview = extractResult.preview!.draft
-      const transformResult = rebuildFromPreview({
+      const transformResult = rebuildFromMultiPartPreview({
         title: preview.title,
-        question: preview.question,
-        options: preview.options,
-        correctAnswer: preview.correctAnswer,
-        explanation: preview.explanation,
+        stem: preview.stem,
+        subQuestions: preview.subQuestions,
+        diagramDescription: preview.diagramDescription,
+        diagramPosition: preview.diagramPosition,
       })
 
       // Create exercise

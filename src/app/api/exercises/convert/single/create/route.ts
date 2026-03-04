@@ -16,7 +16,7 @@ import { z } from 'zod'
 
 import type { Lesson } from '@/payload-types'
 import { withApiHandler } from '@/server/api/with-api-handler'
-import { rebuildFromPreview } from '@/server/services/exercise-conversion/v3/transform'
+import { rebuildFromMultiPartPreview } from '@/server/services/exercise-conversion/v3/transform'
 
 // Minimal type for extraction log (will be generated after types are created)
 interface ExtractionLogMinimal {
@@ -29,16 +29,22 @@ interface ExtractionLogMinimal {
   model?: string
 }
 
-// Request schema
+// Sub-question schema for multi-part exercises
+const subQuestionSchema = z.object({
+  prompt: z.string().min(1),
+  type: z.enum(['free_response', 'mcq', 'true_false']).default('free_response'),
+  options: z.array(z.string()).default([]),
+  correctAnswer: z.number().nullable().default(null),
+  acceptedAnswer: z.string().optional(),
+})
+
+// Request schema for multi-part exercises
 const createRequestSchema = z.object({
   lessonId: z.string().min(1),
   mediaId: z.string().min(1),
   title: z.string().min(1),
-  question: z.string().min(1),
-  options: z.array(z.string()).default([]),
-  correctAnswer: z.number().nullable().default(null),
-  explanation: z.string().optional(),
-  acceptedAnswer: z.string().optional(),
+  stem: z.string().optional(),
+  subQuestions: z.array(subQuestionSchema).min(1),
   extractionLogId: z.string().min(1),
   diagramDescription: z.string().optional(),
   diagramPosition: z.enum(['before_question', 'after_question']).optional(),
@@ -57,25 +63,19 @@ export const POST = withApiHandler<CreateRequest, unknown>(
       lessonId,
       mediaId,
       title,
-      question,
-      options,
-      correctAnswer,
-      explanation,
-      acceptedAnswer,
+      stem,
+      subQuestions,
       extractionLogId,
       diagramDescription,
       diagramPosition,
     } = body
 
-    // Step 1: Rebuild content from edited preview fields
-    // rebuildFromPreview → toExerciseContent already validates internally
-    const { title: derivedTitle, content } = rebuildFromPreview({
+    // Step 1: Rebuild content from edited multi-part preview fields
+    // rebuildFromMultiPartPreview → multiPartToExerciseContent already validates internally
+    const { title: derivedTitle, content } = rebuildFromMultiPartPreview({
       title,
-      question,
-      options,
-      correctAnswer,
-      explanation,
-      acceptedAnswer,
+      stem,
+      subQuestions,
       diagramDescription,
       diagramPosition,
     })

@@ -2,20 +2,28 @@
 
 import { useState } from 'react'
 
-interface PreviewDraft {
-  title: string
-  question: string
+// Hebrew letters for sub-question numbering
+const HEBREW_LETTERS = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י']
+
+interface SubQuestionDraft {
+  prompt: string
+  type: 'free_response' | 'mcq' | 'true_false'
   options: string[]
   correctAnswer: number | null
-  explanation?: string
-  questionType: 'free_response' | 'true_false' | 'mcq'
+  acceptedAnswer?: string
+}
+
+interface MultiPartPreviewDraft {
+  title: string
+  stem?: string
+  subQuestions: SubQuestionDraft[]
   diagramDescription?: string
   diagramPosition?: string
 }
 
 interface PreviewData {
   title: string
-  draft: PreviewDraft
+  draft: MultiPartPreviewDraft
   content: {
     blocks: unknown[]
   }
@@ -37,10 +45,10 @@ interface V3PreviewPanelProps {
 }
 
 /**
- * V3 Preview Panel Component
+ * V3 Preview Panel Component (Multi-Part)
  *
  * Displays extracted exercise preview with editable fields.
- * Allows admin to edit and create the exercise.
+ * Supports stem + multiple sub-questions with Hebrew letter labels.
  */
 export function V3PreviewPanel({
   preview,
@@ -50,11 +58,10 @@ export function V3PreviewPanel({
   onCreated,
 }: V3PreviewPanelProps) {
   const [title, setTitle] = useState(preview.draft.title)
-  const [question, setQuestion] = useState(preview.draft.question)
-  const [options, setOptions] = useState<string[]>(preview.draft.options)
-  const [correctAnswer, setCorrectAnswer] = useState<number | null>(preview.draft.correctAnswer)
-  const [explanation, setExplanation] = useState<string>(preview.draft.explanation || '')
-  const [acceptedAnswer, setAcceptedAnswer] = useState<string>('')
+  const [stem, setStem] = useState(preview.draft.stem || '')
+  const [subQuestions, setSubQuestions] = useState<SubQuestionDraft[]>(
+    preview.draft.subQuestions || [],
+  )
   const [diagramDescription, setDiagramDescription] = useState<string>(
     preview.draft.diagramDescription || '',
   )
@@ -64,7 +71,13 @@ export function V3PreviewPanel({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  const questionType = preview.draft.questionType
+  const updateSubQuestion = (index: number, updates: Partial<SubQuestionDraft>) => {
+    setSubQuestions((prev) => {
+      const updated = [...prev]
+      updated[index] = { ...updated[index], ...updates }
+      return updated
+    })
+  }
 
   const handleCreate = async () => {
     setIsCreating(true)
@@ -80,11 +93,8 @@ export function V3PreviewPanel({
           lessonId,
           mediaId,
           title,
-          question,
-          options,
-          correctAnswer,
-          explanation,
-          acceptedAnswer: acceptedAnswer || undefined,
+          stem: stem || undefined,
+          subQuestions,
           extractionLogId: preview.extractionLogId,
           diagramDescription: diagramDescription || undefined,
           diagramPosition: diagramPosition || undefined,
@@ -124,7 +134,7 @@ export function V3PreviewPanel({
           color: 'var(--theme-elevation-1000)',
         }}
       >
-        V3 Extraction Preview
+        V3 Extraction Preview (Multi-Part)
       </h4>
 
       {/* Title */}
@@ -156,7 +166,7 @@ export function V3PreviewPanel({
         />
       </div>
 
-      {/* Question */}
+      {/* Stem - Shared Context */}
       <div style={{ marginBottom: 12 }}>
         <label
           style={{
@@ -167,12 +177,13 @@ export function V3PreviewPanel({
             color: 'var(--theme-elevation-600)',
           }}
         >
-          Question
+          Stem (Shared Context / Given Information)
         </label>
         <textarea
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
+          value={stem}
+          onChange={(e) => setStem(e.target.value)}
           rows={3}
+          placeholder="Enter shared context (given information, setup) that applies to all sub-questions..."
           style={{
             width: '100%',
             padding: '6px 8px',
@@ -182,8 +193,19 @@ export function V3PreviewPanel({
             backgroundColor: 'var(--theme-elevation-0)',
             color: 'var(--theme-elevation-1000)',
             resize: 'vertical',
+            fontStyle: stem ? 'normal' : 'italic',
           }}
         />
+        <span
+          style={{
+            fontSize: 10,
+            color: 'var(--theme-elevation-500)',
+            marginTop: 4,
+            display: 'block',
+          }}
+        >
+          Optional. Leave empty if there is no shared context between sub-questions.
+        </span>
       </div>
 
       {/* Diagram Description */}
@@ -229,124 +251,221 @@ export function V3PreviewPanel({
         </div>
       )}
 
-      {/* Options (for MCQ and True/False) */}
-      {questionType !== 'free_response' && (
-        <div style={{ marginBottom: 12 }}>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 11,
-              fontWeight: 500,
-              marginBottom: 4,
-              color: 'var(--theme-elevation-600)',
-            }}
-          >
-            Options
-          </label>
-          {options.map((opt, idx) => (
-            <div
-              key={idx}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}
-            >
-              <input
-                type="radio"
-                name="correctAnswer"
-                checked={correctAnswer === idx}
-                onChange={() => setCorrectAnswer(idx)}
-                disabled={questionType === 'true_false'}
-              />
-              <input
-                type="text"
-                value={opt}
-                onChange={(e) => {
-                  const newOptions = [...options]
-                  newOptions[idx] = e.target.value
-                  setOptions(newOptions)
-                }}
-                style={{
-                  flex: 1,
-                  padding: '4px 8px',
-                  fontSize: 12,
-                  border: '1px solid var(--theme-elevation-200)',
-                  borderRadius: 3,
-                  backgroundColor: 'var(--theme-elevation-0)',
-                }}
-              />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Correct Answer (for free response) */}
-      {questionType === 'free_response' && (
-        <div style={{ marginBottom: 12 }}>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 11,
-              fontWeight: 500,
-              marginBottom: 4,
-              color: 'var(--theme-elevation-600)',
-            }}
-          >
-            Accepted Answer (for grading)
-          </label>
-          <input
-            type="text"
-            value={acceptedAnswer}
-            onChange={(e) => setAcceptedAnswer(e.target.value)}
-            placeholder="Enter accepted answer(s)"
-            style={{
-              width: '100%',
-              padding: '6px 8px',
-              fontSize: 12,
-              border: '1px solid var(--theme-elevation-200)',
-              borderRadius: 3,
-              backgroundColor: 'var(--theme-elevation-0)',
-            }}
-          />
-          <span
-            style={{
-              fontSize: 10,
-              color: 'var(--theme-elevation-500)',
-              marginTop: 4,
-              display: 'block',
-            }}
-          >
-            Note: Correct answer was not detected. Please enter manually.
-          </span>
-        </div>
-      )}
-
-      {/* Explanation */}
+      {/* Sub-Questions */}
       <div style={{ marginBottom: 12 }}>
         <label
           style={{
             display: 'block',
             fontSize: 11,
             fontWeight: 500,
-            marginBottom: 4,
+            marginBottom: 8,
             color: 'var(--theme-elevation-600)',
           }}
         >
-          Explanation (optional)
+          Sub-Questions ({subQuestions.length})
         </label>
-        <textarea
-          value={explanation}
-          onChange={(e) => setExplanation(e.target.value)}
-          rows={2}
-          placeholder="Add explanation..."
-          style={{
-            width: '100%',
-            padding: '6px 8px',
-            fontSize: 12,
-            border: '1px solid var(--theme-elevation-200)',
-            borderRadius: 3,
-            backgroundColor: 'var(--theme-elevation-0)',
-            color: 'var(--theme-elevation-1000)',
-            resize: 'vertical',
-          }}
-        />
+
+        {subQuestions.map((sq, idx) => (
+          <div
+            key={idx}
+            style={{
+              marginBottom: 12,
+              padding: 10,
+              border: '1px solid var(--theme-elevation-200)',
+              borderRadius: 4,
+              backgroundColor: 'var(--theme-elevation-50)',
+            }}
+          >
+            {/* Sub-question header with Hebrew letter */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 8,
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--theme-primary)',
+                  color: 'var(--theme-primary-foreground)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                {HEBREW_LETTERS[idx] || idx + 1}
+              </span>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 500,
+                  color: 'var(--theme-elevation-600)',
+                }}
+              >
+                Sub-question {idx + 1}
+              </span>
+              <select
+                value={sq.type}
+                onChange={(e) =>
+                  updateSubQuestion(idx, {
+                    type: e.target.value as 'free_response' | 'mcq' | 'true_false',
+                  })
+                }
+                style={{
+                  marginLeft: 'auto',
+                  padding: '2px 6px',
+                  fontSize: 11,
+                  border: '1px solid var(--theme-elevation-200)',
+                  borderRadius: 3,
+                  backgroundColor: 'var(--theme-elevation-0)',
+                }}
+              >
+                <option value="free_response">Free Response</option>
+                <option value="mcq">Multiple Choice</option>
+                <option value="true_false">True/False</option>
+              </select>
+            </div>
+
+            {/* Prompt textarea */}
+            <textarea
+              value={sq.prompt}
+              onChange={(e) => updateSubQuestion(idx, { prompt: e.target.value })}
+              rows={2}
+              placeholder="Enter sub-question text..."
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                fontSize: 12,
+                border: '1px solid var(--theme-elevation-200)',
+                borderRadius: 3,
+                backgroundColor: 'var(--theme-elevation-0)',
+                color: 'var(--theme-elevation-1000)',
+                resize: 'vertical',
+                marginBottom: 8,
+              }}
+            />
+
+            {/* Options for MCQ */}
+            {sq.type === 'mcq' && (
+              <div style={{ marginBottom: 8, paddingLeft: 8 }}>
+                <span
+                  style={{
+                    display: 'block',
+                    fontSize: 10,
+                    fontWeight: 500,
+                    marginBottom: 4,
+                    color: 'var(--theme-elevation-600)',
+                  }}
+                >
+                  Options (select correct answer)
+                </span>
+                {sq.options.map((opt, optIdx) => (
+                  <div
+                    key={optIdx}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}
+                  >
+                    <input
+                      type="radio"
+                      name={`correct-${idx}`}
+                      checked={sq.correctAnswer === optIdx}
+                      onChange={() => updateSubQuestion(idx, { correctAnswer: optIdx })}
+                    />
+                    <input
+                      type="text"
+                      value={opt}
+                      onChange={(e) => {
+                        const newOptions = [...sq.options]
+                        newOptions[optIdx] = e.target.value
+                        updateSubQuestion(idx, { options: newOptions })
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '4px 8px',
+                        fontSize: 12,
+                        border: '1px solid var(--theme-elevation-200)',
+                        borderRadius: 3,
+                        backgroundColor: 'var(--theme-elevation-0)',
+                      }}
+                      placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* True/False */}
+            {sq.type === 'true_false' && (
+              <div style={{ marginBottom: 8, paddingLeft: 8 }}>
+                <span
+                  style={{
+                    display: 'block',
+                    fontSize: 10,
+                    fontWeight: 500,
+                    marginBottom: 4,
+                    color: 'var(--theme-elevation-600)',
+                  }}
+                >
+                  Correct Answer
+                </span>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+                  <input
+                    type="radio"
+                    name={`tf-${idx}`}
+                    checked={sq.correctAnswer === 0}
+                    onChange={() => updateSubQuestion(idx, { correctAnswer: 0 })}
+                  />
+                  True
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+                  <input
+                    type="radio"
+                    name={`tf-${idx}`}
+                    checked={sq.correctAnswer === 1}
+                    onChange={() => updateSubQuestion(idx, { correctAnswer: 1 })}
+                  />
+                  False
+                </label>
+              </div>
+            )}
+
+            {/* Accepted Answer for free response */}
+            {sq.type === 'free_response' && (
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 10,
+                    fontWeight: 500,
+                    marginBottom: 4,
+                    color: 'var(--theme-elevation-600)',
+                  }}
+                >
+                  Accepted Answer (for grading)
+                </label>
+                <input
+                  type="text"
+                  value={sq.acceptedAnswer || ''}
+                  onChange={(e) => updateSubQuestion(idx, { acceptedAnswer: e.target.value })}
+                  placeholder="Enter accepted answer(s)..."
+                  style={{
+                    width: '100%',
+                    padding: '6px 8px',
+                    fontSize: 12,
+                    border: '1px solid var(--theme-elevation-200)',
+                    borderRadius: 3,
+                    backgroundColor: 'var(--theme-elevation-0)',
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        ))}
       </div>
 
       {/* JSON Preview Toggle */}
