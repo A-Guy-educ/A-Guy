@@ -1,0 +1,32 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "high",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/payload/collections/Courses.ts",
+    "src/server/payload/collections/Chapters.ts",
+    "src/server/payload/collections/Lessons.ts",
+    "src/server/payload/access/authenticatedOrPublished.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The authenticatedOrPublished function will need modification to check custom 'status' field instead of '_status'",
+    "Frontend queries that use authenticated users will continue to work without changes",
+    "All three collections use the same 'status' and 'isActive' field structure"
+  ],
+  "review_questions": [
+    "Does the existing authenticatedOrPublished function need to be modified to support custom 'status' field, or should a new function be created?",
+    "Should the access control also check 'isActive: true' for public queries as shown in the task example?",
+    "Will this change affect any existing frontend functionality that relies on reading draft content?"
+  ],
+  "complexity": 42,
+  "complexity_reasoning": "Scope: 3 collection files to modify (10 pts). Risk: Security vulnerability - public data exposure (18 pts). Novelty: Following existing Pages/Posts pattern (5 pts). Cross-domain: Backend only (2 pts). Ambiguity: Clear intent with specific files (2 pts). Dependencies: No external services (2 pts). Total: 39 → Complex tier",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Task contains clear issue description with current vs expected behavior, specific file paths to modify, and complexity assessment. While not using exact '## Requirements' heading format, the structured sections provide sufficient detail for implementation."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
