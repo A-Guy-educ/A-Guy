@@ -167,11 +167,88 @@ function getDefaultModelName(): string {
 }
 
 /**
- * V3 response type with diagram extraction support
+ * Normalize LLM response to multi-part exercise format.
+ * Handles both new format (stem + subQuestions) and old format (question + options).
+ */
+function normalizeToMultiPart(
+  parsed: Record<string, unknown>,
+  diagramDescription?: string,
+  diagramPosition?: 'before_question' | 'after_question',
+): MultiPartExtractionResult {
+  // New format: has subQuestions array
+  if (Array.isArray(parsed.subQuestions)) {
+    return {
+      stem: typeof parsed.stem === 'string' && parsed.stem.trim() ? parsed.stem : undefined,
+      subQuestions: (parsed.subQuestions as unknown[]).map((sq) => {
+        const sqObj = sq as Record<string, unknown>
+        return {
+          prompt: String(sqObj.prompt || ''),
+          type: ['free_response', 'mcq', 'true_false'].includes(sqObj.type as string)
+            ? (sqObj.type as 'free_response' | 'mcq' | 'true_false')
+            : 'free_response',
+          options: Array.isArray(sqObj.options) ? sqObj.options.map((opt) => String(opt)) : [],
+          correctAnswer: typeof sqObj.correctAnswer === 'number' ? sqObj.correctAnswer : null,
+          acceptedAnswers: Array.isArray(sqObj.acceptedAnswers)
+            ? sqObj.acceptedAnswers.map((a) => String(a))
+            : undefined,
+        }
+      }),
+      diagramDescription,
+      diagramPosition,
+    }
+  }
+
+  // Old format: has question field — wrap into multi-part format
+  const options = Array.isArray(parsed.options) ? parsed.options.map((opt) => String(opt)) : []
+  let type: 'free_response' | 'mcq' | 'true_false' = 'free_response'
+  if (
+    options.length === 2 &&
+    options.some((o) => o.toLowerCase() === 'true') &&
+    options.some((o) => o.toLowerCase() === 'false')
+  ) {
+    type = 'true_false'
+  } else if (options.length > 0) {
+    type = 'mcq'
+  }
+
+  return {
+    stem: undefined,
+    subQuestions: [
+      {
+        prompt: String(parsed.question || ''),
+        type,
+        options,
+        correctAnswer: typeof parsed.correctAnswer === 'number' ? parsed.correctAnswer : null,
+        acceptedAnswers: parsed.explanation ? [String(parsed.explanation)] : undefined,
+      },
+    ],
+    diagramDescription,
+    diagramPosition,
+  }
+}
+
+/**
+ * Multi-part exercise extraction result (NEW)
+ */
+export interface MultiPartExtractionResult {
+  stem?: string
+  subQuestions: Array<{
+    prompt: string
+    type?: 'free_response' | 'mcq' | 'true_false'
+    options?: string[]
+    correctAnswer?: number | null
+    acceptedAnswers?: string[]
+  }>
+  diagramDescription?: string
+  diagramPosition?: 'before_question' | 'after_question'
+}
+
+/**
+ * V3 response type with multi-part exercise extraction support
  */
 export interface ImageToExerciseV3Response {
   success: boolean
-  data?: ExtendedExtractionResult
+  data?: MultiPartExtractionResult
   error?: string
   metadata: {
     model: string
@@ -200,7 +277,7 @@ export async function extractFromImageV3(
     modelConfig = resolveModelConfig('IMAGE_TO_EXERCISE')
 
     // Prepare multimodal input with V3 prompt that includes diagram extraction
-    const prompt = `${V3_EXERCISE_WITH_DIAGRAMS_PROMPT}\n\nExtract the question, options (A, B, C, D), correct answer, explanation, and any diagram information from this image. Return JSON with: question, options[], correctAnswer (index), explanation(optional), diagramDescription(optional), diagramPosition(optional).`
+    const prompt = `${V3_EXERCISE_WITH_DIAGRAMS_PROMPT}\n\nExtract the exercise from this image. Return JSON with: stem (shared context), subQuestions[] (each with prompt, type, options if MCQ, correctAnswer if MCQ, acceptedAnswers if free response), diagramDescription (optional), diagramPosition (optional).`
 
     // For PDFs, pass directly to Gemini (it handles PDF natively)
     // For images, optimize before sending to reduce API latency/costs
@@ -276,17 +353,13 @@ export async function extractFromImageV3(
       diagramPosition = 'before_question'
     }
 
-    // Return successful result with extended fields
+    // Normalize LLM response to multi-part format
+    const normalized = normalizeToMultiPart(parsed, diagramDescription, diagramPosition)
+
+    // Return successful result with normalized multi-part format
     return {
       success: true,
-      data: {
-        question: parsed.question,
-        options: parsed.options,
-        correctAnswer: parsed.correctAnswer,
-        explanation: parsed.explanation,
-        diagramDescription,
-        diagramPosition,
-      },
+      data: normalized,
       metadata: {
         model: modelConfig.name,
         processingTimeMs: Date.now() - startTime,

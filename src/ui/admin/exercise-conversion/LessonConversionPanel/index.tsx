@@ -16,15 +16,22 @@ interface MediaItem {
   mimeType?: string
 }
 
+interface SubQuestionDraft {
+  prompt: string
+  type: 'free_response' | 'mcq' | 'true_false'
+  options: string[]
+  correctAnswer: number | null
+  acceptedAnswer?: string
+}
+
 interface PreviewData {
   title: string
   draft: {
     title: string
-    question: string
-    options: string[]
-    correctAnswer: number | null
-    explanation?: string
-    questionType: 'free_response' | 'true_false' | 'mcq'
+    stem?: string
+    subQuestions: SubQuestionDraft[]
+    diagramDescription?: string
+    diagramPosition?: string
   }
   content: {
     blocks: unknown[]
