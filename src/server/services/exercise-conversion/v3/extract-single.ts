@@ -64,6 +64,14 @@ export interface ExtractSingleResult {
   error?: string
 }
 
+export interface ExtractAndCreateResult {
+  success: boolean
+  exerciseId?: string
+  adminUrl?: string
+  extractionLogId: string
+  error?: string
+}
+
 // ---------------------------------
 // Main: Extract Single Exercise
 // ---------------------------------
@@ -271,6 +279,240 @@ export async function extractSingle(
           promptVersion: resolvedPrompt?.version,
         },
       },
+      extractionLogId: logId,
+    }
+  } else {
+    // Log failed extraction
+    const logId = await createExtractionLog(payload, {
+      tenant: lessonTenantId,
+      lesson: lessonId,
+      media: mediaId,
+      prompt: resolvedPrompt?.prompt.id,
+      promptVersion: resolvedPrompt?.version,
+      status: 'failed',
+      stage: 'extract',
+      errorMessage: llmResult.error || 'LLM extraction returned no data',
+      processingTimeMs: llmResult.metadata.processingTimeMs,
+      model: llmResult.metadata.model,
+    })
+
+    return {
+      success: false,
+      extractionLogId: logId,
+      error: llmResult.error || 'LLM extraction returned no data',
+    }
+  }
+}
+
+// ---------------------------------
+// Main: Extract and Create Single Exercise
+// ---------------------------------
+
+/**
+ * Extract and create a single exercise from a document in one step.
+ * Combines extract + create without preview step.
+ */
+export async function extractAndCreate(
+  payload: Payload,
+  input: ExtractSingleInput,
+): Promise<ExtractAndCreateResult> {
+  const startTime = Date.now()
+  const { lessonId, mediaId, promptId } = input
+
+  // Step 1: Fetch lesson and resolve tenant
+  const lesson = await payload.findByID({
+    collection: 'lessons',
+    id: lessonId,
+    depth: 0,
+  })
+
+  if (!lesson) {
+    return {
+      success: false,
+      extractionLogId: '',
+      error: 'Lesson not found',
+    }
+  }
+
+  const typedLesson = lesson as unknown as Lesson
+  const lessonTenantId =
+    typeof typedLesson.tenant === 'object' ? typedLesson.tenant?.id : typedLesson.tenant
+  if (!lessonTenantId) {
+    return {
+      success: false,
+      extractionLogId: '',
+      error: 'Lesson has no tenant',
+    }
+  }
+
+  // Step 2: Fetch media document and validate attachment
+  const media = await payload.findByID({
+    collection: 'media',
+    id: mediaId,
+    depth: 0,
+  })
+
+  if (!media) {
+    return {
+      success: false,
+      extractionLogId: '',
+      error: 'Media not found',
+    }
+  }
+
+  const typedMedia = media as unknown as Media
+
+  // Validate media is attached to lesson's contentFiles
+  const contentFiles = typedLesson.contentFiles || []
+  const contentFileIds = contentFiles.map((m) => (typeof m === 'string' ? m : m.id))
+  if (!contentFileIds.includes(mediaId)) {
+    return {
+      success: false,
+      extractionLogId: '',
+      error:
+        'Media is not attached to this lesson. Save the lesson after attaching media and try again.',
+    }
+  }
+
+  // Validate mime type
+  if (!SUPPORTED_DOCUMENT_MIMES.includes(typedMedia.mimeType || '')) {
+    return {
+      success: false,
+      extractionLogId: '',
+      error: `Unsupported mime type: ${typedMedia.mimeType}. Supported: ${SUPPORTED_DOCUMENT_MIMES.join(', ')}`,
+    }
+  }
+
+  // Step 3: Resolve extractor prompt
+  let resolvedPrompt: Awaited<ReturnType<typeof resolveExtractorPrompt>> | null = null
+  try {
+    resolvedPrompt = await resolveExtractorPrompt(payload, lessonTenantId, promptId)
+  } catch (promptError) {
+    return {
+      success: false,
+      extractionLogId: '',
+      error: promptError instanceof Error ? promptError.message : 'Failed to resolve prompt',
+    }
+  }
+
+  // Step 4: Download media buffer
+  let imageBuffer: Buffer
+  const mimeType = typedMedia.mimeType || 'application/pdf'
+
+  try {
+    if (mimeType === 'application/pdf') {
+      // PDF: pass directly to Gemini - it handles PDF natively
+      const pdfBuffer = await getPdfBufferFromBlob(mediaId, payload)
+      imageBuffer = pdfBuffer
+      // Keep mimeType as 'application/pdf' — Gemini handles PDF natively
+    } else if (SUPPORTED_IMAGE_MIMES.includes(mimeType)) {
+      // Image: fetch directly
+      if (!typedMedia.url) {
+        return {
+          success: false,
+          extractionLogId: '',
+          error: 'Media has no URL',
+        }
+      }
+      const imageUrl = typedMedia.url.startsWith('/')
+        ? await normalizeToAbsoluteUrl(typedMedia.url)
+        : typedMedia.url
+      imageBuffer = await fetchBuffer(imageUrl, 30000)
+    } else {
+      return {
+        success: false,
+        extractionLogId: '',
+        error: `Unsupported document type: ${mimeType}`,
+      }
+    }
+  } catch (downloadError) {
+    return {
+      success: false,
+      extractionLogId: '',
+      error: downloadError instanceof Error ? downloadError.message : 'Failed to download media',
+    }
+  }
+
+  // Step 5: Extract with LLM
+  let llmResult: ImageToExerciseV3Response
+  try {
+    llmResult = await extractFromImageV3(
+      {
+        imageBuffer,
+        mimeType,
+      },
+      payload,
+    )
+  } catch (llmError) {
+    // Log failed extraction
+    const logId = await createExtractionLog(payload, {
+      tenant: lessonTenantId,
+      lesson: lessonId,
+      media: mediaId,
+      prompt: resolvedPrompt?.prompt.id,
+      promptVersion: resolvedPrompt?.version,
+      status: 'failed',
+      stage: 'extract',
+      errorMessage: llmError instanceof Error ? llmError.message : 'LLM extraction failed',
+      processingTimeMs: Date.now() - startTime,
+      model: '',
+    })
+
+    return {
+      success: false,
+      extractionLogId: logId,
+      error: llmError instanceof Error ? llmError.message : 'LLM extraction failed',
+    }
+  }
+
+  // Step 6: Transform directly to exercise content (no preview draft needed)
+  if (llmResult.success && llmResult.data) {
+    // Keep raw data for logging
+    const rawExtractionData = llmResult.data
+
+    // Apply auto-detect heuristic to move misclassified diagrams to correct sub-question
+    const extractionData = autoAssignDiagrams(rawExtractionData)
+
+    // Transform to exercise content (uses deterministic fallback for null)
+    const transformResult = multiPartToExerciseContent(extractionData)
+    const { title, content } = transformResult
+
+    // Step 7: Create exercise immediately
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const exercise = await (payload as any).create({
+      collection: 'exercises',
+      data: {
+        title,
+        content,
+        lesson: lessonId,
+        origin: 'conversion',
+        sourceDoc: mediaId,
+        pipelineVersion: 3,
+        order: 0,
+        tenant: lessonTenantId,
+      },
+      overrideAccess: true,
+    })
+
+    // Step 8: Create extraction log with stage 'create'
+    const logId = await createExtractionLog(payload, {
+      tenant: lessonTenantId,
+      lesson: lessonId,
+      media: mediaId,
+      prompt: resolvedPrompt?.prompt.id,
+      promptVersion: resolvedPrompt?.version,
+      status: 'success',
+      stage: 'create',
+      rawResponse: JSON.stringify(rawExtractionData),
+      parsedPayload: content as unknown as Record<string, unknown>,
+      processingTimeMs: llmResult.metadata.processingTimeMs,
+      model: llmResult.metadata.model,
+    })
+
+    return {
+      success: true,
+      exerciseId: exercise.id,
+      adminUrl: `/admin/collections/exercises/${exercise.id}`,
       extractionLogId: logId,
     }
   } else {
