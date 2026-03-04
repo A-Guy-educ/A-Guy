@@ -26,9 +26,9 @@ import type { Lesson, Media } from '@/payload-types'
 import { getPdfBufferFromBlob, normalizeToAbsoluteUrl } from '@/server/services/pdf-fetcher'
 import { resolveExtractorPrompt } from './prompt-resolver'
 import {
-  toExerciseContent,
-  toPreviewDraft,
-  type PreviewDraft,
+  multiPartToExerciseContent,
+  multiPartToPreviewDraft,
+  type MultiPartPreviewDraft,
   type TransformResult,
 } from './transform'
 
@@ -50,7 +50,7 @@ export interface ExtractSingleResult {
   success: boolean
   preview?: {
     title: string
-    draft: PreviewDraft
+    draft: MultiPartPreviewDraft
     content: TransformResult['content']
     metadata: {
       model: string
@@ -225,18 +225,18 @@ export async function extractSingle(
   }
 
   // Step 6: Transform to preview
-  let previewDraft: PreviewDraft
+  let previewDraft: MultiPartPreviewDraft
   let exerciseContent: TransformResult['content']
 
   if (llmResult.success && llmResult.data) {
-    // Handle multiple questions - take first silently
+    // Transform to multi-part extraction format (data is now always MultiPartExtractionResult)
     const extractionData = llmResult.data
 
     // Transform to preview draft (preserves null correctAnswer)
-    previewDraft = toPreviewDraft(extractionData)
+    previewDraft = multiPartToPreviewDraft(extractionData)
 
     // Transform to exercise content (uses deterministic fallback for null)
-    const transformResult = toExerciseContent(extractionData)
+    const transformResult = multiPartToExerciseContent(extractionData)
     exerciseContent = transformResult.content
 
     // Log successful extraction

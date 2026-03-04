@@ -22,6 +22,41 @@ import {
 import { nanoid } from 'nanoid'
 
 // ---------------------------------
+// Multi-Part Exercise Types (NEW)
+// ---------------------------------
+
+export interface SubQuestionExtraction {
+  prompt: string
+  type?: 'free_response' | 'mcq' | 'true_false'
+  options?: string[]
+  correctAnswer?: number | null
+  acceptedAnswers?: string[]
+}
+
+export interface MultiPartExtraction {
+  stem?: string
+  subQuestions: SubQuestionExtraction[]
+  diagramDescription?: string
+  diagramPosition?: 'before_question' | 'after_question'
+}
+
+export interface SubQuestionDraft {
+  prompt: string
+  type: 'free_response' | 'mcq' | 'true_false'
+  options: string[]
+  correctAnswer: number | null
+  acceptedAnswer?: string
+}
+
+export interface MultiPartPreviewDraft {
+  title: string
+  stem?: string
+  subQuestions: SubQuestionDraft[]
+  diagramDescription?: string
+  diagramPosition?: string
+}
+
+// ---------------------------------
 // Input: Simple LLM extraction format
 // ---------------------------------
 
@@ -31,8 +66,8 @@ export interface SimpleExtraction {
   correctAnswer: number | null // index into options, or null
   explanation?: string
   acceptedAnswer?: string // for free_response questions
-  diagramDescription?: string // NEW: markdown+LaTeX description of diagram
-  diagramPosition?: 'before_question' | 'after_question' // NEW: position of diagram block
+  diagramDescription?: string // markdown+LaTeX description of diagram
+  diagramPosition?: 'before_question' | 'after_question' // position of diagram block
 }
 
 // ---------------------------------
@@ -293,4 +328,235 @@ export function rebuildFromPreview(
   }
 
   return toExerciseContent(extraction)
+}
+
+// ---------------------------------
+// Multi-Part Exercise Transform Functions (NEW)
+// ---------------------------------
+
+/**
+ * Transform multi-part extraction to preview draft format.
+ * Derives title from stem or first sub-question prompt.
+ */
+export function multiPartToPreviewDraft(extraction: MultiPartExtraction): MultiPartPreviewDraft {
+  const { stem, subQuestions, diagramDescription, diagramPosition } = extraction
+
+  // Derive title from stem or first sub-question
+  let title: string
+  if (stem?.trim()) {
+    title = stem.length > 80 ? stem.substring(0, 77) + '...' : stem
+  } else if (subQuestions.length > 0 && subQuestions[0]?.prompt?.trim()) {
+    const firstPrompt = subQuestions[0].prompt
+    title = firstPrompt.length > 80 ? firstPrompt.substring(0, 77) + '...' : firstPrompt
+  } else {
+    title = 'Untitled Exercise'
+  }
+
+  // Map each sub-question to SubQuestionDraft
+  const mappedSubQuestions: SubQuestionDraft[] = subQuestions.map((sq) => {
+    let type: SubQuestionDraft['type'] = 'free_response'
+
+    if (sq.type === 'mcq' || sq.type === 'true_false') {
+      type = sq.type
+    } else if (sq.options && sq.options.length > 0) {
+      // If options exist but type wasn't specified, determine based on options
+      if (sq.options.length === 2 && isTrueFalsePattern(sq.options)) {
+        type = 'true_false'
+      } else {
+        type = 'mcq'
+      }
+    }
+
+    return {
+      prompt: sq.prompt || '',
+      type,
+      options: sq.options || [],
+      correctAnswer: sq.correctAnswer ?? null,
+      acceptedAnswer: sq.acceptedAnswers?.[0] || '',
+    }
+  })
+
+  return {
+    title,
+    stem,
+    subQuestions: mappedSubQuestions,
+    diagramDescription,
+    diagramPosition,
+  }
+}
+
+/**
+ * Create a single question block from a sub-question extraction.
+ * Reuses existing MCQ/true-false/free-response logic.
+ */
+function createQuestionBlock(sq: SubQuestionExtraction): ContentBlock {
+  const { prompt, type, options, correctAnswer, acceptedAnswers } = sq
+
+  // Determine effective type based on options
+  let effectiveType: 'free_response' | 'mcq' | 'true_false' = type || 'free_response'
+
+  if (effectiveType === 'free_response' && options && options.length > 0) {
+    if (options.length === 2 && isTrueFalsePattern(options)) {
+      effectiveType = 'true_false'
+    } else {
+      effectiveType = 'mcq'
+    }
+  }
+
+  if (effectiveType === 'free_response') {
+    // Free response question
+    const accepted = acceptedAnswers?.filter(Boolean) || []
+    const acceptedAnswersList = accepted.length > 0 ? accepted : ['(answer not detected)']
+
+    return QuestionFreeResponseBlockSchema.parse({
+      id: nanoid(),
+      type: 'question_free_response',
+      prompt: createInlineRichText(prompt),
+      answer: {
+        acceptedAnswers: acceptedAnswersList,
+      },
+    })
+  }
+
+  if (effectiveType === 'true_false') {
+    // True/False question
+    const trueOptionId = 'true'
+    const falseOptionId = 'false'
+
+    let correctOptionId: string | undefined
+    if (correctAnswer !== null && correctAnswer !== undefined) {
+      correctOptionId = correctAnswer === 0 ? trueOptionId : falseOptionId
+    }
+
+    return QuestionSelectBlockSchema.parse({
+      id: nanoid(),
+      type: 'question_select',
+      variant: 'true_false',
+      selectionMode: 'single',
+      prompt: createInlineRichText(prompt),
+      options: [
+        { id: trueOptionId, value: true, label: createInlineRichText('True') },
+        { id: falseOptionId, value: false, label: createInlineRichText('False') },
+      ],
+      answer: {
+        correctOptionId,
+      },
+    })
+  }
+
+  // MCQ question
+  const optionIds = (options || []).map(() => nanoid())
+
+  let correctOptionIds: string[]
+  if (
+    correctAnswer !== null &&
+    correctAnswer !== undefined &&
+    correctAnswer < (options || []).length
+  ) {
+    correctOptionIds = [optionIds[correctAnswer]]
+  } else {
+    // Fallback to first option for schema validity
+    correctOptionIds = [optionIds[0]]
+  }
+
+  return QuestionSelectBlockSchema.parse({
+    id: nanoid(),
+    type: 'question_select',
+    variant: 'mcq',
+    selectionMode: 'single',
+    prompt: createInlineRichText(prompt),
+    answer: {
+      multiSelect: false,
+      options: (options || []).map((opt, idx) => ({
+        id: optionIds[idx],
+        content: createInlineRichText(opt),
+      })),
+      correctOptionIds,
+    },
+  })
+}
+
+/**
+ * Transform multi-part extraction to exercise content.
+ * Builds blocks array in order: diagram?, stem?, diagram?, question1, question2, ...
+ */
+export function multiPartToExerciseContent(extraction: MultiPartExtraction): TransformResult {
+  const { stem, subQuestions, diagramDescription, diagramPosition } = extraction
+  const blocks: ContentBlock[] = []
+
+  const effectivePosition = diagramPosition ?? 'before_question'
+
+  // Create diagram block if present
+  let diagramBlock: ContentBlock | null = null
+  if (diagramDescription?.trim()) {
+    diagramBlock = createRichTextBlock(diagramDescription)
+  }
+
+  // Insert diagram at position based on effectivePosition
+  // For multi-part, we insert diagram at the very beginning (before everything)
+  // unless it's after_question and there are sub-questions
+  if (diagramBlock) {
+    if (effectivePosition === 'before_question' || !subQuestions.length) {
+      blocks.push(diagramBlock)
+    }
+  }
+
+  // Add stem rich_text block if present
+  if (stem?.trim()) {
+    blocks.push(createRichTextBlock(stem))
+  }
+
+  // Insert diagram after stem if position is after_question
+  if (diagramBlock && effectivePosition === 'after_question' && subQuestions.length > 0) {
+    blocks.push(diagramBlock)
+  }
+
+  // Add each sub-question as a separate block
+  for (const sq of subQuestions) {
+    if (sq.prompt?.trim()) {
+      blocks.push(createQuestionBlock(sq))
+    }
+  }
+
+  // Derive title from stem or first sub-question
+  let title: string
+  if (stem?.trim()) {
+    title = stem.length > 80 ? stem.substring(0, 77) + '...' : stem
+  } else if (subQuestions.length > 0 && subQuestions[0]?.prompt?.trim()) {
+    const firstPrompt = subQuestions[0].prompt
+    title = firstPrompt.length > 80 ? firstPrompt.substring(0, 77) + '...' : firstPrompt
+  } else {
+    title = 'Untitled Exercise'
+  }
+
+  // Validate against ContentSchema
+  const content: ExerciseContent = { blocks }
+  const result = ContentSchema.safeParse(content)
+  if (!result.success) {
+    throw new Error(`Invalid exercise content: ${result.error.message}`)
+  }
+
+  return { title, content }
+}
+
+/**
+ * Rebuild exercise content from edited multi-part preview.
+ * Used when admin edits the multi-part preview before creating the exercise.
+ */
+export function rebuildFromMultiPartPreview(edited: MultiPartPreviewDraft): TransformResult {
+  // Convert preview draft back to extraction format
+  const extraction: MultiPartExtraction = {
+    stem: edited.stem,
+    subQuestions: edited.subQuestions.map((sq) => ({
+      prompt: sq.prompt,
+      type: sq.type,
+      options: sq.options,
+      correctAnswer: sq.correctAnswer,
+      acceptedAnswers: sq.acceptedAnswer ? [sq.acceptedAnswer] : undefined,
+    })),
+    diagramDescription: edited.diagramDescription,
+    diagramPosition: (edited.diagramPosition as 'before_question' | 'after_question') || undefined,
+  }
+
+  return multiPartToExerciseContent(extraction)
 }
