@@ -1,0 +1,25 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "GreetingFlow component - TypingAnimation speed prop in 3 locations (lines 76, 106, 152)"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Current speed={200} is the value to change to ~30ms"
+  ],
+  "review_questions": [],
+  "complexity": 11,
+  "complexity_reasoning": "Scope: 5 (single component, 3 prop values). Risk: 3 (animation timing, low impact). Novelty: 2 (parameter adjustment, known pattern). Cross-domain: 0 (frontend only). Ambiguity: 1 (clear target values: 30-35ms vs current 200ms). Dependencies: 0 (no external). Total: 11",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task has clear bug description with steps to reproduce, expected result (30-35ms per character), and actual result (60-100ms). Acceptance criteria are specific: typing should be 1.5x faster with ~30ms delay."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
