@@ -26,6 +26,7 @@ import type { Lesson, Media } from '@/payload-types'
 import { getPdfBufferFromBlob, normalizeToAbsoluteUrl } from '@/server/services/pdf-fetcher'
 import { resolveExtractorPrompt } from './prompt-resolver'
 import {
+  autoAssignDiagrams,
   multiPartToExerciseContent,
   multiPartToPreviewDraft,
   type MultiPartPreviewDraft,
@@ -229,8 +230,11 @@ export async function extractSingle(
   let exerciseContent: TransformResult['content']
 
   if (llmResult.success && llmResult.data) {
-    // Transform to multi-part extraction format (data is now always MultiPartExtractionResult)
-    const extractionData = llmResult.data
+    // Keep raw data for logging (so log reflects what LLM actually returned)
+    const rawExtractionData = llmResult.data
+
+    // Apply auto-detect heuristic to move misclassified diagrams to correct sub-question
+    const extractionData = autoAssignDiagrams(rawExtractionData)
 
     // Transform to preview draft (preserves null correctAnswer)
     previewDraft = multiPartToPreviewDraft(extractionData)
@@ -239,7 +243,7 @@ export async function extractSingle(
     const transformResult = multiPartToExerciseContent(extractionData)
     exerciseContent = transformResult.content
 
-    // Log successful extraction
+    // Log successful extraction (use raw data)
     const logId = await createExtractionLog(payload, {
       tenant: lessonTenantId,
       lesson: lessonId,
@@ -248,8 +252,8 @@ export async function extractSingle(
       promptVersion: resolvedPrompt?.version,
       status: 'success',
       stage: 'extract',
-      rawResponse: JSON.stringify(extractionData),
-      parsedPayload: extractionData as unknown as Record<string, unknown>,
+      rawResponse: JSON.stringify(rawExtractionData),
+      parsedPayload: rawExtractionData as unknown as Record<string, unknown>,
       processingTimeMs: llmResult.metadata.processingTimeMs,
       model: llmResult.metadata.model,
     })

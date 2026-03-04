@@ -568,3 +568,72 @@ export function rebuildFromMultiPartPreview(edited: MultiPartPreviewDraft): Tran
 
   return multiPartToExerciseContent(extraction)
 }
+
+// ---------------------------------
+// Auto-Detect Diagram Misclassification
+// ---------------------------------
+
+/**
+ * Auto-detect diagram misclassification.
+ * If a global diagram exists but only ONE sub-question references diagrams/graphs/figures,
+ * move the global diagram to that sub-question's diagramDescription.
+ *
+ * Returns a new (immutable) extraction — does not mutate the input.
+ */
+export function autoAssignDiagrams(extraction: MultiPartExtraction): MultiPartExtraction {
+  const { diagramDescription, subQuestions } = extraction
+
+  // Only act if there IS a global diagram and NO sub-questions already have diagrams
+  if (!diagramDescription?.trim()) return extraction
+  const anySubHasDiagram = subQuestions.some((sq) => sq.diagramDescription?.trim())
+  if (anySubHasDiagram) return extraction
+
+  // Keywords that indicate a sub-question references a diagram
+  const DIAGRAM_KEYWORDS = [
+    /\bgraph\b/i,
+    /\bdiagram\b/i,
+    /\bfigure\b/i,
+    /\bdrawing\b/i,
+    /\bsketch\b/i,
+    /\bchart\b/i,
+    /\bplot\b/i,
+    // Hebrew equivalents
+    /\bגרף\b/,
+    /\bתרשים\b/,
+    /\bציור\b/,
+    /\bשרטוט\b/,
+    /\bסקיצה\b/,
+    // Common phrases
+    /based on the/i,
+    /according to the/i,
+    /shown in the/i,
+    /see the/i,
+    /לפי ה/,
+    /על פי ה/,
+    /בהתבוננות ב/,
+  ]
+
+  // Find sub-questions that reference diagrams
+  const referencingIndices: number[] = []
+  for (let i = 0; i < subQuestions.length; i++) {
+    const prompt = subQuestions[i].prompt || ''
+    if (DIAGRAM_KEYWORDS.some((kw) => kw.test(prompt))) {
+      referencingIndices.push(i)
+    }
+  }
+
+  // Only auto-move if exactly ONE sub-question references the diagram
+  if (referencingIndices.length !== 1) return extraction
+
+  const targetIdx = referencingIndices[0]
+
+  // Create new extraction with diagram moved to the target sub-question
+  return {
+    ...extraction,
+    diagramDescription: undefined,
+    diagramPosition: undefined,
+    subQuestions: subQuestions.map((sq, idx) =>
+      idx === targetIdx ? { ...sq, diagramDescription: diagramDescription } : sq,
+    ),
+  }
+}
