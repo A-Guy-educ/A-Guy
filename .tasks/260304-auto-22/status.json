@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-04T17:03:45.290Z",
-  "updatedAt": "2026-03-04T19:03:45.223Z",
+  "updatedAt": "2026-03-04T19:22:13.160Z",
   "state": "running",
   "cursor": "spec",
   "stages": {
@@ -47,7 +47,7 @@
     "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-04T19:03:45.223Z"
+      "startedAt": "2026-03-04T19:22:13.160Z"
     }
   },
   "issueNumber": 699
