@@ -71,6 +71,13 @@
     "login": {
       "title": "ברוכים הבאים ל-A-Guy",
       "subtitle": "התחבר כדי להמשיך ללמוד",
+      "headline": "שלום, מוכנים להצליח?",
+      "headlineSubtitle": "A-Guy המורה הפרטי שלכם",
+      "quickEntry": "כניסה מהירה",
+      "signupCTA": "הרשמה ללא עלות",
+      "footerSecure": "גישה מהירה ומאובטחת.",
+      "footerOneClick": "בלחיצה אחת אתם בפנים.",
+      "needHelp": "זקוקים לעזרה?",
       "googleOnlyMessage": "A-Guy תומך כרגע באימות Google לחוויה מהירה ומאובטחת יותר.",
       "email": "אימייל",
       "emailPlaceholder": "you@example.com",

@@ -48,6 +48,13 @@
     "login": {
       "title": "Welcome to A-Guy",
       "subtitle": "Sign in to continue learning",
+      "headline": "Hello, ready to succeed?",
+      "headlineSubtitle": "A-Guy — your personal tutor",
+      "quickEntry": "Quick Entry",
+      "signupCTA": "Free Registration",
+      "footerSecure": "Fast and secure access.",
+      "footerOneClick": "One click and you're in.",
+      "needHelp": "Need help?",
       "googleOnlyMessage": "A-Guy currently supports Google authentication for a faster, more secure experience.",
       "email": "Email",
       "emailPlaceholder": "you@example.com",

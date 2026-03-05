@@ -40,13 +40,23 @@ function LoginFormContent() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <p className="text-sm text-muted-foreground text-center">{t('subtitle')}</p>
+    <Card className="max-w-md w-full mx-auto rounded-xl shadow-lg">
+      <CardHeader className="p-8 pb-0">
+        <div className="w-12 h-0.5 bg-accent mx-auto mb-4" />
+        <p className="text-base font-medium text-foreground text-center">{t('quickEntry')}</p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-8 pt-4">
         <div className="flex flex-col items-center space-y-4">
           <GoogleLoginButton returnTo={returnTo} className="w-full" />
+
+          <Button variant="secondary" className="w-full" asChild>
+            <SystemLink href="/signup">{t('signupCTA')}</SystemLink>
+          </Button>
+
+          <div className="pt-2 pb-4">
+            <p className="text-xs text-muted-foreground text-center">{t('footerSecure')}</p>
+            <p className="text-xs text-muted-foreground text-center">{t('footerOneClick')}</p>
+          </div>
 
           {passwordEnabled && (
             <>
@@ -82,18 +92,7 @@ function LoginFormContent() {
                   {isLoading ? t('loggingIn') : t('loginButton')}
                 </Button>
               </form>
-
-              <p className="text-sm text-muted-foreground">
-                {t('noAccount')}{' '}
-                <SystemLink href="/signup" className="underline hover:no-underline">
-                  {t('signupLink')}
-                </SystemLink>
-              </p>
             </>
-          )}
-
-          {!passwordEnabled && (
-            <p className="text-xs text-muted-foreground text-center">{t('googleOnlyMessage')}</p>
           )}
         </div>
       </CardContent>
@@ -111,14 +110,17 @@ export function LoginForm() {
 
 function LoginFormSkeleton() {
   return (
-    <Card>
-      <CardHeader>
-        <div className="h-4 w-48 mx-auto bg-muted animate-pulse rounded" />
+    <Card className="max-w-md w-full mx-auto rounded-xl shadow-lg">
+      <CardHeader className="p-8 pb-0">
+        <div className="w-12 h-0.5 bg-accent mx-auto mb-4 animate-pulse" />
+        <div className="h-4 w-32 mx-auto bg-muted animate-pulse rounded" />
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-8 pt-4">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-full h-10 bg-muted animate-pulse rounded" />
-          <div className="h-3 w-64 bg-muted animate-pulse rounded" />
+          <div className="w-full h-10 bg-muted animate-pulse rounded" />
+          <div className="h-3 w-48 bg-muted animate-pulse rounded" />
+          <div className="h-3 w-40 bg-muted animate-pulse rounded" />
         </div>
       </CardContent>
     </Card>
