@@ -5,8 +5,8 @@
  * @ai-summary Tests for scripted-stages.ts: buildPrTitle (heading strip), buildPrBody (Closes # link), runPrStage (issueNumber wiring), and audit-history path in STAGE_CONTEXT_FILES
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest'
 import * as path from 'path'
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // ============================================================================
 // Mocks
@@ -65,6 +65,8 @@ const _DEFAULT_BRANCH = 'dev' // reserved for future use
 // ============================================================================
 
 function resetMocks() {
+  // Set GitHub token for runPrStage tests
+  process.env.GH_PAT = 'test-token-for-pr-stage'
   mockExecFileSync.mockReset()
   mockExecSync.mockReset()
   mockFetch.mockReset()
@@ -111,7 +113,7 @@ describe('STAGE_CONTEXT_FILES audit-history path', () => {
 
     expect(auditEntry).toBeDefined()
     const resolved = path.normalize(`${taskDir}/${auditEntry}`)
-    expect(resolved).toBe('.tasks/audit-history.json')
+    expect(resolved).toMatch(/^\.tasks[/\\]audit-history\.json$/)
   })
 })
 
@@ -533,4 +535,9 @@ describe('runPrStage failure handling', () => {
     expect(result.created).toBe(false)
     expect(result.url).toBe('')
   })
+})
+
+// Clean up environment variable after all tests
+afterAll(() => {
+  delete process.env.GH_PAT
 })
