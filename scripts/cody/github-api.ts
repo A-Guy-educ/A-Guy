@@ -597,7 +597,7 @@ export function closeLinkedPR(issueNumber: number): boolean {
     // Find PR linked to this issue
     const listResult = execFileSync(
       'gh',
-      ['pr', 'list', '--issue', String(issueNumber), '--json', 'number'],
+      ['pr', 'list', '--search', `closes:#${issueNumber}`, '--json', 'number'],
       { encoding: 'utf-8' },
     )
     const prs = JSON.parse(listResult) as { number: number }[]
