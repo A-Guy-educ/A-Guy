@@ -31,7 +31,7 @@ describe('GitHubRunner', () => {
       ['exec', 'opencode', 'run', '--agent', 'spec', '--format', 'json', 'Write tests'],
       {
         cwd: '/my/project',
-        stdio: ['ignore', 'pipe', 'inherit'],
+        stdio: ['pipe', 'pipe', 'inherit'],
         env: { PATH: '/usr/bin' },
       },
     )
@@ -48,7 +48,7 @@ describe('GitHubRunner', () => {
       ['exec', 'opencode', 'run', '--agent', 'execute', '--format', 'json', 'Do the thing'],
       expect.objectContaining({
         cwd: '/workspace/repo',
-        stdio: ['ignore', 'pipe', 'inherit'],
+        stdio: ['pipe', 'pipe', 'inherit'],
         env: {},
       }),
     )
@@ -89,7 +89,7 @@ describe('LocalRunner', () => {
     expect(spawn).toHaveBeenCalledWith(
       'pnpm',
       ['ocode', 'run', '--agent', 'spec', '--format', 'json', 'Write a spec'],
-      expect.objectContaining({ cwd: '/my/project', stdio: ['ignore', 'pipe', 'inherit'] }),
+      expect.objectContaining({ cwd: '/my/project', stdio: ['pipe', 'pipe', 'inherit'] }),
     )
   })
 
