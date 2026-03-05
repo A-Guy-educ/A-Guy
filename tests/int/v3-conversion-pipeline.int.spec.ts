@@ -58,11 +58,25 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
   vi.mock('@/infra/llm/services/data-extractor-service', () => ({
     extractFromImage: vi.fn().mockResolvedValue(mockExtractionResponse),
     extractFromImageV3: vi.fn().mockResolvedValue({
-      ...mockExtractionResponse,
+      success: true,
       data: {
-        ...mockExtractionResponse.data,
+        stem: undefined,
+        subQuestions: [
+          {
+            prompt: 'What is 2+2?',
+            type: 'mcq',
+            options: ['3', '4', '5', '6'],
+            correctAnswer: 1,
+            acceptedAnswers: ['Basic addition: 2+2=4'],
+          },
+        ],
         diagramDescription: '**Diagram:** Right triangle $ABC$ where $AB = 5$ cm',
         diagramPosition: 'before_question',
+      },
+      metadata: {
+        model: 'test-model',
+        processingTimeMs: 100,
+        imageSizeBytes: 1024,
       },
     }),
   }))
