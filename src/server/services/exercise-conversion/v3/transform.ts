@@ -35,6 +35,7 @@ export interface SubQuestionExtraction {
 }
 
 export interface MultiPartExtraction {
+  title?: string // LLM-generated topic title
   stem?: string
   subQuestions: SubQuestionExtraction[]
   diagramDescription?: string
@@ -92,7 +93,7 @@ export interface PreviewDraft {
 // ---------------------------------
 
 export interface TransformResult {
-  title: string // derived from question (first 80 chars)
+  title: string // derived: LLM title > stem > first prompt > "Untitled Exercise"
   content: ExerciseContent
 }
 
@@ -308,6 +309,36 @@ function isTrueFalsePattern(options: string[]): boolean {
   return normalized.includes('true') && normalized.includes('false')
 }
 
+/**
+ * Derive title from LLM-generated title, stem, or first sub-question prompt.
+ * Priority: LLM title > stem > first prompt > fallback
+ */
+function deriveTitle(
+  llmTitle: string | undefined,
+  stem: string | undefined,
+  subQuestions: Array<{ prompt?: string }>,
+): string {
+  // Priority 1: Use LLM-generated title if available
+  if (llmTitle?.trim()) {
+    const t = llmTitle.trim()
+    return t.length > 80 ? t.substring(0, 77) + '...' : t
+  }
+
+  // Priority 2: Fall back to stem
+  if (stem?.trim()) {
+    return stem.length > 80 ? stem.substring(0, 77) + '...' : stem
+  }
+
+  // Priority 3: Fall back to first sub-question prompt
+  if (subQuestions.length > 0 && subQuestions[0]?.prompt?.trim()) {
+    const p = subQuestions[0].prompt!
+    return p.length > 80 ? p.substring(0, 77) + '...' : p
+  }
+
+  // Fallback
+  return 'Untitled Exercise'
+}
+
 // ---------------------------------
 // Additional export: Rebuild from edited preview
 // ---------------------------------
@@ -341,21 +372,13 @@ export function rebuildFromPreview(
  * Derives title from stem or first sub-question prompt.
  */
 export function multiPartToPreviewDraft(extraction: MultiPartExtraction): MultiPartPreviewDraft {
-  const { stem, subQuestions, diagramDescription, diagramPosition } = extraction
+  const { title: llmTitle, stem, subQuestions, diagramDescription, diagramPosition } = extraction
 
   // Guard against missing subQuestions
   const safeSubQuestions = subQuestions && Array.isArray(subQuestions) ? subQuestions : []
 
-  // Derive title from stem or first sub-question
-  let title: string
-  if (stem?.trim()) {
-    title = stem.length > 80 ? stem.substring(0, 77) + '...' : stem
-  } else if (safeSubQuestions.length > 0 && safeSubQuestions[0]?.prompt?.trim()) {
-    const firstPrompt = safeSubQuestions[0].prompt
-    title = firstPrompt.length > 80 ? firstPrompt.substring(0, 77) + '...' : firstPrompt
-  } else {
-    title = 'Untitled Exercise'
-  }
+  // Derive title: LLM title > stem > first prompt > fallback
+  const title = deriveTitle(llmTitle, stem, safeSubQuestions)
 
   // Map each sub-question to SubQuestionDraft
   const mappedSubQuestions: SubQuestionDraft[] = safeSubQuestions.map((sq) => {
@@ -487,7 +510,7 @@ function createQuestionBlock(sq: SubQuestionExtraction): ContentBlock {
  * Builds blocks array in order: diagram?, stem?, diagram?, question1, question2, ...
  */
 export function multiPartToExerciseContent(extraction: MultiPartExtraction): TransformResult {
-  const { stem, subQuestions, diagramDescription, diagramPosition } = extraction
+  const { title: llmTitle, stem, subQuestions, diagramDescription, diagramPosition } = extraction
   const blocks: ContentBlock[] = []
 
   // Guard against missing subQuestions
@@ -531,16 +554,8 @@ export function multiPartToExerciseContent(extraction: MultiPartExtraction): Tra
     }
   }
 
-  // Derive title from stem or first sub-question
-  let title: string
-  if (stem?.trim()) {
-    title = stem.length > 80 ? stem.substring(0, 77) + '...' : stem
-  } else if (safeSubQuestions.length > 0 && safeSubQuestions[0]?.prompt?.trim()) {
-    const firstPrompt = safeSubQuestions[0].prompt
-    title = firstPrompt.length > 80 ? firstPrompt.substring(0, 77) + '...' : firstPrompt
-  } else {
-    title = 'Untitled Exercise'
-  }
+  // Derive title: LLM title > stem > first prompt > fallback
+  const title = deriveTitle(llmTitle, stem, safeSubQuestions)
 
   // Validate against ContentSchema
   const content: ExerciseContent = { blocks }
@@ -558,7 +573,9 @@ export function multiPartToExerciseContent(extraction: MultiPartExtraction): Tra
  */
 export function rebuildFromMultiPartPreview(edited: MultiPartPreviewDraft): TransformResult {
   // Convert preview draft back to extraction format
+  // Note: edited.title is the user-edited title from the preview, pass it through
   const extraction: MultiPartExtraction = {
+    title: edited.title,
     stem: edited.stem,
     subQuestions: edited.subQuestions.map((sq) => ({
       prompt: sq.prompt,

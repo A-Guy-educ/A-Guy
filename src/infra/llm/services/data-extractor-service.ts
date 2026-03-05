@@ -177,7 +177,12 @@ function normalizeToMultiPart(
 ): MultiPartExtractionResult {
   // New format: has subQuestions array
   if (Array.isArray(parsed.subQuestions)) {
+    // Extract title if provided by LLM
+    const title =
+      typeof parsed.title === 'string' && parsed.title.trim() ? parsed.title.trim() : undefined
+
     return {
+      title,
       stem: typeof parsed.stem === 'string' && parsed.stem.trim() ? parsed.stem : undefined,
       subQuestions: (parsed.subQuestions as unknown[]).map((sq) => {
         const sqObj = sq as Record<string, unknown>
@@ -217,6 +222,7 @@ function normalizeToMultiPart(
   }
 
   return {
+    title: undefined, // Old format doesn't include title
     stem: undefined,
     subQuestions: [
       {
@@ -236,6 +242,7 @@ function normalizeToMultiPart(
  * Multi-part exercise extraction result (NEW)
  */
 export interface MultiPartExtractionResult {
+  title?: string // LLM-generated topic title
   stem?: string
   subQuestions: Array<{
     prompt: string
@@ -283,7 +290,7 @@ export async function extractFromImageV3(
     modelConfig = resolveModelConfig('IMAGE_TO_EXERCISE')
 
     // Prepare multimodal input with V3 prompt that includes diagram extraction
-    const prompt = `${V3_EXERCISE_WITH_DIAGRAMS_PROMPT}\n\nExtract the exercise from this image. Return JSON with: stem (shared context), subQuestions[] (each with prompt, type, options if MCQ, correctAnswer if MCQ, acceptedAnswers if free response), diagramDescription (optional), diagramPosition (optional).`
+    const prompt = `${V3_EXERCISE_WITH_DIAGRAMS_PROMPT}\n\nExtract the exercise from this image. Return JSON with: title (topic description, 3-8 words), stem (shared context), subQuestions[] (each with prompt, type, options if MCQ, correctAnswer if MCQ, acceptedAnswers if free response), diagramDescription (optional), diagramPosition (optional).`
 
     // For PDFs, pass directly to Gemini (it handles PDF natively)
     // For images, optimize before sending to reduce API latency/costs

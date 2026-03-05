@@ -15,6 +15,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ContentSchema } from '@/server/payload/collections/Exercises/schemas'
 import {
+  multiPartToExerciseContent,
+  multiPartToPreviewDraft,
   rebuildFromPreview,
   toExerciseContent,
   toPreviewDraft,
@@ -530,6 +532,108 @@ describe('V3 Transform Service', () => {
 
       const result = toPreviewDraft(extraction)
       expect(result.questionType).toBe('mcq')
+    })
+  })
+
+  // ============================================
+  // Multi-Part Title Derivation tests
+  // ============================================
+
+  describe('Multi-Part Title Derivation', () => {
+    it('should use LLM-generated title when provided', () => {
+      const extraction = {
+        title: 'שטח משולש ישר זווית',
+        stem: 'Given: triangle ABC where AB = 5, BC = 12',
+        subQuestions: [
+          { prompt: 'Find the area of triangle ABC', type: 'free_response' as const },
+          { prompt: 'Find angle B', type: 'free_response' as const },
+        ],
+      }
+
+      const previewResult = multiPartToPreviewDraft(extraction)
+      const contentResult = multiPartToExerciseContent(extraction)
+
+      expect(previewResult.title).toBe('שטח משולש ישר זווית')
+      expect(contentResult.title).toBe('שטח משולש ישר זווית')
+    })
+
+    it('should fall back to stem when title missing', () => {
+      const extraction = {
+        stem: 'Given: triangle ABC where AB = 5, BC = 12',
+        subQuestions: [{ prompt: 'Find the area of triangle ABC', type: 'free_response' as const }],
+      }
+
+      const previewResult = multiPartToPreviewDraft(extraction)
+      const contentResult = multiPartToExerciseContent(extraction)
+
+      expect(previewResult.title).toBe('Given: triangle ABC where AB = 5, BC = 12')
+      expect(contentResult.title).toBe('Given: triangle ABC where AB = 5, BC = 12')
+    })
+
+    it('should fall back to first prompt when both title and stem missing', () => {
+      const extraction = {
+        stem: undefined,
+        subQuestions: [
+          { prompt: 'Find the area of triangle ABC', type: 'free_response' as const },
+          { prompt: 'Find angle B', type: 'free_response' as const },
+        ],
+      }
+
+      const previewResult = multiPartToPreviewDraft(extraction)
+      const contentResult = multiPartToExerciseContent(extraction)
+
+      expect(previewResult.title).toBe('Find the area of triangle ABC')
+      expect(contentResult.title).toBe('Find the area of triangle ABC')
+    })
+
+    it('should truncate LLM title at 80 chars', () => {
+      const longTitle = 'A'.repeat(100)
+      const extraction = {
+        title: longTitle,
+        subQuestions: [{ prompt: 'Test question', type: 'free_response' as const }],
+      }
+
+      const previewResult = multiPartToPreviewDraft(extraction)
+
+      expect(previewResult.title).toBe('A'.repeat(77) + '...')
+      expect(previewResult.title.length).toBe(80)
+    })
+
+    it('should skip whitespace-only title and fall back', () => {
+      const extraction = {
+        title: '   ', // whitespace-only
+        stem: 'Given: triangle ABC',
+        subQuestions: [{ prompt: 'Find the area', type: 'free_response' as const }],
+      }
+
+      const previewResult = multiPartToPreviewDraft(extraction)
+
+      // Should fall back to stem since whitespace-only title is ignored
+      expect(previewResult.title).toBe('Given: triangle ABC')
+    })
+
+    it('should be consistent title between preview and content functions', () => {
+      const extraction = {
+        title: 'Quadratic Equations',
+        stem: 'Solve the following quadratic equations',
+        subQuestions: [{ prompt: 'Solve x² + 5x + 6 = 0', type: 'free_response' as const }],
+      }
+
+      const previewResult = multiPartToPreviewDraft(extraction)
+      const contentResult = multiPartToExerciseContent(extraction)
+
+      expect(previewResult.title).toBe(contentResult.title)
+    })
+
+    it('should return "Untitled Exercise" when no title, stem, or prompts', () => {
+      const extraction = {
+        stem: undefined,
+        subQuestions: [],
+      }
+
+      const previewResult = multiPartToPreviewDraft(extraction)
+
+      expect(previewResult.title).toBe('Untitled Exercise')
     })
   })
 })
