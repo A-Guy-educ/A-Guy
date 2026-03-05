@@ -1,16 +1,16 @@
+import { describe, it, expect } from 'vitest'
 import * as path from 'path'
-import { describe, expect, it } from 'vitest'
-import type { CodyInput } from '../../../../scripts/cody/cody-utils'
 import {
-  ALL_STAGES,
-  SCRIPTED_STAGES,
-  SPEC_STAGES,
-  STAGE_CONTEXT_FILES,
   buildStagePrompt,
-  getImplStages,
-  getSpecStages,
   stageInstructions,
+  SPEC_STAGES,
+  SCRIPTED_STAGES,
+  ALL_STAGES,
+  STAGE_CONTEXT_FILES,
+  getSpecStages,
+  getImplStages,
 } from '../../../../scripts/cody/stage-prompts'
+import type { CodyInput } from '../../../../scripts/cody/cody-utils'
 
 const mockInput: CodyInput = {
   mode: 'full',
@@ -23,11 +23,9 @@ function getExpectedPath(file: string): string {
   const base = path.join(process.cwd(), '.tasks', '260219-test')
   // Handle relative paths like ../audit-history.json - use string concatenation to preserve ..
   if (file.startsWith('../')) {
-    // Normalize to forward slashes for cross-platform compatibility
-    return `${base}/../${file.replace('../', '')}`.replace(/\\/g, '/')
+    return `${base}/../${file.replace('../', '')}`
   }
-  // Normalize to forward slashes for cross-platform compatibility
-  return path.join(base, file).replace(/\\/g, '/')
+  return path.join(base, file)
 }
 
 describe('stage-prompts', () => {

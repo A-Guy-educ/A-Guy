@@ -1,14 +1,14 @@
+import { describe, it, expect, afterEach } from 'vitest'
 import * as fs from 'fs'
-import * as os from 'os'
 import * as path from 'path'
-import { afterEach, describe, expect, it } from 'vitest'
+import * as os from 'os'
 import {
+  validateTask,
+  readTask,
   normalizeTask,
   PIPELINE_MAP,
-  readTask,
   resolveControlMode,
   resolvePipelineProfile,
-  validateTask,
 } from '../../../../scripts/cody/pipeline-utils'
 
 // Helper: create a temp task directory with a task.json
@@ -558,9 +558,7 @@ describe('pipeline stage definitions', () => {
 describe('gap stage registration', () => {
   it('should map stageOutputFile for gap correctly', async () => {
     const { stageOutputFile } = await import('../../../../scripts/cody/pipeline-utils')
-    // Use path.normalize to handle both Windows and Unix path separators
-    const result = path.normalize(stageOutputFile('/tmp/tasks/123', 'gap'))
-    expect(result).toBe(path.normalize('/tmp/tasks/123/gap.md'))
+    expect(stageOutputFile('/tmp/tasks/123', 'gap')).toBe('/tmp/tasks/123/gap.md')
   })
 
   it('should include gap in SPEC_ONLY_STAGES (spec-only pipeline)', async () => {
@@ -577,9 +575,7 @@ describe('gap stage registration', () => {
   it('should have gap in dry-run outputs (via fallback)', async () => {
     const { stageOutputFile } = await import('../../../../scripts/cody/pipeline-utils')
     // Dry-run relies on fallback `${stage}.md`, so gap should produce gap.md
-    // Use path.normalize to handle both Windows and Unix path separators
-    const result = path.normalize(stageOutputFile('/tmp', 'gap'))
-    expect(result).toBe(path.normalize('/tmp/gap.md'))
+    expect(stageOutputFile('/tmp', 'gap')).toBe('/tmp/gap.md')
   })
 })
 
