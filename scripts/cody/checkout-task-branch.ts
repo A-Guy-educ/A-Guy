@@ -146,17 +146,24 @@ function findRemoteBranch(taskId: string): string | null {
     .filter((b) => b && !b.includes('->'))
     .map((b) => b.replace('origin/', ''))
 
-  // First, try to find branches that match by date prefix AND include issue number
+  // First, try to find branches that match by date prefix AND exact issue number
   // This prevents picking up the wrong branch when multiple issues use the same date
   const issueNumber = process.env.ISSUE_NUMBER
   if (issueNumber) {
     for (const prefix of BRANCH_PREFIXES) {
       const pattern = `${prefix}/${datePrefix}-`
       const matches = branches.filter((b) => b.startsWith(pattern))
-      // If there's a branch that includes the issue number, use it
-      const issueMatch = matches.find((b) => b.includes(issueNumber))
+      // Must match EXACT issue number: -699- or -699 at end, not -694-
+      const issueMatch = matches.find((b) => {
+        // Match -699- or -699. or -699_ or end of string
+        const regex = new RegExp('-' + issueNumber + '(-|\.|_|$)')
+        return regex.test(b)
+      })
       if (issueMatch) return issueMatch
     }
+    // If we have an issue number but no matching branch, DON'T fall back - create new branch
+    logger.info('  No branch found for issue #' + issueNumber + ', will create new branch')
+    return null
   }
 
   // Collect ALL matches across ALL prefixes before deciding
