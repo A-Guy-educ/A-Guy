@@ -1,0 +1,33 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "high",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "Create shared auth middleware: src/server/payload/endpoints/agent/auth-middleware.ts",
+    "Refactor 5 chat endpoints to use shared middleware",
+    "Fix rate-limit bypass in reset-chat.ts",
+    "Fix access control bypass in conversations/by-context GET",
+    "Fix message limit inconsistency between chat.ts and chat-stream.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "All mentioned files exist at specified paths",
+    "checkRateLimit, checkAndIncrementGuestMessageCount functions exist as described",
+    "Collection access control (isOwner) exists for conversations collection"
+  ],
+  "review_questions": [
+    "Are there any other endpoints in the codebase with similar auth duplication issues?",
+    "Should the shared middleware be placed in a different location for better organization?",
+    "Is there existing test coverage for these endpoints that needs to be updated?"
+  ],
+  "complexity": 44,
+  "complexity_reasoning": "Scope: 15 (7 files, 1 new + 6 modified across 2 modules). Risk: 16 (security bugs: rate-limit bypass, access control bypass). Novelty: 6 (extracting shared middleware, follows existing patterns). Cross-domain: 3 (backend only). Ambiguity: 2 (clear requirements, specific file paths). Dependency: 2 (self-contained endpoint changes). Total: 44 → Complex tier (35-49)",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains clear ## Bugs Found section with 3 specific issues, ## Proposed Solution with code structure, ## Files to Change with 7 specific files, and ## Acceptance Criteria with 5 checkable items. Task describes a refactor with security fixes."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
