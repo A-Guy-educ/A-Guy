@@ -1,0 +1,25 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "high",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/app/api/conversations/by-context/route.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "isOwner access control exists in Conversations collection and handles updates correctly",
+    "The fix (overrideAccess: false + pass user) will properly enforce ownership"
+  ],
+  "complexity": 38,
+  "complexity_reasoning": "Scope: 2 files (route.ts + Conversations.ts verification). Risk: Authorization bypass (18). Novelty: Following existing GET handler pattern (5). Cross-domain: Backend only (2). Ambiguity: Clear with exact file paths and line numbers (2). Dependencies: Internal access control (4). Total: 38",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains clear bug description with file path and line numbers, expected behavior, and specific fix steps. Has acceptance criteria (ownership enforcement) and implementation details."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

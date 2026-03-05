@@ -5,11 +5,13 @@
  * @ai-summary Agent stage handler that runs LLM agents
  */
 
+import { logger } from '../logger'
 import * as fs from 'fs'
 
 import type { PipelineContext, StageDefinition, StageResult } from '../engine/types'
 import { runAgentWithFileWatch } from '../agent-runner'
 import { stageOutputFile } from '../pipeline-utils'
+import { appendSession } from '../chat-history'
 import type { StageHandler } from './handler'
 
 /**
@@ -41,7 +43,7 @@ export class AgentHandler implements StageHandler {
         const fallbackContent = def.fallbackOnMissingOutput(ctx)
         if (fallbackContent) {
           fs.writeFileSync(outputFile, fallbackContent)
-          console.log(`  ℹ️ Created fallback output: ${def.name}.md`)
+          logger.info(`  ℹ️ Created fallback output: ${def.name}.md`)
           return {
             outcome: 'completed',
             retries: result.retries,
@@ -54,6 +56,16 @@ export class AgentHandler implements StageHandler {
         outcome: 'failed',
         reason: `Agent failed`,
         retries: result.retries,
+      }
+    }
+
+    // Success - try to save chat history
+    if (result.sessionId) {
+      try {
+        await appendSession(ctx.taskDir, def.name, result.sessionId)
+      } catch (err) {
+        // Non-fatal — don't fail the stage if chat export fails
+        logger.warn({ err, stage: def.name }, 'Failed to save chat history')
       }
     }
 

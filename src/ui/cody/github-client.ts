@@ -5,6 +5,7 @@
  * @ai-summary GitHub API client with caching and manual rate limit handling
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { throttling } from '@octokit/plugin-throttling'
 import { Octokit } from '@octokit/rest'
 import {
   GITHUB_OWNER,
@@ -12,6 +13,7 @@ import {
   WORKFLOW_ID,
   BRANCH_PREFIXES,
   CACHE_TTL,
+  BRANCH_CACHE_TTL,
   TASK_ID_REGEX,
 } from './constants'
 import type {
@@ -70,10 +72,10 @@ function setCache<T>(
 
 let octokitInstance: Octokit | null = null
 
-function getOctokit(): Octokit {
-  if (octokitInstance) {
-    return octokitInstance
-  }
+type ThrottledOctokit = Octokit & ReturnType<typeof throttling>
+
+export function getOctokit(): Octokit {
+  if (octokitInstance) return octokitInstance as ThrottledOctokit
 
   // Prefer CODY_BOT_TOKEN if set (for bot attribution), otherwise fall back to GITHUB_TOKEN
   const token = process.env.CODY_BOT_TOKEN || process.env.GITHUB_TOKEN
@@ -81,12 +83,29 @@ function getOctokit(): Octokit {
     throw new Error('Neither CODY_BOT_TOKEN nor GITHUB_TOKEN is configured')
   }
 
-  // Create Octokit instance - rate limiting handled manually in API routes
-  octokitInstance = new Octokit({
+  // Create Octokit with throttling plugin - auto-retries on rate limits
+  const MyOctokit = Octokit.plugin(throttling)
+  octokitInstance = new MyOctokit({
     auth: token,
+    throttle: {
+      onRateLimit: (retryAfter, _options, _octokit) => {
+        // Retry once after rate limit, then stop
+        if (_options.request?.headers?.['x-octokit-retry-count'] === 0) {
+          console.warn(`[Cody] Rate limited, retrying after ${retryAfter}s`)
+          return true
+        }
+        console.error(`[Cody] Rate limit hit twice, giving up`)
+        return false
+      },
+      onSecondaryRateLimit: (retryAfter, _options, _octokit) => {
+        // Secondary rate limit - always retry
+        console.warn(`[Cody] Secondary rate limit, retrying after ${retryAfter}s`)
+        return true
+      },
+    },
   })
 
-  return octokitInstance
+  return octokitInstance as ThrottledOctokit
 }
 
 // ============ Branch Discovery ============
@@ -171,7 +190,7 @@ export async function findBranchByIssueNumber(
 
   for (const result of results) {
     if (result.status === 'fulfilled' && result.value) {
-      setCache(cacheKey, CACHE_TTL.pipeline, result.value)
+      setCache(cacheKey, BRANCH_CACHE_TTL, result.value)
       return result.value
     }
   }
@@ -1044,6 +1063,34 @@ export async function createIssue(options: {
 }
 
 /**
+ * Upload an attachment to an issue (requires GitHub Enterprise)
+ */
+export async function uploadIssueAttachment(
+  issueNumber: number,
+  file: { name: string; content: string },
+): Promise<{ attachment_url: string; name: string }> {
+  const octokit = getOctokit() as any
+
+  const buffer = Buffer.from(file.content, 'base64')
+
+  const response = await octokit.request(
+    'POST /repos/{owner}/{repo}/issues/{issue_number}/attachments',
+    {
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      issue_number: issueNumber,
+      name: file.name,
+      file: buffer,
+    },
+  )
+
+  return {
+    attachment_url: response.data.asset_url,
+    name: response.data.name,
+  }
+}
+
+/**
  * Update an issue (close, reopen, change title/body)
  */
 export async function updateIssue(
@@ -1213,7 +1260,7 @@ export async function fetchPRCIStatus(
     })
 
     const sha = pr.head.sha
-    const mergeable = pr.mergeable ?? false
+    // mergeable state no longer checked - just CI status determines mergeability
 
     // 2. Get check runs for the head SHA
     const { data: checkRuns } = await octokit.checks.listForRef({
@@ -1247,7 +1294,7 @@ export async function fetchPRCIStatus(
       }
     }
 
-    const result = { ciStatus, mergeable: mergeable && ciStatus === 'success' }
+    const result = { ciStatus, mergeable: ciStatus === 'success' }
 
     // Short cache — CI status changes frequently
     setCache(cacheKey, 30_000, result) // 30 seconds

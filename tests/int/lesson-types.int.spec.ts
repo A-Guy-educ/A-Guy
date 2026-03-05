@@ -43,6 +43,7 @@ describe('Lesson types', () => {
       data: {
         title: `Lesson Types Category ${timestamp}`,
         slug: `lesson-types-category-${timestamp}`,
+        locale: 'he',
       },
     })
     categoryId = category.id
@@ -51,6 +52,7 @@ describe('Lesson types', () => {
       data: {
         courseLabel: `LT-${timestamp}`,
         title: `Lesson Types Course ${timestamp}`,
+        locale: 'he',
         categories: [categoryId],
         order: 0,
         status: 'published',

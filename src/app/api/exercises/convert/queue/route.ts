@@ -86,7 +86,11 @@ export async function POST(request: NextRequest) {
     const contentFiles = lessonTyped.contentFiles || []
     const mediaIds = contentFiles.map((m): string => (typeof m === 'string' ? m : m.id))
     if (!mediaIds.includes(mediaId)) {
-      return errorResponse('MEDIA_NOT_ATTACHED', 'Media is not attached to this lesson', 400)
+      return errorResponse(
+        'MEDIA_NOT_ATTACHED',
+        'Media is not attached to this lesson. Save the lesson after attaching media and try again.',
+        400,
+      )
     }
 
     // ========== Fetch and Validate Prompts (with overrideAccess: true) ==========

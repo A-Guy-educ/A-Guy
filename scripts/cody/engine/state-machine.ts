@@ -14,6 +14,7 @@ import type {
   StageResult,
   PipelineStep,
 } from './types'
+import { logger } from '../logger'
 import { PipelinePausedError } from './types'
 import {
   loadState,
@@ -25,8 +26,23 @@ import {
   recoverPipelineState,
 } from './status'
 import { getHandler } from '../handlers/handler'
+import { setLifecycleLabel } from '../github-api'
 import { executePostAction } from '../pipeline/post-actions'
 import { flattenPipelineOrder } from '../pipeline/definitions'
+
+/**
+ * Error subclass that carries the originating stage name for parallel error attribution
+ */
+class StageError extends Error {
+  public readonly stageName: string
+  public readonly cause?: Error
+  constructor(message: string, stageName: string, cause?: Error) {
+    super(message)
+    this.name = 'StageError'
+    this.stageName = stageName
+    this.cause = cause
+  }
+}
 
 // ============================================================================
 // Engine
@@ -45,6 +61,12 @@ export async function runPipeline(
   let state = loadState(ctx.taskId)
   if (!state) {
     state = initState(ctx, ctx.input.mode)
+    // Set initial lifecycle label based on mode
+    if (ctx.input.issueNumber) {
+      const initialLabel =
+        ctx.input.mode === 'spec' || ctx.input.mode === 'full' ? 'cody:planning' : 'cody:building'
+      setLifecycleLabel(ctx.input.issueNumber, initialLabel)
+    }
   } else {
     // Recovery: handle stale state from previous interrupted runs
     // Step 1: Reset any stages stuck in "running" to "pending"
@@ -84,11 +106,33 @@ export async function runPipeline(
   }
 
   // Main execution loop
+  let loopCount = 0
   while (true) {
+    loopCount++
+
+    // FIX #9: Periodic recovery check every 10 iterations
+    // This handles mid-run corruption of status.json
+    if (loopCount % 10 === 0) {
+      const currentState = loadState(ctx.taskId)
+      if (currentState) {
+        // Check for stale running stages
+        const recoveredState = recoverStaleStages(currentState)
+        if (recoveredState !== currentState) {
+          logger.info('⚠️ Periodic recovery: reset stale running stages')
+          state = recoveredState
+          writeState(ctx.taskId, state)
+        }
+      }
+    }
+
     // Check if pipeline needs rebuilding (two-phase construction)
     if (ctx.pipelineNeedsRebuild && rebuildPipeline) {
       pipeline = rebuildPipeline(ctx)
       ctx.pipelineNeedsRebuild = false
+      // Transition from planning to building after spec stages complete
+      if (ctx.input.issueNumber) {
+        setLifecycleLabel(ctx.input.issueNumber, 'cody:building')
+      }
     }
 
     const nextStep = resolveNextStep(state, pipeline)
@@ -96,6 +140,10 @@ export async function runPipeline(
       // All stages completed - mark pipeline as completed
       state = completeState(state, 'completed')
       writeState(ctx.taskId, state)
+      // Set lifecycle label to done
+      if (ctx.input.issueNumber) {
+        setLifecycleLabel(ctx.input.issueNumber, 'cody:done')
+      }
       break
     }
 
@@ -125,8 +173,15 @@ export async function runPipeline(
 
   // Throw if pipeline failed so caller can handle the failure properly
   if (state.state === 'failed') {
-    const failedStage = Object.entries(state.stages).find(([, s]) => s.state === 'failed')
-    throw new Error(`Pipeline failed at stage: ${failedStage?.[0] || 'unknown'}`)
+    // Find either failed or timeout stage for better error reporting
+    const failedStage = Object.entries(state.stages).find(
+      ([, s]) => s.state === 'failed' || s.state === 'timeout',
+    )
+    const stageName = failedStage?.[0] || 'unknown'
+    const stageState = failedStage?.[1]
+    const stageOutcome = stageState?.state || 'unknown'
+    const stageError = stageState?.error ? `: ${stageState.error}` : ''
+    throw new Error(`Pipeline failed at stage: ${stageName} (${stageOutcome})${stageError}`)
   }
 
   return state
@@ -174,15 +229,16 @@ async function executeSingleStep(
 ): Promise<PipelineStateV2> {
   const def = pipeline.stages.get(stageName)
   if (!def) {
-    console.warn(`Stage ${stageName} not found in pipeline definitions`)
-    return state
+    const msg = `Stage '${stageName}' not found in pipeline definitions — check pipeline order vs stage definitions`
+    logger.error(msg)
+    throw new Error(msg)
   }
 
   // Check skip conditions
   if (def.shouldSkip) {
     const skipResult = def.shouldSkip(ctx)
     if (skipResult.shouldSkip) {
-      console.log(`  ${stageName} skipped — ${skipResult.reason}`)
+      logger.info(`  ${stageName} skipped — ${skipResult.reason}`)
       return updateStage(state, stageName, {
         state: 'skipped',
         skipped: skipResult.reason,
@@ -193,7 +249,7 @@ async function executeSingleStep(
   // Check if already completed (resume)
   const stageState = state.stages[stageName]
   if (stageState?.state === 'completed') {
-    console.log(`  ${stageName} already completed, skipping`)
+    logger.info(`  ${stageName} already completed, skipping`)
     return state
   }
 
@@ -211,7 +267,7 @@ async function executeSingleStep(
     try {
       await def.preExecute(ctx)
     } catch (error) {
-      console.error(`  ❌ preExecute failed for ${stageName}:`, error)
+      logger.error({ err: error }, `  ❌ preExecute failed for ${stageName}:`)
       return updateStage(state, stageName, {
         state: 'failed',
         error: error instanceof Error ? error.message : String(error),
@@ -232,13 +288,17 @@ async function executeSingleStep(
       return completeState(state, 'paused')
     }
     // Handle failure - mark stage as failed
-    console.error(`  ❌ ${stageName} failed:`, error)
+    logger.error({ err: error }, `  ❌ ${stageName} failed:`)
     state = updateStage(state, stageName, {
       state: 'failed',
       error: error instanceof Error ? error.message : String(error),
     })
     // For non-advisory stages, mark pipeline as failed to stop the loop
     if (!def.advisory) {
+      // Set lifecycle label to failed
+      if (ctx.input.issueNumber) {
+        setLifecycleLabel(ctx.input.issueNumber, 'cody:failed')
+      }
       return completeState(state, 'failed')
     }
     return state
@@ -254,13 +314,13 @@ async function executeParallelStep(
   state: PipelineStateV2,
   stageNames: string[],
 ): Promise<PipelineStateV2> {
-  console.log(`  Running parallel: [${stageNames.join(', ')}]...`)
+  logger.info(`  Running parallel: [${stageNames.join(', ')}]...`)
 
   // Filter out already completed stages (for resume)
   const stagesToRun = stageNames.filter((stageName) => {
     const stageState = state.stages[stageName]
     if (stageState?.state === 'completed' || stageState?.state === 'skipped') {
-      console.log(`  ${stageName} already completed/skipped, skipping`)
+      logger.info(`  ${stageName} already completed/skipped, skipping`)
       return false
     }
     return true
@@ -275,7 +335,7 @@ async function executeParallelStep(
     stagesToRun.map(async (stageName) => {
       const def = pipeline.stages.get(stageName)
       if (!def) {
-        return { stageName, result: null as unknown as StageResult }
+        throw new StageError(`Stage '${stageName}' not found in pipeline definitions`, stageName)
       }
 
       // Check skip first
@@ -298,12 +358,12 @@ async function executeParallelStep(
         try {
           await def.preExecute(ctx)
         } catch (preError) {
-          // Tag error with stageName for rejection handler
-          if (preError instanceof Error) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;(preError as any).stageName = stageName
-          }
-          throw preError
+          // Wrap error with stageName for rejection handler
+          throw new StageError(
+            preError instanceof Error ? preError.message : String(preError),
+            stageName,
+            preError instanceof Error ? preError : undefined,
+          )
         }
       }
 
@@ -313,12 +373,12 @@ async function executeParallelStep(
         const result = await handler.execute(ctx, def)
         return { stageName, result }
       } catch (error) {
-        // Tag error with stageName for rejection handler (G30)
-        if (error instanceof Error) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(error as any).stageName = stageName
-        }
-        throw error
+        // Wrap error with stageName for rejection handler
+        throw new StageError(
+          error instanceof Error ? error.message : String(error),
+          stageName,
+          error instanceof Error ? error : undefined,
+        )
       }
     }),
   )
@@ -329,20 +389,23 @@ async function executeParallelStep(
 
   for (const result of results) {
     if (result.status === 'rejected') {
-      // G30: Check if this is a PipelinePausedError
-      if (result.reason instanceof PipelinePausedError) {
+      // G30: Check if this is a PipelinePausedError (direct or wrapped in StageError)
+      const rejectedErr = result.reason
+      const isPaused =
+        rejectedErr instanceof PipelinePausedError ||
+        (rejectedErr instanceof StageError && rejectedErr.cause instanceof PipelinePausedError)
+      if (isPaused) {
         // Mark the stage as paused and return paused state
-        const reason = result.reason as Error & { stageName?: string }
-        const stageName = reason.stageName || 'unknown'
-        state = updateStage(state, stageName, { state: 'paused' })
+        const pausedStageName =
+          rejectedErr instanceof StageError ? rejectedErr.stageName : 'unknown'
+        state = updateStage(state, pausedStageName, { state: 'paused' })
         return completeState(state, 'paused')
       }
 
-      const reason = (result as PromiseRejectedResult).reason as
-        | (Error & { stageName?: string })
-        | undefined
-      const name = reason?.stageName || 'unknown'
-      const message = reason?.message || String(result.reason)
+      const reason = (result as PromiseRejectedResult).reason
+      const name =
+        reason instanceof StageError ? reason.stageName : (reason as any)?.stageName || 'unknown'
+      const message = reason instanceof Error ? reason.message : String(reason)
       // R7: Use dynamic advisory lookup from pipeline definition
       const isAdvisory = pipeline.stages.get(name)?.advisory === true
       if (isAdvisory) {
@@ -391,14 +454,19 @@ async function executeParallelStep(
             writeState(ctx.taskId, state) // Persist paused state to disk
             return completeState(state, 'paused')
           }
-          console.error(`  Post-action failed for parallel stage ${stageName}:`, postError)
+          // FIX #3: Don't immediately fail - collect failures and process at end
+          // This allows other successful parallel stages to complete
+          logger.error({ err: postError }, `  Post-action failed for parallel stage ${stageName}:`)
+          const postErrorMsg = postError instanceof Error ? postError.message : String(postError)
           state = updateStage(state, stageName, {
             state: 'failed',
-            error: postError instanceof Error ? postError.message : String(postError),
+            error: postErrorMsg,
           })
           const isAdvisory = pipeline.stages.get(stageName)?.advisory === true
-          if (!isAdvisory) {
-            return completeState(state, 'failed')
+          if (isAdvisory) {
+            advisoryFailures.push({ name: stageName, reason: postErrorMsg })
+          } else {
+            criticalFailures.push({ name: stageName, reason: postErrorMsg })
           }
         }
       }
@@ -432,7 +500,11 @@ async function executeParallelStep(
   if (criticalFailures.length > 0) {
     const errors = criticalFailures.map((f) => f.reason).join('; ')
     const names = criticalFailures.map((f) => f.name)
-    console.error(`  ❌ Parallel stages [${names.join(', ')}] failed: ${errors}`)
+    logger.error(`  ❌ Parallel stages [${names.join(', ')}] failed: ${errors}`)
+    // Set lifecycle label to failed
+    if (ctx.input.issueNumber) {
+      setLifecycleLabel(ctx.input.issueNumber, 'cody:failed')
+    }
     return completeState(state, 'failed')
   }
 
@@ -473,6 +545,10 @@ async function handleStageResult(
 
     // If non-advisory stage failed, mark pipeline as failed
     if (!def.advisory) {
+      // Set lifecycle label to failed
+      if (ctx.input.issueNumber) {
+        setLifecycleLabel(ctx.input.issueNumber, 'cody:failed')
+      }
       return completeState(state, 'failed')
     }
   } else if (result.outcome === 'timed_out') {
@@ -481,6 +557,10 @@ async function handleStageResult(
       error: result.reason,
     })
     if (!def.advisory) {
+      // Set lifecycle label to failed
+      if (ctx.input.issueNumber) {
+        setLifecycleLabel(ctx.input.issueNumber, 'cody:failed')
+      }
       return completeState(state, 'failed')
     }
   }

@@ -62,6 +62,71 @@ const FORMAT_FILE_REGEX = /\[warn\]\s+(\S+\.\w+)/g
 // ============================================================================
 
 /**
+ * Extract specific test details for smarter autofix guidance
+ */
+function extractTestDetails(rawOutput: string): { summary?: string; specificFix?: string } {
+  // Extract test names
+  const testNameMatch = rawOutput.match(/(?:FAIL|❌).*?>\s*(.+)$/m)
+  const testName = testNameMatch?.[1]?.trim()
+
+  // Extract expected vs actual
+  const expectedMatch = rawOutput.match(/Expected:?\s*(.+)/i)
+  const actualMatch = rawOutput.match(/Actual:?\s*(.+)/i)
+
+  // Check for common fixable errors
+  let specificFix: string | undefined
+
+  if (rawOutput.includes('Cannot find module')) {
+    const moduleMatch = rawOutput.match(/Cannot find module ['"]([^'"]+)['"]/)
+    const moduleName = moduleMatch?.[1]
+    if (moduleName) {
+      specificFix =
+        "Missing import: Install '" + moduleName + "' or add to package.json dependencies."
+    }
+  }
+
+  if (rawOutput.includes('is not defined') || rawOutput.includes('is not declared')) {
+    specificFix =
+      'Reference error: The variable/function is not defined. Check imports or declare the variable.'
+  }
+
+  if (rawOutput.includes('is not a function') || rawOutput.includes('is not a constructor')) {
+    specificFix = 'Type error: Check the import - may need .default or the export name is wrong.'
+  }
+
+  if (rawOutput.includes('TypeError') && rawOutput.includes('undefined')) {
+    specificFix =
+      'Undefined error: Check if variable is initialized before use, or if property exists.'
+  }
+
+  if (rawOutput.includes('expected') && rawOutput.includes('received')) {
+    specificFix =
+      'Assertion mismatch: Update source code to match expected behavior, OR if test is wrong, fix the test.'
+  }
+
+  if (rawOutput.includes('timeout') || rawOutput.includes('Timed out')) {
+    specificFix =
+      'Test timeout: The test or the code it tests is too slow. Consider increasing timeout or optimizing.'
+  }
+
+  if (rawOutput.includes('ENOENT') || rawOutput.includes('No such file')) {
+    specificFix =
+      'Missing file: The test references a file that does not exist. Check the path or create the file.'
+  }
+
+  // Build summary with test name if found
+  let summary: string | undefined
+  if (testName) {
+    summary = 'Test: ' + testName
+    if (expectedMatch && actualMatch) {
+      summary += ' | Expected: ' + expectedMatch[1].trim() + ' | Actual: ' + actualMatch[1].trim()
+    }
+  }
+
+  return { summary, specificFix }
+}
+
+/**
  * Classify a raw error output string into a structured error object.
  *
  * @param rawOutput - The raw stderr/stdout from the failed command
@@ -98,12 +163,19 @@ export function classifyError(rawOutput: string, source: string): ClassifiedErro
 
     case 'test': {
       const fileHints = extractUniqueFiles(rawOutput, TEST_FILE_REGEX)
+
+      // Extract specific test details for better autofix guidance
+      const testDetails = extractTestDetails(rawOutput)
+      const fixInstructions = testDetails.specificFix
+        ? testDetails.specificFix
+        : FIX_INSTRUCTIONS.test_failure
+
       return {
         category: 'test_failure',
-        summary,
+        summary: testDetails.summary || summary,
         fullOutput: truncatedOutput,
         fileHints,
-        fixInstructions: FIX_INSTRUCTIONS.test_failure,
+        fixInstructions,
       }
     }
 
@@ -156,27 +228,36 @@ export function formatErrorsAsMarkdown(
   const sections = errors.map((error, i) => {
     const fileList =
       error.fileHints.length > 0
-        ? `\n**Affected Files**:\n${error.fileHints.map((f) => `- \`${f}\``).join('\n')}`
+        ? '\n**Affected Files**:\n' + error.fileHints.map((f) => '- `' + f + '`').join('\n')
         : ''
 
-    return `## Error ${i + 1}: ${error.category}
-
-**Fix Instructions**: ${error.fixInstructions}
-${fileList}
-
-**Error Output**:
-\`\`\`
-${error.fullOutput}
-\`\`\`
-`
+    return (
+      '## Error ' +
+      (i + 1) +
+      ': ' +
+      error.category +
+      '\n\n' +
+      '**Fix Instructions**: ' +
+      error.fixInstructions +
+      '\n' +
+      fileList +
+      '\n\n' +
+      '**Error Output**:\n' +
+      '```\n' +
+      error.fullOutput +
+      '```\n'
+    )
   })
 
-  return `# Build Errors
-
-Attempt ${attempt}/${maxAttempts}. Fix the errors below and the quality gates will be re-run.
-
-${sections.join('\n---\n\n')}
-`
+  return (
+    '# Build Errors\n\n' +
+    'Attempt ' +
+    attempt +
+    '/' +
+    maxAttempts +
+    '. Fix the errors below and the quality gates will be re-run.\n\n' +
+    sections.join('\n---\n\n')
+  )
 }
 
 // ============================================================================

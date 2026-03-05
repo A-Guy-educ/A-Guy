@@ -66,10 +66,13 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
   }
 
   const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
-  const lessonCourse =
-    lessonChapter && typeof lessonChapter.course !== 'string' ? lessonChapter.course : null
+  const lessonCourseId = lessonChapter
+    ? typeof lessonChapter.course === 'string'
+      ? lessonChapter.course
+      : lessonChapter.course?.id
+    : null
 
-  if (!lessonCourse || lessonCourse.id !== course.id) {
+  if (!lessonCourseId || lessonCourseId !== course.id) {
     notFound()
   }
 
@@ -124,10 +127,13 @@ export async function generateMetadata({ params }: ExercisePageProps) {
   }
 
   const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
-  const lessonCourse =
-    lessonChapter && typeof lessonChapter.course !== 'string' ? lessonChapter.course : null
+  const lessonCourseId = lessonChapter
+    ? typeof lessonChapter.course === 'string'
+      ? lessonChapter.course
+      : lessonChapter.course?.id
+    : null
 
-  if (!lessonCourse || lessonCourse.id !== course.id) {
+  if (!lessonCourseId || lessonCourseId !== course.id) {
     return {
       title: 'Exercise Not Found',
     }

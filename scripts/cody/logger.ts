@@ -5,7 +5,60 @@
  * @ai-summary Structured logging helpers with stage context for the Cody pipeline
  */
 
-import process from 'process'
+import pino from 'pino'
+
+import { getEnv } from './env'
+
+// Lazy-initialize pino logger to avoid validation at import time
+let _logger: ReturnType<typeof pino> | null = null
+
+function getPinoLogger() {
+  if (!_logger) {
+    const env = getEnv()
+    // JSON in CI (for log aggregation), pretty-print locally
+    const isCI = !!env.GITHUB_ACTIONS
+
+    _logger = pino({
+      level: env.LOG_LEVEL || 'info',
+      ...(isCI
+        ? {} // Default JSON output for CI
+        : {
+            transport: {
+              target: 'pino-pretty',
+              options: {
+                colorize: true,
+                translateTime: 'SYS:HH:MM:ss',
+                ignore: 'pid,hostname',
+              },
+            },
+          }),
+    })
+  }
+  return _logger
+}
+
+/**
+ * Get the root pino logger instance
+ */
+export function getRootLogger() {
+  return getPinoLogger()
+}
+
+/**
+ * Create a child logger scoped to a specific pipeline stage.
+ */
+export function createStageLogger(stage: string, taskId?: string) {
+  return getPinoLogger().child({ stage, ...(taskId && { taskId }) })
+}
+
+// Re-export pino logger for backward compatibility
+export const logger = getPinoLogger()
+export default logger
+
+// ============================================================================
+// Legacy structured logging functions (using console)
+// These are kept for backward compatibility with existing code
+// ============================================================================
 
 /**
  * Stage context for structured logging
@@ -125,7 +178,8 @@ export function errorWithContext(message: string, error?: unknown, context?: Log
  * Log a debug message (only in development or when DEBUG is set)
  */
 export function debugWithContext(message: string, context?: LogContext): void {
-  if (process.env.NODE_ENV === 'development' || process.env.DEBUG) {
+  const env = getEnv()
+  if (env.NODE_ENV === 'development' || env.DEBUG) {
     const prefix = formatPrefix(context)
     console.log(`${prefix} DEBUG: ${message}`)
   }

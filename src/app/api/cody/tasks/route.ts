@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 
-import { fetchIssues, fetchWorkflowRuns, fetchOpenPRs, fetchDeploymentPreviews, findTaskBranch, getStatusFromBranch, createIssue, updateIssue } from '@/ui/cody/github-client'
+import { fetchIssues, fetchWorkflowRuns, fetchOpenPRs, fetchDeploymentPreviews, findBranchByIssueNumber, getStatusFromBranch, createIssue, updateIssue, uploadIssueAttachment } from '@/ui/cody/github-client'
 import type { CodyTask, ColumnId, GitHubIssue, GitHubPR, WorkflowRun } from '@/ui/cody/types'
 
 // Map GitHub issue state to column using agent labels, workflow runs, and PR status
@@ -154,10 +154,11 @@ export async function GET(req: NextRequest) {
 
         // Only fetch branch/pipeline details if requested (expensive: N API calls per issue)
         let pipelineStatus = undefined
-        if (includeDetails && taskId) {
-          const branch = await findTaskBranch(taskId)
+        if (includeDetails && issue.number) {
+          // Find branch by issue number (works with any branch naming convention)
+          const branch = await findBranchByIssueNumber(issue.number)
           if (branch) {
-            const status = await getStatusFromBranch(taskId, branch)
+            const status = await getStatusFromBranch(taskId || `issue-${issue.number}`, branch)
             if (status) pipelineStatus = status
           }
         }
@@ -273,7 +274,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { title, body: issueBody, mode, labels, assignees } = body
+    const { title, body: issueBody, mode, labels, assignees, attachments } = body
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
@@ -305,6 +306,24 @@ export async function POST(req: NextRequest) {
       issue.title = correctedTitle
     }
 
+    // Upload attachments if provided
+    const uploadedAttachments = []
+    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+      console.log('[Cody] Uploading', attachments.length, 'attachments...')
+      for (const attachment of attachments) {
+        try {
+          const result = await uploadIssueAttachment(issue.number, {
+            name: attachment.name,
+            content: attachment.content,
+          })
+          uploadedAttachments.push(result)
+          console.log('[Cody] Uploaded attachment:', result.name, result.attachment_url)
+        } catch (attachError: any) {
+          console.error('[Cody] Failed to upload attachment:', attachError.message)
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
       issue: {
@@ -312,6 +331,7 @@ export async function POST(req: NextRequest) {
         title: issue.title,
         html_url: issue.html_url,
       },
+      attachments: uploadedAttachments,
     })
   } catch (error: any) {
     console.error('[Cody] Error creating task:', error)

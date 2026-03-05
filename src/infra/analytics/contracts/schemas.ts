@@ -45,24 +45,24 @@ export const SessionEndedSchema = z.object({
 })
 
 /**
- * page_abandoned - Track when user leaves a page
+ * tab_away - User switched away from tab
  * Destination: Mixpanel
  * Priority: P1
  */
-export const PageAbandonedSchema = z.object({
-  page_url: z.string().describe('Page URL that was abandoned'),
+export const TabAwaySchema = z.object({
+  page_url: z.string().describe('Page URL when user left'),
   time_on_page_seconds: z.number().describe('Time spent on page before leaving'),
   scroll_depth_percent: z.number().optional().describe('Max scroll percentage reached'),
 })
 
 /**
- * visibility_changed - Track tab/window visibility changes
+ * tab_back - User returned to tab
  * Destination: Mixpanel
  * Priority: P1
  */
-export const VisibilityChangedSchema = z.object({
-  visibility_state: z.enum(['visible', 'hidden']).describe('Tab visibility state'),
-  time_on_page_seconds: z.number().describe('Time spent on current page'),
+export const TabBackSchema = z.object({
+  page_url: z.string().describe('Page URL when user returned'),
+  time_on_page_seconds: z.number().describe('Time spent away'),
 })
 
 /**
@@ -149,6 +149,19 @@ export const ChatMessageSentSchema = z.object({
   lesson_id: z.string().optional().describe('Parent lesson ID'),
   message_length: z.number().optional().describe('Character count (not content)'),
   // NO message_text - privacy violation
+})
+
+/**
+ * login_modal_shown - Auth gate modal appeared for anonymous user
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const LoginModalShownSchema = z.object({
+  trigger_type: z
+    .enum(['mandatory', 'gated', 'warning'])
+    .describe('Which access gate triggered the modal'),
+  course_slug: z.string().describe('Course where modal appeared'),
+  current_page: z.string().optional().describe('Page URL when modal shown'),
 })
 
 /**
@@ -303,14 +316,15 @@ export const eventSchemas = {
   [PRODUCT_EVENTS.PAGE_VIEW]: PageViewSchema,
   [PRODUCT_EVENTS.SESSION_STARTED]: SessionStartedSchema,
   [PRODUCT_EVENTS.SESSION_ENDED]: SessionEndedSchema,
-  [PRODUCT_EVENTS.PAGE_ABANDONED]: PageAbandonedSchema,
-  [PRODUCT_EVENTS.VISIBILITY_CHANGED]: VisibilityChangedSchema,
+  [PRODUCT_EVENTS.TAB_AWAY]: TabAwaySchema,
+  [PRODUCT_EVENTS.TAB_BACK]: TabBackSchema,
   [PRODUCT_EVENTS.USER_IDENTIFIED]: UserIdentifiedSchema,
   [PRODUCT_EVENTS.COURSE_ENTERED]: CourseEnteredSchema,
   [PRODUCT_EVENTS.LESSON_STARTED]: LessonStartedSchema,
   [PRODUCT_EVENTS.LESSON_COMPLETED]: LessonCompletedSchema,
   [PRODUCT_EVENTS.PDF_VIEWED]: PdfViewedSchema,
   [PRODUCT_EVENTS.CHAT_MESSAGE_SENT]: ChatMessageSentSchema,
+  [PRODUCT_EVENTS.LOGIN_MODAL_SHOWN]: LoginModalShownSchema,
   [PRODUCT_EVENTS.REGISTRATION_PROMPT_SHOWN]: RegistrationPromptShownSchema,
   [PRODUCT_EVENTS.REGISTRATION_COMPLETED]: RegistrationCompletedSchema,
 
@@ -332,14 +346,15 @@ export const eventSchemas = {
 export type PageViewProperties = z.infer<typeof PageViewSchema>
 export type SessionStartedProperties = z.infer<typeof SessionStartedSchema>
 export type SessionEndedProperties = z.infer<typeof SessionEndedSchema>
-export type PageAbandonedProperties = z.infer<typeof PageAbandonedSchema>
-export type VisibilityChangedProperties = z.infer<typeof VisibilityChangedSchema>
+export type TabAwayProperties = z.infer<typeof TabAwaySchema>
+export type TabBackProperties = z.infer<typeof TabBackSchema>
 export type UserIdentifiedProperties = z.infer<typeof UserIdentifiedSchema>
 export type CourseEnteredProperties = z.infer<typeof CourseEnteredSchema>
 export type LessonStartedProperties = z.infer<typeof LessonStartedSchema>
 export type LessonCompletedProperties = z.infer<typeof LessonCompletedSchema>
 export type PdfViewedProperties = z.infer<typeof PdfViewedSchema>
 export type ChatMessageSentProperties = z.infer<typeof ChatMessageSentSchema>
+export type LoginModalShownProperties = z.infer<typeof LoginModalShownSchema>
 export type RegistrationPromptShownProperties = z.infer<typeof RegistrationPromptShownSchema>
 export type RegistrationCompletedProperties = z.infer<typeof RegistrationCompletedSchema>
 
@@ -361,14 +376,15 @@ export type EventProperties =
   | PageViewProperties
   | SessionStartedProperties
   | SessionEndedProperties
-  | PageAbandonedProperties
-  | VisibilityChangedProperties
+  | TabAwayProperties
+  | TabBackProperties
   | UserIdentifiedProperties
   | CourseEnteredProperties
   | LessonStartedProperties
   | LessonCompletedProperties
   | PdfViewedProperties
   | ChatMessageSentProperties
+  | LoginModalShownProperties
   | RegistrationPromptShownProperties
   | RegistrationCompletedProperties
   | HintClickedProperties

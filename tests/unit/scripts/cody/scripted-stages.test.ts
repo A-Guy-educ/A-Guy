@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as childProcess from 'child_process'
 import * as fs from 'fs'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getDefaultBranch } from '../../../../scripts/cody/git-utils'
 
 // Mock for fetch - need to use hoisted mock
@@ -29,7 +29,7 @@ vi.mock('../../../../scripts/cody/git-utils', () => ({
   getDefaultBranch: vi.fn().mockReturnValue('dev'),
 }))
 
-import { runVerifyStage, runPrStage } from '../../../../scripts/cody/scripted-stages'
+import { runPrStage, runVerifyStage } from '../../../../scripts/cody/scripted-stages'
 
 // Silence console output during tests
 vi.spyOn(console, 'log').mockImplementation(() => {})
@@ -499,6 +499,8 @@ describe('runVerifyStage', () => {
 describe('runPrStage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Set GitHub token for runPrStage tests
+    process.env.GH_PAT = 'test-token-for-pr-stage'
     // Reset getDefaultBranch mock to default
     mockGetDefaultBranch.mockReturnValue('dev')
     // Default mocks for fs
@@ -514,6 +516,10 @@ describe('runPrStage', () => {
       ok: true,
       json: async () => ({ html_url: 'https://github.com/owner/repo/pull/42' }),
     } as unknown as Response)
+  })
+
+  afterEach(() => {
+    delete process.env.GH_PAT
   })
 
   /**
@@ -1387,6 +1393,71 @@ describe('runPrStage', () => {
         (call) => call[0] === 'git' && call[1]?.includes('log'),
       )
       expect(gitLogCalls.length).toBeGreaterThan(0)
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // --fresh flag behavior
+  // ---------------------------------------------------------------------------
+  describe('--fresh flag behavior', () => {
+    it('should skip existing PR check when fresh=true', async () => {
+      setupPrMocks({ existingPrUrl: 'https://github.com/owner/repo/pull/99' })
+
+      const result = await runPrStage('/fake/task-dir', '/tmp/pr.md', '/fake/cwd', undefined, {
+        fresh: true,
+      })
+
+      // Should NOT return early with existing PR — should create a new one
+      expect(result.created).toBe(true)
+    })
+
+    it('should NOT delete or reset the branch when fresh=true', async () => {
+      setupPrMocks({ branch: 'feat/my-feature' })
+
+      await runPrStage('/fake/task-dir', '/tmp/pr.md', '/fake/cwd', undefined, { fresh: true })
+
+      // Verify no branch deletion commands were issued
+      const execFileCalls = mockExecFileSync.mock.calls
+      const deleteBranchCall = execFileCalls.find(
+        (c) => c[0] === 'git' && (c[1] as string[])?.includes('--delete'),
+      )
+      expect(deleteBranchCall).toBeUndefined()
+
+      // Verify no git branch -D was called
+      const branchDCall = execFileCalls.find(
+        (c) =>
+          c[0] === 'git' &&
+          (c[1] as string[])?.[0] === 'branch' &&
+          (c[1] as string[])?.includes('-D'),
+      )
+      expect(branchDCall).toBeUndefined()
+
+      // Verify no git reset --hard was called
+      const resetCall = execFileCalls.find(
+        (c) =>
+          c[0] === 'git' &&
+          (c[1] as string[])?.[0] === 'reset' &&
+          (c[1] as string[])?.includes('--hard'),
+      )
+      expect(resetCall).toBeUndefined()
+    })
+
+    it('should still push the branch and create PR when fresh=true', async () => {
+      setupPrMocks({ branch: 'feat/fresh-feature' })
+
+      const result = await runPrStage('/fake/task-dir', '/tmp/pr.md', '/fake/cwd', undefined, {
+        fresh: true,
+      })
+
+      expect(result.created).toBe(true)
+      expect(result.url).toBe('https://github.com/owner/repo/pull/42')
+
+      // Verify push was called
+      const execFileCalls = mockExecFileSync.mock.calls
+      const pushCall = execFileCalls.find(
+        (c) => c[0] === 'git' && (c[1] as string[])?.[0] === 'push',
+      )
+      expect(pushCall).toBeDefined()
     })
   })
 })

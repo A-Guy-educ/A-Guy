@@ -75,7 +75,7 @@
       "description": "TDD test writer - writes failing tests before implementation"
     },
     "browser": {
-      "model": "anthropic/claude-opus-4-6",
+      "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Browser agent - navigates A-Guy platform, inspects pages, answers UI questions. Uses Chrome DevTools MCP locally, Playwright MCP in CI.",
       "instructions": ["scripts/browser-agent/AGENT.md"]
     }

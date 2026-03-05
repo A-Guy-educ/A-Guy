@@ -116,8 +116,22 @@ export async function POST(
       }
 
       case 'close': {
+        // Close PR if exists
+        const pr = await findAssociatedPR(taskId)
+        if (pr) {
+          await closePR(pr.number)
+        }
+
+        // Delete branch if exists
+        const branchName = await findTaskBranch(taskId)
+        if (branchName && branchName !== 'dev' && branchName !== 'main' && branchName !== 'master') {
+          await deleteBranch(branchName)
+        }
+
+        // Finally close the issue
         await updateIssue(issueNumber, { state: 'closed' })
-        return NextResponse.json({ success: true, message: 'Issue closed' })
+
+        return NextResponse.json({ success: true, message: 'Issue closed (PR closed, branch deleted)' })
       }
 
       case 'close-pr': {

@@ -12,7 +12,7 @@ import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { ChatInterface } from '@/ui/web/chat'
 import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
-import { stripHtml } from '@/lib/utils/strip-html'
+import { stripHtml } from '@/utils/strip-html'
 import { Media as MediaComponent } from '@/ui/web/media'
 import { notFound } from 'next/navigation'
 import { ExercisesPager } from './_components/ExercisesPager'
@@ -40,10 +40,13 @@ export default async function LessonPage({ params }: LessonPageProps) {
   }
 
   const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
-  const lessonCourse =
-    lessonChapter && typeof lessonChapter.course !== 'string' ? lessonChapter.course : null
+  const lessonCourseId = lessonChapter
+    ? typeof lessonChapter.course === 'string'
+      ? lessonChapter.course
+      : lessonChapter.course?.id
+    : null
 
-  if (!lessonCourse || lessonCourse.id !== course.id) {
+  if (!lessonCourseId || lessonCourseId !== course.id) {
     notFound()
   }
 
@@ -89,8 +92,13 @@ export default async function LessonPage({ params }: LessonPageProps) {
   // Batch-fetch all media referenced inside exercise content blocks
   const mediaMap = hasExercises ? await queryMediaByIds(extractAllMediaIds(exercises)) : {}
 
-  // Case 1: No document attached -> Show exercises pager if exercises exist
-  if (!hasContent) {
+  // V3-converted exercises: if any exercise was generated from the attached document,
+  // show the interactive exercises instead of the PDF viewer.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hasV3Exercises = exercises.some((ex: any) => ex.pipelineVersion === 3)
+
+  // Case 1: No document attached, OR V3 exercises exist -> Show exercises pager
+  if (!hasContent || hasV3Exercises) {
     return (
       <AccessGateProvider
         accessType={effectiveAccessType}
@@ -189,10 +197,13 @@ export async function generateMetadata({ params }: LessonPageProps) {
   }
 
   const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
-  const lessonCourse =
-    lessonChapter && typeof lessonChapter.course !== 'string' ? lessonChapter.course : null
+  const lessonCourseId = lessonChapter
+    ? typeof lessonChapter.course === 'string'
+      ? lessonChapter.course
+      : lessonChapter.course?.id
+    : null
 
-  if (!lessonCourse || lessonCourse.id !== course.id) {
+  if (!lessonCourseId || lessonCourseId !== course.id) {
     return {
       title: 'Lesson Not Found',
     }

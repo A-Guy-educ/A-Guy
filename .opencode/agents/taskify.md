@@ -153,6 +153,35 @@ When you assess the input as `good_spec`, `detailed_plan`, or `spec_and_plan`, y
 
 This allows the orchestrator to skip the spec/architect stages and go straight to gap analysis.
 
+### Trivial Fix Promotion (Skip Build Agent)
+
+For **trivial fixes** (complexity 1-9) with **good_spec** or higher quality, you MUST also create build.md directly:
+
+**When**: complexity <= 9 AND (input_quality is `good_spec` OR `detailed_plan` OR `spec_and_plan`)
+
+**What to do**:
+1. Add only `"spec"` to the `skip_stages` array in task.json (NOT "build" - build cannot be skipped)
+2. Write `.tasks/<task-id>/build.md` with:
+   - ## Changes section describing what was implemented
+   - List of files modified with specific changes
+
+This allows the pipeline to skip the build agent (which is slow) and go straight to commit. The build.md serves as both the implementation record and the validation that changes were made.
+
+**Example skip_stages for trivial fix**:
+```json
+"skip_stages": ["spec"]
+```
+
+**Example build.md for trivial fix**:
+```markdown
+## Changes
+
+- Changed `speed={200}` to `speed={25}` in all 3 TypingAnimation usages in GreetingFlow component
+
+## Files Modified
+
+- `src/ui/web/homepage/GreetingFlow/index.tsx` - Updated speed prop values
+```
 ### Reasoning Requirements
 
 Always provide a brief `reasoning` string explaining:

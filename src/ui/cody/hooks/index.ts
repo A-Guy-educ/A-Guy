@@ -167,6 +167,7 @@ export function useCreateTask() {
       mode: string
       labels?: string[]
       assignees?: string[]
+      attachments?: Array<{ name: string; content: string }>
     }) => codyApi.tasks.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
@@ -291,6 +292,18 @@ export function useTaskActions({ issueNumber, onSuccess, onError }: UseTaskActio
     onError: handleError('reject gate'),
   })
 
+  const assign = useMutation({
+    mutationFn: (assignees: string[]) => codyApi.tasks.assign(issueNumber, assignees),
+    onSuccess: handleSuccess('User(s) assigned'),
+    onError: handleError('assign user'),
+  })
+
+  const unassign = useMutation({
+    mutationFn: (assignees: string[]) => codyApi.tasks.unassign(issueNumber, assignees),
+    onSuccess: handleSuccess('User(s) unassigned'),
+    onError: handleError('unassign user'),
+  })
+
   const isPending =
     execute.isPending ||
     close.isPending ||
@@ -299,7 +312,9 @@ export function useTaskActions({ issueNumber, onSuccess, onError }: UseTaskActio
     reopen.isPending ||
     abort.isPending ||
     approveGate.isPending ||
-    rejectGate.isPending
+    rejectGate.isPending ||
+    assign.isPending ||
+    unassign.isPending
 
   return {
     execute: execute.mutate,
@@ -310,6 +325,8 @@ export function useTaskActions({ issueNumber, onSuccess, onError }: UseTaskActio
     abort: abort.mutate,
     approveGate: approveGate.mutate,
     rejectGate: rejectGate.mutate,
+    assign: assign.mutate,
+    unassign: unassign.mutate,
     isPending,
     pendingAction: execute.isPending
       ? 'execute'

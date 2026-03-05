@@ -21,9 +21,9 @@ describe('CACHE_TTL', () => {
     )
     // Verify the new optimized values are in the file
     expect(constantsContent).toContain('tasks: 120000') // 2min
-    expect(constantsContent).toContain('pipeline: 30000') // 30s (was 5s)
-    expect(constantsContent).toContain('boards: 300000') // 5min
-    expect(constantsContent).toContain('prs: 120000') // 2min (was 30s)
+    expect(constantsContent).toContain('pipeline: 60000') // 30s (was 5s)
+    expect(constantsContent).toContain('boards: 900000') // 5min
+    expect(constantsContent).toContain('prs: 300000') // 2min (was 30s)
   })
 })
 
@@ -38,9 +38,9 @@ describe('POLLING_INTERVALS', () => {
       'utf-8',
     )
     // Verify polling intervals are defined
-    expect(constantsContent).toContain('idle: 30000')
-    expect(constantsContent).toContain('board: 10000')
-    expect(constantsContent).toContain('active: 5000')
+    expect(constantsContent).toContain('idle: 60000')
+    expect(constantsContent).toContain('board: 30000')
+    expect(constantsContent).toContain('active: 15000')
   })
 })
 

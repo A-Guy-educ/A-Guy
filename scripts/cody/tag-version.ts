@@ -103,7 +103,6 @@ function cmdCurrent() {
 
 function cmdCreate(options: { setDefault?: boolean; version?: string }) {
   let tagName: string
-  let commitMsg: string
 
   if (options.version) {
     // Explicit version: cody-v2
@@ -126,8 +125,7 @@ function cmdCreate(options: { setDefault?: boolean; version?: string }) {
   }
 
   // Create annotated tag
-  // eslint-disable-next-line prefer-const
-  commitMsg = getCurrentMessage()
+  const commitMsg = getCurrentMessage()
   run(`git tag -a ${tagName} -m "${tagName}: ${commitMsg}"`)
   console.log(`Created tag: ${tagName}`)
 

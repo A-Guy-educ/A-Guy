@@ -15,6 +15,7 @@ import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
 import { Exercises } from '@/server/payload/collections/Exercises'
+import { ExtractionLogs } from '@/server/payload/collections/ExtractionLogs'
 import { GuestSessions } from '@/server/payload/collections/GuestSessions'
 import { Lessons } from '@/server/payload/collections/Lessons'
 import { MCPAuditLogs } from '@/server/payload/collections/MCPAuditLogs'
@@ -153,6 +154,7 @@ export default buildConfig({
     Chapters,
     Lessons,
     Exercises,
+    ExtractionLogs,
     Prompts,
     TeacherProfiles,
     UserSettings,
@@ -271,6 +273,29 @@ export default buildConfig({
     }),
   },
   onInit: async (payload) => {
+    // Ensure default tenant exists BEFORE seedTeacherProfiles runs
+    // This is required because TeacherProfilesSeed needs a tenant to link prompts to
+    const defaultTenantSlug = process.env.DEFAULT_TENANT_SLUG || 'default'
+    const existingTenant = await payload.find({
+      collection: 'tenants',
+      where: { slug: { equals: defaultTenantSlug } },
+      limit: 1,
+      overrideAccess: true,
+    })
+
+    if (existingTenant.totalDocs === 0) {
+      await payload.create({
+        collection: 'tenants',
+        data: {
+          name: 'Default',
+          slug: defaultTenantSlug,
+          status: 'active',
+        },
+        overrideAccess: true,
+      })
+      payload.logger.info(`[onInit] Created default tenant "${defaultTenantSlug}"`)
+    }
+
     await runBackfillOnInit(payload)
     await seedTeacherProfiles(payload)
   },

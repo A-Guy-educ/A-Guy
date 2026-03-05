@@ -7,11 +7,19 @@
 'use client'
 
 import { useCallback } from 'react'
-import { cn, formatRelativeTime } from '../utils'
+import { cn, formatRelativeTime, formatDuration } from '../utils'
 import { getGitHubIssueUrl } from '../constants'
 import { MergeButton } from './MergeButton'
 import type { CodyTask, ColumnId } from '../types'
 import { Button } from '@/ui/web/components/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/ui/web/components/select'
 import {
   GitPullRequest,
   ExternalLink,
@@ -28,6 +36,7 @@ import {
   Clock,
   AlertCircle,
   RefreshCw,
+  X,
 } from 'lucide-react'
 
 interface TaskListProps {
@@ -39,6 +48,9 @@ interface TaskListProps {
   onExecuteTask?: (taskId: string) => void
   onStopTask?: (task: CodyTask) => void
   onApproveReview?: (task: CodyTask) => Promise<void>
+  onAssign?: (issueNumber: number, assignees: string[]) => void
+  onUnassign?: (issueNumber: number, assignees: string[]) => void
+  collaborators?: { login: string; avatar_url: string }[]
 }
 
 // Row background tint by status
@@ -103,6 +115,9 @@ export function TaskList({
   onExecuteTask,
   onStopTask,
   onApproveReview,
+  onAssign,
+  onUnassign,
+  collaborators = [],
 }: TaskListProps) {
   const handleTaskClick = useCallback(
     (task: CodyTask) => {
@@ -146,13 +161,37 @@ export function TaskList({
                 isHardStop && 'ring-2 ring-red-500/40 ring-inset',
               )}
             >
-              {/* Left color bar */}
+              {/* Left color bar - shows progress when running */}
               <div
                 className={cn(
                   'absolute left-0 top-0 bottom-0 w-[3px] rounded-r',
                   isHardStop ? 'bg-red-500 animate-pulse' : indicator.barColor,
                 )}
-              />
+              >
+                {/* Progress bar overlay when running */}
+                {task.pipeline &&
+                  task.pipeline.state === 'running' &&
+                  task.pipeline.currentStage &&
+                  task.pipeline.stages?.[task.pipeline.currentStage]?.elapsed &&
+                  (() => {
+                    const currentStage = task.pipeline.currentStage
+                    const stageElapsed = (task.pipeline.stages[currentStage]?.elapsed || 0) * 1000
+                    const stageMaxMs: Record<string, number> = {
+                      taskify: 10 * 60 * 1000,
+                      spec: 15 * 60 * 1000,
+                      architect: 30 * 60 * 1000,
+                      build: 45 * 60 * 1000,
+                    }
+                    const maxMs = stageMaxMs[currentStage] || 20 * 60 * 1000
+                    const pct = Math.min(100, (stageElapsed / maxMs) * 100)
+                    return (
+                      <div
+                        className="absolute left-0 top-0 bottom-0 bg-blue-400/30 rounded-r transition-all duration-1000"
+                        style={{ width: `${pct}%` }}
+                      />
+                    )
+                  })()}
+              </div>
 
               {/* Top row: Status icon + Title */}
               <div className="flex items-center gap-2 pl-2 sm:pl-5">
@@ -217,6 +256,97 @@ export function TaskList({
                     </span>
                   )}
 
+                  {/* Rich pipeline progress */}
+                  {task.pipeline && (
+                    <span className="shrink-0 inline-flex items-center gap-1.5 text-xs">
+                      {task.pipeline.state === 'running' && task.pipeline.currentStage && (
+                        <>
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-600 text-white font-medium">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            {task.pipeline.currentStage}
+                          </span>
+                          {/* Show estimated progress based on typical stage durations */}
+                          {task.pipeline.stages?.[task.pipeline.currentStage]?.elapsed &&
+                            (() => {
+                              const stageElapsed =
+                                (task.pipeline.stages[task.pipeline.currentStage].elapsed || 0) *
+                                1000
+                              // Typical max durations in minutes
+                              const stageMaxMs: Record<string, number> = {
+                                taskify: 10 * 60 * 1000,
+                                spec: 15 * 60 * 1000,
+                                gap: 10 * 60 * 1000,
+                                clarify: 10 * 60 * 1000,
+                                architect: 30 * 60 * 1000,
+                                'plan-gap': 10 * 60 * 1000,
+                                build: 45 * 60 * 1000,
+                                commit: 5 * 60 * 1000,
+                                verify: 15 * 60 * 1000,
+                                auditor: 15 * 60 * 1000,
+                                pr: 5 * 60 * 1000,
+                              }
+                              const maxMs = stageMaxMs[task.pipeline.currentStage] || 20 * 60 * 1000
+                              const pct = Math.min(99, Math.round((stageElapsed / maxMs) * 100))
+                              return (
+                                <span className="inline-flex items-center gap-1">
+                                  <div className="w-14 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-blue-400 rounded-full animate-pulse"
+                                      style={{ width: `${pct}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-blue-300 font-mono text-[10px]">
+                                    {pct}%
+                                  </span>
+                                </span>
+                              )
+                            })()}
+                          {/* Fallback: show total elapsed if no stage time */}
+                          {!task.pipeline.stages?.[task.pipeline.currentStage]?.elapsed &&
+                            task.pipeline.totalElapsed && (
+                              <span className="text-blue-400 font-mono">
+                                {formatDuration(task.pipeline.totalElapsed * 1000)}
+                              </span>
+                            )}
+                        </>
+                      )}
+                      {task.pipeline.state !== 'running' &&
+                        Object.keys(task.pipeline.stages || {}).length > 0 && (
+                          <>
+                            {/* Progress bar */}
+                            {(() => {
+                              const stages = task.pipeline.stages || {}
+                              const total = Object.keys(stages).length
+                              const completed = Object.values(stages).filter(
+                                (s) => s.state === 'completed',
+                              ).length
+                              const pct = Math.round((completed / total) * 100)
+                              return (
+                                <span className="inline-flex items-center gap-1">
+                                  <div className="w-12 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${task.pipeline.state === 'failed' ? 'bg-red-500' : 'bg-emerald-500'}`}
+                                      style={{ width: `${pct}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-zinc-400">
+                                    {completed}/{total}
+                                  </span>
+                                </span>
+                              )
+                            })()}
+                            <span
+                              className={`font-medium ${task.pipeline.state === 'completed' ? 'text-emerald-400' : task.pipeline.state === 'failed' ? 'text-red-400' : 'text-zinc-400'}`}
+                            >
+                              {task.pipeline.state === 'completed' && '✓ done'}
+                              {task.pipeline.state === 'failed' && '✗ failed'}
+                              {task.pipeline.state === 'timeout' && '⏰ timeout'}
+                            </span>
+                          </>
+                        )}
+                    </span>
+                  )}
+
                   {/* Sub-status badges - show important states */}
                   {task.isTimeout && (
                     <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-orange-600 text-white text-xs font-bold">
@@ -247,6 +377,35 @@ export function TaskList({
                     <span className="text-xs px-1.5 py-0.5 rounded dark:bg-zinc-700 dark:text-zinc-300 bg-zinc-200 text-zinc-700 truncate max-w-24">
                       {task.labels[0]}
                     </span>
+                  )}
+
+                  {/* Assignees */}
+                  {task.assignees && task.assignees.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      {task.assignees.map((assignee) => (
+                        <Avatar key={assignee.login} className="h-5 w-5" title={assignee.login}>
+                          <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
+                          <AvatarFallback className="text-[8px]">
+                            {assignee.login[0]?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      ))}
+                      {onUnassign && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onUnassign(
+                              task.issueNumber,
+                              task.assignees!.map((a) => a.login),
+                            )
+                          }}
+                          className="ml-1 p-0.5 rounded-full hover:bg-zinc-600/50 text-zinc-400 hover:text-zinc-200"
+                          title="Unassign all"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   )}
 
                   <span className="text-xs text-zinc-500 dark:text-zinc-500 text-zinc-400 shrink-0">
@@ -281,14 +440,59 @@ export function TaskList({
                     </a>
                   )}
 
+                  {/* Assignee Picker */}
+                  {onAssign && collaborators.length > 0 && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      className="relative"
+                    >
+                      <Select
+                        onValueChange={(value) => {
+                          onAssign(task.issueNumber, [value])
+                        }}
+                      >
+                        <SelectTrigger className="h-7 w-auto px-2 text-xs gap-1">
+                          <SelectValue placeholder="Assign" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {collaborators
+                            .filter((c) => !task.assignees?.some((a) => a.login === c.login))
+                            .map((collaborator) => (
+                              <SelectItem
+                                key={collaborator.login}
+                                value={collaborator.login}
+                                className="flex items-center gap-2"
+                              >
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage src={collaborator.avatar_url} />
+                                  <AvatarFallback className="text-[8px]">
+                                    {collaborator.login[0]?.toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                {collaborator.login}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
                   {task.column === 'review' && hasPR && onApproveReview && (
-                    <MergeButton
-                      prNumber={task.associatedPR!.number}
-                      prTitle={task.associatedPR!.title}
-                      branchName={task.associatedPR!.head.ref}
-                      isMerging={isMerging}
-                      onMerge={() => onApproveReview(task)}
-                    />
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      <MergeButton
+                        prNumber={task.associatedPR!.number}
+                        prTitle={task.associatedPR!.title}
+                        branchName={task.associatedPR!.head.ref}
+                        isMerging={isMerging}
+                        onMerge={() => onApproveReview(task)}
+                      />
+                    </div>
                   )}
                   {/* Run/Stop toggle - only show stop if there's a running workflow */}
                   {(task.column === 'building' &&

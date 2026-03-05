@@ -10,6 +10,7 @@ export const contact: (args: ContactArgs) => RequiredDataFromCollectionSlug<'pag
 }) => {
   return {
     slug: 'contact',
+    locale: 'he',
     _status: 'published',
     hero: {
       type: 'none',

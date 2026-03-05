@@ -614,6 +614,7 @@ describe('supervisor: error handling', () => {
     // No TASK_ID, no COMMENT_BODY
 
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as () => never)
 
     // Supervisor will try to run but should exit early
     try {
@@ -625,6 +626,7 @@ describe('supervisor: error handling', () => {
     // Should have logged about missing task ID
     expect(consoleSpy).toHaveBeenCalled()
     consoleSpy.mockRestore()
+    exitSpy.mockRestore()
 
     vi.unstubAllEnvs()
   })

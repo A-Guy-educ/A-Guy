@@ -1,7 +1,7 @@
 'use client'
 
 import { SafeHtml } from '@/ui/web/SafeHtml'
-import { stripHtml } from '@/lib/utils/strip-html'
+import { stripHtml } from '@/utils/strip-html'
 
 interface ChapterHeaderProps {
   chapterLabel?: string | null

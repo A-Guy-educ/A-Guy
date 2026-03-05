@@ -7,6 +7,7 @@ vi.mock('child_process', () => ({
 
 import { spawn } from 'child_process'
 import { GitHubRunner, LocalRunner, createRunner } from '../../../../scripts/cody/runner-backend'
+import { resetEnv } from '../../../../scripts/cody/env'
 
 describe('GitHubRunner', () => {
   beforeEach(() => {
@@ -27,10 +28,10 @@ describe('GitHubRunner', () => {
     expect(spawn).toHaveBeenCalledOnce()
     expect(spawn).toHaveBeenCalledWith(
       'pnpm',
-      ['exec', 'opencode', 'run', '--agent', 'spec', 'Write tests'],
+      ['exec', 'opencode', 'run', '--agent', 'spec', '--format', 'json', 'Write tests'],
       {
         cwd: '/my/project',
-        stdio: 'inherit',
+        stdio: ['ignore', 'pipe', 'inherit'],
         env: { PATH: '/usr/bin' },
       },
     )
@@ -44,8 +45,12 @@ describe('GitHubRunner', () => {
 
     expect(spawn).toHaveBeenCalledWith(
       'pnpm',
-      ['exec', 'opencode', 'run', '--agent', 'execute', 'Do the thing'],
-      expect.objectContaining({ cwd: '/workspace/repo', stdio: 'inherit', env: {} }),
+      ['exec', 'opencode', 'run', '--agent', 'execute', '--format', 'json', 'Do the thing'],
+      expect.objectContaining({
+        cwd: '/workspace/repo',
+        stdio: ['ignore', 'pipe', 'inherit'],
+        env: {},
+      }),
     )
   })
 
@@ -83,8 +88,8 @@ describe('LocalRunner', () => {
     // Prompt is passed as positional argument after --agent
     expect(spawn).toHaveBeenCalledWith(
       'pnpm',
-      ['ocode', 'run', '--agent', 'spec', 'Write a spec'],
-      expect.objectContaining({ cwd: '/my/project', stdio: 'inherit' }),
+      ['ocode', 'run', '--agent', 'spec', '--format', 'json', 'Write a spec'],
+      expect.objectContaining({ cwd: '/my/project', stdio: ['ignore', 'pipe', 'inherit'] }),
     )
   })
 
@@ -131,10 +136,13 @@ describe('createRunner', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env = { ...originalEnv }
+    // Reset env cache so tests can set environment variables
+    resetEnv()
   })
 
   afterEach(() => {
     process.env = originalEnv
+    resetEnv()
   })
 
   it('should return LocalRunner when local=true', () => {

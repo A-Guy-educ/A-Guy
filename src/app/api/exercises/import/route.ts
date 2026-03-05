@@ -12,6 +12,7 @@ import type { PayloadRequest } from 'payload'
 import config from '@payload-config'
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
+import { logger } from '@/infra/utils/logger'
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,14 +39,14 @@ export async function POST(request: NextRequest) {
 
     // Route to appropriate handler
     if (lessonId) {
-      console.log('[API Route] Calling importExerciseFromLesson for lessonId:', lessonId)
+      logger.info({ lessonId }, '[API Route] Calling importExerciseFromLesson')
       return await importExerciseFromLesson(payloadRequest)
     } else {
-      console.log('[API Route] Calling importExerciseFromImage')
+      logger.info('[API Route] Calling importExerciseFromImage')
       return await importExerciseFromImage(payloadRequest)
     }
   } catch (error) {
-    console.error('[API Route] Error in /api/exercises/import:', error)
+    logger.error({ err: error }, '[API Route] Error in /api/exercises/import')
 
     return NextResponse.json(
       {

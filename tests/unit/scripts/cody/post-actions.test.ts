@@ -50,6 +50,26 @@ vi.mock('../../../../scripts/cody/git-utils', () => ({
   commitPipelineFiles: vi.fn(),
 }))
 
+const { mockLogger } = vi.hoisted(() => {
+  const mockLogger = {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+    fatal: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+    trace: vi.fn(),
+    silent: vi.fn(),
+    level: 'info',
+  }
+  return { mockLogger }
+})
+
+vi.mock('../../../../scripts/cody/logger', () => ({
+  logger: mockLogger,
+  createStageLogger: vi.fn().mockReturnValue(mockLogger),
+}))
+
 import { executePostAction } from '../../../../scripts/cody/pipeline/post-actions'
 import type { PipelineContext, PostAction } from '../../../../scripts/cody/engine/types'
 import type { TaskDefinition } from '../../../../scripts/cody/pipeline-utils'
@@ -162,20 +182,18 @@ describe('Post-Actions', () => {
       vi.mocked(pipelineUtils.readTask).mockReturnValue(taskWithComplexity)
       vi.mocked(pipelineUtils.resolvePipelineProfile).mockReturnValue('standard')
 
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      mockLogger.info.mockClear()
 
       const action: PostAction = { type: 'resolve-profile' }
       await executePostAction(ctx, action, null)
 
       // Should log complexity tier info
-      const tierLog = consoleSpy.mock.calls.find(
-        (call) => typeof call[0] === 'string' && call[0].includes('Complexity:'),
+      const tierLog = mockLogger.info.mock.calls.find(
+        (call: unknown[]) => typeof call[0] === 'string' && call[0].includes('Complexity:'),
       )
       expect(tierLog).toBeDefined()
       expect(tierLog![0]).toContain('42')
       expect(tierLog![0]).toContain('complex')
-
-      consoleSpy.mockRestore()
     })
 
     it('should log legacy heuristic message when task has no complexity', async () => {
@@ -184,17 +202,15 @@ describe('Post-Actions', () => {
       vi.mocked(pipelineUtils.readTask).mockReturnValue(taskNoComplexity)
       vi.mocked(pipelineUtils.resolvePipelineProfile).mockReturnValue('lightweight')
 
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      mockLogger.info.mockClear()
 
       const action: PostAction = { type: 'resolve-profile' }
       await executePostAction(ctx, action, null)
 
-      const legacyLog = consoleSpy.mock.calls.find(
-        (call) => typeof call[0] === 'string' && call[0].includes('legacy heuristic'),
+      const legacyLog = mockLogger.info.mock.calls.find(
+        (call: unknown[]) => typeof call[0] === 'string' && call[0].includes('legacy heuristic'),
       )
       expect(legacyLog).toBeDefined()
-
-      consoleSpy.mockRestore()
     })
   })
 

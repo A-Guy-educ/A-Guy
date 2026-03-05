@@ -5,6 +5,7 @@ import { ObjectId, type Collection, type Document } from 'mongodb'
 import { NextRequest, NextResponse } from 'next/server'
 import type { Payload, User } from 'payload'
 import { getPayload } from 'payload'
+import { logger } from '@/infra/utils/logger'
 
 interface JobDocument extends Document {
   _id: ObjectId
@@ -105,12 +106,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`[run-immediately] Executing job ${jobId} synchronously`)
+    logger.info({ jobId }, '[run-immediately] Executing job synchronously')
 
     // Load runtime config before job execution
-    console.log('[run-immediately] Loading runtime config...')
+    logger.debug('[run-immediately] Loading runtime config...')
     await loadRuntimeConfig(payload)
-    console.log('[run-immediately] Runtime config loaded')
+    logger.debug('[run-immediately] Runtime config loaded')
 
     // Normalize job object: MongoDB returns _id (ObjectId), but task handler expects id (string)
     const job = {
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
     // Update job status to completed
     await updateJobStatus(coll, jobId, 'completed', (job as JobDocument).output)
 
-    console.log(`[run-immediately] Job ${jobId} completed successfully`)
+    logger.info({ jobId }, '[run-immediately] Job completed successfully')
 
     return NextResponse.json({
       success: true,
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
       message: 'Job executed successfully',
     })
   } catch (error) {
-    console.error('[run-immediately] Error:', error)
+    logger.error({ err: error }, '[run-immediately] Error')
 
     // Try to update job status to failed if we can identify the job
     try {
@@ -169,7 +170,7 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (updateError) {
-      console.error('[run-immediately] Failed to update job status:', updateError)
+      logger.error({ err: updateError }, '[run-immediately] Failed to update job status')
     }
 
     return NextResponse.json(

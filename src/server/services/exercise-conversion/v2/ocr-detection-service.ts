@@ -12,6 +12,7 @@
 
 import type { ExerciseStart, PageDetectionResult } from './vision-detection-service'
 import type { TextLine } from './text-detection-service'
+import { logger } from '@/infra/utils/logger'
 
 /**
  * Shared exercise label patterns — same patterns as text-detection-service.
@@ -56,18 +57,18 @@ export async function detectExerciseStartsFromOCR(
 ): Promise<PageDetectionResult> {
   const lines = await ocrExtractLines(pageImageBuffer, imageWidth, imageHeight)
 
-  console.log(`[V2-OCR] Page ${pageIndex}: ${lines.length} OCR lines extracted`)
+  logger.info({ pageIndex, lineCount: lines.length }, '[V2-OCR] OCR lines extracted')
   if (lines.length > 0 && lines.length <= 30) {
     for (const line of lines) {
-      console.log(`[V2-OCR]   y=${line.y.toFixed(3)} "${line.text.substring(0, 80)}"`)
+      logger.debug({ pageIndex, y: line.y, text: line.text.substring(0, 80) }, '[V2-OCR] OCR line')
     }
   } else if (lines.length > 30) {
     for (const line of lines.slice(0, 10)) {
-      console.log(`[V2-OCR]   y=${line.y.toFixed(3)} "${line.text.substring(0, 80)}"`)
+      logger.debug({ pageIndex, y: line.y, text: line.text.substring(0, 80) }, '[V2-OCR] OCR line')
     }
-    console.log(`[V2-OCR]   ... (${lines.length - 15} more lines) ...`)
+    logger.debug({ pageIndex, omittedCount: lines.length - 15 }, '[V2-OCR] Omitted lines')
     for (const line of lines.slice(-5)) {
-      console.log(`[V2-OCR]   y=${line.y.toFixed(3)} "${line.text.substring(0, 80)}"`)
+      logger.debug({ pageIndex, y: line.y, text: line.text.substring(0, 80) }, '[V2-OCR] OCR line')
     }
   }
 
@@ -89,8 +90,9 @@ export async function detectExerciseStartsFromOCR(
   for (const line of lines) {
     const match = matchExerciseLabel(line.text)
     if (match) {
-      console.log(
-        `[V2-OCR] Page ${pageIndex}: MATCHED exercise "${match.label}" at y=${line.y.toFixed(3)} from text "${line.text.substring(0, 60)}"`,
+      logger.debug(
+        { pageIndex, label: match.label, y: line.y, text: line.text.substring(0, 60) },
+        '[V2-OCR] Matched exercise',
       )
       exercises.push({
         label: match.label,

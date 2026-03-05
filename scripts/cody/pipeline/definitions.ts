@@ -46,7 +46,8 @@ export const IMPL_ORDER_STANDARD: PipelineStep[] = [
   'plan-gap',
   'build',
   'commit',
-  { parallel: ['verify', 'auditor'] },
+  'verify',
+  'auditor',
   'apply-audit',
   'pr',
 ]
@@ -54,7 +55,8 @@ export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
   'architect',
   'build',
   'commit',
-  { parallel: ['verify', 'auditor'] },
+  'verify',
+  'auditor',
   'apply-audit',
   'pr',
 ]
@@ -77,7 +79,9 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
     maxRetries: 2, // BUG-F fix: increased from 1 to 2 for better resilience
     postActions: [
       { type: 'validate-task-json' },
-      { type: 'resolve-profile' },
+      { type: 'set-classification-labels' },
+      // NOTE: resolve-profile MUST be last to ensure profile is resolved before check-gate runs
+      // see issue #1 in pipeline analysis - profile race condition fix
       { type: 'check-gate', gate: 'taskify' },
       {
         type: 'commit-task-files',
@@ -85,6 +89,7 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
         push: true,
         ensureBranch: true,
       },
+      { type: 'resolve-profile' }, // Must be last - triggers pipeline rebuild for next stages
     ],
   })
 
@@ -233,6 +238,7 @@ No critical gaps identified. Plan was refined in-place.
       }
     },
     postActions: [
+      { type: 'validate-src-changes' },
       { type: 'validate-build-content' },
       {
         type: 'run-quality-with-autofix',
@@ -418,7 +424,7 @@ export function buildPipeline(
     // Full/rerun mode: include both spec and impl stages
     // This ensures the pipeline survives restarts — all stages are present
     // and the state machine efficiently skips completed ones
-    const specOrder = SPEC_ORDER_STANDARD
+    const specOrder = profile === 'standard' ? SPEC_ORDER_STANDARD : SPEC_ORDER_LIGHTWEIGHT
     const implOrder = profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
     const filteredSpecOrder = clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
     order = [...filteredSpecOrder, ...implOrder]

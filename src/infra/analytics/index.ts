@@ -9,7 +9,7 @@
 export { analytics, initializeAnalytics, getSessionId } from './core/tracker'
 
 // Provider (for app initialization)
-export { AnalyticsProvider } from './AnalyticsProvider'
+export { AnalyticsProvider } from './providers/AnalyticsProvider'
 
 // Event constants
 export { PRODUCT_EVENTS } from './contracts/events'

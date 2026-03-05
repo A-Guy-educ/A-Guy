@@ -23,7 +23,7 @@
     {
       "id": "AGENTS-core-principles",
       "title": "Core Principles",
-      "content": "1. **TypeScript-First**: Always use TypeScript with proper types from Payload\n2. **Security-Critical**: Follow all security patterns, especially access control\n3. **Type Generation**: Run `generate:types` script after schema changes\n4. **Transaction Safety**: Always pass `req` to nested operations in hooks\n5. **Access Control**: Understand Local API bypasses access control by default\n6. **Access Control**: Ensure roles exist when modifiyng collection or globals with access controls\n7. **Payload-First**: Always use Payload's built-in URL utilities and API endpoints before creating custom implementations",
+      "content": "1. **TypeScript-First**: Always use TypeScript with proper types from Payload\n2. **Security-Critical**: Follow all security patterns, especially access control\n3. **Type Generation**: Run `generate:types` script after schema changes\n4. **Transaction Safety**: Always pass `req` to nested operations in hooks\n5. **Access Control**: Understand Local API bypasses access control by default\n6. **Access Control**: Ensure roles exist when modifying collection or globals with access controls\n7. **Payload-First**: Always use Payload's built-in URL utilities and API endpoints before creating custom implementations",
       "keywords": [
         "access",
         "control",
@@ -67,23 +67,23 @@
     {
       "id": "AGENTS-project-structure",
       "title": "Project Structure",
-      "content": "```\nsrc/\n├── app/\n│   ├── (frontend)/          # Frontend routes\n│   └── (payload)/           # Payload admin routes\n├── collections/             # Collection configs\n├── globals/                 # Global configs\n├── components/              # Custom React components\n├── hooks/                   # Hook functions\n├── access/                  # Access control functions\n└── payload.config.ts        # Main config\n```",
+      "content": "```\nsrc/\n├── app/\n│   ├── (frontend)/          # Frontend routes\n│   └── (payload)/           # Payload admin routes\n├── collections/              # Collection configs\n├── globals/                 # Global configs\n├── ui/                      # React components (PAYLOAD-FIRST - use this directory)\n│   ├── admin/               # Payload admin UI components\n│   └── web/                 # Frontend/consumer UI components\n├── hooks/                   # Hook functions\n├── access/                  # Access control functions\n├── server/                  # Server-side code\n└── payload.config.ts        # Main config\n```\n\n> ⚠️ **DEPRECATED**: `src/components/` is deprecated. Migrate all components to `src/ui/web/` or `src/ui/admin/`.\n> See [src/FILE_STRUCTURE_GUIDE.md](./src/FILE_STRUCTURE_GUIDE.md) for migration patterns.",
       "keywords": [
+        "components",
         "payload",
+        "admin",
         "frontend",
         "routes",
         "configs",
-        "components",
         "functions",
         "access",
         "config",
-        "project",
-        "structure"
+        "deprecated"
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 20,
-      "endLine": 35,
+      "endLine": 41,
       "priority": 8
     },
     {
@@ -93,8 +93,8 @@
       "keywords": ["configuration"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 35,
-      "endLine": 37,
+      "startLine": 41,
+      "endLine": 43,
       "priority": 8
     },
     {
@@ -115,8 +115,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 37,
-      "endLine": 68,
+      "startLine": 43,
+      "endLine": 74,
       "priority": 7
     },
     {
@@ -126,8 +126,8 @@
       "keywords": ["collections"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 68,
-      "endLine": 70,
+      "startLine": 74,
+      "endLine": 76,
       "priority": 8
     },
     {
@@ -148,8 +148,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 70,
-      "endLine": 91,
+      "startLine": 76,
+      "endLine": 97,
       "priority": 7
     },
     {
@@ -170,8 +170,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 91,
-      "endLine": 114,
+      "startLine": 97,
+      "endLine": 120,
       "priority": 7
     },
     {
@@ -181,8 +181,8 @@
       "keywords": ["fields"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 114,
-      "endLine": 116,
+      "startLine": 120,
+      "endLine": 122,
       "priority": 8
     },
     {
@@ -203,8 +203,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 116,
-      "endLine": 152,
+      "startLine": 122,
+      "endLine": 158,
       "priority": 7
     },
     {
@@ -214,8 +214,8 @@
       "keywords": ["critical", "security", "patterns"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 152,
-      "endLine": 154,
+      "startLine": 158,
+      "endLine": 160,
       "priority": 8
     },
     {
@@ -236,8 +236,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 154,
-      "endLine": 179,
+      "startLine": 160,
+      "endLine": 185,
       "priority": 7
     },
     {
@@ -258,8 +258,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 179,
-      "endLine": 211,
+      "startLine": 185,
+      "endLine": 217,
       "priority": 7
     },
     {
@@ -280,8 +280,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 211,
-      "endLine": 246,
+      "startLine": 217,
+      "endLine": 252,
       "priority": 7
     },
     {
@@ -291,8 +291,8 @@
       "keywords": ["access", "control"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 246,
-      "endLine": 248,
+      "startLine": 252,
+      "endLine": 254,
       "priority": 8
     },
     {
@@ -313,8 +313,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 248,
-      "endLine": 283,
+      "startLine": 254,
+      "endLine": 289,
       "priority": 7
     },
     {
@@ -335,8 +335,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 283,
-      "endLine": 305,
+      "startLine": 289,
+      "endLine": 311,
       "priority": 7
     },
     {
@@ -357,8 +357,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 305,
-      "endLine": 332,
+      "startLine": 311,
+      "endLine": 338,
       "priority": 7
     },
     {
@@ -368,8 +368,8 @@
       "keywords": ["advanced", "access", "control", "patterns"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 332,
-      "endLine": 334,
+      "startLine": 338,
+      "endLine": 340,
       "priority": 8
     },
     {
@@ -390,8 +390,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 334,
-      "endLine": 352,
+      "startLine": 340,
+      "endLine": 358,
       "priority": 7
     },
     {
@@ -412,8 +412,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 352,
-      "endLine": 388,
+      "startLine": 358,
+      "endLine": 394,
       "priority": 7
     },
     {
@@ -434,8 +434,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 388,
-      "endLine": 421,
+      "startLine": 394,
+      "endLine": 427,
       "priority": 7
     },
     {
@@ -456,8 +456,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 421,
-      "endLine": 445,
+      "startLine": 427,
+      "endLine": 451,
       "priority": 7
     },
     {
@@ -467,8 +467,8 @@
       "keywords": ["hooks"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 445,
-      "endLine": 447,
+      "startLine": 451,
+      "endLine": 453,
       "priority": 8
     },
     {
@@ -489,8 +489,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 447,
-      "endLine": 510,
+      "startLine": 453,
+      "endLine": 516,
       "priority": 7
     },
     {
@@ -500,8 +500,8 @@
       "keywords": ["queries"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 510,
-      "endLine": 512,
+      "startLine": 516,
+      "endLine": 518,
       "priority": 8
     },
     {
@@ -522,8 +522,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 512,
-      "endLine": 560,
+      "startLine": 518,
+      "endLine": 566,
       "priority": 7
     },
     {
@@ -544,8 +544,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 560,
-      "endLine": 589,
+      "startLine": 566,
+      "endLine": 595,
       "priority": 7
     },
     {
@@ -565,8 +565,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 589,
-      "endLine": 607,
+      "startLine": 595,
+      "endLine": 613,
       "priority": 7
     },
     {
@@ -587,8 +587,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 607,
-      "endLine": 636,
+      "startLine": 613,
+      "endLine": 642,
       "priority": 8
     },
     {
@@ -609,8 +609,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 636,
-      "endLine": 642,
+      "startLine": 642,
+      "endLine": 648,
       "priority": 8
     },
     {
@@ -631,8 +631,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 642,
-      "endLine": 701,
+      "startLine": 648,
+      "endLine": 707,
       "priority": 7
     },
     {
@@ -653,8 +653,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 701,
-      "endLine": 708,
+      "startLine": 707,
+      "endLine": 714,
       "priority": 7
     },
     {
@@ -675,8 +675,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 708,
-      "endLine": 715,
+      "startLine": 714,
+      "endLine": 721,
       "priority": 7
     },
     {
@@ -697,8 +697,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 715,
-      "endLine": 750,
+      "startLine": 721,
+      "endLine": 756,
       "priority": 7
     },
     {
@@ -719,8 +719,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 750,
-      "endLine": 777,
+      "startLine": 756,
+      "endLine": 783,
       "priority": 7
     },
     {
@@ -741,8 +741,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 777,
-      "endLine": 803,
+      "startLine": 783,
+      "endLine": 809,
       "priority": 7
     },
     {
@@ -763,8 +763,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 803,
-      "endLine": 841,
+      "startLine": 809,
+      "endLine": 847,
       "priority": 7
     },
     {
@@ -785,8 +785,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 841,
-      "endLine": 865,
+      "startLine": 847,
+      "endLine": 871,
       "priority": 7
     },
     {
@@ -807,8 +807,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 865,
-      "endLine": 901,
+      "startLine": 871,
+      "endLine": 907,
       "priority": 7
     },
     {
@@ -829,8 +829,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 901,
-      "endLine": 917,
+      "startLine": 907,
+      "endLine": 923,
       "priority": 7
     },
     {
@@ -851,8 +851,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 917,
-      "endLine": 940,
+      "startLine": 923,
+      "endLine": 946,
       "priority": 7
     },
     {
@@ -873,8 +873,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 940,
-      "endLine": 959,
+      "startLine": 946,
+      "endLine": 965,
       "priority": 7
     },
     {
@@ -895,8 +895,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 959,
-      "endLine": 1002,
+      "startLine": 965,
+      "endLine": 1008,
       "priority": 8
     },
     {
@@ -917,8 +917,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1002,
-      "endLine": 1040,
+      "startLine": 1008,
+      "endLine": 1046,
       "priority": 8
     },
     {
@@ -939,8 +939,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1040,
-      "endLine": 1075,
+      "startLine": 1046,
+      "endLine": 1081,
       "priority": 8
     },
     {
@@ -950,8 +950,8 @@
       "keywords": ["plugins"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1075,
-      "endLine": 1077,
+      "startLine": 1081,
+      "endLine": 1083,
       "priority": 8
     },
     {
@@ -972,8 +972,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1077,
-      "endLine": 1095,
+      "startLine": 1083,
+      "endLine": 1101,
       "priority": 7
     },
     {
@@ -994,8 +994,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1095,
-      "endLine": 1121,
+      "startLine": 1101,
+      "endLine": 1127,
       "priority": 7
     },
     {
@@ -1005,8 +1005,8 @@
       "keywords": ["best", "practices"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1121,
-      "endLine": 1123,
+      "startLine": 1127,
+      "endLine": 1129,
       "priority": 8
     },
     {
@@ -1027,8 +1027,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1123,
-      "endLine": 1131,
+      "startLine": 1129,
+      "endLine": 1137,
       "priority": 7
     },
     {
@@ -1049,8 +1049,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1131,
-      "endLine": 1139,
+      "startLine": 1137,
+      "endLine": 1145,
       "priority": 7
     },
     {
@@ -1071,8 +1071,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1139,
-      "endLine": 1147,
+      "startLine": 1145,
+      "endLine": 1153,
       "priority": 7
     },
     {
@@ -1093,8 +1093,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1147,
-      "endLine": 1155,
+      "startLine": 1153,
+      "endLine": 1161,
       "priority": 7
     },
     {
@@ -1115,15 +1115,16 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1155,
-      "endLine": 1163,
+      "startLine": 1161,
+      "endLine": 1169,
       "priority": 7
     },
     {
       "id": "AGENTS-common-gotchas",
       "title": "Common Gotchas",
-      "content": "1. **Local API Default**: Access control bypassed unless `overrideAccess: false`\n2. **Transaction Safety**: Missing `req` in nested operations breaks atomicity\n3. **Hook Loops**: Operations in hooks can trigger the same hooks\n4. **Field Access**: Cannot use query constraints, only boolean\n5. **Relationship Depth**: Default depth is 2, set to 0 for IDs only\n6. **Draft Status**: `_status` field auto-injected when drafts enabled\n7. **Type Generation**: Types not updated until `generate:types` runs\n8. **MongoDB Transactions**: Require replica set configuration",
+      "content": "1. **Local API Default**: Access control bypassed unless `overrideAccess: false`\n2. **Transaction Safety**: Missing `req` in nested operations breaks atomicity\n3. **Hook Loops**: Operations in hooks can trigger the same hooks\n4. **Field Access**: Cannot use query constraints, only boolean\n5. **Relationship Depth**: Default depth is 2, set to 0 for IDs only\n6. **Draft Status**: `_status` field auto-injected when drafts enabled\n7. **Type Generation**: Types not updated until `generate:types` runs\n8. **MongoDB Transactions**: Require replica set configuration\n9. **Local Filesystem**: Do NOT use `upload: { staticDir: ... }` - use Vercel Blob instead",
       "keywords": [
+        "local",
         "default",
         "access",
         "operations",
@@ -1132,13 +1133,12 @@
         "only",
         "depth",
         "types",
-        "common",
-        "gotchas"
+        "common"
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1163,
-      "endLine": 1174,
+      "startLine": 1169,
+      "endLine": 1181,
       "priority": 8
     },
     {
@@ -1159,8 +1159,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1174,
-      "endLine": 1191,
+      "startLine": 1181,
+      "endLine": 1198,
       "priority": 8
     },
     {
@@ -1181,8 +1181,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1191,
-      "endLine": 1199,
+      "startLine": 1198,
+      "endLine": 1206,
       "priority": 7
     },
     {
@@ -1203,8 +1203,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1199,
-      "endLine": 1209,
+      "startLine": 1206,
+      "endLine": 1216,
       "priority": 8
     },
     {
@@ -1225,8 +1225,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1209,
-      "endLine": 1229,
+      "startLine": 1216,
+      "endLine": 1236,
       "priority": 7
     },
     {
@@ -1247,8 +1247,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1229,
-      "endLine": 1236,
+      "startLine": 1236,
+      "endLine": 1243,
       "priority": 8
     },
     {
@@ -3070,23 +3070,23 @@
     {
       "id": "CLAUDE-documentation",
       "title": "Documentation",
-      "content": "**Read [AGENTS.md](./AGENTS.md) - it contains everything you need:**\n\n- Core principles and best practices\n- Project structure and architecture\n- Payload CMS patterns (collections, fields, hooks, access control)\n- Security patterns (CRITICAL - access control, transactions, hooks)\n- Component development\n- Custom endpoints\n- Type safety guidelines\n- Exercise system architecture\n- Authentication patterns\n- Examples and code snippets\n\n**Read [CLAUDE_INTERNAL.md](./CLAUDE.md) - Internal team guidelines (if it exists):**\n\n- Internal conventions and patterns specific to this project\n\n---",
+      "content": "**Read [AGENTS.md](./AGENTS.md) - it contains everything you need:**\n\n- Core principles and best practices\n- Project structure and architecture\n- Payload CMS patterns (collections, fields, hooks, access control)\n- Security patterns (CRITICAL - access control, transactions, hooks)\n- Component development\n- Custom endpoints\n- Type safety guidelines\n- Exercise system architecture\n- Authentication patterns\n- Examples and code snippets\n\n---",
       "keywords": [
         "patterns",
-        "read",
         "agents",
-        "project",
         "architecture",
         "hooks",
         "access",
         "control",
-        "guidelines",
-        "internal"
+        "documentation",
+        "read",
+        "contains",
+        "everything"
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
       "startLine": 7,
-      "endLine": 28,
+      "endLine": 24,
       "priority": 8
     },
     {
@@ -3107,8 +3107,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 28,
-      "endLine": 32,
+      "startLine": 24,
+      "endLine": 28,
       "priority": 8
     },
     {
@@ -3129,8 +3129,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 32,
-      "endLine": 38,
+      "startLine": 28,
+      "endLine": 34,
       "priority": 7
     },
     {
@@ -3151,8 +3151,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 38,
-      "endLine": 43,
+      "startLine": 34,
+      "endLine": 39,
       "priority": 7
     },
     {
@@ -3173,8 +3173,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 43,
-      "endLine": 51,
+      "startLine": 39,
+      "endLine": 47,
       "priority": 7
     },
     {
@@ -3195,8 +3195,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 51,
-      "endLine": 56,
+      "startLine": 47,
+      "endLine": 52,
       "priority": 7
     },
     {
@@ -3217,8 +3217,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 56,
-      "endLine": 65,
+      "startLine": 52,
+      "endLine": 61,
       "priority": 7
     },
     {
@@ -3239,8 +3239,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 65,
-      "endLine": 74,
+      "startLine": 61,
+      "endLine": 70,
       "priority": 7
     },
     {
@@ -3261,8 +3261,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 74,
-      "endLine": 79,
+      "startLine": 70,
+      "endLine": 75,
       "priority": 7
     },
     {
@@ -3281,8 +3281,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 79,
-      "endLine": 86,
+      "startLine": 75,
+      "endLine": 82,
       "priority": 7
     },
     {
@@ -3303,8 +3303,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 86,
-      "endLine": 94,
+      "startLine": 82,
+      "endLine": 90,
       "priority": 7
     },
     {
@@ -3325,8 +3325,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 94,
-      "endLine": 107,
+      "startLine": 90,
+      "endLine": 103,
       "priority": 8
     },
     {
@@ -3347,107 +3347,43 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 107,
-      "endLine": 123,
+      "startLine": 103,
+      "endLine": 119,
       "priority": 8
     },
     {
       "id": "CLAUDE-ai-agent-tools",
       "title": "AI Agent Tools",
-      "content": "This codebase includes tools to help AI agents work efficiently:",
+      "content": "This codebase includes tools to help AI agents work efficiently:\n\n- **SmartDocLoader** - Context-aware documentation loading\n- **DocSearch** - Keyword-based documentation search\n- **Pattern Index** - Find code examples by pattern\n\nSee [AGENTS.md](./AGENTS.md) and [.ai-docs/BOOTSTRAP.md](.ai-docs/BOOTSTRAP.md) for details.\n\n---",
       "keywords": [
+        "agents",
         "tools",
+        "documentation",
+        "pattern",
+        "ai-docs",
+        "bootstrap",
         "agent",
         "codebase",
         "includes",
-        "help",
-        "agents",
-        "work",
-        "efficiently"
+        "help"
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 123,
-      "endLine": 127,
+      "startLine": 119,
+      "endLine": 131,
       "priority": 8
-    },
-    {
-      "id": "CLAUDE-smart-documentation-loading",
-      "title": "Smart Documentation Loading",
-      "content": "Use SmartDocLoader for context-aware documentation loading:\n\n```typescript\nimport { SmartDocLoader } from '@/lib/ai/smart-doc-loader' // src/infra/llm/smart-doc-loader.ts - OLD PATH\n\n// Creating a collection\nconst docs = SmartDocLoader.forCollection('create')\nconsole.log(docs.estimatedTokens) // ~380 tokens\n\n// Creating a component\nconst docs = SmartDocLoader.forComponent('create')\n// Returns: ~335 tokens, quick reference tier\n\n// Creating an endpoint\nconst docs = SmartDocLoader.forEndpoint('create')\n// Returns: ~228 tokens, quick reference tier\n\n// Debugging\nconst docs = SmartDocLoader.forDebugging('collection')\n// Returns: ~1158 tokens, deep reference tier\n```",
-      "keywords": [
-        "smartdocloader",
-        "docs",
-        "const",
-        "tokens",
-        "creating",
-        "create",
-        "returns",
-        "reference",
-        "tier",
-        "documentation"
-      ],
-      "category": "quick-reference",
-      "sourceFile": "CLAUDE.md",
-      "startLine": 127,
-      "endLine": 151,
-      "priority": 7
-    },
-    {
-      "id": "CLAUDE-documentation-search",
-      "title": "Documentation Search",
-      "content": "Search for specific information:\n\n```typescript\nimport { getDocSearch } from '@/lib/ai/doc-search' // src/infra/llm/doc-search.ts - OLD PATH\n\nconst search = getDocSearch()\nconst results = search.query('How do I create a published collection?', {\n  limit: 5,\n  category: 'quick-reference',\n})\n```",
-      "keywords": [
-        "search",
-        "getdocsearch",
-        "doc-search",
-        "const",
-        "documentation",
-        "specific",
-        "information",
-        "typescript",
-        "import",
-        "infra"
-      ],
-      "category": "quick-reference",
-      "sourceFile": "CLAUDE.md",
-      "startLine": 151,
-      "endLine": 165,
-      "priority": 7
-    },
-    {
-      "id": "CLAUDE-pattern-discovery",
-      "title": "Pattern Discovery",
-      "content": "Find examples of specific patterns:\n\n```typescript\n// Load pattern index\nconst index = require('./.ai-docs/indexes/pattern-index.json')\n\n// Find all files using RBAC pattern\nconst rbacFiles = index.patterns['rbac'].files\n```\n\nSee [BOOTSTRAP.md](.ai-docs/BOOTSTRAP.md) for full guide.\n\n---",
-      "keywords": [
-        "pattern",
-        "index",
-        "find",
-        "patterns",
-        "const",
-        "ai-docs",
-        "files",
-        "rbac",
-        "bootstrap",
-        "discovery"
-      ],
-      "category": "quick-reference",
-      "sourceFile": "CLAUDE.md",
-      "startLine": 165,
-      "endLine": 181,
-      "priority": 7
     },
     {
       "id": "CLAUDE-import-style",
       "title": "Import Style",
-      "content": "**Always use `@/` aliases** for src imports:\n\n```typescript\n// ✅ Correct\nimport { getPayload } from 'payload'\nimport { User } from '@/payload-types'\nimport { SmartDocLoader } from '@/lib/ai/smart-doc-loader' // src/infra/llm/smart-doc-loader.ts\n\n// ❌ Wrong (old path structure)\nimport { SmartDocLoader } from '../../../lib/ai/smart-doc-loader'\n```\n\n**Exception**: Use relative imports within the same directory:\n\n```typescript\n// ✅ Correct (same directory)\nimport { helper } from './helper'\n```",
+      "content": "**Always use `@/` aliases** for src imports:\n\n```typescript\n// ✅ Correct\nimport { getPayload } from 'payload'\nimport { User } from '@/payload-types'\nimport { SmartDocLoader } from '@/lib/ai/smart-doc-loader'\n\n// ❌ Wrong (old path structure)\nimport { SmartDocLoader } from '../../../lib/ai/smart-doc-loader'\n```\n\n**Exception**: Use relative imports within the same directory:\n\n```typescript\n// ✅ Correct (same directory)\nimport { helper } from './helper'\n```",
       "keywords": [
         "import",
-        "smart-doc-loader",
         "imports",
         "typescript",
         "correct",
         "smartdocloader",
+        "smart-doc-loader",
         "same",
         "directory",
         "helper",
@@ -3455,8 +3391,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 181,
-      "endLine": 201,
+      "startLine": 131,
+      "endLine": 151,
       "priority": 8
     },
     {
@@ -4924,8 +4860,8 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-01-28T12:05:47.665Z",
-    "totalChunks": 248,
+    "generatedAt": "2026-03-02T20:53:03.198Z",
+    "totalChunks": 245,
     "sourceFiles": [
       "AGENTS.md",
       "DESIGN_SYSTEM.md",

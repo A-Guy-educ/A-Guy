@@ -1,0 +1,31 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "backend",
+  "scope": [
+    "document-to-exercise conversion",
+    "PDF/image processing",
+    "LLM integration",
+    "admin UI flow",
+    "extraction logging"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Existing LLM provider in project can handle vision tasks",
+    "Existing Exercises schema can accommodate the extracted exercise types",
+    "PDF processing library works in Vercel runtime"
+  ],
+  "review_questions": [],
+  "complexity": 65,
+  "complexity_reasoning": "Scope: V3 POC with admin UI, backend extraction, logging, exercise creation (18). Risk: LLM integration, PDF processing, data storage (13). Novelty: New feature building on V2 patterns (12). Cross: Backend + Frontend + LLM + database (10). Ambiguity: Clear requirements, some impl details to figure out (4). Dependencies: LLM provider, PDF library, database (8). Total: 65",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task has clear Scope section with Requirements, Acceptance Criteria checklist (11 items), and Admin Flow steps (1-7). Promoted spec.md from task.md requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

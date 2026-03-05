@@ -651,7 +651,7 @@ async function convertMediaToAttachments(
 
       if (mediaDoc && 'url' in mediaDoc && mediaDoc.url) {
         const imageUrl = mediaDoc.url.startsWith('/')
-          ? `${process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'}${mediaDoc.url}`
+          ? `${process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'}${mediaDoc.url}`
           : mediaDoc.url
 
         const response = await fetch(imageUrl)

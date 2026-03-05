@@ -57,9 +57,9 @@ export const COLUMN_DEFS: Record<ColumnId, ColumnDef> = {
 // ============ Polling Intervals ============
 
 export const POLLING_INTERVALS = {
-  idle: 30000, // 30s - no running tasks
-  board: 10000, // 10s - has running tasks
-  active: 5000, // 5s - selected task is running
+  idle: 60000, // 30s - no running tasks
+  board: 30000, // 10s - has running tasks
+  active: 15000, // 5s - selected task is running
 } as const
 
 // ============ Branch Prefixes ============
@@ -105,11 +105,13 @@ export const STAGE_ICONS = {
 
 // ============ Cache TTL ============
 
+export const BRANCH_CACHE_TTL = 600000 // 10min - branches rarely change
+
 export const CACHE_TTL = {
   tasks: 120000, // 2min - reduced API calls while staying fresh
-  pipeline: 30000, // 30s - increased from 5s to reduce calls
-  boards: 300000, // 5min - labels/milestones rarely change
-  prs: 120000, // 2min - increased from 30s
+  pipeline: 60000, // 30s - increased from 5s to reduce calls
+  boards: 900000, // 5min - labels/milestones rarely change
+  prs: 300000, // 2min - increased from 30s
 } as const
 
 // ============ Emoji List ============

@@ -28,7 +28,8 @@ export const queryCourseBySlug = cache(async ({ slug }: { slug: string }) => {
     },
     limit: 1,
     pagination: false,
-    depth: 2,
+    depth: 1,
+    overrideAccess: false,
   })
 
   return result.docs?.[0] || null
@@ -56,7 +57,8 @@ export const queryPublishedCourses = cache(async () => {
     sort: 'order',
     limit: 1000,
     pagination: false,
-    depth: 2,
+    depth: 1,
+    overrideAccess: false,
   })
 
   return result.docs

@@ -8,7 +8,8 @@ import { SearchIcon } from 'lucide-react'
 import type { Header as HeaderType, User } from '@/payload-types'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
 import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
-import { useTranslations } from '@/ui/web/providers/I18n'
+import { useTranslations, useLocale } from '@/ui/web/providers/I18n'
+import { getNavItemsForLocale } from '@/ui/web/nav-variants'
 import { MobileMenuAuthSection } from './MobileMenuAuthSection'
 
 interface MobileMenuProps {
@@ -31,7 +32,9 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   const tCommon = useTranslations('common.header')
   const tMenu = useTranslations('common.mobileMenu')
   const passwordLogin = usePasswordLogin()
-  const allNavItems = data?.navItems || []
+  const systemLocale = useLocale()
+
+  const allNavItems = getNavItemsForLocale(data, systemLocale)
   const navItems = passwordLogin
     ? allNavItems
     : allNavItems.filter(({ link }) => link?.url !== '/signup')

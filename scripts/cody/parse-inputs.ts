@@ -4,6 +4,7 @@
  * @ai-summary Parse command inputs from dispatch or comment triggers
  */
 
+import { logger } from './logger'
 import { execSync } from 'child_process'
 import { writeFileSync } from 'fs'
 
@@ -16,11 +17,13 @@ interface ParseOutputs {
   from_stage: string
   feedback: string
   issue_number: string
+  is_pull_request: string
   trigger_type: string
   comment_body: string
   valid: string
   runner: string
   version: string
+  fresh: string
 }
 
 // Task ID format: YYMMDD-description (e.g., 260225-auto-90)
@@ -89,17 +92,19 @@ export function parseDispatchInputs(): ParseOutputs {
     return {
       ...getDefaultOutputs(),
       issue_number: '',
+      is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
       valid: 'false',
     }
   }
 
   // Validate task-id format
   if (!isValidTaskId(taskId)) {
-    console.log(`=== Error: Invalid task-id format: ${taskId} ===`)
-    console.log('Expected format: YYMMDD-description (e.g., 260225-auto-90)')
+    logger.info(`=== Error: Invalid task-id format: ${taskId} ===`)
+    logger.info('Expected format: YYMMDD-description (e.g., 260225-auto-90)')
     return {
       ...getDefaultOutputs(),
       issue_number: '',
+      is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
       valid: 'false',
     }
   }
@@ -112,14 +117,16 @@ export function parseDispatchInputs(): ParseOutputs {
     from_stage: process.env.DISPATCH_FROM_STAGE || '',
     feedback: process.env.DISPATCH_FEEDBACK || '',
     issue_number: '',
+    is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
     trigger_type: 'dispatch',
     comment_body: '',
     valid: 'true',
     runner: process.env.DISPATCH_RUNNER || 'self-hosted',
     version: process.env.DISPATCH_VERSION || process.env.CODY_DEFAULT_VERSION || '',
+    fresh: process.env.FRESH || '',
   }
 
-  console.log(
+  logger.info(
     `=== Parsed dispatch: task_id=${outputs.task_id}, mode=${outputs.mode}, clarify=${outputs.clarify}, runner=${outputs.runner} ===`,
   )
 
@@ -137,7 +144,7 @@ export function parseCommentInputs(): ParseOutputs {
 
   // Safety check first
   if (safetyValid !== 'true') {
-    console.log(`=== Safety check failed: ${safetyReason} ===`)
+    logger.info(`=== Safety check failed: ${safetyReason} ===`)
     return {
       ...getDefaultOutputs(),
       issue_number: issueNumber,
@@ -153,70 +160,87 @@ export function parseCommentInputs(): ParseOutputs {
     comment_body: JSON.stringify(commentBody),
   }
 
-  // Discover task-id from previous bot comments on the issue
-  if (issueNumber) {
+  // Extract command after @cody or /cody (MUST be before flag detection)
+  const cmdAfterCody = commentBody ? extractCommandAfterCody(commentBody) : ''
+
+  // Detect --fresh flag - skip taskId discovery if fresh
+  const hasFreshFlag = /--fresh\b/.test(cmdAfterCody)
+  if (hasFreshFlag) {
+    outputs.fresh = 'true'
+    logger.info('=== Detected --fresh flag: will create new task ===')
+  }
+
+  // Discover task-id from previous bot comments on the issue (skip if fresh)
+  if (issueNumber && !hasFreshFlag) {
     const discoveredTaskId = discoverTaskIdFromIssue(issueNumber)
     if (discoveredTaskId) {
-      console.log(`=== Discovered task-id from issue: ${discoveredTaskId} ===`)
+      logger.info(`=== Discovered task-id from issue: ${discoveredTaskId} ===`)
       outputs.task_id = discoveredTaskId
     }
   }
 
   // Parse command to determine mode and flags
-  if (commentBody) {
-    const cmdAfterCody = extractCommandAfterCody(commentBody)
-
+  if (cmdAfterCody) {
     // Detect --local flag anywhere in the command
     const hasLocalFlag = /--local\b/.test(cmdAfterCody)
     if (hasLocalFlag) {
       outputs.runner = 'self-hosted'
-      console.log('=== Detected --local flag: will use self-hosted runner ===')
+      logger.info('=== Detected --local flag: will use self-hosted runner ===')
+    }
+
+    // Detect --github-hosted flag anywhere in the command
+    const hasGithubHostedFlag = /--github-hosted\b/.test(cmdAfterCody)
+    if (hasGithubHostedFlag) {
+      outputs.runner = 'github-hosted'
+      logger.info('=== Detected --github-hosted flag: will use GitHub-hosted runner ===')
     }
 
     // Detect --version flag anywhere in the command
     const versionMatch = cmdAfterCody.match(/--version\s+(\S+)/)
     if (versionMatch) {
       outputs.version = versionMatch[1]
-      console.log(`=== Detected --version flag: ${outputs.version} ===`)
+      logger.info(`=== Detected --version flag: ${outputs.version} ===`)
     }
 
     // Strip flags from command before mode parsing
     const cmdWithoutFlags = cmdAfterCody
       .replace(/--local\b/g, '')
       .replace(/--github\b/g, '')
+      .replace(/--github-hosted\b/g, '')
       .replace(/--version\s+\S+/g, '')
+      .replace(/--fresh\b/g, '')
       .trim()
 
     if (!cmdWithoutFlags) {
       // @cody alone (or @cody --local) - default to full mode
       outputs.mode = 'full'
-      console.log('=== @cody alone - defaulting to full mode ===')
+      logger.info('=== @cody alone - defaulting to full mode ===')
     } else if (APPROVAL_KEYWORDS.includes(cmdWithoutFlags)) {
       // Approval command - use rerun mode
       outputs.mode = 'rerun'
-      console.log(`=== Detected approval keyword: ${cmdWithoutFlags} ===`)
+      logger.info(`=== Detected approval keyword: ${cmdWithoutFlags} ===`)
     } else if (VALID_MODES.includes(cmdWithoutFlags)) {
       // Explicit mode specified
       outputs.mode = cmdWithoutFlags
-      console.log(`=== Detected explicit mode: ${cmdWithoutFlags} ===`)
+      logger.info(`=== Detected explicit mode: ${cmdWithoutFlags} ===`)
     } else {
       // Not a known command - default to full (might be task-id or description)
       outputs.mode = 'full'
-      console.log('=== Not a known command - defaulting to full mode ===')
+      logger.info('=== Not a known command - defaulting to full mode ===')
     }
   }
 
   // Validate task-id format if set
   if (outputs.task_id && !isValidTaskId(outputs.task_id)) {
-    console.log(`=== Error: Invalid task-id format: ${outputs.task_id} ===`)
-    console.log('Expected format: YYMMDD-description (e.g., 260225-auto-90)')
+    logger.info(`=== Error: Invalid task-id format: ${outputs.task_id} ===`)
+    logger.info('Expected format: YYMMDD-description (e.g., 260225-auto-90)')
     outputs.task_id = ''
     outputs.valid = 'false'
   } else {
     outputs.valid = 'true'
   }
 
-  console.log('=== Passing comment to orchestrator for parsing ===')
+  logger.info('=== Passing comment to orchestrator for parsing ===')
 
   return outputs
 }
@@ -233,11 +257,13 @@ export function getDefaultOutputs(): ParseOutputs {
     from_stage: '',
     feedback: '',
     issue_number: '',
+    is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
     trigger_type: '',
     comment_body: '',
     valid: 'false',
     runner: 'self-hosted',
     version: process.env.CODY_DEFAULT_VERSION || '',
+    fresh: '',
   }
 }
 
@@ -248,7 +274,7 @@ function writeOutputs(outputs: ParseOutputs): void {
   const githubOutput = process.env.GITHUB_OUTPUT || ''
 
   if (!githubOutput) {
-    console.error('GITHUB_OUTPUT not set!')
+    logger.error('GITHUB_OUTPUT not set!')
     process.exit(1)
   }
 
@@ -260,11 +286,13 @@ function writeOutputs(outputs: ParseOutputs): void {
     `from_stage=${outputs.from_stage}`,
     `feedback=${outputs.feedback}`,
     `issue_number=${outputs.issue_number}`,
+    `is_pull_request=${outputs.is_pull_request}`,
     `trigger_type=${outputs.trigger_type}`,
     `comment_body=${outputs.comment_body}`,
     `valid=${outputs.valid}`,
     `runner=${outputs.runner}`,
     `version=${outputs.version}`,
+    `fresh=${outputs.fresh}`,
   ]
 
   writeFileSync(githubOutput, lines.join('\n') + '\n')

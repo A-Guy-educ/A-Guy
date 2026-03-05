@@ -192,13 +192,18 @@ describe('stage-prompts', () => {
       }
     })
 
-    it('should return empty strings for non-spec stages (behavioral moved to agent files)', () => {
+    it('should return empty strings for non-spec stages (except build)', () => {
       const nonSpecStages = ALL_STAGES.filter(
         (s) => !SPEC_STAGES.includes(s as (typeof SPEC_STAGES)[number]),
       )
       for (const stage of nonSpecStages) {
         const instruction = stageInstructions[stage]('260219-test')
-        expect(instruction).toBe('')
+        // Build stage intentionally has implementation instructions
+        if (stage === 'build') {
+          expect(instruction).toContain('IMPLEMENTATION STAGE')
+        } else {
+          expect(instruction).toBe('')
+        }
       }
     })
   })

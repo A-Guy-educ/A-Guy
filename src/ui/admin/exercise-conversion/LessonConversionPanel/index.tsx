@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { ConversionStatusPanel } from '../ConversionStatusPanel'
 import { ConvertForm } from '../ConvertForm'
 import { ConvertV2Button } from '../ConvertV2Button'
+import { ConvertV3Button } from '../ConvertV3Button'
 import { DraftExercisesList } from '../DraftExercisesList'
 import { V2StatusPanel } from '../V2StatusPanel'
 
@@ -15,7 +16,7 @@ interface MediaItem {
 }
 
 export const LessonConversionPanel = () => {
-  const { id: lessonId } = useDocumentInfo()
+  const { id: lessonId, lastUpdateTime } = useDocumentInfo()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const contentFilesField = useFormFields(([fields]: any[]) => fields?.contentFiles)
   const contentFilesValue = contentFilesField?.value
@@ -24,37 +25,78 @@ export const LessonConversionPanel = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [activeForm, setActiveForm] = useState<string | null>(null)
   const [expandedPdf, setExpandedPdf] = useState<string | null>(null)
+  const [needsSaveNotice, setNeedsSaveNotice] = useState(false)
 
-  // Resolve media IDs to full objects
+  // Resolve media from persisted lesson data so conversion options always
+  // match server-side validation (which checks lesson.contentFiles in the database).
   useEffect(() => {
     async function resolveMedia() {
-      const value = contentFilesValue
-      if (!value || !Array.isArray(value) || value.length === 0) {
+      if (!lessonId) {
         setMediaItems([])
+        setNeedsSaveNotice(false)
         setIsLoading(false)
         return
       }
 
-      // Check if we have full objects or just IDs
-      const firstItem = value[0]
-      if (typeof firstItem === 'object' && firstItem !== null && 'mimeType' in firstItem) {
-        // Already have full objects
-        setMediaItems(value as MediaItem[])
-        setIsLoading(false)
-        return
-      }
-
-      // Need to fetch media details
       try {
-        const ids = value.map((v) => (typeof v === 'string' ? v : v.id)).join(',')
-        const response = await fetch(
-          `/api/media?where[id][in]=${encodeURIComponent(ids)}&limit=100`,
-          { credentials: 'include' },
-        )
-        if (response.ok) {
-          const data = await response.json()
-          setMediaItems(data.docs || [])
+        const lessonResponse = await fetch(`/api/lessons/${lessonId}?depth=1`, {
+          credentials: 'include',
+          cache: 'no-store',
+        })
+
+        if (!lessonResponse.ok) {
+          setMediaItems([])
+          setNeedsSaveNotice(false)
+          return
         }
+
+        const lessonData = await lessonResponse.json()
+        const persistedContentFiles = Array.isArray(lessonData?.contentFiles)
+          ? lessonData.contentFiles
+          : []
+
+        const persistedIds = persistedContentFiles.map((item: string | { id: string }) =>
+          typeof item === 'string' ? item : item.id,
+        )
+
+        const draftIds = Array.isArray(contentFilesValue)
+          ? contentFilesValue.map((item: string | { id: string }) =>
+              typeof item === 'string' ? item : item.id,
+            )
+          : []
+
+        const hasUnsavedAttachmentChanges =
+          draftIds.length !== persistedIds.length ||
+          draftIds.some((id) => !persistedIds.includes(id))
+
+        setNeedsSaveNotice(hasUnsavedAttachmentChanges)
+
+        if (persistedContentFiles.length === 0) {
+          setMediaItems([])
+          return
+        }
+
+        const firstItem = persistedContentFiles[0]
+        if (typeof firstItem === 'object' && firstItem !== null && 'mimeType' in firstItem) {
+          setMediaItems(persistedContentFiles as MediaItem[])
+          return
+        }
+
+        const ids = persistedIds.join(',')
+        const mediaResponse = await fetch(
+          `/api/media?where[id][in]=${encodeURIComponent(ids)}&limit=100`,
+          {
+            credentials: 'include',
+          },
+        )
+
+        if (!mediaResponse.ok) {
+          setMediaItems([])
+          return
+        }
+
+        const mediaData = await mediaResponse.json()
+        setMediaItems(mediaData.docs || [])
       } catch (err) {
         console.error('Failed to fetch media:', err)
       } finally {
@@ -63,10 +105,12 @@ export const LessonConversionPanel = () => {
     }
 
     resolveMedia()
-  }, [contentFilesValue])
+  }, [contentFilesValue, lessonId, lastUpdateTime])
 
-  // Filter for PDFs only
-  const pdfFiles = mediaItems.filter((m) => m.mimeType === 'application/pdf')
+  // Filter for PDFs and images (V3 supports both)
+  const supportedFiles = mediaItems.filter(
+    (m) => m.mimeType === 'application/pdf' || m.mimeType?.startsWith('image/'),
+  )
 
   if (!lessonId) {
     return null // Don't show on create form
@@ -97,7 +141,7 @@ export const LessonConversionPanel = () => {
     )
   }
 
-  if (pdfFiles.length === 0) {
+  if (supportedFiles.length === 0) {
     return (
       <div
         style={{
@@ -117,7 +161,9 @@ export const LessonConversionPanel = () => {
         >
           Exercise Conversion
         </h3>
-        <p style={{ fontSize: 12, color: 'var(--theme-elevation-500)' }}>No PDFs attached.</p>
+        <p style={{ fontSize: 12, color: 'var(--theme-elevation-500)' }}>
+          No PDFs or images attached.
+        </p>
       </div>
     )
   }
@@ -142,9 +188,15 @@ export const LessonConversionPanel = () => {
         Exercise Conversion
       </h3>
 
-      {pdfFiles.map((pdf) => (
+      {needsSaveNotice && (
+        <p style={{ marginBottom: 8, fontSize: 11, color: 'var(--theme-warning-700)' }}>
+          Save lesson changes to include newly attached files in conversion.
+        </p>
+      )}
+
+      {supportedFiles.map((file) => (
         <div
-          key={pdf.id}
+          key={file.id}
           style={{
             marginBottom: 8,
             padding: 8,
@@ -167,7 +219,7 @@ export const LessonConversionPanel = () => {
                 color: 'var(--theme-elevation-600)',
               }}
             >
-              PDF
+              {file.mimeType?.startsWith('image/') ? 'IMG' : 'PDF'}
             </span>
             <span
               style={{
@@ -180,31 +232,32 @@ export const LessonConversionPanel = () => {
                 whiteSpace: 'nowrap',
               }}
             >
-              {pdf.filename || pdf.id}
+              {file.filename || file.id}
             </span>
             <div style={{ display: 'flex', gap: 4 }}>
               <button
-                onClick={() => setActiveForm(activeForm === pdf.id ? null : pdf.id)}
+                onClick={() => setActiveForm(activeForm === file.id ? null : file.id)}
                 style={{
                   padding: '4px 12px',
                   fontSize: 11,
                   fontWeight: 500,
-                  border: activeForm === pdf.id ? '1px solid var(--theme-elevation-200)' : 'none',
+                  border: activeForm === file.id ? '1px solid var(--theme-elevation-200)' : 'none',
                   borderRadius: 3,
                   backgroundColor:
-                    activeForm === pdf.id
+                    activeForm === file.id
                       ? 'var(--theme-elevation-100)'
                       : 'var(--theme-elevation-900)',
                   color:
-                    activeForm === pdf.id
+                    activeForm === file.id
                       ? 'var(--theme-elevation-700)'
                       : 'var(--theme-elevation-0)',
                   cursor: 'pointer',
                 }}
               >
-                {activeForm === pdf.id ? 'Cancel' : 'Convert (V1)'}
+                {activeForm === file.id ? 'Cancel' : 'Convert (V1)'}
               </button>
-              <ConvertV2Button lessonId={String(lessonId)} mediaId={pdf.id} />
+              <ConvertV2Button lessonId={String(lessonId)} mediaId={file.id} />
+              <ConvertV3Button lessonId={String(lessonId)} mediaId={file.id} />
             </div>
           </div>
 
@@ -212,18 +265,18 @@ export const LessonConversionPanel = () => {
           <div style={{ marginTop: 4 }}>
             <ConversionStatusPanel
               lessonId={String(lessonId)}
-              mediaId={pdf.id}
-              onViewExercises={() => setExpandedPdf(expandedPdf === pdf.id ? null : pdf.id)}
+              mediaId={file.id}
+              onViewExercises={() => setExpandedPdf(expandedPdf === file.id ? null : file.id)}
             />
           </div>
 
           {/* V2 Status Panel */}
           <div style={{ marginTop: 4 }}>
-            <V2StatusPanel lessonId={String(lessonId)} mediaId={pdf.id} />
+            <V2StatusPanel lessonId={String(lessonId)} mediaId={file.id} />
           </div>
 
           {/* Inline Convert Form */}
-          {activeForm === pdf.id && (
+          {activeForm === file.id && (
             <Suspense
               fallback={
                 <div style={{ marginTop: 8, fontSize: 11, color: 'var(--theme-elevation-500)' }}>
@@ -233,17 +286,17 @@ export const LessonConversionPanel = () => {
             >
               <ConvertForm
                 lessonId={String(lessonId)}
-                mediaId={pdf.id}
-                filename={String(pdf.filename || pdf.id)}
+                mediaId={file.id}
+                filename={String(file.filename || file.id)}
                 onClose={() => setActiveForm(null)}
               />
             </Suspense>
           )}
 
           {/* Draft Exercises */}
-          {expandedPdf === pdf.id && (
+          {expandedPdf === file.id && (
             <div style={{ marginTop: 4 }}>
-              <DraftExercisesList lessonId={String(lessonId)} sourceDocId={pdf.id} />
+              <DraftExercisesList lessonId={String(lessonId)} sourceDocId={file.id} />
             </div>
           )}
         </div>

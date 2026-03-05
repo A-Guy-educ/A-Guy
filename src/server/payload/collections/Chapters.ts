@@ -1,23 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
 import { tenantField } from '@/server/payload/fields/tenant'
-import { anyone } from '../access/anyone'
 import { adminOnly } from '../access/adminOnly'
+import { publishedAndActive } from '../access/publishedAndActive'
 import { createdByField } from '../fields/createdBy'
+import { formatSlug } from '../fields/formatSlug'
 import { computeAdminTitle } from '../hooks/chapters/computeAdminTitle'
-
-const formatSlug = (val: string): string =>
-  val
-    .replace(/ /g, '-')
-    .replace(/[^\w-]+/g, '')
-    .toLowerCase()
 
 export const Chapters: CollectionConfig = {
   slug: 'chapters',
   access: {
     create: adminOnly,
     delete: adminOnly,
-    read: anyone,
+    read: publishedAndActive,
     update: adminOnly,
   },
   hooks: {

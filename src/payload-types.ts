@@ -81,6 +81,7 @@ export interface Config {
     chapters: Chapter;
     lessons: Lesson;
     exercises: Exercise;
+    'extraction-logs': ExtractionLog;
     prompts: Prompt;
     teacher_profiles: TeacherProfile;
     user_settings: UserSetting;
@@ -119,6 +120,7 @@ export interface Config {
     chapters: ChaptersSelect<false> | ChaptersSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
+    'extraction-logs': ExtractionLogsSelect<false> | ExtractionLogsSelect<true>;
     prompts: PromptsSelect<false> | PromptsSelect<true>;
     teacher_profiles: TeacherProfilesSelect<false> | TeacherProfilesSelect<true>;
     user_settings: UserSettingsSelect<false> | UserSettingsSelect<true>;
@@ -218,6 +220,10 @@ export interface PayloadMcpApiKeyAuthOperations {
 export interface Page {
   id: string;
   title: string;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
   hero: {
     type: 'none' | 'highImpact' | 'mediumImpact' | 'lowImpact';
     richText?: {
@@ -404,6 +410,10 @@ export interface Category {
   id: string;
   title: string;
   /**
+   * Content language
+   */
+  locale: 'en' | 'he';
+  /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
   generateSlug?: boolean | null;
@@ -468,6 +478,10 @@ export interface Course {
    * Tenant scope for this document
    */
   tenant: string | Tenant;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
   /**
    * Course identifier (e.g., "ח" or "8")
    */
@@ -640,7 +654,11 @@ export interface Prompt {
   /**
    * Machine-readable key (e.g., "default-tutor-v1")
    */
-  key?: string | null;
+  promptKey?: string | null;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
   /**
    * System prompts are always included. Context prompts are lesson-specific. Persona prompts define teacher identity.
    */
@@ -1030,6 +1048,10 @@ export interface Conversation {
    * Legacy field - use contextRef instead. Will be removed in future version.
    */
   exercise?: (string | null) | Exercise;
+  /**
+   * Primary language for AI responses (derived from Course locale)
+   */
+  preferredLocale: 'en' | 'he';
   /**
    * Conversation message history
    */
@@ -1519,6 +1541,79 @@ export interface MemoryItem {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "extraction-logs".
+ */
+export interface ExtractionLog {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Lesson from which this extraction was triggered
+   */
+  lesson: string | Lesson;
+  /**
+   * Source document (PDF or image) that was extracted
+   */
+  media: string | Media;
+  /**
+   * Exercise created from this extraction (populate on create-stage success)
+   */
+  exercise?: (string | null) | Exercise;
+  /**
+   * Prompt used for extraction
+   */
+  prompt?: (string | null) | Prompt;
+  /**
+   * Immutable version marker (e.g., prompt.key:prompt.updatedAt)
+   */
+  promptVersion?: string | null;
+  /**
+   * Extraction result status
+   */
+  status: 'success' | 'failed';
+  /**
+   * Lifecycle stage - extract or create
+   */
+  stage: 'extract' | 'create';
+  /**
+   * Raw LLM response string
+   */
+  rawResponse?: string | null;
+  /**
+   * Parsed JSON from LLM
+   */
+  parsedPayload?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Error details if extraction failed
+   */
+  errorMessage?: string | null;
+  /**
+   * Pipeline version used (V3 = 3)
+   */
+  pipelineVersion: number;
+  /**
+   * Extraction duration in milliseconds
+   */
+  processingTimeMs?: number | null;
+  /**
+   * LLM model name used
+   */
+  model?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "teacher_profiles".
  */
 export interface TeacherProfile {
@@ -1762,6 +1857,10 @@ export interface UploadSession {
 export interface Post {
   id: string;
   title: string;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
   heroImage?: (string | null) | Media;
   content: {
     root: {
@@ -2215,6 +2314,10 @@ export interface PayloadLockedDocument {
         value: string | Exercise;
       } | null)
     | ({
+        relationTo: 'extraction-logs';
+        value: string | ExtractionLog;
+      } | null)
+    | ({
         relationTo: 'prompts';
         value: string | Prompt;
       } | null)
@@ -2340,6 +2443,7 @@ export interface PayloadMigration {
  */
 export interface PagesSelect<T extends boolean = true> {
   title?: T;
+  locale?: T;
   hero?:
     | T
     | {
@@ -2474,6 +2578,7 @@ export interface HtmlBlockSelect<T extends boolean = true> {
  */
 export interface CategoriesSelect<T extends boolean = true> {
   title?: T;
+  locale?: T;
   generateSlug?: T;
   slug?: T;
   createdBy?: T;
@@ -2538,6 +2643,7 @@ export interface ConversationsSelect<T extends boolean = true> {
   contextKey?: T;
   title?: T;
   exercise?: T;
+  preferredLocale?: T;
   messages?:
     | T
     | {
@@ -2630,6 +2736,7 @@ export interface TenantsSelect<T extends boolean = true> {
  */
 export interface CoursesSelect<T extends boolean = true> {
   tenant?: T;
+  locale?: T;
   courseLabel?: T;
   title?: T;
   description?: T;
@@ -2728,11 +2835,34 @@ export interface ExercisesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "extraction-logs_select".
+ */
+export interface ExtractionLogsSelect<T extends boolean = true> {
+  tenant?: T;
+  lesson?: T;
+  media?: T;
+  exercise?: T;
+  prompt?: T;
+  promptVersion?: T;
+  status?: T;
+  stage?: T;
+  rawResponse?: T;
+  parsedPayload?: T;
+  errorMessage?: T;
+  pipelineVersion?: T;
+  processingTimeMs?: T;
+  model?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "prompts_select".
  */
 export interface PromptsSelect<T extends boolean = true> {
   title?: T;
-  key?: T;
+  promptKey?: T;
+  locale?: T;
   type?: T;
   template?: T;
   status?: T;
@@ -2944,6 +3074,7 @@ export interface UploadSessionsSelect<T extends boolean = true> {
  */
 export interface PostsSelect<T extends boolean = true> {
   title?: T;
+  locale?: T;
   heroImage?: T;
   content?: T;
   relatedPosts?: T;
@@ -3312,18 +3443,30 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  */
 export interface Header {
   id: string;
-  navItems?:
+  /**
+   * Navigation items per system language
+   */
+  variants?:
     | {
-        link: {
-          type?: ('reference' | 'custom') | null;
-          newTab?: boolean | null;
-          reference?: {
-            relationTo: 'pages';
-            value: string | Page;
-          } | null;
-          url?: string | null;
-          label: string;
-        };
+        /**
+         * System language this variant is for
+         */
+        locale: 'en' | 'he';
+        navItems?:
+          | {
+              link: {
+                type?: ('reference' | 'custom') | null;
+                newTab?: boolean | null;
+                reference?: {
+                  relationTo: 'pages';
+                  value: string | Page;
+                } | null;
+                url?: string | null;
+                label: string;
+              };
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -3336,18 +3479,30 @@ export interface Header {
  */
 export interface Footer {
   id: string;
-  navItems?:
+  /**
+   * Navigation items per system language
+   */
+  variants?:
     | {
-        link: {
-          type?: ('reference' | 'custom') | null;
-          newTab?: boolean | null;
-          reference?: {
-            relationTo: 'pages';
-            value: string | Page;
-          } | null;
-          url?: string | null;
-          label: string;
-        };
+        /**
+         * System language this variant is for
+         */
+        locale: 'en' | 'he';
+        navItems?:
+          | {
+              link: {
+                type?: ('reference' | 'custom') | null;
+                newTab?: boolean | null;
+                reference?: {
+                  relationTo: 'pages';
+                  value: string | Page;
+                } | null;
+                url?: string | null;
+                label: string;
+              };
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -3359,17 +3514,23 @@ export interface Footer {
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
-  navItems?:
+  variants?:
     | T
     | {
-        link?:
+        locale?: T;
+        navItems?:
           | T
           | {
-              type?: T;
-              newTab?: T;
-              reference?: T;
-              url?: T;
-              label?: T;
+              link?:
+                | T
+                | {
+                    type?: T;
+                    newTab?: T;
+                    reference?: T;
+                    url?: T;
+                    label?: T;
+                  };
+              id?: T;
             };
         id?: T;
       };
@@ -3382,17 +3543,23 @@ export interface HeaderSelect<T extends boolean = true> {
  * via the `definition` "footer_select".
  */
 export interface FooterSelect<T extends boolean = true> {
-  navItems?:
+  variants?:
     | T
     | {
-        link?:
+        locale?: T;
+        navItems?:
           | T
           | {
-              type?: T;
-              newTab?: T;
-              reference?: T;
-              url?: T;
-              label?: T;
+              link?:
+                | T
+                | {
+                    type?: T;
+                    newTab?: T;
+                    reference?: T;
+                    url?: T;
+                    label?: T;
+                  };
+              id?: T;
             };
         id?: T;
       };

@@ -36,6 +36,7 @@ export function buildConversationData(input: ConversationFactoryInput) {
     contextRef: input.contextRef,
     messages,
     summary: input.summary ?? '',
+    preferredLocale: 'he' as const,
     contextPolicyVersion: 'v1',
     lastMessageAt,
   }

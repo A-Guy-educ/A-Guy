@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import type { GeometrySpecV1 } from '@/infra/contracts'
 import { renderGeometrySpec } from '../../graphics/geometryElements'
@@ -18,22 +18,6 @@ interface GeometryRendererProps {
   spec: GeometrySpecV1
 }
 
-function calculateBoundingBox(spec: GeometrySpecV1): [number, number, number, number] {
-  const points = spec.elements.points
-  if (points.length === 0) {
-    return [-10, 10, 10, -10]
-  }
-  const xs = points.map((p) => p.x)
-  const ys = points.map((p) => p.y)
-  const padding = 2
-  return [
-    Math.min(...xs) - padding,
-    Math.max(...ys) + padding,
-    Math.max(...xs) + padding,
-    Math.min(...ys) - padding,
-  ]
-}
-
 export function GeometryRenderer({ blockId, spec }: GeometryRendererProps) {
   const handleBoardReady = useCallback(
     (board: JXG.Board) => {
@@ -42,16 +26,20 @@ export function GeometryRenderer({ blockId, spec }: GeometryRendererProps) {
     [spec],
   )
 
-  const boundingBox = calculateBoundingBox(spec)
+  const { canvas } = spec
+  const boundingBox = useMemo<[number, number, number, number]>(
+    () => [0, canvas.height, canvas.width, 0],
+    [canvas.width, canvas.height],
+  )
 
   return (
     <div className="my-4 flex justify-center">
       <JSXGraphBoard
         id={blockId}
-        width={spec.canvas.width}
-        height={spec.canvas.height}
+        width={canvas.width}
+        height={canvas.height}
         boundingBox={boundingBox}
-        showGrid={spec.canvas.grid ?? false}
+        showGrid={canvas.grid ?? false}
         showAxis={false}
         onBoardReady={handleBoardReady}
         className="border-border"

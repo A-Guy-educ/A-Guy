@@ -27,6 +27,8 @@ import {
 } from '@payloadcms/plugin-seo/fields'
 import { slugField } from 'payload'
 import { createdByField } from '../../fields/createdBy'
+import { contentLocaleField } from '../../fields/contentLocale'
+import { enforceFieldLocaleUniqueness } from '../../hooks/validateLocaleUniqueness'
 
 export const Posts: CollectionConfig<'posts'> = {
   slug: 'posts',
@@ -49,7 +51,7 @@ export const Posts: CollectionConfig<'posts'> = {
     },
   },
   admin: {
-    defaultColumns: ['title', 'slug', 'updatedAt'],
+    defaultColumns: ['title', 'locale', 'slug', 'updatedAt'],
     livePreview: {
       url: ({ data, req }) =>
         generatePreviewPath({
@@ -72,6 +74,8 @@ export const Posts: CollectionConfig<'posts'> = {
       type: 'text',
       required: true,
     },
+    // Content locale
+    contentLocaleField,
     {
       type: 'tabs',
       tabs: [
@@ -223,6 +227,7 @@ export const Posts: CollectionConfig<'posts'> = {
     createdByField,
   ],
   hooks: {
+    beforeChange: [enforceFieldLocaleUniqueness('posts')],
     afterChange: [revalidatePost],
     afterRead: [populateAuthors],
     afterDelete: [revalidateDelete],

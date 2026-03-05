@@ -128,7 +128,7 @@ export function TaskPreviewTab({ task, activeTab }: TaskPreviewTabProps) {
         </div>
 
         {/* File list — click opens GitHub PR files page */}
-        <div className="space-y-0.5 overflow-y-auto max-h-[500px]">
+        <div className="space-y-0.5 overflow-y-auto max-h-[800px]">
           {changes.map((file) => (
             <a
               key={file.filename}
@@ -176,7 +176,7 @@ export function TaskPreviewTab({ task, activeTab }: TaskPreviewTabProps) {
 
     return (
       <>
-        <div className="space-y-1 overflow-y-auto max-h-[500px]">
+        <div className="space-y-1 overflow-y-auto max-h-[800px]">
           {documents.map((doc) => (
             <button
               key={doc.name}

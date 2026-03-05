@@ -90,6 +90,7 @@ describe.skipIf(!hasOpenAIKey)('Memory System Integration Tests', () => {
           messages: [],
           lastMessageAt: new Date().toISOString(),
           contextPolicyVersion: 'v1',
+          preferredLocale: 'he',
         },
         draft: false,
       })

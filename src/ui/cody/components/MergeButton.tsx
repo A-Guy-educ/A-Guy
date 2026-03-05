@@ -6,7 +6,7 @@
  */
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/ui/web/components/button'
 import { GitPullRequest, Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import { usePRCIStatus } from '../hooks/usePRCIStatus'
@@ -50,9 +50,15 @@ export function MergeButton({
   const config = ciIcons[ciStatus]
   const CIIcon = config.icon
 
-  const handleClick = () => {
-    if (!canMerge || isMerging) return
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!canMerge || isMerging || isLoading) return
     setShowDialog(true)
+  }
+
+  // Prevent click from propagating to task row even when disabled
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation()
   }
 
   const handleMerged = async () => {
@@ -72,6 +78,7 @@ export function MergeButton({
         disabled={isMerging || !canMerge || isLoading}
         title={isMerging ? 'Merging…' : canMerge ? 'Click to merge' : config.title}
         onClick={handleClick}
+        onMouseDown={handleMouseDown}
         className={cn(
           'h-7 text-sm px-2 gap-1 disabled:opacity-50',
           canMerge

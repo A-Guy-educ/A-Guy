@@ -6,6 +6,36 @@ import { queryChaptersByCourse } from './chapters'
 export const queryLessonsByChapter = cache(async ({ chapterId }: { chapterId: string }) => {
   const payload = await getPayload({ config: configPromise })
 
+  // First verify the chapter is published+active and its course is published+active
+  const chapterResult = await payload.findByID({
+    collection: 'chapters',
+    id: chapterId,
+    depth: 0,
+    overrideAccess: false,
+  })
+
+  if (!chapterResult || chapterResult.status !== 'published' || !chapterResult.isActive) {
+    return []
+  }
+
+  // Verify parent chapter's course is published+active (hierarchy invariant)
+  // chapterResult.course is an ID when using depth: 0
+  const courseId =
+    typeof chapterResult.course === 'string' ? chapterResult.course : chapterResult.course?.id
+
+  if (!courseId) return []
+
+  const courseResult = await payload.findByID({
+    collection: 'courses',
+    id: courseId,
+    depth: 0,
+    overrideAccess: false,
+  })
+
+  if (!courseResult || courseResult.status !== 'published' || !courseResult.isActive) {
+    return []
+  }
+
   const result = await payload.find({
     collection: 'lessons',
     where: {
@@ -30,7 +60,8 @@ export const queryLessonsByChapter = cache(async ({ chapterId }: { chapterId: st
     sort: 'order',
     limit: 1000,
     pagination: false,
-    depth: 2,
+    depth: 1,
+    overrideAccess: false,
   })
 
   return result.docs
@@ -62,10 +93,47 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
     },
     limit: 1,
     pagination: false,
-    depth: 2,
+    depth: 1,
+    overrideAccess: false,
   })
 
-  return result.docs?.[0] || null
+  const lesson = result.docs?.[0]
+  if (!lesson) return null
+
+  // Verify parent chapter is published+active
+  const chapterId = typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter?.id
+
+  if (!chapterId) return null
+
+  const chapterResult = await payload.findByID({
+    collection: 'chapters',
+    id: chapterId,
+    depth: 0,
+    overrideAccess: false,
+  })
+
+  if (!chapterResult || chapterResult.status !== 'published' || !chapterResult.isActive) {
+    return null
+  }
+
+  // Verify grandparent course is published+active (hierarchy invariant)
+  const courseId =
+    typeof chapterResult.course === 'string' ? chapterResult.course : chapterResult.course?.id
+
+  if (!courseId) return null
+
+  const courseResult = await payload.findByID({
+    collection: 'courses',
+    id: courseId,
+    depth: 0,
+    overrideAccess: false,
+  })
+
+  if (!courseResult || courseResult.status !== 'published' || !courseResult.isActive) {
+    return null
+  }
+
+  return lesson
 })
 
 /**
@@ -73,8 +141,21 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
  * This is a helper function to maintain backward compatibility while transitioning to chapter-based hierarchy
  */
 export const queryLessonsByCourse = cache(async ({ courseId }: { courseId: string }) => {
-  const chapters = await queryChaptersByCourse({ courseId })
   const payload = await getPayload({ config: configPromise })
+
+  // First verify the course is published+active (hierarchy invariant)
+  const courseResult = await payload.findByID({
+    collection: 'courses',
+    id: courseId,
+    depth: 0,
+    overrideAccess: false,
+  })
+
+  if (!courseResult || courseResult.status !== 'published' || !courseResult.isActive) {
+    return []
+  }
+
+  const chapters = await queryChaptersByCourse({ courseId })
 
   // Get all lessons for all chapters in this course
   const chapterIds = chapters.map((chapter) => chapter.id)
@@ -107,7 +188,8 @@ export const queryLessonsByCourse = cache(async ({ courseId }: { courseId: strin
     sort: 'order',
     limit: 1000,
     pagination: false,
-    depth: 2,
+    depth: 1,
+    overrideAccess: false,
   })
 
   return result.docs

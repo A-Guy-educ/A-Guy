@@ -5,6 +5,7 @@
  * @ai-summary Status.json v2 operations with mandatory Zod validation
  */
 
+import { logger } from '../logger'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -14,6 +15,9 @@ import {
   type PipelineContext,
   type StageStateV2,
 } from './types'
+
+// C3 FIX: Import stageOutputFile for correct path resolution in resetFromStage
+import { stageOutputFile } from '../pipeline-utils'
 
 // ============================================================================
 // Status File Operations
@@ -44,13 +48,13 @@ export function loadState(taskId: string): PipelineStateV2 | null {
 
     // Validate with Zod schema
     if (!isPipelineStateV2(parsed)) {
-      console.warn(`Status file for ${taskId} is not valid v2 format, ignoring`)
+      logger.warn(`Status file for ${taskId} is not valid v2 format, ignoring`)
       return null
     }
 
     return parsed
   } catch (error) {
-    console.warn(`Failed to load status for ${taskId}:`, error)
+    logger.warn({ err: error }, `Failed to load status for ${taskId}`)
     return null
   }
 }
@@ -196,7 +200,7 @@ export function recoverStaleStages(state: PipelineStateV2): PipelineStateV2 {
         state: 'pending',
         startedAt: undefined,
       }
-      console.log(`⚠️ Recovered stale stage ${name}: running → pending`)
+      logger.info(`⚠️ Recovered stale stage ${name}: running → pending`)
       hasChanges = true
     } else {
       newStages[name] = stage
@@ -263,12 +267,12 @@ export function recoverPipelineState(
 
   // Determine new pipeline state
   if (hasNonAdvisoryFailure) {
-    console.log(`⚠️ Recovered pipeline state: running → failed (non-advisory stage failed)`)
+    logger.info(`⚠️ Recovered pipeline state: running → failed (non-advisory stage failed)`)
     return completeState(state, 'failed')
   }
 
   if (allCompletedOrSkipped) {
-    console.log(`⚠️ Recovered pipeline state: running → completed (all stages done)`)
+    logger.info(`⚠️ Recovered pipeline state: running → completed (all stages done)`)
     return completeState(state, 'completed')
   }
 
@@ -301,6 +305,10 @@ export function resumeFromGate(state: PipelineStateV2, gateStageName: string): P
 /**
  * Reset stages from a given point onwards to pending.
  * Also deletes output files for reset stages (G37).
+ *
+ * C3 FIX: Uses stageOutputFile() instead of hardcoded `${stage}.md`
+ * to correctly resolve output file paths for all stages
+ * (e.g., taskify→task.json, architect→plan.md, etc.)
  */
 export function resetFromStage(
   state: PipelineStateV2,
@@ -320,9 +328,14 @@ export function resetFromStage(
   // Get stages to reset
   const stagesToReset = pipeline.slice(fromIndex)
 
-  // Delete output files for reset stages (G37)
+  // C3 FIX: Delete output files using stageOutputFile for correct paths
+  // Previously used `${stage}.md` which is wrong for stages like:
+  // - taskify → task.json
+  // - architect → plan.md
+  // - clarify → questions.md
+  // - commit → commit.md
   for (const stage of stagesToReset) {
-    const outputFile = path.join(taskDir, `${stage}.md`)
+    const outputFile = stageOutputFile(taskDir, stage)
     if (fs.existsSync(outputFile)) {
       fs.unlinkSync(outputFile)
     }

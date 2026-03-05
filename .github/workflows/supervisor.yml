@@ -19,14 +19,15 @@ permissions:
 
 jobs:
   # Job 1: Validate comment trigger safety
-  # Only run for failure comments from github-actions[bot]
+  # Trigger on: github-actions[bot] OR github-actions posting failure comments
+  # Matches: "Pipeline failed", "failed at stage" patterns
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: >-
       github.event_name == 'issue_comment' &&
-      github.event.comment.user.login == 'github-actions[bot]' &&
-      contains(github.event.comment.body, 'Pipeline failed')
+      (github.event.comment.user.login == 'github-actions[bot]' || github.event.comment.user.login == 'github-actions') &&
+      (contains(github.event.comment.body, 'Pipeline failed') || contains(github.event.comment.body, 'failed at stage'))
     outputs:
       valid: ${{ steps.safety.outputs.valid }}
       task_id: ${{ steps.extract.outputs.task_id }}

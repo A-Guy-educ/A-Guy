@@ -7,6 +7,8 @@
 
 import { spawn, type ChildProcess } from 'child_process'
 
+import { getEnv } from './env'
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -24,15 +26,27 @@ export class GitHubRunner implements RunnerBackend {
   name = 'opencode-github'
 
   spawn(stage: string, prompt: string, env: NodeJS.ProcessEnv, cwd: string): ChildProcess {
+    console.error(
+      '[DEBUG] GitHubRunner spawn called, stage:',
+      stage,
+      'prompt length:',
+      prompt.length,
+    )
     // Use opencode run --agent instead of opencode github run
     // opencode github run does NOT support --agent flag and ignores AGENT env var
     // opencode run supports --agent which loads correct agent from opencode.json
     // OIDC auth still works in CI (reads ACTIONS_ID_TOKEN_REQUEST_TOKEN from env)
-    return spawn('pnpm', ['exec', 'opencode', 'run', '--agent', stage, prompt], {
-      cwd,
-      stdio: 'inherit',
-      env,
-    })
+    // Use --format json to get sessionID in output for chat history capture
+    return spawn(
+      'pnpm',
+      ['exec', 'opencode', 'run', '--agent', stage, '--format', 'json', prompt],
+      {
+        cwd,
+        // Pipe stdout for JSON parsing (sessionID extraction), inherit stderr
+        stdio: ['ignore', 'pipe', 'inherit'], // stdin=ignore prevents opencode blocking on stdin read
+        env,
+      },
+    )
   }
 }
 
@@ -46,9 +60,11 @@ export class LocalRunner implements RunnerBackend {
   spawn(stage: string, prompt: string, env: NodeJS.ProcessEnv, cwd: string): ChildProcess {
     // Local runner uses pnpm ocode run --agent <stage> [prompt]
     // Prompt is passed as positional arg (same as GitHubRunner)
-    return spawn('pnpm', ['ocode', 'run', '--agent', stage, prompt], {
+    // Use --format json to get sessionID in output for chat history capture
+    return spawn('pnpm', ['ocode', 'run', '--agent', stage, '--format', 'json', prompt], {
       cwd,
-      stdio: 'inherit',
+      // Pipe stdout for JSON parsing (sessionID extraction), inherit stderr
+      stdio: ['ignore', 'pipe', 'inherit'], // stdin=ignore prevents opencode blocking on stdin read
       env: {
         ...env,
         AGENT: stage,
@@ -69,7 +85,8 @@ export class LocalRunner implements RunnerBackend {
  *                If undefined, auto-detects: local when GITHUB_ACTIONS is not set.
  */
 export function createRunner(local?: boolean): RunnerBackend {
-  const useLocal = local ?? !process.env.GITHUB_ACTIONS
+  const env = getEnv()
+  const useLocal = local ?? !env.GITHUB_ACTIONS
 
   if (useLocal) {
     return new LocalRunner()

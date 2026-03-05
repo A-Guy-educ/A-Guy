@@ -32,6 +32,45 @@ export interface PageData {
   pdfPage: any
 }
 
+interface PdfJsLike {
+  GlobalWorkerOptions: {
+    workerSrc: string
+  }
+  getDocument: (input: unknown) => {
+    promise: Promise<{
+      numPages: number
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      getPage: (pageNumber: number) => Promise<any>
+    }>
+  }
+}
+
+interface PdfJsWorkerModule {
+  WorkerMessageHandler: unknown
+}
+
+type GlobalWithPdfJsWorker = typeof globalThis & {
+  pdfjsWorker?: PdfJsWorkerModule
+}
+
+let workerBootstrap: Promise<void> | null = null
+
+async function ensurePdfJsWorkerRegistered(): Promise<void> {
+  if (!workerBootstrap) {
+    workerBootstrap = (async () => {
+      const workerModulePath = 'pdfjs-dist/legacy/build/pdf.worker.mjs'
+      const workerModule = (await import(workerModulePath)) as PdfJsWorkerModule
+      const globalWithWorker = globalThis as GlobalWithPdfJsWorker
+
+      globalWithWorker.pdfjsWorker = {
+        WorkerMessageHandler: workerModule.WorkerMessageHandler,
+      }
+    })()
+  }
+
+  await workerBootstrap
+}
+
 /**
  * Load a PDF and render all pages, returning both images and page proxies.
  *
@@ -39,8 +78,15 @@ export interface PageData {
  * @returns Array of PageData for each page (0-indexed)
  */
 export async function loadAndRenderAllPages(pdfBuffer: Buffer): Promise<PageData[]> {
-  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
+  const pdfjsLib = (await import('pdfjs-dist/legacy/build/pdf.mjs')) as PdfJsLike
   const { createCanvas } = await import('@napi-rs/canvas')
+
+  // Register WorkerMessageHandler on globalThis so PDF.js fake-worker setup does not
+  // rely on runtime dynamic import paths that can break in Vercel serverless bundles.
+  await ensurePdfJsWorkerRegistered()
+
+  // Keep workerSrc as a package specifier fallback for environments that still need it.
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs-dist/legacy/build/pdf.worker.mjs'
 
   const loadingTask = pdfjsLib.getDocument({
     data: new Uint8Array(pdfBuffer),

@@ -9,6 +9,8 @@ import { CMSLink } from '@/ui/web/Link'
 import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
+import { getSystemLocale } from '@/i18n/server-locale'
+import { getNavItemsForLocale } from '@/ui/web/nav-variants'
 
 /**
  * Read version directly from package.json
@@ -34,8 +36,8 @@ function VersionDisplay({ version }: { version: string }) {
 export async function Footer() {
   const footerData: Footer = await getCachedGlobal('footer', 1)()
   const version = await getVersion()
-
-  const navItems = footerData?.navItems || []
+  const systemLocale = await getSystemLocale()
+  const navItems = getNavItemsForLocale(footerData, systemLocale)
 
   return (
     <footer className="mt-auto border-t border-border bg-footer text-card-foreground relative z-0">

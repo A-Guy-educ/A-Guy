@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
 import { link } from '@/server/payload/fields/link'
+import { CONTENT_LOCALES } from '@/server/payload/fields/contentLocale'
 import { revalidateFooter } from './hooks/revalidateFooter'
 
 export const Footer: GlobalConfig = {
@@ -10,20 +11,38 @@ export const Footer: GlobalConfig = {
   },
   fields: [
     {
-      name: 'navItems',
+      name: 'variants',
       type: 'array',
-      fields: [
-        link({
-          appearances: false,
-        }),
-      ],
-      maxRows: 6,
+      label: 'Locale Variants',
       admin: {
+        description: 'Navigation items per system language',
         initCollapsed: true,
-        components: {
-          RowLabel: '@/ui/admin/Footer#RowLabel',
-        },
       },
+      fields: [
+        {
+          name: 'locale',
+          type: 'select',
+          required: true,
+          options: CONTENT_LOCALES.map((l) => ({ label: l.toUpperCase(), value: l })),
+          admin: { description: 'System language this variant is for' },
+        },
+        {
+          name: 'navItems',
+          type: 'array',
+          fields: [
+            link({
+              appearances: false,
+            }),
+          ],
+          maxRows: 6,
+          admin: {
+            initCollapsed: true,
+            components: {
+              RowLabel: '@/ui/admin/Footer#RowLabel',
+            },
+          },
+        },
+      ],
     },
   ],
   hooks: {
