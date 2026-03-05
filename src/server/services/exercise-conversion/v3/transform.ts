@@ -343,19 +343,22 @@ export function rebuildFromPreview(
 export function multiPartToPreviewDraft(extraction: MultiPartExtraction): MultiPartPreviewDraft {
   const { stem, subQuestions, diagramDescription, diagramPosition } = extraction
 
+  // Guard against missing subQuestions
+  const safeSubQuestions = subQuestions && Array.isArray(subQuestions) ? subQuestions : []
+
   // Derive title from stem or first sub-question
   let title: string
   if (stem?.trim()) {
     title = stem.length > 80 ? stem.substring(0, 77) + '...' : stem
-  } else if (subQuestions.length > 0 && subQuestions[0]?.prompt?.trim()) {
-    const firstPrompt = subQuestions[0].prompt
+  } else if (safeSubQuestions.length > 0 && safeSubQuestions[0]?.prompt?.trim()) {
+    const firstPrompt = safeSubQuestions[0].prompt
     title = firstPrompt.length > 80 ? firstPrompt.substring(0, 77) + '...' : firstPrompt
   } else {
     title = 'Untitled Exercise'
   }
 
   // Map each sub-question to SubQuestionDraft
-  const mappedSubQuestions: SubQuestionDraft[] = subQuestions.map((sq) => {
+  const mappedSubQuestions: SubQuestionDraft[] = safeSubQuestions.map((sq) => {
     let type: SubQuestionDraft['type'] = 'free_response'
 
     if (sq.type === 'mcq' || sq.type === 'true_false') {
@@ -487,6 +490,9 @@ export function multiPartToExerciseContent(extraction: MultiPartExtraction): Tra
   const { stem, subQuestions, diagramDescription, diagramPosition } = extraction
   const blocks: ContentBlock[] = []
 
+  // Guard against missing subQuestions
+  const safeSubQuestions = subQuestions && Array.isArray(subQuestions) ? subQuestions : []
+
   const effectivePosition = diagramPosition ?? 'before_question'
 
   // Create diagram block if present
@@ -499,7 +505,7 @@ export function multiPartToExerciseContent(extraction: MultiPartExtraction): Tra
   // For multi-part, we insert diagram at the very beginning (before everything)
   // unless it's after_question and there are sub-questions
   if (diagramBlock) {
-    if (effectivePosition === 'before_question' || !subQuestions.length) {
+    if (effectivePosition === 'before_question' || !safeSubQuestions.length) {
       blocks.push(diagramBlock)
     }
   }
@@ -510,12 +516,12 @@ export function multiPartToExerciseContent(extraction: MultiPartExtraction): Tra
   }
 
   // Insert diagram after stem if position is after_question
-  if (diagramBlock && effectivePosition === 'after_question' && subQuestions.length > 0) {
+  if (diagramBlock && effectivePosition === 'after_question' && safeSubQuestions.length > 0) {
     blocks.push(diagramBlock)
   }
 
   // Add each sub-question, preceded by its diagram if it has one
-  for (const sq of subQuestions) {
+  for (const sq of safeSubQuestions) {
     if (sq.prompt?.trim()) {
       // Insert per-sub-question diagram BEFORE the question block
       if (sq.diagramDescription?.trim()) {
@@ -529,8 +535,8 @@ export function multiPartToExerciseContent(extraction: MultiPartExtraction): Tra
   let title: string
   if (stem?.trim()) {
     title = stem.length > 80 ? stem.substring(0, 77) + '...' : stem
-  } else if (subQuestions.length > 0 && subQuestions[0]?.prompt?.trim()) {
-    const firstPrompt = subQuestions[0].prompt
+  } else if (safeSubQuestions.length > 0 && safeSubQuestions[0]?.prompt?.trim()) {
+    const firstPrompt = safeSubQuestions[0].prompt
     title = firstPrompt.length > 80 ? firstPrompt.substring(0, 77) + '...' : firstPrompt
   } else {
     title = 'Untitled Exercise'
