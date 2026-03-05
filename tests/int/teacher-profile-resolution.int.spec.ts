@@ -15,7 +15,7 @@
  * use two-step pattern to promote if needed. For these tests, student users suffice.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import { startMongoContainer, stopMongoContainer } from '@/infra/utils/test/mongodb-container'
@@ -48,8 +48,8 @@ afterAll(async () => {
   }
 }, 120_000)
 
-/** Clean all teacher-related data between tests to isolate tier resolution */
-afterEach(async () => {
+/** Clean all teacher-related data to isolate tier resolution */
+async function wipeTeacherData() {
   const profiles = await payload.find({
     collection: 'teacher_profiles',
     limit: 100,
@@ -73,7 +73,11 @@ afterEach(async () => {
   const users = await payload.find({ collection: 'users', limit: 100, overrideAccess: true })
   for (const u of users.docs)
     await payload.delete({ collection: 'users', id: u.id, overrideAccess: true })
-})
+}
+
+// Wipe before each test to clear seeded data (TeacherProfilesSeed runs on Payload init)
+beforeEach(wipeTeacherData)
+afterEach(wipeTeacherData)
 
 async function createPublishedPrompt(template = 'You are a helpful AI teacher.') {
   const ts = Date.now()

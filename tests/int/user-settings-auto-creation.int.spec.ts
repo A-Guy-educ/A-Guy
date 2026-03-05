@@ -60,7 +60,12 @@ describe('createUserSettings hook', () => {
     })
 
     expect(settings.docs).toHaveLength(1)
-    expect(settings.docs[0].user).toBe(user.id)
+    // user field may be populated (object) or a raw ID string depending on depth
+    const userId =
+      typeof settings.docs[0].user === 'object'
+        ? (settings.docs[0].user as any).id
+        : settings.docs[0].user
+    expect(userId).toBe(user.id)
 
     // Cleanup
     await payload.delete({
