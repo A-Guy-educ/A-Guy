@@ -222,6 +222,7 @@ export async function POST(
           return NextResponse.json({ error: 'Assignees are required' }, { status: 400 })
         }
         await addAssignees(issueNumber, assignees)
+        clearCache()
         return NextResponse.json({ success: true, message: `Assigned to ${assignees.join(', ')}` })
       }
 
@@ -230,6 +231,7 @@ export async function POST(
           return NextResponse.json({ error: 'Assignees are required' }, { status: 400 })
         }
         await removeAssignees(issueNumber, assignees)
+        clearCache()
         return NextResponse.json({ success: true, message: `Unassigned ${assignees.join(', ')}` })
       }
 
