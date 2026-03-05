@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "taskId": "260304-auto-22",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-05T20:40:45.710Z",
+  "updatedAt": "2026-03-05T20:40:47.377Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-05T20:40:47.376Z"
+    }
+  },
+  "issueNumber": 699
+}

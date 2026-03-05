@@ -1,0 +1,26 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/app/(frontend)/login/LoginPageContent.tsx",
+    "src/app/(frontend)/login/LoginForm.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Login page component exists at the specified paths",
+    "Design system tokens exist in tailwind.config.mjs",
+    "UI components (button, card) exist in src/ui/web/components/"
+  ],
+  "review_questions": [],
+  "complexity": 22,
+  "complexity_reasoning": "Scope: 8 (2-3 files, moderate changes), Risk: 4 (UI only, no security/data changes), Novelty: 6 (Extending existing pattern), Cross-domain: 0 (Frontend only), Ambiguity: 2 (Clear spec), Deps: 2 (Self-contained). Total: 22",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [],
+    "reasoning": "Input contains detailed design specification with exact visual details (background colors, card dimensions, spacing), acceptance criteria checklist, and specific file paths to modify. Has clear step-by-step design requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
