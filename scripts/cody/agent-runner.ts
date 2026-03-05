@@ -352,6 +352,18 @@ export function runAgentWithFileWatch(
         // Non-fatal: skip artifact file if can't create
       }
 
+      // Stderr capture for failure debugging
+      let stderrLineCount = 0
+      const stderrTailLines: string[] = [] // Rolling buffer of last N lines
+      const STDERR_TAIL_SIZE = 50
+      let stderrLogFd: number | null = null
+      try {
+        const stderrLogPath = path.join(path.dirname(outputFile), `${stage}-stderr.log`)
+        stderrLogFd = fs.openSync(stderrLogPath, 'w')
+      } catch {
+        // Non-fatal: skip stderr file if can't create
+      }
+
       // Register cleanup handler to prevent FD leak on unexpected exit
       const cleanupFd = () => {
         if (jsonLogFd !== null) {
@@ -361,6 +373,14 @@ export function runAgentWithFileWatch(
             /* ignore */
           }
           jsonLogFd = null
+        }
+        if (stderrLogFd !== null) {
+          try {
+            fs.closeSync(stderrLogFd)
+          } catch {
+            /* ignore */
+          }
+          stderrLogFd = null
         }
       }
       process.on('exit', cleanupFd)
@@ -409,6 +429,38 @@ export function runAgentWithFileWatch(
         })
       }
 
+      // Handle stderr - write to file, surface on failure
+      if (currentChild.stderr) {
+        let stderrBuffer = ''
+        currentChild.stderr.on('data', (data: Buffer) => {
+          const chunk = data.toString()
+          stderrBuffer += chunk
+
+          const lines = stderrBuffer.split('\n')
+          stderrBuffer = lines.pop() || ''
+
+          for (const line of lines) {
+            if (!line.trim()) continue
+            stderrLineCount++
+
+            // Write to file
+            if (stderrLogFd !== null) {
+              try {
+                fs.writeSync(stderrLogFd, line + '\n')
+              } catch {
+                /* ignore */
+              }
+            }
+
+            // Keep rolling tail buffer
+            stderrTailLines.push(line)
+            if (stderrTailLines.length > STDERR_TAIL_SIZE) {
+              stderrTailLines.shift()
+            }
+          }
+        })
+      }
+
       const finish = (result: { succeeded: boolean; timedOut: boolean }) => {
         if (resolved) return
         resolved = true
@@ -448,6 +500,15 @@ export function runAgentWithFileWatch(
           }
           jsonLogFd = null
         }
+        // Close stderr log file descriptor
+        if (stderrLogFd !== null) {
+          try {
+            fs.closeSync(stderrLogFd)
+          } catch {
+            /* ignore */
+          }
+          stderrLogFd = null
+        }
         // Remove exit cleanup handler (FD already closed)
         process.removeListener('exit', cleanupFd)
         resolve({ ...result, retries, validationErrors, sessionId: extractedSessionId })
@@ -477,6 +538,20 @@ export function runAgentWithFileWatch(
       // Process exit handler - wait for file stability after exit
       currentChild.on('exit', async (code) => {
         logger.info(`  📡 Process exited with code: ${code}`)
+
+        // Surface stderr on failure
+        if (code !== 0 && stderrTailLines.length > 0) {
+          const isCI = !!process.env.GITHUB_ACTIONS
+          if (isCI) process.stderr.write('::group::Agent stderr (last lines)\n')
+          for (const line of stderrTailLines) {
+            process.stderr.write('  ' + line + '\n')
+          }
+          if (isCI) process.stderr.write('::endgroup::\n')
+        } else if (stderrLineCount > 0) {
+          logger.info(
+            `  📝 Agent stderr: ${stderrLineCount} lines captured (see ${stage}-stderr.log)`,
+          )
+        }
 
         if (resolved) return
 

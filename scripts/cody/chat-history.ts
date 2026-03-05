@@ -173,6 +173,7 @@ export async function appendSession(
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
       cwd: process.cwd(),
+      maxBuffer: 50 * 1024 * 1024, // 50MB — session exports can be very large
     }).replace(/^Exporting session:.*\n/, '') // Remove the "Exporting session:" line
 
     const rawExport = JSON.parse(output)

@@ -14,7 +14,7 @@ import type {
   StageResult,
   PipelineStep,
 } from './types'
-import { logger } from '../logger'
+import { logger, ciGroup, ciGroupEnd } from '../logger'
 import { PipelinePausedError } from './types'
 import {
   loadState,
@@ -276,12 +276,14 @@ async function executeSingleStep(
   }
 
   // Get handler and execute
-  const handler = getHandler(def.name, def.type)
-
+  ciGroup(`Stage: ${stageName}`)
   try {
+    const handler = getHandler(def.name, def.type)
     const result = await handler.execute(ctx, def)
+    ciGroupEnd()
     return await handleStageResult(ctx, state, stageName, result, def)
   } catch (error) {
+    ciGroupEnd()
     if (error instanceof PipelinePausedError) {
       // Handle paused - mark stage as paused and pipeline as paused
       state = updateStage(state, stageName, { state: 'paused' })
@@ -404,7 +406,9 @@ async function executeParallelStep(
 
       const reason = (result as PromiseRejectedResult).reason
       const name =
-        reason instanceof StageError ? reason.stageName : (reason as any)?.stageName || 'unknown'
+        reason instanceof StageError
+          ? reason.stageName
+          : (((reason as Record<string, unknown>)?.stageName as string) ?? 'unknown')
       const message = reason instanceof Error ? reason.message : String(reason)
       // R7: Use dynamic advisory lookup from pipeline definition
       const isAdvisory = pipeline.stages.get(name)?.advisory === true

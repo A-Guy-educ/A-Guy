@@ -289,10 +289,15 @@ export async function executePostAction(
 
       logger.info('   Running tsc...')
       try {
-        execFileSync('pnpm', ['-s', 'tsc', '--noEmit'], { stdio: 'inherit' })
+        execFileSync('pnpm', ['-s', 'tsc', '--noEmit'], {
+          encoding: 'utf-8',
+          maxBuffer: 10 * 1024 * 1024,
+        })
         logger.info('   ✓ tsc passed')
-      } catch {
-        throw new Error('TypeScript compilation failed')
+      } catch (error) {
+        const err = error as { stdout?: string; stderr?: string; message?: string }
+        const output = (err.stdout || '') + (err.stderr || '') || err.message || ''
+        throw new Error(`TypeScript compilation failed:\n${output.slice(0, 3000)}`)
       }
       break
     }
@@ -302,7 +307,10 @@ export async function executePostAction(
 
       logger.info('   Running unit tests...')
       try {
-        execFileSync('pnpm', ['-s', 'test:unit'], { stdio: 'inherit' })
+        execFileSync('pnpm', ['-s', 'test:unit'], {
+          encoding: 'utf-8',
+          maxBuffer: 10 * 1024 * 1024,
+        })
         logger.info('   ✓ Unit tests passed')
       } catch (error) {
         // G25: Include output text (3000 chars) for supervisor retry
