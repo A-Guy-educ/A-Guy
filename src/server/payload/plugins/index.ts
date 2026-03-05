@@ -33,10 +33,11 @@ const generateURL: GenerateURL<Page> = ({ doc }) => {
 
 // Vercel Blob storage plugin - throws error if token is not available
 // During type generation (PAYLOAD_GENERATE_TYPES=true), this is skipped
-let vercelBlobPlugin: Plugin | null = null
-if (process.env.PAYLOAD_GENERATE_TYPES !== 'true') {
+export function enforceBlobStorageToken(): string | null {
+  if (process.env.PAYLOAD_GENERATE_TYPES === 'true') {
+    return null
+  }
   const blobToken = process.env.BLOB_READ_WRITE_TOKEN
-
   if (!blobToken) {
     throw new Error(
       'BLOB_READ_WRITE_TOKEN environment variable is required. ' +
@@ -44,7 +45,12 @@ if (process.env.PAYLOAD_GENERATE_TYPES !== 'true') {
         'Please set BLOB_READ_WRITE_TOKEN in your environment configuration.',
     )
   }
+  return blobToken
+}
 
+let vercelBlobPlugin: Plugin | null = null
+const blobToken = enforceBlobStorageToken()
+if (blobToken) {
   vercelBlobPlugin = vercelBlobStorage({
     addRandomSuffix: true,
     clientUploads: false,

@@ -32,6 +32,7 @@ vi.mock('../../../../scripts/cody/logger', () => ({
   createStageLogger: vi.fn().mockReturnValue(mockLogger),
 }))
 
+import * as path from 'path'
 import * as fs from 'fs'
 import * as childProcess from 'child_process'
 
@@ -601,7 +602,7 @@ describe('status management', () => {
   describe('getTaskDir', () => {
     it('should return path under .tasks/<taskId>', () => {
       const dir = getTaskDir('260218-task')
-      expect(dir).toBe(`${MOCK_CWD}/.tasks/260218-task`)
+      expect(dir).toBe(path.join(MOCK_CWD, '.tasks', '260218-task'))
     })
   })
 
@@ -609,10 +610,10 @@ describe('status management', () => {
     it('should create directory when it does not exist', () => {
       vi.mocked(fs.existsSync).mockReturnValue(false)
       const dir = ensureTaskDir('260218-task')
-      expect(fs.mkdirSync).toHaveBeenCalledWith(`${MOCK_CWD}/.tasks/260218-task`, {
+      expect(fs.mkdirSync).toHaveBeenCalledWith(path.join(MOCK_CWD, '.tasks', '260218-task'), {
         recursive: true,
       })
-      expect(dir).toBe(`${MOCK_CWD}/.tasks/260218-task`)
+      expect(dir).toBe(path.join(MOCK_CWD, '.tasks', '260218-task'))
     })
 
     it('should not create directory when it already exists', () => {
@@ -685,13 +686,13 @@ describe('status management', () => {
 
       // Should write to .tmp first (atomic write pattern)
       expect(fs.writeFileSync).toHaveBeenCalledWith(
-        `${MOCK_CWD}/.tasks/260218-task/status.json.tmp`,
+        path.join(MOCK_CWD, '.tasks', '260218-task', 'status.json.tmp'),
         JSON.stringify(mockStatus, null, 2),
       )
       // Then rename .tmp to final
       expect((fs as Record<string, unknown>).renameSync).toHaveBeenCalledWith(
-        `${MOCK_CWD}/.tasks/260218-task/status.json.tmp`,
-        `${MOCK_CWD}/.tasks/260218-task/status.json`,
+        path.join(MOCK_CWD, '.tasks', '260218-task', 'status.json.tmp'),
+        path.join(MOCK_CWD, '.tasks', '260218-task', 'status.json'),
       )
     })
   })

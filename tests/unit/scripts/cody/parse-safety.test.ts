@@ -2,116 +2,72 @@
  * @fileType test
  * @domain ci | cody
  * @pattern bug-fix-verification
- * @ai-summary Tests for parse-safety.sh and YAML condition fixes
+ * @ai-summary Tests for parse-safety.ts and YAML condition fixes
  */
 
 import { describe, it, expect } from 'vitest'
 import * as fs from 'fs'
 import * as path from 'path'
-import * as os from 'os'
-import { execSync } from 'child_process'
+
+import { validateSafety } from '../../../../scripts/cody/parse-safety'
 
 // ============================================================================
-// parse-safety.sh Tests
+// parse-safety.ts Tests
 // ============================================================================
 
-describe('parse-safety.ts', { timeout: 15_000 }, () => {
-  // TypeScript files are run via tsx, not executed directly
-  // Each test spawns a child process (npx tsx) which has cold-start overhead,
-  // especially on CI runners. Default 5s timeout is too tight.
-
+describe('parse-safety.ts', () => {
   it('should reject bot comments (github-actions[bot])', () => {
-    const output = runScript({
-      COMMENT_BODY: '/cody impl',
-      AUTHOR: 'github-actions[bot]',
-      ASSOCIATION: 'NONE',
-    })
+    const output = validateSafety('github-actions[bot]', 'NONE', '/cody impl')
     expect(output.valid).toBe('false')
     expect(output.reason).toBe('bot')
   })
 
   it('should reject bot comments ([bot] suffix pattern)', () => {
-    const output = runScript({
-      COMMENT_BODY: '/cody spec',
-      AUTHOR: 'dependabot[bot]',
-      ASSOCIATION: 'NONE',
-    })
+    const output = validateSafety('dependabot[bot]', 'NONE', '/cody spec')
     expect(output.valid).toBe('false')
     expect(output.reason).toBe('bot')
   })
 
   it('should reject unauthorized author associations', () => {
-    const output = runScript({
-      COMMENT_BODY: '/cody',
-      AUTHOR: 'someuser',
-      ASSOCIATION: 'CONTRIBUTOR', // Not OWNER, MEMBER, or COLLABORATOR
-    })
+    const output = validateSafety('someuser', 'CONTRIBUTOR', '/cody')
     expect(output.valid).toBe('false')
     expect(output.reason).toBe('unauthorized')
   })
 
   it('should accept valid owner association', () => {
-    const output = runScript({
-      COMMENT_BODY: '/cody',
-      AUTHOR: 'owner',
-      ASSOCIATION: 'OWNER',
-    })
+    const output = validateSafety('owner', 'OWNER', '/cody')
     expect(output.valid).toBe('true')
     expect(output.reason).toBeUndefined()
   })
 
   it('should accept valid member association', () => {
-    const output = runScript({
-      COMMENT_BODY: '/cody',
-      AUTHOR: 'someuser',
-      ASSOCIATION: 'MEMBER',
-    })
+    const output = validateSafety('someuser', 'MEMBER', '/cody')
     expect(output.valid).toBe('true')
   })
 
   it('should accept valid collaborator association', () => {
-    const output = runScript({
-      COMMENT_BODY: '/cody',
-      AUTHOR: 'someuser',
-      ASSOCIATION: 'COLLABORATOR',
-    })
+    const output = validateSafety('someuser', 'COLLABORATOR', '/cody')
     expect(output.valid).toBe('true')
   })
 
   it('should reject invalid command pattern', () => {
-    const output = runScript({
-      COMMENT_BODY: 'not a command',
-      AUTHOR: 'someuser',
-      ASSOCIATION: 'OWNER',
-    })
+    const output = validateSafety('someuser', 'OWNER', 'not a command')
     expect(output.valid).toBe('false')
     expect(output.reason).toBe('pattern')
   })
 
   it('should accept /cody with trailing space', () => {
-    const output = runScript({
-      COMMENT_BODY: '/cody ',
-      AUTHOR: 'someuser',
-      ASSOCIATION: 'OWNER',
-    })
+    const output = validateSafety('someuser', 'OWNER', '/cody ')
     expect(output.valid).toBe('true')
   })
 
   it('should accept /cody with subcommand', () => {
-    const output = runScript({
-      COMMENT_BODY: '/cody impl',
-      AUTHOR: 'someuser',
-      ASSOCIATION: 'OWNER',
-    })
+    const output = validateSafety('someuser', 'OWNER', '/cody impl')
     expect(output.valid).toBe('true')
   })
 
   it('should reject /cody as substring (not prefix)', () => {
-    const output = runScript({
-      COMMENT_BODY: 'hello /cody world',
-      AUTHOR: 'someuser',
-      ASSOCIATION: 'OWNER',
-    })
+    const output = validateSafety('someuser', 'OWNER', 'hello /cody world')
     expect(output.valid).toBe('false')
     expect(output.reason).toBe('pattern')
   })
@@ -167,45 +123,3 @@ describe('BUG-FIX: GitHub Actions YAML truthy condition evaluation', () => {
     expect(condition).toContain('needs.parse.outputs.valid')
   })
 })
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-function runScript(envVars: Record<string, string>): Record<string, string> {
-  // Create a temp file for output
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'parse-safety-test-'))
-  const outputPath = path.join(tempDir, 'output')
-
-  // Set up environment and run script
-  const env = {
-    ...process.env,
-    ...envVars,
-    GITHUB_OUTPUT: outputPath,
-  }
-
-  try {
-    execSync(`npx tsx ${path.join(process.cwd(), 'scripts/cody/parse-safety.ts')}`, {
-      env,
-      encoding: 'utf-8',
-    })
-  } catch {
-    // Script may exit non-zero, but we still want to read output
-  }
-
-  // Read output
-  const output = fs.readFileSync(outputPath, 'utf-8')
-  const result: Record<string, string> = {}
-
-  for (const line of output.trim().split('\n')) {
-    const [key, value] = line.split('=')
-    if (key && value !== undefined) {
-      result[key] = value
-    }
-  }
-
-  // Cleanup
-  fs.rmSync(tempDir, { recursive: true })
-
-  return result
-}

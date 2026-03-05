@@ -8,6 +8,11 @@
 import type { User } from '@/payload-types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+// Mock the heavy MCP plugin dependency to prevent timeout during import
+vi.mock('@payloadcms/plugin-mcp', () => ({
+  mcpPlugin: () => ({}),
+}))
+
 // Store original fetch for restoration
 const originalFetch = globalThis.fetch
 

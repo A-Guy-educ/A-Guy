@@ -485,7 +485,7 @@ describe('Supervisor shell wrapper script (Fix #12)', () => {
     expect(fs.existsSync(scriptPath)).toBe(true)
   })
 
-  it('shell wrapper script should be executable', () => {
+  it.skipIf(process.platform === 'win32')('shell wrapper script should be executable', () => {
     const stats = fs.statSync(scriptPath)
     const isExecutable = (stats.mode & 0o111) !== 0
     expect(isExecutable).toBe(true)

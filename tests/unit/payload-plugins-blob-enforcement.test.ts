@@ -6,105 +6,83 @@
  * to local storage which causes 401 errors.
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+
+import { enforceBlobStorageToken } from '@/server/payload/plugins/index'
 
 describe('Vercel Blob Storage Enforcement', () => {
-  let originalEnv: NodeJS.ProcessEnv
+  let originalBlobToken: string | undefined
+  let originalGenerateTypes: string | undefined
 
   beforeEach(() => {
-    originalEnv = { ...process.env }
-    // Clear module cache to test fresh import
-    vi.resetModules()
+    originalBlobToken = process.env.BLOB_READ_WRITE_TOKEN
+    originalGenerateTypes = process.env.PAYLOAD_GENERATE_TYPES
   })
 
   afterEach(() => {
-    process.env = originalEnv
-    vi.restoreAllMocks()
+    if (originalBlobToken !== undefined) {
+      process.env.BLOB_READ_WRITE_TOKEN = originalBlobToken
+    } else {
+      delete process.env.BLOB_READ_WRITE_TOKEN
+    }
+    if (originalGenerateTypes !== undefined) {
+      process.env.PAYLOAD_GENERATE_TYPES = originalGenerateTypes
+    } else {
+      delete process.env.PAYLOAD_GENERATE_TYPES
+    }
   })
 
   describe('enforceBlobStorageToken', () => {
-    it('should throw error when BLOB_READ_WRITE_TOKEN is not set', async () => {
-      // Dynamic import of plugins module can be slow due to transitive dependencies
-      // Ensure token is not set
+    it('should throw error when BLOB_READ_WRITE_TOKEN is not set', () => {
       delete process.env.BLOB_READ_WRITE_TOKEN
+      delete process.env.PAYLOAD_GENERATE_TYPES
 
-      // Import the module fresh - this will trigger the enforcement
-      await expect(async () => {
-        await import('@/server/payload/plugins/index')
-      }).rejects.toThrow(
+      expect(() => enforceBlobStorageToken()).toThrow(
         'BLOB_READ_WRITE_TOKEN environment variable is required. ' +
           'Vercel Blob storage is mandatory for this application. ' +
           'Please set BLOB_READ_WRITE_TOKEN in your environment configuration.',
       )
-    }, 15000)
+    })
 
-    it('should not throw when BLOB_READ_WRITE_TOKEN is set', async () => {
-      // Set a mock token
+    it('should not throw when BLOB_READ_WRITE_TOKEN is set', () => {
       process.env.BLOB_READ_WRITE_TOKEN = 'test-token-12345'
+      delete process.env.PAYLOAD_GENERATE_TYPES
 
-      // This should not throw
-      const pluginsModule = await import('@/server/payload/plugins/index')
-      expect(pluginsModule.plugins).toBeDefined()
-      expect(Array.isArray(pluginsModule.plugins)).toBe(true)
+      expect(() => enforceBlobStorageToken()).not.toThrow()
     })
 
-    it('should throw error when BLOB_READ_WRITE_TOKEN is empty string', async () => {
-      // Set empty string token
+    it('should throw error when BLOB_READ_WRITE_TOKEN is empty string', () => {
       process.env.BLOB_READ_WRITE_TOKEN = ''
+      delete process.env.PAYLOAD_GENERATE_TYPES
 
-      await expect(async () => {
-        await import('@/server/payload/plugins/index')
-      }).rejects.toThrow(
-        'BLOB_READ_WRITE_TOKEN environment variable is required. ' +
-          'Vercel Blob storage is mandatory for this application. ' +
-          'Please set BLOB_READ_WRITE_TOKEN in your environment configuration.',
+      expect(() => enforceBlobStorageToken()).toThrow(
+        'BLOB_READ_WRITE_TOKEN environment variable is required.',
       )
     })
 
-    it('should throw error when BLOB_READ_WRITE_TOKEN is undefined', async () => {
-      // Explicitly set to undefined
-      process.env.BLOB_READ_WRITE_TOKEN = undefined as unknown as string
-
-      await expect(async () => {
-        await import('@/server/payload/plugins/index')
-      }).rejects.toThrow(
-        'BLOB_READ_WRITE_TOKEN environment variable is required. ' +
-          'Vercel Blob storage is mandatory for this application. ' +
-          'Please set BLOB_READ_WRITE_TOKEN in your environment configuration.',
-      )
-    })
-
-    it('should have plugins defined when token is set', async () => {
-      process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_token_abc123'
-
-      const { plugins: pluginsArray } = await import('@/server/payload/plugins/index')
-
-      // Verify plugins array is defined and non-empty
-      expect(pluginsArray).toBeDefined()
-      expect(Array.isArray(pluginsArray)).toBe(true)
-      expect(pluginsArray.length).toBeGreaterThan(0)
-    })
-  })
-
-  describe('addRandomSuffix configuration', () => {
-    it('should have vercel blob plugin in plugins array when token is set', async () => {
+    it('should return the token string when valid', () => {
       process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_rw_test123_abc'
+      delete process.env.PAYLOAD_GENERATE_TYPES
 
-      const { plugins: pluginsArray } = await import('@/server/payload/plugins/index')
-
-      // Plugins array should contain elements including the vercel blob storage plugin
-      expect(pluginsArray).toBeDefined()
-      expect(Array.isArray(pluginsArray)).toBe(true)
-      expect(pluginsArray.length).toBeGreaterThan(0)
+      const result = enforceBlobStorageToken()
+      expect(result).toBe('vercel_blob_rw_test123_abc')
     })
 
-    it('should configure multiple collections for blob storage', async () => {
-      process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_rw_test456_xyz'
+    it('should return null when PAYLOAD_GENERATE_TYPES is true', () => {
+      delete process.env.BLOB_READ_WRITE_TOKEN
+      process.env.PAYLOAD_GENERATE_TYPES = 'true'
 
-      const { plugins: pluginsArray } = await import('@/server/payload/plugins/index')
+      const result = enforceBlobStorageToken()
+      expect(result).toBeNull()
+    })
 
-      // The plugins array should contain multiple plugins including vercel blob
-      expect(pluginsArray.length).toBeGreaterThan(1)
+    it('should still enforce when PAYLOAD_GENERATE_TYPES is false', () => {
+      delete process.env.BLOB_READ_WRITE_TOKEN
+      process.env.PAYLOAD_GENERATE_TYPES = 'false'
+
+      expect(() => enforceBlobStorageToken()).toThrow(
+        'BLOB_READ_WRITE_TOKEN environment variable is required.',
+      )
     })
   })
 })

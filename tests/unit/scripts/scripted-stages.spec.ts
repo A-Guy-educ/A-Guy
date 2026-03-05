@@ -111,7 +111,7 @@ describe('STAGE_CONTEXT_FILES audit-history path', () => {
 
     expect(auditEntry).toBeDefined()
     const resolved = path.normalize(`${taskDir}/${auditEntry}`)
-    expect(resolved).toBe('.tasks/audit-history.json')
+    expect(resolved).toBe(path.normalize('.tasks/audit-history.json'))
   })
 })
 
