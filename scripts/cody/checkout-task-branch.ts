@@ -94,6 +94,35 @@ function mergeDefaultBranch(defaultBranch: string): boolean {
     return false
   }
 }
+/**
+ * Reset branch if --fresh flag is set
+ */
+function resetBranchIfFresh(branch: string | null, _defaultBranch: string): string | null {
+  const fresh = process.env.FRESH === 'true'
+  if (!fresh) return branch
+
+  logger.info('  --fresh flag detected: will reset branch from scratch')
+
+  // If branch exists, delete it
+  if (branch) {
+    logger.info('    Deleting existing branch: ' + branch)
+    try {
+      gitExec(['push', 'origin', '--delete', branch])
+      logger.info('    Deleted remote branch')
+    } catch (_e) {
+      // May not exist on remote
+    }
+    try {
+      gitExec(['branch', '-D', branch])
+      logger.info('    Deleted local branch')
+    } catch (_e) {
+      // May not exist locally
+    }
+  }
+
+  // Return null to force creating a new branch from default
+  return null
+}
 
 /**
  * Find remote branches matching a task ID pattern.
@@ -177,7 +206,10 @@ function main(): void {
   logger.info(`=== Default branch: ${defaultBranch} ===`)
 
   // Find feature branch by pattern matching
-  const branch = findRemoteBranch(taskId)
+  let branch = findRemoteBranch(taskId)
+
+  // Reset branch if --fresh flag is set
+  branch = resetBranchIfFresh(branch, defaultBranch)
 
   if (branch) {
     logger.info(`=== Found feature branch: ${branch} ===`)

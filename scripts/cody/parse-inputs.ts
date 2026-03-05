@@ -23,6 +23,7 @@ interface ParseOutputs {
   valid: string
   runner: string
   version: string
+  fresh: string
 }
 
 // Task ID format: YYMMDD-description (e.g., 260225-auto-90)
@@ -122,6 +123,7 @@ export function parseDispatchInputs(): ParseOutputs {
     valid: 'true',
     runner: process.env.DISPATCH_RUNNER || 'self-hosted',
     version: process.env.DISPATCH_VERSION || process.env.CODY_DEFAULT_VERSION || '',
+    fresh: process.env.FRESH || '',
   }
 
   logger.info(
@@ -158,8 +160,18 @@ export function parseCommentInputs(): ParseOutputs {
     comment_body: JSON.stringify(commentBody),
   }
 
-  // Discover task-id from previous bot comments on the issue
-  if (issueNumber) {
+  // Extract command after @cody or /cody (MUST be before flag detection)
+  const cmdAfterCody = commentBody ? extractCommandAfterCody(commentBody) : ''
+
+  // Detect --fresh flag - skip taskId discovery if fresh
+  const hasFreshFlag = /--fresh\b/.test(cmdAfterCody)
+  if (hasFreshFlag) {
+    outputs.fresh = 'true'
+    logger.info('=== Detected --fresh flag: will create new task ===')
+  }
+
+  // Discover task-id from previous bot comments on the issue (skip if fresh)
+  if (issueNumber && !hasFreshFlag) {
     const discoveredTaskId = discoverTaskIdFromIssue(issueNumber)
     if (discoveredTaskId) {
       logger.info(`=== Discovered task-id from issue: ${discoveredTaskId} ===`)
@@ -168,9 +180,7 @@ export function parseCommentInputs(): ParseOutputs {
   }
 
   // Parse command to determine mode and flags
-  if (commentBody) {
-    const cmdAfterCody = extractCommandAfterCody(commentBody)
-
+  if (cmdAfterCody) {
     // Detect --local flag anywhere in the command
     const hasLocalFlag = /--local\b/.test(cmdAfterCody)
     if (hasLocalFlag) {
@@ -198,6 +208,7 @@ export function parseCommentInputs(): ParseOutputs {
       .replace(/--github\b/g, '')
       .replace(/--github-hosted\b/g, '')
       .replace(/--version\s+\S+/g, '')
+      .replace(/--fresh\b/g, '')
       .trim()
 
     if (!cmdWithoutFlags) {
@@ -252,6 +263,7 @@ export function getDefaultOutputs(): ParseOutputs {
     valid: 'false',
     runner: 'self-hosted',
     version: process.env.CODY_DEFAULT_VERSION || '',
+    fresh: '',
   }
 }
 
@@ -280,6 +292,7 @@ function writeOutputs(outputs: ParseOutputs): void {
     `valid=${outputs.valid}`,
     `runner=${outputs.runner}`,
     `version=${outputs.version}`,
+    `fresh=${outputs.fresh}`,
   ]
 
   writeFileSync(githubOutput, lines.join('\n') + '\n')

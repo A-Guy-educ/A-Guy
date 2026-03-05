@@ -371,7 +371,7 @@ export async function runPrStage(
 ): Promise<PrResult> {
   logger.info('\n📝 Creating PR (scripted)...\n')
 
-  let branch = getBranchName(cwd)
+  const branch = getBranchName(cwd)
   const defaultBranch = getDefaultBranch(cwd)
 
   // Step 1: Check for existing PR (unless --fresh is set)
@@ -387,13 +387,34 @@ export async function runPrStage(
     logger.info(`  --fresh flag: creating new PR (ignoring existing: ${existingUrl})`)
   }
 
-  // Step 1.5: Create fresh branch if --fresh is set
-  if (options?.fresh) {
-    branch = createFreshBranch(branch, cwd)
+  // Step 1.5: Reset branch if --fresh is set (delete old branch, recreate from default)
+  if (options?.fresh && branch !== defaultBranch) {
+    logger.info('  --fresh flag: resetting branch from scratch')
+    try {
+      // Delete remote branch
+      execFileSync('git', ['push', 'origin', '--delete', branch], { cwd, encoding: 'utf-8' })
+      logger.info('  Deleted remote branch')
+    } catch (_e) {
+      // Branch may not exist on remote
+    }
+    try {
+      // Delete local branch
+      execFileSync('git', ['branch', '-D', branch], { cwd, encoding: 'utf-8' })
+      logger.info('  Deleted local branch')
+    } catch (_e) {
+      // Branch may not exist locally
+    }
+    // Create fresh branch from default branch
+    execFileSync('git', ['checkout', '-b', branch, defaultBranch], { cwd, encoding: 'utf-8' })
+    logger.info('  Created fresh branch from ' + defaultBranch)
+  } else if (options?.fresh) {
+    // Already on default branch, just reset to it
+    execFileSync('git', ['reset', '--hard', defaultBranch], { cwd, encoding: 'utf-8' })
+    logger.info('  Reset branch to ' + defaultBranch)
   }
 
   // Step 2: Push branch (skip pre-push hooks to avoid blocking on unrelated checks)
-  logger.info(`  Pushing branch ${branch}...`)
+  logger.info('  Pushing branch ' + branch + '...')
   let pushSuccess = false
   try {
     execFileSync('git', ['push', '-u', 'origin', branch], {
