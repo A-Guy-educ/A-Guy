@@ -9,6 +9,7 @@
  *
  * Handles:
  * - Single/double/triple backslash delimiters: \[, \\[, \\\[ → $$
+ * - Bare brackets with LaTeX: [ \frac{a}{b} ] → $$...$$ (detected by LaTeX command presence)
  * - Over-escaped LaTeX commands: \\frac → \frac
  * - Escaped equals: \= → =
  *
@@ -23,6 +24,12 @@ export function normalizeLatexDelimiters(content: string): string {
   // Use a function replacer to avoid $$ special replacement pattern issues
   return (
     content
+      // Pre-process: detect bare brackets containing LaTeX commands
+      // Closed: [ \frac{a}{b} ] → \[ \frac{a}{b} \] (but not markdown links [text](url))
+      // Use negative lookbehind (?<!\\) to avoid matching already-escaped \[ or \\[
+      .replace(/(?<!\\)\[([^\]]*\\[a-zA-Z]+[^\]]*)\](?!\()/g, '\\[$1\\]')
+      // Unclosed (no closing ]): [ \frac{a}{b} (end of line) → \[ \frac{a}{b} \]
+      .replace(/(?<!\\)\[([^\]\n]*\\[a-zA-Z]+[^\]\n]*)$/gm, '\\[$1\\]')
       // Convert block math delimiters: \\\[, \\[, \[ → $$ (with newline for remark-math)
       .replace(/\\{1,3}\[/g, () => '\n$$\n')
       .replace(/\\{1,3}\]/g, () => '\n$$\n')
