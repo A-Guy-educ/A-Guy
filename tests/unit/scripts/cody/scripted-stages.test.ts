@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as childProcess from 'child_process'
 import * as fs from 'fs'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getDefaultBranch } from '../../../../scripts/cody/git-utils'
 
 // Mock for fetch - need to use hoisted mock
@@ -29,7 +29,7 @@ vi.mock('../../../../scripts/cody/git-utils', () => ({
   getDefaultBranch: vi.fn().mockReturnValue('dev'),
 }))
 
-import { runVerifyStage, runPrStage } from '../../../../scripts/cody/scripted-stages'
+import { runPrStage, runVerifyStage } from '../../../../scripts/cody/scripted-stages'
 
 // Silence console output during tests
 vi.spyOn(console, 'log').mockImplementation(() => {})
@@ -499,6 +499,8 @@ describe('runVerifyStage', () => {
 describe('runPrStage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Set GitHub token for runPrStage tests
+    process.env.GH_PAT = 'test-token-for-pr-stage'
     // Reset getDefaultBranch mock to default
     mockGetDefaultBranch.mockReturnValue('dev')
     // Default mocks for fs
@@ -514,6 +516,10 @@ describe('runPrStage', () => {
       ok: true,
       json: async () => ({ html_url: 'https://github.com/owner/repo/pull/42' }),
     } as unknown as Response)
+  })
+
+  afterEach(() => {
+    delete process.env.GH_PAT
   })
 
   /**
