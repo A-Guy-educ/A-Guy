@@ -9,7 +9,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 import type { CodyInput } from './cody-utils'
-import { getAllImplStageNames, getSpecStagesForProfile, stageOutputFile } from './pipeline-utils'
+import { stageOutputFile, getSpecStagesForProfile, getAllImplStageNames } from './pipeline-utils'
 
 // ============================================================================
 // Constants
@@ -176,8 +176,7 @@ function getTaskType(taskId: string): string {
 export function buildStagePrompt(input: CodyInput, stage: string, feedback?: string): string {
   const { taskId } = input
   // Use absolute path to avoid OpenCode path interpretation issues with task IDs containing hyphens
-  // Normalize to forward slashes for cross-platform consistency
-  const taskDir = path.join(process.cwd(), '.tasks', taskId).replace(/\\/g, '/')
+  const taskDir = path.join(process.cwd(), '.tasks', taskId)
 
   // Get task_type for stages that need it (architect, build)
   const taskType = getTaskType(taskId)
@@ -195,7 +194,7 @@ export function buildStagePrompt(input: CodyInput, stage: string, feedback?: str
   const taskTypeSection =
     stage === 'architect' || stage === 'build' ? `\nTask Type: ${taskType}` : ''
 
-  const outputFile = stageOutputFile(taskDir.replace(/\//g, path.sep), stage).replace(/\\/g, '/')
+  const outputFile = stageOutputFile(taskDir, stage)
 
   // Add feedback section if provided
   const feedbackSection = feedback
