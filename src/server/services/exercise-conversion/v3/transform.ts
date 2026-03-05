@@ -583,6 +583,9 @@ export function rebuildFromMultiPartPreview(edited: MultiPartPreviewDraft): Tran
 export function autoAssignDiagrams(extraction: MultiPartExtraction): MultiPartExtraction {
   const { diagramDescription, subQuestions } = extraction
 
+  // Guard against missing subQuestions
+  if (!subQuestions || !Array.isArray(subQuestions)) return extraction
+
   // Only act if there IS a global diagram and NO sub-questions already have diagrams
   if (!diagramDescription?.trim()) return extraction
   const anySubHasDiagram = subQuestions.some((sq) => sq.diagramDescription?.trim())
