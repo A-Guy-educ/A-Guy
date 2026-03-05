@@ -51,7 +51,7 @@ jobs:
 
           Automated PR created via Cody dashboard publish.
 
-          Triggered by issue #${{ github.event.issue.number }}.
+          Closes #${{ github.event.issue.number }}
 
           Once CI passes, merge via the dashboard or GitHub.
           EOF
