@@ -70,12 +70,38 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const courseId = body.courseId as string | undefined
+    const requestLocale = body.locale as string | undefined
 
     if (!courseId) {
       return NextResponse.json({ error: 'courseId is required' }, { status: 400 })
     }
 
     const contextKey = `ask:${courseId}:${Date.now()}`
+
+    // Resolve preferredLocale with fallback chain:
+    // 1. Request body locale
+    // 2. Course's locale setting
+    // 3. Default to 'he'
+    type LocaleOption = 'en' | 'he'
+    let preferredLocale: LocaleOption = 'he'
+
+    if (requestLocale === 'en' || requestLocale === 'he') {
+      preferredLocale = requestLocale
+    } else {
+      // Fall back to course's locale
+      const course = await payload.findByID({
+        collection: 'courses',
+        id: courseId,
+        depth: 0,
+        select: { locale: true },
+        overrideAccess: true, // Need to fetch course info without user access
+      })
+
+      const courseLocale = (course as { locale?: string })?.locale
+      if (courseLocale === 'en' || courseLocale === 'he') {
+        preferredLocale = courseLocale
+      }
+    }
 
     const conversation = await payload.create({
       collection: 'conversations',
@@ -86,7 +112,7 @@ export async function POST(request: NextRequest) {
         messages: [],
         lastMessageAt: new Date().toISOString(),
         contextPolicyVersion: 'v1',
-        preferredLocale: 'he',
+        preferredLocale,
       },
       draft: false,
       user,
