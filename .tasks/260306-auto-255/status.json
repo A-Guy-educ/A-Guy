@@ -4,14 +4,35 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-06T14:54:32.186Z",
-  "updatedAt": "2026-03-06T15:02:43.428Z",
+  "updatedAt": "2026-03-06T15:14:04.479Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-06T15:02:43.428Z",
+      "completedAt": "2026-03-06T15:05:04.050Z",
+      "outputFile": "taskify.md"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-06T15:05:09.304Z",
+      "completedAt": "2026-03-06T15:06:52.321Z",
+      "outputFile": "architect.md"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-06T15:06:52.347Z",
+      "completedAt": "2026-03-06T15:13:41.552Z",
+      "outputFile": "build.md"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-06T15:02:43.428Z"
+      "startedAt": "2026-03-06T15:14:04.479Z"
     }
   },
   "issueNumber": 682
