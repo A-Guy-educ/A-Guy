@@ -2,16 +2,18 @@
  * @fileType component
  * @domain cody
  * @pattern task-detail
- * @ai-summary Task detail — redesigned with improved visual hierarchy and organized sub-components
+ * @ai-summary Task detail — v2 with header quick-links, consolidated sidebar, contextual actions, inline pipeline timeline
  */
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { formatRelativeTime } from '../utils'
+import { formatRelativeTime, cn } from '../utils'
 import { getGitHubIssueUrl } from '../constants'
-import type { CodyTask, GitHubComment, ColumnId } from '../types'
+import type { CodyTask, GitHubComment, ColumnId, CodyPipelineStatus } from '../types'
+import { ALL_STAGES } from '../constants'
+import { calculatePipelineProgress, stageLabels, formatElapsed } from '../pipeline-utils'
 import { PipelineStatus } from './PipelineStatus'
 import { CommentEditor } from './CommentEditor'
 import { CommentList } from './CommentList'
@@ -44,11 +46,12 @@ import {
   RefreshCw,
   Github,
   Info,
-  Link2,
   FileText,
   MessageSquare,
   GitBranch,
   BookOpen,
+  MoreHorizontal,
+  Timer,
 } from 'lucide-react'
 
 interface TaskDetailProps {
@@ -66,48 +69,58 @@ interface FullTaskDetails extends CodyTask {
 
 // ============ CONSTANTS ============
 
-const columnColors: Record<ColumnId, { bg: string; text: string; bar: string; pill: string }> = {
+const columnColors: Record<
+  ColumnId,
+  { bg: string; text: string; bar: string; pill: string; wash: string }
+> = {
   open: {
     bg: 'bg-zinc-500/10',
     text: 'text-zinc-400',
     bar: 'bg-zinc-400',
     pill: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
+    wash: 'from-zinc-500/5',
   },
   building: {
     bg: 'bg-blue-500/10',
     text: 'text-blue-400',
     bar: 'bg-blue-500',
     pill: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
+    wash: 'from-blue-500/5',
   },
   review: {
     bg: 'bg-purple-500/10',
     text: 'text-purple-400',
     bar: 'bg-purple-500',
     pill: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
+    wash: 'from-purple-500/5',
   },
   failed: {
     bg: 'bg-red-500/10',
     text: 'text-red-400',
     bar: 'bg-red-500',
     pill: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
+    wash: 'from-red-500/5',
   },
   'gate-waiting': {
     bg: 'bg-yellow-500/10',
     text: 'text-yellow-400',
     bar: 'bg-yellow-500',
     pill: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
+    wash: 'from-yellow-500/5',
   },
   retrying: {
     bg: 'bg-orange-500/10',
     text: 'text-orange-400',
     bar: 'bg-orange-500',
     pill: 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
+    wash: 'from-orange-500/5',
   },
   done: {
     bg: 'bg-emerald-500/10',
     text: 'text-emerald-400',
     bar: 'bg-emerald-500',
     pill: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300',
+    wash: 'from-emerald-500/5',
   },
 }
 
@@ -122,109 +135,6 @@ const columnLabels: Record<ColumnId, string> = {
 }
 
 // ============ SUB-COMPONENTS ============
-
-// Quick link button component
-function QuickLinkButton({
-  href,
-  icon: Icon,
-  label,
-  variant = 'default',
-}: {
-  href: string
-  icon: React.ElementType
-  label: string
-  variant?: 'default' | 'purple' | 'green'
-}) {
-  const variantStyles = {
-    default: 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground',
-    purple: 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20',
-    green: 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20',
-  }
-
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors ${variantStyles[variant]}`}
-    >
-      <Icon className="w-3.5 h-3.5" />
-      {label}
-    </a>
-  )
-}
-
-// Section card for sidebar - creates visual grouping
-function SidebarSection({
-  title,
-  children,
-  icon: Icon,
-}: {
-  title: string
-  icon?: React.ElementType
-  children: React.ReactNode
-}) {
-  return (
-    <div className="space-y-2">
-      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-        {Icon && <Icon className="w-3 h-3" />}
-        {title}
-      </h4>
-      <div className="bg-muted/30 rounded-lg p-3 border border-border/50">{children}</div>
-    </div>
-  )
-}
-
-// Action button with different visual styles based on importance
-function ActionButton({
-  onClick,
-  icon: Icon,
-  label,
-  variant = 'secondary',
-  disabled = false,
-  confirmMessage,
-  isPending = false,
-}: {
-  onClick: () => void
-  icon: React.ElementType
-  label: string
-  variant?: 'primary' | 'secondary' | 'destructive' | 'ghost'
-  disabled?: boolean
-  confirmMessage?: string
-  isPending?: boolean
-}) {
-  const variantStyles = {
-    primary: 'text-blue-400 border-blue-500/20 hover:bg-blue-500/10 hover:border-blue-500/40',
-    secondary: 'text-foreground border-border hover:bg-muted',
-    destructive: 'text-red-400 border-red-500/20 hover:bg-red-500/10 hover:border-red-500/40',
-    ghost: 'text-muted-foreground hover:text-foreground hover:bg-muted border-transparent',
-  }
-
-  const handleClick = () => {
-    if (confirmMessage) {
-      if (confirm(confirmMessage)) onClick()
-    } else {
-      onClick()
-    }
-  }
-
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      className={`w-full justify-start ${variantStyles[variant]}`}
-      onClick={handleClick}
-      disabled={disabled || isPending}
-    >
-      {isPending ? (
-        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-      ) : (
-        <Icon className="w-3.5 h-3.5 mr-1.5" />
-      )}
-      {label}
-    </Button>
-  )
-}
 
 // Tab button with optional count badge
 function TabButton({
@@ -277,34 +187,284 @@ function StatusBadge({ column, pipelineState }: { column: ColumnId; pipelineStat
   )
 }
 
-// Helper icons
-function TagIcon({ className }: { className?: string }) {
+// ── Contextual Primary Action ──
+// Returns the ONE most important action for the current state
+function getPrimaryAction(
+  task: CodyTask,
+  fullDetails: FullTaskDetails | null,
+  taskActions: ReturnType<typeof useTaskActions>,
+  completedActions: Set<string>,
+  setCompletedActions: React.Dispatch<React.SetStateAction<Set<string>>>,
+): {
+  icon: React.ElementType
+  label: string
+  pendingLabel: string
+  onClick: () => void
+  pendingKey: string
+  variant: 'blue' | 'yellow' | 'red' | 'green'
+} | null {
+  // Gate waiting → Approve
+  if (task.column === 'gate-waiting' && !completedActions.has('approve')) {
+    return {
+      icon: ShieldCheck,
+      label: 'Approve Gate',
+      pendingLabel: 'Approving…',
+      onClick: () => {
+        setCompletedActions((prev) => new Set([...prev, 'approve']))
+        taskActions.approveGate()
+      },
+      pendingKey: 'approve',
+      variant: 'yellow',
+    }
+  }
+  // Failed → Retry
+  if (task.column === 'failed') {
+    return {
+      icon: RotateCcw,
+      label: 'Retry',
+      pendingLabel: 'Retrying…',
+      onClick: () => taskActions.execute(),
+      pendingKey: 'execute',
+      variant: 'red',
+    }
+  }
+  // Open + unassigned + in backlog → Run Task (not for review/done/building/gate columns)
+  if (
+    task.state === 'open' &&
+    task.column === 'open' &&
+    (!fullDetails?.assignees || fullDetails.assignees.length === 0)
+  ) {
+    return {
+      icon: Zap,
+      label: 'Run Task',
+      pendingLabel: 'Starting…',
+      onClick: () => taskActions.execute(),
+      pendingKey: 'execute',
+      variant: 'blue',
+    }
+  }
+  return null
+}
+
+// Secondary/overflow actions
+function getOverflowActions(
+  task: CodyTask,
+  taskActions: ReturnType<typeof useTaskActions>,
+  completedActions: Set<string>,
+  setCompletedActions: React.Dispatch<React.SetStateAction<Set<string>>>,
+): Array<{
+  icon: React.ElementType
+  label: string
+  pendingLabel: string
+  onClick: () => void
+  pendingKey: string
+  destructive?: boolean
+  confirmMessage?: string
+}> {
+  const actions: Array<{
+    icon: React.ElementType
+    label: string
+    pendingLabel: string
+    onClick: () => void
+    pendingKey: string
+    destructive?: boolean
+    confirmMessage?: string
+  }> = []
+
+  // Stop (if running)
+  if (task.pipeline?.state === 'running') {
+    actions.push({
+      icon: Ban,
+      label: 'Stop',
+      pendingLabel: 'Stopping…',
+      onClick: () => taskActions.abort(),
+      pendingKey: 'abort',
+      destructive: true,
+    })
+  }
+
+  // Reject Gate
+  if (task.column === 'gate-waiting' && !completedActions.has('reject')) {
+    actions.push({
+      icon: ShieldX,
+      label: 'Reject Gate',
+      pendingLabel: 'Rejecting…',
+      onClick: () => {
+        setCompletedActions((prev) => new Set([...prev, 'reject']))
+        taskActions.rejectGate()
+      },
+      pendingKey: 'reject',
+      destructive: true,
+    })
+  }
+
+  // Close PR
+  if (task.associatedPR && task.associatedPR.state === 'open') {
+    actions.push({
+      icon: XCircle,
+      label: 'Close PR',
+      pendingLabel: 'Closing…',
+      onClick: () => taskActions.closePR(),
+      pendingKey: 'close-pr',
+      confirmMessage: `Close PR #${task.associatedPR.number}? This will NOT delete the branch.`,
+    })
+  }
+
+  // Close / Reopen Issue
+  actions.push({
+    icon: task.state === 'open' ? XCircle : RotateCcw,
+    label: task.state === 'open' ? 'Close Issue' : 'Reopen Issue',
+    pendingLabel: task.state === 'open' ? 'Closing…' : 'Reopening…',
+    onClick: () => (task.state === 'open' ? taskActions.close() : taskActions.reopen()),
+    pendingKey: task.state === 'open' ? 'close' : 'reopen',
+  })
+
+  // Reset
+  if (
+    (task.column === 'done' || task.column === 'failed' || task.associatedPR) &&
+    task.state === 'open'
+  ) {
+    actions.push({
+      icon: RotateCcw,
+      label: 'Reset & Re-run',
+      pendingLabel: 'Resetting…',
+      onClick: () => taskActions.reset(),
+      pendingKey: 'reset',
+      confirmMessage:
+        'This will delete the branch, close the PR, remove all agent labels, and re-run the pipeline from scratch. Continue?',
+    })
+  }
+
+  return actions
+}
+
+// Overflow menu component
+function OverflowMenu({
+  actions,
+  isPending,
+  pendingAction,
+}: {
+  actions: ReturnType<typeof getOverflowActions>
+  isPending: boolean
+  pendingAction: string | null
+}) {
+  const [open, setOpen] = useState(false)
+
+  if (actions.length === 0) return null
+
   return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.42 0l8.58-8.58a1 1 0 0 0 0-1.42L12 2Z" />
-      <circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" />
-    </svg>
+    <div className="relative">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0"
+        onClick={() => setOpen(!open)}
+        title="More actions"
+      >
+        <MoreHorizontal className="w-4 h-4" />
+      </Button>
+      {open && (
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          {/* Menu */}
+          <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-popover border border-border rounded-lg shadow-lg py-1">
+            {actions.map((action) => {
+              const isActionPending = pendingAction === action.pendingKey
+              const handleClick = () => {
+                if (action.confirmMessage) {
+                  if (!confirm(action.confirmMessage)) return
+                }
+                action.onClick()
+                setOpen(false)
+              }
+              return (
+                <button
+                  key={action.label}
+                  onClick={handleClick}
+                  disabled={isPending}
+                  className={cn(
+                    'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
+                    action.destructive
+                      ? 'text-red-400 hover:bg-red-500/10'
+                      : 'text-foreground hover:bg-muted',
+                    isPending && 'opacity-50 cursor-not-allowed',
+                  )}
+                >
+                  {isActionPending ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <action.icon className="w-3.5 h-3.5" />
+                  )}
+                  {isActionPending ? action.pendingLabel : action.label}
+                </button>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </div>
   )
 }
 
-function UserIcon({ className }: { className?: string }) {
+// ── Inline Pipeline Timeline for main content ──
+function InlinePipelineTimeline({ pipeline }: { pipeline: CodyPipelineStatus }) {
+  const progress = calculatePipelineProgress(pipeline)
+  const isRunning = pipeline.state === 'running'
+  const isPaused = pipeline.state === 'paused'
+
   return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
-    </svg>
+    <div className="flex items-center gap-3 px-5 py-3 border-b border-border bg-muted/10">
+      {/* Stage dots */}
+      <div className="flex items-center gap-1">
+        {ALL_STAGES.map((stage, i) => {
+          const isCompleted = i < progress.currentStageIndex
+          const isCurrent = i === progress.currentStageIndex
+          const isPendingStage = i > progress.currentStageIndex
+
+          return (
+            <div
+              key={stage}
+              className={cn(
+                'rounded-full transition-all duration-300',
+                isCurrent ? 'w-2.5 h-2.5' : 'w-1.5 h-1.5',
+                isCompleted && 'bg-blue-500',
+                isCurrent &&
+                  isRunning &&
+                  'bg-blue-400 animate-pulse shadow-[0_0_6px_rgba(96,165,250,0.6)]',
+                isCurrent && isPaused && 'bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.5)]',
+                isPendingStage && 'bg-zinc-600/40',
+              )}
+              title={stageLabels[stage] || stage}
+            />
+          )
+        })}
+      </div>
+
+      {/* Label */}
+      <span
+        className={cn(
+          'text-sm font-medium',
+          isRunning && 'text-blue-400',
+          isPaused && 'text-yellow-400',
+        )}
+      >
+        {progress.currentStageLabel}
+      </span>
+
+      {/* Step counter */}
+      <span className="text-xs text-zinc-500 font-mono tabular-nums">
+        {progress.stepNumber}/{progress.totalStages}
+      </span>
+
+      {/* Elapsed time */}
+      {pipeline.startedAt && (
+        <span className="text-xs text-zinc-500 font-mono tabular-nums flex items-center gap-0.5 ml-auto">
+          <Timer className="w-3 h-3" />
+          {formatElapsed(new Date(pipeline.startedAt))}
+        </span>
+      )}
+    </div>
   )
 }
 
@@ -336,7 +496,7 @@ export function TaskDetail({
   )
   const [retryContext, setRetryContext] = useState('')
   const [showRetryContext, setShowRetryContext] = useState(false)
-  const [showMobileInfo, setShowMobileInfo] = useState(false)
+  const [showMobileExtra, setShowMobileExtra] = useState(false)
   const [completedActions, setCompletedActions] = useState<Set<string>>(new Set())
   const [isRefreshing, setIsRefreshing] = useState(false)
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -357,7 +517,7 @@ export function TaskDetail({
 
   useEffect(() => {
     setCompletedActions(new Set())
-    setShowMobileInfo(false)
+    setShowMobileExtra(false)
     setActiveTab('description')
   }, [task?.issueNumber])
 
@@ -412,6 +572,26 @@ export function TaskDetail({
 
   const hasDescription = task.body && task.body.trim().length > 0
   const commentsCount = fullDetails?.comments?.length || 0
+  const hasPR = !!task.associatedPR
+  const showPipelineTimeline =
+    task.pipeline &&
+    (task.pipeline.state === 'running' || task.pipeline.state === 'paused') &&
+    task.pipeline.currentStage
+
+  // Contextual actions
+  const primaryAction = getPrimaryAction(
+    task,
+    fullDetails,
+    taskActions,
+    completedActions,
+    setCompletedActions,
+  )
+  const overflowActions = getOverflowActions(
+    task,
+    taskActions,
+    completedActions,
+    setCompletedActions,
+  )
 
   // --- Shared markdown components ---
   const markdownComponents = {
@@ -509,161 +689,6 @@ export function TaskDetail({
     ),
   }
 
-  // --- Quick Links ---
-  const quickLinks = (
-    <div className="flex flex-wrap gap-1.5">
-      <QuickLinkButton
-        href={getGitHubIssueUrl(task.issueNumber)}
-        icon={Github}
-        label={`#${task.issueNumber}`}
-      />
-      {task.associatedPR && (
-        <>
-          <QuickLinkButton
-            href={task.associatedPR.html_url}
-            icon={GitPullRequest}
-            label={`PR #${task.associatedPR.number}`}
-            variant="purple"
-          />
-          {task.column === 'review' && onApproveReview && (
-            <MergeButton
-              prNumber={task.associatedPR.number}
-              prTitle={task.associatedPR.title}
-              branchName={task.associatedPR.head.ref}
-              isMerging={externalIsMerging ?? false}
-              onMerge={() => onApproveReview(task)}
-            />
-          )}
-        </>
-      )}
-      {task.previewUrl && (
-        <QuickLinkButton
-          href={task.previewUrl}
-          icon={ExternalLink}
-          label="Preview"
-          variant="green"
-        />
-      )}
-      {task.workflowRun && (
-        <QuickLinkButton href={task.workflowRun.html_url} icon={Play} label="Workflow" />
-      )}
-    </div>
-  )
-
-  // --- Action Buttons Grouped by Importance ---
-  const actionButtons = (
-    <div className="space-y-2">
-      {/* Primary Actions - Run / Approve / Retry */}
-      <div className="space-y-1">
-        {task.state === 'open' &&
-          (!fullDetails?.assignees || fullDetails.assignees.length === 0) && (
-            <ActionButton
-              onClick={() => taskActions.execute()}
-              icon={Zap}
-              label={taskActions.pendingAction === 'execute' ? 'Starting…' : 'Run Task'}
-              variant="primary"
-              isPending={taskActions.pendingAction === 'execute'}
-              disabled={taskActions.isPending}
-            />
-          )}
-        {task.column === 'gate-waiting' && !completedActions.has('approve') && (
-          <ActionButton
-            onClick={() => {
-              setCompletedActions((prev) => new Set([...prev, 'approve']))
-              taskActions.approveGate()
-            }}
-            icon={ShieldCheck}
-            label={taskActions.pendingAction === 'approve' ? 'Approving…' : 'Approve Gate'}
-            variant="primary"
-            isPending={taskActions.pendingAction === 'approve'}
-            disabled={taskActions.isPending}
-          />
-        )}
-        {task.column === 'failed' && (
-          <ActionButton
-            onClick={() => taskActions.execute()}
-            icon={RotateCcw}
-            label={taskActions.pendingAction === 'execute' ? 'Retrying…' : 'Retry'}
-            variant="primary"
-            isPending={taskActions.pendingAction === 'execute'}
-            disabled={taskActions.isPending}
-          />
-        )}
-      </div>
-
-      {/* Secondary Actions - Stop / Reject */}
-      <div className="space-y-1">
-        {task.pipeline?.state === 'running' && (
-          <ActionButton
-            onClick={() => taskActions.abort()}
-            icon={Ban}
-            label={taskActions.pendingAction === 'abort' ? 'Stopping…' : 'Stop'}
-            variant="destructive"
-            isPending={taskActions.pendingAction === 'abort'}
-            disabled={taskActions.isPending}
-          />
-        )}
-        {task.column === 'gate-waiting' && !completedActions.has('reject') && (
-          <ActionButton
-            onClick={() => {
-              setCompletedActions((prev) => new Set([...prev, 'reject']))
-              taskActions.rejectGate()
-            }}
-            icon={ShieldX}
-            label={taskActions.pendingAction === 'reject' ? 'Rejecting…' : 'Reject Gate'}
-            variant="destructive"
-            isPending={taskActions.pendingAction === 'reject'}
-            disabled={taskActions.isPending}
-          />
-        )}
-      </div>
-
-      {/* Tertiary Actions - Close PR / Close Issue / Reset */}
-      <div className="space-y-1 pt-2 border-t border-border/50">
-        {task.associatedPR && task.associatedPR.state === 'open' && (
-          <ActionButton
-            onClick={() => taskActions.closePR()}
-            icon={XCircle}
-            label="Close PR"
-            variant="ghost"
-            isPending={taskActions.isPending}
-            confirmMessage={`Close PR #${task.associatedPR?.number}? This will NOT delete the branch.`}
-          />
-        )}
-        <ActionButton
-          onClick={() => (task.state === 'open' ? taskActions.close() : taskActions.reopen())}
-          icon={task.state === 'open' ? XCircle : RotateCcw}
-          label={
-            task.state === 'open'
-              ? taskActions.pendingAction === 'close'
-                ? 'Closing…'
-                : 'Close Issue'
-              : taskActions.pendingAction === 'reopen'
-                ? 'Reopening…'
-                : 'Reopen Issue'
-          }
-          variant="ghost"
-          isPending={
-            taskActions.pendingAction === 'close' || taskActions.pendingAction === 'reopen'
-          }
-          disabled={taskActions.isPending}
-        />
-        {(task.column === 'done' || task.column === 'failed' || task.associatedPR) &&
-          task.state === 'open' && (
-            <ActionButton
-              onClick={() => taskActions.reset()}
-              icon={RotateCcw}
-              label={taskActions.pendingAction === 'reset' ? 'Resetting…' : 'Reset & Re-run'}
-              variant="ghost"
-              isPending={taskActions.pendingAction === 'reset'}
-              disabled={taskActions.isPending}
-              confirmMessage="This will delete the branch, close the PR, remove all agent labels, and re-run the pipeline from scratch. Continue?"
-            />
-          )}
-      </div>
-    </div>
-  )
-
   // --- Retry With Context Block ---
   const retryWithContextBlock = task.column === 'failed' && (
     <div className="border-t border-orange-500/20 bg-orange-500/5 mt-2">
@@ -713,15 +738,19 @@ export function TaskDetail({
     </div>
   )
 
-  // --- Tab Configuration ---
+  // --- Tab Configuration (improvement #6: conditional tabs with counts) ---
   const tabs = [
     ...(hasDescription
       ? [{ key: 'description' as const, label: 'Description', icon: FileText }]
       : []),
     { key: 'comments' as const, label: 'Comments', icon: MessageSquare, count: commentsCount },
-    { key: 'changes' as const, label: 'Changes', icon: GitBranch },
-    { key: 'docs' as const, label: 'Docs', icon: BookOpen },
+    ...(hasPR ? [{ key: 'changes' as const, label: 'Changes', icon: GitBranch }] : []),
+    ...(hasPR ? [{ key: 'docs' as const, label: 'Docs', icon: BookOpen }] : []),
   ]
+
+  // Compute effective tab: if current tab was removed (e.g. no PR → no Changes/Docs), fallback
+  const validKeys = tabs.map((t) => t.key)
+  const effectiveTab = validKeys.includes(activeTab) ? activeTab : validKeys[0] || 'comments'
 
   // --- Tab Bar ---
   const tabBar = (
@@ -729,7 +758,7 @@ export function TaskDetail({
       {tabs.map(({ key, label, icon, count }) => (
         <TabButton
           key={key}
-          active={activeTab === key}
+          active={effectiveTab === key}
           onClick={() => setActiveTab(key)}
           label={label}
           icon={icon}
@@ -742,7 +771,7 @@ export function TaskDetail({
   // --- Tab Content ---
   const tabContent = (
     <>
-      {activeTab === 'description' && hasDescription && (
+      {effectiveTab === 'description' && hasDescription && (
         <div className="p-5 md:p-6 overflow-y-auto h-full">
           <div className="max-w-3xl">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
@@ -751,7 +780,7 @@ export function TaskDetail({
           </div>
         </div>
       )}
-      {activeTab === 'comments' && (
+      {effectiveTab === 'comments' && (
         <div className="flex flex-col h-full">
           <div className="flex-1 overflow-y-auto p-4">
             <CommentList comments={fullDetails?.comments || []} loading={isDetailsFetching} />
@@ -762,41 +791,54 @@ export function TaskDetail({
           {retryWithContextBlock}
         </div>
       )}
-      {(activeTab === 'changes' || activeTab === 'docs') && (
+      {(effectiveTab === 'changes' || effectiveTab === 'docs') && (
         <div className="p-4 overflow-y-auto h-full">
-          <TaskPreviewTab task={task} activeTab={activeTab as 'changes' | 'docs'} />
+          <TaskPreviewTab task={task} activeTab={effectiveTab as 'changes' | 'docs'} />
         </div>
       )}
     </>
   )
 
-  // --- Header ---
+  // --- Assignee handler (shared between desktop & mobile) ---
+  const handleAssigneeChange = (event: AssigneeChangeEvent) => {
+    const current = fullDetails?.assignees || []
+    if (event.action === 'assign') {
+      setAssigneeOverride([...current, { login: event.login, avatar_url: event.avatar_url }])
+    } else {
+      setAssigneeOverride(current.filter((a) => a.login !== event.login))
+    }
+    queryClient.invalidateQueries({ queryKey: queryKeys.taskDetails(task.issueNumber) })
+    queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
+    onRefresh?.()
+  }
+
+  // Primary action button colors
+  const primaryVariantStyles = {
+    blue: 'bg-blue-500/15 text-blue-400 border-blue-500/30 hover:bg-blue-500/25',
+    yellow: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/25',
+    red: 'bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/25',
+    green: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25',
+  }
+
+  // --- Header (improved: thicker bar, wash, quick links as icons) ---
   const header = (
     <>
-      {/* Colored accent bar */}
-      <div className={`h-1.5 ${columnColors[task.column].bar} shrink-0`} />
+      {/* Improvement #5: Thicker accent bar */}
+      <div className={`h-2 ${columnColors[task.column].bar} shrink-0`} />
 
-      {/* Header content */}
-      <div className="px-4 md:px-5 pt-3 md:pt-4 pb-3 border-b border-border bg-gradient-to-b from-background to-muted/20">
-        {/* Top row: Status + Issue # + Timestamp + Actions */}
+      {/* Header content with subtle status-colored wash */}
+      <div
+        className={`px-4 md:px-5 pt-3 md:pt-4 pb-3 border-b border-border bg-gradient-to-b ${columnColors[task.column].wash} to-transparent`}
+      >
+        {/* Row 1: Status + Timestamp (left) | Refresh + Close (right) */}
         <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
             <StatusBadge column={task.column} pipelineState={task.pipeline?.state} />
-            <a
-              href={getGitHubIssueUrl(task.issueNumber)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-muted-foreground hover:text-blue-400 flex items-center gap-1"
-            >
-              <Link2 className="w-3 h-3" />#{task.issueNumber}
-            </a>
             <span className="text-sm text-muted-foreground flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {formatRelativeTime(task.updatedAt)}
             </span>
           </div>
-
-          {/* Action buttons */}
           <div className="flex items-center gap-1 shrink-0">
             <Button
               variant="ghost"
@@ -816,66 +858,258 @@ export function TaskDetail({
           </div>
         </div>
 
-        {/* Title - Prominent */}
-        <h2 className="text-lg md:text-xl font-semibold text-foreground leading-snug pr-8">
+        {/* Row 2: Title */}
+        <h2 className="text-lg md:text-xl font-semibold text-foreground leading-snug pr-8 mb-3">
           {task.title}
         </h2>
 
-        {/* Sub-status badges */}
-        <div className="flex items-center gap-2 mt-2 flex-wrap">
-          {task.column === 'gate-waiting' && task.gateType === 'hard-stop' && (
-            <Badge variant="destructive" className="text-xs px-2 py-0.5">
-              <AlertTriangle className="w-2.5 h-2.5 mr-0.5" /> HARD STOP
-            </Badge>
-          )}
-          {task.isTimeout && (
-            <Badge
-              variant="outline"
-              className="border-orange-500/50 text-orange-400 text-xs px-2 py-0.5"
+        {/* Row 3: Quick link pills (left) | Actions (right) */}
+        <div className="flex items-center justify-between gap-3">
+          {/* Quick link pills - labeled, easy to read */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <a
+              href={getGitHubIssueUrl(task.issueNumber)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             >
-              ⏰ TIMEOUT
-            </Badge>
-          )}
-          {task.isExhausted && (
-            <Badge
-              variant="outline"
-              className="border-orange-500/50 text-orange-400 text-xs px-2 py-0.5"
-            >
-              EXHAUSTED
-            </Badge>
-          )}
-          {task.isSupervisorError && (
-            <Badge variant="destructive" className="text-xs px-2 py-0.5">
-              ERROR
-            </Badge>
-          )}
-          {task.clarifyWaiting && (
-            <Badge
-              variant="outline"
-              className="border-blue-500/50 text-blue-400 text-xs px-2 py-0.5"
-            >
-              💬 NEEDS ANSWER
-            </Badge>
-          )}
+              <Github className="w-3 h-3" />#{task.issueNumber}
+            </a>
+            {task.associatedPR && (
+              <a
+                href={task.associatedPR.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
+              >
+                <GitPullRequest className="w-3 h-3" />
+                PR #{task.associatedPR.number}
+              </a>
+            )}
+            {task.workflowRun && (
+              <a
+                href={task.workflowRun.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                <Play className="w-3 h-3" />
+                Workflow
+              </a>
+            )}
+            {task.previewUrl && (
+              <a
+                href={task.previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Preview
+              </a>
+            )}
+          </div>
+
+          {/* Right side: Merge (if review) + Primary action + Overflow */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Merge button (in review) */}
+            {task.column === 'review' && task.associatedPR && onApproveReview && (
+              <MergeButton
+                prNumber={task.associatedPR.number}
+                prTitle={task.associatedPR.title}
+                branchName={task.associatedPR.head.ref}
+                isMerging={externalIsMerging ?? false}
+                onMerge={() => onApproveReview(task)}
+              />
+            )}
+
+            {/* Contextual primary action */}
+            {primaryAction && (
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  'h-8 gap-1.5 text-sm font-medium',
+                  primaryVariantStyles[primaryAction.variant],
+                )}
+                onClick={primaryAction.onClick}
+                disabled={taskActions.isPending}
+              >
+                {taskActions.pendingAction === primaryAction.pendingKey ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <primaryAction.icon className="w-3.5 h-3.5" />
+                )}
+                <span className="hidden sm:inline">
+                  {taskActions.pendingAction === primaryAction.pendingKey
+                    ? primaryAction.pendingLabel
+                    : primaryAction.label}
+                </span>
+              </Button>
+            )}
+
+            {/* Overflow menu */}
+            <OverflowMenu
+              actions={overflowActions}
+              isPending={taskActions.isPending}
+              pendingAction={taskActions.pendingAction}
+            />
+          </div>
         </div>
+
+        {/* Sub-status badges (below row 3) */}
+        {(task.column === 'gate-waiting' ||
+          task.isTimeout ||
+          task.isExhausted ||
+          task.isSupervisorError ||
+          task.clarifyWaiting) && (
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            {task.column === 'gate-waiting' && task.gateType === 'hard-stop' && (
+              <Badge variant="destructive" className="text-xs px-2 py-0.5">
+                <AlertTriangle className="w-2.5 h-2.5 mr-0.5" /> HARD STOP
+              </Badge>
+            )}
+            {task.isTimeout && (
+              <Badge
+                variant="outline"
+                className="border-orange-500/50 text-orange-400 text-xs px-2 py-0.5"
+              >
+                ⏰ TIMEOUT
+              </Badge>
+            )}
+            {task.isExhausted && (
+              <Badge
+                variant="outline"
+                className="border-orange-500/50 text-orange-400 text-xs px-2 py-0.5"
+              >
+                EXHAUSTED
+              </Badge>
+            )}
+            {task.isSupervisorError && (
+              <Badge variant="destructive" className="text-xs px-2 py-0.5">
+                ERROR
+              </Badge>
+            )}
+            {task.clarifyWaiting && (
+              <Badge
+                variant="outline"
+                className="border-blue-500/50 text-blue-400 text-xs px-2 py-0.5"
+              >
+                💬 NEEDS ANSWER
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
     </>
   )
 
-  // --- Desktop Layout ---
+  // --- Desktop Layout: sidebar with card styling ---
   const desktopLayout = (
     <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
-      {/* Left sidebar with improved visual grouping */}
+      {/* Left sidebar — with card styling */}
       <div className="w-56 shrink-0 border-r border-border overflow-y-auto bg-muted/5">
         <div className="p-4 space-y-4">
-          {/* Links Section */}
-          <SidebarSection title="Links" icon={Link2}>
-            {quickLinks}
-          </SidebarSection>
+          {/* Card: People & Labels — merged into one section */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              People & Labels
+            </h4>
+            <div className="bg-muted/30 rounded-lg p-3 border border-border/50 space-y-3">
+              {/* Assignees */}
+              <AssigneePicker
+                issueNumber={task.issueNumber}
+                currentAssignees={fullDetails?.assignees || []}
+                onChange={handleAssigneeChange}
+              />
 
-          {/* Labels Section */}
-          {task.labels.length > 0 && (
-            <SidebarSection title="Labels" icon={TagIcon}>
+              {/* Labels - below assignees with separator */}
+              {task.labels.length > 0 && (
+                <div className="pt-2 border-t border-border/30">
+                  <div className="flex flex-wrap gap-1">
+                    {task.labels.map((label) => (
+                      <Badge key={label} variant="outline" className="text-xs font-normal">
+                        {label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Pipeline — as separate card, only if exists */}
+          {task.pipeline && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Pipeline
+              </h4>
+              <div className="bg-muted/30 rounded-lg p-3 border border-border/50">
+                <PipelineStatus status={task.pipeline} />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right content */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Improvement #7: Inline pipeline timeline above tabs */}
+        {showPipelineTimeline && <InlinePipelineTimeline pipeline={task.pipeline!} />}
+        {tabBar}
+        <div className="flex-1 min-h-0 overflow-hidden">{tabContent}</div>
+      </div>
+    </div>
+  )
+
+  // --- Mobile Layout (improvement #4: show assignees + primary action by default) ---
+  const mobileLayout = (
+    <div className="md:hidden flex-1 flex flex-col min-h-0 overflow-hidden">
+      {/* Mobile top section — always visible: assignees + primary action */}
+      <div className="shrink-0 px-3 py-3 border-b border-border space-y-2">
+        {/* Assignees row — always visible */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground font-medium shrink-0">Assigned:</span>
+          {fullDetails?.assignees && fullDetails.assignees.length > 0 ? (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {fullDetails.assignees.map((assignee) => (
+                <div
+                  key={assignee.login}
+                  className="flex items-center gap-1 bg-muted/50 px-2 py-0.5 rounded"
+                >
+                  <Avatar className="h-4 w-4">
+                    <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
+                    <AvatarFallback className="text-[9px]">
+                      {assignee.login[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs">{assignee.login}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground italic">Unassigned</span>
+          )}
+        </div>
+
+        {/* Toggle for labels, pipeline, full assignee picker */}
+        <button
+          onClick={() => setShowMobileExtra(!showMobileExtra)}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground w-full"
+        >
+          <Info className="w-3.5 h-3.5" />
+          <span>{showMobileExtra ? 'Hide details' : 'More details'}</span>
+          {showMobileExtra ? (
+            <ChevronUp className="w-3.5 h-3.5 ml-auto" />
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5 ml-auto" />
+          )}
+        </button>
+
+        {showMobileExtra && (
+          <div className="space-y-3 pb-2">
+            {/* Labels */}
+            {task.labels.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {task.labels.map((label) => (
                   <Badge key={label} variant="outline" className="text-xs font-normal">
@@ -883,122 +1117,23 @@ export function TaskDetail({
                   </Badge>
                 ))}
               </div>
-            </SidebarSection>
-          )}
+            )}
 
-          {/* Assignees Section */}
-          <SidebarSection title="Assignees" icon={UserIcon}>
+            {/* Full assignee picker */}
             <AssigneePicker
               issueNumber={task.issueNumber}
               currentAssignees={fullDetails?.assignees || []}
-              onChange={(event: AssigneeChangeEvent) => {
-                // Optimistic update
-                const current = fullDetails?.assignees || []
-                if (event.action === 'assign') {
-                  setAssigneeOverride([
-                    ...current,
-                    { login: event.login, avatar_url: event.avatar_url },
-                  ])
-                } else {
-                  setAssigneeOverride(current.filter((a) => a.login !== event.login))
-                }
-                // Invalidate queries for eventual consistency
-                queryClient.invalidateQueries({
-                  queryKey: queryKeys.taskDetails(task.issueNumber),
-                })
-                queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
-                onRefresh?.()
-              }}
+              onChange={handleAssigneeChange}
             />
-          </SidebarSection>
-
-          {/* Pipeline Section */}
-          {task.pipeline && (
-            <SidebarSection title="Pipeline" icon={GitBranch}>
-              <PipelineStatus status={task.pipeline} />
-            </SidebarSection>
-          )}
-
-          {/* Actions Section */}
-          <SidebarSection title="Actions" icon={Zap}>
-            {actionButtons}
-          </SidebarSection>
-        </div>
-      </div>
-
-      {/* Right content - tabs */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {tabBar}
-        <div className="flex-1 min-h-0 overflow-hidden">{tabContent}</div>
-      </div>
-    </div>
-  )
-
-  // --- Mobile Layout ---
-  const mobileLayout = (
-    <div className="md:hidden flex-1 flex flex-col min-h-0 overflow-hidden">
-      {/* Mobile top section */}
-      <div className="shrink-0 px-3 py-3 border-b border-border space-y-3">
-        {/* Quick links */}
-        {quickLinks}
-
-        {/* Info toggle */}
-        <button
-          onClick={() => setShowMobileInfo(!showMobileInfo)}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground w-full"
-        >
-          <Info className="w-3.5 h-3.5" />
-          <span>{showMobileInfo ? 'Hide details' : 'Show details'}</span>
-          {showMobileInfo ? (
-            <ChevronUp className="w-3.5 h-3.5 ml-auto" />
-          ) : (
-            <ChevronDown className="w-3.5 h-3.5 ml-auto" />
-          )}
-        </button>
-
-        {showMobileInfo && (
-          <div className="space-y-3 pb-2">
-            {/* Labels */}
-            {task.labels.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {task.labels.map((label) => (
-                  <Badge key={label} variant="outline" className="text-[10px] font-normal">
-                    {label}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            {/* Assignees */}
-            <div className="flex items-center gap-2">
-              {fullDetails?.assignees && fullDetails.assignees.length > 0 ? (
-                fullDetails.assignees.map((assignee) => (
-                  <div
-                    key={assignee.login}
-                    className="flex items-center gap-1 bg-muted/50 px-2 py-0.5 rounded"
-                  >
-                    <Avatar className="h-3.5 w-3.5">
-                      <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
-                      <AvatarFallback className="text-[9px]">
-                        {assignee.login[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-[11px]">{assignee.login}</span>
-                  </div>
-                ))
-              ) : (
-                <span className="text-[11px] text-muted-foreground italic">Unassigned</span>
-              )}
-            </div>
 
             {/* Pipeline */}
             {task.pipeline && <PipelineStatus status={task.pipeline} />}
-
-            {/* Actions */}
-            <div className="pt-2 border-t border-border">{actionButtons}</div>
           </div>
         )}
       </div>
+
+      {/* Inline pipeline timeline (mobile) */}
+      {showPipelineTimeline && <InlinePipelineTimeline pipeline={task.pipeline!} />}
 
       {/* Mobile tabs + content */}
       {tabBar}
