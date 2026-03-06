@@ -12,6 +12,8 @@ AGuy is not a typical website or LMS. It's a unified platform that integrates:
 - **Multi-Tenant**: Support for multiple organizations with isolated data
 - **Admin Panel**: Full-featured CMS with custom components
 
+📖 **[Read the full introduction](./docs/a-guy/intro.md)** — Learn about A-Guy's unique approach, advantages, and technical architecture.
+
 ## Tech Stack
 
 | Layer      | Technology                         |
@@ -199,6 +201,7 @@ pnpm release          # Semantic release
 
 Additional documentation is available in the `docs/` folder:
 
+- [Platform Introduction](./docs/a-guy/intro.md) - Unique approach, advantages, and architecture
 - [Course Hierarchy](./docs/course-hierarchy/README.md) - Content structure patterns
 - [Exercises](./docs/exercises/README.md) - Exercise types and rendering
 - [Exercise Import](./docs/exercise-import/README.md) - PDF to exercise flow

@@ -250,7 +250,7 @@
       ],
       "relativeUrl": "README.md",
       "category": "root",
-      "wordCount": 568
+      "wordCount": 592
     },
     {
       "path": "scripts/browser-agent/README.md",
@@ -543,7 +543,7 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-03-06T12:16:15.433Z",
+    "generatedAt": "2026-03-06T12:42:14.711Z",
     "totalReadmes": 32,
     "categories": {
       ".claude": 1,
