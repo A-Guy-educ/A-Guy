@@ -79,28 +79,33 @@ export function MergeButton({
         }
         side="bottom"
       >
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={isMerging || !canMerge || isLoading}
-          onClick={handleClick}
-          onMouseDown={handleMouseDown}
-          className={cn(
-            'h-8 text-sm px-2.5 gap-1.5 disabled:opacity-50',
-            canMerge
-              ? 'text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/30 hover:border-emerald-500/50 hover:shadow-lg cursor-pointer'
-              : 'text-muted-foreground bg-muted/30 cursor-not-allowed',
-          )}
-        >
-          {isMerging ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <CIIcon className={cn('w-3.5 h-3.5', config.color, config.spin && 'animate-spin')} />
-              <GitPullRequest className="w-4 h-4" />
-            </>
-          )}
-        </Button>
+        {/* Wrap in span so tooltip works even when button is disabled (disabled elements block pointer events) */}
+        <span className="inline-flex">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={isMerging || !canMerge || isLoading}
+            onClick={handleClick}
+            onMouseDown={handleMouseDown}
+            className={cn(
+              'h-8 text-sm px-2.5 gap-1.5 disabled:opacity-50',
+              canMerge
+                ? 'text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/30 hover:border-emerald-500/50 hover:shadow-lg cursor-pointer'
+                : 'text-muted-foreground bg-muted/30 cursor-not-allowed',
+            )}
+          >
+            {isMerging ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <CIIcon
+                  className={cn('w-3.5 h-3.5', config.color, config.spin && 'animate-spin')}
+                />
+                <GitPullRequest className="w-4 h-4" />
+              </>
+            )}
+          </Button>
+        </span>
       </SimpleTooltip>
 
       <MergeApprovalDialog
