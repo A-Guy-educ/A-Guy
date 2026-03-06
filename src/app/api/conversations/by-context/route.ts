@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { logger } from '@/infra/utils/logger/logger'
+import { DEFAULT_CONTENT_LOCALE, isValidContentLocale } from '@/server/payload/fields/contentLocale'
+import type { ContentLocale } from '@/server/payload/fields/contentLocale'
 
 export async function GET(request: NextRequest) {
   try {
@@ -70,9 +72,30 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const courseId = body.courseId as string | undefined
+    const requestLocale = body.locale as string | undefined
 
     if (!courseId) {
       return NextResponse.json({ error: 'courseId is required' }, { status: 400 })
+    }
+
+    // Resolve preferredLocale: request body → course locale → DEFAULT_CONTENT_LOCALE
+    let resolvedLocale: ContentLocale = DEFAULT_CONTENT_LOCALE
+    if (requestLocale && isValidContentLocale(requestLocale)) {
+      resolvedLocale = requestLocale
+    } else {
+      // Derive from course's locale field
+      const course = await payload.findByID({
+        collection: 'courses',
+        id: courseId,
+        depth: 0,
+        select: { locale: true },
+      })
+      if (course && typeof course === 'object' && 'locale' in course) {
+        const courseLocale = (course as { locale?: string }).locale
+        if (courseLocale && isValidContentLocale(courseLocale)) {
+          resolvedLocale = courseLocale
+        }
+      }
     }
 
     const contextKey = `ask:${courseId}:${Date.now()}`
@@ -86,7 +109,7 @@ export async function POST(request: NextRequest) {
         messages: [],
         lastMessageAt: new Date().toISOString(),
         contextPolicyVersion: 'v1',
-        preferredLocale: 'he',
+        preferredLocale: resolvedLocale,
       },
       draft: false,
       user,
