@@ -6,7 +6,7 @@
  */
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { CodyTask } from '../types'
 import { TaskList } from './TaskList'
 
@@ -44,7 +44,12 @@ import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
 import { SITE_URLS } from '../constants'
 
-export function CodyDashboard() {
+interface CodyDashboardProps {
+  initialIssueNumber?: number
+}
+
+export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
+  const initialIssueRef = useRef(initialIssueNumber)
   const [selectedTask, setSelectedTask] = useState<CodyTask | null>(null)
   const [executingTaskId, setExecutingTaskId] = useState<string | null>(null)
   const [mergingTaskId, setMergingTaskId] = useState<string | null>(null)
@@ -231,19 +236,62 @@ export function CodyDashboard() {
     }
   }
 
-  // Task selection — on mobile, open Sheet; on desktop, select in right panel
+  // Helper: extract issue number from URL pathname
+  const getIssueFromUrl = () => {
+    const match = window.location.pathname.match(/\/cody\/(\d+)/)
+    return match ? parseInt(match[1], 10) : null
+  }
+
+  // Task selection — uses pushState for browser history support
   const handleTaskSelect = (task: CodyTask | null) => {
     if (task) {
       setSelectedTask(task)
-      // Only open the mobile sheet on mobile
+      window.history.pushState(null, '', `/cody/${task.issueNumber}`)
       if (!isDesktop) {
         setShowMobileDetail(true)
       }
     } else {
       setSelectedTask(null)
       setShowMobileDetail(false)
+      window.history.pushState(null, '', '/cody')
     }
   }
+
+  // Auto-select task from URL on initial load
+  useEffect(() => {
+    const issueNum = initialIssueRef.current
+    if (!issueNum || selectedTask) return
+    if (tasks.length === 0) return
+
+    const match = tasks.find((t) => t.issueNumber === issueNum)
+    if (match) {
+      setSelectedTask(match)
+      if (!isDesktop) {
+        setShowMobileDetail(true)
+      }
+      initialIssueRef.current = undefined
+    }
+  }, [tasks, isDesktop]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Browser back/forward — listen to popstate and sync selected task
+  useEffect(() => {
+    const handlePopState = () => {
+      const issueNum = getIssueFromUrl()
+      if (issueNum) {
+        const match = tasks.find((t) => t.issueNumber === issueNum)
+        if (match) {
+          setSelectedTask(match)
+          if (!isDesktop) setShowMobileDetail(true)
+        }
+      } else {
+        setSelectedTask(null)
+        setShowMobileDetail(false)
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [tasks, isDesktop])
 
   // Mobile filter controls — rendered inside the mobile menu Sheet
   const mobileFilterControls = (
@@ -358,7 +406,7 @@ export function CodyDashboard() {
         {selectedTask ? (
           <TaskDetail
             task={selectedTask}
-            onClose={() => setSelectedTask(null)}
+            onClose={() => handleTaskSelect(null)}
             onRefresh={refetch}
             onApproveReview={handleMerge}
             isMerging={!!(selectedTask && mergingTaskId === selectedTask.id)}
@@ -600,8 +648,7 @@ export function CodyDashboard() {
           open={showMobileDetail && !!selectedTask}
           onOpenChange={(open) => {
             if (!open) {
-              setShowMobileDetail(false)
-              setSelectedTask(null)
+              handleTaskSelect(null)
             }
           }}
         >
@@ -612,10 +659,7 @@ export function CodyDashboard() {
             </SheetHeader>
             <TaskDetail
               task={selectedTask}
-              onClose={() => {
-                setShowMobileDetail(false)
-                setSelectedTask(null)
-              }}
+              onClose={() => handleTaskSelect(null)}
               onRefresh={refetch}
               onApproveReview={handleMerge}
               isMerging={!!(selectedTask && mergingTaskId === selectedTask.id)}

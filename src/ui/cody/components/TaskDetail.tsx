@@ -16,12 +16,13 @@ import { PipelineStatus } from './PipelineStatus'
 import { CommentEditor } from './CommentEditor'
 import { CommentList } from './CommentList'
 import { TaskPreviewTab } from './TaskPreviewTab'
-import { AssigneePicker } from './AssigneePicker'
+import { AssigneePicker, type AssigneeChangeEvent } from './AssigneePicker'
 import { MergeButton } from './MergeButton'
 import { Button } from '@/ui/web/components/button'
 import { Badge } from '@/ui/web/components/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
-import { useTaskActions, useTaskDetails, useRetryWithContext } from '../hooks'
+import { useTaskActions, useTaskDetails, useRetryWithContext, queryKeys } from '../hooks'
+import { useQueryClient } from '@tanstack/react-query'
 import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
 import {
   GitPullRequest,
@@ -319,6 +320,12 @@ export function TaskDetail({
   const { githubUser } = useGitHubIdentity()
   const actorLogin = githubUser?.login
 
+  const queryClient = useQueryClient()
+  const [assigneeOverride, setAssigneeOverride] = useState<Array<{
+    login: string
+    avatar_url: string
+  }> | null>(null)
+
   const {
     data: details,
     refetch,
@@ -378,10 +385,17 @@ export function TaskDetail({
     if (!details?.task || !task) return null
     return {
       ...task,
-      assignees: details.assignees || [],
+      assignees: assigneeOverride ?? details.assignees ?? [],
       comments: (details.comments as GitHubComment[]) || [],
     }
   })()
+
+  // Clear optimistic override once server data refreshes
+  useEffect(() => {
+    if (assigneeOverride && details?.assignees) {
+      setAssigneeOverride(null)
+    }
+  }, [details?.assignees]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!task) {
     return (
@@ -872,38 +886,28 @@ export function TaskDetail({
 
           {/* Assignees Section */}
           <SidebarSection title="Assignees" icon={UserIcon}>
-            {fullDetails?.assignees && fullDetails.assignees.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {fullDetails.assignees.map((assignee) => (
-                  <div
-                    key={assignee.login}
-                    className="flex items-center gap-2 bg-background px-2 py-1.5 rounded-md border border-border/50"
-                  >
-                    <Avatar className="h-5 w-5">
-                      <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
-                      <AvatarFallback className="text-[10px]">
-                        {assignee.login[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs text-foreground">{assignee.login}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <span className="text-xs text-muted-foreground italic">Unassigned</span>
-            )}
-            {task.state === 'open' && (
-              <div className="mt-3 pt-3 border-t border-border/50">
-                <AssigneePicker
-                  issueNumber={task.issueNumber}
-                  currentAssignees={fullDetails?.assignees || []}
-                  onChange={() => {
-                    refetch()
-                    onRefresh?.()
-                  }}
-                />
-              </div>
-            )}
+            <AssigneePicker
+              issueNumber={task.issueNumber}
+              currentAssignees={fullDetails?.assignees || []}
+              onChange={(event: AssigneeChangeEvent) => {
+                // Optimistic update
+                const current = fullDetails?.assignees || []
+                if (event.action === 'assign') {
+                  setAssigneeOverride([
+                    ...current,
+                    { login: event.login, avatar_url: event.avatar_url },
+                  ])
+                } else {
+                  setAssigneeOverride(current.filter((a) => a.login !== event.login))
+                }
+                // Invalidate queries for eventual consistency
+                queryClient.invalidateQueries({
+                  queryKey: queryKeys.taskDetails(task.issueNumber),
+                })
+                queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
+                onRefresh?.()
+              }}
+            />
           </SidebarSection>
 
           {/* Pipeline Section */}

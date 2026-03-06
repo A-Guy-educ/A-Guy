@@ -106,7 +106,7 @@ export function useTaskDetails(issueNumber: number | null, actorLogin?: string) 
     queryKey: queryKeys.taskDetails(issueNumber ?? -1),
     queryFn: () => codyApi.tasks.get(issueNumber!),
     enabled: !!issueNumber,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 5 * 1000, // 5 seconds - reduced for faster assignee updates
   })
 
   // Mutations for task actions
