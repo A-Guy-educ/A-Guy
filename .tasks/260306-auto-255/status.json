@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "taskId": "260306-auto-255",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-06T14:54:32.186Z",
+  "updatedAt": "2026-03-06T14:54:33.710Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-06T14:54:33.710Z"
+    }
+  },
+  "issueNumber": 682
+}

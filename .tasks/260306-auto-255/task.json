@@ -1,0 +1,26 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/app/global-error.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The navigator.language approach is acceptable for basic language detection in error boundary",
+    "The existing project uses Tailwind CSS throughout"
+  ],
+  "review_questions": [],
+  "complexity": 14,
+  "complexity_reasoning": "Scope: 5 (single file), Risk: 3 (UI fix), Novelty: 3 (Tailwind patterns), Cross: 0 (frontend only), Ambiguity: 2 (clear), Deps: 1 (self-contained). Total: 14",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task has clear ## Description with current behavior, expected behavior, ## Files to Change, and clear acceptance criteria. Promoted spec.md."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
