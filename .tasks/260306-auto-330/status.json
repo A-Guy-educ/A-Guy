@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "taskId": "260306-auto-330",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-06T03:41:38.097Z",
+  "updatedAt": "2026-03-06T03:43:58.408Z",
+  "state": "paused",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-03-06T03:41:39.602Z",
+      "completedAt": "2026-03-06T03:43:53.114Z",
+      "outputFile": "taskify.md"
+    }
+  },
+  "issueNumber": 687,
+  "completedAt": "2026-03-06T03:43:58.408Z"
+}
