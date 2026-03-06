@@ -11,6 +11,8 @@ import { cn, formatRelativeTime } from '../utils'
 import { getGitHubIssueUrl } from '../constants'
 import { MergeButton } from './MergeButton'
 import { MiniPipelineProgress } from './MiniPipelineProgress'
+import { SimpleTooltip } from './SimpleTooltip'
+import { StatusTooltipContent, SubStatusTooltipContent } from './tooltip-content'
 import type { CodyTask, ColumnId } from '../types'
 import { Button } from '@/ui/web/components/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
@@ -198,16 +200,20 @@ export function TaskList({
                       {task.assignees && task.assignees.length > 0 && (
                         <div className="flex items-center -space-x-1 shrink-0">
                           {task.assignees.map((assignee) => (
-                            <Avatar
+                            <SimpleTooltip
                               key={assignee.login}
-                              className="h-6 w-6 ring-2 ring-zinc-900"
-                              title={assignee.login}
+                              content={assignee.login}
+                              side="bottom"
                             >
-                              <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
-                              <AvatarFallback className="text-[8px]">
-                                {assignee.login[0]?.toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
+                              <span className="inline-block">
+                                <Avatar className="h-6 w-6 ring-2 ring-zinc-900">
+                                  <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
+                                  <AvatarFallback className="text-[8px]">
+                                    {assignee.login[0]?.toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </span>
+                            </SimpleTooltip>
                           ))}
                         </div>
                       )}
@@ -216,51 +222,61 @@ export function TaskList({
                     {/* Metadata line: #issue · Status · Pipeline · Time · Labels */}
                     <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1 flex-nowrap sm:flex-wrap overflow-hidden sm:overflow-visible">
                       {/* Issue number — colored by status */}
-                      <a
-                        href={getGitHubIssueUrl(task.issueNumber)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="View issue on GitHub"
-                        onClick={(e) => e.stopPropagation()}
-                        className={cn(
-                          'text-sm font-mono font-semibold hover:underline shrink-0',
-                          issueNumberColor[task.column],
-                        )}
-                      >
-                        #{task.issueNumber}
-                      </a>
+                      <SimpleTooltip content="View issue on GitHub" side="bottom">
+                        <a
+                          href={getGitHubIssueUrl(task.issueNumber)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className={cn(
+                            'text-sm font-mono font-semibold hover:underline shrink-0',
+                            issueNumberColor[task.column],
+                          )}
+                        >
+                          #{task.issueNumber}
+                        </a>
+                      </SimpleTooltip>
 
                       <Dot />
 
                       {/* Status label — plain text, no pill */}
-                      <span
-                        className={cn(
-                          'text-sm font-medium shrink-0',
-                          task.column === 'open' && 'dark:text-zinc-400 text-zinc-500',
-                          task.column === 'building' && 'text-blue-400',
-                          task.column === 'review' && 'text-purple-400',
-                          task.column === 'failed' && 'text-red-400',
-                          task.column === 'gate-waiting' && 'text-yellow-400',
-                          task.column === 'retrying' && 'text-orange-400',
-                          task.column === 'done' && 'text-emerald-400',
-                        )}
+                      <SimpleTooltip
+                        content={
+                          <StatusTooltipContent column={task.column} gateType={task.gateType} />
+                        }
+                        side="bottom"
                       >
-                        {/* Gate-specific labels */}
-                        {task.column === 'gate-waiting' && task.gateType === 'hard-stop'
-                          ? 'Hard Stop'
-                          : task.column === 'gate-waiting' && task.gateType === 'risk-gated'
-                            ? 'Risk Gated'
-                            : statusLabel[task.column]}
-                      </span>
+                        <span
+                          className={cn(
+                            'text-sm font-medium shrink-0 cursor-default',
+                            task.column === 'open' && 'dark:text-zinc-400 text-zinc-500',
+                            task.column === 'building' && 'text-blue-400',
+                            task.column === 'review' && 'text-purple-400',
+                            task.column === 'failed' && 'text-red-400',
+                            task.column === 'gate-waiting' && 'text-yellow-400',
+                            task.column === 'retrying' && 'text-orange-400',
+                            task.column === 'done' && 'text-emerald-400',
+                          )}
+                        >
+                          {/* Gate-specific labels */}
+                          {task.column === 'gate-waiting' && task.gateType === 'hard-stop'
+                            ? 'Hard Stop'
+                            : task.column === 'gate-waiting' && task.gateType === 'risk-gated'
+                              ? 'Risk Gated'
+                              : statusLabel[task.column]}
+                        </span>
+                      </SimpleTooltip>
 
                       {/* CODY badge — compact */}
                       {task.isCodyAssigned && (
                         <>
                           <Dot />
-                          <span className="shrink-0 inline-flex items-center gap-0.5 text-xs font-bold text-blue-400">
-                            <Bot className="w-3 h-3" />
-                            CODY
-                          </span>
+                          <SimpleTooltip content="Assigned to Cody AI agent" side="bottom">
+                            <span className="shrink-0 inline-flex items-center gap-0.5 text-xs font-bold text-blue-400 cursor-default">
+                              <Bot className="w-3 h-3" />
+                              CODY
+                            </span>
+                          </SimpleTooltip>
                         </>
                       )}
 
@@ -276,37 +292,57 @@ export function TaskList({
                       {task.isTimeout && (
                         <>
                           <Dot />
-                          <span className="shrink-0 hidden sm:inline-flex items-center gap-0.5 text-xs font-semibold text-orange-400">
-                            <Clock className="w-3 h-3" />
-                            Timeout
-                          </span>
+                          <SimpleTooltip
+                            content={<SubStatusTooltipContent type="timeout" />}
+                            side="bottom"
+                          >
+                            <span className="shrink-0 hidden sm:inline-flex items-center gap-0.5 text-xs font-semibold text-orange-400 cursor-default">
+                              <Clock className="w-3 h-3" />
+                              Timeout
+                            </span>
+                          </SimpleTooltip>
                         </>
                       )}
                       {task.isExhausted && (
                         <>
                           <Dot />
-                          <span className="shrink-0 hidden sm:inline-flex items-center gap-0.5 text-xs font-semibold text-red-400">
-                            <RefreshCw className="w-3 h-3" />
-                            Exhausted
-                          </span>
+                          <SimpleTooltip
+                            content={<SubStatusTooltipContent type="exhausted" />}
+                            side="bottom"
+                          >
+                            <span className="shrink-0 hidden sm:inline-flex items-center gap-0.5 text-xs font-semibold text-red-400 cursor-default">
+                              <RefreshCw className="w-3 h-3" />
+                              Exhausted
+                            </span>
+                          </SimpleTooltip>
                         </>
                       )}
                       {task.isSupervisorError && (
                         <>
                           <Dot />
-                          <span className="shrink-0 hidden sm:inline-flex items-center gap-0.5 text-xs font-semibold text-red-400">
-                            <AlertCircle className="w-3 h-3" />
-                            Error
-                          </span>
+                          <SimpleTooltip
+                            content={<SubStatusTooltipContent type="error" />}
+                            side="bottom"
+                          >
+                            <span className="shrink-0 hidden sm:inline-flex items-center gap-0.5 text-xs font-semibold text-red-400 cursor-default">
+                              <AlertCircle className="w-3 h-3" />
+                              Error
+                            </span>
+                          </SimpleTooltip>
                         </>
                       )}
                       {task.clarifyWaiting && (
                         <>
                           <Dot />
-                          <span className="shrink-0 hidden sm:inline-flex items-center gap-0.5 text-xs font-semibold text-blue-400">
-                            <AlertCircle className="w-3 h-3" />
-                            Needs Answer
-                          </span>
+                          <SimpleTooltip
+                            content={<SubStatusTooltipContent type="needs-answer" />}
+                            side="bottom"
+                          >
+                            <span className="shrink-0 hidden sm:inline-flex items-center gap-0.5 text-xs font-semibold text-blue-400 cursor-default">
+                              <AlertCircle className="w-3 h-3" />
+                              Needs Answer
+                            </span>
+                          </SimpleTooltip>
                         </>
                       )}
 
@@ -330,17 +366,18 @@ export function TaskList({
                       {hasPR && (
                         <>
                           <Dot />
-                          <a
-                            href={task.associatedPR!.html_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Open PR in GitHub"
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-0.5 text-xs dark:text-purple-400 dark:hover:text-purple-300 text-purple-700 hover:text-purple-800 hover:underline shrink-0"
-                          >
-                            <GitPullRequest className="w-3 h-3" />
-                            PR
-                          </a>
+                          <SimpleTooltip content="Open PR in GitHub" side="bottom">
+                            <a
+                              href={task.associatedPR!.html_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-0.5 text-xs dark:text-purple-400 dark:hover:text-purple-300 text-purple-700 hover:text-purple-800 hover:underline shrink-0"
+                            >
+                              <GitPullRequest className="w-3 h-3" />
+                              PR
+                            </a>
+                          </SimpleTooltip>
                         </>
                       )}
 
@@ -387,38 +424,42 @@ export function TaskList({
                       task.workflowRun?.status === 'in_progress' &&
                       onStopTask) ||
                     (canExecute && onExecuteTask) ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={isExecuting}
-                        title={
+                      <SimpleTooltip
+                        content={
                           task.column === 'building'
                             ? 'Stop running task'
                             : 'Start running this task'
                         }
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (task.column === 'building') {
-                            onStopTask?.(task)
-                          } else if (canExecute) {
-                            onExecuteTask?.(task.id)
-                          }
-                        }}
-                        className={cn(
-                          'h-8 text-sm px-2.5 gap-1.5 cursor-pointer disabled:opacity-50',
-                          task.column === 'building'
-                            ? 'text-red-400 bg-red-500/10 hover:bg-red-500/30'
-                            : 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/30',
-                        )}
+                        side="bottom"
                       >
-                        {isExecuting ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : task.column === 'building' ? (
-                          <Square className="w-4 h-4" />
-                        ) : (
-                          <Play className="w-4 h-4" />
-                        )}
-                      </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={isExecuting}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (task.column === 'building') {
+                              onStopTask?.(task)
+                            } else if (canExecute) {
+                              onExecuteTask?.(task.id)
+                            }
+                          }}
+                          className={cn(
+                            'h-8 text-sm px-2.5 gap-1.5 cursor-pointer disabled:opacity-50',
+                            task.column === 'building'
+                              ? 'text-red-400 bg-red-500/10 hover:bg-red-500/30'
+                              : 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/30',
+                          )}
+                        >
+                          {isExecuting ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : task.column === 'building' ? (
+                            <Square className="w-4 h-4" />
+                          ) : (
+                            <Play className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </SimpleTooltip>
                     ) : null}
 
                     {/* Assign picker */}

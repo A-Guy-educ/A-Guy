@@ -42,6 +42,7 @@ import { EnvironmentToolbar } from './EnvironmentToolbar'
 import { GitHubUserPickerDialog } from './GitHubUserPickerDialog'
 import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
+import { SimpleTooltip } from './SimpleTooltip'
 import { SITE_URLS } from '../constants'
 
 interface CodyDashboardProps {
@@ -421,61 +422,68 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
               <div className="hidden md:flex items-center gap-3">
                 {/* GitHub identity badge */}
                 {githubUser && (
-                  <button
-                    type="button"
-                    onClick={clearGitHubUser}
-                    title={`Logged in as @${githubUser.login} — click to switch`}
-                    className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-accent transition-colors"
+                  <SimpleTooltip
+                    content={`Logged in as @${githubUser.login} — click to switch`}
+                    side="bottom"
                   >
-                    <Avatar className="h-5 w-5">
-                      <AvatarImage src={githubUser.avatar_url} alt={githubUser.login} />
-                      <AvatarFallback>{githubUser.login[0]?.toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs text-muted-foreground">@{githubUser.login}</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={clearGitHubUser}
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-accent transition-colors"
+                    >
+                      <Avatar className="h-5 w-5">
+                        <AvatarImage src={githubUser.avatar_url} alt={githubUser.login} />
+                        <AvatarFallback>{githubUser.login[0]?.toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs text-muted-foreground">@{githubUser.login}</span>
+                    </button>
+                  </SimpleTooltip>
                 )}
 
                 {/* Notification status */}
                 {notificationsSupported && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    title={
+                  <SimpleTooltip
+                    content={
                       notificationPermission === 'granted'
                         ? 'Notifications enabled'
                         : 'Enable notifications'
                     }
-                    onClick={() => Notification.requestPermission()}
-                    className={
-                      notificationPermission === 'granted'
-                        ? 'text-green-500'
-                        : 'text-muted-foreground'
-                    }
+                    side="bottom"
                   >
-                    <Bell className="w-4 h-4" />
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => Notification.requestPermission()}
+                      className={
+                        notificationPermission === 'granted'
+                          ? 'text-green-500'
+                          : 'text-muted-foreground'
+                      }
+                    >
+                      <Bell className="w-4 h-4" />
+                    </Button>
+                  </SimpleTooltip>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  title="Refresh tasks"
-                  onClick={() => refetch()}
-                  disabled={isFetching}
-                  className="gap-1"
-                >
-                  <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
-                </Button>
-                <Button
-                  variant="outline"
-                  title="Report a bug"
-                  onClick={() => setShowBugDialog(true)}
-                >
-                  <Bug className="w-4 h-4 mr-2" />
-                  Report Bug
-                </Button>
-                <Button title="Create new task" onClick={() => setShowCreateDialog(true)}>
-                  + New Task
-                </Button>
+                <SimpleTooltip content="Refresh tasks" side="bottom">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetch()}
+                    disabled={isFetching}
+                    className="gap-1"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+                  </Button>
+                </SimpleTooltip>
+                <SimpleTooltip content="Report a bug" side="bottom">
+                  <Button variant="outline" onClick={() => setShowBugDialog(true)}>
+                    <Bug className="w-4 h-4 mr-2" />
+                    Report Bug
+                  </Button>
+                </SimpleTooltip>
+                <SimpleTooltip content="Create new task" side="bottom">
+                  <Button onClick={() => setShowCreateDialog(true)}>+ New Task</Button>
+                </SimpleTooltip>
               </div>
 
               {/* Mobile hamburger */}

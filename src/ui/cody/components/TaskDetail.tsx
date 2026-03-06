@@ -20,6 +20,7 @@ import { CommentList } from './CommentList'
 import { TaskPreviewTab } from './TaskPreviewTab'
 import { AssigneePicker, type AssigneeChangeEvent } from './AssigneePicker'
 import { MergeButton } from './MergeButton'
+import { SimpleTooltip } from './SimpleTooltip'
 import { Button } from '@/ui/web/components/button'
 import { Badge } from '@/ui/web/components/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
@@ -371,16 +372,17 @@ function OverflowMenu({
 
   return (
     <>
-      <Button
-        ref={btnRef}
-        variant="ghost"
-        size="sm"
-        className="h-10 w-10 p-0 shrink-0"
-        onClick={handleToggle}
-        title="More actions"
-      >
-        <MoreHorizontal className="w-5 h-5" />
-      </Button>
+      <SimpleTooltip content="More actions" side="bottom">
+        <Button
+          ref={btnRef}
+          variant="ghost"
+          size="sm"
+          className="h-10 w-10 p-0 shrink-0"
+          onClick={handleToggle}
+        >
+          <MoreHorizontal className="w-5 h-5" />
+        </Button>
+      </SimpleTooltip>
       {open && (
         <>
           {/* Backdrop — fixed to cover entire screen */}
@@ -452,21 +454,40 @@ function InlinePipelineTimeline({ pipeline }: { pipeline: CodyPipelineStatus }) 
           const isCurrent = i === progress.currentStageIndex
           const isPendingStage = i > progress.currentStageIndex
 
+          const stateLabel = isCompleted
+            ? 'Completed'
+            : isCurrent
+              ? isRunning
+                ? 'Running'
+                : isPaused
+                  ? 'Paused'
+                  : 'Current'
+              : 'Pending'
+
           return (
-            <div
+            <SimpleTooltip
               key={stage}
-              className={cn(
-                'rounded-full transition-all duration-300',
-                isCurrent ? 'w-2.5 h-2.5' : 'w-1.5 h-1.5',
-                isCompleted && 'bg-blue-500',
-                isCurrent &&
-                  isRunning &&
-                  'bg-blue-400 animate-pulse shadow-[0_0_6px_rgba(96,165,250,0.6)]',
-                isCurrent && isPaused && 'bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.5)]',
-                isPendingStage && 'bg-zinc-600/40',
-              )}
-              title={stageLabels[stage] || stage}
-            />
+              content={
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold">{stageLabels[stage] || stage}</p>
+                  <p className="text-xs text-muted-foreground">{stateLabel}</p>
+                </div>
+              }
+              side="bottom"
+            >
+              <div
+                className={cn(
+                  'rounded-full transition-all duration-300',
+                  isCurrent ? 'w-2.5 h-2.5' : 'w-1.5 h-1.5',
+                  isCompleted && 'bg-blue-500',
+                  isCurrent &&
+                    isRunning &&
+                    'bg-blue-400 animate-pulse shadow-[0_0_6px_rgba(96,165,250,0.6)]',
+                  isCurrent && isPaused && 'bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.5)]',
+                  isPendingStage && 'bg-zinc-600/40',
+                )}
+              />
+            </SimpleTooltip>
           )
         })}
       </div>
@@ -960,15 +981,16 @@ export function TaskDetail({
       >
         {/* Row 1: ← Back | Status pill | time | Refresh */}
         <div className="flex items-center gap-2 mb-2.5">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-10 w-10 p-0 -ml-1 shrink-0"
-            title="Back to list"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+          <SimpleTooltip content="Back to list" side="bottom">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-10 w-10 p-0 -ml-1 shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </SimpleTooltip>
 
           <StatusBadge column={task.column} pipelineState={task.pipeline?.state} />
 
@@ -977,18 +999,19 @@ export function TaskDetail({
             {formatRelativeTime(task.updatedAt)}
           </span>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            title="Refresh"
-            className="h-10 w-10 p-0 shrink-0"
-          >
-            <RefreshCw
-              className={`w-4.5 h-4.5 transition-transform ${isRefreshing ? 'animate-spin text-blue-400' : ''}`}
-            />
-          </Button>
+          <SimpleTooltip content="Refresh" side="bottom">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="h-10 w-10 p-0 shrink-0"
+            >
+              <RefreshCw
+                className={`w-4.5 h-4.5 transition-transform ${isRefreshing ? 'animate-spin text-blue-400' : ''}`}
+              />
+            </Button>
+          </SimpleTooltip>
         </div>
 
         {/* Row 2: Title */}
@@ -1020,18 +1043,19 @@ export function TaskDetail({
             </span>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              title="Refresh"
-              className="h-8 w-8 p-0"
-            >
-              <RefreshCw
-                className={`w-4 h-4 transition-transform ${isRefreshing ? 'animate-spin text-blue-400' : ''}`}
-              />
-            </Button>
+            <SimpleTooltip content="Refresh" side="bottom">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="h-8 w-8 p-0"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 transition-transform ${isRefreshing ? 'animate-spin text-blue-400' : ''}`}
+                />
+              </Button>
+            </SimpleTooltip>
             <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
               <XCircle className="w-4 h-4" />
             </Button>
@@ -1179,16 +1203,14 @@ export function TaskDetail({
             {fullDetails?.assignees && fullDetails.assignees.length > 0 ? (
               <div className="flex items-center -space-x-1.5 shrink-0">
                 {fullDetails.assignees.map((assignee) => (
-                  <Avatar
-                    key={assignee.login}
-                    className="h-6 w-6 ring-2 ring-background"
-                    title={assignee.login}
-                  >
-                    <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
-                    <AvatarFallback className="text-[9px]">
-                      {assignee.login[0]?.toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <SimpleTooltip key={assignee.login} content={assignee.login} side="bottom">
+                    <Avatar className="h-6 w-6 ring-2 ring-background">
+                      <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
+                      <AvatarFallback className="text-[9px]">
+                        {assignee.login[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </SimpleTooltip>
                 ))}
               </div>
             ) : (
