@@ -131,7 +131,7 @@ export async function GET(req: NextRequest) {
         previewByPrNumber.set(pr.number, url)
       } else {
         // Fallback: generate Vercel preview URL from PR number
-        previewByPrNumber.set(pr.number, `https://a-m0beir6hv-aguy.vercel.app/pr/${pr.number}`)
+        previewByPrNumber.set(pr.number, `https://a-m0beir6hv-aguy.vercel.app/`)
       }
     }
 
