@@ -311,7 +311,7 @@ async function handleAdminModeChat(
       lastMessageAt: new Date().toISOString(),
     },
     user: req.user,
-    overrideAccess: true,
+    overrideAccess: false,
   })
 
   // Get recent window
@@ -429,7 +429,7 @@ Example: If user asks "create a new course about Python programming", call creat
           lastMessageAt: new Date().toISOString(),
         },
         user: req.user,
-        overrideAccess: true,
+        overrideAccess: false,
       })
     } catch (updateError) {
       reqLogger.warn({ err: updateError, conversationId }, 'Failed to persist admin response')
@@ -493,7 +493,7 @@ Example: If user asks "create a new course about Python programming", call creat
         lastMessageAt: new Date().toISOString(),
       },
       user: req.user,
-      overrideAccess: true,
+      overrideAccess: false,
     })
   } catch (updateError) {
     reqLogger.warn({ err: updateError, conversationId }, 'Failed to persist admin response')
@@ -640,6 +640,7 @@ async function handleContextScopedChat(
   const conversationHistory = conversation.messages || []
   const allMessages = [...trimMessagesForUpdate(conversationHistory), userMessage]
 
+  // Use overrideAccess: false for authenticated users, true for guests (ownership already validated)
   await req.payload.update({
     collection: 'conversations',
     id: conversationId,
@@ -648,7 +649,7 @@ async function handleContextScopedChat(
       lastMessageAt: new Date().toISOString(),
     },
     user: req.user,
-    overrideAccess: true,
+    overrideAccess: !userId, // false for authenticated users, true for guests
   })
 
   // Get recent window and retrieve memories
@@ -773,6 +774,7 @@ async function handleContextScopedChat(
   const updatedMessages = [...trimMessagesForUpdate(allMessages), assistantMessage]
 
   try {
+    // Use overrideAccess: false for authenticated users, true for guests (ownership already validated)
     await req.payload.update({
       collection: 'conversations',
       id: conversationId,
@@ -781,7 +783,7 @@ async function handleContextScopedChat(
         lastMessageAt: new Date().toISOString(),
       },
       user: req.user,
-      overrideAccess: true,
+      overrideAccess: !userId, // false for authenticated users, true for guests
     })
   } catch (updateError) {
     reqLogger.warn({ err: updateError, conversationId }, 'Failed to persist assistant response')
