@@ -605,7 +605,7 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
             <span className="text-xl" role="img" aria-label={currentAgent.name}>
               {currentAgent.icon}
             </span>
-            <span className="font-semibold text-sm">{currentAgent.name}</span>
+            <span className="font-semibold text-base">{currentAgent.name}</span>
             {messages.length > 0 && (
               <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
                 {messages.length}
@@ -659,14 +659,14 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
         {/* Context bar: task or global */}
         <div className="mt-2">
           {isTaskMode && selectedTask ? (
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-2 text-sm">
               <span className="px-1.5 py-0.5 bg-primary text-primary-foreground rounded font-medium">
                 #{selectedTask.issueNumber}
               </span>
               <span className="truncate text-muted-foreground">{selectedTask.title}</span>
             </div>
           ) : (
-            <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <div className="text-sm text-muted-foreground flex items-center gap-1.5">
               <Globe className="w-3 h-3" />
               Global chat — not tied to any task
             </div>
@@ -677,16 +677,16 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
       {/* Messages area */}
       <div className="flex-1 overflow-auto p-4 space-y-4">
         {messages.length === 0 && !loading && !isLoadingTaskChat && (
-          <div className="text-center text-muted-foreground text-sm py-8">
+          <div className="text-center text-muted-foreground text-base py-8">
             {isTaskMode ? (
               <>
                 <p className="font-medium">Chat about this task</p>
-                <p className="text-xs mt-1">Messages will be saved to the task</p>
+                <p className="text-sm mt-1">Messages will be saved to the task</p>
               </>
             ) : (
               <>
                 <p className="font-medium">Hi! I can help you with:</p>
-                <ul className="mt-3 text-left text-xs space-y-2">
+                <ul className="mt-3 text-left text-sm space-y-2">
                   <li className="flex items-start gap-2">
                     <span className="text-primary">•</span>
                     <span>Browse repository files and code</span>
@@ -718,12 +718,12 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
-              className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
+              className={`max-w-[85%] rounded-lg px-3 py-2 text-base ${
                 msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
               }`}
             >
               {msg.role === 'assistant' ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none">
+                <div className="prose prose-base dark:prose-invert max-w-none">
                   <ReactMarkdown>
                     {msg.content || (msg.isLoading ? '_Thinking..._' : '')}
                   </ReactMarkdown>
@@ -813,14 +813,14 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             rows={1}
-            className="flex-1 px-3 py-2 text-sm rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-primary resize-none overflow-hidden"
+            className="flex-1 px-3 py-2 text-base rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-primary resize-none overflow-hidden"
             disabled={loading}
             style={{ height: 'auto' }}
           />
           {loading ? (
             <button
               onClick={handleStop}
-              className="px-3 py-2 text-sm bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90"
+              className="px-3 py-2 text-base bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90"
             >
               Stop
             </button>
@@ -828,7 +828,7 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
             <button
               onClick={sendMessage}
               disabled={!canSend}
-              className="px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+              className="px-3 py-2 text-base bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               Send
             </button>

@@ -2,7 +2,7 @@
  * @fileType component
  * @domain cody
  * @pattern task-list
- * @ai-summary Rich task list with status indicators, assignee badges, PR links, and pipeline progress. Responsive for mobile.
+ * @ai-summary Three-zone task list: color bar | title + inline metadata + assignees | actions. Pipeline progress gets its own row only when active.
  */
 'use client'
 
@@ -33,11 +33,9 @@ import {
   AlertTriangle,
   RotateCcw,
   CircleDot,
-  Siren,
   Clock,
   AlertCircle,
   RefreshCw,
-  X,
 } from 'lucide-react'
 
 interface TaskListProps {
@@ -54,7 +52,51 @@ interface TaskListProps {
   collaborators?: { login: string; avatar_url: string }[]
 }
 
-// Row background tint by status
+// ── Status bar colors ──
+const barColor: Record<ColumnId, string> = {
+  open: 'bg-zinc-400',
+  building: 'bg-blue-500',
+  review: 'bg-purple-500',
+  failed: 'bg-red-500',
+  'gate-waiting': 'bg-yellow-500',
+  retrying: 'bg-orange-500',
+  done: 'bg-emerald-500',
+}
+
+// ── Status icon for the left bar area ──
+const statusIcon: Record<ColumnId, React.ReactNode> = {
+  open: <CircleDot className="w-5 h-5 text-zinc-400" />,
+  building: <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />,
+  review: <GitPullRequest className="w-5 h-5 text-purple-500" />,
+  failed: <XCircle className="w-5 h-5 text-red-500" />,
+  'gate-waiting': <AlertTriangle className="w-5 h-5 text-yellow-500" />,
+  retrying: <RotateCcw className="w-5 h-5 text-orange-500" />,
+  done: <CheckCircle2 className="w-5 h-5 text-emerald-500" />,
+}
+
+// ── Status label text ──
+const statusLabel: Record<ColumnId, string> = {
+  open: 'Backlog',
+  building: 'Building',
+  review: 'In Review',
+  failed: 'Failed',
+  'gate-waiting': 'Gate',
+  retrying: 'Retrying',
+  done: 'Done',
+}
+
+// ── Issue number color by column ──
+const issueNumberColor: Record<ColumnId, string> = {
+  open: 'dark:text-zinc-500 text-zinc-500',
+  building: 'text-blue-400',
+  review: 'text-purple-400',
+  failed: 'text-red-400',
+  'gate-waiting': 'text-yellow-400',
+  retrying: 'text-orange-400',
+  done: 'text-emerald-400',
+}
+
+// ── Row tint by status ──
 const rowTint: Record<ColumnId, string> = {
   open: '',
   building: 'bg-blue-500/[0.03]',
@@ -65,46 +107,13 @@ const rowTint: Record<ColumnId, string> = {
   done: 'bg-emerald-500/[0.03]',
 }
 
-// Status indicator — left colored bar + icon
-const statusIndicator: Record<
-  ColumnId,
-  { icon: React.ReactNode; barColor: string; label: string }
-> = {
-  open: {
-    icon: <CircleDot className="w-5 h-5 text-zinc-400" />,
-    barColor: 'bg-zinc-400',
-    label: 'Backlog',
-  },
-  building: {
-    icon: <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />,
-    barColor: 'bg-blue-500',
-    label: 'Building',
-  },
-  review: {
-    icon: <GitPullRequest className="w-5 h-5 text-purple-500" />,
-    barColor: 'bg-purple-500',
-    label: 'In Review',
-  },
-  failed: {
-    icon: <XCircle className="w-5 h-5 text-red-500" />,
-    barColor: 'bg-red-500',
-    label: 'Failed',
-  },
-  'gate-waiting': {
-    icon: <AlertTriangle className="w-5 h-5 text-yellow-500" />,
-    barColor: 'bg-yellow-500',
-    label: 'Gate',
-  },
-  retrying: {
-    icon: <RotateCcw className="w-5 h-5 text-orange-500" />,
-    barColor: 'bg-orange-500',
-    label: 'Retrying',
-  },
-  done: {
-    icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" />,
-    barColor: 'bg-emerald-500',
-    label: 'Done',
-  },
+/** Dot separator between inline metadata items */
+function Dot() {
+  return (
+    <span className="text-zinc-600 text-xs select-none" aria-hidden>
+      ·
+    </span>
+  )
 }
 
 export function TaskList({
@@ -117,7 +126,7 @@ export function TaskList({
   onStopTask,
   onApproveReview,
   onAssign,
-  onUnassign,
+  onUnassign: _onUnassign,
   collaborators = [],
 }: TaskListProps) {
   const handleTaskClick = useCallback(
@@ -141,7 +150,6 @@ export function TaskList({
     <div>
       <div className="divide-y divide-border/50">
         {tasks.map((task) => {
-          const indicator = statusIndicator[task.column]
           const isSelected = task.id === selectedTask?.id
           const isUnassigned = !task.assignees || task.assignees.length === 0
           const canExecute = isUnassigned && task.state === 'open' && onExecuteTask
@@ -149,278 +157,321 @@ export function TaskList({
           const isMerging = mergingTaskId === task.id
           const hasPR = !!task.associatedPR
           const isHardStop = task.column === 'gate-waiting' && task.gateType === 'hard-stop'
+          const isActive = task.column === 'building' || task.column === 'retrying'
 
           return (
             <div
               key={task.id}
               onClick={() => handleTaskClick(task)}
               className={cn(
-                'relative flex flex-col gap-2 px-4 py-3 cursor-pointer transition-all duration-150',
+                'relative cursor-pointer transition-all duration-150',
                 'dark:hover:bg-zinc-800/50 hover:bg-zinc-100',
                 rowTint[task.column],
                 isSelected && 'dark:bg-zinc-800 bg-white',
                 isHardStop && 'ring-2 ring-red-500/40 ring-inset',
               )}
             >
-              {/* Left color bar */}
-              <div
-                className={cn(
-                  'absolute left-0 top-0 bottom-0 w-[3px] rounded-r',
-                  isHardStop ? 'bg-red-500 animate-pulse' : indicator.barColor,
-                )}
-              />
-
-              {/* Top row: Status icon + Title */}
-              <div className="flex items-center gap-2 pl-2 sm:pl-5">
-                <div className="shrink-0">{indicator.icon}</div>
-                <h3 className="text-base font-medium dark:text-zinc-100 text-zinc-900 truncate flex-1">
-                  {task.title}
-                </h3>
-              </div>
-
-              {/* Bottom row */}
-              <div className="flex items-center gap-2 pl-2 sm:pl-9">
-                {/* Left side: Issue#, CODY, Status, Labels, Time */}
-                <div className="flex items-center gap-2 flex-wrap flex-1">
-                  <a
-                    href={getGitHubIssueUrl(task.issueNumber)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="View issue on GitHub"
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-sm font-mono font-medium dark:text-zinc-500 text-zinc-600 dark:hover:text-blue-400 hover:text-blue-600 shrink-0 w-10 hover:underline"
-                  >
-                    #{task.issueNumber}
-                  </a>
-
-                  {task.isCodyAssigned && (
-                    <span
-                      title="Assigned to Cody AI"
-                      className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-600 text-white text-xs font-bold"
-                    >
-                      <Bot className="w-3 h-3" />
-                      CODY
-                    </span>
-                  )}
-
-                  {/* Gate badges */}
-                  {task.column === 'gate-waiting' && task.gateType === 'hard-stop' ? (
-                    <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-600 text-white text-xs font-bold">
-                      <Siren className="w-3 h-3" />
-                      HARD STOP
-                    </span>
-                  ) : task.column === 'gate-waiting' && task.gateType === 'risk-gated' ? (
-                    <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-yellow-600 text-white text-xs font-bold">
-                      <AlertCircle className="w-3 h-3" />
-                      RISK GATED
-                    </span>
-                  ) : (
-                    <span
-                      className={cn(
-                        'text-sm font-medium px-2 py-1 rounded shrink-0 inline-flex items-center gap-1',
-                        task.column === 'open' &&
-                          'dark:text-zinc-400 dark:bg-zinc-800 text-zinc-600 bg-zinc-100',
-                        task.column === 'building' && 'text-blue-400 bg-blue-500/20',
-                        task.column === 'review' && 'text-purple-400 bg-purple-500/20',
-                        task.column === 'failed' && 'text-red-400 bg-red-500/20',
-                        task.column === 'gate-waiting' && 'text-yellow-400 bg-yellow-500/20',
-                        task.column === 'retrying' && 'text-orange-400 bg-orange-500/20',
-                        task.column === 'done' && 'text-emerald-400 bg-emerald-500/20',
-                      )}
-                    >
-                      {task.column === 'gate-waiting' && <AlertTriangle className="w-3.5 h-3.5" />}
-                      {indicator.label}
-                    </span>
-                  )}
-
-                  {/* Pipeline progress — shows for building/retrying tasks */}
-                  <MiniPipelineProgress task={task} />
-
-                  {/* Sub-status badges - show important states */}
-                  {task.isTimeout && (
-                    <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-orange-600 text-white text-xs font-bold">
-                      <Clock className="w-3 h-3" />
-                      TIMEOUT
-                    </span>
-                  )}
-                  {task.isExhausted && (
-                    <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-600 text-white text-xs font-bold">
-                      <RefreshCw className="w-3 h-3" />
-                      EXHAUSTED
-                    </span>
-                  )}
-                  {task.isSupervisorError && (
-                    <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-600 text-white text-xs font-bold">
-                      <AlertCircle className="w-3 h-3" />
-                      ERROR
-                    </span>
-                  )}
-                  {task.clarifyWaiting && (
-                    <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-600 text-white text-xs font-bold">
-                      <AlertCircle className="w-3 h-3" />
-                      NEEDS ANSWER
-                    </span>
-                  )}
-
-                  {task.labels.length > 0 && (
-                    <span className="text-xs px-1.5 py-0.5 rounded dark:bg-zinc-700 dark:text-zinc-300 bg-zinc-200 text-zinc-700 truncate max-w-24">
-                      {task.labels[0]}
-                    </span>
-                  )}
-
-                  {/* Assignees */}
-                  {task.assignees && task.assignees.length > 0 && (
-                    <div className="flex items-center gap-1">
-                      {task.assignees.map((assignee) => (
-                        <Avatar key={assignee.login} className="h-5 w-5" title={assignee.login}>
-                          <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
-                          <AvatarFallback className="text-[8px]">
-                            {assignee.login[0]?.toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                      {onUnassign && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onUnassign(
-                              task.issueNumber,
-                              task.assignees!.map((a) => a.login),
-                            )
-                          }}
-                          className="ml-1 p-0.5 rounded-full hover:bg-zinc-600/50 text-zinc-400 hover:text-zinc-200"
-                          title="Unassign all"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  <span className="text-xs text-zinc-500 dark:text-zinc-500 text-zinc-400 shrink-0">
-                    {formatRelativeTime(task.updatedAt)}
-                  </span>
+              {/* ═══ Layout: stacked on mobile, inline on desktop ═══ */}
+              <div className="flex">
+                {/* ── Zone 1: Color bar + status icon ── */}
+                <div className="flex items-start shrink-0 pl-0 pt-3">
+                  <div
+                    className={cn(
+                      'w-[3px] self-stretch rounded-r',
+                      isHardStop ? 'bg-red-500 animate-pulse' : barColor[task.column],
+                    )}
+                  />
+                  <div className="px-2 sm:px-3">{statusIcon[task.column]}</div>
                 </div>
 
-                {/* Right side: PR, Preview, Buttons */}
-                <div className="flex items-center gap-2 shrink-0">
-                  {hasPR && (
-                    <a
-                      href={task.associatedPR!.html_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Open PR in GitHub"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 text-sm dark:text-purple-400 dark:hover:text-purple-300 text-purple-700 hover:text-purple-800"
-                    >
-                      <GitPullRequest className="w-4 h-4" />
-                    </a>
-                  )}
+                {/* ── Zone 2 + 3 wrapper: stacks on mobile, inline on sm+ ── */}
+                <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center">
+                  {/* ── Zone 2: Content (title line + metadata line) ── */}
+                  <div className="flex-1 min-w-0 py-3 sm:py-3.5 pr-2">
+                    {/* Title line: title + assignee avatars */}
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-medium dark:text-zinc-100 text-zinc-900 truncate flex-1">
+                        {task.title}
+                      </h3>
 
-                  {task.previewUrl && (
-                    <a
-                      href={task.previewUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 hover:underline shrink-0"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  )}
+                      {/* Assignee avatars — right-aligned on title line */}
+                      {task.assignees && task.assignees.length > 0 && (
+                        <div className="flex items-center -space-x-1 shrink-0">
+                          {task.assignees.map((assignee) => (
+                            <Avatar
+                              key={assignee.login}
+                              className="h-6 w-6 ring-2 ring-zinc-900"
+                              title={assignee.login}
+                            >
+                              <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
+                              <AvatarFallback className="text-[8px]">
+                                {assignee.login[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Assignee Picker */}
-                  {onAssign && collaborators.length > 0 && (
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      className="relative"
-                    >
-                      <Select
-                        onValueChange={(value) => {
-                          onAssign(task.issueNumber, [value])
-                        }}
+                    {/* Metadata line: #issue · Status · Pipeline · Time · Labels */}
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {/* Issue number — colored by status */}
+                      <a
+                        href={getGitHubIssueUrl(task.issueNumber)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="View issue on GitHub"
+                        onClick={(e) => e.stopPropagation()}
+                        className={cn(
+                          'text-sm font-mono font-semibold hover:underline shrink-0',
+                          issueNumberColor[task.column],
+                        )}
                       >
-                        <SelectTrigger className="h-7 w-auto px-2 text-xs gap-1">
-                          <SelectValue placeholder="Assign" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {collaborators
-                            .filter((c) => !task.assignees?.some((a) => a.login === c.login))
-                            .map((collaborator) => (
-                              <SelectItem
-                                key={collaborator.login}
-                                value={collaborator.login}
-                                className="flex items-center gap-2"
-                              >
-                                <Avatar className="h-5 w-5">
-                                  <AvatarImage src={collaborator.avatar_url} />
-                                  <AvatarFallback className="text-[8px]">
-                                    {collaborator.login[0]?.toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                {collaborator.login}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                        #{task.issueNumber}
+                      </a>
 
-                  {task.column === 'review' && hasPR && onApproveReview && (
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onPointerDown={(e) => e.stopPropagation()}
-                    >
-                      <MergeButton
-                        prNumber={task.associatedPR!.number}
-                        prTitle={task.associatedPR!.title}
-                        branchName={task.associatedPR!.head.ref}
-                        isMerging={isMerging}
-                        onMerge={() => onApproveReview(task)}
-                      />
+                      <Dot />
+
+                      {/* Status label — plain text, no pill */}
+                      <span
+                        className={cn(
+                          'text-sm font-medium shrink-0',
+                          task.column === 'open' && 'dark:text-zinc-400 text-zinc-500',
+                          task.column === 'building' && 'text-blue-400',
+                          task.column === 'review' && 'text-purple-400',
+                          task.column === 'failed' && 'text-red-400',
+                          task.column === 'gate-waiting' && 'text-yellow-400',
+                          task.column === 'retrying' && 'text-orange-400',
+                          task.column === 'done' && 'text-emerald-400',
+                        )}
+                      >
+                        {/* Gate-specific labels */}
+                        {task.column === 'gate-waiting' && task.gateType === 'hard-stop'
+                          ? 'Hard Stop'
+                          : task.column === 'gate-waiting' && task.gateType === 'risk-gated'
+                            ? 'Risk Gated'
+                            : statusLabel[task.column]}
+                      </span>
+
+                      {/* CODY badge — compact */}
+                      {task.isCodyAssigned && (
+                        <>
+                          <Dot />
+                          <span className="shrink-0 inline-flex items-center gap-0.5 text-xs font-bold text-blue-400">
+                            <Bot className="w-3 h-3" />
+                            CODY
+                          </span>
+                        </>
+                      )}
+
+                      {/* Pipeline progress inline (for active tasks without their own row) */}
+                      {isActive && (
+                        <>
+                          <Dot />
+                          <MiniPipelineProgress task={task} variant="inline" />
+                        </>
+                      )}
+
+                      {/* Sub-status badges — inline text, no pills */}
+                      {task.isTimeout && (
+                        <>
+                          <Dot />
+                          <span className="shrink-0 inline-flex items-center gap-0.5 text-xs font-semibold text-orange-400">
+                            <Clock className="w-3 h-3" />
+                            Timeout
+                          </span>
+                        </>
+                      )}
+                      {task.isExhausted && (
+                        <>
+                          <Dot />
+                          <span className="shrink-0 inline-flex items-center gap-0.5 text-xs font-semibold text-red-400">
+                            <RefreshCw className="w-3 h-3" />
+                            Exhausted
+                          </span>
+                        </>
+                      )}
+                      {task.isSupervisorError && (
+                        <>
+                          <Dot />
+                          <span className="shrink-0 inline-flex items-center gap-0.5 text-xs font-semibold text-red-400">
+                            <AlertCircle className="w-3 h-3" />
+                            Error
+                          </span>
+                        </>
+                      )}
+                      {task.clarifyWaiting && (
+                        <>
+                          <Dot />
+                          <span className="shrink-0 inline-flex items-center gap-0.5 text-xs font-semibold text-blue-400">
+                            <AlertCircle className="w-3 h-3" />
+                            Needs Answer
+                          </span>
+                        </>
+                      )}
+
+                      {/* Time */}
+                      <Dot />
+                      <span className="text-xs text-zinc-500 shrink-0">
+                        {formatRelativeTime(task.updatedAt)}
+                      </span>
+
+                      {/* First label */}
+                      {task.labels.length > 0 && (
+                        <>
+                          <Dot />
+                          <span className="text-xs px-1.5 py-0 rounded dark:bg-zinc-700/50 dark:text-zinc-400 bg-zinc-200 text-zinc-600 truncate max-w-20">
+                            {task.labels[0]}
+                          </span>
+                        </>
+                      )}
+
+                      {/* PR link — inline */}
+                      {hasPR && (
+                        <>
+                          <Dot />
+                          <a
+                            href={task.associatedPR!.html_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Open PR in GitHub"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-0.5 text-xs dark:text-purple-400 dark:hover:text-purple-300 text-purple-700 hover:text-purple-800 hover:underline shrink-0"
+                          >
+                            <GitPullRequest className="w-3 h-3" />
+                            PR
+                          </a>
+                        </>
+                      )}
+
+                      {/* Preview link — inline */}
+                      {task.previewUrl && (
+                        <>
+                          <Dot />
+                          <a
+                            href={task.previewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-0.5 text-xs text-emerald-400 hover:text-emerald-300 hover:underline shrink-0"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Preview
+                          </a>
+                        </>
+                      )}
                     </div>
-                  )}
-                  {/* Run/Stop toggle - only show stop if there's a running workflow */}
-                  {(task.column === 'building' &&
-                    task.workflowRun?.status === 'in_progress' &&
-                    onStopTask) ||
-                  (canExecute && onExecuteTask) ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={isExecuting}
-                      title={
-                        task.column === 'building' ? 'Stop running task' : 'Start running this task'
-                      }
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (task.column === 'building') {
-                          onStopTask?.(task)
-                        } else if (canExecute) {
-                          onExecuteTask?.(task.id)
+                  </div>
+
+                  {/* ── Zone 3: Actions ── */}
+                  <div className="flex items-center gap-1.5 shrink-0 pr-3 pl-8 sm:pl-2 pb-2.5 sm:pb-0">
+                    {/* Merge button */}
+                    {task.column === 'review' && hasPR && onApproveReview && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                      >
+                        <MergeButton
+                          prNumber={task.associatedPR!.number}
+                          prTitle={task.associatedPR!.title}
+                          branchName={task.associatedPR!.head.ref}
+                          isMerging={isMerging}
+                          onMerge={() => onApproveReview(task)}
+                        />
+                      </div>
+                    )}
+
+                    {/* Run / Stop button */}
+                    {(task.column === 'building' &&
+                      task.workflowRun?.status === 'in_progress' &&
+                      onStopTask) ||
+                    (canExecute && onExecuteTask) ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={isExecuting}
+                        title={
+                          task.column === 'building'
+                            ? 'Stop running task'
+                            : 'Start running this task'
                         }
-                      }}
-                      className={cn(
-                        'h-7 text-sm px-2 gap-1 cursor-pointer disabled:opacity-50',
-                        task.column === 'building'
-                          ? 'text-red-400 bg-red-500/10 hover:bg-red-500/30 hover:border-red-500/50 hover:shadow-lg'
-                          : 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/30 hover:border-blue-500/50 hover:shadow-lg',
-                      )}
-                    >
-                      {isExecuting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : task.column === 'building' ? (
-                        <Square className="w-4 h-4" />
-                      ) : (
-                        <Play className="w-4 h-4" />
-                      )}
-                    </Button>
-                  ) : null}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (task.column === 'building') {
+                            onStopTask?.(task)
+                          } else if (canExecute) {
+                            onExecuteTask?.(task.id)
+                          }
+                        }}
+                        className={cn(
+                          'h-8 text-sm px-2.5 gap-1.5 cursor-pointer disabled:opacity-50',
+                          task.column === 'building'
+                            ? 'text-red-400 bg-red-500/10 hover:bg-red-500/30'
+                            : 'text-blue-400 bg-blue-500/10 hover:bg-blue-500/30',
+                        )}
+                      >
+                        {isExecuting ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : task.column === 'building' ? (
+                          <Square className="w-4 h-4" />
+                        ) : (
+                          <Play className="w-4 h-4" />
+                        )}
+                      </Button>
+                    ) : null}
+
+                    {/* Assign picker */}
+                    {onAssign && collaborators.length > 0 && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        className="relative"
+                      >
+                        <Select
+                          onValueChange={(value) => {
+                            onAssign(task.issueNumber, [value])
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-auto px-3 text-sm gap-1.5">
+                            <SelectValue placeholder="Assign" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {collaborators
+                              .filter((c) => !task.assignees?.some((a) => a.login === c.login))
+                              .map((collaborator) => (
+                                <SelectItem
+                                  key={collaborator.login}
+                                  value={collaborator.login}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Avatar className="h-5 w-5">
+                                    <AvatarImage src={collaborator.avatar_url} />
+                                    <AvatarFallback className="text-[8px]">
+                                      {collaborator.login[0]?.toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  {collaborator.login}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* ═══ Pipeline progress row — only for active (building/retrying) tasks with rich data ═══ */}
+              {isActive &&
+                task.pipeline &&
+                (task.pipeline.currentStage ||
+                  Object.keys(task.pipeline.stages || {}).length > 0) && (
+                  <div className="pb-2 pl-10 sm:pl-12 pr-3">
+                    <MiniPipelineProgress task={task} variant="bar" />
+                  </div>
+                )}
             </div>
           )
         })}

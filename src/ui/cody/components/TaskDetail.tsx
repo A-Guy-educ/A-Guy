@@ -146,9 +146,9 @@ function QuickLinkButton({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors ${variantStyles[variant]}`}
+      className={`inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors ${variantStyles[variant]}`}
     >
-      <Icon className="w-3 h-3" />
+      <Icon className="w-3.5 h-3.5" />
       {label}
     </a>
   )
@@ -166,7 +166,7 @@ function SidebarSection({
 }) {
   return (
     <div className="space-y-2">
-      <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
         {Icon && <Icon className="w-3 h-3" />}
         {title}
       </h4>
@@ -252,7 +252,7 @@ function TabButton({
       <Icon className="w-4 h-4" />
       {label}
       {count !== undefined && count > 0 && (
-        <span className="ml-0.5 px-1.5 py-0.5 text-[10px] font-medium bg-muted rounded-full">
+        <span className="ml-0.5 px-1.5 py-0.5 text-xs font-medium bg-muted rounded-full">
           {count}
         </span>
       )}
@@ -267,7 +267,7 @@ function StatusBadge({ column, pipelineState }: { column: ColumnId; pipelineStat
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${colors.pill}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium ${colors.pill}`}
     >
       {isRunning && <Loader2 className="w-3 h-3 animate-spin" />}
       {pipelineState === 'completed' && <CheckCircle className="w-3 h-3" />}
@@ -404,7 +404,7 @@ export function TaskDetail({
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/50 flex items-center justify-center">
             <Info className="w-8 h-8 text-muted-foreground/50" />
           </div>
-          <p className="text-sm">Select a task to view details</p>
+          <p className="text-base">Select a task to view details</p>
         </div>
       </div>
     )
@@ -416,7 +416,7 @@ export function TaskDetail({
   // --- Shared markdown components ---
   const markdownComponents = {
     p: ({ children }: { children?: React.ReactNode }) => (
-      <p className="mb-3 last:mb-0 text-sm text-muted-foreground leading-relaxed">{children}</p>
+      <p className="mb-3 last:mb-0 text-base text-muted-foreground leading-relaxed">{children}</p>
     ),
     a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
       <a
@@ -439,7 +439,7 @@ export function TaskDetail({
       const isBlock = className?.includes('language-')
       if (isBlock) {
         return (
-          <pre className="bg-muted/50 p-3 rounded-md text-xs overflow-x-auto my-3">
+          <pre className="bg-muted/50 p-3 rounded-md text-sm overflow-x-auto my-3">
             <code className={className} {...props}>
               {children}
             </code>
@@ -447,36 +447,38 @@ export function TaskDetail({
         )
       }
       return (
-        <code className="bg-muted/50 px-1.5 py-0.5 rounded text-xs text-foreground" {...props}>
+        <code className="bg-muted/50 px-1.5 py-0.5 rounded text-sm text-foreground" {...props}>
           {children}
         </code>
       )
     },
     ul: ({ children }: { children?: React.ReactNode }) => (
-      <ul className="list-disc pl-6 space-y-1 text-sm text-muted-foreground my-2">{children}</ul>
+      <ul className="list-disc pl-6 space-y-1 text-base text-muted-foreground my-2">{children}</ul>
     ),
     ol: ({ children }: { children?: React.ReactNode }) => (
-      <ol className="list-decimal pl-6 space-y-1 text-sm text-muted-foreground my-2">{children}</ol>
+      <ol className="list-decimal pl-6 space-y-1 text-base text-muted-foreground my-2">
+        {children}
+      </ol>
     ),
     li: ({ children }: { children?: React.ReactNode }) => (
-      <li className="text-sm text-muted-foreground leading-relaxed">{children}</li>
+      <li className="text-base text-muted-foreground leading-relaxed">{children}</li>
     ),
     h1: ({ children }: { children?: React.ReactNode }) => (
-      <h1 className="text-lg font-bold text-foreground mt-6 mb-2 first:mt-0 border-b border-border pb-1">
+      <h1 className="text-xl font-bold text-foreground mt-6 mb-2 first:mt-0 border-b border-border pb-1">
         {children}
       </h1>
     ),
     h2: ({ children }: { children?: React.ReactNode }) => (
-      <h2 className="text-base font-bold text-foreground mt-5 mb-2 first:mt-0">{children}</h2>
+      <h2 className="text-lg font-bold text-foreground mt-5 mb-2 first:mt-0">{children}</h2>
     ),
     h3: ({ children }: { children?: React.ReactNode }) => (
-      <h3 className="text-sm font-semibold text-foreground mt-4 mb-1.5">{children}</h3>
+      <h3 className="text-base font-semibold text-foreground mt-4 mb-1.5">{children}</h3>
     ),
     h4: ({ children }: { children?: React.ReactNode }) => (
-      <h4 className="text-sm font-medium text-foreground mt-3 mb-1">{children}</h4>
+      <h4 className="text-base font-medium text-foreground mt-3 mb-1">{children}</h4>
     ),
     blockquote: ({ children }: { children?: React.ReactNode }) => (
-      <blockquote className="border-l-3 border-blue-500/40 pl-4 my-3 text-sm italic text-muted-foreground bg-muted/20 py-2 rounded-r-md">
+      <blockquote className="border-l-3 border-blue-500/40 pl-4 my-3 text-base italic text-muted-foreground bg-muted/20 py-2 rounded-r-md">
         {children}
       </blockquote>
     ),
@@ -685,10 +687,10 @@ export function TaskDetail({
             value={retryContext}
             onChange={(e) => setRetryContext(e.target.value)}
             placeholder="Add context for the retry…"
-            className="w-full h-20 px-3 py-2 text-sm bg-background border border-border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 placeholder:text-muted-foreground"
+            className="w-full h-20 px-3 py-2 text-base bg-background border border-border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 placeholder:text-muted-foreground"
           />
           <div className="flex items-center justify-between">
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Posts <code className="text-orange-400">@cody retry</code> + context
             </p>
             <Button
@@ -784,11 +786,11 @@ export function TaskDetail({
               href={getGitHubIssueUrl(task.issueNumber)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:text-blue-400 flex items-center gap-1"
+              className="text-sm text-muted-foreground hover:text-blue-400 flex items-center gap-1"
             >
               <Link2 className="w-3 h-3" />#{task.issueNumber}
             </a>
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <span className="text-sm text-muted-foreground flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {formatRelativeTime(task.updatedAt)}
             </span>
@@ -815,21 +817,21 @@ export function TaskDetail({
         </div>
 
         {/* Title - Prominent */}
-        <h2 className="text-base md:text-lg font-semibold text-foreground leading-snug pr-8">
+        <h2 className="text-lg md:text-xl font-semibold text-foreground leading-snug pr-8">
           {task.title}
         </h2>
 
         {/* Sub-status badges */}
         <div className="flex items-center gap-2 mt-2 flex-wrap">
           {task.column === 'gate-waiting' && task.gateType === 'hard-stop' && (
-            <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+            <Badge variant="destructive" className="text-xs px-2 py-0.5">
               <AlertTriangle className="w-2.5 h-2.5 mr-0.5" /> HARD STOP
             </Badge>
           )}
           {task.isTimeout && (
             <Badge
               variant="outline"
-              className="border-orange-500/50 text-orange-400 text-[10px] px-1.5 py-0"
+              className="border-orange-500/50 text-orange-400 text-xs px-2 py-0.5"
             >
               ⏰ TIMEOUT
             </Badge>
@@ -837,20 +839,20 @@ export function TaskDetail({
           {task.isExhausted && (
             <Badge
               variant="outline"
-              className="border-orange-500/50 text-orange-400 text-[10px] px-1.5 py-0"
+              className="border-orange-500/50 text-orange-400 text-xs px-2 py-0.5"
             >
               EXHAUSTED
             </Badge>
           )}
           {task.isSupervisorError && (
-            <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+            <Badge variant="destructive" className="text-xs px-2 py-0.5">
               ERROR
             </Badge>
           )}
           {task.clarifyWaiting && (
             <Badge
               variant="outline"
-              className="border-blue-500/50 text-blue-400 text-[10px] px-1.5 py-0"
+              className="border-blue-500/50 text-blue-400 text-xs px-2 py-0.5"
             >
               💬 NEEDS ANSWER
             </Badge>
@@ -864,7 +866,7 @@ export function TaskDetail({
   const desktopLayout = (
     <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
       {/* Left sidebar with improved visual grouping */}
-      <div className="w-72 shrink-0 border-r border-border overflow-y-auto bg-muted/5">
+      <div className="w-56 shrink-0 border-r border-border overflow-y-auto bg-muted/5">
         <div className="p-4 space-y-4">
           {/* Links Section */}
           <SidebarSection title="Links" icon={Link2}>
@@ -876,7 +878,7 @@ export function TaskDetail({
             <SidebarSection title="Labels" icon={TagIcon}>
               <div className="flex flex-wrap gap-1">
                 {task.labels.map((label) => (
-                  <Badge key={label} variant="outline" className="text-[11px] font-normal">
+                  <Badge key={label} variant="outline" className="text-xs font-normal">
                     {label}
                   </Badge>
                 ))}
