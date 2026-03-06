@@ -1,0 +1,25 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/app/api/conversations/by-context/route.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "review_questions": [
+    "Should the locale be validated to ensure it's either 'en' or 'he' before using it?"
+  ],
+  "complexity": 9,
+  "complexity_reasoning": "Scope:3 (single file, <20 lines), Risk:3 (non-critical API param), Novelty:2 (simple fallback pattern), Cross:0 (single domain), Ambiguity:1 (exact file/line provided), Deps:0 (no external deps). Total:9",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task has ## Issue Title, ## Description, ## Current Behavior (with code), ## Expected Behavior (numbered list), ## Files to Change (exact path), ## Complexity, ## Labels. Promoted spec.md and build.md for trivial fix."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
