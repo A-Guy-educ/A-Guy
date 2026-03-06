@@ -136,35 +136,6 @@ const columnLabels: Record<ColumnId, string> = {
 
 // ============ SUB-COMPONENTS ============
 
-// Icon-only quick link for header bar
-function HeaderIconLink({
-  href,
-  icon: Icon,
-  label,
-  className,
-}: {
-  href: string
-  icon: React.ElementType
-  label: string
-  className?: string
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={label}
-      className={cn(
-        'inline-flex items-center justify-center w-8 h-8 rounded-md transition-colors',
-        'text-muted-foreground hover:text-foreground hover:bg-muted',
-        className,
-      )}
-    >
-      <Icon className="w-4 h-4" />
-    </a>
-  )
-}
-
 // Tab button with optional count badge
 function TabButton({
   active,
@@ -257,8 +228,12 @@ function getPrimaryAction(
       variant: 'red',
     }
   }
-  // Open + unassigned → Run Task
-  if (task.state === 'open' && (!fullDetails?.assignees || fullDetails.assignees.length === 0)) {
+  // Open + unassigned + in backlog → Run Task (not for review/done/building/gate columns)
+  if (
+    task.state === 'open' &&
+    task.column === 'open' &&
+    (!fullDetails?.assignees || fullDetails.assignees.length === 0)
+  ) {
     return {
       icon: Zap,
       label: 'Run Task',
@@ -855,44 +830,88 @@ export function TaskDetail({
       <div
         className={`px-4 md:px-5 pt-3 md:pt-4 pb-3 border-b border-border bg-gradient-to-b ${columnColors[task.column].wash} to-transparent`}
       >
-        {/* Top row: Status + Timestamp + Quick Links (icons) + Actions */}
+        {/* Row 1: Status + Timestamp (left) | Refresh + Close (right) */}
         <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
             <StatusBadge column={task.column} pipelineState={task.pipeline?.state} />
             <span className="text-sm text-muted-foreground flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {formatRelativeTime(task.updatedAt)}
             </span>
           </div>
-
-          {/* Right side: Quick link icons + Merge + Primary Action + Overflow + Refresh + Close */}
-          <div className="flex items-center gap-0.5 shrink-0">
-            {/* Improvement #1: Quick links as icon buttons in header */}
-            <HeaderIconLink
-              href={getGitHubIssueUrl(task.issueNumber)}
-              icon={Github}
-              label={`Issue #${task.issueNumber}`}
-            />
-            {task.associatedPR && (
-              <HeaderIconLink
-                href={task.associatedPR.html_url}
-                icon={GitPullRequest}
-                label={`PR #${task.associatedPR.number}`}
-                className="text-purple-400 hover:text-purple-300"
+          <div className="flex items-center gap-1 shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title="Refresh"
+              className="h-8 w-8 p-0"
+            >
+              <RefreshCw
+                className={`w-4 h-4 transition-transform ${isRefreshing ? 'animate-spin text-blue-400' : ''}`}
               />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+              <XCircle className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Row 2: Title */}
+        <h2 className="text-lg md:text-xl font-semibold text-foreground leading-snug pr-8 mb-3">
+          {task.title}
+        </h2>
+
+        {/* Row 3: Quick link pills (left) | Actions (right) */}
+        <div className="flex items-center justify-between gap-3">
+          {/* Quick link pills - labeled, easy to read */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <a
+              href={getGitHubIssueUrl(task.issueNumber)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              <Github className="w-3 h-3" />#{task.issueNumber}
+            </a>
+            {task.associatedPR && (
+              <a
+                href={task.associatedPR.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
+              >
+                <GitPullRequest className="w-3 h-3" />
+                PR #{task.associatedPR.number}
+              </a>
             )}
             {task.workflowRun && (
-              <HeaderIconLink href={task.workflowRun.html_url} icon={Play} label="Workflow Run" />
+              <a
+                href={task.workflowRun.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                <Play className="w-3 h-3" />
+                Workflow
+              </a>
             )}
             {task.previewUrl && (
-              <HeaderIconLink
+              <a
                 href={task.previewUrl}
-                icon={ExternalLink}
-                label="Preview"
-                className="text-emerald-400 hover:text-emerald-300"
-              />
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Preview
+              </a>
             )}
+          </div>
 
+          {/* Right side: Merge (if review) + Primary action + Overflow */}
+          <div className="flex items-center gap-1.5 shrink-0">
             {/* Merge button (in review) */}
             {task.column === 'review' && task.associatedPR && onApproveReview && (
               <MergeButton
@@ -904,10 +923,7 @@ export function TaskDetail({
               />
             )}
 
-            {/* Divider */}
-            <div className="w-px h-5 bg-border mx-1" />
-
-            {/* Improvement #3: Contextual primary action in header */}
+            {/* Contextual primary action */}
             {primaryAction && (
               <Button
                 variant="outline"
@@ -938,31 +954,10 @@ export function TaskDetail({
               isPending={taskActions.isPending}
               pendingAction={taskActions.pendingAction}
             />
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              title="Refresh"
-              className="h-8 w-8 p-0"
-            >
-              <RefreshCw
-                className={`w-4 h-4 transition-transform ${isRefreshing ? 'animate-spin text-blue-400' : ''}`}
-              />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
-              <XCircle className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
-        {/* Title - Prominent */}
-        <h2 className="text-lg md:text-xl font-semibold text-foreground leading-snug pr-8">
-          {task.title}
-        </h2>
-
-        {/* Sub-status badges */}
+        {/* Sub-status badges (below row 3) */}
         {(task.column === 'gate-waiting' ||
           task.isTimeout ||
           task.isExhausted ||
@@ -1009,41 +1004,41 @@ export function TaskDetail({
     </>
   )
 
-  // --- Desktop Layout (improvement #2: consolidated sidebar) ---
+  // --- Desktop Layout: sidebar with card styling ---
   const desktopLayout = (
     <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
-      {/* Left sidebar — consolidated */}
+      {/* Left sidebar — with card styling */}
       <div className="w-56 shrink-0 border-r border-border overflow-y-auto bg-muted/5">
-        <div className="p-4 space-y-5">
-          {/* Assignees — flat, no card border */}
-          <div className="space-y-2">
+        <div className="p-4 space-y-4">
+          {/* Card: People & Labels — merged into one section */}
+          <div className="space-y-3">
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Assignees
+              People & Labels
             </h4>
-            <AssigneePicker
-              issueNumber={task.issueNumber}
-              currentAssignees={fullDetails?.assignees || []}
-              onChange={handleAssigneeChange}
-            />
+            <div className="bg-muted/30 rounded-lg p-3 border border-border/50 space-y-3">
+              {/* Assignees */}
+              <AssigneePicker
+                issueNumber={task.issueNumber}
+                currentAssignees={fullDetails?.assignees || []}
+                onChange={handleAssigneeChange}
+              />
+
+              {/* Labels - below assignees with separator */}
+              {task.labels.length > 0 && (
+                <div className="pt-2 border-t border-border/30">
+                  <div className="flex flex-wrap gap-1">
+                    {task.labels.map((label) => (
+                      <Badge key={label} variant="outline" className="text-xs font-normal">
+                        {label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Labels — flat, inline with assignees */}
-          {task.labels.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Labels
-              </h4>
-              <div className="flex flex-wrap gap-1">
-                {task.labels.map((label) => (
-                  <Badge key={label} variant="outline" className="text-xs font-normal">
-                    {label}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Pipeline — only shown when there IS pipeline data */}
+          {/* Pipeline — as separate card, only if exists */}
           {task.pipeline && (
             <div className="space-y-2">
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
