@@ -50,7 +50,6 @@ export interface ExtractSingleInput {
 export interface ExtractSingleResult {
   success: boolean
   preview?: {
-    title: string
     draft: MultiPartPreviewDraft
     content: TransformResult['content']
     metadata: {
@@ -269,7 +268,6 @@ export async function extractSingle(
     return {
       success: true,
       preview: {
-        title: previewDraft.title,
         draft: previewDraft,
         content: exerciseContent,
         metadata: {

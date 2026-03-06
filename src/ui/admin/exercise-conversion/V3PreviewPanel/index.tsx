@@ -58,7 +58,6 @@ export function V3PreviewPanel({
   onClose,
   onCreated,
 }: V3PreviewPanelProps) {
-  const [title, setTitle] = useState(preview.draft.title)
   const [stem, setStem] = useState(preview.draft.stem || '')
   const [subQuestions, setSubQuestions] = useState<SubQuestionDraft[]>(
     preview.draft.subQuestions || [],
@@ -93,7 +92,6 @@ export function V3PreviewPanel({
         body: JSON.stringify({
           lessonId,
           mediaId,
-          title,
           stem: stem || undefined,
           subQuestions,
           extractionLogId: preview.extractionLogId,
@@ -137,35 +135,6 @@ export function V3PreviewPanel({
       >
         V3 Extraction Preview (Multi-Part)
       </h4>
-
-      {/* Title */}
-      <div style={{ marginBottom: 12 }}>
-        <label
-          style={{
-            display: 'block',
-            fontSize: 11,
-            fontWeight: 500,
-            marginBottom: 4,
-            color: 'var(--theme-elevation-600)',
-          }}
-        >
-          Title
-        </label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '6px 8px',
-            fontSize: 12,
-            border: '1px solid var(--theme-elevation-200)',
-            borderRadius: 3,
-            backgroundColor: 'var(--theme-elevation-0)',
-            color: 'var(--theme-elevation-1000)',
-          }}
-        />
-      </div>
 
       {/* Stem - Shared Context */}
       <div style={{ marginBottom: 12 }}>

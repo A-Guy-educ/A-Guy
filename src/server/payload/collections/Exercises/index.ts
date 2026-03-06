@@ -70,7 +70,7 @@ export const Exercises: CollectionConfig = {
         {
           name: 'title',
           type: 'text',
-          required: true,
+          required: false,
           admin: { description: 'Exercise title (for admin reference)' },
         },
         {

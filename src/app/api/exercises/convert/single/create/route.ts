@@ -43,7 +43,7 @@ const subQuestionSchema = z.object({
 const createRequestSchema = z.object({
   lessonId: z.string().min(1),
   mediaId: z.string().min(1),
-  title: z.string().min(1),
+  title: z.string().optional(),
   stem: z.string().optional(),
   subQuestions: z.array(subQuestionSchema).min(1),
   extractionLogId: z.string().min(1),
@@ -74,7 +74,7 @@ export const POST = withApiHandler<CreateRequest, unknown>(
     // Step 1: Rebuild content from edited multi-part preview fields
     // rebuildFromMultiPartPreview → multiPartToExerciseContent already validates internally
     const { title: derivedTitle, content } = rebuildFromMultiPartPreview({
-      title,
+      title: title || '',
       stem,
       subQuestions,
       diagramDescription,
