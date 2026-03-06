@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "taskId": "699",
+  "sessions": [
+    {
+      "stage": "dashboard",
+      "startedAt": "2026-03-06T20:08:41.002Z",
+      "messages": [
+        {
+          "role": "user",
+          "text": "can u extract a clean prd from this issue?",
+          "timestamp": "2026-03-06T20:08:38.680Z"
+        },
+        {
+          "role": "assistant",
+          "text": "Here is a clean Product Requirements Document (PRD) extracted and synthesized from Issue #699:\n\n# Product Requirements Document (PRD)\n**Task:** Improve Login Page UI Design Consistency \n**Domain:** Frontend / UI\n\n## 1. Objective\nUpdate the visual design and layout of the login page to align with the updated design specification and establish consistency with the existing design system standards.\n\n## 2. Context\nThe current login page implementation differs significantly from the desired design. It currently lacks a background, utilizes a narrower card structure, displays email/password fields instead of a strictly Google-focused login, and is missing several key UI elements (such as decorative dividers, signup CTAs, and footer help links). The new design relies strictly on Right-to-Left (RTL) structure for Hebrew text.\n\n## 3. UI & UX Requirements\n\n### Layout Constraints\n* **Direction:** RTL (Right-to-Left) specifically for Hebrew typography.\n* **Background:** Full-page light gray/off-white (mapped to `bg-muted` or `bg-secondary` design tokens).\n* **Alignment:** Content must be fully vertically and horizontally centered on the page.\n\n### Header Section (Above Card)\n* **Headline:** \"שלום, מוכנים להצליח?\" — Large (`~text-4xl`), bold, dark color, centered.\n* **Subtitle:** \"A-Guy המורה הפרטי שלכם\" — Smaller (`~text-base`), muted/gray color, centered.\n* **Spacing:** Generous vertical spacing (`~py-16`) separating the header text from the login card.\n\n### Login Card Spec\n* **Container:** White background, rounded corners (`rounded-xl`), subtle prominent shadow (`shadow-lg`).\n* **Dimensions:** Centered, roughly `max-w-md` (wider than the previous `max-w-sm` container).\n* **Padding:** Generous internal padding (`~p-8` or `p-10`).\n\n### Card Content (Top to Bottom)\n1. **Decorative Element:** Small centered horizontal line at the top (short `border-t` or `<hr>`, `~w-12`, accent color).\n2. **Section Label:** \"כניסה מהירה\" (Quick Entry) — Centered, medium text, dark color.\n3. **Primary Action (Google Sign-In):** Full-width, white/light background, bordered, rounded. Must include the Google \"G\" icon on the right side and the text \"המשך עם Google\".\n4. **Divider:** A visual separator placed beneath the Google button.\n5. **Secondary Action (Signup CTA):** \"הרשמה ללא עלות\" (Free Registration) — Styled as a secondary/outline button or an accent link with background. Centered.\n6. **Card Footer Text:** \"גישה מהירה ומאובטחת.\" and \"בלחיצה אחת אתם בפנים.\" — Small text, muted color, centered.\n7. *Note: Ensure legacy email/password form elements are removed per the new design.*\n\n### Page Footer\n* **Help Link:** \"?זקוקים לעזרה\" (Need help?) alongside a help/question-mark icon. Must be centered at the very bottom of the page utilizing small, muted text.\n\n## 4. Acceptance Criteria\n- [ ] Page features a full-page light background and correct RTL layout.\n- [ ] Card layout uses a wider structure (`max-w-md`) with prominent shadows and generous padding.\n- [ ] Small decorative line appears strictly above the \"כניסה מהירה\" section label.\n- [ ] Google Sign-In button is full-width with the correct icon and text alignment.\n- [ ] Signup CTA and footer text (with help links) are correctly positioned below the primary actions.\n- [ ] All UI elements, interactive states (hover, focus, disabled), and spacing utilize established design system tokens.\n- [ ] Layout behaves responsively across device breakpoints.\n\n## 5. Technical Scope & Implementation Notes\n* **Target Files:** \n  * `src/app/(frontend)/login/LoginPageContent.tsx`\n  * `src/app/(frontend)/login/LoginForm.tsx`\n* **Design System Reference:** Refer to `DESIGN_SYSTEM.md` and `tailwind.config.mjs` for available tokens.\n* **Components Context:** Native UI components (button, card, input, label) should be sourced from `src/ui/web/components/`. \n* **Quality Assurance:** TypeScript must compile without errors; linting and formatting pipelines must pass.",
+          "timestamp": "2026-03-06T20:08:38.681Z"
+        }
+      ]
+    }
+  ]
+}
