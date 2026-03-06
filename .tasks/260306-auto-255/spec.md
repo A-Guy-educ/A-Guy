@@ -1,32 +1,32 @@
-# Specification: Fix global-error.tsx
+# Specification: Fix global-error.tsx Inline Styles and Accessibility
 
 ## Overview
 
-Fix the global error page component to use Tailwind CSS classes instead of inline styles, add accessibility attributes, and support basic i18n via browser language detection.
+Fix the global error page component to use Tailwind CSS classes instead of inline styles and add proper accessibility attributes.
 
 ## Requirements
 
-1. **Replace inline styles with Tailwind utility classes**
-   - Use `className="flex flex-col items-center justify-center min-h-screen"` for the container
-   - Style the button consistently with the rest of the application using Tailwind
+### FR-1: Replace Inline Styles with Tailwind Classes
+- Remove all `style={{}}` inline style attributes
+- Use Tailwind utility classes for styling (e.g., `className="flex flex-col items-center justify-center min-h-screen"`)
 
-2. **Add accessibility attributes**
-   - Add `role="alert"` to the error message container for screen reader support
-   - Add appropriate `aria-live` attribute
+### FR-2: Add Accessibility Attributes
+- Add `role="alert"` to the error container for screen reader announcements
+- Add `aria-live="polite"` to indicate the error message region
 
-3. **Language support**
-   - Since this renders outside the i18n provider, use basic browser language detection via `navigator.language`
-   - Display text in English ("Something went wrong!", "Try again") or Hebrew based on browser language
-   - Support: 'en' and 'he' locales
+### FR-3: Style Button Consistently
+- Apply Tailwind classes to the "Try again" button
+- Match the styling conventions used elsewhere in the application
+
+### FR-4: Language Detection (Optional Enhancement)
+- Since the component renders outside the i18n provider, implement basic browser language detection
+- Display text in both English and Hebrew based on `navigator.language`
 
 ## Acceptance Criteria
 
-- [ ] Inline `style={{}}` attributes replaced with Tailwind classes
-- [ ] `role="alert"` added to error container
-- [ ] Error message displays in correct language based on `navigator.language`
-- [ ] Button styled consistently with rest of application using Tailwind
-- [ ] File compiles without TypeScript errors
-
-## Files to Change
-
-- `src/app/global-error.tsx`
+- [ ] No inline `style={{}}` attributes in global-error.tsx
+- [ ] Error container has `role="alert"` attribute
+- [ ] Error container has `aria-live="polite"` attribute
+- [ ] Button uses Tailwind classes for styling
+- [ ] Text displays in the appropriate language based on browser settings
+- [ ] Code follows project's Tailwind styling conventions from DESIGN_SYSTEM.md
