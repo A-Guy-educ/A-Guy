@@ -2,7 +2,7 @@
  * @fileType hook
  * @domain cody
  * @pattern usePRCIStatus
- * @ai-summary Hook to poll CI status for a PR, auto-refreshes while running
+ * @ai-summary Hook to poll CI status for a PR using GitHub's mergeable_state
  */
 'use client'
 
@@ -14,12 +14,12 @@ export function usePRCIStatus(prNumber: number | undefined) {
     queryKey: ['pr-ci-status', prNumber],
     queryFn: () => prsApi.ciStatus(prNumber!),
     enabled: !!prNumber,
-    // Poll every 15s while CI is running, stop when settled
+    // Poll every 10s while CI is running, stop when settled
     refetchInterval: (query) => {
       const status = query.state.data?.ciStatus
-      if (status === 'running' || status === 'pending') return 15_000
+      if (status === 'running' || status === 'pending') return 10_000
       return false
     },
-    staleTime: 10_000,
+    staleTime: 5_000,
   })
 }
