@@ -15,8 +15,6 @@ import {
   CACHE_TTL,
   BRANCH_CACHE_TTL,
   TASK_ID_REGEX,
-  DEV_BRANCH,
-  PROD_BRANCH,
 } from './constants'
 import type {
   CodyPipelineStatus,
@@ -1410,11 +1408,8 @@ export async function fetchPRCIStatus(
       }
     }
 
-    // Publish PRs (dev → main) use force ref update, so they're always mergeable
-    // regardless of CI status or GitHub merge conflict state.
-    const isPublishPR = pr.head.ref === DEV_BRANCH && pr.base.ref === PROD_BRANCH
-    const mergeable = isPublishPR || ciStatus === 'success'
-
+    // Mergeable when CI passes (applies to all PRs including publish PRs)
+    const mergeable = ciStatus === 'success'
     const result = { ciStatus, mergeable }
 
     // Short cache — CI status changes frequently

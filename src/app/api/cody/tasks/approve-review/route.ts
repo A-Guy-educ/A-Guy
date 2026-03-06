@@ -3,7 +3,7 @@
  * @domain cody
  * @pattern approve-review
  * @ai-summary Approve a PR review and merge it via GitHub API (Octokit).
- *             For publish PRs (dev→main), uses force ref update to bypass merge conflicts.
+ *             All PRs (feature and publish) use standard squash merge.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { Octokit } from '@octokit/rest'
@@ -20,38 +20,6 @@ function getOctokit(): Octokit {
     throw new Error('GITHUB_TOKEN not configured')
   }
   return new Octokit({ auth: token })
-}
-
-/**
- * Validates that a PR is a legitimate publish PR (dev → main).
- * Returns the PR data if valid, throws otherwise.
- */
-async function validatePublishPR(
-  octokit: Octokit,
-  prNumber: number,
-): Promise<{ headRef: string; baseRef: string; headSha: string }> {
-  const { data: prData } = await octokit.pulls.get({
-    owner: OWNER,
-    repo: REPO,
-    pull_number: prNumber,
-  })
-
-  const headRef = prData.head.ref
-  const baseRef = prData.base.ref
-  const headSha = prData.head.sha
-
-  // Triple validation: exact branch names, repo match, and constants match
-  if (headRef !== DEV_BRANCH || baseRef !== PROD_BRANCH) {
-    throw new Error(
-      `Not a publish PR: head=${headRef} base=${baseRef} (expected ${DEV_BRANCH}→${PROD_BRANCH})`,
-    )
-  }
-
-  if (headRef !== 'dev' || baseRef !== 'main') {
-    throw new Error('Branch name validation failed — constants may be misconfigured')
-  }
-
-  return { headRef, baseRef, headSha }
 }
 
 export async function POST(req: NextRequest) {
@@ -95,96 +63,29 @@ export async function POST(req: NextRequest) {
       results.push(`Review note: ${msg}`)
     }
 
-    // 2. Merge the PR
-    if (isPublishPR) {
-      // ── Publish PR (dev → main): Force-update main to dev's HEAD ──
-      // This bypasses merge conflicts since main simply becomes dev.
-      // Safe because dev is the source of truth; main is a production snapshot.
-      try {
-        const { headSha } = await validatePublishPR(octokit, Number(prNumber))
-
-        console.log(
-          `[Cody] Force-publishing: updating ${PROD_BRANCH} to ${DEV_BRANCH} HEAD (${headSha})`,
-        )
-
-        await octokit.git.updateRef({
-          owner: OWNER,
-          repo: REPO,
-          ref: `heads/${PROD_BRANCH}`,
-          sha: headSha,
-          force: true,
-        })
-
-        results.push(`Force-published ${DEV_BRANCH} → ${PROD_BRANCH} (${headSha.slice(0, 7)})`)
-
-        // Close the PR (updateRef doesn't auto-close it)
-        await octokit.pulls.update({
-          owner: OWNER,
-          repo: REPO,
-          pull_number: Number(prNumber),
-          state: 'closed',
-        })
-        results.push(`Closed PR #${prNumber}`)
-
-        // Also close the associated publish issue if it exists
-        try {
-          const { data: timeline } = await octokit.issues.listEventsForTimeline({
-            owner: OWNER,
-            repo: REPO,
-            issue_number: Number(prNumber),
-          })
-          // Look for cross-references to find the publish issue
-          const issueRefs = timeline.filter((e) => e.event === 'cross-referenced' && 'source' in e)
-          for (const ref of issueRefs) {
-            const source = ref as {
-              source?: { issue?: { number: number; labels?: Array<{ name: string }> } }
-            }
-            const issue = source.source?.issue
-            if (issue?.labels?.some((l) => l.name === 'publish')) {
-              await octokit.issues.update({
-                owner: OWNER,
-                repo: REPO,
-                issue_number: issue.number,
-                state: 'closed',
-              })
-              results.push(`Closed publish issue #${issue.number}`)
-            }
-          }
-        } catch {
-          // Non-critical — publish issue cleanup is best-effort
-          results.push('Publish issue cleanup skipped')
-        }
-      } catch (error: unknown) {
-        const msg = error instanceof Error ? error.message : String(error)
-        console.error(`[Cody] Force-publish failed:`, msg)
+    // 2. Merge the PR (squash merge for all PRs)
+    try {
+      const mergeMethod = isPublishPR ? 'merge' : 'squash'
+      await octokit.pulls.merge({
+        owner: OWNER,
+        repo: REPO,
+        pull_number: Number(prNumber),
+        merge_method: mergeMethod,
+      })
+      results.push(`Merged PR #${prNumber} (${mergeMethod})`)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      if (msg.includes('not mergeable') || msg.includes('405')) {
         return NextResponse.json(
-          { error: `Force-publish failed: ${msg}`, results },
-          { status: 500 },
+          {
+            error:
+              'PR is not mergeable — CI may still be running, checks have failed, or there are merge conflicts',
+            results,
+          },
+          { status: 409 },
         )
       }
-    } else {
-      // ── Feature PR (task → dev): Standard squash merge ──
-      try {
-        await octokit.pulls.merge({
-          owner: OWNER,
-          repo: REPO,
-          pull_number: Number(prNumber),
-          merge_method: 'squash',
-        })
-        results.push(`Merged PR #${prNumber} (squash)`)
-      } catch (error: unknown) {
-        const msg = error instanceof Error ? error.message : String(error)
-        if (msg.includes('not mergeable') || msg.includes('405')) {
-          return NextResponse.json(
-            {
-              error: 'PR is not mergeable — CI may still be running or checks have failed',
-              results,
-            },
-            { status: 409 },
-          )
-        }
-        throw error
-      }
+      throw error
     }
 
     // 3. Delete the branch (only for feature branches, not dev or main)
