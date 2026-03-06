@@ -60,6 +60,7 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
     extractFromImageV3: vi.fn().mockResolvedValue({
       success: true,
       data: {
+        title: 'שטח משולש ישר זווית',
         stem: undefined,
         subQuestions: [
           {

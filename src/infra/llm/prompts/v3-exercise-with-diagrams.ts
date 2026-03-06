@@ -18,6 +18,7 @@ Return ONLY valid JSON (no markdown code blocks, no explanations):
 
 // Example 1: Global diagram (multiple sub-questions reference it)
 {
+  "title": "שטח משולש ישר זווית",
   "stem": "Given: triangle ABC where AB = 5, BC = 12",
   "subQuestions": [
     { "prompt": "Find the area of triangle ABC", "type": "free_response", "diagramDescription": null },
@@ -28,6 +29,7 @@ Return ONLY valid JSON (no markdown code blocks, no explanations):
 
 // Example 2: Per-sub-question diagram (only one sub-question needs it)
 {
+  "title": "Algebraic Expressions and Graph Reading",
   "stem": null,
   "subQuestions": [
     { "prompt": "Solve for x: $2x + 3 = 7$", "type": "free_response", "diagramDescription": null },
@@ -36,6 +38,14 @@ Return ONLY valid JSON (no markdown code blocks, no explanations):
   ],
   "diagramDescription": null
 }
+
+## Title Rules
+- Generate a short title (3-8 words) describing the TOPIC or CONCEPT
+- Title language must MATCH the exercise text language (Hebrew → Hebrew, English → English)
+- Focus on the mathematical/academic concept, NOT the task instruction
+- Good: "שטח משולש ישר זווית", "Quadratic Equations", "חישוב נפח גליל"
+- Bad: "Find the area", "חשבו את x" (these describe the task, not the topic)
+- If the exercise covers multiple topics, combine: "Linear Equations and Graph Reading"
 
 ## Multi-Part Exercise Rules
 - If the exercise has shared context (given info, setup, diagram), put it in "stem"
