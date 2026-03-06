@@ -52,6 +52,7 @@ import {
   BookOpen,
   MoreHorizontal,
   Timer,
+  ArrowLeft,
 } from 'lucide-react'
 
 interface TaskDetailProps {
@@ -338,7 +339,7 @@ function getOverflowActions(
   return actions
 }
 
-// Overflow menu component — supports 'up' or 'down' direction
+// Overflow menu component — uses fixed positioning to escape overflow clipping
 function OverflowMenu({
   actions,
   isPending,
@@ -351,30 +352,52 @@ function OverflowMenu({
   direction?: 'up' | 'down'
 }) {
   const [open, setOpen] = useState(false)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null)
+
+  const handleToggle = useCallback(() => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      if (direction === 'up') {
+        setMenuPos({ top: rect.top, left: rect.right })
+      } else {
+        setMenuPos({ top: rect.bottom, left: rect.right })
+      }
+    }
+    setOpen((prev) => !prev)
+  }, [open, direction])
 
   if (actions.length === 0) return null
 
   return (
-    <div className="relative">
+    <>
       <Button
+        ref={btnRef}
         variant="ghost"
         size="sm"
-        className="h-8 w-8 p-0"
-        onClick={() => setOpen(!open)}
+        className="h-10 w-10 p-0 shrink-0"
+        onClick={handleToggle}
         title="More actions"
       >
-        <MoreHorizontal className="w-4 h-4" />
+        <MoreHorizontal className="w-5 h-5" />
       </Button>
       {open && (
         <>
-          {/* Backdrop */}
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          {/* Menu */}
+          {/* Backdrop — fixed to cover entire screen */}
+          <div className="fixed inset-0 z-[100]" onClick={() => setOpen(false)} />
+          {/* Menu — fixed positioning to escape overflow:hidden parents */}
           <div
-            className={cn(
-              'absolute right-0 z-50 w-48 bg-popover border border-border rounded-lg shadow-lg py-1',
-              direction === 'up' ? 'bottom-full mb-1' : 'top-full mt-1',
-            )}
+            className="fixed z-[101] w-56 bg-popover border border-border rounded-lg shadow-lg py-1"
+            style={
+              menuPos
+                ? direction === 'up'
+                  ? {
+                      bottom: window.innerHeight - menuPos.top + 4,
+                      right: window.innerWidth - menuPos.left,
+                    }
+                  : { top: menuPos.top + 4, right: window.innerWidth - menuPos.left }
+                : undefined
+            }
           >
             {actions.map((action) => {
               const isActionPending = pendingAction === action.pendingKey
@@ -391,7 +414,7 @@ function OverflowMenu({
                   onClick={handleClick}
                   disabled={isPending}
                   className={cn(
-                    'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
+                    'w-full flex items-center gap-2.5 px-4 py-3 text-sm transition-colors',
                     action.destructive
                       ? 'text-red-400 hover:bg-red-500/10'
                       : 'text-foreground hover:bg-muted',
@@ -410,7 +433,7 @@ function OverflowMenu({
           </div>
         </>
       )}
-    </div>
+    </>
   )
 }
 
@@ -920,44 +943,54 @@ export function TaskDetail({
       </div>
     ) : null
 
-  // --- Mobile Header: compact 2-row header ---
+  // --- Mobile Header: app-style with back button ---
   const mobileHeader = (
     <div className="md:hidden shrink-0">
       {/* Accent bar */}
-      <div className={`h-1 ${columnColors[task.column].bar}`} />
+      <div className={`h-1.5 ${columnColors[task.column].bar}`} />
 
-      {/* Header area with wash */}
+      {/* Header area */}
       <div
-        className={`px-3 pt-3 pb-2.5 border-b border-border bg-gradient-to-b ${columnColors[task.column].wash} to-transparent`}
+        className={`px-3 pt-2 pb-3 border-b border-border bg-gradient-to-b ${columnColors[task.column].wash} to-transparent`}
       >
-        {/* Row 1: Status badge + time + refresh (close is handled by Sheet) */}
-        <div className="flex items-center gap-2 mb-2">
+        {/* Row 1: ← Back | Status pill | time | Refresh */}
+        <div className="flex items-center gap-2 mb-2.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-10 w-10 p-0 -ml-1 shrink-0"
+            title="Back to list"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+
           <StatusBadge column={task.column} pipelineState={task.pipeline?.state} />
-          <span className="text-xs text-muted-foreground flex items-center gap-1">
+
+          <span className="text-xs text-muted-foreground flex items-center gap-1 ml-auto">
             <Clock className="w-3 h-3" />
             {formatRelativeTime(task.updatedAt)}
           </span>
-          <div className="ml-auto shrink-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              title="Refresh"
-              className="h-7 w-7 p-0"
-            >
-              <RefreshCw
-                className={`w-3.5 h-3.5 transition-transform ${isRefreshing ? 'animate-spin text-blue-400' : ''}`}
-              />
-            </Button>
-          </div>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            title="Refresh"
+            className="h-10 w-10 p-0 shrink-0"
+          >
+            <RefreshCw
+              className={`w-4.5 h-4.5 transition-transform ${isRefreshing ? 'animate-spin text-blue-400' : ''}`}
+            />
+          </Button>
         </div>
 
         {/* Row 2: Title */}
-        <h2 className="text-base font-semibold text-foreground leading-snug">{task.title}</h2>
+        <h2 className="text-lg font-semibold text-foreground leading-snug pl-1">{task.title}</h2>
 
         {/* Sub-status badges */}
-        {subStatusBadges}
+        {subStatusBadges && <div className="pl-1 mt-1.5">{subStatusBadges}</div>}
       </div>
     </div>
   )
@@ -1134,48 +1167,48 @@ export function TaskDetail({
       <div className="shrink-0 border-b border-border">
         <button
           onClick={() => setShowMobileExtra(!showMobileExtra)}
-          className="flex items-center justify-between w-full px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+          className="flex items-center justify-between w-full px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors active:bg-muted/50"
         >
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
             {/* Assignee avatars inline */}
             {fullDetails?.assignees && fullDetails.assignees.length > 0 ? (
-              <div className="flex items-center -space-x-1 shrink-0">
+              <div className="flex items-center -space-x-1.5 shrink-0">
                 {fullDetails.assignees.map((assignee) => (
                   <Avatar
                     key={assignee.login}
-                    className="h-5 w-5 ring-1 ring-background"
+                    className="h-6 w-6 ring-2 ring-background"
                     title={assignee.login}
                   >
                     <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
-                    <AvatarFallback className="text-[8px]">
+                    <AvatarFallback className="text-[9px]">
                       {assignee.login[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 ))}
               </div>
             ) : (
-              <span className="italic">Unassigned</span>
+              <span className="italic text-muted-foreground/70">Unassigned</span>
             )}
-            <span className="text-muted-foreground/60">·</span>
-            <span>Links & Details</span>
+            <span className="text-muted-foreground/40">·</span>
+            <span className="font-medium">Details</span>
           </div>
           {showMobileExtra ? (
-            <ChevronUp className="w-3.5 h-3.5 shrink-0" />
+            <ChevronUp className="w-4 h-4 shrink-0" />
           ) : (
-            <ChevronDown className="w-3.5 h-3.5 shrink-0" />
+            <ChevronDown className="w-4 h-4 shrink-0" />
           )}
         </button>
 
         {showMobileExtra && (
-          <div className="px-3 pb-3 space-y-3 border-t border-border/50">
+          <div className="px-4 pb-3 space-y-3 border-t border-border/50">
             {/* Quick links */}
-            <div className="flex items-center gap-1.5 flex-wrap pt-2">{quickLinks}</div>
+            <div className="flex items-center gap-1.5 flex-wrap pt-2.5">{quickLinks}</div>
 
             {/* Labels */}
             {task.labels.length > 0 && (
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1.5">
                 {task.labels.map((label) => (
-                  <Badge key={label} variant="outline" className="text-xs font-normal">
+                  <Badge key={label} variant="outline" className="text-xs font-normal py-0.5">
                     {label}
                   </Badge>
                 ))}
@@ -1202,8 +1235,8 @@ export function TaskDetail({
       {tabBar}
       <div className="flex-1 min-h-0 overflow-hidden">{tabContent}</div>
 
-      {/* Bottom toolbar — always visible, full-width action bar */}
-      <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-t border-border bg-card">
+      {/* Bottom toolbar — single row, always visible */}
+      <div className="shrink-0 border-t border-border bg-card px-3 py-2 flex items-center gap-1.5 overflow-x-auto">
         {/* Merge button */}
         {task.column === 'review' && task.associatedPR && onApproveReview && (
           <MergeButton
@@ -1215,13 +1248,13 @@ export function TaskDetail({
           />
         )}
 
-        {/* Primary action — takes remaining space */}
+        {/* Primary action */}
         {primaryAction && (
           <Button
             variant="outline"
             size="sm"
             className={cn(
-              'h-9 gap-1.5 text-sm font-medium flex-1',
+              'h-9 gap-1.5 text-xs font-medium shrink-0',
               primaryVariantStyles[primaryAction.variant],
             )}
             onClick={primaryAction.onClick}
@@ -1238,47 +1271,45 @@ export function TaskDetail({
           </Button>
         )}
 
-        {/* Quick links as icons when panel is closed (mobile bottom bar) */}
-        {!showMobileExtra && (
-          <div className="flex items-center gap-1">
-            <a
-              href={getGitHubIssueUrl(task.issueNumber)}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="h-8 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              title={`Issue #${task.issueNumber}`}
-            >
-              <Github className="w-4 h-4" />
-            </a>
-            {task.associatedPR && (
-              <a
-                href={task.associatedPR.html_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="h-8 w-8 inline-flex items-center justify-center rounded-md text-purple-400 hover:bg-purple-500/20 transition-colors"
-                title={`PR #${task.associatedPR.number}`}
-              >
-                <GitPullRequest className="w-4 h-4" />
-              </a>
-            )}
-            {task.previewUrl && (
-              <a
-                href={task.previewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="h-8 w-8 inline-flex items-center justify-center rounded-md text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                title="Preview"
-              >
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            )}
-          </div>
+        {/* Labeled link pills */}
+        <a
+          href={getGitHubIssueUrl(task.issueNumber)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+        >
+          <Github className="w-3.5 h-3.5" />#{task.issueNumber}
+        </a>
+        {task.associatedPR && (
+          <a
+            href={task.associatedPR.html_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors shrink-0"
+          >
+            <GitPullRequest className="w-3.5 h-3.5" />
+            PR #{task.associatedPR.number}
+          </a>
+        )}
+        {task.previewUrl && (
+          <a
+            href={task.previewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors shrink-0"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Preview
+          </a>
         )}
 
-        {/* Overflow — opens UPWARD from bottom bar */}
+        {/* Spacer */}
+        <div className="flex-1 min-w-0" />
+
+        {/* Overflow — opens UPWARD, uses fixed positioning */}
         <OverflowMenu
           actions={overflowActions}
           isPending={taskActions.isPending}

@@ -652,7 +652,7 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
             }
           }}
         >
-          <SheetContent side="right" className="w-full sm:w-[400px] p-0">
+          <SheetContent side="right" className="w-full sm:w-[400px] p-0" hideClose>
             <SheetHeader className="sr-only">
               <SheetTitle>Task Details</SheetTitle>
               <SheetDescription>View and manage task details</SheetDescription>
