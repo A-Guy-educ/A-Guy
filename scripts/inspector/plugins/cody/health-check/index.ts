@@ -5,6 +5,7 @@
  * @ai-summary Monitor Cody pipeline health and take corrective action
  */
 
+import { execFileSync } from 'child_process'
 import type {
   InspectorPlugin,
   ActionRequest,
@@ -17,9 +18,51 @@ import { discoverTasks } from './discovery'
 const STALENESS_THRESHOLD_MS = 20 * 60 * 1000 // 20 minutes
 
 /**
+ * Check if a workflow run exists and is in a terminal state (completed/cancelled)
+ * while status.json still says running — meaning the workflow crashed but status wasn't updated.
+ *
+ * Ported from: scripts/watchdog/checks/stuck-pipelines.ts → checkOrphanedWorkflow()
+ */
+function checkOrphanedWorkflow(taskId: string, ctx: InspectorContext): boolean {
+  try {
+    // Use gh CLI via the github client's underlying mechanism
+    // We need to check workflow runs for the task's branch
+    const output = execFileSync(
+      'gh',
+      [
+        'run',
+        'list',
+        '--workflow=cody.yml',
+        `--branch=feat/${taskId}`,
+        '--json',
+        'status,conclusion',
+        '-q',
+        '.[0]',
+        `--repo=${ctx.repo}`,
+      ],
+      {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'ignore'],
+        env: { ...process.env, GH_TOKEN: process.env.GH_TOKEN },
+      },
+    ).trim()
+
+    if (!output) return false
+
+    const run = JSON.parse(output)
+    // If run is completed or cancelled but status.json says running, it's orphaned
+    return (
+      (run.status === 'completed' || run.status === 'cancelled') && run.conclusion !== 'success'
+    )
+  } catch {
+    return false
+  }
+}
+
+/**
  * Evaluate the health of a single task.
  */
-function evaluateHealth(task: TaskSnapshot, _ctx: InspectorContext): EvaluatedTask {
+function evaluateHealth(task: TaskSnapshot, ctx: InspectorContext): EvaluatedTask {
   const status = task.status as {
     state?: string
     updatedAt?: string
@@ -85,14 +128,25 @@ function evaluateHealth(task: TaskSnapshot, _ctx: InspectorContext): EvaluatedTa
     }
   }
 
-  // Running - check for staleness
+  // Running - check for staleness and orphaned workflows
   if (status.state === 'running') {
     const updatedAt = status.updatedAt ? new Date(status.updatedAt).getTime() : 0
     const stalledMs = Date.now() - updatedAt
     const stalledMinutes = Math.round(stalledMs / 60000)
 
     if (stalledMs > STALENESS_THRESHOLD_MS) {
-      // Could check for orphaned workflow here in Phase 2
+      // Check for orphaned workflow (workflow crashed but status not updated)
+      const isOrphaned = checkOrphanedWorkflow(task.taskId, ctx)
+
+      if (isOrphaned) {
+        return {
+          ...task,
+          health: 'orphaned',
+          healthDetail: `Workflow run terminated but status.json still says running (${stalledMinutes}min)`,
+          stalledMinutes,
+        }
+      }
+
       return {
         ...task,
         health: 'stalled',
@@ -112,58 +166,6 @@ function evaluateHealth(task: TaskSnapshot, _ctx: InspectorContext): EvaluatedTa
     ...task,
     health: 'unknown',
     healthDetail: `Unknown state: ${status.state}`,
-  }
-}
-
-/**
- * Create a retry action for failed tasks.
- */
-function createRetryAction(task: EvaluatedTask, ctx: InspectorContext): ActionRequest | null {
-  if (task.health !== 'failed' && task.health !== 'orphaned') {
-    return null
-  }
-
-  // Check retry count
-  const retryKey = `cody:retries:${task.taskId}`
-  const retryCount = ctx.state.get<number>(retryKey) || 0
-
-  if (retryCount >= 3) {
-    ctx.log.debug({ taskId: task.taskId, retryCount }, 'Max retries exhausted')
-    return null
-  }
-
-  const dedupKey = `retry:${task.taskId}`
-
-  return {
-    plugin: 'cody-health-check',
-    type: 'retry',
-    target: task.taskId,
-    urgency: 'critical',
-    title: `Retry failed pipeline: ${task.taskId}`,
-    detail: `Pipeline failed at ${task.failedStage}. Retry attempt ${retryCount + 1}/3.`,
-    dedupKey,
-    dedupWindowMinutes: 30,
-    execute: async () => {
-      // Trigger workflow rerun
-      const fromStage = task.failedStage === 'verify' ? 'build' : task.failedStage || 'build'
-      ctx.github.triggerWorkflow('cody.yml', {
-        task_id: task.taskId,
-        mode: 'rerun',
-        from_stage: fromStage,
-        feedback: `Auto-retry after health-check detection. Previous failure: ${task.failedError}`,
-      })
-
-      // Post comment to issue
-      ctx.github.postComment(
-        task.issueNumber,
-        `## 🔄 Auto-Retry\n\nPipeline failed at \`${task.failedStage}\`. Triggering retry attempt ${retryCount + 1}/3.`,
-      )
-
-      // Increment retry count
-      ctx.state.set(retryKey, retryCount + 1)
-
-      return { success: true, message: 'Retry triggered' }
-    },
   }
 }
 
@@ -234,7 +236,7 @@ function createDigestAction(tasks: EvaluatedTask[], ctx: InspectorContext): Acti
     type: 'digest',
     urgency: 'info',
     title: 'Cody Pipeline Health Digest',
-    detail: `Total: ${tasks.length} | Healthy: ${healthCounts.healthy} | Completed: ${healthCounts.completed} | Failed: ${healthCounts.failed} | Stalled: ${healthCounts.stalled} | Gated: ${healthCounts.gated}`,
+    detail: `Total: ${tasks.length} | Healthy: ${healthCounts.healthy} | Completed: ${healthCounts.completed} | Failed: ${healthCounts.failed} | Stalled: ${healthCounts.stalled} | Gated: ${healthCounts.gated} | Orphaned: ${healthCounts.orphaned}`,
     dedupKey,
     dedupWindowMinutes: 30,
     execute: async () => {
@@ -252,7 +254,9 @@ function createDigestAction(tasks: EvaluatedTask[], ctx: InspectorContext): Acti
                   ? '⏸️'
                   : task.health === 'gated'
                     ? '🚧'
-                    : '❓'
+                    : task.health === 'orphaned'
+                      ? '👻'
+                      : '❓'
         table += `| ${task.taskId} | ${statusEmoji} ${task.health} | ${task.healthDetail} |\n`
       }
 
@@ -267,6 +271,16 @@ function createDigestAction(tasks: EvaluatedTask[], ctx: InspectorContext): Acti
 
 /**
  * Health check plugin.
+ *
+ * Responsibilities:
+ * - Discover active Cody tasks
+ * - Evaluate health (healthy, stalled, failed, gated, orphaned)
+ * - Create nudge actions for gated tasks
+ * - Create digest action for visibility
+ * - Share evaluated tasks via state for failure-analysis plugin
+ *
+ * NOTE: Failed task retries are delegated to the failure-analysis plugin.
+ * This plugin only detects failures and shares them via ctx.state.
  */
 export const healthCheckPlugin: InspectorPlugin = {
   name: 'cody-health-check',
@@ -283,13 +297,13 @@ export const healthCheckPlugin: InspectorPlugin = {
     // Evaluate health
     const evaluated = tasks.map((task) => evaluateHealth(task, ctx))
 
-    // Generate actions
+    // Share evaluated tasks with failure-analysis plugin via state
+    ctx.state.set('cody:evaluatedTasks', evaluated)
+
+    // Generate actions (nudge + digest only — retries handled by failure-analysis)
     const actions: ActionRequest[] = []
 
     for (const task of evaluated) {
-      const retry = createRetryAction(task, ctx)
-      if (retry) actions.push(retry)
-
       const nudge = createNudgeAction(task, ctx)
       if (nudge) actions.push(nudge)
     }

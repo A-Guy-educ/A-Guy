@@ -1,6 +1,6 @@
 /**
  * @fileType utility
- * @domain supervisor
+ * @domain inspector
  * @pattern retry-classification
  * @ai-summary Deterministic pre-classification of retryability before LLM analysis
  */
@@ -118,21 +118,15 @@ export function classifyRetryability(failedStage: string, error: string): RetryC
 function isFormatOnlyFailure(error: string): boolean {
   const lower = error.toLowerCase()
 
-  // Check for format-specific error patterns
-  const formatPatterns = ['prettier', 'format', 'must be formatted', 'expected', 'should have']
-
-  // Check for lint/format only indicators
   const lintFormatOnly =
     (lower.includes('lint') || lower.includes('format')) &&
     !lower.includes('error') &&
     !lower.includes('tsc') &&
     !lower.includes('typescript')
 
-  // Check for specific prettier output patterns
   const prettierOnly =
     lower.includes('src/') && (lower.includes('should format') || lower.includes('must format'))
 
-  // Check that it's not a type error or test failure
   const hasTypeError =
     lower.includes('ts') && (lower.includes('error ts') || lower.includes('typeerror'))
   const hasTestFailure = lower.includes('test') || lower.includes('expect')
@@ -141,26 +135,5 @@ function isFormatOnlyFailure(error: string): boolean {
     return false
   }
 
-  return lintFormatOnly || prettierOnly || formatPatterns.every((p) => lower.includes(p))
-}
-
-/**
- * Format a non-retryable failure comment
- */
-export function formatNonRetryableComment(
-  taskId: string,
-  failedStage: string,
-  reason: string,
-): string {
-  return `## Supervisor: Non-Retryable Failure
-
-**Failed stage:** \`${failedStage}\`
-
-**Reason:** ${reason}
-
----
-
-The supervisor will not attempt a retry. Please fix the underlying issue and run:
-
-\`/cody rerun ${taskId} --feedback "fix the issue manually"\``
+  return lintFormatOnly || prettierOnly
 }
