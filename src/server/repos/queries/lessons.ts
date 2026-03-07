@@ -98,10 +98,12 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
   })
 
   const lesson = result.docs?.[0]
+  console.log('[queryLessonBySlug DEBUG] slug:', slug, 'found:', !!lesson)
   if (!lesson) return null
 
   // Verify parent chapter is published+active
   const chapterId = typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter?.id
+  console.log('[queryLessonBySlug DEBUG] chapterId:', chapterId)
 
   if (!chapterId) return null
 
@@ -112,6 +114,14 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
     overrideAccess: false,
   })
 
+  console.log(
+    '[queryLessonBySlug DEBUG] chapterResult:',
+    chapterResult?.id,
+    'status:',
+    chapterResult?.status,
+    'isActive:',
+    chapterResult?.isActive,
+  )
   if (!chapterResult || chapterResult.status !== 'published' || !chapterResult.isActive) {
     return null
   }
@@ -119,6 +129,8 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
   // Verify grandparent course is published+active (hierarchy invariant)
   const courseId =
     typeof chapterResult.course === 'string' ? chapterResult.course : chapterResult.course?.id
+
+  console.log('[queryLessonBySlug DEBUG] courseId:', courseId)
 
   if (!courseId) return null
 
@@ -129,10 +141,20 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
     overrideAccess: false,
   })
 
+  console.log(
+    '[queryLessonBySlug DEBUG] courseResult:',
+    courseResult?.id,
+    'status:',
+    courseResult?.status,
+    'isActive:',
+    courseResult?.isActive,
+  )
+
   if (!courseResult || courseResult.status !== 'published' || !courseResult.isActive) {
     return null
   }
 
+  console.log('[queryLessonBySlug DEBUG] returning lesson:', lesson.id)
   return lesson
 })
 
