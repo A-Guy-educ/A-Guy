@@ -1350,13 +1350,16 @@ export function getCacheStats(): { size: number; keys: string[] } {
  * Fetch the combined CI status for a PR's head commit.
  * Uses the combined status API + check runs to determine overall state.
  */
-export async function fetchPRCIStatus(
-  prNumber: number,
-): Promise<{ ciStatus: 'pending' | 'success' | 'failure' | 'running'; mergeable: boolean }> {
+export async function fetchPRCIStatus(prNumber: number): Promise<{
+  ciStatus: 'pending' | 'success' | 'failure' | 'running'
+  mergeable: boolean
+  hasConflicts: boolean
+}> {
   const cacheKey = `pr-ci-status:${prNumber}`
   const cached = getCached<{
     ciStatus: 'pending' | 'success' | 'failure' | 'running'
     mergeable: boolean
+    hasConflicts: boolean
   }>(cacheKey)
   if (cached) return cached
 
@@ -1376,6 +1379,7 @@ export async function fetchPRCIStatus(
     //    Values: "clean" | "dirty" | "unstable" | "blocked" | "behind" | "unknown"
     const ghState = pr.mergeable_state
     let ciStatus: 'pending' | 'success' | 'failure' | 'running'
+    let hasConflicts = false
 
     switch (ghState) {
       case 'clean':
@@ -1402,8 +1406,9 @@ export async function fetchPRCIStatus(
         ciStatus = 'running'
         break
       case 'dirty':
-        // Merge conflicts exist
+        // Merge conflicts exist — distinct from CI failure
         ciStatus = 'failure'
+        hasConflicts = true
         break
       case 'unknown':
         // GitHub is computing — retry soon
@@ -1418,20 +1423,27 @@ export async function fetchPRCIStatus(
       pr.mergeable === true &&
       (ciStatus === 'success' || ghState === 'clean' || ghState === 'unstable')
 
-    const result = { ciStatus, mergeable }
+    const result = { ciStatus, mergeable, hasConflicts }
 
     // Short cache — 15s to stay responsive while CI runs
     setCache(cacheKey, 15_000, result)
     return result
   } catch (error) {
     console.error('[Cody] Error fetching PR CI status:', error)
-    return { ciStatus: 'pending', mergeable: false }
+    return { ciStatus: 'pending', mergeable: false, hasConflicts: false }
   }
 }
 
 /**
  * Check the combined commit status and check runs for a given SHA.
  * Used as fallback when mergeable_state is 'blocked' (no branch protection configured).
+ *
+ * Strategy:
+ * - Combined status API (status checks like Vercel) is used as-is (already aggregated by GitHub)
+ * - Check runs (GitHub Actions) are deduplicated by name, keeping only the latest run per check
+ *   to avoid stale/superseded failures from blocking merge
+ * - If combined status is 'success', individual check run failures are treated as non-essential
+ *   (mirrors GitHub's own 'unstable' state behavior)
  */
 async function resolveCommitCIStatus(
   octokit: Octokit,
@@ -1459,9 +1471,23 @@ async function resolveCommitCIStatus(
       return 'success'
     }
 
-    // Check for any failures
+    // Deduplicate check runs by name, keeping only the latest run per check.
+    // This prevents stale/superseded failures from blocking merge when a re-run passed.
+    const latestCheckRuns = deduplicateCheckRuns(checkRuns.check_runs)
+
+    // If the combined status API reports success, trust it as the primary signal.
+    // Individual check run failures are treated as non-essential (mirrors 'unstable' behavior).
+    if (combinedStatus.state === 'success' && combinedStatus.statuses.length > 0) {
+      // Still check if any latest check runs are pending/running
+      const anyRunning = latestCheckRuns.some(
+        (cr) => cr.status === 'queued' || cr.status === 'in_progress',
+      )
+      return anyRunning ? 'running' : 'success'
+    }
+
+    // Check for failures in latest check runs only
     const statusFailed = combinedStatus.state === 'failure'
-    const checkRunFailed = checkRuns.check_runs.some(
+    const checkRunFailed = latestCheckRuns.some(
       (cr) => cr.conclusion === 'failure' || cr.conclusion === 'timed_out',
     )
 
@@ -1471,7 +1497,7 @@ async function resolveCommitCIStatus(
 
     // Check if any are still running/pending
     const statusPending = combinedStatus.state === 'pending'
-    const checkRunPending = checkRuns.check_runs.some(
+    const checkRunPending = latestCheckRuns.some(
       (cr) => cr.status === 'queued' || cr.status === 'in_progress',
     )
 
@@ -1485,4 +1511,29 @@ async function resolveCommitCIStatus(
     console.error('[Cody] Error resolving commit CI status:', error)
     return 'pending'
   }
+}
+
+/**
+ * Deduplicate check runs by name, keeping only the latest run per unique check name.
+ * GitHub can return multiple runs for the same check (e.g., after a re-run), and
+ * stale failures should not block merge when the latest run succeeded.
+ */
+function deduplicateCheckRuns<
+  T extends { name: string; started_at?: string | null; completed_at?: string | null },
+>(checkRuns: T[]): T[] {
+  const latestByName = new Map<string, T>()
+  for (const cr of checkRuns) {
+    const existing = latestByName.get(cr.name)
+    if (!existing) {
+      latestByName.set(cr.name, cr)
+    } else {
+      // Keep the one with the later started_at timestamp
+      const existingTime = existing.started_at ? new Date(existing.started_at).getTime() : 0
+      const crTime = cr.started_at ? new Date(cr.started_at).getTime() : 0
+      if (crTime > existingTime) {
+        latestByName.set(cr.name, cr)
+      }
+    }
+  }
+  return Array.from(latestByName.values())
 }

@@ -14,11 +14,12 @@ export function usePRCIStatus(prNumber: number | undefined) {
     queryKey: ['pr-ci-status', prNumber],
     queryFn: () => prsApi.ciStatus(prNumber!),
     enabled: !!prNumber,
-    // Poll every 10s while CI is running, stop when settled
+    // Poll every 10s while CI is running/pending, slow-poll on failure for recovery, stop on success
     refetchInterval: (query) => {
       const status = query.state.data?.ciStatus
       if (status === 'running' || status === 'pending') return 10_000
-      return false
+      if (status === 'failure') return 30_000 // Slow recovery poll — CI may be re-run
+      return false // 'success' — settled, stop polling
     },
     staleTime: 5_000,
   })

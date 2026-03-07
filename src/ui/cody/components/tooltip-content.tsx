@@ -157,10 +157,12 @@ export function MergeTooltipContent({
   canMerge,
   ciStatus,
   isMerging,
+  hasConflicts = false,
 }: {
   canMerge: boolean
   ciStatus: 'pending' | 'success' | 'failure' | 'running'
   isMerging: boolean
+  hasConflicts?: boolean
 }) {
   if (isMerging) {
     return (
@@ -177,6 +179,20 @@ export function MergeTooltipContent({
         <p className="text-xs font-semibold">✅ Ready to Merge</p>
         <p className="text-xs text-muted-foreground">
           All CI checks passed. Click to open merge dialog.
+        </p>
+      </div>
+    )
+  }
+
+  if (hasConflicts) {
+    return (
+      <div className="space-y-1">
+        <p className="text-xs font-semibold">⚠️ Merge Conflicts</p>
+        <p className="text-xs text-muted-foreground">
+          This PR has merge conflicts that must be resolved before merging.
+        </p>
+        <p className="text-xs text-muted-foreground/70">
+          Update the branch or resolve conflicts on GitHub.
         </p>
       </div>
     )

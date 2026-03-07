@@ -289,7 +289,11 @@ export const prsApi = {
   },
   ciStatus: async (
     prNumber: number,
-  ): Promise<{ ciStatus: 'pending' | 'success' | 'failure' | 'running'; mergeable: boolean }> => {
+  ): Promise<{
+    ciStatus: 'pending' | 'success' | 'failure' | 'running'
+    mergeable: boolean
+    hasConflicts: boolean
+  }> => {
     const res = await fetch(`${API_BASE}/prs/status?prNumber=${prNumber}`)
     return handleResponse(res)
   },
