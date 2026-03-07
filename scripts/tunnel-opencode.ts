@@ -1,25 +1,20 @@
 import 'dotenv/config'
 import { execSync, spawn } from 'child_process'
+import localtunnel from 'localtunnel'
 
 const PORT = 3003
-const USERNAME = process.env.NGROK_USERNAME ?? 'admin'
-const PASSWORD = process.env.NGROK_PASSWORD ?? 'As121212'
-const DOMAIN = process.env.NGROK_DOMAIN
-
-if (!DOMAIN) {
-  console.error('❌ NGROK_DOMAIN is not set')
-  console.error('   Add to .env: NGROK_DOMAIN=your-domain.ngrok-free.dev')
-  process.exit(1)
-}
-
-const domain: string = DOMAIN
+const SUBDOMAIN = process.env.LT_SUBDOMAIN || undefined
 
 console.log(`🚀 Starting OpenCode tunnel on port ${PORT}`)
-console.log(`🔒 Protected with: ${USERNAME} / ********`)
-console.log(`🌐 URL: https://${domain}`)
+if (SUBDOMAIN) {
+  console.log(`🌐 Requested subdomain: ${SUBDOMAIN}`)
+}
+if (process.env.OPENCODE_SERVER_PASSWORD) {
+  console.log('🔒 OpenCode web password protection is enabled')
+}
 console.log('')
 
-function isPortInUse(port: number): boolean {
+export function isPortInUse(port: number): boolean {
   try {
     execSync(`lsof -i :${port} -sTCP:LISTEN`, { stdio: 'ignore' })
     return true
@@ -38,15 +33,29 @@ async function start(): Promise<void> {
     await new Promise<void>((resolve) => setTimeout(resolve, 5000))
   }
 
-  const ngrok = spawn(
-    'ngrok',
-    ['http', String(PORT), '--basic-auth', `${USERNAME}:${PASSWORD}`, '--domain', domain],
-    { stdio: 'inherit' },
-  )
+  const tunnel = await localtunnel({ port: PORT, subdomain: SUBDOMAIN })
 
-  ngrok.on('close', (code: number | null) => {
-    process.exit(code ?? 0)
+  console.log(`🌐 Tunnel URL: ${tunnel.url}`)
+  console.log('')
+  console.log('Press Ctrl+C to stop the tunnel.')
+
+  tunnel.on('close', () => {
+    console.log('🔌 Tunnel closed')
+    process.exit(0)
   })
+
+  tunnel.on('error', (err: Error) => {
+    console.error('❌ Tunnel error:', err)
+    process.exit(1)
+  })
+
+  const shutdown = () => {
+    console.log('\n🛑 Shutting down tunnel...')
+    tunnel.close()
+  }
+
+  process.on('SIGINT', shutdown)
+  process.on('SIGTERM', shutdown)
 }
 
 start()
