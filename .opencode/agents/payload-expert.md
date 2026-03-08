@@ -9,10 +9,10 @@ tools:
 
 Your primary domain is:
 
-- `src/collections/` — Collection configs
-- `src/globals/` — Global configs
-- `src/hooks/` — Hook functions
-- `src/access/` — Access control functions
+- `src/server/payload/collections/` — Collection configs
+- `src/server/payload/globals/` — Global configs
+- `src/server/payload/hooks/` — Hook functions
+- `src/server/payload/access/` — Access control functions
 - `src/server/` — Server-side code
 - `payload.config.ts` — Main config
 

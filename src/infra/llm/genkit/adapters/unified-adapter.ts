@@ -11,6 +11,7 @@ export const __genkit_exports__ = true
  */
 import type { AIModel, AIModelKey } from '@/infra/llm/models'
 import type { UnifiedLLMProvider } from '@/infra/llm/providers/factory'
+import { getCircuitBreaker } from '@/infra/llm/providers/shared/circuit-breaker'
 import { LLMErrorCode } from '@/infra/llm/providers/shared/errors'
 import { withRetry } from '@/infra/llm/providers/shared/retry'
 import { tool } from 'genkit'
@@ -101,6 +102,7 @@ export async function createGenkitUnifiedAdapter(
   const { getProviderTypeFromEnv } = await import('@/infra/llm/providers/factory')
   const providerType = await getProviderTypeFromEnv(payload)
   const errorAdapter = getErrorAdapter(providerType)
+  const circuitBreaker = getCircuitBreaker(`genkit-${providerType}`)
 
   return {
     /**
@@ -112,7 +114,7 @@ export async function createGenkitUnifiedAdapter(
 
       const ai = await getGenkitInstance(payloadInstance, tenantId)
 
-      return withRetry(
+      return circuitBreaker.execute(() => withRetry(
         async () => {
           try {
             const prompt =
@@ -142,7 +144,7 @@ export async function createGenkitUnifiedAdapter(
           wrapError: (error: Error) => errorAdapter.wrapError(error, LLMErrorCode.API_ERROR),
           logPrefix: '[GenkitUnifiedAdapter]',
         },
-      )
+      ))
     },
 
     /**
@@ -163,10 +165,13 @@ export async function createGenkitUnifiedAdapter(
         input.system + '\n\n' + input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
 
       // Get streaming response - Genkit returns { stream: AsyncIterable, response: Promise }
-      const result = await ai.generateStream({
-        model: config.model,
-        prompt,
-      })
+      // Circuit breaker wraps stream initialization to fail fast if provider is down
+      const result = await circuitBreaker.execute(() =>
+        ai.generateStream({
+          model: config.model,
+          prompt,
+        }),
+      )
 
       // result.stream is already an AsyncIterable<GenerateResponseChunk>
       const genkitStream = result.stream
@@ -219,7 +224,7 @@ export async function createGenkitUnifiedAdapter(
 
       const ai = await getGenkitInstance(payloadInstance, tenantId)
 
-      return withRetry(
+      return circuitBreaker.execute(() => withRetry(
         async () => {
           try {
             // Build multimodal prompt with media
@@ -251,7 +256,7 @@ export async function createGenkitUnifiedAdapter(
           wrapError: (error: Error) => errorAdapter.wrapError(error, LLMErrorCode.API_ERROR),
           logPrefix: '[GenkitUnifiedAdapter]',
         },
-      )
+      ))
     },
 
     /**
@@ -263,7 +268,7 @@ export async function createGenkitUnifiedAdapter(
 
       const ai = await getGenkitInstance(payloadInstance, tenantId)
 
-      return withRetry(
+      return circuitBreaker.execute(() => withRetry(
         async () => {
           try {
             const genkitTools = input.tools.map((t) =>
@@ -329,7 +334,7 @@ export async function createGenkitUnifiedAdapter(
           wrapError: (error: Error) => errorAdapter.wrapError(error, LLMErrorCode.API_ERROR),
           logPrefix: '[GenkitUnifiedAdapter]',
         },
-      )
+      ))
     },
 
     /**
