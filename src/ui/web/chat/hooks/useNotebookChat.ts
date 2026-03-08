@@ -6,7 +6,6 @@ import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 
 import { logger } from '@/infra/utils/logger'
 
-// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
 import { apiService } from '@/server/services/api/api-service'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'

@@ -21,7 +21,6 @@
 
 import type { ConfigSecret } from '@/payload-types'
 
-// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import type { Payload, Where } from 'payload'
 import { decryptSecret } from '../config-crypto'

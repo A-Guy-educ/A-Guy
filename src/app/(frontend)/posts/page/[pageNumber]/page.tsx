@@ -5,7 +5,6 @@ import { PageRange } from '@/ui/web/PageRange'
 import { Pagination } from '@/ui/web/Pagination'
 import configPromise from '@payload-config'
 
-// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
 import { getPayload } from 'payload'
 import React from 'react'
 import PageClient from './page.client'

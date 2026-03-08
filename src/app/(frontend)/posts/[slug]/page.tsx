@@ -1,7 +1,6 @@
 import type { Post } from '@/payload-types'
 import type { Metadata } from 'next'
 
-// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
 import { RelatedPosts } from '@/server/payload/blocks/RelatedPosts/Component'
 import { PayloadRedirects } from '@/ui/web/PayloadRedirects'
 import RichText from '@/ui/web/RichText'

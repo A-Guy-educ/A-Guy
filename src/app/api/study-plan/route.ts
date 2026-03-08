@@ -12,10 +12,8 @@ import { getPayload } from 'payload'
 import { z } from 'zod'
 
 import type { StudyPlanSnapshot, StudyPlanDay, TopicInput } from '@/server/services/study-plan'
-// eslint-disable-next-line no-restricted-imports -- TODO: migrate to service layer
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import { generateStudyPlan } from '@/server/services/study-plan'
-// eslint-disable-next-line no-restricted-imports -- TODO: migrate to service layer
 import { queryUserProgressByGrade } from '@/server/repos/queries/userProgress'
 
 // Zod validation schemas

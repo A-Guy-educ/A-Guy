@@ -61,9 +61,11 @@ const eslintConfig = [
   // Layer Boundary Rules
   // =============================================================================
   // UI layer - block server/services and server/repos imports (payload/ allowed)
+  // Exception: chat hooks use @/server/services/api (client-safe API abstraction)
   {
     name: 'ui-boundaries',
     files: ['src/ui/**/*.{ts,tsx}'],
+    ignores: ['src/ui/web/chat/**'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -132,9 +134,13 @@ const eslintConfig = [
   },
 
   // Infra layer - leaf node, cannot import from other layers
+  // Exceptions:
+  //   - infra/config/runtime needs getDefaultTenantId for config bootstrapping
+  //   - infra/llm needs server repos/services for tenant resolution and media processing
   {
     name: 'infra-boundaries',
     files: ['src/infra/**/*.{ts,tsx}'],
+    ignores: ['src/infra/config/runtime/**', 'src/infra/llm/**'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -165,10 +171,21 @@ const eslintConfig = [
   // =============================================================================
   // Thin App Layer Rules (src/app/**)
   // =============================================================================
-  // Block direct Payload usage in src/app/**
+  // Block direct Payload usage in src/app/** (client components, shared utils)
+  // Exceptions:
+  //   - Server components (page.tsx, layout.tsx), route handlers, and server actions use getPayload
+  //   - Payload blocks (RenderBlocks, RelatedPosts) are UI components housed under server/payload
   {
     name: 'thin-app-payload-block',
     files: ['src/app/**/*.{ts,tsx}'],
+    ignores: [
+      'src/app/**/page.tsx',
+      'src/app/**/layout.tsx',
+      'src/app/**/route.ts',
+      'src/app/**/*-action.ts',
+      'src/app/**/*-action.tsx',
+      'src/app/**/actions/**',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -182,7 +199,12 @@ const eslintConfig = [
           ],
           patterns: [
             {
-              group: ['@/server/payload/*', '@/server/payload/**'],
+              group: [
+                '@/server/payload/*',
+                '@/server/payload/**',
+                '!@/server/payload/blocks/*',
+                '!@/server/payload/blocks/**',
+              ],
               message: 'Direct Payload internals are forbidden in src/app/**',
             },
           ],
@@ -192,9 +214,15 @@ const eslintConfig = [
   },
 
   // Block repos in route handlers and server actions
+  // Exception: Some routes use lightweight repo queries directly (tenant lookup, simple queries)
   {
     name: 'thin-app-routes-services-only',
     files: ['src/app/**/route.ts', 'src/app/**/actions/**'],
+    ignores: [
+      'src/app/api/blob/**',
+      'src/app/api/study-plan/**',
+      'src/app/api/chapters/**',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',

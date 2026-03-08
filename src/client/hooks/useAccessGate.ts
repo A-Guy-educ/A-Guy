@@ -9,11 +9,8 @@ import {
   setGateTimerStart,
 } from '@/client/state/localStorage/accessGateTimer'
 
-// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
-import type { AccessType } from '@/server/constants/access-types'
-
-// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
-import { GATED_DELAY_MS, GATED_WARNING_MS } from '@/server/constants/access-types'
+import type { AccessType } from '@/infra/auth/access-types'
+import { GATED_DELAY_MS, GATED_WARNING_MS } from '@/infra/auth/access-types'
 
 interface UseAccessGateParams {
   accessType: AccessType | string

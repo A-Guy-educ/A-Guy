@@ -9,8 +9,7 @@ import type { Metadata } from 'next'
 import { CodyDashboard } from '@/ui/cody/components/CodyDashboard'
 import { getMeUser } from '@/infra/utils/getMeUser'
 
-// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
-import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { AccountRole } from '@/infra/auth/roles'
 
 export const metadata: Metadata = {
   title: 'Cody Operations Dashboard',

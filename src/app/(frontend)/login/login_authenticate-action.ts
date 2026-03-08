@@ -2,7 +2,6 @@
 
 import { cookies } from 'next/headers'
 
-// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
 import { getPayload } from 'payload'
 import { claimGuestConversations } from '@/server/services/guest-session-upgrade'
 import { clearGuestSessionCookie, GUEST_SESSION_COOKIE_NAME } from '@/server/services/guest-session'

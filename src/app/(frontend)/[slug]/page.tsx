@@ -5,7 +5,6 @@ import { draftMode } from 'next/headers'
 
 import { generateMeta } from '@/infra/utils/generateMeta'
 
-// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
 import { RenderBlocks } from '@/server/payload/blocks/RenderBlocks'
 import { queryAllPageSlugs, queryPageBySlug } from '@/server/repos/queries/pages'
 import { LivePreviewListener } from '@/ui/web/LivePreviewListener'
