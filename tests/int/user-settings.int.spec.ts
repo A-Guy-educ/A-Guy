@@ -55,10 +55,7 @@ afterAll(async () => {
   const settings = await payload.find({
     collection: 'user_settings',
     where: {
-      or: [
-        { user: { equals: testUser1Id } },
-        { user: { equals: testUser2Id } },
-      ],
+      or: [{ user: { equals: testUser1Id } }, { user: { equals: testUser2Id } }],
     },
     limit: 1000,
     overrideAccess: true,
@@ -103,9 +100,7 @@ describe.skipIf(!hasDatabaseUrl)('UserSettings Collection', () => {
       expect(settings.id).toBeDefined()
       settingsId = settings.id
 
-      const userId = typeof settings.user === 'string'
-        ? settings.user
-        : (settings.user as any)?.id
+      const userId = typeof settings.user === 'string' ? settings.user : (settings.user as any)?.id
       expect(userId).toBe(testUser1Id)
     })
 
@@ -119,9 +114,7 @@ describe.skipIf(!hasDatabaseUrl)('UserSettings Collection', () => {
       expect(settings).toBeDefined()
       expect(settings.id).toBe(settingsId)
 
-      const userId = typeof settings.user === 'string'
-        ? settings.user
-        : (settings.user as any)?.id
+      const userId = typeof settings.user === 'string' ? settings.user : (settings.user as any)?.id
       expect(userId).toBe(testUser1Id)
 
       // teacherProfile should be null/undefined since we did not set it
@@ -170,9 +163,10 @@ describe.skipIf(!hasDatabaseUrl)('UserSettings Collection', () => {
           overrideAccess: true,
         })
 
-        const profileId = typeof updated.teacherProfile === 'string'
-          ? updated.teacherProfile
-          : (updated.teacherProfile as any)?.id
+        const profileId =
+          typeof updated.teacherProfile === 'string'
+            ? updated.teacherProfile
+            : (updated.teacherProfile as any)?.id
         expect(profileId).toBe(teacherProfileId)
       } else {
         // If no teacher profiles exist, just verify update works with null
@@ -215,7 +209,7 @@ describe.skipIf(!hasDatabaseUrl)('UserSettings Collection', () => {
       expect(found).toBeDefined()
     })
 
-    it('should prevent user from reading another user\'s settings', async () => {
+    it("should prevent user from reading another user's settings", async () => {
       // Create settings for user 2
       const settings2 = await payload.create({
         collection: 'user_settings',

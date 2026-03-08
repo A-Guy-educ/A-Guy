@@ -114,37 +114,39 @@ export async function createGenkitUnifiedAdapter(
 
       const ai = await getGenkitInstance(payloadInstance, tenantId)
 
-      return circuitBreaker.execute(() => withRetry(
-        async () => {
-          try {
-            const prompt =
-              input.system +
-              '\n\n' +
-              input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
+      return circuitBreaker.execute(() =>
+        withRetry(
+          async () => {
+            try {
+              const prompt =
+                input.system +
+                '\n\n' +
+                input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
 
-            const result = await ai.generate({
-              model: config.model,
-              prompt,
-            })
+              const result = await ai.generate({
+                model: config.model,
+                prompt,
+              })
 
-            return {
-              text: result.text,
-              raw: result,
+              return {
+                text: result.text,
+                raw: result,
+              }
+            } catch (error) {
+              const llmError = errorAdapter.wrapError(
+                error instanceof Error ? error : new Error(String(error)),
+              )
+              throw llmError
             }
-          } catch (error) {
-            const llmError = errorAdapter.wrapError(
-              error instanceof Error ? error : new Error(String(error)),
-            )
-            throw llmError
-          }
-        },
-        {
-          maxRetries: 3,
-          isRetryable: errorAdapter.isRetryable,
-          wrapError: (error: Error) => errorAdapter.wrapError(error, LLMErrorCode.API_ERROR),
-          logPrefix: '[GenkitUnifiedAdapter]',
-        },
-      ))
+          },
+          {
+            maxRetries: 3,
+            isRetryable: errorAdapter.isRetryable,
+            wrapError: (error: Error) => errorAdapter.wrapError(error, LLMErrorCode.API_ERROR),
+            logPrefix: '[GenkitUnifiedAdapter]',
+          },
+        ),
+      )
     },
 
     /**
@@ -224,39 +226,41 @@ export async function createGenkitUnifiedAdapter(
 
       const ai = await getGenkitInstance(payloadInstance, tenantId)
 
-      return circuitBreaker.execute(() => withRetry(
-        async () => {
-          try {
-            // Build multimodal prompt with media
-            const mediaContents = input.attachments.map((attachment) => ({
-              media: {
-                url: `data:${attachment.mimeType};base64,${attachment.data}`,
-              },
-            }))
+      return circuitBreaker.execute(() =>
+        withRetry(
+          async () => {
+            try {
+              // Build multimodal prompt with media
+              const mediaContents = input.attachments.map((attachment) => ({
+                media: {
+                  url: `data:${attachment.mimeType};base64,${attachment.data}`,
+                },
+              }))
 
-            const result = await ai.generate({
-              model: config.model,
-              prompt: [...mediaContents, { text: input.prompt }],
-            })
+              const result = await ai.generate({
+                model: config.model,
+                prompt: [...mediaContents, { text: input.prompt }],
+              })
 
-            return {
-              text: result.text,
-              raw: result,
+              return {
+                text: result.text,
+                raw: result,
+              }
+            } catch (error) {
+              const llmError = errorAdapter.wrapError(
+                error instanceof Error ? error : new Error(String(error)),
+              )
+              throw llmError
             }
-          } catch (error) {
-            const llmError = errorAdapter.wrapError(
-              error instanceof Error ? error : new Error(String(error)),
-            )
-            throw llmError
-          }
-        },
-        {
-          maxRetries: 3,
-          isRetryable: errorAdapter.isRetryable,
-          wrapError: (error: Error) => errorAdapter.wrapError(error, LLMErrorCode.API_ERROR),
-          logPrefix: '[GenkitUnifiedAdapter]',
-        },
-      ))
+          },
+          {
+            maxRetries: 3,
+            isRetryable: errorAdapter.isRetryable,
+            wrapError: (error: Error) => errorAdapter.wrapError(error, LLMErrorCode.API_ERROR),
+            logPrefix: '[GenkitUnifiedAdapter]',
+          },
+        ),
+      )
     },
 
     /**
@@ -268,73 +272,75 @@ export async function createGenkitUnifiedAdapter(
 
       const ai = await getGenkitInstance(payloadInstance, tenantId)
 
-      return circuitBreaker.execute(() => withRetry(
-        async () => {
-          try {
-            const genkitTools = input.tools.map((t) =>
-              tool(
-                {
-                  name: t.name,
-                  description: buildToolDescription(t.description || '', t.inputSchema),
-                },
-                async (args) => {
-                  const result = await input.toolExecutor(t.name, args as Record<string, unknown>)
-                  return result
-                },
-              ),
-            )
+      return circuitBreaker.execute(() =>
+        withRetry(
+          async () => {
+            try {
+              const genkitTools = input.tools.map((t) =>
+                tool(
+                  {
+                    name: t.name,
+                    description: buildToolDescription(t.description || '', t.inputSchema),
+                  },
+                  async (args) => {
+                    const result = await input.toolExecutor(t.name, args as Record<string, unknown>)
+                    return result
+                  },
+                ),
+              )
 
-            // Build messages ensuring first non-system message is 'user'
-            const systemMessage = { role: 'system' as const, content: [{ text: input.system }] }
-            type MappedMessage = {
-              role: 'system' | 'user' | 'model'
-              content: Array<{ text: string }>
+              // Build messages ensuring first non-system message is 'user'
+              const systemMessage = { role: 'system' as const, content: [{ text: input.system }] }
+              type MappedMessage = {
+                role: 'system' | 'user' | 'model'
+                content: Array<{ text: string }>
+              }
+              const userAssistantMessages: MappedMessage[] = input.messages.map((m) => ({
+                role: m.role === 'assistant' ? 'model' : m.role === 'system' ? 'system' : 'user',
+                content: [{ text: m.content }],
+              }))
+
+              // Ensure first non-system message is 'user'
+
+              let messages: MappedMessage[] = []
+              if (userAssistantMessages.length > 0 && userAssistantMessages[0].role !== 'user') {
+                messages = [
+                  systemMessage,
+                  { role: 'user' as const, content: [{ text: 'Please continue.' }] },
+                  ...userAssistantMessages,
+                ]
+              } else {
+                messages = [systemMessage, ...userAssistantMessages]
+              }
+
+              const result = await ai.generate({
+                model: config.model,
+                messages,
+                tools: genkitTools as never,
+                toolChoice: 'auto',
+                maxTurns: 5,
+              })
+
+              return {
+                text: result.text,
+                raw: result,
+                toolCalls: [],
+              }
+            } catch (error) {
+              const llmError = errorAdapter.wrapError(
+                error instanceof Error ? error : new Error(String(error)),
+              )
+              throw llmError
             }
-            const userAssistantMessages: MappedMessage[] = input.messages.map((m) => ({
-              role: m.role === 'assistant' ? 'model' : m.role === 'system' ? 'system' : 'user',
-              content: [{ text: m.content }],
-            }))
-
-            // Ensure first non-system message is 'user'
-
-            let messages: MappedMessage[] = []
-            if (userAssistantMessages.length > 0 && userAssistantMessages[0].role !== 'user') {
-              messages = [
-                systemMessage,
-                { role: 'user' as const, content: [{ text: 'Please continue.' }] },
-                ...userAssistantMessages,
-              ]
-            } else {
-              messages = [systemMessage, ...userAssistantMessages]
-            }
-
-            const result = await ai.generate({
-              model: config.model,
-              messages,
-              tools: genkitTools as never,
-              toolChoice: 'auto',
-              maxTurns: 5,
-            })
-
-            return {
-              text: result.text,
-              raw: result,
-              toolCalls: [],
-            }
-          } catch (error) {
-            const llmError = errorAdapter.wrapError(
-              error instanceof Error ? error : new Error(String(error)),
-            )
-            throw llmError
-          }
-        },
-        {
-          maxRetries: 3,
-          isRetryable: errorAdapter.isRetryable,
-          wrapError: (error: Error) => errorAdapter.wrapError(error, LLMErrorCode.API_ERROR),
-          logPrefix: '[GenkitUnifiedAdapter]',
-        },
-      ))
+          },
+          {
+            maxRetries: 3,
+            isRetryable: errorAdapter.isRetryable,
+            wrapError: (error: Error) => errorAdapter.wrapError(error, LLMErrorCode.API_ERROR),
+            logPrefix: '[GenkitUnifiedAdapter]',
+          },
+        ),
+      )
     },
 
     /**

@@ -77,10 +77,7 @@ afterAll(async () => {
   const records = await payload.find({
     collection: 'user-progress',
     where: {
-      or: [
-        { user: { equals: testUser1Id } },
-        { user: { equals: testUser2Id } },
-      ],
+      or: [{ user: { equals: testUser1Id } }, { user: { equals: testUser2Id } }],
     },
     limit: 1000,
     overrideAccess: true,
@@ -231,7 +228,7 @@ describe.skipIf(!hasDatabaseUrl)('UserProgress Collection', () => {
       expect(found).toBeDefined()
     })
 
-    it('should prevent user from reading another user\'s progress', async () => {
+    it("should prevent user from reading another user's progress", async () => {
       // Create progress for user 2
       const progress2 = await payload.create({
         collection: 'user-progress',

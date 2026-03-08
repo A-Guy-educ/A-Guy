@@ -155,9 +155,7 @@ describe.skipIf(!hasDatabaseUrl)('GET /api/teacher-profiles', () => {
     const data = await response.json()
 
     // Find our enabled test profile
-    const testProfile = data.profiles.find(
-      (p: any) => p.label === 'Enabled Teacher',
-    )
+    const testProfile = data.profiles.find((p: any) => p.label === 'Enabled Teacher')
     expect(testProfile).toBeDefined()
 
     // Verify shape: only safe fields exposed
@@ -180,9 +178,7 @@ describe.skipIf(!hasDatabaseUrl)('GET /api/teacher-profiles', () => {
     const data = await response.json()
 
     // Disabled profile should not appear
-    const disabledProfile = data.profiles.find(
-      (p: any) => p.label === 'Disabled Teacher',
-    )
+    const disabledProfile = data.profiles.find((p: any) => p.label === 'Disabled Teacher')
     expect(disabledProfile).toBeUndefined()
   })
 })

@@ -27,5 +27,9 @@ export async function createTestPrompt(
   input: PromptFactoryInput = {},
 ): Promise<Prompt> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test factory: Payload's create() union types are strict
-  return payload.create({ collection: 'prompts', data: buildPromptData(input) as any, overrideAccess: true })
+  return payload.create({
+    collection: 'prompts',
+    data: buildPromptData(input) as any,
+    overrideAccess: true,
+  })
 }

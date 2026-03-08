@@ -62,9 +62,7 @@ describe('CircuitBreaker', () => {
 
     // Next call should fail fast with CircuitOpenError
     await expect(breaker.execute(async () => 'ok')).rejects.toThrow(CircuitOpenError)
-    await expect(breaker.execute(async () => 'ok')).rejects.toThrow(
-      /circuit breaker is open/,
-    )
+    await expect(breaker.execute(async () => 'ok')).rejects.toThrow(/circuit breaker is open/)
   })
 
   it('should transition to half-open after cooldown', async () => {

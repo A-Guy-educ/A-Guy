@@ -87,10 +87,9 @@ afterAll(async () => {
 
 describe.skipIf(!hasDatabaseUrl)('POST /api/cron/upload-session-cleanup', () => {
   it('returns 401 without CRON_SECRET', async () => {
-    const request = new Request(
-      'http://localhost:3000/api/cron/upload-session-cleanup',
-      { method: 'POST' },
-    )
+    const request = new Request('http://localhost:3000/api/cron/upload-session-cleanup', {
+      method: 'POST',
+    })
     const response = await uploadSessionCleanupPOST(request)
 
     expect(response.status).toBe(401)
@@ -99,26 +98,20 @@ describe.skipIf(!hasDatabaseUrl)('POST /api/cron/upload-session-cleanup', () => 
   })
 
   it('returns 401 with wrong CRON_SECRET', async () => {
-    const request = new Request(
-      'http://localhost:3000/api/cron/upload-session-cleanup',
-      {
-        method: 'POST',
-        headers: { Authorization: 'Bearer wrong-secret' },
-      },
-    )
+    const request = new Request('http://localhost:3000/api/cron/upload-session-cleanup', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer wrong-secret' },
+    })
     const response = await uploadSessionCleanupPOST(request)
 
     expect(response.status).toBe(401)
   })
 
   it('runs successfully with no expired sessions', async () => {
-    const request = new Request(
-      'http://localhost:3000/api/cron/upload-session-cleanup',
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${CRON_SECRET}` },
-      },
-    )
+    const request = new Request('http://localhost:3000/api/cron/upload-session-cleanup', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${CRON_SECRET}` },
+    })
     const response = await uploadSessionCleanupPOST(request)
 
     expect(response.status).toBe(200)
@@ -144,13 +137,10 @@ describe.skipIf(!hasDatabaseUrl)('POST /api/cron/upload-session-cleanup', () => 
     })
     createdUploadSessionIds.push(expiredSession.id)
 
-    const request = new Request(
-      'http://localhost:3000/api/cron/upload-session-cleanup',
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${CRON_SECRET}` },
-      },
-    )
+    const request = new Request('http://localhost:3000/api/cron/upload-session-cleanup', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${CRON_SECRET}` },
+    })
     const response = await uploadSessionCleanupPOST(request)
 
     expect(response.status).toBe(200)
@@ -183,13 +173,10 @@ describe.skipIf(!hasDatabaseUrl)('POST /api/cron/upload-session-cleanup', () => 
     })
     createdUploadSessionIds.push(activeSession.id)
 
-    const request = new Request(
-      'http://localhost:3000/api/cron/upload-session-cleanup',
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${CRON_SECRET}` },
-      },
-    )
+    const request = new Request('http://localhost:3000/api/cron/upload-session-cleanup', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${CRON_SECRET}` },
+    })
     await uploadSessionCleanupPOST(request)
 
     // Verify session still exists
@@ -204,10 +191,9 @@ describe.skipIf(!hasDatabaseUrl)('POST /api/cron/upload-session-cleanup', () => 
 
 describe.skipIf(!hasDatabaseUrl)('POST /api/cron/chat-asset-expiry', () => {
   it('returns 401 without CRON_SECRET', async () => {
-    const request = new Request(
-      'http://localhost:3000/api/cron/chat-asset-expiry',
-      { method: 'POST' },
-    )
+    const request = new Request('http://localhost:3000/api/cron/chat-asset-expiry', {
+      method: 'POST',
+    })
     const response = await chatAssetExpiryPOST(request)
 
     expect(response.status).toBe(401)
@@ -216,13 +202,10 @@ describe.skipIf(!hasDatabaseUrl)('POST /api/cron/chat-asset-expiry', () => {
   })
 
   it('runs successfully with no expired assets', async () => {
-    const request = new Request(
-      'http://localhost:3000/api/cron/chat-asset-expiry',
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${CRON_SECRET}` },
-      },
-    )
+    const request = new Request('http://localhost:3000/api/cron/chat-asset-expiry', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${CRON_SECRET}` },
+    })
     const response = await chatAssetExpiryPOST(request)
 
     expect(response.status).toBe(200)
@@ -250,13 +233,10 @@ describe.skipIf(!hasDatabaseUrl)('POST /api/cron/chat-asset-expiry', () => {
     })
     createdChatAssetIds.push(expiredAsset.id)
 
-    const request = new Request(
-      'http://localhost:3000/api/cron/chat-asset-expiry',
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${CRON_SECRET}` },
-      },
-    )
+    const request = new Request('http://localhost:3000/api/cron/chat-asset-expiry', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${CRON_SECRET}` },
+    })
     const response = await chatAssetExpiryPOST(request)
 
     // May return 200 or 207 (partial success if blob delete fails)
@@ -295,13 +275,10 @@ describe.skipIf(!hasDatabaseUrl)('POST /api/cron/chat-asset-expiry', () => {
     })
     createdChatAssetIds.push(persistentAsset.id)
 
-    const request = new Request(
-      'http://localhost:3000/api/cron/chat-asset-expiry',
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${CRON_SECRET}` },
-      },
-    )
+    const request = new Request('http://localhost:3000/api/cron/chat-asset-expiry', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${CRON_SECRET}` },
+    })
     await chatAssetExpiryPOST(request)
 
     // Persistent asset should still exist
@@ -316,10 +293,9 @@ describe.skipIf(!hasDatabaseUrl)('POST /api/cron/chat-asset-expiry', () => {
 
 describe.skipIf(!hasDatabaseUrl)('POST /api/cron/guest-sessions-cleanup', () => {
   it('returns 401 without CRON_SECRET', async () => {
-    const request = new Request(
-      'http://localhost:3000/api/cron/guest-sessions-cleanup',
-      { method: 'POST' },
-    )
+    const request = new Request('http://localhost:3000/api/cron/guest-sessions-cleanup', {
+      method: 'POST',
+    })
     const response = await guestSessionsCleanupPOST(request)
 
     expect(response.status).toBe(401)
@@ -328,13 +304,10 @@ describe.skipIf(!hasDatabaseUrl)('POST /api/cron/guest-sessions-cleanup', () => 
   })
 
   it('runs successfully with no sessions to clean', async () => {
-    const request = new Request(
-      'http://localhost:3000/api/cron/guest-sessions-cleanup',
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${CRON_SECRET}` },
-      },
-    )
+    const request = new Request('http://localhost:3000/api/cron/guest-sessions-cleanup', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${CRON_SECRET}` },
+    })
     const response = await guestSessionsCleanupPOST(request)
 
     expect(response.status).toBe(200)
@@ -352,13 +325,10 @@ describe.skipIf(!hasDatabaseUrl)('POST /api/cron/guest-sessions-cleanup', () => 
     })
     createdGuestSessionIds.push(session.id)
 
-    const request = new Request(
-      'http://localhost:3000/api/cron/guest-sessions-cleanup',
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${CRON_SECRET}` },
-      },
-    )
+    const request = new Request('http://localhost:3000/api/cron/guest-sessions-cleanup', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${CRON_SECRET}` },
+    })
     const response = await guestSessionsCleanupPOST(request)
 
     expect(response.status).toBe(200)
@@ -387,13 +357,10 @@ describe.skipIf(!hasDatabaseUrl)('POST /api/cron/guest-sessions-cleanup', () => 
     })
     createdGuestSessionIds.push(session.id)
 
-    const request = new Request(
-      'http://localhost:3000/api/cron/guest-sessions-cleanup',
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${CRON_SECRET}` },
-      },
-    )
+    const request = new Request('http://localhost:3000/api/cron/guest-sessions-cleanup', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${CRON_SECRET}` },
+    })
     const response = await guestSessionsCleanupPOST(request)
 
     expect(response.status).toBe(200)
