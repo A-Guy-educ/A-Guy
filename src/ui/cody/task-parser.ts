@@ -20,8 +20,9 @@ const CLARIFY_STOP = /stopped at clarify stage/
 const SUPERVISOR_RETRY = /\[supervisor-retry:\s*(\d+)\/(\d+)\]/
 const SUPERVISOR_EXHAUSTED = /Max Retries Exhausted/
 const SUPERVISOR_ERROR = /## Supervisor Error/
-const GATE_APPROVE = /^\/cody\s+approve/
-const GATE_REJECT = /^\/cody\s+reject/
+// Match both /cody and @cody prefixes for approval/rejection commands
+const GATE_APPROVE = /^[\/@]cody\s+approve/
+const GATE_REJECT = /^[\/@]cody\s+reject/
 const VERCEL_PREVIEW = /\[Visit Preview\]\((https:\/\/[^)]+)\)/
 
 // ============ Helper Functions ============

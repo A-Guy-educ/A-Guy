@@ -40,62 +40,85 @@ function LoginFormContent() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <p className="text-sm text-muted-foreground text-center">{t('subtitle')}</p>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center space-y-4">
-          <GoogleLoginButton returnTo={returnTo} className="w-full" />
-
-          {passwordEnabled && (
-            <>
-              <div className="flex items-center w-full gap-3">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground">{tOauth('orDivider')}</span>
-                <div className="flex-1 h-px bg-border" />
-              </div>
-
-              <form onSubmit={handleSubmit} className="w-full space-y-3">
-                <div className="space-y-1">
-                  <Label htmlFor="email">{t('email')}</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder={t('emailPlaceholder')}
-                    required
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="password">{t('password')}</Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder={t('passwordPlaceholder')}
-                    required
-                  />
-                </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? t('loggingIn') : t('loginButton')}
-                </Button>
-              </form>
-
-              <p className="text-sm text-muted-foreground">
-                {t('noAccount')}{' '}
-                <SystemLink href="/signup" className="underline hover:no-underline">
-                  {t('signupLink')}
-                </SystemLink>
-              </p>
-            </>
-          )}
-
-          {!passwordEnabled && (
-            <p className="text-xs text-muted-foreground text-center">{t('googleOnlyMessage')}</p>
-          )}
+    <Card className="rounded-2xl shadow-lg border-0 bg-card p-8">
+      <CardHeader className="pb-4">
+        {/* Section label with decorative line */}
+        <div className="flex flex-col items-center">
+          <div className="w-8 h-px bg-border mb-3" />
+          <p className="text-sm text-muted-foreground">{t('quickLogin')}</p>
         </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Google SSO Button */}
+        <GoogleLoginButton returnTo={returnTo} className="w-full h-14 rounded-xl" />
+
+        {/* Registration Link - appears below Google button when password is disabled */}
+        {!passwordEnabled && (
+          <>
+            <div className="flex justify-center">
+              <SystemLink
+                href="/signup"
+                className="border border-primary text-primary rounded-full px-6 py-2 text-sm hover:bg-primary/5 transition-colors inline-block"
+              >
+                {t('freeRegistration')}
+              </SystemLink>
+            </div>
+            <p className="text-sm text-muted-foreground text-center pt-2">
+              {t('secureAccess')} {t('oneClickEntry')}
+            </p>
+          </>
+        )}
+
+        {/* Email/Password Form - appears when password login is enabled */}
+        {passwordEnabled && (
+          <>
+            <div className="flex items-center w-full gap-3">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground">{tOauth('orDivider')}</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+
+            <form onSubmit={handleSubmit} className="w-full space-y-3">
+              <div className="space-y-1">
+                <Label htmlFor="email">{t('email')}</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder={t('emailPlaceholder')}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="password">{t('password')}</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder={t('passwordPlaceholder')}
+                  required
+                />
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? t('loggingIn') : t('loginButton')}
+              </Button>
+            </form>
+
+            {/* Registration Link - appears below form when password is enabled */}
+            <div className="flex flex-col items-center gap-2 pt-2">
+              <SystemLink
+                href="/signup"
+                className="border border-primary text-primary rounded-full px-6 py-2 text-sm hover:bg-primary/5 transition-colors inline-block"
+              >
+                {t('freeRegistration')}
+              </SystemLink>
+              <p className="text-sm text-muted-foreground text-center">
+                {t('secureAccess')} {t('oneClickEntry')}
+              </p>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   )
@@ -111,15 +134,16 @@ export function LoginForm() {
 
 function LoginFormSkeleton() {
   return (
-    <Card>
-      <CardHeader>
-        <div className="h-4 w-48 mx-auto bg-muted animate-pulse rounded" />
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-full h-10 bg-muted animate-pulse rounded" />
-          <div className="h-3 w-64 bg-muted animate-pulse rounded" />
+    <Card className="rounded-2xl shadow-lg border-0 bg-card p-8">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col items-center">
+          <div className="w-8 h-px bg-border mb-3" />
+          <div className="h-4 w-24 mx-auto bg-muted animate-pulse rounded" />
         </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="w-full h-14 bg-muted animate-pulse rounded-xl" />
+        <div className="h-8 w-32 mx-auto bg-muted animate-pulse rounded-full" />
       </CardContent>
     </Card>
   )
