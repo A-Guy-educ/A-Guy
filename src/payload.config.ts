@@ -16,6 +16,7 @@ import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
 import { Exercises } from '@/server/payload/collections/Exercises'
 import { ExtractionLogs } from '@/server/payload/collections/ExtractionLogs'
+import { FormulaSheets } from '@/server/payload/collections/FormulaSheets'
 import { GuestSessions } from '@/server/payload/collections/GuestSessions'
 import { Lessons } from '@/server/payload/collections/Lessons'
 import { MCPAuditLogs } from '@/server/payload/collections/MCPAuditLogs'
@@ -38,6 +39,7 @@ import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
 import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
 import type { JobDocument } from '@/server/payload/jobs/types'
 import { runBackfillOnInit } from '@/server/payload/migrations/backfillAdminTitle'
+import { seedFormulaSheet471 } from '@/server/payload/migrations/seedFormulaSheet471'
 import { plugins } from '@/server/payload/plugins'
 import { seedTeacherProfiles } from '@/server/payload/seed/teacher-profiles-seed'
 import { Footer } from '@/ui/web/footer/config'
@@ -155,6 +157,7 @@ export default buildConfig({
     Lessons,
     Exercises,
     ExtractionLogs,
+    FormulaSheets,
     Prompts,
     TeacherProfiles,
     UserSettings,
@@ -298,5 +301,6 @@ export default buildConfig({
 
     await runBackfillOnInit(payload)
     await seedTeacherProfiles(payload)
+    await seedFormulaSheet471(payload)
   },
 })

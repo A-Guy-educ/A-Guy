@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-08T17:07:34.817Z",
-  "updatedAt": "2026-03-08T19:20:14.812Z",
-  "state": "paused",
-  "cursor": "build",
+  "updatedAt": "2026-03-08T19:33:30.855Z",
+  "state": "running",
+  "cursor": "plan-gap",
   "stages": {
     "taskify": {
       "state": "paused",
@@ -28,13 +28,25 @@
       "outputFile": "gap.md"
     },
     "architect": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
       "startedAt": "2026-03-08T19:16:55.535Z",
-      "completedAt": "2026-03-08T19:20:11.299Z",
+      "completedAt": "2026-03-08T19:26:54.009Z",
       "outputFile": "architect.md"
+    },
+    "plan-gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-08T19:26:54.076Z",
+      "completedAt": "2026-03-08T19:33:30.759Z",
+      "outputFile": "plan-gap.md"
+    },
+    "build": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-08T19:33:30.782Z"
     }
   },
   "issueNumber": 750,
-  "completedAt": "2026-03-08T19:20:14.812Z"
+  "branchName": "feat/260308-auto-750-equation-paper"
 }

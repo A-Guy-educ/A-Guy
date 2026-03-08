@@ -238,6 +238,16 @@ export const Lessons: CollectionConfig = {
       },
     },
     {
+      name: 'formulaSheet',
+      type: 'relationship',
+      relationTo: 'formula-sheets',
+      required: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Lesson-specific formula sheet override',
+      },
+    },
+    {
       name: 'slug',
       type: 'text',
       required: false,

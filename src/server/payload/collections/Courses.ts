@@ -206,6 +206,16 @@ export const Courses: CollectionConfig = {
       },
     },
     {
+      name: 'defaultFormulaSheet',
+      type: 'relationship',
+      relationTo: 'formula-sheets',
+      required: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Default formula sheet for all lessons in this course',
+      },
+    },
+    {
       name: 'slug',
       type: 'text',
       required: false,

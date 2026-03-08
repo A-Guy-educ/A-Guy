@@ -28,6 +28,9 @@ import { useTTS } from '../hooks/useTTS'
 import { FormulaComposer } from '@/ui/web/shared/MathInput/FormulaComposer'
 import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
 import { FunctionSquare } from 'lucide-react'
+import { FormulaSheetButton } from '../FormulaSheetButton'
+import { FormulaSheetViewer } from '../FormulaSheetViewer'
+import type { FormulaSheetData } from '../FormulaSheetButton'
 
 export type ViewMode = 'PDF' | 'Chat'
 
@@ -312,6 +315,8 @@ export function ChatInterface({
 
   const [formulaComposerOpen, setFormulaComposerOpen] = useState(false)
   const [isChatInputFocused, setIsChatInputFocused] = useState(false)
+  const [formulaSheetOpen, setFormulaSheetOpen] = useState(false)
+  const [formulaSheetData, setFormulaSheetData] = useState<FormulaSheetData | null>(null)
 
   const handleFormulaInsert = useCallback(
     (latex: string) => {
@@ -524,6 +529,19 @@ export function ChatInterface({
         </div>
       )}
 
+      {/* Formula Sheet Toolbar */}
+      {lessonId && (
+        <div className="flex-grow-0 flex-shrink-0 px-5 pt-3">
+          <FormulaSheetButton
+            lessonId={lessonId}
+            onOpen={(data) => {
+              setFormulaSheetData(data)
+              setFormulaSheetOpen(true)
+            }}
+          />
+        </div>
+      )}
+
       {/* Input Container */}
       <div
         className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative"
@@ -713,6 +731,13 @@ export function ChatInterface({
           </div>
         </form>
       </div>
+
+      {/* Formula Sheet Viewer */}
+      <FormulaSheetViewer
+        sheet={formulaSheetData}
+        isOpen={formulaSheetOpen}
+        onClose={() => setFormulaSheetOpen(false)}
+      />
     </div>
   )
 }

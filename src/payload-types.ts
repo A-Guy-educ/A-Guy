@@ -82,6 +82,7 @@ export interface Config {
     lessons: Lesson;
     exercises: Exercise;
     'extraction-logs': ExtractionLog;
+    'formula-sheets': FormulaSheet;
     prompts: Prompt;
     teacher_profiles: TeacherProfile;
     user_settings: UserSetting;
@@ -121,6 +122,7 @@ export interface Config {
     lessons: LessonsSelect<false> | LessonsSelect<true>;
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
     'extraction-logs': ExtractionLogsSelect<false> | ExtractionLogsSelect<true>;
+    'formula-sheets': FormulaSheetsSelect<false> | FormulaSheetsSelect<true>;
     prompts: PromptsSelect<false> | PromptsSelect<true>;
     teacher_profiles: TeacherProfilesSelect<false> | TeacherProfilesSelect<true>;
     user_settings: UserSettingsSelect<false> | UserSettingsSelect<true>;
@@ -528,6 +530,10 @@ export interface Course {
    */
   courseContextText?: string | null;
   /**
+   * Default formula sheet for all lessons in this course
+   */
+  defaultFormulaSheet?: (string | null) | FormulaSheet;
+  /**
    * URL-friendly identifier (auto-generated from title if empty)
    */
   slug?: string | null;
@@ -683,6 +689,49 @@ export interface Prompt {
    * Purpose of this prompt: chat conversation, PDF extraction, or PDF verification
    */
   usage?: ('chat' | 'extractor' | 'verifier') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "formula-sheets".
+ */
+export interface FormulaSheet {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
+  /**
+   * Name following pattern: [Course Code] - [Topic] - [Version] (e.g., 471 - Calc - v1)
+   */
+  name: string;
+  /**
+   * Rich text content with LaTeX support for formulas
+   */
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * PDF file containing formula sheet (max 5MB)
+   */
+  pdfFile?: (string | null) | Media;
   updatedAt: string;
   createdAt: string;
 }
@@ -1296,6 +1345,10 @@ export interface Lesson {
    * AI system prompt for this lesson (uses default if not set)
    */
   prompt?: (string | null) | Prompt;
+  /**
+   * Lesson-specific formula sheet override
+   */
+  formulaSheet?: (string | null) | FormulaSheet;
   /**
    * URL-friendly identifier (auto-generated from title if empty)
    */
@@ -2318,6 +2371,10 @@ export interface PayloadLockedDocument {
         value: string | ExtractionLog;
       } | null)
     | ({
+        relationTo: 'formula-sheets';
+        value: string | FormulaSheet;
+      } | null)
+    | ({
         relationTo: 'prompts';
         value: string | Prompt;
       } | null)
@@ -2749,6 +2806,7 @@ export interface CoursesSelect<T extends boolean = true> {
   categories?: T;
   prompt?: T;
   courseContextText?: T;
+  defaultFormulaSheet?: T;
   slug?: T;
   meta?:
     | T
@@ -2800,6 +2858,7 @@ export interface LessonsSelect<T extends boolean = true> {
   contentFiles?: T;
   lessonContextText?: T;
   prompt?: T;
+  formulaSheet?: T;
   slug?: T;
   createdBy?: T;
   updatedAt?: T;
@@ -2852,6 +2911,19 @@ export interface ExtractionLogsSelect<T extends boolean = true> {
   pipelineVersion?: T;
   processingTimeMs?: T;
   model?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "formula-sheets_select".
+ */
+export interface FormulaSheetsSelect<T extends boolean = true> {
+  tenant?: T;
+  locale?: T;
+  name?: T;
+  content?: T;
+  pdfFile?: T;
   updatedAt?: T;
   createdAt?: T;
 }
