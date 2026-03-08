@@ -87,8 +87,7 @@ describe('MCP audit trail', () => {
     const logAdminUserId =
       typeof log.adminUserId === 'object' ? (log.adminUserId as any).id : log.adminUserId
     expect(logAdminUserId).toBe(adminUserId)
-    const logTenantId =
-      typeof log.tenantId === 'object' ? (log.tenantId as any).id : log.tenantId
+    const logTenantId = typeof log.tenantId === 'object' ? (log.tenantId as any).id : log.tenantId
     expect(logTenantId).toBe(tenantId)
     expect(log.resultCount).toBe(5)
     expect(log.success).toBe(true)
