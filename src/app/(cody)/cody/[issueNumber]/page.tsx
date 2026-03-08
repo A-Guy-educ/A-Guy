@@ -8,6 +8,8 @@ import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { CodyDashboard } from '@/ui/cody/components/CodyDashboard'
 import { getMeUser } from '@/infra/utils/getMeUser'
+
+// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 
 export const metadata: Metadata = {

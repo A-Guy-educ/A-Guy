@@ -15,6 +15,8 @@ import {
   loadConfigValues,
 } from '@/infra/config/runtime/config-values'
 import { logger } from '@/infra/utils/logger'
+
+// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import type { Payload } from 'payload'
 import { LLMProviderType } from './types'

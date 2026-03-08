@@ -9,6 +9,7 @@
  * @pattern server-only
  */
 
+// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
 import type { ResolvedTeacherProfile } from '@/server/services/teacher-profile-resolver'
 
 /**

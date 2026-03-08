@@ -14,6 +14,8 @@ import {
   CHAT_ASSET_TOKEN_VALID_MINUTES,
 } from '@/server/chat-assets/constants'
 import { buildChatAssetPathname } from '@/server/chat-assets/pathname'
+
+// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 
 const clientPayloadSchema = z.object({

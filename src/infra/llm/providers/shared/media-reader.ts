@@ -11,6 +11,8 @@ import type { Payload } from 'payload'
 import { isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
 import type { MediaPartWithPath } from '@/infra/llm/multimodal/types'
 import { logger } from '@/infra/utils/logger'
+
+// eslint-disable-next-line no-restricted-imports -- TODO: migrate to proper layer
 import { normalizeToAbsoluteUrl } from '@/server/services/pdf-fetcher'
 
 export interface MediaReaderOptions {
