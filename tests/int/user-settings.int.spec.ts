@@ -46,6 +46,19 @@ beforeAll(async () => {
     },
   })
   testUser2Id = user2.id
+
+  // Clean up any stale settings from previous test runs (shared CI DB)
+  const staleSettings = await payload.find({
+    collection: 'user_settings',
+    where: {
+      or: [{ user: { equals: testUser1Id } }, { user: { equals: testUser2Id } }],
+    },
+    limit: 100,
+    overrideAccess: true,
+  })
+  for (const s of staleSettings.docs) {
+    await payload.delete({ collection: 'user_settings', id: s.id, overrideAccess: true })
+  }
 })
 
 afterAll(async () => {
@@ -286,6 +299,9 @@ describe.skipIf(!hasDatabaseUrl)('UserSettings Collection', () => {
 
         const results = await payload.find({
           collection: 'user_settings',
+          where: {
+            or: [{ user: { equals: testUser1Id } }, { user: { equals: testUser2Id } }],
+          },
           user: adminUser as any,
           overrideAccess: false,
         })

@@ -293,14 +293,20 @@ describe.skipIf(!hasDatabaseUrl)('Tenants Collection', () => {
         overrideAccess: true,
       })
 
-      const results = await payload.find({
-        collection: 'tenants',
-        user: studentUser as any,
-        overrideAccess: false,
-      })
+      // Payload's adminOnly access may throw Forbidden or return empty results
+      try {
+        const results = await payload.find({
+          collection: 'tenants',
+          user: studentUser as any,
+          overrideAccess: false,
+        })
 
-      // Student should see zero tenants (adminOnly read access)
-      expect(results.docs).toHaveLength(0)
+        // If it returns results, they should be empty
+        expect(results.docs).toHaveLength(0)
+      } catch (error: any) {
+        // Payload throws Forbidden (403) for adminOnly access
+        expect(error.status).toBe(403)
+      }
     })
 
     it('should prevent non-admin from updating tenants', async () => {

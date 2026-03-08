@@ -287,6 +287,9 @@ describe.skipIf(!hasDatabaseUrl)('UserProgress Collection', () => {
 
         const results = await payload.find({
           collection: 'user-progress',
+          where: {
+            or: [{ user: { equals: testUser1Id } }, { user: { equals: testUser2Id } }],
+          },
           user: adminUser as any,
           overrideAccess: false,
         })
