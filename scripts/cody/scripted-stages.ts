@@ -6,7 +6,7 @@
  */
 
 import { logger } from './logger'
-import { execFileSync, execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 import ms from 'ms'
 import * as path from 'path'
@@ -33,20 +33,21 @@ const DEFAULT_GATE_TIMEOUT = ms('2m')
 
 function runGate(
   name: string,
-  command: string,
+  program: string,
+  args: string[],
   cwd: string,
   timeout: number = DEFAULT_GATE_TIMEOUT,
 ): GateResult {
   logger.info(`  Running ${name}...`)
   try {
-    const output = execSync(command, { cwd, encoding: 'utf-8', timeout })
+    const output = execFileSync(program, args, { cwd, encoding: 'utf-8', timeout })
     logger.info(`  ✅ ${name} passed`)
-    return { name, passed: true, output: output.slice(0, 500) }
+    return { name, passed: true, output: output.slice(0, 1000) }
   } catch (error: unknown) {
     const err = error as { stdout?: string; stderr?: string; message?: string }
     const output = (err.stdout || '') + (err.stderr || '') || err.message || 'Unknown error'
     logger.info(`  ❌ ${name} failed`)
-    return { name, passed: false, output: output.slice(0, 2000) }
+    return { name, passed: false, output: output.slice(0, 5000) }
   }
 }
 
@@ -62,12 +63,10 @@ export function runVerifyStage(
   const aggregateTimeout = timeout ?? Infinity
 
   const gateDefinitions = [
-    { name: 'TypeScript', command: 'pnpm -s tsc --noEmit' },
-    { name: 'Lint', command: 'pnpm -s lint' },
-    { name: 'Format', command: 'pnpm -s format:check' },
-    { name: 'Unit Tests', command: 'pnpm -s test:unit' },
-    // Integration tests run in CI after PR is created
-    // Adding them here would require MongoDB service in verify stage
+    { name: 'TypeScript', program: 'pnpm', args: ['-s', 'tsc', '--noEmit'] },
+    { name: 'Lint', program: 'pnpm', args: ['-s', 'lint'] },
+    { name: 'Format', program: 'pnpm', args: ['-s', 'format:check'] },
+    { name: 'Unit Tests', program: 'pnpm', args: ['-s', 'test:unit'] },
   ]
 
   const gates: GateResult[] = []
@@ -87,7 +86,7 @@ export function runVerifyStage(
 
     // Use smaller of remaining aggregate time or per-gate default
     const gateTimeout = Math.min(remaining, DEFAULT_GATE_TIMEOUT)
-    gates.push(runGate(gateDef.name, gateDef.command, cwd, gateTimeout))
+    gates.push(runGate(gateDef.name, gateDef.program, gateDef.args, cwd, gateTimeout))
   }
 
   const allPassed = gates.every((g) => g.passed)
@@ -127,7 +126,20 @@ interface PrResult {
 }
 
 function getBranchName(cwd: string): string {
-  return execSync('git branch --show-current', { cwd, encoding: 'utf-8' }).trim()
+  const branch = execFileSync('git', ['branch', '--show-current'], {
+    cwd,
+    encoding: 'utf-8',
+  }).trim()
+  if (!branch) {
+    // Detached HEAD — use short commit hash as fallback
+    return (
+      execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
+        cwd,
+        encoding: 'utf-8',
+      }).trim() || 'detached'
+    )
+  }
+  return branch
 }
 
 function getExistingPr(branch: string, cwd: string): string | null {
@@ -387,32 +399,6 @@ export async function runPrStage(
     logger.info(`  --fresh flag: creating new PR (ignoring existing: ${existingUrl})`)
   }
 
-  // Step 1.5: Reset branch if --fresh is set (delete old branch, recreate from default)
-  if (options?.fresh && branch !== defaultBranch) {
-    logger.info('  --fresh flag: resetting branch from scratch')
-    try {
-      // Delete remote branch
-      execFileSync('git', ['push', 'origin', '--delete', branch], { cwd, encoding: 'utf-8' })
-      logger.info('  Deleted remote branch')
-    } catch (_e) {
-      // Branch may not exist on remote
-    }
-    try {
-      // Delete local branch
-      execFileSync('git', ['branch', '-D', branch], { cwd, encoding: 'utf-8' })
-      logger.info('  Deleted local branch')
-    } catch (_e) {
-      // Branch may not exist locally
-    }
-    // Create fresh branch from default branch
-    execFileSync('git', ['checkout', '-b', branch, defaultBranch], { cwd, encoding: 'utf-8' })
-    logger.info('  Created fresh branch from ' + defaultBranch)
-  } else if (options?.fresh) {
-    // Already on default branch, just reset to it
-    execFileSync('git', ['reset', '--hard', defaultBranch], { cwd, encoding: 'utf-8' })
-    logger.info('  Reset branch to ' + defaultBranch)
-  }
-
   // Step 2: Push branch (skip pre-push hooks to avoid blocking on unrelated checks)
   logger.info('  Pushing branch ' + branch + '...')
   let pushSuccess = false
@@ -420,6 +406,7 @@ export async function runPrStage(
     execFileSync('git', ['push', '-u', 'origin', branch], {
       cwd,
       stdio: 'inherit',
+      timeout: 120_000,
       env: { ...process.env, HUSKY: '0', SKIP_HOOKS: '1' },
     })
     pushSuccess = true
@@ -430,12 +417,14 @@ export async function runPrStage(
       execFileSync('git', ['pull', '--rebase', 'origin', branch], {
         cwd,
         stdio: 'inherit',
+        timeout: 120_000,
         env: { ...process.env, HUSKY: '0', SKIP_HOOKS: '1' },
       })
       // Retry push after rebase
       execFileSync('git', ['push', '-u', 'origin', branch], {
         cwd,
         stdio: 'inherit',
+        timeout: 120_000,
         env: { ...process.env, HUSKY: '0', SKIP_HOOKS: '1' },
       })
       pushSuccess = true
@@ -457,6 +446,13 @@ export async function runPrStage(
   // Step 4: Create PR via GitHub REST API (more reliable than gh CLI in CI)
   // BUG-F fix: Use GH_PAT if non-empty, fall back to GH_TOKEN (don't use empty string)
   const ghToken = process.env.GH_PAT?.trim() || process.env.GH_TOKEN
+
+  if (!ghToken) {
+    logger.error('  ❌ No GitHub token found (GH_PAT or GH_TOKEN)')
+    const report = `# PR Stage\n\nFailed to create PR: No GitHub token found. Set GH_PAT or GH_TOKEN.\n`
+    fs.writeFileSync(outputFile, report)
+    return { created: false, url: '', report }
+  }
 
   // Extract owner and repo from git remote
   let owner = ''
@@ -511,11 +507,6 @@ export async function runPrStage(
       const cleanUrl = prUrl.replace(/\n/g, '').trim()
       postComment(issueNumber, `🎉 PR created: ${cleanUrl}`)
       logger.info(`  ✅ Commented on issue #${issueNumber}`)
-    }
-
-    // Set lifecycle label to review
-    if (issueNumber) {
-      setLifecycleLabel(issueNumber, 'cody:review')
     }
 
     // Set lifecycle label to review

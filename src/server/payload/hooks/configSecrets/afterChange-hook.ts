@@ -41,6 +41,11 @@ export const afterChangeAuditLog: CollectionAfterChangeHook = async ({
       ? (req.user as { id: string }).id
       : ''
 
+  // Skip audit log when no valid actor (e.g., programmatic/migration operations)
+  if (!actorId) {
+    return doc
+  }
+
   // Get tenant ID from doc
   const tenantId =
     doc.tenant && typeof doc.tenant === 'object' && 'id' in doc.tenant

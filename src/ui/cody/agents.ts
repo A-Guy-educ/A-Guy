@@ -91,7 +91,7 @@ Be helpful, concise, and technical when appropriate. Use markdown for formatting
 The repository is "${GITHUB_OWNER}/${GITHUB_REPO}" - a Next.js 15 + Payload CMS application.
 The Cody pipeline has these stages:
 - Spec: taskify → spec → clarify
-- Impl: architect → plan-review → build → commit → verify → auditor → apply-audit → pr
+- Impl: architect → plan-review → build → commit → verify → pr
 - Special: autofix (retry loop)`,
   },
 

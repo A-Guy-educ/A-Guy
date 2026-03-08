@@ -10,6 +10,23 @@ import * as path from 'path'
 
 import { getLatestIssueComment, getLatestApprovalComment, type CodyInput } from './cody-utils'
 import { checkForQuestions } from './content-validators'
+import { logger } from './logger'
+
+// ============================================================================
+// Safe File Write Helper
+// ============================================================================
+
+/**
+ * Safe file write with error logging. Re-throws on failure so callers can handle.
+ */
+function safeWriteFile(filePath: string, content: string): void {
+  try {
+    fs.writeFileSync(filePath, content)
+  } catch (error) {
+    logger.error({ err: error }, `Failed to write file: ${filePath}`)
+    throw error
+  }
+}
 
 // ============================================================================
 // Answer Extraction
@@ -89,7 +106,7 @@ export function handleClarification(input: CodyInput, taskDir: string): ClarifyR
   // If questions.md doesn't exist, no clarification needed - create default clarified.md
   if (!fs.existsSync(questionsPath)) {
     if (!fs.existsSync(clarifiedPath)) {
-      fs.writeFileSync(clarifiedPath, '# Clarified\n\nUse recommended answers.\n')
+      safeWriteFile(clarifiedPath, '# Clarified\n\nUse recommended answers.\n')
     }
     return 'no-questions'
   }
@@ -110,7 +127,7 @@ export function handleClarification(input: CodyInput, taskDir: string): ClarifyR
 
   // If we have an answer, create clarified.md
   if (answer) {
-    fs.writeFileSync(clarifiedPath, `# Clarified\n\n${answer}\n`)
+    safeWriteFile(clarifiedPath, `# Clarified\n\n${answer}\n`)
     return 'answered'
   }
 
@@ -123,7 +140,7 @@ export function handleClarification(input: CodyInput, taskDir: string): ClarifyR
 
   // No questions - create default clarified.md
   if (!fs.existsSync(clarifiedPath)) {
-    fs.writeFileSync(clarifiedPath, '# Clarified\n\nUse recommended answers.\n')
+    safeWriteFile(clarifiedPath, '# Clarified\n\nUse recommended answers.\n')
   }
 
   return 'no-questions'
@@ -322,8 +339,8 @@ function formatGateComment(
 
   lines.push('---')
   lines.push('')
-  lines.push('Reply with `@cody approve` or `/cody approve` to proceed.')
-  lines.push('Reply with `@cody reject` or `/cody reject` to cancel.')
+  lines.push('Reply `approve` to proceed.')
+  lines.push('Reply `reject` to cancel.')
 
   return lines.join('\n')
 }
@@ -364,16 +381,16 @@ export function handleGateApproval(
     if (latestApproval.status) {
       // User replied with approve/reject - write the approved file
       if (latestApproval.status === 'approved') {
-        fs.writeFileSync(approvedPath, `# Gate Approved\n\nApproved at ${gatePoint} gate.\n`)
+        safeWriteFile(approvedPath, `# Gate Approved\n\nApproved at ${gatePoint} gate.\n`)
         // If there's also answer content in the comment, create clarified.md
         if (latestApproval.answerContent) {
           const clarifiedPath = path.join(taskDir, 'clarified.md')
-          fs.writeFileSync(clarifiedPath, `# Clarified\n\n${latestApproval.answerContent}\n`)
+          safeWriteFile(clarifiedPath, `# Clarified\n\n${latestApproval.answerContent}\n`)
         }
         return 'approved'
       } else {
         // Write rejection marker
-        fs.writeFileSync(requestPath, `# Gate Rejected\n\nRejected at ${gatePoint} gate.\n`)
+        safeWriteFile(requestPath, `# Gate Rejected\n\nRejected at ${gatePoint} gate.\n`)
         return 'rejected'
       }
     }
@@ -381,15 +398,15 @@ export function handleGateApproval(
 
   // If we have approval in current trigger
   if (approval.status === 'approved') {
-    fs.writeFileSync(approvedPath, `# Gate Approved\n\nApproved at ${gatePoint} gate.\n`)
+    safeWriteFile(approvedPath, `# Gate Approved\n\nApproved at ${gatePoint} gate.\n`)
     // If there's also answer content in the comment, create clarified.md
     if (approval.answerContent) {
       const clarifiedPath = path.join(taskDir, 'clarified.md')
-      fs.writeFileSync(clarifiedPath, `# Clarified\n\n${approval.answerContent}\n`)
+      safeWriteFile(clarifiedPath, `# Clarified\n\n${approval.answerContent}\n`)
     }
     return 'approved'
   } else if (approval.status === 'rejected') {
-    fs.writeFileSync(requestPath, `# Gate Rejected\n\nRejected at ${gatePoint} gate.\n`)
+    safeWriteFile(requestPath, `# Gate Rejected\n\nRejected at ${gatePoint} gate.\n`)
     return 'rejected'
   }
 
@@ -442,7 +459,7 @@ export function handleGateApproval(
   )
 
   // Write gate request file
-  fs.writeFileSync(requestPath, `# Gate Request\n\n${comment}\n`)
+  safeWriteFile(requestPath, `# Gate Request\n\n${comment}\n`)
 
   // Return waiting - caller will post the comment to the issue
   return 'waiting'

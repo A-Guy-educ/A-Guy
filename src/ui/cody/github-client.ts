@@ -201,6 +201,36 @@ export async function findBranchByIssueNumber(
 // ============ Status JSON Access ============
 
 /**
+ * Normalize pipeline status data from v2 format.
+ * - Derives `currentStage` from stages data if not set (finds the running stage)
+ * - Maps `cursor` field to `currentStage` as fallback
+ */
+function normalizePipelineStatus(status: CodyPipelineStatus): CodyPipelineStatus {
+  let currentStage = status.currentStage
+
+  // If currentStage is not set, derive it from stages data
+  if (!currentStage && status.stages) {
+    // Find the stage that is currently running
+    const runningEntry = Object.entries(status.stages).find(([, data]) => data.state === 'running')
+    if (runningEntry) {
+      currentStage = runningEntry[0]
+    }
+    // If no running stage but pipeline is paused, find the paused stage
+    if (!currentStage && status.state === 'paused') {
+      const pausedEntry = Object.entries(status.stages).find(([, data]) => data.state === 'paused')
+      if (pausedEntry) {
+        currentStage = pausedEntry[0]
+      }
+    }
+  }
+
+  return {
+    ...status,
+    currentStage,
+  }
+}
+
+/**
  * Read status.json from a branch
  */
 export async function getStatusFromBranch(
@@ -223,13 +253,59 @@ export async function getStatusFromBranch(
 
     if ('content' in data && data.content) {
       const content = Buffer.from(data.content, 'base64').toString('utf-8')
-      const status = JSON.parse(content) as CodyPipelineStatus
+      const raw = JSON.parse(content) as CodyPipelineStatus
+      const status = normalizePipelineStatus(raw)
       setCache(cacheKey, CACHE_TTL.pipeline, status)
       return status
     }
   } catch (error: any) {
     if (error.status !== 404) {
       console.error('[Cody] Error fetching status from branch:', error)
+    }
+  }
+
+  return null
+}
+
+/**
+ * Discover and read status.json from a branch by scanning the .tasks/ directory.
+ * The pipeline creates task IDs with random counters (e.g., 260306-auto-330) that
+ * don't match the issue number, so we can't guess the task ID from the issue.
+ * Instead, we list .tasks/ on the branch and find the newest YYMMDD-prefixed directory.
+ */
+export async function findStatusOnBranch(branch: string): Promise<CodyPipelineStatus | null> {
+  const cacheKey = `status:discover:${branch}`
+  const cached = getCached<CodyPipelineStatus>(cacheKey)
+  if (cached) return cached
+
+  const octokit = getOctokit()
+
+  try {
+    // List .tasks/ directory on the branch
+    const { data } = await octokit.repos.getContent({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      path: '.tasks',
+      ref: branch,
+    })
+
+    if (!Array.isArray(data)) return null
+
+    // Find directories matching YYMMDD-* pattern (pipeline task IDs)
+    const taskDirs = data
+      .filter((item: any) => item.type === 'dir' && TASK_ID_REGEX.test(item.name))
+      .map((item: any) => item.name)
+      .sort()
+      .reverse() // Newest first (YYMMDD sorts chronologically)
+
+    // Try the newest task directory first (check up to 3)
+    for (const taskDir of taskDirs.slice(0, 3)) {
+      const status = await getStatusFromBranch(taskDir, branch)
+      if (status) return status
+    }
+  } catch (error: any) {
+    if (error.status !== 404) {
+      console.error('[Cody] Error listing .tasks/ on branch:', error)
     }
   }
 
@@ -578,6 +654,8 @@ export async function fetchOpenPRs(): Promise<GitHubPR[]> {
 /**
  * Fetch Vercel preview URLs for a set of PR head SHAs.
  * Strategy: 1 bulk call for recent deployments, then 1 status call per matched deployment.
+ * For SHAs not found in the bulk fetch (older deployments beyond the 30-item window),
+ * falls back to individual SHA-based lookups.
  * Returns a Map of SHA -> preview URL.
  */
 export async function fetchDeploymentPreviews(prShas: string[]): Promise<Map<string, string>> {
@@ -621,6 +699,39 @@ export async function fetchDeploymentPreviews(prShas: string[]): Promise<Map<str
         }
       }),
     )
+
+    // 4. For SHAs not found in bulk fetch (older deployments), look up individually.
+    // The bulk fetch only returns the most recent 30 deployments, so older PRs
+    // won't be found. The individual lookup uses the ?sha= query parameter.
+    const missedShas = prShas.filter((sha) => !result.has(sha))
+    if (missedShas.length > 0) {
+      await Promise.all(
+        missedShas.map(async (sha) => {
+          try {
+            const { data: shaDeployments } = await octokit.repos.listDeployments({
+              owner: GITHUB_OWNER,
+              repo: GITHUB_REPO,
+              sha,
+              environment: 'Preview',
+              per_page: 1,
+            })
+            if (shaDeployments.length > 0) {
+              const { data: statuses } = await octokit.repos.listDeploymentStatuses({
+                owner: GITHUB_OWNER,
+                repo: GITHUB_REPO,
+                deployment_id: shaDeployments[0].id,
+                per_page: 1,
+              })
+              if (statuses.length > 0 && statuses[0].environment_url) {
+                result.set(sha, statuses[0].environment_url)
+              }
+            }
+          } catch {
+            // Skip individual failures
+          }
+        }),
+      )
+    }
   } catch (error) {
     console.error('[Cody] Error fetching deployment previews:', error)
   }
@@ -1239,68 +1350,190 @@ export function getCacheStats(): { size: number; keys: string[] } {
  * Fetch the combined CI status for a PR's head commit.
  * Uses the combined status API + check runs to determine overall state.
  */
-export async function fetchPRCIStatus(
-  prNumber: number,
-): Promise<{ ciStatus: 'pending' | 'success' | 'failure' | 'running'; mergeable: boolean }> {
+export async function fetchPRCIStatus(prNumber: number): Promise<{
+  ciStatus: 'pending' | 'success' | 'failure' | 'running'
+  mergeable: boolean
+  hasConflicts: boolean
+}> {
   const cacheKey = `pr-ci-status:${prNumber}`
   const cached = getCached<{
     ciStatus: 'pending' | 'success' | 'failure' | 'running'
     mergeable: boolean
+    hasConflicts: boolean
   }>(cacheKey)
   if (cached) return cached
 
   const octokit = getOctokit()
 
   try {
-    // 1. Get the PR to find head SHA and mergeable state
+    // 1. Get the PR — GitHub computes mergeable state for us
     const { data: pr } = await octokit.pulls.get({
       owner: GITHUB_OWNER,
       repo: GITHUB_REPO,
       pull_number: prNumber,
     })
 
-    const sha = pr.head.sha
-    // mergeable state no longer checked - just CI status determines mergeability
+    // 2. Map GitHub's mergeable_state to our CI status.
+    //    GitHub's mergeable_state accounts for ALL required checks + branch protection + conflicts.
+    //    See: https://docs.github.com/en/rest/pulls/pulls#get-a-pull-request
+    //    Values: "clean" | "dirty" | "unstable" | "blocked" | "behind" | "unknown"
+    const ghState = pr.mergeable_state
+    let ciStatus: 'pending' | 'success' | 'failure' | 'running'
+    let hasConflicts = false
 
-    // 2. Get check runs for the head SHA
-    const { data: checkRuns } = await octokit.checks.listForRef({
+    switch (ghState) {
+      case 'clean':
+        // All checks passed, no conflicts, meets branch protection — ready to merge
+        ciStatus = 'success'
+        break
+      case 'unstable':
+        // Some non-required checks failed, but required ones passed — still mergeable
+        ciStatus = 'success'
+        break
+      case 'blocked':
+        // GitHub returns 'blocked' when branch protection has required checks that haven't
+        // completed, OR when there's NO branch protection at all (can't evaluate as 'clean').
+        // Since this repo has no branch protection, 'blocked' is the steady state for all PRs.
+        // Fall back to checking actual commit status to determine CI state.
+        if (pr.mergeable === true) {
+          ciStatus = await resolveCommitCIStatus(octokit, pr.head.sha)
+        } else {
+          ciStatus = 'running'
+        }
+        break
+      case 'behind':
+        // Branch is behind base — needs update but may be mergeable
+        ciStatus = 'running'
+        break
+      case 'dirty':
+        // Merge conflicts exist — distinct from CI failure
+        ciStatus = 'failure'
+        hasConflicts = true
+        break
+      case 'unknown':
+        // GitHub is computing — retry soon
+        ciStatus = 'pending'
+        break
+      default:
+        ciStatus = 'pending'
+    }
+
+    // 3. Mergeable = GitHub says no conflicts AND CI is in a good state
+    const mergeable =
+      pr.mergeable === true &&
+      (ciStatus === 'success' || ghState === 'clean' || ghState === 'unstable')
+
+    const result = { ciStatus, mergeable, hasConflicts }
+
+    // Short cache — 15s to stay responsive while CI runs
+    setCache(cacheKey, 15_000, result)
+    return result
+  } catch (error) {
+    console.error('[Cody] Error fetching PR CI status:', error)
+    return { ciStatus: 'pending', mergeable: false, hasConflicts: false }
+  }
+}
+
+/**
+ * Check the combined commit status and check runs for a given SHA.
+ * Used as fallback when mergeable_state is 'blocked' (no branch protection configured).
+ *
+ * Strategy:
+ * - Combined status API (status checks like Vercel) is used as-is (already aggregated by GitHub)
+ * - Check runs (GitHub Actions) are deduplicated by name, keeping only the latest run per check
+ *   to avoid stale/superseded failures from blocking merge
+ * - If combined status is 'success', individual check run failures are treated as non-essential
+ *   (mirrors GitHub's own 'unstable' state behavior)
+ */
+async function resolveCommitCIStatus(
+  octokit: Octokit,
+  sha: string,
+): Promise<'pending' | 'success' | 'failure' | 'running'> {
+  try {
+    // Get combined status (covers status API integrations like Vercel)
+    const { data: combinedStatus } = await octokit.repos.getCombinedStatusForRef({
       owner: GITHUB_OWNER,
       repo: GITHUB_REPO,
       ref: sha,
     })
 
-    // 3. Determine overall CI status
-    let ciStatus: 'pending' | 'success' | 'failure' | 'running' = 'pending'
+    // Get check runs (covers GitHub Actions checks)
+    const { data: checkRuns } = await octokit.checks.listForRef({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      ref: sha,
+      per_page: 100,
+    })
 
-    if (checkRuns.total_count === 0) {
-      ciStatus = 'pending'
-    } else {
-      const hasFailure = checkRuns.check_runs.some(
-        (run) => run.conclusion === 'failure' || run.conclusion === 'timed_out',
-      )
-      const hasRunning = checkRuns.check_runs.some(
-        (run) => run.status === 'in_progress' || run.status === 'queued',
-      )
-      const allSuccess = checkRuns.check_runs.every(
-        (run) => run.conclusion === 'success' || run.conclusion === 'skipped',
-      )
-
-      if (hasFailure) {
-        ciStatus = 'failure'
-      } else if (hasRunning) {
-        ciStatus = 'running'
-      } else if (allSuccess) {
-        ciStatus = 'success'
-      }
+    const hasChecks = combinedStatus.statuses.length > 0 || checkRuns.check_runs.length > 0
+    if (!hasChecks) {
+      // No CI checks at all — consider it ready (nothing to wait for)
+      return 'success'
     }
 
-    const result = { ciStatus, mergeable: ciStatus === 'success' }
+    // Deduplicate check runs by name, keeping only the latest run per check.
+    // This prevents stale/superseded failures from blocking merge when a re-run passed.
+    const latestCheckRuns = deduplicateCheckRuns(checkRuns.check_runs)
 
-    // Short cache — CI status changes frequently
-    setCache(cacheKey, 30_000, result) // 30 seconds
-    return result
+    // If the combined status API reports success, trust it as the primary signal.
+    // Individual check run failures are treated as non-essential (mirrors 'unstable' behavior).
+    if (combinedStatus.state === 'success' && combinedStatus.statuses.length > 0) {
+      // Still check if any latest check runs are pending/running
+      const anyRunning = latestCheckRuns.some(
+        (cr) => cr.status === 'queued' || cr.status === 'in_progress',
+      )
+      return anyRunning ? 'running' : 'success'
+    }
+
+    // Check for failures in latest check runs only
+    const statusFailed = combinedStatus.state === 'failure'
+    const checkRunFailed = latestCheckRuns.some(
+      (cr) => cr.conclusion === 'failure' || cr.conclusion === 'timed_out',
+    )
+
+    if (statusFailed || checkRunFailed) {
+      return 'failure'
+    }
+
+    // Check if any are still running/pending
+    const statusPending = combinedStatus.state === 'pending'
+    const checkRunPending = latestCheckRuns.some(
+      (cr) => cr.status === 'queued' || cr.status === 'in_progress',
+    )
+
+    if (statusPending || checkRunPending) {
+      return 'running'
+    }
+
+    // All passed
+    return 'success'
   } catch (error) {
-    console.error('[Cody] Error fetching PR CI status:', error)
-    return { ciStatus: 'pending', mergeable: false }
+    console.error('[Cody] Error resolving commit CI status:', error)
+    return 'pending'
   }
+}
+
+/**
+ * Deduplicate check runs by name, keeping only the latest run per unique check name.
+ * GitHub can return multiple runs for the same check (e.g., after a re-run), and
+ * stale failures should not block merge when the latest run succeeded.
+ */
+function deduplicateCheckRuns<
+  T extends { name: string; started_at?: string | null; completed_at?: string | null },
+>(checkRuns: T[]): T[] {
+  const latestByName = new Map<string, T>()
+  for (const cr of checkRuns) {
+    const existing = latestByName.get(cr.name)
+    if (!existing) {
+      latestByName.set(cr.name, cr)
+    } else {
+      // Keep the one with the later started_at timestamp
+      const existingTime = existing.started_at ? new Date(existing.started_at).getTime() : 0
+      const crTime = cr.started_at ? new Date(cr.started_at).getTime() : 0
+      if (crTime > existingTime) {
+        latestByName.set(cr.name, cr)
+      }
+    }
+  }
+  return Array.from(latestByName.values())
 }

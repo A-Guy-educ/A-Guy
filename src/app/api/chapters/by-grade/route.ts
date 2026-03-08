@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
       gatedWarningMs,
     })
   } catch (error) {
-    console.error('Error fetching chapters:', error)
-    return NextResponse.json({ error: 'Failed to fetch chapters' }, { status: 500 })
+    const { captureAndRespond } = await import('@/server/api/capture-and-respond')
+    return captureAndRespond(error, { route: '/api/chapters/by-grade' })
   }
 }

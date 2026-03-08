@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock child_process.execSync and fs before importing the module
+// Mock child_process.execFileSync and fs before importing the module
 vi.mock('child_process', () => ({
-  execSync: vi.fn(),
+  execFileSync: vi.fn(),
 }))
 
 vi.mock('fs', () => ({
@@ -29,7 +29,7 @@ vi.mock('../../../../scripts/cody/logger', () => ({
   createStageLogger: vi.fn().mockReturnValue(mockLogger),
 }))
 
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 import { preflight } from '../../../../scripts/cody/preflight'
 
@@ -41,12 +41,15 @@ describe('preflight', () => {
     mockLogger.error.mockClear()
 
     // Default: all checks pass
-    vi.mocked(execSync).mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('node --version')) {
-        return 'v20.11.0'
-      }
-      return Buffer.from('')
-    })
+    vi.mocked(execFileSync).mockImplementation(
+      (program: string, args?: readonly string[], _options?: any) => {
+        const argsArr = args || []
+        if (program === 'node' && argsArr.includes('--version')) {
+          return 'v20.11.0'
+        }
+        return Buffer.from('')
+      },
+    )
     vi.mocked(fs.existsSync).mockReturnValue(true)
   })
 
@@ -58,41 +61,50 @@ describe('preflight', () => {
   })
 
   it('should throw Error (not process.exit) when ocode CLI is missing', () => {
-    vi.mocked(execSync).mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('pnpm ocode --version')) {
-        throw new Error('command not found: ocode')
-      }
-      if (typeof cmd === 'string' && cmd.includes('node --version')) {
-        return 'v20.11.0'
-      }
-      return Buffer.from('')
-    })
+    vi.mocked(execFileSync).mockImplementation(
+      (program: string, args?: readonly string[], _options?: any) => {
+        const argsArr = args || []
+        if (program === 'pnpm' && argsArr.includes('ocode') && argsArr.includes('--version')) {
+          throw new Error('command not found: ocode')
+        }
+        if (program === 'node' && argsArr.includes('--version')) {
+          return 'v20.11.0'
+        }
+        return Buffer.from('')
+      },
+    )
 
     expect(() => preflight()).toThrow('Pre-flight checks failed')
     expect(() => preflight()).toThrow(/Run: pnpm install/)
   })
 
   it('should throw Error when git repo is missing', () => {
-    vi.mocked(execSync).mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('git rev-parse --git-dir')) {
-        throw new Error('fatal: not a git repository')
-      }
-      if (typeof cmd === 'string' && cmd.includes('node --version')) {
-        return 'v20.11.0'
-      }
-      return Buffer.from('')
-    })
+    vi.mocked(execFileSync).mockImplementation(
+      (program: string, args?: readonly string[], _options?: any) => {
+        const argsArr = args || []
+        if (program === 'git' && argsArr.includes('rev-parse') && argsArr.includes('--git-dir')) {
+          throw new Error('fatal: not a git repository')
+        }
+        if (program === 'node' && argsArr.includes('--version')) {
+          return 'v20.11.0'
+        }
+        return Buffer.from('')
+      },
+    )
 
     expect(() => preflight()).toThrow('Pre-flight checks failed')
   })
 
   it('should throw Error when Node.js is too old (v16)', () => {
-    vi.mocked(execSync).mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('node --version')) {
-        return 'v16.20.0'
-      }
-      return Buffer.from('')
-    })
+    vi.mocked(execFileSync).mockImplementation(
+      (program: string, args?: readonly string[], _options?: any) => {
+        const argsArr = args || []
+        if (program === 'node' && argsArr.includes('--version')) {
+          return 'v16.20.0'
+        }
+        return Buffer.from('')
+      },
+    )
 
     expect(() => preflight()).toThrow('Pre-flight checks failed')
   })
@@ -105,21 +117,24 @@ describe('preflight', () => {
 
   it('should collect all error messages in thrown Error when multiple checks fail', () => {
     // Fail ocode CLI, git repo, and pnpm
-    vi.mocked(execSync).mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('pnpm ocode --version')) {
-        throw new Error('command not found: ocode')
-      }
-      if (typeof cmd === 'string' && cmd.includes('git rev-parse --git-dir')) {
-        throw new Error('fatal: not a git repository')
-      }
-      if (typeof cmd === 'string' && cmd.includes('which pnpm')) {
-        throw new Error('pnpm not found')
-      }
-      if (typeof cmd === 'string' && cmd.includes('node --version')) {
-        return 'v20.11.0'
-      }
-      return Buffer.from('')
-    })
+    vi.mocked(execFileSync).mockImplementation(
+      (program: string, args?: readonly string[], _options?: any) => {
+        const argsArr = args || []
+        if (program === 'pnpm' && argsArr.includes('ocode') && argsArr.includes('--version')) {
+          throw new Error('command not found: ocode')
+        }
+        if (program === 'git' && argsArr.includes('rev-parse') && argsArr.includes('--git-dir')) {
+          throw new Error('fatal: not a git repository')
+        }
+        if (program === 'which' && argsArr.includes('pnpm')) {
+          throw new Error('pnpm not found')
+        }
+        if (program === 'node' && argsArr.includes('--version')) {
+          return 'v20.11.0'
+        }
+        return Buffer.from('')
+      },
+    )
     vi.mocked(fs.existsSync).mockReturnValue(false)
 
     let thrownError: Error | undefined
@@ -154,26 +169,32 @@ describe('preflight', () => {
   })
 
   it('should throw Error when pnpm is missing', () => {
-    vi.mocked(execSync).mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('which pnpm')) {
-        throw new Error('pnpm not found')
-      }
-      if (typeof cmd === 'string' && cmd.includes('node --version')) {
-        return 'v20.11.0'
-      }
-      return Buffer.from('')
-    })
+    vi.mocked(execFileSync).mockImplementation(
+      (program: string, args?: readonly string[], _options?: any) => {
+        const argsArr = args || []
+        if (program === 'which' && argsArr.includes('pnpm')) {
+          throw new Error('pnpm not found')
+        }
+        if (program === 'node' && argsArr.includes('--version')) {
+          return 'v20.11.0'
+        }
+        return Buffer.from('')
+      },
+    )
 
     expect(() => preflight()).toThrow('Pre-flight checks failed')
   })
 
   it('should accept Node.js v18 as valid', () => {
-    vi.mocked(execSync).mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('node --version')) {
-        return 'v18.0.0'
-      }
-      return Buffer.from('')
-    })
+    vi.mocked(execFileSync).mockImplementation(
+      (program: string, args?: readonly string[], _options?: any) => {
+        const argsArr = args || []
+        if (program === 'node' && argsArr.includes('--version')) {
+          return 'v18.0.0'
+        }
+        return Buffer.from('')
+      },
+    )
 
     preflight()
     // Should not throw

@@ -19,6 +19,10 @@ export type ApiErrorCode =
   | 'JOB_NOT_FOUND'
   | 'JOB_ALREADY_RUNNING'
   | 'JOB_ALREADY_COMPLETED'
+  // Rate limiting
+  | 'RATE_LIMITED'
+  // Upstream errors
+  | 'UPSTREAM_ERROR'
   // System errors
   | 'INTERNAL_ERROR'
   | 'SERVICE_UNAVAILABLE'
@@ -66,6 +70,14 @@ export const ApiErrors = {
   forbidden: (message = 'Access denied') => apiError('FORBIDDEN', message, 403),
   notFound: (resource: string) => apiError('NOT_FOUND', `${resource} not found`, 404),
   internal: (message = 'Internal server error') => apiError('INTERNAL_ERROR', message, 500),
+  rateLimited: (retryAfter?: string) => {
+    const response = apiError('RATE_LIMITED', 'Rate limit exceeded. Please try again later.', 429)
+    if (retryAfter) {
+      response.headers.set('Retry-After', retryAfter)
+    }
+    return response
+  },
+  upstreamError: (message = 'Upstream service error') => apiError('UPSTREAM_ERROR', message, 502),
 } as const
 
 import { safeValidate } from '@/infra/utils/validation'

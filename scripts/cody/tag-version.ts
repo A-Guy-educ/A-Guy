@@ -5,7 +5,7 @@
  * @ai-summary Tag and manage Cody pipeline versions
  */
 
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 
 const TAG_PREFIX = 'cody-v'
@@ -15,32 +15,33 @@ const WORKFLOW_FILE = '.github/workflows/cody.yml'
 // Helpers
 // ============================================================================
 
-function run(
-  cmd: string,
+function runCmd(
+  program: string,
+  args: string[],
   options: { encoding?: BufferEncoding; stdio?: 'pipe' | 'inherit' } = {},
 ): string {
   try {
-    return execSync(cmd, { encoding: 'utf-8', stdio: 'pipe', ...options }).trim()
+    return execFileSync(program, args, { encoding: 'utf-8', stdio: 'pipe', ...options }).trim()
   } catch (err: unknown) {
     const error = err as { stdout?: string; message?: string }
     if (error.stdout) return error.stdout.trim()
-    console.error(`Error running: ${cmd}`)
+    console.error(`Error running: ${program} ${args.join(' ')}`)
     console.error(error.message)
     process.exit(1)
   }
 }
 
 function getLatestTagNumber(): number {
-  const output = run(
-    `git tag --list '${TAG_PREFIX}*' --sort=-version:refname 2>/dev/null | head -1`,
-  )
-  if (!output) return 0
-  const match = output.match(/^cody-v(\d+)$/)
+  // List tags sorted by version, get the first (latest)
+  const output = runCmd('git', ['tag', '--list', `${TAG_PREFIX}*`, '--sort=-version:refname'])
+  const firstTag = output.split('\n')[0]?.trim()
+  if (!firstTag) return 0
+  const match = firstTag.match(/^cody-v(\d+)$/)
   return match ? parseInt(match[1], 10) : 0
 }
 
 function getCurrentBranch(): string {
-  return run('git branch --show-current')
+  return runCmd('git', ['branch', '--show-current'])
 }
 
 function getCurrentMessage(): string {
@@ -73,7 +74,7 @@ function updateWorkflowVersion(version: string): void {
 // ============================================================================
 
 function cmdList() {
-  const output = run(`git tag --list '${TAG_PREFIX}*' --sort=-version:refname`)
+  const output = runCmd('git', ['tag', '--list', `${TAG_PREFIX}*`, '--sort=-version:refname'])
   if (!output) {
     console.log('No versions found.')
     return
@@ -85,8 +86,8 @@ function cmdList() {
   console.log('Available versions:')
   console.log('')
   for (const tag of tags) {
-    const commit = run(`git rev-list -1 ${tag}`).slice(0, 7)
-    const date = run(`git log -1 --format=%ci ${tag} 2>/dev/null`).split(' ')[0] || '-'
+    const commit = runCmd('git', ['rev-list', '-1', tag]).slice(0, 7)
+    const date = runCmd('git', ['log', '-1', '--format=%ci', tag]).split(' ')[0] || '-'
     const isDefault = tag === currentDefault ? ' (default)' : ''
     console.log(`  ${tag}  ${commit}  ${date}${isDefault}`)
   }
@@ -116,7 +117,7 @@ function cmdCreate(options: { setDefault?: boolean; version?: string }) {
   }
 
   // Check if tag already exists
-  const existing = run(`git tag -l ${tagName}`)
+  const existing = runCmd('git', ['tag', '-l', tagName])
   if (existing) {
     console.error(
       `Tag ${tagName} already exists. Use --set-default to update default or specify a new version.`,
@@ -126,7 +127,7 @@ function cmdCreate(options: { setDefault?: boolean; version?: string }) {
 
   // Create annotated tag
   const commitMsg = getCurrentMessage()
-  run(`git tag -a ${tagName} -m "${tagName}: ${commitMsg}"`)
+  runCmd('git', ['tag', '-a', tagName, '-m', `${tagName}: ${commitMsg}`])
   console.log(`Created tag: ${tagName}`)
 
   // Optionally set as default
@@ -147,7 +148,7 @@ function cmdSetDefault(version?: string) {
   }
 
   // Verify tag exists
-  const existing = run(`git tag -l ${tagName}`)
+  const existing = runCmd('git', ['tag', '-l', tagName])
   if (!existing) {
     console.error(`Tag ${tagName} does not exist. Create it first with: pnpm cody:tag`)
     process.exit(1)

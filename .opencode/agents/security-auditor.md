@@ -11,10 +11,10 @@ tools:
 
 Your primary domain is:
 
-- `src/access/` — Access control functions
+- `src/server/payload/access/` — Access control functions
 - `src/server/` — Server-side endpoints and logic
 - `src/app/api/` — API route handlers
-- `src/collections/` — Collection access control configs
+- `src/server/payload/collections/` — Collection access control configs
 - `.env*` — Environment variables and secrets
 
 Start your analysis in these directories. You MAY read other files

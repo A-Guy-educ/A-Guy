@@ -45,9 +45,9 @@ test.describe('Lesson Chat History Loading', () => {
 
   /**
    * Selector for user chat messages (excludes buttons and other bg-primary elements)
-   * User messages have: ml-auto bg-primary and contain text content
+   * User messages have: ms-auto bg-primary (RTL-aware margin-start) and contain text content
    */
-  const USER_MESSAGE_SELECTOR = '.bg-primary.ml-auto'
+  const USER_MESSAGE_SELECTOR = '.bg-primary.ms-auto'
 
   /**
    * Helper to find chat input - works with both ChatInterface and NotebookChat
@@ -87,7 +87,7 @@ test.describe('Lesson Chat History Loading', () => {
    */
   async function waitForChatMessage(page: Page, timeout = 30000) {
     // Wait for any message div (user or assistant)
-    // User messages have ml-auto class to distinguish from send button
+    // User messages have ms-auto class (RTL-aware margin-start) to distinguish from send button
     // ChatInterface uses bg-card for assistant messages, NotebookChat uses bg-muted
     await page.waitForSelector(`${USER_MESSAGE_SELECTOR}, .bg-muted, .bg-card`, { timeout })
   }
@@ -99,7 +99,7 @@ test.describe('Lesson Chat History Loading', () => {
     userMessages: Locator[]
     assistantMessages: Locator[]
   }> {
-    // Use more specific selector for user messages (ml-auto distinguishes from send button)
+    // Use more specific selector for user messages (ms-auto distinguishes from send button)
     const userMessages = await page.locator(USER_MESSAGE_SELECTOR).all()
     // ChatInterface uses bg-card for assistant messages, NotebookChat uses bg-muted
     const assistantMessages = await page.locator('.bg-muted, .bg-card').all()

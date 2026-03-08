@@ -273,6 +273,29 @@ export default buildConfig({
     }),
   },
   onInit: async (payload) => {
+    // Ensure default tenant exists BEFORE seedTeacherProfiles runs
+    // This is required because TeacherProfilesSeed needs a tenant to link prompts to
+    const defaultTenantSlug = process.env.DEFAULT_TENANT_SLUG || 'default'
+    const existingTenant = await payload.find({
+      collection: 'tenants',
+      where: { slug: { equals: defaultTenantSlug } },
+      limit: 1,
+      overrideAccess: true,
+    })
+
+    if (existingTenant.totalDocs === 0) {
+      await payload.create({
+        collection: 'tenants',
+        data: {
+          name: 'Default',
+          slug: defaultTenantSlug,
+          status: 'active',
+        },
+        overrideAccess: true,
+      })
+      payload.logger.info(`[onInit] Created default tenant "${defaultTenantSlug}"`)
+    }
+
     await runBackfillOnInit(payload)
     await seedTeacherProfiles(payload)
   },

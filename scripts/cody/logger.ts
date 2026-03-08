@@ -15,23 +15,18 @@ let _logger: ReturnType<typeof pino> | null = null
 function getPinoLogger() {
   if (!_logger) {
     const env = getEnv()
-    // JSON in CI (for log aggregation), pretty-print locally
     const isCI = !!env.GITHUB_ACTIONS
 
     _logger = pino({
       level: env.LOG_LEVEL || 'info',
-      ...(isCI
-        ? {} // Default JSON output for CI
-        : {
-            transport: {
-              target: 'pino-pretty',
-              options: {
-                colorize: true,
-                translateTime: 'SYS:HH:MM:ss',
-                ignore: 'pid,hostname',
-              },
-            },
-          }),
+      transport: {
+        target: 'pino-pretty',
+        options: {
+          colorize: !isCI,
+          translateTime: 'SYS:HH:MM:ss',
+          ignore: 'pid,hostname',
+        },
+      },
     })
   }
   return _logger
@@ -54,6 +49,30 @@ export function createStageLogger(stage: string, taskId?: string) {
 // Re-export pino logger for backward compatibility
 export const logger = getPinoLogger()
 export default logger
+
+// ============================================================================
+// CI Log Grouping (GitHub Actions)
+// ============================================================================
+
+/**
+ * Emit a GitHub Actions collapsible group header.
+ * No-op when not running in CI.
+ */
+export function ciGroup(title: string): void {
+  if (process.env.GITHUB_ACTIONS) {
+    process.stdout.write(`::group::${title}\n`)
+  }
+}
+
+/**
+ * Emit a GitHub Actions collapsible group footer.
+ * No-op when not running in CI.
+ */
+export function ciGroupEnd(): void {
+  if (process.env.GITHUB_ACTIONS) {
+    process.stdout.write('::endgroup::\n')
+  }
+}
 
 // ============================================================================
 // Legacy structured logging functions (using console)

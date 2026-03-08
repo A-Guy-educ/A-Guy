@@ -10,7 +10,7 @@ import {
   isDuplicateEmailError,
 } from '../signup_handlers'
 import { SignupSchema, type SignupResult } from '../signup_schemas'
-import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { AccountRole } from '@/infra/auth/roles'
 import { claimGuestConversations } from '@/server/services/guest-session-upgrade'
 import { clearGuestSessionCookie, GUEST_SESSION_COOKIE_NAME } from '@/server/services/guest-session'
 

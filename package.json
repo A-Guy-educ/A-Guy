@@ -53,6 +53,7 @@
     "test:unit": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.unit.mts",
     "test:unit:watch": "cross-env NODE_OPTIONS=--no-deprecation vitest watch --config ./vitest.config.unit.mts",
     "test:unit:coverage": "cross-env NODE_OPTIONS=--no-deprecation vitest run --coverage --config ./vitest.config.unit.mts",
+    "test:external": "cross-env NODE_OPTIONS=--no-deprecation RUN_EXTERNAL_TESTS=true vitest run --config ./vitest.config.external.mts",
     "test:e2e": "pnpm exec playwright test --config=playwright.config.ts",
     "test:e2e:ui": "pnpm exec playwright test --ui",
     "test:e2e:debug": "pnpm exec playwright test --debug",
@@ -85,7 +86,7 @@
     "ci:test": "pnpm test:int && pnpm test:e2e",
     "maintenance": "pnpm clean && pnpm deps:update && pnpm install && pnpm ci:local",
     "precommit": "lint-staged",
-    "release": "semantic run generate:types-release",
+    "release": "semantic-release",
     "release:dry-run": "semantic-release --dry-run",
     "prepare": "husky && chmod +x .husky/pre-commit .husky/commit-msg .husky/pre-push .husky/post-commit .husky/post-merge .husky/check-secrets .husky/check-no-css .husky/check-archivedAt-invariant .husky/skip-hooks.sh",
     "verify": "pnpm tsx scripts/verify.ts",
@@ -97,8 +98,7 @@
     "cody:test": "gh workflow run cody.yml -R A-Guy-educ/A-Guy -f task_id=TEST -f mode=status -f dry_run=true",
     "cody": "pnpm tsx scripts/cody/entry.ts",
     "cody:tag": "pnpm tsx scripts/cody/tag-version.ts",
-    "supervisor": "pnpm tsx scripts/supervisor/supervisor.ts",
-    "tunnel:ocode": "export $(grep OPENCODE_SERVER_PASSWORD .env | xargs) && opencode web --port 3001 & ngrok http 3001; kill %1"
+    "tunnel:ocode": "pnpm tsx scripts/tunnel-opencode.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.30",
@@ -135,6 +135,7 @@
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-tooltip": "^1.2.8",
     "@sentry/nextjs": "^10.32.1",
     "@tanstack/react-query": "^5.90.21",
     "@vercel/blob": "^0.22.3",

@@ -55,12 +55,12 @@ describe('resumeFromGate', () => {
       stages: {
         build: createStage('completed'),
         verify: createStage('completed'),
-        auditor: createStage('paused'),
+        autofix: createStage('paused'),
       },
     })
 
-    const resumed = resumeFromGate(state, 'auditor')
-    expect(resumed.stages['auditor'].state).toBe('completed')
+    const resumed = resumeFromGate(state, 'autofix')
+    expect(resumed.stages['autofix'].state).toBe('completed')
   })
 
   it('should set pipeline state to running', () => {
@@ -68,11 +68,11 @@ describe('resumeFromGate', () => {
       state: 'paused',
       completedAt: new Date().toISOString(),
       stages: {
-        auditor: createStage('paused'),
+        autofix: createStage('paused'),
       },
     })
 
-    const resumed = resumeFromGate(state, 'auditor')
+    const resumed = resumeFromGate(state, 'autofix')
     expect(resumed.state).toBe('running')
   })
 
@@ -81,11 +81,11 @@ describe('resumeFromGate', () => {
       state: 'paused',
       completedAt: '2025-01-01T00:00:00.000Z',
       stages: {
-        auditor: createStage('paused'),
+        autofix: createStage('paused'),
       },
     })
 
-    const resumed = resumeFromGate(state, 'auditor')
+    const resumed = resumeFromGate(state, 'autofix')
     expect(resumed.completedAt).toBeUndefined()
   })
 
@@ -95,19 +95,19 @@ describe('resumeFromGate', () => {
       completedAt: '2025-01-01T00:00:00.000Z',
       stages: {
         build: createStage('completed'),
-        auditor: createStage('paused'),
+        autofix: createStage('paused'),
       },
     })
 
     // Freeze the original to detect mutations
-    const originalStageState = state.stages['auditor'].state
+    const originalStageState = state.stages['autofix'].state
     const originalPipelineState = state.state
     const originalCompletedAt = state.completedAt
 
-    const resumed = resumeFromGate(state, 'auditor')
+    const resumed = resumeFromGate(state, 'autofix')
 
     // Original should be unchanged
-    expect(state.stages['auditor'].state).toBe(originalStageState)
+    expect(state.stages['autofix'].state).toBe(originalStageState)
     expect(state.state).toBe(originalPipelineState)
     expect(state.completedAt).toBe(originalCompletedAt)
 
@@ -123,15 +123,15 @@ describe('resumeFromGate', () => {
       stages: {
         build: createStage('completed'),
         verify: createStage('completed'),
-        auditor: createStage('paused'),
+        autofix: createStage('paused'),
         pr: createStage('pending'),
       },
     })
 
-    const resumed = resumeFromGate(state, 'auditor')
+    const resumed = resumeFromGate(state, 'autofix')
     expect(resumed.stages['build'].state).toBe('completed')
     expect(resumed.stages['verify'].state).toBe('completed')
-    expect(resumed.stages['auditor'].state).toBe('completed')
+    expect(resumed.stages['autofix'].state).toBe('completed')
     expect(resumed.stages['pr'].state).toBe('pending')
   })
 
@@ -253,8 +253,6 @@ describe('full pipeline mode', () => {
     expect(stageNames).toContain('build')
     expect(stageNames).toContain('commit')
     expect(stageNames).toContain('verify')
-    expect(stageNames).toContain('auditor')
-    expect(stageNames).toContain('apply-audit')
     expect(stageNames).toContain('pr')
   })
 

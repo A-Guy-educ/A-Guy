@@ -12,6 +12,7 @@ import { runAgentWithFileWatch } from '../agent-runner'
 import { commitPipelineFiles } from '../git-utils'
 import type { StageHandler } from './handler'
 import { DEFAULT_TIMEOUT } from '../agent-runner'
+import { existsSync, unlinkSync } from 'fs'
 
 const MAX_AUTOFIX_ATTEMPTS = 2
 
@@ -65,7 +66,6 @@ export class ScriptedVerifyHandler implements StageHandler {
 
       // Remove previous autofix output if any
       const autofixOutput = `${ctx.taskDir}/autofix.md`
-      const { existsSync, unlinkSync } = await import('fs')
       if (existsSync(autofixOutput)) {
         unlinkSync(autofixOutput)
       }

@@ -9,6 +9,8 @@
 import { usePRCIStatus } from '../hooks/usePRCIStatus'
 import { CheckCircle2, XCircle, Loader2, Clock } from 'lucide-react'
 import { cn } from '../utils'
+import { SimpleTooltip } from './SimpleTooltip'
+import { CIStatusTooltipContent } from './tooltip-content'
 
 interface CIStatusBadgeProps {
   prNumber: number
@@ -31,14 +33,13 @@ export function CIStatusBadge({ prNumber, className }: CIStatusBadgeProps) {
   const Icon = config.icon
 
   return (
-    <span
-      className={cn('inline-flex items-center gap-1', config.color, className)}
-      title={config.label}
-    >
-      <Icon
-        className={cn('w-3.5 h-3.5', 'animate' in config && config.animate && 'animate-spin')}
-      />
-    </span>
+    <SimpleTooltip content={<CIStatusTooltipContent ciStatus={data.ciStatus} />} side="bottom">
+      <span className={cn('inline-flex items-center gap-1', config.color, className)}>
+        <Icon
+          className={cn('w-3.5 h-3.5', 'animate' in config && config.animate && 'animate-spin')}
+        />
+      </span>
+    </SimpleTooltip>
   )
 }
 

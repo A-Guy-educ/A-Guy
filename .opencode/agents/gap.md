@@ -35,9 +35,9 @@ Based on the task domain, explore relevant files:
 
 **For backend/Payload CMS:**
 
-- Check collections in `src/collections/` for existing patterns
-- Look at hooks in `src/hooks/` for business logic patterns
-- Check access control in `src/access/`
+- Check collections in `src/server/payload/collections/` for existing patterns
+- Look at hooks in `src/server/payload/hooks/` for business logic patterns
+- Check access control in `src/server/payload/access/`
 
 **For frontend:**
 

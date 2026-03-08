@@ -20,6 +20,7 @@ vi.mock('@/ui/cody/github-client', () => ({
   closePR: vi.fn(),
   deleteBranch: vi.fn(),
   updateIssue: vi.fn(),
+  clearCache: vi.fn(),
 }))
 
 vi.mock('@/ui/cody/auth', () => ({

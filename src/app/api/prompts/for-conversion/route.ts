@@ -117,7 +117,8 @@ export async function POST(request: NextRequest) {
       verifiers: verifiers.docs.map(mapPromptToOption),
     })
   } catch (error) {
-    console.error('[PromptsForConversion] Error:', error)
+    const Sentry = await import('@sentry/nextjs')
+    Sentry.captureException(error, { tags: { route: '/api/prompts/for-conversion' } })
     return errorResponse('INTERNAL_ERROR', 'Internal server error', 500)
   }
 }

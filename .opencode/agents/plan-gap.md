@@ -80,6 +80,14 @@ No gaps identified. The plan covers all spec requirements.
 
 **FAILURE MODE**: If you edit plan.md but forget to write plan-gap.md, the entire pipeline fails with "Agent exited 0 without producing output file". ALWAYS write plan-gap.md as your final action.
 
+## Efficiency Rule
+
+- Do not narrate reasoning between tool calls.
+- Do not explain what you are about to do — just do it.
+- Do not summarize what you just did — move to the next action.
+- Keep non-tool-call output to a minimum.
+- Output files must still follow their full required format.
+
 ## Key Differences from Plan-Review
 
 - **NO PASS/FAIL verdict** — this is NOT a gate

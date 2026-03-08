@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
 
       - name: Check if dev is ahead of main
         id: check
@@ -36,7 +36,7 @@ jobs:
           PR_NUMBER=$(gh pr list --base main --head dev --state open --json number --jq '.[0].number // empty')
           echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
 
       - name: Create PR from dev to main
         if: steps.check.outputs.ahead != '0' && steps.existing.outputs.pr_number == ''
@@ -51,7 +51,7 @@ jobs:
 
           Automated PR created via Cody dashboard publish.
 
-          Triggered by issue #${{ github.event.issue.number }}.
+          Closes #${{ github.event.issue.number }}
 
           Once CI passes, merge via the dashboard or GitHub.
           EOF
@@ -60,7 +60,7 @@ jobs:
           PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
           echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
 
       - name: Comment on issue with PR link
         if: steps.check.outputs.ahead != '0'
@@ -71,7 +71,7 @@ jobs:
               --body "🚀 PR #${PR_NUMBER} created from \`dev\` → \`main\`. Waiting for CI to pass before merge."
           fi
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
 
       - name: Close issue if nothing to publish
         if: steps.check.outputs.ahead == '0'
@@ -80,4 +80,4 @@ jobs:
             --body "✅ Nothing to publish — dev is already up to date with main."
           gh issue close ${{ github.event.issue.number }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}

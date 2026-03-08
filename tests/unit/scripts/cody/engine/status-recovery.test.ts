@@ -166,18 +166,18 @@ describe('recoverPipelineState', () => {
   })
 
   it('should ignore advisory stage failures', () => {
-    // Arrange: Pipeline running, auditor stage failed but it's advisory
+    // Arrange: Pipeline running, autofix stage failed but it's advisory
     const state = createBaseState({
       state: 'running',
       stages: {
         a: createStage('completed'),
         b: createStage('completed'),
-        auditor: createStage('failed'),
+        autofix: createStage('failed'),
       },
     })
 
     // Act
-    const recovered = recoverPipelineState(state, ['a', 'b', 'auditor'], new Set(['auditor']))
+    const recovered = recoverPipelineState(state, ['a', 'b', 'autofix'], new Set(['autofix']))
 
     // Assert: Pipeline should complete despite advisory failure
     expect(recovered.state).toBe('completed')

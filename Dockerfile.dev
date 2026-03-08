@@ -1,0 +1,84 @@
+# =============================================================================
+# A-Guy Development Container
+# =============================================================================
+# Purpose: Local development environment with full tooling
+# 
+# Features:
+# - Node.js runtime with pnpm
+# - GitHub CLI for repository operations
+# - OpenCode CLI for AI-assisted development
+# - Common development utilities
+# - Hybrid auth support (ENV + login-based)
+# 
+# Usage:
+#   docker build -f Dockerfile.dev -t a-guy:dev .
+#   docker-compose -f docker-compose.dev.yml up -d
+#   docker exec -it a-guy-dev bash
+# =============================================================================
+
+FROM node:22-alpine
+
+# Install base dependencies
+RUN apk add --no-cache \
+    bash \
+    git \
+    curl \
+    wget \
+    openssl \
+    ca-certificates \
+    tzdata \
+    libstdc++ \
+    libc6-compat \
+    jq \
+    unzip \
+    docker-cli \
+    make \
+    g++
+
+# Install GitHub CLI (architecture-aware)
+RUN ARCH=$(uname -m | sed 's/aarch64/arm64/' | sed 's/x86_64/amd64/') \
+    && curl -fsSL "https://github.com/cli/cli/releases/download/v2.63.0/gh_2.63.0_linux_${ARCH}.tar.gz" | tar xz -C /tmp \
+    && mv "/tmp/gh_2.63.0_linux_${ARCH}/bin/gh" /usr/local/bin/ \
+    && rm -rf "/tmp/gh_2.63.0_linux_${ARCH}" \
+    && gh --version
+
+# Install OpenCode CLI
+RUN curl -fsSL https://opencode.ai/install | bash \
+    && ln -sf /root/.opencode/bin/opencode /usr/local/bin/opencode \
+    && opencode --version
+
+# Create directories for persistent auth/config state
+RUN mkdir -p /root/.config/gh \
+             /root/.config/ollama \
+             /root/.cache/pnpm \
+             /root/.local/share/ollama \
+             /root/.local/share/opencode \
+             /home/app
+
+# Copy OpenCode auth credentials into image
+COPY .opencode-auth.json /root/.local/share/opencode/auth.json
+
+# Copy GitHub CLI auth credentials into image
+COPY .gh-hosts.yml /root/.config/gh/hosts.yml
+
+# Set working directory
+WORKDIR /home/app
+
+# Install pnpm
+ENV PNPM_HOME="/root/.local/share/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable pnpm && pnpm --version
+
+# =============================================================================
+# Image Metadata
+# =============================================================================
+LABEL maintainer="A-Guy Development Team"
+LABEL description="Development container for A-Guy LMS platform"
+
+# Default environment variables
+ENV NODE_ENV=development
+ENV SHELL=/bin/bash
+ENV TERM=xterm-256color
+
+# Default command - starts bootstrap then drops to shell
+CMD ["/bin/bash", "-l", "-c", "if [ -f ./scripts/bootstrap.sh ]; then ./scripts/bootstrap.sh; fi && /bin/bash"]

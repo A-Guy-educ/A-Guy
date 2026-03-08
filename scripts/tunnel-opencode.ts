@@ -2,24 +2,9 @@ import 'dotenv/config'
 import { execSync, spawn } from 'child_process'
 
 const PORT = 3003
-const USERNAME = process.env.NGROK_USERNAME ?? 'admin'
-const PASSWORD = process.env.NGROK_PASSWORD ?? 'As121212'
-const DOMAIN = process.env.NGROK_DOMAIN
+const PASSWORD = process.env.OPENCODE_SERVER_PASSWORD
 
-if (!DOMAIN) {
-  console.error('❌ NGROK_DOMAIN is not set')
-  console.error('   Add to .env: NGROK_DOMAIN=your-domain.ngrok-free.dev')
-  process.exit(1)
-}
-
-const domain: string = DOMAIN
-
-console.log(`🚀 Starting OpenCode tunnel on port ${PORT}`)
-console.log(`🔒 Protected with: ${USERNAME} / ********`)
-console.log(`🌐 URL: https://${domain}`)
-console.log('')
-
-function isPortInUse(port: number): boolean {
+export function isPortInUse(port: number): boolean {
   try {
     execSync(`lsof -i :${port} -sTCP:LISTEN`, { stdio: 'ignore' })
     return true
@@ -29,6 +14,9 @@ function isPortInUse(port: number): boolean {
 }
 
 async function start(): Promise<void> {
+  console.log(`🚀 Starting OpenCode tunnel on port ${PORT}`)
+  console.log('')
+
   if (!isPortInUse(PORT)) {
     console.log(`⚠️  Starting OpenCode on port ${PORT}...`)
     spawn('opencode', ['web', '--port', String(PORT)], {
@@ -36,17 +24,52 @@ async function start(): Promise<void> {
       detached: true,
     }).unref()
     await new Promise<void>((resolve) => setTimeout(resolve, 5000))
+  } else {
+    console.log(`✅ OpenCode already running on port ${PORT}`)
   }
 
-  const ngrok = spawn(
-    'ngrok',
-    ['http', String(PORT), '--basic-auth', `${USERNAME}:${PASSWORD}`, '--domain', domain],
-    { stdio: 'inherit' },
-  )
+  if (PASSWORD) {
+    console.log(`🔒 OpenCode credentials: opencode / ${PASSWORD}`)
+  }
+  console.log('')
 
-  ngrok.on('close', (code: number | null) => {
+  const cf = spawn('cloudflared', ['tunnel', '--url', `http://127.0.0.1:${PORT}`], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+
+  const handleOutput = (data: Buffer) => {
+    const line = data.toString()
+    const match = line.match(/https:\/\/[^\s]+\.trycloudflare\.com/)
+    if (match) {
+      console.log(`🌐 Tunnel URL: ${match[0]}`)
+      if (PASSWORD) {
+        console.log(`🔒 OpenCode credentials: opencode / ${PASSWORD}`)
+      }
+      console.log('')
+      console.log('Press Ctrl+C to stop the tunnel.')
+    }
+  }
+
+  cf.stdout.on('data', handleOutput)
+  cf.stderr.on('data', handleOutput)
+
+  cf.on('close', (code: number | null) => {
+    console.log('🔌 Tunnel closed')
     process.exit(code ?? 0)
   })
+
+  cf.on('error', (err: Error) => {
+    console.error('❌ Failed to start cloudflared:', err.message)
+    process.exit(1)
+  })
+
+  const shutdown = () => {
+    console.log('\n🛑 Shutting down tunnel...')
+    cf.kill()
+  }
+
+  process.on('SIGINT', shutdown)
+  process.on('SIGTERM', shutdown)
 }
 
 start()

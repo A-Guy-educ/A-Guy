@@ -7,11 +7,11 @@
       "description": "Building features, refactoring, implementing changes"
     },
     "plan": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "anthropic/claude-opus-4-6",
       "description": "Planning tasks, architecture design, complex problem solving"
     },
     "architect": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "anthropic/claude-opus-4-6",
       "description": "Planning tasks, architecture design, complex problem solving"
     },
     "spec": {
@@ -38,10 +38,6 @@
       "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Automatically fixes lint, type, and format errors from verify stage"
     },
-    "apply-audit": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Applies auditor recommendations to pipeline artifacts"
-    },
     "verify": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Runs tests, validates implementation passes all gates"
@@ -54,10 +50,6 @@
       "model": "openai/gpt-5.2",
       "description": "Code review, suggestions, best practices"
     },
-    "auditor": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Process improvement analysis agent"
-    },
     "pr": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Creates branch, commits changes, opens pull request"
@@ -67,7 +59,7 @@
       "description": "Cody pipeline expert - understands pipeline execution, debugging, adding new stages"
     },
     "build-manager": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "anthropic/claude-opus-4-6",
       "description": "Orchestrates build and test-writer agents in parallel, handles retries and verification"
     },
     "test-writer": {

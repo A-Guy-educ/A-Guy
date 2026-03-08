@@ -241,11 +241,6 @@ export type RunQualityWithAutofixAction = {
   maxFeedbackLoops: number
 }
 
-// Commit-audit-history action
-export type CommitAuditHistoryAction = {
-  type: 'commit-audit-history'
-}
-
 // Validate-src-changes action — ensures build agent modified source files
 export type ValidateSrcChangesAction = {
   type: 'validate-src-changes'
@@ -271,7 +266,6 @@ export type PostAction =
   | RunTscAction
   | RunUnitTestsAction
   | RunQualityWithAutofixAction
-  | CommitAuditHistoryAction
   | ParallelPostAction
 
 // ============================================================================

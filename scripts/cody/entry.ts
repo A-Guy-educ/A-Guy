@@ -133,8 +133,11 @@ Examples:
   let shuttingDown = false
   // G2: Signal handlers with null guard
   const cleanupOnSignal = async (signal: string) => {
-    // Prevent double execution
-    if (shuttingDown) return
+    // Prevent double execution (immediate exit on re-entry during async cleanup)
+    if (shuttingDown) {
+      process.exit(128 + (signal === 'SIGTERM' ? 15 : 2))
+      return // unreachable but satisfies TS
+    }
     shuttingDown = true
     logger.error(`\n⚠ Received ${signal} — CI runner shutting down`)
     try {
@@ -276,6 +279,9 @@ Examples:
     logger.error({ err: error }, `\n❌ Cody failed: ${errorMsg}`)
 
     if (input.issueNumber) {
+      // Set lifecycle label to failed for dashboard visibility
+      const { setLifecycleLabel } = await import('./github-api')
+      setLifecycleLabel(input.issueNumber, 'cody:failed')
       postComment(
         input.issueNumber,
         `❌ Pipeline failed for \`${input.taskId}\`: ${error instanceof Error ? error.message : 'Unknown error'}` +
@@ -306,8 +312,15 @@ async function runSpecMode(ctx: PipelineContext): Promise<void> {
       logger.info('\n⚠️ Clarify stage has questions that need answering')
       const questionsPath = path.join(taskDir, 'questions.md')
       if (input.issueNumber) {
-        const questionsContent = fs.readFileSync(questionsPath, 'utf-8')
-        const preview = questionsContent.slice(0, 1500)
+        let preview = '(questions file not found)'
+        try {
+          if (fs.existsSync(questionsPath)) {
+            const questionsContent = fs.readFileSync(questionsPath, 'utf-8')
+            preview = questionsContent.slice(0, 1500)
+          }
+        } catch (readErr) {
+          logger.warn({ err: readErr }, 'Failed to read questions.md for preview')
+        }
         postComment(
           input.issueNumber,
           `🔄 Cody stopped at clarify stage - questions need answering:\n\n${preview}\n\nPlease answer these questions and call \`/cody\` again to proceed with implementation.`,
@@ -474,10 +487,15 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
 
           // Write approved file to cache approval for future runs
           const approvedPath = path.join(taskDir, `gate-${pausedStage}-approved.md`)
-          fs.writeFileSync(
-            approvedPath,
-            `# Gate Approved\n\nApproved at ${pausedStage} gate.\nApproved via @cody approve command.\n`,
-          )
+          try {
+            fs.writeFileSync(
+              approvedPath,
+              `# Gate Approved\n\nApproved at ${pausedStage} gate.\nApproved via @cody approve command.\n`,
+            )
+          } catch (writeErr) {
+            logger.error({ err: writeErr }, `Failed to write gate approval file: ${approvedPath}`)
+            throw writeErr
+          }
 
           // Commit and push the approval file so subsequent runs can find it
           const { commitPipelineFiles } = await import('./git-utils')
@@ -548,10 +566,15 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
 
   // G37: Write feedback file
   const feedbackFile = path.join(taskDir, 'rerun-feedback.md')
-  fs.writeFileSync(
-    feedbackFile,
-    `# Rerun Feedback - ${new Date().toISOString()}\n\n## Issues Found\n\n${input.feedback}\n`,
-  )
+  try {
+    fs.writeFileSync(
+      feedbackFile,
+      `# Rerun Feedback - ${new Date().toISOString()}\n\n## Issues Found\n\n${input.feedback}\n`,
+    )
+  } catch (writeErr) {
+    logger.error({ err: writeErr }, `Failed to write rerun feedback file: ${feedbackFile}`)
+    throw writeErr
+  }
 
   logger.info(`Feedback: ${input.feedback}`)
   logger.info(`From stage: ${input.fromStage}\n`)

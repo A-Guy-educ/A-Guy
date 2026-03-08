@@ -8,16 +8,7 @@
 // ============ Pipeline Stages ============
 
 export const SPEC_STAGES = ['taskify', 'spec', 'clarify'] as const
-export const IMPL_STAGES = [
-  'architect',
-  'plan-review',
-  'build',
-  'commit',
-  'verify',
-  'auditor',
-  'apply-audit',
-  'pr',
-] as const
+export const IMPL_STAGES = ['architect', 'plan-review', 'build', 'commit', 'verify', 'pr'] as const
 export const AUTOFIX_STAGE = 'autofix' as const
 
 export type SpecStage = (typeof SPEC_STAGES)[number]
@@ -100,6 +91,7 @@ export const STAGE_ICONS = {
   pending: '⏳',
   skipped: '⚪',
   'gate-waiting': '🚫',
+  paused: '⏸️',
   timeout: '⏰',
 } as const
 

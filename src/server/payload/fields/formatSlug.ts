@@ -11,7 +11,7 @@ import slugify from 'slugify'
  * @returns A URL-safe, lowercase slug string
  */
 export function formatSlug(input: string, fallback?: string): string {
-  const slug = slugify(input, {
+  const slug = slugify(input.trim(), {
     lower: true,
     strict: true,
     locale: 'he',

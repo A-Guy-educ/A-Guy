@@ -892,7 +892,7 @@ export interface Form {
  */
 export interface HtmlBlock {
   /**
-   * Enter HTML content. Links must be relative (/path or #anchor). Allowed attributes: class, id, data-* on all tags; href (required), title, class, id, data-* on <a> tags; plus safe SVG attributes (e.g., viewBox, fill, stroke, d). No style=, target=, or on*= attributes allowed. The <style> tag is allowed.
+   * Enter HTML content. Links must be relative (/path or #anchor). Allowed attributes: class, id, data-* on all tags; href (required), title, class, id, data-* on <a> tags; colspan, rowspan, scope on table cells; plus safe SVG attributes (e.g., viewBox, fill, stroke, d). No style=, target=, or on*= attributes allowed. The <style> tag is allowed.
    */
   html: string;
   id?: string | null;
@@ -922,7 +922,7 @@ export interface ConfigSecret {
   /**
    * Secret value (write-only after save)
    */
-  value: string;
+  value?: string | null;
   /**
    * Enable or disable this secret
    */
@@ -1320,7 +1320,7 @@ export interface Exercise {
   /**
    * Exercise title (for admin reference)
    */
-  title: string;
+  title?: string | null;
   /**
    * Order of exercise within the lesson (lower numbers appear first)
    */

@@ -8,16 +8,7 @@ import type { PipelineContext, PostAction } from '../../../../../scripts/cody/en
  * Integration tests verifying all 4 problems are fixed end-to-end
  */
 describe('Feedback Loop Integration', () => {
-  const IMPL_STAGES = [
-    'architect',
-    'plan-gap',
-    'build',
-    'commit',
-    'verify',
-    'auditor',
-    'apply-audit',
-    'pr',
-  ]
+  const IMPL_STAGES = ['architect', 'plan-gap', 'build', 'commit', 'verify', 'autofix', 'pr']
 
   describe('P1: Build post-action has inner retry', () => {
     it('build stage definition uses run-quality-with-autofix (not raw run-tsc)', () => {

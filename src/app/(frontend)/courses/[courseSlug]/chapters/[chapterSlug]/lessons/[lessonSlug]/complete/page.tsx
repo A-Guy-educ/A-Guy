@@ -25,10 +25,13 @@ export async function generateMetadata({ params }: CompletePageProps): Promise<M
   }
 
   const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
-  const lessonCourse =
-    lessonChapter && typeof lessonChapter.course !== 'string' ? lessonChapter.course : null
+  const lessonCourseId = lessonChapter
+    ? typeof lessonChapter.course === 'string'
+      ? lessonChapter.course
+      : lessonChapter.course?.id
+    : null
 
-  if (!lessonCourse || lessonCourse.id !== course.id) {
+  if (!lessonCourseId || lessonCourseId !== course.id) {
     return { title: 'Lesson Complete' }
   }
 
@@ -55,10 +58,13 @@ export default async function CompletePage({ params }: CompletePageProps) {
   }
 
   const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
-  const lessonCourse =
-    lessonChapter && typeof lessonChapter.course !== 'string' ? lessonChapter.course : null
+  const lessonCourseId = lessonChapter
+    ? typeof lessonChapter.course === 'string'
+      ? lessonChapter.course
+      : lessonChapter.course?.id
+    : null
 
-  if (!lessonCourse || lessonCourse.id !== course.id) {
+  if (!lessonCourseId || lessonCourseId !== course.id) {
     notFound()
   }
 

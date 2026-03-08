@@ -46,7 +46,7 @@ describe('stage-prompts', () => {
   })
 
   describe('ALL_STAGES', () => {
-    it('should contain all stages including gap, plan-gap, commit, autofix, apply-audit', () => {
+    it('should contain all stages including gap, plan-gap, commit, autofix', () => {
       const stages = [...ALL_STAGES]
       expect(stages).toContain('taskify')
       expect(stages).toContain('spec')
@@ -58,10 +58,8 @@ describe('stage-prompts', () => {
       expect(stages).toContain('commit')
       expect(stages).toContain('verify')
       expect(stages).toContain('autofix')
-      expect(stages).toContain('auditor')
-      expect(stages).toContain('apply-audit')
       expect(stages).toContain('pr')
-      expect(stages).toHaveLength(13)
+      expect(stages).toHaveLength(11)
     })
   })
 
@@ -91,14 +89,6 @@ describe('stage-prompts', () => {
       expect(STAGE_CONTEXT_FILES.commit).toEqual(['task.json'])
       expect(STAGE_CONTEXT_FILES.verify).toEqual([])
       expect(STAGE_CONTEXT_FILES.autofix).toEqual(['verify.md', 'build-errors.md'])
-      expect(STAGE_CONTEXT_FILES.auditor).toEqual([
-        'task.md',
-        'spec.md',
-        'build.md',
-        'verify.md',
-        '../audit-history.json',
-      ])
-      expect(STAGE_CONTEXT_FILES['apply-audit']).toEqual(['auditor.md'])
       expect(STAGE_CONTEXT_FILES.pr).toEqual([])
     })
 
@@ -138,28 +128,11 @@ describe('stage-prompts', () => {
 
   describe('getImplStages', () => {
     it('should return full implementation stage list (default standard profile)', () => {
-      expect(getImplStages()).toEqual([
-        'architect',
-        'plan-gap',
-        'build',
-        'commit',
-        'verify',
-        'auditor',
-        'apply-audit',
-        'pr',
-      ])
+      expect(getImplStages()).toEqual(['architect', 'plan-gap', 'build', 'commit', 'verify', 'pr'])
     })
 
     it('should return reduced stage list for lightweight profile (no plan-gap)', () => {
-      expect(getImplStages('lightweight')).toEqual([
-        'architect',
-        'build',
-        'commit',
-        'verify',
-        'auditor',
-        'apply-audit',
-        'pr',
-      ])
+      expect(getImplStages('lightweight')).toEqual(['architect', 'build', 'commit', 'verify', 'pr'])
     })
 
     it('should return full stage list for standard profile', () => {
@@ -169,8 +142,6 @@ describe('stage-prompts', () => {
         'build',
         'commit',
         'verify',
-        'auditor',
-        'apply-audit',
         'pr',
       ])
     })

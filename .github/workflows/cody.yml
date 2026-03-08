@@ -299,7 +299,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Checkout feature branch if exists
-        if: needs.parse.outputs.task_id != ''
+        if: needs.parse.outputs.task_id != '' || needs.parse.outputs.fresh == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           TASK_ID: ${{ needs.parse.outputs.task_id }}

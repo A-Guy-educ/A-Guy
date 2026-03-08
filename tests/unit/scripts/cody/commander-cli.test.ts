@@ -1,7 +1,45 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { parseCliArgs } from '../../../../scripts/cody/cody-utils'
 
 describe('commander-based CLI parsing', () => {
+  // Save and clear Cody env vars to prevent CI environment pollution.
+  // When tests run inside a Cody pipeline, TASK_ID and other env vars are set,
+  // which causes parseCliArgs([]) to read them instead of auto-generating values.
+  const CODY_ENV_KEYS = [
+    'TASK_ID',
+    'MODE',
+    'DRY_RUN',
+    'FEEDBACK',
+    'FROM_STAGE',
+    'CLARIFY',
+    'ISSUE_NUMBER',
+    'TRIGGER_TYPE',
+    'RUN_ID',
+    'RUN_URL',
+    'VERSION',
+    'FRESH',
+    'COMPLEXITY',
+    'COMMENT_BODY',
+  ]
+  const savedEnv: Record<string, string | undefined> = {}
+
+  beforeEach(() => {
+    for (const key of CODY_ENV_KEYS) {
+      savedEnv[key] = process.env[key]
+      delete process.env[key]
+    }
+  })
+
+  afterEach(() => {
+    for (const key of CODY_ENV_KEYS) {
+      if (savedEnv[key] !== undefined) {
+        process.env[key] = savedEnv[key]
+      } else {
+        delete process.env[key]
+      }
+    }
+  })
+
   it('parses --task-id correctly', () => {
     const result = parseCliArgs(['--task-id', '260225-my-task'])
     expect(result.taskId).toBe('260225-my-task')
@@ -24,13 +62,17 @@ describe('commander-based CLI parsing', () => {
     expect(result.issueNumber).toBe(42)
   })
 
-  it('parses control mode flags', () => {
+  it('parses --auto control mode flag', () => {
     const autoResult = parseCliArgs(['--auto'])
     expect(autoResult.controlMode).toBe('auto')
+  })
 
+  it('parses --gate control mode flag', () => {
     const gateResult = parseCliArgs(['--gate'])
     expect(gateResult.controlMode).toBe('risk-gated')
+  })
 
+  it('parses --hard-stop control mode flag', () => {
     const hardResult = parseCliArgs(['--hard-stop'])
     expect(hardResult.controlMode).toBe('hard-stop')
   })
@@ -45,7 +87,7 @@ describe('commander-based CLI parsing', () => {
     const result = parseCliArgs([])
     expect(result.mode).toBe('full')
     // Empty args triggers auto-generation of taskId
-    expect(result.taskId).toMatch(/^\d{6}-auto-\d{2}$/)
+    expect(result.taskId).toMatch(/^\d{6}-auto-\d{3}$/)
   })
 
   it('parses --file correctly', () => {

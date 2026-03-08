@@ -31,6 +31,9 @@ export const POST_EXIT_DELAY = 500
 /** Maximum retry attempts for failed stages */
 export const MAX_RETRIES = 2
 
+/** Maximum size of stdout buffer to prevent memory leaks (1 MB) */
+export const MAX_STDOUT_BUFFER_SIZE = 1_048_576
+
 /** Default timeout for stages (10 minutes) */
 export const DEFAULT_TIMEOUT = ms('10m')
 
@@ -44,8 +47,6 @@ export const STAGE_TIMEOUTS: Record<string, number> = {
   build: ms('45m'),
   'plan-gap': ms('15m'),
   verify: ms('10m'),
-  auditor: ms('5m'),
-  'apply-audit': ms('5m'),
   pr: ms('5m'),
   autofix: ms('5m'),
 }
@@ -189,6 +190,71 @@ function findOutputFile(taskDir: string, expectedBase: string, outputExt: string
 }
 
 /**
+ * Format a JSON event line from opencode into a human-readable log line.
+ * Returns the formatted string, or null to skip (for noisy/unimportant events).
+ * Also extracts sessionID from events when found.
+ */
+export function formatJsonEvent(line: string): { display: string | null; sessionId?: string } {
+  try {
+    const event = JSON.parse(line)
+    const type: string = event.type
+    const sessionId: string | undefined = event.sessionID
+
+    switch (type) {
+      case 'session_start':
+        return { display: `🎯 Session started: ${sessionId?.slice(0, 16) || 'unknown'}`, sessionId }
+
+      case 'step_start':
+        return { display: null, sessionId } // Quiet — step_finish is more useful
+
+      case 'step_finish': {
+        const tokens = event.part?.tokens?.total || 0
+        const cost = event.part?.cost ?? 0
+        const reason = event.part?.reason || ''
+        const cached = event.part?.tokens?.cache?.read || 0
+        const costStr = typeof cost === 'number' && cost > 0 ? ` · $${cost.toFixed(4)}` : ''
+        const cacheStr = cached > 0 ? ` · ${cached} cached` : ''
+        return {
+          display: `  ✅ Step done (${tokens} tok${cacheStr}${costStr}) [${reason}]`,
+          sessionId,
+        }
+      }
+
+      case 'tool_use': {
+        const tool = event.part?.tool || 'unknown'
+        const status = event.part?.state?.status || ''
+        const title = event.part?.state?.title || event.part?.state?.input?.description || ''
+        const exit = event.part?.state?.metadata?.exit
+        const exitStr = exit !== undefined && exit !== 0 ? ` exit=${exit}` : ''
+        const titleStr = title ? `: ${title}` : ''
+        if (status === 'completed') {
+          return { display: `  🔧 ${tool}${titleStr}${exitStr}`, sessionId }
+        }
+        return { display: null, sessionId } // Skip pending/running states
+      }
+
+      case 'text_delta':
+      case 'content':
+        return { display: null, sessionId } // Skip streaming text deltas (too noisy)
+
+      case 'error': {
+        const msg = event.part?.message || event.message || JSON.stringify(event.part)
+        return { display: `  🔴 Error: ${msg}`, sessionId }
+      }
+
+      default:
+        return { display: null, sessionId } // Skip unknown event types
+    }
+  } catch {
+    // Not valid JSON — might be a plain log line from pino/logger
+    // Show it as-is if it looks meaningful
+    const trimmed = line.trim()
+    if (!trimmed) return { display: null }
+    return { display: trimmed }
+  }
+}
+
+/**
  * Run an OpenCode agent with file watching, timeouts, and optional retry logic.
  *
  * This function spawns the `opencode github run` command and monitors for the
@@ -274,8 +340,50 @@ export function runAgentWithFileWatch(
       let timeoutTimer: NodeJS.Timeout | null = null
       let stdoutBuffer = ''
       let heartbeatTimer: NodeJS.Timeout | null = null
+      let extractedSessionId: string | undefined
+      // Write raw JSON events to artifact file for full debugging
+      let jsonLogFd: number | null = null
+      try {
+        const jsonLogPath = path.join(path.dirname(outputFile), `${stage}-events.jsonl`)
+        jsonLogFd = fs.openSync(jsonLogPath, 'w')
+      } catch {
+        // Non-fatal: skip artifact file if can't create
+      }
 
-      // Handle stdout - tee to process.stdout for CI log visibility
+      // Stderr capture for failure debugging
+      let stderrLineCount = 0
+      const stderrTailLines: string[] = [] // Rolling buffer of last N lines
+      const STDERR_TAIL_SIZE = 50
+      let stderrLogFd: number | null = null
+      try {
+        const stderrLogPath = path.join(path.dirname(outputFile), `${stage}-stderr.log`)
+        stderrLogFd = fs.openSync(stderrLogPath, 'w')
+      } catch {
+        // Non-fatal: skip stderr file if can't create
+      }
+
+      // Register cleanup handler to prevent FD leak on unexpected exit
+      const cleanupFd = () => {
+        if (jsonLogFd !== null) {
+          try {
+            fs.closeSync(jsonLogFd)
+          } catch {
+            /* ignore */
+          }
+          jsonLogFd = null
+        }
+        if (stderrLogFd !== null) {
+          try {
+            fs.closeSync(stderrLogFd)
+          } catch {
+            /* ignore */
+          }
+          stderrLogFd = null
+        }
+      }
+      process.on('exit', cleanupFd)
+
+      // Handle stdout - parse JSON events and display formatted output
       if (currentChild.stdout) {
         currentChild.stdout.on('data', (data: Buffer) => {
           const chunk = data.toString()
@@ -288,8 +396,65 @@ export function runAgentWithFileWatch(
           for (const line of lines) {
             if (!line.trim()) continue
 
-            // Tee output to process.stdout for CI log visibility
-            process.stdout.write(line + '\n')
+            // Write raw JSON to artifact file for debugging
+            if (jsonLogFd !== null) {
+              fs.writeSync(jsonLogFd, line + '\n')
+            }
+
+            // Parse and format for human-readable output
+            const result = formatJsonEvent(line)
+
+            // Extract sessionId from first event that has it
+            if (result.sessionId && !extractedSessionId) {
+              extractedSessionId = result.sessionId
+            }
+
+            // Display formatted output
+            if (result.display) {
+              process.stderr.write(result.display + '\n')
+            }
+          }
+
+          // Cap buffer size to prevent memory leaks on verbose agents
+          if (stdoutBuffer.length > MAX_STDOUT_BUFFER_SIZE) {
+            // Keep only the last portion, breaking at a newline boundary
+            const lastNewline = stdoutBuffer.lastIndexOf('\n', MAX_STDOUT_BUFFER_SIZE / 2)
+            stdoutBuffer =
+              lastNewline > 0
+                ? stdoutBuffer.slice(lastNewline + 1)
+                : stdoutBuffer.slice(-MAX_STDOUT_BUFFER_SIZE / 2)
+          }
+        })
+      }
+
+      // Handle stderr - write to file, surface on failure
+      if (currentChild.stderr) {
+        let stderrBuffer = ''
+        currentChild.stderr.on('data', (data: Buffer) => {
+          const chunk = data.toString()
+          stderrBuffer += chunk
+
+          const lines = stderrBuffer.split('\n')
+          stderrBuffer = lines.pop() || ''
+
+          for (const line of lines) {
+            if (!line.trim()) continue
+            stderrLineCount++
+
+            // Write to file
+            if (stderrLogFd !== null) {
+              try {
+                fs.writeSync(stderrLogFd, line + '\n')
+              } catch {
+                /* ignore */
+              }
+            }
+
+            // Keep rolling tail buffer
+            stderrTailLines.push(line)
+            if (stderrTailLines.length > STDERR_TAIL_SIZE) {
+              stderrTailLines.shift()
+            }
           }
         })
       }
@@ -303,8 +468,17 @@ export function runAgentWithFileWatch(
         if (timeoutTimer) clearTimeout(timeoutTimer)
 
         // Flush remaining stdout buffer
-        if (stdoutBuffer.trim() && currentChild?.stdout) {
-          process.stdout.write(stdoutBuffer + '\n')
+        if (stdoutBuffer.trim()) {
+          if (jsonLogFd !== null) {
+            fs.writeSync(jsonLogFd, stdoutBuffer + '\n')
+          }
+          const lastResult = formatJsonEvent(stdoutBuffer)
+          if (lastResult.sessionId && !extractedSessionId) {
+            extractedSessionId = lastResult.sessionId
+          }
+          if (lastResult.display) {
+            process.stderr.write(lastResult.display + '\n')
+          }
         }
 
         // Kill process if still running
@@ -315,7 +489,27 @@ export function runAgentWithFileWatch(
           }, ms('5s'))
         }
 
-        resolve({ ...result, retries, validationErrors })
+        // Close JSON log file descriptor
+        if (jsonLogFd !== null) {
+          try {
+            fs.closeSync(jsonLogFd)
+          } catch {
+            /* ignore */
+          }
+          jsonLogFd = null
+        }
+        // Close stderr log file descriptor
+        if (stderrLogFd !== null) {
+          try {
+            fs.closeSync(stderrLogFd)
+          } catch {
+            /* ignore */
+          }
+          stderrLogFd = null
+        }
+        // Remove exit cleanup handler (FD already closed)
+        process.removeListener('exit', cleanupFd)
+        resolve({ ...result, retries, validationErrors, sessionId: extractedSessionId })
       }
 
       // Parse output file path
@@ -342,6 +536,20 @@ export function runAgentWithFileWatch(
       // Process exit handler - wait for file stability after exit
       currentChild.on('exit', async (code) => {
         logger.info(`  📡 Process exited with code: ${code}`)
+
+        // Surface stderr on failure
+        if (code !== 0 && stderrTailLines.length > 0) {
+          const isCI = !!process.env.GITHUB_ACTIONS
+          if (isCI) process.stderr.write('::group::Agent stderr (last lines)\n')
+          for (const line of stderrTailLines) {
+            process.stderr.write('  ' + line + '\n')
+          }
+          if (isCI) process.stderr.write('::endgroup::\n')
+        } else if (stderrLineCount > 0) {
+          logger.info(
+            `  📝 Agent stderr: ${stderrLineCount} lines captured (see ${stage}-stderr.log)`,
+          )
+        }
 
         if (resolved) return
 
