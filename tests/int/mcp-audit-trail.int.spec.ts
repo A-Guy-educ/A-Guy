@@ -84,8 +84,12 @@ describe('MCP audit trail', () => {
     expect(logs.docs).toHaveLength(1)
     const log = logs.docs[0]
     expect(log.toolName).toBe('test-tool')
-    expect(log.adminUserId).toBe(adminUserId)
-    expect(log.tenantId).toBe(tenantId)
+    const logAdminUserId =
+      typeof log.adminUserId === 'object' ? (log.adminUserId as any).id : log.adminUserId
+    expect(logAdminUserId).toBe(adminUserId)
+    const logTenantId =
+      typeof log.tenantId === 'object' ? (log.tenantId as any).id : log.tenantId
+    expect(logTenantId).toBe(tenantId)
     expect(log.resultCount).toBe(5)
     expect(log.success).toBe(true)
     expect(log.durationMs).toBe(123)

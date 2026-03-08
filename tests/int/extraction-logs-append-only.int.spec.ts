@@ -102,9 +102,9 @@ describe('Extraction logs append-only constraint', () => {
       data: {
         lesson: lessonId,
         media: mediaId,
-        status: 'completed',
+        status: 'success',
         stage: 'extract',
-        pipelineVersion: 'v3',
+        pipelineVersion: 3,
         rawResponse: '{"result":"test"}',
         tenant: tenantId,
       } as any,

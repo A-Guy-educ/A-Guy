@@ -57,11 +57,19 @@ beforeAll(async () => {
   payload = await getPayload({ config: config.default })
 
   // Ensure the default tenant exists so getDefaultTenantId succeeds
-  await payload.create({
+  const existingTenants = await payload.find({
     collection: 'tenants',
-    data: { name: TENANT_SLUG, slug: TENANT_SLUG, status: 'active' },
+    where: { slug: { equals: TENANT_SLUG } },
+    limit: 1,
     overrideAccess: true,
   })
+  if (existingTenants.docs.length === 0) {
+    await payload.create({
+      collection: 'tenants',
+      data: { name: TENANT_SLUG, slug: TENANT_SLUG, status: 'active' },
+      overrideAccess: true,
+    })
+  }
 
   // Create a course to use as the plan's courseId
   const category = await payload.create({

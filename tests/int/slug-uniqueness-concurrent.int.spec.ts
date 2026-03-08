@@ -104,10 +104,10 @@ describe('Slug uniqueness under concurrent creation', () => {
     expect(exercise.id).toBeDefined()
   })
 
-  it('rejects duplicate slug within the same lesson', async () => {
+  it('auto-deduplicates duplicate slug within the same lesson', async () => {
     const slug = `dup-slug-${Date.now()}`
 
-    await payload.create({
+    const ex1 = await payload.create({
       collection: 'exercises',
       data: {
         title: 'Exercise One',
@@ -119,19 +119,23 @@ describe('Slug uniqueness under concurrent creation', () => {
       overrideAccess: true,
     })
 
-    await expect(
-      payload.create({
-        collection: 'exercises',
-        data: {
-          title: 'Exercise Two',
-          slug,
-          lesson: lessonId,
-          tenant: tenantId,
-          type: 'open',
-        } as any,
-        overrideAccess: true,
-      }),
-    ).rejects.toThrow(/slug already exists/i)
+    const ex2 = await payload.create({
+      collection: 'exercises',
+      data: {
+        title: 'Exercise Two',
+        slug,
+        lesson: lessonId,
+        tenant: tenantId,
+        type: 'open',
+      } as any,
+      overrideAccess: true,
+    })
+
+    // generateSlug hook auto-suffixes to avoid collision
+    expect(ex1.slug).toBe(slug)
+    expect(ex2.slug).not.toBe(slug)
+    expect(ex2.slug).toContain(slug) // should be slug-1 or similar
+    expect(ex1.id).not.toBe(ex2.id)
   })
 
   it('allows same slug in different lessons', async () => {

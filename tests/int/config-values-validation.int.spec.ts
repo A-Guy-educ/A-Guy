@@ -71,14 +71,14 @@ describe('Config values domain validation', () => {
       collection: 'config_values',
       data: {
         tenant: tenantId,
-        domain: 'rate-limiting',
+        domain: 'global',
         config: { maxRequests: 100, windowMs: 60000 },
       } as any,
       overrideAccess: true,
     })
 
     expect(config.id).toBeDefined()
-    expect(config.domain).toBe('rate-limiting')
+    expect(config.domain).toBe('global')
   })
 
   it('rejects duplicate tenant+domain combination', async () => {
@@ -110,7 +110,7 @@ describe('Config values domain validation', () => {
       collection: 'config_values',
       data: {
         tenant: tenantId,
-        domain: 'guest-chat',
+        domain: 'guest_chat',
         config: { enabled: true },
       } as any,
       overrideAccess: true,
@@ -120,7 +120,7 @@ describe('Config values domain validation', () => {
       collection: 'config_values',
       data: {
         tenant: tenantId2,
-        domain: 'guest-chat',
+        domain: 'guest_chat',
         config: { enabled: false },
       } as any,
       overrideAccess: true,
@@ -136,7 +136,7 @@ describe('Config values domain validation', () => {
       collection: 'config_values',
       data: {
         tenant: tenantId,
-        domain: 'update-test',
+        domain: 'pdf_conversion',
         config: { value: 1 },
       } as any,
       overrideAccess: true,
