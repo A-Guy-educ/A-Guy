@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-08T17:07:34.817Z",
-  "updatedAt": "2026-03-08T19:33:30.855Z",
+  "updatedAt": "2026-03-08T19:59:23.964Z",
   "state": "running",
   "cursor": "plan-gap",
   "stages": {
@@ -42,11 +42,17 @@
       "outputFile": "plan-gap.md"
     },
     "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-08T19:33:30.782Z",
+      "completedAt": "2026-03-08T19:58:41.757Z",
+      "outputFile": "build.md"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-08T19:33:30.782Z"
+      "startedAt": "2026-03-08T19:59:23.964Z"
     }
   },
-  "issueNumber": 750,
-  "branchName": "feat/260308-auto-750-equation-paper"
+  "issueNumber": 750
 }
