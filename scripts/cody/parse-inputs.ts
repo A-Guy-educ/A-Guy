@@ -204,6 +204,20 @@ export function parseCommentInputs(): ParseOutputs {
       logger.info(`=== Detected --version flag: ${outputs.version} ===`)
     }
 
+    // Detect --from flag (both --from=stage and --from stage syntax)
+    const fromMatch = cmdAfterCody.match(/--from[=\s](\S+)/)
+    if (fromMatch) {
+      outputs.from_stage = fromMatch[1]
+      logger.info(`=== Detected --from flag: ${outputs.from_stage} ===`)
+    }
+
+    // Detect --feedback flag (both --feedback=text and --feedback text syntax)
+    const feedbackMatch = cmdAfterCody.match(/--feedback[=\s](\S+)/)
+    if (feedbackMatch) {
+      outputs.feedback = feedbackMatch[1]
+      logger.info(`=== Detected --feedback flag: ${outputs.feedback} ===`)
+    }
+
     // Strip flags from command before mode parsing
     const cmdWithoutFlags = cmdAfterCody
       .replace(/--local\b/g, '')
@@ -211,6 +225,8 @@ export function parseCommentInputs(): ParseOutputs {
       .replace(/--github-hosted\b/g, '')
       .replace(/--version\s+\S+/g, '')
       .replace(/--fresh\b/g, '')
+      .replace(/--from[=\s]\S+/g, '')
+      .replace(/--feedback[=\s]\S+/g, '')
       .trim()
 
     if (!cmdWithoutFlags) {
@@ -218,17 +234,17 @@ export function parseCommentInputs(): ParseOutputs {
       outputs.mode = 'full'
       logger.info('=== @cody alone - defaulting to full mode ===')
     } else {
-      // Check if the first word (before whitespace or newline) is an approval keyword
-      // This handles "@cody approve answer" and "@cody approve\nmultiline answer"
+      // Check if the first word is a known mode or approval keyword
+      // This handles commands like "/cody rerun 260218-task" where extra args follow the mode
       const firstWord = cmdWithoutFlags.split(/[\s\n]/)[0]
       if (APPROVAL_KEYWORDS.includes(firstWord)) {
         // Approval command with optional answer - use rerun mode
         outputs.mode = 'rerun'
         logger.info(`=== Detected approval keyword: ${firstWord} ===`)
-      } else if (VALID_MODES.includes(cmdWithoutFlags)) {
-        // Explicit mode specified
-        outputs.mode = cmdWithoutFlags
-        logger.info(`=== Detected explicit mode: ${cmdWithoutFlags} ===`)
+      } else if (VALID_MODES.includes(firstWord)) {
+        // First word is a valid mode (e.g., "rerun", "spec", "impl")
+        outputs.mode = firstWord
+        logger.info(`=== Detected explicit mode: ${firstWord} ===`)
       } else {
         // Not a known command - default to full (might be task-id or description)
         outputs.mode = 'full'

@@ -313,6 +313,73 @@ describe('parse-inputs', () => {
       expect(result.task_id).toBe('260225-test')
       expect(result.valid).toBe('true')
     })
+
+    // BUG-Fix: /cody rerun --from=build should parse --from flag and set rerun mode
+    it('should parse --from=stage flag with equals syntax', () => {
+      vi.stubEnv('COMMENT_BODY', '/cody rerun --from=build')
+
+      const result = parseCommentInputs()
+
+      expect(result.mode).toBe('rerun')
+      expect(result.from_stage).toBe('build')
+    })
+
+    it('should parse --from stage flag with space syntax', () => {
+      vi.stubEnv('COMMENT_BODY', '/cody rerun --from build')
+
+      const result = parseCommentInputs()
+
+      expect(result.mode).toBe('rerun')
+      expect(result.from_stage).toBe('build')
+    })
+
+    it('should parse --from with verify stage', () => {
+      vi.stubEnv('COMMENT_BODY', '@cody rerun --from=verify')
+
+      const result = parseCommentInputs()
+
+      expect(result.mode).toBe('rerun')
+      expect(result.from_stage).toBe('verify')
+    })
+
+    it('should parse --feedback flag', () => {
+      vi.stubEnv('COMMENT_BODY', '/cody rerun --feedback fix-tests')
+
+      const result = parseCommentInputs()
+
+      expect(result.mode).toBe('rerun')
+      expect(result.feedback).toBe('fix-tests')
+    })
+
+    it('should parse both --from and --feedback flags together', () => {
+      vi.stubEnv('COMMENT_BODY', '/cody rerun --from=build --feedback fix-tests')
+
+      const result = parseCommentInputs()
+
+      expect(result.mode).toBe('rerun')
+      expect(result.from_stage).toBe('build')
+      expect(result.feedback).toBe('fix-tests')
+    })
+
+    it('should parse rerun mode even with extra args after it', () => {
+      vi.stubEnv('COMMENT_BODY', '/cody rerun 260218-task --from build')
+      vi.stubEnv('ISSUE_NUMBER', '')
+
+      const result = parseCommentInputs()
+
+      // rerun is detected as first word mode
+      expect(result.mode).toBe('rerun')
+      expect(result.from_stage).toBe('build')
+    })
+
+    it('should not set from_stage when --from flag is absent', () => {
+      vi.stubEnv('COMMENT_BODY', '/cody rerun')
+
+      const result = parseCommentInputs()
+
+      expect(result.mode).toBe('rerun')
+      expect(result.from_stage).toBe('')
+    })
   })
 })
 
