@@ -206,9 +206,15 @@ const VALID_BODY = () => ({
   lessonId,
   mediaId,
   title: 'Test Exercise',
-  question: 'What is 2 + 2?',
-  options: ['3', '4', '5'],
-  correctAnswer: 1,
+  stem: 'What is 2 + 2?',
+  subQuestions: [
+    {
+      prompt: 'Calculate the sum',
+      type: 'free_response' as const,
+      options: [],
+      correctAnswer: null,
+    },
+  ],
 })
 
 describe('V3 extraction log gate — POST /api/exercises/convert/single/create', () => {
