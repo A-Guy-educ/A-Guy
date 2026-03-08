@@ -76,7 +76,7 @@ function extractTestDetails(rawOutput: string): { summary?: string; specificFix?
   // Check for common fixable errors
   let specificFix: string | undefined
 
-  if (rawOutput.includes('Cannot find module') || rawOutput.includes('Cannot find module')) {
+  if (rawOutput.includes('Cannot find module')) {
     const moduleMatch = rawOutput.match(/Cannot find module ['"]([^'"]+)['"]/)
     const moduleName = moduleMatch?.[1]
     if (moduleName) {

@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from 'react'
 import { cn, formatRelativeTime } from '../utils'
+import { stageLabels, formatElapsed, getStageProgressTooltip } from '../pipeline-utils'
 import type { CodyTask } from '../types'
 import { ALL_STAGES, getGitHubIssueUrl } from '../constants'
 import { Loader2 } from 'lucide-react'
@@ -38,10 +39,24 @@ function deriveCodyState(tasks: CodyTask[]): CodyState {
     const elapsed = pipeline?.startedAt
       ? formatElapsed(new Date(pipeline.startedAt))
       : formatRelativeTime(working.updatedAt)
+
+    // Derive current stage: use currentStage if available, otherwise infer from stages data
+    let stage = pipeline?.currentStage ?? null
+    if (!stage && pipeline?.stages) {
+      // Find the highest stage that has been touched
+      for (const [stageName, stageData] of Object.entries(pipeline.stages)) {
+        if (stageData.state !== 'pending') {
+          const idx = ALL_STAGES.indexOf(stageName as (typeof ALL_STAGES)[number])
+          const prevIdx = stage ? ALL_STAGES.indexOf(stage as (typeof ALL_STAGES)[number]) : -1
+          if (idx > prevIdx) stage = stageName
+        }
+      }
+    }
+
     return {
       status: 'working',
       task: working,
-      stage: pipeline?.currentStage ?? null,
+      stage,
       elapsed,
     }
   }
@@ -57,31 +72,6 @@ function deriveCodyState(tasks: CodyTask[]): CodyState {
   }
 
   return { status: 'idle', taskCount: tasks.length }
-}
-
-function formatElapsed(since: Date): string {
-  const ms = Date.now() - since.getTime()
-  const seconds = Math.floor(ms / 1000)
-  if (seconds < 60) return `${seconds}s`
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ${seconds % 60}s`
-  const hours = Math.floor(minutes / 60)
-  return `${hours}h ${minutes % 60}m`
-}
-
-const stageLabels: Record<string, string> = {
-  taskify: 'Analyzing',
-  spec: 'Writing Spec',
-  clarify: 'Clarifying',
-  architect: 'Architecting',
-  'plan-review': 'Reviewing Plan',
-  build: 'Building',
-  commit: 'Committing',
-  verify: 'Verifying',
-  auditor: 'Auditing',
-  'apply-audit': 'Applying Audit',
-  pr: 'Creating PR',
-  autofix: 'Auto-fixing',
 }
 
 /** Subtle refresh indicator — shows spinner when fetching, "Updated Xs ago" otherwise */
@@ -156,19 +146,23 @@ export function CodyStatusBanner({
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
               className="text-blue-400 hover:underline font-mono"
+              title={`View issue #${state.task.issueNumber} on GitHub`}
             >
               #{state.task.issueNumber}
             </a>{' '}
             <span className="text-muted-foreground truncate">— {state.task.title}</span>
           </span>
           <RefreshIndicator isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
-          <span className="text-xs text-muted-foreground font-mono">{state.elapsed}</span>
+          <span className="text-xs text-muted-foreground font-mono" title="Elapsed time">
+            {state.elapsed}
+          </span>
           {onAbort && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onAbort(state.task.id)}
               className="h-6 text-xs text-muted-foreground hover:text-destructive"
+              title="Abort this task and stop the pipeline"
             >
               Abort
             </Button>
@@ -181,17 +175,24 @@ export function CodyStatusBanner({
             const isCompleted = currentStageIdx > i
             const isCurrent = currentStageIdx === i
             const isPending = currentStageIdx < i
+            const isPaused = isCurrent && state.task.pipeline?.state === 'paused'
 
             return (
               <div key={stage} className="flex items-center gap-1 flex-1">
                 <div
                   className={cn(
-                    'h-1.5 flex-1 rounded-full transition-all',
+                    'h-1.5 flex-1 rounded-full transition-all duration-300',
                     isCompleted && 'bg-blue-500',
-                    isCurrent && 'bg-blue-500 animate-pulse',
+                    isCurrent && !isPaused && 'bg-blue-500 animate-pulse',
+                    isPaused && 'bg-yellow-500',
                     isPending && 'bg-muted',
                   )}
-                  title={stageLabels[stage] || stage}
+                  title={getStageProgressTooltip(
+                    stage,
+                    i,
+                    currentStageIdx,
+                    state.task.pipeline?.state,
+                  )}
                 />
               </div>
             )
@@ -201,6 +202,9 @@ export function CodyStatusBanner({
           <div className="mt-1.5 text-xs text-muted-foreground">
             Stage:{' '}
             <span className="text-foreground">{stageLabels[state.stage] || state.stage}</span>
+            {state.task.pipeline?.state === 'paused' && (
+              <span className="ml-2 text-yellow-400 font-medium">⏸ Awaiting approval</span>
+            )}
           </div>
         )}
       </div>
@@ -222,13 +226,18 @@ export function CodyStatusBanner({
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
             className="text-yellow-400 hover:underline font-mono"
+            title={`View issue #${state.task.issueNumber} on GitHub`}
           >
             #{state.task.issueNumber}
           </a>{' '}
           <span className="text-muted-foreground">— {state.task.title}</span>
         </span>
         <RefreshIndicator isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
-        <Badge variant="outline" className="text-yellow-400 border-yellow-500/30">
+        <Badge
+          variant="outline"
+          className="text-yellow-400 border-yellow-500/30"
+          title="This task is waiting for approval before continuing"
+        >
           Gate
         </Badge>
       </div>
@@ -249,13 +258,16 @@ export function CodyStatusBanner({
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
           className="text-red-400 hover:underline font-mono"
+          title={`View issue #${state.task.issueNumber} on GitHub`}
         >
           #{state.task.issueNumber}
         </a>{' '}
         <span className="text-muted-foreground">— {state.task.title}</span>
       </span>
       <RefreshIndicator isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
-      <span className="text-xs text-muted-foreground">{state.failedAgo}</span>
+      <span className="text-xs text-muted-foreground" title="Failed at">
+        {state.failedAgo}
+      </span>
     </div>
   )
 }

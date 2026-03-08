@@ -97,8 +97,7 @@
     "cody:test": "gh workflow run cody.yml -R A-Guy-educ/A-Guy -f task_id=TEST -f mode=status -f dry_run=true",
     "cody": "pnpm tsx scripts/cody/entry.ts",
     "cody:tag": "pnpm tsx scripts/cody/tag-version.ts",
-    "supervisor": "pnpm tsx scripts/supervisor/supervisor.ts",
-    "tunnel:ocode": "export $(grep OPENCODE_SERVER_PASSWORD .env | xargs) && opencode web --port 3001 & ngrok http 3001; kill %1"
+    "tunnel:ocode": "pnpm tsx scripts/tunnel-opencode.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.30",
@@ -135,6 +134,7 @@
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-tooltip": "^1.2.8",
     "@sentry/nextjs": "^10.32.1",
     "@tanstack/react-query": "^5.90.21",
     "@vercel/blob": "^0.22.3",

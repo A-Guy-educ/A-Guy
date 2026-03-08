@@ -8,16 +8,7 @@ import { describe, it, expect } from 'vitest'
 import { resolveRerunFromStage } from '../../../../scripts/cody/rerun-utils'
 
 describe('resolveRerunFromStage', () => {
-  const IMPL_STAGES = [
-    'architect',
-    'plan-gap',
-    'build',
-    'commit',
-    'verify',
-    'auditor',
-    'apply-audit',
-    'pr',
-  ]
+  const IMPL_STAGES = ['architect', 'plan-gap', 'build', 'commit', 'verify', 'autofix', 'pr']
 
   it('backs up to architect when feedback provided and from=build', () => {
     const result = resolveRerunFromStage('build', 'fix the type error', IMPL_STAGES)

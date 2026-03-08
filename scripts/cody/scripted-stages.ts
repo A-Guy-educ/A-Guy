@@ -6,7 +6,7 @@
  */
 
 import { logger } from './logger'
-import { execFileSync, execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 import ms from 'ms'
 import * as path from 'path'
@@ -33,20 +33,21 @@ const DEFAULT_GATE_TIMEOUT = ms('2m')
 
 function runGate(
   name: string,
-  command: string,
+  program: string,
+  args: string[],
   cwd: string,
   timeout: number = DEFAULT_GATE_TIMEOUT,
 ): GateResult {
   logger.info(`  Running ${name}...`)
   try {
-    const output = execSync(command, { cwd, encoding: 'utf-8', timeout })
+    const output = execFileSync(program, args, { cwd, encoding: 'utf-8', timeout })
     logger.info(`  ✅ ${name} passed`)
-    return { name, passed: true, output: output.slice(0, 500) }
+    return { name, passed: true, output: output.slice(0, 1000) }
   } catch (error: unknown) {
     const err = error as { stdout?: string; stderr?: string; message?: string }
     const output = (err.stdout || '') + (err.stderr || '') || err.message || 'Unknown error'
     logger.info(`  ❌ ${name} failed`)
-    return { name, passed: false, output: output.slice(0, 2000) }
+    return { name, passed: false, output: output.slice(0, 5000) }
   }
 }
 
@@ -62,12 +63,10 @@ export function runVerifyStage(
   const aggregateTimeout = timeout ?? Infinity
 
   const gateDefinitions = [
-    { name: 'TypeScript', command: 'pnpm -s tsc --noEmit' },
-    { name: 'Lint', command: 'pnpm -s lint' },
-    { name: 'Format', command: 'pnpm -s format:check' },
-    { name: 'Unit Tests', command: 'pnpm -s test:unit' },
-    // Integration tests run in CI after PR is created
-    // Adding them here would require MongoDB service in verify stage
+    { name: 'TypeScript', program: 'pnpm', args: ['-s', 'tsc', '--noEmit'] },
+    { name: 'Lint', program: 'pnpm', args: ['-s', 'lint'] },
+    { name: 'Format', program: 'pnpm', args: ['-s', 'format:check'] },
+    { name: 'Unit Tests', program: 'pnpm', args: ['-s', 'test:unit'] },
   ]
 
   const gates: GateResult[] = []
@@ -87,7 +86,7 @@ export function runVerifyStage(
 
     // Use smaller of remaining aggregate time or per-gate default
     const gateTimeout = Math.min(remaining, DEFAULT_GATE_TIMEOUT)
-    gates.push(runGate(gateDef.name, gateDef.command, cwd, gateTimeout))
+    gates.push(runGate(gateDef.name, gateDef.program, gateDef.args, cwd, gateTimeout))
   }
 
   const allPassed = gates.every((g) => g.passed)
@@ -127,7 +126,20 @@ interface PrResult {
 }
 
 function getBranchName(cwd: string): string {
-  return execSync('git branch --show-current', { cwd, encoding: 'utf-8' }).trim()
+  const branch = execFileSync('git', ['branch', '--show-current'], {
+    cwd,
+    encoding: 'utf-8',
+  }).trim()
+  if (!branch) {
+    // Detached HEAD — use short commit hash as fallback
+    return (
+      execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
+        cwd,
+        encoding: 'utf-8',
+      }).trim() || 'detached'
+    )
+  }
+  return branch
 }
 
 function getExistingPr(branch: string, cwd: string): string | null {

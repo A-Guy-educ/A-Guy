@@ -5,7 +5,7 @@
  */
 
 import { logger } from './logger'
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import { closeLinkedPR } from './github-api'
 
 // Git branch prefixes to try
@@ -23,10 +23,12 @@ const GIT_NAME = process.env.GIT_USER_NAME || 'aguyaharonyair'
  */
 function gitExec(args: string[], options: { silent?: boolean } = {}): string {
   try {
-    return execSync(`git ${args.join(' ')}`, {
-      encoding: 'utf-8',
-      stdio: options.silent ? 'ignore' : 'inherit',
-    })
+    return (
+      execFileSync('git', args, {
+        encoding: 'utf-8',
+        stdio: options.silent ? 'ignore' : 'inherit',
+      }) || ''
+    )
   } catch {
     return ''
   }
@@ -37,9 +39,11 @@ function gitExec(args: string[], options: { silent?: boolean } = {}): string {
  */
 function gitExecSilent(args: string[]): string {
   try {
-    return execSync(`git ${args.join(' ')}`, {
-      encoding: 'utf-8',
-    })
+    return (
+      execFileSync('git', args, {
+        encoding: 'utf-8',
+      }) || ''
+    )
   } catch {
     return ''
   }
@@ -49,8 +53,8 @@ function gitExecSilent(args: string[]): string {
  * Configure git identity
  */
 function configureGitIdentity(): void {
-  execSync(`git config --global user.email "${GIT_EMAIL}"`, { encoding: 'utf-8' })
-  execSync(`git config --global user.name "${GIT_NAME}"`, { encoding: 'utf-8' })
+  execFileSync('git', ['config', '--global', 'user.email', GIT_EMAIL], { encoding: 'utf-8' })
+  execFileSync('git', ['config', '--global', 'user.name', GIT_NAME], { encoding: 'utf-8' })
 }
 
 /**

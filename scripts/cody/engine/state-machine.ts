@@ -14,7 +14,7 @@ import type {
   StageResult,
   PipelineStep,
 } from './types'
-import { logger } from '../logger'
+import { logger, ciGroup, ciGroupEnd } from '../logger'
 import { PipelinePausedError } from './types'
 import {
   loadState,
@@ -29,6 +29,20 @@ import { getHandler } from '../handlers/handler'
 import { setLifecycleLabel } from '../github-api'
 import { executePostAction } from '../pipeline/post-actions'
 import { flattenPipelineOrder } from '../pipeline/definitions'
+
+/**
+ * Error subclass that carries the originating stage name for parallel error attribution
+ */
+class StageError extends Error {
+  public readonly stageName: string
+  public readonly cause?: Error
+  constructor(message: string, stageName: string, cause?: Error) {
+    super(message)
+    this.name = 'StageError'
+    this.stageName = stageName
+    this.cause = cause
+  }
+}
 
 // ============================================================================
 // Engine
@@ -215,8 +229,9 @@ async function executeSingleStep(
 ): Promise<PipelineStateV2> {
   const def = pipeline.stages.get(stageName)
   if (!def) {
-    logger.warn(`Stage ${stageName} not found in pipeline definitions`)
-    return state
+    const msg = `Stage '${stageName}' not found in pipeline definitions — check pipeline order vs stage definitions`
+    logger.error(msg)
+    throw new Error(msg)
   }
 
   // Check skip conditions
@@ -261,12 +276,14 @@ async function executeSingleStep(
   }
 
   // Get handler and execute
-  const handler = getHandler(def.name, def.type)
-
+  ciGroup(`Stage: ${stageName}`)
   try {
+    const handler = getHandler(def.name, def.type)
     const result = await handler.execute(ctx, def)
+    ciGroupEnd()
     return await handleStageResult(ctx, state, stageName, result, def)
   } catch (error) {
+    ciGroupEnd()
     if (error instanceof PipelinePausedError) {
       // Handle paused - mark stage as paused and pipeline as paused
       state = updateStage(state, stageName, { state: 'paused' })
@@ -320,7 +337,7 @@ async function executeParallelStep(
     stagesToRun.map(async (stageName) => {
       const def = pipeline.stages.get(stageName)
       if (!def) {
-        return { stageName, result: null as unknown as StageResult }
+        throw new StageError(`Stage '${stageName}' not found in pipeline definitions`, stageName)
       }
 
       // Check skip first
@@ -343,12 +360,12 @@ async function executeParallelStep(
         try {
           await def.preExecute(ctx)
         } catch (preError) {
-          // Tag error with stageName for rejection handler
-          if (preError instanceof Error) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;(preError as any).stageName = stageName
-          }
-          throw preError
+          // Wrap error with stageName for rejection handler
+          throw new StageError(
+            preError instanceof Error ? preError.message : String(preError),
+            stageName,
+            preError instanceof Error ? preError : undefined,
+          )
         }
       }
 
@@ -358,12 +375,12 @@ async function executeParallelStep(
         const result = await handler.execute(ctx, def)
         return { stageName, result }
       } catch (error) {
-        // Tag error with stageName for rejection handler (G30)
-        if (error instanceof Error) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(error as any).stageName = stageName
-        }
-        throw error
+        // Wrap error with stageName for rejection handler
+        throw new StageError(
+          error instanceof Error ? error.message : String(error),
+          stageName,
+          error instanceof Error ? error : undefined,
+        )
       }
     }),
   )
@@ -374,20 +391,25 @@ async function executeParallelStep(
 
   for (const result of results) {
     if (result.status === 'rejected') {
-      // G30: Check if this is a PipelinePausedError
-      if (result.reason instanceof PipelinePausedError) {
+      // G30: Check if this is a PipelinePausedError (direct or wrapped in StageError)
+      const rejectedErr = result.reason
+      const isPaused =
+        rejectedErr instanceof PipelinePausedError ||
+        (rejectedErr instanceof StageError && rejectedErr.cause instanceof PipelinePausedError)
+      if (isPaused) {
         // Mark the stage as paused and return paused state
-        const reason = result.reason as Error & { stageName?: string }
-        const stageName = reason.stageName || 'unknown'
-        state = updateStage(state, stageName, { state: 'paused' })
+        const pausedStageName =
+          rejectedErr instanceof StageError ? rejectedErr.stageName : 'unknown'
+        state = updateStage(state, pausedStageName, { state: 'paused' })
         return completeState(state, 'paused')
       }
 
-      const reason = (result as PromiseRejectedResult).reason as
-        | (Error & { stageName?: string })
-        | undefined
-      const name = reason?.stageName || 'unknown'
-      const message = reason?.message || String(result.reason)
+      const reason = (result as PromiseRejectedResult).reason
+      const name =
+        reason instanceof StageError
+          ? reason.stageName
+          : (((reason as Record<string, unknown>)?.stageName as string) ?? 'unknown')
+      const message = reason instanceof Error ? reason.message : String(reason)
       // R7: Use dynamic advisory lookup from pipeline definition
       const isAdvisory = pipeline.stages.get(name)?.advisory === true
       if (isAdvisory) {

@@ -18,11 +18,11 @@ vi.mock('../../../../scripts/cody/github-api', () => ({
   closeLinkedPR: vi.fn(),
 }))
 
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import { closeLinkedPR } from '../../../../scripts/cody/github-api'
 import { resetBranchIfFresh } from '../../../../scripts/cody/checkout-task-branch'
 
-const mockExecSync = vi.mocked(execSync)
+const mockExecFileSync = vi.mocked(execFileSync)
 const mockCloseLinkedPR = vi.mocked(closeLinkedPR)
 
 // Silence logger output during tests
@@ -53,7 +53,7 @@ describe('resetBranchIfFresh', () => {
 
       expect(result).toBe('feat/my-branch')
       expect(mockCloseLinkedPR).not.toHaveBeenCalled()
-      expect(mockExecSync).not.toHaveBeenCalled()
+      expect(mockExecFileSync).not.toHaveBeenCalled()
     })
 
     it('should return null unchanged when branch is null', () => {
@@ -95,7 +95,7 @@ describe('resetBranchIfFresh', () => {
       resetBranchIfFresh('feat/my-branch', 'dev', '651')
 
       // No git push --delete or git branch -D calls
-      expect(mockExecSync).not.toHaveBeenCalled()
+      expect(mockExecFileSync).not.toHaveBeenCalled()
     })
   })
 
@@ -119,9 +119,16 @@ describe('resetBranchIfFresh', () => {
       resetBranchIfFresh('feat/my-branch', 'dev', '651')
 
       // Should call git push origin --delete and git branch -D
-      const calls = mockExecSync.mock.calls.map((c) => String(c[0]))
-      expect(calls.some((c) => c.includes('push') && c.includes('--delete'))).toBe(true)
-      expect(calls.some((c) => c.includes('branch') && c.includes('-D'))).toBe(true)
+      const calls = mockExecFileSync.mock.calls.map((c) => ({
+        cmd: String(c[0]),
+        args: (c[1] as string[]) || [],
+      }))
+      expect(
+        calls.some(
+          (c) => c.cmd === 'git' && c.args.includes('push') && c.args.includes('--delete'),
+        ),
+      ).toBe(true)
+      expect(calls.some((c) => c.cmd === 'git' && c.args.includes('-D'))).toBe(true)
     })
 
     it('should return null to force new branch creation', () => {
@@ -151,9 +158,16 @@ describe('resetBranchIfFresh', () => {
 
       resetBranchIfFresh('feat/my-branch', 'dev')
 
-      const calls = mockExecSync.mock.calls.map((c) => String(c[0]))
-      expect(calls.some((c) => c.includes('push') && c.includes('--delete'))).toBe(true)
-      expect(calls.some((c) => c.includes('branch') && c.includes('-D'))).toBe(true)
+      const calls = mockExecFileSync.mock.calls.map((c) => ({
+        cmd: String(c[0]),
+        args: (c[1] as string[]) || [],
+      }))
+      expect(
+        calls.some(
+          (c) => c.cmd === 'git' && c.args.includes('push') && c.args.includes('--delete'),
+        ),
+      ).toBe(true)
+      expect(calls.some((c) => c.cmd === 'git' && c.args.includes('-D'))).toBe(true)
     })
 
     it('should return null to force new branch creation', () => {
@@ -186,7 +200,7 @@ describe('resetBranchIfFresh', () => {
       resetBranchIfFresh(null, 'dev', '651')
 
       // No git commands should be called for branch deletion (branch is null)
-      expect(mockExecSync).not.toHaveBeenCalled()
+      expect(mockExecFileSync).not.toHaveBeenCalled()
     })
 
     it('should return null', () => {

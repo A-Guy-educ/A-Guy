@@ -3,17 +3,17 @@
  * @domain cody
  * @pattern boards-api
  * @ai-summary API route to fetch boards (labels + milestones)
+ *
+ * Public endpoint (no auth required) — returns board categories.
+ * Intentionally unauthenticated to support dashboard loading without login.
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 
+import { handleCodyApiError } from '@/lib/cody/github-error-handler'
 import { fetchLabels, fetchMilestones } from '@/ui/cody/github-client'
 import type { Board } from '@/ui/cody/types'
 
 export async function GET(_req: NextRequest) {
-  // Skip auth check for now - open access for testing
-  // Auth can be added later
-
   try {
     // Fetch labels and milestones in parallel
     const [labels, milestones] = await Promise.all([fetchLabels(), fetchMilestones()])
@@ -34,18 +34,7 @@ export async function GET(_req: NextRequest) {
     ]
 
     return NextResponse.json({ boards })
-  } catch (error: any) {
-    console.error('[Cody] Error fetching boards:', error)
-
-    // ALWAYS return mock data on error so the dashboard continues to work locally
-    return NextResponse.json({
-      boards: [
-        { id: 'all', name: 'All', type: 'all' },
-        { id: 'label:frontend', name: 'frontend', type: 'label' },
-        { id: 'label:backend', name: 'backend', type: 'label' },
-        { id: 'label:bug', name: 'bug', type: 'label' },
-        { id: 'label:feature', name: 'feature', type: 'label' },
-      ],
-    })
+  } catch (error: unknown) {
+    return handleCodyApiError(error, 'boards')
   }
 }

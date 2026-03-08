@@ -15,6 +15,7 @@ export type StageState =
   | 'timeout'
   | 'skipped'
   | 'gate-waiting'
+  | 'paused'
 
 export interface StageStatus {
   state: StageState
@@ -45,7 +46,7 @@ export interface CodyPipelineStatus {
   updatedAt: string
   completedAt?: string
   totalElapsed?: number
-  state: 'running' | 'completed' | 'failed' | 'timeout'
+  state: 'running' | 'completed' | 'failed' | 'timeout' | 'paused'
   currentStage: string | null
   stages: Record<string, StageStatus>
   triggeredBy: string

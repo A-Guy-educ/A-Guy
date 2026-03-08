@@ -8,7 +8,7 @@
 import { logger } from '../logger'
 import * as fs from 'fs'
 import * as path from 'path'
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 
 import type { PipelineContext, PostAction, PipelineStateV2 } from '../engine/types'
 import { PipelinePausedError } from '../engine/types'
@@ -257,16 +257,16 @@ export async function executePostAction(
       let diff = ''
       let untracked = ''
       try {
-        diff = execSync('git diff --name-only', { encoding: 'utf-8' }).trim()
-      } catch {
-        // git diff can fail if not in a repo
+        diff = execFileSync('git', ['diff', '--name-only'], { encoding: 'utf-8' }).trim()
+      } catch (error) {
+        logger.warn({ err: error }, 'git diff failed during src validation')
       }
       try {
-        untracked = execSync('git ls-files --others --exclude-standard', {
+        untracked = execFileSync('git', ['ls-files', '--others', '--exclude-standard'], {
           encoding: 'utf-8',
         }).trim()
-      } catch {
-        // Ignore
+      } catch (error) {
+        logger.warn({ err: error }, 'git ls-files failed during src validation')
       }
 
       const allChanged = [...diff.split('\n'), ...untracked.split('\n')]
@@ -289,10 +289,15 @@ export async function executePostAction(
 
       logger.info('   Running tsc...')
       try {
-        execSync('pnpm -s tsc --noEmit', { stdio: 'inherit' })
+        execFileSync('pnpm', ['-s', 'tsc', '--noEmit'], {
+          encoding: 'utf-8',
+          maxBuffer: 10 * 1024 * 1024,
+        })
         logger.info('   ✓ tsc passed')
-      } catch {
-        throw new Error('TypeScript compilation failed')
+      } catch (error) {
+        const err = error as { stdout?: string; stderr?: string; message?: string }
+        const output = (err.stdout || '') + (err.stderr || '') || err.message || ''
+        throw new Error(`TypeScript compilation failed:\n${output.slice(0, 3000)}`)
       }
       break
     }
@@ -302,7 +307,10 @@ export async function executePostAction(
 
       logger.info('   Running unit tests...')
       try {
-        execSync('pnpm -s test:unit', { stdio: 'inherit' })
+        execFileSync('pnpm', ['-s', 'test:unit'], {
+          encoding: 'utf-8',
+          maxBuffer: 10 * 1024 * 1024,
+        })
         logger.info('   ✓ Unit tests passed')
       } catch (error) {
         // G25: Include output text (3000 chars) for supervisor retry
@@ -311,29 +319,6 @@ export async function executePostAction(
         throw new Error(
           `Unit tests failed after build. Fix and re-run.\n\n${output.slice(0, 3000)}`,
         )
-      }
-      break
-    }
-
-    case 'commit-audit-history': {
-      // G18: Skip if localOnly and not in local mode
-      if (!ctx.input.local) {
-        return
-      }
-      if (ctx.input.dryRun) {
-        return
-      }
-
-      const auditHistoryPath = path.join(process.cwd(), '.tasks', 'audit-history.json')
-      if (fs.existsSync(auditHistoryPath)) {
-        commitPipelineFiles({
-          taskDir: '.tasks',
-          taskId: 'audit-history',
-          message: `audit: update audit history from ${ctx.taskId}`,
-          stagingStrategy: 'task-only',
-          push: false,
-          dryRun: ctx.input.dryRun,
-        })
       }
       break
     }
@@ -349,11 +334,19 @@ export async function executePostAction(
         error?: string
       }
 
+      // Helper: split a simple shell command into program + args for execFileSync
+      // Only handles space-separated tokens (no quoting/glob/pipes)
+      const parseCommand = (cmd: string): { program: string; args: string[] } => {
+        const parts = cmd.split(/\s+/).filter(Boolean)
+        return { program: parts[0], args: parts.slice(1) }
+      }
+
       const runGates = (gates: typeof action.gates): GateResult[] => {
         return gates.map((gate) => {
           try {
             logger.info(`   Running ${gate.name}...`)
-            execSync(gate.command, { stdio: 'pipe' })
+            const { program, args } = parseCommand(gate.command)
+            execFileSync(program, args, { stdio: 'pipe' })
             logger.info(`   ✓ ${gate.name} passed`)
             return { ...gate, passed: true }
           } catch (error) {

@@ -60,6 +60,7 @@ const config = {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'gradient-shift': 'gradient-shift 8s ease infinite',
+        shimmer: 'shimmer 1.5s ease-in-out infinite',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -147,6 +148,10 @@ const config = {
         'gradient-shift': {
           '0%, 100%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' },
+        },
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(300%)' },
         },
       },
       typography: () => ({

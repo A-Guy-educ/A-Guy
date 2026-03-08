@@ -28,6 +28,7 @@ import {
 import { Textarea } from '@/ui/web/components/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
 import { useCreateTask, useCodyBoards, useCollaborators } from '../hooks'
+import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
 import ReactMarkdown from 'react-markdown'
 import {
   Bold,
@@ -78,6 +79,7 @@ export function CreateTaskDialog({ open, onClose, onCreated }: CreateTaskDialogP
     .flatMap((b) => (b as { labels?: Array<{ name: string; color: string }> }).labels || [])
     .slice(0, 20)
 
+  const { githubUser } = useGitHubIdentity()
   const createTask = useCreateTask()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -182,6 +184,7 @@ export function CreateTaskDialog({ open, onClose, onCreated }: CreateTaskDialogP
           attachments.length > 0
             ? attachments.map((a) => ({ name: a.name, content: a.content }))
             : undefined,
+        actorLogin: githubUser?.login,
       },
       {
         onSuccess: () => {

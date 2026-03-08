@@ -83,17 +83,6 @@ export function skipIfClarifyDisabled(ctx: PipelineContext): SkipResult {
 }
 
 /**
- * Check if auditor stage should be skipped when no auditor output exists
- */
-export function skipIfNoAuditorOutput(ctx: PipelineContext): SkipResult {
-  const auditorOutput = path.join(ctx.taskDir, 'auditor.md')
-  if (!fs.existsSync(auditorOutput)) {
-    return { shouldSkip: true, reason: 'No auditor.md (auditor did not complete)' }
-  }
-  return { shouldSkip: false }
-}
-
-/**
  * Check if clarify stage should be skipped when spec has no open questions.
  * ONLY applies when clarify IS enabled (G12).
  */

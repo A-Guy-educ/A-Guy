@@ -204,7 +204,7 @@ Example:
 
 ## Pipeline Profile (Lightweight vs Standard)
 
-Determine whether the task should use the lightweight or standard pipeline. The lightweight profile skips: `spec`, `gap`, `plan-gap`, `auditor`, `apply-audit` — saving 5-6 LLM calls for simple fixes.
+Determine whether the task should use the lightweight or standard pipeline. The lightweight profile skips: `spec`, `gap`, `plan-gap` — saving 5-6 LLM calls for simple fixes.
 
 ### Decision Criteria
 
@@ -252,7 +252,7 @@ Example lightweight task.json:
 |-------|------|-----------------|
 | 1-9 | Trivial | taskify → build → commit → verify → pr |
 | 10-19 | Simple | + architect |
-| 20-34 | Moderate | + auditor, apply-audit |
+| 20-34 | Moderate | + architect, build |
 | 35-49 | Complex | + spec, gap |
 | 50-100 | Very Complex | + plan-gap, clarify |
 
@@ -311,6 +311,14 @@ Calculate the score as a weighted sum across these dimensions:
 - **Floor**: If `task_type` is `fix_bug` AND `risk_level: "high"` → complexity MUST be ≥ 35
 - **Ceiling**: If `task_type` is `docs` or `research` → complexity MUST be ≤ 49 (no build stages anyway)
 - Always provide `complexity_reasoning` with per-dimension breakdown
+
+## Efficiency Rule
+
+- Do not narrate reasoning between tool calls.
+- Do not explain what you are about to do — just do it.
+- Do not summarize what you just did — move to the next action.
+- Keep non-tool-call output to a minimum.
+- Output files must still follow their full required format.
 
 ## Guardrails
 

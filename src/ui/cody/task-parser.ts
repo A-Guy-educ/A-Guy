@@ -40,6 +40,7 @@ function getStageIcon(_state: StageState): string {
     pending: '⏳',
     skipped: '⚪',
     'gate-waiting': '🚫',
+    paused: '⏸️',
     timeout: '⏰',
   }
   return icons[_state] || '⚪'

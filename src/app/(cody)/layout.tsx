@@ -60,7 +60,9 @@ export default function CodyLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <CodyProviders>
-          <div className="min-h-screen bg-background text-foreground">{children}</div>
+          <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+            {children}
+          </div>
           <Toaster />
         </CodyProviders>
       </body>

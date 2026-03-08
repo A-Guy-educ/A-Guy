@@ -24,6 +24,8 @@ export async function POST(req: NextRequest) {
   if (authError) return authError
 
   try {
+    const body = await req.json().catch(() => ({}))
+    const actorLogin = body?.actorLogin as string | undefined
     const octokit = getOctokit()
 
     // 1. Check if dev is ahead of main
@@ -72,7 +74,9 @@ export async function POST(req: NextRequest) {
         '',
         `Merging \`${DEV_BRANCH}\` into \`${PROD_BRANCH}\` — **${comparison.ahead_by} commits** ahead.`,
         '',
-        'This issue was created via the Cody dashboard Publish button.',
+        actorLogin
+          ? `This issue was created by @${actorLogin} via the Cody dashboard Publish button.`
+          : 'This issue was created via the Cody dashboard Publish button.',
         'A GitHub Action will automatically create a PR from `dev` → `main`.',
         'Once CI passes, use the Merge button in the dashboard to finalize.',
       ].join('\n'),

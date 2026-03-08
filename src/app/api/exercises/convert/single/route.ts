@@ -15,7 +15,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { withApiHandler } from '@/server/api/with-api-handler'
-import { extractSingle } from '@/server/services/exercise-conversion/v3/extract-single'
+import { extractAndCreate } from '@/server/services/exercise-conversion/v3/extract-single'
 
 // Request schema
 const extractRequestSchema = z.object({
@@ -35,8 +35,8 @@ export const POST = withApiHandler<ExtractRequest, unknown>(
   async ({ body, payload }) => {
     const { lessonId, mediaId, promptId } = body
 
-    // Extract single exercise
-    const result = await extractSingle(payload, {
+    // Extract and create exercise in one step
+    const result = await extractAndCreate(payload, {
       lessonId,
       mediaId,
       promptId,
@@ -53,16 +53,16 @@ export const POST = withApiHandler<ExtractRequest, unknown>(
       )
     }
 
-    // Return preview data
-    return NextResponse.json({
-      success: true,
-      data: {
-        title: result.preview!.title,
-        content: result.preview!.content,
-        draft: result.preview!.draft,
-        metadata: result.preview!.metadata,
-        extractionLogId: result.extractionLogId,
+    // Return success with exercise data
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          exerciseId: result.exerciseId,
+          adminUrl: result.adminUrl,
+        },
       },
-    })
+      { status: 201 },
+    )
   },
 )

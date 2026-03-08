@@ -2,6 +2,7 @@
 
 import DOMPurify from 'dompurify'
 import { useEffect, useMemo, useState } from 'react'
+import { cn } from '@/infra/utils/ui'
 
 const PURIFY_CONFIG = {
   ALLOWED_TAGS: [
@@ -59,13 +60,24 @@ const PURIFY_CONFIG = {
   ],
 }
 
+/** Default prose classes applied when enableProse is true */
+const PROSE_CLASSES = 'prose prose-slate dark:prose-invert max-w-none'
+
 interface SafeHtmlProps {
   html: string
   className?: string
   style?: React.CSSProperties
+  /**
+   * When true, wraps the content with Tailwind Typography `prose` classes
+   * so semantic HTML (headings, lists, tables, blockquotes) is styled
+   * responsively without needing Tailwind classes in the DB content.
+   *
+   * @default false
+   */
+  enableProse?: boolean
 }
 
-export function SafeHtml({ html, className, style }: SafeHtmlProps) {
+export function SafeHtml({ html, className, style, enableProse = false }: SafeHtmlProps) {
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
@@ -87,5 +99,13 @@ export function SafeHtml({ html, className, style }: SafeHtmlProps) {
 
   if (!cleanHtml) return null
 
-  return <div className={className} style={style} dangerouslySetInnerHTML={{ __html: cleanHtml }} />
+  const mergedClassName = cn(enableProse && PROSE_CLASSES, className)
+
+  return (
+    <div
+      className={mergedClassName || undefined}
+      style={style}
+      dangerouslySetInnerHTML={{ __html: cleanHtml }}
+    />
+  )
 }

@@ -437,20 +437,12 @@ describe('Cody Pipeline State Machine Integration', () => {
       expect(result.stages['architect']?.state).toBe('skipped')
       expect(result.stages['architect']?.skipped).toContain('Complexity 5')
 
-      // auditor (threshold 20) should be skipped at score 5
-      expect(result.stages['auditor']?.state).toBe('skipped')
-      expect(result.stages['auditor']?.skipped).toContain('Complexity 5')
-
       // plan-gap (threshold 50) should be skipped
       expect(result.stages['plan-gap']?.state).toBe('skipped')
       expect(result.stages['plan-gap']?.skipped).toContain('Complexity 5')
-
-      // apply-audit (threshold 20) should be skipped
-      expect(result.stages['apply-audit']?.state).toBe('skipped')
-      expect(result.stages['apply-audit']?.skipped).toContain('Complexity 5')
     })
 
-    it('should run architect but skip auditor for simple complexity (score 15)', async () => {
+    it('should run architect for simple complexity (score 15)', async () => {
       const ctx = createMockContext(TEST_TASK_ID)
       ctx.input.dryRun = true
       ctx.taskDef = {
@@ -476,10 +468,6 @@ describe('Cody Pipeline State Machine Integration', () => {
 
       // architect (threshold 10) SHOULD run at score 15
       expect(result.stages['architect']?.state).toBe('completed')
-
-      // auditor (threshold 20) should be skipped at score 15
-      expect(result.stages['auditor']?.state).toBe('skipped')
-      expect(result.stages['auditor']?.skipped).toContain('Complexity 15')
 
       // plan-gap (threshold 50) should be skipped
       expect(result.stages['plan-gap']?.state).toBe('skipped')
@@ -522,9 +510,7 @@ describe('Cody Pipeline State Machine Integration', () => {
       expect(result.stages['build']?.state).toBe('completed')
       expect(result.stages['commit']?.state).toBe('completed')
       expect(result.stages['verify']?.state).toBe('completed')
-      expect(result.stages['auditor']?.state).toBe('completed')
-      // apply-audit may skip due to missing auditor.md (that's a different skip condition, not complexity)
-      // Just verify no complexity-based skips
+      // No complexity-based skips anywhere
       for (const [, stageState] of Object.entries(result.stages)) {
         if (stageState.state === 'skipped' && stageState.skipped) {
           expect(stageState.skipped).not.toContain('Complexity')
@@ -561,7 +547,6 @@ describe('Cody Pipeline State Machine Integration', () => {
       expect(result.stages['build']?.state).toBe('completed')
       expect(result.stages['commit']?.state).toBe('completed')
       expect(result.stages['verify']?.state).toBe('completed')
-      expect(result.stages['auditor']?.state).toBe('completed')
 
       // No complexity-based skips anywhere
       for (const [, stageState] of Object.entries(result.stages)) {

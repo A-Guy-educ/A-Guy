@@ -246,6 +246,14 @@ Write tests that are:
 - **Specific**: assert on the actual output of the function under test
 - **Resistant to weakening**: if someone changes your assertion to test a config array instead of actual behavior, that's a regression
 
+## Efficiency Rule
+
+- Do not narrate reasoning between tool calls.
+- Do not explain what you are about to do — just do it.
+- Do not summarize what you just did — move to the next action.
+- Keep non-tool-call output to a minimum.
+- Output files must still follow their full required format.
+
 ## Output
 
 After writing tests and validating they compile, the build agent will run them to verify they are valid. Tests should FAIL initially (TDD red phase), proving they're testing the right behavior.
