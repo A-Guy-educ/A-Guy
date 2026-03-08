@@ -171,7 +171,7 @@ export default buildConfig({
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins,
-  secret: process.env.PAYLOAD_SECRET,
+  secret: process.env.PAYLOAD_SECRET || (() => { throw new Error('PAYLOAD_SECRET env var is required') })(),
   sharp,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

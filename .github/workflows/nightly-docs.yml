@@ -2,8 +2,8 @@ name: Nightly Docs Agent
 
 on:
   schedule:
-    # Run daily at 03:00 UTC (after other nightly jobs)
-    - cron: '0 3 * * *'
+    # Run daily at 02:00 UTC
+    - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
       dry_run:

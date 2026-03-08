@@ -2,8 +2,8 @@ name: Dependency Security Report (Daily)
 
 on:
   schedule:
-    # Daily at 02:25 UTC
-    - cron: '25 2 * * *'
+    # Daily at 06:00 UTC (spread from 02:25 to reduce contention)
+    - cron: '0 6 * * *'
   workflow_dispatch: {}
 
 permissions:

@@ -13,6 +13,7 @@ import type { AIModel, AIModelKey } from '@/infra/llm/models'
 import type { UnifiedLLMProvider } from '@/infra/llm/providers/factory'
 import { LLMErrorCode } from '@/infra/llm/providers/shared/errors'
 import { withRetry } from '@/infra/llm/providers/shared/retry'
+import { withTimeout } from '@/infra/llm/providers/shared/timeout'
 import { tool } from 'genkit'
 import type { Payload } from 'payload'
 import { resolveGenkitConfig } from '../config-resolver'
@@ -162,11 +163,13 @@ export async function createGenkitUnifiedAdapter(
       const prompt =
         input.system + '\n\n' + input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
 
-      // Get streaming response - Genkit returns { stream: AsyncIterable, response: Promise }
-      const result = await ai.generateStream({
-        model: config.model,
-        prompt,
-      })
+      // Get streaming response with timeout protection
+      // A hung stream could block a serverless function until execution time limit
+      const streamTimeoutMs = input.timeoutMs ?? 30_000
+      const result = await withTimeout(
+        () => ai.generateStream({ model: config.model, prompt }),
+        { timeoutMs: streamTimeoutMs, message: 'Stream initialization timed out' },
+      )
 
       // result.stream is already an AsyncIterable<GenerateResponseChunk>
       const genkitStream = result.stream
