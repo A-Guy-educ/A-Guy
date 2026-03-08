@@ -63,6 +63,14 @@ Brief description of the feature/fix.
 
 **STOP CONDITION**: After you write spec.md, you are DONE. Do NOT read or verify the file afterward. The pipeline validates file existence automatically. Write and stop.
 
+## Efficiency Rule
+
+- Do not narrate reasoning between tool calls.
+- Do not explain what you are about to do — just do it.
+- Do not summarize what you just did — move to the next action.
+- Keep non-tool-call output to a minimum.
+- Output files must still follow their full required format.
+
 ## If Missing Information
 
 If required information is missing from the task, flag unknowns in a "## Open Questions" section but still produce the spec. Do NOT stop — a separate clarify agent handles Q&A.

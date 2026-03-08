@@ -98,8 +98,6 @@ describe('complexity scoring constants', () => {
       'build',
       'commit',
       'verify',
-      'auditor',
-      'apply-audit',
       'pr',
     ]
     for (const stage of requiredStages) {
@@ -122,14 +120,11 @@ describe('complexity scoring constants', () => {
     expect(STAGE_COMPLEXITY_THRESHOLDS.clarify).toBeGreaterThan(0)
     expect(STAGE_COMPLEXITY_THRESHOLDS.architect).toBeGreaterThan(0)
     expect(STAGE_COMPLEXITY_THRESHOLDS['plan-gap']).toBeGreaterThan(0)
-    expect(STAGE_COMPLEXITY_THRESHOLDS.auditor).toBeGreaterThan(0)
-    expect(STAGE_COMPLEXITY_THRESHOLDS['apply-audit']).toBeGreaterThan(0)
   })
 
   it('thresholds increase monotonically for core stages', () => {
-    // architect (10) < auditor (20) < spec (35) < gap (40) < plan-gap (50) < clarify (60)
-    expect(STAGE_COMPLEXITY_THRESHOLDS.architect).toBeLessThan(STAGE_COMPLEXITY_THRESHOLDS.auditor)
-    expect(STAGE_COMPLEXITY_THRESHOLDS.auditor).toBeLessThan(STAGE_COMPLEXITY_THRESHOLDS.spec)
+    // architect (10) < spec (20) < gap (35) < plan-gap (40) < clarify (60)
+    expect(STAGE_COMPLEXITY_THRESHOLDS.architect).toBeLessThan(STAGE_COMPLEXITY_THRESHOLDS.spec)
     expect(STAGE_COMPLEXITY_THRESHOLDS.spec).toBeLessThan(STAGE_COMPLEXITY_THRESHOLDS.gap)
     expect(STAGE_COMPLEXITY_THRESHOLDS.gap).toBeLessThan(STAGE_COMPLEXITY_THRESHOLDS['plan-gap'])
     expect(STAGE_COMPLEXITY_THRESHOLDS['plan-gap']).toBeLessThan(
@@ -182,33 +177,29 @@ describe('getStagesForComplexity', () => {
     expect(stages).not.toContain('spec')
     expect(stages).not.toContain('gap')
     expect(stages).not.toContain('architect')
-    expect(stages).not.toContain('auditor')
     expect(stages).not.toContain('clarify')
   })
 
   it('simple (score 15) → + architect', () => {
     const stages = getStagesForComplexity(15)
     expect(stages).toContain('architect')
-    expect(stages).not.toContain('auditor')
-    expect(stages).not.toContain('spec')
-  })
-
-  it('moderate (score 25) → + auditor, apply-audit', () => {
-    const stages = getStagesForComplexity(25)
-    expect(stages).toContain('architect')
-    expect(stages).toContain('auditor')
-    expect(stages).toContain('apply-audit')
     expect(stages).not.toContain('spec')
     expect(stages).not.toContain('gap')
   })
 
-  it('complex (score 40) → + spec, gap', () => {
+  it('moderate (score 25) → + spec', () => {
+    const stages = getStagesForComplexity(25)
+    expect(stages).toContain('architect')
+    expect(stages).toContain('spec')
+    expect(stages).not.toContain('gap')
+  })
+
+  it('complex (score 40) → + spec, gap, plan-gap', () => {
     const stages = getStagesForComplexity(40)
     expect(stages).toContain('spec')
     expect(stages).toContain('gap')
     expect(stages).toContain('architect')
-    expect(stages).toContain('auditor')
-    expect(stages).not.toContain('plan-gap')
+    expect(stages).toContain('plan-gap')
     expect(stages).not.toContain('clarify')
   })
 
@@ -222,8 +213,6 @@ describe('getStagesForComplexity', () => {
     expect(stages).toContain('build')
     expect(stages).toContain('commit')
     expect(stages).toContain('verify')
-    expect(stages).toContain('auditor')
-    expect(stages).toContain('apply-audit')
     expect(stages).toContain('pr')
   })
 
@@ -387,13 +376,13 @@ describe('readTask with complexity', () => {
 })
 
 describe('resolvePipelineProfile with complexity', () => {
-  it('complexity < 35 → lightweight', () => {
-    const taskDef = createTaskDef('implement_feature', 'medium', 20)
+  it('complexity < 20 → lightweight', () => {
+    const taskDef = createTaskDef('implement_feature', 'medium', 15)
     expect(resolvePipelineProfile(taskDef)).toBe('lightweight')
   })
 
-  it('complexity >= 35 → standard', () => {
-    const taskDef = createTaskDef('implement_feature', 'medium', 35)
+  it('complexity >= 20 → standard', () => {
+    const taskDef = createTaskDef('implement_feature', 'medium', 20)
     expect(resolvePipelineProfile(taskDef)).toBe('standard')
   })
 
@@ -454,7 +443,7 @@ describe('skipIfBelowComplexity', () => {
     expect(result.shouldSkip).toBe(false)
   })
 
-  it('complexity 5, stage spec (threshold 35) → skips', () => {
+  it('complexity 5, stage spec (threshold 20) → skips', () => {
     const ctx = createCtx(5)
     const result = skipIfBelowComplexity(ctx, 'spec')
     expect(result.shouldSkip).toBe(true)
@@ -462,7 +451,7 @@ describe('skipIfBelowComplexity', () => {
     expect(result.reason).toContain('trivial')
   })
 
-  it('complexity 40, stage spec (threshold 35) → does not skip', () => {
+  it('complexity 40, stage spec (threshold 20) → does not skip', () => {
     const ctx = createCtx(40)
     const result = skipIfBelowComplexity(ctx, 'spec')
     expect(result.shouldSkip).toBe(false)
@@ -502,7 +491,6 @@ describe('end-to-end complexity pipeline routing', () => {
     expect(stages).not.toContain('spec')
     expect(stages).not.toContain('gap')
     expect(stages).not.toContain('architect')
-    expect(stages).not.toContain('auditor')
     expect(stages).not.toContain('clarify')
     expect(stages).not.toContain('plan-gap')
   })
@@ -510,26 +498,23 @@ describe('end-to-end complexity pipeline routing', () => {
   it('simple fix (score 15) → adds architect only', () => {
     const stages = getStagesForComplexity(15)
     expect(stages).toContain('architect')
-    expect(stages).not.toContain('auditor')
-    expect(stages).not.toContain('spec')
-  })
-
-  it('moderate feature (score 28) → adds auditor but not spec', () => {
-    const stages = getStagesForComplexity(28)
-    expect(stages).toContain('architect')
-    expect(stages).toContain('auditor')
-    expect(stages).toContain('apply-audit')
     expect(stages).not.toContain('spec')
     expect(stages).not.toContain('gap')
   })
 
-  it('complex task (score 42) → full spec + architect + auditor', () => {
+  it('moderate feature (score 28) → adds spec but not gap', () => {
+    const stages = getStagesForComplexity(28)
+    expect(stages).toContain('architect')
+    expect(stages).toContain('spec')
+    expect(stages).not.toContain('gap')
+  })
+
+  it('complex task (score 42) → full spec + architect + gap + plan-gap', () => {
     const stages = getStagesForComplexity(42)
     expect(stages).toContain('spec')
     expect(stages).toContain('gap')
     expect(stages).toContain('architect')
-    expect(stages).toContain('auditor')
-    expect(stages).not.toContain('plan-gap')
+    expect(stages).toContain('plan-gap')
     expect(stages).not.toContain('clarify')
   })
 
@@ -540,8 +525,6 @@ describe('end-to-end complexity pipeline routing', () => {
     expect(stages).toContain('clarify')
     expect(stages).toContain('architect')
     expect(stages).toContain('plan-gap')
-    expect(stages).toContain('auditor')
-    expect(stages).toContain('apply-audit')
     expect(stages).toContain('build')
     expect(stages).toContain('commit')
     expect(stages).toContain('verify')
@@ -660,25 +643,6 @@ describe('definitions.ts skip chain integration', () => {
     expect(result.shouldSkip).toBe(false)
   })
 
-  it('auditor stage uses complexity as its only skip condition', () => {
-    const ctx = createPipelineCtx(5)
-    const pipeline = buildPipeline('full', 'standard', true, ctx)
-    const auditorStage = pipeline.stages.get('auditor')!
-
-    const result = auditorStage.shouldSkip!(ctx)
-    expect(result.shouldSkip).toBe(true)
-    expect(result.reason).toContain('Complexity 5')
-  })
-
-  it('auditor stage runs when complexity is sufficient (score 25)', () => {
-    const ctx = createPipelineCtx(25)
-    const pipeline = buildPipeline('full', 'standard', true, ctx)
-    const auditorStage = pipeline.stages.get('auditor')!
-
-    const result = auditorStage.shouldSkip!(ctx)
-    expect(result.shouldSkip).toBe(false)
-  })
-
   it('clarify stage has 4-level skip chain: complexity → input_quality → disabled → no questions', () => {
     // Complexity too low → skip at first check
     const ctx = createPipelineCtx(10)
@@ -688,16 +652,6 @@ describe('definitions.ts skip chain integration', () => {
     const result = clarifyStage.shouldSkip!(ctx)
     expect(result.shouldSkip).toBe(true)
     expect(result.reason).toContain('Complexity 10')
-  })
-
-  it('apply-audit stage chains complexity → auditor output check', () => {
-    const ctx = createPipelineCtx(5)
-    const pipeline = buildPipeline('full', 'standard', true, ctx)
-    const applyAuditStage = pipeline.stages.get('apply-audit')!
-
-    const result = applyAuditStage.shouldSkip!(ctx)
-    expect(result.shouldSkip).toBe(true)
-    expect(result.reason).toContain('Complexity 5')
   })
 
   it('build stage has NO complexity skip (always-run, threshold 0)', () => {
@@ -715,19 +669,11 @@ describe('definitions.ts skip chain integration', () => {
     const pipeline = buildPipeline('full', 'standard', true, ctx)
 
     // All optional stages should NOT be skipped by complexity
-    for (const stageName of [
-      'spec',
-      'gap',
-      'clarify',
-      'architect',
-      'plan-gap',
-      'auditor',
-      'apply-audit',
-    ]) {
+    for (const stageName of ['spec', 'gap', 'clarify', 'architect', 'plan-gap']) {
       const stage = pipeline.stages.get(stageName)!
       if (stage.shouldSkip) {
         const result = stage.shouldSkip(ctx)
-        // They might skip for OTHER reasons (clarify disabled, no auditor output, etc.)
+        // They might skip for OTHER reasons (clarify disabled, etc.)
         // but NOT for complexity
         if (result.shouldSkip) {
           expect(result.reason).not.toContain('Complexity')

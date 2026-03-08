@@ -28,6 +28,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { codyApi } from '../api'
 import { useCollaborators } from '../hooks'
+import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
 import { X, Upload } from 'lucide-react'
 import { cn } from '@/infra/utils/ui'
 
@@ -86,6 +87,7 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
     )
   }
 
+  const { githubUser } = useGitHubIdentity()
   const queryClient = useQueryClient()
 
   const createBug = useMutation({
@@ -96,6 +98,7 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
       labels?: string[]
       assignees?: string[]
       attachments?: Array<{ name: string; content: string }>
+      actorLogin?: string
     }) => codyApi.tasks.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
@@ -198,6 +201,7 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
         labels: ['bug'],
         assignees,
         attachments: attachments.map((a) => ({ name: a.name, content: a.content })),
+        actorLogin: githubUser?.login,
       },
       {
         onSuccess: () => {
@@ -381,24 +385,37 @@ export function BugReportDialog({ open, onClose, onCreated }: BugReportDialogPro
 
             <div className="grid gap-2">
               <Label htmlFor="browser">Browser / Device</Label>
-              <Input
-                id="browser"
-                value={browser}
-                onChange={(e) => setBrowser(e.target.value)}
-                placeholder="Chrome, iPhone, etc."
-              />
+              <Select value={browser} onValueChange={setBrowser}>
+                <SelectTrigger id="browser">
+                  <SelectValue placeholder="Select browser" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Chrome">Chrome</SelectItem>
+                  <SelectItem value="Safari">Safari</SelectItem>
+                  <SelectItem value="Firefox">Firefox</SelectItem>
+                  <SelectItem value="Edge">Edge</SelectItem>
+                  <SelectItem value="Mobile Safari (iPhone)">Mobile Safari (iPhone)</SelectItem>
+                  <SelectItem value="Chrome (Android)">Chrome (Android)</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="userRole">User Role / Tenant</Label>
-              <Input
-                id="userRole"
-                value={userRole}
-                onChange={(e) => setUserRole(e.target.value)}
-                placeholder="student, teacher, org-id"
-              />
+              <Label htmlFor="userRole">User Role</Label>
+              <Select value={userRole} onValueChange={setUserRole}>
+                <SelectTrigger id="userRole">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                  <SelectItem value="Student">Student</SelectItem>
+                  <SelectItem value="Teacher">Teacher</SelectItem>
+                  <SelectItem value="Guest">Guest (unauthenticated)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

@@ -64,7 +64,7 @@ export function ExercisesPager({
   if (pageState.type === 'exercise' && currentExercise) {
     return (
       <ExerciseWorkspace
-        exerciseTitle={currentExercise.title}
+        exerciseTitle={currentExercise.title ?? ''}
         backUrl={backUrl}
         primaryContent={
           <div className="h-full flex flex-col">
@@ -140,7 +140,7 @@ export function ExercisesPager({
             exerciseId={currentExercise.id}
             currentExercise={{
               id: currentExercise.id,
-              title: currentExercise.title,
+              title: currentExercise.title ?? '',
               content: {
                 blocks: (currentExercise.content as unknown as ExerciseContentData).blocks.map(
                   (block) => {
@@ -241,7 +241,8 @@ export function ExercisesPager({
                 {introDescription && (
                   <SafeHtml
                     html={introDescription}
-                    className="prose prose-lg dark:prose-invert max-w-md mx-auto mb-8 text-muted-foreground leading-relaxed text-start [&_ul]:list-inside [&_ol]:list-inside"
+                    enableProse
+                    className="prose-lg max-w-md mx-auto mb-8 text-muted-foreground leading-relaxed text-start [&_ul]:list-inside [&_ol]:list-inside"
                   />
                 )}
 

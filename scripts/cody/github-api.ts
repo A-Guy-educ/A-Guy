@@ -9,20 +9,43 @@ import { logger } from './logger'
 import { execFileSync } from 'child_process'
 
 // ============================================================================
+// Synchronous Sleep Helper
+// ============================================================================
+
+/**
+ * Synchronous sleep using Atomics.wait — blocks thread without busy-looping.
+ * Used for retry delays in synchronous fire-and-forget functions.
+ */
+export function syncSleep(ms: number): void {
+  const buf = new SharedArrayBuffer(4)
+  const arr = new Int32Array(buf)
+  Atomics.wait(arr, 0, 0, ms)
+}
+
+// ============================================================================
 // GitHub API Functions
 // ============================================================================
 
 /**
- * Post a comment to an issue
+ * Post a comment to an issue.
+ * Uses GH_PAT when available so comments are posted under the PAT identity,
+ * which allows them to trigger other workflows (e.g. supervisor.yml).
+ * Comments posted with GITHUB_TOKEN do NOT trigger other workflows due to
+ * GitHub Actions security restrictions.
  */
 export function postComment(issueNumber: number, body: string): void {
   if (!issueNumber) return
+
+  // Use GH_PAT if available so the comment triggers other workflows (supervisor)
+  const ghToken = process.env.GH_PAT?.trim() || process.env.GH_TOKEN
+  const env = ghToken ? { ...process.env, GH_TOKEN: ghToken } : process.env
 
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       execFileSync('gh', ['issue', 'comment', String(issueNumber), '--body-file', '-'], {
         input: body,
         stdio: ['pipe', 'inherit', 'inherit'],
+        env,
       })
       return // Success
     } catch (error) {
@@ -32,10 +55,7 @@ export function postComment(issueNumber: number, body: string): void {
           `postComment attempt 1 failed for issue ${issueNumber}, retrying...`,
         )
         // Brief synchronous delay before retry (2 seconds)
-        const waitUntil = Date.now() + 2000
-        while (Date.now() < waitUntil) {
-          /* busy wait */
-        }
+        syncSleep(2000)
       } else {
         logger.error(
           { err: error },
@@ -438,10 +458,7 @@ export function setLifecycleLabel(issueNumber: number, label: string): void {
           { err: error },
           `setLifecycleLabel attempt 1 failed for issue ${issueNumber}, retrying...`,
         )
-        const waitUntil = Date.now() + 2000
-        while (Date.now() < waitUntil) {
-          /* busy wait */
-        }
+        syncSleep(2000)
       } else {
         logger.error(
           { err: error },
@@ -589,7 +606,7 @@ export function closeLinkedPR(issueNumber: number): boolean {
     // Find PR linked to this issue
     const listResult = execFileSync(
       'gh',
-      ['pr', 'list', '--issue', String(issueNumber), '--json', 'number'],
+      ['pr', 'list', '--search', `closes:#${issueNumber}`, '--json', 'number'],
       { encoding: 'utf-8' },
     )
     const prs = JSON.parse(listResult) as { number: number }[]

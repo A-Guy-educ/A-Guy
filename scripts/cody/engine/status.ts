@@ -60,8 +60,8 @@ export function loadState(taskId: string): PipelineStateV2 | null {
 }
 
 /**
- * Atomic write: write to temp file then rename to prevent corruption
- * if the process is killed mid-write.
+ * Atomic write with fsync: write to temp file, flush to disk, then rename
+ * to prevent corruption if the process is killed mid-write.
  */
 export function writeState(taskId: string, state: PipelineStateV2): void {
   const statusFile = getStatusFilePath(taskId)
@@ -73,8 +73,15 @@ export function writeState(taskId: string, state: PipelineStateV2): void {
     fs.mkdirSync(dir, { recursive: true })
   }
 
-  // Atomic write: write to temp file then rename
-  fs.writeFileSync(tmpFile, JSON.stringify(state, null, 2))
+  // Atomic write with fsync: write to temp file, flush to disk, then rename
+  const data = JSON.stringify(state, null, 2)
+  const fd = fs.openSync(tmpFile, 'w')
+  try {
+    fs.writeSync(fd, data)
+    fs.fdatasyncSync(fd)
+  } finally {
+    fs.closeSync(fd)
+  }
   fs.renameSync(tmpFile, statusFile)
 }
 

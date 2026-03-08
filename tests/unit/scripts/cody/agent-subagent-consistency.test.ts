@@ -5,7 +5,7 @@ import * as path from 'path'
 const AGENTS_DIR = path.join(process.cwd(), '.opencode', 'agents')
 
 /** Agents that MUST include domain subagent invocation sections */
-const AGENTS_WITH_SUBAGENTS = ['spec.md', 'architect.md', 'build.md']
+const AGENTS_WITH_SUBAGENTS = ['spec.md', 'build.md']
 
 /** Domain subagents that should be referenced consistently across all three agents */
 const REQUIRED_SUBAGENTS = [

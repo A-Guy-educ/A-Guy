@@ -24,8 +24,7 @@ vi.mock('../../../../scripts/cody/pipeline-utils', () => ({
     build: 0,
     commit: 0,
     verify: 0,
-    auditor: 20,
-    'apply-audit': 20,
+    autofix: 20,
     pr: 0,
   },
 }))

@@ -37,8 +37,6 @@ export const ALL_STAGES = [
   'commit',
   'verify',
   'autofix',
-  'auditor',
-  'apply-audit',
   'pr',
 ] as const
 
@@ -76,8 +74,6 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   commit: ['task.json'],
   verify: [], // scripted — no LLM prompt needed
   autofix: ['verify.md', 'build-errors.md'],
-  auditor: ['task.md', 'spec.md', 'build.md', 'verify.md', '../audit-history.json'],
-  'apply-audit': ['auditor.md'],
   pr: [], // scripted — no LLM prompt needed
 }
 
@@ -137,8 +133,6 @@ DO NOT just write build.md - that will fail the pipeline! The pipeline validates
   // Scripted stages — these prompts are never sent to an LLM
   verify: () => ``,
   autofix: () => ``,
-  auditor: () => ``,
-  'apply-audit': () => ``,
   pr: () => ``,
 }
 

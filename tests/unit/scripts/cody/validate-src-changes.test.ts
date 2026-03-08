@@ -97,7 +97,7 @@ describe('validate-src-changes post-action', () => {
   })
 
   it('should throw when no source files changed (only .tasks/ files)', async () => {
-    vi.mocked(execSync)
+    vi.mocked(execFileSync)
       .mockReturnValueOnce('.tasks/test-task-123/build.md\n.tasks/test-task-123/plan.md') // git diff
       .mockReturnValueOnce('.tasks/test-task-123/status.json') // git ls-files
 
@@ -109,7 +109,7 @@ describe('validate-src-changes post-action', () => {
   })
 
   it('should pass when source files changed', async () => {
-    vi.mocked(execSync)
+    vi.mocked(execFileSync)
       .mockReturnValueOnce('src/ui/web/homepage/GreetingFlow/index.tsx\n.tasks/test/build.md') // git diff
       .mockReturnValueOnce('') // git ls-files
 
@@ -119,7 +119,7 @@ describe('validate-src-changes post-action', () => {
   })
 
   it('should pass when new untracked source files exist', async () => {
-    vi.mocked(execSync)
+    vi.mocked(execFileSync)
       .mockReturnValueOnce('') // git diff (no modifications)
       .mockReturnValueOnce('tests/unit/new-test.test.ts') // git ls-files (new files)
 
@@ -134,11 +134,11 @@ describe('validate-src-changes post-action', () => {
     const action: PostAction = { type: 'validate-src-changes' }
 
     await expect(executePostAction(ctx, action, null)).resolves.not.toThrow()
-    expect(execSync).not.toHaveBeenCalled()
+    expect(execFileSync).not.toHaveBeenCalled()
   })
 
   it('should handle git command failures gracefully', async () => {
-    vi.mocked(execSync)
+    vi.mocked(execFileSync)
       .mockImplementationOnce(() => {
         throw new Error('git failed')
       }) // git diff fails

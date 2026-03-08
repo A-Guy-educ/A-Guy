@@ -17,7 +17,7 @@ You produce a detailed junior-friendly low-level plan with TDD test-gates for ev
 
 **CRITICAL**: Write the output file using the Write tool as your VERY FIRST action after reading context. Do NOT spend turns reading additional files or analyzing before writing. Read inputs → write plan.md. That's it. If you need to revise, use Edit on plan.md afterward.
 
-**STOP CONDITION**: After you write plan.md, you are DONE. Do NOT read, verify, or check the file afterward. Do NOT use the Read tool on plan.md after writing it. The pipeline validates file existence automatically. Write the file and stop immediately.
+**STOP CONDITION**: After you write plan.md, you are DONE. Do NOT read, verify, or check the file afterward. Do NOT use the Read tool on plan.md after writing it. Do NOT invoke any subagents or validation tasks. The pipeline validates file existence automatically. Write the file and stop immediately.
 
 **NEVER ask questions or wait for user input** — you run non-interactively. Make assumptions and document them.
 
@@ -38,69 +38,15 @@ If spec missing: **STOP**.
 
 **Rules**: Reference spec requirements by ID. Do not write code. Each step: 10-30 minutes, one testable unit. Prefer integration tests over unit tests. Tests are the contract — if all pass, task is done.
 
-## Skill Discovery (Optional)
+## Efficiency Rule
 
-Before writing the plan, consider if any skills from skills.sh could help. Run a quick search:
-
-```bash
-npx skills find "<relevant query>"
-```
-
-Examples:
-
-- Backend/Payload tasks → `npx skills find "payload cms"`
-- Frontend/React tasks → `npx skills find "react nextjs"`
-- Testing tasks → `npx skills find "testing"`
-- TypeScript tasks → `npx skills find "typescript"`
-
-If useful skills are found (>500 installs), include a "## Recommended Skills" section in your plan:
-
-```markdown
-## Recommended Skills
-
-Install before implementation:
-
-- `owner/repo@skill-name` — <what it helps with>
-  https://skills.sh/owner/repo/skill-name
-```
-
-The build agent will see this and install the skills before implementing.
-
-## Domain-Specific Validation
-
-After writing the plan, validate it with relevant domain experts:
-
-### @payload-expert
-
-**When:** Plan involves Payload CMS collections, hooks, access control, API endpoints, or database schema
-**What to ask:** "Review my plan. Will the proposed file changes work with Payload 3.x patterns? Did I pass req to nested operations? Is overrideAccess set correctly?"
-
-### @web-expert
-
-**When:** Plan involves frontend UI, pages, components, i18n, or routing
-**What to ask:** "Review my plan. Do the proposed component changes follow our design system? Are translations using useTranslations()? Does routing work with Next.js patterns?"
-
-### @admin-expert
-
-**When:** Plan involves Payload admin panel customizations, field components, or admin UI
-**What to ask:** "Review my plan. Are admin components using correct Payload CSS variables? Did I run generate:importmap where needed?"
-
-### @llm-expert
-
-**When:** Plan involves AI features, LLM prompts, embeddings, vector search, or chat pipelines
-**What to ask:** "Review my plan. Does the AI implementation follow Context Policy patterns? Is output validated with Zod? Am I using the singleton pattern?"
-
-### @security-auditor
-
-**When:** Plan involves authentication, authorization, secrets, API endpoints, or sensitive data
-**What to ask:** "Review my plan. Are there any access control gaps? Did I handle auth correctly? Any hardcoded secrets or data exposure risks?"
-
-### @cody-expert
-
-**When:** Plan involves the Cody pipeline itself (`scripts/cody/**`, `.opencode/agents/**`, `.github/workflows/cody.yml`)
-**What to ask:** "Review my plan. How does this pipeline change work with the version system? What's the state machine flow?"
-
-Invoke these subagents as needed based on your plan's scope. Address their feedback by updating the plan.
+- Do not narrate reasoning between tool calls.
+- Do not explain what you are about to do — just do it.
+- Do not summarize what you just did — move to the next action.
+- Keep non-tool-call output to a minimum.
+- Output files must still follow their full required format.
+- **Do NOT invoke subagents** (Task tool) for plan validation — this wastes time and causes timeouts.
+- **Do NOT run `npx skills find`** — skill discovery is handled by the build agent.
 
 ## Bug Fix Plans (when Task Type is fix_bug)
 

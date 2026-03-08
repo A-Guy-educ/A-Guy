@@ -28,7 +28,6 @@ import {
 import {
   skipIfInputQuality,
   skipIfClarifyDisabled,
-  skipIfNoAuditorOutput,
   skipIfSpecHasNoOpenQuestions,
   skipIfSpecOnly,
   skipIfBelowComplexity,
@@ -47,8 +46,6 @@ export const IMPL_ORDER_STANDARD: PipelineStep[] = [
   'build',
   'commit',
   'verify',
-  'auditor',
-  'apply-audit',
   'pr',
 ]
 export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
@@ -56,8 +53,6 @@ export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
   'build',
   'commit',
   'verify',
-  'auditor',
-  'apply-audit',
   'pr',
 ]
 
@@ -279,85 +274,6 @@ No critical gaps identified. Plan was refined in-place.
     ],
   })
 
-  // auditor stage - advisory (non-blocking)
-  // R11: Removed shouldSkip - auditor creates auditor.md, so skipIfNoAuditorOutput would always skip
-  stages.set('auditor', {
-    name: 'auditor',
-    type: 'agent',
-    timeout: STAGE_TIMEOUTS.auditor ?? DEFAULT_TIMEOUT,
-    maxRetries: 1, // Was 0 - added retry so LLM gets feedback when it fails to write file
-    advisory: true,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.auditor,
-    shouldSkip: (ctx) => skipIfBelowComplexity(ctx, 'auditor'),
-    fallbackOnMissingOutput: (ctx) => {
-      // Fallback if LLM fails to write auditor.md - generate minimal report
-      // This allows apply-audit stage to run instead of being skipped
-      return `# Auditor Report: ${ctx.taskId}
-
-## Task Info
-
-- **Task ID:** ${ctx.taskId}
-- **Task Type:** unknown
-- **Run State:** SUCCESS
-- **Date:** ${new Date().toISOString()}
-
-## Stage Analysis
-
-| Stage | Quality |
-| ------ | ------- |
-| spec | reviewed |
-| plan | reviewed |
-| build | reviewed |
-| verify | reviewed |
-
-## Process Delta
-
-- No major process gaps identified
-
-## Primary Improvement
-
-- **Type:** PIPELINE
-- **Title:** Auditor output detection reliability
-- **Rationale:** LLM occasionally prints to stdout instead of writing file
-- **Where:** scripts/cody/pipeline/definitions.ts
-- **Effectiveness:** unknown
-
-## Additional Findings
-
-1. **Type:** PROMPT
-   - **Title:** Reinforce file writing requirement
-   - **Rationale:** LLM may print report to chat instead of writing file
-   - **Where:** .opencode/agents/auditor.md
-`
-    },
-  })
-
-  // apply-audit stage
-  stages.set('apply-audit', {
-    name: 'apply-audit',
-    type: 'agent',
-    timeout: STAGE_TIMEOUTS['apply-audit'] ?? DEFAULT_TIMEOUT,
-    maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS['apply-audit'],
-    shouldSkip: (ctx) => {
-      const complexitySkip = skipIfBelowComplexity(ctx, 'apply-audit')
-      if (complexitySkip.shouldSkip) return complexitySkip
-      return skipIfNoAuditorOutput(ctx)
-    },
-    postActions: [
-      // LOCAL-ONLY commit of task files (G18)
-      {
-        type: 'commit-task-files',
-        stagingStrategy: 'task-only',
-        push: false,
-        ensureBranch: false,
-        localOnly: true,
-      },
-      // Audit history commit (R7)
-      { type: 'commit-audit-history' },
-    ],
-  })
-
   // pr stage
   stages.set('pr', {
     name: 'pr',
@@ -424,7 +340,7 @@ export function buildPipeline(
     // Full/rerun mode: include both spec and impl stages
     // This ensures the pipeline survives restarts — all stages are present
     // and the state machine efficiently skips completed ones
-    const specOrder = SPEC_ORDER_STANDARD
+    const specOrder = profile === 'standard' ? SPEC_ORDER_STANDARD : SPEC_ORDER_LIGHTWEIGHT
     const implOrder = profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
     const filteredSpecOrder = clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
     order = [...filteredSpecOrder, ...implOrder]

@@ -9,12 +9,12 @@ AI agent pipeline for automated feature implementation and bug fixes.
 
 ## Pipeline Modes
 
-| Mode    | Stages                                                                      |
-| ------- | --------------------------------------------------------------------------- |
-| `spec`  | taskify → spec → gap → clarify                                              |
-| `impl`  | architect → plan-gap → build → commit → verify → auditor → apply-audit → pr |
-| `full`  | spec + impl (two-phase)                                                     |
-| `rerun` | Resume from failure                                                         |
+| Mode    | Stages                                              |
+| ------- | --------------------------------------------------- |
+| `spec`  | taskify → spec → gap → clarify                      |
+| `impl`  | architect → plan-gap → build → commit → verify → pr |
+| `full`  | spec + impl (two-phase)                             |
+| `rerun` | Resume from failure                                 |
 
 ## Two-Phase Execution
 
@@ -25,8 +25,8 @@ AI agent pipeline for automated feature implementation and bug fixes.
 
 ## Profiles
 
-- `standard`: Full pipeline (includes gap, plan-gap, auditor, apply-audit)
-- `lightweight`: Skips spec, gap, plan-gap (auditor + apply-audit always run)
+- `standard`: Full pipeline (includes gap, plan-gap)
+- `lightweight`: Skips spec, gap, plan-gap
 
 Profile resolved in `resolve-profile` post-action based on:
 
@@ -44,7 +44,6 @@ Profile resolved in `resolve-profile` post-action based on:
 | plan-gap  | plan.md         | plan-gap.md  |
 | build     | plan.md         | code changes |
 | verify    | code changes    | test results |
-| auditor   | code changes    | audit.md     |
 | pr        | all             | PR created   |
 
 ## Key Files

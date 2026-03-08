@@ -7,7 +7,7 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 
 import { logger } from './logger'
 
@@ -169,10 +169,11 @@ export async function appendSession(
 
   try {
     // Export session as JSON
-    const output = execSync(`pnpm exec opencode export ${sessionId}`, {
+    const output = execFileSync('pnpm', ['exec', 'opencode', 'export', sessionId], {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
       cwd: process.cwd(),
+      maxBuffer: 50 * 1024 * 1024, // 50MB — session exports can be very large
     }).replace(/^Exporting session:.*\n/, '') // Remove the "Exporting session:" line
 
     const rawExport = JSON.parse(output)

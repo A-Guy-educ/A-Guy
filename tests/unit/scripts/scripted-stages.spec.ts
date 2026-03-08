@@ -5,8 +5,7 @@
  * @ai-summary Tests for scripted-stages.ts: buildPrTitle (heading strip), buildPrBody (Closes # link), runPrStage (issueNumber wiring), and audit-history path in STAGE_CONTEXT_FILES
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import * as path from 'path'
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // ============================================================================
 // Mocks
@@ -65,6 +64,8 @@ const _DEFAULT_BRANCH = 'dev' // reserved for future use
 // ============================================================================
 
 function resetMocks() {
+  // Set GitHub token for runPrStage tests
+  process.env.GH_PAT = 'test-token-for-pr-stage'
   mockExecFileSync.mockReset()
   mockExecSync.mockReset()
   mockFetch.mockReset()
@@ -90,30 +91,6 @@ function setupFiles(files: Record<string, string>) {
   })
   fsMocks.writeFileSync.mockImplementation(() => undefined)
 }
-
-// ============================================================================
-// Tests: STAGE_CONTEXT_FILES — audit-history path
-// ============================================================================
-
-describe('STAGE_CONTEXT_FILES audit-history path', () => {
-  it('auditor context includes ../audit-history.json (not task-scoped)', async () => {
-    const { STAGE_CONTEXT_FILES } = await import('../../../scripts/cody/stage-prompts')
-
-    expect(STAGE_CONTEXT_FILES.auditor).toContain('../audit-history.json')
-    expect(STAGE_CONTEXT_FILES.auditor).not.toContain('audit-history.json')
-  })
-
-  it('resolves to .tasks/audit-history.json when joined with taskDir', async () => {
-    const { STAGE_CONTEXT_FILES } = await import('../../../scripts/cody/stage-prompts')
-
-    const taskDir = '.tasks/260222-auto-37'
-    const auditEntry = STAGE_CONTEXT_FILES.auditor.find((f) => f.includes('audit-history'))!
-
-    expect(auditEntry).toBeDefined()
-    const resolved = path.normalize(`${taskDir}/${auditEntry}`)
-    expect(resolved).toBe('.tasks/audit-history.json')
-  })
-})
 
 // ============================================================================
 // Tests: buildPrTitle — conventional commit prefix deduplication
@@ -533,4 +510,9 @@ describe('runPrStage failure handling', () => {
     expect(result.created).toBe(false)
     expect(result.url).toBe('')
   })
+})
+
+// Clean up environment variable after all tests
+afterAll(() => {
+  delete process.env.GH_PAT
 })

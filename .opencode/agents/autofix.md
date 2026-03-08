@@ -77,6 +77,14 @@ Write to: `.tasks/<taskId>/autofix.md`
 
 **STOP CONDITION**: After you write autofix.md, you are DONE.
 
+## Efficiency Rule
+
+- Do not narrate reasoning between tool calls.
+- Do not explain what you are about to do — just do it.
+- Do not summarize what you just did — move to the next action.
+- Keep non-tool-call output to a minimum.
+- Output files must still follow their full required format.
+
 ## Rules
 
 - Do NOT create branches or commit — pipeline handles that

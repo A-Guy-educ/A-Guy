@@ -35,22 +35,47 @@ export default async function LessonPage({ params }: LessonPageProps) {
     queryLessonBySlug({ slug: lessonSlug }),
   ])
 
+  // DEBUG: Log to identify 404 cause
+  console.log('[LessonPage DEBUG] courseSlug:', courseSlug, 'course:', course?.id)
+  console.log(
+    '[LessonPage DEBUG] lessonSlug:',
+    lessonSlug,
+    'lesson:',
+    lesson?.id,
+    'lesson.chapter:',
+    lesson?.chapter,
+  )
+
   if (!course || !lesson) {
+    console.log('[LessonPage DEBUG] 404: course or lesson not found')
     notFound()
   }
 
   const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
-  const lessonCourse =
-    lessonChapter && typeof lessonChapter.course !== 'string' ? lessonChapter.course : null
+  console.log('[LessonPage DEBUG] lessonChapter:', lessonChapter)
+  const lessonCourseId = lessonChapter
+    ? typeof lessonChapter.course === 'string'
+      ? lessonChapter.course
+      : lessonChapter.course?.id
+    : null
 
-  if (!lessonCourse || lessonCourse.id !== course.id) {
+  if (!lessonCourseId || lessonCourseId !== course.id) {
+    console.log('[LessonPage DEBUG] 404: lessonCourseId mismatch', lessonCourseId, '!=', course.id)
     notFound()
   }
 
   // Verify lesson belongs to the specified chapter
   if (!lessonChapter || lessonChapter.slug !== chapterSlug) {
+    console.log(
+      '[LessonPage DEBUG] 404: chapter slug mismatch',
+      lessonChapter?.slug,
+      '!=',
+      chapterSlug,
+    )
     notFound()
   }
+
+  console.log('[LessonPage DEBUG] All checks passed, rendering page')
 
   const effectiveAccessType = resolveAccessType(lesson.accessType, course.accessType)
   const [gatedDelayMs, gatedWarningMs] = await Promise.all([
@@ -194,10 +219,13 @@ export async function generateMetadata({ params }: LessonPageProps) {
   }
 
   const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
-  const lessonCourse =
-    lessonChapter && typeof lessonChapter.course !== 'string' ? lessonChapter.course : null
+  const lessonCourseId = lessonChapter
+    ? typeof lessonChapter.course === 'string'
+      ? lessonChapter.course
+      : lessonChapter.course?.id
+    : null
 
-  if (!lessonCourse || lessonCourse.id !== course.id) {
+  if (!lessonCourseId || lessonCourseId !== course.id) {
     return {
       title: 'Lesson Not Found',
     }

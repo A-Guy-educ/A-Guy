@@ -311,7 +311,7 @@ async function handleAdminModeChat(
       lastMessageAt: new Date().toISOString(),
     },
     user: req.user,
-    overrideAccess: true,
+    overrideAccess: false,
   })
 
   // Get recent window
@@ -340,28 +340,39 @@ async function handleAdminModeChat(
     reqLogger.error({ err: error }, 'Failed to load MCP tools, proceeding without tool calling')
   }
 
-  // For admin mode, use a system prompt that instructs the AI to use tools
-  const systemPrompt = `You are an AI assistant for the admin panel of an educational platform. You have access to database query and creation tools.
+  // For admin mode, use a system prompt that instructs the AI when to use tools vs answer directly
+  const systemPrompt = `You are an AI assistant for the admin panel of an educational platform.
 
-IMPORTANT: You MUST use the provided tools to answer questions about data and create new content. Do NOT ask clarifying questions - just use the tools to interact with the database directly.
+Your job is to help admins with:
+1. Answering questions about existing data in the database (courses, chapters, lessons, exercises, media)
+2. Creating new educational content directly (like math exercises, lesson plans, explanations)
+3. General questions about education, teaching, and learning
 
-When the user asks about courses, chapters, lessons, exercises, or media:
-1. ALWAYS call the appropriate tool immediately
-2. Do NOT ask "which courses?" or "what do you mean?" - just query the database
-3. Present the results clearly after receiving tool output
+IMPORTANT - When to use tools:
+- ONLY use tools when the user asks about EXISTING data in the database (e.g., "how many courses", "show me all lessons about algebra", "what exercises exist")
+- For ALL OTHER requests (creating new content, answering questions, explaining concepts, etc.), respond directly WITHOUT using tools
 
-Available tools:
+When user asks about existing courses, chapters, lessons, exercises, or media:
+1. Use the appropriate tool to query the database
+2. Present the results clearly
+
+Available tools (USE ONLY FOR DATABASE QUERIES):
 - findCourses: Query courses in the database
 - findChapters: Query chapters
 - findLessons: Query lessons
 - findExercises: Query exercises
 - findMedia: Query media files
-- createCourses: Create a new course
-- createChapters: Create a new chapter in a course
-- createLessons: Create a new lesson in a chapter
 
-Example: If user asks "how many courses do we have?", call findCourses immediately and count the results.
-Example: If user asks "create a new course about Python programming", call createCourses with appropriate data.`
+Examples of when to use tools:
+- "how many courses do we have?" -> use findCourses
+- "show me all lessons about algebra" -> use findLessons
+- "list exercises for chapter 5" -> use findExercises
+
+Examples of when to answer directly (NO tools needed):
+- "create a math exercise about quadratic equations" -> create the exercise content directly
+- "explain how to teach fractions" -> give educational explanation
+- "write a lesson plan for biology" -> create the lesson plan directly
+- "what is the derivative rule?" -> answer the question directly`
 
   // Build messages for AI
   const messages = recentMessages.map((m) => ({
@@ -429,7 +440,7 @@ Example: If user asks "create a new course about Python programming", call creat
           lastMessageAt: new Date().toISOString(),
         },
         user: req.user,
-        overrideAccess: true,
+        overrideAccess: false,
       })
     } catch (updateError) {
       reqLogger.warn({ err: updateError, conversationId }, 'Failed to persist admin response')
@@ -493,7 +504,7 @@ Example: If user asks "create a new course about Python programming", call creat
         lastMessageAt: new Date().toISOString(),
       },
       user: req.user,
-      overrideAccess: true,
+      overrideAccess: false,
     })
   } catch (updateError) {
     reqLogger.warn({ err: updateError, conversationId }, 'Failed to persist admin response')
@@ -640,6 +651,7 @@ async function handleContextScopedChat(
   const conversationHistory = conversation.messages || []
   const allMessages = [...trimMessagesForUpdate(conversationHistory), userMessage]
 
+  // Use overrideAccess: false for authenticated users, true for guests (ownership already validated)
   await req.payload.update({
     collection: 'conversations',
     id: conversationId,
@@ -648,7 +660,7 @@ async function handleContextScopedChat(
       lastMessageAt: new Date().toISOString(),
     },
     user: req.user,
-    overrideAccess: true,
+    overrideAccess: !userId, // false for authenticated users, true for guests
   })
 
   // Get recent window and retrieve memories
@@ -773,6 +785,7 @@ async function handleContextScopedChat(
   const updatedMessages = [...trimMessagesForUpdate(allMessages), assistantMessage]
 
   try {
+    // Use overrideAccess: false for authenticated users, true for guests (ownership already validated)
     await req.payload.update({
       collection: 'conversations',
       id: conversationId,
@@ -781,7 +794,7 @@ async function handleContextScopedChat(
         lastMessageAt: new Date().toISOString(),
       },
       user: req.user,
-      overrideAccess: true,
+      overrideAccess: !userId, // false for authenticated users, true for guests
     })
   } catch (updateError) {
     reqLogger.warn({ err: updateError, conversationId }, 'Failed to persist assistant response')

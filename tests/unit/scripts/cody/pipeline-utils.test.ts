@@ -514,9 +514,9 @@ describe('pipeline stage definitions', () => {
     expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
   })
 
-  it('should have exactly 8 impl stages', async () => {
+  it('should have exactly 6 impl stages', async () => {
     const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
-    expect(ALL_IMPL_STAGE_NAMES).toHaveLength(8)
+    expect(ALL_IMPL_STAGE_NAMES).toHaveLength(6)
   })
 
   it('should have correct stage order', async () => {
@@ -541,10 +541,10 @@ describe('pipeline stage definitions', () => {
     // Sequential stage
     expect(flattenStage('build')).toEqual(['build'])
 
-    // Parallel group (if present in any pipeline)
-    const parallel = { parallel: ['auditor', 'pr'] }
+    // Parallel group (test the feature works even if not used in current pipelines)
+    const parallel = { parallel: ['verify', 'pr'] }
     expect(isParallelStage(parallel)).toBe(true)
-    expect(flattenStage(parallel)).toEqual(['auditor', 'pr'])
+    expect(flattenStage(parallel)).toEqual(['verify', 'pr'])
 
     // Mixed pipeline with parallel group
     const pipeline = ['architect', { parallel: ['a', 'b'] }, 'verify']
@@ -1017,31 +1017,18 @@ describe('getImplPipeline', () => {
   it('returns full pipeline for standard profile', async () => {
     const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
     const pipeline = getImplPipeline('standard')
-    // Standard pipeline should have 7 entries including parallel group
-    expect(pipeline).toHaveLength(7)
-    // Should contain the parallel group
-    const hasParallel = pipeline.some(
-      (stage): stage is { parallel: string[] } => typeof stage === 'object' && 'parallel' in stage,
-    )
-    expect(hasParallel).toBe(true)
+    // Standard pipeline should have 6 entries (no parallel groups currently)
+    expect(pipeline).toHaveLength(6)
   })
 
   it('returns reduced pipeline for lightweight profile (no plan-gap)', async () => {
     const { getImplPipeline, flattenPipeline } =
       await import('../../../../scripts/cody/pipeline-utils')
     const pipeline = getImplPipeline('lightweight')
-    // Lightweight should have 6 entries including parallel group
-    expect(pipeline).toHaveLength(6)
+    // Lightweight should have 5 entries
+    expect(pipeline).toHaveLength(5)
     const flatNames = flattenPipeline(pipeline)
-    expect(flatNames).toEqual([
-      'architect',
-      'build',
-      'commit',
-      'verify',
-      'auditor',
-      'apply-audit',
-      'pr',
-    ])
+    expect(flatNames).toEqual(['architect', 'build', 'commit', 'verify', 'pr'])
   })
 
   it('lightweight does not include plan-gap', async () => {
@@ -1050,9 +1037,6 @@ describe('getImplPipeline', () => {
     const pipeline = getImplPipeline('lightweight')
     const flatNames = flattenPipeline(pipeline)
     expect(flatNames).not.toContain('plan-gap')
-    // But auditor and apply-audit should be present
-    expect(flatNames).toContain('auditor')
-    expect(flatNames).toContain('apply-audit')
   })
 })
 
@@ -1065,23 +1049,13 @@ describe('getAllImplStageNames', () => {
     expect(names).toContain('build')
     expect(names).toContain('commit')
     expect(names).toContain('verify')
-    expect(names).toContain('auditor')
-    expect(names).toContain('apply-audit')
     expect(names).toContain('pr')
   })
 
-  it('lightweight profile returns flat list with audit stages but no plan-gap', async () => {
+  it('lightweight profile returns flat list without plan-gap', async () => {
     const { getAllImplStageNames } = await import('../../../../scripts/cody/pipeline-utils')
     const names = getAllImplStageNames('lightweight')
-    expect(names).toEqual([
-      'architect',
-      'build',
-      'commit',
-      'verify',
-      'auditor',
-      'apply-audit',
-      'pr',
-    ])
+    expect(names).toEqual(['architect', 'build', 'commit', 'verify', 'pr'])
   })
 })
 

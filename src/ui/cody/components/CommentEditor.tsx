@@ -14,6 +14,7 @@ import { Button } from '@/ui/web/components/button'
 import { Textarea } from '@/ui/web/components/textarea'
 import { cn } from '@/infra/utils/ui'
 import { usePostComment } from '../hooks'
+import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
 import { EMOJI_LIST } from '../constants'
 import { Bold, Italic, Code, Link2, List, Eye, Send, Play, ExternalLink } from 'lucide-react'
 
@@ -45,7 +46,12 @@ export function CommentEditor({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const mentionsRef = useRef<HTMLDivElement>(null)
 
-  const { mutate: postComment, isPending: isPosting, error } = usePostComment(issueNumber)
+  const { githubUser } = useGitHubIdentity()
+  const {
+    mutate: postComment,
+    isPending: isPosting,
+    error,
+  } = usePostComment(issueNumber, githubUser?.login)
 
   // Fetch collaborators for @mentions
   useEffect(() => {

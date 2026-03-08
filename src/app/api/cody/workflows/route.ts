@@ -4,9 +4,11 @@
  * @pattern workflows-api
  * @ai-summary API route to fetch workflow runs
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 
+import { handleCodyApiError } from '@/lib/cody/github-error-handler'
+import { workflowsQuerySchema } from '@/lib/cody/schemas'
+import { parseQueryParams } from '@/server/api/responses'
 import { requireAuth } from '@/ui/cody/auth'
 import { fetchWorkflowRuns } from '@/ui/cody/github-client'
 
@@ -15,26 +17,19 @@ export async function GET(req: NextRequest) {
   const authError = await requireAuth(req)
   if (authError) return authError
 
-  try {
-    const { searchParams } = new URL(req.url)
-    const status = searchParams.get('status') as 'queued' | 'in_progress' | 'completed' | null
+  // Validate query params
+  const parsed = parseQueryParams(req, workflowsQuerySchema)
+  if ('error' in parsed) return parsed.error
+  const { status } = parsed.data
 
+  try {
     const runs = await fetchWorkflowRuns({
-      status: status || undefined,
+      status,
       perPage: 20,
     })
 
     return NextResponse.json({ runs })
-  } catch (error: any) {
-    console.error('[Cody] Error fetching workflows:', error)
-
-    if (error.status === 401) {
-      return NextResponse.json({ error: 'GitHub token expired' }, { status: 502 })
-    }
-    if (error.status === 403) {
-      return NextResponse.json({ error: 'GitHub rate limit' }, { status: 429 })
-    }
-
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+  } catch (error: unknown) {
+    return handleCodyApiError(error, 'workflows')
   }
 }

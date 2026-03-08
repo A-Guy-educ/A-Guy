@@ -1,6 +1,6 @@
 // preflight.ts - Pre-flight validation for Cody
 import { logger } from './logger'
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 
 interface Check {
@@ -13,23 +13,23 @@ export function preflight(): void {
   const checks: Check[] = [
     {
       name: 'ocode CLI (via pnpm)',
-      test: () => execSync('pnpm ocode --version', { stdio: 'pipe' }),
+      test: () => execFileSync('pnpm', ['ocode', '--version'], { stdio: 'pipe' }),
       errorMessage: 'Run: pnpm install',
     },
     {
       name: 'Git repository',
-      test: () => execSync('git rev-parse --git-dir', { stdio: 'pipe' }),
+      test: () => execFileSync('git', ['rev-parse', '--git-dir'], { stdio: 'pipe' }),
       errorMessage: 'Initialize git: git init',
     },
     {
       name: 'pnpm',
-      test: () => execSync('which pnpm', { stdio: 'pipe' }),
+      test: () => execFileSync('which', ['pnpm'], { stdio: 'pipe' }),
       errorMessage: 'Install: npm install -g pnpm',
     },
     {
       name: 'Node.js v18+',
       test: () => {
-        const version = execSync('node --version', { encoding: 'utf-8' }).trim()
+        const version = execFileSync('node', ['--version'], { encoding: 'utf-8' }).trim()
         const major = parseInt(version.slice(1).split('.')[0])
         if (major < 18) {
           throw new Error(`Node ${version} is too old, need v18+`)

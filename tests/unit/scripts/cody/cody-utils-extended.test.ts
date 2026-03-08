@@ -172,6 +172,7 @@ describe('parseCommentBody', () => {
     const validStages = [
       'taskify',
       'spec',
+      'gap',
       'clarify',
       'architect',
       'plan-gap',
@@ -179,8 +180,6 @@ describe('parseCommentBody', () => {
       'commit',
       'verify',
       'autofix',
-      'auditor',
-      'apply-audit',
       'pr',
     ]
     for (const stage of validStages) {
@@ -967,8 +966,6 @@ describe('isValidStage', () => {
       'commit',
       'autofix',
       'verify',
-      'auditor',
-      'apply-audit',
       'pr',
     ]
     for (const stage of stages) {

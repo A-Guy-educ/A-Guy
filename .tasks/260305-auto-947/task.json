@@ -1,0 +1,28 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/chat/ChatMessageContent/normalize-latex.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The AI output contains malformed LaTeX starting with unescaped '[' instead of '\\['",
+    "The fix should be in the normalizeLatexDelimiters function to handle this edge case",
+    "The issue is specific to chat message rendering, not other parts of the app"
+  ],
+  "review_questions": [
+    "Is the fix approach (handling unescaped '[' as potential math start) the right solution?",
+    "Could this change affect any existing valid use cases?"
+  ],
+  "complexity": 15,
+  "complexity_reasoning": "Scope: 5 (single file, clear fix location). Risk: 5 (low - visual display issue only). Novelty: 5 (following existing pattern). Cross-Domain: 3 (frontend only). Ambiguity: 2 (clear root cause identified). Dependencies: 2 (self-contained). Total: 22",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Task contains clear requirements (LaTeX should render as math) and acceptance criteria (render as formatted equation vs raw text). Has reproduction steps and actual/expected results."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}

@@ -3,10 +3,10 @@ import * as fs from 'fs'
 import type { PipelineContext, PostAction } from '../../../../../scripts/cody/engine/types'
 
 // Mock child_process
-const mockExecSync = vi.fn()
+const mockExecFileSync = vi.fn()
 vi.mock('child_process', () => ({
-  execSync: (...args: unknown[]) => mockExecSync(...args),
-  execFileSync: vi.fn(),
+  execSync: vi.fn(),
+  execFileSync: (...args: unknown[]) => mockExecFileSync(...args),
 }))
 
 // Mock agent-runner
@@ -83,7 +83,7 @@ describe('run-quality-with-autofix post-action', () => {
   }
 
   it('completes immediately when all gates pass on first try', async () => {
-    mockExecSync.mockReturnValue('')
+    mockExecFileSync.mockReturnValue('')
     const ctx = makeCtx()
 
     await executePostAction(ctx, action, null)
@@ -93,8 +93,10 @@ describe('run-quality-with-autofix post-action', () => {
 
   it('runs autofix when tsc fails, then retries and passes', async () => {
     let tscCallCount = 0
-    mockExecSync.mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('tsc')) {
+    mockExecFileSync.mockImplementation((program: string, args: string[] | undefined) => {
+      const argsArr = args || []
+      const fullCommand = `${program} ${argsArr.join(' ')}`
+      if (fullCommand.includes('tsc')) {
         tscCallCount++
         if (tscCallCount === 1) {
           const err = new Error('tsc failed') as Error & { stdout: Buffer; stderr: Buffer }
@@ -122,8 +124,10 @@ describe('run-quality-with-autofix post-action', () => {
 
   it('throws after exhausting maxFeedbackLoops', async () => {
     // tsc always fails
-    mockExecSync.mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string' && cmd.includes('tsc')) {
+    mockExecFileSync.mockImplementation((program: string, args: string[] | undefined) => {
+      const argsArr = args || []
+      const fullCommand = `${program} ${argsArr.join(' ')}`
+      if (fullCommand.includes('tsc')) {
         const err = new Error('tsc failed') as Error & { stdout: Buffer; stderr: Buffer }
         err.stdout = Buffer.from('src/foo.ts(10,5): error TS2345: Argument...')
         err.stderr = Buffer.from('')
@@ -147,26 +151,26 @@ describe('run-quality-with-autofix post-action', () => {
 
     await executePostAction(ctx, action, null)
 
-    expect(mockExecSync).not.toHaveBeenCalled()
+    expect(mockExecFileSync).not.toHaveBeenCalled()
     expect(mockRunAgent).not.toHaveBeenCalled()
   })
 
   it('only re-runs failed gates, not passing ones', async () => {
     const commandCalls: string[] = []
     let tscCallCount = 0
-    mockExecSync.mockImplementation((cmd: string) => {
-      if (typeof cmd === 'string') {
-        commandCalls.push(cmd)
-        if (cmd.includes('tsc')) {
-          tscCallCount++
-          if (tscCallCount === 1) {
-            const err = new Error('tsc failed') as Error & { stdout: Buffer; stderr: Buffer }
-            err.stdout = Buffer.from('src/foo.ts(10,5): error TS2345: Argument...')
-            err.stderr = Buffer.from('')
-            throw err
-          }
-          return ''
+    mockExecFileSync.mockImplementation((program: string, args: string[] | undefined) => {
+      const argsArr = args || []
+      const fullCommand = `${program} ${argsArr.join(' ')}`
+      commandCalls.push(fullCommand)
+      if (fullCommand.includes('tsc')) {
+        tscCallCount++
+        if (tscCallCount === 1) {
+          const err = new Error('tsc failed') as Error & { stdout: Buffer; stderr: Buffer }
+          err.stdout = Buffer.from('src/foo.ts(10,5): error TS2345: Argument...')
+          err.stderr = Buffer.from('')
+          throw err
         }
+        return ''
       }
       return '' // tests always pass
     })

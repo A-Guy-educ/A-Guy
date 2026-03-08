@@ -204,7 +204,7 @@ This is valid promoted content from a previous successful run.
   // ========================================================================
 
   describe('full mode profile resolution (Fix #5)', () => {
-    it('should resolve profile from task.json with complexity < 35', async () => {
+    it('should resolve profile from task.json with complexity < 20', async () => {
       const { resolvePipelineProfile } = await import('../../scripts/cody/pipeline-utils')
 
       const taskDef: TaskDefinition = {
@@ -216,14 +216,14 @@ This is valid promoted content from a previous successful run.
         scope: ['src/app.ts'],
         missing_inputs: [],
         assumptions: [],
-        complexity: 20, // Below threshold, should be lightweight
+        complexity: 15, // Below threshold (20), should be lightweight
       }
 
       const profile = resolvePipelineProfile(taskDef)
       expect(profile).toBe('lightweight')
     })
 
-    it('should resolve profile as standard for complexity >= 35', async () => {
+    it('should resolve profile as standard for complexity >= 20', async () => {
       const { resolvePipelineProfile } = await import('../../scripts/cody/pipeline-utils')
 
       const taskDef: TaskDefinition = {
@@ -287,16 +287,16 @@ This is valid promoted content from a previous successful run.
   // ========================================================================
 
   describe('parallel stage error handling (Fix #3)', () => {
-    it('should NOT have parallel stages (auditor now runs sequentially after verify)', async () => {
+    it('should NOT have parallel stages in the implementation pipeline', async () => {
       // This test verifies the logic exists - actual parallel execution tested via integration
       const { IMPL_ORDER_STANDARD } = await import('../../scripts/cody/pipeline/definitions')
 
-      // Verify no parallel stages (auditor now runs sequentially after verify)
+      // Verify no parallel stages
       const parallelStep = IMPL_ORDER_STANDARD.find(
         (step) => typeof step === 'object' && 'parallel' in step,
       )
 
-      // No parallel stages - auditor runs after verify
+      // No parallel stages in implementation pipeline
       expect(parallelStep).toBeUndefined()
     })
   })
@@ -365,7 +365,7 @@ This is valid promoted content from a previous successful run.
       }
 
       const pipelineOrder = ['taskify', 'spec', 'build']
-      const advisoryStages = new Set(['auditor'])
+      const advisoryStages = new Set<string>()
 
       const recovered = recoverPipelineState(state as never, pipelineOrder, advisoryStages)
 
@@ -388,7 +388,7 @@ This is valid promoted content from a previous successful run.
       }
 
       const pipelineOrder = ['taskify', 'build']
-      const advisoryStages = new Set(['auditor'])
+      const advisoryStages = new Set<string>()
 
       const recovered = recoverPipelineState(state as never, pipelineOrder, advisoryStages)
 
@@ -415,85 +415,16 @@ This is valid promoted content from a previous successful run.
  *   - verify check-gate runs before resolve-profile
  *
  * ✓ Fix #5: full mode profile resolution
- *   - lightweight for complexity < 35
- *   - standard for complexity >= 35
+ *   - lightweight for complexity < 20
+ *   - standard for complexity >= 20
  *   - respects explicit pipeline_profile
  *   - falls back to legacy heuristic
  *
  * ✓ Fix #3: parallel stage error handling
- *   - verify verify/auditor run in parallel
+ *   - verify no parallel stages in impl pipeline
  *
  * ✓ Fix #9: recovery functions
  *   - recoverStaleStages resets running to pending
  *   - recoverPipelineState detects completed pipelines
  *   - recoverPipelineState detects failed non-advisory stages
  */
-
-// ============================================================================
-// Fix #11: Auditor runs AFTER verify (not in parallel)
-// ============================================================================
-
-describe('Auditor runs AFTER verify (Fix #11)', () => {
-  it('IMPL_ORDER_STANDARD should have auditor after verify', async () => {
-    const { IMPL_ORDER_STANDARD } = await import('../../scripts/cody/pipeline/definitions')
-
-    // Find verify and auditor positions
-    const verifyIdx = IMPL_ORDER_STANDARD.findIndex((s) => s === 'verify')
-    const auditorIdx = IMPL_ORDER_STANDARD.findIndex((s) => s === 'auditor')
-
-    expect(verifyIdx).toBeGreaterThanOrEqual(0)
-    expect(auditorIdx).toBeGreaterThanOrEqual(0)
-    expect(auditorIdx).toBeGreaterThan(verifyIdx)
-  })
-
-  it('IMPL_ORDER_LIGHTWEIGHT should have auditor after verify', async () => {
-    const { IMPL_ORDER_LIGHTWEIGHT } = await import('../../scripts/cody/pipeline/definitions')
-
-    // Find verify and auditor positions
-    const verifyIdx = IMPL_ORDER_LIGHTWEIGHT.findIndex((s) => s === 'verify')
-    const auditorIdx = IMPL_ORDER_LIGHTWEIGHT.findIndex((s) => s === 'auditor')
-
-    expect(verifyIdx).toBeGreaterThanOrEqual(0)
-    expect(auditorIdx).toBeGreaterThanOrEqual(0)
-    expect(auditorIdx).toBeGreaterThan(verifyIdx)
-  })
-
-  it('IMPL_ORDER_STANDARD should NOT have parallel verify/auditor', async () => {
-    const { IMPL_ORDER_STANDARD } = await import('../../scripts/cody/pipeline/definitions')
-
-    // Check there's no parallel with both verify and auditor
-    const hasParallelVerifyAuditor = IMPL_ORDER_STANDARD.some(
-      (step) =>
-        typeof step === 'object' &&
-        'parallel' in step &&
-        step.parallel.includes('verify') &&
-        step.parallel.includes('auditor'),
-    )
-
-    expect(hasParallelVerifyAuditor).toBe(false)
-  })
-})
-
-// ============================================================================
-// Fix #12: Supervisor shell wrapper script exists
-// ============================================================================
-
-describe('Supervisor shell wrapper script (Fix #12)', () => {
-  const scriptPath = path.join(process.cwd(), 'scripts/cody/parse-safety-supervisor.sh')
-
-  it('shell wrapper script should exist', () => {
-    expect(fs.existsSync(scriptPath)).toBe(true)
-  })
-
-  it('shell wrapper script should be executable', () => {
-    const stats = fs.statSync(scriptPath)
-    const isExecutable = (stats.mode & 0o111) !== 0
-    expect(isExecutable).toBe(true)
-  })
-
-  it('shell wrapper should call the tsx script', () => {
-    const content = fs.readFileSync(scriptPath, 'utf-8')
-    expect(content).toContain('parse-safety-supervisor.ts')
-    expect(content).toContain('tsx')
-  })
-})

@@ -1,0 +1,128 @@
+# =============================================================================
+# A-Guy Development Environment - Docker Compose
+# =============================================================================
+# Purpose: Local development container with hybrid authentication support
+#
+# Usage:
+#   docker-compose -f docker-compose.dev.yml up -d          # Start services
+#   docker-compose -f docker-compose.dev.yml exec app bash  # Enter shell
+#   docker-compose -f docker-compose.dev.yml down           # Stop services
+#
+# First-time setup:
+#   1. Copy .env.docker.example to .env.docker and fill in values
+#   2. Run: docker-compose -f docker-compose.dev.yml up -d
+#   3. Run: docker-compose -f docker-compose.dev.yml exec app bash
+#   4. Inside container: gh auth login (for GitHub CLI)
+#
+# Port conflicts:
+#   If port 3000 or 27018 is in use, override via environment:
+#     DEV_PORT=3001 docker-compose -f docker-compose.dev.yml up -d
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Main Development Container
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: a-guy-dev
+    hostname: a-guy-dev
+
+    # Interactive shell support
+    stdin_open: true
+    tty: true
+
+    # Port mappings (override with DEV_PORT env var if 3000 is taken)
+    ports:
+      - '${DEV_PORT:-3000}:3000'
+
+    # Volume mounts
+    volumes:
+      # Project workspace (source code)
+      - .:/home/app:cached
+
+      # Persist node_modules separately from host
+      - dev_node_modules:/home/app/node_modules
+
+      # Persist pnpm cache for faster installs
+      - dev_pnpm_cache:/root/.cache/pnpm
+
+      # Persist GitHub CLI auth state (login-based, requires `gh auth login` inside container)
+      - dev_gh_config:/root/.config/gh
+
+      # Persist Ollama state (if using local AI)
+      - dev_ollama_config:/root/.config/ollama
+      - dev_ollama_data:/root/.local/share/ollama
+
+    # Environment variables
+    env_file:
+      - .env.docker
+
+    # Additional runtime environment
+    environment:
+      - NODE_ENV=development
+
+    # Shared network with MongoDB
+    networks:
+      - dev-network
+
+    # Dependencies
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+    # Health check
+    healthcheck:
+      test: ['CMD', 'test', '-f', '/home/app/package.json']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # MongoDB Database
+  # ---------------------------------------------------------------------------
+  # Uses port 27018 on host to avoid conflict with docker-compose.yml (27017)
+  mongo:
+    image: mongo:latest
+    container_name: a-guy-dev-mongo
+    ports:
+      - '27018:27017'
+    command:
+      - --storageEngine=wiredTiger
+    volumes:
+      - dev_mongo_data:/data/db
+    networks:
+      - dev-network
+    logging:
+      driver: none
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  dev-network:
+    driver: bridge
+
+# =============================================================================
+# Volumes — all prefixed with dev_ to avoid collision with docker-compose.yml
+# =============================================================================
+volumes:
+  dev_node_modules:
+    driver: local
+  dev_pnpm_cache:
+    driver: local
+  dev_gh_config:
+    driver: local
+  dev_ollama_config:
+    driver: local
+  dev_ollama_data:
+    driver: local
+  dev_mongo_data:
+    driver: local
