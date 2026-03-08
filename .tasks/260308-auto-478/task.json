@@ -1,0 +1,34 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "UI components: Equation paper button, sheet/modal component",
+    "Data integration: Lesson/course formula sheet relationships",
+    "Content rendering: RichText with LaTeX, PDF viewer",
+    "State management: Preservation of chat state",
+    "Responsive behavior: Mobile drawer vs desktop panel"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Technical implementation details (schema, component props) will be defined in later stages",
+    "Figma designs will be available for implementation",
+    "Existing MathMarkdown component can be reused for LaTeX rendering",
+    "PDF viewer library already exists or will be selected during implementation"
+  ],
+  "review_questions": [
+    "Should the formula sheet use existing modal/sheet components or create new ones?",
+    "Is there an existing PDF viewer component in the codebase that meets the requirements?",
+    "What is the preferred approach for the lesson/course data fetching - query parameters or direct payload API?"
+  ],
+  "complexity": 52,
+  "complexity_reasoning": "Scope: 18 (7-10 files across frontend modules), Risk: 10 (medium - UI + data + rendering), Novelty: 10 (new feature with existing pattern references), Cross-Domain: 6 (frontend + data), Ambiguity: 4 (some technical details TBD), Dependency Depth: 4 (lesson/course integration). Total: 52",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains Context & Goal, Behavior & Policy with detailed rules, Acceptance Criteria with checkboxes, and Edge Case Handling. Has structured requirements but lacks step-by-step implementation plan with file paths."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
