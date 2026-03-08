@@ -201,7 +201,9 @@ export function getLatestApprovalComment(
 
   try {
     const exclude = (excludeAuthor || 'github-actions[bot]').replace(/[^a-zA-Z0-9\[\]_\-]/g, '')
-    // Get comments from users (not bot) that contain approve/reject
+    // Get comments from users (not bot) that contain approval/rejection keywords
+    // Matches: approve, approved, yes, go, proceed, y, continue, reject, rejected, no, cancel, stop, n
+    // Uses 'i' flag for case-insensitive matching
     const output = execFileSync(
       'gh',
       [
@@ -211,7 +213,7 @@ export function getLatestApprovalComment(
         '--json',
         'comments',
         '--jq',
-        `[.comments[] | select(.author.login != "${exclude}" and (.body | test("^[/@]cody (approve|reject)")))] | last | .body`,
+        `[.comments[] | select(.author.login != "${exclude}" and (.body | test("^[/@]cody\\s+(approve|approved|yes|go|proceed|y|continue|reject|rejected|no|cancel|stop|n)(\\s|$)"; "i")))] | last | .body`,
       ],
       { encoding: 'utf-8' },
     )

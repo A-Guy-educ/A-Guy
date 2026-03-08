@@ -485,19 +485,11 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
           logger.info(`Gate ${pausedStage} approved — resuming pipeline`)
           gateApprovedStage = pausedStage
 
-          // Write approved file to cache approval for future runs
-          const approvedPath = path.join(taskDir, `gate-${pausedStage}-approved.md`)
-          try {
-            fs.writeFileSync(
-              approvedPath,
-              `# Gate Approved\n\nApproved at ${pausedStage} gate.\nApproved via @cody approve command.\n`,
-            )
-          } catch (writeErr) {
-            logger.error({ err: writeErr }, `Failed to write gate approval file: ${approvedPath}`)
-            throw writeErr
-          }
+          // Note: handleGateApproval already wrote gate-{stage}-approved.md and clarified.md
+          // No need to overwrite here - that would lose the context about how approval was detected
 
-          // Commit and push the approval file so subsequent runs can find it
+          // Commit and push the approval files so subsequent runs can find them
+          // This includes both gate-{stage}-approved.md and clarified.md
           const { commitPipelineFiles } = await import('./git-utils')
           await commitPipelineFiles({
             taskDir,

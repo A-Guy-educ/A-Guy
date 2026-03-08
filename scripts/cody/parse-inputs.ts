@@ -51,11 +51,13 @@ export function normalizeComment(comment: string): string {
 
 /**
  * Extract command after @cody or /cody prefix
+ * Handles both single-line and multiline comments
  */
 export function extractCommandAfterCody(comment: string): string {
   const normalized = normalizeComment(comment)
   // Match @cody or /cody at the start, followed by optional whitespace
-  const match = normalized.match(/^[\/@]cody\s*(.*)$/)
+  // Use 's' flag so . matches newlines for multiline comments
+  const match = normalized.match(/^[\/@]cody\s*(.*)$/s)
   if (!match) return ''
   return match[1].trim()
 }
@@ -215,18 +217,23 @@ export function parseCommentInputs(): ParseOutputs {
       // @cody alone (or @cody --local) - default to full mode
       outputs.mode = 'full'
       logger.info('=== @cody alone - defaulting to full mode ===')
-    } else if (APPROVAL_KEYWORDS.includes(cmdWithoutFlags)) {
-      // Approval command - use rerun mode
-      outputs.mode = 'rerun'
-      logger.info(`=== Detected approval keyword: ${cmdWithoutFlags} ===`)
-    } else if (VALID_MODES.includes(cmdWithoutFlags)) {
-      // Explicit mode specified
-      outputs.mode = cmdWithoutFlags
-      logger.info(`=== Detected explicit mode: ${cmdWithoutFlags} ===`)
     } else {
-      // Not a known command - default to full (might be task-id or description)
-      outputs.mode = 'full'
-      logger.info('=== Not a known command - defaulting to full mode ===')
+      // Check if the first word (before whitespace or newline) is an approval keyword
+      // This handles "@cody approve answer" and "@cody approve\nmultiline answer"
+      const firstWord = cmdWithoutFlags.split(/[\s\n]/)[0]
+      if (APPROVAL_KEYWORDS.includes(firstWord)) {
+        // Approval command with optional answer - use rerun mode
+        outputs.mode = 'rerun'
+        logger.info(`=== Detected approval keyword: ${firstWord} ===`)
+      } else if (VALID_MODES.includes(cmdWithoutFlags)) {
+        // Explicit mode specified
+        outputs.mode = cmdWithoutFlags
+        logger.info(`=== Detected explicit mode: ${cmdWithoutFlags} ===`)
+      } else {
+        // Not a known command - default to full (might be task-id or description)
+        outputs.mode = 'full'
+        logger.info('=== Not a known command - defaulting to full mode ===')
+      }
     }
   }
 

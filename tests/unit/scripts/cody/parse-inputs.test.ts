@@ -81,6 +81,17 @@ describe('parse-inputs', () => {
       expect(extractCommandAfterCody('hello')).toBe('')
       expect(extractCommandAfterCody('run @cody')).toBe('')
     })
+
+    // BUG-Fix: Multiline comments should extract content after @cody
+    // Previously the regex didn't match newlines, causing mode to default to 'full'
+    it('should extract command from multiline comments', () => {
+      expect(extractCommandAfterCody('@cody approve\n1. yes\n2. no')).toBe('approve\n1. yes\n2. no')
+      // Note: normalizeComment lowercases the input, so we test with lowercase
+      expect(extractCommandAfterCody('/cody yes\nuse mongodb')).toBe('yes\nuse mongodb')
+      expect(extractCommandAfterCody('@cody proceed\nline 1\nline 2')).toBe(
+        'proceed\nline 1\nline 2',
+      )
+    })
   })
 
   describe('getDefaultOutputs', () => {
@@ -221,6 +232,50 @@ describe('parse-inputs', () => {
         const result = parseCommentInputs()
         expect(result.mode).toBe('rerun')
       }
+    })
+
+    // BUG-Fix: Approval keywords with appended answers should still resolve to rerun mode
+    // Previously exact match failed: "approve yes use TS" not in APPROVAL_KEYWORDS
+    it('should set rerun mode for approval keyword + single-line answer', () => {
+      const cases = [
+        ['@cody approve use TypeScript', 'rerun'],
+        ['@cody approve yes use MongoDB', 'rerun'],
+        ['@cody yes use TypeScript', 'rerun'],
+        ['@cody yes use MongoDB', 'rerun'],
+        ['@cody proceed with the plan', 'rerun'],
+        ['@cody go ahead with implementation', 'rerun'],
+        ['/cody approve the changes', 'rerun'],
+        ['/cody yes use PostgreSQL', 'rerun'],
+      ]
+
+      for (const [comment, expectedMode] of cases) {
+        vi.stubEnv('COMMENT_BODY', comment)
+        const result = parseCommentInputs()
+        expect(result.mode).toBe(expectedMode)
+      }
+    })
+
+    // BUG-Fix: Multiline approval commands with answers should resolve to rerun mode
+    it('should set rerun mode for approval keyword + multiline answer', () => {
+      const multilineCases = [
+        ['@cody approve\n1. yes\n2. no', 'rerun'],
+        ['@cody yes\nuse MongoDB', 'rerun'],
+        ['@cody proceed\nThe implementation is ready', 'rerun'],
+      ]
+
+      for (const [comment, expectedMode] of multilineCases) {
+        vi.stubEnv('COMMENT_BODY', comment)
+        const result = parseCommentInputs()
+        expect(result.mode).toBe(expectedMode)
+      }
+    })
+
+    // Verify comment_body is still passed through correctly for answer extraction
+    it('should preserve comment_body for gate approval detection', () => {
+      vi.stubEnv('COMMENT_BODY', '@cody approve this is my answer')
+      const result = parseCommentInputs()
+      // comment_body is JSON.stringify'd
+      expect(result.comment_body).toContain('approve this is my answer')
     })
 
     it('should reject when safety check fails', () => {
