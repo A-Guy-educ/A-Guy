@@ -47,7 +47,7 @@ export class CircuitBreaker {
       )
     }
 
-    const isProbe = this.state === 'half-open'
+    const _isProbe = this.state === 'half-open'
 
     try {
       const result = await operation()
