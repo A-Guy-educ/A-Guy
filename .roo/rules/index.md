@@ -37,8 +37,8 @@ pnpm lint:fix         # Fix lint issues
 | Access Control            | `docs/access-control/README.md`        |
 | Admin Components          | `docs/admin-components/README.md`      |
 | Testing                   | `tests/README.md`                      |
-| Collections               | `src/collections/README.md`            |
-| Components                | `src/components/README.md`             |
+| Collections               | `src/server/payload/collections/`      |
+| Components                | `src/ui/`                              |
 | Exercises                 | `docs/exercises/README.md`             |
 | AI Services               | `docs/ai-services/README.md`           |
 | i18n                      | `messages/en.json`, `messages/he.json` |

@@ -131,7 +131,7 @@ Analyze the task description to determine its quality level. When the input is a
 **`detailed_plan`** - Task contains:
 
 - Step-by-step sections (e.g., `## Step 1:`, `### Implementation Steps`)
-- File paths to modify (e.g., `src/app/page.ts`, `src/collections/Posts.ts`)
+- File paths to modify (e.g., `src/app/page.ts`, `src/server/payload/collections/Posts.ts`)
 - Test cases or verification steps
 
 **`spec_and_plan`** - Task contains BOTH:
