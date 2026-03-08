@@ -1,0 +1,35 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "backend",
+  "scope": [
+    "Lesson admin UI component",
+    "Prompt selection interface",
+    "Extraction processor API integration",
+    "Lesson context text field population"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The existing conversion buttons pattern can be reused for this feature",
+    "The prompts collection exists and is accessible via Payload API",
+    "The extraction processor API endpoint exists and accepts lesson content + prompt",
+    "The 'Lesson context text' field already exists in the lessons collection schema"
+  ],
+  "review_questions": [
+    "Should the append behavior include a separator (e.g., newline or <hr>) between old and new content?",
+    "Should this feature be restricted to specific user roles (e.g., only admins)?",
+    "Should the feature support batch processing for multiple lessons?"
+  ],
+  "complexity": 40,
+  "complexity_reasoning": "Scope: 12 (multiple admin UI files + backend integration), Risk: 10 (admin UI changes with data processing), Novelty: 6 (extends existing conversion pattern), Cross-Domain: 6 (admin UI + API), Ambiguity: 2 (clear requirements), Dependencies: 4 (prompts collection, extraction processor). Total: 40",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains clear user stories and 8 detailed acceptance criteria with checkboxes. Promoted spec.md with requirements and acceptance criteria extracted from task.md"
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
