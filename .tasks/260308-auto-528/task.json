@@ -1,0 +1,39 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "Add formula sheet toggle button to chat interface",
+    "Create formula sheet viewer component with side panel/modal",
+    "Support RichText content with LaTeX rendering via MathMarkdown",
+    "Support PDF rendering with zoom/scroll on mobile",
+    "Implement lesson→course fallback logic for sheet selection",
+    "Handle localization fallback (he → en → hide)",
+    "Add loading skeleton states",
+    "Handle edge cases (missing PDF, empty RichText)"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Formula sheet collection needs to exist or be created in Payload CMS schema",
+    "MathMarkdown component exists for LaTeX rendering",
+    "Existing PDF viewer component can be reused or adapted",
+    "Chat component structure allows adding a new button"
+  ],
+  "review_questions": [
+    "Does the formula sheet collection already exist in the database schema?",
+    "Are there existing PDF viewer components in the codebase to reuse?",
+    "What is the existing chat component structure where the button should be added?"
+  ],
+  "complexity": 47,
+  "complexity_reasoning": "Scope: 12 (4-6 files across chat and viewer components). Risk: 8 (non-critical UI with content handling). Novelty: 10 (extending existing patterns for content display). Cross-Domain: 8 (frontend + content/rendering). Ambiguity: 4 (clear requirements with some implementation details). Dependencies: 5 (depends on chat components, content rendering). Total: 47 (Complex - requires full pipeline with spec, gap, and plan-gap stages)",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains detailed ## Behavior & Policy, ## Product Constraints, ## Acceptance Criteria (6 checkable items), and ## Edge Case Handling. The task provides clear user-facing requirements, interaction rules, and acceptance criteria. Promoted spec.md with requirements extracted from these sections."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

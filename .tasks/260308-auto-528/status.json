@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "taskId": "260308-auto-528",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-08T17:07:34.817Z",
+  "updatedAt": "2026-03-08T17:09:39.738Z",
+  "state": "paused",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-03-08T17:07:36.208Z",
+      "completedAt": "2026-03-08T17:09:34.710Z",
+      "outputFile": "taskify.md"
+    }
+  },
+  "issueNumber": 750,
+  "completedAt": "2026-03-08T17:09:39.738Z"
+}
