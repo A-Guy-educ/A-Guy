@@ -11,16 +11,16 @@ describe('GET /api/health', () => {
     const response = await GET()
     const data = (await response.json()) as {
       ok: boolean
+      checks: { database: boolean }
+      version: string
       gitSha: string
-      payloadVersion: string
-      projectVersion: string
       timestamp: string
     }
 
     expect(data).toHaveProperty('ok')
+    expect(data).toHaveProperty('checks')
+    expect(data).toHaveProperty('version')
     expect(data).toHaveProperty('gitSha')
-    expect(data).toHaveProperty('payloadVersion')
-    expect(data).toHaveProperty('projectVersion')
     expect(data).toHaveProperty('timestamp')
   })
 
@@ -35,15 +35,13 @@ describe('GET /api/health', () => {
   it('returns string values for all fields', async () => {
     const response = await GET()
     const data = (await response.json()) as {
+      version: string
       gitSha: string
-      payloadVersion: string
-      projectVersion: string
       timestamp: string
     }
 
     expect(typeof data.gitSha).toBe('string')
-    expect(typeof data.payloadVersion).toBe('string')
-    expect(typeof data.projectVersion).toBe('string')
+    expect(typeof data.version).toBe('string')
     expect(typeof data.timestamp).toBe('string')
   })
 
