@@ -8,48 +8,35 @@
 
 import { clearConfigValuesCache, loadConfigValues } from '@/infra/config/runtime/config-values'
 import { SystemParams } from '@/infra/config/system-params'
+import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import config from '@payload-config'
 import { getPayload } from 'payload'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 
-const TEST_TENANT_SLUG = 'system-params-test-tenant'
-
 describe('SystemParams Integration (ConfigValues-based)', () => {
   let payload: Awaited<ReturnType<typeof getPayload>>
-  let testTenantId: string
+  let defaultTenantId: string
   let globalConfigId: string
 
   beforeAll(async () => {
     payload = await getPayload({ config })
 
-    // Get or create test tenant
-    const tenants = await payload.find({
-      collection: 'tenants',
-      where: { slug: { equals: TEST_TENANT_SLUG } },
-    })
-    if (tenants.docs.length > 0) {
-      testTenantId = tenants.docs[0].id
-    } else {
-      const created = await payload.create({
-        collection: 'tenants',
-        data: { name: 'System Params Test Tenant', slug: TEST_TENANT_SLUG },
-        overrideAccess: true,
-      })
-      testTenantId = created.id
-    }
+    // SystemParams always reads from the default tenant (tenantId param is unused)
+    defaultTenantId = await getDefaultTenantId(payload)
 
     // Clean up any leftover config_values from previous test runs
     try {
       await payload.delete({
         collection: 'config_values',
         where: {
-          and: [{ domain: { equals: 'global' } }, { tenant: { equals: testTenantId } }],
+          and: [{ domain: { equals: 'global' } }, { tenant: { equals: defaultTenantId } }],
         },
         overrideAccess: true,
       })
     } catch {
       // Ignore if nothing to delete
     }
+    clearConfigValuesCache()
   })
 
   afterAll(async () => {
@@ -59,8 +46,9 @@ describe('SystemParams Integration (ConfigValues-based)', () => {
       await payload.delete({
         collection: 'config_values',
         where: {
-          and: [{ domain: { equals: 'global' } }, { tenant: { equals: testTenantId } }],
+          and: [{ domain: { equals: 'global' } }, { tenant: { equals: defaultTenantId } }],
         },
+        overrideAccess: true,
       })
     } catch {
       // Ignore cleanup errors
@@ -74,12 +62,12 @@ describe('SystemParams Integration (ConfigValues-based)', () => {
 
   test('should return default values when config not seeded', async () => {
     clearConfigValuesCache()
-    await loadConfigValues(payload, testTenantId)
+    await loadConfigValues(payload, defaultTenantId)
 
-    // These should return defaults since params aren't seeded yet for this tenant
-    expect(await SystemParams.getPdfConversionMaxSegmentPages(testTenantId)).toBe(2)
-    expect(await SystemParams.getPdfConversionMaxExercisesPerSegment(testTenantId)).toBe(1000)
-    expect(await SystemParams.getPdfConversionMaxPromptSizeBytes(testTenantId)).toBe(51200)
+    // These should return defaults since params aren't seeded yet
+    expect(await SystemParams.getPdfConversionMaxSegmentPages()).toBe(2)
+    expect(await SystemParams.getPdfConversionMaxExercisesPerSegment()).toBe(1000)
+    expect(await SystemParams.getPdfConversionMaxPromptSizeBytes()).toBe(51200)
   })
 
   test('should load custom values from config_values', async () => {
@@ -88,7 +76,7 @@ describe('SystemParams Integration (ConfigValues-based)', () => {
       await payload.delete({
         collection: 'config_values',
         where: {
-          and: [{ domain: { equals: 'global' } }, { tenant: { equals: testTenantId } }],
+          and: [{ domain: { equals: 'global' } }, { tenant: { equals: defaultTenantId } }],
         },
         overrideAccess: true,
       })
@@ -96,7 +84,7 @@ describe('SystemParams Integration (ConfigValues-based)', () => {
       // Ignore if nothing to delete
     }
 
-    // Create a test config value in the global domain
+    // Create a test config value in the global domain for default tenant
     const created = await payload.create({
       collection: 'config_values',
       draft: false,
@@ -107,17 +95,17 @@ describe('SystemParams Integration (ConfigValues-based)', () => {
           pdf_conversion_max_exercises_per_segment: 500,
           pdf_conversion_max_prompt_size_bytes: 102400,
         },
-        tenant: testTenantId,
+        tenant: defaultTenantId,
       },
       overrideAccess: true,
     })
 
     // Clear cache to force reload with new values
     clearConfigValuesCache()
-    await loadConfigValues(payload, testTenantId)
+    await loadConfigValues(payload, defaultTenantId)
 
     // Verify it loads via SystemParams
-    expect(await SystemParams.getPdfConversionMaxSegmentPages(testTenantId)).toBe(10)
+    expect(await SystemParams.getPdfConversionMaxSegmentPages()).toBe(10)
 
     // Store ID for update in next test
     globalConfigId = created.id
@@ -129,7 +117,7 @@ describe('SystemParams Integration (ConfigValues-based)', () => {
       throw new Error('globalConfigId not set — previous test must have failed')
     }
 
-    // Update the existing global config entry (tenant+domain must be unique)
+    // Update the existing global config entry
     await payload.update({
       collection: 'config_values',
       id: globalConfigId,
@@ -143,9 +131,9 @@ describe('SystemParams Integration (ConfigValues-based)', () => {
 
     // Clear cache to force reload with updated values
     clearConfigValuesCache()
-    await loadConfigValues(payload, testTenantId)
+    await loadConfigValues(payload, defaultTenantId)
 
-    // Should use tenant-specific value
-    expect(await SystemParams.getPdfConversionMaxExercisesPerSegment(testTenantId)).toBe(750)
+    // Should use updated value
+    expect(await SystemParams.getPdfConversionMaxExercisesPerSegment()).toBe(750)
   })
 })

@@ -112,6 +112,8 @@ describe('Runtime Config Integration (Tenant-Scoped Secrets)', () => {
       overrideAccess: true,
     })
 
+    // Clear cache to force reload with new entries
+    clearConfigCache()
     await loadRuntimeConfig(payload, testTenantId)
 
     // Should find the value for our tenant
@@ -151,6 +153,8 @@ describe('Runtime Config Integration (Tenant-Scoped Secrets)', () => {
       overrideAccess: true,
     })
 
+    // Clear cache to force reload with new entries
+    clearConfigCache()
     await loadRuntimeConfig(payload, testTenantId)
 
     // Enabled should be loaded
