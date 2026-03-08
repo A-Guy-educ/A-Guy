@@ -70,6 +70,18 @@
       "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Browser agent - navigates A-Guy platform, inspects pages, answers UI questions. Uses Chrome DevTools MCP locally, Playwright MCP in CI.",
       "instructions": ["scripts/browser-agent/AGENT.md"]
+    },
+    "review": {
+      "model": "anthropic/claude-opus-4-6",
+      "description": "Architect-level code review of generated code for quality, security, and correctness"
+    },
+    "fix": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Targeted fixes for issues found by review or verify stages"
+    },
+    "commit-fix": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Commits fix changes after the fix stage"
     }
   },
   "mcp": {

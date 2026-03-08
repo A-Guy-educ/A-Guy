@@ -476,6 +476,52 @@ export async function executePostAction(
       break
     }
 
+    case 'analyze-review-findings': {
+      const reviewPath = path.join(ctx.taskDir, 'review.md')
+
+      let fixNeeded = false
+      const reviewSummary = { critical: 0, major: 0, minor: 0 }
+
+      if (fs.existsSync(reviewPath)) {
+        const reviewContent = fs.readFileSync(reviewPath, 'utf-8')
+
+        // Parse review findings
+        const criticalMatch = reviewContent.match(/Critical:\s*(\d+)/)
+        const majorMatch = reviewContent.match(/Major:\s*(\d+)/)
+        const fixRequiredMatch = reviewContent.match(/Fix Required.*\[\s*x\s*\]\s*Yes/i)
+
+        reviewSummary.critical = parseInt(criticalMatch?.[1] || '0')
+        reviewSummary.major = parseInt(majorMatch?.[1] || '0')
+
+        fixNeeded =
+          reviewSummary.critical > 0 || reviewSummary.major > 0 || fixRequiredMatch !== null
+      }
+
+      // Update state to track findings
+      const state = _state
+      if (state) {
+        const updatedState = updateStage(state, 'review', {
+          issuesFound: fixNeeded,
+          reviewSummary,
+        })
+        writeState(ctx.taskId, updatedState)
+      }
+
+      logger.info(
+        `  Review findings: ${reviewSummary.critical} critical, ${reviewSummary.major} major, fixNeeded=${fixNeeded}`,
+      )
+      break
+    }
+
+    case 'clear-verify-failures': {
+      const verifyFailuresPath = path.join(ctx.taskDir, 'verify-failures.md')
+      if (fs.existsSync(verifyFailuresPath)) {
+        fs.unlinkSync(verifyFailuresPath)
+        logger.info('  Cleared verify-failures.md')
+      }
+      break
+    }
+
     case 'parallel': {
       if (!('actions' in action) || !Array.isArray((action as { actions?: unknown }).actions)) {
         throw new Error(`'parallel' post-action missing required 'actions' array`)

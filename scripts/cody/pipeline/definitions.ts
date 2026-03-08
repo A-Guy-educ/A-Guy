@@ -45,6 +45,9 @@ export const IMPL_ORDER_STANDARD: PipelineStep[] = [
   'plan-gap',
   'build',
   'commit',
+  'review',
+  'fix',
+  'commit-fix',
   'verify',
   'pr',
 ]
@@ -52,9 +55,15 @@ export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
   'architect',
   'build',
   'commit',
+  'review',
+  'fix',
+  'commit-fix',
   'verify',
   'pr',
 ]
+
+// Fix-only pipeline order for @cody fix mode
+export const FIX_ORDER: PipelineStep[] = ['review', 'fix', 'commit-fix', 'verify', 'pr']
 
 // ============================================================================
 // Stage Definitions
@@ -259,6 +268,74 @@ No critical gaps identified. Plan was refined in-place.
       },
     ],
     validator: createBuildValidator(),
+  })
+
+  // review stage - architect agent reviews generated code
+  stages.set('review', {
+    name: 'review',
+    type: 'agent',
+    timeout: STAGE_TIMEOUTS.review ?? DEFAULT_TIMEOUT,
+    maxRetries: 0,
+    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.review,
+    shouldSkip: (ctx) => {
+      const complexitySkip = skipIfBelowComplexity(ctx, 'review')
+      if (complexitySkip.shouldSkip) return complexitySkip
+      return { shouldSkip: false }
+    },
+    postActions: [
+      { type: 'analyze-review-findings' },
+      { type: 'commit-task-files', stagingStrategy: 'task-only', push: true, ensureBranch: false },
+    ],
+  })
+
+  // fix stage - targeted fixes based on review or verify failures
+  stages.set('fix', {
+    name: 'fix',
+    type: 'agent',
+    timeout: STAGE_TIMEOUTS.fix ?? DEFAULT_TIMEOUT,
+    maxRetries: 2,
+    shouldSkip: (ctx) => {
+      const state = loadState(ctx.taskId)
+      const fixStage = state?.stages?.fix
+      if (
+        fixStage?.fixAttempt !== undefined &&
+        fixStage.fixAttempt >= (fixStage.maxFixAttempts ?? 2)
+      ) {
+        return { shouldSkip: true, reason: 'Max fix attempts reached' }
+      }
+      const reviewStage = state?.stages?.review
+      if (!reviewStage?.issuesFound) {
+        const verifyFailuresPath = path.join(ctx.taskDir, 'verify-failures.md')
+        if (!fs.existsSync(verifyFailuresPath)) {
+          return { shouldSkip: true, reason: 'No issues to fix' }
+        }
+      }
+      return { shouldSkip: false }
+    },
+    postActions: [
+      {
+        type: 'commit-task-files',
+        stagingStrategy: 'tracked+task',
+        push: true,
+        ensureBranch: false,
+      },
+      { type: 'clear-verify-failures' },
+    ],
+  })
+
+  // commit-fix stage - commits the fix changes before verify
+  stages.set('commit-fix', {
+    name: 'commit-fix',
+    type: 'git',
+    timeout: STAGE_TIMEOUTS['commit-fix'] ?? DEFAULT_TIMEOUT,
+    maxRetries: 0,
+    shouldSkip: (ctx) => {
+      const state = loadState(ctx.taskId)
+      if (state?.stages?.fix?.state === 'skipped') {
+        return { shouldSkip: true, reason: 'Fix was skipped, nothing to commit' }
+      }
+      return { shouldSkip: false }
+    },
   })
 
   // commit stage

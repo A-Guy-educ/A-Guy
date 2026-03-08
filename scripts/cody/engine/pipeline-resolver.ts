@@ -9,13 +9,14 @@ import type { PipelineDefinition, PipelineContext } from '../engine/types'
 import {
   buildPipeline,
   rebuildPipelineAfterTaskify as rebuildFromDefinitions,
+  FIX_ORDER,
 } from '../pipeline/definitions'
 
 /**
  * Resolve pipeline for a given mode
  */
 export function resolvePipelineForMode(
-  mode: 'spec' | 'impl' | 'full' | 'rerun' | 'status',
+  mode: 'spec' | 'impl' | 'full' | 'rerun' | 'fix' | 'status',
   profile: 'standard' | 'lightweight',
   clarify: boolean,
   ctx: PipelineContext,
@@ -29,6 +30,11 @@ export function resolvePipelineForMode(
     case 'rerun':
       // Rerun needs BOTH spec and impl stages to support resuming from any stage
       return buildPipeline('rerun', profile, clarify, ctx)
+    case 'fix': {
+      // Fix mode uses FIX_ORDER (review → fix → commit-fix → verify → pr)
+      const fixPipeline = buildPipeline('full', profile, clarify, ctx)
+      return { stages: fixPipeline.stages, order: FIX_ORDER }
+    }
     case 'status':
       // No pipeline for status mode
       return { stages: new Map(), order: [] }
@@ -56,7 +62,7 @@ export function rebuildPipelineAfterTaskify(
  * Create rebuild callback for the engine
  */
 export function createRebuildCallback(
-  _mode: 'spec' | 'impl' | 'full' | 'rerun',
+  _mode: 'spec' | 'impl' | 'full' | 'rerun' | 'fix',
   _clarify: boolean,
 ): (ctx: PipelineContext) => PipelineDefinition {
   return (ctx) => rebuildPipelineAfterTaskify({ stages: new Map(), order: [] }, ctx)
