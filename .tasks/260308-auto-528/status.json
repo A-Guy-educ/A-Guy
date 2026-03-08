@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-08T17:07:34.817Z",
-  "updatedAt": "2026-03-08T17:09:39.738Z",
+  "updatedAt": "2026-03-08T19:20:14.812Z",
   "state": "paused",
-  "cursor": null,
+  "cursor": "build",
   "stages": {
     "taskify": {
       "state": "paused",
@@ -14,8 +14,27 @@
       "startedAt": "2026-03-08T17:07:36.208Z",
       "completedAt": "2026-03-08T17:09:34.710Z",
       "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Promoted via input_quality (valid file exists)"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-08T19:11:41.087Z",
+      "completedAt": "2026-03-08T19:16:55.514Z",
+      "outputFile": "gap.md"
+    },
+    "architect": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-03-08T19:16:55.535Z",
+      "completedAt": "2026-03-08T19:20:11.299Z",
+      "outputFile": "architect.md"
     }
   },
   "issueNumber": 750,
-  "completedAt": "2026-03-08T17:09:39.738Z"
+  "completedAt": "2026-03-08T19:20:14.812Z"
 }

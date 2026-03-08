@@ -6,6 +6,32 @@ Provide students with immediate access to relevant mathematical formulas during 
 
 ## Requirements
 
+### FR-001: Formula Sheets Collection
+
+Create a FormulaSheets collection in Payload CMS with:
+- **name** (text, required): Human-readable name following pattern [Course Code] - [Topic] - [Version]
+- **content** (richText, optional): Lexical rich text with LaTeX support
+- **pdfFile** (upload, optional): Relationship to media collection for PDF files (max 5MB)
+- **locale** (content locale): Localization field (he/en)
+- **tenant** (tenant field): Multi-tenancy support
+- **Access**: Admin-only create/read/update/delete
+
+### FR-002: Lesson Formula Sheet Field
+
+Add optional `formulaSheet` field to Lessons collection:
+- Type: relationship to FormulaSheets collection
+- Purpose: Lesson-specific formula sheet override
+
+### FR-003: Course Default Formula Sheet Field
+
+Add optional `defaultFormulaSheet` field to Courses collection:
+- Type: relationship to FormulaSheets collection
+- Purpose: Course-level default formula sheet
+
+### FR-004: Data Migration
+
+Create one-time idempotent migration script to populate formula sheet content for course "כיתה יא - 4 יח'ל - 471" (course code 471) with content from Figma.
+
 ### Visibility & Access
 
 - Target Audience: The button and sheet are visible to all users (public or authenticated) who are viewing a published lesson
@@ -42,6 +68,8 @@ The system follows a strict fallback hierarchy:
 - Missing PDF File: If a sheet is type PDF but the file is missing, display: "Formula sheet could not be loaded."
 - Empty Content: If a RichText sheet is linked but has no content, hide the button
 - Slow Load: Provide a loading skeleton while content is fetching
+- Mobile PDF: On mobile, PDF viewer must support zoom and scroll interactions
+- Locale Fallback: If lesson formula sheet exists only in en but user is on he locale, display en version
 
 ## Acceptance Criteria
 
@@ -50,8 +78,20 @@ The system follows a strict fallback hierarchy:
 - [ ] Lesson-level override correctly replaces Course-level default
 - [ ] LaTeX equations render clearly in RichText mode using MathMarkdown
 - [ ] Closing the viewer preserves the active chat input and scroll state
+- [ ] PDF rendering supports zoom/scroll on mobile viewports
+
+## Non-Functional Requirements
+
+### NFR-001: Performance
+- Formula sheet fetching must use efficient queries with depth=0 to avoid over-fetching
+- Loading skeletons must match both PDF and RichText content types
+
+### NFR-002: Localization
+- All user-facing strings must use translation keys
+- Fallback pattern: he → en → hide button
 
 ## Technical Constraints
 
 - Frontend Scope: Only add the sheet toggle button within the chat interface and the presentation component for the content itself. No editing, searching, or management capabilities in the student-facing frontend
-- Seeding: Course 471 equation paper content from Figma must be backfilled to course "כיתה יא - 4 יח"ל - 471" via one-time idempotent migration script
+- Admin Management: Formula sheet CRUD operations are handled via Payload admin panel (not student-facing)
+- TypeScript: Must run `pnpm generate:types` after modifying collections
