@@ -86,6 +86,805 @@
           "timestamp": "2026-03-08T14:42:02.618Z"
         }
       ]
+    },
+    {
+      "stage": "gap",
+      "sessionId": "ses_332198fe8ffel8UPq12qBFKY7x",
+      "startedAt": "2026-03-08T14:42:37.208Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "gap",
+          "text": "\"CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/ directory.\n\nTask ID: 260308-auto-540\n\n\nRead these files for context:\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/spec.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/task.json\n\nWrite your output to /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/gap.md\"",
+          "tools": [],
+          "timestamp": "2026-03-08T14:42:37.226Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "I'll start by reading the task files to understand the scope of this task.",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:42:37.292Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now I understand the task. Let me explore the codebase to understand the existing patterns for:\n1. The v3 PDF-to-exercise conversion\n2. The saved prompts system\n3. The admin interface components\n\nLet me search for relevant code:",
+          "tools": [
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-08T14:42:56.608Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Let me explore the v3 conversion service and the prompts collection more deeply:",
+          "tools": [
+            "read",
+            "glob"
+          ],
+          "timestamp": "2026-03-08T14:43:07.930Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob",
+            "grep"
+          ],
+          "timestamp": "2026-03-08T14:43:21.073Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:43:26.692Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-08T14:43:30.187Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Let me also check for v3-specific endpoints and the API for prompts:",
+          "tools": [
+            "glob",
+            "grep"
+          ],
+          "timestamp": "2026-03-08T14:43:38.386Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Let me look at the v3 conversion route and the prompts for conversion API:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:43:42.582Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:43:49.290Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:44:07.322Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:44:23.352Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-08T14:44:39.341Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:44:48.229Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-08T14:44:52.105Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Let me look at the V3 conversion button component:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:45:01.935Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-08T14:45:07.114Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:45:14.858Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:45:19.793Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-08T14:45:36.268Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now I have a comprehensive understanding of the codebase. Let me also quickly check how the prompts are accessed to see if there are any access control considerations:",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-08T14:45:48.153Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now I have all the information I need. Let me write the gap analysis:",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-08T14:45:55.406Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now let me update the spec.md file to address the identified gaps:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:46:38.397Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-08T14:46:43.972Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "## Summary\n\nI've completed the gap analysis for task 260308-auto-540. Here's what I found:\n\n### Gaps Identified (4 total)\n\n1. **Critical Gap: Missing Prompt Selection UI** - The `ConvertV3Button` component doesn't have any prompt selection UI, even though the backend endpoint already supports passing a `promptId` parameter.\n\n2. **High Gap: Missing Endpoint Documentation** - The spec didn't mention that the v3 endpoint already accepts an optional `promptId` parameter.\n\n3. **Medium Gap: Verification Phase Ambiguity** - The spec mentions \"excluded from verification phase\" but v3 currently has no verification phase (unlike v1/v2). This created confusion about whether verification is a future requirement.\n\n4. **Medium Gap: API Efficiency** - The existing `/api/prompts/for-conversion` returns both extractors and verifiers, but v3 only needs extractors.\n\n### Changes Made to Spec\n\n1. Added **FR-4: Prompt Selection UI Implementation** - Detailed requirements for fetching and displaying prompts\n2. Added **FR-5: Verification Phase Clarification** - Clarifies that v3 is currently extraction-only\n3. Added **NFRs** - Authentication, error handling, and API efficiency recommendations\n4. Updated **Acceptance Criteria** - Added 5 new checkable items\n5. Added **Technical Implementation Notes** - References to existing code patterns\n\n### Key Codebase Findings\n\n- The v3 endpoint (`/api/exercises/convert/single`) already accepts optional `promptId`\n- The prompt resolver (`prompt-resolver.ts`) already validates prompts\n- There's an existing prompt selection UI pattern in `ConvertForm` for v1/v2\n- The prompts API returns both extractors and verifiers",
+          "tools": [],
+          "timestamp": "2026-03-08T14:47:07.221Z"
+        }
+      ]
+    },
+    {
+      "stage": "architect",
+      "sessionId": "ses_33214f755ffeIbzCR47wafg276",
+      "startedAt": "2026-03-08T14:47:38.410Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "architect",
+          "text": "\"Task ID: 260308-auto-540\n\n\nTask Type: implement_feature\n\n\nRead these files for context:\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/spec.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/clarified.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/rerun-feedback.md\n\nWrite your output to /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/plan.md\"",
+          "tools": [],
+          "timestamp": "2026-03-08T14:47:38.426Z",
+          "model": "{\"providerID\":\"anthropic\",\"modelID\":\"claude-opus-4-6\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:47:38.485Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "No clarified.md or rerun-feedback.md found — this is a first run. Let me explore the existing code to understand the current implementation.",
+          "tools": [
+            "glob",
+            "grep",
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-08T14:47:55.341Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me read the current source files to understand the implementation details:",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:48:01.694Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me check the existing test files:",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:48:08.267Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now I have all the context I need. Let me write the plan:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-08T14:48:13.538Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-08T14:48:18.733Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Plan written to `/Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/plan.md`. The plan has 3 steps:\n\n1. **Step 1**: Create `useExtractorPrompts` hook — fetches extractor prompts from the existing API, exposes loading/error/retry states\n2. **Step 2**: Refactor `ConvertV3Button` — transform from simple button to expandable component with prompt dropdown, using the hook from Step 1\n3. **Step 3**: Integration test — verifies the complete flow end-to-end (expand → load prompts → select → convert → correct API call with promptId)\n\nNo backend changes needed — the endpoint already accepts `promptId`. This is a pure UI feature following the exact pattern established by `ConvertForm` (V1/V2).",
+          "tools": [],
+          "timestamp": "2026-03-08T14:49:22.670Z"
+        }
+      ]
+    },
+    {
+      "stage": "plan-gap",
+      "sessionId": "ses_332131bf2ffeL30tLuF2vRqPO4",
+      "startedAt": "2026-03-08T14:49:40.109Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "plan-gap",
+          "text": "\"Task ID: 260308-auto-540\n\n\nRead these files for context:\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/spec.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/plan.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/task.json\n\nWrite your output to /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/plan-gap.md\"",
+          "tools": [],
+          "timestamp": "2026-03-08T14:49:40.129Z",
+          "model": "{\"providerID\":\"openai\",\"modelID\":\"gpt-5.3-codex\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:49:40.200Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "glob",
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-08T14:49:58.938Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:50:03.763Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:50:06.921Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "grep",
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-08T14:50:11.172Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:50:16.867Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-08T14:50:19.562Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-08T14:50:26.874Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:50:32.745Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-08T14:50:36.452Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:50:40.791Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-08T14:50:43.297Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "apply_patch"
+          ],
+          "timestamp": "2026-03-08T14:50:45.506Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-08T14:51:21.500Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "apply_patch"
+          ],
+          "timestamp": "2026-03-08T14:51:24.135Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Done.",
+          "tools": [],
+          "timestamp": "2026-03-08T14:51:38.421Z"
+        }
+      ]
+    },
+    {
+      "stage": "build",
+      "sessionId": "ses_332111db9ffeLXjfJcYcyerLCq",
+      "startedAt": "2026-03-08T14:51:50.726Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "build",
+          "text": "\"CRITICAL: IMPLEMENTATION STAGE - NOT DOCUMENTATION\n\nYou must ACTUALLY IMPLEMENT the code changes, not just document them.\n\nYour job is to:\n1. Use Edit/Write tools to modify source files in src/\n2. Create new files as needed\n3. Run tests to verify\n\nThe build.md file should be a SUMMARY of what you implemented, not the implementation plan.\n\nDO NOT just write build.md - that will fail the pipeline! The pipeline validates that you modified actual source files.\n\nTask ID: 260308-auto-540\n\n\nTask Type: implement_feature\n\n\nRead these files for context:\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/spec.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/clarified.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/plan.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/plan-gap.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/rerun-feedback.md\n\nWrite your output to /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260308-auto-540/build.md\"",
+          "tools": [],
+          "timestamp": "2026-03-08T14:51:50.745Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:51:50.816Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:52:10.156Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-08T14:52:24.720Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:52:31.642Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-08T14:52:36.129Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:52:41.534Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "todowrite"
+          ],
+          "timestamp": "2026-03-08T14:52:46.661Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "Now I'll implement the feature. Let me start by creating the hook:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-08T14:52:56.155Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-08T14:53:00.619Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "todowrite"
+          ],
+          "timestamp": "2026-03-08T14:53:34.617Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-08T14:53:40.848Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "todowrite"
+          ],
+          "timestamp": "2026-03-08T14:54:20.273Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-08T14:54:41.495Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-08T14:54:45.984Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "todowrite"
+          ],
+          "timestamp": "2026-03-08T14:55:11.059Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-08T14:55:17.144Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-08T14:56:34.343Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:57:16.687Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-08T14:57:22.074Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-08T14:58:19.745Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-08T14:58:31.766Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-08T14:58:39.479Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-08T14:58:51.052Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "todowrite"
+          ],
+          "timestamp": "2026-03-08T14:59:04.408Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-08T14:59:09.970Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-08T14:59:47.921Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-08T15:00:08.828Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-08T15:00:17.206Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-08T15:00:23.302Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-08T15:00:27.428Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "todowrite"
+          ],
+          "timestamp": "2026-03-08T15:00:37.463Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-08T15:00:47.857Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "build",
+          "text": "I have successfully implemented the prompt selection feature for PDF-to-Exercise conversion (V3). Here's a summary:\n\n## Implementation Completed\n\n### 1. Created `useExtractorPrompts` Hook\n- New custom hook at `src/ui/admin/exercise-conversion/hooks/useExtractorPrompts.ts`\n- Fetches prompts from `/api/prompts/for-conversion`\n- Filters to return only extractor prompts (not verifiers)\n- Returns `extractorPrompts`, `isLoading`, `error`, and `retry` function\n\n### 2. Refactored `ConvertV3Button` Component\n- Modified `src/ui/admin/exercise-conversion/ConvertV3Button/index.tsx`\n- Two-state UI:\n  - **Collapsed state**: Simple \"Convert V3\" button\n  - **Expanded state**: Prompt dropdown + Convert/Cancel buttons\n- Includes explicit documentation about V3 being extraction-only (FR-5)\n- Handles loading, error, and empty states\n- Passes selected `promptId` to the conversion endpoint\n\n### 3. Created Tests\n- **Hook tests**: `tests/unit/admin/exercise-conversion/hooks/useExtractorPrompts.test.tsx` (6 tests)\n- **Component tests**: `tests/unit/admin/exercise-conversion/ConvertV3Button.test.tsx` (12 tests)\n\n### Test Results\nAll 20 tests pass (including 2 existing ConvertForm tests).\n\n### QualityScript: PASS\n- Lint: Checks\n- Type PASS",
+          "tools": [],
+          "timestamp": "2026-03-08T15:01:10.230Z"
+        }
+      ]
     }
   ]
 }

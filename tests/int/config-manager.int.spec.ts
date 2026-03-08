@@ -463,7 +463,9 @@ describe('Config Secrets (Tenant-Scoped)', () => {
       expect(rawDocs.docs[0].value).not.toBe('')
 
       // Verify it can be decrypted
-      const decrypted = decryptSecret(rawDocs.docs[0].value)
+      const value = rawDocs.docs[0].value
+      if (!value) throw new Error('Value is null or undefined')
+      const decrypted = decryptSecret(value)
       expect(decrypted).toBe(secretValue)
     })
   })

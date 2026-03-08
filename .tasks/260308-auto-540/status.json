@@ -4,14 +4,54 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-08T14:40:40.572Z",
-  "updatedAt": "2026-03-08T14:40:42.156Z",
+  "updatedAt": "2026-03-08T15:05:05.411Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-08T14:40:42.156Z",
+      "completedAt": "2026-03-08T14:42:23.725Z",
+      "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Promoted via input_quality (valid file exists)"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-08T14:42:34.351Z",
+      "completedAt": "2026-03-08T14:47:35.348Z",
+      "outputFile": "gap.md"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-08T14:47:35.370Z",
+      "completedAt": "2026-03-08T14:49:33.277Z",
+      "outputFile": "architect.md"
+    },
+    "plan-gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-08T14:49:37.192Z",
+      "completedAt": "2026-03-08T14:51:47.634Z",
+      "outputFile": "plan-gap.md"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-08T14:51:47.655Z",
+      "completedAt": "2026-03-08T15:01:35.084Z",
+      "outputFile": "build.md"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-08T14:40:42.156Z"
+      "startedAt": "2026-03-08T15:05:05.411Z"
     }
   },
   "issueNumber": 741
