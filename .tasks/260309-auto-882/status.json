@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-09T20:08:06.813Z",
-  "updatedAt": "2026-03-09T21:06:17.257Z",
+  "updatedAt": "2026-03-09T21:41:14.618Z",
   "state": "running",
   "cursor": "spec",
   "stages": {
@@ -44,11 +44,17 @@
       "outputFile": "gsd-plan.md"
     },
     "gsd-execute": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-09T21:06:17.168Z",
+      "completedAt": "2026-03-09T21:25:51.683Z",
+      "outputFile": "gsd-execute.md"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-09T21:06:17.168Z"
+      "startedAt": "2026-03-09T21:41:14.618Z"
     }
   },
-  "issueNumber": 773,
-  "branchName": "fix/260309-auto-773-bug-non-atomic-guest-session-claim"
+  "issueNumber": 773
 }

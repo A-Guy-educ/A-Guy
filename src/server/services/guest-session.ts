@@ -402,7 +402,7 @@ export async function acquireClaimLock(
       // Lock acquired successfully
       return {
         locked: true,
-        session: updated.docs[0] as unknown as GuestSessionDoc,
+        session: updated.docs[0],
       }
     }
   } catch {
@@ -432,7 +432,7 @@ export async function acquireClaimLock(
       // Same user can resume
       return {
         locked: true,
-        session: session as unknown as GuestSessionDoc,
+        session: session,
         resumed: true,
       }
     }
@@ -467,7 +467,7 @@ export async function completeClaimLock(
     })
 
     if (updated.docs.length > 0) {
-      return updated.docs[0] as unknown as GuestSessionDoc
+      return updated.docs[0]
     }
   } catch {
     // Failed to complete lock - session might not exist

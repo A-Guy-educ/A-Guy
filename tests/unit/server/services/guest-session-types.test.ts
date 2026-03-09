@@ -34,8 +34,8 @@ describe('guest-session.ts type safety', () => {
       const plainStringPattern = /collection:\s*'guest-sessions'/g
       const matches = sourceCode.match(plainStringPattern)
 
-      // There should be at least 7 instances of plain 'guest-sessions' string
-      expect(matches).toHaveLength(7)
+      // There should be at least 12 instances of plain 'guest-sessions' string
+      expect(matches).toHaveLength(12)
     })
   })
 
