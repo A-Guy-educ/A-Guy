@@ -21,6 +21,7 @@ import type {
   QuestionTableBlock,
   QuestionMatchingBlock,
   SvgBlock,
+  MediaBlock,
   UserAnswer,
   CheckResult,
 } from '../types'
@@ -46,6 +47,8 @@ import {
   type AnswerErrorMessages,
 } from '../utils/answerChecking'
 import { MediaMapProvider } from '../context/MediaMapContext'
+import { VideoPlayer } from '../components/VideoPlayer'
+import { getMediaUrl } from '@/infra/utils/getMediaUrl'
 
 /**
  * Hebrew letters for question numbering
@@ -393,6 +396,47 @@ export function ExerciseRenderer({
                     className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed"
                   >
                     <HtmlBlockRenderer block={block} />
+                  </div>
+                )
+              }
+
+              // Media block - render image or video from mediaMap
+              if (block.type === 'media') {
+                const mediaBlock = block as MediaBlock
+                const media = mediaMap[mediaBlock.mediaId]
+
+                if (!media) {
+                  return (
+                    <div key={mediaBlock.id} className="my-4">
+                      <p className="text-sm text-muted-foreground">{t('videoUnavailable')}</p>
+                    </div>
+                  )
+                }
+
+                // Check if media is a video (type field or mimeType starts with 'video/')
+                const isVideo = media.type === 'video' || media.mimeType?.startsWith('video/')
+
+                if (isVideo) {
+                  return (
+                    <div key={mediaBlock.id} className="my-4">
+                      <VideoPlayer src={media.url} mimeType={media.mimeType} />
+                    </div>
+                  )
+                }
+
+                // Otherwise render as image (using getMediaUrl for proper URL resolution)
+                const imageSrc = getMediaUrl(media.url)
+                return (
+                  <div
+                    key={mediaBlock.id}
+                    className="my-4 rounded-xl overflow-hidden border border-border/60 bg-muted/30"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imageSrc}
+                      alt={media.alt || media.filename || ''}
+                      className="w-full h-auto max-h-96 object-contain"
+                    />
                   </div>
                 )
               }

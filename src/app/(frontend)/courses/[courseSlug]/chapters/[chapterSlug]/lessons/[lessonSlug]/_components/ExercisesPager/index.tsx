@@ -13,6 +13,7 @@ import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapter
 import { ChatInterface } from '@/ui/web/chat'
 import { getMediaUrl } from '@/infra/utils/getMediaUrl'
 import { SafeHtml } from '@/ui/web/SafeHtml'
+import { VideoPlayer } from '@/ui/web/exerciserenderer/components/VideoPlayer'
 
 interface ExercisesPagerProps {
   exercises: Exercise[]
@@ -248,12 +249,22 @@ export function ExercisesPager({
 
                 {introMediaObj?.url && (
                   <div className="mx-auto max-h-80 overflow-hidden rounded-2xl mb-8">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={getMediaUrl(introMediaObj.url)}
-                      alt={introMediaObj.alt || ''}
-                      className="mx-auto max-h-80 w-auto object-contain"
-                    />
+                    {/* Check if media is a video (type field or mimeType starts with 'video/') */}
+                    {introMediaObj.type === 'video' ||
+                    introMediaObj.mimeType?.startsWith('video/') ? (
+                      <VideoPlayer
+                        src={introMediaObj.url}
+                        mimeType={introMediaObj.mimeType}
+                        className="mx-auto max-h-80 w-full"
+                      />
+                    ) : (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={getMediaUrl(introMediaObj.url)}
+                        alt={introMediaObj.alt || ''}
+                        className="mx-auto max-h-80 w-auto object-contain"
+                      />
+                    )}
                   </div>
                 )}
 

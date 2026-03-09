@@ -193,6 +193,8 @@
     "helpHint": "רמז",
     "helpGuidingQuestion": "שאלה מנחה",
     "helpSolution": "פתרון",
+    "videoUnavailable": "הסרטון אינו זמין",
+    "videoLoadError": "טעינת הסרטון נכשלה",
     "notebookTitle": "מחברת תרגול",
     "chatTab": "צ'אט",
     "chatTitle": "צ'אט",

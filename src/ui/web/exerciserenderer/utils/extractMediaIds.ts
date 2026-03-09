@@ -14,6 +14,7 @@ interface LooseBlock {
   type: string
   variant?: string
   mediaIds?: string[]
+  mediaId?: string
   prompt?: LooseRichText
   hint?: LooseRichText
   solution?: LooseRichText
@@ -67,6 +68,11 @@ export function extractMediaIds(content: { blocks: LooseBlock[] }): string[] {
       }
     }
     collect(block.caption)
+
+    // Collect mediaId from media blocks (single media reference)
+    if (block.type === 'media' && block.mediaId) {
+      ids.add(block.mediaId)
+    }
   }
 
   return Array.from(ids)
