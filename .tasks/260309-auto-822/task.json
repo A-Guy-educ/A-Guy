@@ -1,0 +1,36 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "high",
+  "confidence": 0.85,
+  "primary_domain": "backend",
+  "scope": [
+    "V3 content parser and mapper service",
+    "Block type detection and conversion logic",
+    "Sequential segmentation for mixed-content",
+    "Asset creation integration with ExerciseAssets"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "V3 questions/subquestions exist in a known format that can be parsed",
+    "Existing block types (RichText, Select, MultipleChoice, etc.) are available to map to",
+    "ExerciseAssets collection exists and supports the required asset types",
+    "The system has access to Local API with appropriate permissions for asset creation"
+  ],
+  "review_questions": [
+    "Should the mapping logic be implemented as a standalone service, a Payload hook, or a utility module?",
+    "What is the expected input format for V3 questions (JSON schema, raw text, specific API response)?",
+    "How should ambiguous content be handled - log warnings, raise errors, or use best-fit silently?",
+    "Is there a preferred naming convention for the new module (e.g., V3Mapper, QuestionParser, ContentSegmenter)?"
+  ],
+  "complexity": 78,
+  "complexity_reasoning": "Scope: 22 (10+ block types, multiple modules needed for parser/mapper/segmenter). Risk: 16 (security-critical asset creation, ExerciseAssets access control). Novelty: 16 (entirely new mapping logic, no existing patterns). Cross-Domain: 12 (backend parsing + frontend block rendering + infra asset management). Ambiguity: 7 (implementation approach unclear, needs architect decision). Dependencies: 6 (depends on existing block types, ExerciseAssets collection, auth context). Total: 78",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains ## Core Behaviors & Requirements with 5 detailed requirements sections and ## Acceptance Criteria with 6 checkable items. Has clear technical context including security constraints. Promoted spec.md for gap analysis."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
