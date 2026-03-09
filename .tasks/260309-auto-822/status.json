@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-09T09:58:37.252Z",
-  "updatedAt": "2026-03-09T12:40:27.437Z",
+  "updatedAt": "2026-03-09T12:45:42.314Z",
   "state": "running",
   "cursor": "spec",
   "stages": {
@@ -51,9 +51,23 @@
       "outputFile": "build.md"
     },
     "commit": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-09T12:40:27.437Z"
+      "startedAt": "2026-03-09T12:40:27.437Z",
+      "completedAt": "2026-03-09T12:40:30.658Z"
+    },
+    "review": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-09T12:40:30.681Z",
+      "completedAt": "2026-03-09T12:45:42.312Z",
+      "outputFile": "review.md",
+      "issuesFound": false,
+      "reviewSummary": {
+        "critical": 0,
+        "major": 0,
+        "minor": 0
+      }
     }
   },
   "issueNumber": 754
