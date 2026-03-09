@@ -11,6 +11,7 @@ export const queryChaptersByCourse = cache(async ({ courseId }: { courseId: stri
     id: courseId,
     depth: 0,
     overrideAccess: false,
+    disableErrors: true,
   })
 
   if (!courseResult || courseResult.status !== 'published' || !courseResult.isActive) {
@@ -92,6 +93,7 @@ export const queryChapterBySlug = cache(async ({ slug }: { slug: string }) => {
     id: courseId,
     depth: 0,
     overrideAccess: false,
+    disableErrors: true,
   })
 
   if (!courseResult || courseResult.status !== 'published' || !courseResult.isActive) {

@@ -5,7 +5,7 @@
  * @ai-summary Tests for third round of bug fixes applied to the Cody pipeline
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -175,12 +175,8 @@ describe('CRITICAL 7: preflight uses execFileSync', () => {
 // ============================================================================
 
 describe('HIGH 1: entry.ts try-catch on file writes in rerun mode', () => {
-  it('should have try-catch around gate approval file write', async () => {
-    const source = fs.readFileSync(path.join(process.cwd(), 'scripts/cody/entry.ts'), 'utf-8')
-    // Find the gate-approved write and verify it's in a try-catch
-    expect(source).toContain('Failed to write gate approval file')
-  })
-
+  // BUG-Fix: Removed redundant gate-approved file write from entry.ts
+  // handleGateApproval already writes gate-{stage}-approved.md - no need to overwrite
   it('should have try-catch around rerun feedback file write', async () => {
     const source = fs.readFileSync(path.join(process.cwd(), 'scripts/cody/entry.ts'), 'utf-8')
     expect(source).toContain('Failed to write rerun feedback file')

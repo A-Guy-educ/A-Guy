@@ -17,7 +17,14 @@ import {
   fetchWorkflowRuns,
 } from '@/ui/cody/github-client'
 import { parseAllComments } from '@/ui/cody/task-parser'
-import type { CodyTask, GitHubIssue, GitHubPR, ParsedComment, WorkflowRun, ColumnId } from '@/ui/cody/types'
+import type {
+  CodyTask,
+  GitHubIssue,
+  GitHubPR,
+  ParsedComment,
+  WorkflowRun,
+  ColumnId,
+} from '@/ui/cody/types'
 
 /**
  * Derive column from issue state + parsed comments + workflow run + PR.
@@ -34,7 +41,9 @@ function deriveColumn(
   )
 
   const taskMarker = sorted.find((c) => c.type === 'task-marker')
-  const failure = [...sorted].reverse().find((c) => c.type === 'failure' || c.type === 'cody-failed')
+  const failure = [...sorted]
+    .reverse()
+    .find((c) => c.type === 'failure' || c.type === 'cody-failed')
   const gate = [...sorted].reverse().find((c) => c.type === 'gate-request')
   const gateApproval = [...sorted].reverse().find((c) => c.type === 'gate-approval')
   const retries = sorted.filter((c) => c.type === 'supervisor-retry')
@@ -72,9 +81,7 @@ function buildCodyTask(options: {
     (!lastGateApproval || lastGateRequest.createdAt > lastGateApproval.createdAt)
   ) {
     // Determine gate type from comment body: 🚫 Hard Stop vs 🚦 Risk Gate
-    gateType = lastGateRequest.body.includes('🚫 Hard Stop')
-      ? 'hard-stop'
-      : 'risk-gated'
+    gateType = lastGateRequest.body.includes('🚫 Hard Stop') ? 'hard-stop' : 'risk-gated'
     // Extract gate stage from body (e.g., "paused at architect gate")
     const stageMatch = lastGateRequest.body.match(/at (\w+) gate/)
     gateStage = stageMatch?.[1]
@@ -111,10 +118,7 @@ function buildCodyTask(options: {
   }
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ taskId: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   // Skip auth for now - open access for testing
 
   try {
@@ -122,25 +126,25 @@ export async function GET(
 
     // Try to find by issue number first (optimized path - single API call)
     const issueNumberFromUrl = parseInt(taskId.replace('issue-', ''), 10)
-    
+
     if (!isNaN(issueNumberFromUrl)) {
       // Optimized: directly fetch the single issue by number
       const issue = await fetchIssue(issueNumberFromUrl)
-      
+
       if (issue) {
         // Fetch comments for this single issue
         const comments = await fetchComments(issue.number)
         const parsed = parseAllComments(comments)
-        
+
         // Get workflow runs, branch, and PR in parallel
         const [runs, branch, associatedPR] = await Promise.all([
           fetchWorkflowRuns({ perPage: 50 }),
           findTaskBranch(taskId),
           findAssociatedPR(taskId),
         ])
-        
+
         const workflowRun = runs.find((r) => r.html_url.includes(issueNumberFromUrl.toString()))
-        
+
         let pipeline = null
         if (branch) {
           pipeline = await getStatusFromBranch(taskId, branch)
@@ -157,10 +161,10 @@ export async function GET(
           task.pipeline = pipeline
         }
 
-        return NextResponse.json({ 
+        return NextResponse.json({
           task,
           assignees: issue.assignees,
-          comments: comments.map(c => ({
+          comments: comments.map((c) => ({
             id: c.id,
             body: c.body,
             created_at: c.created_at,
@@ -168,7 +172,7 @@ export async function GET(
           })),
         })
       }
-      
+
       // Issue not found
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
@@ -211,10 +215,10 @@ export async function GET(
         }
 
         // Return task with assignees and raw comments for the detail panel
-        return NextResponse.json({ 
+        return NextResponse.json({
           task,
           assignees: issue.assignees,
-          comments: comments.map(c => ({
+          comments: comments.map((c) => ({
             id: c.id,
             body: c.body,
             created_at: c.created_at,

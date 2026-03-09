@@ -19,7 +19,7 @@ import { discoverTaskIdFromIssue } from './github-api'
 // ============================================================================
 
 export interface CodyInput {
-  mode: 'spec' | 'impl' | 'rerun' | 'full' | 'status'
+  mode: 'spec' | 'impl' | 'rerun' | 'fix' | 'full' | 'status'
   taskId: string
   dryRun: boolean
   fromStage?: string
@@ -88,7 +88,7 @@ export interface StageStatus {
 // Validation
 // ============================================================================
 
-const VALID_MODES = ['spec', 'impl', 'rerun', 'full', 'status'] as const
+const VALID_MODES = ['spec', 'impl', 'rerun', 'fix', 'full', 'status'] as const
 
 // VALID_STAGES derived from stage-prompts to avoid duplication
 const VALID_STAGES = [...ALL_STAGES]
@@ -733,12 +733,16 @@ export function parseCliArgs(argv: string[]): CodyInput {
   // Auto-generate taskId if not provided
   if (!input.taskId) {
     // Try to discover task-id from previous bot comments on the issue
-    if (input.issueNumber && input.triggerType === 'comment') {
+    // Skip discovery when --fresh flag is set — we want a brand-new task ID
+    if (input.issueNumber && input.triggerType === 'comment' && !input.fresh) {
       const discovered = discoverTaskIdFromIssue(input.issueNumber)
       if (discovered) {
         input.taskId = discovered
         logger.info(`Discovered task ID from issue: ${input.taskId}`)
       }
+    }
+    if (input.fresh && input.issueNumber) {
+      logger.info(`--fresh flag: skipping task ID discovery for issue #${input.issueNumber}`)
     }
 
     // If still no task-id, generate one
@@ -845,7 +849,7 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
       mode = subCmd as CodyInput['mode']
     } else {
       // Unrecognized subcommand: treat as rerun with implicit feedback
-      // e.g., "/cody fix tests" → rerun mode, feedback = "fix tests"
+      // e.g., "/cody adjust tests" → rerun mode, feedback = "adjust tests"
       mode = 'rerun'
       // Capture both the subcommand and rest as implicit feedback
       implicitFeedback = rest ? `${subCmd} ${rest}`.trim() : subCmd
@@ -864,8 +868,9 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
       taskId = firstWord
     } else {
       // First word is NOT a task-id
-      if (mode === 'rerun') {
-        // For rerun: treat all remaining text as implicit feedback
+      if (mode === 'rerun' || mode === 'fix') {
+        // For rerun/fix: treat all remaining text as implicit feedback
+        // This handles "@cody fix the button isn't showing" → feedback = "the button isn't showing"
         implicitFeedback = taskId
       }
       taskId = '' // will be auto-discovered from issue

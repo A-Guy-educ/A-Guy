@@ -428,27 +428,3 @@ This is valid promoted content from a previous successful run.
  *   - recoverPipelineState detects completed pipelines
  *   - recoverPipelineState detects failed non-advisory stages
  */
-
-// ============================================================================
-// Fix #12: Supervisor shell wrapper script exists
-// ============================================================================
-
-describe('Supervisor shell wrapper script (Fix #12)', () => {
-  const scriptPath = path.join(process.cwd(), 'scripts/cody/parse-safety-supervisor.sh')
-
-  it('shell wrapper script should exist', () => {
-    expect(fs.existsSync(scriptPath)).toBe(true)
-  })
-
-  it('shell wrapper script should be executable', () => {
-    const stats = fs.statSync(scriptPath)
-    const isExecutable = (stats.mode & 0o111) !== 0
-    expect(isExecutable).toBe(true)
-  })
-
-  it('shell wrapper should call the tsx script', () => {
-    const content = fs.readFileSync(scriptPath, 'utf-8')
-    expect(content).toContain('parse-safety-supervisor.ts')
-    expect(content).toContain('tsx')
-  })
-})

@@ -6,6 +6,7 @@
  */
 
 import type { Logger } from 'pino'
+import type { SlackClient } from '../clients/slack'
 
 // ============================================================================
 // Core Types
@@ -59,6 +60,7 @@ export interface InspectorContext {
   log: Logger
   runTimestamp: string
   cycleNumber: number
+  slack?: SlackClient
 }
 
 export interface StateStore {

@@ -1,26 +1,32 @@
-# Build Agent Report: Cody Publish Flow Improvements
+# Build Agent Report: Fix @cody approve with Answers
 
 ## Changes
 
 ### Fixed
 
-1. **`src/app/api/cody/publish/route.ts`** - Updated to use constants from `@/ui/cody/constants` for `GITHUB_OWNER`, `GITHUB_REPO`, `DEV_BRANCH`, `PROD_BRANCH` instead of hardcoded values
+1. **`scripts/cody/parse-inputs.ts`** - Fixed mode detection to properly handle approval commands with appended answers
+   - Added `s` flag to regex in `extractCommandAfterCody()` so `.` matches newlines for multiline comments
+   - Changed mode detection from exact match to "first word" check: `cmdWithoutFlags.split(/[\s\n]/)[0]` instead of `APPROVAL_KEYWORDS.includes(cmdWithoutFlags)`
+   - This fixes `@cody approve answer`, `@cody approve\nmultiline answer`, and `@cody yes use TypeScript` correctly resolving to `rerun` mode
 
-2. **`src/app/api/cody/tasks/approve/route.ts`** - Updated to use constants from `@/ui/cody/constants` for `GITHUB_OWNER`, `GITHUB_REPO`, added Zod validation schema for request body
+2. **`scripts/cody/github-api.ts`** - Widened jq filter in `getLatestApprovalComment()` 
+   - Changed from `test("^[/@]cody (approve|reject)")` to match all approval/rejection keywords: `approve|approved|yes|go|proceed|y|continue|reject|rejected|no|cancel|stop|n`
+   - Added case-insensitive flag `i` and proper boundary matching with `(\s|$)`
 
-3. **`src/ui/cody/github-client.ts`** - Increased cache TTL for CI status from 15s to 30s to reduce cache misses during polling
+3. **`scripts/cody/entry.ts`** - Removed redundant gate-approved file overwrite
+   - Previously would overwrite the file that `handleGateApproval` already wrote correctly
+   - Now lets `handleGateApproval` be the source of truth for gate approval files
 
-4. **`src/ui/cody/components/MergeButton.tsx`** - Added merge confirmation dialog (first click shows "Confirm?", second click executes), added error handling with sonner toast notifications on failure
+### Tests Written
 
-5. **`src/ui/cody/components/TaskList.tsx`** - Updated `onApproveReview` prop type from `() => void` to `() => Promise<void>` to match MergeButton's async onMerge prop
-
-### Tests Created
-
-- `tests/unit/ui/cody/api/publish.test.ts` - Tests that verify constants are imported correctly
-- `tests/unit/ui/cody/api/approve.test.ts` - Tests that verify constants are imported correctly
+- `tests/unit/scripts/cody/parse-inputs.test.ts` - Added tests for:
+  - `extractCommandAfterCody` with multiline comments
+  - Mode detection with approval keyword + single-line answer
+  - Mode detection with approval keyword + multiline answer
+  - Comment body preservation for gate approval detection
 
 ## Quality
 
 - TypeScript: PASS
 - Lint: PASS
-- Unit Tests: 2680 passed (17 skipped)
+- Unit Tests: 3082 passed (17 skipped)

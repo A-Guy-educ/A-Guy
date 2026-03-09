@@ -6,6 +6,7 @@
  * @domain ai
  */
 
+export * from './circuit-breaker'
 export * from './constants'
 export * from './errors'
 export * from './media-reader'

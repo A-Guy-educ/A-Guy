@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "taskId": "review-fix-pipeline",
+  "mode": "full",
+  "pipeline": "spec_only",
+  "startedAt": "2026-03-08T20:00:00.000Z",
+  "state": "paused",
+  "cursor": "taskify",
+  "stages": {
+    "taskify": {
+      "state": "pending",
+      "retries": 0
+    }
+  },
+  "issueNumber": null
+}

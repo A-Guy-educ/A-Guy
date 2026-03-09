@@ -26,13 +26,29 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
-      include: ['src/lib/**/*.ts'],
-      exclude: [
-        'src/lib/**/*.spec.ts',
-        'src/lib/**/*.test.ts',
-        'src/lib/ai/prompts/**',
-        'src/lib/ai/services/**', // These need more complex mocking
+      include: [
+        'src/lib/**/*.ts',
+        'src/server/payload/access/**/*.ts',
+        'src/server/payload/collections/**/*.ts',
+        'src/server/payload/hooks/**/*.ts',
+        'src/server/payload/endpoints/**/*.ts',
+        'src/server/services/**/*.ts',
+        'src/infra/llm/**/*.ts',
+        'src/infra/blob/**/*.ts',
+        'src/infra/config/**/*.ts',
       ],
+      exclude: [
+        '**/*.spec.ts',
+        '**/*.test.ts',
+        '**/index.ts',
+        'src/lib/ai/prompts/**',
+        'src/lib/ai/services/**',
+      ],
+      thresholds: {
+        statements: 30,
+        branches: 25,
+        functions: 30,
+      },
     },
   },
 })

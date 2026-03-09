@@ -30,7 +30,6 @@ Fixed multiple CI infrastructure issues that prevented the Cody pipeline from ru
 - **Fix**: Changed `require.main === module` to `import.meta.url === file://${process.argv[1]}` in:
   - `scripts/cody/parse-inputs.ts`
   - `scripts/cody/checkout-task-branch.ts`
-  - `scripts/cody/parse-safety-supervisor.ts`
 
 ### 5. CI Environment Variables Not Read
 

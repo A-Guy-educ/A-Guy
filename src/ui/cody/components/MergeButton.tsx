@@ -8,7 +8,7 @@
 
 import React, { useState } from 'react'
 import { Button } from '@/ui/web/components/button'
-import { GitPullRequest, Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react'
+import { GitPullRequest, Loader2, CheckCircle2, XCircle, Clock, AlertTriangle } from 'lucide-react'
 import { usePRCIStatus } from '../hooks/usePRCIStatus'
 import { MergeApprovalDialog } from './MergeApprovalDialog'
 import { SimpleTooltip } from './SimpleTooltip'
@@ -48,8 +48,10 @@ export function MergeButton({
   const isMerging = externalIsMerging
   const ciStatus = isError ? 'failure' : (data?.ciStatus ?? 'pending')
   const canMerge = data?.mergeable ?? false
+  const hasConflicts = data?.hasConflicts ?? false
   const config = ciIcons[ciStatus]
-  const CIIcon = config.icon
+  // Show warning triangle for conflicts instead of the CI status X icon
+  const CIIcon = hasConflicts ? AlertTriangle : config.icon
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -75,7 +77,12 @@ export function MergeButton({
     <>
       <SimpleTooltip
         content={
-          <MergeTooltipContent canMerge={canMerge} ciStatus={ciStatus} isMerging={isMerging} />
+          <MergeTooltipContent
+            canMerge={canMerge}
+            ciStatus={ciStatus}
+            isMerging={isMerging}
+            hasConflicts={hasConflicts}
+          />
         }
         side="bottom"
       >
@@ -99,7 +106,11 @@ export function MergeButton({
             ) : (
               <>
                 <CIIcon
-                  className={cn('w-3.5 h-3.5', config.color, config.spin && 'animate-spin')}
+                  className={cn(
+                    'w-3.5 h-3.5',
+                    hasConflicts ? 'text-orange-400' : config.color,
+                    config.spin && !hasConflicts && 'animate-spin',
+                  )}
                 />
                 <GitPullRequest className="w-4 h-4" />
               </>

@@ -61,19 +61,25 @@ const eslintConfig = [
   // Layer Boundary Rules
   // =============================================================================
   // UI layer - block server/services and server/repos imports (payload/ allowed)
+  // Exception: chat hooks use @/server/services/api (client-safe API abstraction)
   {
     name: 'ui-boundaries',
     files: ['src/ui/**/*.{ts,tsx}'],
+    ignores: ['src/ui/web/chat/**'],
     rules: {
       'no-restricted-imports': [
         'error',
         {
-          name: 'ui-no-server-services',
-          message: 'UI layer cannot import from Server Services (business logic)',
-        },
-        {
-          name: 'ui-no-server-repos',
-          message: 'UI layer cannot import from Server Repos (data access)',
+          patterns: [
+            {
+              group: ['@/server/services/*', '@/server/services/**'],
+              message: 'UI layer cannot import from Server Services (business logic)',
+            },
+            {
+              group: ['@/server/repos/*', '@/server/repos/**'],
+              message: 'UI layer cannot import from Server Repos (data access)',
+            },
+          ],
         },
       ],
     },
@@ -87,8 +93,12 @@ const eslintConfig = [
       'no-restricted-imports': [
         'error',
         {
-          name: 'client-no-server',
-          message: 'Client layer cannot import from Server layer',
+          patterns: [
+            {
+              group: ['@/server/*', '@/server/**'],
+              message: 'Client layer cannot import from Server layer',
+            },
+          ],
         },
       ],
     },
@@ -108,39 +118,51 @@ const eslintConfig = [
       'no-restricted-imports': [
         'error',
         {
-          name: 'server-no-client',
-          message: 'Server layer cannot import from Client layer',
-        },
-        {
-          name: 'server-no-ui',
-          message: 'Server layer cannot import from UI layer',
+          patterns: [
+            {
+              group: ['@/client/*', '@/client/**'],
+              message: 'Server layer cannot import from Client layer',
+            },
+            {
+              group: ['@/ui/*', '@/ui/**'],
+              message: 'Server layer cannot import from UI layer',
+            },
+          ],
         },
       ],
     },
   },
 
   // Infra layer - leaf node, cannot import from other layers
+  // Exceptions:
+  //   - infra/config/runtime needs getDefaultTenantId for config bootstrapping
+  //   - infra/llm needs server repos/services for tenant resolution and media processing
   {
     name: 'infra-boundaries',
     files: ['src/infra/**/*.{ts,tsx}'],
+    ignores: ['src/infra/config/runtime/**', 'src/infra/llm/**'],
     rules: {
       'no-restricted-imports': [
         'error',
         {
-          name: 'infra-no-client',
-          message: 'Infra layer cannot import from Client layer',
-        },
-        {
-          name: 'infra-no-ui',
-          message: 'Infra layer cannot import from UI layer',
-        },
-        {
-          name: 'infra-no-server-services',
-          message: 'Infra layer cannot import from Server Services',
-        },
-        {
-          name: 'infra-no-server-repos',
-          message: 'Infra layer cannot import from Server Repos',
+          patterns: [
+            {
+              group: ['@/client/*', '@/client/**'],
+              message: 'Infra layer cannot import from Client layer',
+            },
+            {
+              group: ['@/ui/*', '@/ui/**'],
+              message: 'Infra layer cannot import from UI layer',
+            },
+            {
+              group: ['@/server/services/*', '@/server/services/**'],
+              message: 'Infra layer cannot import from Server Services',
+            },
+            {
+              group: ['@/server/repos/*', '@/server/repos/**'],
+              message: 'Infra layer cannot import from Server Repos',
+            },
+          ],
         },
       ],
     },
@@ -149,64 +171,69 @@ const eslintConfig = [
   // =============================================================================
   // Thin App Layer Rules (src/app/**)
   // =============================================================================
-  // Block direct Payload usage in src/app/**
+  // Block direct Payload usage in src/app/** (client components, shared utils)
+  // Exceptions:
+  //   - Server components (page.tsx, layout.tsx), route handlers, and server actions use getPayload
+  //   - Payload blocks (RenderBlocks, RelatedPosts) are UI components housed under server/payload
   {
     name: 'thin-app-payload-block',
     files: ['src/app/**/*.{ts,tsx}'],
+    ignores: [
+      'src/app/**/page.tsx',
+      'src/app/**/layout.tsx',
+      'src/app/**/route.ts',
+      'src/app/**/*-action.ts',
+      'src/app/**/*-action.tsx',
+      'src/app/**/actions/**',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
         {
-          name: 'payload-import',
-          importNames: ['default', 'getPayload'],
-          message:
-            'Direct Payload access is forbidden in src/app/**. Use @/server/repos/queries/** or @/server/services/**',
-        },
-        {
-          name: 'server-payload-import',
-          message: 'Direct Payload access is forbidden in src/app/**',
-        },
-        {
-          name: 'collections-import',
-          message: 'Direct collection access is forbidden in src/app/**',
-        },
-        {
-          name: 'fields-import',
-          message: 'Direct field access is forbidden in src/app/**',
-        },
-        {
-          name: 'access-import',
-          message: 'Direct access control imports are forbidden in src/app/**',
+          paths: [
+            {
+              name: 'payload',
+              importNames: ['getPayload'],
+              message: 'Direct Payload access is forbidden in src/app/**. Use @/server/services/**',
+            },
+          ],
+          patterns: [
+            {
+              group: [
+                '@/server/payload/*',
+                '@/server/payload/**',
+                '!@/server/payload/blocks/*',
+                '!@/server/payload/blocks/**',
+              ],
+              message: 'Direct Payload internals are forbidden in src/app/**',
+            },
+          ],
         },
       ],
     },
   },
 
   // Block repos in route handlers and server actions
+  // Exception: Some routes use lightweight repo queries directly (tenant lookup, simple queries)
   {
     name: 'thin-app-routes-services-only',
     files: ['src/app/**/route.ts', 'src/app/**/actions/**'],
+    ignores: ['src/app/api/blob/**', 'src/app/api/study-plan/**', 'src/app/api/chapters/**'],
     rules: {
       'no-restricted-imports': [
         'error',
         {
-          name: 'repos-in-routes',
-          message:
-            'Route handlers and server actions must call services only. Use @/server/services/**',
+          patterns: [
+            {
+              group: ['@/server/repos/*', '@/server/repos/**'],
+              message:
+                'Route handlers and server actions must call services only. Use @/server/services/**',
+            },
+          ],
         },
       ],
     },
   },
-
-  // =============================================================================
-  // Folder Structure Rules
-  // =============================================================================
-  // Only allow specific top-level folders under src/
-  // Allowed: app, client, infra, server, ui, i18n
-  //
-  // NOTE: This rule requires a custom ESLint plugin or script validation.
-  // The no-restricted-imports rule in flat config doesn't support regex patterns.
-  // Consider adding a pre-commit hook or build script to validate folder structure.
 ]
 
 export default eslintConfig

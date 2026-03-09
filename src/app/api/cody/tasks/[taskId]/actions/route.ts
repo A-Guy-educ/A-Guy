@@ -56,10 +56,7 @@ function withActor(message: string, actor?: string): string {
   return actor ? `${message} _(by @${actor})_` : message
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ taskId: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   // Skip auth check for now - open access for testing
 
   try {
@@ -106,21 +103,30 @@ export async function POST(
       case 'abort': {
         // Try to find and cancel in-progress workflow runs for this task
         const runs = await fetchWorkflowRuns({ perPage: 30 })
-        const run = runs.find((r) => 
-          r.status === 'in_progress' && 
-          (r.display_title?.includes(taskId) || r.html_url.includes(taskId) || r.html_url.includes(issueNumber.toString()))
+        const run = runs.find(
+          (r) =>
+            r.status === 'in_progress' &&
+            (r.display_title?.includes(taskId) ||
+              r.html_url.includes(taskId) ||
+              r.html_url.includes(issueNumber.toString())),
         )
-        
+
         // Post comment regardless of whether we found a running workflow
         // This ensures the issue is marked as stopped even if workflow already finished
-        await postComment(issueNumber, withActor('## 🛑 Operation stopped - Run aborted by user.', actor))
-        
+        await postComment(
+          issueNumber,
+          withActor('## 🛑 Operation stopped - Run aborted by user.', actor),
+        )
+
         if (run) {
           await cancelWorkflowRun(run.id)
           return NextResponse.json({ success: true, message: 'Workflow cancelled' })
         }
         // Return success anyway - the comment was posted
-        return NextResponse.json({ success: true, message: 'Marked as stopped (no running workflow)' })
+        return NextResponse.json({
+          success: true,
+          message: 'Marked as stopped (no running workflow)',
+        })
       }
 
       case 'close': {
@@ -132,7 +138,12 @@ export async function POST(
 
         // Delete branch if exists
         const branchName = await findTaskBranch(taskId)
-        if (branchName && branchName !== 'dev' && branchName !== 'main' && branchName !== 'master') {
+        if (
+          branchName &&
+          branchName !== 'dev' &&
+          branchName !== 'main' &&
+          branchName !== 'master'
+        ) {
           await deleteBranch(branchName)
         }
 
@@ -143,7 +154,10 @@ export async function POST(
         // Clear server-side cache so the next poll reflects the closed state immediately
         clearCache()
 
-        return NextResponse.json({ success: true, message: 'Issue closed (PR closed, branch deleted)' })
+        return NextResponse.json({
+          success: true,
+          message: 'Issue closed (PR closed, branch deleted)',
+        })
       }
 
       case 'close-pr': {
@@ -168,12 +182,25 @@ export async function POST(
         }
 
         // Delete branch if exists
-        if (branchName && branchName !== 'dev' && branchName !== 'main' && branchName !== 'master') {
+        if (
+          branchName &&
+          branchName !== 'dev' &&
+          branchName !== 'main' &&
+          branchName !== 'master'
+        ) {
           await deleteBranch(branchName)
         }
 
         // Remove lifecycle labels
-        const labelsToRemove = ['cody:done', 'cody:failed', 'cody:building', 'cody:planning', 'cody:review', 'hard-stop', 'risk-gated']
+        const labelsToRemove = [
+          'cody:done',
+          'cody:failed',
+          'cody:building',
+          'cody:planning',
+          'cody:review',
+          'hard-stop',
+          'risk-gated',
+        ]
         for (const lbl of labelsToRemove) {
           try {
             await removeLabel(issueNumber, lbl)

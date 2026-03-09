@@ -115,12 +115,18 @@ export const POST = withApiHandler<CreateRequest, unknown>(
     }
 
     // Step 3: Fetch ExtractionLog and enforce preview gate
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const extractionLog = await (payload as any).findByID({
-      collection: 'extraction-logs',
-      id: extractionLogId,
-      depth: 0,
-    })
+
+    let extractionLog: ExtractionLogMinimal | null = null
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      extractionLog = await (payload as any).findByID({
+        collection: 'extraction-logs',
+        id: extractionLogId,
+        depth: 0,
+      })
+    } catch {
+      // findByID throws for non-existent documents in Payload v3
+    }
 
     if (!extractionLog) {
       return NextResponse.json(

@@ -9,6 +9,12 @@ import { logger } from './logger'
 import { execFileSync } from 'child_process'
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+const GH_API_TIMEOUT = 30_000 // 30 seconds max per gh CLI call
+
+// ============================================================================
 // Synchronous Sleep Helper
 // ============================================================================
 
@@ -46,6 +52,7 @@ export function postComment(issueNumber: number, body: string): void {
         input: body,
         stdio: ['pipe', 'inherit', 'inherit'],
         env,
+        timeout: GH_API_TIMEOUT,
       })
       return // Success
     } catch (error) {
@@ -76,7 +83,7 @@ export function getIssueBody(issueNumber: number): string | null {
     const output = execFileSync(
       'gh',
       ['issue', 'view', String(issueNumber), '--json', 'body', '--jq', '.body'],
-      { encoding: 'utf-8' },
+      { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
     )
     return output.trim() || null
   } catch (error) {
@@ -103,7 +110,7 @@ export function getIssue(issueNumber: number): { body: string | null; title: str
         '--jq',
         '{body: .body, title: .title}',
       ],
-      { encoding: 'utf-8' },
+      { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
     )
     const data = JSON.parse(output)
     return {
@@ -126,7 +133,7 @@ export function getIssueTitle(issueNumber: number): string | null {
     const output = execFileSync(
       'gh',
       ['issue', 'view', String(issueNumber), '--json', 'title', '--jq', '.title'],
-      { encoding: 'utf-8' },
+      { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
     )
     return output.trim() || null
   } catch (error) {
@@ -154,7 +161,11 @@ export function editComment(commentId: string, body: string): void {
     execFileSync(
       'gh',
       ['api', `repos/${repo}/issues/comments/${commentId}`, '-X', 'PATCH', '--input', '-'],
-      { input: JSON.stringify({ body }), stdio: ['pipe', 'inherit', 'inherit'] },
+      {
+        input: JSON.stringify({ body }),
+        stdio: ['pipe', 'inherit', 'inherit'],
+        timeout: GH_API_TIMEOUT,
+      },
     )
   } catch (error) {
     logger.error({ err: error }, `Failed to edit comment ${commentId}:`)
@@ -181,7 +192,7 @@ export function getLatestIssueComment(issueNumber: number, excludeAuthor?: strin
         '--jq',
         `[.comments[] | select(.author.login != "${exclude}" and (.body | startswith("/cody") | not))] | last | .body`,
       ],
-      { encoding: 'utf-8' },
+      { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
     )
     return output.trim() || null
   } catch {
@@ -201,7 +212,9 @@ export function getLatestApprovalComment(
 
   try {
     const exclude = (excludeAuthor || 'github-actions[bot]').replace(/[^a-zA-Z0-9\[\]_\-]/g, '')
-    // Get comments from users (not bot) that contain approve/reject
+    // Get comments from users (not bot) that contain approval/rejection keywords
+    // Matches: approve, approved, yes, go, proceed, y, continue, reject, rejected, no, cancel, stop, n
+    // Uses 'i' flag for case-insensitive matching
     const output = execFileSync(
       'gh',
       [
@@ -211,9 +224,9 @@ export function getLatestApprovalComment(
         '--json',
         'comments',
         '--jq',
-        `[.comments[] | select(.author.login != "${exclude}" and (.body | test("^[/@]cody (approve|reject)")))] | last | .body`,
+        `[.comments[] | select(.author.login != "${exclude}" and (.body | test("^[/@]cody\\s+(approve|approved|yes|go|proceed|y|continue|reject|rejected|no|cancel|stop|n)(\\s|$)"; "i")))] | last | .body`,
       ],
-      { encoding: 'utf-8' },
+      { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
     )
     return output.trim() || null
   } catch {
@@ -249,7 +262,7 @@ export function discoverTaskIdFromIssue(issueNumber: number): string | null {
     const output = execFileSync(
       'gh',
       ['issue', 'view', String(issueNumber), '--json', 'comments', '--jq', '.comments[].body'],
-      { encoding: 'utf-8' },
+      { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
     )
     // Use canonical task-ID marker regex
     const match = output.match(TASK_ID_MARKER_REGEX)
@@ -331,6 +344,7 @@ export function addIssueLabel(issueNumber: number, label: string): void {
   try {
     execFileSync('gh', ['issue', 'edit', String(issueNumber), '--add-label', label], {
       stdio: ['inherit', 'inherit', 'inherit'],
+      timeout: GH_API_TIMEOUT,
     })
     logger.info(`  Added label "${label}" to issue #${issueNumber}`)
   } catch (error) {
@@ -347,6 +361,7 @@ export function removeIssueLabel(issueNumber: number, label: string): void {
   try {
     execFileSync('gh', ['issue', 'edit', String(issueNumber), '--remove-label', label], {
       stdio: ['inherit', 'inherit', 'inherit'],
+      timeout: GH_API_TIMEOUT,
     })
     logger.info(`  Removed label "${label}" from issue #${issueNumber}`)
   } catch (error) {
@@ -449,7 +464,10 @@ export function setLifecycleLabel(issueNumber: number, label: string): void {
         '--add-label',
         label,
       ]
-      execFileSync('gh', args, { stdio: ['inherit', 'inherit', 'inherit'] })
+      execFileSync('gh', args, {
+        stdio: ['inherit', 'inherit', 'inherit'],
+        timeout: GH_API_TIMEOUT,
+      })
       logger.info(`  Set lifecycle label "${label}" on issue #${issueNumber}`)
       return // Success
     } catch (error) {
@@ -545,6 +563,7 @@ export function setClassificationLabels(
   try {
     execFileSync('gh', ['issue', 'edit', String(issueNumber), '--add-label', labels.join(',')], {
       stdio: ['inherit', 'inherit', 'inherit'],
+      timeout: GH_API_TIMEOUT,
     })
     logger.info(`  Set classification labels [${labels.join(', ')}] on issue #${issueNumber}`)
   } catch (error) {
@@ -566,7 +585,7 @@ export function setProfileLabel(issueNumber: number, profile: 'lightweight' | 's
     execFileSync(
       'gh',
       ['issue', 'edit', String(issueNumber), '--remove-label', otherLabel, '--add-label', label],
-      { stdio: ['inherit', 'inherit', 'inherit'] },
+      { stdio: ['inherit', 'inherit', 'inherit'], timeout: GH_API_TIMEOUT },
     )
     logger.info(`  Set profile label "${label}" on issue #${issueNumber}`)
   } catch (error) {
@@ -587,6 +606,7 @@ export function closeIssue(
   try {
     execFileSync('gh', ['issue', 'close', String(issueNumber), '--reason', reason], {
       stdio: ['inherit', 'inherit', 'inherit'],
+      timeout: GH_API_TIMEOUT,
     })
     logger.info(`  Closed issue #${issueNumber} (${reason})`)
   } catch (error) {
@@ -607,7 +627,7 @@ export function closeLinkedPR(issueNumber: number): boolean {
     const listResult = execFileSync(
       'gh',
       ['pr', 'list', '--search', `closes:#${issueNumber}`, '--json', 'number'],
-      { encoding: 'utf-8' },
+      { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
     )
     const prs = JSON.parse(listResult) as { number: number }[]
 
@@ -621,6 +641,7 @@ export function closeLinkedPR(issueNumber: number): boolean {
     // Close PR and delete branch in one command
     execFileSync('gh', ['pr', 'close', String(prNumber), '--delete-branch'], {
       stdio: ['inherit', 'inherit', 'inherit'],
+      timeout: GH_API_TIMEOUT,
     })
     logger.info(`  ✅ Closed PR #${prNumber} and deleted branch`)
     return true

@@ -11,6 +11,7 @@ import type { ActionRequest, InspectorConfig, InspectorContext, InspectorResult 
 import { JsonStateStore } from './state'
 import { shouldDedup, markExecuted, cleanupExpiredDedup } from './dedup'
 import { createGitHubClient } from '../clients/github'
+import { createSlackClient } from '../clients/slack'
 
 /**
  * Run the Inspector with the given configuration.
@@ -27,7 +28,8 @@ export async function runInspector(config: InspectorConfig): Promise<InspectorRe
 
   // Create GitHub client
   const token = process.env.GH_TOKEN || ''
-  const github = createGitHubClient(repo, token)
+  const patToken = process.env.GH_PAT || undefined
+  const github = createGitHubClient(repo, token, patToken)
 
   // Create logger
   const logger = pino({
@@ -45,6 +47,9 @@ export async function runInspector(config: InspectorConfig): Promise<InspectorRe
 
   const timestamp = new Date().toISOString()
 
+  // Create Slack client
+  const slack = createSlackClient(process.env.SLACK_WEBHOOK_URL)
+
   // Create context
   const ctx: InspectorContext = {
     repo,
@@ -54,6 +59,7 @@ export async function runInspector(config: InspectorConfig): Promise<InspectorRe
     log: logger,
     runTimestamp: timestamp,
     cycleNumber,
+    slack,
   }
 
   // Clean up expired dedup entries (older than 24 hours)

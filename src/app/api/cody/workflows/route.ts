@@ -6,8 +6,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 
-import { handleCodyApiError } from '@/lib/cody/github-error-handler'
-import { workflowsQuerySchema } from '@/lib/cody/schemas'
+import { handleCodyApiError } from '@/ui/cody/github-error-handler'
+import { workflowsQuerySchema } from '@/ui/cody/schemas'
 import { parseQueryParams } from '@/server/api/responses'
 import { requireAuth } from '@/ui/cody/auth'
 import { fetchWorkflowRuns } from '@/ui/cody/github-client'

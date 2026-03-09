@@ -21,22 +21,31 @@ You are an expert Payload CMS developer. When working with Payload projects, fol
 
 ```
 src/
-├── app/
-│   ├── (frontend)/          # Frontend routes
-│   └── (payload)/           # Payload admin routes
-├── collections/              # Collection configs
-├── globals/                 # Global configs
-├── ui/                      # React components (PAYLOAD-FIRST - use this directory)
-│   ├── admin/               # Payload admin UI components
-│   └── web/                 # Frontend/consumer UI components
-├── hooks/                   # Hook functions
-├── access/                  # Access control functions
-├── server/                  # Server-side code
-└── payload.config.ts        # Main config
+├── app/                         # Next.js App Router
+│   ├── (frontend)/              # Frontend routes
+│   ├── (payload)/               # Payload admin routes
+│   └── api/                     # API routes
+├── client/                      # Client-side hooks, state, utils
+├── infra/                       # Infrastructure (analytics, auth, blob, LLM, config)
+├── server/                      # Server-side code
+│   ├── payload/
+│   │   ├── collections/         # Collection configs
+│   │   ├── globals/             # Global configs
+│   │   ├── hooks/              # Hook functions
+│   │   ├── access/             # Access control functions
+│   │   ├── endpoints/          # Custom endpoints
+│   │   └── jobs/               # Background jobs
+│   └── services/                # Business logic services
+├── ui/                          # React components
+│   ├── admin/                   # Payload admin UI components
+│   ├── cody/                    # Cody pipeline components
+│   └── web/                     # Frontend/consumer UI components
+├── i18n/                        # Internationalization
+├── types/                       # Type declarations
+└── payload.config.ts            # Main config
 ```
 
-> ⚠️ **DEPRECATED**: `src/components/` is deprecated. Migrate all components to `src/ui/web/` or `src/ui/admin/`.
-> See [src/FILE_STRUCTURE_GUIDE.md](./src/FILE_STRUCTURE_GUIDE.md) for migration patterns.
+> **Note**: Do NOT create a `lib/` folder under `src/`. Place shared utilities in appropriate domain-specific directories (e.g., `src/ui/cody/`, `src/server/services/`, `src/infra/`).
 
 ## Configuration
 
@@ -643,7 +652,7 @@ export default async function Page() {
 
 The Admin Panel can be extensively customized using React Components. Custom Components can be Server Components (default) or Client Components.
 
-> **Note**: The component examples below demonstrate Payload CMS patterns and capabilities. They are illustrative examples showing what's possible, not documentation of components in this specific project. See `src/components/` for actual implementations in this project.
+> **Note**: The component examples below demonstrate Payload CMS patterns and capabilities. They are illustrative examples showing what's possible, not documentation of components in this specific project. See `src/ui/` for actual implementations in this project.
 
 ### Defining Components
 
@@ -870,39 +879,24 @@ export const Posts: CollectionConfig = {
 
 ### Styling Components
 
-Components can be styled using SCSS files. Import a `.scss` file colocated with your component:
+This project uses **Tailwind CSS** for styling. Use Tailwind utility classes directly in JSX:
 
 ```tsx
-import './index.scss' // Component-specific styles
-
 export function MyComponent() {
-  return <div className="my-component">Content</div>
+  return <div className="bg-muted text-foreground p-4 rounded-md">Content</div>
 }
 ```
 
-```scss
-// Use Payload's CSS variables
-.my-component {
-  background-color: var(--theme-elevation-500);
-  color: var(--theme-text);
-  padding: var(--base);
-  border-radius: var(--border-radius-m);
-}
+For Payload admin components, you can use Payload's CSS variables via Tailwind's arbitrary value syntax:
 
-// Import Payload's SCSS library for mixins and utilities
-@import '~@payloadcms/ui/scss';
-
-.my-component {
-  @include mid-break {
-    background-color: var(--theme-elevation-900);
-  }
-}
+```tsx
+<div className="bg-[var(--theme-elevation-500)] text-[var(--theme-text)]">Admin content</div>
 ```
 
-**Project Convention**: This project uses `index.scss` naming convention. Place styles alongside your component file:
+**Project Convention**: Place components alongside their related feature code:
 
-- Component: `src/components/MyComponent/index.tsx`
-- Styles: `src/components/MyComponent/index.scss`
+- Admin components: `src/ui/admin/MyComponent/index.tsx`
+- Web components: `src/ui/web/MyComponent/index.tsx`
 
 ### Type Safety
 
@@ -945,7 +939,7 @@ export default buildConfig({
 
 ### Project-Specific Components
 
-This project includes the following custom components in `src/components/`:
+This project includes the following custom components in `src/ui/`:
 
 - **AdminBar** - Frontend admin controls with editing shortcuts
 - **BeforeDashboard** - Dashboard header with seed button
@@ -1188,8 +1182,8 @@ For deeper exploration of specific topics, refer to the README files throughout 
 | Admin Components | `docs/admin-components/README.md` |
 | AI Services      | `docs/ai-services/README.md`      |
 | Block Rendering  | `docs/block-rendering/README.md`  |
-| Collections      | `src/collections/README.md`       |
-| Components       | `src/components/README.md`        |
+| Collections      | `src/server/payload/collections/` |
+| Components       | `src/ui/`                         |
 | Course Hierarchy | `docs/course-hierarchy/README.md` |
 | Exercises        | `docs/exercises/README.md`        |
 | Exercise Import  | `docs/exercise-import/README.md`  |

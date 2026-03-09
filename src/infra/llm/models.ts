@@ -104,10 +104,10 @@ export const MODEL_REGISTRY: Record<AIModelKey, Omit<AIModel, 'name'>> = {
  */
 export const PROVIDER_MODEL_NAMES: Record<LLMProviderType, Record<AIModelKey, string>> = {
   [LLMProviderType.GEMINI]: {
-    IMAGE_TO_EXERCISE: 'gemini-2.0-flash-001',
-    EXERCISE_CHAT: 'gemini-2.0-flash-001',
-    PDF_TO_EXERCISE: 'gemini-2.0-flash-001',
-    ANSWER_VALIDATION: 'gemini-2.0-flash-001',
+    IMAGE_TO_EXERCISE: 'gemini-3.1-pro',
+    EXERCISE_CHAT: 'gemini-3.1-pro',
+    PDF_TO_EXERCISE: 'gemini-3.1-pro',
+    ANSWER_VALIDATION: 'gemini-3.1-pro',
   },
   [LLMProviderType.OPENAI_COMPATIBLE]: {
     IMAGE_TO_EXERCISE: 'MiniMax-M2.1',

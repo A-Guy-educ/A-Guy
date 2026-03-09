@@ -1,9 +1,9 @@
-import type { User } from 'payload'
-import config from '@payload-config'
-import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
 import type { Lesson, Prompt } from '@/payload-types'
 import { requireAdminOrTestSecret } from '@/server/api/auth'
+import config from '@payload-config'
+import { NextRequest, NextResponse } from 'next/server'
+import type { User } from 'payload'
+import { getPayload } from 'payload'
 
 type ErrorCode =
   | 'UNAUTHORIZED'
@@ -101,6 +101,21 @@ export async function POST(request: NextRequest) {
       overrideAccess: true,
     })
 
+    // Fetch published context_extractor prompts for this tenant
+    const contextExtractors = await payload.find({
+      collection: 'prompts',
+      where: {
+        and: [
+          { tenant: { equals: tenantId } },
+          { status: { equals: 'published' } },
+          { usage: { equals: 'context_extractor' } },
+        ],
+      },
+      limit: 100,
+      depth: 0,
+      overrideAccess: true,
+    })
+
     // Return in PromptOption format used by UI
     // v2.1 Fix 1: Include status field in response
     const mapPromptToOption = (p: Prompt): PromptOption => ({
@@ -115,9 +130,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       extractors: extractors.docs.map(mapPromptToOption),
       verifiers: verifiers.docs.map(mapPromptToOption),
+      contextExtractors: contextExtractors.docs.map(mapPromptToOption),
     })
   } catch (error) {
-    console.error('[PromptsForConversion] Error:', error)
+    const Sentry = await import('@sentry/nextjs')
+    Sentry.captureException(error, { tags: { route: '/api/prompts/for-conversion' } })
     return errorResponse('INTERNAL_ERROR', 'Internal server error', 500)
   }
 }

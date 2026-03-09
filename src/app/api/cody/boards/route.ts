@@ -9,7 +9,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 
-import { handleCodyApiError } from '@/lib/cody/github-error-handler'
+import { handleCodyApiError } from '@/ui/cody/github-error-handler'
 import { fetchLabels, fetchMilestones } from '@/ui/cody/github-client'
 import type { Board } from '@/ui/cody/types'
 

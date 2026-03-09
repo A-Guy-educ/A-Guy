@@ -13,7 +13,7 @@ import type { GitHubClient, IssueInfo, IssueComment } from '../core/types'
 /**
  * Create a GitHub client wrapper around scripts/cody/github-api.ts functions.
  */
-export function createGitHubClient(repo: string, token: string): GitHubClient {
+export function createGitHubClient(repo: string, token: string, patToken?: string): GitHubClient {
   const gh = (args: string[], input?: string): string => {
     try {
       return execFileSync('gh', args, {
@@ -26,15 +26,6 @@ export function createGitHubClient(repo: string, token: string): GitHubClient {
       // Many gh commands are fire-and-forget; return empty on failure
       return ''
     }
-  }
-
-  const ghRequired = (args: string[], input?: string): string => {
-    return execFileSync('gh', args, {
-      input,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'inherit'],
-      env: { ...process.env, GH_TOKEN: token },
-    }).trim()
   }
 
   return {
@@ -95,7 +86,13 @@ export function createGitHubClient(repo: string, token: string): GitHubClient {
       }
       args.push(`--repo=${repo}`)
 
-      ghRequired(args)
+      // Workflow dispatch requires a PAT — github.token cannot trigger other workflows
+      const dispatchToken = patToken || token
+      execFileSync('gh', args, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'inherit'],
+        env: { ...process.env, GH_TOKEN: dispatchToken },
+      })
     },
 
     addLabel(issueNumber: number, label: string): void {

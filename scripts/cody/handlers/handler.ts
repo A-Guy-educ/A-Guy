@@ -8,7 +8,7 @@
 import type { PipelineContext, StageDefinition, StageResult, StageType } from '../engine/types'
 import { AgentHandler } from './agent-handler'
 import { ScriptedVerifyHandler } from './scripted-handler'
-import { GitCommitHandler, GitPrHandler } from './git-handler'
+import { GitCommitHandler, GitCommitFixHandler, GitPrHandler } from './git-handler'
 import { GateHandler } from './gate-handler'
 
 /**
@@ -31,6 +31,8 @@ export function getHandler(stageName: string, stageType: StageType): StageHandle
   switch (stageName) {
     case 'commit':
       return new GitCommitHandler()
+    case 'commit-fix':
+      return new GitCommitFixHandler()
     case 'pr':
       return new GitPrHandler()
     case 'verify':

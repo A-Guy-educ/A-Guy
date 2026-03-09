@@ -6,9 +6,9 @@ import {
   taskIdSchema,
   pipelineParamsSchema,
   workflowsQuerySchema,
-} from '@/lib/cody/schemas'
+} from '@/ui/cody/schemas'
 import { ApiErrors } from '@/server/api/responses'
-import { handleCodyApiError } from '@/lib/cody/github-error-handler'
+import { handleCodyApiError } from '@/ui/cody/github-error-handler'
 import { ZodError } from 'zod'
 
 describe('Cody API Schemas', () => {

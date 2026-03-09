@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import configPromise from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import type { User } from 'payload'
@@ -96,6 +97,11 @@ export function withApiHandler<TBody = unknown, TQuery = unknown>(
         },
         'API handler error',
       )
+
+      Sentry.captureException(error, {
+        tags: { route: request.nextUrl.pathname, isOperational },
+        extra: { requestId },
+      })
 
       if (isOperational) {
         return apiError(

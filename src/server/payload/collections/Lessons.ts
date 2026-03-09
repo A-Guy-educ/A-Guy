@@ -18,6 +18,9 @@ export const Lessons: CollectionConfig = {
   hooks: {
     beforeChange: [
       ({ data }) => {
+        if (data?.slug) {
+          data.slug = data.slug.trim()
+        }
         if (data?.title && !data?.slug) {
           // Generate unique slug from title
           // Include timestamp for uniqueness, falling back to random if timestamp not available
