@@ -77,6 +77,680 @@
           "timestamp": "2026-03-09T10:00:10.287Z"
         }
       ]
+    },
+    {
+      "stage": "spec",
+      "sessionId": "ses_32de1b9e2ffe1JYf3xfnh1W1D1",
+      "startedAt": "2026-03-09T10:22:05.341Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "spec",
+          "text": "\"CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/ directory.\n\nTask ID: 260309-auto-822\n\n\nRead these files for context:\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/task.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/task.json\n\nWrite your output to /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/spec.md\"",
+          "tools": [],
+          "timestamp": "2026-03-09T10:22:05.357Z",
+          "model": "{\"providerID\":\"openai\",\"modelID\":\"gpt-5.2\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "spec",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:22:05.424Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "spec",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:22:25.475Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "spec",
+          "text": "",
+          "tools": [
+            "task",
+            "task"
+          ],
+          "timestamp": "2026-03-09T10:22:27.374Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "spec",
+          "text": "",
+          "tools": [
+            "apply_patch"
+          ],
+          "timestamp": "2026-03-09T10:25:02.637Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "spec",
+          "text": "Done.",
+          "tools": [],
+          "timestamp": "2026-03-09T10:26:04.360Z"
+        }
+      ]
+    },
+    {
+      "stage": "gap",
+      "sessionId": "ses_32dddf50fffeWWumx5V37VDFaY",
+      "startedAt": "2026-03-09T10:26:12.336Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "gap",
+          "text": "\"CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/ directory.\n\nTask ID: 260309-auto-822\n\n\nRead these files for context:\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/spec.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/task.json\n\nWrite your output to /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/gap.md\"",
+          "tools": [],
+          "timestamp": "2026-03-09T10:26:12.350Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:26:12.404Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Let me explore the codebase to understand the existing V3 converter, block types, and related patterns.",
+          "tools": [
+            "grep",
+            "grep",
+            "glob"
+          ],
+          "timestamp": "2026-03-09T10:26:27.863Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-09T10:26:40.560Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:26:46.921Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read",
+            "invalid"
+          ],
+          "timestamp": "2026-03-09T10:26:52.124Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-09T10:26:58.510Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:27:06.051Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-09T10:27:10.677Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:27:23.398Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now let me look at the defaults and the Exercises collection:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:27:27.156Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-09T10:27:32.234Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-09T10:27:40.582Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-09T10:27:48.021Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:27:52.932Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-09T10:27:57.407Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now I have a comprehensive understanding of the codebase. Let me identify the gaps between the spec and the existing codebase.\n\nBased on my analysis:\n\n1. **No existing \"V3 converter\" module found** - The spec assumes an existing V3 converter exists, but I couldn't find a specific module with that name\n2. **V3 import payload format not defined** - The spec mentions \"V3 question/subquestion content\" but doesn't specify the exact input format\n3. **ExerciseAssets access control** - The current `create: authenticated` allows any logged-in user, which may not be restrictive enough for the spec's NFR-003 requirement\n4. **No existing segmentation logic** - The spec requires sequential segmentation for mixed-format subquestions, but no such logic exists\n5. **No fallback logic for asset creation failures** - The spec mentions FR-010 (degraded behavior) but this doesn't exist\n6. **Latex block** - The spec mentions 11 block types but doesn't explicitly list Latex, which exists in the codebase",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-09T10:28:01.977Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now let me update the spec.md to address the identified gaps:",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-09T10:29:03.501Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-09T10:29:14.359Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-09T10:29:30.672Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-09T10:29:46.649Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-09T10:29:55.721Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:30:09.588Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-09T10:30:14.239Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "I have completed the gap analysis for task 260309-auto-822. Here's a summary:\n\n## Gap Analysis Summary\n\n**Gaps Found:** 7  \n**Spec Revised:** Yes\n\n### Key Gaps Identified:\n\n1. **Missing V3 Converter Module** - No existing V3 converter found; must be implemented in existing exercise endpoints directory\n2. **V3 Input Payload Schema Not Defined** - Critical gap about input format\n3. **Latex Block Missing** - Added to supported block types\n4. **ExerciseAssets Access Control** - Clarified privileged execution requirements\n5. **No Segmentation Logic** - Added requirement for deterministic segmentation algorithm\n6. **No Fallback Logic** - Clarified degraded behavior requirements\n7. **Block Schema Variants** - Clarified mapping to `question_select` with variants\n\n### Changes Made to Spec:\n- Added FR-004-bis: Segmentation algorithm requirement\n- Updated FR-005: Added Latex, clarified question_select variants mapping\n- Added NFR-009: Implementation location requirement\n- Updated Guardrails: Added entrypoint authorization requirement\n- Added Open Questions #6-9: About implementation, permissions, legacy content, segmentation\n\nThe spec is now more aligned with the actual codebase patterns and addresses the identified gaps. The gap.md file documents all findings and the spec.md has been revised accordingly.",
+          "tools": [],
+          "timestamp": "2026-03-09T10:31:14.975Z"
+        }
+      ]
+    },
+    {
+      "stage": "architect",
+      "sessionId": "ses_32dd90b42ffenvZnJnDlVQxNuT",
+      "startedAt": "2026-03-09T10:31:34.333Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "architect",
+          "text": "\"Task ID: 260309-auto-822\n\n\nTask Type: implement_feature\n\n\nRead these files for context:\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/spec.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/clarified.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/rerun-feedback.md\n\nWrite your output to /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/plan.md\"",
+          "tools": [],
+          "timestamp": "2026-03-09T10:31:34.348Z",
+          "model": "{\"providerID\":\"anthropic\",\"modelID\":\"claude-opus-4-6\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:31:34.402Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me examine the existing V3 converter and related code to understand the current implementation:",
+          "tools": [
+            "glob",
+            "glob",
+            "grep"
+          ],
+          "timestamp": "2026-03-09T10:31:47.587Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:31:54.527Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me examine the Exercise schemas, block types, and the existing V3 converter patterns:",
+          "tools": [
+            "glob",
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-09T10:31:58.249Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:32:04.664Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me look at the ExerciseAssets collection, the LLM prompt, and existing test patterns:",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:32:09.376Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me look at existing tests and the data extractor service for the V3 extraction response:",
+          "tools": [
+            "glob",
+            "glob",
+            "glob",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:32:15.724Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:32:21.929Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me check if there's a previous plan.md to review:",
+          "tools": [
+            "glob",
+            "read",
+            "grep"
+          ],
+          "timestamp": "2026-03-09T10:32:27.864Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:32:33.280Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now I have a thorough understanding of the codebase. Let me look at the Exercises collection config for completeness:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:32:37.800Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now I have comprehensive understanding of the codebase. Let me write the plan:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-09T10:32:41.634Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "The plan has been written to `/Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/plan.md`. \n\nThe plan contains 10 incremental steps covering:\n\n1. **Content Feature Detector** — Analyze subquestion content for format signals\n2. **Sequential Segmenter** — Split mixed content into ordered segments  \n3. **Block Mapper** — Map segments to native block types with schema validation\n4. **HTML/SVG Sanitization** — Server-side sanitization utilities\n5. **Conversion Report** — Structured logging without sensitive data\n6. **Enhanced Transform Integration** — Wire segmenter + mapper into existing V3 transform\n7. **Asset Integration** — ExerciseAssets creation for media/SVG with privileged access\n8. **Table Parser** — Parse HTML/markdown tables to `question_table` schema\n9. **Matching Parser** — Parse matching structures to `question_matching` schema\n10. **End-to-End Integration Tests** — Full pipeline verification\n\nEach step has specific test gates (51 total test cases), file paths, and acceptance criteria. Backward compatibility with existing V3 transform tests is verified throughout.",
+          "tools": [],
+          "timestamp": "2026-03-09T10:34:50.126Z"
+        }
+      ]
+    },
+    {
+      "stage": "plan-gap",
+      "sessionId": "ses_32dd5c960ffeG5mt0MZ3XSoKuR",
+      "startedAt": "2026-03-09T10:35:07.807Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "plan-gap",
+          "text": "\"Task ID: 260309-auto-822\n\n\nRead these files for context:\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/spec.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/plan.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/task.json\n\nWrite your output to /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260309-auto-822/plan-gap.md\"",
+          "tools": [],
+          "timestamp": "2026-03-09T10:35:07.825Z",
+          "model": "{\"providerID\":\"openai\",\"modelID\":\"gpt-5.3-codex\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:35:07.884Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "glob",
+            "glob",
+            "glob",
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-09T10:35:25.258Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:35:32.144Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "glob",
+            "glob",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:35:36.164Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "grep",
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-09T10:35:43.349Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:35:48.172Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-09T10:35:50.682Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "grep",
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-09T10:35:59.673Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:36:10.308Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-09T10:36:16.448Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "apply_patch"
+          ],
+          "timestamp": "2026-03-09T10:36:21.894Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "apply_patch"
+          ],
+          "timestamp": "2026-03-09T10:37:12.726Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "apply_patch"
+          ],
+          "timestamp": "2026-03-09T10:37:28.563Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:37:39.514Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "apply_patch"
+          ],
+          "timestamp": "2026-03-09T10:37:42.840Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-09T10:37:56.716Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:38:00.986Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-09T10:38:05.834Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "apply_patch"
+          ],
+          "timestamp": "2026-03-09T10:38:13.244Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "apply_patch"
+          ],
+          "timestamp": "2026-03-09T10:38:21.118Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Done.",
+          "tools": [],
+          "timestamp": "2026-03-09T10:38:42.025Z"
+        }
+      ]
     }
   ]
 }

@@ -4,18 +4,51 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-09T09:58:37.252Z",
-  "updatedAt": "2026-03-09T10:00:30.339Z",
-  "state": "paused",
-  "cursor": null,
+  "updatedAt": "2026-03-09T10:38:48.884Z",
+  "state": "running",
+  "cursor": "spec",
   "stages": {
     "taskify": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
       "startedAt": "2026-03-09T09:58:39.400Z",
-      "completedAt": "2026-03-09T10:00:24.503Z",
+      "completedAt": "2026-03-09T10:22:00.486Z",
       "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-09T10:22:00.556Z",
+      "completedAt": "2026-03-09T10:26:09.908Z",
+      "outputFile": "spec.md"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-09T10:26:09.929Z",
+      "completedAt": "2026-03-09T10:31:31.878Z",
+      "outputFile": "gap.md"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-09T10:31:31.898Z",
+      "completedAt": "2026-03-09T10:35:02.114Z",
+      "outputFile": "architect.md"
+    },
+    "plan-gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-09T10:35:05.227Z",
+      "completedAt": "2026-03-09T10:38:48.788Z",
+      "outputFile": "plan-gap.md"
+    },
+    "build": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-09T10:38:48.809Z"
     }
   },
   "issueNumber": 754,
-  "completedAt": "2026-03-09T10:00:30.339Z"
+  "branchName": "feat/260309-auto-754-v3-question-type-auto-mapping-sequ"
 }

@@ -154,7 +154,7 @@ export const QuestionFreeResponseBlockSchema = z
 // ---------------------------------
 // Zod: Latex Block
 // ---------------------------------
-const LatexBlockSchema = z
+export const LatexBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('latex'),
@@ -318,7 +318,7 @@ const SvgHotspotSchema = z
 // ---------------------------------
 // Zod: SVG Block Schema
 // ---------------------------------
-const SvgBlockSchema = z
+export const SvgBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('svg'),
