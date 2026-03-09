@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-03T12:21:29.942Z",
-  "updatedAt": "2026-03-03T20:23:16.628Z",
+  "updatedAt": "2026-03-09T12:35:12.011Z",
   "state": "running",
-  "cursor": "taskify",
+  "cursor": "review",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -47,9 +47,35 @@
       "outputFile": "build.md"
     },
     "commit": {
-      "state": "running",
+      "state": "pending",
+      "retries": 0
+    },
+    "fix": {
+      "state": "pending",
       "retries": 0,
-      "startedAt": "2026-03-03T20:23:16.628Z"
+      "fixAttempt": 0,
+      "maxFixAttempts": 2
+    },
+    "commit-fix": {
+      "state": "pending",
+      "retries": 0
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-09T12:32:58.589Z",
+      "completedAt": "2026-03-09T12:35:12.010Z",
+      "outputFile": "review.md",
+      "issuesFound": false,
+      "reviewSummary": {
+        "critical": 0,
+        "major": 0,
+        "minor": 0
+      }
     }
   },
   "issueNumber": 673
