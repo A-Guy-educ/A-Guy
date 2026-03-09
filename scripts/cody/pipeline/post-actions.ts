@@ -484,17 +484,60 @@ export async function executePostAction(
 
       if (fs.existsSync(reviewPath)) {
         const reviewContent = fs.readFileSync(reviewPath, 'utf-8')
+        const contentLower = reviewContent.toLowerCase()
 
-        // Parse review findings
-        const criticalMatch = reviewContent.match(/Critical:\s*(\d+)/)
-        const majorMatch = reviewContent.match(/Major:\s*(\d+)/)
-        const fixRequiredMatch = reviewContent.match(/Fix Required.*\[\s*x\s*\]\s*Yes/i)
+        // Parse review findings with multiple robust patterns
+        // Pattern 1: "Critical: N" or "Critical Issues: N" or "**Critical**: N"
+        const criticalPatterns = [/critical[^:]*:\s*(\d+)/i, /(\d+)[ \t]+critical/i]
+        // Pattern 2: "Major: N" or "Major Issues: N" or "**Major**: N"
+        const majorPatterns = [/major[^:]*:\s*(\d+)/i, /(\d+)[ \t]+major/i]
+        // Pattern 3: "Minor: N"
+        const minorPatterns = [/minor[^:]*:\s*(\d+)/i, /(\d+)[ \t]+minor/i]
 
-        reviewSummary.critical = parseInt(criticalMatch?.[1] || '0')
-        reviewSummary.major = parseInt(majorMatch?.[1] || '0')
+        for (const pat of criticalPatterns) {
+          const match = reviewContent.match(pat)
+          if (match) {
+            reviewSummary.critical = Math.max(reviewSummary.critical, parseInt(match[1]))
+          }
+        }
+        for (const pat of majorPatterns) {
+          const match = reviewContent.match(pat)
+          if (match) {
+            reviewSummary.major = Math.max(reviewSummary.major, parseInt(match[1]))
+          }
+        }
+        for (const pat of minorPatterns) {
+          const match = reviewContent.match(pat)
+          if (match) {
+            reviewSummary.minor = Math.max(reviewSummary.minor, parseInt(match[1]))
+          }
+        }
+
+        // Check for explicit fix-required indicators
+        const fixRequiredMatch =
+          reviewContent.match(/fix\s*required[^\n]*\[\s*x\s*\]/i) ||
+          reviewContent.match(/\[\s*x\s*\][^\n]*fix\s*required/i) ||
+          reviewContent.match(/fix\s*required[^\n]*yes/i)
+
+        // Also check for issue-indicating keywords as fallback
+        const hasIssueKeywords =
+          contentLower.includes('must fix') ||
+          contentLower.includes('needs fix') ||
+          contentLower.includes('should fix') ||
+          contentLower.includes('bug found') ||
+          contentLower.includes('security issue') ||
+          contentLower.includes('vulnerability')
 
         fixNeeded =
-          reviewSummary.critical > 0 || reviewSummary.major > 0 || fixRequiredMatch !== null
+          reviewSummary.critical > 0 ||
+          reviewSummary.major > 0 ||
+          fixRequiredMatch !== null ||
+          hasIssueKeywords
+      }
+
+      // In fix mode, always set fixNeeded to true — user explicitly asked for fixes
+      if (ctx.input.mode === 'fix') {
+        fixNeeded = true
       }
 
       // Update state to track findings

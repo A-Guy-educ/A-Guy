@@ -295,6 +295,10 @@ No critical gaps identified. Plan was refined in-place.
     timeout: STAGE_TIMEOUTS.fix ?? DEFAULT_TIMEOUT,
     maxRetries: 2,
     shouldSkip: (ctx) => {
+      // In fix mode, never skip — user explicitly requested fixes
+      if (ctx.input.mode === 'fix') {
+        return { shouldSkip: false }
+      }
       const state = loadState(ctx.taskId)
       const fixStage = state?.stages?.fix
       if (
