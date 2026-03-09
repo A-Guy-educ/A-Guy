@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Integration tests for Exercise Conversion API endpoints
  *
@@ -15,6 +16,7 @@ import { getPayload } from 'payload'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 let payload: Payload
+let testAdminUserId: string
 
 // Skip tests if DATABASE_URL is not set
 const hasDatabaseUrl = !!process.env.DATABASE_URL
@@ -36,8 +38,8 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Conversion API', () => {
     const timestamp = Date.now()
     const testEmail = `exercise-conversion-test-${timestamp}@example.com`
 
-    // Create admin user (unused but creates test data for potential future use)
-    await payload.create({
+    // Create admin user for testing
+    const adminUser = await payload.create({
       collection: 'users',
       data: {
         email: testEmail,
@@ -45,6 +47,7 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Conversion API', () => {
         role: 'admin',
       },
     })
+    testAdminUserId = adminUser.id
 
     // Generate auth token for the admin user
     // The API checks for admin role via user.role.includes('admin')
@@ -54,8 +57,18 @@ describe.skipIf(!hasDatabaseUrl)('Exercise Conversion API', () => {
   afterAll(async () => {
     if (!hasDatabaseUrl || !payload) return
 
-    // Clean up any test data
-    // Note: In a real test, we'd delete the test user and any created jobs
+    // Clean up test admin user
+    if (testAdminUserId) {
+      try {
+        await payload.delete({
+          collection: 'users',
+          id: testAdminUserId,
+          overrideAccess: true,
+        })
+      } catch {
+        // Best effort cleanup
+      }
+    }
 
     if (payload.db?.destroy) {
       await payload.db.destroy()

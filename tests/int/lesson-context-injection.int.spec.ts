@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Integration tests for lesson context injection
  *
@@ -122,6 +123,7 @@ let testUserId: string
 let testLessonId: string
 let testLessonIdB: string
 let testChapterId: string
+let createdChapter = false
 
 beforeAll(async () => {
   payload = await getPayload({ config })
@@ -154,6 +156,7 @@ beforeAll(async () => {
       draft: true,
     })
     testChapterId = chapter.id
+    createdChapter = true
   }
 
   // Create lesson A with context text
@@ -192,25 +195,58 @@ beforeAll(async () => {
 afterAll(async () => {
   if (!payload) return
 
+  // Clean up conversations created during tests
   if (testUserId) {
-    await payload.delete({
-      collection: 'users',
-      id: testUserId,
-    })
+    try {
+      const conversations = await payload.find({
+        collection: 'conversations',
+        where: { user: { equals: testUserId } },
+        limit: 1000,
+        overrideAccess: true,
+      })
+      for (const conv of conversations.docs) {
+        await payload.delete({
+          collection: 'conversations',
+          id: conv.id,
+          overrideAccess: true,
+        })
+      }
+    } catch {
+      // Best effort cleanup
+    }
   }
 
   if (testLessonId) {
-    await payload.delete({
-      collection: 'lessons',
-      id: testLessonId,
-    })
+    try {
+      await payload.delete({ collection: 'lessons', id: testLessonId, overrideAccess: true })
+    } catch {
+      // Best effort cleanup
+    }
   }
 
   if (testLessonIdB) {
-    await payload.delete({
-      collection: 'lessons',
-      id: testLessonIdB,
-    })
+    try {
+      await payload.delete({ collection: 'lessons', id: testLessonIdB, overrideAccess: true })
+    } catch {
+      // Best effort cleanup
+    }
+  }
+
+  // Only delete chapter if we created it (not a pre-existing one)
+  if (createdChapter && testChapterId) {
+    try {
+      await payload.delete({ collection: 'chapters', id: testChapterId, overrideAccess: true })
+    } catch {
+      // Best effort cleanup
+    }
+  }
+
+  if (testUserId) {
+    try {
+      await payload.delete({ collection: 'users', id: testUserId, overrideAccess: true })
+    } catch {
+      // Best effort cleanup
+    }
   }
 
   // Close DB connection to prevent connection leaks

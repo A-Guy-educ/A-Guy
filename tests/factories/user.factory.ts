@@ -1,6 +1,7 @@
 import type { Payload } from 'payload'
 import type { User } from '@/payload-types'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
+import type { TestDataTracker } from '../helpers/test-data-tracker'
 
 export interface UserFactoryInput {
   email?: string
@@ -19,9 +20,15 @@ export function buildUserData(input: UserFactoryInput = {}) {
   }
 }
 
-export async function createTestUser(payload: Payload, input: UserFactoryInput = {}) {
-  return payload.create({
+export async function createTestUser(
+  payload: Payload,
+  input: UserFactoryInput = {},
+  tracker?: TestDataTracker,
+) {
+  const user = await payload.create({
     collection: 'users',
     data: buildUserData(input),
   })
+  tracker?.track('users', user.id)
+  return user
 }
