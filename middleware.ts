@@ -7,6 +7,51 @@ import {
   getLocaleFromSubdomain,
 } from './src/i18n/config'
 
+/** File extensions that should be redirected to Vercel Blob CDN instead of proxied */
+const STREAMABLE_EXTENSIONS = new Set([
+  '.mp4',
+  '.mov',
+  '.webm',
+  '.avi',
+  '.mp3',
+  '.wav',
+  '.ogg',
+  '.m4a',
+  '.aac',
+])
+
+/**
+ * Extract the Vercel Blob base URL from the storage token.
+ * Token format: vercel_blob_rw_<storeId>_<random>
+ */
+function getBlobBaseUrl(): string | null {
+  const token = process.env.BLOB_READ_WRITE_TOKEN
+  if (!token) return null
+  const match = token.match(/^vercel_blob_rw_([a-z\d]+)_[a-z\d]+$/i)
+  if (!match) return null
+  return `https://${match[1].toLowerCase()}.public.blob.vercel-storage.com`
+}
+
+/**
+ * Redirect large streamable media files (video/audio) directly to Vercel Blob CDN.
+ * This avoids proxying through the serverless function which causes timeouts for large files.
+ */
+function handleMediaRedirect(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl
+  if (!pathname.startsWith('/api/media/file/')) return null
+
+  const filename = pathname.slice('/api/media/file/'.length)
+  if (!filename) return null
+
+  const ext = filename.slice(filename.lastIndexOf('.')).toLowerCase()
+  if (!STREAMABLE_EXTENSIONS.has(ext)) return null
+
+  const blobBaseUrl = getBlobBaseUrl()
+  if (!blobBaseUrl) return null
+
+  return NextResponse.redirect(`${blobBaseUrl}/${filename}`, { status: 302 })
+}
+
 function resolveCookieDomain(host: string): string | undefined {
   // If you're on *.vercel.app, sharing cookies across subdomains via Domain=.vercel.app
   // is typically blocked (public suffix). In that case, keep host-only cookie.
@@ -27,6 +72,10 @@ function resolveCookieDomain(host: string): string | undefined {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const host = request.headers.get('host') || ''
+
+  // Redirect streamable media (video/audio) to Vercel Blob CDN to avoid proxy timeouts
+  const mediaRedirect = handleMediaRedirect(request)
+  if (mediaRedirect) return mediaRedirect
 
   // Exclude paths from locale handling (double safety, even though matcher already excludes many)
   const shouldExclude =
@@ -94,7 +143,9 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // exclude admin as well so middleware won't run there at all
+    // Locale handling (excludes api, admin, static assets)
     '/((?!api|admin|_next|_static|.*\\..*).*)',
+    // Media proxy redirect (video/audio → Blob CDN to avoid serverless timeouts)
+    '/api/media/file/:path*',
   ],
 }

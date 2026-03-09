@@ -6,7 +6,7 @@ import { GeistSans } from 'geist/font/sans'
 import { Assistant } from 'next/font/google'
 import React from 'react'
 
-import { reloadConfigValues } from '@/infra/config/runtime'
+import { loadConfigValues } from '@/infra/config/runtime'
 import { isPasswordLoginEnabled } from '@/infra/config/system-params'
 import { mergeOpenGraph } from '@/infra/utils/mergeOpenGraph'
 import { AdminBar } from '@/ui/web/AdminBar'
@@ -52,7 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const dir = getDirection(locale)
 
   const payload = await getPayload({ config })
-  await reloadConfigValues(payload)
+  await loadConfigValues(payload)
   const passwordLoginEnabled = await isPasswordLoginEnabled()
 
   return (

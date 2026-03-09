@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
         sort: 'order',
         limit: 1000,
         pagination: false,
-        depth: 2,
+        depth: 0,
       })
       lessons = lessonsResult.docs
     }
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
       SystemParams.getGatedWarningMs(),
     ])
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       chapters: chaptersWithLessons,
       courseSlug,
       courseId,
@@ -98,6 +98,8 @@ export async function GET(request: NextRequest) {
       gatedDelayMs,
       gatedWarningMs,
     })
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
+    return response
   } catch (error) {
     const { captureAndRespond } = await import('@/server/api/capture-and-respond')
     return captureAndRespond(error, { route: '/api/chapters/by-grade' })

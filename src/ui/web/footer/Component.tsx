@@ -7,23 +7,8 @@ import type { Footer } from '@/payload-types'
 import { ThemeSelector } from '@/ui/web/providers/Theme/ThemeSelector'
 import { CMSLink } from '@/ui/web/Link'
 import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
-import { readFile } from 'fs/promises'
-import { join } from 'path'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { getNavItemsForLocale } from '@/ui/web/nav-variants'
-
-/**
- * Read version directly from package.json
- */
-async function getVersion(): Promise<string> {
-  try {
-    const packageJson = await readFile(join(process.cwd(), 'package.json'), 'utf-8')
-    const { version } = JSON.parse(packageJson)
-    return version || 'dev'
-  } catch {
-    return 'dev'
-  }
-}
 
 /**
  * Minimal version display for public footer
@@ -35,7 +20,7 @@ function VersionDisplay({ version }: { version: string }) {
 
 export async function Footer() {
   const footerData: Footer = await getCachedGlobal('footer', 1)()
-  const version = await getVersion()
+  const version = process.env.NEXT_PUBLIC_APP_VERSION || 'dev'
   const systemLocale = await getSystemLocale()
   const navItems = getNavItemsForLocale(footerData, systemLocale)
 

@@ -1,7 +1,17 @@
+import { readFileSync } from 'fs'
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
 
 import redirects from './redirects.js'
+
+// Read version once at build time — avoids fs.readFile on every request
+const APP_VERSION = (() => {
+  try {
+    return JSON.parse(readFileSync('./package.json', 'utf-8')).version || 'dev'
+  } catch {
+    return 'dev'
+  }
+})()
 
 const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
   ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
@@ -80,6 +90,9 @@ const nextConfig = {
   eslint: {
     // ESLint runs in CI and pre-push hooks; skip during next build to reduce memory usage
     ignoreDuringBuilds: true,
+  },
+  env: {
+    NEXT_PUBLIC_APP_VERSION: APP_VERSION,
   },
   reactStrictMode: true,
   redirects,

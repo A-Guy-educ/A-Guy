@@ -48,9 +48,11 @@ if (process.env.PAYLOAD_GENERATE_TYPES !== 'true') {
   if (blobToken) {
     vercelBlobPlugin = vercelBlobStorage({
       addRandomSuffix: true,
+      cacheControlMaxAge: 60 * 60 * 24 * 30, // 30 days — immutable media with random suffixes
       clientUploads: false,
       // Use proxy mode - URLs are /api/media/file/... and static handler proxies to blob
       // This ensures PDF viewer works (same-origin URLs) and backward compatibility
+      // Note: Video/audio files are redirected to Blob CDN by middleware to avoid proxy timeouts
       collections: {
         media: true,
         'exercise-assets': true,
