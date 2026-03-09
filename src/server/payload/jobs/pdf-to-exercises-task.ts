@@ -518,14 +518,14 @@ Return JSON: { "valid": boolean, "reason": "..." }`
 
   // ========== DIAGRAM PASS ==========
   // Generate TikZ for detected diagram description blocks
-  let diagramMetrics = createEmptyMetrics()
-
   // Use configured prompt or built-in default
   const effectiveDiagramPrompt = diagramGeneratorPrompt ?? DEFAULT_DIAGRAM_GENERATOR_PROMPT
 
+  let diagramResult = { metrics: createEmptyMetrics(), conversions: [] as Array<unknown> }
+
   if (validExercises.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    diagramMetrics = await runDiagramPass(payload as any, {
+    diagramResult = await runDiagramPass(payload as any, {
       attachments,
       diagramPrompt: effectiveDiagramPrompt,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -535,7 +535,7 @@ Return JSON: { "valid": boolean, "reason": "..." }`
 
   // Store diagram metrics in output for segment debug
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ;(output as any).diagramMetrics = diagramMetrics
+  ;(output as any).diagramMetrics = diagramResult.metrics
 
   return validExercises
 }

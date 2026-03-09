@@ -52,3 +52,43 @@ export interface DiagramPassMetrics {
   }
   failureReasons: string[]
 }
+
+// ── Per-Diagram Conversion Info (Step 1 Output) ──
+
+/**
+ * Information about each successful diagram-to-TikZ conversion from Step 1.
+ * Used by Step 2 (geometry-pass) to convert TikZ to GeometrySpecV1/AxisSpecV1.
+ */
+export interface DiagramConversionInfo {
+  /** Index of exercise in the exercises array */
+  exerciseIndex: number
+  /** ID of the inserted latex block */
+  latexBlockId: string
+  /** ID of the original rich_text diagram block */
+  richTextBlockId: string
+  /** Classification: geometry, axis, or other */
+  diagramType: 'geometry' | 'axis' | 'other'
+  /** Generated TikZ code */
+  tikz: string
+  /** Original diagram description text */
+  description: string
+  /** LLM confidence score from Step 1 */
+  confidence: number
+  /** true if "**Diagram for X:**", false if "**Diagram:**" */
+  isPerSubQuestion: boolean
+  /** Sub-question label (e.g., "א", "ב", "a") — only when isPerSubQuestion */
+  subQuestionLabel?: string
+}
+
+// ── Combined Result ──
+
+/**
+ * Full result from the diagram pass (Step 1).
+ * Includes both aggregate metrics and per-diagram conversion info.
+ */
+export interface DiagramPassResult {
+  /** Aggregate metrics for the pass */
+  metrics: DiagramPassMetrics
+  /** Per-diagram conversion information for Step 2 */
+  conversions: DiagramConversionInfo[]
+}

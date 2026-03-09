@@ -279,29 +279,29 @@ export async function extractSingle(
         }>,
       }
 
-      const diagramMetrics = await runDiagramPass(payload, {
+      const diagramResult = await runDiagramPass(payload, {
         attachments: diagramAttachments,
         diagramPrompt: diagramPromptTemplate,
         exercises: [diagramExercise],
       })
 
       // Use mutated blocks if diagram pass found and processed anything
-      if (diagramMetrics.detected > 0) {
+      if (diagramResult.metrics.detected > 0) {
         finalContent = { blocks: diagramExercise.blocks as typeof finalContent.blocks }
       }
 
       // Log diagram pass as a separate extraction log entry
-      if (diagramMetrics.attempted > 0) {
+      if (diagramResult.metrics.attempted > 0) {
         await createExtractionLog(payload, {
           tenant: lessonTenantId,
           lesson: lessonId,
           media: mediaId,
           prompt: diagramPromptId,
           promptVersion: diagramPromptVersion,
-          status: diagramMetrics.succeeded > 0 ? 'success' : 'failed',
+          status: diagramResult.metrics.succeeded > 0 ? 'success' : 'failed',
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           stage: 'diagram-tikz' as any,
-          processingTimeMs: diagramMetrics.latencyMs,
+          processingTimeMs: diagramResult.metrics.latencyMs,
           model: '',
         })
       }
@@ -563,13 +563,13 @@ export async function extractAndCreate(
         }>,
       }
 
-      const diagramMetrics = await runDiagramPass(payload, {
+      const diagramResult = await runDiagramPass(payload, {
         attachments: diagramAttachments,
         diagramPrompt: diagramPromptTemplate,
         exercises: [diagramExercise],
       })
 
-      if (diagramMetrics.detected > 0) {
+      if (diagramResult.metrics.detected > 0) {
         finalContent = { blocks: diagramExercise.blocks as typeof finalContent.blocks }
       }
     } catch {

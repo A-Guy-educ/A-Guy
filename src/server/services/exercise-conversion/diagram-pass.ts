@@ -14,7 +14,9 @@ import type { Payload } from 'payload'
 
 import type {
   DiagramBlockInfo,
+  DiagramConversionInfo,
   DiagramPassMetrics,
+  DiagramPassResult,
   DiagramToTikzOutput,
 } from './diagram-pass.types'
 import { DiagramToTikzOutputSchema } from './diagram-pass.types'
@@ -324,7 +326,7 @@ export interface DiagramPassContext {
  * Run the diagram pass for a set of exercises.
  *
  * Detects diagram blocks → generates TikZ via LLM → validates safety → inserts latex blocks.
- * Mutates exercise blocks arrays in place. Returns metrics.
+ * Mutates exercise blocks arrays in place. Returns metrics and per-diagram conversion info.
  *
  * Used by:
  * - PDF batch pipeline (per segment, on ValidatedExercise[])
@@ -333,16 +335,17 @@ export interface DiagramPassContext {
 export async function runDiagramPass(
   payload: Payload,
   context: DiagramPassContext,
-): Promise<DiagramPassMetrics> {
+): Promise<DiagramPassResult> {
   const { attachments, diagramPrompt, exercises } = context
   const metrics = createEmptyMetrics()
+  const conversions: DiagramConversionInfo[] = []
 
   // Step 1: Detect diagram blocks across all exercises
   const diagramBlocks = detectDiagramBlocks(exercises)
   metrics.detected = diagramBlocks.length
 
   if (diagramBlocks.length === 0) {
-    return metrics
+    return { metrics, conversions }
   }
 
   // Get LLM provider
@@ -400,7 +403,7 @@ export async function runDiagramPass(
     }
 
     // Success: insert latex block after the diagram description block
-    insertTikzBlock(
+    const latexBlock = insertTikzBlock(
       exercise.blocks as Array<Record<string, unknown>>,
       adjustedBlockIndex,
       result.tikz,
@@ -409,7 +412,20 @@ export async function runDiagramPass(
 
     metrics.byType[result.diagramType]++
     metrics.succeeded++
+
+    // Track conversion info for Step 2
+    conversions.push({
+      exerciseIndex: diagram.exerciseIndex,
+      latexBlockId: latexBlock.id,
+      richTextBlockId: diagram.blockId,
+      diagramType: result.diagramType,
+      tikz: result.tikz,
+      description: diagram.description,
+      confidence: result.confidence,
+      isPerSubQuestion: diagram.isPerSubQuestion,
+      subQuestionLabel: diagram.subQuestionLabel,
+    })
   }
 
-  return metrics
+  return { metrics, conversions }
 }
