@@ -339,8 +339,8 @@ function formatGateComment(
 
   lines.push('---')
   lines.push('')
-  lines.push('Reply with `@cody approve` or `/cody approve` to proceed.')
-  lines.push('Reply with `@cody reject` or `/cody reject` to cancel.')
+  lines.push('Reply `approve` to proceed.')
+  lines.push('Reply `reject` to cancel.')
 
   return lines.join('\n')
 }

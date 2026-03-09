@@ -76,7 +76,15 @@ export const ConfigSecrets: CollectionConfig = {
     {
       name: 'value',
       type: 'text',
-      required: true,
+      // Not using `required: true` because partial updates (e.g. toggling enabled)
+      // would fail field validation before the collection beforeChange hook can
+      // preserve the existing encrypted value. Instead, validate on create only.
+      validate: (value: unknown, { operation }: { operation?: string }) => {
+        if (operation === 'create' && (!value || typeof value !== 'string')) {
+          return 'Value is required'
+        }
+        return true
+      },
       admin: {
         description: 'Secret value (write-only after save)',
       },

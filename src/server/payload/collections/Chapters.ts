@@ -18,6 +18,9 @@ export const Chapters: CollectionConfig = {
   hooks: {
     beforeChange: [
       ({ data }) => {
+        if (data?.slug) {
+          data.slug = data.slug.trim()
+        }
         if (data?.title && !data?.slug) {
           data.slug = formatSlug(data.title)
         }

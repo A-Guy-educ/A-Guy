@@ -3,6 +3,7 @@
 import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
 import { Suspense, useEffect, useState } from 'react'
 import { ConversionStatusPanel } from '../ConversionStatusPanel'
+import { ConvertContextButton } from '../ConvertContextButton'
 import { ConvertForm } from '../ConvertForm'
 import { ConvertV2Button } from '../ConvertV2Button'
 import { ConvertV3Button } from '../ConvertV3Button'
@@ -258,6 +259,11 @@ export const LessonConversionPanel = () => {
               </button>
               <ConvertV2Button lessonId={String(lessonId)} mediaId={file.id} />
               <ConvertV3Button lessonId={String(lessonId)} mediaId={file.id} />
+              <ConvertContextButton
+                lessonId={String(lessonId)}
+                mediaId={file.id}
+                filename={String(file.filename || file.id)}
+              />
             </div>
           </div>
 

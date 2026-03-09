@@ -194,5 +194,93 @@ export async function getRateLimitStats(): Promise<{
  */
 export function clearAllRateLimits(): void {
   rateLimitCache.clear()
+  authenticatedRateLimitCache.clear()
   logger.info('All rate limits cleared')
+}
+
+// ============================================================
+// Authenticated User Rate Limiting
+// ============================================================
+// Note: In-memory rate limiting has limitations in serverless environments
+// (each instance has its own cache). For stricter enforcement, consider
+// using a shared store (Redis, MongoDB) in the future.
+
+interface AuthenticatedRateLimitConfig {
+  /** Max requests per window */
+  maxRequests: number
+  /** Window duration in milliseconds */
+  windowMs: number
+}
+
+/**
+ * Default rate limits for authenticated endpoints.
+ * LLM endpoints have stricter limits due to API cost.
+ */
+export const RATE_LIMIT_PRESETS = {
+  /** Standard API endpoints: 60 requests per minute */
+  standard: { maxRequests: 60, windowMs: 60_000 } as AuthenticatedRateLimitConfig,
+  /** LLM chat endpoints: 20 requests per minute (cost-sensitive) */
+  llmChat: { maxRequests: 20, windowMs: 60_000 } as AuthenticatedRateLimitConfig,
+  /** LLM streaming endpoints: 10 requests per minute */
+  llmStream: { maxRequests: 10, windowMs: 60_000 } as AuthenticatedRateLimitConfig,
+} as const
+
+const authenticatedRateLimitCache = new Map<string, RateLimitEntry>()
+
+/**
+ * Check rate limit for an authenticated user by user ID.
+ * Returns rate limit result with Retry-After compatible resetAt.
+ */
+export function checkAuthenticatedRateLimit(
+  userId: string,
+  endpoint: string,
+  config: AuthenticatedRateLimitConfig,
+): RateLimitResult {
+  const key = `auth:${userId}:${endpoint}`
+  const now = Date.now()
+
+  const entry = authenticatedRateLimitCache.get(key)
+
+  if (!entry || now - entry.windowStart > config.windowMs) {
+    authenticatedRateLimitCache.set(key, { count: 1, windowStart: now })
+    return {
+      allowed: true,
+      remaining: config.maxRequests - 1,
+      resetAt: now + config.windowMs,
+    }
+  }
+
+  if (entry.count >= config.maxRequests) {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: entry.windowStart + config.windowMs,
+    }
+  }
+
+  entry.count++
+  return {
+    allowed: true,
+    remaining: config.maxRequests - entry.count,
+    resetAt: entry.windowStart + config.windowMs,
+  }
+}
+
+/**
+ * Apply rate limit headers to a Response.
+ * Adds X-RateLimit-* and Retry-After headers.
+ */
+export function applyRateLimitHeaders(
+  headers: Headers,
+  result: RateLimitResult,
+  maxRequests: number,
+): void {
+  headers.set('X-RateLimit-Limit', String(maxRequests))
+  headers.set('X-RateLimit-Remaining', String(result.remaining))
+  headers.set('X-RateLimit-Reset', String(Math.ceil(result.resetAt / 1000)))
+
+  if (!result.allowed) {
+    const retryAfterSeconds = Math.ceil((result.resetAt - Date.now()) / 1000)
+    headers.set('Retry-After', String(Math.max(1, retryAfterSeconds)))
+  }
 }

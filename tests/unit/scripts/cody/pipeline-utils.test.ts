@@ -514,9 +514,9 @@ describe('pipeline stage definitions', () => {
     expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
   })
 
-  it('should have exactly 6 impl stages', async () => {
+  it('should have exactly 9 impl stages', async () => {
     const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
-    expect(ALL_IMPL_STAGE_NAMES).toHaveLength(6)
+    expect(ALL_IMPL_STAGE_NAMES).toHaveLength(9)
   })
 
   it('should have correct stage order', async () => {
@@ -1017,18 +1017,27 @@ describe('getImplPipeline', () => {
   it('returns full pipeline for standard profile', async () => {
     const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
     const pipeline = getImplPipeline('standard')
-    // Standard pipeline should have 6 entries (no parallel groups currently)
-    expect(pipeline).toHaveLength(6)
+    // Standard pipeline should have 9 entries (with review/fix/commit-fix)
+    expect(pipeline).toHaveLength(9)
   })
 
   it('returns reduced pipeline for lightweight profile (no plan-gap)', async () => {
     const { getImplPipeline, flattenPipeline } =
       await import('../../../../scripts/cody/pipeline-utils')
     const pipeline = getImplPipeline('lightweight')
-    // Lightweight should have 5 entries
-    expect(pipeline).toHaveLength(5)
+    // Lightweight should have 8 entries (with review/fix/commit-fix)
+    expect(pipeline).toHaveLength(8)
     const flatNames = flattenPipeline(pipeline)
-    expect(flatNames).toEqual(['architect', 'build', 'commit', 'verify', 'pr'])
+    expect(flatNames).toEqual([
+      'architect',
+      'build',
+      'commit',
+      'review',
+      'fix',
+      'commit-fix',
+      'verify',
+      'pr',
+    ])
   })
 
   it('lightweight does not include plan-gap', async () => {
@@ -1055,7 +1064,16 @@ describe('getAllImplStageNames', () => {
   it('lightweight profile returns flat list without plan-gap', async () => {
     const { getAllImplStageNames } = await import('../../../../scripts/cody/pipeline-utils')
     const names = getAllImplStageNames('lightweight')
-    expect(names).toEqual(['architect', 'build', 'commit', 'verify', 'pr'])
+    expect(names).toEqual([
+      'architect',
+      'build',
+      'commit',
+      'review',
+      'fix',
+      'commit-fix',
+      'verify',
+      'pr',
+    ])
   })
 })
 

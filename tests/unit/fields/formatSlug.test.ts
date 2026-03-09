@@ -88,4 +88,21 @@ describe('formatSlug', () => {
       expect(result).toBe('uppercase-lowercase-mixed')
     })
   })
+
+  describe('whitespace trimming (slug 404 prevention)', () => {
+    it('should trim leading whitespace from input', () => {
+      const result = formatSlug(' hello-world')
+      expect(result).toBe('hello-world')
+    })
+
+    it('should trim trailing whitespace from input', () => {
+      const result = formatSlug('hello-world ')
+      expect(result).toBe('hello-world')
+    })
+
+    it('should trim input with only trailing space after numbers', () => {
+      const result = formatSlug('test-slug-682076 ')
+      expect(result).toBe('test-slug-682076')
+    })
+  })
 })

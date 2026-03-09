@@ -29,6 +29,8 @@ import { getHandler } from '../handlers/handler'
 import { setLifecycleLabel } from '../github-api'
 import { executePostAction } from '../pipeline/post-actions'
 import { flattenPipelineOrder } from '../pipeline/definitions'
+import * as fs from 'fs'
+import * as path from 'path'
 
 /**
  * Error subclass that carries the originating stage name for parallel error attribution
@@ -388,6 +390,7 @@ async function executeParallelStep(
   // Process results - distinguish critical vs advisory failures (R7)
   const criticalFailures: { name: string; reason: string }[] = []
   const advisoryFailures: { name: string; reason: string }[] = []
+  let pausedStage: string | null = null
 
   for (const result of results) {
     if (result.status === 'rejected') {
@@ -397,11 +400,13 @@ async function executeParallelStep(
         rejectedErr instanceof PipelinePausedError ||
         (rejectedErr instanceof StageError && rejectedErr.cause instanceof PipelinePausedError)
       if (isPaused) {
-        // Mark the stage as paused and return paused state
+        // Mark the stage as paused and collect — don't return early
+        // This allows other parallel stages to complete their post-actions
         const pausedStageName =
           rejectedErr instanceof StageError ? rejectedErr.stageName : 'unknown'
         state = updateStage(state, pausedStageName, { state: 'paused' })
-        return completeState(state, 'paused')
+        pausedStage = pausedStageName
+        continue
       }
 
       const reason = (result as PromiseRejectedResult).reason
@@ -427,12 +432,11 @@ async function executeParallelStep(
     const { stageName, result: stageResult } = result.value
     if (!stageResult) continue
 
-    // Handle PipelinePausedError specially (G30)
+    // Handle PipelinePausedError specially (G30) — collect pauses instead of returning early
     if (stageResult.outcome === 'paused') {
       state = updateStage(state, stageName, { state: 'paused' })
-      writeState(ctx.taskId, state) // Persist paused state to disk
-      // Return early with paused state
-      return completeState(state, 'paused')
+      pausedStage = stageName
+      continue
     }
 
     // Update state based on outcome
@@ -453,10 +457,11 @@ async function executeParallelStep(
           }
         } catch (postError) {
           // Handle post-action errors - mirroring executeSingleStep pattern
+          // Collect pauses instead of returning early — allows other stages to complete
           if (postError instanceof PipelinePausedError) {
             state = updateStage(state, stageName, { state: 'paused' })
-            writeState(ctx.taskId, state) // Persist paused state to disk
-            return completeState(state, 'paused')
+            pausedStage = stageName
+            continue
           }
           // FIX #3: Don't immediately fail - collect failures and process at end
           // This allows other successful parallel stages to complete
@@ -512,6 +517,12 @@ async function executeParallelStep(
     return completeState(state, 'failed')
   }
 
+  // Return paused state if any stage paused — after all other stages processed
+  if (pausedStage) {
+    writeState(ctx.taskId, state)
+    return completeState(state, 'paused')
+  }
+
   return state
 }
 
@@ -542,6 +553,68 @@ async function handleStageResult(
       }
     }
   } else if (result.outcome === 'failed') {
+    // VERIFY LOOP: Check if verify failed and we should retry with fix
+    if (stageName === 'verify' && !def.advisory) {
+      const maxAttempts = state.stages['fix']?.maxFixAttempts ?? 2
+      const currentAttempt = state.stages['fix']?.fixAttempt ?? 0
+
+      if (currentAttempt < maxAttempts) {
+        // Capture verify failures for fix stage
+        const verifyFailuresPath = path.join(ctx.taskDir, 'verify-failures.md')
+        const errorOutput = result.reason || 'Verify failed - check logs'
+
+        // Try to capture more detailed output from verify scripts
+        let detailedOutput = errorOutput
+        try {
+          const tscPath = path.join(ctx.taskDir, 'tsc-output.txt')
+          const lintPath = path.join(ctx.taskDir, 'lint-output.txt')
+          const parts = [`# Verify Failures\n\n${errorOutput}`]
+          if (fs.existsSync(tscPath)) {
+            const tscOutput = fs.readFileSync(tscPath, 'utf-8').slice(0, 5000)
+            parts.push(`## TypeScript Errors\n\`\`\`\n${tscOutput}\n\`\`\``)
+          }
+          if (fs.existsSync(lintPath)) {
+            const lintOutput = fs.readFileSync(lintPath, 'utf-8').slice(0, 5000)
+            parts.push(`## Lint Errors\n\`\`\`\n${lintOutput}\n\`\`\``)
+          }
+          detailedOutput = parts.join('\n\n')
+        } catch {
+          // Files don't exist, use basic error
+        }
+
+        try {
+          fs.writeFileSync(verifyFailuresPath, detailedOutput)
+          if (!fs.existsSync(verifyFailuresPath)) {
+            logger.warn('verify-failures.md was not created after write — fix stage may skip')
+          }
+        } catch (writeErr) {
+          logger.warn(`Failed to write verify-failures.md: ${writeErr}`)
+        }
+
+        // Increment fix attempt and reset fix, commit-fix, verify to pending
+        const newFixAttempt = currentAttempt + 1
+        state = updateStage(state, 'fix', {
+          state: 'pending',
+          fixAttempt: newFixAttempt,
+          maxFixAttempts: maxAttempts,
+        })
+        state = updateStage(state, 'commit-fix', { state: 'pending' })
+        state = updateStage(state, 'verify', { state: 'pending' })
+        writeState(ctx.taskId, state)
+
+        logger.info(`🔄 Verify failed, looping to fix (attempt ${newFixAttempt}/${maxAttempts})`)
+
+        // Return state WITHOUT calling completeState('failed')
+        // The main while(true) loop will continue and resolveNextStep
+        // will find 'fix' as next pending stage
+        return state
+      } else {
+        logger.error(`Max fix attempts (${maxAttempts}) reached, pipeline failing`)
+        // Fall through to normal failure handling
+      }
+    }
+
+    // Normal failure handling
     state = updateStage(state, stageName, {
       state: 'failed',
       error: result.reason,

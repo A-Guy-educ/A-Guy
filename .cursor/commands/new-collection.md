@@ -5,13 +5,13 @@ description: Generate a new Payload collection with best practices
 
 Create a new collection following project conventions:
 
-1. Create file: `src/collections/<Name>.ts`
+1. Create file: `src/server/payload/collections/<Name>.ts`
 2. Use this template:
 
 ```typescript
 import type { CollectionConfig } from 'payload'
-import { anyone } from '../access/anyone'
-import { authenticated } from '../access/authenticated'
+import { anyone } from '@/server/payload/access/anyone'
+import { authenticated } from '@/server/payload/access/authenticated'
 
 export const <Name>: CollectionConfig = {
   slug: '<slug>',

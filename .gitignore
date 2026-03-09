@@ -32,7 +32,6 @@ tsconfig.tsbuildinfo
 CLAUDE_INTERNAL.md
 NAMING.md
 STRICTNESS.md
-/.tasks/
 
 # Test coverage reports
 coverage/

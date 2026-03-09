@@ -16,7 +16,6 @@ import {
   getStatusFromBranch,
   findStatusOnBranch,
   createIssue,
-  updateIssue,
   uploadIssueAttachment,
 } from '@/ui/cody/github-client'
 import type { CodyTask, ColumnId, GitHubIssue, GitHubPR, WorkflowRun } from '@/ui/cody/types'
@@ -313,38 +312,22 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { title, body: issueBody, mode, labels, assignees, attachments, actorLogin } = body
+    const { title, body: issueBody, labels, assignees, attachments, actorLogin } = body
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
-    // Generate task ID prefix only for pipeline modes (not for bug reports)
-    // Bug reports should keep their original title format
-    const isBugReport = mode === 'bug'
-    const datePrefix = new Date().toISOString().slice(2, 8).replace('-', '')
-    const taskIdPrefix = !isBugReport && mode ? `[${datePrefix}-auto-XX] ` : ''
-    const fullTitle = title.startsWith('[') ? title : `${taskIdPrefix}${title}`
-
     // Create the issue in GitHub
     const actorNote = actorLogin ? `\n\n---\n_Created by @${actorLogin} via Cody dashboard_` : ''
     const issue = await createIssue({
-      title: fullTitle,
+      title,
       body: (issueBody || '') + actorNote,
       labels: labels || [],
       assignees: assignees || [],
     })
 
     console.log('[Cody] Created issue:', issue.number, issue.title)
-
-    // Fix the title: replace auto-XX with the real issue number
-    if (!isBugReport && mode && fullTitle.includes('auto-XX')) {
-      const correctedTitle = fullTitle.replace('auto-XX', `auto-${issue.number}`)
-      await updateIssue(issue.number, { title: correctedTitle })
-      console.log('[Cody] Fixed issue title:', issue.number, correctedTitle)
-      // Update the issue object with the corrected title for the response
-      issue.title = correctedTitle
-    }
 
     // Upload attachments if provided
     const uploadedAttachments = []

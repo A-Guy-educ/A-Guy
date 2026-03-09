@@ -6,8 +6,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 
-import { handleCodyApiError } from '@/lib/cody/github-error-handler'
-import { pipelineParamsSchema } from '@/lib/cody/schemas'
+import { handleCodyApiError } from '@/ui/cody/github-error-handler'
+import { pipelineParamsSchema } from '@/ui/cody/schemas'
 import { apiValidationError } from '@/server/api/responses'
 import { requireAuth } from '@/ui/cody/auth'
 import {

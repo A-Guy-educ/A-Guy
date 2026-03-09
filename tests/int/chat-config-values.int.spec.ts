@@ -1,4 +1,3 @@
-// @vitest-environment node
 /**
  * Chat Config Values Integration Tests
  *

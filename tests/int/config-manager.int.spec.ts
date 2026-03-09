@@ -1,4 +1,3 @@
-// @vitest-environment node
 /**
  * Config Manager Integration Tests
  *
@@ -15,6 +14,13 @@ import type { Tenant, User } from '@/payload-types'
 import config from '@payload-config'
 import { getPayload } from 'payload'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+
+/** Extract ID from a Payload relationship field (may be populated object or string) */
+function extractId(field: unknown): string {
+  if (typeof field === 'string') return field
+  if (field && typeof field === 'object' && 'id' in field) return (field as { id: string }).id
+  return ''
+}
 
 // Test data
 const TEST_ADMIN_EMAIL = 'config-test-admin@example.com'
@@ -161,8 +167,8 @@ describe('Config Secrets (Tenant-Scoped)', () => {
       })
 
       expect(result1.id).not.toBe(result2.id)
-      expect(result1.tenant).toBe(tenant1.id)
-      expect(result2.tenant).toBe(tenant2.id)
+      expect(extractId(result1.tenant)).toBe(tenant1.id)
+      expect(extractId(result2.tenant)).toBe(tenant2.id)
     })
 
     test('should reject duplicate key in same tenant', async () => {
@@ -308,8 +314,8 @@ describe('Config Secrets (Tenant-Scoped)', () => {
 
       expect(logs.docs.length).toBeGreaterThan(0)
       expect(logs.docs[0].action).toBe('created')
-      expect(logs.docs[0].actor).toBe(adminUser.id)
-      expect(logs.docs[0].tenant).toBe(tenant1.id)
+      expect(extractId(logs.docs[0].actor)).toBe(adminUser.id)
+      expect(extractId(logs.docs[0].tenant)).toBe(tenant1.id)
     })
 
     test('should create audit log on update', async () => {
@@ -340,7 +346,7 @@ describe('Config Secrets (Tenant-Scoped)', () => {
 
       const updateLog = logs.docs.find((log) => log.action === 'updated')
       expect(updateLog).toBeDefined()
-      expect(updateLog?.tenant).toBe(tenant1.id)
+      expect(extractId(updateLog?.tenant)).toBe(tenant1.id)
     })
 
     test('should create audit log on enable/disable', async () => {
@@ -371,7 +377,7 @@ describe('Config Secrets (Tenant-Scoped)', () => {
 
       const disableLog = logs.docs.find((log) => log.action === 'disabled')
       expect(disableLog).toBeDefined()
-      expect(disableLog?.tenant).toBe(tenant1.id)
+      expect(extractId(disableLog?.tenant)).toBe(tenant1.id)
     })
 
     test('should not store secret values in audit log', async () => {
@@ -445,19 +451,19 @@ describe('Config Secrets (Tenant-Scoped)', () => {
         req: { user: adminUser } as any,
       })
 
-      // For testing: use find with overrideAccess to bypass hooks
+      // For testing: use find with internalConfigLoad context to bypass afterRead hook
       const rawDocs = await payload.find({
         collection: 'config_secrets',
         where: { key: { equals: 'test_db_encryption' } },
         overrideAccess: true,
-        req: { user: adminUser } as any,
+        context: { internalConfigLoad: true },
       })
 
       expect(rawDocs.docs[0].value).not.toBe(secretValue)
       expect(rawDocs.docs[0].value).not.toBe('')
 
       // Verify it can be decrypted
-      const decrypted = decryptSecret(rawDocs.docs[0].value)
+      const decrypted = decryptSecret(rawDocs.docs[0].value!)
       expect(decrypted).toBe(secretValue)
     })
   })
@@ -474,6 +480,7 @@ describe('Config Secrets (Tenant-Scoped)', () => {
             actor: adminUser.id,
             tenant: tenant1.id,
           },
+          overrideAccess: false,
           req: { user: adminUser } as any,
         }),
       ).rejects.toThrow()

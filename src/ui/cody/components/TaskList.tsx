@@ -153,8 +153,7 @@ export function TaskList({
       <div className="divide-y divide-border/50">
         {tasks.map((task) => {
           const isSelected = task.id === selectedTask?.id
-          const isUnassigned = !task.assignees || task.assignees.length === 0
-          const canExecute = isUnassigned && task.state === 'open' && onExecuteTask
+          const canExecute = task.state === 'open' && onExecuteTask
           const isExecuting = executingTaskId === task.id
           const isMerging = mergingTaskId === task.id
           const hasPR = !!task.associatedPR

@@ -46,9 +46,12 @@ export const STAGE_TIMEOUTS: Record<string, number> = {
   architect: ms('30m'),
   build: ms('45m'),
   'plan-gap': ms('15m'),
+  review: ms('15m'),
+  fix: ms('10m'),
+  'commit-fix': ms('2m'),
   verify: ms('10m'),
   pr: ms('5m'),
-  autofix: ms('5m'),
+  autofix: ms('15m'),
 }
 
 /** LLM-specific timeout - max time to wait for LLM API response (3 minutes) */

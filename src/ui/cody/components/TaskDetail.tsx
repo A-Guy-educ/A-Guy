@@ -230,12 +230,8 @@ function getPrimaryAction(
       variant: 'red',
     }
   }
-  // Open + unassigned + in backlog → Run Task (not for review/done/building/gate columns)
-  if (
-    task.state === 'open' &&
-    task.column === 'open' &&
-    (!fullDetails?.assignees || fullDetails.assignees.length === 0)
-  ) {
+  // Open + in backlog → Run Task (not for review/done/building/gate columns)
+  if (task.state === 'open' && task.column === 'open') {
     return {
       icon: Zap,
       label: 'Run Task',

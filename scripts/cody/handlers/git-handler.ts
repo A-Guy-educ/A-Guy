@@ -47,6 +47,25 @@ export class GitCommitHandler implements StageHandler {
 }
 
 /**
+ * Tolerant commit handler for commit-fix stage.
+ * Treats "No changes" as completed (not failed), since fix stage
+ * may produce no file changes if review found only minor issues
+ * or if the fix was applied but resulted in identical code.
+ */
+export class GitCommitFixHandler implements StageHandler {
+  async execute(ctx: PipelineContext, def: StageDefinition): Promise<StageResult> {
+    const handler = new GitCommitHandler()
+    const result = await handler.execute(ctx, def)
+
+    // Treat "No changes" as success instead of failure
+    if (result.outcome === 'failed' && result.reason?.includes('No changes')) {
+      return { outcome: 'completed', retries: 0 }
+    }
+    return result
+  }
+}
+
+/**
  * Git PR handler
  *
  * H3 FIX: Uses getDefaultBranch() instead of hardcoded 'origin/dev'

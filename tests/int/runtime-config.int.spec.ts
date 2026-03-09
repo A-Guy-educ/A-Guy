@@ -36,6 +36,20 @@ describe('Runtime Config Integration (Tenant-Scoped Secrets)', () => {
       })
       testTenantId = created.id
     }
+
+    // Clean up stale entries from previous runs (shared CI database)
+    try {
+      await payload.delete({
+        collection: 'config_secrets',
+        where: {
+          and: [{ key: { like: 'test_runtime_' } }, { tenant: { equals: testTenantId } }],
+        },
+        overrideAccess: true,
+      })
+    } catch {
+      // Ignore if nothing to delete
+    }
+    clearConfigCache()
   })
 
   afterAll(async () => {
@@ -98,6 +112,8 @@ describe('Runtime Config Integration (Tenant-Scoped Secrets)', () => {
       overrideAccess: true,
     })
 
+    // Clear cache to force reload with new entries
+    clearConfigCache()
     await loadRuntimeConfig(payload, testTenantId)
 
     // Should find the value for our tenant
@@ -137,6 +153,8 @@ describe('Runtime Config Integration (Tenant-Scoped Secrets)', () => {
       overrideAccess: true,
     })
 
+    // Clear cache to force reload with new entries
+    clearConfigCache()
     await loadRuntimeConfig(payload, testTenantId)
 
     // Enabled should be loaded

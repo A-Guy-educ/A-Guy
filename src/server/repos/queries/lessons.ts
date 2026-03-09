@@ -12,6 +12,7 @@ export const queryLessonsByChapter = cache(async ({ chapterId }: { chapterId: st
     id: chapterId,
     depth: 0,
     overrideAccess: false,
+    disableErrors: true,
   })
 
   if (!chapterResult || chapterResult.status !== 'published' || !chapterResult.isActive) {
@@ -30,6 +31,7 @@ export const queryLessonsByChapter = cache(async ({ chapterId }: { chapterId: st
     id: courseId,
     depth: 0,
     overrideAccess: false,
+    disableErrors: true,
   })
 
   if (!courseResult || courseResult.status !== 'published' || !courseResult.isActive) {
@@ -110,6 +112,7 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
     id: chapterId,
     depth: 0,
     overrideAccess: false,
+    disableErrors: true,
   })
 
   if (!chapterResult || chapterResult.status !== 'published' || !chapterResult.isActive) {
@@ -127,6 +130,7 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
     id: courseId,
     depth: 0,
     overrideAccess: false,
+    disableErrors: true,
   })
 
   if (!courseResult || courseResult.status !== 'published' || !courseResult.isActive) {
@@ -149,6 +153,7 @@ export const queryLessonsByCourse = cache(async ({ courseId }: { courseId: strin
     id: courseId,
     depth: 0,
     overrideAccess: false,
+    disableErrors: true,
   })
 
   if (!courseResult || courseResult.status !== 'published' || !courseResult.isActive) {

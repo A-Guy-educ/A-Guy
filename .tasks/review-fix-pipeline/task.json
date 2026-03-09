@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "taskId": "review-fix-pipeline",
+  "title": "Architect Agent Code Review + Self-Healing Pipeline",
+  "description": "Add review stage (architect agent), fix stage (targeted fixes), and verify loop for self-healing pipeline",
+  "task_type": "pipeline_infrastructure",
+  "domain": "cody",
+  "complexity": 65,
+  "complexity_reasoning": "Requires modifications to state machine, stage definitions, handlers, and parsing logic across multiple files",
+  "pipeline": "spec_only",
+  "risk": "medium",
+  "control_mode": "risk-gated",
+  "assumptions": [
+    "Architect agent can be reused with modified instructions",
+    "State machine loop logic is extensible",
+    "Existing commit post-action can be reused"
+  ],
+  "review_questions": [
+    "Is the verify loop logic sound?",
+    "Should fix stage allow unlimited retries or cap at 2?",
+    "Should review stage be optional for simple tasks?"
+  ]
+}
