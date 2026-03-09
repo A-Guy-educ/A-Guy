@@ -11,11 +11,16 @@ import { ObjectId } from 'mongodb'
 import { getPayload } from 'payload'
 
 import type { MediaPartWithPath } from '@/infra/llm/multimodal/types'
+import { DEFAULT_DIAGRAM_GENERATOR_PROMPT } from '@/infra/llm/prompts/diagram-generator'
 import {
   getLLMProvider,
   getProviderModelConfig,
   getProviderTypeFromEnv,
 } from '@/infra/llm/providers/factory'
+import {
+  createEmptyMetrics,
+  runDiagramPass,
+} from '@/server/services/exercise-conversion/diagram-pass'
 import {
   enrichBlockIds,
   normalizeExerciseInput,
@@ -115,6 +120,7 @@ export const pdfToExercisesTask = {
             segment,
             extractorPrompt: input.promptSnapshot.extractor,
             verifierPrompt: input.promptSnapshot.verifier,
+            diagramGeneratorPrompt: input.promptSnapshot.diagramGenerator,
             output, // v2.1: Pass output for exercisesSkipped tracking
             tenantId, // For SystemParams access
           })
@@ -407,11 +413,20 @@ async function processSegmentWithMultimodal(
     segment: { pageStart: number; pageEnd: number }
     extractorPrompt: string
     verifierPrompt: string
+    diagramGeneratorPrompt?: string
     output: { exercisesSkipped?: number; errors: unknown[] }
     tenantId: string // For SystemParams access
   },
 ) {
-  const { attachments, segment, extractorPrompt, verifierPrompt, output, tenantId } = context
+  const {
+    attachments,
+    segment,
+    extractorPrompt,
+    verifierPrompt,
+    diagramGeneratorPrompt,
+    output,
+    tenantId,
+  } = context
 
   // ========== Call Extractor with MULTIMODAL PDF Attachment ==========
   const extractorPromptWithContext = `${extractorPrompt}
@@ -500,6 +515,27 @@ Return JSON: { "valid": boolean, "reason": "..." }`
 
     validExercises.push(exercise)
   }
+
+  // ========== DIAGRAM PASS ==========
+  // Generate TikZ for detected diagram description blocks
+  let diagramMetrics = createEmptyMetrics()
+
+  // Use configured prompt or built-in default
+  const effectiveDiagramPrompt = diagramGeneratorPrompt ?? DEFAULT_DIAGRAM_GENERATOR_PROMPT
+
+  if (validExercises.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    diagramMetrics = await runDiagramPass(payload as any, {
+      attachments,
+      diagramPrompt: effectiveDiagramPrompt,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      exercises: validExercises as any,
+    })
+  }
+
+  // Store diagram metrics in output for segment debug
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(output as any).diagramMetrics = diagramMetrics
 
   return validExercises
 }

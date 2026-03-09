@@ -116,6 +116,21 @@ export async function POST(request: NextRequest) {
       overrideAccess: true,
     })
 
+    // Fetch published diagram-generator prompts for this tenant
+    const diagramGenerators = await payload.find({
+      collection: 'prompts',
+      where: {
+        and: [
+          { tenant: { equals: tenantId } },
+          { status: { equals: 'published' } },
+          { usage: { equals: 'diagram-generator' } },
+        ],
+      },
+      limit: 100,
+      depth: 0,
+      overrideAccess: true,
+    })
+
     // Return in PromptOption format used by UI
     // v2.1 Fix 1: Include status field in response
     const mapPromptToOption = (p: Prompt): PromptOption => ({
@@ -131,6 +146,7 @@ export async function POST(request: NextRequest) {
       extractors: extractors.docs.map(mapPromptToOption),
       verifiers: verifiers.docs.map(mapPromptToOption),
       contextExtractors: contextExtractors.docs.map(mapPromptToOption),
+      diagramGenerators: diagramGenerators.docs.map(mapPromptToOption),
     })
   } catch (error) {
     const Sentry = await import('@sentry/nextjs')

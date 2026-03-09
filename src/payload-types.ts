@@ -680,9 +680,9 @@ export interface Prompt {
    */
   tenant: string | Tenant;
   /**
-   * Purpose of this prompt: chat conversation, PDF extraction, PDF verification, or context extraction for AI tutor
+   * Purpose of this prompt: chat conversation, PDF extraction, PDF verification, context extraction, or diagram generation
    */
-  usage?: ('chat' | 'extractor' | 'verifier' | 'context_extractor') | null;
+  usage?: ('chat' | 'extractor' | 'verifier' | 'context_extractor' | 'diagram-generator') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1574,9 +1574,9 @@ export interface ExtractionLog {
    */
   status: 'success' | 'failed';
   /**
-   * Lifecycle stage - extract or create
+   * Lifecycle stage - extract, create, or diagram-tikz
    */
-  stage: 'extract' | 'create';
+  stage: 'extract' | 'create' | 'diagram-tikz';
   /**
    * Raw LLM response string
    */

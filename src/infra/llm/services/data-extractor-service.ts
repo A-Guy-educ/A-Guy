@@ -275,10 +275,12 @@ export interface ImageToExerciseV3Response {
  * Returns extended response including diagram description and position
  *
  * Uses V3_EXERCISE_WITH_DIAGRAMS_PROMPT to also extract diagram information.
+ * Optionally accepts a prompt override for tenant-specific prompts.
  */
 export async function extractFromImageV3(
   input: ImageToExerciseInput,
   payload: Payload,
+  promptOverride?: string,
 ): Promise<ImageToExerciseV3Response> {
   const startTime = Date.now()
   let modelConfig: AIModel | null = null
@@ -290,7 +292,9 @@ export async function extractFromImageV3(
     modelConfig = resolveModelConfig('IMAGE_TO_EXERCISE')
 
     // Prepare multimodal input with V3 prompt that includes diagram extraction
-    const prompt = `${V3_EXERCISE_WITH_DIAGRAMS_PROMPT}\n\nExtract the exercise from this image. Return JSON with: title (topic description, 3-8 words), stem (shared context), subQuestions[] (each with prompt, type, options if MCQ, correctAnswer if MCQ, acceptedAnswers if free response), diagramDescription (optional), diagramPosition (optional).`
+    // Use override if provided (for tenant-specific prompts), otherwise use default
+    const basePrompt = promptOverride ?? V3_EXERCISE_WITH_DIAGRAMS_PROMPT
+    const prompt = `${basePrompt}\n\nExtract the exercise from this image. Return JSON with: title (topic description, 3-8 words), stem (shared context), subQuestions[] (each with prompt, type, options if MCQ, correctAnswer if MCQ, acceptedAnswers if free response), diagramDescription (optional), diagramPosition (optional).`
 
     // For PDFs, pass directly to Gemini (it handles PDF natively)
     // For images, optimize before sending to reduce API latency/costs

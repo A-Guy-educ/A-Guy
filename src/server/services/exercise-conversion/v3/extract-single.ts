@@ -17,6 +17,7 @@
 
 import type { Payload } from 'payload'
 
+import { DEFAULT_DIAGRAM_GENERATOR_PROMPT } from '@/infra/llm/prompts/diagram-generator'
 import {
   extractFromImageV3,
   type ImageToExerciseV3Response,
@@ -24,7 +25,8 @@ import {
 import { fetchBuffer } from '@/infra/utils/http'
 import type { Lesson, Media } from '@/payload-types'
 import { getPdfBufferFromBlob, normalizeToAbsoluteUrl } from '@/server/services/pdf-fetcher'
-import { resolveExtractorPrompt } from './prompt-resolver'
+import { runDiagramPass } from '../diagram-pass'
+import { resolveDiagramPrompt, resolveExtractorPrompt } from './prompt-resolver'
 import {
   autoAssignDiagrams,
   multiPartToExerciseContent,
@@ -209,6 +211,7 @@ export async function extractSingle(
         mimeType,
       },
       payload,
+      resolvedPrompt?.template,
     )
   } catch (llmError) {
     // Log failed extraction
@@ -243,12 +246,74 @@ export async function extractSingle(
     // Apply auto-detect heuristic to move misclassified diagrams to correct sub-question
     const extractionData = autoAssignDiagrams(rawExtractionData)
 
+    // Transform to content first, then run diagram pass on the blocks
+    const preTransformResult = multiPartToExerciseContent(extractionData)
+    let finalContent = preTransformResult.content
+
+    // ========== DIAGRAM PASS (V3 single) ==========
+    // Resolve diagram prompt (non-fatal if not configured)
+    let diagramPromptId: string | undefined
+    let diagramPromptVersion: string | undefined
+    try {
+      const resolved = await resolveDiagramPrompt(payload, lessonTenantId)
+      const diagramPromptTemplate = resolved?.template ?? DEFAULT_DIAGRAM_GENERATOR_PROMPT
+      diagramPromptId = resolved?.prompt.id
+      diagramPromptVersion = resolved?.version
+
+      // Build attachments from the media buffer
+      const diagramAttachments = [
+        {
+          data: imageBuffer.toString('base64'),
+          mimeType,
+        },
+      ]
+
+      // Run diagram pass on the content blocks
+      const diagramExercise = {
+        title: preTransformResult.title,
+        blocks: [...finalContent.blocks] as Array<{
+          type: string
+          id?: string
+          value?: string
+          [key: string]: unknown
+        }>,
+      }
+
+      const diagramMetrics = await runDiagramPass(payload, {
+        attachments: diagramAttachments,
+        diagramPrompt: diagramPromptTemplate,
+        exercises: [diagramExercise],
+      })
+
+      // Use mutated blocks if diagram pass found and processed anything
+      if (diagramMetrics.detected > 0) {
+        finalContent = { blocks: diagramExercise.blocks as typeof finalContent.blocks }
+      }
+
+      // Log diagram pass as a separate extraction log entry
+      if (diagramMetrics.attempted > 0) {
+        await createExtractionLog(payload, {
+          tenant: lessonTenantId,
+          lesson: lessonId,
+          media: mediaId,
+          prompt: diagramPromptId,
+          promptVersion: diagramPromptVersion,
+          status: diagramMetrics.succeeded > 0 ? 'success' : 'failed',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          stage: 'diagram-tikz' as any,
+          processingTimeMs: diagramMetrics.latencyMs,
+          model: '',
+        })
+      }
+    } catch {
+      // Diagram pass is non-fatal — continue without it
+    }
+
     // Transform to preview draft (preserves null correctAnswer)
     previewDraft = multiPartToPreviewDraft(extractionData)
 
-    // Transform to exercise content (uses deterministic fallback for null)
-    const transformResult = multiPartToExerciseContent(extractionData)
-    exerciseContent = transformResult.content
+    // Use the content with diagram pass results applied
+    exerciseContent = finalContent
 
     // Log successful extraction (use raw data)
     const logId = await createExtractionLog(payload, {
@@ -440,6 +505,7 @@ export async function extractAndCreate(
         mimeType,
       },
       payload,
+      resolvedPrompt?.template,
     )
   } catch (llmError) {
     // Log failed extraction
@@ -471,9 +537,47 @@ export async function extractAndCreate(
     // Apply auto-detect heuristic to move misclassified diagrams to correct sub-question
     const extractionData = autoAssignDiagrams(rawExtractionData)
 
+    // Transform to content first, then run diagram pass on the blocks
+    const preTransformResult = multiPartToExerciseContent(extractionData)
+    let finalContent = preTransformResult.content
+
+    // ========== DIAGRAM PASS (V3 single — create path) ==========
+    try {
+      const resolved = await resolveDiagramPrompt(payload, lessonTenantId)
+      const diagramPromptTemplate = resolved?.template ?? DEFAULT_DIAGRAM_GENERATOR_PROMPT
+
+      const diagramAttachments = [
+        {
+          data: imageBuffer.toString('base64'),
+          mimeType,
+        },
+      ]
+
+      const diagramExercise = {
+        title: preTransformResult.title,
+        blocks: [...finalContent.blocks] as Array<{
+          type: string
+          id?: string
+          value?: string
+          [key: string]: unknown
+        }>,
+      }
+
+      const diagramMetrics = await runDiagramPass(payload, {
+        attachments: diagramAttachments,
+        diagramPrompt: diagramPromptTemplate,
+        exercises: [diagramExercise],
+      })
+
+      if (diagramMetrics.detected > 0) {
+        finalContent = { blocks: diagramExercise.blocks as typeof finalContent.blocks }
+      }
+    } catch {
+      // Non-fatal
+    }
+
     // Transform to exercise content (uses deterministic fallback for null)
-    const transformResult = multiPartToExerciseContent(extractionData)
-    const { title, content } = transformResult
+    const { title, content } = { title: preTransformResult.title, content: finalContent }
 
     // Step 7: Create exercise immediately
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

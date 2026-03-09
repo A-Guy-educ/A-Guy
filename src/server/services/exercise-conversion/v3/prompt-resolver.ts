@@ -9,12 +9,13 @@
  * @pattern prompt-resolution
  */
 
-import type { Payload } from 'payload'
 import type { Prompt } from '@/payload-types'
+import type { Payload } from 'payload'
 
 export interface ResolvedPrompt {
   prompt: Prompt
   version: string // `${prompt.promptKey}:${prompt.updatedAt}`
+  template?: string // For diagram prompt which returns template
 }
 
 /**
@@ -68,7 +69,7 @@ export async function resolveExtractorPrompt(
       : 'unknown'
     const version = `${typedPrompt.promptKey}:${updatedAt}`
 
-    return { prompt: typedPrompt, version }
+    return { prompt: typedPrompt, version, template: typedPrompt.template }
   }
 
   // No prompt ID - find latest published extractor prompt for tenant
@@ -96,7 +97,7 @@ export async function resolveExtractorPrompt(
   const updatedAt = prompt.updatedAt ? new Date(prompt.updatedAt).toISOString() : 'unknown'
   const version = `${prompt.promptKey}:${updatedAt}`
 
-  return { prompt, version }
+  return { prompt, version, template: prompt.template }
 }
 
 /**
@@ -105,4 +106,41 @@ export async function resolveExtractorPrompt(
  */
 export function getPromptTemplate(prompt: Prompt): string {
   return prompt.template
+}
+
+/**
+ * Resolve diagram generator prompt for a given tenant.
+ * Returns null if no published prompt exists (diagram pass will use default).
+ *
+ * Unlike resolveExtractorPrompt, this does NOT throw on missing prompt.
+ * The diagram pass is optional — if no prompt exists, use the built-in default.
+ */
+export async function resolveDiagramPrompt(
+  payload: Payload,
+  tenantId: string,
+): Promise<ResolvedPrompt | null> {
+  const result = await payload.find({
+    collection: 'prompts',
+    where: {
+      and: [
+        { tenant: { equals: tenantId } },
+        { usage: { equals: 'diagram-generator' } },
+        { status: { equals: 'published' } },
+      ],
+    },
+    sort: '-updatedAt',
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+  })
+
+  if (result.docs.length === 0) {
+    return null
+  }
+
+  const prompt = result.docs[0] as unknown as Prompt
+  const updatedAt = prompt.updatedAt ? new Date(prompt.updatedAt).toISOString() : 'unknown'
+  const version = `${prompt.promptKey}:${updatedAt}`
+
+  return { prompt, version, template: prompt.template }
 }

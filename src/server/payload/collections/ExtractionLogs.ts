@@ -104,10 +104,11 @@ export const ExtractionLogs: CollectionConfig = {
       options: [
         { label: 'Extract', value: 'extract' },
         { label: 'Create', value: 'create' },
+        { label: 'Diagram TikZ', value: 'diagram-tikz' },
       ],
       index: true,
       admin: {
-        description: 'Lifecycle stage - extract or create',
+        description: 'Lifecycle stage - extract, create, or diagram-tikz',
       },
     },
 

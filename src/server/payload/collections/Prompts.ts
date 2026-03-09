@@ -109,11 +109,12 @@ export const Prompts: CollectionConfig = {
         { label: 'PDF Extractor', value: 'extractor' },
         { label: 'PDF Verifier', value: 'verifier' },
         { label: 'Context Extractor', value: 'context_extractor' },
+        { label: 'Diagram Generator', value: 'diagram-generator' },
       ],
       defaultValue: 'chat',
       admin: {
         description:
-          'Purpose of this prompt: chat conversation, PDF extraction, PDF verification, or context extraction for AI tutor',
+          'Purpose of this prompt: chat conversation, PDF extraction, PDF verification, context extraction, or diagram generation',
         position: 'sidebar',
       },
     },

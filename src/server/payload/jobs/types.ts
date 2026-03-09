@@ -42,6 +42,7 @@ export interface PdfToExercisesInput {
   promptSnapshot: {
     extractor: string
     verifier: string
+    diagramGenerator?: string // null/undefined if not configured
   }
   promptSnapshotHash: {
     extractor: string
@@ -60,6 +61,14 @@ export interface PdfToExercisesOutput {
     exerciseCount: number
     debug?: {
       proposedIdempotencyKeys: string[]
+      diagramPass?: {
+        detected: number
+        attempted: number
+        succeeded: number
+        failed: number
+        latencyMs: number
+        byType: { geometry: number; axis: number; other: number }
+      }
     }
   }>
 }
