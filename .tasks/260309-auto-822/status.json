@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-09T09:58:37.252Z",
-  "updatedAt": "2026-03-09T10:38:48.884Z",
+  "updatedAt": "2026-03-09T11:13:27.740Z",
   "state": "running",
   "cursor": "spec",
   "stages": {
@@ -44,11 +44,17 @@
       "outputFile": "plan-gap.md"
     },
     "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-09T10:38:48.809Z",
+      "completedAt": "2026-03-09T11:12:57.736Z",
+      "outputFile": "build.md"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-09T10:38:48.809Z"
+      "startedAt": "2026-03-09T11:13:27.740Z"
     }
   },
-  "issueNumber": 754,
-  "branchName": "feat/260309-auto-754-v3-question-type-auto-mapping-sequ"
+  "issueNumber": 754
 }
