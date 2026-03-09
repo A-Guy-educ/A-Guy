@@ -388,6 +388,30 @@ html[data-theme='light'] {
   }
 }
 
+/* MathLive mathfield theming */
+math-field {
+  --primary: hsl(var(--primary));
+  --caret-color: hsl(var(--foreground));
+  --selection-background-color: hsl(var(--accent));
+  --selection-color: hsl(var(--accent-foreground));
+  --placeholder-color: hsl(var(--muted-foreground));
+  --placeholder-opacity: 0.5;
+  font-size: 1.1em;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+  background: hsl(var(--input));
+  color: hsl(var(--foreground));
+  min-height: 2.5rem;
+  width: 100%;
+  direction: ltr;
+}
+
+math-field:focus-within {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
 /* Exercise View Animations */
 @keyframes slideUp {
   from {

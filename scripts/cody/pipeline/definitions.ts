@@ -18,7 +18,7 @@ import { STAGE_TIMEOUTS, DEFAULT_TIMEOUT } from '../agent-runner'
 import { ensureFeatureBranch } from '../git-utils'
 import { readTask } from '../pipeline-utils'
 import { setBranchName, loadState } from '../engine/status'
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import {
   createSpecValidator,
   createGapValidator,
@@ -28,7 +28,6 @@ import {
 import {
   skipIfInputQuality,
   skipIfClarifyDisabled,
-  skipIfNoAuditorOutput,
   skipIfSpecHasNoOpenQuestions,
   skipIfSpecOnly,
   skipIfBelowComplexity,
@@ -46,20 +45,25 @@ export const IMPL_ORDER_STANDARD: PipelineStep[] = [
   'plan-gap',
   'build',
   'commit',
+  'review',
+  'fix',
+  'commit-fix',
   'verify',
-  'auditor',
-  'apply-audit',
   'pr',
 ]
 export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
   'architect',
   'build',
   'commit',
+  'review',
+  'fix',
+  'commit-fix',
   'verify',
-  'auditor',
-  'apply-audit',
   'pr',
 ]
+
+// Fix-only pipeline order for @cody fix mode
+export const FIX_ORDER: PipelineStep[] = ['review', 'fix', 'commit-fix', 'verify', 'pr']
 
 // ============================================================================
 // Stage Definitions
@@ -216,30 +220,44 @@ No critical gaps identified. Plan was refined in-place.
     shouldSkip: (ctx) => skipIfInputQuality(ctx, 'build'),
     preExecute: async (ctx) => {
       if (!ctx.input.dryRun) {
-        const td = readTask(ctx.taskDir)
-        if (td) {
-          ensureFeatureBranch(ctx.taskId, td.task_type, undefined, ctx.taskDir)
+        try {
+          const td = readTask(ctx.taskDir)
+          if (td) {
+            ensureFeatureBranch(ctx.taskId, td.task_type, undefined, ctx.taskDir)
 
-          // Capture the branch name and persist to status.json for dashboard lookups
-          try {
-            const currentBranch = execSync('git branch --show-current', {
-              encoding: 'utf-8',
-            }).trim()
-            if (currentBranch) {
-              const state = loadState(ctx.taskId)
-              if (state) {
-                setBranchName(ctx.taskId, state, currentBranch)
+            // Capture the branch name and persist to status.json for dashboard lookups
+            try {
+              const currentBranch = execFileSync('git', ['branch', '--show-current'], {
+                encoding: 'utf-8',
+                timeout: 10000, // 10 seconds
+              }).trim()
+              if (currentBranch) {
+                const state = loadState(ctx.taskId)
+                if (state) {
+                  setBranchName(ctx.taskId, state, currentBranch)
+                }
               }
+            } catch {
+              // Non-critical — branch name is a convenience field
             }
-          } catch {
-            // Non-critical — branch name is a convenience field
           }
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error)
+          throw new Error(`Build stage preExecute failed: ${msg}`)
         }
       }
     },
     postActions: [
       { type: 'validate-src-changes' },
       { type: 'validate-build-content' },
+      // Commit code BEFORE quality gates so work is preserved even if gates fail.
+      // Without this, a gate failure means all build agent work is lost.
+      {
+        type: 'commit-task-files',
+        stagingStrategy: 'tracked+task',
+        push: true,
+        ensureBranch: true,
+      },
       {
         type: 'run-quality-with-autofix',
         gates: [
@@ -250,6 +268,74 @@ No critical gaps identified. Plan was refined in-place.
       },
     ],
     validator: createBuildValidator(),
+  })
+
+  // review stage - architect agent reviews generated code
+  stages.set('review', {
+    name: 'review',
+    type: 'agent',
+    timeout: STAGE_TIMEOUTS.review ?? DEFAULT_TIMEOUT,
+    maxRetries: 0,
+    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.review,
+    shouldSkip: (ctx) => {
+      const complexitySkip = skipIfBelowComplexity(ctx, 'review')
+      if (complexitySkip.shouldSkip) return complexitySkip
+      return { shouldSkip: false }
+    },
+    postActions: [
+      { type: 'analyze-review-findings' },
+      { type: 'commit-task-files', stagingStrategy: 'task-only', push: true, ensureBranch: false },
+    ],
+  })
+
+  // fix stage - targeted fixes based on review or verify failures
+  stages.set('fix', {
+    name: 'fix',
+    type: 'agent',
+    timeout: STAGE_TIMEOUTS.fix ?? DEFAULT_TIMEOUT,
+    maxRetries: 2,
+    shouldSkip: (ctx) => {
+      const state = loadState(ctx.taskId)
+      const fixStage = state?.stages?.fix
+      if (
+        fixStage?.fixAttempt !== undefined &&
+        fixStage.fixAttempt >= (fixStage.maxFixAttempts ?? 2)
+      ) {
+        return { shouldSkip: true, reason: 'Max fix attempts reached' }
+      }
+      const reviewStage = state?.stages?.review
+      if (!reviewStage?.issuesFound) {
+        const verifyFailuresPath = path.join(ctx.taskDir, 'verify-failures.md')
+        if (!fs.existsSync(verifyFailuresPath)) {
+          return { shouldSkip: true, reason: 'No issues to fix' }
+        }
+      }
+      return { shouldSkip: false }
+    },
+    postActions: [
+      {
+        type: 'commit-task-files',
+        stagingStrategy: 'tracked+task',
+        push: true,
+        ensureBranch: false,
+      },
+      { type: 'clear-verify-failures' },
+    ],
+  })
+
+  // commit-fix stage - commits the fix changes before verify
+  stages.set('commit-fix', {
+    name: 'commit-fix',
+    type: 'git',
+    timeout: STAGE_TIMEOUTS['commit-fix'] ?? DEFAULT_TIMEOUT,
+    maxRetries: 0,
+    shouldSkip: (ctx) => {
+      const state = loadState(ctx.taskId)
+      if (state?.stages?.fix?.state === 'skipped') {
+        return { shouldSkip: true, reason: 'Fix was skipped, nothing to commit' }
+      }
+      return { shouldSkip: false }
+    },
   })
 
   // commit stage
@@ -276,85 +362,6 @@ No critical gaps identified. Plan was refined in-place.
         ensureBranch: false,
         localOnly: true,
       },
-    ],
-  })
-
-  // auditor stage - advisory (non-blocking)
-  // R11: Removed shouldSkip - auditor creates auditor.md, so skipIfNoAuditorOutput would always skip
-  stages.set('auditor', {
-    name: 'auditor',
-    type: 'agent',
-    timeout: STAGE_TIMEOUTS.auditor ?? DEFAULT_TIMEOUT,
-    maxRetries: 1, // Was 0 - added retry so LLM gets feedback when it fails to write file
-    advisory: true,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.auditor,
-    shouldSkip: (ctx) => skipIfBelowComplexity(ctx, 'auditor'),
-    fallbackOnMissingOutput: (ctx) => {
-      // Fallback if LLM fails to write auditor.md - generate minimal report
-      // This allows apply-audit stage to run instead of being skipped
-      return `# Auditor Report: ${ctx.taskId}
-
-## Task Info
-
-- **Task ID:** ${ctx.taskId}
-- **Task Type:** unknown
-- **Run State:** SUCCESS
-- **Date:** ${new Date().toISOString()}
-
-## Stage Analysis
-
-| Stage | Quality |
-| ------ | ------- |
-| spec | reviewed |
-| plan | reviewed |
-| build | reviewed |
-| verify | reviewed |
-
-## Process Delta
-
-- No major process gaps identified
-
-## Primary Improvement
-
-- **Type:** PIPELINE
-- **Title:** Auditor output detection reliability
-- **Rationale:** LLM occasionally prints to stdout instead of writing file
-- **Where:** scripts/cody/pipeline/definitions.ts
-- **Effectiveness:** unknown
-
-## Additional Findings
-
-1. **Type:** PROMPT
-   - **Title:** Reinforce file writing requirement
-   - **Rationale:** LLM may print report to chat instead of writing file
-   - **Where:** .opencode/agents/auditor.md
-`
-    },
-  })
-
-  // apply-audit stage
-  stages.set('apply-audit', {
-    name: 'apply-audit',
-    type: 'agent',
-    timeout: STAGE_TIMEOUTS['apply-audit'] ?? DEFAULT_TIMEOUT,
-    maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS['apply-audit'],
-    shouldSkip: (ctx) => {
-      const complexitySkip = skipIfBelowComplexity(ctx, 'apply-audit')
-      if (complexitySkip.shouldSkip) return complexitySkip
-      return skipIfNoAuditorOutput(ctx)
-    },
-    postActions: [
-      // LOCAL-ONLY commit of task files (G18)
-      {
-        type: 'commit-task-files',
-        stagingStrategy: 'task-only',
-        push: false,
-        ensureBranch: false,
-        localOnly: true,
-      },
-      // Audit history commit (R7)
-      { type: 'commit-audit-history' },
     ],
   })
 
@@ -424,7 +431,7 @@ export function buildPipeline(
     // Full/rerun mode: include both spec and impl stages
     // This ensures the pipeline survives restarts — all stages are present
     // and the state machine efficiently skips completed ones
-    const specOrder = SPEC_ORDER_STANDARD
+    const specOrder = profile === 'standard' ? SPEC_ORDER_STANDARD : SPEC_ORDER_LIGHTWEIGHT
     const implOrder = profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
     const filteredSpecOrder = clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
     order = [...filteredSpecOrder, ...implOrder]

@@ -23,13 +23,14 @@ interface ParseOutputs {
   valid: string
   runner: string
   version: string
+  fresh: string
 }
 
 // Task ID format: YYMMDD-description (e.g., 260225-auto-90)
 export const TASK_ID_REGEX = /^[0-9]{6}-[a-zA-Z0-9-]+$/
 
 // Valid pipeline modes
-export const VALID_MODES = ['spec', 'impl', 'rerun', 'full', 'status']
+export const VALID_MODES = ['spec', 'impl', 'rerun', 'fix', 'full', 'status']
 
 // Approval keywords (exact match only)
 export const APPROVAL_KEYWORDS = ['approve', 'approved', 'yes', 'go', 'proceed', 'y', 'continue']
@@ -50,11 +51,13 @@ export function normalizeComment(comment: string): string {
 
 /**
  * Extract command after @cody or /cody prefix
+ * Handles both single-line and multiline comments
  */
 export function extractCommandAfterCody(comment: string): string {
   const normalized = normalizeComment(comment)
   // Match @cody or /cody at the start, followed by optional whitespace
-  const match = normalized.match(/^[\/@]cody\s*(.*)$/)
+  // Use 's' flag so . matches newlines for multiline comments
+  const match = normalized.match(/^[\/@]cody\s*(.*)$/s)
   if (!match) return ''
   return match[1].trim()
 }
@@ -122,6 +125,7 @@ export function parseDispatchInputs(): ParseOutputs {
     valid: 'true',
     runner: process.env.DISPATCH_RUNNER || 'self-hosted',
     version: process.env.DISPATCH_VERSION || process.env.CODY_DEFAULT_VERSION || '',
+    fresh: process.env.FRESH || '',
   }
 
   logger.info(
@@ -158,8 +162,18 @@ export function parseCommentInputs(): ParseOutputs {
     comment_body: JSON.stringify(commentBody),
   }
 
-  // Discover task-id from previous bot comments on the issue
-  if (issueNumber) {
+  // Extract command after @cody or /cody (MUST be before flag detection)
+  const cmdAfterCody = commentBody ? extractCommandAfterCody(commentBody) : ''
+
+  // Detect --fresh flag - skip taskId discovery if fresh
+  const hasFreshFlag = /--fresh\b/.test(cmdAfterCody)
+  if (hasFreshFlag) {
+    outputs.fresh = 'true'
+    logger.info('=== Detected --fresh flag: will create new task ===')
+  }
+
+  // Discover task-id from previous bot comments on the issue (skip if fresh)
+  if (issueNumber && !hasFreshFlag) {
     const discoveredTaskId = discoverTaskIdFromIssue(issueNumber)
     if (discoveredTaskId) {
       logger.info(`=== Discovered task-id from issue: ${discoveredTaskId} ===`)
@@ -168,9 +182,7 @@ export function parseCommentInputs(): ParseOutputs {
   }
 
   // Parse command to determine mode and flags
-  if (commentBody) {
-    const cmdAfterCody = extractCommandAfterCody(commentBody)
-
+  if (cmdAfterCody) {
     // Detect --local flag anywhere in the command
     const hasLocalFlag = /--local\b/.test(cmdAfterCody)
     if (hasLocalFlag) {
@@ -192,30 +204,52 @@ export function parseCommentInputs(): ParseOutputs {
       logger.info(`=== Detected --version flag: ${outputs.version} ===`)
     }
 
+    // Detect --from flag (both --from=stage and --from stage syntax)
+    const fromMatch = cmdAfterCody.match(/--from[=\s](\S+)/)
+    if (fromMatch) {
+      outputs.from_stage = fromMatch[1]
+      logger.info(`=== Detected --from flag: ${outputs.from_stage} ===`)
+    }
+
+    // Detect --feedback flag (both --feedback=text and --feedback text syntax)
+    const feedbackMatch = cmdAfterCody.match(/--feedback[=\s](\S+)/)
+    if (feedbackMatch) {
+      outputs.feedback = feedbackMatch[1]
+      logger.info(`=== Detected --feedback flag: ${outputs.feedback} ===`)
+    }
+
     // Strip flags from command before mode parsing
     const cmdWithoutFlags = cmdAfterCody
       .replace(/--local\b/g, '')
       .replace(/--github\b/g, '')
       .replace(/--github-hosted\b/g, '')
       .replace(/--version\s+\S+/g, '')
+      .replace(/--fresh\b/g, '')
+      .replace(/--from[=\s]\S+/g, '')
+      .replace(/--feedback[=\s]\S+/g, '')
       .trim()
 
     if (!cmdWithoutFlags) {
       // @cody alone (or @cody --local) - default to full mode
       outputs.mode = 'full'
       logger.info('=== @cody alone - defaulting to full mode ===')
-    } else if (APPROVAL_KEYWORDS.includes(cmdWithoutFlags)) {
-      // Approval command - use rerun mode
-      outputs.mode = 'rerun'
-      logger.info(`=== Detected approval keyword: ${cmdWithoutFlags} ===`)
-    } else if (VALID_MODES.includes(cmdWithoutFlags)) {
-      // Explicit mode specified
-      outputs.mode = cmdWithoutFlags
-      logger.info(`=== Detected explicit mode: ${cmdWithoutFlags} ===`)
     } else {
-      // Not a known command - default to full (might be task-id or description)
-      outputs.mode = 'full'
-      logger.info('=== Not a known command - defaulting to full mode ===')
+      // Check if the first word is a known mode or approval keyword
+      // This handles commands like "/cody rerun 260218-task" where extra args follow the mode
+      const firstWord = cmdWithoutFlags.split(/[\s\n]/)[0]
+      if (APPROVAL_KEYWORDS.includes(firstWord)) {
+        // Approval command with optional answer - use rerun mode
+        outputs.mode = 'rerun'
+        logger.info(`=== Detected approval keyword: ${firstWord} ===`)
+      } else if (VALID_MODES.includes(firstWord)) {
+        // First word is a valid mode (e.g., "rerun", "spec", "impl")
+        outputs.mode = firstWord
+        logger.info(`=== Detected explicit mode: ${firstWord} ===`)
+      } else {
+        // Not a known command - default to full (might be task-id or description)
+        outputs.mode = 'full'
+        logger.info('=== Not a known command - defaulting to full mode ===')
+      }
     }
   }
 
@@ -252,6 +286,7 @@ export function getDefaultOutputs(): ParseOutputs {
     valid: 'false',
     runner: 'self-hosted',
     version: process.env.CODY_DEFAULT_VERSION || '',
+    fresh: '',
   }
 }
 
@@ -280,6 +315,7 @@ function writeOutputs(outputs: ParseOutputs): void {
     `valid=${outputs.valid}`,
     `runner=${outputs.runner}`,
     `version=${outputs.version}`,
+    `fresh=${outputs.fresh}`,
   ]
 
   writeFileSync(githubOutput, lines.join('\n') + '\n')

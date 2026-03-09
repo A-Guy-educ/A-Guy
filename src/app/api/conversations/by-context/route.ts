@@ -37,6 +37,8 @@ export async function GET(request: NextRequest) {
       limit,
       pagination: false,
       depth: 0,
+      user,
+      overrideAccess: false,
     })
 
     const conversations = result.docs.map((doc) => {
@@ -87,6 +89,8 @@ export async function POST(request: NextRequest) {
         preferredLocale: 'he',
       },
       draft: false,
+      user,
+      overrideAccess: false,
     })
 
     return NextResponse.json({ id: conversation.id, contextKey })

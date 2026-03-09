@@ -182,7 +182,13 @@ function mergeDefaultBranch(cwd: string): void {
   } catch (_error) {
     logger.error(`[branch] Merge conflict detected while merging ${defaultBranch}`)
     logger.info('[branch] Aborting merge')
-    execFileSync('git', ['merge', '--abort'], { cwd, stdio: 'inherit' })
+    try {
+      execFileSync('git', ['merge', '--abort'], { cwd, stdio: 'inherit' })
+    } catch {
+      // merge --abort can fail if merge state was corrupted; fall back to hard reset
+      logger.warn('[branch] merge --abort failed, falling back to git reset --hard HEAD')
+      execFileSync('git', ['reset', '--hard', 'HEAD'], { cwd, stdio: 'inherit' })
+    }
     throw new Error(
       `Merge conflict while merging ${defaultBranch} into feature branch. Please resolve conflicts manually.`,
     )
@@ -226,7 +232,7 @@ export function ensureFeatureBranch(
   logger.info(`[branch] Ensuring feature branch: ${branchName}`)
 
   // Fetch latest from origin
-  execFileSync('git', ['fetch', 'origin'], { cwd, stdio: 'inherit' })
+  execFileSync('git', ['fetch', 'origin'], { cwd, stdio: 'inherit', timeout: 120_000 })
 
   // Check if branch already exists on remote (original behavior)
   let remoteBranchExists = false
@@ -248,11 +254,20 @@ export function ensureFeatureBranch(
     // Only revert tracked file modifications - don't delete untracked files
     // (Deleting untracked files could remove agent-created source files before they're committed)
     if (process.env.GITHUB_ACTIONS) {
+      // CI mode: clean dirty tracked files from previous failed runs, then checkout branch
       try {
         execFileSync('git', ['checkout', '--', '.'], { cwd, stdio: 'pipe' })
       } catch {
         // Ignore — working tree may already be clean
       }
+      // BUG FIX: Actually checkout the feature branch in CI mode.
+      // Previously this only cleaned dirty state but never switched branches,
+      // causing commits/pushes to land on dev (which has branch protection).
+      execFileSync('git', ['checkout', branchName], { cwd, stdio: 'inherit' })
+      execFileSync('git', ['pull', 'origin', branchName], { cwd, stdio: 'inherit' })
+
+      // Merge default branch to keep feature branch up-to-date
+      mergeDefaultBranch(cwd)
     } else {
       // Local mode: check for uncommitted changes and stash before checkout
       // Track whether we actually stashed to avoid popping unrelated stashes
@@ -462,10 +477,20 @@ export function commitAndPush(
   const workDir = cwd || process.cwd()
 
   // Get current branch
-  const branch = execFileSync('git', ['branch', '--show-current'], {
+  let branch = execFileSync('git', ['branch', '--show-current'], {
     cwd: workDir,
     encoding: 'utf-8',
   }).trim()
+
+  // Handle detached HEAD state (empty branch name)
+  if (!branch) {
+    branch =
+      execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
+        cwd: workDir,
+        encoding: 'utf-8',
+      }).trim() || 'detached'
+    logger.warn(`[commit] Detached HEAD detected, using ref: ${branch}`)
+  }
 
   // Read task.json for commit type
   const taskJsonPath = path.join(taskDir, 'task.json')

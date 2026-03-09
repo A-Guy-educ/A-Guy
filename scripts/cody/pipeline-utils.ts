@@ -33,16 +33,7 @@ export const VALID_INPUT_QUALITY_LEVELS = [
 ] as const
 
 // Stages that cannot be skipped (gap analysis always runs)
-export const NON_SKIPPABLE_STAGES = [
-  'gap',
-  'plan-gap',
-  'build',
-  'commit',
-  'verify',
-  'auditor',
-  'apply-audit',
-  'pr',
-] as const
+export const NON_SKIPPABLE_STAGES = ['gap', 'plan-gap', 'build', 'commit', 'verify', 'pr'] as const
 
 // Stages that CAN be skipped when input quality is high
 export const SKIPPABLE_STAGES = ['spec', 'architect'] as const
@@ -65,26 +56,27 @@ export const COMPLEXITY_MAX = 100
  * Stages with threshold 0 always run. Higher thresholds = only complex tasks.
  *
  * Tiers (stages activate at their individual thresholds, not all at tier boundary):
- *   1-9:   "Trivial"      → taskify, build, commit, verify, pr
+ *   1-9:   "Trivial"      → taskify, build, commit, fix, commit-fix, verify, pr
  *   10-19: "Simple"        → + architect (10)
- *   20-34: "Moderate"      → + auditor (20), apply-audit (20)
- *   35-39: "Complex"       → + spec (35)
- *   40-49: "Complex"       → + gap (40)
- *   50-59: "Very Complex"  → + plan-gap (50)
+ *   20-34: "Moderate"      → + spec (20)
+ *   30+:   "Moderate+"     → + review (30)
+ *   35-39: "Complex"       → + gap (35)
+ *   40-49: "Complex"       → + plan-gap (40)
  *   60+:   "Very Complex"  → + clarify (60)
  */
 export const STAGE_COMPLEXITY_THRESHOLDS: Record<string, number> = {
   taskify: 0,
-  spec: 35,
-  gap: 40,
+  spec: 20,
+  gap: 35,
   clarify: 60,
   architect: 10,
-  'plan-gap': 50,
+  'plan-gap': 40,
   build: 0,
   commit: 0,
+  review: 30,
+  fix: 0,
+  'commit-fix': 0,
   verify: 0,
-  auditor: 20,
-  'apply-audit': 20,
   pr: 0,
 }
 
@@ -131,7 +123,7 @@ export function resolveControlMode(taskDef: TaskDefinition, override?: ControlMo
 }
 
 /**
- * Lightweight tasks: simple fixes that skip heavyweight stages (spec, gap, plan-gap, auditor, apply-audit)
+ * Lightweight tasks: simple fixes that skip heavyweight stages (spec, gap, plan-gap)
  *
  * When complexity score is available, derives profile from it:
  *   complexity < 35 → lightweight (no spec/gap needed)
@@ -818,8 +810,6 @@ const DRY_RUN_OUTPUTS: Record<string, (taskId: string) => string> = {
   build: (taskId) => `# Build (dry-run)\n\nMock build output for ${taskId}.\n`,
   test: (taskId) => `# Test (dry-run)\n\nMock test output for ${taskId}.\n`,
   verify: (taskId) => `# Verify (dry-run)\n\nResult: PASS\n\nMock verification for ${taskId}.\n`,
-  auditor: (taskId) => `# Auditor (dry-run)\n\nMock auditor output for ${taskId}.\n`,
-  'plan-gap': (taskId) => `# Plan Gap Analysis (dry-run)\n\nNo gaps identified for ${taskId}.\n`,
   commit: (taskId) => `# Commit (dry-run)
 
 Mock commit output for ${taskId}.
@@ -881,7 +871,7 @@ export function flattenPipeline(stages: PipelineStage[]): string[] {
  *
  * Flow:
  *   architect → plan-gap → build → commit(scripted) →
- *   verify (scripted) → auditor → apply-audit → pr
+ *   verify (scripted) → pr
  * Note: test-writer subagent is invoked by build agent per plan step (TDD)
  */
 export const IMPL_PIPELINE: PipelineStage[] = [
@@ -889,8 +879,10 @@ export const IMPL_PIPELINE: PipelineStage[] = [
   'plan-gap',
   'build',
   'commit',
-  { parallel: ['verify', 'auditor'] },
-  'apply-audit',
+  'review',
+  'fix',
+  'commit-fix',
+  'verify',
   'pr',
 ]
 
@@ -905,17 +897,18 @@ export const ALL_IMPL_STAGE_NAMES = flattenPipeline(IMPL_PIPELINE)
  * Lightweight implementation pipeline stages.
  *
  * Flow:
- *   architect → build → commit → [verify ‖ auditor] → apply-audit → pr
+ *   architect → build → commit → verify → pr
  *
  * Skipped: plan-gap (saves 1-2 LLM calls)
- * Kept: auditor + apply-audit (quality gate always runs)
  */
 export const LIGHTWEIGHT_IMPL_PIPELINE: PipelineStage[] = [
   'architect',
   'build',
   'commit',
-  { parallel: ['verify', 'auditor'] },
-  'apply-audit',
+  'review',
+  'fix',
+  'commit-fix',
+  'verify',
   'pr',
 ]
 

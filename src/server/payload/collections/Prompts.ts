@@ -1,8 +1,8 @@
 import type { CollectionConfig } from 'payload'
 
 import { adminOnly } from '../access/adminOnly'
-import { tenantField } from '../fields/tenant'
 import { contentLocaleField } from '../fields/contentLocale'
+import { tenantField } from '../fields/tenant'
 import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 
 export const Prompts: CollectionConfig = {
@@ -108,11 +108,12 @@ export const Prompts: CollectionConfig = {
         { label: 'Chat', value: 'chat' },
         { label: 'PDF Extractor', value: 'extractor' },
         { label: 'PDF Verifier', value: 'verifier' },
+        { label: 'Context Extractor', value: 'context_extractor' },
       ],
       defaultValue: 'chat',
       admin: {
         description:
-          'Purpose of this prompt: chat conversation, PDF extraction, or PDF verification',
+          'Purpose of this prompt: chat conversation, PDF extraction, PDF verification, or context extraction for AI tutor',
         position: 'sidebar',
       },
     },

@@ -234,29 +234,23 @@
     },
     {
       "path": "README.md",
-      "title": "Payload Website Template",
+      "title": "A-Guy: AI-Powered Educational Platform",
       "sections": [
+        "Overview",
+        "Tech Stack",
         "Quick Start",
-        "How it works",
-        "Access control",
-        "Layout Builder",
-        "Lexical editor",
-        "Draft Preview",
-        "Live preview",
-        "On-demand Revalidation",
-        "SEO",
-        "Search",
-        "Redirects",
-        "Jobs and Scheduled Publish",
-        "Website",
-        "AI Memory System",
-        "Development",
-        "Production",
-        "Questions"
+        "Project Structure",
+        "Key Features",
+        "Collections",
+        "Environment Variables",
+        "Development Commands",
+        "Documentation",
+        "AI Agent Support",
+        "License"
       ],
       "relativeUrl": "README.md",
       "category": "root",
-      "wordCount": 1986
+      "wordCount": 592
     },
     {
       "path": "scripts/browser-agent/README.md",
@@ -288,7 +282,7 @@
       ],
       "relativeUrl": "scripts/cody/README.md",
       "category": "scripts",
-      "wordCount": 553
+      "wordCount": 534
     },
     {
       "path": "scripts/README.md",
@@ -549,7 +543,7 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-03-01T21:02:41.131Z",
+    "generatedAt": "2026-03-06T12:42:14.711Z",
     "totalReadmes": 32,
     "categories": {
       ".claude": 1,

@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       stopHeartbeat()
     }
   } catch (error) {
-    console.error('[Runner] Error:', error)
-    return NextResponse.json({ error: 'Job execution failed' }, { status: 500 })
+    const { captureAndRespond } = await import('@/server/api/capture-and-respond')
+    return captureAndRespond(error, { route: '/api/exercises/convert/runner' })
   }
 }

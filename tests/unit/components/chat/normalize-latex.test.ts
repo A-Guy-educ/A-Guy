@@ -156,4 +156,75 @@ describe('normalizeLatexDelimiters', () => {
       expect(normalizeLatexDelimiters(input)).toBe(expected)
     })
   })
+
+  describe('bare bracket LaTeX (no backslash before [)', () => {
+    it('converts bare [ with LaTeX commands to $$ block math', () => {
+      // This is the EXACT pattern from the bug report
+      const input = '[ 2 \\cdot (1 \\frac{2}{13} + 1)'
+      const result = normalizeLatexDelimiters(input)
+      // Should contain $$ delimiters, not raw brackets
+      expect(result).toContain('$$')
+      expect(result).not.toMatch(/^\[/) // Should not start with bare [
+    })
+
+    it('converts bare [ ... ] with LaTeX commands to block math', () => {
+      const input = '[ \\frac{a}{b} + \\sqrt{c} ]'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$$')
+      expect(result).toContain('\\frac{a}{b} + \\sqrt{c}')
+    })
+
+    it('does NOT convert regular markdown brackets without LaTeX', () => {
+      // Regular markdown link — should NOT be converted
+      const input = '[click here](https://example.com)'
+      expect(normalizeLatexDelimiters(input)).toBe(input)
+    })
+
+    it('does NOT convert plain bracket text', () => {
+      // Plain text in brackets — no LaTeX commands inside
+      const input = '[see note 1]'
+      expect(normalizeLatexDelimiters(input)).toBe(input)
+    })
+
+    it('converts bare bracket at line start with fraction', () => {
+      const input = 'הנוסחה:\n[ 2 \\cdot (1 \\frac{2}{13} + 1) ]'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$$')
+    })
+
+    it('handles bare bracket with unclosed expression (no closing ])', () => {
+      // The bug report shows expressions without closing bracket
+      const input = '[ 2 \\cdot (1 \\frac{2}{13} + 1)'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$$')
+    })
+  })
+
+  describe('bare bracket edge cases', () => {
+    it('handles multiple bare bracket expressions in one string', () => {
+      const input = 'First: [ \\frac{1}{2} ] and second: [ \\sqrt{3} ]'
+      const result = normalizeLatexDelimiters(input)
+      // Both should be converted
+      expect(result.match(/\$\$/g)?.length).toBeGreaterThanOrEqual(4) // 2 open + 2 close
+    })
+
+    it('handles bare bracket mixed with backslash-bracket', () => {
+      const input = '[ \\frac{a}{b} ] and \\[ c^2 \\]'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$$')
+      expect(result).not.toContain('[')
+    })
+
+    it('preserves array index brackets [0]', () => {
+      const input = 'array[0] = 5'
+      expect(normalizeLatexDelimiters(input)).toBe(input)
+    })
+
+    it('handles Hebrew text before bare bracket math', () => {
+      const input = 'חשבו את [ \\frac{2}{3} + \\frac{1}{4} ]'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$$')
+      expect(result).toContain('חשבו את')
+    })
+  })
 })

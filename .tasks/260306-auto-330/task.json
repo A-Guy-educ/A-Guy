@@ -1,0 +1,34 @@
+{
+  "task_type": "refactor",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/app/api/cody/prs/route.ts",
+    "src/app/api/cody/prs/files/route.ts",
+    "src/app/api/cody/workflows/route.ts",
+    "src/app/api/cody/pipeline/[taskId]/route.ts",
+    "src/app/api/cody/boards/route.ts",
+    "New: shared GitHub API error handler utility"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Zod is already available in the codebase (confirmed by grep)",
+    "The existing route patterns in src/app/api/cody/chat/route.ts can be used as reference",
+    "A shared utility in lib/ or ui/cody/ directory is the appropriate location for error handling"
+  ],
+  "review_questions": [
+    "Where should the shared GitHub API error handler utility be located - lib/utils or ui/cody?",
+    "Should the Zod schemas be defined inline in each route or in a shared location?",
+    "Are there any specific error codes from the GitHub API that need special handling beyond 401 and 403?"
+  ],
+  "complexity": 42,
+  "complexity_reasoning": "Scope: 12 points (5 API routes + 1 utility, multi-file refactor). Risk: 12 points (API routes with potential for breaking changes). Novelty: 6 points (following existing patterns in codebase). Cross-domain: 3 points (backend only). Ambiguity: 2 points (clear file paths and requirements). Dependencies: 7 points (internal code with some external GitHub API integration). Total: 42",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [],
+    "reasoning": "Task contains specific file paths to modify (5 files), expected behavior with code examples, and mentions creating a shared utility. Has clear scope but implementation details (where to place utility, exact Zod schemas) need discovery in the codebase."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

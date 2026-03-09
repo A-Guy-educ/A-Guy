@@ -1,0 +1,58 @@
+{
+  "version": 2,
+  "taskId": "260305-auto-782",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-05T21:53:39.814Z",
+  "updatedAt": "2026-03-05T22:30:16.282Z",
+  "state": "running",
+  "cursor": "spec",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-05T21:53:41.565Z",
+      "completedAt": "2026-03-05T22:02:02.712Z",
+      "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-05T22:02:02.790Z",
+      "completedAt": "2026-03-05T22:06:19.084Z",
+      "outputFile": "spec.md"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-05T22:06:19.105Z",
+      "completedAt": "2026-03-05T22:10:07.908Z",
+      "outputFile": "gap.md"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-05T22:10:07.929Z",
+      "completedAt": "2026-03-05T22:13:07.131Z",
+      "outputFile": "architect.md"
+    },
+    "plan-gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 44 (complex) below threshold 50 for plan-gap"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-05T22:13:10.395Z",
+      "completedAt": "2026-03-05T22:29:51.507Z",
+      "outputFile": "build.md"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-05T22:30:16.282Z"
+    }
+  },
+  "issueNumber": 689
+}

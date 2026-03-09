@@ -741,6 +741,42 @@ describe('ensureFeatureBranch', () => {
       // Verify that git checkout -- . was attempted (and threw)
       expect(checkoutDotThrown).toBe(true)
     })
+
+    it('should actually checkout the feature branch in CI mode (not just clean dirty state)', () => {
+      ensureFeatureBranch('260218-ci-task', 'implement_feature')
+
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
+
+      // BUG FIX verification: Previously CI mode only ran "git checkout -- ."
+      // but never actually switched to the feature branch. This caused commits
+      // to land on dev (which has branch protection), failing the pipeline.
+      expect(calls).toContain('git checkout feat/260218-ci-task')
+      expect(calls).toContain('git pull origin feat/260218-ci-task')
+
+      // Verify order: cleanup before checkout
+      const cleanupIdx = calls.indexOf('git checkout -- .')
+      const checkoutIdx = calls.indexOf('git checkout feat/260218-ci-task')
+      expect(cleanupIdx).toBeLessThan(checkoutIdx)
+    })
+
+    it('should merge default branch after checkout in CI mode', () => {
+      ensureFeatureBranch('260218-ci-task', 'implement_feature')
+
+      const calls = mockExecFileSync.mock.calls.map(toCommandString)
+
+      // After checkout, should merge default branch to keep feature branch up-to-date
+      const mergeCall = calls.find(
+        (c) => c.startsWith('git merge origin/') && c.includes('--no-edit'),
+      )
+      expect(mergeCall).toBeDefined()
+
+      // Verify order: checkout before merge
+      const checkoutIdx = calls.indexOf('git checkout feat/260218-ci-task')
+      const mergeIdx = calls.findIndex(
+        (c) => c.startsWith('git merge origin/') && c.includes('--no-edit'),
+      )
+      expect(checkoutIdx).toBeLessThan(mergeIdx)
+    })
   })
 
   describe('dirty-state cleanup (local mode)', () => {
@@ -1304,7 +1340,7 @@ describe('getDefaultBranch', () => {
   })
 
   it('should return "dev" when both methods fail', () => {
-    mockExecFileSync.mockImplementation(() => {
+    mockExecFileSync.mockImplementation((): string => {
       throw new Error('not a git repo')
     })
 

@@ -10,9 +10,9 @@ import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { publishApi } from '../api'
 
-export function usePublish() {
+export function usePublish(actorLogin?: string) {
   return useMutation({
-    mutationFn: () => publishApi.publish(),
+    mutationFn: () => publishApi.publish(actorLogin),
     onSuccess: (data) => {
       const response = data as { message?: string; issueUrl?: string; issueNumber?: number }
       if (response.issueUrl) {

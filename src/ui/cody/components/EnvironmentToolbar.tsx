@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import { SITE_URLS } from '../constants'
 import { usePublish } from '../hooks/usePublish'
+import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
 import { Button } from '@/ui/web/components/button'
 import {
   Dialog,
@@ -22,7 +23,8 @@ import { ExternalLink, Rocket, Globe, Loader2 } from 'lucide-react'
 
 export function EnvironmentToolbar() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
-  const publish = usePublish()
+  const { githubUser } = useGitHubIdentity()
+  const publish = usePublish(githubUser?.login)
 
   const handlePublish = async () => {
     setShowConfirmDialog(false)

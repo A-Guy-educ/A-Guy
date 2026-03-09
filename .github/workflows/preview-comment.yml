@@ -25,26 +25,45 @@ jobs:
               deployment_id: context.payload.deployment.id
             });
 
+            // Get the commit SHA
+            const sha = deployment.data.sha;
+
             // Extract PR number from ref (e.g., 'refs/pull/123/merge')
             const ref = deployment.data.ref;
             const prMatch = ref.match(/refs\/pull\/(\d+)\//);
 
             if (prMatch) {
+              console.log('Found PR from ref:', prMatch[1]);
               return prMatch[1];
             }
 
-            // Fallback: search for PR with this head ref
-            const prs = await github.rest.pulls.list({
+            // Fallback: search for PR by commit SHA (most reliable)
+            const prsByCommit = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: sha
+            });
+
+            if (prsByCommit.data.length > 0) {
+              console.log('Found PR by commit SHA:', prsByCommit.data[0].number);
+              return prsByCommit.data[0].number;
+            }
+
+            // Final fallback: search for PR with this head ref (branch name)
+            const prsByBranch = await github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
               head: `${context.repo.owner}:${ref}`
             });
 
-            if (prs.data.length > 0) {
-              return prs.data[0].number;
+            if (prsByBranch.data.length > 0) {
+              console.log('Found PR by branch:', prsByBranch.data[0].number);
+              return prsByBranch.data[0].number;
             }
 
+            console.log('No PR found for deployment');
             return null;
 
       - name: Comment on PR

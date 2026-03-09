@@ -41,12 +41,12 @@ describe('stage-prompts', () => {
 
   describe('SCRIPTED_STAGES', () => {
     it('should contain verify, commit, pr', () => {
-      expect([...SCRIPTED_STAGES]).toEqual(['verify', 'commit', 'pr'])
+      expect([...SCRIPTED_STAGES]).toEqual(['verify', 'commit', 'commit-fix', 'pr'])
     })
   })
 
   describe('ALL_STAGES', () => {
-    it('should contain all stages including gap, plan-gap, commit, autofix, apply-audit', () => {
+    it('should contain all stages including gap, plan-gap, commit, autofix', () => {
       const stages = [...ALL_STAGES]
       expect(stages).toContain('taskify')
       expect(stages).toContain('spec')
@@ -57,11 +57,12 @@ describe('stage-prompts', () => {
       expect(stages).toContain('build')
       expect(stages).toContain('commit')
       expect(stages).toContain('verify')
+      expect(stages).toContain('review')
+      expect(stages).toContain('fix')
+      expect(stages).toContain('commit-fix')
       expect(stages).toContain('autofix')
-      expect(stages).toContain('auditor')
-      expect(stages).toContain('apply-audit')
       expect(stages).toContain('pr')
-      expect(stages).toHaveLength(13)
+      expect(stages).toHaveLength(14)
     })
   })
 
@@ -91,15 +92,25 @@ describe('stage-prompts', () => {
       expect(STAGE_CONTEXT_FILES.commit).toEqual(['task.json'])
       expect(STAGE_CONTEXT_FILES.verify).toEqual([])
       expect(STAGE_CONTEXT_FILES.autofix).toEqual(['verify.md', 'build-errors.md'])
-      expect(STAGE_CONTEXT_FILES.auditor).toEqual([
-        'task.md',
-        'spec.md',
-        'build.md',
-        'verify.md',
-        '../audit-history.json',
-      ])
-      expect(STAGE_CONTEXT_FILES['apply-audit']).toEqual(['auditor.md'])
       expect(STAGE_CONTEXT_FILES.pr).toEqual([])
+      expect(STAGE_CONTEXT_FILES.review).toEqual([
+        'review.md',
+        'build.md',
+        'plan.md',
+        'spec.md',
+        'clarified.md',
+      ])
+      expect(STAGE_CONTEXT_FILES.fix).toEqual([
+        'verify-failures.md',
+        'review.md',
+        'rerun-feedback.md',
+        'fix-summary.md',
+        'build.md',
+        'plan.md',
+        'spec.md',
+        'clarified.md',
+      ])
+      expect(STAGE_CONTEXT_FILES['commit-fix']).toEqual(['fix-summary.md', 'verify-failures.md'])
     })
 
     it('should include build-errors.md in autofix context for build stage feedback', () => {
@@ -143,9 +154,10 @@ describe('stage-prompts', () => {
         'plan-gap',
         'build',
         'commit',
+        'review',
+        'fix',
+        'commit-fix',
         'verify',
-        'auditor',
-        'apply-audit',
         'pr',
       ])
     })
@@ -155,9 +167,10 @@ describe('stage-prompts', () => {
         'architect',
         'build',
         'commit',
+        'review',
+        'fix',
+        'commit-fix',
         'verify',
-        'auditor',
-        'apply-audit',
         'pr',
       ])
     })
@@ -168,9 +181,10 @@ describe('stage-prompts', () => {
         'plan-gap',
         'build',
         'commit',
+        'review',
+        'fix',
+        'commit-fix',
         'verify',
-        'auditor',
-        'apply-audit',
         'pr',
       ])
     })
@@ -192,7 +206,7 @@ describe('stage-prompts', () => {
       }
     })
 
-    it('should return empty strings for non-spec stages (except build)', () => {
+    it('should return empty strings for non-spec stages (except build, review, fix)', () => {
       const nonSpecStages = ALL_STAGES.filter(
         (s) => !SPEC_STAGES.includes(s as (typeof SPEC_STAGES)[number]),
       )
@@ -201,6 +215,10 @@ describe('stage-prompts', () => {
         // Build stage intentionally has implementation instructions
         if (stage === 'build') {
           expect(instruction).toContain('IMPLEMENTATION STAGE')
+        } else if (stage === 'review') {
+          expect(instruction).toContain('CODE REVIEW STAGE')
+        } else if (stage === 'fix') {
+          expect(instruction).toContain('TARGETED FIX STAGE')
         } else {
           expect(instruction).toBe('')
         }

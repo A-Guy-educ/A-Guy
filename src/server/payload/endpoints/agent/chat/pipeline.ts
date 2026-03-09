@@ -191,6 +191,7 @@ export async function runChatPipeline(
   const conversationHistory = conversation.messages || []
   const allMessages = [...trimMessagesForUpdatePipeline(conversationHistory), userMessage]
 
+  // Use overrideAccess: false for authenticated users, true for guests (ownership already validated)
   await req.payload.update({
     collection: 'conversations',
     id: conversationId,
@@ -199,7 +200,7 @@ export async function runChatPipeline(
       lastMessageAt: new Date().toISOString(),
     },
     user: req.user,
-    overrideAccess: true,
+    overrideAccess: !userId, // false for authenticated users, true for guests
   })
 
   // Get recent window and retrieve memories
@@ -344,6 +345,8 @@ export async function persistAssistantMessage(
     assistantMessage,
   ]
 
+  // Use overrideAccess: false for authenticated users, true for guests
+  const isGuest = !reqUser || !isUsersCollectionUser(reqUser)
   await payload.update({
     collection: 'conversations',
     id: conversationId,
@@ -352,7 +355,7 @@ export async function persistAssistantMessage(
       lastMessageAt: new Date().toISOString(),
     },
     user: reqUser,
-    overrideAccess: true,
+    overrideAccess: isGuest, // true for guests (ownership validated elsewhere), false for users
   })
 }
 

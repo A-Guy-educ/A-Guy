@@ -14,7 +14,7 @@ import type {
   StageResult,
   PipelineStep,
 } from './types'
-import { logger } from '../logger'
+import { logger, ciGroup, ciGroupEnd } from '../logger'
 import { PipelinePausedError } from './types'
 import {
   loadState,
@@ -29,6 +29,22 @@ import { getHandler } from '../handlers/handler'
 import { setLifecycleLabel } from '../github-api'
 import { executePostAction } from '../pipeline/post-actions'
 import { flattenPipelineOrder } from '../pipeline/definitions'
+import * as fs from 'fs'
+import * as path from 'path'
+
+/**
+ * Error subclass that carries the originating stage name for parallel error attribution
+ */
+class StageError extends Error {
+  public readonly stageName: string
+  public readonly cause?: Error
+  constructor(message: string, stageName: string, cause?: Error) {
+    super(message)
+    this.name = 'StageError'
+    this.stageName = stageName
+    this.cause = cause
+  }
+}
 
 // ============================================================================
 // Engine
@@ -159,8 +175,15 @@ export async function runPipeline(
 
   // Throw if pipeline failed so caller can handle the failure properly
   if (state.state === 'failed') {
-    const failedStage = Object.entries(state.stages).find(([, s]) => s.state === 'failed')
-    throw new Error(`Pipeline failed at stage: ${failedStage?.[0] || 'unknown'}`)
+    // Find either failed or timeout stage for better error reporting
+    const failedStage = Object.entries(state.stages).find(
+      ([, s]) => s.state === 'failed' || s.state === 'timeout',
+    )
+    const stageName = failedStage?.[0] || 'unknown'
+    const stageState = failedStage?.[1]
+    const stageOutcome = stageState?.state || 'unknown'
+    const stageError = stageState?.error ? `: ${stageState.error}` : ''
+    throw new Error(`Pipeline failed at stage: ${stageName} (${stageOutcome})${stageError}`)
   }
 
   return state
@@ -208,8 +231,9 @@ async function executeSingleStep(
 ): Promise<PipelineStateV2> {
   const def = pipeline.stages.get(stageName)
   if (!def) {
-    logger.warn(`Stage ${stageName} not found in pipeline definitions`)
-    return state
+    const msg = `Stage '${stageName}' not found in pipeline definitions — check pipeline order vs stage definitions`
+    logger.error(msg)
+    throw new Error(msg)
   }
 
   // Check skip conditions
@@ -254,12 +278,14 @@ async function executeSingleStep(
   }
 
   // Get handler and execute
-  const handler = getHandler(def.name, def.type)
-
+  ciGroup(`Stage: ${stageName}`)
   try {
+    const handler = getHandler(def.name, def.type)
     const result = await handler.execute(ctx, def)
+    ciGroupEnd()
     return await handleStageResult(ctx, state, stageName, result, def)
   } catch (error) {
+    ciGroupEnd()
     if (error instanceof PipelinePausedError) {
       // Handle paused - mark stage as paused and pipeline as paused
       state = updateStage(state, stageName, { state: 'paused' })
@@ -313,7 +339,7 @@ async function executeParallelStep(
     stagesToRun.map(async (stageName) => {
       const def = pipeline.stages.get(stageName)
       if (!def) {
-        return { stageName, result: null as unknown as StageResult }
+        throw new StageError(`Stage '${stageName}' not found in pipeline definitions`, stageName)
       }
 
       // Check skip first
@@ -336,12 +362,12 @@ async function executeParallelStep(
         try {
           await def.preExecute(ctx)
         } catch (preError) {
-          // Tag error with stageName for rejection handler
-          if (preError instanceof Error) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;(preError as any).stageName = stageName
-          }
-          throw preError
+          // Wrap error with stageName for rejection handler
+          throw new StageError(
+            preError instanceof Error ? preError.message : String(preError),
+            stageName,
+            preError instanceof Error ? preError : undefined,
+          )
         }
       }
 
@@ -351,12 +377,12 @@ async function executeParallelStep(
         const result = await handler.execute(ctx, def)
         return { stageName, result }
       } catch (error) {
-        // Tag error with stageName for rejection handler (G30)
-        if (error instanceof Error) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(error as any).stageName = stageName
-        }
-        throw error
+        // Wrap error with stageName for rejection handler
+        throw new StageError(
+          error instanceof Error ? error.message : String(error),
+          stageName,
+          error instanceof Error ? error : undefined,
+        )
       }
     }),
   )
@@ -364,23 +390,31 @@ async function executeParallelStep(
   // Process results - distinguish critical vs advisory failures (R7)
   const criticalFailures: { name: string; reason: string }[] = []
   const advisoryFailures: { name: string; reason: string }[] = []
+  let pausedStage: string | null = null
 
   for (const result of results) {
     if (result.status === 'rejected') {
-      // G30: Check if this is a PipelinePausedError
-      if (result.reason instanceof PipelinePausedError) {
-        // Mark the stage as paused and return paused state
-        const reason = result.reason as Error & { stageName?: string }
-        const stageName = reason.stageName || 'unknown'
-        state = updateStage(state, stageName, { state: 'paused' })
-        return completeState(state, 'paused')
+      // G30: Check if this is a PipelinePausedError (direct or wrapped in StageError)
+      const rejectedErr = result.reason
+      const isPaused =
+        rejectedErr instanceof PipelinePausedError ||
+        (rejectedErr instanceof StageError && rejectedErr.cause instanceof PipelinePausedError)
+      if (isPaused) {
+        // Mark the stage as paused and collect — don't return early
+        // This allows other parallel stages to complete their post-actions
+        const pausedStageName =
+          rejectedErr instanceof StageError ? rejectedErr.stageName : 'unknown'
+        state = updateStage(state, pausedStageName, { state: 'paused' })
+        pausedStage = pausedStageName
+        continue
       }
 
-      const reason = (result as PromiseRejectedResult).reason as
-        | (Error & { stageName?: string })
-        | undefined
-      const name = reason?.stageName || 'unknown'
-      const message = reason?.message || String(result.reason)
+      const reason = (result as PromiseRejectedResult).reason
+      const name =
+        reason instanceof StageError
+          ? reason.stageName
+          : (((reason as Record<string, unknown>)?.stageName as string) ?? 'unknown')
+      const message = reason instanceof Error ? reason.message : String(reason)
       // R7: Use dynamic advisory lookup from pipeline definition
       const isAdvisory = pipeline.stages.get(name)?.advisory === true
       if (isAdvisory) {
@@ -398,12 +432,11 @@ async function executeParallelStep(
     const { stageName, result: stageResult } = result.value
     if (!stageResult) continue
 
-    // Handle PipelinePausedError specially (G30)
+    // Handle PipelinePausedError specially (G30) — collect pauses instead of returning early
     if (stageResult.outcome === 'paused') {
       state = updateStage(state, stageName, { state: 'paused' })
-      writeState(ctx.taskId, state) // Persist paused state to disk
-      // Return early with paused state
-      return completeState(state, 'paused')
+      pausedStage = stageName
+      continue
     }
 
     // Update state based on outcome
@@ -424,10 +457,11 @@ async function executeParallelStep(
           }
         } catch (postError) {
           // Handle post-action errors - mirroring executeSingleStep pattern
+          // Collect pauses instead of returning early — allows other stages to complete
           if (postError instanceof PipelinePausedError) {
             state = updateStage(state, stageName, { state: 'paused' })
-            writeState(ctx.taskId, state) // Persist paused state to disk
-            return completeState(state, 'paused')
+            pausedStage = stageName
+            continue
           }
           // FIX #3: Don't immediately fail - collect failures and process at end
           // This allows other successful parallel stages to complete
@@ -483,6 +517,12 @@ async function executeParallelStep(
     return completeState(state, 'failed')
   }
 
+  // Return paused state if any stage paused — after all other stages processed
+  if (pausedStage) {
+    writeState(ctx.taskId, state)
+    return completeState(state, 'paused')
+  }
+
   return state
 }
 
@@ -513,6 +553,68 @@ async function handleStageResult(
       }
     }
   } else if (result.outcome === 'failed') {
+    // VERIFY LOOP: Check if verify failed and we should retry with fix
+    if (stageName === 'verify' && !def.advisory) {
+      const maxAttempts = state.stages['fix']?.maxFixAttempts ?? 2
+      const currentAttempt = state.stages['fix']?.fixAttempt ?? 0
+
+      if (currentAttempt < maxAttempts) {
+        // Capture verify failures for fix stage
+        const verifyFailuresPath = path.join(ctx.taskDir, 'verify-failures.md')
+        const errorOutput = result.reason || 'Verify failed - check logs'
+
+        // Try to capture more detailed output from verify scripts
+        let detailedOutput = errorOutput
+        try {
+          const tscPath = path.join(ctx.taskDir, 'tsc-output.txt')
+          const lintPath = path.join(ctx.taskDir, 'lint-output.txt')
+          const parts = [`# Verify Failures\n\n${errorOutput}`]
+          if (fs.existsSync(tscPath)) {
+            const tscOutput = fs.readFileSync(tscPath, 'utf-8').slice(0, 5000)
+            parts.push(`## TypeScript Errors\n\`\`\`\n${tscOutput}\n\`\`\``)
+          }
+          if (fs.existsSync(lintPath)) {
+            const lintOutput = fs.readFileSync(lintPath, 'utf-8').slice(0, 5000)
+            parts.push(`## Lint Errors\n\`\`\`\n${lintOutput}\n\`\`\``)
+          }
+          detailedOutput = parts.join('\n\n')
+        } catch {
+          // Files don't exist, use basic error
+        }
+
+        try {
+          fs.writeFileSync(verifyFailuresPath, detailedOutput)
+          if (!fs.existsSync(verifyFailuresPath)) {
+            logger.warn('verify-failures.md was not created after write — fix stage may skip')
+          }
+        } catch (writeErr) {
+          logger.warn(`Failed to write verify-failures.md: ${writeErr}`)
+        }
+
+        // Increment fix attempt and reset fix, commit-fix, verify to pending
+        const newFixAttempt = currentAttempt + 1
+        state = updateStage(state, 'fix', {
+          state: 'pending',
+          fixAttempt: newFixAttempt,
+          maxFixAttempts: maxAttempts,
+        })
+        state = updateStage(state, 'commit-fix', { state: 'pending' })
+        state = updateStage(state, 'verify', { state: 'pending' })
+        writeState(ctx.taskId, state)
+
+        logger.info(`🔄 Verify failed, looping to fix (attempt ${newFixAttempt}/${maxAttempts})`)
+
+        // Return state WITHOUT calling completeState('failed')
+        // The main while(true) loop will continue and resolveNextStep
+        // will find 'fix' as next pending stage
+        return state
+      } else {
+        logger.error(`Max fix attempts (${maxAttempts}) reached, pipeline failing`)
+        // Fall through to normal failure handling
+      }
+    }
+
+    // Normal failure handling
     state = updateStage(state, stageName, {
       state: 'failed',
       error: result.reason,

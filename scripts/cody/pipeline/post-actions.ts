@@ -8,7 +8,7 @@
 import { logger } from '../logger'
 import * as fs from 'fs'
 import * as path from 'path'
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 
 import type { PipelineContext, PostAction, PipelineStateV2 } from '../engine/types'
 import { PipelinePausedError } from '../engine/types'
@@ -257,16 +257,16 @@ export async function executePostAction(
       let diff = ''
       let untracked = ''
       try {
-        diff = execSync('git diff --name-only', { encoding: 'utf-8' }).trim()
-      } catch {
-        // git diff can fail if not in a repo
+        diff = execFileSync('git', ['diff', '--name-only'], { encoding: 'utf-8' }).trim()
+      } catch (error) {
+        logger.warn({ err: error }, 'git diff failed during src validation')
       }
       try {
-        untracked = execSync('git ls-files --others --exclude-standard', {
+        untracked = execFileSync('git', ['ls-files', '--others', '--exclude-standard'], {
           encoding: 'utf-8',
         }).trim()
-      } catch {
-        // Ignore
+      } catch (error) {
+        logger.warn({ err: error }, 'git ls-files failed during src validation')
       }
 
       const allChanged = [...diff.split('\n'), ...untracked.split('\n')]
@@ -289,10 +289,15 @@ export async function executePostAction(
 
       logger.info('   Running tsc...')
       try {
-        execSync('pnpm -s tsc --noEmit', { stdio: 'inherit' })
+        execFileSync('pnpm', ['-s', 'tsc', '--noEmit'], {
+          encoding: 'utf-8',
+          maxBuffer: 10 * 1024 * 1024,
+        })
         logger.info('   ✓ tsc passed')
-      } catch {
-        throw new Error('TypeScript compilation failed')
+      } catch (error) {
+        const err = error as { stdout?: string; stderr?: string; message?: string }
+        const output = (err.stdout || '') + (err.stderr || '') || err.message || ''
+        throw new Error(`TypeScript compilation failed:\n${output.slice(0, 3000)}`)
       }
       break
     }
@@ -302,7 +307,10 @@ export async function executePostAction(
 
       logger.info('   Running unit tests...')
       try {
-        execSync('pnpm -s test:unit', { stdio: 'inherit' })
+        execFileSync('pnpm', ['-s', 'test:unit'], {
+          encoding: 'utf-8',
+          maxBuffer: 10 * 1024 * 1024,
+        })
         logger.info('   ✓ Unit tests passed')
       } catch (error) {
         // G25: Include output text (3000 chars) for supervisor retry
@@ -311,29 +319,6 @@ export async function executePostAction(
         throw new Error(
           `Unit tests failed after build. Fix and re-run.\n\n${output.slice(0, 3000)}`,
         )
-      }
-      break
-    }
-
-    case 'commit-audit-history': {
-      // G18: Skip if localOnly and not in local mode
-      if (!ctx.input.local) {
-        return
-      }
-      if (ctx.input.dryRun) {
-        return
-      }
-
-      const auditHistoryPath = path.join(process.cwd(), '.tasks', 'audit-history.json')
-      if (fs.existsSync(auditHistoryPath)) {
-        commitPipelineFiles({
-          taskDir: '.tasks',
-          taskId: 'audit-history',
-          message: `audit: update audit history from ${ctx.taskId}`,
-          stagingStrategy: 'task-only',
-          push: false,
-          dryRun: ctx.input.dryRun,
-        })
       }
       break
     }
@@ -349,11 +334,23 @@ export async function executePostAction(
         error?: string
       }
 
+      // Helper: split a simple shell command into program + args for execFileSync
+      // Only handles space-separated tokens (no quoting/glob/pipes)
+      const parseCommand = (cmd: string): { program: string; args: string[] } => {
+        const parts = cmd.split(/\s+/).filter(Boolean)
+        return { program: parts[0], args: parts.slice(1) }
+      }
+
       const runGates = (gates: typeof action.gates): GateResult[] => {
         return gates.map((gate) => {
           try {
             logger.info(`   Running ${gate.name}...`)
-            execSync(gate.command, { stdio: 'pipe' })
+            const { program, args } = parseCommand(gate.command)
+            execFileSync(program, args, {
+              stdio: 'pipe',
+              timeout: 5 * 60 * 1000, // 5 minutes per gate
+              maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+            })
             logger.info(`   ✓ ${gate.name} passed`)
             return { ...gate, passed: true }
           } catch (error) {
@@ -412,15 +409,24 @@ export async function executePostAction(
           fs.unlinkSync(autofixOutput)
         }
         const autofixTimeout = STAGE_TIMEOUTS.autofix ?? DEFAULT_TIMEOUT
-        const autofixResult = await runAgentWithFileWatch(
-          ctx.input,
-          'autofix',
-          autofixOutput,
-          autofixTimeout,
-          { backend: ctx.backend },
-        )
+        let autofixResult: { succeeded: boolean } | undefined
+        try {
+          autofixResult = await runAgentWithFileWatch(
+            ctx.input,
+            'autofix',
+            autofixOutput,
+            autofixTimeout,
+            { backend: ctx.backend },
+          )
+        } catch (agentError) {
+          logger.error(
+            { err: agentError },
+            `  ❌ Autofix agent threw exception (attempt ${attempt}/${action.maxFeedbackLoops})`,
+          )
+          continue // Treat as failed attempt, not pipeline crash
+        }
 
-        if (!autofixResult.succeeded) {
+        if (!autofixResult?.succeeded) {
           logger.error(`  ❌ Autofix agent failed (attempt ${attempt})`)
           continue
         }
@@ -457,6 +463,11 @@ export async function executePostAction(
       }
 
       if (failures.length > 0) {
+        // Clean up orphaned build-errors.md before throwing
+        const errorsFile = path.join(ctx.taskDir, 'build-errors.md')
+        if (fs.existsSync(errorsFile)) {
+          fs.unlinkSync(errorsFile)
+        }
         const failedNames = failures.map((f) => f.name).join(', ')
         throw new Error(
           `Quality gates failed after ${action.maxFeedbackLoops} autofix attempts: ${failedNames}`,
@@ -465,16 +476,74 @@ export async function executePostAction(
       break
     }
 
+    case 'analyze-review-findings': {
+      const reviewPath = path.join(ctx.taskDir, 'review.md')
+
+      let fixNeeded = false
+      const reviewSummary = { critical: 0, major: 0, minor: 0 }
+
+      if (fs.existsSync(reviewPath)) {
+        const reviewContent = fs.readFileSync(reviewPath, 'utf-8')
+
+        // Parse review findings
+        const criticalMatch = reviewContent.match(/Critical:\s*(\d+)/)
+        const majorMatch = reviewContent.match(/Major:\s*(\d+)/)
+        const fixRequiredMatch = reviewContent.match(/Fix Required.*\[\s*x\s*\]\s*Yes/i)
+
+        reviewSummary.critical = parseInt(criticalMatch?.[1] || '0')
+        reviewSummary.major = parseInt(majorMatch?.[1] || '0')
+
+        fixNeeded =
+          reviewSummary.critical > 0 || reviewSummary.major > 0 || fixRequiredMatch !== null
+      }
+
+      // Update state to track findings
+      const state = _state
+      if (state) {
+        const updatedState = updateStage(state, 'review', {
+          issuesFound: fixNeeded,
+          reviewSummary,
+        })
+        writeState(ctx.taskId, updatedState)
+      }
+
+      logger.info(
+        `  Review findings: ${reviewSummary.critical} critical, ${reviewSummary.major} major, fixNeeded=${fixNeeded}`,
+      )
+      break
+    }
+
+    case 'clear-verify-failures': {
+      const verifyFailuresPath = path.join(ctx.taskDir, 'verify-failures.md')
+      if (fs.existsSync(verifyFailuresPath)) {
+        fs.unlinkSync(verifyFailuresPath)
+        logger.info('  Cleared verify-failures.md')
+      }
+      break
+    }
+
     case 'parallel': {
-      const parallelActions = (action as unknown as { actions: PostAction[] }).actions
+      if (!('actions' in action) || !Array.isArray((action as { actions?: unknown }).actions)) {
+        throw new Error(`'parallel' post-action missing required 'actions' array`)
+      }
+      const parallelActions = (action as { actions: PostAction[] }).actions
       logger.info(`   Running ${parallelActions.length} actions in parallel...`)
 
       const results = await Promise.allSettled(
         parallelActions.map(async (a) => {
           // Recursively execute each action
-          await executePostAction(ctx, a, null as unknown as never)
+          await executePostAction(ctx, a, _state)
         }),
       )
+
+      // Check for PipelinePausedError first — re-throw it directly to preserve the type
+      const pauseResult = results.find(
+        (r): r is PromiseRejectedResult =>
+          r.status === 'rejected' && r.reason instanceof PipelinePausedError,
+      )
+      if (pauseResult) {
+        throw pauseResult.reason // Preserve PipelinePausedError type for caller
+      }
 
       const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
       if (failures.length > 0) {

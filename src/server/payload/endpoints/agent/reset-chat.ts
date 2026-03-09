@@ -29,6 +29,7 @@ import {
   hashIP,
   hashUserAgent,
 } from '@/server/services/guest-session'
+import { checkRateLimit } from '@/server/services/rate-limit'
 
 const requestSchema = z.object({
   contextKey: z
@@ -66,6 +67,27 @@ export async function agentResetChat(req: PayloadRequest & { json?: () => Promis
       // Create new guest session
       const ipHash = hashIP(req.headers?.get('x-forwarded-for') || req.headers?.get('x-real-ip'))
       const userAgentHash = hashUserAgent(req.headers?.get('user-agent'))
+
+      // Check rate limit BEFORE creating guest session (FR-004)
+      const rateLimitResult = await checkRateLimit(ipHash, userAgentHash)
+      if (!rateLimitResult.allowed) {
+        return Response.json(
+          {
+            error: 'Too many requests. Please try again later.',
+            isGuestMode: true,
+            retryAfter: Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000),
+          },
+          {
+            status: 429,
+            headers: {
+              'Retry-After': String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)),
+              'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+              'X-RateLimit-Reset': String(rateLimitResult.resetAt),
+            },
+          },
+        )
+      }
+
       const { session, token } = await createGuestSession(req.payload, {
         ipHash,
         userAgentHash,

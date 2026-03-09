@@ -42,22 +42,6 @@ jobs:
       - name: Fix internal markdown links + write report
         run: pnpm run docs:links:fix
 
-      - name: Upsert issue on failure (broken links remain)
-        if: always()
-        run: |
-          if [ -f ".ai-docs/reports/doc-link-report.md" ]; then
-            pnpm tsx scripts/github-issue-upsert.ts \
-              --title "Doc link fixer failures (automated)" \
-              --body-file ".ai-docs/reports/doc-link-report.md" \
-              --labels "automation,docs,doc-links" \
-              --dedupe-label "doc-links" \
-              --mode upsert
-          else
-            echo "No failure report found. Skipping issue upsert."
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Create or update PR
         if: always()
         uses: peter-evans/create-pull-request@v7

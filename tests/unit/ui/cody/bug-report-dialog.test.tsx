@@ -40,6 +40,11 @@ vi.mock('@tanstack/react-query', () => ({
     isError: false,
     reset: vi.fn(),
   })),
+  useQuery: vi.fn(() => ({
+    data: [],
+    isLoading: false,
+    error: null,
+  })),
   useQueryClient: vi.fn(() => ({
     invalidateQueries: vi.fn(),
   })),
@@ -110,7 +115,7 @@ describe('BugReportDialog component', () => {
     it('should have user role/tenant input field', () => {
       render(<BugReportDialog open={true} onClose={mockOnClose} onCreated={mockOnCreated} />)
 
-      expect(screen.getByLabelText('User Role / Tenant')).toBeTruthy()
+      expect(screen.getByLabelText('User Role')).toBeTruthy()
     })
 
     it('should have preconditions textarea field', () => {
@@ -288,12 +293,12 @@ describe('BugReportDialog API integration', () => {
     report += `- Environment: ${environment}\n`
     if (branch) report += `- Branch / Commit: ${branch}\n`
     if (browser) report += `- Browser / Device: ${browser}\n`
-    if (userRole) report += `- User Role / Tenant: ${userRole}\n`
+    if (userRole) report += `- User Role: ${userRole}\n`
 
     expect(report).toContain('- Environment: prod')
     expect(report).toContain('- Branch / Commit: main')
     expect(report).toContain('- Browser / Device: Chrome')
-    expect(report).toContain('- User Role / Tenant: admin')
+    expect(report).toContain('- User Role: admin')
   })
 
   it('should format scope and impact section correctly', () => {

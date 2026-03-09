@@ -5,6 +5,7 @@ import { seedChatConfig } from './chat-config'
 import { seedGuestChatConfig } from './guest-chat-config'
 import { contactForm as contactFormData } from './contact-form'
 import { contact as contactPageData } from './contact-page'
+import { introPage as introPageData } from './intro-page'
 import { seedSystemParams } from './system-params'
 
 const collections: CollectionSlug[] = ['categories', 'pages', 'forms', 'form-submissions', 'search']
@@ -87,6 +88,12 @@ export const seed = async ({
     collection: 'pages',
     depth: 0,
     data: contactPageData({ contactForm: contactForm }),
+  })
+
+  await payload.create({
+    collection: 'pages',
+    depth: 0,
+    data: introPageData(),
   })
 
   payload.logger.info(`— Seeding globals...`)

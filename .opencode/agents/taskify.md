@@ -131,7 +131,7 @@ Analyze the task description to determine its quality level. When the input is a
 **`detailed_plan`** - Task contains:
 
 - Step-by-step sections (e.g., `## Step 1:`, `### Implementation Steps`)
-- File paths to modify (e.g., `src/app/page.ts`, `src/collections/Posts.ts`)
+- File paths to modify (e.g., `src/app/page.ts`, `src/server/payload/collections/Posts.ts`)
 - Test cases or verification steps
 
 **`spec_and_plan`** - Task contains BOTH:
@@ -160,7 +160,7 @@ For **trivial fixes** (complexity 1-9) with **good_spec** or higher quality, you
 **When**: complexity <= 9 AND (input_quality is `good_spec` OR `detailed_plan` OR `spec_and_plan`)
 
 **What to do**:
-1. Add `"build"` to the `skip_stages` array in task.json
+1. Add only `"spec"` to the `skip_stages` array in task.json (NOT "build" - build cannot be skipped)
 2. Write `.tasks/<task-id>/build.md` with:
    - ## Changes section describing what was implemented
    - List of files modified with specific changes
@@ -169,7 +169,7 @@ This allows the pipeline to skip the build agent (which is slow) and go straight
 
 **Example skip_stages for trivial fix**:
 ```json
-"skip_stages": ["spec", "build"]
+"skip_stages": ["spec"]
 ```
 
 **Example build.md for trivial fix**:
@@ -204,7 +204,7 @@ Example:
 
 ## Pipeline Profile (Lightweight vs Standard)
 
-Determine whether the task should use the lightweight or standard pipeline. The lightweight profile skips: `spec`, `gap`, `plan-gap`, `auditor`, `apply-audit` — saving 5-6 LLM calls for simple fixes.
+Determine whether the task should use the lightweight or standard pipeline. The lightweight profile skips: `spec`, `gap`, `plan-gap` — saving 5-6 LLM calls for simple fixes.
 
 ### Decision Criteria
 
@@ -252,7 +252,7 @@ Example lightweight task.json:
 |-------|------|-----------------|
 | 1-9 | Trivial | taskify → build → commit → verify → pr |
 | 10-19 | Simple | + architect |
-| 20-34 | Moderate | + auditor, apply-audit |
+| 20-34 | Moderate | + architect, build |
 | 35-49 | Complex | + spec, gap |
 | 50-100 | Very Complex | + plan-gap, clarify |
 
@@ -311,6 +311,14 @@ Calculate the score as a weighted sum across these dimensions:
 - **Floor**: If `task_type` is `fix_bug` AND `risk_level: "high"` → complexity MUST be ≥ 35
 - **Ceiling**: If `task_type` is `docs` or `research` → complexity MUST be ≤ 49 (no build stages anyway)
 - Always provide `complexity_reasoning` with per-dimension breakdown
+
+## Efficiency Rule
+
+- Do not narrate reasoning between tool calls.
+- Do not explain what you are about to do — just do it.
+- Do not summarize what you just did — move to the next action.
+- Keep non-tool-call output to a minimum.
+- Output files must still follow their full required format.
 
 ## Guardrails
 

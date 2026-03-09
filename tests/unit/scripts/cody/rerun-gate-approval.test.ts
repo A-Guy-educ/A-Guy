@@ -64,8 +64,7 @@ describe('Issue #673: Gate approval + resetFromStage interaction', () => {
     'build',
     'commit',
     'verify',
-    'auditor',
-    'apply-audit',
+    'autofix',
     'pr',
   ]
 
@@ -141,8 +140,7 @@ describe('resolveFromStageAfterGateApproval', () => {
     'build',
     'commit',
     'verify',
-    'auditor',
-    'apply-audit',
+    'autofix',
     'pr',
   ]
 
@@ -167,17 +165,7 @@ describe('resolveFromStageAfterGateApproval', () => {
   })
 
   it('works with lightweight pipeline (no spec/gap)', () => {
-    const LIGHTWEIGHT = [
-      'taskify',
-      'clarify',
-      'architect',
-      'build',
-      'commit',
-      'verify',
-      'auditor',
-      'apply-audit',
-      'pr',
-    ]
+    const LIGHTWEIGHT = ['taskify', 'clarify', 'architect', 'build', 'commit', 'verify', 'pr']
     const result = resolveFromStageAfterGateApproval('taskify', LIGHTWEIGHT)
     expect(result).toBe('clarify')
   })

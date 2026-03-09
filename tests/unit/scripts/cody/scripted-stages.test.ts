@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as childProcess from 'child_process'
 import * as fs from 'fs'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getDefaultBranch } from '../../../../scripts/cody/git-utils'
 
 // Mock for fetch - need to use hoisted mock
@@ -29,7 +29,7 @@ vi.mock('../../../../scripts/cody/git-utils', () => ({
   getDefaultBranch: vi.fn().mockReturnValue('dev'),
 }))
 
-import { runVerifyStage, runPrStage } from '../../../../scripts/cody/scripted-stages'
+import { runPrStage, runVerifyStage } from '../../../../scripts/cody/scripted-stages'
 
 // Silence console output during tests
 vi.spyOn(console, 'log').mockImplementation(() => {})
@@ -47,53 +47,63 @@ const mockReadFileSync = vi.mocked(fs.readFileSync)
 const mockGetDefaultBranch = vi.mocked(getDefaultBranch)
 
 /**
- * Configure execSync to succeed for all 4 verify gates.
+ * Configure execFileSync to succeed for all 4 verify gates.
  */
 function mockAllGatesPass() {
-  mockExecSync.mockReturnValue('OK')
+  mockExecFileSync.mockReturnValue('OK')
 }
 
 /**
- * Configure execSync to fail for a specific gate by command substring.
+ * Configure execFileSync to fail for a specific gate by command argument.
  * All others succeed.
  */
 function mockGateFails(
   failingCommand: string,
   errorOutput: { stdout?: string; stderr?: string; message?: string },
 ) {
-  mockExecSync.mockImplementation((cmd: string) => {
-    if (typeof cmd === 'string' && cmd.includes(failingCommand)) {
-      const error = new Error(errorOutput.message || 'command failed') as Error & {
-        stdout?: string
-        stderr?: string
+  mockExecFileSync.mockImplementation(
+    (program: string, args?: readonly string[], _options?: any) => {
+      const argsArr = args || []
+      const fullCommand = `${program} ${argsArr.join(' ')}`
+      if (fullCommand.includes(failingCommand)) {
+        const error = new Error(errorOutput.message || 'command failed') as Error & {
+          stdout?: string
+          stderr?: string
+        }
+        error.stdout = errorOutput.stdout || ''
+        error.stderr = errorOutput.stderr || ''
+        throw error
       }
-      error.stdout = errorOutput.stdout || ''
-      error.stderr = errorOutput.stderr || ''
-      throw error
-    }
-    return 'OK'
-  })
+      return 'OK'
+    },
+  )
 }
 
 /**
- * Configure execSync to fail for all verify gates.
+ * Configure execFileSync to fail for all verify gates.
  */
 function mockAllGatesFail() {
-  mockExecSync.mockImplementation((cmd: string) => {
-    if (
-      typeof cmd === 'string' &&
-      (cmd.includes('tsc') ||
-        cmd.includes('lint') ||
-        cmd.includes('format:check') ||
-        cmd.includes('test:unit'))
-    ) {
-      const error = new Error(`${cmd} failed`) as Error & { stdout?: string; stderr?: string }
-      error.stdout = `Error output for: ${cmd}`
-      error.stderr = ''
-      throw error
-    }
-    return 'OK'
-  })
+  mockExecFileSync.mockImplementation(
+    (program: string, args?: readonly string[], _options?: any) => {
+      const argsArr = args || []
+      const fullCommand = `${program} ${argsArr.join(' ')}`
+      if (
+        fullCommand.includes('tsc') ||
+        fullCommand.includes('lint') ||
+        fullCommand.includes('format:check') ||
+        fullCommand.includes('test:unit')
+      ) {
+        const error = new Error(`${fullCommand} failed`) as Error & {
+          stdout?: string
+          stderr?: string
+        }
+        error.stdout = `Error output for: ${fullCommand}`
+        error.stderr = ''
+        throw error
+      }
+      return 'OK'
+    },
+  )
 }
 
 // =============================================================================
@@ -153,20 +163,24 @@ describe('runVerifyStage', () => {
 
       runVerifyStage('/tmp/verify.md', '/my/project')
 
-      expect(mockExecSync).toHaveBeenCalledWith(
-        'pnpm -s tsc --noEmit',
+      expect(mockExecFileSync).toHaveBeenCalledWith(
+        'pnpm',
+        ['-s', 'tsc', '--noEmit'],
         expect.objectContaining({ cwd: '/my/project', encoding: 'utf-8', timeout: 120_000 }),
       )
-      expect(mockExecSync).toHaveBeenCalledWith(
-        'pnpm -s lint',
+      expect(mockExecFileSync).toHaveBeenCalledWith(
+        'pnpm',
+        ['-s', 'lint'],
         expect.objectContaining({ cwd: '/my/project' }),
       )
-      expect(mockExecSync).toHaveBeenCalledWith(
-        'pnpm -s format:check',
+      expect(mockExecFileSync).toHaveBeenCalledWith(
+        'pnpm',
+        ['-s', 'format:check'],
         expect.objectContaining({ cwd: '/my/project' }),
       )
-      expect(mockExecSync).toHaveBeenCalledWith(
-        'pnpm -s test:unit',
+      expect(mockExecFileSync).toHaveBeenCalledWith(
+        'pnpm',
+        ['-s', 'test:unit'],
         expect.objectContaining({ cwd: '/my/project' }),
       )
     })
@@ -281,7 +295,7 @@ describe('runVerifyStage', () => {
   describe('output truncation', () => {
     it('should truncate success output to 500 chars', () => {
       const longOutput = 'A'.repeat(1000)
-      mockExecSync.mockReturnValue(longOutput)
+      mockExecFileSync.mockReturnValue(longOutput)
 
       const result = runVerifyStage('/tmp/verify.md', '/fake/cwd')
 
@@ -290,48 +304,59 @@ describe('runVerifyStage', () => {
       expect(result.passed).toBe(true)
     })
 
-    it('should truncate error output to 2000 chars', () => {
-      const longError = 'E'.repeat(5000)
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('tsc')) {
-          const error = new Error('failed') as Error & { stdout?: string; stderr?: string }
-          error.stdout = longError
-          error.stderr = ''
-          throw error
-        }
-        return 'OK'
-      })
+    it('should truncate error output to 5000 chars', () => {
+      const longError = 'E'.repeat(10000)
+      mockExecFileSync.mockImplementation(
+        (program: string, args?: readonly string[], _options?: any) => {
+          const argsArr = args || []
+          const fullCommand = argsArr.join(' ')
+          // Check for 'tsc' as a separate argument (not just substring)
+          if (argsArr.includes('tsc')) {
+            const error = new Error('failed') as Error & { stdout?: string; stderr?: string }
+            error.stdout = longError
+            error.stderr = ''
+            throw error
+          }
+          return 'OK'
+        },
+      )
 
       const result = runVerifyStage('/tmp/verify.md', '/fake/cwd')
       expect(result.passed).toBe(false)
 
-      // The error output in the report should be truncated to 2000 chars
+      // The error output in the report should be truncated to 5000 chars
       // Find the error block content between the ``` fences
       const errorBlockMatch = result.report.match(/```\n([\s\S]*?)\n```/)
       expect(errorBlockMatch).not.toBeNull()
-      expect(errorBlockMatch![1].length).toBe(2000)
+      expect(errorBlockMatch![1].length).toBe(5000)
     })
 
     it('should use error.message as fallback when stdout and stderr are empty', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('tsc')) {
-          const error = new Error('Command tsc not found')
-          throw error
-        }
-        return 'OK'
-      })
+      mockExecFileSync.mockImplementation(
+        (program: string, args?: readonly string[], _options?: any) => {
+          const argsArr = args || []
+          if (argsArr.join(' ').includes('tsc')) {
+            const error = new Error('Command tsc not found')
+            throw error
+          }
+          return 'OK'
+        },
+      )
 
       const result = runVerifyStage('/tmp/verify.md', '/fake/cwd')
       expect(result.report).toContain('Command tsc not found')
     })
 
     it('should use "Unknown error" when error has no stdout, stderr, or message', () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        if (typeof cmd === 'string' && cmd.includes('tsc')) {
-          throw {} // plain object, no message
-        }
-        return 'OK'
-      })
+      mockExecFileSync.mockImplementation(
+        (program: string, args?: readonly string[], _options?: any) => {
+          const argsArr = args || []
+          if (argsArr.join(' ').includes('tsc')) {
+            throw {} // plain object, no message
+          }
+          return 'OK'
+        },
+      )
 
       const result = runVerifyStage('/tmp/verify.md', '/fake/cwd')
       expect(result.report).toContain('Unknown error')
@@ -388,7 +413,7 @@ describe('runVerifyStage', () => {
         return originalDateNow() + 1000 // 1 second elapsed - definitely exceeds any reasonable timeout
       })
 
-      mockExecSync.mockReturnValue('OK')
+      mockExecFileSync.mockReturnValue('OK')
 
       // Use 50ms timeout
       const result = runVerifyStage('/tmp/verify.md', '/fake/cwd', 50)
@@ -413,7 +438,7 @@ describe('runVerifyStage', () => {
     it('should report SKIPPED status for gates after timeout', () => {
       // All gates pass but we simulate timeout after first gate
       let gateIndex = 0
-      mockExecSync.mockImplementation(() => {
+      mockExecFileSync.mockImplementation(() => {
         gateIndex++
         if (gateIndex === 1) {
           // First gate passes
@@ -443,7 +468,7 @@ describe('runVerifyStage', () => {
 
     it('should include aggregate timeout message in skipped gate output', () => {
       let gateIndex = 0
-      mockExecSync.mockImplementation(() => {
+      mockExecFileSync.mockImplementation(() => {
         gateIndex++
         if (gateIndex === 1) return 'OK'
 
@@ -463,7 +488,7 @@ describe('runVerifyStage', () => {
       // Simulate gates that take progressively longer
       // Cumulative time should be tracked, not just per-gate timeout
       let gateIndex = 0
-      mockExecSync.mockImplementation(() => {
+      mockExecFileSync.mockImplementation(() => {
         gateIndex++
         // First 2 gates complete, but cumulative time exceeds on 3rd
         if (gateIndex <= 2) return 'OK'
@@ -499,6 +524,8 @@ describe('runVerifyStage', () => {
 describe('runPrStage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Set GitHub token for runPrStage tests
+    process.env.GH_PAT = 'test-token-for-pr-stage'
     // Reset getDefaultBranch mock to default
     mockGetDefaultBranch.mockReturnValue('dev')
     // Default mocks for fs
@@ -516,10 +543,13 @@ describe('runPrStage', () => {
     } as unknown as Response)
   })
 
+  afterEach(() => {
+    delete process.env.GH_PAT
+  })
+
   /**
-   * Set up execSync, execFileSync, and fetch responses for the standard PR flow.
-   * execSync handles: git branch, git log
-   * execFileSync handles: gh pr list, git push
+   * Set up execFileSync and fetch responses for the standard PR flow.
+   * execFileSync handles: git branch, git log, gh pr list, git push
    * fetch handles: GitHub API PR creation
    * Callers can override specific commands.
    */
@@ -557,26 +587,20 @@ describe('runPrStage', () => {
 
     // Mock getDefaultBranch (imported from git-utils)
     mockGetDefaultBranch.mockReturnValue(defaultBranch)
-    // execSync handles string-based commands: git branch, git log
-    mockExecSync.mockImplementation((cmd: string) => {
-      const cmdStr = typeof cmd === 'string' ? cmd : String(cmd)
 
-      // getBranchName
-      if (cmdStr.includes('git branch --show-current')) {
+    // execFileSync handles: git branch, git log, gh pr list, git push, git remote
+    mockExecFileSync.mockImplementation((file: string, args?: readonly string[]) => {
+      const argsArr = args || []
+
+      // getBranchName: git branch --show-current
+      if (file === 'git' && argsArr.includes('branch') && argsArr.includes('--show-current')) {
         return `${branch}\n`
       }
 
-      // getCommitSummary
-      if (cmdStr.includes('git log --oneline')) {
+      // getCommitSummary: git log --oneline
+      if (file === 'git' && argsArr.includes('log') && argsArr.includes('--oneline')) {
         return `${commitSummary}\n`
       }
-
-      return ''
-    })
-
-    // execFileSync handles array-based commands: gh pr list, git push, git log, git remote
-    mockExecFileSync.mockImplementation((file: string, args?: readonly string[]) => {
-      const argsArr = args || []
 
       // getCommitSummary: git log --oneline <branch>..HEAD
       if (file === 'git' && argsArr[0] === 'log' && argsArr.includes('--oneline')) {
@@ -734,14 +758,12 @@ describe('runPrStage', () => {
 
     it.skip('should fall back to "dev" when getDefaultBranch fails', () => {
       // SKIPPED: Implementation now uses fetch API
-      mockExecSync.mockImplementation((cmd: string) => {
-        const cmdStr = String(cmd)
-        if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
-        if (cmdStr.includes('git log --oneline')) return 'abc123 commit\n'
-        return ''
-      })
       mockExecFileSync.mockImplementation((file: string, args?: readonly string[]) => {
         const argsArr = args || []
+        if (file === 'git' && argsArr.includes('branch') && argsArr.includes('--show-current'))
+          return 'feat/x\n'
+        if (file === 'git' && argsArr.includes('log') && argsArr.includes('--oneline'))
+          return 'abc123 commit\n'
         if (file === 'gh' && argsArr[0] === 'pr' && argsArr[1] === 'list') return '\n'
         if (file === 'git' && argsArr[0] === 'push') return ''
         if (file === 'gh' && argsArr[0] === 'pr' && argsArr[1] === 'create')
@@ -767,14 +789,11 @@ describe('runPrStage', () => {
   // ---------------------------------------------------------------------------
   describe('when PR creation fails', () => {
     it('should return { created: false, url: "" }', async () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        const cmdStr = String(cmd)
-        if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
-        if (cmdStr.includes('git log --oneline')) return ''
-        return ''
-      })
       mockExecFileSync.mockImplementation((file: string, args?: readonly string[]) => {
         const argsArr = args || []
+        if (file === 'git' && argsArr.includes('branch') && argsArr.includes('--show-current'))
+          return 'feat/x\n'
+        if (file === 'git' && argsArr.includes('log') && argsArr.includes('--oneline')) return ''
         if (file === 'gh' && argsArr[0] === 'pr' && argsArr[1] === 'list') return '\n'
         if (file === 'git' && argsArr[0] === 'push') return ''
         if (file === 'git' && argsArr[0] === 'remote' && argsArr[1] === 'get-url')
@@ -794,14 +813,11 @@ describe('runPrStage', () => {
     })
 
     it('should include the error message in the report', async () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        const cmdStr = String(cmd)
-        if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
-        if (cmdStr.includes('git log --oneline')) return ''
-        return ''
-      })
       mockExecFileSync.mockImplementation((file: string, args?: readonly string[]) => {
         const argsArr = args || []
+        if (file === 'git' && argsArr.includes('branch') && argsArr.includes('--show-current'))
+          return 'feat/x\n'
+        if (file === 'git' && argsArr.includes('log') && argsArr.includes('--oneline')) return ''
         if (file === 'gh' && argsArr[0] === 'pr' && argsArr[1] === 'list') return '\n'
         if (file === 'git' && argsArr[0] === 'push') return ''
         if (file === 'git' && argsArr[0] === 'remote' && argsArr[1] === 'get-url')
@@ -821,14 +837,11 @@ describe('runPrStage', () => {
     })
 
     it('should write the failure report to the output file', async () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        const cmdStr = String(cmd)
-        if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
-        if (cmdStr.includes('git log --oneline')) return ''
-        return ''
-      })
       mockExecFileSync.mockImplementation((file: string, args?: readonly string[]) => {
         const argsArr = args || []
+        if (file === 'git' && argsArr.includes('branch') && argsArr.includes('--show-current'))
+          return 'feat/x\n'
+        if (file === 'git' && argsArr.includes('log') && argsArr.includes('--oneline')) return ''
         if (file === 'gh' && argsArr[0] === 'pr' && argsArr[1] === 'list') return '\n'
         if (file === 'git' && argsArr[0] === 'push') return ''
         if (file === 'gh' && argsArr[0] === 'pr' && argsArr[1] === 'create') {
@@ -1239,14 +1252,11 @@ describe('runPrStage', () => {
       process.env.GH_PAT = ''
       delete process.env.GH_TOKEN
 
-      mockExecSync.mockImplementation((cmd: string) => {
-        const cmdStr = String(cmd)
-        if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
-        if (cmdStr.includes('git log --oneline')) return ''
-        return ''
-      })
       mockExecFileSync.mockImplementation((file: string, args?: readonly string[]) => {
         const argsArr = args || []
+        if (file === 'git' && argsArr.includes('branch') && argsArr.includes('--show-current'))
+          return 'feat/x\n'
+        if (file === 'git' && argsArr.includes('log') && argsArr.includes('--oneline')) return ''
         // gh pr list returns empty
         if (file === 'gh' && argsArr[0] === 'pr' && argsArr[1] === 'list') return '\n'
         // gh pr create fails with "not authenticated" when no valid token
@@ -1270,14 +1280,11 @@ describe('runPrStage', () => {
     })
 
     it('should handle getExistingPr returning null on error', async () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        const cmdStr = String(cmd)
-        if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
-        if (cmdStr.includes('git log --oneline')) return ''
-        return ''
-      })
       mockExecFileSync.mockImplementation((file: string, args?: readonly string[]) => {
         const argsArr = args || []
+        if (file === 'git' && argsArr.includes('branch') && argsArr.includes('--show-current'))
+          return 'feat/x\n'
+        if (file === 'git' && argsArr.includes('log') && argsArr.includes('--oneline')) return ''
         // getExistingPr throws
         if (file === 'gh' && argsArr[0] === 'pr' && argsArr[1] === 'list')
           throw new Error('gh: network error')
@@ -1298,14 +1305,12 @@ describe('runPrStage', () => {
     })
 
     it('should handle getCommitSummary returning empty on error', async () => {
-      mockExecSync.mockImplementation((cmd: string) => {
-        const cmdStr = String(cmd)
-        if (cmdStr.includes('git branch --show-current')) return 'feat/x\n'
-        if (cmdStr.includes('git log --oneline')) throw new Error('not a git repo')
-        return ''
-      })
       mockExecFileSync.mockImplementation((file: string, args?: readonly string[]) => {
         const argsArr = args || []
+        if (file === 'git' && argsArr.includes('branch') && argsArr.includes('--show-current'))
+          return 'feat/x\n'
+        if (file === 'git' && argsArr.includes('log') && argsArr.includes('--oneline'))
+          throw new Error('not a git repo')
         if (file === 'gh' && argsArr[0] === 'pr' && argsArr[1] === 'list') return '\n'
         if (file === 'git' && argsArr[0] === 'push') return ''
         if (file === 'git' && argsArr[0] === 'remote' && argsArr[1] === 'get-url')
@@ -1387,6 +1392,71 @@ describe('runPrStage', () => {
         (call) => call[0] === 'git' && call[1]?.includes('log'),
       )
       expect(gitLogCalls.length).toBeGreaterThan(0)
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // --fresh flag behavior
+  // ---------------------------------------------------------------------------
+  describe('--fresh flag behavior', () => {
+    it('should skip existing PR check when fresh=true', async () => {
+      setupPrMocks({ existingPrUrl: 'https://github.com/owner/repo/pull/99' })
+
+      const result = await runPrStage('/fake/task-dir', '/tmp/pr.md', '/fake/cwd', undefined, {
+        fresh: true,
+      })
+
+      // Should NOT return early with existing PR — should create a new one
+      expect(result.created).toBe(true)
+    })
+
+    it('should NOT delete or reset the branch when fresh=true', async () => {
+      setupPrMocks({ branch: 'feat/my-feature' })
+
+      await runPrStage('/fake/task-dir', '/tmp/pr.md', '/fake/cwd', undefined, { fresh: true })
+
+      // Verify no branch deletion commands were issued
+      const execFileCalls = mockExecFileSync.mock.calls
+      const deleteBranchCall = execFileCalls.find(
+        (c) => c[0] === 'git' && (c[1] as string[])?.includes('--delete'),
+      )
+      expect(deleteBranchCall).toBeUndefined()
+
+      // Verify no git branch -D was called
+      const branchDCall = execFileCalls.find(
+        (c) =>
+          c[0] === 'git' &&
+          (c[1] as string[])?.[0] === 'branch' &&
+          (c[1] as string[])?.includes('-D'),
+      )
+      expect(branchDCall).toBeUndefined()
+
+      // Verify no git reset --hard was called
+      const resetCall = execFileCalls.find(
+        (c) =>
+          c[0] === 'git' &&
+          (c[1] as string[])?.[0] === 'reset' &&
+          (c[1] as string[])?.includes('--hard'),
+      )
+      expect(resetCall).toBeUndefined()
+    })
+
+    it('should still push the branch and create PR when fresh=true', async () => {
+      setupPrMocks({ branch: 'feat/fresh-feature' })
+
+      const result = await runPrStage('/fake/task-dir', '/tmp/pr.md', '/fake/cwd', undefined, {
+        fresh: true,
+      })
+
+      expect(result.created).toBe(true)
+      expect(result.url).toBe('https://github.com/owner/repo/pull/42')
+
+      // Verify push was called
+      const execFileCalls = mockExecFileSync.mock.calls
+      const pushCall = execFileCalls.find(
+        (c) => c[0] === 'git' && (c[1] as string[])?.[0] === 'push',
+      )
+      expect(pushCall).toBeDefined()
     })
   })
 })

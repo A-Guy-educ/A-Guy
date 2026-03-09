@@ -47,6 +47,7 @@ If only `verify.md` exists, identify:
 - For lint errors: run `pnpm lint:fix` first, then fix remaining manually
 - For format errors: run `pnpm format:fix`
 - For TypeScript errors: fix type issues in the specific files mentioned
+- For test failures: See Test File Rules below
 
 ### 3. Verify Fixes
 
@@ -76,24 +77,52 @@ Write to: `.tasks/<taskId>/autofix.md`
 
 **STOP CONDITION**: After you write autofix.md, you are DONE.
 
+## Efficiency Rule
+
+- Do not narrate reasoning between tool calls.
+- Do not explain what you are about to do — just do it.
+- Do not summarize what you just did — move to the next action.
+- Keep non-tool-call output to a minimum.
+- Output files must still follow their full required format.
+
 ## Rules
 
 - Do NOT create branches or commit — pipeline handles that
 - Do NOT run `git add`, `git commit`, or `git push`
 - Do NOT expand scope — fix ONLY what verify reported
 - Do NOT refactor or improve code beyond the specific errors
-- If you cannot fix an error, note it in the report and move on
 
-## CRITICAL: Test File Rules
+## Test File Rules (IMPORTANT)
 
-When fixing test files, follow these rules strictly:
+You CAN fix these types of test errors:
 
-1. **Never change test assertions or test logic** — only fix syntax, types, imports, and formatting
-2. **Never change what a test expects** (e.g., changing `toContain('fallback')` to `toContain('something else')`)
-3. **Never add mocks or change mock behavior** — this changes test semantics, not just fixes errors
-4. **Environment awareness** — tests run in CI without `.env` files. If a test relies on `process.env`, it must use `vi.stubEnv()` to set the value explicitly. Never assume env vars from `.env` will be available
-5. **If a test fails and requires logic changes to fix**, report it in autofix.md as "CANNOT FIX — requires test logic change" and move on. The build agent or human must handle it
-6. **Run tests WITHOUT local .env** to validate: `MINIMAX_API_KEY= OPENAI_API_KEY= pnpm test:unit -- <test-file>` — if it passes locally but could fail in CI due to missing env vars, the fix is wrong
+1. **Missing imports** — Add missing imports
+2. **Missing dependencies** — Add to package.json
+3. **Reference errors** — Declare missing variables/functions
+4. **Type errors in tests** — Fix type mismatches
+5. **Missing files** — Create missing test fixtures
+6. **Env var issues** — Use `vi.stubEnv()` for missing env vars
+
+For these, try to fix but report if unable:
+
+1. **Assertion failures** — Try to understand why test expects what it does, fix source code to match
+2. **Timeout errors** — Optimize code or increase timeout if appropriate
+
+DO NOT change:
+- Test assertions or expectations
+- Test logic or semantics
+- Mock behavior (unless it's clearly broken)
+
+## Common Test Error Fixes
+
+| Error | Fix |
+|-------|-----|
+| Cannot find module 'x' | Install x or add to dependencies |
+| x is not defined | Check imports, add declaration |
+| x is not a function | Check import, may need .default |
+| TypeError: undefined | Initialize variable before use |
+| Expected x, got y | Fix source code to return correct value |
+| Test timeout | Optimize code or increase timeout |
 
 ## Using the Edit Tool
 

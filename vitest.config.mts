@@ -12,7 +12,7 @@ export default defineConfig({
     fileParallelism: true, // Run test files in parallel for faster execution (shared MongoDB container enables this)
     pool: 'forks', // Use forks pool for better isolation
     globalSetup: ['./tests/setup/global-int-setup.ts'],
-    environment: 'jsdom',
+    environment: 'node',
     setupFiles: ['./vitest.setup.ts'],
     include: ['tests/int/**/*.int.spec.ts', 'tests/int/**/*.int.spec.tsx'],
     hookTimeout: 120000, // 120 seconds for hooks (parallel tests may contend for Payload init)

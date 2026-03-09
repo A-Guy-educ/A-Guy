@@ -1,0 +1,25 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/Logo/Logo.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Task mentions 'TelescopeLogo component already exists' - could not verify this in codebase, may need to create or find alternative branding component"
+  ],
+  "review_questions": [],
+  "complexity": 8,
+  "complexity_reasoning": "Scope: 3 (single file, <20 lines), Risk: 2 (UI text change only), Novelty: 2 (replacing with existing pattern), Cross: 1 (single domain), Ambiguity: 1 (clear fix), Deps: 1 (self-contained). Total: 10 - Simple tier",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task has clear Current Behavior vs Expected Behavior sections, specifies exact file to change, and mentions existing component to use. Promoted spec.md is not needed as the task description is already well-structured."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}

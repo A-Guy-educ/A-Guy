@@ -25,7 +25,7 @@ const clientUploadsAccess = ({
 
   if (!role) return false
 
-  // exercise-assets: any authenticated user (matches collection access: authenticated)
+  // exercise-assets: any authenticated user can upload (create access: authenticated, but delete/update: adminOnly)
   if (collectionSlug === 'exercise-assets') return true
   // media: admin only (matches collection access: adminOnly)
   return role === 'admin'

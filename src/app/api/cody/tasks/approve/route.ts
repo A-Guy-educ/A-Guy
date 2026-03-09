@@ -20,6 +20,7 @@ const ApproveRequestSchema = z.object({
   issueNumber: z.number().int().positive(),
   prNumber: z.number().int().positive(),
   branchName: z.string().optional(),
+  actorLogin: z.string().optional(),
 })
 
 function getOctokit(): Octokit {
@@ -41,11 +42,11 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'Invalid request', details: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
-    const { issueNumber, prNumber, branchName } = parsed.data
+    const { issueNumber, prNumber, branchName, actorLogin } = parsed.data
 
     const octokit = getOctokit()
     const results: string[] = []
@@ -58,7 +59,9 @@ export async function POST(req: NextRequest) {
         repo: GITHUB_REPO,
         pull_number: prNumber,
         event: 'APPROVE',
-        body: '✅ Gate approved via Cody dashboard.',
+        body: actorLogin
+          ? `✅ Gate approved by @${actorLogin} via Cody dashboard.`
+          : '✅ Gate approved via Cody dashboard.',
       })
     } catch {
       // May fail if already approved

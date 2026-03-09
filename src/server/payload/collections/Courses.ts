@@ -12,30 +12,28 @@ import type { CollectionConfig } from 'payload'
 import { DEFAULT_ACCESS_TYPE, DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
 import { contentLocaleField } from '@/server/payload/fields/contentLocale'
-import { anyone } from '../access/anyone'
 import { adminOnly } from '../access/adminOnly'
+import { publishedAndActive } from '../access/publishedAndActive'
 import { createdByField } from '../fields/createdBy'
+import { formatSlug } from '../fields/formatSlug'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
 import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 import { validateTreeIsolationOnPublish } from '../hooks/courses/validateTreeIsolation'
-
-const formatSlug = (val: string): string =>
-  val
-    .replace(/ /g, '-')
-    .replace(/[^\w-]+/g, '')
-    .toLowerCase()
 
 export const Courses: CollectionConfig = {
   slug: 'courses',
   access: {
     create: adminOnly,
     delete: adminOnly,
-    read: anyone,
+    read: publishedAndActive,
     update: adminOnly,
   },
   hooks: {
     beforeChange: [
       ({ data }) => {
+        if (data?.slug) {
+          data.slug = data.slug.trim()
+        }
         if (data?.title && !data?.slug) {
           data.slug = formatSlug(data.title)
         }

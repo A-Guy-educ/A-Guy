@@ -699,4 +699,62 @@ describe('HtmlBlock Validation', () => {
       expect(result).toBe('foreignObject is not allowed in SVG')
     })
   })
+
+  describe('Table Tags', () => {
+    it('should allow basic table elements', () => {
+      expect(validate?.('<table><tr><td>Cell</td></tr></table>')).toBe(true)
+    })
+
+    it('should allow table with thead, tbody, tfoot', () => {
+      const html =
+        '<table><thead><tr><th>Header</th></tr></thead><tbody><tr><td>Data</td></tr></tbody><tfoot><tr><td>Footer</td></tr></tfoot></table>'
+      expect(validate?.(html)).toBe(true)
+    })
+
+    it('should allow table with caption', () => {
+      expect(validate?.('<table><caption>My Table</caption><tr><td>Cell</td></tr></table>')).toBe(
+        true,
+      )
+    })
+
+    it('should allow table with colgroup and col', () => {
+      expect(validate?.('<table><colgroup><col></colgroup><tr><td>Cell</td></tr></table>')).toBe(
+        true,
+      )
+    })
+
+    it('should allow colspan attribute on td', () => {
+      expect(validate?.('<table><tr><td colspan="2">Spanning</td></tr></table>')).toBe(true)
+    })
+
+    it('should allow rowspan attribute on td', () => {
+      expect(validate?.('<table><tr><td rowspan="3">Spanning</td></tr></table>')).toBe(true)
+    })
+
+    it('should allow scope attribute on th', () => {
+      expect(validate?.('<table><tr><th scope="col">Header</th></tr></table>')).toBe(true)
+    })
+
+    it('should allow span attribute on col', () => {
+      expect(
+        validate?.('<table><colgroup><col span="2"></colgroup><tr><td>Cell</td></tr></table>'),
+      ).toBe(true)
+    })
+
+    it('should allow class and id on table elements', () => {
+      expect(validate?.('<table class="my-table" id="table1"><tr><td>Cell</td></tr></table>')).toBe(
+        true,
+      )
+    })
+
+    it('should reject style attribute on table elements', () => {
+      const result = validate?.('<table style="color:red"><tr><td>Cell</td></tr></table>')
+      expect(result).toContain('style attributes are not allowed')
+    })
+
+    it('should reject disallowed attributes on td', () => {
+      const result = validate?.('<table><tr><td width="100">Cell</td></tr></table>')
+      expect(result).toContain('attribute "width" is not allowed on <td>')
+    })
+  })
 })

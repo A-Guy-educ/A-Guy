@@ -104,13 +104,13 @@ describe('lightweight pipeline integration', () => {
   })
 
   describe('getImplPipeline for lightweight', () => {
-    it('returns exactly 6 stages (including parallel group)', async () => {
+    it('returns exactly 5 stages', async () => {
       const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
 
       const pipeline = getImplPipeline('lightweight')
 
-      // Should be: architect, build, commit, {verify,auditor}, apply-audit, pr (6 entries)
-      expect(pipeline).toHaveLength(6)
+      // Should be: architect, build, commit, review, fix, commit-fix, verify, pr (8 stages)
+      expect(pipeline).toHaveLength(8)
     })
 
     it('returns stages in correct order', async () => {
@@ -124,9 +124,10 @@ describe('lightweight pipeline integration', () => {
         'architect',
         'build',
         'commit',
+        'review',
+        'fix',
+        'commit-fix',
         'verify',
-        'auditor',
-        'apply-audit',
         'pr',
       ])
     })
@@ -141,29 +142,28 @@ describe('lightweight pipeline integration', () => {
       expect(flatNames).not.toContain('plan-gap')
     })
 
-    it('includes auditor and apply-audit', async () => {
+    it('does not include autofix as separate stage (it is sub-stage of verify)', async () => {
       const { getImplPipeline, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const pipeline = getImplPipeline('lightweight')
       const flatNames = flattenPipeline(pipeline)
 
-      expect(flatNames).toContain('auditor')
-      expect(flatNames).toContain('apply-audit')
+      expect(flatNames).not.toContain('autofix')
     })
   })
 
   describe('LIGHTWEIGHT_IMPL_PIPELINE constant', () => {
-    it('flattens to 7 stage names', async () => {
+    it('flattens to 5 stage names', async () => {
       const { LIGHTWEIGHT_IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const flatNames = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
 
-      expect(flatNames).toHaveLength(7)
+      expect(flatNames).toHaveLength(8)
     })
 
-    it('contains architect, build, commit, verify, auditor, apply-audit, pr', async () => {
+    it('contains architect, build, commit, review, fix, commit-fix, verify, pr', async () => {
       const { LIGHTWEIGHT_IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
@@ -172,19 +172,21 @@ describe('lightweight pipeline integration', () => {
       expect(flatNames).toContain('architect')
       expect(flatNames).toContain('build')
       expect(flatNames).toContain('commit')
+      expect(flatNames).toContain('review')
+      expect(flatNames).toContain('fix')
+      expect(flatNames).toContain('commit-fix')
       expect(flatNames).toContain('verify')
-      expect(flatNames).toContain('auditor')
-      expect(flatNames).toContain('apply-audit')
       expect(flatNames).toContain('pr')
     })
 
-    it('does not contain plan-gap', async () => {
+    it('does not contain plan-gap or autofix', async () => {
       const { LIGHTWEIGHT_IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const flatNames = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
 
       expect(flatNames).not.toContain('plan-gap')
+      expect(flatNames).not.toContain('autofix')
     })
   })
 })
@@ -245,24 +247,14 @@ describe('standard pipeline integration', () => {
       expect(flatNames).toContain('plan-gap')
     })
 
-    it('includes auditor', async () => {
+    it('does not include autofix as separate stage (it is sub-stage of verify)', async () => {
       const { getImplPipeline, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const pipeline = getImplPipeline('standard')
       const flatNames = flattenPipeline(pipeline)
 
-      expect(flatNames).toContain('auditor')
-    })
-
-    it('includes apply-audit', async () => {
-      const { getImplPipeline, flattenPipeline } =
-        await import('../../../../scripts/cody/pipeline-utils')
-
-      const pipeline = getImplPipeline('standard')
-      const flatNames = flattenPipeline(pipeline)
-
-      expect(flatNames).toContain('apply-audit')
+      expect(flatNames).not.toContain('autofix')
     })
 
     it('has more stages than lightweight', async () => {
@@ -280,14 +272,14 @@ describe('standard pipeline integration', () => {
   })
 
   describe('IMPL_PIPELINE constant', () => {
-    it('flattens to 8 stage names (including parallel groups)', async () => {
+    it('flattens to 6 stage names', async () => {
       const { IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const flatNames = flattenPipeline(IMPL_PIPELINE)
 
-      // Should be: architect, plan-gap, build, commit, verify, auditor, apply-audit, pr (8 stages)
-      expect(flatNames).toHaveLength(8)
+      // Should be: architect, plan-gap, build, commit, review, fix, commit-fix, verify, pr (9 stages)
+      expect(flatNames).toHaveLength(9)
     })
 
     it('contains all heavyweight stages', async () => {
@@ -297,8 +289,7 @@ describe('standard pipeline integration', () => {
       const flatNames = flattenPipeline(IMPL_PIPELINE)
 
       expect(flatNames).toContain('plan-gap')
-      expect(flatNames).toContain('auditor')
-      expect(flatNames).toContain('apply-audit')
+      expect(flatNames).not.toContain('autofix')
     })
   })
 })
@@ -322,14 +313,15 @@ describe('end-to-end pipeline selection', () => {
     const implPipeline = getImplPipeline(profile)
     const implStages = flattenPipeline(implPipeline)
 
-    // Should be: architect, build, commit, verify, auditor, apply-audit, pr
+    // Should be: architect, build, commit, review, fix, commit-fix, verify, pr
     expect(implStages).toEqual([
       'architect',
       'build',
       'commit',
+      'review',
+      'fix',
+      'commit-fix',
       'verify',
-      'auditor',
-      'apply-audit',
       'pr',
     ])
 
@@ -357,8 +349,7 @@ describe('end-to-end pipeline selection', () => {
 
     // Should contain heavyweight stages
     expect(implStages).toContain('plan-gap')
-    expect(implStages).toContain('auditor')
-    expect(implStages).toContain('apply-audit')
+    expect(implStages).not.toContain('autofix')
   })
 
   it('lightweight skips spec and gap stages', async () => {
@@ -376,7 +367,7 @@ describe('end-to-end pipeline selection', () => {
     expect(standardSpecStages).toContain('gap')
   })
 
-  it('lightweight skips heavyweight spec/planning stages but keeps auditor', async () => {
+  it('lightweight skips heavyweight spec/planning stages but not autofix (sub-stage of verify)', async () => {
     const { getImplPipeline, flattenPipeline } =
       await import('../../../../scripts/cody/pipeline-utils')
 
@@ -386,14 +377,12 @@ describe('end-to-end pipeline selection', () => {
     // Lightweight should NOT have plan-gap (planning overhead)
     expect(lightweightImplStages).not.toContain('plan-gap')
 
-    // Lightweight SHOULD have auditor and apply-audit (quality gate always runs)
-    expect(lightweightImplStages).toContain('auditor')
-    expect(lightweightImplStages).toContain('apply-audit')
+    // Autofix is a sub-stage of verify, not a separate pipeline stage
+    expect(lightweightImplStages).not.toContain('autofix')
 
     // Standard should have all stages including plan-gap
     expect(standardImplStages).toContain('plan-gap')
-    expect(standardImplStages).toContain('auditor')
-    expect(standardImplStages).toContain('apply-audit')
+    expect(standardImplStages).not.toContain('autofix')
   })
 })
 
@@ -471,8 +460,6 @@ describe('rebuildPipelineAfterTaskify', () => {
 
     // Standard profile should include heavyweight stages
     expect(flatOrder).toContain('plan-gap')
-    expect(flatOrder).toContain('auditor')
-    expect(flatOrder).toContain('apply-audit')
   })
 
   it('should use lightweight profile when specified', async () => {
@@ -507,11 +494,7 @@ describe('rebuildPipelineAfterTaskify', () => {
     // Lightweight should NOT include plan-gap
     expect(flatOrder).not.toContain('plan-gap')
 
-    // But SHOULD include auditor and apply-audit (always run)
-    expect(flatOrder).toContain('auditor')
-    expect(flatOrder).toContain('apply-audit')
-
-    // And should still include both spec and impl stages
+    // But should still include both spec and impl stages
     expect(flatOrder).toContain('taskify')
     expect(flatOrder).toContain('build')
     expect(flatOrder).toContain('pr')

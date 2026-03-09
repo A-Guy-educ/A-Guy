@@ -90,7 +90,13 @@ export const tasksApi = {
     return data.tasks
   },
 
-  get: async (issueNumber: number): Promise<{ task: CodyTask; comments: unknown[] }> => {
+  get: async (
+    issueNumber: number,
+  ): Promise<{
+    task: CodyTask
+    assignees: Array<{ login: string; avatar_url: string }>
+    comments: unknown[]
+  }> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}`)
     return handleResponse(res)
   },
@@ -101,6 +107,8 @@ export const tasksApi = {
     mode: string
     labels?: string[]
     assignees?: string[]
+    attachments?: Array<{ name: string; content: string }>
+    actorLogin?: string
   }): Promise<CodyTask> => {
     const res = await fetch(`${API_BASE}/tasks`, {
       method: 'POST',
@@ -110,101 +118,109 @@ export const tasksApi = {
     return handleResponse(res)
   },
 
-  execute: async (issueNumber: number): Promise<ActionResponse> => {
+  execute: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'execute' }),
+      body: JSON.stringify({ action: 'execute', ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },
 
-  close: async (issueNumber: number): Promise<ActionResponse> => {
+  close: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'close' }),
+      body: JSON.stringify({ action: 'close', ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },
 
-  closePR: async (issueNumber: number): Promise<ActionResponse> => {
+  closePR: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'close-pr' }),
+      body: JSON.stringify({ action: 'close-pr', ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },
 
-  reset: async (issueNumber: number): Promise<ActionResponse> => {
+  reset: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'reset' }),
+      body: JSON.stringify({ action: 'reset', ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },
 
-  reopen: async (issueNumber: number): Promise<ActionResponse> => {
+  reopen: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'reopen' }),
+      body: JSON.stringify({ action: 'reopen', ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },
 
-  abort: async (issueNumber: number): Promise<ActionResponse> => {
+  abort: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'abort' }),
+      body: JSON.stringify({ action: 'abort', ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },
 
-  approveGate: async (issueNumber: number): Promise<ActionResponse> => {
+  approveGate: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'approve' }),
+      body: JSON.stringify({ action: 'approve', ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },
 
-  rejectGate: async (issueNumber: number): Promise<ActionResponse> => {
+  rejectGate: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'reject' }),
+      body: JSON.stringify({ action: 'reject', ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },
 
-  comment: async (issueNumber: number, comment: string): Promise<ActionResponse> => {
+  comment: async (
+    issueNumber: number,
+    comment: string,
+    actorLogin?: string,
+  ): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'comment', comment }),
+      body: JSON.stringify({ action: 'comment', comment, ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },
 
   // Retry with context: posts comment with @cody retry then triggers execution
-  retryWithContext: async (issueNumber: number, context: string): Promise<ActionResponse> => {
+  retryWithContext: async (
+    issueNumber: number,
+    context: string,
+    actorLogin?: string,
+  ): Promise<ActionResponse> => {
     // First post comment with retry command and context
     const comment = context.trim() ? `@cody retry\n\n${context.trim()}` : '@cody retry'
 
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'comment', comment }),
+      body: JSON.stringify({ action: 'comment', comment, ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },
 
-  approve: async (task: CodyTask): Promise<ActionResponse> => {
+  approve: async (task: CodyTask, actorLogin?: string): Promise<ActionResponse> => {
     if (!task.associatedPR) {
       throw new Error('No PR associated with this task')
     }
@@ -215,12 +231,13 @@ export const tasksApi = {
         issueNumber: task.issueNumber,
         prNumber: task.associatedPR.number,
         branchName: task.associatedPR.head.ref,
+        ...(actorLogin && { actorLogin }),
       }),
     })
     return handleResponse(res)
   },
 
-  approveReview: async (task: CodyTask): Promise<ActionResponse> => {
+  approveReview: async (task: CodyTask, actorLogin?: string): Promise<ActionResponse> => {
     if (!task.associatedPR) {
       throw new Error('No PR associated with this task')
     }
@@ -229,7 +246,34 @@ export const tasksApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prNumber: task.associatedPR.number,
+        ...(actorLogin && { actorLogin }),
       }),
+    })
+    return handleResponse(res)
+  },
+
+  assign: async (
+    issueNumber: number,
+    assignees: string[],
+    actorLogin?: string,
+  ): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'assign', assignees, ...(actorLogin && { actorLogin }) }),
+    })
+    return handleResponse(res)
+  },
+
+  unassign: async (
+    issueNumber: number,
+    assignees: string[],
+    actorLogin?: string,
+  ): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'unassign', assignees, ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },
@@ -245,7 +289,11 @@ export const prsApi = {
   },
   ciStatus: async (
     prNumber: number,
-  ): Promise<{ ciStatus: 'pending' | 'success' | 'failure' | 'running'; mergeable: boolean }> => {
+  ): Promise<{
+    ciStatus: 'pending' | 'success' | 'failure' | 'running'
+    mergeable: boolean
+    hasConflicts: boolean
+  }> => {
     const res = await fetch(`${API_BASE}/prs/status?prNumber=${prNumber}`)
     return handleResponse(res)
   },
@@ -284,10 +332,11 @@ export const collaboratorsApi = {
 // ============ Publish API ============
 
 export const publishApi = {
-  publish: async (): Promise<ActionResponse> => {
+  publish: async (actorLogin?: string): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/publish`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },

@@ -99,19 +99,19 @@ export function useCollaborators() {
 
 // ============ useTaskDetails ============
 
-export function useTaskDetails(issueNumber: number | null) {
+export function useTaskDetails(issueNumber: number | null, actorLogin?: string) {
   const queryClient = useQueryClient()
 
   const query = useQuery({
     queryKey: queryKeys.taskDetails(issueNumber ?? -1),
     queryFn: () => codyApi.tasks.get(issueNumber!),
     enabled: !!issueNumber,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 5 * 1000, // 5 seconds - reduced for faster assignee updates
   })
 
   // Mutations for task actions
   const executeMutation = useMutation({
-    mutationFn: () => codyApi.tasks.execute(issueNumber!),
+    mutationFn: () => codyApi.tasks.execute(issueNumber!, actorLogin),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.taskDetails(issueNumber!) })
       queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
@@ -119,7 +119,7 @@ export function useTaskDetails(issueNumber: number | null) {
   })
 
   const closeMutation = useMutation({
-    mutationFn: () => codyApi.tasks.close(issueNumber!),
+    mutationFn: () => codyApi.tasks.close(issueNumber!, actorLogin),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.taskDetails(issueNumber!) })
       queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
@@ -127,7 +127,7 @@ export function useTaskDetails(issueNumber: number | null) {
   })
 
   const reopenMutation = useMutation({
-    mutationFn: () => codyApi.tasks.reopen(issueNumber!),
+    mutationFn: () => codyApi.tasks.reopen(issueNumber!, actorLogin),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.taskDetails(issueNumber!) })
       queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
@@ -135,7 +135,7 @@ export function useTaskDetails(issueNumber: number | null) {
   })
 
   const abortMutation = useMutation({
-    mutationFn: () => codyApi.tasks.abort(issueNumber!),
+    mutationFn: () => codyApi.tasks.abort(issueNumber!, actorLogin),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.taskDetails(issueNumber!) })
       queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
@@ -167,6 +167,8 @@ export function useCreateTask() {
       mode: string
       labels?: string[]
       assignees?: string[]
+      attachments?: Array<{ name: string; content: string }>
+      actorLogin?: string
     }) => codyApi.tasks.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
@@ -176,11 +178,11 @@ export function useCreateTask() {
 
 // ============ usePostComment ============
 
-export function usePostComment(issueNumber: number) {
+export function usePostComment(issueNumber: number, actorLogin?: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (comment: string) => codyApi.tasks.comment(issueNumber, comment),
+    mutationFn: (comment: string) => codyApi.tasks.comment(issueNumber, comment, actorLogin),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.taskDetails(issueNumber) })
     },
@@ -191,12 +193,14 @@ export function usePostComment(issueNumber: number) {
 
 export interface UseRetryWithContextOptions {
   issueNumber: number
+  actorLogin?: string
   onSuccess?: () => void
   onError?: (error: Error) => void
 }
 
 export function useRetryWithContext({
   issueNumber,
+  actorLogin,
   onSuccess,
   onError,
 }: UseRetryWithContextOptions) {
@@ -205,9 +209,9 @@ export function useRetryWithContext({
   return useMutation({
     mutationFn: async (context: string) => {
       // First post the comment with @cody retry and context
-      await codyApi.tasks.retryWithContext(issueNumber, context)
+      await codyApi.tasks.retryWithContext(issueNumber, context, actorLogin)
       // Then trigger execution
-      await codyApi.tasks.execute(issueNumber)
+      await codyApi.tasks.execute(issueNumber, actorLogin)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
@@ -221,6 +225,7 @@ export function useRetryWithContext({
 
 export interface UseTaskActionsOptions {
   issueNumber: number
+  actorLogin?: string
   onSuccess?: () => void
   onError?: (error: Error) => void
 }
@@ -229,7 +234,12 @@ export interface UseTaskActionsOptions {
  * Hook providing all task action mutations with per-action pending states
  * and toast notifications for user feedback.
  */
-export function useTaskActions({ issueNumber, onSuccess, onError }: UseTaskActionsOptions) {
+export function useTaskActions({
+  issueNumber,
+  actorLogin,
+  onSuccess,
+  onError,
+}: UseTaskActionsOptions) {
   const queryClient = useQueryClient()
 
   const handleError = (label: string) => (error: Error) => {
@@ -244,51 +254,63 @@ export function useTaskActions({ issueNumber, onSuccess, onError }: UseTaskActio
   }
 
   const execute = useMutation({
-    mutationFn: () => codyApi.tasks.execute(issueNumber),
+    mutationFn: () => codyApi.tasks.execute(issueNumber, actorLogin),
     onSuccess: handleSuccess('Task started'),
     onError: handleError('start task'),
   })
 
   const close = useMutation({
-    mutationFn: () => codyApi.tasks.close(issueNumber),
+    mutationFn: () => codyApi.tasks.close(issueNumber, actorLogin),
     onSuccess: handleSuccess('Issue closed'),
     onError: handleError('close issue'),
   })
 
   const reopen = useMutation({
-    mutationFn: () => codyApi.tasks.reopen(issueNumber),
+    mutationFn: () => codyApi.tasks.reopen(issueNumber, actorLogin),
     onSuccess: handleSuccess('Issue reopened'),
     onError: handleError('reopen issue'),
   })
 
   const abort = useMutation({
-    mutationFn: () => codyApi.tasks.abort(issueNumber),
+    mutationFn: () => codyApi.tasks.abort(issueNumber, actorLogin),
     onSuccess: handleSuccess('Task stopped'),
     onError: handleError('stop task'),
   })
 
   const closePR = useMutation({
-    mutationFn: () => codyApi.tasks.closePR(issueNumber),
+    mutationFn: () => codyApi.tasks.closePR(issueNumber, actorLogin),
     onSuccess: handleSuccess('PR closed'),
     onError: handleError('close PR'),
   })
 
   const reset = useMutation({
-    mutationFn: () => codyApi.tasks.reset(issueNumber),
+    mutationFn: () => codyApi.tasks.reset(issueNumber, actorLogin),
     onSuccess: handleSuccess('Task reset successfully'),
     onError: handleError('reset task'),
   })
 
   const approveGate = useMutation({
-    mutationFn: () => codyApi.tasks.approveGate(issueNumber),
+    mutationFn: () => codyApi.tasks.approveGate(issueNumber, actorLogin),
     onSuccess: handleSuccess('Gate approved'),
     onError: handleError('approve gate'),
   })
 
   const rejectGate = useMutation({
-    mutationFn: () => codyApi.tasks.rejectGate(issueNumber),
+    mutationFn: () => codyApi.tasks.rejectGate(issueNumber, actorLogin),
     onSuccess: handleSuccess('Gate rejected'),
     onError: handleError('reject gate'),
+  })
+
+  const assign = useMutation({
+    mutationFn: (assignees: string[]) => codyApi.tasks.assign(issueNumber, assignees, actorLogin),
+    onSuccess: handleSuccess('User(s) assigned'),
+    onError: handleError('assign user'),
+  })
+
+  const unassign = useMutation({
+    mutationFn: (assignees: string[]) => codyApi.tasks.unassign(issueNumber, assignees, actorLogin),
+    onSuccess: handleSuccess('User(s) unassigned'),
+    onError: handleError('unassign user'),
   })
 
   const isPending =
@@ -299,7 +321,9 @@ export function useTaskActions({ issueNumber, onSuccess, onError }: UseTaskActio
     reopen.isPending ||
     abort.isPending ||
     approveGate.isPending ||
-    rejectGate.isPending
+    rejectGate.isPending ||
+    assign.isPending ||
+    unassign.isPending
 
   return {
     execute: execute.mutate,
@@ -310,6 +334,8 @@ export function useTaskActions({ issueNumber, onSuccess, onError }: UseTaskActio
     abort: abort.mutate,
     approveGate: approveGate.mutate,
     rejectGate: rejectGate.mutate,
+    assign: assign.mutate,
+    unassign: unassign.mutate,
     isPending,
     pendingAction: execute.isPending
       ? 'execute'

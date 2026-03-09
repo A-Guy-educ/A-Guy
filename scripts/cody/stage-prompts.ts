@@ -35,10 +35,11 @@ export const ALL_STAGES = [
   'plan-gap',
   'build',
   'commit',
+  'review',
+  'fix',
+  'commit-fix',
   'verify',
   'autofix',
-  'auditor',
-  'apply-audit',
   'pr',
 ] as const
 
@@ -48,7 +49,7 @@ export type Stage = (typeof ALL_STAGES)[number]
  * Scripted stages that run directly without an LLM agent.
  * Their prompts in stageInstructions are unused but kept for documentation.
  */
-export const SCRIPTED_STAGES = ['verify', 'commit', 'pr'] as const
+export const SCRIPTED_STAGES = ['verify', 'commit', 'commit-fix', 'pr'] as const
 
 // ============================================================================
 // Stage Context — which files each stage needs to read
@@ -74,10 +75,20 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   'plan-gap': ['spec.md', 'plan.md', 'task.json'],
   build: ['spec.md', 'clarified.md', 'plan.md', 'plan-gap.md', 'rerun-feedback.md'],
   commit: ['task.json'],
+  review: ['review.md', 'build.md', 'plan.md', 'spec.md', 'clarified.md'],
+  fix: [
+    'verify-failures.md',
+    'review.md',
+    'rerun-feedback.md',
+    'fix-summary.md',
+    'build.md',
+    'plan.md',
+    'spec.md',
+    'clarified.md',
+  ],
+  'commit-fix': ['fix-summary.md', 'verify-failures.md'],
   verify: [], // scripted — no LLM prompt needed
   autofix: ['verify.md', 'build-errors.md'],
-  auditor: ['task.md', 'spec.md', 'build.md', 'verify.md', '../audit-history.json'],
-  'apply-audit': ['auditor.md'],
   pr: [], // scripted — no LLM prompt needed
 }
 
@@ -134,11 +145,32 @@ DO NOT just write build.md - that will fail the pipeline! The pipeline validates
 
   commit: () => ``,
 
+  review: () => `CRITICAL: CODE REVIEW STAGE
+
+You are reviewing already-generated code. DO NOT modify code files.
+Your job is to analyze and produce a review.md with findings.
+
+Read the generated source files and identify issues by severity:
+- Critical: Security vulnerabilities, data loss risks, runtime crashes
+- Major: TypeScript type errors, missing functionality, logic errors
+- Minor: Code style, missing error handling, performance concerns
+
+Write review.md with your findings including file:line references.`,
+
+  fix: () => `CRITICAL: TARGETED FIX STAGE
+
+You are applying MINIMAL fixes to resolve identified issues.
+DO NOT regenerate entire codebase.
+DO NOT refactor or rewrite working code.
+Only fix the specific issues identified in verify-failures.md, review.md, or rerun-feedback.md.
+
+Write fix-summary.md summarizing what you changed.`,
+
+  'commit-fix': () => ``,
+
   // Scripted stages — these prompts are never sent to an LLM
   verify: () => ``,
   autofix: () => ``,
-  auditor: () => ``,
-  'apply-audit': () => ``,
   pr: () => ``,
 }
 

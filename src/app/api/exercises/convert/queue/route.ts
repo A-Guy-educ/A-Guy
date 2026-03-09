@@ -178,7 +178,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, jobId: job.id, message: 'Conversion job queued' })
   } catch (error: unknown) {
-    console.error('[Queue] Error:', error)
+    const Sentry = await import('@sentry/nextjs')
+    Sentry.captureException(error, { tags: { route: '/api/exercises/convert/queue' } })
     if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
       const typedError = error as { code: string; message: string }
       return errorResponse(typedError.code as ErrorCode, typedError.message, 400)

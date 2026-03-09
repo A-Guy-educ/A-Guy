@@ -16,6 +16,7 @@ import { Media } from '@/server/payload/collections/Media'
 import { adminOnly } from '@/server/payload/access/adminOnly'
 import { anyone } from '@/server/payload/access/anyone'
 import { authenticated } from '@/server/payload/access/authenticated'
+import { publishedAndActive } from '@/server/payload/access/publishedAndActive'
 
 describe('Content Collections Access Control - Bug Reproduction', () => {
   /**
@@ -34,8 +35,8 @@ describe('Content Collections Access Control - Bug Reproduction', () => {
       expect(Courses.access?.delete).toBe(adminOnly)
     })
 
-    it('should use anyone for read operation (unchanged)', () => {
-      expect(Courses.access?.read).toBe(anyone)
+    it('should use publishedAndActive for read operation (FIXED: restricts anonymous access)', () => {
+      expect(Courses.access?.read).toBe(publishedAndActive)
     })
 
     // This test documents the current (buggy) state - it will fail before the fix
@@ -53,8 +54,8 @@ describe('Content Collections Access Control - Bug Reproduction', () => {
       expect(Chapters.access?.delete).toBe(adminOnly)
     })
 
-    it('should use anyone for read operation (unchanged)', () => {
-      expect(Chapters.access?.read).toBe(anyone)
+    it('should use publishedAndActive for read operation (FIXED: restricts anonymous access)', () => {
+      expect(Chapters.access?.read).toBe(publishedAndActive)
     })
 
     it('should NOT use authenticated for write operations', () => {
@@ -71,8 +72,8 @@ describe('Content Collections Access Control - Bug Reproduction', () => {
       expect(Lessons.access?.delete).toBe(adminOnly)
     })
 
-    it('should use anyone for read operation (unchanged)', () => {
-      expect(Lessons.access?.read).toBe(anyone)
+    it('should use publishedAndActive for read operation (FIXED: restricts anonymous access)', () => {
+      expect(Lessons.access?.read).toBe(publishedAndActive)
     })
 
     it('should NOT use authenticated for write operations', () => {

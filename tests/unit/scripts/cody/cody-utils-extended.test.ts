@@ -172,6 +172,7 @@ describe('parseCommentBody', () => {
     const validStages = [
       'taskify',
       'spec',
+      'gap',
       'clarify',
       'architect',
       'plan-gap',
@@ -179,8 +180,6 @@ describe('parseCommentBody', () => {
       'commit',
       'verify',
       'autofix',
-      'auditor',
-      'apply-audit',
       'pr',
     ]
     for (const stage of validStages) {
@@ -326,17 +325,16 @@ describe('parseCliArgs', () => {
     expect(result.triggerType).toBe('comment')
   })
 
-  it('should auto-generate task-id when not provided (format YYMMDD-auto-XX)', () => {
+  it('should auto-generate task-id when not provided (format YYMMDD-auto-NNN)', () => {
     // Skip this test in CI since TASK_ID is provided via env
     if (process.env.TASK_ID) {
       return
     }
-    // Mock Math.random for deterministic counter
-    vi.spyOn(Math, 'random').mockReturnValue(0.5) // gives floor(0.5*99)+1 = 50
 
     const result = parseCliArgs(['--mode', 'full'])
     // The date prefix comes from new Date().toISOString() — we just verify the pattern
-    expect(result.taskId).toMatch(/^\d{6}-auto-50$/)
+    // Counter is now 3 digits (100-999) from crypto.randomInt
+    expect(result.taskId).toMatch(/^\d{6}-auto-\d{3}$/)
     expect(result.mode).toBe('full')
   })
 
@@ -968,8 +966,6 @@ describe('isValidStage', () => {
       'commit',
       'autofix',
       'verify',
-      'auditor',
-      'apply-audit',
       'pr',
     ]
     for (const stage of stages) {
@@ -989,6 +985,17 @@ describe('isValidStage', () => {
 // ---------------------------------------------------------------------------
 
 describe('--fresh and --is-pull-request CLI flags', () => {
+  const savedFresh = process.env.FRESH
+
+  afterEach(() => {
+    // Restore FRESH env var to prevent CI env leak between tests
+    if (savedFresh !== undefined) {
+      process.env.FRESH = savedFresh
+    } else {
+      delete process.env.FRESH
+    }
+  })
+
   it('should parse --fresh flag', () => {
     const result = parseCliArgs(['--task-id', '260218-test', '--fresh'])
     expect(result.fresh).toBe(true)
@@ -1005,7 +1012,8 @@ describe('--fresh and --is-pull-request CLI flags', () => {
     expect(result.fromStage).toBe('build')
   })
 
-  it('should default fresh to undefined', () => {
+  it('should default fresh to undefined when FRESH env var is not set', () => {
+    delete process.env.FRESH
     const result = parseCliArgs(['--task-id', '260218-test'])
     expect(result.fresh).toBeUndefined()
   })

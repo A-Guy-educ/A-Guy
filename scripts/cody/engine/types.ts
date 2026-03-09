@@ -112,6 +112,18 @@ export interface StageStateV2 {
   error?: string
   feedbackLoops?: number
   feedbackErrors?: string[]
+  /** Current fix attempt number (for verify→fix loop) */
+  fixAttempt?: number
+  /** Maximum allowed fix attempts (for verify→fix loop) */
+  maxFixAttempts?: number
+  /** Whether the review stage found issues that need fixing */
+  issuesFound?: boolean
+  /** Review summary counts */
+  reviewSummary?: {
+    critical: number
+    major: number
+    minor: number
+  }
 }
 
 export interface PipelineStateV2 {
@@ -159,6 +171,16 @@ export const PipelineStateV2Schema: z.ZodType<PipelineStateV2> = z.object({
       error: z.string().optional(),
       feedbackLoops: z.number().optional(),
       feedbackErrors: z.array(z.string()).optional(),
+      fixAttempt: z.number().optional(),
+      maxFixAttempts: z.number().optional(),
+      issuesFound: z.boolean().optional(),
+      reviewSummary: z
+        .object({
+          critical: z.number(),
+          major: z.number(),
+          minor: z.number(),
+        })
+        .optional(),
     }),
   ),
 })
@@ -241,14 +263,19 @@ export type RunQualityWithAutofixAction = {
   maxFeedbackLoops: number
 }
 
-// Commit-audit-history action
-export type CommitAuditHistoryAction = {
-  type: 'commit-audit-history'
-}
-
 // Validate-src-changes action — ensures build agent modified source files
 export type ValidateSrcChangesAction = {
   type: 'validate-src-changes'
+}
+
+// Analyze-review-findings action - parses review.md to determine if fix needed
+export type AnalyzeReviewFindingsAction = {
+  type: 'analyze-review-findings'
+}
+
+// Clear-verify-failures action - clears previous verify failures for retry
+export type ClearVerifyFailuresAction = {
+  type: 'clear-verify-failures'
 }
 
 // Parallel-post-action - runs multiple actions concurrently
@@ -271,7 +298,8 @@ export type PostAction =
   | RunTscAction
   | RunUnitTestsAction
   | RunQualityWithAutofixAction
-  | CommitAuditHistoryAction
+  | AnalyzeReviewFindingsAction
+  | ClearVerifyFailuresAction
   | ParallelPostAction
 
 // ============================================================================

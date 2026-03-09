@@ -73,15 +73,15 @@ describe('LLM Model Configuration Validation', () => {
     })
 
     it('should have correct model names for Gemini provider', () => {
-      // Gemini uses gemini-2.0-flash-001 for all models
+      // Gemini uses gemini-3.1-pro for all models
       expect(getProviderModelConfig(LLMProviderType.GEMINI, 'EXERCISE_CHAT').name).toBe(
-        'gemini-2.0-flash-001',
+        'gemini-3.1-pro',
       )
       expect(getProviderModelConfig(LLMProviderType.GEMINI, 'IMAGE_TO_EXERCISE').name).toBe(
-        'gemini-2.0-flash-001',
+        'gemini-3.1-pro',
       )
       expect(getProviderModelConfig(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE').name).toBe(
-        'gemini-2.0-flash-001',
+        'gemini-3.1-pro',
       )
     })
 
@@ -160,13 +160,13 @@ describe('LLM Model Configuration Validation', () => {
     it('should return correct model names via getProviderModelConfig', () => {
       // Gemini provider
       expect(getProviderModelConfig(LLMProviderType.GEMINI, 'EXERCISE_CHAT').name).toBe(
-        'gemini-2.0-flash-001',
+        'gemini-3.1-pro',
       )
       expect(getProviderModelConfig(LLMProviderType.GEMINI, 'IMAGE_TO_EXERCISE').name).toBe(
-        'gemini-2.0-flash-001',
+        'gemini-3.1-pro',
       )
       expect(getProviderModelConfig(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE').name).toBe(
-        'gemini-2.0-flash-001',
+        'gemini-3.1-pro',
       )
 
       // OpenAI-compatible provider
@@ -198,7 +198,7 @@ describe('LLM Model Configuration Validation', () => {
       expect(providerType).toBe(LLMProviderType.GEMINI)
 
       const modelConfig = getProviderModelConfig(providerType, 'EXERCISE_CHAT')
-      expect(modelConfig.name).toBe('gemini-2.0-flash-001')
+      expect(modelConfig.name).toBe('gemini-3.1-pro')
     })
 
     it('should switch to OpenAI-compatible when LLM_PROVIDER=openai-compatible', async () => {

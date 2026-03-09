@@ -3,39 +3,17 @@
 import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
 import { Suspense, useEffect, useState } from 'react'
 import { ConversionStatusPanel } from '../ConversionStatusPanel'
+import { ConvertContextButton } from '../ConvertContextButton'
 import { ConvertForm } from '../ConvertForm'
 import { ConvertV2Button } from '../ConvertV2Button'
 import { ConvertV3Button } from '../ConvertV3Button'
 import { DraftExercisesList } from '../DraftExercisesList'
 import { V2StatusPanel } from '../V2StatusPanel'
-import { V3PreviewPanel } from '../V3PreviewPanel'
 
 interface MediaItem {
   id: string
   filename?: string
   mimeType?: string
-}
-
-interface PreviewData {
-  title: string
-  draft: {
-    title: string
-    question: string
-    options: string[]
-    correctAnswer: number | null
-    explanation?: string
-    questionType: 'free_response' | 'true_false' | 'mcq'
-  }
-  content: {
-    blocks: unknown[]
-  }
-  metadata: {
-    model: string
-    processingTimeMs: number
-    promptId?: string
-    promptVersion?: string
-  }
-  extractionLogId: string
 }
 
 export const LessonConversionPanel = () => {
@@ -48,8 +26,6 @@ export const LessonConversionPanel = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [activeForm, setActiveForm] = useState<string | null>(null)
   const [expandedPdf, setExpandedPdf] = useState<string | null>(null)
-  const [v3Preview, setV3Preview] = useState<PreviewData | null>(null)
-  const [v3MediaId, setV3MediaId] = useState<string | null>(null)
   const [needsSaveNotice, setNeedsSaveNotice] = useState(false)
 
   // Resolve media from persisted lesson data so conversion options always
@@ -282,13 +258,11 @@ export const LessonConversionPanel = () => {
                 {activeForm === file.id ? 'Cancel' : 'Convert (V1)'}
               </button>
               <ConvertV2Button lessonId={String(lessonId)} mediaId={file.id} />
-              <ConvertV3Button
+              <ConvertV3Button lessonId={String(lessonId)} mediaId={file.id} />
+              <ConvertContextButton
                 lessonId={String(lessonId)}
                 mediaId={file.id}
-                onPreview={(preview) => {
-                  setV3Preview(preview)
-                  setV3MediaId(file.id)
-                }}
+                filename={String(file.filename || file.id)}
               />
             </div>
           </div>
@@ -323,23 +297,6 @@ export const LessonConversionPanel = () => {
                 onClose={() => setActiveForm(null)}
               />
             </Suspense>
-          )}
-
-          {/* V3 Preview Panel */}
-          {v3Preview && v3MediaId === file.id && (
-            <V3PreviewPanel
-              preview={v3Preview}
-              lessonId={String(lessonId)}
-              mediaId={file.id}
-              onClose={() => {
-                setV3Preview(null)
-                setV3MediaId(null)
-              }}
-              onCreated={() => {
-                setV3Preview(null)
-                setV3MediaId(null)
-              }}
-            />
           )}
 
           {/* Draft Exercises */}

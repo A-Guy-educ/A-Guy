@@ -164,7 +164,7 @@ export async function POST(request: Request): Promise<Response> {
       },
     })
   } catch (error) {
-    console.error('[finalize] Error:', error)
-    return Response.json({ error: 'Internal server error' }, { status: 500 })
+    const { captureAndRespond } = await import('@/server/api/capture-and-respond')
+    return captureAndRespond(error, { route: '/api/chat-assets/finalize' })
   }
 }

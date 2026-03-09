@@ -9,6 +9,7 @@ import { logger } from './logger'
 import * as fs from 'fs'
 import * as path from 'path'
 import { Command } from 'commander'
+import { randomInt } from 'crypto'
 
 import { ALL_STAGES } from './stage-prompts'
 import { discoverTaskIdFromIssue } from './github-api'
@@ -18,7 +19,7 @@ import { discoverTaskIdFromIssue } from './github-api'
 // ============================================================================
 
 export interface CodyInput {
-  mode: 'spec' | 'impl' | 'rerun' | 'full' | 'status'
+  mode: 'spec' | 'impl' | 'rerun' | 'fix' | 'full' | 'status'
   taskId: string
   dryRun: boolean
   fromStage?: string
@@ -87,7 +88,7 @@ export interface StageStatus {
 // Validation
 // ============================================================================
 
-const VALID_MODES = ['spec', 'impl', 'rerun', 'full', 'status'] as const
+const VALID_MODES = ['spec', 'impl', 'rerun', 'fix', 'full', 'status'] as const
 
 // VALID_STAGES derived from stage-prompts to avoid duplication
 const VALID_STAGES = [...ALL_STAGES]
@@ -283,7 +284,7 @@ export function initStatus(input: CodyInput): CodyPipelineStatus {
 /**
  * Update stage status with read-modify-write to status.json.
  *
- * Concurrency safety: parallel stages (e.g., auditor + pr) call this from
+ * Concurrency safety: parallel stages (e.g., verify + pr) call this from
  * separate promise callbacks, but Node.js is single-threaded — only one
  * callback runs at a time, so read-modify-write is atomic on the event loop.
  * The atomic writeStatus (write-to-tmp + rename) guards against corruption
@@ -514,10 +515,12 @@ export function parseCliArgs(argv: string[]): CodyInput {
 
   if (commanderOpts.isPullRequest !== undefined) {
     input.isPullRequest = true
+    cliSet.add('isPullRequest')
   }
 
   if (commanderOpts.fresh !== undefined) {
     input.fresh = true
+    cliSet.add('fresh')
   }
 
   // Handle --comment-body-env=<var> (Commander may not parse this with --key=value pattern)
@@ -707,6 +710,9 @@ export function parseCliArgs(argv: string[]): CodyInput {
   if (!cliSet.has('version') && process.env.VERSION) {
     input.version = process.env.VERSION
   }
+  if (!cliSet.has('fresh') && process.env.FRESH === 'true') {
+    input.fresh = true
+  }
   if (!cliSet.has('complexityOverride') && process.env.COMPLEXITY) {
     const val = parseInt(process.env.COMPLEXITY, 10)
     if (!isNaN(val) && val >= 1 && val <= 100) {
@@ -727,12 +733,16 @@ export function parseCliArgs(argv: string[]): CodyInput {
   // Auto-generate taskId if not provided
   if (!input.taskId) {
     // Try to discover task-id from previous bot comments on the issue
-    if (input.issueNumber && input.triggerType === 'comment') {
+    // Skip discovery when --fresh flag is set — we want a brand-new task ID
+    if (input.issueNumber && input.triggerType === 'comment' && !input.fresh) {
       const discovered = discoverTaskIdFromIssue(input.issueNumber)
       if (discovered) {
         input.taskId = discovered
         logger.info(`Discovered task ID from issue: ${input.taskId}`)
       }
+    }
+    if (input.fresh && input.issueNumber) {
+      logger.info(`--fresh flag: skipping task ID discovery for issue #${input.issueNumber}`)
     }
 
     // If still no task-id, generate one
@@ -745,8 +755,8 @@ export function parseCliArgs(argv: string[]): CodyInput {
       } else {
         // Fallback: auto-generate from date
         const datePrefix = new Date().toISOString().slice(2, 10).replace(/-/g, '')
-        const counter = Math.floor(Math.random() * 99) + 1
-        input.taskId = `${datePrefix}-auto-${counter.toString().padStart(2, '0')}`
+        const counter = randomInt(100, 999)
+        input.taskId = `${datePrefix}-auto-${counter}`
       }
       logger.info(`Auto-generated task ID: ${input.taskId}`)
     }
@@ -839,7 +849,7 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
       mode = subCmd as CodyInput['mode']
     } else {
       // Unrecognized subcommand: treat as rerun with implicit feedback
-      // e.g., "/cody fix tests" → rerun mode, feedback = "fix tests"
+      // e.g., "/cody adjust tests" → rerun mode, feedback = "adjust tests"
       mode = 'rerun'
       // Capture both the subcommand and rest as implicit feedback
       implicitFeedback = rest ? `${subCmd} ${rest}`.trim() : subCmd
@@ -858,8 +868,9 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
       taskId = firstWord
     } else {
       // First word is NOT a task-id
-      if (mode === 'rerun') {
-        // For rerun: treat all remaining text as implicit feedback
+      if (mode === 'rerun' || mode === 'fix') {
+        // For rerun/fix: treat all remaining text as implicit feedback
+        // This handles "@cody fix the button isn't showing" → feedback = "the button isn't showing"
         implicitFeedback = taskId
       }
       taskId = '' // will be auto-discovered from issue

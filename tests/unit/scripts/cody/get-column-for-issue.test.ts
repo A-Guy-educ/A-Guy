@@ -49,10 +49,13 @@ function getColumnForIssue(
 ): ColumnId {
   const labelNames = issue.labels.map((l) => l.name.toLowerCase())
 
-  // 1. Cody agent labels (highest priority — set by the pipeline itself)
-  if (labelNames.includes('agent:running')) return 'building'
-  if (labelNames.includes('agent:error')) return 'failed'
-  if (labelNames.includes('agent:done')) return 'done'
+  // 1. Cody lifecycle labels (highest priority — set by the pipeline state machine)
+  if (labelNames.includes('cody:planning') || labelNames.includes('cody:building'))
+    return 'building'
+  if (labelNames.includes('cody:failed')) return 'failed'
+  // cody:done = pipeline finished, PR created → task goes to review (not done)
+  // Task is only truly "done" when the PR is merged and the issue is closed
+  if (labelNames.includes('cody:done') || labelNames.includes('cody:review')) return 'review'
 
   // 2. Active workflow run takes priority over gate labels
   // This ensures the dashboard shows "Building" even if risk-gated/hard-stop labels
@@ -101,27 +104,27 @@ describe('getColumnForIssue', () => {
     updated_at: '2026-01-01',
   }
 
-  describe('agent:* labels take highest priority', () => {
-    it('should return building for agent:running label', () => {
-      const issue = { ...baseIssue, labels: [{ name: 'agent:running', color: 'blue' }] }
+  describe('cody:* lifecycle labels take highest priority', () => {
+    it('should return building for cody:building label', () => {
+      const issue = { ...baseIssue, labels: [{ name: 'cody:building', color: 'blue' }] }
       expect(getColumnForIssue(issue)).toBe('building')
     })
 
-    it('should return failed for agent:error label', () => {
-      const issue = { ...baseIssue, labels: [{ name: 'agent:error', color: 'red' }] }
+    it('should return failed for cody:failed label', () => {
+      const issue = { ...baseIssue, labels: [{ name: 'cody:failed', color: 'red' }] }
       expect(getColumnForIssue(issue)).toBe('failed')
     })
 
-    it('should return done for agent:done label', () => {
-      const issue = { ...baseIssue, labels: [{ name: 'agent:done', color: 'green' }] }
-      expect(getColumnForIssue(issue)).toBe('done')
+    it('should return review for cody:done label (pipeline finished, PR ready)', () => {
+      const issue = { ...baseIssue, labels: [{ name: 'cody:done', color: 'green' }] }
+      expect(getColumnForIssue(issue)).toBe('review')
     })
 
-    it('agent:running should override risk-gated label', () => {
+    it('cody:building should override risk-gated label', () => {
       const issue = {
         ...baseIssue,
         labels: [
-          { name: 'agent:running', color: 'blue' },
+          { name: 'cody:building', color: 'blue' },
           { name: 'risk-gated', color: 'yellow' },
         ],
       }

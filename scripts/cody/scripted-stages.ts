@@ -6,7 +6,7 @@
  */
 
 import { logger } from './logger'
-import { execFileSync, execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 import ms from 'ms'
 import * as path from 'path'
@@ -33,20 +33,21 @@ const DEFAULT_GATE_TIMEOUT = ms('2m')
 
 function runGate(
   name: string,
-  command: string,
+  program: string,
+  args: string[],
   cwd: string,
   timeout: number = DEFAULT_GATE_TIMEOUT,
 ): GateResult {
   logger.info(`  Running ${name}...`)
   try {
-    const output = execSync(command, { cwd, encoding: 'utf-8', timeout })
+    const output = execFileSync(program, args, { cwd, encoding: 'utf-8', timeout })
     logger.info(`  ✅ ${name} passed`)
-    return { name, passed: true, output: output.slice(0, 500) }
+    return { name, passed: true, output: output.slice(0, 1000) }
   } catch (error: unknown) {
     const err = error as { stdout?: string; stderr?: string; message?: string }
     const output = (err.stdout || '') + (err.stderr || '') || err.message || 'Unknown error'
     logger.info(`  ❌ ${name} failed`)
-    return { name, passed: false, output: output.slice(0, 2000) }
+    return { name, passed: false, output: output.slice(0, 5000) }
   }
 }
 
@@ -62,12 +63,10 @@ export function runVerifyStage(
   const aggregateTimeout = timeout ?? Infinity
 
   const gateDefinitions = [
-    { name: 'TypeScript', command: 'pnpm -s tsc --noEmit' },
-    { name: 'Lint', command: 'pnpm -s lint' },
-    { name: 'Format', command: 'pnpm -s format:check' },
-    { name: 'Unit Tests', command: 'pnpm -s test:unit' },
-    // Integration tests run in CI after PR is created
-    // Adding them here would require MongoDB service in verify stage
+    { name: 'TypeScript', program: 'pnpm', args: ['-s', 'tsc', '--noEmit'] },
+    { name: 'Lint', program: 'pnpm', args: ['-s', 'lint'] },
+    { name: 'Format', program: 'pnpm', args: ['-s', 'format:check'] },
+    { name: 'Unit Tests', program: 'pnpm', args: ['-s', 'test:unit'] },
   ]
 
   const gates: GateResult[] = []
@@ -87,7 +86,7 @@ export function runVerifyStage(
 
     // Use smaller of remaining aggregate time or per-gate default
     const gateTimeout = Math.min(remaining, DEFAULT_GATE_TIMEOUT)
-    gates.push(runGate(gateDef.name, gateDef.command, cwd, gateTimeout))
+    gates.push(runGate(gateDef.name, gateDef.program, gateDef.args, cwd, gateTimeout))
   }
 
   const allPassed = gates.every((g) => g.passed)
@@ -127,7 +126,20 @@ interface PrResult {
 }
 
 function getBranchName(cwd: string): string {
-  return execSync('git branch --show-current', { cwd, encoding: 'utf-8' }).trim()
+  const branch = execFileSync('git', ['branch', '--show-current'], {
+    cwd,
+    encoding: 'utf-8',
+  }).trim()
+  if (!branch) {
+    // Detached HEAD — use short commit hash as fallback
+    return (
+      execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
+        cwd,
+        encoding: 'utf-8',
+      }).trim() || 'detached'
+    )
+  }
+  return branch
 }
 
 function getExistingPr(branch: string, cwd: string): string | null {
@@ -371,7 +383,7 @@ export async function runPrStage(
 ): Promise<PrResult> {
   logger.info('\n📝 Creating PR (scripted)...\n')
 
-  let branch = getBranchName(cwd)
+  const branch = getBranchName(cwd)
   const defaultBranch = getDefaultBranch(cwd)
 
   // Step 1: Check for existing PR (unless --fresh is set)
@@ -387,23 +399,44 @@ export async function runPrStage(
     logger.info(`  --fresh flag: creating new PR (ignoring existing: ${existingUrl})`)
   }
 
-  // Step 1.5: Create fresh branch if --fresh is set
-  if (options?.fresh) {
-    branch = createFreshBranch(branch, cwd)
-  }
-
   // Step 2: Push branch (skip pre-push hooks to avoid blocking on unrelated checks)
-  logger.info(`  Pushing branch ${branch}...`)
+  logger.info('  Pushing branch ' + branch + '...')
+  let pushSuccess = false
   try {
     execFileSync('git', ['push', '-u', 'origin', branch], {
       cwd,
       stdio: 'inherit',
+      timeout: 120_000,
       env: { ...process.env, HUSKY: '0', SKIP_HOOKS: '1' },
     })
-  } catch {
-    logger.info('  Push failed (may already be up to date)')
+    pushSuccess = true
+  } catch (_error) {
+    // Push was rejected - remote has changes, try pull --rebase and retry
+    logger.info('  Push rejected, pulling and rebasing...')
+    try {
+      execFileSync('git', ['pull', '--rebase', 'origin', branch], {
+        cwd,
+        stdio: 'inherit',
+        timeout: 120_000,
+        env: { ...process.env, HUSKY: '0', SKIP_HOOKS: '1' },
+      })
+      // Retry push after rebase
+      execFileSync('git', ['push', '-u', 'origin', branch], {
+        cwd,
+        stdio: 'inherit',
+        timeout: 120_000,
+        env: { ...process.env, HUSKY: '0', SKIP_HOOKS: '1' },
+      })
+      pushSuccess = true
+      logger.info('  Push succeeded after rebase')
+    } catch (_rebaseError) {
+      logger.info('  Push failed even after rebase')
+    }
   }
 
+  if (!pushSuccess) {
+    logger.info('  Push failed - may already be up to date or branch exists')
+  }
   // Step 3: Build title and body
   const title = buildPrTitle(taskDir, defaultBranch, cwd, issueNumber)
   const body = buildPrBody(taskDir, defaultBranch, cwd, issueNumber)
@@ -413,6 +446,13 @@ export async function runPrStage(
   // Step 4: Create PR via GitHub REST API (more reliable than gh CLI in CI)
   // BUG-F fix: Use GH_PAT if non-empty, fall back to GH_TOKEN (don't use empty string)
   const ghToken = process.env.GH_PAT?.trim() || process.env.GH_TOKEN
+
+  if (!ghToken) {
+    logger.error('  ❌ No GitHub token found (GH_PAT or GH_TOKEN)')
+    const report = `# PR Stage\n\nFailed to create PR: No GitHub token found. Set GH_PAT or GH_TOKEN.\n`
+    fs.writeFileSync(outputFile, report)
+    return { created: false, url: '', report }
+  }
 
   // Extract owner and repo from git remote
   let owner = ''
@@ -449,7 +489,7 @@ export async function runPrStage(
         body,
         head: branch,
         base: defaultBranch,
-        draft: true,
+        draft: false,
       }),
     })
 
@@ -467,11 +507,6 @@ export async function runPrStage(
       const cleanUrl = prUrl.replace(/\n/g, '').trim()
       postComment(issueNumber, `🎉 PR created: ${cleanUrl}`)
       logger.info(`  ✅ Commented on issue #${issueNumber}`)
-    }
-
-    // Set lifecycle label to review
-    if (issueNumber) {
-      setLifecycleLabel(issueNumber, 'cody:review')
     }
 
     // Set lifecycle label to review

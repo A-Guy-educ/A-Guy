@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { adminOnly } from '../access/adminOnly'
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
@@ -7,9 +8,9 @@ export const ExerciseAssets: CollectionConfig = {
   slug: 'exercise-assets',
   access: {
     create: authenticated,
-    delete: authenticated,
+    delete: adminOnly,
     read: anyone, // Needs to be public for student rendering
-    update: authenticated,
+    update: adminOnly,
   },
   upload: {
     // Vercel Blob storage plugin handles actual file storage

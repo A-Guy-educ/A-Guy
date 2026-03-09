@@ -14,10 +14,10 @@ export const HtmlBlock: Block = {
       required: true,
       admin: {
         description:
-          'Enter HTML content. Links must be relative (/path or #anchor). Allowed attributes: class, id, data-* on all tags; href (required), title, class, id, data-* on <a> tags; plus safe SVG attributes (e.g., viewBox, fill, stroke, d). No style=, target=, or on*= attributes allowed. The <style> tag is allowed.',
+          'Enter HTML content. Links must be relative (/path or #anchor). Allowed attributes: class, id, data-* on all tags; href (required), title, class, id, data-* on <a> tags; colspan, rowspan, scope on table cells; plus safe SVG attributes (e.g., viewBox, fill, stroke, d). No style=, target=, or on*= attributes allowed. The <style> tag is allowed.',
         language: 'html',
         components: {
-          Field: '@/ui/admin/HtmlBlock/Field',
+          Field: '@/ui/admin/QuillField#QuillField',
         },
       },
       validate: (value: string | null | undefined): string | true => {
@@ -151,6 +151,17 @@ export const HtmlBlock: Block = {
           'ul',
           'ol',
           'li',
+          // Tables
+          'table',
+          'thead',
+          'tbody',
+          'tfoot',
+          'tr',
+          'th',
+          'td',
+          'caption',
+          'colgroup',
+          'col',
           // Links
           'a',
           // Code/quote
@@ -341,6 +352,14 @@ export const HtmlBlock: Block = {
             if (lowerAttr === 'href') return { allowed: true }
             if (lowerAttr === 'title') return { allowed: true }
             // class, id, data-* already handled as global
+          }
+
+          // Table-specific attributes
+          if (['th', 'td'].includes(tagName)) {
+            if (['colspan', 'rowspan', 'scope'].includes(lowerAttr)) return { allowed: true }
+          }
+          if (tagName === 'col' || tagName === 'colgroup') {
+            if (lowerAttr === 'span') return { allowed: true }
           }
 
           // If not allowed, return false

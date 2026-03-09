@@ -1,0 +1,35 @@
+{
+  "task_type": "refactor",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "Courses collection slug generation",
+    "Chapters collection slug generation",
+    "Lessons collection slug generation",
+    "Exercises collection slug generation",
+    "Shared formatSlug utility"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Exercises collection's formatSlug implementation is production-ready and works correctly with Hebrew locale",
+    "The shared utility will work for all 4 collections without breaking existing functionality",
+    "Existing slugs will continue to work after refactoring (backward compatible)"
+  ],
+  "review_questions": [
+    "Should Exercises collection also import from the shared utility, or keep its own implementation?",
+    "Are there any existing tests for the formatSlug function that need updating?",
+    "Should we migrate existing broken Hebrew slugs, or only fix new ones?"
+  ],
+  "complexity": 37,
+  "complexity_reasoning": "Scope: 12 (4 collection files + 1 new utility file). Risk: 8 (affects slug generation across collections, potential URL breakage). Novelty: 6 (extracting existing pattern to shared utility). Cross-Domain: 0 (single backend domain). Ambiguity: 3 (clear intent, some implementation details to determine). Dependency: 4 (depends on Exercises' existing implementation). Total: 33",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains clear ## Current Behavior and ## Expected Behavior sections, lists specific files to change, and identifies the solution approach. Missing step-by-step implementation plan but has sufficient detail for gap analysis. Promoted spec.md."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

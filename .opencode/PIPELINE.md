@@ -7,7 +7,7 @@ Automated development pipeline for A-Guy project using OpenCode CLI agents.
 ```
 Spec Phase:    taskify → [gate: hard-stop] → spec → [clarify: opt-in]
 Impl Phase:    architect → plan-gap → build(+TDD) → commit(scripted) →
-                verify(scripted) → auditor → apply-audit → pr(scripted)
+                 verify(scripted) → pr(scripted)
 ```
 
 **Clarify is opt-in** — use `--clarify` flag to enable Q&A loop (default: skip).
@@ -27,8 +27,6 @@ Impl Phase:    architect → plan-gap → build(+TDD) → commit(scripted) →
 | commit      | Commit and push changes            | task.json                    | commit.md      | scripted |
 | verify      | Run quality gates (tsc, lint, fmt) | code                         | verify.md      | scripted |
 | autofix     | Fix lint/type/format errors        | verify.md                    | autofix.md     | agent    |
-| auditor     | Process improvement analysis       | task.md, build.md, verify.md | auditor.md     | agent    |
-| apply-audit | Implement auditor suggestions      | auditor.md                   | apply-audit.md | agent    |
 | pr          | Create pull request via gh CLI     | task files                   | pr.md          | scripted |
 
 ### Stage Types
@@ -43,7 +41,7 @@ Not all stages need an expensive model. Lightweight stages use a faster/cheaper 
 | Model            | Used For                           | Cost    |
 | ---------------- | ---------------------------------- | ------- |
 | MiniMax-M2.5     | architect, build                   | Default |
-| Gemini 2.5 Flash | plan-gap, commit, auditor, autofix | Fast    |
+| Gemini 2.5 Flash | plan-gap, commit, autofix          | Fast    |
 
 Override with `OPENCODE_MODEL` env var to force a specific model for all stages.
 
@@ -133,16 +131,6 @@ When `verify` fails, the pipeline doesn't immediately abort. Instead:
 3. If still failing, retry once more (max 2 attempts)
 4. If all attempts exhausted, pipeline fails
 
-### Apply-Audit Stage
-
-After auditor writes `auditor.md`, the `apply-audit` agent:
-
-1. Reads the `## Chosen Improvement` section
-2. Edits the file specified in `Where:` field
-3. Changes are included in the same PR for human review
-
-This automates process improvements instead of creating orphan markdown files.
-
 ### Stage-Specific Context (No .context.md)
 
 Each agent receives only the files it needs via `STAGE_CONTEXT_FILES` in `stage-prompts.ts`.
@@ -173,12 +161,12 @@ Stage outputs are validated after completion:
 
 ## Task Types & Pipelines
 
-| Task Type | Pipeline                                                                           |
-| --------- | ---------------------------------------------------------------------------------- |
-| feat      | spec → architect → plan-gap → build → commit → verify → auditor → apply-audit → pr |
-| fix       | spec → architect → plan-gap → build → commit → verify → auditor → apply-audit → pr |
-| refactor  | spec → architect → plan-gap → build → commit → verify → auditor → apply-audit → pr |
-| docs      | build → commit → auditor → apply-audit → pr                                        |
+| Task Type | Pipeline                                                             |
+| --------- | -------------------------------------------------------------------- |
+| feat      | spec → architect → plan-gap → build → commit → verify → pr         |
+| fix       | spec → architect → plan-gap → build → commit → verify → pr         |
+| refactor  | spec → architect → plan-gap → build → commit → verify → pr         |
+| docs      | build → commit → verify → pr                                        |
 
 ## Task Structure
 
@@ -196,8 +184,6 @@ Stage outputs are validated after completion:
     ├── commit.md         # Commit report (commit — scripted)
     ├── verify.md         # Verification results (verify — scripted)
     ├── autofix.md        # Auto-fix report (autofix agent, if verify fails)
-    ├── auditor.md        # Process improvement (auditor agent)
-    ├── apply-audit.md   # Applied audit (apply-audit agent)
     ├── pr.md             # PR summary (pr — scripted)
     └── status.json       # Pipeline status tracking
 ```

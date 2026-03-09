@@ -144,6 +144,11 @@ export const beforeChangeEncryptAndValidate: CollectionBeforeChangeHook = async 
     // On create: always encrypt
     // On update: only encrypt if value is explicitly provided
     data.value = encryptSecret(data.value)
+  } else if (operation === 'update' && originalDoc?.value) {
+    // Preserve existing encrypted value when not provided on update
+    // (afterRead hook clears value to '' for write-only UX, so partial
+    // updates like toggling 'enabled' must not lose the encrypted value)
+    data.value = originalDoc.value
   }
 
   // =========================================================================

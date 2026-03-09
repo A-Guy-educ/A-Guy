@@ -19,25 +19,16 @@ import {
   Send,
   X,
 } from 'lucide-react'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { ChatErrorSurface } from '../ChatErrorSurface'
 import { ChatMessageContent } from '../ChatMessageContent'
 import { TTSButton } from '../TTSButton'
 import { useNotebookChat } from '../hooks/useNotebookChat'
 import { useTeacherProfileLabel } from '../hooks/useTeacherProfileLabel'
 import { useTTS } from '../hooks/useTTS'
-
-// Optional components - will be lazy-loaded if needed
-let FormulaPanel: React.ComponentType<{
-  isOpen: boolean
-  onClose: () => void
-  onInject: (template: string, cursorOffset: number) => void
-}> | null = null
-
-let MathPalette: React.ComponentType<{
-  isOpen: boolean
-  onInject: (template: string, cursorOffset: number) => void
-}> | null = null
+import { FormulaComposer } from '@/ui/web/shared/MathInput/FormulaComposer'
+import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
+import { FunctionSquare } from 'lucide-react'
 
 export type ViewMode = 'PDF' | 'Chat'
 
@@ -321,66 +312,50 @@ export function ChatInterface({
     }
   }, [currentExercise, injectExerciseContext, mediaMap])
 
-  // Math tools state
-  const [isMathPaletteOpen, setIsMathPaletteOpen] = useState(false)
-  const [isFormulaPanelOpen, setIsFormulaPanelOpen] = useState(false)
-  const [mathPreview, setMathPreview] = useState('')
+  const [formulaComposerOpen, setFormulaComposerOpen] = useState(false)
+  const [isChatInputFocused, setIsChatInputFocused] = useState(false)
 
-  // Lazy-load math tools components if needed
-  useEffect(() => {
-    if (showMathTools && !FormulaPanel) {
-      import('@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/FormulaPanel').then(
-        (mod) => {
-          FormulaPanel = mod.FormulaPanel
-        },
-      )
-      import('@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/MathPalette').then(
-        (mod) => {
-          MathPalette = mod.MathPalette
-        },
-      )
-    }
-  }, [showMathTools])
-
-  // Update LaTeX preview
-  useEffect(() => {
-    if (showMathTools && (inputValue.includes('\\') || inputValue.includes('^'))) {
-      setMathPreview(inputValue)
-    } else {
-      setMathPreview('')
-    }
-  }, [inputValue, showMathTools])
-
-  const injectFormula = (template: string, cursorOffset: number) => {
-    if (!inputRef.current) return
-
-    const start = inputRef.current.selectionStart ?? 0
-    const end = inputRef.current.selectionEnd ?? 0
-    const before = inputValue.substring(0, start)
-    const after = inputValue.substring(end)
-
-    const newValue = before + template + after
-    setInputValue(newValue)
-
-    // Move cursor after state update
-    requestAnimationFrame(() => {
-      const newCursorPos = start + cursorOffset
-      inputRef.current?.setSelectionRange(newCursorPos, newCursorPos)
-      inputRef.current?.focus()
-    })
-  }
+  const handleFormulaInsert = useCallback(
+    (latex: string) => {
+      const el = inputRef.current
+      const start = el?.selectionStart ?? inputValue.length
+      const end = el?.selectionEnd ?? inputValue.length
+      const before = inputValue.substring(0, start)
+      const after = inputValue.substring(end)
+      setInputValue(before + `$${latex}$` + after)
+      setFormulaComposerOpen(false)
+      setIsChatInputFocused(false)
+    },
+    [inputValue, setInputValue, inputRef],
+  )
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
   }
 
+  const switchChatToEditMode = useCallback(() => {
+    setIsChatInputFocused(true)
+    const el = inputRef.current
+    if (el) {
+      el.focus()
+      el.setSelectionRange(el.value.length, el.value.length)
+    }
+  }, [inputRef])
+
+  const handleChatInputBlur = useCallback((e: React.FocusEvent) => {
+    const related = e.relatedTarget as HTMLElement | null
+    if (related?.closest('[data-math-controls]')) return
+    setIsChatInputFocused(false)
+  }, [])
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
     if (showMathTools) {
-      setIsMathPaletteOpen(false)
-      setIsFormulaPanelOpen(false)
+      setFormulaComposerOpen(false)
     }
+
+    setIsChatInputFocused(false)
 
     if (onChatInteraction) {
       onChatInteraction()
@@ -388,6 +363,8 @@ export function ChatInterface({
 
     handleSubmit(e)
   }
+
+  const showChatViewOverlay = showMathTools && !isChatInputFocused && inputValue.includes('$')
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -550,69 +527,41 @@ export function ChatInterface({
       )}
 
       {/* Input Container */}
-      <div className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative">
-        {/* Math Preview Popup */}
-        {showMathTools && mathPreview && (
-          <div className="absolute bottom-full start-5 end-5 mb-2.5 bg-card border border-primary-soft rounded-xl p-2.5 text-center shadow-panel z-20">
-            <span className="text-sm font-mono">{mathPreview}</span>
+      <div
+        className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative"
+        data-math-controls
+      >
+        {/* Formula Composer Popup */}
+        {showMathTools && formulaComposerOpen && (
+          <div className="mb-2.5 max-w-[850px] mx-auto">
+            <FormulaComposer
+              onInsert={handleFormulaInsert}
+              onClose={() => setFormulaComposerOpen(false)}
+            />
           </div>
         )}
 
-        {/* Formula Panel (Popup) */}
-        {showMathTools && FormulaPanel && (
-          <FormulaPanel
-            isOpen={isFormulaPanelOpen}
-            onClose={() => setIsFormulaPanelOpen(false)}
-            onInject={injectFormula}
-          />
-        )}
-
-        {/* Math Palette (Slide-out) */}
-        {showMathTools && MathPalette && (
-          <MathPalette isOpen={isMathPaletteOpen} onInject={injectFormula} />
-        )}
-
-        {/* Toolbar Above Input */}
-        {(showMathTools || (isMobile && viewMode && onModeToggle)) && (
-          <div className="flex gap-4 mb-2.5 px-1.5 justify-between items-center">
-            {showMathTools && (
-              <button
-                type="button"
-                className={cn(
-                  'p-1 text-muted-foreground hover:text-primary transition-colors',
-                  isFormulaPanelOpen && 'text-primary',
-                )}
-                onClick={() => {
-                  setIsFormulaPanelOpen(!isFormulaPanelOpen)
-                  setIsMathPaletteOpen(false)
-                }}
-                aria-label={tCourses('formulaSheet')}
-              >
-                <BookOpen className="w-5 h-5" />
-              </button>
-            )}
-
-            {/* Mobile Toggle */}
-            {isMobile && viewMode && onModeToggle && (
-              <button
-                type="button"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors bg-muted hover:bg-muted/80"
-                onClick={onModeToggle}
-                aria-label={viewMode === 'PDF' ? tCourses('switchToChat') : tCourses('switchToPdf')}
-              >
-                {viewMode === 'PDF' ? (
-                  <>
-                    <MessageSquare className="w-4 h-4" />
-                    <span className="hidden sm:inline">{tCourses('chat')}</span>
-                  </>
-                ) : (
-                  <>
-                    <FileText className="w-4 h-4" />
-                    <span className="hidden sm:inline">{tCourses('content')}</span>
-                  </>
-                )}
-              </button>
-            )}
+        {/* Mobile Toggle */}
+        {isMobile && viewMode && onModeToggle && (
+          <div className="flex mb-2.5 px-1.5 justify-end max-w-[850px] mx-auto">
+            <button
+              type="button"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors bg-muted hover:bg-muted/80"
+              onClick={onModeToggle}
+              aria-label={viewMode === 'PDF' ? tCourses('switchToChat') : tCourses('switchToPdf')}
+            >
+              {viewMode === 'PDF' ? (
+                <>
+                  <MessageSquare className="w-4 h-4" />
+                  <span className="hidden sm:inline">{tCourses('chat')}</span>
+                </>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4" />
+                  <span className="hidden sm:inline">{tCourses('content')}</span>
+                </>
+              )}
+            </button>
           </div>
         )}
 
@@ -689,7 +638,8 @@ export function ChatInterface({
 
         {/* Input Wrapper */}
         <form onSubmit={handleFormSubmit}>
-          <div className="max-w-[850px] mx-auto bg-muted rounded-[30px] flex items-center px-4 py-1.5 border border-input gap-3">
+          <div className="max-w-[850px] mx-auto bg-muted rounded-[30px] flex items-center px-4 py-1.5 border border-input gap-3 relative">
+            {/* Input — always mounted */}
             <input
               ref={inputRef}
               type="text"
@@ -697,6 +647,8 @@ export function ChatInterface({
               placeholder={t('chatInputPlaceholder')}
               value={inputValue}
               onChange={handleInputChange}
+              onFocus={() => setIsChatInputFocused(true)}
+              onBlur={handleChatInputBlur}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
@@ -706,21 +658,28 @@ export function ChatInterface({
               disabled={isLoading}
             />
 
-            {/* Math Keyboard Toggle */}
+            {/* View overlay: rendered math on top of input when blurred */}
+            {showChatViewOverlay && (
+              <div
+                onClick={switchChatToEditMode}
+                className="absolute inset-y-0 start-4 end-[120px] flex items-center bg-muted cursor-text overflow-hidden"
+              >
+                <MathMarkdown
+                  content={inputValue}
+                  className="text-[17px] leading-relaxed truncate"
+                />
+              </div>
+            )}
+
+            {/* Formula button — inside the pill */}
             {showMathTools && (
               <button
                 type="button"
-                className={cn(
-                  'p-1.5 text-muted-foreground hover:text-primary transition-colors',
-                  isMathPaletteOpen && 'text-primary',
-                )}
-                onClick={() => {
-                  setIsMathPaletteOpen(!isMathPaletteOpen)
-                  setIsFormulaPanelOpen(false)
-                }}
-                aria-label={tCourses('mathKeyboard')}
+                onClick={() => setFormulaComposerOpen(!formulaComposerOpen)}
+                className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
+                title={tCourses('insertFormula')}
               >
-                <span className="text-lg font-bold">ƒ</span>
+                <FunctionSquare className="w-5 h-5" />
               </button>
             )}
 

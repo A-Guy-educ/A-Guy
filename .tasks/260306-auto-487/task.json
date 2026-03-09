@@ -1,0 +1,27 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 1,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/payload/collections/ExerciseAssets.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The adminOnly access function exists in the codebase",
+    "The conversion pipeline that creates assets uses overrideAccess: true internally so it will continue to work"
+  ],
+  "review_questions": [
+    "Should we use adminOnly or implement isAdminOrOwner pattern similar to Exercises collection?",
+    "Are there any external integrations or tests that depend on authenticated users being able to delete/update ExerciseAssets?"
+  ],
+  "complexity": 28,
+  "complexity_reasoning": "Scope: 5 (single file), Risk: 12 (security access control), Novelty: 5 (follows existing ChatAssets pattern), Cross-domain: 3 (single backend domain), Ambiguity: 1 (clear file and exact fix), Deps: 2 (self-contained). Total: 28",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input has clear ## Description, ## Current Behavior, ## Expected Behavior sections with file paths and exact changes. Promoted spec.md with extracted requirements and acceptance criteria."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

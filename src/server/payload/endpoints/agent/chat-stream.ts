@@ -107,7 +107,10 @@ export async function agentChatStream(
       guestCookieHeader = await buildGuestSessionCookieHeader(token)
     } else {
       isGuestMode = true
+    }
 
+    // Check guest message limit for ALL guests (new and existing) - FR-006
+    if (guestSession) {
       const messageLimit = await checkAndIncrementGuestMessageCount(req.payload, guestSession.id)
       if (!messageLimit.allowed) {
         return Response.json(
