@@ -26,7 +26,7 @@ import { readTask } from './pipeline-utils'
 import type { PipelineContext } from './engine/types'
 import { runPipeline } from './engine/state-machine'
 import { resolvePipelineForMode, createRebuildCallback } from './engine/pipeline-resolver'
-import { flattenPipelineOrder, IMPL_ORDER_STANDARD } from './pipeline/definitions'
+import { flattenPipelineOrder, IMPL_ORDER_STANDARD, FIX_ORDER } from './pipeline/definitions'
 import { stateToV1 } from './engine/status'
 import { PipelinePausedError } from './engine/types'
 import { resolveRerunFromStage, resolveFromStageAfterGateApproval } from './rerun-utils'
@@ -252,6 +252,9 @@ Examples:
         break
       case 'rerun':
         await runRerunMode(ctx)
+        break
+      case 'fix':
+        await runFixMode(ctx)
         break
       case 'status':
         await runStatusMode(ctx)
@@ -615,6 +618,90 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   await runPipeline(ctx, pipeline)
 
   logger.info('\n✅ Rerun complete!')
+}
+
+/**
+ * Fix mode - applies targeted fixes without regenerating entire codebase
+ */
+async function runFixMode(ctx: PipelineContext): Promise<void> {
+  const { input, taskDir } = ctx
+  logger.info('Running Cody FIX pipeline (targeted fix)...\n')
+
+  // Ensure feedback exists
+  if (!input.feedback) {
+    input.feedback = 'Fix requested via @cody fix command'
+  }
+
+  // Write feedback to file
+  const feedbackPath = path.join(taskDir, 'rerun-feedback.md')
+  fs.writeFileSync(
+    feedbackPath,
+    `# Fix Feedback - ${new Date().toISOString()}\n\n${input.feedback}\n`,
+  )
+
+  // Read task definition for profile resolution
+  let taskDef = null
+  try {
+    taskDef = readTask(taskDir)
+  } catch {
+    logger.warn('Could not read task.json for profile resolution, using default')
+  }
+  ctx.taskDef = taskDef
+  if (taskDef) {
+    const { resolvePipelineProfile } = await import('./pipeline-utils')
+    ctx.profile = resolvePipelineProfile(taskDef)
+  }
+
+  // Load existing state or create new one
+  const {
+    loadState: loadSt2,
+    writeState: writeSt2,
+    updateStage: updStage,
+    initState: initSt,
+  } = await import('./engine/status')
+
+  let state = loadSt2(input.taskId)
+
+  // If no existing state, create fresh state with FIX_ORDER stages
+  if (!state) {
+    state = initSt(ctx, 'fix')
+    for (const stageName of FIX_ORDER) {
+      if (typeof stageName === 'string') {
+        state = updStage(state, stageName, { state: 'pending', retries: 0 })
+      }
+    }
+    writeSt2(input.taskId, state)
+  }
+
+  // Set fix stage to pending and initialize fix attempt if not set
+  const existingFixAttempt = state.stages['fix']?.fixAttempt ?? 0
+  state = updStage(state, 'fix', {
+    state: 'pending',
+    fixAttempt: existingFixAttempt,
+    maxFixAttempts: 2,
+  })
+
+  // Also ensure commit-fix and verify are pending
+  state = updStage(state, 'commit-fix', { state: 'pending' })
+  state = updStage(state, 'verify', { state: 'pending' })
+  state = updStage(state, 'review', { state: 'pending' })
+
+  // Set initial cursor
+  state = { ...state, cursor: 'review', state: 'running' }
+  writeSt2(input.taskId, state)
+
+  // Build pipeline for fix mode - resolvePipelineForMode maps 'fix' to FIX_ORDER
+  const pipeline = resolvePipelineForMode('fix', ctx.profile, false, ctx)
+
+  // Run pipeline - it will find the first pending stage (review) and continue
+  const finalState = await runPipeline(ctx, pipeline)
+
+  // Handle paused state (gate approval required)
+  if (finalState.state === 'paused') {
+    throw new PipelinePausedError(`Pipeline paused — awaiting gate approval for ${ctx.taskId}`)
+  }
+
+  logger.info('\n✅ Fix complete!')
 }
 
 /**

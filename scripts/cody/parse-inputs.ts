@@ -30,7 +30,7 @@ interface ParseOutputs {
 export const TASK_ID_REGEX = /^[0-9]{6}-[a-zA-Z0-9-]+$/
 
 // Valid pipeline modes
-export const VALID_MODES = ['spec', 'impl', 'rerun', 'full', 'status']
+export const VALID_MODES = ['spec', 'impl', 'rerun', 'fix', 'full', 'status']
 
 // Approval keywords (exact match only)
 export const APPROVAL_KEYWORDS = ['approve', 'approved', 'yes', 'go', 'proceed', 'y', 'continue']

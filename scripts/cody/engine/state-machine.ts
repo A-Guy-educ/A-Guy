@@ -29,6 +29,8 @@ import { getHandler } from '../handlers/handler'
 import { setLifecycleLabel } from '../github-api'
 import { executePostAction } from '../pipeline/post-actions'
 import { flattenPipelineOrder } from '../pipeline/definitions'
+import * as fs from 'fs'
+import * as path from 'path'
 
 /**
  * Error subclass that carries the originating stage name for parallel error attribution
@@ -551,6 +553,68 @@ async function handleStageResult(
       }
     }
   } else if (result.outcome === 'failed') {
+    // VERIFY LOOP: Check if verify failed and we should retry with fix
+    if (stageName === 'verify' && !def.advisory) {
+      const maxAttempts = state.stages['fix']?.maxFixAttempts ?? 2
+      const currentAttempt = state.stages['fix']?.fixAttempt ?? 0
+
+      if (currentAttempt < maxAttempts) {
+        // Capture verify failures for fix stage
+        const verifyFailuresPath = path.join(ctx.taskDir, 'verify-failures.md')
+        const errorOutput = result.reason || 'Verify failed - check logs'
+
+        // Try to capture more detailed output from verify scripts
+        let detailedOutput = errorOutput
+        try {
+          const tscPath = path.join(ctx.taskDir, 'tsc-output.txt')
+          const lintPath = path.join(ctx.taskDir, 'lint-output.txt')
+          const parts = [`# Verify Failures\n\n${errorOutput}`]
+          if (fs.existsSync(tscPath)) {
+            const tscOutput = fs.readFileSync(tscPath, 'utf-8').slice(0, 5000)
+            parts.push(`## TypeScript Errors\n\`\`\`\n${tscOutput}\n\`\`\``)
+          }
+          if (fs.existsSync(lintPath)) {
+            const lintOutput = fs.readFileSync(lintPath, 'utf-8').slice(0, 5000)
+            parts.push(`## Lint Errors\n\`\`\`\n${lintOutput}\n\`\`\``)
+          }
+          detailedOutput = parts.join('\n\n')
+        } catch {
+          // Files don't exist, use basic error
+        }
+
+        try {
+          fs.writeFileSync(verifyFailuresPath, detailedOutput)
+          if (!fs.existsSync(verifyFailuresPath)) {
+            logger.warn('verify-failures.md was not created after write — fix stage may skip')
+          }
+        } catch (writeErr) {
+          logger.warn(`Failed to write verify-failures.md: ${writeErr}`)
+        }
+
+        // Increment fix attempt and reset fix, commit-fix, verify to pending
+        const newFixAttempt = currentAttempt + 1
+        state = updateStage(state, 'fix', {
+          state: 'pending',
+          fixAttempt: newFixAttempt,
+          maxFixAttempts: maxAttempts,
+        })
+        state = updateStage(state, 'commit-fix', { state: 'pending' })
+        state = updateStage(state, 'verify', { state: 'pending' })
+        writeState(ctx.taskId, state)
+
+        logger.info(`🔄 Verify failed, looping to fix (attempt ${newFixAttempt}/${maxAttempts})`)
+
+        // Return state WITHOUT calling completeState('failed')
+        // The main while(true) loop will continue and resolveNextStep
+        // will find 'fix' as next pending stage
+        return state
+      } else {
+        logger.error(`Max fix attempts (${maxAttempts}) reached, pipeline failing`)
+        // Fall through to normal failure handling
+      }
+    }
+
+    // Normal failure handling
     state = updateStage(state, stageName, {
       state: 'failed',
       error: result.reason,
