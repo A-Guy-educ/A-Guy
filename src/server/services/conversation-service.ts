@@ -29,6 +29,13 @@ export class GuestConversationLimitError extends Error {
   }
 }
 
+export class GuestSessionClaimingError extends Error {
+  constructor() {
+    super('Guest session is currently being claimed. Please try again.')
+    this.name = 'GuestSessionClaimingError'
+  }
+}
+
 /**
  * Context reference shape for polymorphic relationships
  */
@@ -421,6 +428,16 @@ export class ConversationService {
     contextRef: ContextRef,
     req?: PayloadRequest,
   ): Promise<ConversationWithHistory> {
+    // Verify guest session status before creating conversation
+    const sessionDoc = await this.payload.findByID({
+      collection: 'guest-sessions',
+      id: guestSessionId,
+      depth: 0,
+    })
+    if (!sessionDoc || sessionDoc.status !== 'active') {
+      throw new GuestSessionClaimingError()
+    }
+
     const contextKey = `${contextRef.relationTo}:${contextRef.value}`
 
     const existingConv = await this.payload.find({

@@ -241,6 +241,7 @@ export interface GuestMessageLimitResult {
   remaining: number
   current: number
   max: number
+  blocked?: boolean
 }
 
 export async function checkAndIncrementGuestMessageCount(
@@ -256,6 +257,17 @@ export async function checkAndIncrementGuestMessageCount(
 
   if (!session) {
     return { allowed: false, remaining: 0, current: 0, max: guestConfig.max_messages }
+  }
+
+  // Block message creation if session is in claiming state
+  if (session.status === 'claiming') {
+    return {
+      allowed: false,
+      remaining: 0,
+      current: session.messageCount ?? 0,
+      max: guestConfig.max_messages,
+      blocked: true,
+    }
   }
 
   const currentCount = session.messageCount ?? 0
@@ -293,4 +305,173 @@ export function hashIP(ip: string | null): string {
 export function hashUserAgent(ua: string | null): string {
   if (!ua) return ''
   return crypto.createHash('sha256').update(ua).digest('hex').slice(0, 16)
+}
+
+/**
+ * Result of acquiring a claim lock
+ */
+export interface ClaimLockResult {
+  locked: boolean
+  session?: GuestSessionDoc
+  resumed?: boolean
+  alreadyCompleted?: boolean
+  inProgress?: boolean
+}
+
+/**
+ * Get guest session by token for claim - finds active OR claiming sessions
+ * Used internally for claim operations to support resumability
+ */
+export async function getGuestSessionByTokenForClaim(
+  payload: Payload,
+  token: string,
+): Promise<GuestSessionDoc | null> {
+  const tokenHash = hashToken(token)
+
+  const sessions = await payload.find({
+    collection: 'guest-sessions',
+    where: {
+      and: [{ tokenHash: { equals: tokenHash } }, { status: { in: ['active', 'claiming'] } }],
+    },
+    limit: 1,
+  })
+
+  if (sessions.docs.length === 0) return null
+
+  const session = sessions.docs[0]
+
+  if (new Date(session.expiresAt) < new Date()) {
+    return null
+  }
+
+  return session
+}
+
+/**
+ * Get guest session by token regardless of status (for auth middleware)
+ * Used to check if a session exists but is in claiming state
+ */
+export async function getGuestSessionByTokenAnyStatus(
+  payload: Payload,
+  token: string,
+): Promise<GuestSessionDoc | null> {
+  const tokenHash = hashToken(token)
+
+  const sessions = await payload.find({
+    collection: 'guest-sessions',
+    where: {
+      tokenHash: { equals: tokenHash },
+    },
+    limit: 1,
+  })
+
+  if (sessions.docs.length === 0) return null
+
+  const session = sessions.docs[0]
+
+  if (new Date(session.expiresAt) < new Date()) {
+    return null
+  }
+
+  return session
+}
+
+/**
+ * Acquire claim lock atomically via compare-and-set
+ * Transitions session from 'active' to 'claiming'
+ */
+export async function acquireClaimLock(
+  payload: Payload,
+  sessionId: string,
+  claimingUserId: string,
+): Promise<ClaimLockResult> {
+  // First try to atomically transition from active to claiming
+  try {
+    const updated = await payload.update({
+      collection: 'guest-sessions',
+      where: {
+        and: [{ id: { equals: sessionId } }, { status: { equals: 'active' } }],
+      },
+      data: {
+        status: 'claiming',
+        claimedByUser: claimingUserId,
+      },
+    })
+
+    if (updated.docs.length > 0) {
+      // Lock acquired successfully
+      return {
+        locked: true,
+        session: updated.docs[0] as unknown as GuestSessionDoc,
+      }
+    }
+  } catch {
+    // Update failed, session might not exist or status changed
+  }
+
+  // Lock not acquired - check current state to determine reason
+  const session = await payload.findByID({
+    collection: 'guest-sessions',
+    id: sessionId,
+    depth: 0,
+  })
+
+  if (!session) {
+    // Session doesn't exist
+    return { locked: false, alreadyCompleted: true }
+  }
+
+  if (session.status === 'revoked') {
+    // Already completed (claimed by user)
+    return { locked: false, alreadyCompleted: true }
+  }
+
+  if (session.status === 'claiming') {
+    // Someone else is already claiming
+    if (session.claimedByUser === claimingUserId) {
+      // Same user can resume
+      return {
+        locked: true,
+        session: session as unknown as GuestSessionDoc,
+        resumed: true,
+      }
+    }
+    // Different user claiming - cannot proceed
+    return { locked: false, inProgress: true }
+  }
+
+  // Session is active but update failed (concurrent modification)
+  return { locked: false, inProgress: true }
+}
+
+/**
+ * Complete claim lock - transitions from 'claiming' to 'revoked'
+ * Only called after successful transfer of all conversations
+ */
+export async function completeClaimLock(
+  payload: Payload,
+  sessionId: string,
+  userId: string,
+): Promise<GuestSessionDoc | null> {
+  try {
+    const updated = await payload.update({
+      collection: 'guest-sessions',
+      where: {
+        and: [{ id: { equals: sessionId } }, { status: { equals: 'claiming' } }],
+      },
+      data: {
+        status: 'revoked',
+        claimedByUser: userId,
+        claimedAt: new Date().toISOString(),
+      },
+    })
+
+    if (updated.docs.length > 0) {
+      return updated.docs[0] as unknown as GuestSessionDoc
+    }
+  } catch {
+    // Failed to complete lock - session might not exist
+  }
+
+  return null
 }

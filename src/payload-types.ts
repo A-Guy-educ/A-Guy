@@ -1156,9 +1156,9 @@ export interface GuestSession {
    */
   userAgentHash?: string | null;
   /**
-   * Session status: active = usable, expired = past TTL, revoked = claimed by user
+   * Session status: active = usable, claiming = upgrade in progress, revoked = claimed by user
    */
-  status: 'active' | 'expired' | 'revoked';
+  status: 'active' | 'claiming' | 'revoked';
   /**
    * User who claimed this session on upgrade
    */

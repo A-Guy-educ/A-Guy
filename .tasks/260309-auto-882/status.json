@@ -4,18 +4,51 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-09T20:08:06.813Z",
-  "updatedAt": "2026-03-09T20:09:41.623Z",
-  "state": "paused",
-  "cursor": null,
+  "updatedAt": "2026-03-09T21:06:17.257Z",
+  "state": "running",
+  "cursor": "spec",
   "stages": {
     "taskify": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
       "startedAt": "2026-03-09T20:08:08.424Z",
-      "completedAt": "2026-03-09T20:09:35.797Z",
+      "completedAt": "2026-03-09T20:48:38.759Z",
       "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-09T20:48:38.828Z",
+      "completedAt": "2026-03-09T20:54:11.074Z",
+      "outputFile": "spec.md"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-09T20:54:11.094Z",
+      "completedAt": "2026-03-09T21:00:16.986Z",
+      "outputFile": "gap.md"
+    },
+    "gsd-research": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-09T21:00:17.007Z",
+      "completedAt": "2026-03-09T21:02:40.277Z",
+      "outputFile": "gsd-research.md"
+    },
+    "gsd-plan": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-09T21:02:40.297Z",
+      "completedAt": "2026-03-09T21:06:14.377Z",
+      "outputFile": "gsd-plan.md"
+    },
+    "gsd-execute": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-09T21:06:17.168Z"
     }
   },
   "issueNumber": 773,
-  "completedAt": "2026-03-09T20:09:41.623Z"
+  "branchName": "fix/260309-auto-773-bug-non-atomic-guest-session-claim"
 }

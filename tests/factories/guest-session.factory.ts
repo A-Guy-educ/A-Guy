@@ -10,7 +10,7 @@ import type { Payload } from 'payload'
 import crypto from 'crypto'
 
 export interface GuestSessionFactoryInput {
-  status?: 'active' | 'expired' | 'revoked'
+  status?: 'active' | 'claiming' | 'revoked'
   expiresAt?: Date
   hardExpiresAt?: Date
   claimedByUser?: string
