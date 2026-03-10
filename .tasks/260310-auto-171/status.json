@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-10T11:07:21.339Z",
-  "updatedAt": "2026-03-10T11:37:33.588Z",
+  "updatedAt": "2026-03-10T12:21:42.160Z",
   "state": "running",
   "cursor": "spec",
   "stages": {
@@ -44,11 +44,17 @@
       "outputFile": "gsd-plan.md"
     },
     "gsd-execute": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-10T11:37:33.505Z",
+      "completedAt": "2026-03-10T12:21:10.470Z",
+      "outputFile": "gsd-execute.md"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-10T11:37:33.505Z"
+      "startedAt": "2026-03-10T12:21:42.160Z"
     }
   },
-  "issueNumber": 785,
-  "branchName": "feat/260310-auto-785-course-studying-page-redesign"
+  "issueNumber": 785
 }
