@@ -281,6 +281,24 @@ Examples:
     const errorMsg = error instanceof Error ? error.message : String(error)
     logger.error({ err: error }, `\n❌ Cody failed: ${errorMsg}`)
 
+    // Commit task files on failure — includes debug artifacts (*-events.jsonl, *-stderr.log)
+    // for post-mortem diagnosis. On success these are excluded to keep PRs clean.
+    try {
+      commitPipelineFiles({
+        taskDir,
+        taskId: input.taskId,
+        message: `ci(cody): save failed pipeline state for ${input.taskId}`,
+        ensureBranch: true,
+        stagingStrategy: 'task-only',
+        push: !input.local,
+        isCI: !input.local,
+        dryRun: input.dryRun,
+        pipelineFailed: true,
+      })
+    } catch (commitErr) {
+      logger.warn({ err: commitErr }, 'Failed to commit task files on pipeline failure')
+    }
+
     // Skip GitHub API calls in local mode
     if (input.issueNumber && !input.local) {
       // Set lifecycle label to failed for dashboard visibility

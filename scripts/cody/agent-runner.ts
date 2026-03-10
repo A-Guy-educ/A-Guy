@@ -47,7 +47,7 @@ export const STAGE_TIMEOUTS: Record<string, number> = {
   'gsd-plan': ms('30m'),
   'gsd-execute': ms('45m'),
   review: ms('15m'),
-  fix: ms('10m'),
+  fix: ms('20m'),
   'commit-fix': ms('2m'),
   verify: ms('10m'),
   pr: ms('5m'),
