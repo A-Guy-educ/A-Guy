@@ -56,13 +56,17 @@ export default async function LessonPage({ params }: LessonPageProps) {
   }
 
   const effectiveAccessType = resolveAccessType(lesson.accessType, course.accessType)
-  const [gatedDelayMs, gatedWarningMs] = await Promise.all([
+
+  // Run independent queries in parallel to avoid sequential waterfall
+  const [gatedDelayMs, gatedWarningMs, isAuthenticated, exercises] = await Promise.all([
     SystemParams.getGatedDelayMs(),
     SystemParams.getGatedWarningMs(),
+    effectiveAccessType === 'mandatory' ? isAuthenticatedServer() : Promise.resolve(true),
+    queryExercisesByLesson({ lessonId: lesson.id }),
   ])
 
   // Server-side block: for mandatory mode, don't render content for unauthenticated users
-  if (effectiveAccessType === 'mandatory' && !(await isAuthenticatedServer())) {
+  if (effectiveAccessType === 'mandatory' && !isAuthenticated) {
     return (
       <AccessGateProvider
         accessType={effectiveAccessType}
@@ -74,8 +78,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
       </AccessGateProvider>
     )
   }
-
-  const exercises = await queryExercisesByLesson({ lessonId: lesson.id })
 
   // Use lesson-scoped chat context to keep history stable across refreshes
   const chatLessonId = lesson.id
