@@ -27,8 +27,8 @@ export class GateHandler implements StageHandler {
     // Resolve controlMode dynamically (G42)
     const controlMode = resolveControlMode(ctx.taskDef, ctx.input.controlMode)
 
-    // Determine gate name from stage name (architect or taskify)
-    const gate = def.name === 'architect' ? 'architect' : 'taskify'
+    // Determine gate name from stage name (gsd-plan uses architect gate, taskify uses taskify gate)
+    const gate = def.name === 'gsd-plan' ? 'architect' : 'taskify'
 
     // Call gate approval handler
     const gateResult = handleGateApproval(ctx.input, ctx.taskDir, gate, ctx.taskDef)

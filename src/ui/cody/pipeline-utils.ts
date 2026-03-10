@@ -15,10 +15,19 @@ export const stageLabels: Record<string, string> = {
   taskify: 'Analyzing',
   spec: 'Writing Spec',
   clarify: 'Clarifying',
+  // GSD stages
+  'gsd-research': 'Researching',
+  'gsd-plan': 'Planning',
+  'gsd-execute': 'Executing',
+  // Legacy stage names (for historical pipeline data)
   architect: 'Architecting',
   'plan-review': 'Reviewing Plan',
   build: 'Building',
+  // Shared stages
   commit: 'Committing',
+  review: 'Reviewing',
+  fix: 'Fixing',
+  'commit-fix': 'Committing Fix',
   verify: 'Verifying',
   pr: 'Creating PR',
   autofix: 'Auto-fixing',
@@ -31,10 +40,19 @@ export const stageMaxDurations: Record<string, number> = {
   taskify: 10 * 60 * 1000,
   spec: 15 * 60 * 1000,
   clarify: 10 * 60 * 1000,
+  // GSD stages
+  'gsd-research': 20 * 60 * 1000,
+  'gsd-plan': 30 * 60 * 1000,
+  'gsd-execute': 45 * 60 * 1000,
+  // Legacy stage names (for historical pipeline data)
   architect: 30 * 60 * 1000,
   'plan-review': 10 * 60 * 1000,
   build: 45 * 60 * 1000,
+  // Shared stages
   commit: 5 * 60 * 1000,
+  review: 15 * 60 * 1000,
+  fix: 10 * 60 * 1000,
+  'commit-fix': 2 * 60 * 1000,
   verify: 15 * 60 * 1000,
   pr: 5 * 60 * 1000,
   autofix: 15 * 60 * 1000,

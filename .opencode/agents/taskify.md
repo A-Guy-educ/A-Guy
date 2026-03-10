@@ -37,7 +37,7 @@ You MUST output **valid JSON only** to the output file. No markdown wrappers, no
   "complexity_reasoning": "Scope: X. Risk: X. Novelty: X. Cross-domain: X. Ambiguity: X. Dependencies: X. Total: N",
   "input_quality": {
     "level": "raw_idea | good_spec | detailed_plan | spec_and_plan",
-    "skip_stages": ["spec"] | ["spec", "architect"] | [],
+    "skip_stages": ["spec"] | ["spec", "gsd-plan"] | [],
     "reasoning": "Brief explanation of why this quality level was assigned"
   },
   "pipeline_profile": "lightweight | standard"
@@ -117,8 +117,8 @@ Analyze the task description to determine its quality level. When the input is a
 | --------------- | -------------------------------------------- | ------------------- | ---------------------------------------- |
 | `raw_idea`      | Vague task, no structured sections           | None                | Default for most tasks                   |
 | `good_spec`     | Has ## Requirements + ## Acceptance Criteria | `spec`              | Task already has structured requirements |
-| `detailed_plan` | Has step-by-step plan with file paths        | `spec`, `architect` | Task includes implementation steps       |
-| `spec_and_plan` | Has both spec AND plan sections              | `spec`, `architect` | Task is fully detailed                   |
+| `detailed_plan` | Has step-by-step plan with file paths        | `spec`, `gsd-plan`  | Task includes implementation steps       |
+| `spec_and_plan` | Has both spec AND plan sections              | `spec`, `gsd-plan`  | Task is fully detailed                   |
 
 ### Detection Criteria
 
@@ -204,7 +204,7 @@ Example:
 
 ## Pipeline Profile (Lightweight vs Standard)
 
-Determine whether the task should use the lightweight or standard pipeline. The lightweight profile skips: `spec`, `gap`, `plan-gap` — saving 5-6 LLM calls for simple fixes.
+Determine whether the task should use the lightweight or standard pipeline. The lightweight profile skips: `spec`, `gap` — saving 5-6 LLM calls for simple fixes.
 
 ### Decision Criteria
 
@@ -227,7 +227,7 @@ For lightweight tasks, you MUST also promote the task.md content to spec.md:
 
 - Write `.tasks/<task-id>/spec.md` with the task description as a spec
 - This allows the pipeline to skip the spec stage entirely
-- The pipeline will run: taskify → architect → build → commit → verify → pr
+- The pipeline will run: taskify → gsd-plan → gsd-execute → commit → verify → pr
 
 Example lightweight task.json:
 
@@ -250,11 +250,11 @@ Example lightweight task.json:
 
 | Score | Tier | Stages That Run |
 |-------|------|-----------------|
-| 1-9 | Trivial | taskify → build → commit → verify → pr |
-| 10-19 | Simple | + architect |
-| 20-34 | Moderate | + architect, build |
-| 35-49 | Complex | + spec, gap |
-| 50-100 | Very Complex | + plan-gap, clarify |
+| 1-9 | Trivial | taskify → gsd-execute → commit → verify → pr |
+| 10-19 | Simple | + gsd-plan |
+| 20-34 | Moderate | + spec |
+| 35-49 | Complex | + gap, gsd-research |
+| 50-100 | Very Complex | + clarify |
 
 ### Scoring Dimensions (6 weighted factors)
 

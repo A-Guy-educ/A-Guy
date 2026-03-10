@@ -174,6 +174,8 @@
         "src/ui/admin/QuillField/index.tsx",
         "src/ui/admin/VersionInfo/index.tsx",
         "src/ui/admin/exercise-conversion/ConversionStatusPanel/index.tsx",
+        "src/ui/admin/exercise-conversion/ConvertContextButton/index.tsx",
+        "src/ui/admin/exercise-conversion/ConvertContextModal/index.tsx",
         "src/ui/admin/exercise-conversion/ConvertForm/index.tsx",
         "src/ui/admin/exercise-conversion/ConvertV2Button/index.tsx",
         "src/ui/admin/exercise-conversion/ConvertV3Button/index.tsx",
@@ -2130,7 +2132,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": []
+      "dependencies": ["lucide-react"]
     },
     "src/app/(frontend)/next/preview/route.ts": {
       "path": "src/app/(frontend)/next/preview/route.ts",
@@ -2614,7 +2616,7 @@
       "domain": "general",
       "patterns": ["api-endpoint", "authenticated-endpoint"],
       "aiSummary": "",
-      "dependencies": ["payload", "@payload-config", "next/server"]
+      "dependencies": ["@payload-config", "next/server", "payload"]
     },
     "src/app/api/study-plan/route.ts": {
       "path": "src/app/api/study-plan/route.ts",
@@ -4320,6 +4322,22 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/ui/admin/exercise-conversion/ConvertContextButton/index.tsx": {
+      "path": "src/ui/admin/exercise-conversion/ConvertContextButton/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/ui/admin/exercise-conversion/ConvertContextModal/index.tsx": {
+      "path": "src/ui/admin/exercise-conversion/ConvertContextModal/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "react"]
+    },
     "src/ui/admin/exercise-conversion/ConvertForm/index.tsx": {
       "path": "src/ui/admin/exercise-conversion/ConvertForm/index.tsx",
       "type": "unknown",
@@ -5695,8 +5713,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-08T16:51:29.908Z",
-    "totalFiles": 505,
+    "generatedAt": "2026-03-09T21:13:24.361Z",
+    "totalFiles": 507,
     "totalPatterns": 169
   }
 }

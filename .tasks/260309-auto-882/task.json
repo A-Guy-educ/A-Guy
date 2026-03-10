@@ -1,0 +1,34 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "high",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/services/guest-session-upgrade.ts",
+    "src/server/services/guest-session.ts",
+    "src/server/services/conversation-service.ts",
+    "src/app/(frontend)/login/login_authenticate-action.ts",
+    "src/app/(frontend)/signup/actions/signup_createUser-action.ts",
+    "src/server/payload/endpoints/cron/guest-sessions-cleanup.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Payload CMS transaction support is available and properly configured",
+    "The 'req' object is available in the calling contexts (login/signup actions)",
+    "Guest sessions are identified by a unique session ID that can be marked as 'claiming'"
+  ],
+  "review_questions": [
+    "Should the fix include new integration tests to verify the atomic behavior?",
+    "Is adding a 'claiming' state to the guest session collection acceptable, or should this be handled via in-memory state?",
+    "Should the cron cleanup job be modified to be less aggressive given this fix?"
+  ],
+  "complexity": 55,
+  "complexity_reasoning": "Scope: 6 files across backend services and frontend actions (22 pts). Risk: High - data loss in production (16 pts). Novelty: Bug fix in existing pattern, follows Payload CMS patterns (5 pts). Cross-Domain: Backend + frontend API actions (8 pts). Ambiguity: Clear root cause with documented fix (1 pt). Dependency: Internal Payload CMS operations (3 pts). Total: 55",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains detailed ## Root Cause Analysis with code snippets, ## Expected Fix with 6 numbered items, and ## Severity/Reproducibility sections. Clear identification of files affected and specific functions to modify. No implementation steps provided, so gap analysis stage will be needed."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

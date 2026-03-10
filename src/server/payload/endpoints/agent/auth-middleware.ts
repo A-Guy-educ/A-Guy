@@ -31,6 +31,7 @@ import {
   checkAndIncrementGuestMessageCount,
   createGuestSession,
   getGuestSessionByToken,
+  getGuestSessionByTokenAnyStatus,
   getGuestSessionCookie,
   hashIP,
   hashUserAgent,
@@ -71,6 +72,7 @@ export type AuthResolutionResult =
   | AuthResolutionUnauthenticated
   | AuthResolutionRateLimited
   | AuthResolutionGuestMessageLimit
+  | AuthResolutionSessionClaiming
 
 export interface AuthResolutionAuthenticated {
   kind: 'authenticated'
@@ -98,6 +100,10 @@ export interface AuthResolutionRateLimited {
 
 export interface AuthResolutionGuestMessageLimit {
   kind: 'guest-message-limit'
+}
+
+export interface AuthResolutionSessionClaiming {
+  kind: 'session-claiming'
 }
 
 /**
@@ -200,6 +206,15 @@ export async function resolveAuthOrGuest(
         isNew: false,
         cookieHeaders,
       }
+      cacheResult(req, result)
+      return result
+    }
+
+    // Guest session not found by getGuestSessionByToken (could be expired or in claiming state)
+    // Check if session exists but is in claiming state - don't create new session as fallback
+    const sessionAnyStatus = await getGuestSessionByTokenAnyStatus(req.payload, guestToken)
+    if (sessionAnyStatus?.status === 'claiming') {
+      const result: AuthResolutionSessionClaiming = { kind: 'session-claiming' }
       cacheResult(req, result)
       return result
     }
@@ -313,5 +328,24 @@ export function buildUnauthenticatedResponse(): Response {
   return Response.json(
     { error: 'Authentication or guest session required', isGuestMode: false },
     { status: 401 },
+  )
+}
+
+/**
+ * Helper to build a 409 response for session claiming state
+ */
+export function buildSessionClaimingResponse(): Response {
+  return Response.json(
+    {
+      error: 'Guest session is being claimed. Please try again.',
+      isGuestMode: true,
+      retryAfter: null,
+    },
+    {
+      status: 409,
+      headers: {
+        'X-Guest-Session-Claiming': 'true',
+      },
+    },
   )
 }

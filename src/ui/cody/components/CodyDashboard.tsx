@@ -6,7 +6,7 @@
  */
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import type { CodyTask } from '../types'
 import { TaskList } from './TaskList'
 
@@ -32,7 +32,7 @@ import {
   SheetDescription,
 } from '@/ui/web/components/sheet'
 import { MessageSquare, Bug, Menu, RefreshCw, Bell, Globe } from 'lucide-react'
-import { useCodyTasks } from '../hooks'
+import { useCodyTasks, queryKeys } from '../hooks'
 import { useBrowserNotifications } from '../hooks/useBrowserNotifications'
 import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
 import { RateLimitError, NoTokenError, tasksApi, codyApi } from '../api'
@@ -51,9 +51,8 @@ interface CodyDashboardProps {
 
 export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
   const initialIssueRef = useRef(initialIssueNumber)
-  const [selectedTask, setSelectedTask] = useState<CodyTask | null>(null)
-  const [executingTaskId, setExecutingTaskId] = useState<string | null>(null)
-  const [mergingTaskId, setMergingTaskId] = useState<string | null>(null)
+  // #1: Track selection by issue number, derive task from query data
+  const [selectedIssueNumber, setSelectedIssueNumber] = useState<number | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showBugDialog, setShowBugDialog] = useState(false)
   const [dateFilter, setDateFilter] = useState<string>('30d')
@@ -82,6 +81,15 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
 
   const queryClient = useQueryClient()
 
+  // #1: Derive selectedTask from query data — always fresh
+  const selectedTask = useMemo(
+    () =>
+      selectedIssueNumber
+        ? (tasks.find((t) => t.issueNumber === selectedIssueNumber) ?? null)
+        : null,
+    [selectedIssueNumber, tasks],
+  )
+
   // GitHub identity (localStorage — forced on first visit)
   const {
     githubUser,
@@ -102,8 +110,7 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
     mutationFn: ({ issueNumber, assignees }: { issueNumber: number; assignees: string[] }) =>
       codyApi.tasks.assign(issueNumber, assignees, githubUser?.login),
     onSuccess: () => {
-      // Invalidate tasks to refetch with new assignees
-      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
+      toast.success('Assigned')
     },
   })
 
@@ -111,9 +118,122 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
     mutationFn: ({ issueNumber, assignees }: { issueNumber: number; assignees: string[] }) =>
       codyApi.tasks.unassign(issueNumber, assignees, githubUser?.login),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
+      toast.success('Unassigned')
     },
   })
+
+  // #2: Replace manual try/catch handlers with mutations + optimistic updates
+  const executeMutation = useMutation({
+    mutationFn: (task: CodyTask) => tasksApi.execute(task.issueNumber, githubUser?.login),
+    // #3: Optimistic update — move task to "building" immediately
+    onMutate: async (task) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks(days) })
+      const previous = queryClient.getQueryData<CodyTask[]>(queryKeys.tasks(days))
+      queryClient.setQueryData<CodyTask[]>(queryKeys.tasks(days), (old) =>
+        old?.map((t) => (t.id === task.id ? { ...t, column: 'building' as const } : t)),
+      )
+      return { previous }
+    },
+    onError: (_err, _task, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.tasks(days), context.previous)
+      }
+      toast.error('Failed to start task')
+    },
+    onSuccess: () => {
+      toast.success('Task started')
+      // Let polling handle the refresh — don't force an immediate refetch
+    },
+  })
+
+  const stopMutation = useMutation({
+    mutationFn: (task: CodyTask) => tasksApi.abort(task.issueNumber, githubUser?.login),
+    onMutate: async (task) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks(days) })
+      const previous = queryClient.getQueryData<CodyTask[]>(queryKeys.tasks(days))
+      queryClient.setQueryData<CodyTask[]>(queryKeys.tasks(days), (old) =>
+        old?.map((t) => (t.id === task.id ? { ...t, column: 'open' as const } : t)),
+      )
+      return { previous }
+    },
+    onError: (_err, _task, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.tasks(days), context.previous)
+      }
+      toast.error('Failed to stop task')
+    },
+    onSuccess: () => {
+      toast.success('Task stopped')
+    },
+  })
+
+  const mergeMutation = useMutation({
+    mutationFn: (task: CodyTask) => tasksApi.approveReview(task, githubUser?.login),
+    onMutate: async (task) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.tasks(days) })
+      const previous = queryClient.getQueryData<CodyTask[]>(queryKeys.tasks(days))
+      queryClient.setQueryData<CodyTask[]>(queryKeys.tasks(days), (old) =>
+        old?.map((t) => (t.id === task.id ? { ...t, column: 'done' as const } : t)),
+      )
+      return { previous }
+    },
+    onError: (_err, _task, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.tasks(days), context.previous)
+      }
+      toast.error('Failed to merge PR')
+    },
+    onSuccess: () => {
+      toast.success('PR merged')
+    },
+  })
+
+  // Derive per-task pending state from mutations
+  const executingTaskId = executeMutation.isPending
+    ? ((executeMutation.variables as CodyTask | undefined)?.id ?? null)
+    : stopMutation.isPending
+      ? ((stopMutation.variables as CodyTask | undefined)?.id ?? null)
+      : null
+
+  const mergingTaskId = mergeMutation.isPending
+    ? ((mergeMutation.variables as CodyTask | undefined)?.id ?? null)
+    : null
+
+  // Handlers now just delegate to mutations
+  const handleExecuteTask = useCallback(
+    (taskId: string) => {
+      const task = tasks.find((t) => t.id === taskId)
+      if (task) executeMutation.mutate(task)
+    },
+    [tasks, executeMutation],
+  )
+
+  const handleStopTask = useCallback(
+    (task: CodyTask) => {
+      stopMutation.mutate(task)
+    },
+    [stopMutation],
+  )
+
+  const handleMerge = useCallback(
+    async (task: CodyTask) => {
+      if (!task.associatedPR) return
+      mergeMutation.mutate(task)
+    },
+    [mergeMutation],
+  )
+
+  // #4: Prefetch task details on hover
+  const handleTaskHover = useCallback(
+    (task: CodyTask) => {
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.taskDetails(task.issueNumber),
+        queryFn: () => codyApi.tasks.get(task.issueNumber),
+        staleTime: 60_000, // 60s — don't re-prefetch on rapid hovers
+      })
+    },
+    [queryClient],
+  )
 
   // Browser notifications
   const {
@@ -186,57 +306,6 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
   // Get retry info from error
   const retryAfter = isRateLimited ? (error as RateLimitError).retryAfter : null
 
-  // Execute task handler
-
-  const handleExecuteTask = async (taskId: string) => {
-    const task = tasks.find((t) => t.id === taskId)
-    if (!task) return
-
-    setExecutingTaskId(taskId)
-    try {
-      await tasksApi.execute(task.issueNumber, githubUser?.login)
-      refetch()
-      toast.success('Task started')
-    } catch (err) {
-      console.error('Failed to execute task:', err)
-      toast.error('Failed to start task')
-    } finally {
-      setExecutingTaskId(null)
-    }
-  }
-
-  // Stop task handler
-  const handleStopTask = async (task: CodyTask) => {
-    setExecutingTaskId(task.id)
-    try {
-      await tasksApi.abort(task.issueNumber, githubUser?.login)
-      refetch()
-      toast.success('Task stopped')
-    } catch (err) {
-      console.error('Failed to stop task:', err)
-      toast.error('Failed to stop task')
-    } finally {
-      setExecutingTaskId(null)
-    }
-  }
-
-  // Merge PR handler - approves review and merges
-  const handleMerge = async (task: CodyTask) => {
-    if (!task.associatedPR) return
-
-    setMergingTaskId(task.id)
-    try {
-      await tasksApi.approveReview(task, githubUser?.login)
-      refetch()
-      toast.success('PR merged')
-    } catch (err) {
-      console.error('Failed to merge PR:', err)
-      toast.error('Failed to merge PR')
-    } finally {
-      setMergingTaskId(null)
-    }
-  }
-
   // Helper: extract issue number from URL pathname
   const getIssueFromUrl = () => {
     const match = window.location.pathname.match(/\/cody\/(\d+)/)
@@ -244,29 +313,32 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
   }
 
   // Task selection — uses pushState for browser history support
-  const handleTaskSelect = (task: CodyTask | null) => {
-    if (task) {
-      setSelectedTask(task)
-      window.history.pushState(null, '', `/cody/${task.issueNumber}`)
-      if (!isDesktop) {
-        setShowMobileDetail(true)
+  const handleTaskSelect = useCallback(
+    (task: CodyTask | null) => {
+      if (task) {
+        setSelectedIssueNumber(task.issueNumber)
+        window.history.pushState(null, '', `/cody/${task.issueNumber}`)
+        if (!isDesktop) {
+          setShowMobileDetail(true)
+        }
+      } else {
+        setSelectedIssueNumber(null)
+        setShowMobileDetail(false)
+        window.history.pushState(null, '', '/cody')
       }
-    } else {
-      setSelectedTask(null)
-      setShowMobileDetail(false)
-      window.history.pushState(null, '', '/cody')
-    }
-  }
+    },
+    [isDesktop],
+  )
 
   // Auto-select task from URL on initial load
   useEffect(() => {
     const issueNum = initialIssueRef.current
-    if (!issueNum || selectedTask) return
+    if (!issueNum || selectedIssueNumber) return
     if (tasks.length === 0) return
 
     const match = tasks.find((t) => t.issueNumber === issueNum)
     if (match) {
-      setSelectedTask(match)
+      setSelectedIssueNumber(match.issueNumber)
       if (!isDesktop) {
         setShowMobileDetail(true)
       }
@@ -281,11 +353,11 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
       if (issueNum) {
         const match = tasks.find((t) => t.issueNumber === issueNum)
         if (match) {
-          setSelectedTask(match)
+          setSelectedIssueNumber(match.issueNumber)
           if (!isDesktop) setShowMobileDetail(true)
         }
       } else {
-        setSelectedTask(null)
+        setSelectedIssueNumber(null)
         setShowMobileDetail(false)
       }
     }
@@ -415,7 +487,7 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
         ) : (
           <>
             {/* Header — action buttons only, no filters */}
-            <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-border">
+            <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-white/[0.06] bg-black/20">
               <h1 className="text-lg md:text-xl font-semibold text-foreground">Cody Operations</h1>
 
               {/* Desktop controls */}
@@ -536,6 +608,7 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
                   onExecuteTask={handleExecuteTask}
                   onStopTask={handleStopTask}
                   onApproveReview={handleMerge}
+                  onTaskHover={handleTaskHover}
                   collaborators={collaborators}
                   onAssign={(issueNumber, assignees) =>
                     assignMutation.mutate({ issueNumber, assignees })

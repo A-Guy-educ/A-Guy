@@ -6,11 +6,13 @@
  * @domain auth
  * @pattern test-factory, guest-session
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Payload } from 'payload'
 import crypto from 'crypto'
+import type { TestDataTracker } from '../helpers/test-data-tracker'
 
 export interface GuestSessionFactoryInput {
-  status?: 'active' | 'expired' | 'revoked'
+  status?: 'active' | 'claiming' | 'revoked'
   expiresAt?: Date
   hardExpiresAt?: Date
   claimedByUser?: string
@@ -67,8 +69,9 @@ export function buildGuestSessionData(input: GuestSessionFactoryInput = {}) {
 export async function createGuestSession(
   payload: Payload,
   input: GuestSessionFactoryInput = {},
+  tracker?: TestDataTracker,
 ): Promise<GuestSessionResult> {
-  const { token, tokenHash, data } = buildGuestSessionData(input)
+  const { token, data } = buildGuestSessionData(input)
 
   const session = await payload.create({
     collection: 'guest-sessions',
@@ -76,6 +79,8 @@ export async function createGuestSession(
     overrideAccess: true,
     draft: false,
   })
+
+  tracker?.track('guest-sessions', session.id)
 
   return {
     session: session as GuestSessionResult['session'],
@@ -105,7 +110,7 @@ export async function createGuestSessionRaw(
   payload: Payload,
   input: GuestSessionFactoryInput = {},
 ): Promise<GuestSessionResult> {
-  const { token, tokenHash, data } = buildGuestSessionData(input)
+  const { token, tokenHash: _tokenHash, data } = buildGuestSessionData(input)
 
   // Use direct MongoDB insert to bypass any hooks
   const db = payload.db as any

@@ -14,6 +14,7 @@ import type { UnifiedLLMProvider } from '@/infra/llm/providers/factory'
 import { getCircuitBreaker } from '@/infra/llm/providers/shared/circuit-breaker'
 import { LLMErrorCode } from '@/infra/llm/providers/shared/errors'
 import { withRetry } from '@/infra/llm/providers/shared/retry'
+import { withTimeout } from '@/infra/llm/providers/shared/timeout'
 import { tool } from 'genkit'
 import type { Payload } from 'payload'
 import { resolveGenkitConfig } from '../config-resolver'
@@ -166,13 +167,12 @@ export async function createGenkitUnifiedAdapter(
       const prompt =
         input.system + '\n\n' + input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
 
-      // Get streaming response - Genkit returns { stream: AsyncIterable, response: Promise }
-      // Circuit breaker wraps stream initialization to fail fast if provider is down
-      const result = await circuitBreaker.execute(async () =>
-        ai.generateStream({
-          model: config.model,
-          prompt,
-        }),
+      // Get streaming response with timeout protection
+      // A hung stream could block a serverless function until execution time limit
+      const streamTimeoutMs = input.timeoutMs ?? 30_000
+      const result = await withTimeout(
+        async () => ai.generateStream({ model: config.model, prompt }),
+        { timeoutMs: streamTimeoutMs, message: 'Stream initialization timed out' },
       )
 
       // result.stream is already an AsyncIterable<GenerateResponseChunk>

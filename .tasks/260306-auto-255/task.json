@@ -1,0 +1,27 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/app/global-error.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The global-error.tsx file exists and contains the described hardcoded strings and inline styles",
+    "Tailwind CSS is properly configured in the project",
+    "The file renders outside the i18n provider as stated"
+  ],
+  "review_questions": [],
+  "complexity": 12,
+  "complexity_reasoning": "Scope: 3 (single file, small change). Risk: 3 (low risk UI styling). Novelty: 2 (following existing Tailwind patterns). Cross-domain: 0 (frontend only). Ambiguity: 2 (very clear requirements). Dependency: 2 (self-contained). Total: 12",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task has clear ## Description, ## Current Behavior, ## Expected Behavior sections with specific requirements. The fix is straightforward with clear acceptance criteria."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}

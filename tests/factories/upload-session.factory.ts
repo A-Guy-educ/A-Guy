@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 import type { UploadSession } from '@/payload-types'
+import type { TestDataTracker } from '../helpers/test-data-tracker'
 
 export interface UploadSessionFactoryInput {
   purpose?: string
@@ -26,13 +27,16 @@ export function buildUploadSessionData(input: UploadSessionFactoryInput = {}) {
 export async function createTestUploadSession(
   payload: Payload,
   input: UploadSessionFactoryInput = {},
+  tracker?: TestDataTracker,
 ): Promise<UploadSession> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test factory: Payload's create() union types are strict
-  return payload.create({
+  const session = await payload.create({
     collection: 'upload-sessions',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test factory: Payload's create() union types are strict
     data: buildUploadSessionData(input) as any,
     overrideAccess: true,
   })
+  tracker?.track('upload-sessions', session.id)
+  return session
 }
 
 /** Create an expired upload session for cleanup testing */

@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 import type { ChatAsset } from '@/payload-types'
+import type { TestDataTracker } from '../helpers/test-data-tracker'
 
 export interface ChatAssetFactoryInput {
   url?: string
@@ -27,13 +28,16 @@ export function buildChatAssetData(input: ChatAssetFactoryInput = {}) {
 export async function createTestChatAsset(
   payload: Payload,
   input: ChatAssetFactoryInput = {},
+  tracker?: TestDataTracker,
 ): Promise<ChatAsset> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test factory: Payload's create() union types are strict
-  return payload.create({
+  const asset = await payload.create({
     collection: 'chat-assets',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test factory: Payload's create() union types are strict
     data: buildChatAssetData(input) as any,
     overrideAccess: true,
   })
+  tracker?.track('chat-assets', asset.id)
+  return asset
 }
 
 /** Create an expired chat asset for cleanup testing */

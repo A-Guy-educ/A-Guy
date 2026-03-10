@@ -214,7 +214,7 @@ export interface CodyTask {
   // List view: only isTimeout available from workflow run conclusion
   // Detail view: all fields populated from parsed comments
   gateType?: 'hard-stop' | 'risk-gated' // which gate type (only when column === 'gate-waiting')
-  gateStage?: string // which stage gate paused at ('taskify' | 'architect')
+  gateStage?: string // which stage gate paused at ('taskify' | 'gsd-plan')
   clarifyWaiting?: boolean // waiting for user to answer questions
   isTimeout?: boolean // pipeline timed out (vs regular failure)
   isExhausted?: boolean // retries exhausted (terminal failure)

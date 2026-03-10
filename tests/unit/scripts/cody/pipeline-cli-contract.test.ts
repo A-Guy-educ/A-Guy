@@ -119,7 +119,7 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
         TRIGGER_TYPE: 'dispatch',
         DRY_RUN: 'true',
         FEEDBACK: 'TypeScript errors in src/api.ts',
-        FROM_STAGE: 'build',
+        FROM_STAGE: 'build', // resolves to gsd-execute via alias
         RUN_ID: '9876543',
         RUN_URL: 'https://github.com/org/repo/actions/runs/9876543',
       })
@@ -130,7 +130,7 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
       expect(result.mode).toBe('rerun')
       expect(result.dryRun).toBe(true)
       expect(result.feedback).toBe('TypeScript errors in src/api.ts')
-      expect(result.fromStage).toBe('build')
+      expect(result.fromStage).toBe('gsd-execute')
       // CLI args take precedence over env vars
       expect(result.runId).toBe('9876543')
       expect(result.runUrl).toBe('https://github.com/org/repo/actions/runs/9876543')
@@ -220,14 +220,14 @@ describe('pipeline↔CLI contract: run-cody.sh flags → parseCliArgs', () => {
         MODE: 'full',
         ISSUE_NUMBER: '42',
         TRIGGER_TYPE: 'comment',
-        COMMENT_BODY: '/cody rerun 260218-task --feedback fix-this --from build',
+        COMMENT_BODY: '/cody rerun 260218-task --feedback fix-this --from build', // build resolves to gsd-execute
       })
 
       const result = parseCliArgs(args)
 
       expect(result.mode).toBe('rerun')
       expect(result.feedback).toBe('fix-this')
-      expect(result.fromStage).toBe('build')
+      expect(result.fromStage).toBe('gsd-execute')
     })
 
     it('should override --mode=full with "/cody status"', () => {

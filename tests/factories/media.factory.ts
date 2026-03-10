@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 import type { Media } from '@/payload-types'
+import type { TestDataTracker } from '../helpers/test-data-tracker'
 
 export interface MediaFactoryInput {
   filename?: string
@@ -25,10 +26,17 @@ export function buildMediaData(input: MediaFactoryInput = {}) {
 export async function createTestMedia(
   payload: Payload,
   input: MediaFactoryInput = {},
+  tracker?: TestDataTracker,
 ): Promise<Media> {
   const data = buildMediaData(input)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test factory: Payload's create() union types are strict
-  return payload.create({ collection: 'media', data: data as any, overrideAccess: true })
+  const media = await payload.create({
+    collection: 'media',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test factory: Payload's create() union types are strict
+    data: data as any,
+    overrideAccess: true,
+  })
+  tracker?.track('media', media.id)
+  return media
 }
 
 /** Generate a minimal 1x1 JPEG buffer for upload tests */

@@ -281,6 +281,24 @@ Examples:
     const errorMsg = error instanceof Error ? error.message : String(error)
     logger.error({ err: error }, `\n❌ Cody failed: ${errorMsg}`)
 
+    // Commit task files on failure — includes debug artifacts (*-events.jsonl, *-stderr.log)
+    // for post-mortem diagnosis. On success these are excluded to keep PRs clean.
+    try {
+      commitPipelineFiles({
+        taskDir,
+        taskId: input.taskId,
+        message: `ci(cody): save failed pipeline state for ${input.taskId}`,
+        ensureBranch: true,
+        stagingStrategy: 'task-only',
+        push: !input.local,
+        isCI: !input.local,
+        dryRun: input.dryRun,
+        pipelineFailed: true,
+      })
+    } catch (commitErr) {
+      logger.warn({ err: commitErr }, 'Failed to commit task files on pipeline failure')
+    }
+
     // Skip GitHub API calls in local mode
     if (input.issueNumber && !input.local) {
       // Set lifecycle label to failed for dashboard visibility
@@ -539,14 +557,14 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
       input.fromStage = resolveFromStageAfterGateApproval(gateApprovedStage, tempOrder)
       logger.info(`  ℹ️ Gate approved at ${gateApprovedStage} — resuming from ${input.fromStage}`)
     } else {
-      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
+      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'gsd-execute'
     }
   }
 
   // P3 fix: Back up to architect when feedback provided so plan can be revised
   const implStageOrder = flattenPipelineOrder(IMPL_ORDER_STANDARD)
   const resolvedFrom = resolveRerunFromStage(
-    input.fromStage || 'build',
+    input.fromStage || 'gsd-execute',
     input.feedback,
     implStageOrder,
   )
@@ -598,7 +616,7 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   const stageOrder = flattenPipelineOrder(pipeline.order)
 
   // Fix 5: Validate fromStage exists in the resolved pipeline order
-  const fromStage = input.fromStage || 'build'
+  const fromStage = input.fromStage || 'gsd-execute'
   if (!stageOrder.includes(fromStage)) {
     throw new Error(
       `Stage "${fromStage}" not found in rerun pipeline. Valid stages: ${stageOrder.join(', ')}`,

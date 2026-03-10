@@ -2,8 +2,8 @@ name: Nightly Docs Agent
 
 on:
   schedule:
-    # Run daily at 03:00 UTC (after other nightly jobs)
-    - cron: '0 3 * * *'
+    # Run daily at 02:00 UTC
+    - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -53,8 +53,8 @@ jobs:
 
       - name: Configure git
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "${GIT_USER_NAME:-aguyaharonyair}"
+          git config --global user.email "${GIT_USER_EMAIL:-242132053+aguyaharonyair@users.noreply.github.com}"
 
       - name: Run Nightly Docs Agent
         id: nightly-docs

@@ -23,7 +23,9 @@ export default async function CodyTaskPage({
   const { user } = await getMeUser()
 
   if (!user || user.role !== AccountRole.Admin) {
-    redirect('/login?returnTo=/cody')
+    const { issueNumber } = await params
+    const returnTo = `/cody/${issueNumber}`
+    redirect(`/login?returnTo=${encodeURIComponent(returnTo)}`)
   }
 
   const { issueNumber } = await params

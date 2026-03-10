@@ -1,6 +1,8 @@
 import '@/infra/config/server-init'
 
 import { notFound } from 'next/navigation'
+import { getSystemLocale } from '@/i18n/server-locale'
+import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryChapterBySlug } from '@/server/repos/queries/chapters'
 import { queryLessonsByChapter } from '@/server/repos/queries/lessons'
@@ -23,9 +25,11 @@ interface ChapterPageProps {
 
 export default async function ChapterPage({ params }: ChapterPageProps) {
   const { courseSlug, chapterSlug } = await params
+  const locale = await getSystemLocale()
+  const contentLocale = isValidContentLocale(locale) ? locale : undefined
 
   const [course, chapter] = await Promise.all([
-    queryCourseBySlug({ slug: courseSlug }),
+    queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
     queryChapterBySlug({ slug: chapterSlug }),
   ])
 
@@ -107,9 +111,11 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
 
 export async function generateMetadata({ params }: ChapterPageProps) {
   const { courseSlug, chapterSlug } = await params
+  const locale = await getSystemLocale()
+  const contentLocale = isValidContentLocale(locale) ? locale : undefined
 
   const [course, chapter] = await Promise.all([
-    queryCourseBySlug({ slug: courseSlug }),
+    queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
     queryChapterBySlug({ slug: chapterSlug }),
   ])
 

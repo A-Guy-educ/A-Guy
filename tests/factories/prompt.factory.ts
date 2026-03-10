@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 import type { Prompt } from '@/payload-types'
+import type { TestDataTracker } from '../helpers/test-data-tracker'
 
 export interface PromptFactoryInput {
   title?: string
@@ -25,11 +26,14 @@ export function buildPromptData(input: PromptFactoryInput = {}) {
 export async function createTestPrompt(
   payload: Payload,
   input: PromptFactoryInput = {},
+  tracker?: TestDataTracker,
 ): Promise<Prompt> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test factory: Payload's create() union types are strict
-  return payload.create({
+  const prompt = await payload.create({
     collection: 'prompts',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test factory: Payload's create() union types are strict
     data: buildPromptData(input) as any,
     overrideAccess: true,
   })
+  tracker?.track('prompts', prompt.id)
+  return prompt
 }

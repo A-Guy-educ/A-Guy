@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 import { ChatRole } from '@/infra/llm/chat-message-role'
+import type { TestDataTracker } from '../helpers/test-data-tracker'
 
 export interface MemoryItemFactoryInput {
   userId: string
@@ -33,10 +34,16 @@ export function buildMemoryItemData(input: MemoryItemFactoryInput) {
   }
 }
 
-export async function createMemoryItem(payload: Payload, input: MemoryItemFactoryInput) {
-  return payload.create({
+export async function createMemoryItem(
+  payload: Payload,
+  input: MemoryItemFactoryInput,
+  tracker?: TestDataTracker,
+) {
+  const item = await payload.create({
     collection: 'memory_items',
     data: buildMemoryItemData(input),
     overrideAccess: true,
   })
+  tracker?.track('memory_items', item.id)
+  return item
 }

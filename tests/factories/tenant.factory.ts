@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 import type { Tenant } from '@/payload-types'
+import type { TestDataTracker } from '../helpers/test-data-tracker'
 
 export interface TenantFactoryInput {
   name?: string
@@ -17,10 +18,13 @@ export function buildTenantData(input: TenantFactoryInput = {}) {
 export async function createTestTenant(
   payload: Payload,
   input: TenantFactoryInput = {},
+  tracker?: TestDataTracker,
 ): Promise<Tenant> {
-  return payload.create({
+  const tenant = await payload.create({
     collection: 'tenants',
     data: buildTenantData(input),
     overrideAccess: true,
   })
+  tracker?.track('tenants', tenant.id)
+  return tenant
 }

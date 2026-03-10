@@ -2,8 +2,12 @@
 
 import { cookies } from 'next/headers'
 import { getPayload } from 'payload'
-import { claimGuestConversations } from '@/server/services/guest-session-upgrade'
+import {
+  claimGuestConversations,
+  GuestSessionClaimingInProgressError,
+} from '@/server/services/guest-session-upgrade'
 import { clearGuestSessionCookie, GUEST_SESSION_COOKIE_NAME } from '@/server/services/guest-session'
+import { logger } from '@/infra/utils/logger'
 
 type CookieStore = {
   set: (
@@ -80,12 +84,37 @@ export async function loginAction(formData: FormData, cookieStore?: CookieStore)
           const currentCookies = await cookies()
           const guestToken = currentCookies.get(GUEST_SESSION_COOKIE_NAME)?.value
           if (guestToken) {
-            await claimGuestConversations(payload, result.user.id, guestToken, headers)
-            clearGuestSessionCookie(headers)
-            resolvedCookieStore.delete(GUEST_SESSION_COOKIE_NAME)
+            const claimResult = await claimGuestConversations(
+              payload,
+              result.user.id,
+              guestToken,
+              headers,
+            )
+            // Only clear cookie if claim succeeded (claimed >= 0)
+            if (claimResult.claimed >= 0) {
+              clearGuestSessionCookie(headers)
+              resolvedCookieStore.delete(GUEST_SESSION_COOKIE_NAME)
+            } else {
+              // Partial failure - log warning but don't clear cookie
+              logger.warn(
+                { userId: result.user.id, claimed: claimResult.claimed },
+                'Guest claim incomplete - cookie retained for retry',
+              )
+            }
           }
         } catch (claimError) {
-          console.error('Failed to claim guest conversations:', claimError)
+          if (claimError instanceof GuestSessionClaimingInProgressError) {
+            // Another user is claiming - this shouldn't happen for same user, but handle gracefully
+            logger.warn(
+              { userId: result.user.id },
+              'Guest session claim in progress by another user',
+            )
+          } else {
+            logger.error(
+              { userId: result.user.id, error: claimError },
+              'Failed to claim guest conversations',
+            )
+          }
         }
       }
 

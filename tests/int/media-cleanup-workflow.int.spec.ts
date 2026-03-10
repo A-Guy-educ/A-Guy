@@ -30,7 +30,7 @@ describe('Media Cleanup GitHub Workflow', () => {
 
     expect(workflow.on.schedule).toBeDefined()
     expect(workflow.on.schedule).toHaveLength(1)
-    expect(workflow.on.schedule[0].cron).toBe('0 2 * * *') // Daily at 2 AM UTC
+    expect(workflow.on.schedule[0].cron).toBe('0 4 * * *') // Daily at 4 AM UTC
   })
 
   it('should allow manual trigger', async () => {
