@@ -3,22 +3,22 @@
   "taskId": "260310-auto-256",
   "mode": "fix",
   "pipeline": "spec_execute_verify",
-  "startedAt": "2026-03-10T10:01:32.203Z",
-  "updatedAt": "2026-03-10T10:05:05.375Z",
+  "startedAt": "2026-03-10T13:25:23.667Z",
+  "updatedAt": "2026-03-10T13:29:04.452Z",
   "state": "running",
   "cursor": "review",
   "stages": {
     "review": {
       "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-10T10:01:32.296Z",
-      "completedAt": "2026-03-10T10:05:05.373Z",
+      "startedAt": "2026-03-10T13:25:23.752Z",
+      "completedAt": "2026-03-10T13:29:04.450Z",
       "outputFile": "review.md",
       "issuesFound": true,
       "reviewSummary": {
         "critical": 0,
-        "major": 0,
-        "minor": 0
+        "major": 2,
+        "minor": 2
       }
     },
     "fix": {
