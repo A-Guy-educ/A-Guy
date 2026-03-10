@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "taskId": "260310-auto-171",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-10T11:07:21.339Z",
+  "updatedAt": "2026-03-10T11:09:21.865Z",
+  "state": "paused",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-03-10T11:07:23.114Z",
+      "completedAt": "2026-03-10T11:09:15.956Z",
+      "outputFile": "taskify.md"
+    }
+  },
+  "issueNumber": 785,
+  "completedAt": "2026-03-10T11:09:21.865Z"
+}

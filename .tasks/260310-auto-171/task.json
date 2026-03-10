@@ -1,0 +1,40 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": [
+    "Course Studying Page redesign",
+    "Master workspace layout with split-pane architecture",
+    "Mode-based color theming (Study/Practice/Hint/Test)",
+    "Glassmorphism and soft geometry visual patterns",
+    "Interactive exercise components with animations",
+    "Contextual navigation sidebar with progress indicators",
+    "Chat interface for Hint/Ask mode",
+    "Mobile responsive bottom sheet navigation"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Figma prototype at https://beaver-snack-74767221.figma.site is accessible for reference",
+    "Existing functional logic for course progress and exercise validation will be preserved",
+    "Current design system tokens can be extended to support new mode colors",
+    "A-Guy AI tutor integration points already exist and can be reused"
+  ],
+  "review_questions": [
+    "Should the existing course studying page be replaced entirely or should this be a new variant?",
+    "Are there existing animation libraries (framer-motion, etc.) to use for transitions?",
+    "Should the timer component in Test Mode be a new implementation or reuse existing timer logic?",
+    "Is there an existing theme/context system to extend with mode-based colors, or is a new one needed?"
+  ],
+  "complexity": 58,
+  "complexity_reasoning": "Scope: 18 (new page with 10+ UI components, split-pane layout). Risk: 10 (medium - UI changes, no security impact). Novelty: 15 (new design patterns from Figma). Cross-Domain: 6 (frontend + state management). Ambiguity: 4 (detailed spec, some implementation details to determine). Deps: 5 (depends on design system, existing components). Total: 58",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains detailed ## sections with Project Overview, Visual Language, Functional Requirements (3 subsections), User Interactions, and Mobile patterns. Has clear acceptance criteria embedded as mode colors, visual patterns, and interaction triggers. Promoted spec.md with extracted requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
