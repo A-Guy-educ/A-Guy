@@ -2,11 +2,12 @@
 
 import React from 'react'
 import type { InlineRichText } from '@/server/payload/collections/Exercises/types'
+import type { SupportFields } from './HintSolutionPanel'
 
 interface UseGenerateSupportOptions {
   exerciseId: string | number | undefined
   blockId: string
-  onChange: (field: 'hint' | 'solution' | 'fullSolution', value: InlineRichText | undefined) => void
+  onBatchChange: (fields: SupportFields) => void
   onExpandPanel: () => void
 }
 
@@ -28,7 +29,7 @@ function createRichText(value: string): InlineRichText {
 export function useGenerateSupport({
   exerciseId,
   blockId,
-  onChange,
+  onBatchChange,
   onExpandPanel,
 }: UseGenerateSupportOptions): UseGenerateSupportReturn {
   const [isGenerating, setIsGenerating] = React.useState(false)
@@ -65,7 +66,8 @@ export function useGenerateSupport({
 
         const generated = data.data?.generated
         if (generated) {
-          applyGenerated(generated, overwrite, onChange)
+          const fields = buildSupportFields(generated, overwrite)
+          onBatchChange(fields)
           onExpandPanel()
         }
       } catch {
@@ -74,35 +76,34 @@ export function useGenerateSupport({
         setIsGenerating(false)
       }
     },
-    [exerciseId, blockId, isGenerating, onChange, onExpandPanel],
+    [exerciseId, blockId, isGenerating, onBatchChange, onExpandPanel],
   )
 
   return { isGenerating, generateError, handleGenerate }
 }
 
-function applyGenerated(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  generated: any,
-  overwrite: boolean,
-  onChange: (
-    field: 'hint' | 'solution' | 'fullSolution',
-    value: InlineRichText | undefined,
-  ) => void,
-) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildSupportFields(generated: any, overwrite: boolean): SupportFields {
+  const fields: SupportFields = {}
+
   if (generated.hints?.length) {
     const hintText = generated.hints.map((h: string, i: number) => `${i + 1}. ${h}`).join('\n')
-    onChange('hint', createRichText(hintText))
+    fields.hint = createRichText(hintText)
   } else if (overwrite) {
-    onChange('hint', undefined)
+    fields.hint = undefined
   }
+
   if (generated.solution) {
-    onChange('solution', createRichText(generated.solution))
+    fields.solution = createRichText(generated.solution)
   } else if (overwrite) {
-    onChange('solution', undefined)
+    fields.solution = undefined
   }
+
   if (generated.fullSolution) {
-    onChange('fullSolution', createRichText(generated.fullSolution))
+    fields.fullSolution = createRichText(generated.fullSolution)
   } else if (overwrite) {
-    onChange('fullSolution', undefined)
+    fields.fullSolution = undefined
   }
+
+  return fields
 }

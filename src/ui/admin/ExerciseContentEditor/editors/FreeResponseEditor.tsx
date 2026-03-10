@@ -79,6 +79,7 @@ export const FreeResponseEditor: React.FC<FreeResponseEditorProps> = ({ block, o
           fullSolution={block.fullSolution}
           blockId={block.id}
           onChange={(field, value) => onChange({ ...block, [field]: value })}
+          onBatchChange={(fields) => onChange({ ...block, ...fields })}
         />
       </div>
     </div>

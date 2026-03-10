@@ -8,12 +8,19 @@ import { InlineRichTextEditor } from './InlineRichTextEditor'
 import { useGenerateSupport } from './useGenerateSupport'
 import { Plus, X, Sparkles, Loader2 } from 'lucide-react'
 
+export interface SupportFields {
+  hint?: InlineRichText
+  solution?: InlineRichText
+  fullSolution?: InlineRichText
+}
+
 interface HintSolutionPanelProps {
   hint?: InlineRichText
   solution?: InlineRichText
   fullSolution?: InlineRichText
   blockId: string
   onChange: (field: 'hint' | 'solution' | 'fullSolution', value: InlineRichText | undefined) => void
+  onBatchChange: (fields: SupportFields) => void
 }
 
 function createDefaultInlineRichText(): InlineRichText {
@@ -31,6 +38,7 @@ export const HintSolutionPanel: React.FC<HintSolutionPanelProps> = ({
   fullSolution,
   blockId,
   onChange,
+  onBatchChange,
 }) => {
   const [expanded, setExpanded] = React.useState(false)
   const { id: exerciseId } = useDocumentInfo()
@@ -38,7 +46,7 @@ export const HintSolutionPanel: React.FC<HintSolutionPanelProps> = ({
   const { isGenerating, generateError, handleGenerate } = useGenerateSupport({
     exerciseId,
     blockId,
-    onChange,
+    onBatchChange,
     onExpandPanel: () => setExpanded(true),
   })
 

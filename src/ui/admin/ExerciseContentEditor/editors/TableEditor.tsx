@@ -297,6 +297,7 @@ export const TableEditor: React.FC<TableEditorProps> = ({ block, onChange }) => 
           fullSolution={block.fullSolution}
           blockId={block.id}
           onChange={(field, value) => onChange({ ...block, [field]: value })}
+          onBatchChange={(fields) => onChange({ ...block, ...fields })}
         />
       </div>
     </div>
