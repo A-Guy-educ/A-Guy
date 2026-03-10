@@ -8,8 +8,11 @@
  * @pattern validation, zod-schema
  */
 
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
+
+// Stub PAYLOAD_SECRET before importing route module (which imports payload.config.ts)
+vi.stubEnv('PAYLOAD_SECRET', 'test-secret')
 
 // Import the schema from the route file - will fail until schema is added
 // This import path follows the project structure

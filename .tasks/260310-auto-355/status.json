@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-10T15:36:57.551Z",
-  "updatedAt": "2026-03-10T15:45:44.064Z",
+  "updatedAt": "2026-03-10T16:00:44.197Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -38,11 +38,17 @@
       "outputFile": "gsd-plan.md"
     },
     "gsd-execute": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-10T15:45:43.989Z",
+      "completedAt": "2026-03-10T15:53:57.932Z",
+      "outputFile": "gsd-execute.md"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-10T15:45:43.989Z"
+      "startedAt": "2026-03-10T16:00:44.197Z"
     }
   },
-  "issueNumber": 788,
-  "branchName": "refactor/260310-auto-788-course-page-redesign"
+  "issueNumber": 788
 }
