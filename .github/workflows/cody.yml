@@ -310,8 +310,8 @@ jobs:
       # Configure git identity for commits in CI
       - name: Configure git identity
         run: |
-          git config --global user.email "${GIT_USER_EMAIL:-242132053+aguyaharonyair@users.noreply.github.com}"
-          git config --global user.name "${GIT_USER_NAME:-aguyaharonyair}"
+          git config --global user.email "cody@aguy.co.il"
+          git config --global user.name "Cody"
 
       # Overlay pipeline version (if specified)
       - name: Overlay pipeline version
