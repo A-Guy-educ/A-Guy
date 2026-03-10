@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "taskId": "260310-auto-256",
+  "mode": "fix",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-10T10:01:32.203Z",
+  "updatedAt": "2026-03-10T10:05:05.375Z",
+  "state": "running",
+  "cursor": "review",
+  "stages": {
+    "review": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-10T10:01:32.296Z",
+      "completedAt": "2026-03-10T10:05:05.373Z",
+      "outputFile": "review.md",
+      "issuesFound": true,
+      "reviewSummary": {
+        "critical": 0,
+        "major": 0,
+        "minor": 0
+      }
+    },
+    "fix": {
+      "state": "pending",
+      "retries": 0,
+      "fixAttempt": 0,
+      "maxFixAttempts": 2
+    },
+    "commit-fix": {
+      "state": "pending",
+      "retries": 0
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "pr": {
+      "state": "pending",
+      "retries": 0
+    }
+  },
+  "issueNumber": 751
+}
