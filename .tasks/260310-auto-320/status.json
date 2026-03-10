@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "taskId": "260310-auto-320",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-10T14:51:48.470Z",
+  "updatedAt": "2026-03-10T14:55:18.273Z",
+  "state": "paused",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-03-10T14:51:50.377Z",
+      "completedAt": "2026-03-10T14:55:11.997Z",
+      "outputFile": "taskify.md"
+    }
+  },
+  "issueNumber": 782,
+  "completedAt": "2026-03-10T14:55:18.273Z"
+}
